@@ -1,42 +1,35 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    import torch
-    array = torch.Tensor
-    from torch import dtype as Dtype
-    from typing import Optional, Union, Tuple, Literal
-    inf = float('inf')
+import torch
+import torch.linalg
 
-from ._aliases import _fix_promotion, sum
+from .._internal import clone_module
 
-from torch.linalg import * # noqa: F403
-
-# torch.linalg doesn't define __all__
-# from torch.linalg import __all__ as linalg_all
-from torch import linalg as torch_linalg
-linalg_all = [i for i in dir(torch_linalg) if not i.startswith('_')]
+__all__ = clone_module("torch.linalg", globals())
 
 # outer is implemented in torch but aren't in the linalg namespace
 from torch import outer
+from ._aliases import _fix_promotion, sum
 # These functions are in both the main and linalg namespaces
 from ._aliases import matmul, matrix_transpose, tensordot
+from ._typing import Array, DType
+from ..common._typing import JustInt, JustFloat
 
 # Note: torch.linalg.cross does not default to axis=-1 (it defaults to the
 # first axis with size 3), see https://github.com/pytorch/pytorch/issues/58743
 
 # torch.cross also does not support broadcasting when it would add new
 # dimensions https://github.com/pytorch/pytorch/issues/39656
-def cross(x1: array, x2: array, /, *, axis: int = -1) -> array:
+def cross(x1: Array, x2: Array, /, *, axis: int = -1) -> Array:
     x1, x2 = _fix_promotion(x1, x2, only_scalar=False)
     if not (-min(x1.ndim, x2.ndim) <= axis < max(x1.ndim, x2.ndim)):
         raise ValueError(f"axis {axis} out of bounds for cross product of arrays with shapes {x1.shape} and {x2.shape}")
     if not (x1.shape[axis] == x2.shape[axis] == 3):
         raise ValueError(f"cross product axis must have size 3, got {x1.shape[axis]} and {x2.shape[axis]}")
     x1, x2 = torch.broadcast_tensors(x1, x2)
-    return torch_linalg.cross(x1, x2, dim=axis)
+    return torch.linalg.cross(x1, x2, dim=axis)
 
-def vecdot(x1: array, x2: array, /, *, axis: int = -1, **kwargs) -> array:
+def vecdot(x1: Array, x2: Array, /, *, axis: int = -1, **kwargs: object) -> Array:
     from ._aliases import isdtype
 
     x1, x2 = _fix_promotion(x1, x2, only_scalar=False)
@@ -58,7 +51,7 @@ def vecdot(x1: array, x2: array, /, *, axis: int = -1, **kwargs) -> array:
         return res[..., 0, 0]
     return torch.linalg.vecdot(x1, x2, dim=axis, **kwargs)
 
-def solve(x1: array, x2: array, /, **kwargs) -> array:
+def solve(x1: Array, x2: Array, /, **kwargs: object) -> Array:
     x1, x2 = _fix_promotion(x1, x2, only_scalar=False)
     # Torch tries to emulate NumPy 1 solve behavior by using batched 1-D solve
     # whenever
@@ -79,19 +72,20 @@ def solve(x1: array, x2: array, /, **kwargs) -> array:
     return torch.linalg.solve(x1, x2, **kwargs)
 
 # torch.trace doesn't support the offset argument and doesn't support stacking
-def trace(x: array, /, *, offset: int = 0, dtype: Optional[Dtype] = None) -> array:
+def trace(x: Array, /, *, offset: int = 0, dtype: DType | None = None) -> Array:
     # Use our wrapped sum to make sure it does upcasting correctly
     return sum(torch.diagonal(x, offset=offset, dim1=-2, dim2=-1), axis=-1, dtype=dtype)
 
 def vector_norm(
-    x: array,
+    x: Array,
     /,
     *,
-    axis: Optional[Union[int, Tuple[int, ...]]] = None,
+    axis: int | tuple[int, ...] | None = None,
     keepdims: bool = False,
-    ord: Union[int, float, Literal[inf, -inf]] = 2,
-    **kwargs,
-) -> array:
+    # JustFloat stands for inf | -inf, which are not valid for Literal
+    ord: JustInt | JustFloat = 2,
+    **kwargs: object,
+) -> Array:
     # torch.vector_norm incorrectly treats axis=() the same as axis=None
     if axis == ():
         out = kwargs.get('out')
@@ -113,9 +107,8 @@ def vector_norm(
         return out
     return torch.linalg.vector_norm(x, ord=ord, axis=axis, keepdim=keepdims, **kwargs)
 
-__all__ = linalg_all + ['outer', 'matmul', 'matrix_transpose', 'tensordot',
-                        'cross', 'vecdot', 'solve', 'trace', 'vector_norm']
+__all__ += ['outer', 'matmul', 'matrix_transpose', 'tensordot',
+            'cross', 'vecdot', 'solve', 'trace', 'vector_norm']
 
-_all_ignore = ['torch_linalg', 'sum']
-
-del linalg_all
+def __dir__() -> list[str]:
+    return __all__

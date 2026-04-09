@@ -19,8 +19,6 @@ for years after 2001.
     <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_.
 """
 
-print(__doc__)
-
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
@@ -30,7 +28,7 @@ print(__doc__)
 #
 # We will derive a dataset from the Mauna Loa Observatory that collected air
 # samples. We are interested in estimating the concentration of CO2 and
-# extrapolate it for further year. First, we load the original dataset available
+# extrapolate it for further years. First, we load the original dataset available
 # in OpenML as a pandas dataframe. This will be replaced with Polars
 # once `fetch_openml` adds a native support for it.
 from sklearn.datasets import fetch_openml
@@ -53,7 +51,7 @@ co2_data["date"].min(), co2_data["date"].max()
 
 # %%
 # We see that we get CO2 concentration for some days from March, 1958 to
-# December, 2001. We can plot these raw information to have a better
+# December, 2001. We can plot the raw information to have a better
 # understanding.
 import matplotlib.pyplot as plt
 
@@ -63,8 +61,8 @@ plt.ylabel("CO$_2$ concentration (ppm)")
 _ = plt.title("Raw air samples measurements from the Mauna Loa Observatory")
 
 # %%
-# We will preprocess the dataset by taking a monthly average and drop month
-# for which no measurements were collected. Such a processing will have an
+# We will preprocess the dataset by taking a monthly average and drop months
+# for which no measurements were collected. Such a processing will have a
 # smoothing effect on the data.
 
 co2_data = (
@@ -104,7 +102,7 @@ y = co2_data["co2"].to_numpy()
 #
 # First, the long term rising trend could be fitted using a radial basis
 # function (RBF) kernel with a large length-scale parameter. The RBF kernel
-# with a large length-scale enforces this component to be smooth. An trending
+# with a large length-scale enforces this component to be smooth. A trending
 # increase is not enforced as to give a degree of freedom to our model. The
 # specific length-scale and the amplitude are free hyperparameters.
 from sklearn.gaussian_process.kernels import RBF

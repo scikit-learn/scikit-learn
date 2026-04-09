@@ -20,7 +20,7 @@ try:
 except StopIteration as e:
     raise RuntimeError("Unable to find scikit-learn's dist-info") from e
 
-license_text = (distinfo_path / "COPYING").read_text()
+license_text = (distinfo_path / "licenses" / "COPYING").read_text()
 
 assert "Copyright (c)" in license_text
 

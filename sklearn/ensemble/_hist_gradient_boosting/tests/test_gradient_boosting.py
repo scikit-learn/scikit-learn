@@ -2,6 +2,8 @@ import copyreg
 import io
 import pickle
 import re
+import sys
+import sysconfig
 import warnings
 from unittest.mock import Mock
 
@@ -11,7 +13,7 @@ import pytest
 from joblib.numpy_pickle import NumpyPickler
 from numpy.testing import assert_allclose, assert_array_equal
 
-import sklearn
+import sklearn.ensemble._hist_gradient_boosting.gradient_boosting as hgb_module
 from sklearn._loss.loss import (
     AbsoluteError,
     HalfBinomialLoss,
@@ -35,7 +37,7 @@ from sklearn.metrics import get_scorer, mean_gamma_deviance, mean_poisson_devian
 from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler, OneHotEncoder
-from sklearn.utils import shuffle
+from sklearn.utils import check_random_state, shuffle
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._testing import _convert_container
 from sklearn.utils.fixes import _IS_32BIT
@@ -706,6 +708,7 @@ def test_zero_sample_weights_classification():
 
     X = [[1, 0], [1, 0], [1, 0], [0, 1], [1, 1]]
     y = [0, 0, 1, 0, 2]
+
     # ignore the first 2 training samples by setting their weight to 0
     sample_weight = [0, 0, 1, 1, 1]
     gb = HistGradientBoostingClassifier(loss="log_loss", min_samples_leaf=1)
@@ -716,16 +719,19 @@ def test_zero_sample_weights_classification():
 @pytest.mark.parametrize(
     "problem", ("regression", "binary_classification", "multiclass_classification")
 )
-@pytest.mark.parametrize("duplication", ("half", "all"))
-def test_sample_weight_effect(problem, duplication):
+def test_sample_weight_effect(problem, global_random_seed):
     # High level test to make sure that duplicating a sample is equivalent to
     # giving it weight of 2.
 
-    # fails for n_samples > 255 because binning does not take sample weights
-    # into account. Keeping n_samples <= 255 makes
-    # sure only unique values are used so SW have no effect on binning.
-    n_samples = 255
+    # This test assumes that subsampling in `_BinMapper` is disabled
+    # (when `n_samples < 2e5`) and therefore the binning results should be
+    # deterministic.
+    # Otherwise, this test would require being rewritten as a statistical test.
+    # We also set `n_samples` large enough to ensure that columns have more than
+    # 255 distinct values and that we test the impact of weight-aware binning.
+    n_samples = 300
     n_features = 2
+    rng = np.random.RandomState(global_random_seed)
     if problem == "regression":
         X, y = make_regression(
             n_samples=n_samples,
@@ -753,21 +759,17 @@ def test_sample_weight_effect(problem, duplication):
     # duplicated samples.
     est = Klass(min_samples_leaf=1)
 
-    # Create dataset with duplicate and corresponding sample weights
-    if duplication == "half":
-        lim = n_samples // 2
-    else:
-        lim = n_samples
-    X_dup = np.r_[X, X[:lim]]
-    y_dup = np.r_[y, y[:lim]]
-    sample_weight = np.ones(shape=(n_samples))
-    sample_weight[:lim] = 2
+    # Create dataset with repetitions and corresponding sample weights
+    sample_weight = rng.randint(0, 3, size=X.shape[0])
+    X_repeated = np.repeat(X, sample_weight, axis=0)
+    assert X_repeated.shape[0] < 2e5
+    y_repeated = np.repeat(y, sample_weight, axis=0)
 
-    est_sw = clone(est).fit(X, y, sample_weight=sample_weight)
-    est_dup = clone(est).fit(X_dup, y_dup)
+    est_weighted = clone(est).fit(X, y, sample_weight=sample_weight)
+    est_repeated = clone(est).fit(X_repeated, y_repeated)
 
     # checking raw_predict is stricter than just predict for classification
-    assert np.allclose(est_sw._raw_predict(X_dup), est_dup._raw_predict(X_dup))
+    assert_allclose(est_weighted._raw_predict(X), est_repeated._raw_predict(X))
 
 
 @pytest.mark.parametrize("Loss", (HalfSquaredError, AbsoluteError))
@@ -870,11 +872,7 @@ def test_early_stopping_with_sample_weights(monkeypatch):
         assert scoring == "neg_median_absolute_error"
         return mock_scorer
 
-    monkeypatch.setattr(
-        sklearn.ensemble._hist_gradient_boosting.gradient_boosting,
-        "check_scoring",
-        mock_check_scoring,
-    )
+    monkeypatch.setattr(hgb_module, "check_scoring", mock_check_scoring)
 
     X, y = make_regression(random_state=0)
     sample_weight = np.ones_like(y)
@@ -1203,7 +1201,7 @@ def test_categorical_spec_errors_with_feature_names(Est):
 
     est = Est(categorical_features=["f0", "f1", "f3"])
     expected_msg = re.escape(
-        "categorical_features has a item value 'f3' which is not a valid "
+        "categorical_features has an item value 'f3' which is not a valid "
         "feature name of the training data."
     )
     with pytest.raises(ValueError, match=expected_msg):
@@ -1305,7 +1303,7 @@ def test_check_interaction_cst(interaction_cst, n_features, result):
 def test_interaction_cst_numerically():
     """Check that interaction constraints have no forbidden interactions."""
     rng = np.random.RandomState(42)
-    n_samples = 1000
+    n_samples = 2000
     X = rng.uniform(size=(n_samples, 2))
     # Construct y with a strong interaction term
     # y = x0 + x1 + 5 * x0 * x1
@@ -1353,6 +1351,12 @@ def test_interaction_cst_numerically():
     )
 
 
+@pytest.mark.xfail(
+    sysconfig.get_config_var("Py_GIL_DISABLED") == 1
+    and sys.version_info[:2] == (3, 13),
+    reason="Fails intermittently in the CI for Python 3.13 free-threaded,"
+    " see https://github.com/scikit-learn/scikit-learn/issues/32631",
+)
 def test_no_user_warning_with_scoring():
     """Check that no UserWarning is raised when scoring is set.
 
@@ -1448,6 +1452,100 @@ def test_unknown_category_that_are_negative():
     X_test_nan = np.asarray([[1, np.nan], [3, np.nan]])
 
     assert_allclose(hist.predict(X_test_neg), hist.predict(X_test_nan))
+
+
+@pytest.mark.parametrize(
+    ("GradientBoosting", "make_X_y"),
+    [
+        (HistGradientBoostingClassifier, make_classification),
+        (HistGradientBoostingRegressor, make_regression),
+    ],
+)
+@pytest.mark.parametrize("sample_weight", [False, True])
+def test_X_val_in_fit(GradientBoosting, make_X_y, sample_weight, global_random_seed):
+    """Test that passing X_val, y_val in fit is same as validation fraction."""
+    rng = np.random.RandomState(42)
+    n_samples = 100
+    X, y = make_X_y(n_samples=n_samples, random_state=rng)
+    if sample_weight:
+        sample_weight = np.abs(rng.normal(size=n_samples))
+        data = (X, y, sample_weight)
+    else:
+        sample_weight = None
+        data = (X, y)
+    rng_seed = global_random_seed
+
+    # Fit with validation fraction and early stopping.
+    m1 = GradientBoosting(
+        early_stopping=True,
+        validation_fraction=0.5,
+        random_state=rng_seed,
+    )
+    m1.fit(X, y, sample_weight)
+
+    # Do train-test split ourselves.
+    rng = check_random_state(rng_seed)
+    # We do the same as in the fit method.
+    stratify = y if isinstance(m1, HistGradientBoostingClassifier) else None
+    random_seed = rng.randint(np.iinfo(np.uint32).max, dtype="u8")
+    X_train, X_val, y_train, y_val, *sw = train_test_split(
+        *data,
+        test_size=0.5,
+        stratify=stratify,
+        random_state=random_seed,
+    )
+    if sample_weight is not None:
+        sample_weight_train = sw[0]
+        sample_weight_val = sw[1]
+    else:
+        sample_weight_train = None
+        sample_weight_val = None
+    m2 = GradientBoosting(
+        early_stopping=True,
+        random_state=rng_seed,
+    )
+    m2.fit(
+        X_train,
+        y_train,
+        sample_weight=sample_weight_train,
+        X_val=X_val,
+        y_val=y_val,
+        sample_weight_val=sample_weight_val,
+    )
+
+    assert_allclose(m2.n_iter_, m1.n_iter_)
+    assert_allclose(m2.predict(X), m1.predict(X))
+
+
+def test_X_val_raises_missing_y_val():
+    """Test that an error is raised if X_val given but y_val None."""
+    X, y = make_classification(n_samples=4)
+    X, X_val = X[:2], X[2:]
+    y, y_val = y[:2], y[2:]
+    with pytest.raises(
+        ValueError,
+        match="X_val is provided, but y_val was not provided",
+    ):
+        HistGradientBoostingClassifier().fit(X, y, X_val=X_val)
+    with pytest.raises(
+        ValueError,
+        match="y_val is provided, but X_val was not provided",
+    ):
+        HistGradientBoostingClassifier().fit(X, y, y_val=y_val)
+
+
+def test_X_val_raises_with_early_stopping_false():
+    """Test that an error is raised if X_val given but early_stopping is False."""
+    X, y = make_regression(n_samples=4)
+    X, X_val = X[:2], X[2:]
+    y, y_val = y[:2], y[2:]
+    with pytest.raises(
+        ValueError,
+        match="X_val and y_val are passed to fit while at the same time",
+    ):
+        HistGradientBoostingRegressor(early_stopping=False).fit(
+            X, y, X_val=X_val, y_val=y_val
+        )
 
 
 @pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])

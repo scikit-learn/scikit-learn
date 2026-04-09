@@ -69,9 +69,9 @@ BaseEstimator.__repr__ for pretty-printing estimators"""
 import inspect
 import pprint
 
-from .._config import get_config
-from ..base import BaseEstimator
-from ._missing import is_scalar_nan
+from sklearn._config import get_config
+from sklearn.base import BaseEstimator
+from sklearn.utils._missing import is_scalar_nan
 
 
 class KeyValTuple(tuple):
@@ -93,8 +93,7 @@ def _changed_params(estimator):
     estimator with non-default values."""
 
     params = estimator.get_params(deep=False)
-    init_func = getattr(estimator.__init__, "deprecated_original", estimator.__init__)
-    init_params = inspect.signature(init_func).parameters
+    init_params = inspect.signature(estimator.__init__).parameters
     init_params = {name: param.default for name, param in init_params.items()}
 
     def has_changed(k, v):
@@ -347,7 +346,7 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
     # PrettyPrinter class to call methods of _EstimatorPrettyPrinter (see issue
     # 12906)
     # mypy error: "Type[PrettyPrinter]" has no attribute "_dispatch"
-    _dispatch = pprint.PrettyPrinter._dispatch.copy()  # type: ignore
+    _dispatch = pprint.PrettyPrinter._dispatch.copy()  # type: ignore[attr-defined]
     _dispatch[BaseEstimator.__repr__] = _pprint_estimator
     _dispatch[KeyValTuple.__repr__] = _pprint_key_val_tuple
 

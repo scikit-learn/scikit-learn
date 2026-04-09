@@ -39,6 +39,16 @@ def test_one_hot_encoder_sparse_dense():
     assert_array_equal(X_trans_sparse.toarray(), X_trans_dense)
 
 
+def test_one_hot_encoder_sparse_index_array_int32():
+    X = np.array([[3, 2, 1], [0, 1, 1]])
+    enc_sparse = OneHotEncoder(sparse_output=True)
+
+    X_trans_sparse = enc_sparse.fit_transform(X)
+    assert X_trans_sparse.format == "csr"
+    assert X_trans_sparse.indices.dtype == np.int32
+    assert X_trans_sparse.indptr.dtype == np.int32
+
+
 @pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist", "warn"])
 def test_one_hot_encoder_handle_unknown(handle_unknown):
     X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2]])
@@ -788,9 +798,9 @@ def test_encoder_dtypes_pandas():
     assert_array_equal(enc.transform(X).toarray(), exp)
 
     X = pd.DataFrame({"A": [1, 2], "B": ["a", "b"], "C": [3.0, 4.0]})
-    X_type = [X["A"].dtype, X["B"].dtype, X["C"].dtype]
+    expected_cat_type = ["int64", "object", "float64"]
     enc.fit(X)
-    assert all([enc.categories_[i].dtype == X_type[i] for i in range(3)])
+    assert all([enc.categories_[i].dtype == expected_cat_type[i] for i in range(3)])
     assert_array_equal(enc.transform(X).toarray(), exp)
 
 
@@ -821,7 +831,8 @@ def test_ohe_handle_unknown_warn(drop):
 
     warn_msg = (
         r"Found unknown categories in columns \[0\] during transform. "
-        r"These unknown categories will be encoded as all zeros"
+        r"These unknown categories will be encoded as the "
+        r"infrequent category."
     )
     with pytest.warns(UserWarning, match=warn_msg):
         X_trans = ohe.transform(X_test)
@@ -1520,11 +1531,18 @@ def test_ohe_drop_first_handle_unknown_ignore_warns(handle_unknown):
     X_test = [["c", 3]]
     X_expected = np.array([[0, 0, 0]])
 
-    warn_msg = (
-        r"Found unknown categories in columns \[0, 1\] during "
-        "transform. These unknown categories will be encoded as all "
-        "zeros"
-    )
+    if handle_unknown == "ignore":
+        warn_msg = (
+            r"Found unknown categories in columns \[0, 1\] during "
+            r"transform. These unknown categories will be encoded as all "
+            r"zeros"
+        )
+    else:
+        warn_msg = (
+            r"Found unknown categories in columns \[0, 1\] during "
+            r"transform. These unknown categories will be encoded as the "
+            r"infrequent category."
+        )
     with pytest.warns(UserWarning, match=warn_msg):
         X_trans = ohe.transform(X_test)
     assert_allclose(X_trans, X_expected)
@@ -1557,11 +1575,18 @@ def test_ohe_drop_if_binary_handle_unknown_ignore_warns(handle_unknown):
     X_test = [["c", 3]]
     X_expected = np.array([[0, 0, 0, 0]])
 
-    warn_msg = (
-        r"Found unknown categories in columns \[0, 1\] during "
-        "transform. These unknown categories will be encoded as all "
-        "zeros"
-    )
+    if handle_unknown == "ignore":
+        warn_msg = (
+            r"Found unknown categories in columns \[0, 1\] during "
+            r"transform. These unknown categories will be encoded as all "
+            r"zeros"
+        )
+    else:
+        warn_msg = (
+            r"Found unknown categories in columns \[0, 1\] during "
+            r"transform. These unknown categories will be encoded as the "
+            r"infrequent category."
+        )
     with pytest.warns(UserWarning, match=warn_msg):
         X_trans = ohe.transform(X_test)
     assert_allclose(X_trans, X_expected)
@@ -1589,10 +1614,17 @@ def test_ohe_drop_first_explicit_categories(handle_unknown):
     X_test = [["c", 1]]
     X_expected = np.array([[0, 0]])
 
-    warn_msg = (
-        r"Found unknown categories in columns \[0\] during transform. "
-        r"These unknown categories will be encoded as all zeros"
-    )
+    if handle_unknown == "ignore":
+        warn_msg = (
+            r"Found unknown categories in columns \[0\] during transform. "
+            r"These unknown categories will be encoded as all zeros"
+        )
+    else:
+        warn_msg = (
+            r"Found unknown categories in columns \[0\] during transform. "
+            r"These unknown categories will be encoded as the "
+            r"infrequent category."
+        )
     with pytest.warns(UserWarning, match=warn_msg):
         X_trans = ohe.transform(X_test)
     assert_allclose(X_trans, X_expected)
@@ -1920,7 +1952,7 @@ def test_ordinal_encoder_unknown_missing_interaction():
 @pytest.mark.parametrize("with_pandas", [True, False])
 def test_ordinal_encoder_encoded_missing_value_error(with_pandas):
     """Check OrdinalEncoder errors when encoded_missing_value is used by
-    an known category."""
+    a known category."""
     X = np.array([["a", "dog"], ["b", "cat"], ["c", np.nan]], dtype=object)
 
     # The 0-th feature has no missing values so it is not included in the list of
@@ -2365,3 +2397,39 @@ def test_encoder_not_fitted(Encoder):
     encoder = Encoder(categories=[["A", "B", "C"]])
     with pytest.raises(NotFittedError):
         encoder.transform(X)
+
+
+def test_onehotencoder_handle_unknown_warn_maps_to_infrequent():
+    """
+    Check handle_unknown='warn' behave like 'infrequent_if_exist' and map
+    to the infrequent category.
+    """
+
+    train_data = train_data = np.array(
+        ["restaurant"] * 3 + ["shop"] * 3 + ["snack"]
+    ).reshape(-1, 1)
+    test_data = np.array(["restaurant", "snack", "casino"]).reshape(-1, 1)
+
+    encoder_warn = OneHotEncoder(
+        handle_unknown="warn", sparse_output=False, min_frequency=2, drop="first"
+    )
+    encoder_warn.fit(train_data)
+
+    encoder_infreq = OneHotEncoder(
+        handle_unknown="infrequent_if_exist",
+        sparse_output=False,
+        min_frequency=2,
+        drop="first",
+    )
+
+    encoder_infreq.fit(train_data)
+
+    warning_match = "unknown categories will be encoded as the infrequent category"
+    # The warning is raised because `drop is not None`.
+    with pytest.warns(UserWarning, match=warning_match):
+        result_infreq = encoder_infreq.transform(test_data)
+
+    with pytest.warns(UserWarning, match=warning_match):
+        result_warn = encoder_warn.transform(test_data)
+
+    assert_allclose(result_warn[2], result_infreq[2])

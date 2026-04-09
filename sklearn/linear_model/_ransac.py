@@ -6,7 +6,7 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     MetaEstimatorMixin,
     MultiOutputMixin,
@@ -14,33 +14,32 @@ from ..base import (
     _fit_context,
     clone,
 )
-from ..exceptions import ConvergenceWarning
-from ..utils import check_consistent_length, check_random_state, get_tags
-from ..utils._bunch import Bunch
-from ..utils._param_validation import (
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model._base import LinearRegression
+from sklearn.utils import check_consistent_length, check_random_state, get_tags
+from sklearn.utils._bunch import Bunch
+from sklearn.utils._param_validation import (
     HasMethods,
     Interval,
     Options,
     RealNotInt,
     StrOptions,
 )
-from ..utils.metadata_routing import (
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from ..utils.random import sample_without_replacement
-from ..utils.validation import (
+from sklearn.utils.random import sample_without_replacement
+from sklearn.utils.validation import (
     _check_method_params,
     _check_sample_weight,
-    _deprecate_positional_args,
     check_is_fitted,
     has_fit_parameter,
     validate_data,
 )
-from ._base import LinearRegression
 
 _EPSILON = np.spacing(1)
 
@@ -250,9 +249,9 @@ class RANSACRegressor(
     ...     n_samples=200, n_features=2, noise=4.0, random_state=0)
     >>> reg = RANSACRegressor(random_state=0).fit(X, y)
     >>> reg.score(X, y)
-    0.9885...
+    0.9885
     >>> reg.predict(X[:1,])
-    array([-31.9417...])
+    array([-31.9417])
 
     For a more detailed example, see
     :ref:`sphx_glr_auto_examples_linear_model_plot_ransac.py`
@@ -319,11 +318,7 @@ class RANSACRegressor(
         # RansacRegressor.estimator is not validated yet
         prefer_skip_nested_validation=False
     )
-    # TODO(1.7): remove `sample_weight` from the signature after deprecation
-    # cycle; for backwards compatibility: pop it from `fit_params` before the
-    # `_raise_for_params` check and reinsert it after the check
-    @_deprecate_positional_args(version="1.7")
-    def fit(self, X, y, *, sample_weight=None, **fit_params):
+    def fit(self, X, y, sample_weight=None, **fit_params):
         """Fit estimator using RANSAC algorithm.
 
         Parameters
@@ -712,7 +707,7 @@ class RANSACRegressor(
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__).add(
+        router = MetadataRouter(owner=self).add(
             estimator=self.estimator,
             method_mapping=MethodMapping()
             .add(caller="fit", callee="fit")

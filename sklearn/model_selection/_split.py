@@ -18,22 +18,22 @@ from math import ceil, floor
 import numpy as np
 from scipy.special import comb
 
-from ..utils import (
+from sklearn.utils import (
     _safe_indexing,
     check_random_state,
     indexable,
     metadata_routing,
 )
-from ..utils._array_api import (
-    _convert_to_numpy,
-    ensure_common_namespace_device,
+from sklearn.utils._array_api import (
     get_namespace,
+    get_namespace_and_device,
+    move_to,
 )
-from ..utils._param_validation import Interval, RealNotInt, validate_params
-from ..utils.extmath import _approximate_mode
-from ..utils.metadata_routing import _MetadataRequester
-from ..utils.multiclass import type_of_target
-from ..utils.validation import _num_samples, check_array, column_or_1d
+from sklearn.utils._param_validation import Interval, RealNotInt, validate_params
+from sklearn.utils.extmath import _approximate_mode
+from sklearn.utils.metadata_routing import _MetadataRequester
+from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.validation import _num_samples, check_array, column_or_1d
 
 __all__ = [
     "BaseCrossValidator",
@@ -68,11 +68,11 @@ class _UnsupportedGroupCVMixin:
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
-        y : array-like of shape (n_samples,)
+        y : array-like of shape (n_samples,), default=None
             The target variable for supervised learning problems.
 
-        groups : object
-            Always ignored, exists for compatibility.
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
         Yields
         ------
@@ -210,7 +210,7 @@ class LeaveOneOut(_UnsupportedGroupCVMixin, BaseCrossValidator):
     See Also
     --------
     LeaveOneGroupOut : For splitting the data according to explicit,
-        domain-specific stratification of the dataset.
+        domain-specific grouping of the dataset.
     GroupKFold : K-fold iterator variant with non-overlapping groups.
     """
 
@@ -231,11 +231,11 @@ class LeaveOneOut(_UnsupportedGroupCVMixin, BaseCrossValidator):
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
-        y : object
-            Always ignored, exists for compatibility.
+        y : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
-        groups : object
-            Always ignored, exists for compatibility.
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
         Returns
         -------
@@ -328,11 +328,11 @@ class LeavePOut(_UnsupportedGroupCVMixin, BaseCrossValidator):
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
-        y : object
-            Always ignored, exists for compatibility.
+        y : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
-        groups : object
-            Always ignored, exists for compatibility.
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
         """
         if X is None:
             raise ValueError("The 'X' parameter should not be None.")
@@ -412,18 +412,19 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
             yield train, test
 
     def get_n_splits(self, X=None, y=None, groups=None):
-        """Returns the number of splitting iterations in the cross-validator.
+        """Returns the number of splitting iterations as set with the `n_splits` param
+        when instantiating the cross-validator.
 
         Parameters
         ----------
-        X : object
-            Always ignored, exists for compatibility.
+        X : array-like of shape (n_samples, n_features), default=None
+            Always ignored, exists for API compatibility.
 
-        y : object
-            Always ignored, exists for compatibility.
+        y : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
-        groups : object
-            Always ignored, exists for compatibility.
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
         Returns
         -------
@@ -474,7 +475,7 @@ class KFold(_UnsupportedGroupCVMixin, _BaseKFold):
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([1, 2, 3, 4])
     >>> kf = KFold(n_splits=2)
-    >>> kf.get_n_splits(X)
+    >>> kf.get_n_splits()
     2
     >>> print(kf)
     KFold(n_splits=2, random_state=None, shuffle=False)
@@ -579,7 +580,7 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
     >>> y = np.array([1, 2, 3, 4, 5, 6])
     >>> groups = np.array([0, 0, 2, 2, 3, 3])
     >>> group_kfold = GroupKFold(n_splits=2)
-    >>> group_kfold.get_n_splits(X, y, groups)
+    >>> group_kfold.get_n_splits()
     2
     >>> print(group_kfold)
     GroupKFold(n_splits=2, random_state=None, shuffle=False)
@@ -596,8 +597,8 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
 
     See Also
     --------
-    LeaveOneGroupOut : For splitting the data according to explicit
-        domain-specific stratification of the dataset.
+    LeaveOneGroupOut : For splitting the data according to explicit,
+        domain-specific grouping of the dataset.
 
     StratifiedKFold : Takes class information into account to avoid building
         folds with imbalanced class proportions (for binary or multiclass
@@ -636,7 +637,7 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
             n_samples_per_group = np.bincount(group_idx)
 
             # Distribute the most frequent groups first
-            indices = np.argsort(n_samples_per_group)[::-1]
+            indices = np.argsort(n_samples_per_group, kind="stable")[::-1]
             n_samples_per_group = n_samples_per_group[indices]
 
             # Total weight of each fold
@@ -730,7 +731,7 @@ class StratifiedKFold(_BaseKFold):
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
     >>> skf = StratifiedKFold(n_splits=2)
-    >>> skf.get_n_splits(X, y)
+    >>> skf.get_n_splits()
     2
     >>> print(skf)
     StratifiedKFold(n_splits=2, random_state=None, shuffle=False)
@@ -778,7 +779,7 @@ class StratifiedKFold(_BaseKFold):
         # we need the following explicit conversion:
         xp, is_array_api = get_namespace(y)
         if is_array_api:
-            y = _convert_to_numpy(y, xp)
+            y = move_to(y, xp=np, device="cpu")
         else:
             y = np.asarray(y)
         type_of_target_y = type_of_target(y)
@@ -862,8 +863,8 @@ class StratifiedKFold(_BaseKFold):
             The target variable for supervised learning problems.
             Stratification is done based on the y labels.
 
-        groups : object
-            Always ignored, exists for compatibility.
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
         Yields
         ------
@@ -891,9 +892,9 @@ class StratifiedKFold(_BaseKFold):
 class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
     """Class-wise stratified K-Fold iterator variant with non-overlapping groups.
 
-    This cross-validation object is a variation of StratifiedKFold attempts to
-    return stratified folds with non-overlapping groups. The folds are made by
-    preserving the percentage of samples for each class in `y` in a binary or
+    This cross-validation object is a variation of :class:`StratifiedKFold` that
+    attempts to return stratified folds with non-overlapping groups. The folds are made
+    by preserving the percentage of samples for each class in `y` in a binary or
     multiclass classification setting.
 
     Each group will appear exactly once in the test set across all folds (the
@@ -904,7 +905,7 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
     the former attempts to create balanced folds such that the number of
     distinct groups is approximately the same in each fold, whereas
     `StratifiedGroupKFold` attempts to create folds which preserve the
-    percentage of samples for each class as much as possible given the
+    percentage of samples from each class as much as possible given the
     constraint of non-overlapping groups between splits.
 
     Read more in the :ref:`User Guide <stratified_group_k_fold>`.
@@ -927,7 +928,7 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
         Whether to shuffle each class's samples before splitting into batches.
         Note that the samples within each split will not be shuffled.
         This implementation can only shuffle groups that have approximately the
-        same y distribution, no global shuffle will be performed.
+        same `y` class distribution, no global shuffle will be performed.
 
     random_state : int or RandomState instance, default=None
         When `shuffle` is True, `random_state` affects the ordering of the
@@ -944,7 +945,7 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
     >>> y = np.array([0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
     >>> groups = np.array([1, 1, 2, 2, 3, 3, 3, 4, 5, 5, 5, 5, 6, 6, 7, 8, 8])
     >>> sgkf = StratifiedGroupKFold(n_splits=3)
-    >>> sgkf.get_n_splits(X, y)
+    >>> sgkf.get_n_splits()
     3
     >>> print(sgkf)
     StratifiedGroupKFold(n_splits=3, random_state=None, shuffle=False)
@@ -974,7 +975,7 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
     -----
     The implementation is designed to:
 
-    * Mimic the behavior of StratifiedKFold as much as possible for trivial
+    * Mimic the behavior of :class:`StratifiedKFold` as much as possible for trivial
       groups (e.g. when each group contains only one sample).
     * Be invariant to class label: relabelling ``y = ["Happy", "Sad"]`` to
       ``y = [1, 0]`` should not change the indices generated.
@@ -982,7 +983,7 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
       non-overlapping groups constraint. That means that in some cases when
       there is a small number of groups containing a large number of samples
       the stratification will not be possible and the behavior will be close
-      to GroupKFold.
+      to :class:`GroupKFold`.
 
     See also
     --------
@@ -1043,6 +1044,14 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
         _, groups_inv, groups_cnt = np.unique(
             groups, return_inverse=True, return_counts=True
         )
+        n_groups = len(groups_cnt)
+
+        if self.n_splits > n_groups:
+            raise ValueError(
+                f"Cannot have number of splits n_splits={self.n_splits} greater"
+                f" than the number of groups: {n_groups}."
+            )
+
         y_counts_per_group = np.zeros((len(groups_cnt), n_classes))
         for class_idx, group_idx in zip(y_inv, groups_inv):
             y_counts_per_group[group_idx, class_idx] += 1
@@ -1051,12 +1060,17 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
         groups_per_fold = defaultdict(set)
 
         if self.shuffle:
-            rng.shuffle(y_counts_per_group)
+            perm = np.arange(len(groups_cnt))
+            rng.shuffle(perm)
+            y_counts_per_group = y_counts_per_group[perm]
+            inv_perm = np.empty_like(perm)
+            inv_perm[perm] = np.arange(perm.size)
+            groups_inv = inv_perm[groups_inv]
 
         # Stable sort to keep shuffled order for groups with the same
         # class distribution variance
         sorted_groups_idx = np.argsort(
-            -np.std(y_counts_per_group, axis=1), kind="mergesort"
+            -np.std(y_counts_per_group, axis=1), kind="stable"
         )
 
         for group_idx in sorted_groups_idx:
@@ -1110,10 +1124,10 @@ class TimeSeriesSplit(_BaseKFold):
     while the train set size accumulates data from previous splits.
 
     This cross-validation object is a variation of :class:`KFold`.
-    In the kth split, it returns first k folds as train set and the
-    (k+1)th fold as test set.
+    In the k-th split, it returns the first k folds as the train set and the
+    (k+1)-th fold as the test set.
 
-    Note that unlike standard cross-validation methods, successive
+    Note that, unlike standard cross-validation methods, successive
     training sets are supersets of those that come before them.
 
     Read more in the :ref:`User Guide <time_series_split>`.
@@ -1237,11 +1251,11 @@ class TimeSeriesSplit(_BaseKFold):
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
-        y : array-like of shape (n_samples,)
-            Always ignored, exists for compatibility.
+        y : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
-        groups : array-like of shape (n_samples,)
-            Always ignored, exists for compatibility.
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
         Yields
         ------
@@ -1318,7 +1332,7 @@ class LeaveOneGroupOut(GroupsConsumerMixin, BaseCrossValidator):
 
     Provides train/test indices to split data such that each training set is
     comprised of all samples except ones belonging to one specific group.
-    Arbitrary domain specific group information is provided as an array of integers
+    Arbitrary domain-specific group information is provided as an array of integers
     that encodes the group of each sample.
 
     For instance the groups could be the year of collection of the samples
@@ -1340,9 +1354,7 @@ class LeaveOneGroupOut(GroupsConsumerMixin, BaseCrossValidator):
     >>> y = np.array([1, 2, 1, 2])
     >>> groups = np.array([1, 1, 2, 2])
     >>> logo = LeaveOneGroupOut()
-    >>> logo.get_n_splits(X, y, groups)
-    2
-    >>> logo.get_n_splits(groups=groups)  # 'groups' is always required
+    >>> logo.get_n_splits(groups=groups)
     2
     >>> print(logo)
     LeaveOneGroupOut()
@@ -1383,13 +1395,13 @@ class LeaveOneGroupOut(GroupsConsumerMixin, BaseCrossValidator):
 
         Parameters
         ----------
-        X : object
-            Always ignored, exists for compatibility.
+        X : array-like of shape (n_samples, n_features), default=None
+            Always ignored, exists for API compatibility.
 
-        y : object
-            Always ignored, exists for compatibility.
+        y : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
-        groups : array-like of shape (n_samples,)
+        groups : array-like of shape (n_samples,), default=None
             Group labels for the samples used while splitting the dataset into
             train/test set. This 'groups' parameter must always be specified to
             calculate the number of splits, though the other parameters can be
@@ -1437,7 +1449,7 @@ class LeavePGroupsOut(GroupsConsumerMixin, BaseCrossValidator):
 
     Provides train/test indices to split data according to a third-party
     provided group. This group information can be used to encode arbitrary
-    domain specific stratifications of the samples as integers.
+    domain-specific groupings of the samples as integers.
 
     For instance the groups could be the year of collection of the samples
     and thus allow for cross-validation against time-based splits.
@@ -1462,9 +1474,7 @@ class LeavePGroupsOut(GroupsConsumerMixin, BaseCrossValidator):
     >>> y = np.array([1, 2, 1])
     >>> groups = np.array([1, 2, 3])
     >>> lpgo = LeavePGroupsOut(n_groups=2)
-    >>> lpgo.get_n_splits(X, y, groups)
-    3
-    >>> lpgo.get_n_splits(groups=groups)  # 'groups' is always required
+    >>> lpgo.get_n_splits(groups=groups)
     3
     >>> print(lpgo)
     LeavePGroupsOut(n_groups=2)
@@ -1516,13 +1526,13 @@ class LeavePGroupsOut(GroupsConsumerMixin, BaseCrossValidator):
 
         Parameters
         ----------
-        X : object
-            Always ignored, exists for compatibility.
+        X : array-like of shape (n_samples, n_features), default=None
+            Always ignored, exists for API compatibility.
 
-        y : object
-            Always ignored, exists for compatibility.
+        y : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
-        groups : array-like of shape (n_samples,)
+        groups : array-like of shape (n_samples,), default=None
             Group labels for the samples used while splitting the dataset into
             train/test set. This 'groups' parameter must always be specified to
             calculate the number of splits, though the other parameters can be
@@ -1643,21 +1653,19 @@ class _RepeatedSplits(_MetadataRequester, metaclass=ABCMeta):
                 yield train_index, test_index
 
     def get_n_splits(self, X=None, y=None, groups=None):
-        """Returns the number of splitting iterations in the cross-validator.
+        """Returns the number of splitting iterations as set with the `n_splits` param
+        when instantiating the cross-validator.
 
         Parameters
         ----------
-        X : object
-            Always ignored, exists for compatibility.
-            ``np.zeros(n_samples)`` may be used as a placeholder.
+        X : array-like of shape (n_samples, n_features), default=None
+            Always ignored, exists for API compatibility.
 
-        y : object
-            Always ignored, exists for compatibility.
-            ``np.zeros(n_samples)`` may be used as a placeholder.
+        y : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
         groups : array-like of shape (n_samples,), default=None
-            Group labels for the samples used while splitting the dataset into
-            train/test set.
+            Always ignored, exists for API compatibility.
 
         Returns
         -------
@@ -1699,7 +1707,7 @@ class RepeatedKFold(_UnsupportedGroupCVMixin, _RepeatedSplits):
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
     >>> rkf = RepeatedKFold(n_splits=2, n_repeats=2, random_state=2652124)
-    >>> rkf.get_n_splits(X, y)
+    >>> rkf.get_n_splits()
     4
     >>> print(rkf)
     RepeatedKFold(n_repeats=2, n_splits=2, random_state=2652124)
@@ -1772,7 +1780,7 @@ class RepeatedStratifiedKFold(_UnsupportedGroupCVMixin, _RepeatedSplits):
     >>> y = np.array([0, 0, 1, 1])
     >>> rskf = RepeatedStratifiedKFold(n_splits=2, n_repeats=2,
     ...     random_state=36851234)
-    >>> rskf.get_n_splits(X, y)
+    >>> rskf.get_n_splits()
     4
     >>> print(rskf)
     RepeatedStratifiedKFold(n_repeats=2, n_splits=2, random_state=36851234)
@@ -1830,8 +1838,8 @@ class RepeatedStratifiedKFold(_UnsupportedGroupCVMixin, _RepeatedSplits):
             The target variable for supervised learning problems.
             Stratification is done based on the y labels.
 
-        groups : object
-            Always ignored, exists for compatibility.
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
         Yields
         ------
@@ -1946,18 +1954,19 @@ class BaseShuffleSplit(_MetadataRequester, metaclass=ABCMeta):
             yield ind_train, ind_test
 
     def get_n_splits(self, X=None, y=None, groups=None):
-        """Returns the number of splitting iterations in the cross-validator.
+        """Returns the number of splitting iterations as set with the `n_splits` param
+        when instantiating the cross-validator.
 
         Parameters
         ----------
-        X : object
-            Always ignored, exists for compatibility.
+        X : array-like of shape (n_samples, n_features), default=None
+            Always ignored, exists for API compatibility.
 
-        y : object
-            Always ignored, exists for compatibility.
+        y : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
-        groups : object
-            Always ignored, exists for compatibility.
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
         Returns
         -------
@@ -2016,7 +2025,7 @@ class ShuffleSplit(_UnsupportedGroupCVMixin, BaseShuffleSplit):
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [3, 4], [5, 6]])
     >>> y = np.array([1, 2, 1, 2, 1, 2])
     >>> rs = ShuffleSplit(n_splits=5, test_size=.25, random_state=0)
-    >>> rs.get_n_splits(X)
+    >>> rs.get_n_splits()
     5
     >>> print(rs)
     ShuffleSplit(n_splits=5, random_state=0, test_size=0.25, train_size=None)
@@ -2080,7 +2089,7 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
 
     Provides randomized train/test indices to split data according to a
     third-party provided group. This group information can be used to encode
-    arbitrary domain specific stratifications of the samples as integers.
+    arbitrary domain-specific groupings of the samples as integers.
 
     For instance the groups could be the year of collection of the samples
     and thus allow for cross-validation against time-based splits.
@@ -2277,7 +2286,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 0, 1, 1, 1])
     >>> sss = StratifiedShuffleSplit(n_splits=5, test_size=0.5, random_state=0)
-    >>> sss.get_n_splits(X, y)
+    >>> sss.get_n_splits()
     5
     >>> print(sss)
     StratifiedShuffleSplit(n_splits=5, random_state=0, ...)
@@ -2327,23 +2336,26 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         # `y` is probably never a very large array, which means that converting it
         # should be cheap
         xp, _ = get_namespace(y)
-        y = _convert_to_numpy(y, xp=xp)
+        y = move_to(y, xp=np, device="cpu")
 
         if y.ndim == 2:
             # for multi-label y, map each distinct row to a string repr
             # using join because str(row) uses an ellipsis if len(row) > 1000
             y = np.array([" ".join(row.astype("str")) for row in y])
 
-        classes, y_indices = np.unique(y, return_inverse=True)
+        classes, y_indices, class_counts = np.unique(
+            y, return_inverse=True, return_counts=True
+        )
         n_classes = classes.shape[0]
 
-        class_counts = np.bincount(y_indices)
         if np.min(class_counts) < 2:
+            too_few_classes = classes[class_counts < 2].tolist()
             raise ValueError(
-                "The least populated class in y has only 1"
+                "The least populated classes in y have only 1"
                 " member, which is too few. The minimum"
                 " number of groups for any class cannot"
-                " be less than 2."
+                " be less than 2. Classes with too few"
+                " members are: %s" % (too_few_classes)
             )
 
         if n_train < n_classes:
@@ -2360,7 +2372,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         # Find the sorted list of instances for each class:
         # (np.unique above performs a sort, so code is O(n logn) already)
         class_indices = np.split(
-            np.argsort(y_indices, kind="mergesort"), np.cumsum(class_counts)[:-1]
+            np.argsort(y_indices, kind="stable"), np.cumsum(class_counts)[:-1]
         )
 
         rng = check_random_state(self.random_state)
@@ -2404,8 +2416,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             The target variable for supervised learning problems.
             Stratification is done based on the y labels.
 
-        groups : object
-            Always ignored, exists for compatibility.
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
         Yields
         ------
@@ -2558,14 +2570,14 @@ class PredefinedSplit(BaseCrossValidator):
 
         Parameters
         ----------
-        X : object
-            Always ignored, exists for compatibility.
+        X : array-like of shape (n_samples, n_features), default=None
+            Always ignored, exists for API compatibility.
 
-        y : object
-            Always ignored, exists for compatibility.
+        y : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
-        groups : object
-            Always ignored, exists for compatibility.
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
         Yields
         ------
@@ -2612,14 +2624,14 @@ class PredefinedSplit(BaseCrossValidator):
 
         Parameters
         ----------
-        X : object
-            Always ignored, exists for compatibility.
+        X : array-like of shape (n_samples, n_features), default=None
+            Always ignored, exists for API compatibility.
 
-        y : object
-            Always ignored, exists for compatibility.
+        y : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
-        groups : object
-            Always ignored, exists for compatibility.
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
         Returns
         -------
@@ -2640,14 +2652,14 @@ class _CVIterableWrapper(BaseCrossValidator):
 
         Parameters
         ----------
-        X : object
-            Always ignored, exists for compatibility.
+        X : array-like of shape (n_samples, n_features), default=None
+            Always ignored, exists for API compatibility.
 
-        y : object
-            Always ignored, exists for compatibility.
+        y : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
-        groups : object
-            Always ignored, exists for compatibility.
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
         Returns
         -------
@@ -2661,14 +2673,14 @@ class _CVIterableWrapper(BaseCrossValidator):
 
         Parameters
         ----------
-        X : object
-            Always ignored, exists for compatibility.
+        X : array-like of shape (n_samples, n_features), default=None
+            Always ignored, exists for API compatibility.
 
-        y : object
-            Always ignored, exists for compatibility.
+        y : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
-        groups : object
-            Always ignored, exists for compatibility.
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
         Yields
         ------
@@ -2682,7 +2694,7 @@ class _CVIterableWrapper(BaseCrossValidator):
             yield train, test
 
 
-def check_cv(cv=5, y=None, *, classifier=False):
+def check_cv(cv=5, y=None, *, classifier=False, shuffle=False, random_state=None):
     """Input checker utility for building a cross-validator.
 
     Parameters
@@ -2691,9 +2703,9 @@ def check_cv(cv=5, y=None, *, classifier=False):
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
         - None, to use the default 5-fold cross validation,
-        - integer, to specify the number of folds.
+        - integer, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable that generates (train, test) splits as arrays of indices.
+        - an iterable that generates (train, test) splits as arrays of indices.
 
         For integer/None inputs, if classifier is True and ``y`` is either
         binary or multiclass, :class:`StratifiedKFold` is used. In all other
@@ -2709,8 +2721,23 @@ def check_cv(cv=5, y=None, *, classifier=False):
         The target variable for supervised learning problems.
 
     classifier : bool, default=False
-        Whether the task is a classification task, in which case
-        stratified KFold will be used.
+        Whether the task is a classification task. When ``True`` and `cv` is an
+        integer or ``None``, :class:`StratifiedKFold` is used if ``y`` is binary
+        or multiclass; otherwise :class:`KFold` is used. Ignored if `cv` is a
+        cross-validator instance or iterable.
+
+    shuffle : bool, default=False
+        Whether to shuffle the data before splitting into batches. Note that the samples
+        within each split will not be shuffled. Only applies if `cv` is an int or
+        `None`. If `cv` is a cross-validation generator or an iterable, `shuffle` is
+        ignored.
+
+    random_state : int, RandomState instance or None, default=None
+        When `shuffle` is True and `cv` is an integer or `None`, `random_state` affects
+        the ordering of the indices, which controls the randomness of each fold.
+        Otherwise, this parameter has no effect.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -2733,16 +2760,16 @@ def check_cv(cv=5, y=None, *, classifier=False):
             and (y is not None)
             and (type_of_target(y, input_name="y") in ("binary", "multiclass"))
         ):
-            return StratifiedKFold(cv)
+            return StratifiedKFold(cv, shuffle=shuffle, random_state=random_state)
         else:
-            return KFold(cv)
+            return KFold(cv, shuffle=shuffle, random_state=random_state)
 
     if not hasattr(cv, "split") or isinstance(cv, str):
         if not isinstance(cv, Iterable) or isinstance(cv, str):
             raise ValueError(
-                "Expected cv as an integer, cross-validation "
-                "object (from sklearn.model_selection) "
-                "or an iterable. Got %s." % cv
+                "Expected `cv` as an integer, a cross-validation object "
+                "(from sklearn.model_selection), or an iterable yielding (train, test) "
+                f"splits as arrays of indices. Got {cv}."
             )
         return _CVIterableWrapper(cv)
 
@@ -2939,7 +2966,8 @@ def train_test_split(
 
         train, test = next(cv.split(X=arrays[0], y=stratify))
 
-    train, test = ensure_common_namespace_device(arrays[0], train, test)
+    xp, _, device = get_namespace_and_device(arrays[0])
+    train, test = move_to(train, test, xp=xp, device=device)
 
     return list(
         chain.from_iterable(
@@ -3005,9 +3033,7 @@ def _pprint(params, offset=0, printer=repr):
 
 
 def _build_repr(self):
-    # XXX This is copied from BaseEstimator's get_params
-    cls = self.__class__
-    init = getattr(cls.__init__, "deprecated_original", cls.__init__)
+    init = self.__class__.__init__
     # Ignore varargs, kw and default values and pop self
     init_signature = signature(init)
     # Consider the constructor parameters excluding 'self'
@@ -3024,21 +3050,19 @@ def _build_repr(self):
     class_name = self.__class__.__name__
     params = dict()
     for key in args:
-        # We need deprecation warnings to always be on in order to
-        # catch deprecated param values.
-        # This is set in utils/__init__.py but it gets overwritten
-        # when running under python3 somehow.
-        warnings.simplefilter("always", FutureWarning)
-        try:
-            with warnings.catch_warnings(record=True) as w:
-                value = getattr(self, key, None)
-                if value is None and hasattr(self, "cvargs"):
-                    value = self.cvargs.get(key, None)
-            if len(w) and w[0].category is FutureWarning:
-                # if the parameter is deprecated, don't show it
-                continue
-        finally:
-            warnings.filters.pop(0)
+        with warnings.catch_warnings(record=True) as w:
+            # We need deprecation warnings to always be on in order to
+            # catch deprecated param values.
+            # This is set in utils/__init__.py but it gets overwritten
+            # when running under python3 somehow.
+            warnings.simplefilter("always", FutureWarning)
+            value = getattr(self, key, None)
+            if value is None and hasattr(self, "cvargs"):
+                value = self.cvargs.get(key, None)
+        if len(w) and w[0].category is FutureWarning:
+            # if the parameter is deprecated, don't show it
+            continue
+
         params[key] = value
 
     return "%s(%s)" % (class_name, _pprint(params, offset=len(class_name)))

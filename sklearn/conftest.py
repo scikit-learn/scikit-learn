@@ -13,9 +13,9 @@ import joblib
 import numpy as np
 import pytest
 from _pytest.doctest import DoctestItem
+from scipy.datasets import face
 from threadpoolctl import threadpool_limits
 
-from sklearn import set_config
 from sklearn._min_dependencies import PYTEST_MIN_VERSION
 from sklearn.datasets import (
     fetch_20newsgroups,
@@ -38,6 +38,14 @@ from sklearn.utils.fixes import (
 )
 
 try:
+    import pytest_run_parallel  # noqa:F401
+
+    PARALLEL_RUN_AVAILABLE = True
+except ImportError:
+    PARALLEL_RUN_AVAILABLE = False
+
+
+try:
     from scipy_doctest.conftest import dt_config
 except ModuleNotFoundError:
     dt_config = None
@@ -48,24 +56,16 @@ if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
         f" should have pytest >= {PYTEST_MIN_VERSION} installed."
     )
 
-scipy_datasets_require_network = sp_version >= parse_version("1.10")
-
 
 def raccoon_face_or_skip():
-    # SciPy >= 1.10 requires network to access to get data
-    if scipy_datasets_require_network:
-        run_network_tests = environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "0"
-        if not run_network_tests:
-            raise SkipTest("test is enabled when SKLEARN_SKIP_NETWORK_TESTS=0")
-
-        try:
-            import pooch  # noqa
-        except ImportError:
-            raise SkipTest("test requires pooch to be installed")
-
-        from scipy.datasets import face
-    else:
-        from scipy.misc import face
+    # SciPy requires network access to get data
+    run_network_tests = environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "0"
+    if not run_network_tests:
+        raise SkipTest("test is enabled when SKLEARN_SKIP_NETWORK_TESTS=0")
+    try:
+        import pooch  # noqa: F401
+    except ImportError:
+        raise SkipTest("test requires pooch to be installed")
 
     return face(gray=True)
 
@@ -83,8 +83,7 @@ dataset_fetchers = {
     "fetch_species_distributions_fxt": fetch_species_distributions,
 }
 
-if scipy_datasets_require_network:
-    dataset_fetchers["raccoon_face_fxt"] = raccoon_face_or_skip
+dataset_fetchers["raccoon_face_fxt"] = raccoon_face_or_skip
 
 _SKIP32_MARK = pytest.mark.skipif(
     environ.get("SKLEARN_RUN_FLOAT32_TESTS", "0") != "1",
@@ -192,7 +191,7 @@ def pytest_collection_modifyitems(config, items):
 
     skip_doctests = False
     try:
-        import matplotlib  # noqa
+        import matplotlib  # noqa: F401
     except ImportError:
         skip_doctests = True
         reason = "matplotlib is required to run the doctests"
@@ -237,7 +236,7 @@ def pytest_collection_modifyitems(config, items):
                 if item.name != "sklearn._config.config_context":
                     item.add_marker(skip_marker)
     try:
-        import PIL  # noqa
+        import PIL  # noqa: F401
 
         pillow_installed = True
     except ImportError:
@@ -270,6 +269,111 @@ def pyplot():
     pyplot.close("all")
     yield pyplot
     pyplot.close("all")
+
+
+def munge_scipy_to_check_spmatrix_usage():
+    import scipy
+
+    def flag_this_call(*args, **kwds):
+        raise ValueError("Old spmatrix function called. Use e.g. block or random.")
+
+    scipy.sparse._construct.bmat = flag_this_call
+    scipy.sparse._construct.rand = flag_this_call
+    scipy.sparse._construct.rand = flag_this_call
+
+    class _strict_mul_mixin:
+        def __mul__(self, other):
+            if not scipy.sparse._sputils.isscalarlike(other):
+                raise ValueError("Operator * used here! Change to @?")
+            return super().__mul__(other)
+
+        def __rmul__(self, other):
+            if not scipy.sparse._sputils.isscalarlike(other):
+                raise ValueError("Operator * used here! Change to @?")
+            return super().__rmul__(other)
+
+        def __imul__(self, other):
+            if not scipy.sparse._sputils.isscalarlike(other):
+                raise ValueError("Operator * used here! Change to @?")
+            return super().__imul__(other)
+
+        def __pow__(self, *args, **kwargs):
+            raise ValueError("spmatrix ** used here! Use sparse.linalg.matrix_power?")
+
+        @property
+        def A(self):
+            raise TypeError("spmatrix A property is not allowed! Use .toarray()")
+
+        @property
+        def H(self):
+            raise TypeError("spmatrix H property is not allowed! Use .conjugate().T")
+
+        def asfptype(self):
+            raise TypeError("spmatrix asfptype is not allowed! rewrite needed")
+
+        def get_shape(self):
+            raise TypeError("spmatrix get_shape is not allowed! Use .shape")
+
+        def getformat(self):
+            raise TypeError("spmatrix getformat is not allowed! Use .shape")
+
+        def getmaxprint(self):
+            raise TypeError("spmatrix getmaxprint is not allowed! Use .shape")
+
+        def getnnz(self):
+            raise TypeError("spmatrix getnnz is not allowed! Use .shape")
+
+        def getH(self):
+            raise TypeError("spmatrix getH is not allowed! Use .shape")
+
+        def getrow(self):
+            raise TypeError("spmatrix getrow is not allowed! Use .shape")
+
+        def getcol(self):
+            raise TypeError("spmatrix getcol is not allowed! Use .shape")
+
+    class _strict_coo_matrix(_strict_mul_mixin, scipy.sparse.coo_matrix):
+        pass
+
+    class _strict_bsr_matrix(_strict_mul_mixin, scipy.sparse.bsr_matrix):
+        pass
+
+    class _strict_csr_matrix(_strict_mul_mixin, scipy.sparse.csr_matrix):
+        pass
+
+    class _strict_csc_matrix(_strict_mul_mixin, scipy.sparse.csc_matrix):
+        pass
+
+    class _strict_dok_matrix(_strict_mul_mixin, scipy.sparse.dok_matrix):
+        pass
+
+    class _strict_lil_matrix(_strict_mul_mixin, scipy.sparse.lil_matrix):
+        pass
+
+    class _strict_dia_matrix(_strict_mul_mixin, scipy.sparse.dia_matrix):
+        pass
+
+    scipy.sparse.coo_matrix = scipy.sparse._coo.coo_matrix = _strict_coo_matrix
+    scipy.sparse.bsr_matrix = scipy.sparse._bsr.bsr_matrix = _strict_bsr_matrix
+    scipy.sparse.csr_matrix = scipy.sparse._csr.csr_matrix = _strict_csr_matrix
+    scipy.sparse.csc_matrix = scipy.sparse._csc.csc_matrix = _strict_csc_matrix
+    scipy.sparse.dok_matrix = scipy.sparse._dok.dok_matrix = _strict_dok_matrix
+    scipy.sparse.lil_matrix = scipy.sparse._lil.lil_matrix = _strict_lil_matrix
+    scipy.sparse.dia_matrix = scipy.sparse._dia.dia_matrix = _strict_dia_matrix
+
+    scipy.sparse._construct.bsr_matrix = _strict_bsr_matrix
+    scipy.sparse._construct.coo_matrix = _strict_coo_matrix
+    scipy.sparse._construct.csc_matrix = _strict_csc_matrix
+    scipy.sparse._construct.csr_matrix = _strict_csr_matrix
+    scipy.sparse._construct.dia_matrix = _strict_dia_matrix
+
+    scipy.sparse._matrix.bsr_matrix = _strict_bsr_matrix
+    scipy.sparse._matrix.coo_matrix = _strict_coo_matrix
+    scipy.sparse._matrix.csc_matrix = _strict_csc_matrix
+    scipy.sparse._matrix.csr_matrix = _strict_csr_matrix
+    scipy.sparse._matrix.dia_matrix = _strict_dia_matrix
+    scipy.sparse._matrix.dok_matrix = _strict_dok_matrix
+    scipy.sparse._matrix.lil_matrix = _strict_lil_matrix
 
 
 def pytest_generate_tests(metafunc):
@@ -317,6 +421,22 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("global_random_seed", random_seeds)
 
 
+def pytest_addoption(parser, pluginmanager):
+    if not PARALLEL_RUN_AVAILABLE:
+        parser.addini("thread_unsafe_fixtures", "list of stuff")
+    parser.addoption(
+        "--check_spmatrix",
+        action="store_true",
+        default=False,
+        help="raise for spmatrix usage that breaks sparray",
+    )
+
+
+def pytest_runtest_setup(item):
+    if "no_check_spmatrix" in item.keywords and item.config.option.check_spmatrix:
+        pytest.skip("skip due to check_spmatrix scipy patch breaking this test")
+
+
 def pytest_configure(config):
     # Use matplotlib agg backend during the tests including doctests
     try:
@@ -341,6 +461,33 @@ def pytest_configure(config):
         for line in get_pytest_filterwarning_lines():
             config.addinivalue_line("filterwarnings", line)
 
+    if config.option.check_spmatrix:
+        # Note: this patches scipy.sparse to raise upon outdated spmatrix usage
+        # If you run into this with new PR code to sklearn, make sure it:
+        # - converts spmatrix input to sparray
+        # - uses the sparray interface for manipulating the sparse object
+        # - uses align_api_if_sparse(X) just before returning a sparse object
+        munge_scipy_to_check_spmatrix_usage()
+
+    if not PARALLEL_RUN_AVAILABLE:
+        config.addinivalue_line(
+            "markers",
+            "parallel_threads(n): run the given test function in parallel "
+            "using `n` threads.",
+        )
+        config.addinivalue_line(
+            "markers",
+            "thread_unsafe: mark the test function as single-threaded",
+        )
+        config.addinivalue_line(
+            "markers",
+            "iterations(n): run the given test function `n` times in each thread",
+        )
+        config.addinivalue_line(
+            "markers",
+            "iterations(n): run the given test function `n` times in each thread",
+        )
+
 
 @pytest.fixture
 def hide_available_pandas(monkeypatch):
@@ -355,14 +502,7 @@ def hide_available_pandas(monkeypatch):
     monkeypatch.setattr(builtins, "__import__", mocked_import)
 
 
-@pytest.fixture
-def print_changed_only_false():
-    """Set `print_changed_only` to False for the duration of the test."""
-    set_config(print_changed_only=False)
-    yield
-    set_config(print_changed_only=True)  # reset to default
-
-
 if dt_config is not None:
     # Strict mode to differentiate between 3.14 and np.float64(3.14)
     dt_config.strict_check = True
+    # dt_config.rtol = 0.01

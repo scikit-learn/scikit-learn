@@ -11,6 +11,7 @@ import numpy as np
 import pytest
 from scipy.optimize import approx_fprime
 
+from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import (
@@ -140,17 +141,31 @@ def test_solution_inside_bounds(kernel):
     assert_array_less(gpr.kernel_.theta, bounds[:, 1] + tiny)
 
 
-@pytest.mark.parametrize("kernel", kernels)
-def test_lml_gradient(kernel):
+@pytest.mark.xfail(
+    raises=AssertionError,
+    reason="https://github.com/scikit-learn/scikit-learn/issues/31366",
+)
+@pytest.mark.parametrize("kernel", non_fixed_kernels)
+@pytest.mark.parametrize("length_scale", np.logspace(-3, 3, 13))
+def test_lml_gradient(kernel, length_scale):
+    # Clone the kernel object prior to mutating it to avoid any side effects between
+    # GP tests:
+    kernel = clone(kernel)
+    length_scale_param_name = next(
+        name for name in kernel.get_params() if name.endswith("length_scale")
+    )
+    kernel.set_params(**{length_scale_param_name: length_scale})
+
     # Compare analytic and numeric gradient of log marginal likelihood.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
-
-    lml, lml_gradient = gpr.log_marginal_likelihood(kernel.theta, True)
+    _, lml_gradient = gpr.log_marginal_likelihood(kernel.theta, eval_gradient=True)
+    epsilon = 1e-9
     lml_gradient_approx = approx_fprime(
-        kernel.theta, lambda theta: gpr.log_marginal_likelihood(theta, False), 1e-10
+        kernel.theta.copy(),
+        lambda theta: gpr.log_marginal_likelihood(theta, False),
+        epsilon=epsilon,
     )
-
-    assert_almost_equal(lml_gradient, lml_gradient_approx, 3)
+    assert_allclose(lml_gradient, lml_gradient_approx, rtol=1e-4, atol=epsilon * 100)
 
 
 @pytest.mark.parametrize("kernel", kernels)
@@ -186,11 +201,13 @@ def test_sample_statistics(kernel):
     )
 
 
-def test_no_optimizer():
-    # Test that kernel parameters are unmodified when optimizer is None.
-    kernel = RBF(1.0)
-    gpr = GaussianProcessRegressor(kernel=kernel, optimizer=None).fit(X, y)
-    assert np.exp(gpr.kernel_.theta) == 1.0
+@pytest.mark.parametrize("optimizer", [None, "fmin_l_bfgs_b"])
+@pytest.mark.parametrize("kernel", [None, RBF()])
+def test_no_optimizer(optimizer, kernel):
+    """Test that kernel parameters are unmodified when optimizer is None."""
+    gpr = GaussianProcessRegressor(kernel=kernel, optimizer=optimizer)
+    gpr.fit(X, y)
+    assert bool((gpr.kernel_.theta == 0.0).all()) is (optimizer is None)
 
 
 @pytest.mark.parametrize("kernel", kernels)
@@ -394,8 +411,9 @@ def test_custom_optimizer(kernel):
     # Define a dummy optimizer that simply tests 50 random hyperparameters
     def optimizer(obj_func, initial_theta, bounds):
         rng = np.random.RandomState(0)
-        theta_opt, func_min = initial_theta, obj_func(
-            initial_theta, eval_gradient=False
+        theta_opt, func_min = (
+            initial_theta,
+            obj_func(initial_theta, eval_gradient=False),
         )
         for _ in range(50):
             theta = np.atleast_1d(
@@ -846,3 +864,15 @@ def test_gpr_predict_input_not_modified():
     _, _ = gpr.predict(X2, return_std=True)
 
     assert_allclose(X2, X2_copy)
+
+
+@pytest.mark.parametrize("kernel", kernels)
+def test_gpr_predict_no_cov_no_std_return(kernel):
+    """
+    Check that only y_mean is returned when return_cov=False and
+    return_std=False.
+    """
+    gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+    y_pred = gpr.predict(X, return_cov=False, return_std=False)
+
+    assert_allclose(y_pred, y)

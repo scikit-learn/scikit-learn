@@ -1,0 +1,694 @@
+.. include:: _contributors.rst
+
+.. currentmodule:: sklearn
+
+.. _release_notes_1_8:
+
+===========
+Version 1.8
+===========
+
+For a short description of the main highlights of the release, please refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_8_0.py`.
+
+.. include:: changelog_legend.inc
+
+.. towncrier release notes start
+
+.. _changes_1_8_0:
+
+Version 1.8.0
+=============
+
+**December 2025**
+
+Changes impacting many modules
+------------------------------
+
+- |Efficiency| Improved CPU and memory usage in estimators and metric functions that rely on
+  weighted percentiles and better match NumPy and Scipy (un-weighted) implementations
+  of percentiles.
+  By :user:`Lucy Liu <lucyleeow>` :pr:`31775`
+
+Support for Array API
+---------------------
+
+Additional estimators and functions have been updated to include support for all
+`Array API <https://data-apis.org/array-api/latest/>`_ compliant inputs.
+
+See :ref:`array_api` for more details.
+
+- |Feature| :class:`sklearn.preprocessing.StandardScaler` now supports Array API compliant inputs.
+  By :user:`Alexander Fabisch <AlexanderFabisch>`, :user:`Edoardo Abati <EdAbati>`,
+  :user:`Olivier Grisel <ogrisel>` and :user:`Charles Hill <charlesjhill>`. :pr:`27113`
+
+- |Feature| :class:`linear_model.RidgeCV`, :class:`linear_model.RidgeClassifier` and
+  :class:`linear_model.RidgeClassifierCV` now support array API compatible
+  inputs with `solver="svd"`.
+  By :user:`Jérôme Dockès <jeromedockes>`. :pr:`27961`
+
+- |Feature| :func:`metrics.pairwise.pairwise_kernels` for any kernel except
+  "laplacian" and
+  :func:`metrics.pairwise_distances` for metrics "cosine",
+  "euclidean" and "l2" now support array API inputs.
+  By :user:`Emily Chen <EmilyXinyi>` and :user:`Lucy Liu <lucyleeow>` :pr:`29822`
+
+- |Feature| :func:`sklearn.metrics.confusion_matrix` now supports Array API compatible inputs.
+  By :user:`Stefanie Senger <StefanieSenger>` :pr:`30562`
+
+- |Feature| :class:`sklearn.mixture.GaussianMixture` with
+  `init_params="random"` or `init_params="random_from_data"` and
+  `warm_start=False` now supports Array API compatible inputs.
+  By :user:`Stefanie Senger <StefanieSenger>` and :user:`Loïc Estève <lesteve>` :pr:`30777`
+
+- |Feature| :func:`sklearn.metrics.roc_curve` now supports Array API compatible inputs.
+  By :user:`Thomas Li <lithomas1>` :pr:`30878`
+
+- |Feature| :class:`preprocessing.PolynomialFeatures` now supports array API compatible inputs.
+  By :user:`Omar Salman <OmarManzoor>` :pr:`31580`
+
+- |Feature| :class:`calibration.CalibratedClassifierCV` now supports array API compatible
+  inputs with `method="temperature"` and when the underlying `estimator` also
+  supports the array API.
+  By :user:`Omar Salman <OmarManzoor>` :pr:`32246`
+
+- |Feature| :func:`sklearn.metrics.precision_recall_curve` now supports array API compatible
+  inputs.
+  By :user:`Lucy Liu <lucyleeow>` :pr:`32249`
+
+- |Feature| :func:`sklearn.model_selection.cross_val_predict` now supports array API compatible inputs.
+  By :user:`Omar Salman <OmarManzoor>` :pr:`32270`
+
+- |Feature| :func:`sklearn.metrics.brier_score_loss`, :func:`sklearn.metrics.log_loss`,
+  :func:`sklearn.metrics.d2_brier_score` and :func:`sklearn.metrics.d2_log_loss_score`
+  now support array API compatible inputs.
+  By :user:`Omar Salman <OmarManzoor>` :pr:`32422`
+
+- |Feature| :class:`naive_bayes.GaussianNB` now supports array API compatible inputs.
+  By :user:`Omar Salman <OmarManzoor>` :pr:`32497`
+
+- |Feature| :class:`preprocessing.LabelBinarizer` and :func:`preprocessing.label_binarize` now
+  support numeric array API compatible inputs with `sparse_output=False`.
+  By :user:`Virgil Chan <virchan>`. :pr:`32582`
+
+- |Feature| :func:`sklearn.metrics.det_curve` now supports Array API compliant inputs.
+  By :user:`Josef Affourtit <jaffourt>`. :pr:`32586`
+
+- |Feature| :func:`sklearn.metrics.pairwise.manhattan_distances` now supports array API compatible inputs.
+  By :user:`Omar Salman <OmarManzoor>`. :pr:`32597`
+
+- |Feature| :func:`sklearn.metrics.calinski_harabasz_score` now supports Array API compliant inputs.
+  By :user:`Josef Affourtit <jaffourt>`. :pr:`32600`
+
+- |Feature| :func:`sklearn.metrics.balanced_accuracy_score` now supports array API compatible inputs.
+  By :user:`Omar Salman <OmarManzoor>`. :pr:`32604`
+
+- |Feature| :func:`sklearn.metrics.pairwise.laplacian_kernel` now supports array API compatible inputs.
+  By :user:`Zubair Shakoor <zubairshakoorarbisoft>`. :pr:`32613`
+
+- |Feature| :func:`sklearn.metrics.cohen_kappa_score` now supports array API compatible inputs.
+  By :user:`Omar Salman <OmarManzoor>`. :pr:`32619`
+
+- |Feature| :func:`sklearn.metrics.cluster.davies_bouldin_score` now supports Array API compliant inputs.
+  By :user:`Josef Affourtit <jaffourt>`. :pr:`32693`
+
+- |Fix| Estimators with array API support no longer reject dataframe inputs when array API support is enabled.
+  By :user:`Tim Head <betatim>` :pr:`32838`
+
+Metadata routing
+----------------
+
+Refer to the :ref:`Metadata Routing User Guide <metadata_routing>` for
+more details.
+
+- |Fix| Fixed an issue where passing `sample_weight` to a :class:`Pipeline` inside a
+  :class:`GridSearchCV` would raise an error with metadata routing enabled.
+  By `Adrin Jalali`_. :pr:`31898`
+
+Free-threaded CPython 3.14 support
+----------------------------------
+
+scikit-learn has support for free-threaded CPython, in particular
+free-threaded wheels are available for all of our supported platforms on Python
+3.14.
+
+Free-threaded (also known as nogil) CPython is a version of CPython that aims at
+enabling efficient multi-threaded use cases by removing the Global Interpreter
+Lock (GIL).
+
+If you want to try out free-threaded Python, the recommendation is to use
+Python 3.14, that has fixed a number of issues compared to Python 3.13. Feel
+free to try free-threaded on your use case and report any issues!
+
+For more details about free-threaded CPython see `py-free-threading doc <https://py-free-threading.github.io>`_,
+in particular `how to install a free-threaded CPython <https://py-free-threading.github.io/installing_cpython/>`_
+and `Ecosystem compatibility tracking <https://py-free-threading.github.io/tracking/>`_.
+
+By :user:`Loïc Estève <lesteve>` and :user:`Olivier Grisel <ogrisel>` and many
+other people in the wider Scientific Python and CPython ecosystem, for example
+:user:`Nathan Goldbaum <ngoldbaum>`, :user:`Ralf Gommers <rgommers>`,
+:user:`Edgar Andrés Margffoy Tuay <andfoy>`. :pr:`32079`
+
+:mod:`sklearn.base`
+-------------------
+
+- |Feature| Refactored :meth:`dir` in :class:`BaseEstimator` to recognize condition check in :meth:`available_if`.
+  By :user:`John Hendricks <j-hendricks>` and :user:`Miguel Parece <MiguelParece>`. :pr:`31928`
+
+- |Fix| Fixed the handling of pandas missing values in HTML display of all estimators.
+  By :user:`Dea María Léon <deamarialeon>`. :pr:`32341`
+
+:mod:`sklearn.calibration`
+--------------------------
+
+- |Feature| Added temperature scaling method in :class:`calibration.CalibratedClassifierCV`.
+  By :user:`Virgil Chan <virchan>` and :user:`Christian Lorentzen <lorentzenchr>`. :pr:`31068`
+
+:mod:`sklearn.cluster`
+----------------------
+
+- |Efficiency| :func:`cluster.kmeans_plusplus` now uses `np.cumsum` directly without extra
+  numerical stability checks and without casting to `np.float64`.
+  By :user:`Tiziano Zito <otizonaizit>` :pr:`31991`
+
+- |Fix| The default value of the `copy` parameter in :class:`cluster.HDBSCAN`
+  will change from `False` to `True` in 1.10 to avoid data modification
+  and maintain consistency with other estimators.
+  By :user:`Sarthak Puri <sarthakpurii>`. :pr:`31973`
+
+:mod:`sklearn.compose`
+----------------------
+
+- |Fix| The :class:`compose.ColumnTransformer` now correctly fits on data provided as a
+  `polars.DataFrame` when any transformer has a sparse output.
+  By :user:`Phillipp Gnan <ph-ll-pp>`. :pr:`32188`
+
+:mod:`sklearn.covariance`
+-------------------------
+
+- |Efficiency| :class:`sklearn.covariance.GraphicalLasso`,
+  :class:`sklearn.covariance.GraphicalLassoCV` and
+  :func:`sklearn.covariance.graphical_lasso` with `mode="cd"` profit from the
+  fit time performance improvement of :class:`sklearn.linear_model.Lasso` by means of
+  gap safe screening rules.
+  By :user:`Christian Lorentzen <lorentzenchr>`. :pr:`31987`
+
+- |Fix| Fixed uncontrollable randomness in :class:`sklearn.covariance.GraphicalLasso`,
+  :class:`sklearn.covariance.GraphicalLassoCV` and
+  :func:`sklearn.covariance.graphical_lasso`. For `mode="cd"`, they now use cyclic
+  coordinate descent. Before, it was random coordinate descent with uncontrollable
+  random number seeding.
+  By :user:`Christian Lorentzen <lorentzenchr>`. :pr:`31987`
+
+- |Fix| Added correction to :class:`covariance.MinCovDet` to adjust for
+  consistency at the normal distribution. This reduces the bias present
+  when applying this method to data that is normally distributed.
+  By :user:`Daniel Herrera-Esposito <dherrera1911>` :pr:`32117`
+
+:mod:`sklearn.decomposition`
+----------------------------
+
+- |Efficiency| :class:`sklearn.decomposition.DictionaryLearning` and
+  :class:`sklearn.decomposition.MiniBatchDictionaryLearning` with `fit_algorithm="cd"`,
+  :class:`sklearn.decomposition.SparseCoder` with `transform_algorithm="lasso_cd"`,
+  :class:`sklearn.decomposition.MiniBatchSparsePCA`,
+  :class:`sklearn.decomposition.SparsePCA`,
+  :func:`sklearn.decomposition.dict_learning` and
+  :func:`sklearn.decomposition.dict_learning_online` with `method="cd"`,
+  :func:`sklearn.decomposition.sparse_encode` with `algorithm="lasso_cd"`
+  all profit from the fit time performance improvement of
+  :class:`sklearn.linear_model.Lasso` by means of gap safe screening rules.
+  By :user:`Christian Lorentzen <lorentzenchr>`. :pr:`31987`
+
+- |Enhancement| :class:`decomposition.SparseCoder` now follows the transformer API of scikit-learn.
+  In addition, the :meth:`fit` method now validates the input and parameters.
+  By :user:`François Paugam <FrancoisPgm>`. :pr:`32077`
+
+- |Fix| Add input checks to the `inverse_transform` method of :class:`decomposition.PCA`
+  and :class:`decomposition.IncrementalPCA`.
+  :pr:`29310` by :user:`Ian Faust <icfaust>`. :pr:`29310`
+
+:mod:`sklearn.discriminant_analysis`
+------------------------------------
+
+- |Feature| Added `solver`, `covariance_estimator` and `shrinkage` in
+  :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`.
+  The resulting class is more similar to
+  :class:`discriminant_analysis.LinearDiscriminantAnalysis`
+  and allows for more flexibility in the estimation of the covariance matrices.
+  By :user:`Daniel Herrera-Esposito <dherrera1911>`. :pr:`32108`
+
+:mod:`sklearn.ensemble`
+-----------------------
+
+- |Fix| :class:`ensemble.BaggingClassifier`, :class:`ensemble.BaggingRegressor` and
+  :class:`ensemble.IsolationForest` now use `sample_weight` to draw the samples
+  instead of forwarding them multiplied by a uniformly sampled mask to the
+  underlying estimators. Furthermore, when `max_samples` is a float, it is now
+  interpreted as a fraction of `sample_weight.sum()` instead of `X.shape[0]`.
+  The new default `max_samples=None` draws `X.shape[0]` samples, irrespective
+  of `sample_weight`.
+  By :user:`Antoine Baker <antoinebaker>`. :pr:`31414` and :pr:`32825`
+
+:mod:`sklearn.feature_selection`
+--------------------------------
+
+- |Enhancement| :class:`feature_selection.SelectFromModel` now does not force `max_features` to be
+  less than or equal to the number of input features.
+  By :user:`Thibault <ThibaultDECO>` :pr:`31939`
+
+:mod:`sklearn.gaussian_process`
+-------------------------------
+
+- |Efficiency| make :class:`GaussianProcessRegressor.predict` faster when `return_cov` and
+  `return_std` are both `False`.
+  By :user:`Rafael Ayllón Gavilán <RafaAyGar>`. :pr:`31431`
+
+:mod:`sklearn.linear_model`
+---------------------------
+
+- |Efficiency| :class:`linear_model.ElasticNet` and :class:`linear_model.Lasso` with
+  `precompute=False` use less memory for dense `X` and are a bit faster.
+  Previously, they used twice the memory of `X` even for Fortran-contiguous `X`.
+  By :user:`Christian Lorentzen <lorentzenchr>` :pr:`31665`
+
+- |Efficiency| :class:`linear_model.ElasticNet` and :class:`linear_model.Lasso` avoid
+  double input checking and are therefore a bit faster.
+  By :user:`Christian Lorentzen <lorentzenchr>`. :pr:`31848`
+
+- |Efficiency| :class:`linear_model.ElasticNet`, :class:`linear_model.ElasticNetCV`,
+  :class:`linear_model.Lasso`, :class:`linear_model.LassoCV`,
+  :class:`linear_model.MultiTaskElasticNet`,
+  :class:`linear_model.MultiTaskElasticNetCV`,
+  :class:`linear_model.MultiTaskLasso` and :class:`linear_model.MultiTaskLassoCV`
+  are faster to fit by avoiding a BLAS level 1 (axpy) call in the innermost loop.
+  Same for functions :func:`linear_model.enet_path` and
+  :func:`linear_model.lasso_path`.
+  By :user:`Christian Lorentzen <lorentzenchr>` :pr:`31956` and :pr:`31880`
+
+- |Efficiency| :class:`linear_model.ElasticNetCV`, :class:`linear_model.LassoCV`,
+  :class:`linear_model.MultiTaskElasticNetCV` and :class:`linear_model.MultiTaskLassoCV`
+  avoid an additional copy of `X` with default `copy_X=True`.
+  By :user:`Christian Lorentzen <lorentzenchr>`. :pr:`31946`
+
+- |Efficiency| :class:`linear_model.ElasticNet`, :class:`linear_model.ElasticNetCV`,
+  :class:`linear_model.Lasso`, :class:`linear_model.LassoCV`,
+  :class:`linear_model.MultiTaskElasticNet`, :class:`linear_model.MultiTaskElasticNetCV`
+  :class:`linear_model.MultiTaskLasso`, :class:`linear_model.MultiTaskLassoCV`
+  as well as
+  :func:`linear_model.lasso_path` and :func:`linear_model.enet_path` now implement
+  gap safe screening rules in the coordinate descent solver for dense and sparse `X`.
+  The speedup of fitting time is particularly pronounced (10-times is possible) when
+  computing regularization paths like the \*CV-variants of the above estimators do.
+  There is now an additional check of the stopping criterion before entering the main
+  loop of descent steps. As the stopping criterion requires the computation of the dual
+  gap, the screening happens whenever the dual gap is computed.
+  By :user:`Christian Lorentzen <lorentzenchr>` :pr:`31882`, :pr:`31986`,
+  :pr:`31987` and :pr:`32014`
+
+- |Enhancement| :class:`linear_model.ElasticNet`, :class:`linear_model.ElasticNetCV`,
+  :class:`linear_model.Lasso`, :class:`linear_model.LassoCV`,
+  :class:`MultiTaskElasticNet`, :class:`MultiTaskElasticNetCV`,
+  :class:`MultiTaskLasso`, :class:`MultiTaskLassoCV`, as well as
+  :func:`linear_model.enet_path` and :func:`linear_model.lasso_path`
+  now use `dual gap <= tol` instead of `dual gap < tol` as stopping criterion.
+  The resulting coefficients might differ to previous versions of scikit-learn in
+  rare cases.
+  By :user:`Christian Lorentzen <lorentzenchr>`. :pr:`31906`
+
+- |Fix| Fix the convergence criteria for SGD models, to avoid premature convergence when
+  `tol != None`. This primarily impacts :class:`SGDOneClassSVM` but also affects
+  :class:`SGDClassifier` and :class:`SGDRegressor`. Before this fix, only the loss
+  function without penalty was used as the convergence check, whereas now, the full
+  objective with regularization is used.
+  By :user:`Guillaume Lemaitre <glemaitre>` and :user:`kostayScr <kostayScr>` :pr:`31856`
+
+- |Fix| The allowed parameter range for the initial learning rate `eta0` in
+  :class:`linear_model.SGDClassifier`, :class:`linear_model.SGDOneClassSVM`,
+  :class:`linear_model.SGDRegressor` and :class:`linear_model.Perceptron`
+  changed from non-negative numbers to strictly positive numbers.
+  As a consequence, the default `eta0` of :class:`linear_model.SGDClassifier`
+  and :class:`linear_model.SGDOneClassSVM` changed from 0 to 0.01. But note that
+  `eta0` is not used by the default learning rate "optimal" of those two estimators.
+  By :user:`Christian Lorentzen <lorentzenchr>`. :pr:`31933`
+
+- |Fix| :class:`linear_model.LogisticRegressionCV` is able to handle CV splits where
+  some class labels are missing in some folds. Before, it raised an error whenever a
+  class label were missing in a fold.
+  By :user:`Christian Lorentzen <lorentzenchr>`. :pr:`32747`
+
+- |API| :class:`linear_model.PassiveAggressiveClassifier` and
+  :class:`linear_model.PassiveAggressiveRegressor` are deprecated and will be removed
+  in 1.10. Equivalent estimators are available with :class:`linear_model.SGDClassifier`
+  and :class:`SGDRegressor`, both of which expose the options `learning_rate="pa1"` and
+  `"pa2"`. The parameter `eta0` can be used to specify the aggressiveness parameter of
+  the Passive-Aggressive-Algorithms, called C in the reference paper.
+  By :user:`Christian Lorentzen <lorentzenchr>` :pr:`31932` and :pr:`29097`
+
+- |API| :class:`linear_model.SGDClassifier`, :class:`linear_model.SGDRegressor`, and
+  :class:`linear_model.SGDOneClassSVM` now deprecate negative values for the
+  `power_t` parameter. Using a negative value will raise a warning in version 1.8
+  and will raise an error in version 1.10. A value in the range [0.0, inf) must be used
+  instead.
+  By :user:`Ritvi Alagusankar <ritvi-alagusankar>` :pr:`31474`
+
+- |API| Raising error in :class:`sklearn.linear_model.LogisticRegression` when
+  liblinear solver is used and input X values are larger than 1e30,
+  the liblinear solver freezes otherwise.
+  By :user:`Shruti Nath <snath-xoc>`. :pr:`31888`
+
+- |API| :class:`linear_model.LogisticRegressionCV` got a new parameter
+  `use_legacy_attributes` to control the types and shapes of the fitted attributes
+  `C_`, `l1_ratio_`, `coefs_paths_`, `scores_` and `n_iter_`.
+  The current default value `True` keeps the legacy behaviour. If `False` then:
+
+  - ``C_`` is a float.
+  - ``l1_ratio_`` is a float.
+  - ``coefs_paths_`` is an ndarray of shape
+    (n_folds, n_l1_ratios, n_cs, n_classes, n_features).
+    For binary problems (n_classes=2), the 2nd last dimension is 1.
+  - ``scores_`` is an ndarray of shape (n_folds, n_l1_ratios, n_cs).
+  - ``n_iter_`` is an ndarray of shape (n_folds, n_l1_ratios, n_cs).
+
+  In version 1.10, the default will change to `False` and `use_legacy_attributes` will
+  be deprecated. In 1.12 `use_legacy_attributes` will be removed.
+  By :user:`Christian Lorentzen <lorentzenchr>`. :pr:`32114`
+
+- |API| Parameter `penalty` of :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` is deprecated and will be removed in
+  version 1.10. The equivalent behaviour can be obtained as follows:
+
+  - for :class:`linear_model.LogisticRegression`
+
+    - use `l1_ratio=0` instead of `penalty="l2"`
+    - use `l1_ratio=1` instead of `penalty="l1"`
+    - use `0<l1_ratio<1` instead of `penalty="elasticnet"`
+    - use `C=np.inf` instead of `penalty=None`
+
+  - for :class:`linear_model.LogisticRegressionCV`
+
+    - use `l1_ratios=(0,)` instead of `penalty="l2"`
+    - use `l1_ratios=(1,)` instead of `penalty="l1"`
+    - the equivalent of `penalty=None` is to have `np.inf` as an element of the `Cs` parameter
+
+  For :class:`linear_model.LogisticRegression`, the default value of `l1_ratio`
+  has changed from `None` to `0.0`. Setting `l1_ratio=None` is deprecated and
+  will raise an error in version 1.10
+
+  For :class:`linear_model.LogisticRegressionCV`, the default value of `l1_ratios`
+  has changed from `None` to `"warn"`. It will be changed to `(0,)` in version
+  1.10. Setting `l1_ratios=None` is deprecated and will raise an error in
+  version 1.10.
+
+  By :user:`Christian Lorentzen <lorentzenchr>`. :pr:`32659`
+
+- |API| The `n_jobs` parameter of :class:`linear_model.LogisticRegression` is deprecated and
+  will be removed in 1.10. It has no effect since 1.8.
+  By :user:`Loïc Estève <lesteve>`. :pr:`32742`
+
+:mod:`sklearn.manifold`
+-----------------------
+
+- |MajorFeature| :class:`manifold.ClassicalMDS` was implemented to perform classical MDS
+  (eigendecomposition of the double-centered distance matrix).
+  By :user:`Dmitry Kobak <dkobak>` and :user:`Meekail Zain <Micky774>` :pr:`31322`
+
+- |Feature| :class:`manifold.MDS` now supports arbitrary distance metrics
+  (via `metric` and `metric_params` parameters) and
+  initialization via classical MDS (via `init` parameter).
+  The `dissimilarity` parameter was deprecated. The old `metric` parameter
+  was renamed into `metric_mds`.
+  By :user:`Dmitry Kobak <dkobak>` :pr:`32229`
+
+- |Feature| :class:`manifold.TSNE` now supports PCA initialization with sparse input matrices.
+  By :user:`Arturo Amor <ArturoAmorQ>`. :pr:`32433`
+
+:mod:`sklearn.metrics`
+----------------------
+
+- |Feature| :func:`metrics.d2_brier_score` has been added which calculates the D^2 for the Brier score.
+  By :user:`Omar Salman <OmarManzoor>`. :pr:`28971`
+
+- |Feature| Add :func:`metrics.confusion_matrix_at_thresholds` function that returns the number of
+  true negatives, false positives, false negatives and true positives per threshold.
+  By :user:`Success Moses <SuccessMoses>`. :pr:`30134`
+
+- |Efficiency| Avoid redundant input validation in :func:`metrics.d2_log_loss_score`
+  leading to a 1.2x speedup in large scale benchmarks.
+  By :user:`Olivier Grisel <ogrisel>` and :user:`Omar Salman <OmarManzoor>` :pr:`32356`
+
+- |Enhancement| :func:`metrics.median_absolute_error` now supports Array API compatible inputs.
+  By :user:`Lucy Liu <lucyleeow>`. :pr:`31406`
+
+- |Enhancement| Improved the error message for sparse inputs for the following metrics:
+  :func:`metrics.accuracy_score`,
+  :func:`metrics.multilabel_confusion_matrix`, :func:`metrics.jaccard_score`,
+  :func:`metrics.zero_one_loss`, :func:`metrics.f1_score`,
+  :func:`metrics.fbeta_score`, :func:`metrics.precision_recall_fscore_support`,
+  :func:`metrics.class_likelihood_ratios`, :func:`metrics.precision_score`,
+  :func:`metrics.recall_score`, :func:`metrics.classification_report`,
+  :func:`metrics.hamming_loss`.
+  By :user:`Lucy Liu <lucyleeow>`. :pr:`32047`
+
+- |Fix| :func:`metrics.median_absolute_error` now uses `_averaged_weighted_percentile`
+  instead of `_weighted_percentile` to calculate median when `sample_weight` is not
+  `None`. This is equivalent to using the "averaged_inverted_cdf" instead of
+  the "inverted_cdf" quantile method, which gives results equivalent to `numpy.median`
+  if equal weights used.
+  By :user:`Lucy Liu <lucyleeow>` :pr:`30787`
+
+- |Fix| Additional `sample_weight` checking has been added to
+  :func:`metrics.accuracy_score`,
+  :func:`metrics.balanced_accuracy_score`,
+  :func:`metrics.brier_score_loss`,
+  :func:`metrics.class_likelihood_ratios`,
+  :func:`metrics.classification_report`,
+  :func:`metrics.cohen_kappa_score`,
+  :func:`metrics.confusion_matrix`,
+  :func:`metrics.f1_score`,
+  :func:`metrics.fbeta_score`,
+  :func:`metrics.hamming_loss`,
+  :func:`metrics.jaccard_score`,
+  :func:`metrics.matthews_corrcoef`,
+  :func:`metrics.multilabel_confusion_matrix`,
+  :func:`metrics.precision_recall_fscore_support`,
+  :func:`metrics.precision_score`,
+  :func:`metrics.recall_score` and
+  :func:`metrics.zero_one_loss`.
+  `sample_weight` can only be 1D, consistent to `y_true` and `y_pred` in length,and
+  all values must be finite and not complex.
+  By :user:`Lucy Liu <lucyleeow>`. :pr:`31701`
+
+- |Fix| `y_pred` is deprecated in favour of `y_score` in
+  :func:`metrics.DetCurveDisplay.from_predictions` and
+  :func:`metrics.PrecisionRecallDisplay.from_predictions`. `y_pred` will be removed in
+  v1.10.
+  By :user:`Luis <luiser1401>` :pr:`31764`
+
+- |Fix| `repr` on a scorer which has been created with a `partial` `score_func` now correctly
+  works and uses the `repr` of the given `partial` object.
+  By `Adrin Jalali`_. :pr:`31891`
+
+- |Fix| kwargs specified in the `curve_kwargs` parameter of
+  :meth:`metrics.RocCurveDisplay.from_cv_results` now only overwrite their corresponding
+  default value before being passed to Matplotlib's `plot`. Previously, passing any
+  `curve_kwargs` would overwrite all default kwargs.
+  By :user:`Lucy Liu <lucyleeow>`. :pr:`32313`
+
+- |Fix| Registered named scorer objects for :func:`metrics.d2_brier_score` and
+  :func:`metrics.d2_log_loss_score` and updated their input validation to be
+  consistent with related metric functions.
+  By :user:`Olivier Grisel <ogrisel>` and :user:`Omar Salman <OmarManzoor>` :pr:`32356`
+
+- |Fix| :meth:`metrics.RocCurveDisplay.from_cv_results` will now infer `pos_label` as
+  `estimator.classes_[-1]`, using the estimator from `cv_results`, when
+  `pos_label=None`. Previously, an error was raised when `pos_label=None`.
+  By :user:`Lucy Liu <lucyleeow>`. :pr:`32372`
+
+- |Fix| All classification metrics now raise a `ValueError` when required input arrays
+  (`y_pred`, `y_true`, `y1`, `y2`, `pred_decision`, or `y_proba`) are empty.
+  Previously, `accuracy_score`, `class_likelihood_ratios`, `classification_report`,
+  `confusion_matrix`, `hamming_loss`, `jaccard_score`, `matthews_corrcoef`,
+  `multilabel_confusion_matrix`, and `precision_recall_fscore_support` did not raise
+  this error consistently.
+  By :user:`Stefanie Senger <StefanieSenger>`. :pr:`32549`
+
+- |API| :func:`metrics.cluster.entropy` is deprecated and will be removed in v1.10.
+  By :user:`Lucy Liu <lucyleeow>` :pr:`31294`
+
+- |API| The `estimator_name` parameter is deprecated in favour of `name` in
+  :class:`metrics.PrecisionRecallDisplay` and will be removed in 1.10.
+  By :user:`Lucy Liu <lucyleeow>`. :pr:`32310`
+
+:mod:`sklearn.model_selection`
+------------------------------
+
+- |Enhancement| :class:`model_selection.StratifiedShuffleSplit` will now specify which classes
+   have too few members when raising a ``ValueError`` if any class has less than 2 members.
+   This is useful to identify which classes are causing the error.
+   By :user:`Marc Bresson <MarcBresson>` :pr:`32265`
+
+- |Fix| Fix shuffle behaviour in :class:`model_selection.StratifiedGroupKFold`. Now
+  stratification among folds is also preserved when `shuffle=True`.
+  By :user:`Pau Folch <pfolch>`. :pr:`32540`
+
+:mod:`sklearn.multiclass`
+-------------------------
+
+- |Fix| Fix tie-breaking behavior in :class:`multiclass.OneVsRestClassifier` to match
+  `np.argmax` tie-breaking behavior.
+  By :user:`Lakshmi Krishnan <lakrish>`. :pr:`15504`
+
+:mod:`sklearn.naive_bayes`
+--------------------------
+
+- |Fix| :class:`naive_bayes.GaussianNB` preserves the dtype of the fitted attributes
+  according to the dtype of `X`.
+  By :user:`Omar Salman <OmarManzoor>` :pr:`32497`
+
+:mod:`sklearn.preprocessing`
+----------------------------
+
+- |Enhancement| :class:`preprocessing.SplineTransformer` can now handle missing values with the
+  parameter `handle_missing`. By :user:`Stefanie Senger <StefanieSenger>`. :pr:`28043`
+
+- |Enhancement| The :class:`preprocessing.PowerTransformer` now returns a warning
+  when NaN values are encountered in the inverse transform, `inverse_transform`, typically
+  caused by extremely skewed data.
+  By :user:`Roberto Mourao <maf-rnmourao>` :pr:`29307`
+
+- |Enhancement| :class:`preprocessing.MaxAbsScaler` can now clip out-of-range values in held-out data
+  with the parameter `clip`.
+  By :user:`Hleb Levitski <glevv>`. :pr:`31790`
+
+- |Fix| Fixed a bug in :class:`preprocessing.OneHotEncoder` where `handle_unknown='warn'` incorrectly behaved like `'ignore'` instead of `'infrequent_if_exist'`.
+  By :user:`Nithurshen <nithurshen>` :pr:`32592`
+
+:mod:`sklearn.semi_supervised`
+------------------------------
+
+- |Fix| User written kernel results are now normalized in
+  :class:`semi_supervised.LabelPropagation`
+  so all row sums equal 1 even if kernel gives asymmetric or non-uniform row sums.
+  By :user:`Dan Schult <dschult>`. :pr:`31924`
+
+:mod:`sklearn.tree`
+-------------------
+
+- |Efficiency| :class:`tree.DecisionTreeRegressor` with `criterion="absolute_error"`
+  now runs much faster: O(n log n) complexity against previous O(n^2)
+  allowing to scale to millions of data points, even hundred of millions.
+  By :user:`Arthur Lacote <cakedev0>` :pr:`32100`
+
+- |Fix| Make :func:`tree.export_text` thread-safe.
+  By :user:`Olivier Grisel <ogrisel>`. :pr:`30041`
+
+- |Fix| :func:`~sklearn.tree.export_graphviz` now raises a `ValueError` if given feature
+  names are not all strings.
+  By :user:`Guilherme Peixoto <guilhermecsnpeixoto>` :pr:`31036`
+
+- |Fix| :class:`tree.DecisionTreeRegressor` with `criterion="absolute_error"`
+  would sometimes make sub-optimal splits
+  (i.e. splits that don't minimize the absolute error).
+  Now it's fixed. Hence retraining trees might gives slightly different
+  results.
+  By :user:`Arthur Lacote <cakedev0>` :pr:`32100`
+
+- |Fix| Fixed a regression in :ref:`decision trees <tree>` where almost constant features were
+  not handled properly.
+  By :user:`Sercan Turkmen <sercant>`. :pr:`32259`
+
+- |Fix| Fixed splitting logic during training in :class:`tree.DecisionTree*`
+  (and consequently in :class:`ensemble.RandomForest*`)
+  for nodes containing near-constant feature values and missing values.
+  Beforehand, trees were cut short if a constant feature was found,
+  even if there was more splitting that could be done on the basis of missing values.
+  By :user:`Arthur Lacote <cakedev0>` :pr:`32274`
+
+- |Fix| Fix handling of missing values in method :func:`decision_path` of trees
+  (:class:`tree.DecisionTreeClassifier`, :class:`tree.DecisionTreeRegressor`,
+  :class:`tree.ExtraTreeClassifier` and :class:`tree.ExtraTreeRegressor`)
+  By :user:`Arthur Lacote <cakedev0>`. :pr:`32280`
+
+- |Fix| Fix decision tree splitting with missing values present in some features. In some cases the last
+  non-missing sample would not be partitioned correctly.
+  By :user:`Tim Head <betatim>` and :user:`Arthur Lacote <cakedev0>`. :pr:`32351`
+
+:mod:`sklearn.utils`
+--------------------
+
+- |Efficiency| The function :func:`sklearn.utils.extmath.safe_sparse_dot` was improved by a dedicated
+  Cython routine for the case of `a @ b` with sparse 2-dimensional `a` and `b` and when
+  a dense output is required, i.e., `dense_output=True`. This improves several
+  algorithms in scikit-learn when dealing with sparse arrays (or matrices).
+  By :user:`Christian Lorentzen <lorentzenchr>`. :pr:`31952`
+
+- |Enhancement| The parameter table in the HTML representation of all scikit-learn estimators and
+  more generally of estimators inheriting from :class:`base.BaseEstimator`
+  now displays the parameter description as a tooltip and has a link to the online
+  documentation for each parameter.
+  By :user:`Dea María Léon <DeaMariaLeon>`. :pr:`31564`
+
+- |Enhancement| ``sklearn.utils._check_sample_weight`` now raises a clearer error message when the
+  provided weights are neither a scalar nor a 1-D array-like of the same size as the
+  input data.
+  By :user:`Kapil Parekh <kapslock123>`. :pr:`31873`
+
+- |Enhancement| :func:`sklearn.utils.estimator_checks.parametrize_with_checks` now lets you configure
+  strict mode for xfailing checks. Tests that unexpectedly pass will lead to a test
+  failure. The default behaviour is unchanged.
+  By :user:`Tim Head <betatim>`. :pr:`31951`
+
+- |Enhancement| Fixed the alignment of the "?" and "i" symbols and improved the color style of the
+  HTML representation of estimators.
+  By :user:`Guillaume Lemaitre <glemaitre>`. :pr:`31969`
+
+- |Fix| Changes the way color are chosen when displaying an estimator as an HTML representation. Colors are not adapted anymore to the user's theme, but chosen based on theme declared color scheme (light or dark) for VSCode and JupyterLab. If theme does not declare a color scheme, scheme is chosen according to default text color of the page, if it fails fallbacks to a media query.
+  By :user:`Matt J. <rouk1>`. :pr:`32330`
+
+- |API| :func:`utils.extmath.stable_cumsum` is deprecated and will be removed
+  in v1.10. Use `np.cumulative_sum` with the desired dtype directly instead.
+  By :user:`Tiziano Zito <opossumnano>`. :pr:`32258`
+
+.. rubric:: Code and documentation contributors
+
+Thanks to everyone who has contributed to the maintenance and improvement of
+the project since version 1.7, including:
+
+$id, 4hm3d, Acciaro Gennaro Daniele, achyuthan.s, Adam J. Stewart, Adriano
+Leão, Adrien Linares, Adrin Jalali, Aitsaid Azzedine Idir, Alexander Fabisch,
+Alexandre Abraham, Andrés H. Zapke, Anne Beyer, Anthony Gitter, AnthonyPrudent,
+antoinebaker, Arpan Mukherjee, Arthur, Arthur Lacote, Arturo Amor,
+ayoub.agouzoul, Ayrat, Ayush, Ayush Tanwar, Basile Jezequel, Bhavya Patwa,
+BRYANT MUSI BABILA, Casey Heath, Chems Ben, Christian Lorentzen, Christian
+Veenhuis, Christine P. Chai, cstec, C. Titus Brown, Daniel Herrera-Esposito,
+Dan Schult, dbXD320, Dea María Léon, Deepyaman Datta, dependabot[bot], Dhyey
+Findoriya, Dimitri Papadopoulos Orfanos, Dipak Dhangar, Dmitry Kobak,
+elenafillo, Elham Babaei, EmilyXinyi, Emily (Xinyi) Chen, Eugen-Bleck, Evgeni
+Burovski, fabarca, Fabrizio Damicelli, Faizan-Ul Huda, François Goupil,
+François Paugam, Gaetan, GaetandeCast, Gesa Loof, Gonçalo Guiomar, Gordon Grey,
+Gowtham Kumar K., Guilherme Peixoto, Guillaume Lemaitre, hakan çanakçı, Harshil
+Sanghvi, Henri Bonamy, Hleb Levitski, HulusiOzy, hvtruong, Ian Faust, Imad
+Saddik, Jérémie du Boisberranger, Jérôme Dockès, John Hendricks, Joris Van den
+Bossche, Josef Affourtit, Josh, jshn9515, Junaid, KALLA GANASEKHAR, Kapil
+Parekh, Kenneth Enevoldsen, Kian Eliasi, kostayScr, Krishnan Vignesh, kryggird,
+Kyle S, Lakshmi Krishnan, Leomax, Loic Esteve, Luca Bittarello, Lucas Colley,
+Lucy Liu, Luigi Giugliano, Luis, Mahdi Abid, Mahi Dhiman, Maitrey Talware,
+Mamduh Zabidi, Manikandan Gobalakrishnan, Marc Bresson, Marco Edward Gorelli,
+Marek Pokropiński, Maren Westermann, Marie Sacksick, Marija Vlajic, Matt J.,
+Mayank Raj, Michael Burkhart, Michael Šimáček, Miguel Fernandes, Miro Hrončok,
+Mohamed DHIFALLAH, Muhammad Waseem, MUHAMMED SINAN D, Natalia Mokeeva, Nicholas
+Farr, Nicolas Bolle, Nicolas Hug, nithish-74, Nithurshen, Nitin Pratap Singh,
+NotAceNinja, Olivier Grisel, omahs, Omar Salman, Patrick Walsh, Peter Holzer,
+pfolch, ph-ll-pp, Prashant Bansal, Quan H. Nguyen, Radovenchyk, Rafael Ayllón
+Gavilán, Raghvender, Ranjodh Singh, Ravichandranayakar, Remi Gau, Reshama
+Shaikh, Richard Harris, RishiP2006, Ritvi Alagusankar, Roberto Mourao, Robert
+Pollak, Roshangoli, roychan, R Sagar Shresti, Sarthak Puri, saskra,
+scikit-learn-bot, Scott Huberty, Sercan Turkmen, Sergio P, Shashank S, Shaurya
+Bisht, Shivam, Shruti Nath, SIKAI ZHANG, sisird864, SiyuJin-1, S. M. Mohiuddin
+Khan Shiam, Somdutta Banerjee, sotagg, Sota Goto, Spencer Bradkin, Stefan,
+Stefanie Senger, Steffen Rehberg, Steven Hur, Success Moses, Sylvain Combettes,
+ThibaultDECO, Thomas J. Fan, Thomas Li, Thomas S., Tim Head, Tingwei Zhu,
+Tiziano Zito, TJ Norred, Username46786, Utsab Dahal, Vasanth K, Veghit,
+VirenPassi, Virgil Chan, Vivaan Nanavati, Xiao Yuan, xuzhang0327, Yaroslav
+Halchenko, Yaswanth Kumar, Zijun yi, zodchi94, Zubair Shakoor

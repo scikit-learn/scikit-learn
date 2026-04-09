@@ -14,27 +14,20 @@ import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
 
-from .._config import config_context
-from ..base import (
+from sklearn._config import config_context
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     _fit_context,
 )
-from ..exceptions import ConvergenceWarning
-from ..utils import check_array, check_random_state, gen_batches
-from ..utils._param_validation import (
-    Interval,
-    StrOptions,
-    validate_params,
-)
-from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
-from ..utils.validation import (
-    check_is_fitted,
-    check_non_negative,
-    validate_data,
-)
-from ._cdnmf_fast import _update_cdnmf_fast
+from sklearn.decomposition._cdnmf_fast import _update_cdnmf_fast
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils import check_array, check_random_state, gen_batches
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils._sparse import _align_api_if_sparse
+from sklearn.utils.extmath import _randomized_svd, safe_sparse_dot, squared_norm
+from sklearn.utils.validation import check_is_fitted, check_non_negative, validate_data
 
 EPSILON = np.finfo(np.float32).eps
 
@@ -204,8 +197,8 @@ def _special_sparse_dot(W, H, X):
                 axis=1
             )
 
-        WH = sp.coo_matrix((dot_vals, (ii, jj)), shape=X.shape)
-        return WH.tocsr()
+        WH = sp.coo_array((dot_vals, (ii, jj)), shape=X.shape)
+        return _align_api_if_sparse(WH.tocsr())
     else:
         return np.dot(W, H)
 
@@ -314,7 +307,7 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6, random_state=None):
         return W, H
 
     # NNDSVD initialization
-    U, S, V = randomized_svd(X, n_components, random_state=random_state)
+    U, S, V = _randomized_svd(X, n_components, random_state=random_state)
     W = np.zeros_like(U)
     H = np.zeros_like(V)
 
@@ -1302,7 +1295,7 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
 
         Returns
         -------
-        X : ndarray of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             Returns a data matrix of the original shape.
         """
 

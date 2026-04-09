@@ -10,9 +10,11 @@ body:
       addressed by searching through [the past issues](https://github.com/scikit-learn/scikit-learn/issues).
 - type: textarea
   attributes:
-    label: Describe the bug
+    label: Describe the bug and give evidence about its user-facing impact
     description: >
-      A clear and concise description of what the bug is.
+      A clear and concise description of what the bug is and **how it affects you as a scikit-learn user**. Please give a few details about the context of the discovery, why you care about getting it fixed. Please do not create issues for problems you don't actually care about.
+
+      The scikit-learn issue tracker is swamped by reports and pull-requests. Stating the expected user impact is critical to help maintainers and other contributors focus time and effort to review meaningful contributions.
   validations:
     required: true
 - type: textarea
@@ -36,13 +38,15 @@ body:
       model = lda_model.fit(lda_features)
       ```
 
+      If possible, craft a reproducer that only uses the public scikit-learn API or justify why you had to use some private API to trigger the problem. This helps us assess the user-facing impact of the bug.
+
       If the code is too long, feel free to put it in a public gist and link it in the issue: https://gist.github.com.
 
-      In short, **we are going to copy-paste your code** to run it and we expect to get the same result as you.
+      In short, **we need to be able to quickly copy-paste your code** to run it without modification and we expect to get the same result as you.
 
       We acknowledge that crafting a [minimal reproducible code example](https://scikit-learn.org/dev/developers/minimal_reproducer.html) requires some effort on your side but it really helps the maintainers quickly reproduce the problem and analyze its cause without any ambiguity. Ambiguous bug reports tend to be slower to fix because they will require more effort and back and forth discussion between the maintainers and the reporter to pin-point the precise conditions necessary to reproduce the problem.
     placeholder: |
-      ```
+      ```python
       Sample code to reproduce the problem
       ```
   validations:
@@ -87,6 +91,14 @@ body:
       ```python
       import sklearn; sklearn.show_versions()
       ```
+  validations:
+    required: true
+- type: textarea
+  attributes:
+    label: Interest in fixing the bug
+    description: >
+      If your issue is triaged by project maintainers as a bug that can be reproduced, would you be interested in working on a PR to resolve it? 
+      And if you already have an idea, please explain your analysis of the root cause of the bug and a strategy for a possible fix, but please do not open a PR as long as the issue has not been triaged.
   validations:
     required: true
 - type: markdown

@@ -70,7 +70,7 @@ as objects that implement the ``transform`` method:
   selection with a configurable strategy. This allows to select the best
   univariate selection strategy with hyper-parameter search estimator.
 
-For instance, we can use a F-test to retrieve the two
+For instance, we can use an F-test to retrieve the two
 best features for a dataset as follows:
 
   >>> from sklearn.datasets import load_iris
@@ -262,7 +262,7 @@ meta-transformer)::
   >>> clf = ExtraTreesClassifier(n_estimators=50)
   >>> clf = clf.fit(X, y)
   >>> clf.feature_importances_  # doctest: +SKIP
-  array([ 0.04...,  0.05...,  0.4...,  0.4...])
+  array([ 0.04,  0.05,  0.4,  0.4])
   >>> model = SelectFromModel(clf, prefit=True)
   >>> X_new = model.transform(X)
   >>> X_new.shape               # doctest: +SKIP
