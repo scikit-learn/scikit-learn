@@ -3013,23 +3013,35 @@ def test_search_callbacks(search, est):
 
     search.fit(X, y)
 
+    # defining expected values
     root = 1
+    outer_halving = 0
     outer_search = 1
-    iterations = 1  # calls to self._run_search()
+    n_iterations = 1
+    n_candidates = 3
+    n_splits = 2
+    n_searches = n_candidates * n_splits
+    refit = 1
     if search.__class__.__name__ == "HalvingGridSearchCV":
-        iterations = iterations * 2  # aggressive_elimination=True forces n_iterations=2
-    n_searches = 3 * 2  # n_candidates * n_splits
-    refit = 1  # refit step
+        # aggressive_elimination=True forces self.n_iterations_=2 and
+        # self.n_remaining_candidates_=1 for the second iteration
+        outer_halving = 1
+        n_iterations = 2
+        n_remaining_candidates = 1
+        n_remaining_searches = n_remaining_candidates * n_splits
+        n_searches += n_remaining_searches
 
     # for `NoCallbackEstimator` we expect only the hooks from `search` called:
     if est.__class__.__name__ == "NoCallbackEstimator":
         for callback in callbacks:
             assert callback.count_hooks("setup") == 1
+            expected = (
+                root + outer_halving + n_iterations * outer_search + n_searches + refit
+            )
             assert (
                 callback.count_hooks("on_fit_task_begin")
                 == callback.count_hooks("on_fit_task_end")
-                # == outer + iterations + searches + refit
-                == root + iterations * (outer_search + n_searches) + refit
+                == expected
             )
             assert callback.count_hooks("teardown") == 1
     if est.__class__.__name__ == "MaxIterEstimator":
@@ -3038,11 +3050,17 @@ def test_search_callbacks(search, est):
             # for `MaxIterEstimator` we expect only the hooks from `search` called if
             # the callback is not propagated
             if callback.__class__.__name__ == "TestingCallback":
+                expected = (
+                    root
+                    + outer_halving
+                    + n_iterations * outer_search
+                    + n_searches
+                    + refit
+                )
                 assert (
                     callback.count_hooks("on_fit_task_begin")
                     == callback.count_hooks("on_fit_task_end")
-                    # == outer + iterations + searches + refit
-                    == root + iterations * (outer_search + n_searches) + refit
+                    == expected
                 )
             # for `MaxIterEstimator` with callbacks propagated we expect the
             # outer_search hooks from `search` called (but not the inner hooks
@@ -3050,47 +3068,25 @@ def test_search_callbacks(search, est):
             # and additionally `MaxIterEstimator`'s own hooks, and a few more of each
             # for the refit:
             else:  # TestingAutoPropagatedCallback
-                if search.__class__.__name__ in ["GridSearchCV", "HalvingGridSearchCV"]:
-                    assert (
-                        callback.count_hooks("on_fit_task_begin")
-                        == callback.count_hooks("on_fit_task_end")
-                        == outer_search
-                        + iterations
-                        + 2  # 2 splits
-                        * (
-                            1
-                            * len(
-                                search.get_params()["param_grid"]["max_iter"]
-                            )  # outer*inner MaxIter
-                            + sum(
-                                search.get_params()["param_grid"]["max_iter"]
-                            )  # sum of all max_iter combinations
-                        )
-                        + 1  # refit: outer MaxIter
-                        + search.best_params_["max_iter"]  # refit
-                    )
-                else:  # RandomizedSearchCV or HalvingRandomSearchCV
-                    # random search picks `max_iter` at random but we can access a
-                    # fitted attribute:
-                    propagated_inner = sum(
-                        [d["max_iter"] for d in search.cv_results_["params"]]
-                    )
-                    assert (
-                        callback.count_hooks("on_fit_task_begin")
-                        == callback.count_hooks("on_fit_task_end")
-                        == outer_search
-                        + iterations
-                        + 2  # 2 splits
-                        * (
-                            1 * len(search.cv_results_["params"])  # outer*inner MaxIter
-                            + propagated_inner  # sum of all max_iter combinations
-                        )
-                        + 1  # refit: outer MaxIter
-                        + search.best_params_["max_iter"]  # refit: inner MaxIter
-                    )
+                propagated_inner = n_splits * sum(
+                    1 + p["max_iter"] for p in search.cv_results_["params"]
+                )
+                expected = (
+                    root
+                    + outer_halving
+                    + n_iterations * outer_search
+                    + propagated_inner
+                    + 1  # refit: outer MaxIter
+                    + search.best_params_["max_iter"]  # refit: inner MaxIter
+                )
+                assert (
+                    callback.count_hooks("on_fit_task_begin")
+                    == callback.count_hooks("on_fit_task_end")
+                    == expected
+                )
             assert callback.count_hooks("teardown") == 1
 
 
 # TODO: test with refit=False
-# TODO add a test to check if X, y and metadata are correctly passed to the callback
+# TODO: add a test to check if X, y and metadata are correctly passed to the callback
 # TODO: add test to check if reconstruction_attributes are passed correctly to callback
