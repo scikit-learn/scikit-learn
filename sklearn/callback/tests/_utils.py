@@ -3,6 +3,8 @@
 
 import time
 
+import numpy as np
+
 from sklearn.base import BaseEstimator, _fit_context, clone
 from sklearn.callback import CallbackSupportMixin, with_callbacks
 from sklearn.callback._callback_support import get_callback_manager
@@ -183,8 +185,6 @@ class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
         return self
 
     def predict(self, X):
-        import numpy as np
-
         return np.zeros(shape=(len(X),))
 
 
