@@ -796,7 +796,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     metric : str or callable, default="euclidean"
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
         "manhattan", "cosine", or "precomputed". If linkage is "ward", only
-        "euclidean" is accepted. If "precomputed", a distance matrix is needed
+        "euclidean" and "l2" are accepted. If "precomputed", a distance matrix is needed
         as input for the fit method. If connectivity is None, linkage is
         "single" and affinity is not "precomputed" any valid pairwise distance
         metric can be assigned.
@@ -1021,10 +1021,10 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
                 "compute_full_tree must be True if distance_threshold is set."
             )
 
-        if self.linkage == "ward" and self.metric != "euclidean":
+        if self.linkage == "ward" and self.metric not in ("euclidean", "l2"):
             raise ValueError(
                 f"{self.metric} was provided as metric. Ward can only "
-                "work with euclidean distances."
+                "work with euclidean distances (i.e. 'euclidean' and 'l2')."
             )
 
         tree_builder = _TREE_BUILDERS[self.linkage]
@@ -1142,7 +1142,7 @@ class FeatureAgglomeration(
     metric : str or callable, default="euclidean"
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
         "manhattan", "cosine", or "precomputed". If linkage is "ward", only
-        "euclidean" is accepted. If "precomputed", a distance matrix is needed
+        "euclidean" and "l2" are accepted. If "precomputed", a distance matrix is needed
         as input for the fit method.
 
         .. versionadded:: 1.2
