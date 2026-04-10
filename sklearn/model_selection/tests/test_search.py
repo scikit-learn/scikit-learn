@@ -2980,8 +2980,8 @@ def test_yield_masked_array_no_runtime_warning():
 
 
 # TODO: split test into one for NoCallbackEstimator and one for MaxIterEstimator?
-# TODO: test with refit=False
 @pytest.mark.parametrize("est", [NoCallbackEstimator(), MaxIterEstimator()])
+@pytest.mark.parametrize("refit", [True, False])
 @pytest.mark.parametrize(
     "search",
     [
@@ -3013,11 +3013,12 @@ def test_yield_masked_array_no_runtime_warning():
         ),
     ],
 )
-def test_search_callbacks(search, est):
+def test_search_callbacks(search, refit, est):
     # Check that set callbacks are stored in `_skl_callbacks`, and the correct number of
     # hooks are called.
     callbacks = [TestingCallback(), TestingAutoPropagatedCallback()]
     search.set_params(estimator=est)
+    search.set_params(refit=refit)
     search.set_callbacks(callbacks)
     assert all(cb in search._skl_callbacks for cb in callbacks)
 
@@ -3031,7 +3032,7 @@ def test_search_callbacks(search, est):
     n_candidates = 3
     n_splits = search.n_splits_  # 2
     n_searches = n_candidates * n_splits
-    refit = 1
+    # refit = 1
     if hasattr(search, "n_iterations_"):  # Halving*SearchCV
         outer_halving = 1
         n_iterations = search.n_iterations_  # 2
@@ -3082,8 +3083,8 @@ def test_search_callbacks(search, est):
                     + outer_halving
                     + n_iterations * outer_search
                     + propagated_inner
-                    + 1  # refit: outer MaxIter
-                    + search.best_params_["max_iter"]  # refit: inner MaxIter
+                    + refit  # refit: outer MaxIter
+                    + refit * search.best_params_["max_iter"]  # refit: inner MaxIter
                 )
                 assert (
                     callback.count_hooks("on_fit_task_begin")
