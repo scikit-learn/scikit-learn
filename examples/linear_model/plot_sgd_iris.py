@@ -45,7 +45,7 @@ ax = plt.gca()
 DecisionBoundaryDisplay.from_estimator(
     clf,
     X,
-    cmap=plt.cm.Paired,
+    multiclass_colors=["b", "r", "y"],
     ax=ax,
     response_method="predict",
     xlabel=iris.feature_names[0],
