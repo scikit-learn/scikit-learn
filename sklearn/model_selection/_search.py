@@ -1040,29 +1040,18 @@ class BaseSearchCV(
                             n_splits, n_candidates, n_candidates * n_splits
                         )
                     )
-
-                if hasattr(self, "param_grid"):  # *GridSearchCV
-                    max_callback_subtasks = n_candidates * n_splits
-                elif hasattr(self, "n_iter"):  # RandomizedSearchCV
-                    max_callback_subtasks = self.n_iter * n_splits
-                else:  # HalvingRandomSearchCV and custom classes
-                    # TODO: we could alternatively exclude HalvingGridSearchCV from
-                    # above using `and not hasattr(self, "factor")` and add extra
-                    # condition here, based on self.n_iterations_, which were computed
-                    # in BaseSuccessiveHalving._run_search at this point in time, but
-                    # which are not yet attributes of self (we could move this
-                    # assignment up a bit); I'd prefer to keep it as it is, since the
-                    # condition would be costly to calculate in advance
-                    max_callback_subtasks = None
-                # TODO: we could protect all of these calls with `if callback_ctx is not
-                # None` and the like or require custom classes that inherit from
-                # BaseSearchCV to implement callback support; I think we should do the
-                # first
-                search_subctx = callback_ctx.subcontext(
-                    task_name="search",
-                    max_subtasks=max_callback_subtasks,
-                    sequential_subtasks=False,
-                ).call_on_fit_task_begin(estimator=self)
+                if callback_ctx is not None:
+                    if hasattr(self, "param_grid"):  # *GridSearchCV
+                        max_callback_subtasks = n_candidates * n_splits
+                    elif hasattr(self, "n_iter"):  # RandomizedSearchCV
+                        max_callback_subtasks = self.n_iter * n_splits
+                    else:  # HalvingRandomSearchCV and custom classes
+                        max_callback_subtasks = None
+                    search_subctx = callback_ctx.subcontext(
+                        task_name="search",
+                        max_subtasks=max_callback_subtasks,
+                        sequential_subtasks=False,
+                    ).call_on_fit_task_begin(estimator=self)
 
                 out = parallel(
                     delayed(_fit_and_score)(
@@ -1075,9 +1064,13 @@ class BaseSearchCV(
                         split_progress=(split_idx, n_splits),
                         candidate_progress=(cand_idx, n_candidates),
                         **fit_and_score_kwargs,
-                        callback_ctx=search_subctx.subcontext(
-                            task_name="candidate-split-iteration",
-                            task_id=split_idx * n_candidates + cand_idx,
+                        callback_ctx=(
+                            None
+                            if callback_ctx is None
+                            else search_subctx.subcontext(
+                                task_name="candidate-split-iteration",
+                                task_id=split_idx * n_candidates + cand_idx,
+                            )
                         ),
                     )
                     for (cand_idx, parameters), (split_idx, (train, test)) in product(
@@ -1085,7 +1078,8 @@ class BaseSearchCV(
                         enumerate(cv.split(X, y, **routed_params.splitter.split)),
                     )
                 )
-                search_subctx.call_on_fit_task_end(estimator=self)
+                if callback_ctx is not None:
+                    search_subctx.call_on_fit_task_end(estimator=self)
 
                 if len(out) < 1:
                     raise ValueError(
