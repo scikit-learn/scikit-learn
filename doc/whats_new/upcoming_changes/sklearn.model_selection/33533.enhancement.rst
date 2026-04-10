@@ -1,0 +1,6 @@
+- :class:`~sklearn.model_selection.GridSearchCV`,
+  :class:`~sklearn.model_selection.RandomizedSearchCV`,
+  :class:`~sklearn.model_selection.HalvingGridSearchCV` and
+  :class:`~sklearn.model_selection.HalvingRandomSearchCV` now support the scikit-learn
+  Callback API. #TODO: add link to the docs
+  By :user:`Stefanie Senger <StefanieSenger>`.
