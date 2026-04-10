@@ -1080,7 +1080,9 @@ def test_partial_fit_exception(klass):
     ],
 )
 @pytest.mark.parametrize("dtype", [np.int32, np.float64])
-def test_partial_fit_zero_sample_weight_no_mutation_classifier(klass, fit_kwargs, dtype):
+def test_partial_fit_zero_sample_weight_no_mutation_classifier(
+    klass, fit_kwargs, dtype
+):
     # Regression test for GH-33436: partial_fit with all-zero sample_weight
     # must not mutate coef_ or advance t_.
     clf = klass(alpha=0.01, random_state=42)
