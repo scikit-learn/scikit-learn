@@ -57,6 +57,7 @@ from sklearn.model_selection import (
     GroupKFold,
     GroupShuffleSplit,
     HalvingGridSearchCV,
+    HalvingRandomSearchCV,
     KFold,
     LeaveOneGroupOut,
     LeavePGroupsOut,
@@ -3001,6 +3002,14 @@ def test_yield_masked_array_no_runtime_warning():
             aggressive_elimination=True,
             scoring="accuracy",
         ),
+        HalvingRandomSearchCV(
+            DummyClassifier(),
+            {"max_iter": randint(1, 4)},
+            cv=2,
+            aggressive_elimination=True,
+            scoring="accuracy",
+            random_state=42,
+        ),
     ],
 )
 def test_search_callbacks(search, est):
@@ -3019,17 +3028,13 @@ def test_search_callbacks(search, est):
     outer_search = 1
     n_iterations = 1
     n_candidates = 3
-    n_splits = 2
+    n_splits = search.n_splits_  # 2
     n_searches = n_candidates * n_splits
     refit = 1
-    if search.__class__.__name__ == "HalvingGridSearchCV":
-        # aggressive_elimination=True forces self.n_iterations_=2 and
-        # self.n_remaining_candidates_=1 for the second iteration
+    if hasattr(search, "n_iterations_"):  # Halving*SearchCV
         outer_halving = 1
-        n_iterations = 2
-        n_remaining_candidates = 1
-        n_remaining_searches = n_remaining_candidates * n_splits
-        n_searches += n_remaining_searches
+        n_iterations = search.n_iterations_  # 2
+        n_searches = sum(n_cand * n_splits for n_cand in search.n_candidates_)
 
     # for `NoCallbackEstimator` we expect only the hooks from `search` called:
     if est.__class__.__name__ == "NoCallbackEstimator":

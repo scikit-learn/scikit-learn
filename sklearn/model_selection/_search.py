@@ -234,7 +234,7 @@ class ParameterSampler:
     Parameters
     ----------
     param_distributions : dict
-        Dictionary with parameters names (`str`) as keys and distributions
+        Dictionary with parameter names (`str`) as keys and distributions
         or lists of parameters to try. Distributions must provide a ``rvs``
         method for sampling (such as those from scipy.stats.distributions).
         If a list is given, it is sampled uniformly.
@@ -1041,19 +1041,18 @@ class BaseSearchCV(
                         )
                     )
 
-                if hasattr(self, "param_grid"):  # GridSearchCV, HalvingGridSearchCV
+                if hasattr(self, "param_grid"):  # *GridSearchCV
                     max_callback_subtasks = n_candidates * n_splits
-                elif hasattr(
-                    self, "n_iter"
-                ):  # RandomizedSearchCV, HalvingRandomSearchCV
+                elif hasattr(self, "n_iter"):  # RandomizedSearchCV
                     max_callback_subtasks = self.n_iter * n_splits
-                else:  # custom classes
-                    # TODO: we could also exclude Halving*SearchCV from above using `and
-                    # not hasattr(self, "factor")` and add extra condition here, based
-                    # on self.n_iterations_, which were computed in
-                    # BaseSuccessiveHalving._run_search at this point in time, but which
-                    # are not yet attributes of self (we could move this assignment up a
-                    # bit)
+                else:  # HalvingRandomSearchCV and custom classes
+                    # TODO: we could alternatively exclude HalvingGridSearchCV from
+                    # above using `and not hasattr(self, "factor")` and add extra
+                    # condition here, based on self.n_iterations_, which were computed
+                    # in BaseSuccessiveHalving._run_search at this point in time, but
+                    # which are not yet attributes of self (we could move this
+                    # assignment up a bit); I'd prefer to keep it as it is, since the
+                    # condition would be costly to calculate in advance
                     max_callback_subtasks = None
                 # TODO: we could protect all of these calls with `if callback_ctx is not
                 # None` and the like or require custom classes that inherit from

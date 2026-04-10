@@ -1106,8 +1106,8 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     def _generate_candidate_params(self):
         n_candidates_first_iter = self.n_candidates
         if n_candidates_first_iter == "exhaust":
-            # This will generate enough candidate so that the last iteration
-            # uses as much resources as possible
+            # This will generate enough candidates so that the last iteration
+            # uses as many resources as possible
             n_candidates_first_iter = self.max_resources_ // self.min_resources_
         return ParameterSampler(
             self.param_distributions,
