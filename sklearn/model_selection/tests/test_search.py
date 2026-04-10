@@ -2980,6 +2980,7 @@ def test_yield_masked_array_no_runtime_warning():
 
 
 # TODO: split test into one for NoCallbackEstimator and one for MaxIterEstimator
+# TODO: test with refit=False
 @pytest.mark.parametrize("est", [NoCallbackEstimator(), MaxIterEstimator()])
 @pytest.mark.parametrize(
     "search",
@@ -3092,6 +3093,20 @@ def test_search_callbacks(search, est):
             assert callback.count_hooks("teardown") == 1
 
 
-# TODO: test with refit=False
-# TODO: add a test to check if X, y and metadata are correctly passed to the callback
-# TODO: add test to check if reconstruction_attributes are passed correctly to callback
+def test_search_reconstruction_attributes_callbacks():
+    # Test that `reconstruction_attributes` pass everything needed to
+    # `callback.on_fit_task_end` to reconstruct a working *SearchCV ready to predict.
+    callback = TestingCallback()
+    search = GridSearchCV(
+        MaxIterEstimator(), {"max_iter": [1, 2, 3]}, cv=2, scoring="accuracy"
+    ).set_callbacks(callback)
+    search.fit(X, y)
+
+    for entry in callback.record:
+        if (
+            entry["name"] == "on_fit_task_end"
+            and entry["kwargs"]["fitted_estimator"] is not None
+        ):
+            fitted_estimator = entry["kwargs"]["fitted_estimator"]
+            y_pred = fitted_estimator.predict(X)
+            assert sum(y_pred) == 0

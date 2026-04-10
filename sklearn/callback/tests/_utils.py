@@ -182,6 +182,11 @@ class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
 
         return self
 
+    def predict(self, X):
+        import numpy as np
+
+        return np.zeros(shape=(len(X),))
+
 
 class WhileEstimator(CallbackSupportMixin, BaseEstimator):
     """A class that mimics the behavior of an estimator.
