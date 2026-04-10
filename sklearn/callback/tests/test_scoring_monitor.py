@@ -42,7 +42,7 @@ def _make_expected_output_MaxIterEstimator(
             f"task_name_depth_{depth}": "fit",
             f"task_id_depth_{depth}": 0,
             f"estimator_name_depth_{depth + 1}": est_name,
-            f"task_name_depth_{depth + 1}": "iteration",
+            f"task_name_depth_{depth + 1}": f"iteration {i}",
             f"task_id_depth_{depth + 1}": i,
         }
         for eval_on in ("train", "val"):

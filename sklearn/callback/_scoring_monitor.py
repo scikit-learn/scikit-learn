@@ -15,7 +15,7 @@ class ScoringMonitor:
     """Callback that monitors a score for each iterative step of an estimator.
 
     The specified scorer is called on the training or validation data at each iterative
-    step of the estimator, and the score is logged by the callback. The logs can be 
+    step of the estimator, and the score is logged by the callback. The logs can be
     retrieved through the `get_logs` method.
 
     Parameters
@@ -66,22 +66,23 @@ class ScoringMonitor:
         self._shared_log = get_callback_manager().list()
         self._estimator_scorers = {}
 
-    def setup(self, context):
+    def setup(self, estimator, context):
         # A scorer per estimator is needed to avoid race conditions when the callback is
         # set on different estimators and the scorer is the estimator's default scorer.
         if context.estimator_name not in self._estimator_scorers:
             self._estimator_scorers[context.estimator_name] = check_scoring(
-                context.estimator, self.scoring
+                estimator, self.scoring
             )
 
-    def teardown(self, context):
+    def teardown(self, estimator, context):
         pass
 
-    def on_fit_task_begin(self, context):
+    def on_fit_task_begin(self, estimator, context):
         pass
 
     def on_fit_task_end(
         self,
+        estimator,
         context,
         *,
         X=None,
