@@ -1363,7 +1363,7 @@ def test_enet_cv_sample_weight_correctness(
     rng = np.random.RandomState(global_random_seed)
     n_splits, n_samples_per_cv, n_features = 3, 10, 5
     X_with_weights = rng.rand(n_splits * n_samples_per_cv, n_features)
-    beta = rng.rand(n_features)
+    beta = 10 * rng.rand(n_features)
     beta[0:2] = 0
     y_with_weights = X_with_weights @ beta + rng.rand(n_splits * n_samples_per_cv)
     if issubclass(estimator, MultiTaskElasticNetCV):
