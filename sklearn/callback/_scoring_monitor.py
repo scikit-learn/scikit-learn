@@ -93,6 +93,21 @@ class ScoringMonitor:
         if fitted_estimator is None:
             return
 
+        metadata = {} if metadata is None else metadata
+        if self.eval_on in ("train", "both"):
+            train_metadata = metadata.get("train", {}).copy()
+            self._add_log_entry(
+                context, fitted_estimator, X, y, train_metadata, "train"
+            )
+        if self.eval_on in ("val", "both"):
+            val_metadata = metadata.get("val", {}).copy()
+            X_val = val_metadata.pop("X_val", None)
+            y_val = val_metadata.pop("y_val", None)
+            self._add_log_entry(
+                context, fitted_estimator, X_val, y_val, val_metadata, "val"
+            )
+
+    def _add_log_entry(self, context, fitted_estimator, X, y, metadata, eval_on):
         context_path = get_context_path(context)
 
         root_context = context_path[0]
@@ -103,40 +118,19 @@ class ScoringMonitor:
         }
 
         context_levels = {}
+        context_levels["task_path"] = tuple()
         for depth, ctx in enumerate(context_path):
-            context_levels[f"estimator_name_depth_{depth}"] = ctx.estimator_name
-            context_levels[f"task_name_depth_{depth}"] = ctx.task_name
-            context_levels[f"task_id_depth_{depth}"] = ctx.task_id
+            context_levels["task_path"] += (ctx.task_id,)
+            for k in ("estimator_name", "task_name", "task_id", "sequential_subtasks"):
+                context_levels[f"{k}_depth_{depth}"] = getattr(ctx, k)
 
-        metadata = {} if metadata is None else metadata
-        scores = {}
-        if self.eval_on in ("train", "both"):
-            score_params = metadata.get("train", {}).copy()
-            scores.update(
-                self._compute_scores(
-                    fitted_estimator, X, y, score_params, "train", context
-                )
-            )
-        if self.eval_on in ("val", "both"):
-            score_params = metadata.get("val", {}).copy()
-            X_val = score_params.pop("X_val", None)
-            y_val = score_params.pop("y_val", None)
-            scores.update(
-                self._compute_scores(
-                    fitted_estimator, X_val, y_val, score_params, "val", context
-                )
-            )
+        scores = {"eval_on": eval_on}
+        if X is not None and y is not None:
+            scorer = self._estimator_scorers[context.estimator_name]
+            score_params = {k: v for k, v in metadata.items() if v is not None}
+            scores.update(scorer(fitted_estimator, X, y, **score_params))
 
         self._shared_log.append((run_id, run_info, context_levels, scores))
-
-    def _compute_scores(self, fitted_estimator, X, y, score_params, eval_on, context):
-        if X is None or y is None:
-            return {}
-
-        scorer = self._estimator_scorers[context.estimator_name]
-        score_params = {k: v for k, v in score_params.items() if v is not None}
-        raw_scores = scorer(fitted_estimator, X, y, **score_params)
-        return {f"{eval_on}_{name}": value for name, value in raw_scores.items()}
 
     @validate_params(
         {
@@ -158,6 +152,19 @@ class ScoringMonitor:
         A run corresponds to one fit of the outermost meta-estimator that is a parent of
         the estimator the callback is registered on. If the estimator is not wrapped in
         a meta-estimator, a run corresponds to a single fit of the estimator.
+
+        Depending on `as_frame`, "data" is either a Pandas DataFrame or a list of dicts.
+        In the latter case, each dict corresponds to one row of the corresponding
+        DataFrame and contains column_name -> value pairs. The columns are structured as
+        follows:
+        - "task_path": tuple containing the task ids of the task and its ancestors for
+            for which the score was computed;
+        - A group of 4 columns for each ancestor task of the task for which the score
+            was computed (including itself): "estimator_name_depth_<depth>",
+            "task_name_depth_<depth>", "task_id_depth_<depth>",
+            "sequential_subtasks_depth_<depth>".
+        - "eval_on": the data on which the score was computed, either "train" or "val";
+        - A column for each score name the was passed as `scoring` parameter.
 
         Parameters
         ----------
