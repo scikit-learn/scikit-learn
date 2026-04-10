@@ -634,7 +634,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             sample_weight,
             X,
             dtype=X.dtype,
-            allow_all_zero_weights=self.early_stopping,
+            allow_all_zero_weights=True,
         )
 
         if getattr(self, "coef_", None) is None or coef_init is not None:
@@ -654,6 +654,9 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         self._loss_function_ = self._get_loss_function(loss)
         if not hasattr(self, "t_"):
             self.t_ = 1.0
+
+        if np.all(sample_weight == 0):
+            return self
 
         # delegate to concrete training procedure
         if n_classes > 2:
@@ -1517,7 +1520,9 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
         n_samples, n_features = X.shape
 
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        sample_weight = _check_sample_weight(
+            sample_weight, X, dtype=X.dtype, allow_all_zero_weights=True
+        )
 
         # Allocate datastructures from input arguments
         if first_call:
@@ -1531,6 +1536,9 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         if self.average > 0 and getattr(self, "_average_coef", None) is None:
             self._average_coef = np.zeros(n_features, dtype=X.dtype, order="C")
             self._average_intercept = np.zeros(1, dtype=X.dtype, order="C")
+
+        if np.all(sample_weight == 0):
+            return self
 
         self._fit_regressor(X, y, alpha, loss, learning_rate, sample_weight, max_iter)
 
@@ -2465,6 +2473,9 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
         self._loss_function_ = self._get_loss_function(loss)
         if not hasattr(self, "t_"):
             self.t_ = 1.0
+
+        if np.all(sample_weight == 0):
+            return self
 
         # delegate to concrete training procedure
         self._fit_one_class(

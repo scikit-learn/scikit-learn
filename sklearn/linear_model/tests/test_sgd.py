@@ -1072,6 +1072,80 @@ def test_partial_fit_exception(klass):
         clf.partial_fit(X3, Y3)
 
 
+@pytest.mark.parametrize(
+    "klass,fit_kwargs",
+    [
+        (SGDClassifier, {"classes": np.array([1, 2])}),
+        (SparseSGDClassifier, {"classes": np.array([1, 2])}),
+    ],
+)
+@pytest.mark.parametrize("dtype", [np.int32, np.float64])
+def test_partial_fit_zero_sample_weight_no_mutation_classifier(klass, fit_kwargs, dtype):
+    # Regression test for GH-33436: partial_fit with all-zero sample_weight
+    # must not mutate coef_ or advance t_.
+    clf = klass(alpha=0.01, random_state=42)
+    clf.partial_fit(X, Y, **fit_kwargs)
+    coef_before = clf.coef_.copy()
+    intercept_before = clf.intercept_.copy()
+    t_before = clf.t_
+
+    clf.partial_fit(X, Y, sample_weight=np.zeros(X.shape[0], dtype=dtype))
+
+    assert_array_equal(clf.coef_, coef_before)
+    assert_array_equal(clf.intercept_, intercept_before)
+    assert clf.t_ == t_before
+
+
+@pytest.mark.parametrize(
+    "klass,fit_kwargs",
+    [
+        (SGDClassifier, {"classes": np.array([1, 2])}),
+        (SparseSGDClassifier, {"classes": np.array([1, 2])}),
+    ],
+)
+def test_partial_fit_mixed_sample_weight_still_trains_classifier(klass, fit_kwargs):
+    # A batch where at least one sample has nonzero weight must still update the model.
+    clf = klass(alpha=0.01, random_state=42)
+    clf.partial_fit(X, Y, **fit_kwargs)
+    t_before = clf.t_
+
+    sw = np.zeros(X.shape[0])
+    sw[-1] = 1.0
+    clf.partial_fit(X, Y, sample_weight=sw)
+
+    assert clf.t_ > t_before
+
+
+@pytest.mark.parametrize("klass", [SGDRegressor, SparseSGDRegressor])
+@pytest.mark.parametrize("dtype", [np.int32, np.float64])
+def test_partial_fit_zero_sample_weight_no_mutation_regressor(klass, dtype):
+    # Regression test for GH-33436: partial_fit with all-zero sample_weight
+    # must not mutate coef_ or advance t_.
+    reg = klass(alpha=0.01, random_state=42)
+    reg.partial_fit(X, Y)
+    coef_before = reg.coef_.copy()
+    t_before = reg.t_
+
+    reg.partial_fit(X, Y, sample_weight=np.zeros(X.shape[0], dtype=dtype))
+
+    assert_array_equal(reg.coef_, coef_before)
+    assert reg.t_ == t_before
+
+
+@pytest.mark.parametrize("klass", [SGDOneClassSVM, SparseSGDOneClassSVM])
+def test_partial_fit_zero_sample_weight_no_mutation_oneclass(klass):
+    # Regression test for GH-33436.
+    clf = klass(nu=0.05, random_state=42)
+    clf.partial_fit(X)
+    coef_before = clf.coef_.copy()
+    t_before = clf.t_
+
+    clf.partial_fit(X, sample_weight=np.zeros(X.shape[0]))
+
+    assert_array_equal(clf.coef_, coef_before)
+    assert clf.t_ == t_before
+
+
 @pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])
 def test_partial_fit_binary(klass):
     third = X.shape[0] // 3
