@@ -286,7 +286,8 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
                 "n_neighbors (%s) is greater than the "
                 "total number of samples (%s). n_neighbors "
                 "will be set to (n_samples - 1) for estimation."
-                % (self.n_neighbors, n_samples)
+                % (self.n_neighbors, n_samples),
+                stacklevel=2,
             )
         self.n_neighbors_ = max(1, min(self.n_neighbors, n_samples - 1))
 
@@ -324,7 +325,8 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         if np.min(self.negative_outlier_factor_) < -1e7 and not self.novelty:
             warnings.warn(
                 "Duplicate values are leading to incorrect results. "
-                "Increase the number of neighbors for more accurate results."
+                "Increase the number of neighbors for more accurate results.",
+                stacklevel=2,
             )
 
         return self

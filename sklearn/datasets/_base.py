@@ -1486,7 +1486,8 @@ def _fetch_remote(remote, dirname=None, n_retries=3, delay=1):
             warnings.warn(
                 f"SHA256 checksum of existing local file {file_path.name} "
                 f"({checksum}) differs from expected ({remote.checksum}): "
-                f"re-downloading from {remote.url} ."
+                f"re-downloading from {remote.url} .",
+                stacklevel=2,
             )
 
     # We create a temporary file dedicated to this particular download to avoid
@@ -1516,7 +1517,7 @@ def _fetch_remote(remote, dirname=None, n_retries=3, delay=1):
                 if n_retries == 0:
                     # If no more retries are left, re-raise the caught exception.
                     raise
-                warnings.warn(f"Retry downloading from url: {remote.url}")
+                warnings.warn(f"Retry downloading from url: {remote.url}", stacklevel=2)
                 n_retries -= 1
                 time.sleep(delay)
 

@@ -515,6 +515,7 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
                         current_sklearn_version=__version__,
                         original_sklearn_version=pickle_version,
                     ),
+                    stacklevel=2,
                 )
         try:
             super().__setstate__(state)
@@ -949,6 +950,7 @@ class TransformerMixin(_SetOutputMixin):
                         " disable metadata routed to `transform`, if that's an option."
                     ),
                     UserWarning,
+                    stacklevel=2,
                 )
 
         if y is None:
@@ -1172,6 +1174,7 @@ class OutlierMixin:
                         "`predict`, if that's an option."
                     ),
                     UserWarning,
+                    stacklevel=2,
                 )
 
         # override for transductive outlier detectors like LocalOulierFactor

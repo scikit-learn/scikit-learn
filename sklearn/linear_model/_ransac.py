@@ -588,6 +588,7 @@ class RANSACRegressor(
                         " diagnostics (n_skips*)."
                     ),
                     ConvergenceWarning,
+                    stacklevel=2,
                 )
 
         # estimate final model using all inliers

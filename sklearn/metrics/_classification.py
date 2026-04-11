@@ -200,6 +200,7 @@ def _one_hot_encoding_multiclass_target(y_true, labels, target_xp, target_device
                 f"Pass the ordered labels={lb.classes_.tolist()} and ensure that "
                 "the columns of y_prob correspond to this ordering.",
                 UserWarning,
+                stacklevel=2,
             )
         if not xp.all(_isin(y_true, labels, xp=xp)):
             undeclared_labels = set(y_true) - set(labels)
@@ -309,6 +310,7 @@ def _validate_multiclass_probabilistic_prediction(
         warnings.warn(
             "The y_prob values do not sum to one. Make sure to pass probabilities.",
             UserWarning,
+            stacklevel=2,
         )
 
     # Check if dimensions are consistent.
@@ -623,6 +625,7 @@ def confusion_matrix(
                 "all known labels."
             ),
             UserWarning,
+            stacklevel=2,
         )
 
     return xp.asarray(cm, device=device_)
@@ -1938,6 +1941,7 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
             "labels=[pos_label] to specify a single positive class."
             % (pos_label, average),
             UserWarning,
+            stacklevel=2,
         )
     return labels
 
@@ -2398,7 +2402,7 @@ def class_likelihood_ratios(
         "and the value set with the `replace_undefined_by` param will be returned."
     )
     if raise_warning != "deprecated":
-        warnings.warn(msg_deprecated_param, FutureWarning)
+        warnings.warn(msg_deprecated_param, FutureWarning, stacklevel=2)
     else:
         raise_warning = True
 
@@ -2971,7 +2975,7 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     with context_manager:
         per_class = xp.linalg.diagonal(C) / xp.sum(C, axis=1)
     if xp.any(xp.isnan(per_class)):
-        warnings.warn("y_pred contains classes not in y_true")
+        warnings.warn("y_pred contains classes not in y_true", stacklevel=2)
         per_class = per_class[~xp.isnan(per_class)]
     score = xp.mean(per_class)
     if adjusted:
@@ -3141,7 +3145,8 @@ def classification_report(
             warnings.warn(
                 "labels size, {0}, does not match size of target_names, {1}".format(
                     len(labels), len(target_names)
-                )
+                ),
+                stacklevel=2,
             )
         else:
             raise ValueError(
@@ -3908,7 +3913,7 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
     check_consistent_length(y_pred, y_true, sample_weight)
     if _num_samples(y_pred) < 2:
         msg = "D^2 score is not well-defined with less than two samples."
-        warnings.warn(msg, UndefinedMetricWarning)
+        warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
         return float("nan")
 
     xp, _, device_ = get_namespace_and_device(y_pred)
@@ -4013,7 +4018,7 @@ def d2_brier_score(
     check_consistent_length(y_proba, y_true, sample_weight)
     if _num_samples(y_proba) < 2:
         msg = "D^2 score is not well-defined with less than two samples."
-        warnings.warn(msg, UndefinedMetricWarning)
+        warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
         return float("nan")
 
     xp, _, device_ = get_namespace_and_device(y_proba)

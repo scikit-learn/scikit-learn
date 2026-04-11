@@ -373,6 +373,7 @@ def _safe_indexing(X, indices, *, axis=0):
             "was passed, but scikit-learn does currently not know how to handle this "
             "kind of data. Some array/list indexing will be tried.",
             category=UserWarning,
+            stacklevel=2,
         )
 
     if hasattr(X, "shape"):

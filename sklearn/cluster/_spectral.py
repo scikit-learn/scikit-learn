@@ -707,7 +707,8 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
                 "The spectral clustering API has changed. ``fit``"
                 "now constructs an affinity matrix from data. To use"
                 " a custom affinity matrix, "
-                "set ``affinity=precomputed``."
+                "set ``affinity=precomputed``.",
+                stacklevel=2,
             )
 
         if self.affinity == "nearest_neighbors":

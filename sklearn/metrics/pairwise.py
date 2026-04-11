@@ -2462,7 +2462,7 @@ def pairwise_distances(
 
         if dtype is bool and (X.dtype != bool or (Y is not None and Y.dtype != bool)):
             msg = "Data was converted to boolean for metric %s" % metric
-            warnings.warn(msg, DataConversionWarning)
+            warnings.warn(msg, DataConversionWarning, stacklevel=2)
 
         X, Y = check_pairwise_arrays(
             X, Y, dtype=dtype, ensure_all_finite=ensure_all_finite

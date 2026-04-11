@@ -322,7 +322,8 @@ class DecisionBoundaryDisplay:
                 if kwarg in kwargs:
                     warnings.warn(
                         f"'{kwarg}' is ignored in favor of 'multiclass_colors' "
-                        "in the multiclass case."
+                        "in the multiclass case.",
+                        stacklevel=2,
                     )
                     del kwargs[kwarg]
 

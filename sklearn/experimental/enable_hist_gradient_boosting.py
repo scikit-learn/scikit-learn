@@ -19,5 +19,6 @@ warnings.warn(
     "Since version 1.0, "
     "it is not needed to import enable_hist_gradient_boosting anymore. "
     "HistGradientBoostingClassifier and HistGradientBoostingRegressor are now "
-    "stable and can be normally imported from sklearn.ensemble."
+    "stable and can be normally imported from sklearn.ensemble.",
+    stacklevel=2,
 )

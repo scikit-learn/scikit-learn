@@ -38,6 +38,7 @@ class Bunch(dict):
             warnings.warn(
                 self._deprecated_key_to_warnings[key],
                 FutureWarning,
+                stacklevel=2,
             )
         return super().__getitem__(key)
 

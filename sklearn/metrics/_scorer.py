@@ -326,7 +326,8 @@ class _BaseScorer(_MetadataRequester):
         overlap = _kwargs.intersection(kwargs.keys())
         if overlap:
             warnings.warn(
-                f"{message} Overlapping parameters are: {overlap}", UserWarning
+                f"{message} Overlapping parameters are: {overlap}", UserWarning,
+                stacklevel=2,
             )
 
     def set_score_request(self, **kwargs):

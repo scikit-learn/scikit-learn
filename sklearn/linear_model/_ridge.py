@@ -151,6 +151,7 @@ def _solve_sparse_cg(
             warnings.warn(
                 "sparse_cg did not converge after %d iterations." % info,
                 ConvergenceWarning,
+                stacklevel=2,
             )
 
     return coefs
@@ -265,7 +266,8 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
         except np.linalg.LinAlgError:
             warnings.warn(
                 "Singular matrix in solving dual problem. Using "
-                "least-squares solution instead."
+                "least-squares solution instead.",
+                stacklevel=2,
             )
             dual_coef = linalg.lstsq(K, y)[0]
 
@@ -373,6 +375,7 @@ def _solve_lbfgs(
                     f"or tol. Currently: max_iter={max_iter} and tol={tol}"
                 ),
                 ConvergenceWarning,
+                stacklevel=2,
             )
         coefs[i] = result["x"]
 
@@ -869,7 +872,8 @@ def resolve_solver(solver, positive, return_intercept, is_sparse, xp):
             f"`solver='auto'` will result in using the solver '{solver}'. "
             "The results may differ from those when using a Numpy array, "
             f"because in that case the preferred solver would be {auto_solver_np}. "
-            f"Set `solver='{solver}'` to suppress this warning."
+            f"Set `solver='{solver}'` to suppress this warning.",
+            stacklevel=2,
         )
 
     return solver
@@ -960,7 +964,8 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                     "an intercept with sparse inputs. Either set the "
                     'solver to "auto" or "sparse_cg", or set a low '
                     '"tol" and a high "max_iter" (especially if inputs are '
-                    "not standardized)."
+                    "not standardized).",
+                    stacklevel=2,
                 )
                 solver = "sag"
             else:
@@ -1647,7 +1652,7 @@ def _check_gcv_mode(X, gcv_mode):
                 "an error in 1.11, use the default or pass `gcv_mode='eigen'` to "
                 "suppress this warning."
             )
-            warnings.warn(msg, FutureWarning)
+            warnings.warn(msg, FutureWarning, stacklevel=2)
         else:
             return "svd"
 

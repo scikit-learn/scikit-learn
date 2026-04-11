@@ -869,7 +869,8 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
                         "Outlier label {} is not in training "
                         "classes. All class probabilities of "
                         "outliers will be assigned with 0."
-                        "".format(self.outlier_label_[k])
+                        "".format(self.outlier_label_[k]),
+                        stacklevel=2,
                     )
 
             # normalize 'votes' into real [0,1] probabilities

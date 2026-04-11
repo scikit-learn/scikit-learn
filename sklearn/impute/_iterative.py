@@ -867,6 +867,7 @@ class IterativeImputer(_BaseImputer):
                 warnings.warn(
                     "[IterativeImputer] Early stopping criterion not reached.",
                     ConvergenceWarning,
+                    stacklevel=2,
                 )
         _assign_where(Xt, X, cond=~mask_missing_values)
 

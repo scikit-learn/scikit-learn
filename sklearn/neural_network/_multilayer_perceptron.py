@@ -694,7 +694,8 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
             if self.batch_size > n_samples:
                 warnings.warn(
                     "Got `batch_size` less than 1 or larger than "
-                    "sample size. It is going to be clipped"
+                    "sample size. It is going to be clipped",
+                    stacklevel=2,
                 )
             batch_size = np.clip(self.batch_size, 1, n_samples)
 
@@ -787,9 +788,10 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
                         "reached and the optimization hasn't converged yet."
                         % self.max_iter,
                         ConvergenceWarning,
+                        stacklevel=2,
                     )
         except KeyboardInterrupt:
-            warnings.warn("Training interrupted by user.")
+            warnings.warn("Training interrupted by user.", stacklevel=2)
 
         if early_stopping:
             # restore best weights

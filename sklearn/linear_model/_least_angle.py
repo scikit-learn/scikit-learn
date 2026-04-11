@@ -733,6 +733,7 @@ def _lars_path_solver(
                     " Reduce max_iter or increase eps parameters."
                     % (n_iter, alpha.item(), n_active, diag),
                     ConvergenceWarning,
+                    stacklevel=2,
                 )
 
                 # XXX: need to figure a 'drop for good' way
@@ -761,6 +762,7 @@ def _lars_path_solver(
                 "previous alpha=%.3e, with an active set of %i "
                 "regressors." % (n_iter, alpha.item(), prev_alpha.item(), n_active),
                 ConvergenceWarning,
+                stacklevel=2,
             )
             break
 
@@ -1744,7 +1746,8 @@ class LarsCV(Lars):
         if hasattr(Gram, "__array__"):
             warnings.warn(
                 'Parameter "precompute" cannot be an array in '
-                '%s. Automatically switch to "auto" instead.' % self.__class__.__name__
+                '%s. Automatically switch to "auto" instead.' % self.__class__.__name__,
+                stacklevel=2,
             )
             Gram = "auto"
 

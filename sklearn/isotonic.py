@@ -91,7 +91,8 @@ def check_increasing(x, y):
                 "Confidence interval of the Spearman "
                 "correlation coefficient spans zero. "
                 "Determination of ``increasing`` may be "
-                "suspect."
+                "suspect.",
+                stacklevel=2,
             )
 
     return increasing_bool

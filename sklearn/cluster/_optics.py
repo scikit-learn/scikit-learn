@@ -331,7 +331,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
                 f" metric {self.metric}, to avoid this warning,"
                 " you may convert the data prior to calling fit."
             )
-            warnings.warn(msg, DataConversionWarning)
+            warnings.warn(msg, DataConversionWarning, stacklevel=2)
 
         X = validate_data(self, X, dtype=dtype, accept_sparse="csr")
         if self.metric == "precomputed" and issparse(X):
@@ -665,6 +665,7 @@ def compute_optics_graph(
                 " max_eps or all data will be considered outliers."
             ),
             UserWarning,
+            stacklevel=2,
         )
     return ordering, core_distances_, reachability_, predecessor_
 

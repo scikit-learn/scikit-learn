@@ -687,7 +687,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
                 "`base_estimator` as an argument was deprecated in 1.7 and will be"
                 " removed in 1.9. Use `estimator` instead."
             )
-            warnings.warn(warning_msg, FutureWarning)
+            warnings.warn(warning_msg, FutureWarning, stacklevel=2)
             return self.base_estimator
         else:
             return self.estimator

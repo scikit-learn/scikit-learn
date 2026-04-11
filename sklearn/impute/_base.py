@@ -647,7 +647,8 @@ class SimpleImputer(_BaseImputer):
                 warnings.warn(
                     "Skipping features without any observed values:"
                     f" {invalid_features}. At least one non-missing value is needed"
-                    f" for imputation with strategy='{self.strategy}'."
+                    f" for imputation with strategy='{self.strategy}'.",
+                    stacklevel=2,
                 )
                 X = X[:, valid_statistics_indexes]
 

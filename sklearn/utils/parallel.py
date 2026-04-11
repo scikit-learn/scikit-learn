@@ -34,6 +34,7 @@ def _with_config_and_warning_filters(delayed_func, config, warning_filters):
                 "configuration to the joblib workers."
             ),
             UserWarning,
+            stacklevel=2,
         )
         return delayed_func
 
@@ -149,6 +150,7 @@ class _FuncWrapper:
                     " the joblib workers."
                 ),
                 UserWarning,
+                stacklevel=2,
             )
 
         with config_context(**config), warnings.catch_warnings():

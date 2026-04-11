@@ -472,6 +472,7 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
                 "is not defined in that case."
             ),
             UndefinedMetricWarning,
+            stacklevel=2,
         )
         return np.nan
 
@@ -1191,7 +1192,8 @@ def precision_recall_curve(
     if tps[-1] == 0:
         warnings.warn(
             "No positive class found in y_true, "
-            "recall is set to one for all thresholds."
+            "recall is set to one for all thresholds.",
+            stacklevel=2,
         )
         recall = xp.full(tps.shape, 1.0, device=device)
     else:
@@ -1355,6 +1357,7 @@ def roc_curve(
         warnings.warn(
             "No negative samples in y_true, false positive value should be meaningless",
             UndefinedMetricWarning,
+            stacklevel=2,
         )
         fpr = xp.full(fps.shape, xp.nan)
     else:
@@ -1364,6 +1367,7 @@ def roc_curve(
         warnings.warn(
             "No positive samples in y_true, true positive value should be meaningless",
             UndefinedMetricWarning,
+            stacklevel=2,
         )
         tpr = xp.full(tps.shape, xp.nan)
     else:
@@ -2224,6 +2228,7 @@ def top_k_accuracy_score(
                 "will result in a perfect score and is therefore meaningless."
             ),
             UndefinedMetricWarning,
+            stacklevel=2,
         )
 
     y_true_encoded = _encode(y_true, uniques=classes)

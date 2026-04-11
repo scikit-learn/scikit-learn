@@ -195,6 +195,7 @@ class _BinaryClassifierCurveDisplayMixin:
                 "Pass all matplotlib arguments to `curve_kwargs` as a dictionary "
                 "instead.",
                 FutureWarning,
+                stacklevel=2,
             )
             curve_kwargs = kwargs
 
@@ -404,6 +405,7 @@ def _deprecate_estimator_name(estimator_name, name, version):
             f"`estimator_name` is deprecated in {version} and will be removed in "
             f"{version_remove}. Use `name` instead.",
             FutureWarning,
+            stacklevel=2,
         )
         return estimator_name
     return name
@@ -461,6 +463,7 @@ def _deprecate_y_pred_parameter(y_score, y_pred, version):
                 f" {version_remove}. Please use `y_score` instead."
             ),
             FutureWarning,
+            stacklevel=2,
         )
         return y_pred
 

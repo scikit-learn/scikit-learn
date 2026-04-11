@@ -415,6 +415,7 @@ class BaseRandomProjection(
                     "The dimensionality of the problem will not be reduced."
                     % (n_features, self.n_components),
                     DataDimensionalityWarning,
+                    stacklevel=2,
                 )
 
             self.n_components_ = self.n_components

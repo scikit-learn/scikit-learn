@@ -201,6 +201,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
                     " 'check_inverse=False'."
                 ),
                 UserWarning,
+                stacklevel=2,
             )
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -302,9 +303,9 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
                 " should be defined."
             )
             if output_config == "pandas" and not is_pandas_df(out):
-                warnings.warn(warn_msg.format("pandas"))
+                warnings.warn(warn_msg.format("pandas"), stacklevel=2)
             elif output_config == "polars" and not is_polars_df(out):
-                warnings.warn(warn_msg.format("polars"))
+                warnings.warn(warn_msg.format("polars"), stacklevel=2)
 
         return out
 

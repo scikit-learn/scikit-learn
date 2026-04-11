@@ -309,7 +309,7 @@ def _newton_cg(
                     args=args,
                 )
             except _LineSearchError:
-                warnings.warn("Line Search failed")
+                warnings.warn("Line Search failed", stacklevel=2)
                 break
 
         xk += alphak * xsupi  # upcast if necessary
@@ -322,6 +322,7 @@ def _newton_cg(
                 " number of iterations."
             ),
             ConvergenceWarning,
+            stacklevel=2,
         )
     elif is_verbose:
         print(f"  Solver did converge at loss = {old_fval}.")

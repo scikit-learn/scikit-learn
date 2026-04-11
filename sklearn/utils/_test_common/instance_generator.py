@@ -825,7 +825,7 @@ def _construct_instances(Estimator):
     if Estimator in SKIPPED_ESTIMATORS:
         msg = f"Can't instantiate estimator {Estimator.__name__}"
         # raise additional warning to be shown by pytest
-        warnings.warn(msg, SkipTestWarning)
+        warnings.warn(msg, SkipTestWarning, stacklevel=2)
         raise SkipTest(msg)
 
     if Estimator in INIT_PARAMS:

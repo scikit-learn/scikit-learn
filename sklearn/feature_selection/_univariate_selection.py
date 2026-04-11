@@ -107,7 +107,7 @@ def f_oneway(*args):
     msw = sswn / float(dfwn)
     constant_features_idx = np.where(msw == 0.0)[0]
     if np.nonzero(msb)[0].size != msb.size and constant_features_idx.size:
-        warnings.warn("Features %s are constant." % constant_features_idx, UserWarning)
+        warnings.warn("Features %s are constant." % constant_features_idx, UserWarning, stacklevel=2)
     f = msb / msw
     # flatten matrix to vector in sparse case
     f = np.asarray(f).ravel()
@@ -781,7 +781,8 @@ class SelectKBest(_BaseFilter):
         if not isinstance(self.k, str) and self.k > X.shape[1]:
             warnings.warn(
                 f"k={self.k} is greater than n_features={X.shape[1]}. "
-                "All the features will be returned."
+                "All the features will be returned.",
+                stacklevel=2,
             )
 
     def _get_support_mask(self):

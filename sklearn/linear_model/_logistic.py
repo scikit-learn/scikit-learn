@@ -1203,6 +1203,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                             "trigger an error in 1.10. Use 0<=l1_ratio<=1 instead."
                         ),
                         FutureWarning,
+                        stacklevel=2,
                     )
             elif self.l1_ratio == 1:
                 penalty = "l1"
@@ -1222,6 +1223,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                     "C=np.inf instead of penalty=None."
                 ),
                 FutureWarning,
+                stacklevel=2,
             )
 
         solver = _check_solver(self.solver, penalty, self.dual)
@@ -1232,7 +1234,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             warnings.warn(
                 "l1_ratio parameter is only used when penalty is "
                 "'elasticnet'. Got "
-                "(penalty={})".format(penalty)
+                "(penalty={})".format(penalty),
+                stacklevel=2,
             )
         if (self.penalty == "l2" and self.l1_ratio != 0) or (
             self.penalty == "l1" and self.l1_ratio != 1
@@ -1240,7 +1243,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             warnings.warn(
                 f"Inconsistent values: penalty={self.penalty} with "
                 f"l1_ratio={self.l1_ratio}. penalty is deprecated. Please use "
-                f"l1_ratio only."
+                f"l1_ratio only.",
+                stacklevel=2,
             )
         if penalty == "elasticnet" and self.l1_ratio is None:
             raise ValueError("l1_ratio must be specified when penalty is elasticnet.")
@@ -1251,7 +1255,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         if self.penalty is None:
             if self.C != 1.0:  # default value
                 warnings.warn(
-                    "Setting penalty=None will ignore the C and l1_ratio parameters"
+                    "Setting penalty=None will ignore the C and l1_ratio parameters",
+                    stacklevel=2,
                 )
                 # Note that check for l1_ratio is done right above
             C_ = xp.inf
@@ -1264,7 +1269,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             f"You provided 'n_jobs={self.n_jobs}', please leave it unspecified."
         )
         if self.n_jobs is not None:
-            warnings.warn(msg, category=FutureWarning)
+            warnings.warn(msg, category=FutureWarning, stacklevel=2)
 
         X, y = validate_data(
             self,
@@ -1883,6 +1888,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                     "e.g. l1_ratios=(0,)."
                 ),
                 FutureWarning,
+                stacklevel=2,
             )
         else:
             l1_ratios = self.l1_ratios
@@ -1896,6 +1902,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                         "in [0, 1] instead."
                     ),
                     FutureWarning,
+                    stacklevel=2,
                 )
             if np.all(np.asarray(l1_ratios) == 0) or l1_ratios is None:
                 penalty = "l2"
@@ -1914,6 +1921,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                     " and l1_ratios=(1,) instead of penalty='l1'."
                 ),
                 FutureWarning,
+                stacklevel=2,
             )
 
         if self.scoring == "warn":
@@ -1924,6 +1932,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 "scoring='neg_log_loss' for the new, scoring='accuracy' or "
                 "scoring=None for the old default.",
                 FutureWarning,
+                stacklevel=2,
             )
             scoring = None
         else:
@@ -1940,6 +1949,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 f"scikit-learn 1.10. See the docstring of {self.__class__.__name__} "
                 "for more details.",
                 FutureWarning,
+                stacklevel=2,
             )
             use_legacy_attributes = True
         else:
@@ -1969,7 +1979,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             if l1_ratios is not None and self.penalty != "deprecated":
                 warnings.warn(
                     "l1_ratios parameter is only used when penalty "
-                    "is 'elasticnet'. Got (penalty={})".format(penalty)
+                    "is 'elasticnet'. Got (penalty={})".format(penalty),
+                    stacklevel=2,
                 )
 
             if l1_ratios is None:

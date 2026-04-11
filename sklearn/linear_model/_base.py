@@ -876,6 +876,7 @@ def _pre_fit(
                     "intercept: recomputing Gram matrix."
                 ),
                 UserWarning,
+                stacklevel=2,
             )
             # TODO: instead of warning and recomputing, we could just center
             # the user provided Gram matrix a-posteriori (after making a copy

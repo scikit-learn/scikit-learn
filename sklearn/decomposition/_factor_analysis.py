@@ -298,6 +298,7 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
                 " You might want"
                 " to increase the number of iterations.",
                 ConvergenceWarning,
+                stacklevel=2,
             )
 
         self.components_ = W

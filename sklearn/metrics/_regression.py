@@ -1292,7 +1292,7 @@ def r2_score(
 
     if _num_samples(y_pred) < 2:
         msg = "R^2 score is not well-defined with less than two samples."
-        warnings.warn(msg, UndefinedMetricWarning)
+        warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
         return float("nan")
 
     if sample_weight is not None:
@@ -1679,7 +1679,7 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
 
     if _num_samples(y_pred) < 2:
         msg = "D^2 score is not well-defined with less than two samples."
-        warnings.warn(msg, UndefinedMetricWarning)
+        warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
         return float("nan")
 
     y_true, y_pred = xp.squeeze(y_true, axis=1), xp.squeeze(y_pred, axis=1)
@@ -1823,7 +1823,7 @@ def d2_pinball_score(
 
     if _num_samples(y_pred) < 2:
         msg = "D^2 score is not well-defined with less than two samples."
-        warnings.warn(msg, UndefinedMetricWarning)
+        warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
         return float("nan")
 
     numerator = mean_pinball_loss(

@@ -655,7 +655,8 @@ class _BaseDiscreteNB(_BaseNB):
             warnings.warn(
                 "alpha too small will result in numeric errors, setting alpha ="
                 f" {alpha_lower_bound:.1e}. Use `force_alpha=True` to keep alpha"
-                " unchanged."
+                " unchanged.",
+                stacklevel=2,
             )
             return np.maximum(alpha, alpha_lower_bound)
         return alpha

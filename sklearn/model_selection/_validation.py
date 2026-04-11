@@ -486,7 +486,7 @@ def _warn_or_raise_about_fit_failures(results, error_score):
                 "by setting error_score='raise'.\n\n"
                 f"Below are more details about the failures:\n{fit_errors_summary}"
             )
-            warnings.warn(some_fits_failed_message, FitFailedWarning)
+            warnings.warn(some_fits_failed_message, FitFailedWarning, stacklevel=2)
 
 
 @validate_params(
@@ -930,6 +930,7 @@ def _score(estimator, X_test, y_test, scorer, score_params, error_score="raise")
                         f"{format_exc()}"
                     ),
                     UserWarning,
+                    stacklevel=2,
                 )
 
     # Check non-raised error messages in `_MultimetricScorer`
@@ -948,6 +949,7 @@ def _score(estimator, X_test, y_test, scorer, score_params, error_score="raise")
                         f"{str_e}"
                     ),
                     UserWarning,
+                    stacklevel=2,
                 )
 
     error_msg = "scoring must return a number, got %s (%s) instead. (scorer=%s)"
@@ -1354,6 +1356,7 @@ def _enforce_prediction_order(classes, predictions, n_classes, method):
             "Results may not be appropriate for your use case. "
             "{}".format(classes_length, n_classes, recommendation),
             RuntimeWarning,
+            stacklevel=2,
         )
         if method == "decision_function":
             if predictions.ndim == 2 and predictions.shape[1] != classes_length:
@@ -2131,6 +2134,7 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
             "of ticks will be less than the size of "
             "'train_sizes': %d instead of %d." % (train_sizes_abs.shape[0], n_ticks),
             RuntimeWarning,
+            stacklevel=2,
         )
 
     return train_sizes_abs

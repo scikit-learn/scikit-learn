@@ -344,6 +344,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 "cross-validation generator as `cv` argument to specify the shuffling "
                 "behaviour instead.",
                 FutureWarning,
+                stacklevel=2,
             )
         shuffle = True if self.shuffle == "deprecated" else self.shuffle
         cv_kwargs = {"shuffle": shuffle}

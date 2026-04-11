@@ -172,7 +172,8 @@ def get_chunk_n_rows(row_bytes, *, max_n_rows=None, working_memory=None):
         warnings.warn(
             "Could not adhere to working_memory config. "
             "Currently %.0fMiB, %.0fMiB required."
-            % (working_memory, np.ceil(row_bytes * 2**-20))
+            % (working_memory, np.ceil(row_bytes * 2**-20)),
+            stacklevel=2,
         )
         chunk_n_rows = 1
     return chunk_n_rows

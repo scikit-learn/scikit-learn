@@ -1683,6 +1683,7 @@ class LinearModelCV(MultiOutputLinearModel, ABC):
                 "100 in 1.9. Pass an explicit value to 'alphas' and leave 'n_alphas' "
                 "to its default value to silence this warning.",
                 FutureWarning,
+                stacklevel=2,
             )
             self._alphas = self.n_alphas
 
@@ -1700,6 +1701,7 @@ class LinearModelCV(MultiOutputLinearModel, ABC):
                 "point the default value will be set to 100. Set 'alphas=100' "
                 "to silence this warning.",
                 FutureWarning,
+                stacklevel=2,
             )
         else:
             self._alphas = self.alphas

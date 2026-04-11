@@ -192,6 +192,7 @@ def _c_step(
             "support_fraction (current value: %.3f)."
             % (det, previous_det, n_support / n_samples),
             RuntimeWarning,
+            stacklevel=2,
         )
         results = (
             previous_location,
@@ -791,7 +792,8 @@ class MinCovDet(EmpiricalCovariance):
         # check that the empirical covariance is full rank
         if (linalg.svdvals(np.dot(X.T, X)) > 1e-8).sum() != n_features:
             warnings.warn(
-                "The covariance matrix associated to your dataset is not full rank"
+                "The covariance matrix associated to your dataset is not full rank",
+                stacklevel=2,
             )
         # compute and store raw estimates
         raw_location, raw_covariance, raw_support, raw_dist = fast_mcd(

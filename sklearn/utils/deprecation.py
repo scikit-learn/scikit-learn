@@ -68,7 +68,7 @@ class deprecated:
         sig = signature(cls)
 
         def wrapped(cls, *args, **kwargs):
-            warnings.warn(msg, category=FutureWarning)
+            warnings.warn(msg, category=FutureWarning, stacklevel=2)
             if new is object.__new__:
                 return object.__new__(cls)
 
@@ -91,7 +91,7 @@ class deprecated:
 
         @functools.wraps(fun)
         def wrapped(*args, **kwargs):
-            warnings.warn(msg, category=FutureWarning)
+            warnings.warn(msg, category=FutureWarning, stacklevel=2)
             return fun(*args, **kwargs)
 
         # Add a reference to the wrapped function so that we can introspect
@@ -106,7 +106,7 @@ class deprecated:
         @property
         @functools.wraps(prop.fget)
         def wrapped(*args, **kwargs):
-            warnings.warn(msg, category=FutureWarning)
+            warnings.warn(msg, category=FutureWarning, stacklevel=2)
             return prop.fget(*args, **kwargs)
 
         return wrapped

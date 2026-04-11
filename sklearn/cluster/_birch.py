@@ -713,6 +713,7 @@ class Birch(
                     "than (%d). Decrease the threshold."
                     % (len(centroids), self.n_clusters),
                     ConvergenceWarning,
+                    stacklevel=2,
                 )
         else:
             # The global clustering step that clusters the subclusters of

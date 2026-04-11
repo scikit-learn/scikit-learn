@@ -246,6 +246,7 @@ def sort_graph_by_row_values(graph, copy=False, warn_when_not_sorted=True):
                 " warning."
             ),
             EfficiencyWarning,
+            stacklevel=2,
         )
 
     if graph.format not in ("csr", "csc", "coo", "lil"):
@@ -588,7 +589,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         if issparse(X):
             if self.algorithm not in ("auto", "brute"):
-                warnings.warn("cannot use tree with sparse input: using brute force")
+                warnings.warn("cannot use tree with sparse input: using brute force", stacklevel=2)
 
             if (
                 self.effective_metric_ not in VALID_METRICS_SPARSE["brute"]
@@ -660,7 +661,8 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             if self._fit_method == "brute":
                 warnings.warn(
                     "Mind that for 0 < p < 1, Minkowski metrics are not distance"
-                    " metrics. Continuing the execution with `algorithm='brute'`."
+                    " metrics. Continuing the execution with `algorithm='brute'`.",
+                    stacklevel=2,
                 )
             else:  # self._fit_method in ("kd_tree", "ball_tree")
                 raise ValueError(

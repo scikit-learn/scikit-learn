@@ -450,6 +450,7 @@ class Kernel(metaclass=ABCMeta):
                         " calling fit again may find a "
                         "better value." % (dim, hyp.name, hyp.bounds[dim][0]),
                         ConvergenceWarning,
+                        stacklevel=2,
                     )
                 elif list_close[idx, 1]:
                     warnings.warn(
@@ -460,6 +461,7 @@ class Kernel(metaclass=ABCMeta):
                         " calling fit again may find a "
                         "better value." % (dim, hyp.name, hyp.bounds[dim][1]),
                         ConvergenceWarning,
+                        stacklevel=2,
                     )
                 idx += 1
 

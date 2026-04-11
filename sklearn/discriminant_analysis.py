@@ -685,7 +685,7 @@ class LinearDiscriminantAnalysis(
             raise ValueError("priors must be non-negative")
 
         if xp.abs(xp.sum(self.priors_) - 1.0) > 1e-5:
-            warnings.warn("The priors do not sum to 1. Renormalizing", UserWarning)
+            warnings.warn("The priors do not sum to 1. Renormalizing", UserWarning, stacklevel=2)
             self.priors_ = self.priors_ / self.priors_.sum()
 
         # Maximum number of components no matter what n_components is

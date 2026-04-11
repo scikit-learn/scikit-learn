@@ -348,6 +348,7 @@ def sag_solver(
         warnings.warn(
             "The max_iter was reached which means the coef_ did not converge",
             ConvergenceWarning,
+            stacklevel=2,
         )
 
     if fit_intercept:

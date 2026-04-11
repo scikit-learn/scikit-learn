@@ -303,6 +303,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
                         " no feature selection and all features will be kept."
                     ),
                     UserWarning,
+                    stacklevel=2,
                 )
         else:  # float
             n_features_to_select = int(n_features * self.n_features_to_select)
@@ -861,6 +862,7 @@ class RFECV(RFE):
                     "features will be kept."
                 ),
                 UserWarning,
+                stacklevel=2,
             )
         rfe = RFE(
             estimator=self.estimator,

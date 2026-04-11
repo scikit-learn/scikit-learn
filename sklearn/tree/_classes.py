@@ -1363,6 +1363,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
                 'were always equivalent. Use `criterion="squared_error"` '
                 "to remove this warning.",
                 FutureWarning,
+                stacklevel=2,
             )
         super().__init__(
             criterion=criterion,

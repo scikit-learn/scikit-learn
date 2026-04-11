@@ -101,7 +101,7 @@ def _get_first_singular_vectors_power_method(
 
     n_iter = i + 1
     if n_iter == max_iter:
-        warnings.warn("Maximum number of iterations reached", ConvergenceWarning)
+        warnings.warn("Maximum number of iterations reached", ConvergenceWarning, stacklevel=2)
 
     return x_weights, y_weights, n_iter
 
@@ -305,7 +305,7 @@ class _PLS(
                 except StopIteration as e:
                     if str(e) != "y residual is constant":
                         raise
-                    warnings.warn(f"y residual is constant at iteration {k}")
+                    warnings.warn(f"y residual is constant at iteration {k}", stacklevel=2)
                     break
 
                 self.n_iter_.append(n_iter_)
