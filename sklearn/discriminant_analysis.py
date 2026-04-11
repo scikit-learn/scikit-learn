@@ -344,7 +344,8 @@ class LinearDiscriminantAnalysis(
         Solver to use, possible values:
           - 'svd': Singular value decomposition (default).
             Does not compute the covariance matrix, therefore this solver is
-            recommended for data with a large number of features.
+            recommended for data with a large number of features. Can be combined
+            with shrinkage.
           - 'lsqr': Least squares solution.
             Can be combined with shrinkage or custom covariance estimator.
           - 'eigen': Eigenvalue decomposition.
@@ -361,7 +362,6 @@ class LinearDiscriminantAnalysis(
           - float between 0 and 1: fixed shrinkage parameter.
 
         This should be left to None if `covariance_estimator` is used.
-        Note that shrinkage works only with 'lsqr' and 'eigen' solvers.
 
         For a usage example, see
         :ref:`sphx_glr_auto_examples_classification_plot_lda.py`.
@@ -919,6 +919,7 @@ class QuadraticDiscriminantAnalysis(
           - 'svd': Singular value decomposition (default).
             Does not compute the covariance matrix, therefore this solver is
             recommended for data with a large number of features.
+            Can be combined with shrinkage.
           - 'eigen': Eigenvalue decomposition.
             Can be combined with shrinkage or custom covariance estimator.
 
@@ -934,7 +935,6 @@ class QuadraticDiscriminantAnalysis(
           the covariance estimation step.
 
         This should be left to `None` if `covariance_estimator` is used.
-        Note that shrinkage works only with 'eigen' solver.
 
     priors : array-like of shape (n_classes,), default=None
         Class priors. By default, the class proportions are inferred from the
