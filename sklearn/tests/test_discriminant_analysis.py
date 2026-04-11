@@ -67,6 +67,9 @@ solver_shrinkage = [
     ("eigen", "auto"),
     ("eigen", 0),
     ("eigen", 0.43),
+    ("svd", "auto"),
+    ("svd", 0),
+    ("svd", 0.43),
 ]
 
 
@@ -101,8 +104,10 @@ def test_lda_predict():
         # LDA shouldn't be able to separate those
         assert np.any(y_pred3 != y3), "solver %s" % solver
 
-    clf = LinearDiscriminantAnalysis(solver="svd", shrinkage="auto")
-    with pytest.raises(NotImplementedError):
+    clf = LinearDiscriminantAnalysis(
+      solver="svd", covariance_estimator=ShrunkCovariance
+    )
+    with pytest.raises(ValueError):
         clf.fit(X, y)
 
     clf = LinearDiscriminantAnalysis(
