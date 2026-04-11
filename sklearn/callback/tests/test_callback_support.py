@@ -5,6 +5,7 @@ import textwrap
 
 import pytest
 
+import sklearn.callback._callback_support as callback_support
 from sklearn.base import clone
 from sklearn.callback.tests._utils import (
     FailingCallback,
@@ -106,3 +107,119 @@ def test_instantiate_manager_outside_main_module():
     get_callback_manager()
     """
     assert_run_python_script_without_output(textwrap.dedent(code))
+
+
+def test_is_debugger_session_active_requires_trace_and_debug_module(monkeypatch):
+    monkeypatch.setattr(callback_support.sys, "gettrace", lambda: object())
+    monkeypatch.setitem(callback_support.sys.modules, "debugpy", object())
+
+    assert callback_support._is_debugger_session_active()
+
+    monkeypatch.setattr(callback_support.sys, "gettrace", lambda: None)
+    assert not callback_support._is_debugger_session_active()
+
+    monkeypatch.setattr(callback_support.sys, "gettrace", lambda: object())
+    monkeypatch.delitem(callback_support.sys.modules, "debugpy", raising=False)
+    monkeypatch.delitem(callback_support.sys.modules, "pydevd", raising=False)
+    monkeypatch.delitem(callback_support.sys.modules, "_pydevd_bundle", raising=False)
+    assert not callback_support._is_debugger_session_active()
+
+
+def test_is_debugger_session_active_with_pydevd_global_debugger(monkeypatch):
+    class DummyPydevd:
+        @staticmethod
+        def get_global_debugger():
+            return object()
+
+    monkeypatch.setattr(callback_support.sys, "gettrace", lambda: None)
+    monkeypatch.setitem(callback_support.sys.modules, "pydevd", DummyPydevd())
+
+    assert callback_support._is_debugger_session_active()
+
+
+def test_create_callback_manager_prefers_loky(monkeypatch):
+    calls = []
+
+    class DummyLokyContext:
+        def Manager(self):
+            calls.append("loky")
+            return "loky-manager"
+
+    monkeypatch.setattr(
+        callback_support, "get_loky_context", lambda: DummyLokyContext()
+    )
+    monkeypatch.setattr(
+        callback_support,
+        "_get_fork_context",
+        lambda: pytest.fail("fork fallback should not be used"),
+    )
+
+    assert callback_support._create_callback_manager() == "loky-manager"
+    assert calls == ["loky"]
+
+
+def test_create_callback_manager_reraises_outside_debugger(monkeypatch):
+    error = EOFError("loky bootstrap failed")
+
+    class DummyLokyContext:
+        def Manager(self):
+            raise error
+
+    monkeypatch.setattr(
+        callback_support, "get_loky_context", lambda: DummyLokyContext()
+    )
+    monkeypatch.setattr(callback_support, "_is_debugger_session_active", lambda: False)
+    monkeypatch.setattr(
+        callback_support,
+        "_get_fork_context",
+        lambda: pytest.fail("fork fallback should not be used"),
+    )
+
+    with pytest.raises(EOFError) as exc_info:
+        callback_support._create_callback_manager()
+
+    assert exc_info.value is error
+
+
+def test_create_callback_manager_retries_with_fork_in_debugger(monkeypatch):
+    calls = []
+
+    class DummyLokyContext:
+        def Manager(self):
+            calls.append("loky")
+            raise EOFError("loky bootstrap failed")
+
+    class DummyForkContext:
+        def Manager(self):
+            calls.append("fork")
+            return "fork-manager"
+
+    monkeypatch.setattr(
+        callback_support, "get_loky_context", lambda: DummyLokyContext()
+    )
+    monkeypatch.setattr(callback_support, "_is_debugger_session_active", lambda: True)
+    monkeypatch.setattr(
+        callback_support, "_get_fork_context", lambda: DummyForkContext()
+    )
+
+    assert callback_support._create_callback_manager() == "fork-manager"
+    assert calls == ["loky", "fork"]
+
+
+def test_create_callback_manager_reraises_without_fork_context(monkeypatch):
+    error = EOFError("loky bootstrap failed")
+
+    class DummyLokyContext:
+        def Manager(self):
+            raise error
+
+    monkeypatch.setattr(
+        callback_support, "get_loky_context", lambda: DummyLokyContext()
+    )
+    monkeypatch.setattr(callback_support, "_is_debugger_session_active", lambda: True)
+    monkeypatch.setattr(callback_support, "_get_fork_context", lambda: None)
+
+    with pytest.raises(EOFError) as exc_info:
+        callback_support._create_callback_manager()
+
+    assert exc_info.value is error

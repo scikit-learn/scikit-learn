@@ -2,10 +2,13 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import functools
+import os
+import sys
 from contextlib import contextmanager
+from multiprocessing import get_context as get_multiprocessing_context
 from threading import Lock
 
-from joblib.externals.loky.backend import get_context
+from joblib.externals.loky.backend import get_context as get_loky_context
 
 from sklearn.callback._base import AutoPropagatedCallback, FitCallback
 from sklearn.callback._callback_context import CallbackContext
@@ -16,6 +19,54 @@ class _CallbackManagerState:
     lock = Lock()
 
 
+def _is_debugger_session_active():
+    """Return True when running under an active debugpy/pydevd session."""
+    if not any(
+        module_name in sys.modules
+        for module_name in ("debugpy", "pydevd", "_pydevd_bundle")
+    ):
+        return False
+
+    if sys.gettrace() is not None:
+        return True
+
+    # debugpy can keep a live pydevd debugger without installing a sys.gettrace hook.
+    pydevd = sys.modules.get("pydevd")
+    get_global_debugger = getattr(pydevd, "get_global_debugger", None)
+    return get_global_debugger is not None and get_global_debugger() is not None
+
+
+def _get_fork_context():
+    """Return a multiprocessing fork context when it is available."""
+    if os.name != "posix":
+        return None
+
+    try:
+        return get_multiprocessing_context("fork")
+    except ValueError:
+        return None
+
+
+def _create_callback_manager():
+    """Create the callbacks manager.
+
+    Use loky by default. Under an active debugpy/pydevd session, retry once with a
+    POSIX fork context to avoid debugger-only manager startup failures.
+    """
+
+    try:
+        return get_loky_context().Manager()
+    except EOFError:
+        if not _is_debugger_session_active():
+            raise
+
+        fork_context = _get_fork_context()
+        if fork_context is None:
+            raise
+
+        return fork_context.Manager()
+
+
 def get_callback_manager():
     """Return the global multiprocessing manager dedicated to callbacks.
 
@@ -24,7 +75,7 @@ def get_callback_manager():
     if _CallbackManagerState.manager is None:
         with _CallbackManagerState.lock:
             if _CallbackManagerState.manager is None:
-                _CallbackManagerState.manager = get_context().Manager()
+                _CallbackManagerState.manager = _create_callback_manager()
 
     return _CallbackManagerState.manager
 
