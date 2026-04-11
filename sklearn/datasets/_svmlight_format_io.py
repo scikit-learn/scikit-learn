@@ -32,6 +32,7 @@ from sklearn.utils._param_validation import (
     StrOptions,
     validate_params,
 )
+from sklearn.utils._sparse import _align_api_if_sparse
 
 
 @validate_params(
@@ -409,9 +410,9 @@ def load_svmlight_files(
     result = []
     for data, indices, indptr, y, query_values in r:
         shape = (indptr.shape[0] - 1, n_features)
-        X = sp.csr_matrix((data, indices, indptr), shape)
+        X = sp.csr_array((data, indices, indptr), shape)
         X.sort_indices()
-        result += X, y
+        result += _align_api_if_sparse(X), y
         if query_id:
             result.append(query_values)
 

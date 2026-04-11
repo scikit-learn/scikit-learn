@@ -49,9 +49,8 @@ from sklearn.metrics.pairwise import (
 )
 from sklearn.preprocessing import normalize
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
     get_namespace,
+    move_to,
     xpx,
     yield_namespace_device_dtype_combinations,
 )
@@ -152,14 +151,13 @@ def test_pairwise_distances_for_dense_data(global_dtype):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("metric", ["cosine", "euclidean", "manhattan"])
-def test_pairwise_distances_array_api(array_namespace, device, dtype_name, metric):
+def test_pairwise_distances_array_api(array_namespace, device_name, dtype_name, metric):
     # Test array API support in pairwise_distances.
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
 
     rng = np.random.RandomState(0)
     # Euclidean distance should be equivalent to calling the function.
@@ -171,7 +169,7 @@ def test_pairwise_distances_array_api(array_namespace, device, dtype_name, metri
     with config_context(array_api_dispatch=True):
         # Test with Y=None
         D_xp = pairwise_distances(X_xp, metric=metric)
-        D_xp_np = _convert_to_numpy(D_xp, xp=xp)
+        D_xp_np = move_to(D_xp, xp=np, device="cpu")
         assert get_namespace(D_xp)[0].__name__ == xp.__name__
         assert D_xp.device == X_xp.device
         assert D_xp.dtype == X_xp.dtype
@@ -181,7 +179,7 @@ def test_pairwise_distances_array_api(array_namespace, device, dtype_name, metri
 
         # Test with Y=Y_np/Y_xp
         D_xp = pairwise_distances(X_xp, Y=Y_xp, metric=metric)
-        D_xp_np = _convert_to_numpy(D_xp, xp=xp)
+        D_xp_np = move_to(D_xp, xp=np, device="cpu")
         assert get_namespace(D_xp)[0].__name__ == xp.__name__
         assert D_xp.device == X_xp.device
         assert D_xp.dtype == X_xp.dtype
@@ -390,9 +388,8 @@ def test_pairwise_parallel(func, metric, kwds, dtype):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "func, metric, kwds",
@@ -405,9 +402,9 @@ def test_pairwise_parallel(func, metric, kwds, dtype):
     ],
 )
 def test_pairwise_parallel_array_api(
-    func, metric, kwds, array_namespace, device, dtype_name
+    func, metric, kwds, array_namespace, device_name, dtype_name
 ):
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
     rng = np.random.RandomState(0)
     X_np = np.array(5 * rng.random_sample((5, 4)), dtype=dtype_name)
     Y_np = np.array(5 * rng.random_sample((3, 4)), dtype=dtype_name)
@@ -420,13 +417,13 @@ def test_pairwise_parallel_array_api(
             Y_np = None if y_val is None else Y_np
 
             n_job1_xp = func(X_xp, Y_xp, metric=metric, n_jobs=1, **kwds)
-            n_job1_xp_np = _convert_to_numpy(n_job1_xp, xp=xp)
+            n_job1_xp_np = move_to(n_job1_xp, xp=np, device="cpu")
             assert get_namespace(n_job1_xp)[0].__name__ == xp.__name__
             assert n_job1_xp.device == X_xp.device
             assert n_job1_xp.dtype == X_xp.dtype
 
             n_job2_xp = func(X_xp, Y_xp, metric=metric, n_jobs=2, **kwds)
-            n_job2_xp_np = _convert_to_numpy(n_job2_xp, xp=xp)
+            n_job2_xp_np = move_to(n_job2_xp, xp=np, device="cpu")
             assert get_namespace(n_job2_xp)[0].__name__ == xp.__name__
             assert n_job2_xp.device == X_xp.device
             assert n_job2_xp.dtype == X_xp.dtype
@@ -482,17 +479,16 @@ def test_pairwise_kernels(metric, csr_container):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "metric",
     ["rbf", "sigmoid", "polynomial", "linear", "laplacian", "chi2", "additive_chi2"],
 )
-def test_pairwise_kernels_array_api(metric, array_namespace, device, dtype_name):
+def test_pairwise_kernels_array_api(metric, array_namespace, device_name, dtype_name):
     # Test array API support in pairwise_kernels.
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
 
     rng = np.random.RandomState(0)
     X_np = 10 * rng.random_sample((5, 4))
@@ -505,7 +501,7 @@ def test_pairwise_kernels_array_api(metric, array_namespace, device, dtype_name)
     with config_context(array_api_dispatch=True):
         # Test with Y=None
         K_xp = pairwise_kernels(X_xp, metric=metric)
-        K_xp_np = _convert_to_numpy(K_xp, xp=xp)
+        K_xp_np = move_to(K_xp, xp=np, device="cpu")
         assert get_namespace(K_xp)[0].__name__ == xp.__name__
         assert K_xp.device == X_xp.device
         assert K_xp.dtype == X_xp.dtype
@@ -515,7 +511,7 @@ def test_pairwise_kernels_array_api(metric, array_namespace, device, dtype_name)
 
         # Test with Y=Y_np/Y_xp
         K_xp = pairwise_kernels(X_xp, Y=Y_xp, metric=metric)
-        K_xp_np = _convert_to_numpy(K_xp, xp=xp)
+        K_xp_np = move_to(K_xp, xp=np, device="cpu")
         assert get_namespace(K_xp)[0].__name__ == xp.__name__
         assert K_xp.device == X_xp.device
         assert K_xp.dtype == X_xp.dtype

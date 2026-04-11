@@ -63,7 +63,7 @@ The most common decisions are done on binary classification tasks, where the res
 probability of rain a decision is made on how to act (whether to take mitigating
 measures like an umbrella or not).
 For classifiers, this is what :term:`predict` returns.
-See also :ref:`TunedThresholdClassifierCV`.
+See also :ref:`threshold_tunning`.
 There are many scoring functions which measure different aspects of such a
 decision, most of them are covered with or derived from the
 :func:`metrics.confusion_matrix`.
@@ -466,12 +466,12 @@ Classification metrics
 
 .. currentmodule:: sklearn.metrics
 
-The :mod:`sklearn.metrics` module implements several loss, score, and utility
-functions to measure classification performance.
-Some metrics might require probability estimates of the positive class,
-confidence values, or binary decisions values.
-Most implementations allow each sample to provide a weighted contribution
-to the overall score, through the ``sample_weight`` parameter.
+The :mod:`sklearn.metrics` module implements several loss, score, and utility functions
+to measure classification performance. Some metrics might require probability estimates
+of the positive class or non-thresholded decision values (as returned by
+:term:`decision_function` on some classifiers). Most implementations allow each sample
+to provide a weighted contribution to the overall score, through the ``sample_weight``
+parameter.
 
 Some of these are restricted to the binary classification case:
 
@@ -1578,9 +1578,9 @@ Quoting Wikipedia :
   sensitivity, and FPR is one minus the specificity or true negative rate."
 
 This function requires the true binary value and the target scores, which can
-either be probability estimates of the positive class, confidence values, or
-binary decisions. Here is a small example of how to use the :func:`roc_curve`
-function::
+either be probability estimates of the positive class or non-thresholded decision values
+(as returned by :term:`decision_function` on some classifiers). Here is a small example
+of how to use the :func:`roc_curve` function::
 
     >>> import numpy as np
     >>> from sklearn.metrics import roc_curve
