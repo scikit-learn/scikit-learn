@@ -377,7 +377,9 @@ def _delete_folder(folder_path, warn=False):
             shutil.rmtree(folder_path)
     except OSError:
         if warn:
-            warnings.warn("Could not delete temporary folder %s" % folder_path, stacklevel=2)
+            warnings.warn(
+                "Could not delete temporary folder %s" % folder_path, stacklevel=2
+            )
 
 
 class TempMemmap:

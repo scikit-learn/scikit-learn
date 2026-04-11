@@ -107,7 +107,11 @@ def f_oneway(*args):
     msw = sswn / float(dfwn)
     constant_features_idx = np.where(msw == 0.0)[0]
     if np.nonzero(msb)[0].size != msb.size and constant_features_idx.size:
-        warnings.warn("Features %s are constant." % constant_features_idx, UserWarning, stacklevel=2)
+        warnings.warn(
+            "Features %s are constant." % constant_features_idx,
+            UserWarning,
+            stacklevel=2,
+        )
     f = msb / msw
     # flatten matrix to vector in sparse case
     f = np.asarray(f).ravel()

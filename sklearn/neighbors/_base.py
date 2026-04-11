@@ -589,7 +589,9 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         if issparse(X):
             if self.algorithm not in ("auto", "brute"):
-                warnings.warn("cannot use tree with sparse input: using brute force", stacklevel=2)
+                warnings.warn(
+                    "cannot use tree with sparse input: using brute force", stacklevel=2
+                )
 
             if (
                 self.effective_metric_ not in VALID_METRICS_SPARSE["brute"]

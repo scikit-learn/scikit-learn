@@ -323,7 +323,8 @@ def _spectral_embedding(
 
     if not _graph_is_connected(adjacency):
         warnings.warn(
-            "Graph is not fully connected, spectral embedding may not work as expected.",
+            "Graph is not fully connected, spectral embedding"
+            " may not work as expected.",
             stacklevel=2,
         )
 

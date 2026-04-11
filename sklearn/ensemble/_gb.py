@@ -87,7 +87,9 @@ def _safe_divide(numerator, denominator):
         # on `np.errstate` that is not supported by Pyodide.
         result = float(numerator) / float(denominator)
         if math.isinf(result):
-            warnings.warn("overflow encountered in _safe_divide", RuntimeWarning, stacklevel=2)
+            warnings.warn(
+                "overflow encountered in _safe_divide", RuntimeWarning, stacklevel=2
+            )
         return result
 
 
