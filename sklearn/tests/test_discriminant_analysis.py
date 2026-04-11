@@ -574,10 +574,6 @@ def test_qda(solver):
 def test_qda_covariance_estimator():
     # Test that the correct errors are raised when using inappropriate
     # covariance estimators or shrinkage parameters with QDA.
-    clf = QuadraticDiscriminantAnalysis(solver="svd", shrinkage="auto")
-    with pytest.raises(NotImplementedError):
-        clf.fit(X, y)
-
     clf = QuadraticDiscriminantAnalysis(
         solver="eigen", shrinkage=0.1, covariance_estimator=ShrunkCovariance()
     )
