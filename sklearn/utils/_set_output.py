@@ -27,8 +27,11 @@ def get_columns(columns):
     if callable(columns):
         try:
             return columns()
-        except Exception:
-            return None
+        except AttributeError as e:
+            if "does not provide get_feature_names_out" in str(e):
+                return None
+            else:
+                raise
     return columns
 
 

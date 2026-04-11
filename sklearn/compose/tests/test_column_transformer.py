@@ -1647,6 +1647,32 @@ def test_sk_visual_block_remainder_col_names_pandas():
     assert visual_block.name_details == (["col1"], ["col2"])
 
 
+def test_sk_visual_block_full_transform():
+    """Check that visual_block doesn't return remainder when it has no columns
+    Non-regression test - https://github.com/scikit-learn/scikit-learn/issues/33513
+    """
+    ct = ColumnTransformer([("norm1", Normalizer(), [0, 1])], remainder="passthrough")
+    X = np.array([[0, 4], [3, 3]])
+    ct.fit(X)
+    visual_block = ct._sk_visual_block_()
+    assert visual_block.names == ("norm1",)
+    assert visual_block.name_details == ([0, 1],)
+    assert isinstance(visual_block.estimators[0], Normalizer)
+    assert len(visual_block.estimators) == 1
+
+
+def test_sk_visual_block_int_remainder_cols_pandas():
+    """Check that remainder still uses available string column names in visual block
+    even when transformer columns are specified by integer index.
+    """
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame({"a": [1, 2], "b": [3, 4], "c": [5, 6]})
+    ct = ColumnTransformer([("scaler", StandardScaler(), [0])], remainder="passthrough")
+    ct.fit(X)
+    visual_block = ct._sk_visual_block_()
+    assert visual_block.name_details == ([0], ["b", "c"])
+
+
 @pytest.mark.parametrize("explicit_colname", ["first", "second", 0, 1])
 @pytest.mark.parametrize("remainder", [Trans(), "passthrough", "drop"])
 def test_column_transformer_reordered_column_names_remainder(
@@ -2588,6 +2614,23 @@ def test_column_transformer_remainder_passthrough_naming_consistency(transform_o
     assert preprocessor.get_feature_names_out().tolist() == expected_column_names
 
 
+# DfOutTransformer that does not define get_feature_names_out
+class DfOutTransformer(BaseEstimator):
+    def __init__(self, offset=1.0):
+        self.offset = offset
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        return X - self.offset
+
+    def set_output(self, transform=None):
+        # This transformer will always output a DataFrame regardless of the
+        # configuration.
+        return self
+
+
 @pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
 def test_column_transformer_column_renaming(dataframe_lib):
     """Check that we properly rename columns when using `ColumnTransformer` and
@@ -2605,15 +2648,17 @@ def test_column_transformer_column_renaming(dataframe_lib):
             ("A", "passthrough", ["x1", "x2", "x3"]),
             ("B", FunctionTransformer(), ["x1", "x2"]),
             ("C", StandardScaler(), ["x1", "x3"]),
+            ("D", DfOutTransformer(), ["x2", "x3"]),
             # special case of a transformer returning 0-columns, e.g feature selector
             (
-                "D",
+                "E",
                 FunctionTransformer(lambda x: _safe_indexing(x, [], axis=1)),
                 ["x1", "x2", "x3"],
             ),
         ],
-        verbose_feature_names_out=True,
     ).set_output(transform=dataframe_lib)
+
+    # by default, verbose_feature_names_out is True
     df_trans = transformer.fit_transform(df)
     assert list(df_trans.columns) == [
         "A__x1",
@@ -2623,39 +2668,12 @@ def test_column_transformer_column_renaming(dataframe_lib):
         "B__x2",
         "C__x1",
         "C__x3",
+        "D__x2",
+        "D__x3",
     ]
 
-
-@pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
-def test_column_transformer_error_with_duplicated_columns(dataframe_lib):
-    """Check that we raise an error when using `ColumnTransformer` and
-    the columns names are duplicated between transformers."""
-    lib = pytest.importorskip(dataframe_lib)
-
-    df = lib.DataFrame({"x1": [1, 2, 3], "x2": [10, 20, 30], "x3": [100, 200, 300]})
-
-    transformer = ColumnTransformer(
-        transformers=[
-            ("A", "passthrough", ["x1", "x2", "x3"]),
-            ("B", FunctionTransformer(), ["x1", "x2"]),
-            ("C", StandardScaler(), ["x1", "x3"]),
-            # special case of a transformer returning 0-columns, e.g feature selector
-            (
-                "D",
-                FunctionTransformer(lambda x: _safe_indexing(x, [], axis=1)),
-                ["x1", "x2", "x3"],
-            ),
-        ],
-        verbose_feature_names_out=False,
-    ).set_output(transform=dataframe_lib)
-    err_msg = re.escape(
-        "Duplicated feature names found before concatenating the outputs of the "
-        "transformers: ['x1', 'x2', 'x3'].\n"
-        "Transformer A has conflicting columns names: ['x1', 'x2', 'x3'].\n"
-        "Transformer B has conflicting columns names: ['x1', 'x2'].\n"
-        "Transformer C has conflicting columns names: ['x1', 'x3'].\n"
-    )
-    with pytest.raises(ValueError, match=err_msg):
+    transformer.set_params(verbose_feature_names_out=False)
+    with pytest.raises(ValueError, match=r"Output feature names:.*are not unique"):
         transformer.fit_transform(df)
 
 

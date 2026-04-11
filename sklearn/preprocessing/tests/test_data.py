@@ -39,7 +39,7 @@ from sklearn.preprocessing._data import BOUNDS_THRESHOLD, _handle_zeros_in_scale
 from sklearn.svm import SVR
 from sklearn.utils import gen_batches, shuffle
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
+    move_to,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -202,8 +202,8 @@ def test_standard_scaler_sample_weight_array_api(
     scaler_w_xp = StandardScaler()
     with config_context(array_api_dispatch=True):
         scaler_w_xp.fit(Xw_xp, yw_xp, sample_weight=sample_weight_xp)
-        w_mean = _convert_to_numpy(scaler_w_xp.mean_, xp=xp)
-        w_var = _convert_to_numpy(scaler_w_xp.var_, xp=xp)
+        w_mean = move_to(scaler_w_xp.mean_, xp=np, device="cpu")
+        w_var = move_to(scaler_w_xp.var_, xp=np, device="cpu")
 
     assert_allclose(scaler_w.mean_, w_mean)
     assert_allclose(scaler_w.var_, w_var)
@@ -212,8 +212,8 @@ def test_standard_scaler_sample_weight_array_api(
     scaler_xp = StandardScaler()
     with config_context(array_api_dispatch=True):
         scaler_xp.fit(X_xp, y_xp)
-        uw_mean = _convert_to_numpy(scaler_xp.mean_, xp=xp)
-        uw_var = _convert_to_numpy(scaler_xp.var_, xp=xp)
+        uw_mean = move_to(scaler_xp.mean_, xp=np, device="cpu")
+        uw_var = move_to(scaler_xp.var_, xp=np, device="cpu")
 
     assert_allclose(scaler.mean_, uw_mean)
     assert_allclose(scaler.var_, uw_var)
@@ -223,8 +223,8 @@ def test_standard_scaler_sample_weight_array_api(
     assert_allclose(uw_var, w_var)
     with config_context(array_api_dispatch=True):
         assert_allclose(
-            _convert_to_numpy(scaler_xp.transform(X_test_xp), xp=xp),
-            _convert_to_numpy(scaler_w_xp.transform(X_test_xp), xp=xp),
+            move_to(scaler_xp.transform(X_test_xp), xp=np, device="cpu"),
+            move_to(scaler_w_xp.transform(X_test_xp), xp=np, device="cpu"),
         )
 
 
@@ -2121,7 +2121,7 @@ def test_binarizer_array_api_int(array_namespace, device_name, dtype_name):
         binarized_np = Binarizer(threshold=2.5).fit_transform(X_np)
         with config_context(array_api_dispatch=True):
             binarized_xp = Binarizer(threshold=2.5).fit_transform(X_xp)
-        assert_array_equal(_convert_to_numpy(binarized_xp, xp), binarized_np)
+        assert_array_equal(move_to(binarized_xp, xp=np, device="cpu"), binarized_np)
 
 
 def test_center_kernel():
@@ -2413,8 +2413,8 @@ def test_power_transformer_shape_exception(method):
 
 
 def test_power_transformer_lambda_zero():
-    pt = PowerTransformer(method="box-cox", standardize=False)
     X = np.abs(X_2d)[:, 0:1]
+    pt = PowerTransformer(method="box-cox", standardize=False).fit(X)
 
     # Test the lambda = 0 case
     pt.lambdas_ = np.array([0])
@@ -2458,7 +2458,7 @@ def test_optimization_power_transformer(method, lmbda):
         # Clip the data here to make sure the inequality is valid.
         X = np.clip(X, -1 / lmbda + 1e-5, None)
 
-    pt = PowerTransformer(method=method, standardize=False)
+    pt = PowerTransformer(method=method, standardize=False).fit(np.abs(X))
     pt.lambdas_ = [lmbda]
     X_inv = pt.inverse_transform(X)
 
@@ -2472,7 +2472,7 @@ def test_optimization_power_transformer(method, lmbda):
 
 def test_invserse_box_cox():
     # output nan if the input is invalid
-    pt = PowerTransformer(method="box-cox", standardize=False)
+    pt = PowerTransformer(method="box-cox", standardize=False).fit([[1.0], [2.0]])
     pt.lambdas_ = [0.5]
     X_inv = pt.inverse_transform([[-2.1]])
     assert np.isnan(X_inv)
@@ -2837,3 +2837,33 @@ def test_yeojohnson_for_different_scipy_version():
     """Check that the results are consistent across different SciPy versions."""
     pt = PowerTransformer(method="yeo-johnson").fit(X_1col)
     pt.lambdas_[0] == pytest.approx(0.99546157, rel=1e-7)
+
+
+@pytest.mark.parametrize("TransformerClass", [PowerTransformer, QuantileTransformer])
+def test_transformer_inverse_transform_feature_names_warning(TransformerClass):
+    """Check that inverse_transform does not raise a warning about feature
+    names when fitted on a DataFrame and transforming a NumPy array.
+
+    Non-regression test for issue #31947.
+    """
+    pd = pytest.importorskip("pandas")
+
+    X_df = pd.DataFrame({"a": [1.0, 2.0, 3.0], "b": [4.0, 5.0, 6.0]})
+    transformer = TransformerClass()
+    transformer.fit(X_df)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        transformer.inverse_transform(X_df.to_numpy())
+
+
+@pytest.mark.parametrize("TransformerClass", [PowerTransformer, QuantileTransformer])
+def test_transformer_inverse_transform_shape_error(TransformerClass):
+    """Check that an informative error is raised when the input shape is incorrect."""
+    X = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
+    transformer = TransformerClass().fit(X)
+
+    X_wrong = np.array([[1.0], [2.0], [3.0]])
+    msg = f"X has 1 features, but {TransformerClass.__name__} is expecting 2 features"
+    with pytest.raises(ValueError, match=msg):
+        transformer.inverse_transform(X_wrong)

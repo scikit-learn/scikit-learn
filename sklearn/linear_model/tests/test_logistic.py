@@ -38,7 +38,7 @@ from sklearn.svm import l1_min_c
 from sklearn.utils import compute_class_weight, shuffle
 from sklearn.utils._array_api import (
     _atol_for_type,
-    _convert_to_numpy,
+    move_to,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._array_api import (
@@ -2786,14 +2786,14 @@ def test_logistic_regression_array_api_compliance(
             attr_xp = getattr(lr_xp, attr_name)
             attr_np = getattr(lr_np, attr_name)
             assert_allclose(
-                _convert_to_numpy(attr_xp, xp=xp), attr_np, rtol=rtol, atol=atol
+                move_to(attr_xp, xp=np, device="cpu"), attr_np, rtol=rtol, atol=atol
             )
             assert attr_xp.dtype == X_xp.dtype
             assert array_api_device(attr_xp) == array_api_device(X_xp)
 
         predict_proba_xp = lr_xp.predict_proba(X_xp)
         assert_allclose(
-            _convert_to_numpy(predict_proba_xp, xp=xp),
+            move_to(predict_proba_xp, xp=np, device="cpu"),
             predict_proba_np,
             rtol=rtol,
             atol=atol,
@@ -2803,7 +2803,7 @@ def test_logistic_regression_array_api_compliance(
 
         predict_log_proba_xp = lr_xp.predict_log_proba(X_xp)
         assert_allclose(
-            _convert_to_numpy(predict_log_proba_xp, xp=xp),
+            move_to(predict_log_proba_xp, xp=np, device="cpu"),
             preditct_log_proba_np,
             rtol=rtol,
             atol=atol,
@@ -2813,7 +2813,7 @@ def test_logistic_regression_array_api_compliance(
 
         prediction_xp = lr_xp.predict(X_xp)
         if not use_str_y:
-            prediction_xp = _convert_to_numpy(prediction_xp, xp=xp)
+            prediction_xp = move_to(prediction_xp, xp=np, device="cpu")
         assert_array_equal(prediction_xp, prediction_np)
 
 
