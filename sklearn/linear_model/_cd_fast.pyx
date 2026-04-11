@@ -784,9 +784,9 @@ def sparse_enet_coordinate_descent(
                     i = X_indices[i_ind]
                     normalize_sum += (X_data[i_ind] - X_mean_j) ** 2
                     R[i] -= X_data[i_ind] * w_j
-                norm2_cols_X[j] = normalize_sum + \
-                    (n_samples - endptr + startptr) * X_mean_j ** 2
+                norm2_cols_X[j] = normalize_sum
                 if center:
+                    norm2_cols_X[j] += (n_samples - endptr + startptr) * X_mean_j ** 2
                     for i in range(n_samples):
                         R[i] += X_mean_j * w_j
                         R_sum += R[i]
@@ -1549,7 +1549,8 @@ def enet_coordinate_descent_multi_task(
             if no_sample_weights:
                 for i_ind in range(startptr, endptr):
                     norm2_cols_X[j] += (X_data[i_ind] - X_mean[j]) ** 2
-                norm2_cols_X[j] += (n_samples - endptr + startptr) * X_mean[j] ** 2
+                if center:
+                    norm2_cols_X[j] += (n_samples - endptr + startptr) * X_mean[j] ** 2
             else:
                 for i_ind in range(startptr, endptr):
                     i = X_indices[i_ind]
