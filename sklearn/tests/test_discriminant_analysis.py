@@ -640,14 +640,17 @@ def test_qda_coefs(global_random_seed):
         )
 
 
-def test_qda_priors():
-    clf = QuadraticDiscriminantAnalysis()
-    y_pred = clf.fit(X6, y6).predict(X6)
+@pytest.mark.parametrize("solver", ["svd", "eigen"])
+def test_qda_priors(solver):
+    clf = QuadraticDiscriminantAnalysis(solver=solver)
+    y_pred = clf.fit(X, y).predict(X)
     n_pos = np.sum(y_pred == 2)
 
-    neg = 1e-10
-    clf = QuadraticDiscriminantAnalysis(priors=np.array([neg, 1 - neg]))
-    y_pred = clf.fit(X6, y6).predict(X6)
+    neg = 1e-30
+    clf = QuadraticDiscriminantAnalysis(
+      solver=solver, priors=np.array([neg, 1 - neg])
+    )
+    y_pred = clf.fit(X, y).predict(X)
     n_pos2 = np.sum(y_pred == 2)
 
     assert n_pos2 > n_pos
