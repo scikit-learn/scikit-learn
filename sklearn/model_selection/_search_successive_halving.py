@@ -595,15 +595,26 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         see :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`.
 
     best_estimator_ : estimator or dict
-        Estimator that was chosen by the search, i.e. estimator
-        which gave highest score (or smallest loss if specified)
-        on the left out data. Not available if ``refit=False``.
+        Estimator that was chosen by the search, i.e. estimator which gave
+        the highest score (or smallest loss if specified) on the left out data
+        **in the last halving iteration**. Not available if ``refit=False``.
+
+        .. note::
+            ``best_estimator_`` reflects the winner of the final iteration
+            only. Earlier iterations may contain candidates with a higher
+            ``rank_test_score`` in ``cv_results_`` (because ranking is global
+            across all iterations), but those scores were obtained with fewer
+            resources and are less reliable. To inspect final-iteration results
+            explicitly, filter ``cv_results_`` by
+            ``cv_results_['iter'] == n_iterations_ - 1``.
 
     best_score_ : float
-        Mean cross-validated score of the best_estimator.
+        Mean cross-validated score of the ``best_estimator_``, computed over
+        the candidates from the last halving iteration only.
 
     best_params_ : dict
-        Parameter setting that gave the best results on the hold out data.
+        Parameter setting that gave the best results on the hold out data in
+        the last halving iteration.
 
     best_index_ : int
         The index (of the ``cv_results_`` arrays) which corresponds to the best
@@ -956,15 +967,26 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         see :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`.
 
     best_estimator_ : estimator or dict
-        Estimator that was chosen by the search, i.e. estimator
-        which gave highest score (or smallest loss if specified)
-        on the left out data. Not available if ``refit=False``.
+        Estimator that was chosen by the search, i.e. estimator which gave
+        the highest score (or smallest loss if specified) on the left out data
+        **in the last halving iteration**. Not available if ``refit=False``.
+
+        .. note::
+            ``best_estimator_`` reflects the winner of the final iteration
+            only. Earlier iterations may contain candidates with a higher
+            ``rank_test_score`` in ``cv_results_`` (because ranking is global
+            across all iterations), but those scores were obtained with fewer
+            resources and are less reliable. To inspect final-iteration results
+            explicitly, filter ``cv_results_`` by
+            ``cv_results_['iter'] == n_iterations_ - 1``.
 
     best_score_ : float
-        Mean cross-validated score of the best_estimator.
+        Mean cross-validated score of the ``best_estimator_``, computed over
+        the candidates from the last halving iteration only.
 
     best_params_ : dict
-        Parameter setting that gave the best results on the hold out data.
+        Parameter setting that gave the best results on the hold out data in
+        the last halving iteration.
 
     best_index_ : int
         The index (of the ``cv_results_`` arrays) which corresponds to the best
