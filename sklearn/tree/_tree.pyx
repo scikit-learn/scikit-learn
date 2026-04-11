@@ -501,8 +501,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                     node.left_child = _TREE_LEAF
                     node.right_child = _TREE_LEAF
                     node.feature = _TREE_UNDEFINED
-                    # node.threshold = _TREE_UNDEFINED
-                    node.split_value.threshold = <float64_t> _TREE_UNDEFINED
+                    node.split_value.threshold = _TREE_UNDEFINED
 
                 else:
                     # Node is expandable
@@ -836,8 +835,8 @@ cdef class Tree:
 
         # store the number of categories per feature
         # Note: it is expected to be passed in with a defined number
-        #  per feature via the Python caller. So this array will never be
-        #  "None".
+        # per feature via the Python caller. So this array will never be
+        # "None".
         safe_realloc(&self.n_categories, n_features)
         n_categories = n_categories.astype(np.intp)
         for f in range(n_features):
@@ -996,7 +995,7 @@ cdef class Tree:
             node.left_child = _TREE_LEAF
             node.right_child = _TREE_LEAF
             node.feature = _TREE_UNDEFINED
-            node.split_value.threshold = <float64_t> _TREE_UNDEFINED
+            node.split_value.threshold = _TREE_UNDEFINED
 
         else:
             # left_child and right_child will be set later
