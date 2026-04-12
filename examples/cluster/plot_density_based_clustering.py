@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
 ===========================================
 Demo of DBSCAN, OPTICS and HDBSCAN clustering
@@ -32,6 +35,7 @@ densities to highlight where each algorithm succeeds and where it struggles.
 
 import matplotlib.pyplot as plt
 import numpy as np
+
 from sklearn.cluster import DBSCAN, HDBSCAN, OPTICS, cluster_optics_dbscan
 from sklearn.datasets import make_blobs
 from sklearn.preprocessing import StandardScaler
@@ -104,10 +108,7 @@ def plot_dbscan(X, labels, eps, ax):
         marker = "o" if k != -1 else "x"
         ax.scatter(X[mask, 0], X[mask, 1], c=[col], s=14, marker=marker)
 
-    ax.set_title(
-        f"DBSCAN: eps={eps}\n"
-        f"{n_clusters} clusters, {n_noise} noise points"
-    )
+    ax.set_title(f"DBSCAN: eps={eps}\n{n_clusters} clusters, {n_noise} noise points")
 
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
@@ -192,7 +193,7 @@ labels_optics = clust.labels_[clust.ordering_]
 fig, ax = plt.subplots(figsize=(10, 4))
 colors = ["g", "steelblue", "orange", "purple"]
 
-for klass, color in zip(range(0, 4), colors):
+for klass, color in zip(range(4), colors):
     Xk = reachability[labels_optics == klass]
     ax.plot(
         np.where(labels_optics == klass)[0],
@@ -213,7 +214,9 @@ ax.axhline(0.2, linestyle="--", color="k", linewidth=1, label="eps=0.20")
 ax.axhline(0.75, linestyle="--", color="r", linewidth=1, label="eps=0.75")
 ax.set_ylabel("Reachability distance")
 ax.set_xlabel("Point ordering")
-ax.set_title("OPTICS reachability plot\nValleys = clusters, peaks = noise or boundaries")
+ax.set_title(
+    "OPTICS reachability plot\nValleys = clusters, peaks = noise or boundaries"
+)
 ax.legend()
 plt.tight_layout()
 plt.show()
@@ -340,9 +343,7 @@ all_labels = [db_best.labels_, labels_075, hdb.labels_]
 
 for ax, labels, title in zip(axes, all_labels, titles):
     unique_labels = set(labels)
-    colors = [
-        plt.cm.Spectral(each) for each in np.linspace(0, 1, len(unique_labels))
-    ]
+    colors = [plt.cm.Spectral(each) for each in np.linspace(0, 1, len(unique_labels))]
     n_clusters = len(unique_labels) - (1 if -1 in unique_labels else 0)
     n_noise = list(labels).count(-1)
 
