@@ -1148,10 +1148,6 @@ class QuadraticDiscriminantAnalysis(
             self.priors_ = np.array(self.priors)
 
         if self.solver == "svd":
-            if self.shrinkage is not None:
-                # Support for `shrinkage` could be implemented as in
-                # https://github.com/scikit-learn/scikit-learn/issues/32590
-                raise NotImplementedError("shrinkage not supported with 'svd' solver.")
             if self.covariance_estimator is not None:
                 raise ValueError(
                     "covariance_estimator is not supported with solver='svd'. "
