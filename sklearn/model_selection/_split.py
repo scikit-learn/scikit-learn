@@ -2256,6 +2256,18 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         Stratification on the class label solves an engineering problem rather
         than a statistical one. See :ref:`stratification` for more details.
 
+    .. note::
+
+        The per-class allocation of samples to train and test splits is based
+        on an approximation of the multivariate hypergeometric distribution.
+        This approximation can be off by one sample per class. As a result,
+        when a class is heavily underrepresented relative to the total dataset
+        size, it may receive zero samples in either the train or test split
+        even though both ``n_train`` and ``n_test`` are greater than or equal
+        to the number of classes. In such cases, consider using
+        :class:`StratifiedKFold` instead, or ensure that the least populated
+        class has sufficiently many members relative to the split sizes.
+
     Parameters
     ----------
     n_splits : int, default=10
