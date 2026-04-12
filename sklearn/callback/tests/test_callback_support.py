@@ -137,6 +137,44 @@ def test_is_debugger_session_active_with_pydevd_global_debugger(monkeypatch):
     assert callback_support._is_debugger_session_active()
 
 
+def test_get_fork_context_returns_none_on_non_posix(monkeypatch):
+    monkeypatch.setattr(callback_support.os, "name", "nt")
+    monkeypatch.setattr(
+        callback_support,
+        "get_multiprocessing_context",
+        lambda *_: pytest.fail("fork context should not be requested"),
+    )
+
+    assert callback_support._get_fork_context() is None
+
+
+def test_get_fork_context_returns_none_when_fork_is_unavailable(monkeypatch):
+    monkeypatch.setattr(callback_support.os, "name", "posix")
+
+    def raise_value_error(name):
+        assert name == "fork"
+        raise ValueError
+
+    monkeypatch.setattr(
+        callback_support, "get_multiprocessing_context", raise_value_error
+    )
+
+    assert callback_support._get_fork_context() is None
+
+
+def test_get_fork_context_returns_context(monkeypatch):
+    sentinel = object()
+
+    monkeypatch.setattr(callback_support.os, "name", "posix")
+    monkeypatch.setattr(
+        callback_support,
+        "get_multiprocessing_context",
+        lambda name: sentinel,
+    )
+
+    assert callback_support._get_fork_context() is sentinel
+
+
 def test_create_callback_manager_prefers_loky(monkeypatch):
     calls = []
 
