@@ -945,6 +945,8 @@ class QuadraticDiscriminantAnalysis(
         ``S2 = (1 - reg_param) * S2 + reg_param * np.eye(n_features)``,
         where S2 corresponds to the `scaling_` attribute of a given class.
 
+        This should be left to 0.0 if `shrinkage` is used.
+
     store_covariance : bool, default=False
         If True, the class covariance matrices are explicitly computed and
         stored in the `self.covariance_` attribute.
@@ -1060,6 +1062,11 @@ class QuadraticDiscriminantAnalysis(
         self.store_covariance = store_covariance
         self.tol = tol
         self.covariance_estimator = covariance_estimator
+        if shrinkage is not None and reg_param != 0:
+            raise ValueError(
+                "`shrinkage` is not None and `reg_param` is not 0. Only one of "
+                "the two can be set. `shrinkage` is the preferred parameter."
+            )
 
     def _solve_eigen(self, X):
         """Eigenvalue solver.
