@@ -5,7 +5,12 @@ import pytest
 from scipy import linalg
 
 from sklearn.cluster import KMeans
-from sklearn.covariance import EmpiricalCovariance, LedoitWolf, ShrunkCovariance, ledoit_wolf
+from sklearn.covariance import (
+    EmpiricalCovariance,
+    LedoitWolf,
+    ShrunkCovariance,
+    ledoit_wolf,
+)
 from sklearn.datasets import make_blobs
 from sklearn.discriminant_analysis import (
     LinearDiscriminantAnalysis,
@@ -690,10 +695,10 @@ def test_qda_store_covariance(solver):
     )
     assert hasattr(clf, "covariance_")
 
-    class1_cov = EmpiricalCovariance().fit(X6[y6==1,]).covariance_
+    class1_cov = EmpiricalCovariance().fit(X6[y6 == 1,]).covariance_
     assert_array_almost_equal(clf.covariance_[0], class1_cov)
 
-    class2_cov = EmpiricalCovariance().fit(X6[y6==2,]).covariance_
+    class2_cov = EmpiricalCovariance().fit(X6[y6 == 2,]).covariance_
     assert_array_almost_equal(clf.covariance_[1], class2_cov)
 
 
