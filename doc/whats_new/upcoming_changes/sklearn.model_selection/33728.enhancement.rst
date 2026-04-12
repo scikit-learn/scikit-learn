@@ -1,0 +1,5 @@
+- :class:`model_selection.StratifiedShuffleSplit` now documents that
+  per-class sample allocation uses an approximation of the multivariate
+  hypergeometric distribution, which can be off by one sample per class.
+  Heavily underrepresented classes may receive zero samples in a split.
+  By :user:`Rudrendu Paul <RudrenduPaul>`.
