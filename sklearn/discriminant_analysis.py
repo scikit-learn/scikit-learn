@@ -1094,7 +1094,7 @@ class QuadraticDiscriminantAnalysis(
         mean = X.mean(0)
         Xc = X - mean
         # Xc = U * S * V.T
-        _, S, Vt = np.linalg.svd(Xc, full_matrices=False)
+        _, S, Vt = _svd_shrinkage(Xc, shrinkage=self.shrinkage)
         scaling = (S**2) / n_samples  # scalings are squared singular values
         scaling = ((1 - self.reg_param) * scaling) + self.reg_param
         rotation = Vt.T
