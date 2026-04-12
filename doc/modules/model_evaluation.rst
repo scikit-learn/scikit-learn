@@ -1732,7 +1732,7 @@ class with the greater label for each output.
   >>> clf = MultiOutputClassifier(inner_clf).fit(X, y)
   >>> y_score = np.transpose([y_pred[:, 1] for y_pred in clf.predict_proba(X)])
   >>> roc_auc_score(y, y_score, average=None)
-  array([0.80, 0.83, 0.92, 0.84, 0.93])
+  array([0.82..., 0.85..., 0.94..., 0.86..., 0.94...])
 
 And the decision values do not require such processing.
 

@@ -59,7 +59,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import class_likelihood_ratios
 
-estimator = LogisticRegression(C=None, alpha=1e-4).fit(X_train, y_train)
+estimator = LogisticRegression(C=None).fit(X_train, y_train)
 y_pred = estimator.predict(X_test)
 pos_LR, neg_LR = class_likelihood_ratios(y_test, y_pred, replace_undefined_by=1.0)
 print(f"LR+: {pos_LR:.3f}")
@@ -101,7 +101,7 @@ def extract_score(cv_results):
 
 from sklearn.model_selection import cross_validate
 
-estimator = LogisticRegression(C=None, alpha=1e-4)
+estimator = LogisticRegression(C=None)
 extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
 
 # %%
@@ -144,7 +144,7 @@ extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
 # leads to a higher variance of the estimated likelihood ratios, but can still
 # be interpreted as an increment of the post-test odds of having the condition.
 
-estimator = LogisticRegression(C=None, alpha=1e-4)
+estimator = LogisticRegression(C=None)
 X, y = make_classification(n_samples=300, weights=[0.9, 0.1], random_state=0)
 extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
 
@@ -187,7 +187,7 @@ weights = weights[::-1]
 
 # fit and evaluate base model on balanced classes
 X, y = make_classification(**common_params, weights=[0.5, 0.5])
-estimator = LogisticRegression(C=None, alpha=1e-4).fit(X, y)
+estimator = LogisticRegression(C=None).fit(X, y)
 lr_base = extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
 pos_lr_base, pos_lr_base_std = lr_base["positive"].values
 neg_lr_base, neg_lr_base_std = lr_base["negative"].values

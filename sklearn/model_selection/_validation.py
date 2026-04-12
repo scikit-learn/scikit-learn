@@ -1594,12 +1594,12 @@ def permutation_test_score(
     ...     estimator, X, y, random_state=0
     ... )
     >>> print(f"Original Score: {score:.3f}")
-    Original Score: 0.870
+    Original Score: 0.740
     >>> print(
     ...     f"Permutation Scores: {permutation_scores.mean():.3f} +/- "
     ...     f"{permutation_scores.std():.3f}"
     ... )
-    Permutation Scores: 0.507 +/- 0.062
+    Permutation Scores: 0.506 +/- 0.060
     >>> print(f"P-value: {pvalue:.3f}")
     P-value: 0.010
     """

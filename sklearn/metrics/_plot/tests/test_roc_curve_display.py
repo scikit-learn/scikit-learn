@@ -234,7 +234,7 @@ def test_roc_curve_display_plotting_from_cv_results(
         sample_weight = None
 
     cv_results = cross_validate(
-        LogisticRegression(C=None, alpha=1e-3),
+        LogisticRegression(C=None),
         X,
         y,
         cv=3,
@@ -286,7 +286,7 @@ def test_roc_curve_display_plotting_from_cv_results(
     if with_sample_weight:
         aggregate_expected_labels = ["AUC = 0.64 +/- 0.04", "_child1", "_child2"]
     else:
-        aggregate_expected_labels = ["AUC = 0.61 +/- 0.04", "_child1", "_child2"]
+        aggregate_expected_labels = ["AUC = 0.60 +/- 0.04", "_child1", "_child2"]
     for idx, line in enumerate(display.line_):
         assert isinstance(line, mpl.lines.Line2D)
         # Default alpha for `from_cv_results`

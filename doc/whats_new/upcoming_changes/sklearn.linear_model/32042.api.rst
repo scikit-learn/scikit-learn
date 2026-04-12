@@ -1,13 +1,21 @@
 - The parameters `C` of :class:`linear_model.LogisticRegression` and `Cs` of
   :class:`linear_model.LogisticRegressionCV` are deprecated and will be removed in
-  version 1.11. Use `alpha` and `alphas` instead. To silence deprecation warnings,
-  set `C=None` or `Cs=None` during the deprecation period.
-  Note that the relation is `C=1/(alpha * n_samples)` or
-  `C=1/(alpha * np.sum(sample_weight))`. This way, the penalty parameterization of
-  most linear models is aligned, e.g. :class:`linear_model.Lasso`,
-  :class:`linear_model.ElasticNet` to name a few. For instance,
+  version 1.11. Use `alpha` and `alphas` instead. The new parameters also have new
+  default values:
+
+  - `alpha=1e-5` for `LogisticRegression` is a small regularization
+  - `alphas=10` for `LogisticRegressionCV` will select from 10 values on the log scale
+     between 1e-7 and 1e2.
+
+  To silence deprecation warnings, set `C=None` or `Cs=None` during the deprecation
+  period. Note that the relation between old and new parameters is
+  `C=1/(alpha * n_samples)` or `C=1/(alpha * np.sum(sample_weight))`.
+
+  This way, the penalty parameterization of most linear models is aligned, e.g.
+  :class:`linear_model.Lasso`, :class:`linear_model.ElasticNet` and
+  :class:`linear_model.PoissonRegressor` to name a few. For instance,
   :class:`linear_model.LogisticRegression(alpha=1.23)` is the same model as
-  :class:`linear_model.SGDClassifier(loss="log_loss", alpha=1.23)`.
+  :class:`linear_model.SGDClassifier(loss="log_loss", alpha=1.23)` for binary targets.
 
   For :class:`linear_model.LogisticRegressionCV`, also the attributes `C_` and `Cs_`
   are deprecated. Use the new attributes `alpha_` and `alphas_` instead.

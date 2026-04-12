@@ -1592,7 +1592,7 @@ def test_metadata_routing_multimetric_metadata_routing(enable_metadata_routing):
 def test_curve_scorer():
     """Check the behaviour of the `_CurveScorer` class."""
     X, y = make_classification(random_state=0)
-    estimator = LogisticRegression(C=None, alpha=1e-3).fit(X, y)
+    estimator = LogisticRegression(C=None).fit(X, y)
     curve_scorer = _CurveScorer(
         balanced_accuracy_score,
         sign=1,

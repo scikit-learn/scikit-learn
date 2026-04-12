@@ -1383,7 +1383,7 @@ The following example shows how to fit the majority rule classifier::
    >>> iris = datasets.load_iris()
    >>> X, y = iris.data[:, 1:3], iris.target
 
-   >>> clf1 = LogisticRegression(C=None, alpha=1e-4)
+   >>> clf1 = LogisticRegression(C=None)
    >>> clf2 = RandomForestClassifier(n_estimators=50, random_state=1)
    >>> clf3 = GaussianNB()
 

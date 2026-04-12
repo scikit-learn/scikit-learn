@@ -683,7 +683,7 @@ def roc_auc_score(
     >>> X, y = load_iris(return_X_y=True)
     >>> clf = LogisticRegression(C=None, solver="newton-cholesky").fit(X, y)
     >>> roc_auc_score(y, clf.predict_proba(X), multi_class='ovr')
-    0.97
+    0.99
 
     Multilabel case:
 
@@ -698,7 +698,7 @@ def roc_auc_score(
     >>> # extract the positive columns for each output
     >>> y_score = np.transpose([score[:, 1] for score in y_score])
     >>> roc_auc_score(y, y_score, average=None)
-    array([0.80, 0.83, 0.92, 0.84, 0.93])
+    array([0.828, 0.853, 0.941, 0.868, 0.948])
     >>> from sklearn.linear_model import RidgeClassifierCV
     >>> clf = RidgeClassifierCV().fit(X, y)
     >>> roc_auc_score(y, clf.decision_function(X), average=None)

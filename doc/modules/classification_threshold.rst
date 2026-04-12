@@ -112,10 +112,10 @@ a meaningful metric for their use case.
         >>> base_model = LogisticRegression(C=None)
         >>> model = TunedThresholdClassifierCV(base_model, scoring=scorer)
         >>> scorer(model.fit(X, y), X, y)
-        0.88
+        0.86...
         >>> # compare it with the internal score found by cross-validation
         >>> model.best_score_
-        np.float64(0.86...)
+        np.float64(0.85...)
 
 Important notes regarding the internal cross-validation
 -------------------------------------------------------

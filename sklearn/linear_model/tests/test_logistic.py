@@ -84,11 +84,11 @@ def check_predictions(clf, X, y):
 def test_predict_2_classes(csr_container):
     # Simple sanity check on a 2 classes dataset
     # Make sure it predicts the correct result on simple datasets.
+    check_predictions(LogisticRegression(C=None), X, Y1)
+    check_predictions(LogisticRegression(C=None), csr_container(X), Y1)
+
     check_predictions(LogisticRegression(C=None, alpha=0.1), X, Y1)
     check_predictions(LogisticRegression(C=None, alpha=0.1), csr_container(X), Y1)
-
-    check_predictions(LogisticRegression(C=None, alpha=1e-3), X, Y1)
-    check_predictions(LogisticRegression(C=None, alpha=1e-3), csr_container(X), Y1)
 
     check_predictions(LogisticRegression(C=None, alpha=0.1, fit_intercept=False), X, Y1)
     check_predictions(
@@ -98,10 +98,8 @@ def test_predict_2_classes(csr_container):
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_predict_3_classes(csr_container):
-    check_predictions(LogisticRegression(C=None, alpha=1e-1 / len(Y1)), X, Y2)
-    check_predictions(
-        LogisticRegression(C=None, alpha=1e-1 / len(Y1)), csr_container(X), Y2
-    )
+    check_predictions(LogisticRegression(C=None), X, Y2)
+    check_predictions(LogisticRegression(C=None), csr_container(X), Y2)
 
 
 @pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
@@ -622,14 +620,14 @@ def test_multinomial_logistic_regression_string_inputs():
     # For numerical labels, let y values be taken from set (-1, 0, 1)
     y = np.array(y) - 1
     # Test for string labels
-    lr = LogisticRegression(C=None, alpha=1)
+    lr = LogisticRegression(C=None)
     lr_cv = LogisticRegressionCV(
         Cs=None,
         alphas=3,
         use_legacy_attributes=False,
         scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
     )
-    lr_str = LogisticRegression(C=None, alpha=1)
+    lr_str = LogisticRegression(C=None)
     lr_cv_str = LogisticRegressionCV(
         Cs=None,
         alphas=3,
@@ -666,10 +664,10 @@ def test_multinomial_logistic_regression_string_inputs():
 
     # Make sure class weights can be given with string labels
     lr_cv_str = LogisticRegression(
-        C=None, alpha=1, class_weight={"bar": 1, "baz": 2, "foo": 0}
+        C=None, class_weight={"bar": 1, "baz": 2, "foo": 0}
     ).fit(X_ref, y_str)
 
-    assert sorted(np.unique(lr_cv_str.predict(X_ref))) == ["bar", "baz"]
+    assert sorted(np.unique(lr_cv_str.predict(X_ref))) == ["bar", "baz", "foo"]
 
 
 # TODO(1.12): remove deprecated use_legacy_attributes
@@ -706,7 +704,7 @@ def test_multinomial_cv_iris(use_legacy_attributes):
     # Test that for the iris data multinomial gives a better accuracy than OvR
     clf_ovr = GridSearchCV(
         OneVsRestClassifier(LogisticRegression(C=None, solver="newton-cholesky")),
-        {"estimator__alpha": np.logspace(-4, 4, num=10)},
+        {"estimator__alpha": np.logspace(-7, 2, num=10)},
         scoring="neg_log_loss",
     ).fit(X, y)
     for solver in ["lbfgs", "newton-cg", "sag", "saga"]:
@@ -844,7 +842,6 @@ def test_logistic_cv_folds_with_classes_missing(enable_metadata_routing, n_class
 
         clf = LogisticRegressionCV(
             Cs=None,
-            alphas=np.logspace(-6, 6, 5),
             l1_ratios=(0,),
             cv=cv,
             scoring="neg_brier_score",
@@ -1484,7 +1481,7 @@ def test_logistic_regression_cv_refit(global_random_seed, l1_ratio):
 
 def test_logreg_predict_proba_multinomial(global_random_seed):
     X, y = make_classification(
-        n_samples=10,
+        n_samples=50,
         n_features=20,
         random_state=global_random_seed,
         n_classes=3,
@@ -1493,10 +1490,10 @@ def test_logreg_predict_proba_multinomial(global_random_seed):
 
     # Predicted probabilities using the true-entropy loss should give a
     # smaller loss than those using the ovr method.
-    clf_multi = LogisticRegression(C=None, alpha=1.0)
+    clf_multi = LogisticRegression(C=None, solver="newton-cholesky")
     clf_multi.fit(X, y)
     clf_multi_loss = log_loss(y, clf_multi.predict_proba(X))
-    clf_ovr = OneVsRestClassifier(LogisticRegression(C=None, alpha=1.0))
+    clf_ovr = OneVsRestClassifier(LogisticRegression(C=None, solver="newton-cholesky"))
     clf_ovr.fit(X, y)
     clf_ovr_loss = log_loss(y, clf_ovr.predict_proba(X))
     assert clf_ovr_loss > clf_multi_loss

@@ -56,10 +56,10 @@ def _check_pos_label_statistics(
         random_state=0,
     )
 
-    classifier = LogisticRegression(C=None, alpha=1e-3)
+    classifier = LogisticRegression(C=None)
     classifier.fit(X_train, y_train)
     cv_results = cross_validate(
-        LogisticRegression(C=None, alpha=1e-3),
+        LogisticRegression(C=None),
         X,
         y,
         cv=3,
@@ -616,7 +616,7 @@ def test_display_from_cv_results_legend_label(
     """
     X, y = X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
     cv_results = cross_validate(
-        LogisticRegression(C=None, alpha=1e-3),
+        LogisticRegression(C=None),
         X,
         y,
         cv=3,

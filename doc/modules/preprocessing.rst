@@ -102,7 +102,7 @@ use in the early steps of a :class:`~sklearn.pipeline.Pipeline`::
                   ('logisticregression', LogisticRegression(C=None))])
 
   >>> pipe.score(X_test, y_test)  # apply scaling on testing data, without leaking training data.
-  0.92
+  1.0
 
 It is possible to disable either centering or scaling by either
 passing ``with_mean=False`` or ``with_std=False`` to the constructor

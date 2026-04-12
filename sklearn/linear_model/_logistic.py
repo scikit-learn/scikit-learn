@@ -149,7 +149,7 @@ def _logistic_regression_path(
         multiplies the penalty term (both L1 and L2). In this case, values must be in
         the range `[0.0, inf)`.
         If `alphas` is as an integer, then a grid of `alpha` values is chosen on a
-        logarithmic scale, with between 1e-4 and 1e4.
+        logarithmic scale, with between 1e-7 and 1e2.
 
     Cs : int or array-like of shape (n_alphas,), default=10
 
@@ -285,7 +285,7 @@ def _logistic_regression_path(
     use_alpha = True  # TODO(1.11): remove
     if Cs is None or (isinstance(Cs, str) and Cs == "deprecated"):
         if isinstance(alphas, numbers.Integral):
-            alphas = np.logspace(4, -4, alphas)  # descending
+            alphas = np.logspace(2, -7, alphas)  # descending
         Cs = [None] * len(alphas)
     else:
         use_alpha = False
@@ -946,7 +946,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            `penalty='l1'` and `l1_ratio` set to any float between 0 and 1 for
            `'penalty='elasticnet'`.
 
-    alpha : float, default=1
+    alpha : float, default=1e-5
         Regularization strength that multiplies the penalty term (both L1 and L2).
         ``alpha = 0`` is equivalent to unpenalized logistic regression. In this case,
         the design matrix `X` must have full column rank (no collinearities).
@@ -1200,10 +1200,10 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     >>> clf.predict(X[:2, :])
     array([0, 0])
     >>> clf.predict_proba(X[:2, :])
-    array([[0.6637, 0.2363, 0.0999],
-           [0.6562, 0.2458, 0.0979]])
+    array([[9.99...e-01, 7...e-07, ...e-31],
+           [9.99...e-01, 5...e-05, 1...e-27]])
     >>> clf.score(X, y)
-    0.86
+    0.98
 
     For a comparison of the LogisticRegression with other classifiers see:
     :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`.
@@ -1243,7 +1243,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self,
         penalty="deprecated",
         *,
-        alpha=1.0,
+        alpha=1e-5,
         C="deprecated",
         l1_ratio=0.0,
         dual=False,
@@ -1624,7 +1624,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         multiplies the penalty term (both L1 and L2). In this case, values must be in
         the range `[0.0, inf)`.
         If `alphas` is as an integer, then a grid of `alpha` values is chosen on a
-        logarithmic scale, with between 1e-4 and 1e4.
+        logarithmic scale between 1e-7 and 1e2.
 
         .. warning::
            During the deprecation period of `Cs`, you need to set `Cs=None` in order

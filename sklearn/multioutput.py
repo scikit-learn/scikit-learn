@@ -1011,13 +1011,13 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     >>> base_lr = LogisticRegression(C=None)
     >>> chain = ClassifierChain(base_lr, order='random', random_state=0)
     >>> chain.fit(X_train, Y_train).predict(X_test)
-    array([[1., 1., 0.],
+    array([[1., 1., 1.],
            [1., 0., 0.],
            [0., 1., 0.]])
     >>> chain.predict_proba(X_test)
-    array([[0.6562, 0.8309, 0.3243],
-       [0.6856, 0.4628, 0.3022],
-       [0.1817, 0.9472, 0.1870]])
+    array([[0.998, 0.999, 0.690],
+       [0.999, 0.249, 3.44e-03],
+       [1.91e-06, 0.999, 5.46e-06]])
     """
 
     _parameter_constraints: dict = {

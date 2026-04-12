@@ -54,7 +54,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-model = make_pipeline(StandardScaler(), LogisticRegression(C=None, alpha=1e-3))
+model = make_pipeline(StandardScaler(), LogisticRegression(C=None))
 model
 
 # %%

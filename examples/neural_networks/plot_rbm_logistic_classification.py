@@ -95,14 +95,12 @@ rbm.n_iter = 10
 # More components tend to give better prediction performance, but larger
 # fitting time
 rbm.n_components = 100
-logistic.alpha = 1e-8
 
 # Training RBM-Logistic Pipeline
 rbm_features_classifier.fit(X_train, Y_train)
 
 # Training the Logistic regression classifier directly on the pixel
 raw_pixel_classifier = clone(logistic)
-raw_pixel_classifier.alpha = 1e-6
 raw_pixel_classifier.fit(X_train, Y_train)
 
 # %%

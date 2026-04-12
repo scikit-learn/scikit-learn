@@ -63,7 +63,7 @@ from sklearn.calibration import CalibratedClassifierCV, CalibrationDisplay
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
 
-lr = LogisticRegression(C=None, alpha=1e-5)
+lr = LogisticRegression(C=None)
 gnb = GaussianNB()
 gnb_isotonic = CalibratedClassifierCV(gnb, cv=2, method="isotonic")
 gnb_sigmoid = CalibratedClassifierCV(gnb, cv=2, method="sigmoid")
@@ -221,7 +221,7 @@ class NaivelyCalibratedLinearSVC(LinearSVC):
 
 # %%
 
-lr = LogisticRegression(C=None, alpha=1e-5)
+lr = LogisticRegression(C=None)
 svc = NaivelyCalibratedLinearSVC(max_iter=10_000)
 svc_isotonic = CalibratedClassifierCV(svc, cv=2, method="isotonic")
 svc_sigmoid = CalibratedClassifierCV(svc, cv=2, method="sigmoid")

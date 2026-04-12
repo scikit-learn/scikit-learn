@@ -294,5 +294,5 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
 
 X, y = make_classification(n_classes=4, n_informative=16)
-clf = LogisticRegression(C=None, alpha=1e-3, max_iter=1000).fit(X, y)
+clf = LogisticRegression(C=None, max_iter=1000).fit(X, y)
 print(roc_auc_score(y, clf.predict_proba(X), multi_class="ovr"))
