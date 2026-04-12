@@ -5,7 +5,7 @@ import pytest
 from scipy import linalg
 
 from sklearn.cluster import KMeans
-from sklearn.covariance import LedoitWolf, ShrunkCovariance, ledoit_wolf
+from sklearn.covariance import EmpiricalCovariance, LedoitWolf, ShrunkCovariance, ledoit_wolf
 from sklearn.datasets import make_blobs
 from sklearn.discriminant_analysis import (
     LinearDiscriminantAnalysis,
@@ -647,9 +647,7 @@ def test_qda_priors(solver):
     n_pos = np.sum(y_pred == 2)
 
     neg = 1e-30
-    clf = QuadraticDiscriminantAnalysis(
-      solver=solver, priors=np.array([neg, 1 - neg])
-    )
+    clf = QuadraticDiscriminantAnalysis(solver=solver, priors=np.array([neg, 1 - neg]))
     y_pred = clf.fit(X, y).predict(X)
     n_pos2 = np.sum(y_pred == 2)
 
@@ -680,21 +678,23 @@ def test_qda_prior_copy():
     assert qda.priors_[0] != qda.priors[0]
 
 
-def test_qda_store_covariance():
+@pytest.mark.parametrize("solver", ["svd", "eigen"])
+def test_qda_store_covariance(solver):
     # The default is to not set the covariances_ attribute
-    clf = QuadraticDiscriminantAnalysis().fit(X6, y6)
+    clf = QuadraticDiscriminantAnalysis(solver=solver).fit(X6, y6)
     assert not hasattr(clf, "covariance_")
 
     # Test the actual attribute:
-    clf = QuadraticDiscriminantAnalysis(store_covariance=True).fit(X6, y6)
+    clf = QuadraticDiscriminantAnalysis(store_covariance=True, solver=solver).fit(
+        X6, y6
+    )
     assert hasattr(clf, "covariance_")
 
-    assert_array_almost_equal(clf.covariance_[0], np.array([[0.7, 0.45], [0.45, 0.7]]))
+    class1_cov = EmpiricalCovariance().fit(X6[y6==1,]).covariance_
+    assert_array_almost_equal(clf.covariance_[0], class1_cov)
 
-    assert_array_almost_equal(
-        clf.covariance_[1],
-        np.array([[0.33333333, -0.33333333], [-0.33333333, 0.66666667]]),
-    )
+    class2_cov = EmpiricalCovariance().fit(X6[y6==2,]).covariance_
+    assert_array_almost_equal(clf.covariance_[1], class2_cov)
 
 
 @pytest.mark.parametrize("solver", ["svd", "eigen"])
