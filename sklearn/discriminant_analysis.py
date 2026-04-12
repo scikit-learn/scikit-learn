@@ -1176,23 +1176,11 @@ class QuadraticDiscriminantAnalysis(
 
             rank = np.sum(scaling_class > self.tol)
             if rank < n_features:
-                n_samples_class = X_class.shape[0]
-                if self.solver == "svd" and n_samples_class <= n_features:
-                    raise linalg.LinAlgError(
-                        f"The covariance matrix of class {class_label} is not full "
-                        f"rank. When using `solver='svd'` the number of samples in "
-                        f"each class should be more than the number of features, but "
-                        f"class {class_label} has {n_samples_class} samples and "
-                        f"{n_features} features. Try using `solver='eigen'` and "
-                        f"setting the parameter `shrinkage` for regularization."
-                    )
-                else:
-                    msg_param = "shrinkage" if self.solver == "eigen" else "reg_param"
-                    raise linalg.LinAlgError(
-                        f"The covariance matrix of class {class_label} is not full "
-                        f"rank. Increase the value of `{msg_param}` to reduce the "
-                        f"collinearity.",
-                    )
+                raise linalg.LinAlgError(
+                    f"The covariance matrix of class {class_label} is not full "
+                    f"rank. Increase the value of `shrinkage` to reduce the "
+                    f"collinearity.",
+                )
 
             cov.append(cov_class)
             scalings.append(scaling_class)
