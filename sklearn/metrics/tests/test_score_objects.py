@@ -477,7 +477,7 @@ def test_thresholded_scorers():
     # Test scorers that take thresholds.
     X, y = make_blobs(random_state=0, centers=2)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    clf = LogisticRegression(C=None, random_state=0)
+    clf = LogisticRegression(C=None)
     clf.fit(X_train, y_train)
     score1 = get_scorer("roc_auc")(clf, X_test, y_test)
     score2 = roc_auc_score(y_test, clf.decision_function(X_test))
@@ -1491,7 +1491,7 @@ def test_get_scorer_multimetric(pass_estimator):
     """Check that check_scoring is compatible with multi-metric configurations."""
     X, y = make_classification(n_samples=150, n_features=10, random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    clf = LogisticRegression(C=None, random_state=0)
+    clf = LogisticRegression(C=None)
 
     if pass_estimator:
         check_scoring_ = check_scoring

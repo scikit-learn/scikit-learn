@@ -94,7 +94,7 @@ def make_prediction(dataset=None, binary=False):
     X = np.c_[X, rng.randn(n_samples, 200 * n_features)]
 
     # run classifier, get class probabilities and label predictions
-    clf = LogisticRegression(C=None, alpha=1e-2, random_state=0)
+    clf = LogisticRegression(C=None, alpha=1e-2)
     y_score = clf.fit(X[:half], y[:half]).predict_proba(X[half:])
 
     if binary:

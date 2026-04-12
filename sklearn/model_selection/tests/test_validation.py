@@ -1146,7 +1146,7 @@ def test_cross_val_predict_unbalanced():
     )
     # Change the first sample to a new class
     y[0] = 2
-    clf = LogisticRegression(C=None, random_state=1)
+    clf = LogisticRegression(C=None)
     cv = StratifiedKFold(n_splits=2)
     train, test = list(cv.split(X, y))
     yhat_proba = cross_val_predict(clf, X, y, cv=cv, method="predict_proba")
@@ -1895,9 +1895,7 @@ def test_gridsearchcv_cross_val_predict_with_method():
     iris = load_iris()
     X, y = iris.data, iris.target
     X, y = shuffle(X, y, random_state=0)
-    est = GridSearchCV(
-        LogisticRegression(C=None, random_state=42), {"alpha": [0.1, 1]}, cv=2
-    )
+    est = GridSearchCV(LogisticRegression(C=None), {"alpha": [0.1, 1]}, cv=2)
     for method in ["decision_function", "predict_proba", "predict_log_proba"]:
         check_cross_val_predict_multiclass(est, X, y, method)
 
@@ -1911,9 +1909,7 @@ def test_cross_val_predict_with_method_multilabel_ovr():
     X, y = make_multilabel_classification(
         n_samples=n_samp, n_labels=3, n_classes=n_classes, n_features=5, random_state=42
     )
-    est = OneVsRestClassifier(
-        LogisticRegression(C=None, solver="liblinear", random_state=0)
-    )
+    est = OneVsRestClassifier(LogisticRegression(C=None))
     for method in ["predict_proba", "decision_function"]:
         check_cross_val_predict_binary(est, X, y, method=method)
 

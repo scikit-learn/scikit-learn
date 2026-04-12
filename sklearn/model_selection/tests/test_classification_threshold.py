@@ -298,7 +298,9 @@ def test_tuned_threshold_classifier_metric_with_parameter():
     `beta=2`.
     """
     X, y = load_breast_cancer(return_X_y=True)
-    lr = make_pipeline(StandardScaler(), LogisticRegression(C=None)).fit(X, y)
+    lr = make_pipeline(StandardScaler(), LogisticRegression(C=None, alpha=1e-2)).fit(
+        X, y
+    )
     model_fbeta_1 = TunedThresholdClassifierCV(
         estimator=lr, scoring=make_scorer(fbeta_score, beta=1)
     ).fit(X, y)

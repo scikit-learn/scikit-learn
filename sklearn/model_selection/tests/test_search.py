@@ -1209,14 +1209,14 @@ def test_random_search_cv_results_multimetric():
     n_splits = 3
     n_search_iter = 30
 
-    params = dict(alpha=np.logspace(-1, 4, 3))
+    params = dict(alpha=np.logspace(-5, -1, 30))
     for refit in (True, False):
         random_searches = []
         for scoring in (("accuracy", "recall"), "accuracy", "recall"):
             # If True, for multi-metric pass refit='accuracy'
             if refit and isinstance(scoring, tuple):
                 refit = "accuracy"
-            clf = LogisticRegression(C=None, random_state=42)
+            clf = LogisticRegression(C=None)
             random_search = RandomizedSearchCV(
                 clf,
                 n_iter=n_search_iter,

@@ -629,7 +629,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         if self.final_estimator is None:
             warnings.warn(
                 "The default 'final_estimator' is LogisticRegression(). Note that "
-                "its parameter 'C' was deprecated in verseion 1.9. In version 1.11, "
+                "its parameter 'C' was deprecated in version 1.9. In version 1.11, "
                 "the new parameter 'alpha=1' is the default. I might be a good idea "
                 "to use a smaller penalty alpha or to perform a cross validation "
                 "search for it, e.g. by using LogisticRegressionCV instead.",

@@ -277,7 +277,7 @@ def test_inconsistent_input():
     y_ = np.ones(X_.shape[0])
     y_[0] = 0
 
-    clf = LogisticRegression(C=None, random_state=0)
+    clf = LogisticRegression(C=None)
 
     # Wrong dimensions for training data
     y_wrong = y_[:-1]
@@ -317,7 +317,7 @@ def test_consistency_path(global_random_seed):
     rng = np.random.RandomState(global_random_seed)
     X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
     y = [1] * 100 + [-1] * 100
-    alphas = np.logspace(4, 0, 10)
+    alphas = np.logspace(3, -6, 10)
 
     f = ignore_warnings
     # can't test with fit_intercept=True since LIBLINEAR
@@ -330,7 +330,7 @@ def test_consistency_path(global_random_seed):
             alphas=alphas,
             Cs=None,
             fit_intercept=False,
-            tol=1e-5,
+            tol=1e-7 if solver in ("sag", "saga") else 1e-5,
             solver=solver,
             max_iter=1000,
             random_state=global_random_seed,
@@ -340,15 +340,15 @@ def test_consistency_path(global_random_seed):
                 C=None,
                 alpha=alpha,
                 fit_intercept=False,
-                tol=1e-5,
+                tol=1e-7 if solver in ("sag", "saga") else 1e-5,
                 solver=solver,
                 random_state=global_random_seed,
                 max_iter=1000,
             )
             lr.fit(X, y)
             lr_coef = lr.coef_.ravel()
-            assert_array_almost_equal(
-                lr_coef, coefs[i], decimal=4, err_msg="with solver = %s" % solver
+            assert_allclose(
+                lr_coef, coefs[i], rtol=1e-3, err_msg=f"with {solver = } {alpha = }"
             )
 
     # test for fit_intercept=True
@@ -375,8 +375,8 @@ def test_consistency_path(global_random_seed):
         )
         lr.fit(X, y)
         lr_coef = np.concatenate([lr.coef_.ravel(), lr.intercept_])
-        assert_array_almost_equal(
-            lr_coef, coefs[0], decimal=4, err_msg="with solver = %s" % solver
+        assert_allclose(
+            lr_coef, coefs[0], rtol=1e-3, err_msg=f"with {solver = } {alpha = }"
         )
 
 
@@ -422,6 +422,7 @@ def test_liblinear_dual_random_state(global_random_seed):
         dual=True,
         tol=1e-3,
         solver="liblinear",
+        max_iter=1000,
     )
     lr1.fit(X, y)
     lr2 = LogisticRegression(
@@ -430,6 +431,7 @@ def test_liblinear_dual_random_state(global_random_seed):
         dual=True,
         tol=1e-3,
         solver="liblinear",
+        max_iter=1000,
     )
     lr2.fit(X, y)
     lr3 = LogisticRegression(
@@ -438,6 +440,7 @@ def test_liblinear_dual_random_state(global_random_seed):
         dual=True,
         tol=1e-3,
         solver="liblinear",
+        max_iter=1000,
     )
     lr3.fit(X, y)
 
@@ -569,7 +572,7 @@ def test_logistic_cv_multinomial_score(scoring, multiclass_agg_list):
         n_samples=100, random_state=42, n_classes=3, n_informative=6
     )
     train, test = np.arange(80), np.arange(80, 100)
-    lr = LogisticRegression(C=None, solver="lbfgs")
+    lr = LogisticRegression(C=None, alpha=1e-4, solver="lbfgs")
     params = lr.get_params()
     # Replace default penalty='deprecated' in 1.8 by the equivalent value that
     # can be used by _log_reg_scoring_path
@@ -593,7 +596,7 @@ def test_logistic_cv_multinomial_score(scoring, multiclass_agg_list):
                 train,
                 test,
                 classes=np.unique(y),
-                alphas=[1.0],
+                alphas=[1e-4],
                 Cs=None,
                 scoring=scorer,
                 max_squared_sum=None,
@@ -702,9 +705,7 @@ def test_multinomial_cv_iris(use_legacy_attributes):
 
     # Test that for the iris data multinomial gives a better accuracy than OvR
     clf_ovr = GridSearchCV(
-        OneVsRestClassifier(
-            LogisticRegression(C=None, alpha=1, solver="newton-cholesky")
-        ),
+        OneVsRestClassifier(LogisticRegression(C=None, solver="newton-cholesky")),
         {"estimator__alpha": np.logspace(-4, 4, num=10)},
         scoring="neg_log_loss",
     ).fit(X, y)
@@ -920,7 +921,7 @@ def test_logistic_regression_solvers_multiclass(fit_intercept):
     classifiers = {
         solver: LogisticRegression(
             C=None,
-            alpha=1,
+            alpha=1.0,
             solver=solver,
             max_iter=solver_max_iter.get(solver, 100),
             **params,
@@ -1054,7 +1055,7 @@ def test_logistic_cv_sparse(global_random_seed, solver, csr_container):
     )
     X[X < 0.0] = 0.0  # make it a bit sparse
     params = dict(
-        Cs=None, alphas=[1e1, 1, 1e-1], max_iter=10_000, tol=1e-7, random_state=42
+        Cs=None, alphas=[1e1, 1e-1, 1e-3], max_iter=10_000, tol=1e-7, random_state=42
     )
 
     clf = LogisticRegressionCV(
@@ -1070,7 +1071,12 @@ def test_logistic_cv_sparse(global_random_seed, solver, csr_container):
         scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
         **params,
     )
-    clfs.fit(csr_container(X), y)
+    if solver in ("sag", "saga"):
+        # TODO: sag and saga have bad convergence on sparse data
+        with ignore_warnings(category=ConvergenceWarning):
+            clfs.fit(csr_container(X), y)
+    else:
+        clfs.fit(csr_container(X), y)
 
     rtol = 6e-2 if solver in ("sag", "saga") else 1e-5
     atol = 1e-5 if solver in ("sag", "saga") else 0
@@ -1133,7 +1139,11 @@ def test_logistic_regressioncv_class_weights(weight, class_weight, global_random
         clf.fit(X, y)
 
         assert_allclose(
-            clf.coef_, clf_lbfgs.coef_, rtol=1e-3, err_msg=f"{solver} vs lbfgs"
+            clf.coef_,
+            clf_lbfgs.coef_,
+            rtol=1e-4,
+            atol=1e-11,
+            err_msg=f"{solver} vs lbfgs",
         )
 
 
@@ -1260,6 +1270,7 @@ def test_sample_and_class_weight_equivalence_liblinear(global_random_seed):
 
     params = dict(
         C=None,
+        alpha=1e-3,  # penalty large enough for good convergence
         fit_intercept=False,
         tol=1e-12,
         max_iter=10_000,
@@ -1273,6 +1284,7 @@ def test_sample_and_class_weight_equivalence_liblinear(global_random_seed):
         **params,
     )
     clf_cw.fit(X, y)
+    assert np.sum(clf_cw.coef_ != 0) >= 2  # Check that alpha was not too large.
     clf_sw = LogisticRegression(solver="liblinear", l1_ratio=1, **params)
     clf_sw.fit(X, y, sample_weight)
     assert_allclose(clf_cw.coef_, clf_sw.coef_, atol=1e-10)
@@ -1314,15 +1326,29 @@ def test_logistic_regression_class_weights(global_random_seed, csr_container):
         )
         clf1 = LogisticRegression(class_weight="balanced", **params)
         clf2 = LogisticRegression(class_weight=class_weight_dict, **params)
-        clf1.fit(X, y)
-        clf2.fit(X, y)
+        if solver in ("sag", "saga"):
+            # TODO: sag and saga have bad convergence on sparse data
+            with ignore_warnings(category=ConvergenceWarning):
+                clf1.fit(X, y)
+                clf2.fit(X, y)
+        else:
+            clf1.fit(X, y)
+            clf2.fit(X, y)
         assert len(clf1.classes_) == 3
         assert_allclose(clf1.coef_, clf2.coef_, rtol=1e-4)
+
         # Same as appropriate sample_weight.
         sw = np.ones(X.shape[0])
         for c in clf1.classes_:
             sw[y == c] *= class_weight_dict[c]
-        clf3 = LogisticRegression(**params).fit(X, y, sample_weight=sw)
+        clf3 = LogisticRegression(**params)
+        if solver in ("sag", "saga"):
+            # TODO: sag and saga have bad convergence on sparse data
+            with ignore_warnings(category=ConvergenceWarning):
+                clf3.fit(X, y, sample_weight=sw)
+        else:
+            clf3.fit(X, y, sample_weight=sw)
+
         assert_allclose(clf3.coef_, clf2.coef_, rtol=1e-4)
 
     # Binary case: remove 90% of class 0 and 100% of class 2
@@ -1340,8 +1366,14 @@ def test_logistic_regression_class_weights(global_random_seed, csr_container):
 
         clf1 = LogisticRegression(class_weight="balanced", **params)
         clf2 = LogisticRegression(class_weight=class_weight_dict, **params)
-        clf1.fit(X, y)
-        clf2.fit(X, y)
+        if solver in ("sag", "saga"):
+            # TODO: sag and saga have bad convergence on sparse data
+            with ignore_warnings(category=ConvergenceWarning):
+                clf1.fit(X, y)
+                clf2.fit(X, y)
+        else:
+            clf1.fit(X, y)
+            clf2.fit(X, y)
         assert_array_almost_equal(clf1.coef_, clf2.coef_, decimal=6)
 
 
@@ -1390,6 +1422,7 @@ def test_logreg_l1(global_random_seed, csr_container):
     X = np.concatenate((X, X_noise, X_constant), axis=1)
     params = dict(
         l1_ratio=1,
+        alpha=1e-2,  # penalty large enough for good convergence
         C=None,
         fit_intercept=False,
         max_iter=10000,
@@ -1436,7 +1469,7 @@ def test_logistic_regression_cv_refit(global_random_seed, l1_ratio):
     )
     lr_cv = LogisticRegressionCV(
         Cs=None,
-        alphas=[1.0],
+        alphas=[1e-1],
         l1_ratios=(l1_ratio,),
         refit=True,
         scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
@@ -1444,7 +1477,7 @@ def test_logistic_regression_cv_refit(global_random_seed, l1_ratio):
         **common_params,
     )
     lr_cv.fit(X, y)
-    lr = LogisticRegression(C=None, alpha=1.0, l1_ratio=l1_ratio, **common_params)
+    lr = LogisticRegression(C=None, alpha=1e-1, l1_ratio=l1_ratio, **common_params)
     lr.fit(X, y)
     assert_allclose(lr_cv.coef_, lr.coef_)
 
@@ -1586,7 +1619,7 @@ def test_warm_start(global_random_seed, solver, warm_start, fit_intercept):
 
     clf = LogisticRegression(
         C=None,
-        alpha=1.0 / X.shape[0],
+        alpha=1e-2,  # penalty large enough for good convergence
         tol=1e-4,
         warm_start=warm_start,
         solver=solver,
@@ -1600,10 +1633,7 @@ def test_warm_start(global_random_seed, solver, warm_start, fit_intercept):
         clf.max_iter = 1
         clf.fit(X, y)
     cum_diff = np.sum(np.abs(coef_1 - clf.coef_))
-    msg = (
-        f"Warm starting issue with solver {solver}"
-        f"with {fit_intercept=} and {warm_start=}"
-    )
+    msg = f"Warm starting issue with {solver=}, {fit_intercept=} and {warm_start=}"
     if warm_start:
         assert 2.0 > cum_diff, msg
     else:
@@ -1711,6 +1741,7 @@ def test_dtype_match(solver, fit_intercept, csr_container):
 
     lr_templ = LogisticRegression(
         C=None,
+        alpha=1e-2,  # penalty large enough for good convergence
         solver=solver,
         random_state=42,
         tol=solver_tol,
@@ -1848,7 +1879,7 @@ def test_elastic_net_vs_l1_l2(alpha):
     # Make sure that elasticnet with grid search on l1_ratio gives same or
     # better results than just l1 or just l2.
 
-    X, y = make_classification(500, random_state=0)
+    X, y = make_classification(n_samples=500, n_repeated=2, random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
     param_grid = {"l1_ratio": np.linspace(0, 1, 5)}
@@ -1861,10 +1892,10 @@ def test_elastic_net_vs_l1_l2(alpha):
         random_state=0,
         tol=1e-2,
     )
-    gs = GridSearchCV(enet_clf, param_grid, refit=True)
+    gs = GridSearchCV(enet_clf, param_grid, refit=True, scoring="neg_log_loss")
 
     l1_clf = LogisticRegression(
-        l1_ratio=1, C=None, solver="saga", random_state=0, tol=1e-2
+        l1_ratio=1, C=None, alpha=alpha, solver="saga", random_state=0, tol=1e-2
     )
     l2_clf = LogisticRegression(
         l1_ratio=0, C=None, alpha=alpha, solver="saga", random_state=0, tol=1e-2
@@ -1873,12 +1904,13 @@ def test_elastic_net_vs_l1_l2(alpha):
     for clf in (gs, l1_clf, l2_clf):
         clf.fit(X_train, y_train)
 
-    assert gs.score(X_test, y_test) >= l1_clf.score(X_test, y_test)
-    assert gs.score(X_test, y_test) >= l2_clf.score(X_test, y_test)
+    score = get_scorer("neg_log_loss")
+    assert score(gs, X_test, y_test) >= score(l1_clf, X_test, y_test)
+    assert score(gs, X_test, y_test) >= score(l2_clf, X_test, y_test)
 
 
 ##FIXME: Random state is fixed in order to make the test pass
-@pytest.mark.parametrize("alpha", np.logspace(2, -3, 4))
+@pytest.mark.parametrize("alpha", np.logspace(-2, -5, 4))
 @pytest.mark.parametrize("l1_ratio", [0.1, 0.5, 0.9])
 def test_LogisticRegression_elastic_net_objective(alpha, l1_ratio):
     # Check that training with a penalty matching the objective leads
@@ -1929,7 +1961,7 @@ def test_LogisticRegression_elastic_net_objective(alpha, l1_ratio):
 # FIXME: Random state is fixed in order to make the test pass
 @pytest.mark.parametrize("n_classes", (2, 3))
 def test_LogisticRegressionCV_GridSearchCV_elastic_net(n_classes):
-    # make sure LogisticRegressionCV gives same best params (l1 and C) as
+    # make sure LogisticRegressionCV gives same best params (l1 and alpha) as
     # GridSearchCV when penalty is elasticnet
 
     X, y = make_classification(
@@ -2113,7 +2145,9 @@ def test_l1_ratio_non_elasticnet():
         r" 'elasticnet'\. Got \(penalty=l1\)"
     )
     with pytest.warns(UserWarning, match=msg):
-        LogisticRegression(C=None, penalty="l1", solver="saga", l1_ratio=0.5).fit(X, Y1)
+        LogisticRegression(
+            C=None, penalty="l1", solver="saga", l1_ratio=0.5, tol=0.5
+        ).fit(X, Y1)
 
 
 @pytest.mark.parametrize("alpha", np.logspace(2, -3, 4))
@@ -2283,6 +2317,7 @@ def test_logistic_regression_path_init_coefs():
 # TODO(1.10): remove whole test with the removal of penalty
 @pytest.mark.filterwarnings("ignore:.*'C' was deprecated.*:FutureWarning")
 @pytest.mark.filterwarnings("ignore:.*'penalty' was deprecated.*:FutureWarning")
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("solver", sorted(set(SOLVERS) - set(["liblinear"])))
 def test_penalty_none(global_random_seed, solver):
     # - Make sure warning is raised if penalty=None and C is set to a
@@ -2338,6 +2373,7 @@ def test_c_inf_no_warning(solver):
 # XXX: investigate thread-safety bug that might be related to:
 # https://github.com/scikit-learn/scikit-learn/issues/31883
 @pytest.mark.thread_unsafe
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize(
     "params",
     [
@@ -2585,32 +2621,35 @@ def test_lr_cv_scores_differ_when_sample_weight_is_requested(global_random_seed)
     is not requested.
     """
     rng = np.random.RandomState(global_random_seed)
-    X, y = make_classification(n_samples=2000, random_state=rng)
-    X_t, y_t = make_classification(n_samples=2000, random_state=rng)
-    sample_weight = np.ones(len(y))
-    sample_weight[: len(y) // 2] = 2
+    X, y = make_classification(
+        n_samples=300, n_features=10, flip_y=0.1, random_state=rng
+    )
+    sample_weight = np.arange(len(y))
     kwargs = {"sample_weight": sample_weight}
 
     scorer1 = get_scorer("accuracy")
     lr_cv1 = LogisticRegressionCV(
         scoring=scorer1,
-        tol=3e-6,
         use_legacy_attributes=True,
         Cs=None,
+        solver="newton-cholesky",
     )
     lr_cv1.fit(X, y, **kwargs)
 
     scorer2 = get_scorer("accuracy")
     scorer2.set_score_request(sample_weight=True)
     lr_cv2 = LogisticRegressionCV(
-        scoring=scorer2, tol=3e-6, use_legacy_attributes=True, Cs=None
+        scoring=scorer2,
+        use_legacy_attributes=True,
+        Cs=None,
+        solver="newton-cholesky",
     )
     lr_cv2.fit(X, y, **kwargs)
 
     assert not np.allclose(lr_cv1.scores_[1], lr_cv2.scores_[1])
 
-    score_1 = lr_cv1.score(X_t, y_t, **kwargs)
-    score_2 = lr_cv2.score(X_t, y_t, **kwargs)
+    score_1 = lr_cv1.score(X, y, **kwargs)
+    score_2 = lr_cv2.score(X, y, **kwargs)
 
     assert not np.allclose(score_1, score_2)
 
@@ -2880,7 +2919,7 @@ def test_logistic_regression_array_api_compliance(
     # precision even when taking into account the iterated discrepancies when
     # the gradient is computed in float32. This is only necessary because the
     # iris dataset is perfectly separable.
-    # We selected a low high of alpha (high coef_ regularization) to be able
+    # We selected a high value of alpha (high coef_ regularization) to be able
     # to identify coef_ to some strict enough precision level. However we
     # also want to make sure that this choice of regularization does not
     # constrain the fitted models to a trivial baseline classifier where only
@@ -2954,6 +2993,7 @@ def test_logistic_regression_array_api_compliance(
 
 # TODO(1.10): remove when penalty is removed
 @pytest.mark.filterwarnings("ignore:'penalty' was deprecated")
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("penalty, l1_ratio", [("l1", 0.0), ("l2", 1.0)])
 def test_lr_penalty_l1ratio_incompatible(penalty, l1_ratio):
     """Check that incompatible penalty and l1_ratio raise a warning."""
@@ -3038,7 +3078,9 @@ def test_logistic_regression_array_api_warm_start(
     y_xp = xp.asarray(y_np, device=device_)
 
     with config_context(array_api_dispatch=True):
-        lr = LogisticRegression(C=1e-2, solver="lbfgs", max_iter=300, warm_start=True)
+        lr = LogisticRegression(
+            C=None, alpha=1e-2, solver="lbfgs", max_iter=300, warm_start=True
+        )
         lr.fit(X_xp, y_xp)
         lr.predict(X_xp)
         lr.fit(X_xp, y_xp)

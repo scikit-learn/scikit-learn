@@ -360,7 +360,7 @@ INIT_PARAMS = {
     LocallyLinearEmbedding: dict(max_iter=5),
     # TODO(1.11): remove scoring because it is default now
     LogisticRegressionCV: dict(
-        Cs=None, max_iter=5, cv=3, use_legacy_attributes=False, scoring="neg_log_loss"
+        Cs=None, max_iter=7, cv=3, use_legacy_attributes=False, scoring="neg_log_loss"
     ),
     LogisticRegression: dict(C=None, max_iter=5),
     MDS: dict(n_init=2, max_iter=5),
@@ -387,7 +387,7 @@ INIT_PARAMS = {
     OneClassSVM: dict(max_iter=-1),
     OneHotEncoder: dict(handle_unknown="ignore"),
     OneVsOneClassifier: dict(estimator=LogisticRegression(C=None)),
-    OneVsRestClassifier: dict(estimator=LogisticRegression(C=None)),
+    OneVsRestClassifier: dict(estimator=LogisticRegression(C=None, alpha=1e-2)),
     OrthogonalMatchingPursuitCV: dict(cv=3),
     OutputCodeClassifier: dict(estimator=LogisticRegression(C=None, alpha=0.1)),
     PassiveAggressiveClassifier: dict(max_iter=5),
@@ -498,7 +498,9 @@ INIT_PARAMS = {
     # TruncatedSVD doesn't run with n_components = n_features
     TruncatedSVD: dict(n_iter=5, n_components=1),
     TSNE: dict(perplexity=2),
-    TunedThresholdClassifierCV: dict(estimator=LogisticRegression(C=None), cv=3),
+    TunedThresholdClassifierCV: dict(
+        estimator=LogisticRegression(C=None, alpha=1e-2), cv=3
+    ),
     TweedieRegressor: dict(max_iter=5),
     VotingClassifier: dict(
         estimators=[

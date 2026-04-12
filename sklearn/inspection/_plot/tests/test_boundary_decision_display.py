@@ -122,7 +122,7 @@ def test_multiclass_predict(pyplot):
     eps = 1.0
     X, y = make_classification(n_classes=3, n_informative=3, random_state=0)
     X = X[:, [0, 1]]
-    lr = LogisticRegression(C=None, random_state=0).fit(X, y)
+    lr = LogisticRegression(C=None).fit(X, y)
 
     disp = DecisionBoundaryDisplay.from_estimator(
         lr, X, response_method="predict", grid_resolution=grid_resolution, eps=1.0
@@ -534,7 +534,7 @@ def test_class_of_interest_binary(pyplot, response_method):
     )
 
     if response_method == "predict_proba":
-        assert_allclose(disp_default.response, 1 - disp_class_0.response)
+        assert_allclose(disp_default.response, 1 - disp_class_0.response, atol=1e-15)
     else:
         assert response_method == "decision_function"
         assert_allclose(disp_default.response, -disp_class_0.response)

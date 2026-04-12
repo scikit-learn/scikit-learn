@@ -62,8 +62,8 @@ def get_name(estimator):
 # should be used.
 classifiers = [
     (
-        make_pipeline(StandardScaler(), LogisticRegression(C=None, alpha=1e-3)),
-        {"logisticregression__alpha": np.logspace(1, -1, 3)},
+        make_pipeline(StandardScaler(), LogisticRegression(C=None)),
+        {"logisticregression__alpha": np.logspace(-1, -3, 3)},
     ),
     (
         make_pipeline(StandardScaler(), LinearSVC(random_state=0)),
@@ -75,11 +75,11 @@ classifiers = [
             KBinsDiscretizer(
                 encode="onehot", quantile_method="averaged_inverted_cdf", random_state=0
             ),
-            LogisticRegression(C=None, alpha=1e-3),
+            LogisticRegression(C=None),
         ),
         {
             "kbinsdiscretizer__n_bins": np.arange(5, 8),
-            "logisticregression__alpha": np.logspace(1, -1, 3),
+            "logisticregression__alpha": np.logspace(-1, -3, 3),
         },
     ),
     (

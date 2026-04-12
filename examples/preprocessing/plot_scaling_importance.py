@@ -204,7 +204,7 @@ import numpy as np
 from sklearn.linear_model import LogisticRegressionCV
 from sklearn.pipeline import make_pipeline
 
-alphas = np.logspace(-8, 2, 20)
+alphas = np.logspace(-6, 4, 21)
 
 unscaled_clf = make_pipeline(
     pca,

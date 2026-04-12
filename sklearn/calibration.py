@@ -1407,9 +1407,9 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
     >>> X, y = make_classification(random_state=0)
     >>> X_train, X_test, y_train, y_test = train_test_split(
     ...     X, y, random_state=0)
-    >>> clf = LogisticRegression(C=None, random_state=0)
+    >>> clf = LogisticRegression(C=None)
     >>> clf.fit(X_train, y_train)
-    LogisticRegression(C=None, random_state=0)
+    LogisticRegression(C=None)
     >>> y_prob = clf.predict_proba(X_test)[:, 1]
     >>> prob_true, prob_pred = calibration_curve(y_test, y_prob, n_bins=10)
     >>> disp = CalibrationDisplay(prob_true, prob_pred, y_prob)
@@ -1577,9 +1577,9 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> X, y = make_classification(random_state=0)
         >>> X_train, X_test, y_train, y_test = train_test_split(
         ...     X, y, random_state=0)
-        >>> clf = LogisticRegression(C=None, random_state=0)
+        >>> clf = LogisticRegression(C=None)
         >>> clf.fit(X_train, y_train)
-        LogisticRegression(C=None, random_state=0)
+        LogisticRegression(C=None)
         >>> disp = CalibrationDisplay.from_estimator(clf, X_test, y_test)
         >>> plt.show()
         """
@@ -1694,9 +1694,9 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> X, y = make_classification(random_state=0)
         >>> X_train, X_test, y_train, y_test = train_test_split(
         ...     X, y, random_state=0)
-        >>> clf = LogisticRegression(C=None, random_state=0)
+        >>> clf = LogisticRegression(C=None)
         >>> clf.fit(X_train, y_train)
-        LogisticRegression(C=None, random_state=0)
+        LogisticRegression(C=None)
         >>> y_prob = clf.predict_proba(X_test)[:, 1]
         >>> disp = CalibrationDisplay.from_predictions(y_test, y_prob)
         >>> plt.show()
