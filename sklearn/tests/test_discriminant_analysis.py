@@ -850,3 +850,16 @@ def test_qda_shrinkage_performance(
 
     assert scores_shrinkage.mean() > 0.9
     assert scores_no_shrinkage.mean() < 0.6
+
+
+def test_qda_solver_agreement():
+    qda_svd = QuadraticDiscriminantAnalysis(solver="svd")
+    qda_eigen = QuadraticDiscriminantAnalysis(solver="eigen")
+
+    qda_svd.fit(X6, y6)
+    qda_eigen.fit(X6, y6)
+
+    decision_svd = qda_svd.decision_function(X6)
+    decision_eigen = qda_eigen.decision_function(X6)
+
+    assert_allclose(decision_svd, decision_eigen)
