@@ -285,14 +285,33 @@ def test_lda_transform():
     X_transformed_eigen = clf.fit(X, y).transform(X)
     assert X_transformed_eigen.shape[1] == 1
 
-    assert_array_almost_equal(X_transformed_svd, X_transformed_eigen)
-
     clf = LinearDiscriminantAnalysis(solver="lsqr", n_components=1)
     clf.fit(X, y)
     msg = "transform not implemented for 'lsqr'"
 
     with pytest.raises(NotImplementedError, match=msg):
         clf.transform(X)
+
+
+def test_lda_solver_agreement():
+    # Test LDA transform.
+    clf = LinearDiscriminantAnalysis(solver="svd", n_components=1)
+    X_transformed_svd = clf.fit(X, y).transform(X)
+    decision_svd = clf.decision_function(X)
+
+    clf = LinearDiscriminantAnalysis(solver="eigen", n_components=1)
+    X_transformed_eigen = clf.fit(X, y).transform(X)
+    decision_eigen = clf.decision_function(X)
+
+    clf = LinearDiscriminantAnalysis(solver="lsqr", n_components=1)
+    clf.fit(X, y)
+    decision_lsqr = clf.decision_function(X)
+
+    # Test transform agreement
+    assert_allclose(np.abs(X_transformed_svd), np.abs(X_transformed_eigen))
+    # Test decision function agreement
+    assert_allclose(decision_svd, decision_eigen)
+    assert_allclose(decision_svd, decision_lsqr)
 
 
 def test_lda_explained_variance_ratio():
