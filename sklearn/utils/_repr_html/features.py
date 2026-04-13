@@ -5,6 +5,12 @@ import html
 
 
 def _features_html(features, is_fitted_css_class=""):
+    """Generate HTML representation of feature names.
+
+    Creates a collapsible HTML details element containing a table of feature
+    names with a summary line showing the total count. Includes a copy-to-clipboard
+    button for all feature names.
+    """
     FEATURES_TABLE_TEMPLATE = """
         <div class="features {is_fitted_css_class}">
           <details>

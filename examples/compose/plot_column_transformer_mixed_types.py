@@ -199,6 +199,7 @@ search_cv.fit(X_train, y_train)
 
 print("Best params:")
 print(search_cv.best_params_)
+search_cv
 
 # %%
 # The internal cross-validation scores obtained by those parameters is:
