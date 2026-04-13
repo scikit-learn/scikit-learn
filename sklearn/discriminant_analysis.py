@@ -10,6 +10,7 @@ import numpy as np
 import scipy.linalg
 from scipy import linalg
 
+import sklearn.externals.array_api_extra as xpx
 from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
@@ -23,7 +24,6 @@ from sklearn.covariance import (
     ledoit_wolf_shrinkage,
     shrunk_covariance,
 )
-import sklearn.externals.array_api_extra as xpx
 from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils._array_api import _expit, device, get_namespace, size
