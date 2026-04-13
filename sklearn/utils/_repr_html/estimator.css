@@ -162,6 +162,11 @@ div.sk-serial,
 .sk-global div.sk-item:has(> .sk-label-container input.sk-toggleable__control:checked) > div.sk-parallel {
  display: flex;
 }
+/* Keep top-level always visible
+.sk-global > div.sk-container > div.sk-item > div.sk-serial,
+.sk-global > div.sk-container > div.sk-item > div.sk-parallel {
+  display: flex;
+}
 */
 
 /* Toggleable style: style used for estimator/Pipeline/ColumnTransformer box that is
