@@ -1,0 +1,5 @@
+- :class:`~sklearn.preprocessing.PowerTransformer` and
+  :class:`~sklearn.preprocessing.QuantileTransformer` now don't raise a warning in
+  :meth:`inverse_transform` related to feature names if :meth:`fit` is called using data with
+  feature names.
+  By :user:`Thibault <ThibaultDECO>` and :user:`Mohammad Ahmadullah Khan <MAUK9086>`.
