@@ -829,9 +829,7 @@ def test_get_feature_names_out():
 @pytest.mark.parametrize("n_features", [25])
 @pytest.mark.parametrize("train_size", [100])
 @pytest.mark.parametrize("solver", ["svd", "eigen"])
-def test_qda_shrinkage_performance(
-    global_random_seed, n_features, train_size, solver
-):
+def test_qda_shrinkage_performance(global_random_seed, n_features, train_size, solver):
     # Test that QDA with shrinkage performs better than without shrinkage on
     # a case where there's a small number of samples per class relative to
     # the number of features.
@@ -857,9 +855,7 @@ def test_qda_shrinkage_performance(
     # covariance shrinkage.
     cv = ShuffleSplit(n_splits=5, train_size=train_size, random_state=0)
     qda_shrinkage = QuadraticDiscriminantAnalysis(solver=solver, shrinkage="auto")
-    qda_no_shrinkage = QuadraticDiscriminantAnalysis(
-        solver=solver, shrinkage=None
-    )
+    qda_no_shrinkage = QuadraticDiscriminantAnalysis(solver=solver, shrinkage=None)
 
     scores_no_shrinkage = cross_val_score(
         qda_no_shrinkage, X, y, cv=cv, scoring="d2_brier_score"
