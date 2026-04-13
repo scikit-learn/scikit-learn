@@ -753,10 +753,10 @@ def test_multiclass_not_enough_colors_error(pyplot):
     ],
 )
 def test_multiclass_levels(pyplot, y, response_method, plot_method):
-    """Check that `levels` are set correctly to ensure that all classes or class
-    boundaries are plotted correctly. (only relevant for "contour" and "predict" with
-    "contourf".)
+    """
+    Test that `levels` are set such that all classes and class boundaries are displayed.
 
+    This is only relevant for "contour" and "predict" with "contourf".
     Non-regression test for issue #32866.
     """
     X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1], [2, 2], [3, 2]])
@@ -789,6 +789,8 @@ def test_multiclass_levels(pyplot, y, response_method, plot_method):
     # Check that all expected colors are visible for contourf:
     if plot_method == "contourf":
         expected_colors = pyplot.get_cmap("gist_rainbow")(np.linspace(0, 1, 6))
+        # TODO: Remove version check and the else branch once 3.10 is the minimal
+        # supported matplotlib version.
         import matplotlib as mpl
 
         # disp.surface_ is QuadContourSet. In matplotlib 3.10.0, the API for
@@ -817,6 +819,8 @@ def test_zorder(pyplot, response_method, plot_method):
     disp = DecisionBoundaryDisplay.from_estimator(
         clf, X, response_method=response_method, plot_method=plot_method
     )
+    # TODO: Remove version check and the else branch once 3.10 is the minimal
+    # supported matplotlib version.
     import matplotlib as mpl
 
     # disp.surface_ is QuadContourSet or QuadMesh (for "pcolormesh"). In matplotlib
