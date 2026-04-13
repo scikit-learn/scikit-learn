@@ -37,7 +37,7 @@ def test_with_MinimalTransformer():
 @pytest.mark.parametrize(
     "pandas, feature_cols",
     [
-        (True, ["A", "B"]),
+        (True, ["Feature A", "Feature B"]),
         (False, ["x0", "x1"]),
     ],
 )
@@ -45,7 +45,7 @@ def test_estimator_html_repr_col_names(pandas, feature_cols):
     """Test features names are kept with pandas col names and generic."""
     if pandas:
         pd = pytest.importorskip("pandas")
-        X = pd.DataFrame({"A": [0, 2], "B": [1, 1]})
+        X = pd.DataFrame({"Feature A": [0, 2], "Feature B": [1, 1]})
     else:
         X = np.array([[0, 2], [1, 1]])
 
