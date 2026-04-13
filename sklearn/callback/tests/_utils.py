@@ -11,7 +11,7 @@ from sklearn.callback._callback_support import get_callback_manager
 from sklearn.utils.parallel import Parallel, delayed
 
 
-class TestingCallback:
+class RecordingCallback:
     """A minimal callback used for smoke testing purposes.
 
     This callback keeps a record of the hooks called for introspection.
@@ -79,7 +79,7 @@ class TestingCallback:
         return len([rec for rec in self.record if rec["name"] == hook_name])
 
 
-class TestingAutoPropagatedCallback(TestingCallback):
+class RecordingAutoPropagatedCallback(RecordingCallback):
     """A minimal auto-propagated callback used for smoke testing purposes.
 
     This callback keeps a record of the hooks called for introspection.
@@ -102,14 +102,14 @@ class NotValidCallback:
         pass  # pragma: no cover
 
 
-class NotValidHookCallback(TestingCallback):
+class NotValidHookCallback(RecordingCallback):
     """Invalid callback since it has invalid parameters in the hooks signatures."""
 
     def on_fit_task_begin(self, estimator, context, *, not_valid_kwarg=None):
         pass  # pragma: no cover
 
 
-class FailingCallback(TestingCallback):
+class FailingCallback(RecordingCallback):
     """A callback that raises an error at some point."""
 
     def __init__(self, fail_at=None):
@@ -137,7 +137,7 @@ class FailingCallback(TestingCallback):
             raise ValueError("Failing callback failed at teardown")
 
 
-class StopFitCallback(TestingCallback):
+class StopFitCallback(RecordingCallback):
     """A callback with a `on_fit_task_end` hook returning True."""
 
     def on_fit_task_end(self, estimator, context):
@@ -145,7 +145,7 @@ class StopFitCallback(TestingCallback):
         return True
 
 
-class NotRequiredKwargsCallback(TestingCallback):
+class NotRequiredKwargsCallback(RecordingCallback):
     """A callback with a `on_fit_task_end` not requiring all possible kwargs."""
 
     def on_fit_task_end(self, estimator, context, *, X=None, y=None):

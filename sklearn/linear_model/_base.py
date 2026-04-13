@@ -302,13 +302,13 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features)
+        X : array-like or sparse matrix of shape (n_samples, n_features)
             Samples.
 
         Returns
         -------
-        C : array, shape (n_samples,)
-            Returns predicted values.
+        C : ndarray of shape (n_samples,)
+            Predicted values.
         """
         check_same_namespace(X, self, attribute="coef_", method="predict")
         return self._decision_function(X)
@@ -331,6 +331,26 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
 
         else:
             self.intercept_ = 0.0
+
+
+class MultiOutputLinearModel(MultiOutputMixin, LinearModel):
+    # Provides consistent docstring to `predict` for linear models that support
+    # multi-output.
+    def predict(self, X):
+        """
+        Predict using the linear model.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape (n_samples, n_features)
+            Samples.
+
+        Returns
+        -------
+        C : ndarray of shape (n_samples,) or (n_samples, n_outputs)
+            Predicted values.
+        """
+        return super().predict(X)
 
 
 # XXX Should this derive from LinearModel? It should be a mixin, not an ABC.
@@ -487,7 +507,7 @@ class SparseCoefMixin:
         return self
 
 
-class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
+class LinearRegression(RegressorMixin, MultiOutputLinearModel):
     """
     Ordinary least squares Linear Regression.
 

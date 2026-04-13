@@ -1,0 +1,4 @@
+- :class:`feature_selection.RFE` now uses stable sorting when ranking feature
+  importances. This ensures that the feature selection is deterministic and consistent
+  across runs when feature importances are tied.
+  By :user:`blitchj <blitchj>`.

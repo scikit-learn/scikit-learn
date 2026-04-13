@@ -1,0 +1,4 @@
+- :class:`cluster.AgglomerativeClustering` and
+  :class:`cluster.FeatureAgglomeration` now accept `metric="l2"` together with
+  `linkage="ward"`. `metric="l2"` is equivalent to `metric="euclidean"`.
+  :pr:`24681` by :user:`Guillaume Lemaitre <glemaitre>`.

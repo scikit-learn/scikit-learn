@@ -3291,8 +3291,10 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
 
     References
     ----------
-    .. [1] Grigorios Tsoumakas, Ioannis Katakis. Multi-Label Classification:
-           An Overview. International Journal of Data Warehousing & Mining,
+    .. [1] Grigorios Tsoumakas, Ioannis Katakis.
+           `Multi-Label Classification: An Overview
+           <https://people.iee.ihu.gr/~stoug/odep/papers/Multi-Label%20Classification:%20An%20Overview.pdf>`_.
+           International Journal of Data Warehousing & Mining,
            3(3), 1-13, July-September 2007.
 
     .. [2] `Wikipedia entry on the Hamming distance
