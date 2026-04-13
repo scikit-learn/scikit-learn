@@ -623,7 +623,8 @@ def enet_path(
     if multi_output and positive:
         raise ValueError("positive=True is not allowed for multi-output (y.ndim != 1)")
 
-    if sparse.issparse(X):
+    X_is_sparse = sparse.issparse(X)
+    if X_is_sparse:
         if X_offset_param is not None:
             # As sparse matrices are not actually centered we need this to be passed to
             # the CD solver.
@@ -681,7 +682,6 @@ def enet_path(
     else:
         coef_ = np.asfortranarray(coef_init, dtype=X.dtype)
 
-    X_is_sparse = sparse.issparse(X)
     if X_is_sparse:
         X_data = X.data
         X_indices = X.indices
@@ -1012,7 +1012,7 @@ class ElasticNet(RegressorMixin, MultiOutputLinearModel):
 
         Parameters
         ----------
-        X : {ndarray, sparse matrix, sparse array} of (n_samples, n_features)
+        X : {ndarray, sparse matrix, sparse array} of shape (n_samples, n_features)
             Data.
 
             Note that large sparse matrices and arrays requiring `int64`
@@ -2708,7 +2708,7 @@ class MultiTaskElasticNet(ElasticNet):
 
         Parameters
         ----------
-        X : {ndarray, sparse matrix, sparse array} of (n_samples, n_features)
+        X : {ndarray, sparse matrix, sparse array} of shape (n_samples, n_features)
             Data. Pass directly as Fortran-contiguous data to avoid unnecessary memory
             duplication.
 
