@@ -105,7 +105,7 @@ def test_lda_predict():
         assert np.any(y_pred3 != y3), "solver %s" % solver
 
     clf = LinearDiscriminantAnalysis(
-      solver="svd", covariance_estimator=ShrunkCovariance
+        solver="svd", covariance_estimator=ShrunkCovariance
     )
     with pytest.raises(ValueError):
         clf.fit(X, y)
@@ -298,17 +298,20 @@ def test_lda_transform():
         clf.transform(X)
 
 
-def test_lda_solver_agreement():
+@pytest.mark.parametrize("shrinkage", [None, 0.0, 0.2])
+def test_lda_solver_agreement(shrinkage):
     # Test LDA transform.
-    clf = LinearDiscriminantAnalysis(solver="svd", n_components=1)
+    clf = LinearDiscriminantAnalysis(solver="svd", n_components=1, shrinkage=shrinkage)
     X_transformed_svd = clf.fit(X, y).transform(X)
     decision_svd = clf.decision_function(X)
 
-    clf = LinearDiscriminantAnalysis(solver="eigen", n_components=1)
+    clf = LinearDiscriminantAnalysis(
+        solver="eigen", n_components=1, shrinkage=shrinkage
+    )
     X_transformed_eigen = clf.fit(X, y).transform(X)
     decision_eigen = clf.decision_function(X)
 
-    clf = LinearDiscriminantAnalysis(solver="lsqr", n_components=1)
+    clf = LinearDiscriminantAnalysis(solver="lsqr", n_components=1, shrinkage=shrinkage)
     clf.fit(X, y)
     decision_lsqr = clf.decision_function(X)
 
@@ -459,9 +462,9 @@ def test_lda_shrinkage(seed):
 
 
 def test_lda_ledoitwolf():
-    # When shrinkage="auto" current implementation uses ledoitwolf estimation
-    # of covariance after standardizing the data. This checks that it is indeed
-    # the case
+    # When shrinkage="auto" current implementation with solvers "eigen" and "lsqr"
+    # uses ledoitwolf estimation of covariance after standardizing the data.
+    # This checks that it is indeed the case
     class StandardizedLedoitWolf:
         def fit(self, X):
             sc = StandardScaler()  # standardize features
@@ -602,9 +605,9 @@ def test_qda_covariance_estimator():
 
 
 def test_qda_ledoitwolf(global_random_seed):
-    # When shrinkage="auto" current implementation uses ledoitwolf estimation
-    # of covariance after standardizing the data. This checks that it is indeed
-    # the case
+    # When shrinkage="auto" and solver="eigen", current implementation uses ledoitwolf
+    # estimation of covariance after standardizing the data. This checks that it is
+    # indeed the case
     class StandardizedLedoitWolf:
         def fit(self, X):
             sc = StandardScaler()  # standardize features
@@ -631,7 +634,8 @@ def test_qda_ledoitwolf(global_random_seed):
     assert_allclose(c1.covariance_, c2.covariance_)
 
 
-def test_qda_coefs(global_random_seed):
+@pytest.mark.parametrize("shrinkage", [None, 0.0, 0.2])
+def test_qda_coefs(global_random_seed, shrinkage):
     # Test if the coefficients of the solvers are approximately the same.
     n_features = 2
     n_classes = 2
@@ -644,8 +648,8 @@ def test_qda_coefs(global_random_seed):
         random_state=global_random_seed,
     )
 
-    clf_svd = QuadraticDiscriminantAnalysis(solver="svd")
-    clf_eigen = QuadraticDiscriminantAnalysis(solver="eigen")
+    clf_svd = QuadraticDiscriminantAnalysis(solver="svd", shrinkage=shrinkage)
+    clf_eigen = QuadraticDiscriminantAnalysis(solver="eigen", shrinkage=shrinkage)
 
     clf_svd.fit(X, y)
     clf_eigen.fit(X, y)
@@ -739,8 +743,7 @@ def test_qda_regularization(global_random_seed, solver):
     # Adding a little regularization fixes the fit time error.
     if solver == "svd":
         clf = QuadraticDiscriminantAnalysis(solver=solver, reg_param=0.01)
-    elif solver == "eigen":
-        clf = QuadraticDiscriminantAnalysis(solver=solver, shrinkage=0.01)
+    clf = QuadraticDiscriminantAnalysis(solver=solver, shrinkage=0.01)
     with warnings.catch_warnings():
         warnings.simplefilter("error")
     clf.fit(X2, y6)
@@ -753,25 +756,19 @@ def test_qda_regularization(global_random_seed, solver):
     y = np.array([1, 1, 1, 1, 1, 1, 2, 2, 2])
 
     clf = QuadraticDiscriminantAnalysis(solver=solver)
-    if solver == "svd":
-        msg2 = msg + " When using `solver='svd'`"
-    elif solver == "eigen":
-        msg2 = msg
-
-    with pytest.raises(linalg.LinAlgError, match=msg2):
+    with pytest.raises(linalg.LinAlgError, match=msg):
         clf.fit(X, y)
 
-    # The error will persist even with regularization for SVD
-    # because the number of singular values is limited by n_samples_in_a_class.
+    # The error will persist using `reg_param` with SVD because the
+    # number of singular values is limited by n_samples_in_a_class.
     if solver == "svd":
         clf = QuadraticDiscriminantAnalysis(solver=solver, reg_param=0.3)
-        with pytest.raises(linalg.LinAlgError, match=msg2):
+        with pytest.raises(linalg.LinAlgError, match=msg):
             clf.fit(X, y)
-    # The warning will be gone for Eigen with regularization, because
-    # the covariance matrix will be full-rank.
-    elif solver == "eigen":
-        clf = QuadraticDiscriminantAnalysis(solver=solver, shrinkage=0.3)
-        clf.fit(X, y)
+    # `shrinkage` solves the problem for both solvers, because it inclues
+    # the 0 singular values in SVD and shrinks them.
+    clf = QuadraticDiscriminantAnalysis(solver=solver, shrinkage=0.3)
+    clf.fit(X, y)
 
 
 def test_covariance():
@@ -831,9 +828,9 @@ def test_get_feature_names_out():
 
 @pytest.mark.parametrize("n_features", [25])
 @pytest.mark.parametrize("train_size", [100])
-@pytest.mark.parametrize("solver_no_shrinkage", ["svd", "eigen"])
+@pytest.mark.parametrize("solver", ["svd", "eigen"])
 def test_qda_shrinkage_performance(
-    global_random_seed, n_features, train_size, solver_no_shrinkage
+    global_random_seed, n_features, train_size, solver
 ):
     # Test that QDA with shrinkage performs better than without shrinkage on
     # a case where there's a small number of samples per class relative to
@@ -859,9 +856,9 @@ def test_qda_shrinkage_performance(
     # Use small training sets to illustrate the regularization effect of
     # covariance shrinkage.
     cv = ShuffleSplit(n_splits=5, train_size=train_size, random_state=0)
-    qda_shrinkage = QuadraticDiscriminantAnalysis(solver="eigen", shrinkage="auto")
+    qda_shrinkage = QuadraticDiscriminantAnalysis(solver=solver, shrinkage="auto")
     qda_no_shrinkage = QuadraticDiscriminantAnalysis(
-        solver=solver_no_shrinkage, shrinkage=None
+        solver=solver, shrinkage=None
     )
 
     scores_no_shrinkage = cross_val_score(
@@ -875,9 +872,10 @@ def test_qda_shrinkage_performance(
     assert scores_no_shrinkage.mean() < 0.6
 
 
-def test_qda_solver_agreement():
-    qda_svd = QuadraticDiscriminantAnalysis(solver="svd")
-    qda_eigen = QuadraticDiscriminantAnalysis(solver="eigen")
+@pytest.mark.parametrize("shrinkage", [None, 0.0, 0.2])
+def test_qda_solver_agreement(shrinkage):
+    qda_svd = QuadraticDiscriminantAnalysis(solver="svd", shrinkage=shrinkage)
+    qda_eigen = QuadraticDiscriminantAnalysis(solver="eigen", shrinkage=shrinkage)
 
     qda_svd.fit(X6, y6)
     qda_eigen.fit(X6, y6)
