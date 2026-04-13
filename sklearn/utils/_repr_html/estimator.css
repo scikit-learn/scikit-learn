@@ -119,7 +119,7 @@ div.sk-serial,
     border-bottom:.2em solid var(--sklearn-color-text-on-default-background);
     content: "";
     width: 20px;
-    height: 1em;
+    height: 1.15em;
     margin-left: -10px;
 }
 
