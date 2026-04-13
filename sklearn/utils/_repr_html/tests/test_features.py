@@ -25,6 +25,7 @@ def test_n_features_not_fitted():
 
 
 def test_with_MinimalTransformer():
+    """Test works with MinimalTransformer in a pipeline"""
     X, y = np.array([[0, 1], [1, 1]]), np.array([[0, 1]])
 
     model = Pipeline([("transformer", MinimalTransformer())])
@@ -89,7 +90,8 @@ def test_estimator_html_col_names_featureunion():
 
 
 def test_features_html_with_pipeline():
-    """Test works with MinimalTransformer in a pipeline."""
+    """Test works with MinimalTransformer in a pipeline and scaler
+    to test number of features."""
 
     pipe = Pipeline([("minimal", MinimalTransformer()), ("scaler", StandardScaler())])
 
