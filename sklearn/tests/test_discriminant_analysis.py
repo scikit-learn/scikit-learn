@@ -765,7 +765,7 @@ def test_qda_regularization(global_random_seed, solver):
         clf = QuadraticDiscriminantAnalysis(solver=solver, reg_param=0.3)
         with pytest.raises(linalg.LinAlgError, match=msg):
             clf.fit(X, y)
-    # `shrinkage` solves the problem for both solvers, because it inclues
+    # `shrinkage` solves the problem for both solvers, because it includes
     # the 0 singular values in SVD and shrinks them.
     clf = QuadraticDiscriminantAnalysis(solver=solver, shrinkage=0.3)
     clf.fit(X, y)
