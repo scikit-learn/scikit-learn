@@ -3,6 +3,8 @@
 
 import time
 
+import numpy as np
+
 from sklearn.base import BaseEstimator, _fit_context, clone
 from sklearn.callback import CallbackSupportMixin, with_callbacks
 from sklearn.callback._callback_support import get_callback_manager
@@ -31,8 +33,8 @@ class TestingCallback:
         *,
         X=None,
         y=None,
-        metadata=None,
         fitted_estimator=None,
+        sample_weight=None,
     ):
         self.record.append(
             {
@@ -41,8 +43,8 @@ class TestingCallback:
                 "kwargs": {
                     "X": X,
                     "y": y,
-                    "metadata": metadata,
                     "fitted_estimator": fitted_estimator,
+                    "sample_weight": sample_weight,
                 },
             }
         )
@@ -54,8 +56,8 @@ class TestingCallback:
         *,
         X=None,
         y=None,
-        metadata=None,
         fitted_estimator=None,
+        sample_weight=None,
     ):
         self.record.append(
             {
@@ -64,8 +66,8 @@ class TestingCallback:
                 "kwargs": {
                     "X": X,
                     "y": y,
-                    "metadata": metadata,
                     "fitted_estimator": fitted_estimator,
+                    "sample_weight": sample_weight,
                 },
             }
         )
@@ -154,6 +156,10 @@ class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
     """A class that mimics the behavior of an estimator.
 
     The iterative part uses a loop with a max number of iterations known in advance.
+
+    This estimator computes arbitrary predictions by avergaing the feature
+    values and multiplying the result by the number of iterations done
+    in fit.
     """
 
     _parameter_constraints: dict = {}
@@ -163,24 +169,49 @@ class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
         self.computation_intensity = computation_intensity
 
     @_fit_context(prefer_skip_nested_validation=False)
-    def fit(self, X=None, y=None):
+    def fit(
+        self,
+        X=None,
+        y=None,
+        *,
+        sample_weight=None,
+    ):
         callback_ctx = self._init_callback_context(max_subtasks=self.max_iter)
-        callback_ctx.call_on_fit_task_begin(estimator=self, X=X, y=y)
+        callback_ctx.call_on_fit_task_begin(
+            estimator=self, X=X, y=y, sample_weight=sample_weight
+        )
 
         for i in range(self.max_iter):
-            subcontext = callback_ctx.subcontext()
-            subcontext.call_on_fit_task_begin(estimator=self, X=X, y=y)
+            subcontext = callback_ctx.subcontext(task_name=f"iteration {i}")
+            subcontext.call_on_fit_task_begin(
+                estimator=self, X=X, y=y, sample_weight=sample_weight
+            )
 
             time.sleep(self.computation_intensity)  # Computation intensive task
 
-            if subcontext.call_on_fit_task_end(estimator=self, X=X, y=y):
+            if subcontext.call_on_fit_task_end(
+                estimator=self,
+                X=X,
+                y=y,
+                reconstruction_attributes=lambda: {"n_iter_": i + 1},
+                sample_weight=sample_weight,
+            ):
                 break
-
-        callback_ctx.call_on_fit_task_end(estimator=self, X=X, y=y)
 
         self.n_iter_ = i + 1
 
+        callback_ctx.call_on_fit_task_end(
+            estimator=self,
+            X=X,
+            y=y,
+            reconstruction_attributes={},
+            sample_weight=sample_weight,
+        )
+
         return self
+
+    def predict(self, X):
+        return np.mean(X, axis=1) * self.n_iter_
 
 
 class WhileEstimator(CallbackSupportMixin, BaseEstimator):
@@ -297,18 +328,24 @@ class MetaEstimator(CallbackSupportMixin, BaseEstimator):
         self.prefer = prefer
 
     @_fit_context(prefer_skip_nested_validation=False)
-    def fit(self, X=None, y=None):
+    def fit(self, X=None, y=None, sample_weight=None):
         callback_ctx = self._init_callback_context(
             max_subtasks=self.n_outer, sequential_subtasks=False
         )
-        callback_ctx.call_on_fit_task_begin(estimator=self, X=X, y=y)
+        callback_ctx.call_on_fit_task_begin(
+            estimator=self, X=X, y=y, sample_weight=sample_weight
+        )
+        fit_params = (
+            {"sample_weight": sample_weight} if sample_weight is not None else {}
+        )
 
         Parallel(n_jobs=self.n_jobs, prefer=self.prefer)(
             delayed(_fit_subestimator)(
                 self,
                 self.estimator,
-                X,
-                y,
+                X=X,
+                y=y,
+                fit_params=fit_params,
                 outer_callback_ctx=callback_ctx.subcontext(
                     task_name="outer", task_id=i, max_subtasks=self.n_inner
                 ),
@@ -316,12 +353,16 @@ class MetaEstimator(CallbackSupportMixin, BaseEstimator):
             for i in range(self.n_outer)
         )
 
-        callback_ctx.call_on_fit_task_end(estimator=self, X=X, y=y)
+        callback_ctx.call_on_fit_task_end(
+            estimator=self, X=X, y=y, sample_weight=sample_weight
+        )
 
         return self
 
 
-def _fit_subestimator(meta_estimator, inner_estimator, X, y, *, outer_callback_ctx):
+def _fit_subestimator(
+    meta_estimator, inner_estimator, *, X, y, fit_params, outer_callback_ctx
+):
     outer_callback_ctx.call_on_fit_task_begin(estimator=meta_estimator, X=X, y=y)
 
     for i in range(meta_estimator.n_inner):
@@ -331,7 +372,7 @@ def _fit_subestimator(meta_estimator, inner_estimator, X, y, *, outer_callback_c
         inner_ctx.propagate_callback_context(sub_estimator=est)
         inner_ctx.call_on_fit_task_begin(estimator=meta_estimator, X=X, y=y)
 
-        est.fit(X, y)
+        est.fit(X=X, y=y, **fit_params)
 
         inner_ctx.call_on_fit_task_end(estimator=meta_estimator, X=X, y=y)
 
