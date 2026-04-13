@@ -23,6 +23,7 @@ from sklearn.covariance import (
     ledoit_wolf_shrinkage,
     shrunk_covariance,
 )
+import sklearn.externals.array_api_extra as xpx
 from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils._array_api import _expit, device, get_namespace, size
@@ -214,7 +215,7 @@ def _svd_shrinkage(X, shrinkage=None):
     else:
         svd = scipy.linalg.svd
 
-    n_samples, _ = X.shape
+    n_samples, n_features = X.shape
 
     if shrinkage is None:
         U, S, Vt = svd(X, full_matrices=False)
@@ -224,8 +225,10 @@ def _svd_shrinkage(X, shrinkage=None):
     elif isinstance(shrinkage, Real):
         shrinkage_val = shrinkage
 
-    # Use full_matrices=True to include 0's that will be shrunk
+    # Use full matrices and pad with 0's to include 0 eigenvalues
     U, S_raw, Vt = svd(X, full_matrices=True)
+    if len(S_raw) < n_features:
+        S_raw = xpx.pad(S_raw, (0, n_features - len(S_raw)), constant_values=0, xp=xp)
     cov_eigvals = S_raw**2 / n_samples
     mean_eigval = xp.mean(cov_eigvals)
     shrunk_eigvals = shrinkage_val * mean_eigval + (1 - shrinkage_val) * cov_eigvals
