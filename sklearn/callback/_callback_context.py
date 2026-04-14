@@ -90,8 +90,8 @@ from sklearn.callback._base import AutoPropagatedCallback
 
 # List of the parameters expected to be passed to call_on_fit_task_* (IN) and to be in
 # the hooks signatures (OUT).
-VALID_HOOK_PARAMS_IN = ["X", "y", "sample_weight", "reconstruction_attributes"]
-VALID_HOOK_PARAMS_OUT = ["X", "y", "sample_weight", "fitted_estimator"]
+VALID_HOOK_PARAMS_IN = ["X", "y", "metadata", "reconstruction_attributes"]
+VALID_HOOK_PARAMS_OUT = ["X", "y", "metadata", "fitted_estimator"]
 
 
 class CallbackContext:

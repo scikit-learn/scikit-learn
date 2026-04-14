@@ -380,7 +380,7 @@ def test_hook_calling_unused_kwargs():
     context = estimator.set_callbacks(callback)._init_callback_context()
     # only provide "X" and "y"
     context.call_on_fit_task_begin(estimator=estimator, X=1, y=2)
-    assert callback.record[-1]["kwargs"]["sample_weight"] is None
+    assert callback.record[-1]["kwargs"]["metadata"] is None
     assert callback.record[-1]["kwargs"]["fitted_estimator"] is None
 
 
@@ -406,7 +406,7 @@ def test_hook_calling_lazy_evaluation():
     kwargs are not evaluated if no callback uses them.
     They are evaluated only once and passed to all callbacks that use them.
     """
-    eval_counts = {"X": 0, "sample_weight": 0}
+    eval_counts = {"X": 0, "metadata": 0}
 
     def eval_kwarg(key):
         eval_counts[key] += 1
@@ -419,10 +419,10 @@ def test_hook_calling_lazy_evaluation():
     context.call_on_fit_task_end(
         estimator=estimator,
         X=partial(eval_kwarg, "X"),
-        sample_weight=partial(eval_kwarg, "sample_weight"),
+        metadata=partial(eval_kwarg, "metadata"),
     )
     assert eval_counts["X"] == 1
-    assert eval_counts["sample_weight"] == 0
+    assert eval_counts["metadata"] == 0
 
     # kwarg used twice is evaluated only once
     eval_counts = {"X": 0}
