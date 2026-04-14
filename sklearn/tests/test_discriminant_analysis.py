@@ -770,6 +770,15 @@ def test_qda_regularization(global_random_seed, solver):
     clf = QuadraticDiscriminantAnalysis(solver=solver, shrinkage=0.3)
     clf.fit(X, y)
 
+    # `shrinkage` and `reg_param` can't both be set simultaneously
+    if solver == "svd":
+        clf = QuadraticDiscriminantAnalysis(solver=solver, reg_param=0.3, shrinkage=0.1)
+        with pytest.raises(
+            ValueError,
+            match=(r"`shrinkage` is not None and `reg_param` is not 0"),
+        ):
+            clf.fit(X, y)
+
 
 def test_covariance():
     x, y = make_blobs(n_samples=100, n_features=5, centers=1, random_state=42)

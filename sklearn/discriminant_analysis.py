@@ -1065,11 +1065,6 @@ class QuadraticDiscriminantAnalysis(
         self.store_covariance = store_covariance
         self.tol = tol
         self.covariance_estimator = covariance_estimator
-        if shrinkage is not None and reg_param != 0:
-            raise ValueError(
-                "`shrinkage` is not None and `reg_param` is not 0. Only one of "
-                "the two can be set. `shrinkage` is the preferred parameter."
-            )
 
     def _solve_eigen(self, X):
         """Eigenvalue solver.
@@ -1162,6 +1157,11 @@ class QuadraticDiscriminantAnalysis(
                 raise ValueError(
                     "covariance_estimator is not supported with solver='svd'. "
                     "Try solver='eigen' instead."
+                )
+            if self.shrinkage is not None and self.reg_param != 0:
+                raise ValueError(
+                    "`shrinkage` is not None and `reg_param` is not 0. Only one of "
+                    "the two can be set. `shrinkage` is the preferred parameter."
                 )
             specific_solver = self._solve_svd
         elif self.solver == "eigen":
