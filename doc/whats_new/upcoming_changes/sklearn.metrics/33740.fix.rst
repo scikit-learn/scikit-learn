@@ -1,0 +1,3 @@
+- `y_pred` was deprecated in favor of `y_proba` for :func:`metrics.log_loss`
+  as predicted probabilities are expected, not predicted labels.
+  By :user:`Lucy Liu <lucyleeow>`.
