@@ -2889,3 +2889,28 @@ def test_unused_transformer_request_present():
 
 # End of Metadata Routing Tests
 # =============================
+def test_column_transformer_int_column_names():
+    """Non-regression test for gh-30983.
+    ColumnTransformer should handle DataFrames with integer column names
+    without treating them as positional indices.
+    """
+    pd = pytest.importorskip("pandas")
+    import numpy as np
+    from sklearn.impute import SimpleImputer
+
+    rng = np.random.default_rng(0)
+    X = pd.DataFrame(rng.random((10, 3)))
+    X = X.iloc[:, [0, -1]]  # integer column names: 0 and 2
+
+    # This should not raise an IndexError/ValueError
+    ct = ColumnTransformer(
+        transformers=[
+            (
+                "continuous",
+                SimpleImputer(),
+                make_column_selector(dtype_include="number"),
+            )
+        ]
+    )
+    X_out = ct.fit_transform(X)
+    assert X_out.shape == (10, 2)

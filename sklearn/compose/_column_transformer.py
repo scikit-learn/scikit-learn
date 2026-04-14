@@ -542,6 +542,17 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         for name, _, columns in self.transformers:
             if callable(columns):
                 columns = columns(X)
+                # If X is a DataFrame with integer column names, a callable
+                # (e.g. make_column_selector) returns column names as integers.
+                # Convert them to positional indices to avoid them being
+                # misinterpreted as positions downstream (see gh-30983).
+                if (
+                    hasattr(X, "columns")
+                    and X.columns.dtype.kind in ("i", "u")
+                    and isinstance(columns, list)
+                    and all(isinstance(c, (int, np.integer)) for c in columns)
+                ):
+                    columns = [X.columns.get_loc(c) for c in columns]
             all_columns.append(columns)
             transformer_to_input_indices[name] = _get_column_indices(X, columns)
 
