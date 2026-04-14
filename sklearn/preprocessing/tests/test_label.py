@@ -814,24 +814,25 @@ def test_label_binarize_array_api_compliance(
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
 )
 @pytest.mark.parametrize("classes", [[0, 1], [0, 1, 2]])
 def test_label_binarize_unsigned_integer_overflow(
-    array_namespace, device_, dtype_name, classes
+    array_namespace, device_name, dtype_name, classes
 ):
     """Ensure label_binarize does not overflow when y has unsigned integer dtype.
 
     In particular, verify that label_binarize does not wrap -1 to the maximum value
     of unsigned integer dtypes.
     """
-    xp = _array_api_for_tests(array_namespace, device_)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
     y = classes * 10
 
     with config_context(array_api_dispatch=True):
         # Stable signed baseline
         signed_dtype = indexing_dtype(xp)
-        y_signed = xp.asarray(y, dtype=signed_dtype, device=device_)
+        y_signed = xp.asarray(y, dtype=signed_dtype, device=device)
         desired = label_binarize(y_signed, classes=classes, pos_label=1, neg_label=-1)
 
         # All namespace support `unit8` dtype
@@ -843,7 +844,7 @@ def test_label_binarize_unsigned_integer_overflow(
             uint_dtypes += [xp.uint16, xp.uint32, xp.uint64]
 
         for uint_dtype in uint_dtypes:
-            y_uint = xp.asarray(y, dtype=uint_dtype, device=device_)
+            y_uint = xp.asarray(y, dtype=uint_dtype, device=device)
             actual = label_binarize(y_uint, classes=classes, pos_label=1, neg_label=-1)
 
             assert_allclose(
