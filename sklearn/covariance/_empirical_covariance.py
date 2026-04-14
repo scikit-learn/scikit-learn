@@ -351,7 +351,7 @@ class EmpiricalCovariance(BaseEstimator):
             squared_norm = float(xp.sum(error**2))
         elif norm == "spectral":
             if _is_numpy_namespace(xp):
-                squared_norm = float(np.amax(linalg.svdvals(np.dot(error.T, error))))
+                squared_norm = float(np.amax(linalg.svdvals(error.T @ error)))
             else:
                 s = xp.linalg.svdvals(error.T @ error)
                 squared_norm = float(xp.max(s))
