@@ -9,9 +9,9 @@ import numpy as np
 from scipy import sparse
 
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
     get_namespace,
     get_namespace_and_device,
+    move_to,
 )
 from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.extmath import safe_sparse_dot, squared_norm
@@ -139,9 +139,9 @@ class LinearModelLoss:
         else:
             n_dof = n_features
         if self.base_loss.is_multiclass:
-            coef = np.zeros_like(X, shape=(n_classes, n_dof), dtype=dtype, order="F")
+            coef = np.zeros(shape=(n_classes, n_dof), dtype=dtype, order="F")
         else:
-            coef = np.zeros_like(X, shape=n_dof, dtype=dtype)
+            coef = np.zeros(shape=n_dof, dtype=dtype)
         return coef
 
     def weight_intercept(self, coef):
@@ -355,7 +355,7 @@ class LinearModelLoss:
             grad = np.empty_like(coef, dtype=weights.dtype)
             X_grad = X.T @ grad_pointwise
             grad[:n_features] = (
-                _convert_to_numpy(X_grad, xp=xp) + l2_reg_strength * weights
+                move_to(X_grad, xp=np, device="cpu") + l2_reg_strength * weights
             )
             if self.fit_intercept:
                 grad[-1] = xp.sum(grad_pointwise)
@@ -367,10 +367,12 @@ class LinearModelLoss:
             # grad_pointwise.shape = (n_samples, n_classes)
             grad_X = grad_pointwise.T @ X
             grad[:, :n_features] = (
-                _convert_to_numpy(grad_X, xp) + l2_reg_strength * weights
+                move_to(grad_X, xp=np, device="cpu") + l2_reg_strength * weights
             )
             if self.fit_intercept:
-                grad[:, -1] = _convert_to_numpy(xp.sum(grad_pointwise, axis=0), xp=xp)
+                grad[:, -1] = move_to(
+                    xp.sum(grad_pointwise, axis=0), xp=np, device="cpu"
+                )
             if coef.ndim == 1:
                 grad = grad.ravel(order="F")
 

@@ -89,16 +89,26 @@ The example code snippet below demonstrates how to use `CuPy
     >>> X_trans.device
     <CUDA Device 0>
 
-After the model is trained, fitted attributes that are arrays will also be
-from the same Array API namespace as the training data. For example, if CuPy's
-Array API namespace was used for training, then fitted attributes will be on the
-GPU. We provide an experimental `_estimator_with_converted_arrays` utility that
-transfers an estimator attributes from Array API to an ndarray::
+After the model is trained, fitted attributes that are arrays will also be from
+the same Array API namespace as the training data. For example, if CuPy's Array
+API namespace was used for training, then fitted attributes will be on the GPU.
+Passing data in a different namespace to ``transform`` or ``predict`` is an
+error::
 
-    >>> from sklearn.utils._array_api import _estimator_with_converted_arrays
-    >>> cupy_to_ndarray = lambda array : array.get()
-    >>> lda_np = _estimator_with_converted_arrays(lda, cupy_to_ndarray)
-    >>> X_trans = lda_np.transform(X_np)
+    >>> with config_context(array_api_dispatch=True):
+    ...     lda.transform(X_np)
+    Traceback (most recent call last):
+        ...
+    ValueError: Inputs passed to LinearDiscriminantAnalysis.transform() must use the same namespace and the same device as those passed to fit()...
+
+We provide ``move_estimator_to`` to transfer an estimator's array attributes
+to a different namespace and device::
+
+    >>> from sklearn.utils._array_api import move_estimator_to, get_namespace_and_device
+    >>> import numpy as np
+    >>> lda_np = move_estimator_to(lda, np, device="cpu")
+    >>> with config_context(array_api_dispatch=True):
+    ...     X_trans = lda_np.transform(X_np)
     >>> type(X_trans)
     <class 'numpy.ndarray'>
 
@@ -133,6 +143,7 @@ Estimators
   `svd_solver="randomized"` (`svd_solver="randomized"` only if `power_iteration_normalizer="QR"`))
 - :class:`kernel_approximation.Nystroem`
 - :class:`linear_model.LogisticRegression` (with `solver="lbfgs"`)
+- :class:`linear_model.PoissonRegressor` (with `solver="lbfgs"`)
 - :class:`linear_model.Ridge` (with `solver="svd"`)
 - :class:`linear_model.RidgeCV` (see :ref:`device_support_for_float64`)
 - :class:`linear_model.RidgeClassifier` (with `solver="svd"`)
