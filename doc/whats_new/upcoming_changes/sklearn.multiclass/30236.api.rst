@@ -1,0 +1,2 @@
+- :func:`~multioutput.MultiOutputClassifier.fit` argument `Y` has been deprecated and changed to `y`.
+  By :user:`Sean Moiselle <Sean-Jay-M>`
