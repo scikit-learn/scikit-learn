@@ -10,9 +10,9 @@ import sklearn
 from sklearn.externals._packaging.version import parse as parse_version
 from sklearn.utils import _safe_indexing, resample, shuffle
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
-    device,
+    device as array_api_device,
+)
+from sklearn.utils._array_api import (
     move_to,
     yield_namespace_device_dtype_combinations,
 )
@@ -112,22 +112,21 @@ def test_determine_key_type_slice_error():
 
 @skip_if_array_api_compat_not_configured
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
-def test_determine_key_type_array_api(array_namespace, device_, dtype_name):
-    xp = _array_api_for_tests(array_namespace, device_)
+def test_determine_key_type_array_api(array_namespace, device_name, dtype_name):
+    xp, device = _array_api_for_tests(array_namespace, device_name)
 
     with sklearn.config_context(array_api_dispatch=True):
-        int_array_key = xp.asarray([1, 2, 3], device=device_)
+        int_array_key = xp.asarray([1, 2, 3], device=device)
         assert _determine_key_type(int_array_key) == "int"
 
-        bool_array_key = xp.asarray([True, False, True], device=device_)
+        bool_array_key = xp.asarray([True, False, True], device=device)
         assert _determine_key_type(bool_array_key) == "bool"
 
         try:
-            complex_array_key = xp.asarray([1 + 1j, 2 + 2j, 3 + 3j], device=device_)
+            complex_array_key = xp.asarray([1 + 1j, 2 + 2j, 3 + 3j], device=device)
         except TypeError:
             # Complex numbers are not supported by all Array API libraries.
             complex_array_key = None
@@ -139,9 +138,8 @@ def test_determine_key_type_array_api(array_namespace, device_, dtype_name):
 
 @skip_if_array_api_compat_not_configured
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "indexing_key",
@@ -157,20 +155,20 @@ def test_determine_key_type_array_api(array_namespace, device_, dtype_name):
 )
 @pytest.mark.parametrize("axis", [0, 1])
 def test_safe_indexing_array_api_support(
-    array_namespace, device_, dtype_name, indexing_key, axis
+    array_namespace, device_name, dtype_name, indexing_key, axis
 ):
-    xp = _array_api_for_tests(array_namespace, device_)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
 
     array_to_index_np = np.arange(16).reshape(4, 4)
     expected_result = _safe_indexing(array_to_index_np, indexing_key, axis=axis)
-    array_to_index_xp = move_to(array_to_index_np, xp=xp, device=device_)
+    array_to_index_xp = move_to(array_to_index_np, xp=xp, device=device)
 
     with sklearn.config_context(array_api_dispatch=True):
         indexed_array_xp = _safe_indexing(array_to_index_xp, indexing_key, axis=axis)
-        assert device(indexed_array_xp) == device(array_to_index_xp)
+        assert array_api_device(indexed_array_xp) == array_api_device(array_to_index_xp)
         assert indexed_array_xp.dtype == array_to_index_xp.dtype
 
-    assert_allclose(_convert_to_numpy(indexed_array_xp, xp=xp), expected_result)
+    assert_allclose(move_to(indexed_array_xp, xp=np, device="cpu"), expected_result)
 
 
 @pytest.mark.parametrize(
