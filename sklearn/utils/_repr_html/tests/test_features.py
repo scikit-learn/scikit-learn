@@ -25,7 +25,8 @@ def test_n_features_not_fitted():
 
 
 def test_with_MinimalTransformer():
-    """Test works with MinimalTransformer in a pipeline"""
+    """Test works with MinimalTransformer in a pipeline
+    (doesn't inherit from BaseEstimator)"""
     X, y = np.array([[0, 1], [1, 1]]), np.array([[0, 1]])
 
     model = Pipeline([("transformer", MinimalTransformer())])
