@@ -3345,7 +3345,7 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
 @validate_params(
     {
         "y_true": ["array-like"],
-        "y_proba": ["array-like", None],
+        "y_proba": ["array-like", Hidden(None)],
         "normalize": ["boolean"],
         "sample_weight": ["array-like", None],
         "labels": ["array-like", None],
@@ -3395,7 +3395,7 @@ def log_loss(
         precision for `y_proba`'s dtype.
 
         .. versionadded:: 1.9
-            `y_proba` was added in v1.9 to replace `y_pred`.
+            `y_pred` was renamed to `y_proba`.
 
     normalize : bool, default=True
         If true, return the mean loss per sample.
@@ -3480,15 +3480,15 @@ def log_loss(
     )
 
 
-def _log_loss(transformed_labels, y_pred, *, normalize=True, sample_weight=None):
+def _log_loss(transformed_labels, y_proba, *, normalize=True, sample_weight=None):
     """Log loss for transformed labels and validated probabilistic predictions."""
-    xp, _, device_ = get_namespace_and_device(y_pred)
+    xp, _, device_ = get_namespace_and_device(y_proba)
     if sample_weight is not None:
         sample_weight = move_to(sample_weight, xp=xp, device=device_)
-    eps = xp.finfo(y_pred.dtype).eps
-    y_pred = xp.clip(y_pred, eps, 1 - eps)
-    transformed_labels = xp.astype(transformed_labels, y_pred.dtype, copy=False)
-    loss = -xp.sum(_xlogy(transformed_labels, y_pred, xp=xp), axis=1)
+    eps = xp.finfo(y_proba.dtype).eps
+    y_proba = xp.clip(y_proba, eps, 1 - eps)
+    transformed_labels = xp.astype(transformed_labels, y_proba.dtype, copy=False)
+    loss = -xp.sum(_xlogy(transformed_labels, y_proba, xp=xp), axis=1)
     return float(_average(loss, weights=sample_weight, normalize=normalize))
 
 

@@ -1377,11 +1377,11 @@ method.
 
     >>> from sklearn.metrics import log_loss
     >>> y_true = [0, 0, 1, 1]
-    >>> y_pred = [[.9, .1], [.8, .2], [.3, .7], [.01, .99]]
-    >>> log_loss(y_true, y_pred)
+    >>> y_proba = [[.9, .1], [.8, .2], [.3, .7], [.01, .99]]
+    >>> log_loss(y_true, y_proba)
     0.1738
 
-The first ``[.9, .1]`` in ``y_pred`` denotes 90% probability that the first
+The first ``[.9, .1]`` in ``y_proba`` denotes 90% probability that the first
 sample has label 0.  The log loss is non-negative.
 
 .. _matthews_corrcoef:
