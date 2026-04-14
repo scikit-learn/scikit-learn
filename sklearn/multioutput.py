@@ -646,7 +646,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
 
     def __init__(
         self,
-        estimator=None,
+        estimator,
         *,
         order=None,
         cv=None,
