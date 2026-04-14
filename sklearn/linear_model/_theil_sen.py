@@ -129,6 +129,7 @@ def _spatial_median(X, max_iter=300, tol=1.0e-3):
             "spatial median for TheilSen regressor."
             "".format(max_iter=max_iter),
             ConvergenceWarning,
+            stacklevel=2,
         )
     return n_iter, spatial_median
 

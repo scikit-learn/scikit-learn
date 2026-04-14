@@ -290,7 +290,8 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
     if len(bin_seeds) == len(X):
         warnings.warn(
             "Binning data failed with provided bin_size=%f, using data points as seeds."
-            % bin_size
+            % bin_size,
+            stacklevel=2,
         )
         return X
     bin_seeds = bin_seeds * bin_size

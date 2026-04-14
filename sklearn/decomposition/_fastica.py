@@ -135,6 +135,7 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
                 "tolerance or the maximum number of iterations."
             ),
             ConvergenceWarning,
+            stacklevel=2,
         )
 
     return W, ii + 1
@@ -597,14 +598,15 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         n_components = self.n_components
         if not self.whiten and n_components is not None:
             n_components = None
-            warnings.warn("Ignoring n_components with whiten=False.")
+            warnings.warn("Ignoring n_components with whiten=False.", stacklevel=2)
 
         if n_components is None:
             n_components = min(n_samples, n_features)
         if n_components > min(n_samples, n_features):
             n_components = min(n_samples, n_features)
             warnings.warn(
-                "n_components is too large: it will be set to %s" % n_components
+                "n_components is too large: it will be set to %s" % n_components,
+                stacklevel=2,
             )
 
         if self.whiten:
@@ -623,7 +625,8 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
                     warnings.warn(
                         "There are some small singular values, using "
                         "whiten_solver = 'svd' might lead to more "
-                        "accurate results."
+                        "accurate results.",
+                        stacklevel=2,
                     )
                 d[degenerate_idx] = eps  # For numerical issues
                 np.sqrt(d, out=d)

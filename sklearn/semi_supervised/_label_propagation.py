@@ -325,6 +325,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             warnings.warn(
                 "max_iter=%d was reached without convergence." % self.max_iter,
                 category=ConvergenceWarning,
+                stacklevel=2,
             )
             self.n_iter_ += 1
 

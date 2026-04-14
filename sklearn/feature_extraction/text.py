@@ -413,7 +413,8 @@ class _VectorizerMixin:
                     "Your stop_words may be inconsistent with "
                     "your preprocessing. Tokenizing the stop "
                     "words generated tokens %r not in "
-                    "stop_words." % sorted(inconsistent)
+                    "stop_words." % sorted(inconsistent),
+                    stacklevel=2,
                 )
             return not inconsistent
         except Exception:
@@ -526,13 +527,15 @@ class _VectorizerMixin:
         if self.tokenizer is not None and self.token_pattern is not None:
             warnings.warn(
                 "The parameter 'token_pattern' will not be used"
-                " since 'tokenizer' is not None'"
+                " since 'tokenizer' is not None'",
+                stacklevel=2,
             )
 
         if self.preprocessor is not None and callable(self.analyzer):
             warnings.warn(
                 "The parameter 'preprocessor' will not be used"
-                " since 'analyzer' is callable'"
+                " since 'analyzer' is callable'",
+                stacklevel=2,
             )
 
         if (
@@ -542,13 +545,15 @@ class _VectorizerMixin:
         ):
             warnings.warn(
                 "The parameter 'ngram_range' will not be used"
-                " since 'analyzer' is callable'"
+                " since 'analyzer' is callable'",
+                stacklevel=2,
             )
         if self.analyzer != "word" or callable(self.analyzer):
             if self.stop_words is not None:
                 warnings.warn(
                     "The parameter 'stop_words' will not be used"
-                    " since 'analyzer' != 'word'"
+                    " since 'analyzer' != 'word'",
+                    stacklevel=2,
                 )
             if (
                 self.token_pattern is not None
@@ -556,12 +561,14 @@ class _VectorizerMixin:
             ):
                 warnings.warn(
                     "The parameter 'token_pattern' will not be used"
-                    " since 'analyzer' != 'word'"
+                    " since 'analyzer' != 'word'",
+                    stacklevel=2,
                 )
             if self.tokenizer is not None:
                 warnings.warn(
                     "The parameter 'tokenizer' will not be used"
-                    " since 'analyzer' != 'word'"
+                    " since 'analyzer' != 'word'",
+                    stacklevel=2,
                 )
 
 
@@ -1380,7 +1387,8 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
                         "Upper case characters found in"
                         " vocabulary while 'lowercase'"
                         " is True. These entries will not"
-                        " be matched with any documents"
+                        " be matched with any documents",
+                        stacklevel=2,
                     )
                     break
 
@@ -2050,6 +2058,7 @@ class TfidfVectorizer(CountVectorizer):
                 "Only {} 'dtype' should be used. {} 'dtype' will "
                 "be converted to np.float64.".format(FLOAT_DTYPES, self.dtype),
                 UserWarning,
+                stacklevel=2,
             )
 
     @_fit_context(prefer_skip_nested_validation=True)

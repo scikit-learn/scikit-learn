@@ -323,7 +323,9 @@ def _spectral_embedding(
 
     if not _graph_is_connected(adjacency):
         warnings.warn(
-            "Graph is not fully connected, spectral embedding may not work as expected."
+            "Graph is not fully connected, spectral embedding"
+            " may not work as expected.",
+            stacklevel=2,
         )
 
     laplacian, dd = csgraph_laplacian(
@@ -382,7 +384,7 @@ def _spectral_embedding(
         # Use AMG to get a preconditioner and speed up the eigenvalue
         # problem.
         if not sparse.issparse(laplacian):
-            warnings.warn("AMG works better for sparse matrices")
+            warnings.warn("AMG works better for sparse matrices", stacklevel=2)
         laplacian = check_array(
             laplacian, dtype=[np.float64, np.float32], accept_sparse=True
         )
@@ -690,7 +692,8 @@ class SpectralEmbedding(BaseEstimator):
                 warnings.warn(
                     "Nearest neighbors affinity currently does "
                     "not support sparse input, falling back to "
-                    "rbf affinity"
+                    "rbf affinity",
+                    stacklevel=2,
                 )
                 self.affinity = "rbf"
             else:

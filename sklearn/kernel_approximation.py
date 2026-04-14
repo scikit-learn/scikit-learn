@@ -1041,7 +1041,8 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
             warnings.warn(
                 "n_components > n_samples. This is not possible.\n"
                 "n_components was set to n_samples, which results"
-                " in inefficient evaluation of the full kernel."
+                " in inefficient evaluation of the full kernel.",
+                stacklevel=2,
             )
 
         else:

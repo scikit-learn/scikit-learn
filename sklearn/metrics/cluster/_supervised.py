@@ -66,7 +66,7 @@ def check_clusterings(labels_true, labels_pred):
             f" {type_label} values for label, and {type_pred} values "
             "for target"
         )
-        warnings.warn(msg, UserWarning)
+        warnings.warn(msg, UserWarning, stacklevel=2)
 
     # input checks
     if labels_true.ndim != 1:
@@ -1271,6 +1271,7 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse="deprecated"):
             "The 'sparse' parameter was deprecated in 1.7 and will be removed in 1.9. "
             "It has no effect. Leave it to its default value to silence this warning.",
             FutureWarning,
+            stacklevel=2,
         )
 
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)

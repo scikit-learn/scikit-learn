@@ -127,6 +127,7 @@ def _yield_api_checks(estimator):
             " `sklearn.base.BaseEstimator`. This might lead to unexpected behavior, or"
             " even errors when collecting tests.",
             category=UserWarning,
+            stacklevel=2,
         )
 
     tags = get_tags(estimator)
@@ -382,12 +383,14 @@ def _yield_all_checks(estimator, legacy: bool):
                 name, tags.input_tags
             ),
             SkipTestWarning,
+            stacklevel=2,
         )
         return
     if tags._skip_test:
         warnings.warn(
             "Explicit SKIP via _skip_test tag for estimator {}.".format(name),
             SkipTestWarning,
+            stacklevel=2,
         )
         return
 
@@ -899,6 +902,7 @@ def check_estimator(
                     f"Skipping check {_check_name(check)} for {name} because it raised "
                     f"{type(e).__name__}: {e}",
                     SkipTestWarning,
+                    stacklevel=2,
                 )
         except Exception as e:
             if on_fail == "raise" and not test_can_fail:
@@ -921,7 +925,7 @@ def check_estimator(
 
             if on_fail == "warn":
                 warning = EstimatorCheckFailedWarning(**check_result)
-                warnings.warn(warning)
+                warnings.warn(warning, stacklevel=2)
         else:
             check_result = {
                 "estimator": estimator,
@@ -4245,7 +4249,8 @@ def check_set_params(name, estimator_orig):
                 warnings.warn(
                     "{0} occurred during set_params of param {1} on "
                     "{2}. It is recommended to delay parameter "
-                    "validation until fit.".format(e_type, param_name, name)
+                    "validation until fit.".format(e_type, param_name, name),
+                    stacklevel=2,
                 )
 
                 change_warning_msg = (
@@ -4262,7 +4267,7 @@ def check_set_params(name, estimator_orig):
                     for k, v in curr_params.items():
                         assert params_before_exception[k] is v
                 except AssertionError:
-                    warnings.warn(change_warning_msg)
+                    warnings.warn(change_warning_msg, stacklevel=2)
             else:
                 curr_params = estimator.get_params(deep=False)
                 assert set(test_params.keys()) == set(curr_params.keys()), msg

@@ -279,6 +279,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
                 + "Result message of linprog:\n"
                 + result.message,
                 ConvergenceWarning,
+                stacklevel=2,
             )
 
         # positive slack - negative slack

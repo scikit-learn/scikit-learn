@@ -143,6 +143,7 @@ class LegacyVersion(_BaseVersion):
             "Creating a LegacyVersion has been deprecated and will be "
             "removed in the next major release",
             DeprecationWarning,
+            stacklevel=2,
         )
 
     def __str__(self) -> str:

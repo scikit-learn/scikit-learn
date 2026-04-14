@@ -347,7 +347,8 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
 
     if X.shape[0] == 1:
         warnings.warn(
-            "Only one sample available. You may want to reshape your data array"
+            "Only one sample available. You may want to reshape your data array",
+            stacklevel=2,
         )
     n_samples, n_features = X.shape
 

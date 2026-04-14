@@ -1205,6 +1205,7 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
                 warnings.warn(
                     "When update_H=False, the provided initial W is not used.",
                     RuntimeWarning,
+                    stacklevel=2,
                 )
 
             _check_init(H, (self._n_components, n_features), "NMF (input H)")
@@ -1233,6 +1234,7 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
                         " init='custom' to use them as initialization."
                     ),
                     RuntimeWarning,
+                    stacklevel=2,
                 )
 
             if self._n_components == "auto":
@@ -1579,6 +1581,7 @@ class NMF(_BaseNMF):
                     "You may try init='nndsvda' or init='nndsvdar' instead."
                 ),
                 UserWarning,
+                stacklevel=2,
             )
 
         return self
@@ -1722,6 +1725,7 @@ class NMF(_BaseNMF):
                 "Maximum number of iterations %d reached. Increase "
                 "it to improve convergence." % self.max_iter,
                 ConvergenceWarning,
+                stacklevel=2,
             )
 
         return W, H, n_iter
@@ -2310,6 +2314,7 @@ class MiniBatchNMF(_BaseNMF):
                     "Increase it to improve convergence."
                 ),
                 ConvergenceWarning,
+                stacklevel=2,
             )
 
         return W, H, n_iter, n_steps

@@ -88,7 +88,8 @@ def _fit_binary(estimator, X, y, fit_params, classes=None):
             else:
                 c = y[0]
             warnings.warn(
-                "Label %s is present in all training examples." % str(classes[c])
+                "Label %s is present in all training examples." % str(classes[c]),
+                stacklevel=2,
             )
         estimator = _ConstantPredictor().fit(X, unique_y)
     else:

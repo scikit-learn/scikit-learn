@@ -192,6 +192,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
                     "and would be slower."
                 ),
                 UserWarning,
+                stacklevel=2,
             )
 
         self.sparse_output_ = sp.issparse(y)

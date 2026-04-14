@@ -1420,6 +1420,7 @@ class KMeans(_BaseKMeans):
                     "cluster. Using 'lloyd' instead."
                 ),
                 RuntimeWarning,
+                stacklevel=2,
             )
             self._algorithm = "lloyd"
 
@@ -1429,7 +1430,8 @@ class KMeans(_BaseKMeans):
             "KMeans is known to have a memory leak on Windows "
             "with MKL, when there are less chunks than available "
             "threads. You can avoid it by setting the environment"
-            f" variable OMP_NUM_THREADS={n_active_threads}."
+            f" variable OMP_NUM_THREADS={n_active_threads}.",
+            stacklevel=2,
         )
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -1968,7 +1970,8 @@ class MiniBatchKMeans(_BaseKMeans):
             "available threads. You can prevent it by setting "
             f"batch_size >= {self._n_threads * CHUNK_SIZE} or by "
             "setting the environment variable "
-            f"OMP_NUM_THREADS={n_active_threads}"
+            f"OMP_NUM_THREADS={n_active_threads}",
+            stacklevel=2,
         )
 
     def _mini_batch_convergence(

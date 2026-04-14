@@ -49,7 +49,8 @@ def _affinity_propagation(
         # n_samples clusters, depending on preferences
         warnings.warn(
             "All samples have mutually equal similarities. "
-            "Returning arbitrary cluster center(s)."
+            "Returning arbitrary cluster center(s).",
+            stacklevel=2,
         )
         if preference.flat[0] > S.flat[n_samples - 1]:
             return (
@@ -143,6 +144,7 @@ def _affinity_propagation(
                     "may return degenerate cluster centers and labels."
                 ),
                 ConvergenceWarning,
+                stacklevel=2,
             )
         c = np.argmax(S[:, I], axis=1)
         c[I] = np.arange(K)  # Identify clusters
@@ -165,6 +167,7 @@ def _affinity_propagation(
                 "will not have any cluster centers."
             ),
             ConvergenceWarning,
+            stacklevel=2,
         )
         labels = np.array([-1] * n_samples)
         cluster_centers_indices = []
@@ -582,6 +585,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
                     "Labeling every sample as '-1'."
                 ),
                 ConvergenceWarning,
+                stacklevel=2,
             )
             return np.array([-1] * X.shape[0])
 

@@ -86,10 +86,10 @@ def ignore_warnings(obj=None, category=Warning):
     >>> import warnings
     >>> from sklearn.utils._testing import ignore_warnings
     >>> with ignore_warnings():
-    ...     warnings.warn('buhuhuhu')
+    ...     warnings.warn('buhuhuhu', stacklevel=2)
 
     >>> def nasty_warn():
-    ...     warnings.warn('buhuhuhu')
+    ...     warnings.warn('buhuhuhu', stacklevel=2)
     ...     print(42)
 
     >>> ignore_warnings(nasty_warn)()
@@ -377,7 +377,9 @@ def _delete_folder(folder_path, warn=False):
             shutil.rmtree(folder_path)
     except OSError:
         if warn:
-            warnings.warn("Could not delete temporary folder %s" % folder_path)
+            warnings.warn(
+                "Could not delete temporary folder %s" % folder_path, stacklevel=2
+            )
 
 
 class TempMemmap:
@@ -754,7 +756,8 @@ def _check_consistency_items(
     if skipped:
         warnings.warn(
             f"Checking was skipped for {section}: {skipped} as they were "
-            "not found in all objects."
+            "not found in all objects.",
+            stacklevel=2,
         )
 
 

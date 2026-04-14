@@ -276,7 +276,8 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
                     "when centering the data "
                     "and might not be solved. Dataset may "
                     "contain too large values. You may need "
-                    "to prescale your features."
+                    "to prescale your features.",
+                    stacklevel=2,
                 )
                 Xr -= mean_1
         if with_std:
@@ -295,7 +296,8 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
                         "when scaling the data "
                         "and might not be solved. The standard "
                         "deviation of the data is probably "
-                        "very close to 0. "
+                        "very close to 0. ",
+                        stacklevel=2,
                     )
                     Xr -= mean_2
     return X
@@ -2799,7 +2801,8 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         if self.ignore_implicit_zeros:
             warnings.warn(
                 "'ignore_implicit_zeros' takes effect only with"
-                " sparse matrix. This parameter has no effect."
+                " sparse matrix. This parameter has no effect.",
+                stacklevel=2,
             )
 
         n_samples, n_features = X.shape
@@ -2887,7 +2890,8 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             warnings.warn(
                 "n_quantiles (%s) is greater than the total number "
                 "of samples (%s). n_quantiles is set to "
-                "n_samples." % (self.n_quantiles, n_samples)
+                "n_samples." % (self.n_quantiles, n_samples),
+                stacklevel=2,
             )
         self.n_quantiles_ = max(1, min(self.n_quantiles, n_samples))
 
@@ -3529,6 +3533,7 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                     f"Consider inspecting the input data or preprocessing it "
                     f"before applying the transformation.",
                     UserWarning,
+                    stacklevel=2,
                 )
         return X
 

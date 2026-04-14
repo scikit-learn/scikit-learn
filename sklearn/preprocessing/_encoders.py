@@ -259,7 +259,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     f"{columns_with_unknown} during transform. These "
                     "unknown categories will be encoded as all zeros"
                 )
-            warnings.warn(msg, UserWarning)
+            warnings.warn(msg, UserWarning, stacklevel=2)
 
         self._map_infrequent_categories(X_int, X_mask, ignore_category_indices)
         return X_int, X_mask

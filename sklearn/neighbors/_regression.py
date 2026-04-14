@@ -510,7 +510,7 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
                 "One or more samples have no neighbors "
                 "within specified radius; predicting NaN."
             )
-            warnings.warn(empty_warning_msg)
+            warnings.warn(empty_warning_msg, stacklevel=2)
 
         if self._y.ndim == 1:
             y_pred = y_pred.ravel()

@@ -1007,7 +1007,10 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys
             indptr.append(len(indices))
         if unknown:
             warnings.warn(
-                "unknown class(es) {0} will be ignored".format(sorted(unknown, key=str))
+                "unknown class(es) {0} will be ignored".format(
+                    sorted(unknown, key=str)
+                ),
+                stacklevel=2,
             )
         data = np.ones(len(indices), dtype=int)
 

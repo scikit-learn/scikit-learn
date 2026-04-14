@@ -297,6 +297,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                     "tol, or check for degenerate data."
                 ),
                 ConvergenceWarning,
+                stacklevel=2,
             )
 
         self._set_parameters(best_params, xp=xp)

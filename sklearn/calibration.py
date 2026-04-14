@@ -400,7 +400,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     " more details:"
                     " https://github.com/scikit-learn/scikit-learn/issues/21134."
                     " Be warned that the result of the calibration is likely to be"
-                    " incorrect."
+                    " incorrect.",
+                    stacklevel=2,
                 )
             routed_params = Bunch()
             routed_params.splitter = Bunch(split={})  # no routing for splitter

@@ -208,6 +208,7 @@ class NearestCentroid(
             warnings.warn(
                 "The priors do not sum to 1. Normalizing such that it sums to one.",
                 UserWarning,
+                stacklevel=2,
             )
             self.class_prior_ = self.class_prior_ / self.class_prior_.sum()
 
@@ -240,7 +241,8 @@ class NearestCentroid(
         if any(self.within_class_std_dev_ == 0):
             warnings.warn(
                 "self.within_class_std_dev_ has at least 1 zero standard deviation."
-                "Inputs within the same classes for at least 1 feature are identical."
+                "Inputs within the same classes for at least 1 feature are identical.",
+                stacklevel=2,
             )
 
         err_msg = "All features have zero variance. Division by zero."

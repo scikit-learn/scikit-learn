@@ -242,6 +242,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                     f"Use `CalibratedClassifierCV({est_dep}(), ensemble=False)` "
                     f"instead of `{est_dep}(probability=True)`",
                     FutureWarning,
+                    stacklevel=2,
                 )
             else:
                 self._effective_probability = False
@@ -342,6 +343,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 "  Consider pre-processing your data with"
                 " StandardScaler or MinMaxScaler." % self.max_iter,
                 ConvergenceWarning,
+                stacklevel=2,
             )
 
     def _dense_fit(self, X, y, sample_weight, solver_type, kernel, random_seed):
@@ -1298,6 +1300,7 @@ def _fit_liblinear(
         warnings.warn(
             "Liblinear failed to converge, increase the number of iterations.",
             ConvergenceWarning,
+            stacklevel=2,
         )
 
     if fit_intercept:

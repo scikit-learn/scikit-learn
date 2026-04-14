@@ -200,6 +200,7 @@ def _graphical_lasso(
                 "graphical_lasso: did not converge after %i iteration: dual gap: %.3e"
                 % (max_iter, d_gap),
                 ConvergenceWarning,
+                stacklevel=2,
             )
     except FloatingPointError as e:
         e.args = (e.args[0] + ". The system is too ill-conditioned for this solver",)

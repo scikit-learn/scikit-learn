@@ -309,6 +309,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 "quantile_method='averaged_inverted_cdf' explicitly to silence this "
                 "warning.",
                 FutureWarning,
+                stacklevel=2,
             )
             quantile_method = "linear"
 
@@ -340,7 +341,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
             if col_min == col_max:
                 warnings.warn(
-                    "Feature %d is constant and will be replaced with 0." % jj
+                    "Feature %d is constant and will be replaced with 0." % jj,
+                    stacklevel=2,
                 )
                 n_bins[jj] = 1
                 bin_edges[jj] = np.array([-np.inf, np.inf])
@@ -396,7 +398,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                     warnings.warn(
                         "Bins whose width are too small (i.e., <= "
                         "1e-8) in feature %d are removed. Consider "
-                        "decreasing the number of bins." % jj
+                        "decreasing the number of bins." % jj,
+                        stacklevel=2,
                     )
                     n_bins[jj] = len(bin_edges[jj]) - 1
 

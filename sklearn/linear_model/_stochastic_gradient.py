@@ -745,6 +745,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
                     "improve the fit."
                 ),
                 ConvergenceWarning,
+                stacklevel=2,
             )
 
         if self.power_t < 0:
@@ -753,6 +754,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
                 "and will raise an error in 1.10. "
                 "Use values in the range [0.0, inf) instead.",
                 FutureWarning,
+                stacklevel=2,
             )
 
         return self
@@ -1624,6 +1626,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
                     "improve the fit."
                 ),
                 ConvergenceWarning,
+                stacklevel=2,
             )
 
         if self.power_t < 0:
@@ -1632,6 +1635,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
                 "and will raise an error in 1.10. "
                 "Use values in the range [0.0, inf) instead.",
                 FutureWarning,
+                stacklevel=2,
             )
 
         return self
@@ -2557,6 +2561,7 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
                     "improve the fit."
                 ),
                 ConvergenceWarning,
+                stacklevel=2,
             )
 
         if self.power_t < 0:
@@ -2565,6 +2570,7 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
                 "and will raise an error in 1.10. "
                 "Use values in the range [0.0, inf) instead.",
                 FutureWarning,
+                stacklevel=2,
             )
 
         return self

@@ -126,6 +126,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
                     " too noisy or the selection test too strict."
                 ),
                 UserWarning,
+                stacklevel=2,
             )
             if hasattr(X, "iloc"):
                 return X.iloc[:, :0]

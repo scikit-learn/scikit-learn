@@ -299,6 +299,7 @@ class NewtonSolver(ABC):
                     "search refinement iterations. It will now resort to lbfgs instead."
                 ),
                 ConvergenceWarning,
+                stacklevel=2,
             )
             if self.verbose:
                 print("  Line search did not converge and resorts to lbfgs instead.")
@@ -442,6 +443,7 @@ class NewtonSolver(ABC):
                         "iterations."
                     ),
                     ConvergenceWarning,
+                    stacklevel=2,
                 )
 
         self.iteration -= 1
@@ -511,6 +513,7 @@ class NewtonCholeskySolver(NewtonSolver):
                     f"#{self.iteration}. It will now resort to lbfgs instead."
                 ),
                 ConvergenceWarning,
+                stacklevel=2,
             )
             if self.verbose:
                 print(
@@ -603,6 +606,7 @@ class NewtonCholeskySolver(NewtonSolver):
                 " of X or increasing the penalization strengths.\n"
                 "The original Linear Algebra message was:\n" + str(e),
                 scipy.linalg.LinAlgWarning,
+                stacklevel=2,
             )
             # Possible causes:
             # 1. hess_pointwise is negative. But this is already taken care in

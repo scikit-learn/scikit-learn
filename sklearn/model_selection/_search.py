@@ -327,6 +327,7 @@ class ParameterSampler:
                     "than n_iter=%d. Running %d iterations. For exhaustive "
                     "searches, use GridSearchCV." % (grid_size, self.n_iter, grid_size),
                     UserWarning,
+                    stacklevel=2,
                 )
                 n_iter = grid_size
             for i in sample_without_replacement(grid_size, n_iter, random_state=rng):
@@ -902,7 +903,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                     warnings.warn(
                         f"The scoring {name}={scorer} does not support sample_weight, "
                         "which may lead to statistically incorrect results when "
-                        f"fitting {self} with sample_weight. "
+                        f"fitting {self} with sample_weight. ",
+                        stacklevel=2,
                     )
             return scorers._accept_sample_weight()
         # In most cases, scorers is a Scorer object
@@ -915,7 +917,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             warnings.warn(
                 f"The scoring {scorers} does not support sample_weight, "
                 "which may lead to statistically incorrect results when "
-                f"fitting {self} with sample_weight. "
+                f"fitting {self} with sample_weight. ",
+                stacklevel=2,
             )
         return accept
 
@@ -1172,6 +1175,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                         f"are non-finite: {array_means}"
                     ),
                     category=UserWarning,
+                    stacklevel=2,
                 )
 
             # Weighted std is not directly available in numpy

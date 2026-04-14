@@ -53,6 +53,7 @@ def squared_norm(x):
                 "Data should be float type to avoid this issue"
             ),
             UserWarning,
+            stacklevel=2,
         )
     return np.dot(x, x)
 
@@ -343,7 +344,8 @@ def _randomized_range_finder(
             warnings.warn(
                 "Array API does not support LU factorization, falling back to QR"
                 " instead. Set `power_iteration_normalizer='QR'` explicitly to silence"
-                " this warning."
+                " this warning.",
+                stacklevel=2,
             )
             power_iteration_normalizer = "QR"
         else:
@@ -573,6 +575,7 @@ def _randomized_svd(
             "Calculating SVD of a {} is expensive. "
             "CSR format is more efficient.".format(type(M).__name__),
             sparse.SparseEfficiencyWarning,
+            stacklevel=2,
         )
 
     random_state = check_random_state(random_state)
@@ -1326,6 +1329,7 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
                 "its last element does not correspond to sum"
             ),
             RuntimeWarning,
+            stacklevel=2,
         )
     return out
 

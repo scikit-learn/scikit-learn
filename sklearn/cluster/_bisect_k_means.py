@@ -259,7 +259,8 @@ class BisectingKMeans(_BaseKMeans):
             "BisectingKMeans is known to have a memory leak on Windows "
             "with MKL, when there are less chunks than available "
             "threads. You can avoid it by setting the environment"
-            f" variable OMP_NUM_THREADS={n_active_threads}."
+            f" variable OMP_NUM_THREADS={n_active_threads}.",
+            stacklevel=2,
         )
 
     def _inertia_per_cluster(self, X, centers, labels, sample_weight):

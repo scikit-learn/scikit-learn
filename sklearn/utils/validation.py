@@ -88,6 +88,7 @@ def _deprecate_positional_args(func=None, *, version="1.3"):
                     "will result in an error"
                 ),
                 FutureWarning,
+                stacklevel=2,
             )
             kwargs.update(zip(sig.parameters, args))
             return f(**kwargs)
@@ -891,7 +892,8 @@ def check_array(
             if not hasattr(array, "sparse") and array.dtypes.apply(is_sparse).any():
                 warnings.warn(
                     "pandas.DataFrame with sparse columns found."
-                    "It will be converted to a dense numpy array."
+                    "It will be converted to a dense numpy array.",
+                    stacklevel=2,
                 )
 
         dtypes_orig = list(array.dtypes)
@@ -2024,6 +2026,7 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
                 "eigendecomposition of the matrix. Only the real "
                 "parts will be kept." % (max_imag_abs / max_real_abs),
                 PositiveSpectrumWarning,
+                stacklevel=2,
             )
 
     # Remove all imaginary parts (even if zero)
@@ -2061,6 +2064,7 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
                     " eigendecomposition of the matrix. Negative "
                     "eigenvalues will be replaced with 0." % (-min_eig / max_eig),
                     PositiveSpectrumWarning,
+                    stacklevel=2,
                 )
             lambdas[lambdas < 0] = 0
 
@@ -2074,6 +2078,7 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
                 "Small eigenvalues will be replaced with 0."
                 "" % (1 / small_pos_ratio),
                 PositiveSpectrumWarning,
+                stacklevel=2,
             )
         lambdas[too_small_lambdas] = 0
 
@@ -2699,14 +2704,16 @@ def _check_feature_names(estimator, X, *, reset):
     if X_feature_names is not None and fitted_feature_names is None:
         warnings.warn(
             f"X has feature names, but {estimator.__class__.__name__} was fitted "
-            "without feature names"
+            "without feature names",
+            stacklevel=2,
         )
         return
 
     if X_feature_names is None and fitted_feature_names is not None:
         warnings.warn(
             "X does not have valid feature names, but"
-            f" {estimator.__class__.__name__} was fitted with feature names"
+            f" {estimator.__class__.__name__} was fitted with feature names",
+            stacklevel=2,
         )
         return
 

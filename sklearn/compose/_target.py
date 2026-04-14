@@ -215,6 +215,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
                         ", set 'check_inverse=False'"
                     ),
                     UserWarning,
+                    stacklevel=2,
                 )
 
     @_fit_context(

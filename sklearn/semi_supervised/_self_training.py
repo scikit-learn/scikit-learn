@@ -241,7 +241,7 @@ class SelfTrainingClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         has_label = y != -1
 
         if np.all(has_label):
-            warnings.warn("y contains no unlabeled samples", UserWarning)
+            warnings.warn("y contains no unlabeled samples", UserWarning, stacklevel=2)
 
         if self.criterion == "k_best" and (
             self.k_best > X.shape[0] - np.sum(has_label)
@@ -253,6 +253,7 @@ class SelfTrainingClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     "the first iteration"
                 ),
                 UserWarning,
+                stacklevel=2,
             )
 
         if _routing_enabled():

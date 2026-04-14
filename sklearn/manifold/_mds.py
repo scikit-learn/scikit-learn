@@ -374,7 +374,8 @@ def smacof(
         if not n_init == 1:
             warnings.warn(
                 "Explicit initial positions passed: "
-                "performing only one init of the MDS instead of %d" % n_init
+                "performing only one init of the MDS instead of %d" % n_init,
+                stacklevel=2,
             )
             n_init = 1
 
@@ -737,6 +738,7 @@ class MDS(BaseEstimator):
                 "'classical_mds' in 1.10. To suppress this warning, provide "
                 "some value of `init`.",
                 FutureWarning,
+                stacklevel=2,
             )
             self._init = "random"
         else:
@@ -753,6 +755,7 @@ class MDS(BaseEstimator):
                     "The `dissimilarity` parameter is deprecated and will be "
                     "removed in 1.10. Use `metric` instead.",
                     FutureWarning,
+                    stacklevel=2,
                 )
                 self._metric = self.dissimilarity
 
@@ -761,6 +764,7 @@ class MDS(BaseEstimator):
                 f"Use metric_mds={self.metric} instead of metric={self.metric}. The "
                 "support for metric={True/False} will be dropped in 1.10.",
                 FutureWarning,
+                stacklevel=2,
             )
             if self.dissimilarity == "deprecated":
                 self._metric = "euclidean"
@@ -776,7 +780,8 @@ class MDS(BaseEstimator):
                 "The provided input is a square matrix. Note that ``fit`` constructs "
                 "a dissimilarity matrix from data and will treat rows as samples "
                 "and columns as features. To use a pre-computed dissimilarity matrix, "
-                "set ``metric='precomputed'``."
+                "set ``metric='precomputed'``.",
+                stacklevel=2,
             )
 
         if self._metric == "precomputed":

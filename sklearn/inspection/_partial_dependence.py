@@ -726,6 +726,7 @@ def partial_dependence(
                 "to floating point dtypes ahead of time to avoid problems. "
                 "This will raise ValueError in scikit-learn 1.9.",
                 FutureWarning,
+                stacklevel=2,
             )
             # Do not warn again for other features to avoid spamming the caller.
             break

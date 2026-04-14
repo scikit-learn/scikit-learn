@@ -86,6 +86,7 @@ class _UnsupportedGroupCVMixin:
             warnings.warn(
                 f"The groups parameter is ignored by {self.__class__.__name__}",
                 UserWarning,
+                stacklevel=2,
             )
         return super().split(X, y, groups=groups)
 
@@ -814,6 +815,7 @@ class StratifiedKFold(_BaseKFold):
                 " members, which is less than n_splits=%d."
                 % (min_groups, self.n_splits),
                 UserWarning,
+                stacklevel=2,
             )
 
         # Determine the optimal number of samples from each class in each fold,
@@ -884,6 +886,7 @@ class StratifiedKFold(_BaseKFold):
             warnings.warn(
                 f"The groups parameter is ignored by {self.__class__.__name__}",
                 UserWarning,
+                stacklevel=2,
             )
         y = check_array(y, input_name="y", ensure_2d=False, dtype=None)
         return super().split(X, y, groups)
@@ -1038,6 +1041,7 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
                 " members, which is less than n_splits=%d."
                 % (n_smallest_class, self.n_splits),
                 UserWarning,
+                stacklevel=2,
             )
         n_classes = len(y_cnt)
 
@@ -1269,6 +1273,7 @@ class TimeSeriesSplit(_BaseKFold):
             warnings.warn(
                 f"The groups parameter is ignored by {self.__class__.__name__}",
                 UserWarning,
+                stacklevel=2,
             )
         return self._split(X)
 
@@ -2437,6 +2442,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             warnings.warn(
                 f"The groups parameter is ignored by {self.__class__.__name__}",
                 UserWarning,
+                stacklevel=2,
             )
         y = check_array(y, input_name="y", ensure_2d=False, dtype=None)
         return super().split(X, y, groups)
@@ -2591,6 +2597,7 @@ class PredefinedSplit(BaseCrossValidator):
             warnings.warn(
                 f"The groups parameter is ignored by {self.__class__.__name__}",
                 UserWarning,
+                stacklevel=2,
             )
         return self._split()
 

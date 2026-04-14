@@ -986,6 +986,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 "removed in 1.9. It has no effect. Leave it to its default value to "
                 "avoid this warning.",
                 FutureWarning,
+                stacklevel=2,
             )
 
         validate_data(self, X=X, skip_check_array=True)

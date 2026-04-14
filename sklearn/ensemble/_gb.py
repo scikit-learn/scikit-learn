@@ -87,7 +87,9 @@ def _safe_divide(numerator, denominator):
         # on `np.errstate` that is not supported by Pyodide.
         result = float(numerator) / float(denominator)
         if math.isinf(result):
-            warnings.warn("overflow encountered in _safe_divide", RuntimeWarning)
+            warnings.warn(
+                "overflow encountered in _safe_divide", RuntimeWarning, stacklevel=2
+            )
         return result
 
 
@@ -668,6 +670,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 "removed in 1.11. It has no effect. Leave it to its default value to "
                 "avoid this warning.",
                 FutureWarning,
+                stacklevel=2,
             )
 
         # Check input
@@ -1083,6 +1086,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 "will lead to incorrect partial dependence values. "
                 "Got init=%s." % self.init,
                 UserWarning,
+                stacklevel=2,
             )
         grid = np.asarray(grid, dtype=DTYPE, order="C")
         n_estimators, n_trees_per_stage = self.estimators_.shape
