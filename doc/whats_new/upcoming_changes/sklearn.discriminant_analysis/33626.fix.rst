@@ -1,6 +1,0 @@
-- :class:`discriminant_analysis.LinearDiscriminantAnalysis` now returns the same results
-  when using `solver="svd"` and `solver="eigen"`. The normalization for `solver="svd"` 
-  is changed to `1/n_samples` instead of `1/(n_samples - n_classes)`, which is
-  consistent with the maximum likelihood covariance estimator (same as the
-  `solver="eigen"` default).
-  By :user:`Daniel Herrera-Esposito <dherrera1911>`.
