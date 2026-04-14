@@ -213,3 +213,9 @@ Citation
 
 If you use scikit-learn in a scientific publication, we would appreciate citations: https://scikit-learn.org/stable/about.html#citing-scikit-learn
 This is a demo update for learning GitHub pull request workflow.
+This pull request demonstrates the GitHub workflow.
+
+Changes:
+- Added a demo line in README file
+
+This is a small change made for learning purposes (fork, branch, commit, PR).
