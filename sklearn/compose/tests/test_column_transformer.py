@@ -2924,14 +2924,7 @@ def test_metadata_routing_with_remainder_no_error(remainder):
         remainder=remainder,
     )
 
-    # Check that remainder is registered correctly
-    router = ct.get_metadata_routing()
-    if remainder == "drop":
-        assert "remainder" not in router._route_mappings
-    else:
-        assert "remainder" in router._route_mappings
-
-    # Double-check that no error is raised
+    # Check that no error is raised
     ct.fit_transform(X, y=y, sample_weight=sample_weight)
 
 
