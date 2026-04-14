@@ -14,7 +14,6 @@ from sklearn.preprocessing._label import (
 from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
     _is_numpy_namespace,
     get_namespace,
     indexing_dtype,
