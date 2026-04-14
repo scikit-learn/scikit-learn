@@ -3383,8 +3383,7 @@ def log_loss(
     y_true : array-like or label indicator matrix
         Ground truth (correct) labels for n_samples samples.
 
-    y_proba : array-like of float, shape = (n_samples, n_classes) or (n_samples,), \
-            default=None
+    y_proba : array-like of float, shape = (n_samples, n_classes) or (n_samples,)
         Predicted probabilities, as returned by a classifier's
         predict_proba method. If ``y_proba.shape = (n_samples,)``
         the probabilities provided are assumed to be that of the
