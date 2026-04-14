@@ -814,7 +814,6 @@ def test_column_transformer_get_set_params():
         "transformer_weights": None,
         "verbose_feature_names_out": True,
         "verbose": False,
-        "force_int_remainder_cols": "deprecated",
     }
 
     assert ct.get_params() == exp
@@ -836,7 +835,6 @@ def test_column_transformer_get_set_params():
         "transformer_weights": None,
         "verbose_feature_names_out": True,
         "verbose": False,
-        "force_int_remainder_cols": "deprecated",
     }
 
     assert ct.get_params() == exp
@@ -994,23 +992,6 @@ def test_column_transformer_remainder_dtypes(cols1, cols2, expected_remainder_co
     )
     ct.fit_transform(X)
     assert ct.transformers_[-1][-1] == expected_remainder_cols
-
-
-# TODO(1.9): remove this test
-@pytest.mark.parametrize("force_int_remainder_cols", [True, False])
-def test_force_int_remainder_cols_deprecation(force_int_remainder_cols):
-    """Check that ColumnTransformer raises a FutureWarning when
-    force_int_remainder_cols is set.
-    """
-    X = np.ones((1, 3))
-    ct = ColumnTransformer(
-        [("T1", Trans(), [0]), ("T2", Trans(), [1])],
-        remainder="passthrough",
-        force_int_remainder_cols=force_int_remainder_cols,
-    )
-
-    with pytest.warns(FutureWarning, match="`force_int_remainder_cols` is deprecated"):
-        ct.fit(X)
 
 
 @pytest.mark.parametrize(
@@ -1196,7 +1177,6 @@ def test_column_transformer_get_set_params_with_remainder():
         "transformer_weights": None,
         "verbose_feature_names_out": True,
         "verbose": False,
-        "force_int_remainder_cols": "deprecated",
     }
 
     assert ct.get_params() == exp
@@ -1217,7 +1197,6 @@ def test_column_transformer_get_set_params_with_remainder():
         "transformer_weights": None,
         "verbose_feature_names_out": True,
         "verbose": False,
-        "force_int_remainder_cols": "deprecated",
     }
     assert ct.get_params() == exp
 
