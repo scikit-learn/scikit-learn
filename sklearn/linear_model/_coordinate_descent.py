@@ -1973,10 +1973,6 @@ class LassoCV(RegressorMixin, LinearModelCV):
             `alphas` accepts an integer value which removes the need to pass
             `n_alphas`.
 
-        .. deprecated:: 1.7
-            `alphas=None` was deprecated in 1.7 and will be removed in 1.9, at which
-            point the default value will be set to 100.
-
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
@@ -2236,10 +2232,6 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         .. versionchanged:: 1.7
             `alphas` accepts an integer value which removes the need to pass
             `n_alphas`.
-
-        .. deprecated:: 1.7
-            `alphas=None` was deprecated in 1.7 and will be removed in 1.9, at which
-            point the default value will be set to 100.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
@@ -2981,10 +2973,6 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
             `alphas` accepts an integer value which removes the need to pass
             `n_alphas`.
 
-        .. deprecated:: 1.7
-            `alphas=None` was deprecated in 1.7 and will be removed in 1.9, at which
-            point the default value will be set to 100.
-
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
@@ -3190,10 +3178,6 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         .. versionchanged:: 1.7
             `alphas` accepts an integer value which removes the need to pass
             `n_alphas`.
-
-        .. deprecated:: 1.7
-            `alphas=None` was deprecated in 1.7 and will be removed in 1.9, at which
-            point the default value will be set to 100.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
