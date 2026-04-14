@@ -181,12 +181,20 @@ class DecisionBoundaryDisplay:
         the list or colors taken from the colormap, and passed to the `cmap` parameter
         of the `plot_method`.
 
-        For :term:`binary` problems, this is ignored and `cmap` or `colors` can be
-        passed as kwargs instead, otherwise, the default colormap ('viridis') is used.
+        When `response_method='predict'` and `plot_method='contour'`,
+        `multiclass_colors` is ignored and the class boundaries are plotted in black
+        instead as the boundary lines may overlap and the colors don't necessarily
+        correspond to the classes.
+
+        For :term:`binary` problems, `multiclass_colors` is also ignored and `cmap` or
+        `colors` can be passed as kwargs instead, otherwise, the default colormap
+        ('viridis') is used.
 
         .. versionadded:: 1.7
         .. versionchanged:: 1.9
-           `multiclass_colors` is now also used when `response_method="predict"`
+           `multiclass_colors` is now also used when `response_method="predict"`,
+           except for when `plot_method='contour'`, where it is ignored and "black" is
+           used instead.
 
     xlabel : str, default=None
         Default label to place on x axis.
@@ -294,7 +302,10 @@ class DecisionBoundaryDisplay:
         **kwargs : dict
             Additional keyword arguments to be passed to the `plot_method`. For
             :term:`binary` problems, `cmap` or `colors` can be set here to specify the
-            colormap or colors, otherwise the default colormap ('viridis') is used.
+            colormap or colors, otherwise the default colormap ('viridis') is used. If
+            not specified by the user, `zorder` is set to -1 to ensure that the decision
+            boundary is plotted in the background (in case a scatter plot is added on
+            top).
 
         Returns
         -------
@@ -330,33 +341,13 @@ class DecisionBoundaryDisplay:
                 mpl, self.multiclass_colors, self.n_classes
             )
 
-            if self.response.ndim == 2:  # predict
-                # Set `levels` to ensure all classes are displayed in different colors
-                if "levels" not in kwargs:
-                    if plot_method == "contour":
-                        kwargs["levels"] = np.arange(self.n_classes)
-                    elif plot_method == "contourf":
-                        kwargs["levels"] = np.arange(self.n_classes + 1) - 0.5
-                # `pcolormesh` requires cmap, for the others it makes no difference
-                cmap = mpl.colors.ListedColormap(self.multiclass_colors_)
-                self.surface_ = plot_func(
-                    self.xx0, self.xx1, self.response, cmap=cmap, **kwargs
-                )
+            # If not set by the user, set default values for `zorder` to ensure that the
+            # decision boundary is plotted in the background (in case a scatter plot is
+            # added on top)
+            if "zorder" not in kwargs:
+                kwargs["zorder"] = -1
 
-            # predict_proba and decision_function differ for plotting methods
-            elif plot_method == "contour":
-                # Set `levels` to ensure all classes are displayed in different colors
-                if "levels" not in kwargs:
-                    kwargs["levels"] = np.arange(self.n_classes)
-                # Plot only integer class values
-                self.surface_ = plot_func(
-                    self.xx0,
-                    self.xx1,
-                    self.response.argmax(axis=2),
-                    colors=self.multiclass_colors_,
-                    **kwargs,
-                )
-            else:
+            if self.response.ndim == 3:  # predict_proba and decision_function
                 multiclass_cmaps = [
                     mpl.colors.LinearSegmentedColormap.from_list(
                         f"colormap_{class_idx}",
@@ -372,6 +363,39 @@ class DecisionBoundaryDisplay:
                     )
                     self.surface_.append(
                         plot_func(self.xx0, self.xx1, response, cmap=cmap, **kwargs)
+                    )
+
+                if plot_method == "contour":
+                    # Additionally plot the decision boundaries between classes.
+                    self.surface_.append(
+                        plot_func(
+                            self.xx0,
+                            self.xx1,
+                            self.response.argmax(axis=2),
+                            colors="black",
+                            zorder=-1,
+                            # set levels to ensure all boundaries are plotted correctly
+                            levels=np.arange(self.n_classes),
+                        )
+                    )
+
+            elif self.response.ndim == 2:  # predict
+                # Set `levels` to ensure all class boundaries are displayed.
+                if "levels" not in kwargs:
+                    if plot_method == "contour":
+                        kwargs["levels"] = np.arange(self.n_classes)
+                    elif plot_method == "contourf":
+                        kwargs["levels"] = np.arange(self.n_classes + 1) - 0.5
+
+                if plot_method == "contour":
+                    self.surface_ = plot_func(
+                        self.xx0, self.xx1, self.response, colors="black", **kwargs
+                    )
+                else:
+                    # `pcolormesh` requires cmap, for `contourf` it makes no difference
+                    cmap = mpl.colors.ListedColormap(self.multiclass_colors_)
+                    self.surface_ = plot_func(
+                        self.xx0, self.xx1, self.response, cmap=cmap, **kwargs
                     )
 
         if xlabel is not None or not ax.get_xlabel():
@@ -469,9 +493,14 @@ class DecisionBoundaryDisplay:
             in the list or colors taken from the colormap, and passed to the `cmap`
             parameter of the `plot_method`.
 
-            For :term:`binary` problems, this is ignored and `cmap` or `colors` can be
-            passed as kwargs instead, otherwise, the default colormap ('viridis') is
-            used.
+            When `response_method='predict'` and `plot_method='contour'`,
+            `multiclass_colors` is ignored and the class boundaries are plotted in black
+            instead as the boundary lines may overlap and the colors don't necessarily
+            correspond to the classes.
+
+            For :term:`binary` problems, `multiclass_colors` is also ignored and `cmap`
+            or `colors` can be passed as kwargs instead, otherwise, the default colormap
+            ('viridis') is used.
 
             .. versionadded:: 1.7
             .. versionchanged:: 1.9

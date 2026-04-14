@@ -1,0 +1,57 @@
+# Add a warning to the issue description when the issue is labeled "Needs ..."
+# and doesn't have a warning yet, and remove it again when all such labels are removed.
+name: "Add or remove not-ready-for-PR warning"
+
+permissions:
+  contents: read
+  issues: write
+
+on:
+  issues:
+    types: [opened, labeled, unlabeled]
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GITHUB_REPO: ${{ github.repository }}
+  ISSUE_NUMBER: ${{ github.event.issue.number }}
+
+jobs:
+
+  add_not_ready_for_PR_warning:
+    runs-on: ubuntu-latest
+    if: github.event.action == 'opened' || (github.event.action == 'labeled' &&
+        (startsWith(github.event.label.name, 'Needs') || github.event.label.name == 'RFC'))
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Install PyGithub
+        run: pip install -Uq PyGithub
+      - name: Checkout workflow script
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/scripts/add_or_remove_no_pr_warning.py
+          sparse-checkout-cone-mode: false # false for files/ true for directories
+      - name: Add not-ready-for-PR warning
+        run: python .github/scripts/add_or_remove_no_pr_warning.py --mode="add"
+
+  remove_not_ready_for_PR_warning:
+    runs-on: ubuntu-latest
+    if: github.event.action == 'unlabeled' &&
+        (startsWith(github.event.label.name, 'Needs') ||
+        github.event.label.name == 'RFC')
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Install PyGithub
+        run: pip install -Uq PyGithub
+      - name: Checkout workflow script
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/scripts/add_or_remove_no_pr_warning.py
+          sparse-checkout-cone-mode: false # false for files/ true for directories
+      - name: Remove not-ready-for-PR warning
+        run: python .github/scripts/add_or_remove_no_pr_warning.py --mode="remove"
