@@ -1,1 +1,6 @@
-- :class:`compose.ColumnTransformer` now correctly handles pandas DataFrames with integer column names when using callable column selectors such as :func:`compose.make_column_selector`. :pr:`33748` by :user:`showard04`.
+- :class:`compose.ColumnTransformer` now correctly handles pandas DataFrames
+  with integer column names when using callable column selectors such as
+  :func:`compose.make_column_selector`. Previously, integer column names
+  returned by the callable were misinterpreted as positional indices, causing
+  an ``IndexError`` or ``ValueError``.
+  By :user:`showard04`
