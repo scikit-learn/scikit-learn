@@ -3345,19 +3345,28 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
 @validate_params(
     {
         "y_true": ["array-like"],
-        "y_pred": ["array-like"],
+        "y_proba": ["array-like", None],
         "normalize": ["boolean"],
         "sample_weight": ["array-like", None],
         "labels": ["array-like", None],
+        "y_pred": ["array-like", str, None],
     },
     prefer_skip_nested_validation=True,
 )
-def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None):
+def log_loss(
+    y_true,
+    y_proba=None,
+    *,
+    normalize=True,
+    sample_weight=None,
+    labels=None,
+    y_pred="deprecated",
+):
     r"""Log loss, aka logistic loss or cross-entropy loss.
 
     This is the loss function used in (multinomial) logistic regression
     and extensions of it such as neural networks, defined as the negative
-    log-likelihood of a logistic model that returns ``y_pred`` probabilities
+    log-likelihood of a logistic model that returns ``y_proba`` probabilities
     for its training data ``y_true``.
     The log loss is only defined for two or more labels.
     For a single sample with true label :math:`y \in \{0,1\}` and
@@ -3374,16 +3383,20 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
     y_true : array-like or label indicator matrix
         Ground truth (correct) labels for n_samples samples.
 
-    y_pred : array-like of float, shape = (n_samples, n_classes) or (n_samples,)
+    y_proba : array-like of float, shape = (n_samples, n_classes) or (n_samples,), \
+            default=None
         Predicted probabilities, as returned by a classifier's
-        predict_proba method. If ``y_pred.shape = (n_samples,)``
+        predict_proba method. If ``y_proba.shape = (n_samples,)``
         the probabilities provided are assumed to be that of the
-        positive class. The labels in ``y_pred`` are assumed to be
+        positive class. The labels in ``y_proba`` are assumed to be
         ordered alphabetically, as done by
         :class:`~sklearn.preprocessing.LabelBinarizer`.
 
-        `y_pred` values are clipped to `[eps, 1-eps]` where `eps` is the machine
-        precision for `y_pred`'s dtype.
+        `y_proba` values are clipped to `[eps, 1-eps]` where `eps` is the machine
+        precision for `y_proba`'s dtype.
+
+        .. versionadded:: 1.9
+            `y_proba` was added in v1.9 to replace `y_pred`.
 
     normalize : bool, default=True
         If true, return the mean loss per sample.
@@ -3398,6 +3411,21 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
         assumed to be binary and are inferred from ``y_true``.
 
         .. versionadded:: 0.18
+
+    y_pred : array-like of float, shape = (n_samples, n_classes) or (n_samples,)
+        Predicted probabilities, as returned by a classifier's
+        predict_proba method. If ``y_pred.shape = (n_samples,)``
+        the probabilities provided are assumed to be that of the
+        positive class. The labels in ``y_pred`` are assumed to be
+        ordered alphabetically, as done by
+        :class:`~sklearn.preprocessing.LabelBinarizer`.
+
+        `y_pred` values are clipped to `[eps, 1-eps]` where `eps` is the machine
+        precision for `y_pred`'s dtype.
+
+        .. deprecated:: 1.9
+            `y_pred` was deprecated in favor of `y_proba` in v1.9 and will
+            be removed in v1.11.
 
     Returns
     -------
@@ -3420,19 +3448,34 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
     ...          [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
     0.21616
     """
-    xp, _, device_ = get_namespace_and_device(y_pred)
-    y_pred = check_array(
-        y_pred, ensure_2d=False, dtype=supported_float_dtypes(xp, device=device_)
+    # TODO(1.11): Remove check and remove default value for `y_score`.
+    if y_pred != "deprecated":
+        if y_proba is not None:
+            raise ValueError(
+                "Cannot use both `y_pred` and `y_proba`. `y_pred` is deprecated, "
+                "use `y_proba` instead."
+            )
+        else:
+            warnings.warn(
+                "`y_pred` was renamed to `y_proba` in version 1.9 and will be removed "
+                "in 1.11. Use `y_proba` instead.",
+                FutureWarning,
+            )
+            y_proba = y_pred
+
+    xp, _, device_ = get_namespace_and_device(y_proba)
+    y_proba = check_array(
+        y_proba, ensure_2d=False, dtype=supported_float_dtypes(xp, device=device_)
     )
     if sample_weight is not None:
         sample_weight = move_to(sample_weight, xp=xp, device=device_)
 
-    transformed_labels, y_pred = _validate_multiclass_probabilistic_prediction(
-        y_true, y_pred, sample_weight, labels
+    transformed_labels, y_proba = _validate_multiclass_probabilistic_prediction(
+        y_true, y_proba, sample_weight, labels
     )
     return _log_loss(
         transformed_labels,
-        y_pred,
+        y_proba,
         normalize=normalize,
         sample_weight=sample_weight,
     )

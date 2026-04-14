@@ -2815,65 +2815,65 @@ def test_hinge_loss_multiclass_invariance_lists():
 def test_log_loss():
     # binary case with symbolic labels ("no" < "yes")
     y_true = ["no", "no", "no", "yes", "yes", "yes"]
-    y_pred = np.array(
+    y_proba = np.array(
         [[0.5, 0.5], [0.1, 0.9], [0.01, 0.99], [0.9, 0.1], [0.75, 0.25], [0.001, 0.999]]
     )
-    loss = log_loss(y_true, y_pred)
-    loss_true = -np.mean(bernoulli.logpmf(np.array(y_true) == "yes", y_pred[:, 1]))
+    loss = log_loss(y_true, y_proba)
+    loss_true = -np.mean(bernoulli.logpmf(np.array(y_true) == "yes", y_proba[:, 1]))
     assert_allclose(loss, loss_true)
 
     # multiclass case; adapted from http://bit.ly/RJJHWA
     y_true = [1, 0, 2]
-    y_pred = [[0.2, 0.7, 0.1], [0.6, 0.2, 0.2], [0.6, 0.1, 0.3]]
-    loss = log_loss(y_true, y_pred, normalize=True)
+    y_proba = [[0.2, 0.7, 0.1], [0.6, 0.2, 0.2], [0.6, 0.1, 0.3]]
+    loss = log_loss(y_true, y_proba, normalize=True)
     assert_allclose(loss, 0.6904911)
 
     # check that we got all the shapes and axes right
-    # by doubling the length of y_true and y_pred
+    # by doubling the length of y_true and y_proba
     y_true *= 2
-    y_pred *= 2
-    loss = log_loss(y_true, y_pred, normalize=False)
+    y_proba *= 2
+    loss = log_loss(y_true, y_proba, normalize=False)
     assert_allclose(loss, 0.6904911 * 6)
 
     # raise error if number of classes are not equal.
     y_true = [1, 0, 2]
-    y_pred = [[0.3, 0.7], [0.6, 0.4], [0.4, 0.6]]
+    y_proba = [[0.3, 0.7], [0.6, 0.4], [0.4, 0.6]]
     with pytest.raises(ValueError):
-        log_loss(y_true, y_pred)
+        log_loss(y_true, y_proba)
 
     # raise error if labels do not contain all values of y_true
     y_true = ["a", "b", "c"]
-    y_pred = [[0.9, 0.1, 0.0], [0.1, 0.9, 0.0], [0.1, 0.1, 0.8]]
+    y_proba = [[0.9, 0.1, 0.0], [0.1, 0.9, 0.0], [0.1, 0.1, 0.8]]
     labels = ["a", "c", "d"]
     error_str = (
         "y_true contains values {'b'} not belonging to the passed "
         "labels ['a', 'c', 'd']."
     )
     with pytest.raises(ValueError, match=re.escape(error_str)):
-        log_loss(y_true, y_pred, labels=labels)
+        log_loss(y_true, y_proba, labels=labels)
 
     # case when y_true is a string array object
     y_true = ["ham", "spam", "spam", "ham"]
-    y_pred = [[0.3, 0.7], [0.6, 0.4], [0.4, 0.6], [0.7, 0.3]]
-    loss = log_loss(y_true, y_pred)
+    y_proba = [[0.3, 0.7], [0.6, 0.4], [0.4, 0.6], [0.7, 0.3]]
+    loss = log_loss(y_true, y_proba)
     assert_allclose(loss, 0.7469410)
 
     # test labels option
 
     y_true = [2, 2]
-    y_pred = [[0.2, 0.8], [0.6, 0.4]]
+    y_proba = [[0.2, 0.8], [0.6, 0.4]]
     y_score = np.array([[0.1, 0.9], [0.1, 0.9]])
     error_str = (
         "y_true contains only one label (2). Please provide the list of all "
         "expected class labels explicitly through the labels argument."
     )
     with pytest.raises(ValueError, match=re.escape(error_str)):
-        log_loss(y_true, y_pred)
+        log_loss(y_true, y_proba)
 
-    y_pred = [[0.2, 0.8], [0.6, 0.4], [0.7, 0.3]]
+    y_proba = [[0.2, 0.8], [0.6, 0.4], [0.7, 0.3]]
     error_str = "Found input variables with inconsistent numbers of samples: [3, 2]"
     with pytest.raises(ValueError, match=re.escape(error_str)):
-        log_loss(y_true, y_pred)
+        log_loss(y_true, y_proba)
 
     # works when the labels argument is used
 
@@ -2881,7 +2881,7 @@ def test_log_loss():
     calculated_log_loss = log_loss(y_true, y_score, labels=[1, 2])
     assert_allclose(calculated_log_loss, true_log_loss)
 
-    # ensure labels work when len(np.unique(y_true)) != y_pred.shape[1]
+    # ensure labels work when len(np.unique(y_true)) != y_proba.shape[1]
     y_true = [1, 2, 2]
     y_score2 = [[0.7, 0.1, 0.2], [0.2, 0.7, 0.1], [0.1, 0.7, 0.2]]
     loss = log_loss(y_true, y_score2, labels=[1, 2, 3])
@@ -2896,34 +2896,34 @@ def test_log_loss_eps(dtype):
     https://github.com/scikit-learn/scikit-learn/issues/24315
     """
     y_true = np.array([0, 1], dtype=dtype)
-    y_pred = np.array([1, 0], dtype=dtype)
+    y_proba = np.array([1, 0], dtype=dtype)
 
-    loss = log_loss(y_true, y_pred)
+    loss = log_loss(y_true, y_proba)
     assert np.isfinite(loss)
 
 
 @pytest.mark.parametrize("dtype", [np.float64, np.float32, np.float16])
 def test_log_loss_not_probabilities_warning(dtype):
-    """Check that log_loss raises a warning when y_pred values don't sum to 1."""
+    """Check that log_loss raises a warning when y_proba values don't sum to 1."""
     y_true = np.array([0, 1, 1, 0])
-    y_pred = np.array([[0.2, 0.7], [0.6, 0.3], [0.4, 0.7], [0.8, 0.3]], dtype=dtype)
+    y_proba = np.array([[0.2, 0.7], [0.6, 0.3], [0.4, 0.7], [0.8, 0.3]], dtype=dtype)
 
     with pytest.warns(UserWarning, match="The y_prob values do not sum to one."):
-        log_loss(y_true, y_pred)
+        log_loss(y_true, y_proba)
 
 
 @pytest.mark.parametrize(
-    "y_true, y_pred",
+    "y_true, y_proba",
     [
         ([0, 1, 0], [0, 1, 0]),
         ([0, 1, 0], [[1, 0], [0, 1], [1, 0]]),
         ([0, 1, 2], [[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
     ],
 )
-def test_log_loss_perfect_predictions(y_true, y_pred):
+def test_log_loss_perfect_predictions(y_true, y_proba):
     """Check that log_loss returns 0 for perfect predictions."""
     # Because of the clipping, the result is not exactly 0
-    assert log_loss(y_true, y_pred) == pytest.approx(0)
+    assert log_loss(y_true, y_proba) == pytest.approx(0)
 
 
 def test_log_loss_pandas_input():
@@ -2938,9 +2938,9 @@ def test_log_loss_pandas_input():
     except ImportError:
         pass
     for TrueInputType, PredInputType in types:
-        # y_pred dataframe, y_true series
-        y_true, y_pred = TrueInputType(y_tr), PredInputType(y_pr)
-        loss = log_loss(y_true, y_pred)
+        # y_proba dataframe, y_true series
+        y_true, y_proba = TrueInputType(y_tr), PredInputType(y_pr)
+        loss = log_loss(y_true, y_proba)
         assert_allclose(loss, 0.7469410)
 
 
@@ -2957,6 +2957,21 @@ def test_log_loss_warnings():
             [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
             labels=["spam", "eggs", "ham"],
         )
+
+
+# TODO(1.11): Remove
+def test_log_loss_y_pred_deprecation():
+    """Test `y_pred` deprecation in favor of `y_proba` for `log_loss`."""
+    y_true = np.array([0, 1, 1, 0])
+    y_prob = [[0.1, 0.9], [0.9, 0.1], [0.8, 0.2], [0.35, 0.65]]
+
+    msg = "`y_pred` was renamed to `y_proba` in version 1.9 and will be removed "
+    with pytest.warns(FutureWarning, match=re.escape(msg)):
+        log_loss(y_true, y_pred=y_prob)
+
+    msg = "Cannot use both `y_pred` and `y_proba`. `y_pred` is deprecated, "
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        log_loss(y_true, y_pred=y_prob, y_proba=y_prob)
 
 
 def test_brier_score_loss_binary():
