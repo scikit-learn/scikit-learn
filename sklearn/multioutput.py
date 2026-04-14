@@ -640,7 +640,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         "estimator": [
             HasMethods(["fit", "predict"]),
             Hidden(None),
-        ],
+"estimator": [HasMethods(["fit", "predict"])],
         "order": ["array-like", StrOptions({"random"}), None],
         "cv": ["cv_object", StrOptions({"prefit"})],
         "random_state": ["random_state"],
@@ -996,7 +996,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
     def __init__(
         self,
-        estimator=None,
+        estimator,
         *,
         order=None,
         cv=None,
