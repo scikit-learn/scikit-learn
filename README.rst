@@ -212,3 +212,4 @@ Citation
 ~~~~~~~~
 
 If you use scikit-learn in a scientific publication, we would appreciate citations: https://scikit-learn.org/stable/about.html#citing-scikit-learn
+This is a demo update for learning GitHub pull request workflow.
