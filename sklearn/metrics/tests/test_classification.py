@@ -2963,15 +2963,18 @@ def test_log_loss_warnings():
 def test_log_loss_y_pred_deprecation():
     """Test `y_pred` deprecation in favor of `y_proba` for `log_loss`."""
     y_true = np.array([0, 1, 1, 0])
-    y_prob = np.array([[0.1, 0.9], [0.9, 0.1], [0.8, 0.2], [0.35, 0.65]])
+    y_proba = np.array([[0.1, 0.9], [0.9, 0.1], [0.8, 0.2], [0.35, 0.65]])
+
+    # Check no error raised
+    log_loss(y_true, y_proba)
 
     msg = "`y_pred` was renamed to `y_proba` in version 1.9 and will be removed "
     with pytest.warns(FutureWarning, match=re.escape(msg)):
-        log_loss(y_true, y_pred=y_prob)
+        log_loss(y_true, y_pred=y_proba)
 
     msg = "Cannot use both `y_pred` and `y_proba`. `y_pred` is deprecated, "
     with pytest.raises(ValueError, match=re.escape(msg)):
-        log_loss(y_true, y_pred=y_prob, y_proba=y_prob)
+        log_loss(y_true, y_pred=y_proba, y_proba=y_proba)
 
 
 def test_brier_score_loss_binary():

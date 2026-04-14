@@ -3447,8 +3447,8 @@ def log_loss(
     ...          [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
     0.21616
     """
-    # TODO(1.11): Remove check and remove default value for `y_score`.
-    if not (isinstance(y_pred, str) and y_pred != "deprecated"):
+    # TODO(1.11): Remove check and remove default value for `y_proba`.
+    if not (isinstance(y_pred, str) and y_pred == "deprecated"):
         if y_proba is not None:
             raise ValueError(
                 "Cannot use both `y_pred` and `y_proba`. `y_pred` is deprecated, "
