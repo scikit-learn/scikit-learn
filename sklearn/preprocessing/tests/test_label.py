@@ -12,15 +12,18 @@ from sklearn.preprocessing._label import (
     label_binarize,
 )
 from sklearn.utils._array_api import (
+    _atol_for_type,
     _convert_to_numpy,
     _get_namespace_device_dtype_ids,
     _is_numpy_namespace,
     device,
     get_namespace,
+    indexing_dtype,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
     _array_api_for_tests,
+    assert_allclose,
     assert_array_equal,
 )
 from sklearn.utils.fixes import (
@@ -801,6 +804,46 @@ def test_label_binarize_array_api_compliance(
             msg = "`classes` contains unsupported dtype for array API "
             with pytest.raises(ValueError, match=msg):
                 label_binarize(y=y, classes=classes)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize("classes", [[0, 1], [0, 1, 2]])
+def test_label_binarize_unsigned_integer_overflow(
+    array_namespace, device_, dtype_name, classes
+):
+    """Ensure label_binarize does not overflow when y has unsigned integer dtype.
+
+    In particular, verify that label_binarize does not wrap -1 to the maximum value
+    of unsigned integer dtypes.
+    """
+    xp = _array_api_for_tests(array_namespace, device_)
+    y = classes * 10
+
+    with config_context(array_api_dispatch=True):
+        # Stable signed baseline
+        signed_dtype = indexing_dtype(xp)
+        y_signed = xp.asarray(y, dtype=signed_dtype, device=device_)
+        desired = label_binarize(y_signed, classes=classes, pos_label=1, neg_label=-1)
+
+        # All namespace support `unit8` dtype
+        uint_dtypes = [xp.uint8]
+
+        # PyTorch doesn't fully support `uint16`, `uint32`, `uint64`.
+        # See https://github.com/pytorch/pytorch/issues/58734
+        if "torch" not in xp.__name__:
+            uint_dtypes += [xp.uint16, xp.uint32, xp.uint64]
+
+        for uint_dtype in uint_dtypes:
+            y_uint = xp.asarray(y, dtype=uint_dtype, device=device_)
+            actual = label_binarize(y_uint, classes=classes, pos_label=1, neg_label=-1)
+
+            assert_allclose(
+                _convert_to_numpy(actual, xp=xp),
+                _convert_to_numpy(desired, xp=xp),
+                atol=_atol_for_type(dtype_name),
+            )
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
