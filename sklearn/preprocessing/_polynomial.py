@@ -1148,7 +1148,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
                 if has_nan_output_values:
                     raise ValueError(
-                        "X contains values beyond the limits of the knots."
+                        "`X` contains values beyond the limits of the knots."
                     )
 
             elif self.extrapolation == "constant":

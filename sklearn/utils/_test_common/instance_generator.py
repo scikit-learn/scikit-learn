@@ -466,6 +466,9 @@ INIT_PARAMS = {
     # greater than the number of features.
     # So we impose a smaller number (avoid "auto" mode)
     SparseRandomProjection: dict(n_components=2),
+    # SplineTransformer supports NaN only when handle_missing="zeros", so we
+    # need both parameter sets for the allow_nan_estimators Sphinx directive to
+    # detect it.
     SplineTransformer: [dict(), dict(handle_missing="zeros")],
     SpectralBiclustering: dict(n_init=2, n_best=1, n_clusters=2),
     SpectralClustering: dict(n_init=2, n_clusters=2),
