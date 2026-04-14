@@ -1974,19 +1974,31 @@ def test_num_features_errors_scalars(X):
 
 @pytest.mark.parametrize(
     "names",
-    [list(range(2)), range(2), None, [["a", "b"], ["c", "d"]]],
-    ids=["list-int", "range", "default", "MultiIndex"],
+    [list(range(2)), range(2), np.arange(2), None],
+    ids=["list-int", "range", "ndarray-int", "default"],
 )
-def test_get_feature_names_pandas_with_ints_no_warning(names):
-    """Get feature names with pandas dataframes without warning.
+def test_get_feature_names_pandas_with_ints_warns(names):
+    """Test that column names of integer dtype (including default None) warn."""
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame([[1, 2], [4, 5], [5, 6]], columns=names)
 
-    Column names with consistent dtypes will not warn, such as int or MultiIndex.
-    """
+    with pytest.warns(UserWarning, match="integer column names"):
+        names = _get_feature_names(X)
+    assert names is None
+
+
+@pytest.mark.parametrize(
+    "names",
+    [[["a", "b"], ["c", "d"]]],
+    ids=["MultiIndex"],
+)
+def test_get_feature_names_pandas_multi_index_no_warning(names):
+    """Test that multi-index column names do not warn."""
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame([[1, 2], [4, 5], [5, 6]], columns=names)
 
     with warnings.catch_warnings():
-        warnings.simplefilter("error", FutureWarning)
+        warnings.simplefilter("error", UserWarning)
         names = _get_feature_names(X)
     assert names is None
 
