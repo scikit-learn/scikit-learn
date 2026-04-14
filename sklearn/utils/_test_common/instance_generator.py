@@ -466,6 +466,7 @@ INIT_PARAMS = {
     # greater than the number of features.
     # So we impose a smaller number (avoid "auto" mode)
     SparseRandomProjection: dict(n_components=2),
+    SplineTransformer: [dict(), dict(handle_missing="zeros")],
     SpectralBiclustering: dict(n_init=2, n_best=1, n_clusters=2),
     SpectralClustering: dict(n_init=2, n_clusters=2),
     SpectralCoclustering: dict(n_init=2, n_clusters=2),
