@@ -3275,8 +3275,8 @@ def test_d2_log_loss_score():
         ]
     )
     d2_score = d2_log_loss_score(y_true=y_true, y_pred=y_pred)
-    log_likelihood = log_loss(y_true=y_true, y_pred=y_pred, normalize=False)
-    log_likelihood_null = log_loss(y_true=y_true, y_pred=y_pred_null, normalize=False)
+    log_likelihood = log_loss(y_true=y_true, y_proba=y_pred, normalize=False)
+    log_likelihood_null = log_loss(y_true=y_true, y_proba=y_pred_null, normalize=False)
     d2_score_true = 1 - log_likelihood / log_likelihood_null
     assert d2_score == pytest.approx(d2_score_true)
 
@@ -3289,13 +3289,13 @@ def test_d2_log_loss_score():
     )
     log_likelihood = log_loss(
         y_true=y_true,
-        y_pred=y_pred,
+        y_proba=y_pred,
         sample_weight=sample_weight,
         normalize=False,
     )
     log_likelihood_null = log_loss(
         y_true=y_true,
-        y_pred=y_pred_null,
+        y_proba=y_pred_null,
         sample_weight=sample_weight,
         normalize=False,
     )
