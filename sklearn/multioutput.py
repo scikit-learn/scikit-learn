@@ -25,7 +25,7 @@ from sklearn.base import (
 )
 from sklearn.model_selection import cross_val_predict
 from sklearn.utils import Bunch, check_random_state, get_tags
-from sklearn.utils._param_validation import HasMethods, Hidden, StrOptions
+from sklearn.utils._param_validation import HasMethods, StrOptions
 from sklearn.utils._response import _get_response_values
 from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils._user_interface import _print_elapsed_time
@@ -637,10 +637,7 @@ def _available_if_base_estimator_has(attr):
 
 class _BaseChain(BaseEstimator, metaclass=ABCMeta):
     _parameter_constraints: dict = {
-        "estimator": [
-            HasMethods(["fit", "predict"]),
-            Hidden(None),
-"estimator": [HasMethods(["fit", "predict"])],
+        "estimator": [HasMethods(["fit", "predict"])],
         "order": ["array-like", StrOptions({"random"}), None],
         "cv": ["cv_object", StrOptions({"prefit"})],
         "random_state": ["random_state"],
