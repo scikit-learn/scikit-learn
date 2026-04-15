@@ -1,0 +1,4 @@
+- Remove the deprecated `sparse` parameter from
+  :func:`metrics.cluster.fowlkes_mallows_score`. It was deprecated in v1.7 and
+  had no effect.
+  By :user:`Ashutosh Devpura <AshutoshDevpura>`.
