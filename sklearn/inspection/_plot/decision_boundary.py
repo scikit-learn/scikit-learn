@@ -63,7 +63,7 @@ def _select_colors(mpl, multiclass_colors, n_classes):
     mpl : module
         Imported `matplotlib` module.
 
-    multiclass_colors : str, or list of matplotlib colors, default=None
+    multiclass_colors : str or list of matplotlib colors, default=None
         The colormap or colors to select.
 
         Possible inputs are:
@@ -169,7 +169,7 @@ class DecisionBoundaryDisplay:
             (grid_resolution, grid_resolution, n_classes)
         Values of the response function.
 
-    multiclass_colors : str, or list of matplotlib colors, default=None
+    multiclass_colors : str or list of matplotlib colors, default=None
         Specifies how to color each class when plotting all classes of
         :term:`multiclass` problems.
 
@@ -458,7 +458,7 @@ class DecisionBoundaryDisplay:
 
             .. versionadded:: 1.4
 
-        multiclass_colors : str, or list of matplotlib colors, default=None
+        multiclass_colors : str or list of matplotlib colors, default=None
             Specifies how to color each class when plotting :term:`multiclass` problems
             and `class_of_interest` is None.
 
