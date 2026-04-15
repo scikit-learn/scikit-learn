@@ -1,6 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import sys
 import functools
 from contextlib import contextmanager
 from threading import Lock
@@ -16,6 +17,18 @@ class _CallbackManagerState:
     lock = Lock()
 
 
+def _is_debugger_active():
+    """Return True if a debugger such as debugpy (VS Code) is active."""
+    if "debugpy" in sys.modules:
+        try:
+            import debugpy
+            return debugpy.is_client_connected()
+        except Exception:
+            pass
+    # fallback: check for pydevd (PyCharm debugger)
+    return "pydevd" in sys.modules
+
+
 def get_callback_manager():
     """Return the global multiprocessing manager dedicated to callbacks.
 
@@ -24,7 +37,16 @@ def get_callback_manager():
     if _CallbackManagerState.manager is None:
         with _CallbackManagerState.lock:
             if _CallbackManagerState.manager is None:
-                _CallbackManagerState.manager = get_context().Manager()
+                if _is_debugger_active():
+                    # loky spawns a new process which kills the debugpy
+                    # session and causes EOFError. Fall back to the default
+                    # multiprocessing context when a debugger is attached.
+                    # See: https://github.com/scikit-learn/scikit-learn/issues/33710
+                    import multiprocessing
+                    ctx = multiprocessing.get_context("spawn")
+                else:
+                    ctx = get_context()  # loky context (default)
+                _CallbackManagerState.manager = ctx.Manager()
 
     return _CallbackManagerState.manager
 
