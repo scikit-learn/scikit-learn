@@ -26,21 +26,21 @@ callbacks, defining the different steps (referred to as "tasks") of its ``fit``
 method, and calling the right hooks at the right time for each defined task. Doing so
 requires the use of three types of objects:
 
-- :class:`~CallbackContext` objects which are responsible for calling the callback hooks
-  and also holding contextual information necessary for the callbacks.
+- :class:`~CallbackSupportMixin`, which enables callback registration and initializes
+  callback handling at the beginning of fit.
 
-- the :class:`~CallbackSupportMixin` class from which the estimator must inherit in
-  order to be able to register callbacks.
+- :class:`~CallbackContext`, which represents tasks and is the central object to manage
+  callbacks during fit.
 
-- the :func:`~with_callbacks` decorator, to decorate the estimator's ``fit`` method to
-  take care of the callbacks teardown.
+- :func:`~with_callbacks`, to guarantee proper callback tear down at the end of fit.
 
 CallbackContext
 ---------------
 
-The :class:`~CallbackContext` objects are responsible for calling the callback hooks at
-the right time. They track the different tasks of the estimator, with one context object
-per task, and they capture the tree structure of the tasks of the estimator.
+The :class:`~CallbackContext` objects are responsible for invoking the callbacks at the
+right time during fit. They track the different tasks of the estimator, with one context
+representing each task, and capture the tree structure of the tasks involved in the
+execution of the fit method.
 
 The task tree
 ^^^^^^^^^^^^^
@@ -131,18 +131,8 @@ The :class:`~CallbackContext` objects are to be used through four methods :
     This method is used to generate a sub-context for a sub-task of the task the current
     context is responsible for.
 
-    A string can be given to name the sub-task through the ``task_name`` argument, a
-    unique id can be passed as the ``task_id`` argument.
 
-    If the sub-task will also have sub-tasks, and if the maximum number of children
-    tasks this sub-task can have is known, it must be indicated as an int with the
-    ``max_subtasks`` argument. If it cannot be known in advance, ``max_subtasks`` must
-    be set to ``None``. The ``sequential_subtasks`` argument is a boolean indicating if
-    the sub-task's children tasks are sequential, and if so, the id of the children will
-    be automatically generated, thus the ``task_id`` argument will need to be left to
-    ``None`` for these children tasks.
-
-    The generated sub-context is returned.
+    The generated sub-context is returned, which can then be used to create sub-sub-contexts, and so on.
 
 .. method:: CallbackContext.propagate_callback_context(sub_estimator) -> self
     :noindex:
@@ -158,26 +148,15 @@ CallbackSupportMixin
 --------------------
 
 To support callbacks, an estimator must inherit from the :class:`~CallbackSupportMixin`
-mixin, which provides the :meth:`~CallbackSupportMixin.set_callbacks` method to register
-callbacks to the estimator.
+class, which exposes the following methods:
 
-It also provides the following method to initialize the root callback
-context in ``fit`` :
+- :meth:`~CallbackSupportMixin.set_callbacks`, a public method to be called by the user
+  to register callbacks on the estimator.
 
-.. method:: CallbackSupportMixin._init_callback_context(task_name="fit", task_id=0, max_subtasks=0, sequential_subtasks=True) -> CallbackContext instance
-    :noindex:
+- :meth:`~CallbackSupportMixin._init_callback_context`, which should be called at the
+  beginning of fit to create the root `~CallbackContext`. This context represents the task
+  of running fit as a whole.
 
-    This method must be used at the beginning of the estimator's ``fit`` to generate the
-    callback context corresponding to the root task of the estimator's ``fit``.
-
-    A string can be given to name the root task through the ``task_name`` argument and a
-    unique id can be passed as the ``task_id`` argument. The maximum number of children
-    tasks this root task can have must be indicated as an int with the ``max_subtasks``
-    argument if it is known. If unknown, ``max_subtasks`` must be set to ``None``. The
-    ``sequential_subtasks`` argument is a boolean indicating if this root task's
-    children tasks are sequential, and if so, the id of the children will be
-    automatically generated. Thus the ``task_id`` argument in the ``subcontext`` method
-    used to generate the contexts for these tasks will need to be left to ``None``.
 
     The generated :class:`~CallbackContext` instance is returned.
 
