@@ -814,7 +814,6 @@ def test_column_transformer_get_set_params():
         "transformer_weights": None,
         "verbose_feature_names_out": True,
         "verbose": False,
-        "force_int_remainder_cols": "deprecated",
     }
 
     assert ct.get_params() == exp
@@ -836,7 +835,6 @@ def test_column_transformer_get_set_params():
         "transformer_weights": None,
         "verbose_feature_names_out": True,
         "verbose": False,
-        "force_int_remainder_cols": "deprecated",
     }
 
     assert ct.get_params() == exp
@@ -994,23 +992,6 @@ def test_column_transformer_remainder_dtypes(cols1, cols2, expected_remainder_co
     )
     ct.fit_transform(X)
     assert ct.transformers_[-1][-1] == expected_remainder_cols
-
-
-# TODO(1.9): remove this test
-@pytest.mark.parametrize("force_int_remainder_cols", [True, False])
-def test_force_int_remainder_cols_deprecation(force_int_remainder_cols):
-    """Check that ColumnTransformer raises a FutureWarning when
-    force_int_remainder_cols is set.
-    """
-    X = np.ones((1, 3))
-    ct = ColumnTransformer(
-        [("T1", Trans(), [0]), ("T2", Trans(), [1])],
-        remainder="passthrough",
-        force_int_remainder_cols=force_int_remainder_cols,
-    )
-
-    with pytest.warns(FutureWarning, match="`force_int_remainder_cols` is deprecated"):
-        ct.fit(X)
 
 
 @pytest.mark.parametrize(
@@ -1196,7 +1177,6 @@ def test_column_transformer_get_set_params_with_remainder():
         "transformer_weights": None,
         "verbose_feature_names_out": True,
         "verbose": False,
-        "force_int_remainder_cols": "deprecated",
     }
 
     assert ct.get_params() == exp
@@ -1217,7 +1197,6 @@ def test_column_transformer_get_set_params_with_remainder():
         "transformer_weights": None,
         "verbose_feature_names_out": True,
         "verbose": False,
-        "force_int_remainder_cols": "deprecated",
     }
     assert ct.get_params() == exp
 
@@ -2614,6 +2593,23 @@ def test_column_transformer_remainder_passthrough_naming_consistency(transform_o
     assert preprocessor.get_feature_names_out().tolist() == expected_column_names
 
 
+# DfOutTransformer that does not define get_feature_names_out
+class DfOutTransformer(BaseEstimator):
+    def __init__(self, offset=1.0):
+        self.offset = offset
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        return X - self.offset
+
+    def set_output(self, transform=None):
+        # This transformer will always output a DataFrame regardless of the
+        # configuration.
+        return self
+
+
 @pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
 def test_column_transformer_column_renaming(dataframe_lib):
     """Check that we properly rename columns when using `ColumnTransformer` and
@@ -2631,15 +2627,17 @@ def test_column_transformer_column_renaming(dataframe_lib):
             ("A", "passthrough", ["x1", "x2", "x3"]),
             ("B", FunctionTransformer(), ["x1", "x2"]),
             ("C", StandardScaler(), ["x1", "x3"]),
+            ("D", DfOutTransformer(), ["x2", "x3"]),
             # special case of a transformer returning 0-columns, e.g feature selector
             (
-                "D",
+                "E",
                 FunctionTransformer(lambda x: _safe_indexing(x, [], axis=1)),
                 ["x1", "x2", "x3"],
             ),
         ],
-        verbose_feature_names_out=True,
     ).set_output(transform=dataframe_lib)
+
+    # by default, verbose_feature_names_out is True
     df_trans = transformer.fit_transform(df)
     assert list(df_trans.columns) == [
         "A__x1",
@@ -2649,39 +2647,12 @@ def test_column_transformer_column_renaming(dataframe_lib):
         "B__x2",
         "C__x1",
         "C__x3",
+        "D__x2",
+        "D__x3",
     ]
 
-
-@pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
-def test_column_transformer_error_with_duplicated_columns(dataframe_lib):
-    """Check that we raise an error when using `ColumnTransformer` and
-    the columns names are duplicated between transformers."""
-    lib = pytest.importorskip(dataframe_lib)
-
-    df = lib.DataFrame({"x1": [1, 2, 3], "x2": [10, 20, 30], "x3": [100, 200, 300]})
-
-    transformer = ColumnTransformer(
-        transformers=[
-            ("A", "passthrough", ["x1", "x2", "x3"]),
-            ("B", FunctionTransformer(), ["x1", "x2"]),
-            ("C", StandardScaler(), ["x1", "x3"]),
-            # special case of a transformer returning 0-columns, e.g feature selector
-            (
-                "D",
-                FunctionTransformer(lambda x: _safe_indexing(x, [], axis=1)),
-                ["x1", "x2", "x3"],
-            ),
-        ],
-        verbose_feature_names_out=False,
-    ).set_output(transform=dataframe_lib)
-    err_msg = re.escape(
-        "Duplicated feature names found before concatenating the outputs of the "
-        "transformers: ['x1', 'x2', 'x3'].\n"
-        "Transformer A has conflicting columns names: ['x1', 'x2', 'x3'].\n"
-        "Transformer B has conflicting columns names: ['x1', 'x2'].\n"
-        "Transformer C has conflicting columns names: ['x1', 'x3'].\n"
-    )
-    with pytest.raises(ValueError, match=err_msg):
+    transformer.set_params(verbose_feature_names_out=False)
+    with pytest.raises(ValueError, match=r"Output feature names:.*are not unique"):
         transformer.fit_transform(df)
 
 
