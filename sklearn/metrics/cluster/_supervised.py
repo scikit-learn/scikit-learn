@@ -23,7 +23,6 @@ from sklearn.utils._array_api import (
     get_namespace_and_device,
 )
 from sklearn.utils._param_validation import (
-    Hidden,
     Interval,
     StrOptions,
     validate_params,
