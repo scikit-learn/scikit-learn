@@ -1260,6 +1260,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             else:
                 transformers = self.transformers
         names, transformers, name_details = zip(*transformers)
+
         return _VisualBlock(
             "parallel", transformers, names=names, name_details=name_details
         )

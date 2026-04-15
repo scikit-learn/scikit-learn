@@ -1618,6 +1618,10 @@ def test_sk_visual_block_remainder_fitted_numpy(remainder):
     assert visual_block.name_details == ([0, 2], [1])
     assert isinstance(visual_block.estimators[0], StandardScaler)
     if remainder == "passthrough":
+        # comparing visual_block.estimators[1] to FunctionTransformer because
+        # _column_transformer.py::sk_visual_block needs to send the remainder
+        # as a transformer (not as a string) to estimator.py in order to
+        # display output names.
         assert isinstance(visual_block.estimators[1], FunctionTransformer)
     else:
         assert isinstance(visual_block.estimators[1], StandardScaler)
