@@ -34,13 +34,13 @@ In this section we will focus on the **Steps/Code to Reproduce** section of the
 `Issue template
 <https://github.com/scikit-learn/scikit-learn/blob/main/.github/ISSUE_TEMPLATE/bug_report.yml>`_.
 We will start with a snippet of code that already provides a failing example but
-that has room for readability improvement. We then craft a MCVE from it.
+that has room for readability improvement. We then craft an MCVE from it.
 
 **Example**
 
 .. code-block:: python
 
-    # I am currently working in a ML project and when I tried to fit a
+    # I am currently working in an ML project and when I tried to fit a
     # GradientBoostingRegressor instance to my_data.csv I get a UserWarning:
     # "X has feature names, but DecisionTreeRegressor was fitted without
     # feature names". You can get a copy of my dataset from

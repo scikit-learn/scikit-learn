@@ -210,7 +210,7 @@ class LeaveOneOut(_UnsupportedGroupCVMixin, BaseCrossValidator):
     See Also
     --------
     LeaveOneGroupOut : For splitting the data according to explicit,
-        domain-specific stratification of the dataset.
+        domain-specific grouping of the dataset.
     GroupKFold : K-fold iterator variant with non-overlapping groups.
     """
 
@@ -597,8 +597,8 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
 
     See Also
     --------
-    LeaveOneGroupOut : For splitting the data according to explicit
-        domain-specific stratification of the dataset.
+    LeaveOneGroupOut : For splitting the data according to explicit,
+        domain-specific grouping of the dataset.
 
     StratifiedKFold : Takes class information into account to avoid building
         folds with imbalanced class proportions (for binary or multiclass
@@ -637,7 +637,7 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
             n_samples_per_group = np.bincount(group_idx)
 
             # Distribute the most frequent groups first
-            indices = np.argsort(n_samples_per_group)[::-1]
+            indices = np.argsort(n_samples_per_group, kind="stable")[::-1]
             n_samples_per_group = n_samples_per_group[indices]
 
             # Total weight of each fold
@@ -1044,6 +1044,14 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
         _, groups_inv, groups_cnt = np.unique(
             groups, return_inverse=True, return_counts=True
         )
+        n_groups = len(groups_cnt)
+
+        if self.n_splits > n_groups:
+            raise ValueError(
+                f"Cannot have number of splits n_splits={self.n_splits} greater"
+                f" than the number of groups: {n_groups}."
+            )
+
         y_counts_per_group = np.zeros((len(groups_cnt), n_classes))
         for class_idx, group_idx in zip(y_inv, groups_inv):
             y_counts_per_group[group_idx, class_idx] += 1
@@ -1062,7 +1070,7 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
         # Stable sort to keep shuffled order for groups with the same
         # class distribution variance
         sorted_groups_idx = np.argsort(
-            -np.std(y_counts_per_group, axis=1), kind="mergesort"
+            -np.std(y_counts_per_group, axis=1), kind="stable"
         )
 
         for group_idx in sorted_groups_idx:
@@ -1324,7 +1332,7 @@ class LeaveOneGroupOut(GroupsConsumerMixin, BaseCrossValidator):
 
     Provides train/test indices to split data such that each training set is
     comprised of all samples except ones belonging to one specific group.
-    Arbitrary domain specific group information is provided as an array of integers
+    Arbitrary domain-specific group information is provided as an array of integers
     that encodes the group of each sample.
 
     For instance the groups could be the year of collection of the samples
@@ -1441,7 +1449,7 @@ class LeavePGroupsOut(GroupsConsumerMixin, BaseCrossValidator):
 
     Provides train/test indices to split data according to a third-party
     provided group. This group information can be used to encode arbitrary
-    domain specific stratifications of the samples as integers.
+    domain-specific groupings of the samples as integers.
 
     For instance the groups could be the year of collection of the samples
     and thus allow for cross-validation against time-based splits.
@@ -2081,7 +2089,7 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
 
     Provides randomized train/test indices to split data according to a
     third-party provided group. This group information can be used to encode
-    arbitrary domain specific stratifications of the samples as integers.
+    arbitrary domain-specific groupings of the samples as integers.
 
     For instance the groups could be the year of collection of the samples
     and thus allow for cross-validation against time-based splits.
@@ -2364,7 +2372,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         # Find the sorted list of instances for each class:
         # (np.unique above performs a sort, so code is O(n logn) already)
         class_indices = np.split(
-            np.argsort(y_indices, kind="mergesort"), np.cumsum(class_counts)[:-1]
+            np.argsort(y_indices, kind="stable"), np.cumsum(class_counts)[:-1]
         )
 
         rng = check_random_state(self.random_state)
