@@ -1,8 +1,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import sys
 import functools
+import sys
 from contextlib import contextmanager
 from threading import Lock
 
@@ -18,15 +18,8 @@ class _CallbackManagerState:
 
 
 def _is_debugger_active():
-    """Return True if a debugger such as debugpy (VS Code) is active."""
-    if "debugpy" in sys.modules:
-        try:
-            import debugpy
-            return debugpy.is_client_connected()
-        except Exception:
-            pass
-    # fallback: check for pydevd (PyCharm debugger)
-    return "pydevd" in sys.modules
+    """Return True if a debugger (e.g., debugpy or pydevd) is active."""
+    return "debugpy" in sys.modules or "pydevd" in sys.modules
 
 
 def get_callback_manager():
@@ -38,14 +31,15 @@ def get_callback_manager():
         with _CallbackManagerState.lock:
             if _CallbackManagerState.manager is None:
                 if _is_debugger_active():
-                    # loky spawns a new process which kills the debugpy
-                    # session and causes EOFError. Fall back to the default
-                    # multiprocessing context when a debugger is attached.
-                    # See: https://github.com/scikit-learn/scikit-learn/issues/33710
+                    # loky may spawn subprocesses that break debugger sessions
+                    # (e.g., debugpy), leading to EOFError. Use standard
+                    # multiprocessing "spawn" context when a debugger is active.
                     import multiprocessing
+
                     ctx = multiprocessing.get_context("spawn")
                 else:
-                    ctx = get_context()  # loky context (default)
+                    ctx = get_context()  # default loky context
+
                 _CallbackManagerState.manager = ctx.Manager()
 
     return _CallbackManagerState.manager
@@ -71,8 +65,6 @@ class CallbackSupportMixin:
             callbacks = [callbacks]
 
         if not all(
-            # isinstance for a Protocol returns True for classes too (not only
-            # instances). Hence the additional check for classes.
             isinstance(callback, FitCallback) and not isinstance(callback, type)
             for callback in callbacks
         ):
@@ -81,34 +73,10 @@ class CallbackSupportMixin:
             )
 
         self._skl_callbacks = callbacks
-
         return self
 
     def _init_callback_context(self, task_name="fit", task_id=0, max_subtasks=0):
-        """Initialize the callback context for the estimator and setup its callbacks.
-
-        This method should be called once, at the beginning of the fit method.
-
-        It will only setup callbacks that are not propagated from a meta-estimator.
-
-        Parameters
-        ----------
-        task_name : str, default="fit"
-            The name of the root task.
-
-        task_id : int or str, default=0
-            Identifier for the root task.
-
-        max_subtasks : int or None, default=0
-            The maximum number of subtasks that can be children of the root task. None
-            means the maximum number of subtasks is not known in advance. 0 means it's a
-            leaf.
-
-        Returns
-        -------
-        callback_fit_ctx : CallbackContext
-            The root callback context for the estimator.
-        """
+        """Initialize the callback context for the estimator and setup its callbacks."""
         self._callback_fit_ctx = CallbackContext._from_estimator(
             estimator=self,
             task_name=task_name,
@@ -116,10 +84,7 @@ class CallbackSupportMixin:
             max_subtasks=max_subtasks,
         )
 
-        # setup callbacks
         for callback in getattr(self, "_skl_callbacks", []):
-            # Only call the setup hook of callbacks that are not propagated from a
-            # meta-estimator.
             if not (
                 isinstance(callback, AutoPropagatedCallback)
                 and hasattr(self, "_parent_callback_ctx")
@@ -131,60 +96,25 @@ class CallbackSupportMixin:
 
 @contextmanager
 def callback_management_context(estimator):
-    """Context manager to manage callback lifecycle around estimator fit.
-
-    The context manager is responsible for calling the callbacks `teardown` hook in a
-    `try finally` block, which guarantees that callbacks teardown will always be called,
-    whether the estimator's fit exits successfully or not.
-
-    Parameters
-    ----------
-    estimator : estimator instance
-        The estimator being fitted.
-
-    Yields
-    ------
-    None.
-    """
+    """Context manager to manage callback lifecycle around estimator fit."""
     try:
         yield
     finally:
         if hasattr(estimator, "_callback_fit_ctx"):
             for callback in getattr(estimator, "_skl_callbacks", []):
-                # Only call the teardown hook of callbacks that are not propagated from
-                # a meta-estimator.
                 if not (
                     isinstance(callback, AutoPropagatedCallback)
                     and hasattr(estimator, "_parent_callback_ctx")
                 ):
                     callback.teardown(estimator._callback_fit_ctx)
 
-            # Remove the context and parent context to avoid keeping circular references
-            # when they're notneeded anymore.
             del estimator._callback_fit_ctx
             if hasattr(estimator, "_parent_callback_ctx"):
                 del estimator._parent_callback_ctx
 
 
 def with_callbacks(method):
-    """Decorator to run the method within a callback context manager.
-
-    This decorator is responsible for calling the callbacks `teardown` hooks of
-    callbacks in a `try finally` block, which guarantees that callbacks teardown will
-    always be called, whether the estimator's method exits successfully or not.
-
-    It will only teardown callbacks that are not propagated from a meta-estimator.
-
-    Parameters
-    ----------
-    method : method
-        The method to decorate.
-
-    Returns
-    -------
-    decorated_method : method
-        The decorated method.
-    """
+    """Decorator to run the method within a callback context manager."""
 
     @functools.wraps(method)
     def callback_managed_method(estimator, *args, **kwargs):
