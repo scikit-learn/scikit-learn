@@ -1,28 +1,29 @@
-.. _custom_callbacks:
+.. _developing_callbacks:
 
-===========================
-Developing custom Callbacks
-===========================
+====================
+Developing callbacks
+====================
 
 .. currentmodule:: sklearn.callback
 
-Scikit-learn offers a callback API to use built-in or custom callbacks with compatible
-estimators. This section is intended for developers who wish to implement custom
-callbacks.
+This section is intended for developers who wish to implement callbacks compatible
+with the scikit-learn callback API.
 
-A callback is an object that can be registered to an estimator. The callback holds
-methods which will get called at different specific steps during the fitting process of
-the estimator it is attached to. These methods are called hooks and the steps in ``fit``
-that trigger the hooks are referred to as ``fit`` tasks.
+The callback protocol
+---------------------
 
-The hooks can receive contextual information about the task in which they get called
-through objects of the :class:`~CallbackContext` class and optional keyword arguments in
-the hooks signature.
+To be compatible with scikit-learn estimators, callbacks must implement the :class:`FitCallback` `protocol <https://typing.python.org/en/latest/spec/protocol.html>`__:
 
-In scikit-learn, callbacks are classes following the :class:`~FitCallback` protocol.
-This protocol defines four hook methods that each callback class must implement and
-which are invoked at different steps of the estimator's fit process. To be a compatible
-callback, a custom class must then simply implement these four hooks.
+.. code-block:: python
+
+    class FitCallback(Protocol):
+        def setup(self, context): -> None
+        def on_fit_task_begin(self, context, *, X=None, y=None, metadata=None, fitted_estimator=None): -> None
+        def on_fit_task_end(self, context, *, X=None, y=None, metadata=None, fitted_estimator=None): -> bool
+        def teardown(self, context): -> None
+
+These methods, referred to as callback hooks, will be called at different specific steps
+during the fitting process of the estimator it is registered on.
 
 Callback hooks
 --------------
@@ -129,11 +130,11 @@ The CallbackContext attributes
 ------------------------------
 
 The callback hooks receive as a mandatory argument a :class:`~CallbackContext` object
-which holds contextual information about the task in which the callback hook is being
+which holds contextual information about the task for which the callback hook is being
 called. This contextual information takes the form of public attributes of the
-:class:`~CallbackContext` object. These public attributes are:
+:class:`~CallbackContext` object, which are:
 
-- ``task_name`` : str
+- `task_name` : str
         The name of the task this context is responsible for.
 
 - ``task_id`` : int
@@ -217,13 +218,7 @@ Here is a minimal example of a custom non-propagated callback::
             self, estimator, context, *, X=None, y=None, fitted_estimator=None
         ):
             msg = f"{context.task_name} task is ending."
-            if (
-                fitted_estimator is not None
-                and X is not None
-                and y is not None
-                and hasattr(fitted_estimator, "predict")
-            ):
-                mean_abs_error = np.abs(y - fitted_estimator.predict(X)).mean()
+                mean_squared_error = ((y - fitted_estimator.predict(X))**2).mean()
                 msg += f" With a mean absolute error of {mean_abs_error}."
             print(msg)
 
