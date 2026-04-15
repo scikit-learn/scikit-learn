@@ -51,8 +51,8 @@ from sklearn.tests.metadata_routing_common import (
 from sklearn.utils import get_tags
 from sklearn.utils._array_api import (
     _atol_for_type,
-    _convert_to_numpy,
     get_namespace_and_device,
+    move_to,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._metadata_requests import COMPOSITE_METHODS, METHODS
@@ -1984,7 +1984,7 @@ def test_feature_union_array_api_compliance(array_namespace, device_name, dtype_
 
     with config_context(array_api_dispatch=True):
         X_xp_transformed = union.fit_transform(X_xp)
-        X_xp_transformed_np = _convert_to_numpy(X_xp_transformed, xp=xp)
+        X_xp_transformed_np = move_to(X_xp_transformed, xp=np, device="cpu")
 
         for name, trans in union.transformer_list:
             for attr in ["components_", "normalization_"]:

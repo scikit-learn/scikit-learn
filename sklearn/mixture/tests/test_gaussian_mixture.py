@@ -31,12 +31,12 @@ from sklearn.mixture._gaussian_mixture import (
     _estimate_gaussian_parameters,
 )
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
-    get_namespace,
-    yield_namespace_device_dtype_combinations,
+    device as array_api_device,
 )
 from sklearn.utils._array_api import (
-    device as array_api_device,
+    get_namespace,
+    move_to,
+    yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
     _array_api_for_tests,
@@ -1568,40 +1568,41 @@ def test_gaussian_mixture_array_api_compliance(
     increased_rtol = 1e-3 if dtype_name == "float32" else 1e-7
 
     # Check fitted attributes
-    assert_allclose(gmm.means_, _convert_to_numpy(gmm_xp.means_, xp=xp))
-    assert_allclose(gmm.weights_, _convert_to_numpy(gmm_xp.weights_, xp=xp))
+    assert_allclose(gmm.means_, move_to(gmm_xp.means_, xp=np, device="cpu"))
+    assert_allclose(gmm.weights_, move_to(gmm_xp.weights_, xp=np, device="cpu"))
     assert_allclose(
         gmm.covariances_,
-        _convert_to_numpy(gmm_xp.covariances_, xp=xp),
+        move_to(gmm_xp.covariances_, xp=np, device="cpu"),
         atol=increased_atol,
         rtol=increased_rtol,
     )
     assert_allclose(
         gmm.precisions_cholesky_,
-        _convert_to_numpy(gmm_xp.precisions_cholesky_, xp=xp),
+        move_to(gmm_xp.precisions_cholesky_, xp=np, device="cpu"),
         atol=increased_atol,
         rtol=increased_rtol,
     )
     assert_allclose(
         gmm.precisions_,
-        _convert_to_numpy(gmm_xp.precisions_, xp=xp),
+        move_to(gmm_xp.precisions_, xp=np, device="cpu"),
         atol=increased_atol,
         rtol=increased_rtol,
     )
 
     # Check methods
     assert (
-        adjusted_rand_score(gmm.predict(X), _convert_to_numpy(predict_xp, xp=xp)) > 0.95
+        adjusted_rand_score(gmm.predict(X), move_to(predict_xp, xp=np, device="cpu"))
+        > 0.95
     )
     assert_allclose(
         gmm.predict_proba(X),
-        _convert_to_numpy(predict_proba_xp, xp=xp),
+        move_to(predict_proba_xp, xp=np, device="cpu"),
         rtol=increased_rtol,
         atol=increased_atol,
     )
     assert_allclose(
         gmm.score_samples(X),
-        _convert_to_numpy(score_samples_xp, xp=xp),
+        move_to(score_samples_xp, xp=np, device="cpu"),
         rtol=increased_rtol,
     )
     # comparing Python float so need explicit rtol when X has dtype float32
@@ -1610,8 +1611,10 @@ def test_gaussian_mixture_array_api_compliance(
     assert_allclose(gmm.bic(X), bic_xp, rtol=default_rtol)
     sample_X, sample_y = gmm.sample(10)
     # generated samples are float64 so need explicit rtol when X has dtype float32
-    assert_allclose(sample_X, _convert_to_numpy(sample_X_xp, xp=xp), rtol=default_rtol)
-    assert_allclose(sample_y, _convert_to_numpy(sample_y_xp, xp=xp))
+    assert_allclose(
+        sample_X, move_to(sample_X_xp, xp=np, device="cpu"), rtol=default_rtol
+    )
+    assert_allclose(sample_y, move_to(sample_y_xp, xp=np, device="cpu"))
 
 
 @skip_if_array_api_compat_not_configured

@@ -35,7 +35,7 @@ from sklearn._loss.loss import (
 from sklearn.utils import assert_all_finite
 from sklearn.utils._array_api import (
     _atol_for_type,
-    _convert_to_numpy,
+    move_to,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._array_api import (
@@ -1405,7 +1405,7 @@ def test_loss_array_api(
         result_xp, result_np, raw_prediction_xp, xp, rtol, atol
     ):
         assert_allclose(
-            _convert_to_numpy(result_xp, xp=xp), result_np, rtol=rtol, atol=atol
+            move_to(result_xp, xp=np, device="cpu"), result_np, rtol=rtol, atol=atol
         )
         assert result_xp.dtype == raw_prediction_xp.dtype
         assert array_api_device(result_xp) == array_api_device(raw_prediction_xp)
