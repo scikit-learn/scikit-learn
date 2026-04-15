@@ -50,3 +50,16 @@ https://scikit-learn.org/dev/faq.html#why-is-my-pull-request-not-getting-any-att
 
 Thanks for contributing!
 -->
+
+## 👋 New contributor
+
+If this is your first contribution, please make sure to:
+
+- Read the contributing guide:
+  https://scikit-learn.org/stable/developers/contributing.html
+- Follow the pull request checklist:
+  https://scikit-learn.org/dev/developers/contributing.html#pull-request-checklist
+- Run tests locally with `pytest sklearn`
+- Follow code style guidelines
+- Add or update tests if applicable
+- Update documentation if needed
