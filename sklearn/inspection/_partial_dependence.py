@@ -611,7 +611,9 @@ def partial_dependence(
     if method == "auto":
         if sample_weight is not None:
             method = "brute"
-        elif isinstance(estimator, BaseGradientBoosting) and estimator.init is None or isinstance(
+        elif isinstance(estimator, BaseGradientBoosting) and estimator.init is None:
+            method = "recursion"
+        elif isinstance(
             estimator,
             (BaseHistGradientBoosting, DecisionTreeRegressor, RandomForestRegressor),
         ):
