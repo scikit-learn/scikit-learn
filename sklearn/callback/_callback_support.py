@@ -96,7 +96,18 @@ class CallbackSupportMixin:
 
 @contextmanager
 def callback_management_context(estimator):
-    """Context manager to manage callback lifecycle around estimator fit."""
+    """Context manager to manage callback lifecycle around estimator fit.
+
+    Parameters
+    ----------
+    estimator : estimator instance
+        The estimator whose callback context and teardown are managed.
+
+    Yields
+    ------
+    None
+        Yields control to the caller within the callback lifecycle context.
+    """
     try:
         yield
     finally:
@@ -114,8 +125,18 @@ def callback_management_context(estimator):
 
 
 def with_callbacks(method):
-    """Decorator to run the method within a callback context manager."""
+    """Decorator to run the method within a callback context manager.
 
+    Parameters
+    ----------
+    method : callable
+        The fit method to wrap with callback lifecycle management.
+
+    Returns
+    -------
+    callable
+        The wrapped method that runs inside :func:`callback_management_context`.
+    """
     @functools.wraps(method)
     def callback_managed_method(estimator, *args, **kwargs):
         with callback_management_context(estimator):
