@@ -98,8 +98,7 @@ class ScoringMonitor:
         scores = {}
         if X is not None and y is not None:
             scorer = self._estimator_scorers[context.estimator_name]
-            score_params = {k: v for k, v in metadata.items() if v is not None}
-            scores.update(scorer(fitted_estimator, X, y, **score_params))
+            scores.update(scorer(fitted_estimator, X, y, **metadata))
 
         self._shared_log.append((run_id, run_info, context_levels, scores))
 

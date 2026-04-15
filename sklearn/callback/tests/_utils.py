@@ -33,8 +33,8 @@ class RecordingCallback:
         *,
         X=None,
         y=None,
-        fitted_estimator=None,
         metadata=None,
+        fitted_estimator=None,
     ):
         self.record.append(
             {
@@ -43,8 +43,8 @@ class RecordingCallback:
                 "kwargs": {
                     "X": X,
                     "y": y,
-                    "fitted_estimator": fitted_estimator,
                     "metadata": metadata,
+                    "fitted_estimator": fitted_estimator,
                 },
             }
         )
@@ -56,8 +56,8 @@ class RecordingCallback:
         *,
         X=None,
         y=None,
-        fitted_estimator=None,
         metadata=None,
+        fitted_estimator=None,
     ):
         self.record.append(
             {
@@ -66,8 +66,8 @@ class RecordingCallback:
                 "kwargs": {
                     "X": X,
                     "y": y,
-                    "fitted_estimator": fitted_estimator,
                     "metadata": metadata,
+                    "fitted_estimator": fitted_estimator,
                 },
             }
         )
@@ -177,7 +177,7 @@ class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
         sample_weight=None,
     ):
         callback_ctx = self._init_callback_context(max_subtasks=self.max_iter)
-        metadata = {"sample_weight": sample_weight}
+        metadata = {"sample_weight": sample_weight} if sample_weight is not None else {}
         callback_ctx.call_on_fit_task_begin(estimator=self, X=X, y=y, metadata=metadata)
 
         for i in range(self.max_iter):
@@ -192,8 +192,8 @@ class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
                 estimator=self,
                 X=X,
                 y=y,
-                reconstruction_attributes=lambda: {"n_iter_": i + 1},
                 metadata=metadata,
+                reconstruction_attributes=lambda: {"n_iter_": i + 1},
             ):
                 break
 
@@ -203,8 +203,8 @@ class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
             estimator=self,
             X=X,
             y=y,
-            reconstruction_attributes={},
             metadata=metadata,
+            reconstruction_attributes={},
         )
 
         return self
@@ -331,9 +331,8 @@ class MetaEstimator(CallbackSupportMixin, BaseEstimator):
         callback_ctx = self._init_callback_context(
             max_subtasks=self.n_outer, sequential_subtasks=False
         )
-        metadata = {"sample_weight": sample_weight}
+        metadata = {"sample_weight": sample_weight} if sample_weight is not None else {}
         callback_ctx.call_on_fit_task_begin(estimator=self, X=X, y=y, metadata=metadata)
-        fit_params = {k: v for k, v in metadata.items() if v is not None}
 
         Parallel(n_jobs=self.n_jobs, prefer=self.prefer)(
             delayed(_fit_subestimator)(
@@ -342,7 +341,6 @@ class MetaEstimator(CallbackSupportMixin, BaseEstimator):
                 X=X,
                 y=y,
                 metadata=metadata,
-                fit_params=fit_params,
                 outer_callback_ctx=callback_ctx.subcontext(
                     task_name="outer", task_id=i, max_subtasks=self.n_inner
                 ),
@@ -356,7 +354,7 @@ class MetaEstimator(CallbackSupportMixin, BaseEstimator):
 
 
 def _fit_subestimator(
-    meta_estimator, inner_estimator, *, X, y, metadata, fit_params, outer_callback_ctx
+    meta_estimator, inner_estimator, *, X, y, metadata, outer_callback_ctx
 ):
     outer_callback_ctx.call_on_fit_task_begin(
         estimator=meta_estimator, X=X, y=y, metadata=metadata
@@ -371,7 +369,7 @@ def _fit_subestimator(
             estimator=meta_estimator, X=X, y=y, metadata=metadata
         )
 
-        est.fit(X=X, y=y, **fit_params)
+        est.fit(X=X, y=y, **metadata)
 
         inner_ctx.call_on_fit_task_end(
             estimator=meta_estimator, X=X, y=y, metadata=metadata
