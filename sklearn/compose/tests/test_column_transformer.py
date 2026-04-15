@@ -2911,18 +2911,12 @@ def test_metadata_routing_with_remainder_no_error(remainder):
             sample_weight=True
         )
 
-    ct = ColumnTransformer(
-        [
-            (
-                "trans",
-                ConsumingTransformer()
-                .set_fit_request(sample_weight=True)
-                .set_transform_request(sample_weight=True),
-                [0],
-            )
-        ],
-        remainder=remainder,
+    transformer = (
+        ConsumingTransformer()
+        .set_fit_request(sample_weight=True)
+        .set_transform_request(sample_weight=True)
     )
+    ct = ColumnTransformer([("trans", transformer, [0])], remainder=remainder)
 
     # Check that no error is raised
     ct.fit_transform(X, y=y, sample_weight=sample_weight)
