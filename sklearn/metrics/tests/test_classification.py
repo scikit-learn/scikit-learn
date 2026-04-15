@@ -3490,6 +3490,24 @@ def test_d2_log_loss_score_raises():
         d2_log_loss_score(y_true, y_pred, labels=labels)
 
 
+# TODO(1.11): Remove
+def test_d2_log_loss_score_y_pred_deprecation():
+    """Test `y_pred` deprecation in favor of `y_proba` for `d2_log_loss_score`."""
+    y_true = np.array([0, 1, 1, 0])
+    y_proba = np.array([[0.1, 0.9], [0.9, 0.1], [0.8, 0.2], [0.35, 0.65]])
+
+    # Check no error raised
+    d2_log_loss_score(y_true, y_proba)
+
+    msg = "`y_pred` was renamed to `y_proba` in version 1.9 and will be removed "
+    with pytest.warns(FutureWarning, match=re.escape(msg)):
+        d2_log_loss_score(y_true, y_pred=y_proba)
+
+    msg = "Cannot use both `y_pred` and `y_proba`. `y_pred` is deprecated, "
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        d2_log_loss_score(y_true, y_pred=y_proba, y_proba=y_proba)
+
+
 def test_d2_brier_score():
     """Test that d2_brier_score gives expected outcomes in both the binary and
     multiclass settings.
