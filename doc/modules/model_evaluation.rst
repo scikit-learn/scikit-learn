@@ -2178,29 +2178,29 @@ of 0.0.
 
     >>> from sklearn.metrics import d2_log_loss_score
     >>> y_true = [1, 1, 2, 3]
-    >>> y_pred = [
+    >>> y_proba = [
     ...    [0.5, 0.25, 0.25],
     ...    [0.5, 0.25, 0.25],
     ...    [0.5, 0.25, 0.25],
     ...    [0.5, 0.25, 0.25],
     ... ]
-    >>> d2_log_loss_score(y_true, y_pred)
+    >>> d2_log_loss_score(y_true, y_proba)
     0.0
     >>> y_true = [1, 2, 3]
-    >>> y_pred = [
+    >>> y_proba = [
     ...     [0.98, 0.01, 0.01],
     ...     [0.01, 0.98, 0.01],
     ...     [0.01, 0.01, 0.98],
     ... ]
-    >>> d2_log_loss_score(y_true, y_pred)
+    >>> d2_log_loss_score(y_true, y_proba)
     0.981
     >>> y_true = [1, 2, 3]
-    >>> y_pred = [
+    >>> y_proba = [
     ...     [0.1, 0.6, 0.3],
     ...     [0.1, 0.6, 0.3],
     ...     [0.4, 0.5, 0.1],
     ... ]
-    >>> d2_log_loss_score(y_true, y_pred)
+    >>> d2_log_loss_score(y_true, y_proba)
     -0.552
 
 
