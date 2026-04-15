@@ -197,11 +197,11 @@ class DecisionBoundaryDisplay:
 
         .. versionadded:: 1.7
         .. versionchanged:: 1.9
-           `multiclass_colors` is now also used when `response_method="predict"`,
-           except for when `plot_method='contour'`, where it is ignored and "black" is
-           used instead.
-           The default colors changed from 'tab10' to the more accessible `Petroff
-           colors <https://github.com/matplotlib/matplotlib/issues/9460#issuecomment-875185352>`_.
+            `multiclass_colors` is now also used when `response_method="predict"`,
+            except for when `plot_method='contour'`, where it is ignored and "black" is
+            used instead.
+            The default colors changed from 'tab10' to the more accessible `Petroff
+            colors <https://github.com/matplotlib/matplotlib/issues/9460#issuecomment-875185352>`_.
 
     xlabel : str, default=None
         Default label to place on x axis.
@@ -510,9 +510,11 @@ class DecisionBoundaryDisplay:
 
             .. versionadded:: 1.7
             .. versionchanged:: 1.9
-               `multiclass_colors` is now also used when `response_method="predict"`,
-               and the default colors changed from 'tab10' to the more accessible
-               `Petroff colors <https://github.com/matplotlib/matplotlib/issues/9460#issuecomment-875185352>`_.
+                `multiclass_colors` is now also used when `response_method="predict"`,
+                except for when `plot_method='contour'`, where it is ignored and "black"
+                is used instead.
+                The default colors changed from 'tab10' to the more accessible `Petroff
+                colors <https://github.com/matplotlib/matplotlib/issues/9460#issuecomment-875185352>`_.
 
         xlabel : str, default=None
             The label used for the x-axis. If `None`, an attempt is made to
