@@ -18,8 +18,8 @@ https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_ch
 If this is your first contribution to scikit-learn, please introduce yourself briefly.
 How do you use scikit-learn, and what motivated this contribution?
 We are a community of mostly volunteers, and this helps us build trust and collaborate effectively.
--->
 
+-->
 
 #### Reference Issues/PRs
 <!--
@@ -43,9 +43,7 @@ I used AI assistance for:
 - [ ] Documentation (including examples)
 - [ ] Research and understanding
 
-
 #### Any other comments?
-
 
 <!--
 Thank you for your patience. Changes to scikit-learn require careful
