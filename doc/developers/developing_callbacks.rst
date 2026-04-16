@@ -12,14 +12,20 @@ with the scikit-learn callback API.
 The callback protocol
 ---------------------
 
-To be compatible with scikit-learn estimators, callbacks must implement the :class:`FitCallback` `protocol <https://typing.python.org/en/latest/spec/protocol.html>`__:
+To be compatible with scikit-learn estimators, callbacks must implement the
+:class:`FitCallback` `protocol
+<https://typing.python.org/en/latest/spec/protocol.html>`__:
 
 .. code-block:: python
 
     class FitCallback(Protocol):
         def setup(self, context): -> None
-        def on_fit_task_begin(self, context, *, X=None, y=None, metadata=None, fitted_estimator=None): -> None
-        def on_fit_task_end(self, context, *, X=None, y=None, metadata=None, fitted_estimator=None): -> bool
+        def on_fit_task_begin(
+            self, context, *, X=None, y=None, metadata=None, fitted_estimator=None
+        ): -> None
+        def on_fit_task_end(
+            self, context, *, X=None, y=None, metadata=None, fitted_estimator=None
+        ): -> bool
         def teardown(self, context): -> None
 
 These methods, referred to as callback hooks, will be called at different specific steps
