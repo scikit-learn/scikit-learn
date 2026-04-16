@@ -12,6 +12,12 @@ https://scikit-learn.org/dev/developers/contributing.html#pull-request-checklist
 describing your PR changes, see:
 https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md
 -->
+#### First-time contributor introduction
+<!--
+If this is your first contribution to scikit-learn, please introduce yourself briefly.
+How do you use scikit-learn, and what motivated this contribution?
+We are a community of mostly volunteers, and this helps us build trust and collaborate effectively.
+-->
 
 #### Reference Issues/PRs
 <!--
@@ -21,15 +27,7 @@ you resolved, so that they will automatically be closed when your pull request
 is merged. See https://github.com/blog/1506-closing-issues-via-pull-requests
 -->
 
-
 #### What does this implement/fix? Explain your changes.
-#### First-time contributor introduction
-<!--
-If this is your first contribution to scikit-learn, please introduce yourself briefly.
-How do you use scikit-learn, and what motivated this contribution?
-We are a community of mostly volunteers, and this helps us build trust and collaborate effectively.
--->
-
 
 #### AI usage disclosure
 <!--
