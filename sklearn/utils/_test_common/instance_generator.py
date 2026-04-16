@@ -472,6 +472,10 @@ INIT_PARAMS = {
     # Default "auto" parameter can lead to different ordering of eigenvalues on
     # windows: #24105
     SpectralEmbedding: dict(eigen_tol=1e-05),
+    # SplineTransformer supports NaN only with handle_missing="zeros", so we
+    # need this additional parameter set for the allow_nan_estimators Sphinx
+    # directive to detect it.
+    SplineTransformer: [dict(), dict(handle_missing="zeros")],
     StackingClassifier: dict(
         estimators=[
             ("est1", DecisionTreeClassifier(max_depth=3, random_state=0)),

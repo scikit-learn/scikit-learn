@@ -111,8 +111,8 @@ values of the curves.
 
 .. rubric:: Examples
 
+* :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence_visualization_api.py`
 * :ref:`sphx_glr_auto_examples_miscellaneous_plot_roc_curve_visualization_api.py`
-* :ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_visualization_api.py`
 * :ref:`sphx_glr_auto_examples_miscellaneous_plot_display_object_visualization.py`
 * :ref:`sphx_glr_auto_examples_calibration_plot_compare_calibration.py`
 
