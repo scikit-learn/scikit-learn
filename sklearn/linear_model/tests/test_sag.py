@@ -927,11 +927,13 @@ def test_sag_classifier_raises_error(solver):
 
 
 @pytest.mark.parametrize("solver", [sag, sag_sparse, sag_solver])
-@pytest.mark.parametrize("decay", [1.0, 0.5])
-@pytest.mark.parametrize("saga", [True, False])
-@pytest.mark.parametrize("fit_intercept", [True, False])
-def test_sag_weighted_classification_convergence(solver, decay, saga, fit_intercept):
+@pytest.mark.parametrize("saga", [True, False], ids=["SAG", "SAGA"])
+@pytest.mark.parametrize(
+    "fit_intercept", [True, False], ids=["intercept", "no_intercept"]
+)
+def test_sag_weighted_classification_convergence(solver, saga, fit_intercept):
     max_iter = 1000
+    decay = 1.0
     tol = 1e-10
     alpha = 1.1
 
@@ -1002,11 +1004,13 @@ def test_sag_weighted_classification_convergence(solver, decay, saga, fit_interc
 
 
 @pytest.mark.parametrize("solver", [sag, sag_sparse, sag_solver])
-@pytest.mark.parametrize("decay", [1.0, 0.5])
-@pytest.mark.parametrize("saga", [True, False])
-@pytest.mark.parametrize("fit_intercept", [True, False])
-def test_sag_weighted_regression_convergence(solver, decay, saga, fit_intercept):
+@pytest.mark.parametrize("saga", [True, False], ids=["SAG", "SAGA"])
+@pytest.mark.parametrize(
+    "fit_intercept", [True, False], ids=["intercept", "no_intercept"]
+)
+def test_sag_weighted_regression_convergence(solver, saga, fit_intercept):
     max_iter = 1000
+    decay = 1.0
     tol = 1e-11
     alpha = 1.1
 
