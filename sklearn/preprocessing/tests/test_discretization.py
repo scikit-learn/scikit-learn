@@ -634,8 +634,6 @@ def test_kbinsdiscretizer_subsample(strategy, global_random_seed):
     )
 
 
-
-
 def test_invalid_quantile_method_with_sample_weight():
     X = [[-2, 1, -4], [-1, 2, -3], [0, 3, -2], [1, 4, -1]]
     expected_msg = (
