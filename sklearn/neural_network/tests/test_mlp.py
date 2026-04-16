@@ -15,6 +15,7 @@ import pytest
 from sklearn.datasets import (
     load_digits,
     load_iris,
+    make_classification,
     make_multilabel_classification,
     make_regression,
 )
@@ -829,6 +830,27 @@ def test_early_stopping_stratified():
         ),
     ):
         mlp.fit(X, y)
+
+
+def test_mlp_early_stopping_string_labels():
+    # Non-regression: early stopping calls _score_with_function, which must not
+    # use np.isnan on string predictions from LabelBinarizer.inverse_transform.
+    X, y_numeric = make_classification(
+        n_samples=200,
+        n_features=10,
+        n_classes=3,
+        n_informative=5,
+        random_state=42,
+    )
+    label_map = {0: "Class_A", 1: "Class_B", 2: "Class_C"}
+    y_string = np.array([label_map[i] for i in y_numeric])
+
+    mlp = MLPClassifier(early_stopping=True, max_iter=50, random_state=42)
+    mlp.fit(X, y_string)
+
+    assert mlp.validation_scores_ is not None
+    assert len(mlp.validation_scores_) == mlp.n_iter_
+    assert np.isfinite(mlp.validation_scores_).all()
 
 
 def test_mlp_classifier_dtypes_casting():
