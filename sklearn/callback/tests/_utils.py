@@ -157,7 +157,7 @@ class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
 
     The iterative part uses a loop with a max number of iterations known in advance.
 
-    This estimator computes arbitrary predictions by avergaing the feature
+    This estimator computes arbitrary predictions by averaging the feature
     values and multiplying the result by the number of iterations done
     in fit.
     """
