@@ -595,15 +595,15 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         see :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`.
 
     best_estimator_ : estimator or dict
-        Estimator that was chosen by the search, i.e. estimator which gave
-        the highest score (or smallest loss if specified) on the left out data
-        **in the last halving iteration**. Not available if ``refit=False``.
+        Estimator that was chosen by the search, i.e. estimator
+        which gave highest score (or smallest loss if specified)
+        on the left out data, in the last halving iteration.
+        Not available if ``refit=False``.
 
         .. note::
             ``best_estimator_`` reflects the winner of the final iteration
-            only. Earlier iterations may contain candidates with a higher
-            ``rank_test_score`` in ``cv_results_`` (because ranking is global
-            across all iterations), but those scores were obtained with fewer
+            only. ``cv_results_`` may contain candidates with a higher
+            ``rank_test_score``, but those scores were obtained with fewer
             resources and are less reliable. To inspect final-iteration results
             explicitly, filter ``cv_results_`` by
             ``cv_results_['iter'] == n_iterations_ - 1``.
@@ -967,15 +967,15 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         see :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`.
 
     best_estimator_ : estimator or dict
-        Estimator that was chosen by the search, i.e. estimator which gave
-        the highest score (or smallest loss if specified) on the left out data
-        **in the last halving iteration**. Not available if ``refit=False``.
+        Estimator that was chosen by the search, i.e. estimator
+        which gave highest score (or smallest loss if specified)
+        on the left out data, in the last halving iteration.
+        Not available if ``refit=False``.
 
         .. note::
             ``best_estimator_`` reflects the winner of the final iteration
-            only. Earlier iterations may contain candidates with a higher
-            ``rank_test_score`` in ``cv_results_`` (because ranking is global
-            across all iterations), but those scores were obtained with fewer
+            only. ``cv_results_`` may contain candidates with a higher
+            ``rank_test_score``, but those scores were obtained with fewer
             resources and are less reliable. To inspect final-iteration results
             explicitly, filter ``cv_results_`` by
             ``cv_results_['iter'] == n_iterations_ - 1``.
