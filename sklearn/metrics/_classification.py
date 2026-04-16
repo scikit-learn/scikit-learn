@@ -47,7 +47,6 @@ from sklearn.utils._array_api import (
     xpx,
 )
 from sklearn.utils._param_validation import (
-    Hidden,
     Interval,
     Options,
     StrOptions,
@@ -2230,7 +2229,6 @@ def precision_recall_fscore_support(
         "y_pred": ["array-like", "sparse matrix"],
         "labels": ["array-like", None],
         "sample_weight": ["array-like", None],
-        "raise_warning": ["boolean", Hidden(StrOptions({"deprecated"}))],
         "replace_undefined_by": [
             Options(Real, {1.0, np.nan}),
             dict,
@@ -2244,7 +2242,6 @@ def class_likelihood_ratios(
     *,
     labels=None,
     sample_weight=None,
-    raise_warning="deprecated",
     replace_undefined_by=np.nan,
 ):
     """Compute binary classification positive and negative likelihood ratios.
@@ -2302,15 +2299,6 @@ def class_likelihood_ratios(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    raise_warning : bool, default=True
-        Whether or not a case-specific warning message is raised when there is division
-        by zero.
-
-        .. deprecated:: 1.7
-            `raise_warning` was deprecated in version 1.7 and will be removed in 1.9,
-            when an :class:`~sklearn.exceptions.UndefinedMetricWarning` will always
-            raise in case of a division by zero.
-
     replace_undefined_by : np.nan, 1.0, or dict, default=np.nan
         Sets the return values for LR+ and LR- when there is a division by zero. Can
         take the following values:
@@ -2340,10 +2328,8 @@ def class_likelihood_ratios(
     Raises :class:`~sklearn.exceptions.UndefinedMetricWarning` when `y_true` and
     `y_pred` lead to the following conditions:
 
-        - The number of false positives is 0 and `raise_warning` is set to `True`
-          (default): positive likelihood ratio is undefined.
-        - The number of true negatives is 0 and `raise_warning` is set to `True`
-          (default): negative likelihood ratio is undefined.
+        - The number of false positives is 0: positive likelihood ratio is undefined.
+        - The number of true negatives is 0: negative likelihood ratio is undefined.
         - The sum of true positives and false negatives is 0 (no samples of the positive
           class are present in `y_true`): both likelihood ratios are undefined.
 
@@ -2378,10 +2364,6 @@ def class_likelihood_ratios(
     >>> class_likelihood_ratios(y_true, y_pred, labels=["non-cat", "cat"])
     (1.5, 0.75)
     """
-    # TODO(1.9): When `raise_warning` is removed, the following changes need to be made:
-    # The checks for `raise_warning==True` need to be removed and we will always warn,
-    # remove `FutureWarning`, and the Warns section in the docstring should not mention
-    # `raise_warning` anymore.
     y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred, sample_weight = _check_targets(
         y_true, y_pred, sample_weight
@@ -2391,16 +2373,6 @@ def class_likelihood_ratios(
             "class_likelihood_ratios only supports binary classification "
             f"problems, got targets of type: {y_type}"
         )
-
-    msg_deprecated_param = (
-        "`raise_warning` was deprecated in version 1.7 and will be removed in 1.9. An "
-        "`UndefinedMetricWarning` will always be raised in case of a division by zero "
-        "and the value set with the `replace_undefined_by` param will be returned."
-    )
-    if raise_warning != "deprecated":
-        warnings.warn(msg_deprecated_param, FutureWarning)
-    else:
-        raise_warning = True
 
     if replace_undefined_by == 1.0:
         replace_undefined_by = {"LR+": 1.0, "LR-": 1.0}
@@ -2466,18 +2438,17 @@ def class_likelihood_ratios(
 
     # if `fp == 0`a division by zero will occur
     if fp == 0:
-        if raise_warning:
-            if tp == 0:
-                msg_beginning = (
-                    "No samples were predicted for the positive class and "
-                    "`positive_likelihood_ratio` is "
-                )
-            else:
-                msg_beginning = "`positive_likelihood_ratio` is ill-defined and "
-            msg_end = "set to `np.nan`. Use the `replace_undefined_by` param to "
-            "control this behavior. To suppress this warning or turn it into an error, "
-            "see Python's `warnings` module and `warnings.catch_warnings()`."
-            warnings.warn(msg_beginning + msg_end, UndefinedMetricWarning, stacklevel=2)
+        if tp == 0:
+            msg_beginning = (
+                "No samples were predicted for the positive class and "
+                "`positive_likelihood_ratio` is "
+            )
+        else:
+            msg_beginning = "`positive_likelihood_ratio` is ill-defined and "
+        msg_end = "set to `np.nan`. Use the `replace_undefined_by` param to "
+        "control this behavior. To suppress this warning or turn it into an error, "
+        "see Python's `warnings` module and `warnings.catch_warnings()`."
+        warnings.warn(msg_beginning + msg_end, UndefinedMetricWarning, stacklevel=2)
         if isinstance(replace_undefined_by, float) and np.isnan(replace_undefined_by):
             positive_likelihood_ratio = replace_undefined_by
         else:
@@ -2490,14 +2461,13 @@ def class_likelihood_ratios(
 
     # if `tn == 0`a division by zero will occur
     if tn == 0:
-        if raise_warning:
-            msg = (
-                "`negative_likelihood_ratio` is ill-defined and set to `np.nan`. "
-                "Use the `replace_undefined_by` param to control this behavior. To "
-                "suppress this warning or turn it into an error, see Python's "
-                "`warnings` module and `warnings.catch_warnings()`."
-            )
-            warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
+        msg = (
+            "`negative_likelihood_ratio` is ill-defined and set to `np.nan`. "
+            "Use the `replace_undefined_by` param to control this behavior. To "
+            "suppress this warning or turn it into an error, see Python's "
+            "`warnings` module and `warnings.catch_warnings()`."
+        )
+        warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
         if isinstance(replace_undefined_by, float) and np.isnan(replace_undefined_by):
             negative_likelihood_ratio = replace_undefined_by
         else:
