@@ -258,7 +258,10 @@ def _newton_cg(
         Estimated minimum.
     """
     xp, _, device = get_namespace_and_device(x0)
-    x0 = xp.asarray(x0, device=device).flatten()
+    x0 = xp.asarray(x0, device=device)
+    if x0.ndim != 1:
+        msg = f"x0 must be 1-dimensional; got {x0.ndim=}"
+        raise ValueError(msg)
     xk = xp.asarray(x0, copy=True)  # np.copy(x0)
     k = 0
 
