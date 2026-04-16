@@ -47,6 +47,7 @@ from sklearn.utils._array_api import (
     xpx,
 )
 from sklearn.utils._param_validation import (
+    Hidden,
     Interval,
     Options,
     StrOptions,
