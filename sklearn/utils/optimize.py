@@ -18,14 +18,103 @@ significant speedups.
 import warnings
 
 import scipy
-from scipy.optimize._linesearch import line_search_wolfe1, line_search_wolfe2
+from scipy.optimize._linesearch import (
+    line_search_wolfe2,
+    scalar_search_wolfe1,
+)
 
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils._array_api import get_namespace_and_device
+from sklearn.utils._array_api import get_namespace_and_device, size
 
 
 class _LineSearchError(RuntimeError):
     pass
+
+
+# Copied from scipy
+# https://github.com/scipy/scipy/blob/7a7fbca0b9baa1b709e4a5e0afaf9f94bd34941c/scipy/optimize/_linesearch.py#L37
+# Modified for array API compliance: np.dot(a, b) -> a @ b
+def line_search_wolfe1(
+    f,
+    fprime,
+    xk,
+    pk,
+    gfk=None,
+    old_fval=None,
+    old_old_fval=None,
+    args=(),
+    c1=1e-4,
+    c2=0.9,
+    amax=50,
+    amin=1e-8,
+    xtol=1e-14,
+):
+    """
+    As `scalar_search_wolfe1` but do a line search to direction `pk`
+
+    Parameters
+    ----------
+    f : callable
+        Function `f(x)`
+    fprime : callable
+        Gradient of `f`
+    xk : array_like
+        Current point
+    pk : array_like
+        Search direction
+    gfk : array_like, optional
+        Gradient of `f` at point `xk`
+    old_fval : float, optional
+        Value of `f` at point `xk`
+    old_old_fval : float, optional
+        Value of `f` at point preceding `xk`
+
+    The rest of the parameters are the same as for `scalar_search_wolfe1`.
+
+    Returns
+    -------
+    stp, f_count, g_count, fval, old_fval
+        As in `line_search_wolfe1`
+    gval : array
+        Gradient of `f` at the final point
+
+    Notes
+    -----
+    Parameters `c1` and `c2` must satisfy ``0 < c1 < c2 < 1``.
+
+    """
+    if gfk is None:
+        gfk = fprime(xk, *args)
+
+    gval = [gfk]
+    gc = [0]
+    fc = [0]
+
+    def phi(s):
+        fc[0] += 1
+        return f(xk + s * pk, *args)
+
+    def derphi(s):
+        gval[0] = fprime(xk + s * pk, *args)
+        gc[0] += 1
+        return gval[0] @ pk
+
+    derphi0 = gfk @ pk
+
+    stp, fval, old_fval = scalar_search_wolfe1(
+        phi,
+        derphi,
+        old_fval,
+        old_old_fval,
+        derphi0,
+        c1=c1,
+        c2=c2,
+        amax=amax,
+        amin=amin,
+        xtol=xtol,
+    )
+
+    return stp, fc[0], gc[0], fval, old_fval, gval[0]
 
 
 def _line_search_wolfe12(
@@ -136,7 +225,7 @@ def _cg(fhess_p, fgrad, maxiter, tol, xp, device, verbose=0):
         Estimated solution.
     """
     eps = 16 * xp.finfo(fgrad.dtype).eps
-    xsupi = xp.zeros(len(fgrad), dtype=fgrad.dtype, device=device)
+    xsupi = xp.zeros(size(fgrad), dtype=fgrad.dtype, device=device)
     ri = xp.asarray(fgrad, copy=True)  # residual = fgrad - fhess_p @ xsupi
     psupi = -ri
     i = 0
