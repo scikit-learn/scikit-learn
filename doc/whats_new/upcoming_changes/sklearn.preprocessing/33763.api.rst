@@ -1,0 +1,5 @@
+- :class:`preprocessing.KBinsDiscretizer` now defaults to
+  ``quantile_method="averaged_inverted_cdf"`` instead of ``"linear"`` when
+  ``strategy="quantile"``. This naturally supports sample weight equivalence
+  properties by default.
+  By :user:`Ashutosh Devpura <AshutoshDevpura>`.
