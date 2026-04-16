@@ -27,7 +27,7 @@ from sklearn.utils._testing import (
     assert_allclose,
     assert_array_equal,
 )
-from sklearn.utils.fixes import parse_version
+from sklearn.utils.fixes import PETROFF_COLORS, parse_version
 
 X, y = make_classification(
     n_informative=1,
@@ -670,15 +670,14 @@ def test_multiclass_colors_cmap(
     assert isinstance(disp.multiclass_colors_, np.ndarray)
 
     if multiclass_colors is None:
-        if len(clf.classes_) <= 10:
-            multiclass_colors = "tab10"
+        # make sure the correct colors are selected from the corresponding petroff color
+        # sequences or "gist_rainbow"
+        if len(clf.classes_) == 3:
+            multiclass_colors = PETROFF_COLORS[:3]
         else:
             multiclass_colors = "gist_rainbow"
 
-    if multiclass_colors in ["tab10", "tab20"]:
-        cmap = mpl.pyplot.get_cmap(multiclass_colors)
-        colors = mpl.colors.to_rgba_array(cmap.colors[: len(clf.classes_)])
-    elif multiclass_colors in ["Blues", "gist_rainbow", "plasma"]:
+    if isinstance(multiclass_colors, str):
         cmap = mpl.pyplot.get_cmap(multiclass_colors)
         colors = cmap(np.linspace(0, 1, len(clf.classes_)))
     else:

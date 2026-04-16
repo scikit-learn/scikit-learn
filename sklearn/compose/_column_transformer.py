@@ -1173,9 +1173,13 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     remainder_columns = self.feature_names_in_[
                         remainder_columns
                     ].tolist()
+                # get the fitted remainder function so we can access its methods to
+                # build the display in utils._repr_html.estimator.py
+                remainder_transformer = self.transformers_[-1][1]
 
                 transformers = chain(
-                    transformers, [("remainder", self.remainder, remainder_columns)]
+                    transformers,
+                    [("remainder", remainder_transformer, remainder_columns)],
                 )
         else:  # not fitted
             if self.remainder != "drop":
@@ -1240,7 +1244,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         # might happen if no columns are selected for that transformer. We
         # request all metadata requested by all transformers.
         transformers = self.transformers
-        if self.remainder not in ("drop", "passthrough"):
+        if self.remainder != "drop":
+            # Note: remainder="passthrough" will be converted into a FunctionTransformer
+            # internally, so it needs to be added to the router as well here, even if it
+            # doesn't consume any metadata, to avoid a `KeyError` later.
             transformers = chain(transformers, [("remainder", self.remainder, None)])
         for name, step, _ in transformers:
             method_mapping = MethodMapping()
