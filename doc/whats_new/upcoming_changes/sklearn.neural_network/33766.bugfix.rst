@@ -1,0 +1,1 @@
+Fixed ``MLPClassifier`` with ``early_stopping=True`` crashing on string labels by guarding NaN/Inf checks during scoring.
