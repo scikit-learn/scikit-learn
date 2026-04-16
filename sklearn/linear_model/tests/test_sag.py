@@ -6,16 +6,15 @@ import re
 
 import numpy as np
 import pytest
-from scipy.sparse import csr_array
 
 from sklearn.base import clone
 from sklearn.datasets import load_iris, make_blobs, make_classification, make_regression
 from sklearn.linear_model import LogisticRegression, Ridge
-from sklearn.linear_model._base import SPARSE_INTERCEPT_DECAY, make_dataset
+from sklearn.linear_model._base import SPARSE_INTERCEPT_DECAY
 from sklearn.linear_model._sag import get_auto_step_size, sag_solver
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.preprocessing import LabelEncoder
-from sklearn.utils import compute_class_weight
+from sklearn.utils import check_random_state, compute_class_weight
 from sklearn.utils._testing import (
     assert_allclose,
     assert_almost_equal,
@@ -59,21 +58,6 @@ def get_pobj(w, alpha, myX, myy, loss):
     return p
 
 
-# Using dataset to emulate random draw of samples in cython sag_solver
-def get_mock_dataset(X_shape, X_dtype, X_sparse, random_state):
-    assert isinstance(random_state, int), "must use int random_state"
-    assert random_state > 0, "must use random_state > 0"
-    n, p = X_shape
-    y = np.zeros(n, dtype=X_dtype)
-    sample_weight = np.zeros(n, dtype=X_dtype)
-    X = np.zeros((n, p), dtype=X_dtype)
-    X[0, 1] += 1
-    if X_sparse:
-        X = csr_array(X)
-    dataset, intercept_decay = make_dataset(X, y, sample_weight, random_state)
-    return dataset
-
-
 def sag(
     X,
     y,
@@ -87,10 +71,7 @@ def sag(
     saga=False,
     tol=0,
     random_state=77,
-    X_sparse=False,
 ):
-    # Using dataset to emulate random draw of samples in cython sag_solver
-    dataset = get_mock_dataset(X.shape, X.dtype, X_sparse, random_state)
     n_samples, n_features = X.shape
 
     weights = np.zeros(n_features)
@@ -100,12 +81,13 @@ def sag(
     intercept = 0.0
     intercept_sum_gradient = 0.0
     intercept_gradient_memory = np.zeros(n_samples)
+    rng = check_random_state(random_state)
     seen = set()
 
     for epoch in range(max_iter):
         previous_weights = weights.copy()
         for k in range(n_samples):
-            _, _, _, idx = dataset._random_py()
+            idx = int(rng.rand() * n_samples)
             entry = X[idx]
             seen.add(idx)
             n_seen = len(seen)
@@ -166,10 +148,7 @@ def sag_sparse(
     saga=False,
     tol=0,
     random_state=77,
-    X_sparse=False,
 ):
-    # Using dataset to emulate random draw of samples in cython sag_solver
-    dataset = get_mock_dataset(X.shape, X.dtype, X_sparse, random_state)
     if step_size * alpha == 1.0:
         raise ZeroDivisionError(
             "Sparse sag does not handle the case step_size * alpha == 1"
@@ -181,6 +160,7 @@ def sag_sparse(
     sum_gradient = np.zeros(n_features)
     last_updated = np.zeros(n_features, dtype=int)
     gradient_memory = np.zeros(n_samples)
+    rng = check_random_state(random_state)
     intercept = 0.0
     intercept_sum_gradient = 0.0
     wscale = 1.0
@@ -192,7 +172,7 @@ def sag_sparse(
     for epoch in range(max_iter):
         previous_weights = actual_weights
         for k in range(n_samples):
-            _, _, _, idx = dataset._random_py()
+            idx = int(rng.rand() * n_samples)
             entry = X[idx]
             seen.add(idx)
             n_seen = len(seen)
@@ -561,7 +541,6 @@ def test_sag_regressor_computed_correctly(csr_container):
         dloss=squared_dloss,
         fit_intercept=fit_intercept,
         random_state=77,
-        X_sparse=False,
     )
 
     spweights2, spintercept2, sp_n_iter2 = sag_sparse(
@@ -574,7 +553,6 @@ def test_sag_regressor_computed_correctly(csr_container):
         decay=SPARSE_INTERCEPT_DECAY,
         fit_intercept=fit_intercept,
         random_state=77,
-        X_sparse=True,
     )
 
     assert_array_almost_equal(clf1.coef_.ravel(), spweights1.ravel(), decimal=3)
@@ -701,7 +679,6 @@ def test_sag_classifier_computed_correctly(csr_container):
         dloss=log_dloss,
         fit_intercept=fit_intercept,
         random_state=77,
-        X_sparse=False,
     )
     spweights2, spintercept2, sp_n_iter2 = sag_sparse(
         X,
@@ -713,7 +690,6 @@ def test_sag_classifier_computed_correctly(csr_container):
         decay=SPARSE_INTERCEPT_DECAY,
         fit_intercept=fit_intercept,
         random_state=77,
-        X_sparse=True,
     )
 
     assert_array_almost_equal(clf1.coef_.ravel(), spweights.ravel(), decimal=2)
@@ -768,7 +744,6 @@ def test_sag_multiclass_computed_correctly(csr_container):
             max_iter=max_iter,
             fit_intercept=fit_intercept,
             random_state=77,
-            X_sparse=False,
         )
         spweights2, spintercept2, sp_n_iter2 = sag_sparse(
             X,
@@ -780,7 +755,6 @@ def test_sag_multiclass_computed_correctly(csr_container):
             decay=SPARSE_INTERCEPT_DECAY,
             fit_intercept=fit_intercept,
             random_state=77,
-            X_sparse=True,
         )
         coef1.append(spweights1)
         intercept1.append(spintercept1)
@@ -880,7 +854,6 @@ def test_binary_classifier_class_weight(csr_container):
         sample_weight=sample_weight,
         fit_intercept=fit_intercept,
         random_state=77,
-        X_sparse=False,
     )
     spweights2, spintercept2, sp_n_iter2 = sag_sparse(
         X,
@@ -894,7 +867,6 @@ def test_binary_classifier_class_weight(csr_container):
         sample_weight=sample_weight,
         fit_intercept=fit_intercept,
         random_state=77,
-        X_sparse=True,
     )
 
     assert_array_almost_equal(clf1.coef_.ravel(), spweights.ravel(), decimal=2)
