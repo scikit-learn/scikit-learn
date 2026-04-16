@@ -406,6 +406,30 @@ def test_multioutput_regression():
     mlp.fit(X, y)
     assert mlp.score(X, y) > 0.9
 
+def test_mlp_classifier_early_stopping_with_string_labels():
+    """Non-regression test for string labels with early_stopping=True."""
+    from sklearn.datasets import make_classification
+    import numpy as np
+
+    X, y_num = make_classification(
+        n_samples=200,
+        n_features=10,
+        n_informative=5,
+        n_classes=3,
+        random_state=0,
+    )
+    label_map = {0: "Class_A", 1: "Class_B", 2: "Class_C"}
+    y = np.array([label_map[i] for i in y_num], dtype=object)
+
+    clf = MLPClassifier(
+        hidden_layer_sizes=(5,),
+        max_iter=20,
+        early_stopping=True,
+        random_state=0,
+    )
+    clf.fit(X, y)
+
+    assert clf.n_iter_ > 0
 
 def test_partial_fit_classes_error():
     # Tests that passing different classes to partial_fit raises an error
