@@ -29,11 +29,11 @@ pluggy==1.6.0
     # via
     #   pytest
     #   pytest-cov
-pygments==2.19.2
+pygments==2.20.0
     # via pytest
 pyproject-metadata==0.11.0
     # via meson-python
-pytest==9.0.2
+pytest==9.0.3
     # via
     #   -r build_tools/github/debian_32bit_requirements.txt
     #   pytest-cov
