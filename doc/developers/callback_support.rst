@@ -1,7 +1,7 @@
 .. _callbacks_support:
 
 ===========================
-Supporting the Callback API
+Supporting the callback API
 ===========================
 
 .. currentmodule:: sklearn.callback
