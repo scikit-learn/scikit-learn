@@ -17,7 +17,7 @@ from sklearn.utils.validation import _check_sample_weight
 
 def get_auto_step_size(
     squared_sum,
-    alpha_scaled,
+    alpha,
     loss,
     fit_intercept,
     sample_weight=None,
@@ -28,30 +28,13 @@ def get_auto_step_size(
     The step size is set to 1 / L for SAG and 1/3L for SAGA where L is the
     maximal Lipschitz smoothness constant.
 
-    For each sample i, the objective function term with intercept is:
-
-    .. math::
-        f_i(w, b) = s_i l(x_i^T w + b, y_i) + 0.5 s_i \\alpha \\Vert w \\Vert^2
-
-    The Lipschitz smoothness constant for sample i is:
-
-    .. math::
-        L_i = s_i \\kappa (\\Vert x_i \\Vert^2 + 1) + s_i \\alpha
-
-    where:
-    - :math:`\\kappa = 1/4` for classification tasks (log, multinomial loss)
-    - :math:`\\kappa = 1` for regression tasks (squared loss)
-    - :math:`s_i` is the sample weight for sample i
-    - :math:`\\Vert x_i \\Vert^2` is the squared L2 norm of feature vector x_i.
-
     Parameters
     ----------
     squared_sum : array of shape (n_samples,)
         Squared sum of the feature vector for each sample.
 
-    alpha_scaled : float
-        Constant that multiplies the regularization term, scaled by
-        1. / n_samples, the number of samples.
+    alpha : float
+        Constant that multiplies the regularization term.
 
     loss : {'log', 'squared', 'multinomial'}
         The loss function used in SAG solver.
@@ -88,10 +71,14 @@ def get_auto_step_size(
             "Unknown loss function for SAG solver, got %s instead of 'log' or 'squared'"
             % loss
         )
+    # Lipschitz smoothness constant for f_i(w) = s_i loss_i(w)
+    # L_i = s_i * kappa * (||x_i||^2 + fit_intercept)
+    # where kappa = 1/4 for classification and 1 for regression
     L = kappa * (squared_sum + fit_intercept)
     if sample_weight is not None:
         L *= sample_weight
-    L = L.max() + alpha_scaled
+    # regularisation 1/2 alpha ||w||^2
+    L = L.max() + alpha
     # SAGA theoretical step size is 1/3L. See Defazio et al. 2014
     # SAG theoretical step size is 1/16L but it is recommended to use 1/L
     # See http://www.birs.ca//workshops//2014/14w5003/files/schmidt.pdf slide 65

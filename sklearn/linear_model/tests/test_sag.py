@@ -269,7 +269,7 @@ def sag_sparse(
     return weights, intercept, n_iter
 
 
-def get_step_size_dense(
+def get_step_size(
     X,
     alpha,
     fit_intercept,
@@ -277,44 +277,19 @@ def get_step_size_dense(
     sample_weight=None,
     is_saga=False,
 ):
-    # Lipschitz smoothness constant for f_i(w) = s_i (loss_i(w)) + alpha ||w||^2):
-    # L_i = s_i ( kappa * (||x_i||^2 + fit_intercept) + alpha )
-    # where kappa = 1/4 for classification and 1 for regression
-    kappa = 0.25 if classification else 1.0
-    L = kappa * (np.sum(X * X, axis=1) + fit_intercept) + alpha
-    if sample_weight is not None:
-        L *= sample_weight
-    L = L.max()
-    # step_size = 1/L for SAG https://arxiv.org/abs/1309.2388
-    # step_size = 1/3L for SAGA https://arxiv.org/abs/1407.0202
-    step_size = 1 / (3 * L) if is_saga else 1 / L
-    return step_size
-
-
-def get_step_size_sparse(
-    X,
-    alpha,
-    fit_intercept,
-    classification=True,
-    sample_weight=None,
-    is_saga=False,
-):
-    # Lipschitz smoothness constant for f_i(w) = s_i loss_i(w)):
+    # Lipschitz smoothness constant for f_i(w) = s_i loss_i(w)
     # L_i = s_i * kappa * (||x_i||^2 + fit_intercept)
     # where kappa = 1/4 for classification and 1 for regression
     kappa = 0.25 if classification else 1.0
     L = kappa * (np.sum(X * X, axis=1) + fit_intercept)
     if sample_weight is not None:
         L *= sample_weight
-    # regularisation alpha ||w||^2
+    # regularisation 1/2 alpha ||w||^2
     L = L.max() + alpha
     # step_size = 1/L for SAG https://arxiv.org/abs/1309.2388
     # step_size = 1/3L for SAGA https://arxiv.org/abs/1407.0202
     step_size = 1 / (3 * L) if is_saga else 1 / L
     return step_size
-
-
-get_step_size = get_step_size_sparse
 
 
 def test_classifier_matching():
