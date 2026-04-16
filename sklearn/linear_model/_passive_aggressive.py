@@ -203,6 +203,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         "loss": [StrOptions({"hinge", "squared_hinge"})],
         "C": [Interval(Real, 0, None, closed="right")],
     }
+    _parameter_constraints.pop("eta0")
 
     def __init__(
         self,
@@ -511,6 +512,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         "C": [Interval(Real, 0, None, closed="right")],
         "epsilon": [Interval(Real, 0, None, closed="left")],
     }
+    _parameter_constraints.pop("eta0")
 
     def __init__(
         self,

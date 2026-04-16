@@ -179,6 +179,8 @@ class NewtonSolver(ABC):
             - self.coef
             - self.converged
         """
+        coef_shape = self.coef.shape
+        self.coef = self.coef.ravel(order="F")  # scipy minimize expects 1d arrays
         max_iter = self.max_iter - self.iteration
         opt_res = scipy.optimize.minimize(
             self.linear_loss.loss_gradient,
@@ -197,6 +199,8 @@ class NewtonSolver(ABC):
         self.iteration += _check_optimize_result("lbfgs", opt_res, max_iter=max_iter)
         self.coef = opt_res.x
         self.converged = opt_res.status == 0
+        if len(coef_shape) > 1:
+            self.coef = self.coef.reshape(coef_shape, order="F")
 
     def line_search(self, X, y, sample_weight):
         """Backtracking line search.
@@ -212,7 +216,9 @@ class NewtonSolver(ABC):
         """
         # line search parameters
         beta, sigma = 0.5, 0.00048828125  # 1/2, 1/2**11
-        eps = 16 * np.finfo(self.loss_value.dtype).eps
+        # Remember: dtype follows X, also the one of self.loss_value. For Array API
+        # support, self.loss_value might be float instead of np.floatXX.
+        eps = 16 * np.finfo(X.dtype).eps
         t = 1  # step size
 
         # gradient_times_newton = self.gradient @ self.coef_newton
@@ -289,8 +295,8 @@ class NewtonSolver(ABC):
             warnings.warn(
                 (
                     f"Line search of Newton solver {self.__class__.__name__} at"
-                    f" iteration #{self.iteration} did no converge after 21 line search"
-                    " refinement iterations. It will now resort to lbfgs instead."
+                    f" iteration #{self.iteration} did not converge after 21 line "
+                    "search refinement iterations. It will now resort to lbfgs instead."
                 ),
                 ConvergenceWarning,
             )

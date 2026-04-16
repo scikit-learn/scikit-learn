@@ -14,7 +14,6 @@ from pytest import importorskip
 
 import sklearn
 from sklearn._config import config_context
-from sklearn._min_dependencies import dependent_packages
 from sklearn.base import BaseEstimator
 from sklearn.datasets import make_blobs
 from sklearn.ensemble import RandomForestRegressor
@@ -35,9 +34,8 @@ from sklearn.utils import (
     deprecated,
 )
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
     _is_numpy_namespace,
+    move_to,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._mocking import (
@@ -62,6 +60,7 @@ from sklearn.utils.fixes import (
     CSR_CONTAINERS,
     DIA_CONTAINERS,
     DOK_CONTAINERS,
+    _sparse_random_array,
 )
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
@@ -77,8 +76,6 @@ from sklearn.utils.validation import (
     _estimator_has,
     _get_feature_names,
     _is_fitted,
-    _is_pandas_df,
-    _is_polars_df,
     _num_features,
     _num_samples,
     _to_object_array,
@@ -147,6 +144,7 @@ def test_as_float_array():
     # Test the copy parameter with some matrices
     matrices = [
         sp.csc_matrix(np.arange(5)).toarray(),
+        sp.csc_array([np.arange(5)]).toarray(),
         _sparse_random_matrix(10, 10, density=0.10).toarray(),
     ]
     for M in matrices:
@@ -156,7 +154,7 @@ def test_as_float_array():
 
 
 @pytest.mark.parametrize(
-    "X", [np.random.random((10, 2)), sp.random(10, 2, format="csr")]
+    "X", [np.random.random((10, 2)), _sparse_random_array((10, 2), format="csr")]
 )
 def test_as_float_array_nan(X):
     X = X.copy()
@@ -172,6 +170,7 @@ def test_np_matrix():
 
     assert not isinstance(as_float_array(X), np.matrix)
     assert not isinstance(as_float_array(sp.csc_matrix(X)), np.matrix)
+    assert not isinstance(as_float_array(sp.csc_array(X)), np.matrix)
 
 
 def test_memmap():
@@ -204,7 +203,7 @@ def test_ordering():
             if copy:
                 assert A is not B
 
-    X = sp.csr_matrix(X)
+    X = sp.csr_array(X)
     X.data = X.data[::-1]
     assert not X.data.flags["C_CONTIGUOUS"]
 
@@ -213,7 +212,7 @@ def test_ordering():
     "value, ensure_all_finite",
     [(np.inf, False), (np.nan, "allow-nan"), (np.nan, False)],
 )
-@pytest.mark.parametrize("retype", [np.asarray, sp.csr_matrix])
+@pytest.mark.parametrize("retype", [np.asarray, sp.csr_array, sp.csr_matrix])
 def test_check_array_ensure_all_finite_valid(value, ensure_all_finite, retype):
     X = retype(np.arange(4).reshape(2, 2).astype(float))
     X[0, 0] = value
@@ -240,7 +239,7 @@ def test_check_array_ensure_all_finite_valid(value, ensure_all_finite, retype):
         (np.nan, "", 1, "Input contains NaN"),
     ],
 )
-@pytest.mark.parametrize("retype", [np.asarray, sp.csr_matrix])
+@pytest.mark.parametrize("retype", [np.asarray, sp.csr_array, sp.csr_matrix])
 def test_check_array_ensure_all_finite_invalid(
     value, input_name, ensure_all_finite, match_msg, retype
 ):
@@ -256,7 +255,7 @@ def test_check_array_ensure_all_finite_invalid(
 
 
 @pytest.mark.parametrize("input_name", ["X", "y", "sample_weight"])
-@pytest.mark.parametrize("retype", [np.asarray, sp.csr_matrix])
+@pytest.mark.parametrize("retype", [np.asarray, sp.csr_array, sp.csr_matrix])
 def test_check_array_links_to_imputer_doc_only_for_X(input_name, retype):
     data = retype(np.arange(4).reshape(2, 2).astype(np.float64))
     data[0, 0] = np.nan
@@ -358,7 +357,7 @@ def test_check_array():
     # accept_sparse == False
     # raise error on sparse inputs
     X = [[1, 2], [3, 4]]
-    X_csr = sp.csr_matrix(X)
+    X_csr = sp.csr_array(X)
     with pytest.raises(TypeError):
         check_array(X_csr)
 
@@ -622,9 +621,9 @@ def test_check_array_dtype_warning():
     X_int_list = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
     X_float32 = np.asarray(X_int_list, dtype=np.float32)
     X_int64 = np.asarray(X_int_list, dtype=np.int64)
-    X_csr_float32 = sp.csr_matrix(X_float32)
-    X_csc_float32 = sp.csc_matrix(X_float32)
-    X_csc_int32 = sp.csc_matrix(X_int64, dtype=np.int32)
+    X_csr_float32 = sp.csr_array(X_float32)
+    X_csc_float32 = sp.csc_array(X_float32)
+    X_csc_int32 = sp.csc_array(X_int64, dtype=np.int32)
     integer_data = [X_int64, X_csc_int32]
     float32_data = [X_float32, X_csr_float32, X_csc_float32]
     with warnings.catch_warnings():
@@ -663,7 +662,7 @@ def test_check_array_dtype_warning():
 
 def test_check_array_accept_sparse_type_exception():
     X = [[1, 2], [3, 4]]
-    X_csr = sp.csr_matrix(X)
+    X_csr = sp.csr_array(X)
     invalid_type = SVR()
 
     msg = (
@@ -694,7 +693,7 @@ def test_check_array_accept_sparse_type_exception():
 
 def test_check_array_accept_sparse_no_exception():
     X = [[1, 2], [3, 4]]
-    X_csr = sp.csr_matrix(X)
+    X_csr = sp.csr_array(X)
 
     check_array(X_csr, accept_sparse=True)
     check_array(X_csr, accept_sparse="csr")
@@ -704,7 +703,7 @@ def test_check_array_accept_sparse_no_exception():
 
 @pytest.fixture(params=["csr", "csc", "coo", "bsr"])
 def X_64bit(request):
-    X = sp.random(20, 10, format=request.param)
+    X = _sparse_random_array((20, 10), format=request.param)
 
     if request.param == "coo":
         if hasattr(X, "coords"):
@@ -834,7 +833,7 @@ def test_check_array_complex_data_error():
         check_array(X)
 
     # sparse matrix
-    X = sp.coo_matrix([[0, 1 + 2j], [0, 0]])
+    X = sp.coo_array([[0, 1 + 2j], [0, 0]])
     with pytest.raises(ValueError, match="Complex data not supported"):
         check_array(X)
 
@@ -868,12 +867,12 @@ def test_check_symmetric():
 
     test_arrays = {
         "dense": arr_asym,
-        "dok": sp.dok_matrix(arr_asym),
-        "csr": sp.csr_matrix(arr_asym),
-        "csc": sp.csc_matrix(arr_asym),
-        "coo": sp.coo_matrix(arr_asym),
-        "lil": sp.lil_matrix(arr_asym),
-        "bsr": sp.bsr_matrix(arr_asym),
+        "dok": sp.dok_array(arr_asym),
+        "csr": sp.csr_array(arr_asym),
+        "csc": sp.csc_array(arr_asym),
+        "coo": sp.coo_array(arr_asym),
+        "lil": sp.lil_array(arr_asym),
+        "bsr": sp.bsr_array(arr_asym),
     }
 
     # check error for bad inputs
@@ -1021,7 +1020,7 @@ def test_check_consistent_length():
     input types trigger TypeErrors."""
     check_consistent_length([1], [2], [3], [4], [5])
     check_consistent_length([[1, 2], [[1, 2]]], [1, 2], ["a", "b"])
-    check_consistent_length([1], (2,), np.array([3]), sp.csr_matrix((1, 2)))
+    check_consistent_length([1], (2,), np.array([3]), sp.csr_array((1, 2)))
     with pytest.raises(ValueError, match="inconsistent numbers of samples"):
         check_consistent_length([1, 2], [1])
     with pytest.raises(TypeError, match=r"got <\w+ 'int'>"):
@@ -1037,13 +1036,12 @@ def test_check_consistent_length():
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, _",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
-def test_check_consistent_length_array_api(array_namespace, device, _):
+def test_check_consistent_length_array_api(array_namespace, device_name, dtype_name):
     """Test that check_consistent_length works with different array types."""
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
 
     with config_context(array_api_dispatch=True):
         check_consistent_length(
@@ -1057,7 +1055,8 @@ def test_check_consistent_length_array_api(array_namespace, device, _):
 
         with pytest.raises(ValueError, match="inconsistent numbers of samples"):
             check_consistent_length(
-                xp.asarray([1, 2], device=device), xp.asarray([1], device=device)
+                xp.asarray([1, 2], device=device),
+                xp.asarray([1], device=device),
             )
 
 
@@ -1299,6 +1298,13 @@ def test_estimator_has(
         sp.bsr_matrix,
         sp.dok_matrix,
         sp.dia_matrix,
+        sp.csr_array,
+        sp.csc_array,
+        sp.coo_array,
+        sp.lil_array,
+        sp.bsr_array,
+        sp.dok_array,
+        sp.dia_array,
     ],
 )
 def test_check_non_negative(retype):
@@ -1602,11 +1608,11 @@ def _check_sample_weight_common(xp):
     # for check_sample_weight
     # check None input
     sample_weight = _check_sample_weight(None, X=xp.ones((5, 2)))
-    assert_allclose(_convert_to_numpy(sample_weight, xp), np.ones(5))
+    assert_allclose(move_to(sample_weight, xp=np, device="cpu"), np.ones(5))
 
     # check numbers input
     sample_weight = _check_sample_weight(2.0, X=xp.ones((5, 2)))
-    assert_allclose(_convert_to_numpy(sample_weight, xp), 2 * np.ones(5))
+    assert_allclose(move_to(sample_weight, xp=np, device="cpu"), 2 * np.ones(5))
 
     # check wrong number of dimensions
     with pytest.raises(ValueError, match=r"Sample weights must be 1D array or scalar"):
@@ -1631,6 +1637,13 @@ def _check_sample_weight_common(xp):
     with pytest.raises(ValueError, match=err_msg):
         _check_sample_weight(sample_weight, X, ensure_non_negative=True)
 
+    # check error raised when allow_all_zero_weights=False
+    X = xp.ones((5, 2))
+    sample_weight = xp.zeros(_num_samples(X))
+    err_msg = "Sample weights must contain at least one non-zero number."
+    with pytest.raises(ValueError, match=err_msg):
+        _check_sample_weight(sample_weight, X, allow_all_zero_weights=False)
+
 
 def test_check_sample_weight():
     # check array order
@@ -1648,10 +1661,11 @@ def test_check_sample_weight():
 
 
 @pytest.mark.parametrize(
-    "array_namespace,device,dtype", yield_namespace_device_dtype_combinations()
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
 )
-def test_check_sample_weight_array_api(array_namespace, device, dtype):
-    xp = _array_api_for_tests(array_namespace, device)
+def test_check_sample_weight_array_api(array_namespace, device_name, dtype_name):
+    xp, device = _array_api_for_tests(array_namespace, device_name)
     with config_context(array_api_dispatch=True):
         # check array order
         sample_weight = xp.ones(10)[::2]
@@ -1670,13 +1684,14 @@ def test_check_pos_label_consistency(y_true):
 
 
 @pytest.mark.parametrize(
-    "array_namespace,device,dtype",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("y_true", [[0], [0, 1], [-1, 1], [1, 1, 1], [-1, -1, -1]])
-def test_check_pos_label_consistency_array_api(array_namespace, device, dtype, y_true):
-    xp = _array_api_for_tests(array_namespace, device)
+def test_check_pos_label_consistency_array_api(
+    array_namespace, device_name, dtype_name, y_true
+):
+    xp, device = _array_api_for_tests(array_namespace, device_name)
     with config_context(array_api_dispatch=True):
         arr = xp.asarray(y_true, device=device)
         assert _check_pos_label_consistency(None, arr) == 1
@@ -1691,15 +1706,14 @@ def test_check_pos_label_consistency_invalid(y_true):
 
 
 @pytest.mark.parametrize(
-    "array_namespace,device,dtype",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("y_true", [[2, 3, 4], [-10], [0, -1]])
 def test_check_pos_label_consistency_invalid_array_api(
-    array_namespace, device, dtype, y_true
+    array_namespace, device_name, dtype_name, y_true
 ):
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
     with config_context(array_api_dispatch=True):
         arr = xp.asarray(y_true, device=device)
         with pytest.raises(ValueError, match="y_true takes value in"):
@@ -1708,21 +1722,24 @@ def test_check_pos_label_consistency_invalid_array_api(
         assert _check_pos_label_consistency("a", arr) == "a"
 
 
-@pytest.mark.parametrize("toarray", [np.array, sp.csr_matrix, sp.csc_matrix])
+CS_SPARSE = [sp.csr_array, sp.csr_matrix, sp.csc_array, sp.csc_matrix]
+
+
+@pytest.mark.parametrize("toarray", [np.array] + CS_SPARSE)
 def test_allclose_dense_sparse_equals(toarray):
     base = np.arange(9).reshape(3, 3)
     x, y = toarray(base), toarray(base)
     assert _allclose_dense_sparse(x, y)
 
 
-@pytest.mark.parametrize("toarray", [np.array, sp.csr_matrix, sp.csc_matrix])
+@pytest.mark.parametrize("toarray", [np.array] + CS_SPARSE)
 def test_allclose_dense_sparse_not_equals(toarray):
     base = np.arange(9).reshape(3, 3)
     x, y = toarray(base), toarray(base + 1)
     assert not _allclose_dense_sparse(x, y)
 
 
-@pytest.mark.parametrize("toarray", [sp.csr_matrix, sp.csc_matrix])
+@pytest.mark.parametrize("toarray", CS_SPARSE)
 def test_allclose_dense_sparse_raise(toarray):
     x = np.arange(9).reshape(3, 3)
     y = toarray(x + 1)
@@ -1800,8 +1817,10 @@ def test_check_method_params(indices):
     _params = {
         "list": [1, 2, 3, 4],
         "array": np.array([1, 2, 3, 4]),
-        "sparse-col": sp.csc_matrix([1, 2, 3, 4]).T,
-        "sparse-row": sp.csc_matrix([1, 2, 3, 4]),
+        "sparse-col2": sp.csc_matrix([[1, 2, 3, 4]]).T,
+        "sparse-row2": sp.csc_matrix([[1, 2, 3, 4]]),
+        "sparse-col": sp.csc_array([[1, 2, 3, 4]]).T,
+        "sparse-row": sp.csc_array([[1, 2, 3, 4]]),
         "scalar-int": 1,
         "scalar-str": "xxx",
         "None": None,
@@ -1809,13 +1828,16 @@ def test_check_method_params(indices):
     result = _check_method_params(X, params=_params, indices=indices)
     indices_ = indices if indices is not None else list(range(X.shape[0]))
 
-    for key in ["sparse-row", "scalar-int", "scalar-str", "None"]:
+    for key in ["sparse-row", "sparse-row2", "scalar-int", "scalar-str", "None"]:
         assert result[key] is _params[key]
 
     assert result["list"] == _safe_indexing(_params["list"], indices_)
     assert_array_equal(result["array"], _safe_indexing(_params["array"], indices_))
     assert_allclose_dense_sparse(
         result["sparse-col"], _safe_indexing(_params["sparse-col"], indices_)
+    )
+    assert_allclose_dense_sparse(
+        result["sparse-col2"], _safe_indexing(_params["sparse-col2"], indices_)
     )
 
 
@@ -1993,63 +2015,6 @@ def test_get_feature_names_dataframe_protocol(constructor_name, minversion):
     feature_names = _get_feature_names(df)
 
     assert_array_equal(feature_names, columns)
-
-
-@pytest.mark.parametrize("constructor_name", ["pyarrow", "dataframe", "polars"])
-def test_is_pandas_df_other_libraries(constructor_name):
-    df = _convert_container([[1, 4, 2], [3, 3, 6]], constructor_name)
-    if constructor_name in ("pyarrow", "polars"):
-        assert not _is_pandas_df(df)
-    else:
-        assert _is_pandas_df(df)
-
-
-def test_is_pandas_df():
-    """Check behavior of is_pandas_df when pandas is installed."""
-    pd = pytest.importorskip("pandas")
-    df = pd.DataFrame([[1, 2, 3]])
-    assert _is_pandas_df(df)
-    assert not _is_pandas_df(np.asarray([1, 2, 3]))
-    assert not _is_pandas_df(1)
-
-
-def test_is_pandas_df_pandas_not_installed(hide_available_pandas):
-    """Check _is_pandas_df when pandas is not installed."""
-
-    assert not _is_pandas_df(np.asarray([1, 2, 3]))
-    assert not _is_pandas_df(1)
-
-
-@pytest.mark.parametrize(
-    "constructor_name, minversion",
-    [
-        ("pyarrow", dependent_packages["pyarrow"][0]),
-        ("dataframe", dependent_packages["pandas"][0]),
-        ("polars", dependent_packages["polars"][0]),
-    ],
-)
-def test_is_polars_df_other_libraries(constructor_name, minversion):
-    df = _convert_container(
-        [[1, 4, 2], [3, 3, 6]],
-        constructor_name,
-        minversion=minversion,
-    )
-    if constructor_name in ("pyarrow", "dataframe"):
-        assert not _is_polars_df(df)
-    else:
-        assert _is_polars_df(df)
-
-
-def test_is_polars_df_for_duck_typed_polars_dataframe():
-    """Check _is_polars_df for object that looks like a polars dataframe"""
-
-    class NotAPolarsDataFrame:
-        def __init__(self):
-            self.columns = [1, 2, 3]
-            self.schema = "my_schema"
-
-    not_a_polars_df = NotAPolarsDataFrame()
-    assert not _is_polars_df(not_a_polars_df)
 
 
 def test_get_feature_names_numpy():
@@ -2322,17 +2287,6 @@ def test_column_or_1d():
                 column_or_1d(y)
 
 
-def test__is_polars_df():
-    """Check that _is_polars_df return False for non-dataframe objects."""
-
-    class LooksLikePolars:
-        def __init__(self):
-            self.columns = ["a", "b"]
-            self.schema = ["a", "b"]
-
-    assert not _is_polars_df(LooksLikePolars())
-
-
 def test_check_array_writeable_np():
     """Check the behavior of check_array when a writeable array is requested
     without copy if possible, on numpy arrays.
@@ -2405,23 +2359,6 @@ def test_check_array_on_sparse_inputs_with_array_api_enabled():
 
         with pytest.raises(TypeError):
             check_array(X_sp)
-
-
-# TODO(1.8): remove
-def test_force_all_finite_rename_warning():
-    X = np.random.uniform(size=(10, 10))
-    y = np.random.randint(1, size=(10,))
-
-    msg = "'force_all_finite' was renamed to 'ensure_all_finite'"
-
-    with pytest.warns(FutureWarning, match=msg):
-        check_array(X, force_all_finite=True)
-
-    with pytest.warns(FutureWarning, match=msg):
-        check_X_y(X, y, force_all_finite=True)
-
-    with pytest.warns(FutureWarning, match=msg):
-        as_float_array(X, force_all_finite=True)
 
 
 @pytest.mark.parametrize(

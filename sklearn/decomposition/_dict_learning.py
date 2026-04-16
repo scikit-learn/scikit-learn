@@ -146,6 +146,7 @@ def _sparse_encode_precomputed(
             alpha=alpha,
             fit_intercept=False,
             precompute=gram,
+            tol=1e-8,  # TODO: This parameter should be exposed.
             max_iter=max_iter,
             warm_start=True,
             positive=positive,
@@ -1359,7 +1360,7 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         if X.shape[1] != self.dictionary.shape[1]:
             raise ValueError(
                 "Dictionary and X have different numbers of features:"
-                f"dictionary.shape: {self.dictionary.shape} X.shape{X.shape}"
+                f"dictionary.shape: {self.dictionary.shape} X.shape: {X.shape}"
             )
         return self
 

@@ -11,7 +11,6 @@ import pytest
 from numpy.random import RandomState
 
 from sklearn.base import is_classifier
-from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.exceptions import NotFittedError
 from sklearn.tree import (
     DecisionTreeClassifier,
@@ -20,6 +19,9 @@ from sklearn.tree import (
     export_text,
     plot_tree,
 )
+
+CLF_CRITERIONS = ("gini", "log_loss")
+REG_CRITERIONS = ("squared_error", "absolute_error", "poisson")
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -373,6 +375,11 @@ def test_graphviz_errors():
     with pytest.raises(ValueError, match=message):
         export_graphviz(clf, None, feature_names=["a", "b", "c"])
 
+    # Check error when feature_names contains non-string elements
+    message = "All feature names must be strings."
+    with pytest.raises(ValueError, match=message):
+        export_graphviz(clf, None, feature_names=["a", 1])
+
     # Check error when argument is not an estimator
     message = "is not an estimator instance"
     with pytest.raises(TypeError, match=message):
@@ -384,19 +391,20 @@ def test_graphviz_errors():
         export_graphviz(clf, out, class_names=[])
 
 
-def test_friedman_mse_in_graphviz():
-    clf = DecisionTreeRegressor(criterion="friedman_mse", random_state=0)
-    clf.fit(X, y)
+@pytest.mark.parametrize("criterion", CLF_CRITERIONS + REG_CRITERIONS)
+def test_criterion_in_gradient_boosting_graphviz(criterion):
     dot_data = StringIO()
+
+    is_reg = criterion in REG_CRITERIONS
+    Tree = DecisionTreeRegressor if is_reg else DecisionTreeClassifier
+    clf = Tree(random_state=0, criterion=criterion)
+    # positive values for poisson criterion:
+    y_ = [yi + 2 for yi in y] if is_reg else y
+    clf.fit(X, y_)
     export_graphviz(clf, out_file=dot_data)
 
-    clf = GradientBoostingClassifier(n_estimators=2, random_state=0)
-    clf.fit(X, y)
-    for estimator in clf.estimators_:
-        export_graphviz(estimator[0], out_file=dot_data)
-
     for finding in finditer(r"\[.*?samples.*?\]", dot_data.getvalue()):
-        assert "friedman_mse" in finding.group()
+        assert criterion in finding.group()
 
 
 def test_precision():
@@ -406,9 +414,7 @@ def test_precision():
         (rng_reg.random_sample((5, 2)), rng_clf.random_sample((1000, 4))),
         (rng_reg.random_sample((5,)), rng_clf.randint(2, size=(1000,))),
         (
-            DecisionTreeRegressor(
-                criterion="friedman_mse", random_state=0, max_depth=1
-            ),
+            DecisionTreeRegressor(random_state=0, max_depth=1),
             DecisionTreeClassifier(max_depth=1, random_state=0),
         ),
     ):
@@ -431,7 +437,7 @@ def test_precision():
             if is_classifier(clf):
                 pattern = r"gini = \d+\.\d+"
             else:
-                pattern = r"friedman_mse = \d+\.\d+"
+                pattern = r"squared_error = \d+\.\d+"
 
             # check impurity
             for finding in finditer(pattern, dot_data):

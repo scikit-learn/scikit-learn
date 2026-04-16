@@ -9,15 +9,15 @@ from cython cimport final
 from cython.operator cimport dereference as deref
 from cython.parallel cimport parallel, prange
 
-from ...utils._sorting cimport simultaneous_sort
-from ...utils._typedefs cimport intp_t, float64_t
-from ...utils._vector_sentinel cimport vector_to_nd_array
+from sklearn.utils._sorting cimport simultaneous_sort
+from sklearn.utils._typedefs cimport intp_t, float64_t
+from sklearn.utils._vector_sentinel cimport vector_to_nd_array
 
 from numbers import Real
 from scipy.sparse import issparse
-from ...utils import check_array, check_scalar
-from ...utils.fixes import _in_unstable_openblas_configuration
-from ...utils.parallel import _get_threadpool_controller
+from sklearn.utils import check_array, check_scalar
+from sklearn.utils.fixes import _in_unstable_openblas_configuration
+from sklearn.utils.parallel import _get_threadpool_controller
 
 cnp.import_array()
 
@@ -26,7 +26,7 @@ cnp.import_array()
 cdef cnp.ndarray[object, ndim=1] coerce_vectors_to_nd_arrays(
     shared_ptr[vector_vector_double_intp_t] vecs
 ):
-    """Coerce a std::vector of std::vector to a ndarray of ndarray."""
+    """Coerce a std::vector of std::vector to an ndarray of ndarray."""
     cdef:
         intp_t n = deref(vecs).size()
         cnp.ndarray[object, ndim=1] nd_arrays_of_nd_arrays = np.empty(n, dtype=np.ndarray)
@@ -39,14 +39,14 @@ cdef cnp.ndarray[object, ndim=1] coerce_vectors_to_nd_arrays(
 #####################
 {{for name_suffix in ['64', '32']}}
 
-from ._base cimport (
+from sklearn.metrics._pairwise_distances_reduction._base cimport (
     BaseDistancesReduction{{name_suffix}},
     _sqeuclidean_row_norms{{name_suffix}}
 )
 
-from ._datasets_pair cimport DatasetsPair{{name_suffix}}
+from sklearn.metrics._pairwise_distances_reduction._datasets_pair cimport DatasetsPair{{name_suffix}}
 
-from ._middle_term_computer cimport MiddleTermComputer{{name_suffix}}
+from sklearn.metrics._pairwise_distances_reduction._middle_term_computer cimport MiddleTermComputer{{name_suffix}}
 
 
 cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):

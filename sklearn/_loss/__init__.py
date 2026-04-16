@@ -9,8 +9,10 @@ fitting classification and regression tasks.
 from sklearn._loss.loss import (
     AbsoluteError,
     HalfBinomialLoss,
+    HalfBinomialLossArrayAPI,
     HalfGammaLoss,
     HalfMultinomialLoss,
+    HalfMultinomialLossArrayAPI,
     HalfPoissonLoss,
     HalfSquaredError,
     HalfTweedieLoss,
@@ -22,8 +24,10 @@ from sklearn._loss.loss import (
 __all__ = [
     "AbsoluteError",
     "HalfBinomialLoss",
+    "HalfBinomialLossArrayAPI",
     "HalfGammaLoss",
     "HalfMultinomialLoss",
+    "HalfMultinomialLossArrayAPI",
     "HalfPoissonLoss",
     "HalfSquaredError",
     "HalfTweedieLoss",

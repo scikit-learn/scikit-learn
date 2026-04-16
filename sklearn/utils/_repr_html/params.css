@@ -1,7 +1,14 @@
+.estimator-table {
+    font-family: monospace;
+}
+
 .estimator-table summary {
     padding: .5rem;
-    font-family: monospace;
     cursor: pointer;
+}
+
+.estimator-table summary::marker {
+    font-size: 0.7rem;
 }
 
 .estimator-table details[open] {
@@ -13,6 +20,7 @@
 .estimator-table .parameters-table {
     margin-left: auto !important;
     margin-right: auto !important;
+    margin-top: 0;
 }
 
 .estimator-table .parameters-table tr:nth-child(odd) {
@@ -23,11 +31,11 @@
     background-color: #f6f6f6;
 }
 
-.estimator-table .parameters-table tr:hover {
+.estimator-table .parameters-table tr:hover td {
     background-color: #e0e0e0;
 }
 
-.estimator-table table td {
+.estimator-table table :is(td, th) {
     border: 1px solid rgba(106, 105, 104, 0.232);
 }
 
@@ -37,6 +45,7 @@
 */
 .estimator-table table td.param {
     text-align: left;
+    position: relative;
     padding: 0;
 }
 
@@ -50,7 +59,7 @@
     background-color: transparent;
 }
 
-.default td {
+.default td, .estimator-table th {
     color: black;
     text-align: left !important;
 }
@@ -58,6 +67,10 @@
 .user-set td i,
 .default td i {
     color: black;
+}
+
+td.fitted-att-type {
+    white-space: preserve nowrap;
 }
 
 /*
@@ -69,11 +82,24 @@ a.param-doc-link:link,
 a.param-doc-link:visited {
     text-decoration: underline dashed;
     text-underline-offset: .3em;
-    position: relative;
     color: inherit;
     display: block;
     padding: .5em;
-    box-sizing: border-box;
+}
+
+@supports(anchor-name: --doc-link) {
+    a.param-doc-link,
+    a.param-doc-link:link,
+    a.param-doc-link:visited {
+    anchor-name: --doc-link;
+    }
+}
+
+/* "hack" to make the entire area of the cell containing the link clickable */
+a.param-doc-link::before {
+    position: absolute;
+    content: "";
+    inset: 0;
 }
 
 .param-doc-description {
@@ -93,6 +119,14 @@ a.param-doc-link:visited {
     /* unfitted */
     background: var(--sklearn-color-unfitted-level-0);
     border: thin solid var(--sklearn-color-unfitted-level-3);
+}
+
+@supports(position-area: center right) {
+    .param-doc-description {
+    position-area: center right;
+    position: fixed;
+    margin-left: 0;
+    }
 }
 
 /* Fitted state for parameter tooltips */

@@ -217,7 +217,7 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
        "Kernel principal component analysis."
        International conference on artificial neural networks.
        Springer, Berlin, Heidelberg, 1997.
-       <https://people.eecs.berkeley.edu/~wainwrig/stat241b/scholkopf_kernel.pdf>`_
+       <https://graphics.stanford.edu/courses/cs233-25-spring/ReferencedPapers/scholkopf_kernel.pdf>`_
 
     .. [2] `Bakır, Gökhan H., Jason Weston, and Bernhard Schölkopf.
        "Learning to find pre-images."

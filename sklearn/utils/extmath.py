@@ -23,6 +23,7 @@ from sklearn.utils._array_api import (
     get_namespace_and_device,
 )
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.deprecation import deprecated
 from sklearn.utils.sparsefuncs import sparse_matmul_to_dense
 from sklearn.utils.sparsefuncs_fast import csr_row_norms
 from sklearn.utils.validation import check_array, check_random_state
@@ -151,7 +152,7 @@ def density(w):
     --------
     >>> from scipy import sparse
     >>> from sklearn.utils.extmath import density
-    >>> X = sparse.random(10, 10, density=0.25, random_state=0)
+    >>> X = sparse.random_array((10, 10), density=0.25, rng=0)
     >>> density(X)
     0.25
     """
@@ -180,9 +181,9 @@ def safe_sparse_dot(a, b, *, dense_output=False):
 
     Examples
     --------
-    >>> from scipy.sparse import csr_matrix
+    >>> from scipy.sparse import csr_array
     >>> from sklearn.utils.extmath import safe_sparse_dot
-    >>> X = csr_matrix([[1, 2], [3, 4], [5, 6]])
+    >>> X = csr_array([[1, 2], [3, 4], [5, 6]])
     >>> dot_product = safe_sparse_dot(X, X.T)
     >>> dot_product.toarray()
     array([[ 5, 11, 17],
@@ -520,11 +521,12 @@ def randomized_svd(
       <0909.4061>`
       Halko, et al. (2009)
 
-    .. [2] A randomized algorithm for the decomposition of matrices
-      Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
+    .. [2] `"A randomized algorithm for the decomposition of matrices"
+      <https://doi.org/10.1016/j.acha.2010.02.003>`_
+      Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert (2011)
 
-    .. [3] An implementation of a randomized algorithm for principal component
-      analysis A. Szlam et al. 2014
+    .. [3] :arxiv:`"An implementation of a randomized algorithm for principal
+      component analysis" <1412.3510>` A. Szlam et al. (2014)
 
     Examples
     --------
@@ -569,7 +571,7 @@ def _randomized_svd(
     if sparse.issparse(M) and M.format in ("lil", "dok"):
         warnings.warn(
             "Calculating SVD of a {} is expensive. "
-            "csr_matrix is more efficient.".format(type(M).__name__),
+            "CSR format is more efficient.".format(type(M).__name__),
             sparse.SparseEfficiencyWarning,
         )
 
@@ -1280,8 +1282,18 @@ def _deterministic_vector_sign_flip(u):
     return u
 
 
+# TODO(1.10): Remove
+@deprecated(
+    "`sklearn.utils.extmath.stable_cumsum` is deprecated in version 1.8 and "
+    "will be removed in 1.10. Use `np.cumulative_sum` with the desired dtype "
+    "directly instead."
+)
 def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
     """Use high precision for cumsum and check that final value matches sum.
+
+    .. deprecated:: 1.8
+        This function is deprecated in version 1.8 and will be removed in 1.10.
+        Use `np.cumulative_sum` with the desired dtype directly instead.
 
     Warns if the final cumulative sum does not match the sum (up to the chosen
     tolerance).
