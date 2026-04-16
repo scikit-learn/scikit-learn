@@ -86,7 +86,7 @@ reg = ensemble.GradientBoostingRegressor(**params)
 reg.fit(X_train, y_train)
 
 mse = mean_squared_error(y_test, reg.predict(X_test))
-print("The mean squared error (MSE) on test set: {:.4f}".format(mse))
+print(f"The mean squared error (MSE) on test set: {mse:.4f}")
 
 # %%
 # Plot training deviance

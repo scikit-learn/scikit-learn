@@ -17,7 +17,7 @@ from sklearn.utils.extmath import randomized_svd
 def compute_bench(samples_range, features_range, n_iter=3, rank=50):
     it = 0
 
-    results = defaultdict(lambda: [])
+    results = defaultdict(list)
 
     max_it = len(samples_range) * len(features_range)
     for n_samples in samples_range:

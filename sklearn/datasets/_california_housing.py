@@ -168,9 +168,7 @@ def fetch_california_housing(
         if not download_if_missing:
             raise OSError("Data not found and `download_if_missing` is False")
 
-        logger.info(
-            "Downloading Cal. housing from {} to {}".format(ARCHIVE.url, data_home)
-        )
+        logger.info(f"Downloading Cal. housing from {ARCHIVE.url} to {data_home}")
 
         archive_path = _fetch_remote(
             ARCHIVE,

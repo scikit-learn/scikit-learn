@@ -46,7 +46,6 @@ class BaseOptimizer:
         """Perform update to learning rate and potentially other states at the
         end of an iteration
         """
-        pass
 
     def trigger_stopping(self, msg, verbose):
         """Decides whether it is time to stop training

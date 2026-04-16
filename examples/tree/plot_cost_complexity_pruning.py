@@ -63,9 +63,7 @@ for ccp_alpha in ccp_alphas:
     clf.fit(X_train, y_train)
     clfs.append(clf)
 print(
-    "Number of nodes in the last tree is: {} with ccp_alpha: {}".format(
-        clfs[-1].tree_.node_count, ccp_alphas[-1]
-    )
+    f"Number of nodes in the last tree is: {clfs[-1].tree_.node_count} with ccp_alpha: {ccp_alphas[-1]}"
 )
 
 # %%

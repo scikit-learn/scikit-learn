@@ -1,0 +1,2 @@
+Version: 1.12.0
+Arguments: ['C:\\Users\\runneradmin\\AppData\\Local\\Temp\\cibw-run-xk1ry62f\\cp312-win_amd64\\build\\venv\\Scripts\\delvewheel', 'repair', '--add-path', 'C:/Users/runneradmin/AppData/Local/Temp/cibw-run-xk1ry62f/cp312-win_amd64/build/venv/Lib/site-packages/scipy_openblas32/lib', '--no-dll', 'libsf_error_state.dll', '-w', 'C:\\Users\\runneradmin\\AppData\\Local\\Temp\\cibw-run-xk1ry62f\\cp312-win_amd64\\repaired_wheel', 'C:\\Users\\runneradmin\\AppData\\Local\\Temp\\cibw-run-xk1ry62f\\cp312-win_amd64\\built_wheel\\scipy-1.17.1-cp312-cp312-win_amd64.whl']

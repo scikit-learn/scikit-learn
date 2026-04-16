@@ -548,11 +548,11 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         if hasattr(self, "estimators_"):
             # raise an AttributeError if `predict_proba` does not exist for
             # each estimator
-            [getattr(est, "predict_proba") for est in self.estimators_]
+            [est.predict_proba for est in self.estimators_]
             return True
         # raise an AttributeError if `predict_proba` does not exist for the
         # unfitted estimator
-        getattr(self.estimator, "predict_proba")
+        self.estimator.predict_proba
         return True
 
     @available_if(_check_predict_proba)
@@ -608,8 +608,8 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
             )
         if y.shape[1] != n_outputs_:
             raise ValueError(
-                "The number of outputs of Y for fit {0} and"
-                " score {1} should be same".format(n_outputs_, y.shape[1])
+                f"The number of outputs of Y for fit {n_outputs_} and"
+                f" score {y.shape[1]} should be same"
             )
         y_pred = self.predict(X)
         return np.mean(np.all(y == y_pred, axis=1))

@@ -612,11 +612,17 @@ def partial_dependence(
     if method == "auto":
         if sample_weight is not None:
             method = "brute"
-        elif isinstance(estimator, BaseGradientBoosting) and estimator.init is None:
-            method = "recursion"
-        elif isinstance(
-            estimator,
-            (BaseHistGradientBoosting, DecisionTreeRegressor, RandomForestRegressor),
+        elif (
+            isinstance(estimator, BaseGradientBoosting)
+            and estimator.init is None
+            or isinstance(
+                estimator,
+                (
+                    BaseHistGradientBoosting,
+                    DecisionTreeRegressor,
+                    RandomForestRegressor,
+                ),
+            )
         ):
             method = "recursion"
         else:
@@ -653,7 +659,7 @@ def partial_dependence(
         if response_method != "decision_function":
             raise ValueError(
                 "With the 'recursion' method, the response_method must be "
-                "'decision_function'. Got {}.".format(response_method)
+                f"'decision_function'. Got {response_method}."
             )
 
     if sample_weight is not None:
@@ -664,7 +670,7 @@ def partial_dependence(
         # the indexing to be positive. The upper bound will be checked
         # by _get_column_indices()
         if np.any(np.less(features, 0)):
-            raise ValueError("all features must be in [0, {}]".format(X.shape[1] - 1))
+            raise ValueError(f"all features must be in [0, {X.shape[1] - 1}]")
 
     features_indices = np.asarray(
         _get_column_indices(X, features), dtype=np.intp, order="C"

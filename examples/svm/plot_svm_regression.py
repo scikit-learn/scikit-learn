@@ -47,7 +47,7 @@ for ix, svr in enumerate(svrs):
         svr.fit(X, y).predict(X),
         color=model_color[ix],
         lw=lw,
-        label="{} model".format(kernel_label[ix]),
+        label=f"{kernel_label[ix]} model",
     )
     axes[ix].scatter(
         X[svr.support_],
@@ -55,7 +55,7 @@ for ix, svr in enumerate(svrs):
         facecolor="none",
         edgecolor=model_color[ix],
         s=50,
-        label="{} support vectors".format(kernel_label[ix]),
+        label=f"{kernel_label[ix]} support vectors",
     )
     axes[ix].scatter(
         X[np.setdiff1d(np.arange(len(X)), svr.support_)],

@@ -84,7 +84,7 @@ for i, method in enumerate(methods):
         .T
     )
     t1 = time()
-    print("%s: %.2g sec" % (methods[i], t1 - t0))
+    print("%s: %.2g sec" % (method, t1 - t0))
 
     ax = fig.add_subplot(352 + i)
     plt.scatter(trans_data[0], trans_data[1], c=colors, cmap=plt.cm.rainbow)

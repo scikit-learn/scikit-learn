@@ -569,7 +569,7 @@ trim_doctests_flags = True
 
 # intersphinx configuration
 intersphinx_mapping = {
-    "python": ("https://docs.python.org/{.major}".format(sys.version_info), None),
+    "python": (f"https://docs.python.org/{sys.version_info.major}", None),
     "numpy": ("https://numpy.org/doc/stable", None),
     "scipy": ("https://docs.scipy.org/doc/scipy/", None),
     "matplotlib": ("https://matplotlib.org/", None),
@@ -581,15 +581,13 @@ intersphinx_mapping = {
 
 v = parse(release)
 if v.release is None:
-    raise ValueError(
-        "Ill-formed version: {!r}. Version should follow PEP440".format(version)
-    )
+    raise ValueError(f"Ill-formed version: {version!r}. Version should follow PEP440")
 
 if v.is_devrelease:
     binder_branch = "main"
 else:
     major, minor = v.release[:2]
-    binder_branch = "{}.{}.X".format(major, minor)
+    binder_branch = f"{major}.{minor}.X"
 
 
 class SubSectionTitleOrder:

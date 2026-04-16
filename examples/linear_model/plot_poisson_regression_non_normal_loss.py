@@ -515,7 +515,7 @@ for model in [dummy, ridge_glm, poisson_glm, poisson_gbrt]:
         df_test["Frequency"], y_pred, df_test["Exposure"]
     )
     gini = 1 - 2 * auc(cum_exposure, cum_claims)
-    label = "{} (Gini: {:.2f})".format(model[-1], gini)
+    label = f"{model[-1]} (Gini: {gini:.2f})"
     ax.plot(cum_exposure, cum_claims, linestyle="-", label=label)
 
 # Oracle model: y_pred == y_test
@@ -523,7 +523,7 @@ cum_exposure, cum_claims = lorenz_curve(
     df_test["Frequency"], df_test["Frequency"], df_test["Exposure"]
 )
 gini = 1 - 2 * auc(cum_exposure, cum_claims)
-label = "Oracle (Gini: {:.2f})".format(gini)
+label = f"Oracle (Gini: {gini:.2f})"
 ax.plot(cum_exposure, cum_claims, linestyle="-.", color="gray", label=label)
 
 # Random Baseline

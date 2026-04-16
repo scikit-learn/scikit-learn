@@ -317,7 +317,7 @@ class _PGNMF(NMF):
 
 def plot_results(results_df, plot_name):
     if results_df is None:
-        return None
+        return
 
     plt.figure(figsize=(16, 6))
     colors = "bgr"
@@ -398,7 +398,7 @@ def run_bench(X, clfs, plot_name, n_components, tol, alpha, l1_ratio):
             print(" ")
 
     # Use a panda dataframe to organize the results
-    results_df = pandas.DataFrame(results, columns="method loss time init".split())
+    results_df = pandas.DataFrame(results, columns=["method", "loss", "time", "init"])
     print("Total time = %0.3f sec\n" % (time() - start))
 
     # plot the results

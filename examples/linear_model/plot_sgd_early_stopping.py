@@ -115,7 +115,7 @@ for estimator_name, estimator in estimator_dict.items():
         results.append(
             (estimator_name, max_iter, fit_time, n_iter, train_score, test_score)
         )
-    print("")
+    print()
 
 # Transform the results in a pandas dataframe for easy plotting
 columns = [

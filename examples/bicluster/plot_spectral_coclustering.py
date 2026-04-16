@@ -45,7 +45,7 @@ model = SpectralCoclustering(n_clusters=5, random_state=0)
 model.fit(data)
 score = consensus_score(model.biclusters_, (rows[:, row_idx], columns[:, col_idx]))
 
-print("consensus score: {:.3f}".format(score))
+print(f"consensus score: {score:.3f}")
 
 fit_data = data[np.argsort(model.row_labels_)]
 fit_data = fit_data[:, np.argsort(model.column_labels_)]

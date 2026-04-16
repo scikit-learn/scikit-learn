@@ -138,9 +138,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True, return_path=Fals
         if return_path:
             coefs[:n_active, n_active - 1] = gamma
         residual = y - np.dot(X[:, :n_active], gamma)
-        if tol is not None and nrm2(residual) ** 2 <= tol:
-            break
-        elif n_active == max_features:
+        if tol is not None and nrm2(residual) ** 2 <= tol or n_active == max_features:
             break
 
     if return_path:

@@ -17,7 +17,7 @@ from sklearn.linear_model import lars_path, lars_path_gram, lasso_path
 def compute_bench(samples_range, features_range):
     it = 0
 
-    results = defaultdict(lambda: [])
+    results = defaultdict(list)
 
     max_it = len(samples_range) * len(features_range)
     for n_samples in samples_range:

@@ -183,4 +183,4 @@ pipeline = Pipeline(
 
 pipeline.fit(X_train, y_train)
 y_pred = pipeline.predict(X_test)
-print("Classification report:\n\n{}".format(classification_report(y_test, y_pred)))
+print(f"Classification report:\n\n{classification_report(y_test, y_pred)}")

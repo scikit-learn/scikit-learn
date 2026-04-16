@@ -331,7 +331,6 @@ class Klass:
         c : list
             Parameter c
         """
-        pass
 
 
 class MockEst:
@@ -548,7 +547,6 @@ def f_one(a, b):  # pragma: no cover
     d : int
        Returning
     """
-    pass
 
 
 def f_two(a, b):  # pragma: no cover
@@ -574,7 +572,6 @@ def f_two(a, b):  # pragma: no cover
     d : int
        Returning
     """
-    pass
 
 
 def f_three(a, b):  # pragma: no cover
@@ -599,7 +596,6 @@ def f_three(a, b):  # pragma: no cover
     d : int
        Returning
     """
-    pass
 
 
 @skip_if_no_numpydoc
@@ -700,7 +696,6 @@ def f_four(labels):  # pragma: no cover
         The set of labels to include when `average != 'binary'`, and their
         order if `average is None`. Labels present in the data can be excluded.
     """
-    pass
 
 
 def f_five(labels):  # pragma: no cover
@@ -714,7 +709,6 @@ def f_five(labels):  # pragma: no cover
         order if `average is None`. This is an extra line. Labels present in the
         data can be excluded.
     """
-    pass
 
 
 def f_six(labels):  # pragma: no cover
@@ -727,7 +721,6 @@ def f_six(labels):  # pragma: no cover
         The group of labels to add when `average != 'binary'`, and the
         order if `average is None`. Labels present on them datas can be excluded.
     """
-    pass
 
 
 @skip_if_no_numpydoc
@@ -1011,11 +1004,13 @@ def test_raises():
     assert not cm.raised_and_matched
 
     # proper type but bad match
-    with pytest.raises(
-        AssertionError, match="should contain one of the following patterns"
+    with (
+        pytest.raises(
+            AssertionError, match="should contain one of the following patterns"
+        ),
+        raises(TypeError, match="hello") as cm,
     ):
-        with raises(TypeError, match="hello") as cm:
-            raise TypeError("Bad message")
+        raise TypeError("Bad message")
     assert not cm.raised_and_matched
 
     # proper type but bad match, with err_msg
@@ -1040,9 +1035,8 @@ def test_raises():
         raise TypeError()
     with raises((TypeError, ValueError)):
         raise ValueError()
-    with pytest.raises(AssertionError):
-        with raises((TypeError, ValueError)):
-            pass
+    with pytest.raises(AssertionError), raises((TypeError, ValueError)):
+        pass
 
 
 def test_float32_aware_assert_allclose():

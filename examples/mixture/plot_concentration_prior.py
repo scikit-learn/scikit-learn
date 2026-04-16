@@ -33,9 +33,9 @@ tends to divide natural clusters into unnecessary sub-components.
 # SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib as mpl
-import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib import gridspec
 
 from sklearn.mixture import BayesianGaussianMixture
 

@@ -206,9 +206,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             )
         elif self.classes_.size == 1:
             raise ValueError(
-                "{0:s} requires 2 classes; got {1:d} class".format(
-                    self.__class__.__name__, self.classes_.size
-                )
+                f"{self.__class__.__name__:s} requires 2 classes; got {self.classes_.size:d} class"
             )
 
         if self.optimizer is not None and self.kernel_.n_dims > 0:

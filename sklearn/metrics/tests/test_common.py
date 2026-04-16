@@ -3,7 +3,6 @@ import re
 from functools import partial
 from inspect import signature
 from itertools import chain, permutations, product
-from typing import Tuple
 
 import numpy as np
 import pytest
@@ -532,7 +531,6 @@ SYMMETRIC_METRICS = {
     "root_mean_squared_log_error",
     # P = R = F = accuracy in multiclass case
     "micro_f0.5_score",
-    "micro_f1_score",
     "micro_f2_score",
     "micro_precision_score",
     "micro_recall_score",
@@ -1037,14 +1035,14 @@ def test_classification_invariance_string_vs_numbers_labels(name):
         assert_array_equal(
             measure_with_number,
             measure_with_str,
-            err_msg="{0} failed string vs number invariance test".format(name),
+            err_msg=f"{name} failed string vs number invariance test",
         )
 
         measure_with_strobj = metric_str(y1_str.astype("O"), y2_str.astype("O"))
         assert_array_equal(
             measure_with_number,
             measure_with_strobj,
-            err_msg="{0} failed string object vs number invariance test".format(name),
+            err_msg=f"{name} failed string object vs number invariance test",
         )
 
         if name in METRICS_WITH_LABELS:
@@ -1053,14 +1051,14 @@ def test_classification_invariance_string_vs_numbers_labels(name):
             assert_array_equal(
                 measure_with_number,
                 measure_with_str,
-                err_msg="{0} failed string vs number  invariance test".format(name),
+                err_msg=f"{name} failed string vs number  invariance test",
             )
 
             measure_with_strobj = metric_str(y1_str.astype("O"), y2_str.astype("O"))
             assert_array_equal(
                 measure_with_number,
                 measure_with_strobj,
-                err_msg="{0} failed string vs number  invariance test".format(name),
+                err_msg=f"{name} failed string vs number  invariance test",
             )
 
 
@@ -1089,16 +1087,14 @@ def test_continuous_classification_invariance_string_vs_numbers_labels(name):
             assert_array_equal(
                 measure_with_number,
                 measure_with_str,
-                err_msg="{0} failed string vs number invariance test".format(name),
+                err_msg=f"{name} failed string vs number invariance test",
             )
 
             measure_with_strobj = metric_str(y1_str.astype("O"), y2)
             assert_array_equal(
                 measure_with_number,
                 measure_with_strobj,
-                err_msg="{0} failed string object vs number invariance test".format(
-                    name
-                ),
+                err_msg=f"{name} failed string object vs number invariance test",
             )
         else:
             # TODO those metrics doesn't support string label yet
@@ -1703,9 +1699,7 @@ def check_sample_weight_invariance(name, metric, y1, y2, sample_weight=None):
     # equal, meaningful error is raised.
     error_message = (
         r"Found input variables with inconsistent numbers of "
-        r"samples: \[{}, {}, {}\]".format(
-            _num_samples(y1), _num_samples(y2), _num_samples(sample_weight) * 2
-        )
+        rf"samples: \[{_num_samples(y1)}, {_num_samples(y2)}, {_num_samples(sample_weight) * 2}\]"
     )
     with pytest.raises(ValueError, match=error_message):
         metric(y1, y2, sample_weight=np.hstack([sample_weight, sample_weight]))
@@ -2616,7 +2610,7 @@ def test_mixed_array_api_namespace_input_compliance(
             metric_xp = metric(y1_xp, y2_xp, **metric_kwargs_xp)
             metric_np = metric(y1, y2, **metric_kwargs_np)
 
-            if isinstance(metric_np, Tuple):
+            if isinstance(metric_np, tuple):
                 for out_np, out_xp in zip(metric_np, metric_xp):
                     _check_output(out_np, out_xp, xp_to, y2_xp)
             else:
@@ -2702,7 +2696,7 @@ def test_array_api_classification_mixed_string_numeric_input(
         metric_np = metric(y_true, y_prob_np, **kwargs)
         metric_xp = metric(y_true, y_prob_xp, **kwargs)
 
-        if isinstance(metric_np, Tuple):
+        if isinstance(metric_np, tuple):
             for out_np, out_xp in zip(metric_np, metric_xp):
                 _check_output(out_np, out_xp, xp, y_prob_xp)
         else:
@@ -2726,7 +2720,7 @@ def test_array_api_classification_mixed_string_numeric_input(
             metric_np = metric(y_true, y_prob_np)
             metric_xp = metric(y_true, y_prob_xp)
 
-            if isinstance(metric_np, Tuple):
+            if isinstance(metric_np, tuple):
                 for out_np, out_xp in zip(metric_np, metric_xp):
                     _check_output(out_np, out_xp, xp, y_prob_xp)
             else:

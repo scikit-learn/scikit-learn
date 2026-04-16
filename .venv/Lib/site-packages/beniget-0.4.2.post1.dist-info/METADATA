@@ -1,0 +1,24 @@
+Metadata-Version: 2.1
+Name: beniget
+Version: 0.4.2.post1
+Summary: Extract semantic information about static Python code
+Home-page: https://github.com/serge-sans-paille/beniget/
+Author: serge-sans-paille
+Author-email: serge.guelton@telecom-bretagne.eu
+License: BSD 3-Clause
+Classifier: Development Status :: 4 - Beta
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python :: 3
+Requires-Python: >=3.6
+License-File: LICENSE
+Requires-Dist: gast >=0.5.0
+
+
+A static analyzer for Python code.
+
+Beniget provides a static over-approximation of the global and
+local definitions inside Python Module/Class/Function.
+It can also compute def-use chains from each definition.

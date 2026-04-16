@@ -182,7 +182,7 @@ def validate_params(parameter_constraints, *, prefer_skip_nested_validation):
         # The dict of parameter constraints is set as an attribute of the function
         # to make it possible to dynamically introspect the constraints for
         # automatic testing.
-        setattr(func, "_skl_parameter_constraints", parameter_constraints)
+        func._skl_parameter_constraints = parameter_constraints
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):

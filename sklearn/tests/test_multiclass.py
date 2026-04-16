@@ -271,7 +271,7 @@ def test_ovr_multiclass():
     y = ["eggs", "spam", "ham", "eggs", "ham"]
     Y = np.array([[0, 0, 1], [0, 1, 0], [1, 0, 0], [0, 0, 1], [1, 0, 0]])
 
-    classes = set("ham eggs spam".split())
+    classes = set(["ham", "eggs", "spam"])
 
     for base_clf in (
         MultinomialNB(),
@@ -297,7 +297,7 @@ def test_ovr_binary():
     y = ["eggs", "spam", "spam", "eggs", "spam"]
     Y = np.array([[0, 1, 1, 0, 1]]).T
 
-    classes = set("eggs spam".split())
+    classes = set(["eggs", "spam"])
 
     def conduct_test(base_clf, test_predict_proba=False):
         clf = OneVsRestClassifier(base_clf).fit(X, y)
@@ -586,9 +586,7 @@ def test_ovo_partial_fit_predict():
     ovo = OneVsOneClassifier(MultinomialNB())
     error_y = [0, 1, 2, 3, 4, 5, 2]
     message_re = escape(
-        "Mini-batch contains {0} while it must be subset of {1}".format(
-            np.unique(error_y), np.unique(y)
-        )
+        f"Mini-batch contains {np.unique(error_y)} while it must be subset of {np.unique(y)}"
     )
     with pytest.raises(ValueError, match=message_re):
         ovo.partial_fit(X[:7], error_y, np.unique(y))

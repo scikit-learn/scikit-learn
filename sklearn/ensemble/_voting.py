@@ -155,9 +155,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
             check_is_fitted(self)
         except NotFittedError as nfe:
             raise AttributeError(
-                "{} object has no n_features_in_ attribute.".format(
-                    self.__class__.__name__
-                )
+                f"{self.__class__.__name__} object has no n_features_in_ attribute."
             ) from nfe
 
         return self.estimators_[0].n_features_in_

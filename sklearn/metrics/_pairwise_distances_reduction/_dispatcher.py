@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from abc import abstractmethod
-from typing import List
 
 import numpy as np
 from scipy.sparse import issparse
@@ -63,7 +62,7 @@ class BaseDistancesReductionDispatcher:
     """
 
     @classmethod
-    def valid_metrics(cls) -> List[str]:
+    def valid_metrics(cls) -> list[str]:
         excluded = {
             # PyFunc cannot be supported because it necessitates interacting with
             # the CPython interpreter to call user defined functions.
@@ -465,7 +464,7 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
     """
 
     @classmethod
-    def valid_metrics(cls) -> List[str]:
+    def valid_metrics(cls) -> list[str]:
         excluded = {
             # Euclidean is technically usable for ArgKminClassMode
             # but its current implementation would not be competitive.
@@ -633,7 +632,7 @@ class RadiusNeighborsClassMode(BaseDistancesReductionDispatcher):
     """
 
     @classmethod
-    def valid_metrics(cls) -> List[str]:
+    def valid_metrics(cls) -> list[str]:
         excluded = {
             # Euclidean is technically usable for RadiusNeighborsClassMode
             # but it would not be competitive.

@@ -1,0 +1,251 @@
+Metadata-Version: 2.4
+Name: pybind11
+Version: 3.0.3
+Summary: Seamless operability between C++11 and Python
+Keywords: C++11,Python bindings
+Author-Email: Wenzel Jakob <wenzel.jakob@epfl.ch>
+License-Expression: BSD-3-Clause
+License-File: LICENSE
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Utilities
+Classifier: Programming Language :: C++
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: 3.14
+Classifier: Programming Language :: Python :: Implementation :: PyPy
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Programming Language :: C++
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Project-URL: Homepage, https://github.com/pybind/pybind11
+Project-URL: Documentation, https://pybind11.readthedocs.io/
+Project-URL: Issue Tracker, https://github.com/pybind/pybind11/issues
+Project-URL: Discussions, https://github.com/pybind/pybind11/discussions
+Project-URL: Changelog, https://pybind11.readthedocs.io/en/latest/changelog.html
+Project-URL: Chat, https://gitter.im/pybind/Lobby
+Requires-Python: >=3.8
+Provides-Extra: global
+Requires-Dist: pybind11-global==3.0.3; extra == "global"
+Description-Content-Type: text/x-rst
+
+.. figure:: https://github.com/pybind/pybind11/raw/master/docs/pybind11-logo.png
+   :alt: pybind11 logo
+
+**pybind11 (v3)  — Seamless interoperability between C++ and Python**
+
+|Latest Documentation Status| |Stable Documentation Status| |Gitter chat| |GitHub Discussions|
+
+|CI| |Build status| |SPEC 4 — Using and Creating Nightly Wheels|
+
+|Repology| |PyPI package| |Conda-forge| |Python Versions|
+
+`Setuptools example <https://github.com/pybind/python_example>`_
+• `Scikit-build example <https://github.com/pybind/scikit_build_example>`_
+• `CMake example <https://github.com/pybind/cmake_example>`_
+
+.. start
+
+
+**pybind11** is a lightweight header-only library that exposes C++ types
+in Python and vice versa, mainly to create Python bindings of existing
+C++ code. Its goals and syntax are similar to the excellent
+`Boost.Python <http://www.boost.org/doc/libs/1_58_0/libs/python/doc/>`_
+library by David Abrahams: to minimize boilerplate code in traditional
+extension modules by inferring type information using compile-time
+introspection.
+
+The main issue with Boost.Python—and the reason for creating such a
+similar project—is Boost. Boost is an enormously large and complex suite
+of utility libraries that works with almost every C++ compiler in
+existence. This compatibility has its cost: arcane template tricks and
+workarounds are necessary to support the oldest and buggiest of compiler
+specimens. Now that C++11-compatible compilers are widely available,
+this heavy machinery has become an excessively large and unnecessary
+dependency.
+
+Think of this library as a tiny self-contained version of Boost.Python
+with everything stripped away that isn't relevant for binding
+generation. Without comments, the core header files only require ~4K
+lines of code and depend on Python (CPython 3.8+, PyPy, or GraalPy) and the C++
+standard library. This compact implementation was possible thanks to some C++11
+language features (specifically: tuples, lambda functions and variadic
+templates). Since its creation, this library has grown beyond Boost.Python in
+many ways, leading to dramatically simpler binding code in many common
+situations.
+
+Tutorial and reference documentation is provided at
+`pybind11.readthedocs.io <https://pybind11.readthedocs.io/en/latest>`_.
+A PDF version of the manual is available
+`here <https://pybind11.readthedocs.io/_/downloads/en/latest/pdf/>`_.
+And the source code is always available at
+`github.com/pybind/pybind11 <https://github.com/pybind/pybind11>`_.
+
+
+Core features
+-------------
+
+
+pybind11 can map the following core C++ features to Python:
+
+- Functions accepting and returning custom data structures per value,
+  reference, or pointer
+- Instance methods and static methods
+- Overloaded functions
+- Instance attributes and static attributes
+- Arbitrary exception types
+- Enumerations
+- Callbacks
+- Iterators and ranges
+- Custom operators
+- Single and multiple inheritance
+- STL data structures
+- Smart pointers with reference counting like ``std::shared_ptr``
+- Internal references with correct reference counting
+- C++ classes with virtual (and pure virtual) methods can be extended
+  in Python
+- Integrated NumPy support (NumPy 2 requires pybind11 2.12+)
+
+Goodies
+-------
+
+In addition to the core functionality, pybind11 provides some extra
+goodies:
+
+- CPython 3.8+, PyPy3 7.3.17+, and GraalPy 24.1+ are supported with an
+  implementation-agnostic interface (see older versions for older CPython
+  and PyPy versions).
+
+- It is possible to bind C++11 lambda functions with captured
+  variables. The lambda capture data is stored inside the resulting
+  Python function object.
+
+- pybind11 uses C++11 move constructors and move assignment operators
+  whenever possible to efficiently transfer custom data types.
+
+- It's easy to expose the internal storage of custom data types through
+  Pythons' buffer protocols. This is handy e.g. for fast conversion
+  between C++ matrix classes like Eigen and NumPy without expensive
+  copy operations.
+
+- pybind11 can automatically vectorize functions so that they are
+  transparently applied to all entries of one or more NumPy array
+  arguments.
+
+- Python's slice-based access and assignment operations can be
+  supported with just a few lines of code.
+
+- Everything is contained in just a few header files; there is no need
+  to link against any additional libraries.
+
+- Binaries are generally smaller by a factor of at least 2 compared to
+  equivalent bindings generated by Boost.Python. A recent pybind11
+  conversion of PyRosetta, an enormous Boost.Python binding project,
+  `reported <https://graylab.jhu.edu/Sergey/2016.RosettaCon/PyRosetta-4.pdf>`_
+  a binary size reduction of **5.4x** and compile time reduction by
+  **5.8x**.
+
+- Function signatures are precomputed at compile time (using
+  ``constexpr``), leading to smaller binaries.
+
+- With little extra effort, C++ types can be pickled and unpickled
+  similar to regular Python objects.
+
+Supported platforms & compilers
+-------------------------------
+
+pybind11 is exercised in continuous integration across a range of operating
+systems, Python versions, C++ standards, and toolchains. For an up-to-date
+view of the combinations we currently test, please see the
+`pybind11 GitHub Actions <https://github.com/pybind/pybind11/actions?query=branch%3Amaster>`_
+logs.
+
+The test matrix naturally evolves over time as older platforms and compilers
+fall out of use and new ones are added by the community. Closely related
+versions of a tested compiler or platform will often work as well in practice,
+but we cannot promise to validate every possible combination. If a
+configuration you rely on is missing from the matrix or regresses, issues and
+pull requests to extend coverage are very welcome. At the same time, we need
+to balance the size of the test matrix with the available CI resources,
+such as GitHub's limits on concurrent jobs under the free tier.
+
+About
+-----
+
+This project was created by `Wenzel
+Jakob <http://rgl.epfl.ch/people/wjakob>`_. Significant features and/or
+improvements to the code were contributed by
+Jonas Adler,
+Lori A. Burns,
+Sylvain Corlay,
+Eric Cousineau,
+Aaron Gokaslan,
+Ralf Grosse-Kunstleve,
+Trent Houliston,
+Axel Huebl,
+@hulucc,
+Yannick Jadoul,
+Sergey Lyskov,
+Johan Mabille,
+Tomasz Miąsko,
+Dean Moldovan,
+Ben Pritchard,
+Jason Rhinelander,
+Boris Schäling,
+Pim Schellart,
+Henry Schreiner,
+Ivan Smirnov,
+Dustin Spicuzza,
+Boris Staletic,
+Ethan Steinberg,
+Patrick Stewart,
+Ivor Wanders,
+and
+Xiaofei Wang.
+
+We thank Google for a generous financial contribution to the continuous
+integration infrastructure used by this project.
+
+
+Contributing
+~~~~~~~~~~~~
+
+See the `contributing
+guide <https://github.com/pybind/pybind11/blob/master/.github/CONTRIBUTING.md>`_
+for information on building and contributing to pybind11.
+
+License
+~~~~~~~
+
+pybind11 is provided under a BSD-style license that can be found in the
+`LICENSE <https://github.com/pybind/pybind11/blob/master/LICENSE>`_
+file. By using, distributing, or contributing to this project, you agree
+to the terms and conditions of this license.
+
+.. |Latest Documentation Status| image:: https://readthedocs.org/projects/pybind11/badge?version=latest
+   :target: http://pybind11.readthedocs.org/en/latest
+.. |Stable Documentation Status| image:: https://img.shields.io/badge/docs-stable-blue.svg
+   :target: http://pybind11.readthedocs.org/en/stable
+.. |Gitter chat| image:: https://img.shields.io/gitter/room/gitterHQ/gitter.svg
+   :target: https://gitter.im/pybind/Lobby
+.. |CI| image:: https://github.com/pybind/pybind11/workflows/CI/badge.svg
+   :target: https://github.com/pybind/pybind11/actions
+.. |Build status| image:: https://ci.appveyor.com/api/projects/status/riaj54pn4h08xy40?svg=true
+   :target: https://ci.appveyor.com/project/wjakob/pybind11
+.. |PyPI package| image:: https://img.shields.io/pypi/v/pybind11.svg
+   :target: https://pypi.org/project/pybind11/
+.. |Conda-forge| image:: https://img.shields.io/conda/vn/conda-forge/pybind11.svg
+   :target: https://github.com/conda-forge/pybind11-feedstock
+.. |Repology| image:: https://repology.org/badge/latest-versions/python:pybind11.svg
+   :target: https://repology.org/project/python:pybind11/versions
+.. |Python Versions| image:: https://img.shields.io/pypi/pyversions/pybind11.svg
+   :target: https://pypi.org/project/pybind11/
+.. |GitHub Discussions| image:: https://img.shields.io/static/v1?label=Discussions&message=Ask&color=blue&logo=github
+   :target: https://github.com/pybind/pybind11/discussions
+.. |SPEC 4 — Using and Creating Nightly Wheels| image:: https://img.shields.io/badge/SPEC-4-green?labelColor=%23004811&color=%235CA038
+   :target: https://scientific-python.org/specs/spec-0004/

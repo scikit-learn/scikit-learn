@@ -1,0 +1,15 @@
+#ifndef PYTHONIC_INCLUDE_BUILTIN_FILENOTFOUNDERROR_HPP
+#define PYTHONIC_INCLUDE_BUILTIN_FILENOTFOUNDERROR_HPP
+
+#include "pythonic/include/types/exceptions.hpp"
+
+PYTHONIC_NS_BEGIN
+
+namespace builtins
+{
+
+  PYTHONIC_EXCEPTION_DECL(FileNotFoundError)
+}
+PYTHONIC_NS_END
+
+#endif

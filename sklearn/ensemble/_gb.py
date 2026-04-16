@@ -342,9 +342,9 @@ class VerboseReporter:
                 (est.n_estimators - (j + 1)) * (time() - self.start_time) / float(i + 1)
             )
             if remaining_time > 60:
-                remaining_time = "{0:.2f}m".format(remaining_time / 60.0)
+                remaining_time = f"{remaining_time / 60.0:.2f}m"
             else:
-                remaining_time = "{0:.2f}s".format(remaining_time)
+                remaining_time = f"{remaining_time:.2f}s"
             print(
                 self.verbose_fmt.format(
                     iter=j + 1,
@@ -746,8 +746,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                     self.init_.fit(X_train, y_train)
                 else:
                     msg = (
-                        "The initial estimator {} does not support sample "
-                        "weights.".format(self.init_.__class__.__name__)
+                        f"The initial estimator {self.init_.__class__.__name__} does not support sample "
+                        "weights."
                     )
                     try:
                         self.init_.fit(

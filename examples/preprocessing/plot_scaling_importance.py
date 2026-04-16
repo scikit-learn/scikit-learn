@@ -151,7 +151,7 @@ _ = plt.tight_layout()
 
 fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
 
-target_classes = range(0, 3)
+target_classes = range(3)
 colors = ("blue", "red", "green")
 markers = ("^", "s", "o")
 

@@ -406,10 +406,12 @@ def test_multioutput_regression():
     mlp.fit(X, y)
     assert mlp.score(X, y) > 0.9
 
+
 def test_mlp_classifier_early_stopping_with_string_labels():
     """Non-regression test for string labels with early_stopping=True."""
-    from sklearn.datasets import make_classification
     import numpy as np
+
+    from sklearn.datasets import make_classification
 
     X, y_num = make_classification(
         n_samples=200,
@@ -430,6 +432,7 @@ def test_mlp_classifier_early_stopping_with_string_labels():
     clf.fit(X, y)
 
     assert clf.n_iter_ > 0
+
 
 def test_partial_fit_classes_error():
     # Tests that passing different classes to partial_fit raises an error
@@ -542,11 +545,10 @@ def test_nonfinite_params():
         "Solver produced non-finite parameter weights. The input data may contain large"
         " values and need to be preprocessed."
     )
-    with pytest.raises(ValueError, match=msg):
-        with warnings.catch_warnings():
-            # RuntimeWarning: overflow encountered in square
-            warnings.simplefilter("ignore")
-            clf.fit(X, y)
+    with pytest.raises(ValueError, match=msg), warnings.catch_warnings():
+        # RuntimeWarning: overflow encountered in square
+        warnings.simplefilter("ignore")
+        clf.fit(X, y)
 
 
 def test_predict_proba_binary():

@@ -125,8 +125,8 @@ for name, model in models.items():
 # Error bars correspond to one standard deviation as computed in the different
 # folds of the cross-validation.
 
-import plotly.colors as colors
 import plotly.express as px
+from plotly import colors
 from plotly.subplots import make_subplots
 
 fig = make_subplots(

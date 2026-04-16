@@ -1297,11 +1297,9 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         if indptr[-1] > np.iinfo(np.int32).max:  # = 2**31 - 1
             if _IS_32BIT:
                 raise ValueError(
-                    (
-                        "sparse CSR array has {} non-zero "
-                        "elements and requires 64 bit indexing, "
-                        "which is unsupported with 32 bit Python."
-                    ).format(indptr[-1])
+                    f"sparse CSR array has {indptr[-1]} non-zero "
+                    "elements and requires 64 bit indexing, "
+                    "which is unsupported with 32 bit Python."
                 )
             indices_dtype = np.int64
 
@@ -1500,7 +1498,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
 def _make_int_array():
     """Construct an array.array of a type suitable for scipy.sparse indices."""
-    return array.array(str("i"))
+    return array.array("i")
 
 
 class TfidfTransformer(
@@ -2036,19 +2034,18 @@ class TfidfVectorizer(CountVectorizer):
                 sublinear_tf=self.sublinear_tf,
             )
         self._validate_vocabulary()
-        if hasattr(self, "vocabulary_"):
-            if len(self.vocabulary_) != len(value):
-                raise ValueError(
-                    "idf length = %d must be equal to vocabulary size = %d"
-                    % (len(value), len(self.vocabulary))
-                )
+        if hasattr(self, "vocabulary_") and len(self.vocabulary_) != len(value):
+            raise ValueError(
+                "idf length = %d must be equal to vocabulary size = %d"
+                % (len(value), len(self.vocabulary))
+            )
         self._tfidf.idf_ = value
 
     def _check_params(self):
         if self.dtype not in FLOAT_DTYPES:
             warnings.warn(
-                "Only {} 'dtype' should be used. {} 'dtype' will "
-                "be converted to np.float64.".format(FLOAT_DTYPES, self.dtype),
+                f"Only {FLOAT_DTYPES} 'dtype' should be used. {self.dtype} 'dtype' will "
+                "be converted to np.float64.",
                 UserWarning,
             )
 

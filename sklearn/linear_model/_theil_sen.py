@@ -125,9 +125,8 @@ def _spatial_median(X, max_iter=300, tol=1.0e-3):
             spatial_median_old = spatial_median
     else:
         warnings.warn(
-            "Maximum number of iterations {max_iter} reached in "
-            "spatial median for TheilSen regressor."
-            "".format(max_iter=max_iter),
+            f"Maximum number of iterations {max_iter} reached in "
+            "spatial median for TheilSen regressor.",
             ConvergenceWarning,
         )
     return n_iter, spatial_median
@@ -193,7 +192,7 @@ def _lstsq(X, y, indices, fit_intercept):
     weights = np.empty((indices.shape[0], n_features))
     X_subpopulation = np.ones((n_subsamples, n_features))
     # gelss need to pad y_subpopulation to be of the max dim of X_subpopulation
-    y_subpopulation = np.zeros((max(n_subsamples, n_features)))
+    y_subpopulation = np.zeros(max(n_subsamples, n_features))
     (lstsq,) = get_lapack_funcs(("gelss",), (X_subpopulation, y_subpopulation))
 
     for index, subset in enumerate(indices):
@@ -363,22 +362,21 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
             if n_subsamples > n_samples:
                 raise ValueError(
                     "Invalid parameter since n_subsamples > "
-                    "n_samples ({0} > {1}).".format(n_subsamples, n_samples)
+                    f"n_samples ({n_subsamples} > {n_samples})."
                 )
             if n_samples >= n_features:
                 if n_dim > n_subsamples:
                     plus_1 = "+1" if self.fit_intercept else ""
                     raise ValueError(
-                        "Invalid parameter since n_features{0} "
-                        "> n_subsamples ({1} > {2})."
-                        "".format(plus_1, n_dim, n_subsamples)
+                        f"Invalid parameter since n_features{plus_1} "
+                        f"> n_subsamples ({n_dim} > {n_subsamples})."
                     )
             else:  # if n_samples < n_features
                 if n_subsamples != n_samples:
                     raise ValueError(
                         "Invalid parameter since n_subsamples != "
-                        "n_samples ({0} != {1}) while n_samples "
-                        "< n_features.".format(n_subsamples, n_samples)
+                        f"n_samples ({n_subsamples} != {n_samples}) while n_samples "
+                        "< n_features."
                     )
         else:
             n_subsamples = min(n_dim, n_samples)
@@ -413,11 +411,11 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         self.breakdown_ = _breakdown_point(n_samples, n_subsamples)
 
         if self.verbose:
-            print("Breakdown point: {0}".format(self.breakdown_))
-            print("Number of samples: {0}".format(n_samples))
+            print(f"Breakdown point: {self.breakdown_}")
+            print(f"Number of samples: {n_samples}")
             tol_outliers = int(self.breakdown_ * n_samples)
-            print("Tolerable outliers: {0}".format(tol_outliers))
-            print("Number of subpopulations: {0}".format(self.n_subpopulation_))
+            print(f"Tolerable outliers: {tol_outliers}")
+            print(f"Number of subpopulations: {self.n_subpopulation_}")
 
         # Determine indices of subpopulation
         if np.rint(binom(n_samples, n_subsamples)) <= self.max_subpopulation:

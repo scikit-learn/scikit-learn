@@ -201,9 +201,8 @@ def fetch_rcv1(
 
     data_home = get_data_home(data_home=data_home)
     rcv1_dir = join(data_home, "RCV1")
-    if download_if_missing:
-        if not exists(rcv1_dir):
-            makedirs(rcv1_dir)
+    if download_if_missing and not exists(rcv1_dir):
+        makedirs(rcv1_dir)
 
     samples_path = _pkl_filepath(rcv1_dir, "samples.pkl")
     sample_id_path = _pkl_filepath(rcv1_dir, "sample_id.pkl")
@@ -280,7 +279,7 @@ def fetch_rcv1(
 
         # save category names in a list, with same order than y
         categories = np.empty(N_CATEGORIES, dtype=object)
-        for k in category_names.keys():
+        for k in category_names:
             categories[category_names[k]] = k
 
         # reorder categories in lexicographic order

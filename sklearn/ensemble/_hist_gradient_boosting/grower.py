@@ -374,12 +374,10 @@ class TreeGrower:
                 "array for maximum efficiency."
             )
         if min_gain_to_split < 0:
-            raise ValueError(
-                "min_gain_to_split={} must be positive.".format(min_gain_to_split)
-            )
+            raise ValueError(f"min_gain_to_split={min_gain_to_split} must be positive.")
         if min_hessian_to_split < 0:
             raise ValueError(
-                "min_hessian_to_split={} must be positive.".format(min_hessian_to_split)
+                f"min_hessian_to_split={min_hessian_to_split} must be positive."
             )
 
     def grow(self):

@@ -402,8 +402,7 @@ class _BaseTreeExporter:
             node_string += class_name
 
         # Clean up any trailing newlines
-        if node_string.endswith(characters[4]):
-            node_string = node_string[: -len(characters[4])]
+        node_string = node_string.removesuffix(characters[4])
 
         return node_string + characters[5]
 
@@ -906,7 +905,7 @@ def export_graphviz(
     'digraph Tree {...
     """
     if feature_names is not None:
-        if any((not isinstance(name, str) for name in feature_names)):
+        if any(not isinstance(name, str) for name in feature_names):
             raise ValueError("All feature names must be strings.")
         feature_names = check_array(
             feature_names, ensure_2d=False, dtype=None, ensure_min_samples=0
@@ -1111,7 +1110,7 @@ def export_text(
             for i in tree_.feature
         ]
     else:
-        feature_names_ = ["feature_{}".format(i) for i in tree_.feature]
+        feature_names_ = [f"feature_{i}" for i in tree_.feature]
 
     report = StringIO()
 

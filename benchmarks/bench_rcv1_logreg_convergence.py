@@ -93,9 +93,9 @@ def bench(clfs):
             print("train_score: %.8f" % train_score)
             print("test_score: %.8f" % test_score)
             print("time for fit: %.8f seconds" % duration)
-            print("")
+            print()
 
-        print("")
+        print()
     return clfs
 
 

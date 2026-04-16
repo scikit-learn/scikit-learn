@@ -205,8 +205,8 @@ def test_transformer_dtypes_casting(dtype_in, dtype_out):
     Xt = rbm.fit_transform(X)
 
     # dtype_in and dtype_out should be consistent
-    assert Xt.dtype == dtype_out, "transform dtype: {} - original dtype: {}".format(
-        Xt.dtype, X.dtype
+    assert Xt.dtype == dtype_out, (
+        f"transform dtype: {Xt.dtype} - original dtype: {X.dtype}"
     )
 
 

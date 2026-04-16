@@ -895,9 +895,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         if len(np.setdiff1d(y, self.classes_)):
             raise ValueError(
-                "Mini-batch contains {0} while it must be subset of {1}".format(
-                    np.unique(y), self.classes_
-                )
+                f"Mini-batch contains {np.unique(y)} while it must be subset of {self.classes_}"
             )
 
         X, y = validate_data(

@@ -164,7 +164,7 @@ def test_novelty_errors():
     # predict, decision_function and score_samples raise ValueError
     for method in ["predict", "decision_function", "score_samples"]:
         outer_msg = f"'LocalOutlierFactor' has no attribute '{method}'"
-        inner_msg = "{} is not available when novelty=False".format(method)
+        inner_msg = f"{method} is not available when novelty=False"
         with pytest.raises(AttributeError, match=outer_msg) as exec_info:
             getattr(clf, method)
 
@@ -177,7 +177,7 @@ def test_novelty_errors():
     outer_msg = "'LocalOutlierFactor' has no attribute 'fit_predict'"
     inner_msg = "fit_predict is not available when novelty=True"
     with pytest.raises(AttributeError, match=outer_msg) as exec_info:
-        getattr(clf, "fit_predict")
+        clf.fit_predict
 
     assert isinstance(exec_info.value.__cause__, AttributeError)
     assert inner_msg in str(exec_info.value.__cause__)

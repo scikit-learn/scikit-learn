@@ -3,7 +3,7 @@
 Called from .github/workflows/autoclose-schedule.yml."""
 
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pprint import pprint
 
 from github import Auth, Github
@@ -29,7 +29,7 @@ gh = Github(auth=auth)
 repo = gh.get_repo(gh_repo)
 
 
-now = datetime.now(timezone.utc)
+now = datetime.now(UTC)
 label = "autoclose"
 prs = [
     each for each in repo.get_issues(labels=[label]) if each.pull_request is not None

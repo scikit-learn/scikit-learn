@@ -125,12 +125,10 @@ class Estimator(ABC):
         """Return the dataset for a combination of parameters"""
         # The datasets are cached using joblib.Memory so it's fast and can be
         # called for each repeat
-        pass
 
     @abstractmethod
     def make_estimator(self, params):
         """Return an instance of the estimator for a combination of parameters"""
-        pass
 
     def skip(self, params):
         """Return True if the benchmark should be skipped for these params"""

@@ -134,7 +134,7 @@ def plot_obs_pred(
         alpha=0.1,
     )
     if fill_legend:
-        ax.legend([p2], ["{} distribution".format(feature)])
+        ax.legend([p2], [f"{feature} distribution"])
     ax.set(
         ylabel=y_label if y_label is not None else None,
         title=title if title is not None else "Train: Observed vs Predicted",
@@ -161,7 +161,7 @@ def score_estimator(
     if tweedie_powers:
         metrics += [
             (
-                "mean Tweedie dev p={:.4f}".format(power),
+                f"mean Tweedie dev p={power:.4f}",
                 partial(mean_tweedie_deviance, power=power),
             )
             for power in tweedie_powers
@@ -676,7 +676,7 @@ for label, y_pred in [
         df_test["PurePremium"], y_pred, df_test["Exposure"]
     )
     gini = 1 - 2 * auc(cum_exposure, cum_claims)
-    label += " (Gini index: {:.3f})".format(gini)
+    label += f" (Gini index: {gini:.3f})"
     ax.plot(cum_exposure, cum_claims, linestyle="-", label=label)
 
 # Oracle model: y_pred == y_test
@@ -684,7 +684,7 @@ cum_exposure, cum_claims = lorenz_curve(
     df_test["PurePremium"], df_test["PurePremium"], df_test["Exposure"]
 )
 gini = 1 - 2 * auc(cum_exposure, cum_claims)
-label = "Oracle (Gini index: {:.3f})".format(gini)
+label = f"Oracle (Gini index: {gini:.3f})"
 ax.plot(cum_exposure, cum_claims, linestyle="-.", color="gray", label=label)
 
 # Random baseline

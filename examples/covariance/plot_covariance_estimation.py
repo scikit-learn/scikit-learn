@@ -119,7 +119,7 @@ plt.plot(plt.xlim(), 2 * [loglik_real], "--r", label="Real covariance likelihood
 # adjust view
 lik_max = np.amax(negative_logliks)
 lik_min = np.amin(negative_logliks)
-ymin = lik_min - 6.0 * np.log((plt.ylim()[1] - plt.ylim()[0]))
+ymin = lik_min - 6.0 * np.log(plt.ylim()[1] - plt.ylim()[0])
 ymax = lik_max + 10.0 * np.log(lik_max - lik_min)
 xmin = shrinkages[0]
 xmax = shrinkages[-1]

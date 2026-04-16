@@ -168,7 +168,7 @@ cv_results = cv_results.rename(shorten_param, axis=1)
 
 import plotly.express as px
 
-param_names = [shorten_param(name) for name in parameter_grid.keys()]
+param_names = [shorten_param(name) for name in parameter_grid]
 labels = {
     "mean_score_time": "CV Score time (s)",
     "mean_test_score": "CV score (accuracy)",

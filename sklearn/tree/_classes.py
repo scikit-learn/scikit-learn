@@ -406,8 +406,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             monotonic_cst = np.asarray(self.monotonic_cst)
             if monotonic_cst.shape[0] != X.shape[1]:
                 raise ValueError(
-                    "monotonic_cst has shape {} but the input data "
-                    "X has {} features.".format(monotonic_cst.shape[0], X.shape[1])
+                    f"monotonic_cst has shape {monotonic_cst.shape[0]} but the input data "
+                    f"X has {X.shape[1]} features."
                 )
             valid_constraints = np.isin(monotonic_cst, (-1, 0, 1))
             if not np.all(valid_constraints):

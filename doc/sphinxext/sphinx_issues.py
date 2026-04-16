@@ -48,11 +48,11 @@ def user_role(name, rawtext, text, lineno, inliner, options=None, content=None):
     if config.issues_user_uri:
         ref = config.issues_user_uri.format(user=target)
     else:
-        ref = "https://github.com/{0}".format(target)
+        ref = f"https://github.com/{target}"
     if has_explicit_title:
         text = title
     else:
-        text = "@{0}".format(target)
+        text = f"@{target}"
 
     link = nodes.reference(text=text, refuri=ref, **options)
     return [link], []
@@ -69,13 +69,13 @@ def cve_role(name, rawtext, text, lineno, inliner, options=None, content=None):
 
     target = utils.unescape(target).strip()
     title = utils.unescape(title).strip()
-    ref = "https://cve.mitre.org/cgi-bin/cvename.cgi?name={0}".format(target)
+    ref = f"https://cve.mitre.org/cgi-bin/cvename.cgi?name={target}"
     text = title if has_explicit_title else target
     link = nodes.reference(text=text, refuri=ref, **options)
     return [link], []
 
 
-class IssueRole(object):
+class IssueRole:
     EXTERNAL_REPO_REGEX = re.compile(r"^(\w+)/(.+)([#@])([\w]+)$")
 
     def __init__(
@@ -88,7 +88,7 @@ class IssueRole(object):
 
     @staticmethod
     def default_format_text(issue_no):
-        return "#{0}".format(issue_no)
+        return f"#{issue_no}"
 
     def make_node(self, name, issue_no, config, options=None):
         name_map = {"pr": "pull", "issue": "issues", "commit": "commit"}
@@ -97,12 +97,10 @@ class IssueRole(object):
         if repo_match:  # External repo
             username, repo, symbol, issue = repo_match.groups()
             if name not in name_map:
-                raise ValueError(
-                    "External repo linking not supported for :{}:".format(name)
-                )
+                raise ValueError(f"External repo linking not supported for :{name}:")
             path = name_map.get(name)
             ref = "https://github.com/{issues_github_path}/{path}/{n}".format(
-                issues_github_path="{}/{}".format(username, repo), path=path, n=issue
+                issues_github_path=f"{username}/{repo}", path=path, n=issue
             )
             formatted_issue = self.format_text(issue).lstrip("#")
             text = "{username}/{repo}{symbol}{formatted_issue}".format(**locals())
@@ -119,9 +117,7 @@ class IssueRole(object):
                 )
             else:
                 raise ValueError(
-                    "Neither {} nor issues_github_path is set".format(
-                        self.uri_config_option
-                    )
+                    f"Neither {self.uri_config_option} nor issues_github_path is set"
                 )
             issue_text = self.format_text(issue_no)
             link = nodes.reference(text=issue_text, refuri=ref, **options)

@@ -302,7 +302,7 @@ def test_check_inputs_predict_stages(csc_container):
     x_sparse_csc = csc_container(x)
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
     clf.fit(x, y)
-    score = np.zeros((y.shape)).reshape(-1, 1)
+    score = np.zeros(y.shape).reshape(-1, 1)
     err_msg = "When X is a sparse matrix, a CSR format is expected"
     with pytest.raises(ValueError, match=err_msg):
         predict_stages(clf.estimators_, x_sparse_csc, clf.learning_rate, score)

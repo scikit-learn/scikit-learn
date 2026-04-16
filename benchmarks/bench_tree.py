@@ -100,7 +100,7 @@ if __name__ == "__main__":
     n_classes = 10
 
     dim = start_dim
-    for i in range(0, n):
+    for i in range(n):
         print("============================================")
         print("Entering iteration %s of %s" % (i, n))
         print("============================================")

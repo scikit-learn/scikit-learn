@@ -13,7 +13,7 @@ from functools import partial
 import numpy
 import scipy
 import scipy.sparse as sp
-import scipy.special as special
+from scipy import special
 
 from sklearn._config import get_config
 from sklearn.externals import array_api_compat

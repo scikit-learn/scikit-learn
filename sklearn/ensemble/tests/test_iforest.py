@@ -257,7 +257,7 @@ def test_iforest_warm_start():
 # chunk has 3 rows):
 @patch(
     "sklearn.ensemble._iforest.get_chunk_n_rows",
-    side_effect=Mock(**{"return_value": 3}),
+    side_effect=Mock(return_value=3),
 )
 @pytest.mark.parametrize("contamination, n_predict_calls", [(0.25, 3), ("auto", 2)])
 @pytest.mark.thread_unsafe  # monkeypatched code
@@ -271,7 +271,7 @@ def test_iforest_chunks_works1(
 # idem with chunk_size = 10 rows
 @patch(
     "sklearn.ensemble._iforest.get_chunk_n_rows",
-    side_effect=Mock(**{"return_value": 10}),
+    side_effect=Mock(return_value=10),
 )
 @pytest.mark.parametrize("contamination, n_predict_calls", [(0.25, 3), ("auto", 2)])
 @pytest.mark.thread_unsafe  # monkeypatched code

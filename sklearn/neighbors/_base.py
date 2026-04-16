@@ -170,8 +170,8 @@ def _check_precomputed(X):
 
     if graph.format not in ("csr", "csc", "coo", "lil"):
         raise TypeError(
-            "Sparse matrix in {!r} format is not supported due to "
-            "its handling of explicit zeros".format(graph.format)
+            f"Sparse matrix in {graph.format!r} format is not supported due to "
+            "its handling of explicit zeros"
         )
     copied = graph.format != "csr"
     graph = check_array(
@@ -578,7 +578,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             if X.shape[0] != X.shape[1]:
                 raise ValueError(
                     "Precomputed matrix must be square."
-                    " Input is a {}x{} matrix.".format(X.shape[0], X.shape[1])
+                    f" Input is a {X.shape[0]}x{X.shape[1]} matrix."
                 )
             self.n_features_in_ = X.shape[1]
 

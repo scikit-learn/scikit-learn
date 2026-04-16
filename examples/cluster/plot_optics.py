@@ -20,9 +20,9 @@ thresholds in DBSCAN.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib import gridspec
 
 from sklearn.cluster import OPTICS, cluster_optics_dbscan
 

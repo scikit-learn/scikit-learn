@@ -145,10 +145,10 @@ for color, kernel in zip(colors, kernels):
         color=color,
         lw=lw,
         linestyle="-",
-        label="kernel = '{0}'".format(kernel),
+        label=f"kernel = '{kernel}'",
     )
 
-ax.text(6, 0.38, "N={0} points".format(N))
+ax.text(6, 0.38, f"N={N} points")
 
 ax.legend(loc="upper left")
 ax.plot(X[:, 0], -0.005 - 0.01 * np.random.random(X.shape[0]), "+k")

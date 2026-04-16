@@ -894,7 +894,7 @@ def test_uniform_grid(method):
         )
         Y = tsne.fit_transform(X_2d_grid)
 
-        try_name = "{}_{}".format(method, seed)
+        try_name = f"{method}_{seed}"
         try:
             assert_uniform_grid(Y, try_name)
         except AssertionError:

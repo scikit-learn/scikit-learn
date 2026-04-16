@@ -9,7 +9,7 @@ from sklearn.cluster import KMeans, MiniBatchKMeans
 
 def compute_bench(samples_range, features_range):
     it = 0
-    results = defaultdict(lambda: [])
+    results = defaultdict(list)
     chunk = 100
 
     max_it = len(samples_range) * len(features_range)
@@ -54,7 +54,7 @@ def compute_bench(samples_range, features_range):
 
 
 def compute_bench_2(chunks):
-    results = defaultdict(lambda: [])
+    results = defaultdict(list)
     n_features = 50000
     means = np.array(
         [

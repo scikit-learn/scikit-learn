@@ -35,9 +35,7 @@ def _fit_single_estimator(
         except TypeError as exc:
             if "unexpected keyword argument 'sample_weight'" in str(exc):
                 raise TypeError(
-                    "Underlying estimator {} does not support sample weights.".format(
-                        estimator.__class__.__name__
-                    )
+                    f"Underlying estimator {estimator.__class__.__name__} does not support sample weights."
                 ) from exc
             raise
     else:
@@ -241,9 +239,7 @@ class _BaseHeterogeneousEnsemble(
         for est in estimators:
             if est != "drop" and not is_estimator_type(est):
                 raise ValueError(
-                    "The estimator {} should be a {}.".format(
-                        est.__class__.__name__, is_estimator_type.__name__[3:]
-                    )
+                    f"The estimator {est.__class__.__name__} should be a {is_estimator_type.__name__[3:]}."
                 )
 
         return names, estimators

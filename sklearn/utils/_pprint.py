@@ -85,8 +85,6 @@ class KeyValTuple(tuple):
 class KeyValTupleParam(KeyValTuple):
     """Dummy class for correctly rendering key-value tuples from parameters."""
 
-    pass
-
 
 def _changed_params(estimator):
     """Return dict (param_name: value) of parameters that were given to

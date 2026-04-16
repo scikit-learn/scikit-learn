@@ -375,8 +375,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         ticks = [0.001, 0.01, 0.05, 0.20, 0.5, 0.80, 0.95, 0.99, 0.999]
         tick_locations = sp.stats.norm.ppf(ticks)
         tick_labels = [
-            "{:.0%}".format(s) if (100 * s).is_integer() else "{:.1%}".format(s)
-            for s in ticks
+            f"{s:.0%}" if (100 * s).is_integer() else f"{s:.1%}" for s in ticks
         ]
         self.ax_.set_xticks(tick_locations)
         self.ax_.set_xticklabels(tick_labels)

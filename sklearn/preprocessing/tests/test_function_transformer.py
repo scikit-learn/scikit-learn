@@ -37,11 +37,11 @@ def test_delegate_to_func():
 
     # The function should only have received X.
     assert args_store == [X], (
-        "Incorrect positional arguments passed to func: {args}".format(args=args_store)
+        f"Incorrect positional arguments passed to func: {args_store}"
     )
 
     assert not kwargs_store, (
-        "Unexpected keyword arguments passed to func: {args}".format(args=kwargs_store)
+        f"Unexpected keyword arguments passed to func: {kwargs_store}"
     )
 
     # reset the argument stores.
@@ -57,11 +57,11 @@ def test_delegate_to_func():
 
     # The function should have received X
     assert args_store == [X], (
-        "Incorrect positional arguments passed to func: {args}".format(args=args_store)
+        f"Incorrect positional arguments passed to func: {args_store}"
     )
 
     assert not kwargs_store, (
-        "Unexpected keyword arguments passed to func: {args}".format(args=kwargs_store)
+        f"Unexpected keyword arguments passed to func: {kwargs_store}"
     )
 
 

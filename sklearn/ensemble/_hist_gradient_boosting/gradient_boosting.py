@@ -899,9 +899,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         for iteration in range(begin_at_stage, self.max_iter):
             if self.verbose >= 2:
                 iteration_start_time = time()
-                print(
-                    "[{}/{}] ".format(iteration + 1, self.max_iter), end="", flush=True
-                )
+                print(f"[{iteration + 1}/{self.max_iter}] ", end="", flush=True)
 
             # Update gradients and hessians, inplace
             # Note that self._loss expects shape (n_samples,) for
@@ -1046,9 +1044,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 for predictors_at_ith_iteration in self._predictors
             )
             print(
-                "Fit {} trees in {:.3f} s, ({} total leaves)".format(
-                    n_predictors, duration, n_total_leaves
-                )
+                f"Fit {n_predictors} trees in {duration:.3f} s, ({n_total_leaves} total leaves)"
             )
             print(
                 "{:<32} {:.3f}s".format(
@@ -1232,7 +1228,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         description = "training" if is_training_data else "validation"
         if self.verbose:
             print(
-                "Binning {:.3f} GB of {} data: ".format(X.nbytes / 1e9, description),
+                f"Binning {X.nbytes / 1e9:.3f} GB of {description} data: ",
                 end="",
                 flush=True,
             )
@@ -1249,7 +1245,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         toc = time()
         if self.verbose:
             duration = toc - tic
-            print("{:.3f} s".format(duration))
+            print(f"{duration:.3f} s")
 
         return X_binned
 
@@ -1271,12 +1267,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         )
 
         if n_trees == 1:
-            log_msg += "{} tree, {} leaves, ".format(n_trees, n_leaves)
+            log_msg += f"{n_trees} tree, {n_leaves} leaves, "
         else:
-            log_msg += "{} trees, {} leaves ".format(n_trees, n_leaves)
-            log_msg += "({} on avg), ".format(int(n_leaves / n_trees))
+            log_msg += f"{n_trees} trees, {n_leaves} leaves "
+            log_msg += f"({int(n_leaves / n_trees)} on avg), "
 
-        log_msg += "max depth = {}, ".format(max_depth)
+        log_msg += f"max depth = {max_depth}, "
 
         if self.do_early_stopping_:
             if self.scoring == "loss":
@@ -1285,14 +1281,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             else:
                 factor = 1
                 name = "score"
-            log_msg += "train {}: {:.5f}, ".format(name, factor * self.train_score_[-1])
+            log_msg += f"train {name}: {factor * self.train_score_[-1]:.5f}, "
             if self._use_validation_data:
-                log_msg += "val {}: {:.5f}, ".format(
-                    name, factor * self.validation_score_[-1]
-                )
+                log_msg += f"val {name}: {factor * self.validation_score_[-1]:.5f}, "
 
         iteration_time = time() - iteration_start_time
-        log_msg += "in {:0.3f}s".format(iteration_time)
+        log_msg += f"in {iteration_time:0.3f}s"
 
         print(log_msg)
 
@@ -1383,8 +1377,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         X = self._preprocess_X(X, reset=False)
         if X.shape[1] != self._n_features:
             raise ValueError(
-                "X has {} features but this estimator was trained with "
-                "{} features.".format(X.shape[1], self._n_features)
+                f"X has {X.shape[1]} features but this estimator was trained with "
+                f"{self._n_features} features."
             )
         n_samples = X.shape[0]
         raw_predictions = np.zeros(
@@ -1429,10 +1423,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         if getattr(self, "_fitted_with_sw", False):
             raise NotImplementedError(
-                "{} does not support partial dependence "
+                f"{self.__class__.__name__} does not support partial dependence "
                 "plots with the 'recursion' method when "
                 "sample weights were given during fit "
-                "time.".format(self.__class__.__name__)
+                "time."
             )
 
         grid = np.asarray(grid, dtype=X_DTYPE, order="C")

@@ -1113,9 +1113,7 @@ def make_blobs(
             )
         if not isinstance(centers, Iterable):
             raise ValueError(
-                "Parameter `centers` must be array-like. Got {!r} instead".format(
-                    centers
-                )
+                f"Parameter `centers` must be array-like. Got {centers!r} instead"
             )
         if len(centers) != n_centers:
             raise ValueError(
@@ -1130,8 +1128,8 @@ def make_blobs(
     if hasattr(cluster_std, "__len__") and len(cluster_std) != n_centers:
         raise ValueError(
             "Length of `clusters_std` not consistent with "
-            "number of centers. Got centers = {} "
-            "and cluster_std = {}".format(centers, cluster_std)
+            f"number of centers. Got centers = {centers} "
+            f"and cluster_std = {cluster_std}"
         )
 
     if isinstance(cluster_std, numbers.Real):

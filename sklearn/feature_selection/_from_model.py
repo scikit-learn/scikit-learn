@@ -483,9 +483,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             check_is_fitted(self)
         except NotFittedError as nfe:
             raise AttributeError(
-                "{} object has no n_features_in_ attribute.".format(
-                    self.__class__.__name__
-                )
+                f"{self.__class__.__name__} object has no n_features_in_ attribute."
             ) from nfe
 
         return self.estimator_.n_features_in_

@@ -210,7 +210,7 @@ if __name__ == "__main__":
     print("n_elements \t= %s" % (opts.n_features * opts.n_samples))
     print("n_nonzeros \t= %s per feature" % n_nonzeros)
     print("ratio_nonzeros \t= %s" % opts.ratio_nonzeros)
-    print("")
+    print()
 
     ###########################################################################
     # Set transformer input
@@ -267,7 +267,7 @@ if __name__ == "__main__":
             time_transform[name].append(time_to_transform)
             print("done")
 
-    print("")
+    print()
 
     ###########################################################################
     # Print results
@@ -285,12 +285,12 @@ if __name__ == "__main__":
     print(25 * "-" + ("|" + "-" * 14) * 1)
     for key, value in arguments.items():
         print("%s \t | %s " % (str(key).ljust(16), str(value).strip().center(12)))
-    print("")
+    print()
 
     print("Transformer performance:")
     print("===========================")
     print("Results are averaged over %s repetition(s)." % opts.n_times)
-    print("")
+    print()
     print(
         "%s | %s | %s"
         % ("Transformer".ljust(30), "fit".center(12), "transform".center(12))
@@ -300,5 +300,5 @@ if __name__ == "__main__":
     for name in sorted(selected_transformers):
         print_row(name, np.mean(time_fit[name]), np.mean(time_transform[name]))
 
-    print("")
-    print("")
+    print()
+    print()

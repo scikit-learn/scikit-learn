@@ -883,15 +883,15 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
 
             if self.class_weight == "balanced":
                 raise ValueError(
-                    "class_weight '{0}' is not supported for "
+                    f"class_weight '{self.class_weight}' is not supported for "
                     "partial_fit. In order to use 'balanced' weights,"
-                    " use compute_class_weight('{0}', "
+                    f" use compute_class_weight('{self.class_weight}', "
                     "classes=classes, y=y). "
                     "In place of y you can use a large enough sample "
                     "of the full training set target to properly "
                     "estimate the class frequency distributions. "
                     "Pass the resulting weights as the class_weight "
-                    "parameter.".format(self.class_weight)
+                    "parameter."
                 )
 
         return self._partial_fit(

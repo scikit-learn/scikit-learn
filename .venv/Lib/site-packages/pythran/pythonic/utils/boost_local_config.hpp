@@ -1,0 +1,9 @@
+#ifndef BOOST_MATH_THREAD_LOCAL
+#define BOOST_MATH_THREAD_LOCAL thread_local
+#endif
+#ifndef BOOST_MATH_OVERFLOW_ERROR_POLICY
+#define BOOST_MATH_OVERFLOW_ERROR_POLICY ignore_error
+#endif
+#ifndef BOOST_MATH_DOMAIN_ERROR_POLICY
+#define BOOST_MATH_DOMAIN_ERROR_POLICY ignore_error
+#endif

@@ -1,6 +1,6 @@
 import functools
 import warnings
-from typing import Any, List
+from typing import Any
 
 import numpy as np
 import pytest
@@ -24,12 +24,12 @@ from sklearn.utils._testing import (
 )
 from sklearn.utils.fixes import COO_CONTAINERS
 
-all_sparse_random_matrix: List[Any] = [_sparse_random_matrix]
-all_dense_random_matrix: List[Any] = [_gaussian_random_matrix]
+all_sparse_random_matrix: list[Any] = [_sparse_random_matrix]
+all_dense_random_matrix: list[Any] = [_gaussian_random_matrix]
 all_random_matrix = all_sparse_random_matrix + all_dense_random_matrix
 
-all_SparseRandomProjection: List[Any] = [SparseRandomProjection]
-all_DenseRandomProjection: List[Any] = [GaussianRandomProjection]
+all_SparseRandomProjection: list[Any] = [SparseRandomProjection]
+all_DenseRandomProjection: list[Any] = [GaussianRandomProjection]
 all_RandomProjection = all_SparseRandomProjection + all_DenseRandomProjection
 
 

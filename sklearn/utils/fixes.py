@@ -504,9 +504,8 @@ def _safely_cast_index_arrays(A, idx_dtype=np.int32, msg=""):
         if A.indptr[-1] > max_value:
             raise ValueError(f"indptr values too large for {msg}")
         # check shape vs dtype
-        if max(*A.shape) > max_value:
-            if (A.indices > max_value).any():
-                raise ValueError(f"indices values too large for {msg}")
+        if max(*A.shape) > max_value and (A.indices > max_value).any():
+            raise ValueError(f"indices values too large for {msg}")
 
         indices = A.indices.astype(idx_dtype, copy=False)
         indptr = A.indptr.astype(idx_dtype, copy=False)
@@ -524,9 +523,8 @@ def _safely_cast_index_arrays(A, idx_dtype=np.int32, msg=""):
         return tuple(co.astype(idx_dtype, copy=False) for co in coords)
 
     elif A.format == "dia":
-        if max(*A.shape) > max_value:
-            if (A.offsets > max_value).any():
-                raise ValueError(f"offsets values too large for {msg}")
+        if max(*A.shape) > max_value and (A.offsets > max_value).any():
+            raise ValueError(f"offsets values too large for {msg}")
         offsets = A.offsets.astype(idx_dtype, copy=False)
         return offsets
 
@@ -534,9 +532,8 @@ def _safely_cast_index_arrays(A, idx_dtype=np.int32, msg=""):
         R, C = A.blocksize
         if A.indptr[-1] * R > max_value:
             raise ValueError("indptr values too large for {msg}")
-        if max(*A.shape) > max_value:
-            if (A.indices * C > max_value).any():
-                raise ValueError(f"indices values too large for {msg}")
+        if max(*A.shape) > max_value and (A.indices * C > max_value).any():
+            raise ValueError(f"indices values too large for {msg}")
         indices = A.indices.astype(idx_dtype, copy=False)
         indptr = A.indptr.astype(idx_dtype, copy=False)
         return indices, indptr

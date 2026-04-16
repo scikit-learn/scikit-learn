@@ -157,7 +157,7 @@ def test_ensemble_heterogeneous_estimators_type(Ensemble):
         ensemble_type = "regressor"
     ensemble = Ensemble(estimators=estimators)
 
-    err_msg = "should be a {}".format(ensemble_type)
+    err_msg = f"should be a {ensemble_type}"
     with pytest.raises(ValueError, match=err_msg):
         ensemble.fit(X, y)
 

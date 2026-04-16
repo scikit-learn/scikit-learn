@@ -1,0 +1,76 @@
+Copyright (C) 2025 SciPy developers
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+    a. Redistributions of source code must retain the above copyright notice,
+       this list of conditions and the following disclaimer.
+    b. Redistributions in binary form must reproduce the above copyright
+       notice, this list of conditions and the following disclaimer in the
+       documentation and/or other materials provided with the distribution.
+    c. Names of the SciPy Developers may not be used to endorse or promote
+       products derived from this software without specific prior written
+       permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR CONTRIBUTORS
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+THE POSSIBILITY OF SUCH DAMAGE.
+
+
+DOP library consisting Dormand-Prince (4)5 and 8(5,3) integrators, is a
+C translation of the Fortran code written by Ernst Hairer, and Gerhard
+Wanner with the original descriptions below.
+
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+    NUMERICAL SOLUTION OF A SYSTEM OF FIRST 0RDER
+    ORDINARY DIFFERENTIAL EQUATIONS  Y'=F(X,Y).
+    THIS IS AN EXPLICIT RUNGE-KUTTA METHOD OF ORDER 8(5,3)
+    DUE TO DORMAND & PRINCE (WITH STEPSIZE CONTROL AND
+    DENSE OUTPUT)
+
+    AUTHORS: E. HAIRER AND G. WANNER
+             UNIVERSITE DE GENEVE, DEPT. DE MATHEMATIQUES
+             CH-1211 GENEVE 24, SWITZERLAND
+             E-MAIL:  Ernst.Hairer@math.unige.ch
+                      Gerhard.Wanner@math.unige.ch
+
+    THIS CODE IS DESCRIBED IN:
+        E. HAIRER, S.P. NORSETT AND G. WANNER, SOLVING ORDINARY
+        DIFFERENTIAL EQUATIONS I. NONSTIFF PROBLEMS. 2ND EDITION.
+        SPRINGER SERIES IN COMPUTATIONAL MATHEMATICS,
+        SPRINGER-VERLAG (1993)
+
+    VERSION OF APRIL 25, 1996
+    (latest correction of a small bug: August 8, 2005)
+
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+    NUMERICAL SOLUTION OF A SYSTEM OF FIRST 0RDER
+    ORDINARY DIFFERENTIAL EQUATIONS  Y'=F(X,Y).
+    THIS IS AN EXPLICIT RUNGE-KUTTA METHOD OF ORDER (4)5
+    DUE TO DORMAND & PRINCE (WITH STEPSIZE CONTROL AND
+    DENSE OUTPUT).
+
+    AUTHORS: E. HAIRER AND G. WANNER
+             UNIVERSITE DE GENEVE, DEPT. DE MATHEMATIQUES
+             CH-1211 GENEVE 24, SWITZERLAND
+             E-MAIL:  Ernst.Hairer@math.unige.ch
+                      Gerhard.Wanner@math.unige.ch
+
+    THIS CODE IS DESCRIBED IN:
+        E. HAIRER, S.P. NORSETT AND G. WANNER, SOLVING ORDINARY
+        DIFFERENTIAL EQUATIONS I. NONSTIFF PROBLEMS. 2ND EDITION.
+        SPRINGER SERIES IN COMPUTATIONAL MATHEMATICS,
+        SPRINGER-VERLAG (1993)
+
+    VERSION OF APRIL 25, 1996
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

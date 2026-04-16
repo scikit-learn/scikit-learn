@@ -962,7 +962,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 dist_mat = dist_mat * strength
                 medoid_index = np.argmin(dist_mat.sum(axis=1))
                 self.medoids_[idx] = data[medoid_index]
-        return
 
     def dbscan_clustering(self, cut_distance, min_cluster_size=5):
         """Return clustering given by DBSCAN without border points.

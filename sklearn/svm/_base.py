@@ -257,7 +257,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         if self.kernel == "precomputed" and n_samples != X.shape[1]:
             raise ValueError(
                 "Precomputed matrix must be a square matrix."
-                " Input is a {}x{} matrix.".format(X.shape[0], X.shape[1])
+                f" Input is a {X.shape[0]}x{X.shape[1]} matrix."
             )
 
         if sample_weight.shape[0] > 0 and sample_weight.shape[0] != n_samples:
@@ -670,13 +670,12 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 % type(self).__name__
             )
 
-        if self.kernel == "precomputed":
-            if X.shape[1] != self.shape_fit_[0]:
-                raise ValueError(
-                    "X.shape[1] = %d should be equal to %d, "
-                    "the number of samples at training time"
-                    % (X.shape[1], self.shape_fit_[0])
-                )
+        if self.kernel == "precomputed" and X.shape[1] != self.shape_fit_[0]:
+            raise ValueError(
+                "X.shape[1] = %d should be equal to %d, "
+                "the number of samples at training time"
+                % (X.shape[1], self.shape_fit_[0])
+            )
         # Fixes https://nvd.nist.gov/vuln/detail/CVE-2020-28975
         # Check that _n_support is consistent with support_vectors
         sv = self.support_vectors_

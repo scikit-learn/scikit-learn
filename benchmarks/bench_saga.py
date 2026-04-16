@@ -223,7 +223,7 @@ def exp(
 
     res = []
     idx = 0
-    for dtype_name in dtypes_mapping.keys():
+    for dtype_name in dtypes_mapping:
         for solver in solvers:
             if not (skip_slow and solver == "lightning" and penalty == "l1"):
                 lr, times, train_scores, test_scores, accuracies = out[idx]

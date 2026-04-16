@@ -1,0 +1,4 @@
+#ifndef PYTHONIC_INCLUDE_NUMPY__HPP
+#define PYTHONIC_INCLUDE_NUMPY__HPP
+
+#endif

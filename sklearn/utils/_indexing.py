@@ -59,9 +59,8 @@ def _array_indexing(array, key, key_dtype, axis):
     if issparse(array):
         if key_dtype == "bool":
             key = np.asarray(key)
-        elif SCIPY_VERSION_BELOW_1_12:
-            if isinstance(key, numbers.Integral):
-                key = [key]
+        elif SCIPY_VERSION_BELOW_1_12 and isinstance(key, numbers.Integral):
+            key = [key]
     if isinstance(key, tuple):
         key = list(key)
     return array[key, ...] if axis == 0 else array[:, key]
@@ -323,7 +322,7 @@ def _safe_indexing(X, indices, *, axis=0):
     if axis not in (0, 1):
         raise ValueError(
             "'axis' should be either 0 (to index rows) or 1 (to index "
-            " column). Got {} instead.".format(axis)
+            f" column). Got {axis} instead."
         )
 
     indices_dtype = _determine_key_type(indices)

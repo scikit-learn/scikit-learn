@@ -274,7 +274,7 @@ def fetch_species_distributions(
             coverages = []
             for f in X.files:
                 fhandle = BytesIO(X[f])
-                logger.debug(" - converting {}".format(f))
+                logger.debug(f" - converting {f}")
                 coverages.append(_load_coverage(fhandle))
             coverages = np.asarray(coverages, dtype=dtype)
         remove(coverages_path)

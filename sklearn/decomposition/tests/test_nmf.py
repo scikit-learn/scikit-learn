@@ -66,8 +66,8 @@ def test_parameter_checking():
 
     for init in ["nndsvd", "nndsvda", "nndsvdar"]:
         msg = re.escape(
-            "init = '{}' can only be used when "
-            "n_components <= min(n_samples, n_features)".format(init)
+            f"init = '{init}' can only be used when "
+            "n_components <= min(n_samples, n_features)"
         )
         with pytest.raises(ValueError, match=msg):
             NMF(3, init=init).fit(A)
