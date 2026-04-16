@@ -17,6 +17,7 @@ from sklearn.datasets import (
     load_iris,
     make_multilabel_classification,
     make_regression,
+    make_classification,
 )
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import PoissonRegressor
@@ -409,9 +410,6 @@ def test_multioutput_regression():
 
 def test_mlp_classifier_early_stopping_with_string_labels():
     """Non-regression test for string labels with early_stopping=True."""
-    import numpy as np
-
-    from sklearn.datasets import make_classification
 
     X, y_num = make_classification(
         n_samples=200,
