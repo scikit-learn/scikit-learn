@@ -634,18 +634,6 @@ def test_kbinsdiscretizer_subsample(strategy, global_random_seed):
     )
 
 
-def test_quantile_method_future_warnings():
-    X = [[-2, 1, -4], [-1, 2, -3], [0, 3, -2], [1, 4, -1]]
-    with pytest.warns(
-        FutureWarning,
-        match="The current default behavior, quantile_method='linear', will be "
-        "changed to quantile_method='averaged_inverted_cdf' in "
-        "scikit-learn version 1.9 to naturally support sample weight "
-        "equivalence properties by default. Pass "
-        "quantile_method='averaged_inverted_cdf' explicitly to silence this "
-        "warning.",
-    ):
-        KBinsDiscretizer(strategy="quantile").fit(X)
 
 
 def test_invalid_quantile_method_with_sample_weight():
