@@ -12,11 +12,15 @@ import numpy as np
 from joblib import effective_n_jobs
 from scipy import sparse
 
-from sklearn.base import MultiOutputMixin, RegressorMixin, _fit_context
+from sklearn.base import RegressorMixin, _fit_context
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from sklearn.linear_model import _cd_fast as cd_fast  # type: ignore[attr-defined]
-from sklearn.linear_model._base import LinearModel, _pre_fit, _preprocess_data
+from sklearn.linear_model._base import (
+    MultiOutputLinearModel,
+    _pre_fit,
+    _preprocess_data,
+)
 from sklearn.model_selection import check_cv
 from sklearn.utils import Bunch, check_array, check_scalar, metadata_routing
 from sklearn.utils._metadata_requests import (
@@ -767,7 +771,7 @@ def enet_path(
 # ElasticNet model
 
 
-class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
+class ElasticNet(RegressorMixin, MultiOutputLinearModel):
     """Linear regression with combined L1 and L2 priors as regularizer.
 
     Minimizes the objective function:
@@ -1550,7 +1554,7 @@ def _path_residuals(
     return this_mse.mean(axis=0)
 
 
-class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
+class LinearModelCV(MultiOutputLinearModel, ABC):
     """Base class for iterative model fitting along a regularization path."""
 
     _parameter_constraints: dict = {

@@ -1,6 +1,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import textwrap
+
 import pytest
 
 from sklearn.base import clone
@@ -8,18 +10,19 @@ from sklearn.callback.tests._utils import (
     FailingCallback,
     MaxIterEstimator,
     NotValidCallback,
-    TestingAutoPropagatedCallback,
-    TestingCallback,
+    RecordingAutoPropagatedCallback,
+    RecordingCallback,
 )
+from sklearn.utils._testing import assert_run_python_script_without_output
 from sklearn.utils.parallel import Parallel, delayed
 
 
 @pytest.mark.parametrize(
     "callbacks",
     [
-        TestingCallback(),
-        [TestingCallback()],
-        [TestingCallback(), TestingAutoPropagatedCallback()],
+        RecordingCallback(),
+        [RecordingCallback()],
+        [RecordingCallback(), RecordingAutoPropagatedCallback()],
     ],
 )
 def test_set_callbacks(callbacks):
@@ -35,7 +38,7 @@ def test_set_callbacks(callbacks):
     assert set_callbacks_return is estimator
 
 
-@pytest.mark.parametrize("callbacks", [None, NotValidCallback(), TestingCallback])
+@pytest.mark.parametrize("callbacks", [None, NotValidCallback(), RecordingCallback])
 def test_set_callbacks_error(callbacks):
     """Check the error message when not passing a valid callback to `set_callbacks`."""
     estimator = MaxIterEstimator()
@@ -63,7 +66,9 @@ def test_callback_error(fail_at):
 
 @pytest.mark.parametrize("n_jobs", [1, 2])
 @pytest.mark.parametrize("prefer", ["threads", "processes"])
-@pytest.mark.parametrize("Callback", [TestingCallback, TestingAutoPropagatedCallback])
+@pytest.mark.parametrize(
+    "Callback", [RecordingCallback, RecordingAutoPropagatedCallback]
+)
 def test_function_no_callback_support(n_jobs, prefer, Callback):
     """Check callbacks on estimators within function not supporting callbacks.
 
@@ -93,3 +98,13 @@ def test_function_no_callback_support(n_jobs, prefer, Callback):
     assert callback.count_hooks("on_fit_task_begin") == n_fits * (1 + max_iter)
     assert callback.count_hooks("on_fit_task_end") == n_fits * (1 + max_iter)
     assert callback.count_hooks("teardown") == n_fits
+
+
+def test_instantiate_manager_outside_main_module():
+    """Test instantiating the callbacks manager outside the __main__ module."""
+    code = """
+    from sklearn.callback._callback_support import get_callback_manager
+
+    get_callback_manager()
+    """
+    assert_run_python_script_without_output(textwrap.dedent(code))

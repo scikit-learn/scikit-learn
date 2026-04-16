@@ -21,9 +21,9 @@ from sklearn.callback.tests._utils import (
     NotRequiredKwargsCallback,
     NotValidHookCallback,
     ParentFitEstimator,
+    RecordingAutoPropagatedCallback,
+    RecordingCallback,
     StopFitCallback,
-    TestingAutoPropagatedCallback,
-    TestingCallback,
     ThirdPartyEstimator,
 )
 
@@ -43,8 +43,8 @@ def _make_callback_ctx(
 
 def test_propagate_callback_context():
     """Sanity check for the `propagate_callback_context` method."""
-    not_propagated_callback = TestingCallback()
-    propagated_callback = TestingAutoPropagatedCallback()
+    not_propagated_callback = RecordingCallback()
+    propagated_callback = RecordingAutoPropagatedCallback()
 
     estimator = MaxIterEstimator()
     metaestimator = MetaEstimator(estimator)
@@ -77,7 +77,7 @@ def test_auto_propagated_callbacks():
     sub-estimator of a meta-estimator.
     """
     estimator = MaxIterEstimator()
-    estimator.set_callbacks(TestingAutoPropagatedCallback())
+    estimator.set_callbacks(RecordingAutoPropagatedCallback())
     meta_estimator = MetaEstimator(estimator=estimator)
 
     match = (
@@ -232,7 +232,7 @@ def test_inner_estimator_no_callback_support():
     """
     estimator = NoCallbackEstimator()
     meta_estimator = MetaEstimator(estimator)
-    meta_estimator.set_callbacks(TestingAutoPropagatedCallback())
+    meta_estimator.set_callbacks(RecordingAutoPropagatedCallback())
 
     with pytest.warns(
         UserWarning,
@@ -248,11 +248,13 @@ def test_estimator_without_subtask():
     context's `call_on_fit_task_end` does not cause a problem.
     """
     estimator = NoSubtaskEstimator()
-    estimator.set_callbacks([TestingCallback()])
+    estimator.set_callbacks([RecordingCallback()])
     estimator.fit()
 
 
-@pytest.mark.parametrize("Callback", [TestingAutoPropagatedCallback, TestingCallback])
+@pytest.mark.parametrize(
+    "Callback", [RecordingAutoPropagatedCallback, RecordingCallback]
+)
 def test_callback_hooks_called(Callback):
     """Check the number of callback hook calls in a regular estimator.
 
@@ -285,7 +287,7 @@ def test_meta_estimator_autopropagated_callback_hooks_called(n_jobs):
     """
 
     n_outer, n_inner, max_iter = 2, 3, 5
-    callback = TestingAutoPropagatedCallback()
+    callback = RecordingAutoPropagatedCallback()
     MetaEstimator(
         MaxIterEstimator(max_iter=max_iter),
         n_outer=n_outer,
@@ -314,7 +316,7 @@ def test_meta_estimator_callback_hooks_called(n_jobs):
     task ends from all the sub-estimators.
     """
     n_outer, n_inner, max_iter = 2, 3, 5
-    callback = TestingCallback()
+    callback = RecordingCallback()
     est = MaxIterEstimator(max_iter=max_iter).set_callbacks(callback)
     MetaEstimator(est, n_outer=n_outer, n_inner=n_inner, n_jobs=n_jobs).fit()
 
@@ -333,7 +335,7 @@ def test_autopropagation_to_callback_agnostic_subestimator():
     of the meta-estimator.
     """
     n_outer, n_inner = 2, 3
-    callback = TestingAutoPropagatedCallback()
+    callback = RecordingAutoPropagatedCallback()
     meta_estimator = MetaEstimator(
         NoCallbackEstimator(), n_outer=n_outer, n_inner=n_inner
     ).set_callbacks(callback)
@@ -354,7 +356,7 @@ def test_autopropagation_to_callback_agnostic_subestimator():
 def test_hook_calling_invalid_kwargs_in():
     """Check that passing invalid kwargs to call_on_fit_task_* raises an error."""
     estimator = MaxIterEstimator()
-    context = estimator.set_callbacks(TestingCallback())._init_callback_context()
+    context = estimator.set_callbacks(RecordingCallback())._init_callback_context()
     msg = r"call_on_fit_task_begin .* has received parameters that are not valid"
     with pytest.raises(TypeError, match=msg):
         context.call_on_fit_task_begin(estimator=estimator, X=1, y=2, not_valid_kwarg=3)
@@ -373,7 +375,7 @@ def test_hook_calling_invalid_kwargs_out():
 
 def test_hook_calling_unused_kwargs():
     """Check that not provided kwargs are left to their default value (None)."""
-    callback = TestingCallback()
+    callback = RecordingCallback()
     estimator = MaxIterEstimator()
     context = estimator.set_callbacks(callback)._init_callback_context()
     # only provide "X" and "y"
@@ -385,12 +387,12 @@ def test_hook_calling_unused_kwargs():
 def test_hook_calling_return_value():
     """Check the return value of the hook calls."""
     estimator = MaxIterEstimator()
-    context = estimator.set_callbacks(TestingCallback())._init_callback_context()
+    context = estimator.set_callbacks(RecordingCallback())._init_callback_context()
     result = context.call_on_fit_task_end(estimator=estimator)
-    # TestingCallback.on_fit_task_end does not return a value (interpreted as False)
+    # RecordingCallback.on_fit_task_end does not return a value (interpreted as False)
     assert result is False
 
-    estimator.set_callbacks([TestingCallback(), StopFitCallback()])
+    estimator.set_callbacks([RecordingCallback(), StopFitCallback()])
     result = estimator._init_callback_context().call_on_fit_task_end(
         estimator=estimator
     )
@@ -424,7 +426,7 @@ def test_hook_calling_lazy_evaluation():
 
     # kwarg used twice is evaluated only once
     eval_counts = {"X": 0}
-    estimator.set_callbacks([TestingCallback(), TestingCallback()])
+    estimator.set_callbacks([RecordingCallback(), RecordingCallback()])
     context = estimator._init_callback_context()
     context.call_on_fit_task_begin(estimator=estimator, X=partial(eval_kwarg, "X"))
     assert eval_counts["X"] == 1
@@ -437,7 +439,7 @@ def test_hook_calling_lazy_evaluation_reconstruction_attributes():
     fitted estimator that is passed to the callback as "fitted_estimator".
     """
     estimator = MaxIterEstimator()
-    callback = TestingCallback()
+    callback = RecordingCallback()
     context = estimator.set_callbacks(callback)._init_callback_context()
     context.call_on_fit_task_end(
         estimator=estimator, reconstruction_attributes=lambda: {"n_iter_": 1}
@@ -519,7 +521,7 @@ def test_locally_defined_estimator():
             return self
 
     estimator = LocallyDefinedEstimator()
-    callback = TestingCallback()
+    callback = RecordingCallback()
     estimator.set_callbacks(callback)
     estimator.fit()
     assert callback.count_hooks("setup") == 1

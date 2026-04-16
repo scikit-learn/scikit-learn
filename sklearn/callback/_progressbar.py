@@ -65,10 +65,31 @@ class ProgressBar:
         self._run_monitors[context.root_uuid] = progress_monitor
 
     def on_fit_task_begin(self, estimator, context):
-        pass
+        # Don't pass the context to the queue to avoid pickling the whole context tree.
+        # Instead we pass the minimal information needed to create a progress bar.
+        if context.max_subtasks != 0:
+            path = [ctx.task_id for ctx in get_context_path(context)]
+            self._run_queues[context.root_uuid].put(
+                {
+                    "event": "begin",
+                    "path": path,
+                    "task_name": context.task_name,
+                    "task_id": context.task_id,
+                    "max_subtasks": context.max_subtasks,
+                    "estimator_name": context.estimator_name,
+                    "source_estimator_name": context.source_estimator_name,
+                    "source_task_name": context.source_task_name,
+                }
+            )
 
     def on_fit_task_end(self, estimator, context):
-        self._run_queues[context.root_uuid].put(context)
+        # The path is enough to update the progress of the task and its ancestors.
+        self._run_queues[context.root_uuid].put(
+            {
+                "event": "end",
+                "path": [ctx.task_id for ctx in get_context_path(context)],
+            }
+        )
 
     def teardown(self, estimator, context):
         # Signal that the queue won't receive any more tasks.
@@ -93,8 +114,21 @@ try:
         # setting the _ordered_tasks attribute). In particular it allows to dynamically
         # create and insert tasks between existing tasks.
         def get_renderables(self):
-            table = self.make_tasks_table(getattr(self, "_ordered_tasks", []))
-            yield table
+            yield self.make_tasks_table(getattr(self, "_ordered_tasks", []))
+
+    class _StyledColumnMixin:
+        """Apply finished/in-progress color style to rendered text."""
+
+        def render(self, task):
+            text = super().render(task)
+            text.style = "#29ABE2" if task.finished else "#F7931E"
+            return text
+
+    class _StyledTimeRemainingColumn(_StyledColumnMixin, TimeRemainingColumn):
+        """Time column with color styling."""
+
+    class _StyledPercentageColumn(_StyledColumnMixin, TextColumn):
+        """Percentage column with color styling."""
 
 except ImportError:
     pass
@@ -120,12 +154,12 @@ class RichProgressMonitor(Thread):
         self.progress_ctx = _Progress(
             TextColumn("[progress.description]{task.description}"),
             BarColumn(
-                complete_style=Style(color="dark_orange"),
-                finished_style=Style(color="cyan"),
+                complete_style=Style(color="#F7931E"),
+                finished_style=Style(color="#29ABE2"),
+                pulse_style=Style(color="#F7931E"),
             ),
-            TextColumn("[bright_magenta]{task.percentage:>3.0f}%"),
-            TimeRemainingColumn(elapsed_when_finished=True),
-            auto_refresh=False,
+            _StyledPercentageColumn("{task.percentage:>3.0f}%"),
+            _StyledTimeRemainingColumn(elapsed_when_finished=True),
         )
 
         # Holds the root of the tree of rich tasks (i.e. progress bars) that will be
@@ -133,89 +167,84 @@ class RichProgressMonitor(Thread):
         self.root_rich_task = None
 
         with self.progress_ctx:
-            while context := self.queue.get():
-                context_path = get_context_path(context)
-                self._update_task_tree(context_path)
-                self._update_tasks()
-                self.progress_ctx.refresh()
-
-    def _update_task_tree(self, context_path):
-        """Update the tree of rich tasks from the path of a new task.
-
-        A new rich task is created for the task and all its ancestors if needed.
-        """
-        curr_rich_task, parent_rich_task = None, None
-
-        for context in context_path:
-            if context.parent is None:  # root node
-                if self.root_rich_task is None:
-                    self.root_rich_task = RichTask(
-                        context, progress_ctx=self.progress_ctx
-                    )
-                curr_rich_task = self.root_rich_task
-            elif context.task_id not in parent_rich_task.children:
-                curr_rich_task = RichTask(
-                    context,
-                    progress_ctx=self.progress_ctx,
-                    parent=parent_rich_task,
-                )
-                parent_rich_task.children[context.task_id] = curr_rich_task
-            else:  # task already exists
-                curr_rich_task = parent_rich_task.children[context.task_id]
-            parent_rich_task = curr_rich_task
-
-        # Mark the deepest task as finished (this is the one corresponding to the
-        # task that we just get from the queue).
-        curr_rich_task.finished = True
-
-    def _update_tasks(self):
-        """Loop through the tasks in their display order and update their progress."""
-        self.progress_ctx._ordered_tasks = []
-
-        for rich_task_node in self.root_rich_task:
-            task = self.progress_ctx.tasks[rich_task_node.task_id]
-
-            total = task.total
-
-            if rich_task_node.finished:
-                # It's possible that a task finishes without reaching its total
-                # (e.g. early stopping). We mark it as 100% completed.
-
-                if task.total is None:
-                    # Indeterminate task is finished. Set total to an arbitrary
-                    # value to render its completion as 100%.
-                    completed = total = 1
+            while task_info := self.queue.get():
+                if task_info.pop("event") == "begin":
+                    self._on_task_begin(task_info)
                 else:
-                    completed = total
-            else:
-                completed = sum(t.finished for t in rich_task_node.children.values())
+                    self._on_task_end(task_info)
 
-            self.progress_ctx.update(
-                rich_task_node.task_id, completed=completed, total=total, refresh=False
-            )
-            self.progress_ctx._ordered_tasks.append(task)
+            self.progress_ctx.refresh()
+
+    def _on_task_begin(self, task_info):
+        """Create a progress bar for the task and update the list of ordered tasks."""
+        path = task_info.pop("path")
+
+        rich_task = RichTask(
+            progress_ctx=self.progress_ctx, task_info=task_info, depth=len(path) - 1
+        )
+        if rich_task.depth == 0:
+            self.root_rich_task = rich_task
+        else:
+            parent = self.root_rich_task.get_descendants(path)[-2]
+            parent.children[path[-1]] = rich_task
+
+        self.progress_ctx._ordered_tasks = [
+            self.progress_ctx.tasks[task.id] for task in self.root_rich_task
+        ]
+
+    def _on_task_end(self, task_info):
+        """Update the progress of the task and its ancestors recursively."""
+        *ancestors, task = self.root_rich_task.get_descendants(task_info["path"])
+
+        if task is not None:
+            task.completed = task.total
+            if task.total is None:
+                # Indeterminate task is finished. Set total to an arbitrary
+                # value to render its completion as 100%.
+                self.progress_ctx.update(task.id, completed=1, total=1)
+            else:
+                self.progress_ctx.update(task.id, completed=task.total)
+
+        for ancestor in reversed(ancestors):
+            if ancestor.total is None:
+                continue
+
+            if not ancestor.children:
+                ancestor.completed += 1
+                self.progress_ctx.update(ancestor.id, advance=1)
+            else:
+                completed = ancestor.progress * ancestor.total
+                self.progress_ctx.update(ancestor.id, completed=completed)
 
 
 class RichTask:
     """A task, i.e. progressbar, in the tree of rich tasks.
 
+    There is a rich task for each non-leaf task in the context tree of the estimator.
+
     Parameters
     ----------
-    context : `sklearn.callback.CallbackContext` instance
-        Context of the estimator task for which this rich task is created.
-
     progress_ctx : `rich.Progress` instance
         The progress context to which this task belongs.
 
-    parent : `RichTask` instance
-        The parent of this task.
+    task_info : dict
+        Information about the task for which this rich task is created.
+
+    depth : int
+        The depth of the task in the tree of rich tasks.
 
     Attributes
     ----------
-    finished : bool
-        Whether the task is finished.
+    completed : int
+        The number of completed subtasks.
 
-    task_id : int
+    total : int or None
+        The total number of subtasks. None if the total number of subtasks is not known.
+
+    progress : float
+        The fraction, between 0 and 1, of the task that is completed.
+
+    id : int
         The ID of the task in the Progress context.
 
     children : dict
@@ -223,38 +252,48 @@ class RichTask:
         For a leaf, it's an empty dictionary.
     """
 
-    def __init__(self, context, progress_ctx, parent=None):
-        self.parent = parent
+    def __init__(self, *, progress_ctx, task_info, depth):
         self.children = {}
-        self.finished = False
-        self.depth = 0 if parent is None else parent.depth + 1
+        self.depth = depth
+        self.completed = 0
+        self.total = task_info.pop("max_subtasks")
 
-        if context.max_subtasks != 0:
-            description = self._format_task_description(context)
-            self.task_id = progress_ctx.add_task(
-                description, total=context.max_subtasks
-            )
+        description = self._format_task_description(task_info)
+        self.id = progress_ctx.add_task(description, total=self.total)
 
-    def _format_task_description(self, context):
+    @property
+    def progress(self):
+        """Return the fraction of the task that is completed."""
+        if self.completed == self.total:
+            return 1.0
+        if self.total is None:
+            return 0.0
+        if not self.children:
+            return self.completed / self.total
+        return sum(child.progress for child in self.children.values()) / self.total
+
+    def _format_task_description(self, task_info):
         """Return a formatted description for the task."""
-        colors = ["bright_magenta", "cyan", "dark_orange"]
-
         indent = f"{'  ' * self.depth}"
-        style = f"[{colors[(self.depth) % len(colors)]}]"
-
-        task_desc = f"{context.estimator_name} - {context.task_name}"
-        id_mark = f" #{context.task_id}" if context.parent is not None else ""
+        task_desc = f"{task_info['estimator_name']} - {task_info['task_name']}"
+        id_mark = f" #{task_info['task_id']}" if self.depth > 0 else ""
         source_task_desc = (
-            f"{context.source_estimator_name} - {context.source_task_name} | "
-            if context.source_estimator_name is not None
+            f"{task_info['source_estimator_name']} - {task_info['source_task_name']} | "
+            if task_info["source_estimator_name"] is not None
             else ""
         )
+        return f"{indent}{source_task_desc}{task_desc}{id_mark}"
 
-        return f"{style}{indent}{source_task_desc}{task_desc}{id_mark}"
+    def get_descendants(self, path):
+        """Return the descendants from this task along the given path."""
+        if len(path) == 1:
+            return [self]
+        if path[1] not in self.children:
+            return [self, None]
+        return [self] + self.children[path[1]].get_descendants(path[1:])
 
     def __iter__(self):
-        """Pre-order depth-first traversal, excluding leaves."""
-        if self.children:
-            yield self
-            for child in self.children.values():
-                yield from child
+        """Pre-order depth-first traversal."""
+        yield self
+        for child in self.children.values():
+            yield from child

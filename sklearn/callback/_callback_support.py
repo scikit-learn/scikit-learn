@@ -3,8 +3,9 @@
 
 import functools
 from contextlib import contextmanager
-from multiprocessing import Manager
 from threading import Lock
+
+from joblib.externals.loky.backend import get_context
 
 from sklearn.callback._base import AutoPropagatedCallback, FitCallback
 from sklearn.callback._callback_context import CallbackContext
@@ -23,7 +24,7 @@ def get_callback_manager():
     if _CallbackManagerState.manager is None:
         with _CallbackManagerState.lock:
             if _CallbackManagerState.manager is None:
-                _CallbackManagerState.manager = Manager()
+                _CallbackManagerState.manager = get_context().Manager()
 
     return _CallbackManagerState.manager
 
