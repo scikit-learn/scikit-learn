@@ -1308,6 +1308,8 @@ def check_array_api_input(
     By default, this just checks that the types and shapes of the arrays are
     consistent with calling the same estimator with numpy arrays.
 
+    Parameters
+    ----------
     name : str
         The name of the estimator. Used in error messages but ignored here.
 
