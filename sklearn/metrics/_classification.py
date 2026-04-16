@@ -3920,9 +3920,9 @@ def d2_log_loss_score(
 
     y_proba : array-like of shape (n_samples, n_classes) or (n_samples,)
         Predicted probabilities, as returned by a classifier's
-        predict_proba method. If ``y_pred.shape = (n_samples,)``
+        predict_proba method. If ``y_proba.shape = (n_samples,)``
         the probabilities provided are assumed to be that of the
-        positive class. The labels in ``y_pred`` are assumed to be
+        positive class. The labels in ``y_proba`` are assumed to be
         ordered alphabetically, as done by
         :class:`~sklearn.preprocessing.LabelBinarizer`.
 
