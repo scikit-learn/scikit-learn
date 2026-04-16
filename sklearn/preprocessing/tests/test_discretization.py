@@ -328,8 +328,20 @@ def test_encode_options():
 @pytest.mark.parametrize(
     "strategy, quantile_method, expected_2bins, expected_3bins, expected_5bins",
     [
-        ("uniform", "averaged_inverted_cdf", [0, 0, 0, 0, 1, 1], [0, 0, 0, 0, 2, 2], [0, 0, 1, 1, 4, 4]),
-        ("kmeans", "averaged_inverted_cdf", [0, 0, 0, 0, 1, 1], [0, 0, 1, 1, 2, 2], [0, 0, 1, 2, 3, 4]),
+        (
+            "uniform",
+            "averaged_inverted_cdf",
+            [0, 0, 0, 0, 1, 1],
+            [0, 0, 0, 0, 2, 2],
+            [0, 0, 1, 1, 4, 4],
+        ),
+        (
+            "kmeans",
+            "averaged_inverted_cdf",
+            [0, 0, 0, 0, 1, 1],
+            [0, 0, 1, 1, 2, 2],
+            [0, 0, 1, 2, 3, 4],
+        ),
         (
             "quantile",
             "averaged_inverted_cdf",
