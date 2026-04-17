@@ -482,7 +482,7 @@ jobs:
   check-job-statuses:
     name: Check all job statuses
     runs-on: ubuntu-latest
-    if: always()
+    if: always() && github.repository == 'scikit-learn/scikit-learn'
     needs: [lint, unit-tests, debian-32bit, free-threaded, scipy-dev]
     steps:
       - uses: re-actors/alls-green@release/v1

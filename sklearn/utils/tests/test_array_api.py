@@ -34,9 +34,11 @@ from sklearn.utils._array_api import (
     _nanmin,
     _ravel,
     _validate_diagonal_args,
+    check_same_namespace,
     get_namespace,
     get_namespace_and_device,
     indexing_dtype,
+    move_estimator_to,
     move_to,
     np_compat,
     supported_float_dtypes,
@@ -255,7 +257,7 @@ def test_average(
             # https://github.com/numpy/numpy/issues/26850
             assert array_api_device(array_in) == array_api_device(result)
 
-    result = _convert_to_numpy(result, xp)
+    result = move_to(result, xp=numpy, device="cpu")
     assert_allclose(result, expected, atol=_atol_for_type(dtype_name))
 
 
@@ -438,7 +440,7 @@ def test_nan_reductions(library, X, reduction, expected):
     with config_context(array_api_dispatch=True):
         result = reduction(xp.asarray(X))
 
-    result = _convert_to_numpy(result, xp)
+    result = move_to(result, xp=numpy, device="cpu")
     assert_allclose(result, expected)
 
 
@@ -454,7 +456,7 @@ def test_ravel(namespace, device_name, dtype_name):
     with config_context(array_api_dispatch=True):
         result = _ravel(array_xp)
 
-    result = _convert_to_numpy(result, xp)
+    result = move_to(result, xp=numpy, device="cpu")
     expected = numpy.ravel(array, order="C")
 
     assert_allclose(expected, result)
@@ -494,7 +496,33 @@ def test_convert_to_numpy_cpu():
 class SimpleEstimator(BaseEstimator):
     def fit(self, X, y=None):
         self.X_ = X
+        self.X_dict_ = {"X": X}
+        self.X_list_ = [X]
         self.n_features_ = X.shape[0]
+        return self
+
+    def predict(self, X):
+        check_same_namespace(X, self, attribute="X_", method="predict")
+        return X
+
+
+class SimpleEstimatorCustomLogic(BaseEstimator):
+    def fit(self, X, y=None):
+        self.X_ = X
+        self.X_dict_ = {"X": X}
+        self.n_features_ = X.shape[0]
+        return self
+
+    def predict(self, X):
+        check_same_namespace(X, self, attribute="X_", method="predict")
+        return X
+
+    def __sklearn_array_api_convert__(self, converter):
+        self.X_ = converter(self.X_)
+        self.X_dict_ = {k: converter(v) for k, v in self.X_dict_.items()}
+        # XXX Do we need this? What else could the custom logic do that wouldn't work
+        # with the default logic?
+        self.converted_ = True
         return self
 
 
@@ -512,15 +540,18 @@ def test_convert_estimator_to_ndarray(array_namespace, converter):
     xp = pytest.importorskip(array_namespace)
 
     X = xp.asarray([[1.3, 4.5]])
-    est = SimpleEstimator().fit(X)
+    with config_context(array_api_dispatch=True):
+        est = SimpleEstimator().fit(X)
+        est.predict(X)
 
-    new_est = _estimator_with_converted_arrays(est, converter)
-    assert isinstance(new_est.X_, numpy.ndarray)
+        new_est = _estimator_with_converted_arrays(est, converter)
+        assert isinstance(new_est.X_, numpy.ndarray)
+        new_est = move_estimator_to(est, numpy, device="cpu")
+        assert isinstance(new_est.X_, numpy.ndarray)
 
 
 @skip_if_array_api_compat_not_configured
-def test_convert_estimator_to_array_api():
-    """Convert estimator attributes to ArrayAPI arrays."""
+def test_convert_estimator_with_custom_logic():
     xp = pytest.importorskip("array_api_strict")
 
     X_np = numpy.asarray([[1.3, 4.5]])
@@ -528,6 +559,54 @@ def test_convert_estimator_to_array_api():
 
     new_est = _estimator_with_converted_arrays(est, lambda array: xp.asarray(array))
     assert hasattr(new_est.X_, "__array_namespace__")
+    with config_context(array_api_dispatch=True):
+        new_est = move_estimator_to(est, xp, device=None)
+
+        assert get_namespace(new_est.X_)[0] == xp
+        assert get_namespace(new_est.X_dict_["X"])[0] == xp
+        assert get_namespace(new_est.X_list_[0])[0] == xp
+
+
+@skip_if_array_api_compat_not_configured
+def test_custom_conversion_estimator_to_array_api_strict():
+    xp = pytest.importorskip("array_api_strict")
+
+    X_np = numpy.asarray([[1.3, 4.5]])
+    est = SimpleEstimatorCustomLogic().fit(X_np)
+
+    with config_context(array_api_dispatch=True):
+        new_est = move_estimator_to(est, xp, device=None)
+
+        new_est.predict(xp.asarray([[1.3, 4.5]]))
+
+        assert get_namespace(new_est.X_)[0] == xp
+        assert get_namespace(new_est.X_dict_["X"])[0] == xp
+        assert new_est.converted_
+
+
+@skip_if_array_api_compat_not_configured
+def test_convert_estimator_to_array_api_strict():
+    xp = pytest.importorskip("array_api_strict")
+
+    X_np = numpy.asarray([[1.3, 4.5]])
+    est = SimpleEstimator().fit(X_np)
+
+    with config_context(array_api_dispatch=True):
+        new_est = move_estimator_to(est, xp, device=None)
+
+        assert get_namespace(new_est.X_)[0] == xp
+        assert get_namespace(new_est.X_dict_["X"])[0] == xp
+
+
+@skip_if_array_api_compat_not_configured
+def test_check_fitted_attribute():
+    xp = pytest.importorskip("array_api_strict")
+
+    with config_context(array_api_dispatch=True):
+        est = SimpleEstimator().fit(xp.asarray([[1.3, 4.5]]))
+
+        with pytest.raises(ValueError, match=".*must use the same namespace"):
+            est.predict(numpy.asarray([0]))
 
 
 @pytest.mark.parametrize(
@@ -591,7 +670,7 @@ def test_isin(
             invert=invert,
         )
 
-    assert_array_equal(_convert_to_numpy(result, xp=xp), expected)
+    assert_array_equal(move_to(result, xp=numpy, device="cpu"), expected)
 
 
 @pytest.mark.skipif(
@@ -659,7 +738,7 @@ def test_count_nonzero(
             array_xp, axis=axis, sample_weight=sample_weight, xp=xp, device=device
         )
 
-    assert_allclose(_convert_to_numpy(result, xp=xp), expected)
+    assert_allclose(move_to(result, xp=numpy, device="cpu"), expected)
 
     if np_version < parse_version("2.0.0") or np_version >= parse_version("2.1.0"):
         # NumPy 2.0 has a problem with the device attribute of scalar arrays:
@@ -745,7 +824,7 @@ def test_fill_diagonal(array, array_namespace, device_name, dtype_name):
     with config_context(array_api_dispatch=True):
         _fill_diagonal(array_xp, value=1, xp=xp)
 
-    assert_array_equal(_convert_to_numpy(array_xp, xp=xp), array_np)
+    assert_array_equal(move_to(array_xp, xp=numpy, device="cpu"), array_np)
 
 
 @pytest.mark.parametrize(
@@ -765,7 +844,7 @@ def test_add_to_diagonal(array_namespace, device_name, dtype_name):
     with config_context(array_api_dispatch=True):
         _fill_diagonal(array_xp, value=add_val, xp=xp)
 
-    assert_array_equal(_convert_to_numpy(array_xp, xp=xp), array_np)
+    assert_array_equal(move_to(array_xp, xp=numpy, device="cpu"), array_np)
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
@@ -810,7 +889,7 @@ def test_median(namespace, device_name, dtype_name, axis):
             # part of the Array API spec
             assert get_namespace(result_xp)[0] == xp
             assert result_xp.device == X_xp.device
-    assert_allclose(result_np, _convert_to_numpy(result_xp, xp=xp))
+    assert_allclose(result_np, move_to(result_xp, xp=numpy, device="cpu"))
 
 
 @pytest.mark.parametrize(
@@ -825,7 +904,7 @@ def test_expit_logit(namespace, device_name, dtype_name):
         x_np = numpy.linspace(-20, 20, 1000).astype(dtype_name)
         x_xp = xp.asarray(x_np, device=device)
         assert_allclose(
-            _convert_to_numpy(_expit(x_xp), xp=xp),
+            move_to(_expit(x_xp), xp=numpy, device="cpu"),
             expit(x_np),
             rtol=rtol,
         )
@@ -833,7 +912,7 @@ def test_expit_logit(namespace, device_name, dtype_name):
         x_np = numpy.linspace(0, 1, 1000).astype(dtype_name)
         x_xp = xp.asarray(x_np, device=device)
         assert_allclose(
-            _convert_to_numpy(_logit(x_xp), xp=xp),
+            move_to(_logit(x_xp), xp=numpy, device="cpu"),
             logit(x_np),
             rtol=rtol,
         )
@@ -871,7 +950,7 @@ def test_logsumexp_like_scipy_logsumexp(array_namespace, device_name, dtype_name
 
     with config_context(array_api_dispatch=True):
         res_xp = _logsumexp(array_xp, axis=axis)
-        res_xp = _convert_to_numpy(res_xp, xp)
+        res_xp = move_to(res_xp, xp=numpy, device="cpu")
         assert_allclose(res_np, res_xp, rtol=rtol)
 
     # Test with NaNs and +np.inf
@@ -891,7 +970,7 @@ def test_logsumexp_like_scipy_logsumexp(array_namespace, device_name, dtype_name
 
     with config_context(array_api_dispatch=True):
         res_xp_2 = _logsumexp(array_xp_2, axis=axis)
-        res_xp_2 = _convert_to_numpy(res_xp_2, xp)
+        res_xp_2 = move_to(res_xp_2, xp=numpy, device="cpu")
         assert_allclose(res_np_2, res_xp_2, rtol=rtol)
 
 

@@ -20,9 +20,9 @@ from sklearn.preprocessing._csr_polynomial_expansion import (
     _get_sizeof_LARGEST_INT_t,
 )
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
     _is_numpy_namespace,
     get_namespace,
+    move_to,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._array_api import (
@@ -1363,7 +1363,7 @@ def test_polynomial_features_array_api_compliance(
         ).fit(X_xp)
         out_np = tf_np.transform(X_np)
         out_xp = tf_xp.transform(X_xp)
-        assert_allclose(_convert_to_numpy(out_xp, xp=xp), out_np)
+        assert_allclose(move_to(out_xp, xp=np, device="cpu"), out_np)
         assert get_namespace(out_xp)[0].__name__ == xp.__name__
         assert array_api_device(out_xp) == array_api_device(X_xp)
         assert out_xp.dtype == X_xp.dtype

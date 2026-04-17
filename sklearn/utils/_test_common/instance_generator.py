@@ -151,6 +151,7 @@ from sklearn.multioutput import (
     MultiOutputRegressor,
     RegressorChain,
 )
+from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import (
     KernelDensity,
     KNeighborsClassifier,
@@ -162,8 +163,14 @@ from sklearn.neighbors import (
 from sklearn.neural_network import BernoulliRBM, MLPClassifier, MLPRegressor
 from sklearn.pipeline import FeatureUnion, Pipeline
 from sklearn.preprocessing import (
+    Binarizer,
     KBinsDiscretizer,
+    KernelCenterer,
+    LabelEncoder,
+    MinMaxScaler,
+    Normalizer,
     OneHotEncoder,
+    PolynomialFeatures,
     SplineTransformer,
     StandardScaler,
     TargetEncoder,
@@ -477,6 +484,10 @@ INIT_PARAMS = {
     # Default "auto" parameter can lead to different ordering of eigenvalues on
     # windows: #24105
     SpectralEmbedding: dict(eigen_tol=1e-05),
+    # SplineTransformer supports NaN only with handle_missing="zeros", so we
+    # need this additional parameter set for the allow_nan_estimators Sphinx
+    # directive to detect it.
+    SplineTransformer: [dict(), dict(handle_missing="zeros")],
     StackingClassifier: dict(
         estimators=[
             ("est1", DecisionTreeClassifier(max_depth=3, random_state=0)),
@@ -955,6 +966,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
+    Binarizer: {
+        "check_array_api_same_namespace": "check_same_namespace not yet added",
+    },
     BernoulliRBM: {
         "check_methods_subset_invariance": ("fails for the decision_function method"),
         "check_methods_sample_order_invariance": ("fails for the score_samples method"),
@@ -983,6 +997,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_methods_sample_order_invariance": "fails for the predict method",
     },
     FeatureUnion: {
+        # Fails because StandardScaler, which gets wrapped by FeatureUnion, supports
+        # array API but FeatureUnion itself does not
+        "check_array_api_same_namespace": "check_same_namespace not yet added",
         "check_estimators_overwrite_params": "FIXME",
         "check_estimators_nan_inf": "FIXME",
         "check_dont_overwrite_parameters": "FIXME",
@@ -997,6 +1014,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
+    },
+    GaussianNB: {
+        "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     GradientBoostingClassifier: {
         # TODO: investigate failure see meta-issue #16298
@@ -1067,6 +1087,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
+    KernelCenterer: {
+        "check_array_api_same_namespace": "check_same_namespace not yet added",
+    },
     KernelDensity: {
         "check_sample_weight_equivalence_on_dense_data": (
             "sample_weight must have positive values"
@@ -1083,6 +1106,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     KNeighborsTransformer: {
         "check_methods_sample_order_invariance": "check is not applicable."
+    },
+    LabelEncoder: {
+        "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     LinearSVC: {
         # TODO: replace by a statistical test when _dual=True, see meta-issue #16298
@@ -1113,6 +1139,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
+    },
+    MinMaxScaler: {
+        "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     MiniBatchKMeans: {
         # TODO: replace by a statistical test, see meta-issue #16298
@@ -1147,10 +1176,14 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
+    Normalizer: {
+        "check_array_api_same_namespace": "check_same_namespace not yet added",
+    },
     Nystroem: {
+        "check_array_api_same_namespace": "check_same_namespace not yet added",
         "check_transformer_preserves_dtypes": (
             "dtypes are preserved but not at a close enough precision"
-        )
+        ),
     },
     OneClassSVM: {
         # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
@@ -1164,6 +1197,7 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     PCA: {
         # TODO: see gh-33205 for details
         "check_array_api_input": "`linalg.inv` fails because input is singular",
+        "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     Perceptron: {
         # TODO: replace by a statistical test, see meta-issue #16298
@@ -1183,6 +1217,12 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
             "Pipeline changes the `steps` parameter, which it shouldn't."
             "Therefore this test is x-fail until we fix this."
         ),
+    },
+    PoissonRegressor: {
+        "check_array_api_same_namespace": "check_same_namespace not yet added",
+    },
+    PolynomialFeatures: {
+        "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     RadiusNeighborsTransformer: {
         "check_methods_sample_order_invariance": "check is not applicable."
@@ -1230,6 +1270,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
+    },
+    RBFSampler: {
+        "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     Ridge: {
         "check_non_transformer_estimators_n_iter": (
@@ -1293,6 +1336,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_methods_subset_invariance": "empty array passed inside",
         "check_dont_overwrite_parameters": "empty array passed inside",
         "check_fit2d_predict1d": "empty array passed inside",
+    },
+    StandardScaler: {
+        "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     SVC: {
         # TODO: fix sample_weight handling of this estimator when probability=False

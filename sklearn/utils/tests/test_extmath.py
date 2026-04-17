@@ -14,9 +14,9 @@ from sklearn.datasets import make_low_rank_matrix, make_sparse_spd_matrix
 from sklearn.utils import gen_batches
 from sklearn.utils._arpack import _init_arpack_v0
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
     _max_precision_float_dtype,
     get_namespace,
+    move_to,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._array_api import (
@@ -730,8 +730,8 @@ def test_incremental_weighted_mean_and_variance_array_api(
     assert array_device(var_xp) == array_device(X_xp)
     assert var_xp.dtype == _max_precision_float_dtype(xp, device=device)
 
-    mean_xp = _convert_to_numpy(mean_xp, xp=xp)
-    var_xp = _convert_to_numpy(var_xp, xp=xp)
+    mean_xp = move_to(mean_xp, xp=np, device="cpu")
+    var_xp = move_to(var_xp, xp=np, device="cpu")
 
     assert_allclose(mean, mean_xp)
     assert_allclose(var, var_xp)
@@ -1122,9 +1122,9 @@ def test_randomized_svd_array_api_compliance(array_namespace, device_name, dtype
         assert get_namespace(s_xp)[0].__name__ == xp.__name__
         assert get_namespace(vt_xp)[0].__name__ == xp.__name__
 
-        assert_allclose(_convert_to_numpy(u_xp, xp), u_np, atol=atol)
-        assert_allclose(_convert_to_numpy(s_xp, xp), s_np, atol=atol)
-        assert_allclose(_convert_to_numpy(vt_xp, xp), vt_np, atol=atol)
+        assert_allclose(move_to(u_xp, xp=np, device="cpu"), u_np, atol=atol)
+        assert_allclose(move_to(s_xp, xp=np, device="cpu"), s_np, atol=atol)
+        assert_allclose(move_to(vt_xp, xp=np, device="cpu"), vt_np, atol=atol)
 
 
 @pytest.mark.parametrize(
@@ -1148,4 +1148,4 @@ def test_randomized_range_finder_array_api_compliance(
         Q_xp = randomized_range_finder(X_xp, size=size, n_iter=n_iter, random_state=0)
 
         assert get_namespace(Q_xp)[0].__name__ == xp.__name__
-        assert_allclose(_convert_to_numpy(Q_xp, xp), Q_np, atol=atol)
+        assert_allclose(move_to(Q_xp, xp=np, device="cpu"), Q_np, atol=atol)

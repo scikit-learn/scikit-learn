@@ -8,7 +8,7 @@ This example illustrates the use of
 probabilities of various classifiers in a 2D feature space, mostly for didactic
 purposes.
 
-The first three columns shows the predicted probability for varying values of
+The first three columns show the predicted probability for varying values of
 the two features. Round markers represent the test data that was predicted to
 belong to that class.
 
@@ -20,6 +20,7 @@ markers show the test data and are colored by their true label.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+# %%
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
@@ -151,6 +152,7 @@ for classifier_idx, (name, classifier) in enumerate(classifiers.items()):
         response_method="predict_proba",
         class_of_interest=None,
         ax=axes[classifier_idx, len(y_unique)],
+        multiclass_colors="viridis",
         vmin=0,
         vmax=1,
         levels=levels,
@@ -197,7 +199,6 @@ for label in y_unique:
 # Quantitative evaluation
 # -----------------------
 pd.DataFrame(evaluation_results).round(2)
-
 
 # %%
 # Analysis

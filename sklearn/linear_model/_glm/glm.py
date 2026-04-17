@@ -24,7 +24,6 @@ from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.utils import check_array
 from sklearn.utils._array_api import (
     _average,
-    _convert_to_numpy,
     _is_numpy_namespace,
     _matching_numpy_dtype,
     get_namespace,
@@ -256,10 +255,10 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         loss_dtype_np = _matching_numpy_dtype(X, xp=xp)
         if self.warm_start and hasattr(self, "coef_"):
             coef_xp, _ = get_namespace(self.coef_)
-            coef = _convert_to_numpy(self.coef_, xp=coef_xp)
+            coef = move_to(self.coef_, xp=np, device="cpu")
             if self.fit_intercept:
                 # LinearModelLoss needs intercept at the end of coefficient array.
-                intercept = _convert_to_numpy(self.intercept_, xp=coef_xp)
+                intercept = move_to(self.intercept_, xp=np, device="cpu")
                 coef = np.concatenate((coef, np.array([intercept])))
             coef = coef.astype(loss_dtype_np, copy=False)
         else:

@@ -23,11 +23,11 @@ from sklearn.exceptions import (
 )
 from sklearn.utils._array_api import (
     _asarray_with_order,
-    _convert_to_numpy,
     _is_numpy_namespace,
     _max_precision_float_dtype,
     get_namespace,
     get_namespace_and_device,
+    move_to,
 )
 from sklearn.utils._dataframe import is_pandas_df, is_pandas_df_or_series
 from sklearn.utils._isfinite import FiniteStatus, cy_isfinite
@@ -2598,7 +2598,7 @@ def _check_pos_label_consistency(pos_label, y_true):
                 or xp.all(classes == xp.asarray([1], device=device))
             )
         ):
-            classes = _convert_to_numpy(classes, xp=xp)
+            classes = move_to(classes, xp=np, device="cpu")
             classes_repr = ", ".join([repr(c) for c in classes.tolist()])
             raise ValueError(
                 f"y_true takes value in {{{classes_repr}}} and pos_label is not "

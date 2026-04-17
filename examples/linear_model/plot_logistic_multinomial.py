@@ -18,10 +18,10 @@ the line when the probability estimate for a class is of 0.5.
 # Dataset Generation
 # ------------------
 #
-# We generate a synthetic dataset using :func:`~sklearn.datasets.make_blobs` function.
-# The dataset consists of 1,000 samples from three different classes,
+# We generate a synthetic dataset using the :func:`~sklearn.datasets.make_blobs`
+# function. The dataset consists of 1,000 samples from three different classes,
 # centered around [-5, 0], [0, 1.5], and [5, -1]. After generation, we apply a linear
-# transformation to introduce some correlation between features and make the problem
+# transformation to introduce some correlation between the features to make the problem
 # more challenging. This results in a 2D dataset with three overlapping classes,
 # suitable for demonstrating the differences between multinomial and one-vs-rest
 # logistic regression.
@@ -30,6 +30,8 @@ import numpy as np
 
 from sklearn.datasets import make_blobs
 
+cmap = "coolwarm"
+
 centers = [[-5, 0], [0, 1.5], [5, -1]]
 X, y = make_blobs(n_samples=1_000, centers=centers, random_state=40)
 transformation = [[0.4, 0.2], [-0.4, 1.2]]
@@ -37,7 +39,7 @@ X = np.dot(X, transformation)
 
 fig, ax = plt.subplots(figsize=(6, 4))
 
-scatter = ax.scatter(X[:, 0], X[:, 1], c=y, edgecolor="black")
+scatter = ax.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap, edgecolor="black")
 ax.set(title="Synthetic Dataset", xlabel="Feature 1", ylabel="Feature 2")
 _ = ax.legend(*scatter.legend_elements(), title="Classes")
 
@@ -86,8 +88,9 @@ for model, title, ax in [
         ax=ax,
         response_method="predict",
         alpha=0.8,
+        multiclass_colors=cmap,
     )
-    scatter = ax.scatter(X[:, 0], X[:, 1], c=y, edgecolor="k")
+    scatter = ax.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap, edgecolor="k")
     legend = ax.legend(*scatter.legend_elements(), title="Classes")
     ax.add_artist(legend)
     ax.set_title(title)
@@ -108,8 +111,8 @@ for model, title, ax in [
 # --------------------------
 #
 # We also visualize the hyperplanes that correspond to the line when the probability
-# estimate for a class is of 0.5.
-def plot_hyperplanes(classifier, X, ax):
+# estimate for a class is 0.5.
+def plot_hyperplanes(classifier, X, ax, colors):
     xmin, xmax = X[:, 0].min(), X[:, 0].max()
     ymin, ymax = X[:, 1].min(), X[:, 1].max()
     ax.set(xlim=(xmin, xmax), ylim=(ymin, ymax))
@@ -121,12 +124,12 @@ def plot_hyperplanes(classifier, X, ax):
         coef = classifier.coef_
         intercept = classifier.intercept_
 
-    for i in range(coef.shape[0]):
+    for i, color in zip(range(coef.shape[0]), colors):
         w = coef[i]
         a = -w[0] / w[1]
         xx = np.linspace(xmin, xmax)
         yy = a * xx - (intercept[i]) / w[1]
-        ax.plot(xx, yy, "--", linewidth=3, label=f"Class {i}")
+        ax.plot(xx, yy, "--", color=color, linewidth=4, label=f"Class {i}")
 
     return ax.get_legend_handles_labels()
 
@@ -142,8 +145,10 @@ for model, title, ax in [
     ),
     (logistic_regression_ovr, "One-vs-Rest Logistic Regression Hyperplanes", ax2),
 ]:
-    hyperplane_handles, hyperplane_labels = plot_hyperplanes(model, X, ax)
-    scatter = ax.scatter(X[:, 0], X[:, 1], c=y, edgecolor="k")
+    hyperplane_handles, hyperplane_labels = plot_hyperplanes(
+        model, X, ax, colors=["blue", "dimgray", "red"]
+    )
+    scatter = ax.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap, edgecolor="k")
     scatter_handles, scatter_labels = scatter.legend_elements()
 
     all_handles = hyperplane_handles + scatter_handles

@@ -44,7 +44,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils._array_api import (
     _NUMPY_NAMESPACE_NAMES,
     _atol_for_type,
-    _convert_to_numpy,
+    move_to,
     yield_namespace_device_dtype_combinations,
     yield_namespaces,
 )
@@ -1429,7 +1429,7 @@ def check_array_api_attributes(
         assert coef_xp.dtype == X_iris_xp.dtype
 
         assert_allclose(
-            _convert_to_numpy(coef_xp, xp=xp),
+            move_to(coef_xp, xp=np, device="cpu"),
             coef_np,
             rtol=rtol,
             atol=_atol_for_type(dtype_name),
@@ -1439,7 +1439,7 @@ def check_array_api_attributes(
         assert intercept_xp.dtype == X_iris_xp.dtype
 
         assert_allclose(
-            _convert_to_numpy(intercept_xp, xp=xp),
+            move_to(intercept_xp, xp=np, device="cpu"),
             intercept_np,
             rtol=rtol,
             atol=_atol_for_type(dtype_name),
@@ -1500,7 +1500,7 @@ def test_ridge_classifier_multilabel_array_api(
         ridge_xp = estimator.fit(X_xp, y_xp)
         pred_xp = ridge_xp.predict(X_xp)
         assert pred_xp.shape == pred_np.shape == y.shape
-        assert_allclose(_convert_to_numpy(pred_xp, xp=xp), pred_np)
+        assert_allclose(move_to(pred_xp, xp=np, device="cpu"), pred_np)
 
 
 @pytest.mark.parametrize(
