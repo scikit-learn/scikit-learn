@@ -68,8 +68,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             .. versionadded:: 1.7
 
             .. versionchanged:: 1.9
-                The default value changed from ``"linear"`` to
-                ``"averaged_inverted_cdf"``.
+                The default value changed from `"linear"` to `"averaged_inverted_cdf"`.
 
     dtype : {np.float32, np.float64}, default=None
         The desired data-type for the output. If None, output dtype is
