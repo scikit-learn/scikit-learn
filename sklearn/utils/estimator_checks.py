@@ -1330,8 +1330,8 @@ def check_array_api_input(
     check_values : bool, default=False
         Whether to check the values of attributes, method outputs (including
         `inverse_transform`) obtained with array API inputs match that of all-NumPy
-        inputs. If `False` only the namespace, device, shape and dtype of outputs
-        are checked.
+        inputs. If `False` only the namespace, device, shape and dtype of attributes
+        and method outputs are checked.
 
     check_sample_weight : bool, default=False
         Whether to pass dummy weights to the fit call.
@@ -1415,8 +1415,8 @@ def check_array_api_mixed_inputs(
     check_values : bool, default=False
         Whether to check the values of attributes, method outputs (including
         `inverse_transform`) obtained with array API inputs match that of all-NumPy
-        inputs. If `False` only the namespace, device, shape and dtype of outputs
-        are checked.
+        inputs. If `False` only the namespace, device, shape and dtype of attributes
+        and method outputs are checked.
 
     check_sample_weight : bool, default=True
         Whether to pass dummy weights to the fit call.
