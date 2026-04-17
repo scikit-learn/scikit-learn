@@ -8,8 +8,10 @@ from io import StringIO
 from pathlib import Path
 
 from sklearn import config_context
+from sklearn.exceptions import NotFittedError
 from sklearn.utils._repr_html.base import _IDCounter
 from sklearn.utils._repr_html.features import _features_html
+from sklearn.utils.validation import check_is_fitted
 
 
 def _get_css_style():
@@ -428,7 +430,11 @@ def _write_estimator_html(
         out.write("</div>")
     elif est_block.kind == "single":
         if has_feature_names_out and is_not_pipeline_step and is_fitted_css_class:
-            output_features = estimator.get_feature_names_out()
+            try:
+                check_is_fitted(estimator)
+                output_features = estimator.get_feature_names_out()
+            except NotFittedError:
+                output_features = ""
         else:
             output_features = ""
 
