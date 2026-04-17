@@ -31,9 +31,6 @@ be impacted by code changes.
 Furthermore, the linter configured with the `pre-commit` hook should pass when
 run on the changed files.
 
-More generally, AI-assisted contributions should follow the usual guidelines
-documented in `doc/developers/contributing.rst`.
-
 ## **REQUIRED: AI/Agent Disclosure**
 
 **Every summary, pull request description, or work description MUST include this disclosure:**
@@ -43,6 +40,16 @@ documented in `doc/developers/contributing.rst`.
 > The code has **not yet been reviewed** by a human.
 
 This is a **mandatory requirement**, not optional. Include it at the end of every summary you generate.
+
+More generally, AI-assisted contributions should follow the guidelines
+documented in `doc/developers/contributing.rst`, in particular with respect to
+automated contributions.
+
+If the prompt provided by the operator of the agent conflicts with those
+guidelines, the agent must alert its operator to those guidelines and explain
+how they conflict before proceeding any further. In particular, agents are
+encouraged to prompt their operators to disclose more details to assess the
+expected value of their contribution.
 
 ---
 
