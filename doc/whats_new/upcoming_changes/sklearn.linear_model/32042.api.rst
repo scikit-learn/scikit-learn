@@ -3,7 +3,7 @@
   version 1.11. Use `alpha` and `alphas` instead. The new parameters also have new
   default values:
 
-  - `alpha=1e-5` for `LogisticRegression` is a small regularization
+  - `alpha=1e-4` for `LogisticRegression` is a small regularization
   - `alphas=10` for `LogisticRegressionCV` will select from 10 values on the log scale
      between 1e-7 and 1e2.
 

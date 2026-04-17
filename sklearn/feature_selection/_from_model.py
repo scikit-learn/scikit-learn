@@ -219,9 +219,9 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     >>> y = [0, 1, 0, 1]
     >>> selector = SelectFromModel(estimator=LogisticRegression(C=None)).fit(X, y)
     >>> selector.estimator_.coef_
-    array([[-3.75...,  7.26...,  4.80...]])
+    array([[-3.00...,  5.82...,  3.95...]])
     >>> selector.threshold_
-    np.float64(5.27...)
+    np.float64(4.25...)
     >>> selector.get_support()
     array([False, True, False])
     >>> selector.transform(X)

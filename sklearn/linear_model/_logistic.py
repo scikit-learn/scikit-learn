@@ -946,7 +946,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            `penalty='l1'` and `l1_ratio` set to any float between 0 and 1 for
            `'penalty='elasticnet'`.
 
-    alpha : float, default=1e-5
+    alpha : float, default=1e-4
         Regularization strength that multiplies the penalty term (both L1 and L2).
         ``alpha = 0`` is equivalent to unpenalized logistic regression. In this case,
         the design matrix `X` must have full column rank (no collinearities).
@@ -1200,8 +1200,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     >>> clf.predict(X[:2, :])
     array([0, 0])
     >>> clf.predict_proba(X[:2, :])
-    array([[9.99...e-01, 7...e-07, ...e-31],
-           [9.99...e-01, 5...e-05, 1...e-27]])
+    array([[9.99...e-01, 4...e-04, 6...e-22],
+           [9.98...e-01, 1...e-03, 2...e-20]])
     >>> clf.score(X, y)
     0.98
 
@@ -1243,7 +1243,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self,
         penalty="deprecated",
         *,
-        alpha=1e-5,
+        alpha=1e-4,
         C="deprecated",
         l1_ratio=0.0,
         dual=False,

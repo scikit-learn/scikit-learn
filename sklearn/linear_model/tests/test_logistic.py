@@ -667,7 +667,7 @@ def test_multinomial_logistic_regression_string_inputs():
         C=None, class_weight={"bar": 1, "baz": 2, "foo": 0}
     ).fit(X_ref, y_str)
 
-    assert sorted(np.unique(lr_cv_str.predict(X_ref))) == ["bar", "baz", "foo"]
+    assert sorted(np.unique(lr_cv_str.predict(X_ref))) == ["bar", "baz"]
 
 
 # TODO(1.12): remove deprecated use_legacy_attributes

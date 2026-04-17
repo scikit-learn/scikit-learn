@@ -115,7 +115,7 @@ a meaningful metric for their use case.
         0.86...
         >>> # compare it with the internal score found by cross-validation
         >>> model.best_score_
-        np.float64(0.85...)
+        np.float64(0.86...)
 
 Important notes regarding the internal cross-validation
 -------------------------------------------------------
