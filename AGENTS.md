@@ -1,6 +1,38 @@
-# AGENTS Instruction
+# AGENTS instructions
 
-This file contains additional guidance for AI agents and other AI editors.
+This file contains additional guidance for AI agents and code assistants
+working on the scikit-learn codebase.
+
+## Testing the code from a suitable developer environment
+
+Building scikit-learn from source and running the tests require using a runtime
+environment with appropriate Python dependencies such as meson-python, NumPy,
+Cython, pytest, etc and a few system dependencies such as a C/C++ compiler
+toolchain with OpenMP support.
+
+Instructions to set up a working development environment for Linux, macOS, and
+Windows are detailed in `doc/developers/development_setup.rst`.
+
+Agent assistants working on the scikit-learn code base should refer to that doc to
+check if the default environment they have access to matches the necessary
+requirements and if scikit-learn package is already installed in editable mode
+pointing to the expected git branch.
+
+If this is not the case, they are expected to manage and use their own
+developer environment following those instructions before attempting to run the
+tests or to run other commands for debugging purposes.
+
+## Local testing first
+
+In order to avoid wasting CI and reviewer time on broken code, agents should
+ensure that tests pass locally, at least for the modules that are expected to
+be impacted by code changes.
+
+Furthermore, the linter configured with the `pre-commit` hook should pass when
+run on the changed files.
+
+More generally, AI-assisted contributions should follow the usual guidelines
+documented in `doc/developers/contributing.rst`.
 
 ## **REQUIRED: AI/Agent Disclosure**
 
