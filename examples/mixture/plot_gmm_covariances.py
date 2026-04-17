@@ -29,15 +29,6 @@ clusters and affects both model expressivity and generalization.
 # which increases the risk of overfitting for small datasets
 
 # %%
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import numpy as np
-from scipy.optimize import linear_sum_assignment
-
-from sklearn.metrics import confusion_matrix, rand_score
-from sklearn.mixture import GaussianMixture
-
-# %%
 # Dataset
 # ------
 #
@@ -47,6 +38,8 @@ from sklearn.mixture import GaussianMixture
 # - Component 2: diagonal covariance
 # - Component 3: full covariance
 # - Component 4: spherical covariance (fewer datapoints)
+
+import numpy as np
 
 rnd = np.random.RandomState(4)
 
@@ -75,6 +68,8 @@ X = np.vstack(normals)
 #
 # We fit four GMMs with identical hyperparameters but different covariance types.
 
+from sklearn.mixture import GaussianMixture
+
 cov_types = ["spherical", "diag", "tied", "full"]
 
 estimators = [
@@ -99,6 +94,9 @@ gmm_labels = [est.fit_predict(X) for est in estimators]
 # stretches more in directions where the data varies a lot.
 
 
+import matplotlib as mpl
+
+
 def make_ellipse(mean, cov):
     v, w = np.linalg.eigh(cov)
     u = w[:, 0] / np.linalg.norm(w[:, 0])
@@ -113,6 +111,11 @@ def make_ellipse(mean, cov):
 #
 # The GMM will cluster data into arbitrary clusters.
 # We find the permutations to assign correct colors.
+
+
+from scipy.optimize import linear_sum_assignment
+
+from sklearn.metrics import confusion_matrix
 
 
 def make_perm(true_labels, pred_labels):
@@ -145,6 +148,10 @@ def get_covariances(gmm):
 # -------
 #
 # We compare the learned cluster shapes against the ground truth.
+
+import matplotlib.pyplot as plt
+
+from sklearn.metrics import rand_score
 
 fig = plt.figure(constrained_layout=True)
 gs = fig.add_gridspec(2, 3)
