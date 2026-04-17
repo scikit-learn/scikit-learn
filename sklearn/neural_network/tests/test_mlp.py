@@ -833,20 +833,23 @@ def test_early_stopping_stratified():
 
 
 def test_mlp_early_stopping_string_labels():
-    # Non-regression: early stopping calls _score_with_function, which must not
-    # use np.isnan on string predictions from LabelBinarizer.inverse_transform.
-    X, y_numeric = make_classification(
+    """Check that labels can be strings when `early_stopping=True`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/33760
+    """
+    X, y = make_classification(
         n_samples=200,
         n_features=10,
         n_classes=3,
         n_informative=5,
         random_state=42,
     )
-    label_map = {0: "Class_A", 1: "Class_B", 2: "Class_C"}
-    y_string = np.array([label_map[i] for i in y_numeric])
+    labels = np.array(["class_a", "class_b", "class_c"], dtype=object)
+    y = labels[y]
 
     mlp = MLPClassifier(early_stopping=True, max_iter=50, random_state=42)
-    mlp.fit(X, y_string)
+    mlp.fit(X, y)
 
     assert mlp.validation_scores_ is not None
     assert len(mlp.validation_scores_) == mlp.n_iter_
