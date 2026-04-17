@@ -1,3 +1,0 @@
-- :func:`inspection.partial_dependence` now raises a ``ValueError`` instead of
-  a ``FutureWarning`` when a feature column contains integer data.
-  By :user:`Ashutosh Devpura <AshutoshDevpura>`.
