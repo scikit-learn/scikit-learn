@@ -15,10 +15,10 @@ from scipy import linalg
 
 from sklearn import config_context
 from sklearn.base import BaseEstimator, _fit_context
+from sklearn.externals import array_api_extra as xpx
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.utils import check_array, metadata_routing
 from sklearn.utils._array_api import (
-    _cov,
     _is_numpy_namespace,
     get_namespace,
     get_namespace_and_device,
@@ -115,13 +115,8 @@ def empirical_covariance(X, *, assume_centered=False):
 
     if assume_centered:
         covariance = X.T @ X / X.shape[0]
-    elif _is_numpy_namespace(xp):
-        # Preserve numpy path, because `np.cov` always returns float64
-        # and callers like GraphicalLasso and GraphicalLassoCV rely on
-        # this behavior.
-        covariance = np.cov(X.T, bias=1)
     else:
-        covariance = _cov(X, xp=xp)
+        covariance = xpx.cov(X.T, xp=xp)
 
     if covariance.ndim == 0:
         covariance = xp.reshape(covariance, (1, 1))
