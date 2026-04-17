@@ -157,9 +157,11 @@ and familiarity with scikit-learn's structure and goals. It is not suitable for
 fully automatic processing by AI agents.
 
 Fully-automated agents should never submit issues or pull requests without
-thorough review by a human operator that takes responsibility and ownership
-for the contribution. Maintainers reserve the right, at their sole discretion,
-to close such submissions and to block any account responsible for them.
+thorough review by a human operator that takes responsibility and ownership for
+the contribution. Agents should never open a PR unless explicitly prompted to
+do so by its operator. In such cases, the use of AI tools should be explicitly
+disclosed and the PR should be opened in draft mode until the human operator
+has reviewed and approved the contribution.
 
 The human operator should review all code or documentation changes made by AI
 agents and make sure they understand all changes and can explain them on request,
@@ -188,8 +190,9 @@ speaker.
 More generally, AI agent usage should always be explicitly disclosed in the
 issue or PR description and discussion.
 
-PRs that appear to violate this policy will be closed without review and the
-GitHub account responsible for the wasted resources will be blocked.
+Maintainers reserve the right, at their sole discretion, to close submissions
+that appear to violate this policy. Further, they may block any GitHub account
+responsible for such submissions.
 
 .. _submitting_bug_feature:
 
