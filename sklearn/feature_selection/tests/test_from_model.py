@@ -584,7 +584,7 @@ def _pca_importances(pca_estimator):
     "estimator, importance_getter",
     [
         (
-            make_pipeline(PCA(random_state=0), LogisticRegression(C=None)),
+            make_pipeline(PCA(random_state=0), LogisticRegression(C=None, alpha=1e-5)),
             "named_steps.logisticregression.coef_",
         ),
         (PCA(random_state=0), _pca_importances),
