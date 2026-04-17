@@ -116,7 +116,7 @@ def empirical_covariance(X, *, assume_centered=False):
     if assume_centered:
         covariance = X.T @ X / X.shape[0]
     else:
-        covariance = xpx.cov(X.T, xp=xp)
+        covariance = xpx.cov(X.T, bias=1, xp=xp)
 
     if covariance.ndim == 0:
         covariance = xp.reshape(covariance, (1, 1))
