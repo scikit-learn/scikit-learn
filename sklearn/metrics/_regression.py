@@ -685,8 +685,12 @@ def root_mean_squared_error(
     >>> root_mean_squared_error(y_true, y_pred)
     0.822...
     """
-    xp, _, device = get_namespace_and_device(y_pred)
-    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
+    xp, _, device_ = get_namespace_and_device(y_pred)
+    _, y_true, y_pred, sample_weight, multioutput = (
+        _check_reg_targets_with_floating_dtype(
+            y_true, y_pred, sample_weight, multioutput, xp=xp, device=device_
+        )
+    )
 
     output_errors = xp.sqrt(
         mean_squared_error(
@@ -1127,10 +1131,10 @@ def explained_variance_score(
     >>> explained_variance_score(y_true, y_pred, force_finite=False)
     -inf
     """
-    xp, _, device = get_namespace_and_device(y_pred)
+    xp, _, device_ = get_namespace_and_device(y_pred)
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
-            y_true, y_pred, sample_weight, multioutput, xp=xp
+            y_true, y_pred, sample_weight, multioutput, xp=xp, device=device_
         )
     )
 
@@ -1151,7 +1155,7 @@ def explained_variance_score(
         multioutput=multioutput,
         force_finite=force_finite,
         xp=xp,
-        device=device,
+        device=device_,
     )
 
 
@@ -1297,11 +1301,9 @@ def r2_score(
     -inf
     """
     xp, _, device_ = get_namespace_and_device(y_pred)
-    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device_)
-
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
-            y_true, y_pred, sample_weight, multioutput, xp=xp
+            y_true, y_pred, sample_weight, multioutput, xp=xp, device=device_
         )
     )
 
@@ -1470,10 +1472,9 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     >>> mean_tweedie_deviance(y_true, y_pred, power=1)
     1.4260...
     """
-    xp, _, device = get_namespace_and_device(y_pred)
-    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
+    xp, _, device_ = get_namespace_and_device(y_pred)
     y_type, y_true, y_pred, sample_weight, _ = _check_reg_targets_with_floating_dtype(
-        y_true, y_pred, sample_weight, multioutput=None, xp=xp
+        y_true, y_pred, sample_weight, multioutput=None, xp=xp, device=device_
     )
     if y_type == "continuous-multioutput":
         raise ValueError("Multioutput not supported in mean_tweedie_deviance")
@@ -1683,11 +1684,9 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     >>> d2_tweedie_score(y_true, y_true, power=2)
     1.0
     """
-    xp, _, device = get_namespace_and_device(y_pred)
-    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
-
+    xp, _, device_ = get_namespace_and_device(y_pred)
     y_type, y_true, y_pred, sample_weight, _ = _check_reg_targets_with_floating_dtype(
-        y_true, y_pred, sample_weight, multioutput=None, xp=xp
+        y_true, y_pred, sample_weight, multioutput=None, xp=xp, device=device_
     )
     if y_type == "continuous-multioutput":
         raise ValueError("Multioutput not supported in d2_tweedie_score")
@@ -1829,10 +1828,9 @@ def d2_pinball_score(
     {'fit_intercept': True}
     """
     xp, _, device_ = get_namespace_and_device(y_pred)
-    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device_)
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
-            y_true, y_pred, sample_weight, multioutput, xp=xp
+            y_true, y_pred, sample_weight, multioutput, xp=xp, device=device_
         )
     )
 
