@@ -209,7 +209,6 @@ alphas = np.logspace(-6, 4, 21)
 unscaled_clf = make_pipeline(
     pca,
     LogisticRegressionCV(
-        Cs=None,
         alphas=alphas,
         use_legacy_attributes=False,
         l1_ratios=(0,),  # TODO(1.10): remove because it is default now
@@ -222,7 +221,6 @@ scaled_clf = make_pipeline(
     scaler,
     pca,
     LogisticRegressionCV(
-        Cs=None,
         alphas=alphas,
         use_legacy_attributes=False,
         l1_ratios=(0,),  # TODO(1.10): remove because it is default now

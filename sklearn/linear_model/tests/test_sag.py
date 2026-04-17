@@ -260,7 +260,6 @@ def test_classifier_matching():
             # SAGA variance w.r.t. stream order is higher
             n_iter = 300
         clf = LogisticRegression(
-            C=None,
             alpha=alpha,
             solver=solver,
             fit_intercept=fit_intercept,
@@ -359,7 +358,6 @@ def test_sag_pobj_matches_logistic_regression(csr_container):
     X, y = make_blobs(n_samples=n_samples, centers=2, random_state=0, cluster_std=0.1)
 
     clf1 = LogisticRegression(
-        C=None,
         alpha=alpha,
         solver="sag",
         fit_intercept=False,
@@ -369,7 +367,6 @@ def test_sag_pobj_matches_logistic_regression(csr_container):
     )
     clf2 = clone(clf1)
     clf3 = LogisticRegression(
-        C=None,
         alpha=alpha,
         fit_intercept=False,
         tol=0.0000001,
@@ -613,7 +610,6 @@ def test_sag_classifier_computed_correctly(csr_container):
     y = y_tmp
 
     clf1 = LogisticRegression(
-        C=None,
         alpha=alpha,
         solver="sag",
         max_iter=n_iter,
@@ -668,7 +664,6 @@ def test_sag_multiclass_computed_correctly(csr_container):
 
     clf1 = OneVsRestClassifier(
         LogisticRegression(
-            C=None,
             alpha=alpha,
             solver="sag",
             max_iter=max_iter,
@@ -743,7 +738,6 @@ def test_classifier_results(csr_container):
     y = np.dot(X, w)
     y = np.sign(y)
     clf1 = LogisticRegression(
-        C=None,
         alpha=alpha,
         solver="sag",
         max_iter=max_iter,
@@ -778,7 +772,6 @@ def test_binary_classifier_class_weight(csr_container):
 
     class_weight = {1: 0.45, -1: 0.55}
     clf1 = LogisticRegression(
-        C=None,
         alpha=alpha,
         solver="sag",
         max_iter=n_iter,
@@ -831,7 +824,7 @@ def test_classifier_single_class():
 
     msg = "This solver needs samples of at least 2 classes in the data"
     with pytest.raises(ValueError, match=msg):
-        LogisticRegression(C=None, solver="sag").fit(X, y)
+        LogisticRegression(alpha=1e-4, solver="sag").fit(X, y)
 
 
 def test_step_size_alpha_error():
@@ -844,9 +837,7 @@ def test_step_size_alpha_error():
         " step_size * alpha_scaled == 1"
     )
 
-    clf1 = LogisticRegression(
-        C=None, alpha=alpha, solver="sag", fit_intercept=fit_intercept
-    )
+    clf1 = LogisticRegression(alpha=alpha, solver="sag", fit_intercept=fit_intercept)
     with pytest.raises(ZeroDivisionError, match=msg):
         clf1.fit(X, y)
 
@@ -864,7 +855,9 @@ def test_sag_classifier_raises_error(solver):
     # Train a classifier on a simple problem
     rng = np.random.RandomState(42)
     X, y = make_classification(random_state=rng)
-    clf = LogisticRegression(C=None, solver=solver, random_state=rng, warm_start=True)
+    clf = LogisticRegression(
+        alpha=1e-4, solver=solver, random_state=rng, warm_start=True
+    )
     clf.fit(X, y)
 
     # Trigger a numerical error by:

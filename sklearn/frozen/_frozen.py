@@ -51,10 +51,10 @@ class FrozenEstimator(BaseEstimator):
     >>> from sklearn.frozen import FrozenEstimator
     >>> from sklearn.linear_model import LogisticRegression
     >>> X, y = make_classification(random_state=0)
-    >>> clf = LogisticRegression(C=None).fit(X, y)
+    >>> clf = LogisticRegression(alpha=1e-4).fit(X, y)
     >>> frozen_clf = FrozenEstimator(clf)
     >>> frozen_clf.fit(X, y)  # No-op
-    FrozenEstimator(estimator=LogisticRegression(C=None))
+    FrozenEstimator(estimator=LogisticRegression(alpha=1e-4))
     >>> frozen_clf.predict(X)  # Predictions from `clf.predict`
     array(...)
     """

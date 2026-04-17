@@ -92,7 +92,7 @@ def test_get_response_values_classifier_unknown_pos_label(response_method):
     """Check that `_get_response_values` raises the proper error message with
     classifier."""
     X, y = make_classification(n_samples=10, n_classes=2, random_state=0)
-    classifier = LogisticRegression(C=None).fit(X, y)
+    classifier = LogisticRegression(alpha=1e-4).fit(X, y)
 
     # provide a `pos_label` which is not in `y`
     err_msg = r"pos_label=whatever is not a valid label: It should be one of \[0 1\]"
@@ -135,7 +135,7 @@ def test_get_response_values_binary_classifier_decision_function(
         weights=[0.3, 0.7],
         random_state=0,
     )
-    classifier = LogisticRegression(C=None).fit(X, y)
+    classifier = LogisticRegression(alpha=1e-4).fit(X, y)
     response_method = "decision_function"
 
     # default `pos_label`
@@ -178,7 +178,7 @@ def test_get_response_values_binary_classifier_predict_proba(
         weights=[0.3, 0.7],
         random_state=0,
     )
-    classifier = LogisticRegression(C=None).fit(X, y)
+    classifier = LogisticRegression(alpha=1e-4).fit(X, y)
 
     # default `pos_label`
     results = _get_response_values(
@@ -273,7 +273,7 @@ def test_get_response_predict_proba(return_response_method_used):
 @pytest.mark.parametrize("return_response_method_used", [True, False])
 def test_get_response_decision_function(return_response_method_used):
     """Check the behaviour of `_get_response_values_binary` using decision_function."""
-    classifier = LogisticRegression(C=None).fit(X_binary, y_binary)
+    classifier = LogisticRegression(alpha=1e-4).fit(X_binary, y_binary)
     results = _get_response_values_binary(
         classifier,
         X_binary,
@@ -303,7 +303,7 @@ def test_get_response_decision_function(return_response_method_used):
     [
         (DecisionTreeClassifier(max_depth=2, random_state=0), "predict_proba"),
         (DecisionTreeClassifier(max_depth=2, random_state=0), "predict_log_proba"),
-        (LogisticRegression(C=None), "decision_function"),
+        (LogisticRegression(alpha=1e-4), "decision_function"),
     ],
 )
 def test_get_response_values_multiclass(estimator, response_method):
@@ -325,7 +325,7 @@ def test_get_response_values_multiclass(estimator, response_method):
 
 def test_get_response_values_with_response_list():
     """Check the behaviour of passing a list of responses to `_get_response_values`."""
-    classifier = LogisticRegression(C=None).fit(X_binary, y_binary)
+    classifier = LogisticRegression(alpha=1e-4).fit(X_binary, y_binary)
 
     # it should use `predict_proba`
     y_pred, pos_label, response_method = _get_response_values(
@@ -355,7 +355,7 @@ def test_get_response_values_with_response_list():
 )
 def test_get_response_values_multilabel_indicator(response_method):
     X, Y = make_multilabel_classification(random_state=0)
-    estimator = ClassifierChain(LogisticRegression(C=None)).fit(X, Y)
+    estimator = ClassifierChain(LogisticRegression(alpha=1e-4)).fit(X, Y)
 
     y_pred, pos_label = _get_response_values(
         estimator, X, response_method=response_method
@@ -386,7 +386,7 @@ def test_response_values_type_of_target_on_classes_no_warning():
     # 30 classes, less than 50% of number of samples
     y = np.repeat(np.arange(30), 4)
 
-    clf = LogisticRegression(C=None).fit(X, y)
+    clf = LogisticRegression(alpha=1e-4).fit(X, y)
 
     with warnings.catch_warnings():
         warnings.simplefilter("error", UserWarning)
@@ -397,21 +397,26 @@ def test_response_values_type_of_target_on_classes_no_warning():
 @pytest.mark.parametrize(
     "estimator, response_method, target_type, expected_shape",
     [
-        (LogisticRegression(C=None), "predict", "binary", (10,)),
-        (LogisticRegression(C=None), "predict_proba", "binary", (10,)),
-        (LogisticRegression(C=None), "decision_function", "binary", (10,)),
-        (LogisticRegression(C=None), "predict", "multiclass", (10,)),
-        (LogisticRegression(C=None), "predict_proba", "multiclass", (10, 4)),
-        (LogisticRegression(C=None), "decision_function", "multiclass", (10, 4)),
-        (ClassifierChain(LogisticRegression(C=None)), "predict", "multilabel", (10, 2)),
+        (LogisticRegression(alpha=1e-4), "predict", "binary", (10,)),
+        (LogisticRegression(alpha=1e-4), "predict_proba", "binary", (10,)),
+        (LogisticRegression(alpha=1e-4), "decision_function", "binary", (10,)),
+        (LogisticRegression(alpha=1e-4), "predict", "multiclass", (10,)),
+        (LogisticRegression(alpha=1e-4), "predict_proba", "multiclass", (10, 4)),
+        (LogisticRegression(alpha=1e-4), "decision_function", "multiclass", (10, 4)),
         (
-            ClassifierChain(LogisticRegression(C=None)),
+            ClassifierChain(LogisticRegression(alpha=1e-4)),
+            "predict",
+            "multilabel",
+            (10, 2),
+        ),
+        (
+            ClassifierChain(LogisticRegression(alpha=1e-4)),
             "predict_proba",
             "multilabel",
             (10, 2),
         ),
         (
-            ClassifierChain(LogisticRegression(C=None)),
+            ClassifierChain(LogisticRegression(alpha=1e-4)),
             "decision_function",
             "multilabel",
             (10, 2),

@@ -592,7 +592,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-logistic_regression = make_pipeline(StandardScaler(), LogisticRegression(C=None))
+logistic_regression = make_pipeline(StandardScaler(), LogisticRegression())
 param_grid = {"logisticregression__alpha": np.logspace(6, -6, 13)}
 model = GridSearchCV(logistic_regression, param_grid, scoring="neg_log_loss").fit(
     data_train, target_train

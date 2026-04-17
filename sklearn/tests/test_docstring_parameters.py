@@ -150,7 +150,7 @@ def test_docstring_parameters():
 
 
 def _construct_searchcv_instance(SearchCV):
-    return SearchCV(LogisticRegression(C=None), {"alpha": [0.1, 1]})
+    return SearchCV(LogisticRegression(), {"alpha": [0.1, 1]})
 
 
 def _construct_compose_pipeline_instance(Estimator):
@@ -158,7 +158,7 @@ def _construct_compose_pipeline_instance(Estimator):
     if Estimator.__name__ == "ColumnTransformer":
         return Estimator(transformers=[("transformer", "passthrough", [0, 1])])
     elif Estimator.__name__ == "Pipeline":
-        return Estimator(steps=[("clf", LogisticRegression(C=None))])
+        return Estimator(steps=[("clf", LogisticRegression(alpha=1e-4))])
     elif Estimator.__name__ == "FeatureUnion":
         return Estimator(transformer_list=[("transformer", FunctionTransformer())])
 
@@ -204,7 +204,7 @@ def test_fit_docstring_attributes(name, Estimator):
         est = _construct_sparse_coder(Estimator)
     elif Estimator.__name__ == "FrozenEstimator":
         X, y = make_classification(n_samples=20, n_features=5, random_state=0)
-        est = Estimator(LogisticRegression(C=None).fit(X, y))
+        est = Estimator(LogisticRegression(alpha=1e-4).fit(X, y))
     else:
         # TODO(devtools): use _tested_estimators instead of all_estimators in the
         # decorator

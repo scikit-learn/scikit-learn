@@ -76,7 +76,7 @@ from sklearn.model_selection import StratifiedKFold, cross_validate
 
 n_splits = 6
 cv = StratifiedKFold(n_splits=n_splits)
-classifier = LogisticRegression(C=None).fit(X, y)
+classifier = LogisticRegression(alpha=1e-4).fit(X, y)
 cv_results = cross_validate(
     classifier, X, y, cv=cv, return_estimator=True, return_indices=True
 )

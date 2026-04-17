@@ -264,11 +264,11 @@ def test_confusion_matrix_contrast(pyplot):
 @pytest.mark.parametrize(
     "clf",
     [
-        LogisticRegression(C=None),
-        make_pipeline(StandardScaler(), LogisticRegression(C=None)),
+        LogisticRegression(alpha=1e-4),
+        make_pipeline(StandardScaler(), LogisticRegression(alpha=1e-4)),
         make_pipeline(
             make_column_transformer((StandardScaler(), [0, 1])),
-            LogisticRegression(C=None),
+            LogisticRegression(alpha=1e-4),
         ),
     ],
     ids=["clf", "pipeline-clf", "pipeline-column_transformer-clf"],

@@ -40,9 +40,9 @@ fig, axes = plt.subplots(3, 3)
 params = dict(tol=0.01, solver="saga")
 for i, (alpha, axes_row) in enumerate(zip((1e-3, 1e-2, 1e-1), axes)):
     # Increase tolerance for short training time
-    clf_l1_LR = LogisticRegression(C=None, alpha=alpha, l1_ratio=1, **params)
-    clf_l2_LR = LogisticRegression(C=None, alpha=alpha, l1_ratio=0, **params)
-    clf_en_LR = LogisticRegression(C=None, alpha=alpha, l1_ratio=l1_ratio, **params)
+    clf_l1_LR = LogisticRegression(alpha=alpha, l1_ratio=1, **params)
+    clf_l2_LR = LogisticRegression(alpha=alpha, l1_ratio=0, **params)
+    clf_en_LR = LogisticRegression(alpha=alpha, l1_ratio=l1_ratio, **params)
     clf_l1_LR.fit(X, y)
     clf_l2_LR.fit(X, y)
     clf_en_LR.fit(X, y)

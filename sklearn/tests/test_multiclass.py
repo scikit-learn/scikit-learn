@@ -242,7 +242,7 @@ def test_ovr_always_present():
     y[:, 1] = 1
     y[:, 2] = 1
 
-    ovr = OneVsRestClassifier(LogisticRegression(C=None))
+    ovr = OneVsRestClassifier(LogisticRegression(alpha=1e-4))
     msg = r"Label .+ is present in all training examples"
     with pytest.warns(UserWarning, match=msg):
         ovr.fit(X, y)
@@ -256,7 +256,7 @@ def test_ovr_always_present():
     # y has a constantly absent label
     y = np.zeros((10, 2))
     y[5:, 0] = 1  # variable label
-    ovr = OneVsRestClassifier(LogisticRegression(C=None))
+    ovr = OneVsRestClassifier(LogisticRegression(alpha=1e-4))
 
     msg = r"Label not 1 is present in all training examples"
     with pytest.warns(UserWarning, match=msg):
@@ -329,7 +329,7 @@ def test_ovr_binary():
 
     for base_clf in (
         MultinomialNB(),
-        LogisticRegression(C=None),
+        LogisticRegression(alpha=1e-4),
     ):
         conduct_test(base_clf, test_predict_proba=True)
 
@@ -924,7 +924,7 @@ def test_support_missing_values(MultiClassClassifier):
     X = np.copy(X)  # Copy to avoid that the original data is modified
     mask = rng.choice([1, 0], X.shape, p=[0.1, 0.9]).astype(bool)
     X[mask] = np.nan
-    lr = make_pipeline(SimpleImputer(), LogisticRegression(C=None))
+    lr = make_pipeline(SimpleImputer(), LogisticRegression(alpha=1e-4))
 
     MultiClassClassifier(lr).fit(X, y).score(X, y)
 
@@ -937,7 +937,7 @@ def test_constant_int_target(make_y):
     """
     X = np.ones((10, 2))
     y = make_y((10, 1), dtype=np.int32)
-    ovr = OneVsRestClassifier(LogisticRegression(C=None))
+    ovr = OneVsRestClassifier(LogisticRegression(alpha=1e-4))
 
     ovr.fit(X, y)
     y_pred = ovr.predict_proba(X)
@@ -974,7 +974,7 @@ def test_multiclass_estimator_attribute_error():
 
     # LogisticRegression does not implement 'partial_fit' and should raise an
     # AttributeError
-    clf = OneVsRestClassifier(estimator=LogisticRegression(C=None))
+    clf = OneVsRestClassifier(estimator=LogisticRegression(alpha=1e-4))
 
     outer_msg = "This 'OneVsRestClassifier' has no attribute 'partial_fit'"
     inner_msg = "'LogisticRegression' object has no attribute 'partial_fit'"

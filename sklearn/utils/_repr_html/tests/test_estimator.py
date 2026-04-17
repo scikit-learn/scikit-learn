@@ -407,11 +407,11 @@ def test_estimator_html_repr_unfitted_vs_fitted():
 @pytest.mark.parametrize(
     "estimator",
     [
-        LogisticRegression(C=None),
-        make_pipeline(StandardScaler(), LogisticRegression(C=None)),
+        LogisticRegression(alpha=1e-4),
+        make_pipeline(StandardScaler(), LogisticRegression(alpha=1e-4)),
         make_pipeline(
             make_column_transformer((StandardScaler(), slice(0, 3))),
-            LogisticRegression(C=None),
+            LogisticRegression(alpha=1e-4),
         ),
     ],
 )
@@ -614,5 +614,5 @@ def test_function_transformer_show_caption(func, expected_name):
 
 def test_estimator_html_repr_table():
     """Check that we add the table of parameters in the HTML representation."""
-    est = LogisticRegression(C=None, alpha=0.1, fit_intercept=False)
+    est = LogisticRegression(alpha=0.1, fit_intercept=False)
     assert "parameters-table" in estimator_html_repr(est)

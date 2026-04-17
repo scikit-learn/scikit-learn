@@ -86,7 +86,7 @@ def test_roc_curve_display_plotting(
     else:
         sample_weight = None
 
-    lr = LogisticRegression(C=None)
+    lr = LogisticRegression(alpha=1e-4)
     lr.fit(X, y)
 
     y_score = getattr(lr, response_method)(X)
@@ -234,7 +234,7 @@ def test_roc_curve_display_plotting_from_cv_results(
         sample_weight = None
 
     cv_results = cross_validate(
-        LogisticRegression(C=None),
+        LogisticRegression(alpha=1e-4),
         X,
         y,
         cv=3,
@@ -353,7 +353,7 @@ def test_roc_curve_chance_level_line(
     """Check chance level plotting behavior of `from_predictions`, `from_estimator`."""
     X, y = data_binary
 
-    lr = LogisticRegression(C=None)
+    lr = LogisticRegression(alpha=1e-4)
     lr.fit(X, y)
 
     y_score = getattr(lr, "predict_proba")(X)
@@ -422,7 +422,7 @@ def test_roc_curve_chance_level_line_from_cv_results(
     X, y = data_binary
     n_cv = 3
     cv_results = cross_validate(
-        LogisticRegression(C=None),
+        LogisticRegression(alpha=1e-4),
         X,
         y,
         cv=n_cv,
@@ -464,11 +464,11 @@ def test_roc_curve_chance_level_line_from_cv_results(
 @pytest.mark.parametrize(
     "clf",
     [
-        LogisticRegression(C=None),
-        make_pipeline(StandardScaler(), LogisticRegression(C=None)),
+        LogisticRegression(alpha=1e-4),
+        make_pipeline(StandardScaler(), LogisticRegression(alpha=1e-4)),
         make_pipeline(
             make_column_transformer((StandardScaler(), [0, 1])),
-            LogisticRegression(C=None),
+            LogisticRegression(alpha=1e-4),
         ),
     ],
 )
@@ -579,10 +579,10 @@ def test_plot_roc_curve_despine(pyplot, data_binary, despine, constructor_name):
     # Check that the despine keyword is working correctly
     X, y = data_binary
 
-    lr = LogisticRegression(C=None).fit(X, y)
+    lr = LogisticRegression(alpha=1e-4).fit(X, y)
     lr.fit(X, y)
     cv_results = cross_validate(
-        LogisticRegression(C=None),
+        LogisticRegression(alpha=1e-4),
         X,
         y,
         cv=3,

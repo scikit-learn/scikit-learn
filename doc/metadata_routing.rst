@@ -90,7 +90,7 @@ method and in :func:`~metrics.make_scorer`'s `set_score_request()` method. Both
 
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(sample_weight=True)
   >>> lr = LogisticRegressionCV(
-  ...     Cs=None,
+  ...     alphas=10,
   ...     cv=GroupKFold(),
   ...     scoring=weighted_acc,
   ...     use_legacy_attributes=False,
@@ -126,7 +126,7 @@ that :func:`~model_selection.cross_validate` does not pass the weights along::
 
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(sample_weight=True)
   >>> lr = LogisticRegressionCV(
-  ...     Cs=None, cv=GroupKFold(), scoring=weighted_acc, use_legacy_attributes=False
+  ...     alphas=10, cv=GroupKFold(), scoring=weighted_acc, use_legacy_attributes=False
   ... ).set_fit_request(sample_weight=False)
   >>> cv_results = cross_validate(
   ...     lr,
@@ -157,7 +157,7 @@ to it::
 
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(sample_weight=True)
   >>> lr = LogisticRegressionCV(
-  ...     Cs=None, cv=GroupKFold(), scoring=weighted_acc, use_legacy_attributes=False
+  ...     alphas=10, cv=GroupKFold(), scoring=weighted_acc, use_legacy_attributes=False
   ... ).set_fit_request(sample_weight=True)
   >>> sel = SelectKBest(k=2)
   >>> pipe = make_pipeline(sel, lr)
@@ -183,7 +183,7 @@ consumers. In this example, we pass ``scoring_weight`` to the scorer, and
   ...    sample_weight="scoring_weight"
   ... )
   >>> lr = LogisticRegressionCV(
-  ...     Cs=None, cv=GroupKFold(), scoring=weighted_acc, use_legacy_attributes=False
+  ...     alphas=10, cv=GroupKFold(), scoring=weighted_acc, use_legacy_attributes=False
   ... ).set_fit_request(sample_weight="fitting_weight")
   >>> cv_results = cross_validate(
   ...     lr,
@@ -238,7 +238,7 @@ raises an error, since it hasn't been explicitly specified whether ``sample_weig
 should be passed to the estimator's scorer or not::
 
     >>> param_grid = {"alpha": [1e-1, 1e-2]}
-    >>> lr = LogisticRegression(C=None).set_fit_request(sample_weight=True)
+    >>> lr = LogisticRegression(alpha=1e-4).set_fit_request(sample_weight=True)
     >>> try:
     ...     GridSearchCV(
     ...         estimator=lr, param_grid=param_grid
@@ -253,7 +253,7 @@ should be passed to the estimator's scorer or not::
 
 The issue can be fixed by explicitly setting the request value::
 
-    >>> lr = LogisticRegression(C=None).set_fit_request(
+    >>> lr = LogisticRegression(alpha=1e-4).set_fit_request(
     ...     sample_weight=True
     ... ).set_score_request(sample_weight=False)
 

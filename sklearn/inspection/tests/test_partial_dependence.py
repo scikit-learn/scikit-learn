@@ -839,7 +839,7 @@ def test_partial_dependence_pipeline_custom_values(
 @pytest.mark.parametrize(
     "estimator",
     [
-        LogisticRegression(C=None, max_iter=1000, random_state=0),
+        LogisticRegression(alpha=1e-4, max_iter=1000, random_state=0),
         GradientBoostingClassifier(random_state=0, n_estimators=5),
     ],
     ids=["estimator-brute", "estimator-recursion"],
@@ -954,7 +954,7 @@ def test_partial_dependence_feature_type(features, custom_values, expected_pd_sh
         (RobustScaler(), [iris.feature_names[i] for i in (1, 3)]),
     )
     pipe = make_pipeline(
-        preprocessor, LogisticRegression(C=None, max_iter=1000, random_state=0)
+        preprocessor, LogisticRegression(alpha=1e-4, max_iter=1000, random_state=0)
     )
     pipe.fit(df, iris.target)
     pdp_pipe = partial_dependence(
@@ -973,7 +973,7 @@ def test_partial_dependence_feature_type(features, custom_values, expected_pd_sh
     "estimator",
     [
         LinearRegression(),
-        LogisticRegression(C=None),
+        LogisticRegression(alpha=1e-4),
         GradientBoostingRegressor(),
         GradientBoostingClassifier(),
     ],
@@ -1038,7 +1038,7 @@ def test_partial_dependence_kind_individual_ignores_sample_weight(Estimator, dat
     "estimator",
     [
         LinearRegression(),
-        LogisticRegression(C=None),
+        LogisticRegression(alpha=1e-4),
         RandomForestRegressor(),
         GradientBoostingClassifier(),
     ],
@@ -1105,7 +1105,7 @@ def test_partial_dependence_sample_weight_size_error():
     """Check that we raise an error when the size of `sample_weight` is not
     consistent with `X` and `y`.
     """
-    est = LogisticRegression(C=None)
+    est = LogisticRegression(alpha=1e-4)
     (X, y), n_targets = binary_classification_data
     sample_weight = np.ones_like(y)
     est.fit(X, y)
@@ -1141,7 +1141,7 @@ def test_mixed_type_categorical():
 
     clf = make_pipeline(
         OrdinalEncoder(encoded_missing_value=-1),
-        LogisticRegression(C=None),
+        LogisticRegression(alpha=1e-4),
     ).fit(X, y)
     with pytest.raises(ValueError, match="The column #0 contains mixed data types"):
         partial_dependence(clf, X, features=[0])
@@ -1208,7 +1208,7 @@ def test_reject_pandas_with_integer_dtype():
 def test_partial_dependence_empty_categorical_features():
     """Check that we raise the proper exception when `categorical_features`
     is an empty list"""
-    clf = make_pipeline(StandardScaler(), LogisticRegression(C=None))
+    clf = make_pipeline(StandardScaler(), LogisticRegression(alpha=1e-4))
     clf.fit(iris.data, iris.target)
 
     with pytest.raises(

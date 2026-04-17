@@ -83,7 +83,7 @@ preprocessor = make_column_transformer(
     (num_proc, ("feat1", "feat3")), (cat_proc, ("feat0", "feat2"))
 )
 
-clf = make_pipeline(preprocessor, LogisticRegression(C=None))
+clf = make_pipeline(preprocessor, LogisticRegression(alpha=1e-4))
 clf
 
 ##############################################################################

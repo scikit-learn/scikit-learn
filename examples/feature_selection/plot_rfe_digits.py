@@ -39,7 +39,11 @@ pipe = Pipeline(
         ("scaler", MinMaxScaler()),
         (
             "rfe",
-            RFE(estimator=LogisticRegression(C=None), n_features_to_select=1, step=1),
+            RFE(
+                estimator=LogisticRegression(alpha=1e-4),
+                n_features_to_select=1,
+                step=1,
+            ),
         ),
     ]
 )

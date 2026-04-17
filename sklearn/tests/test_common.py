@@ -94,8 +94,8 @@ class CallableEstimator(BaseEstimator):
         (_sample_func, "_sample_func"),
         (partial(_sample_func, "world"), "_sample_func"),
         (
-            LogisticRegression(C=None, alpha=0.5),
-            "LogisticRegression(C=None,alpha=0.5)",
+            LogisticRegression(alpha=0.5),
+            "LogisticRegression(alpha=0.5)",
         ),
         (
             LogisticRegression(
@@ -242,7 +242,7 @@ def _estimators_that_predict_in_fit():
 column_name_estimators = list(
     chain(
         _tested_estimators(),
-        [make_pipeline(LogisticRegression(C=None))],
+        [make_pipeline(LogisticRegression(alpha=1e-4))],
         _estimators_that_predict_in_fit(),
     )
 )

@@ -55,7 +55,7 @@ from sklearn.pipeline import make_pipeline
 clf = make_pipeline(
     StandardScaler(),
     SelectPercentile(percentile=75),
-    LogisticRegression(C=None),
+    LogisticRegression(alpha=1e-4),
 )
 clf.set_output(transform="pandas")
 clf.fit(X_train, y_train)
@@ -113,7 +113,7 @@ ct = ColumnTransformer(
     ),
     verbose_feature_names_out=False,
 )
-clf = make_pipeline(ct, SelectPercentile(percentile=50), LogisticRegression(C=None))
+clf = make_pipeline(ct, SelectPercentile(percentile=50), LogisticRegression(alpha=1e-4))
 clf.fit(X_train, y_train)
 clf.score(X_test, y_test)
 

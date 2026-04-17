@@ -1588,7 +1588,7 @@ def permutation_test_score(
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.model_selection import permutation_test_score
     >>> X, y = make_classification(random_state=0)
-    >>> estimator = LogisticRegression(C=None)
+    >>> estimator = LogisticRegression(alpha=1e-4)
     >>> score, permutation_scores, pvalue = permutation_test_score(
     ...     estimator, X, y, random_state=0
     ... )
@@ -2376,7 +2376,7 @@ def validation_curve(
     >>> from sklearn.model_selection import validation_curve
     >>> from sklearn.linear_model import LogisticRegression
     >>> X, y = make_classification(n_samples=1_000, random_state=0)
-    >>> logistic_regression = LogisticRegression(C=None)
+    >>> logistic_regression = LogisticRegression()
     >>> param_name, param_range = "alpha", np.logspace(-5, 4, 10)
     >>> train_scores, test_scores = validation_curve(
     ...     logistic_regression, X, y, param_name=param_name, param_range=param_range

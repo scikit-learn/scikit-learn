@@ -208,7 +208,7 @@ def _get_instance_with_pipeline(meta_estimator, init_params):
             estimator = make_pipeline(TfidfVectorizer(), Ridge())
             param_grid = {"ridge__alpha": [0.1, 1.0]}
         else:
-            estimator = make_pipeline(TfidfVectorizer(), LogisticRegression(C=None))
+            estimator = make_pipeline(TfidfVectorizer(), LogisticRegression(alpha=1e-4))
             param_grid = {"logisticregression__alpha": [0.1, 1.0]}
 
         if init_params.intersection(
@@ -241,15 +241,11 @@ def _get_instance_with_pipeline(meta_estimator, init_params):
             estimator = [
                 (
                     "est1",
-                    make_pipeline(
-                        TfidfVectorizer(), LogisticRegression(C=None, alpha=0.1)
-                    ),
+                    make_pipeline(TfidfVectorizer(), LogisticRegression(alpha=0.1)),
                 ),
                 (
                     "est2",
-                    make_pipeline(
-                        TfidfVectorizer(), LogisticRegression(C=None, alpha=1)
-                    ),
+                    make_pipeline(TfidfVectorizer(), LogisticRegression(alpha=1)),
                 ),
             ]
         return type(meta_estimator)(estimator)

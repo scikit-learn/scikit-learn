@@ -33,11 +33,11 @@ X_r, y_r = load_diabetes(return_X_y=True)
             *make_classification(n_samples=10),
             StackingClassifier(
                 estimators=[
-                    ("lr", LogisticRegression(C=None)),
+                    ("lr", LogisticRegression(alpha=1e-4)),
                     ("svm", LinearSVC()),
                     ("rf", RandomForestClassifier(n_estimators=5, max_depth=3)),
                 ],
-                final_estimator=LogisticRegression(C=None),
+                final_estimator=LogisticRegression(alpha=1e-4),
                 cv=2,
             ),
         ),
@@ -45,7 +45,7 @@ X_r, y_r = load_diabetes(return_X_y=True)
             *make_classification(n_samples=10),
             VotingClassifier(
                 estimators=[
-                    ("lr", LogisticRegression(C=None)),
+                    ("lr", LogisticRegression(alpha=1e-4)),
                     ("svm", LinearSVC()),
                     ("rf", RandomForestClassifier(n_estimators=5, max_depth=3)),
                 ]
@@ -154,7 +154,7 @@ def test_ensemble_heterogeneous_estimators_type(Ensemble):
         ensemble_type = "classifier"
     else:
         X, y = make_regression(n_samples=10)
-        estimators = [("lr", LogisticRegression(C=None))]
+        estimators = [("lr", LogisticRegression(alpha=1e-4))]
         ensemble_type = "regressor"
     ensemble = Ensemble(estimators=estimators)
 
@@ -175,7 +175,7 @@ def test_ensemble_heterogeneous_estimators_type(Ensemble):
 def test_ensemble_heterogeneous_estimators_name_validation(X, y, Ensemble):
     # raise an error when the name contains dunder
     if issubclass(Ensemble, ClassifierMixin):
-        estimators = [("lr__", LogisticRegression(C=None))]
+        estimators = [("lr__", LogisticRegression(alpha=1e-4))]
     else:
         estimators = [("lr__", LinearRegression())]
     ensemble = Ensemble(estimators=estimators)
@@ -187,8 +187,8 @@ def test_ensemble_heterogeneous_estimators_name_validation(X, y, Ensemble):
     # raise an error when the name is not unique
     if issubclass(Ensemble, ClassifierMixin):
         estimators = [
-            ("lr", LogisticRegression(C=None)),
-            ("lr", LogisticRegression(C=None)),
+            ("lr", LogisticRegression(alpha=1e-4)),
+            ("lr", LogisticRegression(alpha=1e-4)),
         ]
     else:
         estimators = [("lr", LinearRegression()), ("lr", LinearRegression())]
@@ -200,7 +200,7 @@ def test_ensemble_heterogeneous_estimators_name_validation(X, y, Ensemble):
 
     # raise an error when the name conflicts with the parameters
     if issubclass(Ensemble, ClassifierMixin):
-        estimators = [("estimators", LogisticRegression(C=None))]
+        estimators = [("estimators", LogisticRegression(alpha=1e-4))]
     else:
         estimators = [("estimators", LinearRegression())]
     ensemble = Ensemble(estimators=estimators)
@@ -215,11 +215,11 @@ def test_ensemble_heterogeneous_estimators_name_validation(X, y, Ensemble):
     [
         (
             *make_classification(n_samples=10),
-            StackingClassifier(estimators=[("lr", LogisticRegression(C=None))]),
+            StackingClassifier(estimators=[("lr", LogisticRegression(alpha=1e-4))]),
         ),
         (
             *make_classification(n_samples=10),
-            VotingClassifier(estimators=[("lr", LogisticRegression(C=None))]),
+            VotingClassifier(estimators=[("lr", LogisticRegression(alpha=1e-4))]),
         ),
         (
             *make_regression(n_samples=10),

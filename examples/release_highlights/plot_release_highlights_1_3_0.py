@@ -116,7 +116,7 @@ from sklearn.model_selection import ValidationCurveDisplay
 X, y = make_classification(1000, 10, random_state=0)
 
 _ = ValidationCurveDisplay.from_estimator(
-    LogisticRegression(C=None),
+    LogisticRegression(),
     X,
     y,
     param_name="alpha",

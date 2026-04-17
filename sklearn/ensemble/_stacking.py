@@ -587,7 +587,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     ...                           LinearSVC(random_state=42)))
     ... ]
     >>> clf = StackingClassifier(
-    ...     estimators=estimators, final_estimator=LogisticRegression(C=None)
+    ...     estimators=estimators, final_estimator=LogisticRegression(alpha=1e-4)
     ... )
     >>> from sklearn.model_selection import train_test_split
     >>> X_train, X_test, y_train, y_test = train_test_split(
@@ -842,7 +842,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         # If final_estimator's default changes then this should be
         # updated.
         if self.final_estimator is None:
-            final_estimator = LogisticRegression(C=None)
+            final_estimator = LogisticRegression()
         else:
             final_estimator = self.final_estimator
         return super()._sk_visual_block_with_final_estimator(final_estimator)

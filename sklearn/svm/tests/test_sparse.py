@@ -305,7 +305,7 @@ def test_weight(csr_container):
 
     X_ = csr_container(X_)
     for clf in (
-        linear_model.LogisticRegression(C=None),
+        linear_model.LogisticRegression(alpha=1e-4),
         svm.LinearSVC(random_state=0),
         svm.SVC(),
     ):

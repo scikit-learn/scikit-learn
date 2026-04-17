@@ -555,7 +555,7 @@ class DecisionBoundaryDisplay:
         >>> from sklearn.inspection import DecisionBoundaryDisplay
         >>> iris = load_iris()
         >>> X = iris.data[:, :2]
-        >>> classifier = LogisticRegression(C=None).fit(X, iris.target)
+        >>> classifier = LogisticRegression(alpha=1e-4).fit(X, iris.target)
         >>> disp = DecisionBoundaryDisplay.from_estimator(
         ...     classifier, X, response_method="predict",
         ...     xlabel=iris.feature_names[0], ylabel=iris.feature_names[1],

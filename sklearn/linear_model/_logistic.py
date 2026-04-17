@@ -105,7 +105,7 @@ def _logistic_regression_path(
     *,
     classes,
     alphas=10,
-    Cs="deprecated",
+    Cs=None,
     fit_intercept=True,
     max_iter=100,
     tol=1e-4,
@@ -273,18 +273,8 @@ def _logistic_regression_path(
     .. versionchanged:: 0.19
         The "copy" parameter was removed.
     """
-    if Cs is not None and not (isinstance(alphas, str) and alphas == "warned_already"):
-        depr_msg = (
-            "'Cs' was deprecated in version 1.9 and will be removed in 1.11. "
-            "For integers, use alphas=Cs, "
-            "for arrays, use alphas=1/(Cs * n_samples) or "
-            "alpha=1/(Cs * np.sum(sample_weight)) and set C=None instead. "
-            "Set Cs=None to avoid this warning."
-        )
-        warnings.warn(depr_msg, FutureWarning)
-
     use_alpha = True  # TODO(1.11): remove
-    if Cs is None or (isinstance(Cs, str) and Cs == "deprecated"):
+    if Cs is None:
         if isinstance(alphas, numbers.Integral):
             alphas = np.logspace(2, -7, alphas)  # descending
         Cs = [None] * len(alphas)
@@ -865,7 +855,7 @@ def _log_reg_scoring_path(
 
     if Cs is None:
         alphas_zip = alphas
-        Cs_zip = [None] * len(alphas)
+        Cs_zip = ["deprecated"] * len(alphas)
     else:
         alphas_zip = alphas = [None] * len(Cs)
         Cs_zip = Cs
@@ -947,16 +937,18 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            `penalty='l1'` and `l1_ratio` set to any float between 0 and 1 for
            `'penalty='elasticnet'`.
 
-    alpha : float, default=1e-4
+    alpha : float, default=None
         Regularization strength that multiplies the penalty term (both L1 and L2).
         ``alpha = 0`` is equivalent to unpenalized logistic regression. In this case,
         the design matrix `X` must have full column rank (no collinearities).
         Values of `alpha` must be in the range `[0.0, inf)`.
 
         .. warning::
-           During the deprecation period of `C`, you need to set `C=None` in order
-           to use `alpha`. If you do not set `C=None`, the value of `C` will be used
-           no matter the value of `alpha`.
+           During the deprecation period of `C`, you need to set `alpha` explicitly
+           in order to use it. If you do not set `alpha` to some value, the value of
+           `C` will be used.
+           Also note that the default of `alpha` will change from `None` to `1e-4`
+           in version 1.11.
 
     C : float, default=1.0
         Inverse of regularization strength; must be a positive float.
@@ -969,8 +961,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         .. deprecated:: 1.9
            `C` was deprecated in version 1.9 and will be removed in 1.11.
            Use `alpha=1/(C * n_samples)` or `alpha=1/(C * np.sum(sample_weight))`
-           and set `C=None` instead.
-           The new default will be `alpha=1e-4`.
+           instead.
+           The new default in version 1.11 will be `alpha=1e-4`.
 
     l1_ratio : float, default=0.0
         The Elastic-Net mixing parameter, with `0 <= l1_ratio <= 1`. Setting
@@ -1197,7 +1189,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.linear_model import LogisticRegression
     >>> X, y = load_iris(return_X_y=True)
-    >>> clf = LogisticRegression(C=None).fit(X, y)
+    >>> clf = LogisticRegression(alpha=1e-4).fit(X, y)
     >>> clf.predict(X[:2, :])
     array([0, 0])
     >>> clf.predict_proba(X[:2, :])
@@ -1216,11 +1208,10 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             None,
             Hidden(StrOptions({"deprecated"})),
         ],
-        "alpha": [Interval(Real, 0.0, None, closed="left")],
+        "alpha": [Interval(Real, 0.0, None, closed="left"), None],
         "C": [
             Interval(Real, 0, None, closed="right"),
-            None,
-            Hidden(StrOptions({"deprecated", "warn"})),
+            Hidden(StrOptions({"deprecated"})),
         ],
         "l1_ratio": [Interval(Real, 0, 1, closed="both"), None],
         "dual": ["boolean"],
@@ -1244,7 +1235,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self,
         penalty="deprecated",
         *,
-        alpha=1e-4,
+        alpha=None,
         C="deprecated",
         l1_ratio=0.0,
         dual=False,
@@ -1305,13 +1296,19 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         -----
         The SAGA solver supports both float64 and float32 bit arrays.
         """
-        if self.C is not None:
-            depr_msg = (
-                "'C' was deprecated in version 1.9 and will be removed in 1.11. "
-                "Use alpha=1/(C * n_samples) or "
-                "alpha=1/(C * np.sum(sample_weight)) and set C=None instead. "
-                "Set C=None to avoid this warning."
-            )
+        depr_msg = (
+            "'C' was deprecated in version 1.9 and will be removed in 1.11. "
+            "Use alpha=1/(C * n_samples) or alpha=1/(C * np.sum(sample_weight)) "
+            "instead. Set either 'alpha' or 'C' explicitly to avoid this warning. "
+            "The new default in version 1.11 will be alpha=1e-4."
+        )
+        if self.C != "deprecated":
+            if self.alpha is None:
+                warnings.warn("You are using 'C'. " + depr_msg, FutureWarning)
+            else:
+                msg = "You must set either 'alpha' or the deprecated 'C', but not both."
+                raise ValueError(msg)
+        elif self.C == "deprecated" and self.alpha is None:
             warnings.warn(depr_msg, FutureWarning)
 
         if self.penalty == "deprecated":
@@ -1329,7 +1326,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 penalty = "l1"
             else:
                 penalty = "elasticnet"
-            if self.C == np.inf or (self.C is None and self.alpha == 0):
+            if self.C == np.inf or (self.C == "deprecated" and self.alpha == 0):
                 penalty = None
         else:
             penalty = self.penalty
@@ -1393,7 +1390,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
         if self.penalty is None:
             # if not default values
-            if self.C != "deprecated" or (self.C is None and self.alpha == 1):
+            if self.C != "deprecated" or self.alpha is not None:
                 warnings.warn(
                     "Setting penalty=None will ignore the alpha, C and l1_ratio "
                     "parameters",
@@ -1404,8 +1401,12 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             C_ = None
             penalty = "l2"
         elif self.C == "deprecated":
-            C_ = 1.0  # the old default
-            alpha_ = None
+            if self.alpha is None:
+                C_ = 1.0  # the old default
+                alpha_ = None
+            else:
+                alpha_ = self.alpha
+                C_ = None
         else:
             alpha_ = self.alpha
             C_ = self.C
@@ -1495,7 +1496,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             X,
             y,
             classes=self.classes_,
-            alphas=[alpha_] if C_ is None else "warned_already",
+            alphas=[alpha_] if C_ is None else None,
             Cs=[C_] if C_ is not None else None,
             l1_ratio=self.l1_ratio,
             fit_intercept=self.fit_intercept,
@@ -1622,7 +1623,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
     Parameters
     ----------
-    alphas : int or array-like of shape (n_alphas,), default=10
+    alphas : int or array-like of shape (n_alphas,), default=None
         Each of the values in `alphas` describe the regularization strength that
         multiplies the penalty term (both L1 and L2). In this case, values must be in
         the range `[0.0, inf)`.
@@ -1630,9 +1631,12 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         logarithmic scale between 1e-7 and 1e2.
 
         .. warning::
-           During the deprecation period of `Cs`, you need to set `Cs=None` in order
-           to use `alphas`. If you do not set `Cs=None`, the value of `Cs` will be used
-           no matter the value of `alphas`.
+           During the deprecation period of `Cs`, you need to set `alpha` explicitly
+           in order to use it. If you do not set `alphas` to some value, the value of
+           `Cs` will be used.
+           Also note that the default of `alphas` will change from `None` to `10`
+           in version 1.11. This creates a grid of 10 values between 1e2 and 1e-7,
+           equally spaced on the log scale.
 
     Cs : int or list of floats, default=10
         Each of the values in Cs describes the inverse of regularization
@@ -1645,8 +1649,9 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            `Cs` was deprecated in version 1.9 and will be removed in 1.11.
            For integers, use `alphas=Cs`.
            For arrays, use `alphas=1/(Cs * n_samples)` or
-           `alphas=1/(Cs * np.sum(sample_weight))` and set `Cs=None` instead.
-           The new default will be `alpha=10` (automatic grid of 10 values).
+           `alphas=1/(Cs * np.sum(sample_weight))` instead.
+           The new default will be `alpha=10` (automatic grid of 10 values between
+           1e2 and 1e-7).
 
     l1_ratios : array-like of shape (n_l1_ratios), default=None
         Floats between 0 and 1 passed as Elastic-Net mixing parameter (scaling between
@@ -1955,7 +1960,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     >>> from sklearn.linear_model import LogisticRegressionCV
     >>> X, y = load_iris(return_X_y=True)
     >>> clf = LogisticRegressionCV(
-    ...     Cs=None,
+    ...     alphas=10,
     ...     cv=5,
     ...     use_legacy_attributes=False,
     ...     l1_ratios=(0,),
@@ -1976,11 +1981,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
     _parameter_constraints.update(
         {
-            "alphas": [Interval(Integral, 1, None, closed="left"), "array-like"],
+            "alphas": [Interval(Integral, 1, None, closed="left"), "array-like", None],
             "Cs": [
                 Interval(Integral, 1, None, closed="left"),
                 "array-like",
-                None,
                 Hidden(StrOptions({"deprecated"})),
             ],
             "l1_ratios": ["array-like", None, Hidden(StrOptions({"warn"}))],
@@ -2003,7 +2007,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     def __init__(
         self,
         *,
-        alphas=10,
+        alphas=None,
         Cs="deprecated",
         l1_ratios="warn",
         fit_intercept=True,
@@ -2069,6 +2073,36 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             Fitted LogisticRegressionCV estimator.
         """
         _raise_for_params(params, self, "fit")
+
+        depr_msg = (
+            "'Cs' was deprecated in version 1.9 and will be removed in 1.11. "
+            "For integers, use alphas=Cs. "
+            "For arrays, use `alphas=1/(Cs * n_samples)` or "
+            "alphas=1/(Cs * np.sum(sample_weight))` instead. "
+            "The new default will be alpha=10 (automatic grid of 10 values "
+            "between 1e2 and 1e-7)."
+        )
+        if not (isinstance(self.Cs, str) and self.Cs == "deprecated"):
+            if self.alphas is None:
+                warnings.warn("You are using 'Cs'. " + depr_msg, FutureWarning)
+                alphas_ = None
+                Cs_ = self.Cs
+            else:
+                msg = (
+                    "You must set either 'alphas' or the deprecated 'Cs', but not both."
+                )
+                raise ValueError(msg)
+        elif isinstance(self.Cs, str) and self.Cs == "deprecated":
+            if self.alphas is None:
+                warnings.warn(depr_msg, FutureWarning)
+                Cs_ = 10  # the old default
+                alphas_ = None
+            else:
+                alphas_ = self.alphas
+                Cs_ = None
+        else:
+            alphas_ = self.alphas
+            Cs_ = self.Cs
 
         if isinstance(self.l1_ratios, str) and self.l1_ratios == "warn":
             l1_ratios = None
@@ -2287,8 +2321,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 train,
                 test,
                 classes=self.classes_,
-                alphas=self.alphas,
-                Cs=self.Cs,
+                alphas=alphas_,
+                Cs=Cs_,
                 fit_intercept=self.fit_intercept,
                 penalty=penalty,
                 dual=self.dual,

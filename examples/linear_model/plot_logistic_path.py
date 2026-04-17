@@ -66,7 +66,6 @@ alphas = 1 / (cs * X.shape[0])
 clf = make_pipeline(
     StandardScaler(),
     LogisticRegression(
-        C=None,
         l1_ratio=1,
         solver="liblinear",
         tol=1e-6,

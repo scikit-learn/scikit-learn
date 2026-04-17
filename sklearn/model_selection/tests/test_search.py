@@ -1216,7 +1216,7 @@ def test_random_search_cv_results_multimetric():
             # If True, for multi-metric pass refit='accuracy'
             if refit and isinstance(scoring, tuple):
                 refit = "accuracy"
-            clf = LogisticRegression(C=None)
+            clf = LogisticRegression(alpha=1e-4)
             random_search = RandomizedSearchCV(
                 clf,
                 n_iter=n_search_iter,
@@ -1333,7 +1333,7 @@ def test_unsupported_sample_weight_scorer():
     X, y = make_classification(n_samples=10, n_features=4, random_state=42)
     sw = np.ones_like(y)
     search_cv = GridSearchCV(
-        estimator=LogisticRegression(C=None), param_grid={"alpha": [1, 0.1]}
+        estimator=LogisticRegression(), param_grid={"alpha": [1, 0.1]}
     )
     # function
     search_cv.set_params(scoring=fake_score_func)
@@ -1358,10 +1358,10 @@ def test_unsupported_sample_weight_scorer():
     "estimator",
     [
         GridSearchCV(
-            estimator=LogisticRegression(C=None), param_grid={"alpha": [1, 0.1, 0.01]}
+            estimator=LogisticRegression(), param_grid={"alpha": [1, 0.1, 0.01]}
         ),
         RandomizedSearchCV(
-            estimator=Ridge(), param_distributions={"alpha": [1, 0.1, 0.01]}
+            estimator=Ridge(), param_distributions={"alpha": [1, 0.1, 0.01]}, n_iter=3
         ),
     ],
 )
@@ -2665,7 +2665,7 @@ def test_search_html_repr():
     X, y = make_classification(random_state=42)
 
     pipeline = Pipeline([("scale", StandardScaler()), ("clf", DummyClassifier())])
-    param_grid = {"clf": [DummyClassifier(), LogisticRegression(C=None)]}
+    param_grid = {"clf": [DummyClassifier(), LogisticRegression(alpha=1e-4)]}
 
     # Unfitted shows the original pipeline
     search_cv = GridSearchCV(pipeline, param_grid=param_grid, refit=False)
@@ -2790,7 +2790,7 @@ def test_cv_results_dtype_issue_29074():
         "parameter4": ["str1", "str2"],
     }
     grid_search = GridSearchCV(
-        estimator=MetaEstimator(LogisticRegression(C=None)),
+        estimator=MetaEstimator(LogisticRegression(alpha=1e-4)),
         param_grid=param_grid,
         cv=3,
     )
@@ -2844,7 +2844,7 @@ def test_cv_results_multi_size_array():
 
     spline_reg_pipe = make_pipeline(
         SplineTransformer(extrapolation="periodic"),
-        LogisticRegression(C=None),
+        LogisticRegression(alpha=1e-4),
     )
 
     n_knots_list = [n_features * i for i in [10, 11, 12]]

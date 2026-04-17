@@ -968,7 +968,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     >>> X_train, X_test, Y_train, Y_test = train_test_split(
     ...    X, Y, random_state=0
     ... )
-    >>> base_lr = LogisticRegression(C=None)
+    >>> base_lr = LogisticRegression(alpha=1e-4)
     >>> chain = ClassifierChain(base_lr, order='random', random_state=0)
     >>> chain.fit(X_train, Y_train).predict(X_test)
     array([[1., 1., 1.],
@@ -1209,7 +1209,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
     --------
     >>> from sklearn.multioutput import RegressorChain
     >>> from sklearn.linear_model import LogisticRegression
-    >>> logreg = LogisticRegression(C=None, solver='lbfgs')
+    >>> logreg = LogisticRegression(alpha=1e-4)
     >>> X, Y = [[1, 0], [0, 1], [1, 1]], [[0, 2], [1, 1], [2, 0]]
     >>> chain = RegressorChain(logreg, order=[0, 1]).fit(X, Y)
     >>> chain.predict(X)

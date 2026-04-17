@@ -43,10 +43,10 @@ def classification_dataset():
     "estimator, dataset",
     [
         (LinearRegression(), "regression_dataset"),
-        (LogisticRegression(C=None), "classification_dataset"),
+        (LogisticRegression(alpha=1e-4), "classification_dataset"),
         (make_pipeline(StandardScaler(), LinearRegression()), "regression_dataset"),
         (
-            make_pipeline(StandardScaler(), LogisticRegression(C=None)),
+            make_pipeline(StandardScaler(), LogisticRegression(alpha=1e-4)),
             "classification_dataset",
         ),
         (StandardScaler(), "regression_dataset"),
@@ -211,7 +211,7 @@ def test_frozen_tags():
 
 def test_frozen_params():
     """Test that FrozenEstimator only exposes the estimator parameter."""
-    est = LogisticRegression(C=None)
+    est = LogisticRegression(alpha=1e-4)
     frozen = FrozenEstimator(est)
 
     with pytest.raises(ValueError, match="You cannot set parameters of the inner"):

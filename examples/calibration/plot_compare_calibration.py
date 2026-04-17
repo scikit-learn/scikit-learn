@@ -104,7 +104,6 @@ from sklearn.naive_bayes import GaussianNB
 # classifiers but we don't do it here for the sake of keeping the example code
 # concise and fast to execute.
 lr = LogisticRegressionCV(
-    Cs=None,
     alphas=np.logspace(6, -6, 101),
     cv=10,
     l1_ratios=(0,),

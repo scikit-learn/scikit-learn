@@ -3,13 +3,17 @@
   version 1.11. Use `alpha` and `alphas` instead. The new parameters also have new
   default values:
 
-  - `alpha=1e-4` for `LogisticRegression` is a small regularization
-  - `alphas=10` for `LogisticRegressionCV` will select from 10 values on the log scale
-     between 1e-7 and 1e2.
+  - `alpha=None` for `LogisticRegression`, meaning `C` will be used. Starting with
+    version 1.11 the default will chang to `alpha=1e-4`. Note that this is a small
+    regularization.
+  - `alphas=None` for `LogisticRegressionCV`, meaning `Cs` will be used. Starting with
+    version 1.11 the default will change to `alphas=10`. This creates a grid of 10
+    values of alpha between 1e-7 to 1e2, equally spaced on the log scale.
 
-  To silence deprecation warnings, set `C=None` or `Cs=None` during the deprecation
-  period. Note that the relation between old and new parameters is
-  `C=1/(alpha * n_samples)` or `C=1/(alpha * np.sum(sample_weight))`.
+  To silence deprecation warnings, set `alpha=1e-4` and `alphas=10` (or any other
+  value) explicitly during the deprecation period. Note that the relation between old
+  and new parameters is `C=1/(alpha * n_samples)` or
+  `C=1/(alpha * np.sum(sample_weight))`.
 
   This way, the penalty parameterization of most linear models is aligned, e.g.
   :class:`linear_model.Lasso`, :class:`linear_model.ElasticNet` and

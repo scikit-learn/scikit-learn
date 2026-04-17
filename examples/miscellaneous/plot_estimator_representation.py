@@ -24,7 +24,7 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 # values when displayed as a string. This reduces the visual noise and makes it
 # easier to spot what the differences are when comparing instances.
 
-lr = LogisticRegression(C=None, l1_ratio=1)
+lr = LogisticRegression(alpha=1e-4, l1_ratio=1)
 print(lr)
 
 # %%
@@ -48,5 +48,5 @@ preprocessor = make_column_transformer(
     (num_proc, ("feat1", "feat3")), (cat_proc, ("feat0", "feat2"))
 )
 
-clf = make_pipeline(preprocessor, LogisticRegression(C=None))
+clf = make_pipeline(preprocessor, LogisticRegression(alpha=1e-4))
 clf

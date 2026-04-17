@@ -97,7 +97,7 @@ estimators = [
     ("svr", make_pipeline(StandardScaler(), LinearSVC(dual="auto", random_state=42))),
 ]
 clf = StackingClassifier(
-    estimators=estimators, final_estimator=LogisticRegression(C=None)
+    estimators=estimators, final_estimator=LogisticRegression(alpha=1e-4)
 )
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=42)
 clf.fit(X_train, y_train).score(X_test, y_test)
@@ -268,7 +268,7 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.utils.estimator_checks import parametrize_with_checks
 
 
-@parametrize_with_checks([LogisticRegression(C=None), DecisionTreeRegressor()])
+@parametrize_with_checks([LogisticRegression(alpha=1e-4), DecisionTreeRegressor()])
 def test_sklearn_compatible_estimator(estimator, check):
     check(estimator)
 
@@ -294,5 +294,5 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
 
 X, y = make_classification(n_classes=4, n_informative=16)
-clf = LogisticRegression(C=None, max_iter=1000).fit(X, y)
+clf = LogisticRegression(alpha=1e-4, max_iter=1000).fit(X, y)
 print(roc_auc_score(y, clf.predict_proba(X), multi_class="ovr"))

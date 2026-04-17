@@ -79,7 +79,7 @@ def test_stacking_classifier_iris(cv, final_estimator, passthrough):
     X_train, X_test, y_train, y_test = train_test_split(
         scale(X_iris), y_iris, stratify=y_iris, random_state=42
     )
-    estimators = [("lr", LogisticRegression(C=None)), ("svc", LinearSVC())]
+    estimators = [("lr", LogisticRegression(alpha=1e-4)), ("svc", LinearSVC())]
     clf = StackingClassifier(
         estimators=estimators,
         final_estimator=final_estimator,
@@ -123,7 +123,7 @@ def test_stacking_classifier_drop_column_binary_classification():
 
     # both classifiers implement 'predict_proba' and will both drop one column
     estimators = [
-        ("lr", LogisticRegression(C=None)),
+        ("lr", LogisticRegression(alpha=1e-4)),
         ("rf", RandomForestClassifier(random_state=42)),
     ]
     clf = StackingClassifier(estimators=estimators, cv=3)
@@ -133,7 +133,7 @@ def test_stacking_classifier_drop_column_binary_classification():
     assert X_trans.shape[1] == 2
 
     # LinearSVC does not implement 'predict_proba' and will not drop one column
-    estimators = [("lr", LogisticRegression(C=None)), ("svc", LinearSVC())]
+    estimators = [("lr", LogisticRegression(alpha=1e-4)), ("svc", LinearSVC())]
     clf.set_params(estimators=estimators)
 
     clf.fit(X_train, y_train)
@@ -258,7 +258,7 @@ def test_stacking_classifier_sparse_passthrough(sparse_container):
     X_train, X_test, y_train, _ = train_test_split(
         sparse_container(scale(X_iris)), y_iris, random_state=42
     )
-    estimators = [("lr", LogisticRegression(C=None)), ("svc", LinearSVC())]
+    estimators = [("lr", LogisticRegression(alpha=1e-4)), ("svc", LinearSVC())]
     rf = RandomForestClassifier(n_estimators=10, random_state=42)
     clf = StackingClassifier(
         estimators=estimators, final_estimator=rf, cv=5, passthrough=True
@@ -279,7 +279,10 @@ def test_stacking_classifier_drop_binary_prob():
     # Select only the 2 first classes
     X_, y_ = scale(X_iris[:100]), y_iris[:100]
 
-    estimators = [("lr", LogisticRegression(C=None)), ("rf", RandomForestClassifier())]
+    estimators = [
+        ("lr", LogisticRegression(alpha=1e-4)),
+        ("rf", RandomForestClassifier()),
+    ]
     clf = StackingClassifier(estimators=estimators)
     clf.fit(X_, y_)
     X_meta = clf.transform(X_)
@@ -311,7 +314,7 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
             y_iris,
             {
                 "estimators": [
-                    ("lr", LogisticRegression(C=None)),
+                    ("lr", LogisticRegression(alpha=1e-4)),
                     ("svm", SVC(max_iter=50_000)),
                 ],
                 "stack_method": "predict_proba",
@@ -323,7 +326,7 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
             y_iris,
             {
                 "estimators": [
-                    ("lr", LogisticRegression(C=None)),
+                    ("lr", LogisticRegression(alpha=1e-4)),
                     ("cor", NoWeightClassifier()),
                 ]
             },
@@ -334,7 +337,7 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
             y_iris,
             {
                 "estimators": [
-                    ("lr", LogisticRegression(C=None)),
+                    ("lr", LogisticRegression(alpha=1e-4)),
                     ("cor", LinearSVC(max_iter=50_000)),
                 ],
                 "final_estimator": NoWeightClassifier(),
@@ -388,7 +391,7 @@ def test_stacking_regressor_error(y, params, type_err, msg_err):
         (
             StackingClassifier(
                 estimators=[
-                    ("first", LogisticRegression(C=None)),
+                    ("first", LogisticRegression(alpha=1e-4)),
                     ("second", LinearSVC(random_state=0)),
                 ]
             ),
@@ -434,7 +437,7 @@ def test_stacking_classifier_stratify_default():
     # check that we stratify the classes for the default CV
     clf = StackingClassifier(
         estimators=[
-            ("lr", LogisticRegression(C=None, max_iter=10_000)),
+            ("lr", LogisticRegression(alpha=1e-4, max_iter=10_000)),
             ("svm", LinearSVC(max_iter=10_000)),
         ]
     )
@@ -449,10 +452,10 @@ def test_stacking_classifier_stratify_default():
         (
             StackingClassifier(
                 estimators=[
-                    ("lr", LogisticRegression(C=None)),
+                    ("lr", LogisticRegression(alpha=1e-4)),
                     ("svm", LinearSVC(random_state=42)),
                 ],
-                final_estimator=LogisticRegression(C=None),
+                final_estimator=LogisticRegression(alpha=1e-4),
                 cv=KFold(shuffle=True, random_state=42),
             ),
             *load_breast_cancer(return_X_y=True),
@@ -518,10 +521,10 @@ def test_stacking_classifier_sample_weight_fit_param():
         (
             StackingClassifier(
                 estimators=[
-                    ("lr", LogisticRegression(C=None)),
+                    ("lr", LogisticRegression(alpha=1e-4)),
                     ("svm", LinearSVC(random_state=42)),
                 ],
-                final_estimator=LogisticRegression(C=None),
+                final_estimator=LogisticRegression(alpha=1e-4),
             ),
             *load_breast_cancer(return_X_y=True),
         ),
@@ -571,7 +574,7 @@ def test_stacking_cv_influence(stacker, X, y):
             StackingClassifier,
             DummyClassifier,
             "predict_proba",
-            LogisticRegression(C=None),
+            LogisticRegression(alpha=1e-4),
             X_iris,
             y_iris,
         ),
@@ -806,7 +809,7 @@ def test_stacking_classifier_multilabel_auto_predict(stack_method, passthrough):
         (
             StackingClassifier(
                 estimators=[
-                    ("lr", LogisticRegression(C=None)),
+                    ("lr", LogisticRegression(alpha=1e-4)),
                     ("svm", LinearSVC(random_state=0)),
                 ]
             ),
@@ -825,7 +828,7 @@ def test_stacking_classifier_multilabel_auto_predict(stack_method, passthrough):
         (
             StackingClassifier(
                 estimators=[
-                    ("lr", LogisticRegression(C=None)),
+                    ("lr", LogisticRegression(alpha=1e-4)),
                     ("other", "drop"),
                     ("svm", LinearSVC(random_state=0)),
                 ]
@@ -883,7 +886,7 @@ def test_stacking_classifier_base_regressor():
     )
     clf = StackingClassifier(
         estimators=[("ridge", Ridge())],
-        final_estimator=LogisticRegression(C=None, alpha=1e-3),
+        final_estimator=LogisticRegression(alpha=1e-3),
     )
     clf.fit(X_train, y_train)
     clf.predict(X_test)
@@ -902,7 +905,7 @@ def test_stacking_final_estimator_attribute_error():
     X, y = make_classification(random_state=42)
 
     estimators = [
-        ("lr", LogisticRegression(C=None)),
+        ("lr", LogisticRegression(alpha=1e-4)),
         ("rf", RandomForestClassifier(n_estimators=2, random_state=42)),
     ]
     # RandomForestClassifier does not implement 'decision_function' and should raise
@@ -922,7 +925,7 @@ def test_stacking_final_estimator_attribute_error():
 
 # TODO(1.11): remove with the deprecation of C in LogisticRegression
 def test_stacking_classifier_warning_default_C_deprecated():
-    clf = StackingClassifier(estimators=[("logreg", LogisticRegression(C=None))])
+    clf = StackingClassifier(estimators=[("logreg", LogisticRegression(alpha=1e-4))])
     with pytest.warns(FutureWarning) as record:
         clf.fit(scale(X_iris), y_iris)
     assert len(record) == 2

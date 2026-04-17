@@ -32,7 +32,7 @@ from sklearn.model_selection import FixedThresholdClassifier, train_test_split
 
 X, y = make_classification(n_samples=1000, random_state=0)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-classifier = LogisticRegression(C=None, alpha=1e-2).fit(X_train, y_train)
+classifier = LogisticRegression(alpha=1e-2).fit(X_train, y_train)
 
 print(
     "Probability estimates for three data points:\n"
