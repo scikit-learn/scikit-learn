@@ -1,138 +1,201 @@
 """
 ===============
-GMM covariances
+GMM Covariances
 ===============
 
-Demonstration of several covariances types for Gaussian mixture models.
+This example illustrates the impact of different covariance parameterizations
+in :class:`~sklearn.mixture.GaussianMixture`.
 
-See :ref:`gmm` for more information on the estimator.
-
-Although GMM are often used for clustering, we can compare the obtained
-clusters with the actual classes from the dataset. We initialize the means
-of the Gaussians with the means of the classes from the training set to make
-this comparison valid.
-
-We plot predicted labels on both training and held out test data using a
-variety of GMM covariance types on the iris dataset.
-We compare GMMs with spherical, diagonal, full, and tied covariance
-matrices in increasing order of performance. Although one would
-expect full covariance to perform best in general, it is prone to
-overfitting on small datasets and does not generalize well to held out
-test data.
-
-On the plots, train data is shown as dots, while test data is shown as
-crosses. The iris dataset is four-dimensional. Only the first two
-dimensions are shown here, and thus some points are separated in other
-dimensions.
-
+The choice of covariance structure directly constrains the geometry of the
+clusters and affects both model expressivity and generalization.
 """
 
+# %%
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+# %%
+# Overview
+# --------
+#
+# We compare four covariance types:
+#
+# - **Spherical**: each component has covariance :math:`\sigma^2 I`
+# - **Diagonal**: covariance matrices are diagonal
+# - **Tied**: all components share the same covariance matrix
+# - **Full**: each component has its own general covariance matrix
+#
+# While the *full* model is the most expressive, it introduces more parameters,
+# which increases the risk of overfitting for small datasets
+
+# %%
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.optimize import linear_sum_assignment
 
-from sklearn import datasets
+from sklearn.metrics import confusion_matrix, rand_score
 from sklearn.mixture import GaussianMixture
-from sklearn.model_selection import StratifiedKFold
 
-colors = ["navy", "turquoise", "darkorange"]
+# %%
+# Dataset
+# ------
+#
+# We construct a synthetic dataset drawn from a mixture of four Gaussians:
+#
+# - Component 1: spherical covariance
+# - Component 2: diagonal covariance
+# - Component 3: full covariance
+# - Component 4: spherical covariance (fewer datapoints)
 
+rnd = np.random.RandomState(4)
 
-def make_ellipses(gmm, ax):
-    for n, color in enumerate(colors):
-        if gmm.covariance_type == "full":
-            covariances = gmm.covariances_[n][:2, :2]
-        elif gmm.covariance_type == "tied":
-            covariances = gmm.covariances_[:2, :2]
-        elif gmm.covariance_type == "diag":
-            covariances = np.diag(gmm.covariances_[n][:2])
-        elif gmm.covariance_type == "spherical":
-            covariances = np.eye(gmm.means_.shape[1]) * gmm.covariances_[n]
-        v, w = np.linalg.eigh(covariances)
-        u = w[0] / np.linalg.norm(w[0])
-        angle = np.arctan2(u[1], u[0])
-        angle = 180 * angle / np.pi  # convert to degrees
-        v = 2.0 * np.sqrt(2.0) * np.sqrt(v)
-        ell = mpl.patches.Ellipse(
-            gmm.means_[n, :2], v[0], v[1], angle=180 + angle, color=color
-        )
-        ell.set_clip_box(ax.bbox)
-        ell.set_alpha(0.5)
-        ax.add_artist(ell)
-        ax.set_aspect("equal", "datalim")
+ground_means = [(0, 0), (-2, 2), (-3, -2), (5, 0)]
 
+ground_covs = [np.eye(2), np.diag([1, 5]), [[3, 1], [1, 3]], np.eye(2)]
 
-iris = datasets.load_iris()
+ground_sample_sizes = [50, 50, 50, 10]
 
-# Break up the dataset into non-overlapping training (75%) and testing
-# (25%) sets.
-skf = StratifiedKFold(n_splits=4)
-# Only take the first fold.
-train_index, test_index = next(iter(skf.split(iris.data, iris.target)))
+colors = ["blue", "orange", "green", "magenta"]
 
+normals = [
+    rnd.multivariate_normal(m, c, sz)
+    for m, c, sz in zip(ground_means, ground_covs, ground_sample_sizes)
+]
 
-X_train = iris.data[train_index]
-y_train = iris.target[train_index]
-X_test = iris.data[test_index]
-y_test = iris.target[test_index]
+n_components = len(normals)
 
-n_classes = len(np.unique(y_train))
+ground_labels = np.concatenate([[i] * sz for i, sz in enumerate(ground_sample_sizes)])
 
-# Try GMMs using different types of covariances.
-estimators = {
-    cov_type: GaussianMixture(
-        n_components=n_classes, covariance_type=cov_type, max_iter=20, random_state=0
+X = np.vstack(normals)
+
+# %%
+# Model Fitting
+# -------------
+#
+# We fit four GMMs with identical hyperparameters but different covariance types.
+
+cov_types = ["spherical", "diag", "tied", "full"]
+
+estimators = [
+    GaussianMixture(
+        n_components=n_components, covariance_type=cov_type, max_iter=20, random_state=0
     )
-    for cov_type in ["spherical", "diag", "tied", "full"]
-}
+    for cov_type in cov_types
+]
 
-n_estimators = len(estimators)
+gmm_labels = [est.fit_predict(X) for est in estimators]
 
-plt.figure(figsize=(3 * n_estimators // 2, 6))
-plt.subplots_adjust(
-    bottom=0.01, top=0.95, hspace=0.15, wspace=0.05, left=0.01, right=0.99
-)
+# %%
+# Visualization
+# -------------
+
+# %% Visualizing the distribution
+# ----------------------------
+#
+# Each Gaussian component is represented as an ellipse that summarizes how the
+# data is spread around its center. The center of the ellipse is the mean of the
+# distribution. The shape of the ellipse comes from the covariance matrix: it
+# stretches more in directions where the data varies a lot.
 
 
-for index, (name, estimator) in enumerate(estimators.items()):
-    # Since we have class labels for the training data, we can
-    # initialize the GMM parameters in a supervised manner.
-    estimator.means_init = np.array(
-        [X_train[y_train == i].mean(axis=0) for i in range(n_classes)]
+def make_ellipse(mean, cov):
+    v, w = np.linalg.eigh(cov)
+    u = w[:, 0] / np.linalg.norm(w[:, 0])
+    angle = np.degrees(np.arctan2(u[1], u[0]))
+    v = 2.0 * np.sqrt(2.0) * np.sqrt(v)
+    return mpl.patches.Ellipse(mean, v[0], v[1], angle=180 + angle)
+
+
+# %%
+# Assigning correct labels
+# ------------------------
+#
+# The GMM will cluster data into arbitrary clusters.
+# We find the permutations to assign correct colors.
+
+
+def make_perm(true_labels, pred_labels):
+    cm = confusion_matrix(true_labels, pred_labels)
+    return np.argsort(linear_sum_assignment(-cm)[1])
+
+
+gmm_perms = [make_perm(ground_labels, gmm_cluster) for gmm_cluster in gmm_labels]
+
+# %%
+# Retrieving covariance matrices
+# ------------------------------
+#
+# We convert all covariance formats to full matrices:
+
+
+def get_covariances(gmm):
+    if gmm.covariance_type == "full":
+        return gmm.covariances_
+    elif gmm.covariance_type == "tied":
+        return [gmm.covariances_] * gmm.n_components
+    elif gmm.covariance_type == "diag":
+        return [np.diag(c) for c in gmm.covariances_]
+    elif gmm.covariance_type == "spherical":
+        return [np.eye(gmm.means_.shape[1]) * c for c in gmm.covariances_]
+
+
+# %%
+# Results
+# -------
+#
+# We compare the learned cluster shapes against the ground truth.
+
+fig = plt.figure(constrained_layout=True)
+gs = fig.add_gridspec(2, 3)
+gs.tight_layout(fig, pad=1.05)
+axes = []
+for i in range(len(estimators) + 1):
+    axes.append(fig.add_subplot(gs[i // 3, i % 3]))
+
+titles = ("Ground Truth", "Spherical", "Diagonal", "Tied", "Full")
+all_means = [ground_means] + [gmm.means_ for gmm in estimators]
+all_covs = [ground_covs] + [get_covariances(gmm) for gmm in estimators]
+all_labels = [ground_labels] + gmm_labels
+all_perms = [range(n_components)] + gmm_perms
+
+for ax, title, means, covs, labels, perms in zip(
+    axes, titles, all_means, all_covs, all_labels, all_perms
+):
+    ax.set(title=title, xticks=[], yticks=[], aspect="equal")
+    score = rand_score(all_labels[0], labels)
+    ax.text(
+        0.05,
+        0.95,
+        f"RI = {score:.2f}",
+        transform=ax.transAxes,
+        va="top",
+        ha="left",
+        bbox=dict(boxstyle="round", facecolor="white", alpha=0.7),
     )
 
-    # Train the other parameters using the EM algorithm.
-    estimator.fit(X_train)
+    clustered = [X[labels == k] for k in range(n_components)]
 
-    h = plt.subplot(2, n_estimators // 2, index + 1)
-    make_ellipses(estimator, h)
-
-    for n, color in enumerate(colors):
-        data = iris.data[iris.target == n]
-        plt.scatter(
-            data[:, 0], data[:, 1], s=0.8, color=color, label=iris.target_names[n]
+    for n, mean, cov, pts in zip(perms, means, covs, clustered):
+        ell = make_ellipse(mean, cov)
+        ell.set(alpha=0.5, color=colors[n], zorder=0)
+        ax.add_patch(ell)
+        ax.scatter(
+            pts[:, 0],
+            pts[:, 1],
+            color=colors[n],
+            sizes=np.repeat(7, pts.shape[1]),
+            zorder=1,
         )
-    # Plot the test data with crosses
-    for n, color in enumerate(colors):
-        data = X_test[y_test == n]
-        plt.scatter(data[:, 0], data[:, 1], marker="x", color=color)
-
-    y_train_pred = estimator.predict(X_train)
-    train_accuracy = np.mean(y_train_pred.ravel() == y_train.ravel()) * 100
-    plt.text(0.05, 0.9, "Train accuracy: %.1f" % train_accuracy, transform=h.transAxes)
-
-    y_test_pred = estimator.predict(X_test)
-    test_accuracy = np.mean(y_test_pred.ravel() == y_test.ravel()) * 100
-    plt.text(0.05, 0.8, "Test accuracy: %.1f" % test_accuracy, transform=h.transAxes)
-
-    plt.xticks(())
-    plt.yticks(())
-    plt.title(name)
-
-plt.legend(scatterpoints=1, loc="lower right", prop=dict(size=12))
-
 
 plt.show()
+
+# %%
+#
+# As can be seen in the plots, each covariant type forces the shape of the
+# cluster.
+#
+# Notice that the poor performance of the spherical type. It suffers similar
+# pitfalls as :class:`~sklearn.cluster.KMeans`. However the predicted
+# distribution for the sparse purple cluster matches the ground truth much more
+# closely.
