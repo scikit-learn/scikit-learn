@@ -968,9 +968,9 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
         .. deprecated:: 1.9
            `C` was deprecated in version 1.9 and will be removed in 1.11.
-           Use `alpha=1/(C * n_samples)` or
-           `alpha=1/(C * np.sum(sample_weight))` and set `C=None` instead.
-           The new default will be `alpha=1`.
+           Use `alpha=1/(C * n_samples)` or `alpha=1/(C * np.sum(sample_weight))`
+           and set `C=None` instead.
+           The new default will be `alpha=1e-4`.
 
     l1_ratio : float, default=0.0
         The Elastic-Net mixing parameter, with `0 <= l1_ratio <= 1`. Setting
