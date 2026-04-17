@@ -30,6 +30,7 @@ from sklearn.utils._param_validation import Interval, StrOptions, validate_param
 from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import (
     _check_sample_weight,
+    _is_arraylike,
     _num_samples,
     check_array,
     check_consistent_length,
@@ -58,7 +59,7 @@ __ALL__ = [
 
 
 def _check_reg_targets(
-    y_true, y_pred, sample_weight, multioutput, dtype="numeric", xp=None
+    y_true, y_pred, sample_weight, multioutput, dtype="numeric", xp=None, device=None
 ):
     """Check that y_true, y_pred and sample_weight belong to the same regression task.
 
@@ -84,9 +85,16 @@ def _check_reg_targets(
         the dtype argument passed to check_array.
 
     xp : module, default=None
-        Precomputed array namespace module. When passed, typically from a caller
-        that has already performed inspection of its own inputs, skips array
-        namespace inspection.
+        Precomputed array namespace module. When passed, along with `device`,
+        typically from a caller that has already performed inspection of its own
+        inputs, skips array namespace inspection. If `None`, the inputs are converted
+        to the namespace of `y_pred`.
+
+    device : device, default=None
+        Precomputed device. When passed, along with `xp`, typically from a caller
+        that has already performed inspection of its own inputs, skips device
+        inspection and move everything to that device. If `None`, the inputs are
+        converted to the device of `y_pred`.
 
     Returns
     -------
@@ -109,7 +117,13 @@ def _check_reg_targets(
         just the corresponding argument if ``multioutput`` is a
         correct keyword.
     """
-    xp, _ = get_namespace(y_true, y_pred, multioutput, xp=xp)
+    if xp is None or device is None:
+        xp, _, device = get_namespace_and_device(y_true, y_pred, multioutput, xp=xp)
+
+    # Ensure that all inputs are on the y_pred device and namespace.
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
+    if _is_arraylike(multioutput):
+        multioutput = move_to(multioutput, xp=xp, device=device)
 
     check_consistent_length(y_true, y_pred, sample_weight)
     y_true = check_array(y_true, ensure_2d=False, dtype=dtype)
@@ -155,12 +169,13 @@ def _check_reg_targets(
 
 
 def _check_reg_targets_with_floating_dtype(
-    y_true, y_pred, sample_weight, multioutput, xp=None
+    y_true, y_pred, sample_weight, multioutput, xp=None, device=None
 ):
     """Ensures y_true, y_pred, and sample_weight correspond to same regression task.
 
     Extends `_check_reg_targets` by automatically selecting a suitable floating-point
-    data type for inputs using `_find_matching_floating_dtype`.
+    data type. If `y_pred` has a floating point dtype, it is used. Otherwise, the
+    dtype is determined by `_find_matching_floating_dtype` on all the inputs.
 
     Use this private method only when converting inputs to array API-compatibles.
 
@@ -179,9 +194,16 @@ def _check_reg_targets_with_floating_dtype(
         None is accepted due to backward compatibility of r2_score().
 
     xp : module, default=None
-        Precomputed array namespace module. When passed, typically from a caller
-        that has already performed inspection of its own inputs, skips array
-        namespace inspection.
+        Precomputed array namespace module. When passed, along with `device`,
+        typically from a caller that has already performed inspection of its own
+        inputs, skips array namespace inspection. If `None`, the inputs are converted
+        to the namespace of `y_pred`.
+
+    device : device, default=None
+        Precomputed device. When passed, along with `xp`, typically from a caller
+        that has already performed inspection of its own inputs, skips device
+        inspection and move everything to that device. If `None`, the inputs are
+        converted to the device of `y_pred`.
 
     Returns
     -------
@@ -204,10 +226,17 @@ def _check_reg_targets_with_floating_dtype(
         just the corresponding argument if ``multioutput`` is a
         correct keyword.
     """
-    dtype_name = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
+    if xp is None or device is None:
+        xp, _, device = get_namespace_and_device(y_pred)
+
+    if hasattr(y_pred, "dtype") and xp.isdtype(y_pred.dtype, "real floating"):
+        # Follow the precision level of y_pred.
+        dtype = y_pred.dtype
+    else:
+        dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
 
     y_type, y_true, y_pred, sample_weight, multioutput = _check_reg_targets(
-        y_true, y_pred, sample_weight, multioutput, dtype=dtype_name, xp=xp
+        y_true, y_pred, sample_weight, multioutput, dtype=dtype, xp=xp, device=device
     )
 
     return y_type, y_true, y_pred, sample_weight, multioutput
@@ -278,12 +307,10 @@ def mean_absolute_error(
     >>> mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.85...
     """
-    xp, _, device = get_namespace_and_device(y_pred)
-    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
-
+    xp, _, device_ = get_namespace_and_device(y_pred)
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
-            y_true, y_pred, sample_weight, multioutput, xp=xp
+            y_true, y_pred, sample_weight, multioutput, xp=xp, device=device_
         )
     )
 
@@ -378,12 +405,10 @@ def mean_pinball_loss(
     >>> mean_pinball_loss(y_true, y_true, alpha=0.9)
     0.0
     """
-    xp, _, device = get_namespace_and_device(y_pred)
-    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
-
+    xp, _, device_ = get_namespace_and_device(y_pred)
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
-            y_true, y_pred, sample_weight, multioutput, xp=xp
+            y_true, y_pred, sample_weight, multioutput, xp=xp, device=device_
         )
     )
 
@@ -485,10 +510,9 @@ def mean_absolute_percentage_error(
     112589990684262.48
     """
     xp, _, device_ = get_namespace_and_device(y_pred)
-    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device_)
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
-            y_true, y_pred, sample_weight, multioutput, xp=xp
+            y_true, y_pred, sample_weight, multioutput, xp=xp, device=device_
         )
     )
     epsilon = xp.asarray(xp.finfo(xp.float64).eps, dtype=y_true.dtype, device=device_)
@@ -576,11 +600,10 @@ def mean_squared_error(
     >>> mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.825...
     """
-    xp, _, device = get_namespace_and_device(y_pred)
-    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
+    xp, _, device_ = get_namespace_and_device(y_pred)
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
-            y_true, y_pred, sample_weight, multioutput, xp=xp
+            y_true, y_pred, sample_weight, multioutput, xp=xp, device=device_
         )
     )
     output_errors = _average(
@@ -662,7 +685,6 @@ def root_mean_squared_error(
     >>> root_mean_squared_error(y_true, y_pred)
     0.822...
     """
-
     xp, _, device = get_namespace_and_device(y_pred)
     y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
 
@@ -755,12 +777,10 @@ def mean_squared_log_error(
     >>> mean_squared_log_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.060...
     """
-    xp, _, device = get_namespace_and_device(y_pred)
-    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
-
+    xp, _, device_ = get_namespace_and_device(y_pred)
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
-            y_true, y_pred, sample_weight, multioutput, xp=xp
+            y_true, y_pred, sample_weight, multioutput, xp=xp, device=device_
         )
     )
 
@@ -834,12 +854,10 @@ def root_mean_squared_log_error(
     >>> root_mean_squared_log_error(y_true, y_pred)
     0.199...
     """
-    xp, _, device = get_namespace_and_device(y_pred)
-    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
-
+    xp, _, device_ = get_namespace_and_device(y_pred)
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
-            y_true, y_pred, sample_weight, multioutput, xp=xp
+            y_true, y_pred, sample_weight, multioutput, xp=xp, device=device_
         )
     )
 
@@ -922,10 +940,9 @@ def median_absolute_error(
     >>> median_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.85
     """
-    xp, _, device = get_namespace_and_device(y_pred)
-    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
+    xp, _, device_ = get_namespace_and_device(y_pred)
     _, y_true, y_pred, sample_weight, multioutput = _check_reg_targets(
-        y_true, y_pred, sample_weight, multioutput, xp=xp
+        y_true, y_pred, sample_weight, multioutput, xp=xp, device=device_
     )
     if sample_weight is None:
         output_errors = _median(xp.abs(y_pred - y_true), axis=0)
@@ -1111,8 +1128,6 @@ def explained_variance_score(
     -inf
     """
     xp, _, device = get_namespace_and_device(y_pred)
-    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
-
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
             y_true, y_pred, sample_weight, multioutput, xp=xp
