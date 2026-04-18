@@ -34,8 +34,7 @@ It was then properly solved by `SLEP007: Feature names, their generation and the
 <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep007/proposal.html>`__
 and fully implemented in :ref:`version 1.1 <release_notes_1_1>`, see
 the :ref:`release highlights 1.0 <feature_names_in_release_highlights_1_0_0>` and
-:ref:`get_feature_names_out in the release highlights 1.1
-<get_feature_names_out_release_highlights_1_1_0>`.
+:ref:`release highlights 1.1 <get_feature_names_out_release_highlights_1_1_0>`.
 When an estimator is passed a dataframe during :term:`fit`, the estimator will
 set a `feature_names_in_` attribute containing the feature names. It understands pandas
 dataframes as well as dataframes with the `Python dataframe interchange protocol
