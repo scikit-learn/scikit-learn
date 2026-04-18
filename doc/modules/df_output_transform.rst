@@ -92,6 +92,7 @@ Now the same, but with pandas set as output::
     >>> from sklearn import set_config
     >>> set_config(transform_output="pandas")
     >>> model[0].transform(X)
+    <...>
 
 .. raw:: html
 
@@ -131,6 +132,10 @@ Now the same, but with pandas set as output::
             </tr>
         </tbody>
     </table>
+
+To return to the default, simply run::
+
+    >>> set_config(transform_output="default")
 
 A more detailed example can be found in
 :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`.
