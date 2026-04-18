@@ -92,7 +92,7 @@ Now the same, but with pandas set as output::
     >>> from sklearn import set_config
     >>> set_config(transform_output="pandas")
     >>> model[0].transform(X)
-    ...
+           c...
 
 .. raw:: html
 
