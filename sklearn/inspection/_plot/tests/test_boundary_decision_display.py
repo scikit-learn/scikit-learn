@@ -807,7 +807,7 @@ def test_zorder(pyplot, response_method, plot_method):
     """Check that decision boundaries are plotted in the background."""
     X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1], [2, 2], [3, 2]])
     y = np.arange(6)
-    clf = LogisticRegression().fit(X, y)
+    clf = LogisticRegression(alpha=1e-4).fit(X, y)
     disp = DecisionBoundaryDisplay.from_estimator(
         clf, X, response_method=response_method, plot_method=plot_method
     )

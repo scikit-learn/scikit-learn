@@ -99,7 +99,7 @@ use in the early steps of a :class:`~sklearn.pipeline.Pipeline`::
   >>> pipe = make_pipeline(StandardScaler(), LogisticRegression(alpha=1e-4))
   >>> pipe.fit(X_train, y_train)  # apply scaling on training data
   Pipeline(steps=[('standardscaler', StandardScaler()),
-                  ('logisticregression', LogisticRegression(alpha=1e-4))])
+                  ('logisticregression', LogisticRegression(alpha=0.0001))])
 
   >>> pipe.score(X_test, y_test)  # apply scaling on testing data, without leaking training data.
   1.0

@@ -54,7 +54,7 @@ class FrozenEstimator(BaseEstimator):
     >>> clf = LogisticRegression(alpha=1e-4).fit(X, y)
     >>> frozen_clf = FrozenEstimator(clf)
     >>> frozen_clf.fit(X, y)  # No-op
-    FrozenEstimator(estimator=LogisticRegression(alpha=1e-4))
+    FrozenEstimator(estimator=LogisticRegression(alpha=0.0001))
     >>> frozen_clf.predict(X)  # Predictions from `clf.predict`
     array(...)
     """

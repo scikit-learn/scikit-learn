@@ -1686,7 +1686,7 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     ...     print(f"Model is not fitted yet.")
     Model is not fitted yet.
     >>> lr.fit([[1, 2], [1, 3]], [1, 0])
-    LogisticRegression(alpha=1e-4)
+    LogisticRegression(alpha=0.0001)
     >>> check_is_fitted(lr)
     """
     if isclass(estimator):
