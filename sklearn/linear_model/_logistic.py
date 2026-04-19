@@ -124,9 +124,9 @@ def _logistic_regression_path(
     """Compute a Logistic Regression model for a list of regularization
     parameters.
 
-    This is an implementation that uses the result of the previous model
-    to speed up computations along the set of solutions, making it faster
-    than sequentially calling LogisticRegression for the different parameters.
+    This implementation reuses the solution of the previous model to speed up
+    computations across a sequence of regularization parameters. It is faster
+    than independently fitting LogisticRegression for each parameter.
     Note that there will be no speedup with liblinear solver, since it does
     not handle warm-starting.
 
