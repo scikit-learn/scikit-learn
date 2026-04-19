@@ -2221,10 +2221,19 @@ def test_check_array_multiple_extensions(
 
 
 def test_num_samples_dataframe_protocol():
-    """Use the DataFrame interchange protocol to get n_samples from polars."""
-    pl = pytest.importorskip("polars")
+    """Use the DataFrame interchange protocol to get n_samples."""
+    pa = pytest.importorskip("pyarrow")
 
-    df = pl.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+    class MockDFInterchange:
+        """A dataframe class without .shape attr but with __dataframe__ protocol"""
+
+        def __init__(self, *args, **kwargs):
+            self.df = pa.table(*args, **kwargs)
+
+        def __dataframe__(self):
+            return self.df.__dataframe__()
+
+    df = MockDFInterchange({"a": [1, 2, 3], "b": [4, 5, 6]})
     assert _num_samples(df) == 3
 
 

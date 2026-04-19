@@ -306,13 +306,16 @@ def _is_arraylike_not_scalar(array):
 
 
 def _use_interchange_protocol(X):
-    """Use interchange protocol for non-pandas dataframes that follow the protocol.
+    """Use interchange protocol for non-pandas/polars dataframes that follow the
+    protocol.
 
-    Note: at this point we chose not to use the interchange API on pandas dataframe
+    Note: At this point we chose not to use the interchange API on pandas dataframe
     to ensure strict behavioral backward compatibility with older versions of
     scikit-learn.
+    We also exclude the interchange protocol for polars because it was deprecated
+    in polars 1.40.
     """
-    return not is_pandas_df(X) and not is_polars_df(X) and hasattr(X, "__dataframe__")
+    return hasattr(X, "__dataframe__") and not is_pandas_df(X) and not is_polars_df(X)
 
 
 def _num_features(X):
@@ -386,15 +389,15 @@ def _num_samples(x):
         if isinstance(x.shape[0], numbers.Integral):
             return x.shape[0]
 
+    if _use_interchange_protocol(x):
+        return x.__dataframe__().num_rows()
+
     if not hasattr(x, "__len__") and not hasattr(x, "shape"):
         if hasattr(x, "__array__"):
             xp, _ = get_namespace(x)
             x = xp.asarray(x)
         else:
             raise TypeError(message)
-
-    if _use_interchange_protocol(x):
-        return x.__dataframe__().num_rows()
 
     try:
         return len(x)
