@@ -1061,6 +1061,55 @@ def _estimator_with_converted_arrays(estimator, converter):
     return new_estimator
 
 
+# def _safe_int_dtype(y, xp):
+#     if not hasattr(y, "dtype"):
+#         return indexing_dtype(xp)
+
+#     y_dtype = y.dtype
+
+#     if xp.isdtype(y_dtype, "signed integer"):
+#         return y_dtype
+
+#     if xp.isdtype(y_dtype, "unsigned integer"):
+#         if y_dtype == xp.uint8:
+#             return xp.int16
+#         elif y_dtype == xp.uint16:
+#             return xp.int32
+#         elif y_dtype == xp.uint32:
+#             return xp.int64
+#         elif y_dtype == xp.uint64:
+#             return xp.int64
+
+#     return indexing_dtype(xp)
+
+
+def _safe_int_dtype(y, xp):
+    """Return a safe integer dtype for indexing / accumulation."""
+
+    if not hasattr(y, "dtype"):
+        return indexing_dtype(xp)
+
+    y_dtype = y.dtype
+
+    # Signed integers
+    if xp.isdtype(y_dtype, "signed integer"):
+        return y_dtype
+
+    # Unsigned integers: promote to avoid overflow in accumulation/indexing
+    if xp.isdtype(y_dtype, "unsigned integer"):
+        # Always promote to signed type with enough headroom
+        if y_dtype in (xp.uint8, xp.uint16):
+            return xp.int16
+        if y_dtype == xp.uint32:
+            return xp.int64
+        if y_dtype == xp.uint64:
+            # No safe signed equivalent in many backends
+            # so we fall back to indexing dtype
+            return indexing_dtype(xp)
+
+    return indexing_dtype(xp)
+
+
 def move_estimator_to(estimator, xp, device):
     """Move estimator array attributes to the given namespace and device.
 
