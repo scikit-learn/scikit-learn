@@ -27,7 +27,7 @@ from sklearn.utils._testing import (
     assert_allclose,
     assert_array_equal,
 )
-from sklearn.utils.fixes import parse_version
+from sklearn.utils.fixes import PETROFF_COLORS, parse_version
 
 X, y = make_classification(
     n_informative=1,
@@ -592,13 +592,6 @@ def test_class_of_interest_multiclass(pyplot, response_method):
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
 def test_multiclass_plot_max_class(pyplot, response_method):
     """Check plot correct when plotting max multiclass class."""
-    import matplotlib as mpl
-
-    # In matplotlib < v3.5, default value of `pcolormesh(shading)` is 'flat', which
-    # results in the last row and column being dropped. Thus older versions produce
-    # a 99x99 grid, while newer versions produce a 100x100 grid.
-    if parse_version(mpl.__version__) < parse_version("3.5"):
-        pytest.skip("`pcolormesh` in Matplotlib >= 3.5 gives smaller grid size.")
 
     X, y = load_iris_2d_scaled()
     clf = LogisticRegression().fit(X, y)
@@ -650,11 +643,6 @@ def test_multiclass_colors_cmap(
     """Check correct cmap used for all `multiclass_colors` inputs."""
     import matplotlib as mpl
 
-    if parse_version(mpl.__version__) < parse_version("3.5"):
-        pytest.skip(
-            "Matplotlib >= 3.5 is needed for `==` to check equivalence of colormaps"
-        )
-
     X, y = make_blobs(n_samples=150, centers=n_classes, n_features=2, random_state=42)
     clf = LogisticRegression().fit(X, y)
 
@@ -670,16 +658,15 @@ def test_multiclass_colors_cmap(
     assert isinstance(disp.multiclass_colors_, np.ndarray)
 
     if multiclass_colors is None:
-        if len(clf.classes_) <= 10:
-            multiclass_colors = "tab10"
+        # Make sure the correct colors are selected from the corresponding petroff color
+        # sequences or "gist_rainbow"
+        if len(clf.classes_) == 3:
+            multiclass_colors = PETROFF_COLORS[:3]
         else:
             multiclass_colors = "gist_rainbow"
 
-    if multiclass_colors in ["tab10", "tab20"]:
-        cmap = mpl.pyplot.get_cmap(multiclass_colors)
-        colors = mpl.colors.to_rgba_array(cmap.colors[: len(clf.classes_)])
-    elif multiclass_colors in ["Blues", "gist_rainbow", "plasma"]:
-        cmap = mpl.pyplot.get_cmap(multiclass_colors)
+    if isinstance(multiclass_colors, str):
+        cmap = pyplot.get_cmap(multiclass_colors)
         colors = cmap(np.linspace(0, 1, len(clf.classes_)))
     else:
         colors = mpl.colors.to_rgba_array(multiclass_colors)

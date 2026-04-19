@@ -182,7 +182,7 @@ Metrics
 - :func:`sklearn.metrics.average_precision_score`
 - :func:`sklearn.metrics.balanced_accuracy_score`
 - :func:`sklearn.metrics.brier_score_loss`
-- :func:`sklearn.metrics.cluster.calinski_harabasz_score`
+- :func:`sklearn.metrics.calinski_harabasz_score`
 - :func:`sklearn.metrics.cohen_kappa_score`
 - :func:`sklearn.metrics.confusion_matrix`
 - :func:`sklearn.metrics.d2_absolute_error_score`
@@ -212,8 +212,8 @@ Metrics
 - :func:`sklearn.metrics.pairwise.chi2_kernel`
 - :func:`sklearn.metrics.pairwise.cosine_similarity`
 - :func:`sklearn.metrics.pairwise.cosine_distances`
-- :func:`sklearn.metrics.pairwise.pairwise_distances` (only supports "cosine", "euclidean", "manhattan" and "l2" metrics)
-- :func:`sklearn.metrics.pairwise.pairwise_distances_argmin`
+- :func:`sklearn.metrics.pairwise_distances` (only supports "cosine", "euclidean", "manhattan" and "l2" metrics)
+- :func:`sklearn.metrics.pairwise_distances_argmin`
 - :func:`sklearn.metrics.pairwise.euclidean_distances` (see :ref:`device_support_for_float64`)
 - :func:`sklearn.metrics.pairwise.laplacian_kernel`
 - :func:`sklearn.metrics.pairwise.linear_kernel`

@@ -12,6 +12,7 @@ from sklearn.utils._dataframe import is_pandas_df, is_polars_df
 from sklearn.utils._optional_dependencies import check_matplotlib_support
 from sklearn.utils._response import _get_response_values
 from sklearn.utils._set_output import _get_adapter_from_container
+from sklearn.utils.fixes import PETROFF_COLORS
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import (
     _is_arraylike_not_scalar,
@@ -62,26 +63,36 @@ def _select_colors(mpl, multiclass_colors, n_classes):
     mpl : module
         Imported `matplotlib` module.
 
-    multiclass_colors : list of color-like, str, or None
-        Color specification for multiclass plots.
+    multiclass_colors : str or list of matplotlib colors, default=None
+        The colormap or colors to select.
 
-        - If `None`, defaults to `"tab10"` when `n_classes <= 10`, otherwise
-          `"gist_rainbow"`.
-        - If `str`, interpreted as a Matplotlib colormap name.
-        - If `list`, each entry must be a valid Matplotlib color-like value.
+        Possible inputs are:
+
+        * None: defaults to list of accessible `Petroff colors
+          <https://github.com/matplotlib/matplotlib/issues/9460#issuecomment-875185352>`_
+          if `n_classes <= 10`, otherwise 'gist_rainbow' colormap
+        * str: name of :class:`matplotlib.colors.Colormap`
+        * list: list of length `n_classes` of `matplotlib colors
+          <https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def>`_
 
     n_classes : int
         Number of colors to select.
 
     Returns
     -------
-    colors : list or ndarray of shape (n_classes, 4)
+    colors : ndarray of shape (n_classes, 4)
         RGBA colors, one per class.
 
     """
 
     if multiclass_colors is None:
-        multiclass_colors = "tab10" if n_classes <= 10 else "gist_rainbow"
+        # select accessible colors according to Matthew A. Petroff, see
+        # https://arxiv.org/abs/2107.02270 and
+        # https://github.com/matplotlib/matplotlib/issues/9460#issuecomment-875185352
+        if n_classes <= 10:
+            multiclass_colors = PETROFF_COLORS[:n_classes]
+        else:
+            multiclass_colors = "gist_rainbow"
 
     if isinstance(multiclass_colors, str):
         if multiclass_colors not in mpl.pyplot.colormaps():
@@ -97,13 +108,7 @@ def _select_colors(mpl, multiclass_colors, n_classes):
                 "different colormap or provide a list of colors via "
                 "'multiclass_colors'."
             )
-        if cmap.N < 256:
-            # Special case for the qualitative colormaps that encode a
-            # discrete set of colors that are easily distinguishable, contrary to other
-            # colormaps that are continuous (for which `cmap.N` >= 256).
-            return mpl.colors.to_rgba_array(cmap.colors[:n_classes])
-        else:
-            return cmap(np.linspace(0, 1, n_classes))
+        return cmap(np.linspace(0, 1, n_classes))
 
     elif isinstance(multiclass_colors, list):
         if len(multiclass_colors) != n_classes:
@@ -164,18 +169,18 @@ class DecisionBoundaryDisplay:
             (grid_resolution, grid_resolution, n_classes)
         Values of the response function.
 
-    multiclass_colors : list of str or str, default=None
+    multiclass_colors : str or list of matplotlib colors, default=None
         Specifies how to color each class when plotting all classes of
         :term:`multiclass` problems.
 
         Possible inputs are:
 
-        * list: list of Matplotlib
-          `color <https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def>`_
-          strings, of length `n_classes`
+        * None: defaults to list of accessible `Petroff colors
+          <https://github.com/matplotlib/matplotlib/issues/9460#issuecomment-875185352>`_
+          if `n_classes <= 10`, otherwise 'gist_rainbow' colormap
         * str: name of :class:`matplotlib.colors.Colormap`
-        * None: 'tab10' colormap is used to sample colors if the number of
-          classes is less than or equal to 10, otherwise 'gist_rainbow' colormap.
+        * list: list of length `n_classes` of `matplotlib colors
+          <https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def>`_
 
         Single color (fading to white) colormaps will be generated from the colors in
         the list or colors taken from the colormap, and passed to the `cmap` parameter
@@ -192,9 +197,11 @@ class DecisionBoundaryDisplay:
 
         .. versionadded:: 1.7
         .. versionchanged:: 1.9
-           `multiclass_colors` is now also used when `response_method="predict"`,
-           except for when `plot_method='contour'`, where it is ignored and "black" is
-           used instead.
+            `multiclass_colors` is now also used when `response_method="predict"`,
+            except for when `plot_method='contour'`, where it is ignored and "black" is
+            used instead.
+            The default colors changed from 'tab10' to the more accessible `Petroff
+            colors <https://github.com/matplotlib/matplotlib/issues/9460#issuecomment-875185352>`_.
 
     xlabel : str, default=None
         Default label to place on x axis.
@@ -475,19 +482,18 @@ class DecisionBoundaryDisplay:
 
             .. versionadded:: 1.4
 
-        multiclass_colors : list of str, or str, default=None
+        multiclass_colors : str or list of matplotlib colors, default=None
             Specifies how to color each class when plotting :term:`multiclass` problems
             and `class_of_interest` is None.
 
             Possible inputs are:
 
-            * list: list of Matplotlib
-              `color <https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def>`_
-              strings, of length `n_classes`
+            * None: defaults to list of accessible `Petroff colors
+              <https://github.com/matplotlib/matplotlib/issues/9460#issuecomment-875185352>`_
+              if `n_classes <= 10`, otherwise 'gist_rainbow' colormap
             * str: name of :class:`matplotlib.colors.Colormap`
-            * None: 'tab10' colormap is used to sample colors if the number of
-                classes is less than or equal to 10, otherwise 'gist_rainbow'
-                colormap.
+            * list: list of length `n_classes` of `matplotlib colors
+              <https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def>`_
 
             Single color (fading to white) colormaps will be generated from the colors
             in the list or colors taken from the colormap, and passed to the `cmap`
@@ -504,7 +510,11 @@ class DecisionBoundaryDisplay:
 
             .. versionadded:: 1.7
             .. versionchanged:: 1.9
-               `multiclass_colors` is now also used when `response_method="predict"`
+                `multiclass_colors` is now also used when `response_method="predict"`,
+                except for when `plot_method='contour'`, where it is ignored and "black"
+                is used instead.
+                The default colors changed from 'tab10' to the more accessible `Petroff
+                colors <https://github.com/matplotlib/matplotlib/issues/9460#issuecomment-875185352>`_.
 
         xlabel : str, default=None
             The label used for the x-axis. If `None`, an attempt is made to
