@@ -1079,7 +1079,7 @@ def _safe_int_dtype(y, xp):
         if y_dtype == xp.uint8:
             return xp.int16
         if y_dtype == xp.uint16:
-            return xp.int132
+            return xp.int32
         if y_dtype == xp.uint32:
             return xp.int64
         if y_dtype == xp.uint64:
