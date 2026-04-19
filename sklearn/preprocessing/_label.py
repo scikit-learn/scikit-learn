@@ -598,7 +598,6 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
     int_dtype_ = _safe_int_dtype(y, xp)
     if hasattr(y, "dtype") and xp.isdtype(y.dtype, "integral"):
         y = xp.astype(y, int_dtype_, copy=False)
-
         # Ensure `classes` has the same dtype for consistent comparisons.
         if hasattr(classes, "dtype") and xp.isdtype(classes.dtype, "numeric"):
             classes = xp.astype(classes, int_dtype_, copy=False)
