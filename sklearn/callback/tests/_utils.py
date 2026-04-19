@@ -328,12 +328,12 @@ def _fit_subestimator(meta_estimator, inner_estimator, X, y, *, outer_callback_c
         est = clone(inner_estimator)
 
         inner_ctx = outer_callback_ctx.subcontext(task_name="inner")
-        inner_ctx.propagate_callback_context(sub_estimator=est)
-        inner_ctx.call_on_fit_task_begin(estimator=meta_estimator, X=X, y=y)
+        with inner_ctx.propagate_callback_context(est):
+            inner_ctx.call_on_fit_task_begin(estimator=meta_estimator, X=X, y=y)
 
-        est.fit(X, y)
+            est.fit(X, y)
 
-        inner_ctx.call_on_fit_task_end(estimator=meta_estimator, X=X, y=y)
+            inner_ctx.call_on_fit_task_end(estimator=meta_estimator, X=X, y=y)
 
     outer_callback_ctx.call_on_fit_task_end(estimator=meta_estimator, X=X, y=y)
 
