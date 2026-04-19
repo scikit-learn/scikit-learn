@@ -532,8 +532,10 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
 
         fit_transform_one_cached = memory.cache(
             _fit_transform_one,
-            # don't cache the callback context because it changes at every _fit call
-            ignore=["callback_ctx"],
+            # caller and callback_ctx are not part of the transformer's fit result.
+            # hashing them would break cache hits (Pipeline state / context changes
+            # across fit calls).
+            ignore=["caller", "callback_ctx"],
         )
 
         for step_idx, name, transformer in self._iter(
@@ -637,18 +639,18 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
         with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
             subcontext = callback_ctx.subcontext(task_name="fit final estimator")
             if self._final_estimator != "passthrough":
-                subcontext.propagate_callback_context(self._final_estimator)
-            subcontext.call_on_fit_task_begin(estimator=self, X=Xt, y=y)
-
-            if self._final_estimator != "passthrough":
-                last_step_params = self._get_metadata_for_step(
-                    step_idx=len(self) - 1,
-                    step_params=routed_params[self.steps[-1][0]],
-                    all_params=params,
-                )
-                self._final_estimator.fit(Xt, y, **last_step_params["fit"])
-
-            subcontext.call_on_fit_task_end(estimator=self, X=Xt, y=y)
+                with subcontext.propagate_callback_context(self._final_estimator):
+                    subcontext.call_on_fit_task_begin(estimator=self, X=Xt, y=y)
+                    last_step_params = self._get_metadata_for_step(
+                        step_idx=len(self) - 1,
+                        step_params=routed_params[self.steps[-1][0]],
+                        all_params=params,
+                    )
+                    self._final_estimator.fit(Xt, y, **last_step_params["fit"])
+                    subcontext.call_on_fit_task_end(estimator=self, X=Xt, y=y)
+            else:
+                subcontext.call_on_fit_task_begin(estimator=self, X=Xt, y=y)
+                subcontext.call_on_fit_task_end(estimator=self, X=Xt, y=y)
 
         callback_ctx.call_on_fit_task_end(estimator=self, X=Xt, y=y)
 
@@ -719,25 +721,25 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
                 task_name="fit transform final estimator"
             )
             if last_step != "passthrough":
-                subcontext.propagate_callback_context(self._final_estimator)
-            subcontext.call_on_fit_task_begin(estimator=self, X=Xt, y=y)
-
-            if last_step != "passthrough":
-                last_step_params = self._get_metadata_for_step(
-                    step_idx=len(self) - 1,
-                    step_params=routed_params[self.steps[-1][0]],
-                    all_params=params,
-                )
-                if hasattr(last_step, "fit_transform"):
-                    Xt = last_step.fit_transform(
-                        Xt, y, **last_step_params["fit_transform"]
+                with subcontext.propagate_callback_context(self._final_estimator):
+                    subcontext.call_on_fit_task_begin(estimator=self, X=Xt, y=y)
+                    last_step_params = self._get_metadata_for_step(
+                        step_idx=len(self) - 1,
+                        step_params=routed_params[self.steps[-1][0]],
+                        all_params=params,
                     )
-                else:
-                    Xt = last_step.fit(Xt, y, **last_step_params["fit"]).transform(
-                        Xt, **last_step_params["transform"]
-                    )
-
-            subcontext.call_on_fit_task_end(estimator=self, X=Xt, y=y)
+                    if hasattr(last_step, "fit_transform"):
+                        Xt = last_step.fit_transform(
+                            Xt, y, **last_step_params["fit_transform"]
+                        )
+                    else:
+                        Xt = last_step.fit(Xt, y, **last_step_params["fit"]).transform(
+                            Xt, **last_step_params["transform"]
+                        )
+                    subcontext.call_on_fit_task_end(estimator=self, X=Xt, y=y)
+            else:
+                subcontext.call_on_fit_task_begin(estimator=self, X=Xt, y=y)
+                subcontext.call_on_fit_task_end(estimator=self, X=Xt, y=y)
 
         callback_ctx.call_on_fit_task_end(estimator=self, X=Xt, y=y)
 
@@ -860,16 +862,19 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
         Xt = self._fit(X, y, routed_params, callback_ctx=callback_ctx)
 
         subcontext = callback_ctx.subcontext(task_name="fit predict final estimator")
-        subcontext.propagate_callback_context(self._final_estimator)
-        subcontext.call_on_fit_task_begin(estimator=self, X=Xt, y=y)
+        with subcontext.propagate_callback_context(self._final_estimator):
+            subcontext.call_on_fit_task_begin(estimator=self, X=Xt, y=y)
 
-        params_last_step = routed_params[self.steps[-1][0]]
-        with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
-            y_pred = self.steps[-1][1].fit_predict(
-                Xt, y, **params_last_step.get("fit_predict", {})
-            )
+            params_last_step = routed_params[self.steps[-1][0]]
+            with _print_elapsed_time(
+                "Pipeline", self._log_message(len(self.steps) - 1)
+            ):
+                y_pred = self.steps[-1][1].fit_predict(
+                    Xt, y, **params_last_step.get("fit_predict", {})
+                )
 
-        subcontext.call_on_fit_task_end(estimator=self, X=Xt, y=y)
+            subcontext.call_on_fit_task_end(estimator=self, X=Xt, y=y)
+
         callback_ctx.call_on_fit_task_end(estimator=self, X=Xt, y=y)
 
         return y_pred
@@ -1563,23 +1568,30 @@ def _fit_transform_one(
 
     ``params`` needs to be of the form ``process_routing()["step_name"]``.
     """
-    if callback_ctx is not None:
-        callback_ctx.propagate_callback_context(transformer)
-        callback_ctx.call_on_fit_task_begin(estimator=caller, X=X, y=y)
-
     params = params or {}
-    with _print_elapsed_time(message_clsname, message):
-        if hasattr(transformer, "fit_transform"):
-            res = transformer.fit_transform(X, y, **params.get("fit_transform", {}))
-        else:
-            res = transformer.fit(X, y, **params.get("fit", {})).transform(
-                X, **params.get("transform", {})
-            )
-
-    res = res * weight if weight is not None else res
-
     if callback_ctx is not None:
-        callback_ctx.call_on_fit_task_end(estimator=caller, X=res, y=y)
+        with callback_ctx.propagate_callback_context(transformer):
+            callback_ctx.call_on_fit_task_begin(estimator=caller, X=X, y=y)
+            with _print_elapsed_time(message_clsname, message):
+                if hasattr(transformer, "fit_transform"):
+                    res = transformer.fit_transform(
+                        X, y, **params.get("fit_transform", {})
+                    )
+                else:
+                    res = transformer.fit(X, y, **params.get("fit", {})).transform(
+                        X, **params.get("transform", {})
+                    )
+            res = res * weight if weight is not None else res
+            callback_ctx.call_on_fit_task_end(estimator=caller, X=res, y=y)
+    else:
+        with _print_elapsed_time(message_clsname, message):
+            if hasattr(transformer, "fit_transform"):
+                res = transformer.fit_transform(X, y, **params.get("fit_transform", {}))
+            else:
+                res = transformer.fit(X, y, **params.get("fit", {})).transform(
+                    X, **params.get("transform", {})
+                )
+        res = res * weight if weight is not None else res
 
     return res, transformer
 
