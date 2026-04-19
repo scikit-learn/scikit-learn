@@ -3255,11 +3255,10 @@ def check_get_feature_names_out_error(name, estimator_orig):
     with raises(NotFittedError, err_msg=err_msg):
         estimator.get_feature_names_out()
 
-
 @ignore_warnings(category=FutureWarning)
 def check_estimators_fit_returns_self(name, estimator_orig):
     """Check if self is returned when calling fit."""
-    X, y = make_blobs(random_state=0, n_samples=21)
+    X, y = make_blobs(random_state=0, n_samples=21, n_features=10)
     X = _enforce_estimator_tags_X(estimator_orig, X)
 
     estimator = clone(estimator_orig)
@@ -3268,14 +3267,10 @@ def check_estimators_fit_returns_self(name, estimator_orig):
     set_random_state(estimator)
     assert estimator.fit(X, y) is estimator
 
-
 @ignore_warnings(category=FutureWarning)
 def check_readonly_memmap_input(name, estimator_orig):
-    """Check that the estimator can handle readonly memmap backed data.
-
-    This is particularly needed to support joblib parallelisation.
-    """
-    X, y = make_blobs(random_state=0, n_samples=21)
+    """Check that the estimator can handle readonly memmap backed data."""
+    X, y = make_blobs(random_state=0, n_samples=21, n_features=10)
     X = _enforce_estimator_tags_X(estimator_orig, X)
 
     estimator = clone(estimator_orig)
@@ -3284,9 +3279,7 @@ def check_readonly_memmap_input(name, estimator_orig):
     X, y = create_memmap_backed_data([X, y])
 
     set_random_state(estimator)
-    # This should not raise an error and should return self
     assert estimator.fit(X, y) is estimator
-
 
 @ignore_warnings
 def check_estimators_unfitted(name, estimator_orig):
