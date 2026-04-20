@@ -16,6 +16,7 @@ from scipy.spatial import distance
 
 from sklearn import config_context
 from sklearn.exceptions import DataConversionWarning
+from sklearn.externals import array_api_extra as xpx
 from sklearn.metrics._pairwise_distances_reduction import ArgKmin
 from sklearn.metrics._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 from sklearn.preprocessing import normalize
@@ -1958,7 +1959,7 @@ def distance_metrics():
 
 def _transposed_dist_wrapper(dist_func, dist_matrix, slice_, *args, **kwargs):
     """Write in-place to a slice of a distance matrix."""
-    dist_matrix[slice_, ...] = dist_func(*args, **kwargs).T
+    return slice_, dist_func(*args, **kwargs).T
 
 
 def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
@@ -1981,10 +1982,14 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     # We assume that currently (April 2025) all array API compatible namespaces
     # allocate 2D arrays using the C-contiguity convention by default.
     ret = xp.empty((X.shape[0], Y.shape[0]), device=device, dtype=dtype_float).T
-    Parallel(backend="threading", n_jobs=n_jobs)(
-        fd(func, ret, s, X, Y[s, ...], **kwds)
+    chunk_generator = Parallel(
+        backend="threading", n_jobs=n_jobs, return_as="generator"
+    )(
+        fd(func, s, X, Y[s, ...], **kwds)
         for s in gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs))
     )
+    for slice_, chunk in chunk_generator:
+        ret = xpx.at(ret)[slice_, ...].set(chunk)
 
     if (X is Y or Y is None) and func is euclidean_distances:
         # zeroing diagonal for euclidean norm.
