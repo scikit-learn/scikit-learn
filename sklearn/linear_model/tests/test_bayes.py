@@ -205,8 +205,8 @@ def test_predict_std_centering(Estimator):
 
     # A point near the training centroid should have lower uncertainty
     # than a point near the origin (which is far from all training data).
-    X_near = np.array([X_offset])        # close to training distribution
-    X_far = np.array([[0.0, 0.0]])       # far from training distribution
+    X_near = np.array([X_offset])  # close to training distribution
+    X_far = np.array([[0.0, 0.0]])  # far from training distribution
 
     _, std_near = model.predict(X_near, return_std=True)
     _, std_far = model.predict(X_far, return_std=True)
