@@ -8,7 +8,6 @@ from io import StringIO
 from pathlib import Path
 
 from sklearn import config_context
-from sklearn.exceptions import NotFittedError
 from sklearn.utils._repr_html.base import _IDCounter
 from sklearn.utils._repr_html.features import _features_html
 from sklearn.utils.validation import check_is_fitted
@@ -431,9 +430,8 @@ def _write_estimator_html(
     elif est_block.kind == "single":
         if has_feature_names_out and is_not_pipeline_step and is_fitted_css_class:
             try:
-                check_is_fitted(estimator)
                 output_features = estimator.get_feature_names_out()
-            except NotFittedError:
+            except Exception:
                 output_features = ""
         else:
             output_features = ""
@@ -501,7 +499,6 @@ def estimator_html_repr(estimator):
     '<style>.sk-global...'
     """
     from sklearn.exceptions import NotFittedError
-    from sklearn.utils.validation import check_is_fitted
 
     if not hasattr(estimator, "fit"):
         status_label = "<span>Not fitted</span>"
