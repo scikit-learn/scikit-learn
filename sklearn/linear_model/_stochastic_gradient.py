@@ -1844,17 +1844,23 @@ class SGDRegressor(BaseSGDRegressor):
         The loss function to be used. The possible values are:
 
         - 'squared_error': ordinary least squares fit.
+
         - 'huber': switches from squared to linear loss past distance `epsilon`,
         robust to outliers.
+
         - 'epsilon_insensitive': ignores errors less than epsilon; equivalent to
         linear SVR.
+
         - 'squared_epsilon_insensitive': same but with squared loss beyond epsilon.
+
         - 'poisson': half Poisson deviance with log link. Equivalent to online
         :class:`PoissonRegressor`. Requires non-negative targets. The raw
         model output ``predict(X)`` is in log-space; use ``np.exp(predict(X))``
         for the predicted mean.
+
         - 'gamma': half Gamma deviance with log link. Equivalent to online
         :class:`GammaRegressor`. Requires strictly positive targets.
+
         - 'tweedie': half Tweedie deviance with log link, parameterised by
         ``power``. Equivalent to online :class:`TweedieRegressor`. Requires
         non-negative targets.
