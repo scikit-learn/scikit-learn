@@ -8,11 +8,10 @@ from scipy import sparse
 
 from sklearn.utils._array_api import (
     _bincount,
-    _convert_to_numpy,
     _is_numpy_namespace,
     _isin,
-    get_namespace,
     get_namespace_and_device,
+    move_to,
     size,
 )
 from sklearn.utils._param_validation import StrOptions, validate_params
@@ -75,7 +74,9 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
 
     xp, _, device_ = get_namespace_and_device(y, classes)
     unique_y = xp.unique_values(y)
-    if set(_convert_to_numpy(unique_y, xp)) - set(_convert_to_numpy(classes, xp)):
+    if set(move_to(unique_y, xp=np, device="cpu")) - set(
+        move_to(classes, xp=np, device="cpu")
+    ):
         raise ValueError("classes should include all valid labels that can be in y")
     if class_weight is None or len(class_weight) == 0:
         # uniform class weights
@@ -88,8 +89,7 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
             raise ValueError("classes should have valid labels that are in y")
 
         if _is_numpy_namespace(xp) and sample_weight is not None:
-            xp_sw, _ = get_namespace(sample_weight)
-            sample_weight = _convert_to_numpy(sample_weight, xp_sw)
+            sample_weight = move_to(sample_weight, xp=np, device="cpu")
 
         sample_weight = _check_sample_weight(sample_weight, y)
         weighted_class_counts = _bincount(y_ind, weights=sample_weight, xp=xp)

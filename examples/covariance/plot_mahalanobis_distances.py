@@ -109,9 +109,9 @@ import matplotlib.pyplot as plt
 
 from sklearn.covariance import EmpiricalCovariance, MinCovDet
 
-# fit a MCD robust estimator to data
+# fit an MCD robust estimator to data
 robust_cov = MinCovDet().fit(X)
-# fit a MLE estimator to data
+# fit an MLE estimator to data
 emp_cov = EmpiricalCovariance().fit(X)
 print(
     "Estimated covariance matrix:\nMCD (Robust):\n{}\nMLE:\n{}".format(
