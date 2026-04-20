@@ -143,27 +143,24 @@ inside a `python-traceback` fenced code block. If it's wrong values, show the
 actual values. Paste output as-is -- don't reformat line wrapping from numpy
 or other libraries. Never truncate tracebacks.
 
+If the user or the agent has insights into the root cause, include a
+brief analysis.
+
 ### Field: Versions
 
 Paste the full output of `sklearn.show_versions()` captured in Step 3.
 
 ### Field: Interest in fixing the bug
 
-Ask the user if they would be interested in working on a fix. If the user
-hasn't indicated, write: "I would be interested in looking into this further."
-as a default they can edit. If the user or the agent has insights into the root
-cause, include a brief analysis. Always end with: "I will wait for this issue
-to be triaged before opening a PR."
+Ask the user if they would be interested in working on a fix. Do not prefill
+this section for the user. This field should be filled out by the human.
 
 ## Step 5: Verify the reproducer
 
 **This step is mandatory.** Before presenting the final report, run the
 reproducer script from Step 4 in the user's environment. Write the reproducer
-to a temporary file and execute it (avoids quoting issues with `python -c`):
-
-```bash
-python "$(mktemp /tmp/sklearn_bug_XXXXXX.py)"
-```
+to a temporary file and execute it. Do not use `python -c` -- multi-line
+scripts with quotes and parentheses break inside single-quoted shell strings.
 
 Check the output:
 
@@ -225,7 +222,7 @@ into one field.**
 
 ### Interest in fixing the bug
 
-(draft text here)
+(do not write anything for this section. Remind the user to do that themselves)
 
 ---
 
