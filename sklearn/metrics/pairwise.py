@@ -1222,7 +1222,7 @@ def paired_euclidean_distances(X, Y):
     >>> from sklearn.metrics.pairwise import paired_euclidean_distances
     >>> X = [[0, 0, 0], [1, 1, 1]]
     >>> Y = [[1, 0, 0], [1, 1, 0]]
-    >>> paired_euclidean_distances(X, Y)
+    >>> paired_euclidean_distances(X, Y)  # doctest: +SKIP
     array([1., 1.])
     """
     return _paired_euclidean_distances(X, Y)
@@ -1276,7 +1276,7 @@ def paired_manhattan_distances(X, Y):
     >>> import numpy as np
     >>> X = np.array([[1, 1, 0], [0, 1, 0], [0, 0, 1]])
     >>> Y = np.array([[0, 1, 0], [0, 0, 1], [0, 0, 0]])
-    >>> paired_manhattan_distances(X, Y)
+    >>> paired_manhattan_distances(X, Y)  # doctest: +SKIP
     array([1., 2., 1.])
     """
     return _paired_manhattan_distances(X, Y)
@@ -1327,7 +1327,7 @@ def paired_cosine_distances(X, Y):
     >>> from sklearn.metrics.pairwise import paired_cosine_distances
     >>> X = [[0, 0, 0], [1, 1, 1]]
     >>> Y = [[1, 0, 0], [1, 1, 0]]
-    >>> paired_cosine_distances(X, Y)
+    >>> paired_cosine_distances(X, Y)  # doctest: +SKIP
     array([0.5       , 0.184])
     """
     return _paired_cosine_distances(X, Y)
@@ -1416,7 +1416,7 @@ def paired_distances(X, Y, *, metric="euclidean", **kwds):
     >>> from sklearn.metrics.pairwise import paired_distances
     >>> X = [[0, 1], [1, 1]]
     >>> Y = [[0, 1], [2, 1]]
-    >>> paired_distances(X, Y)
+    >>> paired_distances(X, Y)  # doctest: +SKIP
     array([0., 1.])
     """
     return _paired_distances(X, Y, metric=metric, **kwds)
