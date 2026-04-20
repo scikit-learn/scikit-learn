@@ -28,10 +28,13 @@ from sklearn.linear_model._base import (
 )
 from sklearn.linear_model._sgd_fast import (
     EpsilonInsensitive,
+    GammaLoss,
     Hinge,
     ModifiedHuber,
+    PoissonLoss,
     SquaredEpsilonInsensitive,
     SquaredHinge,
+    TweedieLoss,
     _plain_sgd32,
     _plain_sgd64,
 )
@@ -1433,6 +1436,9 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         "huber": (CyHuberLoss, DEFAULT_EPSILON),
         "epsilon_insensitive": (EpsilonInsensitive, DEFAULT_EPSILON),
         "squared_epsilon_insensitive": (SquaredEpsilonInsensitive, DEFAULT_EPSILON),
+        "poisson": (PoissonLoss,),
+        "gamma": (GammaLoss,),
+        "tweedie": (TweedieLoss, 1.5),
     }
 
     _parameter_constraints: dict = {
@@ -1441,7 +1447,18 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         "early_stopping": ["boolean"],
         "validation_fraction": [Interval(Real, 0, 1, closed="neither")],
         "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
+        "power": [Interval(Real, 1.0, 2.0, closed="neither")],
     }
+
+    def _get_loss_function(self, loss):
+        """Get concrete LossFunction object, passing power for Tweedie."""
+        loss_ = self.loss_functions[loss]
+        loss_class, args = loss_[0], loss_[1:]
+        if loss in ("huber", "epsilon_insensitive", "squared_epsilon_insensitive"):
+            args = (self.epsilon,)
+        elif loss == "tweedie":
+            args = (self.power,)
+        return loss_class(*args)
 
     @abstractmethod
     def __init__(
@@ -1820,20 +1837,33 @@ class SGDRegressor(BaseSGDRegressor):
 
     Parameters
     ----------
-    loss : str, default='squared_error'
-        The loss function to be used. The possible values are 'squared_error',
-        'huber', 'epsilon_insensitive', or 'squared_epsilon_insensitive'
+    loss : {'squared_error', 'huber', 'epsilon_insensitive',
+            'squared_epsilon_insensitive', 'poisson', 'gamma', 'tweedie'},
+        default='squared_error'
 
-        The 'squared_error' refers to the ordinary least squares fit.
-        'huber' modifies 'squared_error' to focus less on getting outliers
-        correct by switching from squared to linear loss past a distance of
-        epsilon. 'epsilon_insensitive' ignores errors less than epsilon and is
-        linear past that; this is the loss function used in SVR.
-        'squared_epsilon_insensitive' is the same but becomes squared loss past
-        a tolerance of epsilon.
+        The loss function to be used. The possible values are:
 
-        More details about the losses formulas can be found in the
-        :ref:`User Guide <sgd_mathematical_formulation>`.
+        - 'squared_error': ordinary least squares fit.
+        - 'huber': switches from squared to linear loss past distance `epsilon`,
+        robust to outliers.
+        - 'epsilon_insensitive': ignores errors less than epsilon; equivalent to
+        linear SVR.
+        - 'squared_epsilon_insensitive': same but with squared loss beyond epsilon.
+        - 'poisson': half Poisson deviance with log link. Equivalent to online
+        :class:`PoissonRegressor`. Requires non-negative targets. The raw
+        model output ``predict(X)`` is in log-space; use ``np.exp(predict(X))``
+        for the predicted mean.
+        - 'gamma': half Gamma deviance with log link. Equivalent to online
+        :class:`GammaRegressor`. Requires strictly positive targets.
+        - 'tweedie': half Tweedie deviance with log link, parameterised by
+        ``power``. Equivalent to online :class:`TweedieRegressor`. Requires
+        non-negative targets.
+
+    power : float, default=1.5
+        The Tweedie power parameter. Only used when ``loss='tweedie'``.
+        Must be in the open interval (1.0, 2.0). Values approaching 1 behave
+        like Poisson; values approaching 2 behave like Gamma.
+        Use ``loss='poisson'`` or ``loss='gamma'`` for the boundary cases.
 
     penalty : {'l2', 'l1', 'elasticnet', None}, default='l2'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
@@ -2098,6 +2128,7 @@ class SGDRegressor(BaseSGDRegressor):
         n_iter_no_change=5,
         warm_start=False,
         average=False,
+        power=1.5,
     ):
         super().__init__(
             loss=loss,
@@ -2120,6 +2151,7 @@ class SGDRegressor(BaseSGDRegressor):
             warm_start=warm_start,
             average=average,
         )
+        self.power = power
 
 
 class SGDOneClassSVM(OutlierMixin, BaseSGD):
