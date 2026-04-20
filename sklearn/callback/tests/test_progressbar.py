@@ -211,7 +211,7 @@ def test_progress_during_fit_composition(meta_estimator):
     orig_on_task_end = RichProgressMonitor._on_task_end
 
     def check_progress(task):
-        # Check recursively that at the completion of each progress bar is the average
+        # Check recursively that the completion of each progress bar is the average
         # completion of its children.
         if not task.children:
             expected = 1.0
