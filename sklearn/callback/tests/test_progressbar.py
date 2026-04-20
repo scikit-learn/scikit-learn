@@ -18,6 +18,8 @@ from sklearn.utils._optional_dependencies import check_rich_support
 from sklearn.utils._testing import assert_run_python_script_without_output
 from sklearn.utils.parallel import Parallel, delayed
 
+# TODO: remove when Python 3.13 is the min version.
+# Shared, module-level test marker to skip on older Python versions:
 pytestmark = pytest.mark.skipif(
     sys.version_info < (3, 12, 8),
     reason="Race conditions can appear because of multiprocessing issues for python"
