@@ -393,6 +393,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
         y_std : array-like of shape (n_samples,)
             Standard deviation of predictive distribution of query points.
         """
+        X = validate_data(self, X, accept_sparse=["csr", "csc", "coo"], reset=False)
         y_mean = self._decision_function(X)
         if not return_std:
             return y_mean
@@ -814,6 +815,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         y_std : array-like of shape (n_samples,)
             Standard deviation of predictive distribution of query points.
         """
+        X = validate_data(self, X, accept_sparse=["csr", "csc", "coo"], reset=False)
         y_mean = self._decision_function(X)
         if return_std is False:
             return y_mean

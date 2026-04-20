@@ -218,6 +218,25 @@ def test_predict_std_centering(Estimator):
     )
 
 
+@pytest.mark.parametrize("Estimator", [BayesianRidge, ARDRegression])
+def test_predict_std_list_input(Estimator):
+    # Non-regression test: predict(return_std=True) must accept list inputs.
+    # After the centering fix, X - self.X_offset_ was applied before validate_data,
+    # causing a TypeError when X was a Python list.
+    rng = np.random.RandomState(0)
+    X_train = rng.randn(20, 3)
+    y_train = rng.randn(20)
+
+    model = Estimator().fit(X_train, y_train)
+
+    X_list = X_train[:5].tolist()
+    y_mean_list, y_std_list = model.predict(X_list, return_std=True)
+    y_mean_arr, y_std_arr = model.predict(X_train[:5], return_std=True)
+
+    assert_allclose(y_mean_list, y_mean_arr)
+    assert_allclose(y_std_list, y_std_arr)
+
+
 def test_update_of_sigma_in_ard():
     # Checks that `sigma_` is updated correctly after the last iteration
     # of the ARDRegression algorithm. See issue #10128.
