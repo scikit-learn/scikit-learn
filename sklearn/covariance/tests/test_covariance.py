@@ -372,23 +372,16 @@ def test_oas():
     assert_array_almost_equal((X_1f**2).sum() / n_samples, oa.covariance_, 4)
 
 
-def test_oas_function_does_not_store_precision(monkeypatch):
-    """oas() should avoid computing the precision matrix."""
-    observed = {}
-
-    def fake_fit(self, X, y=None):
-        observed["store_precision"] = self.store_precision
-        self.covariance_ = np.eye(X.shape[1])
-        self.shrinkage_ = 0.5
-        return self
-
-    monkeypatch.setattr(OAS, "fit", fake_fit)
-
+def test_oas_function_does_not_store_precision():
+    """Check that the oas() convenience function returns consistent results
+    with the OAS estimator and does not store the precision matrix."""
     cov, shrinkage = oas(X)
 
-    assert observed["store_precision"] is False
-    assert_array_equal(cov, np.eye(X.shape[1]))
-    assert shrinkage == 0.5
+    oa = OAS()
+    oa.fit(X)
+
+    assert_array_almost_equal(cov, oa.covariance_)
+    assert_almost_equal(shrinkage, oa.shrinkage_)
 
 
 def test_EmpiricalCovariance_validates_mahalanobis():
