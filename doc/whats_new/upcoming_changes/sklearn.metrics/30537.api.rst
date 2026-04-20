@@ -1,0 +1,7 @@
+- :func:`metrics.pairwise.paired_distances`,
+  :func:`metrics.pairwise.paired_euclidean_distances`,
+  :func:`metrics.pairwise.paired_manhattan_distances` and
+  :func:`metrics.pairwise.paired_cosine_distances` are deprecated in 1.10 and
+  will be removed in 1.12.
+  By :user:`Success Moses <SuccessMoses>` and
+  :user:`Shreesha Kumar Bhat <Shreesha3112>`.

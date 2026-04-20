@@ -11,6 +11,7 @@ from sklearn.utils._param_validation import (
     generate_valid_param,
     make_constraint,
 )
+from sklearn.utils._testing import ignore_warnings
 
 
 def _get_func_info(func_module):
@@ -280,10 +281,6 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.pairwise.linear_kernel",
     "sklearn.metrics.pairwise.manhattan_distances",
     "sklearn.metrics.pairwise.nan_euclidean_distances",
-    "sklearn.metrics.pairwise.paired_cosine_distances",
-    "sklearn.metrics.pairwise.paired_distances",
-    "sklearn.metrics.pairwise.paired_euclidean_distances",
-    "sklearn.metrics.pairwise.paired_manhattan_distances",
     "sklearn.metrics.pairwise.pairwise_distances_argmin_min",
     "sklearn.metrics.pairwise.pairwise_kernels",
     "sklearn.metrics.pairwise.polynomial_kernel",
@@ -340,6 +337,31 @@ PARAM_VALIDATION_FUNCTION_LIST = [
 def test_function_param_validation(func_module):
     """Check param validation for public functions that are not wrappers around
     estimators.
+    """
+    func, func_name, func_params, required_params = _get_func_info(func_module)
+
+    parameter_constraints = getattr(func, "_skl_parameter_constraints")
+
+    _check_function_param_validation(
+        func, func_name, func_params, required_params, parameter_constraints
+    )
+
+
+# TODO(1.12): Remove when paired_distances and paired_*_distances are removed.
+DEPRECATED_PARAM_VALIDATION_FUNCTION_LIST = [
+    "sklearn.metrics.pairwise.paired_cosine_distances",
+    "sklearn.metrics.pairwise.paired_distances",
+    "sklearn.metrics.pairwise.paired_euclidean_distances",
+    "sklearn.metrics.pairwise.paired_manhattan_distances",
+]
+
+
+# TODO(1.12): Remove when paired_distances and paired_*_distances are removed.
+@pytest.mark.parametrize("func_module", DEPRECATED_PARAM_VALIDATION_FUNCTION_LIST)
+@ignore_warnings(category=FutureWarning)
+def test_deprecated_function_param_validation(func_module):
+    """Check param validation for deprecated public functions that are not
+    wrappers around estimators.
     """
     func, func_name, func_params, required_params = _get_func_info(func_module)
 

@@ -63,6 +63,9 @@ from sklearn.metrics import (
 )
 from sklearn.metrics._base import _average_binary_score
 from sklearn.metrics.pairwise import (
+    _paired_cosine_distances,
+    _paired_euclidean_distances,
+    _paired_manhattan_distances,
     additive_chi2_kernel,
     chi2_kernel,
     cosine_distances,
@@ -71,9 +74,6 @@ from sklearn.metrics.pairwise import (
     laplacian_kernel,
     linear_kernel,
     manhattan_distances,
-    paired_cosine_distances,
-    paired_euclidean_distances,
-    paired_manhattan_distances,
     pairwise_distances,
     pairwise_distances_argmin,
     pairwise_kernels,
@@ -2468,7 +2468,7 @@ array_api_metric_checkers = {
     d2_tweedie_score: [
         check_array_api_regression_metric,
     ],
-    paired_cosine_distances: [check_array_api_metric_pairwise],
+    _paired_cosine_distances: [check_array_api_metric_pairwise],
     mean_poisson_deviance: [check_array_api_regression_metric],
     additive_chi2_kernel: [check_array_api_metric_pairwise],
     mean_gamma_deviance: [check_array_api_regression_metric],
@@ -2478,8 +2478,8 @@ array_api_metric_checkers = {
         check_array_api_regression_metric_multioutput,
     ],
     chi2_kernel: [check_array_api_metric_pairwise],
-    paired_euclidean_distances: [check_array_api_metric_pairwise],
-    paired_manhattan_distances: [check_array_api_metric_pairwise],
+    _paired_euclidean_distances: [check_array_api_metric_pairwise],
+    _paired_manhattan_distances: [check_array_api_metric_pairwise],
     cosine_distances: [check_array_api_metric_pairwise],
     euclidean_distances: [check_array_api_metric_pairwise],
     manhattan_distances: [check_array_api_metric_pairwise],
