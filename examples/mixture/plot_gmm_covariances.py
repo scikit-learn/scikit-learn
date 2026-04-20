@@ -120,7 +120,7 @@ for cov_type, gmm in gmms.items():
 # the cluster.
 #
 # - **Center**: located at the mean of the component.
-# - **Shape**: reflects how spread out the data is along different directions.
+# - **Shape**: reflects how samples are distributed along different directions.
 # - **Orientation**: indicates how the features vary together.
 #
 # If the ellipse is tilted, it means the variables are correlated.
@@ -178,8 +178,8 @@ plt.show()
 #
 # We evaluate each model using two complementary criteria:
 #
-# - Rand index: clustering agreement
-# - 2-Wasserstein distance: geometric distance between Gaussian components
+# - **Rand index**: clustering agreement
+# - **2-Wasserstein distance**: geometric distance between Gaussian components
 
 import pandas as pd
 from scipy.linalg import sqrtm
