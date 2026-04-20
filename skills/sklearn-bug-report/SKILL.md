@@ -119,7 +119,7 @@ Build a minimal, self-contained Python script. Requirements:
 - Set `random_state` where applicable so results are deterministic.
 - Remove everything that is not needed to trigger the bug: no unrelated
   preprocessing, no scoring, no plotting, no train/test split unless relevant.
-- Keep lines to 79 characters where practical.
+- Follow the project coding conventions (Black).
 - The script should be copy-pasteable into a Python terminal and reproduce the
   problem with no modifications.
 
@@ -184,11 +184,12 @@ Before presenting the output, verify all of these:
 - [ ] Reproducer was executed and confirmed to trigger the bug.
 - [ ] Code is self-contained: all imports present, no external data.
 - [ ] Data is synthetic (sklearn.datasets, numpy.random, or inline).
-- [ ] Lines are 79 characters or fewer where practical.
+- [ ] Follow the project coding conventions (Black).
 - [ ] Traceback is complete (not truncated).
 - [ ] `sklearn.show_versions()` output is included in full.
 - [ ] Impact statement is concrete and explains why the user cares.
 - [ ] Existing issues were searched and no duplicate was found.
+- [ ] Most related issues and PRs are cross-referenced with a short statements that explains how they are related but not duplicate.
 
 ## Step 7: Present the output
 
