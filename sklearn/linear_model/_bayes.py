@@ -17,7 +17,11 @@ from sklearn.linear_model._base import LinearModel, _preprocess_data
 from sklearn.utils import _safe_indexing
 from sklearn.utils._param_validation import Interval
 from sklearn.utils.extmath import fast_logdet
-from sklearn.utils.validation import _check_sample_weight, check_is_fitted, validate_data
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    check_is_fitted,
+    validate_data,
+)
 
 ###############################################################################
 # BayesianRidge regression
