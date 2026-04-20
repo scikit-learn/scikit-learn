@@ -1,3 +1,0 @@
-- :class:`covariance.EmpiricalCovariance` and :class:`covariance.OAS` now support
-  array API compatible inputs.
-  By :user:`Bruno Aristimunha <bruAristimunha>`
