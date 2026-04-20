@@ -234,11 +234,6 @@ def test_progress_during_fit_composition(meta_estimator):
     assert_allclose(end_of_outer_subtasks, expected_progress)
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 12, 8),
-    reason="Race conditions can appear because of multiprocessing issues for python"
-    " < 3.12.8.",
-)
 def test_estimator_without_subtasks(capsys):
     """Check that a progress bar is displayed for an estimator without subtasks."""
     pytest.importorskip("rich")
