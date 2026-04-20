@@ -24,12 +24,15 @@ from sklearn.utils._testing import (
 )
 from sklearn.utils.parallel import Parallel, delayed
 
-
-@pytest.mark.skipif(
+# TODO: remove when Python 3.13 is the min version.
+# Shared, module-level test marker to skip on older Python versions:
+pytestmark = pytest.mark.skipif(
     sys.version_info < (3, 12, 8),
     reason="Race conditions can appear because of multiprocessing issues for python"
     " < 3.12.8.",
 )
+
+
 @pytest.mark.parametrize("n_jobs", [1, 2])
 @pytest.mark.parametrize("prefer", ["threads", "processes"])
 @pytest.mark.parametrize(
@@ -94,11 +97,6 @@ def test_clone_after_fit():
     clone(est)
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 12, 8),
-    reason="Race conditions can appear because of multiprocessing issues for python"
-    " < 3.12.8.",
-)
 @pytest.mark.parametrize("backend", ["threading", "loky"])
 def test_progressbar_no_callback_support(backend):
     """Sanity check for ProgressBar within function not supporting callbacks.
@@ -138,11 +136,6 @@ def test_progressbar_no_callback_support(backend):
         assert all(queue.empty() for queue in progressbar._run_queues.values())
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 12, 8),
-    reason="Race conditions can appear because of multiprocessing issues for python"
-    " < 3.12.8.",
-)
 @pytest.mark.parametrize("prefer", ["threads", "processes"])
 def test_progressbar_outside_main_module(prefer):
     """Check that ProgressBar does not trigger spawn errors outside `__main__`."""
