@@ -45,8 +45,6 @@ class CallbackSupportMixin:
         self : estimator instance
             The estimator instance itself.
         """
-        callbacks = set(callbacks)
-
         if not all(
             # isinstance for a Protocol returns True for classes too (not only
             # instances). Hence the additional check for classes.
@@ -58,7 +56,7 @@ class CallbackSupportMixin:
             )
 
         if callbacks:
-            self._skl_callbacks = callbacks
+            self._skl_callbacks = list(callbacks)
         else:
             del self._skl_callbacks
 

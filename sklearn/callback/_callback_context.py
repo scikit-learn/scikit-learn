@@ -505,7 +505,7 @@ class CallbackContext:
         # whole tree.
         sub_estimator._parent_callback_ctx = self
 
-        callbacks_to_propagate = {
+        callbacks_to_propagate = [
             callback
             for callback in self._callbacks
             if isinstance(callback, AutoPropagatedCallback)
@@ -513,25 +513,30 @@ class CallbackContext:
                 callback.max_propagation_depth is None
                 or self._propagation_depth < callback.max_propagation_depth
             )
-        }
+        ]
+        if callbacks_to_propagate and not hasattr(sub_estimator, "set_callbacks"):
+            warnings.warn(
+                f"The estimator {sub_estimator.__class__.__name__} does not support "
+                f"callbacks. The callbacks attached to {self.estimator_name} will not "
+                f"be propagated to this estimator."
+            )
+            callbacks_to_propagate = []
+
         if callbacks_to_propagate:
-            if not hasattr(sub_estimator, "set_callbacks"):
-                warnings.warn(
-                    f"The estimator {sub_estimator.__class__.__name__} does not support"
-                    f" callbacks. The callbacks attached to {self.estimator_name} will "
-                    f"not be propagated to this estimator."
-                )
-            else:
-                self._propagated_callbacks = callbacks_to_propagate
-                curr_callbacks = getattr(sub_estimator, "_skl_callbacks", set())
-                sub_estimator.set_callbacks(*(curr_callbacks | callbacks_to_propagate))
+            self._propagated_callbacks = callbacks_to_propagate
+            curr_callbacks = getattr(sub_estimator, "_skl_callbacks", [])
+            sub_estimator.set_callbacks(*(curr_callbacks + callbacks_to_propagate))
 
         try:
             yield
         finally:
-            if callbacks := getattr(self, "_propagated_callbacks", set()):
-                sub_estimator.set_callbacks(*(sub_estimator._skl_callbacks - callbacks))
-                del self._propagated_callbacks
+            if callbacks_to_propagate:
+                kept_callbacks = [
+                    cb
+                    for cb in sub_estimator._skl_callbacks
+                    if cb not in callbacks_to_propagate
+                ]
+                sub_estimator.set_callbacks(*kept_callbacks)
             del sub_estimator._parent_callback_ctx
 
 

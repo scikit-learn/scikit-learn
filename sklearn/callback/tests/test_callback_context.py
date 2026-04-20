@@ -68,9 +68,9 @@ def test_propagate_callback_context_clean_up():
 
     meta_est_callback = RecordingAutoPropagatedCallback()
     metaestimator = MetaEstimator(estimator)
-    metaestimator.set_callbacks(est_callback, meta_est_callback)
+    metaestimator.set_callbacks(meta_est_callback)
 
-    assert estimator._skl_callbacks == {est_callback}
+    assert estimator._skl_callbacks == [est_callback]
 
     callback_ctx = _make_callback_ctx(metaestimator)
     with callback_ctx.propagate_callback_context(estimator):
@@ -78,7 +78,7 @@ def test_propagate_callback_context_clean_up():
         assert est_callback in estimator._skl_callbacks
         assert meta_est_callback in estimator._skl_callbacks
 
-    assert estimator._skl_callbacks == {est_callback}
+    assert estimator._skl_callbacks == [est_callback]
 
 
 def test_propagate_callback_context_no_callback():
