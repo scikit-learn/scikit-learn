@@ -19,8 +19,8 @@ following helpers from the :mod:`~sklearn.callback` module:
 
 - :func:`~with_callbacks`, to guarantee proper callback teardown at the end of fit.
 
-CallbackSupportMixin
---------------------
+The CallbackSupportMixin class
+------------------------------
 
 To support callbacks, an estimator must inherit from the :class:`~CallbackSupportMixin`
 class, which exposes the following methods:
@@ -41,13 +41,15 @@ class, which exposes the following methods:
       made available to developers building third-party estimators and should be
       considered part of the public API contract.
 
-CallbackContext
----------------
+The CallbackContext class
+-------------------------
 
 The :class:`~CallbackContext` objects are responsible for invoking the callbacks at the
 right time during fit. They track the different tasks of the estimator, with one context
 representing each task, and capture the tree structure of the tasks involved in the
 execution of the fit method.
+
+.. _callback_task_definition:
 
 A task is an arbitrary unit of work defined by the estimator. Usually, a task
 corresponds to an iteration of the estimator's learning algorithm. They can also
@@ -119,19 +121,20 @@ To dynamically build the context tree and manage the callbacks during fit, the
 
       def call_on_fit_task_begin(
           self, *, estimator, X=None, y=None, metadata=None, reconstruction_attributes=None
-      ) -> None
+      ) -> None: ...
 
       def call_on_fit_task_end(
           self, *, estimator, X=None, y=None, metadata=None, reconstruction_attributes=None
-      ) -> bool
+      ) -> bool: ...
 
   These two methods must be called respectively at the beginning and end of the task
   that the context is responsible for. As their name suggests, they call the 
   `on_fit_task_begin` and `on_fit_task_end` methods of the callbacks registered on the
   estimator.
 
-  The optional keyword arguments can be used to provide additional contextual
-  information to the callbacks. It is not expected to provide a value for all of them at
+  In addition to the callback context that is implicitly passed to the callbacks, the
+  keyword arguments are used to pass additional information about the state of the
+  fitting process at the task. It is not expected to provide a value for all of them at
   the beginning and end of every task. Estimators are expected to provide all the values
   that they are capable to produce. Callbacks then adapt their behavior based on the
   provided values for a given task.
@@ -147,6 +150,10 @@ To dynamically build the context tree and manage the callbacks during fit, the
       The callback context will copy the state of the estimator at this task, set the
       reconstruction attributes and pass the resulting estimator to the callbacks as
       `fitted_estimator`.
+
+      If no additional attributes are needed to make the estimator ready, an empty
+      dictionary should be passed instead of leaving the default value otherwise the
+      callback context won't pass a `fitted_estimator` to the callbacks.
 
   .. dropdown:: Lazy-loading of the kwargs
 
