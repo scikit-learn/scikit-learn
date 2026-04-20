@@ -176,6 +176,8 @@ Callback                       Description
                                fit.
 ============================== =========================================================
 
+.. _callback_compatible_estimators:
+
 Callback Support Status
 ***********************
 
