@@ -10,7 +10,6 @@ from pathlib import Path
 from sklearn import config_context
 from sklearn.utils._repr_html.base import _IDCounter
 from sklearn.utils._repr_html.features import _features_html
-from sklearn.utils.validation import check_is_fitted
 
 
 def _get_css_style():
@@ -499,6 +498,7 @@ def estimator_html_repr(estimator):
     '<style>.sk-global...'
     """
     from sklearn.exceptions import NotFittedError
+    from sklearn.utils.validation import check_is_fitted
 
     if not hasattr(estimator, "fit"):
         status_label = "<span>Not fitted</span>"
