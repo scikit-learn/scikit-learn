@@ -1,19 +1,10 @@
 .. _callbacks_support:
 
-===========================
-Supporting the callback API
-===========================
+===========================================
+Implementing callback support in estimators
+===========================================
 
 .. currentmodule:: sklearn.callback
-
-Scikit-learn offers a callback API to use built-in or custom callbacks with compatible
-estimators. This section is intended for developers who wish to implement callback
-support in estimators.
-
-For a general introduction to callbacks and how they are used in sciki-learn, see the
-user guide.
-
-.. TODO: add link to callback user guide
 
 Adding callback support in an estimator boils down to enabling the registration of
 callbacks, expressing :term:`fit` as a tree of tasks, and invoking the callbacks at the
@@ -39,7 +30,7 @@ class, which exposes the following methods:
 
 - :meth:`~CallbackSupportMixin._init_callback_context`, which should be called at the
   beginning of fit to create the root :class:`~CallbackContext`. This context
-  corresponds to the task representing the entire execution of ``fit``.
+  corresponds to the task representing the entire execution of `fit`.
 
   .. note::
 
@@ -58,24 +49,20 @@ representing each task, and capture the tree structure of the tasks involved in 
 execution of the fit method.
 
 A task is an arbitrary unit of work defined by the estimator. Usually, a task
-corresponds to an iteration of the estimator's learning algorithm, a step of a pipeline,
-a cross validation fold, etc. As tasks can be decomposed into subtasks, the tasks (and
-therefore callback contexts) have a natural tree structure, with the root task being the
-whole fit task.
+corresponds to an iteration of the estimator's learning algorithm. They can also
+correspond to steps of a pipeline, cross-validation folds, etc. As tasks can be
+decomposed into subtasks, the tasks (and therefore callback contexts) have a natural
+tree structure, with the root task being the whole fit task.
 
-.. dropdown:: The task tree
+The callback context objects follow this tree structure, holding references to their
+parent and children contexts, dynamically built during `fit`. The root context must be
+created by the :meth:`~CallbackSupportMixin._init_callback_context` method.
 
-    During its ``fit`` process, an estimator dynamically builds a tree of tasks. The
-    root task node represents the whole ``fit`` function itself, and each child node
-    represents a sub-task. Such child task is tipycally one step of a loop, with nested
-    loops corresponding to nested sub-tasks. The callbacks attached to an estimator will
-    be invoked for each task defined in the estimator. To allow callbacks to be generic
-    and reusable across estimators, the innermost tasks, i.e. the leaves of the task
-    tree, must correspond to operations on the full input data (or batches for
-    incremental estimators).
+.. dropdown:: examples of task / context trees
 
-    As an example, KMeans has two nested loops: the outer loop is controlled by `n_init`
-    and the inner loop is controlled by `max_iter`. Its task tree looks like this::
+    As an example, KMeans has two nested loops: the outer loop is controlled by the
+    `n_init` parameter, and the inner loop is controlled by the `max_iter` parameter.
+    Therefore its task tree looks like this::
 
         KMeans fit (root)
         ├── init 0
@@ -92,29 +79,28 @@ whole fit task.
             ├── ...
             └── iter n
 
-    where each innermost ``iter j`` task corresponds to the computation of the labels
-    and centers for the full dataset. A callback attached to a KMeans estimator thus
-    will be invoked in the ``fit`` node, each of the ``init i`` nodes and each of the
-    ``iter j`` nodes.
+    where each innermost `iter j` task corresponds to the computation of the labels
+    and centers for the full dataset. A callback registered on a KMeans estimator thus
+    will be invoked at the beginning and end of the `fit` task, each of the `init i`
+    tasks and each of the `iter j` tasks.
+
+    By convention, for performance reasons and consistency across estimators, the
+    innermost tasks of scikit-learn estimators, i.e. the leaves of the task tree,
+    correspond to operations on the full input data (or batches for incremental
+    estimators).
 
     When the estimator is a meta-estimator, a task leaf usually corresponds to fitting a
     sub-estimator. Therefore, this leaf and the root task of the sub-estimator actually
     represent the same task. In this case the leaf task of the meta-estimator and the
-    root task of the sub-estimator are merged into a single task.
-
-    For instance, a `Pipeline` would have a task tree that looks like this::
+    root task of the sub-estimator are merged into a single task. The task trees of the
+    meta-estimator and the sub-estimator are combined into a single task tree. For
+    instance, a `Pipeline` would have a task tree that looks like this::
 
         Pipeline fit (root)
         ├── step 0 | StandardScaler fit
         │   └── <insert StandardScaler task tree here>
         └── step 1 | LogisticRegression fit
             └── <insert LogisticRegression task tree here>
-
-    In that case, a callback attached to the meta-estimator will be invoked either only
-    in the task nodes of the met-estimator (here ``fit``, ``setp 1`` and ``step 2``) if
-    the callback is not propagated; or in both the tasks of the meta-estimator and those
-    of its sub-estimators (here the tasks of the ``StandardScaler`` and
-    ``LogisticRegression`` task trees) if the callback is propagated.
 
 .. _callback_context_methods:
 
@@ -129,11 +115,11 @@ The :class:`~CallbackContext` objects are to be used through four methods.
   .. code-block:: python
 
       CallbackContext.call_on_fit_task_begin(
-          estimator, X=None, y=None, metadata=None, reconstruction_attributesNone
+          estimator, X=None, y=None, metadata=None, reconstruction_attributes=None
       ) -> None
 
       CallbackContext.call_on_fit_task_end(
-          estimator, X=None, y=None, metadata=None, reconstruction_attributesNone
+          estimator, X=None, y=None, metadata=None, reconstruction_attributes=None
       ) -> bool
 
   These two methods must be called respectively at the beginning and end of the
