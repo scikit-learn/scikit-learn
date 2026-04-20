@@ -17,13 +17,13 @@ from sklearn.utils._array_api import (
     get_namespace_and_device,
     move_to,
 )
+from sklearn.utils._dataframe import is_pandas_df, is_pyarrow_data
 from sklearn.utils._param_validation import Interval, validate_params
 from sklearn.utils.extmath import _approximate_mode
+from sklearn.utils.fixes import SCIPY_VERSION_BELOW_1_12
 from sklearn.utils.validation import (
     _check_sample_weight,
     _is_arraylike_not_scalar,
-    _is_pandas_df,
-    _is_pyarrow_array,
     _use_interchange_protocol,
     check_array,
     check_consistent_length,
@@ -35,10 +35,30 @@ def _array_indexing(array, key, key_dtype, axis):
     """Index an array or scipy.sparse consistently across NumPy version."""
     xp, is_array_api, device_ = get_namespace_and_device(array)
     if is_array_api:
-        key = move_to(key, xp=xp, device=device_)
-        return xp.take(array, key, axis=axis)
-    if issparse(array) and key_dtype == "bool":
-        key = np.asarray(key)
+        if hasattr(key, "shape"):
+            key = move_to(key, xp=xp, device=device_)
+        elif isinstance(key, (int, slice)):
+            # Passthrough for valid __getitem__ inputs as noted in the array
+            # API spec.
+            pass
+        else:
+            key = xp.asarray(key, device=device_)
+
+        if hasattr(key, "dtype"):
+            if xp.isdtype(key.dtype, "integral"):
+                return xp.take(array, key, axis=axis)
+            elif xp.isdtype(key.dtype, "bool"):
+                # Array API does not support boolean indexing for n-dim arrays
+                # yet hence the need to turn to equivalent integer indexing.
+                indices = xp.arange(array.shape[axis], device=device_)
+                return xp.take(array, indices[key], axis=axis)
+
+    if issparse(array):
+        if key_dtype == "bool":
+            key = np.asarray(key)
+        elif SCIPY_VERSION_BELOW_1_12:
+            if isinstance(key, numbers.Integral):
+                key = [key]
     if isinstance(key, tuple):
         key = list(key)
     return array[key, ...] if axis == 0 else array[:, key]
@@ -274,22 +294,23 @@ def _safe_indexing(X, indices, *, axis=0):
     if (
         axis == 1
         and indices_dtype == "str"
-        and not (_is_pandas_df(X) or _use_interchange_protocol(X))
+        and not (is_pandas_df(X) or _use_interchange_protocol(X))
     ):
         raise ValueError(
             "Specifying the columns using strings is only supported for dataframes."
         )
 
     if hasattr(X, "iloc"):
-        # TODO: we should probably use _is_pandas_df_or_series(X) instead but this
-        # would require updating some tests such as test_train_test_split_mock_pandas.
-        # TODO: Should also work with _narwhals_indexing, but
-        # test_safe_indexing_pandas_no_settingwithcopy_warning
-        # does not pass.
+        # TODO: we should probably use is_pandas_df_or_series(X) instead but:
+        # 1) Currently, it (probably) works for dataframes compliant to pandas' API.
+        # 2) Updating would require updating some tests such as
+        #    test_train_test_split_mock_pandas.
+        # 3) Should also work with _narwhals_indexing, but
+        #    test_safe_indexing_pandas_no_settingwithcopy_warning does not pass.
         return _pandas_indexing(X, indices, indices_dtype, axis=axis)
     elif nw.dependencies.is_into_dataframe(X) or nw.dependencies.is_into_series(X):
         return _narwhals_indexing(X, indices, indices_dtype, axis=axis)
-    elif _is_pyarrow_array(X):
+    elif is_pyarrow_data(X):
         # Narwhals Series are backed by ChunkedArray, not Array.
         # To reuse `_narwhals_indexing`, we temporarily convert to `ChunkedArray`.
         pa = sys.modules["pyarrow"]
@@ -298,7 +319,7 @@ def _safe_indexing(X, indices, *, axis=0):
         if isinstance(ret, pa.ChunkedArray):
             return ret.combine_chunks()
         return ret
-    elif hasattr(X, "shape"):
+    if hasattr(X, "shape"):
         return _array_indexing(X, indices, indices_dtype, axis=axis)
     else:
         return _list_indexing(X, indices, indices_dtype)
@@ -520,8 +541,8 @@ def resample(
       >>> X = np.array([[1., 0.], [2., 1.], [0., 0.]])
       >>> y = np.array([0, 1, 2])
 
-      >>> from scipy.sparse import coo_matrix
-      >>> X_sparse = coo_matrix(X)
+      >>> from scipy.sparse import coo_array
+      >>> X_sparse = coo_array(X)
 
       >>> from sklearn.utils import resample
       >>> X, X_sparse, y = resample(X, X_sparse, y, random_state=0)
@@ -531,7 +552,7 @@ def resample(
              [1., 0.]])
 
       >>> X_sparse
-      <Compressed Sparse Row sparse matrix of dtype 'float64'
+      <Compressed Sparse Row sparse array of dtype 'float64'
           with 4 stored elements and shape (3, 2)>
 
       >>> X_sparse.toarray()
@@ -678,8 +699,8 @@ def shuffle(*arrays, random_state=None, n_samples=None):
       >>> X = np.array([[1., 0.], [2., 1.], [0., 0.]])
       >>> y = np.array([0, 1, 2])
 
-      >>> from scipy.sparse import coo_matrix
-      >>> X_sparse = coo_matrix(X)
+      >>> from scipy.sparse import coo_array
+      >>> X_sparse = coo_array(X)
 
       >>> from sklearn.utils import shuffle
       >>> X, X_sparse, y = shuffle(X, X_sparse, y, random_state=0)
@@ -689,7 +710,7 @@ def shuffle(*arrays, random_state=None, n_samples=None):
              [1., 0.]])
 
       >>> X_sparse
-      <Compressed Sparse Row sparse matrix of dtype 'float64'
+      <Compressed Sparse Row sparse array of dtype 'float64'
           with 3 stored elements and shape (3, 2)>
 
       >>> X_sparse.toarray()

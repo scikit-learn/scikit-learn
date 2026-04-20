@@ -3,9 +3,14 @@
 
 import numpy as np
 import pytest
+import scipy as sp
 
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils.fixes import _object_dtype_isnan, _smallest_admissible_index_dtype
+from sklearn.utils.fixes import (
+    _ensure_sparse_index_int32,
+    _object_dtype_isnan,
+    _smallest_admissible_index_dtype,
+)
 
 
 @pytest.mark.parametrize("dtype, val", ([object, 1], [object, "a"], [float, 1]))
@@ -158,3 +163,40 @@ def test_smallest_admissible_index_dtype_error(params, err_type, err_msg):
     """Check that we raise the proper error message."""
     with pytest.raises(err_type, match=err_msg):
         _smallest_admissible_index_dtype(**params)
+
+
+INDEX_CONSTRUCTORS = [
+    sp.sparse.csc_array,
+    sp.sparse.csr_array,
+    sp.sparse.coo_array,
+    sp.sparse.csc_matrix,
+    sp.sparse.csr_matrix,
+    sp.sparse.coo_matrix,
+]
+NO_INDEX_TEST_CONSTRUCTORS = [
+    sp.sparse.bsr_array,
+    sp.sparse.bsr_matrix,
+    sp.sparse.dia_array,
+    sp.sparse.dok_array,
+    sp.sparse.lil_array,
+    sp.sparse.dia_matrix,
+    sp.sparse.dok_matrix,
+    sp.sparse.lil_matrix,
+]
+SPARSE_CONSTRUCTORS = INDEX_CONSTRUCTORS + NO_INDEX_TEST_CONSTRUCTORS
+
+
+@pytest.mark.parametrize("constructor", SPARSE_CONSTRUCTORS)
+def test_ensure_sparse_index_int32(constructor):
+    A = constructor(np.array([[1.0, 2.0, 3.0], [3.0, 2.0, 1.0]]))
+    _ensure_sparse_index_int32(A)
+
+
+@pytest.mark.parametrize("constructor", INDEX_CONSTRUCTORS)
+def test_ensure_int32_raises(constructor):
+    with pytest.raises(ValueError, match="too large"):
+        rows, cols = [2, 0], [1, np.iinfo(np.int32).max + 1]
+        if "csc" in constructor.__name__:
+            rows, cols = cols, rows
+        A = sp.sparse.coo_array(([1.0, 2.0], (rows, cols)))
+        _ensure_sparse_index_int32(constructor(A))

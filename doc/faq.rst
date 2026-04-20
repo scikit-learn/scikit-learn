@@ -78,6 +78,9 @@ can be used via the `BSD 3-Clause License
 your work. Citations of scikit-learn are highly encouraged and appreciated. See
 :ref:`citing scikit-learn <citing-scikit-learn>`.
 
+However, the scikit-learn logo is subject to some terms and conditions.
+See :ref:`branding-and-logos`.
+
 Implementation decisions
 ------------------------
 
@@ -313,17 +316,18 @@ being reviewed, you can try:
 
 * follow our :ref:`contribution guidelines <contributing>`, in particular
   :ref:`automated_contributions_policy`, :ref:`filing_bugs`,
-  :ref:`stalled_pull_request` and :ref:`stalled_unclaimed_issues`.
-* complete the provided issue and pull request templates, including a clear and
-  concise description of the issue or motivation for the pull request.
+  :ref:`stalled_pull_request` and :ref:`stalled_unclaimed_issues`,
+* complete all sections of the issue or pull request template provided by GitHub,
+  including a clear description of the issue or motivation and thought process behind
+  the pull request
 * ensure the title clearly describes the issue or pull request and does not include
   an issue number.
 
 For your pull requests specifically, the following will make it easier to review:
 
-* ensure your PR satisfies all items in the
-  :ref:`Pull request checklist <pr_checklist>`.
-* ensure your PR addresses an issue for which there is clear consensus on the solution.
+* ensure your PR addresses an issue for which there is clear consensus on the solution
+  (see :ref:`issues_tagged_needs_triage`),
+* ensure the PR satisfies all items in the :ref:`Pull request checklist <pr_checklist>`,
 * ensure the changes are minimal and directly relevant to the described issue.
 
 What does the "spam" label for issues or pull requests mean?

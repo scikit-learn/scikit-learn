@@ -1,0 +1,8 @@
+- :class:`linear_model.LinearRegression`, :class:`linear_model.Ridge`,
+  :class:`linear_model.RidgeClassifier`, :class:`linear_model.LogisticRegression`,
+  and :class:`discriminant_analysis.LinearDiscriminantAnalysis` now raise a more
+  informative error message when arrays passed at fit and prediction time use
+  different array API namespaces or devices. A new
+  ``sklearn.utils._array_api.move_estimator_to`` utility is provided to move an
+  estimator's fitted array attributes to a different namespace and device.
+  By :user:`Jérôme Dockès <jeromedockes>` and :user:`Tim Head <betatim>`.

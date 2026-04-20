@@ -1,0 +1,4 @@
+- :func:`feature_extraction.image.reconstruct_from_patches_2d` now produces
+  correct results when a patch dimension equals the corresponding image
+  dimension.
+  By :user:`Eden Rochman <EdenRochmanSharabi>`.

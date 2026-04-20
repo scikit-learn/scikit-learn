@@ -7,24 +7,30 @@ import numpy as np
 import pytest
 from scipy import linalg, sparse
 
+from sklearn import config_context
+from sklearn.base import BaseEstimator
 from sklearn.datasets import load_iris, make_regression, make_sparse_uncorrelated
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model._base import (
+    LinearClassifierMixin,
     _preprocess_data,
     _rescale_data,
     make_dataset,
 )
 from sklearn.preprocessing import add_dummy_feature
+from sklearn.utils._array_api import get_namespace_and_device, move_estimator_to
 from sklearn.utils._testing import (
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
+    skip_if_array_api_compat_not_configured,
 )
 from sklearn.utils.fixes import (
     COO_CONTAINERS,
     CSC_CONTAINERS,
     CSR_CONTAINERS,
     LIL_CONTAINERS,
+    _sparse_eye_array,
 )
 
 rtol = 1e-6
@@ -52,6 +58,31 @@ def test_linear_regression():
     assert_array_almost_equal(reg.coef_, [0])
     assert_array_almost_equal(reg.intercept_, [0])
     assert_array_almost_equal(reg.predict(X), [0])
+
+
+@pytest.mark.parametrize("dtype", [np.float64, np.float32])
+def test_linear_regression_vs_lstsq(dtype):
+    """
+    Check that LinearRegression is as good as `scipy.linalg.lstsq`.
+    Non regression test for issue #33032.
+    """
+    rng = np.random.RandomState(1137)
+    n_samples = 500_000
+
+    x1 = rng.rand(n_samples)
+    x2 = 0.3 * x1 + 0.1 * rng.rand(n_samples)
+    X = np.column_stack([x1, x2])
+    y = X @ [0.5, 2.0] + 0.1 * rng.rand(n_samples)
+
+    X = X.astype(dtype)
+    y = y.astype(dtype)
+
+    coef_scipy = linalg.lstsq(X, y)[0]
+    coef_sklearn = LinearRegression(fit_intercept=False).fit(X, y).coef_
+
+    rmse_scipy = np.linalg.norm(y - X @ coef_scipy)
+    rmse_sklearn = np.linalg.norm(y - X @ coef_sklearn)
+    assert rmse_sklearn == pytest.approx(rmse_scipy, rel=1e-6)
 
 
 @pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
@@ -98,7 +129,7 @@ def test_linear_regression_sample_weights(
 def test_raises_value_error_if_positive_and_sparse():
     error_msg = "Sparse data was passed for X, but dense data is required."
     # X must not be sparse if positive == True
-    X = sparse.eye(10)
+    X = _sparse_eye_array(10)
     y = np.ones(10)
 
     reg = LinearRegression(positive=True)
@@ -148,7 +179,7 @@ def test_linear_regression_sparse(global_random_seed):
     # Test that linear regression also works with sparse data
     rng = np.random.RandomState(global_random_seed)
     n = 100
-    X = sparse.eye(n, n)
+    X = _sparse_eye_array(n, n)
     beta = rng.rand(n)
     y = X @ beta
 
@@ -538,25 +569,33 @@ def test_csr_preprocess_data(csr_container):
 
 @pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
 @pytest.mark.parametrize("to_copy", (True, False))
-def test_preprocess_copy_data_no_checks(sparse_container, to_copy):
+@pytest.mark.parametrize("use_sample_weight", (False, True))
+def test_preprocess_copy_data_no_checks(sparse_container, to_copy, use_sample_weight):
     X, y = make_regression()
     X[X < 2.5] = 0.0
+
+    sample_weight = np.ones(len(y)) if use_sample_weight else None
 
     if sparse_container is not None:
         X = sparse_container(X)
 
     X_, y_, _, _, _, _ = _preprocess_data(
-        X, y, fit_intercept=True, copy=to_copy, check_input=False
+        X,
+        y,
+        sample_weight=sample_weight,
+        fit_intercept=True,
+        copy=to_copy,
+        check_input=False,
     )
 
-    if to_copy and sparse_container is not None:
-        assert not np.may_share_memory(X_.data, X.data)
-    elif to_copy:
-        assert not np.may_share_memory(X_, X)
-    elif sparse_container is not None:
-        assert np.may_share_memory(X_.data, X.data)
+    if sparse_container is not None:
+        if to_copy or use_sample_weight:
+            # sparse X, y always copied when use_sample_weight, regardless of to_copy
+            assert not np.may_share_memory(X_.data, X.data)
+        else:
+            assert np.may_share_memory(X_.data, X.data)
     else:
-        assert np.may_share_memory(X_, X)
+        assert np.may_share_memory(X_, X) == (not to_copy)
 
 
 @pytest.mark.parametrize("rescale_with_sw", [False, True])
@@ -844,3 +883,47 @@ def test_linear_regression_sample_weight_consistency(
     assert_allclose(reg1.coef_, reg2.coef_, rtol=1e-6)
     if fit_intercept:
         assert_allclose(reg1.intercept_, reg2.intercept_)
+
+
+@skip_if_array_api_compat_not_configured
+def test_array_api_move_estimator_to():
+    xp = pytest.importorskip("array_api_strict")
+    rng = np.random.default_rng(0)
+    X = rng.normal(size=(10, 5))
+    y = rng.normal(size=10)
+
+    reg = LinearRegression().fit(X, y)
+    X_xp = xp.asarray(X)
+    reg.predict(X_xp)
+
+    with config_context(array_api_dispatch=True):
+        with pytest.raises(ValueError, match=".*must use the same namespace"):
+            reg.predict(X_xp)
+        xp_target, _, device = get_namespace_and_device(X_xp)
+        reg = move_estimator_to(reg, xp_target, device)
+        reg.predict(X_xp)
+
+
+def test_predict_proba_lr_large_values():
+    """Test that _predict_proba_lr of LinearClassifierMixin deals with large
+    negative values.
+
+    Note that exp(-1000) = 0.
+    """
+
+    class MockClassifier(LinearClassifierMixin, BaseEstimator):
+        def __init__(self):
+            pass
+
+        def fit(self, X, y):
+            self.__sklearn_is_fitted__ = True
+
+        def decision_function(self, X):
+            n_samples = X.shape[0]
+            return np.tile([-1000.0] * 4, [n_samples, 1])
+
+    clf = MockClassifier()
+    clf.fit(X=None, y=None)
+
+    proba = clf._predict_proba_lr(np.ones(5))
+    assert_allclose(np.sum(proba, axis=1), 1)

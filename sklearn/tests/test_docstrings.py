@@ -51,7 +51,7 @@ def filter_errors(errors, method, Klass=None):
         # We ignore following error code,
         #  - RT02: The first line of the Returns section
         #    should contain only the type, ..
-        #   (as we may need refer to the name of the returned
+        #   (as we may need to refer to the name of the returned
         #    object)
         #  - GL01: Docstring text (summary) should start in the line
         #    immediately after the opening quotes (not in the same line,
@@ -155,6 +155,7 @@ def test_function_docstring(function_name, request):
         raise ValueError(msg)
 
 
+@pytest.mark.no_check_spmatrix  # no __module__ for check_spmatrix classes
 @pytest.mark.parametrize("Klass, method", get_all_methods())
 def test_docstring(Klass, method, request):
     base_import_path = Klass.__module__

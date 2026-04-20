@@ -105,7 +105,7 @@ def test_newrand_bounded_rand_int(range_, n_pts):
         sample = [bounded_rand_int_wrap(range_) for _ in range(n_pts)]
         res = stats.kstest(sample, uniform_dist.cdf)
         ks_pvals.append(res.pvalue)
-    # Null hypothesis = samples come from an uniform distribution.
+    # Null hypothesis = samples come from a uniform distribution.
     # Under the null hypothesis, p-values should be uniformly distributed
     # and not concentrated on low values
     # (this may seem counter-intuitive but is backed by multiple refs)

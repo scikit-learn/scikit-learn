@@ -8,8 +8,9 @@ Linear Models
 
 The following are a set of methods intended for regression in which
 the target value is expected to be a linear combination of the features.
-In mathematical notation, if :math:`\hat{y}` is the predicted
-value.
+In mathematical notation, the predicted value :math:`\hat{y}` can be
+written as:
+
 
 .. math::    \hat{y}(w, x) = w_0 + w_1 x_1 + ... + w_p x_p
 
@@ -212,11 +213,11 @@ Usage example::
     >>> import numpy as np
     >>> from sklearn import linear_model
     >>> reg = linear_model.RidgeCV(alphas=np.logspace(-6, 6, 13))
-    >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])
+    >>> reg.fit([[0, 0], [0, 0.1], [1, 1]], [0, -0.1, 1])
     RidgeCV(alphas=array([1.e-06, 1.e-05, 1.e-04, 1.e-03, 1.e-02, 1.e-01, 1.e+00, 1.e+01,
           1.e+02, 1.e+03, 1.e+04, 1.e+05, 1.e+06]))
     >>> reg.alpha_
-    np.float64(0.01)
+    np.float64(0.1)
 
 Specifying the value of the :term:`cv` attribute will trigger the use of
 cross-validation with :class:`~sklearn.model_selection.GridSearchCV`, for
@@ -1448,7 +1449,7 @@ eta0=1.0)` can be used for PA-I or with ``learning_rate="pa2"`` for PA-II.
 .. dropdown:: References
 
   * `"Online Passive-Aggressive Algorithms"
-    <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>`_
+    <https://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>`_
     K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR 7 (2006)
 
 Robustness regression: outliers and modeling errors
@@ -1655,7 +1656,7 @@ better than an ordinary least squares in high dimension.
 
   .. [#f1] Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang: `Theil-Sen Estimators in a Multiple Linear Regression Model. <http://home.olemiss.edu/~xdang/papers/MTSE.pdf>`_
 
-  .. [#f2] T. Kärkkäinen and S. Äyrämö: `On Computation of Spatial Median for Robust Data Mining. <http://users.jyu.fi/~samiayr/pdf/ayramo_eurogen05.pdf>`_
+  .. [#f2] T. Kärkkäinen and S. Äyrämö: `On Computation of Spatial Median for Robust Data Mining. <https://users.jyu.fi/~samiayr/pdf/ayramo_eurogen05.pdf>`_
 
   Also see the `Wikipedia page <https://en.wikipedia.org/wiki/Theil%E2%80%93Sen_estimator>`_
 
