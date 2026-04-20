@@ -29,8 +29,9 @@ class, which exposes the following methods:
   to register callbacks on the estimator.
 
 - :meth:`~CallbackSupportMixin._init_callback_context`, which should be called at the
-  beginning of fit to create the root :class:`~CallbackContext`. This context
-  corresponds to the task representing the entire execution of `fit`.
+  beginning of fit to create the root :class:`~CallbackContext`, corresponding to the
+  task that represents the entire execution of `fit`. This method also sets up the
+  callbacks that are registered on the estimator.
 
   .. note::
 
@@ -102,116 +103,108 @@ created by the :meth:`~CallbackSupportMixin._init_callback_context` method.
         └── step 1 | LogisticRegression fit
             └── <insert LogisticRegression task tree here>
 
-.. _callback_context_methods:
+To dynamically build the context tree and manage the callbacks during fit, the
+:class:`~CallbackContext` class exposes the following methods:
 
-The callback context's methods
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- :meth:`~CallbackContext.subcontext`
+  
+  This method allows to create a context for a subtask. Callback contexts should not be
+  created directly but through this method (or `_init_callback_context` for the root
+  context).
 
-The :class:`~CallbackContext` objects are to be used through four methods.
-
-- The first two methods are :meth:`~CallbackContext.call_on_fit_task_begin` and
-  :meth:`~CallbackContext.call_on_fit_task_end`:
+- :meth:`~CallbackContext.call_on_fit_task_begin` and
+  :meth:`~CallbackContext.call_on_fit_task_end`
 
   .. code-block:: python
 
-      CallbackContext.call_on_fit_task_begin(
-          estimator, X=None, y=None, metadata=None, reconstruction_attributes=None
+      def call_on_fit_task_begin(
+          self, *, estimator, X=None, y=None, metadata=None, reconstruction_attributes=None
       ) -> None
 
-      CallbackContext.call_on_fit_task_end(
-          estimator, X=None, y=None, metadata=None, reconstruction_attributes=None
+      def call_on_fit_task_end(
+          self, *, estimator, X=None, y=None, metadata=None, reconstruction_attributes=None
       ) -> bool
 
-  These two methods must be called respectively at the beginning and end of the
-  context's task. They invoke the corresponding method
-  (:meth:`~FitCallback.on_fit_task_begin` or :meth:`~FitCallback.on_fit_task_end`) of
-  each callback attached to the estimator.
+  These two methods must be called respectively at the beginning and end of the task
+  that the context is responsible for. As their name suggests, they call the 
+  `on_fit_task_begin` and `on_fit_task_end` methods of the callbacks registered on the
+  estimator.
 
   The optional keyword arguments can be used to provide additional contextual
-  information to the callbacks. Although optional, certain kwargs might be necessary for
-  certain callbacks to function, and not providing them will result in these callbacks
-  not doing anything. Therefore, in each task, an estimator should provide all the
-  values it is capable to produce to be compatible with most callbacks. These kwargs
-  are:
+  information to the callbacks. It is not expected to provide a value for all of them at
+  the beginning and end of every task. Estimators are expected to provide all the values
+  that they are capable to produce. Callbacks then adapt their behavior based on the
+  provided values for a given task.
 
-  - `X`: array-like
-      The training data of the estimator.
+  .. dropdown:: The `reconstruction_attributes` kwarg
 
-  - `y`: array-like
-      The training targets of the estimator.
+      When `call_on_fit_task_begin/end` is called, the state of the estimator at this
+      task is likely to be incomplete and thus unable to predict, transform, etc ... The
+      `reconstruction_attributes` kwarg expects a dictionary containing the missing
+      attributes to set on the estimator to make it ready as if the fit had stopped at
+      this task.
 
-  - `metadata`: dict
-      A dictionary containing the training metadata.
-
-  - `reconstruction_attributes`: dict
-      A dictionary of the fitted attributes of the estimator, used by the callback
-      context to generate a `fitted_estimator`, i.e. an estimator instance ready to
-      predict, transform, etc ... as if the fit had stopped at the beginning/end of this
-      task. The `fitted_estimator` is the object which will be passed to the callbacks,
-      if required.
+      The callback context will copy the state of the estimator at this task, set the
+      reconstruction attributes and pass the resulting estimator to the callbacks as
+      `fitted_estimator`.
 
   .. dropdown:: Lazy-loading of the kwargs
 
       For each of these kwargs, a callable can be provided instead of the actual value.
       When it is the case, if a callback requires the kwarg, the callback context will
-      execute the callable and forward the returned value to the callback. This
+      evaluate the callable and forward the returned value to the callback. This
       mechanism enables lazy-loading the kwarg values, to avoid potentially costly
-      computations when no callback require a kwarg value.
+      computations when no callback requires a kwarg value.
 
-  The :meth:`~CallbackContext.call_on_fit_task_end` method returns a boolean, which is
-  set to `True` if any callback requests the `fit` process to stop (for example to
-  perform early stopping). The estimator may thus use this boolean value to condition
-  the interruption of its fitting.
+      To prevent performance degradations, estimators should lazily pass quantities
+      that are expensive to compute.
 
-- The third method is :meth:`~CallbackContext.subcontext`:
+  .. dropdown:: Interrupting `fit`
 
-  .. code-block:: python
+      The `call_on_fit_task_end` method returns a boolean, which can be used to
+      interrupt the current level of iterations, to implement early stopping for
+      instance. It returns `True` if any callback signaled to stop the `fit` process at
+      the end of this task and `False` otherwise.
 
-      CallbackContext.subcontext(
-          task_name="", task_id=None, max_subtasks=0, sequential_subtasks=True
-      ) -> CallbackContext instance
+- :meth:`~CallbackContext.propagate_callback_context`.
 
-  This method is to be used when the context's task has a sub-task. It returns a new
-  child context responsible for that sub-task. This sub-context can then be used to
-  create sub-sub-contexts, and so on.
+  This method allows to combine the context trees of individual estimators and
+  meta-estimators in estimator compositions (e.g. a `GridSearchCV` on a
+  `LogisticRegression`) into a single context tree, rooted at the fit of the top level
+  estimator.
 
-- The fourth method is :meth:`~CallbackContext.propagate_callback_context`:
+  It should be used in a meta-estimator, on a context corresponding to the task of
+  fitting a sub-estimator. This task is both a leaf task of the meta-estimator and the
+  root task of the sub-estimator. Their corresponding contexts are thus merged into a
+  single context in the combined tree.
 
-  .. code-block:: python
+  In addition, `propagate_callback_context` is a context manager that propagates the
+  auto-propagated callbacks from the meta-estimator to the sub-estimator such that they
+  are called at the tasks of the sub-estimator as well. It also clears the propagated
+  callbacks on exit such that the fitted sub-estimator no longer holds locally
+  registered callbacks.
 
-      CallbackContext.propagate_callback_context(sub_estimator) -> self
+The with_callbacks decorator
+------------------------------
 
-  When composing estimators, the trees of individual estimators are combined into a
-  single tree, rooted at the fit of the top level estimator. This method is used to do
-  the tree combination, thus it is to be used in a meta-estimator, on a context
-  corresponding to the task of fitting a sub-estimator. This task is both a leaf task of
-  the meta-estimator's task tree, and the root task of the sub-estimator's task tree.
-  This method will propagate the context and callbacks from the meta-estimator's leaf
-  task to the sub-estimator's root task, effectively merging these two tasks into the
-  same task in the combined tree.
+For third-party estimators implementing callback support, the `fit` method should be
+decorated with the :func:`~with_callbacks` decorator. This decorator guarantees that the
+callbacks are torn down after `fit` finishes, even if it exits on an error.
 
-
-The `with_callbacks` decorator
---------------------------------
-
-The `fit` function of the estimator must be decorated with the :func:`~with_callbacks`
-decorator. This decorator takes care of the callbacks' teardown after `fit` finishes,
-even if it exits on an error. For scikit-learn's built-in estimators, the
-:func:`~sklearn.base._fit_context` decorator already takes care of the callbacks
-teardown, thus :func:`~with_callbacks` should not be used.
+For scikit-learn's built-in estimators, the :func:`~sklearn.base._fit_context` decorator
+already takes care of the callbacks teardown, thus `with_callbacks` should not be used.
 
 Minimal example
 ---------------
 
-Here is a minimal example of a custom estimator supporting callbacks:
+Here is a typical implementation of callback support in a custom estimator:
 
 .. code-block:: python
 
-    from sklearn.base import BaseEstimator
     from sklearn.callback import CallbackSupportMixin, with_callbacks
 
 
-    class MyEstimator(CallbackSupportMixin, BaseEstimator):
+    class MyEstimator(CallbackSupportMixin):
         def __init__(self, max_iter):
             self.max_iter = max_iter
 
@@ -226,14 +219,14 @@ Here is a minimal example of a custom estimator supporting callbacks:
 
                 # Do something
 
-                subcontext.call_on_fit_task_end(estimator=self, X=X, y=y)
+                if subcontext.call_on_fit_task_end(estimator=self, X=X, y=y):
+                    break
 
             callback_ctx.call_on_fit_task_end(estimator=self, X=X, y=y)
 
             return self
 
 
-For a more detailed example of how to make a custom estimator or meta-estimator
-compatible with scikit-learn's callback API, you can refer to this example :
-
 .. TODO: add link to example
+.. For a more detailed example of how to make a custom estimator or meta-estimator
+.. compatible with scikit-learn's callback API, you can refer to this example :
