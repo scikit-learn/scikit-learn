@@ -420,5 +420,5 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
    We need to set it to !important and add tabindex="0" in the HTML
    to allow keyboard-only users to navigate the display. */
   overflow-x: scroll !important;
-  max-width: 99%;
+  max-width: 100%;
 }
