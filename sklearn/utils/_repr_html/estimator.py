@@ -540,7 +540,7 @@ def estimator_html_repr(estimator):
         html_template = (
             f"<style>{_CSS_STYLE}</style>"
             f"<body>"
-            f'<div id="{container_id}" class="sk-top-container sk-global">'
+            f'<div id="{container_id}" tabindex="0" class="sk-top-container sk-global">'
             '<div class="sk-text-repr-fallback">'
             f"<pre>{html.escape(estimator_str)}</pre><b>{fallback_msg}</b>"
             "</div>"
