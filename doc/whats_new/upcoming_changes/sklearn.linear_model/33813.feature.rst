@@ -1,5 +1,5 @@
-- |Feature| :class:`~sklearn.linear_model.SGDRegressor` now supports
+- :class:`~sklearn.linear_model.SGDRegressor` now supports
   ``loss='poisson'``, ``loss='gamma'``, and ``loss='tweedie'`` (controlled
   by a new ``power`` parameter), enabling incremental/online learning for
   Poisson, Gamma, and Tweedie regression models.
-  by :user:`Saikat Bera <berasaikat>`.
+  By :user:`Saikat Bera <berasaikat>`.
