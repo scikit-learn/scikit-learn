@@ -42,17 +42,17 @@ def test_extension_type_module():
         for name, cls in inspect.getmembers(mod, inspect.isclass):
             try:
                 cls_file = inspect.getfile(cls)
-            except TypeError:
+            except TypeError:  # pragma: no cover
                 # Raised for built-in types (``object``, stdlib C types) that
                 # have no source file — they were not defined in ``mod``.
-                continue
+                continue  # pragma: no cover
             # Skip classes imported into ``mod`` from elsewhere (e.g. numpy,
             # scipy, or another sklearn module). Only classes whose source
             # file *is* this extension's .so are candidates for the bug.
             if cls_file != mod_file:
                 continue
             if cls.__module__ != modname:
-                failures.append(
+                failures.append(  # pragma: no cover
                     f"{modname}.{name}.__module__ == {cls.__module__!r}, "
                     f"expected {modname!r}"
                 )
