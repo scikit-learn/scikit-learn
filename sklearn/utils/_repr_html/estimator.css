@@ -414,3 +414,9 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
   /* fitted */
   background-color: var(--sklearn-color-fitted-level-3);
 }
+
+.sk-top-container.sk-global {
+  overflow-x: scroll !important;
+  border: 2px solid blue;
+  max-width: 90%;
+}
