@@ -450,11 +450,11 @@ class CallbackContext:
             A dictionary containing training metadata for the current task.
 
         reconstruction_attributes : dict or None, default=None
-            A dictionary of the sufficient fitted attributes needed to construct a `fitted_estimator` from
-            the current state of the estimator, i.e. an estimator instance ready
-            to predict, transform, etc ... as if the fit had stopped at the
-            beginning/end of this task. The `fitted_estimator` is the object which will
-            be passed to the callbacks, if required.
+            A dictionary of the sufficient fitted attributes needed to construct a
+            `fitted_estimator` from the current state of the estimator, i.e. an
+            estimator instance ready to predict, transform, etc ... as if the fit had
+            stopped at the beginning/end of this task. The `fitted_estimator` is the
+            object which will be passed to the callbacks, if required.
         """
         self._call_hooks(
             estimator,
