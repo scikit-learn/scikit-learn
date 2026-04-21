@@ -398,9 +398,9 @@ class BayesianRidge(RegressorMixin, LinearModel):
             return y_mean
         else:
             X_centered = X - self.X_offset_
-            sigmas_squared_data = (
-                np.dot(X_centered, self.sigma_) * X_centered
-            ).sum(axis=1)
+            sigmas_squared_data = (np.dot(X_centered, self.sigma_) * X_centered).sum(
+                axis=1
+            )
             y_std = np.sqrt(sigmas_squared_data + (1.0 / self.alpha_))
             return y_mean, y_std
 
@@ -822,8 +822,8 @@ class ARDRegression(RegressorMixin, LinearModel):
         else:
             col_index = self.lambda_ < self.threshold_lambda
             X_centered = _safe_indexing(X - self.X_offset_, indices=col_index, axis=1)
-            sigmas_squared_data = (
-                np.dot(X_centered, self.sigma_) * X_centered
-            ).sum(axis=1)
+            sigmas_squared_data = (np.dot(X_centered, self.sigma_) * X_centered).sum(
+                axis=1
+            )
             y_std = np.sqrt(sigmas_squared_data + (1.0 / self.alpha_))
             return y_mean, y_std
