@@ -366,6 +366,10 @@ on new unseen data when LOF is applied for novelty detection, i.e. when the
 ``novelty`` parameter is set to ``True``, but the result of ``predict`` may
 differ from that of ``fit_predict``. See :ref:`novelty_with_lof`.
 
+When the ``contamination`` parameter is set, the threshold (called ``offset_``) 
+is determined as the corresponding percentile of ``negative_outlier_factor_`` 
+scores on the training data. Samples with scores strictly below this threshold 
+are classified as outliers.
 
 This strategy is illustrated below.
 
