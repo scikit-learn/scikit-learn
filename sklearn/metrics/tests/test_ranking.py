@@ -2145,9 +2145,7 @@ def test_ndcg_sample_scores_replace_undefined_by():
     y_true = np.array([[1, 0], [0, 0]])
     y_score = np.array([[1, 0], [1, 0]])
     with pytest.warns(UndefinedMetricWarning):
-        scores = _ndcg_sample_scores(
-            y_true, y_score, replace_undefined_by=0.5
-        )
+        scores = _ndcg_sample_scores(y_true, y_score, replace_undefined_by=0.5)
     assert scores[0] == pytest.approx(1.0)  # defined sample
     assert scores[1] == pytest.approx(0.5)  # undefined -> replaced
 
