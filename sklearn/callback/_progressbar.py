@@ -194,9 +194,14 @@ class RichProgressMonitor(Thread):
 
     def _on_task_end(self, task_info):
         """Update the progress of the task and its ancestors recursively."""
-        *ancestors, task = self.root_rich_task.get_descendants(task_info["path"])
+        path = task_info.pop("path")
+        *ancestors, task = self.root_rich_task.get_descendants(path)
 
-        if task is not None:
+        if task is None:
+            # a leaf task of the estimator, no progress bar was created fot it
+            task = RichTask(self.progress_ctx, task_info, depth=len(ancestors))
+            ancestors[-1].children[path[-1]] = task
+        else:
             task.completed = task.total
             if task.total is None:
                 # Indeterminate task is finished. Set total to an arbitrary
@@ -209,12 +214,8 @@ class RichProgressMonitor(Thread):
             if ancestor.total is None:
                 continue
 
-            if not ancestor.children:
-                ancestor.completed += 1
-                self.progress_ctx.update(ancestor.id, advance=1)
-            else:
-                completed = ancestor.progress * ancestor.total
-                self.progress_ctx.update(ancestor.id, completed=completed)
+            completed = ancestor.progress * ancestor.total
+            self.progress_ctx.update(ancestor.id, completed=completed)
 
 
 class RichTask:
@@ -252,14 +253,15 @@ class RichTask:
         For a leaf, it's an empty dictionary.
     """
 
-    def __init__(self, *, progress_ctx, task_info, depth):
+    def __init__(self, progress_ctx, task_info, *, depth):
         self.children = {}
         self.depth = depth
         self.completed = 0
-        self.total = task_info.pop("max_subtasks")
+        self.total = task_info.pop("max_subtasks", 0)
 
-        description = self._format_task_description(task_info)
-        self.id = progress_ctx.add_task(description, total=self.total)
+        if task_info:
+            description = self._format_task_description(task_info)
+            self.id = progress_ctx.add_task(description, total=self.total)
 
     @property
     def progress(self):
@@ -268,8 +270,6 @@ class RichTask:
             return 1.0
         if self.total is None:
             return 0.0
-        if not self.children:
-            return self.completed / self.total
         return sum(child.progress for child in self.children.values()) / self.total
 
     def _format_task_description(self, task_info):
@@ -293,7 +293,8 @@ class RichTask:
         return [self] + self.children[path[1]].get_descendants(path[1:])
 
     def __iter__(self):
-        """Pre-order depth-first traversal."""
-        yield self
-        for child in self.children.values():
-            yield from child
+        """Pre-order depth-first traversal, only including tasks with a progress bar."""
+        if hasattr(self, "id"):
+            yield self
+            for child in self.children.values():
+                yield from child
