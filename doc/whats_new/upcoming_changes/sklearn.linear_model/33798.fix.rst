@@ -1,0 +1,6 @@
+- :class:`linear_model.BayesianRidge` and :class:`linear_model.ARDRegression`
+  now correctly compute the predictive standard deviation when
+  ``return_std=True``. Previously, ``predict`` used raw (uncentered) ``X``
+  for the variance calculation, causing uncertainty to be lowest near the
+  origin rather than near the training data centroid.
+  By :user:`Shivamckaushik <Shivamckaushik>`.

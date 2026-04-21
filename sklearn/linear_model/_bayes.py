@@ -17,7 +17,11 @@ from sklearn.linear_model._base import LinearModel, _preprocess_data
 from sklearn.utils import _safe_indexing
 from sklearn.utils._param_validation import Interval
 from sklearn.utils.extmath import fast_logdet
-from sklearn.utils.validation import _check_sample_weight, validate_data
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    check_is_fitted,
+    validate_data,
+)
 
 ###############################################################################
 # BayesianRidge regression
@@ -393,13 +397,15 @@ class BayesianRidge(RegressorMixin, LinearModel):
         y_std : array-like of shape (n_samples,)
             Standard deviation of predictive distribution of query points.
         """
-        y_mean = self._decision_function(X)
+        check_is_fitted(self)
+        X = validate_data(self, X, accept_sparse=["csr", "csc", "coo"], reset=False)
+        y_mean = X @ self.coef_ + self.intercept_
         if not return_std:
             return y_mean
-        else:
-            sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
-            y_std = np.sqrt(sigmas_squared_data + (1.0 / self.alpha_))
-            return y_mean, y_std
+        X = X - self.X_offset_
+        sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
+        y_std = np.sqrt(sigmas_squared_data + (1.0 / self.alpha_))
+        return y_mean, y_std
 
     def _update_coef_(
         self, X, y, n_samples, n_features, XT_y, U, Vh, eigen_vals_, alpha_, lambda_
@@ -813,12 +819,13 @@ class ARDRegression(RegressorMixin, LinearModel):
         y_std : array-like of shape (n_samples,)
             Standard deviation of predictive distribution of query points.
         """
-        y_mean = self._decision_function(X)
+        check_is_fitted(self)
+        X = validate_data(self, X, accept_sparse=["csr", "csc", "coo"], reset=False)
+        y_mean = X @ self.coef_ + self.intercept_
         if return_std is False:
             return y_mean
-        else:
-            col_index = self.lambda_ < self.threshold_lambda
-            X = _safe_indexing(X, indices=col_index, axis=1)
-            sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
-            y_std = np.sqrt(sigmas_squared_data + (1.0 / self.alpha_))
-            return y_mean, y_std
+        col_index = self.lambda_ < self.threshold_lambda
+        X = _safe_indexing(X - self.X_offset_, indices=col_index, axis=1)
+        sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
+        y_std = np.sqrt(sigmas_squared_data + (1.0 / self.alpha_))
+        return y_mean, y_std

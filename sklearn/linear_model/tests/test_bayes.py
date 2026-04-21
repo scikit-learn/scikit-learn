@@ -185,6 +185,58 @@ def test_std_bayesian_ridge_ard_with_constant_input(global_random_seed):
         assert_array_less(y_std, expected_upper_boundary)
 
 
+@pytest.mark.parametrize("Estimator", [BayesianRidge, ARDRegression])
+def test_predict_std_centering(Estimator):
+    # Regression test for gh-33757.
+    # predict(return_std=True) must use centered features when computing
+    # predictive variance.  Before the fix, sigma_ was computed on
+    # X - X_offset_ during fit but the variance formula used raw X, so
+    # uncertainty was lowest near the origin rather than near the training
+    # data.
+    rng = np.random.RandomState(42)
+
+    # Training data centred far from the origin
+    X_offset = np.array([100.0, 200.0])
+    X_train = rng.randn(50, 2) + X_offset
+    y_train = X_train[:, 0] * 2.0 + rng.randn(50) * 0.1
+
+    model = Estimator()
+    model.fit(X_train, y_train)
+
+    # A point near the training centroid should have lower uncertainty
+    # than a point near the origin (which is far from all training data).
+    X_near = np.array([X_offset])  # close to training distribution
+    X_far = np.array([[0.0, 0.0]])  # far from training distribution
+
+    _, std_near = model.predict(X_near, return_std=True)
+    _, std_far = model.predict(X_far, return_std=True)
+
+    assert std_near[0] < std_far[0], (
+        f"{Estimator.__name__}: expected lower std near training data "
+        f"({std_near[0]:.4f}) than far from it ({std_far[0]:.4f}). "
+        "X_offset_ may not be applied during variance computation."
+    )
+
+
+@pytest.mark.parametrize("Estimator", [BayesianRidge, ARDRegression])
+def test_predict_std_list_input(Estimator):
+    # Non-regression test: predict(return_std=True) must accept list inputs.
+    # After the centering fix, X - self.X_offset_ was applied before validate_data,
+    # causing a TypeError when X was a Python list.
+    rng = np.random.RandomState(0)
+    X_train = rng.randn(20, 3)
+    y_train = rng.randn(20)
+
+    model = Estimator().fit(X_train, y_train)
+
+    X_list = X_train[:5].tolist()
+    y_mean_list, y_std_list = model.predict(X_list, return_std=True)
+    y_mean_arr, y_std_arr = model.predict(X_train[:5], return_std=True)
+
+    assert_allclose(y_mean_list, y_mean_arr)
+    assert_allclose(y_std_list, y_std_arr)
+
+
 def test_update_of_sigma_in_ard():
     # Checks that `sigma_` is updated correctly after the last iteration
     # of the ARDRegression algorithm. See issue #10128.
