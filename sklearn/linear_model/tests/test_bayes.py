@@ -307,6 +307,31 @@ def test_dtype_match(dtype, Estimator):
 
 
 @pytest.mark.parametrize("Estimator", [BayesianRidge, ARDRegression])
+def test_predict_std_centering(Estimator):
+    # Non-regression test for GitHub issue #33757.
+    # When fit_intercept=True, features are centered during fit. The predictive
+    # variance must be computed on centered test features, not raw ones.
+    rng = np.random.RandomState(0)
+    X_train = rng.randn(50, 5) + 10  # large non-zero mean to expose the bug
+    y_train = X_train @ rng.randn(5) + rng.randn(50)
+    X_test = rng.randn(20, 5) + 10
+
+    model_centered = Estimator(fit_intercept=True).fit(X_train, y_train)
+    model_uncentered = Estimator(fit_intercept=False).fit(
+        X_train - model_centered.X_offset_, y_train - y_train.mean()
+    )
+
+    _, std_centered = model_centered.predict(X_test, return_std=True)
+    _, std_uncentered = model_uncentered.predict(
+        X_test - model_centered.X_offset_, return_std=True
+    )
+
+    # Both models operate in the same centered feature space; their predictive
+    # stds must agree closely.
+    assert_allclose(std_centered, std_uncentered, rtol=1e-5)
+
+
+@pytest.mark.parametrize("Estimator", [BayesianRidge, ARDRegression])
 def test_dtype_correctness(Estimator):
     X = np.array([[1, 1], [3, 4], [5, 7], [4, 1], [2, 6], [3, 10], [3, 2]])
     y = np.array([1, 2, 3, 2, 0, 4, 5]).T
