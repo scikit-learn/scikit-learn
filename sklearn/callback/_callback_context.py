@@ -453,8 +453,8 @@ class CallbackContext:
             A dictionary of the sufficient fitted attributes needed to construct a
             `fitted_estimator` from the current state of the estimator, i.e. an
             estimator instance ready to predict, transform, etc ... as if the fit had
-            stopped at the beginning/end of this task. The `fitted_estimator` is the
-            object which will be passed to the callbacks, if required.
+            stopped at the beginning of this task. The `fitted_estimator` is the
+            object that will be passed to the callbacks, if required.
         """
         self._call_hooks(
             estimator,
