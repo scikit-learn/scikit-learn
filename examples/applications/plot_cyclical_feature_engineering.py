@@ -210,7 +210,7 @@ def evaluate(model, X, y, cv, model_prop=None, model_step=None):
         y,
         cv=cv,
         scoring=["neg_mean_absolute_error", "neg_root_mean_squared_error"],
-        return_estimator=model_prop is not None,
+        return_estimator=True,
     )
     if model_prop is not None:
         if model_step is not None:
@@ -226,6 +226,8 @@ def evaluate(model, X, y, cv, model_prop=None, model_step=None):
         f"Mean Absolute Error:     {mae.mean():.3f} +/- {mae.std():.3f}\n"
         f"Root Mean Squared Error: {rmse.mean():.3f} +/- {rmse.std():.3f}"
     )
+    # To display the fitted estimator diagrams in the notebook.
+    return cv_results["estimator"][0]
 
 
 evaluate(gbrt, X, y, cv=ts_cv, model_prop="n_iter_")
@@ -261,6 +263,7 @@ naive_linear_pipeline = make_pipeline(
             ("categorical", one_hot_encoder, categorical_columns),
         ],
         remainder=MinMaxScaler(),
+        verbose_feature_names_out=False,
     ),
     RidgeCV(alphas=alphas),
 )
@@ -308,6 +311,7 @@ one_hot_linear_pipeline = make_pipeline(
             ("one_hot_time", one_hot_encoder, ["hour", "weekday", "month"]),
         ],
         remainder=MinMaxScaler(),
+        verbose_feature_names_out=False,
     ),
     RidgeCV(alphas=alphas),
 )
@@ -348,11 +352,15 @@ from sklearn.preprocessing import FunctionTransformer
 
 
 def sin_transformer(period):
-    return FunctionTransformer(lambda x: np.sin(x / period * 2 * np.pi))
+    return FunctionTransformer(
+        lambda x: np.sin(x / period * 2 * np.pi), feature_names_out="one-to-one"
+    )
 
 
 def cos_transformer(period):
-    return FunctionTransformer(lambda x: np.cos(x / period * 2 * np.pi))
+    return FunctionTransformer(
+        lambda x: np.cos(x / period * 2 * np.pi), feature_names_out="one-to-one"
+    )
 
 
 # %%
@@ -399,6 +407,7 @@ cyclic_cossin_transformer = ColumnTransformer(
         ("hour_cos", cos_transformer(24), ["hour"]),
     ],
     remainder=MinMaxScaler(),
+    verbose_feature_names_out=True,
 )
 cyclic_cossin_linear_pipeline = make_pipeline(
     cyclic_cossin_transformer,
@@ -472,6 +481,7 @@ cyclic_spline_transformer = ColumnTransformer(
         ("cyclic_hour", periodic_spline_transformer(24, n_splines=12), ["hour"]),
     ],
     remainder=MinMaxScaler(),
+    verbose_feature_names_out=False,
 )
 cyclic_spline_linear_pipeline = make_pipeline(
     cyclic_spline_transformer,
@@ -615,8 +625,15 @@ hour_workday_interaction = make_pipeline(
     ColumnTransformer(
         [
             ("cyclic_hour", periodic_spline_transformer(24, n_splines=8), ["hour"]),
-            ("workingday", FunctionTransformer(lambda x: x == "True"), ["workingday"]),
-        ]
+            (
+                "workingday",
+                FunctionTransformer(
+                    lambda x: x == "True", feature_names_out="one-to-one"
+                ),
+                ["workingday"],
+            ),
+        ],
+        verbose_feature_names_out=False,
     ),
     PolynomialFeatures(degree=2, interaction_only=True, include_bias=False),
 )
@@ -631,8 +648,9 @@ cyclic_spline_interactions_pipeline = make_pipeline(
         [
             ("marginal", cyclic_spline_transformer),
             ("interactions", hour_workday_interaction),
-        ]
-    ),
+        ],
+        verbose_feature_names_out=True,
+    ).set_output(transform="pandas"),
     RidgeCV(alphas=alphas),
 )
 evaluate(cyclic_spline_interactions_pipeline, X, y, cv=ts_cv)
@@ -683,10 +701,11 @@ one_hot_poly_pipeline = make_pipeline(
             ("one_hot_time", one_hot_encoder, ["hour", "weekday", "month"]),
         ],
         remainder="passthrough",
+        verbose_feature_names_out=False,
     ),
     Nystroem(kernel="poly", degree=2, n_components=300, random_state=0),
     RidgeCV(alphas=alphas),
-)
+).set_output(transform="pandas")
 evaluate(one_hot_poly_pipeline, X, y, cv=ts_cv)
 
 
