@@ -198,7 +198,7 @@ class RichProgressMonitor(Thread):
         *ancestors, task = self.root_rich_task.get_descendants(path)
 
         if task is None:
-            # a leaf task of the estimator, no progress bar was created fot it
+            # a leaf task of the estimator, no progress bar was created for it
             task = RichTask(self.progress_ctx, task_info, depth=len(ancestors))
             ancestors[-1].children[path[-1]] = task
         else:
