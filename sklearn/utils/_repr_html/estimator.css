@@ -416,7 +416,9 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 }
 
 .sk-top-container.sk-global {
+  /* pydata-sphinx-theme hiddes overflow, scroll is off.
+  We need to make it !important and add tabindex="0" in the HTML
+  to let keyboard-only users move around the display */
   overflow-x: scroll !important;
-  border: 2px solid blue;
-  max-width: 90%;
+  max-width: 99%;
 }
