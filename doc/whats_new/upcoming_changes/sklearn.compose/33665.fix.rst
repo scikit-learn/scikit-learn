@@ -1,0 +1,4 @@
+- Fixes the regression that a `KeyError` was thrown when using
+  :func:`compose.ColumnTransformer.fit_transform` with metadata routing and
+  `remainder="passthrough"`.
+  By :user:`Anne Beyer <AnneBeyer>`.

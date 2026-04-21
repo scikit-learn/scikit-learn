@@ -1044,6 +1044,14 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
         _, groups_inv, groups_cnt = np.unique(
             groups, return_inverse=True, return_counts=True
         )
+        n_groups = len(groups_cnt)
+
+        if self.n_splits > n_groups:
+            raise ValueError(
+                f"Cannot have number of splits n_splits={self.n_splits} greater"
+                f" than the number of groups: {n_groups}."
+            )
+
         y_counts_per_group = np.zeros((len(groups_cnt), n_classes))
         for class_idx, group_idx in zip(y_inv, groups_inv):
             y_counts_per_group[group_idx, class_idx] += 1
