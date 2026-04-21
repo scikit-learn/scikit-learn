@@ -338,6 +338,35 @@ def _fit_subestimator(meta_estimator, inner_estimator, X, y, *, outer_callback_c
     outer_callback_ctx.call_on_fit_task_end(estimator=meta_estimator, X=X, y=y)
 
 
+class HeterogeneousMetaEstimator(CallbackSupportMixin):
+    """A meta-estimator that fits a list of estimators in order."""
+
+    def __init__(self, estimators):
+        self.estimators = estimators
+
+    @with_callbacks
+    def fit(self, X=None, y=None):
+        callback_ctx = self._init_callback_context(max_subtasks=len(self.estimators))
+        callback_ctx.call_on_fit_task_begin(estimator=self, X=X, y=y)
+
+        for i, est in enumerate(self.estimators):
+            task_name = f"fit {est.__class__.__name__}" if est else f"skip {i}"
+            subcontext = callback_ctx.subcontext(task_name=task_name)
+            if est is not None:
+                est = clone(est)
+                subcontext.propagate_callback_context(sub_estimator=est)
+            subcontext.call_on_fit_task_begin(estimator=self, X=X, y=y)
+
+            if est is not None:
+                est.fit(X, y)
+
+            subcontext.call_on_fit_task_end(estimator=self, X=X, y=y)
+
+        callback_ctx.call_on_fit_task_end(estimator=self, X=X, y=y)
+
+        return self
+
+
 class NoSubtaskEstimator(CallbackSupportMixin, BaseEstimator):
     """A class mimicking an estimator without subtasks in fit."""
 
