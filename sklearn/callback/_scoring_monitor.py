@@ -112,11 +112,11 @@ class ScoringMonitor:
     def get_logs(self, select="most_recent", as_frame=False):
         """Get the logged scores.
 
-        The callback records scores for the estimator it is registered on. Log 
-        entries are grouped by the outermost enclosing fit call (root meta-
-        estimator), so one run corresponds to one top-level fit. If the estimator is 
-        not wrapped in a meta-estimator, a run corresponds to a single fit of the 
-        estimator.
+        The callback records scores for the estimator it is registered to. Log entries
+        are grouped by the outermost enclosing fit call (the fit of the outermost
+        meta-estimator that is a parent of the estimator the callback is registered to).
+        Thus one run corresponds to one top-level fit. If the estimator is not wrapped
+        in a meta-estimator, a run simply corresponds to a single fit of the estimator.
 
         For a given run, the scores are logged in a dict containing:
             - "run_id": a unique identifier for the run;
