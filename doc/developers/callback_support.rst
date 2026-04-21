@@ -109,7 +109,7 @@ To dynamically build the context tree and manage the callbacks during fit, the
 :class:`~CallbackContext` class exposes the following methods:
 
 - :meth:`~CallbackContext.subcontext`
-  
+
   This method allows to create a context for a subtask. Callback contexts should not be
   created directly but through this method (or `_init_callback_context` for the root
   context).
@@ -128,7 +128,7 @@ To dynamically build the context tree and manage the callbacks during fit, the
       ) -> bool: ...
 
   These two methods must be called respectively at the beginning and end of the task
-  that the context is responsible for. As their name suggests, they call the 
+  that the context is responsible for. As their name suggests, they call the
   `on_fit_task_begin` and `on_fit_task_end` methods of the callbacks registered on the
   estimator.
 
