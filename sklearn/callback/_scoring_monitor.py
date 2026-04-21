@@ -112,6 +112,12 @@ class ScoringMonitor:
     def get_logs(self, select="most_recent", as_frame=False):
         """Get the logged scores.
 
+        The callback records scores for the estimator it is registered on. Log 
+        entries are grouped by the outermost enclosing fit call (root meta-
+        estimator), so one run corresponds to one top-level fit. If the estimator is 
+        not wrapped in a meta-estimator, a run corresponds to a single fit of the 
+        estimator.
+
         For a given run, the scores are logged in a dict containing:
             - "run_id": a unique identifier for the run;
             - "estimator_name": the name of the estimator of the run;
@@ -119,16 +125,12 @@ class ScoringMonitor:
             - "data": the recorded scores for the run. Each score value is associated
               with the detailed context of the score computation.
 
-        A run corresponds to one fit of the outermost meta-estimator that is a parent of
-        the estimator the callback is registered on. If the estimator is not wrapped in
-        a meta-estimator, a run corresponds to a single fit of the estimator.
-
         Depending on `as_frame`, "data" is either a Pandas DataFrame or a list of dicts.
         In the latter case, each dict corresponds to one row of the corresponding
         DataFrame and contains column_name -> value pairs. The columns are structured as
         follows:
         - "task_path": tuple containing the task ids of the task and its ancestors for
-            for which the score was computed;
+            which the score was computed;
         - A group of 4 columns for each ancestor task of the task for which the score
             was computed (including itself): "estimator_name_depth_<depth>",
             "task_name_depth_<depth>", "task_id_depth_<depth>",

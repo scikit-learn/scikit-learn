@@ -254,7 +254,7 @@ def test_estimator_without_reconstruction_attributes():
     assert len(callback.get_logs(select="most_recent")) == 0
 
 
-def test_sample_weights():
+def test_scoringmonitor_sample_weights():
     """Check that the ScoringMonitor works with sample weights."""
     rng = np.random.RandomState(0)
     X, y = make_regression(n_samples=100, n_features=2, random_state=rng)
