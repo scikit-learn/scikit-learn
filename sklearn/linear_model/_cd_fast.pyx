@@ -12,7 +12,7 @@ from sklearn.utils._cython_blas cimport (
     _axpy, _dot, _asum, _gemv, _nrm2, _copy, _scal
 )
 from sklearn.utils._cython_blas cimport ColMajor, Trans, NoTrans
-from sklearn.utils._typedefs cimport uint8_t, uint32_t
+from sklearn.utils._typedefs cimport int32_t, uint8_t, uint32_t
 from sklearn.utils._random cimport our_rand_r
 
 
@@ -81,6 +81,43 @@ cdef inline floating diff_abs_max(int n, const floating* a, floating* b) noexcep
         if d > m:
             m = d
     return m
+
+
+cdef inline floating sparse_dot(
+    int32_t j,
+    const floating[::1] X_data,  # in
+    const int32_t[::1] X_indices,  # in
+    const int32_t[::1] X_indptr,  # in
+    const floating[::1] y,
+) noexcept nogil:
+    """BLAS X[:, j] @ y for sparse CSC X."""
+    cdef int32_t i, i_ind
+    cdef int32_t startptr = X_indptr[j]
+    cdef int32_t endptr = X_indptr[j + 1]
+    cdef floating result = 0
+
+    for i_ind in range(startptr, endptr):
+        i = X_indices[i_ind]
+        result += X_data[i_ind] * y[i]
+    return result
+
+
+cdef inline floating sparse_axpy(
+    int32_t j,
+    floating a,
+    const floating[::1] X_data,  # in
+    const int32_t[::1] X_indices,  # in
+    const int32_t[::1] X_indptr,  # in
+    floating[::1] y,  # out
+) noexcept nogil:
+    """BLAS y += a * X[:, j] for sparse CSC X."""
+    cdef int32_t i, i_ind
+    cdef int32_t startptr = X_indptr[j]
+    cdef int32_t endptr = X_indptr[j + 1]
+
+    for i_ind in range(startptr, endptr):
+        i = X_indices[i_ind]
+        y[i] += a * X_data[i_ind]
 
 
 message_conv = (
@@ -473,8 +510,8 @@ cdef inline void R_plus_wj_Xj(
     unsigned int n_samples,
     floating[::1] R,  # out
     const floating[::1] X_data,
-    const int[::1] X_indices,
-    const int[::1] X_indptr,
+    const int32_t[::1] X_indices,
+    const int32_t[::1] X_indptr,
     const floating[::1] X_mean,
     bint center,
     const floating[::1] sample_weight,
@@ -483,20 +520,23 @@ cdef inline void R_plus_wj_Xj(
     unsigned int j,
 ) noexcept nogil:
     """R += w_j * X[:,j]"""
-    cdef unsigned int startptr = X_indptr[j]
-    cdef unsigned int endptr = X_indptr[j + 1]
+    cdef int32_t i, i_ind
+    cdef int32_t startptr = X_indptr[j]
+    cdef int32_t endptr = X_indptr[j + 1]
     cdef floating sw
     cdef floating X_mean_j = X_mean[j]
     if no_sample_weights:
-        for i in range(startptr, endptr):
-            R[X_indices[i]] += X_data[i] * w_j
+        for i_ind in range(startptr, endptr):
+            i = X_indices[i_ind]
+            R[i] += X_data[i_ind] * w_j
         if center:
             for i in range(n_samples):
                 R[i] -= X_mean_j * w_j
     else:
-        for i in range(startptr, endptr):
-            sw = sample_weight[X_indices[i]]
-            R[X_indices[i]] += sw * X_data[i] * w_j
+        for i_ind in range(startptr, endptr):
+            i = X_indices[i_ind]
+            sw = sample_weight[i]
+            R[i] += sw * X_data[i_ind] * w_j
         if center:
             for i in range(n_samples):
                 R[i] -= sample_weight[i] * X_mean_j * w_j
@@ -509,8 +549,8 @@ cdef (floating, floating) gap_enet_sparse(
     floating alpha,  # L1 penalty
     floating beta,  # L2 penalty
     const floating[::1] X_data,
-    const int[::1] X_indices,
-    const int[::1] X_indptr,
+    const int32_t[::1] X_indices,
+    const int32_t[::1] X_indptr,
     const floating[::1] y,
     const floating[::1] sample_weight,
     bint no_sample_weights,
@@ -533,7 +573,7 @@ cdef (floating, floating) gap_enet_sparse(
     cdef floating Ry
     cdef floating w_l1_norm
     cdef floating w_l2_norm2 = 0.0
-    cdef unsigned int i, j
+    cdef int32_t i, i_ind, j
 
     # w_l2_norm2 = w @ w
     if beta > 0:
@@ -557,8 +597,9 @@ cdef (floating, floating) gap_enet_sparse(
         # XtA = X.T @ R
         for j in range(n_features):
             XtA[j] = 0.0
-            for i in range(X_indptr[j], X_indptr[j + 1]):
-                XtA[j] += X_data[i] * R[X_indices[i]]
+            for i_ind in range(X_indptr[j], X_indptr[j + 1]):
+                i = X_indices[i_ind]
+                XtA[j] += X_data[i_ind] * R[i]
 
             if center:
                 XtA[j] -= X_mean[j] * R_sum
@@ -580,8 +621,9 @@ cdef (floating, floating) gap_enet_sparse(
     # sparse X.T @ dense R
     for j in range(n_features):
         XtA[j] = 0.0
-        for i in range(X_indptr[j], X_indptr[j + 1]):
-            XtA[j] += X_data[i] * R[X_indices[i]]
+        for i_ind in range(X_indptr[j], X_indptr[j + 1]):
+            i = X_indices[i_ind]
+            XtA[j] += X_data[i_ind] * R[i]
 
         if center:
             XtA[j] -= X_mean[j] * R_sum
@@ -613,8 +655,8 @@ def sparse_enet_coordinate_descent(
     floating alpha,
     floating beta,
     const floating[::1] X_data,
-    const int[::1] X_indices,
-    const int[::1] X_indptr,
+    const int32_t[::1] X_indices,
+    const int32_t[::1] X_indptr,
     const floating[::1] y,
     const floating[::1] sample_weight,
     const floating[::1] X_mean,
@@ -697,12 +739,12 @@ def sparse_enet_coordinate_descent(
     cdef uint32_t[::1] active_set
     # TODO: use binset insteaf of array of bools
     cdef uint8_t[::1] excluded_set
-    cdef unsigned int i
+    cdef int32_t i, i_ind
     cdef unsigned int j
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
-    cdef unsigned int startptr = X_indptr[0]
-    cdef unsigned int endptr
+    cdef int32_t startptr = X_indptr[0]
+    cdef int32_t endptr
     cdef uint32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef uint32_t* rand_r_state = &rand_r_state_seed
     cdef bint center = False
@@ -738,23 +780,25 @@ def sparse_enet_coordinate_descent(
             w_j = w[j]
 
             if no_sample_weights:
-                for i in range(startptr, endptr):
-                    normalize_sum += (X_data[i] - X_mean_j) ** 2
-                    R[X_indices[i]] -= X_data[i] * w_j
-                norm2_cols_X[j] = normalize_sum + \
-                    (n_samples - endptr + startptr) * X_mean_j ** 2
+                for i_ind in range(startptr, endptr):
+                    i = X_indices[i_ind]
+                    normalize_sum += (X_data[i_ind] - X_mean_j) ** 2
+                    R[i] -= X_data[i_ind] * w_j
+                norm2_cols_X[j] = normalize_sum
                 if center:
+                    norm2_cols_X[j] += (n_samples - endptr + startptr) * X_mean_j ** 2
                     for i in range(n_samples):
                         R[i] += X_mean_j * w_j
                         R_sum += R[i]
             else:
                 # R = sw * (y - np.dot(X, w))
-                for i in range(startptr, endptr):
-                    tmp = sample_weight[X_indices[i]]
+                for i_ind in range(startptr, endptr):
+                    i = X_indices[i_ind]
+                    tmp = sample_weight[i]
                     # second term will be subtracted by loop over range(n_samples)
-                    normalize_sum += (tmp * (X_data[i] - X_mean_j) ** 2
+                    normalize_sum += (tmp * (X_data[i_ind] - X_mean_j) ** 2
                                       - tmp * X_mean_j ** 2)
-                    R[X_indices[i]] -= tmp * X_data[i] * w_j
+                    R[i] -= tmp * X_data[i_ind] * w_j
                 if center:
                     for i in range(n_samples):
                         normalize_sum += sample_weight[i] * X_mean_j ** 2
@@ -851,8 +895,9 @@ def sparse_enet_coordinate_descent(
 
                 # tmp = X[:,j] @ (R + w_j * X[:,j])
                 tmp = 0.0
-                for i in range(startptr, endptr):
-                    tmp += R[X_indices[i]] * X_data[i]
+                for i_ind in range(startptr, endptr):
+                    i = X_indices[i_ind]
+                    tmp += R[i] * X_data[i_ind]
                 tmp += w_j * norm2_cols_X[j]
 
                 if center:
@@ -1250,12 +1295,21 @@ cdef (floating, floating) gap_enet_multi_task(
     int n_samples,
     int n_features,
     int n_tasks,
-    const floating[::1, :] W,  # in
+    const floating[::1, :] W,
     floating alpha,
     floating beta,
-    const floating[::1, :] X,  # in
-    const floating[::1, :] Y,  # in
-    const floating[::1, :] R,  # in
+    const floating[::1, :] X,
+    bint X_is_sparse,
+    const floating[::1] X_data,
+    const int32_t[::1] X_indices,
+    const int32_t[::1] X_indptr,
+    const floating[::1, :] Y,
+    const floating[::1] sample_weight,
+    bint no_sample_weights,
+    const floating[::1] X_mean,
+    bint center,
+    const floating[::1, :] R,  # current residuals = y - X @ w
+    const floating[::1] R_sum,
     floating[:, ::1] XtA,  # out
     floating[::1] XtA_row_norms,  # out
 ) noexcept nogil:
@@ -1280,21 +1334,37 @@ cdef (floating, floating) gap_enet_multi_task(
     cdef floating w_l21_norm
     cdef floating w_l2_norm2 = 0.0
     cdef unsigned int t, j
+    cdef int32_t i
 
     # w_l2_norm2 = linalg.norm(W, ord="fro") ** 2
     if beta > 0:
         w_l2_norm2 = _dot(n_features * n_tasks, &W[0, 0], 1, &W[0, 0], 1)
     # R_norm2 = linalg.norm(R, ord="fro") ** 2
-    R_norm2 = _dot(n_samples * n_tasks, &R[0, 0], 1, &R[0, 0], 1)
+    if not X_is_sparse or no_sample_weights:
+        R_norm2 = _dot(n_samples * n_tasks, &R[0, 0], 1, &R[0, 0], 1)
+    else:  # sparse X and sample_weights
+        R_norm2 = 0.0
+        for t in range(n_tasks):
+            for i in range(n_samples):
+                # R is already multiplied by sample_weight
+                if sample_weight[i] != 0:
+                    R_norm2 += (R[i, t] ** 2) / sample_weight[i]
     # Ry = np.sum(R * Y)
     if not (alpha == 0 and beta == 0):
+        # Note that with sample_weight, R equals R*sw and y is just y, such that
+        # Ry = (sw * R) @ y, as it should be.
         Ry = _dot(n_samples * n_tasks, &R[0, 0], 1, &Y[0, 0], 1)
 
     if alpha == 0:
         # XtA = X.T @ R
         for j in range(n_features):
             for t in range(n_tasks):
-                XtA[j, t] = _dot(n_samples, &X[0, j], 1, &R[0, t], 1)
+                if not X_is_sparse:
+                    XtA[j, t] = _dot(n_samples, &X[0, j], 1, &R[0, t], 1)
+                else:
+                    XtA[j, t] = sparse_dot(j, X_data, X_indices, X_indptr, R[:, t])
+                    if center:
+                        XtA[j, t] -= X_mean[j] * R_sum[t]
         # ||X'R||_2^2
         dual_norm_XtA = _dot(n_features * n_tasks, &XtA[0, 0], 1, &XtA[0, 0], 1)
         if beta == 0:
@@ -1312,7 +1382,13 @@ cdef (floating, floating) gap_enet_multi_task(
     # XtA = X.T @ R - beta * W.T
     for j in range(n_features):
         for t in range(n_tasks):
-            XtA[j, t] = _dot(n_samples, &X[0, j], 1, &R[0, t], 1) - beta * W[t, j]
+            if not X_is_sparse:
+                XtA[j, t] = _dot(n_samples, &X[0, j], 1, &R[0, t], 1) - beta * W[t, j]
+            else:
+                XtA[j, t] = sparse_dot(j, X_data, X_indices, X_indptr, R[:, t])
+                if center:
+                    XtA[j, t] -= X_mean[j] * R_sum[t]
+                XtA[j, t] -= beta * W[t, j]
 
     # dual_norm_XtA = np.max(np.sqrt(np.sum(XtA ** 2, axis=1)))
     dual_norm_XtA = 0.0
@@ -1344,7 +1420,13 @@ def enet_coordinate_descent_multi_task(
     floating alpha,
     floating beta,
     const floating[::1, :] X,
+    bint X_is_sparse,
+    const floating[::1] X_data,
+    const int32_t[::1] X_indices,
+    const int32_t[::1] X_indptr,
     const floating[::1, :] Y,
+    const floating[::1] sample_weight,
+    const floating[::1] X_mean,
     unsigned int max_iter,
     floating tol,
     object rng,
@@ -1375,6 +1457,15 @@ def enet_coordinate_descent_multi_task(
     n_iter : int
         Number of coordinate descent iterations.
     """
+    # Notes for sample_weight:
+    # For dense X, one centers X and y and then rescales them by sqrt(sample_weight).
+    # For sparse X, we get the sample_weight averaged center X_mean. We take care
+    # that every calculation results as if we had rescaled y and X (and therefore also
+    # X_mean) by sqrt(sample_weight) without actually calculating the square root.
+    # We work with:
+    #     yw = sample_weight * y
+    #     R = sample_weight * residual
+    #     norm2_cols_X = np.sum(sample_weight * (X - X_mean)**2, axis=0)
 
     if floating is float:
         dtype = np.float32
@@ -1382,20 +1473,19 @@ def enet_coordinate_descent_multi_task(
         dtype = np.float64
 
     # get the data information into easy vars
-    cdef unsigned int n_samples = X.shape[0]
-    cdef unsigned int n_features = X.shape[1]
+    cdef unsigned int n_samples = Y.shape[0]
+    cdef unsigned int n_features = W.shape[1]
     cdef unsigned int n_tasks = Y.shape[1]
 
     # compute squared norms of the columns of X
-    # same as norm2_cols_X = np.square(X).sum(axis=0)
-    cdef floating[::1] norm2_cols_X = np.einsum(
-        "ij,ij->j", X, X, dtype=dtype, order="C"
-    )
+    norm2_cols_X_array = np.empty(shape=n_features, dtype=dtype)
+    cdef floating[::1] norm2_cols_X = norm2_cols_X_array
 
     # initial value of the residuals
-    cdef floating[::1, :] R = np.empty((n_samples, n_tasks), dtype=dtype, order='F')
+    cdef floating[::1, :] R  # shape (n_samples, n_tasks)
     cdef floating[:, ::1] XtA = np.empty((n_features, n_tasks), dtype=dtype)
     cdef floating[::1] XtA_row_norms = np.empty(n_features, dtype=dtype)
+    cdef const floating[::1, :] Yw
 
     cdef floating d_j
     cdef floating Xj_theta
@@ -1409,16 +1499,20 @@ def enet_coordinate_descent_multi_task(
     cdef floating gap = tol + 1.0
     cdef floating d_w_tol = tol
     cdef floating dual_norm_XtA
+    cdef floating[::1] R_sum
     cdef unsigned int n_active = n_features
     cdef uint32_t[::1] active_set
     # TODO: use binset instead of array of bools
     cdef uint8_t[::1] excluded_set
     cdef unsigned int j
     cdef unsigned int t
+    cdef int32_t i, i_ind, startptr, endptr
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
     cdef uint32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef uint32_t* rand_r_state = &rand_r_state_seed
+    cdef bint center = False
+    cdef bint no_sample_weights = sample_weight is None
 
     if alpha == 0:
         # No screeing without L1-penalty.
@@ -1428,20 +1522,106 @@ def enet_coordinate_descent_multi_task(
         active_set = np.empty(n_features, dtype=np.uint32)  # map [:n_active] -> j
         excluded_set = np.empty(n_features, dtype=np.uint8)
 
+    if no_sample_weights or not X_is_sparse:
+        Yw = Y
+        R = np.copy(Y, order="F")
+    else:
+        Yw = np.multiply(sample_weight[:, None], Y)
+        R = np.copy(Yw, order="F")
+
+    if X_is_sparse:
+        R_sum = np.zeros(n_tasks, dtype=dtype)
+        # center = (X_mean != 0).any()
+        for j in range(n_features):
+            if X_mean[j]:
+                center = True
+                break
+
+    # compute squared norms of the columns of X
+    # same as norm2_cols_X = np.square(X).sum(axis=0)
+    if not X_is_sparse:
+        np.einsum("ij,ij->j", X, X, dtype=dtype, out=norm2_cols_X_array)
+    else:
+        for j in range(n_features):
+            norm2_cols_X[j] = 0
+            startptr = X_indptr[j]
+            endptr = X_indptr[j + 1]
+            if no_sample_weights:
+                for i_ind in range(startptr, endptr):
+                    norm2_cols_X[j] += (X_data[i_ind] - X_mean[j]) ** 2
+                if center:
+                    norm2_cols_X[j] += (n_samples - endptr + startptr) * X_mean[j] ** 2
+            else:
+                for i_ind in range(startptr, endptr):
+                    i = X_indices[i_ind]
+                    norm2_cols_X[j] += sample_weight[i] * (
+                        (X_data[i_ind] - X_mean[j]) ** 2 - X_mean[j] ** 2
+                    )
+                if center:
+                    for i in range(n_samples):
+                        norm2_cols_X[j] += sample_weight[i] * X_mean[j] ** 2
+
     with nogil:
         # R = Y - X @ W.T
-        _copy(n_samples * n_tasks, &Y[0, 0], 1, &R[0, 0], 1)
+        # R = Y was already set above.
         for j in range(n_features):
             for t in range(n_tasks):
                 if W[t, j] != 0:
-                    _axpy(n_samples, -W[t, j], &X[0, j], 1, &R[0, t], 1)
+                    if not X_is_sparse:
+                        _axpy(n_samples, -W[t, j], &X[0, j], 1, &R[0, t], 1)
+                    else:
+                        if no_sample_weights:
+                            sparse_axpy(j, -W[t, j], X_data, X_indices, X_indptr, R[:, t])
+                        else:
+                            startptr = X_indptr[j]
+                            endptr = X_indptr[j + 1]
+                            for i_ind in range(startptr, endptr):
+                                i = X_indices[i_ind]
+                                R[i, t] -= sample_weight[i] * X_data[i_ind] * W[t, j]
+
+            if X_is_sparse and center:
+                # R = Y - (X - X_mean) @ W.T
+                if no_sample_weights:
+                    for i in range(n_samples):
+                        for t in range(n_tasks):
+                            R[i, t] += X_mean[j] * W[t, j]
+                            R_sum[t] += R[i, t]
+                else:
+                    for i in range(n_samples):
+                        for t in range(n_tasks):
+                            R[i, t] += sample_weight[i] * X_mean[j] * W[t, j]
+                            R_sum[t] += R[i, t]
+
+        # Note: No need to update R_sum from here on because the update terms cancel
+        # each other: w_j[t] * np.sum(X[:,j] - X_mean[j]) = 0. R_sum is only ever
+        # needed and calculated if X_mean is provided.
 
         # tol = tol * linalg.norm(Y, ord='fro') ** 2
-        tol = tol * _nrm2(n_samples * n_tasks, &Y[0, 0], 1) ** 2
+        # with sample weights: tol *= y @ (sw * y)
+        tol *= _dot(n_samples * n_tasks, &Y[0, 0], 1, &Yw[0, 0], 1)
 
         # Check convergence before entering the main loop.
         gap, dual_norm_XtA = gap_enet_multi_task(
-            n_samples, n_features, n_tasks, W, alpha, beta, X, Y, R, XtA, XtA_row_norms
+            n_samples=n_samples,
+            n_features=n_features,
+            n_tasks=n_tasks,
+            W=W,
+            alpha=alpha,
+            beta=beta,
+            X=X,
+            X_is_sparse=X_is_sparse,
+            X_data=X_data,
+            X_indices=X_indices,
+            X_indptr=X_indptr,
+            Y=Y,
+            sample_weight=sample_weight,
+            no_sample_weights=no_sample_weights,
+            X_mean=X_mean,
+            center=center,
+            R=R,
+            R_sum=R_sum,
+            XtA=XtA,
+            XtA_row_norms=XtA_row_norms,
         )
         if gap <= tol:
             with gil:
@@ -1466,10 +1646,25 @@ def enet_coordinate_descent_multi_task(
                     excluded_set[j] = 0
                     n_active += 1
                 else:
-                    # R += W[:, 1] * X[:, 1][:, None]
+                    # R += W[:, j] * X[:, 1][:, None]
                     for t in range(n_tasks):
                         if W[t, j] != 0:
-                            _axpy(n_samples, W[t, j], &X[0, j], 1, &R[0, t], 1)
+                            if not X_is_sparse:
+                                _axpy(n_samples, W[t, j], &X[0, j], 1, &R[0, t], 1)
+                            else:
+                                R_plus_wj_Xj(
+                                    n_samples=n_samples,
+                                    R=R[:, t],
+                                    X_data=X_data,
+                                    X_indices=X_indices,
+                                    X_indptr=X_indptr,
+                                    X_mean=X_mean,
+                                    center=center,
+                                    sample_weight=sample_weight,
+                                    no_sample_weights=no_sample_weights,
+                                    w_j=W[t, j],
+                                    j=j,
+                                )
                             W[t, j] = 0
                     excluded_set[j] = 1
 
@@ -1501,7 +1696,10 @@ def enet_coordinate_descent_multi_task(
                 #   _axpy(n_tasks, norm2_cols[j], &w_j[0], 1, &tmp[0], 1)
                 # Using BLAS Level 1 (faster for small vectors like here):
                 for t in range(n_tasks):
-                    tmp[t] = _dot(n_samples, &X[0, j], 1, &R[0, t], 1)
+                    if not X_is_sparse:
+                        tmp[t] = _dot(n_samples, &X[0, j], 1, &R[0, t], 1)
+                    else:
+                        tmp[t] = sparse_dot(j, X_data, X_indices, X_indptr, R[:, t])
                     # As we have the loop already, we use it to replace the second BLAS
                     # Level 1, i.e., _axpy, too.
                     tmp[t] += w_j[t] * norm2_cols_X[j]
@@ -1525,7 +1723,22 @@ def enet_coordinate_descent_multi_task(
                 # Using BLAS Level 1 (faster for small vectors like here):
                 for t in range(n_tasks):
                     if W[t, j] != w_j[t]:
-                        _axpy(n_samples, w_j[t] - W[t, j], &X[0, j], 1, &R[0, t], 1)
+                        if not X_is_sparse:
+                            _axpy(n_samples, w_j[t] - W[t, j], &X[0, j], 1, &R[0, t], 1)
+                        else:
+                            R_plus_wj_Xj(
+                                n_samples=n_samples,
+                                R=R[:, t],
+                                X_data=X_data,
+                                X_indices=X_indices,
+                                X_indptr=X_indptr,
+                                X_mean=X_mean,
+                                center=center,
+                                sample_weight=sample_weight,
+                                no_sample_weights=no_sample_weights,
+                                w_j=w_j[t] - W[t, j],
+                                j=j,
+                            )
 
                 # update the maximum absolute coefficient update
                 d_w_j = diff_abs_max(n_tasks, &W[0, j], &w_j[0])
@@ -1542,7 +1755,26 @@ def enet_coordinate_descent_multi_task(
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
                 gap, dual_norm_XtA = gap_enet_multi_task(
-                    n_samples, n_features, n_tasks, W, alpha, beta, X, Y, R, XtA, XtA_row_norms
+                    n_samples=n_samples,
+                    n_features=n_features,
+                    n_tasks=n_tasks,
+                    W=W,
+                    alpha=alpha,
+                    beta=beta,
+                    X=X,
+                    X_is_sparse=X_is_sparse,
+                    X_data=X_data,
+                    X_indices=X_indices,
+                    X_indptr=X_indptr,
+                    Y=Y,
+                    sample_weight=sample_weight,
+                    no_sample_weights=no_sample_weights,
+                    X_mean=X_mean,
+                    center=center,
+                    R=R,
+                    R_sum=R_sum,
+                    XtA=XtA,
+                    XtA_row_norms=XtA_row_norms,
                 )
                 if gap <= tol:
                     # return if we reached desired tolerance
@@ -1564,10 +1796,25 @@ def enet_coordinate_descent_multi_task(
                             excluded_set[j] = 0
                             n_active += 1
                         else:
-                            # R += W[:, 1] * X[:, 1][:, None]
+                            # R += W[:, j] * X[:, 1][:, None]
                             for t in range(n_tasks):
                                 if W[t, j] != 0:
-                                    _axpy(n_samples, W[t, j], &X[0, j], 1, &R[0, t], 1)
+                                    if not X_is_sparse:
+                                        _axpy(n_samples, W[t, j], &X[0, j], 1, &R[0, t], 1)
+                                    else:
+                                        R_plus_wj_Xj(
+                                            n_samples=n_samples,
+                                            R=R[:, t],
+                                            X_data=X_data,
+                                            X_indices=X_indices,
+                                            X_indptr=X_indptr,
+                                            X_mean=X_mean,
+                                            center=center,
+                                            sample_weight=sample_weight,
+                                            no_sample_weights=no_sample_weights,
+                                            w_j=W[t, j],
+                                            j=j,
+                                        )
                                     W[t, j] = 0
                             excluded_set[j] = 1
 
