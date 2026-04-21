@@ -155,11 +155,6 @@ def test_progressbar_outside_main_module(prefer):
     )
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 12, 8),
-    reason="Race conditions can appear because of multiprocessing issues for python"
-    " < 3.12.8.",
-)
 def test_progress_during_fit():
     """Check that the completion of a bottom-level progressbar increments linearly."""
     pytest.importorskip("rich")
@@ -181,11 +176,6 @@ def test_progress_during_fit():
     assert_allclose(records, expected)
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 12, 8),
-    reason="Race conditions can appear because of multiprocessing issues for python"
-    " < 3.12.8.",
-)
 @pytest.mark.parametrize(
     "meta_estimator",
     [
