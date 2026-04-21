@@ -441,13 +441,13 @@ class CallbackContext:
             The estimator calling the callback hook.
 
         X : array-like or None, default=None
-            The training data of the estimator.
+            The training data of the current task.
 
         y : array-like or None, default=None
-            The training targets of the estimator.
+            The training targets of the current task.
 
         metadata : dict or None, default=None
-            A dictionary containing training metadata.
+            A dictionary containing training metadata for the current task.
 
         reconstruction_attributes : dict or None, default=None
             A dictionary of the fitted attributes of the estimator, used by the callback
@@ -483,13 +483,13 @@ class CallbackContext:
             The estimator calling the callback hook.
 
         X : array-like or None, default=None
-            The training data of the estimator.
+            The training data of the current task.
 
         y : array-like or None, default=None
-            The training targets of the estimator.
+            The training targets of the current task.
 
         metadata : dict or None, default=None
-            A dictionary containing training metadata.
+            A dictionary containing training metadata of the current task.
 
         reconstruction_attributes : dict or None, default=None
             A dictionary of the fitted attributes of the estimator, used by the callback
