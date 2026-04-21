@@ -8,7 +8,6 @@ from sklearn.utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
     _check_param_lengths,
     _convert_to_list_leaving_none,
-    _deprecate_estimator_name,
     _deprecate_y_pred_parameter,
     _despine,
     _validate_style_kwargs,
@@ -79,13 +78,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         .. versionadded:: 0.24
 
-    estimator_name : str, default=None
-        Name of estimator. If None, the estimator name is not shown.
-
-        .. deprecated:: 1.7
-            `estimator_name` is deprecated and will be removed in 1.9. Use `name`
-            instead.
-
     Attributes
     ----------
     line_ : matplotlib Artist or list of matplotlib Artists
@@ -141,12 +133,11 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         roc_auc=None,
         name=None,
         pos_label=None,
-        estimator_name="deprecated",
     ):
         self.fpr = fpr
         self.tpr = tpr
         self.roc_auc = roc_auc
-        self.name = _deprecate_estimator_name(estimator_name, name, "1.7")
+        self.name = name
         self.pos_label = pos_label
 
     def _validate_plot_params(self, *, ax, name):
@@ -176,7 +167,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         plot_chance_level=False,
         chance_level_kw=None,
         despine=False,
-        **kwargs,
     ):
         """Plot visualization.
 
@@ -231,13 +221,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
             .. versionadded:: 1.6
 
-        **kwargs : dict
-            Keyword arguments to be passed to matplotlib's `plot`.
-
-            .. deprecated:: 1.7
-                kwargs is deprecated and will be removed in 1.9. Pass matplotlib
-                arguments to `curve_kwargs` as a dictionary instead.
-
         Returns
         -------
         display : :class:`~sklearn.metrics.RocCurveDisplay`
@@ -260,7 +243,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
                 "linestyle": "--",
                 "color": "blue",
             },
-            **kwargs,
         )
 
         default_chance_level_line_kw = {
