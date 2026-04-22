@@ -562,6 +562,12 @@ def move_to(*arrays, xp, device):
         Tuple of arrays with the same namespace and device as reference. Single array
         returned if only one `arrays` input.
     """
+    if isinstance(device, str) and device.startswith("xpu") and ":" not in device:
+        # XXX: Workaround for PyTorch XPU bug for `from_dlpack` calls with
+        # device strings that do not include any device number suffix.
+        # https://github.com/pytorch/pytorch/issues/181140
+        device += ":0"
+
     sparse_mask = [sp.issparse(array) for array in arrays]
     none_mask = [array is None for array in arrays]
     if any(sparse_mask) and not _is_numpy_namespace(xp):
