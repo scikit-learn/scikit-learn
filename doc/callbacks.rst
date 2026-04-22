@@ -37,7 +37,7 @@ method to register callbacks on them. The following example shows how to registe
     >>> estimator = LogisticRegression()
     >>> estimator.set_callbacks(progress_bar)
 
-Now that the progress bar is registered to the estimator, calling its `fit` method will
+Now that the progress bar is registered on the estimator, calling its `fit` method will
 display a bar monitoring the progress of the `fit` execution::
 
     >>> from sklearn.datasets import load_iris
