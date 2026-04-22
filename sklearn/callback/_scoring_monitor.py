@@ -89,18 +89,22 @@ class ScoringMonitor:
             "estimator_name": root_context.estimator_name,
         }
 
-        context_levels = {"task_path": tuple()}
-        for depth, ctx in enumerate(context_path):
-            context_levels["task_path"] += (ctx.task_id,)
-            for k in ("estimator_name", "task_name", "task_id", "sequential_subtasks"):
-                context_levels[f"{k}_depth_{depth}"] = getattr(ctx, k)
+        task_info_path = [
+            {
+                "estimator_name": ctx.estimator_name,
+                "task_name": ctx.task_name,
+                "task_id": ctx.task_id,
+                "sequential_subtasks": ctx.sequential_subtasks,
+            }
+            for ctx in context_path
+        ]
 
         scores = {}
         if X is not None and y is not None:
             scorer = self._estimator_scorers[context.estimator_name]
             scores.update(scorer(fitted_estimator, X, y, **metadata))
 
-        self._shared_log.append((run_id, run_info, context_levels, scores))
+        self._shared_log.append((run_id, run_info, task_info_path, scores))
 
     @validate_params(
         {
@@ -109,7 +113,7 @@ class ScoringMonitor:
         },
         prefer_skip_nested_validation=True,
     )
-    def get_logs(self, select="most_recent", as_frame=False):
+    def get_logs(self, select="most_recent", as_frame=False, include_lineage=False):
         """Get the logged scores.
 
         The callback records scores for the estimator it is registered to. Log entries
@@ -150,17 +154,63 @@ class ScoringMonitor:
             set to False the individual run logs are formatted as lists of dictionaries
             instead.
 
+        include_lineage : bool, default=False
+            Whether to include lineage information of the tasks in the log.
+
         Returns
         -------
         logs : dict or list of dict
             The logged scores.
         """
         logs = defaultdict(lambda: {"data": []})
+        run_to_task_id_path = defaultdict(set)
 
         # group logs by run
-        for run_id, run_info, context_levels, scores in list(self._shared_log):
+        for run_id, run_info, task_info_path, scores in list(self._shared_log):
             logs[run_id].update(run_info)
-            logs[run_id]["data"].append({**context_levels, **scores})
+
+            task_id_path = tuple(task_info["task_id"] for task_info in task_info_path)
+
+            logs[run_id]["data"].append(
+                {
+                    "task_id_path": task_id_path,
+                    "parent_task_id_path": task_id_path[:-1],
+                    "parent_task_info_path": task_info_path[:-1],
+                    **task_info_path[-1],
+                    **scores,
+                }
+            )
+            run_to_task_id_path[run_id].add(task_id_path)
+
+        for run_id, log in logs.items():
+            if include_lineage:
+                extra_rows = []
+                for row in log["data"]:
+                    for i in range(len(row["parent_task_info_path"])):
+                        task_info_path = row["parent_task_info_path"][: i + 1]
+                        task_id_path = tuple(
+                            task_info["task_id"] for task_info in task_info_path
+                        )
+                        if task_id_path not in run_to_task_id_path[run_id]:
+                            extra_rows.append(
+                                {
+                                    "task_id_path": task_id_path,
+                                    "parent_task_id_path": task_id_path[:-1],
+                                    "parent_task_info_path": task_info_path[:-1],
+                                    **task_info_path[-1],
+                                }
+                            )
+                            run_to_task_id_path[run_id].add(task_id_path)
+                log["data"] += extra_rows
+
+            # sort rows by recursive task ids so that tasks of a same parent are grouped
+            sorting_key = lambda x: (len(x["task_id_path"]), x["task_id_path"])
+            log["data"] = sorted(log["data"], key=sorting_key)
+
+            for row in log["data"]:
+                row.pop("parent_task_info_path", None)
+                if not include_lineage:
+                    row.pop("task_id_path", None)
 
         # sort logs by run timestamp and estimator name
         logs = [{"run_id": run_id, **log} for run_id, log in logs.items()]

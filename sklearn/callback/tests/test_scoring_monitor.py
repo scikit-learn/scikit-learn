@@ -15,7 +15,9 @@ from sklearn.metrics import check_scoring, make_scorer
 from sklearn.utils._testing import assert_allclose
 
 
-def _make_expected_output_MaxIterEstimator(max_iter, scoring, as_frame, X, y, depth=0):
+def _make_expected_output_MaxIterEstimator(
+    max_iter, scoring, as_frame, X, y, root_task_id=0
+):
     """Generate the expected output of a ScoringMonitor on a MaxIterEstimator."""
     scorer = check_scoring(None, scoring)
     if isinstance(scoring, str):
@@ -28,37 +30,35 @@ def _make_expected_output_MaxIterEstimator(max_iter, scoring, as_frame, X, y, de
     est_name = MaxIterEstimator.__name__
 
     expected_log = []
-    # fit loop iterations
-    for i in range(max_iter):
-        fitted_est = MaxIterEstimator(max_iter=i + 1).fit()
-        log_item = {
-            "task_path": (0, i),
-            f"estimator_name_depth_{depth}": est_name,
-            f"task_name_depth_{depth}": "fit",
-            f"task_id_depth_{depth}": 0,
-            f"sequential_subtasks_depth_{depth}": True,
-            f"estimator_name_depth_{depth + 1}": est_name,
-            f"task_name_depth_{depth + 1}": f"iteration {i}",
-            f"task_id_depth_{depth + 1}": i,
-            f"sequential_subtasks_depth_{depth + 1}": True,
-        }
-        scores = scorer(fitted_est, X, y)
-        if not isinstance(scores, dict):
-            scores = {score_names[0]: scores}
-        expected_log.append({**log_item, **scores})
 
     # fit root task
+    fitted_est = MaxIterEstimator(max_iter=max_iter).fit()
     log_item = {
-        "task_path": (0,),
-        f"estimator_name_depth_{depth}": est_name,
-        f"task_name_depth_{depth}": "fit",
-        f"task_id_depth_{depth}": 0,
-        f"sequential_subtasks_depth_{depth}": True,
+        "parent_task_id_path": (),
+        "estimator_name": est_name,
+        "task_name": "fit",
+        "task_id": root_task_id,
+        "sequential_subtasks": True,
     }
     scores = scorer(fitted_est, X, y)
     if not isinstance(scores, dict):
         scores = {score_names[0]: scores}
     expected_log.append({**log_item, **scores})
+
+    # fit loop iterations
+    for i in range(max_iter):
+        fitted_est = MaxIterEstimator(max_iter=i + 1).fit()
+        log_item = {
+            "parent_task_id_path": (root_task_id,),
+            "estimator_name": est_name,
+            "task_name": f"iteration {i}",
+            "task_id": i,
+            "sequential_subtasks": True,
+        }
+        scores = scorer(fitted_est, X, y)
+        if not isinstance(scores, dict):
+            scores = {score_names[0]: scores}
+        expected_log.append({**log_item, **scores})
 
     if as_frame:
         pd = pytest.importorskip("pandas")
@@ -68,7 +68,7 @@ def _make_expected_output_MaxIterEstimator(max_iter, scoring, as_frame, X, y, de
 
 
 def _make_expected_output_MetaEstimator(
-    n_outer, n_inner, max_iter, scoring, as_frame, X, y
+    n_outer, n_inner, max_iter, scoring, as_frame, include_lineage, X, y
 ):
     """Generate the expected output of a ScoringMonitor on a MetaEstimator.
 
@@ -79,27 +79,42 @@ def _make_expected_output_MetaEstimator(
     expected_log = []
     for i in range(n_outer):
         for j in range(n_inner):
-            meta_est_context_levels = {
-                "estimator_name_depth_0": meta_est_name,
-                "task_name_depth_0": "fit",
-                "task_id_depth_0": 0,
-                "sequential_subtasks_depth_0": False,
-                "estimator_name_depth_1": meta_est_name,
-                "task_name_depth_1": "outer",
-                "task_id_depth_1": i,
-                "sequential_subtasks_depth_1": True,
-            }
-
             estimator_log = _make_expected_output_MaxIterEstimator(
-                max_iter, scoring, False, X, y, depth=2
+                max_iter, scoring, False, X, y, root_task_id=j
             )
-            for entry in estimator_log:
-                # root task_id of the estimator is inherited from the inner task
-                # adjust the task_id and rewrite the task_path
-                entry["task_id_depth_2"] = j
-                task_path = {"task_path": (0, i, j) + entry["task_path"][1:]}
-                del entry["task_path"]
-                expected_log.append({**task_path, **meta_est_context_levels, **entry})
+            for row in estimator_log:
+                row["parent_task_id_path"] = (0, i) + row["parent_task_id_path"]
+                expected_log.append(row)
+
+    if include_lineage:
+        # fit root task
+        expected_log.append(
+            {
+                "parent_task_id_path": (),
+                "estimator_name": meta_est_name,
+                "task_name": "fit",
+                "task_id": 0,
+                "sequential_subtasks": False,
+            }
+        )
+        # outer tasks
+        for i in range(n_outer):
+            expected_log.append(
+                {
+                    "parent_task_id_path": (0,),
+                    "estimator_name": meta_est_name,
+                    "task_name": "outer",
+                    "task_id": i,
+                    "sequential_subtasks": True,
+                }
+            )
+        # add task_id_path column
+        for i, row in enumerate(expected_log):
+            task_id_path = row["parent_task_id_path"] + (row["task_id"],)
+            expected_log[i] = {"task_id_path": task_id_path, **row}
+
+    sorting_key = lambda x: (len(x["parent_task_id_path"]), x["parent_task_id_path"])
+    expected_log.sort(key=sorting_key)
 
     if as_frame:
         pd = pytest.importorskip("pandas")
@@ -126,12 +141,13 @@ def test_score_after_fit():
     estimator.fit(X=X, y=y)
 
     log = callback.get_logs(as_frame=False, select="most_recent")["data"]
+    log_iterations = [row for row in log if row["parent_task_id_path"] == (0,)]
 
     scorer = check_scoring(None, "r2")
     for i in range(max_iter):
         estimator = MaxIterEstimator(max_iter=i + 1).fit(X, y)
         score = scorer(estimator, X, y)
-        assert_allclose(score, log[i]["r2"])
+        assert_allclose(score, log_iterations[i]["r2"])
 
 
 @pytest.mark.parametrize(
@@ -168,7 +184,8 @@ def test_logged_values(scoring, as_frame):
     ["neg_mean_squared_error", ("neg_mean_squared_error", "r2"), custom_score],
 )
 @pytest.mark.parametrize("as_frame", [True, False])
-def test_logged_values_meta_estimator(prefer, scoring, as_frame):
+@pytest.mark.parametrize("include_lineage", [True, False])
+def test_logged_values_meta_estimator(prefer, scoring, as_frame, include_lineage):
     """Test that the correct values are logged with a meta-estimator."""
     if as_frame:
         pytest.importorskip("pandas")
@@ -183,21 +200,16 @@ def test_logged_values_meta_estimator(prefer, scoring, as_frame):
 
     meta_est.fit(X=X, y=y)
 
-    log = callback.get_logs(as_frame=as_frame, select="most_recent")["data"]
+    log = callback.get_logs(
+        as_frame=as_frame, select="most_recent", include_lineage=include_lineage
+    )["data"]
     expected_log = _make_expected_output_MetaEstimator(
-        n_outer, n_inner, max_iter, scoring, as_frame, X, y
+        n_outer, n_inner, max_iter, scoring, as_frame, include_lineage, X, y
     )
 
-    # The log items might not be in the same order as the expected log due to the
-    # parallelization of the meta-estimator. hence we sort the log by id of the
-    # parallel task, "outer", which at depth 1.
     if as_frame:
-        log.sort_values(
-            by=["task_id_depth_1"], inplace=True, ignore_index=True, kind="stable"
-        )
         assert log.equals(expected_log)
     else:
-        log.sort(key=lambda x: x["task_id_depth_1"])
         assert log == expected_log
 
 
@@ -273,3 +285,84 @@ def test_scoringmonitor_sample_weights():
     log_sw = callback.get_logs(as_frame=False, select="most_recent")["data"]
 
     assert log_no_sw != log_sw
+
+
+def _get_ancestors_info_path(log, parent_task_id_path):
+    log = {row["task_id_path"]: row for row in log}
+    ancestors_info_path = []
+    while parent_task_id_path:
+        task_info = log[parent_task_id_path]
+        ancestors_info_path.append(
+            {
+                "estimator_name": task_info["estimator_name"],
+                "task_name": task_info["task_name"],
+                "task_id": task_info["task_id"],
+            }
+        )
+        parent_task_id_path = task_info["parent_task_id_path"]
+    ancestors_info_path.reverse()
+    return ancestors_info_path
+
+
+def _get_ancestors_info_path_pandas(log, parent_task_id_path):
+    log = log.set_index("task_id_path", drop=False)
+    ancestors_info_path = []
+    while parent_task_id_path:
+        task_info = log.loc[[parent_task_id_path]].iloc[0]
+        ancestors_info_path.append(
+            {
+                "estimator_name": task_info["estimator_name"],
+                "task_name": task_info["task_name"],
+                "task_id": task_info["task_id"],
+            }
+        )
+        parent_task_id_path = task_info["parent_task_id_path"]
+    ancestors_info_path.reverse()
+    return ancestors_info_path
+
+
+@pytest.mark.parametrize("as_frame", [True, False])
+def test_get_logs_include_lineage_ancestor_retrieval(as_frame):
+    """Check that ancestor task info can be retrieved from a given task."""
+    if as_frame:
+        pytest.importorskip("pandas")
+
+    n_outer, n_inner, max_iter = 2, 3, 5
+    callback = ScoringMonitor(scoring="r2")
+    est = MaxIterEstimator(max_iter=max_iter).set_callbacks(callback)
+    meta_est = MetaEstimator(est, n_outer=n_outer, n_inner=n_inner)
+    X, y = make_regression(n_samples=100, n_features=2, random_state=0)
+
+    meta_est.fit(X=X, y=y)
+
+    log = callback.get_logs(as_frame=as_frame, include_lineage=True)["data"]
+
+    # pick an arbitrary parent of iteration tasks
+    parent_path = (0, 1, 1)
+    expected_ancestors_info_path = [
+        {
+            "estimator_name": "MetaEstimator",
+            "task_name": "fit",
+            "task_id": 0,
+        },
+        {
+            "estimator_name": "MetaEstimator",
+            "task_name": "outer",
+            "task_id": 1,
+        },
+        {
+            "estimator_name": "MaxIterEstimator",
+            "task_name": "fit",
+            "task_id": 1,
+        },
+    ]
+
+    if as_frame:
+        sibling_rows = log.loc[log["parent_task_id_path"] == parent_path]
+        ancestors_info_path = _get_ancestors_info_path_pandas(log, parent_path)
+    else:
+        sibling_rows = [row for row in log if row["parent_task_id_path"] == parent_path]
+        ancestors_info_path = _get_ancestors_info_path(log, parent_path)
+
+    assert len(sibling_rows) == max_iter
+    assert ancestors_info_path == expected_ancestors_info_path
