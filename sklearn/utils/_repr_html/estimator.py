@@ -431,7 +431,6 @@ def _write_estimator_html(
             has_feature_names_out
             and is_not_pipeline_step
             and is_fitted_css_class
-            and hasattr(estimator, "n_features_in_")
         ):
             output_features = estimator.get_feature_names_out()
         else:
