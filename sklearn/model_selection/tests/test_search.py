@@ -3146,20 +3146,15 @@ def test_search_callbacks_receive_sample_weight():
     search = GridSearchCV(
         MaxIterEstimator(), {"max_iter": [1, 2, 3]}, cv=2, scoring="accuracy"
     ).set_callbacks(callback)
-    sw = np.ones_like(y)
-    search.fit(X, y, sample_weight=sw)
+    sample_weight = np.ones_like(y)
+    search.fit(X, y, sample_weight=sample_weight)
 
     for entry in callback.record:
-        # print(entry)
-        # print('')
         if (
             entry["name"] == "on_fit_task_begin" or entry["name"] == "on_fit_task_end"
         ) and entry["kwargs"]["metadata"] is not None:
-            print(entry)
-            w = entry["kwargs"]["metadata"].get("sample_weight", {})
-            print(w)
-            print("")
-            assert w  # assert allclose(w, sw)
+            passed_weights = entry["kwargs"]["metadata"].get("sample_weight", {})
+            assert_array_equal(passed_weights, sample_weight)
 
 
 def test_search_callbacks_receive_reconstruction_attributes():
