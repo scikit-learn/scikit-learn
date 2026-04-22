@@ -95,22 +95,19 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
     ):
         if array_namespace == "torch":
             for device_name, dtype in itertools.product(
-                ("cpu", "cuda"), ("float64", "float32")
+                ("cpu", "cuda", "xpu"), ("float64", "float32")
             ):
                 yield array_namespace, device_name, dtype
             yield array_namespace, "mps", "float32"
-            yield array_namespace, "xpu", "float32"
 
         elif array_namespace == "dpnp":
             # XXX: add "accelerator" device type?
             # TODO: check if device supports FP64
             # Now check only float32 for Intel GPUs
-            for device, dtype in [
-                ("cpu", "float64"),
-                ("cpu", "float32"),
-                ("gpu", "float32"),
-            ]:
-                yield array_namespace, device, dtype
+            for device_name, dtype in itertools.product(
+                ("cpu", "gpu"), ("float64", "float32")
+            ):
+                yield array_namespace, device_name, dtype
 
         elif array_namespace == "array_api_strict":
             # Always yield strings for consistent parametrization; _array_api_for_tests
