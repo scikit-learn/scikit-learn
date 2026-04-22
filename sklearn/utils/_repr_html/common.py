@@ -16,8 +16,10 @@ def generate_link_to_param_doc(estimator_class, param_name, doc_link):
     https://developer.mozilla.org/en-US/docs/Web/URI/Reference/Fragment/Text_fragments
     """
     docstring = estimator_class.__doc__
+
     clean_param_name = param_name.replace("`", "")
     m = re.search(f"{clean_param_name} : (.+)\\n", docstring or "")
+
     if m is None:
         # No match found in the docstring, return None to indicate that we
         # cannot link.
@@ -27,6 +29,7 @@ def generate_link_to_param_doc(estimator_class, param_name, doc_link):
     # disambiguation suffix to build the fragment
     param_type = m.group(1).replace("`", "")
     text_fragment = f"{quote(clean_param_name)},-{quote(param_type)}"
+
     return f"{doc_link}#:~:text={text_fragment}"
 
 
