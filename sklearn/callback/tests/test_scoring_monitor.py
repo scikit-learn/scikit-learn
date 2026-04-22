@@ -34,6 +34,7 @@ def _make_expected_output_MaxIterEstimator(
     # fit root task
     fitted_est = MaxIterEstimator(max_iter=max_iter).fit()
     log_item = {
+        "task_id_path": (root_task_id,),
         "parent_task_id_path": (),
         "estimator_name": est_name,
         "task_name": "fit",
@@ -49,6 +50,7 @@ def _make_expected_output_MaxIterEstimator(
     for i in range(max_iter):
         fitted_est = MaxIterEstimator(max_iter=i + 1).fit()
         log_item = {
+            "task_id_path": (root_task_id, i),
             "parent_task_id_path": (root_task_id,),
             "estimator_name": est_name,
             "task_name": f"iteration {i}",
@@ -83,6 +85,7 @@ def _make_expected_output_MetaEstimator(
                 max_iter, scoring, False, X, y, root_task_id=j
             )
             for row in estimator_log:
+                row["task_id_path"] = (0, i) + row["task_id_path"]
                 row["parent_task_id_path"] = (0, i) + row["parent_task_id_path"]
                 expected_log.append(row)
 
@@ -90,6 +93,7 @@ def _make_expected_output_MetaEstimator(
         # fit root task
         expected_log.append(
             {
+                "task_id_path": (0,),
                 "parent_task_id_path": (),
                 "estimator_name": meta_est_name,
                 "task_name": "fit",
@@ -101,6 +105,7 @@ def _make_expected_output_MetaEstimator(
         for i in range(n_outer):
             expected_log.append(
                 {
+                    "task_id_path": (0, i),
                     "parent_task_id_path": (0,),
                     "estimator_name": meta_est_name,
                     "task_name": "outer",
@@ -108,10 +113,6 @@ def _make_expected_output_MetaEstimator(
                     "sequential_subtasks": True,
                 }
             )
-        # add task_id_path column
-        for i, row in enumerate(expected_log):
-            task_id_path = row["parent_task_id_path"] + (row["task_id"],)
-            expected_log[i] = {"task_id_path": task_id_path, **row}
 
     sorting_key = lambda x: (len(x["parent_task_id_path"]), x["parent_task_id_path"])
     expected_log.sort(key=sorting_key)

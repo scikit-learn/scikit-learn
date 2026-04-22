@@ -110,36 +110,40 @@ class ScoringMonitor:
         {
             "select": [StrOptions({"all", "most_recent"})],
             "as_frame": ["boolean"],
+            "include_lineage": ["boolean"],
         },
         prefer_skip_nested_validation=True,
     )
     def get_logs(self, select="most_recent", as_frame=False, include_lineage=False):
         """Get the logged scores.
 
-        The callback records scores for the estimator it is registered to. Log entries
-        are grouped by the outermost enclosing fit call (the fit of the outermost
-        meta-estimator that is a parent of the estimator the callback is registered to).
-        Thus one run corresponds to one top-level fit. If the estimator is not wrapped
+        Log entries are grouped by runs, which are the outermost enclosing fit calls. If
+        the estimator this callback is registered on is wrapped in meta-estimators, a
+        run corresponds to one fit of the outermost meta-estimator. If it is not wrapped
         in a meta-estimator, a run simply corresponds to a single fit of the estimator.
 
         For a given run, the scores are logged in a dict containing:
             - "run_id": a unique identifier for the run;
-            - "estimator_name": the name of the estimator of the run;
+            - "estimator_name": the name of the (meta-)estimator of the run;
             - "timestamp": the timestamp of the start of the run;
             - "data": the recorded scores for the run. Each score value is associated
-              with the detailed context of the score computation.
+              with the context of the task for which the score was computed.
 
         Depending on `as_frame`, "data" is either a Pandas DataFrame or a list of dicts.
         In the latter case, each dict corresponds to one row of the corresponding
         DataFrame and contains column_name -> value pairs. The columns are structured as
         follows:
-        - "task_path": tuple containing the task ids of the task and its ancestors for
-            which the score was computed;
-        - A group of 4 columns for each ancestor task of the task for which the score
-            was computed (including itself): "estimator_name_depth_<depth>",
-            "task_name_depth_<depth>", "task_id_depth_<depth>",
-            "sequential_subtasks_depth_<depth>".
-        - A column for each score name the was passed as `scoring` parameter.
+            - "task_id_path": tuple containing the task ids from the root task to the
+              task for which the score was computed. Each value in this column is
+              unique.
+            - "parent_task_id_path": tuple containing the task ids from the root to the
+              parent task. It can be used to group scores from tasks that have the same
+              parent task.
+            - "estimator_name": the name of the estimator.
+            - "task_name": the name of the task.
+            - "task_id": the id of the task.
+            - "sequential_subtasks": whether the task has sequential subtasks;
+            - A column for each score name that was passed as `scoring` parameter.
 
         Parameters
         ----------
@@ -156,6 +160,12 @@ class ScoringMonitor:
 
         include_lineage : bool, default=False
             Whether to include lineage information of the tasks in the log.
+
+            If set to True, the log contains extra rows for each task that is an
+            ancestor of a task for which the score was computed. These extra rows can
+            be used to retrieve the context of all ancestor tasks of a given task for
+            which the score was computed. For these extra rows, there are no score
+            entries if `as_frame` is False, or NaN values if `as_frame` is True.
 
         Returns
         -------
@@ -209,8 +219,6 @@ class ScoringMonitor:
 
             for row in log["data"]:
                 row.pop("parent_task_info_path", None)
-                if not include_lineage:
-                    row.pop("task_id_path", None)
 
         # sort logs by run timestamp and estimator name
         logs = [{"run_id": run_id, **log} for run_id, log in logs.items()]
