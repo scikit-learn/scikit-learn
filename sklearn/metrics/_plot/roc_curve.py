@@ -543,7 +543,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        y_score = y_score
         pos_label_validated, name = cls._validate_from_predictions_params(
             y_true, y_score, sample_weight=sample_weight, pos_label=pos_label, name=name
         )
@@ -706,7 +705,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             cv_results["estimator"], cv_results["indices"]["test"]
         ):
             y_true = _safe_indexing(y, test_indices)
-            y_pred, pos_label_ = _get_response_values_binary(
+            y_score, pos_label_ = _get_response_values_binary(
                 estimator,
                 _safe_indexing(X, test_indices),
                 response_method=response_method,
@@ -719,7 +718,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             )
             fpr, tpr, _ = roc_curve(
                 y_true,
-                y_pred,
+                y_score,
                 pos_label=pos_label_,
                 sample_weight=sample_weight_fold,
                 drop_intermediate=drop_intermediate,
