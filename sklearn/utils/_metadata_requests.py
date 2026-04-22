@@ -560,40 +560,37 @@ class MethodMetadataRequest:
 class MetadataRequest:
     """Container for storing metadata request info and an associated consumer (`owner`).
 
-        Instances of `MethodMetadataRequest` are used in this class for each
-        available method under `MetadataRequest(owner=obj).{method}`.
+    Instances of `MethodMetadataRequest` are used in this class for each
+    available method under `MetadataRequest(owner=obj).{method}`.
 
-        Every :term:`consumer` in scikit-learn has a `_metadata_request` attribute that
-        is a `MetadataRequest`.
+    Every :term:`consumer` in scikit-learn has a `_metadata_request` attribute that
+    is a `MetadataRequest`.
 
-        Read more on developing custom estimators that can route metadata in the
-        :ref:`Metadata Routing Developing Guide
-        <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>`.
+    Read more on developing custom estimators that can route metadata in the
+    :ref:`Metadata Routing Developing Guide
+    <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>`.
 
-        .. versionadded:: 1.3
+    .. versionadded:: 1.3
 
-        Parameters
-        ----------
-        owner : object
-            The object to which these requests belong.
-    <<<<<<< HEAD
-    =======
+    Parameters
+    ----------
+    owner : object
+        The object to which these requests belong.
 
-        Examples
-        --------
-        >>> from sklearn import set_config
-        >>> set_config(enable_metadata_routing=True)
-        >>> from pprint import pprint
-        >>> from sklearn.utils.metadata_routing import MetadataRequest
-        >>> r = MetadataRequest(owner="any_object")
-        >>> r.fit.add_request(param="sample_weight", alias=True)
-        {'sample_weight': True}
-        >>> r.score.add_request(param="sample_weight", alias=False)
-        {'sample_weight': False}
-        >>> pprint(r)
-        {'fit': {'sample_weight': True}, 'score': {'sample_weight': False}}
-        >>> set_config(enable_metadata_routing=False)
-    >>>>>>> upstream/main
+    Examples
+    --------
+    >>> from sklearn import set_config
+    >>> set_config(enable_metadata_routing=True)
+    >>> from pprint import pprint
+    >>> from sklearn.utils.metadata_routing import MetadataRequest
+    >>> r = MetadataRequest(owner="any_object")
+    >>> r.fit.add_request(param="sample_weight", alias=True)
+    {'sample_weight': True}
+    >>> r.score.add_request(param="sample_weight", alias=False)
+    {'sample_weight': False}
+    >>> pprint(r)
+    {'fit': {'sample_weight': True}, 'score': {'sample_weight': False}}
+    >>> set_config(enable_metadata_routing=False)
     """
 
     # this is here for us to use this attribute's value instead of doing
@@ -1534,57 +1531,6 @@ class _MetadataRequester:
             # all the issues and make sure class definition does not fail.
             pass
         super().__init_subclass__(**kwargs)
-
-    @classmethod
-    def _get_metadata_args_and_aliases(cls, method: str):
-        """Get the metadata arguments for a method."""
-        # Here we use `isfunction` instead of `ismethod` because calling `getattr`
-        # on a class instead of an instance returns an unbound function.
-        if not hasattr(cls, method) or not inspect.isfunction(getattr(cls, method)):
-            return dict()
-        # ignore the first parameter of the method, which is usually "self"
-        params = list(inspect.signature(getattr(cls, method)).parameters.items())[1:]
-        params = defaultdict(
-            str,
-            {
-                pname: None
-                for pname, param in params
-                if pname not in {"X", "y", "Y", "Xt", "yt"}
-                and param.kind not in {param.VAR_POSITIONAL, param.VAR_KEYWORD}
-            },
-        )
-
-        # Then overwrite those defaults with the ones provided in
-        # __metadata_request__* attributes. Defaults set in
-        # __metadata_request__* attributes take precedence over signature
-        # sniffing.
-
-        # need to go through the MRO since this is a class attribute and
-        # ``vars`` doesn't report the parent class attributes. We go through
-        # the reverse of the MRO so that child classes have precedence over
-        # their parents.
-        substr = f"__metadata_request__{method}"
-        for base_class in reversed(inspect.getmro(cls)):
-            for attr, value in vars(base_class).items():
-                # we don't check for equivalence since python prefixes attrs
-                # starting with __ with the `_ClassName`.
-                if substr not in attr:
-                    continue
-                for prop, alias in value.items():
-                    # Here we add request values specified via those class attributes
-                    # to the `MetadataRequest` object. Adding a request which already
-                    # exists will override the previous one. Since we go through the
-                    # MRO in reverse order, the one specified by the lowest most classes
-                    # in the inheritance tree are the ones which take effect.
-                    if prop not in params and alias == UNUSED:
-                        raise ValueError(
-                            f"Trying to remove parameter {prop} with UNUSED which"
-                            " doesn't exist."
-                        )
-
-                    params[prop] = alias
-
-        return {param: alias for param, alias in params.items() if alias is not UNUSED}
 
     @classmethod
     def _get_class_level_metadata_request_values(cls, method: str):
