@@ -1,6 +1,6 @@
 """Export fast murmurhash C/C++ routines + cython wrappers"""
 
-from ..utils._typedefs cimport int32_t, uint32_t
+from sklearn.utils._typedefs cimport int32_t, uint32_t
 
 # The C API is disabled for now, since it requires -I flags to get
 # compilation to work even when these functions are not used.

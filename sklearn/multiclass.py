@@ -514,7 +514,7 @@ class OneVsRestClassifier(
                 indices.extend(np.where(_predict_binary(e, X) > thresh)[0])
                 indptr.append(len(indices))
             data = np.ones(len(indices), dtype=int)
-            indicator = sp.csc_matrix(
+            indicator = sp.csc_array(
                 (data, indices, indptr), shape=(n_samples, len(self.estimators_))
             )
             return self.label_binarizer_.inverse_transform(indicator)
@@ -624,7 +624,7 @@ class OneVsRestClassifier(
         """
 
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
+            MetadataRouter(owner=self)
             .add_self_request(self)
             .add(
                 estimator=self.estimator,
@@ -1028,7 +1028,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         """
 
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
+            MetadataRouter(owner=self)
             .add_self_request(self)
             .add(
                 estimator=self.estimator,
@@ -1252,7 +1252,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         """
         check_is_fitted(self)
         # ArgKmin only accepts C-contiguous array. The aggregated predictions need to be
-        # transposed. We therefore create a F-contiguous array to avoid a copy and have
+        # transposed. We therefore create an F-contiguous array to avoid a copy and have
         # a C-contiguous array after the transpose operation.
         Y = np.array(
             [_predict_binary(e, X) for e in self.estimators_],
@@ -1277,7 +1277,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             routing information.
         """
 
-        router = MetadataRouter(owner=self.__class__.__name__).add(
+        router = MetadataRouter(owner=self).add(
             estimator=self.estimator,
             method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )

@@ -1,11 +1,10 @@
 # This script is used to generate a comment for a PR when linting issues are
 # detected. It is used by the `Comment on failed linting` GitHub Action.
-# This script fails if there are not comments to be posted.
 
 import os
 import re
 
-import requests
+from github import Auth, Github, GithubException
 
 
 def get_versions(versions_file):
@@ -67,15 +66,15 @@ def get_step_message(log, start, end, title, message, details):
     return res
 
 
-def get_message(log_file, repo, pr_number, sha, run_id, details, versions):
+def get_message(log_file, repo_str, pr_number, sha, run_id, details, versions):
     with open(log_file, "r") as f:
         log = f.read()
 
     sub_text = (
         "\n\n<sub> _Generated for commit:"
-        f" [{sha[:7]}](https://github.com/{repo}/pull/{pr_number}/commits/{sha}). "
+        f" [{sha[:7]}](https://github.com/{repo_str}/pull/{pr_number}/commits/{sha}). "
         "Link to the linter CI: [here]"
-        f"(https://github.com/{repo}/actions/runs/{run_id})_ </sub>"
+        f"(https://github.com/{repo_str}/actions/runs/{run_id})_ </sub>"
     )
 
     if "### Linting completed ###" not in log:
@@ -189,12 +188,8 @@ def get_message(log_file, repo, pr_number, sha, run_id, details, versions):
     )
 
     if not message:
-        # no issues detected, so this script "fails"
-        return (
-            "## ✔️ Linting Passed\n"
-            "All linting checks passed. Your pull request is in excellent shape! ☀️"
-            + sub_text
-        )
+        # no issues detected, the linting succeeded
+        return None
 
     if not details:
         # This happens if posting the log fails, which happens if the log is too
@@ -213,10 +208,10 @@ def get_message(log_file, repo, pr_number, sha, run_id, details, versions):
         + "This PR is introducing linting issues. Here's a summary of the issues. "
         + "Note that you can avoid having linting issues by enabling `pre-commit` "
         + "hooks. Instructions to enable them can be found [here]("
-        + "https://scikit-learn.org/dev/developers/contributing.html#how-to-contribute)"
+        + "https://scikit-learn.org/dev/developers/development_setup.html#set-up-pre-commit)"
         + ".\n\n"
         + "You can see the details of the linting issues under the `lint` job [here]"
-        + f"(https://github.com/{repo}/actions/runs/{run_id})\n\n"
+        + f"(https://github.com/{repo_str}/actions/runs/{run_id})\n\n"
         + message
         + sub_text
     )
@@ -224,73 +219,50 @@ def get_message(log_file, repo, pr_number, sha, run_id, details, versions):
     return message
 
 
-def get_headers(token):
-    """Get the headers for the GitHub API."""
-    return {
-        "Accept": "application/vnd.github+json",
-        "Authorization": f"Bearer {token}",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
-
-
-def find_lint_bot_comments(repo, token, pr_number):
+def find_lint_bot_comments(issue):
     """Get the comment from the linting bot."""
-    # repo is in the form of "org/repo"
-    # API doc: https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#list-issue-comments
-    response = requests.get(
-        f"https://api.github.com/repos/{repo}/issues/{pr_number}/comments",
-        headers=get_headers(token),
-    )
-    response.raise_for_status()
-    all_comments = response.json()
 
     failed_comment = "❌ Linting issues"
-    success_comment = "✔️ Linting Passed"
 
-    # Find all comments that match the linting bot, and return the first one.
-    # There should always be only one such comment, or none, if the PR is
-    # just created.
-    comments = [
-        comment
-        for comment in all_comments
-        if comment["user"]["login"] == "github-actions[bot]"
-        and (failed_comment in comment["body"] or success_comment in comment["body"])
-    ]
+    for comment in issue.get_comments():
+        if comment.user.login == "github-actions[bot]":
+            if failed_comment in comment.body:
+                return comment
 
-    if len(all_comments) > 25 and not comments:
-        # By default the API returns the first 30 comments. If we can't find the
-        # comment created by the bot in those, then we raise and we skip creating
-        # a comment in the first place.
-        raise RuntimeError("Comment not found in the first 30 comments.")
-
-    return comments[0] if comments else None
+    return None
 
 
-def create_or_update_comment(comment, message, repo, pr_number, token):
-    """Create a new comment or update existing one."""
-    # repo is in the form of "org/repo"
+def create_or_update_comment(comment, message, issue):
+    """Create a new comment or update the existing linting comment."""
+
     if comment is not None:
-        print("updating existing comment")
-        # API doc: https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#update-an-issue-comment
-        response = requests.patch(
-            f"https://api.github.com/repos/{repo}/issues/comments/{comment['id']}",
-            headers=get_headers(token),
-            json={"body": message},
-        )
+        print("Updating existing comment")
+        comment.edit(message)
     else:
-        print("creating new comment")
-        # API doc: https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment
-        response = requests.post(
-            f"https://api.github.com/repos/{repo}/issues/{pr_number}/comments",
-            headers=get_headers(token),
-            json={"body": message},
-        )
+        print("Creating new comment")
+        issue.create_comment(message)
 
-    response.raise_for_status()
+
+def update_linter_fails_label(linting_failed, issue):
+    """Add or remove the label indicating that the linting has failed."""
+
+    label = "CI:Linter failure"
+
+    if linting_failed:
+        issue.add_to_labels(label)
+
+    else:
+        try:
+            issue.remove_from_labels(label)
+        except GithubException as exception:
+            # The exception is ignored if raised because the issue did not have the
+            # label already
+            if not exception.message == "Label does not exist":
+                raise
 
 
 if __name__ == "__main__":
-    repo = os.environ["GITHUB_REPOSITORY"]
+    repo_str = os.environ["GITHUB_REPOSITORY"]
     token = os.environ["GITHUB_TOKEN"]
     pr_number = os.environ["PR_NUMBER"]
     sha = os.environ["BRANCH_SHA"]
@@ -300,56 +272,60 @@ if __name__ == "__main__":
 
     versions = get_versions(versions_file)
 
-    if not repo or not token or not pr_number or not log_file or not run_id:
-        raise ValueError(
-            "One of the following environment variables is not set: "
-            "GITHUB_REPOSITORY, GITHUB_TOKEN, PR_NUMBER, LOG_FILE, RUN_ID"
-        )
+    for var, val in [
+        ("GITHUB_REPOSITORY", repo_str),
+        ("GITHUB_TOKEN", token),
+        ("PR_NUMBER", pr_number),
+        ("LOG_FILE", log_file),
+        ("RUN_ID", run_id),
+    ]:
+        if not val:
+            raise ValueError(f"The following environment variable is not set: {var}")
 
     if not re.match(r"\d+$", pr_number):
         raise ValueError(f"PR_NUMBER should be a number, got {pr_number!r} instead")
+    pr_number = int(pr_number)
 
-    try:
-        comment = find_lint_bot_comments(repo, token, pr_number)
-    except RuntimeError:
-        print("Comment not found in the first 30 comments. Skipping!")
-        exit(0)
+    gh = Github(auth=Auth.Token(token))
+    repo = gh.get_repo(repo_str)
+    issue = repo.get_issue(number=pr_number)
 
-    try:
-        message = get_message(
-            log_file,
-            repo=repo,
-            pr_number=pr_number,
-            sha=sha,
-            run_id=run_id,
-            details=True,
-            versions=versions,
-        )
-        create_or_update_comment(
-            comment=comment,
-            message=message,
-            repo=repo,
-            pr_number=pr_number,
-            token=token,
-        )
-        print(message)
-    except requests.HTTPError:
-        # The above fails if the message is too long. In that case, we
-        # try again without the details.
-        message = get_message(
-            log_file,
-            repo=repo,
-            pr_number=pr_number,
-            sha=sha,
-            run_id=run_id,
-            details=False,
-            versions=versions,
-        )
-        create_or_update_comment(
-            comment=comment,
-            message=message,
-            repo=repo,
-            pr_number=pr_number,
-            token=token,
-        )
-        print(message)
+    message = get_message(
+        log_file,
+        repo_str=repo_str,
+        pr_number=pr_number,
+        sha=sha,
+        run_id=run_id,
+        details=True,
+        versions=versions,
+    )
+
+    update_linter_fails_label(
+        linting_failed=message is not None,
+        issue=issue,
+    )
+
+    comment = find_lint_bot_comments(issue)
+
+    if message is None:  # linting succeeded
+        if comment is not None:
+            print("Deleting existing comment.")
+            comment.delete()
+    else:
+        try:
+            create_or_update_comment(comment, message, issue)
+            print(message)
+        except GithubException:
+            # The above fails if the message is too long. In that case, we
+            # try again without the details.
+            message = get_message(
+                log_file,
+                repo=repo,
+                pr_number=pr_number,
+                sha=sha,
+                run_id=run_id,
+                details=False,
+                versions=versions,
+            )
+            create_or_update_comment(comment, message, issue)
+            print(message)
