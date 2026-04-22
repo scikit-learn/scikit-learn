@@ -1345,8 +1345,15 @@ def _array_api_for_tests(array_namespace, device_name=None):
         and not xp.backends.cuda.is_built()
     ):
         raise SkipTest("PyTorch test requires cuda, which is not available")
-    elif array_namespace == "dpnp" and device_name not in (None, "cpu"):
-        if len(pytest.importorskip("dpctl").get_devices(device_type=device_name)) == 0:
+    elif array_namespace == "dpnp":  # pragma: nocover
+        dpctl = pytest.importorskip("dpctl")
+        if device_name is None:
+            available_devices = dpctl.get_devices()
+            if len(available_devices) == 0:
+                raise SkipTest("Skipping dpnp test because no SYCL devices found")
+            else:
+                device = available_devices[0]
+        elif len(dpctl.get_devices(device_type=device_name)) == 0:
             raise SkipTest(f"Skipping dpnp test because no {device_name} device found")
 
     elif array_namespace == "torch" and device_name == "mps":

@@ -8,7 +8,7 @@ import itertools
 import math
 import os
 from collections import namedtuple
-from functools import partial
+from functools import lru_cache, partial
 
 import numpy
 import scipy
@@ -752,20 +752,41 @@ def _is_xp_namespace(xp, name):
     )
 
 
+@lru_cache(maxsize=100)
 def _max_precision_float_dtype(xp, device):
     """Return the float dtype with the highest precision supported by the device."""
     # TODO: Update to use `__array_namespace__info__()` from array-api v2023.12
     # when/if that becomes more widespread.
-    if _is_xp_namespace(xp, "torch") and (
-        str(device).startswith("mps") or str(device).startswith("xpu")
-    ):  # pragma: no cover
+
+    # Hardcode known expectations when possible to avoid expensive dtype
+    # support checks via try/except.
+    if (
+        _is_xp_namespace(xp, "numpy")
+        or _is_xp_namespace(xp, "array_api_strict")
+        or _is_xp_namespace(xp, "cupy")
+    ):
+        return xp.float64
+
+    if _is_xp_namespace(xp, "torch"):
+        if str(device).startswith("cpu"):
+            return xp.float64
+
+        if str(device).startswith("mps"):
+            # xp.float64 is never supported on MPS devices at the time of writing.
+            return xp.float32
+
+        if str(device).startswith("cuda"):
+            return xp.float64
+
+    # For other namespaces and devices combinations, we need to check support
+    # via a runtime check.
+    try:
+        xp.asarray([0.0], dtype=xp.float64, device=device)
+        return xp.float64
+    except Exception:
+        # If float64 is not supported, we assume float32 is supported, as is the
+        # case for XPU devices in PyTorch and Intel GPUs with dpnp.
         return xp.float32
-    elif _is_xp_namespace(xp, "dpnp") and "gpu" in str(device):  # pragma: no cover
-        # TODO: find a way to inspect if device supports float64, now always
-        # return float32 for Intel GPUs (same as above for XPU devices in
-        # PyTorch).
-        return xp.float32
-    return xp.float64
 
 
 def _find_matching_floating_dtype(*arrays, xp):
