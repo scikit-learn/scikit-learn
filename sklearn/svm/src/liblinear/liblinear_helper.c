@@ -1,4 +1,6 @@
 #include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include "linear.h"

@@ -21,6 +21,7 @@ foreach ext_name, ext_dict : hist_gradient_boosting_extension_metadata
     ext_name,
     [ext_dict.get('sources'), hist_gradient_boosting_cython_tree],
     dependencies: ext_dict.get('dependencies', []),
+    limited_api: limited_api,
     subdir: 'sklearn/ensemble/_hist_gradient_boosting',
     install: true
   )

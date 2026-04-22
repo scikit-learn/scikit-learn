@@ -16,6 +16,7 @@ foreach ext_name, ext_dict : cluster_hdbscan_extension_metadata
     ext_name,
     [ext_dict.get('sources'), cluster_hdbscan_cython_tree],
     dependencies: [np_dep],
+    limited_api: limited_api,
     subdir: 'sklearn/cluster/_hdbscan',
     install: true
   )
