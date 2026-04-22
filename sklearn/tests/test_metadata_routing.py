@@ -1175,7 +1175,7 @@ class _UncopyableOwner:
     """
 
     def __deepcopy__(self, memo):
-        raise AssertionError("owner must not be deep-copied")
+        raise AssertionError("owner must not be deep-copied")  # pragma: no cover
 
 
 def test_method_metadata_request_deepcopy_does_not_copy_owner():
@@ -1237,10 +1237,12 @@ def test_get_routing_for_object_does_not_deepcopy_estimator():
     # of an estimator should not deep-copy the estimator itself.
     class Est(BaseEstimator):
         def fit(self, X, y, sample_weight=None):
-            return self
+            return self  # pragma: no cover
 
         def __deepcopy__(self, memo):
-            raise AssertionError("estimator must not be deep-copied")
+            raise AssertionError(
+                "estimator must not be deep-copied"
+            )  # pragma: no cover
 
     est = Est().set_fit_request(sample_weight=True)
     routing = get_routing_for_object(est)
@@ -1251,10 +1253,12 @@ def test_get_routing_for_object_does_not_deepcopy_estimator():
 def test_add_self_request_does_not_deepcopy_estimator():
     class Est(BaseEstimator):
         def fit(self, X, y, sample_weight=None):
-            return self
+            return self  # pragma: no cover
 
         def __deepcopy__(self, memo):
-            raise AssertionError("estimator must not be deep-copied")
+            raise AssertionError(
+                "estimator must not be deep-copied"
+            )  # pragma: no cover
 
     est = Est().set_fit_request(sample_weight=True)
     # add_self_request deep-copies the request internally; it must not reach
