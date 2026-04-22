@@ -112,6 +112,7 @@ build_metadata_list = [
             # cuvs is needed for cupyx.scipy.spatial.distance.cdist and friends
             "cuvs",
             "array-api-strict",
+            "scipy-doctest",
         ],
         "virtual_package_spec": True,
     },
@@ -401,10 +402,7 @@ build_metadata_list = [
             "sphinxcontrib-sass",
         ],
         "package_constraints": {
-            "python": "3.11",
-            # Pinned while https://github.com/pola-rs/polars/issues/25039 is
-            # not fixed.
-            "polars": "1.34.0",
+            "python": "3.14",
         },
     },
     {

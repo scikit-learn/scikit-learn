@@ -48,12 +48,12 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
-    get_namespace,
-    yield_namespace_device_dtype_combinations,
+    device as array_api_device,
 )
 from sklearn.utils._array_api import (
-    device as array_api_device,
+    get_namespace,
+    move_to,
+    yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._mocking import CheckingClassifier
 from sklearn.utils._tags import get_tags
@@ -1281,12 +1281,12 @@ def test_temperature_scaling_array_api_compliance(
         assert calibrator_xp.beta_.dtype == X_cal_xp.dtype
         assert array_api_device(calibrator_xp.beta_) == array_api_device(X_cal_xp)
         assert_allclose(
-            _convert_to_numpy(calibrator_xp.beta_, xp=xp),
+            move_to(calibrator_xp.beta_, xp=np, device="cpu"),
             calibrator_np.beta_,
             rtol=rtol,
         )
         pred_xp = cal_clf_xp.predict(X_train_xp)
-        assert_allclose(_convert_to_numpy(pred_xp, xp=xp), pred_np)
+        assert_allclose(move_to(pred_xp, xp=np, device="cpu"), pred_np)
 
 
 @pytest.mark.parametrize("ensemble", [False, True])
@@ -1352,7 +1352,7 @@ def test_temperature_scaling_array_api_with_str_y_estimator_not_prefit(
         assert calibrator_xp.beta_.dtype == X_xp.dtype
         assert array_api_device(calibrator_xp.beta_) == array_api_device(X_xp)
         assert_allclose(
-            _convert_to_numpy(calibrator_xp.beta_, xp=xp),
+            move_to(calibrator_xp.beta_, xp=np, device="cpu"),
             calibrator_np.beta_,
             rtol=rtol,
         )

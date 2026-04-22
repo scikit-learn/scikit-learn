@@ -49,8 +49,8 @@ from sklearn.metrics.pairwise import (
 )
 from sklearn.preprocessing import normalize
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
     get_namespace,
+    move_to,
     xpx,
     yield_namespace_device_dtype_combinations,
 )
@@ -169,7 +169,7 @@ def test_pairwise_distances_array_api(array_namespace, device_name, dtype_name, 
     with config_context(array_api_dispatch=True):
         # Test with Y=None
         D_xp = pairwise_distances(X_xp, metric=metric)
-        D_xp_np = _convert_to_numpy(D_xp, xp=xp)
+        D_xp_np = move_to(D_xp, xp=np, device="cpu")
         assert get_namespace(D_xp)[0].__name__ == xp.__name__
         assert D_xp.device == X_xp.device
         assert D_xp.dtype == X_xp.dtype
@@ -179,7 +179,7 @@ def test_pairwise_distances_array_api(array_namespace, device_name, dtype_name, 
 
         # Test with Y=Y_np/Y_xp
         D_xp = pairwise_distances(X_xp, Y=Y_xp, metric=metric)
-        D_xp_np = _convert_to_numpy(D_xp, xp=xp)
+        D_xp_np = move_to(D_xp, xp=np, device="cpu")
         assert get_namespace(D_xp)[0].__name__ == xp.__name__
         assert D_xp.device == X_xp.device
         assert D_xp.dtype == X_xp.dtype
@@ -417,13 +417,13 @@ def test_pairwise_parallel_array_api(
             Y_np = None if y_val is None else Y_np
 
             n_job1_xp = func(X_xp, Y_xp, metric=metric, n_jobs=1, **kwds)
-            n_job1_xp_np = _convert_to_numpy(n_job1_xp, xp=xp)
+            n_job1_xp_np = move_to(n_job1_xp, xp=np, device="cpu")
             assert get_namespace(n_job1_xp)[0].__name__ == xp.__name__
             assert n_job1_xp.device == X_xp.device
             assert n_job1_xp.dtype == X_xp.dtype
 
             n_job2_xp = func(X_xp, Y_xp, metric=metric, n_jobs=2, **kwds)
-            n_job2_xp_np = _convert_to_numpy(n_job2_xp, xp=xp)
+            n_job2_xp_np = move_to(n_job2_xp, xp=np, device="cpu")
             assert get_namespace(n_job2_xp)[0].__name__ == xp.__name__
             assert n_job2_xp.device == X_xp.device
             assert n_job2_xp.dtype == X_xp.dtype
@@ -501,7 +501,7 @@ def test_pairwise_kernels_array_api(metric, array_namespace, device_name, dtype_
     with config_context(array_api_dispatch=True):
         # Test with Y=None
         K_xp = pairwise_kernels(X_xp, metric=metric)
-        K_xp_np = _convert_to_numpy(K_xp, xp=xp)
+        K_xp_np = move_to(K_xp, xp=np, device="cpu")
         assert get_namespace(K_xp)[0].__name__ == xp.__name__
         assert K_xp.device == X_xp.device
         assert K_xp.dtype == X_xp.dtype
@@ -511,7 +511,7 @@ def test_pairwise_kernels_array_api(metric, array_namespace, device_name, dtype_
 
         # Test with Y=Y_np/Y_xp
         K_xp = pairwise_kernels(X_xp, Y=Y_xp, metric=metric)
-        K_xp_np = _convert_to_numpy(K_xp, xp=xp)
+        K_xp_np = move_to(K_xp, xp=np, device="cpu")
         assert get_namespace(K_xp)[0].__name__ == xp.__name__
         assert K_xp.device == X_xp.device
         assert K_xp.dtype == X_xp.dtype
