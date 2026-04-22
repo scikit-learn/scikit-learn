@@ -8,7 +8,6 @@ from sklearn.utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
     _check_param_lengths,
     _convert_to_list_leaving_none,
-    _deprecate_y_pred_parameter,
     _despine,
     _validate_style_kwargs,
 )
@@ -311,7 +310,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         plot_chance_level=False,
         chance_level_kw=None,
         despine=False,
-        **kwargs,
     ):
         """Create a ROC Curve display from an estimator.
 
@@ -381,13 +379,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
             .. versionadded:: 1.6
 
-        **kwargs : dict
-            Keyword arguments to be passed to matplotlib's `plot`.
-
-            .. deprecated:: 1.7
-                kwargs is deprecated and will be removed in 1.9. Pass matplotlib
-                arguments to `curve_kwargs` as a dictionary instead.
-
         Returns
         -------
         display : :class:`~sklearn.metrics.RocCurveDisplay`
@@ -439,7 +430,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
             despine=despine,
-            **kwargs,
         )
 
     @classmethod
@@ -457,8 +447,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         plot_chance_level=False,
         chance_level_kw=None,
         despine=False,
-        y_pred="deprecated",
-        **kwargs,
     ):
         """Plot ROC curve given the true and predicted values.
 
@@ -525,22 +513,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
             .. versionadded:: 1.6
 
-        y_pred : array-like of shape (n_samples,)
-            Target scores, can either be probability estimates of the positive
-            class or non-thresholded decision values (as returned by
-            :term:`decision_function` on some classifiers).
-
-            .. deprecated:: 1.7
-                `y_pred` is deprecated and will be removed in 1.9. Use
-                `y_score` instead.
-
-        **kwargs : dict
-            Additional keywords arguments passed to matplotlib `plot` function.
-
-            .. deprecated:: 1.7
-                kwargs is deprecated and will be removed in 1.9. Pass matplotlib
-                arguments to `curve_kwargs` as a dictionary instead.
-
         Returns
         -------
         display : :class:`~sklearn.metrics.RocCurveDisplay`
@@ -571,7 +543,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        y_score = _deprecate_y_pred_parameter(y_score, y_pred, "1.7")
+        y_score = y_score
         pos_label_validated, name = cls._validate_from_predictions_params(
             y_true, y_score, sample_weight=sample_weight, pos_label=pos_label, name=name
         )
@@ -599,7 +571,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
             despine=despine,
-            **kwargs,
         )
 
     @classmethod
