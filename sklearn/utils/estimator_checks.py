@@ -3279,6 +3279,7 @@ def check_estimators_fit_returns_self(name, estimator_orig):
         set_random_state(estimator)
         assert estimator.fit(X, y) is estimator
 
+
 @ignore_warnings(category=FutureWarning)
 def check_readonly_memmap_input(name, estimator_orig):
     """Check that the estimator can handle readonly memmap backed data."""
