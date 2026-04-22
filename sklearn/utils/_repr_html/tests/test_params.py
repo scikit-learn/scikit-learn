@@ -179,7 +179,7 @@ def test_generate_link_to_param_doc_basic():
 
     doc_link = "mock_module.MockEstimator.html"
     url = generate_link_to_param_doc(MockEstimator, "alpha", doc_link)
-    assert url == "mock_module.MockEstimator.html#:~:text=alpha,-float "
+    assert url == "mock_module.MockEstimator.html#:~:text=alpha,-float"
 
     url = generate_link_to_param_doc(MockEstimator, "beta", doc_link)
     assert url == "mock_module.MockEstimator.html#:~:text=beta,-int"
