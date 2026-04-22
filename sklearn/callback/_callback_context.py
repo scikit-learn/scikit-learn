@@ -364,20 +364,13 @@ class CallbackContext:
             Name of the callback hook to call.
 
         **kwargs: dict
-            Keyword arguments passed to the callback context.
+            Optional keyword arguments passed to the callback context.
 
         Returns
         -------
         result : bool
             True if any hook call returned True. False otherwise.
         """
-        if diff := set(kwargs.keys()) - set(VALID_HOOK_PARAMS_IN):
-            raise TypeError(
-                f"call_{hook_name} in estimator {self.estimator_name} has received "
-                f"parameters that are not valid: {diff}. The valid parameters are: "
-                f"{VALID_HOOK_PARAMS_IN}."
-            )
-
         result = False
 
         # Keep a cache of the evaluated args to evaluate them only once.
@@ -431,7 +424,15 @@ class CallbackContext:
 
         return result
 
-    def call_on_fit_task_begin(self, *, estimator, **kwargs):
+    def call_on_fit_task_begin(
+        self,
+        *,
+        estimator,
+        X=None,
+        y=None,
+        metadata=None,
+        reconstruction_attributes=None,
+    ):
         """Call the `on_fit_task_begin` hook of the callbacks.
 
         Parameters
@@ -439,14 +440,41 @@ class CallbackContext:
         estimator : estimator instance
             The estimator calling the callback hook.
 
-        **kwargs : dict
-            Additional optional arguments passed to the callback. The list of possible
-            keys and corresponding values are described in detail at <TODO: add link>.
+        X : array-like or None, default=None
+            The training data of the current task.
+
+        y : array-like or None, default=None
+            The training targets of the current task.
+
+        metadata : dict or None, default=None
+            A dictionary containing training metadata for the current task.
+
+        reconstruction_attributes : dict or None, default=None
+            A dictionary of the sufficient fitted attributes needed to construct a
+            `fitted_estimator` from the current state of the estimator, i.e. an
+            estimator instance ready to predict, transform, etc ... as if the fit had
+            stopped at the beginning of this task. The `fitted_estimator` is the
+            object that will be passed to the callbacks, if required.
         """
-        self._call_hooks(estimator, hook_name="on_fit_task_begin", **kwargs)
+        self._call_hooks(
+            estimator,
+            hook_name="on_fit_task_begin",
+            X=X,
+            y=y,
+            metadata=metadata,
+            reconstruction_attributes=reconstruction_attributes,
+        )
         return self
 
-    def call_on_fit_task_end(self, *, estimator, **kwargs):
+    def call_on_fit_task_end(
+        self,
+        *,
+        estimator,
+        X=None,
+        y=None,
+        metadata=None,
+        reconstruction_attributes=None,
+    ):
         """Call the `on_fit_task_end` hook of the callbacks.
 
         Parameters
@@ -454,9 +482,21 @@ class CallbackContext:
         estimator : estimator instance
             The estimator calling the callback hook.
 
-        **kwargs : dict
-            Additional optional arguments passed to the callback. The list of possible
-            keys and corresponding values are described in detail at <TODO: add link>.
+        X : array-like or None, default=None
+            The training data of the current task.
+
+        y : array-like or None, default=None
+            The training targets of the current task.
+
+        metadata : dict or None, default=None
+            A dictionary containing training metadata of the current task.
+
+        reconstruction_attributes : dict or None, default=None
+            A dictionary of the sufficient fitted attributes needed to construct a
+            `fitted_estimator` from the current state of the estimator, i.e. an
+            estimator instance ready to predict, transform, etc ... as if the fit had
+            stopped at the end of this task. The `fitted_estimator` is the object
+            that will be passed to the callbacks, if required.
 
         Returns
         -------
@@ -464,7 +504,14 @@ class CallbackContext:
             Whether or not to stop the current level of iterations at this end of this
             task.
         """
-        return self._call_hooks(estimator, hook_name="on_fit_task_end", **kwargs)
+        return self._call_hooks(
+            estimator,
+            hook_name="on_fit_task_end",
+            X=X,
+            y=y,
+            metadata=metadata,
+            reconstruction_attributes=reconstruction_attributes,
+        )
 
     def propagate_callback_context(self, sub_estimator):
         """Propagate the context and callbacks to a sub-estimator.
