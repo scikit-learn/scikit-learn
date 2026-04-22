@@ -1156,15 +1156,7 @@ class BaseSearchCV(
             refit_subctx = callback_ctx.subcontext(task_name="refit with best params")
 
             refit_subctx.propagate_callback_context(self.best_estimator_)
-            sw = params.get("sample_weight", {})
-            metadata = {
-                "train": {"sample_weight": sw},
-                "val": {
-                    "X_val": params.get("X_val", {}),
-                    "y_val": params.get("y_val", {}),
-                    "sample_weight": params.get("sample_weight_val", {}),
-                },
-            }
+            metadata = {"sample_weight": params.get("sample_weight", {})}
             refit_subctx.call_on_fit_task_begin(
                 estimator=self, X=X, y=y, metadata=metadata
             )

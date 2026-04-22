@@ -24,7 +24,7 @@ def get_callback_manager():
     if _CallbackManagerState.manager is None:
         with _CallbackManagerState.lock:
             if _CallbackManagerState.manager is None:
-                _CallbackManagerState.manager = get_context().Manager()
+                _CallbackManagerState.manager = get_context("fork").Manager()
 
     return _CallbackManagerState.manager
 

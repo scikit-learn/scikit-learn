@@ -19,8 +19,8 @@ from sklearn.base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from sklearn.callback.tests._utils import (
     MaxIterEstimator,
     NoCallbackEstimator,
-    TestingAutoPropagatedCallback,
-    TestingCallback,
+    RecordingAutoPropagatedCallback,
+    RecordingCallback,
 )
 from sklearn.cluster import KMeans
 from sklearn.compose import ColumnTransformer
@@ -3014,7 +3014,7 @@ def test_yield_masked_array_no_runtime_warning():
 def test_search_callbacks_no_propagation(search, refit):
     # Check that set callbacks are stored in `_skl_callbacks`, and the correct number of
     # hooks are called when the sub-estimator doesn't support callbacks.
-    callbacks = [TestingCallback(), TestingAutoPropagatedCallback()]
+    callbacks = [RecordingCallback(), RecordingAutoPropagatedCallback()]
     search.set_params(refit=refit)
     search.set_callbacks(callbacks)
     assert all(cb in search._skl_callbacks for cb in callbacks)
@@ -3083,7 +3083,7 @@ def test_search_callbacks_no_propagation(search, refit):
 def test_search_callbacks_propagation(search, refit):
     # Check that set callbacks are stored in `_skl_callbacks`, and the correct number of
     # hooks are called when the sub-estimator does support callbacks.
-    callbacks = [TestingCallback(), TestingAutoPropagatedCallback()]
+    callbacks = [RecordingCallback(), RecordingAutoPropagatedCallback()]
     search.set_params(refit=refit)
     search.set_callbacks(callbacks)
     assert all(cb in search._skl_callbacks for cb in callbacks)
@@ -3106,7 +3106,7 @@ def test_search_callbacks_propagation(search, refit):
     for callback in callbacks:
         assert callback.count_hooks("setup") == 1
         # without propagation, we expect only the hooks from `search` called
-        if callback.__class__.__name__ == "TestingCallback":
+        if callback.__class__.__name__ == "RecordingCallback":
             expected = (
                 root + outer_halving + n_iterations * outer_search + n_searches + refit
             )
@@ -3139,12 +3139,34 @@ def test_search_callbacks_propagation(search, refit):
         assert callback.count_hooks("teardown") == 1
 
 
-def test_search_reconstruction_attributes_callbacks():
+def test_search_callbacks_receive_sample_weight():
+    # Test that `sample_weight` gets passed to `callback.on_fit_task_*`. Note this
+    # tests all *SearchCV classes that inherit from `BaseSearchCV`.
+    callback = RecordingCallback()
+    search = GridSearchCV(
+        MaxIterEstimator(), {"max_iter": [1, 2, 3]}, cv=2, scoring="accuracy"
+    ).set_callbacks(callback)
+    sw = np.ones_like(y)
+    search.fit(X, y, sample_weight=sw)
+
+    for entry in callback.record:
+        # print(entry)
+        # print('')
+        if (
+            entry["name"] == "on_fit_task_begin" or entry["name"] == "on_fit_task_end"
+        ) and entry["kwargs"]["metadata"] is not None:
+            print(entry)
+            w = entry["kwargs"]["metadata"].get("sample_weight", {})
+            print(w)
+            print("")
+            assert w  # assert allclose(w, sw)
+
+
+def test_search_callbacks_receive_reconstruction_attributes():
     # Test that `reconstruction_attributes` pass everything needed to
     # `callback.on_fit_task_end` to reconstruct a working *SearchCV ready to predict.
-    # Note this test is valid for all *SearchCV classes that inherit from
-    # `BaseSearchCV`.
-    callback = TestingCallback()
+    # Note this tests all *SearchCV classes that inherit from `BaseSearchCV`.
+    callback = RecordingCallback()
     search = GridSearchCV(
         MaxIterEstimator(), {"max_iter": [1, 2, 3]}, cv=2, scoring="accuracy"
     ).set_callbacks(callback)

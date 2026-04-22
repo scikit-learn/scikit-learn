@@ -783,15 +783,7 @@ def _fit_and_score(
 
     if callback_ctx is not None:
         callback_ctx.propagate_callback_context(estimator)
-        sw = fit_params.get("sample_weight", {})
-        metadata = {
-            "train": {"sample_weight": sw},
-            "val": {
-                "X_val": fit_params.get("X_val", {}),
-                "y_val": fit_params.get("y_val", {}),
-                "sample_weight": fit_params.get("sample_weight_val", {}),
-            },
-        }
+        metadata = {"sample_weight": fit_params.get("sample_weight", {})}
         callback_ctx.call_on_fit_task_begin(
             estimator=estimator, X=X, y=y, metadata=metadata
         )
