@@ -314,3 +314,43 @@ def test_dtype_correctness(Estimator):
     coef_32 = model.fit(X.astype(np.float32), y).coef_
     coef_64 = model.fit(X.astype(np.float64), y).coef_
     np.testing.assert_allclose(coef_32, coef_64, rtol=1e-4)
+
+
+@pytest.mark.parametrize("Estimator", [BayesianRidge, ARDRegression])
+def test_predict_std_centered_at_training_data(Estimator):
+    # gh-33757: predictive std must be smallest near the training data, not
+    # near the origin.  fit() centers X before computing sigma_, so predict()
+    # must apply the same centering before evaluating the variance form.
+    rng = np.random.RandomState(0)
+    X_train = np.linspace(80, 100, 50).reshape(-1, 1)
+    y_train = X_train.ravel() + rng.randn(50)
+    model = Estimator().fit(X_train, y_train)
+
+    X_near_training = np.array([[90.0]])
+    X_near_origin = np.array([[0.0]])
+
+    _, std_near_training = model.predict(X_near_training, return_std=True)
+    _, std_near_origin = model.predict(X_near_origin, return_std=True)
+
+    assert std_near_training < std_near_origin, (
+        f"{Estimator.__name__}.predict(return_std=True) should yield lower uncertainty "
+        "near training data than near the origin when training data is far from origin."
+    )
+
+
+def test_bayesian_ridge_predict_std_matches_formula():
+    # gh-33757: verify predict(return_std=True) matches the analytical formula
+    # sigma^2 = 1/alpha + (x - x_offset)^T @ Sigma @ (x - x_offset).
+    rng = np.random.RandomState(42)
+    X_train = np.linspace(50, 70, 40).reshape(-1, 1)
+    y_train = 2 * X_train.ravel() + rng.randn(40)
+    model = BayesianRidge().fit(X_train, y_train)
+
+    X_test = np.linspace(40, 80, 15).reshape(-1, 1)
+    _, y_std = model.predict(X_test, return_std=True)
+
+    X_centered = X_test - model.X_offset_
+    sigmas_sq = (X_centered @ model.sigma_ * X_centered).sum(axis=1)
+    y_std_expected = np.sqrt(sigmas_sq + 1.0 / model.alpha_)
+
+    np.testing.assert_allclose(y_std, y_std_expected, rtol=1e-10)
