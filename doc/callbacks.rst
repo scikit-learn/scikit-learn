@@ -20,25 +20,21 @@ to the related section of the developer guide.
 
 .. TODO add refs to callback developer doc
 
-Generally speaking, a callback is a mechanism used to execute custom code at specific
-points during an algorithm's execution. Callbacks provide a clean way to insert custom
-logic like monitoring progress or metrics, without modifying the underlying algorithm.
-
-In scikit-learn, callbacks are objects that can be registered to an estimator. During
-the fitting of the estimator, the callbacks registered to it will have their methods
+In scikit-learn, callbacks are objects from the :mod:`callbacks` module that can be
+registered on an estimator to insert custom logic like monitoring progress or metrics,
+without modifying the underlying learning algorithm. The registered callbacks are
 called at specific steps of the fitting process.
 
-Callback registration examples
-******************************
+Registering callbacks
+*********************
 
-The following snippet demonstrates how a :class:`~ProgressBar` callback can be
-registered on a :class:`~sklearn.linear_model.LogisticRegression` estimator using its
-:meth:`~CallbackSupportMixin.set_callbacks` method::
+Estimators that support callbacks expose a :meth:`~CallbackSupportMixin.set_callbacks`
+method to register callbacks on them. The following example shows how to register a :class:`~ProgressBar` callback on a :class:`~sklearn.linear_model.LogisticRegression`::
 
     >>> from sklearn.callback import ProgressBar
     >>> from sklearn.linear_model import LogisticRegression
-    >>> estimator = LogisticRegression()
     >>> progress_bar = ProgressBar()
+    >>> estimator = LogisticRegression()
     >>> estimator.set_callbacks(progress_bar)
 
 Now that the progress bar is registered to the estimator, calling its `fit` method will
@@ -74,9 +70,9 @@ An :class:`~AutoPropagatedCallback`, such as :class:`~ProgressBar`, is a callbac
 can be propagated to sub-estimators when registered to a meta-estimator. Thus its
 methods can be called in the `fit` executions of both the meta-estimator and the
 sub-estimators, allowing to aggregate information about the `fit` process of both types
-of estimators. If the sub-estimators are also meta-estimator, the auto-propageted
+of estimators. If the sub-estimators are also meta-estimator, the auto-propagated
 callback can be propagated to the sub-sub-estimators too, and so on. This callback
-propagation is controlled through a `max_propagation_depth` argument of the callback.
+propagation is controlled through the `max_propagation_depth` argument of the callback.
 This argument indicates the estimator depth up to which the callback will be propagated
 in an estimator composition.
 
@@ -90,7 +86,7 @@ AutoPropagatedCallback examples
 In the case of a
 :class:`~sklearn.model_selection.GridSearchCV` applied on a
 :class:`~sklearn.linear_model.LogisticRegression`, the auto-propagated callback
-:class:`~ProgressBar` must be registered to the :class:`~sklearn.search.GridSearchCV`::
+:class:`~ProgressBar` must be registered to the :class:`~sklearn.model_selection.GridSearchCV`::
 
     >>> from sklearn.model_selection import GridSearchCV
     >>> parameters = {"l1_ratio": [0, 1], "fit_intercept": [True, False]}
@@ -101,7 +97,7 @@ In the case of a
     #TODO add printed output
 
 Changing the `max_propagation_depth` argument to 0 will make the auto-propagated
-callback only be registered to the top-level estimtor, in that case it means that only
+callback only be registered to the top-level estimator, in that case it means that only
 one progressbar for the :class:`~sklearn.model_selection.GridSearchCV` will be
 displayed::
 
@@ -144,7 +140,7 @@ In the case of a :class:`~sklearn.model_selection.GridSearchCV` applied on a
     #TODO add printed output, or maybe use the logs in a plot
 
 The non auto-propagated callback can also be registered to the
-:class:`~sklearn.search.GridSearchCV`::
+:class:`~sklearn.model_selection.GridSearchCV`::
 
     >>> sub_estimator = LogisticRegression()
     >>> meta_estimator = GridSearchCV(sub_estimator, parameters).set_callbacks(scoring)
@@ -172,7 +168,7 @@ Callback                       Description
 ============================== =========================================================
 :class:`~ProgressBar`          Display progress bars.
 
-:class:`~ScoringMonitor`       Log the a scoring metric at the end of each task during
+:class:`~ScoringMonitor`       Log a scoring metric at the end of each task during
                                fit.
 ============================== =========================================================
 
