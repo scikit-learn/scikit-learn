@@ -426,7 +426,6 @@ def smacof(
 
 
 # TODO(1.10): change default `init` to "classical_mds", see PR #32229
-# TODO(1.10): drop support for boolean `metric`, see PR #32229
 # TODO(1.10): drop support for `dissimilarity`, see PR #32229
 class MDS(BaseEstimator):
     """Multidimensional scaling.
@@ -519,11 +518,6 @@ class MDS(BaseEstimator):
         vectors as inputs and must return one value indicating the distance
         between those vectors. This works for Scipy's metrics, but is less
         efficient than passing the metric name as a string.
-
-        .. versionchanged:: 1.8
-           Prior to 1.8, `metric=True/False` was used to select metric/non-metric
-           MDS, which is now the role of `metric_mds`.  The support for ``True``
-           and ``False`` will be dropped in version 1.10, use `metric_mds` instead.
 
     metric_params : dict, default=None
         Additional keyword arguments for the dissimilarity computation.
@@ -635,7 +629,7 @@ class MDS(BaseEstimator):
             StrOptions({"euclidean", "precomputed"}),
             Hidden(StrOptions({"deprecated"})),
         ],
-        "metric": [str, callable, Hidden("boolean")],
+        "metric": [str, callable],
         "metric_params": [dict, None],
         "normalized_stress": ["boolean", StrOptions({"auto"})],
     }
@@ -743,7 +737,7 @@ class MDS(BaseEstimator):
             self._init = self.init
 
         if self.dissimilarity != "deprecated":
-            if not isinstance(self.metric, bool) and self.metric != "euclidean":
+            if self.metric != "euclidean":
                 raise ValueError(
                     "You provided both `dissimilarity` and `metric`. Please use "
                     "only `metric`."
@@ -756,19 +750,9 @@ class MDS(BaseEstimator):
                 )
                 self._metric = self.dissimilarity
 
-        if isinstance(self.metric, bool):
-            warnings.warn(
-                f"Use metric_mds={self.metric} instead of metric={self.metric}. The "
-                "support for metric={True/False} will be dropped in 1.10.",
-                FutureWarning,
-            )
-            if self.dissimilarity == "deprecated":
-                self._metric = "euclidean"
-            self._metric_mds = self.metric
-        else:
-            if self.dissimilarity == "deprecated":
-                self._metric = self.metric
-            self._metric_mds = self.metric_mds
+        if self.dissimilarity == "deprecated":
+            self._metric = self.metric
+        self._metric_mds = self.metric_mds
 
         X = validate_data(self, X)
         if X.shape[0] == X.shape[1] and self._metric != "precomputed":

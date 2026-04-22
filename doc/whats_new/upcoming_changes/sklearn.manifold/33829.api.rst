@@ -1,0 +1,3 @@
+- The `metric` parameter of :class:`manifold.MDS` no longer accepts boolean
+  values. Use the `metric_mds` parameter instead to select metric or non-metric
+  MDS.

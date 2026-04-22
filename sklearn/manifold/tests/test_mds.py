@@ -153,10 +153,8 @@ def test_normed_stress(k):
     assert_allclose(X1, X2, rtol=1e-5)
 
 
-# TODO(1.10): remove warning filter
-@pytest.mark.filterwarnings("ignore::FutureWarning")
-@pytest.mark.parametrize("metric", [True, False])
-def test_normalized_stress_auto(metric, monkeypatch):
+@pytest.mark.parametrize("metric_mds", [True, False])
+def test_normalized_stress_auto(metric_mds, monkeypatch):
     rng = np.random.RandomState(0)
     X = rng.randn(4, 3)
     dist = euclidean_distances(X)
@@ -164,12 +162,14 @@ def test_normalized_stress_auto(metric, monkeypatch):
     mock = Mock(side_effect=mds._smacof_single)
     monkeypatch.setattr("sklearn.manifold._mds._smacof_single", mock)
 
-    est = mds.MDS(metric=metric, normalized_stress="auto", random_state=rng)
+    est = mds.MDS(
+        metric_mds=metric_mds, normalized_stress="auto", random_state=rng, init="random"
+    )
     est.fit_transform(X)
-    assert mock.call_args[1]["normalized_stress"] != metric
+    assert mock.call_args[1]["normalized_stress"] != metric_mds
 
-    mds.smacof(dist, metric=metric, normalized_stress="auto", random_state=rng)
-    assert mock.call_args[1]["normalized_stress"] != metric
+    mds.smacof(dist, metric=metric_mds, normalized_stress="auto", random_state=rng)
+    assert mock.call_args[1]["normalized_stress"] != metric_mds
 
 
 def test_isotonic_outofbounds():
@@ -250,14 +250,6 @@ def test_future_warning_init_and_metric():
     # dissimilarity argument deprecated
     with pytest.warns(FutureWarning, match="`dissimilarity` parameter is"):
         mds.MDS(dissimilarity="precomputed", init="random", n_init=1).fit(sim)
-
-    # metric=True deprecated
-    with pytest.warns(FutureWarning, match="Use metric_mds"):
-        mds.MDS(metric=True, init="random", n_init=1).fit(X)
-
-    # metric=False deprecated
-    with pytest.warns(FutureWarning, match="Use metric_mds"):
-        mds.MDS(metric=False, init="random", n_init=1).fit(X)
 
     # default init will become classical_mds in the future
     with pytest.warns(FutureWarning, match="The default value of `init`"):
