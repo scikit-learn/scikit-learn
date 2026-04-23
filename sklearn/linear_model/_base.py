@@ -302,13 +302,13 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features)
+        X : array-like or sparse matrix of shape (n_samples, n_features)
             Samples.
 
         Returns
         -------
-        C : array, shape (n_samples,)
-            Returns predicted values.
+        C : ndarray of shape (n_samples,)
+            Predicted values.
         """
         check_same_namespace(X, self, attribute="coef_", method="predict")
         return self._decision_function(X)
@@ -331,6 +331,26 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
 
         else:
             self.intercept_ = 0.0
+
+
+class MultiOutputLinearModel(MultiOutputMixin, LinearModel):
+    # Provides consistent docstring to `predict` for linear models that support
+    # multi-output.
+    def predict(self, X):
+        """
+        Predict using the linear model.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape (n_samples, n_features)
+            Samples.
+
+        Returns
+        -------
+        C : ndarray of shape (n_samples,) or (n_samples, n_outputs)
+            Predicted values.
+        """
+        return super().predict(X)
 
 
 # XXX Should this derive from LinearModel? It should be a mixin, not an ABC.
@@ -487,7 +507,7 @@ class SparseCoefMixin:
         return self
 
 
-class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
+class LinearRegression(RegressorMixin, MultiOutputLinearModel):
     """
     Ordinary least squares Linear Regression.
 
@@ -507,12 +527,14 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
     tol : float, default=1e-6
         The precision of the solution (`coef_`) is determined by `tol` which
-        specifies a different convergence criterion for the `lsqr` solver.
-        `tol` is set as `atol` and `btol` of :func:`scipy.sparse.linalg.lsqr` when
-        fitting on sparse training data. This parameter has no effect when fitting
-        on dense data.
+        specifies the convergence criterion of the underlying solver. `tol` is
+        set as `atol` and `btol` of :func:`scipy.sparse.linalg.lsqr` when
+        fitting on sparse training data. `tol` is set as `cond` of
+        :func:`scipy.linalg.lstsq` when fitting on dense training data.
 
         .. versionadded:: 1.7
+        .. versionchanged:: 1.9
+            Now supported on dense data, interpreted as the `cond` parameter.
 
     n_jobs : int, default=None
         The number of jobs to use for the computation. This will only provide
@@ -718,9 +740,9 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                 )
                 self.coef_ = np.vstack([out[0] for out in outs])
         else:
-            # cut-off ratio for small singular values
-            cond = max(X.shape) * np.finfo(X.dtype).eps
-            self.coef_, _, self.rank_, self.singular_ = linalg.lstsq(X, y, cond=cond)
+            self.coef_, _, self.rank_, self.singular_ = linalg.lstsq(
+                X, y, cond=self.tol
+            )
             self.coef_ = self.coef_.T
 
         if y.ndim == 1:

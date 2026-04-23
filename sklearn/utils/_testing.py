@@ -1316,7 +1316,7 @@ def _array_api_for_tests(array_namespace, device_name=None):
     -------
     xp : module
         The module object for the requested array namespace.
-    device : object or None
+    device : object, str or None
         The library specific device object that can be passed to
         xp.asarray(..., device=device). This might be a string and not
         a library specific device object.
@@ -1470,6 +1470,14 @@ def _get_warnings_filters_info_list():
         ),
         WarningInfo(
             "ignore", message="Attribute s is deprecated", category=DeprecationWarning
+        ),
+        # sphinx-gallery uses codecs.open(); deprecated in Python 3.14. Remove once
+        # a sphinx-gallery release includes
+        # https://github.com/sphinx-gallery/sphinx-gallery/pull/1594
+        WarningInfo(
+            "ignore",
+            message=r"codecs\.open\(\) is deprecated",
+            category=DeprecationWarning,
         ),
         # Plotly deprecated something which we're not using, but internally it's used
         # and needs to be fixed on their side.

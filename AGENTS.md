@@ -1,6 +1,6 @@
 # AGENTS Instruction
 
-This file contains is additional guidance for AI agents and other AI editors.
+This file contains additional guidance for AI agents and other AI editors.
 
 ## **REQUIRED: AI/Agent Disclosure**
 
