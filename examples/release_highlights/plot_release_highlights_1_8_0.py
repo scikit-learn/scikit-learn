@@ -132,8 +132,8 @@ or with conda::
 # (better) calibrated probabilities with a single free parameter. This is in
 # contrast to all the other available calibrations methods
 # which use a "One-vs-Rest" scheme that adds more parameters for each class.
-# This makes temperature scaling more efficient and less prone to overfitting,
-# especially when dealing with limited data.
+# This approach relies on a single parameter, making it simpler compared to
+# methods that require fitting multiple models in a One-vs-Rest manner.
 
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.datasets import make_classification
