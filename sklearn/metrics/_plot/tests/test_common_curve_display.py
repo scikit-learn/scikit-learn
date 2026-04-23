@@ -802,8 +802,6 @@ def test_display_from_cv_results_curve_kwargs_default_kwargs(
             PrecisionRecallDisplay,
             {"precision": np.array([1, 0.5, 0]), "recall": np.array([0, 0.5, 1])},
         ),
-        # TODO(1.9): Remove
-        (RocCurveDisplay, {"fpr": np.array([0, 0.5, 1]), "tpr": np.array([0, 0.5, 1])}),
     ],
 )
 def test_display_estimator_name_deprecation(pyplot, Display, display_kwargs):
@@ -820,8 +818,6 @@ def test_display_estimator_name_deprecation(pyplot, Display, display_kwargs):
             PrecisionRecallDisplay,
             {"precision": np.array([1, 0.5, 0]), "recall": np.array([0, 0.5, 1])},
         ),
-        # TODO(1.9): Remove
-        (RocCurveDisplay, {"fpr": np.array([0, 0.5, 1]), "tpr": np.array([0, 0.5, 1])}),
     ],
 )
 @pytest.mark.parametrize(

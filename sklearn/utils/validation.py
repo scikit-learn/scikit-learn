@@ -23,13 +23,13 @@ from sklearn.exceptions import (
 )
 from sklearn.utils._array_api import (
     _asarray_with_order,
-    _convert_to_numpy,
     _is_numpy_namespace,
     _max_precision_float_dtype,
     get_namespace,
     get_namespace_and_device,
+    move_to,
 )
-from sklearn.utils._dataframe import is_pandas_df, is_pandas_df_or_series
+from sklearn.utils._dataframe import is_pandas_df, is_pandas_df_or_series, is_polars_df
 from sklearn.utils._isfinite import FiniteStatus, cy_isfinite
 from sklearn.utils._tags import get_tags
 from sklearn.utils.fixes import (
@@ -306,13 +306,16 @@ def _is_arraylike_not_scalar(array):
 
 
 def _use_interchange_protocol(X):
-    """Use interchange protocol for non-pandas dataframes that follow the protocol.
+    """Use interchange protocol for non-pandas/polars dataframes that follow the
+    protocol.
 
-    Note: at this point we chose not to use the interchange API on pandas dataframe
+    Note: At this point we chose not to use the interchange API on pandas dataframe
     to ensure strict behavioral backward compatibility with older versions of
     scikit-learn.
+    We also exclude the interchange protocol for polars because it was deprecated
+    in polars 1.40.
     """
-    return not is_pandas_df(X) and hasattr(X, "__dataframe__")
+    return hasattr(X, "__dataframe__") and not is_pandas_df(X) and not is_polars_df(X)
 
 
 def _num_features(X):
@@ -375,16 +378,6 @@ def _num_samples(x):
         # Don't get num_samples from an ensembles length!
         raise TypeError(message)
 
-    if _use_interchange_protocol(x):
-        return x.__dataframe__().num_rows()
-
-    if not hasattr(x, "__len__") and not hasattr(x, "shape"):
-        if hasattr(x, "__array__"):
-            xp, _ = get_namespace(x)
-            x = xp.asarray(x)
-        else:
-            raise TypeError(message)
-
     if hasattr(x, "shape") and x.shape is not None:
         if len(x.shape) == 0:
             raise TypeError(
@@ -395,6 +388,16 @@ def _num_samples(x):
         # Dask dataframes may not return numeric shape[0] value
         if isinstance(x.shape[0], numbers.Integral):
             return x.shape[0]
+
+    if _use_interchange_protocol(x):
+        return x.__dataframe__().num_rows()
+
+    if not hasattr(x, "__len__") and not hasattr(x, "shape"):
+        if hasattr(x, "__array__"):
+            xp, _ = get_namespace(x)
+            x = xp.asarray(x)
+        else:
+            raise TypeError(message)
 
     try:
         return len(x)
@@ -508,10 +511,10 @@ def indexable(*iterables):
     Examples
     --------
     >>> from sklearn.utils import indexable
-    >>> from scipy.sparse import csr_matrix
+    >>> from scipy.sparse import csr_array
     >>> import numpy as np
     >>> iterables = [
-    ...     [1, 2, 3], np.array([2, 3, 4]), None, csr_matrix([[5], [6], [7]])
+    ...     [1, 2, 3], np.array([2, 3, 4]), None, csr_array([[5], [6], [7]])
     ... ]
     >>> indexable(*iterables)
     [[1, 2, 3], array([2, 3, 4]), None, <...Sparse...dtype 'int64'...shape (3, 1)>]
@@ -570,6 +573,10 @@ def _ensure_sparse_format(
         .. versionchanged:: 0.23
            Accepts `pd.NA` and converts it into `np.nan`
 
+    accept_large_sparse : bool
+        If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
+        accept_sparse, accept_large_sparse will cause it to be accepted only
+        if its indices are stored with a 32-bit dtype.
 
     estimator_name : str, default=None
         The estimator name, used to construct the error message.
@@ -1557,10 +1564,10 @@ def check_symmetric(array, *, tol=1e-10, raise_warning=True, raise_exception=Fal
     array([[0, 1, 2],
            [1, 0, 1],
            [2, 1, 0]])
-    >>> from scipy.sparse import csr_matrix
-    >>> sparse_symmetric_array = csr_matrix(symmetric_array)
+    >>> from scipy.sparse import csr_array
+    >>> sparse_symmetric_array = csr_array(symmetric_array)
     >>> check_symmetric(sparse_symmetric_array)
-    <Compressed Sparse Row sparse matrix of dtype 'int64'
+    <Compressed Sparse Row sparse array of dtype 'int64'
         with 6 stored elements and shape (3, 3)>
     """
     if (array.ndim != 2) or (array.shape[0] != array.shape[1]):
@@ -2153,7 +2160,9 @@ def _check_sample_weight(
     sample_weight : ndarray of shape (n_samples,)
         Validated sample weight. It is guaranteed to be "C" contiguous.
     """
-    xp, is_array_api, device = get_namespace_and_device(X, remove_types=(int, float))
+    xp, is_array_api, device = get_namespace_and_device(
+        X, remove_types=(list, int, float)
+    )
 
     n_samples = _num_samples(X)
 
@@ -2357,13 +2366,13 @@ def _get_feature_names(X):
     feature_names = None
 
     # extract feature names for support array containers
-    if is_pandas_df(X):
+    if is_pandas_df(X) or is_polars_df(X):
         # Make sure we can inspect columns names from pandas, even with
         # versions too old to expose a working implementation of
         # __dataframe__.column_names() and avoid introducing any
         # additional copy.
-        # TODO: remove the pandas-specific branch once the minimum supported
-        # version of pandas has a working implementation of
+        # TODO: remove the pandas-specific branch (but keep polars) once the minimum
+        # supported version of pandas has a working implementation of
         # __dataframe__.column_names() that is guaranteed to not introduce any
         # additional copy of the data without having to impose allow_copy=False
         # that could fail with other libraries. Note: in the longer term, we
@@ -2609,7 +2618,7 @@ def _check_pos_label_consistency(pos_label, y_true):
                 or xp.all(classes == xp.asarray([1], device=device))
             )
         ):
-            classes = _convert_to_numpy(classes, xp=xp)
+            classes = move_to(classes, xp=np, device="cpu")
             classes_repr = ", ".join([repr(c) for c in classes.tolist()])
             raise ValueError(
                 f"y_true takes value in {{{classes_repr}}} and pos_label is not "

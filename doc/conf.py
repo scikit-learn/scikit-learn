@@ -440,6 +440,7 @@ redirects = {
     "documentation": "index",
     "contents": "index",
     "preface": "index",
+    "dispatching": "data_interoperability",
     "modules/classes": "api/index",
     "tutorial/machine_learning_map/index": "machine_learning_map",
     "auto_examples/feature_selection/plot_permutation_test_for_classification": (
@@ -514,6 +515,9 @@ redirects = {
     ),
     "auto_examples/linear_model/plot_sgd_comparison": (
         "auto_examples/linear_model/plot_sgd_loss_functions"
+    ),
+    "auto_examples/miscellaneous/plot_partial_dependence_visualization_api": (
+        "auto_examples/inspection/plot_partial_dependence_visualization_api"
     ),
 }
 html_context["redirects"] = redirects
