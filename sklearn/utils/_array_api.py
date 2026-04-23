@@ -559,7 +559,9 @@ def move_to(*arrays, xp, device):
         Tuple of arrays with the same namespace and device as reference. Single array
         returned if only one `arrays` input.
     """
-    if isinstance(device, str) and device.startswith("xpu") and ":" not in device:
+    if (
+        isinstance(device, str) and device.startswith("xpu") and ":" not in device
+    ):  # pragma: nocover
         # XXX: Workaround for PyTorch XPU bug for `from_dlpack` calls with
         # device strings that do not include any device number suffix.
         # https://github.com/pytorch/pytorch/issues/181140
@@ -777,15 +779,15 @@ def _max_precision_float_dtype(xp, device):
             # xp.float64 is never supported on MPS devices at the time of writing.
             return xp.float32
 
-        if str(device).startswith("cuda"):
+        if str(device).startswith("cuda"):  # pragma: nocover
             return xp.float64
 
     # For other namespaces and devices combinations, we need to check support
     # via a runtime check.
-    try:
+    try:  # pragma: nocover
         xp.asarray([0.0], dtype=xp.float64, device=device)
         return xp.float64
-    except Exception:
+    except Exception:  # pragma: nocover
         # If float64 is not supported, we assume float32 is supported, as is the
         # case for XPU devices in PyTorch and Intel GPUs with dpnp.
         return xp.float32
