@@ -1,45 +1,52 @@
 """
-==========================
-Metadata Routing Tree View
-==========================
+==================================
+Visualising metadata routing trees
+==================================
 
 .. currentmodule:: sklearn
 
-This example demonstrates the improved tree-based visualization for metadata routing
-that makes it easier to understand how parameters are routed through a complex
-pipeline of estimators.
+When metadata routing is enabled and a composite estimator routes metadata such
+as ``sample_weight`` or ``groups`` through a hierarchy of pipelines, column
+transformers, scorers and cross-validation splitters, it can be hard to tell
+which parameter is consumed where, which is renamed (aliased), and which raises
+or warns.
 
-The tree view reduces verbosity by showing each component only once and displaying
-parameters and method mappings in a more structured way.
+:func:`~sklearn.utils.metadata_routing.get_routing_for_object` returns the
+raw routing object, but its default ``repr`` is not designed to be read at a
+glance. The helpers :func:`~sklearn.utils._metadata_routing_visualise.format_routing`
+and :func:`~sklearn.utils._metadata_routing_visualise.visualise_routing` render
+it as a human-readable tree with a per-parameter summary.
 """
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 # %%
+# Build a representative estimator
+# --------------------------------
+#
+# A :class:`~sklearn.model_selection.RandomizedSearchCV` wraps a
+# :class:`~sklearn.pipeline.Pipeline` whose preprocessing step is a
+# :class:`~sklearn.compose.ColumnTransformer`. The CV uses
+# :class:`~sklearn.model_selection.GroupKFold` (so ``groups`` must be routed)
+# and a scorer with an aliased ``sample_weight`` (so ``my_w`` must be routed
+# to the scorer's ``sample_weight``).
 
 from sklearn import set_config
 from sklearn.compose import ColumnTransformer
 from sklearn.feature_selection import SelectPercentile, chi2
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import get_scorer
 from sklearn.model_selection import GroupKFold, RandomizedSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
-from sklearn.utils._metadata_routing_tree_visualise import visualise_routing_tree
-
-# Import both visualization methods for comparison
-from sklearn.utils._metadata_routing_visualise import (
-    visualise_routing as original_visualise,
-)
+from sklearn.utils._metadata_routing_visualise import visualise_routing
 from sklearn.utils.metadata_routing import get_routing_for_object
 
-# Enable metadata routing
 set_config(enable_metadata_routing=True)
 
-# Create a complex pipeline similar to the one in the original example
-numeric_features = ["age", "fare"]
-numeric_transformer = Pipeline(
+numeric = Pipeline(
     steps=[
         ("imputer", SimpleImputer(strategy="median")),
         (
@@ -50,9 +57,7 @@ numeric_transformer = Pipeline(
         ),
     ]
 )
-
-categorical_features = ["embarked", "sex", "pclass"]
-categorical_transformer = Pipeline(
+categorical = Pipeline(
     steps=[
         ("encoder", OneHotEncoder(handle_unknown="ignore")),
         ("selector", SelectPercentile(chi2, percentile=50)),
@@ -60,53 +65,43 @@ categorical_transformer = Pipeline(
 )
 preprocessor = ColumnTransformer(
     transformers=[
-        ("num", numeric_transformer, numeric_features),
-        ("cat", categorical_transformer, categorical_features),
+        ("num", numeric, ["age", "fare"]),
+        ("cat", categorical, ["embarked", "sex", "pclass"]),
     ]
 )
-
-# Append classifier to preprocessing pipeline
 clf = Pipeline(
     steps=[
         ("preprocessor", preprocessor),
-        ("classifier", LogisticRegression().set_fit_request(sample_weight=True)),
+        ("classifier", LogisticRegression().set_fit_request(sample_weight=False)),
     ]
 )
+scorer = get_scorer("accuracy").set_score_request(sample_weight="my_w")
+search = RandomizedSearchCV(clf, {}, cv=GroupKFold(), scoring=scorer, random_state=0)
 
-param_grid = {
-    "preprocessor__num__imputer__strategy": ["mean", "median"],
-    "preprocessor__cat__selector__percentile": [10, 30, 50, 70],
-    "classifier__C": [0.1, 1.0, 10, 100],
-}
+routing = get_routing_for_object(search)
 
-search_cv = RandomizedSearchCV(clf, param_grid, cv=GroupKFold(), random_state=0)
+# %%
+# Default view: legend, tree, and per-method summary
+# --------------------------------------------------
 
-# Get the routing information
-routing_info = get_routing_for_object(search_cv)
+visualise_routing(routing)
 
-# Compare the two visualization methods
-print("=" * 80)
-print("ORIGINAL VERBOSE VISUALIZATION")
-print("=" * 80)
-# Use the original visualization function
-original_visualise(routing_info)
+# %%
+# Filter by parameter
+# -------------------
+#
+# Restrict the output to a single user-facing parameter. The parameter name
+# used for filtering is the *alias* (what the user would pass as a keyword
+# when calling ``fit``/``score``), so filtering by ``"my_w"`` picks up the
+# scorer even though the component name is ``sample_weight``.
 
-print("\n" + "=" * 80)
-print("NEW TREE-BASED VISUALIZATION")
-print("=" * 80)
-print(visualise_routing_tree(routing_info))
+visualise_routing(routing, param="my_w")
 
-print("\n" + "=" * 80)
-print("PARAMETER-SPECIFIC VISUALIZATION: sample_weight")
-print("=" * 80)
-print(visualise_routing_tree(routing_info, param="sample_weight"))
+# %%
+# Filter by root method
+# ---------------------
+#
+# Restrict the summary to a single root method — for example, only what
+# happens when ``search.fit(...)`` is called.
 
-print("\n" + "=" * 80)
-print("PARAMETER-SPECIFIC VISUALIZATION: copy")
-print("=" * 80)
-print(visualise_routing_tree(routing_info, param="copy"))
-
-print("\n" + "=" * 80)
-print("PARAMETER-SPECIFIC VISUALIZATION: groups")
-print("=" * 80)
-print(visualise_routing_tree(routing_info, param="groups"))
+visualise_routing(routing, method="fit")

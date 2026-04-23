@@ -1,20 +1,11 @@
-"""Tests for sklearn.utils._metadata_routing_visualise
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-The visualisation helper functions are largely side-effect based (they print
-ASCII diagrams).  The public contract we care about is that the *underlying*
-metadata inspection logic builds the correct internal structures and that the
-high-level helpers do not crash and include key information in their output.
+"""Tests for ``sklearn.utils._metadata_routing_visualise``."""
 
-These tests focus on `_collect_routing_info` (the work-horse that produces a
-rich mapping used by all views) and perform a smoke-test on `visualise_routing` to
-ensure it runs end-to-end.
-"""
+import pytest
 
-from __future__ import annotations
-
-import re
-
-from sklearn import config_context, set_config
+from sklearn import config_context
 from sklearn.compose import ColumnTransformer
 from sklearn.feature_selection import SelectPercentile, chi2
 from sklearn.impute import SimpleImputer
@@ -23,130 +14,275 @@ from sklearn.metrics import get_scorer
 from sklearn.model_selection import GroupKFold, RandomizedSearchCV
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
-from sklearn.utils._metadata_requests import WARN, _routing_repr
+from sklearn.utils._metadata_requests import UNUSED, WARN, MetadataRouter
 from sklearn.utils._metadata_routing_visualise import (
-    _collect_routing_info,
+    _build_tree,
+    _status_category,
+    format_routing,
     visualise_routing,
 )
 from sklearn.utils.metadata_routing import get_routing_for_object
 
 
-@config_context(enable_metadata_routing=True)
-def capsys_disabled_routing(monkeypatch):
-    """Capture *only* stdout of `visualise_routing`.
-
-    We monkey-patch ``print`` inside the visualisation module so that the output
-    is sent to a list we control.  This is more robust than capturing the
-    global stdout via ``capsys`` in case other prints happen in parallel.
-    """
-
-    captured: list[str] = []
-
-    def fake_print(*args, **kwargs):
-        captured.append(" ".join(map(str, args)))
-
-    from sklearn.utils import _metadata_routing_visualise as vis_mod
-
-    monkeypatch.setattr(vis_mod, "print", fake_print)
-    return captured
+@pytest.fixture(autouse=True)
+def _enable_metadata_routing():
+    with config_context(enable_metadata_routing=True):
+        yield
 
 
-# ---------------------------------------------------------------------------
-# Low-level mapping tests
-# ---------------------------------------------------------------------------
+def _routing_of(est):
+    return get_routing_for_object(est)
 
 
-@config_context(enable_metadata_routing=True)
-def test_collect_routing_info_simple_consumer():
+# --- Classification --------------------------------------------------------
+
+
+def test_status_category_maps_known_values():
+    assert _status_category(True) == "requested"
+    assert _status_category(False) == "ignored"
+    assert _status_category(None) == "errors"
+    assert _status_category(WARN) == "warns"
+    assert _status_category(UNUSED) == "unused"
+    # Aliases are also "requested"
+    assert _status_category("my_alias") == "requested"
+
+
+# --- Traversal: node tree structure ----------------------------------------
+
+
+def test_build_tree_single_consumer_sets_status():
     lr = LogisticRegression().set_fit_request(sample_weight=True)
-    routing = get_routing_for_object(lr)
-
-    info = _collect_routing_info(routing)
-    path = _routing_repr(lr)  # root path is _routing_repr of the root object
-
-    # The parameter should be present and requested for ``fit`` only.
-    assert "sample_weight" in info[path]["params"]
-    assert info[path]["statuses"]["sample_weight"]["fit"] is True
+    root = _build_tree(_routing_of(lr))
+    assert root.owner_repr == "LogisticRegression"
+    assert root.step_name is None
+    assert root.children == []
+    assert root.statuses["sample_weight"]["fit"] is True
 
 
-@config_context(enable_metadata_routing=True)
-def test_collect_routing_info_alias():
+def test_build_tree_alias_recorded_as_string_status():
     scaler = StandardScaler().set_fit_request(sample_weight="user_w")
-    routing = get_routing_for_object(scaler)
-
-    info = _collect_routing_info(routing)
-    path = scaler.__class__.__name__
-
-    # Original and alias parameters should be registered correctly.
-    assert "sample_weight" in info[path]["params"]
-    assert info[path]["aliases"]["sample_weight"] == "user_w"
-    assert info[path]["statuses"]["sample_weight"]["fit"] == "user_w"
+    root = _build_tree(_routing_of(scaler))
+    assert root.statuses["sample_weight"]["fit"] == "user_w"
 
 
-@config_context(enable_metadata_routing=True)
-def test_collect_routing_info_show_all_metadata_flag():
-    scaler = StandardScaler().set_fit_request(sample_weight=True)
-    routing = get_routing_for_object(scaler)
-
-    # Collecting with the flag True (always default) still returns all params.
-    info_all = _collect_routing_info(routing)
-    # "copy" is a legitimate StandardScaler kw on transform method.
-    assert "copy" in info_all[_routing_repr(scaler)]["params"]
-
-    # Passing False no longer changes behaviour; still includes all params.
-    info_req = _collect_routing_info(routing)
-    assert "sample_weight" in info_req[_routing_repr(scaler)]["params"]
+def test_build_tree_nested_pipeline_depth():
+    inner = Pipeline([("sc", StandardScaler().set_fit_request(sample_weight=True))])
+    outer = Pipeline([("inner", inner)])
+    root = _build_tree(_routing_of(outer))
+    assert len(root.children) == 1
+    assert root.children[0].step_name == "inner"
+    assert root.children[0].children[0].step_name == "sc"
 
 
-# ---------------------------------------------------------------------------
-# Smoke test high-level visualisation
-# ---------------------------------------------------------------------------
-
-
-@config_context(enable_metadata_routing=True)
-def test_visualise_routing_smoke(capsys):
-    """The helper should print something meaningful and not crash."""
-    pipe = Pipeline(
-        steps=[
-            ("scaler", StandardScaler().set_fit_request(sample_weight="w")),
-            ("clf", LogisticRegression().set_fit_request(sample_weight=True)),
+def test_build_tree_column_transformer_branches():
+    ct = ColumnTransformer(
+        [
+            ("num", StandardScaler().set_fit_request(sample_weight=True), ["a"]),
+            ("cat", OneHotEncoder(handle_unknown="ignore"), ["b"]),
         ]
     )
+    root = _build_tree(_routing_of(ct))
+    names = [c.step_name for c in root.children]
+    assert "num" in names and "cat" in names
 
-    routing = get_routing_for_object(pipe)
-    visualise_routing(routing)
 
+def test_build_tree_origins_include_indirect_roots():
+    # A scorer inside a RandomizedSearchCV is reachable from *both* ``fit``
+    # (the CV loop calls the scorer while fitting) and ``score``.
+    est = RandomizedSearchCV(
+        LogisticRegression(),
+        {},
+        scoring=get_scorer("accuracy").set_score_request(sample_weight=True),
+    )
+    root = _build_tree(_routing_of(est))
+    scorer = next(c for c in root.children if c.step_name == "scorer")
+    roots = scorer.origins[("sample_weight", "score")]
+    assert "fit" in roots
+    assert "score" in roots
+
+
+# --- End-to-end output ------------------------------------------------------
+
+
+def test_format_routing_returns_string():
+    out = format_routing(_routing_of(LogisticRegression()))
+    assert isinstance(out, str)
+    assert out  # non-empty
+
+
+def test_visualise_routing_prints(capsys):
+    visualise_routing(_routing_of(LogisticRegression()))
+    captured = capsys.readouterr()
+    assert "LogisticRegression" in captured.out
+    assert captured.err == ""
+
+
+def test_legend_present_by_default_and_togglable():
+    routing = _routing_of(LogisticRegression())
+    with_legend = format_routing(routing)
+    without_legend = format_routing(routing, legend=False)
+    assert "Legend:" in with_legend
+    assert "Legend:" not in without_legend
+
+
+def test_alias_arrow_in_tree():
+    scaler = StandardScaler().set_fit_request(sample_weight="w")
+    out = format_routing(_routing_of(scaler))
+    assert "w → sample_weight" in out
+
+
+def test_alias_uses_requested_glyph_not_a_dedicated_one():
+    # An aliased request is always "requested"; no dedicated alias glyph is
+    # needed because the ``alias → component`` prefix already carries the
+    # renaming information.
+    scaler = StandardScaler().set_fit_request(sample_weight="w")
+    out = format_routing(_routing_of(scaler))
+    assert "fit✓" in out
+    assert "↗" not in out
+
+
+def test_colour_off_by_default_in_format_routing():
+    out = format_routing(_routing_of(LogisticRegression()))
+    # No ANSI escape sequences.
+    assert "\x1b[" not in out
+
+
+def test_colour_flag_emits_ansi_escapes():
+    out = format_routing(
+        _routing_of(LogisticRegression().set_fit_request(sample_weight=True)),
+        colour=True,
+    )
+    # Green escape wraps the requested glyph.
+    assert "\x1b[32m✓\x1b[0m" in out
+
+
+def test_colour_categories_match_severity():
+    # Error, warn and requested should each get a distinct ANSI colour.
+    routing = _routing_of(LogisticRegression().set_fit_request(sample_weight=WARN))
+    out = format_routing(routing, colour=True)
+    assert "\x1b[33m⚠\x1b[0m" in out  # yellow warn
+    assert "\x1b[31m⛔\x1b[0m" in out  # red error (score is None by default)
+
+
+def test_no_color_env_disables_auto_colour(monkeypatch, capsys):
+    monkeypatch.setenv("NO_COLOR", "1")
+    monkeypatch.setattr("sys.stdout.isatty", lambda: True)
+    visualise_routing(
+        _routing_of(LogisticRegression().set_fit_request(sample_weight=True))
+    )
     out = capsys.readouterr().out
-    # Basic expectations – root name and the alias arrow should appear.
-    assert pipe.__class__.__name__ in out  # Root header
-    assert "w→sample_weight" in out  # alias display
-    # tree connectors should be present to confirm rendering
-    assert "│" in out or "├" in out or "└" in out
+    assert "\x1b[" not in out
 
 
-# ---------------------------------------------------------------------------
-# Regex safety – ensure no stray placeholders left in output (e.g. "{{" )
-# ---------------------------------------------------------------------------
+def test_warn_glyph_rendered():
+    est = make_pipeline(StandardScaler().set_fit_request(sample_weight=WARN))
+    out = format_routing(_routing_of(est))
+    assert "⚠" in out
+    # And the summary should list it under "warns".
+    assert "warns" in out
 
 
-@config_context(enable_metadata_routing=True)
-def test_no_template_placeholders_in_output(capsys):
-    lr = LogisticRegression().set_fit_request(sample_weight=True)
-    routing = get_routing_for_object(lr)
-    visualise_routing(routing)
-    out = capsys.readouterr().out
-    assert not re.search(r"\{\{.*\}\}", out)
+def test_unused_sentinel_never_surfaces_in_output():
+    # ``UNUSED`` is only valid in class-level ``__metadata_request__*`` attrs,
+    # where it means "remove this param" — entries tagged UNUSED are filtered
+    # out before they reach the MethodMetadataRequest storage. The viz should
+    # therefore never show the literal sentinel.
+    out = format_routing(_routing_of(LogisticRegression()))
+    assert UNUSED not in out
 
 
-# ============================================================================
-# TEST CASES
-# ============================================================================
+def test_self_request_rendered_at_router_path():
+    # A router with a self-request should show its own consumed params on its
+    # own node, not on a child.
+    router = MetadataRouter(owner="my_router").add_self_request(
+        StandardScaler().set_fit_request(sample_weight=True)
+    )
+    out = format_routing(router)
+    assert "my_router" in out
+    assert "sample_weight" in out
 
 
-def run_test_1():
-    numeric_features = ["age", "fare"]
-    numeric_transformer = Pipeline(
-        steps=[
+def test_summary_present_by_default_and_togglable():
+    routing = _routing_of(
+        LogisticRegression().set_fit_request(sample_weight=True),
+    )
+    with_summary = format_routing(routing)
+    without_summary = format_routing(routing, summary=False)
+    assert "Parameter summary:" in with_summary
+    assert "Parameter summary:" not in without_summary
+
+
+def test_tree_togglable():
+    routing = _routing_of(
+        LogisticRegression().set_fit_request(sample_weight=True),
+    )
+    # With tree off, there should be no root class line followed by indented
+    # params — only the summary + legend.
+    without_tree = format_routing(routing, tree=False)
+    assert "LogisticRegression\n" not in without_tree
+    assert "Parameter summary:" in without_tree
+
+
+# --- Filtering --------------------------------------------------------------
+
+
+def test_method_filter_restricts_summary_sections():
+    est = RandomizedSearchCV(
+        LogisticRegression().set_fit_request(sample_weight=True),
+        {},
+        scoring=get_scorer("accuracy").set_score_request(sample_weight=True),
+    )
+    routing = _routing_of(est)
+    full = format_routing(routing)
+    fit_only = format_routing(routing, method="fit")
+    # ``score`` section appears by default but not under method="fit".
+    assert "\nscore\n" in full
+    assert "\nscore\n" not in fit_only
+    # The fit section is still present.
+    assert "\nfit\n" in fit_only
+
+
+def test_method_filter_accepts_composite_names():
+    # Passing ``"fit_transform"`` should be treated as its simple parts.
+    est = make_pipeline(StandardScaler().set_fit_request(sample_weight=True))
+    routing = _routing_of(est)
+    out = format_routing(routing, method="fit_transform")
+    assert "fit\n" in out  # fit summary section present
+
+
+def test_param_filter_restricts_to_named_parameter():
+    est = RandomizedSearchCV(
+        LogisticRegression().set_fit_request(sample_weight=True),
+        {},
+        cv=GroupKFold(),
+    )
+    routing = _routing_of(est)
+    only_groups = format_routing(routing, param="groups")
+    assert "groups" in only_groups
+    assert "sample_weight" not in only_groups
+
+
+def test_param_filter_uses_alias_name():
+    est = RandomizedSearchCV(
+        LogisticRegression().set_fit_request(sample_weight=True),
+        {},
+        scoring=get_scorer("accuracy").set_score_request(sample_weight="my_w"),
+    )
+    routing = _routing_of(est)
+    out = format_routing(routing, param="my_w")
+    # Aliased consumption appears; non-aliased consumption of the same
+    # component param on the estimator is filtered out.
+    assert "my_w" in out
+    assert "├─ ✓ sample_weight" not in out
+
+
+# --- Large integration smoke -----------------------------------------------
+
+
+def test_searchcv_pipeline_column_transformer_integration():
+    """Big-case smoke: no crash and all expected landmarks show up."""
+    num = Pipeline(
+        [
             ("imputer", SimpleImputer(strategy="median")),
             (
                 "scaler",
@@ -156,75 +292,46 @@ def run_test_1():
             ),
         ]
     )
-
-    categorical_features = ["embarked", "sex", "pclass"]
-    categorical_transformer = Pipeline(
-        steps=[
+    cat = Pipeline(
+        [
             ("encoder", OneHotEncoder(handle_unknown="ignore")),
             ("selector", SelectPercentile(chi2, percentile=50)),
         ]
     )
-    preprocessor = ColumnTransformer(
-        transformers=[
-            ("num", numeric_transformer, numeric_features),
-            ("cat", categorical_transformer, categorical_features),
-        ]
-    )
-
-    # %%
-    # Append classifier to preprocessing pipeline.
-    # Now we have a full prediction pipeline.
+    pre = ColumnTransformer([("num", num, ["a"]), ("cat", cat, ["b"])])
     clf = Pipeline(
-        steps=[
-            ("preprocessor", preprocessor),
+        [
+            ("preprocessor", pre),
             ("classifier", LogisticRegression().set_fit_request(sample_weight=False)),
         ]
     )
-
-    param_grid = {
-        "preprocessor__num__imputer__strategy": ["mean", "median"],
-        "preprocessor__cat__selector__percentile": [10, 30, 50, 70],
-        "classifier__C": [0.1, 1.0, 10, 100],
-    }
-
     scorer = get_scorer("accuracy").set_score_request(sample_weight=True)
+    est = RandomizedSearchCV(clf, {}, cv=GroupKFold(), scoring=scorer, random_state=0)
 
-    search_cv = RandomizedSearchCV(
-        clf, param_grid, cv=GroupKFold(), scoring=scorer, random_state=0
+    out = format_routing(_routing_of(est))
+
+    # Landmarks from each branch of the tree.
+    for token in [
+        "RandomizedSearchCV",
+        "preprocessor (ColumnTransformer)",
+        "num (Pipeline)",
+        "scaler (StandardScaler)",
+        "classifier (LogisticRegression)",
+        "splitter (GroupKFold)",
+        "inner_weights → sample_weight",
+        "groups[split✓]",
+    ]:
+        assert token in out, f"missing token: {token!r}"
+
+
+@pytest.mark.parametrize("tree", [True, False])
+@pytest.mark.parametrize("summary", [True, False])
+@pytest.mark.parametrize("legend", [True, False])
+def test_output_sections_are_independently_togglable(tree, summary, legend):
+    routing = _routing_of(
+        LogisticRegression().set_fit_request(sample_weight=True),
     )
-
-    # Get the routing information
-    test = get_routing_for_object(search_cv)
-
-    visualise_routing(test)
-
-
-def run_test_2():
-    est = make_pipeline(
-        make_pipeline(StandardScaler().set_fit_request(sample_weight=True)),
-        make_pipeline(StandardScaler().set_fit_request(sample_weight=False)),
-        make_pipeline(StandardScaler()),
-        make_pipeline(StandardScaler().set_fit_request(sample_weight=WARN)),
-    )
-
-    visualise_routing(get_routing_for_object(est))
-
-
-def run_test_3():
-    est = RandomizedSearchCV(estimator=LogisticRegression(), param_distributions={})
-    visualise_routing(get_routing_for_object(est))
-
-    est = RandomizedSearchCV(
-        estimator=LogisticRegression(),
-        param_distributions={},
-        scoring=get_scorer("accuracy").set_score_request(sample_weight=True),
-    )
-    visualise_routing(get_routing_for_object(est))
-
-
-if __name__ == "__main__":
-    # Enable metadata routing
-    set_config(enable_metadata_routing=True)
-    run_test_1()
-    run_test_2()
-    run_test_3()
+    out = format_routing(routing, tree=tree, summary=summary, legend=legend)
+    assert ("Legend:" in out) == legend
+    assert ("Parameter summary:" in out) == summary
+    assert ("LogisticRegression\n" in out) == tree

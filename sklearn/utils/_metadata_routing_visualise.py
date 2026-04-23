@@ -1,64 +1,21 @@
-"""sklearn.utils._metadata_routing_visualise
-================================================
-Utilities to *inspect* and *visualise* scikit-learn's experimental
-*metadata-routing* configuration.  The module is **purely diagnostic** – it
-never mutates routing information – and can be imported inside notebooks or
-unit-tests to print human-readable ASCII diagrams that explain how
-``sample_weight``, ``groups`` … flow through complex estimator pipelines.
-
-Overview of sections
---------------------
-1.  **Public entry-points**
-    • ``visualise_routing`` – prints a hierarchical tree with parameters
-      annotated inline (the primary public helper).
-
-2.  **Core data gathering**
-    ``_collect_routing_info`` walks a (potentially nested) structure of
-    :class:`~sklearn.utils.metadata_routing.MetadataRequest` and
-    :class:`~sklearn.utils.metadata_routing.MetadataRouter` objects and returns a
-    *rich* mapping that contains, for **every** component path:
-
-    ::
-
-        {
-            "params"          : set[str],             # names understood by component
-            "methods"         : {param -> {methods}}, # caller methods that *request*
-            "aliases"         : {param -> alias},     # component-param → user-param
-            "statuses"        : {param -> {method -> status}},
-            "existing_methods": set[str],             # methods implemented on object
-        }
-
-    The heavy lifting of reachability analysis (only consider methods that can
-    actually be invoked) lives in ``_compute_reachable_methods``.
-
-3.  **Rendering helpers**
-    Once the mapping is built we only need pretty-printers.  Each view resides
-    in its own function (``_display_tree_new``, ``_build_flow_diagram`` …) so
-    that UI changes remain isolated from the routing logic.
-
-4.  **Test fixtures** (bottom of file)
-    The last section sets up an end-to-end *example* pipeline that is executed
-    when running the file directly (or when doctests need a quick demo).  The
-    code lives at module level on purpose so our unit-tests can import the
-    objects without duplicating boilerplate.
-
-Conventions & design notes
---------------------------
-* A *path* is a ``/``-separated string that encodes the position of a component
-  inside the estimator tree (e.g. ``"Pipeline/StandardScaler"``).  Paths are
-  unique keys in the mapping produced by ``_collect_routing_info``.
-* Unicode glyphs (``✓ ✗ ↗ ⊘ ⚠``) are used to keep the output compact yet
-  expressive.  They are generated via ``_get_status_indicator``.
-* The module relies *only* on the public helpers defined in
-  ``sklearn.utils._metadata_requests`` and keeps a strict separation between
-  *data collection* and *rendering* so that new visualisation styles can be
-  added without touching the traversal logic.
-"""
-
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+"""Human-readable visualisation of metadata routing.
+
+:func:`format_routing` takes a metadata-routing object (as returned by
+:func:`~sklearn.utils.metadata_routing.get_routing_for_object`) and returns a
+string showing how each metadata parameter flows through an estimator tree,
+annotated with per-method status glyphs, plus a per-parameter summary.
+
+:func:`visualise_routing` is a thin wrapper that prints the result.
+"""
+
+import os
+import sys
 from collections import defaultdict
+from dataclasses import dataclass, field
+from io import StringIO
 
 from sklearn.utils._metadata_requests import (
     COMPOSITE_METHODS,
@@ -66,552 +23,458 @@ from sklearn.utils._metadata_requests import (
     UNUSED,
     WARN,
     MetadataRequest,
-    MetadataRouter,
     _routing_repr,
     request_is_alias,
 )
 
-# -----------------------------------------------------------------------------
-# General-purpose helpers (shared across collectors / renderers)
-# -----------------------------------------------------------------------------
-
-
-def _expand_methods(methods):
-    """Expand *composite* methods (like ``fit_transform``) into their constituent
-    *simple* methods (``fit`` and ``transform``).
-
-    Parameters
-    ----------
-    methods : Iterable[str]
-        Iterable of method names which may include composite entries present in
-        ``sklearn.utils._metadata_requests.COMPOSITE_METHODS``.
-
-    Returns
-    -------
-    set[str]
-        A set containing every *simple* method after expansion.
-    """
-    expanded: set[str] = set()
-    for m in methods:
-        if m in COMPOSITE_METHODS:
-            expanded.update(COMPOSITE_METHODS[m])
-        expanded.add(m)
-    return expanded
-
-
-# -----------------------------------------------------------------------------
-# Status classification helpers & glyph mapping
-# -----------------------------------------------------------------------------
-
-# Mapping of *high-level* status categories to the glyph shown in the UI.  Note
-# that both "errors" (raise) and "warns" (warn-only) share the same ⚠ symbol –
-# the distinction is made textual when required.
-_STATUS_GLYPH: dict[str, str] = {
-    "requested": "✓",  # param requested (True) or alias
-    "ignored": "✗",  # param explicitly *not* requested (False)
-    "warns": "⚠",  # warn if passed (WARN sentinel)
-    "errors": "⛔",  # error if passed (None)
-    "unused": "⊘",  # UNUSED sentinel
+_GLYPH = {
+    "requested": "✓",
+    "ignored": "✗",
+    "warns": "⚠",
+    "errors": "⛔",
+    "unused": "⊘",
 }
 
-# Ordered list so that the parameter summary is printed in a predictable and
-# meaningful order (most severe first).
-_CATEGORY_ORDER: list[tuple[str, str]] = [
-    ("errors", _STATUS_GLYPH["errors"]),
-    ("warns", _STATUS_GLYPH["warns"]),
-    ("ignored", _STATUS_GLYPH["ignored"]),
-    ("requested", _STATUS_GLYPH["requested"]),
-    ("unused", _STATUS_GLYPH["unused"]),
-]
+# Listed most-severe first so the summary's leading glyph and section order
+# reflect what is most important to notice.
+_CATEGORY_ORDER = ["errors", "warns", "ignored", "requested", "unused"]
+
+# ANSI 8-colour codes. 8-colour rather than 256/truecolor so the output
+# adapts to both light and dark terminal themes: basic red/green/yellow/cyan
+# render sensibly on any background.
+_ANSI = {
+    "red": "\033[31m",
+    "yellow": "\033[33m",
+    "green": "\033[32m",
+    "cyan": "\033[36m",
+    "reset": "\033[0m",
+}
+
+# Ignored/unused are deliberately uncoloured: they represent benign states and
+# reserving a colour for each would dilute the red/yellow danger signal.
+_CATEGORY_COLOUR = {
+    "requested": "green",
+    "warns": "yellow",
+    "errors": "red",
+}
+
+
+def _colour(text, name, enabled):
+    if not enabled or name is None:
+        return text
+    return f"{_ANSI[name]}{text}{_ANSI['reset']}"
+
+
+def _glyph(category, colour):
+    return _colour(_GLYPH[category], _CATEGORY_COLOUR.get(category), colour)
+
+
+def _arrow(colour):
+    """Coloured arrow used between an alias and its component param name."""
+    return _colour("→", "cyan", colour)
+
+
+def _legend(colour):
+    return (
+        "Legend: "
+        f"{_glyph('requested', colour)} requested   "
+        f"{_glyph('ignored', colour)} ignored   "
+        f"{_glyph('warns', colour)} warn on use   "
+        f"{_glyph('errors', colour)} error on use   "
+        f"{_glyph('unused', colour)} unused\n"
+        f'Aliased requests are shown as "user_name {_arrow(colour)} component_name".'
+    )
+
+
+def _auto_colour():
+    """Best-effort TTY detection with NO_COLOR / FORCE_COLOR honoured."""
+    if os.environ.get("NO_COLOR"):
+        return False
+    if os.environ.get("FORCE_COLOR"):
+        return True
+    return sys.stdout.isatty()
+
+
+# --- Status classification ---------------------------------------------------
 
 
 def _status_category(status):
-    """Return the *category* name for a raw request *status* value."""
-    # `True` → requested -------------------------------------------------------
+    """Classify a raw metadata-request value into a summary category."""
     if status is True or request_is_alias(status):
         return "requested"
-
-    # `False` → explicitly ignored -------------------------------------------
     if status is False:
         return "ignored"
-
-    # `None`   → raise error if metadata provided ----------------------------
     if status is None:
         return "errors"
-
-    # WARN sentinel → warn only ----------------------------------------------
     if status == WARN:
         return "warns"
-
-    # UNUSED sentinel → parameter is accepted but never used -----------------
     if status == UNUSED:
         return "unused"
-
-    # Fallback (should not happen) -------------------------------------------
-    return "unknown"
+    return None
 
 
-def visualise_routing(routing_info):
-    """
-    Visualize metadata routing information.
-
-    This diagnostic always displays *all* possible metadata parameters with
-    their status indicators in a unified, comprehensive view.
-    """
-    print("\n=== METADATA ROUTING TREE ===")
-
-    # Get all routing information
-    routing_map = _collect_routing_info(routing_info)
-
-    # Display tree structure without duplicate root entry
-    _display_tree(
-        routing_info,
-        routing_map,
-        prefix="",
-        is_last=True,
-        parent_path="",
-        root=True,
-    )
-
-    # ------------------------------------------------------------------
-    # New style: root-level method blocks
-    # ------------------------------------------------------------------
-
-    summary_by_method = _summarise_params_by_method(routing_info, routing_map)
-
-    if summary_by_method:
-        print("\nParameter summary:")
-
-        glyph_for = dict(_CATEGORY_ORDER)
-
-        for root_method in SIMPLE_METHODS:
-            if root_method not in summary_by_method:
-                continue
-
-            print(f"{root_method}")
-
-            params_for_method = summary_by_method[root_method]
-
-            for param in sorted(params_for_method):
-                cats = params_for_method[param]
-
-                # Leading glyph precedence (error > warn > ignored > requested)
-                if "errors" in cats:
-                    leading = glyph_for["errors"]
-                elif "warns" in cats:
-                    leading = glyph_for["warns"]
-                elif set(cats.keys()) == {"ignored"}:
-                    leading = glyph_for["ignored"]
-                else:
-                    leading = glyph_for["requested"]
-
-                print(f" ├─ {leading} {param}")
-
-                for cat, glyph in _CATEGORY_ORDER:
-                    if cat in cats:
-                        print(f" │   • {glyph} {cat}:")
-                        for p in cats[cat]:
-                            print(f" │       - {_shorten_path(p)}")
-
-            print()  # blank line between methods
-
-    else:
-        print("\nNo parameter summary.")
-
-
-# ============================================================================
-# HELPER FUNCTIONS
-# ============================================================================
-
-
-def _compute_method_origins(router):
-    """Return mapping {"path.method": set(root_methods)}."""
-
-    origins = defaultdict(set)
-
-    def _walk(obj, incoming_methods: set[str], root_method: str, path=""):
-        current_path = (
-            f"{path}/{_routing_repr(obj.owner)}" if path else _routing_repr(obj.owner)
-        )
-
-        inc_expanded = _expand_methods(incoming_methods)
-
-        for m in inc_expanded:
-            origins[f"{current_path}.{m}"].add(root_method)
-
-        if isinstance(obj, MetadataRequest):
-            return  # leaf
-
-        # handle self request
-        if obj._self_request is not None:
-            _walk(obj._self_request, inc_expanded, root_method, current_path)
-
-        # children via mappings
-        for name, mpair in obj._route_mappings.items():
-            child_obj = mpair.router
-            child_methods_raw = {
-                p.callee for p in mpair.mapping if p.caller in inc_expanded
-            }
-            child_methods = _expand_methods(child_methods_raw)
-            if child_methods:
-                _walk(child_obj, child_methods, root_method, f"{current_path}/{name}")
-
-    for root in SIMPLE_METHODS:
-        _walk(router, {root}, root)
-
-    return origins
-
-
-def _collect_routing_info(router):
-    """Return a *rich* mapping describing every parameter/method/alias path.
-
-    The returned ``defaultdict`` has *paths* ( ``"Pipeline/StandardScaler"``)
-    as keys and for each path stores::
-
-        {
-            "params"          : set[str],             # every param encountered
-            "methods"         : {param -> {methods}}, # methods that actively request
-            "aliases"         : {param -> alias},     # component-param → user-param
-            "statuses"        : {param -> {method -> status}},
-            "existing_methods": set[str],             # methods implemented on object
-        }
-
-    The heavy lifting is delegated to two small helpers so that the control-flow
-    is easier to follow:
-
-    * :func:`_collect_request_info` handles *simple* consumers
-      (:class:`~sklearn.utils.metadata_routing.MetadataRequest`).
-    * :func:`_collect_router_info` handles routers which can also include a
-      *self-request* consumer.
-    """
-
-    info: dict[str, dict] = defaultdict(
-        lambda: {
-            "params": set(),
-            "methods": defaultdict(set),
-            "aliases": {},
-            "statuses": defaultdict(dict),
-            "existing_methods": set(),
-        }
-    )
-
-    # ------------------------------------------------------------------
-    # Helper functions – defined *inside* to keep them private to algorithm
-    # ------------------------------------------------------------------
-
-    def _record_status(current_path: str, param: str, method: str, status):
-        """Record *status* for (*path*, *param*, *method*) in all auxiliary
-        structures.
-
-        The helper is on the hot-path of the DFS traversal.  We therefore cache
-        expensive predicate checks (`request_is_alias`) so each call evaluates
-        them only once.
-        """
-
-        # Cache predicate evaluations once ------------------------------------
-        is_alias = request_is_alias(status)
-        is_requested = (status is True) or is_alias
-
-        # 1. Raw status mapping (used later for glyph generation)
-        info[current_path]["statuses"][param][method] = status
-
-        # 2. Which methods *actively* request the parameter -------------------
-        if is_requested:
-            info[current_path]["methods"][param].add(method)
-
-        # 3. Alias bookkeeping (component_param → user_param) -----------------
-        if is_alias and status != param:
-            info[current_path]["aliases"][param] = status
-
-    # ---------------------------------------
-    # Simple consumer (MetadataRequest) branch
-    # ---------------------------------------
-
-    def _collect_request_info(obj, current_path: str, reachable_here: set[str]):
-        """Handle the *consumer* case.
-
-        Parameters
-        ----------
-        obj : MetadataRequest
-        current_path : str
-            Absolute path in the routing tree.
-        reachable_here : set[str]
-            Methods that can *actually* be invoked given parent→child mappings.
-        """
-        for method in SIMPLE_METHODS:
-            if method not in reachable_here or not hasattr(obj, method):
-                continue
-
-            info[current_path]["existing_methods"].add(method)
-            method_req = getattr(obj, method)
-
-            # Consider only the parameters that *this specific method* can
-            # handle so that unrelated parameters for other methods never show
-            # up as "not requested" here.
-            param_source = method_req.requests.keys()
-
-            for param in param_source:
-                info[current_path]["params"].add(param)
-                alias = method_req.requests.get(param, False)
-                _record_status(current_path, param, method, alias)
-
-    # ---------------------------------------
-    # Router branch (can include a *self* request)
-    # ---------------------------------------
-
-    def _collect_router_info(obj, current_path: str, reachable_here: set[str]):
-        """Handle :class:`MetadataRouter` instances (including *self* request)."""
-        if obj._self_request is not None:
-            _collect_request_info(obj._self_request, current_path, reachable_here)
-
-        # Recurse into children -------------------------------------------------
-        for name, mapping in obj._route_mappings.items():
-            child_methods_raw = {
-                pair.callee for pair in mapping.mapping if pair.caller in reachable_here
-            }
-            child_methods = _expand_methods(child_methods_raw)
-            if child_methods:
-                _collect(
-                    mapping.router,
-                    f"{current_path}/{name}",  # becomes *path* for child
-                    child_methods,
-                )
-
-    # ------------------------------------------------------------------
-    # Main DFS traversal
-    # ------------------------------------------------------------------
-
-    def _collect(
-        obj, path: "str" = "", incoming_methods: set[str] = set(SIMPLE_METHODS)
-    ):
-        current_path = (
-            f"{path}/{_routing_repr(obj.owner)}" if path else _routing_repr(obj.owner)
-        )
-        reachable_here = _expand_methods(incoming_methods)
-
-        if isinstance(obj, MetadataRequest):
-            _collect_request_info(obj, current_path, reachable_here)
-        elif isinstance(obj, MetadataRouter):
-            _collect_router_info(obj, current_path, reachable_here)
-
-    _collect(router)
-    return info
-
-
-def _get_status_indicator(status):
-    """Return the glyph corresponding to *status* (✓, ✗ …)."""
-    if request_is_alias(status):
-        # Alias itself gets the alias arrow glyph.
-        return "↗"
-
+def _method_glyph(status, colour):
+    # Aliased requests are "requested" by definition — the alias mapping is
+    # already visible in the ``name → component`` prefix, so we do not need a
+    # distinct glyph to mark them here.
     cat = _status_category(status)
-    return _STATUS_GLYPH.get(cat, "?")
+    if cat is None:
+        return "?"
+    return _glyph(cat, colour)
 
 
-def _format_param_with_status(param, statuses, aliases):
-    """Return a compact textual representation of *param* annotated with
-    method-level status indicators.
+def _expand(methods):
+    """Expand composite method names into their simple parts.
 
-    The implementation groups methods by *alias* vs *direct* usage in a single
-    pass, avoiding the duplication present in the earlier version while
-    preserving the exact output format.  When some methods use an alias and
-    others do not, two comma-separated segments are produced, e.g.::
-
-        inner_weights→sample_weight[fit↗], sample_weight[partial_fit⚠]
+    Composites are kept in the output set alongside their parts so that a
+    ``MethodMapping`` edge whose caller is a composite name still matches when
+    the composite is reachable.
     """
+    out = set()
+    for m in methods:
+        out.add(m)
+        if m in COMPOSITE_METHODS:
+            out.update(COMPOSITE_METHODS[m])
+    return out
 
-    # `param_statuses` maps method → raw status (True/False/alias/…)
-    param_statuses = statuses.get(param, {})
-    if not param_statuses:
-        # No status information – fall back to simple param/alias name.
-        return f"{aliases.get(param, param)}→{param}" if param in aliases else param
 
-    # Group methods by whether they rely on an alias (str) or not.
-    grouped: dict[bool, list[str]] = {True: [], False: []}
-    for method in SIMPLE_METHODS:
-        if method not in param_statuses:
+# --- Node tree built from a MetadataRequest / MetadataRouter ----------------
+
+
+@dataclass
+class _Node:
+    owner_repr: str
+    step_name: object  # str on children; None at root
+    path: str  # "root_repr/mapping_name/..."
+    statuses: dict = field(default_factory=dict)  # param -> {method: status}
+    reachable: set = field(default_factory=set)  # simple methods here
+    children: list = field(default_factory=list)
+    # (param, method) -> set of root simple methods that can invoke this
+    # consumption. Populated in the same pass as statuses.
+    origins: dict = field(default_factory=dict)
+
+
+def _build(obj, path, step_name, incoming_by_root):
+    """Recursively build a :class:`_Node` from a routing object.
+
+    ``incoming_by_root`` maps each root simple-method to the set of callee
+    method names that reach this node under that root. Keeping it keyed by
+    root lets us populate ``origins`` without a second traversal.
+    """
+    all_reachable = set()
+    for callers in incoming_by_root.values():
+        all_reachable |= _expand(callers)
+
+    statuses = defaultdict(dict)
+    origins = {}
+
+    def record(consumer):
+        # Iterate simple methods only: composite methods (``fit_transform``)
+        # are synthesised views over their simple parts on ``MetadataRequest``
+        # and would produce duplicate rows in the summary.
+        for method in SIMPLE_METHODS:
+            if method not in all_reachable or not hasattr(consumer, method):
+                continue
+            for param, status in getattr(consumer, method).requests.items():
+                statuses[param][method] = status
+                for root, callers in incoming_by_root.items():
+                    if method in _expand(callers):
+                        origins.setdefault((param, method), set()).add(root)
+
+    if isinstance(obj, MetadataRequest):
+        record(obj)
+        return _Node(
+            owner_repr=_routing_repr(obj.owner),
+            step_name=step_name,
+            path=path,
+            statuses=dict(statuses),
+            reachable=all_reachable,
+            origins=origins,
+        )
+
+    if obj._self_request is not None:
+        record(obj._self_request)
+
+    children = []
+    for name, pair in obj._route_mappings.items():
+        child_incoming = {}
+        for root, callers in incoming_by_root.items():
+            expanded = _expand(callers)
+            callees = {p.callee for p in pair.mapping if p.caller in expanded}
+            if callees:
+                child_incoming[root] = callees
+        if not child_incoming:
             continue
-        status = param_statuses[method]
-        indicator = _get_status_indicator(status)
-        grouped[request_is_alias(status)].append(f"{method}{indicator}")
+        children.append(_build(pair.router, f"{path}/{name}", name, child_incoming))
 
-    parts: list[str] = []
-    # Iterate in stable order so alias segment (if any) comes first.
-    for uses_alias in (True, False):
-        if not grouped[uses_alias]:
-            continue
+    return _Node(
+        owner_repr=_routing_repr(obj.owner),
+        step_name=step_name,
+        path=path,
+        statuses=dict(statuses),
+        reachable=all_reachable,
+        children=children,
+        origins=origins,
+    )
 
-        # Decide *display name* for this segment.
-        if uses_alias:
-            # All alias statuses share the same alias string by construction.
-            alias_name = next(s for s in param_statuses.values() if request_is_alias(s))
-            name = f"{alias_name}→{param}"
+
+def _build_tree(routing):
+    # Seed every simple method as its own root so that every path in the tree
+    # knows which invocations can reach it.
+    initial = {m: {m} for m in SIMPLE_METHODS}
+    return _build(routing, _routing_repr(routing.owner), None, initial)
+
+
+# --- Filter handling --------------------------------------------------------
+
+
+def _as_set(value):
+    if value is None:
+        return None
+    if isinstance(value, str):
+        return {value}
+    return set(value)
+
+
+def _coerce_method_filter(value):
+    """Normalise the ``method=`` filter.
+
+    Composite names in the filter are expanded to their simple parts so that
+    ``method="fit_transform"`` matches the ``fit`` and ``transform`` roots.
+    """
+    as_set = _as_set(value)
+    if as_set is None:
+        return None
+    expanded = set()
+    for m in as_set:
+        if m in COMPOSITE_METHODS:
+            expanded.update(COMPOSITE_METHODS[m])
         else:
-            name = param
+            expanded.add(m)
+    return expanded
 
-        parts.append(f"{name}[{','.join(grouped[uses_alias])}]")
 
+def _user_param(comp_param, status):
+    """User-facing parameter name — the alias string if ``status`` is one."""
+    if request_is_alias(status):
+        return status
+    return comp_param
+
+
+def _keep_pair(comp_param, method, status, origins, method_filter, param_filter):
+    if method_filter is not None:
+        roots = origins.get((comp_param, method), set())
+        if not roots & method_filter:
+            return False
+    if param_filter is not None and _user_param(comp_param, status) not in param_filter:
+        return False
+    return True
+
+
+# --- Tree rendering ---------------------------------------------------------
+
+
+def _format_param(comp_param, method_statuses, colour):
+    """Render one parameter's per-method glyphs as an inline string.
+
+    When some methods alias and others do not, the output is split into two
+    comma-separated segments so the ``alias → param`` prefix only annotates
+    the aliasing methods.
+    """
+    aliased = []
+    direct = []
+    alias_name = None
+    for method in SIMPLE_METHODS:
+        if method not in method_statuses:
+            continue
+        status = method_statuses[method]
+        token = f"{method}{_method_glyph(status, colour)}"
+        if request_is_alias(status):
+            alias_name = status
+            aliased.append(token)
+        else:
+            direct.append(token)
+
+    parts = []
+    if aliased:
+        parts.append(f"{alias_name} {_arrow(colour)} {comp_param}[{','.join(aliased)}]")
+    if direct:
+        parts.append(f"{comp_param}[{','.join(direct)}]")
     return ", ".join(parts)
 
 
-# -----------------------------------------------------------------------------
-# Tree rendering helpers (branch / prefix calculation)
-# -----------------------------------------------------------------------------
+def _write_params(node, out, indent, method_filter, param_filter, colour):
+    for param in sorted(node.statuses):
+        visible = {
+            m: s
+            for m, s in node.statuses[param].items()
+            if _keep_pair(param, m, s, node.origins, method_filter, param_filter)
+        }
+        if visible:
+            out.write(f"{indent}    ➤ {_format_param(param, visible, colour)}\n")
 
 
-def _branch_connector(root: bool, prefix: str, is_last: bool) -> str:
-    """Return the unicode branch connector for the current node."""
-    if root and prefix == "":
-        return ""
-    return "└── " if is_last else "├── "
+def _write_children(node, out, prefix, method_filter, param_filter, colour):
+    for i, child in enumerate(node.children):
+        is_last = i == len(node.children) - 1
+        connector = "└── " if is_last else "├── "
+        label = (
+            f"{child.step_name} ({child.owner_repr})"
+            if child.step_name is not None
+            else child.owner_repr
+        )
+        out.write(f"{prefix}{connector}{label}\n")
+        child_indent = prefix + ("    " if is_last else "│   ")
+        _write_params(child, out, child_indent, method_filter, param_filter, colour)
+        _write_children(child, out, child_indent, method_filter, param_filter, colour)
 
 
-def _param_prefix(prefix: str, root: bool, is_last: bool) -> str:
-    """Indentation for parameter lines that hang under a node."""
-    if root and prefix == "":
-        return "    "
-    return prefix + ("    " if is_last else "│   ") + "    "
+def _render_tree(root, out, method_filter, param_filter, colour):
+    out.write(f"{root.owner_repr}\n")
+    _write_params(root, out, "", method_filter, param_filter, colour)
+    _write_children(root, out, "", method_filter, param_filter, colour)
 
 
-def _child_prefix(prefix: str, root: bool, is_last: bool) -> str:
-    """Prefix to pass when recursing into child nodes."""
-    if root and prefix == "":
-        return prefix  # keep root prefix empty for the very top-level call
-    return prefix + ("    " if is_last else "│   ")
+# --- Summary rendering ------------------------------------------------------
 
 
-def _display_tree(
-    router,
-    routing_map,
-    prefix="",
-    is_last=True,
-    step_name=None,
-    parent_path="",
-    root=False,
-):
-    """Display the routing tree with proper formatting and inline parameters."""
-    # Get current path
-    if parent_path:
-        current_path = f"{parent_path}/{_routing_repr(router.owner)}"
-    else:
-        current_path = _routing_repr(router.owner)
-
-    # Determine if this node has parameters
-    node_info = routing_map.get(current_path, {})
-    has_params = bool(node_info.get("params"))
-
-    # Build the display line
-    connector = _branch_connector(root, prefix, is_last)
-
-    display_parts = []
-    if step_name:
-        display_parts.append(f"{step_name} ({_routing_repr(router.owner)})")
-    else:
-        display_parts.append(_routing_repr(router.owner))
-
-    # Collect parameters for separate printing (one per line)
-    param_strs = []
-    if has_params:
-        for param in sorted(node_info["params"]):
-            param_str = _format_param_with_status(
-                param,
-                node_info["statuses"],
-                node_info.get("aliases", {}),
-            )
-            param_strs.append(param_str)
-
-    display_line = "".join(display_parts)
-    print(f"{prefix}{connector}{display_line}")
-
-    # Print each parameter on its own indented line
-    if param_strs:
-        param_prefix = _param_prefix(prefix, root, is_last)
-        for p in param_strs:
-            print(f"{param_prefix}➤ {p}")
-
-    # Process children
-    if isinstance(router, MetadataRouter):
-        children = list(router._route_mappings.items())
-        new_prefix = _child_prefix(prefix, root, is_last)
-
-        for i, (name, mapping) in enumerate(children):
-            is_last_child = i == len(children) - 1
-
-            # Pass the *mapping name* on the path so that it matches the key
-            # format used in `_collect_routing_info`.
-            _display_tree(
-                mapping.router,
-                routing_map,
-                new_prefix,
-                is_last_child,
-                name,
-                f"{current_path}/{name}",  # parent_path for child
-                root=False,
-            )
+def _collect_summary(node, summary):
+    """Flatten a node tree into ``{root_method: {user_param: {cat: [paths]}}}``."""
+    for comp_param, m_to_s in node.statuses.items():
+        for method, status in m_to_s.items():
+            cat = _status_category(status)
+            if cat is None:
+                continue
+            uparam = _user_param(comp_param, status)
+            location = f"{node.path}.{method}"
+            # origins may be empty if this method is listed on a node that no
+            # root actually reaches — shouldn't happen given the traversal, but
+            # fall back to the method itself to avoid silently dropping rows.
+            roots = node.origins.get((comp_param, method)) or {method}
+            for root in roots:
+                summary[root][uparam][cat].append(location)
+    for child in node.children:
+        _collect_summary(child, summary)
 
 
-def _summarise_params_by_method(router, routing_map):
-    """Return a mapping ``{root_method -> user_param -> category -> [paths]}``.
+def _leading_category(cats):
+    if "errors" in cats:
+        return "errors"
+    if "warns" in cats:
+        return "warns"
+    if set(cats) == {"ignored"}:
+        return "ignored"
+    return "requested"
 
-    A three-level ``defaultdict`` removes the tedious nested ``setdefault``
-    chains while keeping the public return type identical (converted back to a
-    plain ``dict`` at the end).
-    """
 
-    from collections import defaultdict
-
-    # summary[root][param][cat] → list[str]
+def _render_summary(root, out, method_filter, param_filter, colour):
     summary = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+    _collect_summary(root, summary)
 
-    origins = _compute_method_origins(router)
+    filtered = {}
+    for root_method, by_param in summary.items():
+        if method_filter is not None and root_method not in method_filter:
+            continue
+        params = {
+            p: cats
+            for p, cats in by_param.items()
+            if param_filter is None or p in param_filter
+        }
+        if params:
+            filtered[root_method] = params
 
-    for path, info in routing_map.items():
-        for comp_param in info["params"]:
-            statuses = info["statuses"].get(comp_param, {})
+    if not filtered:
+        return
 
-            for method, status in statuses.items():
-                # Determine user-facing name: only *real* aliases count.
-                user_param = status if request_is_alias(status) else comp_param
-
-                cat = _status_category(status)
-                if cat == "unknown":
+    out.write("\nParameter summary:\n")
+    for root_method in SIMPLE_METHODS:
+        if root_method not in filtered:
+            continue
+        out.write(f"{root_method}\n")
+        for param in sorted(filtered[root_method]):
+            cats = filtered[root_method][param]
+            out.write(f" ├─ {_glyph(_leading_category(cats), colour)} {param}\n")
+            for cat in _CATEGORY_ORDER:
+                if cat not in cats:
                     continue
-
-                roots = origins.get(f"{path}.{method}", {method.split(".")[0]})
-                for root_method in roots:
-                    summary[root_method][user_param][cat].append(f"{path}.{method}")
-
-    # Convert back to plain dicts for stable downstream expectations.
-    return {
-        r: {p: dict(cats) for p, cats in params.items()}
-        for r, params in summary.items()
-    }
+                out.write(f" │   • {_glyph(cat, colour)} {cat}:\n")
+                for location in cats[cat]:
+                    out.write(f" │       - {location}\n")
+        out.write("\n")
 
 
-# -----------------------------------------------------------------------------
-# Formatting helpers
-# -----------------------------------------------------------------------------
+# --- Public API -------------------------------------------------------------
 
 
-def _shorten_path(path_method: str) -> str:
-    """Remove estimator class tokens from a path for display purposes."""
-    if "/" not in path_method:
-        return path_method
+def format_routing(
+    routing,
+    *,
+    tree=True,
+    summary=True,
+    method=None,
+    param=None,
+    legend=True,
+    colour=False,
+):
+    """Return a human-readable string describing metadata routing.
 
-    try:
-        path, method = path_method.rsplit(".", 1)
-    except ValueError:
-        # no method part
-        return path_method
+    Parameters
+    ----------
+    routing : MetadataRequest or MetadataRouter
+        Routing object, typically obtained from
+        :func:`~sklearn.utils.metadata_routing.get_routing_for_object`.
 
-    tokens = path.split("/")
-    if len(tokens) <= 2:
-        # nothing to shorten
-        return path_method
+    tree : bool, default=True
+        Include the hierarchical tree view.
 
-    root = tokens[0]
-    rest = tokens[1:]
-    # Keep every other token starting from index0 of *rest* (mapping names).
-    filtered = [root] + rest[::2]
-    short_path = "/".join(filtered)
-    return f"{short_path}.{method}"
+    summary : bool, default=True
+        Include the per-parameter summary grouped by root method.
+
+    method : str or iterable of str, default=None
+        If given, restrict the output to parameters reachable from these root
+        methods. Composite names (``"fit_transform"``, ``"fit_predict"``) are
+        expanded to their simple parts.
+
+    param : str or iterable of str, default=None
+        If given, restrict the output to these user-facing parameter names.
+        Aliases are resolved first, so passing the alias matches.
+
+    legend : bool, default=True
+        Prepend a glyph legend.
+
+    colour : bool, default=False
+        If True, wrap status glyphs and the alias arrow in ANSI escape codes:
+        red for errors, yellow for warns, green for requested, cyan for the
+        alias arrow. Defaults to False so the returned string stays plain text
+        when captured to logs or tested; :func:`visualise_routing` enables it
+        automatically when stdout is a terminal.
+
+    Returns
+    -------
+    text : str
+        The formatted visualisation.
+    """
+    method_filter = _coerce_method_filter(method)
+    param_filter = _as_set(param)
+
+    root = _build_tree(routing)
+
+    out = StringIO()
+    if legend:
+        out.write(_legend(colour) + "\n\n")
+    if tree:
+        _render_tree(root, out, method_filter, param_filter, colour)
+    if summary:
+        _render_summary(root, out, method_filter, param_filter, colour)
+    return out.getvalue()
+
+
+def visualise_routing(routing, **kwargs):
+    """Print a human-readable metadata routing diagram.
+
+    See :func:`format_routing` for keyword arguments. ``colour`` defaults to
+    True when stdout is a terminal (and ``NO_COLOR`` is unset), False
+    otherwise.
+    """
+    kwargs.setdefault("colour", _auto_colour())
+    print(format_routing(routing, **kwargs))
