@@ -375,14 +375,14 @@ def _yield_array_api_checks(estimator, only_numpy=False):
         # mixed namespace/device inputs. Some are in the process of adding mixed
         # input support and are listed in PER_ESTIMATOR_XFAIL_CHECKS.
         for (
-            from_ns_and_device,
-            to_ns_and_device,
+            other_ns_and_device,
+            X_ns_and_device,
             _,
         ) in yield_mixed_namespace_input_permutations():
             yield partial(
                 check_array_api_mixed_inputs,
-                from_ns_and_device=from_ns_and_device,
-                to_ns_and_device=to_ns_and_device,
+                other_ns_and_device=other_ns_and_device,
+                X_ns_and_device=X_ns_and_device,
             )
         # 3. Namespace/device consistency between fit and predict/transform
         # Only test with one namespace to keep costs down
@@ -1085,26 +1085,24 @@ def check_supervised_y_no_nan(name, estimator_orig):
 
 def _check_array_api_core(
     estimator_orig,
-    to_ns_and_device,
-    from_ns_and_device,
+    X_ns_and_device,
+    other_ns_and_device,
     dtype_name=None,
     check_values=False,
     check_sample_weight=False,
     expect_only_array_outputs=True,
 ):
     """Helper to check estimator attributes and method outputs."""
-    xp_to, device_to = _array_api_for_tests(
-        to_ns_and_device.xp, to_ns_and_device.device
-    )
-    xp_from, device_from = _array_api_for_tests(
-        from_ns_and_device.xp, from_ns_and_device.device
+    xp_X, device_X = _array_api_for_tests(X_ns_and_device.xp, X_ns_and_device.device)
+    xp_other, device_other = _array_api_for_tests(
+        other_ns_and_device.xp, other_ns_and_device.device
     )
 
     X, y = make_classification(n_samples=30, n_features=10, random_state=42)
     if dtype_name is None:
-        max_float_dtype = _max_precision_float_dtype(xp_to, device_to)
+        max_float_dtype = _max_precision_float_dtype(xp_X, device_X)
         # Convert to string, so it is accepted by NumPy (`X` is NumPy array)
-        dtype_name = "float32" if max_float_dtype == xp_to.float32 else "float64"
+        dtype_name = "float32" if max_float_dtype == xp_X.float32 else "float64"
 
     X = X.astype(dtype_name, copy=False)
 
@@ -1114,17 +1112,17 @@ def _check_array_api_core(
     est = clone(estimator_orig)
     set_random_state(est)
 
-    X_xp = xp_to.asarray(X, device=device_to)
-    y_xp = xp_from.asarray(y, device=device_from)
+    X_xp = xp_X.asarray(X, device=device_X)
+    y_xp = xp_other.asarray(y, device=device_other)
 
     fit_kwargs = {}
     fit_kwargs_xp = {}
     if check_sample_weight and has_fit_parameter(estimator_orig, "sample_weight"):
-        max_dtype_from = _max_precision_float_dtype(xp_from, device_from)
-        dtype_from = "float32" if max_dtype_from == xp_from.float32 else "float64"
+        max_dtype_from = _max_precision_float_dtype(xp_other, device_other)
+        dtype_from = "float32" if max_dtype_from == xp_other.float32 else "float64"
         fit_kwargs["sample_weight"] = np.ones(X.shape[0], dtype=dtype_from)
-        fit_kwargs_xp["sample_weight"] = xp_from.asarray(
-            fit_kwargs["sample_weight"], device=device_from
+        fit_kwargs_xp["sample_weight"] = xp_other.asarray(
+            fit_kwargs["sample_weight"], device=device_other
         )
 
     est.fit(X, y, **fit_kwargs)
@@ -1133,7 +1131,7 @@ def _check_array_api_core(
     with config_context(array_api_dispatch=True):
         est_xp.fit(X_xp, y_xp, **fit_kwargs_xp)
 
-    X_ns = xp_to.__name__
+    X_ns = xp_X.__name__
 
     array_attributes = {
         key: value for key, value in vars(est).items() if isinstance(value, np.ndarray)
@@ -1165,7 +1163,7 @@ def _check_array_api_core(
             )
         else:
             assert attribute.shape == est_xp_param_np.shape
-            if to_ns_and_device.device == "mps" and np.issubdtype(
+            if X_ns_and_device.device == "mps" and np.issubdtype(
                 est_xp_param_np.dtype, np.floating
             ):
                 # for mps devices the maximum supported floating dtype is float32
@@ -1194,7 +1192,7 @@ def _check_array_api_core(
         # all the array API libraries (PyTorch, jax, CuPy) accept indexing with a
         # numpy array. This is probably not worth doing anything about for
         # now since array-api-strict seems a bit too strict ...
-        numpy_asarray_works = xp_to.__name__ != "array_api_strict"
+        numpy_asarray_works = xp_X.__name__ != "array_api_strict"
 
     except (TypeError, RuntimeError, ValueError):
         # PyTorch with CUDA device and CuPy raise TypeError consistently.
@@ -1325,7 +1323,7 @@ def check_array_api_input(
     dtype_name : str, default=None
         The name of the data type to use for arrays. If `None`,
         `_max_precision_float_dtype` of namespace and device of
-        `to_ns_and_device` used.
+        `X_ns_and_device` used.
 
     check_values : bool, default=False
         Whether to check the values of attributes, method outputs (including
@@ -1341,12 +1339,12 @@ def check_array_api_input(
         If `False` the checks are looser; device, shape and dtype checks for method
         outputs are skipped and only a smoke test is performed for `inverse_transform`.
     """
-    to_ns_and_device = NamespaceAndDevice(array_namespace, device_name)
+    X_ns_and_device = NamespaceAndDevice(array_namespace, device_name)
     _check_array_api_core(
         estimator_orig,
-        to_ns_and_device=to_ns_and_device,
+        X_ns_and_device=X_ns_and_device,
         # Make all array inputs of the same namespace/device
-        from_ns_and_device=to_ns_and_device,
+        other_ns_and_device=X_ns_and_device,
         dtype_name=dtype_name,
         check_values=check_values,
         check_sample_weight=check_sample_weight,
@@ -1376,8 +1374,8 @@ def check_array_api_input_and_values(
 def check_array_api_mixed_inputs(
     name,
     estimator_orig,
-    to_ns_and_device,
-    from_ns_and_device,
+    X_ns_and_device,
+    other_ns_and_device,
     check_values=False,
     check_sample_weight=True,
     expect_only_array_outputs=True,
@@ -1404,11 +1402,11 @@ def check_array_api_mixed_inputs(
     estimator_orig : estimator
         Original (uncloned) estimator instance.
 
-    to_ns_and_device : NamedTuple
+    X_ns_and_device : NamedTuple
         Namespace and device of reference array API input: `X` as "everything
         follows X".
 
-    from_ns_and_device : NamedTuple
+    other_ns_and_device : NamedTuple
         Namespace and device of other array API inputs. Used for `y` and
         `sample_weight`.
 
@@ -1428,8 +1426,8 @@ def check_array_api_mixed_inputs(
     """
     _check_array_api_core(
         estimator_orig,
-        to_ns_and_device=to_ns_and_device,
-        from_ns_and_device=from_ns_and_device,
+        X_ns_and_device=X_ns_and_device,
+        other_ns_and_device=other_ns_and_device,
         dtype_name=None,
         check_values=check_values,
         check_sample_weight=check_sample_weight,
