@@ -98,7 +98,7 @@ financially support scikit-learn as follows:
        * |michelin|
 
 * `The Chan-Zuckerberg Initiative <https://chanzuckerberg.com/>`_ and `Wellcome
-  Trust <https://wellcome.org/>`_ support the work of Lucy Liu, Dea Maria Leon
+  Trust <https://wellcome.org/>`_ support the work of Lucy Liu, Dea Maria Leon,
   Anne Beyer and Francois Paugam through the `Essential Open Source Software
   for Science (EOSS) <https://chanzuckerberg.com/eoss/>`_ cycle 6.
 
