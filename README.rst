@@ -24,7 +24,7 @@
 .. |PyPI| image:: https://img.shields.io/pypi/v/scikit-learn
    :target: https://pypi.org/project/scikit-learn
 
-.. |DOI| image:: https://zenodo.org/badge/21369/scikit-learn/scikit-learn.svg
+.. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.17880109.svg
    :target: https://zenodo.org/badge/latestdoi/21369/scikit-learn/scikit-learn
 
 .. |Benchmark| image:: https://img.shields.io/badge/Benchmarked%20by-asv-blue

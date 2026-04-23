@@ -28,9 +28,16 @@ def test_extension_type_module():
         path=sklearn_path, prefix="sklearn.", onerror=lambda _: None
     ):
         # Packages are directories, not modules that can hold extension
-        # types. ``tests`` and ``externals`` (vendored third-party code) are
-        # out of scope for this check.
-        if ispkg or ".tests." in modname or ".externals." in modname:
+        # types. ``tests``, ``externals`` (vendored third-party code) and
+        # ``_build_utils`` (build-time helpers that import ``Cython``, which
+        # is not installed in the wheel test environment) are out of scope
+        # for this check.
+        if (
+            ispkg
+            or ".tests." in modname
+            or ".externals." in modname
+            or "._build_utils." in modname
+        ):
             continue
         mod = importlib.import_module(modname)
         mod_file = getattr(mod, "__file__", "") or ""
