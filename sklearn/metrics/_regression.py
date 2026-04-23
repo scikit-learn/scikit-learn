@@ -229,6 +229,7 @@ def _check_reg_targets_with_floating_dtype(
     if xp is None or device is None:
         xp, _, device = get_namespace_and_device(y_pred)
 
+    # Always use `y_pred` dtype as we move everything to xp/device of `y_pred`
     dtype = _find_matching_floating_dtype(y_pred, xp=xp)
 
     y_type, y_true, y_pred, sample_weight, multioutput = _check_reg_targets(
