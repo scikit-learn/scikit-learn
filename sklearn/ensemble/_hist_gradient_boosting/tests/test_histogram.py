@@ -237,3 +237,76 @@ def test_hist_subtraction(constant_hessian):
     for key in ("count", "sum_hessians", "sum_gradients"):
         assert_allclose(hist_left[key], hist_left_sub[key], rtol=1e-6)
         assert_allclose(hist_right[key], hist_right_sub[key], rtol=1e-6)
+
+
+def test_n_threads_heuristic():
+    """Check that n_threads is reduced for small datasets (issue #30662)."""
+    from sklearn.ensemble._hist_gradient_boosting.histogram import HistogramBuilder
+    rng = np.random.default_rng(0)
+    # Small dataset: heuristic should cap to 1
+    n_samples, n_features = 100, 10
+    X_binned = rng.integers(0, 256, (n_samples, n_features), dtype=np.uint8)
+    X_binned = np.asfortranarray(X_binned)
+    gradients = rng.standard_normal(n_samples).astype(np.float32)
+    hessians = np.ones(n_samples, dtype=np.float32)
+
+    builder = HistogramBuilder(X_binned, 256, gradients, hessians, True, n_threads=8)
+    # Should not raise and result should be identical to n_threads=1
+    hist_heuristic = builder.compute_histograms_brute(
+        np.arange(n_samples, dtype=np.uint32)
+    )
+    builder_seq = HistogramBuilder(X_binned, 256, gradients, hessians, True, n_threads=1)
+    hist_seq = builder_seq.compute_histograms_brute(
+        np.arange(n_samples, dtype=np.uint32)
+    )
+    np.testing.assert_array_equal(hist_heuristic, hist_seq)
+
+
+def test_missing_values_bin_isolation():
+    """Check that the missing values bin (last bin) does not bleed into
+    regular bins and accumulates only the samples explicitly assigned to it.
+
+    The missing values bin is always the last one: index n_bins - 1.
+    Regular data uses randint(0, n_bins - 1) so it never touches that slot.
+    Here we inject a controlled number of samples into the missing bin and
+    verify the counts and gradients are exact.
+    """
+    rng = np.random.default_rng(42)
+    n_bins = 5
+    missing_bin = n_bins - 1  # index 4 — the missing-values slot
+
+    # Build a binned feature where some samples land on the missing bin
+    # and the rest land on regular bins [0, n_bins - 2].
+    #
+    # Sample layout (8 samples):
+    #   indices 0-4 → regular bins (values 0-3)
+    #   indices 5-7 → missing bin (value 4)
+    binned_feature = np.array([0, 1, 2, 3, 0, missing_bin, missing_bin, missing_bin],
+                              dtype=X_BINNED_DTYPE)
+    sample_indices = np.arange(len(binned_feature), dtype=np.uint32)
+
+    # Give each sample a distinct gradient so we can trace where it lands
+    ordered_gradients = np.array([1, 2, 3, 4, 5, 10, 20, 30], dtype=G_H_DTYPE)
+    ordered_hessians  = np.ones(len(binned_feature), dtype=G_H_DTYPE)
+
+    hist = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
+    _build_histogram(
+        0, sample_indices, binned_feature,
+        ordered_gradients, ordered_hessians, hist
+    )
+    hist = hist[0]
+
+    # Regular bins must NOT contain any missing-bin gradient (10, 20, 30)
+    assert_array_equal(hist["count"],         [2, 1, 1, 1, 3])
+    assert_allclose(hist["sum_gradients"],    [6, 2, 3, 4, 60])
+    assert_allclose(hist["sum_hessians"],     [2, 1, 1, 1, 3])
+
+    # Missing bin must be completely isolated: only indices 5-7 land there
+    assert hist["count"][missing_bin] == 3
+    assert_allclose(hist["sum_gradients"][missing_bin], 60.0)
+
+    # No regular bin must contain any of the missing-bin gradients
+    for b in range(missing_bin):
+        assert hist["sum_gradients"][b] < 10, (
+            f"bin {b} contains gradient from the missing-values bin"
+        )

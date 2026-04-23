@@ -2,6 +2,7 @@
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
+import joblib
 
 cimport cython
 from cython.parallel import prange
@@ -144,7 +145,15 @@ cdef class HistogramBuilder:
                 dtype=HISTOGRAM_DTYPE
             )
             bint has_interaction_cst = allowed_features is not None
-            int n_threads = self.n_threads
+            int n_threads
+
+        n_threads = min(
+            min(
+                max(sample_indices.shape[0] * self.n_features // int(1e5), 1),
+                self.n_features // 2 if self.n_features >= 2 else 1,
+            ),
+            joblib.cpu_count(only_physical_cores=True),
+        )
 
         if has_interaction_cst:
             n_allowed_features = allowed_features.shape[0]
@@ -261,7 +270,15 @@ cdef class HistogramBuilder:
             int f_idx
             int n_allowed_features = self.n_features
             bint has_interaction_cst = allowed_features is not None
-            int n_threads = self.n_threads
+            int n_threads
+
+        n_threads = min(
+            min(
+                max(self.n_features * self.n_bins // int(1e5), 1),
+                self.n_features // 2 if self.n_features >= 2 else 1,
+            ),
+            joblib.cpu_count(only_physical_cores=True),
+        )
 
         if has_interaction_cst:
             n_allowed_features = allowed_features.shape[0]
