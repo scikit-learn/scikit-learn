@@ -427,13 +427,11 @@ def _write_estimator_html(
 
         out.write("</div>")
     elif est_block.kind == "single":
-        if (
-            has_feature_names_out
-            and is_not_pipeline_step
-            and is_fitted_css_class
-            and hasattr(estimator, "n_features_in_")
-        ):
-            output_features = estimator.get_feature_names_out()
+        if has_feature_names_out and is_not_pipeline_step and is_fitted_css_class:
+            try:
+                output_features = estimator.get_feature_names_out()
+            except Exception:
+                output_features = ""
         else:
             output_features = ""
 
@@ -540,7 +538,8 @@ def estimator_html_repr(estimator):
         html_template = (
             f"<style>{_CSS_STYLE}</style>"
             f"<body>"
-            f'<div id="{container_id}" class="sk-top-container sk-global">'
+            # we need tabindex="0" to make it 'focusable'
+            f'<div id="{container_id}" tabindex="0" class="sk-top-container sk-global">'
             '<div class="sk-text-repr-fallback">'
             f"<pre>{html.escape(estimator_str)}</pre><b>{fallback_msg}</b>"
             "</div>"
