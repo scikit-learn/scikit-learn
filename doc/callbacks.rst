@@ -90,7 +90,7 @@ search::
     >>> sub_estimator = LogisticRegression()
     >>> sub_estimator.set_callbacks(scoring) # doctest: +SKIP
     >>> meta_estimator = GridSearchCV(sub_estimator, parameters)
-    >>> meta_estimator.fit()
+    >>> meta_estimator.fit(X, y)
     >>> scoring.get_logs() # doctest: +SKIP
 
 .. TODO: add printed output, or maybe use the logs in a plot
