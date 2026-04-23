@@ -91,6 +91,8 @@ search::
     >>> sub_estimator.set_callbacks(scoring) # doctest: +SKIP
     >>> meta_estimator = GridSearchCV(sub_estimator, parameters)
     >>> meta_estimator.fit(X, y)
+    GridSearchCV(estimator=LogisticRegression(),
+                 param_grid={'C': [10, 1, 0.1], 'l1_ratio': [0, 1]})
     >>> scoring.get_logs() # doctest: +SKIP
 
 .. TODO: add printed output, or maybe use the logs in a plot
