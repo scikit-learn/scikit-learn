@@ -267,7 +267,7 @@ def test_spectral_embedding_callable_affinity(sparse_container, seed=36):
 
 
 @pytest.mark.parametrize("dtype", (np.float32, np.float64))
-def test_spectral_embedding_lobpcg_solver(dtype, seed=36):
+def test_spectral_embedding_lobpcg_solver(dtype, global_random_seed):
     # Tests that the results are the same when using arpack
     # and lobpcg solvers. Note that we use RBF kernel here
     # to make the graph connected, so that eigenvectors
@@ -277,14 +277,14 @@ def test_spectral_embedding_lobpcg_solver(dtype, seed=36):
         affinity="rbf",
         eigen_solver="lobpcg",
         eigen_tol=1e-5,
-        random_state=np.random.RandomState(seed),
+        random_state=np.random.RandomState(global_random_seed),
     )
     se_arpack = SpectralEmbedding(
         n_components=2,
         affinity="rbf",
         eigen_solver="arpack",
         eigen_tol=0,
-        random_state=np.random.RandomState(seed),
+        random_state=np.random.RandomState(global_random_seed),
     )
     embed_lobpcg = se_lobpcg.fit_transform(S.astype(dtype))
     embed_arpack = se_arpack.fit_transform(S.astype(dtype))
