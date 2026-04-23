@@ -129,10 +129,10 @@ logistic regression fit::
     >>> sub_estimator = LogisticRegression()
     >>> meta_estimator = GridSearchCV(sub_estimator, parameters)
     >>> meta_estimator.set_callbacks(ProgressBar(max_propagation_depth=1)) # doctest: +SKIP
-    >>> meta_estimator.fit(X, y)
+    >>> meta_estimator.fit(X, y) # doctest: +SKIP
 
 .. TODO: add printed output
-.. TODO: remove the doctest skip
+.. TODO: remove the doctest skips
 
 Changing the `max_propagation_depth` argument to 0 will make the auto-propagated
 callback only be registered on the top-level estimator, in that case it means that only
@@ -140,7 +140,7 @@ one progress bar for the :class:`~sklearn.model_selection.GridSearchCV` will be
 displayed::
 
     >>> meta_estimator.set_callbacks(ProgressBar(max_propagation_depth=0)) # doctest: +SKIP
-    >>> meta_estimator.fit(X, y)
+    >>> meta_estimator.fit(X, y) # doctest: +SKIP
 
 .. TODO: add printed output, or maybe use the logs in a plot
 .. TODO: remove the doctest skip
