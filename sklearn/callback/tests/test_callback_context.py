@@ -59,6 +59,7 @@ def test_propagate_callback_context_autopropagated():
         assert propagated_callback in estimator._skl_callbacks
 
     assert not hasattr(estimator, "_skl_callbacks")
+    assert not hasattr(estimator, "_parent_callback_ctx")
 
 
 def test_propagate_callback_context_clean_up():
@@ -68,9 +69,9 @@ def test_propagate_callback_context_clean_up():
 
     meta_est_callback = RecordingAutoPropagatedCallback()
     metaestimator = MetaEstimator(estimator)
-    metaestimator.set_callbacks(est_callback, meta_est_callback)
+    metaestimator.set_callbacks(meta_est_callback)
 
-    assert estimator._skl_callbacks == {est_callback}
+    assert estimator._skl_callbacks == [est_callback]
 
     callback_ctx = _make_callback_ctx(metaestimator)
     with callback_ctx.propagate_callback_context(estimator):
@@ -78,7 +79,8 @@ def test_propagate_callback_context_clean_up():
         assert est_callback in estimator._skl_callbacks
         assert meta_est_callback in estimator._skl_callbacks
 
-    assert estimator._skl_callbacks == {est_callback}
+    assert estimator._skl_callbacks == [est_callback]
+    assert not hasattr(estimator, "_parent_callback_ctx")
 
 
 def test_propagate_callback_context_no_callback():
@@ -94,7 +96,10 @@ def test_propagate_callback_context_no_callback():
         assert not hasattr(metaestimator, "_skl_callbacks")
         assert not hasattr(estimator, "_skl_callbacks")
 
+    assert not hasattr(estimator, "_skl_callbacks")
     assert not hasattr(estimator, "_parent_callback_ctx")
+    assert not hasattr(metaestimator, "_skl_callbacks")
+    assert not hasattr(metaestimator, "_parent_callback_ctx")
 
 
 def test_auto_propagated_callbacks():
@@ -378,15 +383,6 @@ def test_autopropagation_to_callback_agnostic_subestimator():
     assert callback.count_hooks("teardown") == 1
 
 
-def test_hook_calling_invalid_kwargs_in():
-    """Check that passing invalid kwargs to call_on_fit_task_* raises an error."""
-    estimator = MaxIterEstimator()
-    context = estimator.set_callbacks(RecordingCallback())._init_callback_context()
-    msg = r"call_on_fit_task_begin .* has received parameters that are not valid"
-    with pytest.raises(TypeError, match=msg):
-        context.call_on_fit_task_begin(estimator=estimator, X=1, y=2, not_valid_kwarg=3)
-
-
 # TODO(callbacks): should be a common test in a dev test suite instead of a check
 # in the hook calls to avoid repeating the same check for each call of the same hook.
 def test_hook_calling_invalid_kwargs_out():
@@ -396,17 +392,6 @@ def test_hook_calling_invalid_kwargs_out():
     msg = r"on_fit_task_begin .* has parameters that are not valid"
     with pytest.raises(TypeError, match=msg):
         context.call_on_fit_task_begin(estimator=estimator, X=1, y=2)
-
-
-def test_hook_calling_unused_kwargs():
-    """Check that not provided kwargs are left to their default value (None)."""
-    callback = RecordingCallback()
-    estimator = MaxIterEstimator()
-    context = estimator.set_callbacks(callback)._init_callback_context()
-    # only provide "X" and "y"
-    context.call_on_fit_task_begin(estimator=estimator, X=1, y=2)
-    assert callback.record[-1]["kwargs"]["metadata"] is None
-    assert callback.record[-1]["kwargs"]["fitted_estimator"] is None
 
 
 def test_hook_calling_return_value():

@@ -31,8 +31,7 @@ def test_set_callbacks(callbacks):
     set_callbacks_return = estimator.set_callbacks(*callbacks)
     assert hasattr(estimator, "_skl_callbacks")
 
-    expected_callbacks = set(callbacks)
-    assert estimator._skl_callbacks == expected_callbacks
+    assert estimator._skl_callbacks == callbacks
 
     assert set_callbacks_return is estimator
 
