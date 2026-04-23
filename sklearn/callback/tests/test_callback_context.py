@@ -59,6 +59,7 @@ def test_propagate_callback_context_autopropagated():
         assert propagated_callback in estimator._skl_callbacks
 
     assert not hasattr(estimator, "_skl_callbacks")
+    assert not hasattr(estimator, "_parent_callback_ctx")
 
 
 def test_propagate_callback_context_clean_up():
@@ -79,6 +80,7 @@ def test_propagate_callback_context_clean_up():
         assert meta_est_callback in estimator._skl_callbacks
 
     assert estimator._skl_callbacks == [est_callback]
+    assert not hasattr(estimator, "_parent_callback_ctx")
 
 
 def test_propagate_callback_context_no_callback():
@@ -94,7 +96,10 @@ def test_propagate_callback_context_no_callback():
         assert not hasattr(metaestimator, "_skl_callbacks")
         assert not hasattr(estimator, "_skl_callbacks")
 
+    assert not hasattr(estimator, "_skl_callbacks")
     assert not hasattr(estimator, "_parent_callback_ctx")
+    assert not hasattr(metaestimator, "_skl_callbacks")
+    assert not hasattr(metaestimator, "_parent_callback_ctx")
 
 
 def test_auto_propagated_callbacks():
