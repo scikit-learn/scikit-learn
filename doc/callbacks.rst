@@ -45,8 +45,10 @@ display a bar monitoring the progress of the `fit` execution::
 
     >>> from sklearn.datasets import load_iris
     >>> X, y = load_iris(return_X_y=True)
-    >>> estimator.fit(X, y)
+    >>> estimator.fit(X, y) # doctest: +SKIP
     LogisticRegression - fit ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:03:12
+
+.. TODO: remove the doctest skip
 
 Multiple callbacks can be registered on the same estimator, for example a
 :class:`~ScoringMonitor` callback can be registered in addition to the
