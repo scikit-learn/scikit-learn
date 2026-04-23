@@ -122,13 +122,12 @@ build_metadata_list = [
         "tag": "main-ci",
         "folder": "build_tools/github",
         "platform": "linux-64",
-        "channels": ["conda-forge", "https://software.repos.intel.com/python/conda/"],
+        "channels": ["conda-forge"],
         "conda_dependencies": common_dependencies
         + [
             "ccache",
             "pytorch",
             "pytorch-cpu",
-            "dpnp",
             "polars",
             "pyarrow",
             "array-api-strict",
