@@ -229,9 +229,11 @@ def _check_reg_targets_with_floating_dtype(
     if xp is None or device is None:
         xp, _, device = get_namespace_and_device(y_pred)
 
-    if hasattr(y_pred, "dtype") and xp.isdtype(y_pred.dtype, "real floating"):
-        # Follow the precision level of y_pred.
-        dtype = y_pred.dtype
+    if hasattr(y_pred, "dtype"):
+        y_pred_d_type = xp.asarray(y_pred, "dtype")
+        if xp.isdtype(y_pred_d_type.dtype, "real floating"):
+            # Follow the precision level of y_pred.
+            dtype = y_pred.dtype
     else:
         dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
 
