@@ -5,12 +5,12 @@ import copy
 import inspect
 import uuid
 import warnings
+from contextlib import contextmanager
+from datetime import datetime, timezone
 
 from sklearn.callback._base import AutoPropagatedCallback
 
-# List of the parameters expected to be passed to call_on_fit_task_* (IN) and to be in
-# the hooks signatures (OUT).
-VALID_HOOK_PARAMS_IN = ["X", "y", "metadata", "reconstruction_attributes"]
+# List of the parameters expected to be in the hooks signatures
 VALID_HOOK_PARAMS_OUT = ["X", "y", "metadata", "fitted_estimator"]
 
 
@@ -53,6 +53,9 @@ class CallbackContext:
     root_uuid : uuid.UUID instance
         The UUID of the root context. All contexts in the same task tree have the same
         root UUID that is used to identify the task tree itself.
+
+    init_time : datetime.datetime
+        The time when the context was initialised, in the UTC timezone.
 
     source_estimator_name : str or None
         The name of the estimator that holds the parent task this task was
@@ -102,6 +105,7 @@ class CallbackContext:
         new_ctx.sequential_subtasks = sequential_subtasks
         new_ctx.parent = None
         new_ctx.root_uuid = uuid.uuid4()
+        new_ctx.init_time = datetime.now(timezone.utc)
         new_ctx._children_map = {}
         new_ctx.source_estimator_name = None
         new_ctx.source_task_name = None
@@ -157,6 +161,7 @@ class CallbackContext:
         new_ctx.max_subtasks = max_subtasks
         new_ctx.sequential_subtasks = sequential_subtasks
         new_ctx.root_uuid = parent_context.root_uuid
+        new_ctx.init_time = datetime.now(timezone.utc)
         new_ctx.parent = None
         new_ctx._children_map = {}
         new_ctx.source_estimator_name = None
@@ -434,8 +439,11 @@ class CallbackContext:
             reconstruction_attributes=reconstruction_attributes,
         )
 
+    @contextmanager
     def propagate_callback_context(self, sub_estimator):
         """Propagate the context and callbacks to a sub-estimator.
+
+        Clear the propagated callbacks from the sub-estimator on exit.
 
         Only auto-propagated callbacks are propagated to the sub-estimator. An error is
         raised if the sub-estimator already holds auto-propagated callbacks.
@@ -478,24 +486,30 @@ class CallbackContext:
                 or self._propagation_depth < callback.max_propagation_depth
             )
         ]
-        if not callbacks_to_propagate:
-            return self
-
-        if not hasattr(sub_estimator, "set_callbacks"):
+        if callbacks_to_propagate and not hasattr(sub_estimator, "set_callbacks"):
             warnings.warn(
                 f"The estimator {sub_estimator.__class__.__name__} does not support "
                 f"callbacks. The callbacks attached to {self.estimator_name} will not "
                 f"be propagated to this estimator."
             )
-            return self
+            callbacks_to_propagate = []
 
-        self._propagated_callbacks = callbacks_to_propagate
+        if callbacks_to_propagate:
+            self._propagated_callbacks = callbacks_to_propagate
+            curr_callbacks = getattr(sub_estimator, "_skl_callbacks", [])
+            sub_estimator.set_callbacks(*(curr_callbacks + callbacks_to_propagate))
 
-        sub_estimator.set_callbacks(
-            getattr(sub_estimator, "_skl_callbacks", []) + self._propagated_callbacks
-        )
-
-        return self
+        try:
+            yield
+        finally:
+            if callbacks_to_propagate:
+                kept_callbacks = [
+                    cb
+                    for cb in sub_estimator._skl_callbacks
+                    if cb not in callbacks_to_propagate
+                ]
+                sub_estimator.set_callbacks(*kept_callbacks)
+            del sub_estimator._parent_callback_ctx
 
 
 def _from_reconstruction_attributes(estimator, reconstruction_attributes):
