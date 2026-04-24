@@ -36,26 +36,26 @@ class ScoringMonitorLog:
 
     Attributes
     ----------
-    run_id : uuid.UUID or None
+    run_id : uuid.UUID
         The unique identifier for the run.
 
-    estimator_name : str or None
+    estimator_name : str
         The name of the estimator for the run.
 
-    timestamp : datetime.datetime or None
+    timestamp : datetime.datetime
         The timestamp of the start of the run.
 
-    data : list[dict] or None
+    data : list[dict]
         The recorded scores for the run.
 
-    data_as_pandas : pandas.DataFrame or None
+    data_as_pandas : pandas.DataFrame
         The recorded scores for the run as a Pandas DataFrame.
     """
 
-    run_id: uuid.UUID | None = None
-    estimator_name: str | None = None
-    timestamp: datetime.datetime | None = None
-    data: list[dict] | None = None
+    run_id: uuid.UUID
+    estimator_name: str
+    timestamp: datetime.datetime
+    data: list[dict]
 
     _data_as_pandas = None
 
@@ -185,7 +185,7 @@ class ScoringMonitor:
         run corresponds to one fit of the outermost meta-estimator. If it is not wrapped
         in a meta-estimator, a run simply corresponds to a single fit of the estimator.
 
-        For a given run, the scores are logged in a `ScoringMonitorLog` object
+        For a given run, the scores are logged in a :class:`ScoringMonitorLog` object
         containing:
             - "run_id": a unique identifier for the run;
             - "estimator_name": the name of the (meta-)estimator of the run;
@@ -216,14 +216,22 @@ class ScoringMonitor:
 
         Returns
         -------
-        logs : ScoringMonitorLog or list of ScoringMonitorLog
-            The logged scores.
+        logs : :class:`ScoringMonitorLog` or list of :class:`ScoringMonitorLog`
+            The logged scores. If `select=="most_recent"`, returns a single
+            :class:`ScoringMonitorLog` object. Otherwise, returns the list of all
+            run logs.
         """
         logs = defaultdict(lambda: {"data": []})
         run_to_task_id_path = defaultdict(set)
 
+        if len(shared_log := self._shared_log) == 0:
+            raise ValueError(
+                "No logs to retrieve. No scores were computed during the runs or the "
+                "estimator is not fitted yet"
+            )
+
         # group logs by run
-        for run_id, run_info, task_info_path, scores in list(self._shared_log):
+        for run_id, run_info, task_info_path, scores in shared_log:
             logs[run_id].update(run_info)
 
             task_id_path = tuple(task_info["task_id"] for task_info in task_info_path)
@@ -272,6 +280,6 @@ class ScoringMonitor:
         logs.sort(key=lambda log: (log.timestamp, log.estimator_name))
 
         if select == "most_recent":
-            return logs[-1] if logs else ScoringMonitorLog()
+            return logs[-1]
 
         return logs

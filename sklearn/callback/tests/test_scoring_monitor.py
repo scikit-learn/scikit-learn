@@ -217,22 +217,13 @@ def test_logged_values_meta_estimator(prefer, scoring, as_pandas, include_lineag
         assert log == expected_log
 
 
-@pytest.mark.parametrize("as_pandas", [True, False])
-def test_get_logs_output_type_no_fit(as_pandas):
-    """Check that get_logs return empty containers of the right type before fit."""
-    if as_pandas:
-        pytest.importorskip("pandas")
-
+@pytest.mark.parametrize("select", ["all", "most_recent"])
+def test_get_logs_output_type_no_fit(select):
+    """Check that get_logs raises an error before fit."""
     callback = ScoringMonitor(scoring="neg_mean_squared_error")
 
-    # "all" logs is always a list of run dicts.
-    logs_all = callback.get_logs(select="all")
-    assert isinstance(logs_all, list)
-    assert len(logs_all) == 0
-
-    log_most_recent = callback.get_logs(select="most_recent")
-    assert isinstance(log_most_recent, ScoringMonitorLog)
-    assert all(value is None for value in log_most_recent.__dict__.values())
+    with pytest.raises(ValueError, match="No logs to retrieve"):
+        callback.get_logs(select=select)
 
 
 @pytest.mark.parametrize("as_pandas", [True, False])
@@ -263,15 +254,14 @@ def test_get_logs_output_type(as_pandas):
     assert isinstance(getattr(log_most_recent, attr), expected_data_type)
 
 
-def test_estimator_without_reconstruction_attributes():
+@pytest.mark.parametrize("select", ["all", "most_recent"])
+def test_estimator_without_reconstruction_attributes(select):
     """Smoke test on an estimator which does not provide reconstruction_attributes."""
     callback = ScoringMonitor(scoring="r2")
     WhileEstimator().set_callbacks(callback).fit()
-    assert len(callback.get_logs(select="all")) == 0
-    assert all(
-        value is None
-        for value in callback.get_logs(select="most_recent").__dict__.values()
-    )
+
+    with pytest.raises(ValueError, match="No logs to retrieve"):
+        callback.get_logs(select=select)
 
 
 def test_scoringmonitor_sample_weights():
