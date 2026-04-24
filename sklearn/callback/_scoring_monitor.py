@@ -56,12 +56,6 @@ class ScoringMonitorLog:
     estimator_name: str | None = None
     timestamp: datetime.datetime | None = None
     data: list[dict] | None = None
-    _data_as_pandas = None
-
-    run_id: uuid.UUID | None = None
-    estimator_name: str | None = None
-    timestamp: datetime.datetime | None = None
-    data: list[dict] | None = None
 
     _data_as_pandas = None
 
