@@ -188,12 +188,13 @@ class ScoringMonitor:
 
         For a given run, the scores are logged in a :class:`ScoringMonitorLog` object
         containing:
-            - "run_id": a unique identifier for the run;
-            - "estimator_name": the name of the (meta-)estimator of the run;
-            - "timestamp": the timestamp of the start of the run;
-            - "data": the recorded scores for the run. Each score value is associated
-              with the context of the task for which the score was computed.
-            - "data_as_pandas": the recorded scores as a Pandas DataFrame.
+
+        - `run_id`: a unique identifier for the run;
+        - `estimator_name`: the name of the (meta-)estimator of the run;
+        - `timestamp`: the timestamp of the start of the run;
+        - `data`: the recorded scores for the run. Each score value is associated
+          with the context of the task for which the score was computed;
+        - `data_as_pandas`: the recorded scores as a Pandas DataFrame.
 
         See :class:`ScoringMonitorLog` for more details about the structure of the
         recorded scores.
