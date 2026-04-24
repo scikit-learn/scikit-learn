@@ -441,12 +441,12 @@ def _logistic_regression_path(
             # subcontexts in this for loop to avoid introducing an unnecessary subtask
             # level.
 
-            def scipy_callback_fun(intermediate_result):
+            def scipy_callback_fun(xk):
                 solver_iter_ctx = callback_ctx.subcontext(task_name="lbfgs_iter")
                 solver_iter_ctx.call_on_fit_task_begin(
                     estimator=estimator, X=X, y=y, metadata=callback_metadata
                 )
-                w0 = intermediate_result.x
+                w0 = xk
                 if is_binary:
                     coef_ = xp.asarray(
                         w0.copy(order=coefs_order), dtype=X.dtype, device=device_
