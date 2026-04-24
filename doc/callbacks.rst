@@ -13,11 +13,10 @@ Callbacks
   usual deprecation cycle.
 
 This guide demonstrates how to use scikit-learn's callbacks on compatible estimators. To
-implement callback support in an estimator or meta-estimator, see the corresponding
-section of the developer guide. To develop a callback for callback-compatible
-estimators, see the corresponding section of the developer guide.
-
-.. TODO add refs to callback developer doc
+implement callback support in an estimator or meta-estimator, see the
+:ref:`corresponding section of the developer guide <callbacks_support>`. To develop a
+callback for callback-compatible estimators, see the
+:ref:`corresponding section of the developer guide <developing_callbacks>`.
 
 In scikit-learn, callbacks are objects from the :mod:`~sklearn.callback` module that can
 be registered on an estimator to insert custom logic like monitoring progress or
@@ -67,10 +66,8 @@ are arbitrary units of work defined by the estimator. Usually, tasks correspond 
 iterations of the estimator's learning algorithm, but they can also correspond to more
 abstract operations like fitting an estimator, steps of a pipeline, cross-validation
 folds, etc. Within `fit`, tasks are divided into subtasks, which can themselves be
-divided and so on, giving them a natural tree structure where fitting the estimator is
-the root task.
-
-.. TODO: add link to the dev doc tree structure
+divided and so on, giving them a natural :ref:`tree structure <example_task_tree>` where
+fitting the estimator is the root task.
 
 This tree structure will usually be reflected in a callback's generated objects and
 tasks will be identified by their name, id, and a reference to their parent task.
@@ -188,6 +185,3 @@ Callback Support Status
 
 The development of support for callbacks in estimators is in progress. Here is a list of
 the estimators that support callbacks:
-
-- :class:`~sklearn.linear_model.LogisticRegression`
-- :class:`~sklearn.model_selection.GridSearchCV`

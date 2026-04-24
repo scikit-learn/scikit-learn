@@ -63,6 +63,8 @@ created by the :meth:`~CallbackSupportMixin._init_callback_context` method.
 
 .. dropdown:: examples of task / context trees
 
+    .. _example_task_tree:
+
     As an example, KMeans has two nested loops: the outer loop is controlled by the
     `n_init` parameter, and the inner loop is controlled by the `max_iter` parameter.
     Therefore its task tree looks like this::
