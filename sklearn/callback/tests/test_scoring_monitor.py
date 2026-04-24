@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 
 from sklearn.callback import ScoringMonitor
+from sklearn.callback._scoring_monitor import ScoringMonitorLog
 from sklearn.callback.tests._utils import (
     MaxIterEstimator,
     MetaEstimator,
@@ -16,7 +17,7 @@ from sklearn.utils._testing import assert_allclose
 
 
 def _make_expected_output_MaxIterEstimator(
-    max_iter, scoring, as_frame, X, y, root_task_id=0
+    max_iter, scoring, as_pandas, X, y, root_task_id=0
 ):
     """Generate the expected output of a ScoringMonitor on a MaxIterEstimator."""
     scorer = check_scoring(None, scoring)
@@ -62,7 +63,7 @@ def _make_expected_output_MaxIterEstimator(
             scores = {score_names[0]: scores}
         expected_log.append({**log_item, **scores})
 
-    if as_frame:
+    if as_pandas:
         pd = pytest.importorskip("pandas")
         expected_log = pd.DataFrame(expected_log)
 
@@ -70,7 +71,7 @@ def _make_expected_output_MaxIterEstimator(
 
 
 def _make_expected_output_MetaEstimator(
-    n_outer, n_inner, max_iter, scoring, as_frame, include_lineage, X, y
+    n_outer, n_inner, max_iter, scoring, as_pandas, include_lineage, X, y
 ):
     """Generate the expected output of a ScoringMonitor on a MetaEstimator.
 
@@ -117,7 +118,7 @@ def _make_expected_output_MetaEstimator(
     sorting_key = lambda x: (len(x["parent_task_id_path"]), x["parent_task_id_path"])
     expected_log.sort(key=sorting_key)
 
-    if as_frame:
+    if as_pandas:
         pd = pytest.importorskip("pandas")
         expected_log = pd.DataFrame(expected_log)
 
@@ -141,24 +142,25 @@ def test_score_after_fit():
     estimator = MaxIterEstimator(max_iter=max_iter).set_callbacks(callback)
     estimator.fit(X=X, y=y)
 
-    log = callback.get_logs(as_frame=False, select="most_recent")["data"]
-    log_iterations = [row for row in log if row["parent_task_id_path"] == (0,)]
+    log = callback.get_logs()
+    # select the rows corresponding to the iteration tasks
+    iter_log = [row for row in log.data if row["task_name"].startswith("iteration")]
 
     scorer = check_scoring(None, "r2")
     for i in range(max_iter):
         estimator = MaxIterEstimator(max_iter=i + 1).fit(X, y)
         score = scorer(estimator, X, y)
-        assert_allclose(score, log_iterations[i]["r2"])
+        assert_allclose(score, iter_log[i]["r2"])
 
 
 @pytest.mark.parametrize(
     "scoring",
     ["neg_mean_squared_error", ("neg_mean_squared_error", "r2"), custom_score],
 )
-@pytest.mark.parametrize("as_frame", [True, False])
-def test_logged_values(scoring, as_frame):
+@pytest.mark.parametrize("as_pandas", [True, False])
+def test_logged_values(scoring, as_pandas):
     """Test that the correct values are logged with a simple estimator."""
-    if as_frame:
+    if as_pandas:
         pytest.importorskip("pandas")
 
     max_iter = 3
@@ -168,12 +170,13 @@ def test_logged_values(scoring, as_frame):
 
     estimator.fit(X=X, y=y)
 
-    log = callback.get_logs(as_frame=as_frame, select="most_recent")["data"]
+    attr = "data" if not as_pandas else "data_as_pandas"
+    log = getattr(callback.get_logs(), attr)
     expected_log = _make_expected_output_MaxIterEstimator(
-        max_iter, scoring, as_frame, X, y
+        max_iter, scoring, as_pandas, X, y
     )
 
-    if as_frame:
+    if as_pandas:
         assert log.equals(expected_log)
     else:
         assert log == expected_log
@@ -184,11 +187,11 @@ def test_logged_values(scoring, as_frame):
     "scoring",
     ["neg_mean_squared_error", ("neg_mean_squared_error", "r2"), custom_score],
 )
-@pytest.mark.parametrize("as_frame", [True, False])
+@pytest.mark.parametrize("as_pandas", [True, False])
 @pytest.mark.parametrize("include_lineage", [True, False])
-def test_logged_values_meta_estimator(prefer, scoring, as_frame, include_lineage):
+def test_logged_values_meta_estimator(prefer, scoring, as_pandas, include_lineage):
     """Test that the correct values are logged with a meta-estimator."""
-    if as_frame:
+    if as_pandas:
         pytest.importorskip("pandas")
 
     n_outer, n_inner, max_iter = 3, 2, 5
@@ -201,41 +204,41 @@ def test_logged_values_meta_estimator(prefer, scoring, as_frame, include_lineage
 
     meta_est.fit(X=X, y=y)
 
-    log = callback.get_logs(
-        as_frame=as_frame, select="most_recent", include_lineage=include_lineage
-    )["data"]
+    attr = "data" if not as_pandas else "data_as_pandas"
+    log = callback.get_logs(include_lineage=include_lineage)
+    log = getattr(log, attr)
     expected_log = _make_expected_output_MetaEstimator(
-        n_outer, n_inner, max_iter, scoring, as_frame, include_lineage, X, y
+        n_outer, n_inner, max_iter, scoring, as_pandas, include_lineage, X, y
     )
 
-    if as_frame:
+    if as_pandas:
         assert log.equals(expected_log)
     else:
         assert log == expected_log
 
 
-@pytest.mark.parametrize("as_frame", [True, False])
-def test_get_logs_output_type_no_fit(as_frame):
+@pytest.mark.parametrize("as_pandas", [True, False])
+def test_get_logs_output_type_no_fit(as_pandas):
     """Check that get_logs return empty containers of the right type before fit."""
-    if as_frame:
+    if as_pandas:
         pytest.importorskip("pandas")
 
     callback = ScoringMonitor(scoring="neg_mean_squared_error")
 
     # "all" logs is always a list of run dicts.
-    logs_all = callback.get_logs(select="all", as_frame=as_frame)
+    logs_all = callback.get_logs(select="all")
     assert isinstance(logs_all, list)
     assert len(logs_all) == 0
 
-    log_most_recent = callback.get_logs(select="most_recent", as_frame=as_frame)
-    assert isinstance(log_most_recent, dict)
-    assert len(log_most_recent) == 0
+    log_most_recent = callback.get_logs(select="most_recent")
+    assert isinstance(log_most_recent, ScoringMonitorLog)
+    assert all(value is None for value in log_most_recent.__dict__.values())
 
 
-@pytest.mark.parametrize("as_frame", [True, False])
-def test_get_logs_output_type(as_frame):
+@pytest.mark.parametrize("as_pandas", [True, False])
+def test_get_logs_output_type(as_pandas):
     """Test the type of the get_logs output."""
-    if as_frame:
+    if as_pandas:
         pd = pytest.importorskip("pandas")
 
     callback = ScoringMonitor(scoring="neg_mean_squared_error")
@@ -246,17 +249,18 @@ def test_get_logs_output_type(as_frame):
     estimator.fit(X, y)
     estimator.fit(X, y)
 
-    logs_all = callback.get_logs(select="all", as_frame=as_frame)
+    logs_all = callback.get_logs(select="all")
     assert isinstance(logs_all, list)
     assert len(logs_all) == 2
-    assert all(isinstance(log, dict) for log in logs_all)
+    assert all(isinstance(log, ScoringMonitorLog) for log in logs_all)
 
-    expected_data_type = pd.DataFrame if as_frame else list
-    assert all(isinstance(log["data"], expected_data_type) for log in logs_all)
+    expected_data_type = pd.DataFrame if as_pandas else list
+    attr = "data" if not as_pandas else "data_as_pandas"
+    assert all(isinstance(getattr(log, attr), expected_data_type) for log in logs_all)
 
-    log_most_recent = callback.get_logs(select="most_recent", as_frame=as_frame)
-    assert isinstance(log_most_recent, dict)
-    assert isinstance(log_most_recent["data"], expected_data_type)
+    log_most_recent = callback.get_logs(select="most_recent")
+    assert isinstance(log_most_recent, ScoringMonitorLog)
+    assert isinstance(getattr(log_most_recent, attr), expected_data_type)
 
 
 def test_estimator_without_reconstruction_attributes():
@@ -264,7 +268,10 @@ def test_estimator_without_reconstruction_attributes():
     callback = ScoringMonitor(scoring="r2")
     WhileEstimator().set_callbacks(callback).fit()
     assert len(callback.get_logs(select="all")) == 0
-    assert len(callback.get_logs(select="most_recent")) == 0
+    assert all(
+        value is None
+        for value in callback.get_logs(select="most_recent").__dict__.values()
+    )
 
 
 def test_scoringmonitor_sample_weights():
@@ -276,14 +283,14 @@ def test_scoringmonitor_sample_weights():
     # no sample weights
     callback = ScoringMonitor(scoring="r2")
     MaxIterEstimator().set_callbacks(callback).fit(X=X, y=y)
-    log_no_sw = callback.get_logs(as_frame=False, select="most_recent")["data"]
+    log_no_sw = callback.get_logs().data
 
     # sample weights
     callback = ScoringMonitor(scoring="r2")
     MaxIterEstimator().set_callbacks(callback).fit(
         X=X, y=y, sample_weight=sample_weight
     )
-    log_sw = callback.get_logs(as_frame=False, select="most_recent")["data"]
+    log_sw = callback.get_logs().data
 
     assert log_no_sw != log_sw
 
@@ -322,10 +329,10 @@ def _get_ancestors_info_path_pandas(log, parent_task_id_path):
     return ancestors_info_path
 
 
-@pytest.mark.parametrize("as_frame", [True, False])
-def test_get_logs_include_lineage_ancestor_retrieval(as_frame):
+@pytest.mark.parametrize("as_pandas", [True, False])
+def test_get_logs_include_lineage_ancestor_retrieval(as_pandas):
     """Check that ancestor task info can be retrieved from a given task."""
-    if as_frame:
+    if as_pandas:
         pytest.importorskip("pandas")
 
     n_outer, n_inner, max_iter = 2, 3, 5
@@ -336,7 +343,9 @@ def test_get_logs_include_lineage_ancestor_retrieval(as_frame):
 
     meta_est.fit(X=X, y=y)
 
-    log = callback.get_logs(as_frame=as_frame, include_lineage=True)["data"]
+    attr = "data" if not as_pandas else "data_as_pandas"
+    log = callback.get_logs(include_lineage=True)
+    log = getattr(log, attr)
 
     # pick an arbitrary parent of iteration tasks
     parent_path = (0, 1, 1)
@@ -358,7 +367,7 @@ def test_get_logs_include_lineage_ancestor_retrieval(as_frame):
         },
     ]
 
-    if as_frame:
+    if as_pandas:
         sibling_rows = log.loc[log["parent_task_id_path"] == parent_path]
         ancestors_info_path = _get_ancestors_info_path_pandas(log, parent_path)
     else:
