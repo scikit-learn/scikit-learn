@@ -17,6 +17,7 @@ from sklearn.utils._array_api import (
 )
 from sklearn.utils._dataframe import (
     is_pandas_df,
+    is_polars_df,
     is_polars_df_or_series,
     is_pyarrow_data,
 )
@@ -344,7 +345,7 @@ def _safe_indexing(X, indices, *, axis=0):
     if (
         axis == 1
         and indices_dtype == "str"
-        and not (is_pandas_df(X) or _use_interchange_protocol(X))
+        and not (is_pandas_df(X) or is_polars_df(X) or _use_interchange_protocol(X))
     ):
         raise ValueError(
             "Specifying the columns using strings is only supported for dataframes."
@@ -433,8 +434,19 @@ def _get_column_indices(X, key):
     :func:`_safe_indexing`.
     """
     key_dtype = _determine_key_type(key)
-    if _use_interchange_protocol(X):
-        return _get_column_indices_interchange(X.__dataframe__(), key, key_dtype)
+    if is_polars_df(X):
+        n_columns = X.shape[1]
+        column_names = X.columns
+        return _get_column_indices_interchange_and_polars(
+            n_columns, column_names, key, key_dtype
+        )
+    elif _use_interchange_protocol(X):
+        X_interchange = X.__dataframe__()
+        n_columns = X_interchange.num_columns()
+        column_names = list(X_interchange.column_names())
+        return _get_column_indices_interchange_and_polars(
+            n_columns, column_names, key, key_dtype
+        )
 
     n_columns = X.shape[1]
     if isinstance(key, (list, tuple)) and not key:
@@ -480,10 +492,8 @@ def _get_column_indices(X, key):
         return column_indices
 
 
-def _get_column_indices_interchange(X_interchange, key, key_dtype):
-    """Same as _get_column_indices but for X with __dataframe__ protocol."""
-
-    n_columns = X_interchange.num_columns()
+def _get_column_indices_interchange_and_polars(n_columns, column_names, key, key_dtype):
+    """Same as _get_column_indices but for X with __dataframe__ protocol or polars."""
 
     if isinstance(key, (list, tuple)) and not key:
         # we get an empty list
@@ -491,8 +501,6 @@ def _get_column_indices_interchange(X_interchange, key, key_dtype):
     elif key_dtype in ("bool", "int"):
         return _get_column_indices_for_bool_or_int(key, n_columns)
     else:
-        column_names = list(X_interchange.column_names())
-
         if isinstance(key, slice):
             if key.step not in [1, None]:
                 raise NotImplementedError("key.step must be 1 or None")
