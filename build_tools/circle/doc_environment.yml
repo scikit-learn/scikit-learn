@@ -4,7 +4,7 @@
 channels:
   - conda-forge
 dependencies:
-  - python=3.11
+  - python=3.14
   - numpy
   - blas
   - scipy
@@ -30,7 +30,7 @@ dependencies:
   - numpydoc
   - sphinx-prompt
   - plotly
-  - polars=1.34.0
+  - polars
   - pooch
   - sphinxext-opengraph
   - sphinx-remove-toctrees
