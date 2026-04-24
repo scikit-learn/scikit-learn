@@ -4,7 +4,6 @@
 import numbers
 import sys
 import warnings
-from collections import UserList
 from itertools import compress, islice
 
 import narwhals as nw
@@ -17,7 +16,7 @@ from sklearn.utils._array_api import (
     get_namespace_and_device,
     move_to,
 )
-from sklearn.utils._dataframe import is_pandas_df, is_pyarrow_data
+from sklearn.utils._dataframe import is_polars_df, is_pyarrow_data
 from sklearn.utils._param_validation import Interval, validate_params
 from sklearn.utils.extmath import _approximate_mode
 from sklearn.utils.fixes import SCIPY_VERSION_BELOW_1_12
@@ -183,9 +182,7 @@ def _determine_key_type(key, accept_slice=True):
         if key_start_type is not None:
             return key_start_type
         return key_stop_type
-    # TODO(1.9) remove UserList when the force_int_remainder_cols param
-    # of ColumnTransformer is removed
-    if isinstance(key, (list, tuple, UserList)):
+    if isinstance(key, (list, tuple)):
         unique_key = set(key)
         key_type = {_determine_key_type(elt) for elt in unique_key}
         if not key_type:
@@ -294,7 +291,9 @@ def _safe_indexing(X, indices, *, axis=0):
     if (
         axis == 1
         and indices_dtype == "str"
-        and not (is_pandas_df(X) or _use_interchange_protocol(X))
+        and not (
+            nw.dependencies.is_into_dataframe(X) or nw.dependencies.is_into_series(X)
+        )
     ):
         raise ValueError(
             "Specifying the columns using strings is only supported for dataframes."
@@ -380,8 +379,19 @@ def _get_column_indices(X, key):
     :func:`_safe_indexing`.
     """
     key_dtype = _determine_key_type(key)
-    if _use_interchange_protocol(X):
-        return _get_column_indices_interchange(X.__dataframe__(), key, key_dtype)
+    if is_polars_df(X):
+        n_columns = X.shape[1]
+        column_names = X.columns
+        return _get_column_indices_interchange_and_polars(
+            n_columns, column_names, key, key_dtype
+        )
+    elif _use_interchange_protocol(X):
+        X_interchange = X.__dataframe__()
+        n_columns = X_interchange.num_columns()
+        column_names = list(X_interchange.column_names())
+        return _get_column_indices_interchange_and_polars(
+            n_columns, column_names, key, key_dtype
+        )
 
     n_columns = X.shape[1]
     if isinstance(key, (list, tuple)) and not key:
@@ -427,10 +437,8 @@ def _get_column_indices(X, key):
         return column_indices
 
 
-def _get_column_indices_interchange(X_interchange, key, key_dtype):
-    """Same as _get_column_indices but for X with __dataframe__ protocol."""
-
-    n_columns = X_interchange.num_columns()
+def _get_column_indices_interchange_and_polars(n_columns, column_names, key, key_dtype):
+    """Same as _get_column_indices but for X with __dataframe__ protocol or polars."""
 
     if isinstance(key, (list, tuple)) and not key:
         # we get an empty list
@@ -438,8 +446,6 @@ def _get_column_indices_interchange(X_interchange, key, key_dtype):
     elif key_dtype in ("bool", "int"):
         return _get_column_indices_for_bool_or_int(key, n_columns)
     else:
-        column_names = list(X_interchange.column_names())
-
         if isinstance(key, slice):
             if key.step not in [1, None]:
                 raise NotImplementedError("key.step must be 1 or None")
