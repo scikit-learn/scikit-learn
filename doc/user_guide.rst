@@ -12,9 +12,9 @@ User Guide
    unsupervised_learning.rst
    model_selection.rst
    metadata_routing.rst
-   callbacks.rst
    inspection.rst
    visualizations.rst
+   callbacks.rst
    data_transforms.rst
    datasets.rst
    computing.rst

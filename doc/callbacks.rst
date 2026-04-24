@@ -8,15 +8,14 @@ Callbacks
 .. note::
 
   The callback API is experimental, and is not yet implemented for all estimators.
-  Please refer to the :ref:`list of callback compatible estimators
+  Please refer to the :ref:`list of callback-compatible estimators
   <callback_compatible_estimators>` for more information. It may change without the
   usual deprecation cycle.
 
-This guide demonstrates how to use scikit-learn's callbacks on compatible estimators. If
-you are developing a scikit-learn compatible estimator or meta-estimator and want to
-make it compatible with callbacks, you can check our related developer guide. If you
-want to develop a callback to use with callback compatible estimators, you can refer
-to the related section of the developer guide.
+This guide demonstrates how to use scikit-learn's callbacks on compatible estimators. To
+implement callback support in an estimator or meta-estimator, see the corresponding
+section of the developer guide. To develop a callback for callback-compatible
+estimators, see the corresponding section of the developer guide.
 
 .. TODO add refs to callback developer doc
 
@@ -35,130 +34,137 @@ method to register callbacks on them. The following example shows how to registe
     >>> from sklearn.callback import ProgressBar
     >>> from sklearn.linear_model import LogisticRegression
     >>> progress_bar = ProgressBar()
-    >>> estimator = LogisticRegression()
-    >>> estimator.set_callbacks(progress_bar) # doctest: +SKIP
+    >>> logreg = LogisticRegression()
+    >>> logreg.set_callbacks(progress_bar) # doctest: +SKIP
 
 .. TODO: remove the doctest skip
 
 Now that the progress bar is registered on the estimator, calling its `fit` method will
-display a bar monitoring the progress of the `fit` execution::
+display a progress bar::
 
     >>> from sklearn.datasets import load_iris
     >>> X, y = load_iris(return_X_y=True)
-    >>> estimator.fit(X, y) # doctest: +SKIP
+    >>> logreg.fit(X, y) # doctest: +SKIP
     LogisticRegression - fit ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:03:12
 
-.. TODO: remove the doctest skip
+.. TODO: remove the doctest skip and add ellipsis for the time taken
 
 Multiple callbacks can be registered on the same estimator, for example a
 :class:`~ScoringMonitor` callback can be registered in addition to the
-:class:`~ProgressBar` one::
+:class:`~ProgressBar`::
 
     >>> from sklearn.callback import ScoringMonitor # doctest: +SKIP
     >>> scoring_monitor = ScoringMonitor(scoring="precision") # doctest: +SKIP
-    >>> estimator.set_callbacks(progress_bar, scoring_monitor) # doctest: +SKIP
+    >>> logreg.set_callbacks(progress_bar, scoring_monitor) # doctest: +SKIP
 
 .. TODO: remove the doctest skips
+
+Callback invocation
+*******************
+
+During `fit`, the callbacks are invoked at the start and end of each task, where tasks
+are arbitrary units of work defined by the estimator. Usually, tasks correspond to
+iterations of the estimator's learning algorithm, but they can also correspond to more
+abstract operations like fitting an estimator, steps of a pipeline, cross-validation
+folds, etc. Within `fit`, tasks are divided into subtasks, which can themselves be
+divided and so on, giving them a natural tree structure where fitting the estimator is
+the root task.
+
+.. TODO: add link to the dev doc tree structure
+
+This tree structure will usually be reflected in a callback's generated objects and
+tasks will be identified by their name, id, and a reference to their parent task.
+For tasks that have a natural ordering, like the iterations of a learning algorithm, the
+ids are consecutive integers starting from 0. Some callbacks may provide additional
+contextual information about the tasks. Here's an example of the logs of the
+:class:`~ScoringMonitor`::
+
+    >>> logreg.fit(X, y) # doctest: +SKIP
+    LogisticRegression - fit ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:03:12
+    >>> scoring_monitor.get_logs(as_frame=True) # doctest: +SKIP
 
 Usage with meta-estimators
 **************************
 
-There are two types of callbacks, regular callbacks and auto-propagated ones, reflecting
-two different usages in the context of an estimator composition, when using a
-:term:`meta-estimator`.
+When using callbacks in estimator compositions, involving estimators and
+:term:`meta-estimators`, we distinguish two types of callbacks: regular and
+auto-propagated. They serve different purposes and are meant to be registered on
+different estimators or meta-estimators in the composition.
 
 Regular callbacks
 -----------------
 
-Regular callbacks are meant to track the learning process of one estimator. A regular
-callback can be registered on an estimator at any level of the composition, and it will
-be invoked only within the `fit` of that estimator's level. If a regular callback is
-registered on a sub-estimator which is fitted multiple times by a meta-estimator, or is
-cloned by the meta-estimator and the clones get fitted, that callback will be
-invoked in each one of these `fit` executions.
+Regular callbacks are meant to be invoked within the `fit` of a given estimator. Their
+goal is usually to track the learning process of that estimator.
+:class:`~ScoringMonitor`, for example, records the scores at each iteration of a model.
+A regular callback can be registered on an estimator at any level of a composition. If a
+regular callback is registered on an estimator that is :term:`cloned` by a
+meta-estimator, possibly multiple times, that callback will be invoked in each one of
+the `fit` executions of the clones.
 
-For example in the case of a :class:`~sklearn.model_selection.GridSearchCV` applied on a
-:class:`~sklearn.linear_model.LogisticRegression`, the regular callback
-:class:`~ScoringMonitor` can be registered on the
-:class:`~sklearn.linear_model.LogisticRegression`. Then the scores will be logged for
-each logistic regression fit of each parameter combination and each fold of the grid
-search::
+For example, when tuning the hyperparameters of a
+:class:`~sklearn.linear_model.LogisticRegression` using a
+:class:`~sklearn.model_selection.GridSearchCV`, a :class:`~ScoringMonitor` can be
+registered on the :class:`~sklearn.linear_model.LogisticRegression` to monitor the
+scores of the logistic regression model for each parameter combination and each fold of
+the grid search::
 
     >>> from sklearn.model_selection import GridSearchCV
-    >>> parameters = {"C": [10, 1, 0.1], "l1_ratio": [0, 1]}
     >>> scoring = ScoringMonitor(scoring="precision") # doctest: +SKIP
-    >>> sub_estimator = LogisticRegression()
-    >>> sub_estimator.set_callbacks(scoring) # doctest: +SKIP
-    >>> meta_estimator = GridSearchCV(sub_estimator, parameters)
-    >>> meta_estimator.fit(X, y)
+    >>> logreg = LogisticRegression().set_callbacks(scoring) # doctest: +SKIP
+    >>> grid_search = GridSearchCV(logreg, {"C": [10, 1, 0.1], "l1_ratio": [0, 1]})
+    >>> grid_search.fit(X, y)
     GridSearchCV(estimator=LogisticRegression(),
                  param_grid={'C': [10, 1, 0.1], 'l1_ratio': [0, 1]})
-    >>> scoring.get_logs() # doctest: +SKIP
 
-.. TODO: add printed output, or maybe use the logs in a plot
 .. TODO: remove the doctest skips
+
+.. TODO: link to an example of how to use and plot the scores from the logs of
+..       ScoringMonitor
 
 Auto-propagated callbacks
 -------------------------
 
-Auto-propagated callbacks are :class:`~AutoPropagatedCallback` objects, and they are
-meant to aggregate information from the different levels of an estimator composition.
-When registered on a meta-estimator, an auto-propagated callback can be propagated from
-the meta-estimator to its sub-estimators, meaning it will get invoked in the `fit` of
-both the meta-estimator and the sub-estimators. If the sub-estimators are also
-meta-estimators, the auto-propagated callback can be propagated to the
-sub-sub-estimators too, and so on. This propagation is controlled through the
-`max_propagation_depth` argument of the callback. This argument indicates the estimator
-depth up to which the callback will be propagated in an estimator composition.
+Auto-propagated callbacks are meant to be invoked within the `fit` of all
+(meta-)estimators in an estimator composition. Their goal is usually to report more
+general information about the status at each step of the composition.
+:class:`~ProgressBar` for instance displays nested progress bars for the
+meta-estimators, their sub-estimators and so on. When registered on a meta-estimator,
+an auto-propagated callback will automatically be registered on all its sub-estimators
+that support callbacks.
 
-.. dropdown:: Auto-propagated callbacks registration restriction
+.. dropdown:: registration restrictions
 
-    Auto-propagated callbacks cannot be registered on an estimator that is a
-    sub-estimator of a callback compatible meta-estimator. In other words, in an
-    estimator composition an auto-propagated callback must be registered to the
-    outermost meta-estimator that supports callbacks. Otherwise an error will be raised
-    when that callback compatible meta-estimator will have its `fit` executed.
+    Auto-propagated callbacks are designed to be registered on the top-level
+    meta-estimator of an estimator composition. If some of its sub-estimators already
+    have auto-propagated callbacks registered on them, an error will be raised.
 
-For example in the case of a :class:`~sklearn.model_selection.GridSearchCV` applied on a
-:class:`~sklearn.linear_model.LogisticRegression`, the auto-propagated callback
-:class:`~ProgressBar` must be registered on the
-:class:`~sklearn.model_selection.GridSearchCV`, and having its `max_propagation_depth`
-set to 1 means that the progressbar will show progress or both the grid search and each
-logistic regression fit::
+    If the top-level meta-estimator doesn't itself support callbacks, then its
+    sub-estimators are allowed to have auto-propagated callbacks registered on them.
+    However, be aware that this is not optimal and that callbacks might not be able to
+    deliver their full capabilities.
 
-    >>> from sklearn.model_selection import GridSearchCV
-    >>> parameters = {"l1_ratio": [0, 1], "fit_intercept": [True, False]}
-    >>> sub_estimator = LogisticRegression()
-    >>> meta_estimator = GridSearchCV(sub_estimator, parameters)
-    >>> meta_estimator.set_callbacks(ProgressBar(max_propagation_depth=1)) # doctest: +SKIP
-    >>> meta_estimator.fit(X, y) # doctest: +SKIP
+Let's add progress bars to the example of the previous section, tuning the
+hyperparameters of a :class:`~sklearn.linear_model.LogisticRegression`. The
+:class:`~ProgressBar` callback needs to be registered on the grid search::
+
+    >>> grid_search.set_callbacks(ProgressBar()) # doctest: +SKIP
+    >>> grid_search.fit(X, y) # doctest: +SKIP
 
 .. TODO: add printed output
-.. TODO: remove the doctest skips
 
-Changing the `max_propagation_depth` argument to 0 will make the auto-propagated
-callback only be registered on the top-level estimator, in that case it means that only
-one progress bar for the :class:`~sklearn.model_selection.GridSearchCV` will be
-displayed::
+.. dropdown:: Control the propagation depth
 
-    >>> meta_estimator.set_callbacks(ProgressBar(max_propagation_depth=0)) # doctest: +SKIP
-    >>> meta_estimator.fit(X, y) # doctest: +SKIP
+    Auto-propagated callbacks can be distinguished from regular callbacks by the fact
+    that they have a `max_propagation_depth` attribute. This attribute indicates the
+    maximum depth of nested estimators at which the callback will be propagated. In the
+    previous example, the grid search is at depth 0 and the logistic regression is at
+    depth 1 for instance.
 
-.. TODO: add printed output, or maybe use the logs in a plot
-.. TODO: remove the doctest skip
-
-Fit tasks
-*********
-
-During a callback compatible estimator's `fit`, the callbacks are invoked at the start
-and end of each task. The tasks are arbitrary units of work defined by the estimator.
-Usually, a task corresponds to an iteration of the estimator's learning algorithm. They
-can also correspond to steps of a pipeline, cross-validation folds, etc. As tasks can be
-decomposed into subtasks, they have a natural tree structure which can be reflected in
-a callback's generated objects, such as logs. For more details about the tasks and their
-tree structure, please see the corresponding section in the developer documentation.
-
-.. TODO: add link to the dev doc
+    If `max_propagation_depth` is set to 0, the callback will not be propagated to any
+    sub-estimators and will only be invoked for the (meta-)estimator it is registered
+    on. If it is set to `None`, it will be propagated to all nested levels of the
+    estimator composition.
 
 Scikit-learn's built-in callbacks
 *********************************
@@ -180,8 +186,8 @@ Callback                       Description
 Callback Support Status
 ***********************
 
-The development of support for callbacks in estimators is in progress, here is a list of
-the estimators which support callbacks.
+The development of support for callbacks in estimators is in progress. Here is a list of
+the estimators that support callbacks:
 
 - :class:`~sklearn.linear_model.LogisticRegression`
 - :class:`~sklearn.model_selection.GridSearchCV`
