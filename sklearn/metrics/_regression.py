@@ -122,7 +122,7 @@ def _check_reg_targets(
 
     # Ensure that all inputs are on the y_pred device and namespace.
     y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
-    if _is_arraylike(multioutput):
+    if not isinstance(multioutput, str) and _is_arraylike(multioutput):
         multioutput = move_to(multioutput, xp=xp, device=device)
 
     check_consistent_length(y_true, y_pred, sample_weight)
