@@ -115,7 +115,7 @@ class ScoringMonitor:
         prefer_skip_nested_validation=True,
     )
     def get_logs(self, select="most_recent", as_frame=False, include_lineage=False):
-        """Get the logged scores.
+        """Retrieve the logged scores.
 
         Log entries are grouped by runs, which are the outermost enclosing fit calls. If
         the estimator this callback is registered on is wrapped in meta-estimators, a
