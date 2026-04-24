@@ -16,6 +16,7 @@ from scipy.linalg import LinAlgWarning, svd
 from sklearn import config_context
 from sklearn._loss import HalfMultinomialLoss
 from sklearn.base import clone
+from sklearn.callback.tests._utils import RecordingCallback
 from sklearn.datasets import load_iris, make_classification, make_low_rank_matrix
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LogisticRegression, LogisticRegressionCV, SGDClassifier
@@ -2877,3 +2878,27 @@ def test_logistic_regression_array_api_warm_start(
         lr.fit(X_xp, y_xp)
         lr.predict(X_xp)
         lr.fit(X_xp, y_xp)
+
+
+def test_logistic_regression_callback_support():
+    """Test the callback support for LogisticRegression."""
+    # TODO(callbacks): also test for other solvers when they get supported.
+    X, y = load_iris(return_X_y=True)
+    cb = RecordingCallback()
+    lr = LogisticRegression(solver="lbfgs").set_callbacks(cb)
+    lr.fit(X, y)
+
+    assert cb.count_hooks("setup") == 1
+    assert cb.count_hooks("teardown") == 1
+    assert cb.count_hooks("on_fit_task_begin") == lr.n_iter_ + 1
+    assert cb.count_hooks("on_fit_task_end") == lr.n_iter_ + 1
+
+    # The last fitted_estimator should be the same as the actual fitted instance.
+    pred = lr.predict(X)
+    last_fitted_lr = [
+        rec
+        for rec in cb.record
+        if rec["name"] == "on_fit_task_end"
+        and rec["kwargs"]["fitted_estimator"] is not None
+    ][-1]["kwargs"]["fitted_estimator"]
+    assert_allclose(pred, last_fitted_lr.predict(X))
