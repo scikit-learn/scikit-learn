@@ -154,6 +154,8 @@ API_REFERENCE = {
                     "CallbackSupportMixin",
                     "FitCallback",
                     "ProgressBar",
+                    "ScoringMonitor",
+                    "ScoringMonitorLog",
                     "with_callbacks",
                 ],
             },

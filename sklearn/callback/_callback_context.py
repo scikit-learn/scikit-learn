@@ -6,6 +6,7 @@ import inspect
 import uuid
 import warnings
 from contextlib import contextmanager
+from datetime import datetime, timezone
 
 from sklearn.callback._base import AutoPropagatedCallback
 
@@ -70,27 +71,25 @@ from sklearn.callback._base import AutoPropagatedCallback
 #     @with_callbacks
 #     def fit(self, X, y):
 #         callback_ctx = self._init_callback_context(max_subtasks=self.max_iter)
-#         callback_ctx.call_on_fit_task_begin(X=X, y=y)
+#         callback_ctx.call_on_fit_task_begin(estimator=self, X=X, y=y)
 #
 #         for i in range(self.max_iter):
 #             subcontext = callback_ctx.subcontext(task_id=i).call_on_fit_task_begin(
-#                X=X, y=y,
+#                estimator=self, X=X, y=y
 #             )
 #
 #             # Do something
 #
-#             subcontext.call_on_fit_task_end(X=X, y=y)
+#             subcontext.call_on_fit_task_end(estimator=self, X=X, y=y)
 #
-#         callback_ctx.call_on_fit_task_end(X=X, y=y)
+#         callback_ctx.call_on_fit_task_end(estimator=self, X=X, y=y)
 #         return self
 #
 # It's also an object that is passed to the callback hooks to give them information
 # about the task being executed and its position in the task tree.
 
 
-# List of the parameters expected to be passed to call_on_fit_task_* (IN) and to be in
-# the hooks signatures (OUT).
-VALID_HOOK_PARAMS_IN = ["X", "y", "metadata", "reconstruction_attributes"]
+# List of the parameters expected to be in the hooks signatures
 VALID_HOOK_PARAMS_OUT = ["X", "y", "metadata", "fitted_estimator"]
 
 
@@ -133,6 +132,9 @@ class CallbackContext:
     root_uuid : uuid.UUID instance
         The UUID of the root context. All contexts in the same task tree have the same
         root UUID that is used to identify the task tree itself.
+
+    init_time : datetime.datetime
+        The time when the context was initialised, in the UTC timezone.
 
     source_estimator_name : str or None
         The name of the estimator that holds the parent task this task was
@@ -182,6 +184,7 @@ class CallbackContext:
         new_ctx.sequential_subtasks = sequential_subtasks
         new_ctx.parent = None
         new_ctx.root_uuid = uuid.uuid4()
+        new_ctx.init_time = datetime.now(timezone.utc)
         new_ctx._children_map = {}
         new_ctx.source_estimator_name = None
         new_ctx.source_task_name = None
@@ -237,6 +240,7 @@ class CallbackContext:
         new_ctx.max_subtasks = max_subtasks
         new_ctx.sequential_subtasks = sequential_subtasks
         new_ctx.root_uuid = parent_context.root_uuid
+        new_ctx.init_time = datetime.now(timezone.utc)
         new_ctx.parent = None
         new_ctx._children_map = {}
         new_ctx.source_estimator_name = None
