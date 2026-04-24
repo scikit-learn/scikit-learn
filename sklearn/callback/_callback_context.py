@@ -5,6 +5,7 @@ import copy
 import inspect
 import uuid
 import warnings
+from contextlib import contextmanager
 
 from sklearn.callback._base import AutoPropagatedCallback
 
@@ -513,8 +514,11 @@ class CallbackContext:
             reconstruction_attributes=reconstruction_attributes,
         )
 
+    @contextmanager
     def propagate_callback_context(self, sub_estimator):
         """Propagate the context and callbacks to a sub-estimator.
+
+        Clear the propagated callbacks from the sub-estimator on exit.
 
         Only auto-propagated callbacks are propagated to the sub-estimator. An error is
         raised if the sub-estimator already holds auto-propagated callbacks.
@@ -557,24 +561,30 @@ class CallbackContext:
                 or self._propagation_depth < callback.max_propagation_depth
             )
         ]
-        if not callbacks_to_propagate:
-            return self
-
-        if not hasattr(sub_estimator, "set_callbacks"):
+        if callbacks_to_propagate and not hasattr(sub_estimator, "set_callbacks"):
             warnings.warn(
                 f"The estimator {sub_estimator.__class__.__name__} does not support "
                 f"callbacks. The callbacks attached to {self.estimator_name} will not "
                 f"be propagated to this estimator."
             )
-            return self
+            callbacks_to_propagate = []
 
-        self._propagated_callbacks = callbacks_to_propagate
+        if callbacks_to_propagate:
+            self._propagated_callbacks = callbacks_to_propagate
+            curr_callbacks = getattr(sub_estimator, "_skl_callbacks", [])
+            sub_estimator.set_callbacks(*(curr_callbacks + callbacks_to_propagate))
 
-        sub_estimator.set_callbacks(
-            getattr(sub_estimator, "_skl_callbacks", []) + self._propagated_callbacks
-        )
-
-        return self
+        try:
+            yield
+        finally:
+            if callbacks_to_propagate:
+                kept_callbacks = [
+                    cb
+                    for cb in sub_estimator._skl_callbacks
+                    if cb not in callbacks_to_propagate
+                ]
+                sub_estimator.set_callbacks(*kept_callbacks)
+            del sub_estimator._parent_callback_ctx
 
 
 def _from_reconstruction_attributes(estimator, reconstruction_attributes):
