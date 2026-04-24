@@ -476,7 +476,9 @@ def _logistic_regression_path(
                     metadata=callback_metadata,
                     reconstruction_attributes=reconstruction_attributes,
                 ):
-                    raise StopIteration()
+                    pass  # TODO(1.10): Do 'raise StopIteration()' instead of pass.
+                    # Using StopIteration in a scipy callback requires scipy > 1.10
+                    # which will be the case of the min version for scikit-learn 1.10.
 
             l2_reg_strength = 1.0 / (C * sw_sum)
             iprint = [-1, 50, 1, 100, 101][

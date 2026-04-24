@@ -2904,7 +2904,12 @@ def test_logistic_regression_callback_support():
     assert_allclose(pred, last_fitted_lr.predict(X))
 
 
+# TODO(1.10): remove skip when scipy callbacks can be interrupted with StopIteration in
+# min version (i.e. when min scipy version > 1.10).
 # TODO(callbacks): also test for other solvers when they get supported.
+@pytest.mark.skip(
+    reason="Fit interruption will be implemented when scipy min version > 1.10."
+)
 def test_logistic_regression_fit_stopped_by_callback():
     """Test that a callback can interrupt the fit."""
     X, y = load_iris(return_X_y=True)
