@@ -469,16 +469,17 @@ def _logistic_regression_path(
                         intercept_ = xp.zeros(n_classes, dtype=X.dtype, device=device_)
 
                 reconstruction_attributes = {"coef_": coef_, "intercept_": intercept_}
-                if solver_iter_ctx.call_on_fit_task_end(
+                solver_iter_ctx.call_on_fit_task_end(
                     estimator=estimator,
                     X=X,
                     y=y,
                     metadata=callback_metadata,
                     reconstruction_attributes=reconstruction_attributes,
-                ):
-                    pass  # TODO(1.10): Do 'raise StopIteration()' instead of pass.
-                    # Using StopIteration in a scipy callback requires scipy > 1.10
-                    # which will be the case of the min version for scikit-learn 1.10.
+                )
+                # TODO(1.10): Use `call_on_fit_task_end` in an if to do
+                # `raise StopIteration()`
+                # Using StopIteration in a scipy callback requires scipy > 1.10
+                # which will be the case of the min version for scikit-learn 1.10.
 
             l2_reg_strength = 1.0 / (C * sw_sum)
             iprint = [-1, 50, 1, 100, 101][
