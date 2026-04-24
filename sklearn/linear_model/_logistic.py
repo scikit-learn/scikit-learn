@@ -497,7 +497,9 @@ def _logistic_regression_path(
                     "ftol": 64 * np.finfo(float).eps,
                     **_get_additional_lbfgs_options_dict("iprint", iprint),
                 },
-                callback=scipy_callback_fun if callback_ctx is not None else None,
+                callback=scipy_callback_fun
+                if callback_ctx is not None and hasattr(estimator, "_skl_callbacks")
+                else None,
             )
             n_iter_i = _check_optimize_result(
                 solver,
