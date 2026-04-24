@@ -24,11 +24,11 @@ class ScoringMonitorLog:
     column_name -> value pairs. The columns are structured as follows:
 
     - `task_id_path`: tuple containing the task ids from the root task to the
-        task for which the score was computed. Each value in this column is
-        unique.
+      task for which the score was computed. Each value in this column is
+      unique.
     - `parent_task_id_path`: tuple containing the task ids from the root to the
-        parent task. It can be used to group scores from tasks that have the same
-        parent task.
+      parent task. It can be used to group scores from tasks that have the same
+      parent task.
     - `estimator_name`: the name of the estimator.
     - `task_name`: the name of the task.
     - `task_id`: the id of the task.
