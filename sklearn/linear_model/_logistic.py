@@ -20,6 +20,7 @@ from sklearn._loss.loss import (
     HalfMultinomialLossArrayAPI,
 )
 from sklearn.base import _fit_context
+from sklearn.callback import CallbackSupportMixin
 from sklearn.linear_model._base import (
     BaseEstimator,
     LinearClassifierMixin,
@@ -120,6 +121,8 @@ def _logistic_regression_path(
     sample_weight=None,
     l1_ratio=None,
     n_threads=1,
+    callback_ctx=None,
+    estimator=None,
 ):
     """Compute a Logistic Regression model for a list of regularization
     parameters.
@@ -236,6 +239,14 @@ def _logistic_regression_path(
 
     n_threads : int, default=1
        Number of OpenMP threads to use.
+
+    callback_ctx : CallbackContext or None, default=None
+        The callback context of the fit task calling this function. If set to None, the
+        callbacks will not be invoked.
+
+    estimator : estimator instance or None, default=None
+        The estimator instance in which fit this function is called, forwarded to the
+        callbacks if callback_ctx is not None.
 
     Returns
     -------
@@ -421,8 +432,52 @@ def _logistic_regression_path(
     coefs = list()
     n_iter = xp.zeros(len(Cs), dtype=xp.int32, device=device_)
     coefs_order = "C" if not _is_numpy_namespace(xp) else "K"
+    callback_metadata = (
+        {"sample_weight": sample_weight} if sample_weight is not None else None
+    )
     for i, C in enumerate(Cs):
         if solver == "lbfgs":
+            # In LogisticRegression fit, Cs is always a singleton, so we don't use
+            # subcontexts in this for loop to avoid introducing an unnecessary subtask
+            # level.
+
+            def scipy_callback_fun(intermediate_result):
+                solver_iter_ctx = callback_ctx.subcontext(task_name="lbfgs_iter")
+                solver_iter_ctx.call_on_fit_task_begin(
+                    estimator=estimator, X=X, y=y, metadata=callback_metadata
+                )
+                w0 = intermediate_result.x
+                if is_binary:
+                    coef_ = xp.asarray(
+                        w0.copy(order=coefs_order), dtype=X.dtype, device=device_
+                    )
+                    if fit_intercept:
+                        intercept_ = coef_[-1:]
+                        coef_ = coef_[:-1][None, :]
+                    else:
+                        intercept_ = xp.zeros(1, dtype=X.dtype, device=device_)
+                        coef_ = coef_[None, :]
+                else:
+                    multi_w0 = np.reshape(w0, (n_classes, -1), order="F")
+                    coef_ = xp.asarray(
+                        multi_w0.copy(order=coefs_order), dtype=X.dtype, device=device_
+                    )
+                    if fit_intercept:
+                        intercept_ = coef_[:, -1]
+                        coef_ = coef_[:, :-1]
+                    else:
+                        intercept_ = xp.zeros(n_classes, dtype=X.dtype, device=device_)
+
+                reconstruction_attributes = {"coef_": coef_, "intercept_": intercept_}
+                if solver_iter_ctx.call_on_fit_task_end(
+                    estimator=estimator,
+                    X=X,
+                    y=y,
+                    metadata=callback_metadata,
+                    reconstruction_attributes=reconstruction_attributes,
+                ):
+                    raise StopIteration()
+
             l2_reg_strength = 1.0 / (C * sw_sum)
             iprint = [-1, 50, 1, 100, 101][
                 np.searchsorted(np.array([0, 1, 2, 3]), verbose)
@@ -440,6 +495,7 @@ def _logistic_regression_path(
                     "ftol": 64 * np.finfo(float).eps,
                     **_get_additional_lbfgs_options_dict("iprint", iprint),
                 },
+                callback=scipy_callback_fun if callback_ctx is not None else None,
             )
             n_iter_i = _check_optimize_result(
                 solver,
@@ -746,6 +802,8 @@ def _log_reg_scoring_path(
         check_input=False,
         max_squared_sum=max_squared_sum,
         sample_weight=sw_train,
+        callback_ctx=None,
+        estimator=None,
     )
 
     log_reg = LogisticRegression(solver=solver)
@@ -812,7 +870,9 @@ def _log_reg_scoring_path(
     return coefs, Cs, np.array(scores), n_iter
 
 
-class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
+class LogisticRegression(
+    LinearClassifierMixin, SparseCoefMixin, CallbackSupportMixin, BaseEstimator
+):
     """
     Logistic Regression (aka logit, MaxEnt) classifier.
 
@@ -1163,6 +1223,27 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self.warm_start = warm_start
         self.n_jobs = n_jobs
 
+    def set_callbacks(self, callbacks):
+        """Set callbacks for the estimator.
+
+        Parameters
+        ----------
+        callbacks : callback or list of callbacks
+            The callbacks to set.
+
+        Returns
+        -------
+        self : estimator instance
+            The estimator instance itself.
+        """
+        if self.solver != "lbfgs":
+            warnings.warn(
+                f"Callbacks are only supported in {self.__class__.__name__} for"
+                f" solver='lbfgs'. This estimator has solver='{self.solver}', callbacks"
+                " will be ignored during the solving of the regression."
+            )
+        return super().set_callbacks(callbacks)
+
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """
@@ -1193,6 +1274,14 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         -----
         The SAGA solver supports both float64 and float32 bit arrays.
         """
+        # The fit task will have a subtask even if max_iter is 0.
+        callback_ctx = self._init_callback_context(max_subtasks=max(self.max_iter, 1))
+        callback_metadata = (
+            {"sample_weght": sample_weight} if sample_weight is not None else None
+        )
+        callback_ctx.call_on_fit_task_begin(
+            estimator=self, X=X, y=y, metadata=callback_metadata
+        )
         if self.penalty == "deprecated":
             if self.l1_ratio == 0 or self.l1_ratio is None:
                 penalty = "l2"
@@ -1359,6 +1448,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             max_squared_sum=max_squared_sum,
             sample_weight=sample_weight,
             n_threads=n_threads,
+            callback_ctx=callback_ctx,
+            estimator=self,
         )
 
         self.n_iter_ = xp.asarray(n_iter, dtype=xp.int32)
@@ -1377,6 +1468,10 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 self.coef_ = self.coef_[None, :]
             else:
                 self.intercept_ = xp.zeros(n_classes, dtype=X.dtype, device=device_)
+
+        callback_ctx.call_on_fit_task_end(
+            estimator=self, X=X, y=y, metadata=callback_metadata
+        )
 
         return self
 
