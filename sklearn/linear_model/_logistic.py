@@ -1223,6 +1223,7 @@ class LogisticRegression(
         self.warm_start = warm_start
         self.n_jobs = n_jobs
 
+    # TODO(callbacks): update/remove as more solvers get supported.
     def set_callbacks(self, callbacks):
         """Set callbacks for the estimator.
 

@@ -16,7 +16,7 @@ from scipy.linalg import LinAlgWarning, svd
 from sklearn import config_context
 from sklearn._loss import HalfMultinomialLoss
 from sklearn.base import clone
-from sklearn.callback.tests._utils import RecordingCallback
+from sklearn.callback.tests._utils import RecordingCallback, StopFitCallback
 from sklearn.datasets import load_iris, make_classification, make_low_rank_matrix
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LogisticRegression, LogisticRegressionCV, SGDClassifier
@@ -2880,9 +2880,9 @@ def test_logistic_regression_array_api_warm_start(
         lr.fit(X_xp, y_xp)
 
 
+# TODO(callbacks): also test for other solvers when they get supported.
 def test_logistic_regression_callback_support():
     """Test the callback support for LogisticRegression."""
-    # TODO(callbacks): also test for other solvers when they get supported.
     X, y = load_iris(return_X_y=True)
     cb = RecordingCallback()
     lr = LogisticRegression(solver="lbfgs").set_callbacks(cb)
@@ -2902,3 +2902,24 @@ def test_logistic_regression_callback_support():
         and rec["kwargs"]["fitted_estimator"] is not None
     ][-1]["kwargs"]["fitted_estimator"]
     assert_allclose(pred, last_fitted_lr.predict(X))
+
+
+# TODO(callbacks): also test for other solvers when they get supported.
+def test_logistic_regression_fit_stopped_by_callback():
+    """Test that a callback can interrupt the fit."""
+    X, y = load_iris(return_X_y=True)
+    cb = StopFitCallback()
+    lr = LogisticRegression(solver="lbfgs").set_callbacks(cb)
+    lr.fit(X, y)
+    assert lr.n_iter_ == 1
+
+
+# TODO(callbacks): update/remove as more solvers get supported.
+def test_logistic_regression_callback_support_warning():
+    """Test the warning message when trying to set a callback with solver!='lbfgs'."""
+    cb = RecordingCallback()
+    with pytest.warns(
+        UserWarning,
+        match="Callbacks are only supported in LogisticRegression for solver='lbfgs'",
+    ):
+        LogisticRegression(solver="liblinear").set_callbacks(cb)
