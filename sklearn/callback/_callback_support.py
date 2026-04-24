@@ -32,12 +32,12 @@ def get_callback_manager():
 class CallbackSupportMixin:
     """Mixin class to add callback support to an estimator."""
 
-    def set_callbacks(self, callbacks):
+    def set_callbacks(self, *callbacks):
         """Set callbacks for the estimator.
 
         Parameters
         ----------
-        callbacks : callback or list of callbacks
+        *callbacks : callback instances
             The callbacks to set.
 
         Returns
@@ -45,9 +45,6 @@ class CallbackSupportMixin:
         self : estimator instance
             The estimator instance itself.
         """
-        if not isinstance(callbacks, list):
-            callbacks = [callbacks]
-
         if not all(
             # isinstance for a Protocol returns True for classes too (not only
             # instances). Hence the additional check for classes.
@@ -58,7 +55,10 @@ class CallbackSupportMixin:
                 "callbacks must be instances following the FitCallback protocol."
             )
 
-        self._skl_callbacks = callbacks
+        if callbacks:
+            self._skl_callbacks = list(callbacks)
+        else:
+            del self._skl_callbacks
 
         return self
 
@@ -148,8 +148,6 @@ def callback_management_context(estimator):
                     )
 
             del estimator._callback_fit_ctx
-            if hasattr(estimator, "_parent_callback_ctx"):
-                del estimator._parent_callback_ctx
 
 
 def with_callbacks(method):
