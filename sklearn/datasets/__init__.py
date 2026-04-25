@@ -1,12 +1,13 @@
-"""
-The :mod:`sklearn.datasets` module includes utilities to load datasets,
-including methods to load and fetch popular reference datasets. It also
-features some artificial data generators.
-"""
+"""Utilities to load popular datasets and artificial data generators."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import textwrap
 
-from ._base import (
+from sklearn.datasets._base import (
     clear_data_home,
+    fetch_file,
     get_data_home,
     load_breast_cancer,
     load_diabetes,
@@ -18,14 +19,14 @@ from ._base import (
     load_sample_images,
     load_wine,
 )
-from ._california_housing import fetch_california_housing
-from ._covtype import fetch_covtype
-from ._kddcup99 import fetch_kddcup99
-from ._lfw import fetch_lfw_pairs, fetch_lfw_people
-from ._olivetti_faces import fetch_olivetti_faces
-from ._openml import fetch_openml
-from ._rcv1 import fetch_rcv1
-from ._samples_generator import (
+from sklearn.datasets._california_housing import fetch_california_housing
+from sklearn.datasets._covtype import fetch_covtype
+from sklearn.datasets._kddcup99 import fetch_kddcup99
+from sklearn.datasets._lfw import fetch_lfw_pairs, fetch_lfw_people
+from sklearn.datasets._olivetti_faces import fetch_olivetti_faces
+from sklearn.datasets._openml import fetch_openml
+from sklearn.datasets._rcv1 import fetch_rcv1
+from sklearn.datasets._samples_generator import (
     make_biclusters,
     make_blobs,
     make_checkerboard,
@@ -47,34 +48,38 @@ from ._samples_generator import (
     make_spd_matrix,
     make_swiss_roll,
 )
-from ._species_distributions import fetch_species_distributions
-from ._svmlight_format_io import (
+from sklearn.datasets._species_distributions import fetch_species_distributions
+from sklearn.datasets._svmlight_format_io import (
     dump_svmlight_file,
     load_svmlight_file,
     load_svmlight_files,
 )
-from ._twenty_newsgroups import fetch_20newsgroups, fetch_20newsgroups_vectorized
+from sklearn.datasets._twenty_newsgroups import (
+    fetch_20newsgroups,
+    fetch_20newsgroups_vectorized,
+)
 
 __all__ = [
     "clear_data_home",
     "dump_svmlight_file",
     "fetch_20newsgroups",
     "fetch_20newsgroups_vectorized",
+    "fetch_california_housing",
+    "fetch_covtype",
+    "fetch_file",
+    "fetch_kddcup99",
     "fetch_lfw_pairs",
     "fetch_lfw_people",
     "fetch_olivetti_faces",
-    "fetch_species_distributions",
-    "fetch_california_housing",
-    "fetch_covtype",
-    "fetch_rcv1",
-    "fetch_kddcup99",
     "fetch_openml",
+    "fetch_rcv1",
+    "fetch_species_distributions",
     "get_data_home",
+    "load_breast_cancer",
     "load_diabetes",
     "load_digits",
     "load_files",
     "load_iris",
-    "load_breast_cancer",
     "load_linnerud",
     "load_sample_image",
     "load_sample_images",
@@ -83,9 +88,9 @@ __all__ = [
     "load_wine",
     "make_biclusters",
     "make_blobs",
+    "make_checkerboard",
     "make_circles",
     "make_classification",
-    "make_checkerboard",
     "make_friedman1",
     "make_friedman2",
     "make_friedman3",
@@ -106,7 +111,8 @@ __all__ = [
 
 def __getattr__(name):
     if name == "load_boston":
-        msg = textwrap.dedent("""
+        msg = textwrap.dedent(
+            """
             `load_boston` has been removed from scikit-learn since version 1.2.
 
             The Boston housing prices dataset has an ethical problem: as
@@ -153,7 +159,8 @@ def __getattr__(name):
             "Hedonic housing prices and the demand for clean air."
             Journal of environmental economics and management 5.1 (1978): 81-102.
             <https://www.researchgate.net/publication/4974606_Hedonic_housing_prices_and_the_demand_for_clean_air>
-            """)
+            """
+        )
         raise ImportError(msg)
     try:
         return globals()[name]

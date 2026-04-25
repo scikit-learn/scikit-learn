@@ -2,9 +2,8 @@
 Neighborhood Component Analysis
 """
 
-# Authors: William de Vazelhes <wdevazelhes@gmail.com>
-#          John Chiotellis <ioannis.chiotellis@in.tum.de>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import sys
 import time
@@ -14,21 +13,22 @@ from warnings import warn
 import numpy as np
 from scipy.optimize import minimize
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     _fit_context,
 )
-from ..decomposition import PCA
-from ..exceptions import ConvergenceWarning
-from ..metrics import pairwise_distances
-from ..preprocessing import LabelEncoder
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.extmath import softmax
-from ..utils.multiclass import check_classification_targets
-from ..utils.random import check_random_state
-from ..utils.validation import check_array, check_is_fitted
+from sklearn.decomposition import PCA
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.metrics import pairwise_distances
+from sklearn.preprocessing import LabelEncoder
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.extmath import softmax
+from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.random import check_random_state
+from sklearn.utils.validation import check_array, check_is_fitted, validate_data
 
 
 class NeighborhoodComponentsAnalysis(
@@ -57,8 +57,8 @@ class NeighborhoodComponentsAnalysis(
 
         - `'auto'`
             Depending on `n_components`, the most reasonable initialization
-            will be chosen. If `n_components <= n_classes` we use `'lda'`, as
-            it uses labels information. If not, but
+            is chosen. If `n_components <= min(n_features, n_classes - 1)`
+            we use `'lda'`, as it uses labels information. If not, but
             `n_components < min(n_features, n_samples)`, we use `'pca'`, as
             it projects data in meaningful directions (those of higher
             variance). Otherwise, we just use `'identity'`.
@@ -156,7 +156,7 @@ class NeighborhoodComponentsAnalysis(
     .. [1] J. Goldberger, G. Hinton, S. Roweis, R. Salakhutdinov.
            "Neighbourhood Components Analysis". Advances in Neural Information
            Processing Systems. 17, 513-520, 2005.
-           http://www.cs.nyu.edu/~roweis/papers/ncanips.pdf
+           https://www.cs.toronto.edu/~rsalakhu/papers/ncanips.pdf
 
     .. [2] Wikipedia entry on Neighborhood Components Analysis
            https://en.wikipedia.org/wiki/Neighbourhood_components_analysis
@@ -240,7 +240,7 @@ class NeighborhoodComponentsAnalysis(
             Fitted estimator.
         """
         # Validate the inputs X and y, and converts y to numerical classes.
-        X, y = self._validate_data(X, y, ensure_min_samples=2)
+        X, y = validate_data(self, X, y, ensure_min_samples=2)
         check_classification_targets(y)
         y = LabelEncoder().fit_transform(y)
 
@@ -313,7 +313,10 @@ class NeighborhoodComponentsAnalysis(
             "jac": True,
             "x0": transformation,
             "tol": self.tol,
-            "options": dict(maxiter=self.max_iter, disp=disp),
+            "options": dict(
+                maxiter=self.max_iter,
+                **_get_additional_lbfgs_options_dict("disp", disp),
+            ),
             "callback": self._callback,
         }
 
@@ -323,7 +326,6 @@ class NeighborhoodComponentsAnalysis(
 
         # Reshape the solution found by the optimizer
         self.components_ = opt_result.x.reshape(-1, X.shape[1])
-        self._n_features_out = self.components_.shape[1]
 
         # Stop timer
         t_train = time.time() - t_train
@@ -363,7 +365,7 @@ class NeighborhoodComponentsAnalysis(
         """
 
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
 
         return np.dot(X, self.components_.T)
 
@@ -422,7 +424,7 @@ class NeighborhoodComponentsAnalysis(
                     pca.fit(X)
                     transformation = pca.components_
                 elif init == "lda":
-                    from ..discriminant_analysis import LinearDiscriminantAnalysis
+                    from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
                     lda = LinearDiscriminantAnalysis(n_components=n_components)
                     if self.verbose:
@@ -521,5 +523,12 @@ class NeighborhoodComponentsAnalysis(
 
         return sign * loss, sign * gradient.ravel()
 
-    def _more_tags(self):
-        return {"requires_y": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.required = True
+        return tags
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]

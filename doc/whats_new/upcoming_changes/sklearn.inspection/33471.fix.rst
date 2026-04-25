@@ -1,0 +1,5 @@
+- For multiclass data, :class:`inspection.DecisionBoundaryDisplay` with
+  ``plot_method="contour"`` now also displays class-specific contours for
+  ``response_method="predict_proba"`` and ``response_method="decision_function"``.
+  Multiclass class boundary contour lines are now displayed in black by default for all
+  response methods to avoid confusion. By :user:`Anne Beyer <AnneBeyer>`.

@@ -13,9 +13,8 @@ the margins to be calculated using all the data in the area.
 
 """
 
-# Code source: Gaël Varoquaux
-# Modified for documentation by Jaques Grobler
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -63,7 +62,6 @@ for name, penalty in (("unreg", 1), ("reg", 0.05)):
         facecolors="none",
         zorder=10,
         edgecolors="k",
-        cmap=plt.get_cmap("RdBu"),
     )
     plt.scatter(
         X[:, 0], X[:, 1], c=Y, zorder=10, cmap=plt.get_cmap("RdBu"), edgecolors="k"

@@ -1,10 +1,10 @@
 from cython cimport final
 
-from ...utils._typedefs cimport intp_t, float64_t
+from sklearn.utils._typedefs cimport intp_t, float64_t
 
 {{for name_suffix in ['64', '32']}}
 
-from ._datasets_pair cimport DatasetsPair{{name_suffix}}
+from sklearn.metrics._pairwise_distances_reduction._datasets_pair cimport DatasetsPair{{name_suffix}}
 
 
 cpdef float64_t[::1] _sqeuclidean_row_norms{{name_suffix}}(

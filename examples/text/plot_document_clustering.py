@@ -23,11 +23,8 @@ For document analysis via a supervised learning approach, see the example script
 
 """
 
-# Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#         Lars Buitinck
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#         Arturo Amor <david-arturo.amor-quiroz@inria.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Loading text data
@@ -99,8 +96,9 @@ print(f"{len(dataset.data)} documents - {true_k} categories")
 #   assignment have an ARI of 0.0 in expectation.
 #
 # If the ground truth labels are not known, evaluation can only be performed
-# using the model results itself. In that case, the Silhouette Coefficient comes
-# in handy.
+# using the model results itself. In that case, the Silhouette Coefficient comes in
+# handy. See :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py`
+# for an example on how to do it.
 #
 # For more reference, see :ref:`clustering_evaluation`.
 

@@ -2,9 +2,10 @@
 Several basic tests for hierarchical clustering procedures
 
 """
-# Authors: Vincent Michel, 2010, Gael Varoquaux 2012,
-#          Matteo Visconti di Oleggio Castello 2014
-# License: BSD 3 clause
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import itertools
 import shutil
 from functools import partial
@@ -176,6 +177,7 @@ def test_agglomerative_clustering_distances(
         assert not hasattr(clustering, "distances_")
 
 
+@pytest.mark.no_check_spmatrix  # pickle breaks check_spmatrix
 @pytest.mark.parametrize("lil_container", LIL_CONTAINERS)
 def test_agglomerative_clustering(global_random_seed, lil_container):
     # Check that we obtain the correct number of clusters with
@@ -224,17 +226,6 @@ def test_agglomerative_clustering(global_random_seed, lil_container):
         )
         with pytest.raises(ValueError):
             clustering.fit(X)
-
-    # Test that using ward with another metric than euclidean raises an
-    # exception
-    clustering = AgglomerativeClustering(
-        n_clusters=10,
-        connectivity=connectivity.toarray(),
-        metric="manhattan",
-        linkage="ward",
-    )
-    with pytest.raises(ValueError):
-        clustering.fit(X)
 
     # Test using another metric than euclidean works with linkage complete
     for metric in PAIRED_DISTANCES.keys():
@@ -888,12 +879,40 @@ def test_precomputed_connectivity_metric_with_2_connected_components():
     assert_array_equal(clusterer.children_, clusterer_precomputed.children_)
 
 
-# TODO(1.6): remove in 1.6
-@pytest.mark.parametrize(
-    "Agglomeration", [AgglomerativeClustering, FeatureAgglomeration]
-)
-def test_deprecation_warning_metric_None(Agglomeration):
-    X = np.array([[1, 2], [1, 4], [1, 0], [4, 2], [4, 4], [4, 0]])
-    warn_msg = "`metric=None` is deprecated in version 1.4 and will be removed"
-    with pytest.warns(FutureWarning, match=warn_msg):
-        Agglomeration(metric=None).fit(X)
+@pytest.mark.parametrize("Clustering", [AgglomerativeClustering, FeatureAgglomeration])
+def test_agglomeration_ward_contrained_metric(Clustering):
+    """Check that we raise an error when 'euclidean' or 'l2' are not passed with
+    ward linkage."""
+    rng = np.random.RandomState(0)
+    mask = np.ones([10, 10], dtype=bool)
+    n_samples = 100
+    X = rng.randn(n_samples, 50)
+    connectivity = grid_to_graph(*mask.shape)
+
+    clustering = Clustering(
+        n_clusters=10,
+        connectivity=connectivity.toarray(),
+        metric="manhattan",
+        linkage="ward",
+    )
+    with pytest.raises(ValueError):
+        clustering.fit(X)
+
+
+@pytest.mark.parametrize("Clustering", [AgglomerativeClustering, FeatureAgglomeration])
+@pytest.mark.parametrize("metric", ["euclidean", "l2"])
+def test_agglomeration_ward_euclidean(Clustering, metric):
+    """Check that we can pass 'euclidean' and 'l2' as metric with Ward linkage."""
+    rng = np.random.RandomState(0)
+    mask = np.ones([10, 10], dtype=bool)
+    n_samples = 100
+    X = rng.randn(n_samples, 100)
+    connectivity = grid_to_graph(*mask.shape)
+
+    clustering = Clustering(
+        n_clusters=10,
+        connectivity=connectivity.toarray(),
+        metric=metric,
+        linkage="ward",
+    )
+    clustering.fit(X)

@@ -1,23 +1,30 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from itertools import product
 
 import numpy as np
 
-from ...base import is_classifier
-from ...utils import check_matplotlib_support
-from ...utils.multiclass import unique_labels
-from .. import confusion_matrix
+from sklearn.base import is_classifier
+from sklearn.metrics import confusion_matrix
+from sklearn.utils._optional_dependencies import check_matplotlib_support
+from sklearn.utils._plotting import _validate_style_kwargs
+from sklearn.utils.multiclass import unique_labels
 
 
 class ConfusionMatrixDisplay:
     """Confusion Matrix visualization.
 
-    It is recommend to use
+    It is recommended to use
     :func:`~sklearn.metrics.ConfusionMatrixDisplay.from_estimator` or
     :func:`~sklearn.metrics.ConfusionMatrixDisplay.from_predictions` to
     create a :class:`ConfusionMatrixDisplay`. All parameters are stored as
     attributes.
 
-    Read more in the :ref:`User Guide <visualizations>`.
+    For general information regarding `scikit-learn` visualization tools, see
+    the :ref:`Visualization Guide <visualizations>`.
+    For guidance on interpreting these plots, refer to the
+    :ref:`Model Evaluation Guide <confusion_matrix>`.
 
     Parameters
     ----------
@@ -142,7 +149,7 @@ class ConfusionMatrixDisplay:
 
         default_im_kw = dict(interpolation="nearest", cmap=cmap)
         im_kw = im_kw or {}
-        im_kw = {**default_im_kw, **im_kw}
+        im_kw = _validate_style_kwargs(default_im_kw, im_kw)
         text_kw = text_kw or {}
 
         self.im_ = ax.imshow(cm, **im_kw)
@@ -168,7 +175,7 @@ class ConfusionMatrixDisplay:
                     text_cm = format(cm[i, j], values_format)
 
                 default_text_kwargs = dict(ha="center", va="center", color=color)
-                text_kwargs = {**default_text_kwargs, **text_kw}
+                text_kwargs = _validate_style_kwargs(default_text_kwargs, text_kw)
 
                 self.text_[i, j] = ax.text(j, i, text_cm, **text_kwargs)
 
@@ -216,7 +223,10 @@ class ConfusionMatrixDisplay:
     ):
         """Plot Confusion Matrix given an estimator and some data.
 
-        Read more in the :ref:`User Guide <confusion_matrix>`.
+        For general information regarding `scikit-learn` visualization tools, see
+        the :ref:`Visualization Guide <visualizations>`.
+        For guidance on interpreting these plots, refer to the
+        :ref:`Model Evaluation Guide <confusion_matrix>`.
 
         .. versionadded:: 1.0
 
@@ -312,6 +322,10 @@ class ConfusionMatrixDisplay:
         ...     clf, X_test, y_test)
         <...>
         >>> plt.show()
+
+        For a detailed example of using a confusion matrix to evaluate a
+        Support Vector Classifier, please see
+        :ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py`
         """
         method_name = f"{cls.__name__}.from_estimator"
         check_matplotlib_support(method_name)
@@ -357,7 +371,10 @@ class ConfusionMatrixDisplay:
     ):
         """Plot Confusion Matrix given true and predicted labels.
 
-        Read more in the :ref:`User Guide <confusion_matrix>`.
+        For general information regarding `scikit-learn` visualization tools, see
+        the :ref:`Visualization Guide <visualizations>`.
+        For guidance on interpreting these plots, refer to the
+        :ref:`Model Evaluation Guide <confusion_matrix>`.
 
         .. versionadded:: 1.0
 

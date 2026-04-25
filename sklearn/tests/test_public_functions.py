@@ -118,7 +118,7 @@ def _check_function_param_validation(
                 f"{func_name} does not raise an informative error message when the "
                 f"parameter {param_name} does not have a valid value.\n"
                 "Constraints should be disjoint. For instance "
-                "[StrOptions({'a_string'}), str] is not a acceptable set of "
+                "[StrOptions({'a_string'}), str] is not an acceptable set of "
                 "constraint because generating an invalid string for the first "
                 "constraint will always produce a valid string for the second "
                 "constraint."
@@ -207,9 +207,11 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.linear_model.orthogonal_mp",
     "sklearn.linear_model.orthogonal_mp_gram",
     "sklearn.linear_model.ridge_regression",
+    "sklearn.manifold.locally_linear_embedding",
+    "sklearn.manifold.smacof",
+    "sklearn.manifold.spectral_embedding",
     "sklearn.manifold.trustworthiness",
     "sklearn.metrics.accuracy_score",
-    "sklearn.manifold.smacof",
     "sklearn.metrics.auc",
     "sklearn.metrics.average_precision_score",
     "sklearn.metrics.balanced_accuracy_score",
@@ -221,7 +223,6 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.classification_report",
     "sklearn.metrics.cluster.adjusted_mutual_info_score",
     "sklearn.metrics.cluster.contingency_matrix",
-    "sklearn.metrics.cluster.entropy",
     "sklearn.metrics.cluster.fowlkes_mallows_score",
     "sklearn.metrics.cluster.homogeneity_completeness_v_measure",
     "sklearn.metrics.cluster.normalized_mutual_info_score",
@@ -229,9 +230,12 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.cluster.silhouette_score",
     "sklearn.metrics.cohen_kappa_score",
     "sklearn.metrics.confusion_matrix",
+    "sklearn.metrics.confusion_matrix_at_thresholds",
     "sklearn.metrics.consensus_score",
     "sklearn.metrics.coverage_error",
     "sklearn.metrics.d2_absolute_error_score",
+    "sklearn.metrics.d2_brier_score",
+    "sklearn.metrics.d2_log_loss_score",
     "sklearn.metrics.d2_pinball_score",
     "sklearn.metrics.d2_tweedie_score",
     "sklearn.metrics.davies_bouldin_score",
@@ -260,6 +264,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.mean_squared_log_error",
     "sklearn.metrics.mean_tweedie_deviance",
     "sklearn.metrics.median_absolute_error",
+    "sklearn.metrics.metric_at_thresholds",
     "sklearn.metrics.multilabel_confusion_matrix",
     "sklearn.metrics.mutual_info_score",
     "sklearn.metrics.ndcg_score",
@@ -355,6 +360,10 @@ PARAM_VALIDATION_CLASS_WRAPPER_LIST = [
     ("sklearn.covariance.ledoit_wolf", "sklearn.covariance.LedoitWolf"),
     ("sklearn.covariance.oas", "sklearn.covariance.OAS"),
     ("sklearn.decomposition.dict_learning", "sklearn.decomposition.DictionaryLearning"),
+    (
+        "sklearn.decomposition.dict_learning_online",
+        "sklearn.decomposition.MiniBatchDictionaryLearning",
+    ),
     ("sklearn.decomposition.fastica", "sklearn.decomposition.FastICA"),
     ("sklearn.decomposition.non_negative_factorization", "sklearn.decomposition.NMF"),
     ("sklearn.preprocessing.maxabs_scale", "sklearn.preprocessing.MaxAbsScaler"),

@@ -9,6 +9,9 @@ are represented by the dashed lines.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -23,7 +26,7 @@ iris = datasets.load_iris()
 # avoid this ugly slicing by using a two-dim dataset
 X = iris.data[:, :2]
 y = iris.target
-colors = "bry"
+colors = "byr"
 
 # shuffle
 idx = np.arange(X.shape[0])
@@ -42,7 +45,6 @@ ax = plt.gca()
 DecisionBoundaryDisplay.from_estimator(
     clf,
     X,
-    cmap=plt.cm.Paired,
     ax=ax,
     response_method="predict",
     xlabel=iris.feature_names[0],
@@ -52,13 +54,12 @@ plt.axis("tight")
 
 # Plot also the training points
 for i, color in zip(clf.classes_, colors):
-    idx = np.where(y == i)
+    idx = (y == i).nonzero()
     plt.scatter(
         X[idx, 0],
         X[idx, 1],
         c=color,
         label=iris.target_names[i],
-        cmap=plt.cm.Paired,
         edgecolor="black",
         s=20,
     )

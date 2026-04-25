@@ -1,17 +1,17 @@
 """
-    doilinks
-    ~~~~~~~~
-    Extension to add links to DOIs. With this extension you can use e.g.
-    :doi:`10.1016/S0022-2836(05)80360-2` in your documents. This will
-    create a link to a DOI resolver
-    (``https://doi.org/10.1016/S0022-2836(05)80360-2``).
-    The link caption will be the raw DOI.
-    You can also give an explicit caption, e.g.
-    :doi:`Basic local alignment search tool <10.1016/S0022-2836(05)80360-2>`.
+doilinks
+~~~~~~~~
+Extension to add links to DOIs. With this extension you can use e.g.
+:doi:`10.1016/S0022-2836(05)80360-2` in your documents. This will
+create a link to a DOI resolver
+(``https://doi.org/10.1016/S0022-2836(05)80360-2``).
+The link caption will be the raw DOI.
+You can also give an explicit caption, e.g.
+:doi:`Basic local alignment search tool <10.1016/S0022-2836(05)80360-2>`.
 
-    :copyright: Copyright 2015  Jon Lund Steffensen. Based on extlinks by
-        the Sphinx team.
-    :license: BSD.
+:copyright: Copyright 2015  Jon Lund Steffensen. Based on extlinks by
+    the Sphinx team.
+:license: BSD.
 """
 
 from docutils import nodes, utils

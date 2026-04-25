@@ -10,6 +10,9 @@ K-Means++ is used as the default initialization for :ref:`k_means`.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.pyplot as plt
 
 from sklearn.cluster import kmeans_plusplus

@@ -117,20 +117,20 @@ def test_all_precomputed():
             assert_array_almost_equal(expected, got)
 
 
+# TODO: remove warning filter when numpy min version >= 2.0.0
 @pytest.mark.filterwarnings("ignore: `rcond` parameter will change")
-# numpy deprecation
 def test_lars_lstsq():
     # Test that Lars gives least square solution at the end
     # of the path
     X1 = 3 * X  # use un-normalized dataset
     clf = linear_model.LassoLars(alpha=0.0)
     clf.fit(X1, y)
-    coef_lstsq = np.linalg.lstsq(X1, y, rcond=None)[0]
+    coef_lstsq = np.linalg.lstsq(X1, y)[0]
     assert_array_almost_equal(clf.coef_, coef_lstsq)
 
 
-@pytest.mark.filterwarnings("ignore:`rcond` parameter will change")
-# numpy deprecation
+# TODO: remove warning filter when numpy min version >= 2.0.0
+@pytest.mark.filterwarnings("ignore: `rcond` parameter will change")
 def test_lasso_gives_lstsq_solution():
     # Test that Lars Lasso gives least square solution at the end
     # of the path
@@ -408,7 +408,6 @@ def test_lars_n_nonzero_coefs(verbose=False):
     assert len(lars.alphas_) == 7
 
 
-@ignore_warnings
 def test_multitarget():
     # Assure that estimators receiving multidimensional y do the right thing
     Y = np.vstack([y, y**2]).T
@@ -740,6 +739,7 @@ def test_lasso_lars_fit_copyX_behaviour(copy_X):
 
 @pytest.mark.parametrize("est", (LassoLars(alpha=1e-3), Lars()))
 def test_lars_with_jitter(est):
+    est = clone(est)  # Avoid side effects from previous tests.
     # Test that a small amount of jitter helps stability,
     # using example provided in issue #2746
 

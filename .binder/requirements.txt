@@ -7,3 +7,4 @@ seaborn
 Pillow
 sphinx-gallery
 scikit-learn
+polars

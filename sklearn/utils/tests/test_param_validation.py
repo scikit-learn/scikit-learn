@@ -2,7 +2,7 @@ from numbers import Integral, Real
 
 import numpy as np
 import pytest
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_array, csr_matrix
 
 from sklearn._config import config_context, get_config
 from sklearn.base import BaseEstimator, _fit_context
@@ -34,6 +34,7 @@ from sklearn.utils._param_validation import (
     make_constraint,
     validate_params,
 )
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 
 # Some helpers for the tests
@@ -405,6 +406,11 @@ def test_generate_valid_param(constraint):
         ("array-like", [[1, 2], [3, 4]]),
         ("array-like", np.array([[1, 2], [3, 4]])),
         ("sparse matrix", csr_matrix([[1, 2], [3, 4]])),
+        ("sparse matrix", csr_array([[1, 2], [3, 4]])),
+        *[
+            ("sparse matrix", container([[1, 2], [3, 4]]))
+            for container in CSR_CONTAINERS
+        ],
         ("random_state", 0),
         ("random_state", np.random.RandomState(0)),
         ("random_state", None),
@@ -449,6 +455,7 @@ def test_is_satisfied_by(constraint_declaration, value):
         (HasMethods("fit"), HasMethods),
         ("cv_object", _CVObjects),
         ("nan", _NanConstraint),
+        (np.nan, _NanConstraint),
     ],
 )
 def test_make_constraint(constraint_declaration, expected_constraint_class):
@@ -626,12 +633,6 @@ def test_boolean_constraint_deprecated_int():
     # True/False and np.bool_(True/False) are valid params
     f(True)
     f(np.bool_(False))
-
-    # an int is also valid but deprecated
-    with pytest.warns(
-        FutureWarning, match="Passing an int for a boolean parameter is deprecated"
-    ):
-        f(1)
 
 
 def test_no_validation():

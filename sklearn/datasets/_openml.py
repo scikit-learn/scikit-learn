@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import gzip
 import hashlib
 import json
@@ -10,33 +13,30 @@ from os.path import join
 from tempfile import TemporaryDirectory
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 from urllib.error import HTTPError, URLError
+from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 from warnings import warn
 
 import numpy as np
 
-from ..utils import (
-    Bunch,
-    check_pandas_support,  # noqa  # noqa
-)
-from ..utils._param_validation import (
+from sklearn.datasets import get_data_home
+from sklearn.datasets._arff_parser import load_arff_from_gzip_file
+from sklearn.utils import Bunch
+from sklearn.utils._optional_dependencies import check_pandas_support
+from sklearn.utils._param_validation import (
     Integral,
     Interval,
     Real,
     StrOptions,
     validate_params,
 )
-from . import get_data_home
-from ._arff_parser import load_arff_from_gzip_file
 
 __all__ = ["fetch_openml"]
 
-_OPENML_PREFIX = "https://api.openml.org/"
-_SEARCH_NAME = "api/v1/json/data/list/data_name/{}/limit/2"
-_DATA_INFO = "api/v1/json/data/{}"
-_DATA_FEATURES = "api/v1/json/data/features/{}"
-_DATA_QUALITIES = "api/v1/json/data/qualities/{}"
-_DATA_FILE = "data/v1/download/{}"
+_SEARCH_NAME = "https://api.openml.org/api/v1/json/data/list/data_name/{}/limit/2"
+_DATA_INFO = "https://api.openml.org/api/v1/json/data/{}"
+_DATA_FEATURES = "https://api.openml.org/api/v1/json/data/features/{}"
+_DATA_QUALITIES = "https://api.openml.org/api/v1/json/data/qualities/{}"
 
 OpenmlQualitiesType = List[Dict[str, str]]
 OpenmlFeaturesType = List[Dict[str, str]]
@@ -109,6 +109,10 @@ def _retry_on_network_error(
                     warn(
                         f"A network error occurred while downloading {url}. Retrying..."
                     )
+                    # Avoid a ResourceWarning on Python 3.14 and later.
+                    if isinstance(e, HTTPError):
+                        e.close()
+
                     retry_counter -= 1
                     time.sleep(delay)
 
@@ -118,16 +122,17 @@ def _retry_on_network_error(
 
 
 def _open_openml_url(
-    openml_path: str, data_home: Optional[str], n_retries: int = 3, delay: float = 1.0
+    url: str, data_home: Optional[str], n_retries: int = 3, delay: float = 1.0
 ):
     """
     Returns a resource from OpenML.org. Caches it to data_home if required.
 
     Parameters
     ----------
-    openml_path : str
-        OpenML URL that will be accessed. This will be prefixes with
-        _OPENML_PREFIX.
+    url : str
+        OpenML URL that will be downloaded and cached locally. The path component
+        of the URL is used to replicate the tree structure as sub-folders of the local
+        cache folder.
 
     data_home : str
         Directory to which the files will be cached. If None, no caching will
@@ -149,7 +154,7 @@ def _open_openml_url(
     def is_gzip_encoded(_fsrc):
         return _fsrc.info().get("Content-Encoding", "") == "gzip"
 
-    req = Request(_OPENML_PREFIX + openml_path)
+    req = Request(url)
     req.add_header("Accept-encoding", "gzip")
 
     if data_home is None:
@@ -158,6 +163,7 @@ def _open_openml_url(
             return gzip.GzipFile(fileobj=fsrc, mode="rb")
         return fsrc
 
+    openml_path = urlparse(url).path.lstrip("/")
     local_path = _get_local_path(openml_path, data_home)
     dir_name, file_name = os.path.split(local_path)
     if not os.path.exists(local_path):
@@ -307,12 +313,19 @@ def _get_data_info_by_name(
         )
         res = json_data["data"]["dataset"]
         if len(res) > 1:
-            warn(
+            first_version = version = res[0]["version"]
+            warning_msg = (
                 "Multiple active versions of the dataset matching the name"
-                " {name} exist. Versions may be fundamentally different, "
-                "returning version"
-                " {version}.".format(name=name, version=res[0]["version"])
+                f" {name} exist. Versions may be fundamentally different, "
+                f"returning version {first_version}. "
+                "Available versions:\n"
             )
+            for r in res:
+                warning_msg += f"- version {r['version']}, status: {r['status']}\n"
+                warning_msg += (
+                    f"  url: https://www.openml.org/search?type=data&id={r['did']}\n"
+                )
+            warn(warning_msg)
         return res[0]
 
     # an integer version has been provided
@@ -754,7 +767,7 @@ def _valid_data_column_names(features_list, target_columns):
         "return_X_y": [bool],
         "as_frame": [bool, StrOptions({"auto"})],
         "n_retries": [Interval(Integral, 1, None, closed="left")],
-        "delay": [Interval(Real, 0, None, closed="right")],
+        "delay": [Interval(Real, 0.0, None, closed="neither")],
         "parser": [
             StrOptions({"auto", "pandas", "liac-arff"}),
         ],
@@ -879,7 +892,7 @@ def fetch_openml(
 
     read_csv_kwargs : dict, default=None
         Keyword arguments passed to :func:`pandas.read_csv` when loading the data
-        from a ARFF file and using the pandas parser. It can allow to
+        from an ARFF file and using the pandas parser. It can allow to
         overwrite some default parameters.
 
         .. versionadded:: 1.3
@@ -952,6 +965,34 @@ def fetch_openml(
     returns ordinally encoded data where the categories are provided in the
     attribute `categories` of the `Bunch` instance. Instead, `"pandas"` returns
     a NumPy array were the categories are not encoded.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import fetch_openml
+    >>> adult = fetch_openml("adult", version=2)  # doctest: +SKIP
+    >>> adult.frame.info()  # doctest: +SKIP
+    <class 'pandas.core.frame.DataFrame'>
+    RangeIndex: 48842 entries, 0 to 48841
+    Data columns (total 15 columns):
+     #   Column          Non-Null Count  Dtype
+    ---  ------          --------------  -----
+     0   age             48842 non-null  int64
+     1   workclass       46043 non-null  category
+     2   fnlwgt          48842 non-null  int64
+     3   education       48842 non-null  category
+     4   education-num   48842 non-null  int64
+     5   marital-status  48842 non-null  category
+     6   occupation      46033 non-null  category
+     7   relationship    48842 non-null  category
+     8   race            48842 non-null  category
+     9   sex             48842 non-null  category
+     10  capital-gain    48842 non-null  int64
+     11  capital-loss    48842 non-null  int64
+     12  hours-per-week  48842 non-null  int64
+     13  native-country  47985 non-null  category
+     14  class           48842 non-null  category
+    dtypes: category(9), int64(6)
+    memory usage: 2.7 MB
     """
     if cache is False:
         # no caching will be applied
@@ -1030,7 +1071,7 @@ def fetch_openml(
                 )
             else:
                 err_msg = (
-                    f"Using `parser={parser!r}` wit dense data requires pandas to be "
+                    f"Using `parser={parser!r}` with dense data requires pandas to be "
                     "installed. Alternatively, explicitly set `parser='liac-arff'`."
                 )
             raise ImportError(err_msg) from exc
@@ -1090,7 +1131,7 @@ def fetch_openml(
         shape = None
 
     # obtain the data
-    url = _DATA_FILE.format(data_description["file_id"])
+    url = data_description["url"]
     bunch = _download_data_to_bunch(
         url,
         return_sparse,

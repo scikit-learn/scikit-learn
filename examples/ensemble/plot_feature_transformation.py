@@ -20,10 +20,8 @@ high-dimensional categorical embedding of the data.
 
 """
 
-
-# Author: Tim Head <betatim@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # First, we will create a large dataset and split it into three sets:

@@ -3,14 +3,17 @@ Utility methods to print system info for debugging
 
 adapted from :func:`pandas.show_versions`
 """
-# License: BSD 3 clause
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import platform
 import sys
 
-from .. import __version__
-from ..utils.fixes import threadpool_info
-from ._openmp_helpers import _openmp_parallelism_enabled
+from threadpoolctl import threadpool_info
+
+from sklearn import __version__
+from sklearn.utils._openmp_helpers import _openmp_parallelism_enabled
 
 
 def _get_sys_info():
@@ -72,9 +75,14 @@ def _get_deps_info():
 
 
 def show_versions():
-    """Print useful debugging information"
+    """Print useful debugging information.
 
     .. versionadded:: 0.20
+
+    Examples
+    --------
+    >>> from sklearn import show_versions
+    >>> show_versions()  # doctest: +SKIP
     """
 
     sys_info = _get_sys_info()

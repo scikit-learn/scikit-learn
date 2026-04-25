@@ -7,9 +7,8 @@ This example shows how one can use :class:`~sklearn.preprocessing.KBinsDiscretiz
 to perform vector quantization on a set of toy image, the raccoon face.
 """
 
-# Authors: Gael Varoquaux
-#          Jaques Grobler
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Original image
@@ -19,13 +18,7 @@ to perform vector quantization on a set of toy image, the raccoon face.
 # a couple of information regarding the image, such as the shape and data type used
 # to store the image.
 #
-# Note that depending of the SciPy version, we have to adapt the import since the
-# function returning the image is not located in the same module. Also, SciPy >= 1.10
-# requires the package `pooch` to be installed.
-try:  # Scipy >= 1.10
-    from scipy.datasets import face
-except ImportError:
-    from scipy.misc import face
+from scipy.datasets import face
 
 raccoon_face = face(gray=True)
 
@@ -35,7 +28,7 @@ print(f"The number of bytes taken in RAM is {raccoon_face.nbytes}")
 
 # %%
 # Thus the image is a 2D array of 768 pixels in height and 1024 pixels in width. Each
-# value is a 8-bit unsigned integer, which means that the image is encoded using 8
+# value is an 8-bit unsigned integer, which means that the image is encoded using 8
 # bits per pixel. The total memory usage of the image is 786 kilobytes (1 byte equals
 # 8 bits).
 #
@@ -81,7 +74,6 @@ encoder = KBinsDiscretizer(
     encode="ordinal",
     strategy="uniform",
     random_state=0,
-    subsample=200_000,
 )
 compressed_raccoon_uniform = encoder.fit_transform(raccoon_face.reshape(-1, 1)).reshape(
     raccoon_face.shape
@@ -130,7 +122,6 @@ encoder = KBinsDiscretizer(
     encode="ordinal",
     strategy="kmeans",
     random_state=0,
-    subsample=200_000,
 )
 compressed_raccoon_kmeans = encoder.fit_transform(raccoon_face.reshape(-1, 1)).reshape(
     raccoon_face.shape

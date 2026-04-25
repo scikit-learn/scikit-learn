@@ -22,11 +22,13 @@ fitting each tree to the negative gradient of the loss function with respect to
 the predicted value. RFs, on the other hand, are based on bagging and use a
 majority vote to predict the outcome.
 
-For more information on ensemble models, see the :ref:`User Guide <ensemble>`.
+See the :ref:`User Guide <ensemble>` for more information on ensemble models or
+see :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py` for an
+example showcasing some other features of HGBT models.
 """
 
-# Author:  Arturo Amor <david-arturo.amor-quiroz@inria.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Load dataset
@@ -141,7 +143,7 @@ colors_list = colors.qualitative.Plotly * (
 for idx, result in enumerate(results):
     cv_results = result["cv_results"].round(3)
     model_name = result["model"]
-    param_name = list(param_grids[model_name].keys())[0]
+    param_name = next(iter(param_grids[model_name].keys()))
     cv_results[param_name] = cv_results["param_" + param_name]
     cv_results["model"] = model_name
 

@@ -21,10 +21,8 @@ proportional to (n_samples * iterations).
 
 """
 
-# Author: Olivier Grisel <olivier.grisel@ensta.org>
-#         Lars Buitinck
-#         Chyi-Kwei Yau <chyikwei.yau@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from time import time
 
@@ -52,7 +50,7 @@ def plot_top_words(model, feature_names, n_top_words, title):
 
         ax = axes[topic_idx]
         ax.barh(top_features, weights, height=0.7)
-        ax.set_title(f"Topic {topic_idx +1}", fontdict={"fontsize": 30})
+        ax.set_title(f"Topic {topic_idx + 1}", fontdict={"fontsize": 30})
         ax.tick_params(axis="both", which="major", labelsize=20)
         for i in "top right left".split():
             ax.spines[i].set_visible(False)

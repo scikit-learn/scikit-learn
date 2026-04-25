@@ -5,7 +5,7 @@ MNIST dataset T-SNE benchmark
 
 """
 
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import argparse
 import json
@@ -15,6 +15,7 @@ from time import time
 
 import numpy as np
 from joblib import Memory
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 
 from sklearn.datasets import fetch_openml
 from sklearn.decomposition import PCA
@@ -22,7 +23,6 @@ from sklearn.manifold import TSNE
 from sklearn.neighbors import NearestNeighbors
 from sklearn.utils import check_array
 from sklearn.utils import shuffle as _shuffle
-from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 
 LOG_DIR = "mnist_tsne_output"
 if not os.path.exists(LOG_DIR):
@@ -130,7 +130,8 @@ if __name__ == "__main__":
         try:
             from bhtsne.bhtsne import run_bh_tsne
         except ImportError as e:
-            raise ImportError("""\
+            raise ImportError(
+                """\
 If you want comparison with the reference implementation, build the
 binary from source (https://github.com/lvdmaaten/bhtsne) in the folder
 benchmarks/bhtsne and add an empty `__init__.py` file in the folder:
@@ -140,7 +141,8 @@ $ cd bhtsne
 $ g++ sptree.cpp tsne.cpp tsne_main.cpp -o bh_tsne -O2
 $ touch __init__.py
 $ cd ..
-""") from e
+"""
+            ) from e
 
         def bhtsne(X):
             """Wrapper for the reference lvdmaaten/bhtsne implementation."""
