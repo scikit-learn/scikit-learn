@@ -732,20 +732,28 @@ class SimpleImputer(_BaseImputer):
         missing_mask = X[:, non_empty_feature_count:].astype(bool)
 
         n_features_original = len(self.statistics_)
-        shape_original = (X.shape[0], n_features_original)
-        X_original = np.zeros(shape_original)
-        X_original[:, self.indicator_.features_] = missing_mask
-        full_mask = X_original.astype(bool)
 
-        imputed_idx, original_idx = 0, 0
-        while imputed_idx < len(array_imputed.T):
-            if not np.all(X_original[:, original_idx]):
-                X_original[:, original_idx] = array_imputed.T[imputed_idx]
-                imputed_idx += 1
-                original_idx += 1
-            else:
-                original_idx += 1
+        # Full-width missing mask: True where the indicator marks a value as
+        # missing in the input that was passed to ``transform``.
+        full_mask = np.zeros((X.shape[0], n_features_original), dtype=bool)
+        full_mask[:, self.indicator_.features_] = missing_mask
 
+        # Determine which original columns survived ``transform``. When
+        # ``keep_empty_features=False`` columns that were entirely missing at
+        # ``fit`` time are dropped (their entry in ``self.statistics_`` is
+        # ``np.nan``), so ``array_imputed`` has fewer columns than the
+        # original data. Place the imputed columns back at their original
+        # positions rather than inferring them from the indicator mask, which
+        # produced off-by-one column shifts when an empty-at-fit column had
+        # values at ``transform`` time (see issue #27012).
+        if self.keep_empty_features:
+            valid_indexes = np.arange(n_features_original)
+        else:
+            invalid_mask = _get_mask(self.statistics_, np.nan)
+            valid_indexes = np.flatnonzero(np.logical_not(invalid_mask))
+
+        X_original = np.zeros((X.shape[0], n_features_original))
+        X_original[:, valid_indexes] = array_imputed
         X_original[full_mask] = self.missing_values
         return X_original
 

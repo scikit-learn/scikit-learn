@@ -1494,6 +1494,49 @@ def test_simple_imputation_inverse_transform(missing_value):
 
 
 @pytest.mark.parametrize("missing_value", [-1, np.nan])
+def test_simple_imputation_inverse_transform_empty_feature_at_fit():
+    """Non-regression test for #27012.
+
+    When ``keep_empty_features=False`` and ``add_indicator=True``, columns
+    that are entirely missing at ``fit`` time are dropped during ``transform``.
+    ``inverse_transform`` must place the imputed columns back at their
+    original positions rather than relying on the indicator mask, which would
+    produce an off-by-one column shift when a previously-empty column has
+    values at ``transform`` time.
+    """
+    X_fit = np.array(
+        [
+            [np.nan, 2.0, 3.0],
+            [np.nan, 2.0, 3.0],
+        ]
+    )
+    X_transform = np.array(
+        [
+            [1.0, 2.0, 3.0],
+            [1.0, 2.0, 3.0],
+        ]
+    )
+
+    imputer = SimpleImputer(
+        strategy="mean",
+        keep_empty_features=False,
+        add_indicator=True,
+    )
+    imputer.fit(X_fit)
+    X_t = imputer.transform(X_transform)
+    X_inv = imputer.inverse_transform(X_t)
+
+    # Column 0 was dropped at transform (all-missing at fit). The imputed
+    # values for columns 1 and 2 must land in those columns, not be shifted.
+    expected = np.array(
+        [
+            [0.0, 2.0, 3.0],
+            [0.0, 2.0, 3.0],
+        ]
+    )
+    assert_array_equal(X_inv, expected)
+
+
 def test_simple_imputation_inverse_transform_exceptions(missing_value):
     X_1 = np.array(
         [
