@@ -29,11 +29,8 @@ TREE_BASED_REGRESSOR_CLASSES = TREE_REGRESSOR_CLASSES + [
 ]
 
 
-def missing_data_supported(TreeEstimator, criterion):
-    return TreeEstimator in [
-        DecisionTreeRegressor,
-        DecisionTreeClassifier,
-    ] and criterion in ["squared_error", "gini", "entropy", "log_loss"]
+def missing_data_supported(estimator):
+    return estimator.__sklearn_tags__().input_tags.allow_nan
 
 
 @pytest.mark.parametrize("TreeClassifier", TREE_BASED_CLASSIFIER_CLASSES)
@@ -81,11 +78,11 @@ def test_monotonic_constraints_classifications(
             max_leaf_nodes=n_samples_train,
         )
     if hasattr(est, "random_state"):
-        est.set_params(**{"random_state": global_random_seed})
+        est.set_params(random_state=global_random_seed)
     if hasattr(est, "n_estimators"):
-        est.set_params(**{"n_estimators": 5})
+        est.set_params(n_estimators=5)
     if with_missing:
-        if sparse_splitter or not missing_data_supported(TreeClassifier, est.criterion):
+        if sparse_splitter or not missing_data_supported(est):
             return
         generator = np.random.default_rng(seed=global_random_seed)
         mask = generator.choice(2, size=X_train.shape).astype(bool)
@@ -162,9 +159,9 @@ def test_monotonic_constraints_regressions(
     if hasattr(est, "random_state"):
         est.set_params(random_state=global_random_seed)
     if hasattr(est, "n_estimators"):
-        est.set_params(**{"n_estimators": 5})
+        est.set_params(n_estimators=5)
     if with_missing:
-        if sparse_splitter or not missing_data_supported(TreeRegressor, est.criterion):
+        if sparse_splitter or not missing_data_supported(est):
             return
         generator = np.random.default_rng(seed=global_random_seed)
         mask = generator.choice(2, size=X_train.shape).astype(bool)
@@ -340,12 +337,6 @@ def test_1d_tree_nodes_values(
     n_samples = 1000
     n_features = 1
     X = rng.rand(n_samples, n_features)
-    if with_missing:
-        if not missing_data_supported(TreeRegressor, criterion):
-            return
-        generator = np.random.default_rng(seed=global_random_seed)
-        mask = generator.choice(2, size=X.shape, p=[0.8, 0.2]).astype(bool)
-        X[mask] = np.nan
     y = rng.rand(n_samples)
 
     if depth_first_builder:
@@ -363,6 +354,12 @@ def test_1d_tree_nodes_values(
             criterion=criterion,
             random_state=global_random_seed,
         )
+    if with_missing:
+        if not missing_data_supported(clf):
+            return
+        generator = np.random.default_rng(seed=global_random_seed)
+        mask = generator.choice(2, size=X.shape, p=[0.8, 0.2]).astype(bool)
+        X[mask] = np.nan
     clf.fit(X, y)
 
     assert_1d_reg_tree_children_monotonic_bounded(clf.tree_, monotonic_sign)
@@ -515,12 +512,6 @@ def test_nd_tree_nodes_values(
     n_features = 2
     monotonic_cst = [monotonic_sign, 0]
     X = rng.rand(n_samples, n_features)
-    if with_missing:
-        if not missing_data_supported(TreeRegressor, criterion):
-            return
-        generator = np.random.default_rng(seed=global_random_seed)
-        mask = generator.choice(2, size=X.shape, p=[0.8, 0.2]).astype(bool)
-        X[mask] = np.nan
     y = rng.rand(n_samples)
 
     if depth_first_builder:
@@ -538,6 +529,12 @@ def test_nd_tree_nodes_values(
             criterion=criterion,
             random_state=global_random_seed,
         )
+    if with_missing:
+        if not missing_data_supported(clf):
+            return
+        generator = np.random.default_rng(seed=global_random_seed)
+        mask = generator.choice(2, size=X.shape, p=[0.8, 0.2]).astype(bool)
+        X[mask] = np.nan
     clf.fit(X, y)
     assert_nd_reg_tree_children_monotonic_bounded(
         clf.tree_, monotonic_cst, with_missing=with_missing
