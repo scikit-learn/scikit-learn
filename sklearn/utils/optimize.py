@@ -34,6 +34,8 @@ class _LineSearchError(RuntimeError):
 # Copied from scipy
 # https://github.com/scipy/scipy/blob/7a7fbca0b9baa1b709e4a5e0afaf9f94bd34941c/scipy/optimize/_linesearch.py#L37
 # Modified for array API compliance: np.dot(a, b) -> a @ b
+# TODO: use the `line_search_wolfe1` from `scipy` when it is array API compliant.
+# Reference: https://github.com/scipy/scipy/pull/25022
 def line_search_wolfe1(
     f,
     fprime,
@@ -50,38 +52,7 @@ def line_search_wolfe1(
     xtol=1e-14,
 ):
     """
-    As `scalar_search_wolfe1` but do a line search to direction `pk`
-
-    Parameters
-    ----------
-    f : callable
-        Function `f(x)`
-    fprime : callable
-        Gradient of `f`
-    xk : array_like
-        Current point
-    pk : array_like
-        Search direction
-    gfk : array_like, optional
-        Gradient of `f` at point `xk`
-    old_fval : float, optional
-        Value of `f` at point `xk`
-    old_old_fval : float, optional
-        Value of `f` at point preceding `xk`
-
-    The rest of the parameters are the same as for `scalar_search_wolfe1`.
-
-    Returns
-    -------
-    stp, f_count, g_count, fval, old_fval
-        As in `line_search_wolfe1`
-    gval : array
-        Gradient of `f` at the final point
-
-    Notes
-    -----
-    Parameters `c1` and `c2` must satisfy ``0 < c1 < c2 < 1``.
-
+    Same as `scalar_search_wolfe1` but do a line search to direction `pk`
     """
     if gfk is None:
         gfk = fprime(xk, *args)
