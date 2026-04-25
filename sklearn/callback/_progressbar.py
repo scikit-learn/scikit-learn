@@ -65,13 +65,15 @@ class ProgressBar:
         self._run_monitors[context.root_uuid] = progress_monitor
 
     def on_fit_task_begin(self, estimator, context):
-        # Don't pass the context to the queue to avoid pickling the whole context tree.
-        # Instead we pass the minimal information needed to create a progress bar.
+        # A new progress bar is created at the beginning of each task that is not a
+        # leaf, except if it's also the root task of an estimator.
         if (
             context.max_subtasks != 0
             or context.parent is None
             or context.source_estimator_name is not None
         ):
+            # We pass the minimal information to the queue that is necessary to create a
+            # progress bar and not the context to avoid pickling the whole context tree.
             path = [ctx.task_id for ctx in get_context_path(context)]
             self._run_queues[context.root_uuid].put(
                 {

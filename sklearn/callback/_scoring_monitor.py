@@ -8,8 +8,6 @@ from dataclasses import dataclass
 
 from sklearn.callback._callback_context import get_context_path
 from sklearn.callback._callback_support import get_callback_manager
-from sklearn.metrics import check_scoring
-from sklearn.metrics._scorer import _BaseScorer
 from sklearn.utils._optional_dependencies import check_pandas_support
 from sklearn.utils._param_validation import StrOptions, validate_params
 
@@ -109,6 +107,8 @@ class ScoringMonitor:
     def __init__(self, *, scoring):
         self.scoring = scoring
         # Turn the scorer into a MultimetricScorer for convenience
+        from sklearn.metrics._scorer import _BaseScorer
+
         if isinstance(self.scoring, str):
             self.scoring = [self.scoring]
         if callable(self.scoring) and isinstance(self.scoring, _BaseScorer):
@@ -121,6 +121,8 @@ class ScoringMonitor:
         # A scorer per estimator is needed to avoid race conditions when the callback is
         # set on different estimators and the scorer is the estimator's default scorer.
         if context.estimator_name not in self._estimator_scorers:
+            from sklearn.metrics import check_scoring
+
             self._estimator_scorers[context.estimator_name] = check_scoring(
                 estimator, self.scoring
             )
