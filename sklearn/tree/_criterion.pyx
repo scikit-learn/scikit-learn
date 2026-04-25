@@ -526,11 +526,16 @@ cdef class ClassificationCriterion(Criterion):
         float64_t upper_bound,
     ) noexcept nogil:
         """Check monotonicity constraint is satisfied at the current classification split"""
+        if (
+            (self.weighted_n_left == 0.) or
+            (self.weighted_n_right == 0.) or
+            (lower_bound > upper_bound)
+        ):
+            return 0
+
         cdef:
             float64_t value_left = self.sum_left[0][0] / self.weighted_n_left
             float64_t value_right = self.sum_right[0][0] / self.weighted_n_right
-        if (self.weighted_n_right == 0.) or (self.weighted_n_right == 0.) or (lower_bound > upper_bound):
-            return 0
         return self._check_monotonicity(monotonic_cst, lower_bound, upper_bound, value_left, value_right)
 
 
@@ -921,11 +926,16 @@ cdef class RegressionCriterion(Criterion):
         float64_t upper_bound,
     ) noexcept nogil:
         """Check monotonicity constraint is satisfied at the current regression split"""
+        if (
+            (self.weighted_n_left == 0.) or
+            (self.weighted_n_right == 0.) or
+            (lower_bound > upper_bound)
+        ):
+            return 0
+
         cdef:
             float64_t value_left = self.sum_left[0] / self.weighted_n_left
             float64_t value_right = self.sum_right[0] / self.weighted_n_right
-        if (self.weighted_n_right == 0.) or (self.weighted_n_right == 0.) or (lower_bound > upper_bound):
-            return 0
         return self._check_monotonicity(monotonic_cst, lower_bound, upper_bound, value_left, value_right)
 
 
