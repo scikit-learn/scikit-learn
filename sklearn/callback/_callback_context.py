@@ -5,91 +5,12 @@ import copy
 import inspect
 import uuid
 import warnings
+from contextlib import contextmanager
+from datetime import datetime, timezone
 
 from sklearn.callback._base import AutoPropagatedCallback
 
-# TODO(callbacks): move these explanations into a dedicated user guide.
-#
-# The computation tasks performed by an estimator during fit have an inherent tree
-# structure, where each task can be decomposed into subtasks and so on. The root of the
-# tree represents the whole fit task.
-#
-# Each loop in the estimator represents a parent task and each iteration of that loop
-# represents a child task. To allow callbacks to be generic and reusable across
-# estimators, the innermost tasks, i.e. the leaves of the task tree, correspond to
-# operations on the full input data (or batch for incremental estimators).
-#
-# For instance, KMeans has two nested loops: the outer loop is controlled by `n_init`
-# and the inner loop is controlled by `max_iter`. Its task tree looks like this:
-#
-# KMeans fit
-# ├── init 0
-# │   ├── iter 0
-# │   ├── iter 1
-# │   ├── ...
-# │   └── iter n
-# ├── init 1
-# │   ├── iter 0
-# │   ├── ...
-# │   └── iter n
-# └── init 2
-#     ├── iter 0
-#     ├── ...
-#     └── iter n
-#
-# where each innermost `iter j` task corresponds the computation of the labels and
-# centers for the full dataset.
-#
-# When the estimator is a meta-estimator, a task leaf usually corresponds to fitting
-# a sub-estimator. Therefore this leaf and the root task of the sub-estimator actually
-# represent the same task. In this case the leaf task of the meta-estimator and the root
-# task of the sub-estimator are merged into a single task.
-#
-# For instance a `Pipeline` would have a task tree that looks like this:
-#
-# Pipeline fit
-# ├── step 0 | preprocessor fit
-# │   └── <insert preprocessor task tree here>
-# └── step 1 | estimator fit
-#     └── <insert estimator task tree here>
-#
-# Concretely, the tree structure is created dynamically and abstracted in an object
-# named `CallbackContext`. There's a context for each task and the context is
-# responsible for calling the callback hooks for its task and creating contexts for
-# the child tasks.
-#
-# This `CallbackContext` is the object that has to be used in the implementation of an
-# estimator to support callbacks. A context is created at the beginning of fit and
-# then sub-contexts are created for each child task.
-#
-# class MyEstimator(CallbackSupportMixin, BaseEstimator):
-#     def __init__(self, max_iter):
-#         self.max_iter = max_iter
-#
-#     @with_callbacks
-#     def fit(self, X, y):
-#         callback_ctx = self._init_callback_context(max_subtasks=self.max_iter)
-#         callback_ctx.call_on_fit_task_begin(X=X, y=y)
-#
-#         for i in range(self.max_iter):
-#             subcontext = callback_ctx.subcontext(task_id=i).call_on_fit_task_begin(
-#                X=X, y=y,
-#             )
-#
-#             # Do something
-#
-#             subcontext.call_on_fit_task_end(X=X, y=y)
-#
-#         callback_ctx.call_on_fit_task_end(X=X, y=y)
-#         return self
-#
-# It's also an object that is passed to the callback hooks to give them information
-# about the task being executed and its position in the task tree.
-
-
-# List of the parameters expected to be passed to call_on_fit_task_* (IN) and to be in
-# the hooks signatures (OUT).
-VALID_HOOK_PARAMS_IN = ["X", "y", "metadata", "reconstruction_attributes"]
+# List of the parameters expected to be in the hooks signatures
 VALID_HOOK_PARAMS_OUT = ["X", "y", "metadata", "fitted_estimator"]
 
 
@@ -132,6 +53,9 @@ class CallbackContext:
     root_uuid : uuid.UUID instance
         The UUID of the root context. All contexts in the same task tree have the same
         root UUID that is used to identify the task tree itself.
+
+    init_time : datetime.datetime
+        The time when the context was initialised, in the UTC timezone.
 
     source_estimator_name : str or None
         The name of the estimator that holds the parent task this task was
@@ -181,6 +105,7 @@ class CallbackContext:
         new_ctx.sequential_subtasks = sequential_subtasks
         new_ctx.parent = None
         new_ctx.root_uuid = uuid.uuid4()
+        new_ctx.init_time = datetime.now(timezone.utc)
         new_ctx._children_map = {}
         new_ctx.source_estimator_name = None
         new_ctx.source_task_name = None
@@ -236,6 +161,7 @@ class CallbackContext:
         new_ctx.max_subtasks = max_subtasks
         new_ctx.sequential_subtasks = sequential_subtasks
         new_ctx.root_uuid = parent_context.root_uuid
+        new_ctx.init_time = datetime.now(timezone.utc)
         new_ctx.parent = None
         new_ctx._children_map = {}
         new_ctx.source_estimator_name = None
@@ -364,20 +290,13 @@ class CallbackContext:
             Name of the callback hook to call.
 
         **kwargs: dict
-            Keyword arguments passed to the callback context.
+            Optional keyword arguments passed to the callback context.
 
         Returns
         -------
         result : bool
             True if any hook call returned True. False otherwise.
         """
-        if diff := set(kwargs.keys()) - set(VALID_HOOK_PARAMS_IN):
-            raise TypeError(
-                f"call_{hook_name} in estimator {self.estimator_name} has received "
-                f"parameters that are not valid: {diff}. The valid parameters are: "
-                f"{VALID_HOOK_PARAMS_IN}."
-            )
-
         result = False
 
         # Keep a cache of the evaluated args to evaluate them only once.
@@ -431,7 +350,15 @@ class CallbackContext:
 
         return result
 
-    def call_on_fit_task_begin(self, *, estimator, **kwargs):
+    def call_on_fit_task_begin(
+        self,
+        *,
+        estimator,
+        X=None,
+        y=None,
+        metadata=None,
+        reconstruction_attributes=None,
+    ):
         """Call the `on_fit_task_begin` hook of the callbacks.
 
         Parameters
@@ -439,14 +366,41 @@ class CallbackContext:
         estimator : estimator instance
             The estimator calling the callback hook.
 
-        **kwargs : dict
-            Additional optional arguments passed to the callback. The list of possible
-            keys and corresponding values are described in detail at <TODO: add link>.
+        X : array-like or None, default=None
+            The training data of the current task.
+
+        y : array-like or None, default=None
+            The training targets of the current task.
+
+        metadata : dict or None, default=None
+            A dictionary containing training metadata for the current task.
+
+        reconstruction_attributes : dict or None, default=None
+            A dictionary of the sufficient fitted attributes needed to construct a
+            `fitted_estimator` from the current state of the estimator, i.e. an
+            estimator instance ready to predict, transform, etc ... as if the fit had
+            stopped at the beginning of this task. The `fitted_estimator` is the
+            object that will be passed to the callbacks, if required.
         """
-        self._call_hooks(estimator, hook_name="on_fit_task_begin", **kwargs)
+        self._call_hooks(
+            estimator,
+            hook_name="on_fit_task_begin",
+            X=X,
+            y=y,
+            metadata=metadata,
+            reconstruction_attributes=reconstruction_attributes,
+        )
         return self
 
-    def call_on_fit_task_end(self, *, estimator, **kwargs):
+    def call_on_fit_task_end(
+        self,
+        *,
+        estimator,
+        X=None,
+        y=None,
+        metadata=None,
+        reconstruction_attributes=None,
+    ):
         """Call the `on_fit_task_end` hook of the callbacks.
 
         Parameters
@@ -454,9 +408,21 @@ class CallbackContext:
         estimator : estimator instance
             The estimator calling the callback hook.
 
-        **kwargs : dict
-            Additional optional arguments passed to the callback. The list of possible
-            keys and corresponding values are described in detail at <TODO: add link>.
+        X : array-like or None, default=None
+            The training data of the current task.
+
+        y : array-like or None, default=None
+            The training targets of the current task.
+
+        metadata : dict or None, default=None
+            A dictionary containing training metadata of the current task.
+
+        reconstruction_attributes : dict or None, default=None
+            A dictionary of the sufficient fitted attributes needed to construct a
+            `fitted_estimator` from the current state of the estimator, i.e. an
+            estimator instance ready to predict, transform, etc ... as if the fit had
+            stopped at the end of this task. The `fitted_estimator` is the object
+            that will be passed to the callbacks, if required.
 
         Returns
         -------
@@ -464,10 +430,20 @@ class CallbackContext:
             Whether or not to stop the current level of iterations at this end of this
             task.
         """
-        return self._call_hooks(estimator, hook_name="on_fit_task_end", **kwargs)
+        return self._call_hooks(
+            estimator,
+            hook_name="on_fit_task_end",
+            X=X,
+            y=y,
+            metadata=metadata,
+            reconstruction_attributes=reconstruction_attributes,
+        )
 
+    @contextmanager
     def propagate_callback_context(self, sub_estimator):
         """Propagate the context and callbacks to a sub-estimator.
+
+        Clear the propagated callbacks from the sub-estimator on exit.
 
         Only auto-propagated callbacks are propagated to the sub-estimator. An error is
         raised if the sub-estimator already holds auto-propagated callbacks.
@@ -510,24 +486,30 @@ class CallbackContext:
                 or self._propagation_depth < callback.max_propagation_depth
             )
         ]
-        if not callbacks_to_propagate:
-            return self
-
-        if not hasattr(sub_estimator, "set_callbacks"):
+        if callbacks_to_propagate and not hasattr(sub_estimator, "set_callbacks"):
             warnings.warn(
                 f"The estimator {sub_estimator.__class__.__name__} does not support "
                 f"callbacks. The callbacks attached to {self.estimator_name} will not "
                 f"be propagated to this estimator."
             )
-            return self
+            callbacks_to_propagate = []
 
-        self._propagated_callbacks = callbacks_to_propagate
+        if callbacks_to_propagate:
+            self._propagated_callbacks = callbacks_to_propagate
+            curr_callbacks = getattr(sub_estimator, "_skl_callbacks", [])
+            sub_estimator.set_callbacks(*(curr_callbacks + callbacks_to_propagate))
 
-        sub_estimator.set_callbacks(
-            getattr(sub_estimator, "_skl_callbacks", []) + self._propagated_callbacks
-        )
-
-        return self
+        try:
+            yield
+        finally:
+            if callbacks_to_propagate:
+                kept_callbacks = [
+                    cb
+                    for cb in sub_estimator._skl_callbacks
+                    if cb not in callbacks_to_propagate
+                ]
+                sub_estimator.set_callbacks(*kept_callbacks)
+            del sub_estimator._parent_callback_ctx
 
 
 def _from_reconstruction_attributes(estimator, reconstruction_attributes):
