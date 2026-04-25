@@ -52,7 +52,6 @@ def test_newton_cg_array_api_compliance(array_namespace, device_name, dtype_name
     A = xp.asarray(np.array([[3, -1], [-1, 1]]).astype(dtype_name), device=device)
     y = xp.asarray(np.arange(2).astype(dtype_name), device=device)
     x0 = xp.asarray(np.ones(2).astype(dtype_name), device=device)
-    print(f"{xp=}")
 
     def func(x):
         return 0.5 * (y - A @ x) @ (y - A @ x)
@@ -76,7 +75,6 @@ def test_newton_cg_array_api_compliance(array_namespace, device_name, dtype_name
     )
 
 
-# @pytest.mark.filterwarnings("ignore::UserWarning")
 @pytest.mark.parametrize("verbose", [0, 1, 2])
 def test_newton_cg_verbosity(capsys, verbose):
     """Test the std output of verbose newton_cg solver."""
