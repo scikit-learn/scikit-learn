@@ -290,8 +290,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                         # Lower bound for right child and upper bound for left child
                         # are set to the same value.
                         middle_value = splitter.criterion.middle_value()
-                        right_child_min = max(middle_value, lower_bound)
-                        left_child_max = min(middle_value, upper_bound)
+                        right_child_min = max(middle_value, parent_record.lower_bound)
+                        left_child_max = min(middle_value, parent_record.upper_bound)
                     else:  # i.e. splitter.monotonic_cst[split.feature] == -1
                         # Split on a feature with monotonic decrease constraint
                         right_child_min = parent_record.lower_bound
@@ -300,8 +300,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                         # Lower bound for left child and upper bound for right child
                         # are set to the same value.
                         middle_value = splitter.criterion.middle_value()
-                        left_child_min = max(middle_value, lower_bound)
-                        right_child_max = min(middle_value, upper_bound)
+                        left_child_min = max(middle_value, parent_record.lower_bound)
+                        right_child_max = min(middle_value, parent_record.upper_bound)
 
                     # Push right child on stack
                     builder_stack.push({
