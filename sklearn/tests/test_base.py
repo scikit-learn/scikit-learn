@@ -919,8 +919,8 @@ def test_estimator_getstate_using_slots_error_message():
         ("polars", "0.20.23"),
     ],
 )
-def test_dataframe_protocol(constructor_name, minversion):
-    """Uses the dataframe exchange protocol to get feature names."""
+def test_feature_names_in_on_dataframes(constructor_name, minversion):
+    """Test that feature_names_in_ is correctly set for dataframe X."""
     data = [[1, 4, 2], [3, 3, 6]]
     columns = ["col_0", "col_1", "col_2"]
     df = _convert_container(

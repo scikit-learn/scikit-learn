@@ -16,14 +16,13 @@ from sklearn.utils._array_api import (
     get_namespace_and_device,
     move_to,
 )
-from sklearn.utils._dataframe import is_polars_df, is_pyarrow_data
+from sklearn.utils._dataframe import is_pyarrow_data
 from sklearn.utils._param_validation import Interval, validate_params
 from sklearn.utils.extmath import _approximate_mode
 from sklearn.utils.fixes import SCIPY_VERSION_BELOW_1_12
 from sklearn.utils.validation import (
     _check_sample_weight,
     _is_arraylike_not_scalar,
-    _use_interchange_protocol,
     check_array,
     check_consistent_length,
     check_random_state,
@@ -379,76 +378,31 @@ def _get_column_indices(X, key):
     :func:`_safe_indexing`.
     """
     key_dtype = _determine_key_type(key)
-    if is_polars_df(X):
-        n_columns = X.shape[1]
-        column_names = X.columns
-        return _get_column_indices_interchange_and_polars(
-            n_columns, column_names, key, key_dtype
-        )
-    elif _use_interchange_protocol(X):
-        X_interchange = X.__dataframe__()
-        n_columns = X_interchange.num_columns()
-        column_names = list(X_interchange.column_names())
-        return _get_column_indices_interchange_and_polars(
-            n_columns, column_names, key, key_dtype
-        )
 
-    n_columns = X.shape[1]
+    if nw.dependencies.is_into_dataframe(X):
+        # Note: narwhals raises DuplicateError if column names are not unique.
+        df_nw = nw.from_native(X)
+        n_columns = df_nw.shape[1]
+        column_names = df_nw.columns
+    else:
+        n_columns = X.shape[1]
+        column_names = None
+
     if isinstance(key, (list, tuple)) and not key:
         # we get an empty list
         return []
     elif key_dtype in ("bool", "int"):
         return _get_column_indices_for_bool_or_int(key, n_columns)
     else:
-        try:
-            all_columns = X.columns
-        except AttributeError:
+        if column_names is None:
             raise ValueError(
                 "Specifying the columns using strings is only supported for dataframes."
             )
-        if isinstance(key, str):
-            columns = [key]
-        elif isinstance(key, slice):
-            start, stop = key.start, key.stop
-            if start is not None:
-                start = all_columns.get_loc(start)
-            if stop is not None:
-                # pandas indexing with strings is endpoint included
-                stop = all_columns.get_loc(stop) + 1
-            else:
-                stop = n_columns + 1
-            return list(islice(range(n_columns), start, stop))
-        else:
-            columns = list(key)
 
-        try:
-            column_indices = []
-            for col in columns:
-                col_idx = all_columns.get_loc(col)
-                if not isinstance(col_idx, numbers.Integral):
-                    raise ValueError(
-                        f"Selected columns, {columns}, are not unique in dataframe"
-                    )
-                column_indices.append(col_idx)
-
-        except KeyError as e:
-            raise ValueError("A given column is not a column of the dataframe") from e
-
-        return column_indices
-
-
-def _get_column_indices_interchange_and_polars(n_columns, column_names, key, key_dtype):
-    """Same as _get_column_indices but for X with __dataframe__ protocol or polars."""
-
-    if isinstance(key, (list, tuple)) and not key:
-        # we get an empty list
-        return []
-    elif key_dtype in ("bool", "int"):
-        return _get_column_indices_for_bool_or_int(key, n_columns)
-    else:
         if isinstance(key, slice):
             if key.step not in [1, None]:
                 raise NotImplementedError("key.step must be 1 or None")
+
             start, stop = key.start, key.stop
             if start is not None:
                 start = column_names.index(start)
@@ -458,13 +412,14 @@ def _get_column_indices_interchange_and_polars(n_columns, column_names, key, key
             else:
                 stop = n_columns + 1
             return list(islice(range(n_columns), start, stop))
-
-        selected_columns = [key] if np.isscalar(key) else key
-
-        try:
-            return [column_names.index(col) for col in selected_columns]
-        except ValueError as e:
-            raise ValueError("A given column is not a column of the dataframe") from e
+        else:
+            selected_columns = [key] if np.isscalar(key) else key
+            try:
+                return [column_names.index(col) for col in selected_columns]
+            except ValueError as e:
+                raise ValueError(
+                    "A given column is not a column of the dataframe"
+                ) from e
 
 
 @validate_params(
