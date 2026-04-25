@@ -36,7 +36,7 @@ class _LineSearchError(RuntimeError):
 # Modified for array API compliance: np.dot(a, b) -> a @ b
 # TODO: use the `line_search_wolfe1` from `scipy` when it is array API compliant.
 # Reference: https://github.com/scipy/scipy/pull/25022
-def line_search_wolfe1(
+def _line_search_wolfe1(
     f,
     fprime,
     xk,
@@ -109,7 +109,7 @@ def _line_search_wolfe12(
         print(f"    eps=16 * finfo.eps={eps}")
         print("    try line search wolfe1")
 
-    ret = line_search_wolfe1(f, fprime, xk, pk, gfk, old_fval, old_old_fval, **kwargs)
+    ret = _line_search_wolfe1(f, fprime, xk, pk, gfk, old_fval, old_old_fval, **kwargs)
 
     if is_verbose:
         _not_ = "not " if ret[0] is None else ""
