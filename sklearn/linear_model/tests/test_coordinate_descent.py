@@ -968,7 +968,7 @@ def test_check_input_false():
     X, y, _, _ = build_dataset(n_samples=20, n_features=10)
     X = check_array(X, order="F", dtype="float64")
     y = check_array(X, order="F", dtype="float64")
-    clf = ElasticNet(selection="cyclic", tol=1e-7)
+    clf = ElasticNet(selection="cyclic", tol=1e-6)
     # Check that no error is raised if data is provided in the right format
     clf.fit(X, y, check_input=False)
     # With check_input=False, an exhaustive check is not made on y but its
@@ -1772,4 +1772,24 @@ def test_enet_path_check_input_false(precompute):
     """Test enet_path works with check_input=False and various precompute settings."""
     X, y = make_regression(n_samples=100, n_features=5, n_informative=2, random_state=0)
     X = np.asfortranarray(X)
-    alphas, _, _ = enet_path(X, y, n_alphas=3, check_input=False, precompute=precompute)
+    alphas, _, _ = enet_path(X, y, alphas=3, check_input=False, precompute=precompute)
+
+
+# TODO(1.11): remove
+@pytest.mark.parametrize("path_func", [lasso_path, enet_path])
+def test_path_function_deprecated_n_alphas(path_func):
+    """Check deprecation of n_alphas in favor of alphas."""
+    X, y = make_regression(n_samples=9, n_features=5, n_informative=2, random_state=42)
+
+    msg = "'n_alphas' was deprecated in 1.9 and will be removed in 1.11"
+    with pytest.warns(FutureWarning, match=msg):
+        path_func(X, y, n_alphas=5)
+
+    msg = "'alphas=None' is deprecated and will be removed in 1.11"
+    with pytest.warns(FutureWarning, match=msg):
+        path_func(X, y, alphas=None)
+
+    # Assert that no warning is raised when n_alphas is not used.
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        path_func(X, y, alphas=5)
