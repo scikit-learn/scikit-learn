@@ -1954,7 +1954,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
           features.
         - str array-like: names of categorical features (assuming the training
           data has feature names).
-       - `"from_dtype"`: dataframe columns with dtype "Categorical" and "Enum" are
+        - `"from_dtype"`: dataframe columns with dtype "Categorical" and "Enum" are
           considered to be categorical features. The input must be a dataframe that
           is supported by narwhals (or supports it): ``narwhals.from_native(X)`` must
           work. This is the case, for instance, for pandas and polars DataFrames.
