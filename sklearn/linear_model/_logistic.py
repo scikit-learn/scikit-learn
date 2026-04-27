@@ -99,6 +99,64 @@ def _check_solver(solver, penalty, dual):
     return solver
 
 
+def _make_scipy_callback_fun(
+    callback_ctx,
+    estimator,
+    X,
+    y,
+    metadata,
+    xp,
+    n_classes,
+    is_binary,
+    fit_intercept,
+    coefs_order,
+    device,
+):
+    """Helper function to make a callback function for scipy."""
+    if callback_ctx is None or not hasattr(estimator, "_skl_callbacks"):
+        return None
+
+    def scipy_callback_fun(xk):
+        solver_iter_ctx = callback_ctx.subcontext(task_name="lbfgs_iter")
+        solver_iter_ctx.call_on_fit_task_begin(
+            estimator=estimator, X=X, y=y, metadata=metadata
+        )
+        w0 = xk
+        if is_binary:
+            coef_ = xp.asarray(w0.copy(order=coefs_order), dtype=X.dtype, device=device)
+            if fit_intercept:
+                intercept_ = coef_[-1:]
+                coef_ = coef_[:-1][None, :]
+            else:
+                intercept_ = xp.zeros(1, dtype=X.dtype, device=device)
+                coef_ = coef_[None, :]
+        else:
+            multi_w0 = np.reshape(w0, (n_classes, -1), order="F")
+            coef_ = xp.asarray(
+                multi_w0.copy(order=coefs_order), dtype=X.dtype, device=device
+            )
+            if fit_intercept:
+                intercept_ = coef_[:, -1]
+                coef_ = coef_[:, :-1]
+            else:
+                intercept_ = xp.zeros(n_classes, dtype=X.dtype, device=device)
+
+        reconstruction_attributes = {"coef_": coef_, "intercept_": intercept_}
+        solver_iter_ctx.call_on_fit_task_end(
+            estimator=estimator,
+            X=X,
+            y=y,
+            metadata=metadata,
+            reconstruction_attributes=reconstruction_attributes,
+        )
+        # TODO(1.10): Use `call_on_fit_task_end` in an if to do
+        # `raise StopIteration()`
+        # Using StopIteration in a scipy callback requires scipy > 1.10
+        # which will be the case of the min version for scikit-learn 1.10.
+
+    return scipy_callback_fun
+
+
 def _logistic_regression_path(
     X,
     y,
@@ -441,46 +499,6 @@ def _logistic_regression_path(
             # subcontexts in this for loop to avoid introducing an unnecessary subtask
             # level.
 
-            def scipy_callback_fun(xk):
-                solver_iter_ctx = callback_ctx.subcontext(task_name="lbfgs_iter")
-                solver_iter_ctx.call_on_fit_task_begin(
-                    estimator=estimator, X=X, y=y, metadata=callback_metadata
-                )
-                w0 = xk
-                if is_binary:
-                    coef_ = xp.asarray(
-                        w0.copy(order=coefs_order), dtype=X.dtype, device=device_
-                    )
-                    if fit_intercept:
-                        intercept_ = coef_[-1:]
-                        coef_ = coef_[:-1][None, :]
-                    else:
-                        intercept_ = xp.zeros(1, dtype=X.dtype, device=device_)
-                        coef_ = coef_[None, :]
-                else:
-                    multi_w0 = np.reshape(w0, (n_classes, -1), order="F")
-                    coef_ = xp.asarray(
-                        multi_w0.copy(order=coefs_order), dtype=X.dtype, device=device_
-                    )
-                    if fit_intercept:
-                        intercept_ = coef_[:, -1]
-                        coef_ = coef_[:, :-1]
-                    else:
-                        intercept_ = xp.zeros(n_classes, dtype=X.dtype, device=device_)
-
-                reconstruction_attributes = {"coef_": coef_, "intercept_": intercept_}
-                solver_iter_ctx.call_on_fit_task_end(
-                    estimator=estimator,
-                    X=X,
-                    y=y,
-                    metadata=callback_metadata,
-                    reconstruction_attributes=reconstruction_attributes,
-                )
-                # TODO(1.10): Use `call_on_fit_task_end` in an if to do
-                # `raise StopIteration()`
-                # Using StopIteration in a scipy callback requires scipy > 1.10
-                # which will be the case of the min version for scikit-learn 1.10.
-
             l2_reg_strength = 1.0 / (C * sw_sum)
             iprint = [-1, 50, 1, 100, 101][
                 np.searchsorted(np.array([0, 1, 2, 3]), verbose)
@@ -498,9 +516,19 @@ def _logistic_regression_path(
                     "ftol": 64 * np.finfo(float).eps,
                     **_get_additional_lbfgs_options_dict("iprint", iprint),
                 },
-                callback=scipy_callback_fun
-                if callback_ctx is not None and hasattr(estimator, "_skl_callbacks")
-                else None,
+                callback=_make_scipy_callback_fun(
+                    callback_ctx,
+                    estimator,
+                    X,
+                    y,
+                    callback_metadata,
+                    xp,
+                    n_classes,
+                    is_binary,
+                    fit_intercept,
+                    coefs_order,
+                    device_,
+                ),
             )
             n_iter_i = _check_optimize_result(
                 solver,
