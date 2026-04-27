@@ -69,8 +69,8 @@ scikit-learn requires:
 - Python (>= |PythonMinVersion|)
 - NumPy (>= |NumPyMinVersion|)
 - SciPy (>= |SciPyMinVersion|)
-- joblib (>= |JoblibMinVersion|)
 - Narwhals (>= |NarwhalsMinVersion|)
+- joblib (>= |JoblibMinVersion|)
 - threadpoolctl (>= |ThreadpoolctlMinVersion|)
 
 =======
