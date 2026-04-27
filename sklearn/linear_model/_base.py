@@ -26,7 +26,6 @@ from sklearn.utils._array_api import (
     _asarray_with_order,
     _average,
     _expit,
-    _is_numpy_namespace,
     check_same_namespace,
     get_namespace,
     get_namespace_and_device,
@@ -408,21 +407,21 @@ class LinearClassifierMixin(ClassifierMixin):
             Vector containing the class labels for each sample.
         """
         check_same_namespace(X, self, attribute="coef_", method="predict")
-        xp, _ = get_namespace(X)
+        xp, _, device_ = get_namespace_and_device(X)
         scores = self.decision_function(X)
         if len(scores.shape) == 1:
             indices = xp.astype(scores > 0, indexing_dtype(xp))
         else:
             indices = xp.argmax(scores, axis=1)
 
-        # If `y` consists of strings during fitting then `self.classes_` will
-        # also contain strings and we handle such a scenario by returning the
-        # predictions according to the namespace of `self.classes_` i.e. numpy.
-        xp_classes, _ = get_namespace(self.classes_)
-        if _is_numpy_namespace(xp_classes):
-            indices = move_to(indices, xp=np, device="cpu")
+        xp_classes, _, device_classes = get_namespace_and_device(self.classes_)
+        indices = move_to(indices, xp=xp_classes, device=device_classes)
 
-        return xp_classes.take(self.classes_, indices, axis=0)
+        y_pred = xp_classes.take(self.classes_, indices, axis=0)
+        if isinstance(y_pred[0], str):
+            return y_pred
+        else:
+            return move_to(y_pred, xp=xp, device=device_)
 
     def _predict_proba_lr(self, X):
         """Probability estimation for OvR logistic regression.
