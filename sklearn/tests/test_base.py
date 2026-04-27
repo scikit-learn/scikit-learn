@@ -915,7 +915,7 @@ def test_estimator_getstate_using_slots_error_message():
     "constructor_name, minversion",
     [
         ("dataframe", "1.5.0"),
-        ("pyarrow", "12.0.0"),
+        ("pyarrow", "13.0.0"),
         ("polars", "0.20.23"),
     ],
 )
