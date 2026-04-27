@@ -34,3 +34,11 @@ Quick links
 * [Contributing code](https://scikit-learn.org/dev/developers/contributing.html#contributing-code)
 * [Coding guidelines](https://scikit-learn.org/dev/developers/develop.html#coding-guidelines)
 * [Tips to read current code](https://scikit-learn.org/dev/developers/contributing.html#reading-the-existing-code-base)
+
+## 💰 Bounty Contribution
+
+- **Task:** `pairwise_distances` throws warnings with array API classes
+- **Reward:** $1
+- **Source:** GitHub-Paid
+- **Date:** 2026-04-28
+
