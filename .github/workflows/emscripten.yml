@@ -35,7 +35,7 @@ jobs:
       build: ${{ steps.check_build_trigger.outputs.build }}
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
@@ -63,11 +63,11 @@ jobs:
     if: needs.check_build_trigger.outputs.build
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
 
-      - uses: pypa/cibuildwheel@9c00cb4f6b517705a3794b22395aedc36257242c # v3.2.1
+      - uses: pypa/cibuildwheel@298ed2fb2c105540f5ed055e8a6ad78d82dd3a7e # v3.3.1
         env:
           CIBW_PLATFORM: pyodide
           SKLEARN_SKIP_OPENMP_TEST: "true"
@@ -77,7 +77,7 @@ jobs:
           CIBW_TEST_COMMAND: "python -m pytest -sra --pyargs sklearn --durations 20 --showlocals"
 
       - name: Upload wheel artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: pyodide_wheel
           path: ./wheelhouse/*.whl
@@ -94,13 +94,13 @@ jobs:
     if: github.repository == 'scikit-learn/scikit-learn' && github.event_name != 'pull_request'
     steps:
       - name: Download wheel artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           path: wheelhouse/
           merge-multiple: true
 
       - name: Push to Anaconda PyPI index
-        uses: scientific-python/upload-nightly-action@b36e8c0c10dbcfd2e05bf95f17ef8c14fd708dbf # 0.6.2
+        uses: scientific-python/upload-nightly-action@5748273c71e2d8d3a61f3a11a16421c8954f9ecf # 0.6.3
         with:
           artifacts_path: wheelhouse/
           anaconda_nightly_upload_token: ${{ secrets.SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN }}

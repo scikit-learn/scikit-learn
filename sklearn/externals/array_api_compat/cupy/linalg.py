@@ -2,7 +2,7 @@ from cupy.linalg import * # noqa: F403
 # cupy.linalg doesn't have __all__. If it is added, replace this with
 #
 # from cupy.linalg import __all__ as linalg_all
-_n = {}
+_n: dict[str, object] = {}
 exec('from cupy.linalg import *', _n)
 del _n['__builtins__']
 linalg_all = list(_n)
@@ -43,7 +43,5 @@ else:
 
 __all__ = linalg_all + _linalg.__all__
 
-del get_xp
-del cp
-del linalg_all
-del _linalg
+def __dir__() -> list[str]:
+    return __all__

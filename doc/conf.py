@@ -515,6 +515,9 @@ redirects = {
     "auto_examples/linear_model/plot_sgd_comparison": (
         "auto_examples/linear_model/plot_sgd_loss_functions"
     ),
+    "auto_examples/miscellaneous/plot_partial_dependence_visualization_api": (
+        "auto_examples/inspection/plot_partial_dependence_visualization_api"
+    ),
 }
 html_context["redirects"] = redirects
 for old_link in redirects:
@@ -910,7 +913,7 @@ linkcheck_ignore = [
     r"^..?/",
     # ignore links to specific pdf pages because linkcheck does not handle them
     # ('utf-8' codec can't decode byte error)
-    r"http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf#page=.*",
+    r"https://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf#page=.*",
     (
         "https://www.fordfoundation.org/media/2976/roads-and-bridges"
         "-the-unseen-labor-behind-our-digital-infrastructure.pdf#page=.*"

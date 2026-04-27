@@ -28,6 +28,7 @@ from sklearn.model_selection import cross_val_predict
 from sklearn.utils import Bunch, check_random_state, get_tags
 from sklearn.utils._param_validation import HasMethods, Hidden, StrOptions
 from sklearn.utils._response import _get_response_values
+from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils._user_interface import _print_elapsed_time
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
@@ -734,7 +735,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         inv_order[self.order_] = np.arange(len(self.order_))
         Y_output = Y_output_chain[:, inv_order]
 
-        return Y_output
+        return _align_api_if_sparse(Y_output)
 
     @abstractmethod
     def fit(self, X, Y, **fit_params):
@@ -920,7 +921,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         - None, to use true labels when fitting,
         - integer, to specify the number of folds in a (Stratified)KFold,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
     chain_method : {'predict', 'predict_proba', 'predict_log_proba', \
             'decision_function'} or list of such str's, default='predict'
@@ -1205,7 +1206,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         - None, to use true labels when fitting,
         - integer, to specify the number of folds in a (Stratified)KFold,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If ``order='random'``, determines random number generation for the
@@ -1234,7 +1235,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         A list of clones of base_estimator.
 
     order_ : list
-        The order of labels in the classifier chain.
+        The order of labels in the regressor chain.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the

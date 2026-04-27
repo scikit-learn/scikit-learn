@@ -522,7 +522,7 @@ Formally, the loss function of classical MDS (strain) is given by
 
 where :math:`Z` is the :math:`n \times d` embedding matrix whose rows are
 :math:`z_i^T`, :math:`\|\cdot\|_F` denotes the Frobenius norm, and
-:math:`B` is the Gram matrix with elements :math:`b_{ij}`, 
+:math:`B` is the Gram matrix with elements :math:`b_{ij}`,
 given by :math:`B = -\frac{1}{2}C\Delta C`.
 Here :math:`C\Delta C` is the double-centered matrix of squared dissimilarities,
 with :math:`\Delta` being the matrix of squared input dissimilarities

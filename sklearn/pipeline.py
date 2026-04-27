@@ -14,6 +14,7 @@ from sklearn.base import TransformerMixin, _fit_context, clone
 from sklearn.exceptions import NotFittedError
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils import Bunch
+from sklearn.utils._array_api import get_namespace, get_namespace_and_device
 from sklearn.utils._metadata_requests import METHODS
 from sklearn.utils._param_validation import HasMethods, Hidden
 from sklearn.utils._repr_html.estimator import _VisualBlock
@@ -388,6 +389,11 @@ class Pipeline(_BaseComposition):
         try:
             estimator = self.steps[-1][1]
             return "passthrough" if estimator is None else estimator
+        except IndexError:
+            # An empty pipeline has no final estimator
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute '_final_estimator'"
+            )
         except (ValueError, AttributeError, TypeError):
             # This condition happens when a call to a method is first calling
             # `_available_if` and `fit` did not validate `steps` yet. We
@@ -1148,7 +1154,12 @@ class Pipeline(_BaseComposition):
     @property
     def classes_(self):
         """The classes labels. Only exist if the last step is a classifier."""
-        return self.steps[-1][1].classes_
+        try:
+            return self.steps[-1][1].classes_
+        except IndexError:
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute 'classes_'"
+            )
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -1220,13 +1231,23 @@ class Pipeline(_BaseComposition):
     def n_features_in_(self):
         """Number of features seen during first step `fit` method."""
         # delegate to first step (which will call check_is_fitted)
-        return self.steps[0][1].n_features_in_
+        try:
+            return self.steps[0][1].n_features_in_
+        except IndexError:
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute 'n_features_in_'"
+            )
 
     @property
     def feature_names_in_(self):
         """Names of features seen during first step `fit` method."""
         # delegate to first step (which will call check_is_fitted)
-        return self.steps[0][1].feature_names_in_
+        try:
+            return self.steps[0][1].feature_names_in_
+        except IndexError:
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute 'feature_names_in_'"
+            )
 
     def __sklearn_is_fitted__(self):
         """Indicate whether pipeline has been fit.
@@ -1909,7 +1930,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         results = self._parallel_func(X, y, _fit_transform_one, routed_params)
         if not results:
             # All transformers are None
-            return np.zeros((X.shape[0], 0))
+            xp, _, device = get_namespace_and_device(X)
+            return xp.zeros((X.shape[0], 0), device=device)
 
         Xs, transformers = zip(*results)
         self._update_transformer_list(transformers)
@@ -1979,11 +2001,13 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         )
         if not Xs:
             # All transformers are None
-            return np.zeros((X.shape[0], 0))
+            xp, _, device = get_namespace_and_device(X)
+            return xp.zeros((X.shape[0], 0), device=device)
 
         return self._hstack(Xs)
 
     def _hstack(self, Xs):
+        xp, _ = get_namespace(*Xs)
         # Check if Xs dimensions are valid
         for X, (name, _) in zip(Xs, self.transformer_list):
             if hasattr(X, "shape") and len(X.shape) != 2:
@@ -1995,12 +2019,12 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         adapter = _get_container_adapter("transform", self)
         if adapter and all(adapter.is_supported_container(X) for X in Xs):
-            return adapter.hstack(Xs)
+            return adapter.hstack(Xs, self.get_feature_names_out())
 
         if any(sparse.issparse(f) for f in Xs):
             return sparse.hstack(Xs).tocsr()
 
-        return np.hstack(Xs)
+        return xp.concat(Xs, axis=1)
 
     def _update_transformer_list(self, transformers):
         transformers = iter(transformers)
@@ -2074,6 +2098,12 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                 get_tags(trans).input_tags.sparse
                 for name, trans in self.transformer_list
                 if trans not in {"passthrough", "drop"}
+            )
+            tags.array_api_support = all(
+                True
+                if trans in {"passthrough", "drop"}
+                else get_tags(trans).array_api_support
+                for name, trans in self.transformer_list
             )
         except Exception:
             # If `transformer_list` does not comply with our API (list of tuples)

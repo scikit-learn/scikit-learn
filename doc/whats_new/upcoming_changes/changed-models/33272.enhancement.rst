@@ -1,0 +1,5 @@
+- The :meth:`transform` method of :class:`preprocessing.PowerTransformer` with
+  `method="yeo-johnson"` now uses the numerical more stable function
+  `scipy.stats.yeojohnson` instead of an own implementation. The results may deviate in
+  numerical edge cases or within the precision of floating-point arithmetic.
+  By :user:`Christian Lorentzen <lorentzenchr>`.

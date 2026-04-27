@@ -23,11 +23,11 @@ from sklearn.exceptions import (
 )
 from sklearn.utils._array_api import (
     _asarray_with_order,
-    _convert_to_numpy,
     _is_numpy_namespace,
     _max_precision_float_dtype,
     get_namespace,
     get_namespace_and_device,
+    move_to,
 )
 from sklearn.utils._dataframe import is_pandas_df, is_pandas_df_or_series
 from sklearn.utils._isfinite import FiniteStatus, cy_isfinite
@@ -77,7 +77,7 @@ def _deprecate_positional_args(func=None, *, version="1.3"):
 
             # extra_args > 0
             args_msg = [
-                "{}={}".format(name, arg)
+                f"{name}={arg}"
                 for name, arg in zip(kwonly_args[:extra_args], args[-extra_args:])
             ]
             args_msg = ", ".join(args_msg)
@@ -437,7 +437,7 @@ def check_memory(memory):
         raise ValueError(
             "'memory' should be None, a string or have the same"
             " interface as joblib.Memory."
-            " Got memory='{}' instead.".format(memory)
+            f" Got memory='{memory}' instead."
         )
     return memory
 
@@ -508,10 +508,10 @@ def indexable(*iterables):
     Examples
     --------
     >>> from sklearn.utils import indexable
-    >>> from scipy.sparse import csr_matrix
+    >>> from scipy.sparse import csr_array
     >>> import numpy as np
     >>> iterables = [
-    ...     [1, 2, 3], np.array([2, 3, 4]), None, csr_matrix([[5], [6], [7]])
+    ...     [1, 2, 3], np.array([2, 3, 4]), None, csr_array([[5], [6], [7]])
     ... ]
     >>> indexable(*iterables)
     [[1, 2, 3], array([2, 3, 4]), None, <...Sparse...dtype 'int64'...shape (3, 1)>]
@@ -570,6 +570,10 @@ def _ensure_sparse_format(
         .. versionchanged:: 0.23
            Accepts `pd.NA` and converts it into `np.nan`
 
+    accept_large_sparse : bool
+        If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
+        accept_sparse, accept_large_sparse will cause it to be accepted only
+        if its indices are stored with a 32-bit dtype.
 
     estimator_name : str, default=None
         The estimator name, used to construct the error message.
@@ -1465,7 +1469,7 @@ def check_random_state(seed):
     if isinstance(seed, np.random.RandomState):
         return seed
     raise ValueError(
-        "%r cannot be used to seed a numpy.random.RandomState instance" % seed
+        f"{seed!r} cannot be used to seed a numpy.random.RandomState instance"
     )
 
 
@@ -1540,10 +1544,10 @@ def check_symmetric(array, *, tol=1e-10, raise_warning=True, raise_exception=Fal
     array([[0, 1, 2],
            [1, 0, 1],
            [2, 1, 0]])
-    >>> from scipy.sparse import csr_matrix
-    >>> sparse_symmetric_array = csr_matrix(symmetric_array)
+    >>> from scipy.sparse import csr_array
+    >>> sparse_symmetric_array = csr_array(symmetric_array)
     >>> check_symmetric(sparse_symmetric_array)
-    <Compressed Sparse Row sparse matrix of dtype 'int64'
+    <Compressed Sparse Row sparse array of dtype 'int64'
         with 6 stored elements and shape (3, 3)>
     """
     if (array.ndim != 2) or (array.shape[0] != array.shape[1]):
@@ -1686,7 +1690,7 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     >>> check_is_fitted(lr)
     """
     if isclass(estimator):
-        raise TypeError("{} is a class, not an instance.".format(estimator))
+        raise TypeError(f"{estimator} is a class, not an instance.")
     if msg is None:
         msg = (
             "This %(name)s instance is not fitted yet. Call 'fit' with "
@@ -1694,7 +1698,7 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
         )
 
     if not hasattr(estimator, "fit"):
-        raise TypeError("%s is not an estimator instance." % (estimator))
+        raise TypeError(f"{estimator} is not an estimator instance.")
 
     tags = get_tags(estimator)
 
@@ -2085,6 +2089,7 @@ def _check_sample_weight(
     ensure_non_negative=False,
     ensure_same_device=True,
     copy=False,
+    allow_all_zero_weights=False,
 ):
     """Validate sample weights.
 
@@ -2127,12 +2132,17 @@ def _check_sample_weight(
     copy : bool, default=False
         If True, a copy of sample_weight will be created.
 
+    allow_all_zero_weights : bool, default=False,
+        Whether or not to raise an error when sample weights are all zero.
+
     Returns
     -------
     sample_weight : ndarray of shape (n_samples,)
         Validated sample weight. It is guaranteed to be "C" contiguous.
     """
-    xp, is_array_api, device = get_namespace_and_device(X, remove_types=(int, float))
+    xp, is_array_api, device = get_namespace_and_device(
+        X, remove_types=(list, int, float)
+    )
 
     n_samples = _num_samples(X)
 
@@ -2173,6 +2183,12 @@ def _check_sample_weight(
                 "sample_weight.shape == {}, expected {}!".format(
                     sample_weight.shape, (n_samples,)
                 )
+            )
+
+    if not allow_all_zero_weights:
+        if xp.all(sample_weight == 0):
+            raise ValueError(
+                "Sample weights must contain at least one non-zero number."
             )
 
     if ensure_non_negative:
@@ -2582,7 +2598,7 @@ def _check_pos_label_consistency(pos_label, y_true):
                 or xp.all(classes == xp.asarray([1], device=device))
             )
         ):
-            classes = _convert_to_numpy(classes, xp=xp)
+            classes = move_to(classes, xp=np, device="cpu")
             classes_repr = ", ".join([repr(c) for c in classes.tolist()])
             raise ValueError(
                 f"y_true takes value in {{{classes_repr}}} and pos_label is not "

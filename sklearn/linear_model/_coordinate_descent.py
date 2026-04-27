@@ -12,11 +12,15 @@ import numpy as np
 from joblib import effective_n_jobs
 from scipy import sparse
 
-from sklearn.base import MultiOutputMixin, RegressorMixin, _fit_context
+from sklearn.base import RegressorMixin, _fit_context
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from sklearn.linear_model import _cd_fast as cd_fast  # type: ignore[attr-defined]
-from sklearn.linear_model._base import LinearModel, _pre_fit, _preprocess_data
+from sklearn.linear_model._base import (
+    MultiOutputLinearModel,
+    _pre_fit,
+    _preprocess_data,
+)
 from sklearn.model_selection import check_cv
 from sklearn.utils import Bunch, check_array, check_scalar, metadata_routing
 from sklearn.utils._metadata_requests import (
@@ -31,6 +35,7 @@ from sklearn.utils._param_validation import (
     StrOptions,
     validate_params,
 )
+from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.metadata_routing import _routing_enabled, process_routing
 from sklearn.utils.parallel import Parallel, delayed
@@ -633,7 +638,7 @@ def enet_path(
 
     # X should have been passed through _pre_fit already if function is called
     # from ElasticNet.fit
-    if check_input:
+    if check_input or precompute is not False:
         X, y, _, _, _, precompute, Xy = _pre_fit(
             X,
             y,
@@ -641,7 +646,7 @@ def enet_path(
             precompute,
             fit_intercept=False,
             copy=False,
-            check_gram=True,
+            check_gram=check_input,
         )
     if alphas is None:
         # fit_intercept and sample_weight have already been dealt with in calling
@@ -766,7 +771,7 @@ def enet_path(
 # ElasticNet model
 
 
-class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
+class ElasticNet(RegressorMixin, MultiOutputLinearModel):
     """Linear regression with combined L1 and L2 priors as regularizer.
 
     Minimizes the objective function:
@@ -1183,7 +1188,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     @property
     def sparse_coef_(self):
         """Sparse representation of the fitted `coef_`."""
-        return sparse.csr_matrix(self.coef_)
+        return _align_api_if_sparse(sparse.csr_array(np.atleast_2d(self.coef_)))
 
     def _decision_function(self, X):
         """Decision function of the linear model.
@@ -1284,12 +1289,12 @@ class Lasso(ElasticNet):
         Parameter vector (w in the cost function formula).
 
     dual_gap_ : float or ndarray of shape (n_targets,)
-        Given param alpha, the dual gaps at the end of the optimization,
+        Given parameter ``alpha``, the dual gaps at the end of the optimization,
         same shape as each observation of y.
 
     sparse_coef_ : sparse matrix of shape (n_features, 1) or \
             (n_targets, n_features)
-        Readonly property derived from ``coef_``.
+        Read-only property derived from ``coef_``.
 
     intercept_ : float or ndarray of shape (n_targets,)
         Independent term in decision function.
@@ -1332,7 +1337,7 @@ class Lasso(ElasticNet):
     :class:`~sklearn.svm.LinearSVC`.
 
     The precise stopping criteria based on `tol` are the following: First, check that
-    that maximum coordinate update, i.e. :math:`\\max_j |w_j^{new} - w_j^{old}|`
+    the maximum coordinate update, i.e. :math:`\\max_j |w_j^{new} - w_j^{old}|`
     is smaller or equal to `tol` times the maximum absolute coefficient,
     :math:`\\max_j |w_j|`. If so, then additionally check whether the dual gap is
     smaller or equal to `tol` times :math:`||y||_2^2 / n_{\\text{samples}}`.
@@ -1549,7 +1554,7 @@ def _path_residuals(
     return this_mse.mean(axis=0)
 
 
-class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
+class LinearModelCV(MultiOutputLinearModel, ABC):
     """Base class for iterative model fitting along a regularization path."""
 
     _parameter_constraints: dict = {
@@ -2028,7 +2033,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
             (n_features, n_features), default='auto'
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
-        matrix can also be passed as argument.
+        matrix can also be passed as an argument.
 
     max_iter : int, default=1000
         The maximum number of iterations.
@@ -2039,16 +2044,16 @@ class LassoCV(RegressorMixin, LinearModelCV):
         until it is smaller or equal to ``tol``.
 
     copy_X : bool, default=True
-        If ``True``, X will be copied; else, it may be overwritten.
+        If ``True``, `X` will be copied; otherwise, it may be overwritten.
 
     cv : int, cross-validation generator or iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
         - None, to use the default 5-fold cross-validation,
-        - int, to specify the number of folds.
+        - int, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For int/None inputs, :class:`~sklearn.model_selection.KFold` is used.
 
@@ -2148,7 +2153,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
     regularization path. It tends to speed up the hyperparameter
     search.
 
-    The underlying coordinate descent solver uses gap safe screening rules to speedup
+    The underlying coordinate descent solver uses gap safe screening rules to speed up
     fitting time, see :ref:`User Guide on coordinate descent <coordinate_descent>`.
 
     Examples
@@ -2316,9 +2321,9 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         Possible inputs for cv are:
 
         - None, to use the default 5-fold cross-validation,
-        - int, to specify the number of folds.
+        - int, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For int/None inputs, :class:`~sklearn.model_selection.KFold` is used.
 
@@ -3014,9 +3019,9 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         Possible inputs for cv are:
 
         - None, to use the default 5-fold cross-validation,
-        - int, to specify the number of folds.
+        - int, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For int/None inputs, :class:`~sklearn.model_selection.KFold` is used.
 
@@ -3272,9 +3277,9 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         Possible inputs for cv are:
 
         - None, to use the default 5-fold cross-validation,
-        - int, to specify the number of folds.
+        - int, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For int/None inputs, :class:`~sklearn.model_selection.KFold` is used.
 

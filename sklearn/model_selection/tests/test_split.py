@@ -42,13 +42,12 @@ from sklearn.model_selection._split import (
 from sklearn.svm import SVC
 from sklearn.tests.metadata_routing_common import assert_request_is_empty
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
-    get_namespace,
-    yield_namespace_device_dtype_combinations,
+    device as array_api_device,
 )
 from sklearn.utils._array_api import (
-    device as array_api_device,
+    get_namespace,
+    move_to,
+    yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._testing import (
@@ -218,7 +217,7 @@ def test_2d_y():
         StratifiedKFold(),
         RepeatedKFold(),
         RepeatedStratifiedKFold(),
-        StratifiedGroupKFold(),
+        StratifiedGroupKFold(n_splits=3),
         ShuffleSplit(),
         StratifiedShuffleSplit(test_size=0.5),
         GroupShuffleSplit(),
@@ -1342,9 +1341,8 @@ def test_train_test_split_default_test_size(train_size, exp_train, exp_test):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "shuffle,stratify",
@@ -1356,9 +1354,9 @@ def test_train_test_split_default_test_size(train_size, exp_train, exp_test):
     ),
 )
 def test_array_api_train_test_split(
-    shuffle, stratify, array_namespace, device, dtype_name
+    shuffle, stratify, array_namespace, device_name, dtype_name
 ):
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
 
     X = np.arange(100).reshape((10, 10))
     y = np.arange(10)
@@ -1400,11 +1398,11 @@ def test_array_api_train_test_split(
     assert y_test_xp.dtype == y_xp.dtype
 
     assert_allclose(
-        _convert_to_numpy(X_train_xp, xp=xp),
+        move_to(X_train_xp, xp=np, device="cpu"),
         X_train_np,
     )
     assert_allclose(
-        _convert_to_numpy(X_test_xp, xp=xp),
+        move_to(X_test_xp, xp=np, device="cpu"),
         X_test_np,
     )
 
@@ -1621,7 +1619,8 @@ def test_check_cv():
     cv = check_cv(3, y_multioutput, classifier=True)
     np.testing.assert_equal(list(KFold(3).split(X)), list(cv.split(X)))
 
-    with pytest.raises(ValueError):
+    msg = "Expected `cv` as an integer, a cross-validation object"
+    with pytest.raises(ValueError, match=msg):
         check_cv(cv="lolo")
 
 
@@ -1784,7 +1783,7 @@ def test_group_kfold(kfold, shuffle, global_random_seed):
     groups = np.array([1, 1, 1, 2, 2])
     X = y = np.ones(len(groups))
     with pytest.raises(ValueError, match="Cannot have number of splits.*greater"):
-        next(GroupKFold(n_splits=3).split(X, y, groups))
+        next(kfold(n_splits=3).split(X, y, groups))
 
 
 def test_time_series_cv():

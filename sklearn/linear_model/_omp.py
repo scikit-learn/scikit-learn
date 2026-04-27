@@ -11,8 +11,8 @@ import numpy as np
 from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
 
-from sklearn.base import MultiOutputMixin, RegressorMixin, _fit_context
-from sklearn.linear_model._base import LinearModel, _pre_fit
+from sklearn.base import RegressorMixin, _fit_context
+from sklearn.linear_model._base import LinearModel, MultiOutputLinearModel, _pre_fit
 from sklearn.model_selection import check_cv
 from sklearn.utils import Bunch, as_float_array, check_array
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
@@ -642,7 +642,7 @@ def orthogonal_mp_gram(
         return np.squeeze(coef)
 
 
-class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
+class OrthogonalMatchingPursuit(RegressorMixin, MultiOutputLinearModel):
     """Orthogonal Matching Pursuit model (OMP).
 
     Read more in the :ref:`User Guide <omp>`.
@@ -926,9 +926,9 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         Possible inputs for cv are:
 
         - None, to use the default 5-fold cross-validation,
-        - integer, to specify the number of folds.
+        - integer, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, :class:`~sklearn.model_selection.KFold` is used.
 

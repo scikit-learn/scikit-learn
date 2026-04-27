@@ -23,7 +23,7 @@ jobs:
         run: mkdir -p "$ARTIFACTS_DIR"
 
       - name: Download artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: lint-log
           path: ${{ runner.temp }}/artifacts
@@ -48,7 +48,7 @@ jobs:
             --jq '"PR_NUMBER=\(.number)"' \
             >> $GITHUB_ENV
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           sparse-checkout: build_tools/get_comment.py
 
