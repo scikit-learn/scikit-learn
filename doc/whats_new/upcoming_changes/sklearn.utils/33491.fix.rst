@@ -1,0 +1,6 @@
+- :func:`utils.validation.check_array` now correctly rejects pandas
+  ``StringDtype`` columns when ``dtype="numeric"`` is requested. In pandas 3,
+  string columns use ``StringDtype`` instead of ``object`` dtype, which caused
+  ``check_array`` to silently accept string data instead of raising a
+  ``ValueError``.
+  By :user:`Olivier Grisel <ogrisel>`.
