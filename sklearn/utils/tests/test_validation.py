@@ -2062,9 +2062,9 @@ def test_get_feature_names_numpy():
     "names, dtypes",
     [
         (["a", 1], "['int', 'str']"),
-        (["pizza", ["a", "b"]], "['list', 'str']"),
+        (["pizza", ("a", "b")], "['str', 'tuple']"),
     ],
-    ids=["int-str", "list-str"],
+    ids=["str-int", "str-tuple"],
 )
 def test_get_feature_names_invalid_dtypes(names, dtypes):
     """Get feature names errors when the feature names have mixed dtypes"""
