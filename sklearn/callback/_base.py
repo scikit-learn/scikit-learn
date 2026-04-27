@@ -47,7 +47,9 @@ class _BaseCallback(Protocol):
 class FitCallback(_BaseCallback, Protocol):
     """Protocol for the callbacks evaluated on tasks during the fit of an estimator."""
 
-    def on_fit_task_begin(self, estimator, context, **kwargs):
+    def on_fit_task_begin(
+        self, estimator, context, X=None, y=None, metadata=None, fitted_estimator=None
+    ):
         """Method called at the beginning of each fit task of the estimator.
 
         Parameters
@@ -58,13 +60,23 @@ class FitCallback(_BaseCallback, Protocol):
         context : `sklearn.callback.CallbackContext` instance
             Context of the corresponding task.
 
-        **kwargs : dict
-            Additional optional arguments holding information about the state of the
-            fitting process at this task. The list of possible keys and corresponding
-            values are described in detail at <TODO: add link>.
+        X : array-like
+            The training data at this task.
+
+        y : array-like
+            The training target values at this task.
+
+        metadata : dict
+            Training metadata at this task, e.g. sample weights.
+
+        fitted_estimator : estimator instance
+            A new instance of the estimator that is ready to predict, transform, etc ...
+            as if fit had stopped at the beginning of this task.
         """
 
-    def on_fit_task_end(self, estimator, context, **kwargs):
+    def on_fit_task_end(
+        self, estimator, context, X=None, y=None, metadata=None, fitted_estimator=None
+    ):
         """Method called at the end of each fit task of the estimator.
 
         Parameters
@@ -75,10 +87,18 @@ class FitCallback(_BaseCallback, Protocol):
         context : `sklearn.callback.CallbackContext` instance
             Context of the corresponding task.
 
-        **kwargs : dict
-            Additional optional arguments holding information about the state of the
-            fitting process at this task. The list of possible keys and corresponding
-            values are described in detail at <TODO: add link>.
+        X : array-like
+            The training data at this task.
+
+        y : array-like
+            The training target values at this task.
+
+        metadata : dict
+            Training metadata at this task, e.g. sample weights.
+
+        fitted_estimator : estimator instance
+            A new instance of the estimator that is ready to predict, transform, etc ...
+            as if fit had stopped at the end of this task.
 
         Returns
         -------

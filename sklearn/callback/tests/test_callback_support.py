@@ -20,7 +20,6 @@ from sklearn.utils.parallel import Parallel, delayed
 @pytest.mark.parametrize(
     "callbacks",
     [
-        RecordingCallback(),
         [RecordingCallback()],
         [RecordingCallback(), RecordingAutoPropagatedCallback()],
     ],
@@ -29,17 +28,16 @@ def test_set_callbacks(callbacks):
     """Sanity check for the `set_callbacks` method."""
     estimator = MaxIterEstimator()
 
-    set_callbacks_return = estimator.set_callbacks(callbacks)
+    set_callbacks_return = estimator.set_callbacks(*callbacks)
     assert hasattr(estimator, "_skl_callbacks")
 
-    expected_callbacks = [callbacks] if not isinstance(callbacks, list) else callbacks
-    assert estimator._skl_callbacks == expected_callbacks
+    assert estimator._skl_callbacks == callbacks
 
     assert set_callbacks_return is estimator
 
 
-@pytest.mark.parametrize("callbacks", [None, NotValidCallback(), RecordingCallback])
-def test_set_callbacks_error(callbacks):
+@pytest.mark.parametrize("callback", [None, NotValidCallback(), RecordingCallback])
+def test_set_callbacks_error(callback):
     """Check the error message when not passing a valid callback to `set_callbacks`."""
     estimator = MaxIterEstimator()
 
@@ -47,7 +45,7 @@ def test_set_callbacks_error(callbacks):
         TypeError,
         match="callbacks must be instances following the FitCallback protocol.",
     ):
-        estimator.set_callbacks(callbacks)
+        estimator.set_callbacks(callback)
 
 
 @pytest.mark.parametrize(
