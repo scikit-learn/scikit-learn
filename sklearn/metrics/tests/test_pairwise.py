@@ -858,6 +858,25 @@ def test_parallel_pairwise_distances_diagonal(metric, global_dtype):
     assert_allclose(np.diag(distances), 0, atol=1e-10)
 
 
+def test_parallel_pairwise_distances_y_norm_squared():
+    """Non-regression test for _parallel_pairwise not slicing Y_norm_squared.
+
+    When n_jobs > 1, _parallel_pairwise chunks Y into slices but previously
+    passed Y_norm_squared through unchanged, causing a shape mismatch in
+    euclidean_distances.
+    """
+    rng = np.random.RandomState(42)
+    X = rng.rand(13, 4)
+    Y = rng.rand(15, 4)
+    Y_norm_squared = (Y**2).sum(axis=1)
+
+    D_single = euclidean_distances(X, Y, Y_norm_squared=Y_norm_squared)
+    D_parallel = pairwise_distances(
+        X, Y, metric="euclidean", n_jobs=2, Y_norm_squared=Y_norm_squared
+    )
+    assert_allclose(D_parallel, D_single)
+
+
 @pytest.mark.filterwarnings("ignore:Could not adhere to working_memory config")
 def test_pairwise_distances_chunked(global_dtype):
     # Test the pairwise_distance helper function.
