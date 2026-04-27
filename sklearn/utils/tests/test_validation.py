@@ -1392,7 +1392,7 @@ def test_num_samples_on_non_standard_shape():
             self.x = x
 
         def __array__(self, dtype=None, copy=None):
-            return np.asarray(self.x, dtype=dtype, copy=copy)
+            return np.asarray(self.x, dtype=dtype)  # copy needs numpy >= 2.0
 
     X = TestNoLenNoShapeButArrayProtocol(np.arange(3))
     assert _num_samples(X) == 3
