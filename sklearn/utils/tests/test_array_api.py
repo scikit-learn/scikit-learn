@@ -194,6 +194,48 @@ def test_move_to_sparse():
             move_to(sparse1, None, xp=xp_torch, device=device_cpu)
 
 
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "constructor_name", ["dataframe", "series", "polars", "polars_series"]
+)
+def test_move_to_dataframe_or_series(constructor_name):
+    """Non-regression test for #33822.
+
+    Pandas / polars dataframes and series should be accepted by ``move_to``
+    and converted to the reference namespace / device without triggering a
+    cryptic error from the DLPack protocol.
+    """
+    if constructor_name in ("polars", "polars_series"):
+        pytest.importorskip("polars")
+
+    # Series-like constructors take a 1D sequence, dataframe-like
+    # constructors take a 2D sequence.
+    if constructor_name in ("series", "polars_series"):
+        data = [1, 2, 3]
+    else:
+        data = [[1, 2, 3], [4, 5, 6]]
+    array_in = _convert_container(data, constructor_name)
+
+    xp_numpy, _ = _array_api_for_tests("numpy", device_name=None)
+
+    with config_context(array_api_dispatch=True):
+        # Target: numpy namespace. The dataframe/series should be converted
+        # to a plain NumPy ndarray.
+        array_out = move_to(array_in, xp=xp_numpy, device=None)
+        assert isinstance(array_out, numpy.ndarray)
+        assert_array_equal(array_out, numpy.asarray(data))
+
+        # Target: array_api_strict namespace. The conversion should still
+        # succeed (via the NumPy intermediary fallback) rather than raising
+        # an AssertionError from the DLPack protocol.
+        xp_strict, device_strict = _array_api_for_tests(
+            "array_api_strict", device_name="CPU_DEVICE"
+        )
+        array_out_strict = move_to(array_in, xp=xp_strict, device=device_strict)
+        assert get_namespace(array_out_strict)[0] == xp_strict
+        assert_array_equal(numpy.asarray(array_out_strict), numpy.asarray(data))
+
+
 @pytest.mark.parametrize("array_api", ["numpy", "array_api_strict"])
 def test_asarray_with_order(array_api):
     """Test _asarray_with_order passes along order for NumPy arrays."""

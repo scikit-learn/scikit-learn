@@ -1,0 +1,7 @@
+- Fixed :func:`utils._array_api.move_to` so it accepts pandas / polars /
+  pyarrow dataframes and series as inputs and converts them to the reference
+  namespace and device. Previously, passing such an input (for example a
+  ``y`` target as a ``pandas.Series`` to ``RidgeClassifier.score`` under
+  ``array_api_dispatch=True``) could fail with a cryptic ``AssertionError``
+  raised by the DLPack protocol.
+  By :user:`Gaurav <gaurav0107>`.

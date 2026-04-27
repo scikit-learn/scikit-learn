@@ -531,6 +531,11 @@ def move_to(*arrays, xp, device):
     NumPy, in which case they are returned unchanged. Otherwise a `TypeError`
     is raised.
 
+    Pandas, polars and pyarrow dataframes and series are accepted and are
+    converted to a NumPy ndarray (on CPU) regardless of the reference
+    namespace/device, so that they can be further processed uniformly along
+    with the other inputs.
+
     Parameters
     ----------
     *arrays : iterable of arrays
@@ -550,6 +555,20 @@ def move_to(*arrays, xp, device):
     """
     sparse_mask = [sp.issparse(array) for array in arrays]
     none_mask = [array is None for array in arrays]
+    # Dataframes and series (pandas/polars/pyarrow) are treated as the NumPy
+    # namespace by `get_namespace`, but they cannot be moved across namespaces
+    # or devices via the DLPack fast path below: some of them expose
+    # ``__dlpack__`` without supporting the ``device``/``copy`` kwargs
+    # introduced in array-api 2023.12, which results in a cryptic
+    # ``AssertionError`` from the consuming namespace (see #33822). Convert
+    # them to a plain NumPy ndarray up-front so the rest of this function can
+    # treat them uniformly as NumPy inputs.
+    df_mask = [is_df_or_series(array) for array in arrays]
+    if any(df_mask):
+        arrays = tuple(
+            numpy.asarray(array) if is_df else array
+            for array, is_df in zip(arrays, df_mask)
+        )
     if any(sparse_mask) and not _is_numpy_namespace(xp):
         raise TypeError(
             "Sparse arrays are only accepted (and passed through) when the target "
