@@ -32,6 +32,8 @@ REMOVE_TYPES_DEFAULT = (
     tuple,
 )
 
+NamespaceAndDevice = namedtuple("NamespaceAndDevice", ["xp", "device"])
+
 
 def yield_namespaces(include_numpy_namespaces=True):
     """Yield supported namespace.
@@ -123,9 +125,6 @@ def yield_mixed_namespace_input_permutations():
     * array-api-strict to non-NumPy (this pair also has no special hardware
       requirements to allow for local testing)
     """
-
-    NamespaceAndDevice = namedtuple("NamespaceAndDevice", ["xp", "device"])
-
     yield (
         NamespaceAndDevice("cupy", None),
         NamespaceAndDevice("torch", "cuda"),
