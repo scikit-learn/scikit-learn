@@ -2881,11 +2881,17 @@ def test_logistic_regression_array_api_warm_start(
 
 
 # TODO(callbacks): also test for other solvers when they get supported.
-def test_logistic_regression_callback_support():
+@pytest.mark.parametrize("binary", [True, False])
+@pytest.mark.parametrize("fit_intercept", [True, False])
+def test_logistic_regression_callback_support(binary, fit_intercept):
     """Test the callback support for LogisticRegression."""
     X, y = load_iris(return_X_y=True)
+    if binary:
+        y = y > 0
     cb = RecordingCallback()
-    lr = LogisticRegression(solver="lbfgs").set_callbacks(cb)
+    lr = LogisticRegression(solver="lbfgs", fit_intercept=fit_intercept).set_callbacks(
+        cb
+    )
     lr.fit(X, y)
 
     assert cb.count_hooks("setup") == 1
