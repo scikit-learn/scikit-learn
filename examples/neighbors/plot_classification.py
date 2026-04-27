@@ -53,6 +53,7 @@ clf = Pipeline(
 # Now, we fit two classifiers with different values of the parameter
 # `weights`. We plot the decision boundary of each classifier as well as the original
 # dataset to observe the difference.
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 from sklearn.inspection import DecisionBoundaryDisplay
@@ -72,11 +73,14 @@ for ax, weights in zip(axs, ("uniform", "distance")):
         alpha=0.5,
         ax=ax,
     )
-    scatter = disp.ax_.scatter(X.iloc[:, 0], X.iloc[:, 1], c=y, edgecolors="k")
+    cmap = mpl.colors.ListedColormap(disp.multiclass_colors_)
+    scatter = disp.ax_.scatter(
+        X.iloc[:, 0], X.iloc[:, 1], c=y, cmap=cmap, edgecolors="k"
+    )
     disp.ax_.legend(
         scatter.legend_elements()[0],
         iris.target_names,
-        loc="lower left",
+        loc="lower right",
         title="Classes",
     )
     _ = disp.ax_.set_title(

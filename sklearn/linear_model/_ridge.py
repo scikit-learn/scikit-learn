@@ -1258,7 +1258,9 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
             Fitted estimator.
         """
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), self.solver)
-        xp, _ = get_namespace(X, y, sample_weight)
+        xp, _, device_ = get_namespace_and_device(X)
+        y, sample_weight = move_to(y, sample_weight, xp=xp, device=device_)
+
         X, y = validate_data(
             self,
             X,
@@ -1270,6 +1272,22 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
             y_numeric=True,
         )
         return super().fit(X, y, sample_weight=sample_weight)
+
+    def predict(self, X):
+        """
+        Predict using the linear model.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape (n_samples, n_features)
+            Samples.
+
+        Returns
+        -------
+        C : ndarray of shape (n_samples,) or (n_samples, n_outputs)
+            Predicted values.
+        """
+        return super().predict(X)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -2836,6 +2854,22 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         """
         super().fit(X, y, sample_weight=sample_weight, **params)
         return self
+
+    def predict(self, X):
+        """
+        Predict using the linear model.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape (n_samples, n_features)
+            Samples.
+
+        Returns
+        -------
+        C : ndarray of shape (n_samples,) or (n_samples, n_outputs)
+            Predicted values.
+        """
+        return super().predict(X)
 
     def _get_scorer_instance(self):
         """Return a scorer which corresponds to what's defined in RegressorMixin

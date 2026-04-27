@@ -1,3 +1,4 @@
+import inspect
 import pickle
 
 import numpy as np
@@ -13,6 +14,7 @@ from scipy.optimize import (
 from scipy.special import logsumexp
 
 from sklearn import config_context
+from sklearn._loss import _loss as _loss_module
 from sklearn._loss.link import IdentityLink, _inclusive_low_high
 from sklearn._loss.loss import (
     _LOSSES,
@@ -1504,4 +1506,26 @@ def test_log1pexp(namespace, device_name, dtype_name):
             result_mpmath,
             rel=1e-5 if dtype_name == "float32" else 1e-12,
             abs=0,
+        )
+
+
+def test_cy_loss_classes_module():
+    """Check that Cython extension types in _loss have the correct __module__.
+
+    When _loss_cython_tree in meson.build is missing __init__.py files, Cython
+    can not detect the package hierarchy and set __module__ = '_loss' instead
+    of 'sklearn._loss._loss' on all Cy* extension types, e.g.
+    `CyHalfMultinomialLoss`. This breaks downstream tools like skops that rely
+    on __module__ for serialization.
+    """
+    cy_classes = [
+        obj
+        for name, obj in inspect.getmembers(_loss_module, inspect.isclass)
+        if name.startswith("Cy")
+    ]
+    assert len(cy_classes) > 0, "No Cy* classes found in sklearn._loss._loss"
+    for cls in cy_classes:
+        assert cls.__module__ == "sklearn._loss._loss", (
+            f"{cls.__name__}.__module__ == {cls.__module__!r}, "
+            f"expected 'sklearn._loss._loss'"
         )

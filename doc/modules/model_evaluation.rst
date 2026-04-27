@@ -466,12 +466,12 @@ Classification metrics
 
 .. currentmodule:: sklearn.metrics
 
-The :mod:`sklearn.metrics` module implements several loss, score, and utility
-functions to measure classification performance.
-Some metrics might require probability estimates of the positive class,
-confidence values, or binary decisions values.
-Most implementations allow each sample to provide a weighted contribution
-to the overall score, through the ``sample_weight`` parameter.
+The :mod:`sklearn.metrics` module implements several loss, score, and utility functions
+to measure classification performance. Some metrics might require probability estimates
+of the positive class or non-thresholded decision values (as returned by
+:term:`decision_function` on some classifiers). Most implementations allow each sample
+to provide a weighted contribution to the overall score, through the ``sample_weight``
+parameter.
 
 Some of these are restricted to the binary classification case:
 
@@ -1377,11 +1377,11 @@ method.
 
     >>> from sklearn.metrics import log_loss
     >>> y_true = [0, 0, 1, 1]
-    >>> y_pred = [[.9, .1], [.8, .2], [.3, .7], [.01, .99]]
-    >>> log_loss(y_true, y_pred)
+    >>> y_proba = [[.9, .1], [.8, .2], [.3, .7], [.01, .99]]
+    >>> log_loss(y_true, y_proba)
     0.1738
 
-The first ``[.9, .1]`` in ``y_pred`` denotes 90% probability that the first
+The first ``[.9, .1]`` in ``y_proba`` denotes 90% probability that the first
 sample has label 0.  The log loss is non-negative.
 
 .. _matthews_corrcoef:
@@ -1578,9 +1578,9 @@ Quoting Wikipedia :
   sensitivity, and FPR is one minus the specificity or true negative rate."
 
 This function requires the true binary value and the target scores, which can
-either be probability estimates of the positive class, confidence values, or
-binary decisions. Here is a small example of how to use the :func:`roc_curve`
-function::
+either be probability estimates of the positive class or non-thresholded decision values
+(as returned by :term:`decision_function` on some classifiers). Here is a small example
+of how to use the :func:`roc_curve` function::
 
     >>> import numpy as np
     >>> from sklearn.metrics import roc_curve
@@ -2178,29 +2178,29 @@ of 0.0.
 
     >>> from sklearn.metrics import d2_log_loss_score
     >>> y_true = [1, 1, 2, 3]
-    >>> y_pred = [
+    >>> y_proba = [
     ...    [0.5, 0.25, 0.25],
     ...    [0.5, 0.25, 0.25],
     ...    [0.5, 0.25, 0.25],
     ...    [0.5, 0.25, 0.25],
     ... ]
-    >>> d2_log_loss_score(y_true, y_pred)
+    >>> d2_log_loss_score(y_true, y_proba)
     0.0
     >>> y_true = [1, 2, 3]
-    >>> y_pred = [
+    >>> y_proba = [
     ...     [0.98, 0.01, 0.01],
     ...     [0.01, 0.98, 0.01],
     ...     [0.01, 0.01, 0.98],
     ... ]
-    >>> d2_log_loss_score(y_true, y_pred)
+    >>> d2_log_loss_score(y_true, y_proba)
     0.981
     >>> y_true = [1, 2, 3]
-    >>> y_pred = [
+    >>> y_proba = [
     ...     [0.1, 0.6, 0.3],
     ...     [0.1, 0.6, 0.3],
     ...     [0.4, 0.5, 0.1],
     ... ]
-    >>> d2_log_loss_score(y_true, y_pred)
+    >>> d2_log_loss_score(y_true, y_proba)
     -0.552
 
 

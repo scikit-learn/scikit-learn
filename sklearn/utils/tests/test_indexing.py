@@ -504,12 +504,16 @@ def test_get_column_indices_pandas_nonunique_columns_error(key):
     assert str(exc_info.value) == err_msg
 
 
-def test_get_column_indices_interchange():
-    """Check _get_column_indices for edge cases with the interchange"""
-    pl = pytest.importorskip("polars")
-
-    # Polars dataframes go down the interchange path.
-    df = pl.DataFrame([[1, 2, 3], [4, 5, 6]], schema=["a", "b", "c"])
+@pytest.mark.parametrize("df_type", ["interchange", "polars"])
+def test_get_column_indices_interchange_and_polars(df_type):
+    """Check _get_column_indices for edge cases with the interchange and polars"""
+    if df_type == "polars":
+        pl = pytest.importorskip("polars")
+        df = pl.DataFrame([[1, 2, 3], [4, 5, 6]], schema=["a", "b", "c"])
+    else:
+        # Pyarrow tables go down the interchange path.
+        pa = pytest.importorskip("pyarrow")
+        df = pa.table([[1, 4], [2, 5], [3, 6]], names=["a", "b", "c"])
 
     key_results = [
         (slice(1, None), [1, 2]),
