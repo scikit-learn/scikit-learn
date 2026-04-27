@@ -950,7 +950,7 @@ is not readily available from the start, or when the data does not fit into memo
 .. rubric:: References
 
 .. [1] `"Learning the parts of objects by non-negative matrix factorization"
-  <http://www.cs.columbia.edu/~blei/fogm/2020F/readings/LeeSeung1999.pdf>`_
+  <https://www.cs.columbia.edu/~blei/fogm/2020F/readings/LeeSeung1999.pdf>`_
   D. Lee, S. Seung, 1999
 
 .. [2] `"Non-negative Matrix Factorization with Sparseness Constraints"
@@ -959,7 +959,7 @@ is not readily available from the start, or when the data does not fit into memo
 
 .. [4] `"SVD based initialization: A head start for nonnegative
   matrix factorization"
-  <https://www.boutsidis.org/Boutsidis_PRE_08.pdf>`_
+  <https://user.it.uu.se/~milga730/histo/before2011august/Boutsidis.pdf>`_
   C. Boutsidis, E. Gallopoulos, 2008
 
 .. [5] `"Fast local algorithms for large scale nonnegative matrix and tensor

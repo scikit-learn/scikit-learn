@@ -5,7 +5,6 @@
 
 import numbers
 import operator
-import sys
 import warnings
 from collections.abc import Sequence
 from contextlib import suppress
@@ -24,12 +23,13 @@ from sklearn.exceptions import (
 )
 from sklearn.utils._array_api import (
     _asarray_with_order,
-    _convert_to_numpy,
     _is_numpy_namespace,
     _max_precision_float_dtype,
     get_namespace,
     get_namespace_and_device,
+    move_to,
 )
+from sklearn.utils._dataframe import is_pandas_df, is_pandas_df_or_series, is_polars_df
 from sklearn.utils._isfinite import FiniteStatus, cy_isfinite
 from sklearn.utils._tags import get_tags
 from sklearn.utils.fixes import (
@@ -77,7 +77,7 @@ def _deprecate_positional_args(func=None, *, version="1.3"):
 
             # extra_args > 0
             args_msg = [
-                "{}={}".format(name, arg)
+                f"{name}={arg}"
                 for name, arg in zip(kwonly_args[:extra_args], args[-extra_args:])
             ]
             args_msg = ", ".join(args_msg)
@@ -306,13 +306,16 @@ def _is_arraylike_not_scalar(array):
 
 
 def _use_interchange_protocol(X):
-    """Use interchange protocol for non-pandas dataframes that follow the protocol.
+    """Use interchange protocol for non-pandas/polars dataframes that follow the
+    protocol.
 
-    Note: at this point we chose not to use the interchange API on pandas dataframe
+    Note: At this point we chose not to use the interchange API on pandas dataframe
     to ensure strict behavioral backward compatibility with older versions of
     scikit-learn.
+    We also exclude the interchange protocol for polars because it was deprecated
+    in polars 1.40.
     """
-    return not _is_pandas_df(X) and hasattr(X, "__dataframe__")
+    return hasattr(X, "__dataframe__") and not is_pandas_df(X) and not is_polars_df(X)
 
 
 def _num_features(X):
@@ -375,16 +378,6 @@ def _num_samples(x):
         # Don't get num_samples from an ensembles length!
         raise TypeError(message)
 
-    if _use_interchange_protocol(x):
-        return x.__dataframe__().num_rows()
-
-    if not hasattr(x, "__len__") and not hasattr(x, "shape"):
-        if hasattr(x, "__array__"):
-            xp, _ = get_namespace(x)
-            x = xp.asarray(x)
-        else:
-            raise TypeError(message)
-
     if hasattr(x, "shape") and x.shape is not None:
         if len(x.shape) == 0:
             raise TypeError(
@@ -395,6 +388,16 @@ def _num_samples(x):
         # Dask dataframes may not return numeric shape[0] value
         if isinstance(x.shape[0], numbers.Integral):
             return x.shape[0]
+
+    if _use_interchange_protocol(x):
+        return x.__dataframe__().num_rows()
+
+    if not hasattr(x, "__len__") and not hasattr(x, "shape"):
+        if hasattr(x, "__array__"):
+            xp, _ = get_namespace(x)
+            x = xp.asarray(x)
+        else:
+            raise TypeError(message)
 
     try:
         return len(x)
@@ -437,7 +440,7 @@ def check_memory(memory):
         raise ValueError(
             "'memory' should be None, a string or have the same"
             " interface as joblib.Memory."
-            " Got memory='{}' instead.".format(memory)
+            f" Got memory='{memory}' instead."
         )
     return memory
 
@@ -508,10 +511,10 @@ def indexable(*iterables):
     Examples
     --------
     >>> from sklearn.utils import indexable
-    >>> from scipy.sparse import csr_matrix
+    >>> from scipy.sparse import csr_array
     >>> import numpy as np
     >>> iterables = [
-    ...     [1, 2, 3], np.array([2, 3, 4]), None, csr_matrix([[5], [6], [7]])
+    ...     [1, 2, 3], np.array([2, 3, 4]), None, csr_array([[5], [6], [7]])
     ... ]
     >>> indexable(*iterables)
     [[1, 2, 3], array([2, 3, 4]), None, <...Sparse...dtype 'int64'...shape (3, 1)>]
@@ -570,6 +573,10 @@ def _ensure_sparse_format(
         .. versionchanged:: 0.23
            Accepts `pd.NA` and converts it into `np.nan`
 
+    accept_large_sparse : bool
+        If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
+        accept_sparse, accept_large_sparse will cause it to be accepted only
+        if its indices are stored with a 32-bit dtype.
 
     estimator_name : str, default=None
         The estimator name, used to construct the error message.
@@ -715,6 +722,16 @@ def _pandas_dtype_needs_early_conversion(pd_dtype):
         return True
 
     return False
+
+
+def _is_pandas_string_dtype(dtype):
+    """Return True if dtype is a pandas StringDtype."""
+    try:
+        from pandas import StringDtype
+
+        return isinstance(dtype, StringDtype)
+    except ImportError:
+        return False
 
 
 def _is_extension_array_dtype(array):
@@ -894,8 +911,12 @@ def check_array(
         pandas_requires_conversion = any(
             _pandas_dtype_needs_early_conversion(i) for i in dtypes_orig
         )
+        has_pandas_string = any(_is_pandas_string_dtype(d) for d in dtypes_orig)
         if all(isinstance(dtype_iter, np.dtype) for dtype_iter in dtypes_orig):
             dtype_orig = np.result_type(*dtypes_orig)
+        elif has_pandas_string:
+            # Force object if any of the dtypes is a StringDtype.
+            dtype_orig = object
         elif pandas_requires_conversion and any(d == object for d in dtypes_orig):
             # Force object if any of the dtypes is an object
             dtype_orig = object
@@ -903,20 +924,23 @@ def check_array(
     elif (_is_extension_array_dtype(array) or hasattr(array, "iloc")) and hasattr(
         array, "dtype"
     ):
-        # array is a pandas series
+        # array is a pandas series or a pandas array.
         type_if_series = type(array)
         pandas_requires_conversion = _pandas_dtype_needs_early_conversion(array.dtype)
         if isinstance(array.dtype, np.dtype):
             dtype_orig = array.dtype
+        elif _is_pandas_string_dtype(array.dtype):
+            # pandas 3 uses StringDtype for string columns instead of object.
+            # Treat as object so that dtype_numeric detection works correctly.
+            dtype_orig = object
         else:
             # Set to None to let array.astype work out the best dtype
             dtype_orig = None
 
     if dtype_numeric:
-        if (
-            dtype_orig is not None
-            and hasattr(dtype_orig, "kind")
-            and dtype_orig.kind == "O"
+        if dtype_orig is not None and (
+            (hasattr(dtype_orig, "kind") and dtype_orig.kind == "O")
+            or dtype_orig == object
         ):
             # if input is object, convert to float.
             dtype = xp.float64
@@ -1129,7 +1153,7 @@ def check_array(
             # ensure that the output is writeable, even if avoidable, to not overwrite
             # the user's data by surprise.
 
-            if _is_pandas_df_or_series(array_orig):
+            if is_pandas_df_or_series(array_orig):
                 try:
                     # In pandas >= 3, np.asarray(df), called earlier in check_array,
                     # returns a read-only intermediate array. It can be made writeable
@@ -1437,7 +1461,7 @@ def column_or_1d(y, *, dtype=None, input_name="y", warn=False, device=None):
 
 
 def check_random_state(seed):
-    """Turn seed into a np.random.RandomState instance.
+    """Turn seed into an np.random.RandomState instance.
 
     Parameters
     ----------
@@ -1465,7 +1489,7 @@ def check_random_state(seed):
     if isinstance(seed, np.random.RandomState):
         return seed
     raise ValueError(
-        "%r cannot be used to seed a numpy.random.RandomState instance" % seed
+        f"{seed!r} cannot be used to seed a numpy.random.RandomState instance"
     )
 
 
@@ -1540,10 +1564,10 @@ def check_symmetric(array, *, tol=1e-10, raise_warning=True, raise_exception=Fal
     array([[0, 1, 2],
            [1, 0, 1],
            [2, 1, 0]])
-    >>> from scipy.sparse import csr_matrix
-    >>> sparse_symmetric_array = csr_matrix(symmetric_array)
+    >>> from scipy.sparse import csr_array
+    >>> sparse_symmetric_array = csr_array(symmetric_array)
     >>> check_symmetric(sparse_symmetric_array)
-    <Compressed Sparse Row sparse matrix of dtype 'int64'
+    <Compressed Sparse Row sparse array of dtype 'int64'
         with 6 stored elements and shape (3, 3)>
     """
     if (array.ndim != 2) or (array.shape[0] != array.shape[1]):
@@ -1686,7 +1710,7 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     >>> check_is_fitted(lr)
     """
     if isclass(estimator):
-        raise TypeError("{} is a class, not an instance.".format(estimator))
+        raise TypeError(f"{estimator} is a class, not an instance.")
     if msg is None:
         msg = (
             "This %(name)s instance is not fitted yet. Call 'fit' with "
@@ -1694,7 +1718,7 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
         )
 
     if not hasattr(estimator, "fit"):
-        raise TypeError("%s is not an estimator instance." % (estimator))
+        raise TypeError(f"{estimator} is not an estimator instance.")
 
     tags = get_tags(estimator)
 
@@ -2085,6 +2109,7 @@ def _check_sample_weight(
     ensure_non_negative=False,
     ensure_same_device=True,
     copy=False,
+    allow_all_zero_weights=False,
 ):
     """Validate sample weights.
 
@@ -2127,12 +2152,17 @@ def _check_sample_weight(
     copy : bool, default=False
         If True, a copy of sample_weight will be created.
 
+    allow_all_zero_weights : bool, default=False,
+        Whether or not to raise an error when sample weights are all zero.
+
     Returns
     -------
     sample_weight : ndarray of shape (n_samples,)
         Validated sample weight. It is guaranteed to be "C" contiguous.
     """
-    xp, is_array_api, device = get_namespace_and_device(X, remove_types=(int, float))
+    xp, is_array_api, device = get_namespace_and_device(
+        X, remove_types=(list, int, float)
+    )
 
     n_samples = _num_samples(X)
 
@@ -2151,7 +2181,7 @@ def _check_sample_weight(
         if force_float_dtype and dtype is None:
             dtype = float_dtypes
         if is_array_api and ensure_same_device:
-            sample_weight = xp.asarray(sample_weight, device=device)
+            sample_weight = move_to(sample_weight, xp=xp, device=device)
         sample_weight = check_array(
             sample_weight,
             accept_sparse=False,
@@ -2173,6 +2203,12 @@ def _check_sample_weight(
                 "sample_weight.shape == {}, expected {}!".format(
                     sample_weight.shape, (n_samples,)
                 )
+            )
+
+    if not allow_all_zero_weights:
+        if xp.all(sample_weight == 0):
+            raise ValueError(
+                "Sample weights must contain at least one non-zero number."
             )
 
     if ensure_non_negative:
@@ -2307,51 +2343,6 @@ def _check_method_params(X, params, indices=None):
     return method_params_validated
 
 
-def _is_pandas_df_or_series(X):
-    """Return True if the X is a pandas dataframe or series."""
-    try:
-        pd = sys.modules["pandas"]
-    except KeyError:
-        return False
-    return isinstance(X, (pd.DataFrame, pd.Series))
-
-
-def _is_pandas_df(X):
-    """Return True if the X is a pandas dataframe."""
-    try:
-        pd = sys.modules["pandas"]
-    except KeyError:
-        return False
-    return isinstance(X, pd.DataFrame)
-
-
-def _is_pyarrow_data(X):
-    """Return True if the X is a pyarrow Table, RecordBatch, Array or ChunkedArray."""
-    try:
-        pa = sys.modules["pyarrow"]
-    except KeyError:
-        return False
-    return isinstance(X, (pa.Table, pa.RecordBatch, pa.Array, pa.ChunkedArray))
-
-
-def _is_polars_df_or_series(X):
-    """Return True if the X is a polars dataframe or series."""
-    try:
-        pl = sys.modules["polars"]
-    except KeyError:
-        return False
-    return isinstance(X, (pl.DataFrame, pl.Series))
-
-
-def _is_polars_df(X):
-    """Return True if the X is a polars dataframe."""
-    try:
-        pl = sys.modules["polars"]
-    except KeyError:
-        return False
-    return isinstance(X, pl.DataFrame)
-
-
 def _get_feature_names(X):
     """Get feature names from X.
 
@@ -2375,13 +2366,13 @@ def _get_feature_names(X):
     feature_names = None
 
     # extract feature names for support array containers
-    if _is_pandas_df(X):
+    if is_pandas_df(X) or is_polars_df(X):
         # Make sure we can inspect columns names from pandas, even with
         # versions too old to expose a working implementation of
         # __dataframe__.column_names() and avoid introducing any
         # additional copy.
-        # TODO: remove the pandas-specific branch once the minimum supported
-        # version of pandas has a working implementation of
+        # TODO: remove the pandas-specific branch (but keep polars) once the minimum
+        # supported version of pandas has a working implementation of
         # __dataframe__.column_names() that is guaranteed to not introduce any
         # additional copy of the data without having to impose allow_copy=False
         # that could fail with other libraries. Note: in the longer term, we
@@ -2627,7 +2618,7 @@ def _check_pos_label_consistency(pos_label, y_true):
                 or xp.all(classes == xp.asarray([1], device=device))
             )
         ):
-            classes = _convert_to_numpy(classes, xp=xp)
+            classes = move_to(classes, xp=np, device="cpu")
             classes_repr = ", ".join([repr(c) for c in classes.tolist()])
             raise ValueError(
                 f"y_true takes value in {{{classes_repr}}} and pos_label is not "

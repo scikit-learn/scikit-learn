@@ -7,7 +7,6 @@ different columns.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import warnings
 from collections import Counter
 from functools import partial
 from itertools import chain
@@ -20,6 +19,7 @@ from sklearn.base import TransformerMixin, _fit_context, clone
 from sklearn.pipeline import _fit_transform_one, _name_estimators, _transform_one
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils import Bunch
+from sklearn.utils._dataframe import is_pandas_df, is_polars_df
 from sklearn.utils._indexing import (
     _determine_key_type,
     _get_column_indices,
@@ -47,7 +47,6 @@ from sklearn.utils.validation import (
     _check_feature_names_in,
     _check_n_features,
     _get_feature_names,
-    _is_pandas_df,
     _num_samples,
     check_array,
     check_is_fitted,
@@ -164,23 +163,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         .. versionchanged:: 1.6
             `verbose_feature_names_out` can be a callable or a string to be formatted.
-
-    force_int_remainder_cols : bool, default=False
-        This parameter has no effect.
-
-        .. note::
-            If you do not access the list of columns for the remainder columns
-            in the `transformers_` fitted attribute, you do not need to set
-            this parameter.
-
-        .. versionadded:: 1.5
-
-        .. versionchanged:: 1.7
-           The default value for `force_int_remainder_cols` will change from
-           `True` to `False` in version 1.7.
-
-        .. deprecated:: 1.7
-           `force_int_remainder_cols` is deprecated and will be removed in 1.9.
 
     Attributes
     ----------
@@ -300,7 +282,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         "transformer_weights": [dict, None],
         "verbose": ["verbose"],
         "verbose_feature_names_out": ["boolean", str, callable],
-        "force_int_remainder_cols": ["boolean", Hidden(StrOptions({"deprecated"}))],
     }
 
     def __init__(
@@ -313,7 +294,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         transformer_weights=None,
         verbose=False,
         verbose_feature_names_out=True,
-        force_int_remainder_cols="deprecated",
     ):
         self.transformers = transformers
         self.remainder = remainder
@@ -322,7 +302,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self.transformer_weights = transformer_weights
         self.verbose = verbose
         self.verbose_feature_names_out = verbose_feature_names_out
-        self.force_int_remainder_cols = force_int_remainder_cols
 
     @property
     def _transformers(self):
@@ -513,6 +492,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self._validate_names(names)
 
         # validate estimators
+        self._check_estimators_are_instances(transformers)
         for t in transformers:
             if t in ("drop", "passthrough"):
                 continue
@@ -596,12 +576,17 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         column_indices = self._transformer_to_input_indices[name]
         names = feature_names_in[column_indices]
         # An actual transformer
-        if not hasattr(trans, "get_feature_names_out"):
+        if hasattr(trans, "get_feature_names_out"):
+            return trans.get_feature_names_out(names)
+        elif hasattr(self, "_transformers_feature_names_out"):
+            # Fallback to feature names returned by transformers that output
+            # dataframes but don't implement get_feature_names_out.
+            return self._transformers_feature_names_out[self.output_indices_[name]]
+        else:
             raise AttributeError(
                 f"Transformer {name} (type {type(trans).__name__}) does "
                 "not provide get_feature_names_out."
             )
-        return trans.get_feature_names_out(names)
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
@@ -761,10 +746,14 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             )
         ]
         for Xs, name in zip(result, names):
-            if not getattr(Xs, "ndim", 0) == 2 and not hasattr(Xs, "__dataframe__"):
+            if not (
+                getattr(Xs, "ndim", 0) == 2
+                or hasattr(Xs, "__dataframe__")
+                or is_polars_df(Xs)
+            ):
                 raise ValueError(
-                    "The output of the '{0}' transformer should be 2D (numpy array, "
-                    "scipy sparse array, dataframe).".format(name)
+                    f"The output of the '{name}' transformer should be 2D (numpy "
+                    "array, scipy sparse array, dataframe)."
                 )
         if _get_output_config("transform", self)["dense"] == "pandas":
             return
@@ -773,7 +762,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         except ImportError:
             return
         for Xs, name in zip(result, names):
-            if not _is_pandas_df(Xs):
+            if not is_pandas_df(Xs):
                 continue
             for col_name, dtype in Xs.dtypes.to_dict().items():
                 if getattr(dtype, "na_value", None) is not pd.NA:
@@ -974,14 +963,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         """
         _raise_for_params(params, self, "fit_transform")
 
-        if self.force_int_remainder_cols != "deprecated":
-            warnings.warn(
-                "The parameter `force_int_remainder_cols` is deprecated and will be "
-                "removed in 1.9. It has no effect. Leave it to its default value to "
-                "avoid this warning.",
-                FutureWarning,
-            )
-
         validate_data(self, X=X, skip_check_array=True)
         X = _check_X(X)
         # set n_features_in_ attribute
@@ -1064,7 +1045,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         # were not present in fit time, and the order of the columns doesn't
         # matter.
         fit_dataframe_and_transform_dataframe = hasattr(self, "feature_names_in_") and (
-            _is_pandas_df(X) or hasattr(X, "__dataframe__")
+            is_pandas_df(X) or is_polars_df(X) or hasattr(X, "__dataframe__")
         )
 
         n_samples = _num_samples(X)
@@ -1145,68 +1126,21 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             Xs = [f.toarray() if sparse.issparse(f) else f for f in Xs]
             adapter = _get_container_adapter("transform", self)
             if adapter and all(adapter.is_supported_container(X) for X in Xs):
-                # rename before stacking as it avoids to error on temporary duplicated
-                # columns
-                transformer_names = [
-                    t[0]
-                    for t in self._iter(
-                        fitted=True,
-                        column_as_labels=False,
-                        skip_drop=True,
-                        skip_empty_columns=True,
+                # Store feature names out of transformers in case they don't implement
+                # get_feature_names_out
+                self._transformers_feature_names_out = np.hstack(
+                    [_get_feature_names(X) for X in Xs]
+                )
+
+                # Rename all columns to avoid duplicated column names.
+                # The names are not important here as final column names will be
+                # generated by the set_output wrapper using `get_feature_names_out`.
+                Xs = [
+                    adapter.rename_columns(
+                        X, [f"tmp_col_name_{i}_{j}" for j in range(X.shape[1])]
                     )
+                    for i, X in enumerate(Xs)
                 ]
-                feature_names_outs = [X.columns for X in Xs if X.shape[1] != 0]
-                if self.verbose_feature_names_out:
-                    # `_add_prefix_for_feature_names_out` takes care about raising
-                    # an error if there are duplicated columns.
-                    feature_names_outs = self._add_prefix_for_feature_names_out(
-                        list(zip(transformer_names, feature_names_outs))
-                    )
-                else:
-                    # check for duplicated columns and raise if any
-                    feature_names_outs = list(chain.from_iterable(feature_names_outs))
-                    feature_names_count = Counter(feature_names_outs)
-                    if any(count > 1 for count in feature_names_count.values()):
-                        duplicated_feature_names = sorted(
-                            name
-                            for name, count in feature_names_count.items()
-                            if count > 1
-                        )
-                        err_msg = (
-                            "Duplicated feature names found before concatenating the"
-                            " outputs of the transformers:"
-                            f" {duplicated_feature_names}.\n"
-                        )
-                        for transformer_name, X in zip(transformer_names, Xs):
-                            if X.shape[1] == 0:
-                                continue
-                            dup_cols_in_transformer = sorted(
-                                set(X.columns).intersection(duplicated_feature_names)
-                            )
-                            if len(dup_cols_in_transformer):
-                                err_msg += (
-                                    f"Transformer {transformer_name} has conflicting "
-                                    f"columns names: {dup_cols_in_transformer}.\n"
-                                )
-                        raise ValueError(
-                            err_msg
-                            + "Either make sure that the transformers named above "
-                            "do not generate columns with conflicting names or set "
-                            "verbose_feature_names_out=True to automatically "
-                            "prefix to the output feature names with the name "
-                            "of the transformer to prevent any conflicting "
-                            "names."
-                        )
-
-                names_idx = 0
-                for X in Xs:
-                    if X.shape[1] == 0:
-                        continue
-                    names_out = feature_names_outs[names_idx : names_idx + X.shape[1]]
-                    adapter.rename_columns(X, names_out)
-                    names_idx += X.shape[1]
-
                 output = adapter.hstack(Xs)
                 output_samples = output.shape[0]
                 if output_samples != n_samples:
@@ -1223,23 +1157,43 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             return np.hstack(Xs)
 
     def _sk_visual_block_(self):
-        if isinstance(self.remainder, str) and self.remainder == "drop":
-            transformers = self.transformers
-        elif hasattr(self, "_remainder"):
-            remainder_columns = self._remainder[2]
-            if (
-                hasattr(self, "feature_names_in_")
-                and remainder_columns
-                and not all(isinstance(col, str) for col in remainder_columns)
-            ):
-                remainder_columns = self.feature_names_in_[remainder_columns].tolist()
-            transformers = chain(
-                self.transformers, [("remainder", self.remainder, remainder_columns)]
+        # We can find remainder and its column only when it's fitted
+        if hasattr(self, "transformers_"):
+            transformers = (
+                self.transformers_[:-1]
+                if self.transformers_ and self.transformers_[-1][0] == "remainder"
+                else self.transformers_
             )
-        else:
-            transformers = chain(self.transformers, [("remainder", self.remainder, "")])
 
+            # Add remainder back to fitted transformers if remainder is not drop
+            # and if there are remainder columns to display
+            remainder_columns = self._remainder[2]
+            if self.remainder != "drop" and remainder_columns:
+                has_numeric_columns = not all(
+                    isinstance(col, str) for col in remainder_columns
+                )
+                # Convert indices to column names when feature names are available
+                if hasattr(self, "feature_names_in_") and has_numeric_columns:
+                    remainder_columns = self.feature_names_in_[
+                        remainder_columns
+                    ].tolist()
+                # get the fitted remainder function so we can access its methods to
+                # build the display in utils._repr_html.estimator.py
+                remainder_transformer = self.transformers_[-1][1]
+
+                transformers = chain(
+                    transformers,
+                    [("remainder", remainder_transformer, remainder_columns)],
+                )
+        else:  # not fitted
+            if self.remainder != "drop":
+                transformers = chain(
+                    self.transformers, [("remainder", self.remainder, [])]
+                )
+            else:
+                transformers = self.transformers
         names, transformers, name_details = zip(*transformers)
+
         return _VisualBlock(
             "parallel", transformers, names=names, name_details=name_details
         )
@@ -1294,7 +1248,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         # might happen if no columns are selected for that transformer. We
         # request all metadata requested by all transformers.
         transformers = self.transformers
-        if self.remainder not in ("drop", "passthrough"):
+        if self.remainder != "drop":
+            # Note: remainder="passthrough" will be converted into a FunctionTransformer
+            # internally, so it needs to be added to the router as well here, even if it
+            # doesn't consume any metadata, to avoid a `KeyError` later.
             transformers = chain(transformers, [("remainder", self.remainder, None)])
         for name, step, _ in transformers:
             method_mapping = MethodMapping()
@@ -1337,6 +1294,7 @@ def _check_X(X):
     if (
         (hasattr(X, "__array__") and hasattr(X, "shape"))
         or hasattr(X, "__dataframe__")
+        or is_polars_df(X)
         or sparse.issparse(X)
     ):
         return X
@@ -1385,7 +1343,6 @@ def make_column_transformer(
     n_jobs=None,
     verbose=False,
     verbose_feature_names_out=True,
-    force_int_remainder_cols="deprecated",
 ):
     """Construct a ColumnTransformer from the given transformers.
 
@@ -1458,23 +1415,6 @@ def make_column_transformer(
 
         .. versionadded:: 1.0
 
-    force_int_remainder_cols : bool, default=True
-        This parameter has no effect.
-
-        .. note::
-            If you do not access the list of columns for the remainder columns
-            in the :attr:`ColumnTransformer.transformers_` fitted attribute,
-            you do not need to set this parameter.
-
-        .. versionadded:: 1.5
-
-        .. versionchanged:: 1.7
-           The default value for `force_int_remainder_cols` will change from
-           `True` to `False` in version 1.7.
-
-        .. deprecated:: 1.7
-           `force_int_remainder_cols` is deprecated and will be removed in version 1.9.
-
     Returns
     -------
     ct : ColumnTransformer
@@ -1508,7 +1448,6 @@ def make_column_transformer(
         sparse_threshold=sparse_threshold,
         verbose=verbose,
         verbose_feature_names_out=verbose_feature_names_out,
-        force_int_remainder_cols=force_int_remainder_cols,
     )
 
 

@@ -129,7 +129,7 @@ the required packages.
 
             conda create -n sklearn-dev -c conda-forge ^
               python numpy scipy cython meson-python ninja ^
-              pytest pytest-cov ruff==0.11.2 mypy numpydoc ^
+              pytest pytest-cov ruff==0.12.2 mypy numpydoc ^
               joblib threadpoolctl pre-commit
 
           Activate the newly created conda environment:
@@ -167,7 +167,7 @@ the required packages.
           .. prompt::
 
             pip install wheel numpy scipy cython meson-python ninja ^
-              pytest pytest-cov ruff==0.11.2 mypy numpydoc ^
+              pytest pytest-cov ruff==0.12.2 mypy numpydoc ^
               joblib threadpoolctl pre-commit
 
 
@@ -199,7 +199,7 @@ the required packages.
 
             conda create -n sklearn-dev -c conda-forge python \
               numpy scipy cython meson-python ninja \
-              pytest pytest-cov ruff==0.11.2 mypy numpydoc \
+              pytest pytest-cov ruff==0.12.2 mypy numpydoc \
               joblib threadpoolctl compilers llvm-openmp pre-commit
 
           and activate the newly created conda environment:
@@ -244,7 +244,7 @@ the required packages.
           .. prompt::
 
             pip install wheel numpy scipy cython meson-python ninja \
-              pytest pytest-cov ruff==0.11.2 mypy numpydoc \
+              pytest pytest-cov ruff==0.12.2 mypy numpydoc \
               joblib threadpoolctl pre-commit
 
     .. tab-item:: Linux
@@ -267,7 +267,7 @@ the required packages.
 
             conda create -n sklearn-dev -c conda-forge python \
               numpy scipy cython meson-python ninja \
-              pytest pytest-cov ruff==0.11.2 mypy numpydoc \
+              pytest pytest-cov ruff==0.12.2 mypy numpydoc \
               joblib threadpoolctl compilers pre-commit
 
           and activate the newly created environment:
@@ -327,7 +327,7 @@ the required packages.
           .. prompt::
 
             pip install wheel numpy scipy cython meson-python ninja \
-              pytest pytest-cov ruff==0.11.2 mypy numpydoc \
+              pytest pytest-cov ruff==0.12.2 mypy numpydoc \
               joblib threadpoolctl pre-commit
 
 

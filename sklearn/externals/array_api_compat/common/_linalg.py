@@ -8,7 +8,7 @@ import numpy as np
 if np.__version__[0] == "2":
     from numpy.lib.array_utils import normalize_axis_tuple
 else:
-    from numpy.core.numeric import normalize_axis_tuple
+    from numpy.core.numeric import normalize_axis_tuple  # type: ignore[no-redef]
 
 from .._internal import get_xp
 from ._aliases import isdtype, matmul, matrix_transpose, tensordot, vecdot
@@ -187,14 +187,14 @@ def vector_norm(
         # We can't reuse xp.linalg.norm(keepdims) because of the reshape hacks
         # above to avoid matrix norm logic.
         shape = list(x.shape)
-        _axis = cast(
+        axes = cast(
             "tuple[int, ...]",
             normalize_axis_tuple(  # pyright: ignore[reportCallIssue]
                 range(x.ndim) if axis is None else axis,
                 x.ndim,
             ),
         )
-        for i in _axis:
+        for i in axes:
             shape[i] = 1
         res = xp.reshape(res, tuple(shape))
 
@@ -224,8 +224,6 @@ __all__ = ['cross', 'matmul', 'outer', 'tensordot', 'EighResult',
            'svd', 'cholesky', 'matrix_rank', 'pinv', 'matrix_norm',
            'matrix_transpose', 'svdvals', 'vecdot', 'vector_norm', 'diagonal',
            'trace']
-
-_all_ignore = ['math', 'normalize_axis_tuple', 'get_xp', 'np', 'isdtype']
 
 
 def __dir__() -> list[str]:

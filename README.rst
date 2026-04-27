@@ -1,9 +1,10 @@
 .. -*- mode: rst -*-
 
-|Azure| |Codecov| |CircleCI| |Nightly wheels| |Ruff| |PythonVersion| |PyPI| |DOI| |Benchmark|
+|GitHubActions| |Codecov| |CircleCI| |Nightly wheels| |Ruff| |PythonVersion| |PyPI| |DOI| |Benchmark|
 
-.. |Azure| image:: https://dev.azure.com/scikit-learn/scikit-learn/_apis/build/status/scikit-learn.scikit-learn?branchName=main
-   :target: https://dev.azure.com/scikit-learn/scikit-learn/_build/latest?definitionId=1&branchName=main
+
+.. |GitHubActions| image:: https://github.com/scikit-learn/scikit-learn/actions/workflows/unit-tests.yml/badge.svg?
+   :target: https://github.com/scikit-learn/scikit-learn/actions/workflows/unit-tests.yml?query=branch%3Amain
 
 .. |CircleCI| image:: https://circleci.com/gh/scikit-learn/scikit-learn/tree/main.svg?style=shield
    :target: https://circleci.com/gh/scikit-learn/scikit-learn
@@ -14,16 +15,16 @@
 .. |Nightly wheels| image:: https://github.com/scikit-learn/scikit-learn/actions/workflows/wheels.yml/badge.svg?event=schedule
    :target: https://github.com/scikit-learn/scikit-learn/actions?query=workflow%3A%22Wheel+builder%22+event%3Aschedule
 
-.. |Ruff| image:: https://img.shields.io/badge/code%20style-ruff-000000.svg
+.. |Ruff| image:: https://img.shields.io/badge/code%20style-ruff-000000.svg?
    :target: https://github.com/astral-sh/ruff
 
-.. |PythonVersion| image:: https://img.shields.io/pypi/pyversions/scikit-learn.svg
+.. |PythonVersion| image:: https://img.shields.io/pypi/pyversions/scikit-learn.svg?
    :target: https://pypi.org/project/scikit-learn/
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/scikit-learn
    :target: https://pypi.org/project/scikit-learn
 
-.. |DOI| image:: https://zenodo.org/badge/21369/scikit-learn/scikit-learn.svg
+.. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.17880109.svg?
    :target: https://zenodo.org/badge/latestdoi/21369/scikit-learn/scikit-learn
 
 .. |Benchmark| image:: https://img.shields.io/badge/Benchmarked%20by-asv-blue

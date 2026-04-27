@@ -1,0 +1,3 @@
+- :func:`sklearn.metrics.ranking.average_precision_score` now supports Array API
+  compliant inputs.
+  By :user:`Stefanie Senger <StefanieSenger>`.

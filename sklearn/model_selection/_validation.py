@@ -27,7 +27,6 @@ from sklearn.model_selection._split import check_cv
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import Bunch, _safe_indexing, check_random_state, indexable
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
     device,
     get_namespace,
     get_namespace_and_device,
@@ -170,7 +169,7 @@ def cross_validate(
         - None, to use the default 5-fold cross validation,
         - int, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For int/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -1320,7 +1319,7 @@ def _fit_and_predict(estimator, X, y, train, test, fit_params, method):
             # A 2D y array should be a binary label indicator matrix
             xp, _ = get_namespace(X, y)
             n_classes = (
-                len(set(_convert_to_numpy(y, xp=xp))) if y.ndim == 1 else y.shape[1]
+                len(set(move_to(y, xp=np, device="cpu"))) if y.ndim == 1 else y.shape[1]
             )
             predictions = _enforce_prediction_order(
                 estimator.classes_, predictions, n_classes, method
@@ -1504,7 +1503,7 @@ def permutation_test_score(
         - `None`, to use the default 5-fold cross validation,
         - int, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For `int`/`None` inputs, if the estimator is a classifier and `y` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -1810,7 +1809,7 @@ def learning_curve(
         - None, to use the default 5-fold cross validation,
         - int, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For int/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -2296,7 +2295,7 @@ def validation_curve(
         - None, to use the default 5-fold cross validation,
         - int, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For int/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all

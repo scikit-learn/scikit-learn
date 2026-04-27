@@ -26,7 +26,7 @@ cnp.import_array()
 cdef cnp.ndarray[object, ndim=1] coerce_vectors_to_nd_arrays(
     shared_ptr[vector_vector_double_intp_t] vecs
 ):
-    """Coerce a std::vector of std::vector to a ndarray of ndarray."""
+    """Coerce a std::vector of std::vector to an ndarray of ndarray."""
     cdef:
         intp_t n = deref(vecs).size()
         cnp.ndarray[object, ndim=1] nd_arrays_of_nd_arrays = np.empty(n, dtype=np.ndarray)

@@ -4,7 +4,6 @@
 import numbers
 import sys
 import warnings
-from collections import UserList
 from itertools import compress, islice
 
 import numpy as np
@@ -16,15 +15,18 @@ from sklearn.utils._array_api import (
     get_namespace_and_device,
     move_to,
 )
+from sklearn.utils._dataframe import (
+    is_pandas_df,
+    is_polars_df,
+    is_polars_df_or_series,
+    is_pyarrow_data,
+)
 from sklearn.utils._param_validation import Interval, validate_params
 from sklearn.utils.extmath import _approximate_mode
-from sklearn.utils.fixes import PYARROW_VERSION_BELOW_17
+from sklearn.utils.fixes import PYARROW_VERSION_BELOW_17, SCIPY_VERSION_BELOW_1_12
 from sklearn.utils.validation import (
     _check_sample_weight,
     _is_arraylike_not_scalar,
-    _is_pandas_df,
-    _is_polars_df_or_series,
-    _is_pyarrow_data,
     _use_interchange_protocol,
     check_array,
     check_consistent_length,
@@ -36,10 +38,30 @@ def _array_indexing(array, key, key_dtype, axis):
     """Index an array or scipy.sparse consistently across NumPy version."""
     xp, is_array_api, device_ = get_namespace_and_device(array)
     if is_array_api:
-        key = move_to(key, xp=xp, device=device_)
-        return xp.take(array, key, axis=axis)
-    if issparse(array) and key_dtype == "bool":
-        key = np.asarray(key)
+        if hasattr(key, "shape"):
+            key = move_to(key, xp=xp, device=device_)
+        elif isinstance(key, (int, slice)):
+            # Passthrough for valid __getitem__ inputs as noted in the array
+            # API spec.
+            pass
+        else:
+            key = xp.asarray(key, device=device_)
+
+        if hasattr(key, "dtype"):
+            if xp.isdtype(key.dtype, "integral"):
+                return xp.take(array, key, axis=axis)
+            elif xp.isdtype(key.dtype, "bool"):
+                # Array API does not support boolean indexing for n-dim arrays
+                # yet hence the need to turn to equivalent integer indexing.
+                indices = xp.arange(array.shape[axis], device=device_)
+                return xp.take(array, indices[key], axis=axis)
+
+    if issparse(array):
+        if key_dtype == "bool":
+            key = np.asarray(key)
+        elif SCIPY_VERSION_BELOW_1_12:
+            if isinstance(key, numbers.Integral):
+                key = [key]
     if isinstance(key, tuple):
         key = list(key)
     return array[key, ...] if axis == 0 else array[:, key]
@@ -214,9 +236,7 @@ def _determine_key_type(key, accept_slice=True):
         if key_start_type is not None:
             return key_start_type
         return key_stop_type
-    # TODO(1.9) remove UserList when the force_int_remainder_cols param
-    # of ColumnTransformer is removed
-    if isinstance(key, (list, tuple, UserList)):
+    if isinstance(key, (list, tuple)):
         unique_key = set(key)
         key_type = {_determine_key_type(elt) for elt in unique_key}
         if not key_type:
@@ -325,21 +345,21 @@ def _safe_indexing(X, indices, *, axis=0):
     if (
         axis == 1
         and indices_dtype == "str"
-        and not (_is_pandas_df(X) or _use_interchange_protocol(X))
+        and not (is_pandas_df(X) or is_polars_df(X) or _use_interchange_protocol(X))
     ):
         raise ValueError(
             "Specifying the columns using strings is only supported for dataframes."
         )
 
     if hasattr(X, "iloc"):
-        # TODO: we should probably use _is_pandas_df_or_series(X) instead but:
+        # TODO: we should probably use is_pandas_df_or_series(X) instead but:
         # 1) Currently, it (probably) works for dataframes compliant to pandas' API.
         # 2) Updating would require updating some tests such as
         #    test_train_test_split_mock_pandas.
         return _pandas_indexing(X, indices, indices_dtype, axis=axis)
-    elif _is_polars_df_or_series(X):
+    elif is_polars_df_or_series(X):
         return _polars_indexing(X, indices, indices_dtype, axis=axis)
-    elif _is_pyarrow_data(X):
+    elif is_pyarrow_data(X):
         return _pyarrow_indexing(X, indices, indices_dtype, axis=axis)
     elif _use_interchange_protocol(X):  # pragma: no cover
         # Once the dataframe X is converted into its dataframe interchange protocol
@@ -414,8 +434,19 @@ def _get_column_indices(X, key):
     :func:`_safe_indexing`.
     """
     key_dtype = _determine_key_type(key)
-    if _use_interchange_protocol(X):
-        return _get_column_indices_interchange(X.__dataframe__(), key, key_dtype)
+    if is_polars_df(X):
+        n_columns = X.shape[1]
+        column_names = X.columns
+        return _get_column_indices_interchange_and_polars(
+            n_columns, column_names, key, key_dtype
+        )
+    elif _use_interchange_protocol(X):
+        X_interchange = X.__dataframe__()
+        n_columns = X_interchange.num_columns()
+        column_names = list(X_interchange.column_names())
+        return _get_column_indices_interchange_and_polars(
+            n_columns, column_names, key, key_dtype
+        )
 
     n_columns = X.shape[1]
     if isinstance(key, (list, tuple)) and not key:
@@ -461,10 +492,8 @@ def _get_column_indices(X, key):
         return column_indices
 
 
-def _get_column_indices_interchange(X_interchange, key, key_dtype):
-    """Same as _get_column_indices but for X with __dataframe__ protocol."""
-
-    n_columns = X_interchange.num_columns()
+def _get_column_indices_interchange_and_polars(n_columns, column_names, key, key_dtype):
+    """Same as _get_column_indices but for X with __dataframe__ protocol or polars."""
 
     if isinstance(key, (list, tuple)) and not key:
         # we get an empty list
@@ -472,8 +501,6 @@ def _get_column_indices_interchange(X_interchange, key, key_dtype):
     elif key_dtype in ("bool", "int"):
         return _get_column_indices_for_bool_or_int(key, n_columns)
     else:
-        column_names = list(X_interchange.column_names())
-
         if isinstance(key, slice):
             if key.step not in [1, None]:
                 raise NotImplementedError("key.step must be 1 or None")
@@ -575,8 +602,8 @@ def resample(
       >>> X = np.array([[1., 0.], [2., 1.], [0., 0.]])
       >>> y = np.array([0, 1, 2])
 
-      >>> from scipy.sparse import coo_matrix
-      >>> X_sparse = coo_matrix(X)
+      >>> from scipy.sparse import coo_array
+      >>> X_sparse = coo_array(X)
 
       >>> from sklearn.utils import resample
       >>> X, X_sparse, y = resample(X, X_sparse, y, random_state=0)
@@ -586,7 +613,7 @@ def resample(
              [1., 0.]])
 
       >>> X_sparse
-      <Compressed Sparse Row sparse matrix of dtype 'float64'
+      <Compressed Sparse Row sparse array of dtype 'float64'
           with 4 stored elements and shape (3, 2)>
 
       >>> X_sparse.toarray()
@@ -733,8 +760,8 @@ def shuffle(*arrays, random_state=None, n_samples=None):
       >>> X = np.array([[1., 0.], [2., 1.], [0., 0.]])
       >>> y = np.array([0, 1, 2])
 
-      >>> from scipy.sparse import coo_matrix
-      >>> X_sparse = coo_matrix(X)
+      >>> from scipy.sparse import coo_array
+      >>> X_sparse = coo_array(X)
 
       >>> from sklearn.utils import shuffle
       >>> X, X_sparse, y = shuffle(X, X_sparse, y, random_state=0)
@@ -744,7 +771,7 @@ def shuffle(*arrays, random_state=None, n_samples=None):
              [1., 0.]])
 
       >>> X_sparse
-      <Compressed Sparse Row sparse matrix of dtype 'float64'
+      <Compressed Sparse Row sparse array of dtype 'float64'
           with 3 stored elements and shape (3, 2)>
 
       >>> X_sparse.toarray()

@@ -25,7 +25,6 @@ from sklearn.utils import (
     metadata_routing,
 )
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
     get_namespace,
     get_namespace_and_device,
     move_to,
@@ -211,7 +210,7 @@ class LeaveOneOut(_UnsupportedGroupCVMixin, BaseCrossValidator):
     See Also
     --------
     LeaveOneGroupOut : For splitting the data according to explicit,
-        domain-specific stratification of the dataset.
+        domain-specific grouping of the dataset.
     GroupKFold : K-fold iterator variant with non-overlapping groups.
     """
 
@@ -598,8 +597,8 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
 
     See Also
     --------
-    LeaveOneGroupOut : For splitting the data according to explicit
-        domain-specific stratification of the dataset.
+    LeaveOneGroupOut : For splitting the data according to explicit,
+        domain-specific grouping of the dataset.
 
     StratifiedKFold : Takes class information into account to avoid building
         folds with imbalanced class proportions (for binary or multiclass
@@ -638,7 +637,7 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
             n_samples_per_group = np.bincount(group_idx)
 
             # Distribute the most frequent groups first
-            indices = np.argsort(n_samples_per_group)[::-1]
+            indices = np.argsort(n_samples_per_group, kind="stable")[::-1]
             n_samples_per_group = n_samples_per_group[indices]
 
             # Total weight of each fold
@@ -780,7 +779,7 @@ class StratifiedKFold(_BaseKFold):
         # we need the following explicit conversion:
         xp, is_array_api = get_namespace(y)
         if is_array_api:
-            y = _convert_to_numpy(y, xp)
+            y = move_to(y, xp=np, device="cpu")
         else:
             y = np.asarray(y)
         type_of_target_y = type_of_target(y)
@@ -1045,6 +1044,14 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
         _, groups_inv, groups_cnt = np.unique(
             groups, return_inverse=True, return_counts=True
         )
+        n_groups = len(groups_cnt)
+
+        if self.n_splits > n_groups:
+            raise ValueError(
+                f"Cannot have number of splits n_splits={self.n_splits} greater"
+                f" than the number of groups: {n_groups}."
+            )
+
         y_counts_per_group = np.zeros((len(groups_cnt), n_classes))
         for class_idx, group_idx in zip(y_inv, groups_inv):
             y_counts_per_group[group_idx, class_idx] += 1
@@ -1063,7 +1070,7 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
         # Stable sort to keep shuffled order for groups with the same
         # class distribution variance
         sorted_groups_idx = np.argsort(
-            -np.std(y_counts_per_group, axis=1), kind="mergesort"
+            -np.std(y_counts_per_group, axis=1), kind="stable"
         )
 
         for group_idx in sorted_groups_idx:
@@ -1325,7 +1332,7 @@ class LeaveOneGroupOut(GroupsConsumerMixin, BaseCrossValidator):
 
     Provides train/test indices to split data such that each training set is
     comprised of all samples except ones belonging to one specific group.
-    Arbitrary domain specific group information is provided as an array of integers
+    Arbitrary domain-specific group information is provided as an array of integers
     that encodes the group of each sample.
 
     For instance the groups could be the year of collection of the samples
@@ -1442,7 +1449,7 @@ class LeavePGroupsOut(GroupsConsumerMixin, BaseCrossValidator):
 
     Provides train/test indices to split data according to a third-party
     provided group. This group information can be used to encode arbitrary
-    domain specific stratifications of the samples as integers.
+    domain-specific groupings of the samples as integers.
 
     For instance the groups could be the year of collection of the samples
     and thus allow for cross-validation against time-based splits.
@@ -2082,7 +2089,7 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
 
     Provides randomized train/test indices to split data according to a
     third-party provided group. This group information can be used to encode
-    arbitrary domain specific stratifications of the samples as integers.
+    arbitrary domain-specific groupings of the samples as integers.
 
     For instance the groups could be the year of collection of the samples
     and thus allow for cross-validation against time-based splits.
@@ -2329,7 +2336,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         # `y` is probably never a very large array, which means that converting it
         # should be cheap
         xp, _ = get_namespace(y)
-        y = _convert_to_numpy(y, xp=xp)
+        y = move_to(y, xp=np, device="cpu")
 
         if y.ndim == 2:
             # for multi-label y, map each distinct row to a string repr
@@ -2365,7 +2372,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         # Find the sorted list of instances for each class:
         # (np.unique above performs a sort, so code is O(n logn) already)
         class_indices = np.split(
-            np.argsort(y_indices, kind="mergesort"), np.cumsum(class_counts)[:-1]
+            np.argsort(y_indices, kind="stable"), np.cumsum(class_counts)[:-1]
         )
 
         rng = check_random_state(self.random_state)
@@ -2687,7 +2694,7 @@ class _CVIterableWrapper(BaseCrossValidator):
             yield train, test
 
 
-def check_cv(cv=5, y=None, *, classifier=False):
+def check_cv(cv=5, y=None, *, classifier=False, shuffle=False, random_state=None):
     """Input checker utility for building a cross-validator.
 
     Parameters
@@ -2696,9 +2703,9 @@ def check_cv(cv=5, y=None, *, classifier=False):
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
         - None, to use the default 5-fold cross validation,
-        - integer, to specify the number of folds.
+        - integer, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable that generates (train, test) splits as arrays of indices.
+        - an iterable that generates (train, test) splits as arrays of indices.
 
         For integer/None inputs, if classifier is True and ``y`` is either
         binary or multiclass, :class:`StratifiedKFold` is used. In all other
@@ -2714,8 +2721,23 @@ def check_cv(cv=5, y=None, *, classifier=False):
         The target variable for supervised learning problems.
 
     classifier : bool, default=False
-        Whether the task is a classification task, in which case
-        stratified KFold will be used.
+        Whether the task is a classification task. When ``True`` and `cv` is an
+        integer or ``None``, :class:`StratifiedKFold` is used if ``y`` is binary
+        or multiclass; otherwise :class:`KFold` is used. Ignored if `cv` is a
+        cross-validator instance or iterable.
+
+    shuffle : bool, default=False
+        Whether to shuffle the data before splitting into batches. Note that the samples
+        within each split will not be shuffled. Only applies if `cv` is an int or
+        `None`. If `cv` is a cross-validation generator or an iterable, `shuffle` is
+        ignored.
+
+    random_state : int, RandomState instance or None, default=None
+        When `shuffle` is True and `cv` is an integer or `None`, `random_state` affects
+        the ordering of the indices, which controls the randomness of each fold.
+        Otherwise, this parameter has no effect.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -2738,16 +2760,16 @@ def check_cv(cv=5, y=None, *, classifier=False):
             and (y is not None)
             and (type_of_target(y, input_name="y") in ("binary", "multiclass"))
         ):
-            return StratifiedKFold(cv)
+            return StratifiedKFold(cv, shuffle=shuffle, random_state=random_state)
         else:
-            return KFold(cv)
+            return KFold(cv, shuffle=shuffle, random_state=random_state)
 
     if not hasattr(cv, "split") or isinstance(cv, str):
         if not isinstance(cv, Iterable) or isinstance(cv, str):
             raise ValueError(
-                "Expected cv as an integer, cross-validation "
-                "object (from sklearn.model_selection) "
-                "or an iterable. Got %s." % cv
+                "Expected `cv` as an integer, a cross-validation object "
+                "(from sklearn.model_selection), or an iterable yielding (train, test) "
+                f"splits as arrays of indices. Got {cv}."
             )
         return _CVIterableWrapper(cv)
 
@@ -3011,9 +3033,7 @@ def _pprint(params, offset=0, printer=repr):
 
 
 def _build_repr(self):
-    # XXX This is copied from BaseEstimator's get_params
-    cls = self.__class__
-    init = getattr(cls.__init__, "deprecated_original", cls.__init__)
+    init = self.__class__.__init__
     # Ignore varargs, kw and default values and pop self
     init_signature = signature(init)
     # Consider the constructor parameters excluding 'self'

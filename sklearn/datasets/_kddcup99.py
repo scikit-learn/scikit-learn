@@ -402,12 +402,8 @@ def _fetch_brute_kddcup99(
 
         X = Xy[:, :-1]
         y = Xy[:, -1]
-        # XXX bug when compress!=0:
-        # (error: 'Incorrect data length while decompressing[...] the file
-        #  could be corrupted.')
-
-        joblib.dump(X, samples_path, compress=0)
-        joblib.dump(y, targets_path, compress=0)
+        joblib.dump(X, samples_path, compress=3)
+        joblib.dump(y, targets_path, compress=3)
     else:
         raise OSError("Data not found and `download_if_missing` is False")
 

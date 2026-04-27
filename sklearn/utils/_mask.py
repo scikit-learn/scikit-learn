@@ -8,6 +8,7 @@ from scipy import sparse as sp
 
 from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._param_validation import validate_params
+from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.fixes import _object_dtype_isnan
 
 
@@ -59,12 +60,12 @@ def _get_mask(X, value_to_mask):
 
     Xt = _get_dense_mask(X.data, value_to_mask)
 
-    sparse_constructor = sp.csr_matrix if X.format == "csr" else sp.csc_matrix
+    sparse_constructor = sp.csr_array if X.format == "csr" else sp.csc_array
     Xt_sparse = sparse_constructor(
         (Xt, X.indices.copy(), X.indptr.copy()), shape=X.shape, dtype=bool
     )
 
-    return Xt_sparse
+    return _align_api_if_sparse(Xt_sparse)
 
 
 @validate_params(
@@ -93,8 +94,8 @@ def safe_mask(X, mask):
     Examples
     --------
     >>> from sklearn.utils import safe_mask
-    >>> from scipy.sparse import csr_matrix
-    >>> data = csr_matrix([[1], [2], [3], [4], [5]])
+    >>> from scipy.sparse import csr_array
+    >>> data = csr_array([[1], [2], [3], [4], [5]])
     >>> condition = [False, True, True, False, True]
     >>> mask = safe_mask(data, condition)
     >>> data[mask].toarray()
