@@ -887,3 +887,24 @@ def test_label_encoder_array_api_compliance(
         assert_array_equal(
             move_to(xp_label.classes_, xp=np, device="cpu"), np_label.classes_
         )
+
+
+def test_label_binarize_uint64_overflow():
+    """Check that label_binarize does not overflow with uint64 labels.
+
+    This ensures that unsigned integers are handled by converting them
+    to signed integers to prevent issues in estimators like RidgeClassifier.
+    Reference: Fixes Issue #30177
+    """
+    import numpy as np
+
+    from sklearn.preprocessing import label_binarize
+
+    y = np.array([0, 1], dtype=np.uint64)
+    classes = np.array([0, 1], dtype=np.uint64)
+
+    Y = label_binarize(y, classes=classes)
+
+    assert np.all(np.logical_or(Y == 0, Y == 1))
+
+    assert Y.dtype.kind in "bi"
