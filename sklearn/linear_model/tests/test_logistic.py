@@ -16,7 +16,7 @@ from scipy.linalg import LinAlgWarning, svd
 from sklearn import config_context
 from sklearn._loss import HalfMultinomialLoss
 from sklearn.base import clone
-from sklearn.callback.tests._utils import RecordingCallback, StopFitCallback
+from sklearn.callback.tests._utils import RecordingCallback
 from sklearn.datasets import load_iris, make_classification, make_low_rank_matrix
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LogisticRegression, LogisticRegressionCV, SGDClassifier
@@ -2910,19 +2910,16 @@ def test_logistic_regression_callback_support(binary, fit_intercept):
     assert_allclose(pred, last_fitted_lr.predict(X))
 
 
-# TODO(1.10): remove skip when scipy callbacks can be interrupted with StopIteration in
-# min version (i.e. when min scipy version > 1.10).
+# TODO(1.10): Uncomment when scipy callbacks can be interrupted with StopIteration in
+# min dependencies (i.e. when min scipy version > 1.10).
 # TODO(callbacks): also test for other solvers when they get supported.
-@pytest.mark.skip(
-    reason="Fit interruption will be implemented when scipy min version > 1.10."
-)
-def test_logistic_regression_fit_stopped_by_callback():
-    """Test that a callback can interrupt the fit."""
-    X, y = load_iris(return_X_y=True)
-    cb = StopFitCallback()
-    lr = LogisticRegression(solver="lbfgs").set_callbacks(cb)
-    lr.fit(X, y)
-    assert lr.n_iter_ == 1
+# def test_logistic_regression_fit_stopped_by_callback():
+#     """Test that a callback can interrupt the fit."""
+#     X, y = load_iris(return_X_y=True)
+#     cb = StopFitCallback()
+#     lr = LogisticRegression(solver="lbfgs").set_callbacks(cb)
+#     lr.fit(X, y)
+#     assert lr.n_iter_ == 1
 
 
 # TODO(callbacks): update/remove as more solvers get supported.

@@ -152,7 +152,7 @@ def _make_scipy_callback_fun(
         # TODO(1.10): Use `call_on_fit_task_end` in an if to do
         # `raise StopIteration()`
         # Using StopIteration in a scipy callback requires scipy > 1.10
-        # which will be the case of the min version for scikit-learn 1.10.
+        # which will be the case of the min dependencies for scikit-learn 1.10.
 
     return scipy_callback_fun
 
