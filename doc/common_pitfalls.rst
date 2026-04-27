@@ -374,8 +374,11 @@ following snippet::
     array([0.85, 0.95, 0.95, 0.9 , 0.9 ])
 
     >>> rf_none = RandomForestClassifier(random_state=None)
-    >>> cross_val_score(rf_none, X, y)
+    >>> cross_val_score(rf_none, X, y) # doctest: +SKIP
     array([0.9 , 0.95, 0.95, 0.9 , 0.9 ])
+
+.. The previous python command is skipped as it can produce different results depending
+on the platform.
 
 We see that the cross-validated scores of `rf_123` and `rf_none` are
 different, as should be expected since we didn't pass the same `random_state`
