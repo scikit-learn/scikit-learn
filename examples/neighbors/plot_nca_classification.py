@@ -4,7 +4,7 @@ Comparing Nearest Neighbors with and without Neighborhood Components Analysis
 =============================================================================
 
 An example comparing nearest neighbors classification with and without
-[Neighborhood Components Analysis](Neighborhood Components Analysis).
+:ref:`nca`.
 
 It will plot the class decision boundaries given by a Nearest Neighbors
 classifier when using the Euclidean distance on the original features, versus
