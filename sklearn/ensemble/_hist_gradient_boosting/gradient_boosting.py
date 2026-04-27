@@ -10,7 +10,7 @@ from functools import partial
 from numbers import Integral, Real
 from time import time
 
-import narwhals as nw
+import narwhals.stable.v2 as nw
 import numpy as np
 
 from sklearn._loss.loss import (

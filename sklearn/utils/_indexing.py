@@ -6,7 +6,7 @@ import sys
 import warnings
 from itertools import compress, islice
 
-import narwhals as nw
+import narwhals.stable.v2 as nw
 import numpy as np
 from scipy.sparse import issparse
 

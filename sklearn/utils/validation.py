@@ -12,7 +12,7 @@ from functools import reduce, wraps
 from inspect import Parameter, isclass, signature
 
 import joblib
-import narwhals as nw
+import narwhals.stable.v2 as nw
 import numpy as np
 import scipy.sparse as sp
 

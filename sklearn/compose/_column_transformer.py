@@ -12,7 +12,7 @@ from functools import partial
 from itertools import chain
 from numbers import Integral, Real
 
-import narwhals as nw
+import narwhals.stable.v2 as nw
 import numpy as np
 from scipy import sparse
 
