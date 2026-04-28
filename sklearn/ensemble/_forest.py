@@ -585,18 +585,22 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             oob_pred[unsampled_indices, ...] += y_pred
             n_oob_pred[unsampled_indices, :] += 1
 
+        if (n_oob_pred == 0).any():
+            warn(
+                (
+                    "Some inputs do not have OOB scores. This probably means "
+                    "too few trees were used to compute any reliable OOB "
+                    "estimates."
+                ),
+                UserWarning,
+            )
+        # Normalise predictions: divide OOB samples by their count and set
+        # never-left-out samples (n_oob_pred == 0) to NaN explicitly.
         for k in range(n_outputs):
-            if (n_oob_pred == 0).any():
-                warn(
-                    (
-                        "Some inputs do not have OOB scores. This probably means "
-                        "too few trees were used to compute any reliable OOB "
-                        "estimates."
-                    ),
-                    UserWarning,
-                )
-                n_oob_pred[n_oob_pred == 0] = 1
-            oob_pred[..., k] /= n_oob_pred[..., [k]]
+            n_k = n_oob_pred[:, k]  # shape (n_samples,), dtype int64
+            valid = n_k > 0
+            oob_pred[valid, :, k] /= n_k[valid, np.newaxis]
+            oob_pred[~valid, :, k] = np.nan
 
         return oob_pred
 
@@ -804,8 +808,13 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         if scoring_function is None:
             scoring_function = accuracy_score
 
+        oob_df = self.oob_decision_function_
+        if oob_df.ndim == 2:
+            oob_mask = ~np.isnan(oob_df).any(axis=1)
+        else:
+            oob_mask = ~np.isnan(oob_df).any(axis=(1, 2))
         self.oob_score_ = scoring_function(
-            y, np.argmax(self.oob_decision_function_, axis=1)
+            y[oob_mask], np.argmax(oob_df[oob_mask], axis=1)
         )
 
     def _validate_y_class_weight(self, y, sample_weight):
@@ -1130,7 +1139,12 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         if scoring_function is None:
             scoring_function = r2_score
 
-        self.oob_score_ = scoring_function(y, self.oob_prediction_)
+        oob_pred = self.oob_prediction_
+        if oob_pred.ndim == 1:
+            oob_mask = ~np.isnan(oob_pred)
+        else:
+            oob_mask = ~np.isnan(oob_pred).any(axis=1)
+        self.oob_score_ = scoring_function(y[oob_mask], oob_pred[oob_mask])
 
     def _compute_partial_dependence_recursion(self, grid, target_features):
         """Fast partial dependence computation.
@@ -1828,8 +1842,11 @@ class RandomForestRegressor(ForestRegressor):
         This attribute exists only when ``oob_score`` is True.
 
     oob_prediction_ : ndarray of shape (n_samples,) or (n_samples, n_outputs)
-        Prediction computed with out-of-bag estimate on the training set.
-        This attribute exists only when ``oob_score`` is True.
+        Prediction computed with out-of-bag estimate on the training set. If
+        ``n_estimators`` is small it might be possible that a data point was
+        never left out during the bootstrap. In this case, ``oob_prediction_``
+        might contain NaN for those data points. This attribute exists only
+        when ``oob_score`` is True.
 
     estimators_samples_ : list of arrays
         The subset of drawn samples (i.e., the in-bag samples) for each base
@@ -2598,8 +2615,11 @@ class ExtraTreesRegressor(ForestRegressor):
         This attribute exists only when ``oob_score`` is True.
 
     oob_prediction_ : ndarray of shape (n_samples,) or (n_samples, n_outputs)
-        Prediction computed with out-of-bag estimate on the training set.
-        This attribute exists only when ``oob_score`` is True.
+        Prediction computed with out-of-bag estimate on the training set. If
+        ``n_estimators`` is small it might be possible that a data point was
+        never left out during the bootstrap. In this case, ``oob_prediction_``
+        might contain NaN for those data points. This attribute exists only
+        when ``oob_score`` is True.
 
     estimators_samples_ : list of arrays
         The subset of drawn samples (i.e., the in-bag samples) for each base
