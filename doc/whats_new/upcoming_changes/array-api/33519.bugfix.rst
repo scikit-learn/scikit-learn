@@ -1,0 +1,6 @@
+- :func:`metrics.explained_variance_score` and other regression metrics now
+  correctly handle array-like ``multioutput`` weights (list or numpy array)
+  when ``array_api_dispatch=True`` and ``y_pred`` is a non-NumPy array
+  (e.g. a PyTorch tensor). Previously this raised a confusing
+  ``ValueError: Input arrays use different devices: cpu, cpu``.
+  By :user:`Sachin Mahajan <Mahajan-Sachin>`

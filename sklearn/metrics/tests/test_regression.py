@@ -656,9 +656,7 @@ def test_regression_metrics_array_api_multioutput_weights():
 
     with config_context(array_api_dispatch=True):
         # Reference: compute with numpy y_pred and list weights (always worked)
-        ref = explained_variance_score(
-            y_true, y_pred_np, multioutput=weights_list
-        )
+        ref = explained_variance_score(y_true, y_pred_np, multioutput=weights_list)
 
         # list weights with torch y_pred — was broken before the fix
         result_list = explained_variance_score(
@@ -676,4 +674,3 @@ def test_regression_metrics_array_api_multioutput_weights():
     assert result_array == pytest.approx(ref, rel=1e-6), (
         "multioutput=np.array should give the same result as with numpy y_pred"
     )
-
