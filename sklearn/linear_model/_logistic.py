@@ -1164,7 +1164,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self.n_jobs = n_jobs
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y, sample_weight=None):
+    # def fit(self, X, y, sample_weight=None):
         """
         Fit the model according to the given training data.
 
@@ -1256,7 +1256,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 )
                 # Note that check for l1_ratio is done right above
             C_ = xp.inf
-            penalty = "l2"
+          
         else:
             C_ = self.C
 
