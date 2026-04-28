@@ -594,10 +594,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 ),
                 UserWarning,
             )
-        # Normalise predictions: divide OOB samples by their count and set
-        # never-left-out samples (n_oob_pred == 0) to NaN explicitly.
         for k in range(n_outputs):
-            n_k = n_oob_pred[:, k]  # shape (n_samples,), dtype int64
+            n_k = n_oob_pred[:, k]
             valid = n_k > 0
             oob_pred[valid, :, k] /= n_k[valid, np.newaxis]
             oob_pred[~valid, :, k] = np.nan

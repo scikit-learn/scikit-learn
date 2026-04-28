@@ -1476,8 +1476,6 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
                 "This probably means too few estimators were used "
                 "to compute any reliable oob estimates."
             )
-        # Normalise predictions: divide OOB samples by count and set
-        # never-left-out samples (n_predictions == 0) to NaN explicitly.
         valid = n_predictions > 0
         predictions[valid] /= n_predictions[valid]
         predictions[~valid] = np.nan
