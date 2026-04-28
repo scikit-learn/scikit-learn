@@ -1357,9 +1357,9 @@ def _logsumexp(array, axis=None, xp=None):
     xp, _, device = get_namespace_and_device(array, xp=xp)
     axis = tuple(range(array.ndim)) if axis is None else axis
 
-    supported_dtypes = supported_float_dtypes(xp)
+    supported_dtypes = supported_float_dtypes(xp, device=device)
     if array.dtype not in supported_dtypes:
-        array = xp.asarray(array, dtype=supported_dtypes[0])
+        array = xp.asarray(array, dtype=supported_dtypes[0], device=device)
 
     array_max = xp.max(array, axis=axis, keepdims=True)
     index_max = array == array_max
@@ -1411,7 +1411,9 @@ def _matching_numpy_dtype(X, xp=None):
     if _is_numpy_namespace(xp):
         return X.dtype
 
-    dtypes_dict = xp.__array_namespace_info__().dtypes()
+    dtypes_dict = xp.__array_namespace_info__().dtypes(
+        device=getattr(X, "device", None)
+    )
     reversed_dtypes_dict = {dtype: name for name, dtype in dtypes_dict.items()}
     dtype_name = reversed_dtypes_dict[X.dtype]
     return numpy.__array_namespace_info__().dtypes()[dtype_name]

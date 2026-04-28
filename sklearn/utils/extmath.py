@@ -318,21 +318,14 @@ def _randomized_range_finder(
     # Generating normal random vectors with shape: (A.shape[1], size)
     # XXX: generate random number directly from xp if it's possible
     # one day.
-    Q = xp.asarray(random_state.normal(size=(A.shape[1], size)))
+    Q = random_state.normal(size=(A.shape[1], size))
+    if is_array_api_compliant:
+        Q = xp.asarray(Q, device=device(A))
+    else:
+        Q = xp.asarray(Q)
     if hasattr(A, "dtype") and xp.isdtype(A.dtype, kind="real floating"):
         # Use float32 computation and components if A has a float32 dtype.
         Q = xp.astype(Q, A.dtype, copy=False)
-
-    # Move Q to device if needed only after converting to float32 if needed to
-    # avoid allocating unnecessary memory on the device.
-
-    # Note: we cannot combine the astype and to_device operations in one go
-    # using xp.asarray(..., dtype=dtype, device=device) because downcasting
-    # from float64 to float32 in asarray might not always be accepted as only
-    # casts following type promotion rules are guarateed to work.
-    # https://github.com/data-apis/array-api/issues/647
-    if is_array_api_compliant:
-        Q = xp.asarray(Q, device=device(A))
 
     # Deal with "auto" mode
     if power_iteration_normalizer == "auto":
