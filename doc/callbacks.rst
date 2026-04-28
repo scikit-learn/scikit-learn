@@ -33,30 +33,27 @@ method to register callbacks on them. The following example shows how to registe
     >>> from sklearn.callback import ProgressBar
     >>> from sklearn.linear_model import LogisticRegression
     >>> progress_bar = ProgressBar()
-    >>> logreg = LogisticRegression()
-    >>> logreg.set_callbacks(progress_bar) # doctest: +SKIP
-
-.. TODO: remove the doctest skip
+    >>> logreg = LogisticRegression(max_iter=200)
+    >>> logreg.set_callbacks(progress_bar)
+    LogisticRegression(max_iter=200)
 
 Now that the progress bar is registered on the estimator, calling its `fit` method will
 display a progress bar::
 
     >>> from sklearn.datasets import load_iris
     >>> X, y = load_iris(return_X_y=True)
-    >>> logreg.fit(X, y) # doctest: +SKIP
-    LogisticRegression - fit ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:03:12
-
-.. TODO: remove the doctest skip and add ellipsis for the time taken
+    >>> logreg.fit(X, y)
+    LogisticRegression - fit ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+    LogisticRegression(max_iter=200)
 
 Multiple callbacks can be registered on the same estimator, for example a
 :class:`~ScoringMonitor` callback can be registered in addition to the
 :class:`~ProgressBar`::
 
-    >>> from sklearn.callback import ScoringMonitor # doctest: +SKIP
-    >>> scoring_monitor = ScoringMonitor(scoring="precision") # doctest: +SKIP
-    >>> logreg.set_callbacks(progress_bar, scoring_monitor) # doctest: +SKIP
-
-.. TODO: remove the doctest skips
+    >>> from sklearn.callback import ScoringMonitor
+    >>> scoring_monitor = ScoringMonitor(scoring="accuracy")
+    >>> logreg.set_callbacks(progress_bar, scoring_monitor)
+    LogisticRegression(max_iter=200)
 
 Callback invocation
 *******************
@@ -76,9 +73,21 @@ ids are consecutive integers starting from 0. Some callbacks may provide additio
 contextual information about the tasks. Here's an example of the logs of the
 :class:`~ScoringMonitor`::
 
-    >>> logreg.fit(X, y) # doctest: +SKIP
-    LogisticRegression - fit ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:03:12
-    >>> scoring_monitor.get_logs(as_frame=True) # doctest: +SKIP
+    >>> logreg.fit(X, y)
+    LogisticRegression - fit ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+    >>> scoring_monitor.get_logs().data_as_pandas
+        task_id_path parent_task_id_path      estimator_name   task_name  task_id  sequential_subtasks  accuracy
+    0         (0, 0)                (0,)  LogisticRegression  lbfgs_iter        0                 True  0.333333
+    1         (0, 1)                (0,)  LogisticRegression  lbfgs_iter        1                 True  0.333333
+    2         (0, 2)                (0,)  LogisticRegression  lbfgs_iter        2                 True  0.666667
+    3         (0, 3)                (0,)  LogisticRegression  lbfgs_iter        3                 True  0.926667
+    4         (0, 4)                (0,)  LogisticRegression  lbfgs_iter        4                 True  0.673333
+    ..           ...                 ...                 ...         ...      ...                  ...       ...
+    105     (0, 105)                (0,)  LogisticRegression  lbfgs_iter      105                 True  0.973333
+    106     (0, 106)                (0,)  LogisticRegression  lbfgs_iter      106                 True  0.973333
+    107     (0, 107)                (0,)  LogisticRegression  lbfgs_iter      107                 True  0.973333
+    108     (0, 108)                (0,)  LogisticRegression  lbfgs_iter      108                 True  0.973333
+    109     (0, 109)                (0,)  LogisticRegression  lbfgs_iter      109                 True  0.973333
 
 Usage with meta-estimators
 **************************
@@ -107,14 +116,13 @@ scores of the logistic regression model for each parameter combination and each 
 the grid search::
 
     >>> from sklearn.model_selection import GridSearchCV
-    >>> scoring = ScoringMonitor(scoring="precision") # doctest: +SKIP
-    >>> logreg = LogisticRegression().set_callbacks(scoring) # doctest: +SKIP
+    >>> scoring_monitor = ScoringMonitor(scoring="accuracy")
+    >>> logreg = LogisticRegression().set_callbacks(scoring)
     >>> grid_search = GridSearchCV(logreg, {"C": [10, 1, 0.1], "l1_ratio": [0, 1]})
     >>> grid_search.fit(X, y)
-    GridSearchCV(estimator=LogisticRegression(),
-                 param_grid={'C': [10, 1, 0.1], 'l1_ratio': [0, 1]})
+    >>> scoring_monitor.get_logs().data_as_pandas # doctest: +SKIP
 
-.. TODO: remove the doctest skips
+.. TODO: remove the doctest skips and add logs
 
 .. TODO: link to an example of how to use and plot the scores from the logs of
 ..       ScoringMonitor
@@ -185,3 +193,6 @@ Callback Support Status
 
 The development of support for callbacks in estimators is in progress. Here is a list of
 the estimators that support callbacks:
+
+- :class:`~sklearn.linear_model.LogisticRegression`
+- :class:`~sklearn.preprocessing.StandardScaler`

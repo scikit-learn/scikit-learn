@@ -1257,7 +1257,7 @@ class LogisticRegression(
         self.n_jobs = n_jobs
 
     # TODO(callbacks): update/remove as more solvers get supported.
-    def set_callbacks(self, callbacks):
+    def set_callbacks(self, *callbacks):
         """Set callbacks for the estimator.
 
         Parameters
@@ -1276,7 +1276,7 @@ class LogisticRegression(
                 f" solver='lbfgs'. This estimator has solver='{self.solver}', callbacks"
                 " will be ignored during the solving of the regression."
             )
-        return super().set_callbacks(callbacks)
+        return super().set_callbacks(*callbacks)
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
