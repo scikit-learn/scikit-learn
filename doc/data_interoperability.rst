@@ -15,6 +15,7 @@ Scikit-learn handles four kinds of data for :term:`X` as in `fit(X, y)`, `fit(X)
   The returned `Xt` of `transform` and `fit_transform` is also a numpy ndarray or it
   is a sparse matrix or sparse array, see next bullet.
 - :term:`sparse matrices <sparse matrix>` and sparse arrays
+
   Many estimators can deal with sparse `X`, some cannot and will raise an error.
   For instance, :class:`linear_model.LogisticRegression` can be fit on sparse `X`,
   :class:`isotonic.IsotonicRegression` can not.
