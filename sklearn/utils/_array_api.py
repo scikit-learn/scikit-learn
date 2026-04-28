@@ -102,8 +102,6 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
 
         elif array_namespace == "dpnp":  # pragma: nocover
             # XXX: add "accelerator" device type?
-            # TODO: check if device supports FP64
-            # Now check only float32 for Intel GPUs
             for device_name, dtype in itertools.product(
                 ("cpu", "gpu"), ("float64", "float32")
             ):
