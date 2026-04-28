@@ -188,18 +188,17 @@ def test_pairwise_distances_array_api(array_namespace, device_name, dtype_name, 
         assert_allclose(D_xp_np, D_np)
 
 
-def test_pairwise_distances_array_api_no_warnings(monkeypatch):
+def test_pairwise_distances_array_api_no_warnings():
     # Regression test for https://github.com/scikit-learn/scikit-learn/issues/33829
     # pairwise_distances should not emit cross-library dtype comparison warnings
     # when called with Array API inputs under array_api_dispatch=True.
-    array_api_strict = pytest.importorskip("array_api_strict")
-    monkeypatch.setenv("SCIPY_ARRAY_API", "1")
+    xp, device = _array_api_for_tests("array_api_strict")
 
     rng = np.random.RandomState(0)
     X_np = rng.random_sample((5, 4))
     Y_np = rng.random_sample((3, 4))
-    X_xp = array_api_strict.from_dlpack(X_np)
-    Y_xp = array_api_strict.from_dlpack(Y_np)
+    X_xp = xp.asarray(X_np, device=device)
+    Y_xp = xp.asarray(Y_np, device=device)
 
     with config_context(array_api_dispatch=True):
         with warnings.catch_warnings():
