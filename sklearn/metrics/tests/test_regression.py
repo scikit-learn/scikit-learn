@@ -634,3 +634,46 @@ def test_pinball_loss_relation_with_mae(global_random_seed):
         mean_absolute_error(y_true, y_pred)
         == mean_pinball_loss(y_true, y_pred, alpha=0.5) * 2
     )
+
+
+@pytest.mark.filterwarnings("ignore::FutureWarning")
+def test_regression_metrics_array_api_multioutput_weights():
+    """Non-regression test for #33519.
+
+    When array_api_dispatch=True and y_pred is a non-NumPy array (e.g. a
+    PyTorch tensor), passing multioutput weights as a list or numpy array
+    should work without raising a confusing
+    "Input arrays use different devices: cpu, cpu" error.
+    """
+    torch = pytest.importorskip("torch")
+    from sklearn import config_context
+
+    y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    y_pred_np = np.array([[0, 2], [-1, 2], [8, -5]], dtype=np.float64)
+    y_pred_torch = torch.asarray(y_pred_np, dtype=torch.float64)
+    weights_list = [0.3, 0.7]
+    weights_array = np.array(weights_list)
+
+    with config_context(array_api_dispatch=True):
+        # Reference: compute with numpy y_pred and list weights (always worked)
+        ref = explained_variance_score(
+            y_true, y_pred_np, multioutput=weights_list
+        )
+
+        # list weights with torch y_pred — was broken before the fix
+        result_list = explained_variance_score(
+            y_true, y_pred_torch, multioutput=weights_list
+        )
+
+        # numpy array weights with torch y_pred — was broken before the fix
+        result_array = explained_variance_score(
+            y_true, y_pred_torch, multioutput=weights_array
+        )
+
+    assert result_list == pytest.approx(ref, rel=1e-6), (
+        "multioutput=list should give the same result as with numpy y_pred"
+    )
+    assert result_array == pytest.approx(ref, rel=1e-6), (
+        "multioutput=np.array should give the same result as with numpy y_pred"
+    )
+
