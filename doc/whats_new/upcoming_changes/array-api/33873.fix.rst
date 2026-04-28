@@ -1,6 +1,4 @@
 - :func:`metrics.pairwise_distances` no longer emits spurious cross-library
   dtype comparison warnings when called with Array API inputs under
-  ``config_context(array_api_dispatch=True)``. The fix reorders conditions in
-  :func:`utils.extmath.safe_sparse_dot` so that the NumPy dtype membership
-  check is only reached for sparse matrices, never for Array API arrays.
+  ``config_context(array_api_dispatch=True)``.
   By :user:`Olivier Grisel <ogrisel>`.
