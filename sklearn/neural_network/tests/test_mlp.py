@@ -15,6 +15,7 @@ import pytest
 from sklearn.datasets import (
     load_digits,
     load_iris,
+    make_classification,
     make_multilabel_classification,
     make_regression,
 )
@@ -829,6 +830,30 @@ def test_early_stopping_stratified():
         ),
     ):
         mlp.fit(X, y)
+
+
+def test_mlp_early_stopping_string_labels():
+    """Check that labels can be strings when `early_stopping=True`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/33760
+    """
+    X, y = make_classification(
+        n_samples=200,
+        n_features=10,
+        n_classes=3,
+        n_informative=5,
+        random_state=42,
+    )
+    labels = np.array(["class_a", "class_b", "class_c"], dtype=object)
+    y = labels[y]
+
+    mlp = MLPClassifier(early_stopping=True, max_iter=50, random_state=42)
+    mlp.fit(X, y)
+
+    assert mlp.validation_scores_ is not None
+    assert len(mlp.validation_scores_) == mlp.n_iter_
+    assert np.isfinite(mlp.validation_scores_).all()
 
 
 def test_mlp_classifier_dtypes_casting():

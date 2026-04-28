@@ -1471,6 +1471,14 @@ def _get_warnings_filters_info_list():
         WarningInfo(
             "ignore", message="Attribute s is deprecated", category=DeprecationWarning
         ),
+        # sphinx-gallery uses codecs.open(); deprecated in Python 3.14. Remove once
+        # a sphinx-gallery release includes
+        # https://github.com/sphinx-gallery/sphinx-gallery/pull/1594
+        WarningInfo(
+            "ignore",
+            message=r"codecs\.open\(\) is deprecated",
+            category=DeprecationWarning,
+        ),
         # Plotly deprecated something which we're not using, but internally it's used
         # and needs to be fixed on their side.
         # https://github.com/plotly/plotly.py/issues/4997

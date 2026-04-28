@@ -1,6 +1,10 @@
 # .pyx is generated, so this is needed to make Cython compilation work
+# We add sklearn_root_cython_tree and __init__.py so Cython can detect the
+# package hierarchy and set the correct __module__ on extension types.
 _loss_cython_tree = [
-  fs.copyfile('_loss.pxd')
+  sklearn_root_cython_tree,
+  fs.copyfile('__init__.py'),
+  fs.copyfile('_loss.pxd'),
 ]
 
 _loss_pyx = custom_target(

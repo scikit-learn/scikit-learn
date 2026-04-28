@@ -1,0 +1,4 @@
+- The code path for polars dataframes in :func:`validate_data` was made independent of
+  the dataframe interchange protocol `__dataframe__`. This change was necessary to
+  adapt to the recent deprecation of the interchange protocol in polars version 1.40.
+  By :user:`Christian Lorentzen <lorentzenchr>`.
