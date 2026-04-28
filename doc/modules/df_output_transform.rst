@@ -6,16 +6,16 @@ Pandas/Polars Output for Transformers with `set_output` API
 
 .. currentmodule:: sklearn
 
-This part of the use guide explains how scikit-learn supports tabular data.
+This part of the user guide explains how scikit-learn supports tabular data.
 
 
-Feature Names
-=============
+Propagation of Feature Names
+============================
 
 By default, scikit-learn transformers (estimators with a :meth:`transform` method)
 return numpy arrays (sometimes also sparse arrays). Because numpy arrays do not provide
 names for the indices of axes/dimensions, prior to version 1.0
-the :class:`pipeline.Pipeline` did not know how to propagate features names:
+the :class:`pipeline.Pipeline` did not know how to propagate feature names:
 
 - The single step estimators did not know how to handle incoming features names.
 - The pipeline did not know how to pass features names from step to step.
