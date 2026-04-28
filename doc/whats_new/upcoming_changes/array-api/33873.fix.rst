@@ -3,4 +3,4 @@
   ``config_context(array_api_dispatch=True)``. The fix reorders conditions in
   :func:`utils.extmath.safe_sparse_dot` so that the NumPy dtype membership
   check is only reached for sparse matrices, never for Array API arrays.
-  :pr:`33829` by :user:`GitHub Copilot <github-copilot>`.
+  By :user:`Olivier Grisel <ogrisel>`.
