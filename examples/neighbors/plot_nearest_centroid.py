@@ -38,7 +38,7 @@ for shrinkage in [None, 0.2]:
         clf, X, ax=ax, response_method="predict", alpha=0.5
     )
 
-    # Plot also the training and testing points
+    # Plot also the training points
     cmap = ListedColormap(disp.multiclass_colors_)
     plt.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap, edgecolor="k", s=20)
     plt.title(f"3-Class classification (shrink_threshold={shrinkage})")
