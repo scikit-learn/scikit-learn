@@ -142,6 +142,13 @@ def _check_reg_targets(
             )
     elif multioutput is not None:
         multioutput = check_array(multioutput, ensure_2d=False)
+        # Move multioutput to the same namespace/device as y_pred so that
+        # array API weighted-average operations work correctly when y_pred is
+        # a non-NumPy array (e.g. a PyTorch tensor). Without this, _average()
+        # sees mismatched namespaces and raises a confusing
+        # "Input arrays use different devices: cpu, cpu" error.
+        _, _, device = get_namespace_and_device(y_pred)
+        multioutput = move_to(multioutput, xp=xp, device=device)
         if n_outputs == 1:
             raise ValueError("Custom weights are useful only in multi-output cases.")
         elif n_outputs != multioutput.shape[0]:
