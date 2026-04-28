@@ -2535,7 +2535,7 @@ def _check_output(out_np, out_xp, xp_to, y2_xp):
 
 
 @pytest.mark.parametrize(
-    "from_ns_and_device, to_ns_and_device",
+    "other_ns_and_device, y_pred_ns_and_device",
     [
         pytest.param(*args[:2], id=args[2])
         for args in yield_mixed_namespace_input_permutations()
@@ -2543,7 +2543,7 @@ def _check_output(out_np, out_xp, xp_to, y2_xp):
 )
 @pytest.mark.parametrize("metric_name", sorted(METRICS_SUPPORTING_MIXED_NAMESPACE))
 def test_mixed_array_api_namespace_input_compliance(
-    metric_name, from_ns_and_device, to_ns_and_device
+    metric_name, other_ns_and_device, y_pred_ns_and_device
 ):
     """Check `y_true` and `sample_weight` follows `y_pred` for mixed namespace inputs.
 
@@ -2551,15 +2551,15 @@ def test_mixed_array_api_namespace_input_compliance(
     If the output is a float, checks that both all-numpy and mixed-type inputs return
     a float.
     If output is an array, checks it is of the same namespace and device as `y_pred`
-    (`to_ns_and_device`).
+    (`y_pred_ns_and_device`).
     If the output is a tuple, checks that each element, whether float or array,
     is correct, as detailed above.
     """
-    xp_to, device_to = _array_api_for_tests(
-        to_ns_and_device.xp, device_name=to_ns_and_device.device
+    xp_y_pred, device_y_pred = _array_api_for_tests(
+        y_pred_ns_and_device.xp, device_name=y_pred_ns_and_device.device
     )
-    xp_from, device_from = _array_api_for_tests(
-        from_ns_and_device.xp, device_name=from_ns_and_device.device
+    xp_other, device_other = _array_api_for_tests(
+        other_ns_and_device.xp, device_name=other_ns_and_device.device
     )
 
     metric = ALL_METRICS[metric_name]
@@ -2599,28 +2599,30 @@ def test_mixed_array_api_namespace_input_compliance(
         for data_case in data_cases:
             y1, y2 = data_all[data_case]
 
-            dtype = _get_dtype(y1, xp_from, device_from)
-            y1_xp = xp_from.asarray(y1, device=device_from, dtype=dtype)
+            dtype = _get_dtype(y1, xp_other, device_other)
+            y1_xp = xp_other.asarray(y1, device=device_other, dtype=dtype)
 
             metric_kwargs_xp = metric_kwargs_np = {}
             if metric_name not in METRICS_WITHOUT_SAMPLE_WEIGHT:
-                # use `from_ns_and_device` for `sample_weight` as well
+                # use `other_ns_and_device` for `sample_weight` as well
                 sample_weight_np = np.array(sample_weight)
                 metric_kwargs_np = {"sample_weight": sample_weight_np}
-                sample_weight_xp = xp_from.asarray(sample_weight_np, device=device_from)
+                sample_weight_xp = xp_other.asarray(
+                    sample_weight_np, device=device_other
+                )
                 metric_kwargs_xp = {"sample_weight": sample_weight_xp}
 
-            dtype = _get_dtype(y2, xp_to, device_to)
-            y2_xp = xp_to.asarray(y2, device=device_to, dtype=dtype)
+            dtype = _get_dtype(y2, xp_y_pred, device_y_pred)
+            y2_xp = xp_y_pred.asarray(y2, device=device_y_pred, dtype=dtype)
 
             metric_xp = metric(y1_xp, y2_xp, **metric_kwargs_xp)
             metric_np = metric(y1, y2, **metric_kwargs_np)
 
             if isinstance(metric_np, Tuple):
                 for out_np, out_xp in zip(metric_np, metric_xp):
-                    _check_output(out_np, out_xp, xp_to, y2_xp)
+                    _check_output(out_np, out_xp, xp_y_pred, y2_xp)
             else:
-                _check_output(metric_np, metric_xp, xp_to, y2_xp)
+                _check_output(metric_np, metric_xp, xp_y_pred, y2_xp)
 
 
 # Check thresholded classification metrics, minus multilabel ranking metrics
