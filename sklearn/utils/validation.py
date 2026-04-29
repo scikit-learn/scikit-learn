@@ -2909,6 +2909,24 @@ def validate_data(
     out : {ndarray, sparse matrix} or tuple of these
         The validated input. A tuple is returned if both `X` and `y` are
         validated.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.base import BaseEstimator
+    >>> from sklearn.utils.validation import validate_data
+    >>> class MyEstimator(BaseEstimator):
+    ...     def fit(self, X, y):
+    ...         X, y = validate_data(self, X, y)
+    ...         return self
+    ...     def predict(self, X):
+    ...         X = validate_data(self, X, reset=False)
+    ...         return np.zeros(X.shape[0])
+    >>> est = MyEstimator()
+    >>> est.fit([[1, 2], [3, 4]], [0, 1])
+    MyEstimator()
+    >>> est.predict([[5, 6]])
+    array([0.])
     """
     _check_feature_names(_estimator, X, reset=reset)
     tags = get_tags(_estimator)
