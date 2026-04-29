@@ -628,7 +628,14 @@ def test_indexing_dtype(namespace, device_name, dtype_name):
 )
 def test_max_precision_float_dtype(namespace, device_name, dtype_name):
     xp, device = _array_api_for_tests(namespace, device_name)
-    expected_dtype = xp.float32 if device_name == "mps" else xp.float64
+    try:
+        xp.asarray([0.0], dtype=xp.float64, device=device)
+        expected_dtype = xp.float64
+    except Exception:
+        # Some devices, such as MPS devices, PyTorch XPU devices and some Intel
+        # GPUs with dpnp, do not support float64.
+        expected_dtype = xp.float32
+
     assert _max_precision_float_dtype(xp, device) == expected_dtype
 
 
