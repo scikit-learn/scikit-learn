@@ -62,6 +62,7 @@ from sklearn.preprocessing import StandardScaler, scale
 from sklearn.utils import _safe_indexing, shuffle
 from sklearn.utils._array_api import (
     _atol_for_type,
+    _max_precision_float_dtype,
     get_namespace,
     move_to,
     yield_namespace_device_dtype_combinations,
@@ -1146,11 +1147,12 @@ def check_array_api_input(
             )
         else:
             assert attribute.shape == est_xp_param_np.shape
-            if device == "mps" and np.issubdtype(est_xp_param_np.dtype, np.floating):
-                # for mps devices the maximum supported floating dtype is float32
-                assert est_xp_param_np.dtype == np.float32
-            else:
-                assert est_xp_param_np.dtype == attribute.dtype
+            expected_dtype = attribute.dtype
+            if np.issubdtype(attribute.dtype, np.floating):
+                max_float_dtype = _max_precision_float_dtype(xp, device=device)
+                if xp.finfo(max_float_dtype).bits < np.finfo(attribute.dtype).bits:
+                    expected_dtype = max_float_dtype
+            assert est_xp_param_np.dtype == expected_dtype
 
     # Check estimator methods, if supported, give the same results
     methods = (
