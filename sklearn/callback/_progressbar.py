@@ -37,11 +37,6 @@ class ProgressBar:
         check_rich_support("Progressbar")
 
         self.max_propagation_depth = max_propagation_depth
-        self._manager = get_callback_manager()
-        # Queue proxies need to be shared across callback copies in subprocesses,
-        # while monitor threads must stay process-local (they are not picklable).
-        self._run_queues = self._manager.dict()
-        self._run_monitors = {}
 
     def setup(self, estimator, context):
         if not hasattr(self, "_manager"):

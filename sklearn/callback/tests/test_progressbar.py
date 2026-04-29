@@ -122,9 +122,9 @@ def test_progressbar_no_callback_support(backend):
         # Since ProgressBar is pickled in different subprocesses and managers are not
         # picklable, a new manager is created for each subprocess and the queues are
         # effectively process-local.
-        assert len(progressbar._run_queues) == 0
+        assert not hasattr(progressbar, "_run_queues")
         # The monitors are process-local by construction.
-        assert len(progressbar._run_monitors) == 0
+        assert not hasattr(progressbar, "_run_monitors")
     else:  # "threading"
         # The state is shared across threads so we expect one queue and monitor per fit.
         # in the shared state.
