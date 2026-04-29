@@ -417,9 +417,11 @@ def _write_estimator_html(
             and is_not_pipeline_step
             and not (is_column_transformer and has_single_estimator)
         ):
-            features_div = _features_html(
-                estimator.get_feature_names_out(), is_fitted_css_class
-            )
+            try:
+                output_features = estimator.get_feature_names_out()
+            except Exception:
+                output_features = ""
+            features_div = _features_html(output_features, is_fitted_css_class)
             total_output_features_item = (
                 f"<div class='total_features'>{features_div}</div>"
             )
