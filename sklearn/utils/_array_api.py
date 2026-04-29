@@ -758,8 +758,8 @@ def _is_xp_namespace(xp, name):
 def _max_precision_float_dtype(xp, device):
     """Return the float dtype with the highest precision supported by the device.
 
-    Note that scikit-learn only considers float32 and float64 as suitablefloating point
-    dtypes.
+    Note that scikit-learn only considers float32 and float64 as suitable
+    floating point dtypes.
     """
     floating_dtypes = xp.__array_namespace_info__().dtypes(
         kind="real floating", device=device
