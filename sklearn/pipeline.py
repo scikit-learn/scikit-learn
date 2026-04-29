@@ -1294,7 +1294,7 @@ class Pipeline(_BaseComposition):
             estimators,
             names=names,
             name_details=name_details,
-            dash_wrapped=False,
+            dash_wrapped=True,
         )
 
     def get_metadata_routing(self):

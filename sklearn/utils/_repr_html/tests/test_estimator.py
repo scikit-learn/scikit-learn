@@ -106,6 +106,7 @@ def test_get_visual_block_pipeline():
         "do_nothing_more: passthrough",
         "classifier: LogisticRegression",
     )
+    assert est_html_info.dash_wrapped
     assert est_html_info.name_details == [str(est) for _, est in pipe.steps]
 
 
@@ -233,6 +234,34 @@ def test_estimator_html_repr_pipeline():
 
     # verify that prefers-color-scheme is implemented
     assert "prefers-color-scheme" in html_output
+
+
+def test_nested_pipeline_has_dashed_wrapper():
+    """Check that a Pipeline nested in a meta-estimator is dash-wrapped.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/32146"""
+    estimator = ColumnTransformer(
+        [
+            (
+                "pipe",
+                Pipeline(
+                    [
+                        ("scaler", StandardScaler()),
+                        ("pca", PCA(n_components=1)),
+                    ]
+                ),
+                [0, 1],
+            )
+        ]
+    )
+
+    html_output = estimator_html_repr(estimator)
+    pattern = (
+        r"<div><div>pipe</div></div></label>.*?"
+        r'<div class="sk-serial"><div class="sk-item sk-dashed-wrapped">'
+    )
+
+    assert re.search(pattern, html_output, flags=re.DOTALL)
 
 
 @pytest.mark.parametrize("final_estimator", [None, LinearSVC()])
