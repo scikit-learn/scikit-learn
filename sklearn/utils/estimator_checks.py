@@ -1171,7 +1171,7 @@ def _check_array_api_core(
                     xp_X, device=X_ns_and_device.device
                 )
                 # for some devices the maximum supported floating dtype is float32
-                if max_float_dtype == X_xp.float32:
+                if max_float_dtype == xp_X.float32:
                     expected_dtype = np.float32
             assert est_xp_param_np.dtype == expected_dtype
 
