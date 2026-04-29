@@ -1,0 +1,5 @@
+- :class:`linear_model.BayesianRidge` now correctly centers test data when
+  computing the predictive standard deviation with ``return_std=True``,
+  so that the variance is minimized near the training data rather than near
+  the origin.
+  By :user:`NIK-TIGER-BILL <NIK-TIGER-BILL>`.

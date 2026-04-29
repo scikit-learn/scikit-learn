@@ -397,6 +397,8 @@ class BayesianRidge(RegressorMixin, LinearModel):
         if not return_std:
             return y_mean
         else:
+            if self.fit_intercept:
+                X = X - self.X_offset_
             sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
             y_std = np.sqrt(sigmas_squared_data + (1.0 / self.alpha_))
             return y_mean, y_std

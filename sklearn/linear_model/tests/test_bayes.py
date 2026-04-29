@@ -305,6 +305,25 @@ def test_dtype_match(dtype, Estimator):
 
 
 @pytest.mark.parametrize("Estimator", [BayesianRidge, ARDRegression])
+def test_bayesian_ridge_std_centered_data():
+    """Check that predictive std is centered around the training data.
+
+    Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/33757
+    """
+    x_train = np.linspace(80, 100, 4).reshape(-1, 1)
+    y_train = x_train.ravel() + np.array([2.0, -1.0, 1.0, -2.0])
+    model = BayesianRidge().fit(x_train, y_train)
+    x_test = np.linspace(-100, 100, 101).reshape(-1, 1)
+    y_mean, y_std = model.predict(x_test, return_std=True)
+    # The predictive variance should be minimal near the training data
+    # (around 80-100) rather than near the origin.
+    assert y_std[x_test.ravel().argmin()] > y_std[x_test.ravel().argmax()]
+    assert_array_less(
+        y_std[(x_test >= 80).ravel() & (x_test <= 100).ravel()],
+        y_std[(x_test <= 0).ravel()],
+    )
+
+
 def test_dtype_correctness(Estimator):
     X = np.array([[1, 1], [3, 4], [5, 7], [4, 1], [2, 6], [3, 10], [3, 2]])
     y = np.array([1, 2, 3, 2, 0, 4, 5]).T
