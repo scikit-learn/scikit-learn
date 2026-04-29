@@ -11,6 +11,7 @@ from scipy import sparse, stats
 
 from sklearn import config_context, datasets
 from sklearn.base import clone
+from sklearn.callback.tests._utils import RecordingCallback
 from sklearn.exceptions import NotFittedError
 from sklearn.externals._packaging.version import parse as parse_version
 from sklearn.metrics.pairwise import linear_kernel
@@ -2867,3 +2868,24 @@ def test_transformer_inverse_transform_shape_error(TransformerClass):
     msg = f"X has 1 features, but {TransformerClass.__name__} is expecting 2 features"
     with pytest.raises(ValueError, match=msg):
         transformer.inverse_transform(X_wrong)
+
+
+@pytest.mark.parametrize("fit_method", ["fit", "partial_fit"])
+def test_standard_scaler_callback_support(fit_method):
+    """Check that the reconstruction attributes are correctly passed."""
+    X = np.random.RandomState(0).random_sample((10, 2))
+
+    cb = RecordingCallback()
+    scaler = StandardScaler().set_callbacks(cb)
+    getattr(scaler, fit_method)(X)
+    Xt = scaler.transform(X)
+
+    # StandardScaler has no iterative part -> only one task.
+    assert cb.count_hooks("setup") == 1
+    assert cb.count_hooks("teardown") == 1
+    assert cb.count_hooks("on_fit_task_begin") == 1
+    assert cb.count_hooks("on_fit_task_end") == 1
+
+    task_end_record = [rec for rec in cb.record if rec["name"] == "on_fit_task_end"][0]
+    fitted_scaler = task_end_record["kwargs"]["fitted_estimator"]
+    assert_allclose(fitted_scaler.transform(X), Xt)

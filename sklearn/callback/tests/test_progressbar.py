@@ -14,6 +14,7 @@ from sklearn.callback.tests._utils import (
     HeterogeneousMetaEstimator,
     MaxIterEstimator,
     MetaEstimator,
+    NoSubtaskEstimator,
     WhileEstimator,
 )
 from sklearn.utils._optional_dependencies import check_rich_support
@@ -34,7 +35,9 @@ pytestmark = pytest.mark.skipif(
 
 @pytest.mark.parametrize("n_jobs", [1, 2])
 @pytest.mark.parametrize("prefer", ["threads", "processes"])
-@pytest.mark.parametrize("InnerEstimator", [MaxIterEstimator, WhileEstimator])
+@pytest.mark.parametrize(
+    "InnerEstimator", [MaxIterEstimator, WhileEstimator, NoSubtaskEstimator]
+)
 @pytest.mark.parametrize("max_propagation_depth", [1, 2, None])
 def test_progressbar(n_jobs, prefer, InnerEstimator, max_propagation_depth, capsys):
     """Check the output of the progress bars and their completion."""
@@ -219,3 +222,13 @@ def test_progress_during_fit_composition(meta_estimator):
     end_of_outer_subtasks = [progress for path, progress in records if len(path) == 2]
     expected_progress = [0.25, 0.5, 0.75, 1.0]
     assert_allclose(end_of_outer_subtasks, expected_progress)
+
+
+def test_estimator_without_subtasks(capsys):
+    """Check that a progress bar is displayed for an estimator without subtasks."""
+    pytest.importorskip("rich")
+
+    NoSubtaskEstimator().set_callbacks(ProgressBar()).fit()
+    captured = capsys.readouterr()
+    assert re.search(r"NoSubtaskEstimator - fit", captured.out)
+    assert re.search(r"100%", captured.out)

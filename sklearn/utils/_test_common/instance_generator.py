@@ -585,7 +585,6 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     GraphicalLasso: {"check_array_api_input": dict(max_iter=5, alpha=1.0)},
     IncrementalPCA: {"check_dict_unchanged": dict(batch_size=10, n_components=1)},
     Isomap: {"check_dict_unchanged": dict(n_components=1)},
-    # TODO(1.9) simplify when averaged_inverted_cdf is the default
     KBinsDiscretizer: {
         "check_sample_weight_equivalence_on_dense_data": [
             # Using subsample != None leads to a stochastic fit that is not
@@ -600,21 +599,6 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             # The "kmeans" strategy leads to a stochastic fit that is not
             # handled by the check_sample_weight_equivalence test.
         ],
-        "check_sample_weights_list": dict(
-            strategy="quantile", quantile_method="averaged_inverted_cdf"
-        ),
-        "check_sample_weights_pandas_series": dict(
-            strategy="quantile", quantile_method="averaged_inverted_cdf"
-        ),
-        "check_sample_weights_shape": dict(
-            strategy="quantile", quantile_method="averaged_inverted_cdf"
-        ),
-        "check_sample_weights_not_an_array": dict(
-            strategy="quantile", quantile_method="averaged_inverted_cdf"
-        ),
-        "check_sample_weights_not_overwritten": dict(
-            strategy="quantile", quantile_method="averaged_inverted_cdf"
-        ),
     },
     KernelPCA: {
         "check_dict_unchanged": dict(n_components=1),

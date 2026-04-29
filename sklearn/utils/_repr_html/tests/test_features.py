@@ -3,6 +3,7 @@ import pytest
 
 from sklearn.compose import ColumnTransformer
 from sklearn.decomposition import PCA, TruncatedSVD
+from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.pipeline import FeatureUnion, Pipeline
 from sklearn.preprocessing import Normalizer, StandardScaler
 from sklearn.utils._repr_html.estimator import estimator_html_repr
@@ -100,6 +101,21 @@ def test_features_html_with_pipeline():
     pipe.fit(X)
     html = estimator_html_repr(pipe)
     assert "3 features" in html
+
+
+def test_countvectorizer_output_features():
+    """Non-regression test for
+    https://github.com/scikit-learn/scikit-learn/issues/33772"""
+    corpus = [
+        "cat",
+        "dog",
+        "mouse",
+        "bird",
+    ]
+    vectorizer = CountVectorizer()
+    vectorizer.fit_transform(corpus)
+    html = estimator_html_repr(vectorizer)
+    assert "4 features" in html
 
 
 def test_features_html_empty_features():
