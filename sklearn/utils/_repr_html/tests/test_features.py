@@ -1,11 +1,14 @@
 import numpy as np
 import pytest
 
-from sklearn.compose import ColumnTransformer
+from sklearn.compose import ColumnTransformer, make_column_transformer
+from sklearn.datasets import load_iris
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.pipeline import FeatureUnion, Pipeline
-from sklearn.preprocessing import Normalizer, StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import TunedThresholdClassifierCV
+from sklearn.pipeline import FeatureUnion, Pipeline, make_pipeline
+from sklearn.preprocessing import MinMaxScaler, Normalizer, StandardScaler
 from sklearn.utils._repr_html.estimator import estimator_html_repr
 from sklearn.utils._repr_html.features import _features_html
 from sklearn.utils._testing import MinimalTransformer
@@ -116,6 +119,25 @@ def test_countvectorizer_output_features():
     vectorizer.fit_transform(corpus)
     html = estimator_html_repr(vectorizer)
     assert "4 features" in html
+
+
+def test_meta_estimator_output_features():
+    """Non-regression test for
+    https://github.com/scikit-learn/scikit-learn/pull/33889
+    """
+    X, y = load_iris(return_X_y=True, as_frame=True)
+    X, y = X.iloc[:100], y.iloc[:100]
+
+    preprocessor = make_column_transformer(
+        (StandardScaler(), [0, 1]),
+        (MinMaxScaler(), [2, 3]),
+    )
+    estimator = make_pipeline(preprocessor, LogisticRegression())
+    meta_estimator = TunedThresholdClassifierCV(
+        estimator, store_cv_results=True, random_state=0
+    ).fit(X, y)
+    html = estimator_html_repr(meta_estimator)
+    assert "0 features" in html
 
 
 def test_features_html_empty_features():
