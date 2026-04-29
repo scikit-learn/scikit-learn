@@ -557,9 +557,7 @@ def move_to(*arrays, xp, device):
         Tuple of arrays with the same namespace and device as reference. Single array
         returned if only one `arrays` input.
     """
-    if (
-        isinstance(device, str) and device == "xpu"
-    ):  # pragma: nocover
+    if isinstance(device, str) and device == "xpu":  # pragma: nocover
         # XXX: Workaround for PyTorch XPU bug for `from_dlpack` calls with
         # device strings that do not include any device number suffix.
         # https://github.com/pytorch/pytorch/issues/181140
