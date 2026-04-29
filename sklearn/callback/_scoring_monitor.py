@@ -109,10 +109,11 @@ class ScoringMonitor:
         # Turn the scorer into a MultimetricScorer for convenience
         from sklearn.metrics._scorer import _BaseScorer
 
+        self._scoring_processed = scoring
         if isinstance(self.scoring, str):
-            self.scoring = [self.scoring]
+            self._scoring_processed = [self.scoring]
         if callable(self.scoring) and isinstance(self.scoring, _BaseScorer):
-            self.scoring = {"score": self.scoring}
+            self._scoring_processed = {"score": self.scoring}
 
         self._shared_log = get_callback_manager().list()
         self._estimator_scorers = {}
@@ -124,7 +125,7 @@ class ScoringMonitor:
             from sklearn.metrics import check_scoring
 
             self._estimator_scorers[context.estimator_name] = check_scoring(
-                estimator, self.scoring
+                estimator, self._scoring_processed
             )
 
     def teardown(self, estimator, context):
