@@ -1,6 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import copy
 import datetime
 import uuid
 from collections import defaultdict
@@ -106,10 +107,13 @@ class ScoringMonitor:
     )
     def __init__(self, *, scoring):
         self.scoring = scoring
+        # Copy scoring if it is mutable
+        if isinstance(self.scoring, dict) or isinstance(self.scoring, list):
+            self.scoring = copy.copy(self.scoring)
         # Turn the scorer into a MultimetricScorer for convenience
         from sklearn.metrics._scorer import _BaseScorer
 
-        self._scoring_processed = scoring
+        self._scoring_processed = self.scoring
         if isinstance(self.scoring, str):
             self._scoring_processed = [self.scoring]
         if callable(self.scoring) and isinstance(self.scoring, _BaseScorer):
