@@ -1168,10 +1168,10 @@ def _check_array_api_core(
             expected_dtype = attribute.dtype
             if np.issubdtype(attribute.dtype, np.floating):
                 max_float_dtype = _max_precision_float_dtype(
-                    X_xp, device=X_ns_and_device.device
+                    xp_X, device=X_ns_and_device.device
                 )
                 # for some devices the maximum supported floating dtype is float32
-                if max_float_dtype == X_xp.float32:
+                if max_float_dtype == xp_X.float32:
                     expected_dtype = np.float32
             assert est_xp_param_np.dtype == expected_dtype
 
