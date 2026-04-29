@@ -60,6 +60,7 @@ def yield_namespaces(include_numpy_namespaces=True):
         "array_api_strict",
         "cupy",
         "torch",
+        "dpnp",
     ]:
         if not include_numpy_namespaces and array_namespace in _NUMPY_NAMESPACE_NAMES:
             continue
@@ -100,6 +101,13 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
             ):
                 yield array_namespace, device_name, dtype
             yield array_namespace, "mps", "float32"
+
+        elif array_namespace == "dpnp":  # pragma: nocover
+            # XXX: add "accelerator" device type?
+            for device_name, dtype in itertools.product(
+                ("cpu", "gpu"), ("float64", "float32")
+            ):
+                yield array_namespace, device_name, dtype
 
         elif array_namespace == "array_api_strict":
             # Always yield strings for consistent parametrization; _array_api_for_tests
@@ -548,6 +556,12 @@ def move_to(*arrays, xp, device):
         Tuple of arrays with the same namespace and device as reference. Single array
         returned if only one `arrays` input.
     """
+    if isinstance(device, str) and device == "xpu":  # pragma: nocover
+        # XXX: Workaround for PyTorch XPU bug for `from_dlpack` calls with
+        # device strings that do not include any device number suffix.
+        # https://github.com/pytorch/pytorch/issues/181140
+        device += ":0"
+
     sparse_mask = [sp.issparse(array) for array in arrays]
     none_mask = [array is None for array in arrays]
     if any(sparse_mask) and not _is_numpy_namespace(xp):
@@ -739,14 +753,23 @@ def _is_xp_namespace(xp, name):
 
 
 def _max_precision_float_dtype(xp, device):
-    """Return the float dtype with the highest precision supported by the device."""
-    # TODO: Update to use `__array_namespace__info__()` from array-api v2023.12
-    # when/if that becomes more widespread.
-    if _is_xp_namespace(xp, "torch") and str(device).startswith(
-        "mps"
-    ):  # pragma: no cover
-        return xp.float32
-    return xp.float64
+    """Return the float dtype with the highest precision supported by the device.
+
+    Note that scikit-learn only considers float32 and float64 as suitable
+    floating point dtypes.
+    """
+    if _is_numpy_namespace(xp):
+        # Special case NumPy for backward compat with older versions that do
+        # not implement __array_namespace_info__.
+        return xp.float64
+
+    floating_dtypes = xp.__array_namespace_info__().dtypes(
+        kind="real floating", device=device
+    )
+    if "float64" in floating_dtypes:
+        return xp.float64
+
+    return xp.float32
 
 
 def _find_matching_floating_dtype(*arrays, xp):
@@ -1000,6 +1023,8 @@ def _convert_to_numpy(array, xp):
         return array.get()
     elif _is_xp_namespace(xp, "array_api_strict"):
         return numpy.asarray(xp.asarray(array, device=xp.Device("CPU_DEVICE")))
+    elif _is_xp_namespace(xp, "dpnp"):  # pragma: nocover
+        return array.asnumpy()
 
     return numpy.asarray(array)
 
