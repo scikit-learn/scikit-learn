@@ -1,4 +1,4 @@
 - :func:`metrics.pairwise.euclidean_distances` no longer raises when called
-  with ``Y_norm_squared`` and ``n_jobs > 1``. ``_parallel_pairwise`` now
-  correctly slices ``Y_norm_squared`` alongside ``Y``.
+  with ``Y_norm_squared`` and ``n_jobs > 1``. ``Y_norm_squared`` is now
+  correctly sliced alongside ``Y``.
   By :user:`Kunle <unw9527>`.
