@@ -36,6 +36,10 @@ The plot method allows adding to an existing plot by passing the existing plots
 In the following example, we plot a ROC curve for a fitted Logistic Regression
 model `from_estimator`:
 
+The plot shows the Receiver Operating Characteristic (ROC) curve illustrating
+the performance of a binary classifier, with true positive rate against false
+positive rate.
+
 .. plot::
    :context: close-figs
    :align: center
@@ -58,6 +62,8 @@ model `from_estimator`:
 If you already have the prediction values, you could instead use
 `from_predictions` to do the same thing (and save on compute):
 
+The plot shows a ROC curve generated from predicted probabilities,
+demonstrating classifier performance without recomputing predictions.
 
 .. plot::
    :context: close-figs
@@ -88,6 +94,9 @@ that stores the computed values as attributes called `roc_auc`, `fpr`, and `tpr`
 
 Next, we train a random forest classifier and plot the previously computed ROC curve
 again by using the `plot` method of the `Display` object.
+
+The plot compares ROC curves from different classifiers, showing how model
+performance varies between Logistic Regression and Random Forest.
 
 .. plot::
    :context: close-figs
