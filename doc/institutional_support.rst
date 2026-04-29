@@ -86,9 +86,9 @@ financially support scikit-learn as follows:
    :header-rows: 1
    :class: sk-funding-participation-table
 
-   * - 5 :abbr:`FTEs (Full-Time Equivalent)` or more
-     - 0.5 :abbr:`FTE (Full-Time Equivalent)` or more
-     - less than 0.5 :abbr:`FTE (Full-Time Equivalent)`
+   * - 5 FTE or more
+     - 0.5 FTE or more
+     - less than 0.5 FTE
    * - |probabl|
      - * |czi| |wellcome|
        * |nvidia|
@@ -96,6 +96,8 @@ financially support scikit-learn as follows:
        * |chanel|
      - * |bnpparibasgroup|
        * |michelin|
+
+FTE stands for Full-Time Equivalent.
 
 * `The Chan-Zuckerberg Initiative <https://chanzuckerberg.com/>`_ and `Wellcome
   Trust <https://wellcome.org/>`_ support the work of Lucy Liu, Dea Maria Leon,
