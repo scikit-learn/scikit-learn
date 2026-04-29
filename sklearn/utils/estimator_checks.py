@@ -1090,7 +1090,7 @@ def check_array_api_input(
     behavior of any estimator fed with NumPy inputs, even for estimators that
     do not support array API.
     """
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     X, y = make_classification(n_samples=30, n_features=10, random_state=42)
     X = X.astype(dtype_name, copy=False)
@@ -1298,7 +1298,7 @@ def check_array_api_same_namespace(
     input arrays are from the same namespace and device as the fitted
     attributes.
     """
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, "float64")
 
     X, y = make_classification(n_samples=30, n_features=10, random_state=42)
     X = X.astype("float64", copy=False)

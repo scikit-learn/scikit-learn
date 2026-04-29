@@ -157,7 +157,7 @@ def test_pairwise_distances_for_dense_data(global_dtype):
 @pytest.mark.parametrize("metric", ["cosine", "euclidean", "manhattan"])
 def test_pairwise_distances_array_api(array_namespace, device_name, dtype_name, metric):
     # Test array API support in pairwise_distances.
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     rng = np.random.RandomState(0)
     # Euclidean distance should be equivalent to calling the function.
@@ -404,7 +404,7 @@ def test_pairwise_parallel(func, metric, kwds, dtype):
 def test_pairwise_parallel_array_api(
     func, metric, kwds, array_namespace, device_name, dtype_name
 ):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     rng = np.random.RandomState(0)
     X_np = np.array(5 * rng.random_sample((5, 4)), dtype=dtype_name)
     Y_np = np.array(5 * rng.random_sample((3, 4)), dtype=dtype_name)
@@ -488,7 +488,7 @@ def test_pairwise_kernels(metric, csr_container):
 )
 def test_pairwise_kernels_array_api(metric, array_namespace, device_name, dtype_name):
     # Test array API support in pairwise_kernels.
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     rng = np.random.RandomState(0)
     X_np = 10 * rng.random_sample((5, 4))

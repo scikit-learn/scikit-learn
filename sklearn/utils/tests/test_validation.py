@@ -1075,7 +1075,7 @@ def test_check_consistent_length():
 )
 def test_check_consistent_length_array_api(array_namespace, device_name, dtype_name):
     """Test that check_consistent_length works with different array types."""
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     with config_context(array_api_dispatch=True):
         check_consistent_length(
@@ -1699,7 +1699,7 @@ def test_check_sample_weight():
     yield_namespace_device_dtype_combinations(),
 )
 def test_check_sample_weight_array_api(array_namespace, device_name, dtype_name):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     with config_context(array_api_dispatch=True):
         # check array order
         sample_weight = xp.ones(10)[::2]
@@ -1725,7 +1725,7 @@ def test_check_pos_label_consistency(y_true):
 def test_check_pos_label_consistency_array_api(
     array_namespace, device_name, dtype_name, y_true
 ):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     with config_context(array_api_dispatch=True):
         arr = xp.asarray(y_true, device=device)
         assert _check_pos_label_consistency(None, arr) == 1
@@ -1747,7 +1747,7 @@ def test_check_pos_label_consistency_invalid(y_true):
 def test_check_pos_label_consistency_invalid_array_api(
     array_namespace, device_name, dtype_name, y_true
 ):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     with config_context(array_api_dispatch=True):
         arr = xp.asarray(y_true, device=device)
         with pytest.raises(ValueError, match="y_true takes value in"):
