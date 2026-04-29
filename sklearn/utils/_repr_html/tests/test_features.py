@@ -125,6 +125,7 @@ def test_meta_estimator_output_features():
     """Non-regression test for
     https://github.com/scikit-learn/scikit-learn/pull/33889
     """
+    pytest.importorskip("pandas")
     X, y = load_iris(return_X_y=True, as_frame=True)
     X, y = X.iloc[:100], y.iloc[:100]
 
