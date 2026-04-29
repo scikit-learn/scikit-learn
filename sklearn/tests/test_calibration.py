@@ -1231,7 +1231,7 @@ def test_temperature_scaling_array_api_compliance(
     """Check that `CalibratedClassifierCV` with temperature scaling is compatible
     with the array API"""
 
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     X, y = make_classification(
         n_samples=1000,
         n_features=10,
@@ -1307,7 +1307,7 @@ def test_temperature_scaling_array_api_with_str_y_estimator_not_prefit(
     #  the array API when `y` is an ndarray of strings and we fit
     #  `LinearDiscriminantAnalysis` beforehand. In this regard
     #  `LinearDiscriminantAnalysis` will also need modifications.
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     X, y = make_classification(
         n_samples=500,
         n_features=10,

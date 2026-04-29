@@ -708,7 +708,7 @@ def test_incremental_weighted_mean_and_variance_simple(dtype, as_list):
 def test_incremental_weighted_mean_and_variance_array_api(
     array_namespace, device_name, dtype_name
 ):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     rng = np.random.RandomState(42)
     mult = 10
     X = rng.rand(1000, 20).astype(dtype_name) * mult
@@ -1106,7 +1106,7 @@ def test_approximate_mode():
     yield_namespace_device_dtype_combinations(),
 )
 def test_randomized_svd_array_api_compliance(array_namespace, device_name, dtype_name):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     rng = np.random.RandomState(0)
     X = rng.normal(size=(30, 10)).astype(dtype_name)
@@ -1134,7 +1134,7 @@ def test_randomized_svd_array_api_compliance(array_namespace, device_name, dtype
 def test_randomized_range_finder_array_api_compliance(
     array_namespace, device_name, dtype_name
 ):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     rng = np.random.RandomState(0)
     X = rng.normal(size=(30, 10)).astype(dtype_name)

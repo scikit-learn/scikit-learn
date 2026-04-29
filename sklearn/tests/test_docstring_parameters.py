@@ -55,7 +55,6 @@ _DOCSTRING_IGNORES = [
     "sklearn.utils.deprecation.load_mlcomp",
     "sklearn.pipeline.make_pipeline",
     "sklearn.pipeline.make_union",
-    "sklearn.utils.extmath.safe_sparse_dot",
     "HalfBinomialLoss",
 ]
 

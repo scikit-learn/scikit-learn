@@ -32,6 +32,8 @@ REMOVE_TYPES_DEFAULT = (
     tuple,
 )
 
+NamespaceAndDevice = namedtuple("NamespaceAndDevice", ["xp", "device"])
+
 
 def yield_namespaces(include_numpy_namespaces=True):
     """Yield supported namespace.
@@ -131,9 +133,6 @@ def yield_mixed_namespace_input_permutations():
     * array-api-strict to non-NumPy (this pair also has no special hardware
       requirements to allow for local testing)
     """
-
-    NamespaceAndDevice = namedtuple("NamespaceAndDevice", ["xp", "device"])
-
     yield (
         NamespaceAndDevice("cupy", None),
         NamespaceAndDevice("torch", "cuda"),
@@ -557,9 +556,7 @@ def move_to(*arrays, xp, device):
         Tuple of arrays with the same namespace and device as reference. Single array
         returned if only one `arrays` input.
     """
-    if (
-        isinstance(device, str) and device.startswith("xpu") and ":" not in device
-    ):  # pragma: nocover
+    if isinstance(device, str) and device == "xpu":  # pragma: nocover
         # XXX: Workaround for PyTorch XPU bug for `from_dlpack` calls with
         # device strings that do not include any device number suffix.
         # https://github.com/pytorch/pytorch/issues/181140
@@ -756,39 +753,23 @@ def _is_xp_namespace(xp, name):
 
 
 def _max_precision_float_dtype(xp, device):
-    """Return the float dtype with the highest precision supported by the device."""
-    # TODO: Update to use `__array_namespace__info__()` from array-api v2023.12
-    # when/if that becomes more widespread.
+    """Return the float dtype with the highest precision supported by the device.
 
-    # Hardcode known expectations when possible to avoid expensive dtype
-    # support checks via try/except.
-    if (
-        _is_xp_namespace(xp, "numpy")
-        or _is_xp_namespace(xp, "array_api_strict")
-        or _is_xp_namespace(xp, "cupy")
-    ):
+    Note that scikit-learn only considers float32 and float64 as suitable
+    floating point dtypes.
+    """
+    if _is_numpy_namespace(xp):
+        # Special case NumPy for backward compat with older versions that do
+        # not implement __array_namespace_info__.
         return xp.float64
 
-    if _is_xp_namespace(xp, "torch"):
-        if str(device).startswith("cpu"):
-            return xp.float64
-
-        if str(device).startswith("mps"):
-            # xp.float64 is never supported on MPS devices at the time of writing.
-            return xp.float32
-
-        if str(device).startswith("cuda"):  # pragma: nocover
-            return xp.float64
-
-    # For other namespaces and devices combinations, we need to check support
-    # via a runtime check.
-    try:  # pragma: nocover
-        xp.asarray([0.0], dtype=xp.float64, device=device)
+    floating_dtypes = xp.__array_namespace_info__().dtypes(
+        kind="real floating", device=device
+    )
+    if "float64" in floating_dtypes:
         return xp.float64
-    except Exception:  # pragma: nocover
-        # If float64 is not supported, we assume float32 is supported, as is the
-        # case for XPU devices in PyTorch and Intel GPUs with dpnp.
-        return xp.float32
+
+    return xp.float32
 
 
 def _find_matching_floating_dtype(*arrays, xp):

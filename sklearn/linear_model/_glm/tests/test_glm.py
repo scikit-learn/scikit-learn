@@ -1163,7 +1163,7 @@ def test_poisson_regressor_array_api_compliance(
     device_name,
     dtype_name,
 ):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     X_np, y_np = make_regression(
         n_samples=107, n_features=20, n_informative=20, noise=0.5, random_state=2
     )
@@ -1237,7 +1237,7 @@ def test_poisson_regressor_array_api_warm_start(
     X = rng.standard_normal((200, 5)).astype(dtype_name)
     y = np.abs(rng.standard_normal(200)) + 0.1
     y = y.astype(dtype_name)
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     X_xp = xp.asarray(X, device=device)
     y_xp = xp.asarray(y, device=device)
     with config_context(array_api_dispatch=True):
