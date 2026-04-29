@@ -761,6 +761,11 @@ def _max_precision_float_dtype(xp, device):
     Note that scikit-learn only considers float32 and float64 as suitable
     floating point dtypes.
     """
+    if _is_numpy_namespace(xp):
+        # Special case NumPy for backward compat with older versions that do
+        # not implement __array_namespace_info__.
+        return xp.float64
+
     floating_dtypes = xp.__array_namespace_info__().dtypes(
         kind="real floating", device=device
     )
