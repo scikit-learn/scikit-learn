@@ -32,6 +32,8 @@ REMOVE_TYPES_DEFAULT = (
     tuple,
 )
 
+NamespaceAndDevice = namedtuple("NamespaceAndDevice", ["xp", "device"])
+
 
 def yield_namespaces(include_numpy_namespaces=True):
     """Yield supported namespace.
@@ -131,9 +133,6 @@ def yield_mixed_namespace_input_permutations():
     * array-api-strict to non-NumPy (this pair also has no special hardware
       requirements to allow for local testing)
     """
-
-    NamespaceAndDevice = namedtuple("NamespaceAndDevice", ["xp", "device"])
-
     yield (
         NamespaceAndDevice("cupy", None),
         NamespaceAndDevice("torch", "cuda"),
@@ -557,9 +556,7 @@ def move_to(*arrays, xp, device):
         Tuple of arrays with the same namespace and device as reference. Single array
         returned if only one `arrays` input.
     """
-    if (
-        isinstance(device, str) and device.startswith("xpu") and ":" not in device
-    ):  # pragma: nocover
+    if isinstance(device, str) and device == "xpu":  # pragma: nocover
         # XXX: Workaround for PyTorch XPU bug for `from_dlpack` calls with
         # device strings that do not include any device number suffix.
         # https://github.com/pytorch/pytorch/issues/181140
@@ -761,6 +758,11 @@ def _max_precision_float_dtype(xp, device):
     Note that scikit-learn only considers float32 and float64 as suitable
     floating point dtypes.
     """
+    if _is_numpy_namespace(xp):
+        # Special case NumPy for backward compat with older versions that do
+        # not implement __array_namespace_info__.
+        return xp.float64
+
     floating_dtypes = xp.__array_namespace_info__().dtypes(
         kind="real floating", device=device
     )

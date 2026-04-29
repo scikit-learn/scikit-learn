@@ -1352,11 +1352,11 @@ def _array_api_for_tests(array_namespace, device_name=None, dtype_name=None):
         dpctl = pytest.importorskip("dpctl")
         if device_name is None:
             available_devices = dpctl.get_devices()
-            if len(available_devices) == 0:
+            if not available_devices:
                 raise SkipTest("Skipping dpnp test because no SYCL devices found")
             else:
                 device = available_devices[0]
-        elif len(dpctl.get_devices(device_type=device_name)) == 0:
+        elif not dpctl.get_devices(device_type=device_name):
             raise SkipTest(f"Skipping dpnp test because no {device_name} device found")
 
     elif array_namespace == "torch" and device_name == "mps":
