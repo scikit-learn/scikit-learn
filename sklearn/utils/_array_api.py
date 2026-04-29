@@ -558,7 +558,7 @@ def move_to(*arrays, xp, device):
         returned if only one `arrays` input.
     """
     if (
-        isinstance(device, str) and device.startswith("xpu") and ":" not in device
+        isinstance(device, str) and device == "xpu"
     ):  # pragma: nocover
         # XXX: Workaround for PyTorch XPU bug for `from_dlpack` calls with
         # device strings that do not include any device number suffix.
