@@ -106,7 +106,7 @@ def test_get_visual_block_pipeline():
         "do_nothing_more: passthrough",
         "classifier: LogisticRegression",
     )
-    assert est_html_info.dash_wrapped
+    assert not est_html_info.dash_wrapped
     assert est_html_info.name_details == [str(est) for _, est in pipe.steps]
 
 
@@ -236,14 +236,16 @@ def test_estimator_html_repr_pipeline():
     assert "prefers-color-scheme" in html_output
 
 
-def test_nested_pipeline_has_dashed_wrapper():
-    """Check that a Pipeline nested in a meta-estimator is dash-wrapped.
+def test_column_transformer_pipeline_branches_are_not_dash_wrapped():
+    """Check ColumnTransformer pipeline branches are not dash-wrapped.
+
     Non-regression test for:
-    https://github.com/scikit-learn/scikit-learn/issues/32146"""
+    https://github.com/scikit-learn/scikit-learn/issues/32146
+    """
     estimator = ColumnTransformer(
         [
             (
-                "pipe",
+                "num",
                 Pipeline(
                     [
                         ("scaler", StandardScaler()),
@@ -251,14 +253,39 @@ def test_nested_pipeline_has_dashed_wrapper():
                     ]
                 ),
                 [0, 1],
-            )
+            ),
+            ("cat", Pipeline([("onehot", OneHotEncoder())]), [2]),
         ]
     )
 
     html_output = estimator_html_repr(estimator)
+    for branch_name in ("num", "cat"):
+        pattern = (
+            r'<div class="sk-parallel-item"><div class="sk-item sk-dashed-wrapped">.*?'
+            rf"<div><div>{branch_name}</div></div></label>"
+        )
+        assert not re.search(pattern, html_output, flags=re.DOTALL)
+
+
+def test_meta_estimator_pipeline_estimator_is_dash_wrapped():
+    """Check meta-estimator Pipeline parameters are dash-wrapped.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/32146
+    """
+    estimator = OneVsOneClassifier(
+        Pipeline(
+            [
+                ("scaler", StandardScaler()),
+                ("classifier", LinearSVC()),
+            ]
+        )
+    )
+
+    html_output = estimator_html_repr(estimator)
     pattern = (
-        r"<div><div>pipe</div></div></label>.*?"
-        r'<div class="sk-serial"><div class="sk-item sk-dashed-wrapped">'
+        r'<div class="sk-parallel-item"><div class="sk-item sk-dashed-wrapped">.*?'
+        r"<div><div>estimator: Pipeline</div></div></label>"
     )
 
     assert re.search(pattern, html_output, flags=re.DOTALL)
