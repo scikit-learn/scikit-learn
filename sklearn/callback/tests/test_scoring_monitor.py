@@ -366,3 +366,12 @@ def test_get_logs_include_lineage_ancestor_retrieval(as_pandas):
 
     assert len(sibling_rows) == max_iter
     assert ancestors_info_path == expected_ancestors_info_path
+
+
+def test_scoring_monitor_copy_mutable_arg():
+    """Test that a mutable scoring argument gets copied."""
+    scoring = ["r2", "neg_mean_squared_error"]
+    callback = ScoringMonitor(scoring=scoring)
+
+    assert callback.scoring == scoring
+    assert callback.scoring is not scoring
