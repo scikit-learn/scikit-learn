@@ -1400,7 +1400,9 @@ def _array_api_for_tests(array_namespace, device_name=None, dtype_name=None):
     # xp.asarray(..., device=) in those libraries.
     device = device_name if device is None else device
 
-    if dtype_name == "float64" and _max_precision_float_dtype(xp, device) != xp.float64:
+    if (
+        dtype_name == "float64" and _max_precision_float_dtype(xp, device) != xp.float64
+    ):  # pragma: nocover
         skip_msg = f"{array_namespace} does not support float64 on device {device}"
         raise SkipTest(skip_msg)
 
