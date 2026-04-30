@@ -90,6 +90,8 @@ contextual information about the tasks. Here's an example of the logs of the
     100     (0, 100)                (0,)  ...                True  0.973333
     101     (0, 101)                (0,)  ...                True  0.973333
 
+    [102 rows x 7 columns]
+
 
 Usage with meta-estimators
 **************************
