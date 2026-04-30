@@ -15,6 +15,7 @@ from scipy import linalg, sparse
 from sklearn.utils._array_api import (
     _average,
     _is_numpy_namespace,
+    _matching_numpy_dtype,
     _max_precision_float_dtype,
     _nanmean,
     _nansum,
@@ -322,12 +323,18 @@ def _randomized_range_finder(
     # one day.
     Q = random_state.normal(size=(A.shape[1], size))
     if is_array_api_compliant:
+        if xp.isdtype(A.dtype, kind="real floating"):
+            dtype = _matching_numpy_dtype(A, xp=xp)
+        else:
+            dtype = _max_precision_float_dtype(xp, device=device(A))
+            dtype = np.float32 if dtype == xp.float32 else np.float64
+        # Downcast while Q is still a NumPy array to avoid allocating float64
+        # on devices that do not support it. The Array API does not require
+        # xp.asarray(..., dtype=...) to accept such a downcast during conversion.
+        Q = Q.astype(dtype, copy=False)
         Q = xp.asarray(Q, device=device(A))
     else:
         Q = xp.asarray(Q)
-    if hasattr(A, "dtype") and xp.isdtype(A.dtype, kind="real floating"):
-        # Use float32 computation and components if A has a float32 dtype.
-        Q = xp.astype(Q, A.dtype, copy=False)
 
     # Deal with "auto" mode
     if power_iteration_normalizer == "auto":
