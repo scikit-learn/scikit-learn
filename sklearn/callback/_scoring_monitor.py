@@ -1,7 +1,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import copy
 import datetime
 import uuid
 from collections import defaultdict
@@ -107,18 +106,6 @@ class ScoringMonitor:
     )
     def __init__(self, *, scoring):
         self.scoring = scoring
-        # Copy scoring if it is mutable
-        if isinstance(self.scoring, dict) or isinstance(self.scoring, list):
-            self.scoring = copy.copy(self.scoring)
-        # Turn the scorer into a MultimetricScorer for convenience
-        from sklearn.metrics._scorer import _BaseScorer
-
-        self._scoring_processed = self.scoring
-        if isinstance(self.scoring, str):
-            self._scoring_processed = [self.scoring]
-        if callable(self.scoring) and isinstance(self.scoring, _BaseScorer):
-            self._scoring_processed = {"score": self.scoring}
-
         self._shared_log = get_callback_manager().list()
         self._estimator_scorers = {}
 
@@ -127,9 +114,19 @@ class ScoringMonitor:
         # set on different estimators and the scorer is the estimator's default scorer.
         if context.estimator_name not in self._estimator_scorers:
             from sklearn.metrics import check_scoring
+            from sklearn.metrics._scorer import _BaseScorer
+
+            # Turn the scorer into a MultimetricScorer for convenience
+            scoring_processed = self.scoring
+            if isinstance(scoring_processed, str):
+                scoring_processed = [scoring_processed]
+            if callable(scoring_processed) and isinstance(
+                scoring_processed, _BaseScorer
+            ):
+                scoring_processed = {"score": scoring_processed}
 
             self._estimator_scorers[context.estimator_name] = check_scoring(
-                estimator, self._scoring_processed
+                estimator, scoring_processed
             )
 
     def teardown(self, estimator, context):
