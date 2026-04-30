@@ -177,7 +177,7 @@ def test_standard_scaler_sample_weight_array_api(
 ):
     # N.B. The sample statistics for Xw w/ sample_weight should match
     #      the statistics of X w/ uniform sample_weight.
-    xp, device = _array_api_for_tests(namespace, device_name)
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
 
     X = np.array(X).astype(dtype_name, copy=False)
     y = np.ones(X.shape[0]).astype(dtype_name, copy=False)
@@ -2114,7 +2114,7 @@ def test_binarizer(constructor):
 )
 def test_binarizer_array_api_int(array_namespace, device_name, dtype_name):
     # Checks that Binarizer works with integer elements and float threshold
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     for dtype_name_ in [dtype_name, "int32", "int64"]:
         X_np = np.reshape(np.asarray([0, 1, 2, 3, 4], dtype=dtype_name_), (-1, 1))
         X_xp = xp.asarray(X_np, device=device)

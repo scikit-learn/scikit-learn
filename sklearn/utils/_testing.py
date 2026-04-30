@@ -45,7 +45,10 @@ from sklearn.utils import (
     TargetTags,
     TransformerTags,
 )
-from sklearn.utils._array_api import _check_array_api_dispatch
+from sklearn.utils._array_api import (
+    _check_array_api_dispatch,
+    _max_precision_float_dtype,
+)
 from sklearn.utils.fixes import (
     _IS_32BIT,
     VisibleDeprecationWarning,
@@ -1302,7 +1305,7 @@ class MinimalTransformer:
         )
 
 
-def _array_api_for_tests(array_namespace, device_name=None):
+def _array_api_for_tests(array_namespace, device_name=None, dtype_name=None):
     """Return (xp, device) for array API testing.
 
     Parameters
@@ -1345,6 +1348,17 @@ def _array_api_for_tests(array_namespace, device_name=None):
         and not xp.backends.cuda.is_built()
     ):
         raise SkipTest("PyTorch test requires cuda, which is not available")
+    elif array_namespace == "dpnp":  # pragma: nocover
+        dpctl = pytest.importorskip("dpctl")
+        if device_name is None:
+            available_devices = dpctl.get_devices()
+            if not available_devices:
+                raise SkipTest("Skipping dpnp test because no SYCL devices found")
+            else:
+                device = available_devices[0]
+        elif not dpctl.get_devices(device_type=device_name):
+            raise SkipTest(f"Skipping dpnp test because no {device_name} device found")
+
     elif array_namespace == "torch" and device_name == "mps":
         if os.getenv("PYTORCH_ENABLE_MPS_FALLBACK") != "1":
             # For now we need PYTORCH_ENABLE_MPS_FALLBACK=1 for all estimators to work
@@ -1384,7 +1398,15 @@ def _array_api_for_tests(array_namespace, device_name=None):
     # object. For all other libraries we return a string or `None`.
     # This works because strings are accepted as arguments to
     # xp.asarray(..., device=) in those libraries.
-    return xp, device_name if device is None else device
+    device = device_name if device is None else device
+
+    if (
+        dtype_name == "float64" and _max_precision_float_dtype(xp, device) != xp.float64
+    ):  # pragma: nocover
+        skip_msg = f"{array_namespace} does not support float64 on device {device}"
+        raise SkipTest(skip_msg)
+
+    return xp, device
 
 
 def _get_warnings_filters_info_list():

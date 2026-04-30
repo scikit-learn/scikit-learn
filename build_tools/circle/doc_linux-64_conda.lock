@@ -286,7 +286,7 @@ https://conda.anaconda.org/conda-forge/noarch/jsonschema-4.26.0-pyhcf101f3_0.con
 https://conda.anaconda.org/conda-forge/noarch/jupyterlite-pyodide-kernel-0.7.1-pyhcf101f3_0.conda#4552b601cf622dea2bb5075baccc2c5b
 https://conda.anaconda.org/conda-forge/linux-64/libblas-3.11.0-6_h5875eb1_mkl.conda#d03e4571f7876dcd4e530f3d07faf333
 https://conda.anaconda.org/conda-forge/linux-64/mkl-devel-2025.3.1-ha770c72_10.conda#568282798682e81eb59c592b8a0267ad
-https://conda.anaconda.org/conda-forge/linux-64/polars-runtime-32-1.39.3-py310hffdcd12_1.conda#f9327f9f2cfc4215f55b613e64afd3ba
+https://conda.anaconda.org/conda-forge/linux-64/polars-runtime-32-1.40.0-py310hffdcd12_0.conda#8eacf9ff4d4e1ca1b52f8f3ba3e0c993
 https://conda.anaconda.org/conda-forge/noarch/pytest-xdist-3.8.0-pyhd8ed1ab_0.conda#8375cfbda7c57fbceeda18229be10417
 https://conda.anaconda.org/conda-forge/linux-64/pyzmq-27.1.0-py312hda471dd_2.conda#082985717303dab433c976986c674b35
 https://conda.anaconda.org/conda-forge/linux-64/qt6-main-6.11.0-pl5321h16c4a6b_4.conda#c81127acb50fdc7760682495fc9ab088
@@ -297,7 +297,7 @@ https://conda.anaconda.org/conda-forge/noarch/jupyter_client-8.8.0-pyhcf101f3_0.
 https://conda.anaconda.org/conda-forge/linux-64/libcblas-3.11.0-6_hfef963f_mkl.conda#72cf77ee057f87d826f9b98cacd67a59
 https://conda.anaconda.org/conda-forge/linux-64/liblapack-3.11.0-6_h5e43f62_mkl.conda#8b13738802df008211c9ecd08775ca21
 https://conda.anaconda.org/conda-forge/noarch/nbformat-5.10.4-pyhd8ed1ab_1.conda#bbe1963f1e47f594070ffe87cdf612ea
-https://conda.anaconda.org/conda-forge/noarch/polars-1.39.3-pyh58ad624_1.conda#d5a4e013a30dd8dfde9ab39f45aaf9c1
+https://conda.anaconda.org/conda-forge/noarch/polars-1.40.0-pyh58ad624_0.conda#fd16be490f5403adfbf27dd4901bbe34
 https://conda.anaconda.org/conda-forge/noarch/pooch-1.9.0-pyhd8ed1ab_0.conda#dd4b6337bf8886855db6905b336db3c8
 https://conda.anaconda.org/conda-forge/linux-64/pyside6-6.11.0-py314h3987850_2.conda#c77e1fe23b6cf0b6077e5f924ac420c9
 https://conda.anaconda.org/conda-forge/noarch/jupyter_events-0.12.0-pyhe01879c_0.conda#31e11c30bbee1682a55627f953c6725a

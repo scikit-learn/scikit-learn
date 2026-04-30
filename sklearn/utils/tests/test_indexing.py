@@ -116,7 +116,7 @@ def test_determine_key_type_slice_error():
     yield_namespace_device_dtype_combinations(),
 )
 def test_determine_key_type_array_api(array_namespace, device_name, dtype_name):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     with sklearn.config_context(array_api_dispatch=True):
         int_array_key = xp.asarray([1, 2, 3], device=device)
@@ -157,7 +157,7 @@ def test_determine_key_type_array_api(array_namespace, device_name, dtype_name):
 def test_safe_indexing_array_api_support(
     array_namespace, device_name, dtype_name, indexing_key, axis
 ):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     array_to_index_np = np.arange(16).reshape(4, 4)
     expected_result = _safe_indexing(array_to_index_np, indexing_key, axis=axis)
@@ -504,12 +504,16 @@ def test_get_column_indices_pandas_nonunique_columns_error(key):
     assert str(exc_info.value) == err_msg
 
 
-def test_get_column_indices_interchange():
-    """Check _get_column_indices for edge cases with the interchange"""
-    pl = pytest.importorskip("polars")
-
-    # Polars dataframes go down the interchange path.
-    df = pl.DataFrame([[1, 2, 3], [4, 5, 6]], schema=["a", "b", "c"])
+@pytest.mark.parametrize("df_type", ["interchange", "polars"])
+def test_get_column_indices_interchange_and_polars(df_type):
+    """Check _get_column_indices for edge cases with the interchange and polars"""
+    if df_type == "polars":
+        pl = pytest.importorskip("polars")
+        df = pl.DataFrame([[1, 2, 3], [4, 5, 6]], schema=["a", "b", "c"])
+    else:
+        # Pyarrow tables go down the interchange path.
+        pa = pytest.importorskip("pyarrow")
+        df = pa.table([[1, 4], [2, 5], [3, 6]], names=["a", "b", "c"])
 
     key_results = [
         (slice(1, None), [1, 2]),

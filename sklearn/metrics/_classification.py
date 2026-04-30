@@ -3408,8 +3408,9 @@ def log_loss(
 
     References
     ----------
-    C.M. Bishop (2006). Pattern Recognition and Machine Learning. Springer,
-    p. 209.
+    C.M. Bishop (2006). `Pattern Recognition and Machine Learning
+    <https://www.microsoft.com/en-us/research/wp-content/uploads/2006/01/Bishop-Pattern-Recognition-and-Machine-Learning-2006.pdf>`_.
+    Springer, p. 209.
 
     Examples
     --------
