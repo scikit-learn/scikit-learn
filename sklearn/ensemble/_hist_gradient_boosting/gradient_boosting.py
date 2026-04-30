@@ -1563,9 +1563,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
           data has feature names).
         - `"from_dtype"`: dataframe columns with dtype "Categorical" and "Enum" are
           considered to be categorical features. The input must be a dataframe that
-          is supported by narwhals (or supports it): :ref:`narwhals.from_native(X)
-          <narwhals:api-reference/narwhals/#narwhals.from_native>` must work.
-          This is the case, for instance, for pandas and polars DataFrames.
+          is supported by narwhals (or supports it): :func:`narwhals.from_native` must
+          work. This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, there must be at most `max_bins` unique
         categories. Negative values for categorical features encoded as numeric
@@ -1957,9 +1956,8 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
           data has feature names).
         - `"from_dtype"`: dataframe columns with dtype "Categorical" and "Enum" are
           considered to be categorical features. The input must be a dataframe that
-          is supported by narwhals (or supports it): :ref:`narwhals.from_native(X)
-          <narwhals:api-reference/narwhals/#narwhals.from_native>` must work.
-          This is the case, for instance, for pandas and polars DataFrames.
+          is supported by narwhals (or supports it): :func:`narwhals.from_native` must
+          work. This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, there must be at most `max_bins` unique
         categories. Negative values for categorical features encoded as numeric

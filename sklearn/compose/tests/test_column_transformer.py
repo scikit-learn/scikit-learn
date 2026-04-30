@@ -310,7 +310,6 @@ def test_column_transformer_dataframe(constructor_name):
             return self
 
         def transform(self, X, y=None):
-            print(f"{type(X)=}")
             assert isinstance(X, self.expected_type_transform)
             if len(X.shape) < 2:
                 X = _convert_container(X, constructor_name)

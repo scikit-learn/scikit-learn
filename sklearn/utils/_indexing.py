@@ -63,7 +63,7 @@ def _array_indexing(array, key, key_dtype, axis):
 
 
 def _narwhals_indexing(X, key, key_dtype, axis):
-    """Index a narhals dataframe or series."""
+    """Index a narwhals dataframe or series."""
     X = nw.from_native(X, allow_series=True)
     if (
         not isinstance(key, (int, slice))
@@ -92,10 +92,9 @@ def _narwhals_indexing(X, key, key_dtype, axis):
     if np.isscalar(key):
         if len(X.shape) <= 1:
             return X_indexed
-        # `X_indexed` is a DataFrame with a single row; we return a Series to be
-        # consistent with pandas
-        # Christian Lorentzen really dislikes this behaviour and favours to return a
-        # dataframe.
+        # TODO: `X_indexed` is a DataFrame with a single row; we return a Series to be
+        # consistent with pandas. Narwhals would return a dataframe which is
+        # advantageous if the columns have different dtypes.
         return np.array([col.item(0) for col in X_indexed.iter_columns()])
     return X_indexed.to_native()
 

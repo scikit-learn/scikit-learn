@@ -1413,7 +1413,7 @@ def test_num_samples_on_1d(constructor_name):
     "constructor_name",
     ["list", "tuple", "array", "sparse", "dataframe", "pandas", "pyarrow", "polars"],
 )
-def test_num_samples_on_datagrame_likes(constructor_name):
+def test_num_samples_on_dataframe_likes(constructor_name):
     """Test _num_samples on different dataframe-like input X."""
     X = _convert_container([[1, 11], [2, 22], [3, 33]], constructor_name)
     assert _num_samples(X) == 3
