@@ -2028,7 +2028,7 @@ def test_metrics_pos_label_error_str(metric, y_pred_threshold, dtype_y_str):
 def check_array_api_metric(
     metric, array_namespace, device_name, dtype_name, a_np, b_np, **metric_kwargs
 ):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     a_xp = xp.asarray(a_np, device=device)
     b_xp = xp.asarray(b_np, device=device)
@@ -2688,7 +2688,7 @@ def test_array_api_classification_mixed_string_numeric_input(
     a mix of string and numeric inputs (numeric input should be able to be of
     any supported namespace/device), with array API dispatch enabled.
     """
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     metric = ALL_METRICS[metric_name]
 
     # Binary
