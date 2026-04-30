@@ -117,7 +117,7 @@ def _assert_all_finite(
         if _object_dtype_isnan(X).any():
             raise ValueError(
                 "Input contains NaN values. Please handle missing values "
-                "(e.g., using imputation or removal) before passing data to the estimator."
+                "before passing data to the estimator."
             )
 
     # We need only consider float arrays, hence can early return for all else.
