@@ -1262,7 +1262,7 @@ class LogisticRegression(
 
         Parameters
         ----------
-        callbacks : callback or list of callbacks
+        *callbacks : callback instances
             The callbacks to set.
 
         Returns
