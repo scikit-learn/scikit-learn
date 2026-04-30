@@ -1392,9 +1392,10 @@ def _matching_numpy_dtype(X, xp=None):
     if _is_numpy_namespace(xp):
         return X.dtype
 
-    dtypes_dict = xp.__array_namespace_info__().dtypes(
-        device=getattr(X, "device", None)
-    )
+    if X.dtype == xp.float64:
+        return numpy.float64
+
+    dtypes_dict = xp.__array_namespace_info__().dtypes()
     reversed_dtypes_dict = {dtype: name for name, dtype in dtypes_dict.items()}
     dtype_name = reversed_dtypes_dict[X.dtype]
-    return numpy.__array_namespace_info__().dtypes()[dtype_name]
+    return np_compat.__array_namespace_info__().dtypes()[dtype_name]
