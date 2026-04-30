@@ -960,11 +960,6 @@ class StandardScaler(
         self : object
             Fitted scaler.
         """
-        callback_ctx = self._init_callback_context()
-        callback_ctx.call_on_fit_task_begin(
-            estimator=self, X=X, y=y, metadata={"sample_weight": sample_weight}
-        )
-
         xp, _, X_device = get_namespace_and_device(X)
         first_call = not hasattr(self, "n_samples_seen_")
         X = validate_data(
@@ -976,6 +971,11 @@ class StandardScaler(
             reset=first_call,
         )
         n_features = X.shape[1]
+
+        callback_ctx = self._init_callback_context()
+        callback_ctx.call_on_fit_task_begin(
+            estimator=self, X=X, y=y, metadata={"sample_weight": sample_weight}
+        )
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
