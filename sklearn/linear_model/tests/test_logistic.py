@@ -2702,7 +2702,7 @@ def test_logistic_regression_array_api_compliance(
     device_name,
     dtype_name,
 ):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     X_np = iris.data.astype(dtype_name, copy=True)
     n_samples, _ = X_np.shape
     X_xp = xp.asarray(X_np, device=device)
@@ -2862,7 +2862,7 @@ def test_logistic_regression_array_api_warm_start(
 ):
     """Test that warm_start=True works with array API inputs across
     multiple fit calls for both binary and multiclass classification."""
-    xp, device_ = _array_api_for_tests(array_namespace, device_name)
+    xp, device_ = _array_api_for_tests(array_namespace, device_name, dtype_name)
     X_np = iris.data.astype(dtype_name, copy=True)
     if binary:
         y_np = (iris.target > 0).astype(dtype_name)

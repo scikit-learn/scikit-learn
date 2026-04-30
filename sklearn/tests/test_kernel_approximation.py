@@ -360,7 +360,7 @@ def test_nystroem_approximation():
 def test_nystroem_approximation_array_api(
     array_namespace, device_name, dtype_name, kernel, n_components
 ):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     rnd = np.random.RandomState(0)
     n_samples = 10
     # Ensure full-rank linear kernel to limit the impact of device-specific

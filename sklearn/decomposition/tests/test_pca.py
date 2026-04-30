@@ -938,7 +938,7 @@ def test_variance_correctness(copy):
 def check_array_api_get_precision(
     name, estimator, array_namespace, device_name, dtype_name
 ):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     iris_np = iris.data.astype(dtype_name)
     iris_xp = xp.asarray(iris_np, device=device)
 
@@ -1046,7 +1046,7 @@ def test_pca_mle_array_api_compliance(
 
     # Simpler variant of the generic check_array_api_input checker tailored for
     # the specific case of PCA with mle-trimmed components.
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     X, y = make_classification(random_state=42)
     X = X.astype(dtype_name, copy=False)
