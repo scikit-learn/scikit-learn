@@ -12,18 +12,18 @@ This part of the user guide explains how scikit-learn supports tabular data.
 Propagation of Feature Names
 ============================
 
-By default, scikit-learn transformers (estimators with a :meth:`transform` method)
-return numpy arrays (sometimes also sparse arrays). Because numpy arrays do not provide
-names for the indices of axes/dimensions, prior to version 1.0
+By default, scikit-learn :term:`transformers` (estimators with a :meth:`transform`
+method) return numpy arrays (sometimes also sparse arrays). Because numpy arrays do
+not provide names for the indices of axes/dimensions, prior to version 1.0
 the :class:`pipeline.Pipeline` did not know how to propagate feature names:
 
-- The single step estimators did not know how to handle incoming features names.
-- The pipeline did not know how to pass features names from step to step.
+- The single step estimators did not know how to handle incoming feature names.
+- The pipeline did not know how to pass feature names from step to step.
 
 In practice, a lot of use cases start with tabular data like a `pandas dataframe
 <https://pandas.pydata.org/docs/user_guide/dsintro.html#dataframe>`_ or a
 `polars dataframe <https://docs.pola.rs/api/python/stable/reference/dataframe/index.html>`__
-which have column/features names.
+which have column/feature names.
 
 A first step to support this important use case was made by the addition of the
 :class:`compose.ColumnTransformer` in :ref:`version 0.20 <changes_0_20>`.
@@ -53,7 +53,7 @@ implemented for pandas dataframes in :ref:`version 1.2 <release_notes_1_2>` and 
 polars dataframes in :ref:`version 1.4 <release_notes_1_4>`. It introduced the
 `set_output` API to configure transformers to output pandas or polars DataFrames.
 The output of transformers can be configured per estimator by calling
-the :meth:`set_output` method or globally by setting `set_config(transform_output="pandas")`.
+the :meth:`set_output` method or globally, by setting `set_config(transform_output="pandas")`.
 Set it to `"polars"` instead of `"pandas"` if you want the same thing to happen but with
 polars DataFrames.
 

@@ -4,7 +4,7 @@ Data Interoperability
 
 .. currentmodule:: sklearn
 
-Scikit-learn handles four kinds of data for :term:`X` as in `fit(X, y)`, `fit(X)`,
+Scikit-learn handles four kinds of data for :term:`X` as used in `fit(X, y)`, `fit(X)`,
 `fit_transform(X)` and `transform(X)` as well as :term:`Xt` as returned by
 `transform(X)` and `fit_transform(X)`:
 
@@ -21,7 +21,7 @@ Scikit-learn handles four kinds of data for :term:`X` as in `fit(X, y)`, `fit(X)
   :class:`isotonic.IsotonicRegression` can not.
 
   Some transformers return sparse `Xt` from `transform` and `fit_transform`.
-  Most often, it can be controlled by `sparse_output` as in
+  Most often, it can be controlled by a `sparse_output` parameter as in
   :class:`preprocessing.SplineTransformer`.
 
   To control whether it returns a sparse matrix or a sparse array, use
