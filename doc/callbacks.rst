@@ -77,18 +77,19 @@ contextual information about the tasks. Here's an example of the logs of the
     LogisticRegression - fit ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
     LogisticRegression(max_iter=200)
     >>> scoring_monitor.get_logs().data_as_pandas
-        task_id_path parent_task_id_path      estimator_name   task_name  task_id  sequential_subtasks  accuracy
-    0         (0, 0)                (0,)  LogisticRegression  lbfgs_iter        0                 True  0.333333
-    1         (0, 1)                (0,)  LogisticRegression  lbfgs_iter        1                 True  0.333333
-    2         (0, 2)                (0,)  LogisticRegression  lbfgs_iter        2                 True  0.666667
-    3         (0, 3)                (0,)  LogisticRegression  lbfgs_iter        3                 True  0.926667
-    4         (0, 4)                (0,)  LogisticRegression  lbfgs_iter        4                 True  0.673333
-    ..           ...                 ...                 ...         ...      ...                  ...       ...
-    105     (0, 105)                (0,)  LogisticRegression  lbfgs_iter      105                 True  0.973333
-    106     (0, 106)                (0,)  LogisticRegression  lbfgs_iter      106                 True  0.973333
-    107     (0, 107)                (0,)  LogisticRegression  lbfgs_iter      107                 True  0.973333
-    108     (0, 108)                (0,)  LogisticRegression  lbfgs_iter      108                 True  0.973333
-    109     (0, 109)                (0,)  LogisticRegression  lbfgs_iter      109                 True  0.973333
+        task_id_path parent_task_id_path  ... sequential_subtasks  accuracy
+    0         (0, 0)                (0,)  ...                True  0.333333
+    1         (0, 1)                (0,)  ...                True  0.333333
+    2         (0, 2)                (0,)  ...                True  0.666667
+    3         (0, 3)                (0,)  ...                True  0.926667
+    4         (0, 4)                (0,)  ...                True  0.673333
+    ..           ...                 ...  ...                 ...       ...
+    97       (0, 97)                (0,)  ...                True  0.973333
+    98       (0, 98)                (0,)  ...                True  0.973333
+    99       (0, 99)                (0,)  ...                True  0.973333
+    100     (0, 100)                (0,)  ...                True  0.973333
+    101     (0, 101)                (0,)  ...                True  0.973333
+
 
 Usage with meta-estimators
 **************************
