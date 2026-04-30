@@ -1121,6 +1121,9 @@ def check_warnings_as_errors(warning_info, warnings_as_errors):
             # Special treatment when regex is used
             if "Pyarrow" in message:
                 message = "\nPyarrow will become a required dependency"
+            # Regex in _testing.py; emit the real Python 3.14 deprecation text.
+            elif message == r"codecs\.open\(\) is deprecated":
+                message = "codecs.open() is deprecated. Use open() instead."
 
             warnings.warn(
                 message=message,

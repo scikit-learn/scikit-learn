@@ -503,6 +503,40 @@ def test_check_array_numeric_error(X):
         check_array(X, dtype="numeric")
 
 
+def test_check_array_pandas_string_dtype_numeric_error():
+    """check_array raises an error for pandas StringDtype with dtype='numeric'.
+
+    Non-regression test for pandas 3 where string columns use StringDtype
+    instead of object dtype. check_array should reject string data when
+    dtype='numeric' is requested.
+    """
+    pd = pytest.importorskip("pandas")
+
+    # DataFrame with all string columns
+    df_str = pd.DataFrame({"a": ["x", "y", "z"], "b": ["1", "2", "3"]})
+    with pytest.raises(ValueError):
+        check_array(df_str, dtype="numeric")
+
+    # DataFrame with mixed string/numeric columns
+    df_mixed = pd.DataFrame({"a": [1.0, 2.0, 3.0], "b": ["x", "y", "z"]})
+    with pytest.raises(ValueError):
+        check_array(df_mixed, dtype="numeric")
+
+    # Series with string dtype
+    s_str = pd.Series(["a", "b", "c"])
+    with pytest.raises(ValueError):
+        check_array(s_str, dtype="numeric", ensure_2d=False)
+
+    # String data with dtype=None should still work
+    result = check_array(df_str, dtype=None)
+    assert result.dtype == np.object_
+    assert_array_equal(result, df_str.values)
+
+    result = check_array(s_str, dtype=None, ensure_2d=False)
+    assert result.dtype == np.object_
+    assert_array_equal(result, s_str.values)
+
+
 @pytest.mark.parametrize(
     "pd_dtype", ["Int8", "Int16", "UInt8", "UInt16", "Float32", "Float64"]
 )
@@ -1041,7 +1075,7 @@ def test_check_consistent_length():
 )
 def test_check_consistent_length_array_api(array_namespace, device_name, dtype_name):
     """Test that check_consistent_length works with different array types."""
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     with config_context(array_api_dispatch=True):
         check_consistent_length(
@@ -1665,7 +1699,7 @@ def test_check_sample_weight():
     yield_namespace_device_dtype_combinations(),
 )
 def test_check_sample_weight_array_api(array_namespace, device_name, dtype_name):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     with config_context(array_api_dispatch=True):
         # check array order
         sample_weight = xp.ones(10)[::2]
@@ -1691,7 +1725,7 @@ def test_check_pos_label_consistency(y_true):
 def test_check_pos_label_consistency_array_api(
     array_namespace, device_name, dtype_name, y_true
 ):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     with config_context(array_api_dispatch=True):
         arr = xp.asarray(y_true, device=device)
         assert _check_pos_label_consistency(None, arr) == 1
@@ -1713,7 +1747,7 @@ def test_check_pos_label_consistency_invalid(y_true):
 def test_check_pos_label_consistency_invalid_array_api(
     array_namespace, device_name, dtype_name, y_true
 ):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     with config_context(array_api_dispatch=True):
         arr = xp.asarray(y_true, device=device)
         with pytest.raises(ValueError, match="y_true takes value in"):
@@ -2028,9 +2062,9 @@ def test_get_feature_names_numpy():
     "names, dtypes",
     [
         (["a", 1], "['int', 'str']"),
-        (["pizza", ["a", "b"]], "['list', 'str']"),
+        (["pizza", ("a", "b")], "['str', 'tuple']"),
     ],
-    ids=["int-str", "list-str"],
+    ids=["str-int", "str-tuple"],
 )
 def test_get_feature_names_invalid_dtypes(names, dtypes):
     """Get feature names errors when the feature names have mixed dtypes"""
@@ -2221,10 +2255,19 @@ def test_check_array_multiple_extensions(
 
 
 def test_num_samples_dataframe_protocol():
-    """Use the DataFrame interchange protocol to get n_samples from polars."""
-    pl = pytest.importorskip("polars")
+    """Use the DataFrame interchange protocol to get n_samples."""
+    pa = pytest.importorskip("pyarrow")
 
-    df = pl.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+    class MockDFInterchange:
+        """A dataframe class without .shape attr but with __dataframe__ protocol"""
+
+        def __init__(self, *args, **kwargs):
+            self.df = pa.table(*args, **kwargs)
+
+        def __dataframe__(self):
+            return self.df.__dataframe__()
+
+    df = MockDFInterchange({"a": [1, 2, 3], "b": [4, 5, 6]})
     assert _num_samples(df) == 3
 
 
