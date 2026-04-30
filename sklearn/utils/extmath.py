@@ -322,16 +322,17 @@ def _randomized_range_finder(
     # XXX: generate random number directly from xp if it's possible
     # one day.
     Q = random_state.normal(size=(A.shape[1], size))
-    if is_array_api_compliant:
-        if xp.isdtype(A.dtype, kind="real floating"):
-            dtype = _matching_numpy_dtype(A, xp=xp)
-        else:
-            dtype = _max_precision_float_dtype(xp, device=device(A))
-            dtype = np.float32 if dtype == xp.float32 else np.float64
+    if xp.isdtype(A.dtype, kind="real floating"):
+        dtype = _matching_numpy_dtype(A, xp=xp) if is_array_api_compliant else A.dtype
         # Downcast while Q is still a NumPy array to avoid allocating float64
         # on devices that do not support it. The Array API does not require
         # xp.asarray(..., dtype=...) to accept such a downcast during conversion.
         Q = Q.astype(dtype, copy=False)
+    elif is_array_api_compliant:
+        dtype = _max_precision_float_dtype(xp, device=device(A))
+        dtype = np.float32 if dtype == xp.float32 else np.float64
+        Q = Q.astype(dtype, copy=False)
+    if is_array_api_compliant:
         Q = xp.asarray(Q, device=device(A))
     else:
         Q = xp.asarray(Q)

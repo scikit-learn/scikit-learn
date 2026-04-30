@@ -1151,9 +1151,9 @@ def test_randomized_range_finder_array_api_compliance(
         assert_allclose(move_to(Q_xp, xp=np, device="cpu"), Q_np, atol=atol)
 
     max_dtype = _max_precision_float_dtype(xp, device=device)
-    # Also test with integer input only once per namespace/device, when the
-    # current floating point parametrization uses the max supported precision.
-    if X_xp.dtype != max_dtype:
+    # Also test with integer input only once per namespace/device for
+    # namespaces that support integer-by-floating matmul.
+    if X_xp.dtype != max_dtype or array_namespace in {"array_api_strict", "torch"}:
         return
 
     X_int = (X * 10).astype(np.int64)
