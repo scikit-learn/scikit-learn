@@ -75,6 +75,7 @@ contextual information about the tasks. Here's an example of the logs of the
 
     >>> logreg.fit(X, y)
     LogisticRegression - fit ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+    LogisticRegression(max_iter=200)
     >>> scoring_monitor.get_logs().data_as_pandas
         task_id_path parent_task_id_path      estimator_name   task_name  task_id  sequential_subtasks  accuracy
     0         (0, 0)                (0,)  LogisticRegression  lbfgs_iter        0                 True  0.333333
