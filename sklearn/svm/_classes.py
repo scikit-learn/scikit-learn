@@ -98,7 +98,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         Determines the multi-class strategy if `y` contains more than
         two classes.
         ``"ovr"`` trains n_classes one-vs-rest classifiers, while
-        ``"crammer_singer"`` optimizes a joint objective over all classes.
+        ``"crammer_singer"`` optimizes a joint objective over all classes [1]_.
         While `crammer_singer` is interesting from a theoretical perspective
         as it is consistent, it is seldom used in practice as it rarely leads
         to better accuracy and is more expensive to compute.
@@ -217,6 +217,10 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
     References
     ----------
+    .. [1] `Crammer, K. and Singer, Y., "On the Algorithmic Implementation of
+        Multiclass Kernel-based Vector Machines", JMLR, 2001.
+        <https://jmlr.csail.mit.edu/papers/volume2/crammer01a/crammer01a.pdf>`_
+
     `LIBLINEAR: A Library for Large Linear Classification
     <https://www.csie.ntu.edu.tw/~cjlin/liblinear/>`__
 
