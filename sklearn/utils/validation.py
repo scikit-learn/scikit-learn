@@ -115,7 +115,10 @@ def _assert_all_finite(
     # for object dtype data, we only check for NaNs (GH-13254)
     if not is_array_api and X.dtype == np.dtype("object") and not allow_nan:
         if _object_dtype_isnan(X).any():
-            raise ValueError("Input contains NaN")
+            raise ValueError(
+                "Input contains NaN values. Please handle missing values "
+                "(e.g., imputation or removal) before passing data."
+            )
 
     # We need only consider float arrays, hence can early return for all else.
     if not xp.isdtype(X.dtype, ("real floating", "complex floating")):
