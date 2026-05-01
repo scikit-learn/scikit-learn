@@ -218,6 +218,90 @@ def test_one_hot_encoder_custom_feature_name_combiner():
     with pytest.raises(TypeError, match=err_msg):
         enc.get_feature_names_out()
 
+def test_frequency_same():
+    
+    enc = OrdinalEncoder(
+        handle_unknown="use_encoded_value",categories='frequency', unknown_value=-2
+    )
+
+    X_fit = np.array(
+        [
+            ["b", "x"],
+            ["a", "x"],
+            ["a", "x"],
+            ["a", "x"],
+            ["b", "y"],
+            ["b", "y"],
+            ["a", "z"]
+        ],
+        dtype=object,
+    )
+    X_trans = np.array(
+        [
+            ["a", "xy"],
+            ["bla", "y"],
+            ["a", "x"],
+            ["a", "x"],
+            ["b", "x"],
+            ["b", "x"],
+            ["b", "x"]
+        ],
+        dtype=object,
+    )
+    enc.fit(X_fit)
+
+    X_trans_enc = enc.transform(X_trans)
+    exp = np.array(
+        [
+            [ 0.0, -2.0],
+            [-2.0,  1.0],
+            [ 0.0,  0.0],
+            [ 0.0,  0.0],
+            [ 1.0,  0.0],
+            [ 1.0,  0.0],
+            [ 1.0,  0.0]
+        ], dtype="int64",
+    )
+    
+    assert_array_equal(X_trans_enc, exp)
+    X_trans_inv = enc.inverse_transform(X_trans_enc)
+    inv_exp = np.array(
+        [
+            ["a", None],
+            [None, "y"],
+            ["a", "x"],
+            ["a", "x"],
+            ["b", "x"],
+            ["b", "x"],
+            ["b" ,"x"]
+        ],
+        dtype=object,
+    )
+
+    assert_array_equal(X_trans_inv, inv_exp)
+
+def test_diferent_order():
+    
+    enc = OrdinalEncoder(
+        handle_unknown="use_encoded_value", categories="frequency", unknown_value=-2
+    )
+    enc_second = OrdinalEncoder(
+        handle_unknown="use_encoded_value", categories="frequency", unknown_value=-2
+    )
+
+    X_fit = np.array(
+        [["a", "x"],["a", "x"], ["b", "y"], ["b", "y"], ["c", "z"]], dtype=object
+    )
+
+    X_trans = np.array([["c", "xy"], ["bla", "y"], ["a", "x"]], dtype=object)
+    X_trans_second = np.array([["c", "xy"], ["bla", "y"], ["a", "x"]], dtype=object)
+    enc.fit(X_fit)
+    enc_second.fit(X_fit)
+
+    X_trans_enc = enc.transform(X_trans)
+    X_trans_enc_second = enc_second.transform(X_trans_second)
+    
+    assert_array_equal(X_trans_enc_second, X_trans_enc)
 
 def test_one_hot_encoder_set_params():
     X = np.array([[1, 2]]).T
@@ -690,6 +774,25 @@ def test_ordinal_encoder_inverse():
     with pytest.raises(ValueError, match=msg):
         enc.inverse_transform(X_tr)
 
+#test bunch of ties for frequency
+# test for no ties
+#encoder  dont encode in any particular order . it has auto of alphabetical OrdinalEncoder
+#after this this encoding is fed to the fit functions
+#we have to test if the fit is behaiving normally with the new encoding which will be ordered. 
+def test_ordinal_encoder_frequency():
+    
+    enc = OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-2)
+    X_fit = np.array([["a", "x"], ["b", "y"], ["c", "z"]], dtype=object)
+    X_trans = np.array([["c", "xy"], ["bla", "y"], ["a", "x"]], dtype=object)
+    enc.fit(X_fit)
+
+    X_trans_enc = enc.transform(X_trans)
+    exp = np.array([[2, -2], [-2, 1], [0, 0]], dtype="int64")
+    assert_array_equal(X_trans_enc, exp)
+
+    X_trans_inv = enc.inverse_transform(X_trans_enc)
+    inv_exp = np.array([["c", None], [None, "y"], ["a", "x"]], dtype=object)
+    assert_array_equal(X_trans_inv, inv_exp)
 
 def test_ordinal_encoder_handle_unknowns_string():
     enc = OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-2)
