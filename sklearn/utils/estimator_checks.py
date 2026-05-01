@@ -1093,7 +1093,9 @@ def _check_array_api_core(
     expect_only_array_outputs=True,
 ):
     """Helper to check estimator attributes and method outputs."""
-    xp_X, device_X = _array_api_for_tests(X_ns_and_device.xp, X_ns_and_device.device)
+    xp_X, device_X = _array_api_for_tests(
+        X_ns_and_device.xp, X_ns_and_device.device, dtype_name
+    )
     xp_other, device_other = _array_api_for_tests(
         other_ns_and_device.xp, other_ns_and_device.device
     )
@@ -1163,13 +1165,15 @@ def _check_array_api_core(
             )
         else:
             assert attribute.shape == est_xp_param_np.shape
-            if X_ns_and_device.device == "mps" and np.issubdtype(
-                est_xp_param_np.dtype, np.floating
-            ):
-                # for mps devices the maximum supported floating dtype is float32
-                assert est_xp_param_np.dtype == np.float32
-            else:
-                assert est_xp_param_np.dtype == attribute.dtype
+            expected_dtype = attribute.dtype
+            if np.issubdtype(attribute.dtype, np.floating):
+                max_float_dtype = _max_precision_float_dtype(
+                    xp_X, device=X_ns_and_device.device
+                )
+                # for some devices the maximum supported floating dtype is float32
+                if max_float_dtype == xp_X.float32:
+                    expected_dtype = np.float32
+            assert est_xp_param_np.dtype == expected_dtype
 
     # Check estimator methods, if supported, give the same results
     methods = (
@@ -1445,7 +1449,7 @@ def check_array_api_same_namespace(
     input arrays are from the same namespace and device as the fitted
     attributes.
     """
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, "float64")
 
     X, y = make_classification(n_samples=30, n_features=10, random_state=42)
     X = X.astype("float64", copy=False)
