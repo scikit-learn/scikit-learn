@@ -140,7 +140,8 @@ def dbscan(
 
     Notes
     -----
-    For an example, see :ref:`sphx_glr_auto_examples_cluster_plot_dbscan.py`.
+    For an example, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_density_based_clustering.py`.
 
     This implementation bulk-computes all neighborhood queries, which increases
     the memory complexity to O(n.d) where d is the average number of neighbors,
@@ -349,7 +350,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     DBSCAN(eps=3, min_samples=2)
 
     For an example, see
-    :ref:`sphx_glr_auto_examples_cluster_plot_dbscan.py`.
+    :ref:`sphx_glr_auto_examples_cluster_plot_density_based_clustering.py`.
 
     For a comparison of DBSCAN with other clustering algorithms, see
     :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`

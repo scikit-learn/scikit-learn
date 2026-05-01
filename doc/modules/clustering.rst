@@ -913,15 +913,15 @@ indicating core samples found by the algorithm. Smaller circles are non-core
 samples that are still part of a cluster. Moreover, the outliers are indicated
 by black points below.
 
-.. |dbscan_results| image:: ../auto_examples/cluster/images/sphx_glr_plot_dbscan_002.png
-    :target: ../auto_examples/cluster/plot_dbscan.html
+.. |dbscan_results| image:: ../auto_examples/cluster/images/sphx_glr_plot_density_based_clustering_002.png
+    :target: ../auto_examples/cluster/plot_density_based_clustering.html
     :scale: 50
 
 .. centered:: |dbscan_results|
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_cluster_plot_dbscan.py`
+* :ref:`sphx_glr_auto_examples_cluster_plot_density_based_clustering.py`
 
 .. dropdown:: Implementation
 
@@ -997,7 +997,7 @@ scales by building an alternative representation of the clustering problem.
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_cluster_plot_hdbscan.py`
+* :ref:`sphx_glr_auto_examples_cluster_plot_density_based_clustering.py`
 
 Mutual Reachability Graph
 -------------------------
@@ -1057,11 +1057,11 @@ and as such it no longer needs :math:`\varepsilon` to be given as a hyperparamet
 it relies solely on the choice of `min_samples`, which tends to be a more robust
 hyperparameter.
 
-.. |hdbscan_ground_truth| image:: ../auto_examples/cluster/images/sphx_glr_plot_hdbscan_005.png
-    :target: ../auto_examples/cluster/plot_hdbscan.html
+.. |hdbscan_ground_truth| image:: ../auto_examples/cluster/images/sphx_glr_plot_density_based_clustering_001.png
+    :target: ../auto_examples/cluster/plot_density_based_clustering.html
     :scale: 75
-.. |hdbscan_results| image:: ../auto_examples/cluster/images/sphx_glr_plot_hdbscan_007.png
-    :target: ../auto_examples/cluster/plot_hdbscan.html
+.. |hdbscan_results| image:: ../auto_examples/cluster/images/sphx_glr_plot_density_based_clustering_005.png
+    :target: ../auto_examples/cluster/plot_density_based_clustering.html
     :scale: 75
 
 .. centered:: |hdbscan_ground_truth|
@@ -1106,9 +1106,9 @@ given ``eps`` value using the ``cluster_optics_dbscan`` method. Setting
 thought of as the maximum neighborhood radius from each point to find other
 potential reachable points.
 
-.. |optics_results| image:: ../auto_examples/cluster/images/sphx_glr_plot_optics_001.png
-        :target: ../auto_examples/cluster/plot_optics.html
-        :scale: 50
+.. |optics_results| image:: ../auto_examples/cluster/images/sphx_glr_plot_density_based_clustering_003.png
+    :target: ../auto_examples/cluster/plot_density_based_clustering.html
+    :scale: 50
 
 .. centered:: |optics_results|
 
@@ -1133,7 +1133,7 @@ represented as children of a larger parent cluster.
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_cluster_plot_optics.py`
+* :ref:`sphx_glr_auto_examples_cluster_plot_density_based_clustering.py`
 
 
 .. dropdown:: Comparison with DBSCAN
