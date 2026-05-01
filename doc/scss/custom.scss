@@ -73,6 +73,21 @@ code.literal {
     padding: 1%;
   }
 
+  figure > a {
+    &::after {
+      content: "Click to see the code that generated this plot";
+      display: block;
+      font-style: italic;
+      opacity: 0.7;
+      margin-top: 0.3rem;
+    }
+
+    &:hover > img {
+      box-shadow: 0 0 0 0.15rem var(--pst-color-secondary);
+      border-radius: 0.3rem;
+    }
+  }
+
   // Resize table of contents to make the top few levels of headings more visible
   li.toctree-l1 {
     padding-bottom: 0.5em;
