@@ -1957,7 +1957,7 @@ def distance_metrics():
     return PAIRWISE_DISTANCE_FUNCTIONS
 
 
-def _transposed_dist_wrapper(dist_func, dist_matrix, slice_, *args, **kwargs):
+def _transposed_dist_wrapper(dist_func, slice_, *args, **kwargs):
     """Write in-place to a slice of a distance matrix."""
     return slice_, dist_func(*args, **kwargs).T
 
@@ -1989,6 +1989,7 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
         for s in gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs))
     )
     for slice_, chunk in chunk_generator:
+        print(f"Writing chunk for slice {slice_} to output array.")
         ret[slice_, ...] = chunk
 
     if (X is Y or Y is None) and func is euclidean_distances:
