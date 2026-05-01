@@ -19,6 +19,7 @@ from sklearn.tree import (
     export_text,
     plot_tree,
 )
+from sklearn.tree._export import _rgb_to_hexstring
 
 CLF_CRITERIONS = ("gini", "log_loss")
 REG_CRITERIONS = ("squared_error", "absolute_error", "poisson")
@@ -32,8 +33,12 @@ y_degraded = [1, 1, 1, 1, 1, 1]
 
 
 def test_rgb_to_hexstring():
-    pytest.importorskip("matplotlib")
-    from sklearn.tree._export import _rgb_to_hexstring
+    """
+    Test that _rgb_to_hexstring correctly converts an RGB tuple to a hex color string.
+
+    A previous bug caused incorrect hex color string generation for zero values
+    in the RGB tuple.
+    """
 
     assert _rgb_to_hexstring((0, 255, 0)) == "#00ff00"
 
