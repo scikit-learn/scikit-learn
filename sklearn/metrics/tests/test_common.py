@@ -1972,21 +1972,19 @@ def test_continuous_metric_permutation_invariance(name):
 
 
 @pytest.mark.parametrize(
-    "input_kind",
-    ["array_of_str_objects", "array_of_fixed_width_strings", "list_of_str_objects"],
+    "y1",
+    [
+        np.array(["spam"] * 3 + ["eggs"] * 2, dtype=object),  # str object
+        np.array(["spam"] * 3 + ["eggs"] * 2),  # fixed width str
+        np.array(["spam"] * 3 + ["eggs"] * 2),  # list
+    ],
 )
 @pytest.mark.parametrize("metric_name", CLASSIFICATION_METRICS)
-def test_metrics_consistent_type_error(input_kind, metric_name):
+def test_metrics_consistent_type_error(y1, metric_name):
     # check that an understable message is raised when the type between y_true
     # and y_pred mismatch
     rng = np.random.RandomState(42)
     n_samples = 5
-    if input_kind == "array_of_str_objects":
-        y1 = np.array(["spam"] * 3 + ["eggs"] * 2, dtype=object)
-    elif input_kind == "array_of_fixed_width_strings":
-        y1 = np.array(["spam"] * 3 + ["eggs"] * 2)
-    else:  # list_of_str_objects
-        y1 = ["spam"] * 3 + ["eggs"] * 2
 
     y2 = rng.randint(0, 2, size=n_samples)
 

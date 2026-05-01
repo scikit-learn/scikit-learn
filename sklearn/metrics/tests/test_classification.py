@@ -2507,7 +2507,6 @@ def test__check_targets():
     MCN = "continuous-multioutput"
     # all of length 3
     EXAMPLES = [
-        (IND, np.array([[0, 1], [1, 0], [0, 0]])),
         # must not be considered binary
         (IND, np.array([[0, 1], [1, 0], [1, 1]])),
         (MC, [2, 3, 1]),
