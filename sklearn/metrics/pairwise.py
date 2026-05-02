@@ -1989,6 +1989,8 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
             s,
             X,
             Y[s, ...],
+            # Y_norm_squared is a precomputed per-sample norm passed through kwds;
+            # it must be sliced to match the current Y chunk to avoid dimension mismatch.
             **{k: (v[s] if k == "Y_norm_squared" else v) for k, v in kwds.items()},
         )
         for s in gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs))
