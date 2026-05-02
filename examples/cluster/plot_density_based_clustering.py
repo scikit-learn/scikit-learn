@@ -41,6 +41,7 @@ X = StandardScaler(copy=True).fit_transform(X)
 # Helper to plot cluster labels
 # -----------------------------
 
+
 def plot_labels(ax, X, labels, title, probabilities=None):
     unique_labels = set(labels)
     colors = [plt.cm.Spectral(each) for each in np.linspace(0, 1, len(unique_labels))]
@@ -191,8 +192,6 @@ fig, axes = plt.subplots(1, 3, figsize=(16, 5))
 plot_labels(axes[0], X, db_best.labels_, f"DBSCAN eps={best_eps:.2f}")
 plot_labels(axes[1], X, labels_075, "OPTICS eps=0.75")
 plot_labels(axes[2], X, hdb.labels_, "HDBSCAN min_cluster_size=15")
-fig.suptitle(
-    "Comparing DBSCAN, OPTICS, and HDBSCAN on varying densities", fontsize=12
-)
+fig.suptitle("Comparing DBSCAN, OPTICS, and HDBSCAN on varying densities", fontsize=12)
 plt.tight_layout()
 plt.show()
