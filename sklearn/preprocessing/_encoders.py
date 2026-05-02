@@ -15,7 +15,7 @@ from sklearn.base import (
     _fit_context,
 )
 from sklearn.utils import _safe_indexing, check_array
-from sklearn.utils._encode import _check_unknown, _encode, _get_counts, _unique
+from sklearn.utils._encode import _check_unknown, _encode, _get_counts, _unique,_nandict
 from sklearn.utils._mask import _get_mask
 from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
@@ -25,6 +25,7 @@ from sklearn.utils.validation import (
     check_is_fitted,
     validate_data,
 )
+from sklearn.utils._array_api import _isin, device, get_namespace, xpx
 
 __all__ = ["OneHotEncoder", "OrdinalEncoder"]
 
@@ -88,7 +89,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         )
         self.n_features_in_ = n_features
 
-        if self.categories != "auto" and self.categories != "frequency":
+        if self.categories != "auto" and self.categories != "frequency" :
             if len(self.categories) != n_features:
                 raise ValueError(
                     "Shape mismatch: if categories is an array,"
@@ -97,27 +98,38 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
         self.categories_ = []
         category_counts = []
+        X_list_dict = {}
         compute_counts = return_counts or self._infrequent_enabled
-        X_list_counter = {}
+
         for i in range(n_features):
             Xi = X_list[i]
 
             if self.categories == "auto":
                 result = _unique(Xi, return_counts=compute_counts)
-
                 if compute_counts:
                     cats, counts = result
                     category_counts.append(counts)
                 else:
                     cats = result
             elif self.categories == "frequency":
-                for element in Xi:
-                    if element not in list(X_list_counter.keys()):
-                        X_list_counter[element] = []
-                    X_list_counter[element].append(element)
-                category_counts.append(len(X_list_counter.keys()))
                 result = _unique(Xi, return_counts=compute_counts)
-                cats = result
+                table = _nandict({val: i for i, val in enumerate(Xi)})
+                frequency_table = list(table.values())
+                frequency_table.sort()
+                if "inverted_table" not in dir(self):
+                    self.inverted_table = {}
+
+                for key,value in enumerate(table):
+                    if value in list(self.inverted_table.keys()):
+                        continue
+                    index_frequency = frequency_table.index(table[value])
+                    frequency_table[index_frequency] = -2
+                    self.inverted_table[value] = index_frequency
+                if compute_counts:
+                    cats, counts = result
+                    category_counts.append(counts)
+                else:
+                    cats = result
             else:
                 if np.issubdtype(Xi.dtype, np.str_):
                     # Always convert string categories to objects to avoid
@@ -178,11 +190,10 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     category_counts.append(_get_counts(Xi, cats))
 
             self.categories_.append(cats)
-        
+        self.sorted_dict = dict(sorted(X_list_dict.items(), key=lambda item: item[1]))
         output = {"n_samples": n_samples}
         if return_counts:
             output["category_counts"] = category_counts
-
         missing_indices = {}
         if return_and_ignore_missing_for_infrequent:
             for feature_idx, categories_for_idx in enumerate(self.categories_):
@@ -190,6 +201,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     # `nan` values can only be placed in the latest position
                     missing_indices[feature_idx] = categories_for_idx.size - 1
             output["missing_indices"] = missing_indices
+
         if self._infrequent_enabled:
             self._fit_infrequent_category_mapping(
                 n_samples,
@@ -251,23 +263,26 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     Xi[~valid_mask] = self.categories_[i][0]
             # We use check_unknown=False, since _check_unknown was
             # already called above.
-            X_int[:, i] = _encode(Xi, uniques=self.categories_[i], check_unknown=False)
-        if columns_with_unknown:
-            if handle_unknown == "infrequent_if_exist":
-                msg = (
-                    "Found unknown categories in columns "
-                    f"{columns_with_unknown} during transform. These "
-                    "unknown categories will be encoded as the "
-                    "infrequent category."
-                )
+            # introduce
+            if self.categories == "frequency":
+                xp, _ = get_namespace(Xi, self.categories_[i])
+                table = _nandict({val: i for i, val in enumerate(self.categories_[i])})
+                frequency_table = list(table.values())
+                frequency_table.sort()
+                X_int[:, i] = xp.asarray([self.inverted_table[v] for v in Xi],
+                                          device=device(Xi))
             else:
-                msg = (
+                X_int[:, i] = _encode(Xi, uniques=self.categories_[i],
+                                       check_unknown=False)
+        if columns_with_unknown:
+            warnings.warn(
+                (
                     "Found unknown categories in columns "
                     f"{columns_with_unknown} during transform. These "
                     "unknown categories will be encoded as all zeros"
-                )
-            warnings.warn(msg, UserWarning)
-
+                ),
+                UserWarning,
+            )
         self._map_infrequent_categories(X_int, X_mask, ignore_category_indices)
         return X_int, X_mask
 
@@ -450,7 +465,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 continue
 
             X_int[~X_mask[:, col_idx], col_idx] = infrequent_idx[0]
-            if self.handle_unknown in ("infrequent_if_exist", "warn"):
+            if self.handle_unknown == "infrequent_if_exist":
                 # All the unknown values are now mapped to the
                 # infrequent_idx[0], which makes the unknown values valid
                 # This is needed in `transform` when the encoding is formed
@@ -645,7 +660,7 @@ class OneHotEncoder(_BaseEncoder):
 
         If infrequent categories are enabled by setting `min_frequency` or
         `max_categories` to a non-default value and `drop_idx[i]` corresponds
-        to an infrequent category, then the entire infrequent category is
+        to a infrequent category, then the entire infrequent category is
         dropped.
 
         .. versionchanged:: 0.23
@@ -1288,8 +1303,6 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         Categories (unique values) per feature:
 
         - 'auto' : Determine categories automatically from the training data.
-        - 'frequency' : Option for the order of the encodings to be by their
-          frequency instead of the alphabetical order
         - list : ``categories[i]`` holds the categories expected in the ith
           column. The passed categories should not mix strings and numeric
           values, and should be sorted in case of numeric values.
@@ -1388,6 +1401,13 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         suitable for high cardinality categorical variables.
     LabelEncoder : Encodes target labels with values between 0 and
         ``n_classes-1``.
+
+    Notes
+    -----
+    With a high proportion of `nan` values, inferring categories becomes slow with
+    Python versions before 3.10. The handling of `nan` values was improved
+    from Python 3.10 onwards, (c.f.
+    `bpo-43475 <https://github.com/python/cpython/issues/87641>`_).
 
     Examples
     --------
