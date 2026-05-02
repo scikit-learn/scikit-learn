@@ -2216,6 +2216,24 @@ def test_c_inf_no_warning(solver):
         lr.fit(X, y)
 
 
+# TODO(1.10): remove whole test with the removal of penalty
+@pytest.mark.filterwarnings("ignore:.*'penalty' was deprecated.*:FutureWarning")
+@pytest.mark.parametrize("solver", sorted(set(SOLVERS) - set(["liblinear"])))
+def test_penalty_none_c_inf_no_warning(solver):
+    """Test that penalty=None with C=np.inf produces no UserWarning.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/33871
+    """
+    X, y = make_classification(n_samples=100, n_redundant=0, random_state=42)
+
+    lr = LogisticRegression(penalty=None, C=np.inf, solver=solver)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        warnings.filterwarnings("ignore", category=ConvergenceWarning)
+        lr.fit(X, y)
+
+
 # XXX: investigate thread-safety bug that might be related to:
 # https://github.com/scikit-learn/scikit-learn/issues/31883
 @pytest.mark.thread_unsafe
