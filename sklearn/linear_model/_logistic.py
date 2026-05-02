@@ -312,7 +312,7 @@ def _logistic_regression_path(
             n_features + int(fit_intercept), dtype=_matching_numpy_dtype(X, xp=xp)
         )
         # classes[1] is the "positive label"
-        mask = xp.asarray(y == classes[1], device=device_)
+        mask = move_to(y == classes[1], xp=xp, device=device_)
         y_bin = xp.ones(y.shape, dtype=X.dtype, device=device_)
         if solver == "liblinear":
             y_bin[~mask] = -1.0
@@ -1246,6 +1246,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             raise ValueError("l1_ratio must be specified when penalty is elasticnet.")
 
         xp, _, device_ = get_namespace_and_device(X)
+        sample_weight = move_to(sample_weight, xp=xp, device=device_)
         xp_y, _ = get_namespace(y)
 
         if self.penalty is None:

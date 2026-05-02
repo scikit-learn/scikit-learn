@@ -242,7 +242,7 @@ def test_asarray_with_order(array_api):
 def test_average(
     array_namespace, device_name, dtype_name, weights, axis, normalize, expected
 ):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     array_in = numpy.asarray([[1, 2, 3], [4, 5, 6]], dtype=dtype_name)
     array_in = xp.asarray(array_in, device=device)
     if weights is not None:
@@ -266,7 +266,7 @@ def test_average(
     yield_namespace_device_dtype_combinations(include_numpy_namespaces=False),
 )
 def test_average_raises_with_wrong_dtype(array_namespace, device_name, dtype_name):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     array_in = numpy.asarray([2, 0], dtype=dtype_name) + 1j * numpy.asarray(
         [4, 3], dtype=dtype_name
@@ -318,7 +318,7 @@ def test_average_raises_with_wrong_dtype(array_namespace, device_name, dtype_nam
 def test_average_raises_with_invalid_parameters(
     array_namespace, device_name, dtype_name, axis, weights, error, error_msg
 ):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     array_in = numpy.asarray([[1, 2, 3], [4, 5, 6]], dtype=dtype_name)
     array_in = xp.asarray(array_in, device=device)
@@ -449,7 +449,7 @@ def test_nan_reductions(library, X, reduction, expected):
     yield_namespace_device_dtype_combinations(),
 )
 def test_ravel(namespace, device_name, dtype_name):
-    xp, device = _array_api_for_tests(namespace, device_name)
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
 
     array = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
     array_xp = xp.asarray(array, device=device)
@@ -614,7 +614,7 @@ def test_check_fitted_attribute():
     yield_namespace_device_dtype_combinations(),
 )
 def test_indexing_dtype(namespace, device_name, dtype_name):
-    xp, device = _array_api_for_tests(namespace, device_name)
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
 
     if _IS_32BIT:
         assert indexing_dtype(xp) == xp.int32
@@ -628,7 +628,14 @@ def test_indexing_dtype(namespace, device_name, dtype_name):
 )
 def test_max_precision_float_dtype(namespace, device_name, dtype_name):
     xp, device = _array_api_for_tests(namespace, device_name)
-    expected_dtype = xp.float32 if device_name == "mps" else xp.float64
+    try:
+        xp.asarray([0.0], dtype=xp.float64, device=device)
+        expected_dtype = xp.float64
+    except Exception:
+        # Some devices, such as MPS devices, PyTorch XPU devices and some Intel
+        # GPUs with dpnp, do not support float64.
+        expected_dtype = xp.float32
+
     assert _max_precision_float_dtype(xp, device) == expected_dtype
 
 
@@ -649,7 +656,7 @@ def test_isin(
     element_size,
     int_dtype,
 ):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     r = element_size // 2
     element = 2 * numpy.arange(element_size).reshape((r, 2)).astype(int_dtype)
     test_elements = numpy.array(numpy.arange(14), dtype=int_dtype)
@@ -720,7 +727,7 @@ def test_count_nonzero(
 ):
     from sklearn.utils.sparsefuncs import count_nonzero as sparse_count_nonzero
 
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     array = numpy.array([[0, 3, 0], [2, -1, 0], [0, 0, 0], [9, 8, 7], [4, 0, 5]])
     if sample_weight_type == "int":
         sample_weight = numpy.asarray([1, 2, 2, 3, 1])
@@ -808,7 +815,7 @@ def test_fill_and_add_to_diagonal(c_contiguity, function):
 )
 def test_fill_diagonal(array, array_namespace, device_name, dtype_name):
     """Check array API `_fill_diagonal` consistent with `numpy._fill_diagonal`."""
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     array_np = numpy.zeros((4, 5), dtype=dtype_name)
 
     if array == "transposed":
@@ -833,7 +840,7 @@ def test_fill_diagonal(array, array_namespace, device_name, dtype_name):
 )
 def test_add_to_diagonal(array_namespace, device_name, dtype_name):
     """Check `_add_to_diagonal` consistent between array API xp and numpy namespace."""
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     np_xp, _ = _array_api_for_tests("numpy", device_name=None)
 
     array_np = numpy.zeros((3, 4), dtype=dtype_name)
@@ -874,7 +881,7 @@ def test_median(namespace, device_name, dtype_name, axis):
     # will test for median computation with and without interpolation to check
     # that array API namespaces yield consistent results even when the median is
     # not mathematically uniquely defined.
-    xp, device = _array_api_for_tests(namespace, device_name)
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
     rng = numpy.random.RandomState(0)
 
     X_np = rng.uniform(low=0.0, high=1.0, size=(5, 4)).astype(dtype_name)
@@ -898,7 +905,7 @@ def test_median(namespace, device_name, dtype_name, axis):
 )
 def test_expit_logit(namespace, device_name, dtype_name):
     rtol = 1e-6 if "float32" in str(dtype_name) else 1e-12
-    xp, device = _array_api_for_tests(namespace, device_name)
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
 
     with config_context(array_api_dispatch=True):
         x_np = numpy.linspace(-20, 20, 1000).astype(dtype_name)
@@ -924,7 +931,7 @@ def test_expit_logit(namespace, device_name, dtype_name):
 )
 @pytest.mark.parametrize("axis", [0, 1, None])
 def test_logsumexp_like_scipy_logsumexp(array_namespace, device_name, dtype_name, axis):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     array_np = numpy.asarray(
         [
             [0, 3, 1000],
@@ -1006,7 +1013,7 @@ def test_half_multinomial_loss(use_sample_weight, namespace, device_name, dtype_
     rng = numpy.random.RandomState(42)
     y = rng.randint(0, n_classes, n_samples).astype(dtype_name)
     pred = rng.rand(n_samples, n_classes).astype(dtype_name)
-    xp, device = _array_api_for_tests(namespace, device_name)
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
     y_xp = xp.asarray(y, device=device)
     pred_xp = xp.asarray(pred, device=device)
     if use_sample_weight:
@@ -1032,7 +1039,7 @@ def test_half_multinomial_loss(use_sample_weight, namespace, device_name, dtype_
     yield_namespace_device_dtype_combinations(),
 )
 def test_matching_numpy_dtype(namespace, device_name, dtype_name):
-    xp, device = _array_api_for_tests(namespace, device_name)
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
     X_np = numpy.arange(1000).astype(dtype_name)
     X_xp = xp.asarray(X_np, device=device)
     ret_dtype = _matching_numpy_dtype(X_xp, xp=xp)
