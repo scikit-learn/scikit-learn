@@ -16,7 +16,6 @@ from sklearn.utils._array_api import (
     _find_matching_floating_dtype,
     _is_numpy_namespace,
     _isin,
-    _safe_int_dtype,
     device,
     get_namespace,
     get_namespace_and_device,
@@ -592,15 +591,16 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
     n_samples = y.shape[0] if hasattr(y, "shape") else len(y)
     n_classes = classes.shape[0]
 
-    # Cast y to a safe signed integer dtype to ensure consistent behaviour
-    # across array API backends. Avoids issues with unsigned integers in
-    # _isin, searchsorted, and cumulative_sum.
-    int_dtype_ = _safe_int_dtype(y, xp)
-    if hasattr(y, "dtype") and xp.isdtype(y.dtype, "integral"):
-        y = xp.astype(y, int_dtype_, copy=False)
-        # Ensure `classes` has the same dtype for consistent comparisons.
-        if hasattr(classes, "dtype") and xp.isdtype(classes.dtype, "numeric"):
-            classes = xp.astype(classes, int_dtype_, copy=False)
+    y_has_dtype = hasattr(y, "dtype")
+    if y_has_dtype and xp.isdtype(y.dtype, "signed integer"):
+        int_dtype_ = y.dtype
+    else:
+        int_dtype_ = indexing_dtype(xp)
+
+    # Align `classes` dtype with integral `y` to ensure correct comparisons
+    # and avoid signed/unsigned dtype mismatches
+    if y_has_dtype and xp.isdtype(y.dtype, "integral"):
+        classes = xp.astype(classes, y.dtype, copy=False)
 
     if y_type == "binary":
         if n_classes == 1:
