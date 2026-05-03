@@ -70,8 +70,8 @@ with estimators, and reduces the possibility of forgetting a transformation::
     0.90...
 
 Pipelines also help avoiding another common pitfall: leaking the test data
-into the training data.
-
+into the training data. They also ensure that preprocessing steps such as
+scaling are applied independently within each cross-validation fold.
 .. _data_leakage:
 
 Data leakage
