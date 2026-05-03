@@ -161,7 +161,10 @@ def _assert_all_finite_element_wise(
             msg_dtype = msg_dtype if msg_dtype is not None else X.dtype
             type_err = f"infinity or a value too large for {msg_dtype!r}"
         padded_input_name = input_name + " " if input_name else ""
-        msg_err = f"Input {padded_input_name}contains {type_err}."
+        msg_err = f"Input {padded_input_name} contains {type_err}. "
+        "Please check your input data and consider preprocessing it "
+        "(e.g., remove infinite values, clip large values, or use "
+        "appropriate data types)."
         if estimator_name and input_name == "X" and has_nan_error:
             # Improve the error message on how to handle missing values in
             # scikit-learn.
