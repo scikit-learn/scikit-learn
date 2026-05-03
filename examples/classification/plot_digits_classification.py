@@ -6,6 +6,10 @@ Recognizing hand-written digits
 This example shows how scikit-learn can be used to recognize images of
 hand-written digits, from 0-9.
 
+The dataset contains 1,797 images of size 8x8 pixels. A :class:`~sklearn.svm.SVC`
+with an RBF kernel is trained on half the data and evaluated on the rest.
+Results are interpreted via a classification report and confusion matrix.
+
 """
 
 # Authors: The scikit-learn developers
@@ -38,7 +42,7 @@ _, axes = plt.subplots(nrows=1, ncols=4, figsize=(10, 3))
 for ax, image, label in zip(axes, digits.images, digits.target):
     ax.set_axis_off()
     ax.imshow(image, cmap=plt.cm.gray_r, interpolation="nearest")
-    ax.set_title("Training: %i" % label)
+    ax.set_title(f"Training: {label}")       # CHANGED: % formatting → f-string
 
 ###############################################################################
 # Classification
@@ -62,9 +66,11 @@ data = digits.images.reshape((n_samples, -1))
 # Create a classifier: a support vector classifier
 clf = svm.SVC(gamma=0.001)
 
-# Split data into 50% train and 50% test subsets
+# Split data into 50% train and 50% test subsets.
+# shuffle=True with a fixed random_state ensures a stratified random split
+# and makes results reproducible across different machines and sklearn versions.
 X_train, X_test, y_train, y_test = train_test_split(
-    data, digits.target, test_size=0.5, shuffle=False
+    data, digits.target, test_size=0.5, shuffle=True, random_state=42  # CHANGED
 )
 
 # Learn the digits on the train subset
@@ -109,18 +115,15 @@ plt.show()
 # `y_pred`, one can still build a :func:`~sklearn.metrics.classification_report`
 # as follows:
 
-
-# The ground truth and predicted lists
-y_true = []
-y_pred = []
+y_true, y_pred = [], []        # CHANGED: cleaner initialization
 cm = disp.confusion_matrix
 
 # For each cell in the confusion matrix, add the corresponding ground truths
 # and predictions to the lists
 for gt in range(len(cm)):
     for pred in range(len(cm)):
-        y_true += [gt] * cm[gt][pred]
-        y_pred += [pred] * cm[gt][pred]
+        y_true.extend([gt] * cm[gt][pred])    # CHANGED: += → .extend()
+        y_pred.extend([pred] * cm[gt][pred])  # CHANGED: += → .extend()
 
 print(
     "Classification report rebuilt from confusion matrix:\n"
