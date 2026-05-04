@@ -138,7 +138,7 @@ def test_meta_estimator_output_features():
         estimator, store_cv_results=True, random_state=0
     ).fit(X, y)
     html = estimator_html_repr(meta_estimator)
-    assert "0 features" in html
+    assert "4 features" in html
 
 
 def test_features_html_empty_features():
