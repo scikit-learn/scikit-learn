@@ -362,6 +362,10 @@ ignore-words = "build_tools/codespell_ignore_words.txt"
         path = "metadata-routing"
 
     [[tool.towncrier.section]]
+        name = "Callbacks"
+        path = "callbacks"
+
+    [[tool.towncrier.section]]
         name = "custom-top-level"
         path = "custom-top-level"
 
