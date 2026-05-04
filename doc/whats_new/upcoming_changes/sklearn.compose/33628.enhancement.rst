@@ -1,3 +1,0 @@
-- :class:`compose.ColumnTransformer`
-   now reports a list of missing columns in the error message when asked to transform dataframe that is missing some columns.
-   By :user:`James Dean <AcylSilane>`.
