@@ -396,13 +396,13 @@ class HeterogeneousMetaEstimator(CallbackSupportMixin):
             subcontext = callback_ctx.subcontext(task_name=task_name)
             if est is not None:
                 est = clone(est)
-                subcontext.propagate_callback_context(sub_estimator=est)
-            subcontext.call_on_fit_task_begin(estimator=self, X=X, y=y)
-
-            if est is not None:
-                est.fit(X, y)
-
-            subcontext.call_on_fit_task_end(estimator=self, X=X, y=y)
+                with subcontext.propagate_callback_context(est):
+                    subcontext.call_on_fit_task_begin(estimator=self, X=X, y=y)
+                    est.fit(X, y)
+                    subcontext.call_on_fit_task_end(estimator=self, X=X, y=y)
+            else:
+                subcontext.call_on_fit_task_begin(estimator=self, X=X, y=y)
+                subcontext.call_on_fit_task_end(estimator=self, X=X, y=y)
 
         callback_ctx.call_on_fit_task_end(estimator=self, X=X, y=y)
 
