@@ -1837,9 +1837,9 @@ class SGDRegressor(BaseSGDRegressor):
 
     Parameters
     ----------
-    loss : {'squared_error', 'huber', 'epsilon_insensitive',
-            'squared_epsilon_insensitive', 'poisson', 'gamma',
-            'tweedie'}, default='squared_error'
+    loss : {'squared_error', 'huber', 'epsilon_insensitive', \
+        'squared_epsilon_insensitive', 'poisson', 'gamma', \
+        'tweedie'}, default='squared_error'
         The loss function to be used. The possible values are:
 
         - 'squared_error': ordinary least squares fit.
