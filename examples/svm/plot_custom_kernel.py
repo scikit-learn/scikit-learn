@@ -3,7 +3,7 @@
 SVM with custom kernel
 ======================
 
-Simple usage of :ref:`svm` with a custom kernel. It will
+Simple usage of :ref:`svm` classifier with a custom kernel. It will
 plot the decision surface and highlight the support vectors.
 
 """
