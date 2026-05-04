@@ -65,17 +65,11 @@ def _array_indexing(array, key, key_dtype, axis):
 def _narwhals_indexing(X, key, key_dtype, axis):
     """Index a narwhals dataframe or series."""
     X = nw.from_native(X, allow_series=True)
-    if (
-        not isinstance(key, (int, slice))
-        and not (isinstance(key, list) and key_dtype in ("bool", "str"))
-        and key is not None
-    ):
+    if not (isinstance(key, (list, slice)) or key is None):
         # Note that at least tuples should be converted to either list or ndarray as
         # tuples in __getitem__ are special: x[(1, 2)] is equal to x[1, 2].
-        key = np.asarray(key)
-
-    if key_dtype in ("bool", "str") and not isinstance(key, (list, slice)):
-        key = key.tolist()
+        # Also, not all backends of narwhals support ndarray, but all support lists.
+        key = np.asarray(key).tolist()
 
     if axis == 1:
         if key_dtype == "bool":
