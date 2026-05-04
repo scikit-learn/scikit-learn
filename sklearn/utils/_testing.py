@@ -1509,7 +1509,7 @@ def _get_warnings_filters_info_list():
             message=".+scattermapbox.+deprecated.+scattermap.+instead",
             category=DeprecationWarning,
         ),
-        # TODO(1.10): remove PassiveAgressive
+        # TODO(1.10): remove PassiveAggressive
         WarningInfo(
             "ignore",
             message="Class PassiveAggressive.+is deprecated",

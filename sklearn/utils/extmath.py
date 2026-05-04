@@ -330,7 +330,7 @@ def _randomized_range_finder(
 
         # Downcast while Q is still a NumPy array to avoid allocating float64
         # on devices that do not support it. The Array API does not require
-        # xp.asarray(..., dtype=...) to accept such a downcast during conversion.
+        # xp.asarray(..., dtype=..., device=device) to accept such a downcast.
         Q = Q.astype(np.float32, copy=False)
 
     if is_array_api_compliant:

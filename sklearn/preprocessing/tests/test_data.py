@@ -696,7 +696,7 @@ def test_partial_fit_sparse_input(sample_weight, sparse_container):
 
 
 @pytest.mark.parametrize("sample_weight", [True, None])
-def test_standard_scaler_trasform_with_partial_fit(sample_weight):
+def test_standard_scaler_transform_with_partial_fit(sample_weight):
     # Check some postconditions after applying partial_fit and transform
     X = X_2d[:100, :]
 
@@ -2748,7 +2748,7 @@ def test_kernel_centerer_feature_names_out():
 
 @pytest.mark.parametrize("standardize", [True, False])
 def test_power_transformer_constant_feature(standardize):
-    """Check that PowerTransfomer leaves constant features unchanged."""
+    """Check that PowerTransformer leaves constant features unchanged."""
     X = [[-2, 0, 2], [-2, 0, 2], [-2, 0, 2]]
 
     pt = PowerTransformer(method="yeo-johnson", standardize=standardize).fit(X)

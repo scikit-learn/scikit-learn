@@ -94,7 +94,7 @@ plt.show()
 # ----------
 #
 # We observe that the parameter `weights` has an impact on the decision boundary. When
-# `weights="unifom"` all nearest neighbors will have the same impact on the decision.
+# `weights="uniform"` all nearest neighbors will have the same impact on the decision.
 # Whereas when `weights="distance"` the weight given to each neighbor is proportional
 # to the inverse of the distance from that neighbor to the query point.
 #
