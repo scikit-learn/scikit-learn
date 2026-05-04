@@ -116,7 +116,7 @@ def test_determine_key_type_slice_error():
     yield_namespace_device_dtype_combinations(),
 )
 def test_determine_key_type_array_api(array_namespace, device_name, dtype_name):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     with sklearn.config_context(array_api_dispatch=True):
         int_array_key = xp.asarray([1, 2, 3], device=device)
@@ -157,7 +157,7 @@ def test_determine_key_type_array_api(array_namespace, device_name, dtype_name):
 def test_safe_indexing_array_api_support(
     array_namespace, device_name, dtype_name, indexing_key, axis
 ):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     array_to_index_np = np.arange(16).reshape(4, 4)
     expected_result = _safe_indexing(array_to_index_np, indexing_key, axis=axis)

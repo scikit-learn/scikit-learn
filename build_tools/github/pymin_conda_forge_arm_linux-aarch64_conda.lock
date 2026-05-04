@@ -25,7 +25,7 @@ https://conda.anaconda.org/conda-forge/linux-aarch64/bzip2-1.0.8-h4777abc_9.cond
 https://conda.anaconda.org/conda-forge/linux-aarch64/keyutils-1.6.3-h86ecc28_0.conda#e7df0aab10b9cbb73ab2a467ebfaf8c7
 https://conda.anaconda.org/conda-forge/linux-aarch64/libbrotlicommon-1.2.0-he30d5cf_1.conda#8ec1d03f3000108899d1799d9964f281
 https://conda.anaconda.org/conda-forge/linux-aarch64/libdeflate-1.25-h1af38f5_0.conda#a9138815598fe6b91a1d6782ca657b0c
-https://conda.anaconda.org/conda-forge/linux-aarch64/libexpat-2.7.5-hfae3067_0.conda#05d1e0b30acd816a192c03dc6e164f4d
+https://conda.anaconda.org/conda-forge/linux-aarch64/libexpat-2.8.0-hfae3067_0.conda#3bacd6171f0a3f8fddd06c3d5ae01955
 https://conda.anaconda.org/conda-forge/linux-aarch64/libffi-3.5.2-h376a255_0.conda#2f364feefb6a7c00423e80dcb12db62a
 https://conda.anaconda.org/conda-forge/linux-aarch64/libgcc-ng-15.2.0-he9431aa_18.conda#4feebd0fbf61075a1a9c2e9b3936c257
 https://conda.anaconda.org/conda-forge/linux-aarch64/libgfortran5-15.2.0-h1b7bec0_18.conda#574d88ce3348331e962cfa5ed451b247
@@ -39,7 +39,7 @@ https://conda.anaconda.org/conda-forge/linux-aarch64/libsqlite-3.53.0-h022381a_0
 https://conda.anaconda.org/conda-forge/linux-aarch64/libstdcxx-15.2.0-hef695bb_18.conda#f56573d05e3b735cb03efeb64a15f388
 https://conda.anaconda.org/conda-forge/linux-aarch64/libuuid-2.42-h1022ec0_0.conda#a0b5de740d01c390bdbb46d7503c9fab
 https://conda.anaconda.org/conda-forge/linux-aarch64/libwebp-base-1.6.0-ha2e29f5_0.conda#24e92d0942c799db387f5c9d7b81f1af
-https://conda.anaconda.org/conda-forge/linux-aarch64/ncurses-6.5-ha32ae93_3.conda#182afabe009dc78d8b73100255ee6868
+https://conda.anaconda.org/conda-forge/linux-aarch64/ncurses-6.6-hf8d1292_0.conda#b2a43456aa56fe80c2477a5094899eff
 https://conda.anaconda.org/conda-forge/linux-aarch64/openssl-3.6.2-h546c87b_0.conda#3b129669089e4d6a5c6871dbb4669b99
 https://conda.anaconda.org/conda-forge/linux-aarch64/pthread-stubs-0.4-h86ecc28_1002.conda#bb5a90c93e3bac3d5690acf76b4a6386
 https://conda.anaconda.org/conda-forge/linux-aarch64/tk-8.6.13-noxft_h0dc03b3_103.conda#7fc6affb9b01e567d2ef1d05b84aa6ed
@@ -96,7 +96,7 @@ https://conda.anaconda.org/conda-forge/linux-aarch64/fontconfig-2.17.1-hba86a56_
 https://conda.anaconda.org/conda-forge/linux-aarch64/freetype-2.14.3-h8af1aa0_0.conda#f11edf8adf0d119148b97f745548390d
 https://conda.anaconda.org/conda-forge/noarch/iniconfig-2.3.0-pyhd8ed1ab_0.conda#9614359868482abba1bd15ce465e3c42
 https://conda.anaconda.org/conda-forge/linux-aarch64/kiwisolver-1.5.0-py311h229e7f7_0.conda#aeade47300d466d9d6ba01daaca31a86
-https://conda.anaconda.org/conda-forge/linux-aarch64/lcms2-2.18-h9d5b58d_0.conda#bb960f01525b5e001608afef9d47b79c
+https://conda.anaconda.org/conda-forge/linux-aarch64/lcms2-2.19-h9d5b58d_0.conda#6bc596d689e559787079968b885e75d8
 https://conda.anaconda.org/conda-forge/linux-aarch64/libblas-3.11.0-6_haddc8a3_openblas.conda#652bb20bb4618cacd11e17ae070f47ce
 https://conda.anaconda.org/conda-forge/linux-aarch64/libcups-2.3.3-h4f2b762_6.conda#67828c963b17db7dc989fe5d509ef04a
 https://conda.anaconda.org/conda-forge/linux-aarch64/libglx-1.7.0-hd24410f_2.conda#1d4269e233636148696a67e2d30dad2a
@@ -105,7 +105,7 @@ https://conda.anaconda.org/conda-forge/noarch/meson-1.11.1-pyhcf101f3_0.conda#ce
 https://conda.anaconda.org/conda-forge/noarch/munkres-1.1.4-pyhd8ed1ab_1.conda#37293a85a0f4f77bbd9cf7aaefc62609
 https://conda.anaconda.org/conda-forge/linux-aarch64/openblas-0.3.32-pthreads_h3a8cbd8_0.conda#62e1383bcaf8f5244d2598bbda509e3b
 https://conda.anaconda.org/conda-forge/linux-aarch64/openjpeg-2.5.4-h5da879a_0.conda#cea962410e327262346d48d01f05936c
-https://conda.anaconda.org/conda-forge/noarch/packaging-26.1-pyhc364b38_0.conda#b8ae38639d323d808da535fb71e31be8
+https://conda.anaconda.org/conda-forge/noarch/packaging-26.2-pyhc364b38_0.conda#4c06a92e74452cfa53623a81592e8934
 https://conda.anaconda.org/conda-forge/noarch/pluggy-1.6.0-pyhf9edf01_1.conda#d7585b6550ad04c8c5e21097ada2888e
 https://conda.anaconda.org/conda-forge/noarch/pygments-2.20.0-pyhd8ed1ab_0.conda#16c18772b340887160c79a6acc022db0
 https://conda.anaconda.org/conda-forge/noarch/pyparsing-3.3.2-pyhcf101f3_0.conda#3687cc0b82a8b4c17e1f0eb7e47163d5

@@ -2181,7 +2181,7 @@ def _check_sample_weight(
         if force_float_dtype and dtype is None:
             dtype = float_dtypes
         if is_array_api and ensure_same_device:
-            sample_weight = xp.asarray(sample_weight, device=device)
+            sample_weight = move_to(sample_weight, xp=xp, device=device)
         sample_weight = check_array(
             sample_weight,
             accept_sparse=False,
