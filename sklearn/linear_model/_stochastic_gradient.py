@@ -1863,12 +1863,6 @@ class SGDRegressor(BaseSGDRegressor):
           ``power``. Equivalent to online :class:`TweedieRegressor`. Requires
           non-negative targets.
 
-    power : float, default=1.5
-        The Tweedie power parameter. Only used when ``loss='tweedie'``.
-        Must be in the open interval (1.0, 2.0). Values approaching 1 behave
-        like Poisson; values approaching 2 behave like Gamma.
-        Use ``loss='poisson'`` or ``loss='gamma'`` for the boundary cases.
-
     penalty : {'l2', 'l1', 'elasticnet', None}, default='l2'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
         which is the standard regularizer for linear SVM models. 'l1' and
@@ -2037,6 +2031,12 @@ class SGDRegressor(BaseSGDRegressor):
         an int greater than 1, averaging will begin once the total number of
         samples seen reaches `average`. So ``average=10`` will begin
         averaging after seeing 10 samples.
+
+    power : float, default=1.5
+        The Tweedie power parameter. Only used when ``loss='tweedie'``.
+        Must be in the open interval (1.0, 2.0). Values approaching 1 behave
+        like Poisson; values approaching 2 behave like Gamma.
+        Use ``loss='poisson'`` or ``loss='gamma'`` for the boundary cases.
 
     Attributes
     ----------
