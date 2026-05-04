@@ -3014,9 +3014,11 @@ def test_yield_masked_array_no_runtime_warning():
 def test_search_callbacks_no_propagation(search, refit):
     # Check that set callbacks are stored in `_skl_callbacks`, and the correct number of
     # hooks are called when the sub-estimator doesn't support callbacks.
-    callbacks = [RecordingCallback(), RecordingAutoPropagatedCallback()]
+    callback1 = RecordingCallback()
+    callback2 = RecordingAutoPropagatedCallback()
+    callbacks = [callback1, callback2]
     search.set_params(refit=refit)
-    search.set_callbacks(callbacks)
+    search.set_callbacks(callback1, callback2)
     assert all(cb in search._skl_callbacks for cb in callbacks)
 
     search.fit(X, y)
@@ -3083,9 +3085,11 @@ def test_search_callbacks_no_propagation(search, refit):
 def test_search_callbacks_propagation(search, refit):
     # Check that set callbacks are stored in `_skl_callbacks`, and the correct number of
     # hooks are called when the sub-estimator does support callbacks.
-    callbacks = [RecordingCallback(), RecordingAutoPropagatedCallback()]
+    callback1 = RecordingCallback()
+    callback2 = RecordingAutoPropagatedCallback()
+    callbacks = [callback1, callback2]
     search.set_params(refit=refit)
-    search.set_callbacks(callbacks)
+    search.set_callbacks(callback1, callback2)
     assert all(cb in search._skl_callbacks for cb in callbacks)
 
     search.fit(X, y)

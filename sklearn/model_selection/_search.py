@@ -1155,18 +1155,18 @@ class BaseSearchCV(
 
             refit_subctx = callback_ctx.subcontext(task_name="refit with best params")
 
-            refit_subctx.propagate_callback_context(self.best_estimator_)
-            metadata = {"sample_weight": params.get("sample_weight", {})}
-            refit_subctx.call_on_fit_task_begin(
-                estimator=self, X=X, y=y, metadata=metadata
-            )
+            with refit_subctx.propagate_callback_context(self.best_estimator_):
+                metadata = {"sample_weight": params.get("sample_weight", {})}
+                refit_subctx.call_on_fit_task_begin(
+                    estimator=self, X=X, y=y, metadata=metadata
+                )
 
-            refit_start_time = time.time()
-            if y is not None:
-                self.best_estimator_.fit(X, y, **routed_params.estimator.fit)
-            else:
-                self.best_estimator_.fit(X, **routed_params.estimator.fit)
-            refit_end_time = time.time()
+                refit_start_time = time.time()
+                if y is not None:
+                    self.best_estimator_.fit(X, y, **routed_params.estimator.fit)
+                else:
+                    self.best_estimator_.fit(X, **routed_params.estimator.fit)
+                refit_end_time = time.time()
             self.refit_time_ = refit_end_time - refit_start_time
 
             if hasattr(self.best_estimator_, "feature_names_in_"):

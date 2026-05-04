@@ -781,13 +781,6 @@ def _fit_and_score(
     xp, _ = get_namespace(X)
     X_device = device(X)
 
-    if callback_ctx is not None:
-        callback_ctx.propagate_callback_context(estimator)
-        metadata = {"sample_weight": fit_params.get("sample_weight", {})}
-        callback_ctx.call_on_fit_task_begin(
-            estimator=estimator, X=X, y=y, metadata=metadata
-        )
-
     # Make sure that we can fancy index X even if train and test are provided
     # as NumPy arrays by NumPy only cross-validation splitters.
     train, test = xp.asarray(train, device=X_device), xp.asarray(test, device=X_device)
@@ -816,6 +809,8 @@ def _fit_and_score(
         start_msg = f"[CV{progress_msg}] START {params_msg}"
         print(f"{start_msg}{(80 - len(start_msg)) * '.'}")
 
+    metadata_callbacks = {"sample_weight": fit_params.get("sample_weight", {})}
+
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
     fit_params = _check_method_params(X, params=fit_params, indices=train)
@@ -836,11 +831,22 @@ def _fit_and_score(
     X_test, y_test = _safe_split(estimator, X, y, test, train)
 
     result = {}
+
     try:
-        if y_train is None:
-            estimator.fit(X_train, **fit_params)
-        else:
-            estimator.fit(X_train, y_train, **fit_params)
+        if callback_ctx is not None:
+            with callback_ctx.propagate_callback_context(estimator):
+                callback_ctx.call_on_fit_task_begin(
+                    estimator=estimator, X=X, y=y, metadata=metadata_callbacks
+                )
+                if y_train is None:
+                    estimator.fit(X_train, **fit_params)
+                else:
+                    estimator.fit(X_train, y_train, **fit_params)
+        else:  # no callback is set
+            if y_train is None:
+                estimator.fit(X_train, **fit_params)
+            else:
+                estimator.fit(X_train, y_train, **fit_params)
 
     except Exception:
         # Note fit time as time until error
@@ -914,7 +920,7 @@ def _fit_and_score(
             estimator=estimator,
             X=X,
             y=y,
-            metadata=metadata,
+            metadata=metadata_callbacks,
             reconstruction_attributes={"best_estimator_": estimator},
         )
 
