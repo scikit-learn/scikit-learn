@@ -1194,7 +1194,7 @@ def test_poisson_regressor_array_api_compliance(
 
     predict_np = glm_np.predict(X_np)
     atol = _atol_for_type(dtype_name) * 10
-    rtol = 3.5e-3 if dtype_name == "float32" else 1e-6
+    rtol = 3e-3 if dtype_name == "float32" else 1e-6
 
     with config_context(array_api_dispatch=True):
         glm_xp = PoissonRegressor(**params).fit(X_xp, y_xp, sample_weight=sample_weight)
