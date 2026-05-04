@@ -1447,7 +1447,6 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         "early_stopping": ["boolean"],
         "validation_fraction": [Interval(Real, 0, 1, closed="neither")],
         "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
-        "power": [Interval(Real, 1.0, 2.0, closed="neither")],
     }
 
     def _get_loss_function(self, loss):
@@ -2109,6 +2108,7 @@ class SGDRegressor(BaseSGDRegressor):
             StrOptions({"constant", "optimal", "invscaling", "adaptive", "pa1", "pa2"}),
         ],
         "epsilon": [Interval(Real, 0, None, closed="left")],
+        "power": [Interval(Real, 1.0, 2.0, closed="neither")],
     }
 
     def __init__(
