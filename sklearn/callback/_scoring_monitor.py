@@ -105,29 +105,25 @@ class ScoringMonitor:
         prefer_skip_nested_validation=True,
     )
     def __init__(self, *, scoring):
-        self.scoring = scoring
+        self._scoring = scoring
         self._shared_log = get_callback_manager().list()
         self._estimator_scorers = {}
 
     def setup(self, estimator, context):
         # A scorer per estimator is needed to avoid race conditions when the callback is
         # set on different estimators and the scorer is the estimator's default scorer.
-        if context.estimator_name not in self._estimator_scorers:
+        if estimator not in self._estimator_scorers:
             from sklearn.metrics import check_scoring
             from sklearn.metrics._scorer import _BaseScorer
 
             # Turn the scorer into a MultimetricScorer for convenience
-            scoring_processed = self.scoring
-            if isinstance(scoring_processed, str):
-                scoring_processed = [scoring_processed]
-            if callable(scoring_processed) and isinstance(
-                scoring_processed, _BaseScorer
-            ):
-                scoring_processed = {"score": scoring_processed}
+            scoring = self._scoring
+            if isinstance(scoring, str):
+                scoring = [scoring]
+            elif callable(scoring) and isinstance(scoring, _BaseScorer):
+                scoring = {"score": scoring}
 
-            self._estimator_scorers[context.estimator_name] = check_scoring(
-                estimator, scoring_processed
-            )
+            self._estimator_scorers[estimator] = check_scoring(estimator, scoring)
 
     def teardown(self, estimator, context):
         pass
@@ -169,7 +165,7 @@ class ScoringMonitor:
 
         scores = {}
         if X is not None and y is not None:
-            scorer = self._estimator_scorers[context.estimator_name]
+            scorer = self._estimator_scorers[estimator]
             scores.update(scorer(fitted_estimator, X, y, **metadata))
 
         self._shared_log.append((run_id, run_info, task_info_path, scores))
