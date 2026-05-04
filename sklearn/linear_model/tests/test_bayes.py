@@ -189,7 +189,7 @@ def test_std_bayesian_ridge_ard_with_constant_input(global_random_seed):
 def test_std_bayesian_ridge_noncentered(Estimator, global_random_seed):
     # Test BayesianRidge and ARDRegression std when data is not centered.
     # The std should be smallest at the center of the data, not at the origin.
-    # See issue #33757
+    # Non-regression test for issue #33757
     rng = np.random.RandomState(global_random_seed)
     n_samples = 4
     X_train = np.linspace(80, 100, n_samples).reshape(-1, 1)
