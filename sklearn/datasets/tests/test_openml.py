@@ -72,10 +72,10 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
     # monkey patches the urlopen function. Important note: Do NOT use this
     # in combination with a regular cache directory, as the files that are
     # stored as cache should not be mixed up with real openml datasets
-    url_prefix_data_description = "https://api.openml.org/api/v1/json/data/"
-    url_prefix_data_features = "https://api.openml.org/api/v1/json/data/features/"
+    url_prefix_data_description = "https://www.openml.org/api/v1/json/data/"
+    url_prefix_data_features = "https://www.openml.org/api/v1/json/data/features/"
     url_prefix_download_data = "https://www.openml.org/data/v1/download"
-    url_prefix_data_list = "https://api.openml.org/api/v1/json/data/list/"
+    url_prefix_data_list = "https://www.openml.org/api/v1/json/data/list/"
 
     path_suffix = ".gz"
     read_fn = gzip.open

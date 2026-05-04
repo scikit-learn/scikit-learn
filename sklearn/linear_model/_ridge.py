@@ -2752,6 +2752,8 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         settings: multiple prediction targets). When set to `True`, after
         fitting, the `alpha_` attribute will contain a value for each target.
         When set to `False`, a single alpha is used for all targets.
+        This flag is only compatible with ``cv=None`` (i.e. using
+        Leave-One-Out Cross-Validation).
 
         .. versionadded:: 0.24
 
