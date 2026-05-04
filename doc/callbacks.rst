@@ -76,22 +76,17 @@ contextual information about the tasks. Here's an example of the logs of the
     >>> logreg.fit(X, y)
     LogisticRegression - fit ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
     LogisticRegression(max_iter=200)
-    >>> scoring_monitor.get_logs().data_as_pandas
+    >>> scoring_monitor.get_logs().data_as_pandas # doctest: +SKIP
         task_id_path parent_task_id_path  ... sequential_subtasks  accuracy
-    0         (0, 0)                (0,)  ...                True  0.333333
-    1         (0, 1)                (0,)  ...                True  0.333333
-    2         (0, 2)                (0,)  ...                True  0.666667
-    3         (0, 3)                (0,)  ...                True  0.926667
-    4         (0, 4)                (0,)  ...                True  0.673333
-    ..           ...                 ...  ...                 ...       ...
-    97       (0, 97)                (0,)  ...                True  0.973333
-    98       (0, 98)                (0,)  ...                True  0.973333
-    99       (0, 99)                (0,)  ...                True  0.973333
-    100     (0, 100)                (0,)  ...                True  0.973333
-    101     (0, 101)                (0,)  ...                True  0.973333
+    0         (0, 0)                (0,)  ...                True  0.333...
+    1         (0, 1)                (0,)  ...                True  0.333...
+    2         (0, 2)                (0,)  ...                True  0.666...
+    3         (0, 3)                (0,)  ...                True  0.926...
+    4         (0, 4)                (0,)  ...                True  0.673...
+    ...
 
-    [102 rows x 7 columns]
-
+.. The number of rows can vary depending on numerical specificities of the platform, so
+   we only report the first lines here.
 
 Usage with meta-estimators
 **************************
@@ -121,9 +116,11 @@ the grid search::
 
     >>> from sklearn.model_selection import GridSearchCV
     >>> scoring_monitor = ScoringMonitor(scoring="accuracy")
-    >>> logreg = LogisticRegression().set_callbacks(scoring)
+    >>> logreg = LogisticRegression().set_callbacks(scoring_monitor)
     >>> grid_search = GridSearchCV(logreg, {"C": [10, 1, 0.1], "l1_ratio": [0, 1]})
     >>> grid_search.fit(X, y)
+    GridSearchCV(estimator=LogisticRegression(),
+                 param_grid={'C': [10, 1, 0.1], 'l1_ratio': [0, 1]})
     >>> scoring_monitor.get_logs().data_as_pandas # doctest: +SKIP
 
 .. TODO: remove the doctest skips and add logs
