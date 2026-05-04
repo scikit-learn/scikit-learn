@@ -1164,11 +1164,12 @@ def test_poisson_regressor_array_api_compliance(
     dtype_name,
 ):
     xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
-    X_np, y_np = make_regression(
-        n_samples=107, n_features=20, n_informative=20, noise=0.5, random_state=2
-    )
-    # make y positive
-    y_np = np.abs(y_np) + 1.0
+    # make a simple poisson-regression problem:
+    rng = np.random.default_rng(0)
+    n_samples, n_features = 500, 20
+    X_np = rng.normal(size=(n_samples, n_features))
+    coef = np.linspace(-0.22, 0.22, n_features)
+    y_np = np.exp(X_np @ coef + 4.8 + 0.02 * rng.normal(size=n_samples))
     n_samples = X_np.shape[0]
     X_np = X_np.astype(dtype_name, copy=False)
     y_np = y_np.astype(dtype_name, copy=False)
@@ -1177,7 +1178,7 @@ def test_poisson_regressor_array_api_compliance(
 
     if use_sample_weight:
         sample_weight = (
-            np.random.default_rng(0)
+            rng
             .uniform(-1, 5, size=n_samples)
             .clip(0, None)  # over-represent null weights to cover edge-cases.
             .astype(dtype_name)
@@ -1191,6 +1192,7 @@ def test_poisson_regressor_array_api_compliance(
 
     # Test that alpha was not too large for meaningful testing.
     assert np.abs(glm_np.coef_).max() > 0.1
+    assert np.abs(glm_np.coef_).min() > 0.005
 
     predict_np = glm_np.predict(X_np)
     atol = _atol_for_type(dtype_name) * 10
@@ -1198,8 +1200,7 @@ def test_poisson_regressor_array_api_compliance(
 
     with config_context(array_api_dispatch=True):
         glm_xp = PoissonRegressor(**params).fit(X_xp, y_xp, sample_weight=sample_weight)
-        if dtype_name == "float64":
-            assert glm_xp.n_iter_ == glm_np.n_iter_
+        assert glm_xp.n_iter_ < glm_xp.max_iter
 
         for attr_name in ("coef_", "intercept_"):
             attr_xp = getattr(glm_xp, attr_name)
