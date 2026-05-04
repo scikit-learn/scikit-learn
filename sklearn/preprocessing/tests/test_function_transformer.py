@@ -214,7 +214,7 @@ def test_function_transformer_raise_error_with_mixed_dtype(X_type):
         transformer.fit(data)
 
 
-def test_function_transformer_support_all_nummerical_dataframes_check_inverse_True():
+def test_function_transformer_support_all_numerical_dataframes_check_inverse_True():
     """Check support for dataframes with only numerical values."""
     pd = pytest.importorskip("pandas")
 
@@ -231,7 +231,7 @@ def test_function_transformer_support_all_nummerical_dataframes_check_inverse_Tr
 def test_function_transformer_with_dataframe_and_check_inverse_True():
     """Check error is raised when check_inverse=True.
 
-    Non-regresion test for gh-25261.
+    Non-regression test for gh-25261.
     """
     pd = pytest.importorskip("pandas")
     transformer = FunctionTransformer(

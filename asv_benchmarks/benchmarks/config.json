@@ -1,5 +1,5 @@
 {
-    // "regular": Bencharks are run on small to medium datasets. Each benchmark
+    // "regular": Benchmarks are run on small to medium datasets. Each benchmark
     //            is run multiple times and averaged.
     // "fast": Benchmarks are run on small to medium datasets. Each benchmark
     //         is run only once. May provide unstable benchmarks.
