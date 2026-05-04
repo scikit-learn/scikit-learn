@@ -10,7 +10,7 @@ It will plot the decision boundaries for each class.
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
-
+# %%
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import ListedColormap
@@ -41,16 +41,11 @@ for shrinkage in [None, 0.2]:
     # Plot also the training points
     cmap = ListedColormap(disp.multiclass_colors_)
     plt.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap, edgecolor="k", s=20)
-    plt.title(f"3-Class classification (shrink_threshold={shrinkage})")
-    plt.axis("tight")
-    plt.text(
-        0.9,
-        0.1,
-        f"{acc:.2f}",
-        size=15,
-        ha="center",
-        va="center",
-        transform=plt.gca().transAxes,
+    plt.title(
+        f"3-Class classification (shrink_threshold={shrinkage})\nAccuracy: {acc:.2f}"
     )
+    plt.axis("tight")
 
 plt.show()
+
+# %%
