@@ -3,7 +3,7 @@
 Institutional support
 =====================
 
-Scikit-learn is a community driven project, however a number of public
+Scikit-learn is a community driven project. However, a number of public
 institutions and private entities have contributed and keep on contributing to
 its success and sustainability.
 
@@ -31,15 +31,14 @@ its success and sustainability.
   .. div:: text-box
 
     In 2023, Inria spun off `Probabl <https://probabl.ai>`_ as a mission driven
-    company to take scikit-learn beyond the research lab. All of the
+    company to take scikit-learn beyond a research lab. All of the
     scikit-learn core-maintainers employed by Inria have joined the spinoff as
     co-founders, most as full-time employees.
 
     Today, Probabl employs the following core and non-core contributors: Adrin
     Jalali, Antoine Baker, Arturo Amor, François Goupil, Guillaume Lemaitre,
     Jérémie du Boisberranger, Loïc Estève, Olivier Grisel, Shruti Nath and
-    Stefanie Senger, as well as Gaël Varoquaux who has joined the company as
-    Chief Science Officer.
+    Stefanie Senger, as well as Gaël Varoquaux.
 
 The above financial commitments mean that Inria initially and now Probabl have
 been and are the main source of financial support for scikit-learn, completed
