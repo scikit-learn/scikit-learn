@@ -235,33 +235,45 @@ class DecisionBoundaryDisplay:
 
     Examples
     --------
-    >>> import matplotlib as mpl
     >>> import matplotlib.pyplot as plt
+    >>> import matplotlib as mpl
     >>> import numpy as np
-    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.inspection import DecisionBoundaryDisplay
-    >>> from sklearn.tree import DecisionTreeClassifier
-    >>> iris = load_iris()
-    >>> feature_1, feature_2 = np.meshgrid(
-    ...     np.linspace(iris.data[:, 0].min(), iris.data[:, 0].max()),
-    ...     np.linspace(iris.data[:, 1].min(), iris.data[:, 1].max())
+    >>> data = np.array([[0, 0], [1, 1], [2, 1], [2, 2], [3, 2], [3, 3]])
+    >>> target = np.arange(data.shape[0])
+    >>> clf = LogisticRegression().fit(data, target)
+    >>> plot_methods = ["contourf", "contour", "pcolormesh"]
+    >>> response_methods = ["predict_proba", "decision_function", "predict"]
+    >>> _, axes = plt.subplots(
+    ...     nrows=3,
+    ...     ncols=3,
+    ...     figsize=(12, 12),
+    ...     constrained_layout=True
     ... )
-    >>> grid = np.vstack([feature_1.ravel(), feature_2.ravel()]).T
-    >>> tree = DecisionTreeClassifier().fit(iris.data[:, :2], iris.target)
-    >>> y_pred = np.reshape(tree.predict(grid), feature_1.shape)
-    >>> display = DecisionBoundaryDisplay(
-    ...     xx0=feature_1, xx1=feature_2, n_classes=len(tree.classes_), response=y_pred
-    ... )
-    >>> display.plot()
-    <...>
-    >>> display.ax_.scatter(
-    ...     iris.data[:, 0],
-    ...     iris.data[:, 1],
-    ...     c=iris.target,
-    ...     cmap=mpl.colors.ListedColormap(display.multiclass_colors_),
-    ...     edgecolor="black"
-    ... )
-    <...>
+    >>> for plot_method_idx, plot_method in enumerate(plot_methods):
+    ...     for response_method_idx, response_method in enumerate(response_methods):
+    ...         ax = axes[plot_method_idx, response_method_idx]
+    ...         display = DecisionBoundaryDisplay.from_estimator(
+    ...             clf,
+    ...             data,
+    ...             grid_resolution=300,
+    ...             response_method=response_method,
+    ...             plot_method=plot_method,
+    ...             ax=ax,
+    ...             alpha=0.5,
+    ...         )
+    ...         cmap = mpl.colors.ListedColormap(display.multiclass_colors_)
+    ...         ax.scatter(
+    ...             data[:, 0],
+    ...             data[:, 1],
+    ...             c=target.astype(int),
+    ...             edgecolors="black",
+    ...             cmap=cmap,
+    ...         )
+    ...         ax.set_title(
+    ...             f"plot_method={plot_method}\\nresponse_method={response_method}"
+    ...         )
     >>> plt.show()
     """
 
@@ -318,6 +330,45 @@ class DecisionBoundaryDisplay:
         -------
         display: :class:`~sklearn.inspection.DecisionBoundaryDisplay`
             Object that stores computed values.
+
+        See Also
+        --------
+        DecisionBoundaryDisplay.from_estimator : Plot decision boundary given an
+            estimator.
+
+        Examples
+        --------
+        >>> import matplotlib as mpl
+        >>> import matplotlib.pyplot as plt
+        >>> import numpy as np
+        >>> from sklearn.datasets import load_iris
+        >>> from sklearn.inspection import DecisionBoundaryDisplay
+        >>> from sklearn.tree import DecisionTreeClassifier
+        >>> iris = load_iris()
+        >>> feature_1, feature_2 = np.meshgrid(
+        ...     np.linspace(iris.data[:, 0].min(), iris.data[:, 0].max()),
+        ...     np.linspace(iris.data[:, 1].min(), iris.data[:, 1].max())
+        ... )
+        >>> grid = np.vstack([feature_1.ravel(), feature_2.ravel()]).T
+        >>> tree = DecisionTreeClassifier().fit(iris.data[:, :2], iris.target)
+        >>> y_pred = np.reshape(tree.predict(grid), feature_1.shape)
+        >>> display = DecisionBoundaryDisplay(
+        ...     xx0=feature_1,
+        ...     xx1=feature_2,
+        ...     n_classes=len(tree.classes_),
+        ...     response=y_pred
+        ... )
+        >>> display.plot()
+        <...>
+        >>> display.ax_.scatter(
+        ...     iris.data[:, 0],
+        ...     iris.data[:, 1],
+        ...     c=iris.target,
+        ...     cmap=mpl.colors.ListedColormap(display.multiclass_colors_),
+        ...     edgecolor="black"
+        ... )
+        <...>
+        >>> plt.show()
         """
         check_matplotlib_support("DecisionBoundaryDisplay.plot")
         import matplotlib as mpl

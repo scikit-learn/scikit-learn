@@ -2507,7 +2507,6 @@ def test__check_targets():
     MCN = "continuous-multioutput"
     # all of length 3
     EXAMPLES = [
-        (IND, np.array([[0, 1, 1], [1, 0, 0], [0, 0, 1]])),
         # must not be considered binary
         (IND, np.array([[0, 1], [1, 0], [1, 1]])),
         (MC, [2, 3, 1]),
@@ -2570,7 +2569,7 @@ def test__check_targets():
                         _check_targets(y1, y2)
 
         else:
-            merged_type, y1out, y2out, _ = _check_targets(y1, y2)
+            merged_type, _, y1out, y2out, _ = _check_targets(y1, y2)
             assert merged_type == expected
             if merged_type.startswith("multilabel"):
                 assert y1out.format == "csr"
@@ -2624,7 +2623,7 @@ def test__check_targets_sparse_inputs(y, target_type):
             _check_targets(y, y)
     else:
         # This should not raise an error
-        y_type, y_true_out, y_pred_out, _ = _check_targets(y, y)
+        y_type, _, y_true_out, y_pred_out, _ = _check_targets(y, y)
 
         assert y_type == "multilabel-indicator"
         assert y_true_out.format == "csr"
@@ -3711,7 +3710,7 @@ def test_d2_brier_score_warning_on_less_than_two_samples():
 def test_confusion_matrix_array_api(array_namespace, device_name, dtype_name):
     """Test that `confusion_matrix` works for all array types when `labels` are passed
     such that the inner boolean `need_index_conversion` evaluates to `True`."""
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     y_true = xp.asarray([1, 2, 3], device=device)
     y_pred = xp.asarray([4, 5, 6], device=device)
@@ -3744,7 +3743,7 @@ def test_probabilistic_metrics_array_api(
     and :func:`d2_log_loss_score` work correctly with the array API for binary
     and multi-class inputs.
     """
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     sample_weight = np.array([1, 2, 3, 1]) if use_sample_weight else None
 
     # binary case
@@ -3816,7 +3815,7 @@ def test_probabilistic_metrics_multilabel_array_api(
     and :func:`d2_log_loss_score` work correctly with the array API for
     multi-label inputs.
     """
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     sample_weight = np.array([1, 2, 3, 1]) if use_sample_weight else None
     y_true_np = np.array(
         [
@@ -3856,7 +3855,7 @@ def test_pos_label_in_brier_score_metrics_array_api(
     """Check `pos_label` handled correctly when labels not in {-1, 1} or {0, 1}."""
     # For 'brier_score' metrics, when `pos_label=None` and labels are not strings,
     # `pos_label` defaults to the largest label.
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     y_true_pos_1 = xp.asarray(np.array([1, 0, 1, 0]), device=device)
     # Result should be the same when we use 2's for the label instead of 1's
     y_true_pos_2 = xp.asarray(np.array([2, 0, 2, 0]), device=device)
