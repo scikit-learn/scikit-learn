@@ -98,7 +98,8 @@ def test_clone_after_fit():
 
 
 @pytest.mark.parametrize("backend", ["threading", "loky"])
-def test_progressbar_no_callback_support(backend):
+@pytest.mark.parametrize("n_repeat", range(1000))
+def test_progressbar_no_callback_support(backend, n_repeat):
     """Sanity check for ProgressBar within function not supporting callbacks.
 
     It's hard to check the output from sub-processes so this test only checks that it

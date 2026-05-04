@@ -3,7 +3,7 @@
 
 import sys
 import warnings
-from threading import Thread
+from threading import Lock, Thread
 
 from sklearn.callback._callback_context import get_context_path
 from sklearn.callback._callback_support import get_callback_manager
@@ -37,21 +37,24 @@ class ProgressBar:
         check_rich_support("Progressbar")
 
         self.max_propagation_depth = max_propagation_depth
+        self._setup_lock = Lock()
 
     def setup(self, estimator, context):
-        if not hasattr(self, "_manager"):
-            # If the outer function call supports callback, it would typically have
-            # initialized the manager and monitor in the same process and we can
-            # directly reuse it. If the same callback is used to collect progress of
-            # sub-estimators in subprocess parallel workers the setup/teardown is not
-            # needed because it is performed only once, typically in the parent process.
-            # However, if the outer function call does not support callbacks explicitly,
-            # we need to reinitialize a working callback state in worker processes:
-            # the callback will work in slightly degraded mode with redundant managers
-            # and progress monitors but this should not crash.
-            self._manager = get_callback_manager()
-            self._run_queues = self._manager.dict()
-            self._run_monitors = {}
+        with self._setup_lock:
+            if not hasattr(self, "_manager"):
+                # If the outer function call supports callback, it would typically have
+                # initialized the manager and monitor in the same process and we can
+                # directly reuse it. If the same callback is used to collect progress of
+                # sub-estimators in subprocess parallel workers the setup/teardown is
+                # not needed because it is performed only once, typically in the parent
+                # process. However, if the outer function call does not support
+                # callbacks explicitly, we need to reinitialize a working callback state
+                # in worker processes: the callback will work in slightly degraded mode
+                # with redundant managers and progress monitors but this should not
+                # crash.
+                self._manager = get_callback_manager()
+                self._run_queues = self._manager.dict()
+                self._run_monitors = {}
 
         queue = self._manager.Queue()
         progress_monitor = RichProgressMonitor(queue=queue)
@@ -103,7 +106,12 @@ class ProgressBar:
         state.pop("_run_monitors", None)
         # Note that run queues are pickleable and are expected to be shared between
         # the parent and worker processes.
+        state.pop("_setup_lock", None)
         return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self._setup_lock = Lock()
 
 
 try:
