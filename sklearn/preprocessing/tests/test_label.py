@@ -248,7 +248,7 @@ def test_label_binarizer_array_api_compliance(
     """Test that :class:`LabelBinarizer` works correctly with the Array API for binary
     and multi-class inputs for numerical labels and non-sparse outputs.
     """
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     y_np = np.asarray(y)
 
@@ -778,7 +778,7 @@ def test_label_binarize_array_api_compliance(
     """Test that :func:`label_binarize` works correctly with the Array API for binary
     and multi-class inputs for numerical labels and non-sparse outputs.
     """
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     xp_is_numpy = _is_numpy_namespace(xp)
     numeric_dtype = np.issubdtype(np.asarray(y).dtype, np.integer) and np.issubdtype(
         np.asarray(classes).dtype, np.integer
@@ -858,7 +858,7 @@ def test_label_encoders_do_not_have_set_output(encoder):
 def test_label_encoder_array_api_compliance(
     y, array_namespace, device_name, dtype_name
 ):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     xp_y = xp.asarray(y, device=device)
     with config_context(array_api_dispatch=True):
         xp_label = LabelEncoder()

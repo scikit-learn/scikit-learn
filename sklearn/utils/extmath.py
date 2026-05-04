@@ -169,7 +169,9 @@ def safe_sparse_dot(a, b, *, dense_output=False):
     Parameters
     ----------
     a : {ndarray, sparse matrix}
+        First operand of the dot product.
     b : {ndarray, sparse matrix}
+        Second operand of the dot product.
     dense_output : bool, default=False
         When False, ``a`` and ``b`` both being sparse will yield sparse output.
         When True, output will always be a dense array.
@@ -216,10 +218,10 @@ def safe_sparse_dot(a, b, *, dense_output=False):
         dense_output
         and a.ndim == 2
         and b.ndim == 2
-        and a.dtype in (np.float32, np.float64)
-        and b.dtype in (np.float32, np.float64)
         and (sparse.issparse(a) and a.format in ("csc", "csr"))
         and (sparse.issparse(b) and b.format in ("csc", "csr"))
+        and a.dtype in (np.float32, np.float64)
+        and b.dtype in (np.float32, np.float64)
     ):
         # Use dedicated fast method for dense_C = sparse_A @ sparse_B
         return sparse_matmul_to_dense(a, b)
