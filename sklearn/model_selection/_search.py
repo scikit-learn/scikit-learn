@@ -1002,8 +1002,8 @@ class BaseSearchCV(
         n_splits = cv_orig.get_n_splits(X, y, **routed_params.splitter.split)
 
         callback_ctx = self._init_callback_context(
-            max_subtasks=1 + (self.refit is not False),
-        ).call_on_fit_task_begin(estimator=self)
+            max_subtasks=1 + (self.refit is not False),  # refit can be str or callable
+        ).call_on_fit_task_begin(estimator=self, X=X, y=y)
 
         base_estimator = clone(self.estimator)
 
@@ -1051,7 +1051,7 @@ class BaseSearchCV(
                         task_name="search",
                         max_subtasks=max_callback_subtasks,
                         sequential_subtasks=False,
-                    ).call_on_fit_task_begin(estimator=self)
+                    ).call_on_fit_task_begin(estimator=self, X=X, y=y)
 
                 out = parallel(
                     delayed(_fit_and_score)(
@@ -1079,7 +1079,7 @@ class BaseSearchCV(
                     )
                 )
                 if callback_ctx is not None:
-                    search_subctx.call_on_fit_task_end(estimator=self)
+                    search_subctx.call_on_fit_task_end(estimator=self, X=X, y=y)
 
                 if len(out) < 1:
                     raise ValueError(
@@ -1189,7 +1189,7 @@ class BaseSearchCV(
         self.cv_results_ = results
         self.n_splits_ = n_splits
 
-        callback_ctx.call_on_fit_task_end(estimator=self)
+        callback_ctx.call_on_fit_task_end(estimator=self, X=X, y=y)
 
         return self
 
