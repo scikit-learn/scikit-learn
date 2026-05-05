@@ -640,7 +640,7 @@ def test_partial_dependence_unknown_feature_string(estimator):
     estimator = clone(estimator).fit(df, y)
 
     features = ["random"]
-    err_msg = "A given column is not a column of the dataframe"
+    err_msg = "Some column names are not columns of the dataframe"
     with pytest.raises(ValueError, match=err_msg):
         partial_dependence(estimator, df, features)
 

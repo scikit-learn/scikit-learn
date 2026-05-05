@@ -239,7 +239,7 @@ def test_permutation_importance_mixed_types_pandas():
     assert np.all(result.importances_mean[-1] > result.importances_mean[:-1])
 
 
-def test_permutation_importance_linear_regresssion():
+def test_permutation_importance_linear_regression():
     X, y = make_regression(n_samples=500, n_features=10, random_state=0)
 
     X = scale(X)
@@ -329,7 +329,7 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs, max_samples)
     X_df[new_col_idx] = cat_column
     assert X_df[new_col_idx].dtype == cat_column.dtype
 
-    # Stich an arbitrary index to the dataframe:
+    # Stitch an arbitrary index to the dataframe:
     X_df.index = np.arange(len(X_df)).astype(str)
 
     rf = RandomForestRegressor(n_estimators=5, max_depth=3, random_state=0)
@@ -352,7 +352,7 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs, max_samples)
     imp_max = importance_array["importances"].max()
     assert imp_max - imp_min > 0.3
 
-    # Now check that importances computed on dataframe matche the values
+    # Now check that importances computed on dataframe match the values
     # of those computed on the array with the same data.
     importance_dataframe = permutation_importance(
         rf,

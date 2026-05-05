@@ -2043,7 +2043,7 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
 
     else:
         # Calculate all cells
-        out = xp.empty((X.shape[0], Y.shape[0]), dtype=dtype_float)
+        out = xp.empty((X.shape[0], Y.shape[0]), dtype=dtype_float, device=device)
         iterator = itertools.product(range(X.shape[0]), range(Y.shape[0]))
         for i, j in iterator:
             x = _get_slice(X, i)

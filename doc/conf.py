@@ -289,11 +289,11 @@ html_theme_options = {
     "secondary_sidebar_items": {
         "**": [
             "page-toc",
-            "sourcelink",
             # Sphinx-Gallery-specific sidebar components
             # https://sphinx-gallery.github.io/stable/advanced.html#using-sphinx-gallery-sidebar-components
             "sg_download_links",
             "sg_launcher_links",
+            "funding_links",
         ],
     },
     "show_version_warning_banner": True,
@@ -338,6 +338,7 @@ html_sidebars = {
     "roadmap": [],
     "governance": [],
     "about": [],
+    "institutional_support": [],
 }
 
 # Additional templates that should be rendered to pages, maps page names to

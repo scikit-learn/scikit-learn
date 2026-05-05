@@ -1007,7 +1007,7 @@ def test_enet_copy_X_False_check_input_False():
     assert np.any(np.not_equal(original_X, X))
 
 
-def test_overrided_gram_matrix():
+def test_overridden_gram_matrix():
     X, y, _, _ = build_dataset(n_samples=20, n_features=10)
     Gram = X.T.dot(X)
     clf = ElasticNet(selection="cyclic", tol=1e-8, precompute=Gram)

@@ -1,0 +1,4 @@
+- Fixed color conversion in tree export so RGB values with zero channels are
+  correctly converted to two-digit hexadecimal components (for example,
+  ``(0, 255, 0)`` now yields ``#00ff00``).
+  By :user:`Simon-Martin Schröder <moi90>`.

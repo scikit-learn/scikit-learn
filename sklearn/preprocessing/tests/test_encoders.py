@@ -343,7 +343,7 @@ def test_one_hot_encoder_inverse_transform_raise_error_with_unknown(
     X, X_trans, sparse_
 ):
     """Check that `inverse_transform` raise an error with unknown samples, no
-    dropped feature, and `handle_unknow="error`.
+    dropped feature, and `handle_unknown="error`.
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/14934
     """
