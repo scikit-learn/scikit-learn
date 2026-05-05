@@ -105,7 +105,14 @@ class ScoringMonitor:
         prefer_skip_nested_validation=True,
     )
     def __init__(self, *, scoring):
+        from sklearn.metrics._scorer import _BaseScorer
+
         self._scoring = scoring
+        # Turn the scorer into a MultimetricScorer for convenience
+        if isinstance(scoring, str):
+            self._scoring = [scoring]
+        elif callable(scoring) and isinstance(scoring, _BaseScorer):
+            self._scoring = {"score": scoring}
         self._shared_log = get_callback_manager().list()
         self._estimator_scorers = {}
 
@@ -114,16 +121,8 @@ class ScoringMonitor:
         # set on different estimators and the scorer is the estimator's default scorer.
         if estimator not in self._estimator_scorers:
             from sklearn.metrics import check_scoring
-            from sklearn.metrics._scorer import _BaseScorer
 
-            # Turn the scorer into a MultimetricScorer for convenience
-            scoring = self._scoring
-            if isinstance(scoring, str):
-                scoring = [scoring]
-            elif callable(scoring) and isinstance(scoring, _BaseScorer):
-                scoring = {"score": scoring}
-
-            self._estimator_scorers[estimator] = check_scoring(estimator, scoring)
+            self._estimator_scorers[estimator] = check_scoring(estimator, self._scoring)
 
     def teardown(self, estimator, context):
         pass
