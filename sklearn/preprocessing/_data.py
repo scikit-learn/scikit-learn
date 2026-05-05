@@ -923,15 +923,9 @@ class StandardScaler(
         self : object
             Fitted scaler.
         """
-        callback_ctx = self._init_callback_context(max_subtasks=None)
-        callback_ctx.call_on_fit_task_begin(estimator=self, X=X, y=y)
-
         # Reset internal state before fitting
         self._reset()
-        Xt = self.partial_fit(X, y, sample_weight)
-
-        callback_ctx.call_on_fit_task_end(estimator=self, X=Xt, y=y)
-        return Xt
+        return self.partial_fit(X, y, sample_weight)
 
     @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y=None, sample_weight=None):
