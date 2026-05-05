@@ -1219,7 +1219,7 @@ def test_nan_euclidean_distances_complete_nan(missing_value):
 
 
 @pytest.mark.parametrize("missing_value", [np.nan, -1])
-def test_nan_euclidean_distances_not_trival(missing_value):
+def test_nan_euclidean_distances_not_trivial(missing_value):
     X = np.array(
         [
             [1.0, missing_value, 3.0, 4.0, 2.0],

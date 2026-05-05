@@ -410,9 +410,9 @@ def _get_column_indices(X, key):
             try:
                 return [column_names.index(col) for col in selected_columns]
             except ValueError as e:
-                raise ValueError(
-                    "A given column is not a column of the dataframe"
-                ) from e
+                missing = {*selected_columns} - {*column_names}
+                msg = f"Some column names are not columns of the dataframe: {missing}"
+                raise ValueError(msg) from e
 
 
 @validate_params(

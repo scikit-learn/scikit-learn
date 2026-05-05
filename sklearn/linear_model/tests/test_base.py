@@ -323,7 +323,7 @@ def test_inplace_data_preprocessing(sparse_container, use_sw, global_random_seed
     rng = np.random.RandomState(global_random_seed)
     original_X_data = rng.randn(10, 12)
     original_y_data = rng.randn(10, 2)
-    orginal_sw_data = rng.rand(10)
+    original_sw_data = rng.rand(10)
 
     if sparse_container is not None:
         X = sparse_container(original_X_data)
@@ -334,7 +334,7 @@ def test_inplace_data_preprocessing(sparse_container, use_sw, global_random_seed
     # implementation of LinearRegression.
 
     if use_sw:
-        sample_weight = orginal_sw_data.copy()
+        sample_weight = original_sw_data.copy()
     else:
         sample_weight = None
 
@@ -348,7 +348,7 @@ def test_inplace_data_preprocessing(sparse_container, use_sw, global_random_seed
     assert_allclose(y, original_y_data)
 
     if use_sw:
-        assert_allclose(sample_weight, orginal_sw_data)
+        assert_allclose(sample_weight, original_sw_data)
 
     # Allow inplace preprocessing of X and y
     reg = LinearRegression(copy_X=False)
@@ -368,7 +368,7 @@ def test_inplace_data_preprocessing(sparse_container, use_sw, global_random_seed
 
     if use_sw:
         # Sample weights have no reason to ever be modified inplace.
-        assert_allclose(sample_weight, orginal_sw_data)
+        assert_allclose(sample_weight, original_sw_data)
 
 
 def test_linear_regression_pd_sparse_dataframe_warning():

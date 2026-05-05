@@ -235,7 +235,7 @@ def precision_recall_curve_padded_thresholds(*args, **kwargs):
     """
     precision, recall, thresholds = precision_recall_curve(*args, **kwargs)
 
-    pad_threshholds = len(precision) - len(thresholds)
+    pad_thresholds = len(precision) - len(thresholds)
 
     return np.array(
         [
@@ -243,7 +243,7 @@ def precision_recall_curve_padded_thresholds(*args, **kwargs):
             recall,
             np.pad(
                 thresholds.astype(np.float64),
-                pad_width=(0, pad_threshholds),
+                pad_width=(0, pad_thresholds),
                 mode="constant",
                 constant_values=[np.nan],
             ),
@@ -362,7 +362,7 @@ METRICS_WITH_AVERAGING = {
 }
 
 # Threshold-based metrics with an "average" argument
-CONTINOUS_CLASSIFICATION_METRICS_WITH_AVERAGING = {
+CONTINUOUS_CLASSIFICATION_METRICS_WITH_AVERAGING = {
     "roc_auc_score",
     "average_precision_score",
     "partial_roc_auc",
@@ -1521,7 +1521,7 @@ def check_averaging(name, y_true, y_true_binarize, y_pred, y_pred_binarize, y_sc
         _check_averaging(
             metric, y_true, y_pred, y_true_binarize, y_pred_binarize, is_multilabel
         )
-    elif name in CONTINOUS_CLASSIFICATION_METRICS_WITH_AVERAGING:
+    elif name in CONTINUOUS_CLASSIFICATION_METRICS_WITH_AVERAGING:
         _check_averaging(
             metric, y_true, y_score, y_true_binarize, y_score, is_multilabel
         )
@@ -1546,7 +1546,7 @@ def test_averaging_multiclass(name):
 
 @pytest.mark.parametrize(
     "name",
-    sorted(METRICS_WITH_AVERAGING | CONTINOUS_CLASSIFICATION_METRICS_WITH_AVERAGING),
+    sorted(METRICS_WITH_AVERAGING | CONTINUOUS_CLASSIFICATION_METRICS_WITH_AVERAGING),
 )
 def test_averaging_multilabel(name):
     n_samples, n_classes = 40, 5
@@ -1971,16 +1971,25 @@ def test_continuous_metric_permutation_invariance(name):
         assert_almost_equal(score, current_score)
 
 
+@pytest.mark.parametrize(
+    "y1",
+    [
+        np.array(["spam"] * 3 + ["eggs"] * 2, dtype=object),  # str object
+        np.array(["spam"] * 3 + ["eggs"] * 2),  # fixed width str
+        np.array(["spam"] * 3 + ["eggs"] * 2),  # list
+    ],
+)
 @pytest.mark.parametrize("metric_name", CLASSIFICATION_METRICS)
-def test_metrics_consistent_type_error(metric_name):
+def test_metrics_consistent_type_error(y1, metric_name):
     # check that an understable message is raised when the type between y_true
     # and y_pred mismatch
     rng = np.random.RandomState(42)
-    y1 = np.array(["spam"] * 3 + ["eggs"] * 2, dtype=object)
-    y2 = rng.randint(0, 2, size=y1.size)
+    n_samples = 5
 
-    err_msg = "Labels in y_true and y_pred should be of the same type."
-    with pytest.raises(TypeError, match=err_msg):
+    y2 = rng.randint(0, 2, size=n_samples)
+
+    err_msg = r"Mix of label input types \(string and number\)"
+    with pytest.raises(ValueError, match=err_msg):
         CLASSIFICATION_METRICS[metric_name](y1, y2)
 
 

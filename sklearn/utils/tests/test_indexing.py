@@ -478,7 +478,10 @@ def test_safe_assign(array_type):
     "key, err_msg",
     [
         (10, r"all features must be in \[0, 2\]"),
-        ("whatever", "A given column is not a column of the dataframe"),
+        (
+            "whatever",
+            r"Some column names are not columns of the dataframe: \{'whatever'\}",
+        ),
         (object(), "No valid specification of the columns"),
     ],
 )
@@ -533,7 +536,7 @@ def test_get_column_indices_dataframes(constructor_name):
             assert _get_column_indices(df, key) == result
 
     if constructor_name not in ("array", "sparse"):
-        msg = "A given column is not a column of the dataframe"
+        msg = r"Some column names are not columns of the dataframe: \{'not_a_column'\}"
         with pytest.raises(ValueError, match=msg):
             _get_column_indices(df, ["not_a_column"])
 
