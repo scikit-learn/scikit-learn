@@ -24,6 +24,7 @@ from sklearn.base import (
 from sklearn.callback.tests._utils import (
     MaxIterEstimator,
     RecordingAutoPropagatedCallback,
+    RecordingCallback,
 )
 from sklearn.cluster import KMeans
 from sklearn.datasets import load_iris
@@ -2552,6 +2553,47 @@ def test_feature_union_metadata_routing(transformer):
 
 # End of routing tests
 # ====================
+
+
+def test_pipeline_with_callbacks():
+    """Check that callbacks are propagated correctly for a pipeline."""
+    X, y = load_iris(return_X_y=True)
+    max_iter = 3
+    callback = RecordingAutoPropagatedCallback()
+
+    Pipeline(
+        [("sc", StandardScaler()), ("est", MaxIterEstimator(max_iter=max_iter))]
+    ).set_callbacks(callback).fit(X, y)
+
+    assert callback.count_hooks("setup") == 1
+    assert callback.count_hooks("teardown") == 1
+    # 1 root + 1 root for "sc" + (1 root + max_iter leaves for "est")
+    assert callback.count_hooks("on_fit_task_begin") == 1 + 1 + 1 + max_iter
+    assert callback.count_hooks("on_fit_task_end") == 1 + 1 + 1 + max_iter
+
+
+def test_pipeline_with_callbacks_on_steps():
+    """Check that callbacks registered on steps are correctly invoked."""
+    X, y = load_iris(return_X_y=True)
+
+    sc_callback = RecordingCallback()
+    sc = StandardScaler().set_callbacks(sc_callback)
+
+    max_iter = 3
+    est_callback = RecordingCallback()
+    est = MaxIterEstimator(max_iter=max_iter).set_callbacks(est_callback)
+
+    Pipeline([("sc", sc), ("est", est)]).fit(X, y)
+
+    assert sc_callback.count_hooks("setup") == 1
+    assert sc_callback.count_hooks("teardown") == 1
+    assert sc_callback.count_hooks("on_fit_task_begin") == 1
+    assert sc_callback.count_hooks("on_fit_task_end") == 1
+
+    assert est_callback.count_hooks("setup") == 1
+    assert est_callback.count_hooks("teardown") == 1
+    assert est_callback.count_hooks("on_fit_task_begin") == 1 + max_iter
+    assert est_callback.count_hooks("on_fit_task_end") == 1 + max_iter
 
 
 def test_pipeline_memory_callbacks_second_fit_same_pipeline():

@@ -531,7 +531,7 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
         memory = check_memory(self.memory)
 
         fit_transform_one_cached = memory.cache(
-            _fit_transform_one,
+            _fit_transform_one_with_callbacks,
             # caller and callback_ctx are not part of the transformer's fit result.
             # hashing them would break cache hits (Pipeline state / context changes
             # across fit calls).
@@ -1551,15 +1551,7 @@ def _transform_one(transformer, X, y, weight, params):
 
 
 def _fit_transform_one(
-    transformer,
-    X,
-    y,
-    weight,
-    message_clsname="",
-    message=None,
-    params=None,
-    caller=None,
-    callback_ctx=None,
+    transformer, X, y, weight, message_clsname="", message=None, params=None
 ):
     """
     Fits ``transformer`` to ``X`` and ``y``. The transformed result is returned
@@ -1569,31 +1561,42 @@ def _fit_transform_one(
     ``params`` needs to be of the form ``process_routing()["step_name"]``.
     """
     params = params or {}
-    if callback_ctx is not None:
-        with callback_ctx.propagate_callback_context(transformer):
-            callback_ctx.call_on_fit_task_begin(estimator=caller, X=X, y=y)
-            with _print_elapsed_time(message_clsname, message):
-                if hasattr(transformer, "fit_transform"):
-                    res = transformer.fit_transform(
-                        X, y, **params.get("fit_transform", {})
-                    )
-                else:
-                    res = transformer.fit(X, y, **params.get("fit", {})).transform(
-                        X, **params.get("transform", {})
-                    )
-            res = res * weight if weight is not None else res
-            callback_ctx.call_on_fit_task_end(estimator=caller, X=res, y=y)
-    else:
-        with _print_elapsed_time(message_clsname, message):
-            if hasattr(transformer, "fit_transform"):
-                res = transformer.fit_transform(X, y, **params.get("fit_transform", {}))
-            else:
-                res = transformer.fit(X, y, **params.get("fit", {})).transform(
-                    X, **params.get("transform", {})
-                )
-        res = res * weight if weight is not None else res
+    with _print_elapsed_time(message_clsname, message):
+        if hasattr(transformer, "fit_transform"):
+            res = transformer.fit_transform(X, y, **params.get("fit_transform", {}))
+        else:
+            res = transformer.fit(X, y, **params.get("fit", {})).transform(
+                X, **params.get("transform", {})
+            )
 
-    return res, transformer
+    if weight is None:
+        return res, transformer
+    return res * weight, transformer
+
+
+# TODO merge with _fit_transform_one when all callers support callbacks
+def _fit_transform_one_with_callbacks(
+    transformer,
+    X,
+    y,
+    weight,
+    message_clsname="",
+    message=None,
+    params=None,
+    *,
+    caller,
+    callback_ctx,
+):
+    with callback_ctx.propagate_callback_context(transformer):
+        callback_ctx.call_on_fit_task_begin(estimator=caller, X=X, y=y)
+
+        Xt, transformer = _fit_transform_one(
+            transformer, X, y, weight, message_clsname, message, params
+        )
+
+        callback_ctx.call_on_fit_task_end(estimator=caller, X=Xt, y=y)
+
+    return Xt, transformer
 
 
 def _fit_one(transformer, X, y, weight, message_clsname="", message=None, params=None):
