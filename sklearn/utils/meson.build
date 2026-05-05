@@ -1,3 +1,22 @@
+# Check if scipy's cython_blas exports blas_int (ILP64 support).
+scipy_has_blas_int = cython.compiles(
+  'from scipy.linalg.cython_blas cimport blas_int',
+  name: 'scipy cython_blas blas_int'
+)
+
+_blas_int_conf = configuration_data()
+if scipy_has_blas_int
+  _blas_int_conf.set('BLAS_INT_DEF', 'from scipy.linalg.cython_blas cimport blas_int')
+else
+  _blas_int_conf.set('BLAS_INT_DEF', 'ctypedef int blas_int')
+endif
+
+_blas_int_pxi = configure_file(
+  input: '_blas_int.pxi.in',
+  output: '_blas_int.pxi',
+  configuration: _blas_int_conf,
+)
+
 # utils is cimported from other subpackages so this is needed for the cimport
 # to work
 utils_cython_tree = [
@@ -17,7 +36,7 @@ utils_cython_tree = [
 utils_extension_metadata = {
   'sparsefuncs_fast':
     {'sources': [cython_gen.process('sparsefuncs_fast.pyx')]},
-  '_cython_blas': {'sources': [cython_gen.process('_cython_blas.pyx')]},
+  '_cython_blas': {'sources': [cython_gen.process('_cython_blas.pyx'), _blas_int_pxi]},
   'arrayfuncs': {'sources': [cython_gen.process('arrayfuncs.pyx')]},
   'murmurhash': {
       'sources': [cython_gen.process('murmurhash.pyx'), 'src' / 'MurmurHash3.cpp'],
@@ -61,7 +80,7 @@ foreach name: util_extension_names
     output: name + '.pyx',
     input: name + '.pyx.tp',
     command: [tempita, '@INPUT@', '-o', '@OUTDIR@'],
-    # TODO in principle this should go in py.exension_module below. This is
+    # TODO in principle this should go in py.extension_module below. This is
     # temporary work-around for dependency issue with .pyx.tp files. For more
     # details, see https://github.com/mesonbuild/meson/issues/13212
     depends: [pxd, utils_cython_tree],

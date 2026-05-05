@@ -978,6 +978,11 @@ class StandardScaler(
         )
         n_features = X.shape[1]
 
+        callback_ctx = self._init_callback_context()
+        callback_ctx.call_on_fit_task_begin(
+            estimator=self, X=X, y=y, metadata={"sample_weight": sample_weight}
+        )
+
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
@@ -1079,6 +1084,14 @@ class StandardScaler(
             )
         else:
             self.scale_ = None
+
+        callback_ctx.call_on_fit_task_end(
+            estimator=self,
+            X=X,
+            y=y,
+            metadata={"sample_weight": sample_weight},
+            reconstruction_attributes={},
+        )
 
         return self
 

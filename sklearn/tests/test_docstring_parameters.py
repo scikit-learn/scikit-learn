@@ -56,8 +56,8 @@ _DOCSTRING_IGNORES = [
     "sklearn.utils.deprecation.load_mlcomp",
     "sklearn.pipeline.make_pipeline",
     "sklearn.pipeline.make_union",
-    "sklearn.utils.extmath.safe_sparse_dot",
     "HalfBinomialLoss",
+    "ScoringMonitorLog",  # dataclass
 ]
 
 # Methods where y param should be ignored if y=None by default
@@ -236,10 +236,6 @@ def test_fit_docstring_attributes(name, Estimator):
     elif Estimator.__name__ == "TSNE":
         # default raises an error, perplexity must be less than n_samples
         est.set_params(perplexity=2)
-    # TODO(1.9) remove
-    elif Estimator.__name__ == "KBinsDiscretizer":
-        # default raises a FutureWarning if quantile method is at default "warn"
-        est.set_params(quantile_method="averaged_inverted_cdf")
     # TODO(1.10) remove
     elif Estimator.__name__ == "MDS":
         # default raises a FutureWarning

@@ -936,7 +936,7 @@ def test_n_classes_attribute(pyplot, estimator, n_blobs, expected_n_classes):
     assert disp_coi.n_classes == 2
 
 
-def test_n_classes_raises_if_not_inferrable(pyplot):
+def test_n_classes_raises_if_not_inferable(pyplot):
     """Check behaviour if `n_classes` can't be inferred.
 
     Non-regression test for issue #33194.

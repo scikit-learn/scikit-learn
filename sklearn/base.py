@@ -16,7 +16,6 @@ import numpy as np
 
 from sklearn import __version__
 from sklearn._config import config_context, get_config
-from sklearn.callback._callback_support import callback_management_context
 from sklearn.exceptions import InconsistentVersionWarning
 from sklearn.utils._metadata_requests import _MetadataRequester, _routing_enabled
 from sklearn.utils._missing import is_pandas_na, is_scalar_nan
@@ -1227,7 +1226,7 @@ class MultiOutputMixin:
 
 
 class _UnstableArchMixin:
-    """Mark estimators that are non-determinstic on 32bit or PowerPC"""
+    """Mark estimators that are non-deterministic on 32bit or PowerPC"""
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -1375,6 +1374,8 @@ def _fit_context(*, prefer_skip_nested_validation):
     def decorator(fit_method):
         @functools.wraps(fit_method)
         def wrapper(estimator, *args, **kwargs):
+            from sklearn.callback._callback_support import callback_management_context
+
             global_skip_validation = get_config()["skip_parameter_validation"]
 
             # we don't want to validate again for each call to partial_fit

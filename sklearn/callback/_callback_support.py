@@ -30,7 +30,11 @@ def get_callback_manager():
 
 
 class CallbackSupportMixin:
-    """Mixin class to add callback support to an estimator."""
+    """Mixin class to add callback support to an estimator.
+
+    .. document the private method
+    .. automethod:: _init_callback_context
+    """
 
     def set_callbacks(self, *callbacks):
         """Set callbacks for the estimator.

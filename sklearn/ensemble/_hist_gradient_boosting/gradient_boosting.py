@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import itertools
+import sys
 from abc import ABC, abstractmethod
 from contextlib import contextmanager, nullcontext, suppress
 from functools import partial
@@ -40,7 +41,7 @@ from sklearn.metrics._scorer import _SCORERS
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import FunctionTransformer, LabelEncoder, OrdinalEncoder
 from sklearn.utils import check_random_state, compute_sample_weight, resample
-from sklearn.utils._dataframe import is_pandas_df
+from sklearn.utils._dataframe import is_pandas_df, is_polars_df
 from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
@@ -374,6 +375,14 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if is_pandas_df(X):
             X_is_dataframe = True
             categorical_columns_mask = np.asarray(X.dtypes == "category")
+        elif is_polars_df(X):
+            # Special code for polars because polars 1.40 deprecates the __dataframe__
+            # protocol.
+            X_is_dataframe = True
+            pl = sys.modules["polars"]
+            categorical_columns_mask = np.asarray(
+                [d in (pl.Categorical, pl.Enum) for d in X.dtypes]
+            )
         elif hasattr(X, "__dataframe__"):
             X_is_dataframe = True
             categorical_columns_mask = np.asarray(
@@ -1573,7 +1582,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         - `"from_dtype"`: dataframe columns with dtype "category" are
           considered to be categorical features. The input must be an object
           exposing a ``__dataframe__`` method such as pandas or polars
-          DataFrames to use this feature.
+          DataFrames to use this feature. For polars dataframes, dtypes
+          pl.Categorical and pl.Enum are detected.
 
         For each categorical feature, there must be at most `max_bins` unique
         categories. Negative values for categorical features encoded as numeric
@@ -1966,7 +1976,8 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         - `"from_dtype"`: dataframe columns with dtype "category" are
           considered to be categorical features. The input must be an object
           exposing a ``__dataframe__`` method such as pandas or polars
-          DataFrames to use this feature.
+          DataFrames to use this feature. For polars dataframes, dtypes
+          pl.Categorical and pl.Enum are detected.
 
         For each categorical feature, there must be at most `max_bins` unique
         categories. Negative values for categorical features encoded as numeric
