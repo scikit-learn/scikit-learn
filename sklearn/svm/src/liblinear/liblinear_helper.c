@@ -27,12 +27,12 @@ static struct feature_node **dense_to_sparse(char *x, int double_precision,
     struct feature_node *T;             /* pointer to the top of the stack */
     int have_bias = (bias > 0);
 
-    sparse = malloc (n_samples * sizeof(struct feature_node *));
+    sparse = calloc(n_samples, sizeof(struct feature_node *));
     if (sparse == NULL)
         return NULL;
 
     n_nonzero += (have_bias+1) * n_samples;
-    T = malloc (n_nonzero * sizeof(struct feature_node));
+    T = calloc(n_nonzero, sizeof(struct feature_node));
     if (T == NULL) {
         free(sparse);
         return NULL;
@@ -89,12 +89,12 @@ static struct feature_node **csr_to_sparse(char *x, int double_precision,
     struct feature_node *T;
     int have_bias = (bias > 0);
 
-    sparse = malloc (n_samples * sizeof(struct feature_node *));
+    sparse = calloc(n_samples, sizeof(struct feature_node *));
     if (sparse == NULL)
         return NULL;
 
     n_nonzero += (have_bias+1) * n_samples;
-    T = malloc (n_nonzero * sizeof(struct feature_node));
+    T = calloc(n_nonzero, sizeof(struct feature_node));
     if (T == NULL) {
         free(sparse);
         return NULL;
@@ -198,6 +198,9 @@ struct parameter *set_parameter(int solver_type, double eps, double C,
 
 void copy_w(void *data, struct model *model, int len)
 {
+    int max_len = model->nr_feature * model->nr_class;
+    if (len <= 0 || len > max_len)
+        return;
     memcpy(data, model->w, len * sizeof(double));
 }
 
