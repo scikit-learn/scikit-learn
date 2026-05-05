@@ -859,18 +859,18 @@ def test_parallel_pairwise_distances_diagonal(metric, global_dtype):
 
 
 def test_parallel_pairwise_distances_y_norm_squared():
-    """Non-regression test for _parallel_pairwise not slicing Y_norm_squared.
+    """Check that Y_norm_squared is correctly sliced alongside Y.
 
-    When n_jobs > 1, _parallel_pairwise chunks Y into slices but previously
-    passed Y_norm_squared through unchanged, causing a shape mismatch in
-    euclidean_distances.
+    Non-regression test for issue #33877.
     """
     rng = np.random.RandomState(42)
     X = rng.rand(13, 4)
     Y = rng.rand(15, 4)
     Y_norm_squared = (Y**2).sum(axis=1)
 
-    D_single = euclidean_distances(X, Y, Y_norm_squared=Y_norm_squared)
+    D_single = pairwise_distances(
+        X, Y, metric="euclidean", n_jobs=1, Y_norm_squared=Y_norm_squared
+    )
     D_parallel = pairwise_distances(
         X, Y, metric="euclidean", n_jobs=2, Y_norm_squared=Y_norm_squared
     )

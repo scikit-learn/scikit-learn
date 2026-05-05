@@ -1,4 +1,3 @@
-- :func:`metrics.pairwise.euclidean_distances` no longer raises when called
-  with ``Y_norm_squared`` and ``n_jobs > 1``. ``Y_norm_squared`` is now
-  correctly sliced alongside ``Y``.
+- :func:`metrics.pairwise.pairwise_distances` no longer raises an error for the
+  euclidean metric when called with `Y_norm_squared` and `n_jobs > 1`.
   By :user:`Kunle Li <unw9527>`.
