@@ -49,7 +49,7 @@ __version__ = "1.9.dev0"
 # simultaneously. This can happen for instance when calling BLAS inside a
 # prange. Setting the following environment variable allows multiple OpenMP
 # libraries to be loaded. It should not degrade performances since we manually
-# take care of potential over-subcription performance issues, in sections of
+# take care of potential over-subscription performance issues, in sections of
 # the code where nested OpenMP loops can happen, by dynamically reconfiguring
 # the inner OpenMP runtime to temporarily disable it while under the scope of
 # the outer OpenMP parallel section.
