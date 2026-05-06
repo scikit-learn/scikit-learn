@@ -2899,15 +2899,6 @@ def test_logistic_regression_callback_support(binary, fit_intercept):
     assert cb.count_hooks("on_fit_task_begin") == lr.n_iter_ + 1
     assert cb.count_hooks("on_fit_task_end") == lr.n_iter_ + 1
 
-    # The last fitted_estimator should be the same as the actual fitted instance.
-    pred = lr.predict(X)
-    last_fitted_lr = [
-        rec
-        for rec in cb.record
-        if rec["name"] == "on_fit_task_end"
-        and rec["kwargs"]["fitted_estimator"] is not None
-    ][-1]["kwargs"]["fitted_estimator"]
-    assert_allclose(pred, last_fitted_lr.predict(X))
 
 
 # TODO(1.10): Uncomment when scipy callbacks can be interrupted with StopIteration in

@@ -117,7 +117,7 @@ def _make_scipy_callback_fun(
         return None
 
     def scipy_callback_fun(xk):
-        solver_iter_ctx = callback_ctx.subcontext(task_name="lbfgs_iter")
+        solver_iter_ctx = callback_ctx.subcontext(task_name="lbfgs iter")
         solver_iter_ctx.call_on_fit_task_begin(
             estimator=estimator, X=X, y=y, metadata=metadata
         )
