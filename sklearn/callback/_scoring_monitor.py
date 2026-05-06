@@ -113,6 +113,7 @@ class ScoringMonitor:
             self._scoring = [scoring]
         elif callable(scoring) and isinstance(scoring, _BaseScorer):
             self._scoring = {"score": scoring}
+
         self._shared_log = get_callback_manager().list()
         self._estimator_scorers = {}
 
@@ -125,7 +126,7 @@ class ScoringMonitor:
             self._estimator_scorers[estimator] = check_scoring(estimator, self._scoring)
 
     def teardown(self, estimator, context):
-        pass
+        self._estimator_scorers.pop(estimator, None)
 
     def on_fit_task_begin(self, estimator, context):
         pass
