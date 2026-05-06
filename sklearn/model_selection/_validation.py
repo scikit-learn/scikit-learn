@@ -836,7 +836,10 @@ def _fit_and_score(
         if callback_ctx is not None:
             with callback_ctx.propagate_callback_context(estimator):
                 callback_ctx.call_on_fit_task_begin(
-                    estimator=estimator, X=X, y=y, metadata=metadata_callbacks
+                    estimator=estimator,
+                    X=X_train,
+                    y=y_train,
+                    metadata=metadata_callbacks,
                 )
                 if y_train is None:
                     estimator.fit(X_train, **fit_params)
@@ -918,8 +921,8 @@ def _fit_and_score(
     if callback_ctx is not None:
         callback_ctx.call_on_fit_task_end(
             estimator=estimator,
-            X=X,
-            y=y,
+            X=X_train,
+            y=y_train,
             metadata=metadata_callbacks,
             reconstruction_attributes={"best_estimator_": estimator},
         )
