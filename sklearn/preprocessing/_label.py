@@ -1023,7 +1023,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys
         Parameters
         ----------
         yt : {ndarray, sparse matrix} of shape (n_samples, n_classes)
-            A matrix containing only 1s ands 0s.
+            A matrix containing only 1s and 0s.
 
         Returns
         -------

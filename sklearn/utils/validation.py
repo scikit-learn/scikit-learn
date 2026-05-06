@@ -2181,7 +2181,7 @@ def _check_sample_weight(
         if force_float_dtype and dtype is None:
             dtype = float_dtypes
         if is_array_api and ensure_same_device:
-            sample_weight = xp.asarray(sample_weight, device=device)
+            sample_weight = move_to(sample_weight, xp=xp, device=device)
         sample_weight = check_array(
             sample_weight,
             accept_sparse=False,
@@ -2539,13 +2539,13 @@ def _check_monotonic_cst(estimator, monotonic_cst=None):
                 set(original_monotonic_cst) - set(estimator.feature_names_in_)
             )
             unexpected_feature_names.sort()  # deterministic error message
-            n_unexpeced = len(unexpected_feature_names)
+            n_unexpected = len(unexpected_feature_names)
             if unexpected_feature_names:
                 if len(unexpected_feature_names) > 5:
                     unexpected_feature_names = unexpected_feature_names[:5]
                     unexpected_feature_names.append("...")
                 raise ValueError(
-                    f"monotonic_cst contains {n_unexpeced} unexpected feature "
+                    f"monotonic_cst contains {n_unexpected} unexpected feature "
                     f"names: {unexpected_feature_names}."
                 )
             for feature_idx, feature_name in enumerate(estimator.feature_names_in_):
