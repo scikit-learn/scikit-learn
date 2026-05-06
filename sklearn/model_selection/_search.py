@@ -1060,9 +1060,11 @@ class BaseSearchCV(
                         )
                     )
 
-                if hasattr(self, "param_grid"):  # *GridSearchCV
+                if isinstance(self, GridSearchCV) or isinstance(
+                    self, HalvingGridSearchCV
+                ):
                     max_callback_subtasks = n_candidates * n_splits
-                elif hasattr(self, "n_iter"):  # RandomizedSearchCV
+                elif isinstance(self, RandomizedSearchCV):
                     max_callback_subtasks = self.n_iter * n_splits
                 else:  # HalvingRandomSearchCV and custom classes
                     max_callback_subtasks = None
