@@ -12,11 +12,15 @@ Callbacks
   <callback_compatible_estimators>` for more information. It may change without the
   usual deprecation cycle.
 
-This guide demonstrates how to use scikit-learn's callbacks on compatible estimators. To
-implement callback support in an estimator or meta-estimator, see the
-:ref:`corresponding section of the developer guide <callbacks_support>`. To develop a
-callback for callback-compatible estimators, see the
-:ref:`corresponding section of the developer guide <developing_callbacks>`.
+This guide demonstrates how to use scikit-learn's callbacks on compatible estimators.
+For information about how to implement the callback API, you can refer to the following
+sections of the developer's guide:
+
+- the :ref:`Implementing callback support in estimators <callbacks_support>` section for
+  making estimators compatible with callbacks.
+
+- the :ref:`Developing callbacks <developing_callbacks>` section for how to implement a
+  new callback.
 
 In scikit-learn, callbacks are objects from the :mod:`~sklearn.callback` module that can
 be registered on an estimator to insert custom logic like monitoring progress or
