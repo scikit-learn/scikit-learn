@@ -19,7 +19,7 @@ sections of the developer's guide:
 - the :ref:`Implementing callback support in estimators <callbacks_support>` section for
   making estimators compatible with callbacks.
 
-- the :ref:`Developing callback <developing_callbacks>` section for how to implement a
+- the :ref:`Developing callbacks <developing_callbacks>` section for how to implement a
   new callback.
 
 In scikit-learn, callbacks are objects from the :mod:`~sklearn.callback` module that can
