@@ -64,6 +64,15 @@ class CallbackSupportMixin:
         else:
             del self._skl_callbacks
 
+        # Optional `_skl_on_attach` hook — called once on the main process when
+        # the callback is attached to an estimator. Callbacks that need to set
+        # up cross-process transport (so that workers can write back to main
+        # before they ever run any callback hook themselves) can implement it.
+        for callback in callbacks:
+            on_attach = getattr(callback, "_skl_on_attach", None)
+            if on_attach is not None:
+                on_attach(self)
+
         return self
 
     def _init_callback_context(

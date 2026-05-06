@@ -2,12 +2,18 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import sys
+import uuid
 import warnings
 from threading import Thread
 
 from sklearn.callback._callback_context import get_context_path
 from sklearn.callback._callback_support import get_callback_manager
 from sklearn.utils._optional_dependencies import check_rich_support
+
+# Monitor threads run only in the main process of a fit and are not picklable, so
+# they must not live on the callback instance. They are registered here keyed by
+# the run's root_uuid; entries are added in ``setup`` and removed in ``teardown``.
+_run_monitors: dict[uuid.UUID, "RichProgressMonitor"] = {}
 
 
 class ProgressBar:
@@ -37,32 +43,27 @@ class ProgressBar:
         check_rich_support("Progressbar")
 
         self.max_propagation_depth = max_propagation_depth
-        self._manager = get_callback_manager()
-        # Queue proxies need to be shared across callback copies in subprocesses,
-        # while monitor threads must stay process-local (they are not picklable).
-        self._run_queues = self._manager.dict()
-        self._run_monitors = {}
+        # Per-run Manager.Queue proxies, keyed by root_uuid. Plain Python dict so
+        # the instance is natively picklable; the Manager process is only spawned
+        # on the first ``setup`` call. Workers that receive the pickled callback
+        # see the same queue proxies and can ``put`` on them cross-process.
+        self._run_queues = {}
 
     def setup(self, estimator, context):
-        if not hasattr(self, "_manager"):
-            # If the outer function call supports callback, it would typically have
-            # initialized the manager and monitor in the same process and we can
-            # directly reuse it. If the same callback is used to collect progress of
-            # sub-estimators in subprocess parallel workers the setup/teardown is not
-            # needed because it is performed only once, typically in the parent process.
-            # However, if the outer function call does not support callbacks explicitly,
-            # we need to reinitialize a working callback state in worker processes:
-            # the callback will work in slightly degraded mode with redundant managers
-            # and progress monitors but this should not crash.
-            self._manager = get_callback_manager()
-            self._run_queues = self._manager.dict()
-            self._run_monitors = {}
+        # Lazily create the per-fit transport state. The Manager process is only
+        # spawned here, on the first fit, instead of at construction time. ``setup``
+        # runs on the main process for the common case where ``ProgressBar`` is
+        # attached to (or auto-propagated from) the outermost estimator. In the
+        # degraded case where the outer function does not support callbacks, this
+        # may run inside a loky worker; that worker will then spawn its own local
+        # Manager and the queues will be process-local — the callback runs in
+        # slightly degraded mode but does not crash.
+        queue = get_callback_manager().Queue()
+        self._run_queues[context.root_uuid] = queue
 
-        queue = self._manager.Queue()
         progress_monitor = RichProgressMonitor(queue=queue)
         progress_monitor.start()
-        self._run_queues[context.root_uuid] = queue
-        self._run_monitors[context.root_uuid] = progress_monitor
+        _run_monitors[context.root_uuid] = progress_monitor
 
     def on_fit_task_begin(self, estimator, context):
         # A new progress bar is created at the beginning of each task that is not a
@@ -98,17 +99,13 @@ class ProgressBar:
         )
 
     def teardown(self, estimator, context):
-        # Signal that the queue won't receive any more tasks.
-        self._run_queues[context.root_uuid].put(None)
-        self._run_monitors[context.root_uuid].join()
-
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        state.pop("_manager", None)
-        state.pop("_run_monitors", None)
-        # Note that run queues are pickleable and are expected to be shared between
-        # the parent and worker processes.
-        return state
+        # Signal that the queue won't receive any more tasks, then join the monitor
+        # thread and drop both transport entries. The instance always keeps a
+        # ``_run_queues`` dict so concurrent teardowns from sibling fits don't race
+        # on its presence.
+        queue = self._run_queues.pop(context.root_uuid)
+        queue.put(None)
+        _run_monitors.pop(context.root_uuid).join()
 
 
 try:

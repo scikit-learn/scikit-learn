@@ -118,22 +118,16 @@ def test_progressbar_no_callback_support(backend):
     n_fits = 4
     func(MaxIterEstimator().set_callbacks(progressbar), n_fits=n_fits)
 
-    if backend == "loky":
-        # Since ProgressBar is pickled in different subprocesses and managers are not
-        # picklable, a new manager is created for each subprocess and the queues are
-        # effectively process-local.
-        assert len(progressbar._run_queues) == 0
-        # The monitors are process-local by construction.
-        assert len(progressbar._run_monitors) == 0
-    else:  # "threading"
-        # The state is shared across threads so we expect one queue and monitor per fit.
-        # in the shared state.
-        assert len(progressbar._run_queues) == n_fits
-        assert len(progressbar._run_monitors) == n_fits
-        # All monitor threads are finished.
-        assert not any(mon.is_alive() for mon in progressbar._run_monitors.values())
-        # All queues are empty.
-        assert all(queue.empty() for queue in progressbar._run_queues.values())
+    from sklearn.callback._progressbar import _run_monitors
+
+    # After fit completes, ``teardown`` has popped every per-fit queue from the
+    # instance dict and every monitor from the module-level registry. The main
+    # instance's ``_run_queues`` dict therefore ends up empty in both backends:
+    # for ``threading``, teardown ran in the main process; for ``loky``, the
+    # main-process callback never had any queues added (workers' setup ran in
+    # their own processes against their own copies).
+    assert progressbar._run_queues == {}
+    assert _run_monitors == {}
 
 
 @pytest.mark.parametrize("prefer", ["threads", "processes"])
