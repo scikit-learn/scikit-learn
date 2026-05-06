@@ -70,10 +70,6 @@ jobs:
             python: 313
             platform_id: win_amd64
           - os: windows-latest
-            python: 313t
-            platform_id: win_amd64
-            cibw_enable: cpython-freethreading
-          - os: windows-latest
             python: 314
             platform_id: win_amd64
           - os: windows-latest
@@ -90,10 +86,6 @@ jobs:
           - os: windows-11-arm
             python: 313
             platform_id: win_arm64
-          - os: windows-11-arm
-            python: 313t
-            platform_id: win_arm64
-            cibw_enable: cpython-freethreading
           - os: windows-11-arm
             python: 314
             platform_id: win_arm64
@@ -114,11 +106,6 @@ jobs:
             python: 313
             platform_id: manylinux_x86_64
             manylinux_image: manylinux_2_28
-          - os: ubuntu-latest
-            python: 313t
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux_2_28
-            cibw_enable: cpython-freethreading
           - os: ubuntu-latest
             python: 314
             platform_id: manylinux_x86_64
@@ -142,11 +129,6 @@ jobs:
             platform_id: manylinux_aarch64
             manylinux_image: manylinux_2_28
           - os: ubuntu-24.04-arm
-            python: 313t
-            platform_id: manylinux_aarch64
-            manylinux_image: manylinux_2_28
-            cibw_enable: cpython-freethreading
-          - os: ubuntu-24.04-arm
             python: 314
             platform_id: manylinux_aarch64
             manylinux_image: manylinux_2_28
@@ -166,10 +148,6 @@ jobs:
             python: 313
             platform_id: macosx_x86_64
           - os: macos-15-intel
-            python: 313t
-            platform_id: macosx_x86_64
-            cibw_enable: cpython-freethreading
-          - os: macos-15-intel
             python: 314
             platform_id: macosx_x86_64
           - os: macos-15-intel
@@ -186,10 +164,6 @@ jobs:
           - os: macos-14
             python: 313
             platform_id: macosx_arm64
-          - os: macos-14
-            python: 313t
-            platform_id: macosx_arm64
-            cibw_enable: cpython-freethreading
           - os: macos-14
             python: 314
             platform_id: macosx_arm64
@@ -213,7 +187,6 @@ jobs:
 
       - name: Build and test wheels
         env:
-          CIBW_ENABLE: ${{ matrix.cibw_enable }}
           CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
           CIBW_ARCHS: all
