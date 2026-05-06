@@ -117,10 +117,6 @@ def _make_scipy_callback_fun(
         return None
 
     def scipy_callback_fun(xk):
-        solver_iter_ctx = callback_ctx.subcontext(task_name="lbfgs iter")
-        solver_iter_ctx.call_on_fit_task_begin(
-            estimator=estimator, X=X, y=y, metadata=metadata
-        )
         w0 = xk
         if is_binary:
             coef_ = xp.asarray(w0.copy(order=coefs_order), dtype=X.dtype, device=device)
@@ -142,6 +138,7 @@ def _make_scipy_callback_fun(
                 intercept_ = xp.zeros(n_classes, dtype=X.dtype, device=device)
 
         reconstruction_attributes = {"coef_": coef_, "intercept_": intercept_}
+        solver_iter_ctx = list(callback_ctx._children_map.values())[-1]
         solver_iter_ctx.call_on_fit_task_end(
             estimator=estimator,
             X=X,
@@ -153,6 +150,13 @@ def _make_scipy_callback_fun(
         # `raise StopIteration()`
         # Using StopIteration in a scipy callback requires scipy > 1.10
         # which will be the case of the min dependencies for scikit-learn 1.10.
+
+        # Making the subcontext for the next iteration.
+        if len(callback_ctx._children_map) < callback_ctx.max_subtasks:
+            solver_iter_ctx = callback_ctx.subcontext(task_name="lbfgs iter")
+            solver_iter_ctx.call_on_fit_task_begin(
+                estimator=estimator, X=X, y=y, metadata=metadata
+            )
 
     return scipy_callback_fun
 
@@ -498,11 +502,20 @@ def _logistic_regression_path(
             # In LogisticRegression fit, Cs is always a singleton, so we don't use
             # subcontexts in this for loop to avoid introducing an unnecessary subtask
             # level.
+            # TODO(callbacks) When adding callbcak support to LogisticRegressionCV,
+            # another subcontext level will be necessary, so we'll need to add a level
+            # only in the LogisticRegressionCV, keeping the LogisticRegression version
+            # without that extra level.
 
             l2_reg_strength = 1.0 / (C * sw_sum)
             iprint = [-1, 50, 1, 100, 101][
                 np.searchsorted(np.array([0, 1, 2, 3]), verbose)
             ]
+            if callback_ctx is not None:
+                # We call call_on_fit_task_begin for the first iteration's subcontext.
+                callback_ctx.subcontext(task_name="lbfgs iter").call_on_fit_task_begin(
+                    estimator=estimator, X=X, y=y, metadata=callback_metadata
+                )
             opt_res = optimize.minimize(
                 func,
                 w0,
@@ -1308,14 +1321,6 @@ class LogisticRegression(
         -----
         The SAGA solver supports both float64 and float32 bit arrays.
         """
-        # The fit task will have a subtask even if max_iter is 0.
-        callback_ctx = self._init_callback_context(max_subtasks=max(self.max_iter, 1))
-        callback_metadata = (
-            {"sample_weght": sample_weight} if sample_weight is not None else None
-        )
-        callback_ctx.call_on_fit_task_begin(
-            estimator=self, X=X, y=y, metadata=callback_metadata
-        )
         if self.penalty == "deprecated":
             if self.l1_ratio == 0 or self.l1_ratio is None:
                 penalty = "l2"
@@ -1404,6 +1409,15 @@ class LogisticRegression(
         self.classes_ = xp_y.unique_values(y)
         n_classes = size(self.classes_)
         is_binary = n_classes == 2
+
+        # The fit task will have a subtask even if max_iter is 0.
+        callback_ctx = self._init_callback_context(max_subtasks=max(self.max_iter, 1))
+        callback_metadata = (
+            {"sample_weght": sample_weight} if sample_weight is not None else None
+        )
+        callback_ctx.call_on_fit_task_begin(
+            estimator=self, X=X, y=y, metadata=callback_metadata
+        )
 
         if solver == "liblinear":
             if not is_binary:

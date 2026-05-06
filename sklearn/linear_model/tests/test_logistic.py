@@ -2883,26 +2883,57 @@ def test_logistic_regression_array_api_warm_start(
 # TODO(callbacks): also test for other solvers when they get supported.
 @pytest.mark.parametrize("binary", [True, False])
 @pytest.mark.parametrize("fit_intercept", [True, False])
-def test_logistic_regression_callback_support(binary, fit_intercept):
+@pytest.mark.parametrize("max_iter", [0, 2, 1000])
+def test_logistic_regression_callback_support(binary, fit_intercept, max_iter):
     """Test the callback support for LogisticRegression."""
     X, y = load_iris(return_X_y=True)
     if binary:
         y = y > 0
+    cb = RecordingCallback()
+    lr = LogisticRegression(
+        solver="lbfgs", fit_intercept=fit_intercept, max_iter=max_iter
+    ).set_callbacks(cb)
+    lr.fit(X, y)
+
+    expected_on_fit_task_begin_count = (
+        max(lr.n_iter_, 1) + 1 + (lr.n_iter_ < lr.max_iter)
+    )  # Number of iteration (always at least one), plus one for fit task, plus one if
+    # max_iter is not reached.
+    expected_on_fit_task_end_count = max(lr.n_iter_, 1) + 1
+
+    assert cb.count_hooks("setup") == 1
+    assert cb.count_hooks("teardown") == 1
+    assert cb.count_hooks("on_fit_task_begin") == expected_on_fit_task_begin_count
+    assert cb.count_hooks("on_fit_task_end") == expected_on_fit_task_end_count
+
+
+# TODO(callbacks): also test for other solvers when they get supported.
+@pytest.mark.parametrize("fit_intercept", [True, False])
+def test_logistic_regression_fitted_estimator(fit_intercept):
+    """Check that the fitted_estimator in callback hooks are equivalent to an estimator
+    fitted with the same amount of solver iteration."""
+    X, y = load_iris(return_X_y=True)
     cb = RecordingCallback()
     lr = LogisticRegression(solver="lbfgs", fit_intercept=fit_intercept).set_callbacks(
         cb
     )
     lr.fit(X, y)
 
-    assert cb.count_hooks("setup") == 1
-    assert cb.count_hooks("teardown") == 1
-    assert cb.count_hooks("on_fit_task_begin") == lr.n_iter_ + 1
-    assert cb.count_hooks("on_fit_task_end") == lr.n_iter_ + 1
-
+    for rec in cb.record:
+        if rec["name"] == "on_fit_task_end" and "fitted_estimator" in rec:
+            i_iter = rec["context"].task_id
+            lr_iter = lr = LogisticRegression(
+                solver="lbfgs", fit_intercept=fit_intercept, max_iter=i_iter
+            )
+            lr_iter.fit(X, y)
+            assert_allclose(rec["fitted_estimator"].coef_, lr_iter.coef_)
+            assert_allclose(rec["fitted_estimator"].intercept_, lr_iter.intercept_)
+            assert_allclose(rec["fitted_estimator"].predict(X), lr_iter.predict(X))
 
 
 # TODO(1.10): Uncomment when scipy callbacks can be interrupted with StopIteration in
-# min dependencies (i.e. when min scipy version > 1.10).
+# min dependencies (i.e. when min scipy version > 1.10 and StopIteration gets used
+# in the scipy callback function, see TODO in _make_scipy_callback_fun).
 # TODO(callbacks): also test for other solvers when they get supported.
 # def test_logistic_regression_fit_stopped_by_callback():
 #     """Test that a callback can interrupt the fit."""
