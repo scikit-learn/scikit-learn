@@ -1180,8 +1180,7 @@ def test_poisson_regressor_array_api_compliance(
 
     if use_sample_weight:
         sample_weight = (
-            rng
-            .uniform(-1, 5, size=n_samples)
+            rng.uniform(-1, 5, size=n_samples)
             .clip(0, None)  # over-represent null weights to cover edge-cases.
             .astype(dtype_name)
         )
