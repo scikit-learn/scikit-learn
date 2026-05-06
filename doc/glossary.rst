@@ -1664,6 +1664,12 @@ functions or non-estimator constructors.
         threads should be used for routines that are parallelized with
         :term:`joblib`.
 
+        Where (and if) parallelization happens in a fit or prediction routine
+        is implementation-dependent and is described in the estimator's own
+        documentation. For instance, in
+        :class:`~sklearn.ensemble.RandomForestClassifier`, fitting the trees
+        in the forest is parallelized over the trees.
+
         ``n_jobs`` is an integer, specifying the maximum number of concurrently
         running workers. If 1 is given, no joblib parallelism is used at all,
         which is useful for debugging. If set to -1, all CPUs are used. For
