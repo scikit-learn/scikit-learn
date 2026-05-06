@@ -1168,7 +1168,9 @@ def test_poisson_regressor_array_api_compliance(
     rng = np.random.default_rng(0)
     n_samples, n_features = 500, 20
     X_np = rng.normal(size=(n_samples, n_features))
-    coef = np.linspace(-0.22, 0.22, n_features)
+    coef = rng.choice([-1, 1], size=n_features) * rng.uniform(
+        0.05, 0.25, size=n_features
+    )
     y_np = np.exp(X_np @ coef + 4.8 + 0.02 * rng.normal(size=n_samples))
     n_samples = X_np.shape[0]
     X_np = X_np.astype(dtype_name, copy=False)
