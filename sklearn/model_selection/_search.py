@@ -1059,18 +1059,18 @@ class BaseSearchCV(
                             n_splits, n_candidates, n_candidates * n_splits
                         )
                     )
-                if callback_ctx is not None:
-                    if hasattr(self, "param_grid"):  # *GridSearchCV
-                        max_callback_subtasks = n_candidates * n_splits
-                    elif hasattr(self, "n_iter"):  # RandomizedSearchCV
-                        max_callback_subtasks = self.n_iter * n_splits
-                    else:  # HalvingRandomSearchCV and custom classes
-                        max_callback_subtasks = None
-                    search_subctx = callback_ctx.subcontext(
-                        task_name="search",
-                        max_subtasks=max_callback_subtasks,
-                        sequential_subtasks=False,
-                    ).call_on_fit_task_begin(estimator=self, X=X, y=y)
+
+                if hasattr(self, "param_grid"):  # *GridSearchCV
+                    max_callback_subtasks = n_candidates * n_splits
+                elif hasattr(self, "n_iter"):  # RandomizedSearchCV
+                    max_callback_subtasks = self.n_iter * n_splits
+                else:  # HalvingRandomSearchCV and custom classes
+                    max_callback_subtasks = None
+                search_subctx = callback_ctx.subcontext(
+                    task_name="search",
+                    max_subtasks=max_callback_subtasks,
+                    sequential_subtasks=False,
+                ).call_on_fit_task_begin(estimator=self, X=X, y=y)
 
                 out = parallel(
                     delayed(_fit_and_score)(
@@ -1084,9 +1084,7 @@ class BaseSearchCV(
                         candidate_progress=(cand_idx, n_candidates),
                         **fit_and_score_kwargs,
                         callback_ctx=(
-                            None
-                            if callback_ctx is None
-                            else search_subctx.subcontext(
+                            search_subctx.subcontext(
                                 task_name="candidate-split-iteration",
                                 task_id=split_idx * n_candidates + cand_idx,
                             )
@@ -1097,8 +1095,7 @@ class BaseSearchCV(
                         enumerate(cv.split(X, y, **routed_params.splitter.split)),
                     )
                 )
-                if callback_ctx is not None:
-                    search_subctx.call_on_fit_task_end(estimator=self, X=X, y=y)
+                search_subctx.call_on_fit_task_end(estimator=self, X=X, y=y)
 
                 if len(out) < 1:
                     raise ValueError(
