@@ -392,24 +392,8 @@ def test_cross_validate_invalid_scoring_param():
 
 def test_cross_validate_array_function_not_called():
     """Check that `__array_function__` (NEP18) is not called."""
-    X = np.array(
-        [
-            [1, 1],
-            [1, 2],
-            [1, 3],
-            [1, 4],
-            [2, 1],
-            [2, 2],
-            [2, 3],
-            [2, 4],
-            [3, 1],
-            [3, 2],
-            [3, 3],
-            [3, 4],
-        ]
-    )
-    X = _NotAnArray(X)
-    y = _NotAnArray([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2])
+    X = _NotAnArray([[1, 1], [1, 2], [1, 3], [1, 4], [2, 1], [2, 2], [2, 3], [2, 4]])
+    y = _NotAnArray([1, 1, 1, 2, 2, 2, 1, 1])
     estimator = LogisticRegression(random_state=0)
     cross_validate(estimator, X, y, cv=2)
 

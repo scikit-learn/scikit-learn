@@ -543,24 +543,8 @@ def test_permutation_importance_max_samples_error():
 
 def test_permutation_importance_array_function_not_called():
     """Check that `__array_function__` (NEP18) is not called."""
-    X = np.array(
-        [
-            [1, 1],
-            [1, 2],
-            [1, 3],
-            [1, 4],
-            [2, 1],
-            [2, 2],
-            [2, 3],
-            [2, 4],
-            [3, 1],
-            [3, 2],
-            [3, 3],
-            [3, 4],
-        ]
-    )
-    X = _NotAnArray(X)
-    y = _NotAnArray([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2])
+    X = _NotAnArray([[1, 1], [1, 2], [1, 3], [1, 4], [2, 1], [2, 2], [2, 3], [2, 4]])
+    y = _NotAnArray([1, 1, 1, 2, 2, 2, 1, 1])
     estimator = LogisticRegression(random_state=0)
     estimator.fit(X, y)
     permutation_importance(estimator, X, y, n_repeats=2, random_state=0)
