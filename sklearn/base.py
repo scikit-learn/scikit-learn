@@ -1219,7 +1219,7 @@ class MultiOutputMixin:
 
 
 class _UnstableArchMixin:
-    """Mark estimators that are non-determinstic on 32bit or PowerPC"""
+    """Mark estimators that are non-deterministic on 32bit or PowerPC"""
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()

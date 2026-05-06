@@ -1000,7 +1000,7 @@ def test_linalg_warning_with_newton_solver(global_random_seed):
 
     # We check that the model could successfully fit information in X_orig to
     # improve upon the constant baseline by a large margin (when evaluated on
-    # the traing set).
+    # the training set).
     assert constant_model_deviance - original_newton_deviance > 0.1
 
     # LBFGS is robust to a collinear design because its approximation of the

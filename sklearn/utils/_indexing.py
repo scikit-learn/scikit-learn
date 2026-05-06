@@ -487,7 +487,10 @@ def _get_column_indices(X, key):
                 column_indices.append(col_idx)
 
         except KeyError as e:
-            raise ValueError("A given column is not a column of the dataframe") from e
+            missing = {*columns} - {*all_columns}
+            raise ValueError(
+                f"Some column names are not columns of the dataframe: {missing}"
+            ) from e
 
         return column_indices
 
@@ -519,7 +522,10 @@ def _get_column_indices_interchange_and_polars(n_columns, column_names, key, key
         try:
             return [column_names.index(col) for col in selected_columns]
         except ValueError as e:
-            raise ValueError("A given column is not a column of the dataframe") from e
+            missing = {*selected_columns} - {*column_names}
+            raise ValueError(
+                f"Some column names are not columns of the dataframe: {missing}"
+            ) from e
 
 
 @validate_params(
