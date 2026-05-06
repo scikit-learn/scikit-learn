@@ -2,27 +2,27 @@
 Testing for the base module (sklearn.ensemble.base).
 """
 
-# Authors: Gilles Louppe
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+from collections import OrderedDict
 
 import numpy as np
 
-from sklearn.utils._testing import assert_raise_message
-
 from sklearn.datasets import load_iris
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.ensemble import BaggingClassifier
 from sklearn.ensemble._base import _set_random_states
-from sklearn.linear_model import Perceptron
-from collections import OrderedDict
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.pipeline import Pipeline
 from sklearn.feature_selection import SelectFromModel
+from sklearn.linear_model import Perceptron
+from sklearn.pipeline import Pipeline
 
 
 def test_base():
     # Check BaseEnsemble methods.
     ensemble = BaggingClassifier(
-        base_estimator=Perceptron(random_state=None), n_estimators=3)
+        estimator=Perceptron(random_state=None), n_estimators=3
+    )
 
     iris = load_iris()
     ensemble.fit(iris.data, iris.target)
@@ -43,36 +43,10 @@ def test_base():
     assert isinstance(ensemble[2].random_state, int)
     assert ensemble[1].random_state != ensemble[2].random_state
 
-    np_int_ensemble = BaggingClassifier(base_estimator=Perceptron(),
-                                        n_estimators=np.int32(3))
+    np_int_ensemble = BaggingClassifier(
+        estimator=Perceptron(), n_estimators=np.int32(3)
+    )
     np_int_ensemble.fit(iris.data, iris.target)
-
-
-def test_base_zero_n_estimators():
-    # Check that instantiating a BaseEnsemble with n_estimators<=0 raises
-    # a ValueError.
-    ensemble = BaggingClassifier(base_estimator=Perceptron(),
-                                 n_estimators=0)
-    iris = load_iris()
-    assert_raise_message(ValueError,
-                         "n_estimators must be greater than zero, got 0.",
-                         ensemble.fit, iris.data, iris.target)
-
-
-def test_base_not_int_n_estimators():
-    # Check that instantiating a BaseEnsemble with a string as n_estimators
-    # raises a ValueError demanding n_estimators to be supplied as an integer.
-    string_ensemble = BaggingClassifier(base_estimator=Perceptron(),
-                                        n_estimators='3')
-    iris = load_iris()
-    assert_raise_message(ValueError,
-                         "n_estimators must be an integer",
-                         string_ensemble.fit, iris.data, iris.target)
-    float_ensemble = BaggingClassifier(base_estimator=Perceptron(),
-                                       n_estimators=3.0)
-    assert_raise_message(ValueError,
-                         "n_estimators must be an integer",
-                         float_ensemble.fit, iris.data, iris.target)
 
 
 def test_set_random_states():
@@ -95,15 +69,19 @@ def test_set_random_states():
     # nested random_state
 
     def make_steps():
-        return [('sel', SelectFromModel(Perceptron(random_state=None))),
-                ('clf', Perceptron(random_state=None))]
+        return [
+            ("sel", SelectFromModel(Perceptron(random_state=None))),
+            ("clf", Perceptron(random_state=None)),
+        ]
 
     est1 = Pipeline(make_steps())
     _set_random_states(est1, 3)
     assert isinstance(est1.steps[0][1].estimator.random_state, int)
     assert isinstance(est1.steps[1][1].random_state, int)
-    assert (est1.get_params()['sel__estimator__random_state'] !=
-                     est1.get_params()['clf__random_state'])
+    assert (
+        est1.get_params()["sel__estimator__random_state"]
+        != est1.get_params()["clf__random_state"]
+    )
 
     # ensure multiple random_state parameters are invariant to get_params()
     # iteration order
@@ -121,7 +99,11 @@ def test_set_random_states():
     for cls in [AlphaParamPipeline, RevParamPipeline]:
         est2 = cls(make_steps())
         _set_random_states(est2, 3)
-        assert (est1.get_params()['sel__estimator__random_state'] ==
-                     est2.get_params()['sel__estimator__random_state'])
-        assert (est1.get_params()['clf__random_state'] ==
-                     est2.get_params()['clf__random_state'])
+        assert (
+            est1.get_params()["sel__estimator__random_state"]
+            == est2.get_params()["sel__estimator__random_state"]
+        )
+        assert (
+            est1.get_params()["clf__random_state"]
+            == est2.get_params()["clf__random_state"]
+        )

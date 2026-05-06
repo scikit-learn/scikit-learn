@@ -1,7 +1,3 @@
-.. Places parent toc into the sidebar
-
-:parenttoc: True
-
 .. _loading_other_datasets:
 
 Loading other datasets
@@ -23,23 +19,28 @@ and pipelines on 2D data.
    load_sample_images
    load_sample_image
 
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_color_quantization_001.png
-   :target: ../auto_examples/cluster/plot_color_quantization.html
+.. plot::
+   :context: close-figs
    :scale: 30
    :align: right
+   :include-source: False
 
+    import matplotlib.pyplot as plt
+    from sklearn.datasets import load_sample_image
+
+    china = load_sample_image("china.jpg")
+    plt.imshow(china)
+    plt.axis('off')
+    plt.tight_layout()
+    plt.show()
 
 .. warning::
 
   The default coding of images is based on the ``uint8`` dtype to
   spare memory. Often machine learning algorithms work best if the
   input is converted to a floating point representation first. Also,
-  if you plan to use ``matplotlib.pyplpt.imshow``, don't forget to scale to the range
+  if you plan to use ``matplotlib.pyplot.imshow``, don't forget to scale to the range
   0 - 1 as done in the following example.
-
-.. topic:: Examples:
-
-    * :ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`
 
 .. _libsvm_loader:
 
@@ -52,7 +53,7 @@ takes the form ``<label> <feature-id>:<feature-value>
 <feature-id>:<feature-value> ...``. This format is especially suitable for sparse datasets.
 In this module, scipy sparse CSR matrices are used for ``X`` and numpy arrays are used for ``y``.
 
-You may load a dataset like as follows::
+You may load a dataset like this as follows::
 
   >>> from sklearn.datasets import load_svmlight_file
   >>> X_train, y_train = load_svmlight_file("/path/to/train_dataset.txt")
@@ -72,11 +73,10 @@ features::
   ...     "/path/to/test_dataset.txt", n_features=X_train.shape[1])
   ...                                                         # doctest: +SKIP
 
-.. topic:: Related links:
+.. rubric:: Related links
 
- _`Public datasets in svmlight / libsvm format`: https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets
-
- _`Faster API-compatible implementation`: https://github.com/mblondel/svmlight-loader
+- `Public datasets in svmlight / libsvm format`: https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets
+- `Faster API-compatible implementation`: https://github.com/mblondel/svmlight-loader
 
 ..
     For doctests:
@@ -171,8 +171,8 @@ which can contain entirely different datasets.
 If a particular version of a dataset has been found to contain significant
 issues, it might be deactivated. Using a name to specify a dataset will yield
 the earliest version of a dataset that is still active. That means that
-``fetch_openml(name="miceprotein")`` can yield different results at different
-times if earlier versions become inactive.
+``fetch_openml(name="miceprotein")`` can yield different results
+at different times if earlier versions become inactive.
 You can see that the dataset with ``data_id`` 40966 that we fetched above is
 the first version of the "miceprotein" dataset::
 
@@ -219,12 +219,54 @@ identifies the dataset::
   '969'
 
 
-.. topic:: References:
+.. rubric:: References
 
- * Vanschoren, van Rijn, Bischl and Torgo
-   `"OpenML: networked science in machine learning"
-   <https://arxiv.org/pdf/1407.7722.pdf>`_,
-   ACM SIGKDD Explorations Newsletter, 15(2), 49-60, 2014.
+* :arxiv:`Vanschoren, van Rijn, Bischl and Torgo. "OpenML: networked science in
+  machine learning" ACM SIGKDD Explorations Newsletter, 15(2), 49-60, 2014.
+  <1407.7722>`
+
+.. _openml_parser:
+
+ARFF parser
+~~~~~~~~~~~
+
+From version 1.2, scikit-learn provides a new keyword argument `parser` that
+provides several options to parse the ARFF files provided by OpenML. The legacy
+parser (i.e. `parser="liac-arff"`) is based on the project
+`LIAC-ARFF <https://github.com/renatopp/liac-arff>`_. This parser is however
+slow and consumes more memory than required. A new parser based on pandas
+(i.e. `parser="pandas"`) is both faster and more memory efficient.
+However, this parser does not support sparse data.
+Therefore, we recommend using `parser="auto"` which will use the best parser
+available for the requested dataset.
+
+The `"pandas"` and `"liac-arff"` parsers can lead to different data types in
+the output. The notable differences are the following:
+
+- The `"liac-arff"` parser always encodes categorical features as `str`
+  objects. To the contrary, the `"pandas"` parser instead infers the type while
+  reading and numerical categories will be casted into integers whenever
+  possible.
+- The `"liac-arff"` parser uses float64 to encode numerical features tagged as
+  'REAL' and 'NUMERICAL' in the metadata. The `"pandas"` parser instead infers
+  if these numerical features correspond to integers and uses pandas' Integer
+  extension dtype.
+- In particular, classification datasets with integer categories are typically
+  loaded as such `(0, 1, ...)` with the `"pandas"` parser while `"liac-arff"`
+  will force the use of string encoded class labels such as `"0"`, `"1"` and so
+  on.
+- The `"pandas"` parser will not strip single quotes - i.e. `'` - from string
+  columns. For instance, a string `'my string'` will be kept as is while the
+  `"liac-arff"` parser will strip the single quotes. For categorical columns,
+  the single quotes are stripped from the values.
+
+In addition, when `as_frame=False` is used, the `"liac-arff"` parser returns
+ordinally encoded data where the categories are provided in the attribute
+`categories` of the `Bunch` instance. Instead, `"pandas"` returns a NumPy array
+were the categories. Then it's up to the user to design a feature
+engineering pipeline with an instance of  `OneHotEncoder` or
+`OrdinalEncoder` typically wrapped in a `ColumnTransformer` to
+preprocess the categorical columns explicitly. See for instance: :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`.
 
 .. _external_datasets:
 
@@ -245,12 +287,12 @@ format usable by scikit-learn:
   manipulation and conversion into a numeric array suitable for scikit-learn.
 * `scipy.io <https://docs.scipy.org/doc/scipy/reference/io.html>`_
   specializes in binary formats often used in scientific computing
-  context such as .mat and .arff
+  contexts such as .mat and .arff
 * `numpy/routines.io <https://docs.scipy.org/doc/numpy/reference/routines.io.html>`_
   for standard loading of columnar data into numpy arrays
-* scikit-learn's :func:`datasets.load_svmlight_file` for the svmlight or libSVM
+* scikit-learn's :func:`load_svmlight_file` for the svmlight or libSVM
   sparse format
-* scikit-learn's :func:`datasets.load_files` for directories of text files where
+* scikit-learn's :func:`load_files` for directories of text files where
   the name of each directory is the name of each category and each file inside
   of each directory corresponds to one sample from that category
 
@@ -258,10 +300,10 @@ For some miscellaneous data such as images, videos, and audio, you may wish to
 refer to:
 
 * `skimage.io <https://scikit-image.org/docs/dev/api/skimage.io.html>`_ or
-  `Imageio <https://imageio.readthedocs.io/en/latest/userapi.html>`_
+  `Imageio <https://imageio.readthedocs.io/en/stable/reference/core_v3.html>`_
   for loading images and videos into numpy arrays
 * `scipy.io.wavfile.read
-  <https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.io.wavfile.read.html>`_
+  <https://docs.scipy.org/doc/scipy/reference/generated/scipy.io.wavfile.read.html>`_
   for reading WAV files into a numpy array
 
 Categorical (or nominal) features stored as strings (common in pandas DataFrames)
@@ -271,5 +313,5 @@ See :ref:`preprocessing`.
 
 Note: if you manage your own numerical data it is recommended to use an
 optimized file format such as HDF5 to reduce data load times. Various libraries
-such as H5Py, PyTables and pandas provides a Python interface for reading and
+such as H5Py, PyTables and pandas provide a Python interface for reading and
 writing data in that format.

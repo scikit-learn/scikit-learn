@@ -1,29 +1,48 @@
 .. -*- mode: rst -*-
 
-|Azure|_ |Travis|_ |Codecov|_ |CircleCI|_ |PythonVersion|_ |PyPi|_ |DOI|_
+|GitHubActions| |Codecov| |CircleCI| |Nightly wheels| |Ruff| |PythonVersion| |PyPI| |DOI| |Benchmark|
 
-.. |Azure| image:: https://dev.azure.com/scikit-learn/scikit-learn/_apis/build/status/scikit-learn.scikit-learn?branchName=master
-.. _Azure: https://dev.azure.com/scikit-learn/scikit-learn/_build/latest?definitionId=1&branchName=master
 
-.. |Travis| image:: https://api.travis-ci.org/scikit-learn/scikit-learn.svg?branch=master
-.. _Travis: https://travis-ci.org/scikit-learn/scikit-learn
+.. |GitHubActions| image:: https://github.com/scikit-learn/scikit-learn/actions/workflows/unit-tests.yml/badge.svg?
+   :target: https://github.com/scikit-learn/scikit-learn/actions/workflows/unit-tests.yml?query=branch%3Amain
 
-.. |Codecov| image:: https://codecov.io/github/scikit-learn/scikit-learn/badge.svg?branch=master&service=github
-.. _Codecov: https://codecov.io/github/scikit-learn/scikit-learn?branch=master
+.. |CircleCI| image:: https://circleci.com/gh/scikit-learn/scikit-learn/tree/main.svg?style=shield
+   :target: https://circleci.com/gh/scikit-learn/scikit-learn
 
-.. |CircleCI| image:: https://circleci.com/gh/scikit-learn/scikit-learn/tree/master.svg?style=shield&circle-token=:circle-token
-.. _CircleCI: https://circleci.com/gh/scikit-learn/scikit-learn
+.. |Codecov| image:: https://codecov.io/gh/scikit-learn/scikit-learn/branch/main/graph/badge.svg?token=Pk8G9gg3y9
+   :target: https://codecov.io/gh/scikit-learn/scikit-learn
 
-.. |PythonVersion| image:: https://img.shields.io/badge/python-3.6%20%7C%203.7%20%7C%203.8-blue
-.. _PythonVersion: https://img.shields.io/badge/python-3.6%20%7C%203.7%20%7C%203.8-blue
+.. |Nightly wheels| image:: https://github.com/scikit-learn/scikit-learn/actions/workflows/wheels.yml/badge.svg?event=schedule
+   :target: https://github.com/scikit-learn/scikit-learn/actions?query=workflow%3A%22Wheel+builder%22+event%3Aschedule
 
-.. |PyPi| image:: https://badge.fury.io/py/scikit-learn.svg
-.. _PyPi: https://badge.fury.io/py/scikit-learn
+.. |Ruff| image:: https://img.shields.io/badge/code%20style-ruff-000000.svg?
+   :target: https://github.com/astral-sh/ruff
 
-.. |DOI| image:: https://zenodo.org/badge/21369/scikit-learn/scikit-learn.svg
-.. _DOI: https://zenodo.org/badge/latestdoi/21369/scikit-learn/scikit-learn
+.. |PythonVersion| image:: https://img.shields.io/pypi/pyversions/scikit-learn.svg?
+   :target: https://pypi.org/project/scikit-learn/
 
-.. image:: doc/logos/scikit-learn-logo.png
+.. |PyPI| image:: https://img.shields.io/pypi/v/scikit-learn
+   :target: https://pypi.org/project/scikit-learn
+
+.. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.17880109.svg?
+   :target: https://zenodo.org/badge/latestdoi/21369/scikit-learn/scikit-learn
+
+.. |Benchmark| image:: https://img.shields.io/badge/Benchmarked%20by-asv-blue
+   :target: https://scikit-learn.org/scikit-learn-benchmarks
+
+.. |PythonMinVersion| replace:: 3.11
+.. |NumPyMinVersion| replace:: 1.24.1
+.. |SciPyMinVersion| replace:: 1.10.0
+.. |JoblibMinVersion| replace:: 1.3.0
+.. |ThreadpoolctlMinVersion| replace:: 3.2.0
+.. |MatplotlibMinVersion| replace:: 3.6.1
+.. |Scikit-ImageMinVersion| replace:: 0.22.0
+.. |PandasMinVersion| replace:: 1.5.0
+.. |SeabornMinVersion| replace:: 0.13.0
+.. |PytestMinVersion| replace:: 7.1.2
+.. |PlotlyMinVersion| replace:: 5.18.0
+
+.. image:: https://raw.githubusercontent.com/scikit-learn/scikit-learn/main/doc/logos/scikit-learn-logo.png
   :target: https://scikit-learn.org/
 
 **scikit-learn** is a Python module for machine learning built on top of
@@ -46,28 +65,26 @@ Dependencies
 
 scikit-learn requires:
 
-- Python (>= 3.6)
-- NumPy (>= 1.13.3)
-- SciPy (>= 0.19.1)
-- joblib (>= 0.11)
-- threadpoolctl (>= 2.0.0)
+- Python (>= |PythonMinVersion|)
+- NumPy (>= |NumPyMinVersion|)
+- SciPy (>= |SciPyMinVersion|)
+- joblib (>= |JoblibMinVersion|)
+- threadpoolctl (>= |ThreadpoolctlMinVersion|)
 
 =======
 
-**Scikit-learn 0.20 was the last version to support Python 2.7 and Python 3.4.**
-scikit-learn 0.23 and later require Python 3.6 or newer.
-
-Scikit-learn plotting capabilities (i.e., functions start with ``plot_``
-and classes end with "Display") require Matplotlib (>= 2.1.1). For running the
-examples Matplotlib >= 2.1.1 is required. A few examples require
-scikit-image >= 0.13, a few examples require pandas >= 0.25.0, some examples
-require seaborn >= 0.9.0.
+Scikit-learn plotting capabilities (i.e., functions start with ``plot_`` and
+classes end with ``Display``) require Matplotlib (>= |MatplotlibMinVersion|).
+For running the examples Matplotlib >= |MatplotlibMinVersion| is required.
+A few examples require scikit-image >= |Scikit-ImageMinVersion|, a few examples
+require pandas >= |PandasMinVersion|, some examples require seaborn >=
+|SeabornMinVersion| and Plotly >= |PlotlyMinVersion|.
 
 User installation
 ~~~~~~~~~~~~~~~~~
 
-If you already have a working installation of numpy and scipy,
-the easiest way to install scikit-learn is using ``pip``   ::
+If you already have a working installation of NumPy and SciPy,
+the easiest way to install scikit-learn is using ``pip``::
 
     pip install -U scikit-learn
 
@@ -117,12 +134,12 @@ To learn more about making a contribution to scikit-learn, please see our
 Testing
 ~~~~~~~
 
-After installation, you can launch the test suite from outside the
-source directory (you will need to have ``pytest`` >= 5.0.1 installed)::
+After installation, you can launch the test suite from outside the source
+directory (you will need to have ``pytest`` >= |PytestMinVersion| installed)::
 
     pytest sklearn
 
-See the web page https://scikit-learn.org/dev/developers/advanced_installation.html#testing
+See the web page https://scikit-learn.org/dev/developers/contributing.html#testing-and-improving-test-coverage
 for more information.
 
     Random number generation can be controlled during testing by setting
@@ -160,12 +177,36 @@ Documentation
 Communication
 ~~~~~~~~~~~~~
 
-- Mailing list: https://mail.python.org/mailman/listinfo/scikit-learn
-- IRC channel: ``#scikit-learn`` at ``webchat.freenode.net``
-- Gitter: https://gitter.im/scikit-learn/scikit-learn
-- Twitter: https://twitter.com/scikit_learn
-- Stack Overflow: https://stackoverflow.com/questions/tagged/scikit-learn
-- Website: https://scikit-learn.org
+Main Channels
+^^^^^^^^^^^^^
+
+- **Website**: https://scikit-learn.org
+- **Blog**: https://blog.scikit-learn.org
+- **Mailing list**: https://mail.python.org/mailman/listinfo/scikit-learn
+
+Developer & Support
+^^^^^^^^^^^^^^^^^^^^^^
+
+- **GitHub Discussions**: https://github.com/scikit-learn/scikit-learn/discussions
+- **Stack Overflow**: https://stackoverflow.com/questions/tagged/scikit-learn
+- **Discord**: https://discord.gg/h9qyrK8Jc8
+
+Social Media Platforms
+^^^^^^^^^^^^^^^^^^^^^^
+
+- **LinkedIn**: https://www.linkedin.com/company/scikit-learn
+- **YouTube**: https://www.youtube.com/channel/UCJosFjYm0ZYVUARxuOZqnnw/playlists
+- **Facebook**: https://www.facebook.com/scikitlearnofficial/
+- **Instagram**: https://www.instagram.com/scikitlearnofficial/
+- **TikTok**: https://www.tiktok.com/@scikit.learn
+- **Bluesky**: https://bsky.app/profile/scikit-learn.org
+- **Mastodon**: https://mastodon.social/@sklearn@fosstodon.org
+
+Resources
+^^^^^^^^^
+
+- **Calendar**: https://blog.scikit-learn.org/calendar/
+- **Logos & Branding**: https://github.com/scikit-learn/scikit-learn/tree/main/doc/logos
 
 Citation
 ~~~~~~~~

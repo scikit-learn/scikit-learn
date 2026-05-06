@@ -2,6 +2,10 @@
 
 .. currentmodule:: sklearn
 
+==============
+Older Versions
+==============
+
 .. _changes_0_12.1:
 
 Version 0.12.1
@@ -40,14 +44,14 @@ Changelog
 People
 ------
 
- *  14  `Peter Prettenhofer`_
- *  12  `Gael Varoquaux`_
- *  10  `Andreas Müller`_
- *   5  `Lars Buitinck`_
- *   3  :user:`Virgile Fritsch <VirgileFritsch>`
- *   1  `Alexandre Gramfort`_
- *   1  `Gilles Louppe`_
- *   1  `Mathieu Blondel`_
+*  14  `Peter Prettenhofer`_
+*  12  `Gael Varoquaux`_
+*  10  `Andreas Müller`_
+*   5  `Lars Buitinck`_
+*   3  :user:`Virgile Fritsch <VirgileFritsch>`
+*   1  `Alexandre Gramfort`_
+*   1  `Gilles Louppe`_
+*   1  `Mathieu Blondel`_
 
 .. _changes_0_12:
 
@@ -101,7 +105,7 @@ Changelog
 - Add MultiTaskLasso and MultiTaskElasticNet for joint feature selection,
   by `Alexandre Gramfort`_.
 
-- Added :func:`metrics.auc_score` and
+- Added `metrics.auc_score` and
   :func:`metrics.average_precision_score` convenience functions by `Andreas
   Müller`_.
 
@@ -121,7 +125,7 @@ Changelog
   and OrthogonalMatchingPursuit) by `Vlad Niculae`_ and
   `Alexandre Gramfort`_.
 
-- Fixes in :class:`~decomposition.ProbabilisticPCA` score function by Wei Li.
+- Fixes in `decomposition.ProbabilisticPCA` score function by Wei Li.
 
 - Fixed feature importance computation in
   :ref:`gradient_boosting`.
@@ -133,11 +137,11 @@ API changes summary
   from ``sklearn`` instead, which was introduced in 0.9.
 
 - In :func:`metrics.roc_curve`, the ``thresholds`` array is now returned
-  with it's order reversed, in order to keep it consistent with the order
+  with its order reversed, in order to keep it consistent with the order
   of the returned ``fpr`` and ``tpr``.
 
-- In :class:`hmm` objects, like :class:`~hmm.GaussianHMM`,
-  :class:`~hmm.MultinomialHMM`, etc., all parameters must be passed to the
+- In `hmm` objects, like `hmm.GaussianHMM`,
+  `hmm.MultinomialHMM`, etc., all parameters must be passed to the
   object when initialising it and not through ``fit``. Now ``fit`` will
   only accept the data as an input parameter.
 
@@ -180,9 +184,9 @@ API changes summary
   :meth:`~ensemble.GradientBoostingClassifier.staged_predict_proba`, and
   :meth:`~ensemble.GradientBoostingClassifier.staged_predict`.
 
-- :class:`~svm.sparse.SVC` and other sparse SVM classes are now deprecated.
-  The all classes in the :ref:`svm` module now automatically select the
-  sparse or dense representation base on the input.
+- `svm.sparse.SVC` and other sparse SVM classes are now deprecated.
+  All classes in the :ref:`svm` module now automatically select the
+  sparse or dense representation based on the input.
 
 - All clustering algorithms now interpret the array ``X`` given to ``fit`` as
   input data, in particular :class:`~cluster.SpectralClustering` and
@@ -194,53 +198,53 @@ API changes summary
 
 People
 ------
- * 267  `Andreas Müller`_
- *  94  `Gilles Louppe`_
- *  89  `Gael Varoquaux`_
- *  79  `Peter Prettenhofer`_
- *  60  `Mathieu Blondel`_
- *  57  `Alexandre Gramfort`_
- *  52  `Vlad Niculae`_
- *  45  `Lars Buitinck`_
- *  44  Nelle Varoquaux
- *  37  `Jaques Grobler`_
- *  30  Alexis Mignon
- *  30  Immanuel Bayer
- *  27  `Olivier Grisel`_
- *  16  Subhodeep Moitra
- *  13  Yannick Schwartz
- *  12  :user:`@kernc <kernc>`
- *  11  :user:`Virgile Fritsch <VirgileFritsch>`
- *   9  Daniel Duckworth
- *   9  `Fabian Pedregosa`_
- *   9  `Robert Layton`_
- *   8  John Benediktsson
- *   7  Marko Burjek
- *   5  `Nicolas Pinto`_
- *   4  Alexandre Abraham
- *   4  `Jake Vanderplas`_
- *   3  `Brian Holt`_
- *   3  `Edouard Duchesnay`_
- *   3  Florian Hoenig
- *   3  flyingimmidev
- *   2  Francois Savard
- *   2  Hannes Schulz
- *   2  Peter Welinder
- *   2  `Yaroslav Halchenko`_
- *   2  Wei Li
- *   1  Alex Companioni
- *   1  Brandyn A. White
- *   1  Bussonnier Matthias
- *   1  Charles-Pierre Astolfi
- *   1  Dan O'Huiginn
- *   1  David Cournapeau
- *   1  Keith Goodman
- *   1  Ludwig Schwardt
- *   1  Olivier Hervieu
- *   1  Sergio Medina
- *   1  Shiqiao Du
- *   1  Tim Sheerman-Chase
- *   1  buguen
+* 267  `Andreas Müller`_
+*  94  `Gilles Louppe`_
+*  89  `Gael Varoquaux`_
+*  79  `Peter Prettenhofer`_
+*  60  `Mathieu Blondel`_
+*  57  `Alexandre Gramfort`_
+*  52  `Vlad Niculae`_
+*  45  `Lars Buitinck`_
+*  44  Nelle Varoquaux
+*  37  `Jaques Grobler`_
+*  30  Alexis Mignon
+*  30  Immanuel Bayer
+*  27  `Olivier Grisel`_
+*  16  Subhodeep Moitra
+*  13  Yannick Schwartz
+*  12  :user:`@kernc <kernc>`
+*  11  :user:`Virgile Fritsch <VirgileFritsch>`
+*   9  Daniel Duckworth
+*   9  `Fabian Pedregosa`_
+*   9  `Robert Layton`_
+*   8  John Benediktsson
+*   7  Marko Burjek
+*   5  `Nicolas Pinto`_
+*   4  Alexandre Abraham
+*   4  `Jake Vanderplas`_
+*   3  `Brian Holt`_
+*   3  `Edouard Duchesnay`_
+*   3  Florian Hoenig
+*   3  flyingimmidev
+*   2  Francois Savard
+*   2  Hannes Schulz
+*   2  Peter Welinder
+*   2  `Yaroslav Halchenko`_
+*   2  Wei Li
+*   1  Alex Companioni
+*   1  Brandyn A. White
+*   1  Bussonnier Matthias
+*   1  Charles-Pierre Astolfi
+*   1  Dan O'Huiginn
+*   1  David Cournapeau
+*   1  Keith Goodman
+*   1  Ludwig Schwardt
+*   1  Olivier Hervieu
+*   1  Sergio Medina
+*   1  Shiqiao Du
+*   1  Tim Sheerman-Chase
+*   1  buguen
 
 
 
@@ -282,8 +286,8 @@ Highlights
 - Added BIC/AIC model selection to classical :ref:`gmm` and unified
   the API with the remainder of scikit-learn, by `Bertrand Thirion`_
 
-- Added :class:`~sklearn.cross_validation.StratifiedShuffleSplit`, which is
-  a :class:`~sklearn.cross_validation.ShuffleSplit` with balanced splits,
+- Added `sklearn.cross_validation.StratifiedShuffleSplit`, which is
+  a `sklearn.cross_validation.ShuffleSplit` with balanced splits,
   by Yannick Schwartz.
 
 - :class:`~sklearn.neighbors.NearestCentroid` classifier added, along with a
@@ -307,15 +311,15 @@ Other changes
 - Regressors can now be used as base estimator in the :ref:`multiclass`
   module by `Mathieu Blondel`_.
 
-- Added n_jobs option to :func:`metrics.pairwise.pairwise_distances`
+- Added n_jobs option to :func:`metrics.pairwise_distances`
   and :func:`metrics.pairwise.pairwise_kernels` for parallel computation,
   by `Mathieu Blondel`_.
 
 - :ref:`k_means` can now be run in parallel, using the ``n_jobs`` argument
-  to either :ref:`k_means` or :class:`KMeans`, by `Robert Layton`_.
+  to either :ref:`k_means` or :class:`cluster.KMeans`, by `Robert Layton`_.
 
 - Improved :ref:`cross_validation` and :ref:`grid_search` documentation
-  and introduced the new :func:`cross_validation.train_test_split`
+  and introduced the new `cross_validation.train_test_split`
   helper function by `Olivier Grisel`_
 
 - :class:`~svm.SVC` members ``coef_`` and ``intercept_`` changed sign for
@@ -330,7 +334,7 @@ Other changes
   API and fixed a bug that caused possible negative IDF,
   by `Olivier Grisel`_.
 
-- Beam pruning option in :class:`_BaseHMM` module has been removed since it
+- Beam pruning option in `_BaseHMM` module has been removed since it
   is difficult to Cythonize. If you are interested in contributing a Cython
   version, you can use the python version in the git history as a reference.
 
@@ -340,31 +344,31 @@ Other changes
 API changes summary
 -------------------
 
-- :class:`~covariance.EllipticEnvelop` is now deprecated - Please use :class:`~covariance.EllipticEnvelope`
-  instead.
+- `covariance.EllipticEnvelop` is now deprecated.
+  Please use :class:`~covariance.EllipticEnvelope` instead.
 
 - ``NeighborsClassifier`` and ``NeighborsRegressor`` are gone in the module
-  :ref:`neighbors`. Use the classes :class:`KNeighborsClassifier`,
-  :class:`RadiusNeighborsClassifier`, :class:`KNeighborsRegressor`
-  and/or :class:`RadiusNeighborsRegressor` instead.
+  :ref:`neighbors`. Use the classes :class:`~neighbors.KNeighborsClassifier`,
+  :class:`~neighbors.RadiusNeighborsClassifier`, :class:`~neighbors.KNeighborsRegressor`
+  and/or :class:`~neighbors.RadiusNeighborsRegressor` instead.
 
 - Sparse classes in the :ref:`sgd` module are now deprecated.
 
-- In :class:`~mixture.GMM`, :class:`~mixture.DPGMM` and :class:`~mixture.VBGMM`,
+- In `mixture.GMM`, `mixture.DPGMM` and `mixture.VBGMM`,
   parameters must be passed to an object when initialising it and not through
   ``fit``. Now ``fit`` will only accept the data as an input parameter.
 
-- methods ``rvs`` and ``decode`` in :class:`GMM` module are now deprecated.
+- methods ``rvs`` and ``decode`` in `GMM` module are now deprecated.
   ``sample`` and ``score`` or ``predict`` should be used instead.
 
 - attribute ``_scores`` and ``_pvalues`` in univariate feature selection
   objects are now deprecated.
   ``scores_`` or ``pvalues_`` should be used instead.
 
-- In :class:`LogisticRegression`, :class:`LinearSVC`, :class:`SVC` and
-  :class:`NuSVC`, the ``class_weight`` parameter is now an initialization
-  parameter, not a parameter to fit. This makes grid searches
-  over this parameter possible.
+- In :class:`~linear_model.LogisticRegression`, :class:`~svm.LinearSVC`,
+  :class:`~svm.SVC` and :class:`~svm.NuSVC`, the ``class_weight`` parameter is
+  now an initialization parameter, not a parameter to fit. This makes grid
+  searches over this parameter possible.
 
 - LFW ``data`` is now always shape ``(n_samples, n_features)`` to be
   consistent with the Olivetti faces dataset. Use ``images`` and
@@ -375,14 +379,14 @@ API changes summary
   ``'ovr'`` being the default.  This does not change the default behavior
   but hopefully is less confusing.
 
-- Class :class:`~feature_selection.text.Vectorizer` is deprecated and
-  replaced by :class:`~feature_selection.text.TfidfVectorizer`.
+- Class `feature_selection.text.Vectorizer` is deprecated and
+  replaced by `feature_selection.text.TfidfVectorizer`.
 
 - The preprocessor / analyzer nested structure for text feature
   extraction has been removed. All those features are
   now directly passed as flat constructor arguments
-  to :class:`~feature_selection.text.TfidfVectorizer` and
-  :class:`~feature_selection.text.CountVectorizer`, in particular the
+  to `feature_selection.text.TfidfVectorizer` and
+  `feature_selection.text.CountVectorizer`, in particular the
   following parameters are now used:
 
 - ``analyzer`` can be ``'word'`` or ``'char'`` to switch the default
@@ -401,27 +405,27 @@ API changes summary
   ``vocabulary_`` attribute to be consistent with the project
   conventions.
 
-- Class :class:`~feature_selection.text.TfidfVectorizer` now derives directly
-  from :class:`~feature_selection.text.CountVectorizer` to make grid
+- Class `feature_selection.text.TfidfVectorizer` now derives directly
+  from `feature_selection.text.CountVectorizer` to make grid
   search trivial.
 
-- methods ``rvs`` in :class:`_BaseHMM` module are now deprecated.
+- methods ``rvs`` in `_BaseHMM` module are now deprecated.
   ``sample`` should be used instead.
 
-- Beam pruning option in :class:`_BaseHMM` module is removed since it is
+- Beam pruning option in `_BaseHMM` module is removed since it is
   difficult to be Cythonized. If you are interested, you can look in the
   history codes by git.
 
 - The SVMlight format loader now supports files with both zero-based and
   one-based column indices, since both occur "in the wild".
 
-- Arguments in class :class:`ShuffleSplit` are now consistent with
-  :class:`StratifiedShuffleSplit`. Arguments ``test_fraction`` and
+- Arguments in class :class:`~model_selection.ShuffleSplit` are now consistent with
+  :class:`~model_selection.StratifiedShuffleSplit`. Arguments ``test_fraction`` and
   ``train_fraction`` are deprecated and renamed to ``test_size`` and
   ``train_size`` and can accept both ``float`` and ``int``.
 
-- Arguments in class :class:`Bootstrap` are now consistent with
-  :class:`StratifiedShuffleSplit`. Arguments ``n_test`` and
+- Arguments in class `Bootstrap` are now consistent with
+  :class:`~model_selection.StratifiedShuffleSplit`. Arguments ``n_test`` and
   ``n_train`` are deprecated and renamed to ``test_size`` and
   ``train_size`` and can accept both ``float`` and ``int``.
 
@@ -431,54 +435,55 @@ API changes summary
 
 People
 ------
-   * 282  `Andreas Müller`_
-   * 239  `Peter Prettenhofer`_
-   * 198  `Gael Varoquaux`_
-   * 129  `Olivier Grisel`_
-   * 114  `Mathieu Blondel`_
-   * 103  Clay Woolam
-   *  96  `Lars Buitinck`_
-   *  88  `Jaques Grobler`_
-   *  82  `Alexandre Gramfort`_
-   *  50  `Bertrand Thirion`_
-   *  42  `Robert Layton`_
-   *  28  flyingimmidev
-   *  26  `Jake Vanderplas`_
-   *  26  Shiqiao Du
-   *  21  `Satrajit Ghosh`_
-   *  17  `David Marek`_
-   *  17  `Gilles Louppe`_
-   *  14  `Vlad Niculae`_
-   *  11  Yannick Schwartz
-   *  10  `Fabian Pedregosa`_
-   *   9  fcostin
-   *   7  Nick Wilson
-   *   5  Adrien Gaidon
-   *   5  `Nicolas Pinto`_
-   *   4  `David Warde-Farley`_
-   *   5  Nelle Varoquaux
-   *   5  Emmanuelle Gouillart
-   *   3  Joonas Sillanpää
-   *   3  Paolo Losi
-   *   2  Charles McCarthy
-   *   2  Roy Hyunjin Han
-   *   2  Scott White
-   *   2  ibayer
-   *   1  Brandyn White
-   *   1  Carlos Scheidegger
-   *   1  Claire Revillet
-   *   1  Conrad Lee
-   *   1  `Edouard Duchesnay`_
-   *   1  Jan Hendrik Metzen
-   *   1  Meng Xinfan
-   *   1  `Rob Zinkov`_
-   *   1  Shiqiao
-   *   1  Udi Weinsberg
-   *   1  Virgile Fritsch
-   *   1  Xinfan Meng
-   *   1  Yaroslav Halchenko
-   *   1  jansoe
-   *   1  Leon Palafox
+
+* 282  `Andreas Müller`_
+* 239  `Peter Prettenhofer`_
+* 198  `Gael Varoquaux`_
+* 129  `Olivier Grisel`_
+* 114  `Mathieu Blondel`_
+* 103  Clay Woolam
+*  96  `Lars Buitinck`_
+*  88  `Jaques Grobler`_
+*  82  `Alexandre Gramfort`_
+*  50  `Bertrand Thirion`_
+*  42  `Robert Layton`_
+*  28  flyingimmidev
+*  26  `Jake Vanderplas`_
+*  26  Shiqiao Du
+*  21  `Satrajit Ghosh`_
+*  17  `David Marek`_
+*  17  `Gilles Louppe`_
+*  14  `Vlad Niculae`_
+*  11  Yannick Schwartz
+*  10  `Fabian Pedregosa`_
+*   9  fcostin
+*   7  Nick Wilson
+*   5  Adrien Gaidon
+*   5  `Nicolas Pinto`_
+*   4  `David Warde-Farley`_
+*   5  Nelle Varoquaux
+*   5  Emmanuelle Gouillart
+*   3  Joonas Sillanpää
+*   3  Paolo Losi
+*   2  Charles McCarthy
+*   2  Roy Hyunjin Han
+*   2  Scott White
+*   2  ibayer
+*   1  Brandyn White
+*   1  Carlos Scheidegger
+*   1  Claire Revillet
+*   1  Conrad Lee
+*   1  `Edouard Duchesnay`_
+*   1  Jan Hendrik Metzen
+*   1  Meng Xinfan
+*   1  `Rob Zinkov`_
+*   1  Shiqiao
+*   1  Udi Weinsberg
+*   1  Virgile Fritsch
+*   1  Xinfan Meng
+*   1  Yaroslav Halchenko
+*   1  jansoe
+*   1  Leon Palafox
 
 
 .. _changes_0_10:
@@ -557,7 +562,7 @@ Changelog
   by `Mathieu Blondel`_.
 
 - Make :func:`~sklearn.preprocessing.scale` and
-  :class:`~sklearn.preprocessing.Scaler` work on sparse matrices by
+  `sklearn.preprocessing.Scaler` work on sparse matrices by
   `Olivier Grisel`_
 
 - Feature importances using decision trees and/or forest of trees,
@@ -566,7 +571,7 @@ Changelog
 - Parallel implementation of forests of randomized trees by
   `Gilles Louppe`_.
 
-- :class:`~sklearn.cross_validation.ShuffleSplit` can subsample the train
+- `sklearn.cross_validation.ShuffleSplit` can subsample the train
   sets as well as the test sets by `Olivier Grisel`_.
 
 - Errors in the build of the documentation fixed by `Andreas Müller`_.
@@ -582,7 +587,7 @@ version 0.9:
   had ``overwrite_`` parameters; these have been replaced with ``copy_``
   parameters with exactly the opposite meaning.
 
-  This particularly affects some of the estimators in :mod:`linear_model`.
+  This particularly affects some of the estimators in :mod:`~sklearn.linear_model`.
   The default behavior is still to copy everything passed in.
 
 - The SVMlight dataset loader :func:`~sklearn.datasets.load_svmlight_file` no
@@ -596,17 +601,17 @@ version 0.9:
 - The :ref:`covariance` module now has a robust estimator of
   covariance, the Minimum Covariance Determinant estimator.
 
-- Cluster evaluation metrics in :mod:`metrics.cluster` have been refactored
+- Cluster evaluation metrics in :mod:`~sklearn.metrics.cluster` have been refactored
   but the changes are backwards compatible. They have been moved to the
-  :mod:`metrics.cluster.supervised`, along with
-  :mod:`metrics.cluster.unsupervised` which contains the Silhouette
+  `metrics.cluster.supervised`, along with
+  `metrics.cluster.unsupervised` which contains the Silhouette
   Coefficient.
 
 - The ``permutation_test_score`` function now behaves the same way as
   ``cross_val_score`` (i.e. uses the mean score across the folds.)
 
 - Cross Validation generators now use integer indices (``indices=True``)
-  by default instead of boolean masks. This make it more intuitive to
+  by default instead of boolean masks. This makes it more intuitive to
   use with sparse matrix data.
 
 - The functions used for sparse coding, ``sparse_encode`` and
@@ -622,7 +627,7 @@ version 0.9:
 
 - ``BaseDictionaryLearning`` class replaced by ``SparseCodingMixin``.
 
-- :func:`~sklearn.utils.extmath.fast_svd` has been renamed
+- `sklearn.utils.extmath.fast_svd` has been renamed
   :func:`~sklearn.utils.extmath.randomized_svd` and the default
   oversampling is now fixed to 10 additional random vectors instead
   of doubling the number of components to extract. The new behavior
@@ -634,37 +639,37 @@ People
 
 The following people contributed to scikit-learn since last release:
 
-   * 246  `Andreas Müller`_
-   * 242  `Olivier Grisel`_
-   * 220  `Gilles Louppe`_
-   * 183  `Brian Holt`_
-   * 166  `Gael Varoquaux`_
-   * 144  `Lars Buitinck`_
-   *  73  `Vlad Niculae`_
-   *  65  `Peter Prettenhofer`_
-   *  64  `Fabian Pedregosa`_
-   *  60  Robert Layton
-   *  55  `Mathieu Blondel`_
-   *  52  `Jake Vanderplas`_
-   *  44  Noel Dawe
-   *  38  `Alexandre Gramfort`_
-   *  24  :user:`Virgile Fritsch <VirgileFritsch>`
-   *  23  `Satrajit Ghosh`_
-   *   3  Jan Hendrik Metzen
-   *   3  Kenneth C. Arnold
-   *   3  Shiqiao Du
-   *   3  Tim Sheerman-Chase
-   *   3  `Yaroslav Halchenko`_
-   *   2  Bala Subrahmanyam Varanasi
-   *   2  DraXus
-   *   2  Michael Eickenberg
-   *   1  Bogdan Trach
-   *   1  Félix-Antoine Fortin
-   *   1  Juan Manuel Caicedo Carvajal
-   *   1  Nelle Varoquaux
-   *   1  `Nicolas Pinto`_
-   *   1  Tiziano Zito
-   *   1  Xinfan Meng
+* 246  `Andreas Müller`_
+* 242  `Olivier Grisel`_
+* 220  `Gilles Louppe`_
+* 183  `Brian Holt`_
+* 166  `Gael Varoquaux`_
+* 144  `Lars Buitinck`_
+*  73  `Vlad Niculae`_
+*  65  `Peter Prettenhofer`_
+*  64  `Fabian Pedregosa`_
+*  60  Robert Layton
+*  55  `Mathieu Blondel`_
+*  52  `Jake Vanderplas`_
+*  44  Noel Dawe
+*  38  `Alexandre Gramfort`_
+*  24  :user:`Virgile Fritsch <VirgileFritsch>`
+*  23  `Satrajit Ghosh`_
+*   3  Jan Hendrik Metzen
+*   3  Kenneth C. Arnold
+*   3  Shiqiao Du
+*   3  Tim Sheerman-Chase
+*   3  `Yaroslav Halchenko`_
+*   2  Bala Subrahmanyam Varanasi
+*   2  DraXus
+*   2  Michael Eickenberg
+*   1  Bogdan Trach
+*   1  Félix-Antoine Fortin
+*   1  Juan Manuel Caicedo Carvajal
+*   1  Nelle Varoquaux
+*   1  `Nicolas Pinto`_
+*   1  Tiziano Zito
+*   1  Xinfan Meng
 
 
 
@@ -744,7 +749,7 @@ Changelog
 - Text feature extraction optimizations by Lars Buitinck
 
 - Chi-Square feature selection
-  (:func:`feature_selection.univariate_selection.chi2`) by `Lars Buitinck`_.
+  (:func:`feature_selection.chi2`) by `Lars Buitinck`_.
 
 - :ref:`sample_generators` module refactoring by `Gilles Louppe`_
 
@@ -778,7 +783,7 @@ Changelog
 
 - Scalability improvements to :func:`metrics.roc_curve` by Olivier Hervieu
 
-- Distance helper functions :func:`metrics.pairwise.pairwise_distances`
+- Distance helper functions :func:`metrics.pairwise_distances`
   and :func:`metrics.pairwise.pairwise_kernels` by Robert Layton
 
 - :class:`Mini-Batch K-Means <cluster.MiniBatchKMeans>` by Nelle Varoquaux and Peter Prettenhofer.
@@ -925,7 +930,7 @@ enhancements and bug fixes.
 Changelog
 ---------
 
-Several new modules where introduced during this release:
+Several new modules were introduced during this release:
 
 - New :ref:`hierarchical_clustering` module by Vincent Michel,
   `Bertrand Thirion`_, `Alexandre Gramfort`_ and `Gael Varoquaux`_.
@@ -993,20 +998,20 @@ People that made this release possible preceded by number of commits:
 - 25  `Peter Prettenhofer`_
 - 22  `Nicolas Pinto`_
 - 11  :user:`Virgile Fritsch <VirgileFritsch>`
-   -  7  Lars Buitinck
-   -  6  Vincent Michel
-   -  5  `Bertrand Thirion`_
-   -  4  Thouis (Ray) Jones
-   -  4  Vincent Schut
-   -  3  Jan Schlüter
-   -  2  Julien Miotte
-   -  2  `Matthieu Perrot`_
-   -  2  Yann Malet
-   -  2  `Yaroslav Halchenko`_
-   -  1  Amit Aides
-   -  1  `Andreas Müller`_
-   -  1  Feth Arezki
-   -  1  Meng Xinfan
+-  7  Lars Buitinck
+-  6  Vincent Michel
+-  5  `Bertrand Thirion`_
+-  4  Thouis (Ray) Jones
+-  4  Vincent Schut
+-  3  Jan Schlüter
+-  2  Julien Miotte
+-  2  `Matthieu Perrot`_
+-  2  Yann Malet
+-  2  `Yaroslav Halchenko`_
+-  1  Amit Aides
+-  1  `Andreas Müller`_
+-  1  Feth Arezki
+-  1  Meng Xinfan
 
 
 .. _changes_0_7:
@@ -1021,7 +1026,7 @@ after the 0.6 release. This release is marked by the speed
 improvements in existing algorithms like k-Nearest Neighbors and
 K-Means algorithm and by the inclusion of an efficient algorithm for
 computing the Ridge Generalized Cross Validation solution. Unlike the
-preceding release, no new modules where added to this release.
+preceding release, no new modules were added to this release.
 
 Changelog
 ---------
@@ -1047,7 +1052,7 @@ Changelog
 
 - Sanity checks for SVM-based classes [`Mathieu Blondel`_].
 
-- Refactoring of :class:`~neighbors.NeighborsClassifier` and
+- Refactoring of `neighbors.NeighborsClassifier` and
   :func:`neighbors.kneighbors_graph`: added different algorithms for
   the k-Nearest Neighbor Search and implemented a more stable
   algorithm for finding barycenter weights. Also added some
@@ -1055,7 +1060,7 @@ Changelog
   `notes_neighbors
   <https://github.com/scikit-learn/scikit-learn/wiki/Neighbors-working-notes>`_ for more information [`Fabian Pedregosa`_].
 
-- Documentation improvements: Added :class:`~pca.RandomizedPCA` and
+- Documentation improvements: Added `pca.RandomizedPCA` and
   :class:`~linear_model.LogisticRegression` to the class
   reference. Also added references of matrices used for clustering
   and other fixes [`Gael Varoquaux`_, `Fabian Pedregosa`_, `Mathieu
@@ -1067,12 +1072,12 @@ Changelog
   :class:`~linear_model.LogisticRegression` [`Fabian Pedregosa`_].
 
 - Performance and API improvements to
-  :func:`metrics.euclidean_distances` and to
-  :class:`~pca.RandomizedPCA` [`James Bergstra`_].
+  :func:`metrics.pairwise.euclidean_distances` and to
+  `pca.RandomizedPCA` [`James Bergstra`_].
 
 - Fix compilation issues under NetBSD [Kamel Ibn Hassen Derouiche]
 
-- Allow input sequences of different lengths in :class:`~hmm.GaussianHMM`
+- Allow input sequences of different lengths in `hmm.GaussianHMM`
   [`Ron Weiss`_].
 
 - Fix bug in affinity propagation caused by incorrect indexing [Xinfan Meng]
@@ -1119,7 +1124,7 @@ Changelog
 ---------
 
 - New `stochastic gradient
-  <http://scikit-learn.org/stable/modules/sgd.html>`_ descent
+  <https://scikit-learn.org/stable/modules/sgd.html>`_ descent
   module by Peter Prettenhofer. The module comes with complete
   documentation and examples.
 
@@ -1134,21 +1139,20 @@ Changelog
   example_gaussian_process_plot_gp_probabilistic_classification_after_regression.py
   for a taste of what can be done.
 
-- It is now possible to use liblinear’s Multi-class SVC (option
+- It is now possible to use liblinear's Multi-class SVC (option
   multi_class in :class:`~svm.LinearSVC`)
 
 - New features and performance improvements of text feature
   extraction.
 
 - Improved sparse matrix support, both in main classes
-  (:class:`~grid_search.GridSearchCV`) as in modules
+  (:class:`~model_selection.GridSearchCV`) as in modules
   sklearn.svm.sparse and sklearn.linear_model.sparse.
 
 - Lots of cool new examples and a new section that uses real-world
   datasets was created. These include:
   :ref:`sphx_glr_auto_examples_applications_plot_face_recognition.py`,
   :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`,
-  :ref:`sphx_glr_auto_examples_applications_svm_gui.py`,
   :ref:`sphx_glr_auto_examples_applications_wikipedia_principal_eigenvector.py` and
   others.
 
@@ -1175,31 +1179,31 @@ People
 
 People that made this release possible preceded by number of commits:
 
-   * 207  `Olivier Grisel`_
+* 207  `Olivier Grisel`_
 
-   * 167 `Fabian Pedregosa`_
+* 167 `Fabian Pedregosa`_
 
-   * 97 `Peter Prettenhofer`_
+* 97 `Peter Prettenhofer`_
 
-   * 68 `Alexandre Gramfort`_
+* 68 `Alexandre Gramfort`_
 
-   * 59  `Mathieu Blondel`_
+* 59  `Mathieu Blondel`_
 
-   * 55  `Gael Varoquaux`_
+* 55  `Gael Varoquaux`_
 
-   * 33  Vincent Dubourg
+* 33  Vincent Dubourg
 
-   * 21  `Ron Weiss`_
+* 21  `Ron Weiss`_
 
-   * 9  Bertrand Thirion
+* 9  Bertrand Thirion
 
-   * 3  `Alexandre Passos`_
+* 3  `Alexandre Passos`_
 
-   * 3  Anne-Laure Fouque
+* 3  Anne-Laure Fouque
 
-   * 2  Ronan Amicel
+* 2  Ronan Amicel
 
-   * 1 `Christian Osendorfer`_
+* 1 `Christian Osendorfer`_
 
 
 
@@ -1218,9 +1222,9 @@ New classes
 -----------
 
 - Support for sparse matrices in some classifiers of modules
-  ``svm`` and ``linear_model`` (see :class:`~svm.sparse.SVC`,
-  :class:`~svm.sparse.SVR`, :class:`~svm.sparse.LinearSVC`,
-  :class:`~linear_model.sparse.Lasso`, :class:`~linear_model.sparse.ElasticNet`)
+  ``svm`` and ``linear_model`` (see `svm.sparse.SVC`,
+  `svm.sparse.SVR`, `svm.sparse.LinearSVC`,
+  `linear_model.sparse.Lasso`, `linear_model.sparse.ElasticNet`)
 
 - New :class:`~pipeline.Pipeline` object to compose different estimators.
 
@@ -1237,8 +1241,7 @@ New classes
   :class:`~linear_model.LassoLars`.
 
 - New Hidden Markov Models module (see classes
-  :class:`~hmm.GaussianHMM`, :class:`~hmm.MultinomialHMM`,
-  :class:`~hmm.GMMHMM`)
+  `hmm.GaussianHMM`, `hmm.MultinomialHMM`, `hmm.GMMHMM`)
 
 - New module feature_extraction (see :ref:`class reference
   <feature_extraction_ref>`)
@@ -1252,9 +1255,9 @@ Documentation
 - Improved documentation for many modules, now separating
   narrative documentation from the class reference. As an example,
   see `documentation for the SVM module
-  <http://scikit-learn.org/stable/modules/svm.html>`_ and the
+  <https://scikit-learn.org/stable/modules/svm.html>`_ and the
   complete `class reference
-  <http://scikit-learn.org/stable/modules/classes.html>`_.
+  <https://scikit-learn.org/stable/modules/classes.html>`_.
 
 Fixes
 -----
@@ -1276,7 +1279,7 @@ Examples
   :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
 
 - Many more examples. `See here
-  <http://scikit-learn.org/stable/auto_examples/index.html>`_
+  <https://scikit-learn.org/stable/auto_examples/index.html>`_
   the full list of examples.
 
 
@@ -1305,20 +1308,20 @@ Authors
 The following is a list of authors for this release, preceded by
 number of commits:
 
-     * 262  Fabian Pedregosa
-     * 240  Gael Varoquaux
-     * 149  Alexandre Gramfort
-     * 116  Olivier Grisel
-     *  40  Vincent Michel
-     *  38  Ron Weiss
-     *  23  Matthieu Perrot
-     *  10  Bertrand Thirion
-     *   7  Yaroslav Halchenko
-     *   9  VirgileFritsch
-     *   6  Edouard Duchesnay
-     *   4  Mathieu Blondel
-     *   1  Ariel Rokem
-     *   1  Matthieu Brucher
+* 262  Fabian Pedregosa
+* 240  Gael Varoquaux
+* 149  Alexandre Gramfort
+* 116  Olivier Grisel
+*  40  Vincent Michel
+*  38  Ron Weiss
+*  23  Matthieu Perrot
+*  10  Bertrand Thirion
+*   7  Yaroslav Halchenko
+*   9  VirgileFritsch
+*   6  Edouard Duchesnay
+*   4  Mathieu Blondel
+*   1  Ariel Rokem
+*   1  Matthieu Brucher
 
 Version 0.4
 ===========
@@ -1369,13 +1372,13 @@ Authors
 The committer list for this release is the following (preceded by number
 of commits):
 
-    * 143  Fabian Pedregosa
-    * 35  Alexandre Gramfort
-    * 34  Olivier Grisel
-    * 11  Gael Varoquaux
-    *  5  Yaroslav Halchenko
-    *  2  Vincent Michel
-    *  1  Chris Filo Gorgolewski
+* 143  Fabian Pedregosa
+* 35  Alexandre Gramfort
+* 34  Olivier Grisel
+* 11  Gael Varoquaux
+*  5  Yaroslav Halchenko
+*  2  Vincent Michel
+*  1  Chris Filo Gorgolewski
 
 
 Earlier versions
@@ -1383,4 +1386,3 @@ Earlier versions
 
 Earlier versions included contributions by Fred Mailhot, David Cooke,
 David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
-

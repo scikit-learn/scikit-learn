@@ -1,35 +1,22 @@
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-# Authors: Gilles Louppe <g.louppe@gmail.com>
-#          Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#          Brian Holt <bdholt1@gmail.com>
-#          Noel Dawe <noel@dawe.me>
-#          Satrajit Gosh <satrajit.ghosh@gmail.com>
-#          Lars Buitinck
-#          Arnaud Joly <arnaud.v.joly@gmail.com>
-#          Joel Nothman <joel.nothman@gmail.com>
-#          Fares Hedayati <fares.hedayati@gmail.com>
-#          Jacob Schreiber <jmschreiber91@gmail.com>
-#          Nelson Liu <nelson@nelsonliu.me>
-#
-# License: BSD 3 clause
-
-from libc.stdlib cimport calloc
-from libc.stdlib cimport free
 from libc.string cimport memcpy
 from libc.string cimport memset
-from libc.math cimport fabs
+from libc.math cimport INFINITY
 
 import numpy as np
-cimport numpy as np
-np.import_array()
+cimport numpy as cnp
+cnp.import_array()
 
-from ._utils cimport log
-from ._utils cimport safe_realloc
-from ._utils cimport sizet_ptr_to_ndarray
-from ._utils cimport WeightedMedianCalculator
+from scipy.special.cython_special cimport xlogy
+
+from sklearn.tree._utils cimport log
+from sklearn.tree._utils cimport WeightedFenwickTree
+from sklearn.tree._partitioner cimport sort
+
+# EPSILON is used in the Poisson criterion
+cdef float64_t EPSILON = 10 * np.finfo('double').eps
 
 cdef class Criterion:
     """Interface for impurity criteria.
@@ -37,23 +24,21 @@ cdef class Criterion:
     This object stores methods on how to calculate how good a split is using
     different metrics.
     """
-
-    def __dealloc__(self):
-        """Destructor."""
-
-        free(self.sum_total)
-        free(self.sum_left)
-        free(self.sum_right)
-
     def __getstate__(self):
         return {}
 
     def __setstate__(self, d):
         pass
 
-    cdef int init(self, const DOUBLE_t[:, ::1] y, DOUBLE_t* sample_weight,
-                  double weighted_n_samples, SIZE_t* samples, SIZE_t start,
-                  SIZE_t end) nogil except -1:
+    cdef int init(
+        self,
+        const float64_t[:, ::1] y,
+        const float64_t[:] sample_weight,
+        float64_t weighted_n_samples,
+        const intp_t[:] sample_indices,
+        intp_t start,
+        intp_t end,
+    ) except -1 nogil:
         """Placeholder for a method which will initialize the criterion.
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -61,100 +46,106 @@ cdef class Criterion:
 
         Parameters
         ----------
-        y : array-like, dtype=DOUBLE_t
+        y : ndarray, dtype=float64_t
             y is a buffer that can store values for n_outputs target variables
-        sample_weight : array-like, dtype=DOUBLE_t
-            The weight of each sample
-        weighted_n_samples : double
+            stored as a Cython memoryview.
+        sample_weight : ndarray, dtype=float64_t
+            The weight of each sample stored as a Cython memoryview.
+        weighted_n_samples : float64_t
             The total weight of the samples being considered
-        samples : array-like, dtype=SIZE_t
-            Indices of the samples in X and y, where samples[start:end]
-            correspond to the samples in this node
-        start : SIZE_t
+        sample_indices : ndarray, dtype=intp_t
+            A mask on the samples. Indices of the samples in X and y we want to use,
+            where sample_indices[start:end] correspond to the samples in this node.
+        start : intp_t
             The first sample to be used on this node
-        end : SIZE_t
+        end : intp_t
             The last sample used on this node
 
         """
-
         pass
 
-    cdef int reset(self) nogil except -1:
+    cdef int reset(self) except -1 nogil:
         """Reset the criterion at pos=start.
 
         This method must be implemented by the subclass.
         """
-
         pass
 
-    cdef int reverse_reset(self) nogil except -1:
+    cdef int reverse_reset(self) except -1 nogil:
         """Reset the criterion at pos=end.
 
         This method must be implemented by the subclass.
         """
         pass
 
-    cdef int update(self, SIZE_t new_pos) nogil except -1:
-        """Updated statistics by moving samples[pos:new_pos] to the left child.
+    cdef int update(self, intp_t new_pos) except -1 nogil:
+        """Updated statistics by moving sample_indices[pos:new_pos] to the left child.
 
-        This updates the collected statistics by moving samples[pos:new_pos]
+        This updates the collected statistics by moving sample_indices[pos:new_pos]
         from the right child to the left child. It must be implemented by
         the subclass.
 
         Parameters
         ----------
-        new_pos : SIZE_t
-            New starting index position of the samples in the right child
+        new_pos : intp_t
+            New starting index position of the sample_indices in the right child
         """
-
         pass
 
-    cdef double node_impurity(self) nogil:
+    cdef float64_t node_impurity(self) noexcept nogil:
         """Placeholder for calculating the impurity of the node.
 
         Placeholder for a method which will evaluate the impurity of
-        the current node, i.e. the impurity of samples[start:end]. This is the
-        primary function of the criterion class.
+        the current node, i.e. the impurity of sample_indices[start:end]. This is the
+        primary function of the criterion class. The smaller the impurity the
+        better.
         """
-
         pass
 
-    cdef void children_impurity(self, double* impurity_left,
-                                double* impurity_right) nogil:
+    cdef void children_impurity(self, float64_t* impurity_left,
+                                float64_t* impurity_right) noexcept nogil:
         """Placeholder for calculating the impurity of children.
 
         Placeholder for a method which evaluates the impurity in
-        children nodes, i.e. the impurity of samples[start:pos] + the impurity
-        of samples[pos:end].
+        children nodes, i.e. the impurity of sample_indices[start:pos] + the impurity
+        of sample_indices[pos:end].
 
         Parameters
         ----------
-        impurity_left : double pointer
+        impurity_left : float64_t pointer
             The memory address where the impurity of the left child should be
             stored.
-        impurity_right : double pointer
+        impurity_right : float64_t pointer
             The memory address where the impurity of the right child should be
             stored
         """
-
         pass
 
-    cdef void node_value(self, double* dest) nogil:
+    cdef void node_value(self, float64_t* dest) noexcept nogil:
         """Placeholder for storing the node value.
 
         Placeholder for a method which will compute the node value
-        of samples[start:end] and save the value into dest.
+        of sample_indices[start:end] and save the value into dest.
 
         Parameters
         ----------
-        dest : double pointer
+        dest : float64_t pointer
             The memory address where the node value should be stored.
         """
-
         pass
 
-    cdef double proxy_impurity_improvement(self) nogil:
-        """Compute a proxy of the impurity reduction
+    cdef void clip_node_value(self, float64_t* dest, float64_t lower_bound, float64_t upper_bound) noexcept nogil:
+        pass
+
+    cdef float64_t middle_value(self) noexcept nogil:
+        """Compute the middle value of a split for monotonicity constraints
+
+        This method is implemented in ClassificationCriterion and RegressionCriterion.
+        """
+        pass
+
+    cdef float64_t proxy_impurity_improvement(self) noexcept nogil:
+        """Compute a proxy of the impurity reduction.
 
         This method is used to speed up the search for the best split.
         It is a proxy quantity such that the split that maximizes this value
@@ -164,17 +155,17 @@ cdef class Criterion:
         The absolute impurity improvement is only computed by the
         impurity_improvement method once the best split has been found.
         """
-        cdef double impurity_left
-        cdef double impurity_right
+        cdef float64_t impurity_left
+        cdef float64_t impurity_right
         self.children_impurity(&impurity_left, &impurity_right)
 
         return (- self.weighted_n_right * impurity_right
                 - self.weighted_n_left * impurity_left)
 
-    cdef double impurity_improvement(self, double impurity_parent,
-                                     double impurity_left,
-                                     double impurity_right) nogil:
-        """Compute the improvement in impurity
+    cdef float64_t impurity_improvement(self, float64_t impurity_parent,
+                                        float64_t impurity_left,
+                                        float64_t impurity_right) noexcept nogil:
+        """Compute the improvement in impurity.
 
         This method computes the improvement in impurity when a split occurs.
         The weighted impurity improvement equation is the following:
@@ -188,45 +179,91 @@ cdef class Criterion:
 
         Parameters
         ----------
-        impurity_parent : double
+        impurity_parent : float64_t
             The initial impurity of the parent node before the split
 
-        impurity_left : double
+        impurity_left : float64_t
             The impurity of the left child
 
-        impurity_right : double
+        impurity_right : float64_t
             The impurity of the right child
 
         Return
         ------
-        double : improvement in impurity after the split occurs
+        float64_t : improvement in impurity after the split occurs
         """
-
         return ((self.weighted_n_node_samples / self.weighted_n_samples) *
-                (impurity_parent - (self.weighted_n_right / 
+                (impurity_parent - (self.weighted_n_right /
                                     self.weighted_n_node_samples * impurity_right)
-                                 - (self.weighted_n_left / 
+                                 - (self.weighted_n_left /
                                     self.weighted_n_node_samples * impurity_left)))
+
+    cdef bint check_monotonicity(
+        self,
+        cnp.int8_t monotonic_cst,
+        float64_t lower_bound,
+        float64_t upper_bound,
+    ) noexcept nogil:
+        pass
+
+    cdef inline bint _check_monotonicity(
+        self,
+        cnp.int8_t monotonic_cst,
+        float64_t lower_bound,
+        float64_t upper_bound,
+        float64_t value_left,
+        float64_t value_right,
+    ) noexcept nogil:
+        cdef:
+            bint check_lower_bound = (
+                (value_left >= lower_bound) &
+                (value_right >= lower_bound)
+            )
+            bint check_upper_bound = (
+                (value_left <= upper_bound) &
+                (value_right <= upper_bound)
+            )
+            bint check_monotonic_cst = (
+                (value_left - value_right) * monotonic_cst <= 0
+            )
+        return check_lower_bound & check_upper_bound & check_monotonic_cst
+
+
+cdef inline void _move_sums_classification(
+    ClassificationCriterion criterion,
+    float64_t[:, ::1] sum_1,
+    float64_t[:, ::1] sum_2,
+    float64_t* weighted_n_1,
+    float64_t* weighted_n_2,
+) noexcept nogil:
+    """Distribute sum_total into sum_1 and sum_2.
+    """
+    cdef intp_t k, n_bytes
+
+    # Assigning sum_2 = sum_total for all outputs.
+    for k in range(criterion.n_outputs):
+        n_bytes = criterion.n_classes[k] * sizeof(float64_t)
+        memset(&sum_1[k, 0], 0, n_bytes)
+        memcpy(&sum_2[k, 0], &criterion.sum_total[k, 0], n_bytes)
+
+    weighted_n_1[0] = 0.0
+    weighted_n_2[0] = criterion.weighted_n_node_samples
 
 
 cdef class ClassificationCriterion(Criterion):
     """Abstract criterion for classification."""
 
-    def __cinit__(self, SIZE_t n_outputs,
-                  np.ndarray[SIZE_t, ndim=1] n_classes):
+    def __cinit__(self, intp_t n_outputs,
+                  cnp.ndarray[intp_t, ndim=1] n_classes):
         """Initialize attributes for this criterion.
 
         Parameters
         ----------
-        n_outputs : SIZE_t
+        n_outputs : intp_t
             The number of targets, the dimensionality of the prediction
-        n_classes : numpy.ndarray, dtype=SIZE_t
+        n_classes : numpy.ndarray, dtype=intp_t
             The number of unique classes in each target
         """
-
-        self.sample_weight = NULL
-
-        self.samples = NULL
         self.start = 0
         self.pos = 0
         self.end = 0
@@ -238,107 +275,93 @@ cdef class ClassificationCriterion(Criterion):
         self.weighted_n_left = 0.0
         self.weighted_n_right = 0.0
 
-        # Count labels for each output
-        self.sum_total = NULL
-        self.sum_left = NULL
-        self.sum_right = NULL
-        self.n_classes = NULL
+        self.n_classes = np.empty(n_outputs, dtype=np.intp)
 
-        safe_realloc(&self.n_classes, n_outputs)
-
-        cdef SIZE_t k = 0
-        cdef SIZE_t sum_stride = 0
+        cdef intp_t k = 0
+        cdef intp_t max_n_classes = 0
 
         # For each target, set the number of unique classes in that target,
         # and also compute the maximal stride of all targets
         for k in range(n_outputs):
             self.n_classes[k] = n_classes[k]
 
-            if n_classes[k] > sum_stride:
-                sum_stride = n_classes[k]
+            if n_classes[k] > max_n_classes:
+                max_n_classes = n_classes[k]
 
-        self.sum_stride = sum_stride
+        self.max_n_classes = max_n_classes
 
-        cdef SIZE_t n_elements = n_outputs * sum_stride
-        self.sum_total = <double*> calloc(n_elements, sizeof(double))
-        self.sum_left = <double*> calloc(n_elements, sizeof(double))
-        self.sum_right = <double*> calloc(n_elements, sizeof(double))
-
-        if (self.sum_total == NULL or
-                self.sum_left == NULL or
-                self.sum_right == NULL):
-            raise MemoryError()
-
-    def __dealloc__(self):
-        """Destructor."""
-        free(self.n_classes)
+        # Count labels for each output
+        self.sum_total = np.zeros((n_outputs, max_n_classes), dtype=np.float64)
+        self.sum_left = np.zeros((n_outputs, max_n_classes), dtype=np.float64)
+        self.sum_right = np.zeros((n_outputs, max_n_classes), dtype=np.float64)
 
     def __reduce__(self):
         return (type(self),
-                (self.n_outputs,
-                 sizet_ptr_to_ndarray(self.n_classes, self.n_outputs)),
-                self.__getstate__())
+                (self.n_outputs, np.asarray(self.n_classes)), self.__getstate__())
 
-    cdef int init(self, const DOUBLE_t[:, ::1] y,
-                  DOUBLE_t* sample_weight, double weighted_n_samples,
-                  SIZE_t* samples, SIZE_t start, SIZE_t end) nogil except -1:
-        """Initialize the criterion at node samples[start:end] and
-        children samples[start:start] and samples[start:end].
+    cdef int init(
+        self,
+        const float64_t[:, ::1] y,
+        const float64_t[:] sample_weight,
+        float64_t weighted_n_samples,
+        const intp_t[:] sample_indices,
+        intp_t start,
+        intp_t end
+    ) except -1 nogil:
+        """Initialize the criterion.
+
+        This initializes the criterion at node sample_indices[start:end] and children
+        sample_indices[start:start] and sample_indices[start:end].
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
 
         Parameters
         ----------
-        y : array-like, dtype=DOUBLE_t
-            The target stored as a buffer for memory efficiency
-        sample_weight : array-like, dtype=DOUBLE_t
-            The weight of each sample
-        weighted_n_samples : double
+        y : ndarray, dtype=float64_t
+            The target stored as a buffer for memory efficiency.
+        sample_weight : ndarray, dtype=float64_t
+            The weight of each sample stored as a Cython memoryview.
+        weighted_n_samples : float64_t
             The total weight of all samples
-        samples : array-like, dtype=SIZE_t
-            A mask on the samples, showing which ones we want to use
-        start : SIZE_t
+        sample_indices : ndarray, dtype=intp_t
+            A mask on the samples. Indices of the samples in X and y we want to use,
+            where sample_indices[start:end] correspond to the samples in this node.
+        start : intp_t
             The first sample to use in the mask
-        end : SIZE_t
+        end : intp_t
             The last sample to use in the mask
         """
-
         self.y = y
         self.sample_weight = sample_weight
-        self.samples = samples
+        self.sample_indices = sample_indices
         self.start = start
         self.end = end
         self.n_node_samples = end - start
         self.weighted_n_samples = weighted_n_samples
         self.weighted_n_node_samples = 0.0
 
-        cdef SIZE_t* n_classes = self.n_classes
-        cdef double* sum_total = self.sum_total
-
-        cdef SIZE_t i
-        cdef SIZE_t p
-        cdef SIZE_t k
-        cdef SIZE_t c
-        cdef DOUBLE_t w = 1.0
-        cdef SIZE_t offset = 0
+        cdef intp_t i
+        cdef intp_t p
+        cdef intp_t k
+        cdef intp_t c
+        cdef float64_t w = 1.0
 
         for k in range(self.n_outputs):
-            memset(sum_total + offset, 0, n_classes[k] * sizeof(double))
-            offset += self.sum_stride
+            memset(&self.sum_total[k, 0], 0, self.n_classes[k] * sizeof(float64_t))
 
         for p in range(start, end):
-            i = samples[p]
+            i = sample_indices[p]
 
             # w is originally set to be 1.0, meaning that if no sample weights
-            # are given, the default weight of each sample is 1.0
-            if sample_weight != NULL:
+            # are given, the default weight of each sample is 1.0.
+            if sample_weight is not None:
                 w = sample_weight[i]
 
             # Count weighted class frequency for each target
             for k in range(self.n_outputs):
-                c = <SIZE_t> self.y[i, k]
-                sum_total[k * self.sum_stride + c] += w
+                c = <intp_t> self.y[i, k]
+                self.sum_total[k, c] += w
 
             self.weighted_n_node_samples += w
 
@@ -346,163 +369,164 @@ cdef class ClassificationCriterion(Criterion):
         self.reset()
         return 0
 
-    cdef int reset(self) nogil except -1:
-        """Reset the criterion at pos=start
+    cdef int reset(self) except -1 nogil:
+        """Reset the criterion at pos=start.
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
         self.pos = self.start
-
-        self.weighted_n_left = 0.0
-        self.weighted_n_right = self.weighted_n_node_samples
-
-        cdef double* sum_total = self.sum_total
-        cdef double* sum_left = self.sum_left
-        cdef double* sum_right = self.sum_right
-
-        cdef SIZE_t* n_classes = self.n_classes
-        cdef SIZE_t k
-
-        for k in range(self.n_outputs):
-            memset(sum_left, 0, n_classes[k] * sizeof(double))
-            memcpy(sum_right, sum_total, n_classes[k] * sizeof(double))
-
-            sum_total += self.sum_stride
-            sum_left += self.sum_stride
-            sum_right += self.sum_stride
+        _move_sums_classification(
+            self,
+            self.sum_left,
+            self.sum_right,
+            &self.weighted_n_left,
+            &self.weighted_n_right,
+        )
         return 0
 
-    cdef int reverse_reset(self) nogil except -1:
-        """Reset the criterion at pos=end
+    cdef int reverse_reset(self) except -1 nogil:
+        """Reset the criterion at pos=end.
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
         self.pos = self.end
-
-        self.weighted_n_left = self.weighted_n_node_samples
-        self.weighted_n_right = 0.0
-
-        cdef double* sum_total = self.sum_total
-        cdef double* sum_left = self.sum_left
-        cdef double* sum_right = self.sum_right
-
-        cdef SIZE_t* n_classes = self.n_classes
-        cdef SIZE_t k
-
-        for k in range(self.n_outputs):
-            memset(sum_right, 0, n_classes[k] * sizeof(double))
-            memcpy(sum_left, sum_total, n_classes[k] * sizeof(double))
-
-            sum_total += self.sum_stride
-            sum_left += self.sum_stride
-            sum_right += self.sum_stride
+        _move_sums_classification(
+            self,
+            self.sum_right,
+            self.sum_left,
+            &self.weighted_n_right,
+            &self.weighted_n_left,
+        )
         return 0
 
-    cdef int update(self, SIZE_t new_pos) nogil except -1:
-        """Updated statistics by moving samples[pos:new_pos] to the left child.
+    cdef int update(self, intp_t new_pos) except -1 nogil:
+        """Updated statistics by moving sample_indices[pos:new_pos] to the left child.
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
 
         Parameters
         ----------
-        new_pos : SIZE_t
-            The new ending position for which to move samples from the right
+        new_pos : intp_t
+            The new ending position for which to move sample_indices from the right
             child to the left child.
         """
-        cdef SIZE_t pos = self.pos
-        cdef SIZE_t end = self.end
+        cdef intp_t pos = self.pos
 
-        cdef double* sum_left = self.sum_left
-        cdef double* sum_right = self.sum_right
-        cdef double* sum_total = self.sum_total
-
-        cdef SIZE_t* n_classes = self.n_classes
-        cdef SIZE_t* samples = self.samples
-        cdef DOUBLE_t* sample_weight = self.sample_weight
-
-        cdef SIZE_t i
-        cdef SIZE_t p
-        cdef SIZE_t k
-        cdef SIZE_t c
-        cdef SIZE_t label_index
-        cdef DOUBLE_t w = 1.0
+        cdef intp_t i
+        cdef intp_t p
+        cdef intp_t k
+        cdef intp_t c
+        cdef float64_t w = 1.0
 
         # Update statistics up to new_pos
         #
         # Given that
-        #   sum_left[x] +  sum_right[x] = sum_total[x]
+        #   sum_left[x] + sum_right[x] = sum_total[x]
         # and that sum_total is known, we are going to update
         # sum_left from the direction that require the least amount
         # of computations, i.e. from pos to new_pos or from end to new_po.
-
-        if (new_pos - pos) <= (end - new_pos):
+        if (new_pos - pos) <= (self.end - new_pos):
             for p in range(pos, new_pos):
-                i = samples[p]
+                i = self.sample_indices[p]
 
-                if sample_weight != NULL:
-                    w = sample_weight[i]
+                if self.sample_weight is not None:
+                    w = self.sample_weight[i]
 
                 for k in range(self.n_outputs):
-                    label_index = k * self.sum_stride + <SIZE_t> self.y[i, k]
-                    sum_left[label_index] += w
+                    self.sum_left[k, <intp_t> self.y[i, k]] += w
 
                 self.weighted_n_left += w
 
         else:
             self.reverse_reset()
 
-            for p in range(end - 1, new_pos - 1, -1):
-                i = samples[p]
+            for p in range(self.end - 1, new_pos - 1, -1):
+                i = self.sample_indices[p]
 
-                if sample_weight != NULL:
-                    w = sample_weight[i]
+                if self.sample_weight is not None:
+                    w = self.sample_weight[i]
 
                 for k in range(self.n_outputs):
-                    label_index = k * self.sum_stride + <SIZE_t> self.y[i, k]
-                    sum_left[label_index] -= w
+                    self.sum_left[k, <intp_t> self.y[i, k]] -= w
 
                 self.weighted_n_left -= w
 
         # Update right part statistics
         self.weighted_n_right = self.weighted_n_node_samples - self.weighted_n_left
         for k in range(self.n_outputs):
-            for c in range(n_classes[k]):
-                sum_right[c] = sum_total[c] - sum_left[c]
-
-            sum_right += self.sum_stride
-            sum_left += self.sum_stride
-            sum_total += self.sum_stride
+            for c in range(self.n_classes[k]):
+                self.sum_right[k, c] = self.sum_total[k, c] - self.sum_left[k, c]
 
         self.pos = new_pos
         return 0
 
-    cdef double node_impurity(self) nogil:
+    cdef float64_t node_impurity(self) noexcept nogil:
         pass
 
-    cdef void children_impurity(self, double* impurity_left,
-                                double* impurity_right) nogil:
+    cdef void children_impurity(self, float64_t* impurity_left,
+                                float64_t* impurity_right) noexcept nogil:
         pass
 
-    cdef void node_value(self, double* dest) nogil:
-        """Compute the node value of samples[start:end] and save it into dest.
+    cdef void node_value(self, float64_t* dest) noexcept nogil:
+        """Compute the node value of sample_indices[start:end] and save it into dest.
 
         Parameters
         ----------
-        dest : double pointer
+        dest : float64_t pointer
             The memory address which we will save the node value into.
         """
-
-        cdef double* sum_total = self.sum_total
-        cdef SIZE_t* n_classes = self.n_classes
-        cdef SIZE_t k
+        cdef intp_t k, c
 
         for k in range(self.n_outputs):
-            memcpy(dest, sum_total, n_classes[k] * sizeof(double))
-            dest += self.sum_stride
-            sum_total += self.sum_stride
+            for c in range(self.n_classes[k]):
+                dest[c] = self.sum_total[k, c] / self.weighted_n_node_samples
+            dest += self.max_n_classes
+
+    cdef inline void clip_node_value(
+        self, float64_t * dest, float64_t lower_bound, float64_t upper_bound
+    ) noexcept nogil:
+        """Clip the values in dest such that predicted probabilities stay between
+        `lower_bound` and `upper_bound` when monotonic constraints are enforced.
+        Note that monotonicity constraints are only supported for:
+        - single-output trees and
+        - binary classifications.
+        """
+        if dest[0] < lower_bound:
+            dest[0] = lower_bound
+        elif dest[0] > upper_bound:
+            dest[0] = upper_bound
+
+        # Values for binary classification must sum to 1.
+        dest[1] = 1 - dest[0]
+
+    cdef inline float64_t middle_value(self) noexcept nogil:
+        """Compute the middle value of a split for monotonicity constraints as the simple average
+        of the left and right children values.
+
+        Note that monotonicity constraints are only supported for:
+        - single-output trees and
+        - binary classifications.
+        """
+        return (
+            (self.sum_left[0, 0] / (2 * self.weighted_n_left)) +
+            (self.sum_right[0, 0] / (2 * self.weighted_n_right))
+        )
+
+    cdef inline bint check_monotonicity(
+        self,
+        cnp.int8_t monotonic_cst,
+        float64_t lower_bound,
+        float64_t upper_bound,
+    ) noexcept nogil:
+        """Check monotonicity constraint is satisfied at the current classification split"""
+        cdef:
+            float64_t value_left = self.sum_left[0][0] / self.weighted_n_left
+            float64_t value_right = self.sum_right[0][0] / self.weighted_n_right
+
+        return self._check_monotonicity(monotonic_cst, lower_bound, upper_bound, value_left, value_right)
 
 
 cdef class Entropy(ClassificationCriterion):
@@ -521,66 +545,58 @@ cdef class Entropy(ClassificationCriterion):
         cross-entropy = -\sum_{k=0}^{K-1} count_k log(count_k)
     """
 
-    cdef double node_impurity(self) nogil:
-        """Evaluate the impurity of the current node, i.e. the impurity of
-        samples[start:end], using the cross-entropy criterion."""
+    cdef float64_t node_impurity(self) noexcept nogil:
+        """Evaluate the impurity of the current node.
 
-        cdef SIZE_t* n_classes = self.n_classes
-        cdef double* sum_total = self.sum_total
-        cdef double entropy = 0.0
-        cdef double count_k
-        cdef SIZE_t k
-        cdef SIZE_t c
+        Evaluate the cross-entropy criterion as impurity of the current node,
+        i.e. the impurity of sample_indices[start:end]. The smaller the impurity the
+        better.
+        """
+        cdef float64_t entropy = 0.0
+        cdef float64_t count_k
+        cdef intp_t k
+        cdef intp_t c
 
         for k in range(self.n_outputs):
-            for c in range(n_classes[k]):
-                count_k = sum_total[c]
+            for c in range(self.n_classes[k]):
+                count_k = self.sum_total[k, c]
                 if count_k > 0.0:
                     count_k /= self.weighted_n_node_samples
                     entropy -= count_k * log(count_k)
 
-            sum_total += self.sum_stride
-
         return entropy / self.n_outputs
 
-    cdef void children_impurity(self, double* impurity_left,
-                                double* impurity_right) nogil:
-        """Evaluate the impurity in children nodes
+    cdef void children_impurity(self, float64_t* impurity_left,
+                                float64_t* impurity_right) noexcept nogil:
+        """Evaluate the impurity in children nodes.
 
-        i.e. the impurity of the left child (samples[start:pos]) and the
-        impurity the right child (samples[pos:end]).
+        i.e. the impurity of the left child (sample_indices[start:pos]) and the
+        impurity the right child (sample_indices[pos:end]).
 
         Parameters
         ----------
-        impurity_left : double pointer
+        impurity_left : float64_t pointer
             The memory address to save the impurity of the left node
-        impurity_right : double pointer
+        impurity_right : float64_t pointer
             The memory address to save the impurity of the right node
         """
-
-        cdef SIZE_t* n_classes = self.n_classes
-        cdef double* sum_left = self.sum_left
-        cdef double* sum_right = self.sum_right
-        cdef double entropy_left = 0.0
-        cdef double entropy_right = 0.0
-        cdef double count_k
-        cdef SIZE_t k
-        cdef SIZE_t c
+        cdef float64_t entropy_left = 0.0
+        cdef float64_t entropy_right = 0.0
+        cdef float64_t count_k
+        cdef intp_t k
+        cdef intp_t c
 
         for k in range(self.n_outputs):
-            for c in range(n_classes[k]):
-                count_k = sum_left[c]
+            for c in range(self.n_classes[k]):
+                count_k = self.sum_left[k, c]
                 if count_k > 0.0:
                     count_k /= self.weighted_n_left
                     entropy_left -= count_k * log(count_k)
 
-                count_k = sum_right[c]
+                count_k = self.sum_right[k, c]
                 if count_k > 0.0:
                     count_k /= self.weighted_n_right
                     entropy_right -= count_k * log(count_k)
-
-            sum_left += self.sum_stride
-            sum_right += self.sum_stride
 
         impurity_left[0] = entropy_left / self.n_outputs
         impurity_right[0] = entropy_right / self.n_outputs
@@ -603,68 +619,62 @@ cdef class Gini(ClassificationCriterion):
               = 1 - \sum_{k=0}^{K-1} count_k ** 2
     """
 
-    cdef double node_impurity(self) nogil:
-        """Evaluate the impurity of the current node, i.e. the impurity of
-        samples[start:end] using the Gini criterion."""
+    cdef float64_t node_impurity(self) noexcept nogil:
+        """Evaluate the impurity of the current node.
 
-
-        cdef SIZE_t* n_classes = self.n_classes
-        cdef double* sum_total = self.sum_total
-        cdef double gini = 0.0
-        cdef double sq_count
-        cdef double count_k
-        cdef SIZE_t k
-        cdef SIZE_t c
+        Evaluate the Gini criterion as impurity of the current node,
+        i.e. the impurity of sample_indices[start:end]. The smaller the impurity the
+        better.
+        """
+        cdef float64_t gini = 0.0
+        cdef float64_t sq_count
+        cdef float64_t count_k
+        cdef intp_t k
+        cdef intp_t c
 
         for k in range(self.n_outputs):
             sq_count = 0.0
 
-            for c in range(n_classes[k]):
-                count_k = sum_total[c]
+            for c in range(self.n_classes[k]):
+                count_k = self.sum_total[k, c]
                 sq_count += count_k * count_k
 
             gini += 1.0 - sq_count / (self.weighted_n_node_samples *
                                       self.weighted_n_node_samples)
 
-            sum_total += self.sum_stride
-
         return gini / self.n_outputs
 
-    cdef void children_impurity(self, double* impurity_left,
-                                double* impurity_right) nogil:
-        """Evaluate the impurity in children nodes
+    cdef void children_impurity(self, float64_t* impurity_left,
+                                float64_t* impurity_right) noexcept nogil:
+        """Evaluate the impurity in children nodes.
 
-        i.e. the impurity of the left child (samples[start:pos]) and the
-        impurity the right child (samples[pos:end]) using the Gini index.
+        i.e. the impurity of the left child (sample_indices[start:pos]) and the
+        impurity the right child (sample_indices[pos:end]) using the Gini index.
 
         Parameters
         ----------
-        impurity_left : double pointer
+        impurity_left : float64_t pointer
             The memory address to save the impurity of the left node to
-        impurity_right : double pointer
+        impurity_right : float64_t pointer
             The memory address to save the impurity of the right node to
         """
-
-        cdef SIZE_t* n_classes = self.n_classes
-        cdef double* sum_left = self.sum_left
-        cdef double* sum_right = self.sum_right
-        cdef double gini_left = 0.0
-        cdef double gini_right = 0.0
-        cdef double sq_count_left
-        cdef double sq_count_right
-        cdef double count_k
-        cdef SIZE_t k
-        cdef SIZE_t c
+        cdef float64_t gini_left = 0.0
+        cdef float64_t gini_right = 0.0
+        cdef float64_t sq_count_left
+        cdef float64_t sq_count_right
+        cdef float64_t count_k
+        cdef intp_t k
+        cdef intp_t c
 
         for k in range(self.n_outputs):
             sq_count_left = 0.0
             sq_count_right = 0.0
 
-            for c in range(n_classes[k]):
-                count_k = sum_left[c]
+            for c in range(self.n_classes[k]):
+                count_k = self.sum_left[k, c]
                 sq_count_left += count_k * count_k
 
-                count_k = sum_right[c]
+                count_k = self.sum_right[k, c]
                 sq_count_right += count_k * count_k
 
             gini_left += 1.0 - sq_count_left / (self.weighted_n_left *
@@ -673,11 +683,25 @@ cdef class Gini(ClassificationCriterion):
             gini_right += 1.0 - sq_count_right / (self.weighted_n_right *
                                                   self.weighted_n_right)
 
-            sum_left += self.sum_stride
-            sum_right += self.sum_stride
-
         impurity_left[0] = gini_left / self.n_outputs
         impurity_right[0] = gini_right / self.n_outputs
+
+
+cdef inline void _move_sums_regression(
+    RegressionCriterion criterion,
+    float64_t[::1] sum_1,
+    float64_t[::1] sum_2,
+    float64_t* weighted_n_1,
+    float64_t* weighted_n_2,
+) noexcept nogil:
+    """Distribute sum_total into sum_1 and sum_2."""
+    cdef intp_t n_bytes = criterion.n_outputs * sizeof(float64_t)
+
+    memset(&sum_1[0], 0, n_bytes)
+    # Assigning sum_2 = sum_total for all outputs.
+    memcpy(&sum_2[0], &criterion.sum_total[0], n_bytes)
+    weighted_n_1[0] = 0.0
+    weighted_n_2[0] = criterion.weighted_n_node_samples
 
 
 cdef class RegressionCriterion(Criterion):
@@ -692,22 +716,18 @@ cdef class RegressionCriterion(Criterion):
             = (\sum_i^n y_i ** 2) - n_samples * y_bar ** 2
     """
 
-    def __cinit__(self, SIZE_t n_outputs, SIZE_t n_samples):
+    def __cinit__(self, intp_t n_outputs, intp_t n_samples):
         """Initialize parameters for this criterion.
 
         Parameters
         ----------
-        n_outputs : SIZE_t
+        n_outputs : intp_t
             The number of targets to be predicted
 
-        n_samples : SIZE_t
+        n_samples : intp_t
             The total number of samples to fit on
         """
-
         # Default values
-        self.sample_weight = NULL
-
-        self.samples = NULL
         self.start = 0
         self.pos = 0
         self.end = 0
@@ -721,54 +741,50 @@ cdef class RegressionCriterion(Criterion):
 
         self.sq_sum_total = 0.0
 
-        # Allocate accumulators. Make sure they are NULL, not uninitialized,
-        # before an exception can be raised (which triggers __dealloc__).
-        self.sum_total = NULL
-        self.sum_left = NULL
-        self.sum_right = NULL
-
-        # Allocate memory for the accumulators
-        self.sum_total = <double*> calloc(n_outputs, sizeof(double))
-        self.sum_left = <double*> calloc(n_outputs, sizeof(double))
-        self.sum_right = <double*> calloc(n_outputs, sizeof(double))
-
-        if (self.sum_total == NULL or 
-                self.sum_left == NULL or
-                self.sum_right == NULL):
-            raise MemoryError()
+        self.sum_total = np.zeros(n_outputs, dtype=np.float64)
+        self.sum_left = np.zeros(n_outputs, dtype=np.float64)
+        self.sum_right = np.zeros(n_outputs, dtype=np.float64)
 
     def __reduce__(self):
         return (type(self), (self.n_outputs, self.n_samples), self.__getstate__())
 
-    cdef int init(self, const DOUBLE_t[:, ::1] y, DOUBLE_t* sample_weight,
-                  double weighted_n_samples, SIZE_t* samples, SIZE_t start,
-                  SIZE_t end) nogil except -1:
-        """Initialize the criterion at node samples[start:end] and
-           children samples[start:start] and samples[start:end]."""
+    cdef int init(
+        self,
+        const float64_t[:, ::1] y,
+        const float64_t[:] sample_weight,
+        float64_t weighted_n_samples,
+        const intp_t[:] sample_indices,
+        intp_t start,
+        intp_t end,
+    ) except -1 nogil:
+        """Initialize the criterion.
+
+        This initializes the criterion at node sample_indices[start:end] and children
+        sample_indices[start:start] and sample_indices[start:end].
+        """
         # Initialize fields
         self.y = y
         self.sample_weight = sample_weight
-        self.samples = samples
+        self.sample_indices = sample_indices
         self.start = start
         self.end = end
         self.n_node_samples = end - start
         self.weighted_n_samples = weighted_n_samples
         self.weighted_n_node_samples = 0.
 
-        cdef SIZE_t i
-        cdef SIZE_t p
-        cdef SIZE_t k
-        cdef DOUBLE_t y_ik
-        cdef DOUBLE_t w_y_ik
-        cdef DOUBLE_t w = 1.0
-
+        cdef intp_t i
+        cdef intp_t p
+        cdef intp_t k
+        cdef float64_t y_ik
+        cdef float64_t w_y_ik
+        cdef float64_t w = 1.0
         self.sq_sum_total = 0.0
-        memset(self.sum_total, 0, self.n_outputs * sizeof(double))
+        memset(&self.sum_total[0], 0, self.n_outputs * sizeof(float64_t))
 
         for p in range(start, end):
-            i = samples[p]
+            i = sample_indices[p]
 
-            if sample_weight != NULL:
+            if sample_weight is not None:
                 w = sample_weight[i]
 
             for k in range(self.n_outputs):
@@ -783,44 +799,38 @@ cdef class RegressionCriterion(Criterion):
         self.reset()
         return 0
 
-    cdef int reset(self) nogil except -1:
+    cdef int reset(self) except -1 nogil:
         """Reset the criterion at pos=start."""
-        cdef SIZE_t n_bytes = self.n_outputs * sizeof(double)
-        memset(self.sum_left, 0, n_bytes)
-        memcpy(self.sum_right, self.sum_total, n_bytes)
-
-        self.weighted_n_left = 0.0
-        self.weighted_n_right = self.weighted_n_node_samples
         self.pos = self.start
+        _move_sums_regression(
+            self,
+            self.sum_left,
+            self.sum_right,
+            &self.weighted_n_left,
+            &self.weighted_n_right,
+        )
         return 0
 
-    cdef int reverse_reset(self) nogil except -1:
+    cdef int reverse_reset(self) except -1 nogil:
         """Reset the criterion at pos=end."""
-        cdef SIZE_t n_bytes = self.n_outputs * sizeof(double)
-        memset(self.sum_right, 0, n_bytes)
-        memcpy(self.sum_left, self.sum_total, n_bytes)
-
-        self.weighted_n_right = 0.0
-        self.weighted_n_left = self.weighted_n_node_samples
         self.pos = self.end
+        _move_sums_regression(
+            self,
+            self.sum_right,
+            self.sum_left,
+            &self.weighted_n_right,
+            &self.weighted_n_left,
+        )
         return 0
 
-    cdef int update(self, SIZE_t new_pos) nogil except -1:
-        """Updated statistics by moving samples[pos:new_pos] to the left."""
+    cdef int update(self, intp_t new_pos) except -1 nogil:
+        """Updated statistics by moving sample_indices[pos:new_pos] to the left."""
+        cdef intp_t pos = self.pos
 
-        cdef double* sum_left = self.sum_left
-        cdef double* sum_right = self.sum_right
-        cdef double* sum_total = self.sum_total
-
-        cdef double* sample_weight = self.sample_weight
-        cdef SIZE_t* samples = self.samples
-
-        cdef SIZE_t pos = self.pos
-        cdef SIZE_t end = self.end
-        cdef SIZE_t i
-        cdef SIZE_t p
-        cdef SIZE_t k
-        cdef DOUBLE_t w = 1.0
+        cdef intp_t i
+        cdef intp_t p
+        cdef intp_t k
+        cdef float64_t w = 1.0
 
         # Update statistics up to new_pos
         #
@@ -829,54 +839,84 @@ cdef class RegressionCriterion(Criterion):
         # and that sum_total is known, we are going to update
         # sum_left from the direction that require the least amount
         # of computations, i.e. from pos to new_pos or from end to new_pos.
-
-        if (new_pos - pos) <= (end - new_pos):
+        if (new_pos - pos) <= (self.end - new_pos):
             for p in range(pos, new_pos):
-                i = samples[p]
+                i = self.sample_indices[p]
 
-                if sample_weight != NULL:
-                    w = sample_weight[i]
+                if self.sample_weight is not None:
+                    w = self.sample_weight[i]
 
                 for k in range(self.n_outputs):
-                    sum_left[k] += w * self.y[i, k]
+                    self.sum_left[k] += w * self.y[i, k]
 
                 self.weighted_n_left += w
         else:
             self.reverse_reset()
 
-            for p in range(end - 1, new_pos - 1, -1):
-                i = samples[p]
+            for p in range(self.end - 1, new_pos - 1, -1):
+                i = self.sample_indices[p]
 
-                if sample_weight != NULL:
-                    w = sample_weight[i]
+                if self.sample_weight is not None:
+                    w = self.sample_weight[i]
 
                 for k in range(self.n_outputs):
-                    sum_left[k] -= w * self.y[i, k]
+                    self.sum_left[k] -= w * self.y[i, k]
 
                 self.weighted_n_left -= w
 
         self.weighted_n_right = (self.weighted_n_node_samples -
                                  self.weighted_n_left)
         for k in range(self.n_outputs):
-            sum_right[k] = sum_total[k] - sum_left[k]
+            self.sum_right[k] = self.sum_total[k] - self.sum_left[k]
 
         self.pos = new_pos
         return 0
 
-    cdef double node_impurity(self) nogil:
+    cdef float64_t node_impurity(self) noexcept nogil:
         pass
 
-    cdef void children_impurity(self, double* impurity_left,
-                                double* impurity_right) nogil:
+    cdef void children_impurity(self, float64_t* impurity_left,
+                                float64_t* impurity_right) noexcept nogil:
         pass
 
-    cdef void node_value(self, double* dest) nogil:
-        """Compute the node value of samples[start:end] into dest."""
-
-        cdef SIZE_t k
+    cdef void node_value(self, float64_t* dest) noexcept nogil:
+        """Compute the node value of sample_indices[start:end] into dest."""
+        cdef intp_t k
 
         for k in range(self.n_outputs):
             dest[k] = self.sum_total[k] / self.weighted_n_node_samples
+
+    cdef inline void clip_node_value(self, float64_t* dest, float64_t lower_bound, float64_t upper_bound) noexcept nogil:
+        """Clip the value in dest between lower_bound and upper_bound for monotonic constraints."""
+        if dest[0] < lower_bound:
+            dest[0] = lower_bound
+        elif dest[0] > upper_bound:
+            dest[0] = upper_bound
+
+    cdef float64_t middle_value(self) noexcept nogil:
+        """Compute the middle value of a split for monotonicity constraints as the simple average
+        of the left and right children values.
+
+        Monotonicity constraints are only supported for single-output trees we can safely assume
+        n_outputs == 1.
+        """
+        return (
+            (self.sum_left[0] / (2 * self.weighted_n_left)) +
+            (self.sum_right[0] / (2 * self.weighted_n_right))
+        )
+
+    cdef bint check_monotonicity(
+        self,
+        cnp.int8_t monotonic_cst,
+        float64_t lower_bound,
+        float64_t upper_bound,
+    ) noexcept nogil:
+        """Check monotonicity constraint is satisfied at the current regression split"""
+        cdef:
+            float64_t value_left = self.sum_left[0] / self.weighted_n_left
+            float64_t value_right = self.sum_right[0] / self.weighted_n_right
+
+        return self._check_monotonicity(monotonic_cst, lower_bound, upper_bound, value_left, value_right)
 
 
 cdef class MSE(RegressionCriterion):
@@ -885,22 +925,24 @@ cdef class MSE(RegressionCriterion):
         MSE = var_left + var_right
     """
 
-    cdef double node_impurity(self) nogil:
-        """Evaluate the impurity of the current node, i.e. the impurity of
-           samples[start:end]."""
+    cdef float64_t node_impurity(self) noexcept nogil:
+        """Evaluate the impurity of the current node.
 
-        cdef double* sum_total = self.sum_total
-        cdef double impurity
-        cdef SIZE_t k
+        Evaluate the MSE criterion as impurity of the current node,
+        i.e. the impurity of sample_indices[start:end]. The smaller the impurity the
+        better.
+        """
+        cdef float64_t impurity
+        cdef intp_t k
 
         impurity = self.sq_sum_total / self.weighted_n_node_samples
         for k in range(self.n_outputs):
-            impurity -= (sum_total[k] / self.weighted_n_node_samples)**2.0
+            impurity -= (self.sum_total[k] / self.weighted_n_node_samples)**2.0
 
         return impurity / self.n_outputs
 
-    cdef double proxy_impurity_improvement(self) nogil:
-        """Compute a proxy of the impurity reduction
+    cdef float64_t proxy_impurity_improvement(self) noexcept nogil:
+        """Compute a proxy of the impurity reduction.
 
         This method is used to speed up the search for the best split.
         It is a proxy quantity such that the split that maximizes this value
@@ -909,49 +951,53 @@ cdef class MSE(RegressionCriterion):
 
         The absolute impurity improvement is only computed by the
         impurity_improvement method once the best split has been found.
+
+        The MSE proxy is derived from
+
+            sum_{i left}(y_i - y_pred_L)^2 + sum_{i right}(y_i - y_pred_R)^2
+            = sum(y_i^2) - n_L * mean_{i left}(y_i)^2 - n_R * mean_{i right}(y_i)^2
+
+        Neglecting constant terms, this gives:
+
+            - 1/n_L * sum_{i left}(y_i)^2 - 1/n_R * sum_{i right}(y_i)^2
         """
-
-        cdef double* sum_left = self.sum_left
-        cdef double* sum_right = self.sum_right
-
-        cdef SIZE_t k
-        cdef double proxy_impurity_left = 0.0
-        cdef double proxy_impurity_right = 0.0
+        cdef intp_t k
+        cdef float64_t proxy_impurity_left = 0.0
+        cdef float64_t proxy_impurity_right = 0.0
 
         for k in range(self.n_outputs):
-            proxy_impurity_left += sum_left[k] * sum_left[k]
-            proxy_impurity_right += sum_right[k] * sum_right[k]
+            proxy_impurity_left += self.sum_left[k] * self.sum_left[k]
+            proxy_impurity_right += self.sum_right[k] * self.sum_right[k]
 
         return (proxy_impurity_left / self.weighted_n_left +
                 proxy_impurity_right / self.weighted_n_right)
 
-    cdef void children_impurity(self, double* impurity_left,
-                                double* impurity_right) nogil:
-        """Evaluate the impurity in children nodes, i.e. the impurity of the
-           left child (samples[start:pos]) and the impurity the right child
-           (samples[pos:end])."""
+    cdef void children_impurity(self, float64_t* impurity_left,
+                                float64_t* impurity_right) noexcept nogil:
+        """Evaluate the impurity in children nodes.
 
-        cdef DOUBLE_t* sample_weight = self.sample_weight
-        cdef SIZE_t* samples = self.samples
-        cdef SIZE_t pos = self.pos
-        cdef SIZE_t start = self.start
+        i.e. the impurity of the left child (sample_indices[start:pos]) and the
+        impurity the right child (sample_indices[pos:end]).
+        """
+        cdef const float64_t[:] sample_weight = self.sample_weight
+        cdef const intp_t[:] sample_indices = self.sample_indices
+        cdef intp_t pos = self.pos
+        cdef intp_t start = self.start
 
-        cdef double* sum_left = self.sum_left
-        cdef double* sum_right = self.sum_right
-        cdef DOUBLE_t y_ik
+        cdef float64_t y_ik
 
-        cdef double sq_sum_left = 0.0
-        cdef double sq_sum_right
+        cdef float64_t sq_sum_left = 0.0
+        cdef float64_t sq_sum_right
 
-        cdef SIZE_t i
-        cdef SIZE_t p
-        cdef SIZE_t k
-        cdef DOUBLE_t w = 1.0
+        cdef intp_t i
+        cdef intp_t p
+        cdef intp_t k
+        cdef float64_t w = 1.0
 
         for p in range(start, pos):
-            i = samples[p]
+            i = sample_indices[p]
 
-            if sample_weight != NULL:
+            if sample_weight is not None:
                 w = sample_weight[i]
 
             for k in range(self.n_outputs):
@@ -964,41 +1010,261 @@ cdef class MSE(RegressionCriterion):
         impurity_right[0] = sq_sum_right / self.weighted_n_right
 
         for k in range(self.n_outputs):
-            impurity_left[0] -= (sum_left[k] / self.weighted_n_left) ** 2.0
-            impurity_right[0] -= (sum_right[k] / self.weighted_n_right) ** 2.0
+            impurity_left[0] -= (self.sum_left[k] / self.weighted_n_left) ** 2.0
+            impurity_right[0] -= (self.sum_right[k] / self.weighted_n_right) ** 2.0
 
         impurity_left[0] /= self.n_outputs
         impurity_right[0] /= self.n_outputs
 
-cdef class MAE(RegressionCriterion):
-    r"""Mean absolute error impurity criterion
 
-       MAE = (1 / n)*(\sum_i |y_i - f_i|), where y_i is the true
-       value and f_i is the predicted value."""
-    def __dealloc__(self):
-        """Destructor."""
-        free(self.node_medians)
+# Helper for MAE criterion:
 
-    cdef np.ndarray left_child
-    cdef np.ndarray right_child
-    cdef DOUBLE_t* node_medians
+cdef void precompute_absolute_errors(
+    const float64_t[::1] sorted_y,
+    const intp_t[::1] ranks,
+    const float64_t[:] sample_weight,
+    const intp_t[:] sample_indices,
+    WeightedFenwickTree tree,
+    intp_t start,
+    intp_t end,
+    float64_t[::1] abs_errors,
+    float64_t[::1] medians,
+) noexcept nogil:
+    """
+    Fill `abs_errors` and `medians`.
 
-    def __cinit__(self, SIZE_t n_outputs, SIZE_t n_samples):
+    If start < end:
+        Forward pass: Computes the "prefix" AEs/medians
+        i.e the AEs for each set of indices sample_indices[start:start + i]
+        with i in {1, ..., n}, where n = end - start.
+    Else:
+        Backward pass: Computes the "suffix" AEs/medians
+        i.e the AEs for each set of indices sample_indices[start - i:start]
+        with i in {1, ..., n}, where n = start - end.
+
+    Parameters
+    ----------
+    sorted_y : const float64_t[::1]
+        Target values, sorted
+    ranks : const intp_t[::1]
+        Ranks of the node-local values of y for points in sample_indices such that:
+        sorted_y[ranks[p]] == y[sample_indices[p]] for any p in [start, end) or
+        (end, start].
+    sample_weight : const float64_t[:]
+    sample_indices : const intp_t[:]
+        indices indicating which samples to use. Shape: (n_samples,)
+    tree : WeightedFenwickTree
+        pre-instantiated tree
+    start : intp_t
+        Start index in `sample_indices`
+    end : intp_t
+        End index (exclusive) in `sample_indices`
+    abs_errors : float64_t[::1]
+        array to store (increment) the computed absolute errors. Shape: (n,)
+        with n := end - start
+    medians : float64_t[::1]
+        array to store (overwrite) the computed medians. Shape: (n,)
+
+    Complexity: O(n log n)
+    """
+    cdef:
+        intp_t p, i, step, n, rank, median_rank, median_prev_rank
+        float64_t w = 1.
+        float64_t half_weight, median
+        float64_t w_right, w_left, wy_left, wy_right
+
+    if start < end:
+        step = 1
+        n = end - start
+    else:
+        n = start - end
+        step = -1
+
+    tree.reset(n)
+
+    p = start
+    # We iterate exactly `n` samples starting at absolute index `start` and
+    # move by `step` (+1 for the forward pass, -1 for the backward pass).
+    for _ in range(n):
+        i = sample_indices[p]
+        if sample_weight is not None:
+            w = sample_weight[i]
+        # Activate sample i at its rank:
+        rank = ranks[p]
+        tree.add(rank, sorted_y[rank], w)
+
+        # Weighted median by cumulative weight: the median is where the
+        # cumulative weight crosses half of the total weight.
+        half_weight = 0.5 * tree.total_w
+        # find the smallest activated rank with cumulative weight > half_weight
+        # while returning the prefix sums (`w_left` and `wy_left`)
+        # up to (and excluding) that index:
+        median_rank = tree.search(half_weight, &w_left, &wy_left, &median_prev_rank)
+
+        if median_rank != median_prev_rank:
+            # Exact match for half_weight fell between two consecutive ranks:
+            # cumulative weight up to `median_rank` excluded is exactly half_weight.
+            # In that case, `median_prev_rank` is the activated rank such that
+            # the cumulative weight up to it included is exactly half_weight.
+            # In this case we take the mid-point:
+            median = (sorted_y[median_prev_rank] + sorted_y[median_rank]) / 2
+        else:
+            # if there are no exact match for half_weight in the cumulative weights
+            # `median_rank == median_prev_rank` and the median is:
+            median = sorted_y[median_rank]
+
+        # Convert left prefix sums into right-hand complements.
+        w_right = tree.total_w - w_left
+        wy_right = tree.total_wy - wy_left
+
+        medians[p] = median
+        # Pinball-loss identity for absolute error at the current set:
+        #   sum_{y_i >= m} w_i (y_i - m) = wy_right - m * w_right
+        #   sum_{y_i <  m} w_i (m - y_i) = m * w_left  - wy_left
+        abs_errors[p] += (
+            (wy_right - median * w_right)
+            + (median * w_left - wy_left)
+        )
+        p += step
+
+
+cdef inline void compute_ranks(
+    float64_t* sorted_y,
+    intp_t* sorted_indices,
+    intp_t* ranks,
+    intp_t n
+) noexcept nogil:
+    """Sort `sorted_y` inplace and fill `ranks` accordingly"""
+    cdef intp_t i
+    for i in range(n):
+        sorted_indices[i] = i
+    sort(sorted_y, sorted_indices, n)
+    for i in range(n):
+        ranks[sorted_indices[i]] = i
+
+
+def _py_precompute_absolute_errors(
+    const float64_t[:, ::1] ys,
+    const float64_t[:] sample_weight,
+    const intp_t[:] sample_indices,
+    const intp_t start,
+    const intp_t end,
+    const intp_t n,
+):
+    """Used for testing precompute_absolute_errors."""
+    cdef:
+        intp_t p, i
+        intp_t s = start
+        intp_t e = end
+        WeightedFenwickTree tree = WeightedFenwickTree(n)
+        float64_t[::1] sorted_y = np.empty(n, dtype=np.float64)
+        intp_t[::1] sorted_indices = np.empty(n, dtype=np.intp)
+        intp_t[::1] ranks = np.empty(n, dtype=np.intp)
+        float64_t[::1] abs_errors = np.zeros(n, dtype=np.float64)
+        float64_t[::1] medians = np.empty(n, dtype=np.float64)
+
+    if start > end:
+        s = end + 1
+        e = start + 1
+    for p in range(s, e):
+        i = sample_indices[p]
+        sorted_y[p - s] = ys[i, 0]
+    compute_ranks(&sorted_y[0], &sorted_indices[0], &ranks[s], n)
+
+    precompute_absolute_errors(
+        sorted_y, ranks, sample_weight, sample_indices, tree,
+        start, end, abs_errors, medians
+    )
+    return np.asarray(abs_errors)[s:e], np.asarray(medians)[s:e]
+
+
+cdef class MAE(Criterion):
+    r"""Mean absolute error impurity criterion.
+
+    It has almost nothing in common with other regression criterions
+    so it doesn't inherit from RegressionCriterion.
+
+    MAE = (1 / n)*(\sum_i |y_i - p_i|), where y_i is the true
+    value and p_i is the predicted value.
+    In a decision tree, that prediction is the (weighted) median
+    of the targets in the node.
+
+    How this implementation works
+    -----------------------------
+    This class precomputes in `reset`, for the current node,
+    the absolute-error values and corresponding medians for all
+    potential split positions: every p in [start, end).
+
+    For that:
+    - We first compute the rank of each samples node-local sorted order of target values.
+      `self.ranks[p]` gives the rank of sample p.
+    - While iterating the segment of indices (p in [start, end)), we
+        * "activate" one sample at a time at its rank within a prefix sum tree,
+          the `WeightedFenwickTree`: `tree.add(rank, y, weight)`
+          The tree maintains cumulative sums of weights and of `weight * y`
+        * search for the half total weight in the tree:
+          `tree.search(current_total_weight / 2)`.
+          This allows us to retrieve/compute:
+            * the current weighted median value
+            * the absolute-error contribution via the standard pinball-loss identity:
+              AE = (wy_right - median * w_right) + (median * w_left - wy_left)
+    - We perform two such passes:
+        * one forward from `start` to `end - 1` to fill `left_abs_errors[p]` and
+          `left_medians[p]` for left children.
+        * one backward from `end - 1` down to `start` to fill
+          `right_abs_errors[p]` and `right_medians[p]` for right children.
+
+    Complexity: time complexity is O(n log n), indeed:
+    - computing ranks is based on sorting: O(n log n)
+    - add and search operations in the Fenwick tree are O(log n).
+      => the forward and backward passes are O(n log n).
+
+    How the other methods use the precomputations
+    --------------------------------------------
+    - `reset` performs the precomputation described above.
+      It also stores the node weighted median per output in
+      `node_medians` (prediction value of the node).
+
+    - `update(new_pos)` only updates `weighted_n_left` and `weighted_n_right`;
+      no recomputation of errors is needed.
+
+    - `children_impurity` reads the precomputed absolute errors at
+      `left_abs_errors[pos - 1]` and `right_abs_errors[pos]` and scales
+      them by the corresponding child weights and `n_outputs` to report the
+      impurity of each child.
+
+    - `middle_value` and `check_monotonicity` use the precomputed
+      `left_medians[pos - 1]` and `right_medians[pos]` to derive the
+      mid-point value and to validate monotonic constraints when enabled.
+
+    - Missing values are not supported for MAE: `init_missing` raises.
+
+    For a complementary, in-depth discussion of the mathematics and design
+    choices, see the external report:
+    https://github.com/cakedev0/fast-mae-split/blob/main/report.ipynb
+    """
+    cdef float64_t[::1] node_medians
+    cdef float64_t[::1] left_abs_errors
+    cdef float64_t[::1] right_abs_errors
+    cdef float64_t[::1] left_medians
+    cdef float64_t[::1] right_medians
+    cdef float64_t[::1] sorted_y
+    cdef intp_t [::1] sorted_indices
+    cdef intp_t[::1] ranks
+    cdef WeightedFenwickTree prefix_sum_tree
+
+    def __cinit__(self, intp_t n_outputs, intp_t n_samples):
         """Initialize parameters for this criterion.
 
         Parameters
         ----------
-        n_outputs : SIZE_t
+        n_outputs : intp_t
             The number of targets to be predicted
 
-        n_samples : SIZE_t
+        n_samples : intp_t
             The total number of samples to fit on
         """
-
         # Default values
-        self.sample_weight = NULL
-
-        self.samples = NULL
         self.start = 0
         self.pos = 0
         self.end = 0
@@ -1010,277 +1276,285 @@ cdef class MAE(RegressionCriterion):
         self.weighted_n_left = 0.0
         self.weighted_n_right = 0.0
 
-        # Allocate accumulators. Make sure they are NULL, not uninitialized,
-        # before an exception can be raised (which triggers __dealloc__).
-        self.node_medians = NULL
+        self.node_medians = np.zeros(n_outputs, dtype=np.float64)
 
-        # Allocate memory for the accumulators
-        safe_realloc(&self.node_medians, n_outputs)
+        # Note: this criterion has a  n_samples x 64 bytes memory footprint, which is
+        # fine as it's instantiated only once to build an entire tree
+        self.left_abs_errors = np.empty(n_samples, dtype=np.float64)
+        self.right_abs_errors = np.empty(n_samples, dtype=np.float64)
+        self.left_medians = np.empty(n_samples, dtype=np.float64)
+        self.right_medians = np.empty(n_samples, dtype=np.float64)
+        self.ranks = np.empty(n_samples, dtype=np.intp)
+        # Important: The arrays declared above are indexed with
+        # the absolute position `p` in `sample_indices` (not with a 0-based offset).
+        # The forward and backward passes in `reset` method ensure that
+        # for any current split position `pos` we can read:
+        # - left child precomputed values at `p = pos - 1`, and
+        # - right child precomputed values at `p = pos`.
 
-        self.left_child = np.empty(n_outputs, dtype='object')
-        self.right_child = np.empty(n_outputs, dtype='object')
-        # initialize WeightedMedianCalculators
-        for k in range(n_outputs):
-            self.left_child[k] = WeightedMedianCalculator(n_samples)
-            self.right_child[k] = WeightedMedianCalculator(n_samples)
+        self.prefix_sum_tree = WeightedFenwickTree(n_samples)
+        # used memory: 2 float64 arrays of size n_samples + 1
+        # we reuse a single `WeightedFenwickTree` instance to build prefix
+        # and suffix aggregates over the node samples.
 
-    cdef int init(self, const DOUBLE_t[:, ::1] y, DOUBLE_t* sample_weight,
-                  double weighted_n_samples, SIZE_t* samples, SIZE_t start,
-                  SIZE_t end) nogil except -1:
-        """Initialize the criterion at node samples[start:end] and
-           children samples[start:start] and samples[start:end]."""
+        # Work buffer arrays, used with 0-based offset:
+        self.sorted_y = np.empty(n_samples, dtype=np.float64)
+        self.sorted_indices = np.empty(n_samples, dtype=np.intp)
 
-        cdef SIZE_t i, p, k
-        cdef DOUBLE_t w = 1.0
+    cdef int init(
+        self,
+        const float64_t[:, ::1] y,
+        const float64_t[:] sample_weight,
+        float64_t weighted_n_samples,
+        const intp_t[:] sample_indices,
+        intp_t start,
+        intp_t end,
+    ) except -1 nogil:
+        """Initialize the criterion.
+
+        This initializes the criterion at node sample_indices[start:end] and children
+        sample_indices[start:start] and sample_indices[start:end].
+
+        WARNING: sample_indices will be modified in-place externally
+        after this method is called.
+        """
+        cdef:
+            intp_t i, p
+            intp_t n = end - start
+            float64_t w = 1.0
 
         # Initialize fields
         self.y = y
         self.sample_weight = sample_weight
-        self.samples = samples
+        self.sample_indices = sample_indices
         self.start = start
         self.end = end
-        self.n_node_samples = end - start
+        self.n_node_samples = n
         self.weighted_n_samples = weighted_n_samples
         self.weighted_n_node_samples = 0.
 
-        cdef void** left_child
-        cdef void** right_child
-
-        left_child = <void**> self.left_child.data
-        right_child = <void**> self.right_child.data
-
-        for k in range(self.n_outputs):
-            (<WeightedMedianCalculator> left_child[k]).reset()
-            (<WeightedMedianCalculator> right_child[k]).reset()
-
         for p in range(start, end):
-            i = samples[p]
-
-            if sample_weight != NULL:
+            i = sample_indices[p]
+            if sample_weight is not None:
                 w = sample_weight[i]
-
-            for k in range(self.n_outputs):
-                # push method ends up calling safe_realloc, hence `except -1`
-                # push all values to the right side,
-                # since pos = start initially anyway
-                (<WeightedMedianCalculator> right_child[k]).push(self.y[i, k], w)
-
             self.weighted_n_node_samples += w
-        # calculate the node medians
-        for k in range(self.n_outputs):
-            self.node_medians[k] = (<WeightedMedianCalculator> right_child[k]).get_median()
 
         # Reset to pos=start
         self.reset()
         return 0
 
-    cdef int reset(self) nogil except -1:
-        """Reset the criterion at pos=start
+    cdef int reset(self) except -1 nogil:
+        """Reset the criterion at pos=start.
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
+
+        Reset might be called after an external class has changed
+        inplace self.sample_indices[start:end], hence re-computing
+        the absolute errors is needed.
         """
-
-        cdef SIZE_t i, k
-        cdef DOUBLE_t value
-        cdef DOUBLE_t weight
-
-        cdef void** left_child = <void**> self.left_child.data
-        cdef void** right_child = <void**> self.right_child.data
+        cdef intp_t k, p, i
 
         self.weighted_n_left = 0.0
         self.weighted_n_right = self.weighted_n_node_samples
         self.pos = self.start
 
-        # reset the WeightedMedianCalculators, left should have no
-        # elements and right should have all elements.
+        n_bytes = self.n_node_samples * sizeof(float64_t)
+        memset(&self.left_abs_errors[self.start],  0, n_bytes)
+        memset(&self.right_abs_errors[self.start], 0, n_bytes)
+
+        # Multi-output handling:
+        # absolute errors are accumulated across outputs by
+        # incrementing `left_abs_errors` and `right_abs_errors` on each pass.
+        # The per-output medians arrays are overwritten at each output iteration
+        # as they are only used for monotonicity checks when `n_outputs == 1`.
 
         for k in range(self.n_outputs):
-            # if left has no elements, it's already reset
-            for i in range((<WeightedMedianCalculator> left_child[k]).size()):
-                # remove everything from left and put it into right
-                (<WeightedMedianCalculator> left_child[k]).pop(&value,
-                                                               &weight)
-                # push method ends up calling safe_realloc, hence `except -1`
-                (<WeightedMedianCalculator> right_child[k]).push(value,
-                                                                 weight)
+
+            # 1) Node-local ordering:
+            # for each output k, the values `y[sample_indices[p], k]` for p
+            # in [start, end) are copied into self.sorted_y[0:n_node_samples]`
+            # and ranked with `compute_ranks`.
+            # The resulting `self.ranks[p]` gives the rank of sample p in the
+            # node-local sorted order.
+            for p in range(self.start, self.end):
+                i = self.sample_indices[p]
+                self.sorted_y[p - self.start] = self.y[i, k]
+
+            compute_ranks(
+                &self.sorted_y[0],
+                &self.sorted_indices[0],
+                &self.ranks[self.start],
+                self.n_node_samples,
+            )
+
+            # 2) Forward pass
+            # from `start` to `end - 1` to fill `left_abs_errors[p]` and
+            # `left_medians[p]` for left children.
+            precompute_absolute_errors(
+                self.sorted_y, self.ranks, self.sample_weight, self.sample_indices,
+                self.prefix_sum_tree, self.start, self.end,
+                # left_abs_errors is incremented, left_medians is overwritten
+                self.left_abs_errors, self.left_medians
+            )
+            # 3) Backward pass
+            # from `end - 1` down to `start` to fill `right_abs_errors[p]`
+            # and `right_medians[p]` for right children.
+            precompute_absolute_errors(
+                self.sorted_y, self.ranks, self.sample_weight, self.sample_indices,
+                self.prefix_sum_tree, self.end - 1, self.start - 1,
+                # right_abs_errors is incremented, right_medians is overwritten
+                self.right_abs_errors, self.right_medians
+            )
+
+            # Store the median for the current node: when p == self.start all the
+            # node's data points are sent to the right child, so the current node
+            # median value and the right child median value would be equal.
+            self.node_medians[k] = self.right_medians[self.start]
+
         return 0
 
-    cdef int reverse_reset(self) nogil except -1:
-        """Reset the criterion at pos=end
+    cdef int reverse_reset(self) except -1 nogil:
+        """For this class, this method is never called."""
+        raise NotImplementedError("This method is not implemented for this subclass")
+
+    cdef int update(self, intp_t new_pos) except -1 nogil:
+        """Updated statistics by moving sample_indices[pos:new_pos] to the left.
+        new_pos is guaranteed to be greater than pos.
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
+
+        Time complexity: O(new_pos - pos) (which usually is O(1), at least for dense data).
         """
-
-        self.weighted_n_right = 0.0
-        self.weighted_n_left = self.weighted_n_node_samples
-        self.pos = self.end
-
-        cdef DOUBLE_t value
-        cdef DOUBLE_t weight
-        cdef void** left_child = <void**> self.left_child.data
-        cdef void** right_child = <void**> self.right_child.data
-
-        # reverse reset the WeightedMedianCalculators, right should have no
-        # elements and left should have all elements.
-        for k in range(self.n_outputs):
-            # if right has no elements, it's already reset
-            for i in range((<WeightedMedianCalculator> right_child[k]).size()):
-                # remove everything from right and put it into left
-                (<WeightedMedianCalculator> right_child[k]).pop(&value,
-                                                                &weight)
-                # push method ends up calling safe_realloc, hence `except -1`
-                (<WeightedMedianCalculator> left_child[k]).push(value,
-                                                                weight)
-        return 0
-
-    cdef int update(self, SIZE_t new_pos) nogil except -1:
-        """Updated statistics by moving samples[pos:new_pos] to the left
-
-        Returns -1 in case of failure to allocate memory (and raise MemoryError)
-        or 0 otherwise.
-        """
-
-        cdef DOUBLE_t* sample_weight = self.sample_weight
-        cdef SIZE_t* samples = self.samples
-
-        cdef void** left_child = <void**> self.left_child.data
-        cdef void** right_child = <void**> self.right_child.data
-
-        cdef SIZE_t pos = self.pos
-        cdef SIZE_t end = self.end
-        cdef SIZE_t i, p, k
-        cdef DOUBLE_t w = 1.0
+        cdef intp_t pos = self.pos
+        cdef intp_t i, p
+        cdef float64_t w = 1.0
 
         # Update statistics up to new_pos
-        #
-        # We are going to update right_child and left_child
-        # from the direction that require the least amount of
-        # computations, i.e. from pos to new_pos or from end to new_pos.
-
-        if (new_pos - pos) <= (end - new_pos):
-            for p in range(pos, new_pos):
-                i = samples[p]
-
-                if sample_weight != NULL:
-                    w = sample_weight[i]
-
-                for k in range(self.n_outputs):
-                    # remove y_ik and its weight w from right and add to left
-                    (<WeightedMedianCalculator> right_child[k]).remove(self.y[i, k], w)
-                    # push method ends up calling safe_realloc, hence except -1
-                    (<WeightedMedianCalculator> left_child[k]).push(self.y[i, k], w)
-
-                self.weighted_n_left += w
-        else:
-            self.reverse_reset()
-
-            for p in range(end - 1, new_pos - 1, -1):
-                i = samples[p]
-
-                if sample_weight != NULL:
-                    w = sample_weight[i]
-
-                for k in range(self.n_outputs):
-                    # remove y_ik and its weight w from left and add to right
-                    (<WeightedMedianCalculator> left_child[k]).remove(self.y[i, k], w)
-                    (<WeightedMedianCalculator> right_child[k]).push(self.y[i, k], w)
-
-                self.weighted_n_left -= w
+        for p in range(pos, new_pos):
+            i = self.sample_indices[p]
+            if self.sample_weight is not None:
+                w = self.sample_weight[i]
+            self.weighted_n_left += w
 
         self.weighted_n_right = (self.weighted_n_node_samples -
                                  self.weighted_n_left)
         self.pos = new_pos
         return 0
 
-    cdef void node_value(self, double* dest) nogil:
-        """Computes the node value of samples[start:end] into dest."""
-
-        cdef SIZE_t k
+    cdef void node_value(self, float64_t* dest) noexcept nogil:
+        """Computes the node value of sample_indices[start:end] into dest."""
+        cdef intp_t k
         for k in range(self.n_outputs):
-            dest[k] = <double> self.node_medians[k]
+            dest[k] = <float64_t> self.node_medians[k]
 
-    cdef double node_impurity(self) nogil:
-        """Evaluate the impurity of the current node, i.e. the impurity of
-           samples[start:end]"""
+    cdef inline float64_t middle_value(self) noexcept nogil:
+        """Compute the middle value of a split for monotonicity constraints as the simple average
+        of the left and right children values.
 
-        cdef DOUBLE_t* sample_weight = self.sample_weight
-        cdef SIZE_t* samples = self.samples
-        cdef SIZE_t i, p, k
-        cdef DOUBLE_t w = 1.0
-        cdef DOUBLE_t impurity = 0.0
-
-        for k in range(self.n_outputs):
-            for p in range(self.start, self.end):
-                i = samples[p]
-
-                if sample_weight != NULL:
-                    w = sample_weight[i]
-
-                impurity += fabs(self.y[i, k] - self.node_medians[k]) * w
-
-        return impurity / (self.weighted_n_node_samples * self.n_outputs)
-
-    cdef void children_impurity(self, double* p_impurity_left,
-                                double* p_impurity_right) nogil:
-        """Evaluate the impurity in children nodes, i.e. the impurity of the
-           left child (samples[start:pos]) and the impurity the right child
-           (samples[pos:end]).
+        Monotonicity constraints are only supported for single-output trees we can safely assume
+        n_outputs == 1.
         """
+        return (
+            self.left_medians[self.pos - 1]
+            + self.right_medians[self.pos]
+        ) / 2
 
-        cdef DOUBLE_t* sample_weight = self.sample_weight
-        cdef SIZE_t* samples = self.samples
+    cdef inline bint check_monotonicity(
+        self,
+        cnp.int8_t monotonic_cst,
+        float64_t lower_bound,
+        float64_t upper_bound,
+    ) noexcept nogil:
+        """Check monotonicity constraint is satisfied at the current regression split"""
+        return self._check_monotonicity(
+            monotonic_cst, lower_bound, upper_bound,
+            self.left_medians[self.pos - 1], self.right_medians[self.pos])
 
-        cdef SIZE_t start = self.start
-        cdef SIZE_t pos = self.pos
-        cdef SIZE_t end = self.end
+    cdef float64_t node_impurity(self) noexcept nogil:
+        """Evaluate the impurity of the current node.
 
-        cdef SIZE_t i, p, k
-        cdef DOUBLE_t median
-        cdef DOUBLE_t w = 1.0
-        cdef DOUBLE_t impurity_left = 0.0
-        cdef DOUBLE_t impurity_right = 0.0
+        Evaluate the MAE criterion as impurity of the current node,
+        i.e. the impurity of sample_indices[start:end]. The smaller the impurity the
+        better.
 
-        cdef void** left_child = <void**> self.left_child.data
-        cdef void** right_child = <void**> self.right_child.data
+        Time complexity: O(1) (precomputed in `.reset()`)
+        """
+        return (
+            self.right_abs_errors[0]
+            / (self.weighted_n_node_samples * self.n_outputs)
+        )
 
-        for k in range(self.n_outputs):
-            median = (<WeightedMedianCalculator> left_child[k]).get_median()
-            for p in range(start, pos):
-                i = samples[p]
+    cdef void children_impurity(self, float64_t* p_impurity_left,
+                                float64_t* p_impurity_right) noexcept nogil:
+        """Evaluate the impurity in children nodes.
 
-                if sample_weight != NULL:
-                    w = sample_weight[i]
+        i.e. the impurity of the left child (sample_indices[start:pos]) and the
+        impurity the right child (sample_indices[pos:end]).
 
-                impurity_left += fabs(self.y[i, k] - median) * w
-        p_impurity_left[0] = impurity_left / (self.weighted_n_left * 
+        Time complexity: O(1) (precomputed in `.reset()`)
+        """
+        cdef float64_t impurity_left = 0.0
+        cdef float64_t impurity_right = 0.0
+
+        # if pos == start, left child is empty, hence impurity is 0
+        if self.pos > self.start:
+            impurity_left += self.left_abs_errors[self.pos - 1]
+        p_impurity_left[0] = impurity_left / (self.weighted_n_left *
                                               self.n_outputs)
 
-        for k in range(self.n_outputs):
-            median = (<WeightedMedianCalculator> right_child[k]).get_median()
-            for p in range(pos, end):
-                i = samples[p]
-
-                if sample_weight != NULL:
-                    w = sample_weight[i]
-
-                impurity_right += fabs(self.y[i, k] - median) * w
-        p_impurity_right[0] = impurity_right / (self.weighted_n_right * 
+        # if pos == end, right child is empty, hence impurity is 0
+        if self.pos < self.end:
+            impurity_right += self.right_abs_errors[self.pos]
+        p_impurity_right[0] = impurity_right / (self.weighted_n_right *
                                                 self.n_outputs)
 
+    # those 2 methods are copied from the RegressionCriterion abstract class:
+    def __reduce__(self):
+        return (type(self), (self.n_outputs, self.n_samples), self.__getstate__())
 
-cdef class FriedmanMSE(MSE):
-    """Mean squared error impurity criterion with improvement score by Friedman
+    cdef inline void clip_node_value(self, float64_t* dest, float64_t lower_bound, float64_t upper_bound) noexcept nogil:
+        """Clip the value in dest between lower_bound and upper_bound for monotonic constraints."""
+        if dest[0] < lower_bound:
+            dest[0] = lower_bound
+        elif dest[0] > upper_bound:
+            dest[0] = upper_bound
 
-    Uses the formula (35) in Friedman's original Gradient Boosting paper:
 
-        diff = mean_left - mean_right
-        improvement = n_left * n_right * diff^2 / (n_left + n_right)
+cdef class Poisson(RegressionCriterion):
+    """Half Poisson deviance as impurity criterion.
+
+    Poisson deviance = 2/n * sum(y_true * log(y_true/y_pred) + y_pred - y_true)
+
+    Note that the deviance is >= 0, and since we have `y_pred = mean(y_true)`
+    at the leaves, one always has `sum(y_pred - y_true) = 0`. It remains the
+    implemented impurity (factor 2 is skipped):
+        1/n * sum(y_true * log(y_true/y_pred)
     """
+    # FIXME in 1.0:
+    # min_impurity_split with default = 0 forces us to use a non-negative
+    # impurity like the Poisson deviance. Without this restriction, one could
+    # throw away the 'constant' term sum(y_true * log(y_true)) and just use
+    # Poisson loss = - 1/n * sum(y_true * log(y_pred))
+    #              = - 1/n * sum(y_true * log(mean(y_true))
+    #              = - mean(y_true) * log(mean(y_true))
+    # With this trick (used in proxy_impurity_improvement()), as for MSE,
+    # children_impurity would only need to go over left xor right split, not
+    # both. This could be faster.
 
-    cdef double proxy_impurity_improvement(self) nogil:
-        """Compute a proxy of the impurity reduction
+    cdef float64_t node_impurity(self) noexcept nogil:
+        """Evaluate the impurity of the current node.
+
+        Evaluate the Poisson criterion as impurity of the current node,
+        i.e. the impurity of sample_indices[start:end]. The smaller the impurity the
+        better.
+        """
+        return self.poisson_loss(self.start, self.end, self.sum_total,
+                                 self.weighted_n_node_samples)
+
+    cdef float64_t proxy_impurity_improvement(self) noexcept nogil:
+        """Compute a proxy of the impurity reduction.
 
         This method is used to speed up the search for the best split.
         It is a proxy quantity such that the split that maximizes this value
@@ -1289,44 +1563,94 @@ cdef class FriedmanMSE(MSE):
 
         The absolute impurity improvement is only computed by the
         impurity_improvement method once the best split has been found.
+
+        The Poisson proxy is derived from:
+
+              sum_{i left }(y_i * log(y_i / y_pred_L))
+            + sum_{i right}(y_i * log(y_i / y_pred_R))
+            = sum(y_i * log(y_i) - n_L * mean_{i left}(y_i) * log(mean_{i left}(y_i))
+                                 - n_R * mean_{i right}(y_i) * log(mean_{i right}(y_i))
+
+        Neglecting constant terms, this gives
+
+            - sum{i left }(y_i) * log(mean{i left}(y_i))
+            - sum{i right}(y_i) * log(mean{i right}(y_i))
         """
-
-        cdef double* sum_left = self.sum_left
-        cdef double* sum_right = self.sum_right
-
-        cdef double total_sum_left = 0.0
-        cdef double total_sum_right = 0.0
-
-        cdef SIZE_t k
-        cdef double diff = 0.0
+        cdef intp_t k
+        cdef float64_t proxy_impurity_left = 0.0
+        cdef float64_t proxy_impurity_right = 0.0
+        cdef float64_t y_mean_left = 0.
+        cdef float64_t y_mean_right = 0.
 
         for k in range(self.n_outputs):
-            total_sum_left += sum_left[k]
-            total_sum_right += sum_right[k]
+            if (self.sum_left[k] <= EPSILON) or (self.sum_right[k] <= EPSILON):
+                # Poisson loss does not allow non-positive predictions. We
+                # therefore forbid splits that have child nodes with
+                # sum(y_i) <= 0.
+                # Since sum_right = sum_total - sum_left, it can lead to
+                # floating point rounding error and will not give zero. Thus,
+                # we relax the above comparison to sum(y_i) <= EPSILON.
+                return -INFINITY
+            else:
+                y_mean_left = self.sum_left[k] / self.weighted_n_left
+                y_mean_right = self.sum_right[k] / self.weighted_n_right
+                proxy_impurity_left -= self.sum_left[k] * log(y_mean_left)
+                proxy_impurity_right -= self.sum_right[k] * log(y_mean_right)
 
-        diff = (self.weighted_n_right * total_sum_left -
-                self.weighted_n_left * total_sum_right)
+        return - proxy_impurity_left - proxy_impurity_right
 
-        return diff * diff / (self.weighted_n_left * self.weighted_n_right)
+    cdef void children_impurity(self, float64_t* impurity_left,
+                                float64_t* impurity_right) noexcept nogil:
+        """Evaluate the impurity in children nodes.
 
-    cdef double impurity_improvement(self, double impurity_parent, double
-                                     impurity_left, double impurity_right) nogil:
-        # Note: none of the arguments are used here
-        cdef double* sum_left = self.sum_left
-        cdef double* sum_right = self.sum_right
+        i.e. the impurity of the left child (sample_indices[start:pos]) and the
+        impurity of the right child (sample_indices[pos:end]) for Poisson.
+        """
+        cdef intp_t start = self.start
+        cdef intp_t pos = self.pos
+        cdef intp_t end = self.end
 
-        cdef double total_sum_left = 0.0
-        cdef double total_sum_right = 0.0
+        impurity_left[0] = self.poisson_loss(start, pos, self.sum_left,
+                                             self.weighted_n_left)
 
-        cdef SIZE_t k
-        cdef double diff = 0.0
+        impurity_right[0] = self.poisson_loss(pos, end, self.sum_right,
+                                              self.weighted_n_right)
 
-        for k in range(self.n_outputs):
-            total_sum_left += sum_left[k]
-            total_sum_right += sum_right[k]
+    cdef inline float64_t poisson_loss(
+        self,
+        intp_t start,
+        intp_t end,
+        const float64_t[::1] y_sum,
+        float64_t weight_sum
+    ) noexcept nogil:
+        """Helper function to compute Poisson loss (~deviance) of a given node.
+        """
+        cdef const float64_t[:, ::1] y = self.y
+        cdef const float64_t[:] sample_weight = self.sample_weight
+        cdef const intp_t[:] sample_indices = self.sample_indices
 
-        diff = (self.weighted_n_right * total_sum_left -
-                self.weighted_n_left * total_sum_right) / self.n_outputs
+        cdef float64_t y_mean = 0.
+        cdef float64_t poisson_loss = 0.
+        cdef float64_t w = 1.0
+        cdef intp_t i, k, p
+        cdef intp_t n_outputs = self.n_outputs
 
-        return (diff * diff / (self.weighted_n_left * self.weighted_n_right *
-                               self.weighted_n_node_samples))
+        for k in range(n_outputs):
+            if y_sum[k] <= EPSILON:
+                # y_sum could be computed from the subtraction
+                # sum_right = sum_total - sum_left leading to a potential
+                # floating point rounding error.
+                # Thus, we relax the comparison y_sum <= 0 to
+                # y_sum <= EPSILON.
+                return INFINITY
+
+            y_mean = y_sum[k] / weight_sum
+
+            for p in range(start, end):
+                i = sample_indices[p]
+
+                if sample_weight is not None:
+                    w = sample_weight[i]
+
+                poisson_loss += w * xlogy(y[i, k], y[i, k] / y_mean)
+        return poisson_loss / (weight_sum * n_outputs)

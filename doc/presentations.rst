@@ -1,15 +1,52 @@
+.. _external_resources:
+
 ===========================================
 External Resources, Videos and Talks
 ===========================================
 
-For written tutorials, see the :ref:`Tutorial section <tutorial_menu>` of
-the documentation.
+The scikit-learn MOOC
+=====================
+
+If you are new to scikit-learn, or looking to strengthen your understanding,
+we highly recommend the **scikit-learn MOOC (Massive Open Online Course)**.
+
+The MOOC, created and maintained by some of the scikit-learn core-contributors,
+is **free of charge** and is designed to help learners of all levels master
+machine learning using scikit-learn. It covers topics
+from the fundamental machine learning concepts to more advanced areas like
+predictive modeling pipelines and model evaluation.
+
+The course materials are available on the
+`scikit-learn MOOC website <https://inria.github.io/scikit-learn-mooc/>`_.
+
+This course is also hosted on the `FUN platform
+<https://www.fun-mooc.fr/en/courses/machine-learning-python-scikit-learn/>`_,
+which additionally makes the content interactive without the need to install
+anything, and gives access to a discussion forum.
+
+The videos are available on the
+`Inria Learning Lab channel <https://www.youtube.com/@inrialearninglab>`_
+in a
+`playlist <https://www.youtube.com/playlist?list=PL2okA_2qDJ-m44KooOI7x8tu85wr4ez4f>`__.
+
+.. _videos:
+
+Videos
+======
+
+- The `scikit-learn YouTube channel <https://www.youtube.com/@scikit-learn>`_
+  features a
+  `playlist <https://www.youtube.com/@scikit-learn/playlists>`__
+  of videos
+  showcasing talks by maintainers
+  and community members.
 
 New to Scientific Python?
 ==========================
+
 For those that are still new to the scientific Python ecosystem, we highly
 recommend the `Python Scientific Lecture Notes
-<https://www.scipy-lectures.org/>`_. This will help you find your footing a
+<https://scipy-lectures.org>`_. This will help you find your footing a
 bit and will definitely improve your scikit-learn experience.  A basic
 understanding of NumPy arrays is recommended to make the most of scikit-learn.
 
@@ -21,58 +58,3 @@ specific subject areas:
 
 - `Machine Learning for NeuroImaging in Python <https://nilearn.github.io/>`_
 - `Machine Learning for Astronomical Data Analysis <https://github.com/astroML/sklearn_tutorial>`_
-
-.. _videos:
-
-Videos
-======
-
-- An introduction to scikit-learn `Part
-  I <https://conference.scipy.org/scipy2013/tutorial_detail.php?id=107>`_ and
-  `Part II <https://conference.scipy.org/scipy2013/tutorial_detail.php?id=111>`_ at Scipy 2013
-  by `Gael Varoquaux`_, `Jake Vanderplas`_  and `Olivier Grisel`_. Notebooks on
-  `github <https://github.com/jakevdp/sklearn_scipy2013>`_.
-
-- `Introduction to scikit-learn
-  <http://videolectures.net/icml2010_varaquaux_scik/>`_ by `Gael Varoquaux`_ at
-  ICML 2010
-
-    A three minute video from a very early stage of scikit-learn, explaining the
-    basic idea and approach we are following.
-
-- `Introduction to statistical learning with scikit-learn <https://archive.org/search.php?query=scikit-learn>`_
-  by `Gael Varoquaux`_ at SciPy 2011
-
-    An extensive tutorial, consisting of four sessions of one hour.
-    The tutorial covers the basics of machine learning,
-    many algorithms and how to apply them using scikit-learn. The
-    material corresponding is now in the scikit-learn documentation
-    section :ref:`stat_learn_tut_index`.
-
-- `Statistical Learning for Text Classification with scikit-learn and NLTK
-  <https://pyvideo.org/video/417/pycon-2011--statistical-machine-learning-for-text>`_
-  (and `slides <https://www.slideshare.net/ogrisel/statistical-machine-learning-for-text-classification-with-scikitlearn-and-nltk>`_)
-  by `Olivier Grisel`_ at PyCon 2011
-
-    Thirty minute introduction to text classification. Explains how to
-    use NLTK and scikit-learn to solve real-world text classification
-    tasks and compares against cloud-based solutions.
-
-- `Introduction to Interactive Predictive Analytics in Python with scikit-learn <https://www.youtube.com/watch?v=Zd5dfooZWG4>`_
-  by `Olivier Grisel`_ at PyCon 2012
-
-    3-hours long introduction to prediction tasks using scikit-learn.
-
-- `scikit-learn - Machine Learning in Python <https://newcircle.com/s/post/1152/scikit-learn_machine_learning_in_python>`_
-  by `Jake Vanderplas`_ at the 2012 PyData workshop at Google
-
-    Interactive demonstration of some scikit-learn features. 75 minutes.
-
-- `scikit-learn tutorial <https://www.youtube.com/watch?v=cHZONQ2-x7I>`_ by `Jake Vanderplas`_ at PyData NYC 2012
-
-    Presentation using the online tutorial, 45 minutes.
-
-
-.. _Gael Varoquaux: http://gael-varoquaux.info
-.. _Jake Vanderplas: https://staff.washington.edu/jakevdp
-.. _Olivier Grisel: https://twitter.com/ogrisel
