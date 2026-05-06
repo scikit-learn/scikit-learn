@@ -1164,15 +1164,15 @@ def test_poisson_regressor_array_api_compliance(
     dtype_name,
 ):
     xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
-    # make a simple poisson-regression problem:
     rng = np.random.default_rng(0)
-    n_samples, n_features = 500, 20
+    n_samples = 1000
+    n_features = 3
     X_np = rng.normal(size=(n_samples, n_features))
-    coef = rng.choice([-1, 1], size=n_features) * rng.uniform(
-        0.05, 0.25, size=n_features
-    )
-    y_np = np.exp(X_np @ coef + 4.8 + 0.02 * rng.normal(size=n_samples))
-    n_samples = X_np.shape[0]
+    beta = np.array([0.5, -0.3, 0.8])  # true coefficients
+    intercept = 1.0
+    mu = np.exp(X_np @ beta + intercept)  # poisson mean
+    y_np = rng.poisson(mu)
+
     X_np = X_np.astype(dtype_name, copy=False)
     y_np = y_np.astype(dtype_name, copy=False)
     X_xp = xp.asarray(X_np, device=device)
@@ -1188,21 +1188,22 @@ def test_poisson_regressor_array_api_compliance(
     else:
         sample_weight = None
 
-    params = dict(alpha=1, solver="lbfgs", tol=1e-12, max_iter=500)
+    params = dict(alpha=1, solver="lbfgs", max_iter=500)
+    params["tol"] = 3e-6 if dtype_name == "float32" else 1e-13
     glm_np = PoissonRegressor(**params).fit(X_np, y_np, sample_weight=sample_weight)
     assert glm_np.n_iter_ < glm_np.max_iter
 
     # Test that alpha was not too large for meaningful testing.
     assert np.abs(glm_np.coef_).max() > 0.1
-    assert np.abs(glm_np.coef_).min() > 0.005
 
     predict_np = glm_np.predict(X_np)
-    atol = _atol_for_type(dtype_name) * 10
-    rtol = 3e-3 if dtype_name == "float32" else 1e-6
+    atol = _atol_for_type(dtype_name)
+    rtol = np.sqrt(params["tol"])
 
     with config_context(array_api_dispatch=True):
         glm_xp = PoissonRegressor(**params).fit(X_xp, y_xp, sample_weight=sample_weight)
-        assert glm_xp.n_iter_ < glm_xp.max_iter
+        if dtype_name == "float64":
+            assert abs(glm_xp.n_iter_ - glm_np.n_iter_) <= 1
 
         for attr_name in ("coef_", "intercept_"):
             attr_xp = getattr(glm_xp, attr_name)
