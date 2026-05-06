@@ -252,15 +252,24 @@ estimators that support it, and 'brute' is used for the rest.
 
 .. note::
 
-    While both methods should be close in general, they might differ in some
-    specific settings. The `'brute'` method assumes the existence of the
-    data points :math:`(x_S, x_C^{(i)})`. When the features are correlated,
-    such artificial samples may have a very low probability mass. The `'brute'`
-    and `'recursion'` methods will likely disagree regarding the value of the
-    partial dependence, because they will treat these unlikely
-    samples differently. Remember, however, that the primary assumption for
-    interpreting PDPs is that the features should be independent.
+    The `'brute'` and `'recursion'` methods compute conceptually different
+    quantities when features are correlated:
 
+    - `'brute'` computes the **interventional** partial dependence,
+      :math:`E_{X_C}[f(x_S, X_C)]`, by marginalizing over the empirical
+      distribution of the complement features :math:`X_C` independently of
+      :math:`X_S`. This matches the original PDP definition.
+
+    - `'recursion'` computes the **conditional** partial dependence,
+      :math:`E[f(x_S, X_C) | X_S = x_s]`, by exploiting the tree structure.
+      When features are correlated, this conditions on :math:`X_S = x_s`
+      and therefore produces different results than `'brute'`.
+
+    When features are independent, both methods give the same result. When
+    features are correlated, `'brute'` is more faithful to the original PDP
+    definition, while `'recursion'` is faster but reflects conditional rather
+    than marginal effects. The primary assumption for interpreting PDPs is
+    that the features should be independent.
 
 .. rubric:: Examples
 
