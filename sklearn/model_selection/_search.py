@@ -808,9 +808,9 @@ class BaseSearchCV(
                   the `cv_results_` attribute. Values should be lists of
                   length `n_candidates`
 
-            callback_ctx : `CallbackContext` object
-                CallbackContext object for callback propagation. Only needed for
-                `Halving*SearchCV`, ignored otherwise.
+        root_callback_ctx : `CallbackContext` object
+            CallbackContext object for callback propagation. Only needed for
+            `Halving*SearchCV`, ignored otherwise.
 
             It returns a dict of all results so far, formatted like
             ``cv_results_``.
@@ -1001,8 +1001,21 @@ class BaseSearchCV(
         cv_orig = check_cv(self.cv, y, classifier=is_classifier(estimator))
         n_splits = cv_orig.get_n_splits(X, y, **routed_params.splitter.split)
 
-        callback_ctx = self._init_callback_context(
-            max_subtasks=1 + (self.refit is not False),  # refit can be str or callable
+        # avoid circular import
+        from sklearn.model_selection import HalvingGridSearchCV, HalvingRandomSearchCV
+
+        _single_shot_run_search = [
+            GridSearchCV._run_search,
+            RandomizedSearchCV._run_search,
+            HalvingGridSearchCV._run_search,
+            HalvingRandomSearchCV._run_search,
+        ]
+        if type(self)._run_search not in _single_shot_run_search:
+            max_subtasks = None  # custom search class that overrides _run_search
+        else:
+            max_subtasks = 1 + (self.refit is not False)  # refit can be str or callable
+        root_callback_ctx = self._init_callback_context(
+            max_subtasks=max_subtasks
         ).call_on_fit_task_begin(estimator=self, X=X, y=y)
 
         base_estimator = clone(self.estimator)
@@ -1027,11 +1040,17 @@ class BaseSearchCV(
             all_more_results = defaultdict(list)
 
             def evaluate_candidates(
-                candidate_params, cv=None, more_results=None, callback_ctx=None
+                candidate_params, cv=None, more_results=None, halving_callback_ctx=None
             ):
                 cv = cv or cv_orig
                 candidate_params = list(candidate_params)
                 n_candidates = len(candidate_params)
+
+                callback_ctx = (
+                    halving_callback_ctx
+                    if halving_callback_ctx is not None
+                    else root_callback_ctx
+                )
 
                 if self.verbose > 0:
                     print(
@@ -1117,7 +1136,7 @@ class BaseSearchCV(
 
                 return results
 
-            self._run_search(evaluate_candidates, callback_ctx=callback_ctx)
+            self._run_search(evaluate_candidates, root_callback_ctx)
 
             # multimetric is determined here because in the case of a callable
             # self.scoring the return type is only known after calling
@@ -1153,7 +1172,9 @@ class BaseSearchCV(
                 **clone(self.best_params_, safe=False)
             )
 
-            refit_subctx = callback_ctx.subcontext(task_name="refit with best params")
+            refit_subctx = root_callback_ctx.subcontext(
+                task_name="refit_with_best_params"
+            )
 
             with refit_subctx.propagate_callback_context(self.best_estimator_):
                 metadata = {"sample_weight": params.get("sample_weight", {})}
@@ -1189,7 +1210,7 @@ class BaseSearchCV(
         self.cv_results_ = results
         self.n_splits_ = n_splits
 
-        callback_ctx.call_on_fit_task_end(estimator=self, X=X, y=y)
+        root_callback_ctx.call_on_fit_task_end(estimator=self, X=X, y=y)
 
         return self
 
@@ -1693,9 +1714,9 @@ class GridSearchCV(BaseSearchCV):
         )
         self.param_grid = param_grid
 
-    def _run_search(self, evaluate_candidates, callback_ctx=None):
+    def _run_search(self, evaluate_candidates, root_callback_ctx):
         """Search all candidates in param_grid"""
-        evaluate_candidates(ParameterGrid(self.param_grid), callback_ctx=callback_ctx)
+        evaluate_candidates(ParameterGrid(self.param_grid))
 
 
 class RandomizedSearchCV(BaseSearchCV):
@@ -2090,5 +2111,4 @@ class RandomizedSearchCV(BaseSearchCV):
             ParameterSampler(
                 self.param_distributions, self.n_iter, random_state=self.random_state
             ),
-            callback_ctx=callback_ctx,
         )

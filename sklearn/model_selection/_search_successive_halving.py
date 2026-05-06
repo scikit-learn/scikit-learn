@@ -257,7 +257,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
         return self
 
-    def _run_search(self, evaluate_candidates, callback_ctx=None):
+    def _run_search(self, evaluate_candidates, root_callback_ctx):
         candidate_params = self._generate_candidate_params()
 
         if self.resource != "n_samples" and any(
@@ -309,7 +309,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
         self.n_resources_ = []
         self.n_candidates_ = []
 
-        callback_ctx = callback_ctx.subcontext(
+        halving_callback_ctx = root_callback_ctx.subcontext(
             task_name="halving",
             max_subtasks=n_iterations,
         ).call_on_fit_task_begin(estimator=self)
@@ -363,7 +363,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 candidate_params,
                 cv,
                 more_results=more_results,
-                callback_ctx=callback_ctx,
+                halving_callback_ctx=halving_callback_ctx,
             )
 
             n_candidates_to_keep = ceil(n_candidates / self.factor)
@@ -374,7 +374,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
         self.n_possible_iterations_ = n_possible_iterations
         self.n_iterations_ = n_iterations
 
-        callback_ctx.call_on_fit_task_end(estimator=self)
+        halving_callback_ctx.call_on_fit_task_end(estimator=self)
 
     @abstractmethod
     def _generate_candidate_params(self):
