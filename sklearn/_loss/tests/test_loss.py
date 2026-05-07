@@ -1412,7 +1412,7 @@ def test_loss_array_api(
         assert result_xp.dtype == raw_prediction_xp.dtype
         assert array_api_device(result_xp) == array_api_device(raw_prediction_xp)
 
-    xp, device = _array_api_for_tests(namespace, device_name)
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
     atol = _atol_for_type(dtype_name)
     rtol = 1e-6 if dtype_name == "float32" else 1e-11
     random_seed = 42
@@ -1485,7 +1485,7 @@ def test_log1pexp(namespace, device_name, dtype_name):
     mpmath = pytest.importorskip("mpmath")
     mpmath.mp.prec = 100  # Significantly more precise reference than float64.
     values_to_test = np.linspace(-40, 40, 300)
-    xp, device = _array_api_for_tests(namespace, device_name)
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
     for value in values_to_test:
         if dtype_name == "float32":
             x = xp.asarray(value, dtype=xp.float32, device=device)

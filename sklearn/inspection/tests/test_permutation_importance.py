@@ -24,6 +24,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import KBinsDiscretizer, OneHotEncoder, StandardScaler, scale
 from sklearn.utils._testing import _convert_container
+from sklearn.utils.estimator_checks import _NotAnArray
 
 
 @pytest.mark.parametrize("n_jobs", [1, 2])
@@ -239,7 +240,7 @@ def test_permutation_importance_mixed_types_pandas():
     assert np.all(result.importances_mean[-1] > result.importances_mean[:-1])
 
 
-def test_permutation_importance_linear_regresssion():
+def test_permutation_importance_linear_regression():
     X, y = make_regression(n_samples=500, n_features=10, random_state=0)
 
     X = scale(X)
@@ -329,7 +330,7 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs, max_samples)
     X_df[new_col_idx] = cat_column
     assert X_df[new_col_idx].dtype == cat_column.dtype
 
-    # Stich an arbitrary index to the dataframe:
+    # Stitch an arbitrary index to the dataframe:
     X_df.index = np.arange(len(X_df)).astype(str)
 
     rf = RandomForestRegressor(n_estimators=5, max_depth=3, random_state=0)
@@ -352,7 +353,7 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs, max_samples)
     imp_max = importance_array["importances"].max()
     assert imp_max - imp_min > 0.3
 
-    # Now check that importances computed on dataframe matche the values
+    # Now check that importances computed on dataframe match the values
     # of those computed on the array with the same data.
     importance_dataframe = permutation_importance(
         rf,
@@ -538,3 +539,12 @@ def test_permutation_importance_max_samples_error():
 
     with pytest.raises(ValueError, match=err_msg):
         permutation_importance(clf, X, y, max_samples=5)
+
+
+def test_permutation_importance_array_function_not_called():
+    """Check that `__array_function__` (NEP18) is not called."""
+    X = _NotAnArray([[1, 1], [1, 2], [1, 3], [1, 4], [2, 1], [2, 2], [2, 3], [2, 4]])
+    y = _NotAnArray([1, 1, 1, 2, 2, 2, 1, 1])
+    estimator = LogisticRegression(random_state=0)
+    estimator.fit(X, y)
+    permutation_importance(estimator, X, y, n_repeats=2, random_state=0)

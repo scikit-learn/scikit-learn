@@ -1831,7 +1831,7 @@ def test_feature_union_check_if_fitted():
 def test_pipeline_get_feature_names_out_passes_names_through():
     """Check that pipeline passes names through.
 
-    Non-regresion test for #21349.
+    Non-regression test for #21349.
     """
     X, y = iris.data, iris.target
 
@@ -1966,7 +1966,7 @@ def test_feature_union_1d_output():
 )
 def test_feature_union_array_api_compliance(array_namespace, device_name, dtype_name):
     """Test that FeatureUnion with Array API-compatible transformers works."""
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     rnd = np.random.RandomState(0)
     n_samples, n_features = 20, 10
     X_np = rnd.uniform(size=(n_samples, n_features)).astype(dtype_name)

@@ -1349,7 +1349,7 @@ def test_polynomial_features_array_api_compliance(
     dtype_name,
 ):
     """Test array API compliance for PolynomialFeatures on 2 features up to degree 3."""
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     X, _ = two_features_degree3
     X_np = X.astype(dtype_name)
     X_xp = xp.asarray(X_np, device=device)
@@ -1378,7 +1378,7 @@ def test_polynomial_features_array_api_raises_on_order_F(
 ):
     """Test that PolynomialFeatures with order='F' raises ValueError on
     array API namespaces other than numpy."""
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     X = np.arange(6).reshape((3, 2)).astype(dtype_name)
     X_xp = xp.asarray(X, device=device)
     msg = "PolynomialFeatures does not support order='F' for non-numpy arrays"

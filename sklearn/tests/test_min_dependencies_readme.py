@@ -123,27 +123,27 @@ def test_min_dependencies_readme():
 
                 message = (
                     f"{package} has inconsistent minimum versions in README.rst and"
-                    f" _min_depencies.py: {version} != {min_version}"
+                    f" _min_dependencies.py: {version} != {min_version}"
                 )
                 assert version == min_version, message
 
 
 def extract_packages_and_pyproject_tags(dependencies):
-    min_depencies_tag_to_packages_without_version = defaultdict(list)
+    min_dependencies_tag_to_packages_without_version = defaultdict(list)
     for package, (min_version, tags) in dependencies.items():
         for t in tags.split(", "):
-            min_depencies_tag_to_packages_without_version[t].append(package)
+            min_dependencies_tag_to_packages_without_version[t].append(package)
 
     pyproject_section_to_min_dependencies_tag = {
         "build-system.requires": "build",
         "project.dependencies": "install",
     }
-    for tag in min_depencies_tag_to_packages_without_version:
+    for tag in min_dependencies_tag_to_packages_without_version:
         section = f"project.optional-dependencies.{tag}"
         pyproject_section_to_min_dependencies_tag[section] = tag
 
     return (
-        min_depencies_tag_to_packages_without_version,
+        min_dependencies_tag_to_packages_without_version,
         pyproject_section_to_min_dependencies_tag,
     )
 
@@ -182,7 +182,7 @@ def check_pyproject_sections(pyproject_toml, min_dependencies):
 
             pyproject_build_min_versions[package] = version
 
-        msg = f"Packages in {pyproject_section} differ from _min_depencies.py"
+        msg = f"Packages in {pyproject_section} differ from _min_dependencies.py"
 
         assert sorted(pyproject_build_min_versions) == sorted(expected_packages), msg
 
@@ -194,7 +194,7 @@ def check_pyproject_sections(pyproject_toml, min_dependencies):
 
             message = (
                 f"{package} has inconsistent minimum versions in pyproject.toml and"
-                f" _min_depencies.py: {version} != {expected_min_version}"
+                f" _min_dependencies.py: {version} != {expected_min_version}"
             )
             assert version == expected_min_version, message
 
@@ -241,16 +241,16 @@ def test_check_matching_pyproject_section(example_pyproject):
         ),
         (
             TOY_MISSING_PACKAGE_PYPROJECT_SECTIONS,
-            "Packages in .* differ from _min_depencies.py",
+            "Packages in .* differ from _min_dependencies.py",
         ),
         (
             TOY_ADDITIONAL_PACKAGE_PYPROJECT_SECTIONS,
-            "Packages in .* differ from _min_depencies.py",
+            "Packages in .* differ from _min_dependencies.py",
         ),
         (
             TOY_NON_MATCHING_VERSION_PYPROJECT_SECTIONS,
             ".* has inconsistent minimum versions in pyproject.toml and"
-            " _min_depencies.py: .* != .*",
+            " _min_dependencies.py: .* != .*",
         ),
     ],
 )
