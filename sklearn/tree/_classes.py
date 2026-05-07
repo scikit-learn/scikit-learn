@@ -579,7 +579,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             is_categorical = np.zeros(n_features, dtype=bool)
             is_categorical[categorical_features] = True
         else:
-            if categorical_features.shape[0] != n_features:
+            if categorical_features.shape != (n_features,):
                 raise ValueError(
                     "categorical_features set as a boolean mask "
                     "must have shape (n_features,), got: "
@@ -1057,7 +1057,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         Categorical features are only supported for dense inputs
         and single-output targets.
-        Values of categorical features must be contiguous integers in ``[0, 63]``
+        Values of categorical features must be contiguous integers in ``[0, 255]``
         (missing values are not supported).
         Categorical features cannot have non-zero monotonic constraint.
 
@@ -1861,7 +1861,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
         Categorical features are only supported for dense inputs
         and single-output targets.
-        Values of categorical features must be contiguous integers in ``[0, 63]``
+        Values of categorical features must be contiguous integers in ``[0, 255]``
         (missing values are not supported).
         Categorical features cannot have non-zero monotonic constraints.
 
@@ -2161,7 +2161,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
         Categorical features are only supported for dense inputs
         and single-output targets.
-        Values of categorical features must be contiguous integers in ``[0, 63]``
+        Values of categorical features must be contiguous integers in ``[0, 255]``
         (missing values are not supported).
         Categorical features cannot have non-zero monotonic constraints.
 
