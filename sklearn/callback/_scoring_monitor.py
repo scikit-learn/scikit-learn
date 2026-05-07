@@ -105,14 +105,14 @@ class ScoringMonitor:
         prefer_skip_nested_validation=True,
     )
     def __init__(self, *, scoring):
-        self.scoring = scoring
-        # Turn the scorer into a MultimetricScorer for convenience
         from sklearn.metrics._scorer import _BaseScorer
 
-        if isinstance(self.scoring, str):
-            self.scoring = [self.scoring]
-        if callable(self.scoring) and isinstance(self.scoring, _BaseScorer):
-            self.scoring = {"score": self.scoring}
+        self._scoring = scoring
+        # Turn the scorer into a MultimetricScorer for convenience
+        if isinstance(scoring, str):
+            self._scoring = [scoring]
+        elif callable(scoring) and isinstance(scoring, _BaseScorer):
+            self._scoring = {"score": scoring}
 
         self._shared_log = get_callback_manager().list()
         self._estimator_scorers = {}
@@ -120,15 +120,13 @@ class ScoringMonitor:
     def setup(self, estimator, context):
         # A scorer per estimator is needed to avoid race conditions when the callback is
         # set on different estimators and the scorer is the estimator's default scorer.
-        if context.estimator_name not in self._estimator_scorers:
+        if estimator not in self._estimator_scorers:
             from sklearn.metrics import check_scoring
 
-            self._estimator_scorers[context.estimator_name] = check_scoring(
-                estimator, self.scoring
-            )
+            self._estimator_scorers[estimator] = check_scoring(estimator, self._scoring)
 
     def teardown(self, estimator, context):
-        pass
+        self._estimator_scorers.pop(estimator, None)
 
     def on_fit_task_begin(self, estimator, context):
         pass
@@ -167,7 +165,7 @@ class ScoringMonitor:
 
         scores = {}
         if X is not None and y is not None:
-            scorer = self._estimator_scorers[context.estimator_name]
+            scorer = self._estimator_scorers[estimator]
             scores.update(scorer(fitted_estimator, X, y, **metadata))
 
         self._shared_log.append((run_id, run_info, task_info_path, scores))

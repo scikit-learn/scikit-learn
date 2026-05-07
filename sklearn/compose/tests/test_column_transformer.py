@@ -196,12 +196,9 @@ def test_column_transformer_tuple_transformers_parameter():
     )
 
 
-@pytest.mark.parametrize("constructor_name", ["dataframe", "polars"])
+@pytest.mark.parametrize("constructor_name", ["pandas", "polars"])
 def test_column_transformer_dataframe(constructor_name):
-    if constructor_name == "dataframe":
-        dataframe_lib = pytest.importorskip("pandas")
-    else:
-        dataframe_lib = pytest.importorskip(constructor_name)
+    df_lib = pytest.importorskip(constructor_name)
 
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     X_df = _convert_container(
@@ -229,16 +226,15 @@ def test_column_transformer_dataframe(constructor_name):
         # boolean mask
         (np.array([True, False]), X_res_first),
         ([True, False], X_res_first),
+        # scalar
+        (0, X_res_first),
+        ("first", X_res_first),
     ]
-    if constructor_name == "dataframe":
-        # Scalars are only supported for pandas dataframes.
+    if constructor_name == "pandas":
         cases.extend(
             [
-                # scalar
-                (0, X_res_first),
-                ("first", X_res_first),
                 (
-                    dataframe_lib.Series([True, False], index=["first", "second"]),
+                    df_lib.Series([True, False], index=["first", "second"]),
                     X_res_first,
                 ),
             ]
@@ -315,38 +311,36 @@ def test_column_transformer_dataframe(constructor_name):
 
         def transform(self, X, y=None):
             assert isinstance(X, self.expected_type_transform)
-            if isinstance(X, dataframe_lib.Series):
-                X = X.to_frame()
+            if len(X.shape) < 2:
+                X = _convert_container(X, constructor_name)
             return X
 
     ct = ColumnTransformer(
         [
             (
                 "trans",
-                TransAssert(expected_type_transform=dataframe_lib.DataFrame),
+                TransAssert(expected_type_transform=df_lib.DataFrame),
                 ["first", "second"],
             )
         ]
     )
     ct.fit_transform(X_df)
 
-    if constructor_name == "dataframe":
-        # DataFrame protocol does not have 1d columns, so we only test on Pandas
-        # dataframes.
-        ct = ColumnTransformer(
-            [
-                (
-                    "trans",
-                    TransAssert(expected_type_transform=dataframe_lib.Series),
-                    "first",
-                )
-            ],
-            remainder="drop",
-        )
-        ct.fit_transform(X_df)
+    ct = ColumnTransformer(
+        [
+            (
+                "trans",
+                TransAssert(expected_type_transform=df_lib.Series),
+                "first",
+            )
+        ],
+        remainder="drop",
+    )
+    ct.fit_transform(X_df)
 
-        # Only test on pandas because the dataframe protocol requires string column
-        # names
+    if constructor_name == "pandas":
+        # Only pandas (but not polars, nor pyarrow) allows for column names that are
+        # not strings.
         # integer column spec + integer column names -> still use positional
         X_df2 = X_df.copy()
         X_df2.columns = [1, 0]

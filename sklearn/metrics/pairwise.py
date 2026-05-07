@@ -1983,7 +1983,16 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     # allocate 2D arrays using the C-contiguity convention by default.
     ret = xp.empty((X.shape[0], Y.shape[0]), device=device, dtype=dtype_float).T
     Parallel(backend="threading", n_jobs=n_jobs)(
-        fd(func, ret, s, X, Y[s, ...], **kwds)
+        fd(
+            func,
+            ret,
+            s,
+            X,
+            Y[s, ...],
+            # Y_norm_squared for euclidean distance is a precomputed per-sample norm
+            # passed through kwds; slice it to match the current Y chunk.
+            **{k: (v[s] if k == "Y_norm_squared" else v) for k, v in kwds.items()},
+        )
         for s in gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs))
     )
 
