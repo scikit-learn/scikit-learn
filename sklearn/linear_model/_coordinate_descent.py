@@ -28,6 +28,7 @@ from sklearn.utils._metadata_requests import (
     _raise_for_params,
 )
 from sklearn.utils._param_validation import (
+    Hidden,
     Interval,
     StrOptions,
     validate_params,
@@ -212,8 +213,17 @@ def _alpha_grid(
         "X": ["array-like", "sparse matrix"],
         "y": ["array-like", "sparse matrix"],
         "eps": [Interval(Real, 0, None, closed="neither")],
-        "n_alphas": [Interval(Integral, 1, None, closed="left")],
-        "alphas": ["array-like", None],
+        "n_alphas": [
+            Interval(Integral, 1, None, closed="left"),
+            Hidden(StrOptions({"deprecated"})),
+        ],
+        # TODO(1.11): remove "warn" and None options.
+        "alphas": [
+            Interval(Integral, 1, None, closed="left"),
+            "array-like",
+            None,
+            Hidden(StrOptions({"warn"})),
+        ],
         "precompute": [StrOptions({"auto"}), "boolean", "array-like"],
         "Xy": ["array-like", None],
         "copy_X": ["boolean"],
@@ -229,8 +239,8 @@ def lasso_path(
     y,
     *,
     eps=1e-3,
-    n_alphas=100,
-    alphas=None,
+    n_alphas="deprecated",
+    alphas="warn",
     precompute="auto",
     Xy=None,
     copy_X=True,
@@ -383,13 +393,46 @@ def lasso_path(
     [[0.         0.         0.46915237]
      [0.2159048  0.4425765  0.23668876]]
     """
+    # TODO(1.11): remove n_alphas and alphas={"warn", None}; set alphas=100 by default.
+    # Remove these deprecations messages and use alphas directly instead of instead of
+    # _alphas.
+    if n_alphas == "deprecated":
+        _alphas = 100  # the old, current, and future default;-)
+    else:
+        warnings.warn(
+            "'n_alphas' was deprecated in 1.9 and will be removed in 1.11. "
+            "'alphas' now accepts an integer value which removes the need to pass "
+            "'n_alphas'. The default value of 'alphas' will change from None to "
+            "100 in 1.11. Pass an explicit value to 'alphas' and leave 'n_alphas' "
+            "to its default value to silence this warning.",
+            FutureWarning,
+        )
+        _alphas = n_alphas
+
+    if isinstance(alphas, str) and alphas == "warn":
+        # - If n_alphas == "deprecated", both are left to their default values so we
+        #   don't warn since the future default behavior will be the same as the
+        #   current default behavior.
+        # - self.n_alphas != "deprecated", then we already warned about it and the
+        #   warning message mentions the future alphas default, so no need to warn a
+        #   second time.
+        pass
+    elif alphas is None:
+        warnings.warn(
+            "'alphas=None' is deprecated and will be removed in 1.11, at which "
+            "point the default value will be set to 100. Set 'alphas=100' "
+            "to silence this warning.",
+            FutureWarning,
+        )
+    else:
+        _alphas = alphas
+
     return enet_path(
         X,
         y,
         l1_ratio=1.0,
         eps=eps,
-        n_alphas=n_alphas,
-        alphas=alphas,
+        alphas=_alphas,
         precompute=precompute,
         Xy=Xy,
         copy_X=copy_X,
@@ -407,8 +450,17 @@ def lasso_path(
         "y": ["array-like", "sparse matrix"],
         "l1_ratio": [Interval(Real, 0.0, 1.0, closed="both")],
         "eps": [Interval(Real, 0.0, None, closed="neither")],
-        "n_alphas": [Interval(Integral, 1, None, closed="left")],
-        "alphas": ["array-like", None],
+        "n_alphas": [
+            Interval(Integral, 1, None, closed="left"),
+            Hidden(StrOptions({"deprecated"})),
+        ],
+        # TODO(1.11): remove "warn" and None options.
+        "alphas": [
+            Interval(Integral, 1, None, closed="left"),
+            "array-like",
+            None,
+            Hidden(StrOptions({"warn"})),
+        ],
         "precompute": [StrOptions({"auto"}), "boolean", "array-like"],
         "Xy": ["array-like", None],
         "copy_X": ["boolean"],
@@ -426,8 +478,8 @@ def enet_path(
     *,
     l1_ratio=0.5,
     eps=1e-3,
-    n_alphas=100,
-    alphas=None,
+    n_alphas="deprecated",
+    alphas="warn",
     precompute="auto",
     Xy=None,
     copy_X=True,
@@ -566,7 +618,7 @@ def enet_path(
     ... )
     >>> true_coef
     array([ 0.        ,  0.        ,  0.        , 97.9, 45.7])
-    >>> alphas, estimated_coef, _ = enet_path(X, y, n_alphas=3)
+    >>> alphas, estimated_coef, _ = enet_path(X, y, alphas=3)
     >>> alphas.shape
     (3,)
     >>> estimated_coef
@@ -576,6 +628,40 @@ def enet_path(
             [ 0., 23.046, 88.939],
             [ 0., 10.637, 41.566]])
     """
+    # TODO(1.11): remove n_alphas and alphas={"warn", None}; set alphas=100 by default.
+    # Remove these deprecations messages and use alphas directly instead of instead of
+    # _alphas.
+    if n_alphas == "deprecated":
+        _alphas = 100  # the old, current, and future default;-)
+    else:
+        warnings.warn(
+            "'n_alphas' was deprecated in 1.9 and will be removed in 1.11. "
+            "'alphas' now accepts an integer value which removes the need to pass "
+            "'n_alphas'. The default value of 'alphas' will change from None to "
+            "100 in 1.11. Pass an explicit value to 'alphas' and leave 'n_alphas' "
+            "to its default value to silence this warning.",
+            FutureWarning,
+        )
+        _alphas = n_alphas
+
+    if isinstance(alphas, str) and alphas == "warn":
+        # - If n_alphas == "deprecated", both are left to their default values so we
+        #   don't warn since the future default behavior will be the same as the
+        #   current default behavior.
+        # - self.n_alphas != "deprecated", then we already warned about it and the
+        #   warning message mentions the future alphas default, so no need to warn a
+        #   second time.
+        pass
+    elif alphas is None:
+        warnings.warn(
+            "'alphas=None' is deprecated and will be removed in 1.11, at which "
+            "point the default value will be set to 100. Set 'alphas=100' "
+            "to silence this warning.",
+            FutureWarning,
+        )
+    else:
+        _alphas = alphas
+
     X_offset_param = params.pop("X_offset", None)
     X_scale_param = params.pop("X_scale", None)
     sample_weight = params.pop("sample_weight", None)
@@ -646,7 +732,7 @@ def enet_path(
             copy=False,
             check_gram=check_input,
         )
-    if alphas is None:
+    if isinstance(_alphas, Integral):
         # fit_intercept and sample_weight have already been dealt with in calling
         # methods like ElasticNet.fit.
         alphas = _alpha_grid(
@@ -657,10 +743,10 @@ def enet_path(
             fit_intercept=False,
             positive=positive,
             eps=eps,
-            n_alphas=n_alphas,
+            n_alphas=_alphas,
         )
-    elif len(alphas) > 1:
-        alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
+    elif len(_alphas) > 1:
+        alphas = np.sort(_alphas)[::-1]  # make sure alphas are properly ordered
 
     n_alphas = len(alphas)
     dual_gaps = np.empty(n_alphas)
@@ -1162,7 +1248,6 @@ class ElasticNet(RegressorMixin, MultiOutputLinearModel):
                 y[:, k],
                 l1_ratio=self.l1_ratio,
                 eps=None,
-                n_alphas=None,
                 alphas=[self.alpha],
                 precompute=precompute,
                 Xy=this_Xy,
@@ -1808,10 +1893,6 @@ class LinearModelCV(MultiOutputLinearModel, ABC):
                 check_scalar_alpha(alpha, f"alphas[{index}]")
             # Making sure alphas is properly ordered.
             alphas = np.tile(np.sort(self.alphas)[::-1], (n_l1_ratio, 1))
-
-        # We want n_alphas to be the number of alphas used for each l1_ratio.
-        n_alphas = len(alphas[0])
-        path_params.update({"n_alphas": n_alphas})
 
         path_params["copy_X"] = copy_X
         # We are not computing in parallel, we can modify X
