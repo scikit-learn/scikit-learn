@@ -6,6 +6,7 @@ import sys
 import warnings
 from itertools import compress, islice
 
+import narwhals.stable.v2 as nw
 import numpy as np
 from scipy.sparse import issparse
 
@@ -15,19 +16,13 @@ from sklearn.utils._array_api import (
     get_namespace_and_device,
     move_to,
 )
-from sklearn.utils._dataframe import (
-    is_pandas_df,
-    is_polars_df,
-    is_polars_df_or_series,
-    is_pyarrow_data,
-)
+from sklearn.utils._dataframe import is_pyarrow_data
 from sklearn.utils._param_validation import Interval, validate_params
 from sklearn.utils.extmath import _approximate_mode
-from sklearn.utils.fixes import PYARROW_VERSION_BELOW_17, SCIPY_VERSION_BELOW_1_12
+from sklearn.utils.fixes import SCIPY_VERSION_BELOW_1_12
 from sklearn.utils.validation import (
     _check_sample_weight,
     _is_arraylike_not_scalar,
-    _use_interchange_protocol,
     check_array,
     check_consistent_length,
     check_random_state,
@@ -67,6 +62,37 @@ def _array_indexing(array, key, key_dtype, axis):
     return array[key, ...] if axis == 0 else array[:, key]
 
 
+def _narwhals_indexing(X, key, key_dtype, axis):
+    """Index a narwhals dataframe or series."""
+    X = nw.from_native(X, allow_series=True)
+    if not (isinstance(key, (list, slice)) or key is None):
+        # Note that at least tuples should be converted to either list or ndarray as
+        # tuples in __getitem__ are special: x[(1, 2)] is equal to x[1, 2].
+        # Also, not all backends of narwhals support ndarray, but all support lists.
+        key = np.asarray(key).tolist()
+
+    if axis == 1:
+        if key_dtype == "bool":
+            subset = X.select(col for (col, select) in zip(X.columns, key) if select)
+            return subset.to_native()
+        return X[:, key].to_native()
+
+    # From here on axis == 0:
+    if key_dtype == "bool":
+        X_indexed = X.filter(key)
+    else:
+        X_indexed = X[key]
+
+    if np.isscalar(key):
+        if len(X.shape) <= 1:
+            return X_indexed
+        # TODO: `X_indexed` is a DataFrame with a single row; we return a Series to be
+        # consistent with pandas. Narwhals would return a dataframe which is
+        # advantageous if the columns have different dtypes.
+        return np.array([col.item(0) for col in X_indexed.iter_columns()])
+    return X_indexed.to_native()
+
+
 def _pandas_indexing(X, key, key_dtype, axis):
     """Index a pandas dataframe or a series."""
     if _is_arraylike_not_scalar(key):
@@ -92,94 +118,6 @@ def _list_indexing(X, key, key_dtype):
         return list(compress(X, key))
     # key is an integer array-like of key
     return [X[idx] for idx in key]
-
-
-def _polars_indexing(X, key, key_dtype, axis):
-    """Index a polars dataframe or series."""
-    # Polars behavior is more consistent with lists
-    if isinstance(key, np.ndarray):
-        # Convert each element of the array to a Python scalar
-        key = key.tolist()
-    elif not (np.isscalar(key) or isinstance(key, slice)):
-        key = list(key)
-
-    if axis == 1:
-        # Here we are certain to have a polars DataFrame; which can be indexed with
-        # integer and string scalar, and list of integer, string and boolean
-        return X[:, key]
-
-    if key_dtype == "bool":
-        # Boolean mask can be indexed in the same way for Series and DataFrame (axis=0)
-        return X.filter(key)
-
-    # Integer scalar and list of integer can be indexed in the same way for Series and
-    # DataFrame (axis=0)
-    X_indexed = X[key]
-    if np.isscalar(key) and len(X.shape) == 2:
-        # `X_indexed` is a DataFrame with a single row; we return a Series to be
-        # consistent with pandas
-        pl = sys.modules["polars"]
-        return pl.Series(X_indexed.row(0))
-    return X_indexed
-
-
-def _pyarrow_indexing(X, key, key_dtype, axis):
-    """Index a pyarrow data."""
-    scalar_key = np.isscalar(key)
-    if isinstance(key, slice):
-        if isinstance(key.stop, str):
-            start = X.column_names.index(key.start)
-            stop = X.column_names.index(key.stop) + 1
-        else:
-            start = 0 if not key.start else key.start
-            stop = key.stop
-        step = 1 if not key.step else key.step
-        key = list(range(start, stop, step))
-
-    if axis == 1:
-        # Here we are certain that X is a pyarrow Table or RecordBatch.
-        if key_dtype == "int" and not isinstance(key, list):
-            # pyarrow's X.select behavior is more consistent with integer lists.
-            key = np.asarray(key).tolist()
-        if key_dtype == "bool":
-            key = np.asarray(key).nonzero()[0].tolist()
-
-        if scalar_key:
-            return X.column(key)
-
-        return X.select(key)
-
-    # axis == 0 from here on
-    if scalar_key:
-        if hasattr(X, "shape"):
-            # X is a Table or RecordBatch
-            key = [key]
-        else:
-            return X[key].as_py()
-    elif not isinstance(key, list):
-        key = np.asarray(key)
-
-    if key_dtype == "bool":
-        # TODO(pyarrow): remove version checking and following if-branch when
-        # pyarrow==17.0.0 is the minimal version, see pyarrow issue
-        # https://github.com/apache/arrow/issues/42013 for more info
-        if PYARROW_VERSION_BELOW_17:
-            import pyarrow
-
-            if not isinstance(key, pyarrow.BooleanArray):
-                key = pyarrow.array(key, type=pyarrow.bool_())
-
-        X_indexed = X.filter(key)
-
-    else:
-        X_indexed = X.take(key)
-
-    if scalar_key and len(getattr(X, "shape", [0])) == 2:
-        # X_indexed is a dataframe-like with a single row; we return a Series to be
-        # consistent with pandas
-        pa = sys.modules["pyarrow"]
-        return pa.array(X_indexed.to_pylist()[0].values())
-    return X_indexed
 
 
 def _determine_key_type(key, accept_slice=True):
@@ -345,7 +283,9 @@ def _safe_indexing(X, indices, *, axis=0):
     if (
         axis == 1
         and indices_dtype == "str"
-        and not (is_pandas_df(X) or is_polars_df(X) or _use_interchange_protocol(X))
+        and not (
+            nw.dependencies.is_into_dataframe(X) or nw.dependencies.is_into_series(X)
+        )
     ):
         raise ValueError(
             "Specifying the columns using strings is only supported for dataframes."
@@ -356,23 +296,20 @@ def _safe_indexing(X, indices, *, axis=0):
         # 1) Currently, it (probably) works for dataframes compliant to pandas' API.
         # 2) Updating would require updating some tests such as
         #    test_train_test_split_mock_pandas.
+        # 3) Should also work with _narwhals_indexing, but
+        #    test_safe_indexing_pandas_no_settingwithcopy_warning does not pass.
         return _pandas_indexing(X, indices, indices_dtype, axis=axis)
-    elif is_polars_df_or_series(X):
-        return _polars_indexing(X, indices, indices_dtype, axis=axis)
+    elif nw.dependencies.is_into_dataframe(X) or nw.dependencies.is_into_series(X):
+        return _narwhals_indexing(X, indices, indices_dtype, axis=axis)
     elif is_pyarrow_data(X):
-        return _pyarrow_indexing(X, indices, indices_dtype, axis=axis)
-    elif _use_interchange_protocol(X):  # pragma: no cover
-        # Once the dataframe X is converted into its dataframe interchange protocol
-        # version by calling X.__dataframe__(), it becomes very hard to turn it back
-        # into its original type, e.g., a pyarrow.Table, see
-        # https://github.com/data-apis/dataframe-api/issues/85.
-        raise warnings.warn(
-            message="A data object with support for the dataframe interchange protocol"
-            "was passed, but scikit-learn does currently not know how to handle this "
-            "kind of data. Some array/list indexing will be tried.",
-            category=UserWarning,
-        )
-
+        # Narwhals Series are backed by ChunkedArray, not Array.
+        # To reuse `_narwhals_indexing`, we temporarily convert to `ChunkedArray`.
+        pa = sys.modules["pyarrow"]
+        X = pa.chunked_array(X)
+        ret = _narwhals_indexing(X, indices, indices_dtype, axis=axis)
+        if isinstance(ret, pa.ChunkedArray):
+            return ret.combine_chunks()
+        return ret
     if hasattr(X, "shape"):
         return _array_indexing(X, indices, indices_dtype, axis=axis)
     else:
@@ -434,79 +371,31 @@ def _get_column_indices(X, key):
     :func:`_safe_indexing`.
     """
     key_dtype = _determine_key_type(key)
-    if is_polars_df(X):
-        n_columns = X.shape[1]
-        column_names = X.columns
-        return _get_column_indices_interchange_and_polars(
-            n_columns, column_names, key, key_dtype
-        )
-    elif _use_interchange_protocol(X):
-        X_interchange = X.__dataframe__()
-        n_columns = X_interchange.num_columns()
-        column_names = list(X_interchange.column_names())
-        return _get_column_indices_interchange_and_polars(
-            n_columns, column_names, key, key_dtype
-        )
 
-    n_columns = X.shape[1]
+    if nw.dependencies.is_into_dataframe(X):
+        # Note: narwhals raises DuplicateError if column names are not unique.
+        df_nw = nw.from_native(X)
+        n_columns = df_nw.shape[1]
+        column_names = df_nw.columns
+    else:
+        n_columns = X.shape[1]
+        column_names = None
+
     if isinstance(key, (list, tuple)) and not key:
         # we get an empty list
         return []
     elif key_dtype in ("bool", "int"):
         return _get_column_indices_for_bool_or_int(key, n_columns)
     else:
-        try:
-            all_columns = X.columns
-        except AttributeError:
+        if column_names is None:
             raise ValueError(
                 "Specifying the columns using strings is only supported for dataframes."
             )
-        if isinstance(key, str):
-            columns = [key]
-        elif isinstance(key, slice):
-            start, stop = key.start, key.stop
-            if start is not None:
-                start = all_columns.get_loc(start)
-            if stop is not None:
-                # pandas indexing with strings is endpoint included
-                stop = all_columns.get_loc(stop) + 1
-            else:
-                stop = n_columns + 1
-            return list(islice(range(n_columns), start, stop))
-        else:
-            columns = list(key)
 
-        try:
-            column_indices = []
-            for col in columns:
-                col_idx = all_columns.get_loc(col)
-                if not isinstance(col_idx, numbers.Integral):
-                    raise ValueError(
-                        f"Selected columns, {columns}, are not unique in dataframe"
-                    )
-                column_indices.append(col_idx)
-
-        except KeyError as e:
-            missing = {*columns} - {*all_columns}
-            raise ValueError(
-                f"Some column names are not columns of the dataframe: {missing}"
-            ) from e
-
-        return column_indices
-
-
-def _get_column_indices_interchange_and_polars(n_columns, column_names, key, key_dtype):
-    """Same as _get_column_indices but for X with __dataframe__ protocol or polars."""
-
-    if isinstance(key, (list, tuple)) and not key:
-        # we get an empty list
-        return []
-    elif key_dtype in ("bool", "int"):
-        return _get_column_indices_for_bool_or_int(key, n_columns)
-    else:
         if isinstance(key, slice):
             if key.step not in [1, None]:
                 raise NotImplementedError("key.step must be 1 or None")
+
             start, stop = key.start, key.stop
             if start is not None:
                 start = column_names.index(start)
@@ -516,16 +405,14 @@ def _get_column_indices_interchange_and_polars(n_columns, column_names, key, key
             else:
                 stop = n_columns + 1
             return list(islice(range(n_columns), start, stop))
-
-        selected_columns = [key] if np.isscalar(key) else key
-
-        try:
-            return [column_names.index(col) for col in selected_columns]
-        except ValueError as e:
-            missing = {*selected_columns} - {*column_names}
-            raise ValueError(
-                f"Some column names are not columns of the dataframe: {missing}"
-            ) from e
+        else:
+            selected_columns = [key] if np.isscalar(key) else key
+            try:
+                return [column_names.index(col) for col in selected_columns]
+            except ValueError as e:
+                missing = {*selected_columns} - {*column_names}
+                msg = f"Some column names are not columns of the dataframe: {missing}"
+                raise ValueError(msg) from e
 
 
 @validate_params(

@@ -12,6 +12,7 @@ from functools import reduce, wraps
 from inspect import Parameter, isclass, signature
 
 import joblib
+import narwhals.stable.v2 as nw
 import numpy as np
 import scipy.sparse as sp
 
@@ -29,7 +30,7 @@ from sklearn.utils._array_api import (
     get_namespace_and_device,
     move_to,
 )
-from sklearn.utils._dataframe import is_pandas_df, is_pandas_df_or_series, is_polars_df
+from sklearn.utils._dataframe import is_pandas_df_or_series
 from sklearn.utils._isfinite import FiniteStatus, cy_isfinite
 from sklearn.utils._tags import get_tags
 from sklearn.utils.fixes import (
@@ -305,19 +306,6 @@ def _is_arraylike_not_scalar(array):
     return _is_arraylike(array) and not np.isscalar(array)
 
 
-def _use_interchange_protocol(X):
-    """Use interchange protocol for non-pandas/polars dataframes that follow the
-    protocol.
-
-    Note: At this point we chose not to use the interchange API on pandas dataframe
-    to ensure strict behavioral backward compatibility with older versions of
-    scikit-learn.
-    We also exclude the interchange protocol for polars because it was deprecated
-    in polars 1.40.
-    """
-    return hasattr(X, "__dataframe__") and not is_pandas_df(X) and not is_polars_df(X)
-
-
 def _num_features(X):
     """Return the number of features in an array-like X.
 
@@ -389,8 +377,8 @@ def _num_samples(x):
         if isinstance(x.shape[0], numbers.Integral):
             return x.shape[0]
 
-    if _use_interchange_protocol(x):
-        return x.__dataframe__().num_rows()
+    if nw.dependencies.is_into_dataframe(x) or nw.dependencies.is_into_series(x):
+        return nw.from_native(x).shape[0]
 
     if not hasattr(x, "__len__") and not hasattr(x, "shape"):
         if hasattr(x, "__array__"):
@@ -2346,42 +2334,30 @@ def _check_method_params(X, params, indices=None):
 def _get_feature_names(X):
     """Get feature names from X.
 
-    Support for other array containers should place its implementation here.
+    Support for other (2d) data containers should place its implementation here.
 
     Parameters
     ----------
     X : {ndarray, dataframe} of shape (n_samples, n_features)
         Array container to extract feature names.
 
-        - pandas dataframe : The columns will be considered to be feature
-          names. If the dataframe contains non-string feature names, `None` is
-          returned.
+        - narwhals compliant dataframe : The columns will be considered to be feature
+          names.
         - All other array containers will return `None`.
 
     Returns
     -------
     names: ndarray or None
-        Feature names of `X`. Unrecognized array containers will return `None`.
+        Feature names of `X`. Unrecognized data containers will return `None`.
     """
     feature_names = None
 
-    # extract feature names for support array containers
-    if is_pandas_df(X) or is_polars_df(X):
-        # Make sure we can inspect columns names from pandas, even with
-        # versions too old to expose a working implementation of
-        # __dataframe__.column_names() and avoid introducing any
-        # additional copy.
-        # TODO: remove the pandas-specific branch (but keep polars) once the minimum
-        # supported version of pandas has a working implementation of
-        # __dataframe__.column_names() that is guaranteed to not introduce any
-        # additional copy of the data without having to impose allow_copy=False
-        # that could fail with other libraries. Note: in the longer term, we
-        # could decide to instead rely on the __dataframe_namespace__ API once
-        # adopted by our minimally supported pandas version.
-        feature_names = np.asarray(X.columns, dtype=object)
-    elif hasattr(X, "__dataframe__"):
-        df_protocol = X.__dataframe__()
-        feature_names = np.asarray(list(df_protocol.column_names()), dtype=object)
+    # Extract feature names for supported data containers.
+    if nw.dependencies.is_into_dataframe(X):
+        # Note: Narwhals API says that the .columns property ist a list of strings, but
+        # this does not hold. If pandas has integer column names, .columns returns a
+        # list of integers, see https://github.com/narwhals-dev/narwhals/issues/3571.
+        feature_names = np.asarray(nw.from_native(X).columns, dtype=object)
 
     if feature_names is None or len(feature_names) == 0:
         return
