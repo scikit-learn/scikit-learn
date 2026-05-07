@@ -510,10 +510,6 @@ cdef class ClassificationCriterion(Criterion):
         - single-output trees and
         - binary classifications.
         """
-        if self.weighted_n_left == 0.:
-            return self.sum_right[0, 0] / self.weighted_n_right
-        elif self.weighted_n_right == 0.:
-            return self.sum_left[0, 0] / self.weighted_n_left
         return (
             (self.sum_left[0, 0] / (2 * self.weighted_n_left)) +
             (self.sum_right[0, 0] / (2 * self.weighted_n_right))
@@ -526,16 +522,10 @@ cdef class ClassificationCriterion(Criterion):
         float64_t upper_bound,
     ) noexcept nogil:
         """Check monotonicity constraint is satisfied at the current classification split"""
-        if (
-            (self.weighted_n_left == 0.) or
-            (self.weighted_n_right == 0.) or
-            (lower_bound > upper_bound)
-        ):
-            return 0
-
         cdef:
             float64_t value_left = self.sum_left[0][0] / self.weighted_n_left
             float64_t value_right = self.sum_right[0][0] / self.weighted_n_right
+
         return self._check_monotonicity(monotonic_cst, lower_bound, upper_bound, value_left, value_right)
 
 
@@ -910,10 +900,6 @@ cdef class RegressionCriterion(Criterion):
         Monotonicity constraints are only supported for single-output trees we can safely assume
         n_outputs == 1.
         """
-        if self.weighted_n_left == 0.:
-            return self.sum_right[0] / self.weighted_n_right
-        elif self.weighted_n_right == 0.:
-            return self.sum_left[0] / self.weighted_n_left
         return (
             (self.sum_left[0] / (2 * self.weighted_n_left)) +
             (self.sum_right[0] / (2 * self.weighted_n_right))
@@ -926,16 +912,10 @@ cdef class RegressionCriterion(Criterion):
         float64_t upper_bound,
     ) noexcept nogil:
         """Check monotonicity constraint is satisfied at the current regression split"""
-        if (
-            (self.weighted_n_left == 0.) or
-            (self.weighted_n_right == 0.) or
-            (lower_bound > upper_bound)
-        ):
-            return 0
-
         cdef:
             float64_t value_left = self.sum_left[0] / self.weighted_n_left
             float64_t value_right = self.sum_right[0] / self.weighted_n_right
+
         return self._check_monotonicity(monotonic_cst, lower_bound, upper_bound, value_left, value_right)
 
 
