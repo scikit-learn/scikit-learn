@@ -1366,7 +1366,9 @@ def test_check_X_y_informative_error():
         check_X_y(X, y, estimator=RandomForestRegressor())
 
 
-def test_retrieve_samples_from_non_standard_shape():
+def test_num_samples_on_non_standard_shape():
+    """Test _num_samples on different non standard input X."""
+
     class TestNonNumericShape:
         def __init__(self):
             self.shape = ("not numeric",)
@@ -1384,6 +1386,37 @@ def test_retrieve_samples_from_non_standard_shape():
 
     with pytest.raises(TypeError, match="Expected sequence or array-like"):
         _num_samples(TestNoLenWeirdShape())
+
+    class TestNoLenNoShapeButArrayProtocol:
+        def __init__(self, x):
+            self.x = x
+
+        def __array__(self, dtype=None, copy=None):
+            return np.asarray(self.x, dtype=dtype)  # copy needs numpy >= 2.0
+
+    X = TestNoLenNoShapeButArrayProtocol(np.arange(3))
+    assert _num_samples(X) == 3
+    X = TestNoLenNoShapeButArrayProtocol(np.arange(6).reshape(3, 2))
+    assert _num_samples(X) == 3
+
+
+@pytest.mark.parametrize(
+    "constructor_name", ["list", "tuple", "array", "series", "polars_series"]
+)
+def test_num_samples_on_1d(constructor_name):
+    """Test _num_samples on different 1d input X."""
+    X = _convert_container(list(range(3)), constructor_name)
+    assert _num_samples(X) == 3
+
+
+@pytest.mark.parametrize(
+    "constructor_name",
+    ["list", "tuple", "array", "sparse", "dataframe", "pandas", "pyarrow", "polars"],
+)
+def test_num_samples_on_dataframe_likes(constructor_name):
+    """Test _num_samples on different dataframe-like input X."""
+    X = _convert_container([[1, 11], [2, 22], [3, 33]], constructor_name)
+    assert _num_samples(X) == 3
 
 
 @pytest.mark.parametrize("x", [2, 3, 2.5, 5])
@@ -2037,10 +2070,10 @@ def test_get_feature_names_pandas():
 
 @pytest.mark.parametrize(
     "constructor_name, minversion",
-    [("pyarrow", "12.0.0"), ("dataframe", "1.5.0"), ("polars", "0.18.2")],
+    [("pyarrow", "13.0.0"), ("dataframe", "1.5.0"), ("polars", "0.18.2")],
 )
-def test_get_feature_names_dataframe_protocol(constructor_name, minversion):
-    """Uses the dataframe exchange protocol to get feature names."""
+def test_get_feature_names_4_dataframes(constructor_name, minversion):
+    """Test _get_features_names on dataframes."""
     data = [[1, 4, 2], [3, 3, 6]]
     columns = ["col_0", "col_1", "col_2"]
     df = _convert_container(
@@ -2252,23 +2285,6 @@ def test_check_array_multiple_extensions(
     X_regular_checked = check_array(X_regular, dtype=None)
     X_extension_checked = check_array(X_extension, dtype=None)
     assert_array_equal(X_regular_checked, X_extension_checked)
-
-
-def test_num_samples_dataframe_protocol():
-    """Use the DataFrame interchange protocol to get n_samples."""
-    pa = pytest.importorskip("pyarrow")
-
-    class MockDFInterchange:
-        """A dataframe class without .shape attr but with __dataframe__ protocol"""
-
-        def __init__(self, *args, **kwargs):
-            self.df = pa.table(*args, **kwargs)
-
-        def __dataframe__(self):
-            return self.df.__dataframe__()
-
-    df = MockDFInterchange({"a": [1, 2, 3], "b": [4, 5, 6]})
-    assert _num_samples(df) == 3
 
 
 @pytest.mark.parametrize(
