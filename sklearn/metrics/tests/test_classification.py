@@ -3222,7 +3222,7 @@ def test_f1_for_small_binary_inputs_with_zero_division(y_true, y_pred, expected_
         make_scorer(recall_score, zero_division=np.nan),
     ],
 )
-def test_classification_metric_division_by_zero_nan_validaton(scoring):
+def test_classification_metric_division_by_zero_nan_validation(scoring):
     """Check that we validate `np.nan` properly for classification metrics.
 
     With `n_jobs=2` in cross-validation, the `np.nan` used for the singleton will be

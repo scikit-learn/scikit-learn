@@ -383,7 +383,7 @@ def test_plot_partial_dependence_passing_numpy_axes(
 
 @pytest.mark.parametrize("nrows, ncols", [(2, 2), (3, 1)])
 @pytest.mark.parametrize("use_custom_values", [True, False])
-def test_plot_partial_dependence_incorrent_num_axes(
+def test_plot_partial_dependence_incorrect_num_axes(
     pyplot,
     clf_diabetes,
     diabetes,

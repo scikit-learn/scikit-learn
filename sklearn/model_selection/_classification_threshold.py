@@ -504,7 +504,7 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
     into a class label. The tuning is done by optimizing a binary metric,
     potentially constrained by another metric.
 
-    Read more in the :ref:`User Guide <threshold_tunning>`.
+    Read more in the :ref:`User Guide <threshold_tuning>`.
 
     .. versionadded:: 1.5
 

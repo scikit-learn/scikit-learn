@@ -1397,7 +1397,7 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         return tags
 
     def _get_scorer_instance(self):
-        """Return a scorer which corresponds to what's defined in ClassiferMixin
+        """Return a scorer which corresponds to what's defined in ClassifierMixin
         parent class. This is used for routing `sample_weight`.
         """
         return get_scorer("accuracy")

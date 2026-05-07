@@ -2268,7 +2268,7 @@ def metric_at_thresholds(
     r"""Compute `metric_func` per threshold for :term:`binary` data.
 
     Aids visualization of metric values across thresholds when tuning the
-    :ref:`decision threshold <threshold_tunning>`.
+    :ref:`decision threshold <threshold_tuning>`.
 
     Read more in the :ref:`User Guide <metric_at_thresholds>`.
 
