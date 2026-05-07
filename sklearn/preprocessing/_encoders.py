@@ -15,7 +15,14 @@ from sklearn.base import (
     _fit_context,
 )
 from sklearn.utils import _safe_indexing, check_array
-from sklearn.utils._encode import _check_unknown, _encode, _get_counts, _unique,_nandict
+from sklearn.utils._array_api import device, get_namespace
+from sklearn.utils._encode import (
+    _check_unknown,
+    _encode,
+    _get_counts,
+    _nandict,
+    _unique,
+)
 from sklearn.utils._mask import _get_mask
 from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
@@ -25,7 +32,6 @@ from sklearn.utils.validation import (
     check_is_fitted,
     validate_data,
 )
-from sklearn.utils._array_api import _isin, device, get_namespace, xpx
 
 __all__ = ["OneHotEncoder", "OrdinalEncoder"]
 
@@ -89,7 +95,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         )
         self.n_features_in_ = n_features
 
-        if self.categories != "auto" and self.categories != "frequency" :
+        if self.categories != "auto" and self.categories != "frequency":
             if len(self.categories) != n_features:
                 raise ValueError(
                     "Shape mismatch: if categories is an array,"
@@ -119,7 +125,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 if "inverted_table" not in dir(self):
                     self.inverted_table = {}
 
-                for key,value in enumerate(table):
+                for key, value in enumerate(table):
                     if value in list(self.inverted_table.keys()):
                         continue
                     index_frequency = frequency_table.index(table[value])
@@ -269,11 +275,13 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 table = _nandict({val: i for i, val in enumerate(self.categories_[i])})
                 frequency_table = list(table.values())
                 frequency_table.sort()
-                X_int[:, i] = xp.asarray([self.inverted_table[v] for v in Xi],
-                                          device=device(Xi))
+                X_int[:, i] = xp.asarray(
+                    [self.inverted_table[v] for v in Xi], device=device(Xi)
+                )
             else:
-                X_int[:, i] = _encode(Xi, uniques=self.categories_[i],
-                                       check_unknown=False)
+                X_int[:, i] = _encode(
+                    Xi, uniques=self.categories_[i], check_unknown=False
+                )
         if columns_with_unknown:
             warnings.warn(
                 (

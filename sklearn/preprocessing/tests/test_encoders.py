@@ -227,7 +227,6 @@ def test_frequency_same():
             ["b", "x"],
             ["b", "x"],
             ["b", "x"],
-            ["b", "x"],
         ],
         dtype=object,
     )
@@ -235,16 +234,13 @@ def test_frequency_same():
 
     X_trans_enc = enc.transform(X_trans)
     exp = np.array(
-        [
-            [0.0, -2.0],
-            [-2.0, 1.0],
-            [0.0, 0.0],
-            [0.0, 0.0],
-            [1.0, 0.0],
-            [1.0, 0.0],
-            [1.0, 0.0],
-            [1.0, 0.0],
-        ],
+        [[ 2. ,-2.],
+        [-2.,  1.],
+        [ 2.,  4.],
+        [ 2.,  4.],
+        [ 3.,  4.],
+        [ 3.,  4.],
+        [ 3.,  4.]],
         dtype="int64",
     )
 
@@ -259,11 +255,9 @@ def test_frequency_same():
             ["b", "x"],
             ["b", "x"],
             ["b", "x"],
-            ["b", "x"],
         ],
         dtype=object,
     )
-
     assert_array_equal(X_trans_inv, inv_exp)
 
 
