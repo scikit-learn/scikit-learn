@@ -499,9 +499,9 @@ def _logistic_regression_path(
     )
     for i, C in enumerate(Cs):
         if solver == "lbfgs":
-            # In LogisticRegression fit, Cs is always a singleton, so we don't use
-            # subcontexts in this for loop to avoid introducing an unnecessary subtask
-            # level.
+            # In LogisticRegression.fit, Cs is always a one-element list, so 
+            # we don't add additional callback subcontexts inside this for-loop 
+            # to avoid introducing an unnecessary subtask level.
             # TODO(callbacks) When adding callbcak support to LogisticRegressionCV,
             # another subcontext level will be necessary, so we'll need to add a level
             # only in the LogisticRegressionCV, keeping the LogisticRegression version
