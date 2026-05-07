@@ -708,7 +708,7 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
             Transformed samples.
         """
         callback_ctx = self._init_callback_context(
-            task_name="fit transform", max_subtasks=len(self.steps)
+            task_name="fit_transform", max_subtasks=len(self.steps)
         )
         callback_ctx.call_on_fit_task_begin(estimator=self, X=X, y=y)
 
@@ -854,7 +854,7 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
             Result of calling `fit_predict` on the final estimator.
         """
         callback_ctx = self._init_callback_context(
-            task_name="fit predict", max_subtasks=len(self.steps)
+            task_name="fit_predict", max_subtasks=len(self.steps)
         )
         callback_ctx.call_on_fit_task_begin(estimator=self, X=X, y=y)
 
