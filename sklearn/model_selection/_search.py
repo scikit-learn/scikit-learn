@@ -1002,6 +1002,7 @@ class BaseSearchCV(
         n_splits = cv_orig.get_n_splits(X, y, **routed_params.splitter.split)
 
         # avoid circular import
+        from sklearn.experimental import enable_halving_search_cv  # noqa: F401
         from sklearn.model_selection import HalvingGridSearchCV, HalvingRandomSearchCV
 
         _single_shot_run_search = [
@@ -1176,9 +1177,9 @@ class BaseSearchCV(
             )
 
             with refit_subctx.propagate_callback_context(self.best_estimator_):
-                metadata = {"sample_weight": params.get("sample_weight", {})}
+                metadata_callbacks = {"sample_weight": params.get("sample_weight", {})}
                 refit_subctx.call_on_fit_task_begin(
-                    estimator=self, X=X, y=y, metadata=metadata
+                    estimator=self, X=X, y=y, metadata=metadata_callbacks
                 )
 
                 refit_start_time = time.time()
@@ -1196,7 +1197,7 @@ class BaseSearchCV(
                 estimator=self,
                 X=X,
                 y=y,
-                metadata=metadata,
+                metadata=metadata_callbacks,
                 reconstruction_attributes={},
             )
 

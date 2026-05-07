@@ -809,7 +809,10 @@ def _fit_and_score(
         start_msg = f"[CV{progress_msg}] START {params_msg}"
         print(f"{start_msg}{(80 - len(start_msg)) * '.'}")
 
-    metadata_callbacks = {"sample_weight": fit_params.get("sample_weight", {})}
+    if fit_params:
+        metadata_callbacks = {"sample_weight": fit_params.get("sample_weight", {})}
+    else:
+        metadata_callbacks = {}
 
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
