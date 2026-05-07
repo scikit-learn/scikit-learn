@@ -499,18 +499,17 @@ def _logistic_regression_path(
     )
     for i, C in enumerate(Cs):
         if solver == "lbfgs":
-            # In LogisticRegression.fit, Cs is always a one-element list, so 
-            # we don't add additional callback subcontexts inside this for-loop 
-            # to avoid introducing an unnecessary subtask level.
-            # TODO(callbacks) When adding callbcak support to LogisticRegressionCV,
-            # another subcontext level will be necessary, so we'll need to add a level
-            # only in the LogisticRegressionCV, keeping the LogisticRegression version
-            # without that extra level.
-
             l2_reg_strength = 1.0 / (C * sw_sum)
             iprint = [-1, 50, 1, 100, 101][
                 np.searchsorted(np.array([0, 1, 2, 3]), verbose)
             ]
+            # In LogisticRegression.fit, Cs is always a one-element list, so we don't
+            # add additional callback subcontexts inside this for-loop to avoid
+            # introducing an unnecessary subtask level.
+            # TODO(callbacks) When adding callbcak support to LogisticRegressionCV,
+            # another subcontext level will be necessary, so we'll need to add a level
+            # only in the LogisticRegressionCV, keeping the LogisticRegression version
+            # without that extra level.
             if callback_ctx is not None:
                 # We call call_on_fit_task_begin for the first iteration's subcontext.
                 callback_ctx.subcontext(task_name="lbfgs iter").call_on_fit_task_begin(
