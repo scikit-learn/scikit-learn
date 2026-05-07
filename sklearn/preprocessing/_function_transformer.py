@@ -394,9 +394,8 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
     def set_output(self, *, transform=None):
         """Set output container.
 
-        Refer to the :ref:`user guide <df_output_transform>` for more details
-        and :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py` for an
-        example on how to use the API.
+        See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`
+        for an example on how to use the API.
 
         Parameters
         ----------

@@ -158,7 +158,6 @@ def show_versions_update(scikit_learn_release_date="today"):
 
     pure_python_or_example_dependencies = [
         "joblib",
-        "narwhals",
         "threadpoolctl",
         "scikit-image",
         "seaborn",

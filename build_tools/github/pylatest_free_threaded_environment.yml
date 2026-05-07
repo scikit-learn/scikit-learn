@@ -10,7 +10,6 @@ dependencies:
   - numpy
   - scipy
   - joblib
-  - narwhals
   - threadpoolctl
   - pytest
   - pytest-run-parallel

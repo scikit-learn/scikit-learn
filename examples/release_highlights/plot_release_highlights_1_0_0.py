@@ -136,8 +136,6 @@ spline.fit_transform(X)
 #    :scale: 50%
 
 ##############################################################################
-# .. _feature_names_in_release_highlights_1_0_0:
-#
 # Feature Names Support
 # --------------------------------------------------------------------------
 # When an estimator is passed a `pandas' dataframe

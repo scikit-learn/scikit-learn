@@ -12,7 +12,6 @@ from functools import partial
 from itertools import chain
 from numbers import Integral, Real
 
-import narwhals.stable.v2 as nw
 import numpy as np
 from scipy import sparse
 
@@ -20,7 +19,7 @@ from sklearn.base import TransformerMixin, _fit_context, clone
 from sklearn.pipeline import _fit_transform_one, _name_estimators, _transform_one
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils import Bunch
-from sklearn.utils._dataframe import is_pandas_df
+from sklearn.utils._dataframe import is_pandas_df, is_polars_df
 from sklearn.utils._indexing import (
     _determine_key_type,
     _get_column_indices,
@@ -748,7 +747,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         ]
         for Xs, name in zip(result, names):
             if not (
-                getattr(Xs, "ndim", 0) == 2 or nw.dependencies.is_into_dataframe(Xs)
+                getattr(Xs, "ndim", 0) == 2
+                or hasattr(Xs, "__dataframe__")
+                or is_polars_df(Xs)
             ):
                 raise ValueError(
                     f"The output of the '{name}' transformer should be 2D (numpy "
@@ -1044,7 +1045,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         # were not present in fit time, and the order of the columns doesn't
         # matter.
         fit_dataframe_and_transform_dataframe = hasattr(self, "feature_names_in_") and (
-            nw.dependencies.is_into_dataframe(X)
+            is_pandas_df(X) or is_polars_df(X) or hasattr(X, "__dataframe__")
         )
 
         n_samples = _num_samples(X)
@@ -1292,7 +1293,8 @@ def _check_X(X):
     """Use check_array only when necessary, e.g. on lists and other non-array-likes."""
     if (
         (hasattr(X, "__array__") and hasattr(X, "shape"))
-        or nw.dependencies.is_into_dataframe(X)
+        or hasattr(X, "__dataframe__")
+        or is_polars_df(X)
         or sparse.issparse(X)
     ):
         return X
