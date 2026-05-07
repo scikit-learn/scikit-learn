@@ -2,95 +2,19 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import datetime
-import os
-import threading
+import multiprocessing
 import uuid
 from collections import defaultdict
 from dataclasses import dataclass
-from multiprocessing.connection import Client, Connection, Listener
-from threading import Thread
 
 from sklearn.callback._callback_context import get_context_path
+from sklearn.callback._transport import (
+    ListenerHandle,
+    open_listener,
+    send,
+)
 from sklearn.utils._optional_dependencies import check_pandas_support
 from sklearn.utils._param_validation import StrOptions, validate_params
-
-# Listeners and the threads that accept on them run only in the main process and
-# are not picklable, so they must not live on the callback instance. They are
-# registered here keyed by callback uuid (which IS picklable). The instance only
-# stores the listener's address+authkey, both of which are plain bytes/strings
-# and round-trip cleanly through pickle without triggering any connection
-# attempt at unpickle time. This is the difference vs. ``multiprocessing.Manager``
-# proxies, which call ``_incref`` (and thus connect) during unpickling.
-_listeners: dict[uuid.UUID, Listener] = {}
-_acceptor_threads: dict[uuid.UUID, Thread] = {}
-
-# Worker-side connection cache, keyed by listener address. Lazy-created on first
-# send and reused for the worker process's lifetime. Process-local: each worker
-# has its own cache.
-_worker_connections: dict[bytes, Connection] = {}
-_worker_connections_lock = threading.Lock()
-
-
-def _start_log_listener(callback_id, target_log):
-    """Open a Listener on the main process and start its accept loop.
-
-    Each connection is handled in its own daemon thread, which receives records
-    and appends them to ``target_log`` until the peer disconnects. Returns the
-    listener's address and authkey (both plain bytes) so the callback instance
-    can carry them as picklable state.
-    """
-    authkey = os.urandom(32)
-    listener = Listener(authkey=authkey)
-
-    def _handle_connection(conn):
-        try:
-            while True:
-                target_log.append(conn.recv())
-        except (EOFError, OSError):
-            return
-
-    def _accept_loop():
-        while True:
-            try:
-                conn = listener.accept()
-            except OSError:
-                # Listener was closed; exit cleanly.
-                return
-            t = Thread(target=_handle_connection, args=(conn,), daemon=True)
-            t.start()
-
-    accept_thread = Thread(target=_accept_loop, daemon=True)
-    accept_thread.start()
-    _listeners[callback_id] = listener
-    _acceptor_threads[callback_id] = accept_thread
-
-    return listener.address, authkey
-
-
-def _send_log_record(address, authkey, record):
-    """Send a record to the listener at ``address`` from a worker.
-
-    Caches the connection per (process, address) so workers reconnect at most
-    once. If the listener has gone away (e.g. the callback was unpickled in a
-    fresh process and never re-attached), the failure is swallowed: the record
-    is silently dropped rather than crashing the worker's fit.
-    """
-    with _worker_connections_lock:
-        conn = _worker_connections.get(address)
-        if conn is None:
-            try:
-                conn = Client(address, authkey=authkey)
-            except (ConnectionRefusedError, FileNotFoundError, OSError):
-                return
-            _worker_connections[address] = conn
-
-    try:
-        conn.send(record)
-    except (BrokenPipeError, OSError):
-        # The listener went away mid-fit; drop the cached connection so a
-        # subsequent attempt can reconnect (or fail silently again).
-        with _worker_connections_lock:
-            _worker_connections.pop(address, None)
 
 
 @dataclass
@@ -195,38 +119,31 @@ class ScoringMonitor:
         elif callable(scoring) and isinstance(scoring, _BaseScorer):
             self._scoring = {"score": scoring}
 
-        # All persistent state below is plain Python — the callback (and any
-        # estimator it is attached to) is therefore natively picklable, including
-        # across process boundaries. Workers receive ``_address`` / ``_authkey``
-        # (plain bytes) and connect to the main-process listener lazily on first
-        # ``on_fit_task_end``; a per-connection handler thread on main appends
-        # received records to ``_log``.
         self._log = []
         self._estimator_scorers = {}
-        # Stable identifier used to look up the main-process listener in the
-        # module-level registry. Generated once at construction; pickled as-is.
-        self._callback_id = uuid.uuid4()
-        # Listener address + authkey are populated by ``_skl_on_attach`` on main.
-        # Absent before attach, and absent (re-created) after re-attach in a
-        # fresh process.
-        self._address = None
-        self._authkey = None
 
-    def _skl_on_attach(self, estimator):
-        """Open the main-process transport listener, idempotently.
+        # Handle to the main-process listener, opened eagerly so that any worker that
+        # receives a pickled copy of this callback can send data to the main process.
+        # `self._log.append` is the message consumer that `send` calls will use to
+        # to grow the main process's log.
+        self._listener_handle: ListenerHandle = open_listener(self._log.append)
 
-        Called by ``CallbackSupportMixin.set_callbacks`` on main. If this callback
-        already has a live listener in this process, the existing one is reused.
-        If it does not (e.g. the callback was just unpickled in a fresh process,
-        or this is the first attach), a new listener is opened and its address
-        and authkey are stored on the instance.
+    def __setstate__(self, state):
+        """Restore state and re-open a fresh listener on a main process.
+
+        There are two cases:
+
+        - Unpickle in a worker process, e.g. joblib shipped this callback to a worker.
+          Keep `_listener_handle` as-is: it points to the main-process listener.
+
+        - Unpickle in the main process, e.g. in-process pickle round-trip, or load in a
+          fresh interpreter. The handle in the pickled state references either a
+          different listener instance or a dead listener. Open a fresh listener.
         """
-        if self._callback_id in _listeners:
+        self.__dict__.update(state)
+        if multiprocessing.parent_process() is not None:
             return
-
-        address, authkey = _start_log_listener(self._callback_id, self._log)
-        self._address = address
-        self._authkey = authkey
+        self._listener_handle = open_listener(self._log.append)
 
     def setup(self, estimator, context):
         # A scorer per estimator is needed to avoid race conditions when the callback is
@@ -279,19 +196,7 @@ class ScoringMonitor:
             scorer = self._estimator_scorers[estimator]
             scores.update(scorer(fitted_estimator, X, y, **metadata))
 
-        record = (run_id, run_info, task_info_path, scores)
-        if self._address is None:
-            # Callback was unpickled in a fresh process and never re-attached.
-            # We have nowhere to send the record. The estimator can still finish
-            # fitting; ``get_logs`` will simply not see records from this run.
-            return
-
-        listener = _listeners.get(self._callback_id)
-        if listener is not None:
-            # Same-process fast path: skip serialization and append directly.
-            self._log.append(record)
-        else:
-            _send_log_record(self._address, self._authkey, record)
+        send(self._listener_handle, (run_id, run_info, task_info_path, scores))
 
     @validate_params(
         {

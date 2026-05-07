@@ -514,12 +514,7 @@ def test_subcontext_task_id_ordering_error():
 
 
 def test_locally_defined_estimator():
-    """Test a callback with a locally defined estimator class.
-
-    A locally defined estimator is not picklable, putting it in a container managed by
-    the callback manager would break. As a future improvement, the loky manager used as
-    the callback manager could use the loky pickler.
-    """
+    """Check registering a callback on a locally defined estimator."""
 
     class LocallyDefinedEstimator(CallbackSupportMixin):
         @with_callbacks

@@ -1,8 +1,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import textwrap
-
 import pytest
 
 from sklearn.base import clone
@@ -13,7 +11,6 @@ from sklearn.callback.tests._utils import (
     RecordingAutoPropagatedCallback,
     RecordingCallback,
 )
-from sklearn.utils._testing import assert_run_python_script_without_output
 from sklearn.utils.parallel import Parallel, delayed
 
 
@@ -96,13 +93,3 @@ def test_function_no_callback_support(n_jobs, prefer, Callback):
     assert callback.count_hooks("on_fit_task_begin") == n_fits * (1 + max_iter)
     assert callback.count_hooks("on_fit_task_end") == n_fits * (1 + max_iter)
     assert callback.count_hooks("teardown") == n_fits
-
-
-def test_instantiate_manager_outside_main_module():
-    """Test instantiating the callbacks manager outside the __main__ module."""
-    code = """
-    from sklearn.callback._callback_support import get_callback_manager
-
-    get_callback_manager()
-    """
-    assert_run_python_script_without_output(textwrap.dedent(code))

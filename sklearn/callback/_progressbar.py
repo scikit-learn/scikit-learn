@@ -2,18 +2,19 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import sys
-import uuid
 import warnings
+from queue import Queue
 from threading import Thread
 
 from sklearn.callback._callback_context import get_context_path
-from sklearn.callback._callback_support import get_callback_manager
+from sklearn.callback._transport import close_listener, open_listener, send
 from sklearn.utils._optional_dependencies import check_rich_support
 
-# Monitor threads run only in the main process of a fit and are not picklable, so
-# they must not live on the callback instance. They are registered here keyed by
-# the run's root_uuid; entries are added in ``setup`` and removed in ``teardown``.
-_run_monitors: dict[uuid.UUID, "RichProgressMonitor"] = {}
+# Per-fit local queues and monitors, keyed by the run's `root_uuid`. Both are not
+# picklable so they live here rather than on the callback instance. Entries are added in
+# `setup` and removed in `teardown`.
+_run_queues = {}
+_run_monitors = {}
 
 
 class ProgressBar:
@@ -43,26 +44,27 @@ class ProgressBar:
         check_rich_support("Progressbar")
 
         self.max_propagation_depth = max_propagation_depth
-        # Per-run Manager.Queue proxies, keyed by root_uuid. Plain Python dict so
-        # the instance is natively picklable; the Manager process is only spawned
-        # on the first ``setup`` call. Workers that receive the pickled callback
-        # see the same queue proxies and can ``put`` on them cross-process.
-        self._run_queues = {}
+
+        # Handles to the main-process per-fit listeners, keyed by `root_uuid`.
+        self._listener_handles = {}
 
     def setup(self, estimator, context):
-        # Lazily create the per-fit transport state. The Manager process is only
-        # spawned here, on the first fit, instead of at construction time. ``setup``
-        # runs on the main process for the common case where ``ProgressBar`` is
-        # attached to (or auto-propagated from) the outermost estimator. In the
-        # degraded case where the outer function does not support callbacks, this
-        # may run inside a loky worker; that worker will then spawn its own local
-        # Manager and the queues will be process-local — the callback runs in
+        # Lazily create the per-fit transport state. `setup` runs on the main
+        # process for the common case where `ProgressBar` is registered on (or
+        # auto-propagated from) the outermost estimator. In the degraded case
+        # where the outer function does not support callbacks, this may run
+        # inside a worker process; that worker will then open its own local
+        # listener and the events will be process-local — the callback runs in
         # slightly degraded mode but does not crash.
-        queue = get_callback_manager().Queue()
-        self._run_queues[context.root_uuid] = queue
+        queue = Queue()
+        # `queue.put` is the message consumer that `send` calls will use to forward
+        # information to the rich monitor thread.
+        self._listener_handles[context.root_uuid] = open_listener(queue.put)
 
         progress_monitor = RichProgressMonitor(queue=queue)
         progress_monitor.start()
+
+        _run_queues[context.root_uuid] = queue
         _run_monitors[context.root_uuid] = progress_monitor
 
     def on_fit_task_begin(self, estimator, context):
@@ -76,7 +78,8 @@ class ProgressBar:
             # We pass the minimal information to the queue that is necessary to create a
             # progress bar and not the context to avoid pickling the whole context tree.
             path = [ctx.task_id for ctx in get_context_path(context)]
-            self._run_queues[context.root_uuid].put(
+            send(
+                self._listener_handles[context.root_uuid],
                 {
                     "event": "begin",
                     "path": path,
@@ -86,26 +89,25 @@ class ProgressBar:
                     "estimator_name": context.estimator_name,
                     "source_estimator_name": context.source_estimator_name,
                     "source_task_name": context.source_task_name,
-                }
+                },
             )
 
     def on_fit_task_end(self, estimator, context):
         # The path is enough to update the progress of the task and its ancestors.
-        self._run_queues[context.root_uuid].put(
+        send(
+            self._listener_handles[context.root_uuid],
             {
                 "event": "end",
                 "path": [ctx.task_id for ctx in get_context_path(context)],
-            }
+            },
         )
 
     def teardown(self, estimator, context):
-        # Signal that the queue won't receive any more tasks, then join the monitor
-        # thread and drop both transport entries. The instance always keeps a
-        # ``_run_queues`` dict so concurrent teardowns from sibling fits don't race
-        # on its presence.
-        queue = self._run_queues.pop(context.root_uuid)
-        queue.put(None)
+        # Fit is finished. Signal that the queue won't receive any more tasks, close
+        # the monitor thread and the listener.
+        _run_queues.pop(context.root_uuid).put(None)
         _run_monitors.pop(context.root_uuid).join()
+        close_listener(self._listener_handles.pop(context.root_uuid))
 
 
 try:
@@ -145,7 +147,7 @@ class RichProgressMonitor(Thread):
 
     Parameters
     ----------
-    queue : `multiprocessing.Manager.Queue` instance
+    queue : `queue.Queue` instance
         This thread will run until the queue is empty.
     """
 

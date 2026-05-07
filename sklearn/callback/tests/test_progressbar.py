@@ -85,16 +85,16 @@ def test_progressbar_requires_rich_error():
 
 
 def test_clone_after_fit():
-    """Smoke test for cloning after fit with a progressbar attached.
+    """Cloning an estimator with a ProgressBar preserves the callback reference.
 
-    Initialized `ProgressBar` instances use a multiprocessing.Manager.Queue instance
-    that cannot be deepcopied. This test is there to ensure that future changes
-    in clone will not make it attempt to naively call copy.deepcopy on the
-    _skl_callbacks attribute of the estimator.
+    clone copies _skl_callbacks by reference so that a single callback instance can
+    track every clone.
     """
     pytest.importorskip("rich")
-    est = MaxIterEstimator().set_callbacks(ProgressBar()).fit()
-    clone(est)
+    pb = ProgressBar()
+    est = MaxIterEstimator().set_callbacks(pb).fit()
+    cloned = clone(est)
+    assert cloned._skl_callbacks[0] is pb
 
 
 @pytest.mark.parametrize("backend", ["threading", "loky"])
@@ -118,15 +118,12 @@ def test_progressbar_no_callback_support(backend):
     n_fits = 4
     func(MaxIterEstimator().set_callbacks(progressbar), n_fits=n_fits)
 
-    from sklearn.callback._progressbar import _run_monitors
+    from sklearn.callback._progressbar import _run_monitors, _run_queues
 
-    # After fit completes, ``teardown`` has popped every per-fit queue from the
-    # instance dict and every monitor from the module-level registry. The main
-    # instance's ``_run_queues`` dict therefore ends up empty in both backends:
-    # for ``threading``, teardown ran in the main process; for ``loky``, the
-    # main-process callback never had any queues added (workers' setup ran in
-    # their own processes against their own copies).
-    assert progressbar._run_queues == {}
+    # After fit completes, `teardown` has popped the per-fit queue and monitor from
+    # the module-level registry and the per-fit listener handle from the instance.
+    assert progressbar._listener_handles == {}
+    assert _run_queues == {}
     assert _run_monitors == {}
 
 
