@@ -2556,20 +2556,28 @@ def test_feature_union_metadata_routing(transformer):
 
 
 def test_pipeline_with_callbacks():
-    """Check that callbacks are propagated correctly for a pipeline."""
+    """Check that callbacks are propagated correctly for a pipeline.
+
+    passthrough step is counted as one task.
+    """
     X, y = load_iris(return_X_y=True)
     max_iter = 3
     callback = RecordingAutoPropagatedCallback()
 
     Pipeline(
-        [("sc", StandardScaler()), ("est", MaxIterEstimator(max_iter=max_iter))]
+        [
+            ("sc", StandardScaler()),
+            ("passthrough", "passthrough"),
+            ("est", MaxIterEstimator(max_iter=max_iter)),
+        ]
     ).set_callbacks(callback).fit(X, y)
 
     assert callback.count_hooks("setup") == 1
     assert callback.count_hooks("teardown") == 1
-    # 1 root + 1 root for "sc" + (1 root + max_iter leaves for "est")
-    assert callback.count_hooks("on_fit_task_begin") == 1 + 1 + 1 + max_iter
-    assert callback.count_hooks("on_fit_task_end") == 1 + 1 + 1 + max_iter
+    # 1 root for Pipeline + 1 task for "sc" + 1 task for "passthrough"
+    # + (1 root + max_iter leaves for "est")
+    assert callback.count_hooks("on_fit_task_begin") == 1 + 1 + 1 + (1 + max_iter)
+    assert callback.count_hooks("on_fit_task_end") == 1 + 1 + 1 + (1 + max_iter)
 
 
 def test_pipeline_with_callbacks_on_steps():
@@ -2602,7 +2610,11 @@ def test_pipeline_memory_callbacks_second_fit_same_pipeline():
     with TemporaryDirectory() as cachedir:
         max_iter = 3
         pipe = Pipeline(
-            [("sc", StandardScaler()), ("est", MaxIterEstimator(max_iter=max_iter))],
+            [
+                ("sc", StandardScaler()),
+                ("passthrough", "passthrough"),
+                ("est", MaxIterEstimator(max_iter=max_iter)),
+            ],
             memory=joblib.Memory(location=cachedir),
         )
         callback = RecordingAutoPropagatedCallback()
