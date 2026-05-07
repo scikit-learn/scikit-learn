@@ -46,15 +46,14 @@ def _start_log_listener(callback_id, target_log):
         try:
             while True:
                 target_log.append(conn.recv())
-        except (EOFError, OSError):
+        except (EOFError, OSError):  # pragma: no cover - peer closed mid-recv
             return
 
     def _accept_loop():
         while True:
             try:
                 conn = listener.accept()
-            except OSError:
-                # Listener was closed; exit cleanly.
+            except OSError:  # pragma: no cover - listener closed during shutdown
                 return
             t = Thread(target=_handle_connection, args=(conn,), daemon=True)
             t.start()
@@ -80,15 +79,19 @@ def _send_log_record(address, authkey, record):
         if conn is None:
             try:
                 conn = Client(address, authkey=authkey)
-            except (ConnectionRefusedError, FileNotFoundError, OSError):
+            except (  # pragma: no cover - listener absent (stale address)
+                ConnectionRefusedError,
+                FileNotFoundError,
+                OSError,
+            ):
                 return
             _worker_connections[address] = conn
 
     try:
         conn.send(record)
-    except (BrokenPipeError, OSError):
-        # The listener went away mid-fit; drop the cached connection so a
-        # subsequent attempt can reconnect (or fail silently again).
+    except (BrokenPipeError, OSError):  # pragma: no cover - listener gone mid-fit
+        # Drop the cached connection so a subsequent attempt can reconnect (or
+        # fail silently again).
         with _worker_connections_lock:
             _worker_connections.pop(address, None)
 
