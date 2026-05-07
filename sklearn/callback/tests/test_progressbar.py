@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import re
-import sys
 import textwrap
 from unittest import mock
 
@@ -23,14 +22,6 @@ from sklearn.utils._testing import (
     assert_run_python_script_without_output,
 )
 from sklearn.utils.parallel import Parallel, delayed
-
-# TODO: remove when Python 3.13 is the min version.
-# Shared, module-level test marker to skip on older Python versions:
-pytestmark = pytest.mark.skipif(
-    sys.version_info < (3, 12, 8),
-    reason="Race conditions can appear because of multiprocessing issues for python"
-    " < 3.12.8.",
-)
 
 
 @pytest.mark.parametrize("n_jobs", [1, 2])

@@ -1,8 +1,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import sys
-import warnings
 from queue import Queue
 from threading import Thread
 
@@ -26,21 +24,9 @@ class ProgressBar:
         The maximum depth of nested levels of estimators to display progress bars for.
         0 means that the progress of only the outermost estimator is displayed.
         If set to None, all levels are displayed.
-
-    Notes
-    -----
-    The use of this callback on python versions inferior to 3.12.8 might lead to
-    unexpected crashes related to multiprocessing bugs on certain platforms.
     """
 
     def __init__(self, max_propagation_depth=1):
-        if sys.version_info < (3, 12, 8):
-            warnings.warn(
-                "The use of the ProgressBar callback on python versions inferior "
-                "to 3.12.8 might lead to unexpected crashes related to multiprocessing "
-                "bugs on certain platforms."
-            )
-
         check_rich_support("Progressbar")
 
         self.max_propagation_depth = max_propagation_depth
