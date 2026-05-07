@@ -8,11 +8,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 
 from sklearn.callback._callback_context import get_context_path
-from sklearn.callback._transport import (
-    ListenerHandle,
-    open_listener,
-    send,
-)
+from sklearn.callback._transport import open_listener, send
 from sklearn.utils._optional_dependencies import check_pandas_support
 from sklearn.utils._param_validation import StrOptions, validate_params
 
@@ -126,23 +122,6 @@ class ScoringMonitor:
         # receives a pickled copy of this callback can send data to the main process.
         # `self._log.append` is the message consumer that `send` calls will use to
         # to grow the main process's log.
-        self._listener_handle: ListenerHandle = open_listener(self._log.append)
-
-    def __setstate__(self, state):
-        """Restore state and re-open a fresh listener on a main process.
-
-        There are two cases:
-
-        - Unpickle in a worker process, e.g. joblib shipped this callback to a worker.
-          Keep `_listener_handle` as-is: it points to the main-process listener.
-
-        - Unpickle in the main process, e.g. in-process pickle round-trip, or load in a
-          fresh interpreter. The handle in the pickled state references either a
-          different listener instance or a dead listener. Open a fresh listener.
-        """
-        self.__dict__.update(state)
-        if multiprocessing.parent_process() is not None:
-            return
         self._listener_handle = open_listener(self._log.append)
 
     def setup(self, estimator, context):
@@ -197,6 +176,23 @@ class ScoringMonitor:
             scores.update(scorer(fitted_estimator, X, y, **metadata))
 
         send(self._listener_handle, (run_id, run_info, task_info_path, scores))
+
+    def __setstate__(self, state):
+        """Restore state and re-open a fresh listener on a main process.
+
+        There are two cases:
+
+        - Unpickle in a worker process, e.g. joblib shipped this callback to a worker.
+          Keep `_listener_handle` as-is: it points to the main-process listener.
+
+        - Unpickle in the main process, e.g. in-process pickle round-trip, or load in a
+          fresh interpreter. The handle in the pickled state references either a
+          different listener instance or a dead listener. Open a fresh listener.
+        """
+        self.__dict__.update(state)
+        if multiprocessing.parent_process() is not None:
+            return
+        self._listener_handle = open_listener(self._log.append)
 
     @validate_params(
         {
