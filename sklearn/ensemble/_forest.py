@@ -64,7 +64,6 @@ from sklearn.tree import (
     ExtraTreeClassifier,
     ExtraTreeRegressor,
 )
-from sklearn.tree._tree import DOUBLE, DTYPE
 from sklearn.utils import (
     check_random_state,
     compute_class_weight,
@@ -338,7 +337,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             y,
             multi_output=True,
             accept_sparse="csc",
-            dtype=DTYPE,
+            dtype=np.float32,
             ensure_all_finite=False,
         )
         # _compute_missing_values_in_feature_mask checks if X has missing values and
@@ -393,8 +392,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         y, expanded_class_weight = self._validate_y_class_weight(y, sample_weight)
 
-        if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
-            y = np.ascontiguousarray(y, dtype=DOUBLE)
+        if getattr(y, "dtype", None) != np.float64 or not y.flags.contiguous:
+            y = np.ascontiguousarray(y, dtype=np.float64)
 
         # Combined _sample_weight = sample_weight * expanded_class_weight
         # (when provided) used in _parallel_build_trees to draw indices
@@ -616,7 +615,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         X = validate_data(
             self,
             X,
-            dtype=DTYPE,
+            dtype=np.float32,
             accept_sparse="csr",
             reset=False,
             ensure_all_finite=ensure_all_finite,
@@ -1137,7 +1136,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
         Parameters
         ----------
-        grid : ndarray of shape (n_samples, n_target_features), dtype=DTYPE
+        grid : ndarray of shape (n_samples, n_target_features), dtype=np.float32
             The grid points on which the partial dependence should be
             evaluated.
         target_features : ndarray of shape (n_target_features), dtype=np.intp
@@ -1149,7 +1148,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         averaged_predictions : ndarray of shape (n_samples,)
             The value of the partial dependence function on each grid point.
         """
-        grid = np.asarray(grid, dtype=DTYPE, order="C")
+        grid = np.asarray(grid, dtype=np.float32, order="C")
         target_features = np.asarray(target_features, dtype=np.intp, order="C")
         averaged_predictions = np.zeros(
             shape=grid.shape[0], dtype=np.float64, order="C"
