@@ -2,13 +2,12 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import datetime
-import multiprocessing
 import uuid
 from collections import defaultdict
 from dataclasses import dataclass
 
 from sklearn.callback._callback_context import get_context_path
-from sklearn.callback._transport import open_listener, send
+from sklearn.callback._transport import can_reuse_listener, open_listener, send
 from sklearn.utils._optional_dependencies import check_pandas_support
 from sklearn.utils._param_validation import StrOptions, validate_params
 
@@ -178,21 +177,10 @@ class ScoringMonitor:
         send(self._listener_handle, (run_id, run_info, task_info_path, scores))
 
     def __setstate__(self, state):
-        """Restore state and re-open a fresh listener on a main process.
-
-        There are two cases:
-
-        - Unpickle in a worker process, e.g. joblib shipped this callback to a worker.
-          Keep `_listener_handle` as-is: it points to the main-process listener.
-
-        - Unpickle in the main process, e.g. in-process pickle round-trip, or load in a
-          fresh interpreter. The handle in the pickled state references either a
-          different listener instance or a dead listener. Open a fresh listener.
-        """
+        """Restore state, opening a fresh listener if the inherited one is unusable."""
         self.__dict__.update(state)
-        if multiprocessing.parent_process() is not None:
-            return
-        self._listener_handle = open_listener(self._log.append)
+        if not can_reuse_listener(self._listener_handle):
+            self._listener_handle = open_listener(self._log.append)
 
     @validate_params(
         {

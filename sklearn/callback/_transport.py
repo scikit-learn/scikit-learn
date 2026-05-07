@@ -123,6 +123,29 @@ def close_listener(listener_handle):
     _listeners.pop(listener_handle.address).close()
 
 
+def can_reuse_listener(listener_handle):
+    """Whether the listener at `listener_handle` is usable from this process.
+
+    Helper for callbacks that open their listener eagerly (e.g. in `__init__`) and
+    therefore have to decide, on unpickling, whether to keep the inherited handle
+    or open a fresh listener. The listener is not reusable when:
+
+    - We are the process that originally opened the listener. Reusing the handle
+      would route messages through the in-process fast path of `send`, into the
+      original instance's message consumer instead of the unpickled instance's.
+
+    - The listener is no longer reachable, e.g. unpickling in a fresh interpreter,
+      or on a host that cannot reach the original listener.
+    """
+    if listener_handle.address in _listeners:
+        return False
+    try:
+        Client(listener_handle.address, authkey=listener_handle.authkey).close()
+    except OSError:
+        return False
+    return True
+
+
 def send(listener_handle, message):
     """Deliver `message` to whoever is listening on `listener_handle`.
 
