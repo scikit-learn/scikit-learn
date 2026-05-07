@@ -363,12 +363,11 @@ def test_1d_tree_nodes_values(
     clf.fit(X, y)
 
     assert_1d_reg_tree_children_monotonic_bounded(clf.tree_, monotonic_sign)
-    assert_1d_reg_monotonic(clf, monotonic_sign, np.min(X), np.max(X), 100)
+    min_x, max_x = np.nanmin(X), np.nanmax(X)
+    assert_1d_reg_monotonic(clf, monotonic_sign, min_x, max_x, 100)
 
 
-def assert_nd_reg_tree_children_monotonic_bounded(
-    tree_, monotonic_cst, with_missing=False
-):
+def assert_nd_reg_tree_children_monotonic_bounded(tree_, monotonic_cst):
     upper_bound = np.full(tree_.node_count, np.inf)
     lower_bound = np.full(tree_.node_count, -np.inf)
     for i in range(tree_.node_count):
@@ -380,12 +379,8 @@ def assert_nd_reg_tree_children_monotonic_bounded(
         # is slightly different from the value of the right sibling.
         # This can cause a discrepancy up to numerical noise when clipping,
         # which is resolved by comparing with some loss of precision.
-        # Clipping modifies the actual middle values and in turn the
-        # lower_bound and upper_bound computed here with missing values,
-        # which causes node_value to trespass the final bounds (post clipping)
-        if not with_missing:
-            assert np.float32(node_value) <= np.float32(upper_bound[i])
-            assert np.float32(node_value) >= np.float32(lower_bound[i])
+        assert np.float32(node_value) <= np.float32(upper_bound[i])
+        assert np.float32(node_value) >= np.float32(lower_bound[i])
 
         if feature < 0:
             # Leaf: nothing to do
@@ -536,6 +531,4 @@ def test_nd_tree_nodes_values(
         mask = generator.choice(2, size=X.shape, p=[0.8, 0.2]).astype(bool)
         X[mask] = np.nan
     clf.fit(X, y)
-    assert_nd_reg_tree_children_monotonic_bounded(
-        clf.tree_, monotonic_cst, with_missing=with_missing
-    )
+    assert_nd_reg_tree_children_monotonic_bounded(clf.tree_, monotonic_cst)
