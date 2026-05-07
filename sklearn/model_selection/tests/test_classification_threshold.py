@@ -513,9 +513,7 @@ def test_tuned_threshold_classifier_refit_false_consistent_split():
 
     cv = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=0)
     with patch.object(cv, "split", wraps=cv.split) as mock_split:
-        TunedThresholdClassifierCV(
-            LogisticRegression(), cv=cv, refit=False
-        ).fit(X, y)
+        TunedThresholdClassifierCV(LogisticRegression(), cv=cv, refit=False).fit(X, y)
         assert mock_split.call_count == 1, (
             f"cv.split() was called {mock_split.call_count} times; expected 1. "
             "The second call produces a different split and makes estimator_ "
