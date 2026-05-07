@@ -1475,7 +1475,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         Categorical features are only supported for dense inputs
         and single-output targets.
-        Values of categorical features must be contiguous integers in ``[0, 63]``
+        Values of categorical features must be contiguous integers in ``[0, 255]``
         (missing values are not supported).
         Categorical features cannot have non-zero monotonic constraints.
 
