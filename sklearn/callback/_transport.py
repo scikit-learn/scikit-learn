@@ -58,6 +58,11 @@ class ListenerHandle(NamedTuple):
 _listeners = {}
 _message_consumers = {}
 
+# Worker-side cache of client connections back to the main-process listeners, keyed by
+# listener address. The first cross-process send opens a client. Subsequent sends to the
+# same listener reuse the cached connection.
+_worker_connections = {}
+
 
 def open_listener(message_consumer):
     """Create a listener for incoming messages on the main process.
@@ -76,16 +81,27 @@ def open_listener(message_consumer):
         A reference to the listener.
     """
     authkey = os.urandom(32)
-    listener = Listener(authkey=authkey)
+    # `backlog` is the kernel's accept queue size. The stdlib default of 1 is too
+    # small: while the accept thread is busy with the authentication handshake of
+    # an in-flight connection, any concurrent worker that calls `Client(...)` on a
+    # full queue gets `ConnectionRefusedError` (macOS in particular enforces this
+    # strictly). With the worker-side connection cache (see `_worker_connections`)
+    # only one `connect()` per worker per listener is ever needed, so 128 is comfortably
+    # more than enough.
+    listener = Listener(authkey=authkey, backlog=128)
     listener_handle = ListenerHandle(address=listener.address, authkey=authkey)
 
     _listeners[listener_handle.address] = listener
     _message_consumers[listener_handle.address] = message_consumer
 
     def _handle(conn):
+        # Read messages until the worker disconnects. After processing each message,
+        # send a one-byte acknowledgement so that the worker-side `send` only returns
+        # once the message has actually been consumed here.
         try:
             while True:
                 message_consumer(conn.recv())
+                conn.send(None)
         except (EOFError, OSError):
             return
 
@@ -116,16 +132,21 @@ def send(listener_handle, message):
       `open_listener` for this listener handle. The message consumer can directly be
       called without any serialization overhead.
 
-    - Cross-process path: `send` is called in a different process. A fresh socket
-      connection is opened to the main-process listener and the message is sent over it.
+    - Cross-process path: `send` is called in a different process. The worker opens
+      a `Client` connection to the main-process listener on first use and caches it
+      in `_worker_connections`, so all subsequent messages reuse the same socket.
+      `send` then waits for an acknowledgement from the main process so that, by
+      the time it returns, the message has actually been processed by the consumer.
     """
     message_consumer = _message_consumers.get(listener_handle.address)
     if message_consumer is not None:  # fast path
         message_consumer(message)
         return
 
-    try:
-        connection = Client(listener_handle.address, authkey=listener_handle.authkey)
-        connection.send(message)
-    finally:
-        connection.close()
+    address = listener_handle.address
+    connection = _worker_connections.get(address)
+    if connection is None:
+        connection = Client(address, authkey=listener_handle.authkey)
+        _worker_connections[address] = connection
+    connection.send(message)
+    connection.recv()
