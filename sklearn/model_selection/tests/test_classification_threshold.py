@@ -500,6 +500,29 @@ def test_tuned_threshold_classifier_cv_float():
     assert_allclose(tuned_model.estimator_.coef_, cloned_estimator.coef_)
 
 
+def test_tuned_threshold_classifier_refit_false_consistent_split():
+    """Non-regression test for gh-33540.
+
+    When refit=False and cv is a float, estimator_ must be trained on the same
+    partition used for threshold tuning. Previously a second cv.split() call was made
+    which produced a different random partition when random_state was not a fixed seed.
+    """
+    from unittest.mock import patch
+
+    X, y = make_classification(random_state=0)
+
+    cv = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=0)
+    with patch.object(cv, "split", wraps=cv.split) as mock_split:
+        TunedThresholdClassifierCV(
+            LogisticRegression(), cv=cv, refit=False
+        ).fit(X, y)
+        assert mock_split.call_count == 1, (
+            f"cv.split() was called {mock_split.call_count} times; expected 1. "
+            "The second call produces a different split and makes estimator_ "
+            "inconsistent with the tuned threshold."
+        )
+
+
 def test_tuned_threshold_classifier_error_constant_predictor():
     """Check that we raise a ValueError if the underlying classifier returns constant
     probabilities such that we cannot find any threshold.

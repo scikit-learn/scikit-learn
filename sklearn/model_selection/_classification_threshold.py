@@ -759,8 +759,10 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
                 # train on the whole dataset
                 X_train, y_train, fit_params_train = X, y, routed_params.estimator.fit
             else:
-                # single split cross-validation
-                train_idx, _ = next(cv.split(X, y, **routed_params.splitter.split))
+                # single split cross-validation; consume the one split from the
+                # iterator so estimator_ and threshold tuning use the same partition
+                train_idx, val_idx = next(splits)
+                splits = [(train_idx, val_idx)]  # re-wrap for the Parallel loop below
                 X_train = _safe_indexing(X, train_idx)
                 y_train = _safe_indexing(y, train_idx)
                 fit_params_train = _check_method_params(
