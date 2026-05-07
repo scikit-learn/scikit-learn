@@ -1,7 +1,6 @@
 import numpy as np
 import pytest
 
-from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.compose import ColumnTransformer, make_column_transformer
 from sklearn.datasets import load_iris
 from sklearn.decomposition import PCA, TruncatedSVD
@@ -149,24 +148,21 @@ def test_get_feature_names_out_exception():
     and we still get an HTML display with no number of features.
     """
 
-    class BrokenFeatureNamesTransformer(TransformerMixin, BaseEstimator):
+    class BrokenColumnTransformer(ColumnTransformer):
         """Transformer whose get_feature_names_out raises an exception."""
 
         def fit(self, X, y=None):
             self.n_features_in_ = X.shape[1]
             return self
 
-        def transform(self, X):
-            return X
-
         def get_feature_names_out(self, input_features=None):
-            raise RuntimeError("Simulated failure in get_feature_names_out")
+            raise RuntimeError("Simulated failure")
 
     X = np.array([[1, 2], [3, 4]])
-    pipeline = make_pipeline(BrokenFeatureNamesTransformer(), StandardScaler())
-    pipeline.fit(X)
-    html = estimator_html_repr(pipeline)
-    assert "BrokenFeatureNamesTransformer" in html
+    ct = BrokenColumnTransformer([("scaler", StandardScaler(), [0, 1])])
+    ct.fit(X)
+    html = estimator_html_repr(ct)
+
     assert "StandardScaler" in html
     assert "Features" not in html
 
