@@ -96,7 +96,7 @@ cdef class WeightedFenwickTree:
         Reset the tree to hold 'size' elements and clear all aggregates.
         """
         cdef intp_t p
-        cdef intp_t n_bytes = (size + 1) * sizeof(float64_t)  # +1 for 1-based storage
+        cdef intp_t n_bytes = (size + 1) * sizeof(Y_DTYPE_C)  # +1 for 1-based storage
 
         # Public size and zeroed aggregates.
         self.size = size
@@ -117,7 +117,7 @@ cdef class WeightedFenwickTree:
         if self.tree_wy != NULL:
             free(self.tree_wy)
 
-    cdef void add(self, intp_t idx, float64_t y_value, float64_t weight) noexcept nogil:
+    cdef void add(self, intp_t idx, Y_DTYPE_C y_value, Y_DTYPE_C weight) noexcept nogil:
         """
         Add a weighted observation to the Fenwick tree.
 
@@ -134,7 +134,7 @@ cdef class WeightedFenwickTree:
         -----
         Updates both weight sums and weighted target sums in O(log n) time.
         """
-        cdef float64_t weighted_y = weight * y_value
+        cdef Y_DTYPE_C weighted_y = weight * y_value
         cdef intp_t fenwick_idx = idx + 1  # Convert to 1-based indexing
 
         # Update Fenwick tree nodes by traversing up the tree
@@ -150,9 +150,9 @@ cdef class WeightedFenwickTree:
 
     cdef intp_t search(
         self,
-        float64_t target_weight,
-        float64_t* cumul_weight_out,
-        float64_t* cumul_weighted_y_out,
+        Y_DTYPE_C target_weight,
+        Y_DTYPE_C* cumul_weight_out,
+        Y_DTYPE_C* cumul_weighted_y_out,
         intp_t* prev_idx_out,
     ) noexcept nogil:
         """
@@ -188,10 +188,10 @@ cdef class WeightedFenwickTree:
         cdef:
             intp_t current_idx = 0
             intp_t next_idx, prev_idx, equal_bit
-            float64_t cumul_weight = 0.0
-            float64_t cumul_weighted_y = 0.0
+            Y_DTYPE_C cumul_weight = 0.0
+            Y_DTYPE_C cumul_weighted_y = 0.0
             intp_t search_bit = self.max_pow2  # Start from highest power of 2
-            float64_t node_weight, equal_target
+            Y_DTYPE_C node_weight, equal_target
 
         # Phase 1: Standard Fenwick binary search with prefix accumulation
         # Traverse down the tree, moving right when we can consume more weight
@@ -260,11 +260,11 @@ cdef class PytestWeightedFenwickTree(WeightedFenwickTree):
     def py_reset(self, intp_t n):
         self.reset(n)
 
-    def py_add(self, intp_t idx, float64_t y, float64_t w):
+    def py_add(self, intp_t idx, Y_DTYPE_C y, Y_DTYPE_C w):
         self.add(idx, y, w)
 
-    def py_search(self, float64_t t):
-        cdef float64_t w, wy
+    def py_search(self, Y_DTYPE_C t):
+        cdef Y_DTYPE_C w, wy
         cdef intp_t prev_idx
         idx = self.search(t, &w, &wy, &prev_idx)
         return prev_idx, idx, w, wy

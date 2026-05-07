@@ -3,6 +3,7 @@
 
 # See _criterion.pyx for implementation details.
 from sklearn.utils._typedefs cimport float64_t, int8_t, intp_t
+from sklearn.tree._common cimport X_DTYPE_C, Y_DTYPE_C
 
 
 cdef class Criterion:
@@ -11,21 +12,21 @@ cdef class Criterion:
     # such as the mean in regression and class probabilities in classification.
 
     # Internal structures
-    cdef const float64_t[:, ::1] y         # Values of y
-    cdef const float64_t[:] sample_weight  # Sample weights
+    cdef const Y_DTYPE_C[:, ::1] y         # Values of y
+    cdef const Y_DTYPE_C[:] sample_weight  # Sample weights
 
     cdef const intp_t[:] sample_indices    # Sample indices in X, y
     cdef intp_t start                      # samples[start:pos] are the samples in the left node
     cdef intp_t pos                        # samples[pos:end] are the samples in the right node
     cdef intp_t end
 
-    cdef intp_t n_outputs                  # Number of outputs
-    cdef intp_t n_samples                  # Number of samples
-    cdef intp_t n_node_samples             # Number of samples in the node (end-start)
-    cdef float64_t weighted_n_samples         # Weighted number of samples (in total)
-    cdef float64_t weighted_n_node_samples    # Weighted number of samples in the node
-    cdef float64_t weighted_n_left            # Weighted number of samples in the left node
-    cdef float64_t weighted_n_right           # Weighted number of samples in the right node
+    cdef intp_t n_outputs                   # Number of outputs
+    cdef intp_t n_samples                   # Number of samples
+    cdef intp_t n_node_samples              # Number of samples in the node (end-start)
+    cdef Y_DTYPE_C weighted_n_samples       # Weighted number of samples (in total)
+    cdef Y_DTYPE_C weighted_n_node_samples  # Weighted number of samples in the node
+    cdef Y_DTYPE_C weighted_n_left          # Weighted number of samples in the left node
+    cdef Y_DTYPE_C weighted_n_right         # Weighted number of samples in the right node
 
     # The criterion object is maintained such that left and right collected
     # statistics correspond to samples[start:pos] and samples[pos:end].
@@ -33,9 +34,9 @@ cdef class Criterion:
     # Methods
     cdef int init(
         self,
-        const float64_t[:, ::1] y,
-        const float64_t[:] sample_weight,
-        float64_t weighted_n_samples,
+        const Y_DTYPE_C[:, ::1] y,
+        const Y_DTYPE_C[:] sample_weight,
+        Y_DTYPE_C weighted_n_samples,
         const intp_t[:] sample_indices,
         intp_t start,
         intp_t end

@@ -12,7 +12,7 @@ from scipy.sparse import issparse
 from sklearn.base import OutlierMixin, _fit_context
 from sklearn.ensemble._bagging import BaseBagging
 from sklearn.tree import ExtraTreeRegressor
-from sklearn.tree._tree import DTYPE as tree_dtype
+from sklearn.tree._common import X_DTYPE
 from sklearn.utils import check_array, check_random_state, gen_batches
 from sklearn.utils._chunking import get_chunk_n_rows
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
@@ -319,7 +319,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
             Fitted estimator.
         """
         X = validate_data(
-            self, X, accept_sparse=["csc"], dtype=tree_dtype, ensure_all_finite=False
+            self, X, accept_sparse=["csc"], dtype=X_DTYPE, ensure_all_finite=False
         )
 
         if sample_weight is not None:
@@ -528,7 +528,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
             self,
             X,
             accept_sparse="csr",
-            dtype=tree_dtype,
+            dtype=X_DTYPE,
             reset=False,
             ensure_all_finite=False,
         )

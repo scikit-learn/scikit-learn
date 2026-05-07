@@ -23,8 +23,10 @@ cnp.import_array()
 from scipy.sparse import issparse
 from scipy.sparse import csr_array
 
+from sklearn.tree._common import X_DTYPE, Y_DTYPE
 from sklearn.utils import _align_api_if_sparse
 
+from sklearn.tree._common cimport node_struct, X_DTYPE_C, Y_DTYPE_C
 from sklearn.tree._utils cimport safe_realloc
 from sklearn.tree._utils cimport sizet_ptr_to_ndarray
 
@@ -39,11 +41,8 @@ cdef extern from "numpy/arrayobject.h":
 # Types and constants
 # =============================================================================
 
-from numpy import float32 as DTYPE
-from numpy import float64 as DOUBLE
-
-cdef float64_t INFINITY = np.inf
-cdef float64_t EPSILON = np.finfo('double').eps
+cdef Y_DTYPE_C INFINITY = np.inf
+cdef Y_DTYPE_C EPSILON = np.finfo('double').eps
 
 # Some handy constants (BestFirstTreeBuilder)
 cdef bint IS_FIRST = 1
@@ -56,12 +55,13 @@ TREE_UNDEFINED = -2
 cdef intp_t _TREE_LEAF = TREE_LEAF
 cdef intp_t _TREE_UNDEFINED = TREE_UNDEFINED
 
-# Build the corresponding numpy dtype for Node.
-# This works by casting `dummy` to an array of Node of length 1, which numpy
+# Build the corresponding numpy dtype for node_struct.
+# This works by casting `dummy` to an array of node_struct of length 1, which numpy
 # can construct a `dtype`-object for. See https://stackoverflow.com/q/62448946
 # for a more detailed explanation.
-cdef Node dummy
-NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
+# TODO: should be np.intp, corresponding to Py_ssize_t
+cdef node_struct dummy
+NODE_DTYPE = np.asarray(<node_struct[:1]>(&dummy)).dtype
 
 cdef inline void _init_parent_record(ParentInfo* record) noexcept nogil:
     record.n_constant_features = 0
@@ -80,8 +80,8 @@ cdef class TreeBuilder:
         self,
         Tree tree,
         object X,
-        const float64_t[:, ::1] y,
-        const float64_t[:] sample_weight=None,
+        const Y_DTYPE_C[:, ::1] y,
+        const Y_DTYPE_C[:] sample_weight=None,
         const uint8_t[::1] missing_values_in_feature_mask=None,
     ):
         """Build a decision tree from the training set (X, y)."""
@@ -90,27 +90,27 @@ cdef class TreeBuilder:
     cdef inline _check_input(
         self,
         object X,
-        const float64_t[:, ::1] y,
-        const float64_t[:] sample_weight,
+        const Y_DTYPE_C[:, ::1] y,
+        const Y_DTYPE_C[:] sample_weight,
     ):
         """Check input dtype, layout and format"""
         if issparse(X):
             X = X.tocsc()
             X.sort_indices()
 
-            if X.data.dtype != DTYPE:
-                X.data = np.ascontiguousarray(X.data, dtype=DTYPE)
+            if X.data.dtype != X_DTYPE:
+                X.data = np.ascontiguousarray(X.data, dtype=X_DTYPE)
 
             if X.indices.dtype != np.int32 or X.indptr.dtype != np.int32:
                 raise ValueError("No support for np.int64 index based "
                                  "sparse matrices")
 
-        elif X.dtype != DTYPE:
+        elif X.dtype != X_DTYPE:
             # since we have to copy we will make it fortran for efficiency
-            X = np.asfortranarray(X, dtype=DTYPE)
+            X = np.asfortranarray(X, dtype=X_DTYPE)
 
         if sample_weight is not None and not sample_weight.base.flags.contiguous:
-            sample_weight = np.asarray(sample_weight, dtype=DOUBLE, order="C")
+            sample_weight = np.asarray(sample_weight, dtype=Y_DTYPE, order="C")
 
         return X, y, sample_weight
 
@@ -122,17 +122,17 @@ cdef struct StackRecord:
     intp_t depth
     intp_t parent
     bint is_left
-    float64_t impurity
+    Y_DTYPE_C impurity
     intp_t n_constant_features
-    float64_t lower_bound
-    float64_t upper_bound
+    Y_DTYPE_C lower_bound
+    Y_DTYPE_C upper_bound
 
 cdef class DepthFirstTreeBuilder(TreeBuilder):
     """Build a decision tree in depth-first fashion."""
 
     def __cinit__(self, Splitter splitter, intp_t min_samples_split,
-                  intp_t min_samples_leaf, float64_t min_weight_leaf,
-                  intp_t max_depth, float64_t min_impurity_decrease):
+                  intp_t min_samples_leaf, Y_DTYPE_C min_weight_leaf,
+                  intp_t max_depth, Y_DTYPE_C min_impurity_decrease):
         self.splitter = splitter
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
@@ -144,8 +144,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         self,
         Tree tree,
         object X,
-        const float64_t[:, ::1] y,
-        const float64_t[:] sample_weight=None,
+        const Y_DTYPE_C[:, ::1] y,
+        const Y_DTYPE_C[:] sample_weight=None,
         const uint8_t[::1] missing_values_in_feature_mask=None,
     ):
         """Build a decision tree from the training set (X, y)."""
@@ -167,9 +167,9 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef Splitter splitter = self.splitter
         cdef intp_t max_depth = self.max_depth
         cdef intp_t min_samples_leaf = self.min_samples_leaf
-        cdef float64_t min_weight_leaf = self.min_weight_leaf
+        cdef Y_DTYPE_C min_weight_leaf = self.min_weight_leaf
         cdef intp_t min_samples_split = self.min_samples_split
-        cdef float64_t min_impurity_decrease = self.min_impurity_decrease
+        cdef Y_DTYPE_C min_impurity_decrease = self.min_impurity_decrease
 
         # Recursive partition (without actual recursion)
         splitter.init(X, y, sample_weight, missing_values_in_feature_mask)
@@ -180,15 +180,15 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef intp_t parent
         cdef bint is_left
         cdef intp_t n_node_samples = splitter.n_samples
-        cdef float64_t weighted_n_node_samples
+        cdef Y_DTYPE_C weighted_n_node_samples
         cdef SplitRecord split
         cdef intp_t node_id
 
-        cdef float64_t middle_value
-        cdef float64_t left_child_min
-        cdef float64_t left_child_max
-        cdef float64_t right_child_min
-        cdef float64_t right_child_max
+        cdef Y_DTYPE_C middle_value
+        cdef Y_DTYPE_C left_child_min
+        cdef Y_DTYPE_C left_child_max
+        cdef Y_DTYPE_C right_child_min
+        cdef Y_DTYPE_C right_child_max
         cdef bint is_leaf
         cdef bint first = 1
         cdef intp_t max_depth_seen = -1
@@ -352,13 +352,13 @@ cdef struct FrontierRecord:
     intp_t pos
     intp_t depth
     bint is_leaf
-    float64_t impurity
-    float64_t impurity_left
-    float64_t impurity_right
-    float64_t improvement
-    float64_t lower_bound
-    float64_t upper_bound
-    float64_t middle_value
+    Y_DTYPE_C impurity
+    Y_DTYPE_C impurity_left
+    Y_DTYPE_C impurity_right
+    Y_DTYPE_C improvement
+    Y_DTYPE_C lower_bound
+    Y_DTYPE_C upper_bound
+    Y_DTYPE_C middle_value
 
 cdef inline bool _compare_records(
     const FrontierRecord& left,
@@ -386,7 +386,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
     def __cinit__(self, Splitter splitter, intp_t min_samples_split,
                   intp_t min_samples_leaf,  min_weight_leaf,
                   intp_t max_depth, intp_t max_leaf_nodes,
-                  float64_t min_impurity_decrease):
+                  Y_DTYPE_C min_impurity_decrease):
         self.splitter = splitter
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
@@ -399,8 +399,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         self,
         Tree tree,
         object X,
-        const float64_t[:, ::1] y,
-        const float64_t[:] sample_weight=None,
+        const Y_DTYPE_C[:, ::1] y,
+        const Y_DTYPE_C[:] sample_weight=None,
         const uint8_t[::1] missing_values_in_feature_mask=None,
     ):
         """Build a decision tree from the training set (X, y)."""
@@ -419,17 +419,17 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef FrontierRecord record
         cdef FrontierRecord split_node_left
         cdef FrontierRecord split_node_right
-        cdef float64_t left_child_min
-        cdef float64_t left_child_max
-        cdef float64_t right_child_min
-        cdef float64_t right_child_max
+        cdef Y_DTYPE_C left_child_min
+        cdef Y_DTYPE_C left_child_max
+        cdef Y_DTYPE_C right_child_min
+        cdef Y_DTYPE_C right_child_max
 
         cdef intp_t n_node_samples = splitter.n_samples
         cdef intp_t max_split_nodes = max_leaf_nodes - 1
         cdef bint is_leaf
         cdef intp_t max_depth_seen = -1
         cdef int rc = 0
-        cdef Node* node
+        cdef node_struct* node
 
         cdef ParentInfo parent_record
         _init_parent_record(&parent_record)
@@ -571,7 +571,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         intp_t end,
         bint is_first,
         bint is_left,
-        Node* parent,
+        node_struct* parent,
         intp_t depth,
         ParentInfo* parent_record,
         FrontierRecord* res
@@ -580,8 +580,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef SplitRecord split
         cdef intp_t node_id
         cdef intp_t n_node_samples
-        cdef float64_t min_impurity_decrease = self.min_impurity_decrease
-        cdef float64_t weighted_n_node_samples
+        cdef Y_DTYPE_C min_impurity_decrease = self.min_impurity_decrease
+        cdef Y_DTYPE_C weighted_n_node_samples
         cdef bint is_leaf
 
         splitter.node_reset(start, end, &weighted_n_node_samples)
@@ -838,7 +838,7 @@ cdef class Tree:
         node_ndarray = _check_node_ndarray(node_ndarray, expected_dtype=NODE_DTYPE)
         value_ndarray = _check_value_ndarray(
             value_ndarray,
-            expected_dtype=np.dtype(np.float64),
+            expected_dtype=np.dtype(Y_DTYPE),
             expected_shape=value_shape
         )
 
@@ -847,9 +847,9 @@ cdef class Tree:
             raise MemoryError("resizing tree to %d" % self.capacity)
 
         memcpy(self.nodes, cnp.PyArray_DATA(node_ndarray),
-               self.capacity * sizeof(Node))
+               self.capacity * sizeof(node_struct))
         memcpy(self.value, cnp.PyArray_DATA(value_ndarray),
-               self.capacity * self.value_stride * sizeof(float64_t))
+               self.capacity * self.value_stride * sizeof(Y_DTYPE_C))
 
     cdef int _resize(self, intp_t capacity) except -1 nogil:
         """Resize all inner arrays to `capacity`, if `capacity` == -1, then
@@ -885,9 +885,9 @@ cdef class Tree:
             # value memory is initialised to 0 to enable classifier argmax
             memset(<void*>(self.value + self.capacity * self.value_stride), 0,
                    (capacity - self.capacity) * self.value_stride *
-                   sizeof(float64_t))
-            # node memory is initialised to 0 to ensure deterministic pickle (padding in Node struct)
-            memset(<void*>(self.nodes + self.capacity), 0, (capacity - self.capacity) * sizeof(Node))
+                   sizeof(Y_DTYPE_C))
+            # node memory is initialised to 0 to ensure deterministic pickle (padding in node_struct)
+            memset(<void*>(self.nodes + self.capacity), 0, (capacity - self.capacity) * sizeof(node_struct))
 
         # if capacity smaller than node_count, adjust the counter
         if capacity < self.node_count:
@@ -897,9 +897,9 @@ cdef class Tree:
         return 0
 
     cdef intp_t _add_node(self, intp_t parent, bint is_left, bint is_leaf,
-                          intp_t feature, float64_t threshold, float64_t impurity,
+                          intp_t feature, float64_t threshold, Y_DTYPE_C impurity,
                           intp_t n_node_samples,
-                          float64_t weighted_n_node_samples,
+                          Y_DTYPE_C weighted_n_node_samples,
                           uint8_t missing_go_to_left) except -1 nogil:
         """Add a node to the tree.
 
@@ -913,7 +913,7 @@ cdef class Tree:
             if self._resize_c() != 0:
                 return INTPTR_MAX
 
-        cdef Node* node = &self.nodes[node_id]
+        cdef node_struct* node = &self.nodes[node_id]
         node.impurity = impurity
         node.n_node_samples = n_node_samples
         node.weighted_n_node_samples = weighted_n_node_samples
@@ -963,19 +963,19 @@ cdef class Tree:
             raise ValueError("X should be in np.ndarray format, got %s"
                              % type(X))
 
-        if X.dtype != DTYPE:
+        if X.dtype != X_DTYPE:
             raise ValueError("X.dtype should be np.float32, got %s" % X.dtype)
 
         # Extract input
-        cdef const float32_t[:, :] X_ndarray = X
+        cdef const X_DTYPE_C[:, :] X_ndarray = X
         cdef intp_t n_samples = X.shape[0]
-        cdef float32_t X_i_node_feature
+        cdef X_DTYPE_C X_i_node_feature
 
         # Initialize output
         cdef intp_t[:] out = np.zeros(n_samples, dtype=np.intp)
 
         # Initialize auxiliary data-structure
-        cdef Node* node = NULL
+        cdef node_struct* node = NULL
         cdef intp_t i = 0
 
         with nogil:
@@ -1007,11 +1007,11 @@ cdef class Tree:
             raise ValueError("X should be in CSR sparse format, got %s"
                              % type(X))
 
-        if X.dtype != DTYPE:
+        if X.dtype != X_DTYPE:
             raise ValueError("X.dtype should be np.float32, got %s" % X.dtype)
 
         # Extract input
-        cdef const float32_t[:] X_data = X.data
+        cdef const X_DTYPE_C[:] X_data = X.data
         cdef const int32_t[:] X_indices = X.indices
         cdef const int32_t[:] X_indptr = X.indptr
 
@@ -1022,9 +1022,9 @@ cdef class Tree:
         cdef intp_t[:] out = np.zeros(n_samples, dtype=np.intp)
 
         # Initialize auxiliary data-structure
-        cdef float32_t feature_value = 0.
-        cdef Node* node = NULL
-        cdef float32_t* X_sample = NULL
+        cdef X_DTYPE_C feature_value = 0.
+        cdef node_struct* node = NULL
+        cdef X_DTYPE_C* X_sample = NULL
         cdef intp_t i = 0
         cdef int32_t k = 0
 
@@ -1083,13 +1083,13 @@ cdef class Tree:
             raise ValueError("X should be in np.ndarray format, got %s"
                              % type(X))
 
-        if X.dtype != DTYPE:
+        if X.dtype != X_DTYPE:
             raise ValueError("X.dtype should be np.float32, got %s" % X.dtype)
 
         # Extract input
-        cdef const float32_t[:, :] X_ndarray = X
+        cdef const X_DTYPE_C[:, :] X_ndarray = X
         cdef intp_t n_samples = X.shape[0]
-        cdef float32_t X_i_node_feature
+        cdef X_DTYPE_C X_i_node_feature
 
         # Initialize output
         cdef intp_t[:] indptr = np.zeros(n_samples + 1, dtype=np.intp)
@@ -1098,7 +1098,7 @@ cdef class Tree:
         )
 
         # Initialize auxiliary data-structure
-        cdef Node* node = NULL
+        cdef node_struct* node = NULL
         cdef intp_t i = 0
 
         with nogil:
@@ -1142,11 +1142,11 @@ cdef class Tree:
             raise ValueError("X should be in CSR sparse format, got %s"
                              % type(X))
 
-        if X.dtype != DTYPE:
+        if X.dtype != X_DTYPE:
             raise ValueError("X.dtype should be np.float32, got %s" % X.dtype)
 
         # Extract input
-        cdef const float32_t[:] X_data = X.data
+        cdef const X_DTYPE_C[:] X_data = X.data
         cdef const int32_t[:] X_indices = X.indices
         cdef const int32_t[:] X_indptr = X.indptr
 
@@ -1160,9 +1160,9 @@ cdef class Tree:
         )
 
         # Initialize auxiliary data-structure
-        cdef float32_t feature_value = 0.
-        cdef Node* node = NULL
-        cdef float32_t* X_sample = NULL
+        cdef X_DTYPE_C feature_value = 0.
+        cdef node_struct* node = NULL
+        cdef X_DTYPE_C* X_sample = NULL
         cdef intp_t i = 0
         cdef int32_t k = 0
 
@@ -1247,15 +1247,15 @@ cdef class Tree:
 
     cpdef compute_feature_importances(self, normalize=True):
         """Computes the importance of each feature (aka variable)."""
-        cdef Node* left
-        cdef Node* right
-        cdef Node* nodes = self.nodes
-        cdef Node* node = nodes
-        cdef Node* end_node = node + self.node_count
+        cdef node_struct* left
+        cdef node_struct* right
+        cdef node_struct* nodes = self.nodes
+        cdef node_struct* node = nodes
+        cdef node_struct* end_node = node + self.node_count
 
         cdef float64_t normalizer = 0.
 
-        cdef cnp.float64_t[:] importances = np.zeros(self.n_features)
+        cdef float64_t[:] importances = np.zeros(self.n_features)
 
         with nogil:
             while node != end_node:
@@ -1289,7 +1289,7 @@ cdef class Tree:
         The array keeps a reference to this Tree, which manages the underlying
         memory.
         """
-        cdef cnp.npy_intp shape[3]
+        cdef cnp.npy_intp[3] shape
         shape[0] = <cnp.npy_intp> self.node_count
         shape[1] = <cnp.npy_intp> self.n_outputs
         shape[2] = <cnp.npy_intp> self.max_n_classes
@@ -1310,7 +1310,7 @@ cdef class Tree:
         cdef cnp.npy_intp shape[1]
         shape[0] = <cnp.npy_intp> self.node_count
         cdef cnp.npy_intp strides[1]
-        strides[0] = sizeof(Node)
+        strides[0] = sizeof(node_struct)
         cdef cnp.ndarray arr
         Py_INCREF(NODE_DTYPE)
         arr = PyArray_NewFromDescr(<PyTypeObject *> cnp.ndarray,
@@ -1322,7 +1322,7 @@ cdef class Tree:
             raise ValueError("Can't initialize array.")
         return arr
 
-    def compute_partial_dependence(self, float32_t[:, ::1] X,
+    def compute_partial_dependence(self, X_DTYPE_C[:, ::1] X,
                                    const intp_t[::1] target_features,
                                    float64_t[::1] out):
         """Partial dependence of the response on the ``target_feature`` set.
@@ -1363,7 +1363,7 @@ cdef class Tree:
             float64_t left_sample_frac
             float64_t current_weight
             float64_t total_weight  # used for sanity check only
-            Node *current_node  # use a pointer to avoid copying attributes
+            node_struct *current_node  # use a pointer to avoid copying attributes
             intp_t current_node_idx
             bint is_target_feature
             intp_t _TREE_LEAF = TREE_LEAF  # to avoid python interactions
@@ -1481,7 +1481,7 @@ def _dtype_to_dict(dtype):
 
 
 def _dtype_dict_with_modified_bitness(dtype_dict):
-    # field names in Node struct with intp_t types (see sklearn/tree/_tree.pxd)
+    # field names in node_struct with intp_t types (see sklearn/tree/_common.pxd)
     indexing_field_names = ["left_child", "right_child", "feature", "n_node_samples"]
 
     expected_dtype_size = str(struct.calcsize("P"))
@@ -1571,7 +1571,7 @@ cdef class _CCPPruneController:
         return 0
 
     cdef void save_metrics(self, float64_t effective_alpha,
-                           float64_t subtree_impurities) noexcept nogil:
+                           Y_DTYPE_C subtree_impurities) noexcept nogil:
         """Save metrics when pruning"""
         pass
 
@@ -1604,17 +1604,17 @@ cdef class _AlphaPruner(_CCPPruneController):
 cdef class _PathFinder(_CCPPruneController):
     """Record metrics used to return the cost complexity path."""
     cdef float64_t[:] ccp_alphas
-    cdef float64_t[:] impurities
+    cdef Y_DTYPE_C[:] impurities
     cdef uint32_t count
 
     def __cinit__(self,  intp_t node_count):
         self.ccp_alphas = np.zeros(shape=(node_count), dtype=np.float64)
-        self.impurities = np.zeros(shape=(node_count), dtype=np.float64)
+        self.impurities = np.zeros(shape=(node_count), dtype=Y_DTYPE)
         self.count = 0
 
     cdef void save_metrics(self,
                            float64_t effective_alpha,
-                           float64_t subtree_impurities) noexcept nogil:
+                           Y_DTYPE_C subtree_impurities) noexcept nogil:
         self.ccp_alphas[self.count] = effective_alpha
         self.impurities[self.count] = subtree_impurities
         self.count += 1
@@ -1649,11 +1649,11 @@ cdef _cost_complexity_prune(uint8_t[:] leaves_in_subtree,  # OUT
         intp_t i
         intp_t n_nodes = orig_tree.node_count
         # prior probability using weighted samples
-        float64_t[:] weighted_n_node_samples = orig_tree.weighted_n_node_samples
-        float64_t total_sum_weights = weighted_n_node_samples[0]
-        float64_t[:] impurity = orig_tree.impurity
+        Y_DTYPE_C[:] weighted_n_node_samples = orig_tree.weighted_n_node_samples
+        Y_DTYPE_C total_sum_weights = weighted_n_node_samples[0]
+        Y_DTYPE_C[:] impurity = orig_tree.impurity
         # weighted impurity of each node
-        float64_t[:] r_node = np.empty(shape=n_nodes, dtype=np.float64)
+        Y_DTYPE_C[:] r_node = np.empty(shape=n_nodes, dtype=Y_DTYPE)
 
         intp_t[:] child_l = orig_tree.children_left
         intp_t[:] child_r = orig_tree.children_right
@@ -1665,8 +1665,8 @@ cdef _cost_complexity_prune(uint8_t[:] leaves_in_subtree,  # OUT
         stack[intp_t] node_indices_stack
 
         intp_t[:] n_leaves = np.zeros(shape=n_nodes, dtype=np.intp)
-        float64_t[:] r_branch = np.zeros(shape=n_nodes, dtype=np.float64)
-        float64_t current_r
+        Y_DTYPE_C[:] r_branch = np.zeros(shape=n_nodes, dtype=Y_DTYPE)
+        Y_DTYPE_C current_r
         intp_t leaf_idx
         intp_t parent_idx
 
@@ -1678,7 +1678,7 @@ cdef _cost_complexity_prune(uint8_t[:] leaves_in_subtree,  # OUT
         float64_t subtree_alpha
         float64_t effective_alpha
         intp_t n_pruned_leaves
-        float64_t r_diff
+        Y_DTYPE_C r_diff
         float64_t max_float64 = np.finfo(np.float64).max
 
     # find parent node ids and leaves
@@ -1849,7 +1849,7 @@ def ccp_pruning_path(Tree orig_tree):
     cdef:
         uint32_t total_items = path_finder.count
         float64_t[:] ccp_alphas = np.empty(shape=total_items, dtype=np.float64)
-        float64_t[:] impurities = np.empty(shape=total_items, dtype=np.float64)
+        Y_DTYPE_C[:] impurities = np.empty(shape=total_items, dtype=Y_DTYPE)
         uint32_t count = 0
 
     while count < total_items:
@@ -1905,9 +1905,9 @@ cdef void _build_pruned_tree(
         intp_t value_stride = orig_tree.value_stride
         intp_t max_depth_seen = -1
         int rc = 0
-        Node* node
-        float64_t* orig_value_ptr
-        float64_t* new_value_ptr
+        node_struct* node
+        Y_DTYPE_C* orig_value_ptr
+        Y_DTYPE_C* new_value_ptr
 
         stack[BuildPrunedRecord] prune_stack
         BuildPrunedRecord stack_record
@@ -1949,7 +1949,7 @@ cdef void _build_pruned_tree(
             # copy value from original tree to new tree
             orig_value_ptr = orig_tree.value + value_stride * orig_node_id
             new_value_ptr = tree.value + value_stride * new_node_id
-            memcpy(new_value_ptr, orig_value_ptr, sizeof(float64_t) * value_stride)
+            memcpy(new_value_ptr, orig_value_ptr, sizeof(Y_DTYPE_C) * value_stride)
 
             if not is_leaf:
                 # Push right child on stack

@@ -4,7 +4,7 @@
 # See _utils.pyx for details.
 
 cimport numpy as cnp
-from sklearn.tree._tree cimport Node
+from sklearn.tree._common cimport node_struct, Y_DTYPE_C
 from sklearn.neighbors._quad_tree cimport Cell
 from sklearn.utils._typedefs cimport float32_t, float64_t, intp_t, uint8_t, int32_t, uint32_t
 
@@ -30,9 +30,9 @@ ctypedef fused realloc_ptr:
     (uint8_t*)
     (float64_t*)
     (float64_t**)
-    (Node*)
+    (node_struct*)
     (Cell*)
-    (Node**)
+    (node_struct**)
 
 cdef int safe_realloc(realloc_ptr* p, size_t nelems) except -1 nogil
 
@@ -53,18 +53,18 @@ cdef float64_t log(float64_t x) noexcept nogil
 
 cdef class WeightedFenwickTree:
     cdef intp_t size         # number of leaves (ranks)
-    cdef float64_t* tree_w   # BIT for weights
-    cdef float64_t* tree_wy  # BIT for weighted targets
+    cdef Y_DTYPE_C* tree_w   # BIT for weights
+    cdef Y_DTYPE_C* tree_wy  # BIT for weighted targets
     cdef intp_t max_pow2     # highest power of two <= n
-    cdef float64_t total_w   # running total weight
-    cdef float64_t total_wy  # running total weighted target
+    cdef Y_DTYPE_C total_w   # running total weight
+    cdef Y_DTYPE_C total_wy  # running total weighted target
 
     cdef void reset(self, intp_t size) noexcept nogil
-    cdef void add(self, intp_t idx, float64_t y, float64_t w) noexcept nogil
+    cdef void add(self, intp_t idx, Y_DTYPE_C y, Y_DTYPE_C w) noexcept nogil
     cdef intp_t search(
         self,
-        float64_t t,
-        float64_t* cw_out,
-        float64_t* cwy_out,
+        Y_DTYPE_C t,
+        Y_DTYPE_C* cw_out,
+        Y_DTYPE_C* cwy_out,
         intp_t* prev_idx_out,
     ) noexcept nogil

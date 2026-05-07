@@ -31,6 +31,8 @@ from sklearn.tree._utils cimport RAND_R_MAX, rand_int, rand_uniform
 
 import numpy as np
 
+from sklearn.tree._common import X_DTYPE
+
 # Introduce a fused-class to make it possible to share the split implementation
 # between the dense and sparse cases in the node_split_best and node_split_random
 # functions. The alternative would have been to use inheritance-based polymorphism
@@ -41,7 +43,7 @@ ctypedef fused Partitioner:
     SparsePartitioner
 
 
-cdef float64_t INFINITY = np.inf
+cdef Y_DTYPE_C INFINITY = np.inf
 
 
 cdef inline void _init_split(SplitRecord* self, intp_t start_pos) noexcept nogil:
@@ -65,7 +67,7 @@ cdef class Splitter:
         Criterion criterion,
         intp_t max_features,
         intp_t min_samples_leaf,
-        float64_t min_weight_leaf,
+        Y_DTYPE_C min_weight_leaf,
         object random_state,
         const int8_t[:] monotonic_cst,
     ):
@@ -125,8 +127,8 @@ cdef class Splitter:
     cdef int init(
         self,
         object X,
-        const float64_t[:, ::1] y,
-        const float64_t[:] sample_weight,
+        const Y_DTYPE_C[:, ::1] y,
+        const Y_DTYPE_C[:] sample_weight,
         const uint8_t[::1] missing_values_in_feature_mask,
     ) except -1:
         """Initialize the splitter.
@@ -164,7 +166,7 @@ cdef class Splitter:
         cdef intp_t[::1] samples = self.samples
 
         cdef intp_t i, j
-        cdef float64_t weighted_n_samples = 0.0
+        cdef Y_DTYPE_C weighted_n_samples = 0.0
         j = 0
 
         for i in range(n_samples):
@@ -186,7 +188,7 @@ cdef class Splitter:
         self.features = np.arange(n_features, dtype=np.intp)
         self.n_features = n_features
 
-        self.feature_values = np.empty(n_samples, dtype=np.float32)
+        self.feature_values = np.empty(n_samples, dtype=X_DTYPE)
         self.constant_features = np.empty(n_features, dtype=np.intp)
 
         self.y = y
@@ -198,7 +200,7 @@ cdef class Splitter:
         self,
         intp_t start,
         intp_t end,
-        float64_t* weighted_n_node_samples
+        Y_DTYPE_C* weighted_n_node_samples
     ) except -1 nogil:
         """Reset splitter on node samples[start:end].
 
@@ -246,17 +248,17 @@ cdef class Splitter:
 
         pass
 
-    cdef void node_value(self, float64_t* dest) noexcept nogil:
+    cdef void node_value(self, Y_DTYPE_C* dest) noexcept nogil:
         """Copy the value of node samples[start:end] into dest."""
 
         self.criterion.node_value(dest)
 
-    cdef inline void clip_node_value(self, float64_t* dest, float64_t lower_bound, float64_t upper_bound) noexcept nogil:
+    cdef inline void clip_node_value(self, Y_DTYPE_C* dest, Y_DTYPE_C lower_bound, Y_DTYPE_C upper_bound) noexcept nogil:
         """Clip the value in dest between lower_bound and upper_bound for monotonic constraints."""
 
         self.criterion.clip_node_value(dest, lower_bound, upper_bound)
 
-    cdef float64_t node_impurity(self) noexcept nogil:
+    cdef Y_DTYPE_C node_impurity(self) noexcept nogil:
         """Return the impurity of the current node."""
 
         return self.criterion.node_impurity()
@@ -291,19 +293,19 @@ cdef inline int node_split_best(
     cdef intp_t[::1] constant_features = splitter.constant_features
     cdef intp_t n_features = splitter.n_features
 
-    cdef float32_t[::1] feature_values = splitter.feature_values
+    cdef X_DTYPE_C[::1] feature_values = splitter.feature_values
     cdef intp_t max_features = splitter.max_features
     cdef intp_t min_samples_leaf = splitter.min_samples_leaf
-    cdef float64_t min_weight_leaf = splitter.min_weight_leaf
+    cdef Y_DTYPE_C min_weight_leaf = splitter.min_weight_leaf
     cdef uint32_t* random_state = &splitter.rand_r_state
 
     cdef SplitRecord best_split, current_split
-    cdef float64_t current_proxy_improvement = -INFINITY
-    cdef float64_t best_proxy_improvement = -INFINITY
+    cdef Y_DTYPE_C current_proxy_improvement = -INFINITY
+    cdef Y_DTYPE_C best_proxy_improvement = -INFINITY
 
-    cdef float64_t impurity = parent_record.impurity
-    cdef float64_t lower_bound = parent_record.lower_bound
-    cdef float64_t upper_bound = parent_record.upper_bound
+    cdef Y_DTYPE_C impurity = parent_record.impurity
+    cdef Y_DTYPE_C lower_bound = parent_record.lower_bound
+    cdef Y_DTYPE_C upper_bound = parent_record.upper_bound
 
     cdef intp_t f_i = n_features
     cdef intp_t f_j
@@ -536,16 +538,16 @@ cdef inline int node_split_random(
 
     cdef intp_t max_features = splitter.max_features
     cdef intp_t min_samples_leaf = splitter.min_samples_leaf
-    cdef float64_t min_weight_leaf = splitter.min_weight_leaf
+    cdef Y_DTYPE_C min_weight_leaf = splitter.min_weight_leaf
     cdef uint32_t* random_state = &splitter.rand_r_state
 
     cdef SplitRecord best_split, current_split
-    cdef float64_t current_proxy_improvement = - INFINITY
-    cdef float64_t best_proxy_improvement = - INFINITY
+    cdef Y_DTYPE_C current_proxy_improvement = - INFINITY
+    cdef Y_DTYPE_C best_proxy_improvement = - INFINITY
 
-    cdef float64_t impurity = parent_record.impurity
-    cdef float64_t lower_bound = parent_record.lower_bound
-    cdef float64_t upper_bound = parent_record.upper_bound
+    cdef Y_DTYPE_C impurity = parent_record.impurity
+    cdef Y_DTYPE_C lower_bound = parent_record.lower_bound
+    cdef Y_DTYPE_C upper_bound = parent_record.upper_bound
 
     cdef intp_t f_i = n_features
     cdef intp_t f_j
@@ -557,8 +559,8 @@ cdef inline int node_split_random(
     # n_total_constants = n_known_constants + n_found_constants
     cdef intp_t n_total_constants = n_known_constants
     cdef intp_t n_visited_features = 0
-    cdef float32_t min_feature_value
-    cdef float32_t max_feature_value
+    cdef X_DTYPE_C min_feature_value
+    cdef X_DTYPE_C max_feature_value
 
     _init_split(&best_split, end)
 
@@ -745,8 +747,8 @@ cdef class BestSplitter(Splitter):
     cdef int init(
         self,
         object X,
-        const float64_t[:, ::1] y,
-        const float64_t[:] sample_weight,
+        const Y_DTYPE_C[:, ::1] y,
+        const Y_DTYPE_C[:] sample_weight,
         const uint8_t[::1] missing_values_in_feature_mask,
     ) except -1:
         Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask)
@@ -773,8 +775,8 @@ cdef class BestSparseSplitter(Splitter):
     cdef int init(
         self,
         object X,
-        const float64_t[:, ::1] y,
-        const float64_t[:] sample_weight,
+        const Y_DTYPE_C[:, ::1] y,
+        const Y_DTYPE_C[:] sample_weight,
         const uint8_t[::1] missing_values_in_feature_mask,
     ) except -1:
         Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask)
@@ -801,8 +803,8 @@ cdef class RandomSplitter(Splitter):
     cdef int init(
         self,
         object X,
-        const float64_t[:, ::1] y,
-        const float64_t[:] sample_weight,
+        const Y_DTYPE_C[:, ::1] y,
+        const Y_DTYPE_C[:] sample_weight,
         const uint8_t[::1] missing_values_in_feature_mask,
     ) except -1:
         Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask)
@@ -829,8 +831,8 @@ cdef class RandomSparseSplitter(Splitter):
     cdef int init(
         self,
         object X,
-        const float64_t[:, ::1] y,
-        const float64_t[:] sample_weight,
+        const Y_DTYPE_C[:, ::1] y,
+        const Y_DTYPE_C[:] sample_weight,
         const uint8_t[::1] missing_values_in_feature_mask,
     ) except -1:
         Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask)

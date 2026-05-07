@@ -6,13 +6,14 @@
 from cython cimport floating
 
 from sklearn.utils._typedefs cimport (
-    float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t
+    float32_t, float64_t, int32_t, intp_t, uint8_t
 )
+from sklearn.tree._common cimport X_DTYPE_C, Y_DTYPE_C
 from sklearn.tree._splitter cimport SplitRecord
 
 
 # Mitigate precision differences between 32 bit and 64 bit
-cdef const float32_t FEATURE_THRESHOLD = 1e-7
+cdef const X_DTYPE_C FEATURE_THRESHOLD = 1e-7
 
 
 # We provide here the abstract interface for a Partitioner that would be
@@ -26,7 +27,7 @@ cdef const float32_t FEATURE_THRESHOLD = 1e-7
 #
 # cdef class BasePartitioner:
 #     cdef intp_t[::1] samples
-#     cdef float32_t[::1] feature_values
+#     cdef X_DTYPE_C[::1] feature_values
 #     cdef intp_t start
 #     cdef intp_t end
 #     cdef intp_t n_missing
@@ -43,8 +44,8 @@ cdef const float32_t FEATURE_THRESHOLD = 1e-7
 #     cdef void find_min_max(
 #         self,
 #         intp_t current_feature,
-#         float32_t* min_feature_value_out,
-#         float32_t* max_feature_value_out,
+#         X_DTYPE_C* min_feature_value_out,
+#         X_DTYPE_C* max_feature_value_out,
 #     ) noexcept nogil
 #     cdef void next_p(
 #         self,
@@ -67,9 +68,9 @@ cdef class DensePartitioner:
 
     Note that this partitioner is agnostic to the splitting strategy (best vs. random).
     """
-    cdef const float32_t[:, :] X
+    cdef const X_DTYPE_C[:, :] X
     cdef intp_t[::1] samples
-    cdef float32_t[::1] feature_values
+    cdef X_DTYPE_C[::1] feature_values
     cdef intp_t start
     cdef intp_t end
     cdef intp_t n_missing
@@ -88,8 +89,8 @@ cdef class DensePartitioner:
     cdef void find_min_max(
         self,
         intp_t current_feature,
-        float32_t* min_feature_value_out,
-        float32_t* max_feature_value_out,
+        X_DTYPE_C* min_feature_value_out,
+        X_DTYPE_C* max_feature_value_out,
     ) noexcept nogil
     cdef void next_p(
         self,
@@ -113,7 +114,7 @@ cdef class SparsePartitioner:
 
     Note that this partitioner is agnostic to the splitting strategy (best vs. random).
     """
-    cdef const float32_t[::1] X_data
+    cdef const X_DTYPE_C[::1] X_data
     cdef const int32_t[::1] X_indices
     cdef const int32_t[::1] X_indptr
     cdef intp_t n_total_samples
@@ -124,7 +125,7 @@ cdef class SparsePartitioner:
     cdef bint is_samples_sorted
 
     cdef intp_t[::1] samples
-    cdef float32_t[::1] feature_values
+    cdef X_DTYPE_C[::1] feature_values
     cdef intp_t start
     cdef intp_t end
     cdef intp_t n_missing
@@ -142,8 +143,8 @@ cdef class SparsePartitioner:
     cdef void find_min_max(
         self,
         intp_t current_feature,
-        float32_t* min_feature_value_out,
-        float32_t* max_feature_value_out,
+        X_DTYPE_C* min_feature_value_out,
+        X_DTYPE_C* max_feature_value_out,
     ) noexcept nogil
     cdef void next_p(
         self,
@@ -176,4 +177,4 @@ cdef void sort(floating* feature_values, intp_t* samples, intp_t n) noexcept nog
 
 ctypedef fused array_data_type:
     intp_t
-    float32_t
+    X_DTYPE_C

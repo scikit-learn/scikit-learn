@@ -27,7 +27,7 @@ from sklearn.tree._splitter cimport SplitRecord
 cdef float32_t EXTRACT_NNZ_SWITCH = 0.1
 
 # Allow for 32 bit float comparisons
-cdef float32_t INFINITY_32t = np.inf
+cdef X_DTYPE_C INFINITY_32t = np.inf
 
 
 @final
@@ -38,9 +38,9 @@ cdef class DensePartitioner:
     """
     def __init__(
         self,
-        const float32_t[:, :] X,
+        const X_DTYPE_C[:, :] X,
         intp_t[::1] samples,
-        float32_t[::1] feature_values,
+        X_DTYPE_C[::1] feature_values,
         const uint8_t[::1] missing_values_in_feature_mask,
     ):
         self.X = X
@@ -69,8 +69,8 @@ cdef class DensePartitioner:
         """
         cdef:
             intp_t i, current_end
-            float32_t[::1] feature_values = self.feature_values
-            const float32_t[:, :] X = self.X
+            X_DTYPE_C[::1] feature_values = self.feature_values
+            const X_DTYPE_C[:, :] X = self.X
             intp_t[::1] samples = self.samples
             intp_t n_missing = 0
             const uint8_t[::1] missing_values_in_feature_mask = self.missing_values_in_feature_mask
@@ -126,8 +126,8 @@ cdef class DensePartitioner:
     cdef inline void find_min_max(
         self,
         intp_t current_feature,
-        float32_t* min_feature_value_out,
-        float32_t* max_feature_value_out,
+        X_DTYPE_C* min_feature_value_out,
+        X_DTYPE_C* max_feature_value_out,
     ) noexcept nogil:
         """Find the minimum and maximum value for current_feature.
 
@@ -136,11 +136,11 @@ cdef class DensePartitioner:
         """
         cdef:
             intp_t p
-            float32_t current_feature_value
+            X_DTYPE_C current_feature_value
             intp_t[::1] samples = self.samples
-            float32_t min_feature_value = INFINITY_32t
-            float32_t max_feature_value = -INFINITY_32t
-            float32_t[::1] feature_values = self.feature_values
+            X_DTYPE_C min_feature_value = INFINITY_32t
+            X_DTYPE_C max_feature_value = -INFINITY_32t
+            X_DTYPE_C[::1] feature_values = self.feature_values
             intp_t n_missing = 0
             bint seen_non_missing = False
 
@@ -226,7 +226,7 @@ cdef class DensePartitioner:
             intp_t partition_start = self.start
             intp_t partition_end = self.end
             intp_t* samples = &self.samples[0]
-            float32_t* feature_values = &self.feature_values[0]
+            X_DTYPE_C* feature_values = &self.feature_values[0]
             bint go_to_left
 
         while partition_start < partition_end:
@@ -259,7 +259,7 @@ cdef class DensePartitioner:
             float64_t best_threshold = best_split[0].threshold
             intp_t best_feature = best_split[0].feature
             bint best_missing_go_to_left = best_split[0].missing_go_to_left
-            float32_t current_value
+            X_DTYPE_C current_value
             bint go_to_left
 
         while partition_start < partition_end:
@@ -287,7 +287,7 @@ cdef class SparsePartitioner:
         object X,
         intp_t[::1] samples,
         intp_t n_samples,
-        float32_t[::1] feature_values,
+        X_DTYPE_C[::1] feature_values,
         const uint8_t[::1] missing_values_in_feature_mask,
     ):
         if not (issparse(X) and X.format == "csc"):
@@ -327,7 +327,7 @@ cdef class SparsePartitioner:
     ) noexcept nogil:
         """Simultaneously sort based on the feature_values."""
         cdef:
-            float32_t[::1] feature_values = self.feature_values
+            X_DTYPE_C[::1] feature_values = self.feature_values
             intp_t[::1] index_to_samples = self.index_to_samples
             intp_t[::1] samples = self.samples
 
@@ -366,14 +366,14 @@ cdef class SparsePartitioner:
     cdef inline void find_min_max(
         self,
         intp_t current_feature,
-        float32_t* min_feature_value_out,
-        float32_t* max_feature_value_out,
+        X_DTYPE_C* min_feature_value_out,
+        X_DTYPE_C* max_feature_value_out,
     ) noexcept nogil:
         """Find the minimum and maximum value for current_feature."""
         cdef:
             intp_t p
-            float32_t current_feature_value, min_feature_value, max_feature_value
-            float32_t[::1] feature_values = self.feature_values
+            X_DTYPE_C current_feature_value, min_feature_value, max_feature_value
+            X_DTYPE_C[::1] feature_values = self.feature_values
 
         self.extract_nnz(current_feature)
 
@@ -462,7 +462,7 @@ cdef class SparsePartitioner:
         cdef:
             intp_t p, partition_end
             intp_t[::1] index_to_samples = self.index_to_samples
-            float32_t[::1] feature_values = self.feature_values
+            X_DTYPE_C[::1] feature_values = self.feature_values
             intp_t[::1] samples = self.samples
 
         if threshold < 0.:
@@ -509,7 +509,7 @@ cdef class SparsePartitioner:
             Index of the feature we want to extract non zero value.
         """
         cdef intp_t[::1] samples = self.samples
-        cdef float32_t[::1] feature_values = self.feature_values
+        cdef X_DTYPE_C[::1] feature_values = self.feature_values
         cdef intp_t indptr_start = self.X_indptr[feature]
         cdef intp_t indptr_end = self.X_indptr[feature + 1]
         cdef intp_t n_indices = <intp_t>(indptr_end - indptr_start)
@@ -517,7 +517,7 @@ cdef class SparsePartitioner:
         cdef intp_t[::1] index_to_samples = self.index_to_samples
         cdef intp_t[::1] sorted_samples = self.sorted_samples
         cdef const int32_t[::1] X_indices = self.X_indices
-        cdef const float32_t[::1] X_data = self.X_data
+        cdef const X_DTYPE_C[::1] X_data = self.X_data
 
         # Use binary search if n_samples * log(n_indices) <
         # n_indices and index_to_samples approach otherwise.
@@ -580,14 +580,14 @@ cdef inline void binary_search(const int32_t[::1] sorted_array,
 
 
 cdef inline void extract_nnz_index_to_samples(const int32_t[::1] X_indices,
-                                              const float32_t[::1] X_data,
+                                              const X_DTYPE_C[::1] X_data,
                                               int32_t indptr_start,
                                               int32_t indptr_end,
                                               intp_t[::1] samples,
                                               intp_t start,
                                               intp_t end,
                                               intp_t[::1] index_to_samples,
-                                              float32_t[::1] feature_values,
+                                              X_DTYPE_C[::1] feature_values,
                                               intp_t* end_negative,
                                               intp_t* start_positive) noexcept nogil:
     """Extract and partition values for a feature using index_to_samples.
@@ -619,14 +619,14 @@ cdef inline void extract_nnz_index_to_samples(const int32_t[::1] X_indices,
 
 
 cdef inline void extract_nnz_binary_search(const int32_t[::1] X_indices,
-                                           const float32_t[::1] X_data,
+                                           const X_DTYPE_C[::1] X_data,
                                            int32_t indptr_start,
                                            int32_t indptr_end,
                                            intp_t[::1] samples,
                                            intp_t start,
                                            intp_t end,
                                            intp_t[::1] index_to_samples,
-                                           float32_t[::1] feature_values,
+                                           X_DTYPE_C[::1] feature_values,
                                            intp_t* end_negative,
                                            intp_t* start_positive,
                                            intp_t[::1] sorted_samples,
@@ -697,7 +697,7 @@ cdef inline void sparse_swap(intp_t[::1] index_to_samples, intp_t[::1] samples,
     index_to_samples[samples[pos_2]] = pos_2
 
 
-def _py_sort(float32_t[::1] feature_values, intp_t[::1] samples, intp_t n):
+def _py_sort(X_DTYPE_C[::1] feature_values, intp_t[::1] samples, intp_t n):
     """Used for testing sort."""
     sort(&feature_values[0], &samples[0], n)
 

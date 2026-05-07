@@ -7,10 +7,10 @@ from libc.string cimport memset
 import numpy as np
 from scipy.sparse import issparse
 
-from sklearn.utils._typedefs cimport float32_t, float64_t, intp_t, int32_t, uint8_t
+from sklearn.utils._typedefs cimport float64_t, intp_t, int32_t, uint8_t
+from sklearn.tree._common cimport node_struct, X_DTYPE_C
 # Note: _tree uses cimport numpy, cnp.import_array, so we need to include
 # numpy headers in the build configuration of this extension
-from sklearn.tree._tree cimport Node
 from sklearn.tree._tree cimport Tree
 from sklearn.tree._utils cimport safe_realloc
 
@@ -23,11 +23,11 @@ from numpy import zeros as np_zeros
 cdef intp_t TREE_LEAF = -1
 
 cdef void _predict_regression_tree_inplace_fast_dense(
-    const float32_t[:, ::1] X,
-    Node* root_node,
+    const X_DTYPE_C[:, ::1] X,
+    node_struct* root_node,
     double *value,
     double scale,
-    Py_ssize_t k,
+    intp_t k,
     float64_t[:, :] out
 ) noexcept nogil:
     """Predicts output for regression tree and stores it in ``out[i, k]``.
@@ -44,7 +44,7 @@ cdef void _predict_regression_tree_inplace_fast_dense(
     X : float32_t 2d memory view
         The memory view on the data ndarray of the input ``X``.
         Assumes that the array is c-continuous.
-    root_node : tree Node pointer
+    root_node : tree node_struct pointer
         Pointer to the main node array of the :class:``sklearn.tree.Tree``.
     value : np.float64_t pointer
         The pointer to the data array of the ``value`` array attribute
@@ -60,8 +60,8 @@ cdef void _predict_regression_tree_inplace_fast_dense(
         shape ``(n_samples, K)``.
     """
     cdef intp_t n_samples = X.shape[0]
-    cdef Py_ssize_t i
-    cdef Node *node
+    cdef intp_t i
+    cdef node_struct *node
     for i in range(n_samples):
         node = root_node
         # While node not a leaf
@@ -83,7 +83,7 @@ def _predict_regression_tree_stages_sparse(
 
     The function assumes that the ndarray that wraps ``X`` is csr_matrix.
     """
-    cdef const float32_t[::1] X_data = X.data
+    cdef const X_DTYPE_C[::1] X_data = X.data
     cdef const int32_t[::1] X_indices = X.indices
     cdef const int32_t[::1] X_indptr = X.indptr
 
@@ -97,12 +97,12 @@ def _predict_regression_tree_stages_sparse(
     cdef intp_t feature_i
     cdef intp_t stage_i
     cdef intp_t output_i
-    cdef Node *root_node = NULL
-    cdef Node *node = NULL
+    cdef node_struct *root_node = NULL
+    cdef node_struct *node = NULL
     cdef double *value = NULL
 
     cdef Tree tree
-    cdef Node** nodes = NULL
+    cdef node_struct** nodes = NULL
     cdef double** values = NULL
     safe_realloc(&nodes, n_stages * n_outputs)
     safe_realloc(&values, n_stages * n_outputs)
@@ -113,8 +113,8 @@ def _predict_regression_tree_stages_sparse(
             values[stage_i * n_outputs + output_i] = tree.value
 
     # Initialize auxiliary data-structure
-    cdef float32_t feature_value = 0.
-    cdef float32_t* X_sample = NULL
+    cdef X_DTYPE_C feature_value = 0.
+    cdef X_DTYPE_C* X_sample = NULL
 
     # feature_to_sample as a data structure records the last seen sample
     # for each feature; functionally, it is an efficient way to identify
@@ -172,10 +172,10 @@ def predict_stages(
     Each estimator is scaled by ``scale`` before its prediction
     is added to ``out``.
     """
-    cdef Py_ssize_t i
-    cdef Py_ssize_t k
-    cdef Py_ssize_t n_estimators = estimators.shape[0]
-    cdef Py_ssize_t K = estimators.shape[1]
+    cdef intp_t i
+    cdef intp_t k
+    cdef intp_t n_estimators = estimators.shape[0]
+    cdef intp_t K = estimators.shape[1]
     cdef Tree tree
 
     if issparse(X):
