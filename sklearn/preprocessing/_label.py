@@ -590,10 +590,17 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
 
     n_samples = y.shape[0] if hasattr(y, "shape") else len(y)
     n_classes = classes.shape[0]
-    if hasattr(y, "dtype") and xp.isdtype(y.dtype, "integral"):
+
+    y_has_dtype = hasattr(y, "dtype")
+    if y_has_dtype and xp.isdtype(y.dtype, "signed integer"):
         int_dtype_ = y.dtype
     else:
         int_dtype_ = indexing_dtype(xp)
+
+    # Align `classes` dtype with integral `y` to ensure correct comparisons
+    # and avoid signed/unsigned dtype mismatches
+    if y_has_dtype and xp.isdtype(y.dtype, "integral"):
+        classes = xp.astype(classes, y.dtype, copy=False)
 
     if y_type == "binary":
         if n_classes == 1:
@@ -752,7 +759,7 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold, xp=None):
         )
 
     dtype_ = _find_matching_floating_dtype(y, xp=xp)
-    if hasattr(y, "dtype") and xp.isdtype(y.dtype, "integral"):
+    if hasattr(y, "dtype") and xp.isdtype(y.dtype, "signed integer"):
         int_dtype_ = y.dtype
     else:
         int_dtype_ = indexing_dtype(xp)

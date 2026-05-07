@@ -64,6 +64,7 @@ common_dependencies_without_coverage = [
     "scipy",
     "cython",
     "joblib",
+    "narwhals",
     "threadpoolctl",
     "matplotlib",
     "pandas",
@@ -188,6 +189,7 @@ build_metadata_list = [
             "matplotlib": "min",
             "cython": "min",
             "joblib": "min",
+            "narwhals": "min",
             "threadpoolctl": "min",
             "meson-python": "min",
             "pandas": "min",
@@ -263,6 +265,7 @@ build_metadata_list = [
                     "rich",
                     "cython",
                     "joblib",
+                    "narwhals",
                     "pillow",
                 ],
             )
@@ -287,6 +290,7 @@ build_metadata_list = [
             "numpy",
             "scipy",
             "joblib",
+            "narwhals",
             "threadpoolctl",
             "pytest",
             "pytest-run-parallel",
@@ -436,6 +440,7 @@ build_metadata_list = [
         "pip_dependencies": [
             "cython",
             "joblib",
+            "narwhals",
             "threadpoolctl",
             "pytest",
             "pytest-xdist",
@@ -455,6 +460,7 @@ build_metadata_list = [
         "pip_dependencies": [
             "cython",
             "joblib",
+            "narwhals",
             "threadpoolctl",
             "pytest",
             "pytest-xdist",
@@ -463,6 +469,7 @@ build_metadata_list = [
         ],
         "package_constraints": {
             "joblib": "min",
+            "narwhals": "min",
             "threadpoolctl": "min",
             "cython": "min",
         },
