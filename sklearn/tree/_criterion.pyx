@@ -1,9 +1,9 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+from libc.math cimport INFINITY
 from libc.string cimport memcpy
 from libc.string cimport memset
-from libc.math cimport INFINITY
 
 import numpy as np
 cimport numpy as cnp
