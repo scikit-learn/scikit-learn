@@ -19,7 +19,7 @@ API or give up cross-process capabilities.
 import os
 from multiprocessing.connection import Client, Listener
 from threading import Thread
-from typing import NamedTuple
+from typing import Callable, NamedTuple
 
 
 class ListenerHandle(NamedTuple):
@@ -55,13 +55,13 @@ class ListenerHandle(NamedTuple):
 # own copy when the module is imported, and a worker that receives a pickled
 # `ListenerHandle` from the main process will find these dicts empty, which is how
 # `send` decides to go over the socket instead of directly calling the message consumer.
-_listeners = {}
-_message_consumers = {}
+_listeners: dict[str, Listener] = {}
+_message_consumers: dict[str, Callable] = {}
 
 # Worker-side cache of client connections back to the main-process listeners, keyed by
 # listener address. The first cross-process send opens a client. Subsequent sends to the
 # same listener reuse the cached connection.
-_worker_connections = {}
+_worker_connections: dict[str, Client] = {}
 
 
 def open_listener(message_consumer):
