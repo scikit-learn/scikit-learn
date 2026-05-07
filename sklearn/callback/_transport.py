@@ -17,7 +17,7 @@ API or give up cross-process capabilities.
 """
 
 import os
-from multiprocessing.connection import Client, Listener
+from multiprocessing.connection import Client, Connection, Listener
 from threading import Thread
 from typing import Callable, NamedTuple
 
@@ -61,7 +61,7 @@ _message_consumers: dict[str, Callable] = {}
 # Worker-side cache of client connections back to the main-process listeners, keyed by
 # listener address. The first cross-process send opens a client. Subsequent sends to the
 # same listener reuse the cached connection.
-_worker_connections: dict[str, Client] = {}
+_worker_connections: dict[str, Connection] = {}
 
 
 def open_listener(message_consumer):
