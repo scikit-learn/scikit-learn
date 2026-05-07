@@ -2895,16 +2895,14 @@ def test_logistic_regression_callback_support(binary, fit_intercept, max_iter):
     ).set_callbacks(cb)
     lr.fit(X, y)
 
-    expected_on_fit_task_begin_count = (
-        max(lr.n_iter_, 1) + 1 + (lr.n_iter_ < lr.max_iter)
-    )  # Number of iteration (always at least one), plus one for fit task, plus one if
-    # max_iter is not reached.
-    expected_on_fit_task_end_count = max(lr.n_iter_, 1) + 1
+    expected_on_fit_hook_count = max(lr.n_iter_, 1) + 1 + (lr.n_iter_ < lr.max_iter)
+    # Number of iteration (always at least one), plus one for fit task, plus one empty
+    # task if max_iter is not reached.
 
     assert cb.count_hooks("setup") == 1
     assert cb.count_hooks("teardown") == 1
-    assert cb.count_hooks("on_fit_task_begin") == expected_on_fit_task_begin_count
-    assert cb.count_hooks("on_fit_task_end") == expected_on_fit_task_end_count
+    assert cb.count_hooks("on_fit_task_begin") == expected_on_fit_hook_count
+    assert cb.count_hooks("on_fit_task_end") == expected_on_fit_hook_count
 
 
 # TODO(callbacks): also test for other solvers when they get supported.

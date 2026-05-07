@@ -549,6 +549,14 @@ def _logistic_regression_path(
                 max_iter,
                 extra_warning_msg=_LOGISTIC_SOLVER_CONVERGENCE_MSG,
             )
+            if callback_ctx is not None and n_iter_i < max_iter:
+                # If max_iter is not reached, call_on_fit_task_begin has been called at
+                # the end of the last solver iteration, so here call_on_fit_task_end is
+                # called for this last subtask. It does not correspond to an iteration
+                # so it's an empty task.
+                list(callback_ctx._children_map.values())[-1].call_on_fit_task_end(
+                    estimator=estimator, X=X, y=y, metadata=callback_metadata
+                )
             w0, loss = opt_res.x, opt_res.fun
         elif solver == "newton-cg":
             l2_reg_strength = 1.0 / (C * sw_sum)
