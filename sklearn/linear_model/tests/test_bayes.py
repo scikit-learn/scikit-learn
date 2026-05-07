@@ -185,6 +185,21 @@ def test_std_bayesian_ridge_ard_with_constant_input(global_random_seed):
         assert_array_less(y_std, expected_upper_boundary)
 
 
+@pytest.mark.parametrize("Estimator", [BayesianRidge, ARDRegression])
+def test_std_bayesian_ridge_noncentered(Estimator, global_random_seed):
+    # Test BayesianRidge and ARDRegression std when data is not centered.
+    # The std should be smallest at the center of the data, not at the origin.
+    # Non-regression test for issue #33757
+    rng = np.random.RandomState(global_random_seed)
+    n_samples = 4
+    X_train = np.linspace(80, 100, n_samples).reshape(-1, 1)
+    y_train = X_train.reshape(-1) + 10 * rng.standard_normal(n_samples)
+    model = Estimator(fit_intercept=True).fit(X_train, y_train)
+    X = np.array([[0.0], [90.0]])
+    _, y_std = model.predict(X, return_std=True)
+    assert y_std[1] < y_std[0]
+
+
 def test_update_of_sigma_in_ard():
     # Checks that `sigma_` is updated correctly after the last iteration
     # of the ARDRegression algorithm. See issue #10128.

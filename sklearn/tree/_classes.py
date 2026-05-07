@@ -411,10 +411,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 )
             valid_constraints = np.isin(monotonic_cst, (-1, 0, 1))
             if not np.all(valid_constraints):
-                unique_constaints_value = np.unique(monotonic_cst)
+                unique_constraints_value = np.unique(monotonic_cst)
                 raise ValueError(
                     "monotonic_cst must be None or an array-like of -1, 0 or 1, but"
-                    f" got {unique_constaints_value}"
+                    f" got {unique_constraints_value}"
                 )
             monotonic_cst = np.asarray(monotonic_cst, dtype=np.int8)
             if is_classifier(self):

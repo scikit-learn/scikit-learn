@@ -10,6 +10,7 @@ from collections import defaultdict
 NUMPY_MIN_VERSION = "1.24.1"
 SCIPY_MIN_VERSION = "1.10.0"
 JOBLIB_MIN_VERSION = "1.3.0"
+NARWHALS_MIN_VERSION = "2.0.1"
 THREADPOOLCTL_MIN_VERSION = "3.2.0"
 PYTEST_MIN_VERSION = "7.1.2"
 CYTHON_MIN_VERSION = "3.1.2"
@@ -22,6 +23,7 @@ dependent_packages = {
     "numpy": (NUMPY_MIN_VERSION, "build, install"),
     "scipy": (SCIPY_MIN_VERSION, "build, install"),
     "joblib": (JOBLIB_MIN_VERSION, "install"),
+    "narwhals": (NARWHALS_MIN_VERSION, "install"),
     "threadpoolctl": (THREADPOOLCTL_MIN_VERSION, "install"),
     "cython": (CYTHON_MIN_VERSION, "build"),
     "meson-python": ("0.17.1", "build"),
@@ -36,7 +38,7 @@ dependent_packages = {
     "mypy": ("1.15", "tests"),
     "pyamg": ("5.0.0", "tests"),
     "polars": ("0.20.30", "docs, tests"),
-    "pyarrow": ("12.0.0", "tests"),
+    "pyarrow": ("13.0.0", "tests"),
     "sphinx": ("7.3.7", "docs"),
     "sphinx-copybutton": ("0.5.2", "docs"),
     "sphinx-gallery": ("0.17.1", "docs"),
