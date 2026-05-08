@@ -2719,11 +2719,9 @@ def test_mixed_array_api_namespace_input_compliance(
         else:
             data_cases = ["label_indicator_continuous"]
     elif metric_name in REGRESSION_METRICS:
-        data_cases = [
-            "regression_integer",
-            "regression_continuous",
-            "regression_multioutput",
-        ]
+        data_cases = ["regression_integer", "regression_continuous"]
+        if metric_name in MULTIOUTPUT_METRICS:
+            data_cases.append("regression_multioutput")
 
     with config_context(array_api_dispatch=True):
         for data_case in data_cases:
@@ -2734,23 +2732,23 @@ def test_mixed_array_api_namespace_input_compliance(
 
             metric_kwargs_xp = metric_kwargs_np = {}
             if metric_name not in METRICS_WITHOUT_SAMPLE_WEIGHT:
-                # use `other_ns_and_device` for `sample_weight` as well
                 sample_weight_np = np.array(sample_weight)
-                metric_kwargs_np = {"sample_weight": sample_weight_np}
+                metric_kwargs_np.update({"sample_weight": sample_weight_np})
+                # Use `other_ns_and_device` for `sample_weight` as well
                 sample_weight_xp = xp_other.asarray(
                     sample_weight_np, device=device_other
                 )
-                metric_kwargs_xp = {"sample_weight": sample_weight_xp}
+                metric_kwargs_xp.update({"sample_weight": sample_weight_xp})
             if (
                 data_case == "regression_multioutput"
                 and metric_name in MULTIOUTPUT_METRICS
             ):
-                # Use `other_ns_and_device` for `multioutput` as well
                 # Use float32 to avoid MPS max float
                 multioutput_np = np.array(multioutput, dtype=np.float32)
-                metric_kwargs_np = {"multioutput": multioutput_np}
+                metric_kwargs_np.update({"multioutput": multioutput_np})
+                # Use `other_ns_and_device` for `multioutput` as well
                 multioutput_xp = xp_other.asarray(multioutput_np, device=device_other)
-                metric_kwargs_xp = {"multioutput": multioutput_xp}
+                metric_kwargs_xp.update({"multioutput": multioutput_xp})
 
             dtype = _get_dtype(y2, xp_y_pred, device_y_pred)
             y2_xp = xp_y_pred.asarray(y2, device=device_y_pred, dtype=dtype)
