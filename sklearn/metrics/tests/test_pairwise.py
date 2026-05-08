@@ -876,6 +876,25 @@ def test_parallel_pairwise_distances_diagonal(metric, global_dtype):
     assert_allclose(np.diag(distances), 0, atol=1e-10)
 
 
+def test_parallel_pairwise_distances_y_norm_squared():
+    """Check that Y_norm_squared is correctly sliced alongside Y.
+
+    Non-regression test for issue #33877.
+    """
+    rng = np.random.RandomState(42)
+    X = rng.rand(13, 4)
+    Y = rng.rand(15, 4)
+    Y_norm_squared = (Y**2).sum(axis=1)
+
+    D_single = pairwise_distances(
+        X, Y, metric="euclidean", n_jobs=1, Y_norm_squared=Y_norm_squared
+    )
+    D_parallel = pairwise_distances(
+        X, Y, metric="euclidean", n_jobs=2, Y_norm_squared=Y_norm_squared
+    )
+    assert_allclose(D_parallel, D_single)
+
+
 @pytest.mark.filterwarnings("ignore:Could not adhere to working_memory config")
 def test_pairwise_distances_chunked(global_dtype):
     # Test the pairwise_distance helper function.

@@ -1,13 +1,18 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import sys
-import warnings
+from queue import Queue
 from threading import Thread
 
 from sklearn.callback._callback_context import get_context_path
-from sklearn.callback._callback_support import get_callback_manager
+from sklearn.callback._transport import close_listener, open_listener, send
 from sklearn.utils._optional_dependencies import check_rich_support
+
+# Per-fit local queues and monitors, keyed by the run's `root_uuid`. Both are not
+# picklable so they live here rather than on the callback instance. Entries are added in
+# `setup` and removed in `teardown`.
+_run_queues = {}
+_run_monitors = {}
 
 
 class ProgressBar:
@@ -19,50 +24,34 @@ class ProgressBar:
         The maximum depth of nested levels of estimators to display progress bars for.
         0 means that the progress of only the outermost estimator is displayed.
         If set to None, all levels are displayed.
-
-    Notes
-    -----
-    The use of this callback on python versions inferior to 3.12.8 might lead to
-    unexpected crashes related to multiprocessing bugs on certain platforms.
     """
 
     def __init__(self, max_propagation_depth=1):
-        if sys.version_info < (3, 12, 8):
-            warnings.warn(
-                "The use of the ProgressBar callback on python versions inferior "
-                "to 3.12.8 might lead to unexpected crashes related to multiprocessing "
-                "bugs on certain platforms."
-            )
-
         check_rich_support("Progressbar")
 
         self.max_propagation_depth = max_propagation_depth
-        self._manager = get_callback_manager()
-        # Queue proxies need to be shared across callback copies in subprocesses,
-        # while monitor threads must stay process-local (they are not picklable).
-        self._run_queues = self._manager.dict()
-        self._run_monitors = {}
+
+        # Handles to the main-process per-fit listeners, keyed by `root_uuid`.
+        self._listener_handles = {}
 
     def setup(self, estimator, context):
-        if not hasattr(self, "_manager"):
-            # If the outer function call supports callback, it would typically have
-            # initialized the manager and monitor in the same process and we can
-            # directly reuse it. If the same callback is used to collect progress of
-            # sub-estimators in subprocess parallel workers the setup/teardown is not
-            # needed because it is performed only once, typically in the parent process.
-            # However, if the outer function call does not support callbacks explicitly,
-            # we need to reinitialize a working callback state in worker processes:
-            # the callback will work in slightly degraded mode with redundant managers
-            # and progress monitors but this should not crash.
-            self._manager = get_callback_manager()
-            self._run_queues = self._manager.dict()
-            self._run_monitors = {}
+        # Lazily create the per-fit transport state. `setup` runs on the main
+        # process for the common case where `ProgressBar` is registered on (or
+        # auto-propagated from) the outermost estimator. In the degraded case
+        # where the outer function does not support callbacks, this may run
+        # inside a worker process; that worker will then open its own local
+        # listener and the events will be process-local — the callback runs in
+        # slightly degraded mode but does not crash.
+        queue = Queue()
+        # `queue.put` is the message consumer that `send` calls will use to forward
+        # information to the rich monitor thread.
+        self._listener_handles[context.root_uuid] = open_listener(queue.put)
 
-        queue = self._manager.Queue()
         progress_monitor = RichProgressMonitor(queue=queue)
         progress_monitor.start()
-        self._run_queues[context.root_uuid] = queue
-        self._run_monitors[context.root_uuid] = progress_monitor
+
+        _run_queues[context.root_uuid] = queue
+        _run_monitors[context.root_uuid] = progress_monitor
 
     def on_fit_task_begin(self, estimator, context):
         # A new progress bar is created at the beginning of each task that is not a
@@ -75,7 +64,8 @@ class ProgressBar:
             # We pass the minimal information to the queue that is necessary to create a
             # progress bar and not the context to avoid pickling the whole context tree.
             path = [ctx.task_id for ctx in get_context_path(context)]
-            self._run_queues[context.root_uuid].put(
+            send(
+                self._listener_handles[context.root_uuid],
                 {
                     "event": "begin",
                     "path": path,
@@ -85,30 +75,25 @@ class ProgressBar:
                     "estimator_name": context.estimator_name,
                     "source_estimator_name": context.source_estimator_name,
                     "source_task_name": context.source_task_name,
-                }
+                },
             )
 
     def on_fit_task_end(self, estimator, context):
         # The path is enough to update the progress of the task and its ancestors.
-        self._run_queues[context.root_uuid].put(
+        send(
+            self._listener_handles[context.root_uuid],
             {
                 "event": "end",
                 "path": [ctx.task_id for ctx in get_context_path(context)],
-            }
+            },
         )
 
     def teardown(self, estimator, context):
-        # Signal that the queue won't receive any more tasks.
-        self._run_queues[context.root_uuid].put(None)
-        self._run_monitors[context.root_uuid].join()
-
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        state.pop("_manager", None)
-        state.pop("_run_monitors", None)
-        # Note that run queues are pickleable and are expected to be shared between
-        # the parent and worker processes.
-        return state
+        # Fit is finished. Signal that the queue won't receive any more tasks, close
+        # the monitor thread and the listener.
+        _run_queues.pop(context.root_uuid).put(None)
+        _run_monitors.pop(context.root_uuid).join()
+        close_listener(self._listener_handles.pop(context.root_uuid))
 
 
 try:
@@ -148,7 +133,7 @@ class RichProgressMonitor(Thread):
 
     Parameters
     ----------
-    queue : `multiprocessing.Manager.Queue` instance
+    queue : `queue.Queue` instance
         This thread will run until the queue is empty.
     """
 
