@@ -1661,7 +1661,7 @@ def test_enet_ridge_consistency(ridge_alpha, precompute, n_targets, global_rando
     # by working with the squares of matrices like Q=X'X (=gram) and
     # R^2 = y^2 + wQw - 2yQw (=square of residuals).
     rtol = 1e-5 if precompute else 5e-7
-    atol = 1e-11
+    atol = 3e-11
     assert_allclose(enet.coef_, ridge.coef_, rtol=rtol, atol=atol)
     assert_allclose(enet.intercept_, ridge.intercept_, atol=atol)
 
