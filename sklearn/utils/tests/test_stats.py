@@ -299,7 +299,7 @@ def test_weighted_percentile_array_api_consistency(
     percentile,
 ):
     """Check `_weighted_percentile` gives consistent results with array API."""
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     # Skip test for percentile=0 edge case (#20528) on namespace/device where
     # xp.nextafter is broken. This is the case for torch with MPS device:

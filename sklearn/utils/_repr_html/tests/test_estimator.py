@@ -13,7 +13,11 @@ import pytest
 from sklearn import config_context
 from sklearn.base import BaseEstimator, clone
 from sklearn.cluster import AgglomerativeClustering, Birch
-from sklearn.compose import ColumnTransformer, make_column_transformer
+from sklearn.compose import (
+    ColumnTransformer,
+    TransformedTargetRegressor,
+    make_column_transformer,
+)
 from sklearn.datasets import load_iris
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.ensemble import StackingClassifier, StackingRegressor, VotingClassifier
@@ -21,7 +25,7 @@ from sklearn.feature_selection import SelectPercentile
 from sklearn.gaussian_process.kernels import ExpSineSquared
 from sklearn.impute import SimpleImputer
 from sklearn.kernel_ridge import KernelRidge
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.neural_network import MLPClassifier
@@ -140,6 +144,17 @@ def test_get_visual_block_column_transformer():
     assert est_html_info.estimators == tuple(trans[1] for trans in ct.transformers)
     assert est_html_info.names == ("pca", "svd")
     assert est_html_info.name_details == (["num1", "num2"], [0, 3])
+
+
+def test_get_visual_block_transformed_target_regressor():
+    X = np.array([[0], [1], [2], [3], [4]])
+    y = np.array([1.0, 7.3, 54.5, 403.5])
+    tt = TransformedTargetRegressor(func=np.log, inverse_func=np.exp)
+    est_html_info = _get_visual_block(tt)
+    assert est_html_info.kind == "serial"
+    assert isinstance(est_html_info.estimators[0], LinearRegression)
+    assert est_html_info.names == ["regressor: LinearRegression"]
+    assert est_html_info.name_details == ["LinearRegression()"]
 
 
 def test_estimator_html_repr_an_empty_pipeline():

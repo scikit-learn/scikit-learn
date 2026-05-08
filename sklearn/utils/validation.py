@@ -12,6 +12,7 @@ from functools import reduce, wraps
 from inspect import Parameter, isclass, signature
 
 import joblib
+import narwhals.stable.v2 as nw
 import numpy as np
 import scipy.sparse as sp
 
@@ -29,7 +30,7 @@ from sklearn.utils._array_api import (
     get_namespace_and_device,
     move_to,
 )
-from sklearn.utils._dataframe import is_pandas_df, is_pandas_df_or_series
+from sklearn.utils._dataframe import is_pandas_df_or_series
 from sklearn.utils._isfinite import FiniteStatus, cy_isfinite
 from sklearn.utils._tags import get_tags
 from sklearn.utils.fixes import (
@@ -305,16 +306,6 @@ def _is_arraylike_not_scalar(array):
     return _is_arraylike(array) and not np.isscalar(array)
 
 
-def _use_interchange_protocol(X):
-    """Use interchange protocol for non-pandas dataframes that follow the protocol.
-
-    Note: at this point we chose not to use the interchange API on pandas dataframe
-    to ensure strict behavioral backward compatibility with older versions of
-    scikit-learn.
-    """
-    return not is_pandas_df(X) and hasattr(X, "__dataframe__")
-
-
 def _num_features(X):
     """Return the number of features in an array-like X.
 
@@ -375,16 +366,6 @@ def _num_samples(x):
         # Don't get num_samples from an ensembles length!
         raise TypeError(message)
 
-    if _use_interchange_protocol(x):
-        return x.__dataframe__().num_rows()
-
-    if not hasattr(x, "__len__") and not hasattr(x, "shape"):
-        if hasattr(x, "__array__"):
-            xp, _ = get_namespace(x)
-            x = xp.asarray(x)
-        else:
-            raise TypeError(message)
-
     if hasattr(x, "shape") and x.shape is not None:
         if len(x.shape) == 0:
             raise TypeError(
@@ -395,6 +376,16 @@ def _num_samples(x):
         # Dask dataframes may not return numeric shape[0] value
         if isinstance(x.shape[0], numbers.Integral):
             return x.shape[0]
+
+    if nw.dependencies.is_into_dataframe(x) or nw.dependencies.is_into_series(x):
+        return nw.from_native(x).shape[0]
+
+    if not hasattr(x, "__len__") and not hasattr(x, "shape"):
+        if hasattr(x, "__array__"):
+            xp, _ = get_namespace(x)
+            x = xp.asarray(x)
+        else:
+            raise TypeError(message)
 
     try:
         return len(x)
@@ -721,6 +712,16 @@ def _pandas_dtype_needs_early_conversion(pd_dtype):
     return False
 
 
+def _is_pandas_string_dtype(dtype):
+    """Return True if dtype is a pandas StringDtype."""
+    try:
+        from pandas import StringDtype
+
+        return isinstance(dtype, StringDtype)
+    except ImportError:
+        return False
+
+
 def _is_extension_array_dtype(array):
     # Pandas extension arrays have a dtype with an na_value
     return hasattr(array, "dtype") and hasattr(array.dtype, "na_value")
@@ -898,8 +899,12 @@ def check_array(
         pandas_requires_conversion = any(
             _pandas_dtype_needs_early_conversion(i) for i in dtypes_orig
         )
+        has_pandas_string = any(_is_pandas_string_dtype(d) for d in dtypes_orig)
         if all(isinstance(dtype_iter, np.dtype) for dtype_iter in dtypes_orig):
             dtype_orig = np.result_type(*dtypes_orig)
+        elif has_pandas_string:
+            # Force object if any of the dtypes is a StringDtype.
+            dtype_orig = object
         elif pandas_requires_conversion and any(d == object for d in dtypes_orig):
             # Force object if any of the dtypes is an object
             dtype_orig = object
@@ -907,20 +912,23 @@ def check_array(
     elif (_is_extension_array_dtype(array) or hasattr(array, "iloc")) and hasattr(
         array, "dtype"
     ):
-        # array is a pandas series
+        # array is a pandas series or a pandas array.
         type_if_series = type(array)
         pandas_requires_conversion = _pandas_dtype_needs_early_conversion(array.dtype)
         if isinstance(array.dtype, np.dtype):
             dtype_orig = array.dtype
+        elif _is_pandas_string_dtype(array.dtype):
+            # pandas 3 uses StringDtype for string columns instead of object.
+            # Treat as object so that dtype_numeric detection works correctly.
+            dtype_orig = object
         else:
             # Set to None to let array.astype work out the best dtype
             dtype_orig = None
 
     if dtype_numeric:
-        if (
-            dtype_orig is not None
-            and hasattr(dtype_orig, "kind")
-            and dtype_orig.kind == "O"
+        if dtype_orig is not None and (
+            (hasattr(dtype_orig, "kind") and dtype_orig.kind == "O")
+            or dtype_orig == object
         ):
             # if input is object, convert to float.
             dtype = xp.float64
@@ -2161,7 +2169,7 @@ def _check_sample_weight(
         if force_float_dtype and dtype is None:
             dtype = float_dtypes
         if is_array_api and ensure_same_device:
-            sample_weight = xp.asarray(sample_weight, device=device)
+            sample_weight = move_to(sample_weight, xp=xp, device=device)
         sample_weight = check_array(
             sample_weight,
             accept_sparse=False,
@@ -2326,42 +2334,30 @@ def _check_method_params(X, params, indices=None):
 def _get_feature_names(X):
     """Get feature names from X.
 
-    Support for other array containers should place its implementation here.
+    Support for other (2d) data containers should place its implementation here.
 
     Parameters
     ----------
     X : {ndarray, dataframe} of shape (n_samples, n_features)
         Array container to extract feature names.
 
-        - pandas dataframe : The columns will be considered to be feature
-          names. If the dataframe contains non-string feature names, `None` is
-          returned.
+        - narwhals compliant dataframe : The columns will be considered to be feature
+          names.
         - All other array containers will return `None`.
 
     Returns
     -------
     names: ndarray or None
-        Feature names of `X`. Unrecognized array containers will return `None`.
+        Feature names of `X`. Unrecognized data containers will return `None`.
     """
     feature_names = None
 
-    # extract feature names for support array containers
-    if is_pandas_df(X):
-        # Make sure we can inspect columns names from pandas, even with
-        # versions too old to expose a working implementation of
-        # __dataframe__.column_names() and avoid introducing any
-        # additional copy.
-        # TODO: remove the pandas-specific branch once the minimum supported
-        # version of pandas has a working implementation of
-        # __dataframe__.column_names() that is guaranteed to not introduce any
-        # additional copy of the data without having to impose allow_copy=False
-        # that could fail with other libraries. Note: in the longer term, we
-        # could decide to instead rely on the __dataframe_namespace__ API once
-        # adopted by our minimally supported pandas version.
-        feature_names = np.asarray(X.columns, dtype=object)
-    elif hasattr(X, "__dataframe__"):
-        df_protocol = X.__dataframe__()
-        feature_names = np.asarray(list(df_protocol.column_names()), dtype=object)
+    # Extract feature names for supported data containers.
+    if nw.dependencies.is_into_dataframe(X):
+        # Note: Narwhals API says that the .columns property ist a list of strings, but
+        # this does not hold. If pandas has integer column names, .columns returns a
+        # list of integers, see https://github.com/narwhals-dev/narwhals/issues/3571.
+        feature_names = np.asarray(nw.from_native(X).columns, dtype=object)
 
     if feature_names is None or len(feature_names) == 0:
         return
@@ -2519,13 +2515,13 @@ def _check_monotonic_cst(estimator, monotonic_cst=None):
                 set(original_monotonic_cst) - set(estimator.feature_names_in_)
             )
             unexpected_feature_names.sort()  # deterministic error message
-            n_unexpeced = len(unexpected_feature_names)
+            n_unexpected = len(unexpected_feature_names)
             if unexpected_feature_names:
                 if len(unexpected_feature_names) > 5:
                     unexpected_feature_names = unexpected_feature_names[:5]
                     unexpected_feature_names.append("...")
                 raise ValueError(
-                    f"monotonic_cst contains {n_unexpeced} unexpected feature "
+                    f"monotonic_cst contains {n_unexpected} unexpected feature "
                     f"names: {unexpected_feature_names}."
                 )
             for feature_idx, feature_name in enumerate(estimator.feature_names_in_):

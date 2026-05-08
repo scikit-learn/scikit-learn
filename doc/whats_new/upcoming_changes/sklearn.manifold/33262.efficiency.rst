@@ -1,0 +1,4 @@
+- The way ARPACK eigensolver is called in :class:`manifold.SpectralEmbedding`
+  and :class:`cluster.SpectralClustering` was improved, resulting in faster
+  runtimes.
+  By :user:`Dmitry Kobak <dkobak>`

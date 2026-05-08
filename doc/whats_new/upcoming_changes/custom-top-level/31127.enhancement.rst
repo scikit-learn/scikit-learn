@@ -1,0 +1,9 @@
+- Scikit-learn accepted a new library dependency:
+  `narwhals <https://github.com/narwhals-dev/narwhals>`__.
+  This is a very lightweight dependency that simplifies the support of dataframe input
+  `X` and dataframe output as specified in the `set_output` API. Examples are pandas and
+  polars dataframes. Narwhals can also help to support more dataframe libraries.
+  Another reason for its adoption was that the dataframe interchange protocol
+  (`__dataframe__`) on which scikit-learn relied so far for non-pandas dataframes got
+  deprecated by polars and has run its course.
+  By :user:`Christian Lorentzen <lorentzenchr>`.

@@ -524,7 +524,7 @@ def test_small_trainset():
 
 
 def test_missing_values_minmax_imputation():
-    # Compare the buit-in missing value handling of Histogram GBC with an
+    # Compare the built-in missing value handling of Histogram GBC with an
     # a-priori missing value imputation strategy that should yield the same
     # results in terms of decision function.
     #
