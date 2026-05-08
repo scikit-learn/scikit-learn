@@ -24,6 +24,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import KBinsDiscretizer, OneHotEncoder, StandardScaler, scale
 from sklearn.utils._testing import _convert_container
+from sklearn.utils.estimator_checks import _NotAnArray
 
 
 @pytest.mark.parametrize("n_jobs", [1, 2])
@@ -538,3 +539,12 @@ def test_permutation_importance_max_samples_error():
 
     with pytest.raises(ValueError, match=err_msg):
         permutation_importance(clf, X, y, max_samples=5)
+
+
+def test_permutation_importance_array_function_not_called():
+    """Check that `__array_function__` (NEP18) is not called."""
+    X = _NotAnArray([[1, 1], [1, 2], [1, 3], [1, 4], [2, 1], [2, 2], [2, 3], [2, 4]])
+    y = _NotAnArray([1, 1, 1, 2, 2, 2, 1, 1])
+    estimator = LogisticRegression(random_state=0)
+    estimator.fit(X, y)
+    permutation_importance(estimator, X, y, n_repeats=2, random_state=0)

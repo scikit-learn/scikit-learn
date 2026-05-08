@@ -4,6 +4,7 @@ from unittest import SkipTest
 
 import numpy as np
 import pytest
+from narwhals.exceptions import DuplicateError
 from scipy.stats import kstest
 
 import sklearn
@@ -501,44 +502,47 @@ def test_get_column_indices_pandas_nonunique_columns_error(key):
     columns = ["col1", "col1", "col2", "col3", "col2"]
     X = pd.DataFrame(toy, columns=columns)
 
-    err_msg = "Selected columns, {}, are not unique in dataframe".format(key)
-    with pytest.raises(ValueError) as exc_info:
+    err_msg = "Expected unique column names, got.*"
+    with pytest.raises(DuplicateError, match=err_msg):
         _get_column_indices(X, key)
-    assert str(exc_info.value) == err_msg
 
 
-@pytest.mark.parametrize("df_type", ["interchange", "polars"])
-def test_get_column_indices_interchange_and_polars(df_type):
-    """Check _get_column_indices for edge cases with the interchange and polars"""
-    if df_type == "polars":
-        pl = pytest.importorskip("polars")
-        df = pl.DataFrame([[1, 2, 3], [4, 5, 6]], schema=["a", "b", "c"])
-    else:
-        # Pyarrow tables go down the interchange path.
-        pa = pytest.importorskip("pyarrow")
-        df = pa.table([[1, 4], [2, 5], [3, 6]], names=["a", "b", "c"])
+@pytest.mark.parametrize(
+    "constructor_name", ["array", "sparse", "pandas", "pyarrow", "polars"]
+)
+def test_get_column_indices_dataframes(constructor_name):
+    """Check _get_column_indices for edge cases with 2d input X."""
+    df = _convert_container(
+        [[1, 2, 3], [4, 5, 6]], constructor_name, columns_name=["a", "b", "c"]
+    )
 
     key_results = [
-        (slice(1, None), [1, 2]),
-        (slice(None, 2), [0, 1]),
-        (slice(1, 2), [1]),
-        (["b", "c"], [1, 2]),
-        (slice("a", "b"), [0, 1]),
-        (slice("a", None), [0, 1, 2]),
-        (slice(None, "a"), [0]),
-        (["c", "a"], [2, 0]),
-        ([], []),
+        (slice(1, None), [1, 2], False),
+        (slice(None, 2), [0, 1], False),
+        (slice(1, 2), [1], False),
+        (["b", "c"], [1, 2], True),
+        (slice("a", "b"), [0, 1], True),
+        (slice("a", None), [0, 1, 2], True),
+        (slice(None, "a"), [0], True),
+        (["c", "a"], [2, 0], True),
+        ([], [], False),
     ]
-    for key, result in key_results:
-        assert _get_column_indices(df, key) == result
+    msg = "Specifying the columns using strings is only supported for dataframes"
+    for key, result, use_names in key_results:
+        if constructor_name in ("array", "sparse") and use_names:
+            with pytest.raises(ValueError, match=msg):
+                _get_column_indices(df, key)
+        else:
+            assert _get_column_indices(df, key) == result
 
-    msg = r"Some column names are not columns of the dataframe: \{'not_a_column'\}"
-    with pytest.raises(ValueError, match=msg):
-        _get_column_indices(df, ["not_a_column"])
+    if constructor_name not in ("array", "sparse"):
+        msg = r"Some column names are not columns of the dataframe: \{'not_a_column'\}"
+        with pytest.raises(ValueError, match=msg):
+            _get_column_indices(df, ["not_a_column"])
 
-    msg = "key.step must be 1 or None"
-    with pytest.raises(NotImplementedError, match=msg):
-        _get_column_indices(df, slice("a", None, 2))
+        msg = "key.step must be 1 or None"
+        with pytest.raises(NotImplementedError, match=msg):
+            _get_column_indices(df, slice("a", None, 2))
 
 
 def test_resample():
