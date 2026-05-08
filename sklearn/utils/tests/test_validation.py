@@ -2477,7 +2477,6 @@ def test_check_array_allow_nd_errors(X, estimator, expected_error_message):
 )
 def test_check_categorical_features_raises(categorical_features, expected_msg):
     """Test that check_categorical_features raises expected errors."""
-    #
     rng = np.random.RandomState(0)
     n_samples, n_features = 10, 10
     X = rng.randint(0, 3, size=(n_samples, n_features))
@@ -2497,7 +2496,7 @@ def test_check_categorical_features_raises(categorical_features, expected_msg):
 )
 @pytest.mark.parametrize("constructor_name", ["array", "pandas", "polars"])
 def test_check_categorical_features(categorical_features, on_array, constructor_name):
-    """Test that check_categorical_features raises expected errors."""
+    """Test that check_categorical_features returns as expected on simple data."""
     rng = np.random.RandomState(0)
     n_samples, n_features = 30, 4
     X = rng.randint(0, 3, size=(n_samples, n_features))
