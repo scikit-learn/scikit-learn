@@ -3,11 +3,11 @@
 
 from cpython cimport Py_INCREF, PyObject, PyTypeObject
 
+from libc.math cimport INFINITY, isnan
 from libc.stdlib cimport free
 from libc.string cimport memcpy
 from libc.string cimport memset
 from libc.stdint cimport INTPTR_MAX
-from libc.math cimport isnan
 from libcpp.vector cimport vector
 from libcpp.algorithm cimport pop_heap
 from libcpp.algorithm cimport push_heap
@@ -39,7 +39,6 @@ cdef extern from "numpy/arrayobject.h":
 # Types and constants
 # =============================================================================
 
-cdef float64_t INFINITY = np.inf
 cdef float64_t EPSILON = np.finfo('double').eps
 
 # Some handy constants (BestFirstTreeBuilder)

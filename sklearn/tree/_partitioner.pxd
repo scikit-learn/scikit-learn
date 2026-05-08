@@ -6,7 +6,7 @@
 from cython cimport floating
 
 from sklearn.utils._typedefs cimport (
-    float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t
+    float32_t, float64_t, int32_t, intp_t, uint8_t
 )
 from sklearn.tree._splitter cimport SplitRecord
 
