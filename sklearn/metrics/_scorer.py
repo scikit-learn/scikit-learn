@@ -277,8 +277,8 @@ class _BaseScorer(_MetadataRequester):
     def _routing_repr(self):
         return repr(self)
 
-    # TODO (1.10): remove in 1.10
-    @_deprecate_positional_args(version="1.10")
+    # TODO (1.11): remove in 1.11
+    @_deprecate_positional_args(version="1.11")
     def __call__(self, estimator, X, y_true, *, sample_weight=None, **kwargs):
         """Evaluate predicted target values for X relative to y_true.
 
@@ -314,7 +314,7 @@ class _BaseScorer(_MetadataRequester):
         _raise_for_params(kwargs, self, None)
 
         _kwargs = copy.deepcopy(kwargs)
-        # TODO(1.10): remove this when sample_weight is removed from the `__call__`
+        # TODO(1.11): remove this when sample_weight is removed from the `__call__`
         # signature
         if sample_weight is not None:
             _kwargs["sample_weight"] = sample_weight
