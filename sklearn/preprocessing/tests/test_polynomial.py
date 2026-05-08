@@ -69,6 +69,14 @@ def test_spline_transformer_input_validation(params, err_msg):
         SplineTransformer(**params).fit(X)
 
 
+def test_spline_transformer_warns_for_one_unique_knot():
+    """Test that SplineTransformer warns for knots with a single unique value."""
+    X = [[1, 2, 3], [1, 22, 3], [1, 222, 3]]
+    msg = r"The spline for feature\(s\) \[0 2\] has.*"
+    with pytest.warns(UserWarning, match=msg):
+        SplineTransformer().fit(X)
+
+
 @pytest.mark.parametrize("extrapolation", ["continue", "periodic"])
 def test_spline_transformer_integer_knots(extrapolation):
     """Test that SplineTransformer accepts integer value knot positions."""

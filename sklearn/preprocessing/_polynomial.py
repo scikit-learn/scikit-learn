@@ -6,6 +6,7 @@ This file contains preprocessing tools based on polynomials.
 # SPDX-License-Identifier: BSD-3-Clause
 
 import collections
+import warnings
 from itertools import chain, combinations
 from itertools import combinations_with_replacement as combinations_w_r
 from numbers import Integral
@@ -964,6 +965,18 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             coef = np.concatenate((coef, coef[:degree, :]))
 
         extrapolate = self.extrapolation in ["periodic", "continue"]
+
+        n_unique_knots = np.fromiter(
+            [len(np.unique(knots[:, i])) for i in range(n_features)], dtype=int
+        )
+        idx_one_knot = n_unique_knots == 1
+        if np.any(idx_one_knot):
+            msg = (
+                f"The spline(s) for feature(s) {np.flatnonzero(idx_one_knot)} has"
+                "(have) only one unique knot. Those splines will always return zeros "
+                "in transform."
+            )
+            warnings.warn(msg, UserWarning)
 
         bsplines = [
             BSpline.construct_fast(
