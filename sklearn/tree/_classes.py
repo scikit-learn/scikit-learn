@@ -248,7 +248,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         missing_values_in_feature_mask=None,
     ):
         random_state = check_random_state(self.random_state)
-
+                               
         if check_input:
             # Need to validate separately here.
             # We can't pass multi_output=True because that would allow y to be
@@ -274,11 +274,15 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     raise ValueError(
                         "No support for np.int64 index based sparse matrices"
                     )
-            if issparse(X) and self.categorical_features is not None:
+            if (
+                issparse(X)
+                and self.categorical_features is not None
+                and any(x > 0 for x in self.categorical_features)
+            ):
                 raise NotImplementedError(
                     "Categorical features not supported with sparse inputs"
                 )
-
+            
             if self.criterion == "poisson":
                 if np.any(y < 0):
                     raise ValueError(
@@ -447,6 +451,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             self._check_categorical_features(X, monotonic_cst)
         )
         has_categorical = bool(np.any(is_categorical_))
+
         if has_categorical and self.splitter == "random":
             raise ValueError(
                 "Categorical features are not supported with splitter='random'. "
@@ -1110,12 +1115,9 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
 
-    n_categories_in_feature_ : array-like of int or bool of shape (n_features,) or
-        (n_categorical_features,), default=None
-        Indicates which features are treated as categorical.
-
-        - If array-like of int, the entries are feature indices.
-        - If array-like of bool, it is a boolean mask over features.
+    n_categories_in_feature_ : ndarray of shape (n_features,), dtype=np.intp
+        Number of categories for each categorical feature. For non-categorical
+        features, the value is -1.
 
     See Also
     --------
@@ -1519,12 +1521,9 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
 
-    n_categories_in_feature_ : array-like of int or bool of shape (n_features,) or
-        (n_categorical_features,), default=None
-        Indicates which features are treated as categorical.
-
-        - If array-like of int, the entries are feature indices.
-        - If array-like of bool, it is a boolean mask over features.
+    n_categories_in_feature_ : ndarray of shape (n_features,), dtype=np.intp
+        Number of categories for each categorical feature. For non-categorical
+        features, the value is -1.
 
     See Also
     --------
@@ -1914,12 +1913,9 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
 
-    n_categories_in_feature_ : array-like of int or bool of shape (n_features,) or
-        (n_categorical_features,), default=None
-        Indicates which features are treated as categorical.
-
-        - If array-like of int, the entries are feature indices.
-        - If array-like of bool, it is a boolean mask over features.
+    n_categories_in_feature_ : ndarray of shape (n_features,), dtype=np.intp
+        Number of categories for each categorical feature. For non-categorical
+        features, the value is -1.
 
     See Also
     --------
@@ -2202,12 +2198,9 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
 
-    n_categories_in_feature_ : array-like of int or bool of shape (n_features,) or
-        (n_categorical_features,), default=None
-        Indicates which features are treated as categorical.
-
-        - If array-like of int, the entries are feature indices.
-        - If array-like of bool, it is a boolean mask over features.
+    n_categories_in_feature_ : ndarray of shape (n_features,), dtype=np.intp
+        Number of categories for each categorical feature. For non-categorical
+        features, the value is -1.
 
     See Also
     --------

@@ -488,8 +488,6 @@ cdef class DensePartitioner:
         split.threshold = (
             self.feature_values[p_prev] / 2.0 + self.feature_values[position] / 2.0
         )
-        if split.threshold == INFINITY_64t or split.threshold == -INFINITY_64t:
-            split.threshold = self.feature_values[p_prev]
 
         return split
 

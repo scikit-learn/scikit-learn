@@ -1451,6 +1451,8 @@ cdef class Tree:
             Node *current_node  # use a pointer to avoid copying attributes
             intp_t current_node_idx
             bint is_target_feature
+            bint go_left
+            bint is_categorical
             intp_t _TREE_LEAF = TREE_LEAF  # to avoid python interactions
 
         for sample_idx in range(X.shape[0]):
@@ -1483,8 +1485,14 @@ cdef class Tree:
 
                     if is_target_feature:
                         # In this case, we push left or right child on stack
-                        # TODO: handle categorical (and missing)
-                        if X[sample_idx, feature_idx] <= current_node.split_value.threshold:
+                        is_categorical = self.n_categories[current_node.feature] > 0
+                        go_left = goes_left(
+                            current_node.split_value,
+                            current_node.missing_go_to_left,
+                            is_categorical,
+                            X[sample_idx, feature_idx],
+                        )
+                        if go_left:
                             node_idx_stack[stack_size] = current_node.left_child
                         else:
                             node_idx_stack[stack_size] = current_node.right_child
