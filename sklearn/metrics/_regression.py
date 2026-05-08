@@ -30,7 +30,6 @@ from sklearn.utils._param_validation import Interval, StrOptions, validate_param
 from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import (
     _check_sample_weight,
-    _is_arraylike,
     _num_samples,
     check_array,
     check_consistent_length,
@@ -120,10 +119,8 @@ def _check_reg_targets(
     if xp is None or device is None:
         xp, _, device = get_namespace_and_device(y_true, y_pred, multioutput, xp=xp)
 
-    # Ensure that all inputs are on the y_pred device and namespace.
+    # Ensure `y_true`, `sample_weight` are on the `y_pred` device and namespace.
     y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
-    if not isinstance(multioutput, str) and _is_arraylike(multioutput):
-        multioutput = move_to(multioutput, xp=xp, device=device)
 
     check_consistent_length(y_true, y_pred, sample_weight)
     y_true = check_array(y_true, ensure_2d=False, dtype=dtype)
@@ -155,6 +152,8 @@ def _check_reg_targets(
                 )
             )
     elif multioutput is not None:
+        # Ensure `multioutput` are on the `y_pred` device and namespace.
+        multioutput = move_to(multioutput, xp=xp, device=device)
         multioutput = check_array(multioutput, ensure_2d=False)
         if n_outputs == 1:
             raise ValueError("Custom weights are useful only in multi-output cases.")

@@ -2745,8 +2745,9 @@ def test_mixed_array_api_namespace_input_compliance(
                 data_case == "regression_multioutput"
                 and metric_name in MULTIOUTPUT_METRICS
             ):
-                # use `other_ns_and_device` for `multioutput` as well
-                multioutput_np = np.array(multioutput)
+                # Use `other_ns_and_device` for `multioutput` as well
+                # Use float32 to avoid MPS max float
+                multioutput_np = np.array(multioutput, dtype=np.float32)
                 metric_kwargs_np = {"multioutput": multioutput_np}
                 multioutput_xp = xp_other.asarray(multioutput_np, device=device_other)
                 metric_kwargs_xp = {"multioutput": multioutput_xp}
