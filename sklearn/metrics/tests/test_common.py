@@ -2758,8 +2758,8 @@ def test_mixed_array_api_namespace_input_compliance(
             metric_np = metric(y1, y2, **metric_kwargs_np)
 
             msg = (
-                f"Output incorrect for mixed array input to metric, for {data_case} "
-                "case."
+                f"Output incorrect for mixed namespace and device array input to "
+                f"{metric_name}, for {data_case} case."
             )
             if isinstance(metric_np, Tuple):
                 for out_np, out_xp in zip(metric_np, metric_xp):
