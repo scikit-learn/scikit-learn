@@ -248,6 +248,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         missing_values_in_feature_mask=None,
     ):
         random_state = check_random_state(self.random_state)
+        is_categorical_ = None
+        has_categorical = False
 
         if check_input:
             # Need to validate separately here.
@@ -274,11 +276,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     raise ValueError(
                         "No support for np.int64 index based sparse matrices"
                     )
-            if (
-                issparse(X)
-                and self.categorical_features is not None
-                and any(x > 0 for x in self.categorical_features)
-            ):
+
+            is_categorical_ = self._resolve_categorical_features(X.shape[1])
+            has_categorical = bool(np.any(is_categorical_))
+            if issparse(X) and has_categorical:
                 raise NotImplementedError(
                     "Categorical features not supported with sparse inputs"
                 )
@@ -298,6 +299,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         # Determine output settings
         n_samples, self.n_features_in_ = X.shape
         is_classification = is_classifier(self)
+        if is_categorical_ is None:
+            is_categorical_ = self._resolve_categorical_features(self.n_features_in_)
+            has_categorical = bool(np.any(is_categorical_))
 
         y = np.atleast_1d(y)
         expanded_class_weight = None
@@ -447,10 +451,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 # *positive class*, all signs must be flipped.
                 monotonic_cst *= -1
 
-        is_categorical_, self.n_categories_in_feature_ = (
-            self._check_categorical_features(X, monotonic_cst)
+        self.n_categories_in_feature_ = self._check_categorical_features(
+            X, monotonic_cst, is_categorical_
         )
-        has_categorical = bool(np.any(is_categorical_))
 
         if has_categorical and self.splitter == "random":
             raise ValueError(
@@ -531,36 +534,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         return self
 
-    def _check_categorical_features(self, X, monotonic_cst):
-        """Validate `categorical_features` and infer per-feature category counts.
-
-        This method resolves `self.categorical_features` into a boolean mask of
-        shape `(n_features,)` (accepting integer indices or a boolean mask),
-        then validates values in categorical columns of `X`.
-
-        Validation for categorical columns includes:
-        - no missing values,
-        - integer-valued entries,
-        - non-negative values,
-        - values strictly below ``MAX_NUM_CATEGORIES``,
-        - no non-zero monotonic constraints on categorical features.
-
-        Parameters
-        ----------
-        X : ndarray of shape (n_samples, n_features)
-            Training data after `validate_data`.
-        monotonic_cst : ndarray of shape (n_features,) or None
-            Monotonic constraints for each feature.
-
-        Returns
-        -------
-        is_categorical : ndarray of shape (n_features,), dtype=bool
-            Boolean mask indicating categorical features.
-        n_categories_in_feature : ndarray of shape (n_features,), dtype=intp
-            For categorical feature `j`, stores ``max(X[:, j]) + 1``; for
-            non-categorical features, stores ``-1``.
-        """
-        n_features = X.shape[1]
+    def _resolve_categorical_features(self, n_features):
+        """Resolve `categorical_features` into a boolean mask."""
         categorical_features = np.asarray(self.categorical_features)
 
         if self.categorical_features is None or categorical_features.size == 0:
@@ -592,6 +567,33 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 )
             is_categorical = categorical_features
 
+        return is_categorical
+
+    def _check_categorical_features(self, X, monotonic_cst, is_categorical):
+        """Validate categorical values and infer per-feature category counts.
+
+        Validation for categorical columns includes:
+        - no missing values,
+        - integer-valued entries,
+        - non-negative values,
+        - values strictly below ``MAX_NUM_CATEGORIES``,
+        - no non-zero monotonic constraints on categorical features.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_features)
+            Training data after `validate_data`.
+        monotonic_cst : ndarray of shape (n_features,) or None
+            Monotonic constraints for each feature.
+        is_categorical : ndarray of shape (n_features,), dtype=bool
+            Boolean mask indicating categorical features.
+
+        Returns
+        -------
+        n_categories_in_feature : ndarray of shape (n_features,), dtype=intp
+            For categorical feature `j`, stores ``max(X[:, j]) + 1``; for
+            non-categorical features, stores ``-1``.
+        """
         n_categories_in_feature = np.full(self.n_features_in_, -1, dtype=np.intp)
         self._validate_categorical_values(X, is_categorical)
 
@@ -604,7 +606,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     " constraint. "
                 )
 
-        return is_categorical, n_categories_in_feature
+        return n_categories_in_feature
 
     def _validate_categorical_values(
         self, X, is_categorical, n_categories_in_feature=None
