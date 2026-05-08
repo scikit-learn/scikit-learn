@@ -387,7 +387,7 @@ def test_spline_transformer_extrapolation(bias, intercept, degree):
         n_knots=4, degree=degree, include_bias=bias, extrapolation="error"
     )
     splt.fit(X)
-    msg = "`X` contains values beyond the limits of the knots"
+    msg = "X contains values beyond the limits of the knots"
     with pytest.raises(ValueError, match=msg):
         splt.transform([[-10]])
     with pytest.raises(ValueError, match=msg):
@@ -461,7 +461,7 @@ def test_spline_transformer_sparse_output(
         np.linspace(X_min - 5, X_min, 10), np.linspace(X_max, X_max + 5, 10)
     ]
     if extrapolation == "error":
-        msg = "`X` contains values beyond the limits of the knots"
+        msg = "X contains values beyond the limits of the knots"
         with pytest.raises(ValueError, match=msg):
             splt_dense.transform(X_extra)
         msg = "Out of bounds"
@@ -583,7 +583,8 @@ def test_spline_transformer_handles_all_nans(extrapolation, sparse_output):
     all-nan-features."""
 
     X = np.array([[1, 1], [2, 2], [3, 3], [4, 5], [4, 4]])
-    X_nan_full_column = np.array([[np.nan, np.nan], [np.nan, 1]])
+    X = np.concat((X, np.array([np.nan] * 5)[:, None]), axis=1)
+    X_nan_full_column = np.array([[np.nan, np.nan, 1], [np.nan, 1, 2]])
 
     spline = SplineTransformer(
         degree=2,
@@ -592,7 +593,8 @@ def test_spline_transformer_handles_all_nans(extrapolation, sparse_output):
         extrapolation=extrapolation,
         sparse_output=sparse_output,
     )
-    spline.fit(X_nan_full_column)
+    with pytest.warns(UserWarning, match="The spline for feature.*"):
+        spline.fit(X)
 
     all_missing_column_encoded = spline.transform(X_nan_full_column)
     nan_mask = _get_mask(X_nan_full_column, np.nan)
