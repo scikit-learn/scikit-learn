@@ -11,7 +11,7 @@ and sparse data stored in a Compressed Sparse Column (CSC) format.
 # SPDX-License-Identifier: BSD-3-Clause
 
 from cython cimport final
-from libc.math cimport isnan, log2
+from libc.math cimport INFINITY, isnan, log2
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy, memmove
 
@@ -25,9 +25,6 @@ from sklearn.tree._splitter cimport SplitRecord
 # Constant to switch between algorithm non zero value extract algorithm
 # in SparsePartitioner
 cdef float32_t EXTRACT_NNZ_SWITCH = 0.1
-
-# Allow for 32 bit float comparisons
-cdef float32_t INFINITY_32t = np.inf
 
 
 @final
@@ -138,8 +135,8 @@ cdef class DensePartitioner:
             intp_t p
             float32_t current_feature_value
             intp_t[::1] samples = self.samples
-            float32_t min_feature_value = INFINITY_32t
-            float32_t max_feature_value = -INFINITY_32t
+            float32_t min_feature_value = INFINITY
+            float32_t max_feature_value = -INFINITY
             float32_t[::1] feature_values = self.feature_values
             intp_t n_missing = 0
             bint seen_non_missing = False

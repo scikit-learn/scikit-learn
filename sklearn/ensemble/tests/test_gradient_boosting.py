@@ -1036,7 +1036,7 @@ def test_monitor_early_stopping(Cls):
 
 
 def test_complete_classification():
-    # Test greedy trees with max_depth + 1 leafs.
+    # Test greedy trees with max_depth + 1 leaves.
     from sklearn.tree._tree import TREE_LEAF
 
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
@@ -1053,7 +1053,7 @@ def test_complete_classification():
 
 
 def test_complete_regression():
-    # Test greedy trees with max_depth + 1 leafs.
+    # Test greedy trees with max_depth + 1 leaves.
     from sklearn.tree._tree import TREE_LEAF
 
     k = 4
@@ -1677,7 +1677,7 @@ def test_gb_denominator_zero(global_random_seed):
     }
 
     clf = GradientBoostingClassifier(**params)
-    # _safe_devide would raise a RuntimeWarning
+    # _safe_divide would raise a RuntimeWarning
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         clf.fit(X, y)

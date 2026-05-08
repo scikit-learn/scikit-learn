@@ -1,6 +1,6 @@
 .. currentmodule:: sklearn.model_selection
 
-.. _threshold_tunning:
+.. _threshold_tuning:
 
 ==================================================
 Tuning the decision threshold for class prediction
@@ -28,7 +28,7 @@ cut-off rules: a positive class is predicted when the conditional probability
 :math:`P(y|X)` is greater than 0.5 (obtained with :term:`predict_proba`) or if the
 decision score is greater than 0 (obtained with :term:`decision_function`).
 
-Here, we show an example that illustrates the relatonship between conditional
+Here, we show an example that illustrates the relationship between conditional
 probability estimates :math:`P(y|X)` and class labels::
 
     >>> from sklearn.datasets import make_classification

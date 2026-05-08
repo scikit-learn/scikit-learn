@@ -1,9 +1,9 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+from libc.math cimport INFINITY
 from libc.string cimport memcpy
 from libc.string cimport memset
-from libc.math cimport INFINITY
 
 import numpy as np
 cimport numpy as cnp
@@ -1054,7 +1054,7 @@ cdef void precompute_absolute_errors(
     sample_indices : const intp_t[:]
         indices indicating which samples to use. Shape: (n_samples,)
     tree : WeightedFenwickTree
-        pre-instanciated tree
+        pre-instantiated tree
     start : intp_t
         Start index in `sample_indices`
     end : intp_t

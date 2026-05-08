@@ -95,6 +95,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
 )
+from sklearn.utils.estimator_checks import _NotAnArray
 from sklearn.utils.fixes import COO_CONTAINERS, CSR_CONTAINERS
 from sklearn.utils.validation import _num_samples
 
@@ -387,6 +388,14 @@ def test_cross_validate_invalid_scoring_param():
 
     with pytest.warns(UserWarning, match=warning_message):
         cross_validate(estimator, X, y, scoring={"foo": multiclass_scorer})
+
+
+def test_cross_validate_array_function_not_called():
+    """Check that `__array_function__` (NEP18) is not called."""
+    X = _NotAnArray([[1, 1], [1, 2], [1, 3], [1, 4], [2, 1], [2, 2], [2, 3], [2, 4]])
+    y = _NotAnArray([1, 1, 1, 2, 2, 2, 1, 1])
+    estimator = LogisticRegression(random_state=0)
+    cross_validate(estimator, X, y, cv=2)
 
 
 def test_cross_validate_nested_estimator():
