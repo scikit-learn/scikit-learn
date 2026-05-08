@@ -248,7 +248,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         missing_values_in_feature_mask=None,
     ):
         random_state = check_random_state(self.random_state)
-                               
+
         if check_input:
             # Need to validate separately here.
             # We can't pass multi_output=True because that would allow y to be
@@ -282,7 +282,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 raise NotImplementedError(
                     "Categorical features not supported with sparse inputs"
                 )
-            
+
             if self.criterion == "poisson":
                 if np.any(y < 0):
                     raise ValueError(
