@@ -5,17 +5,7 @@
 cimport numpy as cnp
 from sklearn.neighbors._quad_tree cimport Cell
 from sklearn.utils._typedefs cimport float32_t, float64_t, intp_t, uint8_t, int32_t, uint32_t, uint64_t
-
-
-ctypedef uint64_t bitword_t
-
-cdef enum:
-    BITWORD_SHIFT = 6          # log2(64)
-    BITWORD_MASK = 63          # 64 - 1
-    BITWORD_BITS = 64
-
-cdef enum:
-    MAX_CAT_BITSET_WORDS = 4   # ceil(256 / 64)
+from sklearn.utils._bitset cimport BITSET_DTYPE_C
 
 ctypedef union SplitValue:
     # Union type to generalize the concept of a threshold to categorical
@@ -23,22 +13,13 @@ ctypedef union SplitValue:
     # for numerical features, where feature values less than or equal to the
     # threshold go left, and values greater than the threshold go right.
     #
-    # For categorical features, the BITSET_INNER_DTYPE_C view (`SplitValue.categorical_split``) is
-    # used. It works in one of two ways, indicated by the value of its least
-    # significant bit (LSB). If the LSB is 0, then categorical_split acts as a bitfield
-    # for up to 64 categories, sending samples left if the bit corresponding to
-    # their category is 1 or right if it is 0. If the LSB is 1, then the most
-    # significant 32 bits of categorical_split make a random seed. To evaluate a
-    # sample, use the random seed to flip a coin (category_value + 1) times and
-    # send it left if the last flip gives 1; otherwise right. This second
-    # method allows up to 2**31 category values, but can only be used for
-    # RandomSplitter.
+    # For categorical features, categorical_bitset stores the set of
+    # categories that go to the left child.
     float64_t threshold
-    # BITSET_DTYPE_C categorical_split
-    # Array size = ceil(MAX_NUM_CATEGORIES / 64).
-    # Currently MAX_NUM_CATEGORIES = 256, so 256/64 = 4 words.
-    # If you change MAX_NUM_CATEGORIES, update this array size accordingly.
-    uint64_t[MAX_CAT_BITSET_WORDS] categorical_bitset
+    # Array size = ceil(MAX_NUM_CATEGORIES / 32).
+    # Currently MAX_NUM_CATEGORIES = 256, so 256/32 = 8 words.
+    # If you change MAX_NUM_CATEGORIES, update BITSET_DTYPE_C accordingly.
+    BITSET_DTYPE_C categorical_bitset
 
 cdef struct Node:
     # Base storage structure for the nodes in a Tree object
@@ -54,11 +35,6 @@ cdef struct Node:
     float64_t weighted_n_node_samples    # Weighted number of samples at the node
     uint8_t missing_go_to_left     # Whether features have missing values
 
-
-cdef intp_t n_words_for_nbits(intp_t n_bits) noexcept
-
-cdef void set_bit_fast(bitword_t* words, intp_t c) noexcept nogil
-cdef bint in_bitset_words_fast(const bitword_t* words, intp_t c) noexcept nogil
 
 cdef bint goes_left(
     SplitValue split_value,

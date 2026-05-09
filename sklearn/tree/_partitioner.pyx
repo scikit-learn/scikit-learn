@@ -19,7 +19,8 @@ import numpy as np
 cimport numpy as cnp
 cnp.import_array()
 from scipy.sparse import issparse
-from sklearn.tree._utils cimport set_bit_fast, goes_left
+from sklearn.utils._bitset cimport BITSET_DTYPE_C, init_bitset, set_bitset
+from sklearn.tree._utils cimport goes_left
 from sklearn.tree._tree cimport MAX_NUM_CATEGORIES
 from sklearn.tree._splitter cimport SplitRecord
 
@@ -135,7 +136,7 @@ cdef class DensePartitioner:
         self.n_missing = n_missing
         self.n_categories = self.n_categories_in_feature[current_feature]
         if self.n_categories > 0:
-            self.n_words = (self.n_categories + 63) >> 6   # divide by 64 with ceil
+            self.n_words = (self.n_categories + 31) >> 5   # divide by 32 with ceil
         else:
             self.n_words = 0
 
@@ -1077,7 +1078,7 @@ cdef inline void split_pos_to_bitset_words(
     const intp_t* sorted_cat,
     intp_t n_sorted,
     const intp_t* counts,
-    bitword_t* out_words,
+    BITSET_DTYPE_C out_words,
     intp_t n_words
 ) noexcept nogil:
     """Build a categorical-split bitset from a prefix of sorted categories.
@@ -1099,30 +1100,30 @@ cdef inline void split_pos_to_bitset_words(
         Number of entries in `sorted_cat` (typically `n_categories`).
     counts : const intp_t*
         Per-category sample counts (node-local histogram).
-    out_words : bitword_t*
-        Output buffer of `n_words` 64-bit words; zeroed and filled by
+    out_words : BITSET_DTYPE_C
+        Output buffer of 32-bit words; zeroed and filled by
         this function.
     n_words : intp_t
         Length of `out_words`.  Must satisfy
-        ``n_words >= ceil((max_category_id + 1) / 64)``.
+        ``n_words >= ceil((max_category_id + 1) / 32)``.
 
     Notes
     -----
     Caller must guarantee that every id in `sorted_cat` satisfies
-    ``0 <= id < 64 * n_words``.  No bounds checking is performed.
+    ``0 <= id < 32 * n_words``.  No bounds checking is performed.
     This function is ``nogil`` and performs no allocation.
     """
     cdef intp_t r, c
     cdef intp_t offset = 0
 
-    memset(out_words, 0, <size_t>(n_words * sizeof(bitword_t)))
+    init_bitset(out_words)
 
     if p <= 0:
         return
 
     for r in range(n_sorted):
         c = sorted_cat[r]
-        set_bit_fast(out_words, c)
+        set_bitset(out_words, <uint8_t> c)
         offset += counts[c]
         if offset >= p:
             break

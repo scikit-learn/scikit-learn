@@ -9,7 +9,8 @@ from sklearn.utils._typedefs cimport (
 
 from sklearn.tree._criterion cimport Criterion
 from sklearn.tree._tree cimport ParentInfo
-from sklearn.tree._utils cimport bitword_t, SplitValue
+from sklearn.tree._utils cimport SplitValue
+from sklearn.utils._bitset cimport BITSET_INNER_DTYPE_C
 
 cdef struct SplitRecord:
     # Data to track sample split
@@ -72,7 +73,7 @@ cdef class Splitter:
     #   then it is not categorical.
     # - categorical_split_buffer: a bitset to store the categorical split
     cdef const intp_t[:] n_categories
-    cdef bitword_t* categorical_split
+    cdef BITSET_INNER_DTYPE_C* categorical_split
 
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,

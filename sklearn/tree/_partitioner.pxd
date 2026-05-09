@@ -10,9 +10,6 @@ from sklearn.utils._typedefs cimport (
 )
 from sklearn.tree._splitter cimport SplitRecord, SplitValue
 
-ctypedef uint64_t bitword_t
-
-
 # Mitigate precision differences between 32 bit and 64 bit
 cdef const float32_t FEATURE_THRESHOLD = 1e-7
 

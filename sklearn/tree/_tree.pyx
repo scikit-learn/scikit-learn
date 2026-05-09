@@ -24,12 +24,12 @@ from scipy.sparse import issparse
 from scipy.sparse import csr_array
 
 from sklearn.utils import _align_api_if_sparse
+from sklearn.utils._bitset cimport BITSET_LENGTH
+from sklearn.utils._bitset cimport in_bitset
 
 from sklearn.tree._utils cimport goes_left
 from sklearn.tree._utils cimport safe_realloc
 from sklearn.tree._utils cimport sizet_ptr_to_ndarray
-from sklearn.tree._utils cimport in_bitset_words_fast
-from sklearn.tree._utils cimport MAX_CAT_BITSET_WORDS
 
 cdef extern from "numpy/arrayobject.h":
     object PyArray_NewFromDescr(PyTypeObject* subtype, cnp.dtype descr,
@@ -72,19 +72,19 @@ MAX_NUM_CATEGORIES_PY = 256
 #   – threshold is a float64 at offset 0
 #   – categorical_bitset is an array of eight uint32’s at offset 0 (i.e. fully overlapping)
 #   – total itemsize must be 32 (so union = max(size of FLOAT64=8, size of 8×uint32=32))
-# Number of uint64 words in the categorical bitset.
-# Must match uint64_t[_N_BITSET_WORDS] in SplitValue (see _utils.pxd).
+# Number of uint32 words in the categorical bitset.
+# Must match BITSET_DTYPE_C in SplitValue (see _utils.pxd).
 SplitValue_dtype = np.dtype({
     'names':   ['threshold', 'categorical_bitset'],
-    'formats': [np.float64,     (np.uint64, MAX_CAT_BITSET_WORDS)],
+    'formats': [np.float64,     (np.uint32, BITSET_LENGTH)],
     'offsets': [0,              0],
-    'itemsize': MAX_CAT_BITSET_WORDS * 8,
+    'itemsize': BITSET_LENGTH * 4,
 })
 NODE_DTYPE = np.dtype([
     ('left_child',              np.intp),           # 8 bytes  (offset 0)
     ('right_child',             np.intp),           # 8 bytes  (offset 8)
     ('feature',                 np.intp),           # 8 bytes  (offset 16)
-    ('split_value',             SplitValue_dtype),  # 64 bytes (offset 24)
+    ('split_value',             SplitValue_dtype),  # 32 bytes (offset 24)
     ('impurity',                np.float64),        # 8 bytes (offset 56)
     ('n_node_samples',          np.intp),           # 8 bytes (offset 64)
     ('weighted_n_node_samples', np.float64),        # 8 bytes (offset 72)
@@ -1003,7 +1003,11 @@ cdef class Tree:
             node.feature = feature
             if self.n_categories[feature] > 0:
                 node.split_value.threshold = -INFINITY
-                node.split_value.categorical_bitset = split_value.categorical_bitset
+                memcpy(
+                    node.split_value.categorical_bitset,
+                    split_value.categorical_bitset,
+                    sizeof(node.split_value.categorical_bitset),
+                )
             else:
                 node.split_value.threshold = split_value.threshold
             node.missing_go_to_left = missing_go_to_left
@@ -1195,9 +1199,9 @@ cdef class Tree:
                         else:
                             node = &self.nodes[node.right_child]
                     elif self.n_categories[node.feature] > 0:
-                        if in_bitset_words_fast(
+                        if in_bitset(
                             node.split_value.categorical_bitset,
-                            <intp_t> X_i_node_feature
+                            <uint8_t> X_i_node_feature
                         ):
                             node = &self.nodes[node.left_child]
                         else:

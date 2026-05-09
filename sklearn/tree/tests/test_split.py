@@ -42,11 +42,12 @@ def powerset(iterable):
 
 
 def bitset_to_tuple(v, n_categories):
-    bitset = np.asarray(v, dtype=np.uint64).reshape(-1)
+    bitset = np.asarray(v).reshape(-1)
+    bits_per_word = bitset.dtype.itemsize * 8
     return tuple(
         c
         for c in range(n_categories)
-        if bitset[c // 64] & (np.uint64(1) << np.uint64(c % 64))
+        if int(bitset[c // bits_per_word]) & (1 << (c % bits_per_word))
     )
 
 

@@ -6,6 +6,10 @@ from sklearn.utils._typedefs cimport float64_t, uint8_t, uint32_t
 ctypedef uint32_t BITSET_INNER_DTYPE_C
 ctypedef BITSET_INNER_DTYPE_C[8] BITSET_DTYPE_C
 
+cdef enum:
+    BITSET_INNER_BITS = 32
+    BITSET_LENGTH = 8
+
 cdef void init_bitset(BITSET_DTYPE_C bitset) noexcept nogil
 
 cdef void set_bitset(BITSET_DTYPE_C bitset, uint8_t val) noexcept nogil
