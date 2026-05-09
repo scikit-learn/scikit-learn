@@ -206,7 +206,7 @@ def test_plot_partial_dependence_str_features(
     bmi = diabetes.data[:, diabetes.feature_names.index("bmi")]
 
     X = _convert_container(
-        diabetes.data, input_type, columns_names=diabetes.feature_names
+        diabetes.data, input_type, columns_name=diabetes.feature_names
     )
 
     if feature_names_type is None:
