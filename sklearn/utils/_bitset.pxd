@@ -4,7 +4,7 @@
 from sklearn.utils._typedefs cimport float64_t, uint8_t, uint32_t
 
 # Fixed-width bitset storage shared by categorical split implementations.
-# e.g. in HGBT and DT implmenetations.
+# e.g. in HGBT and DT implementations.
 #
 # A bitset stores BITSET_LENGTH words, with one bit per supported category code.
 # BITSET_INNER_BITS is derived from the word dtype so changing
