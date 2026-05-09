@@ -447,6 +447,10 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         neighbors_model.fit(X)
         # This has worst case O(n^2) memory complexity
         neighborhoods = neighbors_model.radius_neighbors(X, return_distance=False)
+        # Release the neighbors model eagerly to free the internal tree
+        # structure and its copy of X, avoiding reference cycles that would
+        # otherwise delay garbage collection until a full GC sweep.
+        del neighbors_model
 
         if sample_weight is None:
             n_neighbors = np.array([len(neighbors) for neighbors in neighborhoods])
@@ -461,6 +465,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         # A list of all core samples found.
         core_samples = np.asarray(n_neighbors >= self.min_samples, dtype=np.uint8)
         dbscan_inner(core_samples, neighborhoods, labels)
+        del neighborhoods
 
         self.core_sample_indices_ = np.where(core_samples)[0]
         self.labels_ = labels
