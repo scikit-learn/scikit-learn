@@ -2139,7 +2139,7 @@ class PassthroughTransformer(BaseEstimator):
 def test_check_feature_names_in(constructor_name, feature_names, msg):
     """Check behavior of check_feature_names_in for arrays."""
     X = np.array([[0.0, 1.0, 2.0]])
-    X = _convert_container(X, constructor_name, column_names=["a", "b", "c"])
+    X = _convert_container(X, constructor_name, columns_name=["a", "b", "c"])
     est = PassthroughTransformer().fit(X)
 
     names = est.get_feature_names_out()
