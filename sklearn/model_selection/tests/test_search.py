@@ -85,12 +85,13 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._array_api import (
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
+from sklearn.utils._mocking import CheckingClassifier
 from sklearn.utils._testing import (
     MinimalClassifier,
     MinimalRegressor,
     MinimalTransformer,
     _array_api_for_tests,
+    _convert_container,
     assert_allclose,
     assert_allclose_dense_sparse,
     assert_almost_equal,
@@ -815,35 +816,33 @@ def test_y_as_list():
     assert hasattr(grid_search, "cv_results_")
 
 
-def test_pandas_input():
-    # check cross_val_score doesn't destroy pandas dataframe
-    types = [(MockDataFrame, MockDataFrame)]
-    try:
-        from pandas import DataFrame, Series
+@pytest.mark.parametrize(
+    ["input_type", "target_type"],
+    [
+        ("pandas", "series"),
+        ("polars", "polars_series"),
+        ("pyarrow", "pyarrow_array"),
+    ],
+)
+def test_dataframe_input(input_type, target_type):
+    # check cross_val_score doesn't destroy dataframes
+    X = _convert_container(np.arange(100).reshape(10, 10), input_type)
+    y = _convert_container(np.array([0] * 5 + [1] * 5), target_type)
+    input_type = type(X)
+    target_type = type(y)
 
-        types.append((DataFrame, Series))
-    except ImportError:
-        pass
+    def check_df(x):
+        return isinstance(x, input_type) or isinstance(x.to_native(), input_type)
 
-    X = np.arange(100).reshape(10, 10)
-    y = np.array([0] * 5 + [1] * 5)
+    def check_series(x):
+        return isinstance(x, target_type) or isinstance(x.to_native(), target_type)
 
-    for InputFeatureType, TargetType in types:
-        # X dataframe, y series
-        X_df, y_ser = InputFeatureType(X), TargetType(y)
+    clf = CheckingClassifier(check_X=check_df, check_y=check_series)
 
-        def check_df(x):
-            return isinstance(x, InputFeatureType)
-
-        def check_series(x):
-            return isinstance(x, TargetType)
-
-        clf = CheckingClassifier(check_X=check_df, check_y=check_series)
-
-        grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]})
-        grid_search.fit(X_df, y_ser).score(X_df, y_ser)
-        grid_search.predict(X_df)
-        assert hasattr(grid_search, "cv_results_")
+    grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]})
+    grid_search.fit(X, y).score(X, y)
+    grid_search.predict(X)
+    assert hasattr(grid_search, "cv_results_")
 
 
 def test_unsupervised_grid_search():

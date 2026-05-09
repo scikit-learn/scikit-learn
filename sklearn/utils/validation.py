@@ -42,6 +42,10 @@ from sklearn.utils.fixes import (
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
 
+def _nw_is_into_df_or_series(x):
+    return nw.dependencies.is_into_dataframe(x) or nw.dependencies.is_into_series(x)
+
+
 # This function is not used anymore at this moment in the code base but we keep it in
 # case that we merge a new public function without kwarg only by mistake, which would
 # require a deprecation cycle to fix.
@@ -377,7 +381,7 @@ def _num_samples(x):
         if isinstance(x.shape[0], numbers.Integral):
             return x.shape[0]
 
-    if nw.dependencies.is_into_dataframe(x) or nw.dependencies.is_into_series(x):
+    if _nw_is_into_df_or_series(x):
         return nw.from_native(x).shape[0]
 
     if not hasattr(x, "__len__") and not hasattr(x, "shape"):
@@ -471,8 +475,10 @@ def _make_indexable(iterable):
     """
     if sp.issparse(iterable):
         return iterable.tocsr()
-    elif hasattr(iterable, "__getitem__") or hasattr(iterable, "iloc"):
+    elif hasattr(iterable, "__getitem__"):
         return iterable
+    elif _nw_is_into_df_or_series(iterable):
+        return nw.from_native(iterable)
     elif iterable is None:
         return iterable
     return np.array(iterable)
