@@ -19,6 +19,7 @@ from sklearn.tree._utils cimport MAX_CAT_BITSET_WORDS, BITWORD_BITS
 cdef enum:
     MAX_NUM_CATEGORIES = MAX_CAT_BITSET_WORDS * BITWORD_BITS
 
+
 cdef struct ParentInfo:
     # Structure to store information about the parent of a node
     # This is passed to the splitter, to provide information about the previous split

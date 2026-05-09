@@ -3202,6 +3202,11 @@ def test_no_sparse_with_categorical(name):
     with pytest.raises(
         NotImplementedError, match="Categorical features not supported with sparse"
     ):
+        Tree(categorical_features=[0]).fit(X_sparse, y)
+
+    with pytest.raises(
+        NotImplementedError, match="Categorical features not supported with sparse"
+    ):
         Tree(categorical_features=[3, 4]).fit(X, y).predict(X_sparse)
 
     # Regression check: categorical_features=[0] should also trigger sparse rejection.
