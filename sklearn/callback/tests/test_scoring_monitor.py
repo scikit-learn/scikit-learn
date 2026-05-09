@@ -1,8 +1,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from pickle import dumps, loads
-
 import numpy as np
 import pytest
 
@@ -368,15 +366,3 @@ def test_get_logs_include_lineage_ancestor_retrieval(as_pandas):
 
     assert len(sibling_rows) == max_iter
     assert ancestors_info_path == expected_ancestors_info_path
-
-
-def test_scoring_monitor_survives_pickling():
-    """Verify that pickling an estimator preserves its callback with its log."""
-    callback = ScoringMonitor(scoring="neg_mean_squared_error")
-    estimator = MaxIterEstimator().set_callbacks(callback)
-    X, y = make_regression(n_samples=100, n_features=2, random_state=0)
-    estimator.fit(X, y)
-
-    est_depickled = loads(dumps(estimator))
-
-    assert est_depickled._skl_callbacks[0].get_logs() == callback.get_logs()

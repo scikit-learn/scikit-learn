@@ -200,4 +200,5 @@ The development of support for callbacks in estimators is in progress. Here is a
 the estimators that support callbacks:
 
 - :class:`~sklearn.linear_model.LogisticRegression`
+- :class:`~sklearn.pipeline.Pipeline`
 - :class:`~sklearn.preprocessing.StandardScaler`

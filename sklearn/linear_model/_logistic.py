@@ -99,66 +99,89 @@ def _check_solver(solver, penalty, dual):
     return solver
 
 
-def _make_scipy_callback_fun(
+def _make_lr_minimize_lbfgs_callback_func(
     callback_ctx,
     estimator,
     X,
     y,
     metadata,
-    xp,
     n_classes,
     is_binary,
     fit_intercept,
     coefs_order,
+    xp,
     device,
 ):
-    """Helper function to make a callback function for scipy."""
+    """Helper to forward sklearn callbacks to scipy.optimize.minimize for L-BFGS.
+
+    Since `minimize` only calls it at the end of each iteration, the order of hook calls
+    is first on_fit_task_end for the current iteration, then on_fit_task_begin for the
+    next iteration. A first begin is called before calling `minimize` and a last end is
+    called after. Therefore there's an extra empty task when max_iter is not reached.
+    """
     if callback_ctx is None or not hasattr(estimator, "_skl_callbacks"):
         return None
 
-    def scipy_callback_fun(xk):
-        w0 = xk
-        if is_binary:
-            coef_ = xp.asarray(w0.copy(order=coefs_order), dtype=X.dtype, device=device)
-            if fit_intercept:
-                intercept_ = coef_[-1:]
-                coef_ = coef_[:-1][None, :]
-            else:
-                intercept_ = xp.zeros(1, dtype=X.dtype, device=device)
-                coef_ = coef_[None, :]
-        else:
-            multi_w0 = np.reshape(w0, (n_classes, -1), order="F")
-            coef_ = xp.asarray(
-                multi_w0.copy(order=coefs_order), dtype=X.dtype, device=device
-            )
-            if fit_intercept:
-                intercept_ = coef_[:, -1]
-                coef_ = coef_[:, :-1]
-            else:
-                intercept_ = xp.zeros(n_classes, dtype=X.dtype, device=device)
-
-        reconstruction_attributes = {"coef_": coef_, "intercept_": intercept_}
-        solver_iter_ctx = list(callback_ctx._children_map.values())[-1]
+    def callback_func(xk):
+        coef, intercept = _compute_coef_intercept(
+            xk,
+            n_classes=n_classes,
+            is_binary=is_binary,
+            fit_intercept=fit_intercept,
+            coefs_order=coefs_order,
+            dtype=X.dtype,
+            xp=xp,
+            device=device,
+        )
+        solver_iter_ctx = next(reversed(callback_ctx._children_map.values()))
+        # Call the end hook for the current iteration.
         solver_iter_ctx.call_on_fit_task_end(
             estimator=estimator,
             X=X,
             y=y,
             metadata=metadata,
-            reconstruction_attributes=reconstruction_attributes,
+            reconstruction_attributes={"coef_": coef, "intercept_": intercept},
         )
         # TODO(1.10): Use `call_on_fit_task_end` in an if to do
         # `raise StopIteration()`
         # Using StopIteration in a scipy callback requires scipy > 1.10
         # which will be the case of the min dependencies for scikit-learn 1.10.
 
-        # Making the subcontext for the next iteration.
-        if len(callback_ctx._children_map) < callback_ctx.max_subtasks:
-            solver_iter_ctx = callback_ctx.subcontext(task_name="lbfgs iter")
-            solver_iter_ctx.call_on_fit_task_begin(
-                estimator=estimator, X=X, y=y, metadata=metadata
-            )
+        # Make the subcontext and call the begin hook for the next iteration.
+        solver_iter_ctx = callback_ctx.subcontext(task_name="lbfgs iter")
+        solver_iter_ctx.call_on_fit_task_begin(
+            estimator=estimator,
+            X=X,
+            y=y,
+            metadata=metadata,
+            reconstruction_attributes={"coef_": coef, "intercept_": intercept},
+        )
 
-    return scipy_callback_fun
+    return callback_func
+
+
+def _compute_coef_intercept(
+    w0, *, n_classes, is_binary, fit_intercept, coefs_order, dtype, xp, device
+):
+    """Helper to compute coef and intercept from a flattened array of parameters."""
+    if is_binary:
+        coef = xp.asarray(w0.copy(order=coefs_order), dtype=dtype, device=device)
+        if fit_intercept:
+            intercept = coef[-1:]
+            coef = coef[:-1][None, :]
+        else:
+            intercept = xp.zeros(1, dtype=dtype, device=device)
+            coef = coef[None, :]
+    else:
+        multi_w0 = np.reshape(w0, (n_classes, -1), order="F")
+        coef = xp.asarray(multi_w0.copy(order=coefs_order), dtype=dtype, device=device)
+        if fit_intercept:
+            intercept = coef[:, -1]
+            coef = coef[:, :-1]
+        else:
+            intercept = xp.zeros(n_classes, dtype=dtype, device=device)
+
+    return coef, intercept
 
 
 def _logistic_regression_path(
@@ -511,9 +534,23 @@ def _logistic_regression_path(
             # only in the LogisticRegressionCV, keeping the LogisticRegression version
             # without that extra level.
             if callback_ctx is not None:
+                coef, intercept = _compute_coef_intercept(
+                    w0,
+                    n_classes=n_classes,
+                    is_binary=is_binary,
+                    fit_intercept=fit_intercept,
+                    coefs_order=coefs_order,
+                    dtype=X.dtype,
+                    xp=xp,
+                    device=device_,
+                )
                 # We call call_on_fit_task_begin for the first iteration's subcontext.
                 callback_ctx.subcontext(task_name="lbfgs iter").call_on_fit_task_begin(
-                    estimator=estimator, X=X, y=y, metadata=callback_metadata
+                    estimator=estimator,
+                    X=X,
+                    y=y,
+                    metadata=callback_metadata,
+                    reconstruction_attributes={"coef_": coef, "intercept_": intercept},
                 )
             opt_res = optimize.minimize(
                 func,
@@ -528,17 +565,17 @@ def _logistic_regression_path(
                     "ftol": 64 * np.finfo(float).eps,
                     **_get_additional_lbfgs_options_dict("iprint", iprint),
                 },
-                callback=_make_scipy_callback_fun(
+                callback=_make_lr_minimize_lbfgs_callback_func(
                     callback_ctx,
                     estimator,
                     X,
                     y,
                     callback_metadata,
-                    xp,
                     n_classes,
                     is_binary,
                     fit_intercept,
                     coefs_order,
+                    xp,
                     device_,
                 ),
             )
@@ -548,14 +585,11 @@ def _logistic_regression_path(
                 max_iter,
                 extra_warning_msg=_LOGISTIC_SOLVER_CONVERGENCE_MSG,
             )
-            if callback_ctx is not None and n_iter_i < max_iter:
-                # If max_iter is not reached, call_on_fit_task_begin has been called at
-                # the end of the last solver iteration, so here call_on_fit_task_end is
-                # called for this last subtask. It does not correspond to an iteration
-                # so it's an empty task.
-                list(callback_ctx._children_map.values())[-1].call_on_fit_task_end(
-                    estimator=estimator, X=X, y=y, metadata=callback_metadata
-                )
+            # call_on_fit_task_begin has been called at the end of the last solver
+            # iteration, so here we call call_on_fit_task_end for this last subtask.
+            # It's an empty task, so we don't pass any information.
+            last_context = next(reversed(callback_ctx._children_map.values()))
+            last_context.call_on_fit_task_end(estimator=estimator)
             w0, loss = opt_res.x, opt_res.fun
         elif solver == "newton-cg":
             l2_reg_strength = 1.0 / (C * sw_sum)
@@ -924,7 +958,7 @@ def _log_reg_scoring_path(
 
 
 class LogisticRegression(
-    LinearClassifierMixin, SparseCoefMixin, CallbackSupportMixin, BaseEstimator
+    CallbackSupportMixin, LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 ):
     """
     Logistic Regression (aka logit, MaxEnt) classifier.
@@ -1417,8 +1451,11 @@ class LogisticRegression(
         n_classes = size(self.classes_)
         is_binary = n_classes == 2
 
-        # The fit task will have a subtask even if max_iter is 0.
-        callback_ctx = self._init_callback_context(max_subtasks=max(self.max_iter, 1))
+        # With lbfgs, the fit task will have a subtask even if max_iter is 0.
+        # There's also always one extra empty subtask due to the scipy.optimize.minimize
+        # callback logic.
+        max_subtasks = max(self.max_iter, 1) + 1
+        callback_ctx = self._init_callback_context(max_subtasks=max_subtasks)
         callback_metadata = (
             {"sample_weght": sample_weight} if sample_weight is not None else None
         )
@@ -1510,23 +1547,23 @@ class LogisticRegression(
 
         self.n_iter_ = xp.asarray(n_iter, dtype=xp.int32)
 
-        self.coef_ = coefs[0, ...]
-        if self.fit_intercept:
-            if is_binary:
-                self.intercept_ = self.coef_[-1:]
-                self.coef_ = self.coef_[:-1][None, :]
-            else:
-                self.intercept_ = self.coef_[:, -1]
-                self.coef_ = self.coef_[:, :-1]
-        else:
-            if is_binary:
-                self.intercept_ = xp.zeros(1, dtype=X.dtype, device=device_)
-                self.coef_ = self.coef_[None, :]
-            else:
-                self.intercept_ = xp.zeros(n_classes, dtype=X.dtype, device=device_)
+        self.coef_, self.intercept_ = _compute_coef_intercept(
+            coefs[0, ...],
+            n_classes=n_classes,
+            is_binary=is_binary,
+            fit_intercept=self.fit_intercept,
+            coefs_order="K",
+            dtype=X.dtype,
+            xp=xp,
+            device=device_,
+        )
 
         callback_ctx.call_on_fit_task_end(
-            estimator=self, X=X, y=y, metadata=callback_metadata
+            estimator=self,
+            X=X,
+            y=y,
+            metadata=callback_metadata,
+            reconstruction_attributes={},
         )
 
         return self
