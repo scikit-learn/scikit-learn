@@ -2148,7 +2148,7 @@ def test_random_search_bad_cv():
     with pytest.raises(
         ValueError,
         match=(
-            "cv.split and cv.get_n_splits returned "
+            "cv.split and cv.get_n_splits return "
             "inconsistent results. Expected \\d+ "
             "splits, got \\d+"
         ),

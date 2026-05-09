@@ -1041,6 +1041,13 @@ class BaseSearchCV(
                 n_candidates = len(candidate_params)
                 n_splits = self.n_splits_
 
+                cv_splits = list(cv.split(X, y, **routed_params.splitter.split))
+                if len(cv_splits) != n_splits:
+                    raise ValueError(
+                        f"cv.split and cv.get_n_splits return inconsistent results. "
+                        f"Expected {n_splits} splits, got {len(cv_splits)}"
+                    )
+
                 if self.verbose > 0:
                     print(
                         "Fitting {0} folds for each of {1} candidates,"
@@ -1071,7 +1078,7 @@ class BaseSearchCV(
                     )
                     for (cand_idx, parameters), (split_idx, (train, test)) in product(
                         enumerate(candidate_params),
-                        enumerate(cv.split(X, y, **routed_params.splitter.split)),
+                        enumerate(cv_splits),
                     )
                 )
 
@@ -1080,12 +1087,6 @@ class BaseSearchCV(
                         "No fits were performed. "
                         "Was the CV iterator empty? "
                         "Were there no candidates?"
-                    )
-                elif len(out) != n_candidates * n_splits:
-                    raise ValueError(
-                        "cv.split and cv.get_n_splits returned "
-                        "inconsistent results. Expected {} "
-                        "splits, got {}".format(n_splits, len(out) // n_candidates)
                     )
 
                 _warn_or_raise_about_fit_failures(out, self.error_score)
