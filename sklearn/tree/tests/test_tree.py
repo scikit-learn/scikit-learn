@@ -3243,6 +3243,37 @@ def test_predict_invalid_categorical_values(Tree, X_test, match):
         est.predict(X_test)
 
 
+@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
+@pytest.mark.parametrize(
+    "X",
+    [
+        np.array([[0.0], [0.0], [2.0], [2.0]], dtype=np.float64),
+        np.array([[1.0], [1.0], [2.0], [2.0]], dtype=np.float64),
+    ],
+)
+def test_fit_invalid_categorical_non_contiguous_values(Tree, X):
+    if Tree is DecisionTreeClassifier:
+        y = np.array([0, 0, 1, 1])
+    else:
+        y = np.array([0.0, 0.0, 1.0, 1.0])
+
+    with pytest.raises(
+        ValueError, match="contiguous integer categories starting at 0"
+    ):
+        Tree(categorical_features=[0], random_state=0).fit(X, y)
+
+
+@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
+def test_fit_categorical_contiguous_values(Tree):
+    X = np.array([[0.0], [1.0], [2.0], [2.0]], dtype=np.float64)
+    if Tree is DecisionTreeClassifier:
+        y = np.array([0, 0, 1, 1])
+    else:
+        y = np.array([0.0, 0.0, 1.0, 1.0])
+
+    Tree(categorical_features=[0], random_state=0).fit(X, y)
+
+
 @pytest.mark.parametrize(
     "data_params",
     [
