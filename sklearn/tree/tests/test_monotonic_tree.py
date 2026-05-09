@@ -29,20 +29,23 @@ TREE_BASED_REGRESSOR_CLASSES = TREE_REGRESSOR_CLASSES + [
 ]
 
 
-def missing_data_supported(estimator):
-    return estimator.__sklearn_tags__().input_tags.allow_nan
-
-
 @pytest.mark.parametrize("TreeClassifier", TREE_BASED_CLASSIFIER_CLASSES)
-@pytest.mark.parametrize("with_missing", (True, False))
+@pytest.mark.parametrize(
+    "sparse_splitter, with_missing",
+    [
+        (False, False),
+        (True, False),
+        (False, True),
+    ],
+    ids=["dense-without-missing", "sparse-without-missing", "dense-with-missing"],
+)
 @pytest.mark.parametrize("depth_first_builder", (True, False))
-@pytest.mark.parametrize("sparse_splitter", (True, False))
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 def test_monotonic_constraints_classifications(
     TreeClassifier,
-    with_missing,
-    depth_first_builder,
     sparse_splitter,
+    depth_first_builder,
+    with_missing,
     global_random_seed,
     csc_container,
 ):
@@ -82,8 +85,6 @@ def test_monotonic_constraints_classifications(
     if hasattr(est, "n_estimators"):
         est.set_params(n_estimators=5)
     if with_missing:
-        if sparse_splitter or not missing_data_supported(est):
-            return
         generator = np.random.default_rng(seed=global_random_seed)
         mask = generator.choice(2, size=X_train.shape).astype(bool)
         X_train[mask] = np.nan
@@ -107,16 +108,23 @@ def test_monotonic_constraints_classifications(
 
 
 @pytest.mark.parametrize("TreeRegressor", TREE_BASED_REGRESSOR_CLASSES)
-@pytest.mark.parametrize("with_missing", (True, False))
+@pytest.mark.parametrize(
+    "sparse_splitter, with_missing",
+    [
+        (False, False),
+        (True, False),
+        (False, True),
+    ],
+    ids=["dense-without-missing", "sparse-without-missing", "dense-with-missing"],
+)
 @pytest.mark.parametrize("depth_first_builder", (True, False))
-@pytest.mark.parametrize("sparse_splitter", (True, False))
 @pytest.mark.parametrize("criterion", ("absolute_error", "squared_error"))
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 def test_monotonic_constraints_regressions(
     TreeRegressor,
-    with_missing,
-    depth_first_builder,
     sparse_splitter,
+    depth_first_builder,
+    with_missing,
     criterion,
     global_random_seed,
     csc_container,
@@ -161,8 +169,6 @@ def test_monotonic_constraints_regressions(
     if hasattr(est, "n_estimators"):
         est.set_params(n_estimators=5)
     if with_missing:
-        if sparse_splitter or not missing_data_supported(est):
-            return
         generator = np.random.default_rng(seed=global_random_seed)
         mask = generator.choice(2, size=X_train.shape).astype(bool)
         X_train[mask] = np.nan
@@ -355,8 +361,6 @@ def test_1d_tree_nodes_values(
             random_state=global_random_seed,
         )
     if with_missing:
-        if not missing_data_supported(clf):
-            return
         generator = np.random.default_rng(seed=global_random_seed)
         mask = generator.choice(2, size=X.shape, p=[0.8, 0.2]).astype(bool)
         X[mask] = np.nan
@@ -525,8 +529,6 @@ def test_nd_tree_nodes_values(
             random_state=global_random_seed,
         )
     if with_missing:
-        if not missing_data_supported(clf):
-            return
         generator = np.random.default_rng(seed=global_random_seed)
         mask = generator.choice(2, size=X.shape, p=[0.8, 0.2]).astype(bool)
         X[mask] = np.nan
