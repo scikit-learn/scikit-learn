@@ -161,11 +161,11 @@ def _make_scipy_minimize_callback(
 
 
 def _compute_coef_intercept(
-    w0, *, n_classes, is_binary, fit_intercept, coefs_order, dtype, xp, device_
+    w, *, n_classes, is_binary, fit_intercept, coefs_order, dtype, xp, device_
 ):
     """Helper to compute coef and intercept from a flattened array of parameters."""
     if is_binary:
-        coef = xp.asarray(w0.copy(order=coefs_order), dtype=dtype, device=device_)
+        coef = xp.asarray(w.copy(order=coefs_order), dtype=dtype, device=device_)
         if fit_intercept:
             intercept = coef[-1:]
             coef = coef[:-1][None, :]
@@ -173,8 +173,8 @@ def _compute_coef_intercept(
             intercept = xp.zeros(1, dtype=dtype, device=device_)
             coef = coef[None, :]
     else:
-        multi_w0 = np.reshape(w0, (n_classes, -1), order="F")
-        coef = xp.asarray(multi_w0.copy(order=coefs_order), dtype=dtype, device=device_)
+        multi_w = np.reshape(w, (n_classes, -1), order="F")
+        coef = xp.asarray(multi_w.copy(order=coefs_order), dtype=dtype, device=device_)
         if fit_intercept:
             intercept = coef[:, -1]
             coef = coef[:, :-1]
@@ -1548,16 +1548,20 @@ class LogisticRegression(
 
         self.n_iter_ = xp.asarray(n_iter, dtype=xp.int32)
 
-        self.coef_, self.intercept_ = _compute_coef_intercept(
-            coefs[0, ...],
-            n_classes=n_classes,
-            is_binary=is_binary,
-            fit_intercept=self.fit_intercept,
-            coefs_order="K",
-            dtype=X.dtype,
-            xp=xp,
-            device_=device_,
-        )
+        self.coef_ = coefs[0, ...]
+        if self.fit_intercept:
+            if is_binary:
+                self.intercept_ = self.coef_[-1:]
+                self.coef_ = self.coef_[:-1][None, :]
+            else:
+                self.intercept_ = self.coef_[:, -1]
+                self.coef_ = self.coef_[:, :-1]
+        else:
+            if is_binary:
+                self.intercept_ = xp.zeros(1, dtype=X.dtype, device=device_)
+                self.coef_ = self.coef_[None, :]
+            else:
+                self.intercept_ = xp.zeros(n_classes, dtype=X.dtype, device=device_)
 
         callback_ctx.call_on_fit_task_end(
             estimator=self,
