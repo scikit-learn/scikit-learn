@@ -1624,11 +1624,11 @@ def test_enet_sample_weight_does_not_overwrite_sample_weight(check_input):
 @pytest.mark.parametrize(
     ["precompute", "n_targets"], [(False, 1), (True, 1), (False, 3)]
 )
-def test_enet_ridge_consistency(ridge_alpha, precompute, n_targets):
+def test_enet_ridge_consistency(ridge_alpha, precompute, n_targets, global_random_seed):
     # Check that ElasticNet(l1_ratio=0) converges to the same solution as Ridge
     # provided that the value of alpha is adapted.
 
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 300
     X, y = make_regression(
         n_samples=n_samples,
@@ -1660,9 +1660,10 @@ def test_enet_ridge_consistency(ridge_alpha, precompute, n_targets):
     # The CD solver using the gram matrix (precompute = True) loses numerical precision
     # by working with the squares of matrices like Q=X'X (=gram) and
     # R^2 = y^2 + wQw - 2yQw (=square of residuals).
-    rtol = 1e-5 if precompute else 1e-7
-    assert_allclose(enet.coef_, ridge.coef_, rtol=rtol)
-    assert_allclose(enet.intercept_, ridge.intercept_)
+    rtol = 1e-5 if precompute else 5e-7
+    atol = 3e-11
+    assert_allclose(enet.coef_, ridge.coef_, rtol=rtol, atol=atol)
+    assert_allclose(enet.intercept_, ridge.intercept_, atol=atol)
 
 
 @pytest.mark.filterwarnings("ignore:With alpha=0, this algorithm:UserWarning")
