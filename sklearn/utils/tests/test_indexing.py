@@ -214,9 +214,9 @@ def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
     if indices_type == "slice" and isinstance(indices[1], int):
         indices_converted[1] += 1
 
-    columns_name = ["col_0", "col_1", "col_2"]
+    column_names = ["col_0", "col_1", "col_2"]
     array = _convert_container(
-        [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, columns_name
+        [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, column_names
     )
     indices_converted = _convert_container(indices_converted, indices_type)
 
@@ -278,9 +278,9 @@ def test_safe_indexing_1d_container_mask(array_type, indices_type):
     [(0, [[4, 5, 6], [7, 8, 9]]), (1, [[2, 3], [5, 6], [8, 9]])],
 )
 def test_safe_indexing_2d_mask(array_type, indices_type, axis, expected_subset):
-    columns_name = ["col_0", "col_1", "col_2"]
+    column_names = ["col_0", "col_1", "col_2"]
     array = _convert_container(
-        [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, columns_name
+        [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, column_names
     )
     indices = [False, True, True]
     indices = _convert_container(indices, indices_type)
@@ -332,9 +332,9 @@ def test_safe_indexing_1d_scalar(array_type):
 )
 @pytest.mark.parametrize("indices", [2, "col_2"])
 def test_safe_indexing_2d_scalar_axis_1(array_type, expected_output_type, indices):
-    columns_name = ["col_0", "col_1", "col_2"]
+    column_names = ["col_0", "col_1", "col_2"]
     array = _convert_container(
-        [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, columns_name
+        [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, column_names
     )
 
     if isinstance(indices, str) and array_type in ("array", "sparse"):
@@ -513,7 +513,7 @@ def test_get_column_indices_pandas_nonunique_columns_error(key):
 def test_get_column_indices_dataframes(constructor_name):
     """Check _get_column_indices for edge cases with 2d input X."""
     df = _convert_container(
-        [[1, 2, 3], [4, 5, 6]], constructor_name, columns_name=["a", "b", "c"]
+        [[1, 2, 3], [4, 5, 6]], constructor_name, column_names=["a", "b", "c"]
     )
 
     key_results = [
