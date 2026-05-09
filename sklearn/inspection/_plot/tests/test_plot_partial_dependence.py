@@ -178,17 +178,17 @@ def test_plot_partial_dependence_kind(
 @pytest.mark.parametrize(
     "input_type, feature_names_type",
     [
-        ("dataframe", None),
-        ("dataframe", "list"),
+        ("pandas", None),
+        ("pandas", "list"),
         ("list", "list"),
         ("array", "list"),
-        ("dataframe", "array"),
+        ("pandas", "array"),
         ("list", "array"),
         ("array", "array"),
-        ("dataframe", "series"),
+        ("pandas", "series"),
         ("list", "series"),
         ("array", "series"),
-        ("dataframe", "index"),
+        ("pandas", "index"),
         ("list", "index"),
         ("array", "index"),
     ],
@@ -205,13 +205,9 @@ def test_plot_partial_dependence_str_features(
     age = diabetes.data[:, diabetes.feature_names.index("age")]
     bmi = diabetes.data[:, diabetes.feature_names.index("bmi")]
 
-    if input_type == "dataframe":
-        pd = pytest.importorskip("pandas")
-        X = pd.DataFrame(diabetes.data, columns=diabetes.feature_names)
-    elif input_type == "list":
-        X = diabetes.data.tolist()
-    else:
-        X = diabetes.data
+    X = _convert_container(
+        diabetes.data, input_type, columns_name=diabetes.feature_names
+    )
 
     if feature_names_type is None:
         feature_names = None
@@ -803,7 +799,7 @@ def test_plot_partial_dependence_does_not_override_ylabel(
 @pytest.mark.parametrize(
     "categorical_features, array_type",
     [
-        (["col_A", "col_C"], "dataframe"),
+        (["col_A", "col_C"], "pandas"),
         ([0, 2], "array"),
         ([True, False, True], "array"),
     ],
@@ -985,7 +981,7 @@ def test_partial_dependence_overwrite_labels(
 @pytest.mark.parametrize(
     "categorical_features, array_type",
     [
-        (["col_A", "col_C"], "dataframe"),
+        (["col_A", "col_C"], "pandas"),
         ([0, 2], "array"),
         ([True, False, True], "array"),
     ],

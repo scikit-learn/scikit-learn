@@ -978,7 +978,7 @@ def _convert_container(
     ----------
     container : array-like
         The container to convert.
-    constructor_name : {"list", "tuple", "array", "sparse", "dataframe", \
+    constructor_name : {"list", "tuple", "array", "sparse", \
             "pandas", "series", "index", "slice", "sparse_csr", "sparse_csc", \
             "sparse_csr_array", "sparse_csc_array", "pyarrow", "polars", \
             "polars_series"}
@@ -1010,7 +1010,7 @@ def _convert_container(
             return tuple(np.asarray(container, dtype=dtype).tolist())
     elif constructor_name == "array":
         return np.asarray(container, dtype=dtype)
-    elif constructor_name in ("pandas", "dataframe"):
+    elif constructor_name == "pandas":
         pd = pytest.importorskip("pandas", minversion=minversion)
         result = pd.DataFrame(container, columns=columns_name, dtype=dtype, copy=False)
         if categorical_feature_names is not None:

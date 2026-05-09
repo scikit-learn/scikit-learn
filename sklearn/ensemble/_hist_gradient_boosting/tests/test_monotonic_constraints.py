@@ -226,7 +226,7 @@ def test_predictions(global_random_seed, use_feature_names):
 
     X = np.c_[f_a, f_0, f_b, f_1, f_c]
     columns_name = ["f_a", "f_0", "f_b", "f_1", "f_c"]
-    constructor_name = "dataframe" if use_feature_names else "array"
+    constructor_name = "pandas" if use_feature_names else "array"
     X = _convert_container(X, constructor_name, columns_name=columns_name)
 
     noise = rng.normal(loc=0.0, scale=0.01, size=n_samples)
