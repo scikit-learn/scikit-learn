@@ -2155,7 +2155,7 @@ def test_check_feature_names_in(constructor_name, feature_names, msg):
         with pytest.raises(ValueError, match="Unable to generate feature names"):
             est.get_feature_names_out()
     else:
-        est.get_feature_names_out()
+        assert_array_equal(est.get_feature_names_out(), feature_names)
 
 
 def test_check_response_method_unknown_method():
