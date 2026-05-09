@@ -2692,8 +2692,8 @@ def test_mixed_array_api_namespace_input_compliance(
         "regression_integer": ([2, 1, 3, 4], [2, 1, 2, 2]),
         "regression_continuous": ([2.1, 1.0, 3.0, 4.0], [2.2, 1.1, 2.0, 2.0]),
         "regression_multioutput": (
-            [[1, 0, 0, 1], [0, 1, 1, 1], [1, 1, 0, 1]],
-            [[0, 0, 0, 1], [1, 0, 1, 1], [0, 0, 0, 1]],
+            [[1, 0, 0, 1], [0, 1, 1, 1], [1, 1, 0, 1], [1, 0, 0, 1]],
+            [[0, 0, 0, 1], [1, 0, 1, 1], [0, 0, 0, 1], [1, 1, 0, 0]],
         ),
     }
     sample_weight = [1, 1, 2, 2]
