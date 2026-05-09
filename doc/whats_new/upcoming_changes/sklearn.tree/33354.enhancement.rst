@@ -1,4 +1,5 @@
 - :class:`tree.DecisionTreeRegressor`, :class:`tree.DecisionTreeClassifier`
-  supports native categorical splitting up to 256 categories for binary
-  classification, and single-output regression.
-  By `:user:`Adam Li <adam2392>` and `:user:`Arthur Lacote <cakedev0>`
+  now have native support for categorical features for binary classification and
+  single-output regression. Categorical features can be specified with the
+  `categorical_features` parameter. Up to 256 categories per features are supported.
+  By `:user:`Adam Li <adam2392>`, `:user:`Arthur Lacote <cakedev0>` and :user:`Christian Lorentzen <lorentzenchr>`
