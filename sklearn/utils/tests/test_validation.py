@@ -10,7 +10,6 @@ from tempfile import NamedTemporaryFile
 import numpy as np
 import pytest
 import scipy.sparse as sp
-from pytest import importorskip
 
 import sklearn
 from sklearn._config import config_context
@@ -43,7 +42,6 @@ from sklearn.utils._mocking import (
     _MockEstimatorOnOffPrediction,
 )
 from sklearn.utils._testing import (
-    SkipTest,
     TempMemmap,
     _array_api_for_tests,
     _convert_container,
@@ -1096,16 +1094,13 @@ def test_check_consistent_length_array_api(array_namespace, device_name, dtype_n
 
 
 def test_check_dataframe_fit_attribute():
-    # check pandas dataframe with 'fit' column does not raise error
+    # check pandas.DataFrame with 'fit' column does not raise error
     # https://github.com/scikit-learn/scikit-learn/issues/8415
-    try:
-        import pandas as pd
-
-        X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-        X_df = pd.DataFrame(X, columns=["a", "b", "fit"])
-        check_consistent_length(X_df)
-    except ImportError:
-        raise SkipTest("Pandas not found")
+    # This essentially tests _num_samples.
+    pd = pytest.importorskip("pandas")
+    X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    X_df = pd.DataFrame(X, columns=["a", "b", "fit"])
+    check_consistent_length(X_df)
 
 
 def test_suppress_validation():
@@ -1121,7 +1116,7 @@ def test_suppress_validation():
 
 def test_check_array_series():
     # regression test that check_array works on pandas Series
-    pd = importorskip("pandas")
+    pd = pytest.importorskip("pandas")
     res = check_array(pd.Series([1, 2, 3]), ensure_2d=False)
     assert_array_equal(res, np.array([1, 2, 3]))
 
@@ -1136,13 +1131,13 @@ def test_check_array_series():
 )
 @pytest.mark.parametrize("bool_dtype", ("bool", "boolean"))
 def test_check_dataframe_mixed_float_dtypes(dtype, bool_dtype):
-    # pandas dataframe will coerce a boolean into a object, this is a mismatch
+    # pandas.DataFrame will coerce a boolean into a object, this is a mismatch
     # with np.result_type which will return a float
     # check_array needs to explicitly check for bool dtype in a dataframe for
     # this situation
     # https://github.com/scikit-learn/scikit-learn/issues/15787
 
-    pd = importorskip("pandas")
+    pd = pytest.importorskip("pandas")
 
     df = pd.DataFrame(
         {
@@ -1162,8 +1157,8 @@ def test_check_dataframe_mixed_float_dtypes(dtype, bool_dtype):
 
 
 def test_check_dataframe_with_only_bool():
-    """Check that dataframe with bool return a boolean arrays."""
-    pd = importorskip("pandas")
+    """Check that pandas.DataFrame with bool return a boolean arrays."""
+    pd = pytest.importorskip("pandas")
     df = pd.DataFrame({"bool": [True, False, True]})
 
     array = check_array(df, dtype=None)
@@ -1181,8 +1176,8 @@ def test_check_dataframe_with_only_bool():
 
 
 def test_check_dataframe_with_only_boolean():
-    """Check that dataframe with boolean return a float array with dtype=None"""
-    pd = importorskip("pandas")
+    """Check that pandas.DataFrame with boolean return a float array with dtype=None"""
+    pd = pytest.importorskip("pandas")
     df = pd.DataFrame({"bool": pd.Series([True, False, True], dtype="boolean")})
 
     array = check_array(df, dtype=None)
@@ -1412,7 +1407,7 @@ def test_num_samples_on_1d(constructor_name):
 
 @pytest.mark.parametrize(
     "constructor_name",
-    ["list", "tuple", "array", "sparse", "dataframe", "pandas", "pyarrow", "polars"],
+    ["list", "tuple", "array", "sparse", "pandas", "pyarrow", "polars"],
 )
 def test_num_samples_on_dataframe_likes(constructor_name):
     """Test _num_samples on different dataframe-like input X."""
@@ -1911,8 +1906,7 @@ def test_check_method_params(indices):
 
 @pytest.mark.parametrize("sp_format", [True, "csr", "csc", "coo", "bsr"])
 def test_check_sparse_pandas_sp_format(sp_format):
-    # check_array converts pandas dataframe with only sparse arrays into
-    # sparse matrix
+    # check_array converts pandas.DataFrame with only sparse arrays into sparse matrix
     pd = pytest.importorskip("pandas")
     sp_mat = _sparse_random_matrix(10, 3)
 
@@ -1943,7 +1937,7 @@ def test_check_sparse_pandas_sp_format(sp_format):
     ],
 )
 def test_check_pandas_sparse_mixed_dtypes(ntype1, ntype2):
-    """Check that pandas dataframes having sparse extension arrays with mixed dtypes
+    """Check that pandas.DataFrame having sparse extension arrays with mixed dtypes
     works."""
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame(
@@ -1991,7 +1985,7 @@ def test_check_pandas_sparse_valid(ntype1, ntype2, expected_subtype):
 
 @pytest.mark.parametrize(
     "constructor_name",
-    ["list", "tuple", "array", "dataframe", "sparse_csr", "sparse_csc"],
+    ["list", "tuple", "array", "pandas", "sparse_csr", "sparse_csc"],
 )
 def test_num_features(constructor_name):
     """Check _num_features for array-likes."""
@@ -2046,7 +2040,7 @@ def test_num_features_errors_scalars(X):
     ids=["list-int", "range", "default", "MultiIndex"],
 )
 def test_get_feature_names_pandas_with_ints_no_warning(names):
-    """Get feature names with pandas dataframes without warning.
+    """Get feature names with pandas.DataFrames without warning.
 
     Column names with consistent dtypes will not warn, such as int or MultiIndex.
     """
@@ -2059,19 +2053,9 @@ def test_get_feature_names_pandas_with_ints_no_warning(names):
     assert names is None
 
 
-def test_get_feature_names_pandas():
-    """Get feature names with pandas dataframes."""
-    pd = pytest.importorskip("pandas")
-    columns = [f"col_{i}" for i in range(3)]
-    X = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=columns)
-    feature_names = _get_feature_names(X)
-
-    assert_array_equal(feature_names, columns)
-
-
 @pytest.mark.parametrize(
     "constructor_name, minversion",
-    [("pyarrow", "13.0.0"), ("dataframe", "1.5.0"), ("polars", "0.18.2")],
+    [("pyarrow", "13.0.0"), ("pandas", "1.5.0"), ("polars", "0.18.2")],
 )
 def test_get_feature_names_4_dataframes(constructor_name, minversion):
     """Test _get_features_names on dataframes."""
@@ -2214,7 +2198,7 @@ def test_check_response_method_list_str():
 
 def test_boolean_series_remains_boolean():
     """Regression test for gh-25145"""
-    pd = importorskip("pandas")
+    pd = pytest.importorskip("pandas")
     res = check_array(pd.Series([True, False]), ensure_2d=False)
     expected = np.array([True, False])
 
@@ -2228,7 +2212,7 @@ def test_pandas_array_returns_ndarray(input_values):
 
     Non-regression test for gh-25637.
     """
-    pd = importorskip("pandas")
+    pd = pytest.importorskip("pandas")
     input_series = pd.array(input_values, dtype="Int32")
     result = check_array(
         input_series,

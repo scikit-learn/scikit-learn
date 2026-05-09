@@ -9,7 +9,7 @@ from sklearn.utils._testing import _convert_container
     "feature_names, array_type, expected_feature_names",
     [
         (None, "array", ["x0", "x1", "x2"]),
-        (None, "dataframe", ["a", "b", "c"]),
+        (None, "pandas", ["a", "b", "c"]),
         (np.array(["a", "b", "c"]), "array", ["a", "b", "c"]),
     ],
 )

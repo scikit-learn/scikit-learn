@@ -178,17 +178,17 @@ def test_plot_partial_dependence_kind(
 @pytest.mark.parametrize(
     "input_type, feature_names_type",
     [
-        ("dataframe", None),
-        ("dataframe", "list"),
+        ("pandas", None),
+        ("pandas", "list"),
         ("list", "list"),
         ("array", "list"),
-        ("dataframe", "array"),
+        ("pandas", "array"),
         ("list", "array"),
         ("array", "array"),
-        ("dataframe", "series"),
+        ("pandas", "series"),
         ("list", "series"),
         ("array", "series"),
-        ("dataframe", "index"),
+        ("pandas", "index"),
         ("list", "index"),
         ("array", "index"),
     ],
@@ -799,7 +799,7 @@ def test_plot_partial_dependence_does_not_override_ylabel(
 @pytest.mark.parametrize(
     "categorical_features, array_type",
     [
-        (["col_A", "col_C"], "dataframe"),
+        (["col_A", "col_C"], "pandas"),
         ([0, 2], "array"),
         ([True, False, True], "array"),
     ],
@@ -981,7 +981,7 @@ def test_partial_dependence_overwrite_labels(
 @pytest.mark.parametrize(
     "categorical_features, array_type",
     [
-        (["col_A", "col_C"], "dataframe"),
+        (["col_A", "col_C"], "pandas"),
         ([0, 2], "array"),
         ([True, False, True], "array"),
     ],
