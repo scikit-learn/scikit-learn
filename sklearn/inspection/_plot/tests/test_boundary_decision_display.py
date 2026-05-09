@@ -485,7 +485,7 @@ def test_dataframe_support(pyplot, constructor_name):
     * https://github.com/scikit-learn/scikit-learn/issues/28717
     """
     df = _convert_container(
-        X, constructor_name=constructor_name, columns_name=["col_x", "col_y"]
+        X, constructor_name=constructor_name, column_names=["col_x", "col_y"]
     )
     estimator = LogisticRegression().fit(df, y)
 
