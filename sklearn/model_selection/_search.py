@@ -775,7 +775,7 @@ class BaseSearchCV(
         _search_estimator_has("classes_")(self)
         return self.best_estimator_.classes_
 
-    def _run_search(self, evaluate_candidates, callback_ctx=None):
+    def _run_search(self, evaluate_candidates, *, callback_ctx=None):
         """Repeatedly calls `evaluate_candidates` to conduct a search.
 
         This method, implemented in sub-classes, makes it possible to
@@ -808,10 +808,6 @@ class BaseSearchCV(
                   the `cv_results_` attribute. Values should be lists of
                   length `n_candidates`
 
-        root_callback_ctx : `CallbackContext` object
-            CallbackContext object for callback propagation. Only needed for
-            `Halving*SearchCV`, ignored otherwise.
-
             It returns a dict of all results so far, formatted like
             ``cv_results_``.
 
@@ -824,6 +820,9 @@ class BaseSearchCV(
             might be a methodological issue depending on the search strategy
             that you're implementing. To prevent randomized splitters from
             being used, you may use _split._yields_constant_splits()
+
+        callback_ctx : `CallbackContext` object
+            callback context for the hyper-parameter tuning task.
 
         Examples
         --------
@@ -926,6 +925,9 @@ class BaseSearchCV(
             )
         return accept
 
+    def _check_input_parameters(self, X, y, split_params):
+        pass
+
     def _get_routed_params_for_fit(self, params):
         """Get the parameters to be used for routing.
 
@@ -990,34 +992,25 @@ class BaseSearchCV(
         self : object
             Instance of fitted estimator.
         """
-        estimator = self.estimator
         scorers, refit_metric = self._get_scorers()
 
         X, y = indexable(X, y)
         params = _check_method_params(X, params=params)
-
         routed_params = self._get_routed_params_for_fit(params)
 
-        cv_orig = check_cv(self.cv, y, classifier=is_classifier(estimator))
-        n_splits = cv_orig.get_n_splits(X, y, **routed_params.splitter.split)
-
-        # avoid circular import
-        from sklearn.experimental import enable_halving_search_cv  # noqa: F401
-        from sklearn.model_selection import HalvingGridSearchCV, HalvingRandomSearchCV
-
-        _single_shot_run_search = [
-            GridSearchCV._run_search,
-            RandomizedSearchCV._run_search,
-            HalvingGridSearchCV._run_search,
-            HalvingRandomSearchCV._run_search,
-        ]
-        if type(self)._run_search not in _single_shot_run_search:
-            max_subtasks = None  # custom search class that overrides _run_search
-        else:
-            max_subtasks = 1 + (self.refit is not False)  # refit can be str or callable
         root_callback_ctx = self._init_callback_context(
-            max_subtasks=max_subtasks
+            max_subtasks=1 + (self.refit is not False)  # refit can be str or callable
         ).call_on_fit_task_begin(estimator=self, X=X, y=y)
+
+        self._checked_cv_orig = check_cv(
+            self.cv, y, classifier=is_classifier(self.estimator)
+        )
+        self._check_input_parameters(
+            X=X, y=y, split_params=routed_params.splitter.split
+        )
+        self.n_splits_ = self._checked_cv_orig.get_n_splits(
+            X, y, **routed_params.splitter.split
+        )
 
         base_estimator = clone(self.estimator)
 
@@ -1041,17 +1034,12 @@ class BaseSearchCV(
             all_more_results = defaultdict(list)
 
             def evaluate_candidates(
-                candidate_params, cv=None, more_results=None, halving_callback_ctx=None
+                candidate_params, cv=None, more_results=None, callback_ctx=None
             ):
-                cv = cv or cv_orig
+                cv = cv or self._checked_cv_orig
                 candidate_params = list(candidate_params)
                 n_candidates = len(candidate_params)
-
-                callback_ctx = (
-                    halving_callback_ctx
-                    if halving_callback_ctx is not None
-                    else root_callback_ctx
-                )
+                n_splits = self.n_splits_
 
                 if self.verbose > 0:
                     print(
@@ -1060,20 +1048,6 @@ class BaseSearchCV(
                             n_splits, n_candidates, n_candidates * n_splits
                         )
                     )
-
-                if isinstance(self, GridSearchCV) or isinstance(
-                    self, HalvingGridSearchCV
-                ):
-                    max_callback_subtasks = n_candidates * n_splits
-                elif isinstance(self, RandomizedSearchCV):
-                    max_callback_subtasks = self.n_iter * n_splits
-                else:  # HalvingRandomSearchCV and custom classes
-                    max_callback_subtasks = None
-                search_subctx = callback_ctx.subcontext(
-                    task_name="search",
-                    max_subtasks=max_callback_subtasks,
-                    sequential_subtasks=False,
-                ).call_on_fit_task_begin(estimator=self, X=X, y=y)
 
                 out = parallel(
                     delayed(_fit_and_score)(
@@ -1087,10 +1061,12 @@ class BaseSearchCV(
                         candidate_progress=(cand_idx, n_candidates),
                         **fit_and_score_kwargs,
                         callback_ctx=(
-                            search_subctx.subcontext(
-                                task_name="candidate-split-iteration",
+                            callback_ctx.subcontext(
+                                task_name="candidate-split-evaluation",
                                 task_id=split_idx * n_candidates + cand_idx,
                             )
+                            if callback_ctx is not None
+                            else None
                         ),
                     )
                     for (cand_idx, parameters), (split_idx, (train, test)) in product(
@@ -1098,7 +1074,6 @@ class BaseSearchCV(
                         enumerate(cv.split(X, y, **routed_params.splitter.split)),
                     )
                 )
-                search_subctx.call_on_fit_task_end(estimator=self, X=X, y=y)
 
                 if len(out) < 1:
                     raise ValueError(
@@ -1136,7 +1111,11 @@ class BaseSearchCV(
 
                 return results
 
-            self._run_search(evaluate_candidates, root_callback_ctx)
+            if "callback_ctx" in signature(self._run_search).parameters:
+                self._run_search(evaluate_candidates, callback_ctx=root_callback_ctx)
+            else:
+                # custom search classes
+                self._run_search(evaluate_candidates)
 
             # multimetric is determined here because in the case of a callable
             # self.scoring the return type is only known after calling
@@ -1208,7 +1187,6 @@ class BaseSearchCV(
             self.scorer_ = scorers
 
         self.cv_results_ = results
-        self.n_splits_ = n_splits
 
         root_callback_ctx.call_on_fit_task_end(estimator=self, X=X, y=y)
 
@@ -1714,9 +1692,19 @@ class GridSearchCV(BaseSearchCV):
         )
         self.param_grid = param_grid
 
-    def _run_search(self, evaluate_candidates, root_callback_ctx):
+    def _run_search(self, evaluate_candidates, *, callback_ctx=None):
         """Search all candidates in param_grid"""
-        evaluate_candidates(ParameterGrid(self.param_grid))
+        candidate_params = ParameterGrid(self.param_grid)
+
+        search_ctx = callback_ctx.subcontext(
+            task_name="search",
+            max_subtasks=len(candidate_params) * self.n_splits_,
+            sequential_subtasks=False,
+        ).call_on_fit_task_begin(estimator=self)
+
+        evaluate_candidates(ParameterGrid(self.param_grid), callback_ctx=search_ctx)
+
+        search_ctx.call_on_fit_task_end(estimator=self)
 
 
 class RandomizedSearchCV(BaseSearchCV):
@@ -2105,10 +2093,18 @@ class RandomizedSearchCV(BaseSearchCV):
             return_train_score=return_train_score,
         )
 
-    def _run_search(self, evaluate_candidates, callback_ctx=None):
+    def _run_search(self, evaluate_candidates, *, callback_ctx=None):
         """Search n_iter candidates from param_distributions"""
-        evaluate_candidates(
-            ParameterSampler(
-                self.param_distributions, self.n_iter, random_state=self.random_state
-            ),
+        candidate_params = ParameterSampler(
+            self.param_distributions, self.n_iter, random_state=self.random_state
         )
+
+        search_ctx = callback_ctx.subcontext(
+            task_name="search",
+            max_subtasks=len(candidate_params) * self.n_splits_,
+            sequential_subtasks=False,
+        ).call_on_fit_task_begin(estimator=self)
+
+        evaluate_candidates(candidate_params, callback_ctx=search_ctx)
+
+        search_ctx.call_on_fit_task_end(estimator=self)
