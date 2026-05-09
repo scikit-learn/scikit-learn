@@ -555,9 +555,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 "categorical_features must be an array-like of bool or int, "
                 f"got: {categorical_features.dtype.name}."
             )
-        if (
-            categorical_features.dtype.kind == "b"
-            and categorical_features.shape != (n_features,)
+        if categorical_features.dtype.kind == "b" and categorical_features.shape != (
+            n_features,
         ):
             raise ValueError(
                 "categorical_features set as a boolean mask "
