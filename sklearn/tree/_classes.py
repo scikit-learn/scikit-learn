@@ -652,9 +652,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             X_col_max = np.max(X_col_int)
             if n_categories_in_feature is None:
                 unique_categories = np.unique(X_col_int)
-                if not np.array_equal(
-                    unique_categories, np.arange(X_col_max + 1)
-                ):
+                if not np.array_equal(unique_categories, np.arange(X_col_max + 1)):
                     raise ValueError(
                         f"Categorical feature {idx} must contain contiguous "
                         "integer categories starting at 0."

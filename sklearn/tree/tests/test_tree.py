@@ -3257,9 +3257,7 @@ def test_fit_invalid_categorical_non_contiguous_values(Tree, X):
     else:
         y = np.array([0.0, 0.0, 1.0, 1.0])
 
-    with pytest.raises(
-        ValueError, match="contiguous integer categories starting at 0"
-    ):
+    with pytest.raises(ValueError, match="contiguous integer categories starting at 0"):
         Tree(categorical_features=[0], random_state=0).fit(X, y)
 
 
