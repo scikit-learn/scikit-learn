@@ -583,7 +583,7 @@ def test_spline_transformer_handles_all_nans(extrapolation, sparse_output):
     all-nan-features."""
 
     X = np.array([[1, 1], [2, 2], [3, 3], [4, 5], [4, 4]])
-    X = np.concat((X, np.array([np.nan] * 5)[:, None]), axis=1)
+    X = np.concatenate((X, np.array([np.nan] * 5)[:, None]), axis=1)
     X_nan_full_column = np.array([[np.nan, np.nan, 1], [np.nan, 1, 2]])
 
     spline = SplineTransformer(
