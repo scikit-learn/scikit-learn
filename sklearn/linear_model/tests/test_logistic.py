@@ -476,8 +476,8 @@ def test_logistic_cv(global_random_seed, use_legacy_attributes):
 # TODO(1.11): remove filterwarnings with change of default scoring
 @pytest.mark.filterwarnings("ignore:The default value.*scoring.*:FutureWarning")
 def test_logistic_cv_refit_false_non_elasticnet(global_random_seed):
-    """Non-regression test for non-elasticnet penalties with refit=False and
-    use_legacy_attributes=False.
+    """Test that non-elasticnet penalty with refit=False and
+    use_legacy_attributes=False works without error.
 
     For non-elasticnet penalties, l1_ratio=0.0 (equivalent to pure L2).
     Previously, None was stored, which caused float() to raise a
