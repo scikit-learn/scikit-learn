@@ -4,12 +4,27 @@
 from libc.stdlib cimport free
 from libc.stdlib cimport realloc
 from libc.math cimport log as ln
+from libc.math cimport isnan
 from libc.string cimport memset
 
 cimport numpy as cnp
 cnp.import_array()
 
+from sklearn.utils._bitset cimport in_bitset
 from sklearn.utils._random cimport our_rand_r
+
+cdef inline bint goes_left(
+    SplitValue split_value,
+    bint missing_go_to_left,
+    bint is_categorical,
+    float32_t value,
+) noexcept nogil:
+    if isnan(value):
+        return missing_go_to_left
+    elif is_categorical:
+        return in_bitset(split_value.categorical_bitset, <uint8_t> value)
+    else:
+        return value <= split_value.threshold
 
 # =============================================================================
 # Helper functions
