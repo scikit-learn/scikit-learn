@@ -1153,7 +1153,7 @@ class BaseSearchCV(
             )
 
             refit_subctx = root_callback_ctx.subcontext(
-                task_name="refit_with_best_params"
+                task_name="refit-with-best-params"
             )
 
             with refit_subctx.propagate_callback_context(self.best_estimator_):
@@ -1174,11 +1174,7 @@ class BaseSearchCV(
                 self.feature_names_in_ = self.best_estimator_.feature_names_in_
 
             refit_subctx.call_on_fit_task_end(
-                estimator=self,
-                X=X,
-                y=y,
-                metadata=metadata_callbacks,
-                reconstruction_attributes={},
+                estimator=self, X=X, y=y, metadata=metadata_callbacks
             )
 
         # Store the only scorer not as a dict for single metric evaluation

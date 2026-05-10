@@ -3012,7 +3012,7 @@ def test_yield_masked_array_no_runtime_warning():
     ],
 )
 def test_search_callbacks_no_propagation(search, refit):
-    """Check the number of hooks calls when the sub-estimator doesn't support callbacks."""
+    """Check number of hook calls when the sub-estimator doesn't support callbacks."""
     callbacks = [RecordingCallback(), RecordingAutoPropagatedCallback()]
     search.set_params(refit=refit).set_callbacks(*callbacks).fit(X, y)
 
@@ -3069,7 +3069,7 @@ def test_search_callbacks_no_propagation(search, refit):
     ],
 )
 def test_search_callbacks_propagation(search, refit):
-    """Check the number of hooks calls when the sub-estimator does support callbacks."""
+    """Check number of hook calls when the sub-estimator does support callbacks."""
     callbacks = [RecordingCallback(), RecordingAutoPropagatedCallback()]
     search.set_params(refit=refit).set_callbacks(*callbacks).fit(X, y)
 
@@ -3089,11 +3089,12 @@ def test_search_callbacks_propagation(search, refit):
 
     for callback in callbacks:
         assert callback.count_hooks("setup") == 1
-        # without propagation, we expect only the hooks from the *SearchCV class called
         if callback.__class__.__name__ == "RecordingCallback":
+            # Without propagation we expect only hook calls from the *SearchCV class.
             assert callback.count_hooks("on_fit_task_begin") == searchcv_tasks
             assert callback.count_hooks("on_fit_task_end") == searchcv_tasks
         else:  # TestingAutoPropagatedCallback
+            # With propagation we expect additional calls from each inner estimator.
             # Each MaxIterEstimator has 1 root + max_iter tasks, but we ignore the root
             # because it's the same as the evaluation leaf of the searchcv class.
             # There are n_splits * n_candidates such inner estimators.
@@ -3110,38 +3111,31 @@ def test_search_callbacks_propagation(search, refit):
 
 
 def test_search_callbacks_receive_sample_weight():
-    # Test that `sample_weight` gets passed to `callback.on_fit_task_*`. Note this
-    # tests all *SearchCV classes that inherit from `BaseSearchCV`.
+    """Test that `sample_weight` gets passed to `callback.on_fit_task_*`.
+
+    Note this tests all *SearchCV classes that inherit from `BaseSearchCV`.
+    """
     callback = RecordingCallback()
     search = GridSearchCV(
         MaxIterEstimator(), {"max_iter": [1, 2, 3]}, cv=2, scoring="accuracy"
     ).set_callbacks(callback)
-    sample_weight = np.ones_like(y)
+    sample_weight = np.random.RandomState(0).randint(0, 5, size=y.shape[0])
     search.fit(X, y, sample_weight=sample_weight)
 
-    for entry in callback.record:
-        if (
-            entry["name"] == "on_fit_task_begin" or entry["name"] == "on_fit_task_end"
-        ) and entry["kwargs"]["metadata"] is not None:
-            passed_weights = entry["kwargs"]["metadata"].get("sample_weight", {})
-            assert_array_equal(passed_weights, sample_weight)
+    evaluation_records = [
+        entry
+        for entry in callback.record
+        if entry["context"].task_name == "candidate-split-evaluation"
+    ]
+    assert evaluation_records
+    refit_records = [
+        entry
+        for entry in callback.record
+        if entry["context"].task_name == "refit-with-best-params"
+    ]
+    assert refit_records
 
-
-def test_search_callbacks_receive_reconstruction_attributes():
-    # Test that `reconstruction_attributes` pass everything needed to
-    # `callback.on_fit_task_end` to reconstruct a working *SearchCV ready to predict.
-    # Note this tests all *SearchCV classes that inherit from `BaseSearchCV`.
-    callback = RecordingCallback()
-    search = GridSearchCV(
-        MaxIterEstimator(), {"max_iter": [1, 2, 3]}, cv=2, scoring="accuracy"
-    ).set_callbacks(callback)
-    search.fit(X, y)
-
-    for entry in callback.record:
-        if (
-            entry["name"] == "on_fit_task_end"
-            and entry["kwargs"]["fitted_estimator"] is not None
-        ):
-            fitted_estimator = entry["kwargs"]["fitted_estimator"]
-            y_pred = fitted_estimator.predict(X)
-            assert sum(y_pred) == 0  # MaxIterEstimator.predict returns an array of 0s
+    for entry in evaluation_records + refit_records:
+        assert "sample_weight" in entry["kwargs"]["metadata"]
+        passed_weights = entry["kwargs"]["metadata"]["sample_weight"]
+        assert_array_equal(passed_weights, sample_weight)
