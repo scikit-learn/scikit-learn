@@ -3012,41 +3012,29 @@ def test_yield_masked_array_no_runtime_warning():
     ],
 )
 def test_search_callbacks_no_propagation(search, refit):
-    # Check that set callbacks are stored in `_skl_callbacks`, and the correct number of
-    # hooks are called when the sub-estimator doesn't support callbacks.
-    callback1 = RecordingCallback()
-    callback2 = RecordingAutoPropagatedCallback()
-    callbacks = [callback1, callback2]
-    search.set_params(refit=refit)
-    search.set_callbacks(callback1, callback2)
-    assert all(cb in search._skl_callbacks for cb in callbacks)
-
-    search.fit(X, y)
+    """Check the number of hooks calls when the sub-estimator doesn't support callbacks."""
+    callbacks = [RecordingCallback(), RecordingAutoPropagatedCallback()]
+    search.set_params(refit=refit).set_callbacks(*callbacks).fit(X, y)
 
     # defining expected values
     root = 1
-    outer_halving = 0
-    outer_search = 1
-    n_iterations = 1
-    n_candidates = 3
+    search_task = 1
     n_splits = search.n_splits_  # 2
-    n_searches = n_candidates * n_splits
-    if hasattr(search, "n_iterations_"):  # Halving*SearchCV
-        outer_halving = 1
-        n_iterations = search.n_iterations_  # 2
-        n_searches = sum(n_cand * n_splits for n_cand in search.n_candidates_)
+
+    if "Halving" in search.__class__.__name__:
+        n_halving_rounds = search.n_iterations_
+        n_evaluations = sum(n_cand * n_splits for n_cand in search.n_candidates_)
+        expected = root + (search_task + refit) + n_halving_rounds + n_evaluations
+    else:  # GridSearchCV, RandomizedSearchCV
+        n_candidates = 3
+        n_evaluations = n_candidates * n_splits
+        expected = root + (search_task + refit) + n_evaluations
 
     # we expect only the hooks from `search` called:
     for callback in callbacks:
         assert callback.count_hooks("setup") == 1
-        expected = (
-            root + outer_halving + n_iterations * outer_search + n_searches + refit
-        )
-        assert (
-            callback.count_hooks("on_fit_task_begin")
-            == callback.count_hooks("on_fit_task_end")
-            == expected
-        )
+        assert callback.count_hooks("on_fit_task_begin") == expected
+        assert callback.count_hooks("on_fit_task_end") == expected
         assert callback.count_hooks("teardown") == 1
 
 
@@ -3054,15 +3042,13 @@ def test_search_callbacks_no_propagation(search, refit):
 @pytest.mark.parametrize(
     "search",
     [
-        GridSearchCV(
-            MaxIterEstimator(), {"max_iter": [1, 2, 3]}, cv=2, scoring="accuracy"
-        ),
+        GridSearchCV(MaxIterEstimator(), {"max_iter": [1, 2, 3]}, cv=2, scoring="r2"),
         RandomizedSearchCV(
             MaxIterEstimator(),
             {"max_iter": randint(1, 4)},
             cv=2,
             n_iter=3,
-            scoring="accuracy",
+            scoring="r2",
             random_state=42,
         ),
         HalvingGridSearchCV(
@@ -3070,76 +3056,56 @@ def test_search_callbacks_no_propagation(search, refit):
             {"max_iter": [1, 2, 3]},
             cv=2,
             aggressive_elimination=True,
-            scoring="accuracy",
+            scoring="r2",
         ),
         HalvingRandomSearchCV(
             MaxIterEstimator(),
             {"max_iter": randint(1, 4)},
             cv=2,
             aggressive_elimination=True,
-            scoring="accuracy",
+            scoring="r2",
             random_state=42,
         ),
     ],
 )
 def test_search_callbacks_propagation(search, refit):
-    # Check that set callbacks are stored in `_skl_callbacks`, and the correct number of
-    # hooks are called when the sub-estimator does support callbacks.
-    callback1 = RecordingCallback()
-    callback2 = RecordingAutoPropagatedCallback()
-    callbacks = [callback1, callback2]
-    search.set_params(refit=refit)
-    search.set_callbacks(callback1, callback2)
-    assert all(cb in search._skl_callbacks for cb in callbacks)
-
-    search.fit(X, y)
+    """Check the number of hooks calls when the sub-estimator does support callbacks."""
+    callbacks = [RecordingCallback(), RecordingAutoPropagatedCallback()]
+    search.set_params(refit=refit).set_callbacks(*callbacks).fit(X, y)
 
     # defining expected values
     root = 1
-    outer_halving = 0
-    outer_search = 1
-    n_iterations = 1
-    n_candidates = 3
+    search_task = 1
     n_splits = search.n_splits_  # 2
-    n_searches = n_candidates * n_splits
-    if hasattr(search, "n_iterations_"):  # Halving*SearchCV
-        outer_halving = 1
-        n_iterations = search.n_iterations_  # 2
-        n_searches = sum(n_cand * n_splits for n_cand in search.n_candidates_)
+
+    if "Halving" in search.__class__.__name__:
+        n_halving_rounds = search.n_iterations_
+        n_evaluations = sum(n_cand * n_splits for n_cand in search.n_candidates_)
+        searchcv_tasks = root + (search_task + refit) + n_halving_rounds + n_evaluations
+    else:  # GridSearchCV, RandomizedSearchCV
+        n_candidates = 3
+        n_evaluations = n_candidates * n_splits
+        searchcv_tasks = root + (search_task + refit) + n_evaluations
 
     for callback in callbacks:
         assert callback.count_hooks("setup") == 1
-        # without propagation, we expect only the hooks from `search` called
+        # without propagation, we expect only the hooks from the *SearchCV class called
         if callback.__class__.__name__ == "RecordingCallback":
-            expected = (
-                root + outer_halving + n_iterations * outer_search + n_searches + refit
-            )
-            assert (
-                callback.count_hooks("on_fit_task_begin")
-                == callback.count_hooks("on_fit_task_end")
-                == expected
-            )
-        # with callbacks propagated we expect the outer_search hooks from `search`
-        # called (but not the inner hooks (n_searches) because they will be merged with
-        # the sub-estimator's hooks) and additionally `MaxIterEstimator`'s own hooks,
-        # and a few more of each for the refit:
+            assert callback.count_hooks("on_fit_task_begin") == searchcv_tasks
+            assert callback.count_hooks("on_fit_task_end") == searchcv_tasks
         else:  # TestingAutoPropagatedCallback
-            propagated_inner = n_splits * sum(
-                1 + p["max_iter"] for p in search.cv_results_["params"]
+            # Each MaxIterEstimator has 1 root + max_iter tasks, but we ignore the root
+            # because it's the same as the evaluation leaf of the searchcv class.
+            # There are n_splits * n_candidates such inner estimators.
+            search_inner_tasks = sum(
+                p["max_iter"]
+                for p in search.cv_results_["params"]
+                for _ in range(n_splits)
             )
-            expected = (
-                root
-                + outer_halving
-                + n_iterations * outer_search
-                + propagated_inner
-                + refit  # refit: outer MaxIter
-                + refit * search.best_params_["max_iter"]  # refit: inner MaxIter
-            )
-            assert (
-                callback.count_hooks("on_fit_task_begin")
-                == callback.count_hooks("on_fit_task_end")
-                == expected
-            )
+            refit_inner_tasks = search.best_estimator_.n_iter_ if refit else 0
+            expected = searchcv_tasks + search_inner_tasks + refit_inner_tasks
+            assert callback.count_hooks("on_fit_task_begin") == expected
+            assert callback.count_hooks("on_fit_task_end") == expected
         assert callback.count_hooks("teardown") == 1
 
 

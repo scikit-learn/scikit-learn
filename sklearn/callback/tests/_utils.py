@@ -306,6 +306,9 @@ class NoCallbackEstimator(BaseEstimator):
 
         return self
 
+    def predict(self, X):
+        return np.zeros(X.shape[0])
+
 
 class MetaEstimator(CallbackSupportMixin, BaseEstimator):
     """A class that mimics the behavior of a meta-estimator.
