@@ -849,7 +849,7 @@ def _fit_and_score(
                     estimator.fit(X_train, **fit_params)
                 else:
                     estimator.fit(X_train, y_train, **fit_params)
-        else:  # no callback is set
+        else:  # custom search class does not support callbacks
             if y_train is None:
                 estimator.fit(X_train, **fit_params)
             else:
