@@ -924,7 +924,7 @@ def test_feature_names_in_on_dataframes(constructor_name, minversion):
     data = [[1, 4, 2], [3, 3, 6]]
     columns = ["col_0", "col_1", "col_2"]
     df = _convert_container(
-        data, constructor_name, columns_name=columns, minversion=minversion
+        data, constructor_name, column_names=columns, minversion=minversion
     )
 
     class NoOpTransformer(TransformerMixin, BaseEstimator):
@@ -946,7 +946,7 @@ def test_feature_names_in_on_dataframes(constructor_name, minversion):
         assert_allclose(df, X_out)
 
     bad_names = ["a", "b", "c"]
-    df_bad = _convert_container(data, constructor_name, columns_name=bad_names)
+    df_bad = _convert_container(data, constructor_name, column_names=bad_names)
     with pytest.raises(ValueError, match="The feature names should match"):
         no_op.transform(df_bad)
 

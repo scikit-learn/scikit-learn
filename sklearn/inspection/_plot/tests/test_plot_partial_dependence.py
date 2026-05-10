@@ -206,7 +206,7 @@ def test_plot_partial_dependence_str_features(
     bmi = diabetes.data[:, diabetes.feature_names.index("bmi")]
 
     X = _convert_container(
-        diabetes.data, input_type, columns_name=diabetes.feature_names
+        diabetes.data, input_type, column_names=diabetes.feature_names
     )
 
     if feature_names_type is None:
@@ -808,8 +808,8 @@ def test_plot_partial_dependence_with_categorical(
     pyplot, categorical_features, array_type
 ):
     X = [[1, 1, "A"], [2, 0, "C"], [3, 2, "B"]]
-    column_name = ["col_A", "col_B", "col_C"]
-    X = _convert_container(X, array_type, columns_name=column_name)
+    column_names = ["col_A", "col_B", "col_C"]
+    X = _convert_container(X, array_type, column_names=column_names)
     y = np.array([1.2, 0.5, 0.45]).T
 
     preprocessor = make_column_transformer((OneHotEncoder(), categorical_features))
@@ -821,7 +821,7 @@ def test_plot_partial_dependence_with_categorical(
         model,
         X,
         features=["col_C"],
-        feature_names=column_name,
+        feature_names=column_names,
         categorical_features=categorical_features,
     )
 
@@ -843,7 +843,7 @@ def test_plot_partial_dependence_with_categorical(
         model,
         X,
         features=[("col_A", "col_C")],
-        feature_names=column_name,
+        feature_names=column_names,
         categorical_features=categorical_features,
     )
 
@@ -991,8 +991,8 @@ def test_grid_resolution_with_categorical(pyplot, categorical_features, array_ty
     respect to the number of categories in the categorical features targeted.
     """
     X = [["A", 1, "A"], ["B", 0, "C"], ["C", 2, "B"]]
-    column_name = ["col_A", "col_B", "col_C"]
-    X = _convert_container(X, array_type, columns_name=column_name)
+    column_names = ["col_A", "col_B", "col_C"]
+    X = _convert_container(X, array_type, column_names=column_names)
     y = np.array([1.2, 0.5, 0.45]).T
 
     preprocessor = make_column_transformer((OneHotEncoder(), categorical_features))
@@ -1007,7 +1007,7 @@ def test_grid_resolution_with_categorical(pyplot, categorical_features, array_ty
             model,
             X,
             features=["col_C"],
-            feature_names=column_name,
+            feature_names=column_names,
             categorical_features=categorical_features,
             grid_resolution=2,
         )

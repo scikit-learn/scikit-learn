@@ -2062,7 +2062,7 @@ def test_get_feature_names_4_dataframes(constructor_name, minversion):
     data = [[1, 4, 2], [3, 3, 6]]
     columns = ["col_0", "col_1", "col_2"]
     df = _convert_container(
-        data, constructor_name, columns_name=columns, minversion=minversion
+        data, constructor_name, column_names=columns, minversion=minversion
     )
     feature_names = _get_feature_names(df)
 
@@ -2491,7 +2491,7 @@ def test_check_categorical_features(categorical_features, on_array, constructor_
     X = _convert_container(
         X,
         constructor_name,
-        columns_name=["a", "b", "c", "d"],
+        column_names=["a", "b", "c", "d"],
         categorical_feature_names=["b", "c"],
     )
 
