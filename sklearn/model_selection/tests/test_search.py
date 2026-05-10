@@ -2979,37 +2979,39 @@ def test_yield_masked_array_no_runtime_warning():
         list(_yield_masked_array_for_each_param(candidate_params))
 
 
-@pytest.mark.parametrize("refit", [True, False])
-@pytest.mark.parametrize(
-    "search",
-    [
-        GridSearchCV(
-            NoCallbackEstimator(), {"max_iter": [1, 2, 3]}, cv=2, scoring="accuracy"
-        ),
+def _searchcv_callback_test_cases(estimator, scoring):
+    return [
+        GridSearchCV(estimator(), {"max_iter": [1, 2, 3]}, cv=2, scoring=scoring),
         RandomizedSearchCV(
-            NoCallbackEstimator(),
+            estimator(),
             {"max_iter": randint(1, 4)},
             cv=2,
             n_iter=3,
-            scoring="accuracy",
+            scoring=scoring,
             random_state=42,
         ),
         HalvingGridSearchCV(
-            NoCallbackEstimator(),
+            estimator(),
             {"max_iter": [1, 2, 3]},
             cv=2,
             aggressive_elimination=True,
-            scoring="accuracy",
+            scoring=scoring,
         ),
         HalvingRandomSearchCV(
-            NoCallbackEstimator(),
+            estimator(),
             {"max_iter": randint(1, 4)},
             cv=2,
             aggressive_elimination=True,
-            scoring="accuracy",
+            scoring=scoring,
             random_state=42,
         ),
-    ],
+    ]
+
+
+@pytest.mark.parametrize("refit", [True, False])
+@pytest.mark.parametrize(
+    "search",
+    _searchcv_callback_test_cases(NoCallbackEstimator, "accuracy"),
 )
 def test_search_callbacks_no_propagation(search, refit):
     """Check number of hook calls when the sub-estimator doesn't support callbacks."""
@@ -3041,32 +3043,7 @@ def test_search_callbacks_no_propagation(search, refit):
 @pytest.mark.parametrize("refit", [True, False])
 @pytest.mark.parametrize(
     "search",
-    [
-        GridSearchCV(MaxIterEstimator(), {"max_iter": [1, 2, 3]}, cv=2, scoring="r2"),
-        RandomizedSearchCV(
-            MaxIterEstimator(),
-            {"max_iter": randint(1, 4)},
-            cv=2,
-            n_iter=3,
-            scoring="r2",
-            random_state=42,
-        ),
-        HalvingGridSearchCV(
-            MaxIterEstimator(),
-            {"max_iter": [1, 2, 3]},
-            cv=2,
-            aggressive_elimination=True,
-            scoring="r2",
-        ),
-        HalvingRandomSearchCV(
-            MaxIterEstimator(),
-            {"max_iter": randint(1, 4)},
-            cv=2,
-            aggressive_elimination=True,
-            scoring="r2",
-            random_state=42,
-        ),
-    ],
+    _searchcv_callback_test_cases(MaxIterEstimator, "r2"),
 )
 def test_search_callbacks_propagation(search, refit):
     """Check number of hook calls when the sub-estimator does support callbacks."""
@@ -3139,3 +3116,16 @@ def test_search_callbacks_receive_sample_weight():
         assert "sample_weight" in entry["kwargs"]["metadata"]
         passed_weights = entry["kwargs"]["metadata"]["sample_weight"]
         assert_array_equal(passed_weights, sample_weight)
+
+
+@pytest.mark.parametrize(
+    "search",
+    _searchcv_callback_test_cases(MaxIterEstimator, "r2"),
+)
+def test_search_callbacks_receive_search_instance(search):
+    """Test that all hooks receive the search instance as `estimator` argument."""
+    callback = RecordingCallback()
+    search.set_callbacks(callback).fit(X, y)
+
+    for entry in callback.record:
+        assert entry["estimator"] is search

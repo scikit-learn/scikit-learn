@@ -683,6 +683,7 @@ def _fit_and_score(
     split_progress=None,
     candidate_progress=None,
     error_score=np.nan,
+    caller=None,
     callback_ctx=None,
 ):
     """Fit estimator and compute scores for a given dataset split.
@@ -754,8 +755,11 @@ def _fit_and_score(
     return_estimator : bool, default=False
         Whether to return the fitted estimator.
 
+    caller : estimator instance
+        The *SearchCV instance that called this function.
+
     callback_ctx : `CallbackContext` object
-        CallbackContext object for callback propagation.
+        Callback context for the evaluation task.
 
     Returns
     -------
@@ -839,10 +843,7 @@ def _fit_and_score(
         if callback_ctx is not None:
             with callback_ctx.propagate_callback_context(estimator):
                 callback_ctx.call_on_fit_task_begin(
-                    estimator=estimator,
-                    X=X_train,
-                    y=y_train,
-                    metadata=metadata_callbacks,
+                    estimator=caller, X=X_train, y=y_train, metadata=metadata_callbacks
                 )
                 if y_train is None:
                     estimator.fit(X_train, **fit_params)
@@ -923,11 +924,7 @@ def _fit_and_score(
 
     if callback_ctx is not None:
         callback_ctx.call_on_fit_task_end(
-            estimator=estimator,
-            X=X_train,
-            y=y_train,
-            metadata=metadata_callbacks,
-            reconstruction_attributes={"best_estimator_": estimator},
+            estimator=caller, X=X_train, y=y_train, metadata=metadata_callbacks
         )
 
     return result

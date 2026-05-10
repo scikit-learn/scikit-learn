@@ -822,7 +822,7 @@ class BaseSearchCV(
             being used, you may use _split._yields_constant_splits()
 
         callback_ctx : `CallbackContext` object
-            callback context for the hyper-parameter tuning task.
+            Callback context for the best hyper-parameter search task.
 
         Examples
         --------
@@ -1067,6 +1067,7 @@ class BaseSearchCV(
                         split_progress=(split_idx, n_splits),
                         candidate_progress=(cand_idx, n_candidates),
                         **fit_and_score_kwargs,
+                        caller=self,
                         callback_ctx=(
                             callback_ctx.subcontext(
                                 task_name="candidate-split-evaluation",
