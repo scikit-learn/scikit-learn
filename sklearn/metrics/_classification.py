@@ -3622,17 +3622,6 @@ def _one_hot_encoding_binary_target(y_true, pos_label, target_xp, target_device)
     y_true_pos = move_to(y_true_pos, xp=target_xp, device=target_device)
     return target_xp.stack((1 - y_true_pos, y_true_pos), axis=1)
 
-<<<<<<< HEAD
-    The smaller the Brier score loss, the better, hence the naming with "loss".
-    The Brier score measures the mean squared difference between the predicted
-    probability and the actual outcome. The Brier score always
-    takes on a value between zero and one, since this is the largest
-    possible difference between a predicted probability (which must be
-    between zero and one) and the actual outcome (which can take on values
-    of only 0 and 1). It can be decomposed as the sum of refinement loss and
-    calibration loss.
-=======
->>>>>>> main
 
 def _validate_binary_probabilistic_prediction(y_true, y_prob, sample_weight, pos_label):
     r"""Convert y_true and y_prob in binary classification to shape (n_samples, 2)
