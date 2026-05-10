@@ -4,4 +4,3 @@ Decomposition
 -------------
 
 Examples concerning the :mod:`sklearn.decomposition` module.
-

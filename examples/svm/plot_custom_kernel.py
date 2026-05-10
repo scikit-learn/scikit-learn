@@ -3,20 +3,24 @@
 SVM with custom kernel
 ======================
 
-Simple usage of Support Vector Machines to classify a sample. It will
-plot the decision surface and the support vectors.
+Simple usage of :ref:`svm` classifier with a custom kernel. It will
+plot the decision surface and highlight the support vectors.
 
 """
-print(__doc__)
 
-import numpy as np
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.pyplot as plt
-from sklearn import svm, datasets
+import numpy as np
 
-# import some data to play with
+from sklearn import datasets, svm
+from sklearn.inspection import DecisionBoundaryDisplay
+
+# Import some data to play with.
 iris = datasets.load_iris()
-X = iris.data[:, :2]  # we only take the first two features. We could
-                      # avoid this ugly slicing by using a two-dim dataset
+X = iris.data[:, :2]  # We only take the first two features. We could
+# avoid this ugly slicing by using a two-dim dataset.
 Y = iris.target
 
 
@@ -32,26 +36,31 @@ def my_kernel(X, Y):
     return np.dot(np.dot(X, M), Y.T)
 
 
-h = .02  # step size in the mesh
-
-# we create an instance of SVM and fit out data.
+# We create an instance of SVC with that kernel and fit it on the data.
 clf = svm.SVC(kernel=my_kernel)
 clf.fit(X, Y)
 
-# Plot the decision boundary. For that, we will assign a color to each
-# point in the mesh [x_min, x_max]x[y_min, y_max].
-x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
-y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
-xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
-Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
+ax = plt.gca()
+DecisionBoundaryDisplay.from_estimator(
+    clf,
+    X,
+    multiclass_colors="Paired",
+    ax=ax,
+    response_method="predict",
+    plot_method="pcolormesh",
+    shading="auto",
+    alpha=0.5,
+)
 
-# Put the result into a color plot
-Z = Z.reshape(xx.shape)
-plt.pcolormesh(xx, yy, Z, cmap=plt.cm.Paired)
-
-# Plot also the training points
-plt.scatter(X[:, 0], X[:, 1], c=Y, cmap=plt.cm.Paired, edgecolors='k')
-plt.title('3-Class classification using Support Vector Machine with custom'
-          ' kernel')
-plt.axis('tight')
+# Plot the training points
+plt.scatter(X[:, 0], X[:, 1], c=Y, cmap=plt.cm.Paired)
+# Highlight the support vectors
+plt.scatter(
+    X[clf.support_, 0],
+    X[clf.support_, 1],
+    facecolor="none",
+    edgecolors="k",
+)
+plt.title("3-Class classification using Support Vector Machine with custom kernel")
+plt.axis("tight")
 plt.show()

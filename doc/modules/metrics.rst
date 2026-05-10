@@ -28,9 +28,9 @@ There are a number of ways to convert between a distance metric and a
 similarity measure, such as a kernel. Let ``D`` be the distance, and ``S`` be
 the kernel:
 
-    1. ``S = np.exp(-D * gamma)``, where one heuristic for choosing
-       ``gamma`` is ``1 / num_features``
-    2. ``S = 1. / (D / np.max(D))``
+1. ``S = np.exp(-D * gamma)``, where one heuristic for choosing
+    ``gamma`` is ``1 / num_features``
+2. ``S = 1. / (D / np.max(D))``
 
 
 .. currentmodule:: sklearn.metrics
@@ -87,11 +87,11 @@ represented as tf-idf vectors.
 can produce normalized vectors, in which case :func:`cosine_similarity`
 is equivalent to :func:`linear_kernel`, only slower.)
 
-.. topic:: References:
+.. rubric:: References
 
-    * C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
-      Information Retrieval. Cambridge University Press.
-      https://nlp.stanford.edu/IR-book/html/htmledition/the-vector-space-model-for-scoring-1.html
+* C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
+  Information Retrieval. Cambridge University Press.
+  https://nlp.stanford.edu/IR-book/html/htmledition/the-vector-space-model-for-scoring-1.html
 
 .. _linear_kernel:
 
@@ -111,7 +111,7 @@ Polynomial kernel
 -----------------
 The function :func:`polynomial_kernel` computes the degree-d polynomial kernel
 between two vectors. The polynomial kernel represents the similarity between two
-vectors. Conceptually, the polynomial kernels considers not only the similarity
+vectors. Conceptually, the polynomial kernel considers not only the similarity
 between vectors under the same dimension, but also across dimensions. When used
 in machine learning algorithms, this allows to account for feature interaction.
 
@@ -123,8 +123,8 @@ The polynomial kernel is defined as:
 
 where:
 
-    * ``x``, ``y`` are the input vectors
-    * ``d`` is the kernel degree
+* ``x``, ``y`` are the input vectors
+* ``d`` is the kernel degree
 
 If :math:`c_0 = 0` the kernel is said to be homogeneous.
 
@@ -143,9 +143,9 @@ activation function). It is defined as:
 
 where:
 
-    * ``x``, ``y`` are the input vectors
-    * :math:`\gamma` is known as slope
-    * :math:`c_0` is known as intercept
+* ``x``, ``y`` are the input vectors
+* :math:`\gamma` is known as slope
+* :math:`c_0` is known as intercept
 
 .. _rbf_kernel:
 
@@ -165,14 +165,14 @@ the kernel is known as the Gaussian kernel of variance :math:`\sigma^2`.
 
 Laplacian kernel
 ----------------
-The function :func:`laplacian_kernel` is a variant on the radial basis 
+The function :func:`laplacian_kernel` is a variant on the radial basis
 function kernel defined as:
 
 .. math::
 
     k(x, y) = \exp( -\gamma \| x-y \|_1)
 
-where ``x`` and ``y`` are the input vectors and :math:`\|x-y\|_1` is the 
+where ``x`` and ``y`` are the input vectors and :math:`\|x-y\|_1` is the
 Manhattan distance between the input vectors.
 
 It has proven useful in ML applied to noiseless data.
@@ -222,11 +222,10 @@ which is a distance between discrete probability distributions.
 
 The chi squared kernel is most commonly used on histograms (bags) of visual words.
 
-.. topic:: References:
+.. rubric:: References
 
-    * Zhang, J. and Marszalek, M. and Lazebnik, S. and Schmid, C.
-      Local features and kernels for classification of texture and object
-      categories: A comprehensive study
-      International Journal of Computer Vision 2007
-      https://research.microsoft.com/en-us/um/people/manik/projects/trade-off/papers/ZhangIJCV06.pdf
-
+* Zhang, J. and Marszalek, M. and Lazebnik, S. and Schmid, C.
+  Local features and kernels for classification of texture and object
+  categories: A comprehensive study
+  International Journal of Computer Vision 2007
+  https://hal.archives-ouvertes.fr/hal-00171412/document

@@ -1,7 +1,3 @@
-.. Places parent toc into the sidebar
-
-:parenttoc: True
-
 .. _computational_performance:
 
 .. currentmodule:: sklearn
@@ -19,9 +15,9 @@ scikit-learn estimators in different contexts and provide some tips and
 tricks for overcoming performance bottlenecks.
 
 Prediction latency is measured as the elapsed time necessary to make a
-prediction (e.g. in micro-seconds). Latency is often viewed as a distribution
+prediction (e.g. in microseconds). Latency is often viewed as a distribution
 and operations engineers often focus on the latency at a given percentile of
-this distribution (e.g. the 90 percentile).
+this distribution (e.g. the 90th percentile).
 
 Prediction throughput is defined as the number of predictions the software can
 deliver in a given amount of time (e.g. in predictions per second).
@@ -34,15 +30,16 @@ to take into account the same exact properties of the data as more complex ones.
 Prediction Latency
 ------------------
 
-One of the most straight-forward concerns one may have when using/choosing a
+One of the most straightforward concerns one may have when using/choosing a
 machine learning toolkit is the latency at which predictions can be made in a
 production environment.
 
 The main factors that influence the prediction latency are
-  1. Number of features
-  2. Input data representation and sparsity
-  3. Model complexity
-  4. Feature extraction
+
+1. Number of features
+2. Input data representation and sparsity
+3. Model complexity
+4. Feature extraction
 
 A last major parameter is also the possibility to do predictions in bulk or
 one-at-a-time mode.
@@ -128,7 +125,7 @@ by quite a bit as only the non zero valued features impact the dot product
 and thus the model predictions. Hence if you have 100 non zeros in 1e6
 dimensional space, you only need 100 multiply and add operation instead of 1e6.
 
-Calculation over a dense representation, however, may leverage highly optimised
+Calculation over a dense representation, however, may leverage highly optimized
 vector operations and multithreading in BLAS, and tends to result in fewer CPU
 cache misses. So the sparsity should typically be quite high (10% non-zeros
 max, to be checked depending on the hardware) for the sparse input
@@ -157,10 +154,9 @@ prediction latency too much. We will now review this idea for different
 families of supervised models.
 
 For :mod:`sklearn.linear_model` (e.g. Lasso, ElasticNet,
-SGDClassifier/Regressor, Ridge & RidgeClassifier,
-PassiveAggressiveClassifier/Regressor, LinearSVC, LogisticRegression...) the
-decision function that is applied at prediction time is the same (a dot product)
-, so latency should be equivalent.
+SGDClassifier/Regressor, Ridge & RidgeClassifier, LinearSVC, LogisticRegression...) the
+decision function that is applied at prediction time is the same (a dot product), so
+latency should be equivalent.
 
 Here is an example using
 :class:`~linear_model.SGDClassifier` with the
@@ -182,7 +178,7 @@ non-zero coefficients.
 For the :mod:`sklearn.svm` family of algorithms with a non-linear kernel,
 the latency is tied to the number of support vectors (the fewer the faster).
 Latency and throughput should (asymptotically) grow linearly with the number
-of support vectors in a SVC or SVR model. The kernel will also influence the
+of support vectors in an SVC or SVR model. The kernel will also influence the
 latency as it is used to compute the projection of the input vector once per
 support vector. In the following graph the ``nu`` parameter of
 :class:`~svm.NuSVR` was used to influence the number of
@@ -195,7 +191,7 @@ support vectors.
 .. centered:: |nusvr_model_complexity|
 
 For :mod:`sklearn.ensemble` of trees (e.g. RandomForest, GBT,
-ExtraTrees etc) the number of trees and their depth play the most
+ExtraTrees, etc.) the number of trees and their depth play the most
 important role. Latency and throughput should scale linearly with the number
 of trees. In this case we used directly the ``n_estimators`` parameter of
 :class:`~ensemble.GradientBoostingRegressor`.
@@ -224,9 +220,9 @@ files, tokenizing the text and hashing it into a common vector space) is
 taking 100 to 500 times more time than the actual prediction code, depending on
 the chosen model.
 
- .. |prediction_time| image::  ../auto_examples/applications/images/sphx_glr_plot_out_of_core_classification_004.png
-    :target: ../auto_examples/applications/plot_out_of_core_classification.html
-    :scale: 80
+.. |prediction_time| image::  ../auto_examples/applications/images/sphx_glr_plot_out_of_core_classification_004.png
+  :target: ../auto_examples/applications/plot_out_of_core_classification.html
+  :scale: 80
 
 .. centered:: |prediction_time|
 
@@ -278,21 +274,20 @@ BLAS implementation and lead to orders of magnitude speedup over a
 non-optimized BLAS.
 
 You can display the BLAS / LAPACK implementation used by your NumPy / SciPy /
-scikit-learn install with the following commands::
+scikit-learn install with the following command::
 
-    from numpy.distutils.system_info import get_info
-    print(get_info('blas_opt'))
-    print(get_info('lapack_opt'))
+    python -c "import sklearn; sklearn.show_versions()"
 
 Optimized BLAS / LAPACK implementations include:
- - Atlas (need hardware specific tuning by rebuilding on the target machine)
- - OpenBLAS
- - MKL
- - Apple Accelerate and vecLib frameworks (OSX only)
 
-More information can be found on the `Scipy install page <https://docs.scipy.org/doc/numpy/user/install.html>`_
+- Atlas (need hardware specific tuning by rebuilding on the target machine)
+- OpenBLAS
+- MKL
+- Apple Accelerate and vecLib frameworks (OSX only)
+
+More information can be found on the `NumPy install page <https://numpy.org/install/>`_
 and in this
-`blog post <http://danielnouri.org/notes/2012/12/19/libblas-and-liblapack-issues-and-speed,-with-scipy-and-ubuntu/>`_
+`blog post <https://danielnouri.org/notes/2012/12/19/libblas-and-liblapack-issues-and-speed,-with-scipy-and-ubuntu/>`_
 from Daniel Nouri which has some nice step by step install instructions for
 Debian / Ubuntu.
 
@@ -336,7 +331,7 @@ compromise between model compactness and prediction power. One can also
 further tune the ``l1_ratio`` parameter (in combination with the
 regularization strength ``alpha``) to control this tradeoff.
 
-A typical `benchmark <https://github.com/scikit-learn/scikit-learn/blob/master/benchmarks/bench_sparsify.py>`_
+A typical `benchmark <https://github.com/scikit-learn/scikit-learn/blob/main/benchmarks/bench_sparsify.py>`_
 on synthetic data yields a >30% decrease in latency when both the model and
 input are sparse (with 0.000024 and 0.027400 non-zero coefficients ratio
 respectively). Your mileage may vary depending on the sparsity and size of
@@ -356,7 +351,7 @@ feature selection components in a pipeline once we know which features to
 keep from a previous run. Finally, it can help reduce processing time and I/O
 usage upstream in the data access and feature extraction layers by not
 collecting and building features that are discarded by the model. For instance
-if the raw data come from a database, it can make it possible to write simpler
+if the raw data come from a database, it is possible to write simpler
 and faster queries or reduce I/O usage by making the queries return lighter
 records.
 At the moment, reshaping needs to be performed manually in scikit-learn.
@@ -366,5 +361,5 @@ sufficient to not generate the relevant features, leaving their columns empty.
 Links
 ......
 
-  - :ref:`scikit-learn developer performance documentation <performance-howto>`
-  - `Scipy sparse matrix formats documentation <https://docs.scipy.org/doc/scipy/reference/sparse.html>`_
+- :ref:`scikit-learn developer performance documentation <performance-howto>`
+- `Scipy sparse matrix formats documentation <https://docs.scipy.org/doc/scipy/reference/sparse.html>`_

@@ -1,42 +1,73 @@
-# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Vincent Michel <vincent.michel@inria.fr>
-#          Gilles Louppe <g.louppe@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 """Recursive feature elimination for feature ranking"""
 
+import warnings
+from copy import deepcopy
+from numbers import Integral
+
 import numpy as np
-import numbers
-from joblib import Parallel, effective_n_jobs
+from joblib import effective_n_jobs
 
-from ..utils.metaestimators import if_delegate_has_method
-from ..utils.metaestimators import _safe_split
-from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
-from ..utils.fixes import delayed
-from ..base import BaseEstimator
-from ..base import MetaEstimatorMixin
-from ..base import clone
-from ..base import is_classifier
-from ..model_selection import check_cv
-from ..model_selection._validation import _score
-from ..metrics import check_scoring
-from ._base import SelectorMixin
-from ._base import _get_feature_importances
+from sklearn.base import (
+    BaseEstimator,
+    MetaEstimatorMixin,
+    _fit_context,
+    clone,
+    is_classifier,
+)
+from sklearn.feature_selection._base import SelectorMixin, _get_feature_importances
+from sklearn.metrics import get_scorer
+from sklearn.model_selection import check_cv
+from sklearn.model_selection._validation import _score
+from sklearn.utils import Bunch, metadata_routing
+from sklearn.utils._metadata_requests import (
+    MetadataRouter,
+    MethodMapping,
+    _raise_for_params,
+    _routing_enabled,
+    process_routing,
+)
+from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt
+from sklearn.utils._tags import get_tags
+from sklearn.utils.metaestimators import _safe_split, available_if
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
+    _check_method_params,
+    _estimator_has,
+    check_is_fitted,
+    validate_data,
+)
 
 
-def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
+def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer, routed_params):
     """
-    Return the score for a fit across one fold.
+    Return the score and n_features per step for a fit across one fold.
     """
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
-    return rfe._fit(
-        X_train, y_train,
+    fit_params = _check_method_params(
+        X, params=routed_params.estimator.fit, indices=train
+    )
+    score_params = _check_method_params(
+        X=X, params=routed_params.scorer.score, indices=test
+    )
+
+    rfe._fit(
+        X_train,
+        y_train,
         lambda estimator, features: _score(
-            estimator, X_test[:, features], y_test, scorer
-        )).scores_
+            estimator,
+            X_test[:, features],
+            y_test,
+            scorer,
+            score_params=score_params,
+        ),
+        **fit_params,
+    )
+
+    return rfe.step_scores_, rfe.step_support_, rfe.step_ranking_, rfe.step_n_features_
 
 
 class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
@@ -98,11 +129,26 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     Attributes
     ----------
+    classes_ : ndarray of shape (n_classes,)
+        The classes labels. Only available when `estimator` is a classifier.
+
     estimator_ : ``Estimator`` instance
         The fitted estimator used to select features.
 
     n_features_ : int
         The number of selected features.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     ranking_ : ndarray of shape (n_features,)
         The feature ranking, such that ``ranking_[i]`` corresponds to the
@@ -111,6 +157,26 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     support_ : ndarray of shape (n_features,)
         The mask of selected features.
+
+    See Also
+    --------
+    RFECV : Recursive feature elimination with built-in cross-validated
+        selection of the best number of features.
+    SelectFromModel : Feature selection based on thresholds of importance
+        weights.
+    SequentialFeatureSelector : Sequential cross-validation based feature
+        selection. Does not rely on importance weights.
+
+    Notes
+    -----
+    Allows NaN/Inf in the input if the underlying estimator does as well.
+
+    References
+    ----------
+
+    .. [1] Guyon, I., Weston, J., Barnhill, S., & Vapnik, V., "Gene selection
+           for cancer classification using support vector machines",
+           Mach. Learn., 46(1-3), 389--422, 2002.
 
     Examples
     --------
@@ -129,30 +195,32 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
            False])
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
-
-    Notes
-    -----
-    Allows NaN/Inf in the input if the underlying estimator does as well.
-
-    See Also
-    --------
-    RFECV : Recursive feature elimination with built-in cross-validated
-        selection of the best number of features.
-    SelectFromModel : Feature selection based on thresholds of importance
-        weights.
-    SequentialFeatureSelector : Sequential cross-validation based feature
-        selection. Does not rely on importance weights.
-
-    References
-    ----------
-
-    .. [1] Guyon, I., Weston, J., Barnhill, S., & Vapnik, V., "Gene selection
-           for cancer classification using support vector machines",
-           Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    @_deprecate_positional_args
-    def __init__(self, estimator, *, n_features_to_select=None, step=1,
-                 verbose=0, importance_getter='auto'):
+
+    _parameter_constraints: dict = {
+        "estimator": [HasMethods(["fit"])],
+        "n_features_to_select": [
+            None,
+            Interval(RealNotInt, 0, 1, closed="right"),
+            Interval(Integral, 0, None, closed="neither"),
+        ],
+        "step": [
+            Interval(Integral, 0, None, closed="neither"),
+            Interval(RealNotInt, 0, 1, closed="neither"),
+        ],
+        "verbose": ["verbose"],
+        "importance_getter": [str, callable],
+    }
+
+    def __init__(
+        self,
+        estimator,
+        *,
+        n_features_to_select=None,
+        step=1,
+        verbose=0,
+        importance_getter="auto",
+    ):
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
         self.step = step
@@ -160,16 +228,21 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         self.verbose = verbose
 
     @property
-    def _estimator_type(self):
-        return self.estimator._estimator_type
-
-    @property
     def classes_(self):
+        """Classes labels available when `estimator` is a classifier.
+
+        Returns
+        -------
+        ndarray of shape (n_classes,)
+        """
         return self.estimator_.classes_
 
-    def fit(self, X, y):
-        """Fit the RFE model and then the underlying estimator on the selected
-           features.
+    @_fit_context(
+        # RFE.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
+    def fit(self, X, y, **fit_params):
+        """Fit the RFE model and then the underlying estimator on the selected features.
 
         Parameters
         ----------
@@ -178,38 +251,59 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         y : array-like of shape (n_samples,)
             The target values.
+
+        **fit_params : dict
+            - If `enable_metadata_routing=False` (default): Parameters directly passed
+              to the ``fit`` method of the underlying estimator.
+
+            - If `enable_metadata_routing=True`: Parameters safely routed to the ``fit``
+              method of the underlying estimator.
+
+            .. versionchanged:: 1.6
+                See :ref:`Metadata Routing User Guide <metadata_routing>`
+                for more details.
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
         """
-        return self._fit(X, y)
+        if _routing_enabled():
+            routed_params = process_routing(self, "fit", **fit_params)
+        else:
+            routed_params = Bunch(estimator=Bunch(fit=fit_params))
 
-    def _fit(self, X, y, step_score=None):
-        # Parameter step_score controls the calculation of self.scores_
-        # step_score is not exposed to users
-        # and is used when implementing RFECV
-        # self.scores_ will not be calculated when calling _fit through fit
+        return self._fit(X, y, **routed_params.estimator.fit)
 
-        tags = self._get_tags()
-        X, y = self._validate_data(
-            X, y, accept_sparse="csc",
+    def _fit(self, X, y, step_score=None, **fit_params):
+        # Parameter step_score controls the calculation of self.step_scores_
+        # step_score is not exposed to users and is used when implementing RFECV
+        # self.step_scores_ will not be calculated when calling _fit through fit
+
+        X, y = validate_data(
+            self,
+            X,
+            y,
+            accept_sparse="csc",
             ensure_min_features=2,
-            force_all_finite=not tags.get('allow_nan', True),
-            multi_output=True
+            ensure_all_finite=False,
+            multi_output=True,
         )
-        error_msg = ("n_features_to_select must be either None, a "
-                     "positive integer representing the absolute "
-                     "number of features or a float in (0.0, 1.0] "
-                     "representing a percentage of features to "
-                     f"select. Got {self.n_features_to_select}")
 
         # Initialization
         n_features = X.shape[1]
         if self.n_features_to_select is None:
             n_features_to_select = n_features // 2
-        elif self.n_features_to_select < 0:
-            raise ValueError(error_msg)
-        elif isinstance(self.n_features_to_select, numbers.Integral):  # int
+        elif isinstance(self.n_features_to_select, Integral):  # int
             n_features_to_select = self.n_features_to_select
-        elif self.n_features_to_select > 1.0:  # float > 1
-            raise ValueError(error_msg)
+            if n_features_to_select > n_features:
+                warnings.warn(
+                    (
+                        f"Found {n_features_to_select=} > {n_features=}. There will be"
+                        " no feature selection and all features will be kept."
+                    ),
+                    UserWarning,
+                )
         else:  # float
             n_features_to_select = int(n_features * self.n_features_to_select)
 
@@ -217,14 +311,15 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             step = int(max(1, self.step * n_features))
         else:
             step = int(self.step)
-        if step <= 0:
-            raise ValueError("Step must be >0")
 
         support_ = np.ones(n_features, dtype=bool)
         ranking_ = np.ones(n_features, dtype=int)
 
         if step_score:
-            self.scores_ = []
+            self.step_n_features_ = []
+            self.step_scores_ = []
+            self.step_support_ = []
+            self.step_ranking_ = []
 
         # Elimination
         while np.sum(support_) > n_features_to_select:
@@ -236,13 +331,23 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             if self.verbose > 0:
                 print("Fitting estimator with %d features." % np.sum(support_))
 
-            estimator.fit(X[:, features], y)
+            estimator.fit(X[:, features], y, **fit_params)
+
+            # Compute step values on the previous selection iteration because
+            # 'estimator' must use features that have not been eliminated yet
+            if step_score:
+                self.step_n_features_.append(len(features))
+                self.step_scores_.append(step_score(estimator, features))
+                self.step_support_.append(list(support_))
+                self.step_ranking_.append(list(ranking_))
 
             # Get importance and rank them
             importances = _get_feature_importances(
-                estimator, self.importance_getter, transform_func="square",
+                estimator,
+                self.importance_getter,
+                transform_func="square",
             )
-            ranks = np.argsort(importances)
+            ranks = np.argsort(importances, kind="stable")
 
             # for sparse case ranks is matrix
             ranks = np.ravel(ranks)
@@ -250,50 +355,65 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             # Eliminate the worse features
             threshold = min(step, np.sum(support_) - n_features_to_select)
 
-            # Compute step score on the previous selection iteration
-            # because 'estimator' must use features
-            # that have not been eliminated yet
-            if step_score:
-                self.scores_.append(step_score(estimator, features))
             support_[features[ranks][:threshold]] = False
             ranking_[np.logical_not(support_)] += 1
 
         # Set final attributes
         features = np.arange(n_features)[support_]
         self.estimator_ = clone(self.estimator)
-        self.estimator_.fit(X[:, features], y)
+        self.estimator_.fit(X[:, features], y, **fit_params)
 
-        # Compute step score when only n_features_to_select features left
+        # Compute step values when only n_features_to_select features left
         if step_score:
-            self.scores_.append(step_score(self.estimator_, features))
+            self.step_n_features_.append(len(features))
+            self.step_scores_.append(step_score(self.estimator_, features))
+            self.step_support_.append(support_)
+            self.step_ranking_.append(ranking_)
         self.n_features_ = support_.sum()
         self.support_ = support_
         self.ranking_ = ranking_
 
         return self
 
-    @if_delegate_has_method(delegate='estimator')
-    def predict(self, X):
-        """Reduce X to the selected features and then predict using the
-           underlying estimator.
+    @available_if(_estimator_has("predict"))
+    def predict(self, X, **predict_params):
+        """Reduce X to the selected features and predict using the estimator.
 
         Parameters
         ----------
         X : array of shape [n_samples, n_features]
             The input samples.
 
+        **predict_params : dict
+            Parameters to route to the ``predict`` method of the
+            underlying estimator.
+
+            .. versionadded:: 1.6
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>`
+                for more details.
+
         Returns
         -------
         y : array of shape [n_samples]
             The predicted target values.
         """
+        _raise_for_params(predict_params, self, "predict")
         check_is_fitted(self)
-        return self.estimator_.predict(self.transform(X))
+        if _routing_enabled():
+            routed_params = process_routing(self, "predict", **predict_params)
+        else:
+            routed_params = Bunch(estimator=Bunch(predict={}))
 
-    @if_delegate_has_method(delegate='estimator')
-    def score(self, X, y):
-        """Reduce X to the selected features and then return the score of the
-           underlying estimator.
+        return self.estimator_.predict(
+            self.transform(X), **routed_params.estimator.predict
+        )
+
+    @available_if(_estimator_has("score"))
+    def score(self, X, y, **score_params):
+        """Reduce X to the selected features and return the score of the estimator.
 
         Parameters
         ----------
@@ -302,15 +422,41 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         y : array of shape [n_samples]
             The target values.
+
+        **score_params : dict
+            - If `enable_metadata_routing=False` (default): Parameters directly passed
+              to the ``score`` method of the underlying estimator.
+
+            - If `enable_metadata_routing=True`: Parameters safely routed to the `score`
+              method of the underlying estimator.
+
+            .. versionadded:: 1.0
+
+            .. versionchanged:: 1.6
+                See :ref:`Metadata Routing User Guide <metadata_routing>`
+                for more details.
+
+        Returns
+        -------
+        score : float
+            Score of the underlying base estimator computed with the selected
+            features returned by `rfe.transform(X)` and `y`.
         """
         check_is_fitted(self)
-        return self.estimator_.score(self.transform(X), y)
+        if _routing_enabled():
+            routed_params = process_routing(self, "score", **score_params)
+        else:
+            routed_params = Bunch(estimator=Bunch(score=score_params))
+
+        return self.estimator_.score(
+            self.transform(X), y, **routed_params.estimator.score
+        )
 
     def _get_support_mask(self):
         check_is_fitted(self)
         return self.support_
 
-    @if_delegate_has_method(delegate='estimator')
+    @available_if(_estimator_has("decision_function"))
     def decision_function(self, X):
         """Compute the decision function of ``X``.
 
@@ -332,7 +478,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         check_is_fitted(self)
         return self.estimator_.decision_function(self.transform(X))
 
-    @if_delegate_has_method(delegate='estimator')
+    @available_if(_estimator_has("predict_proba"))
     def predict_proba(self, X):
         """Predict class probabilities for X.
 
@@ -352,7 +498,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         check_is_fitted(self)
         return self.estimator_.predict_proba(self.transform(X))
 
-    @if_delegate_has_method(delegate='estimator')
+    @available_if(_estimator_has("predict_log_proba"))
     def predict_log_proba(self, X):
         """Predict class log-probabilities for X.
 
@@ -370,17 +516,54 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         check_is_fitted(self)
         return self.estimator_.predict_log_proba(self.transform(X))
 
-    def _more_tags(self):
-        estimator_tags = self.estimator._get_tags()
-        return {'poor_score': True,
-                'allow_nan': estimator_tags.get('allow_nan', True),
-                'requires_y': True,
-                }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        sub_estimator_tags = get_tags(self.estimator)
+        tags.estimator_type = sub_estimator_tags.estimator_type
+        tags.classifier_tags = deepcopy(sub_estimator_tags.classifier_tags)
+        tags.regressor_tags = deepcopy(sub_estimator_tags.regressor_tags)
+        if tags.classifier_tags is not None:
+            tags.classifier_tags.poor_score = True
+        if tags.regressor_tags is not None:
+            tags.regressor_tags.poor_score = True
+        tags.target_tags.required = True
+        tags.input_tags.sparse = sub_estimator_tags.input_tags.sparse
+        tags.input_tags.allow_nan = sub_estimator_tags.input_tags.allow_nan
+        return tags
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.6
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self).add(
+            estimator=self.estimator,
+            method_mapping=MethodMapping()
+            .add(caller="fit", callee="fit")
+            .add(caller="predict", callee="predict")
+            .add(caller="score", callee="score"),
+        )
+        return router
 
 
 class RFECV(RFE):
-    """Feature ranking with recursive feature elimination and cross-validated
-    selection of the best number of features.
+    """Recursive feature elimination with cross-validation to select features.
+
+    The number of features selected is tuned automatically by fitting an :class:`RFE`
+    selector on the different cross-validation splits (provided by the `cv` parameter).
+    The performance of each :class:`RFE` selector is evaluated using `scoring` for
+    different numbers of selected features and aggregated together. Finally, the scores
+    are averaged across folds and the number of features selected is set to the number
+    of features that maximize the cross-validation score.
 
     See glossary entry for :term:`cross-validation estimator`.
 
@@ -414,13 +597,13 @@ class RFECV(RFE):
         Possible inputs for cv are:
 
         - None, to use the default 5-fold cross-validation,
-        - integer, to specify the number of folds.
+        - integer, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
         :class:`~sklearn.model_selection.StratifiedKFold` is used. If the
-        estimator is a classifier or if ``y`` is neither binary nor multiclass,
+        estimator is not a classifier or if ``y`` is neither binary nor multiclass,
         :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -429,10 +612,14 @@ class RFECV(RFE):
         .. versionchanged:: 0.22
             ``cv`` default value of None changed from 3-fold to 5-fold.
 
-    scoring : string, callable or None, default=None
-        A string (see model evaluation documentation) or
-        a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
+    scoring : str or callable, default=None
+        Scoring method to evaluate the :class:`RFE` selectors' performance. Options:
+
+        - str: see :ref:`scoring_string_names` for options.
+        - callable: a scorer callable object (e.g., function) with signature
+          ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
+        - `None`: the `estimator`'s
+          :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
     verbose : int, default=0
         Controls verbosity of output.
@@ -464,16 +651,64 @@ class RFECV(RFE):
 
     Attributes
     ----------
+    classes_ : ndarray of shape (n_classes,)
+        The classes labels. Only available when `estimator` is a classifier.
+
     estimator_ : ``Estimator`` instance
         The fitted estimator used to select features.
 
-    grid_scores_ : ndarray of shape (n_subsets_of_features,)
-        The cross-validation scores such that
-        ``grid_scores_[i]`` corresponds to
-        the CV score of the i-th subset of features.
+    cv_results_ : dict of ndarrays
+        All arrays (values of the dictionary) are sorted in ascending order
+        by the number of features used (i.e., the first element of the array
+        represents the models that used the least number of features, while the
+        last element represents the models that used all available features).
+
+        .. versionadded:: 1.0
+
+        This dictionary contains the following keys:
+
+        split(k)_test_score : ndarray of shape (n_subsets_of_features,)
+            The cross-validation scores across (k)th fold.
+
+        mean_test_score : ndarray of shape (n_subsets_of_features,)
+            Mean of scores over the folds.
+
+        std_test_score : ndarray of shape (n_subsets_of_features,)
+            Standard deviation of scores over the folds.
+
+        n_features : ndarray of shape (n_subsets_of_features,)
+            Number of features used at each step.
+
+            .. versionadded:: 1.5
+
+        split(k)_ranking : ndarray of shape (n_subsets_of_features,)
+            The cross-validation rankings across (k)th fold.
+            Selected (i.e., estimated best) features are assigned rank 1.
+            Illustration in
+            :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`
+
+            .. versionadded:: 1.7
+
+        split(k)_support : ndarray of shape (n_subsets_of_features,)
+            The cross-validation supports across (k)th fold. The support
+            is the mask of selected features.
+
+            .. versionadded:: 1.7
 
     n_features_ : int
         The number of selected features with cross-validation.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     ranking_ : narray of shape (n_features,)
         The feature ranking, such that `ranking_[i]`
@@ -485,13 +720,24 @@ class RFECV(RFE):
     support_ : ndarray of shape (n_features,)
         The mask of selected features.
 
+    See Also
+    --------
+    RFE : Recursive feature elimination.
+
     Notes
     -----
-    The size of ``grid_scores_`` is equal to
+    The size of all values in ``cv_results_`` is equal to
     ``ceil((n_features - min_features_to_select) / step) + 1``,
     where step is the number of features removed at each iteration.
 
     Allows NaN/Inf in the input if the underlying estimator does as well.
+
+    References
+    ----------
+
+    .. [1] Guyon, I., Weston, J., Barnhill, S., & Vapnik, V., "Gene selection
+           for cancer classification using support vector machines",
+           Mach. Learn., 46(1-3), 389--422, 2002.
 
     Examples
     --------
@@ -511,21 +757,33 @@ class RFECV(RFE):
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
 
-    See Also
-    --------
-    RFE : Recursive feature elimination.
-
-    References
-    ----------
-
-    .. [1] Guyon, I., Weston, J., Barnhill, S., & Vapnik, V., "Gene selection
-           for cancer classification using support vector machines",
-           Mach. Learn., 46(1-3), 389--422, 2002.
+    For a detailed example of using RFECV to select features when training a
+    :class:`~sklearn.linear_model.LogisticRegression`, see
+    :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`.
     """
-    @_deprecate_positional_args
-    def __init__(self, estimator, *, step=1, min_features_to_select=1,
-                 cv=None, scoring=None, verbose=0, n_jobs=None,
-                 importance_getter='auto'):
+
+    _parameter_constraints: dict = {
+        **RFE._parameter_constraints,
+        "min_features_to_select": [Interval(Integral, 0, None, closed="neither")],
+        "cv": ["cv_object"],
+        "scoring": [None, str, callable],
+        "n_jobs": [None, Integral],
+    }
+    _parameter_constraints.pop("n_features_to_select")
+    __metadata_request__fit = {"groups": metadata_routing.UNUSED}
+
+    def __init__(
+        self,
+        estimator,
+        *,
+        step=1,
+        min_features_to_select=1,
+        cv=None,
+        scoring=None,
+        verbose=0,
+        n_jobs=None,
+        importance_getter="auto",
+    ):
         self.estimator = estimator
         self.step = step
         self.importance_getter = importance_getter
@@ -535,9 +793,12 @@ class RFECV(RFE):
         self.n_jobs = n_jobs
         self.min_features_to_select = min_features_to_select
 
-    def fit(self, X, y, groups=None):
-        """Fit the RFE model and automatically tune the number of selected
-           features.
+    @_fit_context(
+        # RFECV.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
+    def fit(self, X, y, **params):
+        """Fit the RFE model and automatically tune the number of selected features.
 
         Parameters
         ----------
@@ -549,38 +810,65 @@ class RFECV(RFE):
             Target values (integers for classification, real numbers for
             regression).
 
-        groups : array-like of shape (n_samples,) or None, default=None
-            Group labels for the samples used while splitting the dataset into
-            train/test set. Only used in conjunction with a "Group" :term:`cv`
-            instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
+        **params : dict of str -> object
+            Parameters passed to the ``fit`` method of the estimator,
+            the scorer, and the CV splitter.
 
-            .. versionadded:: 0.20
+            .. versionadded:: 1.6
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>`
+                for more details.
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
         """
-        tags = self._get_tags()
-        X, y = self._validate_data(
-            X, y, accept_sparse="csr", ensure_min_features=2,
-            force_all_finite=not tags.get('allow_nan', True),
-            multi_output=True
+        _raise_for_params(params, self, "fit", allow=["groups"])
+        X, y = validate_data(
+            self,
+            X,
+            y,
+            accept_sparse="csr",
+            ensure_min_features=2,
+            ensure_all_finite=False,
+            multi_output=True,
         )
+
+        if _routing_enabled():
+            routed_params = process_routing(self, "fit", **params)
+        else:
+            routed_params = Bunch(
+                estimator=Bunch(fit={}),
+                splitter=Bunch(split={"groups": params.pop("groups", None)}),
+                scorer=Bunch(score={}),
+            )
 
         # Initialization
         cv = check_cv(self.cv, y, classifier=is_classifier(self.estimator))
-        scorer = check_scoring(self.estimator, scoring=self.scoring)
-        n_features = X.shape[1]
-
-        if 0.0 < self.step < 1.0:
-            step = int(max(1, self.step * n_features))
-        else:
-            step = int(self.step)
-        if step <= 0:
-            raise ValueError("Step must be >0")
+        scorer = self._get_scorer()
 
         # Build an RFE object, which will evaluate and score each possible
         # feature count, down to self.min_features_to_select
-        rfe = RFE(estimator=self.estimator,
-                  n_features_to_select=self.min_features_to_select,
-                  importance_getter=self.importance_getter,
-                  step=self.step, verbose=self.verbose)
+        n_features = X.shape[1]
+        if self.min_features_to_select > n_features:
+            warnings.warn(
+                (
+                    f"Found min_features_to_select={self.min_features_to_select} > "
+                    f"{n_features=}. There will be no feature selection and all "
+                    "features will be kept."
+                ),
+                UserWarning,
+            )
+        rfe = RFE(
+            estimator=self.estimator,
+            n_features_to_select=min(self.min_features_to_select, n_features),
+            importance_getter=self.importance_getter,
+            step=self.step,
+            verbose=self.verbose,
+        )
 
         # Determine the number of subsets of features by fitting across
         # the train folds and choosing the "features_to_select" parameter
@@ -600,33 +888,127 @@ class RFECV(RFE):
             parallel = Parallel(n_jobs=self.n_jobs)
             func = delayed(_rfe_single_fit)
 
-        scores = parallel(
-            func(rfe, self.estimator, X, y, train, test, scorer)
-            for train, test in cv.split(X, y, groups))
+        step_results = parallel(
+            func(clone(rfe), self.estimator, X, y, train, test, scorer, routed_params)
+            for train, test in cv.split(X, y, **routed_params.splitter.split)
+        )
+        scores, supports, rankings, step_n_features = zip(*step_results)
 
-        scores = np.sum(scores, axis=0)
-        scores_rev = scores[::-1]
-        argmax_idx = len(scores) - np.argmax(scores_rev) - 1
-        n_features_to_select = max(
-            n_features - (argmax_idx * step),
-            self.min_features_to_select)
+        step_n_features_rev = np.array(step_n_features[0])[::-1]
+        scores = np.array(scores)
+        rankings = np.array(rankings)
+        supports = np.array(supports)
+
+        # Reverse order such that lowest number of features is selected in case of tie.
+        scores_sum_rev = np.sum(scores, axis=0)[::-1]
+        n_features_to_select = step_n_features_rev[np.argmax(scores_sum_rev)]
 
         # Re-execute an elimination with best_k over the whole set
-        rfe = RFE(estimator=self.estimator,
-                  n_features_to_select=n_features_to_select, step=self.step,
-                  importance_getter=self.importance_getter,
-                  verbose=self.verbose)
+        rfe = RFE(
+            estimator=self.estimator,
+            n_features_to_select=n_features_to_select,
+            step=self.step,
+            importance_getter=self.importance_getter,
+            verbose=self.verbose,
+        )
 
-        rfe.fit(X, y)
+        rfe.fit(X, y, **routed_params.estimator.fit)
 
         # Set final attributes
         self.support_ = rfe.support_
         self.n_features_ = rfe.n_features_
         self.ranking_ = rfe.ranking_
         self.estimator_ = clone(self.estimator)
-        self.estimator_.fit(self.transform(X), y)
+        self.estimator_.fit(self._transform(X), y, **routed_params.estimator.fit)
 
-        # Fixing a normalization error, n is equal to get_n_splits(X, y) - 1
-        # here, the scores are normalized by get_n_splits(X, y)
-        self.grid_scores_ = scores[::-1] / cv.get_n_splits(X, y, groups)
+        # reverse to stay consistent with before
+        scores_rev = scores[:, ::-1]
+        supports_rev = supports[:, ::-1]
+        rankings_rev = rankings[:, ::-1]
+        self.cv_results_ = {
+            "mean_test_score": np.mean(scores_rev, axis=0),
+            "std_test_score": np.std(scores_rev, axis=0),
+            **{f"split{i}_test_score": scores_rev[i] for i in range(scores.shape[0])},
+            **{f"split{i}_ranking": rankings_rev[i] for i in range(rankings.shape[0])},
+            **{f"split{i}_support": supports_rev[i] for i in range(supports.shape[0])},
+            "n_features": step_n_features_rev,
+        }
         return self
+
+    def score(self, X, y, **score_params):
+        """Score using the `scoring` option on the given test data and labels.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Test samples.
+
+        y : array-like of shape (n_samples,)
+            True labels for X.
+
+        **score_params : dict
+            Parameters to pass to the `score` method of the underlying scorer.
+
+            .. versionadded:: 1.6
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>`
+                for more details.
+
+        Returns
+        -------
+        score : float
+            Score of self.predict(X) w.r.t. y defined by `scoring`.
+        """
+        _raise_for_params(score_params, self, "score")
+        scoring = self._get_scorer()
+        if _routing_enabled():
+            routed_params = process_routing(self, "score", **score_params)
+        else:
+            routed_params = Bunch()
+            routed_params.scorer = Bunch(score={})
+
+        return scoring(self, X, y, **routed_params.scorer.score)
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.6
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self)
+        router.add(
+            estimator=self.estimator,
+            method_mapping=MethodMapping().add(caller="fit", callee="fit"),
+        )
+        router.add(
+            splitter=check_cv(self.cv),
+            method_mapping=MethodMapping().add(
+                caller="fit",
+                callee="split",
+            ),
+        )
+        router.add(
+            scorer=self._get_scorer(),
+            method_mapping=MethodMapping()
+            .add(caller="fit", callee="score")
+            .add(caller="score", callee="score"),
+        )
+
+        return router
+
+    def _get_scorer(self):
+        if self.scoring is None:
+            scoring = "accuracy" if is_classifier(self.estimator) else "r2"
+        else:
+            scoring = self.scoring
+        return get_scorer(scoring)

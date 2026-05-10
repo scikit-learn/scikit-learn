@@ -1,7 +1,15 @@
 #include <stdlib.h>
-#include <numpy/arrayobject.h>
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
 #include "svm.h"
 #include "_svm_cython_blas_helpers.h"
+
+
+#ifndef MAX
+    #define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#endif
+
+
 /*
  * Some helper methods for libsvm bindings.
  *
@@ -9,9 +17,9 @@
  * but libsvm does not expose this structure, so we define it here
  * along some utilities to convert from numpy arrays.
  *
- * License: BSD 3 clause
+ * Authors: The scikit-learn developers
+ * SPDX-License-Identifier: BSD-3-Clause
  *
- * Author: 2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
  */
 
 
@@ -30,10 +38,10 @@
  * contiguous, but in practice its a reasonable assumption.
  *
  */
-struct svm_node *dense_to_libsvm (double *x, npy_intp *dims)
+struct svm_node *dense_to_libsvm (double *x, Py_ssize_t *dims)
 {
     struct svm_node *node;
-    npy_intp len_row = dims[1];
+    Py_ssize_t len_row = dims[1];
     double *tx = x;
     int i;
 
@@ -82,7 +90,7 @@ void set_parameter(struct svm_parameter *param, int svm_type, int kernel_type, i
 /*
  * Fill an svm_problem struct. problem->x will be malloc'd.
  */
-void set_problem(struct svm_problem *problem, char *X, char *Y, char *sample_weight, npy_intp *dims, int kernel_type)
+void set_problem(struct svm_problem *problem, char *X, char *Y, char *sample_weight, Py_ssize_t *dims, int kernel_type)
 {
     if (problem == NULL) return;
     problem->l = (int) dims[0]; /* number of samples */
@@ -105,9 +113,9 @@ void set_problem(struct svm_problem *problem, char *X, char *Y, char *sample_wei
  *
  */
 struct svm_model *set_model(struct svm_parameter *param, int nr_class,
-                            char *SV, npy_intp *SV_dims,
-                            char *support, npy_intp *support_dims,
-                            npy_intp *sv_coef_strides,
+                            char *SV, Py_ssize_t *SV_dims,
+                            char *support, Py_ssize_t *support_dims,
+                            Py_ssize_t *sv_coef_strides,
                             char *sv_coef, char *rho, char *nSV,
                             char *probA, char *probB)
 {
@@ -127,6 +135,9 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
         goto sv_coef_error;
     if ((model->rho = malloc( m * sizeof(double))) == NULL)
         goto rho_error;
+
+    // This is only allocated in dynamic memory while training.
+    model->n_iter = NULL;
 
     model->nr_class = nr_class;
     model->param = *param;
@@ -204,18 +215,27 @@ model_error:
 /*
  * Get the number of support vectors in a model.
  */
-npy_intp get_l(struct svm_model *model)
+Py_ssize_t get_l(struct svm_model *model)
 {
-    return (npy_intp) model->l;
+    return (Py_ssize_t) model->l;
 }
 
 /*
  * Get the number of classes in a model, = 2 in regression/one class
  * svm.
  */
-npy_intp get_nr(struct svm_model *model)
+Py_ssize_t get_nr(struct svm_model *model)
 {
-    return (npy_intp) model->nr_class;
+    return (Py_ssize_t) model->nr_class;
+}
+
+/*
+ * Get the number of iterations run in optimization
+ */
+void copy_n_iter(char *data, struct svm_model *model)
+{
+    const int n_models = MAX(1, model->nr_class * (model->nr_class-1) / 2);
+    memcpy(data, model->n_iter, n_models * sizeof(int));
 }
 
 /*
@@ -233,10 +253,10 @@ void copy_sv_coef(char *data, struct svm_model *model)
     }
 }
 
-void copy_intercept(char *data, struct svm_model *model, npy_intp *dims)
+void copy_intercept(char *data, struct svm_model *model, Py_ssize_t *dims)
 {
     /* intercept = -rho */
-    npy_intp i, n = dims[0];
+    Py_ssize_t i, n = dims[0];
     double t, *ddata = (double *) data;
     for (i=0; i<n; ++i) {
         t = model->rho[i];
@@ -251,7 +271,7 @@ void copy_intercept(char *data, struct svm_model *model, npy_intp *dims)
  * structures, so we have to do the conversion on the fly and also
  * iterate fast over data.
  */
-void copy_SV(char *data, struct svm_model *model, npy_intp *dims)
+void copy_SV(char *data, struct svm_model *model, Py_ssize_t *dims)
 {
     int i, n = model->l;
     double *tdata = (double *) data;
@@ -277,12 +297,12 @@ void copy_nSV(char *data, struct svm_model *model)
     memcpy(data, model->nSV, model->nr_class * sizeof(int));
 }
 
-void copy_probA(char *data, struct svm_model *model, npy_intp * dims)
+void copy_probA(char *data, struct svm_model *model, Py_ssize_t * dims)
 {
     memcpy(data, model->probA, dims[0] * sizeof(double));
 }
 
-void copy_probB(char *data, struct svm_model *model, npy_intp * dims)
+void copy_probB(char *data, struct svm_model *model, Py_ssize_t * dims)
 {
     memcpy(data, model->probB, dims[0] * sizeof(double));
 }
@@ -292,12 +312,12 @@ void copy_probB(char *data, struct svm_model *model, npy_intp * dims)
  *
  *  It will return -1 if we run out of memory.
  */
-int copy_predict(char *predict, struct svm_model *model, npy_intp *predict_dims,
+int copy_predict(char *predict, struct svm_model *model, Py_ssize_t *predict_dims,
                  char *dec_values, BlasFunctions *blas_functions)
 {
     double *t = (double *) dec_values;
     struct svm_node *predict_nodes;
-    npy_intp i;
+    Py_ssize_t i;
 
     predict_nodes = dense_to_libsvm((double *) predict, predict_dims);
 
@@ -312,9 +332,9 @@ int copy_predict(char *predict, struct svm_model *model, npy_intp *predict_dims,
 }
 
 int copy_predict_values(char *predict, struct svm_model *model,
-                        npy_intp *predict_dims, char *dec_values, int nr_class, BlasFunctions *blas_functions)
+                        Py_ssize_t *predict_dims, char *dec_values, int nr_class, BlasFunctions *blas_functions)
 {
-    npy_intp i;
+    Py_ssize_t i;
     struct svm_node *predict_nodes;
     predict_nodes = dense_to_libsvm((double *) predict, predict_dims);
     if (predict_nodes == NULL)
@@ -331,13 +351,13 @@ int copy_predict_values(char *predict, struct svm_model *model,
 
 
 
-int copy_predict_proba(char *predict, struct svm_model *model, npy_intp *predict_dims,
+int copy_predict_proba(char *predict, struct svm_model *model, Py_ssize_t *predict_dims,
                  char *dec_values, BlasFunctions *blas_functions)
 {
-    npy_intp i, n, m;
+    Py_ssize_t i, n, m;
     struct svm_node *predict_nodes;
     n = predict_dims[0];
-    m = (npy_intp) model->nr_class;
+    m = (Py_ssize_t) model->nr_class;
     predict_nodes = dense_to_libsvm((double *) predict, predict_dims);
     if (predict_nodes == NULL)
         return -1;
@@ -363,9 +383,11 @@ int free_model(struct svm_model *model)
     if (model == NULL) return -1;
     free(model->SV);
 
-    /* We don't free sv_ind, since we did not create them in
+    /* We don't free sv_ind and n_iter, since we did not create them in
        set_model */
-    /* free(model->sv_ind); */
+    /* free(model->sv_ind);
+     * free(model->n_iter);
+     */
     free(model->sv_coef);
     free(model->rho);
     free(model->label);

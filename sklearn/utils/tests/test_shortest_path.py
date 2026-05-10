@@ -2,18 +2,18 @@ from collections import defaultdict
 
 import numpy as np
 from numpy.testing import assert_array_almost_equal
-from sklearn.utils.graph import (graph_shortest_path,
-                                 single_source_shortest_path_length)
+
+from sklearn.utils.graph import single_source_shortest_path_length
 
 
 def floyd_warshall_slow(graph, directed=False):
     N = graph.shape[0]
 
-    #set nonzero entries to infinity
+    # set nonzero entries to infinity
     graph[np.where(graph == 0)] = np.inf
 
-    #set diagonal to zero
-    graph.flat[::N + 1] = 0
+    # set diagonal to zero
+    graph.flat[:: N + 1] = 0
 
     if not directed:
         graph = np.minimum(graph, graph.T)
@@ -29,41 +29,21 @@ def floyd_warshall_slow(graph, directed=False):
 
 
 def generate_graph(N=20):
-    #sparse grid of distances
+    # sparse grid of distances
     rng = np.random.RandomState(0)
     dist_matrix = rng.random_sample((N, N))
 
-    #make symmetric: distances are not direction-dependent
+    # make symmetric: distances are not direction-dependent
     dist_matrix = dist_matrix + dist_matrix.T
 
-    #make graph sparse
+    # make graph sparse
     i = (rng.randint(N, size=N * N // 2), rng.randint(N, size=N * N // 2))
     dist_matrix[i] = 0
 
-    #set diagonal to zero
-    dist_matrix.flat[::N + 1] = 0
+    # set diagonal to zero
+    dist_matrix.flat[:: N + 1] = 0
 
     return dist_matrix
-
-
-def test_floyd_warshall():
-    dist_matrix = generate_graph(20)
-
-    for directed in (True, False):
-        graph_FW = graph_shortest_path(dist_matrix, directed, 'FW')
-        graph_py = floyd_warshall_slow(dist_matrix.copy(), directed)
-
-        assert_array_almost_equal(graph_FW, graph_py)
-
-
-def test_dijkstra():
-    dist_matrix = generate_graph(20)
-
-    for directed in (True, False):
-        graph_D = graph_shortest_path(dist_matrix, directed, 'D')
-        graph_py = floyd_warshall_slow(dist_matrix.copy(), directed)
-
-        assert_array_almost_equal(graph_D, graph_py)
 
 
 def test_shortest_path():
@@ -79,17 +59,7 @@ def test_shortest_path():
         for i in range(dist_matrix.shape[0]):
             # Non-reachable nodes have distance 0 in graph_py
             dist_dict = defaultdict(int)
-            dist_dict.update(single_source_shortest_path_length(dist_matrix,
-                                                                i))
+            dist_dict.update(single_source_shortest_path_length(dist_matrix, i))
 
             for j in range(graph_py[i].shape[0]):
                 assert_array_almost_equal(dist_dict[j], graph_py[i, j])
-
-
-def test_dijkstra_bug_fix():
-    X = np.array([[0., 0., 4.],
-                  [1., 0., 2.],
-                  [0., 5., 0.]])
-    dist_FW = graph_shortest_path(X, directed=False, method='FW')
-    dist_D = graph_shortest_path(X, directed=False, method='D')
-    assert_array_almost_equal(dist_D, dist_FW)

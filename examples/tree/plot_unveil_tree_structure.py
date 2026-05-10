@@ -15,13 +15,17 @@ show how to retrieve:
 - the decision path shared by a group of samples.
 
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numpy as np
 from matplotlib import pyplot as plt
 
-from sklearn.model_selection import train_test_split
-from sklearn.datasets import load_iris
-from sklearn.tree import DecisionTreeClassifier
 from sklearn import tree
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
 
 ##############################################################################
 # Train tree classifier
@@ -43,25 +47,29 @@ clf.fit(X_train, y_train)
 #
 # The decision classifier has an attribute called ``tree_`` which allows access
 # to low level attributes such as ``node_count``, the total number of nodes,
-# and ``max_depth``, the maximal depth of the tree. It also stores the
-# entire binary tree structure, represented as a number of parallel arrays. The
-# i-th element of each array holds information about the node ``i``. Node 0 is
-# the tree's root. Some of the arrays only apply to either leaves or split
-# nodes. In this case the values of the nodes of the other type is arbitrary.
-# For example, the arrays ``feature`` and ``threshold`` only apply to split
-# nodes. The values for leaf nodes in these arrays are therefore arbitrary.
+# and ``max_depth``, the maximal depth of the tree. The
+# ``tree_.compute_node_depths()`` method computes the depth of each node in the
+# tree. `tree_` also stores the entire binary tree structure, represented as a
+# number of parallel arrays. The i-th element of each array holds information
+# about the node ``i``. Node 0 is the tree's root. Some of the arrays only
+# apply to either leaves or split nodes. In this case the values of the nodes
+# of the other type is arbitrary. For example, the arrays ``feature`` and
+# ``threshold`` only apply to split nodes. The values for leaf nodes in these
+# arrays are therefore arbitrary.
 #
 # Among these arrays, we have:
 #
-#   - ``children_left[i]``: id of the left child of node ``i`` or -1 if leaf
-#     node
-#   - ``children_right[i]``: id of the right child of node ``i`` or -1 if leaf
-#     node
-#   - ``feature[i]``: feature used for splitting node ``i``
-#   - ``threshold[i]``: threshold value at node ``i``
-#   - ``n_node_samples[i]``: the number of of training samples reaching node
-#     ``i``
-#   - ``impurity[i]``: the impurity at node ``i``
+# - ``children_left[i]``: id of the left child of node ``i`` or -1 if leaf node
+# - ``children_right[i]``: id of the right child of node ``i`` or -1 if leaf node
+# - ``feature[i]``: feature used for splitting node ``i``
+# - ``threshold[i]``: threshold value at node ``i``
+# - ``n_node_samples[i]``: the number of training samples reaching node ``i``
+# - ``impurity[i]``: the impurity at node ``i``
+# - ``weighted_n_node_samples[i]``: the weighted number of training samples
+#   reaching node ``i``
+# - ``value[i, j, k]``: the summary of the training samples that reached node i for
+#   output j and class k (for regression tree, class is set to 1). See below
+#   for more information about ``value``.
 #
 # Using the arrays, we can traverse the tree structure to compute various
 # properties. Below, we will compute the depth of each node and whether or not
@@ -72,6 +80,7 @@ children_left = clf.tree_.children_left
 children_right = clf.tree_.children_right
 feature = clf.tree_.feature
 threshold = clf.tree_.threshold
+values = clf.tree_.value
 
 node_depth = np.zeros(shape=n_nodes, dtype=np.int64)
 is_leaves = np.zeros(shape=n_nodes, dtype=bool)
@@ -92,27 +101,70 @@ while len(stack) > 0:
     else:
         is_leaves[node_id] = True
 
-print("The binary tree structure has {n} nodes and has "
-      "the following tree structure:\n".format(n=n_nodes))
+print(
+    "The binary tree structure has {n} nodes and has "
+    "the following tree structure:\n".format(n=n_nodes)
+)
 for i in range(n_nodes):
     if is_leaves[i]:
-        print("{space}node={node} is a leaf node.".format(
-            space=node_depth[i] * "\t", node=i))
+        print(
+            "{space}node={node} is a leaf node with value={value}.".format(
+                space=node_depth[i] * "\t", node=i, value=np.around(values[i], 3)
+            )
+        )
     else:
-        print("{space}node={node} is a split node: "
-              "go to node {left} if X[:, {feature}] <= {threshold} "
-              "else to node {right}.".format(
-                  space=node_depth[i] * "\t",
-                  node=i,
-                  left=children_left[i],
-                  feature=feature[i],
-                  threshold=threshold[i],
-                  right=children_right[i]))
+        print(
+            "{space}node={node} is a split node with value={value}: "
+            "go to node {left} if X[:, {feature}] <= {threshold} "
+            "else to node {right}.".format(
+                space=node_depth[i] * "\t",
+                node=i,
+                left=children_left[i],
+                feature=feature[i],
+                threshold=threshold[i],
+                right=children_right[i],
+                value=np.around(values[i], 3),
+            )
+        )
+
+# %%
+# What is the values array used here?
+# -----------------------------------
+# The `tree_.value` array is a 3D array of shape
+# [``n_nodes``, ``n_classes``, ``n_outputs``] which provides the proportion of samples
+# reaching a node for each class and for each output.
+# Each node has a ``value`` array which is the proportion of weighted samples reaching
+# this node for each output and class with respect to the parent node.
+#
+# One could convert this to the absolute weighted number of samples reaching a node,
+# by multiplying this number by `tree_.weighted_n_node_samples[node_idx]` for the
+# given node. Note sample weights are not used in this example, so the weighted
+# number of samples is the number of samples reaching the node because each sample
+# has a weight of 1 by default.
+#
+# For example, in the above tree built on the iris dataset, the root node has
+# ``value = [0.33, 0.304, 0.366]`` indicating there are 33% of class 0 samples,
+# 30.4% of class 1 samples, and 36.6% of class 2 samples at the root node. One can
+# convert this to the absolute number of samples by multiplying by the number of
+# samples reaching the root node, which is `tree_.weighted_n_node_samples[0]`.
+# Then the root node has ``value = [37, 34, 41]``, indicating there are 37 samples
+# of class 0, 34 samples of class 1, and 41 samples of class 2 at the root node.
+#
+# Traversing the tree, the samples are split and as a result, the ``value`` array
+# reaching each node changes. The left child of the root node has ``value = [1., 0, 0]``
+# (or ``value = [37, 0, 0]`` when converted to the absolute number of samples)
+# because all 37 samples in the left child node are from class 0.
+#
+# Note: In this example, `n_outputs=1`, but the tree classifier can also handle
+# multi-output problems. The `value` array at each node would just be a 2D
+# array instead.
 
 ##############################################################################
 # We can compare the above output to the plot of the decision tree.
+# Here, we show the proportions of samples of each class that reach each
+# node corresponding to the actual elements of `tree_.value` array.
 
-tree.plot_tree(clf)
+tree.plot_tree(clf, proportion=True)
 plt.show()
 
 ##############################################################################
@@ -139,29 +191,33 @@ leaf_id = clf.apply(X_test)
 
 sample_id = 0
 # obtain ids of the nodes `sample_id` goes through, i.e., row `sample_id`
-node_index = node_indicator.indices[node_indicator.indptr[sample_id]:
-                                    node_indicator.indptr[sample_id + 1]]
+node_index = node_indicator.indices[
+    node_indicator.indptr[sample_id] : node_indicator.indptr[sample_id + 1]
+]
 
-print('Rules used to predict sample {id}:\n'.format(id=sample_id))
+print("Rules used to predict sample {id}:\n".format(id=sample_id))
 for node_id in node_index:
     # continue to the next node if it is a leaf node
     if leaf_id[sample_id] == node_id:
         continue
 
     # check if value of the split feature for sample 0 is below threshold
-    if (X_test[sample_id, feature[node_id]] <= threshold[node_id]):
+    if X_test[sample_id, feature[node_id]] <= threshold[node_id]:
         threshold_sign = "<="
     else:
         threshold_sign = ">"
 
-    print("decision node {node} : (X_test[{sample}, {feature}] = {value}) "
-          "{inequality} {threshold})".format(
-              node=node_id,
-              sample=sample_id,
-              feature=feature[node_id],
-              value=X_test[sample_id, feature[node_id]],
-              inequality=threshold_sign,
-              threshold=threshold[node_id]))
+    print(
+        "decision node {node} : (X_test[{sample}, {feature}] = {value}) "
+        "{inequality} {threshold})".format(
+            node=node_id,
+            sample=sample_id,
+            feature=feature[node_id],
+            value=X_test[sample_id, feature[node_id]],
+            inequality=threshold_sign,
+            threshold=threshold[node_id],
+        )
+    )
 
 ##############################################################################
 # For a group of samples, we can determine the common nodes the samples go
@@ -169,12 +225,13 @@ for node_id in node_index:
 
 sample_ids = [0, 1]
 # boolean array indicating the nodes both samples go through
-common_nodes = (node_indicator.toarray()[sample_ids].sum(axis=0) ==
-                len(sample_ids))
+common_nodes = node_indicator.toarray()[sample_ids].sum(axis=0) == len(sample_ids)
 # obtain node ids using position in array
 common_node_id = np.arange(n_nodes)[common_nodes]
 
-print("\nThe following samples {samples} share the node(s) {nodes} in the "
-      "tree.".format(samples=sample_ids, nodes=common_node_id))
-print("This is {prop}% of all nodes.".format(
-    prop=100 * len(common_node_id) / n_nodes))
+print(
+    "\nThe following samples {samples} share the node(s) {nodes} in the tree.".format(
+        samples=sample_ids, nodes=common_node_id
+    )
+)
+print("This is {prop}% of all nodes.".format(prop=100 * len(common_node_id) / n_nodes))

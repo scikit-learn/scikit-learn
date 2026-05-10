@@ -19,19 +19,19 @@ samples of the dataset. Thus random projection is a suitable approximation
 technique for distance based method.
 
 
-.. topic:: References:
+.. rubric:: References
 
- * Sanjoy Dasgupta. 2000.
-   `Experiments with random projection. <https://cseweb.ucsd.edu/~dasgupta/papers/randomf.pdf>`_
-   In Proceedings of the Sixteenth conference on Uncertainty in artificial
-   intelligence (UAI'00), Craig Boutilier and Moisés Goldszmidt (Eds.). Morgan
-   Kaufmann Publishers Inc., San Francisco, CA, USA, 143-151.
+* Sanjoy Dasgupta. 2000.
+  `Experiments with random projection. <https://cseweb.ucsd.edu/~dasgupta/papers/randomf.pdf>`_
+  In Proceedings of the Sixteenth conference on Uncertainty in artificial
+  intelligence (UAI'00), Craig Boutilier and Moisés Goldszmidt (Eds.). Morgan
+  Kaufmann Publishers Inc., San Francisco, CA, USA, 143-151.
 
- * Ella Bingham and Heikki Mannila. 2001.
-   `Random projection in dimensionality reduction: applications to image and text data. <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.24.5135&rep=rep1&type=pdf>`_
-   In Proceedings of the seventh ACM SIGKDD international conference on
-   Knowledge discovery and data mining (KDD '01). ACM, New York, NY, USA,
-   245-250.
+* Ella Bingham and Heikki Mannila. 2001.
+  `Random projection in dimensionality reduction: applications to image and text data. <https://cs-people.bu.edu/evimaria/cs565/kdd-rp.pdf>`_
+  In Proceedings of the seventh ACM SIGKDD international conference on
+  Knowledge discovery and data mining (KDD '01). ACM, New York, NY, USA,
+  245-250.
 
 
 .. _johnson_lindenstrauss:
@@ -58,7 +58,7 @@ bounded distortion introduced by the random projection::
 
   >>> from sklearn.random_projection import johnson_lindenstrauss_min_dim
   >>> johnson_lindenstrauss_min_dim(n_samples=1e6, eps=0.5)
-  663
+  np.int64(663)
   >>> johnson_lindenstrauss_min_dim(n_samples=1e6, eps=[0.5, 0.1, 0.01])
   array([    663,   11841, 1112658])
   >>> johnson_lindenstrauss_min_dim(n_samples=[1e4, 1e5, 1e6], eps=0.1)
@@ -74,17 +74,17 @@ bounded distortion introduced by the random projection::
    :scale: 75
    :align: center
 
-.. topic:: Example:
+.. rubric:: Examples
 
-  * See :ref:`sphx_glr_auto_examples_miscellaneous_plot_johnson_lindenstrauss_bound.py`
-    for a theoretical explication on the Johnson-Lindenstrauss lemma and an
-    empirical validation using sparse random matrices.
+* See :ref:`sphx_glr_auto_examples_miscellaneous_plot_johnson_lindenstrauss_bound.py`
+  for a theoretical explication on the Johnson-Lindenstrauss lemma and an
+  empirical validation using sparse random matrices.
 
-.. topic:: References:
+.. rubric:: References
 
-  * Sanjoy Dasgupta and Anupam Gupta, 1999.
-    `An elementary proof of the Johnson-Lindenstrauss Lemma.
-    <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.39.3334&rep=rep1&type=pdf>`_
+* Sanjoy Dasgupta and Anupam Gupta, 1999.
+  `An elementary proof of the Johnson-Lindenstrauss Lemma.
+  <https://cseweb.ucsd.edu/~dasgupta/papers/jl.pdf>`_
 
 .. _gaussian_random_matrix:
 
@@ -95,7 +95,7 @@ dimensionality by projecting the original input space on a randomly generated
 matrix where components are drawn from the following distribution
 :math:`N(0, \frac{1}{n_{components}})`.
 
-Here a small excerpt which illustrates how to use the Gaussian random
+Here is a small excerpt which illustrates how to use the Gaussian random
 projection transformer::
 
   >>> import numpy as np
@@ -136,7 +136,7 @@ where :math:`n_{\text{components}}` is the size of the projected subspace.
 By default the density of non zero elements is set to the minimum density as
 recommended by Ping Li et al.: :math:`1 / \sqrt{n_{\text{features}}}`.
 
-Here a small excerpt which illustrates how to use the sparse random
+Here is a small excerpt which illustrates how to use the sparse random
 projection transformer::
 
   >>> import numpy as np
@@ -148,15 +148,53 @@ projection transformer::
   (100, 3947)
 
 
-.. topic:: References:
+.. rubric:: References
 
- * D. Achlioptas. 2003.
-   `Database-friendly random projections: Johnson-Lindenstrauss  with binary
-   coins <http://www.cs.ucsc.edu/~optas/papers/jl.pdf>`_.
-   Journal of Computer and System Sciences 66 (2003) 671–687
+* D. Achlioptas. 2003.
+  `Database-friendly random projections: Johnson-Lindenstrauss  with binary
+  coins <https://www.sciencedirect.com/science/article/pii/S0022000003000254>`_.
+  Journal of Computer and System Sciences 66 (2003) 671-687.
 
- * Ping Li, Trevor J. Hastie, and Kenneth W. Church. 2006.
-   `Very sparse random projections. <https://web.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf>`_
-   In Proceedings of the 12th ACM SIGKDD international conference on
-   Knowledge discovery and data mining (KDD '06). ACM, New York, NY, USA,
-   287-296.
+* Ping Li, Trevor J. Hastie, and Kenneth W. Church. 2006.
+  `Very sparse random projections. <https://web.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf>`_
+  In Proceedings of the 12th ACM SIGKDD international conference on
+  Knowledge discovery and data mining (KDD '06). ACM, New York, NY, USA, 287-296.
+
+
+.. _random_projection_inverse_transform:
+
+Inverse Transform
+=================
+The random projection transformers have ``compute_inverse_components`` parameter. When
+set to True, after creating the random ``components_`` matrix during fitting,
+the transformer computes the pseudo-inverse of this matrix and stores it as
+``inverse_components_``. The ``inverse_components_`` matrix has shape
+:math:`n_{features} \times n_{components}`, and it is always a dense matrix,
+regardless of whether the components matrix is sparse or dense. So depending on
+the number of features and components, it may use a lot of memory.
+
+When the ``inverse_transform`` method is called, it computes the product of the
+input ``X`` and the transpose of the inverse components. If the inverse components have
+been computed during fit, they are reused at each call to ``inverse_transform``.
+Otherwise they are recomputed each time, which can be costly. The result is always
+dense, even if ``X`` is sparse.
+
+Here is a small code example which illustrates how to use the inverse transform
+feature::
+
+  >>> import numpy as np
+  >>> from sklearn.random_projection import SparseRandomProjection
+  >>> X = np.random.rand(100, 10000)
+  >>> transformer = SparseRandomProjection(
+  ...   compute_inverse_components=True
+  ... )
+  ...
+  >>> X_new = transformer.fit_transform(X)
+  >>> X_new.shape
+  (100, 3947)
+  >>> X_new_inversed = transformer.inverse_transform(X_new)
+  >>> X_new_inversed.shape
+  (100, 10000)
+  >>> X_new_again = transformer.transform(X_new_inversed)
+  >>> np.allclose(X_new, X_new_again)
+  True

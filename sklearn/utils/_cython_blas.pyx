@@ -11,87 +11,94 @@ from scipy.linalg.cython_blas cimport srot, drot
 from scipy.linalg.cython_blas cimport sgemv, dgemv
 from scipy.linalg.cython_blas cimport sger, dger
 from scipy.linalg.cython_blas cimport sgemm, dgemm
+include "sklearn/utils/_blas_int.pxi"
 
 
 ################
 # BLAS Level 1 #
 ################
 
-cdef floating _dot(int n, floating *x, int incx,
-                   floating *y, int incy) nogil:
+cdef floating _dot(int n, const floating *x, int incx,
+                   const floating *y, int incy) noexcept nogil:
     """x.T.y"""
+    cdef blas_int n_ = n, incx_ = incx, incy_ = incy
     if floating is float:
-        return sdot(&n, x, &incx, y, &incy)
+        return sdot(&n_, <float *> x, &incx_, <float *> y, &incy_)
     else:
-        return ddot(&n, x, &incx, y, &incy)
+        return ddot(&n_, <double *> x, &incx_, <double *> y, &incy_)
 
 
-cpdef _dot_memview(floating[::1] x, floating[::1] y):
+cpdef _dot_memview(const floating[::1] x, const floating[::1] y):
     return _dot(x.shape[0], &x[0], 1, &y[0], 1)
 
 
-cdef floating _asum(int n, floating *x, int incx) nogil:
+cdef floating _asum(int n, const floating *x, int incx) noexcept nogil:
     """sum(|x_i|)"""
+    cdef blas_int n_ = n, incx_ = incx
     if floating is float:
-        return sasum(&n, x, &incx)
+        return sasum(&n_, <float *> x, &incx_)
     else:
-        return dasum(&n, x, &incx)
+        return dasum(&n_, <double *> x, &incx_)
 
 
-cpdef _asum_memview(floating[::1] x):
+cpdef _asum_memview(const floating[::1] x):
     return _asum(x.shape[0], &x[0], 1)
 
 
-cdef void _axpy(int n, floating alpha, floating *x, int incx,
-                floating *y, int incy) nogil:
+cdef void _axpy(int n, floating alpha, const floating *x, int incx,
+                floating *y, int incy) noexcept nogil:
     """y := alpha * x + y"""
+    cdef blas_int n_ = n, incx_ = incx, incy_ = incy
     if floating is float:
-        saxpy(&n, &alpha, x, &incx, y, &incy)
+        saxpy(&n_, &alpha, <float *> x, &incx_, y, &incy_)
     else:
-        daxpy(&n, &alpha, x, &incx, y, &incy)
+        daxpy(&n_, &alpha, <double *> x, &incx_, y, &incy_)
 
 
-cpdef _axpy_memview(floating alpha, floating[::1] x, floating[::1] y):
+cpdef _axpy_memview(floating alpha, const floating[::1] x, floating[::1] y):
     _axpy(x.shape[0], alpha, &x[0], 1, &y[0], 1)
 
 
-cdef floating _nrm2(int n, floating *x, int incx) nogil:
+cdef floating _nrm2(int n, const floating *x, int incx) noexcept nogil:
     """sqrt(sum((x_i)^2))"""
+    cdef blas_int n_ = n, incx_ = incx
     if floating is float:
-        return snrm2(&n, x, &incx)
+        return snrm2(&n_, <float *> x, &incx_)
     else:
-        return dnrm2(&n, x, &incx)
+        return dnrm2(&n_, <double *> x, &incx_)
 
 
-cpdef _nrm2_memview(floating[::1] x):
+cpdef _nrm2_memview(const floating[::1] x):
     return _nrm2(x.shape[0], &x[0], 1)
 
 
-cdef void _copy(int n, floating *x, int incx, floating *y, int incy) nogil:
+cdef void _copy(int n, const floating *x, int incx, const floating *y, int incy) noexcept nogil:
     """y := x"""
+    cdef blas_int n_ = n, incx_ = incx, incy_ = incy
     if floating is float:
-        scopy(&n, x, &incx, y, &incy)
+        scopy(&n_, <float *> x, &incx_, <float *> y, &incy_)
     else:
-        dcopy(&n, x, &incx, y, &incy)
+        dcopy(&n_, <double *> x, &incx_, <double *> y, &incy_)
 
 
-cpdef _copy_memview(floating[::1] x, floating[::1] y):
+cpdef _copy_memview(const floating[::1] x, const floating[::1] y):
     _copy(x.shape[0], &x[0], 1, &y[0], 1)
 
 
-cdef void _scal(int n, floating alpha, floating *x, int incx) nogil:
+cdef void _scal(int n, floating alpha, const floating *x, int incx) noexcept nogil:
     """x := alpha * x"""
+    cdef blas_int n_ = n, incx_ = incx
     if floating is float:
-        sscal(&n, &alpha, x, &incx)
+        sscal(&n_, &alpha, <float *> x, &incx_)
     else:
-        dscal(&n, &alpha, x, &incx)
+        dscal(&n_, &alpha, <double *> x, &incx_)
 
 
-cpdef _scal_memview(floating alpha, floating[::1] x):
+cpdef _scal_memview(floating alpha, const floating[::1] x):
     _scal(x.shape[0], alpha, &x[0], 1)
 
 
-cdef void _rotg(floating *a, floating *b, floating *c, floating *s) nogil:
+cdef void _rotg(floating *a, floating *b, floating *c, floating *s) noexcept nogil:
     """Generate plane rotation"""
     if floating is float:
         srotg(a, b, c, s)
@@ -105,12 +112,13 @@ cpdef _rotg_memview(floating a, floating b, floating c, floating s):
 
 
 cdef void _rot(int n, floating *x, int incx, floating *y, int incy,
-               floating c, floating s) nogil:
+               floating c, floating s) noexcept nogil:
     """Apply plane rotation"""
+    cdef blas_int n_ = n, incx_ = incx, incy_ = incy
     if floating is float:
-        srot(&n, x, &incx, y, &incy, &c, &s)
+        srot(&n_, x, &incx_, y, &incy_, &c, &s)
     else:
-        drot(&n, x, &incx, y, &incy, &c, &s)
+        drot(&n_, x, &incx_, y, &incy_, &c, &s)
 
 
 cpdef _rot_memview(floating[::1] x, floating[::1] y, floating c, floating s):
@@ -122,56 +130,68 @@ cpdef _rot_memview(floating[::1] x, floating[::1] y, floating c, floating s):
 ################
 
 cdef void _gemv(BLAS_Order order, BLAS_Trans ta, int m, int n, floating alpha,
-                floating *A, int lda, floating *x, int incx,
-                floating beta, floating *y, int incy) nogil:
+                const floating *A, int lda, const floating *x, int incx,
+                floating beta, floating *y, int incy) noexcept nogil:
     """y := alpha * op(A).x + beta * y"""
-    cdef char ta_ = ta
-    if order == RowMajor:
-        ta_ = NoTrans if ta == Trans else Trans
+    cdef:
+        char ta_ = ta
+        blas_int m_ = m, n_ = n, lda_ = lda, incx_ = incx, incy_ = incy
+    if order == BLAS_Order.RowMajor:
+        ta_ = BLAS_Trans.NoTrans if ta == BLAS_Trans.Trans else BLAS_Trans.Trans
         if floating is float:
-            sgemv(&ta_, &n, &m, &alpha, A, &lda, x, &incx, &beta, y, &incy)
+            sgemv(&ta_, &n_, &m_, &alpha, <float *> A, &lda_, <float *> x,
+                  &incx_, &beta, y, &incy_)
         else:
-            dgemv(&ta_, &n, &m, &alpha, A, &lda, x, &incx, &beta, y, &incy)
+            dgemv(&ta_, &n_, &m_, &alpha, <double *> A, &lda_, <double *> x,
+                  &incx_, &beta, y, &incy_)
     else:
         if floating is float:
-            sgemv(&ta_, &m, &n, &alpha, A, &lda, x, &incx, &beta, y, &incy)
+            sgemv(&ta_, &m_, &n_, &alpha, <float *> A, &lda_, <float *> x,
+                  &incx_, &beta, y, &incy_)
         else:
-            dgemv(&ta_, &m, &n, &alpha, A, &lda, x, &incx, &beta, y, &incy)
+            dgemv(&ta_, &m_, &n_, &alpha, <double *> A, &lda_, <double *> x,
+                  &incx_, &beta, y, &incy_)
 
 
-cpdef _gemv_memview(BLAS_Trans ta, floating alpha, floating[:, :] A,
-                    floating[::1] x, floating beta, floating[::1] y):
+cpdef _gemv_memview(BLAS_Trans ta, floating alpha, const floating[:, :] A,
+                    const floating[::1] x, floating beta, floating[::1] y):
     cdef:
         int m = A.shape[0]
         int n = A.shape[1]
-        BLAS_Order order = ColMajor if A.strides[0] == A.itemsize else RowMajor
-        int lda = m if order == ColMajor else n
+        BLAS_Order order = (
+            BLAS_Order.ColMajor if A.strides[0] == A.itemsize else BLAS_Order.RowMajor
+        )
+        int lda = m if order == BLAS_Order.ColMajor else n
 
     _gemv(order, ta, m, n, alpha, &A[0, 0], lda, &x[0], 1, beta, &y[0], 1)
 
 
-cdef void _ger(BLAS_Order order, int m, int n, floating alpha, floating *x,
-               int incx, floating *y, int incy, floating *A, int lda) nogil:
+cdef void _ger(BLAS_Order order, int m, int n, floating alpha,
+               const floating *x, int incx, const floating *y,
+               int incy, floating *A, int lda) noexcept nogil:
     """A := alpha * x.y.T + A"""
-    if order == RowMajor:
+    cdef blas_int m_ = m, n_ = n, incx_ = incx, incy_ = incy, lda_ = lda
+    if order == BLAS_Order.RowMajor:
         if floating is float:
-            sger(&n, &m, &alpha, y, &incy, x, &incx, A, &lda)
+            sger(&n_, &m_, &alpha, <float *> y, &incy_, <float *> x, &incx_, A, &lda_)
         else:
-            dger(&n, &m, &alpha, y, &incy, x, &incx, A, &lda)
+            dger(&n_, &m_, &alpha, <double *> y, &incy_, <double *> x, &incx_, A, &lda_)
     else:
         if floating is float:
-            sger(&m, &n, &alpha, x, &incx, y, &incy, A, &lda)
+            sger(&m_, &n_, &alpha, <float *> x, &incx_, <float *> y, &incy_, A, &lda_)
         else:
-            dger(&m, &n, &alpha, x, &incx, y, &incy, A, &lda)
+            dger(&m_, &n_, &alpha, <double *> x, &incx_, <double *> y, &incy_, A, &lda_)
 
 
-cpdef _ger_memview(floating alpha, floating[::1] x, floating[::] y,
-                   floating[:, :] A):
+cpdef _ger_memview(floating alpha, const floating[::1] x,
+                   const floating[::1] y, floating[:, :] A):
     cdef:
         int m = A.shape[0]
         int n = A.shape[1]
-        BLAS_Order order = ColMajor if A.strides[0] == A.itemsize else RowMajor
-        int lda = m if order == ColMajor else n
+        BLAS_Order order = (
+            BLAS_Order.ColMajor if A.strides[0] == A.itemsize else BLAS_Order.RowMajor
+        )
+        int lda = m if order == BLAS_Order.ColMajor else n
 
     _ger(order, m, n, alpha, &x[0], 1, &y[0], 1, &A[0, 0], lda)
 
@@ -181,45 +201,50 @@ cpdef _ger_memview(floating alpha, floating[::1] x, floating[::] y,
 ################
 
 cdef void _gemm(BLAS_Order order, BLAS_Trans ta, BLAS_Trans tb, int m, int n,
-                int k, floating alpha, floating *A, int lda, floating *B,
-                int ldb, floating beta, floating *C, int ldc) nogil:
+                int k, floating alpha, const floating *A, int lda, const floating *B,
+                int ldb, floating beta, floating *C, int ldc) noexcept nogil:
     """C := alpha * op(A).op(B) + beta * C"""
+    # TODO: Remove the pointer casts below once SciPy uses const-qualification.
+    # See: https://github.com/scipy/scipy/issues/14262
     cdef:
         char ta_ = ta
         char tb_ = tb
-    if order == RowMajor:
+        blas_int m_ = m, n_ = n, k_ = k, lda_ = lda, ldb_ = ldb, ldc_ = ldc
+    if order == BLAS_Order.RowMajor:
         if floating is float:
-            sgemm(&tb_, &ta_, &n, &m, &k, &alpha, B,
-                  &ldb, A, &lda, &beta, C, &ldc)
+            sgemm(&tb_, &ta_, &n_, &m_, &k_, &alpha, <float*>B,
+                  &ldb_, <float*>A, &lda_, &beta, C, &ldc_)
         else:
-            dgemm(&tb_, &ta_, &n, &m, &k, &alpha, B,
-                  &ldb, A, &lda, &beta, C, &ldc)
+            dgemm(&tb_, &ta_, &n_, &m_, &k_, &alpha, <double*>B,
+                  &ldb_, <double*>A, &lda_, &beta, C, &ldc_)
     else:
         if floating is float:
-            sgemm(&ta_, &tb_, &m, &n, &k, &alpha, A,
-                  &lda, B, &ldb, &beta, C, &ldc)
+            sgemm(&ta_, &tb_, &m_, &n_, &k_, &alpha, <float*>A,
+                  &lda_, <float*>B, &ldb_, &beta, C, &ldc_)
         else:
-            dgemm(&ta_, &tb_, &m, &n, &k, &alpha, A,
-                  &lda, B, &ldb, &beta, C, &ldc)
+            dgemm(&ta_, &tb_, &m_, &n_, &k_, &alpha, <double*>A,
+                  &lda_, <double*>B, &ldb_, &beta, C, &ldc_)
 
 
 cpdef _gemm_memview(BLAS_Trans ta, BLAS_Trans tb, floating alpha,
-                    floating[:, :] A, floating[:, :] B, floating beta,
+                    const floating[:, :] A, const floating[:, :] B, floating beta,
                     floating[:, :] C):
     cdef:
-        int m = A.shape[0] if ta == NoTrans else A.shape[1]
-        int n = B.shape[1] if tb == NoTrans else B.shape[0]
-        int k = A.shape[1] if ta == NoTrans else A.shape[0]
+        int m = A.shape[0] if ta == BLAS_Trans.NoTrans else A.shape[1]
+        int n = B.shape[1] if tb == BLAS_Trans.NoTrans else B.shape[0]
+        int k = A.shape[1] if ta == BLAS_Trans.NoTrans else A.shape[0]
         int lda, ldb, ldc
-        BLAS_Order order = ColMajor if A.strides[0] == A.itemsize else RowMajor
+        BLAS_Order order = (
+            BLAS_Order.ColMajor if A.strides[0] == A.itemsize else BLAS_Order.RowMajor
+        )
 
-    if order == RowMajor:
-        lda = k if ta == NoTrans else m
-        ldb = n if tb == NoTrans else k
+    if order == BLAS_Order.RowMajor:
+        lda = k if ta == BLAS_Trans.NoTrans else m
+        ldb = n if tb == BLAS_Trans.NoTrans else k
         ldc = n
     else:
-        lda = m if ta == NoTrans else k
-        ldb = k if tb == NoTrans else n
+        lda = m if ta == BLAS_Trans.NoTrans else k
+        ldb = k if tb == BLAS_Trans.NoTrans else n
         ldc = m
 
     _gemm(order, ta, tb, m, n, k, alpha, &A[0, 0],

@@ -1,0 +1,31 @@
+from sklearn.utils._typedefs cimport intp_t, float64_t
+
+{{for name_suffix in ['64', '32']}}
+
+from sklearn.metrics._pairwise_distances_reduction._base cimport BaseDistancesReduction{{name_suffix}}
+from sklearn.metrics._pairwise_distances_reduction._middle_term_computer cimport MiddleTermComputer{{name_suffix}}
+
+cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
+    """float{{name_suffix}} implementation of the ArgKmin."""
+
+    cdef:
+        intp_t k
+
+        intp_t[:, ::1] argkmin_indices
+        float64_t[:, ::1] argkmin_distances
+
+        # Used as array of pointers to private datastructures used in threads.
+        float64_t ** heaps_r_distances_chunks
+        intp_t ** heaps_indices_chunks
+
+
+cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
+    """EuclideanDistance-specialisation of ArgKmin{{name_suffix}}."""
+    cdef:
+        MiddleTermComputer{{name_suffix}} middle_term_computer
+        const float64_t[::1] X_norm_squared
+        const float64_t[::1] Y_norm_squared
+
+        bint use_squared_distances
+
+{{endfor}}

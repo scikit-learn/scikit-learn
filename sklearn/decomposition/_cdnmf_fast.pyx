@@ -1,9 +1,5 @@
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
-
-# Author: Mathieu Blondel, Tom Dupre la Tour
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from cython cimport floating
 from libc.math cimport fabs
@@ -38,5 +34,5 @@ def _update_cdnmf_fast(floating[:, ::1] W, floating[:, :] HHt,
 
                 if hess != 0:
                     W[i, t] = max(W[i, t] - grad / hess, 0.)
-                
+
     return violation
