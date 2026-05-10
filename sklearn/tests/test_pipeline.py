@@ -6,7 +6,7 @@ import itertools
 import re
 import shutil
 import time
-from tempfile import mkdtemp
+from tempfile import TemporaryDirectory, mkdtemp
 
 import joblib
 import numpy as np
@@ -20,6 +20,11 @@ from sklearn.base import (
     clone,
     is_classifier,
     is_regressor,
+)
+from sklearn.callback.tests._utils import (
+    MaxIterEstimator,
+    RecordingAutoPropagatedCallback,
+    RecordingCallback,
 )
 from sklearn.cluster import KMeans
 from sklearn.datasets import load_iris
@@ -2548,3 +2553,82 @@ def test_feature_union_metadata_routing(transformer):
 
 # End of routing tests
 # ====================
+
+
+def test_pipeline_with_callbacks():
+    """Check that callbacks are propagated correctly for a pipeline.
+
+    passthrough step is counted as one task.
+    """
+    X, y = load_iris(return_X_y=True)
+    max_iter = 3
+    callback = RecordingAutoPropagatedCallback()
+
+    Pipeline(
+        [
+            ("sc", StandardScaler()),
+            ("passthrough", "passthrough"),
+            ("est", MaxIterEstimator(max_iter=max_iter)),
+        ]
+    ).set_callbacks(callback).fit(X, y)
+
+    assert callback.count_hooks("setup") == 1
+    assert callback.count_hooks("teardown") == 1
+    # 1 root for Pipeline + 1 task for "sc" + 1 task for "passthrough"
+    # + (1 root + max_iter leaves for "est")
+    assert callback.count_hooks("on_fit_task_begin") == 1 + 1 + 1 + (1 + max_iter)
+    assert callback.count_hooks("on_fit_task_end") == 1 + 1 + 1 + (1 + max_iter)
+
+
+def test_pipeline_with_callbacks_on_steps():
+    """Check that callbacks registered on steps are correctly invoked."""
+    X, y = load_iris(return_X_y=True)
+
+    sc_callback = RecordingCallback()
+    sc = StandardScaler().set_callbacks(sc_callback)
+
+    max_iter = 3
+    est_callback = RecordingCallback()
+    est = MaxIterEstimator(max_iter=max_iter).set_callbacks(est_callback)
+
+    Pipeline([("sc", sc), ("est", est)]).fit(X, y)
+
+    assert sc_callback.count_hooks("setup") == 1
+    assert sc_callback.count_hooks("teardown") == 1
+    assert sc_callback.count_hooks("on_fit_task_begin") == 1
+    assert sc_callback.count_hooks("on_fit_task_end") == 1
+
+    assert est_callback.count_hooks("setup") == 1
+    assert est_callback.count_hooks("teardown") == 1
+    assert est_callback.count_hooks("on_fit_task_begin") == 1 + max_iter
+    assert est_callback.count_hooks("on_fit_task_end") == 1 + max_iter
+
+
+def test_pipeline_memory_callbacks_second_fit_same_pipeline():
+    """Check that callbacks don't break the caching mechanism of the pipeline."""
+    X, y = load_iris(return_X_y=True)
+    with TemporaryDirectory() as cachedir:
+        max_iter = 3
+        pipe = Pipeline(
+            [
+                ("sc", StandardScaler()),
+                ("passthrough", "passthrough"),
+                ("est", MaxIterEstimator(max_iter=max_iter)),
+            ],
+            memory=joblib.Memory(location=cachedir),
+        )
+        callback = RecordingAutoPropagatedCallback()
+        pipe.set_callbacks(callback)
+        pipe.fit(X, y)
+        n_task_begin = callback.count_hooks("on_fit_task_begin")
+        n_task_end = callback.count_hooks("on_fit_task_end")
+        # propagated callbacks are not kept on the cached transformer
+        assert not hasattr(pipe.named_steps["sc"], "_skl_callbacks")
+
+        # Fit again on same data hits the cache and skips the scaler step so we expect
+        # 1 fewer task begin and end (StandardScaler has only one task).
+        callback = RecordingAutoPropagatedCallback()
+        pipe.set_callbacks(callback).fit(X, y)
+        assert callback.count_hooks("on_fit_task_begin") == n_task_begin - 1
+        assert callback.count_hooks("on_fit_task_end") == n_task_end - 1
+        assert not hasattr(pipe.named_steps["sc"], "_skl_callbacks")

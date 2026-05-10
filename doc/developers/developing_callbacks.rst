@@ -136,7 +136,7 @@ not reset the state of the callback, and `on_fit_task_begin` / `on_fit_task_end`
 accumulate data across all fits. Indeed resetting state in `setup`/`teardown` would drop
 information collected from previous or concurrent fits.
 
-.. TODO: document the callback Manager.
+.. TODO: make public and document the transport mechanism.
 
 Minimal example
 ---------------
