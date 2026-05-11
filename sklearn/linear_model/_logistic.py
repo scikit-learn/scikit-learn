@@ -148,7 +148,7 @@ def _make_scipy_minimize_callback(
         # which will be the case of the min dependencies for scikit-learn 1.10.
 
         # Make the subcontext and call the begin hook for the next iteration.
-        solver_iter_ctx = callback_ctx.subcontext(task_name="lbfgs iter")
+        solver_iter_ctx = callback_ctx.subcontext(task_name="lbfgs-iter")
         solver_iter_ctx.call_on_fit_task_begin(
             estimator=estimator,
             X=X,
