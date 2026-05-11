@@ -32,6 +32,10 @@ REG_TREES = {
     "ExtraTreeRegressor": ExtraTreeRegressor,
 }
 
+SPLIT_NUMERIC = 0
+SPLIT_CATEGORICAL_BITSET = 1
+SPLIT_CATEGORICAL_HASH = 2
+
 
 def powerset(iterable):
     """returns all the subsets of `iterable`."""
@@ -51,29 +55,56 @@ def bitset_to_tuple(v, n_categories):
     )
 
 
+def _mix_uint32(x):
+    """Deterministic 32-bit stable pseudo-random hash.
+
+    Keep in sync with sklearn/tree/_utils.pyx::_mix_uint32.
+
+    see https://nullprogram.com/blog/2018/07/31/
+    """
+    x &= 0xFFFFFFFF
+    x ^= x >> 16
+    x = (x * 0x7FEB352D) & 0xFFFFFFFF
+    x ^= x >> 15
+    x = (x * 0x846CA68B) & 0xFFFFFFFF
+    x ^= x >> 16
+    return x & 0xFFFFFFFF
+
+
+def random_categorical_goes_left(seed, x):
+    return np.array([_mix_uint32(seed ^ int(category)) & 1 for category in x])
+
+
 @dataclass
 class Split:
     feature: int
     threshold: float | tuple
     missing_left: bool = False
+    split_kind: int = SPLIT_NUMERIC
 
     @property
     def is_categorical(self):
-        return isinstance(self.threshold, tuple)
+        return self.split_kind in (
+            SPLIT_CATEGORICAL_BITSET,
+            SPLIT_CATEGORICAL_HASH,
+        )
 
     @classmethod
     def from_tree(cls, tree):
         ftr = int(tree.tree_.feature[0])
-        if tree.n_categories_in_feature_[ftr] > 0:
+        split_kind = int(tree.tree_.split_kind[0])
+        if split_kind == SPLIT_CATEGORICAL_BITSET:
             cat_bitset = tree.tree_.categorical_bitset[0]
             threshold = bitset_to_tuple(
                 cat_bitset,
                 n_categories=int(tree.tree_.n_categories[ftr]),
             )
+        elif split_kind == SPLIT_CATEGORICAL_HASH:
+            threshold = int(tree.tree_.categorical_bitset[0, 0])
         else:
             threshold = tree.tree_.threshold[0]
         missing_left = bool(tree.tree_.missing_go_to_left[0])
-        return cls(ftr, threshold, missing_left)
+        return cls(ftr, threshold, missing_left, split_kind)
 
 
 @dataclass
@@ -110,11 +141,14 @@ class NaiveSplitter:
 
     def compute_split_nodes(self, X, y, w, split):
         x = X[:, split.feature]
-        if split.is_categorical:
+        if split.split_kind == SPLIT_CATEGORICAL_BITSET:
             x = x.astype(int)
             cat_go_left = np.zeros(max(max(x), max(split.threshold)) + 1, dtype=bool)
             cat_go_left[list(split.threshold)] = True
             go_left = cat_go_left[x]
+        elif split.split_kind == SPLIT_CATEGORICAL_HASH:
+            x = x.astype(int)
+            go_left = random_categorical_goes_left(split.threshold, x).astype(bool)
         else:
             go_left = x <= split.threshold
         if split.missing_left:
@@ -136,13 +170,16 @@ class NaiveSplitter:
             thresholds = np.unique(x[~nan_mask])
             if self.is_categorical[f]:
                 thresholds = list(powerset(int(th) for th in thresholds))
+                split_kind = SPLIT_CATEGORICAL_BITSET
+            else:
+                split_kind = SPLIT_NUMERIC
             for th in thresholds:
-                yield Split(f, th)
+                yield Split(f, th, split_kind=split_kind)
             if not nan_mask.any():
                 continue
             for th in [*thresholds, -np.inf]:
                 # include -inf to test the split with only NaNs on the left node
-                yield Split(f, th, missing_left=True)
+                yield Split(f, th, missing_left=True, split_kind=split_kind)
 
     def best_split_naive(self, X, y, w):
         splits = list(self._generate_all_splits(X))
@@ -223,8 +260,6 @@ def test_split_impurity(
 ):
     is_clf = criterion in CLF_CRITERIONS
 
-    if categorical and "Extra" in Tree.__name__:
-        pytest.skip("Categorical features not implemented for the random splitter")
     if missing_values and criterion == "absolute_error":
         pytest.skip("AE + missing values not supported yet")
     if missing_values and criterion == "poisson":

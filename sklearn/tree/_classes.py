@@ -69,6 +69,9 @@ __all__ = [
 DTYPE = _tree.DTYPE
 DOUBLE = _tree.DOUBLE
 
+# maximum number of categories encodable via float32
+MAX_FLOAT32_INT_CATEGORIES = 2**24
+
 CRITERIA_CLF = {
     "gini": _criterion.Gini,
     "log_loss": _criterion.Entropy,
@@ -126,6 +129,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         "min_impurity_decrease": [Interval(Real, 0.0, None, closed="left")],
         "ccp_alpha": [Interval(Real, 0.0, None, closed="left")],
         "monotonic_cst": ["array-like", None],
+        "n_random_categorical_splits": [Interval(Integral, 0, None, closed="left")],
         # TODO: ultimately change this to follow Histgradboosting
         "categorical_features": [
             "array-like",
@@ -150,6 +154,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         class_weight=None,
         ccp_alpha=0.0,
         monotonic_cst=None,
+        n_random_categorical_splits=0,
         categorical_features=None,
     ):
         self.criterion = criterion
@@ -165,6 +170,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.class_weight = class_weight
         self.ccp_alpha = ccp_alpha
         self.monotonic_cst = monotonic_cst
+        self.n_random_categorical_splits = n_random_categorical_splits
         self.categorical_features = categorical_features
 
     def get_depth(self):
@@ -451,11 +457,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             X, monotonic_cst, is_categorical_
         )
 
-        if has_categorical and self.splitter == "random":
-            raise ValueError(
-                "Categorical features are not supported with splitter='random'. "
-                "Use splitter='best' instead."
-            )
         if has_categorical and self.n_outputs_ > 1:
             raise ValueError(
                 "Categorical features are not supported with multi-output targets."
@@ -474,6 +475,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 min_weight_leaf,
                 random_state,
                 monotonic_cst,
+                self.n_random_categorical_splits,
             )
 
         if is_classifier(self):
@@ -573,7 +575,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         - no missing values,
         - integer-valued entries,
         - non-negative values,
-        - values strictly below ``MAX_NUM_CATEGORIES``,
+        - values supported by the selected splitter's categorical split
+          representation,
         - no non-zero monotonic constraints on categorical features.
 
         Parameters
@@ -614,8 +617,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         - no NaNs,
         - integer-valued,
         - non-negative,
-        - below ``MAX_NUM_CATEGORIES`` (fit-time), or below the fitted per-feature
-          upper bound ``n_categories_in_feature[j]`` (predict-time).
+        - within the selected splitter's fit-time category-code range, or below
+          the fitted per-feature upper bound ``n_categories_in_feature[j]``
+          (predict-time).
 
         Parameters
         ----------
@@ -629,11 +633,23 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             categorical feature ``j`` must be in
             ``[0, n_categories_in_feature[j] - 1]``.
         """
-        base_msg = (
-            f"Values for categorical features should be integers in "
-            f"[0, {MAX_NUM_CATEGORIES - 1}]."
-        )
         for idx in np.where(is_categorical)[0]:
+            if n_categories_in_feature is None:
+                max_category = (
+                    MAX_FLOAT32_INT_CATEGORIES
+                    if (
+                        self.splitter == "random"
+                        or self.n_random_categorical_splits > 0
+                    )
+                    else MAX_NUM_CATEGORIES - 1
+                )
+            else:
+                max_category = n_categories_in_feature[idx] - 1
+
+            base_msg = (
+                "Values for categorical features should be integers in "
+                f"[0, {max_category}]."
+            )
             X_col = X[:, idx]
             if np.isnan(X_col).any():
                 raise ValueError(
@@ -647,10 +663,17 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             X_col_int = X_col.astype(np.intp)
             X_col_max = np.max(X_col_int)
             if n_categories_in_feature is None:
-                if X_col_max >= MAX_NUM_CATEGORIES:
+                if X_col_max > max_category:
                     raise ValueError(f"{base_msg} Found {X_col_max}.")
-                counts = np.bincount(X_col_int)
-                if np.any(counts == 0):
+                if X_col_max < MAX_NUM_CATEGORIES:
+                    is_contiguous = not np.any(np.bincount(X_col_int) == 0)
+                else:
+                    unique_categories = np.unique(X_col_int)
+                    is_contiguous = (
+                        unique_categories[0] == 0
+                        and unique_categories[-1] == unique_categories.size - 1
+                    )
+                if not is_contiguous:
                     raise ValueError(
                         f"Categorical feature {idx} must contain contiguous "
                         "integer categories starting at 0."
@@ -1058,6 +1081,16 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         .. versionadded:: 1.4
 
+    n_random_categorical_splits : int, default=0
+        Number of random hash-based categorical splits to evaluate for each
+        over-cap categorical feature with ``splitter="best"``. When set to
+        0, ``splitter="best"`` rejects categorical features with more than
+        256 categories. When positive, such features use stochastic splits
+        controlled by ``random_state``. This parameter is ignored for
+        ``splitter="random"``.
+
+        .. versionadded:: 1.9
+
     categorical_features : array-like of int or bool of shape (n_features,) or
         (n_categorical_features,), default=None
         Indicates which features are treated as categorical.
@@ -1067,8 +1100,15 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         Categorical features are only supported for dense inputs
         and single-output targets.
-        Values of categorical features must be contiguous integers in ``[0, 255]``
-        (missing values are not supported).
+        For classifiers, categorical features are only supported for binary
+        classification.
+        Values of categorical features must be contiguous non-negative integers
+        (missing values are not supported). With ``splitter="best"``, category
+        codes must be in ``[0, 255]`` unless ``n_random_categorical_splits``
+        is positive, in which case over-cap categories use random hash-based
+        splits. With ``splitter="random"`` or an enabled random categorical
+        fallback, category codes must be in ``[0, 2**24]``, the integer range
+        preserved by the current ``np.float32`` input path.
         Categorical features cannot have non-zero monotonic constraint.
 
         When these constraints are not met, ``fit`` will raise an error.
@@ -1196,6 +1236,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         class_weight=None,
         ccp_alpha=0.0,
         monotonic_cst=None,
+        n_random_categorical_splits=0,
         categorical_features=None,
     ):
         super().__init__(
@@ -1213,6 +1254,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             monotonic_cst=monotonic_cst,
             ccp_alpha=ccp_alpha,
             categorical_features=categorical_features,
+            n_random_categorical_splits=n_random_categorical_splits,
         )
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -1472,6 +1514,16 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         .. versionadded:: 1.4
 
+    n_random_categorical_splits : int, default=0
+        Number of random hash-based categorical splits to evaluate for each
+        over-cap categorical feature with ``splitter="best"``. When set to
+        0, ``splitter="best"`` rejects categorical features with more than
+        256 categories. When positive, such features use stochastic splits
+        controlled by ``random_state``. This parameter is ignored for
+        ``splitter="random"``.
+
+        .. versionadded:: 1.9
+
     categorical_features : array-like of int or bool of shape (n_features,) or
         (n_categorical_features,), default=None
         Indicates which features are treated as categorical.
@@ -1481,8 +1533,13 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         Categorical features are only supported for dense inputs
         and single-output targets.
-        Values of categorical features must be contiguous integers in ``[0, 255]``
-        (missing values are not supported).
+        Values of categorical features must be contiguous non-negative integers
+        (missing values are not supported). With ``splitter="best"``, category
+        codes must be in ``[0, 255]`` unless ``n_random_categorical_splits``
+        is positive, in which case over-cap categories use random hash-based
+        splits. With ``splitter="random"`` or an enabled random categorical
+        fallback, category codes must be in ``[0, 2**24]``, the integer range
+        preserved by the current ``np.float32`` input path.
         Categorical features cannot have non-zero monotonic constraints.
 
         When these constraints are not met, ``fit`` will raise an error.
@@ -1596,6 +1653,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         min_impurity_decrease=0.0,
         ccp_alpha=0.0,
         monotonic_cst=None,
+        n_random_categorical_splits=0,
         categorical_features=None,
     ):
         if isinstance(criterion, str) and criterion == "friedman_mse":
@@ -1622,6 +1680,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             ccp_alpha=ccp_alpha,
             monotonic_cst=monotonic_cst,
             categorical_features=categorical_features,
+            n_random_categorical_splits=n_random_categorical_splits,
         )
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -1854,6 +1913,16 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
         .. versionadded:: 1.4
 
+    n_random_categorical_splits : int, default=0
+        Number of random hash-based categorical splits to evaluate for each
+        over-cap categorical feature with ``splitter="best"``. When set to
+        0, ``splitter="best"`` rejects categorical features with more than
+        256 categories. When positive, such features use stochastic splits
+        controlled by ``random_state``. This parameter is ignored for
+        ``splitter="random"``.
+
+        .. versionadded:: 1.9
+
     categorical_features : array-like of int or bool of shape (n_features,) or
         (n_categorical_features,), default=None
         Indicates which features are treated as categorical.
@@ -1863,8 +1932,15 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
         Categorical features are only supported for dense inputs
         and single-output targets.
-        Values of categorical features must be contiguous integers in ``[0, 255]``
-        (missing values are not supported).
+        For classifiers, categorical features are only supported for binary
+        classification.
+        Values of categorical features must be contiguous non-negative integers
+        (missing values are not supported). With ``splitter="best"``, category
+        codes must be in ``[0, 255]`` unless ``n_random_categorical_splits``
+        is positive, in which case over-cap categories use random hash-based
+        splits. With ``splitter="random"`` or an enabled random categorical
+        fallback, category codes must be in ``[0, 2**24]``, the integer range
+        preserved by the current ``np.float32`` input path.
         Categorical features cannot have non-zero monotonic constraints.
 
         When these constraints are not met, ``fit`` will raise an error.
@@ -1976,6 +2052,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         class_weight=None,
         ccp_alpha=0.0,
         monotonic_cst=None,
+        n_random_categorical_splits=0,
         categorical_features=None,
     ):
         super().__init__(
@@ -1993,6 +2070,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             ccp_alpha=ccp_alpha,
             monotonic_cst=monotonic_cst,
             categorical_features=categorical_features,
+            n_random_categorical_splits=n_random_categorical_splits,
         )
 
     def __sklearn_tags__(self):
@@ -2150,6 +2228,16 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
         .. versionadded:: 1.4
 
+    n_random_categorical_splits : int, default=0
+        Number of random hash-based categorical splits to evaluate for each
+        over-cap categorical feature with ``splitter="best"``. When set to
+        0, ``splitter="best"`` rejects categorical features with more than
+        256 categories. When positive, such features use stochastic splits
+        controlled by ``random_state``. This parameter is ignored for
+        ``splitter="random"``.
+
+        .. versionadded:: 1.9
+
     categorical_features : array-like of int or bool of shape (n_features,) or
         (n_categorical_features,), default=None
         Indicates which features are treated as categorical.
@@ -2159,8 +2247,13 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
         Categorical features are only supported for dense inputs
         and single-output targets.
-        Values of categorical features must be contiguous integers in ``[0, 255]``
-        (missing values are not supported).
+        Values of categorical features must be contiguous non-negative integers
+        (missing values are not supported). With ``splitter="best"``, category
+        codes must be in ``[0, 255]`` unless ``n_random_categorical_splits``
+        is positive, in which case over-cap categories use random hash-based
+        splits. With ``splitter="random"`` or an enabled random categorical
+        fallback, category codes must be in ``[0, 2**24]``, the integer range
+        preserved by the current ``np.float32`` input path.
         Categorical features cannot have non-zero monotonic constraints.
 
         When these constraints are not met, ``fit`` will raise an error.
@@ -2255,6 +2348,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         max_leaf_nodes=None,
         ccp_alpha=0.0,
         monotonic_cst=None,
+        n_random_categorical_splits=0,
         categorical_features=None,
     ):
         super().__init__(
@@ -2271,6 +2365,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             ccp_alpha=ccp_alpha,
             monotonic_cst=monotonic_cst,
             categorical_features=categorical_features,
+            n_random_categorical_splits=n_random_categorical_splits,
         )
 
     def __sklearn_tags__(self):

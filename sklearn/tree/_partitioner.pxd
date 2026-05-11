@@ -116,8 +116,7 @@ cdef class DensePartitioner:
     ) noexcept nogil
     cdef intp_t partition_samples(
         self,
-        float64_t current_threshold,
-        bint missing_go_to_left
+        const SplitRecord* current_split,
     ) noexcept nogil
     cdef void partition_samples_final(
         self,
@@ -192,8 +191,7 @@ cdef class SparsePartitioner:
     ) noexcept nogil
     cdef intp_t partition_samples(
         self,
-        float64_t current_threshold,
-        bint missing_go_to_left,
+        const SplitRecord* current_split,
     ) noexcept nogil
     cdef void partition_samples_final(
         self,

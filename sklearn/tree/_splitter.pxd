@@ -21,6 +21,7 @@ cdef struct SplitRecord:
 
     SplitValue split_value    # Generalized threshold for categorical and
     #                         # non-categorical features to split samples.
+    uint8_t split_kind        # Encoding used by split_value.
 
     float64_t improvement     # Impurity improvement given parent node.
     float64_t impurity_left   # Impurity of the left split.
@@ -41,6 +42,7 @@ cdef class Splitter:
     cdef public intp_t max_features      # Number of features to test
     cdef public intp_t min_samples_leaf  # Min samples in a leaf
     cdef public float64_t min_weight_leaf   # Minimum weight in a leaf
+    cdef public intp_t n_random_categorical_splits  # Random fallback candidates
 
     cdef object random_state             # Random state
     cdef uint32_t rand_r_state           # sklearn_rand_r random number state

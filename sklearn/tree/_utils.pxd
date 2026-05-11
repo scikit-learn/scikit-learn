@@ -7,14 +7,21 @@ from sklearn.neighbors._quad_tree cimport Cell
 from sklearn.utils._typedefs cimport float32_t, float64_t, intp_t, uint8_t, int32_t, uint32_t, uint64_t
 from sklearn.utils._bitset cimport BITSET_DTYPE_C
 
+cdef enum:
+    SPLIT_NUMERIC = 0
+    SPLIT_CATEGORICAL_BITSET = 1
+    SPLIT_CATEGORICAL_HASH = 2
+
 ctypedef union SplitValue:
     # Union type to generalize the concept of a threshold to categorical
     # features. The floating point view, i.e. ``SplitValue.split_value.threshold`` is used
     # for numerical features, where feature values less than or equal to the
     # threshold go left, and values greater than the threshold go right.
     #
-    # For categorical features, categorical_bitset stores the set of
-    # categories that go to the left child.
+    # For categorical features, the interpretation of categorical_bitset
+    # depends on split_kind:
+    # - SPLIT_CATEGORICAL_BITSET: stores the set of categories that go left.
+    # - SPLIT_CATEGORICAL_HASH: categorical_bitset[0] stores the hash seed.
     float64_t threshold
     # Array size = ceil(MAX_NUM_CATEGORIES / 32).
     # Currently MAX_NUM_CATEGORIES = 256, so 256/32 = 8 words.
@@ -33,13 +40,14 @@ cdef struct Node:
     float64_t impurity                   # Impurity of the node (i.e., the value of the criterion)
     intp_t n_node_samples                # Number of samples at the node
     float64_t weighted_n_node_samples    # Weighted number of samples at the node
-    uint8_t missing_go_to_left     # Whether features have missing values
+    uint8_t missing_go_to_left     # Whether missing values go to the left child
+    uint8_t split_kind             # Encoding used by split_value
 
 
 cdef bint goes_left(
     SplitValue split_value,
     bint missing_go_to_left,
-    bint is_categorical,
+    uint8_t split_kind,
     float32_t value,
 ) noexcept nogil
 

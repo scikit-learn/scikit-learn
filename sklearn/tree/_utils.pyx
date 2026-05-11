@@ -12,19 +12,41 @@ cnp.import_array()
 
 from sklearn.utils._bitset cimport in_bitset
 from sklearn.utils._random cimport our_rand_r
+from sklearn.utils._typedefs cimport uint8_t, uint32_t
+
+
+# 32-bit stable pseudo-random routing bit for SPLIT_CATEGORICAL_HASH.
+# The constants are from the "lowbias32" mixer from Chris Wellons'
+# hash-prospector work: see https://nullprogram.com/blog/2018/07/31/
+# This is deterministic and non-cryptographic.
+# Keep in sync with sklearn/tree/tests/test_split.py::_mix_uint32.
+cdef inline uint32_t mix_uint32(uint32_t x) noexcept nogil:
+    x ^= x >> 16
+    x *= <uint32_t> 0x7feb352d
+    x ^= x >> 15
+    x *= <uint32_t> 0x846ca68b
+    x ^= x >> 16
+    return x
+
 
 cdef inline bint goes_left(
     SplitValue split_value,
     bint missing_go_to_left,
-    bint is_categorical,
+    uint8_t split_kind,
     float32_t value,
 ) noexcept nogil:
     if isnan(value):
         return missing_go_to_left
-    elif is_categorical:
-        return in_bitset(split_value.categorical_bitset, <uint8_t> value)
-    else:
+    elif split_kind == SPLIT_NUMERIC:
         return value <= split_value.threshold
+    elif split_kind == SPLIT_CATEGORICAL_BITSET:
+        return in_bitset(split_value.categorical_bitset, <uint8_t> value)
+    elif split_kind == SPLIT_CATEGORICAL_HASH:
+        return mix_uint32(
+            split_value.categorical_bitset[0] ^ <uint32_t> value
+        ) & 1
+    else:
+        return False
 
 # =============================================================================
 # Helper functions

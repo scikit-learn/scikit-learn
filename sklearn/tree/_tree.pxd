@@ -55,6 +55,7 @@ cdef class Tree:
     cdef intp_t _add_node(self, intp_t parent, bint is_left, bint is_leaf,
                           intp_t feature,
                           SplitValue split_value,
+                          uint8_t split_kind,
                           float64_t impurity,
                           intp_t n_node_samples,
                           float64_t weighted_n_node_samples,

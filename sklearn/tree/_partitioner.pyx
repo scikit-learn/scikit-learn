@@ -375,13 +375,12 @@ cdef class DensePartitioner:
 
     cdef inline intp_t partition_samples(
         self,
-        float64_t threshold,
-        bint missing_go_to_left
+        const SplitRecord* current_split,
     ) noexcept nogil:
         """Partition self.samples and self.feature_values
-        on current self.feature_values for a given threshold.
+        on current self.feature_values for a given split.
 
-        Used while searching splits through random threshold sampling.
+        Used while searching splits through random split sampling.
         """
         cdef:
             # Local invariance: start <= partition_start <= partition_end <= end
@@ -392,9 +391,11 @@ cdef class DensePartitioner:
             bint go_to_left
 
         while partition_start < partition_end:
-            go_to_left = (
-                missing_go_to_left if isnan(feature_values[partition_start])
-                else feature_values[partition_start] <= threshold
+            go_to_left = goes_left(
+                current_split[0].split_value,
+                current_split[0].missing_go_to_left,
+                current_split[0].split_kind,
+                feature_values[partition_start],
             )
             if go_to_left:
                 partition_start += 1
@@ -421,7 +422,6 @@ cdef class DensePartitioner:
             intp_t best_feature = best_split[0].feature
             bint best_missing_go_to_left = best_split[0].missing_go_to_left
             float32_t current_value
-            bint is_categorical = self.n_categories_in_feature[best_feature] > 0
             bint go_to_left
 
         while partition_start < partition_end:
@@ -430,7 +430,7 @@ cdef class DensePartitioner:
             go_to_left = goes_left(
                 best_split[0].split_value,
                 best_missing_go_to_left,
-                is_categorical,
+                best_split[0].split_kind,
                 current_value
             )
             if go_to_left:
@@ -457,6 +457,8 @@ cdef class DensePartitioner:
         """
         cdef SplitValue split
         cdef intp_t end_non_missing = self.end - self.n_missing
+
+        memset(<void*> &split, 0, sizeof(SplitValue))
 
         # if we split categorically, compute a bitset and populate the SplitValue
         if self.n_categories > 0:
@@ -659,11 +661,10 @@ cdef class SparsePartitioner:
 
     cdef inline intp_t partition_samples(
         self,
-        float64_t current_threshold,
-        bint missing_go_to_left
+        const SplitRecord* current_split,
     ) noexcept nogil:
-        """Partition samples for feature_values at the current_threshold."""
-        return self._partition(current_threshold)
+        """Partition samples for feature_values at the current split."""
+        return self._partition(current_split[0].split_value.threshold)
 
     cdef inline void partition_samples_final(
         self,
@@ -673,7 +674,7 @@ cdef class SparsePartitioner:
         self.extract_nnz(best_split[0].feature)
         self._partition(best_split[0].split_value.threshold)
 
-    # TODO: use splitValue when refactored to support categorical data
+    # TODO: use goes_left when refactored to support sparse categorical data.
     cdef inline intp_t _partition(self, float64_t threshold) noexcept nogil:
         """
         Partition samples[start:end] based on threshold.
@@ -727,9 +728,11 @@ cdef class SparsePartitioner:
         cdef SplitValue split
         cdef intp_t end_non_missing = self.end - self.n_missing
 
+        memset(<void*> &split, 0, sizeof(SplitValue))
+
         # if we split categorically, compute a bitset and populate the SplitValue
         if self.n_categories > 0:
-            # TODO: not supported for now, so returns uninitialized split
+            # TODO: not supported for now, so return the zeroed split.
             return split
 
         # if we split numerically, compute a numerical threshold
