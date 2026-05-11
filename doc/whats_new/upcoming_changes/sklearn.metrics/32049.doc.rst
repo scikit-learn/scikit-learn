@@ -1,0 +1,4 @@
+- Add explicit mathematical formulas for :func:`metrics.dcg_score` and
+  :func:`metrics.ndcg_score` to their docstrings, clarifying which DCG
+  variant (linear gain, not exponential) is implemented.
+  By :user:`Priyanshu <Priyanshu-byte-coder>`.
