@@ -9,7 +9,12 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import TunedThresholdClassifierCV
 from sklearn.pipeline import FeatureUnion, Pipeline, make_pipeline
-from sklearn.preprocessing import MinMaxScaler, Normalizer, StandardScaler
+from sklearn.preprocessing import (
+    FunctionTransformer,
+    MinMaxScaler,
+    Normalizer,
+    StandardScaler,
+)
 from sklearn.utils._repr_html.estimator import estimator_html_repr
 from sklearn.utils._repr_html.features import _features_html
 from sklearn.utils._testing import MinimalTransformer
@@ -124,7 +129,7 @@ def test_countvectorizer_output_features():
 
 def test_meta_estimator_output_features():
     """Non-regression test for
-    https://github.com/scikit-learn/scikit-learn/pull/33889
+    https://github.com/scikit-learn/scikit-learn/issues/33887
     """
     pytest.importorskip("pandas")
     X, y = load_iris(return_X_y=True, as_frame=True)
@@ -144,31 +149,28 @@ def test_meta_estimator_output_features():
 
 def test_get_feature_names_out_exception():
     """Non-regression test for
-    https://github.com/scikit-learn/scikit-learn/pull/33889
+    https://github.com/scikit-learn/scikit-learn/issues/33887
     Testing that error in _get_feature_names_out doesn't break
     and we still get an HTML display with no number of features.
     """
 
-    class BrokenColumnTransformer(ColumnTransformer):
-        """Transformer whose get_feature_names_out raises an exception."""
+    X = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
 
-        def fit(self, X, y=None):
-            self.n_features_in_ = X.shape[1]
-            return self
-
-        def get_feature_names_out(self, input_features=None):
-            raise RuntimeError("Simulated failure")
-
-    X = np.array([[1, 2], [3, 4]])
-    ct = BrokenColumnTransformer([("scaler", StandardScaler(), [0, 1])])
-    ct.fit(X)
-    html = estimator_html_repr(ct)
-    assert "StandardScaler" in html
+    union = FeatureUnion(
+        [
+            ("pca", PCA(n_components=1)),
+            ("identity", FunctionTransformer()),
+        ]
+    )
+    Xt = union.fit_transform(X)
+    html = estimator_html_repr(union)
+    assert "1 feature" in html
+    assert "identity" in html
 
 
 def test_single_estimator_get_feature_names_out_exception():
     """Non-regression test for
-    https://github.com/scikit-learn/scikit-learn/pull/33889
+    https://github.com/scikit-learn/scikit-learn/issues/33887
     Testing that error in _get_feature_names_out doesn't break
     hitting single block except branch"""
 
