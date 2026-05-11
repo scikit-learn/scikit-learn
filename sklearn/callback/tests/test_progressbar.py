@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import re
-import sys
 import textwrap
 from unittest import mock
 
@@ -23,14 +22,6 @@ from sklearn.utils._testing import (
     assert_run_python_script_without_output,
 )
 from sklearn.utils.parallel import Parallel, delayed
-
-# TODO: remove when Python 3.13 is the min version.
-# Shared, module-level test marker to skip on older Python versions:
-pytestmark = pytest.mark.skipif(
-    sys.version_info < (3, 12, 8),
-    reason="Race conditions can appear because of multiprocessing issues for python"
-    " < 3.12.8.",
-)
 
 
 @pytest.mark.parametrize("n_jobs", [1, 2])
@@ -85,16 +76,16 @@ def test_progressbar_requires_rich_error():
 
 
 def test_clone_after_fit():
-    """Smoke test for cloning after fit with a progressbar attached.
+    """Cloning an estimator with a ProgressBar preserves the callback reference.
 
-    Initialized `ProgressBar` instances use a multiprocessing.Manager.Queue instance
-    that cannot be deepcopied. This test is there to ensure that future changes
-    in clone will not make it attempt to naively call copy.deepcopy on the
-    _skl_callbacks attribute of the estimator.
+    clone copies _skl_callbacks by reference so that a single callback instance can
+    track every clone.
     """
     pytest.importorskip("rich")
-    est = MaxIterEstimator().set_callbacks(ProgressBar()).fit()
-    clone(est)
+    pb = ProgressBar()
+    est = MaxIterEstimator().set_callbacks(pb).fit()
+    cloned = clone(est)
+    assert cloned._skl_callbacks[0] is pb
 
 
 @pytest.mark.parametrize("backend", ["threading", "loky"])
@@ -118,22 +109,13 @@ def test_progressbar_no_callback_support(backend):
     n_fits = 4
     func(MaxIterEstimator().set_callbacks(progressbar), n_fits=n_fits)
 
-    if backend == "loky":
-        # Since ProgressBar is pickled in different subprocesses and managers are not
-        # picklable, a new manager is created for each subprocess and the queues are
-        # effectively process-local.
-        assert len(progressbar._run_queues) == 0
-        # The monitors are process-local by construction.
-        assert len(progressbar._run_monitors) == 0
-    else:  # "threading"
-        # The state is shared across threads so we expect one queue and monitor per fit.
-        # in the shared state.
-        assert len(progressbar._run_queues) == n_fits
-        assert len(progressbar._run_monitors) == n_fits
-        # All monitor threads are finished.
-        assert not any(mon.is_alive() for mon in progressbar._run_monitors.values())
-        # All queues are empty.
-        assert all(queue.empty() for queue in progressbar._run_queues.values())
+    from sklearn.callback._progressbar import _run_monitors, _run_queues
+
+    # After fit completes, `teardown` has popped the per-fit queue and monitor from
+    # the module-level registry and the per-fit listener handle from the instance.
+    assert progressbar._listener_handles == {}
+    assert _run_queues == {}
+    assert _run_monitors == {}
 
 
 @pytest.mark.parametrize("prefer", ["threads", "processes"])
