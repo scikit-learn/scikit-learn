@@ -1170,8 +1170,10 @@ def test_poisson_regressor_array_api_compliance(
     X_np = rng.normal(size=(n_samples, n_features))
     beta = np.array([0.5, -0.3, 0.8])  # true coefficients
     intercept = 1.0
-    mu = np.exp(X_np @ beta + intercept)  # poisson mean
+    mu = np.exp(X_np @ beta + intercept)  # Poisson mean with log-link.
     y_np = rng.poisson(mu)
+    # Ensure that we have non-zero targets for meaningful testing:
+    assert (y_np > 0).mean() > 0.1
 
     X_np = X_np.astype(dtype_name, copy=False)
     y_np = y_np.astype(dtype_name, copy=False)
