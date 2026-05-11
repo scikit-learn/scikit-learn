@@ -12,13 +12,8 @@ cdef inline void dual_swap(
     intp_t b,
 ) noexcept nogil:
     """Swap the values at index a and b of both darr and iarr"""
-    cdef floating dtmp = darr[a]
-    darr[a] = darr[b]
-    darr[b] = dtmp
-
-    cdef intp_t itmp = iarr[a]
-    iarr[a] = iarr[b]
-    iarr[b] = itmp
+    darr[a], darr[b] = darr[b], darr[a]
+    iarr[a], iarr[b] = iarr[b], iarr[a]
 
 
 cdef int simultaneous_sort(
