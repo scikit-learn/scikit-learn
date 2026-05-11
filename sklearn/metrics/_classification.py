@@ -4137,8 +4137,14 @@ def calibration_error(
             All bins have the same number of points.
 
     pos_label : int or str, default=None
-        Label of the positive class. If None, the maximum label is used as
-        positive class.
+        Label of the positive class. If None, `pos_label` will be inferred in
+        the following manner:
+
+        * if `y_true` in {-1, 1} or {0, 1}, `pos_label` defaults to 1;
+        * else if `y_true` contains string, an error will be raised and
+          `pos_label` should be explicitly specified;
+        * otherwise, `pos_label` defaults to the greater label,
+          i.e. `np.unique(y_true)[-1]`.
 
     reduce_bias : bool, default=True
         Add debiasing term as in Verified Uncertainty Calibration, A. Kumar.
@@ -4184,8 +4190,14 @@ def calibration_error(
         )
 
     if pos_label is None:
-        pos_label = y_true.max()
-    if pos_label not in labels:
+        try:
+            pos_label = _check_pos_label_consistency(pos_label, y_true)
+        except ValueError:
+            if labels.dtype.kind not in "OUS":
+                pos_label = labels[-1]
+            else:
+                raise
+    if len(labels) == 2 and pos_label not in labels:
         raise ValueError("pos_label=%r is not a valid label: %r" % (pos_label, labels))
     y_true = np.array(y_true == pos_label, int)
 
@@ -4197,6 +4209,9 @@ def calibration_error(
     y_true = y_true[remapping]
     y_prob = y_prob[remapping]
     if sample_weight is not None:
+        sample_weight = _check_sample_weight(
+            sample_weight, y_prob, force_float_dtype=False
+        )
         sample_weight = sample_weight[remapping]
     else:
         sample_weight = np.ones(y_true.shape[0])
@@ -4234,9 +4249,13 @@ def calibration_error(
             np.dot(y_prob[i_start:i_end], sample_weight[i_start:i_end]) / delta_count[i]
         )
         if norm == "l2" and reduce_bias:
-            delta_debias = avg_pred_true[i] * (avg_pred_true[i] - 1) * delta_count[i]
-            delta_debias /= count * delta_count[i] - 1
-            debias[i] = delta_debias
+            debias_denominator = count * delta_count[i] - 1
+            if debias_denominator != 0:
+                delta_debias = (
+                    avg_pred_true[i] * (avg_pred_true[i] - 1) * delta_count[i]
+                )
+                delta_debias /= debias_denominator
+                debias[i] = delta_debias
 
     if norm == "max":
         loss = np.max(np.abs(avg_pred_true - bin_centroid))

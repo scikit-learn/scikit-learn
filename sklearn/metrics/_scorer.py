@@ -784,7 +784,7 @@ brier_score_loss_scorer = make_scorer(
     brier_score_loss, greater_is_better=False, response_method="predict_proba"
 )
 neg_calibration_error_scorer = make_scorer(
-    calibration_error, greater_is_better=False, needs_proba=True
+    calibration_error, greater_is_better=False, response_method="predict_proba"
 )
 
 # Clustering scores

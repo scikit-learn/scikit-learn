@@ -2302,7 +2302,9 @@ Here is a small example of usage of this function:::
     >>> from sklearn.metrics import make_scorer
     >>> from functools import partial
     >>> max_calibration_error = partial(calibration_error, norm="max")
-    >>> neg_max_calibration_scorer = make_scorer(max_calibration_error, greater_is_better=False)
+    >>> neg_max_calibration_scorer = make_scorer(
+    ...     max_calibration_error, greater_is_better=False, response_method="predict_proba"
+    ... )
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sklearn.model_selection import GridSearchCV
     >>> grid = GridSearchCV(RandomForestClassifier(), param_grid={'max_depth': [3, 5, 7]},
