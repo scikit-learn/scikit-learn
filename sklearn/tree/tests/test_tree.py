@@ -42,7 +42,6 @@ from sklearn.tree._classes import (
     SPARSE_SPLITTERS,
 )
 from sklearn.tree._criterion import _py_precompute_absolute_errors
-from sklearn.tree._partitioner import _py_sort
 from sklearn.tree._tree import (
     NODE_DTYPE,
     TREE_LEAF,
@@ -55,6 +54,7 @@ from sklearn.tree._tree import (
 from sklearn.tree._tree import Tree as CythonTree
 from sklearn.utils import compute_sample_weight
 from sklearn.utils._array_api import xpx
+from sklearn.utils._sorting import _py_sort
 from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
