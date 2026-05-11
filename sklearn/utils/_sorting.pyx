@@ -5,34 +5,36 @@ from cython cimport floating
 from sklearn.utils._typedefs cimport intp_t
 
 
-# This file contains 2 Cython implementation of sorting:
-# `introsort_3way` and `introsort_2way`.
-# Algorithm: Introsort (Musser, SP&E, 1997) with two variants for the quicksort part:
-# - "2-way" partitioning: at each step, partition the current array in... 3 parts:
-#   [x <= pivot] [pivot] [x >= pivot] (the middle part is only one element)
-# - 3-way partitioning: at each step, partition the current array in 3 parts:
-#   [x < pivot] [x == pivot] [x > pivot]. This variant is faster when working
-#   with many duplicate values
-
-# Note:
-# Arrays are manipulated via a pointer to there first element and their size
-# as to ease the processing of dynamically allocated buffers.
-
-# TODO: In order to support discrete distance metrics, we need to have a
-# simultaneous sort which breaks ties on indices when distances are identical.
-# The best might be using a std::stable_sort and a Comparator which might need
-# an Array of Structures (AoS) instead of the Structure of Arrays (SoA)
-# currently used.
-# An alternative would be to implement a stable sort ourselves, like the
-# radix sort for instance
-
-
 cdef void simultaneous_sort(
     floating* values,
     intp_t* indices,
     intp_t n,
     bint use_three_way_partition=False,
 ) noexcept nogil:
+    """Sort values and indices simultaneously by values.
+
+    Algorithm: Introsort (Musser, SP&E, 1997) with two variants for the
+    quicksort part:
+
+    - If use_three_way_partition is True, use 3-way partitioning:
+      [x < pivot] [x == pivot] [x > pivot]. This variant is fast when
+      working with many duplicate values, otherwise it's slower.
+    - If use_three_way_partition is False, use 2-way partitioning:
+      [x <= pivot] [pivot] [x >= pivot]. There are three parts too, but the middle
+      part is only the selected pivot element, not all values equal to the pivot.
+
+    Notes
+    -----
+    Arrays are manipulated via a pointer to their first element and their size
+    to ease the processing of dynamically allocated buffers.
+
+    TODO: In order to support discrete distance metrics, we need to have a
+    simultaneous sort which breaks ties on indices when distances are
+    identical. The best might be using a std::stable_sort and a Comparator
+    which might need an Array of Structures (AoS) instead of the Structure of
+    Arrays (SoA) currently used. An alternative would be to implement a stable
+    sort ourselves, like the radix sort for instance.
+    """
     if n == 0:
         return
     cdef intp_t maxd = 2 * <intp_t>log2(n)
@@ -42,7 +44,7 @@ cdef void simultaneous_sort(
         introsort_2way(values, indices, n, maxd)
 
 
-def _py_sort(
+def _py_simultaneous_sort(
     floating[::1] values,
     intp_t[::1] indices,
     intp_t n,
