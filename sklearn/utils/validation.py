@@ -101,6 +101,43 @@ def _deprecate_positional_args(func=None, *, version="1.3"):
     return _inner_deprecate_positional_args
 
 
+def _estimator_rejects_nan_suffix(estimator_name):
+    """Return the extended error suffix used when an estimator does not support NaN."""
+    return (
+        f"\n{estimator_name} does not accept missing values"
+        " encoded as NaN natively. For supervised learning, you might want"
+        " to consider sklearn.ensemble.HistGradientBoostingClassifier and"
+        " Regressor which accept missing values encoded as NaNs natively."
+        " Alternatively, it is possible to preprocess the data, for"
+        " instance by using an imputer transformer in a pipeline or drop"
+        " samples with missing values. See"
+        " https://scikit-learn.org/stable/modules/impute.html"
+        " You can find a list of all estimators that handle NaN values"
+        " at the following page:"
+        " https://scikit-learn.org/stable/modules/impute.html"
+        "#estimators-that-handle-nan-values"
+    )
+
+
+_NON_ESTIMATOR_NAN_GUIDANCE = (
+    " If they represent missing values, impute or remove them before using this"
+    " data with scikit-learn (for example with an imputer in a Pipeline). If NaNs"
+    " are expected in otherwise valid inputs, set ensure_all_finite='allow-nan'"
+    " where that validation option exists (e.g., check_array)."
+)
+
+
+def _nan_finite_error_message(estimator_name, input_name):
+    """Build the ValueError message when finite checks fail on NaN (allow_nan is False)."""
+    padded_input_name = input_name + " " if input_name else ""
+    msg_err = f"Input {padded_input_name}contains NaN."
+    if estimator_name and input_name == "X":
+        msg_err += _estimator_rejects_nan_suffix(estimator_name)
+    else:
+        msg_err += _NON_ESTIMATOR_NAN_GUIDANCE
+    return msg_err
+
+
 def _assert_all_finite(
     X, allow_nan=False, msg_dtype=None, estimator_name=None, input_name=""
 ):
@@ -116,7 +153,9 @@ def _assert_all_finite(
     # for object dtype data, we only check for NaNs (GH-13254)
     if not is_array_api and X.dtype == np.dtype("object") and not allow_nan:
         if _object_dtype_isnan(X).any():
-            raise ValueError("Input contains NaN")
+            raise ValueError(
+                _nan_finite_error_message(estimator_name, input_name)
+            )
 
     # We need only consider float arrays, hence can early return for all else.
     if not xp.isdtype(X.dtype, ("real floating", "complex floating")):
@@ -156,30 +195,13 @@ def _assert_all_finite_element_wise(
         has_inf = xp.any(xp.isinf(X))
         has_nan_error = False if allow_nan else xp.any(xp.isnan(X))
     if has_inf or has_nan_error:
+        padded_input_name = input_name + " " if input_name else ""
         if has_nan_error:
-            type_err = "NaN"
+            msg_err = _nan_finite_error_message(estimator_name, input_name)
         else:
             msg_dtype = msg_dtype if msg_dtype is not None else X.dtype
             type_err = f"infinity or a value too large for {msg_dtype!r}"
-        padded_input_name = input_name + " " if input_name else ""
-        msg_err = f"Input {padded_input_name}contains {type_err}."
-        if estimator_name and input_name == "X" and has_nan_error:
-            # Improve the error message on how to handle missing values in
-            # scikit-learn.
-            msg_err += (
-                f"\n{estimator_name} does not accept missing values"
-                " encoded as NaN natively. For supervised learning, you might want"
-                " to consider sklearn.ensemble.HistGradientBoostingClassifier and"
-                " Regressor which accept missing values encoded as NaNs natively."
-                " Alternatively, it is possible to preprocess the data, for"
-                " instance by using an imputer transformer in a pipeline or drop"
-                " samples with missing values. See"
-                " https://scikit-learn.org/stable/modules/impute.html"
-                " You can find a list of all estimators that handle NaN values"
-                " at the following page:"
-                " https://scikit-learn.org/stable/modules/impute.html"
-                "#estimators-that-handle-nan-values"
-            )
+            msg_err = f"Input {padded_input_name}contains {type_err}."
         raise ValueError(msg_err)
 
 

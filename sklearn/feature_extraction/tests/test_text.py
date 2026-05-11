@@ -383,6 +383,16 @@ def test_countvectorizer_empty_vocabulary():
         v.fit(["to be or not to be", "and me too", "and so do you"])
 
 
+def test_countvectorizer_empty_vocabulary_documents_shorter_than_ngram():
+    """Documents shorter than ngram_range lower bound yield an informative error."""
+    rng = np.random.default_rng(0)
+    letters = rng.choice(list("abcdefghijklmnopqrstuvwxyz"), 50)
+    vect = CountVectorizer(analyzer="char", ngram_range=(2, 4))
+    with pytest.raises(ValueError, match="empty vocabulary") as exc_info:
+        vect.fit_transform(letters)
+    assert "ngram_range" in str(exc_info.value)
+
+
 def test_fit_countvectorizer_twice():
     cv = CountVectorizer()
     X1 = cv.fit_transform(ALL_FOOD_DOCS[:5])
