@@ -285,6 +285,27 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         elif isinstance(self.gamma, Real):
             self._gamma = self.gamma
 
+        # For NuSVC with a callable kernel, check nu feasibility before the
+        # (potentially expensive) kernel matrix computation. This mirrors the
+        # check that libsvm performs in svm_check_parameter(), but avoids the
+        # cost of computing the kernel matrix first.
+        if self._impl == "nu_svc" and callable(self.kernel):
+            effective_sw = (
+                sample_weight
+                if sample_weight.shape[0] > 0
+                else np.ones(y.shape[0], dtype=np.float64)
+            )
+            y_int = y.astype(np.intp)
+            n_classes = len(self.classes_)
+            class_counts = np.array(
+                [effective_sw[y_int == i].sum() for i in range(n_classes)]
+            )
+            for i in range(n_classes):
+                for j in range(i + 1, n_classes):
+                    n1, n2 = class_counts[i], class_counts[j]
+                    if self.nu * (n1 + n2) / 2 > min(n1, n2):
+                        raise ValueError("specified nu is infeasible")
+
         fit = self._sparse_fit if self._sparse else self._dense_fit
         if self.verbose:
             print("[LibSVM]", end="")

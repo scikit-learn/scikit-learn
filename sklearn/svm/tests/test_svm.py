@@ -643,6 +643,31 @@ def test_negative_weights_svc_leave_just_one_label(Classifier, err_msg, sample_w
         clf.fit(X, Y, sample_weight=sample_weight)
 
 
+def test_nusvc_callable_kernel_early_nu_feasibility_check():
+    """NuSVC raises ValueError before computing the callable kernel when nu is
+    infeasible. Regression test for GitHub issue #33478."""
+    kernel_call_count = [0]
+
+    def counting_kernel(X, Y):
+        kernel_call_count[0] += 1
+        return X @ Y.T
+
+    # Use nu=0.5 with highly imbalanced data (1 vs 5) so that nu is infeasible:
+    # nu * (1 + 5) / 2 = 1.5 > min(1, 5) = 1.
+    X_imbalanced = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
+    y_imbalanced = [1, 2, 2, 2, 2, 2]  # 1 vs 5
+
+    clf = svm.NuSVC(kernel=counting_kernel, nu=0.5)
+    with pytest.raises(ValueError, match="specified nu is infeasible"):
+        clf.fit(X_imbalanced, y_imbalanced)
+
+    # The kernel must NOT have been called before the infeasibility check.
+    assert kernel_call_count[0] == 0, (
+        "Callable kernel was invoked before nu feasibility check: "
+        f"kernel was called {kernel_call_count[0]} time(s)"
+    )
+
+
 @pytest.mark.parametrize(
     "Classifier, model",
     [

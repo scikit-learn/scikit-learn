@@ -1,0 +1,4 @@
+- :class:`svm.NuSVC` now checks whether the ``nu`` parameter is feasible
+  *before* computing a callable kernel matrix, avoiding unnecessary computation
+  when the parameter is invalid.
+  By :user:`Priyanshu <Priyanshu-byte-coder>`.
