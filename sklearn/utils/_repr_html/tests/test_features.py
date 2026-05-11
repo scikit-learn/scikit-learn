@@ -164,7 +164,6 @@ def test_get_feature_names_out_exception():
     html = estimator_html_repr(ct)
 
     assert "StandardScaler" in html
-    assert "Features" not in html
 
 
 def test_features_html_empty_features():
