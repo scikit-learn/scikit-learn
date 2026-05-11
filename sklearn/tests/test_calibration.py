@@ -122,8 +122,9 @@ def test_calibration(data, method, csr_container, ensemble):
         prob_pos_cal_clf = cal_clf.predict_proba(this_X_test)[:, 1]
 
         # Check that calibration error has improved after calibration
-        assert (calibration_error(y_test, prob_pos_clf) >
-                calibration_error(y_test, prob_pos_cal_clf))
+        assert calibration_error(y_test, prob_pos_clf) > calibration_error(
+            y_test, prob_pos_cal_clf
+        )
 
         # Check that brier score has improved after calibration
         assert brier_score_loss(y_test, prob_pos_clf) > brier_score_loss(
