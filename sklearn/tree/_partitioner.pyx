@@ -695,11 +695,6 @@ cdef inline void sparse_swap(intp_t[::1] index_to_samples, intp_t[::1] samples,
     index_to_samples[samples[pos_2]] = pos_2
 
 
-def _py_sort(float32_t[::1] feature_values, intp_t[::1] samples, intp_t n):
-    """Used for testing sort."""
-    sort(&feature_values[0], &samples[0], n)
-
-
 cdef inline void swap(float32_t* feature_values, intp_t* samples,
                       intp_t i, intp_t j) noexcept nogil:
     feature_values[i], feature_values[j] = feature_values[j], feature_values[i]
