@@ -998,9 +998,10 @@ class BaseSearchCV(
         params = _check_method_params(X, params=params)
         routed_params = self._get_routed_params_for_fit(params)
 
+        metadata_callbacks = {"sample_weight": params.get("sample_weight", {})}
         root_callback_ctx = self._init_callback_context(
             max_subtasks=1 + (self.refit is not False)  # refit can be str or callable
-        ).call_on_fit_task_begin(estimator=self, X=X, y=y)
+        ).call_on_fit_task_begin(estimator=self, X=X, y=y, metadata=metadata_callbacks)
 
         self._checked_cv_orig = check_cv(
             self.cv, y, classifier=is_classifier(self.estimator)
@@ -1158,7 +1159,6 @@ class BaseSearchCV(
             )
 
             with refit_subctx.propagate_callback_context(self.best_estimator_):
-                metadata_callbacks = {"sample_weight": params.get("sample_weight", {})}
                 refit_subctx.call_on_fit_task_begin(
                     estimator=self, X=X, y=y, metadata=metadata_callbacks
                 )
@@ -1186,7 +1186,9 @@ class BaseSearchCV(
 
         self.cv_results_ = results
 
-        root_callback_ctx.call_on_fit_task_end(estimator=self, X=X, y=y)
+        root_callback_ctx.call_on_fit_task_end(
+            estimator=self, X=X, y=y, metadata=metadata_callbacks
+        )
 
         return self
 

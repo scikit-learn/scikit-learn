@@ -308,8 +308,8 @@ class BaseSuccessiveHalving(BaseSearchCV):
         for itr in range(n_iterations):
             n_candidates = len(candidate_params)
 
-            round_callback_ctx = search_callback_ctx.subcontext(
-                task_name="halving-round",
+            iteration_callback_ctx = search_callback_ctx.subcontext(
+                task_name="halving-iteration",
                 max_subtasks=n_candidates * self.n_splits_,
                 sequential_subtasks=False,
             ).call_on_fit_task_begin(estimator=self)
@@ -361,13 +361,13 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 candidate_params,
                 cv,
                 more_results=more_results,
-                callback_ctx=round_callback_ctx,
+                callback_ctx=iteration_callback_ctx,
             )
 
             n_candidates_to_keep = ceil(n_candidates / self.factor)
             candidate_params = _top_k(results, n_candidates_to_keep, itr)
 
-            round_callback_ctx.call_on_fit_task_end(estimator=self)
+            iteration_callback_ctx.call_on_fit_task_end(estimator=self)
 
         self.n_remaining_candidates_ = len(candidate_params)
         self.n_required_iterations_ = n_required_iterations

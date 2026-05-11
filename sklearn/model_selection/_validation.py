@@ -755,10 +755,10 @@ def _fit_and_score(
     return_estimator : bool, default=False
         Whether to return the fitted estimator.
 
-    caller : estimator instance
+    caller : estimator instance or None, default=None
         The *SearchCV instance that called this function.
 
-    callback_ctx : `CallbackContext` object
+    callback_ctx : `CallbackContext` object or None, default=None
         Callback context for the evaluation task.
 
     Returns
