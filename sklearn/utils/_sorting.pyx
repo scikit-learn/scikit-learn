@@ -62,7 +62,7 @@ cdef void introsort_2way(
     cdef floating pivot
     cdef intp_t pivot_idx, i, j
 
-    while n > 1:
+    while n > 15:
         if maxd <= 0:   # max depth limit exceeded ("gone quadratic")
             heapsort(values, indices, n)
             return
@@ -97,6 +97,9 @@ cdef void introsort_2way(
         indices += pivot_idx + 1
         n -= pivot_idx + 1
 
+    # in the small-array case, insertion sort is faster
+    insertion_sort(values, indices, n)
+
 
 cdef void introsort_3way(
     floating* values, intp_t *indices,
@@ -109,7 +112,7 @@ cdef void introsort_3way(
     cdef floating pivot
     cdef intp_t i, l, r
 
-    while n > 1:
+    while n > 15:
         if maxd <= 0:   # max depth limit exceeded ("gone quadratic")
             heapsort(values, indices, n)
             return
@@ -142,6 +145,9 @@ cdef void introsort_3way(
         values += r
         indices += r
         n -= r
+
+    # in the small-array case, insertion sort is faster
+    insertion_sort(values, indices, n)
 
 # ------------ HEAP SORT -------------
 
@@ -230,3 +236,23 @@ cdef inline void swap(floating* values, intp_t* indices,
     # Helper for sort
     values[i], values[j] = values[j], values[i]
     indices[i], indices[j] = indices[j], indices[i]
+
+
+cdef inline void insertion_sort(
+    floating* values, intp_t *indices, intp_t n
+) noexcept nogil:
+    cdef intp_t i, j, temp_idx
+    cdef floating temp_val
+
+    for i in range(1, n):
+        temp_val = values[i]
+        temp_idx = indices[i]
+
+        j = i
+        while j > 0 and values[j - 1] > temp_val:
+            values[j] = values[j - 1]
+            indices[j] = indices[j - 1]
+            j -= 1
+
+        values[j] = temp_val
+        indices[j] = temp_idx
