@@ -1837,15 +1837,15 @@ def dcg_score(
 
     .. math::
 
-        \text{DCG}_k = \sum_{i=1}^{k} \frac{rel_i}{\log_{\text{base}}(i+1)}
+        \\text{DCG}_k = \\sum_{i=1}^{k} \\frac{rel_i}{\\log_{\\text{base}}(i+1)}
 
     where :math:`rel_i` is the true relevance score of the item ranked at
     position :math:`i` (by ``y_score`` in descending order) and
-    :math:`\text{base}` is the ``log_base`` parameter (default 2). A higher
+    :math:`\\text{base}` is the ``log_base`` parameter (default 2). A higher
     rank position (larger :math:`i`) incurs a larger logarithmic discount.
 
     Note that this is the *linear* gain variant. The *exponential* gain variant
-    :math:`(2^{rel_i} - 1) / \log_2(i+1)` is *not* used here.
+    :math:`(2^{rel_i} - 1) / \\log_2(i+1)` is *not* used here.
 
     When ``k`` is given, only the top :math:`k` ranked items contribute.
 
@@ -2019,22 +2019,22 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
 
     .. math::
 
-        \text{NDCG}_k = \frac{\text{DCG}_k}{\text{IDCG}_k}
+        \\text{NDCG}_k = \\frac{\\text{DCG}_k}{\\text{IDCG}_k}
 
-    where the *Ideal DCG* (:math:`\text{IDCG}_k`) is the DCG score of a
+    where the *Ideal DCG* (:math:`\\text{IDCG}_k`) is the DCG score of a
     perfect ranking (i.e., items sorted by ``y_true`` in descending order),
-    and :math:`\text{DCG}_k` is:
+    and :math:`\\text{DCG}_k` is:
 
     .. math::
 
-        \text{DCG}_k = \sum_{i=1}^{k} \frac{rel_i}{\log_2(i+1)}
+        \\text{DCG}_k = \\sum_{i=1}^{k} \\frac{rel_i}{\\log_2(i+1)}
 
     with :math:`rel_i` the true relevance score of the item ranked at position
-    :math:`i` by ``y_score``.  Normalising by :math:`\text{IDCG}_k` ensures
+    :math:`i` by ``y_score``.  Normalising by :math:`\\text{IDCG}_k` ensures
     that the result is always in :math:`[0, 1]` (assuming non-negative
     ``y_true``).
 
-    The *exponential* gain variant :math:`(2^{rel_i} - 1) / \log_2(i+1)` is
+    The *exponential* gain variant :math:`(2^{rel_i} - 1) / \\log_2(i+1)` is
     *not* used here.
 
     See Also
