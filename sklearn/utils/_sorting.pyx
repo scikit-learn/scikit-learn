@@ -192,34 +192,6 @@ cdef inline void swap(floating* values, intp_t* indices,
     indices[i], indices[j] = indices[j], indices[i]
 
 
-cdef inline void insertion_sort(
-    floating* values, intp_t *indices, intp_t n
-) noexcept nogil:
-    # Note: this sort is stable:
-    cdef intp_t i = 1
-    cdef intp_t j, temp_idx
-    cdef floating temp_val
-
-    for i in range(n):
-        # Store current element to be inserted in sorted position
-        temp_val = values[i]
-        temp_idx = indices[i]
-
-        # Find correct position by shifting larger elements right
-        j = i  # Start comparing from current position
-        # Shift elements that are larger than temp_val to the right
-        # Continue while we haven't reached the start and
-        # the previous element is larger than our value to insert
-        while j > 0 and values[j - 1] > temp_val:
-            values[j] = values[j - 1]        # Shift value right
-            indices[j] = indices[j - 1]  # Shift index right
-            j -= 1  # Move comparison position left
-
-        # Insert the stored element at its correct sorted position
-        values[j] = temp_val
-        indices[j] = temp_idx
-
-
 cdef inline floating inplace_median3(floating* values, intp_t* indices, intp_t n) noexcept nogil:
     # # Median of three pivot selection
     # The smallest of the three is moved to the beginning of the array,
