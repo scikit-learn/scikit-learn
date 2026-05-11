@@ -24,6 +24,7 @@ from sklearn.utils._array_api import (
     _fill_diagonal,
     _find_matching_floating_dtype,
     _is_numpy_namespace,
+    _matching_numpy_dtype,
     _max_precision_float_dtype,
     _modify_in_place_if_numpy,
     get_namespace,
@@ -2444,7 +2445,7 @@ def pairwise_distances(
            [2., 1.]])
     """
 
-    out_xp = out_device = out_dtype = None
+    out_xp = out_device = out_cast_dtype = None
 
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(
@@ -2485,7 +2486,10 @@ def pairwise_distances(
             # SciPy delegates use `np.asarray` internally. This fails for
             # array-api arrays residing on non-CPU devices. Move inputs to
             # NumPy on CPU for the SciPy call, then move the result back.
-            out_xp, out_device, out_dtype = xp, device, X.dtype
+            out_xp, out_device = xp, device
+            # SciPy returns NumPy arrays; cast using a NumPy dtype because
+            # `ndarray.astype` does not accept Array API dtype objects.
+            out_cast_dtype = _matching_numpy_dtype(X, xp=xp)
             same_input = X is Y
             X = move_to(X, xp=np, device="cpu")
             Y = X if same_input else move_to(Y, xp=np, device="cpu")
@@ -2497,14 +2501,14 @@ def pairwise_distances(
         if effective_n_jobs(n_jobs) == 1 and X is Y:
             D = distance.squareform(distance.pdist(X, metric=metric, **kwds))
             if out_xp is not None:
-                D = D.astype(out_dtype, copy=False)
+                D = D.astype(out_cast_dtype, copy=False)
                 D = move_to(D, xp=out_xp, device=out_device)
             return D
         func = partial(distance.cdist, metric=metric, **kwds)
 
     D = _parallel_pairwise(X, Y, func, n_jobs, **kwds)
     if out_xp is not None:
-        D = D.astype(out_dtype, copy=False)
+        D = D.astype(out_cast_dtype, copy=False)
         D = move_to(D, xp=out_xp, device=out_device)
     return D
 
