@@ -403,3 +403,4 @@ def test_scoring_monitor_no_callback_support(backend):
     assert len(log_all) == n_fits
     for log in log_all:
         assert log.data == expected_log
+        assert log.estimator_name == "MaxIterEstimator"
