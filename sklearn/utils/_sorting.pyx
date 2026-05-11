@@ -13,6 +13,11 @@ cdef void simultaneous_sort(
 ) noexcept nogil:
     """Sort values and indices simultaneously by values.
 
+    The numpy equivalent is:
+        def simultaneous_sort(values, indices):
+             i = np.argsort(values)
+             return values[i], indices[i]
+
     Algorithm: Introsort (Musser, SP&E, 1997) with two variants for the
     quicksort part:
 
