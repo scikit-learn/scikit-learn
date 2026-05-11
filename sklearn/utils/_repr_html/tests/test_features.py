@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 
+from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.compose import ColumnTransformer, make_column_transformer
 from sklearn.datasets import load_iris
 from sklearn.decomposition import PCA, TruncatedSVD
@@ -162,8 +163,28 @@ def test_get_feature_names_out_exception():
     ct = BrokenColumnTransformer([("scaler", StandardScaler(), [0, 1])])
     ct.fit(X)
     html = estimator_html_repr(ct)
-
     assert "StandardScaler" in html
+
+
+def test_single_estimator_get_feature_names_out_exception():
+    """Non-regression test for
+    https://github.com/scikit-learn/scikit-learn/pull/33889
+    Testing that error in _get_feature_names_out doesn't break
+    hitting single block except branch"""
+
+    class BrokenTransformer(TransformerMixin, BaseEstimator):
+        def fit(self, X, y=None):
+            self.n_features_in_ = X.shape[1]
+            return self
+
+        def get_feature_names_out(self, input_features=None):
+            raise RuntimeError("Simulated failure")
+
+    X = np.array([[1, 2], [3, 4]])
+    t = BrokenTransformer()
+    t.fit(X)
+    html = estimator_html_repr(t)
+    assert "BrokenTransformer" in html
 
 
 def test_features_html_empty_features():
