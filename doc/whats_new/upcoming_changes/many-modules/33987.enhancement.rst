@@ -1,0 +1,7 @@
+- Finite-data validation now appends clearer guidance when arrays contain NaN,
+  and :class:`feature_extraction.text.CountVectorizer` reports a more detailed
+  message when the fitted vocabulary is empty because no token meets
+  ``ngram_range`` (for example single-character documents with character n-grams
+  of length greater than one). Several gallery examples now use
+  :class:`inspection.DecisionBoundaryDisplay` instead of manual mesh plots.
+  By :user:`Nabid Alam <NabidAlam>`.
