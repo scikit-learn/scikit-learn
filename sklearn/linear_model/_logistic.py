@@ -114,10 +114,11 @@ def _make_scipy_minimize_callback(
 ):
     """Helper to forward sklearn callbacks to scipy.optimize.minimize for L-BFGS.
 
-    Since `minimize` calls `callback(xk)` at the end of each iteration, the order of hook calls
-    is first on_fit_task_end for the current iteration, then on_fit_task_begin for the
-    next iteration. A first begin is called before calling `minimize` and a last end is
-    called after. Therefore there's an extra empty task when max_iter is not reached.
+    Since `minimize` calls `callback(xk)` at the end of each iteration, the order of
+    hook calls is first on_fit_task_end for the current iteration, then
+    on_fit_task_begin for the next iteration. A first begin is called before calling
+    `minimize` and a last end is called after. Therefore there's an extra empty task
+    when max_iter is not reached.
     """
     if callback_ctx is None or not hasattr(estimator, "_skl_callbacks"):
         return None
