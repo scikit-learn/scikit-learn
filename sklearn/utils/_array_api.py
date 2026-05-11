@@ -872,10 +872,8 @@ def _cov(X, *, ddof=0, mean=None, xp=None):
     if mean is None:
         mean = xp.mean(X, axis=0)
     covariance = X.T @ X
-    covariance = covariance - n_samples * (
-        xp.reshape(mean, (-1, 1)) * xp.reshape(mean, (1, -1))
-    )
-    covariance = covariance / (n_samples - ddof)
+    covariance -= n_samples * (xp.reshape(mean, (-1, 1)) * xp.reshape(mean, (1, -1)))
+    covariance /= n_samples - ddof
     return covariance
 
 
