@@ -31,32 +31,52 @@ def test_simultaneous_sort_correctness(kind):
 
 @pytest.mark.parametrize("kind", ["2-way", "3-way"])
 def test_simultaneous_sort_not_quadratic(kind):
-    n = int(3e5)
-    # "killer pattern" (i.e. triggers the quadratic path)
+    n = int(1e5)
+
+    values = np.random.default_rng(0).uniform(size=n)
+    indices = np.arange(n, dtype=np.intp)
+    t0 = perf_counter()
+    _py_simultaneous_sort(
+        values, indices, values.shape[0], use_three_way_partition=kind == "3-way"
+    )
+    dt_ref = perf_counter() - t0
+
+    # worst case pattern (i.e. triggers the quadratic path)
     # for naive 2-way partitioning quicksort:
-    dist = np.zeros(n)
-    ind = np.arange(n, dtype=np.intp)
+    values = np.zeros(n)
+    indices = np.arange(n, dtype=np.intp)
     t0 = perf_counter()
     _py_simultaneous_sort(
-        dist, ind, dist.shape[0], use_three_way_partition=kind == "3-way"
+        values, indices, values.shape[0], use_three_way_partition=kind == "3-way"
     )
     dt = perf_counter() - t0
-    # sorting 300k elements should take less than 1s unless the sort goes quadratic
-    # (it should take something like <10ms)
-    assert dt < 1
+    # sorting 100k constant elements should not take more than 10x the time
+    # needed to sort 100k random elements:
+    assert dt < dt_ref * 10
 
-    # "killer pattern" for the better (numpy-style) 2-way partitioning:
-    dist = np.roll(np.arange(n), -1).astype(np.float32)
-    ind = np.arange(n, dtype=np.intp)
+    # worst case pattern for the better (numpy-style) 2-way partitioning:
+    values = np.roll(np.arange(n), -1).astype(np.float32)
+    indices = np.arange(n, dtype=np.intp)
     t0 = perf_counter()
     _py_simultaneous_sort(
-        dist, ind, dist.shape[0], use_three_way_partition=kind == "3-way"
+        values, indices, values.shape[0], use_three_way_partition=kind == "3-way"
     )
     dt = perf_counter() - t0
-    assert dt < 1
+    assert dt < dt_ref * 10
 
-    # The "killer pattern" of the 3-way partitioning quicksort
-    # with median-of-3 pivot is:
-    # [i if i%2 == 1 else k+i-1 for i in range(1, k+1)]
-    # + [i for i in range(1, 2*k + 1) if i%2 == 0]
-    # which has 0% chance to exist in real data
+    # worst case pattern for the 3-way partitioning quicksort
+    # with median-of-3 pivot:
+    k = n // 2
+    values = np.array(
+        [i if i % 2 == 1 else k + i - 1 for i in range(1, k + 1)]
+        + [i for i in range(1, 2 * k + 1) if i % 2 == 0]
+    ).astype(np.float64)
+    # (very unlikely in real-world non-adversarial data)
+    indices = np.arange(n, dtype=np.intp)
+    assert values.size == indices.size
+    t0 = perf_counter()
+    _py_simultaneous_sort(
+        values, indices, values.shape[0], use_three_way_partition=kind == "3-way"
+    )
+    dt = perf_counter() - t0
+    assert dt < dt_ref * 10
