@@ -249,13 +249,10 @@ def _rescale_data(X, y, sample_weight, inplace=False):
     n_samples = X.shape[0]
     sample_weight_sqrt = xp.sqrt(sample_weight)
 
-    if sp.issparse(X) or sp.issparse(y):
-        sw_matrix = sparse.dia_array(
-            (sample_weight_sqrt, 0), shape=(n_samples, n_samples)
-        )
-
     if sp.issparse(X):
-        X = safe_sparse_dot(sw_matrix, X)
+        # Avoid building an intermediate (n_samples x n_samples) diagonal
+        # sparse matrix. Instead, rescale rows directly.
+        X = X.multiply(sample_weight_sqrt[:, None])
     else:
         if inplace:
             X *= sample_weight_sqrt[:, None]
@@ -263,7 +260,7 @@ def _rescale_data(X, y, sample_weight, inplace=False):
             X = X * sample_weight_sqrt[:, None]
 
     if sp.issparse(y):
-        y = safe_sparse_dot(sw_matrix, y)
+        y = y.multiply(sample_weight_sqrt[:, None])
     else:
         if inplace:
             if y.ndim == 1:

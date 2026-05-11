@@ -1,0 +1,5 @@
+- Linear models that support ``sample_weight`` now rescale sparse ``X`` and ``y`` by
+  multiplying rows with ``sqrt(sample_weight)`` instead of building an intermediate
+  ``n_samples`` × ``n_samples`` sparse diagonal matrix, reducing peak memory for large
+  datasets.
+  By :user:`NabidAlam <NabidAlam>`.
