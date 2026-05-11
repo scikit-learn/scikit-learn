@@ -172,7 +172,7 @@ def test_features_html_empty_features():
     features = []
     html = _features_html(features)
 
-    assert "0 features" in html
+    assert "features" not in html
     assert "<tbody>" in html
 
 

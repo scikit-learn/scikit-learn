@@ -420,12 +420,14 @@ def _write_estimator_html(
             try:
                 output_features = estimator.get_feature_names_out()
             except Exception:
-                output_features = ""
-            features_div = _features_html(output_features, is_fitted_css_class)
-            total_output_features_item = (
-                f"<div class='total_features'>{features_div}</div>"
-            )
-            out.write(total_output_features_item)
+                output_features = None
+
+            if output_features is not None:
+                features_div = _features_html(output_features, is_fitted_css_class)
+                total_output_features_item = (
+                    f"<div class='total_features'>{features_div}</div>"
+                )
+                out.write(total_output_features_item)
 
         out.write("</div>")
     elif est_block.kind == "single":
