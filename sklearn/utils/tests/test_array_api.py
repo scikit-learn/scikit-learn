@@ -1042,5 +1042,6 @@ def test_matching_numpy_dtype(namespace, device_name, dtype_name):
     xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
     X_np = numpy.arange(1000).astype(dtype_name)
     X_xp = xp.asarray(X_np, device=device)
-    ret_dtype = _matching_numpy_dtype(X_xp, xp=xp)
+    with config_context(array_api_dispatch=True):
+        ret_dtype = _matching_numpy_dtype(X_xp, xp=xp)
     assert ret_dtype == X_np.dtype
