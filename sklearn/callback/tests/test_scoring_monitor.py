@@ -372,7 +372,7 @@ def test_get_logs_include_lineage_ancestor_retrieval(as_pandas):
 
 @pytest.mark.parametrize("backend", ["threading", "loky"])
 def test_scoring_monitor_no_callback_support(backend):
-    """Test ScoringMonitor within a parallelizedf unction not supporting callbacks.
+    """Test ScoringMonitor within a parallelized function not supporting callbacks.
 
     The expected result is multiple separate logs, similar to the result of multiple
     sequential fit executions.
