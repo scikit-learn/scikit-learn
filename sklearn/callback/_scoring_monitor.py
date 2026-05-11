@@ -7,7 +7,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 
 from sklearn.callback._callback_context import get_context_path
-from sklearn.callback._callback_support import get_callback_manager
+from sklearn.callback._transport import can_reuse_listener, open_listener, send
 from sklearn.utils._optional_dependencies import check_pandas_support
 from sklearn.utils._param_validation import StrOptions, validate_params
 
@@ -105,30 +105,34 @@ class ScoringMonitor:
         prefer_skip_nested_validation=True,
     )
     def __init__(self, *, scoring):
-        self.scoring = scoring
-        # Turn the scorer into a MultimetricScorer for convenience
         from sklearn.metrics._scorer import _BaseScorer
 
-        if isinstance(self.scoring, str):
-            self.scoring = [self.scoring]
-        if callable(self.scoring) and isinstance(self.scoring, _BaseScorer):
-            self.scoring = {"score": self.scoring}
+        self._scoring = scoring
+        # Turn the scorer into a MultimetricScorer for convenience
+        if isinstance(scoring, str):
+            self._scoring = [scoring]
+        elif callable(scoring) and isinstance(scoring, _BaseScorer):
+            self._scoring = {"score": scoring}
 
-        self._shared_log = get_callback_manager().list()
+        self._log = []
         self._estimator_scorers = {}
+
+        # Handle to the main-process listener, opened eagerly so that any worker that
+        # receives a pickled copy of this callback can send data to the main process.
+        # `self._log.append` is the message consumer that `send` calls will use to
+        # to grow the main process's log.
+        self._listener_handle = open_listener(self._log.append)
 
     def setup(self, estimator, context):
         # A scorer per estimator is needed to avoid race conditions when the callback is
         # set on different estimators and the scorer is the estimator's default scorer.
-        if context.estimator_name not in self._estimator_scorers:
+        if estimator not in self._estimator_scorers:
             from sklearn.metrics import check_scoring
 
-            self._estimator_scorers[context.estimator_name] = check_scoring(
-                estimator, self.scoring
-            )
+            self._estimator_scorers[estimator] = check_scoring(estimator, self._scoring)
 
     def teardown(self, estimator, context):
-        pass
+        self._estimator_scorers.pop(estimator, None)
 
     def on_fit_task_begin(self, estimator, context):
         pass
@@ -167,10 +171,16 @@ class ScoringMonitor:
 
         scores = {}
         if X is not None and y is not None:
-            scorer = self._estimator_scorers[context.estimator_name]
+            scorer = self._estimator_scorers[estimator]
             scores.update(scorer(fitted_estimator, X, y, **metadata))
 
-        self._shared_log.append((run_id, run_info, task_info_path, scores))
+        send(self._listener_handle, (run_id, run_info, task_info_path, scores))
+
+    def __setstate__(self, state):
+        """Restore state, opening a fresh listener if the inherited one is unusable."""
+        self.__dict__.update(state)
+        if not can_reuse_listener(self._listener_handle):
+            self._listener_handle = open_listener(self._log.append)
 
     @validate_params(
         {
@@ -228,14 +238,14 @@ class ScoringMonitor:
         logs = defaultdict(lambda: {"data": []})
         run_to_task_id_path = defaultdict(set)
 
-        if len(shared_log := self._shared_log) == 0:
+        if len(self._log) == 0:
             raise ValueError(
                 "No logs to retrieve. No scores were computed during the runs or the "
                 "estimator is not fitted yet"
             )
 
         # group logs by run
-        for run_id, run_info, task_info_path, scores in shared_log:
+        for run_id, run_info, task_info_path, scores in self._log:
             logs[run_id].update(run_info)
 
             task_id_path = tuple(task_info["task_id"] for task_info in task_info_path)

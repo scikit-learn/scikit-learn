@@ -48,7 +48,14 @@ class FitCallback(_BaseCallback, Protocol):
     """Protocol for the callbacks evaluated on tasks during the fit of an estimator."""
 
     def on_fit_task_begin(
-        self, estimator, context, X=None, y=None, metadata=None, fitted_estimator=None
+        self,
+        estimator,
+        context,
+        *,
+        X=None,
+        y=None,
+        metadata=None,
+        fitted_estimator=None,
     ):
         """Method called at the beginning of each fit task of the estimator.
 
@@ -75,7 +82,14 @@ class FitCallback(_BaseCallback, Protocol):
         """
 
     def on_fit_task_end(
-        self, estimator, context, X=None, y=None, metadata=None, fitted_estimator=None
+        self,
+        estimator,
+        context,
+        *,
+        X=None,
+        y=None,
+        metadata=None,
+        fitted_estimator=None,
     ):
         """Method called at the end of each fit task of the estimator.
 

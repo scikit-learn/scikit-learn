@@ -501,8 +501,8 @@ def test_lars_path_readonly_data():
     # fold data is in read-only mode
     # This is a non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/4597
-    splitted_data = train_test_split(X, y, random_state=42)
-    with TempMemmap(splitted_data) as (X_train, X_test, y_train, y_test):
+    split_data = train_test_split(X, y, random_state=42)
+    with TempMemmap(split_data) as (X_train, X_test, y_train, y_test):
         # The following should not fail despite copy=False
         _lars_path_residues(X_train, y_train, X_test, y_test, copy=False)
 

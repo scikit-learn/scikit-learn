@@ -7,7 +7,7 @@ import numpy as np
 
 from sklearn.base import BaseEstimator, _fit_context, clone
 from sklearn.callback import CallbackSupportMixin, with_callbacks
-from sklearn.callback._callback_support import get_callback_manager
+from sklearn.callback._transport import open_listener, send
 from sklearn.utils.parallel import Parallel, delayed
 
 
@@ -21,10 +21,11 @@ class RecordingCallback:
     """
 
     def __init__(self):
-        self.record = get_callback_manager().list()
+        self.record = []
+        self._listener_handle = open_listener(self.record.append)
 
     def setup(self, estimator, context):
-        self.record.append({"name": "setup", "context": context})
+        send(self._listener_handle, {"name": "setup", "context": context})
 
     def on_fit_task_begin(
         self,
@@ -36,7 +37,8 @@ class RecordingCallback:
         metadata=None,
         fitted_estimator=None,
     ):
-        self.record.append(
+        send(
+            self._listener_handle,
             {
                 "name": "on_fit_task_begin",
                 "context": context,
@@ -46,7 +48,7 @@ class RecordingCallback:
                     "metadata": metadata,
                     "fitted_estimator": fitted_estimator,
                 },
-            }
+            },
         )
 
     def on_fit_task_end(
@@ -59,7 +61,8 @@ class RecordingCallback:
         metadata=None,
         fitted_estimator=None,
     ):
-        self.record.append(
+        send(
+            self._listener_handle,
             {
                 "name": "on_fit_task_end",
                 "context": context,
@@ -69,11 +72,11 @@ class RecordingCallback:
                     "metadata": metadata,
                     "fitted_estimator": fitted_estimator,
                 },
-            }
+            },
         )
 
     def teardown(self, estimator, context):
-        self.record.append({"name": "teardown", "context": context})
+        send(self._listener_handle, {"name": "teardown", "context": context})
 
     def count_hooks(self, hook_name):
         return len([rec for rec in self.record if rec["name"] == hook_name])
@@ -396,13 +399,13 @@ class HeterogeneousMetaEstimator(CallbackSupportMixin):
             subcontext = callback_ctx.subcontext(task_name=task_name)
             if est is not None:
                 est = clone(est)
-                subcontext.propagate_callback_context(sub_estimator=est)
-            subcontext.call_on_fit_task_begin(estimator=self, X=X, y=y)
-
-            if est is not None:
-                est.fit(X, y)
-
-            subcontext.call_on_fit_task_end(estimator=self, X=X, y=y)
+                with subcontext.propagate_callback_context(est):
+                    subcontext.call_on_fit_task_begin(estimator=self, X=X, y=y)
+                    est.fit(X, y)
+                    subcontext.call_on_fit_task_end(estimator=self, X=X, y=y)
+            else:
+                subcontext.call_on_fit_task_begin(estimator=self, X=X, y=y)
+                subcontext.call_on_fit_task_end(estimator=self, X=X, y=y)
 
         callback_ctx.call_on_fit_task_end(estimator=self, X=X, y=y)
 

@@ -4,13 +4,13 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import itertools
-import sys
 from abc import ABC, abstractmethod
 from contextlib import contextmanager, nullcontext, suppress
 from functools import partial
 from numbers import Integral, Real
 from time import time
 
+import narwhals.stable.v2 as nw
 import numpy as np
 
 from sklearn._loss.loss import (
@@ -41,7 +41,6 @@ from sklearn.metrics._scorer import _SCORERS
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import FunctionTransformer, LabelEncoder, OrdinalEncoder
 from sklearn.utils import check_random_state, compute_sample_weight, resample
-from sklearn.utils._dataframe import is_pandas_df, is_polars_df
 from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
@@ -368,28 +367,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             Indicates whether a feature is categorical. If no feature is
             categorical, this is None.
         """
-        # Special code for pandas because of a bug in recent pandas, which is
-        # fixed in main and maybe included in 2.2.1, see
-        # https://github.com/pandas-dev/pandas/pull/57173.
-        # Also pandas versions < 1.5.1 do not support the dataframe interchange
-        if is_pandas_df(X):
-            X_is_dataframe = True
-            categorical_columns_mask = np.asarray(X.dtypes == "category")
-        elif is_polars_df(X):
-            # Special code for polars because polars 1.40 deprecates the __dataframe__
-            # protocol.
-            X_is_dataframe = True
-            pl = sys.modules["polars"]
-            categorical_columns_mask = np.asarray(
-                [d in (pl.Categorical, pl.Enum) for d in X.dtypes]
-            )
-        elif hasattr(X, "__dataframe__"):
+        if nw.dependencies.is_into_dataframe(X):
+            X = nw.from_native(X)
+            dtypes = X.schema.dtypes()
             X_is_dataframe = True
             categorical_columns_mask = np.asarray(
-                [
-                    c.dtype[0].name == "CATEGORICAL"
-                    for c in X.__dataframe__().get_columns()
-                ]
+                [d in (nw.Categorical, nw.Enum) for d in dtypes]
             )
         else:
             X_is_dataframe = False
@@ -408,8 +391,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if no_categorical_dtype:
             return None
 
-        use_pandas_categorical = categorical_by_dtype and X_is_dataframe
-        if use_pandas_categorical:
+        if categorical_by_dtype and X_is_dataframe:
             categorical_features = categorical_columns_mask
         else:
             categorical_features = np.asarray(categorical_features)
@@ -1579,11 +1561,10 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
           features.
         - str array-like: names of categorical features (assuming the training
           data has feature names).
-        - `"from_dtype"`: dataframe columns with dtype "category" are
-          considered to be categorical features. The input must be an object
-          exposing a ``__dataframe__`` method such as pandas or polars
-          DataFrames to use this feature. For polars dataframes, dtypes
-          pl.Categorical and pl.Enum are detected.
+        - `"from_dtype"`: dataframe columns with dtype "Categorical" and "Enum" are
+          considered to be categorical features. The input must be a dataframe that
+          is supported by narwhals (or supports it): :func:`narwhals.from_native` must
+          work. This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, there must be at most `max_bins` unique
         categories. Negative values for categorical features encoded as numeric
@@ -1973,11 +1954,10 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
           features.
         - str array-like: names of categorical features (assuming the training
           data has feature names).
-        - `"from_dtype"`: dataframe columns with dtype "category" are
-          considered to be categorical features. The input must be an object
-          exposing a ``__dataframe__`` method such as pandas or polars
-          DataFrames to use this feature. For polars dataframes, dtypes
-          pl.Categorical and pl.Enum are detected.
+        - `"from_dtype"`: dataframe columns with dtype "Categorical" and "Enum" are
+          considered to be categorical features. The input must be a dataframe that
+          is supported by narwhals (or supports it): :func:`narwhals.from_native` must
+          work. This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, there must be at most `max_bins` unique
         categories. Negative values for categorical features encoded as numeric

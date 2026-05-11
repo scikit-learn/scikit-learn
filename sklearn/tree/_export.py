@@ -28,6 +28,11 @@ from sklearn.utils._param_validation import (
 from sklearn.utils.validation import check_array, check_is_fitted
 
 
+def _rgb_to_hexstring(rgb):
+    """Convert 8bit integer rgb color to html hexstring"""
+    return "#%02x%02x%02x" % tuple(rgb)
+
+
 def _color_brew(n):
     """Generate n colors with equally spaced hues.
 
@@ -261,7 +266,7 @@ class _BaseTreeExporter:
         # compute the color as alpha against white
         color = [int(round(alpha * c + (1 - alpha) * 255, 0)) for c in color]
         # Return html color code in #RRGGBB format
-        return "#%2x%2x%2x" % tuple(color)
+        return _rgb_to_hexstring(color)
 
     def get_fill_color(self, tree, node_id):
         # Fetch appropriate color for node

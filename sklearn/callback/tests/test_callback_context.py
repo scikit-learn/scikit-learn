@@ -1,7 +1,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import sys
 from functools import partial
 
 import numpy as np
@@ -301,11 +300,6 @@ def test_callback_hooks_called(Callback):
     assert callback.count_hooks("teardown") == 1
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 12, 8),
-    reason="Race conditions can appear because of multiprocessing issues for python"
-    " < 3.12.8.",
-)
 @pytest.mark.parametrize("n_jobs", [1, 2])
 def test_meta_estimator_autopropagated_callback_hooks_called(n_jobs):
     """Check the number of callback hook calls in a meta-estimator.
@@ -332,11 +326,6 @@ def test_meta_estimator_autopropagated_callback_hooks_called(n_jobs):
     assert callback.count_hooks("teardown") == 1
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 12, 8),
-    reason="Race conditions can appear because of multiprocessing issues for python"
-    " < 3.12.8.",
-)
 @pytest.mark.parametrize("n_jobs", [1, 2])
 def test_meta_estimator_callback_hooks_called(n_jobs):
     """Check the number of callback hook calls in a meta-estimator.
@@ -514,12 +503,7 @@ def test_subcontext_task_id_ordering_error():
 
 
 def test_locally_defined_estimator():
-    """Test a callback with a locally defined estimator class.
-
-    A locally defined estimator is not picklable, putting it in a container managed by
-    the callback manager would break. As a future improvement, the loky manager used as
-    the callback manager could use the loky pickler.
-    """
+    """Check registering a callback on a locally defined estimator."""
 
     class LocallyDefinedEstimator(CallbackSupportMixin):
         @with_callbacks
