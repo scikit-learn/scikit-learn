@@ -210,7 +210,9 @@ def test_pairwise_distances_array_api_scipy_metrics(
     # Use more samples than features to avoid singular covariance matrices
     # when the user doesn't supply VI / V.
     X_np = rng.random_sample((12, 4)).astype(dtype_name, copy=False)
+    Y_np = rng.random_sample((8, 4)).astype(dtype_name, copy=False)
     X_xp = xp.asarray(X_np, device=device)
+    Y_xp = xp.asarray(Y_np, device=device)
 
     kwds = {}
     if metric == "mahalanobis":
@@ -226,6 +228,8 @@ def test_pairwise_distances_array_api_scipy_metrics(
         kwds["p"] = 2.0
 
     with config_context(array_api_dispatch=True):
+        # Y=None uses the pdist branch (squareform); Y provided uses cdist +
+        # _parallel_pairwise so both return paths are covered for codecov.
         D_xp = pairwise_distances(X_xp, metric=metric, **kwds)
 
         assert get_namespace(D_xp)[0].__name__ == xp.__name__
@@ -235,6 +239,15 @@ def test_pairwise_distances_array_api_scipy_metrics(
         D_xp_np = move_to(D_xp, xp=np, device="cpu")
         D_np = pairwise_distances(X_np, metric=metric, **kwds)
         assert_allclose(D_xp_np, D_np)
+
+        D_xy_xp = pairwise_distances(X_xp, Y=Y_xp, metric=metric, **kwds)
+        assert get_namespace(D_xy_xp)[0].__name__ == xp.__name__
+        assert D_xy_xp.device == X_xp.device
+        assert D_xy_xp.dtype == X_xp.dtype
+
+        D_xy_xp_np = move_to(D_xy_xp, xp=np, device="cpu")
+        D_xy_np = pairwise_distances(X_np, Y=Y_np, metric=metric, **kwds)
+        assert_allclose(D_xy_xp_np, D_xy_np)
 
 
 def test_pairwise_distances_array_api_no_warnings():
