@@ -28,6 +28,7 @@ from sklearn.utils._array_api import (
     _modify_in_place_if_numpy,
     get_namespace,
     get_namespace_and_device,
+    move_to,
 )
 from sklearn.utils._chunking import get_chunk_n_rows
 from sklearn.utils._mask import _get_mask
@@ -2443,6 +2444,8 @@ def pairwise_distances(
            [2., 1.]])
     """
 
+    out_xp = out_device = out_dtype = None
+
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(
             X, Y, precomputed=True, ensure_all_finite=ensure_all_finite
@@ -2477,15 +2480,33 @@ def pairwise_distances(
             X, Y, dtype=dtype, ensure_all_finite=ensure_all_finite
         )
 
+        xp, _, device = get_namespace_and_device(X, Y)
+        if not _is_numpy_namespace(xp):
+            # SciPy delegates use `np.asarray` internally. This fails for
+            # array-api arrays residing on non-CPU devices. Move inputs to
+            # NumPy on CPU for the SciPy call, then move the result back.
+            out_xp, out_device, out_dtype = xp, device, X.dtype
+            same_input = X is Y
+            X = move_to(X, xp=np, device="cpu")
+            Y = X if same_input else move_to(Y, xp=np, device="cpu")
+
         # precompute data-derived metric params
         params = _precompute_metric_params(X, Y, metric=metric, **kwds)
         kwds.update(**params)
 
         if effective_n_jobs(n_jobs) == 1 and X is Y:
-            return distance.squareform(distance.pdist(X, metric=metric, **kwds))
+            D = distance.squareform(distance.pdist(X, metric=metric, **kwds))
+            if out_xp is not None:
+                D = D.astype(out_dtype, copy=False)
+                D = move_to(D, xp=out_xp, device=out_device)
+            return D
         func = partial(distance.cdist, metric=metric, **kwds)
 
-    return _parallel_pairwise(X, Y, func, n_jobs, **kwds)
+    D = _parallel_pairwise(X, Y, func, n_jobs, **kwds)
+    if out_xp is not None:
+        D = D.astype(out_dtype, copy=False)
+        D = move_to(D, xp=out_xp, device=out_device)
+    return D
 
 
 # These distances require boolean arrays, when using scipy.spatial.distance

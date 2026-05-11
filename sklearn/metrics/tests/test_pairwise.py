@@ -188,6 +188,52 @@ def test_pairwise_distances_array_api(array_namespace, device_name, dtype_name, 
         assert_allclose(D_xp_np, D_np)
 
 
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+@pytest.mark.parametrize("metric", ["mahalanobis", "seuclidean", "minkowski"])
+def test_pairwise_distances_array_api_scipy_metrics(
+    array_namespace, device_name, dtype_name, metric
+):
+    """Check array API compatibility for scipy-delegated distance metrics.
+
+    The code path in :func:`pairwise_distances` delegates these metrics to
+    SciPy. SciPy internally uses `np.asarray`, which fails for array-api
+    arrays residing on non-CPU devices. We therefore expect the sklearn
+    implementation to move inputs to NumPy on CPU for the SciPy call and move
+    the result back to the original device.
+    """
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
+
+    rng = np.random.RandomState(0)
+    # Use more samples than features to avoid singular covariance matrices
+    # when the user doesn't supply VI / V.
+    X_np = rng.random_sample((12, 4)).astype(dtype_name, copy=False)
+    X_xp = xp.asarray(X_np, device=device)
+
+    kwds = {}
+    if metric == "mahalanobis":
+        VI = np.linalg.inv(np.cov(X_np.T)).T
+        kwds["VI"] = VI
+    elif metric == "seuclidean":
+        V = np.var(X_np, axis=0, ddof=1)
+        kwds["V"] = V
+    elif metric == "minkowski":
+        kwds["p"] = 2.0
+
+    with config_context(array_api_dispatch=True):
+        D_xp = pairwise_distances(X_xp, metric=metric, **kwds)
+
+        assert get_namespace(D_xp)[0].__name__ == xp.__name__
+        assert D_xp.device == X_xp.device
+        assert D_xp.dtype == X_xp.dtype
+
+        D_xp_np = move_to(D_xp, xp=np, device="cpu")
+        D_np = pairwise_distances(X_np, metric=metric, **kwds)
+        assert_allclose(D_xp_np, D_np)
+
+
 def test_pairwise_distances_array_api_no_warnings():
     # Regression test for https://github.com/scikit-learn/scikit-learn/issues/33829
     # pairwise_distances should not emit cross-library dtype comparison warnings
