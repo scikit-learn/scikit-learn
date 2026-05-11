@@ -402,6 +402,33 @@ def test_estimator_get_params_return_cls():
     assert "MyEstimator" in estimator_html_repr(est)
 
 
+def test_nested_meta_estimator_html_unfitted_feature_names_out():
+    """Check that nested meta-estimator HTML repr does not fail when
+    an inner unfitted estimator defines get_feature_names_out."""
+    from sklearn.exceptions import NotFittedError
+    from sklearn.pipeline import Pipeline
+    from sklearn.multiclass import OneVsRestClassifier
+
+    class UnfittedFeatureNamesTransformer(BaseEstimator):
+        """A transformer that has get_feature_names_out but raises when unfitted."""
+
+        def get_feature_names_out(self, input_features=None):
+            raise NotFittedError("Not fitted.")
+
+    estimator = OneVsRestClassifier(
+        estimator=Pipeline(
+            [
+                ("transform", UnfittedFeatureNamesTransformer()),
+                ("classifier", LogisticRegression()),
+            ]
+        )
+    )
+    # Should not raise
+    html_output = estimator_html_repr(estimator)
+    assert "OneVsRestClassifier" in html_output
+    assert "Pipeline" in html_output
+
+
 def test_estimator_html_repr_unfitted_vs_fitted():
     """Check that we have the information that the estimator is fitted or not in the
     HTML representation.
