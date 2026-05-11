@@ -1,0 +1,5 @@
+- Fixed :func:`sklearn.metrics.pairwise_distances` with SciPy-delegated
+  metrics (e.g. ``metric="mahalanobis"``) to work with Array API inputs on
+  non-CPU devices.
+  By :user:`NabidAlam <NabidAlam>`.
+

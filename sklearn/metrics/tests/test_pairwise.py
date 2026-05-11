@@ -214,8 +214,11 @@ def test_pairwise_distances_array_api_scipy_metrics(
 
     kwds = {}
     if metric == "mahalanobis":
-        VI = np.linalg.inv(np.cov(X_np.T)).T
-        kwds["VI"] = VI
+        # Use an identity VI to avoid numerical issues when inverting
+        # float32 covariances on some array-api namespaces/devices.
+        n_features = X_np.shape[1]
+        VI = np.eye(n_features, dtype=np.float64)
+        kwds["VI"] = VI.astype(X_np.dtype, copy=False)
     elif metric == "seuclidean":
         V = np.var(X_np, axis=0, ddof=1)
         kwds["V"] = V
