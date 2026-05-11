@@ -75,9 +75,7 @@ for _, penalty in (("unreg", 1), ("reg", 0.05)):
         zorder=10,
         edgecolors="k",
     )
-    ax.scatter(
-        X[:, 0], X[:, 1], c=Y, zorder=10, cmap="RdBu", edgecolors="k"
-    )
+    ax.scatter(X[:, 0], X[:, 1], c=Y, zorder=10, cmap="RdBu", edgecolors="k")
 
     ax.set_xlim(-4.8, 4.2)
     ax.set_ylim(-6, 6)

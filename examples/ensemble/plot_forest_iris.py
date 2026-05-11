@@ -50,12 +50,12 @@ import numpy as np
 from matplotlib.colors import ListedColormap
 
 from sklearn.datasets import load_iris
-from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.ensemble import (
     AdaBoostClassifier,
     ExtraTreesClassifier,
     RandomForestClassifier,
 )
+from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.tree import DecisionTreeClassifier
 
 # Parameters

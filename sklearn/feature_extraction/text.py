@@ -1290,9 +1290,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             # disable defaultdict behaviour
             vocabulary = dict(vocabulary)
             if not vocabulary:
-                msg = (
-                    "empty vocabulary; perhaps the documents only contain stop words"
-                )
+                msg = "empty vocabulary; perhaps the documents only contain stop words"
                 min_ngram = self.ngram_range[0]
                 if min_ngram > 1:
                     msg += (

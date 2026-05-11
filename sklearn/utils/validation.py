@@ -128,7 +128,7 @@ _NON_ESTIMATOR_NAN_GUIDANCE = (
 
 
 def _nan_finite_error_message(estimator_name, input_name):
-    """Build the ValueError message when finite checks fail on NaN (allow_nan is False)."""
+    """Build ValueError text when finite checks fail on NaN (allow_nan is False)."""
     padded_input_name = input_name + " " if input_name else ""
     msg_err = f"Input {padded_input_name}contains NaN."
     if estimator_name and input_name == "X":
@@ -153,9 +153,7 @@ def _assert_all_finite(
     # for object dtype data, we only check for NaNs (GH-13254)
     if not is_array_api and X.dtype == np.dtype("object") and not allow_nan:
         if _object_dtype_isnan(X).any():
-            raise ValueError(
-                _nan_finite_error_message(estimator_name, input_name)
-            )
+            raise ValueError(_nan_finite_error_message(estimator_name, input_name))
 
     # We need only consider float arrays, hence can early return for all else.
     if not xp.isdtype(X.dtype, ("real floating", "complex floating")):
