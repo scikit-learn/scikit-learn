@@ -5,11 +5,8 @@ from cython cimport floating
 from sklearn.utils._typedefs cimport intp_t
 
 
-# This file contains 2 Cython implementation of:
-#   def simultaneous_sort(dist, idx):
-#       i = np.argsort(dist)
-#       return dist[i], idx[i]
-
+# This file contains 2 Cython implementation of sorting:
+# `introsort_3way` and `introsort_2way`.
 # Algorithm: Introsort (Musser, SP&E, 1997) with two variants for the quicksort part:
 # - "2-way" partitioning: at each step, partition the current array in... 3 parts:
 #   [x <= pivot] [pivot] [x >= pivot] (the middle part is only one element)
@@ -28,13 +25,6 @@ from sklearn.utils._typedefs cimport intp_t
 # currently used.
 # An alternative would be to implement a stable sort ourselves, like the
 # radix sort for instance
-
-
-cdef inline void swap(floating* values, intp_t* indices,
-                      intp_t i, intp_t j) noexcept nogil:
-    # Helper for sort
-    values[i], values[j] = values[j], values[i]
-    indices[i], indices[j] = indices[j], indices[i]
 
 
 cdef void simultaneous_sort(
@@ -72,13 +62,12 @@ cdef void introsort_2way(
     cdef floating pivot
     cdef intp_t pivot_idx, i, j
 
-    # in the small-array case, do things efficiently
     while n > 1:
         if maxd <= 0:   # max depth limit exceeded ("gone quadratic")
             heapsort(values, indices, n)
             return
         maxd -= 1
-        # Determine the pivot using the median-of-three rule:
+
         pivot = inplace_median3(values, indices, n)
 
         i = 1  # the median3 step ensures values[0] <= pivot
@@ -128,7 +117,6 @@ cdef void introsort_3way(
 
         pivot = median3(values, n)
 
-        # Three-way partition.
         i = l = 0
         r = n
         while i < r:
@@ -142,10 +130,39 @@ cdef void introsort_3way(
             else:
                 i += 1
 
+        # Three-way partition:
+        # - values[:l] contains elements < pivot
+        # - values[l:r] contains elements == pivot
+        # - values[r:] contains elements > pivot
+
+        # Recursively sort left side:
         introsort_3way(values, indices, l, maxd)
+
+        # Continue with right side:
         values += r
         indices += r
         n -= r
+
+# ------------ HEAP SORT -------------
+
+cdef void heapsort(floating* feature_values, intp_t* samples, intp_t n) noexcept nogil:
+    cdef intp_t start, end
+
+    # heapify
+    start = (n - 2) / 2
+    end = n
+    while True:
+        sift_down(feature_values, samples, start, end)
+        if start == 0:
+            break
+        start -= 1
+
+    # sort by shrinking the heap, putting the max element immediately after it
+    end = n - 1
+    while end > 0:
+        swap(feature_values, samples, 0, end)
+        sift_down(feature_values, samples, 0, end)
+        end = end - 1
 
 
 cdef inline void sift_down(floating* feature_values, intp_t* samples,
@@ -171,25 +188,7 @@ cdef inline void sift_down(floating* feature_values, intp_t* samples,
             root = maxind
 
 
-cdef void heapsort(floating* feature_values, intp_t* samples, intp_t n) noexcept nogil:
-    cdef intp_t start, end
-
-    # heapify
-    start = (n - 2) / 2
-    end = n
-    while True:
-        sift_down(feature_values, samples, start, end)
-        if start == 0:
-            break
-        start -= 1
-
-    # sort by shrinking the heap, putting the max element immediately after it
-    end = n - 1
-    while end > 0:
-        swap(feature_values, samples, 0, end)
-        sift_down(feature_values, samples, 0, end)
-        end = end - 1
-
+# ------------ HELPERS -------------
 
 cdef inline floating inplace_median3(floating* values, intp_t* indices, intp_t n) noexcept nogil:
     # # Median of three pivot selection
@@ -224,3 +223,10 @@ cdef inline floating median3(floating* feature_values, intp_t n) noexcept nogil:
             return c
     else:
         return b
+
+
+cdef inline void swap(floating* values, intp_t* indices,
+                      intp_t i, intp_t j) noexcept nogil:
+    # Helper for sort
+    values[i], values[j] = values[j], values[i]
+    indices[i], indices[j] = indices[j], indices[i]
