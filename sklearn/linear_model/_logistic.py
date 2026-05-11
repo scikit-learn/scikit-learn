@@ -114,7 +114,7 @@ def _make_scipy_minimize_callback(
 ):
     """Helper to forward sklearn callbacks to scipy.optimize.minimize for L-BFGS.
 
-    Since `minimize` only calls it at the end of each iteration, the order of hook calls
+    Since `minimize` calls `callback(xk)` at the end of each iteration, the order of hook calls
     is first on_fit_task_end for the current iteration, then on_fit_task_begin for the
     next iteration. A first begin is called before calling `minimize` and a last end is
     called after. Therefore there's an extra empty task when max_iter is not reached.
@@ -525,7 +525,7 @@ def _logistic_regression_path(
             # In LogisticRegression.fit, Cs is always a one-element list, so we don't
             # add additional callback subcontexts inside this for-loop to avoid
             # introducing an unnecessary subtask level.
-            # TODO(callbacks) When adding callbcak support to LogisticRegressionCV,
+            # TODO(callbacks) When adding callback support to LogisticRegressionCV,
             # another subcontext level will be necessary, so we'll need to add a level
             # only in the LogisticRegressionCV, keeping the LogisticRegression version
             # without that extra level.
