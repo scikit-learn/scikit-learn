@@ -435,7 +435,7 @@ def _write_estimator_html(
             try:
                 output_features = estimator.get_feature_names_out()
             except Exception:
-                output_features = ""
+                output_features = None
         else:
             output_features = ""
 
