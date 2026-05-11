@@ -541,7 +541,7 @@ def _logistic_regression_path(
                     device_=device_,
                 )
                 # We call call_on_fit_task_begin for the first iteration's subcontext.
-                callback_ctx.subcontext(task_name="lbfgs iter").call_on_fit_task_begin(
+                callback_ctx.subcontext(task_name="lbfgs-iter").call_on_fit_task_begin(
                     estimator=estimator,
                     X=X,
                     y=y,
