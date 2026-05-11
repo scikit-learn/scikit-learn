@@ -1,0 +1,12 @@
+- The :ref:`callback API <callbacks_user>`'s base infrastructure is included in this
+  release. This API allows to use callbacks during the fitting of estimators that
+  supports callbacks. The :class:`sklearn.callback.ProgressBar` and
+  :class:`sklearn.callback.ScoringMonitor` callbacks are introduced.
+  :class:`~sklearn.linear_model.LogisticRegression`,
+  :class:`~sklearn.pipeline.Pipeline`, :class:`~sklearn.preprocessing.StandardScaler`,
+  :class:`~sklearn.model_selection.GridSearchCV`,
+  :class:`~sklearn.model_selection.HalvingGridSearchCV`,
+  :class:`~sklearn.model_selection.HalvingRandomSearchCV` and
+  :class:`~sklearn.model_selection.RandomizedSearchCV` are updated to support callbacks.
+  By :user:`Jérémie du Boisberranger <jeremiedbb>`, :user:`François Paugam
+  <FrancoisPgm>` and :user:`Stefanie Senger <StefanieSenger>`.
