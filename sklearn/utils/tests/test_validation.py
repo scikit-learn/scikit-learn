@@ -1125,8 +1125,6 @@ def test_check_array_series():
     res = check_array(s, dtype=None, ensure_2d=False)
     assert_array_equal(res, np.array(["a", "b", "c"], dtype=object))
 
-    # TODO: pandas sparse array
-
 
 @pytest.mark.parametrize(
     "dtype", ((np.float64, np.float32), np.float64, None, "numeric")
