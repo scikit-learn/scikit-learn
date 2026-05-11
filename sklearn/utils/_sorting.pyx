@@ -30,31 +30,37 @@ from sklearn.utils._typedefs cimport intp_t
 # radix sort for instance
 
 
-cdef void simultaneous_sort(floating* dist, intp_t* idx, intp_t size) noexcept nogil:
-    if size == 0:
-        return
-    cdef intp_t maxd = 2 * <intp_t>log2(size)
-    introsort_2way(dist, idx, size, maxd)
+cdef inline void swap(floating* values, intp_t* indices,
+                      intp_t i, intp_t j) noexcept nogil:
+    # Helper for sort
+    values[i], values[j] = values[j], values[i]
+    indices[i], indices[j] = indices[j], indices[i]
 
 
-cdef void sort(floating* values, intp_t* indices, intp_t n) noexcept nogil:
+cdef void simultaneous_sort(
+    floating* values,
+    intp_t* indices,
+    intp_t n,
+    bint use_three_way_partition=False,
+) noexcept nogil:
     if n == 0:
         return
     cdef intp_t maxd = 2 * <intp_t>log2(n)
-    introsort_3way(values, indices, n, maxd)
+    if use_three_way_partition:
+        introsort_3way(values, indices, n, maxd)
+    else:
+        introsort_2way(values, indices, n, maxd)
 
 
 def _py_sort(
     floating[::1] values,
     intp_t[::1] indices,
     intp_t n,
-    bint use_three_way_partition=True,
+    *,
+    bint use_three_way_partition,
 ):
     """Python wrapper used for testing."""
-    if use_three_way_partition:
-        sort(&values[0], &indices[0], n)
-    else:
-        simultaneous_sort(&values[0], &indices[0], n)
+    simultaneous_sort(&values[0], &indices[0], n, use_three_way_partition)
 
 
 cdef void introsort_2way(
@@ -183,13 +189,6 @@ cdef void heapsort(floating* feature_values, intp_t* samples, intp_t n) noexcept
         swap(feature_values, samples, 0, end)
         sift_down(feature_values, samples, 0, end)
         end = end - 1
-
-
-cdef inline void swap(floating* values, intp_t* indices,
-                      intp_t i, intp_t j) noexcept nogil:
-    # Helper for sort
-    values[i], values[j] = values[j], values[i]
-    indices[i], indices[j] = indices[j], indices[i]
 
 
 cdef inline floating inplace_median3(floating* values, intp_t* indices, intp_t n) noexcept nogil:

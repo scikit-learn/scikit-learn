@@ -21,7 +21,7 @@ cnp.import_array()
 from scipy.sparse import issparse
 
 from sklearn.tree._splitter cimport SplitRecord
-from sklearn.utils._sorting cimport sort
+from sklearn.utils._sorting cimport simultaneous_sort
 
 # Constant to switch between algorithm non zero value extract algorithm
 # in SparsePartitioner
@@ -693,6 +693,14 @@ cdef inline void sparse_swap(intp_t[::1] index_to_samples, intp_t[::1] samples,
     samples[pos_1], samples[pos_2] = samples[pos_2], samples[pos_1]
     index_to_samples[samples[pos_1]] = pos_1
     index_to_samples[samples[pos_2]] = pos_2
+
+
+cdef inline void sort(
+    float32_t* feature_values,
+    intp_t* samples,
+    intp_t n,
+) noexcept nogil:
+    simultaneous_sort(feature_values, samples, n, use_three_way_partition=True)
 
 
 cdef inline void swap(float32_t* feature_values, intp_t* samples,
