@@ -3171,12 +3171,32 @@ def test_calibration_error_uncalibrated_predictions(norm, strategy):
     )
 
 
+def test_calibration_error_default_pos_label_single_class():
+    y_true = np.array([0, 0])
+    y_pred = np.array([0.1, 0.2])
+
+    assert_almost_equal(
+        calibration_error(y_true, y_pred, n_bins=2, norm="l1"),
+        calibration_error(y_true, y_pred, n_bins=2, norm="l1", pos_label=1),
+    )
+    assert_almost_equal(
+        calibration_error(y_true, y_pred, n_bins=2, norm="l1"),
+        0.15,
+    )
+
+
 def test_calibration_error_sample_weights():
     ratio = 2
     y_true = np.array([0, 0, 0, 1] + [1, 1, 1, 1])
     y_pred = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
     sample_weight = np.array([1, 1, 1, 1] + [3, 3, 3, 3])
 
+    assert_almost_equal(
+        calibration_error(
+            y_true, y_pred, sample_weight=sample_weight.tolist(), n_bins=ratio
+        ),
+        calibration_error(y_true, y_pred, sample_weight=sample_weight, n_bins=ratio),
+    )
     assert_almost_equal(
         calibration_error(
             y_true, y_pred, sample_weight=sample_weight, n_bins=ratio, norm="l1"
@@ -3205,15 +3225,22 @@ def test_calibration_error_sample_weights():
 def test_calibration_error_raises():
     y_true = np.array([0, 0, 0, 1] + [1, 1, 1, 1])
     y_pred = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
-    assert_raises(ValueError, calibration_error, y_true, y_pred[1:])
-    assert_raises(ValueError, calibration_error, y_true, y_pred + 1.0)
-    assert_raises(ValueError, calibration_error, y_true, y_pred - 1.0)
-    assert_raises(ValueError, calibration_error, y_true, y_pred, pos_label=2)
-    assert_raises(ValueError, calibration_error, y_true, y_pred, norm="foo")
-    assert_raises(ValueError, calibration_error, y_true, y_pred, strategy="foo")
+    with pytest.raises(ValueError, match="inconsistent numbers of samples"):
+        calibration_error(y_true, y_pred[1:])
+    with pytest.raises(ValueError, match="values outside of \\[0, 1\\] range"):
+        calibration_error(y_true, y_pred + 1.0)
+    with pytest.raises(ValueError, match="values outside of \\[0, 1\\] range"):
+        calibration_error(y_true, y_pred - 1.0)
+    with pytest.raises(ValueError, match="pos_label=2 is not a valid label"):
+        calibration_error(y_true, y_pred, pos_label=2)
+    with pytest.raises(ValueError, match="norm has to be one of"):
+        calibration_error(y_true, y_pred, norm="foo")
+    with pytest.raises(ValueError, match="Invalid entry to 'strategy' input"):
+        calibration_error(y_true, y_pred, strategy="foo")
 
     y_true[0] = 2
-    assert_raises(ValueError, calibration_error, y_true, y_pred)
+    with pytest.raises(ValueError, match="Only binary classification is supported"):
+        calibration_error(y_true, y_pred)
 
 
 def test_calibration_error_one_element_per_bin():
@@ -3230,6 +3257,20 @@ def test_calibration_error_one_element_per_bin():
     assert_almost_equal(
         calibration_error(y_true, y_pred, n_bins=ratio, norm="l2", reduce_bias=False),
         0.4677071,
+    )
+
+
+def test_calibration_error_l2_reduce_bias_zero_debias_denominator():
+    assert_almost_equal(calibration_error([0], [0.4], n_bins=1, norm="l2"), 0.4)
+    assert_almost_equal(
+        calibration_error(
+            [0, 1],
+            [0.4, 0.6],
+            sample_weight=[0.25, 0.75],
+            n_bins=1,
+            norm="l2",
+        ),
+        0.2,
     )
 
 
