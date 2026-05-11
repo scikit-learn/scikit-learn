@@ -403,5 +403,7 @@ class EmpiricalCovariance(BaseEstimator):
 
             return np.reshape(dist, (len(X),)) ** 2
         else:
+            # XXX: pairwise_distances does not support array API with
+            # metric="mahalanobis" at the time of writing.
             X_centered = X - self.location_
             return xp.sum((X_centered @ precision) * X_centered, axis=1)
