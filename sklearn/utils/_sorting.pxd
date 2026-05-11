@@ -9,4 +9,8 @@ cdef void simultaneous_sort(
 ) noexcept nogil
 
 
-cdef void sort(floating* values, intp_t* indices, intp_t n) noexcept nogil
+cdef void sort(
+    floating* feature_values,
+    intp_t* samples,
+    intp_t n,
+) noexcept nogil

@@ -189,6 +189,10 @@ def test_clone_empty_array():
     clf2 = clone(clf)
     assert_array_equal(clf.empty.data, clf2.empty.data)
 
+    clf = MyEstimator(empty=sp.csr_array(np.array([[0]])))
+    clf2 = clone(clf)
+    assert_array_equal(clf.empty.data, clf2.empty.data)
+
 
 def test_clone_nan():
     # Regression test for cloning estimators with default parameter as np.nan
@@ -209,7 +213,8 @@ def test_clone_sparse_matrices():
     sparse_matrix_classes = [
         cls
         for name in dir(sp)
-        if name.endswith("_matrix") and type(cls := getattr(sp, name)) is type
+        if name.endswith("_matrix") or name.endswith("_array")
+        if type(cls := getattr(sp, name)) is type
     ]
 
     for cls in sparse_matrix_classes:
@@ -909,17 +914,17 @@ def test_estimator_getstate_using_slots_error_message():
 @pytest.mark.parametrize(
     "constructor_name, minversion",
     [
-        ("dataframe", "1.5.0"),
-        ("pyarrow", "12.0.0"),
+        ("pandas", "1.5.0"),
+        ("pyarrow", "13.0.0"),
         ("polars", "0.20.23"),
     ],
 )
-def test_dataframe_protocol(constructor_name, minversion):
-    """Uses the dataframe exchange protocol to get feature names."""
+def test_feature_names_in_on_dataframes(constructor_name, minversion):
+    """Test that feature_names_in_ is correctly set for dataframe X."""
     data = [[1, 4, 2], [3, 3, 6]]
     columns = ["col_0", "col_1", "col_2"]
     df = _convert_container(
-        data, constructor_name, columns_name=columns, minversion=minversion
+        data, constructor_name, column_names=columns, minversion=minversion
     )
 
     class NoOpTransformer(TransformerMixin, BaseEstimator):
@@ -941,7 +946,7 @@ def test_dataframe_protocol(constructor_name, minversion):
         assert_allclose(df, X_out)
 
     bad_names = ["a", "b", "c"]
-    df_bad = _convert_container(data, constructor_name, columns_name=bad_names)
+    df_bad = _convert_container(data, constructor_name, column_names=bad_names)
     with pytest.raises(ValueError, match="The feature names should match"):
         no_op.transform(df_bad)
 
@@ -1004,6 +1009,21 @@ def test_get_params_html():
 
     assert est._get_params_html() == {"l1": 0, "empty": "test"}
     assert est._get_params_html().non_default == ("empty",)
+
+
+def test_get_fitted_attr_html():
+    """Check the behaviour of the `_get_fitted_attr_html` method."""
+    X = np.array([[-1, -1], [-2, -1], [-3, -2]])
+    pca = PCA().fit(X)
+    pca._not_a_fitted_attr = "x"
+
+    fitted_attr_html = pca._get_fitted_attr_html()
+    assert fitted_attr_html["n_features_in_"] == {"type_name": "int", "value": 2}
+    assert pca._not_a_fitted_attr not in fitted_attr_html
+    assert len(fitted_attr_html) == 9
+    assert fitted_attr_html["components_"]["type_name"] == ("ndarray")
+    assert fitted_attr_html["components_"]["shape"] == (2, 2)
+    assert_allclose(fitted_attr_html["components_"]["value"], pca.components_)
 
 
 def make_estimator_with_param(default_value):

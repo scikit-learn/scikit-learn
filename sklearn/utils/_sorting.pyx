@@ -1,5 +1,8 @@
-from cython cimport floating
 from libc.math cimport log2
+
+from cython cimport floating
+
+from sklearn.utils._typedefs cimport intp_t
 
 
 # This file contains 2 Cython implementation of:
@@ -45,7 +48,7 @@ def _py_sort(
     floating[::1] values,
     intp_t[::1] indices,
     intp_t n,
-    bint use_three_way_partition=False,
+    bint use_three_way_partition=True,
 ):
     """Python wrapper used for testing."""
     if use_three_way_partition:

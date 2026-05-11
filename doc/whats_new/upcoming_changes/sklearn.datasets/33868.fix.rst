@@ -1,0 +1,5 @@
+- Fixed :func:`datasets.fetch_openml` to issue OpenML API calls to
+  ``https://www.openml.org/api/v1/`` instead of
+  ``https://api.openml.org/api/v1/``, which no longer resolves or redirects
+  correctly.
+  By :user:`Olivier Grisel <ogrisel>`.

@@ -811,15 +811,22 @@ class SVC(BaseSVC):
         Number of support vectors for each class.
 
     probA_ : ndarray of shape (n_classes * (n_classes - 1) / 2)
-    probB_ : ndarray of shape (n_classes * (n_classes - 1) / 2)
         If `probability=True`, it corresponds to the parameters learned in
         Platt scaling to produce probability estimates from decision values.
         If `probability=False`, it's an empty array. Platt scaling uses the
         logistic function
+
+    probB_ : ndarray of shape (n_classes * (n_classes - 1) / 2)
+        If `probability=True`, it corresponds to the parameters learned in
+        Platt scaling. Platt scaling uses the logistic function
         ``1 / (1 + exp(decision_value * probA_ + probB_))``
         where ``probA_`` and ``probB_`` are learned from the dataset [2]_. For
         more information on the multiclass case and training procedure see
         section 8 of [1]_.
+
+        .. deprecated:: 1.9
+            The attributes `probA_` and `probB_` are deprecated in version 1.9 and will
+            be removed in 1.11.
 
     shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
         Array dimensions of training vector ``X``.
@@ -1078,6 +1085,7 @@ class NuSVC(BaseSVC):
         0 if correctly fitted, 1 if the algorithm did not converge.
 
     probA_ : ndarray of shape (n_classes * (n_classes - 1) / 2,)
+        If `probability=True`, parameters learned in Platt scaling.
 
     probB_ : ndarray of shape (n_classes * (n_classes - 1) / 2,)
         If `probability=True`, it corresponds to the parameters learned in
@@ -1088,6 +1096,10 @@ class NuSVC(BaseSVC):
         where ``probA_`` and ``probB_`` are learned from the dataset [2]_. For
         more information on the multiclass case and training procedure see
         section 8 of [1]_.
+
+        .. deprecated:: 1.9
+            The attributes `probA_` and `probB_` are deprecated in version 1.9 and will
+            be removed in 1.11.
 
     shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
         Array dimensions of training vector ``X``.

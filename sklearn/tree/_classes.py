@@ -184,11 +184,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         return self.tree_.n_leaves
 
     def _support_missing_values(self, X):
-        return (
-            not issparse(X)
-            and self.__sklearn_tags__().input_tags.allow_nan
-            and self.monotonic_cst is None
-        )
+        return not issparse(X) and self.__sklearn_tags__().input_tags.allow_nan
 
     def _compute_missing_values_in_feature_mask(self, X, estimator_name=None):
         """Return boolean mask denoting if there are missing values for each feature.
@@ -411,10 +407,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 )
             valid_constraints = np.isin(monotonic_cst, (-1, 0, 1))
             if not np.all(valid_constraints):
-                unique_constaints_value = np.unique(monotonic_cst)
+                unique_constraints_value = np.unique(monotonic_cst)
                 raise ValueError(
                     "monotonic_cst must be None or an array-like of -1, 0 or 1, but"
-                    f" got {unique_constaints_value}"
+                    f" got {unique_constraints_value}"
                 )
             monotonic_cst = np.asarray(monotonic_cst, dtype=np.int8)
             if is_classifier(self):
@@ -849,8 +845,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         Monotonicity constraints are not supported for:
           - multiclass classifications (i.e. when `n_classes > 2`),
-          - multioutput classifications (i.e. when `n_outputs_ > 1`),
-          - classifications trained on data with missing values.
+          - multioutput classifications (i.e. when `n_outputs_ > 1`).
 
         The constraints hold over the probability of the positive class.
 
@@ -1098,15 +1093,10 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # XXX: nan is only supported for dense arrays, but we set this for
+        # XXX: nan values are only accepted in dense arrays, but we set this for
         # common test to pass, specifically: check_estimators_nan_inf
-        allow_nan = self.splitter in ("best", "random") and self.criterion in {
-            "gini",
-            "log_loss",
-            "entropy",
-        }
+        tags.input_tags.allow_nan = True
         tags.classifier_tags.multi_label = True
-        tags.input_tags.allow_nan = allow_nan
         return tags
 
 
@@ -1248,8 +1238,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         If monotonic_cst is None, no constraints are applied.
 
         Monotonicity constraints are not supported for:
-          - multioutput regressions (i.e. when `n_outputs_ > 1`),
-          - regressions trained on data with missing values.
+          - multioutput regressions (i.e. when `n_outputs_ > 1`).
 
         Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
 
@@ -1452,13 +1441,9 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # XXX: nan is only supported for dense arrays, but we set this for
-        # common test to pass, specifically: check_estimators_nan_inf
-        allow_nan = self.splitter in ("best", "random") and self.criterion in {
-            "squared_error",
-            "poisson",
-        }
-        tags.input_tags.allow_nan = allow_nan
+        # XXX: nan values are only accepted in dense arrays, but we set this for
+        # for common test to pass, specifically: check_estimators_nan_inf
+        tags.input_tags.allow_nan = True
         return tags
 
 
@@ -1610,8 +1595,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
         Monotonicity constraints are not supported for:
           - multiclass classifications (i.e. when `n_classes > 2`),
-          - multioutput classifications (i.e. when `n_outputs_ > 1`),
-          - classifications trained on data with missing values.
+          - multioutput classifications (i.e. when `n_outputs_ > 1`).
 
         The constraints hold over the probability of the positive class.
 
@@ -1739,13 +1723,9 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # XXX: nan is only supported for dense arrays, but we set this for the
+        # XXX: nan values are only accepted in dense arrays, but we set this for
         # common test to pass, specifically: check_estimators_nan_inf
-        allow_nan = self.splitter == "random" and self.criterion in {
-            "gini",
-            "log_loss",
-            "entropy",
-        }
+        allow_nan = self.splitter == "random"
         tags.classifier_tags.multi_label = True
         tags.input_tags.allow_nan = allow_nan
         return tags
@@ -1890,8 +1870,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         If monotonic_cst is None, no constraints are applied.
 
         Monotonicity constraints are not supported for:
-          - multioutput regressions (i.e. when `n_outputs_ > 1`),
-          - regressions trained on data with missing values.
+          - multioutput regressions (i.e. when `n_outputs_ > 1`).
 
         Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
 
@@ -1999,11 +1978,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # XXX: nan is only supported for dense arrays, but we set this for the
+        # XXX: nan values are only accepted in dense arrays, but we set this for
         # common test to pass, specifically: check_estimators_nan_inf
-        allow_nan = self.splitter == "random" and self.criterion in {
-            "squared_error",
-            "poisson",
-        }
+        allow_nan = self.splitter == "random"
         tags.input_tags.allow_nan = allow_nan
         return tags

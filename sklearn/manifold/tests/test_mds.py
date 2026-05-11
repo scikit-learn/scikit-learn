@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_almost_equal, assert_equal
 
-from sklearn.datasets import load_digits, load_iris
+from sklearn.datasets import load_digits, load_iris, make_blobs
 from sklearn.manifold import ClassicalMDS
 from sklearn.manifold import _mds as mds
 from sklearn.metrics import euclidean_distances
@@ -242,19 +242,6 @@ def test_convergence_does_not_depend_on_scale(metric_mds):
     assert_equal(n_iter1, n_iter2)
 
 
-# TODO(1.9): delete this test
-def test_future_warning_n_init():
-    X = np.array([[1, 1], [1, 4], [1, 5], [3, 3]])
-    sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
-
-    with pytest.warns(FutureWarning):
-        mds.smacof(sim)
-
-    with pytest.warns(FutureWarning):
-        mds.MDS(init="random").fit(X)
-
-
-# TODO(1.9): delete the n_init warning check
 # TODO(1.10): delete this test
 def test_future_warning_init_and_metric():
     X = np.array([[1, 1], [1, 4], [1, 5], [3, 3]])
@@ -276,11 +263,6 @@ def test_future_warning_init_and_metric():
     with pytest.warns(FutureWarning, match="The default value of `init`"):
         mds.MDS(metric="euclidean", n_init=1).fit(X)
 
-    # TODO (1.9): delete this check
-    # n_init=1 will become default in the future
-    with pytest.warns(FutureWarning, match="The default value of `n_init`"):
-        mds.MDS(metric="euclidean", init="random").fit(X)
-
     # providing both metric and dissimilarity raises an error
     with pytest.raises(ValueError, match="provided both `dissimilarity`"):
         mds.MDS(
@@ -288,8 +270,6 @@ def test_future_warning_init_and_metric():
         ).fit(X)
 
 
-# TODO(1.9): remove warning filter
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_classical_mds_init_to_mds():
     X, _ = load_iris(return_X_y=True)
 
@@ -303,3 +283,14 @@ def test_classical_mds_init_to_mds():
     Z2 = mds1.fit_transform(X, init=Z_classical)
 
     assert_allclose(Z1, Z2)
+
+
+@pytest.mark.parametrize("init", ["random", "classical_mds"])
+@pytest.mark.parametrize("n_components", [1, 2, 5, 10])
+def test_correct_n_components(init, n_components):
+    X, _ = make_blobs(n_features=10)
+
+    model = mds.MDS(init=init, n_components=n_components, n_init=1)
+    Z = model.fit_transform(X)
+
+    assert Z.shape[1] == n_components
