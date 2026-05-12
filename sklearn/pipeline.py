@@ -718,7 +718,7 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
         last_step = self._final_estimator
         with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
             subcontext = callback_ctx.subcontext(
-                task_name="fit-transform-final-estimator"
+                task_name="fit_transform-final-estimator"
             )
             if last_step != "passthrough":
                 with subcontext.propagate_callback_context(self._final_estimator):
