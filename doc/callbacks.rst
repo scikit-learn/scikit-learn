@@ -221,10 +221,11 @@ Callback Support Status
 The development of support for callbacks in estimators is in progress. Here is a list of
 the estimators that support callbacks:
 
-- :class:`~sklearn.linear_model.LogisticRegression`
-- :class:`~sklearn.pipeline.Pipeline`
-- :class:`~sklearn.preprocessing.StandardScaler`
-- :class:`~sklearn.model_selection.GridSearchCV`
-- :class:`~sklearn.model_selection.HalvingGridSearchCV`
-- :class:`~sklearn.model_selection.HalvingRandomSearchCV`
+- :class:`sklearn.linear_model.LogisticRegression`
+- :class:`sklearn.model_selection.GridSearchCV`
+- :class:`sklearn.model_selection.HalvingGridSearchCV`
+- :class:`sklearn.model_selection.HalvingRandomSearchCV`
+- :class:`sklearn.model_selection.RandomizedSearchCV`
+- :class:`sklearn.pipeline.Pipeline`
+- :class:`sklearn.preprocessing.StandardScaler`
 - :class:`~sklearn.model_selection.RandomizedSearchCV`
