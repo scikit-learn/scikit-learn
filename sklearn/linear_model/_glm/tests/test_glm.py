@@ -1162,9 +1162,10 @@ def test_poisson_regressor_array_api_compliance(
     array_namespace,
     device_name,
     dtype_name,
+    global_random_seed,
 ):
     xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
-    rng = np.random.default_rng(0)
+    rng = np.random.default_rng(global_random_seed)
     n_samples = 1000
     n_features = 3
     X_np = rng.normal(size=(n_samples, n_features))
