@@ -4153,7 +4153,7 @@ def calibration_error(
     Returns
     -------
     score : float
-        calibration error
+        Calibration error.
 
     Examples
     --------
