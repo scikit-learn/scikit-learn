@@ -4115,7 +4115,7 @@ def calibration_error(
     y_true : array-like of shape (n_samples,)
         True targets of a binary classification task.
 
-    y_prob : array-like of (n_samples,)
+    y_prob : array-like of shape (n_samples,)
         Probabilities of the positive class.
 
     sample_weight : array-like of shape (n_samples,), default=None
@@ -4123,10 +4123,11 @@ def calibration_error(
 
     norm : {'l1', 'l2', 'max'}, default='l2'
         Norm method. The l1-norm is the Expected Calibration Error (ECE),
-        and the max-norm corresponds to Maximum Calibration Error (MCE).
+        and the max-norm corresponds to Maximum Calibration Error (MCE) defined
+        in [1]_.
 
     n_bins : int, default=10
-       The number of bins to compute error on.
+        The number of bins to compute error on.
 
     strategy : {'uniform', 'quantile'}, default='uniform'
         Strategy used to define the widths of the bins.
@@ -4136,9 +4137,9 @@ def calibration_error(
         quantile
             All bins have the same number of points.
 
-    pos_label : int or str, default=None
-        Label of the positive class. If None, `pos_label` will be inferred in
-        the following manner:
+    pos_label : int, float, bool or str, default=None
+        Label of the positive class. If ``None``, `pos_label` will be inferred
+        in the following manner:
 
         * if `y_true` in {-1, 1} or {0, 1}, `pos_label` defaults to 1;
         * else if `y_true` contains string, an error will be raised and
@@ -4147,13 +4148,24 @@ def calibration_error(
           i.e. `np.unique(y_true)[-1]`.
 
     reduce_bias : bool, default=True
-        Add debiasing term as in Verified Uncertainty Calibration, A. Kumar.
+        Add debiasing term as in [2]_.
         Only effective for the l2-norm.
 
     Returns
     -------
     score : float
         Calibration error.
+
+    References
+    ----------
+    .. [1] `Chuan Guo, Geoff Pleiss, Yu Sun, Kilian Q. Weinberger. On
+           Calibration of Modern Neural Networks. Proceedings of the 34th
+           International Conference on Machine Learning, PMLR 70:1321-1330,
+           2017. <http://proceedings.mlr.press/v70/guo17a.html>`_
+
+    .. [2] `Ananya Kumar, Percy Liang, Tengyu Ma. Verified Uncertainty
+           Calibration. Advances in Neural Information Processing Systems
+           (NeurIPS), 2019. <https://arxiv.org/abs/1909.10155>`_
 
     Examples
     --------
