@@ -154,7 +154,7 @@ cdef class DensePartitioner:
                 self.end - self.start - n_missing,
                 use_three_way_partition=True,
             )
-            
+
             # if there are missing values found in this current candidate split, then
             # by definition the features cannot be constant
             if n_missing > 0:
@@ -217,7 +217,7 @@ cdef class DensePartitioner:
         # sorted_cat[i] = i-th categories sorted by ascending means
         for c in range(nc):
             sorted_cat[c] = c
-        sort(means, sorted_cat, nc)
+        simultaneous_sort(means, sorted_cat, nc, use_three_way_partition=True)
 
         # build offsets such that:
         # offsets[c] = sum( counts[x] for all x s.t. rank(x) <= rank(c) ) - 1
