@@ -120,17 +120,21 @@ the grid search::
 
     >>> from sklearn.model_selection import GridSearchCV
     >>> scoring_monitor = ScoringMonitor(scoring="accuracy")
-    >>> logreg = LogisticRegression().set_callbacks(scoring_monitor)
+    >>> logreg = LogisticRegression(max_iter=200).set_callbacks(scoring_monitor)
     >>> grid_search = GridSearchCV(logreg, {"C": [10, 1, 0.1]})
     >>> grid_search.fit(X, y)
-    GridSearchCV(estimator=LogisticRegression(),
+    GridSearchCV(estimator=LogisticRegression(max_iter=200),
                  param_grid={'C': [10, 1, 0.1]})
-    >>> scoring_monitor.get_logs().data_as_pandas # doctest: +SKIP
+    >>> scoring_monitor.get_logs().data_as_pandas[["estimator_name", "task_name", "task_id", "accuracy"]]
+              estimator_name   task_name  task_id  accuracy
+    0     LogisticRegression         fit        1  0.980...
+    1     LogisticRegression         fit        0  0.975...
+    2     LogisticRegression         fit        1  0.966...
+    3     LogisticRegression         fit        2  0.958...
+    4     LogisticRegression         fit        3  0.975...
+    ...                  ...         ...      ...       ...
 
-.. TODO: remove the doctest skips and add logs
-
-.. TODO: link to an example of how to use and plot the scores from the logs of
-..       ScoringMonitor
+.. TODO(callbacks): link to an example of how to use and plot the scores from the logs
 
 Auto-propagated callbacks
 -------------------------
@@ -158,10 +162,28 @@ Let's add progress bars to the example of the previous section, tuning the
 hyperparameters of a :class:`~sklearn.linear_model.LogisticRegression`. The
 :class:`~ProgressBar` callback needs to be registered on the grid search::
 
-    >>> grid_search.set_callbacks(ProgressBar()) # doctest: +SKIP
-    >>> grid_search.fit(X, y) # doctest: +SKIP
-
-.. TODO: add printed output
+    >>> grid_search.set_callbacks(ProgressBar())
+    GridSearchCV(estimator=LogisticRegression(max_iter=200),
+                 param_grid={'C': [10, 1, 0.1]})
+    >>> grid_search.fit(X, y)
+    GridSearchCV - fit                                                           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+      GridSearchCV - search #0                                                   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #0  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #3  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #6  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #9  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #12 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #1  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #4  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #7  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #10 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #13 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #2  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #5  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #8  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #11 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #14 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+      GridSearchCV - refit-with-best-params | LogisticRegression - fit #1        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
 
 .. dropdown:: Control the propagation depth
 
