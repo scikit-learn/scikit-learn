@@ -891,7 +891,7 @@ def resolve_solver_for_numpy(positive, return_intercept, is_sparse):
 
 class _BaseRidge(LinearModel, metaclass=ABCMeta):
     _parameter_constraints: dict = {
-        "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
+        "alpha": [Interval(Real, 0, None, closed="left"), "array-like"],
         "fit_intercept": ["boolean"],
         "copy_X": ["boolean"],
         "max_iter": [Interval(Integral, 1, None, closed="left"), None],
