@@ -13,9 +13,14 @@ from sklearn.neighbors._base import (
     KNeighborsMixin,
     NeighborsBase,
     RadiusNeighborsMixin,
+    _check_zero_weights,
     _get_weights,
 )
 from sklearn.utils._param_validation import StrOptions
+from sklearn.utils.arrayfuncs import _all_with_any_reduction_axis_1
+from sklearn.utils.validation import (
+    check_is_fitted,
+)
 
 
 class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
@@ -206,7 +211,7 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         # KNeighborsRegressor.metric is not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit the k-nearest neighbors regressor from the training dataset.
 
         Parameters
@@ -219,12 +224,15 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
                 (n_samples, n_outputs)
             Target values.
 
+        sample_weight : array-like of shape (n_samples,), default=None
+            Per-sample weights.
+
         Returns
         -------
         self : KNeighborsRegressor
             The fitted k-nearest neighbors regressor.
         """
-        return self._fit(X, y)
+        return self._fit(X, y, sample_weight)
 
     def predict(self, X):
         """Predict the target for the provided data.
@@ -242,7 +250,8 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         y : ndarray of shape (n_queries,) or (n_queries, n_outputs), dtype=int
             Target values.
         """
-        if self.weights == "uniform":
+        check_is_fitted(self, "_fit_method")
+        if self.weights == "uniform" and self._sample_weight is None:
             # In that case, we do not need the distances to perform
             # the weighting so we do not compute them.
             neigh_ind = self.kneighbors(X, return_distance=False)
@@ -255,6 +264,20 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         _y = self._y
         if _y.ndim == 1:
             _y = _y.reshape((-1, 1))
+
+        if self._sample_weight is not None:
+            if weights is None:
+                weights = self._sample_weight[neigh_ind]
+            else:
+                sample_weight = self._sample_weight[neigh_ind]
+                weights = weights * sample_weight
+
+        if (weights is not None) and (_all_with_any_reduction_axis_1(weights, value=0)):
+            raise ValueError(
+                "All neighbors of some sample is getting zero weights. "
+                "Please modify 'weights' to avoid this case if you are "
+                "using a user-defined function."
+            )
 
         if weights is None:
             y_pred = np.mean(_y[neigh_ind], axis=1)
@@ -438,7 +461,7 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
         # RadiusNeighborsRegressor.metric is not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit the radius neighbors regressor from the training dataset.
 
         Parameters
@@ -451,12 +474,15 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
                 (n_samples, n_outputs)
             Target values.
 
+        sample_weight : array-like of shape (n_samples,), default=None
+            Per-sample weights.
+
         Returns
         -------
         self : RadiusNeighborsRegressor
             The fitted radius neighbors regressor.
         """
-        return self._fit(X, y)
+        return self._fit(X, y, sample_weight)
 
     def predict(self, X):
         """Predict the target for the provided data.
@@ -485,6 +511,19 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
 
         empty_obs = np.full_like(_y[0], np.nan)
 
+        if self._sample_weight is not None:
+            # Weights is a jagged array so we have to do some fancy indexing
+            sample_weight = [self._sample_weight[idx] for idx in neigh_ind]
+            sample_weight = np.asarray(sample_weight, dtype=np.ndarray)
+            if weights is not None:
+                weights = weights * sample_weight
+            else:
+                # If we go down this path, each element of weights is an ndarray
+                weights = sample_weight
+
+        if weights is not None:
+            _check_zero_weights(weights)
+
         if weights is None:
             y_pred = np.array(
                 [
@@ -497,7 +536,7 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
             y_pred = np.array(
                 [
                     (
-                        np.average(_y[ind, :], axis=0, weights=weights[i])
+                        np.average(_y[ind, :], axis=0, weights=weights[i].astype(float))
                         if len(ind)
                         else empty_obs
                     )

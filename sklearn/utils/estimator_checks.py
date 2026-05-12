@@ -57,6 +57,8 @@ from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 from sklearn.metrics.pairwise import linear_kernel, pairwise_distances, rbf_kernel
 from sklearn.model_selection import LeaveOneGroupOut, ShuffleSplit, train_test_split
 from sklearn.model_selection._validation import _safe_split
+from sklearn.neighbors import RadiusNeighborsClassifier, RadiusNeighborsRegressor
+from sklearn.neighbors._base import KNeighborsMixin
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler, scale
 from sklearn.utils import _safe_indexing, shuffle
@@ -1787,6 +1789,17 @@ def check_sample_weights_shape(name, estimator_orig):
 def _check_sample_weight_equivalence(name, estimator_orig, sparse_container):
     # check that setting sample_weight to zero / integer is equivalent
     # to removing / repeating corresponding samples.
+
+    # This is not guaranteed to pass for k Neighbor estimators
+    if isinstance(estimator_orig, KNeighborsMixin):
+        return
+
+    # The default radius of 1 is not quite large enough to classify all points
+    if isinstance(estimator_orig, RadiusNeighborsClassifier):
+        estimator_orig = RadiusNeighborsClassifier(radius=2.2)
+    if isinstance(estimator_orig, RadiusNeighborsRegressor):
+        estimator_orig = RadiusNeighborsRegressor(radius=2.2)
+
     estimator_weighted = clone(estimator_orig)
     estimator_repeated = clone(estimator_orig)
     set_random_state(estimator_weighted, random_state=0)

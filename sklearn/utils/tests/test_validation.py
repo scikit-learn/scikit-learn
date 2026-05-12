@@ -878,7 +878,7 @@ def test_check_array_complex_data_error():
 
 
 def test_has_fit_parameter():
-    assert not has_fit_parameter(KNeighborsClassifier, "sample_weight")
+    assert has_fit_parameter(KNeighborsClassifier, "sample_weight")
     assert has_fit_parameter(RandomForestRegressor, "sample_weight")
     assert has_fit_parameter(SVR, "sample_weight")
     assert has_fit_parameter(SVR(), "sample_weight")
