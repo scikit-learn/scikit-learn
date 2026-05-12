@@ -8,4 +8,4 @@
   the `subsample` parameter, the weights are instead used to subsample the data
   (with replacement) and the bin edges are set using unweighted quantiles of the
   subsampled data. By
-  :user:`Shruti Nath <snath-xoc>` and :user:`Olivier Grisel <ogrisel>`
+  :user:`Shruti Nath <snath-xoc>` and :user:`Olivier Grisel <ogrisel>`.

@@ -6,4 +6,4 @@
   - :class:`tree.ExtraTreeRegressor`
   - :class:`ensemble.RandomForestRegressor`
   - :class:`ensemble.ExtraTreesRegressor`
-  By :user:`Arthur Lacote <cakedev0>`
+  By :user:`Arthur Lacote <cakedev0>`.

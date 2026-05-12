@@ -3,4 +3,4 @@
   :class:`ensemble.ExtraTreesRegressor` when missing values are present for the Poisson
   criterion. The Poisson criterion was returning invalid impurities (including
   negative values) when missing values were present.
-  By :user:`Arthur Lacote <cakedev0>`
+  By :user:`Arthur Lacote <cakedev0>`.
