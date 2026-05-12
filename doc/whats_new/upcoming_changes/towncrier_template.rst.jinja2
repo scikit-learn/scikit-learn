@@ -34,14 +34,6 @@ Refer to the :ref:`Metadata Routing User Guide <metadata_routing>` for
 more details.
 
 {% endif %}
-{% if section == 'Callbacks' %}
-The callback API has been expanded. This includes new callback utilities 
-and support in the following estimators.
-
-Refer to the :ref:`Callbacks User Guide <callbacks_user>` for
-more details.
-
-{% endif %}
 {# We loop over definitions because, contrary to content_per_category, it follow the category order as defined in pyproject.toml #}
 {% for category in definitions if category in content_per_category %}
 {% set content = content_per_category[category] %}
