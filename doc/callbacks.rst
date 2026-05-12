@@ -228,4 +228,3 @@ the estimators that support callbacks:
 - :class:`sklearn.model_selection.RandomizedSearchCV`
 - :class:`sklearn.pipeline.Pipeline`
 - :class:`sklearn.preprocessing.StandardScaler`
-- :class:`~sklearn.model_selection.RandomizedSearchCV`
