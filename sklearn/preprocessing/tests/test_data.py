@@ -799,6 +799,43 @@ def test_preprocessing_array_api_compliance(
 
 
 @pytest.mark.parametrize(
+    "estimator",
+    [
+        MaxAbsScaler(),
+        MinMaxScaler(),
+        KernelCenterer(),
+    ],
+    ids=_get_check_estimator_ids,
+)
+def test_preprocessing_integer_array_api_on_float32_only_device(estimator):
+    xp, device = _array_api_for_tests("torch", device_name="mps", dtype_name="float32")
+
+    # TODO: replace this torch/MPS-specific coverage by array-api-strict once
+    # https://github.com/data-apis/array-api-strict/pull/206 is released.
+    X_np = np.asarray([[1, 2, 3], [4, 5, 6], [7, 8, 10]], dtype=np.int64)
+    X_xp = xp.asarray(X_np, device=device)
+
+    with config_context(array_api_dispatch=True):
+        X_out = estimator.fit_transform(X_xp)
+
+    assert X_out.dtype == xp.float32
+
+
+def test_normalize_integer_array_api_on_float32_only_device():
+    xp, device = _array_api_for_tests("torch", device_name="mps", dtype_name="float32")
+
+    # TODO: replace this torch/MPS-specific coverage by array-api-strict once
+    # https://github.com/data-apis/array-api-strict/pull/206 is released.
+    X_np = np.asarray([[1, 2, 3], [4, 5, 6], [7, 8, 10]], dtype=np.int64)
+    X_xp = xp.asarray(X_np, device=device)
+
+    with config_context(array_api_dispatch=True):
+        X_out = normalize(X_xp)
+
+    assert X_out.dtype == xp.float32
+
+
+@pytest.mark.parametrize(
     "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
 )
