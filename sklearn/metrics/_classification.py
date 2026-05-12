@@ -4187,35 +4187,22 @@ def calibration_error(
     ... )
     0.25
     """
-    y_true = column_or_1d(y_true)
-    y_prob = column_or_1d(y_prob)
-    assert_all_finite(y_true)
-    assert_all_finite(y_prob)
-    check_consistent_length(y_true, y_prob, sample_weight)
-    if any(y_prob < 0) or any(y_prob > 1):
-        raise ValueError("y_prob has values outside of [0, 1] range")
-
-    labels = np.unique(y_true)
-    if len(labels) > 2:
-        raise ValueError(
-            "Only binary classification is supported. Provided labels %s." % labels
-        )
-
-    if pos_label is None:
-        try:
-            pos_label = _check_pos_label_consistency(pos_label, y_true)
-        except ValueError:
-            if labels.dtype.kind not in "OUS":
-                pos_label = labels[-1]
-            else:
-                raise
-    if len(labels) == 2 and pos_label not in labels:
-        raise ValueError("pos_label=%r is not a valid label: %r" % (pos_label, labels))
-    y_true = np.array(y_true == pos_label, int)
+    if pos_label is not None:
+        labels = np.unique(column_or_1d(y_true))
+        if len(labels) == 2 and pos_label not in labels:
+            raise ValueError(
+                "pos_label=%r is not a valid label: %r" % (pos_label, labels)
+            )
 
     norm_options = ("l1", "l2", "max")
     if norm not in norm_options:
         raise ValueError(f"norm has to be one of {norm_options}, got: {norm}.")
+
+    y_true, y_prob = _validate_binary_probabilistic_prediction(
+        y_true, y_prob, sample_weight, pos_label
+    )
+    y_true = y_true[:, 1]
+    y_prob = y_prob[:, 1]
 
     remapping = np.argsort(y_prob)
     y_true = y_true[remapping]

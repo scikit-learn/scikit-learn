@@ -3139,17 +3139,14 @@ def test_calibration_error_calibrated_predictions(norm, strategy):
     ratio = 2
     y_true = np.array([0, 0, 0, 1] + [0, 1, 1, 1])
     y_pred = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
-    assert_almost_equal(
-        calibration_error(
-            y_true,
-            y_pred,
-            n_bins=ratio,
-            norm=norm,
-            strategy=strategy,
-            reduce_bias=False,
-        ),
-        0.0,
-    )
+    assert calibration_error(
+        y_true,
+        y_pred,
+        n_bins=ratio,
+        norm=norm,
+        strategy=strategy,
+        reduce_bias=False,
+    ) == pytest.approx(0.0)
 
 
 @pytest.mark.parametrize("norm", ["l1", "l2", "max"])
@@ -3158,30 +3155,25 @@ def test_calibration_error_uncalibrated_predictions(norm, strategy):
     ratio = 2
     y_true = np.array([0, 0, 0, 0] + [1, 1, 1, 1])
     y_pred = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
-    assert_almost_equal(
-        calibration_error(
-            y_true,
-            y_pred,
-            n_bins=ratio,
-            norm=norm,
-            strategy=strategy,
-            reduce_bias=False,
-        ),
-        0.25,
-    )
+    assert calibration_error(
+        y_true,
+        y_pred,
+        n_bins=ratio,
+        norm=norm,
+        strategy=strategy,
+        reduce_bias=False,
+    ) == pytest.approx(0.25)
 
 
 def test_calibration_error_default_pos_label_single_class():
     y_true = np.array([0, 0])
     y_pred = np.array([0.1, 0.2])
 
-    assert_almost_equal(
-        calibration_error(y_true, y_pred, n_bins=2, norm="l1"),
-        calibration_error(y_true, y_pred, n_bins=2, norm="l1", pos_label=1),
+    assert calibration_error(y_true, y_pred, n_bins=2, norm="l1") == pytest.approx(
+        calibration_error(y_true, y_pred, n_bins=2, norm="l1", pos_label=1)
     )
-    assert_almost_equal(
-        calibration_error(y_true, y_pred, n_bins=2, norm="l1"),
-        0.15,
+    assert calibration_error(y_true, y_pred, n_bins=2, norm="l1") == pytest.approx(
+        0.15
     )
 
 
@@ -3191,56 +3183,54 @@ def test_calibration_error_sample_weights():
     y_pred = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
     sample_weight = np.array([1, 1, 1, 1] + [3, 3, 3, 3])
 
-    assert_almost_equal(
-        calibration_error(
-            y_true, y_pred, sample_weight=sample_weight.tolist(), n_bins=ratio
-        ),
-        calibration_error(y_true, y_pred, sample_weight=sample_weight, n_bins=ratio),
+    assert calibration_error(
+        y_true, y_pred, sample_weight=sample_weight.tolist(), n_bins=ratio
+    ) == pytest.approx(
+        calibration_error(y_true, y_pred, sample_weight=sample_weight, n_bins=ratio)
     )
-    assert_almost_equal(
-        calibration_error(
-            y_true, y_pred, sample_weight=sample_weight, n_bins=ratio, norm="l1"
-        ),
-        0.1875,
-    )
-    assert_almost_equal(
-        calibration_error(
-            y_true, y_pred, sample_weight=sample_weight, n_bins=ratio, norm="max"
-        ),
-        0.25,
-    )
-    assert_almost_equal(
-        calibration_error(
-            y_true,
-            y_pred,
-            sample_weight=sample_weight,
-            n_bins=ratio,
-            norm="l2",
-            reduce_bias=False,
-        ),
-        0.2165063,
-    )
+    assert calibration_error(
+        y_true, y_pred, sample_weight=sample_weight, n_bins=ratio, norm="l1"
+    ) == pytest.approx(0.1875)
+    assert calibration_error(
+        y_true, y_pred, sample_weight=sample_weight, n_bins=ratio, norm="max"
+    ) == pytest.approx(0.25)
+    assert calibration_error(
+        y_true,
+        y_pred,
+        sample_weight=sample_weight,
+        n_bins=ratio,
+        norm="l2",
+        reduce_bias=False,
+    ) == pytest.approx(0.2165063)
 
 
-def test_calibration_error_raises():
+@pytest.mark.parametrize(
+    "case, kwargs, err_msg",
+    [
+        ("inconsistent-lengths", {}, "inconsistent numbers of samples"),
+        ("probabilities-above-one", {}, "values greater than 1"),
+        ("probabilities-below-zero", {}, "values less than 0"),
+        ("invalid-pos-label", {"pos_label": 2}, "pos_label=2 is not a valid label"),
+        ("invalid-norm", {"norm": "foo"}, "norm has to be one of"),
+        ("invalid-strategy", {"strategy": "foo"}, "Invalid entry to 'strategy' input"),
+        ("multiclass-target", {}, "inferred from y_true is multiclass"),
+    ],
+)
+def test_calibration_error_raises(case, kwargs, err_msg):
     y_true = np.array([0, 0, 0, 1] + [1, 1, 1, 1])
-    y_pred = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
-    with pytest.raises(ValueError, match="inconsistent numbers of samples"):
-        calibration_error(y_true, y_pred[1:])
-    with pytest.raises(ValueError, match="values outside of \\[0, 1\\] range"):
-        calibration_error(y_true, y_pred + 1.0)
-    with pytest.raises(ValueError, match="values outside of \\[0, 1\\] range"):
-        calibration_error(y_true, y_pred - 1.0)
-    with pytest.raises(ValueError, match="pos_label=2 is not a valid label"):
-        calibration_error(y_true, y_pred, pos_label=2)
-    with pytest.raises(ValueError, match="norm has to be one of"):
-        calibration_error(y_true, y_pred, norm="foo")
-    with pytest.raises(ValueError, match="Invalid entry to 'strategy' input"):
-        calibration_error(y_true, y_pred, strategy="foo")
+    y_prob = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
 
-    y_true[0] = 2
-    with pytest.raises(ValueError, match="Only binary classification is supported"):
-        calibration_error(y_true, y_pred)
+    if case == "inconsistent-lengths":
+        y_prob = y_prob[1:]
+    elif case == "probabilities-above-one":
+        y_prob = y_prob + 1
+    elif case == "probabilities-below-zero":
+        y_prob = y_prob - 1
+    elif case == "multiclass-target":
+        y_true[0] = 2
+
+    with pytest.raises(ValueError, match=err_msg):
+        calibration_error(y_true, y_prob, **kwargs)
 
 
 def test_calibration_error_one_element_per_bin():
@@ -3248,30 +3238,26 @@ def test_calibration_error_one_element_per_bin():
     y_true = np.array([0, 1, 0, 1])
     y_pred = np.array([0.0, 0.25, 0.5, 0.75])
 
-    assert_almost_equal(
-        calibration_error(y_true, y_pred, n_bins=ratio, norm="max"), 0.75
+    assert calibration_error(y_true, y_pred, n_bins=ratio, norm="max") == pytest.approx(
+        0.75
     )
-    assert_almost_equal(
-        calibration_error(y_true, y_pred, n_bins=ratio, norm="l1"), 0.375
+    assert calibration_error(y_true, y_pred, n_bins=ratio, norm="l1") == pytest.approx(
+        0.375
     )
-    assert_almost_equal(
-        calibration_error(y_true, y_pred, n_bins=ratio, norm="l2", reduce_bias=False),
-        0.4677071,
-    )
+    assert calibration_error(
+        y_true, y_pred, n_bins=ratio, norm="l2", reduce_bias=False
+    ) == pytest.approx(0.4677071)
 
 
 def test_calibration_error_l2_reduce_bias_zero_debias_denominator():
-    assert_almost_equal(calibration_error([0], [0.4], n_bins=1, norm="l2"), 0.4)
-    assert_almost_equal(
-        calibration_error(
-            [0, 1],
-            [0.4, 0.6],
-            sample_weight=[0.25, 0.75],
-            n_bins=1,
-            norm="l2",
-        ),
-        0.2,
-    )
+    assert calibration_error([0], [0.4], n_bins=1, norm="l2") == pytest.approx(0.4)
+    assert calibration_error(
+        [0, 1],
+        [0.4, 0.6],
+        sample_weight=[0.25, 0.75],
+        n_bins=1,
+        norm="l2",
+    ) == pytest.approx(0.2)
 
 
 @pytest.mark.parametrize("norm", ["l1", "l2", "max"])
@@ -3281,17 +3267,14 @@ def test_calibration_error_one_bin(norm, strategy):
     y_true = np.array([1, 0, 0, 1])
     y_pred = np.array([0.25, 0.25, 0.75, 0.75])
 
-    assert_almost_equal(
-        calibration_error(
-            y_true,
-            y_pred,
-            n_bins=ratio,
-            norm=norm,
-            strategy=strategy,
-            reduce_bias=False,
-        ),
-        0.0,
-    )
+    assert calibration_error(
+        y_true,
+        y_pred,
+        n_bins=ratio,
+        norm=norm,
+        strategy=strategy,
+        reduce_bias=False,
+    ) == pytest.approx(0.0)
 
 
 def test_balanced_accuracy_score_unseen():
