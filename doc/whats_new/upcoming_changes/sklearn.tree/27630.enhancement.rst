@@ -1,0 +1,9 @@
+- :class:`tree.DecisionTreeClassifier`, :class:`tree.DecisionTreeRegressor`,
+  :class:`tree.ExtraTreeClassifier`, :class:`tree.ExtraTreeRegressor`,
+  :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`, :class:`ensemble.ExtraTreesClassifier`,
+  and :class:`ensemble.ExtraTreesRegressor` now support combining
+  `monotonic_cst` with missing values in dense training data. This builds on
+  the improvements to missing-value support for dense training data in
+  :pr:`32119`.
+  By :user:`Samuel O. Ronsin <samronsin>`.

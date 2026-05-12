@@ -184,11 +184,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         return self.tree_.n_leaves
 
     def _support_missing_values(self, X):
-        return (
-            not issparse(X)
-            and self.__sklearn_tags__().input_tags.allow_nan
-            and self.monotonic_cst is None
-        )
+        return not issparse(X) and self.__sklearn_tags__().input_tags.allow_nan
 
     def _compute_missing_values_in_feature_mask(self, X, estimator_name=None):
         """Return boolean mask denoting if there are missing values for each feature.
@@ -849,8 +845,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         Monotonicity constraints are not supported for:
           - multiclass classifications (i.e. when `n_classes > 2`),
-          - multioutput classifications (i.e. when `n_outputs_ > 1`),
-          - classifications trained on data with missing values.
+          - multioutput classifications (i.e. when `n_outputs_ > 1`).
 
         The constraints hold over the probability of the positive class.
 
@@ -1243,8 +1238,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         If monotonic_cst is None, no constraints are applied.
 
         Monotonicity constraints are not supported for:
-          - multioutput regressions (i.e. when `n_outputs_ > 1`),
-          - regressions trained on data with missing values.
+          - multioutput regressions (i.e. when `n_outputs_ > 1`).
 
         Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
 
@@ -1601,8 +1595,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
         Monotonicity constraints are not supported for:
           - multiclass classifications (i.e. when `n_classes > 2`),
-          - multioutput classifications (i.e. when `n_outputs_ > 1`),
-          - classifications trained on data with missing values.
+          - multioutput classifications (i.e. when `n_outputs_ > 1`).
 
         The constraints hold over the probability of the positive class.
 
@@ -1877,8 +1870,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         If monotonic_cst is None, no constraints are applied.
 
         Monotonicity constraints are not supported for:
-          - multioutput regressions (i.e. when `n_outputs_ > 1`),
-          - regressions trained on data with missing values.
+          - multioutput regressions (i.e. when `n_outputs_ > 1`).
 
         Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
 

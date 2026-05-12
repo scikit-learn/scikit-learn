@@ -12,10 +12,16 @@ from types import GeneratorType
 
 import numpy as np
 import pytest
-from scipy.stats import bernoulli, expon, uniform
+from scipy.stats import bernoulli, expon, randint, uniform
 
 from sklearn import config_context
 from sklearn.base import BaseEstimator, ClassifierMixin, clone, is_classifier
+from sklearn.callback.tests._utils import (
+    MaxIterEstimator,
+    NoCallbackEstimator,
+    RecordingAutoPropagatedCallback,
+    RecordingCallback,
+)
 from sklearn.cluster import KMeans
 from sklearn.compose import ColumnTransformer
 from sklearn.datasets import (
@@ -51,6 +57,7 @@ from sklearn.model_selection import (
     GroupKFold,
     GroupShuffleSplit,
     HalvingGridSearchCV,
+    HalvingRandomSearchCV,
     KFold,
     LeaveOneGroupOut,
     LeavePGroupsOut,
@@ -2091,7 +2098,7 @@ def test__custom_fit_no_run_search():
 
     with pytest.raises(NotImplementedError, match="_run_search not implemented."):
         # this should raise a NotImplementedError
-        BadSearchCV(SVC()).fit(X, y)
+        BadSearchCV(SVC(), cv=KFold(n_splits=2)).fit(X, y)
 
 
 # TODO: remove mark once loky bug is fixed:
@@ -2141,7 +2148,7 @@ def test_random_search_bad_cv():
     with pytest.raises(
         ValueError,
         match=(
-            "cv.split and cv.get_n_splits returned "
+            "cv.split and cv.get_n_splits return "
             "inconsistent results. Expected \\d+ "
             "splits, got \\d+"
         ),
@@ -2970,3 +2977,155 @@ def test_yield_masked_array_no_runtime_warning():
     with warnings.catch_warnings():
         warnings.simplefilter("error", RuntimeWarning)
         list(_yield_masked_array_for_each_param(candidate_params))
+
+
+def _searchcv_callback_test_cases(estimator, scoring):
+    return [
+        GridSearchCV(estimator(), {"max_iter": [1, 2, 3]}, cv=2, scoring=scoring),
+        RandomizedSearchCV(
+            estimator(),
+            {"max_iter": randint(1, 4)},
+            cv=2,
+            n_iter=3,
+            scoring=scoring,
+            random_state=42,
+        ),
+        HalvingGridSearchCV(
+            estimator(),
+            {"max_iter": [1, 2, 3]},
+            cv=2,
+            aggressive_elimination=True,
+            scoring=scoring,
+        ),
+        HalvingRandomSearchCV(
+            estimator(),
+            {"max_iter": randint(1, 4)},
+            cv=2,
+            aggressive_elimination=True,
+            scoring=scoring,
+            random_state=42,
+        ),
+    ]
+
+
+@pytest.mark.parametrize("refit", [True, False])
+@pytest.mark.parametrize(
+    "search",
+    _searchcv_callback_test_cases(NoCallbackEstimator, "accuracy"),
+)
+def test_search_callbacks_no_propagation(search, refit):
+    """Check number of hook calls when the sub-estimator doesn't support callbacks."""
+    callbacks = [RecordingCallback(), RecordingAutoPropagatedCallback()]
+    search.set_params(refit=refit).set_callbacks(*callbacks).fit(X, y)
+
+    # defining expected values
+    root = 1
+    search_task = 1
+    n_splits = search.n_splits_  # 2
+
+    if "Halving" in search.__class__.__name__:
+        n_halving_rounds = search.n_iterations_
+        n_evaluations = sum(n_cand * n_splits for n_cand in search.n_candidates_)
+        expected = root + (search_task + refit) + n_halving_rounds + n_evaluations
+    else:  # GridSearchCV, RandomizedSearchCV
+        n_candidates = 3
+        n_evaluations = n_candidates * n_splits
+        expected = root + (search_task + refit) + n_evaluations
+
+    # we expect only the hooks from `search` called:
+    for callback in callbacks:
+        assert callback.count_hooks("setup") == 1
+        assert callback.count_hooks("on_fit_task_begin") == expected
+        assert callback.count_hooks("on_fit_task_end") == expected
+        assert callback.count_hooks("teardown") == 1
+
+
+@pytest.mark.parametrize("refit", [True, False])
+@pytest.mark.parametrize(
+    "search",
+    _searchcv_callback_test_cases(MaxIterEstimator, "r2"),
+)
+def test_search_callbacks_propagation(search, refit):
+    """Check number of hook calls when the sub-estimator does support callbacks."""
+    callbacks = [RecordingCallback(), RecordingAutoPropagatedCallback()]
+    search.set_params(refit=refit).set_callbacks(*callbacks).fit(X, y)
+
+    # defining expected values
+    root = 1
+    search_task = 1
+    n_splits = search.n_splits_  # 2
+
+    if "Halving" in search.__class__.__name__:
+        n_halving_rounds = search.n_iterations_
+        n_evaluations = sum(n_cand * n_splits for n_cand in search.n_candidates_)
+        searchcv_tasks = root + (search_task + refit) + n_halving_rounds + n_evaluations
+    else:  # GridSearchCV, RandomizedSearchCV
+        n_candidates = 3
+        n_evaluations = n_candidates * n_splits
+        searchcv_tasks = root + (search_task + refit) + n_evaluations
+
+    for callback in callbacks:
+        assert callback.count_hooks("setup") == 1
+        if callback.__class__.__name__ == "RecordingCallback":
+            # Without propagation we expect only hook calls from the *SearchCV class.
+            assert callback.count_hooks("on_fit_task_begin") == searchcv_tasks
+            assert callback.count_hooks("on_fit_task_end") == searchcv_tasks
+        else:  # TestingAutoPropagatedCallback
+            # With propagation we expect additional calls from each inner estimator.
+            # Each MaxIterEstimator has 1 root + max_iter tasks, but we ignore the root
+            # because it's the same as the evaluation leaf of the searchcv class.
+            # There are n_splits * n_candidates such inner estimators.
+            search_inner_tasks = sum(
+                p["max_iter"]
+                for p in search.cv_results_["params"]
+                for _ in range(n_splits)
+            )
+            refit_inner_tasks = search.best_estimator_.n_iter_ if refit else 0
+            expected = searchcv_tasks + search_inner_tasks + refit_inner_tasks
+            assert callback.count_hooks("on_fit_task_begin") == expected
+            assert callback.count_hooks("on_fit_task_end") == expected
+        assert callback.count_hooks("teardown") == 1
+
+
+def test_search_callbacks_receive_sample_weight():
+    """Test that `sample_weight` gets passed to `callback.on_fit_task_*`.
+
+    Note this tests all *SearchCV classes that inherit from `BaseSearchCV`.
+    """
+    callback = RecordingCallback()
+    search = GridSearchCV(
+        MaxIterEstimator(), {"max_iter": [1, 2, 3]}, cv=2, scoring="accuracy"
+    ).set_callbacks(callback)
+    sample_weight = np.random.RandomState(0).randint(0, 5, size=y.shape[0])
+    search.fit(X, y, sample_weight=sample_weight)
+
+    evaluation_records = [
+        entry
+        for entry in callback.record
+        if entry["context"].task_name == "candidate-split-evaluation"
+    ]
+    assert evaluation_records
+    refit_records = [
+        entry
+        for entry in callback.record
+        if entry["context"].task_name == "refit-with-best-params"
+    ]
+    assert refit_records
+
+    for entry in evaluation_records + refit_records:
+        assert "sample_weight" in entry["kwargs"]["metadata"]
+        passed_weights = entry["kwargs"]["metadata"]["sample_weight"]
+        assert_array_equal(passed_weights, sample_weight)
+
+
+@pytest.mark.parametrize(
+    "search",
+    _searchcv_callback_test_cases(MaxIterEstimator, "r2"),
+)
+def test_search_callbacks_receive_search_instance(search):
+    """Test that all hooks receive the search instance as `estimator` argument."""
+    callback = RecordingCallback()
+    search.set_callbacks(callback).fit(X, y)
+
+    for entry in callback.record:
+        assert entry["estimator"] is search
