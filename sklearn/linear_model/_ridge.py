@@ -703,7 +703,7 @@ def _ridge_regression(
     # Some callers of this method might pass alpha as single
     # element array which already has been validated.
     if alpha is not None and not isinstance(
-            alpha, (type(xp.asarray([0.0])), np.ndarray)
+        alpha, (type(xp.asarray([0.0])), np.ndarray)
     ):
         alpha = check_scalar(
             alpha,

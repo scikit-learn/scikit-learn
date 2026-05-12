@@ -1507,13 +1507,9 @@ def test_ridge_classifier_multilabel_array_api(
     "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
 )
-def test_ridge_per_target_alpha_array_api(
-    array_namespace, device_name, dtype_name
-):
+def test_ridge_per_target_alpha_array_api(array_namespace, device_name, dtype_name):
     xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
-    X, y = make_regression(
-        n_targets=3, n_features=10, random_state=0
-    )
+    X, y = make_regression(n_targets=3, n_features=10, random_state=0)
     X_np = X.astype(dtype_name)
     y_np = y.astype(dtype_name)
     alphas = np.asarray([1e-2, 0.1, 1.0], dtype=dtype_name)
