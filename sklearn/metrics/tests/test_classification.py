@@ -3172,9 +3172,7 @@ def test_calibration_error_default_pos_label_single_class():
     assert calibration_error(y_true, y_pred, n_bins=2, norm="l1") == pytest.approx(
         calibration_error(y_true, y_pred, n_bins=2, norm="l1", pos_label=1)
     )
-    assert calibration_error(y_true, y_pred, n_bins=2, norm="l1") == pytest.approx(
-        0.15
-    )
+    assert calibration_error(y_true, y_pred, n_bins=2, norm="l1") == pytest.approx(0.15)
 
 
 def test_calibration_error_sample_weights():
