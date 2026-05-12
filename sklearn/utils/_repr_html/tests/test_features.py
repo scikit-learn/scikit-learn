@@ -165,6 +165,7 @@ def test_get_feature_names_out_exception():
     Xt = union.fit_transform(X)
     html = estimator_html_repr(union)
     assert "1 feature" in html
+    assert "<div> 0 features</div>" not in html
     assert "identity" in html
 
 
