@@ -2525,8 +2525,9 @@ def test_check_categorical_features(categorical_features, on_array, constructor_
 
 
 def test_r2_score_pa_chunked_array():
+    # https://github.com/scikit-learn/scikit-learn/issues/33993
     pytest.importorskip("pandas")
-    pytest.importorskip("pyarrow")
+    pytest.importorskip("pyarrow", minversion="16.0.0")
     import pandas as pd
     from pyarrow import chunked_array
 
