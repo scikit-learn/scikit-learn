@@ -522,3 +522,14 @@ def test_locally_defined_estimator():
     assert callback.count_hooks("on_fit_task_begin") == 1
     assert callback.count_hooks("on_fit_task_end") == 1
     assert callback.count_hooks("teardown") == 1
+
+
+def test_callback_context_repr():
+    """Smoke test for the repr of the callback context."""
+    estimator = MaxIterEstimator()
+    context = _make_callback_ctx(estimator, task_name="mytask", task_id=42)
+    expected_repr = (
+        "CallbackContext(estimator_name='MaxIterEstimator', task_name='mytask', "
+        "task_id=42)"
+    )
+    assert repr(context) == expected_repr

@@ -178,6 +178,14 @@ class CallbackContext:
         for context in self._children_map.values():
             yield from context
 
+    def __repr__(self):
+        return (
+            f"{self.__class__.__name__}("
+            f"estimator_name={self.estimator_name!r}, "
+            f"task_name={self.task_name!r}, "
+            f"task_id={self.task_id})"
+        )
+
     def _add_child(self, child_context):
         """Add `child_context` as a child of this context."""
         if child_context.task_id in self._children_map:
