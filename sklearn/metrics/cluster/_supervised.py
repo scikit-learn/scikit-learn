@@ -972,11 +972,11 @@ def adjusted_mutual_info_score(
 
     Parameters
     ----------
-    labels_true : int array-like of shape (n_samples,)
+    labels_true : array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets, called :math:`U` in
         the above formula.
 
-    labels_pred : int array-like of shape (n_samples,)
+    labels_pred : array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets, called :math:`V` in
         the above formula.
 
@@ -1108,10 +1108,10 @@ def normalized_mutual_info_score(
 
     Parameters
     ----------
-    labels_true : int array-like of shape (n_samples,)
+    labels_true : array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
-    labels_pred : int array-like of shape (n_samples,)
+    labels_pred : array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
     average_method : {'min', 'geometric', 'arithmetic', 'max'}, default='arithmetic'

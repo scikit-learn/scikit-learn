@@ -93,9 +93,7 @@ def test_get_namespace_ndarray_or_similar_default_with_dispatch(X):
 
 
 @skip_if_array_api_compat_not_configured
-@pytest.mark.parametrize(
-    "constructor_name", ["pyarrow", "dataframe", "polars", "series"]
-)
+@pytest.mark.parametrize("constructor_name", ["pyarrow", "pandas", "polars", "series"])
 def test_get_namespace_df_with_dispatch(constructor_name):
     """Test get_namespace on dataframes and series."""
 

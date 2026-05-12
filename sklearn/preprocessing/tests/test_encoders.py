@@ -1394,7 +1394,7 @@ def test_ohe_infrequent_user_cats_unknown_training_errors(kwargs):
 @pytest.mark.parametrize(
     "input_dtype, category_dtype", ["OO", "OU", "UO", "UU", "SO", "SU", "SS"]
 )
-@pytest.mark.parametrize("array_type", ["list", "array", "dataframe"])
+@pytest.mark.parametrize("array_type", ["list", "array", "pandas"])
 def test_encoders_string_categories(input_dtype, category_dtype, array_type):
     """Check that encoding work with object, unicode, and byte string dtypes.
     Non-regression test for:
