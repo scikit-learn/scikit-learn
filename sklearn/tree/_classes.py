@@ -150,8 +150,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         min_impurity_decrease,
         class_weight=None,
         ccp_alpha=0.0,
-        monotonic_cst=None,
         categorical_features=None,
+        monotonic_cst=None,
     ):
         self.criterion = criterion
         self.splitter = splitter
