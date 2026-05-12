@@ -18,7 +18,6 @@ from sklearn.datasets import make_blobs
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
 from sklearn.linear_model import ARDRegression
-from sklearn.metrics import r2_score
 
 # TODO: add this estimator into the _mocking module in a further refactoring
 from sklearn.metrics.tests.test_score_objects import EstimatorWithFit
@@ -2524,14 +2523,10 @@ def test_check_categorical_features(categorical_features, on_array, constructor_
     assert_allclose(result, [False, True, True, False])
 
 
-def test_r2_score_pa_chunked_array():
+def test_num_samples_pa_chunked_array():
     # https://github.com/scikit-learn/scikit-learn/issues/33993
-    pytest.importorskip("pandas")
-    pytest.importorskip("pyarrow", minversion="16.0.0")
-    import pandas as pd
+    pytest.importorskip("pyarrow")
     from pyarrow import chunked_array
 
-    y_true = pd.Series([0.1, 0.2, 0.3])
-    y_pred = chunked_array(y_true)
-    result = r2_score(y_true, y_pred)
-    assert result == 1
+    result = _num_samples(chunked_array([[0.1, 0.2, 0.3]]))
+    assert result == 3
