@@ -3,8 +3,6 @@
 
 # See _partitioner.pyx for details.
 
-from cython cimport floating
-
 from sklearn.utils._typedefs cimport (
     float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t, uint64_t
 )
@@ -215,9 +213,6 @@ cdef class SparsePartitioner:
         self,
         float64_t threshold
     ) noexcept nogil
-
-
-cdef void sort(floating* feature_values, intp_t* samples, intp_t n) noexcept nogil
 
 
 ctypedef fused array_data_type:
