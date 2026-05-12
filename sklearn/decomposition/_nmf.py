@@ -307,8 +307,8 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6, random_state=None):
 
     # NNDSVD initialization
     U, S, V = _randomized_svd(X, n_components, random_state=random_state)
-    W = np.zeros_like(U, order="C")
-    H = np.zeros_like(V, order="C")
+    W = np.zeros_like(U)
+    H = np.zeros_like(V)
 
     # The leading singular triplet is non-negative
     # so it can be used as is for initialization.
@@ -479,9 +479,11 @@ def _fit_coordinate_descent(
        Cichocki, Andrzej, and P. H. A. N. Anh-Huy. IEICE transactions on fundamentals
        of electronics, communications and computer sciences 92.3: 708-721, 2009.
     """
-    # so W and Ht are both in C order in memory
-    Ht = check_array(H.T, order="C")
-    X = check_array(X, accept_sparse="csr")
+    # ensure that W and Ht are both in C order in memory and that X is csr
+    W = np.ascontiguousarray(W)
+    Ht = np.ascontiguousarray(H.T)
+    if sp.issparse(X) and X.format == "csc":
+        X = X.tocsr()
 
     rng = check_random_state(random_state)
 
