@@ -189,3 +189,8 @@ Callback Support Status
 
 The development of support for callbacks in estimators is in progress. Here is a list of
 the estimators that support callbacks:
+
+- :class:`~sklearn.model_selection.GridSearchCV`
+- :class:`~sklearn.model_selection.HalvingGridSearchCV`
+- :class:`~sklearn.model_selection.HalvingRandomSearchCV`
+- :class:`~sklearn.model_selection.RandomizedSearchCV`

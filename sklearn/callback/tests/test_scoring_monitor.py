@@ -4,6 +4,7 @@
 import numpy as np
 import pytest
 
+from sklearn.base import clone
 from sklearn.callback import ScoringMonitor
 from sklearn.callback._scoring_monitor import ScoringMonitorLog
 from sklearn.callback.tests._utils import (
@@ -14,6 +15,7 @@ from sklearn.callback.tests._utils import (
 from sklearn.datasets import make_regression
 from sklearn.metrics import check_scoring, make_scorer
 from sklearn.utils._testing import assert_allclose
+from sklearn.utils.parallel import Parallel, delayed
 
 
 def _make_expected_output_MaxIterEstimator(
@@ -366,3 +368,39 @@ def test_get_logs_include_lineage_ancestor_retrieval(as_pandas):
 
     assert len(sibling_rows) == max_iter
     assert ancestors_info_path == expected_ancestors_info_path
+
+
+@pytest.mark.parametrize("backend", ["threading", "loky"])
+def test_scoring_monitor_no_callback_support(backend):
+    """Test ScoringMonitor within a parallelized function not supporting callbacks.
+
+    The expected result is multiple separate logs, similar to the result of multiple
+    sequential fit executions.
+    """
+
+    def clone_and_fit(estimator, X, y):
+        clone(estimator).fit(X, y)
+
+    def func(estimator, X, y, n_fits):
+        Parallel(n_jobs=2, backend=backend)(
+            delayed(clone_and_fit)(estimator, X, y) for _ in range(n_fits)
+        )
+
+    max_iter = 3
+    n_fits = 4
+
+    callback = ScoringMonitor(scoring="r2")
+    X, y = make_regression(n_samples=100, n_features=2, random_state=0)
+    func(
+        MaxIterEstimator(max_iter=max_iter).set_callbacks(callback), X, y, n_fits=n_fits
+    )
+    log_all = callback.get_logs(select="all")
+
+    expected_log = _make_expected_output_MaxIterEstimator(
+        max_iter, scoring="r2", as_pandas=False, X=X, y=y
+    )
+
+    assert len(log_all) == n_fits
+    for log in log_all:
+        assert log.data == expected_log
+        assert log.estimator_name == "MaxIterEstimator"

@@ -30,6 +30,7 @@ from sklearn.base import (
     clone,
     is_classifier,
 )
+from sklearn.callback import CallbackSupportMixin
 from sklearn.exceptions import NotFittedError
 from sklearn.metrics import check_scoring
 from sklearn.metrics._scorer import (
@@ -233,7 +234,7 @@ class ParameterSampler:
     Parameters
     ----------
     param_distributions : dict
-        Dictionary with parameters names (`str`) as keys and distributions
+        Dictionary with parameter names (`str`) as keys and distributions
         or lists of parameters to try. Distributions must provide a ``rvs``
         method for sampling (such as those from scipy.stats.distributions).
         If a list is given, it is sampled uniformly.
@@ -438,7 +439,9 @@ def _yield_masked_array_for_each_param(candidate_params):
         yield (key, ma)
 
 
-class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
+class BaseSearchCV(
+    MetaEstimatorMixin, CallbackSupportMixin, BaseEstimator, metaclass=ABCMeta
+):
     """Abstract base class for hyper parameter search with cross-validation."""
 
     _parameter_constraints: dict = {
@@ -772,7 +775,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         _search_estimator_has("classes_")(self)
         return self.best_estimator_.classes_
 
-    def _run_search(self, evaluate_candidates):
+    def _run_search(self, evaluate_candidates, *, callback_ctx=None):
         """Repeatedly calls `evaluate_candidates` to conduct a search.
 
         This method, implemented in sub-classes, makes it possible to
@@ -818,12 +821,15 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             that you're implementing. To prevent randomized splitters from
             being used, you may use _split._yields_constant_splits()
 
+        callback_ctx : `CallbackContext` object
+            Callback context for the best hyper-parameter search task.
+
         Examples
         --------
 
         ::
 
-            def _run_search(self, evaluate_candidates):
+            def _run_search(self, evaluate_candidates, callback_ctx=None):
                 'Try C=0.1 only if C=1 is better than C=10'
                 all_results = evaluate_candidates([{'C': 1}, {'C': 10}])
                 score = all_results['mean_test_score']
@@ -919,6 +925,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             )
         return accept
 
+    def _check_input_parameters(self, X, y, split_params):
+        pass
+
     def _get_routed_params_for_fit(self, params):
         """Get the parameters to be used for routing.
 
@@ -983,16 +992,26 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         self : object
             Instance of fitted estimator.
         """
-        estimator = self.estimator
         scorers, refit_metric = self._get_scorers()
 
         X, y = indexable(X, y)
         params = _check_method_params(X, params=params)
-
         routed_params = self._get_routed_params_for_fit(params)
 
-        cv_orig = check_cv(self.cv, y, classifier=is_classifier(estimator))
-        n_splits = cv_orig.get_n_splits(X, y, **routed_params.splitter.split)
+        metadata_callbacks = {"sample_weight": params.get("sample_weight", {})}
+        root_callback_ctx = self._init_callback_context(
+            max_subtasks=1 + (self.refit is not False)  # refit can be str or callable
+        ).call_on_fit_task_begin(estimator=self, X=X, y=y, metadata=metadata_callbacks)
+
+        self._checked_cv_orig = check_cv(
+            self.cv, y, classifier=is_classifier(self.estimator)
+        )
+        self._check_input_parameters(
+            X=X, y=y, split_params=routed_params.splitter.split
+        )
+        self.n_splits_ = self._checked_cv_orig.get_n_splits(
+            X, y, **routed_params.splitter.split
+        )
 
         base_estimator = clone(self.estimator)
 
@@ -1015,10 +1034,20 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             all_out = []
             all_more_results = defaultdict(list)
 
-            def evaluate_candidates(candidate_params, cv=None, more_results=None):
-                cv = cv or cv_orig
+            def evaluate_candidates(
+                candidate_params, cv=None, more_results=None, callback_ctx=None
+            ):
+                cv = cv or self._checked_cv_orig
                 candidate_params = list(candidate_params)
                 n_candidates = len(candidate_params)
+                n_splits = self.n_splits_
+
+                cv_splits = list(cv.split(X, y, **routed_params.splitter.split))
+                if len(cv_splits) != n_splits:
+                    raise ValueError(
+                        f"cv.split and cv.get_n_splits return inconsistent results. "
+                        f"Expected {n_splits} splits, got {len(cv_splits)}"
+                    )
 
                 if self.verbose > 0:
                     print(
@@ -1039,10 +1068,19 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                         split_progress=(split_idx, n_splits),
                         candidate_progress=(cand_idx, n_candidates),
                         **fit_and_score_kwargs,
+                        caller=self,
+                        callback_ctx=(
+                            callback_ctx.subcontext(
+                                task_name="candidate-split-evaluation",
+                                task_id=split_idx * n_candidates + cand_idx,
+                            )
+                            if callback_ctx is not None
+                            else None
+                        ),
                     )
                     for (cand_idx, parameters), (split_idx, (train, test)) in product(
                         enumerate(candidate_params),
-                        enumerate(cv.split(X, y, **routed_params.splitter.split)),
+                        enumerate(cv_splits),
                     )
                 )
 
@@ -1051,12 +1089,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                         "No fits were performed. "
                         "Was the CV iterator empty? "
                         "Were there no candidates?"
-                    )
-                elif len(out) != n_candidates * n_splits:
-                    raise ValueError(
-                        "cv.split and cv.get_n_splits returned "
-                        "inconsistent results. Expected {} "
-                        "splits, got {}".format(n_splits, len(out) // n_candidates)
                     )
 
                 _warn_or_raise_about_fit_failures(out, self.error_score)
@@ -1082,7 +1114,11 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
                 return results
 
-            self._run_search(evaluate_candidates)
+            if "callback_ctx" in signature(self._run_search).parameters:
+                self._run_search(evaluate_candidates, callback_ctx=root_callback_ctx)
+            else:
+                # custom search classes
+                self._run_search(evaluate_candidates)
 
             # multimetric is determined here because in the case of a callable
             # self.scoring the return type is only known after calling
@@ -1118,16 +1154,29 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 **clone(self.best_params_, safe=False)
             )
 
-            refit_start_time = time.time()
-            if y is not None:
-                self.best_estimator_.fit(X, y, **routed_params.estimator.fit)
-            else:
-                self.best_estimator_.fit(X, **routed_params.estimator.fit)
-            refit_end_time = time.time()
+            refit_subctx = root_callback_ctx.subcontext(
+                task_name="refit-with-best-params"
+            )
+
+            with refit_subctx.propagate_callback_context(self.best_estimator_):
+                refit_subctx.call_on_fit_task_begin(
+                    estimator=self, X=X, y=y, metadata=metadata_callbacks
+                )
+
+                refit_start_time = time.time()
+                if y is not None:
+                    self.best_estimator_.fit(X, y, **routed_params.estimator.fit)
+                else:
+                    self.best_estimator_.fit(X, **routed_params.estimator.fit)
+                refit_end_time = time.time()
             self.refit_time_ = refit_end_time - refit_start_time
 
             if hasattr(self.best_estimator_, "feature_names_in_"):
                 self.feature_names_in_ = self.best_estimator_.feature_names_in_
+
+            refit_subctx.call_on_fit_task_end(
+                estimator=self, X=X, y=y, metadata=metadata_callbacks
+            )
 
         # Store the only scorer not as a dict for single metric evaluation
         if isinstance(scorers, _MultimetricScorer):
@@ -1136,7 +1185,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             self.scorer_ = scorers
 
         self.cv_results_ = results
-        self.n_splits_ = n_splits
+
+        root_callback_ctx.call_on_fit_task_end(
+            estimator=self, X=X, y=y, metadata=metadata_callbacks
+        )
 
         return self
 
@@ -1640,9 +1692,19 @@ class GridSearchCV(BaseSearchCV):
         )
         self.param_grid = param_grid
 
-    def _run_search(self, evaluate_candidates):
+    def _run_search(self, evaluate_candidates, *, callback_ctx=None):
         """Search all candidates in param_grid"""
-        evaluate_candidates(ParameterGrid(self.param_grid))
+        candidate_params = ParameterGrid(self.param_grid)
+
+        search_ctx = callback_ctx.subcontext(
+            task_name="search",
+            max_subtasks=len(candidate_params) * self.n_splits_,
+            sequential_subtasks=False,
+        ).call_on_fit_task_begin(estimator=self)
+
+        evaluate_candidates(ParameterGrid(self.param_grid), callback_ctx=search_ctx)
+
+        search_ctx.call_on_fit_task_end(estimator=self)
 
 
 class RandomizedSearchCV(BaseSearchCV):
@@ -2031,10 +2093,18 @@ class RandomizedSearchCV(BaseSearchCV):
             return_train_score=return_train_score,
         )
 
-    def _run_search(self, evaluate_candidates):
+    def _run_search(self, evaluate_candidates, *, callback_ctx=None):
         """Search n_iter candidates from param_distributions"""
-        evaluate_candidates(
-            ParameterSampler(
-                self.param_distributions, self.n_iter, random_state=self.random_state
-            )
+        candidate_params = ParameterSampler(
+            self.param_distributions, self.n_iter, random_state=self.random_state
         )
+
+        search_ctx = callback_ctx.subcontext(
+            task_name="search",
+            max_subtasks=len(candidate_params) * self.n_splits_,
+            sequential_subtasks=False,
+        ).call_on_fit_task_begin(estimator=self)
+
+        evaluate_candidates(candidate_params, callback_ctx=search_ctx)
+
+        search_ctx.call_on_fit_task_end(estimator=self)
