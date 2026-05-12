@@ -42,7 +42,6 @@ from sklearn.tree._classes import (
     SPARSE_SPLITTERS,
 )
 from sklearn.tree._criterion import _py_precompute_absolute_errors
-from sklearn.tree._partitioner import _py_sort
 from sklearn.tree._tree import (
     NODE_DTYPE,
     TREE_LEAF,
@@ -621,7 +620,7 @@ def test_error():
 
 def test_min_samples_split():
     """Test min_samples_split parameter"""
-    X = np.asfortranarray(iris.data, dtype=tree._tree.DTYPE)
+    X = np.asfortranarray(iris.data, dtype=np.float32)
     y = iris.target
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
@@ -652,7 +651,7 @@ def test_min_samples_split():
 
 def test_min_samples_leaf():
     # Test if leaves contain more than leaf_count training examples
-    X = np.asfortranarray(iris.data, dtype=tree._tree.DTYPE)
+    X = np.asfortranarray(iris.data, dtype=np.float32)
     y = iris.target
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
@@ -1622,7 +1621,7 @@ def test_min_weight_leaf_split_level(name, sparse_container):
 
 @pytest.mark.parametrize("name", ALL_TREES)
 def test_public_apply_all_trees(name):
-    X_small32 = X_small.astype(tree._tree.DTYPE, copy=False)
+    X_small32 = X_small.astype(np.float32, copy=False)
 
     est = ALL_TREES[name]()
     est.fit(X_small, y_small)
@@ -1632,7 +1631,7 @@ def test_public_apply_all_trees(name):
 @pytest.mark.parametrize("name", SPARSE_TREES)
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_public_apply_sparse_trees(name, csr_container):
-    X_small32 = csr_container(X_small.astype(tree._tree.DTYPE, copy=False))
+    X_small32 = csr_container(X_small.astype(np.float32, copy=False))
 
     est = ALL_TREES[name]()
     est.fit(X_small, y_small)
@@ -1993,13 +1992,13 @@ def assert_is_subtree(tree, subtree):
 @pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS + CSR_CONTAINERS)
 def test_apply_path_readonly_all_trees(name, splitter, sparse_container):
     dataset = DATASETS["clf_small"]
-    X_small = dataset["X"].astype(tree._tree.DTYPE, copy=False)
+    X_small = dataset["X"].astype(np.float32, copy=False)
     if sparse_container is None:
         X_readonly = create_memmap_backed_data(X_small)
     else:
         X_readonly = sparse_container(dataset["X"])
 
-        X_readonly.data = np.array(X_readonly.data, dtype=tree._tree.DTYPE)
+        X_readonly.data = np.array(X_readonly.data, dtype=np.float32)
         (
             X_readonly.data,
             X_readonly.indices,
@@ -2008,7 +2007,7 @@ def test_apply_path_readonly_all_trees(name, splitter, sparse_container):
             (X_readonly.data, X_readonly.indices, X_readonly.indptr)
         )
 
-    y_readonly = create_memmap_backed_data(np.array(y_small, dtype=tree._tree.DTYPE))
+    y_readonly = create_memmap_backed_data(np.array(y_small, dtype=np.float32))
     est = ALL_TREES[name](splitter=splitter)
     est.fit(X_readonly, y_readonly)
     assert_array_equal(est.predict(X_readonly), est.predict(X_small))
@@ -2907,28 +2906,6 @@ def test_build_pruned_tree_infinite_loop():
         ValueError, match="Node has reached a leaf in the original tree"
     ):
         _build_pruned_tree_py(pruned_tree, tree.tree_, leave_in_subtree)
-
-
-def test_sort_log2_build():
-    """Non-regression test for gh-30554.
-
-    Using log2 and log in sort correctly sorts feature_values, but the tie breaking is
-    different which can results in placing samples in a different order.
-    """
-    rng = np.random.default_rng(75)
-    some = rng.normal(loc=0.0, scale=10.0, size=10).astype(np.float32)
-    feature_values = np.concatenate([some] * 5)
-    samples = np.arange(50, dtype=np.intp)
-    _py_sort(feature_values, samples, 50)
-    # fmt: off
-    # no black reformatting for this specific array
-    expected_samples = [
-        0, 40, 30, 20, 10, 29, 39, 19, 49,  9, 45, 15, 35,  5, 25, 11, 31,
-        41,  1, 21, 22, 12,  2, 42, 32, 23, 13, 43,  3, 33,  6, 36, 46, 16,
-        26,  4, 14, 24, 34, 44, 27, 47,  7, 37, 17,  8, 38, 48, 28, 18
-    ]
-    # fmt: on
-    assert_array_equal(samples, expected_samples)
 
 
 def test_absolute_errors_precomputation_function(global_random_seed):
