@@ -522,7 +522,11 @@ class _DOTTreeExporter(_BaseTreeExporter):
 
     def recurse(self, tree, node_id, criterion, parent=None, depth=0):
         if node_id == _tree.TREE_LEAF:
-            raise ValueError("Invalid node_id %s" % _tree.TREE_LEAF)
+            raise ValueError(
+                f"node_id must be in [0, {tree.node_count}). "
+                f"Got node_id={node_id}. "
+                "TREE_LEAF (-2) is used internally and is not a valid output node."
+            )
 
         left_child = tree.children_left[node_id]
         right_child = tree.children_right[node_id]
