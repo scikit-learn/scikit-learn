@@ -3188,6 +3188,11 @@ def test_no_sparse_with_categorical(name):
     ):
         Tree(categorical_features=[3, 4]).fit(X, y).predict(X_sparse)
 
+    with pytest.raises(
+        NotImplementedError, match="Categorical features not supported with sparse"
+    ):
+        Tree(categorical_features=[3, 4]).fit(X, y).predict(X_sparse, check_input=False)
+
     # Regression check: categorical_features=[0] should also trigger sparse rejection.
     X_fit_cat0 = X.copy()
     X_fit_cat0[:, 0] = rng.randint(0, 3, size=n_samples).astype(np.float64)
@@ -3220,6 +3225,30 @@ def test_predict_invalid_categorical_values(Tree, X_test, match):
     est = Tree(categorical_features=[0], random_state=0).fit(X, y)
     with pytest.raises(ValueError, match=match):
         est.predict(X_test)
+
+
+@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
+def test_fit_categorical_with_monotonic_constraint(Tree):
+    X = np.array([[0.0], [1.0], [0.0], [1.0]], dtype=np.float64)
+    y = np.array([0, 1, 0, 1])
+
+    with pytest.raises(
+        ValueError, match="A categorical feature cannot have a non-null monotonic"
+    ):
+        Tree(categorical_features=[0], monotonic_cst=[1], random_state=0).fit(X, y)
+
+
+def test_predict_sparse_int64_indices_raises():
+    X = np.array([[0.0], [1.0]], dtype=np.float64)
+    y = np.array([0, 1])
+    est = DecisionTreeClassifier(random_state=0).fit(X, y)
+
+    X_sparse = scipy.sparse.csr_matrix(X.astype(np.float32))
+    X_sparse.indices = X_sparse.indices.astype(np.int64)
+    X_sparse.indptr = X_sparse.indptr.astype(np.int64)
+
+    with pytest.raises(ValueError, match="No support for np.int64 index"):
+        est.predict(X_sparse)
 
 
 @pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
@@ -3270,6 +3299,16 @@ def test_predict_unknown_string_category(Tree):
 
     with pytest.raises(ValueError, match="Found unknown categories"):
         est.predict(np.array([["c"]], dtype=object))
+
+
+@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
+def test_predict_categorical_list_input(Tree):
+    X = np.array([["a"], ["b"], ["a"], ["b"]], dtype=object)
+    y = np.array([0, 1, 0, 1])
+    est = Tree(categorical_features=[0], random_state=0).fit(X, y)
+
+    assert_array_equal(est.predict([["a"], ["b"]]), y[:2])
+    assert_array_equal(est.predict([["a"], ["b"]], check_input=False), y[:2])
 
 
 @pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
