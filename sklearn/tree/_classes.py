@@ -25,6 +25,7 @@ from sklearn.base import (
     clone,
     is_classifier,
 )
+from sklearn.preprocessing import OrdinalEncoder
 from sklearn.tree import _criterion, _splitter
 from sklearn.tree._criterion import Criterion
 from sklearn.tree._splitter import Splitter
@@ -38,10 +39,12 @@ from sklearn.tree._tree import (
 )
 from sklearn.utils import (
     Bunch,
+    _safe_indexing,
     check_random_state,
     compute_sample_weight,
     metadata_routing,
 )
+from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._param_validation import Hidden, Interval, RealNotInt, StrOptions
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
@@ -50,6 +53,7 @@ from sklearn.utils.validation import (
     _check_n_features,
     _check_sample_weight,
     assert_all_finite,
+    check_array,
     check_is_fitted,
     validate_data,
 )
@@ -123,9 +127,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         "min_impurity_decrease": [Interval(Real, 0.0, None, closed="left")],
         "ccp_alpha": [Interval(Real, 0.0, None, closed="left")],
         "monotonic_cst": ["array-like", None],
-        # TODO: ultimately change this to follow Histgradboosting
         "categorical_features": [
             "array-like",
+            StrOptions({"from_dtype"}),
             None,
         ],
     }
@@ -241,10 +245,16 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         missing_values_in_feature_mask=None,
     ):
         random_state = check_random_state(self.random_state)
-        is_categorical_ = None
-        has_categorical = False
+        is_categorical_ = _check_categorical_features(X, self.categorical_features)
+        self.is_categorical_ = is_categorical_
+        has_categorical = is_categorical_ is not None
 
         if check_input:
+            if issparse(X) and has_categorical:
+                raise NotImplementedError(
+                    "Categorical features not supported with sparse inputs"
+                )
+
             # Need to validate separately here.
             # We can't pass multi_output=True because that would allow y to be
             # csr.
@@ -255,10 +265,37 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 dtype=np.float32, accept_sparse="csc", ensure_all_finite=False
             )
             check_y_params = dict(ensure_2d=False, dtype=None)
-            X, y = validate_data(
-                self, X, y, validate_separately=(check_X_params, check_y_params)
-            )
+            if has_categorical:
+                validate_data(self, X, reset=True, skip_check_array=True)
+            else:
+                X, y = validate_data(
+                    self, X, y, validate_separately=(check_X_params, check_y_params)
+                )
 
+        if has_categorical:
+            # Categorical feature selection must see the original container for
+            # names/dtypes, but tree fitting needs numeric values. Encode selected
+            # columns before the final numeric validation, preserving column order.
+            X = self._fit_transform_categorical_features(X)
+            if check_input:
+                X = check_array(X, input_name="X", estimator=self, **check_X_params)
+                _check_n_features(self, X, reset=False)
+                y = check_array(y, input_name="y", estimator=self, **check_y_params)
+            else:
+                X = np.asarray(X, dtype=np.float32)
+        else:
+            self._categorical_encoder = None
+
+        if check_input:
+            # Note: we must check missing after the categorical features 
+            # because it is assumed X is fully numeric by then. Thus, missing value mask
+            # need to be checked separately.
+            # 
+            # TODO: we can support missing values with categories by either:
+            # 1. sending them down randomly through the tree (no assumptions)
+            # 2. sending them down to missing_goes_to_left according to child with most samples
+            #  (assumes missing at random, where missingness correlates with most prevalent observed samples).
+            # To align this with HGBT, we would do #2.
             missing_values_in_feature_mask = (
                 self._compute_missing_values_in_feature_mask(X)
             )
@@ -269,13 +306,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     raise ValueError(
                         "No support for np.int64 index based sparse matrices"
                     )
-
-            is_categorical_ = self._check_categorical_feature_mask(X)
-            has_categorical = bool(np.any(is_categorical_))
-            if issparse(X) and has_categorical:
-                raise NotImplementedError(
-                    "Categorical features not supported with sparse inputs"
-                )
 
             if self.criterion == "poisson":
                 if np.any(y < 0):
@@ -292,9 +322,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         # Determine output settings
         n_samples, self.n_features_in_ = X.shape
         is_classification = is_classifier(self)
-        if is_categorical_ is None:
-            is_categorical_ = self._check_categorical_feature_mask(X)
-            has_categorical = bool(np.any(is_categorical_))
 
         y = np.atleast_1d(y)
         expanded_class_weight = None
@@ -527,41 +554,72 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         return self
 
-    def _check_categorical_feature_mask(self, X):
-        """Validate `categorical_features` and return a boolean mask.
+    def _check_categorical_missing(self, X):
+        """Reject scalar NaN values in categorical features.
 
-        This check runs before fit-time categorical value validation so that
-        sparse inputs with categorical features can be rejected before the
-        dense-only categorical value checks run.
+        ``X`` is converted to an object array so mixed string/object
+        categorical data can be scanned before ordinal encoding. This check
+        uses :func:`~sklearn.utils._missing.is_scalar_nan`, and therefore only
+        detects scalar NaN values such as ``np.nan`` and ``float("nan")``.
+
+        It does not call pandas or Polars missing-value APIs, so plain
+        ``pd.NA``, ``None``, or Polars nulls are not detected here if they
+        materialize as non-NaN Python objects. Missing values from pandas
+        categorical columns are still rejected when they materialize as
+        ``np.nan``.
         """
-        n_features = X.shape[1]
+        X = np.asarray(X, dtype=object)
+        missing_mask = np.fromiter(
+            (is_scalar_nan(x) for x in X.ravel()),
+            dtype=bool,
+            count=X.size,
+        )
+        if np.any(missing_mask):
+            raise ValueError("Missing values are not supported in categorical features")
 
-        if self.categorical_features is None:
-            return np.zeros(n_features, dtype=bool)
+    def _replace_categorical_features(self, X, X_categorical):
+        X = np.asarray(X, dtype=object).copy()
+        X[:, self.is_categorical_] = X_categorical
+        return X
 
-        categorical_features = np.asarray(self.categorical_features)
-        if categorical_features.size == 0:
-            return np.zeros(n_features, dtype=bool)
+    def _fit_transform_categorical_features(self, X):
+        """Encode categorical columns while preserving input feature order.
 
-        if categorical_features.dtype.kind not in ("i", "b"):
+        Fit the internal ordinal encoder on selected categorical columns, reject
+        scalar NaN values, and replace those columns with contiguous float32
+        codes. The returned data is ready for numeric validation with
+        ``check_array``.
+        """
+        if not hasattr(X, "shape"):
+            X = np.asarray(X, dtype=object)
+        X_categorical = _safe_indexing(X, self.is_categorical_, axis=1)
+        self._check_categorical_missing(X_categorical)
+        self._categorical_encoder = OrdinalEncoder(
+            dtype=np.float32,
+            handle_unknown="use_encoded_value",
+            unknown_value=-1,
+            encoded_missing_value=np.nan,
+        )
+        X_categorical = self._categorical_encoder.fit_transform(X_categorical)
+        return self._replace_categorical_features(X, X_categorical)
+
+    def _transform_categorical_features(self, X):
+        if not hasattr(X, "shape"):
+            X = np.asarray(X, dtype=object)
+        X_categorical = _safe_indexing(X, self.is_categorical_, axis=1)
+        self._check_categorical_missing(X_categorical)
+        X_categorical = self._categorical_encoder.transform(X_categorical)
+        unknown_mask = X_categorical == -1
+        if np.any(unknown_mask):
+            categorical_indices = np.flatnonzero(self.is_categorical_)
+            feature_idx = categorical_indices[
+                np.flatnonzero(unknown_mask.any(axis=0))[0]
+            ]
             raise ValueError(
-                "categorical_features must be an array-like of bool or int, "
-                f"got: {categorical_features.dtype.name}."
+                "Found unknown categories in categorical feature "
+                f"{feature_idx} during transform."
             )
-        if categorical_features.dtype.kind == "b" and categorical_features.shape != (
-            n_features,
-        ):
-            raise ValueError(
-                "categorical_features set as a boolean mask "
-                "must have shape (n_features,), got: "
-                f"{categorical_features.shape}"
-            )
-
-        is_categorical = _check_categorical_features(X, self.categorical_features)
-        if is_categorical is None:
-            return np.zeros(n_features, dtype=bool)
-
-        return is_categorical
+        return self._replace_categorical_features(X, X_categorical)
 
     def _validate_categorical_fit(self, X, monotonic_cst, is_categorical):
         """Validate fit-time categorical data and infer category counts.
@@ -589,6 +647,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             non-categorical features, stores ``-1``.
         """
         n_categories_in_feature = np.full(self.n_features_in_, -1, dtype=np.intp)
+        if is_categorical is None:
+            return n_categories_in_feature
+
         self._validate_categorical_values(X, is_categorical)
 
         for idx in np.where(is_categorical)[0]:
@@ -663,25 +724,43 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
     def _validate_X_predict(self, X, check_input):
         """Validate the training data on predict (probabilities)."""
+        has_categorical = np.any(self.n_categories_in_feature_ > 0)
         if check_input:
             if self._support_missing_values(X):
                 ensure_all_finite = "allow-nan"
             else:
                 ensure_all_finite = True
-            X = validate_data(
-                self,
-                X,
-                dtype=np.float32,
-                accept_sparse="csr",
-                reset=False,
-                ensure_all_finite=ensure_all_finite,
-            )
+
+            if has_categorical:
+                if issparse(X):
+                    raise NotImplementedError(
+                        "Categorical features not supported with sparse inputs"
+                    )
+                validate_data(self, X, reset=False, skip_check_array=True)
+                X = self._transform_categorical_features(X)
+                X = check_array(
+                    X,
+                    input_name="X",
+                    estimator=self,
+                    dtype=np.float32,
+                    accept_sparse="csr",
+                    ensure_all_finite=ensure_all_finite,
+                )
+                _check_n_features(self, X, reset=False)
+            else:
+                X = validate_data(
+                    self,
+                    X,
+                    dtype=np.float32,
+                    accept_sparse="csr",
+                    reset=False,
+                    ensure_all_finite=ensure_all_finite,
+                )
             if issparse(X) and (
                 X.indices.dtype != np.intc or X.indptr.dtype != np.intc
             ):
                 raise ValueError("No support for np.int64 index based sparse matrices")
 
-            has_categorical = np.any(self.n_categories_in_feature_ > 0)
             if issparse(X) and has_categorical:
                 raise NotImplementedError(
                     "Categorical features not supported with sparse inputs"
@@ -695,6 +774,13 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             # The number of features is checked regardless of `check_input`
             _check_n_features(self, X, reset=False)
+            if has_categorical:
+                if issparse(X):
+                    raise NotImplementedError(
+                        "Categorical features not supported with sparse inputs"
+                    )
+                X = self._transform_categorical_features(X)
+                X = np.asarray(X, dtype=np.float32)
         return X
 
     def predict(self, X, check_input=True):
@@ -1055,17 +1141,21 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         .. versionadded:: 1.4
 
-    categorical_features : array-like of int or bool of shape (n_features,) or
-        (n_categorical_features,), default=None
+    categorical_features : array-like of {bool, int, str} of shape (n_features,) or \
+        (n_categorical_features,), or "from_dtype", default=None
         Indicates which features are treated as categorical.
 
         - If array-like of int, the entries are feature indices.
         - If array-like of bool, it is a boolean mask over features.
+        - If array-like of str, the entries are feature names.
+        - If "from_dtype", dataframe columns with dtype "Categorical" or
+          "Enum" are treated as categorical features.
 
         Categorical features are only supported for dense inputs
         and single-output targets.
-        Values of categorical features must be contiguous integers in ``[0, 255]``
-        (missing values are not supported).
+        Values of categorical features are encoded internally. Each categorical
+        feature can have at most 256 categories and missing values are not
+        supported.
         Categorical features cannot have non-zero monotonic constraint.
 
         When these constraints are not met, ``fit`` will raise an error.
@@ -1116,6 +1206,10 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
+
+    is_categorical_ : ndarray of shape (n_features,), dtype=bool, or None
+        Boolean mask indicating categorical features. ``None`` when no features
+        are categorical.
 
     n_categories_in_feature_ : ndarray of shape (n_features,), dtype=np.intp
         Number of categories for each categorical feature. For non-categorical
@@ -1469,17 +1563,21 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         .. versionadded:: 1.4
 
-    categorical_features : array-like of int or bool of shape (n_features,) or
-        (n_categorical_features,), default=None
+    categorical_features : array-like of {bool, int, str} of shape (n_features,) or \
+        (n_categorical_features,), or "from_dtype", default=None
         Indicates which features are treated as categorical.
 
         - If array-like of int, the entries are feature indices.
         - If array-like of bool, it is a boolean mask over features.
+        - If array-like of str, the entries are feature names.
+        - If "from_dtype", dataframe columns with dtype "Categorical" or
+          "Enum" are treated as categorical features.
 
         Categorical features are only supported for dense inputs
         and single-output targets.
-        Values of categorical features must be contiguous integers in ``[0, 255]``
-        (missing values are not supported).
+        Values of categorical features are encoded internally. Each categorical
+        feature can have at most 256 categories and missing values are not
+        supported.
         Categorical features cannot have non-zero monotonic constraints.
 
         When these constraints are not met, ``fit`` will raise an error.
@@ -1521,6 +1619,10 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
+
+    is_categorical_ : ndarray of shape (n_features,), dtype=bool, or None
+        Boolean mask indicating categorical features. ``None`` when no features
+        are categorical.
 
     n_categories_in_feature_ : ndarray of shape (n_features,), dtype=np.intp
         Number of categories for each categorical feature. For non-categorical
@@ -1851,17 +1953,21 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
         .. versionadded:: 1.4
 
-    categorical_features : array-like of int or bool of shape (n_features,) or
-        (n_categorical_features,), default=None
+    categorical_features : array-like of {bool, int, str} of shape (n_features,) or \
+        (n_categorical_features,), or "from_dtype", default=None
         Indicates which features are treated as categorical.
 
         - If array-like of int, the entries are feature indices.
         - If array-like of bool, it is a boolean mask over features.
+        - If array-like of str, the entries are feature names.
+        - If "from_dtype", dataframe columns with dtype "Categorical" or
+          "Enum" are treated as categorical features.
 
         Categorical features are only supported for dense inputs
         and single-output targets.
-        Values of categorical features must be contiguous integers in ``[0, 255]``
-        (missing values are not supported).
+        Values of categorical features are encoded internally. Each categorical
+        feature can have at most 256 categories and missing values are not
+        supported.
         Categorical features cannot have non-zero monotonic constraints.
 
         When these constraints are not met, ``fit`` will raise an error.
@@ -1912,6 +2018,10 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
+
+    is_categorical_ : ndarray of shape (n_features,), dtype=bool, or None
+        Boolean mask indicating categorical features. ``None`` when no features
+        are categorical.
 
     n_categories_in_feature_ : ndarray of shape (n_features,), dtype=np.intp
         Number of categories for each categorical feature. For non-categorical
@@ -2147,17 +2257,21 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
         .. versionadded:: 1.4
 
-    categorical_features : array-like of int or bool of shape (n_features,) or
-        (n_categorical_features,), default=None
+    categorical_features : array-like of {bool, int, str} of shape (n_features,) or \
+        (n_categorical_features,), or "from_dtype", default=None
         Indicates which features are treated as categorical.
 
         - If array-like of int, the entries are feature indices.
         - If array-like of bool, it is a boolean mask over features.
+        - If array-like of str, the entries are feature names.
+        - If "from_dtype", dataframe columns with dtype "Categorical" or
+          "Enum" are treated as categorical features.
 
         Categorical features are only supported for dense inputs
         and single-output targets.
-        Values of categorical features must be contiguous integers in ``[0, 255]``
-        (missing values are not supported).
+        Values of categorical features are encoded internally. Each categorical
+        feature can have at most 256 categories and missing values are not
+        supported.
         Categorical features cannot have non-zero monotonic constraints.
 
         When these constraints are not met, ``fit`` will raise an error.
@@ -2196,6 +2310,10 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
+
+    is_categorical_ : ndarray of shape (n_features,), dtype=bool, or None
+        Boolean mask indicating categorical features. ``None`` when no features
+        are categorical.
 
     n_categories_in_feature_ : ndarray of shape (n_features,), dtype=np.intp
         Number of categories for each categorical feature. For non-categorical

@@ -60,6 +60,7 @@ from sklearn.tree._tree import Tree as CythonTree
 from sklearn.utils import compute_sample_weight
 from sklearn.utils._array_api import xpx
 from sklearn.utils._testing import (
+    _convert_container,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
@@ -3130,7 +3131,7 @@ def test_friedman_mse_deprecation():
     "categorical_features, match",
     [
         # Wrong dtype (float)
-        ([0.5, 1.5], "must be an array-like of bool or int"),
+        ([0.5, 1.5], "must be an array-like of bool, int or str"),
         # Boolean mask wrong length
         ([False, False, False], "boolean mask must have shape"),
         # Index too large
@@ -3142,8 +3143,9 @@ def test_friedman_mse_deprecation():
 def test_invalid_categorical(name, categorical_features, match):
     """Test that invalid categorical_features specifications raise errors."""
     Tree = ALL_TREES[name]
+    X_array = np.asarray(X)
     with pytest.raises(ValueError, match=match):
-        Tree(categorical_features=categorical_features).fit(X, y)
+        Tree(categorical_features=categorical_features).fit(X_array, y)
 
 
 @pytest.mark.parametrize("name", ALL_TREES)
@@ -3200,8 +3202,8 @@ def test_no_sparse_with_categorical(name):
     "X_test, match",
     [
         (np.array([[2.0]], dtype=np.float64), "Found unknown categories"),
-        (np.array([[0.5]], dtype=np.float64), "Found non-integer values"),
-        (np.array([[-1.0]], dtype=np.float64), "Found negative values"),
+        (np.array([[0.5]], dtype=np.float64), "Found unknown categories"),
+        (np.array([[-1.0]], dtype=np.float64), "Found unknown categories"),
         (
             np.array([[np.nan]], dtype=np.float64),
             "Missing values are not supported in categorical features",
@@ -3226,12 +3228,78 @@ def test_predict_invalid_categorical_values(Tree, X_test, match):
     [
         np.array([[0.0], [0.0], [2.0], [2.0]], dtype=np.float64),
         np.array([[1.0], [1.0], [2.0], [2.0]], dtype=np.float64),
+        np.array([["b"], ["b"], ["d"], ["d"]], dtype=object),
     ],
 )
-def test_fit_invalid_categorical_non_contiguous_values(Tree, X):
+def test_fit_categorical_non_contiguous_values(Tree, X):
     y = np.array([0, 0, 1, 1])
-    with pytest.raises(ValueError, match="contiguous integer categories starting at 0"):
+    est = Tree(categorical_features=[0], random_state=0).fit(X, y)
+
+    assert_array_equal(est.is_categorical_, [True])
+    assert_array_equal(est.n_categories_in_feature_, [2])
+    assert_array_equal(est.predict(X), y)
+
+
+@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
+def test_fit_categorical_too_many_categories(Tree):
+    X = np.array([f"cat_{idx}" for idx in range(257)], dtype=object).reshape(-1, 1)
+    y = np.arange(257) % 2
+
+    with pytest.raises(
+        ValueError, match=r"Values for categorical features.*\[0, 255\]"
+    ):
         Tree(categorical_features=[0], random_state=0).fit(X, y)
+
+
+@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
+def test_fit_categorical_missing_values(Tree):
+    X = np.array([["a"], [np.nan], ["b"], ["b"]], dtype=object)
+    y = np.array([0, 1, 0, 1])
+
+    with pytest.raises(
+        ValueError, match="Missing values are not supported in categorical features"
+    ):
+        Tree(categorical_features=[0], random_state=0).fit(X, y)
+
+
+@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
+def test_predict_unknown_string_category(Tree):
+    X = np.array([["a"], ["b"], ["a"], ["b"]], dtype=object)
+    y = np.array([0, 1, 0, 1])
+    est = Tree(categorical_features=[0], random_state=0).fit(X, y)
+
+    with pytest.raises(ValueError, match="Found unknown categories"):
+        est.predict(np.array([["c"]], dtype=object))
+
+
+@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
+@pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
+@pytest.mark.parametrize("categorical_features", [["f_cat"], "from_dtype"])
+def test_dataframe_categorical_features(Tree, dataframe_lib, categorical_features):
+    pytest.importorskip(dataframe_lib)
+    X = np.array(
+        [
+            [0.0, "low"],
+            [1.0, "high"],
+            [2.0, "low"],
+            [3.0, "high"],
+        ],
+        dtype=object,
+    )
+    X = _convert_container(
+        X,
+        dataframe_lib,
+        column_names=["f_num", "f_cat"],
+        categorical_feature_names=["f_cat"],
+    )
+    y = np.array([0, 1, 0, 1])
+
+    est = Tree(categorical_features=categorical_features, random_state=0).fit(X, y)
+
+    assert_array_equal(est.feature_names_in_, ["f_num", "f_cat"])
+    assert_array_equal(est.is_categorical_, [False, True])
+    assert_array_equal(est.n_categories_in_feature_, [-1, 2])
+    assert_array_equal(est.predict(X), y)
 
 
 @pytest.mark.parametrize(
