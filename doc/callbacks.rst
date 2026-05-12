@@ -202,3 +202,7 @@ the estimators that support callbacks:
 - :class:`~sklearn.linear_model.LogisticRegression`
 - :class:`~sklearn.pipeline.Pipeline`
 - :class:`~sklearn.preprocessing.StandardScaler`
+- :class:`~sklearn.model_selection.GridSearchCV`
+- :class:`~sklearn.model_selection.HalvingGridSearchCV`
+- :class:`~sklearn.model_selection.HalvingRandomSearchCV`
+- :class:`~sklearn.model_selection.RandomizedSearchCV`

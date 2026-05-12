@@ -7,3 +7,9 @@ cdef int simultaneous_sort(
     intp_t *idx,
     intp_t size,
 ) noexcept nogil
+
+cdef void sort(
+    floating* feature_values,
+    intp_t* samples,
+    intp_t n,
+) noexcept nogil

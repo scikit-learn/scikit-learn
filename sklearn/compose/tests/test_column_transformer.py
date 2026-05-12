@@ -202,7 +202,7 @@ def test_column_transformer_dataframe(constructor_name):
 
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     X_df = _convert_container(
-        X_array, constructor_name, columns_name=["first", "second"]
+        X_array, constructor_name, column_names=["first", "second"]
     )
 
     X_res_first = np.array([0, 1, 2]).reshape(-1, 1)
@@ -530,7 +530,7 @@ def test_column_transformer_list():
 @pytest.mark.parametrize("constructor_name", ["array", "pandas", "polars"])
 def test_column_transformer_sparse_stacking(csr_container, constructor_name):
     X = np.array([[0, 1, 2], [2, 4, 6]]).T
-    X = _convert_container(X, constructor_name, columns_name=["first", "second"])
+    X = _convert_container(X, constructor_name, column_names=["first", "second"])
 
     col_trans = ColumnTransformer(
         [("trans1", Trans(), [0]), ("trans2", SparseMatrixTrans(csr_container), 1)],

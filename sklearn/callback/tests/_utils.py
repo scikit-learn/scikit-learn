@@ -25,7 +25,10 @@ class RecordingCallback:
         self._listener_handle = open_listener(self.record.append)
 
     def setup(self, estimator, context):
-        send(self._listener_handle, {"name": "setup", "context": context})
+        send(
+            self._listener_handle,
+            {"name": "setup", "estimator": estimator, "context": context},
+        )
 
     def on_fit_task_begin(
         self,
@@ -41,6 +44,7 @@ class RecordingCallback:
             self._listener_handle,
             {
                 "name": "on_fit_task_begin",
+                "estimator": estimator,
                 "context": context,
                 "kwargs": {
                     "X": X,
@@ -65,6 +69,7 @@ class RecordingCallback:
             self._listener_handle,
             {
                 "name": "on_fit_task_end",
+                "estimator": estimator,
                 "context": context,
                 "kwargs": {
                     "X": X,
@@ -76,7 +81,10 @@ class RecordingCallback:
         )
 
     def teardown(self, estimator, context):
-        send(self._listener_handle, {"name": "teardown", "context": context})
+        send(
+            self._listener_handle,
+            {"name": "teardown", "estimator": estimator, "context": context},
+        )
 
     def count_hooks(self, hook_name):
         return len([rec for rec in self.record if rec["name"] == hook_name])
@@ -308,6 +316,9 @@ class NoCallbackEstimator(BaseEstimator):
             time.sleep(self.computation_intensity)  # Computation intensive task
 
         return self
+
+    def predict(self, X):
+        return np.zeros(X.shape[0])
 
 
 class MetaEstimator(CallbackSupportMixin, BaseEstimator):
