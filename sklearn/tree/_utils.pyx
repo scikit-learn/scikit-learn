@@ -22,7 +22,7 @@ cdef inline bint goes_left(
     if isnan(value):
         return missing_go_to_left
     elif is_categorical:
-        return in_bitset(split_value.categorical_bitset, <uint8_t> value)
+        return in_bitset(split_value.left_cat_bitset, <uint8_t> value)
     else:
         return value <= split_value.threshold
 

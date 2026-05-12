@@ -3551,7 +3551,7 @@ def test_single_tree_equivalence_with_hgbt_regressor_categorical():
         return (a, b)
 
     # DT root split set
-    dt_root_set = _bitset_to_set(tree.tree_.categorical_bitset[0], n_categories)
+    dt_root_set = _bitset_to_set(tree.tree_.left_cat_bitset[0], n_categories)
 
     # HGBT root split set
     hgb_tree = hist._predictors[0][0]

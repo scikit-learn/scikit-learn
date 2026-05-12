@@ -13,13 +13,13 @@ ctypedef union SplitValue:
     # for numerical features, where feature values less than or equal to the
     # threshold go left, and values greater than the threshold go right.
     #
-    # For categorical features, categorical_bitset stores the set of
+    # For categorical features, left_cat_bitset stores the set of
     # categories that go to the left child.
     float64_t threshold
     # Array size = ceil(MAX_NUM_CATEGORIES / 32).
     # Currently MAX_NUM_CATEGORIES = 256, so 256/32 = 8 words.
     # If you change MAX_NUM_CATEGORIES, update BITSET_DTYPE_C accordingly.
-    BITSET_DTYPE_C categorical_bitset
+    BITSET_DTYPE_C left_cat_bitset
 
 cdef struct Node:
     # Base storage structure for the nodes in a Tree object

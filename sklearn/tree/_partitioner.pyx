@@ -466,7 +466,7 @@ cdef class DensePartitioner:
                 &self.sorted_cat[0],
                 self.n_categories,
                 &self.counts[0],
-                split.categorical_bitset,
+                split.left_cat_bitset,
                 self.n_words
             )
             return split

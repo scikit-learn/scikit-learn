@@ -24,7 +24,6 @@ from scipy.sparse import issparse
 from scipy.sparse import csr_array
 
 from sklearn.utils import _align_api_if_sparse
-from sklearn.utils._bitset cimport BITSET_LENGTH
 from sklearn.utils._bitset cimport in_bitset
 
 from sklearn.tree._utils cimport goes_left
@@ -57,6 +56,9 @@ cdef intp_t _TREE_UNDEFINED = TREE_UNDEFINED
 
 MAX_NUM_CATEGORIES_PY = 256
 
+# Number of bits per bitset word. see: sklearn/utils/_bitset.pxd BITSET_DTYPE_C
+BITSET_LENGTH = 8
+
 # Note: an old simple method for getting the numpy dtype of Node
 # Build the corresponding numpy dtype for Node.
 # This works by casting `dummy` to an array of Node of length 1, which numpy
@@ -67,12 +69,12 @@ MAX_NUM_CATEGORIES_PY = 256
 
 # A 32‐byte union “SplitValue” ──
 #   – threshold is a float64 at offset 0
-#   – categorical_bitset is an array of eight uint32’s at offset 0 (i.e. fully overlapping)
+#   – left_cat_bitset is an array of eight uint32’s at offset 0 (i.e. fully overlapping)
 #   – total itemsize must be 32 (so union = max(size of FLOAT64=8, size of 8×uint32=32))
 # Number of uint32 words in the categorical bitset.
 # Must match BITSET_DTYPE_C in SplitValue (see _utils.pxd).
 SplitValue_dtype = np.dtype({
-    'names':   ['threshold', 'categorical_bitset'],
+    'names':   ['threshold', 'left_cat_bitset'],
     'formats': [np.float64,     (np.uint32, BITSET_LENGTH)],
     'offsets': [0,              0],
     'itemsize': BITSET_LENGTH * 4,
@@ -782,8 +784,8 @@ cdef class Tree:
         return self._get_node_ndarray()['split_value']['threshold'][:self.node_count]
 
     @property
-    def categorical_bitset(self):
-        return self._get_node_ndarray()['split_value']['categorical_bitset'][:self.node_count]
+    def left_cat_bitset(self):
+        return self._get_node_ndarray()['split_value']['left_cat_bitset'][:self.node_count]
 
     @property
     def impurity(self):
@@ -1001,9 +1003,9 @@ cdef class Tree:
             if self.n_categories[feature] > 0:
                 node.split_value.threshold = -INFINITY
                 memcpy(
-                    node.split_value.categorical_bitset,
-                    split_value.categorical_bitset,
-                    sizeof(node.split_value.categorical_bitset),
+                    node.split_value.left_cat_bitset,
+                    split_value.left_cat_bitset,
+                    sizeof(node.split_value.left_cat_bitset),
                 )
             else:
                 node.split_value.threshold = split_value.threshold
@@ -1197,7 +1199,7 @@ cdef class Tree:
                             node = &self.nodes[node.right_child]
                     elif self.n_categories[node.feature] > 0:
                         if in_bitset(
-                            node.split_value.categorical_bitset,
+                            node.split_value.left_cat_bitset,
                             <uint8_t> X_i_node_feature
                         ):
                             node = &self.nodes[node.left_child]

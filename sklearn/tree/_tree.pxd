@@ -13,11 +13,11 @@ from sklearn.tree._splitter cimport Splitter, SplitRecord
 
 from sklearn.tree._splitter cimport Splitter, SplitRecord
 from sklearn.tree._utils cimport SplitValue, Node
-from sklearn.utils._bitset cimport BITSET_INNER_BITS, BITSET_LENGTH
+from sklearn.utils._bitset cimport N_BITSETS
 
 
 cdef enum:
-    MAX_NUM_CATEGORIES = BITSET_LENGTH * BITSET_INNER_BITS
+    MAX_NUM_CATEGORIES = N_BITSETS  # = 8 * size(BITSET_INNER_DTYPE_C)
 
 
 cdef struct ParentInfo:
