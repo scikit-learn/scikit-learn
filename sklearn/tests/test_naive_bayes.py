@@ -159,7 +159,11 @@ def test_gnb_var_smoothing_increases_stored_variance(global_random_seed):
 
 
 def test_gnb_var_smoothing_stabilizes_constant_feature():
-    """A near-constant feature should not produce ``inf``/``nan`` predictions thanks to ``var_smoothing``."""
+    """A constant feature should not yield ``inf``/``nan`` predictions.
+
+    Without ``var_smoothing`` the zero variance of the first column would
+    make the Gaussian likelihood diverge.
+    """
     X_const = np.array([[1.0, 0.0], [1.0, 1.0], [1.0, 2.0], [1.0, 3.0]])
     y_const = np.array([0, 0, 1, 1])
     proba = GaussianNB().fit(X_const, y_const).predict_proba(X_const)

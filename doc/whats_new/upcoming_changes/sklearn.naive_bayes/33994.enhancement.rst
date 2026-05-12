@@ -1,0 +1,5 @@
+- Documented the role of ``var_smoothing`` and the derived ``epsilon_`` attribute
+  in :class:`naive_bayes.GaussianNB`, added a *Variance smoothing* subsection
+  to the user guide, and added regression tests covering the ``epsilon_``
+  formula and stability on near-constant features.
+  By :user:`Woo-Je Jung <wjddnwp29>`.
