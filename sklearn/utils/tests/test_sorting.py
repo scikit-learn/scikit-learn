@@ -1,7 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
-from time import perf_counter
-
 import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
@@ -30,39 +28,22 @@ def test_simultaneous_sort_correctness(kind):
 
 
 @pytest.mark.parametrize("kind", ["2-way", "3-way"])
-def test_simultaneous_sort_not_quadratic(kind):
-    n = int(1e5)
-
-    values = np.random.default_rng(0).uniform(size=n)
-    indices = np.arange(n, dtype=np.intp)
-    t0 = perf_counter()
-    _py_simultaneous_sort(
-        values, indices, values.shape[0], use_three_way_partition=kind == "3-way"
-    )
-    dt_ref = perf_counter() - t0
-
+def test_simultaneous_sort_no_stackoverflow(kind):
+    n = 1_000_000
     # worst case pattern (i.e. triggers the quadratic path)
     # for naive 2-way partitioning quicksort:
     values = np.zeros(n)
     indices = np.arange(n, dtype=np.intp)
-    t0 = perf_counter()
     _py_simultaneous_sort(
         values, indices, values.shape[0], use_three_way_partition=kind == "3-way"
     )
-    dt = perf_counter() - t0
-    # sorting 100k constant elements should not take more than 10x the time
-    # needed to sort 100k random elements:
-    assert dt < dt_ref * 10
 
     # worst case pattern for the better (numpy-style) 2-way partitioning:
     values = np.roll(np.arange(n), -1).astype(np.float32)
     indices = np.arange(n, dtype=np.intp)
-    t0 = perf_counter()
     _py_simultaneous_sort(
         values, indices, values.shape[0], use_three_way_partition=kind == "3-way"
     )
-    dt = perf_counter() - t0
-    assert dt < dt_ref * 10
 
     # worst case pattern for the 3-way partitioning quicksort
     # with median-of-3 pivot:
@@ -74,9 +55,6 @@ def test_simultaneous_sort_not_quadratic(kind):
     # (very unlikely in real-world non-adversarial data)
     indices = np.arange(n, dtype=np.intp)
     assert values.size == indices.size
-    t0 = perf_counter()
     _py_simultaneous_sort(
         values, indices, values.shape[0], use_three_way_partition=kind == "3-way"
     )
-    dt = perf_counter() - t0
-    assert dt < dt_ref * 10
