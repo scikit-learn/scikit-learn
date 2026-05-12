@@ -123,11 +123,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         "min_impurity_decrease": [Interval(Real, 0.0, None, closed="left")],
         "ccp_alpha": [Interval(Real, 0.0, None, closed="left")],
         "monotonic_cst": ["array-like", None],
-        # TODO: ultimately change this to follow Histgradboosting
-        "categorical_features": [
-            "array-like",
-            None,
-        ],
+        "categorical_features": ["array-like", StrOptions({"from_dtype"}), None],
     }
 
     @abstractmethod
@@ -146,8 +142,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         min_impurity_decrease,
         class_weight=None,
         ccp_alpha=0.0,
-        monotonic_cst=None,
         categorical_features=None,
+        monotonic_cst=None,
     ):
         self.criterion = criterion
         self.splitter = splitter
