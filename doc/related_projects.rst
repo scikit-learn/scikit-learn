@@ -77,11 +77,6 @@ enhance the functionality of scikit-learn's estimators.
 - `model-diagnostics <https://lorentzenchr.github.io/model-diagnostics/>`_ Tools for
   diagnostics and assessment of (machine learning) models (in Python).
 
-- `sklearn-evaluation <https://github.com/ploomber/sklearn-evaluation>`_
-  Machine learning model evaluation made easy: plots, tables, HTML reports,
-  experiment tracking and Jupyter notebook analysis. Visual analysis, model
-  selection, evaluation and diagnostics.
-
 - `yellowbrick <https://github.com/DistrictDataLabs/yellowbrick>`_ A suite of
   custom matplotlib visualizers for scikit-learn estimators to support visual feature
   analysis, model selection, evaluation, and diagnostics.
@@ -292,7 +287,7 @@ Other packages useful for data analysis and machine learning.
   Models are fully compatible with scikit-learn.
 
 Recommendation Engine packages
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------
 
 - `implicit <https://github.com/benfred/implicit>`_, Library for implicit
   feedback datasets.
@@ -304,7 +299,7 @@ Recommendation Engine packages
   datasets.
 
 Domain specific packages
-~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------
 
 - `scikit-network <https://scikit-network.readthedocs.io/>`_ Machine learning on graphs.
 

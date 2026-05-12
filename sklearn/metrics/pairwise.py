@@ -11,7 +11,7 @@ from numbers import Integral, Real
 
 import numpy as np
 from joblib import effective_n_jobs
-from scipy.sparse import csr_matrix, issparse
+from scipy.sparse import csr_array, issparse
 from scipy.spatial import distance
 
 from sklearn import config_context
@@ -40,6 +40,7 @@ from sklearn.utils._param_validation import (
     StrOptions,
     validate_params,
 )
+from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.extmath import row_norms, safe_sparse_dot
 from sklearn.utils.fixes import parse_version, sp_base_version
 from sklearn.utils.parallel import Parallel, delayed
@@ -1094,8 +1095,8 @@ def manhattan_distances(X, Y=None):
     n_x, n_y = X.shape[0], Y.shape[0]
 
     if issparse(X) or issparse(Y):
-        X = csr_matrix(X, copy=False)
-        Y = csr_matrix(Y, copy=False)
+        X = csr_array(X, copy=False)
+        Y = csr_array(Y, copy=False)
         X.sum_duplicates()  # this also sorts indices in-place
         Y.sum_duplicates()
         D = np.zeros((n_x, n_y))
@@ -1748,7 +1749,7 @@ def cosine_similarity(X, Y=None, dense_output=True):
 
     K = safe_sparse_dot(X_normalized, Y_normalized.T, dense_output=dense_output)
 
-    return K
+    return _align_api_if_sparse(K)
 
 
 @validate_params(
@@ -1982,7 +1983,16 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     # allocate 2D arrays using the C-contiguity convention by default.
     ret = xp.empty((X.shape[0], Y.shape[0]), device=device, dtype=dtype_float).T
     Parallel(backend="threading", n_jobs=n_jobs)(
-        fd(func, ret, s, X, Y[s, ...], **kwds)
+        fd(
+            func,
+            ret,
+            s,
+            X,
+            Y[s, ...],
+            # Y_norm_squared for euclidean distance is a precomputed per-sample norm
+            # passed through kwds; slice it to match the current Y chunk.
+            **{k: (v[s] if k == "Y_norm_squared" else v) for k, v in kwds.items()},
+        )
         for s in gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs))
     )
 
@@ -2042,7 +2052,7 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
 
     else:
         # Calculate all cells
-        out = xp.empty((X.shape[0], Y.shape[0]), dtype=dtype_float)
+        out = xp.empty((X.shape[0], Y.shape[0]), dtype=dtype_float, device=device)
         iterator = itertools.product(range(X.shape[0]), range(Y.shape[0]))
         for i, j in iterator:
             x = _get_slice(X, i)

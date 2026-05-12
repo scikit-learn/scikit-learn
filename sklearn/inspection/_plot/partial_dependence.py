@@ -33,7 +33,7 @@ class PartialDependenceDisplay:
     :ref:`Inspection Guide <partial_dependence>`.
 
     For an example on how to use this class, see the following example:
-    :ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_visualization_api.py`.
+    :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence_visualization_api.py`.
 
     .. versionadded:: 0.22
 
