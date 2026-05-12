@@ -148,8 +148,8 @@ grid = GridSearchCV(SVC(), param_grid=param_grid, cv=cv)
 grid.fit(X, y)
 
 print(
-    f"The best parameters are {grid.best_params_} \
-with a score of {grid.best_score_:0.2f}"
+    f"The best parameters are {grid.best_params_} "
+    f"with a score of {grid.best_score_:0.2f}"
 )
 
 # %%
