@@ -29,6 +29,7 @@ def test_simultaneous_sort_correctness(kind):
 
 @pytest.mark.parametrize("kind", ["2-way", "3-way"])
 def test_simultaneous_sort_no_stackoverflow(kind):
+    """Check that worst case inputs do not exceed the recursion stack limit."""
     n = 1_000_000
     # worst case pattern (i.e. triggers the quadratic path)
     # for naive 2-way partitioning quicksort:
