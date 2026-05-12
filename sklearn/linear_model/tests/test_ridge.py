@@ -1504,6 +1504,31 @@ def test_ridge_classifier_multilabel_array_api(
 
 
 @pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_ridge_per_target_alpha_array_api(
+    array_namespace, device_name, dtype_name
+):
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
+    X, y = make_regression(n_targets=2, random_state=0)
+    X_np = X.astype(dtype_name)
+    y_np = y.astype(dtype_name)
+    alphas = np.asarray([0.1, 1.0], dtype=dtype_name)
+    estimator = Ridge(alpha=alphas)
+
+    ridge_np = estimator.fit(X_np, y_np)
+    pred_np = ridge_np.predict(X_np)
+    with config_context(array_api_dispatch=True):
+        estimator = Ridge(alpha=xp.asarray(alphas))
+        X_xp, y_xp = xp.asarray(X_np, device=device), xp.asarray(y_np, device=device)
+        ridge_xp = estimator.fit(X_xp, y_xp)
+        pred_xp = ridge_xp.predict(X_xp)
+        assert pred_xp.shape == pred_np.shape == y.shape
+        assert_allclose(move_to(pred_xp, xp=np, device="cpu"), pred_np)
+
+
+@pytest.mark.parametrize(
     "array_namespace", yield_namespaces(include_numpy_namespaces=False)
 )
 def test_array_api_error_and_warnings_for_solver_parameter(array_namespace):
