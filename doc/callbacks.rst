@@ -37,30 +37,27 @@ method to register callbacks on them. The following example shows how to registe
     >>> from sklearn.callback import ProgressBar
     >>> from sklearn.linear_model import LogisticRegression
     >>> progress_bar = ProgressBar()
-    >>> logreg = LogisticRegression()
-    >>> logreg.set_callbacks(progress_bar) # doctest: +SKIP
-
-.. TODO: remove the doctest skip
+    >>> logreg = LogisticRegression(max_iter=200)
+    >>> logreg.set_callbacks(progress_bar)
+    LogisticRegression(max_iter=200)
 
 Now that the progress bar is registered on the estimator, calling its `fit` method will
 display a progress bar::
 
     >>> from sklearn.datasets import load_iris
     >>> X, y = load_iris(return_X_y=True)
-    >>> logreg.fit(X, y) # doctest: +SKIP
-    LogisticRegression - fit ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:03:12
-
-.. TODO: remove the doctest skip and add ellipsis for the time taken
+    >>> logreg.fit(X, y)
+    LogisticRegression - fit ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+    LogisticRegression(max_iter=200)
 
 Multiple callbacks can be registered on the same estimator, for example a
 :class:`~ScoringMonitor` callback can be registered in addition to the
 :class:`~ProgressBar`::
 
-    >>> from sklearn.callback import ScoringMonitor # doctest: +SKIP
-    >>> scoring_monitor = ScoringMonitor(scoring="precision") # doctest: +SKIP
-    >>> logreg.set_callbacks(progress_bar, scoring_monitor) # doctest: +SKIP
-
-.. TODO: remove the doctest skips
+    >>> from sklearn.callback import ScoringMonitor
+    >>> scoring_monitor = ScoringMonitor(scoring="accuracy")
+    >>> logreg.set_callbacks(progress_bar, scoring_monitor)
+    LogisticRegression(max_iter=200)
 
 Callback invocation
 *******************
@@ -80,9 +77,20 @@ ids are consecutive integers starting from 0. Some callbacks may provide additio
 contextual information about the tasks. Here's an example of the logs of the
 :class:`~ScoringMonitor`::
 
-    >>> logreg.fit(X, y) # doctest: +SKIP
-    LogisticRegression - fit ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:03:12
-    >>> scoring_monitor.get_logs(as_frame=True) # doctest: +SKIP
+    >>> logreg.fit(X, y)
+    LogisticRegression - fit ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+    LogisticRegression(max_iter=200)
+    >>> scoring_monitor.get_logs().data_as_pandas[["task_name", "task_id", "accuracy"]]
+          task_name  task_id  accuracy
+    0           fit        0  0.973...
+    1    lbfgs-iter        0  0.333...
+    2    lbfgs-iter        1  0.333...
+    3    lbfgs-iter        2  0.666...
+    4    lbfgs-iter        3  0.926...
+    ...
+
+.. The number of rows can vary depending on numerical specificities of the platform, so
+   we only report the first lines here.
 
 Usage with meta-estimators
 **************************
@@ -111,17 +119,33 @@ scores of the logistic regression model for each parameter combination and each 
 the grid search::
 
     >>> from sklearn.model_selection import GridSearchCV
-    >>> scoring = ScoringMonitor(scoring="precision") # doctest: +SKIP
-    >>> logreg = LogisticRegression().set_callbacks(scoring) # doctest: +SKIP
-    >>> grid_search = GridSearchCV(logreg, {"C": [10, 1, 0.1], "l1_ratio": [0, 1]})
+    >>> scoring_monitor = ScoringMonitor(scoring="accuracy")
+    >>> logreg = LogisticRegression(max_iter=200).set_callbacks(scoring_monitor)
+    >>> grid_search = GridSearchCV(logreg, {"C": [10, 1, 0.1]})
     >>> grid_search.fit(X, y)
-    GridSearchCV(estimator=LogisticRegression(),
-                 param_grid={'C': [10, 1, 0.1], 'l1_ratio': [0, 1]})
+    GridSearchCV(estimator=LogisticRegression(max_iter=200),
+                 param_grid={'C': [10, 1, 0.1]})
+    >>> log = scoring_monitor.get_logs().data_as_pandas
+    >>> # show the scores at the end of each fit of the search
+    >>> log[log["parent_task_id_path"] == (0,0)][["task_name", "task_id", "accuracy"]]
+       task_name  task_id  accuracy
+    1        fit        0  0.975...
+    2        fit        1  0.966...
+    3        fit        2  0.958...
+    4        fit        3  0.975...
+    5        fit        4  0.966...
+    6        fit        5  0.958...
+    7        fit        6  0.991...
+    8        fit        7  0.983...
+    9        fit        8  0.958...
+    10       fit        9  0.991...
+    11       fit       10  0.983...
+    12       fit       11  0.958...
+    13       fit       12  0.975...
+    14       fit       13  0.975...
+    15       fit       14  0.941...
 
-.. TODO: remove the doctest skips
-
-.. TODO: link to an example of how to use and plot the scores from the logs of
-..       ScoringMonitor
+.. TODO(callbacks): link to an example of how to use and plot the scores from the logs
 
 Auto-propagated callbacks
 -------------------------
@@ -149,10 +173,33 @@ Let's add progress bars to the example of the previous section, tuning the
 hyperparameters of a :class:`~sklearn.linear_model.LogisticRegression`. The
 :class:`~ProgressBar` callback needs to be registered on the grid search::
 
-    >>> grid_search.set_callbacks(ProgressBar()) # doctest: +SKIP
+    >>> grid_search.set_callbacks(ProgressBar())
+    GridSearchCV(estimator=LogisticRegression(max_iter=200),
+                 param_grid={'C': [10, 1, 0.1]})
     >>> grid_search.fit(X, y) # doctest: +SKIP
+    GridSearchCV - fit                                                           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+      GridSearchCV - search #0                                                   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #0  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #3  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #6  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #9  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #12 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #1  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #4  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #7  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #10 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #13 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #2  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #5  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #8  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #11 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #14 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+      GridSearchCV - refit-with-best-params | LogisticRegression - fit #1        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+    GridSearchCV(estimator=LogisticRegression(max_iter=200),
+                 param_grid={'C': [10, 1, 0.1]})
 
-.. TODO: add printed output
+.. The doctest skip is here because the CI uses much shorter lines which produces an
+   output that crops out the progress bars.
 
 .. dropdown:: Control the propagation depth
 
@@ -190,7 +237,10 @@ Callback Support Status
 The development of support for callbacks in estimators is in progress. Here is a list of
 the estimators that support callbacks:
 
-- :class:`~sklearn.model_selection.GridSearchCV`
-- :class:`~sklearn.model_selection.HalvingGridSearchCV`
-- :class:`~sklearn.model_selection.HalvingRandomSearchCV`
-- :class:`~sklearn.model_selection.RandomizedSearchCV`
+- :class:`sklearn.linear_model.LogisticRegression`
+- :class:`sklearn.model_selection.GridSearchCV`
+- :class:`sklearn.model_selection.HalvingGridSearchCV`
+- :class:`sklearn.model_selection.HalvingRandomSearchCV`
+- :class:`sklearn.model_selection.RandomizedSearchCV`
+- :class:`sklearn.pipeline.Pipeline`
+- :class:`sklearn.preprocessing.StandardScaler`
