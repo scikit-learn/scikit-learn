@@ -184,6 +184,8 @@ hyperparameters of a :class:`~sklearn.linear_model.LogisticRegression`. The
         GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #11 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
         GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #14 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
       GridSearchCV - refit-with-best-params | LogisticRegression - fit #1        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+    GridSearchCV(estimator=LogisticRegression(max_iter=200),
+                 param_grid={'C': [10, 1, 0.1]})
 
 .. dropdown:: Control the propagation depth
 
