@@ -165,7 +165,7 @@ hyperparameters of a :class:`~sklearn.linear_model.LogisticRegression`. The
     >>> grid_search.set_callbacks(ProgressBar())
     GridSearchCV(estimator=LogisticRegression(max_iter=200),
                  param_grid={'C': [10, 1, 0.1]})
-    >>> grid_search.fit(X, y)
+    >>> grid_search.fit(X, y) # doctest: +SKIP
     GridSearchCV - fit                                                           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
       GridSearchCV - search #0                                                   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
         GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #0  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
@@ -186,6 +186,9 @@ hyperparameters of a :class:`~sklearn.linear_model.LogisticRegression`. The
       GridSearchCV - refit-with-best-params | LogisticRegression - fit #1        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
     GridSearchCV(estimator=LogisticRegression(max_iter=200),
                  param_grid={'C': [10, 1, 0.1]})
+
+.. The doctest skip is here because the CI uses much shorter lines which produces an
+   output that crops out the progress bars.
 
 .. dropdown:: Control the propagation depth
 
