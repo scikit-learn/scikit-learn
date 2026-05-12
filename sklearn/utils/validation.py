@@ -378,7 +378,7 @@ def _num_samples(x):
             return x.shape[0]
 
     if nw.dependencies.is_into_dataframe(x) or nw.dependencies.is_into_series(x):
-        return nw.from_native(x).shape[0]
+        return nw.from_native(x, allow_series=True).shape[0]
 
     if not hasattr(x, "__len__") and not hasattr(x, "shape"):
         if hasattr(x, "__array__"):
