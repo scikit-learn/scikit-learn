@@ -16,6 +16,7 @@ from scipy.linalg import LinAlgWarning, svd
 from sklearn import config_context
 from sklearn._loss import HalfMultinomialLoss
 from sklearn.base import clone
+from sklearn.callback.tests._utils import RecordingCallback
 from sklearn.datasets import load_iris, make_classification, make_low_rank_matrix
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LogisticRegression, LogisticRegressionCV, SGDClassifier
@@ -2898,3 +2899,99 @@ def test_logistic_regression_array_api_warm_start(
         lr.fit(X_xp, y_xp)
         lr.predict(X_xp)
         lr.fit(X_xp, y_xp)
+
+
+# TODO(callbacks): also test for other solvers when they get supported.
+@pytest.mark.parametrize("max_iter", [0, 2, 1000])
+def test_logistic_regression_callback_support(max_iter):
+    """Test the callback support for LogisticRegression."""
+    X, y = make_classification(n_features=4, random_state=0)
+
+    cb = RecordingCallback()
+    lr = LogisticRegression(solver="lbfgs", max_iter=max_iter).set_callbacks(cb)
+    lr.fit(X, y)
+
+    assert cb.count_hooks("setup") == 1
+    assert cb.count_hooks("teardown") == 1
+    # 1 root for fit + number of iteration (always at least one) + 1 empty task
+    assert cb.count_hooks("on_fit_task_begin") == 1 + max(lr.n_iter_, 1) + 1
+    assert cb.count_hooks("on_fit_task_end") == 1 + max(lr.n_iter_, 1) + 1
+
+
+# TODO(callbacks): also test for other solvers when they get supported.
+@pytest.mark.parametrize("n_classes", [2, 3])
+@pytest.mark.parametrize("fit_intercept", [True, False])
+def test_logistic_regression_callback_fitted_estimator(n_classes, fit_intercept):
+    """Check the fitted_estimator in callback hooks.
+
+    It is able to predict, with learned parameters identical to the ones obtained if the
+    owner estimator had been fitted with the same number of iterations.
+    """
+    X, y = make_classification(
+        n_features=4,
+        n_informative=4,
+        n_redundant=0,
+        n_classes=n_classes,
+        random_state=0,
+    )
+    cb = RecordingCallback()
+
+    lr_params = {"solver": "lbfgs", "fit_intercept": fit_intercept}
+    lr = LogisticRegression(**lr_params).set_callbacks(cb).fit(X, y)
+    n_iter = lr.n_iter_[0]
+
+    iter_begins = [
+        rec
+        for rec in cb.record
+        if rec["name"] == "on_fit_task_begin" and "iter" in rec["context"].task_name
+    ]
+    iter_ends = [
+        rec
+        for rec in cb.record
+        if rec["name"] == "on_fit_task_end" and "iter" in rec["context"].task_name
+    ]
+
+    for i, (iter_begin, iter_end) in enumerate(zip(iter_begins, iter_ends)):
+        assert iter_begin["context"].task_id == i
+        assert iter_end["context"].task_id == i
+
+        if i > 0:
+            est = iter_begin["kwargs"]["fitted_estimator"]
+            expected_lr = LogisticRegression(**lr_params, max_iter=i).fit(X, y)
+            assert_allclose(est.coef_, expected_lr.coef_)
+            assert_allclose(est.intercept_, expected_lr.intercept_)
+            assert_allclose(est.predict(X), expected_lr.predict(X))
+
+        if i < n_iter:
+            est = iter_end["kwargs"]["fitted_estimator"]
+            expected_lr = LogisticRegression(**lr_params, max_iter=i + 1).fit(X, y)
+            assert_allclose(est.coef_, expected_lr.coef_)
+            assert_allclose(est.intercept_, expected_lr.intercept_)
+            assert_allclose(est.predict(X), expected_lr.predict(X))
+        else:
+            # Extra empty task with lbfgs solver.
+            assert iter_end["kwargs"]["fitted_estimator"] is None
+
+
+# TODO(1.10): Uncomment when scipy callbacks can be interrupted with StopIteration in
+# min dependencies (i.e. when min scipy version > 1.10 and StopIteration gets used
+# in the scipy callback function, see TODO in _make_scipy_callback_fun).
+# TODO(callbacks): also test for other solvers when they get supported.
+# def test_logistic_regression_fit_stopped_by_callback():
+#     """Test that a callback can interrupt the fit."""
+#     X, y = load_iris(return_X_y=True)
+#     cb = StopFitCallback()
+#     lr = LogisticRegression(solver="lbfgs").set_callbacks(cb)
+#     lr.fit(X, y)
+#     assert lr.n_iter_ == 1
+
+
+# TODO(callbacks): update/remove as more solvers get supported.
+def test_logistic_regression_callback_support_warning():
+    """Test the warning message when trying to set a callback with solver!='lbfgs'."""
+    cb = RecordingCallback()
+    with pytest.warns(
+        UserWarning,
+        match="Callbacks are only supported in LogisticRegression for solver='lbfgs'",
+    ):
+        LogisticRegression(solver="liblinear").set_callbacks(cb)

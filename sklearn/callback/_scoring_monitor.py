@@ -170,6 +170,7 @@ class ScoringMonitor:
         ]
 
         scores = {}
+        metadata = {} if metadata is None else metadata
         if X is not None and y is not None:
             scorer = self._estimator_scorers[estimator]
             scores.update(scorer(fitted_estimator, X, y, **metadata))
