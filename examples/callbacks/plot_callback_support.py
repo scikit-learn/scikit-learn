@@ -18,7 +18,7 @@ In scikit-learn, callbacks take the form of classes following a `protocol
 <https://typing.python.org/en/latest/spec/protocol.html>`__. This protocol
 requires the callback classes to implement specific methods (referred to as callback
 hooks) which will be called at specific steps of the fitting of an estimator or a
-meta-estimator. These hooks are :meth:`~callback._base.Callback.setup`
+meta-estimator. These hooks are :meth:`~callback._base.Callback.setup`,
 :meth:`~callback._base.Callback.on_fit_task_begin`,
 :meth:`~callback._base.Callback.on_fit_task_end` and
 :meth:`~callback._base.Callback.teardown`. The :meth:`~callback._base.Callback.setup`
@@ -29,7 +29,7 @@ setting up and shutting down the callback. The
 :meth:`~callback._base.Callback.on_fit_task_end` hooks are respectively called at the
 beginning and end of each task in ``fit`` and are responsible for the actual callback
 work. In scikit-learn estimators, a task in ``fit`` is usually one step of a loop, with
-nested loops corresponding to netsed tasks. In general a task can be whatever unit of
+nested loops corresponding to netsed tasks. In general, a task can be whatever unit of
 work the estimator's developer wants it to be.
 
 In order to support the callbacks, estimators need to initialize and manage
@@ -130,7 +130,7 @@ class SimpleKMeans(CallbackSupportMixin, BaseEstimator):  # noqa: F811
     def _compute_labels(self, X):
         return np.argmin(euclidean_distances(X, self.cluster_centers_), axis=1)
 
-    # Then the `fit` function must be decorated with the `with_callback_context`
+    # Then the `fit` function must be decorated with the `with_callbacks`
     # decorator, which will take care of the proper teardown of callbacks.
     @with_callbacks
     def fit(self, X, y=None):
