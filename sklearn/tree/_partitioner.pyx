@@ -23,7 +23,7 @@ from sklearn.utils._bitset cimport BITSET_DTYPE_C, init_bitset, set_bitset
 from sklearn.tree._utils cimport goes_left
 from sklearn.tree._tree cimport MAX_NUM_CATEGORIES
 from sklearn.tree._splitter cimport SplitRecord
-from sklearn.utils._sorting cimport sort
+from sklearn.utils._sorting cimport simultaneous_sort
 
 # Constant to switch between algorithm non zero value extract algorithm
 # in SparsePartitioner
@@ -148,8 +148,13 @@ cdef class DensePartitioner:
         # apply sort, or categorical sort (Breiman shortcut) depending on the dtype
         if self.n_categories <= 0:
             # not a categorical feature, so we apply sort as before. At this point
-            sort(&feature_values[self.start], &samples[self.start], self.end - self.start - n_missing)
-
+            simultaneous_sort(
+                &feature_values[self.start],
+                &samples[self.start],
+                self.end - self.start - n_missing,
+                use_three_way_partition=True,
+            )
+            
             # if there are missing values found in this current candidate split, then
             # by definition the features cannot be constant
             if n_missing > 0:
@@ -553,12 +558,18 @@ cdef class SparsePartitioner:
 
         self.extract_nnz(current_feature)
         # Sort the positive and negative parts of `feature_values`
-        sort(&feature_values[self.start], &samples[self.start], self.end_negative - self.start)
+        simultaneous_sort(
+            &feature_values[self.start],
+            &samples[self.start],
+            self.end_negative - self.start,
+            use_three_way_partition=True,
+        )
         if self.start_positive < self.end:
-            sort(
+            simultaneous_sort(
                 &feature_values[self.start_positive],
                 &samples[self.start_positive],
-                self.end - self.start_positive
+                self.end - self.start_positive,
+                use_three_way_partition=True,
             )
 
         # Update index_to_samples to take into account the sort

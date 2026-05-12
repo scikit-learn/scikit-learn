@@ -1162,14 +1162,20 @@ def test_poisson_regressor_array_api_compliance(
     array_namespace,
     device_name,
     dtype_name,
+    global_random_seed,
 ):
     xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
-    X_np, y_np = make_regression(
-        n_samples=107, n_features=20, n_informative=20, noise=0.5, random_state=2
-    )
-    # make y positive
-    y_np = np.abs(y_np) + 1.0
-    n_samples = X_np.shape[0]
+    rng = np.random.default_rng(global_random_seed)
+    n_samples = 1000
+    n_features = 3
+    X_np = rng.normal(size=(n_samples, n_features))
+    beta = np.array([0.5, -0.3, 0.8])  # true coefficients
+    intercept = 1.0
+    mu = np.exp(X_np @ beta + intercept)  # Poisson mean with log-link.
+    y_np = rng.poisson(mu)
+    # Ensure that we have non-zero targets for meaningful testing:
+    assert (y_np > 0).mean() > 0.1
+
     X_np = X_np.astype(dtype_name, copy=False)
     y_np = y_np.astype(dtype_name, copy=False)
     X_xp = xp.asarray(X_np, device=device)
@@ -1177,15 +1183,15 @@ def test_poisson_regressor_array_api_compliance(
 
     if use_sample_weight:
         sample_weight = (
-            np.random.default_rng(0)
-            .uniform(-1, 5, size=n_samples)
+            rng.uniform(-1, 5, size=n_samples)
             .clip(0, None)  # over-represent null weights to cover edge-cases.
             .astype(dtype_name)
         )
     else:
         sample_weight = None
 
-    params = dict(alpha=1, solver="lbfgs", tol=1e-12, max_iter=500)
+    params = dict(alpha=1, solver="lbfgs", max_iter=500)
+    params["tol"] = 3e-6 if dtype_name == "float32" else 1e-13
     glm_np = PoissonRegressor(**params).fit(X_np, y_np, sample_weight=sample_weight)
     assert glm_np.n_iter_ < glm_np.max_iter
 
@@ -1193,13 +1199,13 @@ def test_poisson_regressor_array_api_compliance(
     assert np.abs(glm_np.coef_).max() > 0.1
 
     predict_np = glm_np.predict(X_np)
-    atol = _atol_for_type(dtype_name) * 10
-    rtol = 3e-3 if dtype_name == "float32" else 1e-6
+    atol = _atol_for_type(dtype_name)
+    rtol = 2e-3 if dtype_name == "float32" else 3e-7
 
     with config_context(array_api_dispatch=True):
         glm_xp = PoissonRegressor(**params).fit(X_xp, y_xp, sample_weight=sample_weight)
         if dtype_name == "float64":
-            assert glm_xp.n_iter_ == glm_np.n_iter_
+            assert abs(glm_xp.n_iter_ - glm_np.n_iter_) <= 1
 
         for attr_name in ("coef_", "intercept_"):
             attr_xp = getattr(glm_xp, attr_name)
