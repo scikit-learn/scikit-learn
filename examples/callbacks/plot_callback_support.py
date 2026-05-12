@@ -30,7 +30,7 @@ usually one step of a loop, with nested loops corresponding to netsed tasks. In 
 a task can be whatever unit of work the estimator's developer wants it to be.
 
 In order to support the callbacks, estimators need to initialize and manage
-:class:`~callback.CallbackContext` objects. As the name implies, these objects hold the
+:class:`~CallbackContext` objects. As the name implies, these objects hold the
 contextual information necessary to run the callback hooks. They are also responsible
 for calling the callback hooks at the right time.
 
@@ -213,8 +213,8 @@ class SimpleKMeans(CallbackSupportMixin, BaseEstimator):  # noqa: F811
 # .. note::
 #
 #     See the documentation of the methods
-#     :meth:`CallbackContext.call_on_fit_task_begin` and
-#     :meth:`CallbackContext.call_on_fit_task_end` for the description of the `kwargs`
+#     :meth:`~CallbackContext.call_on_fit_task_begin` and
+#     :meth:`~CallbackContext.call_on_fit_task_end` for the description of the `kwargs`
 #     they can accept. These `kwargs` are optional, but an estimator should provide all
 #     the ones it is capable of producing in each task to be compatible with a maximum
 #     number of callbacks.
@@ -326,24 +326,25 @@ class SimpleGridSearch(CallbackSupportMixin, BaseEstimator):  # noqa: F811
                 # level of sub-contexts must then be used.
                 inner_subcontext = outer_subcontext.subcontext(task_name=f"split {i}")
                 # Since a sub-estimator is used, the callbacks must be propagated to
-                # that estimator with the `propagate_callback_context` method. Note that
-                # only the callbacks following the `AutoPropagatedCallback` protocol
-                # will be propagated.
-                inner_subcontext.propagate_callback_context(sub_estimator=estimator)
-                # After the propagation, the sub-context's `call_on_fit_task_begin`
-                # method must be called.
-                inner_subcontext.call_on_fit_task_begin(estimator=self, X=X, y=y)
+                # that estimator with the `propagate_callback_context` context manager.
+                # Note that only the callbacks following the `AutoPropagatedCallback`
+                # protocol will be propagated.
+                with inner_subcontext.propagate_callback_context(estimator):
+                    # After the propagation, the inner sub-context's
+                    # `call_on_fit_task_begin` method must be called.
+                    inner_subcontext.call_on_fit_task_begin(estimator=self, X=X, y=y)
 
-                X_train, X_test = X[train_idx], X[test_idx]
-                y_train, y_test = (
-                    (y[train_idx], y[test_idx]) if y is not None else (None, None)
-                )
-                estimator.fit(X_train, y_train)
-                score = self.score_func(estimator, X_test, y_test)
-                self.cv_results_.append((params, f"split_{i}", score))
+                    X_train, X_test = X[train_idx], X[test_idx]
+                    y_train, y_test = (
+                        (y[train_idx], y[test_idx]) if y is not None else (None, None)
+                    )
+                    estimator.fit(X_train, y_train)
+                    score = self.score_func(estimator, X_test, y_test)
+                    self.cv_results_.append((params, f"split_{i}", score))
 
-                # The inner sub-context's `call_on_fit_task_end` method must be called.
-                inner_subcontext.call_on_fit_task_end(estimator=self, X=X, y=y)
+                    # The inner sub-context's `call_on_fit_task_end` method must be
+                    # called.
+                    inner_subcontext.call_on_fit_task_end(estimator=self, X=X, y=y)
 
             # The outer sub-context's `call_on_fit_task_end` must be called as well and
             # is used with an `if` / `break` to enable interruptions.
@@ -360,7 +361,14 @@ class SimpleGridSearch(CallbackSupportMixin, BaseEstimator):  # noqa: F811
 # %%
 # The main difference with a simple estimator is that the callbacks must be propagated
 # to the sub-estimators through the corresponding callback sub-context's
-# :meth:`~CallbackContext.propagate_callback_context` method.
+# :meth:`~CallbackContext.propagate_callback_context` context manager.
+
+# %%
+# .. note::
+#
+#     A meta-estimator that supports callback can be used with sub-estimators that do
+#     not. In that case a warning will be raised when trying to propagate the callbacks
+#     and the callbacks will be ignored in the sub-estimator.
 
 
 # %%
