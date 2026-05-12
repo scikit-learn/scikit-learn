@@ -3,7 +3,7 @@
 Supporting callbacks in third party estimators
 ==============================================
 
-.. currentmodule:: sklearn
+.. currentmodule:: sklearn.callback
 
 This document shows how to make third party :term:`estimators` and
 :term:`meta-estimators` compatible with the callback infrastructure supported by
@@ -15,22 +15,19 @@ a clean mechanism for inserting custom logic like monitoring progress or metrics
 without modifying the core algorithm of the process.
 
 In scikit-learn, callbacks take the form of classes following a `protocol
-<https://typing.python.org/en/latest/spec/protocol.html>`__. This protocol
-requires the callback classes to implement specific methods (referred to as callback
-hooks) which will be called at specific steps of the fitting of an estimator or a
-meta-estimator. These hooks are :meth:`~callback._base.Callback.setup`,
-:meth:`~callback._base.Callback.on_fit_task_begin`,
-:meth:`~callback._base.Callback.on_fit_task_end` and
-:meth:`~callback._base.Callback.teardown`. The :meth:`~callback._base.Callback.setup`
-and :meth:`~callback._base.Callback.teardown` hooks are called only once, respectively
-at the start and end of the estimator's :term:`fit` method, and are responsible for
-setting up and shutting down the callback. The
-:meth:`~callback._base.Callback.on_fit_task_begin` and
-:meth:`~callback._base.Callback.on_fit_task_end` hooks are respectively called at the
-beginning and end of each task in ``fit`` and are responsible for the actual callback
-work. In scikit-learn estimators, a task in ``fit`` is usually one step of a loop, with
-nested loops corresponding to netsed tasks. In general, a task can be whatever unit of
-work the estimator's developer wants it to be.
+<https://typing.python.org/en/latest/spec/protocol.html>`__. This protocol requires the
+callback classes to implement specific methods (referred to as callback hooks) which
+will be called at specific steps of the fitting of an estimator or a meta-estimator.
+These hooks are :meth:`~FitCallback.setup`, :meth:`~FitCallback.on_fit_task_begin`,
+:meth:`~FitCallback.on_fit_task_end` and :meth:`~FitCallback.teardown`. The
+:meth:`~FitCallback.setup` and :meth:`~FitCallback.teardown` hooks are called only once,
+respectively at the start and end of the estimator's :term:`fit` method, and are
+responsible for setting up and shutting down the callback. The
+:meth:`~FitCallback.on_fit_task_begin` and :meth:`~FitCallback.on_fit_task_end` hooks
+are respectively called at the beginning and end of each task in `fit` and are
+responsible for the actual callback work. In scikit-learn estimators, a task in `fit` is
+usually one step of a loop, with nested loops corresponding to netsed tasks. In general,
+a task can be whatever unit of work the estimator's developer wants it to be.
 
 In order to support the callbacks, estimators need to initialize and manage
 :class:`~callback.CallbackContext` objects. As the name implies, these objects hold the
@@ -215,17 +212,18 @@ class SimpleKMeans(CallbackSupportMixin, BaseEstimator):  # noqa: F811
 # %%
 # .. note::
 #
-#     See :ref:`the callback API documentation <callback_context_methods>` for a list of
-#     the possible keys of the ``kwargs`` to provide to ``call_on_fit_task_begin`` and
-#     ``call_on_fit_task_end``. These ``kwargs`` are optional, but an estimator should
-#     provide all the ones it is capable of producing to be compatible with a maximum
+#     See the documentation of the methods
+#     :meth:`CallbackContext.call_on_fit_task_begin` and
+#     :meth:`CallbackContext.call_on_fit_task_end` for the description of the `kwargs`
+#     they can accept. These `kwargs` are optional, but an estimator should provide all
+#     the ones it is capable of producing in each task to be compatible with a maximum
 #     number of callbacks.
 
 # %%
 # Registering callbacks to the custom estimator
 # -------------------
-# Now the ``SimpleKMeans`` estimator can be used with callbacks, for example with the
-# :class:`~callback.ProgressBar` callback to monitor progress.
+# Now the `SimpleKMeans` estimator can be used with callbacks, for example with the
+# :class:`~ProgressBar` callback to monitor progress.
 
 estimator = SimpleKMeans(random_state=rng)
 callback = ProgressBar()
@@ -323,11 +321,10 @@ class SimpleGridSearch(CallbackSupportMixin, BaseEstimator):  # noqa: F811
             # The `call_on_fit_task_begin` method of this sub-context must be called
             outer_subcontext.call_on_fit_task_begin(estimator=self, X=X, y=y)
             for i, (train_idx, test_idx) in enumerate(cv.split(X)):
+                estimator = clone(self.estimator).set_params(**params)
                 # This time a second level of iterations is also used, a second
                 # level of sub-contexts must then be used.
                 inner_subcontext = outer_subcontext.subcontext(task_name=f"split {i}")
-
-                estimator = clone(self.estimator).set_params(**params)
                 # Since a sub-estimator is used, the callbacks must be propagated to
                 # that estimator with the `propagate_callback_context` method. Note that
                 # only the callbacks following the `AutoPropagatedCallback` protocol
@@ -363,15 +360,15 @@ class SimpleGridSearch(CallbackSupportMixin, BaseEstimator):  # noqa: F811
 # %%
 # The main difference with a simple estimator is that the callbacks must be propagated
 # to the sub-estimators through the corresponding callback sub-context's
-# :meth:`~callback._callback_context.CallbackContext.propagate_callback_context` method.
+# :meth:`~CallbackContext.propagate_callback_context` method.
 
 
 # %%
 # Registering callbacks to the meta-estimator
 # -------------------------------------------
 # Callbacks are registered to a meta-estimator the same way as to regular estimators.
-# The callbacks which respect the :class:`~callback.AutoPropagatedCallback` protocol
-# (such as :class:`~callback.ProgressBar`) will be propagated to the sub-estimators.
+# The callbacks which respect the :class:`~AutoPropagatedCallback` protocol (such as
+# :class:`~ProgressBar`) will be propagated to the sub-estimators.
 
 
 param_list = [{"n_clusters": 5, "n_iter": 20}, {"n_clusters": 4, "n_iter": 50}]
