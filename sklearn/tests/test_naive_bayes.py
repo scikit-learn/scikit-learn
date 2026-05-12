@@ -136,6 +136,36 @@ def test_gnb_neg_priors():
         clf.fit(X, y)
 
 
+@pytest.mark.parametrize("var_smoothing", [0.0, 1e-9, 1e-3])
+def test_gnb_epsilon_matches_var_smoothing_formula(var_smoothing):
+    """``epsilon_`` should equal ``var_smoothing * max(np.var(X, axis=0))``."""
+    rng = np.random.RandomState(0)
+    X_rand = rng.randn(50, 3)
+    y_rand = rng.randint(0, 2, size=50)
+    clf = GaussianNB(var_smoothing=var_smoothing).fit(X_rand, y_rand)
+    expected = var_smoothing * np.var(X_rand, axis=0).max()
+    assert clf.epsilon_ == pytest.approx(expected)
+
+
+def test_gnb_var_smoothing_increases_stored_variance(global_random_seed):
+    """Larger ``var_smoothing`` should raise ``epsilon_`` and the stored variances."""
+    rng = np.random.RandomState(global_random_seed)
+    X_rand = rng.randn(60, 4)
+    y_rand = rng.randint(0, 3, size=60)
+    small = GaussianNB(var_smoothing=1e-9).fit(X_rand, y_rand)
+    large = GaussianNB(var_smoothing=1e-2).fit(X_rand, y_rand)
+    assert large.epsilon_ > small.epsilon_
+    assert np.all(large.var_ >= small.var_)
+
+
+def test_gnb_var_smoothing_stabilizes_constant_feature():
+    """A near-constant feature should not produce ``inf``/``nan`` predictions thanks to ``var_smoothing``."""
+    X_const = np.array([[1.0, 0.0], [1.0, 1.0], [1.0, 2.0], [1.0, 3.0]])
+    y_const = np.array([0, 0, 1, 1])
+    proba = GaussianNB().fit(X_const, y_const).predict_proba(X_const)
+    assert np.all(np.isfinite(proba))
+
+
 def test_gnb_priors():
     """Test whether the class prior override is properly used"""
     clf = GaussianNB(priors=np.array([0.3, 0.7])).fit(X, y)

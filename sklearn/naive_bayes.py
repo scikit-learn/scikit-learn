@@ -178,8 +178,15 @@ class GaussianNB(_BaseNB):
         adjusted according to the data.
 
     var_smoothing : float, default=1e-9
-        Portion of the largest variance of all features that is added to
-        variances for calculation stability.
+        A small constant added to every feature variance to keep the
+        Gaussian likelihood numerically stable when one or more features
+        have near-zero variance. The actual additive value used at fit
+        time is stored in :attr:`epsilon_` and equals
+        ``var_smoothing * np.var(X, axis=0).max()``. The default is
+        sufficient for almost all use cases; increase it only if you
+        observe ``inf`` or ``nan`` predictions due to extremely
+        low-variance features. See the :ref:`User Guide
+        <gaussian_naive_bayes_var_smoothing>` for details.
 
         .. versionadded:: 0.20
 
@@ -195,7 +202,10 @@ class GaussianNB(_BaseNB):
         class labels known to the classifier.
 
     epsilon_ : float
-        absolute additive value to variances.
+        Absolute additive value applied to every feature variance,
+        computed as ``var_smoothing * np.var(X, axis=0).max()`` at fit
+        time. Stored so that :meth:`partial_fit` can subtract and re-add
+        it consistently across incremental updates.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.

@@ -101,6 +101,28 @@ are estimated using maximum likelihood.
    ...       % (X_test.shape[0], (y_test != y_pred).sum()))
    Number of mislabeled points out of a total 75 points : 4
 
+.. _gaussian_naive_bayes_var_smoothing:
+
+Variance smoothing
+~~~~~~~~~~~~~~~~~~
+
+When one or more features have a variance close to zero, the Gaussian
+likelihood :math:`P(x_i \mid y)` degenerates and the resulting
+log-probabilities can be ``inf`` or ``nan``. To keep the model
+numerically stable, :class:`GaussianNB` adds a small constant to every
+feature variance before computing the likelihood. The constant is stored
+in the :attr:`~GaussianNB.epsilon_` attribute after :meth:`~GaussianNB.fit`
+and is derived from the ``var_smoothing`` parameter as
+
+.. math::
+
+   \varepsilon = \text{var\_smoothing} \times \max_i \operatorname{Var}(X_i)
+
+so it always scales with the spread of the most-variable feature in the
+training data. The default ``var_smoothing=1e-9`` is sufficient for
+nearly all datasets; increase it only if you observe ``inf`` or ``nan``
+predictions from features whose values are almost constant.
+
 .. _multinomial_naive_bayes:
 
 Multinomial Naive Bayes
