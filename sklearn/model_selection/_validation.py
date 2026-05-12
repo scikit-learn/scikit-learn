@@ -93,6 +93,12 @@ def _check_groups_routing_disabled(groups):
         "return_train_score": ["boolean"],
         "return_estimator": ["boolean"],
         "return_indices": ["boolean"],
+        "return_predictions": [
+            StrOptions(
+                {"predict", "predict_proba", "predict_log_proba", "decision_function"}
+            ),
+            None,
+        ],
         "error_score": [StrOptions({"raise"}), Real],
     },
     prefer_skip_nested_validation=False,  # estimator is not validated yet
@@ -112,6 +118,7 @@ def cross_validate(
     return_train_score=False,
     return_estimator=False,
     return_indices=False,
+    return_predictions=None,
     error_score=np.nan,
 ):
     """Evaluate metric(s) by cross-validation and also record fit/score times.
@@ -230,6 +237,18 @@ def cross_validate(
 
         .. versionadded:: 1.3
 
+    return_predictions : {'predict', 'predict_proba', 'predict_log_proba', \
+                          'decision_function'} or None, default=None
+        If not None, the estimator's specified prediction method is called on
+        each test fold after fitting. Predictions are reassembled into original
+        sample order and returned under key ``'predictions'``. Requires the CV
+        object to partition the data (each sample in exactly one test fold),
+        just like :func:`cross_val_predict`. Raises ``ValueError`` otherwise.
+
+        Predictions for folds whose fit failed are filled with ``np.nan``.
+
+        .. versionadded:: 1.8
+
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
@@ -273,6 +292,11 @@ def cross_validate(
             is returned where the keys are either `"train"` or `"test"`
             and the associated values are a list of integer-dtyped NumPy
             arrays with the indices. Available only if `return_indices=True`.
+        ``predictions``
+            Out-of-fold predictions in original sample order. Shape is
+            ``(n_samples,)`` for ``'predict'``/``'decision_function'`` (binary)
+            and ``(n_samples, n_classes)`` for proba/log_proba methods. Only
+            present when ``return_predictions`` is not ``None``.
 
     See Also
     --------
@@ -362,9 +386,18 @@ def cross_validate(
         routed_params.scorer = Bunch(score={})
 
     indices = cv.split(X, y, **routed_params.splitter.split)
-    if return_indices:
+    if return_indices or return_predictions is not None:
         # materialize the indices since we need to store them in the returned dict
         indices = list(indices)
+
+    if return_predictions is not None:
+        all_test_indices = np.concatenate([test for _, test in indices])
+        if not _check_is_permutation(all_test_indices, _num_samples(X)):
+            raise ValueError(
+                "cross_validate with return_predictions requires the CV strategy "
+                "to partition the data (each sample in exactly one test fold). "
+                "Use cross_val_predict for non-partitioning CV strategies."
+            )
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
@@ -384,6 +417,7 @@ def cross_validate(
             return_train_score=return_train_score,
             return_times=True,
             return_estimator=return_estimator,
+            return_predictions=return_predictions,
             error_score=error_score,
         )
         for train, test in indices
@@ -396,6 +430,9 @@ def cross_validate(
     # the correct key.
     if callable(scoring):
         _insert_error_scores(results, error_score)
+
+    if return_predictions is not None:
+        per_fold_predictions = [r.get("predictions") for r in results]
 
     results = _aggregate_score_dicts(results)
 
@@ -419,6 +456,31 @@ def cross_validate(
         if return_train_score:
             key = "train_%s" % name
             ret[key] = train_scores_dict[name]
+
+    if return_predictions is not None:
+        all_test_indices = np.concatenate([test for _, test in indices])
+        inv_test_indices = np.empty(len(all_test_indices), dtype=int)
+        inv_test_indices[all_test_indices] = np.arange(len(all_test_indices))
+
+        # Determine shape from a successful fold (for NaN-fill of failed folds)
+        sample_pred = next((p for p in per_fold_predictions if p is not None), None)
+        fold_preds = []
+        for pred, (_, test) in zip(per_fold_predictions, indices):
+            if pred is None:
+                n_test = len(test)
+                if sample_pred is not None and np.ndim(sample_pred) == 2:
+                    fold_preds.append(np.full((n_test, sample_pred.shape[1]), np.nan))
+                else:
+                    fold_preds.append(np.full(n_test, np.nan))
+            else:
+                fold_preds.append(pred)
+
+        if sp.issparse(fold_preds[0]):
+            all_preds = sp.vstack(fold_preds, format=fold_preds[0].format)
+            ret["predictions"] = all_preds[inv_test_indices]
+        else:
+            all_preds = np.concatenate([np.asarray(p) for p in fold_preds], axis=0)
+            ret["predictions"] = all_preds[inv_test_indices]
 
     return ret
 
@@ -680,6 +742,7 @@ def _fit_and_score(
     return_n_test_samples=False,
     return_times=False,
     return_estimator=False,
+    return_predictions=False,
     split_progress=None,
     candidate_progress=None,
     error_score=np.nan,
@@ -847,6 +910,8 @@ def _fit_and_score(
                 if return_train_score:
                     train_scores = error_score
         result["fit_error"] = format_exc()
+        if return_predictions:
+            result["predictions"] = None
     else:
         result["fit_error"] = None
 
@@ -859,6 +924,9 @@ def _fit_and_score(
             train_scores = _score(
                 estimator, X_train, y_train, scorer, score_params_train, error_score
             )
+        if return_predictions:
+            func = getattr(estimator, return_predictions)
+            result["predictions"] = func(X_test)
 
     if verbose > 1:
         total_time = score_time + fit_time
@@ -1349,10 +1417,10 @@ def _enforce_prediction_order(classes, predictions, n_classes, method):
             "stratified folds"
         )
         warnings.warn(
-            "Number of classes in training fold ({}) does "
-            "not match total number of classes ({}). "
+            f"Number of classes in training fold ({classes_length}) does "
+            f"not match total number of classes ({n_classes}). "
             "Results may not be appropriate for your use case. "
-            "{}".format(classes_length, n_classes, recommendation),
+            f"{recommendation}",
             RuntimeWarning,
         )
         if method == "decision_function":
@@ -1362,23 +1430,19 @@ def _enforce_prediction_order(classes, predictions, n_classes, method):
                 # it with. This case is found when sklearn.svm.SVC is
                 # set to `decision_function_shape='ovo'`.
                 raise ValueError(
-                    "Output shape {} of {} does not match "
-                    "number of classes ({}) in fold. "
+                    f"Output shape {predictions.shape} of {method} does not match "
+                    f"number of classes ({classes_length}) in fold. "
                     "Irregular decision_function outputs "
                     "are not currently supported by "
-                    "cross_val_predict".format(
-                        predictions.shape, method, classes_length
-                    )
+                    "cross_val_predict"
                 )
             if classes_length <= 2:
                 # In this special case, `predictions` contains a 1D array.
                 raise ValueError(
-                    "Only {} class/es in training fold, but {} "
+                    f"Only {classes_length} class/es in training fold, but {n_classes} "
                     "in overall dataset. This "
                     "is not supported for decision_function "
-                    "with imbalanced folds. {}".format(
-                        classes_length, n_classes, recommendation
-                    )
+                    f"with imbalanced folds. {recommendation}"
                 )
 
         float_min = xp.finfo(predictions.dtype).min
