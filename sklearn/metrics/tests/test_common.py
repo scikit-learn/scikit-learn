@@ -2730,7 +2730,8 @@ def test_mixed_array_api_namespace_input_compliance(
             dtype = _get_dtype(y1, xp_other, device_other)
             y1_xp = xp_other.asarray(y1, device=device_other, dtype=dtype)
 
-            metric_kwargs_xp = metric_kwargs_np = {}
+            metric_kwargs_xp = {}
+            metric_kwargs_np = {}
             if metric_name not in METRICS_WITHOUT_SAMPLE_WEIGHT:
                 sample_weight_np = np.array(sample_weight)
                 metric_kwargs_np.update({"sample_weight": sample_weight_np})
