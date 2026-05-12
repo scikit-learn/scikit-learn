@@ -287,14 +287,15 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             self._categorical_encoder = None
 
         if check_input:
-            # Note: we must check missing after the categorical features 
+            # Note: we must check missing after the categorical features
             # because it is assumed X is fully numeric by then. Thus, missing value mask
             # need to be checked separately.
-            # 
+            #
             # TODO: we can support missing values with categories by either:
             # 1. sending them down randomly through the tree (no assumptions)
-            # 2. sending them down to missing_goes_to_left according to child with most samples
-            #  (assumes missing at random, where missingness correlates with most prevalent observed samples).
+            # 2. sending them down to missing_goes_to_left according to child with
+            # most samples (assumes missing at random, where missingness correlates
+            # with most prevalent observed samples).
             # To align this with HGBT, we would do #2.
             missing_values_in_feature_mask = (
                 self._compute_missing_values_in_feature_mask(X)
