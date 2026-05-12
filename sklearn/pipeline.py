@@ -861,7 +861,7 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
         routed_params = self._check_method_params(method="fit_predict", props=params)
         Xt = self._fit(X, y, routed_params, callback_ctx=callback_ctx)
 
-        subcontext = callback_ctx.subcontext(task_name="fit-predict-final-estimator")
+        subcontext = callback_ctx.subcontext(task_name="fit_predict-final-estimator")
         with subcontext.propagate_callback_context(self._final_estimator):
             subcontext.call_on_fit_task_begin(estimator=self, X=Xt, y=y)
 
