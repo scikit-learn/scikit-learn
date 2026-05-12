@@ -15,12 +15,12 @@ from sklearn.exceptions import NotFittedError
 from sklearn.tree import (
     DecisionTreeClassifier,
     DecisionTreeRegressor,
+    _tree,
     export_graphviz,
     export_text,
     plot_tree,
 )
-from sklearn.tree._export import _rgb_to_hexstring, _DOTTreeExporter
-from sklearn.tree import _tree
+from sklearn.tree._export import _DOTTreeExporter, _rgb_to_hexstring
 
 CLF_CRITERIONS = ("gini", "log_loss")
 REG_CRITERIONS = ("squared_error", "absolute_error", "poisson")
