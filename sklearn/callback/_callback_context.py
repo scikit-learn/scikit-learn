@@ -529,7 +529,7 @@ def _from_reconstruction_attributes(estimator, reconstruction_attributes):
     fitted_estimator : estimator instance
         The fitted copy of this estimator.
     """
-    new_estimator = copy.copy(estimator)  # TODO(callbacks) copy / deepcopy / clone ?
+    new_estimator = copy.copy(estimator)
     for key, val in reconstruction_attributes.items():
         setattr(new_estimator, key, val)
     return new_estimator
