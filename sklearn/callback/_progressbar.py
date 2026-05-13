@@ -1,12 +1,14 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+from numbers import Integral
 from queue import Queue
 from threading import Thread
 
 from sklearn.callback._callback_context import get_context_path
 from sklearn.callback._transport import close_listener, open_listener, send
 from sklearn.utils._optional_dependencies import check_rich_support
+from sklearn.utils._param_validation import Interval, validate_params
 
 # Per-fit local queues and monitors, keyed by the run's `root_uuid`. Both are not
 # picklable so they live here rather than on the callback instance. Entries are added in
@@ -26,6 +28,10 @@ class ProgressBar:
         If set to None, all levels are displayed.
     """
 
+    @validate_params(
+        {"max_propagation_depth": [Interval(Integral, 0, None, closed="left"), None]},
+        prefer_skip_nested_validation=True,
+    )
     def __init__(self, max_propagation_depth=1):
         check_rich_support("Progressbar")
 
