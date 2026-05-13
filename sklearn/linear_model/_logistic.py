@@ -1459,7 +1459,7 @@ class LogisticRegression(
         max_subtasks = max(self.max_iter, 1) + 1
         callback_ctx = self._init_callback_context(max_subtasks=max_subtasks)
         callback_metadata = (
-            {"sample_weght": sample_weight} if sample_weight is not None else None
+            {"sample_weight": sample_weight} if sample_weight is not None else None
         )
         callback_ctx.call_on_fit_task_begin(
             estimator=self, X=X, y=y, metadata=callback_metadata

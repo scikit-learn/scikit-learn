@@ -998,7 +998,10 @@ class BaseSearchCV(
         params = _check_method_params(X, params=params)
         routed_params = self._get_routed_params_for_fit(params)
 
-        metadata_callbacks = {"sample_weight": params.get("sample_weight", {})}
+        if (sample_weight := params.get("sample_weight")) is not None:
+            metadata_callbacks = {"sample_weight": sample_weight}
+        else:
+            metadata_callbacks = None
         root_callback_ctx = self._init_callback_context(
             max_subtasks=1 + (self.refit is not False)  # refit can be str or callable
         ).call_on_fit_task_begin(estimator=self, X=X, y=y, metadata=metadata_callbacks)

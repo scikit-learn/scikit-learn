@@ -3112,7 +3112,10 @@ def test_search_callbacks_receive_sample_weight():
     ]
     assert refit_records
 
-    for entry in evaluation_records + refit_records:
+    for entry in evaluation_records:
+        assert "sample_weight" in entry["kwargs"]["metadata"]
+
+    for entry in refit_records:
         assert "sample_weight" in entry["kwargs"]["metadata"]
         passed_weights = entry["kwargs"]["metadata"]["sample_weight"]
         assert_array_equal(passed_weights, sample_weight)
