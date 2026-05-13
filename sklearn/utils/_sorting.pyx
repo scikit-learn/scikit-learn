@@ -2,109 +2,220 @@ from libc.math cimport log2
 
 from cython cimport floating
 
-from sklearn.utils._typedefs cimport float32_t, intp_t
+from sklearn.utils._typedefs cimport intp_t
 
 
-cdef inline void dual_swap(
-    floating* darr,
-    intp_t *iarr,
-    intp_t a,
-    intp_t b,
-) noexcept nogil:
-    """Swap the values at index a and b of both darr and iarr"""
-    darr[a], darr[b] = darr[b], darr[a]
-    iarr[a], iarr[b] = iarr[b], iarr[a]
-
-
-cdef int simultaneous_sort(
+cdef void simultaneous_sort(
     floating* values,
     intp_t* indices,
-    intp_t size,
+    intp_t n,
+    bint use_three_way_partition=False,
 ) noexcept nogil:
-    """
-    Perform a recursive quicksort on the values array as to sort them ascendingly.
-    This simultaneously performs the swaps on both the values and the indices arrays.
+    """Sort values and indices simultaneously by values.
 
     The numpy equivalent is:
+        def simultaneous_sort(values, indices):
+             i = np.argsort(values)
+             return values[i], indices[i]
 
-        def simultaneous_sort(dist, idx):
-             i = np.argsort(dist)
-             return dist[i], idx[i]
+    Algorithm: Introsort (Musser, SP&E, 1997) with two variants for the
+    quicksort part:
+
+    - If use_three_way_partition is True, use 3-way partitioning:
+      [x < pivot] [x == pivot] [x > pivot]. This variant is fast when
+      working with many duplicate values, otherwise it's slower.
+    - If use_three_way_partition is False, use 2-way partitioning:
+      [x <= pivot] [pivot] [x >= pivot]. There are three parts too, but the middle
+      part is only the selected pivot element, not all values equal to the pivot.
 
     Notes
     -----
-    Arrays are manipulated via a pointer to there first element and their size
-    as to ease the processing of dynamically allocated buffers.
+    Arrays are manipulated via a pointer to their first element and their size
+    to ease the processing of dynamically allocated buffers.
+
+    TODO: In order to support discrete distance metrics, we need to have a
+    simultaneous sort which breaks ties on indices when distances are
+    identical. The best might be using a std::stable_sort and a Comparator
+    which might need an Array of Structures (AoS) instead of the Structure of
+    Arrays (SoA) currently used. An alternative would be to implement a stable
+    sort ourselves, like the radix sort for instance.
     """
-    # TODO: In order to support discrete distance metrics, we need to have a
-    # simultaneous sort which breaks ties on indices when distances are identical.
-    # The best might be using a std::stable_sort and a Comparator which might need
-    # an Array of Structures (AoS) instead of the Structure of Arrays (SoA)
-    # currently used.
-    cdef:
-        intp_t pivot_idx, i, store_idx
-        floating pivot_val
-
-    # in the small-array case, do things efficiently
-    if size <= 1:
-        pass
-    elif size == 2:
-        if values[0] > values[1]:
-            dual_swap(values, indices, 0, 1)
-    elif size == 3:
-        if values[0] > values[1]:
-            dual_swap(values, indices, 0, 1)
-        if values[1] > values[2]:
-            dual_swap(values, indices, 1, 2)
-            if values[0] > values[1]:
-                dual_swap(values, indices, 0, 1)
-    else:
-        # Determine the pivot using the median-of-three rule.
-        # The smallest of the three is moved to the beginning of the array,
-        # the middle (the pivot value) is moved to the end, and the largest
-        # is moved to the pivot index.
-        pivot_idx = size // 2
-        if values[0] > values[size - 1]:
-            dual_swap(values, indices, 0, size - 1)
-        if values[size - 1] > values[pivot_idx]:
-            dual_swap(values, indices, size - 1, pivot_idx)
-            if values[0] > values[size - 1]:
-                dual_swap(values, indices, 0, size - 1)
-        pivot_val = values[size - 1]
-
-        # Partition indices about pivot.  At the end of this operation,
-        # pivot_idx will contain the pivot value, everything to the left
-        # will be smaller, and everything to the right will be larger.
-        store_idx = 0
-        for i in range(size - 1):
-            if values[i] < pivot_val:
-                dual_swap(values, indices, i, store_idx)
-                store_idx += 1
-        dual_swap(values, indices, store_idx, size - 1)
-        pivot_idx = store_idx
-
-        # Recursively sort each side of the pivot
-        if pivot_idx > 1:
-            simultaneous_sort(values, indices, pivot_idx)
-        if pivot_idx + 2 < size:
-            simultaneous_sort(values + pivot_idx + 1,
-                              indices + pivot_idx + 1,
-                              size - pivot_idx - 1)
-    return 0
-
-
-def _py_sort(float32_t[::1] feature_values, intp_t[::1] samples, intp_t n):
-    """Used for testing sort."""
-    sort(&feature_values[0], &samples[0], n)
-
-
-# Sort n-element arrays pointed to by feature_values and samples, simultaneously,
-# by the values in feature_values. Algorithm: Introsort (Musser, SP&E, 1997).
-cdef void sort(floating* feature_values, intp_t* samples, intp_t n) noexcept nogil:
     if n == 0:
         return
     cdef intp_t maxd = 2 * <intp_t>log2(n)
-    introsort(feature_values, samples, n, maxd)
+    if use_three_way_partition:
+        introsort_3way(values, indices, n, maxd)
+    else:
+        introsort_2way(values, indices, n, maxd)
+
+
+def _py_simultaneous_sort(
+    floating[::1] values,
+    intp_t[::1] indices,
+    intp_t n,
+    *,
+    bint use_three_way_partition,
+):
+    """Python wrapper used for testing."""
+    simultaneous_sort(&values[0], &indices[0], n, use_three_way_partition)
+
+
+cdef void introsort_2way(
+    floating* values,
+    intp_t* indices,
+    intp_t n,
+    intp_t maxd,
+) noexcept nogil:
+    cdef floating pivot
+    cdef intp_t pivot_idx, i, j
+
+    while n > 15:
+        if maxd <= 0:   # max depth limit exceeded ("gone quadratic")
+            heapsort(values, indices, n)
+            return
+        maxd -= 1
+
+        pivot = inplace_median3(values, indices, n)
+
+        i = 1  # the median3 step ensures values[0] <= pivot
+        j = n - 2  # the median3 step ensures values[-1] >= pivot
+        while True:
+            # Find element >= pivot from left
+            while i <= j and values[i] < pivot:
+                i += 1
+            # Find element <= pivot from right
+            while i <= j and values[j] > pivot:
+                j -= 1
+            if i >= j:
+                break
+            swap(values, indices, i, j)
+            i += 1
+            j -= 1
+
+        # Put pivot at pivot_idx
+        pivot_idx = i
+        swap(values, indices, pivot_idx, n - 1)
+
+        # Recursively sort left side of the pivot
+        introsort_2way(values, indices, pivot_idx, maxd)
+
+        # Continue with right side:
+        values += pivot_idx + 1
+        indices += pivot_idx + 1
+        n -= pivot_idx + 1
+
+    # in the small-array case, insertion sort is faster
+    insertion_sort(values, indices, n)
+
+
+cdef void introsort_3way(
+    floating* values, intp_t *indices,
+    intp_t n, intp_t maxd
+) noexcept nogil:
+    """
+    Introsort with median of 3 pivot selection and 3-way partition function
+    (fast for repeated elements, e.g. lots of zeros).
+    """
+    cdef floating pivot
+    cdef intp_t i, l, r
+
+    while n > 15:
+        if maxd <= 0:   # max depth limit exceeded ("gone quadratic")
+            heapsort(values, indices, n)
+            return
+        maxd -= 1
+
+        pivot = median3(values, n)
+
+        i = l = 0
+        r = n
+        while i < r:
+            if values[i] < pivot:
+                swap(values, indices, i, l)
+                i += 1
+                l += 1
+            elif values[i] > pivot:
+                r -= 1
+                swap(values, indices, i, r)
+            else:
+                i += 1
+
+        # Three-way partition:
+        # - values[:l] contains elements < pivot
+        # - values[l:r] contains elements == pivot
+        # - values[r:] contains elements > pivot
+
+        # Recursively sort left side:
+        introsort_3way(values, indices, l, maxd)
+
+        # Continue with right side:
+        values += r
+        indices += r
+        n -= r
+
+    # in the small-array case, insertion sort is faster
+    insertion_sort(values, indices, n)
+
+# ------------ HEAP SORT -------------
+
+cdef void heapsort(floating* feature_values, intp_t* samples, intp_t n) noexcept nogil:
+    cdef intp_t start, end
+
+    # heapify
+    start = (n - 2) / 2
+    end = n
+    while True:
+        sift_down(feature_values, samples, start, end)
+        if start == 0:
+            break
+        start -= 1
+
+    # sort by shrinking the heap, putting the max element immediately after it
+    end = n - 1
+    while end > 0:
+        swap(feature_values, samples, 0, end)
+        sift_down(feature_values, samples, 0, end)
+        end = end - 1
+
+
+cdef inline void sift_down(floating* feature_values, intp_t* samples,
+                           intp_t start, intp_t end) noexcept nogil:
+    # Restore heap order in feature_values[start:end] by moving the max element to start.
+    cdef intp_t child, maxind, root
+
+    root = start
+    while True:
+        child = root * 2 + 1
+
+        # find max of root, left child, right child
+        maxind = root
+        if child < end and feature_values[maxind] < feature_values[child]:
+            maxind = child
+        if child + 1 < end and feature_values[maxind] < feature_values[child + 1]:
+            maxind = child + 1
+
+        if maxind == root:
+            break
+        else:
+            swap(feature_values, samples, root, maxind)
+            root = maxind
+
+
+# ------------ HELPERS -------------
+
+cdef inline floating inplace_median3(floating* values, intp_t* indices, intp_t n) noexcept nogil:
+    # # Median of three pivot selection
+    # The smallest of the three is moved to the beginning of the array,
+    # the middle (the pivot value) is moved to the end, and the largest
+    # is moved to the pivot index.
+    pivot_idx = n // 2
+    if values[0] > values[n - 1]:
+        swap(values, indices, 0, n - 1)
+    if values[n - 1] > values[pivot_idx]:
+        swap(values, indices, n - 1, pivot_idx)
+        if values[0] > values[n - 1]:
+            swap(values, indices, 0, n - 1)
+    return values[n - 1]
 
 
 cdef inline floating median3(floating* feature_values, intp_t n) noexcept nogil:
@@ -127,79 +238,28 @@ cdef inline floating median3(floating* feature_values, intp_t n) noexcept nogil:
         return b
 
 
-# Introsort with median of 3 pivot selection and 3-way partition function
-# (robust to repeated elements, e.g. lots of zero features).
-cdef void introsort(floating* feature_values, intp_t *samples,
-                    intp_t n, intp_t maxd) noexcept nogil:
-    cdef floating pivot
-    cdef intp_t i, l, r
-
-    while n > 1:
-        if maxd <= 0:   # max depth limit exceeded ("gone quadratic")
-            heapsort(feature_values, samples, n)
-            return
-        maxd -= 1
-
-        pivot = median3(feature_values, n)
-
-        # Three-way partition.
-        i = l = 0
-        r = n
-        while i < r:
-            if feature_values[i] < pivot:
-                dual_swap(feature_values, samples, i, l)
-                i += 1
-                l += 1
-            elif feature_values[i] > pivot:
-                r -= 1
-                dual_swap(feature_values, samples, i, r)
-            else:
-                i += 1
-
-        introsort(feature_values, samples, l, maxd)
-        feature_values += r
-        samples += r
-        n -= r
+cdef inline void swap(floating* values, intp_t* indices,
+                      intp_t i, intp_t j) noexcept nogil:
+    # Helper for sort
+    values[i], values[j] = values[j], values[i]
+    indices[i], indices[j] = indices[j], indices[i]
 
 
-cdef inline void sift_down(floating* feature_values, intp_t* samples,
-                           intp_t start, intp_t end) noexcept nogil:
-    # Restore heap order in feature_values[start:end] by moving the max element to start.
-    cdef intp_t child, maxind, root
+cdef inline void insertion_sort(
+    floating* values, intp_t *indices, intp_t n
+) noexcept nogil:
+    cdef intp_t i, j, temp_idx
+    cdef floating temp_val
 
-    root = start
-    while True:
-        child = root * 2 + 1
+    for i in range(1, n):
+        temp_val = values[i]
+        temp_idx = indices[i]
 
-        # find max of root, left child, right child
-        maxind = root
-        if child < end and feature_values[maxind] < feature_values[child]:
-            maxind = child
-        if child + 1 < end and feature_values[maxind] < feature_values[child + 1]:
-            maxind = child + 1
+        j = i
+        while j > 0 and values[j - 1] > temp_val:
+            values[j] = values[j - 1]
+            indices[j] = indices[j - 1]
+            j -= 1
 
-        if maxind == root:
-            break
-        else:
-            dual_swap(feature_values, samples, root, maxind)
-            root = maxind
-
-
-cdef void heapsort(floating* feature_values, intp_t* samples, intp_t n) noexcept nogil:
-    cdef intp_t start, end
-
-    # heapify
-    start = (n - 2) / 2
-    end = n
-    while True:
-        sift_down(feature_values, samples, start, end)
-        if start == 0:
-            break
-        start -= 1
-
-    # sort by shrinking the heap, putting the max element immediately after it
-    end = n - 1
-    while end > 0:
-        dual_swap(feature_values, samples, 0, end)
-        sift_down(feature_values, samples, 0, end)
-        end = end - 1
+        values[j] = temp_val
+        indices[j] = temp_idx
