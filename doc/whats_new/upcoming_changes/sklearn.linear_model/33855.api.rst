@@ -1,0 +1,9 @@
+- The parameter `n_alphas` has been deprecated for
+  :func:`linear_model.lasso_path` and :func:`linear_model.enet_path`.
+  This deprecation follows the same deprecation that has happened for
+  :class:`linear_model.ElasticNetCV` and :class:`linear_model.LassoCV`.
+  The parameter `alphas` now supports both integers and array-likes, removing the need
+  for `n_alphas`. From now on, only `alphas` should be set, either to and integer to
+  indicate the number of automatically generated alphas or to an array-like of values
+  for the regularization path.
+  By :user:`Christian Lorentzen <lorentzenchr>`.

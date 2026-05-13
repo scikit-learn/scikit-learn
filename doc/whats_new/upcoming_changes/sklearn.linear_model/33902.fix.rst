@@ -1,0 +1,5 @@
+- :class:`linear_model.LogisticRegressionCV` no longer raises a ``TypeError``
+  when `refit=False` and `use_legacy_attributes=False` are set together with a
+  non-elasticnet penalty like `l1_ratios=[0.0]`. Previously, `None` was stored in `l1_ratio_` instead
+  of `0.0`, which caused `float()` to fail during post-processing.
+  By :user:`Mohamad Fazeli <Fazel94>`.

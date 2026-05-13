@@ -1628,7 +1628,7 @@ def test_tfidf_transformer_copy(csr_container):
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_tfidf_vectorizer_perserve_dtype_idf(dtype):
+def test_tfidf_vectorizer_preserve_dtype_idf(dtype):
     """Check that `idf_` has the same dtype as the input data.
 
     Non-regression test for:

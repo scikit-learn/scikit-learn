@@ -84,7 +84,7 @@ from sklearn.tests.metadata_routing_common import (
 from sklearn.utils import shuffle
 from sklearn.utils._array_api import (
     _atol_for_type,
-    _convert_to_numpy,
+    move_to,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
@@ -95,6 +95,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
 )
+from sklearn.utils.estimator_checks import _NotAnArray
 from sklearn.utils.fixes import COO_CONTAINERS, CSR_CONTAINERS
 from sklearn.utils.validation import _num_samples
 
@@ -387,6 +388,14 @@ def test_cross_validate_invalid_scoring_param():
 
     with pytest.warns(UserWarning, match=warning_message):
         cross_validate(estimator, X, y, scoring={"foo": multiclass_scorer})
+
+
+def test_cross_validate_array_function_not_called():
+    """Check that `__array_function__` (NEP18) is not called."""
+    X = _NotAnArray([[1, 1], [1, 2], [1, 3], [1, 4], [2, 1], [2, 2], [2, 3], [2, 4]])
+    y = _NotAnArray([1, 1, 1, 2, 2, 2, 1, 1])
+    estimator = LogisticRegression(random_state=0)
+    cross_validate(estimator, X, y, cv=2)
 
 
 def test_cross_validate_nested_estimator():
@@ -2721,7 +2730,7 @@ def test_cross_val_predict_array_api_compliance(
     """Test that `cross_val_predict` functions correctly with the array API
     with both a classifier and a regressor."""
 
-    xp, device = _array_api_for_tests(namespace, device_name)
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
     if is_classifier(estimator):
         X, y = make_classification(
             n_samples=1000, n_features=5, n_classes=3, n_informative=3, random_state=42
@@ -2741,5 +2750,5 @@ def test_cross_val_predict_array_api_compliance(
 
     pred_np = cross_val_predict(estimator, X_np, y_np, cv=cv)
     assert_allclose(
-        _convert_to_numpy(pred_xp, xp), pred_np, atol=_atol_for_type(dtype_name)
+        move_to(pred_xp, xp=np, device="cpu"), pred_np, atol=_atol_for_type(dtype_name)
     )

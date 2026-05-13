@@ -1,0 +1,4 @@
+- :func:`metrics.pairwise_distances` no longer emits spurious cross-library
+  dtype comparison warnings when called with Array API inputs under
+  ``config_context(array_api_dispatch=True)``.
+  By :user:`Olivier Grisel <ogrisel>`.

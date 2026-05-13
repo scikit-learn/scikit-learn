@@ -248,7 +248,7 @@ jobs:
         if: ${{ startsWith(env.DISTRIB, 'conda') }}
         with:
           miniforge-version: latest
-          auto-activate-base: true
+          auto-activate: true
           activate-environment: ""
 
       - name: Build scikit-learn
@@ -378,7 +378,7 @@ jobs:
         if: ${{ startsWith(env.DISTRIB, 'conda') }}
         with:
           miniforge-version: latest
-          auto-activate-base: true
+          auto-activate: true
           activate-environment: ""
 
       # Enable global random seed randomization to discover seed-sensitive tests

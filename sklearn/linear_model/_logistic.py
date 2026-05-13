@@ -40,11 +40,12 @@ from sklearn.utils import (
     compute_class_weight,
 )
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
     _is_numpy_namespace,
     _matching_numpy_dtype,
+    check_same_namespace,
     get_namespace,
     get_namespace_and_device,
+    move_to,
     size,
 )
 from sklearn.utils._param_validation import Hidden, Interval, StrOptions
@@ -311,7 +312,7 @@ def _logistic_regression_path(
             n_features + int(fit_intercept), dtype=_matching_numpy_dtype(X, xp=xp)
         )
         # classes[1] is the "positive label"
-        mask = xp.asarray(y == classes[1], device=device_)
+        mask = move_to(y == classes[1], xp=xp, device=device_)
         y_bin = xp.ones(y.shape, dtype=X.dtype, device=device_)
         if solver == "liblinear":
             y_bin[~mask] = -1.0
@@ -1245,6 +1246,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             raise ValueError("l1_ratio must be specified when penalty is elasticnet.")
 
         xp, _, device_ = get_namespace_and_device(X)
+        sample_weight = move_to(sample_weight, xp=xp, device=device_)
         xp_y, _ = get_namespace(y)
 
         if self.penalty is None:
@@ -1328,9 +1330,9 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         else:
             warm_start_coef = None
         if warm_start_coef is not None:
-            warm_start_coef = _convert_to_numpy(warm_start_coef, xp=xp)
+            warm_start_coef = move_to(warm_start_coef, xp=np, device="cpu")
             if self.fit_intercept:
-                intercept_np = _convert_to_numpy(self.intercept_, xp=xp)
+                intercept_np = move_to(self.intercept_, xp=np, device="cpu")
                 warm_start_coef = np.concatenate(
                     [warm_start_coef, intercept_np[:, None]], axis=1
                 )
@@ -1402,6 +1404,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             where classes are ordered as they are in ``self.classes_``.
         """
         check_is_fitted(self)
+        check_same_namespace(X, self, attribute="coef_", method="predict_proba")
 
         is_binary = size(self.classes_) <= 2
         if is_binary:
@@ -1429,6 +1432,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             Returns the log-probability of the sample for each class in the
             model, where classes are ordered as they are in ``self.classes_``.
         """
+        check_same_namespace(X, self, attribute="coef_", method="predict_log_proba")
         xp, _ = get_namespace(X)
         return xp.log(self.predict_proba(X))
 
@@ -2191,7 +2195,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 best_indices_l1 = best_indices[:, 1]
                 self.l1_ratio_.append(np.mean(l1_ratios_[best_indices_l1]))
             else:
-                self.l1_ratio_.append(None)
+                self.l1_ratio_.append(0.0)
 
         if is_binary:
             self.coef_ = w[:, :n_features] if w.ndim == 2 else w[:n_features][None, :]
