@@ -1,0 +1,3 @@
+- :class:`neighbors.KNeighborsClassifier` and :class:`neighbors.RadiusNeighborsClassier`
+  now work with string labels when `algorithm="brute".
+  By :user:`AAAZZZR <AAAZZZR>`.

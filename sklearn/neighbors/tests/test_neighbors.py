@@ -2509,18 +2509,23 @@ def test_neighbor_regressors_loocv(nn_model, algorithm):
     assert_allclose(loocv, nn_model.predict(None))
 
 
-def test_kneighbors_classifier_brute_manhattan_string_labels():
-    # Ensure KNeighborsClassifier works with algorithm='brute', p=1 and string labels
+@pytest.mark.parametrize("metric", COMMON_VALID_METRICS)
+@pytest.mark.parametrize(
+    "Estimator", [neighbors.KNeighborsClassifier, neighbors.RadiusNeighborsClassifier]
+)
+def test_neighbors_classifier_with_string_labels(metric, Estimator):
+    """Ensure KNeighborsClassifier(algorithm='brute') works with string labels.
+
+    Non-regression test for issue #33034.
+    """
     X = rng.normal(size=(5, 3))
     # String label
     y = np.array(["foo", "bar", "foo", "bar", "foo"])
 
-    # Condition: algorithm='brute' AND p=1
-    knn = neighbors.KNeighborsClassifier(algorithm="brute", p=1)
+    knn = Estimator(algorithm="brute", metric=metric)
     knn.fit(X, y)
 
-    X_test = rng.normal(size=(2, 3))
-    y_pred = knn.predict(X_test)
+    y_pred = knn.predict(X)
 
-    assert y_pred.shape == (2,)
-    assert y_pred.dtype.kind in ("U", "S")
+    assert y_pred.shape == (5,)
+    assert all(label in y for label in y_pred)

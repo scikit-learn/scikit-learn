@@ -801,7 +801,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
                 radius=self.radius,
                 weights=self.weights,
                 Y_labels=self._y,
-                unique_Y_labels=self.classes_,
+                unique_Y_labels=np.arange(len(self.classes_), dtype=np.intp),
                 outlier_label=self.outlier_label,
                 metric=metric,
                 metric_kwargs=metric_kwargs,
