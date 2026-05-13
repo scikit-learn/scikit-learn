@@ -734,9 +734,9 @@ class SimpleImputer(_BaseImputer):
 
         fullnan_indices = np.where(_get_mask(self.statistics_, np.nan))[0]
 
-        mask_indices_nan = np.where(np.isin(
-            self.indicator_.features_, fullnan_indices
-        ))[0]
+        mask_indices_nan = np.where(
+            np.isin(self.indicator_.features_, fullnan_indices)
+        )[0]
         missing_mask[:, mask_indices_nan] = True
 
         # Fix for add_indicator=True when columns are entirely NaN
