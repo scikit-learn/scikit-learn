@@ -41,7 +41,7 @@ class CallbackSupportMixin:
         if callbacks:
             self._skl_callbacks = list(callbacks)
         else:
-            del self._skl_callbacks
+            self.__dict__.pop("_skl_callbacks", None)
 
         return self
 

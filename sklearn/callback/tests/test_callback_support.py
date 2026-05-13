@@ -93,3 +93,18 @@ def test_function_no_callback_support(n_jobs, prefer, Callback):
     assert callback.count_hooks("on_fit_task_begin") == n_fits * (1 + max_iter)
     assert callback.count_hooks("on_fit_task_end") == n_fits * (1 + max_iter)
     assert callback.count_hooks("teardown") == n_fits
+
+
+def test_set_callback_empty():
+    """Check that setting no callbacks removes the `_skl_callbacks` attribute."""
+    estimator = MaxIterEstimator()
+
+    estimator.set_callbacks(RecordingCallback())
+    assert hasattr(estimator, "_skl_callbacks")
+
+    estimator.set_callbacks()
+    assert not hasattr(estimator, "_skl_callbacks")
+
+    # calling again doesn't raise
+    estimator.set_callbacks()
+    assert not hasattr(estimator, "_skl_callbacks")
