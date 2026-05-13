@@ -59,6 +59,42 @@ def test_callback_error(fail_at):
     assert callback.count_hooks("teardown") == 1
 
 
+def test_teardown_matches_setup_calls_on_partial_setup_failure():
+    """Check that teardown only runs for callbacks that entered setup."""
+    callback_1 = FailingCallback(fail_at="setup")
+    callback_2 = RecordingCallback()
+
+    estimator = MaxIterEstimator().set_callbacks(callback_1, callback_2)
+    with pytest.raises(ValueError, match="Failing callback failed at setup"):
+        estimator.fit()
+
+    assert callback_1.count_hooks("setup") == 1
+    assert callback_1.count_hooks("teardown") == 1
+
+    # setup was never entered for this callback, so teardown should not be called.
+    assert callback_2.count_hooks("setup") == 0
+    assert callback_2.count_hooks("teardown") == 0
+
+
+def test_multiple_teardown_errors_are_grouped():
+    """Check that all teardown are called even if some fail.
+
+    All errors are raised together in one ExceptionGroup.
+    """
+    callback_1 = FailingCallback(fail_at="teardown")
+    callback_2 = FailingCallback(fail_at="teardown")
+    estimator = MaxIterEstimator().set_callbacks(callback_1, callback_2)
+
+    with pytest.raises(
+        ExceptionGroup, match="The following callback teardown errors occurred"
+    ) as exc_info:
+        estimator.fit()
+
+    assert len(exc_info.value.exceptions) == 2
+    assert callback_1.count_hooks("teardown") == 1
+    assert callback_2.count_hooks("teardown") == 1
+
+
 @pytest.mark.parametrize("n_jobs", [1, 2])
 @pytest.mark.parametrize("prefer", ["threads", "processes"])
 @pytest.mark.parametrize(

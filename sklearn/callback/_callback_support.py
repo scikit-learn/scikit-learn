@@ -85,7 +85,9 @@ class CallbackSupportMixin:
             sequential_subtasks=sequential_subtasks,
         )
 
-        # setup callbacks
+        # Setup callbacks. We store callbacks for which setup has started in order to
+        # only tear those down after fit.
+        self._skl_callbacks_to_teardown = []
         for callback in getattr(self, "_skl_callbacks", []):
             # Only call the setup hook of callbacks that are not propagated from a
             # meta-estimator.
@@ -93,6 +95,7 @@ class CallbackSupportMixin:
                 isinstance(callback, AutoPropagatedCallback)
                 and hasattr(self, "_parent_callback_ctx")
             ):
+                self._skl_callbacks_to_teardown.append(callback)
                 callback.setup(estimator=self, context=self._callback_fit_ctx)
 
         return self._callback_fit_ctx
@@ -119,18 +122,24 @@ def callback_management_context(estimator):
         yield
     finally:
         if hasattr(estimator, "_callback_fit_ctx"):
-            for callback in getattr(estimator, "_skl_callbacks", []):
-                # Only call the teardown hook of callbacks that are not propagated from
-                # a meta-estimator.
-                if not (
-                    isinstance(callback, AutoPropagatedCallback)
-                    and hasattr(estimator, "_parent_callback_ctx")
-                ):
+            teardown_errors = []
+            for callback in estimator._skl_callbacks_to_teardown:
+                try:
                     callback.teardown(
                         estimator=estimator, context=estimator._callback_fit_ctx
                     )
+                except Exception as exc:
+                    teardown_errors.append(exc)
 
+            del estimator._skl_callbacks_to_teardown
             del estimator._callback_fit_ctx
+            if len(teardown_errors) == 1:
+                raise teardown_errors[0]
+            if teardown_errors:
+                raise ExceptionGroup(
+                    "The following callback teardown errors occurred",
+                    teardown_errors,
+                )
 
 
 def with_callbacks(method):
