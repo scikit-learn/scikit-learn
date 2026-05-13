@@ -1,3 +1,5 @@
+#type: ignore
+
 import io
 import re
 import warnings
@@ -1937,3 +1939,29 @@ def test_iterative_imputer_with_empty_features(strategy, X_test):
 
     assert X_train_drop_empty_features.shape[1] == X_test_drop_empty_features.shape[1]
     assert X_train_keep_empty_features.shape[1] == X_test_keep_empty_features.shape[1]
+
+
+@pytest.mark.parametrize("missing_value", [np.nan])
+def test_simple_imputer_column_shift(missing_value):
+    """Test for bug #27012: columns shift with indicator and fill_value = np.nan"""
+    X1 = np.array([[missing_value, 2.0, 3.0], [missing_value, 2.0, 3.0]])
+    X2 = np.array([[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]])
+    
+    imputer = SimpleImputer(add_indicator=True, fill_value=missing_value)
+    imputer.fit(X1)
+    X_inv = imputer.inverse_transform(imputer.transform(X2))
+    
+    expected = np.array([[missing_value, 2.0, 3.0], [missing_value, 2.0, 3.0]])
+    assert_allclose(X_inv, expected)
+
+    X1 = np.array([[missing_value, 2.0, missing_value, 3.0], [missing_value, 2.0, missing_value, 3.0]])
+    X2 = np.array([[1.0, 2.0, 3.0, 4.0], [1.0, 2.0, 3.0, 4.0]])
+    
+    imputer = SimpleImputer(add_indicator=True, fill_value=missing_value)
+    imputer.fit(X1)
+    X_inv = imputer.inverse_transform(imputer.transform(X2))
+    
+    expected = np.array([[missing_value, 2.0, missing_value, 4.0], [missing_value, 2.0, missing_value, 4.0]])
+    assert_allclose(X_inv, expected)
+
+

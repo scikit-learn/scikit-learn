@@ -1,6 +1,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+# type: ignore
+
 import numbers
 import warnings
 from collections import Counter
@@ -729,10 +731,20 @@ class SimpleImputer(_BaseImputer):
         n_features_missing = len(self.indicator_.features_)
         non_empty_feature_count = X.shape[1] - n_features_missing
         array_imputed = X[:, :non_empty_feature_count].copy()
+
         missing_mask = X[:, non_empty_feature_count:].astype(bool)
+        
+        if isinstance(self.fill_value, (int, float)) and np.isnan(self.fill_value):
+            fullnan_indices = np.where(np.isnan(self.statistics_))
+        else:
+            fullnan_indices = []
+
+        mask_indices_nan = np.where(np.isin(self.indicator_.features_, fullnan_indices))[0]
+        missing_mask[:, mask_indices_nan] = True # that small fix for add_indicator = True and problem with full row of nan(or other fill_values)
 
         n_features_original = len(self.statistics_)
         shape_original = (X.shape[0], n_features_original)
+
         X_original = np.zeros(shape_original)
         X_original[:, self.indicator_.features_] = missing_mask
         full_mask = X_original.astype(bool)
