@@ -1397,7 +1397,7 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         return tags
 
     def _get_scorer_instance(self):
-        """Return a scorer which corresponds to what's defined in ClassiferMixin
+        """Return a scorer which corresponds to what's defined in ClassifierMixin
         parent class. This is used for routing `sample_weight`.
         """
         return get_scorer("accuracy")
@@ -2752,6 +2752,8 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         settings: multiple prediction targets). When set to `True`, after
         fitting, the `alpha_` attribute will contain a value for each target.
         When set to `False`, a single alpha is used for all targets.
+        This flag is only compatible with ``cv=None`` (i.e. using
+        Leave-One-Out Cross-Validation).
 
         .. versionadded:: 0.24
 

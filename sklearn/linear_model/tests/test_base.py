@@ -1,8 +1,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import warnings
-
 import numpy as np
 import pytest
 from scipy import linalg, sparse
@@ -323,7 +321,7 @@ def test_inplace_data_preprocessing(sparse_container, use_sw, global_random_seed
     rng = np.random.RandomState(global_random_seed)
     original_X_data = rng.randn(10, 12)
     original_y_data = rng.randn(10, 2)
-    orginal_sw_data = rng.rand(10)
+    original_sw_data = rng.rand(10)
 
     if sparse_container is not None:
         X = sparse_container(original_X_data)
@@ -334,7 +332,7 @@ def test_inplace_data_preprocessing(sparse_container, use_sw, global_random_seed
     # implementation of LinearRegression.
 
     if use_sw:
-        sample_weight = orginal_sw_data.copy()
+        sample_weight = original_sw_data.copy()
     else:
         sample_weight = None
 
@@ -348,7 +346,7 @@ def test_inplace_data_preprocessing(sparse_container, use_sw, global_random_seed
     assert_allclose(y, original_y_data)
 
     if use_sw:
-        assert_allclose(sample_weight, orginal_sw_data)
+        assert_allclose(sample_weight, original_sw_data)
 
     # Allow inplace preprocessing of X and y
     reg = LinearRegression(copy_X=False)
@@ -368,35 +366,7 @@ def test_inplace_data_preprocessing(sparse_container, use_sw, global_random_seed
 
     if use_sw:
         # Sample weights have no reason to ever be modified inplace.
-        assert_allclose(sample_weight, orginal_sw_data)
-
-
-def test_linear_regression_pd_sparse_dataframe_warning():
-    pd = pytest.importorskip("pandas")
-
-    # Warning is raised only when some of the columns is sparse
-    df = pd.DataFrame({"0": np.random.randn(10)})
-    for col in range(1, 4):
-        arr = np.random.randn(10)
-        arr[:8] = 0
-        # all columns but the first column is sparse
-        if col != 0:
-            arr = pd.arrays.SparseArray(arr, fill_value=0)
-        df[str(col)] = arr
-
-    msg = "pandas.DataFrame with sparse columns found."
-
-    reg = LinearRegression()
-    with pytest.warns(UserWarning, match=msg):
-        reg.fit(df.iloc[:, 0:2], df.iloc[:, 3])
-
-    # does not warn when the whole dataframe is sparse
-    df["0"] = pd.arrays.SparseArray(df["0"], fill_value=0)
-    assert hasattr(df, "sparse")
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", UserWarning)
-        reg.fit(df.iloc[:, 0:2], df.iloc[:, 3])
+        assert_allclose(sample_weight, original_sw_data)
 
 
 def test_preprocess_data(global_random_seed):

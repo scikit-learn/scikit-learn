@@ -473,6 +473,27 @@ def test_logistic_cv(global_random_seed, use_legacy_attributes):
         assert lr_cv.scores_.shape == (n_cv, n_l1_ratios, n_Cs)
 
 
+# TODO(1.11): remove filterwarnings with change of default scoring
+@pytest.mark.filterwarnings("ignore:The default value.*scoring.*:FutureWarning")
+def test_logistic_cv_refit_false_non_elasticnet(global_random_seed):
+    """Test that non-elasticnet penalty with refit=False and
+    use_legacy_attributes=False works without error.
+
+    For non-elasticnet penalties, l1_ratio=0.0 (equivalent to pure L2).
+    Previously, None was stored, which caused float() to raise a
+    TypeError when use_legacy_attributes=False converted the value to a scalar.
+    """
+    X, y = make_classification(random_state=global_random_seed)
+    lr_cv = LogisticRegressionCV(
+        l1_ratios=[0.0],
+        refit=False,
+        use_legacy_attributes=False,
+        random_state=global_random_seed,
+    )
+    lr_cv.fit(X, y)
+    assert lr_cv.l1_ratio_ == 0.0
+
+
 def test_logistic_cv_mock_scorer():
     """Test that LogisticRegressionCV calls the scorer."""
 
@@ -1994,7 +2015,7 @@ def test_LogisticRegressionCV_on_folds():
         ).fit(X[train_fold_0], y[train_fold_0])
 
         for cl in np.unique(y):
-            # Coefficients without intecept
+            # Coefficients without intercept
             assert_allclose(
                 lrcv.coefs_paths_[cl][idx_fold, idx_C, :-1],
                 lr.coef_[cl],
@@ -2702,7 +2723,7 @@ def test_logistic_regression_array_api_compliance(
     device_name,
     dtype_name,
 ):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     X_np = iris.data.astype(dtype_name, copy=True)
     n_samples, _ = X_np.shape
     X_xp = xp.asarray(X_np, device=device)
@@ -2862,7 +2883,7 @@ def test_logistic_regression_array_api_warm_start(
 ):
     """Test that warm_start=True works with array API inputs across
     multiple fit calls for both binary and multiclass classification."""
-    xp, device_ = _array_api_for_tests(array_namespace, device_name)
+    xp, device_ = _array_api_for_tests(array_namespace, device_name, dtype_name)
     X_np = iris.data.astype(dtype_name, copy=True)
     if binary:
         y_np = (iris.target > 0).astype(dtype_name)
