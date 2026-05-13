@@ -1,0 +1,8 @@
+- :class:`neighbors.KernelDensity` now correctly scales data to unit variance
+  (with respect to sample weights) when performing kernel density estimation. If you had
+  data with non-unit variance, the results will change with this new version of
+  scikit-learn to the correct behavior (i.e., approximately the shape of histogram, and
+  consistent with the results of other KDE implementations e.g.
+  :class:`scipy.linalg.gaussian_kde`). On top of that, it also takes sample weights into
+  account when computing the bandwidth if using automatic strategies `bandwidth="scott"`
+  or `bandwidth="silverman"`. By :user:`Yao Xiao <Charlie-XIAO>`
