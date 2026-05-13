@@ -21,7 +21,7 @@ cnp.import_array()
 from scipy.sparse import issparse
 
 from sklearn.tree._splitter cimport SplitRecord
-from sklearn.utils._sorting cimport sort
+from sklearn.utils._sorting cimport simultaneous_sort
 
 # Constant to switch between algorithm non zero value extract algorithm
 # in SparsePartitioner
@@ -100,7 +100,12 @@ cdef class DensePartitioner:
             for i in range(self.start, self.end):
                 feature_values[i] = X[samples[i], current_feature]
 
-        sort(&feature_values[self.start], &samples[self.start], self.end - self.start - n_missing)
+        simultaneous_sort(
+            &feature_values[self.start],
+            &samples[self.start],
+            self.end - self.start - n_missing,
+            use_three_way_partition=True,
+        )
         self.n_missing = n_missing
 
     cdef void shift_missing_to_the_left(self) noexcept nogil:
@@ -331,12 +336,18 @@ cdef class SparsePartitioner:
 
         self.extract_nnz(current_feature)
         # Sort the positive and negative parts of `feature_values`
-        sort(&feature_values[self.start], &samples[self.start], self.end_negative - self.start)
+        simultaneous_sort(
+            &feature_values[self.start],
+            &samples[self.start],
+            self.end_negative - self.start,
+            use_three_way_partition=True,
+        )
         if self.start_positive < self.end:
-            sort(
+            simultaneous_sort(
                 &feature_values[self.start_positive],
                 &samples[self.start_positive],
-                self.end - self.start_positive
+                self.end - self.start_positive,
+                use_three_way_partition=True,
             )
 
         # Update index_to_samples to take into account the sort

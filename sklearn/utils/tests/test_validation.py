@@ -2521,3 +2521,12 @@ def test_check_categorical_features(categorical_features, on_array, constructor_
 
     result = _check_categorical_features(X, categorical_features)
     assert_allclose(result, [False, True, True, False])
+
+
+def test_num_samples_pa_chunked_array():
+    # https://github.com/scikit-learn/scikit-learn/issues/33993
+    pytest.importorskip("pyarrow")
+    from pyarrow import chunked_array
+
+    result = _num_samples(chunked_array([[0.1, 0.2, 0.3]]))
+    assert result == 3
