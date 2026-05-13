@@ -541,7 +541,7 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
         for step_idx, name, transformer in self._iter(
             with_final=False, filter_passthrough=False
         ):
-            subcontext = callback_ctx.subcontext(task_name=f"fit transform {name}")
+            subcontext = callback_ctx.subcontext(task_name=f"fit-transform-{name}")
 
             if transformer is None or transformer == "passthrough":
                 with _print_elapsed_time("Pipeline", self._log_message(step_idx)):
@@ -637,7 +637,7 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
             X, y, routed_params, raw_params=params, callback_ctx=callback_ctx
         )
         with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
-            subcontext = callback_ctx.subcontext(task_name="fit final estimator")
+            subcontext = callback_ctx.subcontext(task_name="fit-final-estimator")
             if self._final_estimator != "passthrough":
                 with subcontext.propagate_callback_context(self._final_estimator):
                     subcontext.call_on_fit_task_begin(estimator=self, X=Xt, y=y)
@@ -708,7 +708,7 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
             Transformed samples.
         """
         callback_ctx = self._init_callback_context(
-            task_name="fit_transform", max_subtasks=len(self.steps)
+            task_name="fit-transform", max_subtasks=len(self.steps)
         )
         callback_ctx.call_on_fit_task_begin(estimator=self, X=X, y=y)
 
@@ -718,7 +718,7 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
         last_step = self._final_estimator
         with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
             subcontext = callback_ctx.subcontext(
-                task_name="fit transform final estimator"
+                task_name="fit-transform-final-estimator"
             )
             if last_step != "passthrough":
                 with subcontext.propagate_callback_context(self._final_estimator):
@@ -854,14 +854,14 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
             Result of calling `fit_predict` on the final estimator.
         """
         callback_ctx = self._init_callback_context(
-            task_name="fit_predict", max_subtasks=len(self.steps)
+            task_name="fit-predict", max_subtasks=len(self.steps)
         )
         callback_ctx.call_on_fit_task_begin(estimator=self, X=X, y=y)
 
         routed_params = self._check_method_params(method="fit_predict", props=params)
         Xt = self._fit(X, y, routed_params, callback_ctx=callback_ctx)
 
-        subcontext = callback_ctx.subcontext(task_name="fit predict final estimator")
+        subcontext = callback_ctx.subcontext(task_name="fit-predict-final-estimator")
         with subcontext.propagate_callback_context(self._final_estimator):
             subcontext.call_on_fit_task_begin(estimator=self, X=Xt, y=y)
 
