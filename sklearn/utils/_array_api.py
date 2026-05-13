@@ -1385,3 +1385,28 @@ def _matching_numpy_dtype(X, xp=None):
     reversed_dtypes_dict = {dtype: name for name, dtype in dtypes_dict.items()}
     dtype_name = reversed_dtypes_dict[X.dtype]
     return numpy.__array_namespace_info__().dtypes()[dtype_name]
+
+
+def _swapaxes(array, axis1, axis2, /, xp=None):
+    xp, _ = get_namespace(array)
+    if hasattr(xp, "swapaxes"):
+        return xp.swapaxes(array, axis1, axis2)
+
+    ndim = array.ndim
+    a1 = axis1 if axis1 >= 0 else axis1 + ndim
+    a2 = axis2 if axis2 >= 0 else axis2 + ndim
+    axes = list(range(ndim))
+    axes[a1], axes[a2] = axes[a2], axes[a1]
+    return xp.permute_dims(array, axes=tuple(axes))
+
+
+def _unravel_index(indices, shape, /, xp=None):
+    xp, _ = get_namespace(indices)
+    if hasattr(xp, "unravel_index"):
+        return xp.unravel_index(indices, shape)
+
+    coordinates = []
+    for dim in reversed(shape):
+        coordinates.append(indices % dim)
+        indices = indices // dim
+    return tuple(reversed(coordinates))

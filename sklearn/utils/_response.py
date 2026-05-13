@@ -9,6 +9,7 @@ It allows to make uniform checks and validation.
 import numpy as np
 
 from sklearn.base import is_classifier
+from sklearn.utils._array_api import _ravel, get_namespace
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import _check_response_method, check_is_fitted
 
@@ -57,7 +58,8 @@ def _process_predict_proba(*, y_pred, target_type, classes, pos_label):
         )
 
     if target_type == "binary":
-        col_idx = np.flatnonzero(classes == pos_label)[0]
+        xp_classes, _ = get_namespace(classes)
+        col_idx = int(xp_classes.nonzero(_ravel(classes == pos_label))[0][0])
         return y_pred[:, col_idx]
     elif target_type == "multilabel-indicator":
         # Use a compress format of shape `(n_samples, n_output)`.
