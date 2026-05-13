@@ -1947,7 +1947,7 @@ def test_simple_imputer_column_shift(missing_value):
     X2 = np.array([[1.0, 2.0, 3.0],
                    [1.0, 2.0, 3.0]])
 
-    imputer = SimpleImputer(add_indicator=True)
+    imputer = SimpleImputer(add_indicator=True, fill_value=missing_value)
     imputer.fit(X1)
     X_inv = imputer.inverse_transform(imputer.transform(X2))
 
