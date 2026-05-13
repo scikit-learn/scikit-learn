@@ -1,0 +1,4 @@
+- :class:`impute.SimpleImputer` now correctly handles :meth:`inverse_transform` 
+  when ``add_indicator=True`` and some columns were entirely empty (all-NaN) 
+  during :meth:`fit`.
+  By :user:`max12G`
