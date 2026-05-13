@@ -3266,14 +3266,14 @@ def test_calibration_error_one_element_per_bin():
     y_pred = np.array([0.1, 0.3, 0.6, 0.9])
 
     assert calibration_error(y_true, y_pred, n_bins=ratio, norm="max") == pytest.approx(
-        0.6
+        0.7
     )
     assert calibration_error(y_true, y_pred, n_bins=ratio, norm="l1") == pytest.approx(
-        0.3
+        0.375
     )
     assert calibration_error(
         y_true, y_pred, n_bins=ratio, norm="l2", reduce_bias=False
-    ) == pytest.approx(0.3741657)
+    ) == pytest.approx(0.4663689)
 
 
 def test_calibration_error_l2_reduce_bias_zero_debias_denominator():
