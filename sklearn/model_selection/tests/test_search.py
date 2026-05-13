@@ -3132,3 +3132,40 @@ def test_search_callbacks_receive_search_instance(search):
 
     for entry in callback.record:
         assert entry["estimator"] is search
+
+
+def test_search_callbacks_with_partial_fit_failures():
+    """Check callbacks hooks are called when some candidate fits fail.
+
+    When error_score != "raise" and not all fit fail, the whole search doesn't raise so
+    all callback invocations are expected.
+    """
+
+    class MayFailClassifier(ClassifierMixin, BaseEstimator):
+        def __init__(self, fail=False):
+            self.fail = fail
+
+        def fit(self, X, y):
+            self.classes_ = np.unique(y)
+            if self.fail:
+                raise RuntimeError("MayFailClassifier.fit failed")
+            return self
+
+        def predict(self, X):
+            return np.zeros(len(X), dtype=int)
+
+    callback = RecordingCallback()
+    search = GridSearchCV(
+        MayFailClassifier(),
+        {"fail": [False, True]},
+        cv=2,
+        refit=False,
+        error_score=0.0,
+    ).set_callbacks(callback)
+
+    with pytest.warns(FitFailedWarning, match="2 fits failed out of a total of 4."):
+        search.fit(X, y)
+
+    expected_n_tasks = 1 + 1 + 4  # root + search + 4 candidate-split evaluations
+    assert callback.count_hooks("on_fit_task_begin") == expected_n_tasks
+    assert callback.count_hooks("on_fit_task_end") == expected_n_tasks

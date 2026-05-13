@@ -849,7 +849,7 @@ def _fit_and_score(
                     estimator.fit(X_train, **fit_params)
                 else:
                     estimator.fit(X_train, y_train, **fit_params)
-        else:  # custom search class does not support callbacks
+        else:  # custom search class that does not support callbacks
             if y_train is None:
                 estimator.fit(X_train, **fit_params)
             else:
@@ -882,6 +882,11 @@ def _fit_and_score(
         if return_train_score:
             train_scores = _score(
                 estimator, X_train, y_train, scorer, score_params_train, error_score
+            )
+    finally:
+        if callback_ctx is not None:
+            callback_ctx.call_on_fit_task_end(
+                estimator=caller, X=X_train, y=y_train, metadata=metadata_callbacks
             )
 
     if verbose > 1:
@@ -921,11 +926,6 @@ def _fit_and_score(
         result["parameters"] = parameters
     if return_estimator:
         result["estimator"] = estimator
-
-    if callback_ctx is not None:
-        callback_ctx.call_on_fit_task_end(
-            estimator=caller, X=X_train, y=y_train, metadata=metadata_callbacks
-        )
 
     return result
 
