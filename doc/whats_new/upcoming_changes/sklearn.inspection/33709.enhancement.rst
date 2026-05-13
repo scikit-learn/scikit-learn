@@ -1,0 +1,4 @@
+- In :class:`inspection.DecisionBoundaryDisplay`, `multiclass_colors` now defaults to
+  the more accessible [Petroff color sequence](https://arxiv.org/abs/2107.02270) for
+  multiclass problems with up to 10 classes.
+  By :user:`Anne Beyer <AnneBeyer>`.

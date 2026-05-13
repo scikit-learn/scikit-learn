@@ -4,9 +4,11 @@ import numpy as np
 import pytest
 from scipy.optimize import fmin_ncg
 
+from sklearn import config_context
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils._array_api import move_to, yield_namespace_device_dtype_combinations
 from sklearn.utils._bunch import Bunch
-from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import _array_api_for_tests, assert_allclose
 from sklearn.utils.optimize import _check_optimize_result, _newton_cg
 
 
@@ -37,6 +39,39 @@ def test_newton_cg(global_random_seed):
         _newton_cg(grad_hess, func, grad, x0, tol=1e-7)[0],
         fmin_ncg(f=func, x0=x0, fprime=grad, fhess_p=hess),
         atol=1e-5,
+    )
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_newton_cg_array_api_compliance(array_namespace, device_name, dtype_name):
+    """Test that newton_cg works with Array API input."""
+    xp, device = _array_api_for_tests(array_namespace, device_name)
+    A = xp.asarray(np.array([[3, -1], [-1, 1]]).astype(dtype_name), device=device)
+    y = xp.asarray(np.arange(2).astype(dtype_name), device=device)
+    x0 = xp.asarray(np.ones(2).astype(dtype_name), device=device)
+
+    def func(x):
+        return 0.5 * (y - A @ x) @ (y - A @ x)
+
+    def grad(x):
+        return A.T @ (A @ x - y)
+
+    def hess(x, p):
+        return A.T @ (A @ p)
+
+    def grad_hess(x):
+        return grad(x), lambda p: hess(x, p)
+
+    with config_context(array_api_dispatch=True):
+        res = _newton_cg(grad_hess, func, grad, x0, tol=1e-10)
+
+    assert_allclose(
+        move_to(res[0], xp=np, device="cpu"),
+        [1 / 2, 3 / 2],
+        atol=1e-10,
     )
 
 
@@ -85,7 +120,7 @@ def test_newton_cg_verbosity(capsys, verbose):
         b = np.array([1.0, 2.0])
         # Note that scipy.optimize._linesearch LineSearchWarning inherits from
         # RuntimeWarning, but we do not want to import from non public APIs.
-        with pytest.warns(RuntimeWarning):
+        with pytest.warns((RuntimeWarning, UserWarning)):
             _newton_cg(
                 grad_hess=lambda x: (A @ x - b, lambda z: A @ z),
                 func=lambda x: 0.5 * x @ A @ x - b @ x,
@@ -128,7 +163,7 @@ def test_newton_cg_verbosity(capsys, verbose):
         # curvature", but that is very hard to trigger.
         A = np.eye(2)
         b = np.array([-2.0, 1])
-        with pytest.warns(RuntimeWarning):
+        with pytest.warns((RuntimeWarning, UserWarning)):
             _newton_cg(
                 # Note the wrong sign in the hessian product.
                 grad_hess=lambda x: (A @ x - b, lambda z: -A @ z),
