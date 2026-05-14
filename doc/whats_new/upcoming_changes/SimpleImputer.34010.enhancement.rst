@@ -1,0 +1,4 @@
+:func:`impute.SimpleImputer` and :func:`impute.MissingIndicator` now support
+boolean dtype arrays. Previously, a ``ValueError`` was raised when fitting on
+a bool array without NaNs.
+:pr:`34010` by :user:`kanhaiya0318`.

@@ -4,11 +4,11 @@
 import numbers
 import warnings
 from collections import Counter
+from collections.abc import Callable
 from functools import partial
-from typing import Callable
 
 import numpy as np
-import numpy.ma as ma
+from numpy import ma
 from scipy import sparse as sp
 
 from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
@@ -34,8 +34,8 @@ def _check_inputs_dtype(X, missing_values):
     if X.dtype.kind in ("f", "i", "u") and not isinstance(missing_values, numbers.Real):
         raise ValueError(
             "'X' and 'missing_values' types are expected to be"
-            " both numerical. Got X.dtype={} and "
-            " type(missing_values)={}.".format(X.dtype, type(missing_values))
+            f" both numerical. Got X.dtype={X.dtype} and "
+            f" type(missing_values)={type(missing_values)}."
         )
 
 
@@ -366,9 +366,7 @@ class SimpleImputer(_BaseImputer):
         except ValueError as ve:
             if "could not convert" in str(ve):
                 new_ve = ValueError(
-                    "Cannot use {} strategy with non-numeric data:\n{}".format(
-                        self.strategy, ve
-                    )
+                    f"Cannot use {self.strategy} strategy with non-numeric data:\n{ve}"
                 )
                 raise new_ve from None
             else:
@@ -385,17 +383,18 @@ class SimpleImputer(_BaseImputer):
                 if self.strategy not in ("most_frequent", "constant"):
                     raise ValueError(
                         f"SimpleImputer does not support bool dtype with "
-                        f"strategy='{self.strategy}'. Use 'most_frequent' or 'constant'."
+                        f"strategy='{self.strategy}'. Use 'most_frequent' "
+                        f"or 'constant'."
                     )
                 X = X.astype(object)  # cast and continue normally
             else:
                 raise ValueError(
                     "SimpleImputer does not support data with dtype "
-                    "{0}. Please provide either a numeric array (with"
+                    f"{X.dtype}. Please provide either a numeric array (with"
                     " a floating point or integer dtype) or "
                     "categorical data represented either as an array "
                     "with integer dtype or an array of string values "
-                    "with an object dtype.".format(X.dtype)
+                    "with an object dtype."
                 )
 
         if sp.issparse(X) and self.missing_values == 0:
@@ -973,11 +972,11 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             else:
                 raise ValueError(
                     "MissingIndicator does not support data with "
-                    "dtype {0}. Please provide either a numeric array"
+                    f"dtype {X.dtype}. Please provide either a numeric array"
                     " (with a floating point or integer dtype) or "
                     "categorical data represented either as an array "
                     "with integer dtype or an array of string values "
-                    "with an object dtype.".format(X.dtype)
+                    "with an object dtype."
                 )
 
         if sp.issparse(X) and self.missing_values == 0:
@@ -1085,9 +1084,9 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             features_diff_fit_trans = np.setdiff1d(features, self.features_)
             if self.error_on_new and features_diff_fit_trans.size > 0:
                 raise ValueError(
-                    "The features {} have missing values "
+                    f"The features {features_diff_fit_trans} have missing values "
                     "in transform but have no missing values "
-                    "in fit.".format(features_diff_fit_trans)
+                    "in fit."
                 )
 
             if self.features_.size < self._n_features:
