@@ -1,5 +1,6 @@
-import pytest
 import sysconfig
+
+import pytest
 
 from sklearn.utils.fixes import _IS_WASM
 
