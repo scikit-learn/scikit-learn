@@ -1254,6 +1254,19 @@ def test_multioutput_regression_invariance_to_dimension_shuffling(name):
         )
 
 
+def test_aa():
+    y_true = [0, 0, 1, 1, 2, 2]
+    y_scores = [
+        [0.7, 0.2, 0.1],
+        [0.4, 0.3, 0.3],
+        [0.1, 0.8, 0.1],
+        [0.2, 0.3, 0.5],
+        [0.4, 0.4, 0.2],
+        [0.1, 0.2, 0.7],
+    ]
+    average_precision_score(y_true, y_scores)
+
+
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.UndefinedMetricWarning")
 @pytest.mark.parametrize("coo_container", COO_CONTAINERS)
 def test_multilabel_representation_invariance(coo_container):
@@ -1329,6 +1342,63 @@ def test_multilabel_representation_invariance(coo_container):
             )
             % name,
         )
+
+
+@pytest.mark.parametrize("name", sorted(CONTINUOUS_MULTILABEL_METRICS))
+def test_continuous_multilabel_representation_invariance(name):
+    # Check representation invariance for continuous multilabel metrics.
+    n_classes = 4
+    random_state = check_random_state(0)
+
+    # Generate binary multilabel indicator for y_true
+    _, y_true = make_multilabel_classification(
+        n_features=1,
+        n_classes=n_classes,
+        random_state=0,
+        n_samples=50,
+        allow_unlabeled=True,
+    )
+
+    # To make sure at least one empty label is present
+    y_true = np.vstack([y_true, [[0] * n_classes]])
+
+    # Generate continuous scores for y_score (not binary labels)
+    y_score = random_state.uniform(size=y_true.shape)
+
+    # Some metrics (e.g. log_loss) require y_score to be probabilities (sum to 1)
+    y_score /= y_score.sum(axis=1, keepdims=True)
+
+    y_true_list_array_indicator = list(y_true)
+    y_score_list_array = list(y_score)
+
+    y_true_list_list_indicator = [list(a) for a in y_true_list_array_indicator]
+    y_score_list_list = [list(a) for a in y_score_list_array]
+    print(f"{y_score_list_list=}")
+
+    metric = ALL_METRICS[name]
+    measure = metric(y_true, y_score)
+
+    # Check representation invariance with list of arrays
+    assert_almost_equal(
+        metric(y_true_list_array_indicator, y_score_list_array),
+        measure,
+        err_msg=(
+            f"{name} failed representation invariance  "
+            "between dense array and list of array "
+            "indicator formats."
+        ),
+    )
+
+    # Check representation invariance with list of lists
+    assert_almost_equal(
+        metric(y_true_list_list_indicator, y_score_list_list),
+        measure,
+        err_msg=(
+            f"{name} failed representation invariance  "
+            "between dense array and list of list "
+            "indicator formats."
+        ),
+    )
 
 
 @pytest.mark.parametrize("name", sorted(MULTILABELS_METRICS))
