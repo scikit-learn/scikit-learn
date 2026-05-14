@@ -870,6 +870,21 @@ class CCA(_PLS):
     PLSCanonical : Partial Least Squares transformer and regressor.
     PLSSVD : Partial Least Square SVD.
 
+    Notes
+    -----
+    CCA (mode B) internally uses pseudo-inverse computations which become
+    numerically unstable when ``n_features > n_samples`` or
+    ``n_targets > n_samples``. In such cases the fitted weights may depend on
+    the order of the columns in ``X`` or ``y`` and should not be interpreted.
+    Consider reducing the number of features or using :class:`PLSCanonical`
+    instead. See the Wegelin review [1]_ for a theoretical discussion.
+
+    References
+    ----------
+    .. [1] Wegelin, J. A. (2000). A Survey of Partial Least Squares (PLS)
+       Methods, with Emphasis on the Two-Block Case. Technical Report 371,
+       University of Washington Statistics Department.
+
     Examples
     --------
     >>> from sklearn.cross_decomposition import CCA
