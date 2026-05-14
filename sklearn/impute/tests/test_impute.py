@@ -1937,3 +1937,53 @@ def test_iterative_imputer_with_empty_features(strategy, X_test):
 
     assert X_train_drop_empty_features.shape[1] == X_test_drop_empty_features.shape[1]
     assert X_train_keep_empty_features.shape[1] == X_test_keep_empty_features.shape[1]
+
+
+def test_simpleimputer_bool_dtype():
+    """Test that SimpleImputer works with boolean dtype arrays.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/26292
+    """
+    X_bool = np.asarray([[True, False, True], [False, False, True]])
+
+    # most_frequent should work on bool arrays without NaNs
+    imp = SimpleImputer(strategy="most_frequent")
+    result = imp.fit_transform(X_bool)
+    assert result.shape == X_bool.shape
+
+    # constant should work with a bool fill_value
+    imp2 = SimpleImputer(strategy="constant", fill_value=False)
+    result2 = imp2.fit_transform(X_bool)
+    assert result2.shape == X_bool.shape
+
+    # mean and median also work — bool is cast to float automatically
+    imp3 = SimpleImputer(strategy="mean")
+    result3 = imp3.fit_transform(X_bool)
+    assert result3.shape == X_bool.shape
+    assert result3.dtype == np.float64
+
+    imp4 = SimpleImputer(strategy="median")
+    result4 = imp4.fit_transform(X_bool)
+    assert result4.shape == X_bool.shape
+    assert result4.dtype == np.float64
+
+
+def test_missingindicator_bool_dtype():
+    """Test that MissingIndicator works with boolean dtype arrays.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/26292
+    """
+    X_bool = np.asarray([[True, False, True], [False, False, True]])
+
+    # MissingIndicator should work on bool arrays
+    indicator = MissingIndicator(missing_values=False)
+    result = indicator.fit_transform(X_bool)
+    assert result.shape[0] == X_bool.shape[0]
+
+    # fit and transform should both work
+    indicator2 = MissingIndicator(missing_values=False)
+    indicator2.fit(X_bool)
+    result2 = indicator2.transform(X_bool)
+    assert result2.shape[0] == X_bool.shape[0]

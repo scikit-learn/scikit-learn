@@ -380,14 +380,23 @@ class SimpleImputer(_BaseImputer):
 
         _check_inputs_dtype(X, self.missing_values)
         if X.dtype.kind not in ("i", "u", "f", "O"):
-            raise ValueError(
-                "SimpleImputer does not support data with dtype "
-                "{0}. Please provide either a numeric array (with"
-                " a floating point or integer dtype) or "
-                "categorical data represented either as an array "
-                "with integer dtype or an array of string values "
-                "with an object dtype.".format(X.dtype)
-            )
+            if X.dtype.kind == "b":
+                # Bool dtype is only supported for most_frequent and constant
+                if self.strategy not in ("most_frequent", "constant"):
+                    raise ValueError(
+                        f"SimpleImputer does not support bool dtype with "
+                        f"strategy='{self.strategy}'. Use 'most_frequent' or 'constant'."
+                    )
+                X = X.astype(object)  # cast and continue normally
+            else:
+                raise ValueError(
+                    "SimpleImputer does not support data with dtype "
+                    "{0}. Please provide either a numeric array (with"
+                    " a floating point or integer dtype) or "
+                    "categorical data represented either as an array "
+                    "with integer dtype or an array of string values "
+                    "with an object dtype.".format(X.dtype)
+                )
 
         if sp.issparse(X) and self.missing_values == 0:
             # missing_values = 0 not allowed with sparse data as it would
@@ -959,14 +968,17 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         )
         _check_inputs_dtype(X, self.missing_values)
         if X.dtype.kind not in ("i", "u", "f", "O"):
-            raise ValueError(
-                "MissingIndicator does not support data with "
-                "dtype {0}. Please provide either a numeric array"
-                " (with a floating point or integer dtype) or "
-                "categorical data represented either as an array "
-                "with integer dtype or an array of string values "
-                "with an object dtype.".format(X.dtype)
-            )
+            if X.dtype.kind == "b":
+                X = X.astype(object)
+            else:
+                raise ValueError(
+                    "MissingIndicator does not support data with "
+                    "dtype {0}. Please provide either a numeric array"
+                    " (with a floating point or integer dtype) or "
+                    "categorical data represented either as an array "
+                    "with integer dtype or an array of string values "
+                    "with an object dtype.".format(X.dtype)
+                )
 
         if sp.issparse(X) and self.missing_values == 0:
             # missing_values = 0 not allowed with sparse data as it would
