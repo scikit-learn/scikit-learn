@@ -4224,35 +4224,51 @@ def calibration_error(
         )
 
     binids = np.searchsorted(bins[1:-1], y_prob)
-    bin_total = np.bincount(binids, weights=sample_weight, minlength=n_bins)
-    nonzero = bin_total != 0
-    bin_total = bin_total[nonzero]
-    prob_true = (
+    bin_weights = np.bincount(binids, weights=sample_weight, minlength=n_bins)
+    nonzero = bin_weights != 0
+    bin_weights = bin_weights[nonzero]
+    freq_true = (
         np.bincount(binids, weights=y_true * sample_weight, minlength=n_bins)[nonzero]
-        / bin_total
+        / bin_weights
     )
-    prob_pred = (
+    mean_pred = (
         np.bincount(binids, weights=y_prob * sample_weight, minlength=n_bins)[nonzero]
-        / bin_total
+        / bin_weights
     )
 
     debias = 0.0
-    count = float(sample_weight.sum())
+    weight_sum = np.sum(sample_weight, dtype=np.float64)
     if norm == "l2" and reduce_bias:
-        nonzero_variance = bin_total != 1
-        mean_label = prob_true[nonzero_variance]
-        variance = mean_label * (1.0 - mean_label) / (bin_total[nonzero_variance] - 1.0)
-        bin_probs = bin_total[nonzero_variance] / count
-        debias = -np.dot(bin_probs, variance)
+        # The squared calibration error is biased upward because `freq_true`
+        # estimates the bin label frequency from finitely many samples. The
+        # bias term to subtract from the squared error is Var(freq_true). If
+        # theta is the true bin frequency, then Var(freq_true) is theta *
+        # (1 - theta) * sum(w**2) / sum(w)**2. Estimate this variance with
+        # freq_true * (1 - freq_true) * sum(w**2) /
+        # (sum(w)**2 - sum(w**2)), applying a weighted Bessel correction. With
+        # unit weights this reduces to the unweighted correction
+        # freq_true * (1 - freq_true) / (n_bin - 1).
+        sample_weight_squared = sample_weight.astype(np.float64, copy=False) ** 2
+        bin_weight_squares = np.bincount(
+            binids, weights=sample_weight_squared, minlength=n_bins
+        )[nonzero]
+        variance_denominator = bin_weights**2 - bin_weight_squares
+        nonzero_var_denom = variance_denominator > 0
+        variance = np.zeros_like(freq_true)
+        np.divide(
+            freq_true * (1.0 - freq_true) * bin_weight_squares,
+            variance_denominator,
+            out=variance,
+            where=nonzero_var_denom,
+        )
+        debias = -np.dot(bin_weights, variance) / weight_sum
 
     if norm == "max":
-        loss = np.max(np.abs(prob_true - prob_pred))
+        loss = np.max(np.abs(freq_true - mean_pred))
     elif norm == "l1":
-        delta_loss = np.abs(prob_true - prob_pred) * bin_total
-        loss = np.sum(delta_loss) / count
+        loss = np.dot(bin_weights, np.abs(freq_true - mean_pred)) / weight_sum
     elif norm == "l2":
-        delta_loss = (prob_true - prob_pred) ** 2 * bin_total
-        loss = np.sum(delta_loss) / count
+        loss = np.dot(bin_weights, (freq_true - mean_pred) ** 2) / weight_sum
         if reduce_bias:
             loss += debias
         loss = np.sqrt(max(loss, 0.0))

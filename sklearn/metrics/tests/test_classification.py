@@ -3281,10 +3281,43 @@ def test_calibration_error_l2_reduce_bias_zero_debias_denominator():
     assert calibration_error(
         [0, 1],
         [0.4, 0.6],
-        sample_weight=[0.25, 0.75],
+        sample_weight=[0.25, 0.0],
         n_bins=1,
         norm="l2",
-    ) == pytest.approx(0.2)
+    ) == pytest.approx(0.4)
+
+
+def test_calibration_error_l2_reduce_bias_sample_weight_scale_invariant():
+    y_true = np.array([1, 1, 0, 1, 1, 1, 1, 1])
+    y_prob = np.array([0.36, 0.89, 0.22, 0.14, 0.14, 0.09, 0.8, 0.99])
+    sample_weight = np.array([1.5, 2.0, 3.0, 1.5, 0.5, 0.75, 0.25, 2.0])
+
+    result = calibration_error(
+        y_true,
+        y_prob,
+        sample_weight=sample_weight,
+        n_bins=3,
+        norm="l2",
+        reduce_bias=True,
+    )
+
+    assert result > 0
+    assert calibration_error(
+        y_true,
+        y_prob,
+        sample_weight=0.5 * sample_weight,
+        n_bins=3,
+        norm="l2",
+        reduce_bias=True,
+    ) == pytest.approx(result)
+    assert calibration_error(
+        y_true,
+        y_prob,
+        sample_weight=3 * sample_weight,
+        n_bins=3,
+        norm="l2",
+        reduce_bias=True,
+    ) == pytest.approx(result)
 
 
 def test_calibration_error_l2_reduce_bias_unbiased_square_ce():
