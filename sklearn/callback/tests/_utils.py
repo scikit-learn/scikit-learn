@@ -1,14 +1,23 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import sysconfig
 import time
 
 import numpy as np
+import pytest
 
 from sklearn.base import BaseEstimator, _fit_context, clone
 from sklearn.callback import CallbackSupportMixin, with_callbacks
 from sklearn.callback._transport import open_listener, send
+from sklearn.utils.fixes import _IS_WASM
 from sklearn.utils.parallel import Parallel, delayed
+
+IS_WASM_OR_FREE_THREADED = _IS_WASM or bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
+skip_if_wasm_or_free_threaded = pytest.mark.skipif(
+    IS_WASM_OR_FREE_THREADED,
+    reason="callback tests are skipped on WASM/Pyodide and free-threaded Python",
+)
 
 
 class RecordingCallback:
