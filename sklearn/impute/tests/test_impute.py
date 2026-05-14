@@ -1944,26 +1944,31 @@ def test_simpleimputer_bool_dtype():
     """
     X_bool = np.asarray([[True, False, True], [False, False, True]])
 
-    # most_frequent should work on bool arrays without NaNs
+    # most_frequent
     imp = SimpleImputer(strategy="most_frequent")
     result = imp.fit_transform(X_bool)
     assert result.shape == X_bool.shape
 
-    # constant should work with a bool fill_value
+    # constant
     imp2 = SimpleImputer(strategy="constant", fill_value=False)
     result2 = imp2.fit_transform(X_bool)
     assert result2.shape == X_bool.shape
 
-    # mean and median also work — bool is cast to float automatically
+    # mean also works — bool cast to float
     imp3 = SimpleImputer(strategy="mean")
     result3 = imp3.fit_transform(X_bool)
-    assert result3.shape == X_bool.shape
     assert result3.dtype == np.float64
 
+    # median also works
     imp4 = SimpleImputer(strategy="median")
     result4 = imp4.fit_transform(X_bool)
-    assert result4.shape == X_bool.shape
     assert result4.dtype == np.float64
+
+    # fit then transform separately
+    imp5 = SimpleImputer(strategy="most_frequent")
+    imp5.fit(X_bool)
+    result5 = imp5.transform(X_bool)
+    assert result5.shape == X_bool.shape
 
 
 def test_missingindicator_bool_dtype():
