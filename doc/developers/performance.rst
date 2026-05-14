@@ -241,9 +241,55 @@ pin-point the most expensive expressions that would deserve additional care.
 Memory usage profiling
 ======================
 
-You can analyze in detail the memory usage of any Python code with the help of
-`memory_profiler <https://pypi.org/project/memory_profiler/>`_. First,
-install the latest version:
+Peak memory
+-----------
+
+Peak memory, i.e. the highest level of memory usage for a program, can be a
+bottleneck when processing large amounts of data. You can use `memray
+<https://bloomberg.github.io/memray/>`_ to measure peak memory, and discover the
+responsible code. In particular, it will tell you which Python callstacks were
+responsible for allocating the various allocations that led to peak memory.
+
+First, install the latest version:
+
+.. prompt:: bash $
+
+  pip install -U memray
+
+Then, run a script using the relevant code under ``memray``:
+
+.. prompt:: bash $
+
+  memray run example.py
+
+It will tell you where it wrote the resulting data::
+
+  Writing profile results into memray-example.py.123.bin
+
+You can then convert this data into an HTML report:
+
+.. prompt:: bash $
+
+  memray flamegraph memray-example.py.123.bin
+
+In this case it will generate a file called
+"memray-flamegraph-example.py.123.html" which you can then open in a browser. If
+you are not familiar with flamegraphs, see `Memray's docs
+<https://bloomberg.github.io/memray/flamegraph.html>`_ for an introduction.
+
+
+Memory leaks
+------------
+
+You can analyze the memory usage changes of any Python code with the help of
+`memory_profiler <https://pypi.org/project/memory_profiler/>`_. It works by
+measuring how much memory usage has changed between the start of a line of code
+and the end of a line of code. As a result, it is less useful for discovering
+peak memory usage: it cannot detect any memory that is allocated and then
+immediately released while the line of code is executing, even if it's a large
+amount.
+
+First, install the latest version:
 
 .. prompt:: bash $
 
