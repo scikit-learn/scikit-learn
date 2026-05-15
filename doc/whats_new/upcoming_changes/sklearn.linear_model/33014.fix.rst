@@ -3,4 +3,4 @@
   ``precompute`` was not properly treated which could lead to a ValueError.
   This also affects :class:`linear_model.ElasticNetCV`, :class:`linear_model.LassoCV`,
   :class:`linear_model.MultiTaskElasticNetCV` and :class:`linear_model.MultiTaskLassoCV`.
-  By :user:`Albert Dorador <adc-trust-ai>`
+  By :user:`Albert Dorador <adc-trust-ai>`.
