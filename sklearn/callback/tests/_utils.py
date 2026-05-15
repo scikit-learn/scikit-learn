@@ -29,7 +29,7 @@ class RecordingCallback:
 
     def __init__(self):
         self.record = []
-        self._listener_handle = open_listener(self.record.append)
+        self._listener_handle = open_listener(self.record.append, owner=self)
 
     def setup(self, estimator, context):
         send(
