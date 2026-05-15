@@ -1,3 +1,3 @@
 - Constructor signature of Gaussian process kernels is now cached,
   improving performance on small and medium datasets.
-  By :user:`Stanislav Terliakov <sterliakov>`
+  By :user:`Stanislav Terliakov <sterliakov>`.

@@ -306,6 +306,7 @@ def test_pipeline_invalid_parameters():
 )
 def test_meta_estimator_raises_class_not_instance_error(meta_estimators, class_name):
     # non-regression tests for https://github.com/scikit-learn/scikit-learn/issues/32719
+    meta_estimators = clone(meta_estimators)
     msg = re.escape(
         f"Expected an estimator instance ({class_name}()), "
         f"got estimator class instead ({class_name})."

@@ -25,7 +25,7 @@ from sklearn.base import (
     clone,
     is_classifier,
 )
-from sklearn.tree import _criterion, _splitter, _tree
+from sklearn.tree import _criterion, _splitter
 from sklearn.tree._criterion import Criterion
 from sklearn.tree._splitter import Splitter
 from sklearn.tree._tree import (
@@ -63,9 +63,6 @@ __all__ = [
 # =============================================================================
 # Types and constants
 # =============================================================================
-
-DTYPE = _tree.DTYPE
-DOUBLE = _tree.DOUBLE
 
 CRITERIA_CLF = {
     "gini": _criterion.Gini,
@@ -193,7 +190,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameter
         ---------
-        X : array-like of shape (n_samples, n_features), dtype=DOUBLE
+        X : array-like of shape (n_samples, n_features)
             Input data.
 
         estimator_name : str or None, default=None
@@ -244,7 +241,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             # _compute_missing_values_in_feature_mask will check for finite values and
             # compute the missing mask if the tree supports missing values
             check_X_params = dict(
-                dtype=DTYPE, accept_sparse="csc", ensure_all_finite=False
+                dtype=np.float32, accept_sparse="csc", ensure_all_finite=False
             )
             check_y_params = dict(ensure_2d=False, dtype=None)
             X, y = validate_data(
@@ -312,8 +309,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
             self.n_classes_ = np.array(self.n_classes_, dtype=np.intp)
 
-        if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
-            y = np.ascontiguousarray(y, dtype=DOUBLE)
+        if getattr(y, "dtype", None) != np.float64 or not y.flags.contiguous:
+            y = np.ascontiguousarray(y, dtype=np.float64)
 
         max_depth = np.iinfo(np.int32).max if self.max_depth is None else self.max_depth
 
@@ -356,7 +353,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             )
 
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, dtype=DOUBLE)
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=np.float64)
 
         if expanded_class_weight is not None:
             if sample_weight is not None:
@@ -487,7 +484,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             X = validate_data(
                 self,
                 X,
-                dtype=DTYPE,
+                dtype=np.float32,
                 accept_sparse="csr",
                 reset=False,
                 ensure_all_finite=ensure_all_finite,
@@ -1428,7 +1425,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         averaged_predictions : ndarray of shape (n_samples,), dtype=np.float64
             The value of the partial dependence function on each grid point.
         """
-        grid = np.asarray(grid, dtype=DTYPE, order="C")
+        grid = np.asarray(grid, dtype=np.float32, order="C")
         averaged_predictions = np.zeros(
             shape=grid.shape[0], dtype=np.float64, order="C"
         )
