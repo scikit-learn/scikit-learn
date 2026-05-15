@@ -87,7 +87,6 @@ from sklearn.utils._array_api import (
     _atol_for_type,
     _max_precision_float_dtype,
     get_namespace,
-    move_to,
     yield_mixed_namespace_input_permutations,
     yield_namespace_device_dtype_combinations,
 )
@@ -2068,14 +2067,12 @@ def check_array_api_metric(
         # Exception type may need to be updated in the future for other libraries.
         numpy_as_array_works = False
 
-    def _check_metric_matches(metric_a, metric_b, convert_a=False):
-        if convert_a:
-            metric_a = move_to(xp.asarray(metric_a), xp=np, device="cpu")
+    def _check_metric_matches(metric_a, metric_b):
         assert_allclose(metric_a, metric_b, atol=_atol_for_type(dtype_name))
 
-    def _check_each_metric_matches(metric_a, metric_b, convert_a=False):
+    def _check_each_metric_matches(metric_a, metric_b):
         for metric_a_val, metric_b_val in zip(metric_a, metric_b):
-            _check_metric_matches(metric_a_val, metric_b_val, convert_a=convert_a)
+            _check_metric_matches(metric_a_val, metric_b_val)
 
     if numpy_as_array_works:
         metric_xp = metric(a_xp, b_xp, **metric_kwargs)
@@ -2108,9 +2105,9 @@ def check_array_api_metric(
 
         # Handle cases where there are multiple return values, e.g. roc_curve:
         if isinstance(metric_xp, tuple):
-            _check_each_metric_matches(metric_xp, metric_np, convert_a=True)
+            _check_each_metric_matches(metric_xp, metric_np)
         else:
-            _check_metric_matches(metric_xp, metric_np, convert_a=True)
+            _check_metric_matches(metric_xp, metric_np)
 
 
 def check_array_api_binary_classification_metric(

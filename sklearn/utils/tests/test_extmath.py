@@ -82,8 +82,8 @@ def test_uniform_weights():
         mode, score = _mode(x, axis)
         mode2, score2 = weighted_mode(x, weights, axis=axis)
 
-        assert_array_equal(mode, mode2)
-        assert_array_equal(score, score2)
+        assert_array_equal(mode2, mode)
+        assert_array_equal(score2, score)
 
 
 def test_random_weights():
@@ -973,7 +973,7 @@ def test_incremental_variance_ddof():
             calculated_variances = np.var(X[:j], axis=0)
             assert_almost_equal(incremental_means, calculated_means, 6)
             assert_almost_equal(incremental_variances, calculated_variances, 6)
-            assert_array_equal(incremental_count, sample_count)
+            assert_array_equal(sample_count, incremental_count)
 
 
 def test_vector_sign_flip():
