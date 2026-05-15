@@ -514,7 +514,7 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             self,
             X,
             reset=first_pass,
-            dtype=_array_api.supported_float_dtypes(xp),
+            dtype=_array_api.supported_float_dtypes(xp, device=device(X)),
             ensure_all_finite="allow-nan",
         )
 
@@ -565,7 +565,7 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             self,
             X,
             copy=self.copy,
-            dtype=_array_api.supported_float_dtypes(xp),
+            dtype=_array_api.supported_float_dtypes(xp, device=device(X)),
             force_writeable=True,
             ensure_all_finite="allow-nan",
             reset=False,
@@ -605,7 +605,7 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         X = check_array(
             X,
             copy=self.copy,
-            dtype=_array_api.supported_float_dtypes(xp),
+            dtype=_array_api.supported_float_dtypes(xp, device=device(X)),
             force_writeable=True,
             ensure_all_finite="allow-nan",
         )
@@ -1343,7 +1343,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X,
             reset=first_pass,
             accept_sparse=("csr", "csc"),
-            dtype=_array_api.supported_float_dtypes(xp),
+            dtype=_array_api.supported_float_dtypes(xp, device=device(X)),
             ensure_all_finite="allow-nan",
         )
 
@@ -1386,7 +1386,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             accept_sparse=("csr", "csc"),
             copy=self.copy,
             reset=False,
-            dtype=_array_api.supported_float_dtypes(xp),
+            dtype=_array_api.supported_float_dtypes(xp, device=device(X)),
             force_writeable=True,
             ensure_all_finite="allow-nan",
         )
@@ -1430,7 +1430,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X,
             accept_sparse=("csr", "csc"),
             copy=self.copy,
-            dtype=_array_api.supported_float_dtypes(xp),
+            dtype=_array_api.supported_float_dtypes(xp, device=device(X)),
             force_writeable=True,
             ensure_all_finite="allow-nan",
         )
@@ -2047,7 +2047,7 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
         accept_sparse=sparse_format,
         copy=copy,
         estimator="the normalize function",
-        dtype=_array_api.supported_float_dtypes(xp),
+        dtype=_array_api.supported_float_dtypes(xp, device=device(X)),
         force_writeable=True,
     )
     if axis == 0:
@@ -2534,7 +2534,9 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         """
         xp, _ = get_namespace(K)
 
-        K = validate_data(self, K, dtype=_array_api.supported_float_dtypes(xp))
+        K = validate_data(
+            self, K, dtype=_array_api.supported_float_dtypes(xp, device=device(K))
+        )
 
         if K.shape[0] != K.shape[1]:
             raise ValueError(
@@ -2572,7 +2574,7 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
             K,
             copy=copy,
             force_writeable=True,
-            dtype=_array_api.supported_float_dtypes(xp),
+            dtype=_array_api.supported_float_dtypes(xp, device=device(K)),
             reset=False,
         )
 
