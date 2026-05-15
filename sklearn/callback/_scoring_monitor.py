@@ -121,7 +121,7 @@ class ScoringMonitor:
         # receives a pickled copy of this callback can send data to the main process.
         # `self._log.append` is the message consumer that `send` calls will use to
         # to grow the main process's log.
-        self._listener_handle = open_listener(self._log.append, owner=self)
+        self._listener_handle = open_listener(self._log.append)
 
     def setup(self, estimator, context):
         # A scorer per estimator is needed to avoid race conditions when the callback is
@@ -181,7 +181,7 @@ class ScoringMonitor:
         """Restore state, opening a fresh listener if the inherited one is unusable."""
         self.__dict__.update(state)
         if not can_reuse_listener(self._listener_handle):
-            self._listener_handle = open_listener(self._log.append, owner=self)
+            self._listener_handle = open_listener(self._log.append)
 
     @validate_params(
         {

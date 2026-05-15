@@ -29,7 +29,7 @@ class RecordingCallback:
 
     def __init__(self):
         self.record = []
-        self._listener_handle = open_listener(self.record.append, owner=self)
+        self._listener_handle = open_listener(self.record.append)
 
     def setup(self, estimator, context):
         send(
@@ -355,13 +355,6 @@ class MetaEstimator(CallbackSupportMixin, BaseEstimator):
         metadata = {"sample_weight": sample_weight} if sample_weight is not None else {}
         callback_ctx.call_on_fit_task_begin(estimator=self, X=X, y=y, metadata=metadata)
 
-        outer_callback_contexts = [
-            callback_ctx.subcontext(
-                task_name="outer", task_id=i, max_subtasks=self.n_inner
-            )
-            for i in range(self.n_outer)
-        ]
-
         Parallel(n_jobs=self.n_jobs, prefer=self.prefer)(
             delayed(_fit_subestimator)(
                 self,
@@ -369,7 +362,9 @@ class MetaEstimator(CallbackSupportMixin, BaseEstimator):
                 X=X,
                 y=y,
                 metadata=metadata,
-                outer_callback_ctx=outer_callback_contexts[i],
+                outer_callback_ctx=callback_ctx.subcontext(
+                    task_name="outer", task_id=i, max_subtasks=self.n_inner
+                ),
             )
             for i in range(self.n_outer)
         )

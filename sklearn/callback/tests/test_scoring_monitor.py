@@ -404,17 +404,3 @@ def test_scoring_monitor_no_callback_support(backend):
     for log in log_all:
         assert log.data == expected_log
         assert log.estimator_name == "MaxIterEstimator"
-
-
-def test_scoring_monitor_listener_closed_on_gc():
-    """Check that listener is closed when callback is garbage collected."""
-    from sklearn.callback._transport import _listeners, _message_consumers
-
-    callback = ScoringMonitor(scoring="r2")
-    listener_address = callback._listener_handle.address
-    assert listener_address in _listeners
-    assert listener_address in _message_consumers
-
-    del callback
-    assert listener_address not in _listeners
-    assert listener_address not in _message_consumers

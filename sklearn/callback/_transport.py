@@ -17,7 +17,6 @@ API or give up cross-process capabilities.
 """
 
 import os
-import weakref
 from multiprocessing.connection import Client, Connection, Listener
 from threading import Thread
 from typing import Callable, NamedTuple
@@ -65,7 +64,7 @@ _message_consumers: dict[str, Callable] = {}
 _worker_connections: dict[str, Connection] = {}
 
 
-def open_listener(message_consumer, *, owner=None):
+def open_listener(message_consumer):
     """Create a listener for incoming messages on the main process.
 
     Also registers the listener and its message consumer in the module-level dicts.
@@ -75,10 +74,6 @@ def open_listener(message_consumer, *, owner=None):
     message_consumer : callable
         A one-argument function, `message_consumer(message)`, that processes incoming
         message to update the callback's state.
-
-    owner : object, default=None
-        Optional owner object. When provided, the listener is automatically closed when
-        `owner` gets garbage-collected.
 
     Returns
     -------
@@ -98,8 +93,6 @@ def open_listener(message_consumer, *, owner=None):
 
     _listeners[listener_handle.address] = listener
     _message_consumers[listener_handle.address] = message_consumer
-    if owner is not None:
-        weakref.finalize(owner, close_listener, listener_handle)
 
     def _handle(conn):
         # Read messages until the worker disconnects. After processing each message,
@@ -126,10 +119,8 @@ def open_listener(message_consumer, *, owner=None):
 
 def close_listener(listener_handle):
     """Stop listening for `listener_handle` and free its background threads."""
-    _message_consumers.pop(listener_handle.address, None)
-    listener = _listeners.pop(listener_handle.address, None)
-    if listener is not None:
-        listener.close()
+    _message_consumers.pop(listener_handle.address)
+    _listeners.pop(listener_handle.address).close()
 
 
 def can_reuse_listener(listener_handle):

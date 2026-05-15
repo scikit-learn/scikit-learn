@@ -88,8 +88,6 @@ def test_clone_after_fit():
     assert cloned._skl_callbacks[0] is pb
 
 
-# This test inspects the global _run_queues/monitors registries which is not thread-safe
-@pytest.mark.thread_unsafe
 @pytest.mark.parametrize("backend", ["threading", "loky"])
 def test_progressbar_no_callback_support(backend):
     """Sanity check for ProgressBar within function not supporting callbacks.
