@@ -4208,23 +4208,21 @@ def calibration_error(
     y_true = y_true[:, 1]
     y_prob = y_prob[:, 1]
     xp, _, device_ = get_namespace_and_device(y_prob)
-    max_float_dtype = _max_precision_float_dtype(xp=xp, device=device_)
-    y_true = xp.astype(y_true, max_float_dtype, copy=False)
-    y_prob = xp.astype(y_prob, max_float_dtype, copy=False)
+    float_dtype = _find_matching_floating_dtype(y_prob, sample_weight, xp=xp)
+    y_true = xp.astype(y_true, float_dtype, copy=False)
+    y_prob = xp.astype(y_prob, float_dtype, copy=False)
 
     if sample_weight is not None:
         sample_weight = _check_sample_weight(
             sample_weight, y_prob, force_float_dtype=False
         )
     else:
-        sample_weight = xp.ones(y_true.shape[0], dtype=max_float_dtype, device=device_)
-    sample_weight = xp.astype(sample_weight, max_float_dtype, copy=False)
+        sample_weight = xp.ones(y_true.shape[0], dtype=float_dtype, device=device_)
+    sample_weight = xp.astype(sample_weight, float_dtype, copy=False)
 
     n_bins = int(n_bins)
     if strategy == "quantile":
-        quantiles = xp.linspace(
-            0, 100, n_bins + 1, dtype=max_float_dtype, device=device_
-        )
+        quantiles = xp.linspace(0, 100, n_bins + 1, dtype=float_dtype, device=device_)
         bins = _weighted_percentile(
             y_prob, sample_weight, quantiles, average=True, xp=xp
         )
@@ -4254,7 +4252,7 @@ def calibration_error(
     )
 
     debias = 0.0
-    weight_sum = xp.sum(sample_weight, dtype=max_float_dtype)
+    weight_sum = xp.sum(sample_weight, dtype=float_dtype)
     if norm == "l2" and reduce_bias:
         # The squared calibration error is biased upward because `freq_true`
         # estimates the bin label frequency from finitely many samples. The
