@@ -361,12 +361,14 @@ vanilla NumPy and array API inputs.
 To run these checks you need to install
 `array-api-strict <https://data-apis.org/array-api-strict/>`_ in your
 test environment. This allows you to run checks without having a
-GPU. To run the full set of checks you also need to install
-`PyTorch <https://pytorch.org/>`_, `CuPy <https://cupy.dev/>`_, and
+GPU. To run checks on real GPU devices you also need to install
+`PyTorch <https://pytorch.org/>`_, `CuPy <https://cupy.dev/>`_, and/or
 `dpnp <https://intelpython.github.io/dpnp/>`_, and have compatible GPU
-hardware. Checks that can not be executed or have missing dependencies
-will be automatically skipped. Therefore it's important to run the tests
-with the `-v` flag to see which checks are skipped:
+hardware. Full GPU coverage is expected to be split across machines because
+CUDA, MPS, and Intel GPU backends require different hardware. Checks that can
+not be executed or have missing dependencies will be automatically skipped.
+Therefore it's important to run the tests with the `-v` flag to see which
+checks are skipped:
 
 .. prompt:: bash $
 
