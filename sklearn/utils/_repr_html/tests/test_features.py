@@ -84,7 +84,8 @@ def test_estimator_html_repr_total_feature_names(pandas, total_output_features):
 
 def test_estimator_html_col_names_featureunion():
     X = [[0.0, 1.0, 3], [2.0, 2.0, 5]]
-    ct2_cloned = clone(ct2).fit_transform(X)
+    ct2_cloned = clone(ct2)
+    ct2_cloned.fit_transform(X)
     out = estimator_html_repr(ct2_cloned)
 
     assert "pca__pca0" in out
