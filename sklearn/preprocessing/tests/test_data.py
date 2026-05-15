@@ -13,7 +13,7 @@ from sklearn import config_context, datasets
 from sklearn.base import clone
 from sklearn.callback.tests._utils import (
     RecordingCallback,
-    skip_if_wasm_or_free_threaded,
+    skip_callback_test_if_wasm,
 )
 from sklearn.exceptions import NotFittedError
 from sklearn.externals._packaging.version import parse as parse_version
@@ -2874,7 +2874,7 @@ def test_transformer_inverse_transform_shape_error(TransformerClass):
 
 
 @pytest.mark.parametrize("fit_method", ["fit", "partial_fit"])
-@skip_if_wasm_or_free_threaded
+@skip_callback_test_if_wasm
 def test_standard_scaler_callback_support(fit_method):
     """Check that the reconstruction attributes are correctly passed."""
     X = np.random.RandomState(0).random_sample((10, 2))

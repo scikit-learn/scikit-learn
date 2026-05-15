@@ -1,6 +1,6 @@
-from sklearn.callback.tests._utils import IS_WASM_OR_FREE_THREADED
+from sklearn.utils.fixes import _IS_WASM
 
 
 def pytest_ignore_collect(collection_path, config):
-    # Skip tests for the whole callback module on free-threaded Python and WASM/Pyodide.
-    return IS_WASM_OR_FREE_THREADED
+    # Skip tests for the whole callback module on WASM/Pyodide.
+    return _IS_WASM

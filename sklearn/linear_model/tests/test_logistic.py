@@ -18,7 +18,7 @@ from sklearn._loss import HalfMultinomialLoss
 from sklearn.base import clone
 from sklearn.callback.tests._utils import (
     RecordingCallback,
-    skip_if_wasm_or_free_threaded,
+    skip_callback_test_if_wasm,
 )
 from sklearn.datasets import load_iris, make_classification, make_low_rank_matrix
 from sklearn.exceptions import ConvergenceWarning
@@ -2906,7 +2906,7 @@ def test_logistic_regression_array_api_warm_start(
 
 # TODO(callbacks): also test for other solvers when they get supported.
 @pytest.mark.parametrize("max_iter", [0, 2, 1000])
-@skip_if_wasm_or_free_threaded
+@skip_callback_test_if_wasm
 def test_logistic_regression_callback_support(max_iter):
     """Test the callback support for LogisticRegression."""
     X, y = make_classification(n_features=4, random_state=0)
@@ -2925,7 +2925,7 @@ def test_logistic_regression_callback_support(max_iter):
 # TODO(callbacks): also test for other solvers when they get supported.
 @pytest.mark.parametrize("n_classes", [2, 3])
 @pytest.mark.parametrize("fit_intercept", [True, False])
-@skip_if_wasm_or_free_threaded
+@skip_callback_test_if_wasm
 def test_logistic_regression_callback_fitted_estimator(n_classes, fit_intercept):
     """Check the fitted_estimator in callback hooks.
 
@@ -2992,7 +2992,7 @@ def test_logistic_regression_callback_fitted_estimator(n_classes, fit_intercept)
 
 
 # TODO(callbacks): update/remove as more solvers get supported.
-@skip_if_wasm_or_free_threaded
+@skip_callback_test_if_wasm
 def test_logistic_regression_callback_support_warning():
     """Test the warning message when trying to set a callback with solver!='lbfgs'."""
     cb = RecordingCallback()
