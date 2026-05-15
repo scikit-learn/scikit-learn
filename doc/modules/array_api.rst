@@ -384,9 +384,8 @@ actual GPU devices, it is necessary to run the tests against those libraries and
 hardware. This can either be achieved by using
 `Google Colab <https://gist.github.com/EdAbati/ff3bdc06bafeb92452b3740686cc8d7c>`_
 for CUDA or leveraging our CI infrastructure on pull requests. CUDA and Intel
-GPU tests are manually triggered by maintainers for cost and hardware
-availability reasons. Intel GPU testing for PyTorch XPU and dpnp is run on a
-dedicated self-hosted runner:
+GPU tests are manually triggered by maintainers. Intel GPU testing for PyTorch
+XPU and dpnp is run on a dedicated self-hosted runner:
 `probabl-ai/scikit-learn-intel-workflow
 <https://github.com/probabl-ai/scikit-learn-intel-workflow>`_.
 
