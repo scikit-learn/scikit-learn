@@ -3018,7 +3018,7 @@ def _searchcv_callback_test_cases(estimator, scoring):
 def test_search_callbacks_no_propagation(search, refit):
     """Check number of hook calls when the sub-estimator doesn't support callbacks."""
     callbacks = [RecordingCallback(), RecordingAutoPropagatedCallback()]
-    search.set_params(refit=refit).set_callbacks(*callbacks).fit(X, y)
+    search = clone(search).set_params(refit=refit).set_callbacks(*callbacks).fit(X, y)
 
     # defining expected values
     root = 1
@@ -3051,7 +3051,7 @@ def test_search_callbacks_no_propagation(search, refit):
 def test_search_callbacks_propagation(search, refit):
     """Check number of hook calls when the sub-estimator does support callbacks."""
     callbacks = [RecordingCallback(), RecordingAutoPropagatedCallback()]
-    search.set_params(refit=refit).set_callbacks(*callbacks).fit(X, y)
+    search = clone(search).set_params(refit=refit).set_callbacks(*callbacks).fit(X, y)
 
     # defining expected values
     root = 1
@@ -3133,7 +3133,7 @@ def test_search_callbacks_receive_sample_weight():
 def test_search_callbacks_receive_search_instance(search):
     """Test that all hooks receive the search instance as `estimator` argument."""
     callback = RecordingCallback()
-    search.set_callbacks(callback).fit(X, y)
+    search = clone(search).set_callbacks(callback).fit(X, y)
 
     for entry in callback.record:
         assert entry["estimator"] is search
