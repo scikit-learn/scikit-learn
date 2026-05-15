@@ -263,6 +263,39 @@ metadata routing::
 
 .. _metadata_routing_models:
 
+Developing Custom Estimators
+****************************
+If you are developing a custom estimator and want to support the metadata routing API,
+you do not need to manually write `set_{method}_request` methods. 
+
+By inheriting from :class:`~base.BaseEstimator`, scikit-learn will automatically 
+inspect your method signatures (like `fit` or `score`) and dynamically generate the
+corresponding `set_fit_request()` or `set_score_request()` methods. 
+
+For example, if your custom estimator's `fit` method accepts a `sample_weight` parameter:
+
+.. code-block:: python
+
+    from sklearn.base import BaseEstimator, ClassifierMixin
+
+    class MyCustomEstimator(BaseEstimator, ClassifierMixin):
+        def fit(self, X, y, sample_weight=None):
+            # fitting logic here
+            return self
+
+Users of your estimator will automatically be able to call:
+
+.. code-block:: python
+
+    estimator = MyCustomEstimator()
+    estimator.set_fit_request(sample_weight=True)
+
+If you are developing a custom scorer, you should use the :func:`~metrics.make_scorer` 
+factory function, which automatically attaches the necessary routing methods. For more 
+advanced routing (e.g., meta-estimators routing data to sub-estimators), please see 
+the detailed developer guide at 
+:ref:`sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py`.
+
 Metadata Routing Support Status
 *******************************
 All consumers (i.e. simple estimators which only consume metadata and don't
