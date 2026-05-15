@@ -4,18 +4,11 @@
 import time
 
 import numpy as np
-import pytest
 
 from sklearn.base import BaseEstimator, _fit_context, clone
 from sklearn.callback import CallbackSupportMixin, with_callbacks
 from sklearn.callback._transport import open_listener, send
-from sklearn.utils.fixes import _IS_WASM
 from sklearn.utils.parallel import Parallel, delayed
-
-skip_callback_test_if_wasm = pytest.mark.skipif(
-    _IS_WASM,
-    reason="callback tests are skipped on WASM/Pyodide",
-)
 
 
 class RecordingCallback:

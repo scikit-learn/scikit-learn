@@ -1063,6 +1063,9 @@ class BaseSearchCV(
                 candidate_split_pairs = list(
                     product(enumerate(candidate_params), enumerate(cv_splits))
                 )
+                # Create the subcontexts ahead of time to avoid creating them on the fly
+                # in the parallel loop, which causes pickling errors (e.g. modify an
+                # attribute of the estimator while it is being pickled).
                 if callback_ctx is not None:
                     evaluation_contexts = [
                         callback_ctx.subcontext(

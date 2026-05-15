@@ -76,9 +76,9 @@ def open_listener(message_consumer, *, owner=None):
         A one-argument function, `message_consumer(message)`, that processes incoming
         message to update the callback's state.
 
-    owner : object, default=None
-        Optional owner object. When provided, the listener is automatically closed when
-        `owner` gets garbage-collected.
+    owner : callback instance, default=None
+        Optional owner callback. When provided, the listener is automatically closed
+        when `owner` gets garbage-collected.
 
     Returns
     -------
