@@ -83,13 +83,40 @@ def _assess_dimension(spectrum, rank, n_samples):
     pp = log(2.0 * xp.pi) * (m + rank) / 2.0
 
     pa = 0.0
-    spectrum_ = xp.asarray(spectrum, copy=True)
-    spectrum_[rank:n_features] = v
-    for i in range(rank):
-        for j in range(i + 1, spectrum.shape[0]):
-            pa += log(
-                (spectrum[i] - spectrum[j]) * (1.0 / spectrum_[j] - 1.0 / spectrum_[i])
-            ) + log(n_samples)
+    s_signal = spectrum[:rank]
+
+    # Equation (27) from the paper.
+    # |A_Z| = ∏∏ (λ̂_j⁻¹ - λ̂_i⁻¹)(λ_i - λ_j) · N
+    # A literal implementation involves two loops:
+    # for i in range(rank):
+    #     for j in range(i+1, n_features):
+    # This is O(n_features^2) per call, and _infer_dimension calls
+    # it for every candidate rank, making the total O(n_features^3).
+    # We can do much better by exploiting the piecewise nature of
+    # spectrum_: it equals spectrum[:rank] for signal eigenvalues
+    # and v for noise eigenvalues. Splitting on this boundary lets
+    # us replace the Python loops with numpy vectorization.
+    # Signal-signal pairs (i < j < rank): both eigenvalues are signal
+    if rank > 1:
+        si = s_signal[:, None]
+        sj = s_signal[None, :]
+        # (s_i - s_j) * (1/s_j - 1/s_i) = (s_i - s_j)^2 / (s_i * s_j)
+        vals = (si - sj) ** 2 / (si * sj)
+        # Mask to upper triangle to avoid double-counting and log(0) on diagonal
+        mask = xp.asarray(
+            np.triu(np.ones((rank, rank), dtype=bool), k=1),
+            device=device(vals),
+        )
+        n_pairs = rank * (rank - 1) // 2
+        pa += float(xp.sum(xp.log(vals[mask]))) + n_pairs * log(n_samples)
+
+    # Signal-noise pairs (i < rank, j >= rank): noise eigenvalues are all v
+    s_noise = spectrum[rank:]
+    si_A = s_signal[:, None]
+    sj_A = s_noise[None, :]
+    terms = (si_A - sj_A) * (1.0 / v - 1.0 / si_A)
+    n_signal_noise_pairs = rank * (n_features - rank)
+    pa += float(xp.sum(xp.log(terms))) + n_signal_noise_pairs * log(n_samples)
 
     ll = pu + pl + pv + pp - pa / 2.0 - rank * log(n_samples) / 2.0
 
