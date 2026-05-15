@@ -40,12 +40,12 @@ from sklearn.metrics._scorer import _SCORERS
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import FunctionTransformer, LabelEncoder, OrdinalEncoder
 from sklearn.utils import check_random_state, compute_sample_weight, resample
-from sklearn.utils._dataframe import is_pandas_df
 from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
+    _check_categorical_features,
     _check_monotonic_cst,
     _check_sample_weight,
     _check_y,
@@ -267,7 +267,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             return self._preprocessor.transform(X)
 
         # At this point, reset is False, which runs during `fit`.
-        self.is_categorical_ = self._check_categorical_features(X)
+        self.is_categorical_ = _check_categorical_features(X, self.categorical_features)
 
         if self.is_categorical_ is None:
             self._preprocessor = None
@@ -352,125 +352,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 )
             known_categories[feature_idx] = np.arange(len(categories), dtype=X_DTYPE)
         return known_categories
-
-    def _check_categorical_features(self, X):
-        """Check and validate categorical features in X
-
-        Parameters
-        ----------
-        X : {array-like, pandas DataFrame} of shape (n_samples, n_features)
-            Input data.
-
-        Return
-        ------
-        is_categorical : ndarray of shape (n_features,) or None, dtype=bool
-            Indicates whether a feature is categorical. If no feature is
-            categorical, this is None.
-        """
-        # Special code for pandas because of a bug in recent pandas, which is
-        # fixed in main and maybe included in 2.2.1, see
-        # https://github.com/pandas-dev/pandas/pull/57173.
-        # Also pandas versions < 1.5.1 do not support the dataframe interchange
-        if is_pandas_df(X):
-            X_is_dataframe = True
-            categorical_columns_mask = np.asarray(X.dtypes == "category")
-        elif hasattr(X, "__dataframe__"):
-            X_is_dataframe = True
-            categorical_columns_mask = np.asarray(
-                [
-                    c.dtype[0].name == "CATEGORICAL"
-                    for c in X.__dataframe__().get_columns()
-                ]
-            )
-        else:
-            X_is_dataframe = False
-            categorical_columns_mask = None
-
-        categorical_features = self.categorical_features
-
-        categorical_by_dtype = (
-            isinstance(categorical_features, str)
-            and categorical_features == "from_dtype"
-        )
-        no_categorical_dtype = categorical_features is None or (
-            categorical_by_dtype and not X_is_dataframe
-        )
-
-        if no_categorical_dtype:
-            return None
-
-        use_pandas_categorical = categorical_by_dtype and X_is_dataframe
-        if use_pandas_categorical:
-            categorical_features = categorical_columns_mask
-        else:
-            categorical_features = np.asarray(categorical_features)
-
-        if categorical_features.size == 0:
-            return None
-
-        if categorical_features.dtype.kind not in ("i", "b", "U", "O"):
-            raise ValueError(
-                "categorical_features must be an array-like of bool, int or "
-                f"str, got: {categorical_features.dtype.name}."
-            )
-
-        if categorical_features.dtype.kind == "O":
-            types = set(type(f) for f in categorical_features)
-            if types != {str}:
-                raise ValueError(
-                    "categorical_features must be an array-like of bool, int or "
-                    f"str, got: {', '.join(sorted(t.__name__ for t in types))}."
-                )
-
-        n_features = X.shape[1]
-        # At this point `validate_data` was not called yet because we use the original
-        # dtypes to discover the categorical features. Thus `feature_names_in_`
-        # is not defined yet.
-        feature_names_in_ = getattr(X, "columns", None)
-
-        if categorical_features.dtype.kind in ("U", "O"):
-            # check for feature names
-            if feature_names_in_ is None:
-                raise ValueError(
-                    "categorical_features should be passed as an array of "
-                    "integers or as a boolean mask when the model is fitted "
-                    "on data without feature names."
-                )
-            is_categorical = np.zeros(n_features, dtype=bool)
-            feature_names = list(feature_names_in_)
-            for feature_name in categorical_features:
-                try:
-                    is_categorical[feature_names.index(feature_name)] = True
-                except ValueError as e:
-                    raise ValueError(
-                        f"categorical_features has an item value '{feature_name}' "
-                        "which is not a valid feature name of the training "
-                        f"data. Observed feature names: {feature_names}"
-                    ) from e
-        elif categorical_features.dtype.kind == "i":
-            # check for categorical features as indices
-            if (
-                np.max(categorical_features) >= n_features
-                or np.min(categorical_features) < 0
-            ):
-                raise ValueError(
-                    "categorical_features set as integer "
-                    "indices must be in [0, n_features - 1]"
-                )
-            is_categorical = np.zeros(n_features, dtype=bool)
-            is_categorical[categorical_features] = True
-        else:
-            if categorical_features.shape[0] != n_features:
-                raise ValueError(
-                    "categorical_features set as a boolean mask "
-                    "must have shape (n_features,), got: "
-                    f"{categorical_features.shape}"
-                )
-            is_categorical = categorical_features
-
-        if not np.any(is_categorical):
-            return None
-        return is_categorical
 
     def _check_interaction_cst(self, n_features):
         """Check and validation for interaction constraints."""
@@ -719,9 +600,13 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             random_state=self._random_seed,
             n_threads=n_threads,
         )
-        X_binned_train = self._bin_data(X_train, is_training_data=True)
+        X_binned_train = self._bin_data(
+            X_train, sample_weight_train, is_training_data=True
+        )
         if X_val is not None:
-            X_binned_val = self._bin_data(X_val, is_training_data=False)
+            X_binned_val = self._bin_data(
+                X_val, sample_weight_val, is_training_data=False
+            )
         else:
             X_binned_val = None
 
@@ -1218,7 +1103,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         recent_improvements = [score > reference_score for score in recent_scores]
         return not any(recent_improvements)
 
-    def _bin_data(self, X, is_training_data):
+    def _bin_data(self, X, sample_weight, is_training_data):
         """Bin data X.
 
         If is_training_data, then fit the _bin_mapper attribute.
@@ -1234,7 +1119,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             )
         tic = time()
         if is_training_data:
-            X_binned = self._bin_mapper.fit_transform(X)  # F-aligned array
+            X_binned = self._bin_mapper.fit_transform(
+                X, sample_weight=sample_weight
+            )  # F-aligned array
         else:
             X_binned = self._bin_mapper.transform(X)  # F-aligned array
             # We convert the array to C-contiguous since predicting is faster
@@ -1487,7 +1374,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     usecase example of this feature.
 
     This implementation is inspired by
-    `LightGBM <https://github.com/Microsoft/LightGBM>`_.
+    `LightGBM <https://github.com/lightgbm-org/LightGBM>`_.
 
     Read more in the :ref:`User Guide <histogram_based_gradient_boosting>`.
 
@@ -1564,10 +1451,10 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
           features.
         - str array-like: names of categorical features (assuming the training
           data has feature names).
-        - `"from_dtype"`: dataframe columns with dtype "category" are
-          considered to be categorical features. The input must be an object
-          exposing a ``__dataframe__`` method such as pandas or polars
-          DataFrames to use this feature.
+        - `"from_dtype"`: dataframe columns with dtype "Categorical" and "Enum" are
+          considered to be categorical features. The input must be a dataframe that
+          is supported by narwhals (or supports it): :func:`narwhals.from_native` must
+          work. This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, there must be at most `max_bins` unique
         categories. Negative values for categorical features encoded as numeric
@@ -1736,7 +1623,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     >>> X, y = load_diabetes(return_X_y=True)
     >>> est = HistGradientBoostingRegressor().fit(X, y)
     >>> est.score(X, y)
-    0.92...
+    0.93...
     """
 
     _parameter_constraints: dict = {
@@ -1888,7 +1775,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
     missing values are mapped to whichever child has the most samples.
 
     This implementation is inspired by
-    `LightGBM <https://github.com/Microsoft/LightGBM>`_.
+    `LightGBM <https://github.com/lightgbm-org/LightGBM>`_.
 
     Read more in the :ref:`User Guide <histogram_based_gradient_boosting>`.
 
@@ -1957,10 +1844,10 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
           features.
         - str array-like: names of categorical features (assuming the training
           data has feature names).
-        - `"from_dtype"`: dataframe columns with dtype "category" are
-          considered to be categorical features. The input must be an object
-          exposing a ``__dataframe__`` method such as pandas or polars
-          DataFrames to use this feature.
+        - `"from_dtype"`: dataframe columns with dtype "Categorical" and "Enum" are
+          considered to be categorical features. The input must be a dataframe that
+          is supported by narwhals (or supports it): :func:`narwhals.from_native` must
+          work. This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, there must be at most `max_bins` unique
         categories. Negative values for categorical features encoded as numeric

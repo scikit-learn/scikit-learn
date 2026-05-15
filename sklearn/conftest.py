@@ -271,6 +271,111 @@ def pyplot():
     pyplot.close("all")
 
 
+def munge_scipy_to_check_spmatrix_usage():
+    import scipy
+
+    def flag_this_call(*args, **kwds):
+        raise ValueError("Old spmatrix function called. Use e.g. block or random.")
+
+    scipy.sparse._construct.bmat = flag_this_call
+    scipy.sparse._construct.rand = flag_this_call
+    scipy.sparse._construct.rand = flag_this_call
+
+    class _strict_mul_mixin:
+        def __mul__(self, other):
+            if not scipy.sparse._sputils.isscalarlike(other):
+                raise ValueError("Operator * used here! Change to @?")
+            return super().__mul__(other)
+
+        def __rmul__(self, other):
+            if not scipy.sparse._sputils.isscalarlike(other):
+                raise ValueError("Operator * used here! Change to @?")
+            return super().__rmul__(other)
+
+        def __imul__(self, other):
+            if not scipy.sparse._sputils.isscalarlike(other):
+                raise ValueError("Operator * used here! Change to @?")
+            return super().__imul__(other)
+
+        def __pow__(self, *args, **kwargs):
+            raise ValueError("spmatrix ** used here! Use sparse.linalg.matrix_power?")
+
+        @property
+        def A(self):
+            raise TypeError("spmatrix A property is not allowed! Use .toarray()")
+
+        @property
+        def H(self):
+            raise TypeError("spmatrix H property is not allowed! Use .conjugate().T")
+
+        def asfptype(self):
+            raise TypeError("spmatrix asfptype is not allowed! rewrite needed")
+
+        def get_shape(self):
+            raise TypeError("spmatrix get_shape is not allowed! Use .shape")
+
+        def getformat(self):
+            raise TypeError("spmatrix getformat is not allowed! Use .shape")
+
+        def getmaxprint(self):
+            raise TypeError("spmatrix getmaxprint is not allowed! Use .shape")
+
+        def getnnz(self):
+            raise TypeError("spmatrix getnnz is not allowed! Use .shape")
+
+        def getH(self):
+            raise TypeError("spmatrix getH is not allowed! Use .shape")
+
+        def getrow(self):
+            raise TypeError("spmatrix getrow is not allowed! Use .shape")
+
+        def getcol(self):
+            raise TypeError("spmatrix getcol is not allowed! Use .shape")
+
+    class _strict_coo_matrix(_strict_mul_mixin, scipy.sparse.coo_matrix):
+        pass
+
+    class _strict_bsr_matrix(_strict_mul_mixin, scipy.sparse.bsr_matrix):
+        pass
+
+    class _strict_csr_matrix(_strict_mul_mixin, scipy.sparse.csr_matrix):
+        pass
+
+    class _strict_csc_matrix(_strict_mul_mixin, scipy.sparse.csc_matrix):
+        pass
+
+    class _strict_dok_matrix(_strict_mul_mixin, scipy.sparse.dok_matrix):
+        pass
+
+    class _strict_lil_matrix(_strict_mul_mixin, scipy.sparse.lil_matrix):
+        pass
+
+    class _strict_dia_matrix(_strict_mul_mixin, scipy.sparse.dia_matrix):
+        pass
+
+    scipy.sparse.coo_matrix = scipy.sparse._coo.coo_matrix = _strict_coo_matrix
+    scipy.sparse.bsr_matrix = scipy.sparse._bsr.bsr_matrix = _strict_bsr_matrix
+    scipy.sparse.csr_matrix = scipy.sparse._csr.csr_matrix = _strict_csr_matrix
+    scipy.sparse.csc_matrix = scipy.sparse._csc.csc_matrix = _strict_csc_matrix
+    scipy.sparse.dok_matrix = scipy.sparse._dok.dok_matrix = _strict_dok_matrix
+    scipy.sparse.lil_matrix = scipy.sparse._lil.lil_matrix = _strict_lil_matrix
+    scipy.sparse.dia_matrix = scipy.sparse._dia.dia_matrix = _strict_dia_matrix
+
+    scipy.sparse._construct.bsr_matrix = _strict_bsr_matrix
+    scipy.sparse._construct.coo_matrix = _strict_coo_matrix
+    scipy.sparse._construct.csc_matrix = _strict_csc_matrix
+    scipy.sparse._construct.csr_matrix = _strict_csr_matrix
+    scipy.sparse._construct.dia_matrix = _strict_dia_matrix
+
+    scipy.sparse._matrix.bsr_matrix = _strict_bsr_matrix
+    scipy.sparse._matrix.coo_matrix = _strict_coo_matrix
+    scipy.sparse._matrix.csc_matrix = _strict_csc_matrix
+    scipy.sparse._matrix.csr_matrix = _strict_csr_matrix
+    scipy.sparse._matrix.dia_matrix = _strict_dia_matrix
+    scipy.sparse._matrix.dok_matrix = _strict_dok_matrix
+    scipy.sparse._matrix.lil_matrix = _strict_lil_matrix
+
+
 def pytest_generate_tests(metafunc):
     """Parametrization of global_random_seed fixture
 
@@ -319,6 +424,17 @@ def pytest_generate_tests(metafunc):
 def pytest_addoption(parser, pluginmanager):
     if not PARALLEL_RUN_AVAILABLE:
         parser.addini("thread_unsafe_fixtures", "list of stuff")
+    parser.addoption(
+        "--check_spmatrix",
+        action="store_true",
+        default=False,
+        help="raise for spmatrix usage that breaks sparray",
+    )
+
+
+def pytest_runtest_setup(item):
+    if "no_check_spmatrix" in item.keywords and item.config.option.check_spmatrix:
+        pytest.skip("skip due to check_spmatrix scipy patch breaking this test")
 
 
 def pytest_configure(config):
@@ -344,6 +460,14 @@ def pytest_configure(config):
         # https://github.com/pytest-dev/pytest/issues/3311#issuecomment-373177592
         for line in get_pytest_filterwarning_lines():
             config.addinivalue_line("filterwarnings", line)
+
+    if config.option.check_spmatrix:
+        # Note: this patches scipy.sparse to raise upon outdated spmatrix usage
+        # If you run into this with new PR code to sklearn, make sure it:
+        # - converts spmatrix input to sparray
+        # - uses the sparray interface for manipulating the sparse object
+        # - uses align_api_if_sparse(X) just before returning a sparse object
+        munge_scipy_to_check_spmatrix_usage()
 
     if not PARALLEL_RUN_AVAILABLE:
         config.addinivalue_line(

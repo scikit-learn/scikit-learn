@@ -64,6 +64,7 @@ common_dependencies_without_coverage = [
     "scipy",
     "cython",
     "joblib",
+    "narwhals",
     "threadpoolctl",
     "matplotlib",
     "pandas",
@@ -112,6 +113,7 @@ build_metadata_list = [
             # cuvs is needed for cupyx.scipy.spatial.distance.cdist and friends
             "cuvs",
             "array-api-strict",
+            "scipy-doctest",
         ],
         "virtual_package_spec": True,
     },
@@ -119,7 +121,7 @@ build_metadata_list = [
         "name": "pylatest_conda_forge_mkl_linux-64",
         "type": "conda",
         "tag": "main-ci",
-        "folder": "build_tools/azure",
+        "folder": "build_tools/github",
         "platform": "linux-64",
         "channels": ["conda-forge"],
         "conda_dependencies": common_dependencies
@@ -141,7 +143,7 @@ build_metadata_list = [
         "name": "pylatest_conda_forge_osx-arm64",
         "type": "conda",
         "tag": "main-ci",
-        "folder": "build_tools/azure",
+        "folder": "build_tools/github",
         "platform": "osx-arm64",
         "channels": ["conda-forge"],
         "conda_dependencies": common_dependencies
@@ -158,7 +160,7 @@ build_metadata_list = [
         "name": "pylatest_conda_forge_mkl_no_openmp",
         "type": "conda",
         "tag": "main-ci",
-        "folder": "build_tools/azure",
+        "folder": "build_tools/github",
         "platform": "osx-64",
         "channels": ["conda-forge"],
         "conda_dependencies": common_dependencies + ["ccache"],
@@ -170,7 +172,7 @@ build_metadata_list = [
         "name": "pymin_conda_forge_openblas_min_dependencies",
         "type": "conda",
         "tag": "main-ci",
-        "folder": "build_tools/azure",
+        "folder": "build_tools/github",
         "platform": "linux-64",
         "channels": ["conda-forge"],
         "conda_dependencies": remove_from(common_dependencies, ["pandas"])
@@ -186,6 +188,7 @@ build_metadata_list = [
             "matplotlib": "min",
             "cython": "min",
             "joblib": "min",
+            "narwhals": "min",
             "threadpoolctl": "min",
             "meson-python": "min",
             "pandas": "min",
@@ -198,7 +201,7 @@ build_metadata_list = [
         "name": "pymin_conda_forge_openblas_ubuntu_2204",
         "type": "conda",
         "tag": "main-ci",
-        "folder": "build_tools/azure",
+        "folder": "build_tools/github",
         "platform": "linux-64",
         "channels": ["conda-forge"],
         "conda_dependencies": (
@@ -215,7 +218,7 @@ build_metadata_list = [
         "name": "pylatest_pip_openblas_pandas",
         "type": "conda",
         "tag": "main-ci",
-        "folder": "build_tools/azure",
+        "folder": "build_tools/github",
         "platform": "linux-64",
         "channels": ["conda-forge"],
         "conda_dependencies": ["python", "ccache"],
@@ -239,7 +242,7 @@ build_metadata_list = [
         "name": "pylatest_pip_scipy_dev",
         "type": "conda",
         "tag": "scipy-dev",
-        "folder": "build_tools/azure",
+        "folder": "build_tools/github",
         "platform": "linux-64",
         "channels": ["conda-forge"],
         "conda_dependencies": ["python", "ccache"],
@@ -259,6 +262,7 @@ build_metadata_list = [
                     "pandas",
                     "cython",
                     "joblib",
+                    "narwhals",
                     "pillow",
                 ],
             )
@@ -273,7 +277,7 @@ build_metadata_list = [
         "name": "pylatest_free_threaded",
         "type": "conda",
         "tag": "free-threaded",
-        "folder": "build_tools/azure",
+        "folder": "build_tools/github",
         "platform": "linux-64",
         "channels": ["conda-forge"],
         "conda_dependencies": [
@@ -283,6 +287,7 @@ build_metadata_list = [
             "numpy",
             "scipy",
             "joblib",
+            "narwhals",
             "threadpoolctl",
             "pytest",
             "pytest-run-parallel",
@@ -294,7 +299,7 @@ build_metadata_list = [
         "name": "pymin_conda_forge_openblas",
         "type": "conda",
         "tag": "main-ci",
-        "folder": "build_tools/azure",
+        "folder": "build_tools/github",
         "platform": "win-64",
         "channels": ["conda-forge"],
         "conda_dependencies": remove_from(common_dependencies, ["pandas", "pyamg"])
@@ -400,10 +405,7 @@ build_metadata_list = [
             "sphinxcontrib-sass",
         ],
         "package_constraints": {
-            "python": "3.11",
-            # Pinned while https://github.com/pola-rs/polars/issues/25039 is
-            # not fixed.
-            "polars": "1.34.0",
+            "python": "3.14",
         },
     },
     {
@@ -426,10 +428,11 @@ build_metadata_list = [
         "name": "debian_32bit",
         "type": "pip",
         "tag": "main-ci",
-        "folder": "build_tools/azure",
+        "folder": "build_tools/github",
         "pip_dependencies": [
             "cython",
             "joblib",
+            "narwhals",
             "threadpoolctl",
             "pytest",
             "pytest-xdist",
@@ -445,10 +448,11 @@ build_metadata_list = [
         "name": "ubuntu_atlas",
         "type": "pip",
         "tag": "main-ci",
-        "folder": "build_tools/azure",
+        "folder": "build_tools/github",
         "pip_dependencies": [
             "cython",
             "joblib",
+            "narwhals",
             "threadpoolctl",
             "pytest",
             "pytest-xdist",
@@ -457,6 +461,7 @@ build_metadata_list = [
         ],
         "package_constraints": {
             "joblib": "min",
+            "narwhals": "min",
             "threadpoolctl": "min",
             "cython": "min",
         },
