@@ -182,8 +182,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
     def _support_missing_values(self, X):
         return (
-            self.__sklearn_tags__().input_tags.allow_nan
-            and self.monotonic_cst is None
+            self.__sklearn_tags__().input_tags.allow_nan and self.monotonic_cst is None
         )
 
     def _compute_missing_values_in_feature_mask(self, X, estimator_name=None):
@@ -225,16 +224,16 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             # For sparse matrices _assert_all_finite_element_wise only needs to
             # inspect the explicitly stored values (X.data), not the full matrix.
             X_to_check = X.data if issparse(X) else X
-            _assert_all_finite_element_wise(X_to_check, xp=np, allow_nan=True, **common_kwargs)
+            _assert_all_finite_element_wise(
+                X_to_check, xp=np, allow_nan=True, **common_kwargs
+            )
 
         # If the sum is not nan, then there are no missing values
         if not np.isnan(overall_sum):
             return None
 
         # X.sum(axis=0) returns a 2-D matrix for sparse; ravel to 1-D.
-        missing_values_in_feature_mask = np.asarray(
-            np.isnan(X.sum(axis=0))
-        ).ravel()
+        missing_values_in_feature_mask = np.asarray(np.isnan(X.sum(axis=0))).ravel()
         return missing_values_in_feature_mask
 
     def _fit(
