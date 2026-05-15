@@ -995,6 +995,17 @@ In contrast to the original publication [B2001]_, the scikit-learn
 implementation combines classifiers by averaging their probabilistic
 prediction, instead of letting each classifier vote for a single class.
 
+.. _forest_missing_value_support:
+
+Missing Values Support
+^^^^^^^^^^^^^^^^^^^^^^
+
+:class:`RandomForestClassifier`, :class:`RandomForestRegressor`,
+:class:`ExtraTreesClassifier`, and :class:`ExtraTreesRegressor` support missing
+values (NaNs) in both dense and sparse training data. The behavior mirrors that of
+their base decision-tree estimators — see :ref:`tree_missing_value_support` for
+a full description.
+
 A competitive alternative to random forests are
 :ref:`histogram_based_gradient_boosting` (HGBT) models:
 

@@ -1,0 +1,4 @@
+- :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier`, and :class:`ensemble.ExtraTreesRegressor` now
+  support missing values (NaNs) in sparse input matrices (``csc_matrix`` / ``csr_matrix``).
+  By :user:`Sravan Kundurthi <sravankundurthi>`.

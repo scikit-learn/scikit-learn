@@ -316,6 +316,8 @@ cdef class SparsePartitioner:
             self.index_to_samples[samples[p]] = p
 
         self.missing_values_in_feature_mask = missing_values_in_feature_mask
+        buffer_size = n_samples * max(samples.itemsize, feature_values.itemsize)
+        self.swap_buffer = np.empty(buffer_size, dtype=np.uint8)
 
     cdef inline void init_node_split(self, intp_t start, intp_t end) noexcept nogil:
         """Initialize splitter at the beginning of node_split."""
@@ -328,13 +330,44 @@ cdef class SparsePartitioner:
         self,
         intp_t current_feature
     ) noexcept nogil:
-        """Simultaneously sort based on the feature_values."""
+        """Simultaneously sort based on the feature_values.
+
+        Missing values (NaN stored explicitly in CSC data) are moved to the
+        end of samples[start:end] before sorting. Their count is stored in
+        self.n_missing.
+        """
         cdef:
             float32_t[::1] feature_values = self.feature_values
             intp_t[::1] index_to_samples = self.index_to_samples
             intp_t[::1] samples = self.samples
+            intp_t n_missing = 0
+            intp_t end_non_missing = self.end
+            intp_t indptr_start, indptr_end, k, index, p
+            float32_t val
 
+        # Move NaN samples to samples[end-n_missing:end] before extract_nnz.
+        # NaN in a CSC matrix is an explicit non-zero stored in X.data, so we
+        # scan the current column's data array.
+        if (self.missing_values_in_feature_mask is not None and
+                self.missing_values_in_feature_mask[current_feature]):
+            indptr_start = self.X_indptr[current_feature]
+            indptr_end = self.X_indptr[current_feature + 1]
+            for k in range(indptr_start, indptr_end):
+                val = self.X_data[k]
+                if isnan(val):
+                    index = index_to_samples[self.X_indices[k]]
+                    if self.start <= index < end_non_missing:
+                        end_non_missing -= 1
+                        sparse_swap(index_to_samples, samples, index, end_non_missing)
+                        n_missing += 1
+
+        self.n_missing = n_missing
+
+        # Run extract_nnz only on the non-missing range by temporarily
+        # lowering self.end.
+        self.end = end_non_missing
         self.extract_nnz(current_feature)
+
         # Sort the positive and negative parts of `feature_values`
         simultaneous_sort(
             &feature_values[self.start],
@@ -342,18 +375,18 @@ cdef class SparsePartitioner:
             self.end_negative - self.start,
             use_three_way_partition=True,
         )
-        if self.start_positive < self.end:
+        if self.start_positive < end_non_missing:
             simultaneous_sort(
                 &feature_values[self.start_positive],
                 &samples[self.start_positive],
-                self.end - self.start_positive,
+                end_non_missing - self.start_positive,
                 use_three_way_partition=True,
             )
 
         # Update index_to_samples to take into account the sort
         for p in range(self.start, self.end_negative):
             index_to_samples[samples[p]] = p
-        for p in range(self.start_positive, self.end):
+        for p in range(self.start_positive, end_non_missing):
             index_to_samples[samples[p]] = p
 
         # Add one or two zeros in feature_values, if there is any
@@ -365,12 +398,36 @@ cdef class SparsePartitioner:
                 feature_values[self.end_negative] = 0.
                 self.end_negative += 1
 
-        # XXX: When sparse supports missing values, this should be set to the
-        # number of missing values for current_feature
-        self.n_missing = 0
+        # Restore self.end to include the missing samples at the tail.
+        self.end = end_non_missing + n_missing
 
     cdef void shift_missing_to_the_left(self) noexcept nogil:
-        pass  # Missing values are not supported for sparse data.
+        """Move missing values from samples[end-n_missing:end] to samples[start:start+n_missing].
+
+        Non-missing values move correspondingly to the right, preserving their
+        inner ordering. end_negative and start_positive are shifted by n_missing
+        to reflect the new layout so that next_p continues to work correctly.
+        """
+        cdef intp_t n_missing = self.n_missing
+        if n_missing == 0:
+            return
+
+        cdef intp_t n_non_missing = self.end - self.start - n_missing
+        cdef intp_t p
+
+        # Rotate both samples and feature_values:
+        #   before: [non_missing...(n_non_missing) | missing...(n_missing)]
+        #   after:  [missing...(n_missing) | non_missing...(n_non_missing)]
+        swap_array_slices(self.samples, self.start, self.end, n_non_missing, self.swap_buffer)
+        swap_array_slices(self.feature_values, self.start, self.end, n_non_missing, self.swap_buffer)
+
+        # Rebuild index_to_samples for every sample in the current node range.
+        for p in range(self.start, self.end):
+            self.index_to_samples[self.samples[p]] = p
+
+        # Shift the neg/zero/pos boundaries to account for the missing block at the left.
+        self.end_negative += n_missing
+        self.start_positive += n_missing
 
     cdef inline void find_min_max(
         self,
@@ -378,16 +435,52 @@ cdef class SparsePartitioner:
         float32_t* min_feature_value_out,
         float32_t* max_feature_value_out,
     ) noexcept nogil:
-        """Find the minimum and maximum value for current_feature."""
+        """Find the minimum and maximum value for current_feature.
+
+        Also sets self.n_missing for the number of NaN values in the current
+        node for this feature (used by the random splitter path).
+        Missing samples are moved to samples[end-n_missing:end] as a side-effect.
+        """
         cdef:
             intp_t p
             float32_t current_feature_value, min_feature_value, max_feature_value
             float32_t[::1] feature_values = self.feature_values
+            intp_t[::1] index_to_samples = self.index_to_samples
+            intp_t[::1] samples = self.samples
+            intp_t n_missing = 0
+            intp_t end_non_missing = self.end
+            intp_t indptr_start, indptr_end, k, index
+            float32_t val
 
+        # Move NaN samples to the end before extracting non-zero values.
+        if (self.missing_values_in_feature_mask is not None and
+                self.missing_values_in_feature_mask[current_feature]):
+            indptr_start = self.X_indptr[current_feature]
+            indptr_end = self.X_indptr[current_feature + 1]
+            for k in range(indptr_start, indptr_end):
+                val = self.X_data[k]
+                if isnan(val):
+                    index = index_to_samples[self.X_indices[k]]
+                    if self.start <= index < end_non_missing:
+                        end_non_missing -= 1
+                        sparse_swap(index_to_samples, samples, index, end_non_missing)
+                        n_missing += 1
+
+        self.n_missing = n_missing
+
+        if end_non_missing == self.start:
+            # All samples are NaN for this feature; return dummy values.
+            min_feature_value_out[0] = 0.
+            max_feature_value_out[0] = 0.
+            return
+
+        # Extract non-zero values for the non-missing range only.
+        self.end = end_non_missing
         self.extract_nnz(current_feature)
+        self.end = end_non_missing + n_missing
 
         if self.end_negative != self.start_positive:
-            # There is a zero
+            # There is a zero (implicit)
             min_feature_value = 0
             max_feature_value = 0
         else:
@@ -403,8 +496,8 @@ cdef class SparsePartitioner:
             elif current_feature_value > max_feature_value:
                 max_feature_value = current_feature_value
 
-        # Update min, max given feature_values[start_positive:end]
-        for p in range(self.start_positive, self.end):
+        # Update min, max given feature_values[start_positive:end_non_missing]
+        for p in range(self.start_positive, end_non_missing):
             current_feature_value = feature_values[p]
 
             if current_feature_value < min_feature_value:
@@ -423,17 +516,41 @@ cdef class SparsePartitioner:
     ) noexcept nogil:
         """Compute the next p_prev and p for iterating over feature values.
 
-        The missing_go_to_left argument is ignored for sparse data because
-        sparse partitioning does not currently support missing values.
+        Mirrors DensePartitioner.next_p, adapted for the sparse neg/zero/pos layout.
+
+        First pass (missing_go_to_left=False): missing values are at
+          samples[end-n_missing:end]; p iterates in [start, end-n_missing].
+          When p reaches end-n_missing the search loop terminates (all non-missing
+          values have been evaluated).
+        Second pass (missing_go_to_left=True): after shift_missing_to_the_left(),
+          missing values are at samples[start:start+n_missing]; p starts at
+          start+n_missing and iterates up to end.
+        In both passes the neg→zero gap-jump (end_negative → start_positive) is
+        preserved; end_negative and start_positive are already shifted by n_missing
+        after shift_missing_to_the_left(), so the jump works unchanged.
         """
+        cdef intp_t end_non_missing = (
+            self.end if missing_go_to_left
+            else self.end - self.n_missing
+        )
         cdef intp_t p_next
+
+        # First-pass termination: all non-missing split positions exhausted.
+        if p[0] == end_non_missing and not missing_go_to_left:
+            p[0] = self.end
+            p_prev[0] = self.end
+            return
+
+        # Second-pass initialisation: skip the missing block at the left.
+        if missing_go_to_left and p[0] == self.start:
+            p[0] = self.start + self.n_missing
 
         if p[0] + 1 != self.end_negative:
             p_next = p[0] + 1
         else:
             p_next = self.start_positive
 
-        while (p_next < self.end and
+        while (p_next < end_non_missing and
                 self.feature_values[p_next] <= self.feature_values[p[0]] + FEATURE_THRESHOLD):
             p[0] = p_next
             if p[0] + 1 != self.end_negative:
@@ -449,16 +566,91 @@ cdef class SparsePartitioner:
         float64_t current_threshold,
         bint missing_go_to_left
     ) noexcept nogil:
-        """Partition samples for feature_values at the current_threshold."""
-        return self._partition(current_threshold)
+        """Partition samples for feature_values at the current_threshold.
+
+        Missing (NaN) samples reside at samples[end-n_missing:end] after
+        find_min_max(). They are routed left or right based on missing_go_to_left.
+        """
+        cdef intp_t n_missing = self.n_missing
+        cdef intp_t end_non_missing, partition_end, n_non_missing_right, p
+
+        if n_missing == 0:
+            return self._partition(current_threshold)
+
+        end_non_missing = self.end - n_missing
+
+        # Partition only non-missing samples.
+        self.end = end_non_missing
+        partition_end = self._partition(current_threshold)
+        self.end = end_non_missing + n_missing
+
+        if missing_go_to_left:
+            # NaN at [end_non_missing:end] must go to the left side.
+            # Rotate [non_miss_right | NaN] → [NaN | non_miss_right] so that
+            # the NaN block sits immediately after the non-missing left block.
+            n_non_missing_right = end_non_missing - partition_end
+            swap_array_slices(
+                self.samples, partition_end, self.end, n_non_missing_right, self.swap_buffer
+            )
+            for p in range(partition_end, self.end):
+                self.index_to_samples[self.samples[p]] = p
+            return partition_end + n_missing
+        else:
+            # NaN already at the right tail [end_non_missing:end]. No movement needed.
+            return partition_end
 
     cdef inline void partition_samples_final(
         self,
         const SplitRecord* best_split,
     ) noexcept nogil:
-        """Partition samples for X according to the split described by best_split."""
-        self.extract_nnz(best_split[0].feature)
-        self._partition(best_split[0].threshold)
+        """Partition samples according to the split described by best_split.
+
+        Re-detects NaN samples for best_split.feature (which may differ from
+        the last feature evaluated in sort_samples_and_feature_values) and
+        routes them according to best_split.missing_go_to_left.
+        """
+        cdef:
+            intp_t best_feature = best_split[0].feature
+            float64_t best_threshold = best_split[0].threshold
+            bint best_missing_go_to_left = best_split[0].missing_go_to_left
+            intp_t[::1] index_to_samples = self.index_to_samples
+            intp_t[::1] samples = self.samples
+            intp_t n_missing = 0
+            intp_t end_non_missing = self.end
+            intp_t indptr_start, indptr_end, k, index, partition_end
+            intp_t n_non_missing_right, p
+            float32_t val
+
+        # Detect and move NaN samples for best_feature to the tail.
+        if (self.missing_values_in_feature_mask is not None and
+                self.missing_values_in_feature_mask[best_feature]):
+            indptr_start = self.X_indptr[best_feature]
+            indptr_end = self.X_indptr[best_feature + 1]
+            for k in range(indptr_start, indptr_end):
+                val = self.X_data[k]
+                if isnan(val):
+                    index = index_to_samples[self.X_indices[k]]
+                    if self.start <= index < end_non_missing:
+                        end_non_missing -= 1
+                        sparse_swap(index_to_samples, samples, index, end_non_missing)
+                        n_missing += 1
+
+        # Extract non-zero values and partition non-missing samples.
+        self.end = end_non_missing
+        self.extract_nnz(best_feature)
+        partition_end = self._partition(best_threshold)
+        self.end = end_non_missing + n_missing
+
+        # Route NaN samples to the correct side.
+        if n_missing > 0 and best_missing_go_to_left:
+            # Move NaN from [end_non_missing:end] to [partition_end:partition_end+n_missing].
+            n_non_missing_right = end_non_missing - partition_end
+            swap_array_slices(
+                self.samples, partition_end, self.end, n_non_missing_right, self.swap_buffer
+            )
+            for p in range(partition_end, self.end):
+                self.index_to_samples[self.samples[p]] = p
+        # If missing_go_to_left=False: NaN at [end_non_missing:end] is already on the right.
 
     cdef inline intp_t _partition(self, float64_t threshold) noexcept nogil:
         """
