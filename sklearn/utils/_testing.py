@@ -29,15 +29,21 @@ from subprocess import STDOUT, CalledProcessError, TimeoutExpired, check_output
 import joblib
 import numpy as np
 import scipy as sp
-from numpy.testing import assert_allclose as np_assert_allclose
 from numpy.testing import (
     assert_almost_equal,
     assert_array_almost_equal,
-    assert_array_equal,
-    assert_array_less,
+    # assert_array_equal,
+    # assert_array_less,
 )
 
 from sklearn import __file__ as sklearn_path
+from sklearn.externals.array_api_extra._lib._testing import xp_assert_close
+from sklearn.externals.array_api_extra._lib._testing import (
+    xp_assert_equal as assert_array_equal,
+)
+from sklearn.externals.array_api_extra._lib._testing import (
+    xp_assert_less as assert_array_less,
+)
 from sklearn.utils import (
     ClassifierTags,
     RegressorTags,
@@ -172,7 +178,15 @@ class _IgnoreWarnings:
 
 
 def assert_allclose(
-    actual, desired, rtol=None, atol=0.0, equal_nan=True, err_msg="", verbose=True
+    actual,
+    desired,
+    rtol=None,
+    atol=0.0,
+    equal_nan=True,
+    err_msg="",
+    verbose=True,
+    check_shape: bool = False,
+    check_dtype: bool = False,
 ):
     """dtype-aware variant of numpy.testing.assert_allclose
 
@@ -233,7 +247,7 @@ def assert_allclose(
         rtols = [1e-4 if dtype == np.float32 else 1e-7 for dtype in dtypes]
         rtol = max(rtols)
 
-    np_assert_allclose(
+    xp_assert_close(
         actual,
         desired,
         rtol=rtol,
@@ -241,6 +255,8 @@ def assert_allclose(
         equal_nan=equal_nan,
         err_msg=err_msg,
         verbose=verbose,
+        check_shape=check_shape,
+        check_dtype=check_dtype,
     )
 
 
