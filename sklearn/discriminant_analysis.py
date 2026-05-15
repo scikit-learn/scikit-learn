@@ -10,6 +10,7 @@ import numpy as np
 import scipy.linalg
 from scipy import linalg
 
+import sklearn.externals.array_api_extra as xpx
 from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
@@ -17,7 +18,12 @@ from sklearn.base import (
     TransformerMixin,
     _fit_context,
 )
-from sklearn.covariance import empirical_covariance, ledoit_wolf, shrunk_covariance
+from sklearn.covariance import (
+    empirical_covariance,
+    ledoit_wolf,
+    ledoit_wolf_shrinkage,
+    shrunk_covariance,
+)
 from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils._array_api import (
@@ -174,6 +180,68 @@ def _class_cov(X, y, priors, shrinkage=None, covariance_estimator=None):
     return cov
 
 
+def _svd_shrinkage(X, shrinkage=None):
+    """Compute the SVD of the data and shrink the singular values to mimic covariance
+    shrinking.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        Input data.
+
+    shrinkage : 'auto' or float, default=None
+        Shrinkage parameter, possible values:
+          - None: no shrinkage (default).
+          - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
+          - float between 0 and 1: fixed shrinkage parameter.
+
+    Returns
+    -------
+    U : ndarray of shape (n_samples, n_samples)
+        Left singular vectors.
+    S : ndarray of shape (n_samples,)
+        Singular values.
+    Vt : ndarray of shape (n_samples, n_features)
+        Right singular vectors.
+
+    Notes
+    -----
+    Uses the equivalence between the covariance eigenvalues and the data
+    singular values in [1]. However, this function uses the maximum likelihood
+    covariance estimator, unlike [1] that uses the unbiased estimator.
+
+    References
+    ----------
+    .. [1] https://stats.stackexchange.com/a/134283/134438
+    """
+    xp, is_array_api_compliant = get_namespace(X)
+
+    if is_array_api_compliant:
+        svd = xp.linalg.svd
+    else:
+        svd = scipy.linalg.svd
+
+    n_samples, n_features = X.shape
+
+    if shrinkage is None:
+        U, S, Vt = svd(X, full_matrices=False)
+        return U, S, Vt
+    elif shrinkage == "auto":
+        shrinkage_val = ledoit_wolf_shrinkage(X)
+    elif isinstance(shrinkage, Real):
+        shrinkage_val = shrinkage
+
+    # Use full matrices and pad with 0's to include 0 eigenvalues
+    U, S_raw, Vt = svd(X, full_matrices=True)
+    if len(S_raw) < n_features:
+        S_raw = xpx.pad(S_raw, (0, n_features - len(S_raw)), constant_values=0, xp=xp)
+    cov_eigvals = S_raw**2 / n_samples
+    mean_eigval = xp.mean(cov_eigvals)
+    shrunk_eigvals = shrinkage_val * mean_eigval + (1 - shrinkage_val) * cov_eigvals
+    S = xp.sqrt(shrunk_eigvals * n_samples)
+    return U, S, Vt
+
+
 class DiscriminantAnalysisPredictionMixin:
     """Mixin class for QuadraticDiscriminantAnalysis and NearestCentroid."""
 
@@ -285,7 +353,8 @@ class LinearDiscriminantAnalysis(
         Solver to use, possible values:
           - 'svd': Singular value decomposition (default).
             Does not compute the covariance matrix, therefore this solver is
-            recommended for data with a large number of features.
+            recommended for data with a large number of features. Can be combined
+            with shrinkage.
           - 'lsqr': Least squares solution.
             Can be combined with shrinkage or custom covariance estimator.
           - 'eigen': Eigenvalue decomposition.
@@ -302,7 +371,6 @@ class LinearDiscriminantAnalysis(
           - float between 0 and 1: fixed shrinkage parameter.
 
         This should be left to None if `covariance_estimator` is used.
-        Note that shrinkage works only with 'lsqr' and 'eigen' solvers.
 
         For a usage example, see
         :ref:`sphx_glr_auto_examples_classification_plot_lda.py`.
@@ -564,7 +632,7 @@ class LinearDiscriminantAnalysis(
             self.priors_
         )
 
-    def _solve_svd(self, X, y):
+    def _solve_svd(self, X, y, shrinkage):
         """SVD solver.
 
         Parameters
@@ -574,6 +642,12 @@ class LinearDiscriminantAnalysis(
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values.
+
+        shrinkage : 'auto', float or None
+            Shrinkage parameter, possible values:
+              - None: no shrinkage.
+              - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
+              - float between 0 and 1: fixed shrinkage constant.
         """
         xp, is_array_api_compliant = get_namespace(X)
 
@@ -587,7 +661,7 @@ class LinearDiscriminantAnalysis(
 
         self.means_ = _class_means(X, y)
         if self.store_covariance:
-            self.covariance_ = _class_cov(X, y, self.priors_)
+            self.covariance_ = _class_cov(X, y, self.priors_, shrinkage)
 
         Xc = []
         for idx, group in enumerate(self.classes_):
@@ -596,25 +670,19 @@ class LinearDiscriminantAnalysis(
 
         self.xbar_ = self.priors_ @ self.means_
 
+        # 1) Centering and scaling
         Xc = xp.concat(Xc, axis=0)
-
-        # 1) within (univariate) scaling by with classes std-dev
-        std = xp.std(Xc, axis=0)
-        # avoid division by zero in normalization
-        std[std == 0] = 1.0
-        fac = xp.asarray(1.0 / (n_samples - n_classes), dtype=X.dtype, device=device(X))
-
-        # 2) Within variance scaling
-        X = xp.sqrt(fac) * (Xc / std)
-        # SVD of centered (within)scaled data
-        _, S, Vt = svd(X, full_matrices=False)
+        fac = xp.asarray(1.0 / n_samples, dtype=X.dtype, device=device(X))
+        X = xp.sqrt(fac) * Xc
+        # SVD of centered data
+        _, S, Vt = _svd_shrinkage(X, shrinkage=shrinkage)
 
         rank = xp.sum(xp.astype(S > self.tol, xp.int32))
         # Scaling of within covariance is: V' 1/S
-        scalings = (Vt[:rank, :] / std).T / S[:rank]
+        scalings = Vt[:rank, :].T / S[:rank]
         fac = 1.0 if n_classes == 1 else 1.0 / (n_classes - 1)
 
-        # 3) Between variance scaling
+        # 2) Between variance scaling
         # Scale weighted centers
         X = (
             (xp.sqrt((n_samples * self.priors_) * fac)) * (self.means_ - self.xbar_).T
@@ -702,15 +770,13 @@ class LinearDiscriminantAnalysis(
             self._max_components = self.n_components
 
         if self.solver == "svd":
-            if self.shrinkage is not None:
-                raise NotImplementedError("shrinkage not supported with 'svd' solver.")
             if self.covariance_estimator is not None:
                 raise ValueError(
                     "covariance estimator "
                     "is not supported "
                     "with svd solver. Try another solver"
                 )
-            self._solve_svd(X, y)
+            self._solve_svd(X, y, shrinkage=self.shrinkage)
         elif self.solver == "lsqr":
             self._solve_lstsq(
                 X,
@@ -865,6 +931,7 @@ class QuadraticDiscriminantAnalysis(
           - 'svd': Singular value decomposition (default).
             Does not compute the covariance matrix, therefore this solver is
             recommended for data with a large number of features.
+            Can be combined with shrinkage.
           - 'eigen': Eigenvalue decomposition.
             Can be combined with shrinkage or custom covariance estimator.
 
@@ -880,7 +947,6 @@ class QuadraticDiscriminantAnalysis(
           the covariance estimation step.
 
         This should be left to `None` if `covariance_estimator` is used.
-        Note that shrinkage works only with 'eigen' solver.
 
     priors : array-like of shape (n_classes,), default=None
         Class priors. By default, the class proportions are inferred from the
@@ -890,6 +956,8 @@ class QuadraticDiscriminantAnalysis(
         Regularizes the per-class covariance estimates by transforming S2 as
         ``S2 = (1 - reg_param) * S2 + reg_param * np.eye(n_features)``,
         where S2 corresponds to the `scaling_` attribute of a given class.
+
+        This should be left to 0.0 if `shrinkage` is used.
 
     store_covariance : bool, default=False
         If True, the class covariance matrices are explicitly computed and
@@ -1040,8 +1108,8 @@ class QuadraticDiscriminantAnalysis(
         mean = X.mean(0)
         Xc = X - mean
         # Xc = U * S * V.T
-        _, S, Vt = np.linalg.svd(Xc, full_matrices=False)
-        scaling = (S**2) / (n_samples - 1)  # scalings are squared singular values
+        _, S, Vt = _svd_shrinkage(Xc, shrinkage=self.shrinkage)
+        scaling = (S**2) / n_samples  # scalings are squared singular values
         scaling = ((1 - self.reg_param) * scaling) + self.reg_param
         rotation = Vt.T
 
@@ -1094,14 +1162,15 @@ class QuadraticDiscriminantAnalysis(
             self.priors_ = np.array(self.priors)
 
         if self.solver == "svd":
-            if self.shrinkage is not None:
-                # Support for `shrinkage` could be implemented as in
-                # https://github.com/scikit-learn/scikit-learn/issues/32590
-                raise NotImplementedError("shrinkage not supported with 'svd' solver.")
             if self.covariance_estimator is not None:
                 raise ValueError(
                     "covariance_estimator is not supported with solver='svd'. "
                     "Try solver='eigen' instead."
+                )
+            if self.shrinkage is not None and self.reg_param != 0:
+                raise ValueError(
+                    "`shrinkage` is not None and `reg_param` is not 0. Only one of "
+                    "the two can be set. `shrinkage` is the preferred parameter."
                 )
             specific_solver = self._solve_svd
         elif self.solver == "eigen":
@@ -1126,23 +1195,11 @@ class QuadraticDiscriminantAnalysis(
 
             rank = np.sum(scaling_class > self.tol)
             if rank < n_features:
-                n_samples_class = X_class.shape[0]
-                if self.solver == "svd" and n_samples_class <= n_features:
-                    raise linalg.LinAlgError(
-                        f"The covariance matrix of class {class_label} is not full "
-                        f"rank. When using `solver='svd'` the number of samples in "
-                        f"each class should be more than the number of features, but "
-                        f"class {class_label} has {n_samples_class} samples and "
-                        f"{n_features} features. Try using `solver='eigen'` and "
-                        f"setting the parameter `shrinkage` for regularization."
-                    )
-                else:
-                    msg_param = "shrinkage" if self.solver == "eigen" else "reg_param"
-                    raise linalg.LinAlgError(
-                        f"The covariance matrix of class {class_label} is not full "
-                        f"rank. Increase the value of `{msg_param}` to reduce the "
-                        f"collinearity.",
-                    )
+                raise linalg.LinAlgError(
+                    f"The covariance matrix of class {class_label} is not full "
+                    f"rank. Increase the value of `shrinkage` to reduce the "
+                    f"collinearity.",
+                )
 
             cov.append(cov_class)
             scalings.append(scaling_class)
