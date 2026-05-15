@@ -7,6 +7,7 @@ at which the fix is no longer needed.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import os
 import platform
 import struct
 
@@ -340,6 +341,44 @@ else:
 
 
 # TODO: Remove when Python min version >= 3.12.
+def _validate_tar_members(tar, dest_path):
+    """Validate tar members against path traversal for Python < 3.12.
+
+    Replicates the path-safety checks from CPython's _get_filtered_attrs
+    (Lib/tarfile.py) that are enabled via filter='data' in Python 3.12+.
+    """
+
+    dest_path = os.path.realpath(dest_path)
+    for member in tar.getmembers():
+        name = member.name
+        if name.startswith(("/", os.sep)):
+            name = name.lstrip("/" + os.sep)
+        if os.path.isabs(name):
+            raise ValueError(f"Absolute path in tar member: {member.name!r}")
+        target_path = os.path.realpath(os.path.join(dest_path, name))
+        if os.path.commonpath([target_path, dest_path]) != dest_path:
+            raise ValueError(
+                f"Tar member {member.name!r} would extract outside destination"
+            )
+        if not (member.isreg() or member.isdir() or member.issym() or member.islnk()):
+            raise ValueError(f"Tar member {member.name!r} is a special file type")
+        if member.islnk() or member.issym():
+            if os.path.isabs(member.linkname):
+                raise ValueError(f"Tar member {member.name!r} has absolute link target")
+            if member.issym():
+                link_target = os.path.join(
+                    dest_path, os.path.dirname(name), member.linkname
+                )
+            else:
+                link_target = os.path.join(dest_path, member.linkname)
+            real_link = os.path.realpath(link_target)
+            if os.path.commonpath([real_link, dest_path]) != dest_path:
+                raise ValueError(
+                    f"Tar member {member.name!r} links outside destination"
+                )
+
+
+# TODO: Remove when Python min version >= 3.12.
 def tarfile_extractall(tarfile, path):
     try:
         # Use filter="data" to prevent the most dangerous security issues.
@@ -347,6 +386,7 @@ def tarfile_extractall(tarfile, path):
         # https://docs.python.org/3/library/tarfile.html#tarfile.TarFile.extractall
         tarfile.extractall(path, filter="data")
     except TypeError:
+        _validate_tar_members(tarfile, path)
         tarfile.extractall(path)
 
 

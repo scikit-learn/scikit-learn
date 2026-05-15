@@ -1,0 +1,3 @@
+- Fixed path traversal vulnerability in :func:`utils.fixes.tarfile_extractall`
+  for Python < 3.12 by validating tar members before extraction.
+  By :user:`Dmitry Dube <dunkin-dee>`.
