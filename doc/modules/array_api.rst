@@ -23,7 +23,7 @@ explicitly by the `array_api_dispatch` configuration. See below for details.
 
 .. note::
     Currently, only `array-api-strict`, `cupy`, `PyTorch`, and `dpnp` are
-    known to work with scikit-learn's estimators.
+    regularly tested to work with scikit-learn's estimators.
 
 The following video provides an overview of the standard's design principles
 and how it facilitates interoperability between array libraries:
