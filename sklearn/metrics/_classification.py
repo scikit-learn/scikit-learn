@@ -55,6 +55,7 @@ from sklearn.utils._param_validation import (
 from sklearn.utils._unique import attach_unique
 from sklearn.utils.extmath import _nanaverage
 from sklearn.utils.multiclass import type_of_target, unique_labels
+from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import (
     _check_pos_label_consistency,
     _check_sample_weight,
@@ -4188,8 +4189,11 @@ def calibration_error(
     0.25
     """
     if pos_label is not None:
-        labels = np.unique(column_or_1d(y_true))
-        if len(labels) == 2 and pos_label not in labels:
+        y_true = column_or_1d(y_true)
+        xp_y_true, _ = get_namespace(y_true)
+        labels = xp_y_true.unique_values(y_true)
+        labels = move_to(labels, xp=np, device="cpu")
+        if labels.shape[0] == 2 and pos_label not in labels:
             raise ValueError(
                 "pos_label=%r is not a valid label: %r" % (pos_label, labels)
             )
@@ -4203,41 +4207,53 @@ def calibration_error(
     )
     y_true = y_true[:, 1]
     y_prob = y_prob[:, 1]
+    xp, _, device_ = get_namespace_and_device(y_prob)
+    max_float_dtype = _max_precision_float_dtype(xp=xp, device=device_)
+    y_prob = xp.astype(y_prob, max_float_dtype, copy=False)
 
     if sample_weight is not None:
         sample_weight = _check_sample_weight(
             sample_weight, y_prob, force_float_dtype=False
         )
     else:
-        sample_weight = np.ones(y_true.shape[0])
+        sample_weight = xp.ones(y_true.shape[0], dtype=max_float_dtype, device=device_)
+    sample_weight = xp.astype(sample_weight, max_float_dtype, copy=False)
 
     n_bins = int(n_bins)
     if strategy == "quantile":
-        quantiles = np.linspace(0, 1, n_bins + 1)
-        bins = np.percentile(y_prob, quantiles * 100)
+        quantiles = xp.linspace(
+            0, 100, n_bins + 1, dtype=max_float_dtype, device=device_
+        )
+        bins = _weighted_percentile(
+            y_prob, sample_weight, quantiles, average=True, xp=xp
+        )
     elif strategy == "uniform":
-        bins = np.linspace(0.0, 1.0, n_bins + 1)
+        bins = xp.linspace(0.0, 1.0, n_bins + 1, dtype=y_prob.dtype, device=device_)
     else:
         raise ValueError(
             f"Invalid entry to 'strategy' input. Strategy must be either "
             f"'quantile' or 'uniform'. Got {strategy} instead."
         )
 
-    binids = np.searchsorted(bins[1:-1], y_prob)
-    bin_weights = np.bincount(binids, weights=sample_weight, minlength=n_bins)
+    binids = xp.searchsorted(bins[1:-1], y_prob)
+    bin_weights = _bincount(binids, weights=sample_weight, minlength=n_bins, xp=xp)
     nonzero = bin_weights != 0
     bin_weights = bin_weights[nonzero]
     freq_true = (
-        np.bincount(binids, weights=y_true * sample_weight, minlength=n_bins)[nonzero]
+        _bincount(binids, weights=y_true * sample_weight, minlength=n_bins, xp=xp)[
+            nonzero
+        ]
         / bin_weights
     )
     mean_pred = (
-        np.bincount(binids, weights=y_prob * sample_weight, minlength=n_bins)[nonzero]
+        _bincount(binids, weights=y_prob * sample_weight, minlength=n_bins, xp=xp)[
+            nonzero
+        ]
         / bin_weights
     )
 
     debias = 0.0
-    weight_sum = np.sum(sample_weight, dtype=np.float64)
+    weight_sum = xp.sum(sample_weight, dtype=max_float_dtype)
     if norm == "l2" and reduce_bias:
         # The squared calibration error is biased upward because `freq_true`
         # estimates the bin label frequency from finitely many samples. The
@@ -4248,28 +4264,28 @@ def calibration_error(
         # (sum(w)**2 - sum(w**2)), applying a weighted Bessel correction. With
         # unit weights this reduces to the unweighted correction
         # freq_true * (1 - freq_true) / (n_bin - 1).
-        sample_weight_squared = sample_weight.astype(np.float64, copy=False) ** 2
-        bin_weight_squares = np.bincount(
-            binids, weights=sample_weight_squared, minlength=n_bins
+        sample_weight_squared = sample_weight**2
+        bin_weight_squares = _bincount(
+            binids, weights=sample_weight_squared, minlength=n_bins, xp=xp
         )[nonzero]
         variance_denominator = bin_weights**2 - bin_weight_squares
         nonzero_var_denom = variance_denominator > 0
-        variance = np.zeros_like(freq_true)
-        np.divide(
-            freq_true * (1.0 - freq_true) * bin_weight_squares,
-            variance_denominator,
-            out=variance,
-            where=nonzero_var_denom,
+        variance = xp.zeros_like(freq_true)
+        variance[nonzero_var_denom] = (
+            freq_true[nonzero_var_denom]
+            * (1.0 - freq_true[nonzero_var_denom])
+            * bin_weight_squares[nonzero_var_denom]
+            / variance_denominator[nonzero_var_denom]
         )
-        debias = -np.dot(bin_weights, variance) / weight_sum
+        debias = -xp.sum(bin_weights * variance) / weight_sum
 
     if norm == "max":
-        loss = np.max(np.abs(freq_true - mean_pred))
+        loss = xp.max(xp.abs(freq_true - mean_pred))
     elif norm == "l1":
-        loss = np.dot(bin_weights, np.abs(freq_true - mean_pred)) / weight_sum
+        loss = xp.sum(bin_weights * xp.abs(freq_true - mean_pred)) / weight_sum
     elif norm == "l2":
-        loss = np.dot(bin_weights, (freq_true - mean_pred) ** 2) / weight_sum
+        loss = xp.sum(bin_weights * (freq_true - mean_pred) ** 2) / weight_sum
         if reduce_bias:
             loss += debias
-        loss = np.sqrt(max(loss, 0.0))
-    return loss
+        loss = sqrt(max(0.0, float(loss)))
+    return float(loss)

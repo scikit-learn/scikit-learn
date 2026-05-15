@@ -16,6 +16,7 @@ from sklearn.metrics import (
     average_precision_score,
     balanced_accuracy_score,
     brier_score_loss,
+    calibration_error,
     classification_report,
     cohen_kappa_score,
     confusion_matrix,
@@ -2535,6 +2536,10 @@ array_api_metric_checkers = {
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
+    ],
+    calibration_error: [check_array_api_binary_continuous_classification_metric],
+    partial(calibration_error, strategy="quantile"): [
+        check_array_api_binary_continuous_classification_metric
     ],
     brier_score_loss: [
         check_array_api_binary_continuous_classification_metric,
