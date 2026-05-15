@@ -4209,6 +4209,7 @@ def calibration_error(
     y_prob = y_prob[:, 1]
     xp, _, device_ = get_namespace_and_device(y_prob)
     max_float_dtype = _max_precision_float_dtype(xp=xp, device=device_)
+    y_true = xp.astype(y_true, max_float_dtype, copy=False)
     y_prob = xp.astype(y_prob, max_float_dtype, copy=False)
 
     if sample_weight is not None:
