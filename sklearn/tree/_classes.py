@@ -181,8 +181,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         return self.tree_.n_leaves
 
     def _support_missing_values(self, X):
-        return (
-            self.__sklearn_tags__().input_tags.allow_nan and self.monotonic_cst is None
+        return self.__sklearn_tags__().input_tags.allow_nan and (
+            self.monotonic_cst is None or not issparse(X)
         )
 
     def _compute_missing_values_in_feature_mask(self, X, estimator_name=None):
