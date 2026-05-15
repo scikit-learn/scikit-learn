@@ -1060,6 +1060,20 @@ class BaseSearchCV(
                         )
                     )
 
+                candidate_split_pairs = list(
+                    product(enumerate(candidate_params), enumerate(cv_splits))
+                )
+                if callback_ctx is not None:
+                    evaluation_contexts = [
+                        callback_ctx.subcontext(
+                            task_name="candidate-split-evaluation",
+                            task_id=task_id,
+                        )
+                        for task_id in range(len(candidate_split_pairs))
+                    ]
+                else:
+                    evaluation_contexts = [None] * len(candidate_split_pairs)
+
                 out = parallel(
                     delayed(_fit_and_score)(
                         clone(base_estimator),
@@ -1072,19 +1086,12 @@ class BaseSearchCV(
                         candidate_progress=(cand_idx, n_candidates),
                         **fit_and_score_kwargs,
                         caller=self,
-                        callback_ctx=(
-                            callback_ctx.subcontext(
-                                task_name="candidate-split-evaluation",
-                                task_id=split_idx * n_candidates + cand_idx,
-                            )
-                            if callback_ctx is not None
-                            else None
-                        ),
+                        callback_ctx=evaluation_ctx,
                     )
-                    for (cand_idx, parameters), (split_idx, (train, test)) in product(
-                        enumerate(candidate_params),
-                        enumerate(cv_splits),
-                    )
+                    for (
+                        ((cand_idx, parameters), (split_idx, (train, test))),
+                        evaluation_ctx,
+                    ) in zip(candidate_split_pairs, evaluation_contexts)
                 )
 
                 if len(out) < 1:
