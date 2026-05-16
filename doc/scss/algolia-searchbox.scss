@@ -1,0 +1,80 @@
+/**
+ * This is the styling for Algolia docsearch per page, corresponding to
+ * `doc/templates/algolia-searchbox.html` and `doc/js/scripts/algolia-searchbox.js`.
+ * It must not included if not using Algolia docsearch.
+ *
+ * This file is compiled into styles/algolia-searchbox.css by sphinxcontrib.sass, see:
+ * https://sass-lang.com/guide/
+ */
+
+// We have to hide pydata-sphinx-theme searchbox; though its button is removed the
+// searchbox will still be triggered by Ctrl-K shortcut which we cannot disable
+.search-button__wrapper.show {
+  .search-button__overlay,
+  .search-button__search-container {
+    display: none;
+  }
+}
+
+.DocSearch {
+  --docsearch-modal-width: 768px;
+  --docsearch-modal-height: 80vh;
+
+  // Reuse text and background colors from pydata-sphinx-theme
+  --docsearch-text-color: var(--pst-color-text-base);
+  --docsearch-muted-color: var(--pst-color-text-muted);
+  --docsearch-highlight-color: var(--pst-color-primary);
+  --docsearch-modal-background: var(--pst-color-background);
+  --docsearch-searchbox-background: var(--pst-color-surface);
+  --docsearch-searchbox-focus-background: var(--pst-color-background);
+  --docsearch-footer-background: var(--pst-color-on-background);
+  --docsearch-searchbox-shadow: inset 0 0 0 2px var(--pst-color-primary);
+
+  &.DocSearch-Button {
+    // Keep only the search icon to take less space on smaller screen sizes to avoid
+    // messing up the layout of other elements in the header
+    @media screen and (max-width: 1200px) {
+      .DocSearch-Button-Placeholder,
+      .DocSearch-Button-Keys {
+        display: none;
+      }
+    }
+
+    kbd.DocSearch-Button-Key {
+      top: 0;
+      padding: 0;
+    }
+  }
+
+  &.DocSearch-Container {
+    z-index: 1050; // Make it above the header
+    cursor: auto; // Revert the cursor: pointer effect by [role="button"]
+
+    // This is 100vh minus `--docsearch-modal-height` divided by 2; note that on mobile
+    // devices the modal takes full height so we do not force top margin in that case
+    @media screen and (min-width: 768.1px) {
+      .DocSearch-Modal {
+        margin-top: 10vh;
+      }
+    }
+
+    .DocSearch-Hits {
+      .DocSearch-Hit-icon svg {
+        vertical-align: unset;
+      }
+
+      .DocSearch-Hit-source,
+      .DocSearch-Hit-title {
+        font-size: var(--pst-sidebar-font-size);
+      }
+
+      mark {
+        padding: 0;
+      }
+    }
+
+    .DocSearch-Commands {
+      display: none; // They are not completely true under our customizations
+    }
+  }
+}
