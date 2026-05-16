@@ -114,8 +114,8 @@ To dynamically build the context tree and manage the callbacks during fit, the
 - :meth:`~CallbackContext.subcontext`
 
   This method should be used to create a context for a subtask. Callback contexts must
-  not be created directly but through this method (or `_init_callback_context` for the
-  root context).
+  not be created directly but through this method (or
+  :meth:`~CallbackSupportMixin._init_callback_context` for the root context).
 
 - :meth:`~CallbackContext.call_on_fit_task_begin` and
   :meth:`~CallbackContext.call_on_fit_task_end`
@@ -190,11 +190,11 @@ To dynamically build the context tree and manage the callbacks during fit, the
   root task of the sub-estimator. Their corresponding contexts are thus merged into a
   single context in the combined tree.
 
-  In addition, `propagate_callback_context` is a context manager that propagates the
-  auto-propagated callbacks from the meta-estimator to the sub-estimator such that they
-  are called at the tasks of the sub-estimator as well. It also clears the propagated
-  callbacks on exit such that the fitted sub-estimator no longer holds locally
-  registered callbacks.
+  In addition, :meth:`~CallbackContext.propagate_callback_context` is a context manager
+  that propagates the auto-propagated callbacks from the meta-estimator to the
+  sub-estimator such that they are called at the tasks of the sub-estimator as well. It
+  also clears the propagated callbacks on exit such that the fitted sub-estimator no
+  longer holds any locally registered callbacks.
 
 The with_callbacks decorator
 ----------------------------
@@ -204,7 +204,8 @@ decorated with the :func:`~with_callbacks` decorator. This decorator guarantees 
 callbacks are torn down after `fit` finishes, even if it exits on an error.
 
 For scikit-learn's built-in estimators, the :func:`~sklearn.base._fit_context` decorator
-already takes care of the callbacks teardown, thus `with_callbacks` should not be used.
+already takes care of the callbacks teardown, thus :func:`~with_callbacks` should not be
+used.
 
 Minimal example
 ---------------

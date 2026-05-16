@@ -133,8 +133,8 @@ Since the estimator on which the callback is registered may be cloned and fitted
 multiple times in a meta-estimator, callbacks should behave as if the same callback
 instance were registered on multiple estimators. Therefore, `setup` / `teardown` should
 not reset the state of the callback, and `on_fit_task_begin` / `on_fit_task_end` should
-accumulate data across all fits. Indeed resetting state in `setup`/`teardown` would drop
-information collected from previous or concurrent fits.
+accumulate data across all fits. Indeed resetting state in `setup` / `teardown` would
+drop information collected from previous or concurrent fits.
 
 .. TODO: make public and document the transport mechanism.
 
