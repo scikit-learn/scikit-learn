@@ -99,9 +99,15 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         two classes.
         ``"ovr"`` trains n_classes one-vs-rest classifiers, while
         ``"crammer_singer"`` optimizes a joint objective over all classes [1]_.
-        While `crammer_singer` is interesting from a theoretical perspective
-        as it is consistent, it is seldom used in practice as it rarely leads
-        to better accuracy and is more expensive to compute.
+        Because all K class weight vectors are optimized simultaneously
+        under a shared multiclass margin constraint, their decision scores
+        are directly comparable across classes unlike ``"ovr"``, which
+        solves K independent binary problems whose raw scores are not
+        guaranteed to be on a common scale thus calibration is needed in ovr.
+        The per-example slack is set by whichever competing class is
+        hardest to separate, not averaged over all competitors [1]_.
+        In practice ``"crammer_singer"`` rarely improves over ``"ovr"`` and
+        is more expensive to compute; ``"ovr"`` is preferred in most settings.
         If ``"crammer_singer"`` is chosen, the options loss, penalty and dual
         will be ignored.
 
