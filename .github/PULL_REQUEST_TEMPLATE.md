@@ -13,6 +13,13 @@ describing your PR changes, see:
 https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md
 -->
 
+#### First-time contributor introduction
+<!--
+If this is your first contribution to scikit-learn, please introduce yourself briefly.
+How do you use scikit-learn, and what motivated this contribution?
+We are a community of mostly volunteers, and this helps us build trust and collaborate effectively.
+-->
+
 #### Reference Issues/PRs
 <!--
 Example: Fixes #1234. See also #3456.
@@ -21,9 +28,7 @@ you resolved, so that they will automatically be closed when your pull request
 is merged. See https://github.com/blog/1506-closing-issues-via-pull-requests
 -->
 
-
 #### What does this implement/fix? Explain your changes.
-
 
 #### AI usage disclosure
 <!--
@@ -37,9 +42,7 @@ I used AI assistance for:
 - [ ] Documentation (including examples)
 - [ ] Research and understanding
 
-
 #### Any other comments?
-
 
 <!--
 Thank you for your patience. Changes to scikit-learn require careful
