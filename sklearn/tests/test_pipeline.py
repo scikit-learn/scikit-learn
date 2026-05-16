@@ -1419,6 +1419,9 @@ def test_feature_union_duplicate_column_names(df_lib_name, T1):
     df_t = fu.fit_transform(df)
     assert list(df_t.columns) == ["t1__a", "t1__b", "t2__a", "t2__b"]
 
+    # input dataframe is not mutated
+    assert list(df.columns) == ["a", "b"]
+
     fu.set_params(verbose_feature_names_out=False)
     with pytest.raises(ValueError, match=r"Output feature names:.*are not unique"):
         fu.fit_transform(df)
