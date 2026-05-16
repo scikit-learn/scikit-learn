@@ -80,18 +80,18 @@ steps during the fitting process of the estimator the callback is registered on:
       estimators that don't aim to be interruptible will ignore this request and
       continue with the next task.
 
-All the hooks receive as mandatory arguments the estimator instance calling the callback
-and the :class:`~CallbackContext` object holding the contextual information that allows
-to identify the task that is being processed as public attributes. See
-:class:`~CallbackContext` for more details.
+All the hooks receive, as mandatory arguments, the estimator instance calling the
+callback and the :class:`~CallbackContext` object holding the contextual information
+that allows unique identification of the task that is being processed as public
+attributes. See :class:`~CallbackContext` for more details.
 
 .. dropdown:: The `estimator` argument
 
-    The estimator instance received by the hooks as a mandatory argument is in the same
-    state as it was when calling the hook during `fit`. Therefore it is not expected to
-    be fully fitted (except for the :meth:`~FitCallback.teardown` hook). Callbacks
-    should not rely on it to predict, transform, etc ... but rather use the
-    `fitted_estimator` when available.
+    The estimator instance received by the hooks, as a mandatory argument, is in the
+    same state as it was when calling the hook during `fit`. Therefore it is not
+    expected to be fully fitted (except for the :meth:`~FitCallback.teardown` hook).
+    Callbacks should not rely on it to :term:`predict`, :term:`transform`, etc ... but
+    rather use the `fitted_estimator` when available.
 
 Auto-propagated callbacks
 -------------------------
@@ -117,7 +117,7 @@ sub-estimators at all nesting levels.
 
 Auto-propagated callbacks should be registered on the top-level estimator. If the
 top-level estimator does not support callbacks, they can be registered on
-sub-estimators and are expected to work, possibly not at full capacity.
+sub-estimators and are expected to work, though possibly not at full capacity.
 
 .. note::
 

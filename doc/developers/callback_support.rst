@@ -14,8 +14,8 @@ following helpers from the :mod:`~sklearn.callback` module:
 - :class:`~CallbackSupportMixin`, which enables callback registration and initializes
   callback handling at the beginning of fit.
 
-- :class:`~CallbackContext`, which represents tasks and is the central object to manage
-  callbacks during fit.
+- :class:`~CallbackContext`, which represents tasks and is the central object for
+  managing callbacks during fit.
 
 - :func:`~with_callbacks`, to guarantee proper callback teardown at the end of fit.
 
@@ -46,8 +46,8 @@ The CallbackContext class
 
 The :class:`~CallbackContext` objects are responsible for invoking the callbacks at the
 right time during fit. They track the different tasks of the estimator, with one context
-representing each task, and capture the tree structure of the tasks involved in the
-execution of the fit method.
+instance representing each task, and capture the tree structure of the tasks involved in
+the execution of the fit method.
 
 .. _callback_task_definition:
 
@@ -58,16 +58,16 @@ decomposed into subtasks, the tasks (and therefore callback contexts) have a nat
 tree structure, with the root task being the whole fit task.
 
 The callback context objects follow this tree structure, holding references to their
-parent and children contexts, dynamically built during `fit`. The root context must be
-created by the :meth:`~CallbackSupportMixin._init_callback_context` method.
+parent and children contexts, and are dynamically built during `fit`. The root context
+must be created by the :meth:`~CallbackSupportMixin._init_callback_context` method.
 
 .. dropdown:: examples of task / context trees
 
     .. _example_task_tree:
 
-    As an example, KMeans has two nested loops: the outer loop is controlled by the
-    `n_init` parameter, and the inner loop is controlled by the `max_iter` parameter.
-    Therefore its task tree looks like this::
+    As an example, :class:`~sklearn.cluster.KMeans` has two nested loops: the outer loop
+    is controlled by the `n_init` parameter, and the inner loop is controlled by the
+    `max_iter` parameter. Therefore its task tree looks like this::
 
         KMeans fit (root)
         ├── init 0
@@ -86,8 +86,8 @@ created by the :meth:`~CallbackSupportMixin._init_callback_context` method.
 
     where each innermost `iter j` task corresponds to the computation of the labels
     and centers for the full dataset. A callback registered on a KMeans estimator thus
-    will be invoked at the beginning and end of the `fit` task, each of the `init i`
-    tasks and each of the `iter j` tasks.
+    will be invoked at the beginning and end of the `fit` task, each of the outer
+    `init i` tasks and each of the inner `iter j` tasks.
 
     By convention, for performance reasons and consistency across estimators, the
     innermost tasks of scikit-learn estimators, i.e. the leaves of the task tree,
@@ -99,7 +99,8 @@ created by the :meth:`~CallbackSupportMixin._init_callback_context` method.
     represent the same task. In this case the leaf task of the meta-estimator and the
     root task of the sub-estimator are merged into a single task. The task trees of the
     meta-estimator and the sub-estimator are combined into a single task tree. For
-    instance, a `Pipeline` would have a task tree that looks like this::
+    instance, a :class:`~sklearn.pipeline.Pipeline` would have a task tree that looks
+    like this::
 
         Pipeline fit (root)
         ├── step 0 | StandardScaler fit
@@ -112,9 +113,9 @@ To dynamically build the context tree and manage the callbacks during fit, the
 
 - :meth:`~CallbackContext.subcontext`
 
-  This method allows to create a context for a subtask. Callback contexts should not be
-  created directly but through this method (or `_init_callback_context` for the root
-  context).
+  This method should be used to create a context for a subtask. Callback contexts must
+  not be created directly but through this method (or `_init_callback_context` for the
+  root context).
 
 - :meth:`~CallbackContext.call_on_fit_task_begin` and
   :meth:`~CallbackContext.call_on_fit_task_end`
@@ -134,20 +135,21 @@ To dynamically build the context tree and manage the callbacks during fit, the
   `on_fit_task_begin` and `on_fit_task_end` methods of the callbacks registered on the
   estimator.
 
-  In addition to the callback context that is implicitly passed to the callbacks, the
-  keyword arguments are used to pass additional information about the state of the
-  fitting process at the task. It is not expected to provide a value for all of them at
-  the beginning and end of every task. Estimators are expected to provide all the values
-  that they are capable to produce. Callbacks then adapt their behavior based on the
-  provided values for a given task.
+  In addition to the callback context that is implicitly passed to the registered
+  callbacks, the keyword arguments of `call_on_fit_task_begin/end` are used to pass
+  additional information about the state of the fitting process at a given task. It is
+  not expected to provide a value for all of them at every call of these methods.
+  Estimators are expected to provide all the values that they are capable to produce.
+  Callbacks then adapt their behavior based on the provided values for a given task.
 
   .. dropdown:: The `reconstruction_attributes` kwarg
 
       When `call_on_fit_task_begin/end` is called, the state of the estimator at this
-      task is likely to be incomplete and thus unable to predict, transform, etc ... The
-      `reconstruction_attributes` kwarg expects a dictionary containing the missing
-      attributes to set on the estimator to make it ready as if the fit had stopped at
-      this task.
+      task is likely to be incomplete and thus unable to :term:`predict`,
+      :term:`transform`, etc ... The `reconstruction_attributes` kwarg expects a
+      dictionary containing the necessary missing attributes to set on the estimator to
+      ensure that it is ready to :term:`predict`, :term:`transform`, etc ... as if fit
+      had stopped at this task.
 
       The callback context will copy the state of the estimator at this task, set the
       reconstruction attributes and pass the resulting estimator to the callbacks as
@@ -157,13 +159,14 @@ To dynamically build the context tree and manage the callbacks during fit, the
       dictionary should be passed instead of leaving the default value otherwise the
       callback context won't pass a `fitted_estimator` to the callbacks.
 
-  .. dropdown:: Lazy-loading of the kwargs
+  .. dropdown:: Lazy evaluation of the kwargs
 
-      For each of these kwargs, a callable can be provided instead of the actual value.
-      When it is the case, if a callback requires the kwarg, the callback context will
-      evaluate the callable and forward the returned value to the callback. This
-      mechanism enables lazy-loading the kwarg values, to avoid potentially costly
-      computations when no callback requires a kwarg value.
+      For each of these kwargs, a callable (with no arguments and returning the kwarg
+      value) can be provided instead of the actual value. When it is the case, if a
+      callback requires the kwarg, the callback context will evaluate the callable and
+      forward the returned value to the callback. This mechanism enables lazy evaluation
+      of the kwarg values, to avoid potentially costly computations when no callback
+      requires a kwarg value.
 
       To prevent performance degradations, estimators should lazily pass quantities
       that are expensive to compute.
@@ -177,7 +180,7 @@ To dynamically build the context tree and manage the callbacks during fit, the
 
 - :meth:`~CallbackContext.propagate_callback_context`.
 
-  This method allows to combine the context trees of individual estimators and
+  This method enables combining the context trees of individual estimators and
   meta-estimators in estimator compositions (e.g. a `GridSearchCV` on a
   `LogisticRegression`) into a single context tree, rooted at the fit of the top level
   estimator.
@@ -194,7 +197,7 @@ To dynamically build the context tree and manage the callbacks during fit, the
   registered callbacks.
 
 The with_callbacks decorator
-------------------------------
+----------------------------
 
 For third-party estimators implementing callback support, the `fit` method should be
 decorated with the :func:`~with_callbacks` decorator. This decorator guarantees that the
