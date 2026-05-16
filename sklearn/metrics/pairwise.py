@@ -41,6 +41,7 @@ from sklearn.utils._param_validation import (
     validate_params,
 )
 from sklearn.utils._sparse import _align_api_if_sparse
+from sklearn.utils.deprecation import deprecated
 from sklearn.utils.extmath import row_norms, safe_sparse_dot
 from sklearn.utils.fixes import parse_version, sp_base_version
 from sklearn.utils.parallel import Parallel, delayed
@@ -1183,6 +1184,16 @@ def cosine_distances(X, Y=None):
 
 
 # Paired distances
+def _paired_euclidean_distances(X, Y):
+    X, Y = check_paired_arrays(X, Y)
+    return row_norms(X - Y)
+
+
+# TODO(1.12): Remove
+@deprecated(
+    "The public function `sklearn.metrics.pairwise.paired_euclidean_distances` "
+    "is deprecated in 1.10 and will be removed in 1.12."
+)
 @validate_params(
     {"X": ["array-like", "sparse matrix"], "Y": ["array-like", "sparse matrix"]},
     prefer_skip_nested_validation=True,
@@ -1211,13 +1222,28 @@ def paired_euclidean_distances(X, Y):
     >>> from sklearn.metrics.pairwise import paired_euclidean_distances
     >>> X = [[0, 0, 0], [1, 1, 1]]
     >>> Y = [[1, 0, 0], [1, 1, 0]]
-    >>> paired_euclidean_distances(X, Y)
+    >>> paired_euclidean_distances(X, Y)  # doctest: +SKIP
     array([1., 1.])
     """
+    return _paired_euclidean_distances(X, Y)
+
+
+def _paired_manhattan_distances(X, Y):
     X, Y = check_paired_arrays(X, Y)
-    return row_norms(X - Y)
+    xp, _ = get_namespace(X, Y)
+    diff = X - Y
+    if issparse(diff):
+        diff.data = np.abs(diff.data)
+        return np.squeeze(np.array(diff.sum(axis=1)))
+    else:
+        return xp.sum(xp.abs(diff), axis=-1)
 
 
+# TODO(1.12): Remove
+@deprecated(
+    "The public function `sklearn.metrics.pairwise.paired_manhattan_distances` "
+    "is deprecated in 1.10 and will be removed in 1.12."
+)
 @validate_params(
     {"X": ["array-like", "sparse matrix"], "Y": ["array-like", "sparse matrix"]},
     prefer_skip_nested_validation=True,
@@ -1250,19 +1276,22 @@ def paired_manhattan_distances(X, Y):
     >>> import numpy as np
     >>> X = np.array([[1, 1, 0], [0, 1, 0], [0, 0, 1]])
     >>> Y = np.array([[0, 1, 0], [0, 0, 1], [0, 0, 0]])
-    >>> paired_manhattan_distances(X, Y)
+    >>> paired_manhattan_distances(X, Y)  # doctest: +SKIP
     array([1., 2., 1.])
     """
+    return _paired_manhattan_distances(X, Y)
+
+
+def _paired_cosine_distances(X, Y):
     X, Y = check_paired_arrays(X, Y)
-    xp, _ = get_namespace(X, Y)
-    diff = X - Y
-    if issparse(diff):
-        diff.data = np.abs(diff.data)
-        return np.squeeze(np.array(diff.sum(axis=1)))
-    else:
-        return xp.sum(xp.abs(diff), axis=-1)
+    return 0.5 * row_norms(normalize(X) - normalize(Y), squared=True)
 
 
+# TODO(1.12): Remove
+@deprecated(
+    "The public function `sklearn.metrics.pairwise.paired_cosine_distances` "
+    "is deprecated in 1.10 and will be removed in 1.12."
+)
 @validate_params(
     {"X": ["array-like", "sparse matrix"], "Y": ["array-like", "sparse matrix"]},
     prefer_skip_nested_validation=True,
@@ -1298,23 +1327,42 @@ def paired_cosine_distances(X, Y):
     >>> from sklearn.metrics.pairwise import paired_cosine_distances
     >>> X = [[0, 0, 0], [1, 1, 1]]
     >>> Y = [[1, 0, 0], [1, 1, 0]]
-    >>> paired_cosine_distances(X, Y)
+    >>> paired_cosine_distances(X, Y)  # doctest: +SKIP
     array([0.5       , 0.184])
     """
-    X, Y = check_paired_arrays(X, Y)
-    return 0.5 * row_norms(normalize(X) - normalize(Y), squared=True)
+    return _paired_cosine_distances(X, Y)
 
 
+# TODO(1.12): Remove `PAIRED_DISTANCES` when the public `paired_*_distances`
+# functions are removed.
 PAIRED_DISTANCES = {
-    "cosine": paired_cosine_distances,
-    "euclidean": paired_euclidean_distances,
-    "l2": paired_euclidean_distances,
-    "l1": paired_manhattan_distances,
-    "manhattan": paired_manhattan_distances,
-    "cityblock": paired_manhattan_distances,
+    "cosine": _paired_cosine_distances,
+    "euclidean": _paired_euclidean_distances,
+    "l2": _paired_euclidean_distances,
+    "l1": _paired_manhattan_distances,
+    "manhattan": _paired_manhattan_distances,
+    "cityblock": _paired_manhattan_distances,
 }
 
 
+def _paired_distances(X, Y, *, metric="euclidean", **kwds):
+    if metric in PAIRED_DISTANCES:
+        func = PAIRED_DISTANCES[metric]
+        return func(X, Y)
+    elif callable(metric):
+        # Check the matrix first (it is usually done by the metric)
+        X, Y = check_paired_arrays(X, Y)
+        distances = np.zeros(len(X))
+        for i in range(len(X)):
+            distances[i] = metric(X[i], Y[i])
+        return distances
+
+
+# TODO(1.12): Remove
+@deprecated(
+    "The public function `sklearn.metrics.pairwise.paired_distances` "
+    "is deprecated in 1.10 and will be removed in 1.12."
+)
 @validate_params(
     {
         "X": ["array-like"],
@@ -1368,20 +1416,10 @@ def paired_distances(X, Y, *, metric="euclidean", **kwds):
     >>> from sklearn.metrics.pairwise import paired_distances
     >>> X = [[0, 1], [1, 1]]
     >>> Y = [[0, 1], [2, 1]]
-    >>> paired_distances(X, Y)
+    >>> paired_distances(X, Y)  # doctest: +SKIP
     array([0., 1.])
     """
-
-    if metric in PAIRED_DISTANCES:
-        func = PAIRED_DISTANCES[metric]
-        return func(X, Y)
-    elif callable(metric):
-        # Check the matrix first (it is usually done by the metric)
-        X, Y = check_paired_arrays(X, Y)
-        distances = np.zeros(len(X))
-        for i in range(len(X)):
-            distances[i] = metric(X[i], Y[i])
-        return distances
+    return _paired_distances(X, Y, metric=metric, **kwds)
 
 
 # Kernels

@@ -29,7 +29,7 @@ from sklearn.cluster import (  # type: ignore[attr-defined]
 from sklearn.cluster._feature_agglomeration import AgglomerationTransform
 from sklearn.metrics import DistanceMetric
 from sklearn.metrics._dist_metrics import METRIC_MAPPING64
-from sklearn.metrics.pairwise import _VALID_METRICS, paired_distances
+from sklearn.metrics.pairwise import _VALID_METRICS, _paired_distances
 from sklearn.utils import check_array
 from sklearn.utils._fast_dict import IntFloatDict
 from sklearn.utils._param_validation import (
@@ -608,7 +608,7 @@ def linkage_tree(
     else:
         # FIXME We compute all the distances, while we could have only computed
         # the "interesting" distances
-        distances = paired_distances(
+        distances = _paired_distances(
             X[connectivity.row], X[connectivity.col], metric=affinity
         )
     connectivity.data = distances
