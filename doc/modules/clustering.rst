@@ -997,7 +997,7 @@ scales by building an alternative representation of the clustering problem.
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_cluster_plot_hdbscan.py`
+* :ref:`sphx_glr_auto_examples_cluster_plot_dbscan.py`
 
 Mutual Reachability Graph
 -------------------------
@@ -1133,7 +1133,7 @@ represented as children of a larger parent cluster.
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_cluster_plot_optics.py`
+* :ref:`sphx_glr_auto_examples_cluster_plot_dbscan.py`
 
 
 .. dropdown:: Comparison with DBSCAN
