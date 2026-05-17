@@ -48,6 +48,7 @@ from sklearn.utils._array_api import (
     move_to,
     size,
 )
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Hidden, Interval, StrOptions
 from sklearn.utils.extmath import row_norms, softmax
 from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
@@ -1337,9 +1338,13 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                     [warm_start_coef, intercept_np[:, None]], axis=1
                 )
 
-        # TODO: enable multi-threading if benchmarks show a positive effect,
-        # see https://github.com/scikit-learn/scikit-learn/issues/32162
-        n_threads = 1
+        # Enable multi-threading heuristically based on #32162 benchmarks.
+        # Threading overhead degrades performance on smaller datasets.
+        # Only enable OpenMP threading for massive sample sizes.
+        if solver in ["lbfgs", "newton-cg", "newton-cholesky"] and X.shape[0] >= 100_000:
+            n_threads = _openmp_effective_n_threads()
+        else:
+            n_threads = 1
 
         coefs, _, n_iter = _logistic_regression_path(
             X,
