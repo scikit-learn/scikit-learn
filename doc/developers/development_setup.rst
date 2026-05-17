@@ -128,7 +128,7 @@ the required packages.
           .. prompt::
 
             conda create -n sklearn-dev -c conda-forge ^
-              python numpy scipy cython meson-python ninja ^
+              python numpy scipy narwhals cython meson-python ninja ^
               pytest pytest-cov ruff==0.12.2 mypy numpydoc ^
               joblib threadpoolctl pre-commit
 

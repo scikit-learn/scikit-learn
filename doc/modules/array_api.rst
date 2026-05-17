@@ -92,8 +92,8 @@ The example code snippet below demonstrates how to use `CuPy
 After the model is trained, fitted attributes that are arrays will also be from
 the same Array API namespace as the training data. For example, if CuPy's Array
 API namespace was used for training, then fitted attributes will be on the GPU.
-Passing data in a different namespace to ``transform`` or ``predict`` is an
-error::
+Passing data in a different namespace or in a different device within the same
+namespace to ``transform`` or ``predict`` is an error::
 
     >>> with config_context(array_api_dispatch=True):
     ...     lda.transform(X_np)

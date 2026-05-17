@@ -696,7 +696,7 @@ def test_partial_fit_sparse_input(sample_weight, sparse_container):
 
 
 @pytest.mark.parametrize("sample_weight", [True, None])
-def test_standard_scaler_trasform_with_partial_fit(sample_weight):
+def test_standard_scaler_transform_with_partial_fit(sample_weight):
     # Check some postconditions after applying partial_fit and transform
     X = X_2d[:100, :]
 
@@ -796,6 +796,43 @@ def test_preprocessing_array_api_compliance(
         device_name=device_name,
         dtype_name=dtype_name,
     )
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [
+        MaxAbsScaler(),
+        MinMaxScaler(),
+        KernelCenterer(),
+    ],
+    ids=_get_check_estimator_ids,
+)
+def test_preprocessing_integer_array_api_on_float32_only_device(estimator):
+    xp, device = _array_api_for_tests("torch", device_name="mps", dtype_name="float32")
+
+    # TODO: replace this torch/MPS-specific coverage by array-api-strict once
+    # https://github.com/data-apis/array-api-strict/pull/206 is released.
+    X_np = np.asarray([[1, 2, 3], [4, 5, 6], [7, 8, 10]], dtype=np.int64)
+    X_xp = xp.asarray(X_np, device=device)
+
+    with config_context(array_api_dispatch=True):
+        X_out = estimator.fit_transform(X_xp)
+
+    assert X_out.dtype == xp.float32
+
+
+def test_normalize_integer_array_api_on_float32_only_device():
+    xp, device = _array_api_for_tests("torch", device_name="mps", dtype_name="float32")
+
+    # TODO: replace this torch/MPS-specific coverage by array-api-strict once
+    # https://github.com/data-apis/array-api-strict/pull/206 is released.
+    X_np = np.asarray([[1, 2, 3], [4, 5, 6], [7, 8, 10]], dtype=np.int64)
+    X_xp = xp.asarray(X_np, device=device)
+
+    with config_context(array_api_dispatch=True):
+        X_out = normalize(X_xp)
+
+    assert X_out.dtype == xp.float32
 
 
 @pytest.mark.parametrize(
@@ -2750,7 +2787,7 @@ def test_kernel_centerer_feature_names_out():
 
 @pytest.mark.parametrize("standardize", [True, False])
 def test_power_transformer_constant_feature(standardize):
-    """Check that PowerTransfomer leaves constant features unchanged."""
+    """Check that PowerTransformer leaves constant features unchanged."""
     X = [[-2, 0, 2], [-2, 0, 2], [-2, 0, 2]]
 
     pt = PowerTransformer(method="yeo-johnson", standardize=standardize).fit(X)

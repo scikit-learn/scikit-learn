@@ -473,6 +473,27 @@ def test_logistic_cv(global_random_seed, use_legacy_attributes):
         assert lr_cv.scores_.shape == (n_cv, n_l1_ratios, n_Cs)
 
 
+# TODO(1.11): remove filterwarnings with change of default scoring
+@pytest.mark.filterwarnings("ignore:The default value.*scoring.*:FutureWarning")
+def test_logistic_cv_refit_false_non_elasticnet(global_random_seed):
+    """Test that non-elasticnet penalty with refit=False and
+    use_legacy_attributes=False works without error.
+
+    For non-elasticnet penalties, l1_ratio=0.0 (equivalent to pure L2).
+    Previously, None was stored, which caused float() to raise a
+    TypeError when use_legacy_attributes=False converted the value to a scalar.
+    """
+    X, y = make_classification(random_state=global_random_seed)
+    lr_cv = LogisticRegressionCV(
+        l1_ratios=[0.0],
+        refit=False,
+        use_legacy_attributes=False,
+        random_state=global_random_seed,
+    )
+    lr_cv.fit(X, y)
+    assert lr_cv.l1_ratio_ == 0.0
+
+
 def test_logistic_cv_mock_scorer():
     """Test that LogisticRegressionCV calls the scorer."""
 
@@ -1994,7 +2015,7 @@ def test_LogisticRegressionCV_on_folds():
         ).fit(X[train_fold_0], y[train_fold_0])
 
         for cl in np.unique(y):
-            # Coefficients without intecept
+            # Coefficients without intercept
             assert_allclose(
                 lrcv.coefs_paths_[cl][idx_fold, idx_C, :-1],
                 lr.coef_[cl],

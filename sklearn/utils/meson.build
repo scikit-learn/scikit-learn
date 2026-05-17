@@ -24,6 +24,7 @@ utils_cython_tree = [
   # early in the build
   sklearn_root_cython_tree,
   fs.copyfile('__init__.py'),
+  fs.copyfile('_bitset.pxd'),
   fs.copyfile('_cython_blas.pxd'),
   fs.copyfile('_heap.pxd'),
   fs.copyfile('_openmp_helpers.pxd'),
@@ -38,6 +39,7 @@ utils_extension_metadata = {
     {'sources': [cython_gen.process('sparsefuncs_fast.pyx')]},
   '_cython_blas': {'sources': [cython_gen.process('_cython_blas.pyx'), _blas_int_pxi]},
   'arrayfuncs': {'sources': [cython_gen.process('arrayfuncs.pyx')]},
+  '_bitset': {'sources': [cython_gen.process('_bitset.pyx')]},
   'murmurhash': {
       'sources': [cython_gen.process('murmurhash.pyx'), 'src' / 'MurmurHash3.cpp'],
   },
@@ -80,7 +82,7 @@ foreach name: util_extension_names
     output: name + '.pyx',
     input: name + '.pyx.tp',
     command: [tempita, '@INPUT@', '-o', '@OUTDIR@'],
-    # TODO in principle this should go in py.exension_module below. This is
+    # TODO in principle this should go in py.extension_module below. This is
     # temporary work-around for dependency issue with .pyx.tp files. For more
     # details, see https://github.com/mesonbuild/meson/issues/13212
     depends: [pxd, utils_cython_tree],

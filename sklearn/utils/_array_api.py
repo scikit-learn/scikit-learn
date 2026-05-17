@@ -269,17 +269,6 @@ def _is_numpy_namespace(xp):
     return xp.__name__ in _NUMPY_NAMESPACE_NAMES
 
 
-def _union1d(a, b, xp):
-    if _is_numpy_namespace(xp):
-        # avoid circular import
-        from sklearn.utils._unique import cached_unique
-
-        a_unique, b_unique = cached_unique(a, b, xp=xp)
-        return xp.asarray(numpy.union1d(a_unique, b_unique))
-    assert a.ndim == b.ndim == 1
-    return xp.unique_values(xp.concat([xp.unique_values(a), xp.unique_values(b)]))
-
-
 def supported_float_dtypes(xp, device=None):
     """Supported floating point types for the namespace.
 
@@ -1338,9 +1327,9 @@ def _logsumexp(array, axis=None, xp=None):
     xp, _, device = get_namespace_and_device(array, xp=xp)
     axis = tuple(range(array.ndim)) if axis is None else axis
 
-    supported_dtypes = supported_float_dtypes(xp)
+    supported_dtypes = supported_float_dtypes(xp, device=device)
     if array.dtype not in supported_dtypes:
-        array = xp.asarray(array, dtype=supported_dtypes[0])
+        array = xp.asarray(array, dtype=supported_dtypes[0], device=device)
 
     array_max = xp.max(array, axis=axis, keepdims=True)
     index_max = array == array_max
@@ -1388,11 +1377,11 @@ def _half_multinomial_loss(y, pred, sample_weight=None, xp=None):
 
 
 def _matching_numpy_dtype(X, xp=None):
-    xp, _ = get_namespace(X, xp=xp)
+    xp, _, device_ = get_namespace_and_device(X, xp=xp)
     if _is_numpy_namespace(xp):
         return X.dtype
 
-    dtypes_dict = xp.__array_namespace_info__().dtypes()
+    dtypes_dict = xp.__array_namespace_info__().dtypes(device=device_)
     reversed_dtypes_dict = {dtype: name for name, dtype in dtypes_dict.items()}
     dtype_name = reversed_dtypes_dict[X.dtype]
-    return numpy.__array_namespace_info__().dtypes()[dtype_name]
+    return np_compat.__array_namespace_info__().dtypes()[dtype_name]

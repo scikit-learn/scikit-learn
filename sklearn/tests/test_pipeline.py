@@ -306,6 +306,7 @@ def test_pipeline_invalid_parameters():
 )
 def test_meta_estimator_raises_class_not_instance_error(meta_estimators, class_name):
     # non-regression tests for https://github.com/scikit-learn/scikit-learn/issues/32719
+    meta_estimators = clone(meta_estimators)
     msg = re.escape(
         f"Expected an estimator instance ({class_name}()), "
         f"got estimator class instead ({class_name})."
@@ -1831,7 +1832,7 @@ def test_feature_union_check_if_fitted():
 def test_pipeline_get_feature_names_out_passes_names_through():
     """Check that pipeline passes names through.
 
-    Non-regresion test for #21349.
+    Non-regression test for #21349.
     """
     X, y = iris.data, iris.target
 
