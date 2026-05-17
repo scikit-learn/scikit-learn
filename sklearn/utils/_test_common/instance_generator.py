@@ -1208,6 +1208,11 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     PolynomialFeatures: {
         "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
+    QuantileTransformer: {
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "QuantileTransformer does not yet support sample_weight on sparse data."
+        ),
+    },
     RadiusNeighborsTransformer: {
         "check_methods_sample_order_invariance": "check is not applicable."
     },
@@ -1351,11 +1356,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
             "Due to the cross-validation and sample ordering, removing a sample"
             " is not strictly equal to putting is weight to zero. Specific unit"
             " tests are added for TunedThresholdClassifierCV specifically."
-        ),
-    },
-    QuantileTransformer: {
-        "check_sample_weight_equivalence_on_sparse_data": (
-            "QuantileTransformer does not yet support sample_weight on sparse data."
         ),
     },
 }

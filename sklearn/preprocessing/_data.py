@@ -2822,22 +2822,20 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             # sample weights to None if they are used for subsampling
             sample_weight = None
 
-        self.quantiles_ = np.zeros((len(references), n_features))
-
-        for feature_idx in range(n_features):
-            col = X[:, feature_idx]
-
-            if sample_weight is not None:
-                self.quantiles_[:, feature_idx] = _weighted_percentile(
-                    col,
-                    sample_weight=sample_weight,
-                    percentile_rank=references,
-                    average=True,
-                )
-
-            else:
+        if sample_weight is not None:
+            self.quantiles_ = _weighted_percentile(
+                X,
+                sample_weight=sample_weight,
+                percentile_rank=references,
+                average=True,
+            ).T
+        else:
+            self.quantiles_ = np.zeros((len(references), n_features))
+            for feature_idx in range(n_features):
                 self.quantiles_[:, feature_idx] = np.nanquantile(
-                    col, references / 100.0, method="averaged_inverted_cdf"
+                    X[:, feature_idx],
+                    references / 100.0,
+                    method="averaged_inverted_cdf",
                 )
 
     def _sparse_fit(self, X, random_state):
@@ -2913,15 +2911,23 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         if self.subsample is not None and self.n_quantiles > self.subsample:
             raise ValueError(
                 "The number of quantiles cannot be greater than"
-                " the number of samples used. Got {} quantiles"
-                " and {} samples.".format(self.n_quantiles, self.subsample)
+                f" the number of samples used. Got {self.n_quantiles} quantiles"
+                f" and {self.subsample} samples."
             )
 
         X = self._check_inputs(X, in_fit=True, copy=False)
         n_samples = X.shape[0]
-        if sample_weight is None:
+        is_sparse = sparse.issparse(X)
+
+        if is_sparse and sample_weight is not None:
+            raise NotImplementedError(
+                "sample_weight is not supported for sparse input."
+            )
+
+        if sample_weight is None or is_sparse:
             # sample_weight is None, is equivalent to all samples having unit
-            # weight, so the sum of weights is equal to the number of samples
+            # weight, so the sum of weights is equal to the number of samples.
+            # Sparse inputs do not support sample_weight.
             effective_sample_size = n_samples
         else:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
@@ -2929,10 +2935,9 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
         if self.n_quantiles > effective_sample_size:
             warnings.warn(
-                "n_quantiles (%s) is greater than the effective "
-                "sample size (%s). n_quantiles is set to "
-                "effective_sample_size (%s)."
-                % (self.n_quantiles, effective_sample_size, effective_sample_size)
+                f"n_quantiles ({self.n_quantiles}) is greater than the effective "
+                f"sample size ({effective_sample_size}). n_quantiles is set to "
+                f"effective_sample_size ({effective_sample_size})."
             )
         self.n_quantiles_ = int(max(1, min(self.n_quantiles, effective_sample_size)))
 
@@ -2940,11 +2945,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
         # Create the quantiles of reference
         self.references_ = np.linspace(0, 1, self.n_quantiles_, endpoint=True)
-        if sparse.issparse(X):
-            if sample_weight is not None:
-                raise NotImplementedError(
-                    "sample_weight is not supported for sparse input."
-                )
+        if is_sparse:
             self._sparse_fit(X, rng)
         else:
             self._dense_fit(X, rng, sample_weight=sample_weight)
