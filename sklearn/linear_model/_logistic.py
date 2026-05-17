@@ -1345,7 +1345,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             solver in ["lbfgs", "newton-cg", "newton-cholesky"]
             and X.shape[0] >= 100_000
         ):
-            n_threads = _openmp_effective_n_threads()
+            n_threads = _openmp_effective_n_threads()  # pragma: no cover
         else:
             n_threads = 1
 
