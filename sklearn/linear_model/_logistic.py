@@ -1341,7 +1341,10 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         # Enable multi-threading heuristically based on #32162 benchmarks.
         # Threading overhead degrades performance on smaller datasets.
         # Only enable OpenMP threading for massive sample sizes.
-        if solver in ["lbfgs", "newton-cg", "newton-cholesky"] and X.shape[0] >= 100_000:
+        if (
+            solver in ["lbfgs", "newton-cg", "newton-cholesky"]
+            and X.shape[0] >= 100_000
+        ):
             n_threads = _openmp_effective_n_threads()
         else:
             n_threads = 1
