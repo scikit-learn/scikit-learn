@@ -1192,17 +1192,17 @@ def test_float32_predict_proba(data, use_sample_weight, method):
     else:
         sample_weight = None
 
-    class DummyClassifer32(DummyClassifier):
+    class DummyClassifier32(DummyClassifier):
         def predict_proba(self, X):
             return super().predict_proba(X).astype(np.float32)
 
-    model = DummyClassifer32()
+    model = DummyClassifier32()
     calibrator = CalibratedClassifierCV(model, method=method)
     # Does not raise an error.
     calibrator.fit(*data, sample_weight=sample_weight)
 
     # Check with frozen prefit model
-    model = DummyClassifer32().fit(*data, sample_weight=sample_weight)
+    model = DummyClassifier32().fit(*data, sample_weight=sample_weight)
     calibrator = CalibratedClassifierCV(FrozenEstimator(model), method=method)
     # Does not raise an error.
     calibrator.fit(*data, sample_weight=sample_weight)
