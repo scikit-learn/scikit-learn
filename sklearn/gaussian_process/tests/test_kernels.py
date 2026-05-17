@@ -8,7 +8,6 @@ from inspect import signature
 import numpy as np
 import pytest
 from scipy.optimize import approx_fprime
-from numpy.testing import assert_allclose
 
 from sklearn.base import clone
 from sklearn.gaussian_process.kernels import (
@@ -404,6 +403,7 @@ def test_rational_quadratic_kernel():
     with pytest.raises(AttributeError, match=message):
         kernel(X)
 
+
 @pytest.mark.parametrize("length_scale", [2.0, np.array([1.0, 2.0, 3.0])])
 def test_rbf_gradient_numerical_check(length_scale):
     """
@@ -415,32 +415,34 @@ def test_rbf_gradient_numerical_check(length_scale):
     # Generate mock data (3 dimensions if isotropic, matching dims if anisotropic)
     n_features = 3 if np.isscalar(length_scale) else len(length_scale)
     X = rng.randn(5, n_features)
-    
+
     from sklearn.gaussian_process.kernels import RBF
+
     kernel = RBF(length_scale=length_scale)
-    
+
     # 1. Analytical Gradient (computed w.r.t log-transformed length_scale)
     K, K_gradient_analytical = kernel(X, eval_gradient=True)
-    
+
     # 2. Numerical Gradient setup
     theta = kernel.theta
     K_gradient_numerical = np.zeros_like(K_gradient_analytical)
-    
+
     # We must flatten K to calculate the gradient for each element independently
     for i in range(K.size):
+
         def f_i(t):
             # Clone kernel with perturbed theta (log-parameters)
             k_clone = kernel.clone_with_theta(t)
             # Return the i-th element of the flattened kernel matrix
             return k_clone(X).ravel()[i]
-            
+
         # Calculate numerical gradient for the i-th element
         grad_num_i = approx_fprime(theta, f_i, 1e-6)
-        
+
         # Map the 1D index back to the 3D gradient array
         idx_row = i // K.shape[1]
         idx_col = i % K.shape[1]
         K_gradient_numerical[idx_row, idx_col, :] = grad_num_i
-        
+
     # 3. The Truth Protocol: Do the analytical and numerical gradients match?
     assert_allclose(K_gradient_analytical, K_gradient_numerical, rtol=1e-4, atol=1e-4)
