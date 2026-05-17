@@ -1,4 +1,0 @@
-Verify RBF Kernel Gradient
-==========================
-
-- **Maintenance**: Added a numerical gradient test for the `RBF` kernel to definitively verify its analytical gradient and resolve a long-standing mathematical discrepancy in issue #26502. By Adi
