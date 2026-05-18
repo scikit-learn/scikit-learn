@@ -804,8 +804,9 @@ class SVC(BaseSVC):
     support_ : ndarray of shape (n_SV)
         Indices of support vectors.
 
-    support_vectors_ : ndarray of shape (n_SV, n_features)
+    support_vectors_ : ndarray or sparse  array/matrix of shape (n_SV, n_features)
         Support vectors. An empty array if kernel is precomputed.
+        If `X` is sparse, these will also be sparse.
 
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
@@ -1075,8 +1076,8 @@ class NuSVC(BaseSVC):
     support_ : ndarray of shape (n_SV,)
         Indices of support vectors.
 
-    support_vectors_ : ndarray of shape (n_SV, n_features)
-        Support vectors.
+    support_vectors_ : ndarray or sparse  array/matrix of shape (n_SV, n_features)
+        Support vectors. If `X` is sparse, these will also be sparse.
 
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
@@ -1300,8 +1301,8 @@ class SVR(RegressorMixin, BaseLibSVM):
     support_ : ndarray of shape (n_SV,)
         Indices of support vectors.
 
-    support_vectors_ : ndarray of shape (n_SV, n_features)
-        Support vectors.
+    support_vectors_ : ndarray or sparse  array/matrix of shape (n_SV, n_features)
+        Support vectors. If `X` is sparse, these will also be sparse.
 
     See Also
     --------
@@ -1487,8 +1488,8 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     support_ : ndarray of shape (n_SV,)
         Indices of support vectors.
 
-    support_vectors_ : ndarray of shape (n_SV, n_features)
-        Support vectors.
+    support_vectors_ : ndarray or sparse array/matrix of shape (n_SV, n_features)
+        Support vectors. If `X` is sparse, these will also be sparse.
 
     See Also
     --------
