@@ -1,0 +1,6 @@
+- Fixed support for integer Array API inputs on devices that do not support
+  ``float64`` in :class:`preprocessing.MinMaxScaler`,
+  :class:`preprocessing.MaxAbsScaler`, :class:`preprocessing.KernelCenterer`,
+  :func:`preprocessing.normalize`, :func:`utils.extmath.randomized_range_finder`,
+  and internal linear-model preprocessing and log-sum-exp utilities.
+  By :user:`Arthur Lacote <cakedev0>`.
