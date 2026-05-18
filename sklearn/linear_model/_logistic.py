@@ -99,33 +99,45 @@ def _check_solver(solver, penalty, dual):
     return solver
 
 
-def _make_scipy_minimize_callback(
-    callback_ctx,
-    estimator,
-    X,
-    y,
-    metadata,
-    n_classes,
-    is_binary,
-    fit_intercept,
-    coefs_order,
-    xp,
-    device_,
-):
-    """Helper to forward sklearn callbacks to scipy.optimize.minimize for L-BFGS.
+class _LbfgsCallbackBridge:
+    """Forward sklearn callbacks to ``scipy.optimize.minimize`` for L-BFGS.
 
-    Since `minimize` calls `callback(xk)` at the end of each iteration, the order of
-    hook calls is first on_fit_task_end for the current iteration, then
-    on_fit_task_begin for the next iteration. A first begin is called before calling
-    `minimize` and a last end is called after. Therefore there's an extra empty task
-    when max_iter is not reached.
+    ``scipy.optimize.minimize`` calls ``callback(xk)`` at the end of each L-BFGS
+    iteration. We map that onto a pair of sklearn hooks per iteration:
+
+    - end the iteration that just finished (``on_fit_task_end`` on the current
+      subcontext),
+    - start the next iteration's subcontext (``on_fit_task_begin``).
+
+    The first iteration's subcontext is created at construction time using the
+    initial weights ``w0``. After ``scipy.optimize.minimize`` returns, the last
+    subcontext created by ``__call__`` corresponds to an iteration that never ran.
+    ``close`` ends it as an empty task so every ``on_fit_task_begin`` call has a
+    matching ``on_fit_task_end`` call.
     """
-    if callback_ctx is None or not hasattr(estimator, "_skl_callbacks"):
-        return None
 
-    def callback(xk):
-        coef, intercept = _compute_coef_intercept(
-            xk,
+    def __init__(
+        self,
+        callback_ctx,
+        estimator,
+        X,
+        y,
+        metadata,
+        w0,
+        *,
+        n_classes,
+        is_binary,
+        fit_intercept,
+        coefs_order,
+        xp,
+        device_,
+    ):
+        self._callback_ctx = callback_ctx
+        self._estimator = estimator
+        self._X = X
+        self._y = y
+        self._metadata = metadata
+        self._coef_kwargs = dict(
             n_classes=n_classes,
             is_binary=is_binary,
             fit_intercept=fit_intercept,
@@ -134,31 +146,48 @@ def _make_scipy_minimize_callback(
             xp=xp,
             device_=device_,
         )
-        solver_iter_ctx = next(reversed(callback_ctx._children_map.values()))
-        # Call the end hook for the current iteration.
-        solver_iter_ctx.call_on_fit_task_end(
-            estimator=estimator,
-            X=X,
-            y=y,
-            metadata=metadata,
+        # Start the first iteration's subcontext, using the initial weights.
+        self._iter_ctx = self._start_iter(w0)
+
+    def _start_iter(self, w):
+        coef, intercept = _compute_coef_intercept(w, **self._coef_kwargs)
+        ctx = self._callback_ctx.subcontext(task_name="lbfgs-iter")
+        ctx.call_on_fit_task_begin(
+            estimator=self._estimator,
+            X=self._X,
+            y=self._y,
+            metadata=self._metadata,
             reconstruction_attributes={"coef_": coef, "intercept_": intercept},
         )
-        # TODO(1.10): Use `call_on_fit_task_end` in an if to do
-        # `raise StopIteration()`
-        # Using StopIteration in a scipy callback requires scipy > 1.10
-        # which will be the case of the min dependencies for scikit-learn 1.10.
+        return ctx
 
-        # Make the subcontext and call the begin hook for the next iteration.
-        solver_iter_ctx = callback_ctx.subcontext(task_name="lbfgs-iter")
-        solver_iter_ctx.call_on_fit_task_begin(
-            estimator=estimator,
-            X=X,
-            y=y,
-            metadata=metadata,
+    def __call__(self, xk):
+        coef, intercept = _compute_coef_intercept(xk, **self._coef_kwargs)
+        # End hook for the iteration that scipy just finished.
+        self._iter_ctx.call_on_fit_task_end(
+            estimator=self._estimator,
+            X=self._X,
+            y=self._y,
+            metadata=self._metadata,
             reconstruction_attributes={"coef_": coef, "intercept_": intercept},
         )
+        # TODO(1.10): use the return value of ``call_on_fit_task_end`` (a bool
+        # requesting early stopping) to ``raise StopIteration()``. scipy's
+        # ``callback`` honours ``StopIteration`` only from scipy > 1.10, which
+        # is the min supported scipy in scikit-learn 1.10.
 
-    return callback
+        # Begin hook for the next iteration's subcontext.
+        self._iter_ctx = self._start_iter(xk)
+
+    def close(self):
+        """Invoke ``on_fit_task_end`` for the left-over subcontext.
+
+        The last subcontext created by ``__call__`` corresponds to an iteration
+        that ``scipy.optimize.minimize`` did not actually run. It corresponds to
+        an empty task so we don't forward anything to the ``on_fit_task_end``
+        hooks.
+        """
+        self._iter_ctx.call_on_fit_task_end(estimator=self._estimator)
 
 
 def _compute_coef_intercept(
@@ -530,24 +559,21 @@ def _logistic_regression_path(
             # another subcontext level will be necessary, so we'll need to add a level
             # only in the LogisticRegressionCV, keeping the LogisticRegression version
             # without that extra level.
-            if callback_ctx is not None:
-                coef, intercept = _compute_coef_intercept(
+            lbfgs_bridge = None
+            if callback_ctx is not None and hasattr(estimator, "_skl_callbacks"):
+                lbfgs_bridge = _LbfgsCallbackBridge(
+                    callback_ctx,
+                    estimator,
+                    X,
+                    y,
+                    callback_metadata,
                     w0,
                     n_classes=n_classes,
                     is_binary=is_binary,
                     fit_intercept=fit_intercept,
                     coefs_order=coefs_order,
-                    dtype=X.dtype,
                     xp=xp,
                     device_=device_,
-                )
-                # We call call_on_fit_task_begin for the first iteration's subcontext.
-                callback_ctx.subcontext(task_name="lbfgs-iter").call_on_fit_task_begin(
-                    estimator=estimator,
-                    X=X,
-                    y=y,
-                    metadata=callback_metadata,
-                    reconstruction_attributes={"coef_": coef, "intercept_": intercept},
                 )
             l2_reg_strength = 1.0 / (C * sw_sum)
             iprint = [-1, 50, 1, 100, 101][
@@ -566,19 +592,7 @@ def _logistic_regression_path(
                     "ftol": 64 * np.finfo(float).eps,
                     **_get_additional_lbfgs_options_dict("iprint", iprint),
                 },
-                callback=_make_scipy_minimize_callback(
-                    callback_ctx,
-                    estimator,
-                    X,
-                    y,
-                    callback_metadata,
-                    n_classes,
-                    is_binary,
-                    fit_intercept,
-                    coefs_order,
-                    xp,
-                    device_,
-                ),
+                callback=lbfgs_bridge,
             )
             n_iter_i = _check_optimize_result(
                 solver,
@@ -587,12 +601,8 @@ def _logistic_regression_path(
                 extra_warning_msg=_LOGISTIC_SOLVER_CONVERGENCE_MSG,
             )
             w0, loss = opt_res.x, opt_res.fun
-            if callback_ctx is not None:
-                # call_on_fit_task_begin has been called at the end of the last solver
-                # iteration, so here we call call_on_fit_task_end for this last subtask.
-                # It's an empty task, so we don't pass any information.
-                last_context = next(reversed(callback_ctx._children_map.values()))
-                last_context.call_on_fit_task_end(estimator=estimator)
+            if lbfgs_bridge is not None:
+                lbfgs_bridge.close()
         elif solver == "newton-cg":
             l2_reg_strength = 1.0 / (C * sw_sum)
             args = (X, target, sample_weight, l2_reg_strength, n_threads)

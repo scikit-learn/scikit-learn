@@ -1,14 +1,14 @@
 - This release introduces a new :ref:`callback API <callbacks_user>` to invoke callbacks
   during the fitting of estimators that support them. It comes with two built-in
   callbacks:
-  
+
   - :class:`sklearn.callback.ProgressBar`, to display progress bars.
   - :class:`sklearn.callback.ScoringMonitor`, to compute and log a scoring metric at the
     end of each iteration.
-  
+
   The following estimators support callbacks:
-  
-  - :class:`~sklearn.linear_model.LogisticRegression`
+
+  - :class:`~sklearn.linear_model.LogisticRegression` (only with ``solver="lbfgs"``).
   - :class:`~sklearn.model_selection.GridSearchCV`
   - :class:`~sklearn.model_selection.HalvingGridSearchCV`
   - :class:`~sklearn.model_selection.HalvingRandomSearchCV`
@@ -23,4 +23,3 @@
 
   By :user:`Jérémie du Boisberranger <jeremiedbb>`, :user:`François Paugam
   <FrancoisPgm>` and :user:`Stefanie Senger <StefanieSenger>`.
-
