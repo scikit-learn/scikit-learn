@@ -14,11 +14,11 @@ Mailing Lists
 
 - **Main Mailing List**: Join the primary discussion
   platform for scikit-learn at `scikit-learn Mailing List
-  <https://mail.python.org/mailman/listinfo/scikitlearn>`_.
+  <https://mail.python.org/mailman3/lists/scikit-learn.python.org/>`_.
 
 - **Commit Updates**: Stay informed about repository
   updates and test failures on the `scikit-learn-commits list
-  <https://lists.sourceforge.net/lists/listinfo/scikit-learn-commits>`_.
+  <https://mail.python.org/mailman3/lists/scikit-learn-commits.python.org/>`_.
 
 .. _user_questions:
 

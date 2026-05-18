@@ -369,7 +369,7 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs, max_samples)
     )
 
 
-@pytest.mark.parametrize("input_type", ["array", "dataframe"])
+@pytest.mark.parametrize("input_type", ["array", "pandas"])
 def test_permutation_importance_large_memmaped_data(input_type):
     # Smoke, non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/15810
