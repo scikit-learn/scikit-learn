@@ -152,6 +152,7 @@ def test_as_float_array():
         assert not np.isnan(M).any()
 
 
+@pytest.mark.filterwarnings("ignore::scipy.sparse.SparseEfficiencyWarning")
 @pytest.mark.parametrize(
     "X", [np.random.random((10, 2)), _sparse_random_array((10, 2), format="csr")]
 )
@@ -213,8 +214,9 @@ def test_ordering():
 )
 @pytest.mark.parametrize("retype", [np.asarray, sp.csr_array, sp.csr_matrix])
 def test_check_array_ensure_all_finite_valid(value, ensure_all_finite, retype):
-    X = retype(np.arange(4).reshape(2, 2).astype(float))
+    X = np.array(np.arange(4).reshape(2, 2).astype(float))
     X[0, 0] = value
+    X = retype(X)
     X_checked = check_array(X, ensure_all_finite=ensure_all_finite, accept_sparse=True)
     assert_allclose_dense_sparse(X, X_checked)
 
@@ -242,8 +244,9 @@ def test_check_array_ensure_all_finite_valid(value, ensure_all_finite, retype):
 def test_check_array_ensure_all_finite_invalid(
     value, input_name, ensure_all_finite, match_msg, retype
 ):
-    X = retype(np.arange(4).reshape(2, 2).astype(np.float64))
+    X = np.array(np.arange(4).reshape(2, 2).astype(np.float64))
     X[0, 0] = value
+    X = retype(X)
     with pytest.raises(ValueError, match=match_msg):
         check_array(
             X,
@@ -256,8 +259,9 @@ def test_check_array_ensure_all_finite_invalid(
 @pytest.mark.parametrize("input_name", ["X", "y", "sample_weight"])
 @pytest.mark.parametrize("retype", [np.asarray, sp.csr_array, sp.csr_matrix])
 def test_check_array_links_to_imputer_doc_only_for_X(input_name, retype):
-    data = retype(np.arange(4).reshape(2, 2).astype(np.float64))
+    data = np.array(np.arange(4).reshape(2, 2).astype(np.float64))
     data[0, 0] = np.nan
+    data = retype(data)
     estimator = SVR()
     extended_msg = (
         f"\n{estimator.__class__.__name__} does not accept missing values"
