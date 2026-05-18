@@ -1407,7 +1407,7 @@ def test_num_samples_on_1d(constructor_name):
 
 @pytest.mark.parametrize(
     "constructor_name",
-    ["list", "tuple", "array", "sparse", "pandas", "pyarrow", "polars"],
+    ["list", "tuple", "array", "sparse", "pandas", "pyarrow", "polars", "narwhals"],
 )
 def test_num_samples_on_dataframe_likes(constructor_name):
     """Test _num_samples on different dataframe-like input X."""
@@ -2081,7 +2081,12 @@ def test_get_feature_names_pandas_with_ints_no_warning(names):
 
 @pytest.mark.parametrize(
     "constructor_name, minversion",
-    [("pyarrow", "13.0.0"), ("pandas", "1.5.0"), ("polars", "0.18.2")],
+    [
+        ("pyarrow", "13.0.0"),
+        ("pandas", "1.5.0"),
+        ("polars", "0.18.2"),
+        ("narwhals", None),
+    ],
 )
 def test_get_feature_names_4_dataframes(constructor_name, minversion):
     """Test _get_features_names on dataframes."""
