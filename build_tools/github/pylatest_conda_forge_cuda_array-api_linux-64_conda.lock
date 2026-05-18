@@ -57,12 +57,12 @@ https://conda.anaconda.org/conda-forge/linux-64/liblzma-5.8.3-hb03c661_0.conda#b
 https://conda.anaconda.org/conda-forge/linux-64/libmpdec-4.0.0-hb03c661_1.conda#2c21e66f50753a083cbe6b80f38268fa
 https://conda.anaconda.org/conda-forge/linux-64/libnl-3.11.0-hb9d3cd8_0.conda#db63358239cbe1ff86242406d440e44a
 https://conda.anaconda.org/conda-forge/linux-64/libntlm-1.8-hb9d3cd8_0.conda#7c7927b404672409d9917d49bff5f2d6
-https://conda.anaconda.org/conda-forge/linux-64/libpciaccess-0.18-hb9d3cd8_0.conda#70e3400cbbfa03e96dcde7fc13e38c7b
+https://conda.anaconda.org/conda-forge/linux-64/libpciaccess-0.19-hb03c661_0.conda#33082e13b4769b48cfeb648e15bfe3fc
 https://conda.anaconda.org/conda-forge/linux-64/libpng-1.6.58-h421ea60_0.conda#eba48a68a1a2b9d3c0d9511548db85db
 https://conda.anaconda.org/conda-forge/linux-64/libsqlite-3.53.1-h0c1763c_0.conda#7dc38adcbf71e6b38748e919e16e0dce
 https://conda.anaconda.org/conda-forge/linux-64/libstdcxx-15.2.0-h934c35e_19.conda#5794b3bdc38177caf969dabd3af08549
 https://conda.anaconda.org/conda-forge/linux-64/libutf8proc-2.11.3-hfe17d71_0.conda#1247168fe4a0b8912e3336bccdbf98a5
-https://conda.anaconda.org/conda-forge/linux-64/libuuid-2.42-h5347b49_0.conda#38ffe67b78c9d4de527be8315e5ada2c
+https://conda.anaconda.org/conda-forge/linux-64/libuuid-2.42.1-h5347b49_0.conda#7d0a66598195ef00b6efc55aefc7453b
 https://conda.anaconda.org/conda-forge/linux-64/libuv-1.51.0-hb03c661_1.conda#0f03292cc56bf91a077a134ea8747118
 https://conda.anaconda.org/conda-forge/linux-64/libwebp-base-1.6.0-hd42ef1d_0.conda#aea31d2e5b1091feca96fcfe945c3cf9
 https://conda.anaconda.org/conda-forge/linux-64/ncurses-6.6-hdb14827_0.conda#fc21868a1a5aacc937e7a18747acb8a5
@@ -97,7 +97,7 @@ https://conda.anaconda.org/conda-forge/linux-64/libbrotlidec-1.2.0-hb03c661_1.co
 https://conda.anaconda.org/conda-forge/linux-64/libbrotlienc-1.2.0-hb03c661_1.conda#4ffbb341c8b616aa2494b6afb26a0c5f
 https://conda.anaconda.org/conda-forge/linux-64/libcufft-11.4.1.4-hecca717_1.conda#75ae571353ec92c8f34d4cf6ec6ba264
 https://conda.anaconda.org/conda-forge/linux-64/libcurand-10.3.10.19-h676940d_1.conda#2a91559a9345bedf09af8b7903deb6e6
-https://conda.anaconda.org/conda-forge/linux-64/libdrm-2.4.125-hb03c661_1.conda#9314bc5a1fe7d1044dc9dfd3ef400535
+https://conda.anaconda.org/conda-forge/linux-64/libdrm-2.4.127-hb03c661_0.conda#d8d16b9b32a3c5df7e5b3350e2cbe058
 https://conda.anaconda.org/conda-forge/linux-64/libedit-3.1.20250104-pl5321h7949ede_0.conda#c277e0a4d549b03ac1e9d6cbbe3d017b
 https://conda.anaconda.org/conda-forge/linux-64/libev-4.33-hd590300_2.conda#172bf1cd1ff8629f2b1179945ed45055
 https://conda.anaconda.org/conda-forge/linux-64/libevent-2.1.12-hf998b51_1.conda#a1cfcc585f0c42bf8d5546bb1dfb668d
@@ -194,9 +194,9 @@ https://conda.anaconda.org/conda-forge/noarch/meson-1.11.1-pyhcf101f3_0.conda#ce
 https://conda.anaconda.org/conda-forge/linux-64/mpfr-4.2.2-he0a73b1_0.conda#85ce2ffa51ab21da5efa4a9edc5946aa
 https://conda.anaconda.org/conda-forge/noarch/mpmath-1.3.0-pyhd8ed1ab_1.conda#3585aa87c43ab15b167b574cd73b057b
 https://conda.anaconda.org/conda-forge/noarch/munkres-1.1.4-pyhd8ed1ab_1.conda#37293a85a0f4f77bbd9cf7aaefc62609
-https://conda.anaconda.org/conda-forge/noarch/narwhals-2.21.0-pyhcf101f3_0.conda#d2ec42db1d2fcd69003c8b069fb4301c
+https://conda.anaconda.org/conda-forge/noarch/narwhals-2.21.2-pyhcf101f3_0.conda#6687827c332121727ce383919e1ec8c2
 https://conda.anaconda.org/conda-forge/noarch/networkx-3.6.1-pyhcf101f3_0.conda#a2c1eeadae7a309daed9d62c96012a2b
-https://conda.anaconda.org/conda-forge/linux-64/numpy-2.4.4-py314h2b28147_0.conda#c8f3b508487aeb903fd6b75e3573a0cb
+https://conda.anaconda.org/conda-forge/linux-64/numpy-2.4.5-py314h2b28147_0.conda#64a8d5cd0553d51590a304a28c184785
 https://conda.anaconda.org/conda-forge/noarch/nvidia-ml-py-13.595.45-pyhd8ed1ab_1.conda#dc8587ae654e96031728802016e8258c
 https://conda.anaconda.org/conda-forge/linux-64/openjpeg-2.5.4-h55fea9a_0.conda#11b3379b191f63139e29c0d19dee24cd
 https://conda.anaconda.org/conda-forge/linux-64/orc-2.3.0-h21090e2_0.conda#8027fce94fdfdf2e54f9d18cbae496df
@@ -260,7 +260,7 @@ https://conda.anaconda.org/conda-forge/linux-64/xcb-util-cursor-0.1.6-hb03c661_0
 https://conda.anaconda.org/conda-forge/linux-64/xorg-libxcomposite-0.4.7-hb03c661_0.conda#f2ba4192d38b6cef2bb2c25029071d90
 https://conda.anaconda.org/conda-forge/linux-64/xorg-libxcursor-1.2.3-hb9d3cd8_0.conda#2ccd714aa2242315acaf0a67faea780b
 https://conda.anaconda.org/conda-forge/linux-64/xorg-libxdamage-1.1.6-hb9d3cd8_0.conda#b5fcc7172d22516e1f965490e65e33a4
-https://conda.anaconda.org/conda-forge/linux-64/xorg-libxi-1.8.2-hb9d3cd8_0.conda#17dcc85db3c7886650b8908b183d6876
+https://conda.anaconda.org/conda-forge/linux-64/xorg-libxi-1.8.3-hb03c661_0.conda#adba2e334082bb218db806d4c12277c9
 https://conda.anaconda.org/conda-forge/linux-64/xorg-libxrandr-1.5.5-hb03c661_0.conda#e192019153591938acf7322b6459d36e
 https://conda.anaconda.org/conda-forge/linux-64/xorg-libxxf86vm-1.1.7-hb03c661_0.conda#665d152b9c6e78da404086088077c844
 https://conda.anaconda.org/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_2.conda#aaa2a381ccc56eac91d63b6c1240312f
@@ -305,7 +305,7 @@ https://conda.anaconda.org/conda-forge/linux-64/qt6-main-6.11.1-pl5321h16c4a6b_0
 https://conda.anaconda.org/rapidsai/linux-64/ucxx-0.49.00-cuda12_cp311_abi3_260408_8d47a9ff.conda#4e44176d2cfc7f9941dc3089df22c9dc
 https://conda.anaconda.org/conda-forge/linux-64/libarrow-24.0.0-h0935d00_1_cpu.conda#aed984d45692d6211ebf013b62c9fa02
 https://conda.anaconda.org/rapidsai/linux-64/libraft-headers-26.04.00-cuda12_260408_b01e3028.conda#413e57142e096269834e8a95b4905d09
-https://conda.anaconda.org/conda-forge/linux-64/pyside6-6.11.1-py314h3987850_0.conda#28112219a1dca0f0d139ec97fe9d2e5b
+https://conda.anaconda.org/conda-forge/linux-64/pyside6-6.11.1-py314h3987850_1.conda#5d2051f0630a568926943fc53c0aaa4c
 https://conda.anaconda.org/conda-forge/linux-64/pytorch-gpu-2.10.0-cuda129_generic_h1715cf7_203.conda#969fd0ea1b469425630712ba3513deff
 https://conda.anaconda.org/conda-forge/linux-64/libarrow-compute-24.0.0-h53684a4_1_cpu.conda#0aac1926c3b2f8c35570af6be677f8ad
 https://conda.anaconda.org/rapidsai/linux-64/libcuvs-headers-26.04.00-cuda12_260408_60b19a0f.conda#c3216f4b246d2016b1f1a9d719dc94ad
