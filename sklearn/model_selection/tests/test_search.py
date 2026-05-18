@@ -21,6 +21,7 @@ from sklearn.callback.tests._utils import (
     NoCallbackEstimator,
     RecordingAutoPropagatedCallback,
     RecordingCallback,
+    skip_callback_test_if_wasm,
 )
 from sklearn.cluster import KMeans
 from sklearn.compose import ColumnTransformer
@@ -3013,6 +3014,7 @@ def _searchcv_callback_test_cases(estimator, scoring):
     "search",
     _searchcv_callback_test_cases(NoCallbackEstimator, "accuracy"),
 )
+@skip_callback_test_if_wasm
 def test_search_callbacks_no_propagation(search, refit):
     """Check number of hook calls when the sub-estimator doesn't support callbacks."""
     callbacks = [RecordingCallback(), RecordingAutoPropagatedCallback()]
@@ -3045,6 +3047,7 @@ def test_search_callbacks_no_propagation(search, refit):
     "search",
     _searchcv_callback_test_cases(MaxIterEstimator, "r2"),
 )
+@skip_callback_test_if_wasm
 def test_search_callbacks_propagation(search, refit):
     """Check number of hook calls when the sub-estimator does support callbacks."""
     callbacks = [RecordingCallback(), RecordingAutoPropagatedCallback()]
@@ -3087,6 +3090,7 @@ def test_search_callbacks_propagation(search, refit):
         assert callback.count_hooks("teardown") == 1
 
 
+@skip_callback_test_if_wasm
 def test_search_callbacks_receive_sample_weight():
     """Test that `sample_weight` gets passed to `callback.on_fit_task_*`.
 
@@ -3125,6 +3129,7 @@ def test_search_callbacks_receive_sample_weight():
     "search",
     _searchcv_callback_test_cases(MaxIterEstimator, "r2"),
 )
+@skip_callback_test_if_wasm
 def test_search_callbacks_receive_search_instance(search):
     """Test that all hooks receive the search instance as `estimator` argument."""
     callback = RecordingCallback()
@@ -3134,6 +3139,7 @@ def test_search_callbacks_receive_search_instance(search):
         assert entry["estimator"] is search
 
 
+@skip_callback_test_if_wasm
 def test_search_callbacks_with_partial_fit_failures():
     """Check callbacks hooks are called when some candidate fits fail.
 

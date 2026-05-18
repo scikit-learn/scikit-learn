@@ -25,6 +25,7 @@ from sklearn.callback.tests._utils import (
     MaxIterEstimator,
     RecordingAutoPropagatedCallback,
     RecordingCallback,
+    skip_callback_test_if_wasm,
 )
 from sklearn.cluster import KMeans
 from sklearn.datasets import load_iris
@@ -2556,6 +2557,7 @@ def test_feature_union_metadata_routing(transformer):
 # ====================
 
 
+@skip_callback_test_if_wasm
 def test_pipeline_with_callbacks():
     """Check that callbacks are propagated correctly for a pipeline.
 
@@ -2581,6 +2583,7 @@ def test_pipeline_with_callbacks():
     assert callback.count_hooks("on_fit_task_end") == 1 + 1 + 1 + (1 + max_iter)
 
 
+@skip_callback_test_if_wasm
 def test_pipeline_with_callbacks_on_steps():
     """Check that callbacks registered on steps are correctly invoked."""
     X, y = load_iris(return_X_y=True)
@@ -2605,6 +2608,7 @@ def test_pipeline_with_callbacks_on_steps():
     assert est_callback.count_hooks("on_fit_task_end") == 1 + max_iter
 
 
+@skip_callback_test_if_wasm
 def test_pipeline_memory_callbacks_second_fit_same_pipeline():
     """Check that callbacks don't break the caching mechanism of the pipeline."""
     X, y = load_iris(return_X_y=True)
