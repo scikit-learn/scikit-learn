@@ -8,7 +8,8 @@ from abc import ABCMeta, abstractmethod
 from operator import attrgetter
 
 import numpy as np
-from scipy.sparse import csc_array, issparse
+import scipy.sparse
+from scipy.sparse import csc_array, csr_array, issparse
 
 from sklearn.base import TransformerMixin
 from sklearn.utils import _safe_indexing, check_array, safe_sqr
@@ -246,13 +247,17 @@ def _get_feature_importances(estimator, getter, transform_func=None, norm_order=
 
     importances = getter(estimator)
 
+    if issparse(importances):
+        importances = _align_api_if_sparse(csr_array(importances))
+
     if transform_func is None:
         return importances
     elif transform_func == "norm":
         if importances.ndim == 1:
             importances = np.abs(importances)
         else:
-            importances = np.linalg.norm(importances, axis=0, ord=norm_order)
+            norm = scipy.sparse.linalg.norm if issparse(importances) else np.linalg.norm
+            importances = norm(importances, axis=0, ord=norm_order)
     elif transform_func == "square":
         if importances.ndim == 1:
             importances = safe_sqr(importances)

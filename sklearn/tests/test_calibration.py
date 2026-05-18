@@ -48,12 +48,12 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
-    get_namespace,
-    yield_namespace_device_dtype_combinations,
+    device as array_api_device,
 )
 from sklearn.utils._array_api import (
-    device as array_api_device,
+    get_namespace,
+    move_to,
+    yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._mocking import CheckingClassifier
 from sklearn.utils._tags import get_tags
@@ -1192,17 +1192,17 @@ def test_float32_predict_proba(data, use_sample_weight, method):
     else:
         sample_weight = None
 
-    class DummyClassifer32(DummyClassifier):
+    class DummyClassifier32(DummyClassifier):
         def predict_proba(self, X):
             return super().predict_proba(X).astype(np.float32)
 
-    model = DummyClassifer32()
+    model = DummyClassifier32()
     calibrator = CalibratedClassifierCV(model, method=method)
     # Does not raise an error.
     calibrator.fit(*data, sample_weight=sample_weight)
 
     # Check with frozen prefit model
-    model = DummyClassifer32().fit(*data, sample_weight=sample_weight)
+    model = DummyClassifier32().fit(*data, sample_weight=sample_weight)
     calibrator = CalibratedClassifierCV(FrozenEstimator(model), method=method)
     # Does not raise an error.
     calibrator.fit(*data, sample_weight=sample_weight)
@@ -1231,7 +1231,7 @@ def test_temperature_scaling_array_api_compliance(
     """Check that `CalibratedClassifierCV` with temperature scaling is compatible
     with the array API"""
 
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     X, y = make_classification(
         n_samples=1000,
         n_features=10,
@@ -1281,12 +1281,12 @@ def test_temperature_scaling_array_api_compliance(
         assert calibrator_xp.beta_.dtype == X_cal_xp.dtype
         assert array_api_device(calibrator_xp.beta_) == array_api_device(X_cal_xp)
         assert_allclose(
-            _convert_to_numpy(calibrator_xp.beta_, xp=xp),
+            move_to(calibrator_xp.beta_, xp=np, device="cpu"),
             calibrator_np.beta_,
             rtol=rtol,
         )
         pred_xp = cal_clf_xp.predict(X_train_xp)
-        assert_allclose(_convert_to_numpy(pred_xp, xp=xp), pred_np)
+        assert_allclose(move_to(pred_xp, xp=np, device="cpu"), pred_np)
 
 
 @pytest.mark.parametrize("ensemble", [False, True])
@@ -1307,7 +1307,7 @@ def test_temperature_scaling_array_api_with_str_y_estimator_not_prefit(
     #  the array API when `y` is an ndarray of strings and we fit
     #  `LinearDiscriminantAnalysis` beforehand. In this regard
     #  `LinearDiscriminantAnalysis` will also need modifications.
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     X, y = make_classification(
         n_samples=500,
         n_features=10,
@@ -1352,7 +1352,7 @@ def test_temperature_scaling_array_api_with_str_y_estimator_not_prefit(
         assert calibrator_xp.beta_.dtype == X_xp.dtype
         assert array_api_device(calibrator_xp.beta_) == array_api_device(X_xp)
         assert_allclose(
-            _convert_to_numpy(calibrator_xp.beta_, xp=xp),
+            move_to(calibrator_xp.beta_, xp=np, device="cpu"),
             calibrator_np.beta_,
             rtol=rtol,
         )

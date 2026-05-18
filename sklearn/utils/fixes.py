@@ -1,4 +1,4 @@
-"""Compatibility fixes for older version of python, numpy and scipy
+"""Compatibility fixes for older version of the dependencies
 
 If you add content to this file, please give the version of the package
 at which the fix is no longer needed.
@@ -393,18 +393,6 @@ def _get_additional_lbfgs_options_dict(key, value):
     return {} if sp_version >= parse_version("1.15") else {key: value}
 
 
-# TODO(pyarrow): Remove when minimum pyarrow version is 17.0.0
-PYARROW_VERSION_BELOW_17 = False
-try:
-    import pyarrow
-
-    pyarrow_version = parse_version(pyarrow.__version__)
-    if pyarrow_version < parse_version("17.0.0"):
-        PYARROW_VERSION_BELOW_17 = True
-except ModuleNotFoundError:  # pragma: no cover
-    pass
-
-
 # TODO: Replace when Scipy 1.12 is the minimum supported version
 #       fixes for transitioning scipy.sparse function names
 if not SCIPY_VERSION_BELOW_1_12:
@@ -541,3 +529,19 @@ def _safely_cast_index_arrays(A, idx_dtype=np.int32, msg=""):
         indptr = A.indptr.astype(idx_dtype, copy=False)
         return indices, indptr
     # DOK and LIL formats are not associated with index arrays.
+
+
+# TODO remove when matplotlib 3.10 is the minimal supported version
+# and replace usage with `mpl.color_sequences['petroff10']`
+PETROFF_COLORS = [
+    "#3f90da",
+    "#ffa90e",
+    "#bd1f01",
+    "#94a4a2",
+    "#832db6",
+    "#a96b59",
+    "#e76300",
+    "#b9ac70",
+    "#717581",
+    "#92dadd",
+]

@@ -3,10 +3,12 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import inspect
 import itertools
 import math
 import os
 from collections import namedtuple
+from functools import partial
 
 import numpy
 import scipy
@@ -29,6 +31,8 @@ REMOVE_TYPES_DEFAULT = (
     list,
     tuple,
 )
+
+NamespaceAndDevice = namedtuple("NamespaceAndDevice", ["xp", "device"])
 
 
 def yield_namespaces(include_numpy_namespaces=True):
@@ -56,6 +60,7 @@ def yield_namespaces(include_numpy_namespaces=True):
         "array_api_strict",
         "cupy",
         "torch",
+        "dpnp",
     ]:
         if not include_numpy_namespaces and array_namespace in _NUMPY_NAMESPACE_NAMES:
             continue
@@ -97,6 +102,13 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
                 yield array_namespace, device_name, dtype
             yield array_namespace, "mps", "float32"
 
+        elif array_namespace == "dpnp":  # pragma: nocover
+            # XXX: add "accelerator" device type?
+            for device_name, dtype in itertools.product(
+                ("cpu", "gpu"), ("float64", "float32")
+            ):
+                yield array_namespace, device_name, dtype
+
         elif array_namespace == "array_api_strict":
             # Always yield strings for consistent parametrization; _array_api_for_tests
             # creates Device objects when needed.
@@ -121,9 +133,6 @@ def yield_mixed_namespace_input_permutations():
     * array-api-strict to non-NumPy (this pair also has no special hardware
       requirements to allow for local testing)
     """
-
-    NamespaceAndDevice = namedtuple("NamespaceAndDevice", ["xp", "device"])
-
     yield (
         NamespaceAndDevice("cupy", None),
         NamespaceAndDevice("torch", "cuda"),
@@ -258,17 +267,6 @@ def size(x):
 def _is_numpy_namespace(xp):
     """Return True if xp is backed by NumPy."""
     return xp.__name__ in _NUMPY_NAMESPACE_NAMES
-
-
-def _union1d(a, b, xp):
-    if _is_numpy_namespace(xp):
-        # avoid circular import
-        from sklearn.utils._unique import cached_unique
-
-        a_unique, b_unique = cached_unique(a, b, xp=xp)
-        return xp.asarray(numpy.union1d(a_unique, b_unique))
-    assert a.ndim == b.ndim == 1
-    return xp.unique_values(xp.concat([xp.unique_values(a), xp.unique_values(b)]))
 
 
 def supported_float_dtypes(xp, device=None):
@@ -524,7 +522,7 @@ def move_to(*arrays, xp, device):
     Each array will be moved to the reference namespace and device if
     it is not already using it. Otherwise the array is left unchanged.
 
-    `array` may contain `None` entries, these are left unchanged.
+    `arrays` may contain `None` entries, these are left unchanged.
 
     Sparse arrays are accepted (as pass through) if the reference namespace is
     NumPy, in which case they are returned unchanged. Otherwise a `TypeError`
@@ -547,6 +545,12 @@ def move_to(*arrays, xp, device):
         Tuple of arrays with the same namespace and device as reference. Single array
         returned if only one `arrays` input.
     """
+    if isinstance(device, str) and device == "xpu":  # pragma: nocover
+        # XXX: Workaround for PyTorch XPU bug for `from_dlpack` calls with
+        # device strings that do not include any device number suffix.
+        # https://github.com/pytorch/pytorch/issues/181140
+        device += ":0"
+
     sparse_mask = [sp.issparse(array) for array in arrays]
     none_mask = [array is None for array in arrays]
     if any(sparse_mask) and not _is_numpy_namespace(xp):
@@ -738,14 +742,23 @@ def _is_xp_namespace(xp, name):
 
 
 def _max_precision_float_dtype(xp, device):
-    """Return the float dtype with the highest precision supported by the device."""
-    # TODO: Update to use `__array_namespace__info__()` from array-api v2023.12
-    # when/if that becomes more widespread.
-    if _is_xp_namespace(xp, "torch") and str(device).startswith(
-        "mps"
-    ):  # pragma: no cover
-        return xp.float32
-    return xp.float64
+    """Return the float dtype with the highest precision supported by the device.
+
+    Note that scikit-learn only considers float32 and float64 as suitable
+    floating point dtypes.
+    """
+    if _is_numpy_namespace(xp):
+        # Special case NumPy for backward compat with older versions that do
+        # not implement __array_namespace_info__.
+        return xp.float64
+
+    floating_dtypes = xp.__array_namespace_info__().dtypes(
+        kind="real floating", device=device
+    )
+    if "float64" in floating_dtypes:
+        return xp.float64
+
+    return xp.float32
 
 
 def _find_matching_floating_dtype(*arrays, xp):
@@ -895,9 +908,8 @@ def _median(x, axis=None, keepdims=False, xp=None):
     if hasattr(xp, "median"):
         return xp.median(x, axis=axis, keepdims=keepdims)
 
-    # Intended mostly for array-api-strict (which as no "median", as per the spec)
-    # as `_convert_to_numpy` does not necessarily work for all array types.
-    x_np = _convert_to_numpy(x, xp=xp)
+    # Intended mostly for array-api-strict (which has no "median", as per the spec).
+    x_np = move_to(x, xp=numpy, device="cpu")
     return xp.asarray(numpy.median(x_np, axis=axis, keepdims=keepdims), device=device)
 
 
@@ -1023,22 +1035,31 @@ def _ravel(array, xp=None):
 
 
 def _convert_to_numpy(array, xp):
-    """Convert X into a NumPy ndarray on the CPU."""
+    """Convert X into a NumPy ndarray on the CPU.
+
+    This function uses library-specific methods to convert the array to a NumPy
+    ndarray on the CPU. It is only meant as a fallback when move_to fails to use the
+    DLPACK protocol.
+
+    This function is not meant to be called directly and
+    `move_to(array, xp=np, device="cpu")` should be used instead.
+    """
     if _is_xp_namespace(xp, "torch"):
         return array.cpu().numpy()
     elif _is_xp_namespace(xp, "cupy"):  # pragma: nocover
         return array.get()
     elif _is_xp_namespace(xp, "array_api_strict"):
         return numpy.asarray(xp.asarray(array, device=xp.Device("CPU_DEVICE")))
+    elif _is_xp_namespace(xp, "dpnp"):  # pragma: nocover
+        return array.asnumpy()
 
     return numpy.asarray(array)
 
 
 def _estimator_with_converted_arrays(estimator, converter):
-    """Create new estimator which converting all attributes that are arrays.
+    """Create a new estimator with converted array attributes.
 
-    The converter is called on all NumPy arrays and arrays that support the
-    `DLPack interface <https://dmlc.github.io/dlpack/latest/>`__.
+    All attributes that are arrays will be converted using the provided converter.
 
     Parameters
     ----------
@@ -1051,16 +1072,124 @@ def _estimator_with_converted_arrays(estimator, converter):
     Returns
     -------
     new_estimator : Estimator
-        Convert estimator
+        A clone of the estimator with converted array attributes.
     """
+    # Inline import to avoid circular import
     from sklearn.base import clone
+
+    # Because we call this function recursively `estimator` might actually be an
+    # attribute of an estimator and not an actual estimator object.
+    estimator_type = type(estimator)
+
+    if hasattr(estimator, "__sklearn_array_api_convert__") and not inspect.isclass(
+        estimator
+    ):
+        return estimator.__sklearn_array_api_convert__(converter)
+
+    if estimator_type is dict:
+        return {
+            k: _estimator_with_converted_arrays(v, converter)
+            for k, v in estimator.items()
+        }
+
+    if estimator_type in (list, tuple, set, frozenset):
+        return estimator_type(
+            _estimator_with_converted_arrays(v, converter) for v in estimator
+        )
+
+    if hasattr(estimator, "__dlpack__") or isinstance(
+        estimator, (numpy.ndarray, numpy.generic)
+    ):
+        return converter(estimator)
+
+    if not hasattr(estimator, "get_params") or isinstance(estimator, type):
+        return estimator
 
     new_estimator = clone(estimator)
     for key, attribute in vars(estimator).items():
-        if hasattr(attribute, "__dlpack__") or isinstance(attribute, numpy.ndarray):
-            attribute = converter(attribute)
+        attribute = _estimator_with_converted_arrays(attribute, converter)
         setattr(new_estimator, key, attribute)
     return new_estimator
+
+
+def move_estimator_to(estimator, xp, device):
+    """Move estimator array attributes to the given namespace and device.
+
+    Attributes which are not arrays are left unchanged.
+
+    Parameters
+    ----------
+    estimator : estimator object
+        The estimator whose attributes should be converted.
+
+    xp : array namespace
+        The target array API namespace.
+
+    device : device or None
+        The target device.
+
+    Returns
+    -------
+    new_estimator : estimator object
+        A clone of the estimator with array attributes moved.
+    """
+    return _estimator_with_converted_arrays(
+        estimator, partial(move_to, xp=xp, device=device)
+    )
+
+
+def check_same_namespace(X, estimator, *, attribute, method):
+    """Check that estimator's fitted attribute is compatible with X.
+
+    Use this to check that an estimator was fitted using the same array
+    namespace and device as ``X``. This is done by comparing the namespace and
+    device of ``X`` and the provided ``attribute``.
+
+    Parameters
+    ----------
+    X : array-like
+        The data passed to the fitted estimator's method, e.g. to ``predict``.
+
+    estimator : estimator object
+        The fitted estimator.
+
+    attribute : str
+        The name of the fitted attribute to check; for example it could be
+        ``"coef_"`` for a linear model. This function will check that ``X`` is
+        in a namespace and device that are consistent with the attribute.
+
+    method : str
+        The name of the calling method (e.g. ``"predict"``). It is used to
+        write the error message if the check fails.
+    """
+    if not get_config()["array_api_dispatch"]:
+        return
+
+    attr = getattr(estimator, attribute)
+    a_xp, _, a_device = get_namespace_and_device(attr)
+
+    X_xp, _, X_device = get_namespace_and_device(X)
+
+    if X_xp == a_xp and X_device == a_device:
+        return
+
+    if X_xp != a_xp:
+        msg = (
+            f"Array namespaces used during fit ({a_xp.__name__}) "
+            f"and {method} ({X_xp.__name__}) differ."
+        )
+    else:  # pragma: no cover
+        msg = f"Devices used during fit ({a_device}) and {method} ({X_device}) differ."
+
+    raise ValueError(
+        f"Inputs passed to {estimator.__class__.__name__}.{method}() "
+        "must use the same namespace and the same device as those passed to fit(). "
+        f"{msg} "
+        "You can move the estimator to the same namespace and device as X with: "
+        "'from sklearn.utils._array_api import move_estimator_to; "
+        "xp, _, device = get_namespace_and_device(X); "
+        "estimator = move_estimator_to(estimator, xp, device)'"
+    )
 
 
 def _atol_for_type(dtype_or_dtype_name):
@@ -1219,9 +1348,9 @@ def _bincount(array, weights=None, minlength=0, xp=None):
     if hasattr(xp, "bincount"):
         return xp.bincount(array, weights=weights, minlength=minlength)
 
-    array_np = _convert_to_numpy(array, xp=xp)
+    array_np = move_to(array, xp=numpy, device="cpu")
     if weights is not None:
-        weights_np = _convert_to_numpy(weights, xp=xp)
+        weights_np = move_to(weights, xp=numpy, device="cpu")
     else:
         weights_np = None
     bin_out = numpy.bincount(array_np, weights=weights_np, minlength=minlength)
@@ -1236,9 +1365,9 @@ def _logsumexp(array, axis=None, xp=None):
     xp, _, device = get_namespace_and_device(array, xp=xp)
     axis = tuple(range(array.ndim)) if axis is None else axis
 
-    supported_dtypes = supported_float_dtypes(xp)
+    supported_dtypes = supported_float_dtypes(xp, device=device)
     if array.dtype not in supported_dtypes:
-        array = xp.asarray(array, dtype=supported_dtypes[0])
+        array = xp.asarray(array, dtype=supported_dtypes[0], device=device)
 
     array_max = xp.max(array, axis=axis, keepdims=True)
     index_max = array == array_max
@@ -1286,11 +1415,11 @@ def _half_multinomial_loss(y, pred, sample_weight=None, xp=None):
 
 
 def _matching_numpy_dtype(X, xp=None):
-    xp, _ = get_namespace(X, xp=xp)
+    xp, _, device_ = get_namespace_and_device(X, xp=xp)
     if _is_numpy_namespace(xp):
         return X.dtype
 
-    dtypes_dict = xp.__array_namespace_info__().dtypes()
+    dtypes_dict = xp.__array_namespace_info__().dtypes(device=device_)
     reversed_dtypes_dict = {dtype: name for name, dtype in dtypes_dict.items()}
     dtype_name = reversed_dtypes_dict[X.dtype]
-    return numpy.__array_namespace_info__().dtypes()[dtype_name]
+    return np_compat.__array_namespace_info__().dtypes()[dtype_name]

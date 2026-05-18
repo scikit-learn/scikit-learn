@@ -212,3 +212,25 @@ def test_generate_link_to_param_doc_empty_docstring():
     doc_link = "mock_module.MockEstimator.html"
     url = generate_link_to_param_doc(MockEstimator, "alpha", doc_link)
     assert url is None
+
+
+def test_generate_link_to_param_doc_special_char():
+    """Non-regression test for
+    https://github.com/scikit-learn/scikit-learn/issues/33830
+    """
+
+    class MockEstimator:
+        """Mock class.
+
+        Attributes
+        ----------
+        weird_attr_ : ndarray of shape (`n_features_in_`,)
+        """
+
+    doc_link = "mock_module.MockEstimator.html"
+    url = generate_link_to_param_doc(MockEstimator, "weird_attr_", doc_link)
+    expected_url = (
+        "mock_module.MockEstimator.html#:~:text=weird_attr_,"
+        "-ndarray%20of%20shape%20%28n_features_in_%2C%29"
+    )
+    assert url == expected_url

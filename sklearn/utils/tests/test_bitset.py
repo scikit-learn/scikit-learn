@@ -2,12 +2,11 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
-from sklearn.ensemble._hist_gradient_boosting._bitset import (
+from sklearn.utils._bitset import (
     in_bitset_memoryview,
     set_bitset_memoryview,
     set_raw_bitset_from_binned_bitset,
 )
-from sklearn.ensemble._hist_gradient_boosting.common import X_DTYPE
 
 
 @pytest.mark.parametrize(
@@ -49,7 +48,7 @@ def test_raw_bitset_from_binned_bitset(
 ):
     binned_bitset = np.zeros(2, dtype=np.uint32)
     raw_bitset = np.zeros(2, dtype=np.uint32)
-    raw_categories = np.asarray(raw_categories, dtype=X_DTYPE)
+    raw_categories = np.asarray(raw_categories, dtype=np.float64)
 
     for val in binned_cat_to_insert:
         set_bitset_memoryview(binned_bitset, val)

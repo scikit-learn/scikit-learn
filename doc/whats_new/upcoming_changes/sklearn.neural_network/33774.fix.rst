@@ -1,0 +1,5 @@
+- :class:`neural_network.MLPClassifier` with ``early_stopping=True`` no longer
+  raises a `TypeError` when ``y`` contains non-numeric class labels (e.g.
+  strings): validation scoring now checks finiteness only for floating
+  predictions.
+  By :user:`Guillaume Lemaitre <glemaitre>`.

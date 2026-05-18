@@ -381,7 +381,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         return func(X, **(kw_args if kw_args else {}))
 
     def __sklearn_is_fitted__(self):
-        """Return True since FunctionTransfomer is stateless."""
+        """Return True since FunctionTransformer is stateless."""
         return True
 
     def __sklearn_tags__(self):
@@ -394,8 +394,9 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
     def set_output(self, *, transform=None):
         """Set output container.
 
-        See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`
-        for an example on how to use the API.
+        Refer to the :ref:`user guide <df_output_transform>` for more details
+        and :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py` for an
+        example on how to use the API.
 
         Parameters
         ----------

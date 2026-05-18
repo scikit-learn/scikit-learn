@@ -14,9 +14,6 @@ from timeit import default_timer as time
 
 import numpy as np
 
-from sklearn.ensemble._hist_gradient_boosting._bitset import (
-    set_raw_bitset_from_binned_bitset,
-)
 from sklearn.ensemble._hist_gradient_boosting.common import (
     PREDICTOR_RECORD_DTYPE,
     X_BITSET_INNER_DTYPE,
@@ -25,6 +22,7 @@ from sklearn.ensemble._hist_gradient_boosting.common import (
 from sklearn.ensemble._hist_gradient_boosting.histogram import HistogramBuilder
 from sklearn.ensemble._hist_gradient_boosting.predictor import TreePredictor
 from sklearn.ensemble._hist_gradient_boosting.splitting import Splitter
+from sklearn.utils._bitset import set_raw_bitset_from_binned_bitset
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 
 

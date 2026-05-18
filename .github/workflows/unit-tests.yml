@@ -248,7 +248,7 @@ jobs:
         if: ${{ startsWith(env.DISTRIB, 'conda') }}
         with:
           miniforge-version: latest
-          auto-activate-base: true
+          auto-activate: true
           activate-environment: ""
 
       - name: Build scikit-learn
@@ -378,7 +378,7 @@ jobs:
         if: ${{ startsWith(env.DISTRIB, 'conda') }}
         with:
           miniforge-version: latest
-          auto-activate-base: true
+          auto-activate: true
           activate-environment: ""
 
       # Enable global random seed randomization to discover seed-sensitive tests
@@ -482,7 +482,7 @@ jobs:
   check-job-statuses:
     name: Check all job statuses
     runs-on: ubuntu-latest
-    if: always()
+    if: always() && github.repository == 'scikit-learn/scikit-learn'
     needs: [lint, unit-tests, debian-32bit, free-threaded, scipy-dev]
     steps:
       - uses: re-actors/alls-green@release/v1

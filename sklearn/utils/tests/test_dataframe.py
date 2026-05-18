@@ -8,7 +8,7 @@ from sklearn.utils._dataframe import is_df_or_series, is_pandas_df, is_polars_df
 from sklearn.utils._testing import _convert_container
 
 
-@pytest.mark.parametrize("constructor_name", ["pyarrow", "dataframe", "polars"])
+@pytest.mark.parametrize("constructor_name", ["pyarrow", "pandas", "polars"])
 def test_is_df_or_series(constructor_name):
     df = _convert_container([[1, 4, 2], [3, 3, 6]], constructor_name)
 
@@ -16,7 +16,7 @@ def test_is_df_or_series(constructor_name):
     assert not is_df_or_series(np.asarray([1, 2, 3]))
 
 
-@pytest.mark.parametrize("constructor_name", ["pyarrow", "dataframe", "polars"])
+@pytest.mark.parametrize("constructor_name", ["pyarrow", "pandas", "polars"])
 def test_is_pandas_df_other_libraries(constructor_name):
     df = _convert_container([[1, 4, 2], [3, 3, 6]], constructor_name)
     if constructor_name in ("pyarrow", "polars"):
@@ -45,7 +45,7 @@ def test_is_pandas_df_pandas_not_installed(hide_available_pandas):
     "constructor_name, minversion",
     [
         ("pyarrow", dependent_packages["pyarrow"][0]),
-        ("dataframe", dependent_packages["pandas"][0]),
+        ("pandas", dependent_packages["pandas"][0]),
         ("polars", dependent_packages["polars"][0]),
     ],
 )
@@ -55,7 +55,7 @@ def test_is_polars_df_other_libraries(constructor_name, minversion):
         constructor_name,
         minversion=minversion,
     )
-    if constructor_name in ("pyarrow", "dataframe"):
+    if constructor_name in ("pyarrow", "pandas"):
         assert not is_polars_df(df)
     else:
         assert is_polars_df(df)
