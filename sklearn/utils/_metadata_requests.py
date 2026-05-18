@@ -1461,18 +1461,21 @@ class _MetadataRequester:
                 if hasattr(cls, set_method_name) and not is_RequestMethod(
                     cls, set_method_name
                 ):
-                    # `set_method_name` is not a `RequestMethod` so we skip 
-                    # overriding it. For example, in Scorers the `set_score_request` 
+                    # `set_method_name` is not a `RequestMethod` so we skip
+                    # overriding it. For example, in Scorers the `set_score_request`
                     # method is explicitly defined in the class.
                     continue
 
                 if not requests and not hasattr(cls, set_method_name):
-                    # It can be the case that requests here is empty due to removing
-                    # metadata with an UNUSED marker, and that the parent class has
-                    # the method already. In this case, we cannot remove the method
-                    # since it exists in the parent class, and instead we set it with
-                    # an empty set of requests.
+                    # No requests, and no inherited method — nothing to do.
                     continue
+
+                # When `requests` is empty but `cls` inherits a
+                # `set_{method}_request`, we still install an empty
+                # `RequestMethod` here so the child shadows the parent's
+                # descriptor. Otherwise the child would expose the parent's
+                # request params (e.g. `sample_weight`) for a method whose
+                # own signature no longer accepts them.
                 setattr(
                     cls,
                     set_method_name,
