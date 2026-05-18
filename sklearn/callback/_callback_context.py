@@ -5,7 +5,6 @@ import copy
 import inspect
 import uuid
 import warnings
-from contextlib import contextmanager
 from datetime import datetime, timezone
 
 from sklearn.callback._base import AutoPropagatedCallback
@@ -447,77 +446,174 @@ class CallbackContext:
             reconstruction_attributes=reconstruction_attributes,
         )
 
-    @contextmanager
     def propagate_callback_context(self, sub_estimator):
-        """Propagate the context and callbacks to a sub-estimator.
+        """Propagate this context (and auto-propagated callbacks) to a sub-estimator.
 
-        Clear the propagated callbacks from the sub-estimator on exit.
+        Mirrors :func:`open`: the propagation is performed eagerly when this
+        method is called, and is undone when the returned object is closed.
 
-        Only auto-propagated callbacks are propagated to the sub-estimator. An error is
-        raised if the sub-estimator already holds auto-propagated callbacks.
+        - Use as a context manager for deterministic cleanup (preferred)::
+
+            with ctx.propagate_callback_context(sub_estimator):
+                sub_estimator.fit(X, y)
+
+        - Or call :meth:`~_CallbackPropagation.close` explicitly::
+
+            prop = ctx.propagate_callback_context(sub_estimator)
+            try:
+                sub_estimator.fit(X, y)
+            finally:
+                prop.close()
+
+        If the returned object is garbage-collected without ``close`` having
+        been called, cleanup still runs but a :exc:`ResourceWarning` is
+        emitted (again mirroring :func:`open`).
+
+        Only auto-propagated callbacks are propagated to the sub-estimator.
+        A :exc:`TypeError` is raised if the sub-estimator already holds
+        auto-propagated callbacks; this happens before any state is mutated
+        on the sub-estimator.
 
         The sub-estimator receives this context as an attribute named
-        `_parent_callback_ctx` so that the meta-estimator's task tree can be merged with
-        the sub-estimator's one.
+        ``_parent_callback_ctx`` so the meta-estimator's task tree can be
+        merged with the sub-estimator's one.
 
         Parameters
         ----------
         sub_estimator : estimator instance
             The estimator to propagate the callbacks and context to.
+
+        Returns
+        -------
+        propagation : :class:`_CallbackPropagation`
+            Object representing the active propagation. Supports the context
+            manager protocol and an explicit :meth:`~_CallbackPropagation.close`
+            method.
         """
+        return _CallbackPropagation(self, sub_estimator)
+
+
+class _CallbackPropagation:
+    """Live propagation of a :class:`CallbackContext` to a sub-estimator.
+
+    Returned by :meth:`CallbackContext.propagate_callback_context`. Mirrors
+    CPython's file object pattern:
+
+    - propagation is performed eagerly in ``__init__`` (analogous to
+      :func:`open` actually opening the file descriptor),
+    - cleanup happens in :meth:`close`, called either via ``__exit__`` (when
+      the instance is used as a context manager) or by user code,
+    - ``__del__`` calls :meth:`close` as a safety net and emits a
+      :exc:`ResourceWarning` if cleanup had to happen there (analogous to the
+      unclosed-file warning).
+
+    Calling :meth:`close` more than once is safe; it is a no-op after the
+    first call.
+    """
+
+    def __init__(self, parent_context, sub_estimator):
+        # Default to "closed" so an exception during construction (e.g. the
+        # auto-propagated-callbacks validation below) leaves the instance with
+        # no state to roll back. We flip to "open" only once we have mutated
+        # the sub-estimator.
+        self._closed = True
+        self._parent_context = parent_context
+        self._sub_estimator = sub_estimator
+        self._callbacks_to_propagate = ()
+
         bad_callbacks = [
-            callback.__class__.__name__
-            for callback in getattr(sub_estimator, "_skl_callbacks", [])
-            if isinstance(callback, AutoPropagatedCallback)
+            cb.__class__.__name__
+            for cb in getattr(sub_estimator, "_skl_callbacks", [])
+            if isinstance(cb, AutoPropagatedCallback)
         ]
         if bad_callbacks:
             raise TypeError(
                 f"The sub-estimator ({sub_estimator.__class__.__name__}) of a"
-                f" meta-estimator ({self.estimator_name}) can't have"
+                f" meta-estimator ({parent_context.estimator_name}) can't have"
                 f" auto-propagated callbacks ({bad_callbacks})."
                 " Register them directly on the meta-estimator."
             )
 
-        # We store the parent context in the sub-estimator to be able to merge the task
-        # trees of the sub-estimator and the meta-estimator. We want to link the task
-        # trees even if there is no callback to propagate, as the sub-estimators might
-        # have non auto-propagated callbacks, which would need to have access to the
-        # whole tree.
-        sub_estimator._parent_callback_ctx = self
-
-        callbacks_to_propagate = [
-            callback
-            for callback in self._callbacks
-            if isinstance(callback, AutoPropagatedCallback)
-            and (
-                callback.max_propagation_depth is None
-                or self._propagation_depth < callback.max_propagation_depth
-            )
-        ]
-        if callbacks_to_propagate and not hasattr(sub_estimator, "set_callbacks"):
-            warnings.warn(
-                f"The estimator {sub_estimator.__class__.__name__} does not support "
-                f"callbacks. The callbacks attached to {self.estimator_name} will not "
-                f"be propagated to this estimator."
-            )
-            callbacks_to_propagate = []
-
-        if callbacks_to_propagate:
-            self._propagated_callbacks = callbacks_to_propagate
-            curr_callbacks = getattr(sub_estimator, "_skl_callbacks", [])
-            sub_estimator.set_callbacks(*(curr_callbacks + callbacks_to_propagate))
+        # Past this point we are mutating ``sub_estimator``. Link the task
+        # trees first (this happens even when there is nothing to propagate,
+        # so non-auto-propagated callbacks attached to the sub-estimator can
+        # still see the whole tree), then resolve which callbacks to attach.
+        sub_estimator._parent_callback_ctx = parent_context
+        self._closed = False
 
         try:
-            yield
-        finally:
+            callbacks_to_propagate = [
+                cb
+                for cb in parent_context._callbacks
+                if isinstance(cb, AutoPropagatedCallback)
+                and (
+                    cb.max_propagation_depth is None
+                    or parent_context._propagation_depth < cb.max_propagation_depth
+                )
+            ]
+            if callbacks_to_propagate and not hasattr(sub_estimator, "set_callbacks"):
+                warnings.warn(
+                    f"The estimator {sub_estimator.__class__.__name__} does not "
+                    f"support callbacks. The callbacks attached to "
+                    f"{parent_context.estimator_name} will not be propagated to "
+                    f"this estimator."
+                )
+                callbacks_to_propagate = []
             if callbacks_to_propagate:
-                kept_callbacks = [
-                    cb
-                    for cb in sub_estimator._skl_callbacks
-                    if cb not in callbacks_to_propagate
-                ]
-                sub_estimator.set_callbacks(*kept_callbacks)
-            del sub_estimator._parent_callback_ctx
+                parent_context._propagated_callbacks = callbacks_to_propagate
+                curr = getattr(sub_estimator, "_skl_callbacks", [])
+                sub_estimator.set_callbacks(*(curr + callbacks_to_propagate))
+            self._callbacks_to_propagate = callbacks_to_propagate
+        except Exception:
+            # A later mutation failed; roll back the parent-context link and
+            # let the exception propagate. ``close()`` would also handle this,
+            # but doing it inline keeps the failure path symmetric with the
+            # pre-validation failure path above.
+            sub_estimator.__dict__.pop("_parent_callback_ctx", None)
+            self._closed = True
+            raise
+
+    def close(self):
+        """Undo the propagation. Safe to call multiple times.
+
+        Removes the propagated callbacks from the sub-estimator and clears its
+        ``_parent_callback_ctx`` attribute. After the first call, further
+        calls are no-ops.
+        """
+        if self._closed:
+            return
+        sub = self._sub_estimator
+        if self._callbacks_to_propagate:
+            kept = [
+                cb
+                for cb in sub._skl_callbacks
+                if cb not in self._callbacks_to_propagate
+            ]
+            sub.set_callbacks(*kept)
+        sub.__dict__.pop("_parent_callback_ctx", None)
+        self._closed = True
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        self.close()
+        return False
+
+    def __del__(self):
+        if not self._closed:
+            warnings.warn(
+                f"CallbackContext.propagate_callback_context(...) for "
+                f"{type(self._sub_estimator).__name__} was never closed; the "
+                f"propagation was undone at garbage collection. Use the "
+                f"returned object as a context manager (`with`) or call its "
+                f".close() method to make the cleanup point deterministic.",
+                ResourceWarning,
+            )
+            try:
+                self.close()
+            except Exception:
+                pass
 
 
 def _from_reconstruction_attributes(estimator, reconstruction_attributes):

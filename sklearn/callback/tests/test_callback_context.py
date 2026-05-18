@@ -101,6 +101,67 @@ def test_propagate_callback_context_no_callback():
     assert not hasattr(metaestimator, "_parent_callback_ctx")
 
 
+def test_propagate_callback_context_explicit_close():
+    """``propagate_callback_context`` works without ``with``: the propagation
+    happens eagerly on call and is undone by an explicit ``.close()``.
+    """
+    estimator = MaxIterEstimator()
+    metaestimator = MetaEstimator(estimator)
+    metaestimator.set_callbacks(RecordingAutoPropagatedCallback())
+    callback_ctx = _make_callback_ctx(metaestimator)
+
+    prop = callback_ctx.propagate_callback_context(estimator)
+    # Propagation is in effect immediately, no ``with`` required.
+    assert hasattr(estimator, "_parent_callback_ctx")
+    assert estimator._skl_callbacks
+
+    prop.close()
+    assert not hasattr(estimator, "_parent_callback_ctx")
+    assert not hasattr(estimator, "_skl_callbacks")
+
+    # close() is idempotent.
+    prop.close()
+    assert not hasattr(estimator, "_parent_callback_ctx")
+
+
+def test_propagate_callback_context_gc_warns_and_cleans_up():
+    """Letting the returned object be garbage-collected without ``close()``
+    emits a ``ResourceWarning`` and still undoes the propagation, mirroring
+    Python's behaviour for an unclosed file.
+    """
+    import gc
+
+    estimator = MaxIterEstimator()
+    metaestimator = MetaEstimator(estimator)
+    metaestimator.set_callbacks(RecordingAutoPropagatedCallback())
+    callback_ctx = _make_callback_ctx(metaestimator)
+
+    with pytest.warns(ResourceWarning, match="was never closed"):
+        callback_ctx.propagate_callback_context(estimator)
+        gc.collect()
+
+    # The propagation was rolled back at GC time.
+    assert not hasattr(estimator, "_parent_callback_ctx")
+    assert not hasattr(estimator, "_skl_callbacks")
+
+
+def test_propagate_callback_context_validation_does_not_mutate():
+    """When the auto-propagated-callback validation fails, the sub-estimator
+    is left untouched and no propagation object lingers.
+    """
+    estimator = MaxIterEstimator().set_callbacks(RecordingAutoPropagatedCallback())
+    metaestimator = MetaEstimator(estimator)
+    callback_ctx = _make_callback_ctx(metaestimator)
+
+    original_callbacks = list(estimator._skl_callbacks)
+    with pytest.raises(TypeError, match=r"can't have auto-propagated callbacks"):
+        callback_ctx.propagate_callback_context(estimator)
+
+    # Sub-estimator state is unchanged.
+    assert estimator._skl_callbacks == original_callbacks
+    assert not hasattr(estimator, "_parent_callback_ctx")
+
+
 def test_auto_propagated_callbacks():
     """Check that it's not possible to set an auto-propagated callback on the
     sub-estimator of a meta-estimator.
