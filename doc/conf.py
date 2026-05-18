@@ -289,11 +289,11 @@ html_theme_options = {
     "secondary_sidebar_items": {
         "**": [
             "page-toc",
-            "sourcelink",
             # Sphinx-Gallery-specific sidebar components
             # https://sphinx-gallery.github.io/stable/advanced.html#using-sphinx-gallery-sidebar-components
             "sg_download_links",
             "sg_launcher_links",
+            "funding_links",
         ],
     },
     "show_version_warning_banner": True,
@@ -338,6 +338,7 @@ html_sidebars = {
     "roadmap": [],
     "governance": [],
     "about": [],
+    "institutional_support": [],
 }
 
 # Additional templates that should be rendered to pages, maps page names to
@@ -352,6 +353,7 @@ html_js_files = [
     "scripts/dropdown.js",
     "scripts/version-switcher.js",
     "scripts/sg_plotly_resize.js",
+    "scripts/theme-observer.js",
 ]
 
 # Compile scss files into css files using sphinxcontrib-sass
@@ -439,6 +441,7 @@ redirects = {
     "documentation": "index",
     "contents": "index",
     "preface": "index",
+    "dispatching": "data_interoperability",
     "modules/classes": "api/index",
     "tutorial/machine_learning_map/index": "machine_learning_map",
     "auto_examples/feature_selection/plot_permutation_test_for_classification": (
@@ -500,13 +503,22 @@ redirects = {
     "auto_examples/linear_model/plot_iris_logistic": (
         "auto_examples/linear_model/plot_logistic_multinomial"
     ),
+    "auto_examples/linear_model/plot_logistic": (
+        "auto_examples/calibration/plot_calibration_curve"
+    ),
     "auto_examples/linear_model/plot_ols_3d": ("auto_examples/linear_model/plot_ols"),
     "auto_examples/linear_model/plot_ols": "auto_examples/linear_model/plot_ols_ridge",
     "auto_examples/linear_model/plot_ols_ridge_variance": (
         "auto_examples/linear_model/plot_ols_ridge"
     ),
+    "auto_examples/cluster/plot_agglomerative_clustering.html": (
+        "auto_examples/cluster/plot_ward_structured_vs_unstructured.html"
+    ),
     "auto_examples/linear_model/plot_sgd_comparison": (
         "auto_examples/linear_model/plot_sgd_loss_functions"
+    ),
+    "auto_examples/miscellaneous/plot_partial_dependence_visualization_api": (
+        "auto_examples/inspection/plot_partial_dependence_visualization_api"
     ),
 }
 html_context["redirects"] = redirects
@@ -562,6 +574,7 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/{.major}".format(sys.version_info), None),
     "numpy": ("https://numpy.org/doc/stable", None),
     "scipy": ("https://docs.scipy.org/doc/scipy/", None),
+    "narwhals": ("https://narwhals-dev.github.io/narwhals/", None),
     "matplotlib": ("https://matplotlib.org/", None),
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "joblib": ("https://joblib.readthedocs.io/en/latest/", None),
@@ -903,7 +916,7 @@ linkcheck_ignore = [
     r"^..?/",
     # ignore links to specific pdf pages because linkcheck does not handle them
     # ('utf-8' codec can't decode byte error)
-    r"http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf#page=.*",
+    r"https://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf#page=.*",
     (
         "https://www.fordfoundation.org/media/2976/roads-and-bridges"
         "-the-unseen-labor-behind-our-digital-infrastructure.pdf#page=.*"

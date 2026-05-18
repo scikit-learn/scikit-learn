@@ -425,14 +425,14 @@ def test_multi_output_classification_partial_fit_sample_weights():
     Xw = [[1, 2, 3], [4, 5, 6], [1.5, 2.5, 3.5]]
     yw = [[3, 2], [2, 3], [3, 2]]
     w = np.asarray([2.0, 1.0, 1.0])
-    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=20)
+    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=20, tol=None)
     clf_w = MultiOutputClassifier(sgd_linear_clf)
     clf_w.fit(Xw, yw, w)
 
     # unweighted, but with repeated samples
     X = [[1, 2, 3], [1, 2, 3], [4, 5, 6], [1.5, 2.5, 3.5]]
     y = [[3, 2], [3, 2], [2, 3], [3, 2]]
-    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=20)
+    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=20, tol=None)
     clf = MultiOutputClassifier(sgd_linear_clf)
     clf.fit(X, y)
     X_test = [[1.5, 2.5, 3.5]]
@@ -865,19 +865,3 @@ def test_multioutput_regressor_has_partial_fit():
     msg = "This 'MultiOutputRegressor' has no attribute 'partial_fit'"
     with pytest.raises(AttributeError, match=msg):
         getattr(est, "partial_fit")
-
-
-# TODO(1.9):  remove when deprecated `base_estimator` is removed
-@pytest.mark.parametrize("Estimator", [ClassifierChain, RegressorChain])
-def test_base_estimator_deprecation(Estimator):
-    """Check that we warn about the deprecation of `base_estimator`."""
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([[1, 0], [0, 1]])
-
-    estimator = LogisticRegression()
-
-    with pytest.warns(FutureWarning):
-        Estimator(base_estimator=estimator).fit(X, y)
-
-    with pytest.raises(ValueError):
-        Estimator(base_estimator=estimator, estimator=estimator).fit(X, y)

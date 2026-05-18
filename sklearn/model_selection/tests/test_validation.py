@@ -12,7 +12,7 @@ import pytest
 from scipy.sparse import issparse
 
 from sklearn import config_context
-from sklearn.base import BaseEstimator, ClassifierMixin, clone
+from sklearn.base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from sklearn.cluster import KMeans
 from sklearn.datasets import (
     load_diabetes,
@@ -22,6 +22,7 @@ from sklearn.datasets import (
     make_multilabel_classification,
     make_regression,
 )
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.exceptions import FitFailedWarning, UnsetMetadataPassedError
 from sklearn.impute import SimpleImputer
@@ -81,13 +82,20 @@ from sklearn.tests.metadata_routing_common import (
     check_recorded_metadata,
 )
 from sklearn.utils import shuffle
+from sklearn.utils._array_api import (
+    _atol_for_type,
+    move_to,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
 )
+from sklearn.utils.estimator_checks import _NotAnArray
 from sklearn.utils.fixes import COO_CONTAINERS, CSR_CONTAINERS
 from sklearn.utils.validation import _num_samples
 
@@ -380,6 +388,14 @@ def test_cross_validate_invalid_scoring_param():
 
     with pytest.warns(UserWarning, match=warning_message):
         cross_validate(estimator, X, y, scoring={"foo": multiclass_scorer})
+
+
+def test_cross_validate_array_function_not_called():
+    """Check that `__array_function__` (NEP18) is not called."""
+    X = _NotAnArray([[1, 1], [1, 2], [1, 3], [1, 4], [2, 1], [2, 2], [2, 3], [2, 4]])
+    y = _NotAnArray([1, 1, 1, 2, 2, 2, 1, 1])
+    estimator = LogisticRegression(random_state=0)
+    cross_validate(estimator, X, y, cv=2)
 
 
 def test_cross_validate_nested_estimator():
@@ -2456,35 +2472,6 @@ def test_cross_validate_return_indices(global_random_seed):
 # ======================================================
 
 
-# TODO(1.8): remove `learning_curve`, `validation_curve` and `permutation_test_score`.
-@pytest.mark.parametrize(
-    "func, extra_args",
-    [
-        (learning_curve, {}),
-        (permutation_test_score, {}),
-        (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
-    ],
-)
-def test_fit_param_deprecation(func, extra_args):
-    """Check that we warn about deprecating `fit_params`."""
-    with pytest.warns(FutureWarning, match="`fit_params` is deprecated"):
-        func(
-            estimator=ConsumingClassifier(), X=X, y=y, cv=2, fit_params={}, **extra_args
-        )
-
-    with pytest.raises(
-        ValueError, match="`params` and `fit_params` cannot both be provided"
-    ):
-        func(
-            estimator=ConsumingClassifier(),
-            X=X,
-            y=y,
-            fit_params={},
-            params={},
-            **extra_args,
-        )
-
-
 @pytest.mark.parametrize(
     "func, extra_args",
     [
@@ -2725,3 +2712,43 @@ def test_learning_curve_exploit_incremental_learning_routing():
 
 # End of metadata routing tests
 # =============================
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [Ridge(), LinearDiscriminantAnalysis()],
+    ids=["Ridge", "LinearDiscriminantAnalysis"],
+)
+@pytest.mark.parametrize("cv", [None, 3, 5])
+@pytest.mark.parametrize(
+    "namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_cross_val_predict_array_api_compliance(
+    estimator, cv, namespace, device_name, dtype_name
+):
+    """Test that `cross_val_predict` functions correctly with the array API
+    with both a classifier and a regressor."""
+
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
+    if is_classifier(estimator):
+        X, y = make_classification(
+            n_samples=1000, n_features=5, n_classes=3, n_informative=3, random_state=42
+        )
+    else:
+        X, y = make_regression(
+            n_samples=1000, n_features=5, n_informative=3, random_state=42
+        )
+
+    X_np = X.astype(dtype_name)
+    y_np = y.astype(dtype_name)
+    X_xp = xp.asarray(X_np, device=device)
+    y_xp = xp.asarray(y_np, device=device)
+
+    with config_context(array_api_dispatch=True):
+        pred_xp = cross_val_predict(estimator, X_xp, y_xp, cv=cv)
+
+    pred_np = cross_val_predict(estimator, X_np, y_np, cv=cv)
+    assert_allclose(
+        move_to(pred_xp, xp=np, device="cpu"), pred_np, atol=_atol_for_type(dtype_name)
+    )

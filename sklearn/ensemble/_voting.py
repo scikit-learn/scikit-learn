@@ -149,7 +149,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
     @property
     def n_features_in_(self):
         """Number of features seen during :term:`fit`."""
-        # For consistency with other estimators we raise a AttributeError so
+        # For consistency with other estimators we raise an AttributeError so
         # that hasattr() fails if the estimator isn't fitted.
         try:
             check_is_fitted(self)
@@ -246,7 +246,10 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     ----------
     estimators_ : list of classifiers
         The collection of fitted sub-estimators as defined in ``estimators``
-        that are not 'drop'.
+        that are not 'drop'. Note that sub-estimators are always fitted on
+        integer-encoded labels (see ``le_`` attribute). When ``y`` contains
+        non-integer class labels (e.g. strings), use ``le_.inverse_transform``
+        to map predictions back to the original label space.
 
     named_estimators_ : :class:`~sklearn.utils.Bunch`
         Attribute to access any fitted sub-estimators by name.
@@ -255,7 +258,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
     le_ : :class:`~sklearn.preprocessing.LabelEncoder`
         Transformer used to encode the labels during fit and decode during
-        prediction.
+        prediction. Sub-estimators in ``estimators_`` are fitted on the
+        integer-encoded labels produced by this encoder.
 
     classes_ : ndarray of shape (n_classes,)
         The classes labels.

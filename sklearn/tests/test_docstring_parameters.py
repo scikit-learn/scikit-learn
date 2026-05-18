@@ -55,7 +55,6 @@ _DOCSTRING_IGNORES = [
     "sklearn.utils.deprecation.load_mlcomp",
     "sklearn.pipeline.make_pipeline",
     "sklearn.pipeline.make_union",
-    "sklearn.utils.extmath.safe_sparse_dot",
     "HalfBinomialLoss",
 ]
 
@@ -172,6 +171,10 @@ def _construct_sparse_coder(Estimator):
     return Estimator(dictionary=dictionary)
 
 
+# TODO(1.10): remove copy warning filter
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `copy` will change from False to True in 1.10."
+)
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("name, Estimator", all_estimators())
 def test_fit_docstring_attributes(name, Estimator):
@@ -220,14 +223,16 @@ def test_fit_docstring_attributes(name, Estimator):
     elif Estimator.__name__ == "TSNE":
         # default raises an error, perplexity must be less than n_samples
         est.set_params(perplexity=2)
-    # TODO(1.9) remove
-    elif Estimator.__name__ == "KBinsDiscretizer":
-        # default raises an FutureWarning if quantile method is at default "warn"
-        est.set_params(quantile_method="averaged_inverted_cdf")
-    # TODO(1.9) remove
+    # TODO(1.10) remove
     elif Estimator.__name__ == "MDS":
         # default raises a FutureWarning
-        est.set_params(n_init=1)
+        est.set_params(n_init=1, init="random")
+    # TODO(1.10) remove l1_ratios
+    # TODO(1.11) remove completely
+    elif Estimator.__name__ == "LogisticRegressionCV":
+        # default 'l1_ratios' value creates a FutureWarning
+        # default 'scoring' value creates a FutureWarning
+        est.set_params(l1_ratios=(0,), scoring="neg_log_loss")
 
     # Low max iter to speed up tests: we are only interested in checking the existence
     # of fitted attributes. This should be invariant to whether it has converged or not.

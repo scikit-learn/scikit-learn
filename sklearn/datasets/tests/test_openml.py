@@ -72,10 +72,10 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
     # monkey patches the urlopen function. Important note: Do NOT use this
     # in combination with a regular cache directory, as the files that are
     # stored as cache should not be mixed up with real openml datasets
-    url_prefix_data_description = "https://api.openml.org/api/v1/json/data/"
-    url_prefix_data_features = "https://api.openml.org/api/v1/json/data/features/"
+    url_prefix_data_description = "https://www.openml.org/api/v1/json/data/"
+    url_prefix_data_features = "https://www.openml.org/api/v1/json/data/features/"
     url_prefix_download_data = "https://www.openml.org/data/v1/download"
-    url_prefix_data_list = "https://api.openml.org/api/v1/json/data/list/"
+    url_prefix_data_list = "https://www.openml.org/api/v1/json/data/list/"
 
     path_suffix = ".gz"
     read_fn = gzip.open
@@ -163,7 +163,7 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
         data_file_name = _file_name(url, ".json")
         data_file_path = resources.files(data_module) / data_file_name
 
-        # load the file itself, to simulate a http error
+        # load the file itself, to simulate an http error
         with data_file_path.open("rb") as f:
             decompressed_f = read_fn(f, "rb")
             decoded_s = decompressed_f.read().decode("utf-8")
@@ -1042,7 +1042,7 @@ def test_fetch_openml_sparse_arff_error(monkeypatch, params, err_msg):
 @pytest.mark.parametrize(
     "data_id, data_type",
     [
-        (61, "dataframe"),  # iris dataset version 1
+        (61, "pandas"),  # iris dataset version 1
         (292, "sparse"),  # Australian dataset version 1
     ],
 )
@@ -1052,7 +1052,7 @@ def test_fetch_openml_auto_mode(monkeypatch, data_id, data_type):
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
     data = fetch_openml(data_id=data_id, as_frame="auto", cache=False)
-    klass = pd.DataFrame if data_type == "dataframe" else scipy.sparse.csr_matrix
+    klass = pd.DataFrame if data_type == "pandas" else scipy.sparse.csr_matrix
     assert isinstance(data.data, klass)
 
 

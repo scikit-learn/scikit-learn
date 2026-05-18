@@ -903,7 +903,7 @@ class CCA(_PLS):
 class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Partial Least Square SVD.
 
-    This transformer simply performs a SVD on the cross-covariance matrix
+    This transformer simply performs an SVD on the cross-covariance matrix
     `X'y`. It is able to project both the training data `X` and the targets
     `y`. The training data `X` is projected on the left singular vectors, while
     the targets are projected on the right singular vectors.

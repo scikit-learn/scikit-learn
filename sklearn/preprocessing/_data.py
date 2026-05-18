@@ -34,8 +34,8 @@ from sklearn.utils._param_validation import (
     StrOptions,
     validate_params,
 )
+from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.extmath import _incremental_mean_and_var, row_norms
-from sklearn.utils.fixes import _yeojohnson_lambda
 from sklearn.utils.sparsefuncs import (
     incr_mean_variance_axis,
     inplace_column_scale,
@@ -513,7 +513,7 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             self,
             X,
             reset=first_pass,
-            dtype=_array_api.supported_float_dtypes(xp),
+            dtype=_array_api.supported_float_dtypes(xp, device=device(X)),
             ensure_all_finite="allow-nan",
         )
 
@@ -564,7 +564,7 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             self,
             X,
             copy=self.copy,
-            dtype=_array_api.supported_float_dtypes(xp),
+            dtype=_array_api.supported_float_dtypes(xp, device=device(X)),
             force_writeable=True,
             ensure_all_finite="allow-nan",
             reset=False,
@@ -604,7 +604,7 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         X = check_array(
             X,
             copy=self.copy,
-            dtype=_array_api.supported_float_dtypes(xp),
+            dtype=_array_api.supported_float_dtypes(xp, device=device(X)),
             force_writeable=True,
             ensure_all_finite="allow-nan",
         )
@@ -993,7 +993,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                     "instead. See docstring for motivation and alternatives."
                 )
             sparse_constructor = (
-                sparse.csr_matrix if X.format == "csr" else sparse.csc_matrix
+                sparse.csr_array if X.format == "csr" else sparse.csc_array
             )
 
             if self.with_std:
@@ -1327,7 +1327,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X,
             reset=first_pass,
             accept_sparse=("csr", "csc"),
-            dtype=_array_api.supported_float_dtypes(xp),
+            dtype=_array_api.supported_float_dtypes(xp, device=device(X)),
             ensure_all_finite="allow-nan",
         )
 
@@ -1370,7 +1370,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             accept_sparse=("csr", "csc"),
             copy=self.copy,
             reset=False,
-            dtype=_array_api.supported_float_dtypes(xp),
+            dtype=_array_api.supported_float_dtypes(xp, device=device(X)),
             force_writeable=True,
             ensure_all_finite="allow-nan",
         )
@@ -1414,7 +1414,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X,
             accept_sparse=("csr", "csc"),
             copy=self.copy,
-            dtype=_array_api.supported_float_dtypes(xp),
+            dtype=_array_api.supported_float_dtypes(xp, device=device(X)),
             force_writeable=True,
             ensure_all_finite="allow-nan",
         )
@@ -2031,7 +2031,7 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
         accept_sparse=sparse_format,
         copy=copy,
         estimator="the normalize function",
-        dtype=_array_api.supported_float_dtypes(xp),
+        dtype=_array_api.supported_float_dtypes(xp, device=device(X)),
         force_writeable=True,
     )
     if axis == 0:
@@ -2518,7 +2518,9 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         """
         xp, _ = get_namespace(K)
 
-        K = validate_data(self, K, dtype=_array_api.supported_float_dtypes(xp))
+        K = validate_data(
+            self, K, dtype=_array_api.supported_float_dtypes(xp, device=device(K))
+        )
 
         if K.shape[0] != K.shape[1]:
             raise ValueError(
@@ -2556,7 +2558,7 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
             K,
             copy=copy,
             force_writeable=True,
-            dtype=_array_api.supported_float_dtypes(xp),
+            dtype=_array_api.supported_float_dtypes(xp, device=device(K)),
             reset=False,
         )
 
@@ -2630,7 +2632,8 @@ def add_dummy_feature(X, value=1.0):
             row = np.concatenate((np.arange(n_samples), X.row))
             # Prepend the dummy feature n_samples times.
             data = np.concatenate((np.full(n_samples, value), X.data))
-            return sparse.coo_matrix((data, (row, col)), shape)
+            result = sparse.coo_array((data, (row, col)), shape)
+            return _align_api_if_sparse(result)
         elif X.format == "csc":
             # Shift index pointers since we need to add n_samples elements.
             indptr = X.indptr + n_samples
@@ -2640,10 +2643,10 @@ def add_dummy_feature(X, value=1.0):
             indices = np.concatenate((np.arange(n_samples), X.indices))
             # Prepend the dummy feature n_samples times.
             data = np.concatenate((np.full(n_samples, value), X.data))
-            return sparse.csc_matrix((data, indices, indptr), shape)
-        else:
-            klass = X.__class__
-            return klass(add_dummy_feature(X.tocoo(), value))
+            result = sparse.csc_array((data, indices, indptr), shape)
+            return _align_api_if_sparse(result)
+        else:  # "csr" format
+            return _align_api_if_sparse(add_dummy_feature(X.tocoo(), value).tocsr())
     else:
         return np.hstack((np.full((n_samples, 1), value), X))
 
@@ -2811,11 +2814,6 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             )
 
         self.quantiles_ = np.nanpercentile(X, references, axis=0)
-        # Due to floating-point precision error in `np.nanpercentile`,
-        # make sure that quantiles are monotonically increasing.
-        # Upstream issue in numpy:
-        # https://github.com/numpy/numpy/issues/14685
-        self.quantiles_ = np.maximum.accumulate(self.quantiles_)
 
     def _sparse_fit(self, X, random_state):
         """Compute percentiles for sparse matrices.
@@ -2825,7 +2823,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         X : sparse matrix of shape (n_samples, n_features)
             The data used to scale along the features axis. The sparse matrix
             needs to be nonnegative. If a sparse matrix is provided,
-            it will be converted into a sparse ``csc_matrix``.
+            it will be converted into a SciPy sparse CSC matrix.
         """
         n_samples, n_features = X.shape
         references = self.references_ * 100
@@ -2856,11 +2854,6 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             else:
                 self.quantiles_.append(np.nanpercentile(column_data, references))
         self.quantiles_ = np.transpose(self.quantiles_)
-        # due to floating-point precision error in `np.nanpercentile`,
-        # make sure the quantiles are monotonically increasing
-        # Upstream issue in numpy:
-        # https://github.com/numpy/numpy/issues/14685
-        self.quantiles_ = np.maximum.accumulate(self.quantiles_)
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
@@ -2871,7 +2864,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data used to scale along the features axis. If a sparse
             matrix is provided, it will be converted into a sparse
-            ``csc_matrix``. Additionally, the sparse matrix needs to be
+            CSC matrix. Additionally, the sparse matrix needs to be
             nonnegative if `ignore_implicit_zeros` is False.
 
         y : None
@@ -3043,7 +3036,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data used to scale along the features axis. If a sparse
             matrix is provided, it will be converted into a sparse
-            ``csc_matrix``. Additionally, the sparse matrix needs to be
+            CSC matrix. Additionally, the sparse matrix needs to be
             nonnegative if `ignore_implicit_zeros` is False.
 
         Returns
@@ -3064,7 +3057,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data used to scale along the features axis. If a sparse
             matrix is provided, it will be converted into a sparse
-            ``csc_matrix``. Additionally, the sparse matrix needs to be
+            CSC_matrix. Additionally, the sparse matrix needs to be
             nonnegative if `ignore_implicit_zeros` is False.
 
         Returns
@@ -3073,9 +3066,20 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             The projected data.
         """
         check_is_fitted(self)
-        X = self._check_inputs(
-            X, in_fit=False, accept_sparse_negative=True, copy=self.copy
+        X = check_array(
+            X,
+            accept_sparse="csc",
+            copy=self.copy,
+            dtype=FLOAT_DTYPES,
+            force_writeable=True,
+            ensure_all_finite="allow-nan",
         )
+
+        if not X.shape[1] == self.n_features_in_:
+            raise ValueError(
+                f"X has {X.shape[1]} features, but QuantileTransformer "
+                f"is expecting {self.n_features_in_} features as input."
+            )
 
         return self._transform(X, inverse=True)
 
@@ -3403,7 +3407,7 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         transform_function = {
             "box-cox": boxcox,
-            "yeo-johnson": self._yeo_johnson_transform,
+            "yeo-johnson": stats.yeojohnson,
         }[self.method]
 
         with np.errstate(invalid="ignore"):  # hide NaN warnings
@@ -3448,7 +3452,7 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         transform_function = {
             "box-cox": boxcox,
-            "yeo-johnson": self._yeo_johnson_transform,
+            "yeo-johnson": stats.yeojohnson,
         }[self.method]
         for i, lmbda in enumerate(self.lambdas_):
             with np.errstate(invalid="ignore"):  # hide NaN warnings
@@ -3491,7 +3495,19 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             The original data.
         """
         check_is_fitted(self)
-        X = self._check_input(X, in_fit=False, check_shape=True)
+        X = check_array(
+            X,
+            copy=self.copy,
+            dtype=FLOAT_DTYPES,
+            force_writeable=True,
+            ensure_all_finite="allow-nan",
+        )
+
+        if not X.shape[1] == self.n_features_in_:
+            raise ValueError(
+                f"X has {X.shape[1]} features, but PowerTransformer "
+                f"is expecting {self.n_features_in_} features as input."
+            )
 
         if self.standardize:
             X = self._scaler.inverse_transform(X)
@@ -3539,28 +3555,6 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         return x_inv
 
-    def _yeo_johnson_transform(self, x, lmbda):
-        """Return transformed input x following Yeo-Johnson transform with
-        parameter lambda.
-        """
-
-        out = np.zeros_like(x)
-        pos = x >= 0  # binary mask
-
-        # when x >= 0
-        if abs(lmbda) < np.spacing(1.0):
-            out[pos] = np.log1p(x[pos])
-        else:  # lmbda != 0
-            out[pos] = (np.power(x[pos] + 1, lmbda) - 1) / lmbda
-
-        # when x < 0
-        if abs(lmbda - 2) > np.spacing(1.0):
-            out[~pos] = -(np.power(-x[~pos] + 1, 2 - lmbda) - 1) / (2 - lmbda)
-        else:  # lmbda == 2
-            out[~pos] = -np.log1p(-x[~pos])
-
-        return out
-
     def _box_cox_optimize(self, x):
         """Find and return optimal lambda parameter of the Box-Cox transform by
         MLE, for observed data x.
@@ -3583,30 +3577,11 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         Like for Box-Cox, MLE is done via the brent optimizer.
         """
-        x_tiny = np.finfo(np.float64).tiny
-
-        def _neg_log_likelihood(lmbda):
-            """Return the negative log likelihood of the observed data x as a
-            function of lambda."""
-            x_trans = self._yeo_johnson_transform(x, lmbda)
-            n_samples = x.shape[0]
-            x_trans_var = x_trans.var()
-
-            # Reject transformed data that would raise a RuntimeWarning in np.log
-            if x_trans_var < x_tiny:
-                return np.inf
-
-            log_var = np.log(x_trans_var)
-            loglike = -n_samples / 2 * log_var
-            loglike += (lmbda - 1) * (np.sign(x) * np.log1p(np.abs(x))).sum()
-
-            return -loglike
-
         # the computation of lambda is influenced by NaNs so we need to
         # get rid of them
         x = x[~np.isnan(x)]
-
-        return _yeojohnson_lambda(_neg_log_likelihood, x)
+        _, lmbda = stats.yeojohnson(x, lmbda=None)
+        return lmbda
 
     def _check_input(self, X, in_fit, check_positive=False, check_shape=False):
         """Validate the input before fit and transform.

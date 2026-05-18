@@ -40,7 +40,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     Parameters
     ----------
     C : float, default=1.0
-        Aggressiveness parameter for the passive-agressive algorithm, see [1].
+        Aggressiveness parameter for the passive-aggressive algorithm, see [1].
         For PA-I it is the maximum step size. For PA-II it regularizes the
         step size (the smaller `C` the more it regularizes).
         As a general rule-of-thumb, `C` should be small when the data is noisy.
@@ -203,6 +203,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         "loss": [StrOptions({"hinge", "squared_hinge"})],
         "C": [Interval(Real, 0, None, closed="right")],
     }
+    _parameter_constraints.pop("eta0")
 
     def __init__(
         self,
@@ -366,7 +367,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     ----------
 
     C : float, default=1.0
-        Aggressiveness parameter for the passive-agressive algorithm, see [1].
+        Aggressiveness parameter for the passive-aggressive algorithm, see [1].
         For PA-I it is the maximum step size. For PA-II it regularizes the
         step size (the smaller `C` the more it regularizes).
         As a general rule-of-thumb, `C` should be small when the data is noisy.
@@ -511,6 +512,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         "C": [Interval(Real, 0, None, closed="right")],
         "epsilon": [Interval(Real, 0, None, closed="left")],
     }
+    _parameter_constraints.pop("eta0")
 
     def __init__(
         self,

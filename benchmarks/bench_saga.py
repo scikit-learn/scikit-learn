@@ -1,8 +1,10 @@
-"""Author: Arthur Mensch, Nelle Varoquaux
-
+"""
 Benchmarks of sklearn SAGA vs lightning SAGA vs Liblinear. Shows the gain
 in using multinomial logistic regression in term of learning time.
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import json
 import os
@@ -66,10 +68,12 @@ def fit_single(
     times = [0]
 
     if penalty == "l2":
+        l1_ratio = 0
         alpha = 1.0 / (C * n_samples)
         beta = 0
         lightning_penalty = None
     else:
+        l1_ratio = 1
         alpha = 0.0
         beta = 1.0 / (C * n_samples)
         lightning_penalty = "l1"
@@ -97,7 +101,7 @@ def fit_single(
             lr = LogisticRegression(
                 solver=solver,
                 C=C,
-                penalty=penalty,
+                l1_ratio=l1_ratio,
                 fit_intercept=False,
                 tol=0,
                 max_iter=this_max_iter,
@@ -116,15 +120,15 @@ def fit_single(
         scores = []
         for X, y in [(X_train, y_train), (X_test, y_test)]:
             try:
-                y_pred = lr.predict_proba(X)
+                y_proba = lr.predict_proba(X)
             except NotImplementedError:
                 # Lightning predict_proba is not implemented for n_classes > 2
-                y_pred = _predict_proba(lr, X)
+                y_proba = _predict_proba(lr, X)
             if isinstance(lr, OneVsRestClassifier):
                 coef = np.concatenate([est.coef_ for est in lr.estimators_])
             else:
                 coef = lr.coef_
-            score = log_loss(y, y_pred, normalize=False) / n_samples
+            score = log_loss(y, y_proba, normalize=False) / n_samples
             score += 0.5 * alpha * np.sum(coef**2) + beta * np.sum(np.abs(coef))
             scores.append(score)
         train_score, test_score = tuple(scores)

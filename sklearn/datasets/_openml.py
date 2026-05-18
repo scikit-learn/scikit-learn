@@ -33,10 +33,10 @@ from sklearn.utils._param_validation import (
 
 __all__ = ["fetch_openml"]
 
-_SEARCH_NAME = "https://api.openml.org/api/v1/json/data/list/data_name/{}/limit/2"
-_DATA_INFO = "https://api.openml.org/api/v1/json/data/{}"
-_DATA_FEATURES = "https://api.openml.org/api/v1/json/data/features/{}"
-_DATA_QUALITIES = "https://api.openml.org/api/v1/json/data/qualities/{}"
+_SEARCH_NAME = "https://www.openml.org/api/v1/json/data/list/data_name/{}/limit/2"
+_DATA_INFO = "https://www.openml.org/api/v1/json/data/{}"
+_DATA_FEATURES = "https://www.openml.org/api/v1/json/data/features/{}"
+_DATA_QUALITIES = "https://www.openml.org/api/v1/json/data/qualities/{}"
 
 OpenmlQualitiesType = List[Dict[str, str]]
 OpenmlFeaturesType = List[Dict[str, str]]
@@ -892,7 +892,7 @@ def fetch_openml(
 
     read_csv_kwargs : dict, default=None
         Keyword arguments passed to :func:`pandas.read_csv` when loading the data
-        from a ARFF file and using the pandas parser. It can allow to
+        from an ARFF file and using the pandas parser. It can allow to
         overwrite some default parameters.
 
         .. versionadded:: 1.3

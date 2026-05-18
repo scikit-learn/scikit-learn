@@ -13,8 +13,8 @@ how to use the visualization API by comparing ROC curves.
 # SPDX-License-Identifier: BSD-3-Clause
 
 # %%
-# Load Data and Train a SVC
-# -------------------------
+# Load Data and Train an SVC
+# --------------------------
 # First, we load the wine dataset and convert it to a binary classification
 # problem. Then, we train a support vector classifier on a training dataset.
 import matplotlib.pyplot as plt

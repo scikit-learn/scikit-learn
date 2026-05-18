@@ -6,10 +6,11 @@
 import numpy as np
 cimport numpy as cnp
 
-from ..utils._typedefs cimport float32_t, float64_t, intp_t, int32_t, uint8_t, uint32_t
+from sklearn.utils._typedefs cimport (
+    float32_t, float64_t, intp_t, int32_t, uint8_t, uint32_t
+)
+from sklearn.tree._splitter cimport Splitter, SplitRecord
 
-from ._splitter cimport Splitter
-from ._splitter cimport SplitRecord
 
 cdef struct Node:
     # Base storage structure for the nodes in a Tree object

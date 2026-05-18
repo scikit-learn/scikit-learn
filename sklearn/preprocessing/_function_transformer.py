@@ -7,6 +7,7 @@ from functools import partial
 import numpy as np
 
 from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.utils._dataframe import is_pandas_df, is_polars_df
 from sklearn.utils._param_validation import StrOptions
 from sklearn.utils._repr_html.estimator import _VisualBlock
 from sklearn.utils._set_output import _get_adapter_from_container, _get_output_config
@@ -15,8 +16,6 @@ from sklearn.utils.validation import (
     _allclose_dense_sparse,
     _check_feature_names_in,
     _get_feature_names,
-    _is_pandas_df,
-    _is_polars_df,
     check_array,
     validate_data,
 )
@@ -302,9 +301,9 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
                 "a {0} DataFrame to follow the `set_output` API  or `feature_names_out`"
                 " should be defined."
             )
-            if output_config == "pandas" and not _is_pandas_df(out):
+            if output_config == "pandas" and not is_pandas_df(out):
                 warnings.warn(warn_msg.format("pandas"))
-            elif output_config == "polars" and not _is_polars_df(out):
+            elif output_config == "polars" and not is_polars_df(out):
                 warnings.warn(warn_msg.format("polars"))
 
         return out
@@ -382,7 +381,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         return func(X, **(kw_args if kw_args else {}))
 
     def __sklearn_is_fitted__(self):
-        """Return True since FunctionTransfomer is stateless."""
+        """Return True since FunctionTransformer is stateless."""
         return True
 
     def __sklearn_tags__(self):
@@ -395,8 +394,9 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
     def set_output(self, *, transform=None):
         """Set output container.
 
-        See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`
-        for an example on how to use the API.
+        Refer to the :ref:`user guide <df_output_transform>` for more details
+        and :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py` for an
+        example on how to use the API.
 
         Parameters
         ----------

@@ -220,8 +220,7 @@ Support for building with Meson
 -------------------------------
 
 From scikit-learn 1.5 onwards, Meson is the main supported way to build
-scikit-learn, see :ref:`Building from source <install_bleeding_edge>` for more
-details.
+scikit-learn.
 
 Unless we discover a major blocker, setuptools support will be dropped in
 scikit-learn 1.6. The 1.5.x releases will support building scikit-learn with
@@ -349,9 +348,9 @@ Changelog
 
 - |API| Deprecates `Y` in favor of `y` in the methods `fit`, `transform` and
   `inverse_transform` of:
-  :class:`cross_decomposition.PLSRegression`, 
-  :class:`cross_decomposition.PLSCanonical`, 
-  and :class:`cross_decomposition.CCA`, 
+  :class:`cross_decomposition.PLSRegression`,
+  :class:`cross_decomposition.PLSCanonical`,
+  and :class:`cross_decomposition.CCA`,
   and methods `fit` and `transform` of:
   :class:`cross_decomposition.PLSSVD`.
   `Y` will be removed in version 1.7.

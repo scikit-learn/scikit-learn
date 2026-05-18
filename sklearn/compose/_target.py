@@ -17,6 +17,7 @@ from sklearn.utils._metadata_requests import (
     process_routing,
 )
 from sklearn.utils._param_validation import HasMethods
+from sklearn.utils._repr_html.estimator import _VisualBlock
 from sklearn.utils._tags import get_tags
 from sklearn.utils.validation import check_is_fitted
 
@@ -355,7 +356,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     @property
     def n_features_in_(self):
         """Number of features seen during :term:`fit`."""
-        # For consistency with other estimators we raise a AttributeError so
+        # For consistency with other estimators we raise an AttributeError so
         # that hasattr() returns False the estimator isn't fitted.
         try:
             check_is_fitted(self)
@@ -395,3 +396,15 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
             return LinearRegression()
 
         return clone(self.regressor) if get_clone else self.regressor
+
+    def _sk_visual_block_(self):
+        regressor = (
+            self.regressor_ if hasattr(self, "regressor_") else self._get_regressor()
+        )
+        return _VisualBlock(
+            "serial",
+            [regressor],
+            names=[f"regressor: {regressor.__class__.__name__}"],
+            name_details=[str(regressor)],
+            dash_wrapped=True,
+        )

@@ -12,10 +12,6 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 
 
-# TODO(1.8) remove the filterwarnings decorator
-@pytest.mark.filterwarnings(
-    "ignore:'force_all_finite' was renamed to 'ensure_all_finite':FutureWarning"
-)
 @pytest.mark.parametrize("seed", range(5))
 @pytest.mark.parametrize(
     "loss",
@@ -97,7 +93,7 @@ def test_same_predictions_regression(
     est_lightgbm.fit(X_train, y_train)
     est_sklearn.fit(X_train, y_train)
 
-    # We need X to be treated an numerical data, not pre-binned data.
+    # We need X to be treated a numerical data, not pre-binned data.
     X_train, X_test = X_train.astype(np.float32), X_test.astype(np.float32)
 
     pred_lightgbm = est_lightgbm.predict(X_train)
@@ -122,10 +118,6 @@ def test_same_predictions_regression(
         assert np.mean(np.isclose(pred_lightgbm, pred_sklearn, rtol=1e-4)) > 1 - 0.01
 
 
-# TODO(1.8) remove the filterwarnings decorator
-@pytest.mark.filterwarnings(
-    "ignore:'force_all_finite' was renamed to 'ensure_all_finite':FutureWarning"
-)
 @pytest.mark.parametrize("seed", range(5))
 @pytest.mark.parametrize("min_samples_leaf", (1, 20))
 @pytest.mark.parametrize(
@@ -178,7 +170,7 @@ def test_same_predictions_classification(
     est_lightgbm.fit(X_train, y_train)
     est_sklearn.fit(X_train, y_train)
 
-    # We need X to be treated an numerical data, not pre-binned data.
+    # We need X to be treated a numerical data, not pre-binned data.
     X_train, X_test = X_train.astype(np.float32), X_test.astype(np.float32)
 
     pred_lightgbm = est_lightgbm.predict(X_train)
@@ -199,10 +191,6 @@ def test_same_predictions_classification(
         np.testing.assert_almost_equal(acc_lightgbm, acc_sklearn, decimal=2)
 
 
-# TODO(1.8) remove the filterwarnings decorator
-@pytest.mark.filterwarnings(
-    "ignore:'force_all_finite' was renamed to 'ensure_all_finite':FutureWarning"
-)
 @pytest.mark.parametrize("seed", range(5))
 @pytest.mark.parametrize("min_samples_leaf", (1, 20))
 @pytest.mark.parametrize(
@@ -257,7 +245,7 @@ def test_same_predictions_multiclass_classification(
     est_lightgbm.fit(X_train, y_train)
     est_sklearn.fit(X_train, y_train)
 
-    # We need X to be treated an numerical data, not pre-binned data.
+    # We need X to be treated a numerical data, not pre-binned data.
     X_train, X_test = X_train.astype(np.float32), X_test.astype(np.float32)
 
     pred_lightgbm = est_lightgbm.predict(X_train)

@@ -3,7 +3,7 @@ import numpy as np
 from libc cimport math
 from libc.math cimport INFINITY
 
-from ..utils._typedefs cimport float32_t, float64_t
+from sklearn.utils._typedefs cimport float32_t, float64_t
 
 
 cdef float EPSILON_DBL = 1e-8
