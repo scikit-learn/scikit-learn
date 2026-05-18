@@ -2605,14 +2605,10 @@ def test_pipeline_with_callbacks_on_steps():
     assert est_callback.count_hooks("on_fit_task_end") == 1 + max_iter
 
 
-def test_pipeline_final_step_failure_calls_task_end():
-    """Begin/end pair around the final step stays balanced when the final fit raises.
-
-    Regression test for the ``_final_step_task`` context manager: without the
-    ``try/finally`` around the wrapped body, the ``on_fit_task_end`` hook on the
-    final-step subcontext is skipped when the final estimator's ``fit`` raises,
-    leaving the task tree half-open and ``teardown`` running over an
-    inconsistent state.
+def test_pipeline_final_step_failure_propagates_and_runs_teardown():
+    """A failure in the final step propagates to the caller and still runs
+    ``teardown`` on the registered callbacks so they can release their
+    resources, regardless of whether the task tree is left half-open.
     """
 
     class FailingFinal(ClassifierMixin, BaseEstimator):
@@ -2628,11 +2624,15 @@ def test_pipeline_final_step_failure_calls_task_end():
     with pytest.raises(RuntimeError, match="FailingFinal.fit failed"):
         pipe.fit(X, y)
 
-    # root + scaler + final = 3 begin / 3 end, even though the final fit raised.
-    assert callback.count_hooks("on_fit_task_begin") == 3
-    assert callback.count_hooks("on_fit_task_end") == 3
-    # teardown still fires.
+    # Cleanup is the contract callbacks rely on; teardown must fire even on
+    # a failed fit.
     assert callback.count_hooks("teardown") == 1
+    # Begin hooks fire up to the point of failure (root, scaler, final-step).
+    assert callback.count_hooks("on_fit_task_begin") == 3
+    # The scaler completed and its end fired. The final-step end is skipped
+    # because the wrapped fit raised; the root end is skipped for the same
+    # reason. ``on_fit_task_end`` signals "task completed", not "task aborted".
+    assert callback.count_hooks("on_fit_task_end") == 1
 
 
 def test_pipeline_memory_callbacks_second_fit_same_pipeline():
