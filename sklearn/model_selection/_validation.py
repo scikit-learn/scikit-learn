@@ -2153,10 +2153,8 @@ def _incremental_fit_estimator(
     """Train estimator on training subsets incrementally and compute scores."""
     train_scores, test_scores, fit_times, score_times = [], [], [], []
     partitions = zip(train_sizes, np.split(train, train_sizes)[:-1])
-    if fit_params is None:
-        fit_params = {}
-    if score_params is None:
-        score_params = {}
+    fit_params = fit_params if fit_params is not None else {}
+    score_params = score_params if score_params is not None else {}
     if classes is None:
         partial_fit_func = partial(estimator.partial_fit)
     else:
