@@ -598,6 +598,39 @@ def test_removing_non_existing_param_raises():
         InvalidRequestRemoval().get_metadata_routing()
 
 
+def test_get_class_level_metadata_request_values():
+    """Test the `method` and `ignore_params` arguments of
+    `_get_class_level_metadata_request_values`, used by scorers to inspect an
+    arbitrary `score_func` rather than a class-level method.
+    """
+
+    class Dummy(BaseEstimator):
+        def fit(self, X, y, sample_weight=None, extra=None):
+            return self
+
+    # Baseline: sniff the class method's signature.
+    assert Dummy._get_class_level_metadata_request_values("fit") == {
+        "sample_weight": None,
+        "extra": None,
+    }
+
+    # `ignore_params` filters names out of the result.
+    assert Dummy._get_class_level_metadata_request_values(
+        "fit", ignore_params={"sample_weight"}
+    ) == {"extra": None}
+
+    # `method` lets us inspect a different callable; first arg is auto-skipped.
+    def score_func(y_true, y_pred, sample_weight=None):
+        return 0  # pragma: no cover
+
+    assert Dummy._get_class_level_metadata_request_values(
+        "score", method=score_func, ignore_params={"y_pred"}
+    ) == {"sample_weight": None}
+
+    # No matching class method and no `method` callable -> empty dict.
+    assert Dummy._get_class_level_metadata_request_values("predict") == {}
+
+
 @config_context(enable_metadata_routing=True)
 def test_method_metadata_request():
     mmr = MethodMetadataRequest(owner="test", method="fit")

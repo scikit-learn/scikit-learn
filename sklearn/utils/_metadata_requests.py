@@ -1516,14 +1516,14 @@ class _MetadataRequester:
         .. [1] https://www.python.org/dev/peps/pep-0487
         """
         try:
-            for method in SIMPLE_METHODS:
-                requests = cls._get_class_level_metadata_request_values(method)
+            for method_name in SIMPLE_METHODS:
+                requests = cls._get_class_level_metadata_request_values(method_name)
                 if not requests:
                     continue
                 setattr(
                     cls,
-                    f"set_{method}_request",
-                    RequestMethod(method, sorted(requests)),
+                    f"set_{method_name}_request",
+                    RequestMethod(method_name, sorted(requests)),
                 )
         except Exception:
             # if there are any issues here, it will be raised when
@@ -1653,14 +1653,16 @@ class _MetadataRequester:
             requests = get_routing_for_object(self._metadata_request)
         else:
             requests = MetadataRequest(owner=self)
-            for method in SIMPLE_METHODS:
+            for method_name in SIMPLE_METHODS:
                 setattr(
                     requests,
-                    method,
+                    method_name,
                     MethodMetadataRequest(
                         owner=self,
-                        method=method,
-                        requests=self._get_class_level_metadata_request_values(method),
+                        method=method_name,
+                        requests=self._get_class_level_metadata_request_values(
+                            method_name
+                        ),
                     ),
                 )
         return requests
