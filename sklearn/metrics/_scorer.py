@@ -277,7 +277,7 @@ class _BaseScorer(_MetadataRequester):
     def _routing_repr(self):
         return repr(self)
 
-    # TODO (1.11): remove in 1.11
+    # TODO (1.11): remove decorator and sample_weight param from signature
     @_deprecate_positional_args(version="1.11")
     def __call__(self, estimator, X, y_true, *, sample_weight=None, **kwargs):
         """Evaluate predicted target values for X relative to y_true.
@@ -399,6 +399,8 @@ class _BaseScorer(_MetadataRequester):
                             "y_prob",
                             "y_proba",
                             "y_score",
+                            "y2",
+                            "pred_decision",
                             "labels_true",
                             "labels_pred",
                         },
