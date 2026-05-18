@@ -465,8 +465,8 @@ def check_consistent_length(*arrays):
 def _make_indexable(iterable):
     """Ensure iterable supports indexing or convert to an indexable variant.
 
-    Convert sparse matrices to csr and other non-indexable iterable to arrays.
-    Let `None` and indexable objects (e.g. pandas dataframes) pass unchanged.
+    Convert sparse matrices to csr, dataframes to narwhals.DataFrame and other
+    non-indexable iterable to arrays. Let `None` and indexable objects pass unchanged.
 
     Parameters
     ----------
@@ -475,10 +475,13 @@ def _make_indexable(iterable):
     """
     if sp.issparse(iterable):
         return iterable.tocsr()
+    elif _nw_is_into_df_or_series(iterable):
+        # Even if dataframe has __getitem__, semantics are quite different, examples:
+        # pandas: df[0] -> KeyError if 0 is not a column name
+        # polars: df[0] -> returns the 0th row
+        return nw.from_native(iterable, allow_series=True)
     elif hasattr(iterable, "__getitem__"):
         return iterable
-    elif _nw_is_into_df_or_series(iterable):
-        return nw.from_native(iterable)
     elif iterable is None:
         return iterable
     return np.array(iterable)
