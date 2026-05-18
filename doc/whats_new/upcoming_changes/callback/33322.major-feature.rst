@@ -8,8 +8,7 @@
 
   The following estimators support callbacks:
 
-  - :class:`~sklearn.linear_model.LogisticRegression` (only with ``solver="lbfgs"``;
-    other solvers do not yet emit callback hooks).
+  - :class:`~sklearn.linear_model.LogisticRegression` (only with ``solver="lbfgs"``).
   - :class:`~sklearn.model_selection.GridSearchCV`
   - :class:`~sklearn.model_selection.HalvingGridSearchCV`
   - :class:`~sklearn.model_selection.HalvingRandomSearchCV`

@@ -105,16 +105,15 @@ class _LbfgsCallbackBridge:
     ``scipy.optimize.minimize`` calls ``callback(xk)`` at the end of each L-BFGS
     iteration. We map that onto a pair of sklearn hooks per iteration:
 
-    - close the iteration that just finished
-      (:meth:`~CallbackContext.call_on_fit_task_end` on the current subcontext),
-    - open the next iteration's subcontext
-      (:meth:`~CallbackContext.call_on_fit_task_begin`).
+    - end the iteration that just finished (``on_fit_task_end`` on the current
+      subcontext),
+    - start the next iteration's subcontext (``on_fit_task_begin``).
 
-    The first iteration's subcontext is opened at construction time using the
-    initial weights ``w0``. After ``scipy.optimize.minimize`` returns, the
-    subcontext most recently opened by ``__call__`` corresponds to an iteration
-    that never ran; :meth:`close` closes it as an empty task so the task tree
-    stays balanced.
+    The first iteration's subcontext is created at construction time using the
+    initial weights ``w0``. After ``scipy.optimize.minimize`` returns, the last
+    subcontext created by ``__call__`` corresponds to an iteration that never ran.
+    ``close`` ends it as an empty task so every ``on_fit_task_begin`` call has a
+    matching ``on_fit_task_end`` call.
     """
 
     def __init__(
@@ -147,10 +146,10 @@ class _LbfgsCallbackBridge:
             xp=xp,
             device_=device_,
         )
-        # Open the first iteration's subcontext, using the initial weights.
-        self._iter_ctx = self._open_iter(w0)
+        # Start the first iteration's subcontext, using the initial weights.
+        self._iter_ctx = self._start_iter(w0)
 
-    def _open_iter(self, w):
+    def _start_iter(self, w):
         coef, intercept = _compute_coef_intercept(w, **self._coef_kwargs)
         ctx = self._callback_ctx.subcontext(task_name="lbfgs-iter")
         ctx.call_on_fit_task_begin(
@@ -178,14 +177,15 @@ class _LbfgsCallbackBridge:
         # is the min supported scipy in scikit-learn 1.10.
 
         # Begin hook for the next iteration's subcontext.
-        self._iter_ctx = self._open_iter(xk)
+        self._iter_ctx = self._start_iter(xk)
 
     def close(self):
-        """Close the orphan subcontext left over after ``scipy.optimize.minimize``.
+        """Invoke ``on_fit_task_end`` for the left-over subcontext.
 
-        The last subcontext opened by ``__call__`` corresponds to an iteration
-        that ``scipy.optimize.minimize`` did not actually run, so we close it as
-        an empty task (no kwargs forwarded to the hook).
+        The last subcontext created by ``__call__`` corresponds to an iteration
+        that ``scipy.optimize.minimize`` did not actually run. It corresponds to
+        an empty task so we don't forward anything to the ``on_fit_task_end``
+        hooks.
         """
         self._iter_ctx.call_on_fit_task_end(estimator=self._estimator)
 
