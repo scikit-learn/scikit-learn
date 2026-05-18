@@ -1,5 +1,6 @@
 import math
 import re
+import warnings
 
 import numpy as np
 import pytest
@@ -2076,8 +2077,8 @@ def test_ndcg_score():
 
 
 def _test_ndcg_score_for(y_true, y_score):
-    ideal = _ndcg_sample_scores(y_true, y_true)
-    score = _ndcg_sample_scores(y_true, y_score)
+    ideal = _ndcg_sample_scores(y_true, y_true, replace_undefined_by=0.0)
+    score = _ndcg_sample_scores(y_true, y_score, replace_undefined_by=0.0)
     assert (score <= ideal).all()
     all_zero = (y_true == 0).all(axis=1)
     assert ideal[~all_zero] == pytest.approx(np.ones((~all_zero).sum()))
@@ -2089,6 +2090,64 @@ def _test_ndcg_score_for(y_true, y_score):
     assert score[all_zero] == pytest.approx(np.zeros(all_zero.sum()))
     assert ideal.shape == (y_true.shape[0],)
     assert score.shape == (y_true.shape[0],)
+
+
+def test_ndcg_replace_undefined_by_default_nan():
+    """NDCG with default replace_undefined_by=np.nan excludes undefined samples."""
+    y_true = np.array([[1, 0, 1], [0, 0, 0]])
+    y_score = np.array([[1, 0, 1], [0, 0, 0]])
+    with pytest.warns(UndefinedMetricWarning):
+        result = ndcg_score(y_true, y_score)
+    # Only the first sample contributes; it's a perfect prediction so NDCG=1
+    assert result == pytest.approx(1.0)
+
+
+def test_ndcg_replace_undefined_by_zero():
+    """NDCG with replace_undefined_by=0.0 includes undefined samples as 0."""
+    y_true = np.array([[1, 0, 1], [0, 0, 0]])
+    y_score = np.array([[1, 0, 1], [0, 0, 0]])
+    with pytest.warns(UndefinedMetricWarning):
+        result = ndcg_score(y_true, y_score, replace_undefined_by=0.0)
+    # First sample: NDCG=1, second: 0 -> average = 0.5
+    assert result == pytest.approx(0.5)
+
+
+def test_ndcg_replace_undefined_by_one():
+    """NDCG with replace_undefined_by=1.0 treats undefined as perfect."""
+    y_true = np.array([[1, 0, 1], [0, 0, 0]])
+    y_score = np.array([[1, 0, 1], [0, 0, 0]])
+    with pytest.warns(UndefinedMetricWarning):
+        result = ndcg_score(y_true, y_score, replace_undefined_by=1.0)
+    # Both samples: 1.0 -> average = 1.0
+    assert result == pytest.approx(1.0)
+
+
+def test_ndcg_all_zero_relevance_warns():
+    """NDCG raises UndefinedMetricWarning when all samples have zero relevance."""
+    y_true = np.array([[0, 0], [0, 0]])
+    y_score = np.array([[1, 2], [3, 4]])
+    with pytest.warns(UndefinedMetricWarning, match="NDCG is undefined"):
+        ndcg_score(y_true, y_score)
+
+
+def test_ndcg_no_warning_when_all_relevant():
+    """No warning when no samples have all-zero relevance."""
+    y_true = np.array([[1, 0, 1], [0, 1, 0]])
+    y_score = np.array([[1, 0, 1], [0, 1, 0]])
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        result = ndcg_score(y_true, y_score)
+    assert result == pytest.approx(1.0)
+
+
+def test_ndcg_sample_scores_replace_undefined_by():
+    """_ndcg_sample_scores returns replace_undefined_by for undefined samples."""
+    y_true = np.array([[1, 0], [0, 0]])
+    y_score = np.array([[1, 0], [1, 0]])
+    with pytest.warns(UndefinedMetricWarning):
+        scores = _ndcg_sample_scores(y_true, y_score, replace_undefined_by=0.5)
+    assert scores[0] == pytest.approx(1.0)  # defined sample
+    assert scores[1] == pytest.approx(0.5)  # undefined -> replaced
 
 
 def test_partial_roc_auc_score():
