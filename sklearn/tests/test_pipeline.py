@@ -2605,6 +2605,36 @@ def test_pipeline_with_callbacks_on_steps():
     assert est_callback.count_hooks("on_fit_task_end") == 1 + max_iter
 
 
+def test_pipeline_final_step_failure_calls_task_end():
+    """Begin/end pair around the final step stays balanced when the final fit raises.
+
+    Regression test for the ``_final_step_task`` context manager: without the
+    ``try/finally`` around the wrapped body, the ``on_fit_task_end`` hook on the
+    final-step subcontext is skipped when the final estimator's ``fit`` raises,
+    leaving the task tree half-open and ``teardown`` running over an
+    inconsistent state.
+    """
+
+    class FailingFinal(ClassifierMixin, BaseEstimator):
+        def fit(self, X, y):
+            raise RuntimeError("FailingFinal.fit failed")
+
+    callback = RecordingCallback()
+    pipe = Pipeline([("sc", StandardScaler()), ("clf", FailingFinal())]).set_callbacks(
+        callback
+    )
+
+    X, y = load_iris(return_X_y=True)
+    with pytest.raises(RuntimeError, match="FailingFinal.fit failed"):
+        pipe.fit(X, y)
+
+    # root + scaler + final = 3 begin / 3 end, even though the final fit raised.
+    assert callback.count_hooks("on_fit_task_begin") == 3
+    assert callback.count_hooks("on_fit_task_end") == 3
+    # teardown still fires.
+    assert callback.count_hooks("teardown") == 1
+
+
 def test_pipeline_memory_callbacks_second_fit_same_pipeline():
     """Check that callbacks don't break the caching mechanism of the pipeline."""
     X, y = load_iris(return_X_y=True)
