@@ -67,9 +67,12 @@ jobs:
         with:
           persist-credentials: false
 
+      # Build the wheel for the Pyodide version used in the jupyterlite deployment configured
+      # in doc/jupyter-lite.json (the two Pyodide versions need to be manually aligned).
       - uses: pypa/cibuildwheel@298ed2fb2c105540f5ed055e8a6ad78d82dd3a7e # v3.3.1
         env:
           CIBW_PLATFORM: pyodide
+          CIBW_PYODIDE_VERSION: "0.29.0"
           SKLEARN_SKIP_OPENMP_TEST: "true"
           SKLEARN_SKIP_NETWORK_TESTS: 1
           CIBW_TEST_REQUIRES: "pytest pandas"
