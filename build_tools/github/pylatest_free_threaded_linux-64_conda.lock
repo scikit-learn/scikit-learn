@@ -37,7 +37,7 @@ https://conda.anaconda.org/conda-forge/linux-64/cython-3.2.4-py314h3f98dc2_0.con
 https://conda.anaconda.org/conda-forge/noarch/iniconfig-2.3.0-pyhd8ed1ab_0.conda#9614359868482abba1bd15ce465e3c42
 https://conda.anaconda.org/conda-forge/linux-64/libblas-3.11.0-7_h4a7cf45_openblas.conda#955b44e8b00b7f7ef4ce0130cef12394
 https://conda.anaconda.org/conda-forge/noarch/meson-1.11.1-pyhcf101f3_0.conda#ced6358cc61d7e381e68fc128f7b63db
-https://conda.anaconda.org/conda-forge/noarch/narwhals-2.21.0-pyhcf101f3_0.conda#d2ec42db1d2fcd69003c8b069fb4301c
+https://conda.anaconda.org/conda-forge/noarch/narwhals-2.21.2-pyhcf101f3_0.conda#6687827c332121727ce383919e1ec8c2
 https://conda.anaconda.org/conda-forge/noarch/packaging-26.2-pyhc364b38_0.conda#4c06a92e74452cfa53623a81592e8934
 https://conda.anaconda.org/conda-forge/noarch/pip-26.1.1-pyh145f28c_0.conda#2e7e59a063366f1fc4f45ac86bd9485f
 https://conda.anaconda.org/conda-forge/noarch/pluggy-1.6.0-pyhf9edf01_1.conda#d7585b6550ad04c8c5e21097ada2888e
@@ -53,7 +53,7 @@ https://conda.anaconda.org/conda-forge/linux-64/liblapack-3.11.0-7_h47877c9_open
 https://conda.anaconda.org/conda-forge/noarch/pyproject-metadata-0.11.0-pyhd8ed1ab_0.conda#cd6dae6c673c8f12fe7267eac3503961
 https://conda.anaconda.org/conda-forge/noarch/python-freethreading-3.14.4-h92d6c8b_0.conda#431c21b61666866b1b4cb3252974642c
 https://conda.anaconda.org/conda-forge/noarch/meson-python-0.19.0-pyh7e86bf3_2.conda#369afcc2d4965e7a6a075ab82e2a26b8
-https://conda.anaconda.org/conda-forge/linux-64/numpy-2.4.3-py314hd4f4903_0.conda#ee2b2bb9e96a9cd64d68492842559adf
+https://conda.anaconda.org/conda-forge/linux-64/numpy-2.4.5-py314hd4f4903_0.conda#4c7460c3172b2fdc6d73cdaf07fe9f98
 https://conda.anaconda.org/conda-forge/noarch/pytest-9.0.3-pyhc364b38_1.conda#6a991452eadf2771952f39d43615bb3e
 https://conda.anaconda.org/conda-forge/noarch/pytest-run-parallel-0.8.2-pyhd8ed1ab_0.conda#288250b7e539cddf52f39616deae278d
 https://conda.anaconda.org/conda-forge/linux-64/scipy-1.17.1-py314h529d2a9_0.conda#c09dd94be0e88aca25c60fb53d5c8e45
