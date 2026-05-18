@@ -1904,13 +1904,16 @@ def test_check_method_params(indices):
     )
 
 
+@pytest.mark.parametrize("convert_to_narwhals", [False, True])
 @pytest.mark.parametrize("sp_format", [True, "csr", "csc", "coo", "bsr"])
-def test_check_sparse_pandas_sp_format(sp_format):
+def test_check_sparse_pandas_sp_format(convert_to_narwhals, sp_format):
     # check_array converts pandas.DataFrame with only sparse arrays into sparse matrix
     pd = pytest.importorskip("pandas")
     sp_mat = _sparse_random_matrix(10, 3)
 
     sdf = pd.DataFrame.sparse.from_spmatrix(sp_mat)
+    if convert_to_narwhals:
+        sdf = _convert_container(sdf, constructor_name="narwhals")
     result = check_array(sdf, accept_sparse=sp_format)
 
     if sp_format is True:
