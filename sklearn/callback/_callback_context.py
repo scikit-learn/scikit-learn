@@ -541,37 +541,28 @@ class _CallbackPropagation:
         sub_estimator._parent_callback_ctx = parent_context
         self._closed = False
 
-        try:
-            callbacks_to_propagate = [
-                cb
-                for cb in parent_context._callbacks
-                if isinstance(cb, AutoPropagatedCallback)
-                and (
-                    cb.max_propagation_depth is None
-                    or parent_context._propagation_depth < cb.max_propagation_depth
-                )
-            ]
-            if callbacks_to_propagate and not hasattr(sub_estimator, "set_callbacks"):
-                warnings.warn(
-                    f"The estimator {sub_estimator.__class__.__name__} does not "
-                    f"support callbacks. The callbacks attached to "
-                    f"{parent_context.estimator_name} will not be propagated to "
-                    f"this estimator."
-                )
-                callbacks_to_propagate = []
-            if callbacks_to_propagate:
-                parent_context._propagated_callbacks = callbacks_to_propagate
-                curr = getattr(sub_estimator, "_skl_callbacks", [])
-                sub_estimator.set_callbacks(*(curr + callbacks_to_propagate))
-            self._callbacks_to_propagate = callbacks_to_propagate
-        except Exception:
-            # A later mutation failed; roll back the parent-context link and
-            # let the exception propagate. ``close()`` would also handle this,
-            # but doing it inline keeps the failure path symmetric with the
-            # pre-validation failure path above.
-            sub_estimator.__dict__.pop("_parent_callback_ctx", None)
-            self._closed = True
-            raise
+        callbacks_to_propagate = [
+            cb
+            for cb in parent_context._callbacks
+            if isinstance(cb, AutoPropagatedCallback)
+            and (
+                cb.max_propagation_depth is None
+                or parent_context._propagation_depth < cb.max_propagation_depth
+            )
+        ]
+        if callbacks_to_propagate and not hasattr(sub_estimator, "set_callbacks"):
+            warnings.warn(
+                f"The estimator {sub_estimator.__class__.__name__} does not "
+                f"support callbacks. The callbacks attached to "
+                f"{parent_context.estimator_name} will not be propagated to "
+                f"this estimator."
+            )
+            callbacks_to_propagate = []
+        if callbacks_to_propagate:
+            parent_context._propagated_callbacks = callbacks_to_propagate
+            curr = getattr(sub_estimator, "_skl_callbacks", [])
+            sub_estimator.set_callbacks(*(curr + callbacks_to_propagate))
+        self._callbacks_to_propagate = callbacks_to_propagate
 
     def close(self):
         """Undo the propagation. Safe to call multiple times.
@@ -612,7 +603,10 @@ class _CallbackPropagation:
             )
             try:
                 self.close()
-            except Exception:
+            except Exception:  # pragma: no cover
+                # Defensive: never propagate exceptions out of ``__del__``,
+                # CPython routes those to ``sys.unraisablehook`` and they
+                # would otherwise pollute stderr at GC time.
                 pass
 
 
