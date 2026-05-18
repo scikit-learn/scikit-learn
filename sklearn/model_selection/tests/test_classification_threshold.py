@@ -24,6 +24,7 @@ from sklearn.model_selection import (
     FixedThresholdClassifier,
     StratifiedShuffleSplit,
     TunedThresholdClassifierCV,
+    train_test_split,
 )
 from sklearn.model_selection._classification_threshold import (
     _fit_and_score_over_thresholds,
@@ -616,3 +617,115 @@ def test_fixed_threshold_classifier_classes_():
     classifier = LogisticRegression().fit(X, y)
     fixed_threshold_classifier = FixedThresholdClassifier(estimator=classifier)
     assert_array_equal(fixed_threshold_classifier.classes_, classifier.classes_)
+
+
+@pytest.fixture
+def binary_dataset():
+    """Generate a binary classification dataset for testing."""
+    X, y = make_classification(
+        n_samples=100, n_features=5, n_classes=2, random_state=42
+    )
+    return train_test_split(X, y, test_size=0.2, random_state=1)
+
+
+def test_binary_threshold_single_value(binary_dataset):
+    """Test binary thresholding returns only 0 or 1."""
+    X_train, X_test, y_train, y_test = binary_dataset
+
+    clf = FixedThresholdClassifier(estimator=LogisticRegression(), threshold=0.6)
+    clf.fit(X_train, y_train)
+    y_pred = clf.predict(X_test)
+
+    # check binary output
+    assert set(np.unique(y_pred)).issubset({0, 1})
+
+
+def test_multi_thresholds_with_labels(binary_dataset):
+    """Test multi-threshold classification assigns correct string labels to bins."""
+    X_train, X_test, y_train, y_test = binary_dataset
+
+    clf = FixedThresholdClassifier(
+        estimator=LogisticRegression(),
+        threshold=[0.3, 0.6],
+        labels=["Low", "Medium", "High"],
+    )
+    clf.fit(X_train, y_train)
+    y_pred = clf.predict(X_test)
+
+    # output should only contain provided labels
+    assert set(np.unique(y_pred)) == {"Low", "Medium", "High"}
+
+
+def test_multi_thresholds_without_labels(binary_dataset):
+    """Test multi-threshold classification returns numeric bin indices
+    without labels."""
+    X_train, X_test, y_train, _ = binary_dataset
+
+    clf = FixedThresholdClassifier(estimator=LogisticRegression(), threshold=[0.3, 0.6])
+    clf.fit(X_train, y_train)
+    y_pred = clf.predict(X_test)
+
+    # should return bin indices: 0, 1, 2
+    assert set(np.unique(y_pred)).issubset({0, 1, 2})
+
+
+def test_invalid_label_length_raises_error(binary_dataset):
+    """Test ValueError is raised if number of labels != number of bins
+    (len(thresholds)+1)."""
+    X_train, _, y_train, _ = binary_dataset
+
+    clf = FixedThresholdClassifier(
+        estimator=LogisticRegression(),
+        threshold=[0.3, 0.6],
+        labels=["Low", "High"],  # only 2 labels for 3 bins
+    )
+
+    clf.fit(X_train, y_train)
+    with pytest.raises(ValueError, match="Number of labels must match number of bins"):
+        clf.predict(X_train)
+
+
+def test_not_fitted_raises_error(binary_dataset):
+    """Test that predict raises NotFittedError if estimator isn't fitted."""
+    X_train, _, _, _ = binary_dataset
+
+    clf = FixedThresholdClassifier(
+        estimator=LogisticRegression(),
+        threshold=[0.3, 0.6],
+        labels=["Low", "Medium", "High"],
+    )
+
+    with pytest.raises(NotFittedError):
+        clf.predict(X_train)
+
+
+def test_binary_labels_invalid_length_raises(binary_dataset):
+    """Test binary classification raises error with invalid number of labels (not 2)."""
+    X_train, X_test, y_train, _ = binary_dataset
+
+    # single label provided for binary classification (invalid)
+    clf = FixedThresholdClassifier(
+        estimator=LogisticRegression(), threshold=0.5, labels=["positive"]
+    )
+
+    clf.fit(X_train, y_train)
+
+    with pytest.raises(ValueError, match="Labels must contain exactly two elements"):
+        clf.predict(X_test)
+
+
+def test_unsorted_thresholds_raises(binary_dataset):
+    """Test that unsorted thresholds raise a ValueError."""
+    X_train, X_test, y_train, _ = binary_dataset
+
+    clf = FixedThresholdClassifier(
+        estimator=LogisticRegression(),
+        threshold=[0.7, 0.3],  # unsorted
+        labels=["Low", "Medium", "High"],
+    )
+    clf.fit(X_train, y_train)
+
+    with pytest.raises(
+        ValueError, match="Thresholds must be in strictly increasing order."
+    ):
+        clf.predict(X_test)

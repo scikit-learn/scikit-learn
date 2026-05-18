@@ -999,16 +999,83 @@ def check_scoring(estimator=None, scoring=None, *, allow_none=False, raise_exc=T
             )
 
 
-def _threshold_scores_to_class_labels(y_score, threshold, classes, pos_label):
-    """Threshold `y_score` and return the associated class labels."""
-    if pos_label is None:
-        map_thresholded_score_to_label = np.array([0, 1])
-    else:
-        pos_label_idx = np.flatnonzero(classes == pos_label)[0]
-        neg_label_idx = np.flatnonzero(classes != pos_label)[0]
-        map_thresholded_score_to_label = np.array([neg_label_idx, pos_label_idx])
+def _threshold_scores_to_class_labels(
+    y_score, threshold, classes, pos_label=None, labels=None
+):
+    """Convert continuous scores into discrete class predictions based on thresholds.
 
-    return classes[map_thresholded_score_to_label[(y_score >= threshold).astype(int)]]
+    Parameters
+    -------
+    y_score : array-like of shape (n_samples,)
+        Continuous prediction scores (e.g. probabilities) from a classifier.
+
+    threshold : float or array-like of floats
+        Threshold(s) used to convert scores into class labels.
+        A single float implies binary classification;
+        multiple values define bin edges for multi-class prediction.
+
+    classes : array-like of shape (n_classes,)
+        The original class labels from the classifier.
+
+    pos_label : int, float, bool or str, default=None
+        The class to treat as the positive class in binary thresholding.
+        Required if `classes` contains more than two labels or is non-standard.
+
+    labels : array-like of shape (n_bins,), optional
+        Class labels to assign to each bin for multi-threshold classification,
+        or to the binary decisions if a single threshold is used.
+        For binary classification, must have exactly two labels.
+
+    Returns
+    -------
+    y_pred : ndarray of shape (n_samples,)
+        Predicted class labels or bin indices, depending on `threshold` and `labels`.
+
+    Raises
+    -------
+    ValueError
+        If `threshold` contains multiple values that are not strictly increasing.
+        If `labels` is provided but:
+        - In multi-threshold classification, its length does not match the number
+        of bins (`len(threshold) + 1`).
+        - In binary classification, it does not contain exactly two elements.
+    """
+    y_score_arr = np.asarray(y_score)
+    th_arr = np.atleast_1d(threshold)
+
+    # multiple threshold classification
+    if th_arr.ndim == 1 and th_arr.size > 1:
+        if not np.all(np.diff(th_arr) > 0):
+            raise ValueError("Thresholds must be in strictly increasing order.")
+        bin_indices = np.digitize(y_score_arr, th_arr)
+        if labels is not None:
+            expected_bins = len(th_arr) + 1
+            if len(labels) != expected_bins:
+                raise ValueError(
+                    f"Number of labels must match number of bins ({expected_bins})"
+                    f", got {len(labels)} instead."
+                )
+            return np.array(labels)[bin_indices]
+        return bin_indices
+
+    # binary classification
+    decisions = (y_score_arr >= threshold).astype(int)
+
+    if labels is not None:
+        if len(labels) != 2:
+            raise ValueError(
+                "Labels must contain exactly two elements for binary classification."
+            )
+        return np.array(labels)[decisions]
+
+    if pos_label is None:
+        map_idx = np.array([0, 1])
+    else:
+        pos_idx = np.flatnonzero(classes == pos_label)[0]
+        neg_idx = np.flatnonzero(classes != pos_label)[0]
+        map_idx = np.array([neg_idx, pos_idx])
+
+    return classes[map_idx[decisions]]
 
 
 class _CurveScorer(_BaseScorer):
