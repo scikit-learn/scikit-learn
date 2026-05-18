@@ -1362,7 +1362,7 @@ def test_continuous_multilabel_representation_invariance(name):
     # To make sure at least one empty label is present
     y_true = np.vstack([y_true, [[0] * n_classes]])
 
-    # Generate continuous scores for y_score (not binary labels)
+    # Generate continuous scores for y_score
     y_score = random_state.uniform(size=y_true.shape)
 
     # Some metrics (e.g. log_loss) require y_score to be probabilities (sum to 1)
@@ -1373,7 +1373,6 @@ def test_continuous_multilabel_representation_invariance(name):
 
     y_true_list_list_indicator = [list(a) for a in y_true_list_array_indicator]
     y_score_list_list = [list(a) for a in y_score_list_array]
-    print(f"{y_score_list_list=}")
 
     metric = ALL_METRICS[name]
     measure = metric(y_true, y_score)
@@ -1399,6 +1398,18 @@ def test_continuous_multilabel_representation_invariance(name):
             "indicator formats."
         ),
     )
+    # Only these metrics support sparse input
+    if name in {"label_ranking_loss", "label_ranking_average_precision_score"}:
+        for coo_container in COO_CONTAINERS:
+            y_true_sparse = coo_container(y_true)
+            assert_almost_equal(
+                metric(y_true_sparse, y_score),
+                measure,
+                err_msg=(
+                    f"{name} failed representation invariance "
+                    "between dense and sparse indicator formats."
+                ),
+            )
 
 
 @pytest.mark.parametrize("name", sorted(MULTILABELS_METRICS))
