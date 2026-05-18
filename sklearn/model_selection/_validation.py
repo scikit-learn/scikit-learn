@@ -47,7 +47,7 @@ from sklearn.utils.metadata_routing import (
 )
 from sklearn.utils.metaestimators import _safe_split
 from sklearn.utils.parallel import Parallel, delayed
-from sklearn.utils.validation import _check_method_params, _num_samples
+from sklearn.utils.validation import _check_method_params, _is_arraylike, _num_samples
 
 __all__ = [
     "cross_val_predict",
@@ -663,6 +663,14 @@ def cross_val_score(
     return cv_results["test_score"]
 
 
+def _move_method_params_to(params, xp, device):
+    """Move array-like method params to the given namespace and device."""
+    return {
+        k: move_to(v, xp=xp, device=device) if _is_arraylike(v) else v
+        for k, v in params.items()
+    }
+
+
 def _fit_and_score(
     estimator,
     X,
@@ -777,6 +785,10 @@ def _fit_and_score(
     xp, _ = get_namespace(X)
     X_device = device(X)
 
+    # `y` can be None for unsupervised estimators
+    if y is not None:
+        y = move_to(y, xp=xp, device=X_device)
+
     # Make sure that we can fancy index X even if train and test are provided
     # as NumPy arrays by NumPy only cross-validation splitters.
     train, test = xp.asarray(train, device=X_device), xp.asarray(test, device=X_device)
@@ -807,8 +819,10 @@ def _fit_and_score(
 
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
+    fit_params = _move_method_params_to(fit_params, xp=xp, device=X_device)
     fit_params = _check_method_params(X, params=fit_params, indices=train)
     score_params = score_params if score_params is not None else {}
+    score_params = _move_method_params_to(score_params, xp=xp, device=X_device)
     score_params_train = _check_method_params(X, params=score_params, indices=train)
     score_params_test = _check_method_params(X, params=score_params, indices=test)
 

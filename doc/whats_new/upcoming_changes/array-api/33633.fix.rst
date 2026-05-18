@@ -1,0 +1,2 @@
+- :class:`model_selection.GridSearchCV` now supports array API inputs with mixed devices.
+  By :user:`Tim Head <betatim>`.
