@@ -9,9 +9,9 @@ from collections import defaultdict
 # scipy and cython should by in sync with pyproject.toml
 NUMPY_MIN_VERSION = "1.24.1"
 SCIPY_MIN_VERSION = "1.10.0"
-JOBLIB_MIN_VERSION = "1.3.0"
+JOBLIB_MIN_VERSION = "1.4.0"
 NARWHALS_MIN_VERSION = "2.0.1"
-THREADPOOLCTL_MIN_VERSION = "3.2.0"
+THREADPOOLCTL_MIN_VERSION = "3.5.0"
 PYTEST_MIN_VERSION = "7.1.2"
 CYTHON_MIN_VERSION = "3.1.2"
 
@@ -43,11 +43,11 @@ dependent_packages = {
     "sphinx-copybutton": ("0.5.2", "docs"),
     "sphinx-gallery": ("0.17.1", "docs"),
     "numpydoc": ("1.2.0", "docs, tests"),
-    "Pillow": ("10.1.0", "docs"),
+    "Pillow": ("12.1.1", "docs"),
     "pooch": ("1.8.0", "docs, examples, tests"),
     "sphinx-prompt": ("1.4.0", "docs"),
     "sphinxext-opengraph": ("0.9.1", "docs"),
-    "plotly": ("5.18.0", "docs, examples"),
+    "plotly": ("5.22.0", "docs, examples"),
     "sphinxcontrib-sass": ("0.3.4", "docs"),
     "sphinx-remove-toctrees": ("1.0.0.post1", "docs"),
     "sphinx-design": ("0.6.0", "docs"),
