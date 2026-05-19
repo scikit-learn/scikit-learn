@@ -3399,7 +3399,7 @@ def check_classifiers_multilabel_output_format_predict_proba(name, classifier_or
             "is expected to provide probabilities of the positive class "
             "and should therefore contain values between 0 and 1."
         )
-        assert_array_less(0, y_pred, err_msg=err_msg)
+        assert_array_less(np.zeros(y_pred.shape), y_pred, err_msg=err_msg)
         assert_array_less(y_pred, 1, err_msg=err_msg)
     else:
         raise ValueError(

@@ -211,28 +211,30 @@ def assert_tree_equal(d, s, message):
     )
 
     assert_array_equal(
-        d.children_right, s.children_right, message + ": inequal children_right"
+        d.children_right, s.children_right, err_msg=message + ": inequal children_right"
     )
     assert_array_equal(
-        d.children_left, s.children_left, message + ": inequal children_left"
+        d.children_left, s.children_left, err_msg=message + ": inequal children_left"
     )
 
     external = d.children_right == TREE_LEAF
     internal = np.logical_not(external)
 
     assert_array_equal(
-        d.feature[internal], s.feature[internal], message + ": inequal features"
+        d.feature[internal], s.feature[internal], err_msg=message + ": inequal features"
     )
     assert_array_equal(
-        d.threshold[internal], s.threshold[internal], message + ": inequal threshold"
+        d.threshold[internal],
+        s.threshold[internal],
+        err_msg=message + ": inequal threshold",
     )
     assert_array_equal(
         d.n_node_samples.sum(),
         s.n_node_samples.sum(),
-        message + ": inequal sum(n_node_samples)",
+        err_msg=message + ": inequal sum(n_node_samples)",
     )
     assert_array_equal(
-        d.n_node_samples, s.n_node_samples, message + ": inequal n_node_samples"
+        d.n_node_samples, s.n_node_samples, err_msg=message + ": inequal n_node_samples"
     )
 
     assert_almost_equal(d.impurity, s.impurity, err_msg=message + ": inequal impurity")

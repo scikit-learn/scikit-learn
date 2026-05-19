@@ -61,7 +61,7 @@ def test_assert_allclose_dense_sparse(csr_container):
 
     A = _sparse_diags_array(np.ones(5), offsets=0, format="csr")
     B = csr_container(np.ones((1, 5)))
-    with pytest.raises(AssertionError, match="Arrays are not equal"):
+    with pytest.raises(AssertionError, match="sizes do not match:*"):
         assert_allclose_dense_sparse(B, A)
 
 

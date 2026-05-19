@@ -283,7 +283,7 @@ def test_ovr_multiclass():
         clf = OneVsRestClassifier(base_clf).fit(X, y)
         assert set(clf.classes_) == classes
         y_pred = clf.predict(np.array([[0, 0, 4]]))[0]
-        assert_array_equal(y_pred, ["eggs"])
+        assert_array_equal(["eggs"], y_pred)
 
         # test input as label indicator matrix
         clf = OneVsRestClassifier(base_clf).fit(X, Y)
@@ -303,7 +303,7 @@ def test_ovr_binary():
         clf = OneVsRestClassifier(base_clf).fit(X, y)
         assert set(clf.classes_) == classes
         y_pred = clf.predict(np.array([[0, 0, 4]]))[0]
-        assert_array_equal(y_pred, ["eggs"])
+        assert_array_equal(["eggs"], y_pred)
         if hasattr(base_clf, "decision_function"):
             dec = clf.decision_function(X)
             assert dec.shape == (5,)

@@ -2038,7 +2038,9 @@ def test_custom_run_search():
                         exp_results[k], results[k], err_msg="Checking " + k
                     )
                 else:
-                    assert_allclose(exp_results[k], results[k], err_msg="Checking " + k)
+                    assert_allclose(
+                        exp_results[k], results[k], err_msg="Checking " + k
+                    )  # Fails with AssertionError
 
     def fit_grid(param_grid):
         return GridSearchCV(clf, param_grid, return_train_score=True).fit(X, y)
