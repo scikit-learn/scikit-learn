@@ -702,7 +702,9 @@ def _ridge_regression(
 
     # Some callers of this method might pass alpha as single
     # element array which already has been validated.
-    if alpha is not None and not isinstance(alpha, type(xp.asarray([0.0]))):
+    if alpha is not None and not isinstance(
+        alpha, (type(xp.asarray([0.0])), np.ndarray)
+    ):
         alpha = check_scalar(
             alpha,
             "alpha",
@@ -891,7 +893,7 @@ def resolve_solver_for_numpy(positive, return_intercept, is_sparse):
 
 class _BaseRidge(LinearModel, metaclass=ABCMeta):
     _parameter_constraints: dict = {
-        "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
+        "alpha": [Interval(Real, 0, None, closed="left"), "array-like"],
         "fit_intercept": ["boolean"],
         "copy_X": ["boolean"],
         "max_iter": [Interval(Integral, 1, None, closed="left"), None],
