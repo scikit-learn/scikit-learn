@@ -7,4 +7,4 @@
   `store_cv_results=True` and `X` is an integer array, the `cv_results_`
   attribute was wrongly coerced to the integer dtype of `X`, it now always has a
   float dtype.
-  By :user:`Antoine Baker <antoinebaker>`
+  By :user:`Antoine Baker <antoinebaker>`.

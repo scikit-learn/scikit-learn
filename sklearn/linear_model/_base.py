@@ -170,7 +170,10 @@ def _preprocess_data(
 
     if check_input:
         X = check_array(
-            X, copy=copy, accept_sparse=["csr", "csc"], dtype=supported_float_dtypes(xp)
+            X,
+            copy=copy,
+            accept_sparse=["csr", "csc"],
+            dtype=supported_float_dtypes(xp, device=device_),
         )
         y = check_array(y, dtype=X.dtype, copy=True, ensure_2d=False)
     else:
