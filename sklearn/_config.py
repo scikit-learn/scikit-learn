@@ -12,6 +12,7 @@ _global_config = {
     "working_memory": int(os.environ.get("SKLEARN_WORKING_MEMORY", 1024)),
     "print_changed_only": True,
     "display": "diagram",
+    "display_layout": "horizontal",
     "pairwise_dist_chunk_size": int(
         os.environ.get("SKLEARN_PAIRWISE_DIST_CHUNK_SIZE", 256)
     ),
@@ -66,6 +67,7 @@ def set_config(
     working_memory=None,
     print_changed_only=None,
     display=None,
+    display_layout=None,
     pairwise_dist_chunk_size=None,
     enable_cython_pairwise_dist=None,
     array_api_dispatch=None,
@@ -122,6 +124,15 @@ def set_config(
         text. Global default: 'diagram'.
 
         .. versionadded:: 0.23
+
+    display_layout : {'horizontal', 'vertical'}, default=None
+        Layout of the estimator HTML diagram (used when `display='diagram'`).
+        If 'horizontal', parallel sub-estimators (e.g. the transformers of a
+        :class:`~sklearn.compose.ColumnTransformer`) are placed side by side.
+        If 'vertical', they are stacked top to bottom. Global default:
+        'horizontal'.
+
+        .. versionadded:: 2.0
 
     pairwise_dist_chunk_size : int, default=None
         The number of row vectors per chunk for the accelerated pairwise-
@@ -226,6 +237,8 @@ def set_config(
         local_config["print_changed_only"] = print_changed_only
     if display is not None:
         local_config["display"] = display
+    if display_layout is not None:
+        local_config["display_layout"] = display_layout
     if pairwise_dist_chunk_size is not None:
         local_config["pairwise_dist_chunk_size"] = pairwise_dist_chunk_size
     if enable_cython_pairwise_dist is not None:
@@ -252,6 +265,7 @@ def config_context(
     working_memory=None,
     print_changed_only=None,
     display=None,
+    display_layout=None,
     pairwise_dist_chunk_size=None,
     enable_cython_pairwise_dist=None,
     array_api_dispatch=None,
@@ -303,6 +317,15 @@ def config_context(
         Global default: 'diagram'.
 
         .. versionadded:: 0.23
+
+    display_layout : {'horizontal', 'vertical'}, default=None
+        Layout of the estimator HTML diagram (used when `display='diagram'`).
+        If 'horizontal', parallel sub-estimators (e.g. the transformers of a
+        :class:`~sklearn.compose.ColumnTransformer`) are placed side by side.
+        If 'vertical', they are stacked top to bottom. Global default:
+        'horizontal'.
+
+        .. versionadded:: 2.0
 
     pairwise_dist_chunk_size : int, default=None
         The number of row vectors per chunk for the accelerated pairwise-
@@ -420,6 +443,7 @@ def config_context(
         working_memory=working_memory,
         print_changed_only=print_changed_only,
         display=display,
+        display_layout=display_layout,
         pairwise_dist_chunk_size=pairwise_dist_chunk_size,
         enable_cython_pairwise_dist=enable_cython_pairwise_dist,
         array_api_dispatch=array_api_dispatch,

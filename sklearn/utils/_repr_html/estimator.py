@@ -8,6 +8,7 @@ from io import StringIO
 from pathlib import Path
 
 from sklearn import config_context
+from sklearn._config import get_config
 from sklearn.utils._repr_html.base import _IDCounter
 from sklearn.utils._repr_html.features import _features_html
 
@@ -535,11 +536,15 @@ def estimator_html_repr(estimator):
             " HTML representation is unable to render, please try loading this page"
             " with nbviewer.org."
         )
+        layout_class = (
+            " sk-vertical" if get_config()["display_layout"] == "vertical" else ""
+        )
         html_template = (
             f"<style>{_CSS_STYLE}</style>"
             f"<body>"
             # we need tabindex="0" to make it 'focusable'
-            f'<div id="{container_id}" tabindex="0" class="sk-top-container sk-global">'
+            f'<div id="{container_id}" tabindex="0" '
+            f'class="sk-top-container sk-global{layout_class}">'
             '<div class="sk-text-repr-fallback">'
             f"<pre>{html.escape(estimator_str)}</pre><b>{fallback_msg}</b>"
             "</div>"

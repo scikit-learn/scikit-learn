@@ -1,0 +1,6 @@
+- A new global configuration option `display_layout` controls the layout of the
+  estimator HTML diagram. When set to `"vertical"` via :func:`set_config` or
+  :func:`config_context`, parallel sub-estimators (such as the transformers of
+  a :class:`compose.ColumnTransformer`) are stacked top to bottom instead of
+  side by side. The default `"horizontal"` keeps the existing layout.
+  By :user:`Dea María Léon <DeaMariaLeon>`.

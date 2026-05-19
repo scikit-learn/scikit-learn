@@ -205,7 +205,6 @@ clickable and can be expanded/collapsed.
 .sk-global input.sk-toggleable__control:checked~div.sk-toggleable__content {
   /* Expand drop-down */
   display: block;
-  width: 100%;
   overflow: visible;
 }
 
