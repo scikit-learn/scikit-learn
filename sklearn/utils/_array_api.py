@@ -852,6 +852,46 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
     return sum_ / scale
 
 
+def _cov(X, *, ddof=0, mean=None, xp=None):
+    """Compute covariance matrix using post-hoc centering.
+
+    Computes ``X.T @ X`` then subtracts the outer product of means, avoiding
+    allocation of a full centered copy of X.
+
+    Note: ``xp.cov`` does not exist in the Array API
+    standard: https://github.com/data-apis/array-api/issues/43
+
+    Parameters
+    ----------
+    X : array of shape (n_samples, n_features)
+        Data matrix. Assumed NOT centered.
+
+    ddof : int, default=0
+        Degrees of freedom correction. 0 for population covariance,
+        1 for sample covariance.
+
+    mean : array of shape (n_features,), default=None
+        Pre-computed mean of X. If None, computed from X.
+
+    xp : module, default=None
+        Array namespace.
+
+    Returns
+    -------
+    covariance : array of shape (n_features, n_features)
+    """
+    xp, _ = get_namespace(X, xp=xp)
+    n_samples = X.shape[0]
+    if mean is None:
+        mean = xp.mean(X, axis=0)
+    covariance = X.T @ X
+    covariance = covariance - n_samples * (
+        xp.reshape(mean, (-1, 1)) * xp.reshape(mean, (1, -1))
+    )
+    covariance = covariance / (n_samples - ddof)
+    return covariance
+
+
 def _median(x, axis=None, keepdims=False, xp=None):
     # XXX: `median` is not included in the array API spec, but is implemented
     # in most array libraries, and all that we support (as of May 2025).
