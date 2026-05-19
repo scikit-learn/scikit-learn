@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from sklearn import svm
+from sklearn.inspection import DecisionBoundaryDisplay
 
 # we create 40 separable points
 np.random.seed(0)
@@ -49,13 +50,12 @@ for name, penalty in (("unreg", 1), ("reg", 0.05)):
     yy_up = yy + np.sqrt(1 + a**2) * margin
 
     # plot the line, the points, and the nearest vectors to the plane
-    plt.figure(fignum, figsize=(4, 3))
-    plt.clf()
-    plt.plot(xx, yy, "k-")
-    plt.plot(xx, yy_down, "k--")
-    plt.plot(xx, yy_up, "k--")
+    _, ax = plt.subplots(figsize=(4, 3), num=fignum)
+    ax.plot(xx, yy, "k-")
+    ax.plot(xx, yy_down, "k--")
+    ax.plot(xx, yy_up, "k--")
 
-    plt.scatter(
+    ax.scatter(
         clf.support_vectors_[:, 0],
         clf.support_vectors_[:, 1],
         s=80,
@@ -63,28 +63,32 @@ for name, penalty in (("unreg", 1), ("reg", 0.05)):
         zorder=10,
         edgecolors="k",
     )
-    plt.scatter(
+    ax.scatter(
         X[:, 0], X[:, 1], c=Y, zorder=10, cmap=plt.get_cmap("RdBu"), edgecolors="k"
     )
 
-    plt.axis("tight")
     x_min = -4.8
     x_max = 4.2
     y_min = -6
     y_max = 6
 
-    YY, XX = np.meshgrid(yy, xx)
-    xy = np.vstack([XX.ravel(), YY.ravel()]).T
-    Z = clf.decision_function(xy).reshape(XX.shape)
+    DecisionBoundaryDisplay.from_estimator(
+        clf,
+        X,
+        response_method="decision_function",
+        plot_method="contourf",
+        cmap=plt.get_cmap("RdBu"),
+        alpha=0.5,
+        ax=ax,
+        xlabel="",
+        ylabel="",
+    )
 
-    # Put the result into a contour plot
-    plt.contourf(XX, YY, Z, cmap=plt.get_cmap("RdBu"), alpha=0.5, linestyles=["-"])
+    ax.set_xlim(x_min, x_max)
+    ax.set_ylim(y_min, y_max)
 
-    plt.xlim(x_min, x_max)
-    plt.ylim(y_min, y_max)
-
-    plt.xticks(())
-    plt.yticks(())
+    ax.set_xticks(())
+    ax.set_yticks(())
     fignum = fignum + 1
 
 plt.show()
