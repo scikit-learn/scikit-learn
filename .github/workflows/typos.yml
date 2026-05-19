@@ -1,6 +1,6 @@
-# Codespell configuration is within pyproject.toml
+# Typos configuration is within .typos.toml
 ---
-name: Codespell
+name: Typos
 
 on:
   push:
@@ -19,7 +19,5 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-      - name: Annotate locations with typos
-        uses: codespell-project/codespell-problem-matcher@v1
-      - name: Codespell
-        uses: codespell-project/actions-codespell@v2
+      - name: Spell Check Repo
+        uses: crate-ci/typos@v1

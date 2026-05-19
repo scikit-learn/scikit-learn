@@ -1,0 +1,72 @@
+[files]
+extend-exclude = [
+    "*.svg",
+    "sklearn/externals",
+    "*sklearn/feature_extraction/_stop_words.py",
+    "doc/whats_new",
+    "doc/_build",
+    "doc/auto_examples",
+    "doc/modules/generated",
+]
+
+[default.extend-identifiers]
+compute_corrected_ttest = "compute_corrected_ttest"
+CPY001 = "CPY001"
+DuPont = "DuPont"
+freMTPL2 = "freMTPL2"
+freMTPL2freq = "freMTPL2freq"
+freMTPL2sev = "freMTPL2sev"
+lik_max = "lik_max"
+lik_min = "lik_min"
+MEK_N = "MEK_N"
+pMEK_N = "pMEK_N"
+roc_cuve = "roc_cuve"
+VanderPlas = "VanderPlas"
+
+[default.extend-words]
+aggresive = "aggresive"
+arange = "arange"
+Ba = "Ba"
+boun = "boun"
+BRE = "BRE"
+CACH = "CACH"
+chanel = "chanel"
+CALD = "CALD"
+Comput = "Comput"
+copys = "copys"
+datas = "datas"
+deine = "deine"
+fo = "fo"
+fpr = "fpr"
+fwe = "fwe"
+Heping = "Heping"
+Gool = "Gool"
+indx = "indx"
+iy = "iy"
+Jaques = "Jaques"
+leafs = "leafs"
+LOD = "LOD"
+MAPE = "MAPE"
+mis = "mis"
+mor = "mor"
+Namee = "Namee"
+nd = "nd"
+ocur = "ocur"
+regxp = "regxp"
+ser = "ser"
+setp = "setp"
+SLEP = "SLEP"
+Soler = "Soler"
+srot = "srot"
+suprised = "suprised"
+Technic = "Technic"
+Teh = "Teh"
+thi = "thi"
+thr = "thr"
+unil = "unil"
+visibles = "visibles"
+vor = "vor"
+whis = "whis"
+Winn = "Winn"
+writeable = "writeable"
+yhat = "yhat"
