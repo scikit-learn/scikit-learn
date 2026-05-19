@@ -30,6 +30,12 @@
   --sklearn-color-icon: #878787;
 }
 
+.sk-global *,
+.sk-global *::before,
+.sk-global *::after {
+  box-sizing: border-box;
+}
+
 .sk-global {
   color: var(--sklearn-color-text);
 }
@@ -420,4 +426,30 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
    to allow keyboard-only users to navigate the display. */
   overflow-x: scroll !important;
   max-width: 100%;
+}
+
+@scope (.sk-global.sk-vertical) {
+
+  div.sk-parallel-item,
+  div.sk-serial,
+  div.sk-item {
+    background-image: none;
+  }
+  .sk-global.sk-vertical div.sk-parallel-item::after {
+  display: none;
+  }
+.sk-global div.sk-dashed-wrapped {
+  display: none;
+}
+
+  div.sk-parallel-item::after,
+  div.sk-parallel-item:first-child::after,
+  div.sk-parallel-item:last-child::after {
+    display: none;
+  }
+ div.sk-parallel {
+  flex-direction: column;
+  align-items: center;
+}
+
 }
