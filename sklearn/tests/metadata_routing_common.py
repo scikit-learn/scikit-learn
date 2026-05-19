@@ -71,6 +71,7 @@ def check_recorded_metadata(obj, method, parent, split_params=tuple(), **kwargs)
     all_records = (
         getattr(obj, "_records", dict()).get(method, dict()).get(parent, list())
     )
+    assert all_records
     for record in all_records:
         # first check that the names of the metadata passed are the same as
         # expected. The names are stored as keys in `record`.

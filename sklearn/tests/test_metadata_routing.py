@@ -395,7 +395,7 @@ def test_nested_routing():
     check_recorded_metadata(
         pipeline.steps_[0].transformer_,
         method="transform",
-        parent="fit",
+        parent="wrapped",
         sample_weight=w1,
     )
     check_recorded_metadata(
@@ -409,7 +409,7 @@ def test_nested_routing():
     check_recorded_metadata(
         pipeline.steps_[0].transformer_,
         method="transform",
-        parent="fit",
+        parent="wrapped",
         sample_weight=w3,
     )
 
