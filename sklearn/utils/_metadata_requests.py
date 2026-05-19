@@ -350,6 +350,17 @@ class MethodMetadataRequest:
         self.owner = owner
         self.method = method
 
+    def __deepcopy__(self, memo):
+        # `owner` is a reference to the estimator and is only used by
+        # `_routing_repr` for display; deep copying it would drag the full
+        # estimator state (and fail for non-picklable attributes) for no benefit.
+        new = self.__class__.__new__(self.__class__)
+        memo[id(self)] = new
+        new.owner = self.owner
+        new.method = self.method
+        new._requests = deepcopy(self._requests, memo)
+        return new
+
     @property
     def requests(self):
         """Dictionary of the form: ``{key: alias}``."""
@@ -606,6 +617,16 @@ class MetadataRequest:
                 method,
                 MethodMetadataRequest(owner=owner, method=method),
             )
+
+    def __deepcopy__(self, memo):
+        # `owner` is a reference to the estimator and is only used by
+        # `_routing_repr` for display; see MethodMetadataRequest.__deepcopy__.
+        new = self.__class__.__new__(self.__class__)
+        memo[id(self)] = new
+        new.owner = self.owner
+        for method in SIMPLE_METHODS:
+            setattr(new, method, deepcopy(getattr(self, method), memo))
+        return new
 
     def consumes(self, method, params):
         """Return params consumed as metadata in a :term:`consumer`.
@@ -912,6 +933,16 @@ class MetadataRouter:
         # _route_mappings.
         self._self_request = None
         self.owner = owner
+
+    def __deepcopy__(self, memo):
+        # `owner` is a reference to the estimator and is only used by
+        # `_routing_repr` for display; see MethodMetadataRequest.__deepcopy__.
+        new = self.__class__.__new__(self.__class__)
+        memo[id(self)] = new
+        new.owner = self.owner
+        new._self_request = deepcopy(self._self_request, memo)
+        new._route_mappings = deepcopy(self._route_mappings, memo)
+        return new
 
     def add_self_request(self, obj):
         """Add `self` (as a :term:`consumer`) to the `MetadataRouter`.
