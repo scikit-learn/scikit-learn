@@ -128,7 +128,7 @@ rng = np.random.RandomState(42)
 iris = datasets.load_iris()
 random_unlabeled_points = rng.rand(iris.target.shape[0]) < 0.3
 iris.target[random_unlabeled_points] = -1
-clf = LogisticRegression()
+clf = LogisticRegression(alpha=1e-4)
 self_training_model = SelfTrainingClassifier(clf)
 self_training_model.fit(iris.data, iris.target)
 
@@ -175,7 +175,7 @@ X, y = fetch_covtype(return_X_y=True)
 pipe = make_pipeline(
     MinMaxScaler(),
     PolynomialCountSketch(degree=2, n_components=300),
-    LogisticRegression(max_iter=1000),
+    LogisticRegression(alpha=1e-4, max_iter=1000),
 )
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, train_size=5000, test_size=10000, random_state=42
@@ -185,7 +185,9 @@ pipe.fit(X_train, y_train).score(X_test, y_test)
 ##############################################################################
 # For comparison, here is the score of a linear baseline for the same data:
 
-linear_baseline = make_pipeline(MinMaxScaler(), LogisticRegression(max_iter=1000))
+linear_baseline = make_pipeline(
+    MinMaxScaler(), LogisticRegression(alpha=1e-4, max_iter=1000)
+)
 linear_baseline.fit(X_train, y_train).score(X_test, y_test)
 
 ##############################################################################

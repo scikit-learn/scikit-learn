@@ -370,7 +370,9 @@ def test_multiclass_multioutput_estimator_predict_proba():
 
     Y = np.concatenate([y1, y2], axis=1)
 
-    clf = MultiOutputClassifier(LogisticRegression(random_state=seed))
+    clf = MultiOutputClassifier(
+        LogisticRegression(random_state=seed, alpha=1 / X.shape[0])
+    )
 
     clf.fit(X, Y)
 
@@ -462,7 +464,7 @@ def test_multi_output_exceptions():
 @pytest.mark.parametrize("response_method", ["predict_proba", "predict"])
 def test_multi_output_not_fitted_error(response_method):
     """Check that we raise the proper error when the estimator is not fitted"""
-    moc = MultiOutputClassifier(LogisticRegression())
+    moc = MultiOutputClassifier(LogisticRegression(alpha=1e-4))
     with pytest.raises(NotFittedError):
         getattr(moc, response_method)(X)
 
@@ -472,7 +474,7 @@ def test_multi_output_delegate_predict_proba():
     estimator"""
 
     # A base estimator with `predict_proba`should expose the method even before fit
-    moc = MultiOutputClassifier(LogisticRegression())
+    moc = MultiOutputClassifier(LogisticRegression(alpha=1e-4))
     assert hasattr(moc, "predict_proba")
     moc.fit(X, y)
     assert hasattr(moc, "predict_proba")
@@ -533,10 +535,10 @@ def test_classifier_chain_fit_and_predict_with_sparse_data(csr_container):
     X, Y = generate_multilabel_dataset_with_correlations()
     X_sparse = csr_container(X)
 
-    classifier_chain = ClassifierChain(LogisticRegression()).fit(X_sparse, Y)
+    classifier_chain = ClassifierChain(LogisticRegression(alpha=1e-4)).fit(X_sparse, Y)
     Y_pred_sparse = classifier_chain.predict(X_sparse)
 
-    classifier_chain = ClassifierChain(LogisticRegression()).fit(X, Y)
+    classifier_chain = ClassifierChain(LogisticRegression(alpha=1e-4)).fit(X, Y)
     Y_pred_dense = classifier_chain.predict(X)
 
     assert_array_equal(Y_pred_sparse, Y_pred_dense)
@@ -552,11 +554,11 @@ def test_classifier_chain_vs_independent_models():
     Y_train = Y[:600, :]
     Y_test = Y[600:, :]
 
-    ovr = OneVsRestClassifier(LogisticRegression())
+    ovr = OneVsRestClassifier(LogisticRegression(alpha=1e-2))
     ovr.fit(X_train, Y_train)
     Y_pred_ovr = ovr.predict(X_test)
 
-    chain = ClassifierChain(LogisticRegression())
+    chain = ClassifierChain(LogisticRegression(alpha=1e-2))
     chain.fit(X_train, Y_train)
     Y_pred_chain = chain.predict(X_test)
 
@@ -573,7 +575,7 @@ def test_classifier_chain_vs_independent_models():
 def test_classifier_chain_fit_and_predict(chain_method, response_method):
     # Fit classifier chain and verify predict performance
     X, Y = generate_multilabel_dataset_with_correlations()
-    chain = ClassifierChain(LogisticRegression(), chain_method=chain_method)
+    chain = ClassifierChain(LogisticRegression(alpha=1e-4), chain_method=chain_method)
     chain.fit(X, Y)
     Y_pred = chain.predict(X)
     assert Y_pred.shape == Y.shape
@@ -608,7 +610,7 @@ def test_base_chain_fit_and_predict_with_sparse_data_and_cv(csr_container):
     X, Y = generate_multilabel_dataset_with_correlations()
     X_sparse = csr_container(X)
     base_chains = [
-        ClassifierChain(LogisticRegression(), cv=3),
+        ClassifierChain(LogisticRegression(alpha=1e-4), cv=3),
         RegressorChain(Ridge(), cv=3),
     ]
     for chain in base_chains:
@@ -620,7 +622,10 @@ def test_base_chain_fit_and_predict_with_sparse_data_and_cv(csr_container):
 def test_base_chain_random_order():
     # Fit base chain with random order
     X, Y = generate_multilabel_dataset_with_correlations()
-    for chain in [ClassifierChain(LogisticRegression()), RegressorChain(Ridge())]:
+    for chain in [
+        ClassifierChain(LogisticRegression(alpha=1e-4)),
+        RegressorChain(Ridge()),
+    ]:
         chain_random = clone(chain).set_params(order="random", random_state=42)
         chain_random.fit(X, Y)
         chain_fixed = clone(chain).set_params(order=chain_random.order_)
@@ -651,7 +656,9 @@ def test_base_chain_crossval_fit_and_predict(chain_type, chain_method):
     X, Y = generate_multilabel_dataset_with_correlations()
 
     if chain_type == "classifier":
-        chain = ClassifierChain(LogisticRegression(), chain_method=chain_method)
+        chain = ClassifierChain(
+            LogisticRegression(alpha=1e-2), chain_method=chain_method
+        )
     else:
         chain = RegressorChain(Ridge())
     chain.fit(X, Y)
@@ -741,6 +748,8 @@ def test_regressor_chain_w_fit_params():
         assert est.sample_weight_ is weight
 
 
+# TODO(1.11): remove filterwarnings with deprecation period of C and Cs
+@pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "MultiOutputEstimator, Estimator",
     [(MultiOutputClassifier, LogisticRegression), (MultiOutputRegressor, Ridge)],

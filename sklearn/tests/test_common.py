@@ -93,7 +93,10 @@ class CallableEstimator(BaseEstimator):
         (partial(_sample_func, y=1), "_sample_func(y=1)"),
         (_sample_func, "_sample_func"),
         (partial(_sample_func, "world"), "_sample_func"),
-        (LogisticRegression(C=2.0), "LogisticRegression(C=2.0)"),
+        (
+            LogisticRegression(alpha=0.5),
+            "LogisticRegression(alpha=0.5)",
+        ),
         (
             LogisticRegression(
                 random_state=1,
@@ -201,6 +204,8 @@ def test_all_tests_are_importable():
     )
 
 
+# TODO(1.11): remove filterwarnings with deprecation period of C and Cs
+@pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 def test_class_support_removed():
     # Make sure passing classes to check_estimator or parametrize_with_checks
     # raises an error
@@ -237,7 +242,7 @@ def _estimators_that_predict_in_fit():
 column_name_estimators = list(
     chain(
         _tested_estimators(),
-        [make_pipeline(LogisticRegression(C=1))],
+        [make_pipeline(LogisticRegression(alpha=1e-4))],
         _estimators_that_predict_in_fit(),
     )
 )

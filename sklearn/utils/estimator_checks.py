@@ -697,7 +697,7 @@ def parametrize_with_checks(
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.tree import DecisionTreeRegressor
 
-    >>> @parametrize_with_checks([LogisticRegression(),
+    >>> @parametrize_with_checks([LogisticRegression(alpha=1e-4),
     ...                           DecisionTreeRegressor()])
     ... def test_sklearn_compatible_estimator(estimator, check):
     ...     check(estimator)
@@ -872,7 +872,7 @@ def check_estimator(
     --------
     >>> from sklearn.utils.estimator_checks import check_estimator
     >>> from sklearn.linear_model import LogisticRegression
-    >>> check_estimator(LogisticRegression())
+    >>> check_estimator(LogisticRegression(alpha=1e-4))
     [...]
     """
     if isinstance(estimator, type):

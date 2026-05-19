@@ -80,7 +80,7 @@ from sklearn.preprocessing import PolynomialFeatures, SplineTransformer, Standar
 clf1 = make_pipeline(
     SplineTransformer(degree=2, n_knots=2),
     PolynomialFeatures(interaction_only=True),
-    LogisticRegression(C=10),
+    LogisticRegression(alpha=1e-3),
 )
 clf2 = make_pipeline(
     SplineTransformer(
@@ -90,12 +90,12 @@ clf2 = make_pipeline(
         include_bias=True,
     ),
     PolynomialFeatures(interaction_only=True),
-    LogisticRegression(C=10),
+    LogisticRegression(alpha=1e-3),
 )
 clf3 = make_pipeline(
     StandardScaler(),
     Nystroem(gamma=2, random_state=0),
-    LogisticRegression(C=10),
+    LogisticRegression(alpha=1e-3),
 )
 weights = [2, 1, 3]
 eclf = VotingClassifier(

@@ -447,7 +447,7 @@ def test_temperature_scaling(n_classes, ensemble):
         random_state=42,
     )
     X_train, X_cal, y_train, y_cal = train_test_split(X, y, random_state=42)
-    clf = LogisticRegression(C=np.inf, tol=1e-8, max_iter=200, random_state=0)
+    clf = LogisticRegression(alpha=0, tol=1e-8, max_iter=200, random_state=0)
     clf.fit(X_train, y_train)
     # Train the calibrator on the calibrating set
     cal_clf = CalibratedClassifierCV(
@@ -710,7 +710,7 @@ def test_calibration_votingclassifier():
     # defined via a property that only works when voting="soft".
     X, y = make_classification(n_samples=10, n_features=5, n_classes=2, random_state=7)
     vote = VotingClassifier(
-        estimators=[("lr" + str(i), LogisticRegression()) for i in range(3)],
+        estimators=[("lr" + str(i), LogisticRegression(alpha=1e-4)) for i in range(3)],
         voting="soft",
     )
     vote.fit(X, y)
@@ -739,7 +739,7 @@ def test_calibration_display_compute(pyplot, iris_data_binary, n_bins, strategy)
     # CalibrationDisplay object.
     X, y = iris_data_binary
 
-    lr = LogisticRegression().fit(X, y)
+    lr = LogisticRegression(alpha=1e-4).fit(X, y)
 
     viz = CalibrationDisplay.from_estimator(
         lr, X, y, n_bins=n_bins, strategy=strategy, alpha=0.8
@@ -777,7 +777,7 @@ def test_calibration_display_compute(pyplot, iris_data_binary, n_bins, strategy)
 def test_plot_calibration_curve_pipeline(pyplot, iris_data_binary):
     # Ensure pipelines are supported by CalibrationDisplay.from_estimator
     X, y = iris_data_binary
-    clf = make_pipeline(StandardScaler(), LogisticRegression())
+    clf = make_pipeline(StandardScaler(), LogisticRegression(alpha=1e-4))
     clf.fit(X, y)
     viz = CalibrationDisplay.from_estimator(clf, X, y)
 
@@ -837,7 +837,7 @@ def test_calibration_display_name_multiple_calls(
     # `CalibrationDisplay.viz.plot()` calls are made.
     X, y = iris_data_binary
     clf_name = "my hand-crafted name"
-    clf = LogisticRegression().fit(X, y)
+    clf = LogisticRegression(alpha=1e-4).fit(X, y)
     y_prob = clf.predict_proba(X)[:, 1]
 
     constructor = getattr(CalibrationDisplay, constructor_name)
@@ -865,7 +865,7 @@ def test_calibration_display_name_multiple_calls(
 def test_calibration_display_ref_line(pyplot, iris_data_binary):
     # Check that `ref_line` only appears once
     X, y = iris_data_binary
-    lr = LogisticRegression().fit(X, y)
+    lr = LogisticRegression(alpha=1e-4).fit(X, y)
     dt = DecisionTreeClassifier().fit(X, y)
 
     viz = CalibrationDisplay.from_estimator(lr, X, y)
@@ -923,7 +923,7 @@ def test_calibration_display_kwargs(pyplot, iris_data_binary, kwargs):
     """Check that matplotlib aliases are handled."""
     X, y = iris_data_binary
 
-    lr = LogisticRegression().fit(X, y)
+    lr = LogisticRegression(alpha=1e-4).fit(X, y)
     viz = CalibrationDisplay.from_estimator(lr, X, y, **kwargs)
 
     assert viz.line_.get_color() == "red"
@@ -938,7 +938,7 @@ def test_calibration_display_pos_label(
     """Check the behaviour of `pos_label` in the `CalibrationDisplay`."""
     X, y = iris_data_binary
 
-    lr = LogisticRegression().fit(X, y)
+    lr = LogisticRegression(alpha=1e-4).fit(X, y)
     viz = CalibrationDisplay.from_estimator(lr, X, y, pos_label=pos_label)
 
     y_prob = lr.predict_proba(X)[:, expected_pos_label]
@@ -985,7 +985,7 @@ def test_calibrated_classifier_cv_double_sample_weights_equivalence(method, ense
     y_twice[::2] = y
     y_twice[1::2] = y
 
-    estimator = LogisticRegression()
+    estimator = LogisticRegression(alpha=1e-4)
     calibrated_clf_without_weights = CalibratedClassifierCV(
         estimator,
         method=method,
@@ -1082,7 +1082,7 @@ def test_calibration_with_non_sample_aligned_fit_param(data):
             assert fit_param is not None
             return super().fit(X, y, sample_weight=sample_weight)
 
-    CalibratedClassifierCV(estimator=TestClassifier()).fit(
+    CalibratedClassifierCV(estimator=TestClassifier(alpha=1e-4)).fit(
         *data, fit_param=np.ones(len(data[1]) + 1)
     )
 

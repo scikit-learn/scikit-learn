@@ -56,10 +56,15 @@ def _check_pos_label_statistics(
         random_state=0,
     )
 
-    classifier = LogisticRegression()
+    classifier = LogisticRegression(alpha=1e-4)
     classifier.fit(X_train, y_train)
     cv_results = cross_validate(
-        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+        LogisticRegression(alpha=1e-4),
+        X,
+        y,
+        cv=3,
+        return_estimator=True,
+        return_indices=True,
     )
 
     # Sanity check to be sure the positive class is `classes_[0]`.
@@ -244,10 +249,15 @@ def test_display_curve_name_overwritten_by_plot_multiple_calls(
     """Check passing `name` in `plot` overwrites name passed in `from_*` method."""
     X, y = data_binary
     clf_name = "my hand-crafted name"
-    clf = LogisticRegression().fit(X, y)
+    clf = LogisticRegression(alpha=1e-4).fit(X, y)
     y_pred = clf.predict_proba(X)[:, 1]
     cv_results = cross_validate(
-        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+        LogisticRegression(alpha=1e-4),
+        X,
+        y,
+        cv=3,
+        return_estimator=True,
+        return_indices=True,
     )
 
     if constructor_name == "from_estimator":
@@ -283,10 +293,11 @@ def test_display_curve_name_overwritten_by_plot_multiple_calls(
 @pytest.mark.parametrize(
     "clf",
     [
-        LogisticRegression(),
-        make_pipeline(StandardScaler(), LogisticRegression()),
+        LogisticRegression(alpha=1e-4),
+        make_pipeline(StandardScaler(), LogisticRegression(alpha=1e-4)),
         make_pipeline(
-            make_column_transformer((StandardScaler(), [0, 1])), LogisticRegression()
+            make_column_transformer((StandardScaler(), [0, 1])),
+            LogisticRegression(alpha=1e-4),
         ),
     ],
 )
@@ -379,9 +390,14 @@ def test_classifier_display_curve_named_constructor_return_type(
     # type so the only requirement here is instantiating the class without error
     y_pred = y
 
-    classifier = LogisticRegression().fit(X, y)
+    classifier = LogisticRegression(alpha=1e-4).fit(X, y)
     cv_results = cross_validate(
-        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+        LogisticRegression(alpha=1e-4),
+        X,
+        y,
+        cv=3,
+        return_estimator=True,
+        return_indices=True,
     )
 
     class SubclassOfDisplay(Display):
@@ -566,7 +582,7 @@ def test_display_default_name(
     # Check the default name display in the figure when `name` is not provided
     X, y = data_binary
 
-    lr = LogisticRegression().fit(X, y)
+    lr = LogisticRegression(alpha=1e-4).fit(X, y)
     y_score = lr.predict_proba(X)[:, 1]
 
     if constructor_name == "from_estimator":
@@ -600,7 +616,12 @@ def test_display_from_cv_results_legend_label(
     """
     X, y = X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
     cv_results = cross_validate(
-        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+        LogisticRegression(alpha=1e-4),
+        X,
+        y,
+        cv=3,
+        return_estimator=True,
+        return_indices=True,
     )
 
     if not isinstance(curve_kwargs, list) and isinstance(name, list):
@@ -656,10 +677,20 @@ def test_display_from_cv_results_param_validation(pyplot, data_binary, Display):
 
     # `cv_results` missing key
     cv_results_no_est = cross_validate(
-        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=False
+        LogisticRegression(alpha=1e-4),
+        X,
+        y,
+        cv=3,
+        return_estimator=True,
+        return_indices=False,
     )
     cv_results_no_indices = cross_validate(
-        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=False
+        LogisticRegression(alpha=1e-4),
+        X,
+        y,
+        cv=3,
+        return_estimator=True,
+        return_indices=False,
     )
     for cv_results in (cv_results_no_est, cv_results_no_indices):
         with pytest.raises(
@@ -669,7 +700,12 @@ def test_display_from_cv_results_param_validation(pyplot, data_binary, Display):
             Display.from_cv_results(cv_results, X, y)
 
     cv_results = cross_validate(
-        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+        LogisticRegression(alpha=1e-4),
+        X,
+        y,
+        cv=3,
+        return_estimator=True,
+        return_indices=True,
     )
 
     # `X` wrong length
@@ -725,7 +761,12 @@ def test_display_from_cv_results_pos_label_inferred(pyplot, data_binary, Display
     """Check `pos_label` inferred correctly by `from_cv_results(pos_label=None)`."""
     X, y = data_binary
     cv_results = cross_validate(
-        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+        LogisticRegression(alpha=1e-4),
+        X,
+        y,
+        cv=3,
+        return_estimator=True,
+        return_indices=True,
     )
 
     disp = Display.from_cv_results(cv_results, X, y, pos_label=None)
@@ -744,7 +785,12 @@ def test_display_from_cv_results_curve_kwargs(
     """Check `curve_kwargs` correctly passed from `from_cv_results`."""
     X, y = data_binary
     cv_results = cross_validate(
-        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+        LogisticRegression(alpha=1e-4),
+        X,
+        y,
+        cv=3,
+        return_estimator=True,
+        return_indices=True,
     )
     display = Display.from_cv_results(
         cv_results,
@@ -778,7 +824,12 @@ def test_display_from_cv_results_curve_kwargs_default_kwargs(
 
     X, y = data_binary
     cv_results = cross_validate(
-        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+        LogisticRegression(alpha=1e-4),
+        X,
+        y,
+        cv=3,
+        return_estimator=True,
+        return_indices=True,
     )
     display = Display.from_cv_results(cv_results, X, y, curve_kwargs=curve_kwargs)
 
@@ -828,7 +879,7 @@ def test_display_kwargs_deprecation(
 ):
     """Check **kwargs deprecated correctly in favour of `curve_kwargs`."""
     X, y = data_binary
-    lr = LogisticRegression()
+    lr = LogisticRegression(alpha=1e-4)
     lr.fit(X, y)
 
     # Error when both `curve_kwargs` and `**kwargs` provided

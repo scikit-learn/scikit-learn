@@ -32,7 +32,7 @@ from sklearn.model_selection import FixedThresholdClassifier, train_test_split
 
 X, y = make_classification(n_samples=1000, random_state=0)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-classifier = LogisticRegression().fit(X_train, y_train)
+classifier = LogisticRegression(alpha=1e-2).fit(X_train, y_train)
 
 print(
     "Probability estimates for three data points:\n"
@@ -91,8 +91,8 @@ calibrated_classifier = CalibratedClassifierCV(
 
 prob_pos_clf = classifier.predict_proba(X_test)[:, 1]
 clf_score = brier_score_loss(y_test, prob_pos_clf)
-print(f"No calibration: {clf_score:.3f}")
+print(f"Brier score - no calibration: {clf_score:.3f}")
 
 prob_pos_calibrated = calibrated_classifier.predict_proba(X_test)[:, 1]
 calibrated_score = brier_score_loss(y_test, prob_pos_calibrated)
-print(f"With calibration: {calibrated_score:.3f}")
+print(f"Brier score - with calibration: {calibrated_score:.3f}")

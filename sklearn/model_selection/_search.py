@@ -1981,16 +1981,16 @@ class RandomizedSearchCV(BaseSearchCV):
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.model_selection import RandomizedSearchCV
-    >>> from scipy.stats import uniform
+    >>> from scipy.stats import loguniform
     >>> iris = load_iris()
-    >>> logistic = LogisticRegression(solver='saga', tol=1e-2, max_iter=200,
-    ...                               random_state=0)
-    >>> distributions = dict(C=uniform(loc=0, scale=4),
-    ...                      l1_ratio=[0, 1])
+    >>> logistic = LogisticRegression(
+    ...     alpha=1e-4, solver='saga', tol=1e-2, max_iter=200, random_state=0
+    ... )
+    >>> distributions = dict(alpha=loguniform(a=1e-4, b=4), l1_ratio=[0, 1])
     >>> clf = RandomizedSearchCV(logistic, distributions, random_state=0)
     >>> search = clf.fit(iris.data, iris.target)
     >>> search.best_params_
-    {'C': np.float64(2.195...), 'l1_ratio': 1}
+    {'alpha': np.float64(0.0103...), 'l1_ratio': 0}
     """
 
     _parameter_constraints: dict = {

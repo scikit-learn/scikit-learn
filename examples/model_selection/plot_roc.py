@@ -74,7 +74,7 @@ X = np.concatenate([X, random_state.randn(n_samples, 200 * n_features)], axis=1)
 
 from sklearn.linear_model import LogisticRegression
 
-classifier = LogisticRegression()
+classifier = LogisticRegression(alpha=1e-4)
 y_score = classifier.fit(X_train, y_train).predict_proba(X_test)
 
 # %%

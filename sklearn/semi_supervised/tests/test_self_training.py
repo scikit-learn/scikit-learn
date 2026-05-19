@@ -48,7 +48,7 @@ def test_warns_k_best():
 
 @pytest.mark.parametrize(
     "estimator",
-    [KNeighborsClassifier(), LogisticRegression()],
+    [KNeighborsClassifier(), LogisticRegression(alpha=1e-4)],
 )
 @pytest.mark.parametrize("selection_crit", ["threshold", "k_best"])
 def test_classification(estimator, selection_crit):
@@ -209,7 +209,7 @@ def test_no_unlabeled():
 
 
 def test_early_stopping():
-    lr = LogisticRegression()
+    lr = LogisticRegression(alpha=1.0)
     st = SelfTrainingClassifier(lr)
     X_train_easy = [[1], [0], [1], [0.5]]
     y_train_easy = [1, 0, -1, -1]
@@ -271,7 +271,7 @@ def test_verbose_k_best(capsys):
 
 def test_k_best_selects_best():
     # Tests that the labels added by st really are the 10 best labels.
-    est = LogisticRegression(random_state=0)
+    est = LogisticRegression(alpha=1e-4)
     st = SelfTrainingClassifier(est, criterion="k_best", max_iter=1, k_best=10)
     has_label = y_train_missing_labels != -1
     st.fit(X_train, y_train_missing_labels)
@@ -298,10 +298,10 @@ def test_estimator_meta_estimator():
 
     estimator = StackingClassifier(
         estimators=[
-            ("clf_1", LogisticRegression()),
-            ("clf_2", LogisticRegression()),
+            ("clf_1", LogisticRegression(alpha=1e-4)),
+            ("clf_2", LogisticRegression(alpha=1e-4)),
         ],
-        final_estimator=LogisticRegression(),
+        final_estimator=LogisticRegression(alpha=1e-4),
         cv=2,
     )
 

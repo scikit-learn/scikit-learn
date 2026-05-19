@@ -280,7 +280,7 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
     >>> X_train, X_test, y_train, y_test = train_test_split(
     ...     X, y, stratify=y, random_state=42
     ... )
-    >>> classifier = LogisticRegression(random_state=0).fit(X_train, y_train)
+    >>> classifier = LogisticRegression(alpha=1e-4).fit(X_train, y_train)
     >>> print(confusion_matrix(y_test, classifier.predict(X_test)))
     [[217   7]
      [ 19   7]]
@@ -288,7 +288,7 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
     ...     classifier, threshold=0.1, response_method="predict_proba"
     ... ).fit(X_train, y_train)
     >>> print(confusion_matrix(y_test, classifier_other_threshold.predict(X_test)))
-    [[184  40]
+    [[185  39]
      [  6  20]]
     """
 

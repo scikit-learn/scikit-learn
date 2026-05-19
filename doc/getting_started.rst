@@ -105,7 +105,7 @@ the test data::
   >>> # create a pipeline object
   >>> pipe = make_pipeline(
   ...     StandardScaler(),
-  ...     LogisticRegression()
+  ...     LogisticRegression(alpha=1e-4)
   ... )
   ...
   >>> # load the iris dataset and split it into train and test sets
@@ -115,7 +115,8 @@ the test data::
   >>> # fit the whole pipeline
   >>> pipe.fit(X_train, y_train)
   Pipeline(steps=[('standardscaler', StandardScaler()),
-                  ('logisticregression', LogisticRegression())])
+                ('logisticregression',
+                 LogisticRegression(alpha=0.0001))])
   >>> # we can now use it like any other estimator
   >>> accuracy_score(pipe.predict(X_test), y_test)
   0.97...

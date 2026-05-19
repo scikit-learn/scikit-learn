@@ -349,7 +349,7 @@ def test_pipeline_methods_anova():
     X = iris.data
     y = iris.target
     # Test with Anova + LogisticRegression
-    clf = LogisticRegression()
+    clf = LogisticRegression(alpha=1e-4)
     filter1 = SelectKBest(f_classif, k=2)
     pipe = Pipeline([("anova", filter1), ("logistic", clf)])
     pipe.fit(X, y)
@@ -431,7 +431,7 @@ def test_pipeline_methods_pca_classifier():
     X = iris.data
     y = iris.target
     # Test with PCA + LogisticRegression
-    clf = LogisticRegression()
+    clf = LogisticRegression(alpha=1e-4)
     pca = PCA(svd_solver="full", n_components="mle", whiten=True)
     pipe = Pipeline([("pca", pca), ("classifier", clf)])
     pipe.fit(X, y)
@@ -462,7 +462,7 @@ def test_score_samples_on_pipeline_without_score_samples():
     y = np.array([1, 2])
     # Test that a pipeline does not have score_samples method when the final
     # step of the pipeline does not have score_samples defined.
-    pipe = make_pipeline(LogisticRegression())
+    pipe = make_pipeline(LogisticRegression(alpha=1e-4))
     pipe.fit(X, y)
 
     inner_msg = "'LogisticRegression' object has no attribute 'score_samples'"
@@ -482,7 +482,7 @@ def test_pipeline_methods_preprocessing_classifier():
     n_classes = len(np.unique(y))
     scaler = StandardScaler()
     pca = PCA(n_components=2, svd_solver="randomized", whiten=True)
-    clf = LogisticRegression()
+    clf = LogisticRegression(alpha=1e-4)
 
     for preprocessing in [scaler, pca]:
         pipe = Pipeline([("preprocess", preprocessing), ("svc", clf)])
@@ -966,7 +966,10 @@ def test_make_pipeline():
 @pytest.mark.parametrize(
     "pipeline, check_estimator_type",
     [
-        (make_pipeline(StandardScaler(), LogisticRegression()), is_classifier),
+        (
+            make_pipeline(StandardScaler(), LogisticRegression(alpha=1e-4)),
+            is_classifier,
+        ),
         (make_pipeline(StandardScaler(), LinearRegression()), is_regressor),
         (
             make_pipeline(StandardScaler()),
@@ -1108,7 +1111,7 @@ def test_classes_property():
     with pytest.raises(AttributeError):
         getattr(reg, "classes_")
 
-    clf = make_pipeline(SelectKBest(k=1), LogisticRegression(random_state=0))
+    clf = make_pipeline(SelectKBest(k=1), LogisticRegression(alpha=1e-4))
     with pytest.raises(AttributeError):
         getattr(clf, "classes_")
     clf.fit(X, y)
@@ -1420,7 +1423,9 @@ def test_step_name_validation():
 def test_set_params_nested_pipeline():
     estimator = Pipeline([("a", Pipeline([("b", DummyRegressor())]))])
     estimator.set_params(a__b__alpha=0.001, a__b=Lasso())
-    estimator.set_params(a__steps=[("b", LogisticRegression())], a__b__C=5)
+    estimator.set_params(
+        a__steps=[("b", LogisticRegression(alpha=1e-4))], a__b__alpha=0.2
+    )
 
 
 def test_pipeline_memory():
@@ -1430,7 +1435,7 @@ def test_pipeline_memory():
     try:
         memory = joblib.Memory(location=cachedir, verbose=10)
         # Test with transformer + logistic regression
-        clf = LogisticRegression(random_state=0)
+        clf = LogisticRegression(alpha=1e-4)
         transf = DummyTransf()
         pipe = Pipeline([("transf", clone(transf)), ("logreg", clf)])
         cached_pipe = Pipeline([("transf", transf), ("logreg", clf)], memory=memory)
@@ -1463,7 +1468,7 @@ def test_pipeline_memory():
         assert ts == cached_pipe.named_steps["transf"].timestamp_
         # Create a new pipeline with cloned estimators
         # Check that even changing the name step does not affect the cache hit
-        clf_2 = LogisticRegression(random_state=0)
+        clf_2 = LogisticRegression(alpha=1e-4)
         transf_2 = DummyTransf()
         cached_pipe_2 = Pipeline(
             [("transf_2", transf_2), ("logreg", clf_2)], memory=memory
@@ -1516,7 +1521,7 @@ def test_features_names_passthrough():
         steps=[
             ("names", FeatureNameSaver()),
             ("pass", "passthrough"),
-            ("clf", LogisticRegression()),
+            ("clf", LogisticRegression(alpha=1e-4)),
         ]
     )
     iris = load_iris()
@@ -1528,7 +1533,9 @@ def test_features_names_passthrough():
 
 def test_feature_names_count_vectorizer():
     """Check pipeline.get_feature_names_out with vectorizers"""
-    pipe = Pipeline(steps=[("vect", CountVectorizer()), ("clf", LogisticRegression())])
+    pipe = Pipeline(
+        steps=[("vect", CountVectorizer()), ("clf", LogisticRegression(alpha=1e-4))]
+    )
     y = ["pizza" in x for x in JUNK_FOOD_DOCS]
     pipe.fit(JUNK_FOOD_DOCS, y)
     assert_array_equal(
@@ -1554,7 +1561,7 @@ def test_pipeline_feature_names_out_error_without_definition():
 
 
 def test_pipeline_param_error():
-    clf = make_pipeline(LogisticRegression())
+    clf = make_pipeline(LogisticRegression(alpha=1e-4))
     with pytest.raises(
         ValueError, match="Pipeline.fit does not accept the sample_weight parameter"
     ):
@@ -1736,7 +1743,7 @@ def test_pipeline_missing_values_leniency():
     X, y = iris.data.copy(), iris.target.copy()
     mask = np.random.choice([1, 0], X.shape, p=[0.1, 0.9]).astype(bool)
     X[mask] = np.nan
-    pipe = make_pipeline(SimpleImputer(), LogisticRegression())
+    pipe = make_pipeline(SimpleImputer(), LogisticRegression(alpha=1e-4))
     assert pipe.fit(X, y).score(X, y) > 0.4
 
 
@@ -1856,7 +1863,7 @@ def test_pipeline_set_output_integration():
 
     X, y = load_iris(as_frame=True, return_X_y=True)
 
-    pipe = make_pipeline(StandardScaler(), LogisticRegression())
+    pipe = make_pipeline(StandardScaler(), LogisticRegression(alpha=1e-4))
     pipe.set_output(transform="pandas")
     pipe.fit(X, y)
 

@@ -46,14 +46,14 @@ def load_iris_2d_scaled():
 
 @pytest.fixture(scope="module")
 def fitted_clf():
-    return LogisticRegression().fit(X, y)
+    return LogisticRegression(alpha=1e-4).fit(X, y)
 
 
 def test_input_data_dimension(pyplot):
     """Check that we raise an error when `X` does not have exactly 2 features."""
     X, y = make_classification(n_samples=10, n_features=4, random_state=0)
 
-    clf = LogisticRegression().fit(X, y)
+    clf = LogisticRegression(alpha=1e-4).fit(X, y)
     msg = "n_features must be equal to 2. Got 4 instead."
     with pytest.raises(ValueError, match=msg):
         DecisionBoundaryDisplay.from_estimator(estimator=clf, X=X)
@@ -77,30 +77,34 @@ def test_check_boundary_response_method_error():
     [
         (DecisionTreeRegressor(), "predict", "predict"),
         (DecisionTreeRegressor(), "auto", "predict"),
-        (LogisticRegression().fit(*load_iris_2d_scaled()), "predict", "predict"),
         (
-            LogisticRegression().fit(*load_iris_2d_scaled()),
+            LogisticRegression(alpha=1e-4).fit(*load_iris_2d_scaled()),
+            "predict",
+            "predict",
+        ),
+        (
+            LogisticRegression(alpha=1e-4).fit(*load_iris_2d_scaled()),
             "auto",
             ["decision_function", "predict_proba", "predict"],
         ),
         (
-            LogisticRegression().fit(*load_iris_2d_scaled()),
+            LogisticRegression(alpha=1e-4).fit(*load_iris_2d_scaled()),
             "predict_proba",
             "predict_proba",
         ),
         (
-            LogisticRegression().fit(*load_iris_2d_scaled()),
+            LogisticRegression(alpha=1e-4).fit(*load_iris_2d_scaled()),
             "decision_function",
             "decision_function",
         ),
         (
-            LogisticRegression().fit(X, y),
+            LogisticRegression(alpha=1e-4).fit(X, y),
             "auto",
             ["decision_function", "predict_proba", "predict"],
         ),
-        (LogisticRegression().fit(X, y), "predict", "predict"),
+        (LogisticRegression(alpha=1e-4).fit(X, y), "predict", "predict"),
         (
-            LogisticRegression().fit(X, y),
+            LogisticRegression(alpha=1e-4).fit(X, y),
             ["predict_proba", "decision_function"],
             ["predict_proba", "decision_function"],
         ),
@@ -122,7 +126,7 @@ def test_multiclass_predict(pyplot):
     eps = 1.0
     X, y = make_classification(n_classes=3, n_informative=3, random_state=0)
     X = X[:, [0, 1]]
-    lr = LogisticRegression(random_state=0).fit(X, y)
+    lr = LogisticRegression(alpha=1e-4).fit(X, y)
 
     disp = DecisionBoundaryDisplay.from_estimator(
         lr, X, response_method="predict", grid_resolution=grid_resolution, eps=1.0
@@ -200,7 +204,7 @@ def test_input_validation_errors_multiclass_colors(
 ):
     """Check input validation for `multiclass_colors` in `from_estimator`."""
     X, y = load_iris_2d_scaled()
-    clf = LogisticRegression().fit(X, y)
+    clf = LogisticRegression(alpha=1e-4).fit(X, y)
     with pytest.raises(error_type, match=error_msg):
         DecisionBoundaryDisplay.from_estimator(clf, X, **kwargs)
 
@@ -464,7 +468,7 @@ def test_string_target(pyplot):
 
     # Use strings as target
     y = iris.target_names[iris.target]
-    log_reg = LogisticRegression().fit(X, y)
+    log_reg = LogisticRegression(alpha=1e-4).fit(X, y)
 
     # Does not raise
     DecisionBoundaryDisplay.from_estimator(
@@ -487,7 +491,7 @@ def test_dataframe_support(pyplot, constructor_name):
     df = _convert_container(
         X, constructor_name=constructor_name, column_names=["col_x", "col_y"]
     )
-    estimator = LogisticRegression().fit(df, y)
+    estimator = LogisticRegression(alpha=1e-4).fit(df, y)
 
     with warnings.catch_warnings():
         # no warnings linked to feature names validation should be raised
@@ -505,7 +509,7 @@ def test_class_of_interest_binary(pyplot, response_method):
     y = iris.target[:100]
     assert_array_equal(np.unique(y), [0, 1])
 
-    estimator = LogisticRegression().fit(X, y)
+    estimator = LogisticRegression(alpha=1e-4).fit(X, y)
     # We will check that `class_of_interest=None` is equivalent to
     # `class_of_interest=estimator.classes_[1]`
     disp_default = DecisionBoundaryDisplay.from_estimator(
@@ -534,7 +538,7 @@ def test_class_of_interest_binary(pyplot, response_method):
     )
 
     if response_method == "predict_proba":
-        assert_allclose(disp_default.response, 1 - disp_class_0.response)
+        assert_allclose(disp_default.response, 1 - disp_class_0.response, atol=1e-15)
     else:
         assert response_method == "decision_function"
         assert_allclose(disp_default.response, -disp_class_0.response)
@@ -550,7 +554,7 @@ def test_class_of_interest_multiclass(pyplot, response_method):
     y = iris.target  # the target are numerical labels
     class_of_interest_idx = 2
 
-    estimator = LogisticRegression().fit(X, y)
+    estimator = LogisticRegression(alpha=1e-4).fit(X, y)
     disp = DecisionBoundaryDisplay.from_estimator(
         estimator,
         X,
@@ -565,7 +569,7 @@ def test_class_of_interest_multiclass(pyplot, response_method):
 
     # make the same test but this time using target as strings
     y = iris.target_names[iris.target]
-    estimator = LogisticRegression().fit(X, y)
+    estimator = LogisticRegression(alpha=1e-4).fit(X, y)
 
     disp = DecisionBoundaryDisplay.from_estimator(
         estimator,
@@ -594,7 +598,7 @@ def test_multiclass_plot_max_class(pyplot, response_method):
     """Check plot correct when plotting max multiclass class."""
 
     X, y = load_iris_2d_scaled()
-    clf = LogisticRegression().fit(X, y)
+    clf = LogisticRegression(alpha=1e-4).fit(X, y)
 
     disp = DecisionBoundaryDisplay.from_estimator(
         clf,
@@ -644,7 +648,7 @@ def test_multiclass_colors_cmap(
     import matplotlib as mpl
 
     X, y = make_blobs(n_samples=150, centers=n_classes, n_features=2, random_state=42)
-    clf = LogisticRegression().fit(X, y)
+    clf = LogisticRegression(alpha=1e-4).fit(X, y)
 
     disp = DecisionBoundaryDisplay.from_estimator(
         clf,
@@ -724,7 +728,7 @@ def test_multiclass_not_enough_colors_error(pyplot):
         ]
     )
     y = np.arange(11)
-    clf = LogisticRegression().fit(X, y)
+    clf = LogisticRegression(alpha=1e-4).fit(X, y)
     msg = "Colormap 'tab10' only has 10 colors, but 11 classes are to be displayed."
     with pytest.raises(ValueError, match=msg):
         DecisionBoundaryDisplay.from_estimator(clf, X, multiclass_colors="tab10")
@@ -749,7 +753,7 @@ def test_multiclass_levels(pyplot, y, response_method, plot_method):
     """
     X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1], [2, 2], [3, 2]])
 
-    clf = LogisticRegression().fit(X, y)
+    clf = LogisticRegression(alpha=1e-4).fit(X, y)
 
     disp = DecisionBoundaryDisplay.from_estimator(
         clf,
@@ -803,7 +807,7 @@ def test_zorder(pyplot, response_method, plot_method):
     """Check that decision boundaries are plotted in the background."""
     X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1], [2, 2], [3, 2]])
     y = np.arange(6)
-    clf = LogisticRegression().fit(X, y)
+    clf = LogisticRegression(alpha=1e-4).fit(X, y)
     disp = DecisionBoundaryDisplay.from_estimator(
         clf, X, response_method=response_method, plot_method=plot_method
     )
@@ -960,7 +964,7 @@ def test_n_classes_raises_if_not_inferable(pyplot):
 def test_cmap_and_colors_logic(pyplot):
     """Check the handling logic for `cmap` and `colors`."""
     X, y = load_iris_2d_scaled()
-    clf = LogisticRegression().fit(X, y)
+    clf = LogisticRegression(alpha=1e-4).fit(X, y)
 
     with pytest.warns(
         UserWarning,
@@ -991,7 +995,7 @@ def test_subclass_named_constructors_return_type_is_subclass(pyplot):
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/pull/27675
     """
-    clf = LogisticRegression().fit(X, y)
+    clf = LogisticRegression(alpha=1e-4).fit(X, y)
 
     class SubclassOfDisplay(DecisionBoundaryDisplay):
         pass

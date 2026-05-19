@@ -309,7 +309,7 @@ def test_sample_weight():
     sample_weight = np.ones(y.shape)
     sample_weight[y == 1] *= 100
 
-    est = LogisticRegression(random_state=0, fit_intercept=False)
+    est = LogisticRegression(alpha=1e-4, fit_intercept=False)
     transformer = SelectFromModel(estimator=est)
     transformer.fit(X, y, sample_weight=None)
     mask = transformer._get_support_mask()
@@ -362,12 +362,14 @@ def test_2d_coef():
         n_classes=4,
     )
 
-    est = LogisticRegression()
+    est = LogisticRegression(alpha=1e-4)
     for threshold, func in zip(["mean", "median"], [np.mean, np.median]):
         for order in [1, 2, np.inf]:
             # Fit SelectFromModel a multi-class problem
             transformer = SelectFromModel(
-                estimator=LogisticRegression(), threshold=threshold, norm_order=order
+                estimator=LogisticRegression(alpha=1e-4),
+                threshold=threshold,
+                norm_order=order,
             )
             transformer.fit(X, y)
             assert hasattr(transformer.estimator_, "coef_")
@@ -582,7 +584,7 @@ def _pca_importances(pca_estimator):
     "estimator, importance_getter",
     [
         (
-            make_pipeline(PCA(random_state=0), LogisticRegression()),
+            make_pipeline(PCA(random_state=0), LogisticRegression(alpha=1e-5)),
             "named_steps.logisticregression.coef_",
         ),
         (PCA(random_state=0), _pca_importances),

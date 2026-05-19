@@ -372,11 +372,12 @@ the following estimator::
 The parameter `deep` controls whether or not the parameters of the
 `subestimator` should be reported. Thus when `deep=True`, the output will be::
 
-    >>> my_estimator = MyEstimator(subestimator=LogisticRegression())
+    >>> my_estimator = MyEstimator(subestimator=LogisticRegression(alpha=1e-4))
     >>> for param, value in my_estimator.get_params(deep=True).items():
     ...     print(f"{param} -> {value}")
     my_extra_param -> random
-    subestimator__C -> 1.0
+    subestimator__C -> deprecated
+    subestimator__alpha -> 0.0001
     subestimator__class_weight -> None
     subestimator__dual -> False
     subestimator__fit_intercept -> True
@@ -390,18 +391,18 @@ The parameter `deep` controls whether or not the parameters of the
     subestimator__tol -> 0.0001
     subestimator__verbose -> 0
     subestimator__warm_start -> False
-    subestimator -> LogisticRegression()
+    subestimator -> LogisticRegression(alpha=0.0001)
 
 If the meta-estimator takes multiple sub-estimators, often, those sub-estimators have
 names (as e.g. named steps in a :class:`~pipeline.Pipeline` object), in which case the
-key should become `<name>__C`, `<name>__class_weight`, etc.
+key should become `<name>__alpha`, `<name>__class_weight`, etc.
 
 When ``deep=False``, the output will be::
 
     >>> for param, value in my_estimator.get_params(deep=False).items():
     ...     print(f"{param} -> {value}")
     my_extra_param -> random
-    subestimator -> LogisticRegression()
+    subestimator -> LogisticRegression(alpha=0.0001)
 
 On the other hand, ``set_params`` takes the parameters of ``__init__`` as keyword
 arguments, unpacks them into a dict of the form ``'parameter': value`` and sets the

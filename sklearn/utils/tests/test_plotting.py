@@ -41,7 +41,7 @@ def test_validate_and_get_response_values(pyplot, pos_label, name, response_meth
     """Check `_validate_and_get_response_values` returns the correct values."""
     X = np.array([[0, 0], [1, 1], [2, 2], [3, 3]])
     y = np.array([0, 0, 2, 2])
-    estimator = LogisticRegression().fit(X, y)
+    estimator = LogisticRegression(alpha=1e-4).fit(X, y)
 
     y_pred, pos_label, name_out = (
         _BinaryClassifierCurveDisplayMixin._validate_and_get_response_values(

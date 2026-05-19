@@ -54,8 +54,8 @@ _ = ax.legend(*scatter.legend_elements(), title="Classes")
 from sklearn.linear_model import LogisticRegression
 from sklearn.multiclass import OneVsRestClassifier
 
-logistic_regression_multinomial = LogisticRegression().fit(X, y)
-logistic_regression_ovr = OneVsRestClassifier(LogisticRegression()).fit(X, y)
+logistic_regression_multinomial = LogisticRegression(alpha=1e-4).fit(X, y)
+logistic_regression_ovr = OneVsRestClassifier(LogisticRegression(alpha=1e-4)).fit(X, y)
 
 accuracy_multinomial = logistic_regression_multinomial.score(X, y)
 accuracy_ovr = logistic_regression_ovr.score(X, y)

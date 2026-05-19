@@ -984,7 +984,7 @@ def test_cross_val_predict(coo_container):
     )
     with pytest.warns(RuntimeWarning, match=warning_message):
         cross_val_predict(
-            LogisticRegression(solver="liblinear"),
+            LogisticRegression(alpha=1e-4, solver="liblinear"),
             X,
             y,
             method="predict_proba",
@@ -995,12 +995,16 @@ def test_cross_val_predict(coo_container):
 def test_cross_val_predict_decision_function_shape():
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
-    preds = cross_val_predict(LogisticRegression(), X, y, method="decision_function")
+    preds = cross_val_predict(
+        LogisticRegression(alpha=1e-4), X, y, method="decision_function"
+    )
     assert preds.shape == (50,)
 
     X, y = load_iris(return_X_y=True)
 
-    preds = cross_val_predict(LogisticRegression(), X, y, method="decision_function")
+    preds = cross_val_predict(
+        LogisticRegression(alpha=1e-4), X, y, method="decision_function"
+    )
     assert preds.shape == (150, 3)
 
     # This specifically tests imbalanced splits for binary
@@ -1043,24 +1047,32 @@ def test_cross_val_predict_decision_function_shape():
 def test_cross_val_predict_predict_proba_shape():
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
-    preds = cross_val_predict(LogisticRegression(), X, y, method="predict_proba")
+    preds = cross_val_predict(
+        LogisticRegression(alpha=1e-4), X, y, method="predict_proba"
+    )
     assert preds.shape == (50, 2)
 
     X, y = load_iris(return_X_y=True)
 
-    preds = cross_val_predict(LogisticRegression(), X, y, method="predict_proba")
+    preds = cross_val_predict(
+        LogisticRegression(alpha=1e-4), X, y, method="predict_proba"
+    )
     assert preds.shape == (150, 3)
 
 
 def test_cross_val_predict_predict_log_proba_shape():
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
-    preds = cross_val_predict(LogisticRegression(), X, y, method="predict_log_proba")
+    preds = cross_val_predict(
+        LogisticRegression(alpha=1e-4), X, y, method="predict_log_proba"
+    )
     assert preds.shape == (50, 2)
 
     X, y = load_iris(return_X_y=True)
 
-    preds = cross_val_predict(LogisticRegression(), X, y, method="predict_log_proba")
+    preds = cross_val_predict(
+        LogisticRegression(alpha=1e-4), X, y, method="predict_log_proba"
+    )
     assert preds.shape == (150, 3)
 
 
@@ -1098,13 +1110,13 @@ def test_cross_val_predict_input_types(coo_container):
 
     # test with X and y as list and non empty method
     predictions = cross_val_predict(
-        LogisticRegression(),
+        LogisticRegression(alpha=1e-4),
         X.tolist(),
         y.tolist(),
         method="decision_function",
     )
     predictions = cross_val_predict(
-        LogisticRegression(),
+        LogisticRegression(alpha=1e-4),
         X,
         y.tolist(),
         method="decision_function",
@@ -1147,7 +1159,7 @@ def test_cross_val_predict_unbalanced():
     )
     # Change the first sample to a new class
     y[0] = 2
-    clf = LogisticRegression(random_state=1)
+    clf = LogisticRegression(alpha=1e-4)
     cv = StratifiedKFold(n_splits=2)
     train, test = list(cv.split(X, y))
     yhat_proba = cross_val_predict(clf, X, y, cv=cv, method="predict_proba")
@@ -1877,8 +1889,8 @@ def check_cross_val_predict_with_method_multiclass(est):
 
 
 def test_cross_val_predict_with_method():
-    check_cross_val_predict_with_method_binary(LogisticRegression())
-    check_cross_val_predict_with_method_multiclass(LogisticRegression())
+    check_cross_val_predict_with_method_binary(LogisticRegression(alpha=1e-4))
+    check_cross_val_predict_with_method_multiclass(LogisticRegression(alpha=1e-4))
 
 
 def test_cross_val_predict_method_checking():
@@ -1896,7 +1908,7 @@ def test_gridsearchcv_cross_val_predict_with_method():
     iris = load_iris()
     X, y = iris.data, iris.target
     X, y = shuffle(X, y, random_state=0)
-    est = GridSearchCV(LogisticRegression(random_state=42), {"C": [0.1, 1]}, cv=2)
+    est = GridSearchCV(LogisticRegression(), {"alpha": [0.1, 1]}, cv=2)
     for method in ["decision_function", "predict_proba", "predict_log_proba"]:
         check_cross_val_predict_multiclass(est, X, y, method)
 
@@ -1910,7 +1922,7 @@ def test_cross_val_predict_with_method_multilabel_ovr():
     X, y = make_multilabel_classification(
         n_samples=n_samp, n_labels=3, n_classes=n_classes, n_features=5, random_state=42
     )
-    est = OneVsRestClassifier(LogisticRegression(solver="liblinear", random_state=0))
+    est = OneVsRestClassifier(LogisticRegression(alpha=1e-4))
     for method in ["predict_proba", "decision_function"]:
         check_cross_val_predict_binary(est, X, y, method=method)
 
@@ -1950,7 +1962,7 @@ def test_cross_val_predict_with_method_rare_class():
     rng = np.random.RandomState(0)
     X = rng.normal(0, 1, size=(14, 10))
     y = np.array([0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 3])
-    est = LogisticRegression()
+    est = LogisticRegression(alpha=1e-4)
     for method in ["predict_proba", "predict_log_proba", "decision_function"]:
         with warnings.catch_warnings():
             # Suppress warning about too few examples of a class
@@ -2007,7 +2019,7 @@ def test_cross_val_predict_class_subset():
 
     methods = ["decision_function", "predict_proba", "predict_log_proba"]
     for method in methods:
-        est = LogisticRegression()
+        est = LogisticRegression(alpha=1e-4)
 
         # Test with n_splits=3
         predictions = cross_val_predict(est, X, y, method=method, cv=kfold3)
@@ -2207,7 +2219,7 @@ def test_cross_val_score_failing_scorer(error_score):
     # check that an estimator can fail during scoring in `cross_val_score` and
     # that we can optionally replaced it with `error_score`
     X, y = load_iris(return_X_y=True)
-    clf = LogisticRegression(max_iter=5).fit(X, y)
+    clf = LogisticRegression(alpha=1e-4, max_iter=5).fit(X, y)
 
     error_msg = "This scorer is supposed to fail!!!"
     failing_scorer = partial(_failing_scorer, error_msg=error_msg)
@@ -2241,7 +2253,7 @@ def test_cross_validate_failing_scorer(
     # case also check the result of a non-failing scorer where the other scorers
     # are failing.
     X, y = load_iris(return_X_y=True)
-    clf = LogisticRegression(max_iter=5).fit(X, y)
+    clf = LogisticRegression(alpha=1e-4, max_iter=5).fit(X, y)
 
     error_msg = "This scorer is supposed to fail!!!"
     failing_scorer = partial(_failing_scorer, error_msg=error_msg)
@@ -2447,7 +2459,7 @@ def test_cross_validate_return_indices(global_random_seed):
     """Check the behaviour of `return_indices` in `cross_validate`."""
     X, y = load_iris(return_X_y=True)
     X = scale(X)  # scale features for better convergence
-    estimator = LogisticRegression()
+    estimator = LogisticRegression(alpha=1e-4)
 
     cv = KFold(n_splits=3, shuffle=True, random_state=global_random_seed)
     cv_results = cross_validate(estimator, X, y, cv=cv, n_jobs=2, return_indices=False)

@@ -86,7 +86,7 @@ def test_roc_curve_display_plotting(
     else:
         sample_weight = None
 
-    lr = LogisticRegression()
+    lr = LogisticRegression(alpha=1e-4)
     lr.fit(X, y)
 
     y_score = getattr(lr, response_method)(X)
@@ -234,7 +234,12 @@ def test_roc_curve_display_plotting_from_cv_results(
         sample_weight = None
 
     cv_results = cross_validate(
-        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+        LogisticRegression(alpha=1e-4),
+        X,
+        y,
+        cv=3,
+        return_estimator=True,
+        return_indices=True,
     )
     display = RocCurveDisplay.from_cv_results(
         cv_results,
@@ -281,7 +286,7 @@ def test_roc_curve_display_plotting_from_cv_results(
     if with_sample_weight:
         aggregate_expected_labels = ["AUC = 0.64 +/- 0.04", "_child1", "_child2"]
     else:
-        aggregate_expected_labels = ["AUC = 0.61 +/- 0.05", "_child1", "_child2"]
+        aggregate_expected_labels = ["AUC = 0.60 +/- 0.04", "_child1", "_child2"]
     for idx, line in enumerate(display.line_):
         assert isinstance(line, mpl.lines.Line2D)
         # Default alpha for `from_cv_results`
@@ -348,7 +353,7 @@ def test_roc_curve_chance_level_line(
     """Check chance level plotting behavior of `from_predictions`, `from_estimator`."""
     X, y = data_binary
 
-    lr = LogisticRegression()
+    lr = LogisticRegression(alpha=1e-4)
     lr.fit(X, y)
 
     y_score = getattr(lr, "predict_proba")(X)
@@ -417,7 +422,12 @@ def test_roc_curve_chance_level_line_from_cv_results(
     X, y = data_binary
     n_cv = 3
     cv_results = cross_validate(
-        LogisticRegression(), X, y, cv=n_cv, return_estimator=True, return_indices=True
+        LogisticRegression(alpha=1e-4),
+        X,
+        y,
+        cv=n_cv,
+        return_estimator=True,
+        return_indices=True,
     )
 
     display = RocCurveDisplay.from_cv_results(
@@ -454,10 +464,11 @@ def test_roc_curve_chance_level_line_from_cv_results(
 @pytest.mark.parametrize(
     "clf",
     [
-        LogisticRegression(),
-        make_pipeline(StandardScaler(), LogisticRegression()),
+        LogisticRegression(alpha=1e-4),
+        make_pipeline(StandardScaler(), LogisticRegression(alpha=1e-4)),
         make_pipeline(
-            make_column_transformer((StandardScaler(), [0, 1])), LogisticRegression()
+            make_column_transformer((StandardScaler(), [0, 1])),
+            LogisticRegression(alpha=1e-4),
         ),
     ],
 )
@@ -543,10 +554,15 @@ def test_plot_roc_curve_despine(pyplot, data_binary, despine, constructor_name):
     # Check that the despine keyword is working correctly
     X, y = data_binary
 
-    lr = LogisticRegression().fit(X, y)
+    lr = LogisticRegression(alpha=1e-4).fit(X, y)
     lr.fit(X, y)
     cv_results = cross_validate(
-        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+        LogisticRegression(alpha=1e-4),
+        X,
+        y,
+        cv=3,
+        return_estimator=True,
+        return_indices=True,
     )
 
     y_pred = lr.decision_function(X)

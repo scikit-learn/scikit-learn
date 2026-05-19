@@ -494,7 +494,7 @@ def estimator_html_repr(estimator):
     --------
     >>> from sklearn.utils._repr_html.estimator import estimator_html_repr
     >>> from sklearn.linear_model import LogisticRegression
-    >>> estimator_html_repr(LogisticRegression())
+    >>> estimator_html_repr(LogisticRegression(alpha=1e-4))
     '<style>.sk-global...'
     """
     from sklearn.exceptions import NotFittedError

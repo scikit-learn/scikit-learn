@@ -84,7 +84,7 @@ def test_get_visual_block_single_str_none(est):
 
 
 def test_get_visual_block_single_estimator():
-    est = LogisticRegression(C=10.0)
+    est = LogisticRegression(alpha=0.1)
     est_html_info = _get_visual_block(est)
     assert est_html_info.kind == "single"
     assert est_html_info.estimators == est
@@ -422,11 +422,11 @@ def test_estimator_html_repr_unfitted_vs_fitted():
 @pytest.mark.parametrize(
     "estimator",
     [
-        LogisticRegression(),
-        make_pipeline(StandardScaler(), LogisticRegression()),
+        LogisticRegression(alpha=1e-4),
+        make_pipeline(StandardScaler(), LogisticRegression(alpha=1e-4)),
         make_pipeline(
             make_column_transformer((StandardScaler(), slice(0, 3))),
-            LogisticRegression(),
+            LogisticRegression(alpha=1e-4),
         ),
     ],
 )
@@ -629,5 +629,5 @@ def test_function_transformer_show_caption(func, expected_name):
 
 def test_estimator_html_repr_table():
     """Check that we add the table of parameters in the HTML representation."""
-    est = LogisticRegression(C=10.0, fit_intercept=False)
+    est = LogisticRegression(alpha=0.1, fit_intercept=False)
     assert "parameters-table" in estimator_html_repr(est)
