@@ -11,7 +11,7 @@ from sklearn.base import _fit_context, is_classifier
 from sklearn.metrics._scorer import get_scorer_names
 from sklearn.model_selection import ParameterGrid, ParameterSampler
 from sklearn.model_selection._search import BaseSearchCV
-from sklearn.model_selection._split import _yields_constant_splits, check_cv
+from sklearn.model_selection._split import _yields_constant_splits
 from sklearn.utils import resample
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.multiclass import check_classification_targets
@@ -239,15 +239,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
         self : object
             Instance of fitted estimator.
         """
-        self._checked_cv_orig = check_cv(
-            self.cv, y, classifier=is_classifier(self.estimator)
-        )
-
-        routed_params = self._get_routed_params_for_fit(params)
-        self._check_input_parameters(
-            X=X, y=y, split_params=routed_params.splitter.split
-        )
-
         self._n_samples_orig = _num_samples(X)
 
         super().fit(X, y=y, **params)
@@ -257,7 +248,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
         return self
 
-    def _run_search(self, evaluate_candidates):
+    def _run_search(self, evaluate_candidates, *, callback_ctx):
         candidate_params = self._generate_candidate_params()
 
         if self.resource != "n_samples" and any(
@@ -309,7 +300,20 @@ class BaseSuccessiveHalving(BaseSearchCV):
         self.n_resources_ = []
         self.n_candidates_ = []
 
+        search_callback_ctx = callback_ctx.subcontext(
+            task_name="search",
+            max_subtasks=n_iterations,
+        ).call_on_fit_task_begin(estimator=self)
+
         for itr in range(n_iterations):
+            n_candidates = len(candidate_params)
+
+            iteration_callback_ctx = search_callback_ctx.subcontext(
+                task_name="halving-iteration",
+                max_subtasks=n_candidates * self.n_splits_,
+                sequential_subtasks=False,
+            ).call_on_fit_task_begin(estimator=self)
+
             power = itr  # default
             if self.aggressive_elimination:
                 # this will set n_resources to the initial value (i.e. the
@@ -323,7 +327,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
             n_resources = min(n_resources, self.max_resources_)
             self.n_resources_.append(n_resources)
 
-            n_candidates = len(candidate_params)
             self.n_candidates_.append(n_candidates)
 
             if self.verbose:
@@ -355,16 +358,23 @@ class BaseSuccessiveHalving(BaseSearchCV):
             }
 
             results = evaluate_candidates(
-                candidate_params, cv, more_results=more_results
+                candidate_params,
+                cv,
+                more_results=more_results,
+                callback_ctx=iteration_callback_ctx,
             )
 
             n_candidates_to_keep = ceil(n_candidates / self.factor)
             candidate_params = _top_k(results, n_candidates_to_keep, itr)
 
+            iteration_callback_ctx.call_on_fit_task_end(estimator=self)
+
         self.n_remaining_candidates_ = len(candidate_params)
         self.n_required_iterations_ = n_required_iterations
         self.n_possible_iterations_ = n_possible_iterations
         self.n_iterations_ = n_iterations
+
+        search_callback_ctx.call_on_fit_task_end(estimator=self)
 
     @abstractmethod
     def _generate_candidate_params(self):
@@ -1096,8 +1106,8 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     def _generate_candidate_params(self):
         n_candidates_first_iter = self.n_candidates
         if n_candidates_first_iter == "exhaust":
-            # This will generate enough candidate so that the last iteration
-            # uses as much resources as possible
+            # This will generate enough candidates so that the last iteration
+            # uses as many resources as possible
             n_candidates_first_iter = self.max_resources_ // self.min_resources_
         return ParameterSampler(
             self.param_distributions,
