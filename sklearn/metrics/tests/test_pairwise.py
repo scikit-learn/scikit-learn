@@ -22,6 +22,7 @@ from sklearn.metrics.pairwise import (
     PAIRWISE_DISTANCE_FUNCTIONS,
     PAIRWISE_KERNEL_FUNCTIONS,
     _euclidean_distances_upcast,
+    _parallel_pairwise,
     additive_chi2_kernel,
     check_paired_arrays,
     check_pairwise_arrays,
@@ -403,6 +404,20 @@ def test_pairwise_parallel(func, metric, kwds, dtype):
     S = func(X, Y, metric=metric, n_jobs=1, **kwds)
     S2 = func(X, Y, metric=metric, n_jobs=2, **kwds)
     assert_allclose(S, S2)
+
+
+def test_parallel_pairwise_generator_return():
+    X = np.array([[1.0], [2.0], [3.0], [4.0]])
+    Y = np.array([[10.0], [20.0], [30.0]])
+
+    def simple_pairwise(X, Y):
+        return X[:, 0][:, None] + Y[:, 0][None, :]
+
+    expected = simple_pairwise(X, Y)
+    result = _parallel_pairwise(X, Y, simple_pairwise, n_jobs=2)
+
+    assert_allclose(result, expected)
+    assert result.shape == (X.shape[0], Y.shape[0])
 
 
 @pytest.mark.parametrize(
