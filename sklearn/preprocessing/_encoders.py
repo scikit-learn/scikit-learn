@@ -15,14 +15,7 @@ from sklearn.base import (
     _fit_context,
 )
 from sklearn.utils import _safe_indexing, check_array
-from sklearn.utils._array_api import device, get_namespace
-from sklearn.utils._encode import (
-    _check_unknown,
-    _encode,
-    _get_counts,
-    _nandict,
-    _unique,
-)
+from sklearn.utils._encode import _check_unknown, _encode, _get_counts, _unique,_nandict
 from sklearn.utils._mask import _get_mask
 from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
@@ -32,6 +25,7 @@ from sklearn.utils.validation import (
     check_is_fitted,
     validate_data,
 )
+from sklearn.utils._array_api import _isin, device, get_namespace, xpx
 
 __all__ = ["OneHotEncoder", "OrdinalEncoder"]
 
@@ -95,7 +89,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         )
         self.n_features_in_ = n_features
 
-        if self.categories != "auto" and self.categories != "frequency":
+        if self.categories != "auto" and self.categories != "frequency" :
             if len(self.categories) != n_features:
                 raise ValueError(
                     "Shape mismatch: if categories is an array,"
@@ -107,95 +101,122 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         X_list_dict = {}
         compute_counts = return_counts or self._infrequent_enabled
 
-        for i in range(n_features):
-            Xi = X_list[i]
+        if  self.categories == "frequency":
+                Xi = np.array([])
 
-            if self.categories == "auto":
-                result = _unique(Xi, return_counts=compute_counts)
-                if compute_counts:
-                    cats, counts = result
-                    category_counts.append(counts)
-                else:
-                    cats = result
-            elif self.categories == "frequency":
-                result = _unique(Xi, return_counts=compute_counts)
-                table = _nandict({val: i for i, val in enumerate(Xi)})
+                #here we transform two list into pairs.
+                for element in X_list:
+                   Xi = np.concatenate((Xi, element), axis=0)
+            
+                unique, counts = _unique(Xi, return_counts=True) #np.unique(Xi, return_counts=True)
+                #use only counts
+                #I wan a table that have the object that will be encoded and their frequency
+                table = dict(zip(unique, counts))
                 frequency_table = list(table.values())
+                #here I sort the frequency so the encoding values will be sorted by their frequency
                 frequency_table.sort()
+                
+                #1. enumare in text what you want to do
+                #2. clean up redundancy 
+                
+                #make this more clear
+                #here I add table that can be used to invert the frequency encoding in the inverse transform function
                 if "inverted_table" not in dir(self):
-                    self.inverted_table = {}
+                    self.inverted_table = {}#'a':5,'b':3}
 
-                for key, value in enumerate(table):
+                for key,value in enumerate(table):
                     if value in list(self.inverted_table.keys()):
                         continue
+                    #here I get the index of the given frequency from the frequency table ,which was already sorted and for value we
+                    #have the key of the target object that will be encoded thus we can enstablish connection based on the frequency of the object
+                    #and the encoding
                     index_frequency = frequency_table.index(table[value])
+                    #here we remove the frequency value to not go over it accidently
                     frequency_table[index_frequency] = -2
+                    #populating the frequency table
                     self.inverted_table[value] = index_frequency
-                if compute_counts:
-                    cats, counts = result
-                    category_counts.append(counts)
+                # should fit cleanly in this design
+                # I dont think that this can be placed anywhere else 
+                # because it requires X_list
+                for i in range(n_features):
+                    result = _unique(X_list[i], return_counts=compute_counts)
+                    if compute_counts:
+                        cats, counts = result
+                        category_counts.append(counts)
+                    else:
+                        cats = result
+                    self.categories_.append(unique)
+        else:
+            for i in range(n_features):
+                Xi = X_list[i]
+
+                if self.categories == "auto":
+                    result = _unique(Xi, return_counts=compute_counts)
+                    if compute_counts:
+                        cats, counts = result
+                        category_counts.append(counts)
+                    else:
+                        cats = result
+
                 else:
-                    cats = result
-            else:
-                if np.issubdtype(Xi.dtype, np.str_):
-                    # Always convert string categories to objects to avoid
-                    # unexpected string truncation for longer category labels
-                    # passed in the constructor.
-                    Xi_dtype = object
-                else:
-                    Xi_dtype = Xi.dtype
+                    if np.issubdtype(Xi.dtype, np.str_):
+                        # Always convert string categories to objects to avoid
+                        # unexpected string truncation for longer category labels
+                        # passed in the constructor.
+                        Xi_dtype = object
+                    else:
+                        Xi_dtype = Xi.dtype
 
-                cats = np.array(self.categories[i], dtype=Xi_dtype)
-                if (
-                    cats.dtype == object
-                    and isinstance(cats[0], bytes)
-                    and Xi.dtype.kind != "S"
-                ):
-                    msg = (
-                        f"In column {i}, the predefined categories have type 'bytes'"
-                        " which is incompatible with values of type"
-                        f" '{type(Xi[0]).__name__}'."
-                    )
-                    raise ValueError(msg)
-
-                # `nan` must be the last stated category
-                for category in cats[:-1]:
-                    if is_scalar_nan(category):
-                        raise ValueError(
-                            "Nan should be the last element in user"
-                            f" provided categories, see categories {cats}"
-                            f" in column #{i}"
-                        )
-
-                if cats.size != len(_unique(cats)):
-                    msg = (
-                        f"In column {i}, the predefined categories"
-                        " contain duplicate elements."
-                    )
-                    raise ValueError(msg)
-
-                if Xi.dtype.kind not in "OUS":
-                    sorted_cats = np.sort(cats)
-                    error_msg = (
-                        "Unsorted categories are not supported for numerical categories"
-                    )
-                    # if there are nans, nan should be the last element
-                    stop_idx = -1 if np.isnan(sorted_cats[-1]) else None
-                    if np.any(sorted_cats[:stop_idx] != cats[:stop_idx]):
-                        raise ValueError(error_msg)
-
-                if handle_unknown == "error":
-                    diff = _check_unknown(Xi, cats)
-                    if diff:
+                    cats = np.array(self.categories[i], dtype=Xi_dtype)
+                    if (
+                        cats.dtype == object
+                        and isinstance(cats[0], bytes)
+                        and Xi.dtype.kind != "S"
+                    ):
                         msg = (
-                            "Found unknown categories {0} in column {1}"
-                            " during fit".format(diff, i)
+                            f"In column {i}, the predefined categories have type 'bytes'"
+                            " which is incompatible with values of type"
+                            f" '{type(Xi[0]).__name__}'."
                         )
                         raise ValueError(msg)
-                if compute_counts:
-                    category_counts.append(_get_counts(Xi, cats))
 
-            self.categories_.append(cats)
+                    # `nan` must be the last stated category
+                    for category in cats[:-1]:
+                        if is_scalar_nan(category):
+                            raise ValueError(
+                                "Nan should be the last element in user"
+                                f" provided categories, see categories {cats}"
+                                f" in column #{i}"
+                            )
+
+                    if cats.size != len(_unique(cats)):
+                        msg = (
+                            f"In column {i}, the predefined categories"
+                            " contain duplicate elements."
+                        )
+                        raise ValueError(msg)
+
+                    if Xi.dtype.kind not in "OUS":
+                        sorted_cats = np.sort(cats)
+                        error_msg = (
+                            "Unsorted categories are not supported for numerical categories"
+                        )
+                        # if there are nans, nan should be the last element
+                        stop_idx = -1 if np.isnan(sorted_cats[-1]) else None
+                        if np.any(sorted_cats[:stop_idx] != cats[:stop_idx]):
+                            raise ValueError(error_msg)
+
+                    if handle_unknown == "error":
+                        diff = _check_unknown(Xi, cats)
+                        if diff:
+                            msg = (
+                                "Found unknown categories {0} in column {1}"
+                                " during fit".format(diff, i)
+                            )
+                            raise ValueError(msg)
+                    if compute_counts:
+                        category_counts.append(_get_counts(Xi, cats))
+                self.categories_.append(cats)
         self.sorted_dict = dict(sorted(X_list_dict.items(), key=lambda item: item[1]))
         output = {"n_samples": n_samples}
         if return_counts:
@@ -272,16 +293,12 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             # introduce
             if self.categories == "frequency":
                 xp, _ = get_namespace(Xi, self.categories_[i])
-                table = _nandict({val: i for i, val in enumerate(self.categories_[i])})
-                frequency_table = list(table.values())
-                frequency_table.sort()
-                X_int[:, i] = xp.asarray(
-                    [self.inverted_table[v] for v in Xi], device=device(Xi)
-                )
+
+                X_int[:, i] = xp.asarray([self.inverted_table[v] for v in Xi],
+                                          device=device(Xi))
             else:
-                X_int[:, i] = _encode(
-                    Xi, uniques=self.categories_[i], check_unknown=False
-                )
+                X_int[:, i] = _encode(Xi, uniques=self.categories_[i],
+                                       check_unknown=False)
         if columns_with_unknown:
             warnings.warn(
                 (
@@ -1695,8 +1712,15 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 labels[X_i_mask] = self._missing_indices[i]
 
             rows_to_update = slice(None)
-            categories = self.categories_[i]
-
+            
+            if  self.categories == "frequency":
+               categories = [None]*len(self.inverted_table)
+               for j,val in enumerate(self.inverted_table):
+                   categories[self.inverted_table[val]] = val
+               categories = np.array(categories)
+               
+            else:
+                categories = self.categories_[i]
             if infrequent_indices is not None and infrequent_indices[i] is not None:
                 # Compute mask for frequent categories
                 infrequent_encoding_value = len(categories) - len(infrequent_indices[i])
