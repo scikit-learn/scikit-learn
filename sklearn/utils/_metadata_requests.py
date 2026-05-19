@@ -1304,6 +1304,11 @@ def get_routing_for_object(obj=None):
 # mixin class.
 
 # These strings are used to dynamically generate the docstrings for the methods.
+REQUESTER_DOC_EMPTY = """        No-op.
+
+        Calling this method has no effect.
+
+"""
 REQUESTER_DOC = """        Configure whether metadata should be requested to be \
 passed to the ``{method}`` method.
 
@@ -1334,7 +1339,8 @@ this given alias instead of the original name.
 
         .. versionadded:: 1.3
 
-        Parameters
+"""
+REQUESTER_DOC_PARAMS_SECTION = """        Parameters
         ----------
 """
 REQUESTER_DOC_PARAM = """        {metadata} : str, True, False, or None, \
@@ -1461,9 +1467,13 @@ class RequestMethod:
             params,
             return_annotation=owner,
         )
-        doc = REQUESTER_DOC.format(method=self.name)
-        for metadata in self.keys:
-            doc += REQUESTER_DOC_PARAM.format(metadata=metadata, method=self.name)
+        if self.keys:
+            doc = REQUESTER_DOC.format(method=self.name)
+            doc += REQUESTER_DOC_PARAMS_SECTION
+            for metadata in self.keys:
+                doc += REQUESTER_DOC_PARAM.format(metadata=metadata, method=self.name)
+        else:
+            doc = REQUESTER_DOC_EMPTY
         doc += REQUESTER_DOC_RETURN
         func.__doc__ = doc
         return func
@@ -1515,16 +1525,37 @@ class _MetadataRequester:
         ----------
         .. [1] https://www.python.org/dev/peps/pep-0487
         """
+
+        def is_RequestMethod(obj, name: str):
+            """Check if obj.name is a RequestMethod"""
+            value = inspect.getattr_static(obj, name)
+            return isinstance(value, RequestMethod)
+
+        def _has_explicit_set_method_request(cls, name):
+            # True if this class has a set_method_request defined or inherited
+            # which is not a descriptor
+            return hasattr(cls, name) and not is_RequestMethod(cls, name)
+
+        def _needs_generated_set_request(cls, name, requests):
+            # True if this class has requestable metadata or requests is empty but
+            # a parent class hands down a RequestMethod
+            if requests:
+                return True
+            return hasattr(cls, name) and is_RequestMethod(cls, name)
+
         try:
             for method in SIMPLE_METHODS:
+                set_method_name = f"set_{method}_request"
                 requests = cls._get_class_level_metadata_request_values(method)
-                if not requests:
+
+                if _has_explicit_set_method_request(cls, set_method_name):
                     continue
-                setattr(
-                    cls,
-                    f"set_{method}_request",
-                    RequestMethod(method, sorted(requests)),
-                )
+
+                if _needs_generated_set_request(cls, set_method_name, requests):
+                    setattr(
+                        cls, set_method_name, RequestMethod(method, sorted(requests))
+                    )
+
         except Exception:
             # if there are any issues here, it will be raised when
             # ``get_metadata_routing`` is called. Here we are going to ignore
