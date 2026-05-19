@@ -9,7 +9,6 @@ kind of confidence on the prediction. This example demonstrates how to
 visualize how well calibrated the predicted probabilities are using calibration
 curves, also known as reliability diagrams. Calibration of an uncalibrated
 classifier will also be demonstrated.
-
 """
 
 # Authors: The scikit-learn developers
@@ -131,7 +130,7 @@ plt.show()
 # greater flexibility of the non-parametric model can be exploited.
 #
 # Below we will make a quantitative analysis considering several classification
-# metrics: :ref:`brier_score_loss`, :ref:`log_loss`,
+# metrics: :ref:`calibration_error`, :ref:`log_loss`,
 # :ref:`precision, recall, F1 score <precision_recall_f_measure_metrics>` and
 # :ref:`ROC AUC <roc_metrics>`.
 
@@ -140,7 +139,7 @@ from collections import defaultdict
 import pandas as pd
 
 from sklearn.metrics import (
-    brier_score_loss,
+    calibration_error,
     f1_score,
     log_loss,
     precision_score,
@@ -155,7 +154,7 @@ for i, (clf, name) in enumerate(clf_list):
     y_pred = clf.predict(X_test)
     scores["Classifier"].append(name)
 
-    for metric in [brier_score_loss, log_loss, roc_auc_score]:
+    for metric in [calibration_error, log_loss, roc_auc_score]:
         score_name = metric.__name__.replace("_", " ").replace("score", "").capitalize()
         scores[score_name].append(metric(y_test, y_prob[:, 1]))
 
@@ -169,9 +168,8 @@ for i, (clf, name) in enumerate(clf_list):
 score_df
 
 # %%
-# Notice that although calibration improves the :ref:`brier_score_loss` (a
-# metric composed
-# of calibration term and refinement term) and :ref:`log_loss`, it does not
+# Notice that although calibration improves the :ref:`calibration_error`
+# and :ref:`log_loss`, it does not
 # significantly alter the prediction accuracy measures (precision, recall and
 # F1 score).
 # This is because calibration should not significantly change prediction
@@ -289,7 +287,7 @@ plt.show()
 # Both kinds of calibration (sigmoid and isotonic) can fix this issue and
 # yield similar results.
 #
-# As before, we show the :ref:`brier_score_loss`, :ref:`log_loss`,
+# As before, we show the :ref:`calibration_error`, :ref:`log_loss`,
 # :ref:`precision, recall, F1 score <precision_recall_f_measure_metrics>` and
 # :ref:`ROC AUC <roc_metrics>`.
 
@@ -300,7 +298,7 @@ for i, (clf, name) in enumerate(clf_list):
     y_pred = clf.predict(X_test)
     scores["Classifier"].append(name)
 
-    for metric in [brier_score_loss, log_loss, roc_auc_score]:
+    for metric in [calibration_error, log_loss, roc_auc_score]:
         score_name = metric.__name__.replace("_", " ").replace("score", "").capitalize()
         scores[score_name].append(metric(y_test, y_prob[:, 1]))
 
@@ -315,7 +313,7 @@ score_df
 
 # %%
 # As with :class:`~sklearn.naive_bayes.GaussianNB` above, calibration improves
-# both :ref:`brier_score_loss` and :ref:`log_loss` but does not alter the
+# both :ref:`calibration_error` and :ref:`log_loss` but does not alter the
 # prediction accuracy measures (precision, recall and F1 score) much.
 #
 # Summary

@@ -55,6 +55,7 @@ from sklearn.utils._param_validation import (
 from sklearn.utils._unique import attach_unique
 from sklearn.utils.extmath import _nanaverage
 from sklearn.utils.multiclass import type_of_target, unique_labels
+from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import (
     _check_pos_label_consistency,
     _check_sample_weight,
@@ -4085,3 +4086,205 @@ def d2_brier_score(
         weights=sample_weight,
     )
     return float(1 - brier_score / brier_score_null)
+
+
+def calibration_error(
+    y_true,
+    y_prob,
+    sample_weight=None,
+    norm="l2",
+    n_bins=10,
+    strategy="uniform",
+    pos_label=None,
+    reduce_bias=True,
+):
+    """Compute calibration error of a binary classifier.
+
+    Across all items in a set of N predictions, the calibration error measures
+    the aggregated difference between (1) the average predicted probabilities
+    assigned to the positive class, and (2) the frequencies
+    of the positive class in the actual outcome.
+
+    The calibration error is only appropriate for binary categorical outcomes.
+    Which label is considered to be the positive label is controlled via the
+    parameter pos_label, which defaults to 1.
+
+    Read more in the :ref:`User Guide <calibration>`.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,)
+        True targets of a binary classification task.
+
+    y_prob : array-like of shape (n_samples,)
+        Probabilities of the positive class.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    norm : {'l1', 'l2', 'max'}, default='l2'
+        Norm method. The l1-norm is the Expected Calibration Error (ECE),
+        and the max-norm corresponds to Maximum Calibration Error (MCE) defined
+        in [1]_.
+
+    n_bins : int, default=10
+        The number of bins to compute error on.
+
+    strategy : {'uniform', 'quantile'}, default='uniform'
+        Strategy used to define the widths of the bins.
+
+        uniform
+            All bins have identical widths.
+        quantile
+            All bins have the same number of points.
+
+    pos_label : int, float, bool or str, default=None
+        Label of the positive class. If ``None``, `pos_label` will be inferred
+        in the following manner:
+
+        * if `y_true` in {-1, 1} or {0, 1}, `pos_label` defaults to 1;
+        * else if `y_true` contains string, an error will be raised and
+          `pos_label` should be explicitly specified;
+        * otherwise, `pos_label` defaults to the greater label,
+          i.e. `np.unique(y_true)[-1]`.
+
+    reduce_bias : bool, default=True
+        Add debiasing term as in [2]_.
+        Only effective for the l2-norm.
+
+    Returns
+    -------
+    score : float
+        Calibration error.
+
+    References
+    ----------
+    .. [1] `Chuan Guo, Geoff Pleiss, Yu Sun, Kilian Q. Weinberger. On
+           Calibration of Modern Neural Networks. Proceedings of the 34th
+           International Conference on Machine Learning, PMLR 70:1321-1330,
+           2017. <http://proceedings.mlr.press/v70/guo17a.html>`_
+
+    .. [2] `Ananya Kumar, Percy Liang, Tengyu Ma. Verified Uncertainty
+           Calibration. Advances in Neural Information Processing Systems
+           (NeurIPS), 2019. <https://arxiv.org/abs/1909.10155>`_
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import calibration_error
+    >>> y_true = np.array([0, 0, 0, 1] + [0, 1, 1, 1])
+    >>> y_pred = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
+    >>> calibration_error(y_true, y_pred, n_bins=5)
+    0.0
+    >>> calibration_error(
+    ...     y_true, y_pred, n_bins=5, norm="max"
+    ... )
+    0.0
+    >>> y_true = np.array([0, 0, 0, 0] + [1, 1, 1, 1])
+    >>> calibration_error(y_true, y_pred, n_bins=5)
+    0.25
+    >>> calibration_error(
+    ...     y_true, y_pred, n_bins=5, norm="max"
+    ... )
+    0.25
+    """
+    if pos_label is not None:
+        y_true = column_or_1d(y_true)
+        xp_y_true, _ = get_namespace(y_true)
+        labels = xp_y_true.unique_values(y_true)
+        labels = move_to(labels, xp=np, device="cpu")
+        if labels.shape[0] == 2 and pos_label not in labels:
+            raise ValueError(
+                "pos_label=%r is not a valid label: %r" % (pos_label, labels)
+            )
+
+    norm_options = ("l1", "l2", "max")
+    if norm not in norm_options:
+        raise ValueError(f"norm has to be one of {norm_options}, got: {norm}.")
+
+    y_true, y_prob = _validate_binary_probabilistic_prediction(
+        y_true, y_prob, sample_weight, pos_label
+    )
+    y_true = y_true[:, 1]
+    y_prob = y_prob[:, 1]
+    xp, _, device_ = get_namespace_and_device(y_prob)
+    float_dtype = _find_matching_floating_dtype(y_prob, sample_weight, xp=xp)
+    y_true = xp.astype(y_true, float_dtype, copy=False)
+    y_prob = xp.astype(y_prob, float_dtype, copy=False)
+
+    if sample_weight is not None:
+        sample_weight = _check_sample_weight(
+            sample_weight, y_prob, force_float_dtype=False
+        )
+    else:
+        sample_weight = xp.ones(y_true.shape[0], dtype=float_dtype, device=device_)
+    sample_weight = xp.astype(sample_weight, float_dtype, copy=False)
+
+    n_bins = int(n_bins)
+    if strategy == "quantile":
+        quantiles = xp.linspace(0, 100, n_bins + 1, dtype=float_dtype, device=device_)
+        bins = _weighted_percentile(
+            y_prob, sample_weight, quantiles, average=True, xp=xp
+        )
+    elif strategy == "uniform":
+        bins = xp.linspace(0.0, 1.0, n_bins + 1, dtype=y_prob.dtype, device=device_)
+    else:
+        raise ValueError(
+            f"Invalid entry to 'strategy' input. Strategy must be either "
+            f"'quantile' or 'uniform'. Got {strategy} instead."
+        )
+
+    binids = xp.searchsorted(bins[1:-1], y_prob)
+    bin_weights = _bincount(binids, weights=sample_weight, minlength=n_bins, xp=xp)
+    nonzero = bin_weights != 0
+    bin_weights = bin_weights[nonzero]
+    freq_true = (
+        _bincount(binids, weights=y_true * sample_weight, minlength=n_bins, xp=xp)[
+            nonzero
+        ]
+        / bin_weights
+    )
+    mean_pred = (
+        _bincount(binids, weights=y_prob * sample_weight, minlength=n_bins, xp=xp)[
+            nonzero
+        ]
+        / bin_weights
+    )
+
+    debias = 0.0
+    weight_sum = xp.sum(sample_weight, dtype=float_dtype)
+    if norm == "l2" and reduce_bias:
+        # The squared calibration error is biased upward because `freq_true`
+        # estimates the bin label frequency from finitely many samples. The
+        # bias term to subtract from the squared error is Var(freq_true). If
+        # theta is the true bin frequency, then Var(freq_true) is theta *
+        # (1 - theta) * sum(w**2) / sum(w)**2. Estimate this variance with
+        # freq_true * (1 - freq_true) * sum(w**2) /
+        # (sum(w)**2 - sum(w**2)), applying a weighted Bessel correction. With
+        # unit weights this reduces to the unweighted correction
+        # freq_true * (1 - freq_true) / (n_bin - 1).
+        sample_weight_squared = sample_weight**2
+        bin_weight_squares = _bincount(
+            binids, weights=sample_weight_squared, minlength=n_bins, xp=xp
+        )[nonzero]
+        variance_denominator = bin_weights**2 - bin_weight_squares
+        nonzero_var_denom = variance_denominator > 0
+        variance = xp.zeros_like(freq_true)
+        variance[nonzero_var_denom] = (
+            freq_true[nonzero_var_denom]
+            * (1.0 - freq_true[nonzero_var_denom])
+            * bin_weight_squares[nonzero_var_denom]
+            / variance_denominator[nonzero_var_denom]
+        )
+        debias = -xp.sum(bin_weights * variance) / weight_sum
+
+    if norm == "max":
+        loss = xp.max(xp.abs(freq_true - mean_pred))
+    elif norm == "l1":
+        loss = xp.sum(bin_weights * xp.abs(freq_true - mean_pred)) / weight_sum
+    elif norm == "l2":
+        loss = xp.sum(bin_weights * (freq_true - mean_pred) ** 2) / weight_sum
+        if reduce_bias:
+            loss += debias
+        loss = sqrt(max(0.0, float(loss)))
+    return float(loss)

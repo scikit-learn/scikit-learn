@@ -31,6 +31,7 @@ from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.metrics import (
     accuracy_score,
     brier_score_loss,
+    calibration_error,
     log_loss,
     roc_auc_score,
 )
@@ -119,6 +120,11 @@ def test_calibration(data, method, csr_container, ensemble):
         # set
         cal_clf.fit(this_X_train, y_train, sample_weight=sw_train)
         prob_pos_cal_clf = cal_clf.predict_proba(this_X_test)[:, 1]
+
+        # Check that calibration error has improved after calibration
+        assert calibration_error(y_test, prob_pos_clf) > calibration_error(
+            y_test, prob_pos_cal_clf
+        )
 
         # Check that brier score has improved after calibration
         assert brier_score_loss(y_test, prob_pos_clf) > brier_score_loss(
@@ -369,6 +375,9 @@ def test_calibration_frozen(csr_container, method):
             prob_pos_cal_clf_frozen = y_prob_frozen[:, 1]
             assert_array_equal(
                 y_pred_frozen, np.array([0, 1])[np.argmax(y_prob_frozen, axis=1)]
+            )
+            assert calibration_error(y_test, prob_pos_clf) > calibration_error(
+                y_test, prob_pos_cal_clf_frozen
             )
             assert brier_score_loss(y_test, prob_pos_clf) > brier_score_loss(
                 y_test, prob_pos_cal_clf_frozen

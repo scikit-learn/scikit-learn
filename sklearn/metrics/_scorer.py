@@ -32,6 +32,7 @@ from sklearn.metrics import (
     average_precision_score,
     balanced_accuracy_score,
     brier_score_loss,
+    calibration_error,
     class_likelihood_ratios,
     d2_absolute_error_score,
     d2_brier_score,
@@ -772,6 +773,7 @@ roc_auc_ovr_weighted_scorer = make_scorer(
 )
 
 # Score function for probabilistic classification
+
 neg_log_loss_scorer = make_scorer(
     log_loss, greater_is_better=False, response_method="predict_proba"
 )
@@ -781,7 +783,9 @@ neg_brier_score_scorer = make_scorer(
 brier_score_loss_scorer = make_scorer(
     brier_score_loss, greater_is_better=False, response_method="predict_proba"
 )
-
+neg_calibration_error_scorer = make_scorer(
+    calibration_error, greater_is_better=False, response_method="predict_proba"
+)
 
 # Clustering scores
 adjusted_rand_scorer = make_scorer(adjusted_rand_score)
@@ -823,6 +827,7 @@ _SCORERS = dict(
     average_precision=average_precision_scorer,
     neg_log_loss=neg_log_loss_scorer,
     neg_brier_score=neg_brier_score_scorer,
+    neg_calibration_error=neg_calibration_error_scorer,
     positive_likelihood_ratio=positive_likelihood_ratio_scorer,
     neg_negative_likelihood_ratio=neg_negative_likelihood_ratio_scorer,
     # Cluster metrics that use supervised evaluation
