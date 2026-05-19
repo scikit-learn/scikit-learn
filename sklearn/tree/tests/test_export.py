@@ -312,6 +312,23 @@ def test_graphviz_toy():
     )
 
 
+def test_graphviz_special_character_escaping():
+    clf = DecisionTreeClassifier(random_state=0)
+    clf.fit(X, y)
+
+    contents = export_graphviz(
+        clf,
+        feature_names=['feature "x" & <0>', 'feature > "1"'],
+        class_names=['"yes" & maybe', 'no < "never"'],
+        out_file=None,
+        special_characters=True,
+    )
+
+    assert "feature &gt; &quot;1&quot;" in contents
+    assert "class = &quot;yes&quot; &amp; maybe" in contents
+    assert "class = no &lt; &quot;never&quot;" in contents
+
+
 @pytest.mark.parametrize("constructor", [list, np.array])
 def test_graphviz_feature_class_names_array_support(constructor):
     # Check that export_graphviz treats feature names

@@ -6,6 +6,7 @@ This module defines export functions for decision trees.
 # SPDX-License-Identifier: BSD-3-Clause
 
 from collections.abc import Iterable
+from html import escape as html_escape
 from io import StringIO
 from numbers import Integral
 
@@ -591,6 +592,8 @@ class _DOTTreeExporter(_BaseTreeExporter):
 
     def str_escape(self, string):
         # override default escaping for graphviz
+        if self.special_characters:
+            return html_escape(string, quote=True)
         return string.replace('"', r"\"")
 
 
