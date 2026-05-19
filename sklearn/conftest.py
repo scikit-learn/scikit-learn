@@ -36,6 +36,7 @@ from sklearn.utils.fixes import (
     parse_version,
     sp_version,
 )
+from sklearn.utils.parallel import Parallel
 
 try:
     import pytest_run_parallel  # noqa:F401
@@ -430,6 +431,12 @@ def pytest_addoption(parser, pluginmanager):
         default=False,
         help="raise for spmatrix usage that breaks sparray",
     )
+    parser.addoption(
+        "--thread-safety-testing",
+        action="store_true",
+        default=False,
+        help="run Parallel code in threads, and try to catch thread-safety issues",
+    )
 
 
 def pytest_runtest_setup(item):
@@ -468,6 +475,9 @@ def pytest_configure(config):
         # - uses the sparray interface for manipulating the sparse object
         # - uses align_api_if_sparse(X) just before returning a sparse object
         munge_scipy_to_check_spmatrix_usage()
+
+    if config.option.thread_safety_testing:
+        Parallel._thread_safety_testing = True
 
     if not PARALLEL_RUN_AVAILABLE:
         config.addinivalue_line(
