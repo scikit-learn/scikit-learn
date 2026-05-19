@@ -55,6 +55,7 @@ from sklearn.ensemble import (
     ExtraTreesClassifier,
     RandomForestClassifier,
 )
+from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.tree import DecisionTreeClassifier
 
 # Parameters
@@ -105,13 +106,13 @@ for pair in ([0, 1], [0, 2], [2, 3]):
 
         model_details = model_title
         if hasattr(model, "estimators_"):
-            model_details += " with {} estimators".format(len(model.estimators_))
+            model_details += f" with {len(model.estimators_)} estimators"
         print(model_details + " with features", pair, "has a score of", scores)
 
-        plt.subplot(3, 4, plot_idx)
+        ax = plt.subplot(3, 4, plot_idx)
         if plot_idx <= len(models):
             # Add a title at the top of each column
-            plt.title(model_title, fontsize=9)
+            ax.set_title(model_title, fontsize=9)
 
         # Now plot the decision boundary using a fine mesh as input to a
         # filled contour plot
@@ -124,10 +125,18 @@ for pair in ([0, 1], [0, 2], [2, 3]):
         # Plot either a single DecisionTreeClassifier or alpha blend the
         # decision surfaces of the ensemble of classifiers
         if isinstance(model, DecisionTreeClassifier):
-            Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
-            Z = Z.reshape(xx.shape)
-            cs = plt.contourf(xx, yy, Z, cmap=cmap)
+            DecisionBoundaryDisplay.from_estimator(
+                model,
+                X,
+                response_method="predict",
+                plot_method="contourf",
+                cmap=cmap,
+                ax=ax,
+                xlabel="",
+                ylabel="",
+            )
         else:
+            # Keep the ensemble path as a per-tree blend to show individual votes.
             # Choose alpha blend level with respect to the number
             # of estimators
             # that are in use (noting that AdaBoost can use fewer estimators
@@ -149,7 +158,7 @@ for pair in ([0, 1], [0, 2], [2, 3]):
         Z_points_coarser = model.predict(
             np.c_[xx_coarser.ravel(), yy_coarser.ravel()]
         ).reshape(xx_coarser.shape)
-        cs_points = plt.scatter(
+        cs_points = ax.scatter(
             xx_coarser,
             yy_coarser,
             s=15,
@@ -160,7 +169,7 @@ for pair in ([0, 1], [0, 2], [2, 3]):
 
         # Plot the training points, these are clustered together and have a
         # black outline
-        plt.scatter(
+        ax.scatter(
             X[:, 0],
             X[:, 1],
             c=y,
