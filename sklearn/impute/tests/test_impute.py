@@ -298,6 +298,40 @@ def test_imputation_mean_median_error_invalid_type_list_pandas(
         imputer.fit_transform(X)
 
 
+@pytest.mark.parametrize("strategy", ["mean", "median"])
+@pytest.mark.parametrize(
+    "X",
+    [
+        np.array([[0], [1], [2], [None]], dtype=object),
+        [[0], [1], [2], [None]],
+    ],
+)
+def test_imputation_mean_median_missing_values_none(strategy, X):
+    imputer = SimpleImputer(missing_values=None, strategy=strategy)
+    assert_array_equal(imputer.fit_transform(X), [[0], [1], [2], [1]])
+
+
+@pytest.mark.parametrize(
+    "missing_values, err_msg",
+    [
+        (None, "Input contains NaN"),
+        (np.nan, "non-numeric values that are not marked as missing"),
+    ],
+)
+def test_imputation_object_none_nan_distinct(missing_values, err_msg):
+    X = np.array([[0], [1], [2], [None], [np.nan]], dtype=object)
+    imputer = SimpleImputer(missing_values=missing_values)
+    with pytest.raises(ValueError, match=err_msg):
+        imputer.fit_transform(X)
+
+
+def test_imputation_list_none_missing_values_nan():
+    imputer = SimpleImputer(missing_values=np.nan)
+    assert_allclose(
+        imputer.fit_transform([[0], [1], [2], [None]]), [[0], [1], [2], [1]]
+    )
+
+
 @pytest.mark.parametrize("strategy", ["constant", "most_frequent"])
 @pytest.mark.parametrize("dtype", [str, np.dtype("U"), np.dtype("S")])
 def test_imputation_const_mostf_error_invalid_types(strategy, dtype):
