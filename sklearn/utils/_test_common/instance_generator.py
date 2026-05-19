@@ -171,6 +171,7 @@ from sklearn.preprocessing import (
     Normalizer,
     OneHotEncoder,
     PolynomialFeatures,
+    QuantileTransformer,
     SplineTransformer,
     StandardScaler,
     TargetEncoder,
@@ -1206,6 +1207,11 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     PolynomialFeatures: {
         "check_array_api_same_namespace": "check_same_namespace not yet added",
+    },
+    QuantileTransformer: {
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "QuantileTransformer does not yet support sample_weight on sparse data."
+        ),
     },
     RadiusNeighborsTransformer: {
         "check_methods_sample_order_invariance": "check is not applicable."
