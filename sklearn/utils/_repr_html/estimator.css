@@ -29,20 +29,13 @@
   --sklearn-color-border-box: white;
   --sklearn-color-icon: #878787;
 }
-.sk-global *,
-.sk-global *::before,
-.sk-global *::after {
-  box-sizing: border-box;
-}
 
 .sk-global {
   color: var(--sklearn-color-text);
-
 }
 
 .sk-global pre {
   padding: 0;
-
 }
 
 .sk-global input.sk-hidden--visually {
@@ -54,6 +47,14 @@
   padding: 0;
   position: absolute;
   width: 1px;
+}
+
+.sk-global div.sk-dashed-wrapped {
+  border: 1px dashed var(--sklearn-color-line);
+  margin: 0 0.4em 0.5em 0.4em;
+  box-sizing: border-box;
+  padding-bottom: 0.4em;
+  background-color: var(--sklearn-color-background);
 }
 
 .sk-global div.sk-container {
@@ -70,97 +71,61 @@
   display: none;
 }
 
- div.sk-parallel-item,
+div.sk-parallel-item,
 div.sk-serial,
-.sk-global div.sk-item {
-   /* border: 1px solid blue; */
-  position: relative;
-  margin-left: 20px;
+div.sk-item {
+  /* draw centered vertical line to link estimators */
+  background-image: linear-gradient(var(--sklearn-color-text-on-default-background), var(--sklearn-color-text-on-default-background));
+  background-size: 2px 100%;
+  background-repeat: no-repeat;
+  background-position: center center;
+}
+
+/* Parallel-specific style estimator block */
+
+.sk-global div.sk-parallel-item::after {
+  content: "";
+  width: 100%;
+  border-bottom: 2px solid var(--sklearn-color-text-on-default-background);
+  flex-grow: 1;
 }
 
 .sk-global div.sk-parallel {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: left;
+  align-items: stretch;
+  justify-content: center;
   background-color: var(--sklearn-color-background);
-  /* border: 2px solid red; */
+  position: relative;
 }
 
 .sk-global div.sk-parallel-item {
   display: flex;
   flex-direction: column;
-  /* border: 2px solid green; */
 }
 
+.sk-global div.sk-parallel-item:first-child::after {
+  align-self: flex-end;
+  width: 50%;
+}
+
+.sk-global div.sk-parallel-item:last-child::after {
+  align-self: flex-start;
+  width: 50%;
+}
 
 .sk-global div.sk-parallel-item:only-child::after {
   width: 0;
 }
 
 /* Serial-specific style estimator block */
+
 .sk-global div.sk-serial {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   background-color: var(--sklearn-color-background);
   padding-right: 1em;
-}
-
-/* Tree lines */
-.sk-global div.sk-serial div.sk-item::before,
-.sk-global div.sk-parallel div.sk-parallel::before{
-  position:absolute;
-   left:-10px;
-    /* top:0px; */
-    /* border-left:.2em solid orange; /* colors used to debug */
-    /*border-bottom:.2em solid purple; */
-    border-left:.2em solid var(--sklearn-color-text-on-default-background);
-    border-bottom:.2em solid var(--sklearn-color-text-on-default-background);
-    content: "";
-    width: 20px;
-    height: 1.15em;
-    margin-left: -10px;
-}
-
-.sk-global div.sk-serial div.sk-item::after,
-.sk-global div.sk-parallel div.sk-item::after{
-  position:absolute;
-   left:-10px;
-    bottom:0px;
-    /* border-left:.2em solid orange; */
-    border-left:.2em solid var(--sklearn-color-text-on-default-background);
-    content: "";
-    width: 20px;
-    height: 100%;
-    padding-left: 10px;
-    margin-left: -10px;
-}
-
-/* So the vertical line doesn't go too low */
-
-.sk-global div.sk-serial div.sk-item:last-child::after,
-.sk-global div.sk-parallel div.sk-item:last-child::after{
-  display: none;
-}
-
-.sk-global div.sk-serial div.sk-item:has(> .sk-estimator) {
-  margin-left: 0;
-}
-/* Hide tree lines on estimator under its name in a column transformer*/
-.sk-global div.sk-serial div.sk-item:has(> .sk-estimator)::before,
-.sk-global div.sk-serial div.sk-item:has(> .sk-estimator)::after{
-  display: none;
-}
-
-.sk-global div.sk-item:has(> .sk-label-container input.sk-toggleable__control:checked) > div.sk-serial,
-.sk-global div.sk-item:has(> .sk-label-container input.sk-toggleable__control:checked) > div.sk-parallel {
- display: flex;
-}
-/*Keep top-level always visible */
-.sk-global > div.sk-container > div.sk-item > div.sk-serial,
-.sk-global > div.sk-container > div.sk-item > div.sk-parallel {
-  display: flex;
+  padding-left: 1em;
 }
 
 
@@ -182,13 +147,13 @@ clickable and can be expanded/collapsed.
 .sk-global label.sk-toggleable__label {
   cursor: pointer;
   display: flex;
-  /*width: 100%;*/
+  width: 100%;
   margin-bottom: 0;
   padding: 0.5em;
-  /* box-sizing: border-box; */
+  box-sizing: border-box;
   text-align: center;
-  /* align-items: start; */
-  justify-content:flex-start;
+  align-items: center;
+  justify-content: center;
   gap: 0.5em;
 }
 
@@ -298,8 +263,7 @@ clickable and can be expanded/collapsed.
 }
 
 .sk-global div.sk-label-container {
-  text-align: left;
-  /* padding-left: 1.5em; */
+  text-align: center;
 }
 
 /* Estimator-specific */
@@ -307,7 +271,7 @@ clickable and can be expanded/collapsed.
   font-family: monospace;
   border: 1px dotted var(--sklearn-color-border-box);
   border-radius: 0.25em;
-  /* box-sizing: border-box; */
+  box-sizing: border-box;
   margin-bottom: 0.5em;
   /* unfitted */
   background-color: var(--sklearn-color-unfitted-level-0);

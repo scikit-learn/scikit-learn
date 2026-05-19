@@ -2,13 +2,13 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import html
-import re
 from contextlib import closing
 from inspect import isclass
 from io import StringIO
 from pathlib import Path
 
 from sklearn import config_context
+from sklearn._config import get_config
 from sklearn.utils._repr_html.base import _IDCounter
 from sklearn.utils._repr_html.features import _features_html
 
@@ -83,10 +83,6 @@ class _VisualBlock:
         self.dash_wrapped = dash_wrapped
         self.name_caption = name_caption
         self.doc_link_label = doc_link_label
-        # Temporal fix to test rendering vertical
-        if kind == "parallel":
-            kind = "serial"
-        self.kind = kind
 
         if self.kind in ("parallel", "serial"):
             if names is None:
@@ -390,37 +386,6 @@ def _write_estimator_html(
                 new_prefix = param_prefix
 
             if kind == "serial":
-                child_block = (
-                    _get_visual_block(est)
-                    if not isinstance(est, _VisualBlock)
-                    else est._sk_visual_block_()
-                )
-                repeated_name = (
-                    re.search(name_details.split("(", 1)[0], name)
-                    if isinstance(name_details, str)
-                    else ""
-                )
-                has_name = child_block.kind == "single" and name is not None
-                if has_name:
-                    # write a label for the step name, then the
-                    # estimator itself
-                    out.write('<div class="sk-item">')
-                    if not repeated_name:
-                        _write_label_html(
-                            out,
-                            "",  # params
-                            "",  # attrs
-                            name,
-                            name_details,
-                            outer_class="sk-label-container",
-                            inner_class="sk-label",
-                            checked=False,
-                            doc_link="",
-                            is_fitted_css_class=is_fitted_css_class,
-                            is_fitted_icon="",
-                            param_prefix=new_prefix,
-                        )
-
                 _write_estimator_html(
                     out,
                     est,
@@ -429,8 +394,20 @@ def _write_estimator_html(
                     is_fitted_css_class=is_fitted_css_class,
                     param_prefix=new_prefix,
                 )
-                if has_name:
-                    out.write("</div>")
+            else:  # parallel
+                out.write('<div class="sk-parallel-item">')
+                # wrap element in a serial visualblock
+                serial_block = _VisualBlock("serial", [est], dash_wrapped=False)
+                _write_estimator_html(
+                    out,
+                    serial_block,
+                    name,
+                    name_details,
+                    is_fitted_css_class=is_fitted_css_class,
+                    param_prefix=new_prefix,
+                )
+                out.write("</div>")  # sk-parallel-item
+
         out.write("</div>")
 
         is_column_transformer = isinstance(estimator, ColumnTransformer)
@@ -559,11 +536,15 @@ def estimator_html_repr(estimator):
             " HTML representation is unable to render, please try loading this page"
             " with nbviewer.org."
         )
+        layout_class = (
+            " sk-vertical" if get_config()["display_layout"] == "vertical" else ""
+        )
         html_template = (
             f"<style>{_CSS_STYLE}</style>"
             f"<body>"
             # we need tabindex="0" to make it 'focusable'
-            f'<div id="{container_id}" tabindex="0" class="sk-top-container sk-global">'
+            f'<div id="{container_id}" tabindex="0" '
+            f'class="sk-top-container sk-global{layout_class}">'
             '<div class="sk-text-repr-fallback">'
             f"<pre>{html.escape(estimator_str)}</pre><b>{fallback_msg}</b>"
             "</div>"
