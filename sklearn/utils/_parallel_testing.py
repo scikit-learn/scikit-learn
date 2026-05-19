@@ -5,10 +5,13 @@
 
 from collections import Counter
 from collections.abc import Iterable
+from copy import deepcopy
 from hashlib import md5
 from pickle import PicklingError, dumps
 from types import MethodType
 from typing import Any
+
+import numpy as np
 
 from sklearn.utils.parallel import _FuncWrapper
 
@@ -25,6 +28,7 @@ class DetectChanges:
     def __init__(self):
         self.counts = Counter()
         self.hashes = {}
+        self.old_objects = {}
         self.objects = {}
 
     def store_object(self, obj: Any) -> None:
@@ -32,11 +36,12 @@ class DetectChanges:
         obj_id = id(obj)
         try:
             obj_hash = object_hash(obj)
-        except (TypeError, PicklingError):
+        except TypeError:
             return
         self.counts[obj_id] += 1
         self.hashes[obj_id] = obj_hash
         self.objects[obj_id] = obj
+        self.old_objects[obj_id] = deepcopy(obj)
 
     def store_parallel_calls(
         self, iterable: Iterable[tuple[_FuncWrapper, tuple[Any], dict[str, Any]]]
@@ -62,10 +67,22 @@ class DetectChanges:
                 continue
             obj = self.objects[obj_id]
             old_hash = self.hashes[obj_id]
+            orig_obj = self.old_objects[obj_id]
             if object_hash(obj) != old_hash:
+                changed = []
+                if hasattr(orig_obj, "__dict__"):
+                    attrs = orig_obj.__dict__.keys()
+                else:
+                    attrs = getattr(orig_obj, "__slots__", ())
+                for attr in attrs:
+                    if not attr.startswith("__") and not np.array_equal(
+                        getattr(orig_obj, attr), getattr(obj, attr)
+                    ):
+                        changed.append(attr)
                 raise AssertionError(
                     f"Hash for object of type {type(obj)} has changed, "
-                    "suggesting potential thread unsafety"
+                    "suggesting potential thread unsafety. "
+                    f"Start by checking attributes: {changed}"
                 )
 
 
@@ -75,4 +92,7 @@ def object_hash(obj: Any) -> bytes:
 
     Raises ``TypeError`` in some rare cases.
     """
-    return md5(dumps(obj), usedforsecurity=False).digest()
+    try:
+        return md5(dumps(obj), usedforsecurity=False).digest()
+    except PicklingError:
+        raise TypeError
