@@ -2,6 +2,7 @@ import atexit
 import os
 import warnings
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import pytest
 from scipy import sparse
@@ -902,6 +903,8 @@ def test_create_memmap_backed_data(monkeypatch):
         ("pyarrow_array", lambda: pytest.importorskip("pyarrow").Array),
         ("polars", lambda: pytest.importorskip("polars").DataFrame),
         ("polars_series", lambda: pytest.importorskip("polars").Series),
+        # Use pandas as backend, therefore importskip
+        ("narwhals", lambda: [pytest.importorskip("pandas"), nw.DataFrame][1]),
         ("slice", slice),
     ],
 )
@@ -930,6 +933,7 @@ def test_convert_container(
         "pyarrow",
         "pyarrow_array",
         "series",
+        "narwhals",
     ):
         # delay the import of pandas/polars within the function to only skip this test
         # instead of the whole file
@@ -947,7 +951,13 @@ def test_convert_container(
         # list and tuple will use Python class dtype: int, float
         # pandas index will always use high precision: np.int64 and np.float64
         assert np.issubdtype(type(container_converted[0]), superdtype)
-    elif constructor_name in ("polars", "polars_series", "pyarrow", "pyarrow_array"):
+    elif constructor_name in (
+        "polars",
+        "polars_series",
+        "pyarrow",
+        "pyarrow_array",
+        "narwhals",
+    ):
         return
     elif hasattr(container_converted, "dtype"):
         assert container_converted.dtype == dtype
