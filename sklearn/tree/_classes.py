@@ -181,7 +181,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         return self.tree_.n_leaves
 
     def _support_missing_values(self, X):
-        return not issparse(X) and self.__sklearn_tags__().input_tags.allow_nan
+        return self.__sklearn_tags__().input_tags.allow_nan and (
+            self.monotonic_cst is None or not issparse(X)
+        )
 
     def _compute_missing_values_in_feature_mask(self, X, estimator_name=None):
         """Return boolean mask denoting if there are missing values for each feature.
@@ -210,17 +212,28 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             return None
 
         with np.errstate(over="ignore"):
-            overall_sum = np.sum(X)
+            # For sparse matrices use X.data to avoid summing implicit zeros;
+            # NaN/inf in sparse data is always explicit (stored in X.data).
+            if issparse(X):
+                overall_sum = float(X.data.sum()) if X.nnz > 0 else 0.0
+            else:
+                overall_sum = np.sum(X)
 
         if not np.isfinite(overall_sum):
             # Raise a ValueError in case of the presence of an infinite element.
-            _assert_all_finite_element_wise(X, xp=np, allow_nan=True, **common_kwargs)
+            # For sparse matrices _assert_all_finite_element_wise only needs to
+            # inspect the explicitly stored values (X.data), not the full matrix.
+            X_to_check = X.data if issparse(X) else X
+            _assert_all_finite_element_wise(
+                X_to_check, xp=np, allow_nan=True, **common_kwargs
+            )
 
         # If the sum is not nan, then there are no missing values
         if not np.isnan(overall_sum):
             return None
 
-        missing_values_in_feature_mask = np.isnan(X.sum(axis=0))
+        # X.sum(axis=0) returns a 2-D matrix for sparse; ravel to 1-D.
+        missing_values_in_feature_mask = np.asarray(np.isnan(X.sum(axis=0))).ravel()
         return missing_values_in_feature_mask
 
     def _fit(
@@ -1090,8 +1103,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # XXX: nan values are only accepted in dense arrays, but we set this for
-        # common test to pass, specifically: check_estimators_nan_inf
         tags.input_tags.allow_nan = True
         tags.classifier_tags.multi_label = True
         return tags
@@ -1438,8 +1449,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # XXX: nan values are only accepted in dense arrays, but we set this for
-        # for common test to pass, specifically: check_estimators_nan_inf
         tags.input_tags.allow_nan = True
         return tags
 
@@ -1720,8 +1729,6 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # XXX: nan values are only accepted in dense arrays, but we set this for
-        # common test to pass, specifically: check_estimators_nan_inf
         allow_nan = self.splitter == "random"
         tags.classifier_tags.multi_label = True
         tags.input_tags.allow_nan = allow_nan
@@ -1975,8 +1982,6 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # XXX: nan values are only accepted in dense arrays, but we set this for
-        # common test to pass, specifically: check_estimators_nan_inf
         allow_nan = self.splitter == "random"
         tags.input_tags.allow_nan = allow_nan
         return tags

@@ -1,7 +1,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from sklearn.utils._bitset cimport BITSET_INNER_DTYPE_C, BITSET_INNER_DTYPE_C
 from sklearn.utils._typedefs cimport float32_t, float64_t, intp_t, uint8_t
 
 
