@@ -544,6 +544,43 @@ def test_calibration_curve():
         calibration_curve(y_true2, y_pred2, strategy="percentile")
 
 
+def test_calibration_curve_cube_root_bins():
+    """Check calibration_curve with n_bins='cube_root'."""
+    # With 8 samples, n_bins='cube_root' should be int(np.ceil(8**(1/3))) = 2
+    y_true = np.array([0, 0, 0, 0, 1, 1, 1, 1])
+    y_pred = np.array([0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9])
+    prob_true, prob_pred = calibration_curve(y_true, y_pred, n_bins="cube_root")
+    assert len(prob_true) == 2
+    assert len(prob_pred) == 2
+    assert_allclose(prob_true, [0, 1])
+    assert_allclose(prob_pred, [0.25, 0.75])
+
+    # With 2 samples, n_bins='cube_root' should be int(np.ceil(2**(1/3))) = 2
+    prob_true, prob_pred = calibration_curve([0, 1], [0.1, 0.9], n_bins="cube_root")
+    assert len(prob_true) == 2
+    assert len(prob_pred) == 2
+    assert_allclose(prob_true, [0, 1])
+    assert_allclose(prob_pred, [0.1, 0.9])
+
+
+def test_calibration_display_cube_root_bins(pyplot, iris_data_binary):
+    """Check CalibrationDisplay with n_bins='cube_root'."""
+    X, y = iris_data_binary
+    lr = LogisticRegression().fit(X, y)
+
+    # Smoke test for from_estimator
+    viz = CalibrationDisplay.from_estimator(lr, X, y, n_bins="cube_root")
+    n_samples = X.shape[0]
+    expected_n_bins = int(np.ceil(n_samples ** (1 / 3)))
+    # Note: prob_true might be smaller than expected_n_bins if some bins are empty
+    assert len(viz.prob_true) <= expected_n_bins
+
+    # Smoke test for from_predictions
+    y_prob = lr.predict_proba(X)[:, 1]
+    viz = CalibrationDisplay.from_predictions(y, y_prob, n_bins="cube_root")
+    assert len(viz.prob_true) <= expected_n_bins
+
+
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic", "temperature"])
 @pytest.mark.parametrize("ensemble", [True, False])
 def test_calibration_nan_imputer(method, ensemble):
