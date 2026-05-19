@@ -1531,33 +1531,31 @@ class _MetadataRequester:
             value = inspect.getattr_static(obj, name)
             return isinstance(value, RequestMethod)
 
+        def _has_explicit_set_method_request(cls, name):
+            # True if this class has a set_method_request defined or inherited
+            # which is not a descriptor
+            return hasattr(cls, name) and not is_RequestMethod(cls, name)
+
+        def _needs_generated_set_request(cls, name, requests):
+            # True if this class has requestable metadata or requests is empty but
+            # a parent class hands down a RequestMethod
+            if requests:
+                return True
+            return hasattr(cls, name) and is_RequestMethod(cls, name)
+
         try:
             for method in SIMPLE_METHODS:
                 set_method_name = f"set_{method}_request"
                 requests = cls._get_class_level_metadata_request_values(method)
-                if hasattr(cls, set_method_name) and not is_RequestMethod(
-                    cls, set_method_name
-                ):
-                    # `set_method_name` is not a `RequestMethod` so we skip
-                    # overriding it. For example, in Scorers the `set_score_request`
-                    # method is explicitly defined in the class.
+
+                if _has_explicit_set_method_request(cls, set_method_name):
                     continue
 
-                if not requests and not hasattr(cls, set_method_name):
-                    # No requests, and no inherited method — nothing to do.
-                    continue
+                if _needs_generated_set_request(cls, set_method_name, requests):
+                    setattr(
+                        cls, set_method_name, RequestMethod(method, sorted(requests))
+                    )
 
-                # When `requests` is empty but `cls` inherits a
-                # `set_{method}_request`, we still install an empty
-                # `RequestMethod` here so the child shadows the parent's
-                # descriptor. Otherwise the child would expose the parent's
-                # request params (e.g. `sample_weight`) for a method whose
-                # own signature no longer accepts them.
-                setattr(
-                    cls,
-                    set_method_name,
-                    RequestMethod(method, sorted(requests)),
-                )
         except Exception:
             # if there are any issues here, it will be raised when
             # ``get_metadata_routing`` is called. Here we are going to ignore
