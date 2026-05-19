@@ -39,6 +39,7 @@ from sklearn.utils import (
     check_consistent_length,
     check_random_state,
     compute_class_weight,
+    metadata_routing,
 )
 from sklearn.utils._array_api import (
     _is_numpy_namespace,
@@ -65,6 +66,7 @@ from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import (
     _check_method_params,
     _check_sample_weight,
+    _deprecate_positional_args,
     check_is_fitted,
     validate_data,
 )
@@ -1983,6 +1985,9 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     -0.041...
     """
 
+    # TODO(1.11): remove this when sample_weight as positional arg is removed
+    # from the `score` signature
+    __metadata_request__score = {"sample_weight": metadata_routing.UNUSED}
     _parameter_constraints: dict = {**LogisticRegression._parameter_constraints}
 
     for param in ["C", "warm_start", "l1_ratio"]:
@@ -2464,7 +2469,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         return self
 
-    def score(self, X, y, sample_weight=None, **score_params):
+    # TODO(1.11): remove this decorator along with `sample_weight` from the `score`
+    #  signature
+    @_deprecate_positional_args(version="1.11")
+    def score(self, X, y, *, sample_weight=None, **score_params):
         """Score using the `scoring` option on the given test data and labels.
 
         Parameters
@@ -2478,6 +2486,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
+            .. deprecated:: 1.9
+              `sample_weight` needs to be passed as a keyword argument and not as a
+              positional argument.
+
         **score_params : dict
             Parameters to pass to the `score` method of the underlying scorer.
 
@@ -2488,21 +2500,29 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         score : float
             Score of self.predict(X) w.r.t. y.
         """
+        # TODO(1.11): for backwards compatibility, when `sample_weight` becomes a part
+        # of **score_params, it should be skipped in the following check so that people
+        # can still pass it w/o metadata routing enabled.
         _raise_for_params(score_params, self, "score")
+        # TODO(1.11): remove this when sample_weight is removed from the `score`
+        # signature
+        if sample_weight is not None:
+            score_params["sample_weight"] = sample_weight
 
         scoring = self._get_scorer()
         if _routing_enabled():
             routed_params = process_routing(
                 self,
                 "score",
-                sample_weight=sample_weight,
                 **score_params,
             )
         else:
             routed_params = Bunch()
             routed_params.scorer = Bunch(score={})
-            if sample_weight is not None:
-                routed_params.scorer.score["sample_weight"] = sample_weight
+            if score_params.get("sample_weight") is not None:
+                routed_params.scorer.score["sample_weight"] = score_params[
+                    "sample_weight"
+                ]
 
         return scoring(
             self,
