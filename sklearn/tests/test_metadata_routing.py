@@ -599,8 +599,8 @@ def test_removing_non_existing_param_raises():
 
 
 def test_get_class_level_metadata_request_values():
-    """Test `_get_class_level_metadata_request_values`, which infers metadata 
-    requests from callables; used for class methods in consumers and by scorers 
+    """Test `_get_class_level_metadata_request_values`, which infers metadata
+    requests from callables; used for class methods in consumers and by scorers
     for custom `score_func`s.
     """
 
