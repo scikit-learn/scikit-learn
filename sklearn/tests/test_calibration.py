@@ -513,11 +513,15 @@ def test_temperature_scaling_input_validation(global_dtype):
     assert_allclose(y_pred1, y_pred2)
 
 
+# TODO(1.11): remove warning filter
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_calibration_curve():
     """Check calibration_curve function"""
     y_true = np.array([0, 0, 0, 1, 1, 1])
     y_pred = np.array([0.0, 0.1, 0.2, 0.8, 0.9, 1.0])
-    prob_true, prob_pred = calibration_curve(y_true, y_pred, n_bins=2)
+    prob_true, prob_pred = calibration_curve(
+        y_true, y_pred, n_bins=2, strategy="uniform"
+    )
     assert len(prob_true) == len(prob_pred)
     assert len(prob_true) == 2
     assert_almost_equal(prob_true, [0, 1])
@@ -774,6 +778,8 @@ def test_calibration_display_compute(pyplot, iris_data_binary, n_bins, strategy)
         assert labels.get_text() in expected_legend_labels
 
 
+# TODO(1.11): remove warning filter
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_plot_calibration_curve_pipeline(pyplot, iris_data_binary):
     # Ensure pipelines are supported by CalibrationDisplay.from_estimator
     X, y = iris_data_binary
@@ -827,6 +833,8 @@ def test_calibration_display_label_class_plot(pyplot):
         assert labels.get_text() in expected_legend_labels
 
 
+# TODO(1.11): remove warning filter
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
 def test_calibration_display_name_multiple_calls(
     constructor_name, pyplot, iris_data_binary
@@ -862,6 +870,8 @@ def test_calibration_display_name_multiple_calls(
         assert labels.get_text() in expected_legend_labels
 
 
+# TODO(1.11): remove warning filter
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_calibration_display_ref_line(pyplot, iris_data_binary):
     # Check that `ref_line` only appears once
     X, y = iris_data_binary
@@ -891,6 +901,8 @@ def test_calibration_curve_pos_label_error_str(dtype_y_str):
         calibration_curve(y1, y2)
 
 
+# TODO(1.11): remove warning filter
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("dtype_y_str", [str, object])
 def test_calibration_curve_pos_label(dtype_y_str):
     """Check the behaviour when passing explicitly `pos_label`."""
@@ -900,18 +912,26 @@ def test_calibration_curve_pos_label(dtype_y_str):
     y_pred = np.array([0.1, 0.2, 0.3, 0.4, 0.65, 0.7, 0.8, 0.9, 1.0])
 
     # default case
-    prob_true, _ = calibration_curve(y_true, y_pred, n_bins=4)
+    prob_true, _ = calibration_curve(y_true, y_pred, n_bins=4, strategy="uniform")
     assert_allclose(prob_true, [0, 0.5, 1, 1])
     # if `y_true` contains `str`, then `pos_label` is required
-    prob_true, _ = calibration_curve(y_true_str, y_pred, n_bins=4, pos_label="egg")
+    prob_true, _ = calibration_curve(
+        y_true_str, y_pred, n_bins=4, strategy="uniform", pos_label="egg"
+    )
     assert_allclose(prob_true, [0, 0.5, 1, 1])
 
-    prob_true, _ = calibration_curve(y_true, 1 - y_pred, n_bins=4, pos_label=0)
+    prob_true, _ = calibration_curve(
+        y_true, 1 - y_pred, n_bins=4, strategy="uniform", pos_label=0
+    )
     assert_allclose(prob_true, [0, 0, 0.5, 1])
-    prob_true, _ = calibration_curve(y_true_str, 1 - y_pred, n_bins=4, pos_label="spam")
+    prob_true, _ = calibration_curve(
+        y_true_str, 1 - y_pred, n_bins=4, strategy="uniform", pos_label="spam"
+    )
     assert_allclose(prob_true, [0, 0, 0.5, 1])
 
 
+# TODO(1.11): remove warning filter
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "kwargs",
     [
@@ -931,6 +951,8 @@ def test_calibration_display_kwargs(pyplot, iris_data_binary, kwargs):
     assert viz.line_.get_linestyle() == "-."
 
 
+# TODO(1.11): remove warning filter
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("pos_label, expected_pos_label", [(None, 1), (0, 0), (1, 1)])
 def test_calibration_display_pos_label(
     pyplot, iris_data_binary, pos_label, expected_pos_label

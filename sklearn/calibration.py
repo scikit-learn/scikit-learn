@@ -1212,13 +1212,14 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
         return tags
 
 
+# TODO(1.11): change default strategy to 'quantile', see PR #33908.
 @validate_params(
     {
         "y_true": ["array-like"],
         "y_prob": ["array-like"],
         "pos_label": [Real, str, "boolean", None],
         "n_bins": [Interval(Integral, 1, None, closed="left")],
-        "strategy": [StrOptions({"uniform", "quantile"})],
+        "strategy": [StrOptions({"uniform", "quantile", "warn"})],
     },
     prefer_skip_nested_validation=True,
 )
@@ -1228,7 +1229,7 @@ def calibration_curve(
     *,
     pos_label=None,
     n_bins=5,
-    strategy="uniform",
+    strategy="warn",
 ):
     """Compute true and predicted probabilities for a calibration curve.
 
@@ -1265,6 +1266,9 @@ def calibration_curve(
             The bins have identical widths.
         quantile
             The bins have the same number of samples and depend on `y_prob`.
+
+        .. versionchanged:: 1.11
+            Default value changed from 'uniform' to 'quantile'.
 
     Returns
     -------
@@ -1315,6 +1319,15 @@ def calibration_curve(
             f"Only binary classification is supported. Provided labels {labels}."
         )
     y_true = y_true == pos_label
+
+    # TODO(1.11): remove, see PR #33908.
+    if strategy == "warn":
+        warnings.warn(
+            "The default value of `strategy` will change "
+            "from 'uniform' to 'quantile' in 1.11",
+            FutureWarning,
+        )
+        strategy = "uniform"
 
     if strategy == "quantile":  # Determine bin edges by distribution of data
         quantiles = np.linspace(0, 1, n_bins + 1)
@@ -1479,6 +1492,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
 
         return self
 
+    # TODO(1.11): change default strategy to 'quantile', see PR #33908.
     @classmethod
     def from_estimator(
         cls,
@@ -1487,7 +1501,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         y,
         *,
         n_bins=5,
-        strategy="uniform",
+        strategy="warn",
         pos_label=None,
         name=None,
         ax=None,
@@ -1533,6 +1547,9 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             - `'uniform'`: The bins have identical widths.
             - `'quantile'`: The bins have the same number of samples and depend
               on predicted probabilities.
+
+            .. versionchanged:: 1.11
+                Default value changed from 'uniform' to 'quantile'.
 
         pos_label : int, float, bool or str, default=None
             The positive class when computing the calibration curve.
@@ -1591,6 +1608,15 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             name=name,
         )
 
+        # TODO(1.11): remove, see PR #33908.
+        if strategy == "warn":
+            warnings.warn(
+                "The default value of `strategy` will change "
+                "from 'uniform' to 'quantile' in 1.11",
+                FutureWarning,
+            )
+            strategy = "uniform"
+
         return cls.from_predictions(
             y,
             y_prob,
@@ -1603,6 +1629,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             **kwargs,
         )
 
+    # TODO(1.11): change default strategy to 'quantile', see PR #33908.
     @classmethod
     def from_predictions(
         cls,
@@ -1610,7 +1637,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         y_prob,
         *,
         n_bins=5,
-        strategy="uniform",
+        strategy="warn",
         pos_label=None,
         name=None,
         ax=None,
@@ -1651,6 +1678,9 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             - `'uniform'`: The bins have identical widths.
             - `'quantile'`: The bins have the same number of samples and depend
               on predicted probabilities.
+
+            .. versionchanged:: 1.11
+                Default value changed from 'uniform' to 'quantile'.
 
         pos_label : int, float, bool or str, default=None
             The positive class when computing the calibration curve.
@@ -1703,6 +1733,15 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         pos_label_validated, name = cls._validate_from_predictions_params(
             y_true, y_prob, sample_weight=None, pos_label=pos_label, name=name
         )
+
+        # TODO(1.11): remove, see PR #33908.
+        if strategy == "warn":
+            warnings.warn(
+                "The default value of `strategy` will change "
+                "from 'uniform' to 'quantile' in 1.11",
+                FutureWarning,
+            )
+            strategy = "uniform"
 
         prob_true, prob_pred = calibration_curve(
             y_true, y_prob, n_bins=n_bins, strategy=strategy, pos_label=pos_label
