@@ -230,7 +230,7 @@ Metrics
 - :func:`sklearn.metrics.mean_absolute_percentage_error`
 - :func:`sklearn.metrics.mean_gamma_deviance`
 - :func:`sklearn.metrics.mean_pinball_loss`
-- :func:`sklearn.metrics.mean_poisson_deviance` (requires `enabling array API support for SciPy <https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html#using-array-api-standard-support>`_)
+- :func:`sklearn.metrics.mean_poisson_deviance`
 - :func:`sklearn.metrics.mean_squared_error`
 - :func:`sklearn.metrics.mean_squared_log_error`
 - :func:`sklearn.metrics.mean_tweedie_deviance`
