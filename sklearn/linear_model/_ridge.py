@@ -1333,12 +1333,6 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         """
         accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), solver)
         xp, _, device_ = get_namespace_and_device(X)
-        xp_y, y_is_array_api = get_namespace(y)
-        classes = (
-            xp_y.unique_values(y)
-            if y_is_array_api and xp_y.isdtype(y.dtype, "numeric")
-            else None
-        )
         sample_weight = move_to(sample_weight, xp=xp, device=device_)
         X, y = validate_data(
             self,
@@ -1353,10 +1347,7 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
         Y = move_to(Y, xp=xp, device=device_)
-        if classes is not None:
-            self.classes_ = classes
-        else:
-            self.classes_ = self._label_binarizer.classes_
+        self.classes_ = self._label_binarizer.classes_
         if not self._label_binarizer.y_type_.startswith("multilabel"):
             y = column_or_1d(y, warn=True)
 
