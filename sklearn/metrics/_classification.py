@@ -768,12 +768,8 @@ def multilabel_confusion_matrix(
         if (
             _is_numpy_namespace(xp)
             and K > 0
-            and xp.isdtype(
-                y_true.dtype, ("bool", "signed integer", "unsigned integer")
-            )
-            and xp.isdtype(
-                y_pred.dtype, ("bool", "signed integer", "unsigned integer")
-            )
+            and xp.isdtype(y_true.dtype, ("bool", "signed integer", "unsigned integer"))
+            and xp.isdtype(y_pred.dtype, ("bool", "signed integer", "unsigned integer"))
             and int(present_labels[0]) == 0
             and int(present_labels[-1]) == K - 1
             and int(xp.min(labels)) >= 0
