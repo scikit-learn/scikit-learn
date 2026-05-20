@@ -1,0 +1,7 @@
+- :class:`decomposition.DictionaryLearning`,
+  :class:`decomposition.MiniBatchDictionaryLearning`, and
+  :class:`decomposition.SparseCoder` no longer raise ``ValueError`` from
+  ``orthogonal_mp_gram`` when ``transform_algorithm="omp"`` and
+  ``transform_n_nonzero_coefs`` is greater than ``n_components``. The value is
+  now clipped to ``n_components`` with a ``UserWarning``, matching the implicit
+  clipping behavior of ``transform_algorithm="lars"``.

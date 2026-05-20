@@ -6,6 +6,7 @@
 import itertools
 import sys
 import time
+import warnings
 from numbers import Integral, Real
 
 import numpy as np
@@ -189,10 +190,25 @@ def _sparse_encode_precomputed(
             np.clip(new_code, 0, None, out=new_code)
 
     elif algorithm == "omp":
+        # `orthogonal_mp_gram` requires `n_nonzero_coefs <= n_components` (the
+        # number of atoms in the dictionary). The `lars` branch above clips
+        # implicitly via the LARS algorithm termination, so we clip here too
+        # for consistency. Without this, an exception would bubble up from
+        # `_omp.py`, which is surprising during hyper-parameter searches that
+        # explore values of `transform_n_nonzero_coefs` around `n_components`.
+        omp_n_nonzero_coefs = int(regularization)
+        if omp_n_nonzero_coefs > n_components:
+            warnings.warn(
+                f"n_nonzero_coefs={omp_n_nonzero_coefs} is greater than the "
+                f"number of dictionary atoms ({n_components}); it has been "
+                f"clipped to {n_components}.",
+                UserWarning,
+            )
+            omp_n_nonzero_coefs = n_components
         new_code = orthogonal_mp_gram(
             Gram=gram,
             Xy=cov,
-            n_nonzero_coefs=int(regularization),
+            n_nonzero_coefs=omp_n_nonzero_coefs,
             tol=None,
             norms_squared=row_norms(X, squared=True),
             copy_Xy=copy_cov,

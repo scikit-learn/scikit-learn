@@ -277,6 +277,32 @@ def test_dict_learning_nonzero_coefs():
     assert len(np.flatnonzero(code)) == 3
 
 
+def test_dict_learning_omp_n_nonzero_coefs_clipped():
+    # Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/33454
+    # When transform_n_nonzero_coefs > n_components and transform_algorithm="omp",
+    # the value is clipped to n_components and a warning is emitted, matching the
+    # implicit clipping behavior of transform_algorithm="lars".
+    n_components = 4
+    dico = DictionaryLearning(
+        n_components=n_components,
+        transform_algorithm="omp",
+        transform_n_nonzero_coefs=n_components + 1,
+        random_state=0,
+    ).fit(X)
+
+    with pytest.warns(UserWarning, match="clipped"):
+        code = dico.transform(X)
+    assert code.shape == (X.shape[0], n_components)
+    # The clipped value equals n_components so at most n_components atoms are used.
+    assert np.max((code != 0).sum(axis=1)) <= n_components
+
+    # No warning when transform_n_nonzero_coefs <= n_components.
+    dico.set_params(transform_n_nonzero_coefs=n_components)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        dico.transform(X)
+
+
 def test_dict_learning_split():
     n_components = 5
     dico = DictionaryLearning(
