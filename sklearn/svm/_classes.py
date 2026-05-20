@@ -761,14 +761,15 @@ class SVC(BaseSVC):
     classes_ : ndarray of shape (n_classes,)
         The classes labels.
 
-    coef_ : ndarray of shape (n_classes * (n_classes - 1) / 2, n_features)
+    coef_ : ndarray or sparse array/matrix \
+            of shape (n_classes * (n_classes - 1) / 2, n_features)
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
         `coef_` is a readonly property derived from `dual_coef_` and
         `support_vectors_`.
 
-    dual_coef_ : ndarray of shape (n_classes -1, n_SV)
+    dual_coef_ : ndarray or sparse array/matrix of shape (n_classes -1, n_SV)
         Dual coefficients of the support vector in the decision
         function (see :ref:`sgd_mathematical_formulation`), multiplied by
         their targets.
@@ -776,6 +777,7 @@ class SVC(BaseSVC):
         The layout of the coefficients in the multiclass case is somewhat
         non-trivial. See the :ref:`multi-class section of the User Guide
         <svm_multi_class>` for details.
+        If `X` is sparse, these will also be sparse.
 
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)
@@ -1033,14 +1035,15 @@ class NuSVC(BaseSVC):
     classes_ : ndarray of shape (n_classes,)
         The unique classes labels.
 
-    coef_ : ndarray of shape (n_classes * (n_classes -1) / 2, n_features)
+    coef_ : ndarray or sparse array/matrix \
+            of shape (n_classes * (n_classes -1) / 2, n_features)
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`.
 
-    dual_coef_ : ndarray of shape (n_classes - 1, n_SV)
+    dual_coef_ : ndarray or sparse array/matrix of shape (n_classes - 1, n_SV)
         Dual coefficients of the support vector in the decision
         function (see :ref:`sgd_mathematical_formulation`), multiplied by
         their targets.
@@ -1048,6 +1051,7 @@ class NuSVC(BaseSVC):
         The layout of the coefficients in the multiclass case is somewhat
         non-trivial. See the :ref:`multi-class section of the User Guide
         <svm_multi_class>` for details.
+        If `X` is sparse, these will also be sparse.
 
     fit_status_ : int
         0 if correctly fitted, 1 if the algorithm did not converge.
@@ -1260,15 +1264,16 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     Attributes
     ----------
-    coef_ : ndarray of shape (1, n_features)
+    coef_ : ndarray or sparse array/matrix of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`.
 
-    dual_coef_ : ndarray of shape (1, n_SV)
+    dual_coef_ : ndarray or sparse array/matrix of shape (1, n_SV)
         Coefficients of the support vector in the decision function.
+        If `X` is sparse, these will also be sparse.
 
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)
@@ -1447,15 +1452,16 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     Attributes
     ----------
-    coef_ : ndarray of shape (1, n_features)
+    coef_ : ndarray or sparse array/matrix of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`.
 
-    dual_coef_ : ndarray of shape (1, n_SV)
+    dual_coef_ : ndarray or sparse array/matrix of shape (1, n_SV)
         Coefficients of the support vector in the decision function.
+        If `X` is sparse, these will also be sparse.
 
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)
@@ -1626,15 +1632,16 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     Attributes
     ----------
-    coef_ : ndarray of shape (1, n_features)
+    coef_ : ndarray or sparse array/matrix of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`.
 
-    dual_coef_ : ndarray of shape (1, n_SV)
+    dual_coef_ : ndarray or sparse array/matrix of shape (1, n_SV)
         Coefficients of the support vectors in the decision function.
+        If `X` is sparse, these will also be sparse.
 
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)
@@ -1675,8 +1682,9 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     support_ : ndarray of shape (n_SV,)
         Indices of support vectors.
 
-    support_vectors_ : ndarray of shape (n_SV, n_features)
+    support_vectors_ : ndarray or sparse array/matrix of shape (n_SV, n_features)
         Support vectors.
+        If `X` is sparse, these will also be sparse.
 
     See Also
     --------
