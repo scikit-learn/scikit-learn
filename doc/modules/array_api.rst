@@ -120,9 +120,8 @@ The example code snippet below demonstrates how to use `PyTorch
 
 This pattern works identically with any supported array library. For example,
 replace ``torch.asarray(..., device="cuda")`` with ``cupy.asarray(...)`` for CuPy
-or ``dpnp.asarray(..., device="gpu")`` for dpnp. You can also target different
-devices within PyTorch by changing the ``device=`` argument (e.g.,
-``"cpu"``, ``"xpu"``, ``"mps"``).
+or ``dpnp.asarray(...)`` for dpnp. You can also target different devices within
+PyTorch by changing the ``device=`` argument (e.g., ``"cpu"``, ``"xpu"``, ``"mps"``).
 
 After the model is trained, fitted attributes that are arrays will also be from
 the same Array API namespace as the training data. For example, if PyTorch's
@@ -130,7 +129,6 @@ CUDA namespace was used for training, then fitted attributes will be on the GPU.
 Passing data in a different namespace or in a different device within the same
 namespace to ``transform`` or ``predict`` is an error::
 
-    >>> import numpy as np
     >>> with config_context(array_api_dispatch=True):
     ...     lda.transform(X_np)
     Traceback (most recent call last):
@@ -143,7 +141,7 @@ Moving estimators between devices
 We provide ``move_estimator_to`` to transfer an estimator's array attributes
 to a different namespace and device::
 
-    >>> from sklearn.utils._array_api import move_estimator_to, get_namespace_and_device
+    >>> from sklearn.utils._array_api import move_estimator_to
     >>> import numpy as np
     >>> lda_np = move_estimator_to(lda, np, device="cpu")
     >>> with config_context(array_api_dispatch=True):
