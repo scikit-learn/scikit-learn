@@ -342,6 +342,19 @@ def test_countvectorizer_custom_vocabulary_pipeline():
     assert X.shape[1] == len(what_we_like)
 
 
+@pytest.mark.parametrize("Vectorizer", (CountVectorizer, TfidfVectorizer))
+def test_vectorizer_fixed_vocabulary_with_ngrams(Vectorizer):
+    vocabulary = ["ab", "bc", "cd", "de"]
+    vectorizer = Vectorizer(analyzer="char", ngram_range=(2, 2), vocabulary=vocabulary)
+
+    X = vectorizer.fit_transform(["abc", "bcd", "cde"])
+
+    assert vectorizer.get_feature_names_out().tolist() == vocabulary
+    assert_array_equal(
+        X.toarray() > 0, [[1, 1, 0, 0], [0, 1, 1, 0], [0, 0, 1, 1]]
+    )
+
+
 def test_countvectorizer_custom_vocabulary_repeated_indices():
     vocab = {"pizza": 0, "beer": 0}
     msg = "Vocabulary contains repeated indices"

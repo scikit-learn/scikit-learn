@@ -1072,7 +1072,8 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         indices in the feature matrix, or an iterable over terms. If not
         given, a vocabulary is determined from the input documents. Indices
         in the mapping should not be repeated and should not have any gap
-        between 0 and the largest index.
+        between 0 and the largest index. When `ngram_range` is used, the
+        vocabulary terms are expected to be n-grams, not the original tokens.
 
     binary : bool, default=False
         If True, all non zero counts are set to 1. This is useful for discrete
@@ -1874,7 +1875,9 @@ class TfidfVectorizer(CountVectorizer):
     vocabulary : Mapping or iterable, default=None
         Either a Mapping (e.g., a dict) where keys are terms and values are
         indices in the feature matrix, or an iterable over terms. If not
-        given, a vocabulary is determined from the input documents.
+        given, a vocabulary is determined from the input documents. When
+        `ngram_range` is used, the vocabulary terms are expected to be
+        n-grams, not the original tokens.
 
     binary : bool, default=False
         If True, all non-zero term counts are set to 1. This does not mean
