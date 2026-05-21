@@ -7,7 +7,6 @@ import numbers
 import operator
 import warnings
 from collections.abc import Sequence
-from contextlib import suppress
 from functools import reduce, wraps
 from inspect import Parameter, isclass, signature
 
@@ -40,6 +39,10 @@ from sklearn.utils.fixes import (
 )
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
+
+
+def _nw_into_df_or_series(x):
+    return nw.dependencies.is_into_dataframe(x) or nw.dependencies.is_into_series(x)
 
 
 # This function is not used anymore at this moment in the code base but we keep it in
@@ -377,7 +380,7 @@ def _num_samples(x):
         if isinstance(x.shape[0], numbers.Integral):
             return x.shape[0]
 
-    if nw.dependencies.is_into_dataframe(x) or nw.dependencies.is_into_series(x):
+    if _nw_into_df_or_series(x):
         return nw.from_native(x, allow_series=True).shape[0]
 
     if not hasattr(x, "__len__") and not hasattr(x, "shape"):
@@ -880,20 +883,35 @@ def check_array(
     pandas_requires_conversion = False
     # track if we have a Series-like object to raise a better error message
     type_if_series = None
-    if hasattr(array, "dtypes") and hasattr(array.dtypes, "__array__"):
-        # throw warning if columns are sparse. If all columns are sparse, then
+    # For dataframes, use narwhals
+    if _nw_into_df_or_series(array):
+        array_df = nw.from_native(array, allow_series=True)
+    else:
+        array_df = None
+
+    # pandas.DataFrame may have sparse columns
+    is_pandas_fully_sparse_df = False
+    if (
+        array_df is not None
+        and array_df.implementation.is_pandas()
+        and len(array_df.shape) >= 2
+    ):
+        # Throw warning if some columns are sparse. If all columns are sparse, then
         # array.sparse exists and sparsity will be preserved (later).
-        with suppress(ImportError):
-            from pandas import SparseDtype
+        from pandas import SparseDtype
 
-            def is_sparse(dtype):
-                return isinstance(dtype, SparseDtype)
+        def is_pd_sparse(dtype):
+            return isinstance(dtype, SparseDtype)
 
-            if not hasattr(array, "sparse") and array.dtypes.apply(is_sparse).any():
-                warnings.warn(
-                    "pandas.DataFrame with sparse columns found."
-                    "It will be converted to a dense numpy array."
-                )
+        if hasattr(array, "sparse") and array.dtypes.apply(is_pd_sparse).all():
+            # All columns of the pandas.DataFrame are sparse. Note that the `sparse`
+            # attribute is not a guaranteed detection for all sparse columns.
+            is_pandas_fully_sparse_df = True
+        elif array.dtypes.apply(is_pd_sparse).any():
+            warnings.warn(
+                "pandas.DataFrame with sparse columns found."
+                "It will be converted to a dense numpy array."
+            )
 
         dtypes_orig = list(array.dtypes)
         pandas_requires_conversion = any(
@@ -967,26 +985,9 @@ def check_array(
     context = " by %s" % estimator_name if estimator is not None else ""
 
     # When all dataframe columns are sparse, convert to a sparse array
-    if hasattr(array, "sparse") and array.ndim > 1:
-        with suppress(ImportError):
-            from pandas import SparseDtype
-
-            def is_sparse(dtype):
-                return isinstance(dtype, SparseDtype)
-
-            if array.dtypes.apply(is_sparse).all():
-                # DataFrame.sparse only supports `to_coo`
-                array = array.sparse.to_coo()
-                if array.dtype == np.dtype("object"):
-                    unique_dtypes = set([dt.subtype.name for dt in array_orig.dtypes])
-                    if len(unique_dtypes) > 1:
-                        raise ValueError(
-                            "Pandas DataFrame with mixed sparse extension arrays "
-                            "generated a sparse matrix with object dtype which "
-                            "can not be converted to a scipy sparse matrix."
-                            "Sparse extension arrays should all have the same "
-                            "numeric type."
-                        )
+    if is_pandas_fully_sparse_df and array.ndim > 1:
+        # DataFrame.sparse only supports `to_coo`
+        array = array.sparse.to_coo()
 
     if sp.issparse(array):
         _ensure_no_complex_data(array)
