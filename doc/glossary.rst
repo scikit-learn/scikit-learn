@@ -1166,9 +1166,9 @@ Callbacks
         * :meth:`~sklearn.callback.FitCallback.on_fit_task_begin` called at the
           beginning of each :term:`fit task`.
         * :meth:`~sklearn.callback.FitCallback.on_fit_task_end` called at the end of
-          each fit task.
+          each :term:`fit task`.
         * :meth:`~sklearn.callback.FitCallback.teardown` called once at the end of
-          `fit`.
+          :term:`fit`.
 
     fit task
     fit tasks
