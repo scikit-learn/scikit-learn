@@ -5,7 +5,6 @@ Metadata Routing Utility Tests
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import copy
 import re
 
 import numpy as np
@@ -1168,7 +1167,7 @@ def test_unbound_set_methods_work():
 class _UncopyableOwner:
     """An owner-like object that fails on deepcopy.
 
-    Used to verify that deep-copying routing objects does not walk into the
+    Used to verify that cloning routing objects does not walk into the
     estimator state. This mirrors the real-world skorch case where the
     estimator holds attributes (e.g. locally-defined torch modules) that are
     not picklable / deep-copyable.
@@ -1178,12 +1177,12 @@ class _UncopyableOwner:
         raise AssertionError("owner must not be deep-copied")  # pragma: no cover
 
 
-def test_method_metadata_request_deepcopy_does_not_copy_owner():
+def test_method_metadata_request_clone_does_not_copy_owner():
     owner = _UncopyableOwner()
     req = MethodMetadataRequest(owner=owner, method="fit")
     req.add_request(param="sample_weight", alias=True)
 
-    new = copy.deepcopy(req)
+    new = req._clone()
 
     # owner is shared by reference, not copied
     assert new.owner is owner
@@ -1195,12 +1194,12 @@ def test_method_metadata_request_deepcopy_does_not_copy_owner():
     assert "groups" not in req.requests
 
 
-def test_metadata_request_deepcopy_does_not_copy_owner():
+def test_metadata_request_clone_does_not_copy_owner():
     owner = _UncopyableOwner()
     req = MetadataRequest(owner=owner)
     req.fit.add_request(param="sample_weight", alias=True)
 
-    new = copy.deepcopy(req)
+    new = req._clone()
 
     assert new.owner is owner
     for method in SIMPLE_METHODS:
@@ -1211,7 +1210,7 @@ def test_metadata_request_deepcopy_does_not_copy_owner():
     assert "groups" not in req.fit.requests
 
 
-def test_metadata_router_deepcopy_does_not_copy_owner():
+def test_metadata_router_clone_does_not_copy_owner():
     owner = _UncopyableOwner()
     sub_owner = _UncopyableOwner()
     sub_req = MetadataRequest(owner=sub_owner)
@@ -1222,11 +1221,11 @@ def test_metadata_router_deepcopy_does_not_copy_owner():
         method_mapping=MethodMapping().add(caller="fit", callee="fit"),
     )
 
-    new = copy.deepcopy(router)
+    new = router._clone()
 
     assert new.owner is owner
     assert new._route_mappings["est"].router.owner is sub_owner
-    # routing state is deep-copied
+    # routing state is independent from the original
     assert new._route_mappings is not router._route_mappings
     assert new._route_mappings["est"].router.fit.requests == {"sample_weight": True}
 
@@ -1261,7 +1260,7 @@ def test_add_self_request_does_not_deepcopy_estimator():
             )  # pragma: no cover
 
     est = Est().set_fit_request(sample_weight=True)
-    # add_self_request deep-copies the request internally; it must not reach
-    # into the estimator.
+    # add_self_request clones the request internally; it must not reach into
+    # the estimator.
     router = MetadataRouter(owner=est).add_self_request(est)
     assert router._self_request.owner is est
