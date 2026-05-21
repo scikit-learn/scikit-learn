@@ -7,11 +7,11 @@ import numbers
 import operator
 import warnings
 from collections.abc import Sequence
-from contextlib import suppress
 from functools import reduce, wraps
 from inspect import Parameter, isclass, signature
 
 import joblib
+import narwhals.stable.v2 as nw
 import numpy as np
 import scipy.sparse as sp
 
@@ -29,7 +29,7 @@ from sklearn.utils._array_api import (
     get_namespace_and_device,
     move_to,
 )
-from sklearn.utils._dataframe import is_pandas_df, is_pandas_df_or_series
+from sklearn.utils._dataframe import is_pandas_df_or_series
 from sklearn.utils._isfinite import FiniteStatus, cy_isfinite
 from sklearn.utils._tags import get_tags
 from sklearn.utils.fixes import (
@@ -39,6 +39,10 @@ from sklearn.utils.fixes import (
 )
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
+
+
+def _nw_into_df_or_series(x):
+    return nw.dependencies.is_into_dataframe(x) or nw.dependencies.is_into_series(x)
 
 
 # This function is not used anymore at this moment in the code base but we keep it in
@@ -305,16 +309,6 @@ def _is_arraylike_not_scalar(array):
     return _is_arraylike(array) and not np.isscalar(array)
 
 
-def _use_interchange_protocol(X):
-    """Use interchange protocol for non-pandas dataframes that follow the protocol.
-
-    Note: at this point we chose not to use the interchange API on pandas dataframe
-    to ensure strict behavioral backward compatibility with older versions of
-    scikit-learn.
-    """
-    return not is_pandas_df(X) and hasattr(X, "__dataframe__")
-
-
 def _num_features(X):
     """Return the number of features in an array-like X.
 
@@ -375,16 +369,6 @@ def _num_samples(x):
         # Don't get num_samples from an ensembles length!
         raise TypeError(message)
 
-    if _use_interchange_protocol(x):
-        return x.__dataframe__().num_rows()
-
-    if not hasattr(x, "__len__") and not hasattr(x, "shape"):
-        if hasattr(x, "__array__"):
-            xp, _ = get_namespace(x)
-            x = xp.asarray(x)
-        else:
-            raise TypeError(message)
-
     if hasattr(x, "shape") and x.shape is not None:
         if len(x.shape) == 0:
             raise TypeError(
@@ -395,6 +379,16 @@ def _num_samples(x):
         # Dask dataframes may not return numeric shape[0] value
         if isinstance(x.shape[0], numbers.Integral):
             return x.shape[0]
+
+    if _nw_into_df_or_series(x):
+        return nw.from_native(x, allow_series=True).shape[0]
+
+    if not hasattr(x, "__len__") and not hasattr(x, "shape"):
+        if hasattr(x, "__array__"):
+            xp, _ = get_namespace(x)
+            x = xp.asarray(x)
+        else:
+            raise TypeError(message)
 
     try:
         return len(x)
@@ -721,6 +715,16 @@ def _pandas_dtype_needs_early_conversion(pd_dtype):
     return False
 
 
+def _is_pandas_string_dtype(dtype):
+    """Return True if dtype is a pandas StringDtype."""
+    try:
+        from pandas import StringDtype
+
+        return isinstance(dtype, StringDtype)
+    except ImportError:
+        return False
+
+
 def _is_extension_array_dtype(array):
     # Pandas extension arrays have a dtype with an na_value
     return hasattr(array, "dtype") and hasattr(array.dtype, "na_value")
@@ -879,27 +883,46 @@ def check_array(
     pandas_requires_conversion = False
     # track if we have a Series-like object to raise a better error message
     type_if_series = None
-    if hasattr(array, "dtypes") and hasattr(array.dtypes, "__array__"):
-        # throw warning if columns are sparse. If all columns are sparse, then
+    # For dataframes, use narwhals
+    if _nw_into_df_or_series(array):
+        array_df = nw.from_native(array, allow_series=True)
+    else:
+        array_df = None
+
+    # pandas.DataFrame may have sparse columns
+    is_pandas_fully_sparse_df = False
+    if (
+        array_df is not None
+        and array_df.implementation.is_pandas()
+        and len(array_df.shape) >= 2
+    ):
+        # Throw warning if some columns are sparse. If all columns are sparse, then
         # array.sparse exists and sparsity will be preserved (later).
-        with suppress(ImportError):
-            from pandas import SparseDtype
+        from pandas import SparseDtype
 
-            def is_sparse(dtype):
-                return isinstance(dtype, SparseDtype)
+        def is_pd_sparse(dtype):
+            return isinstance(dtype, SparseDtype)
 
-            if not hasattr(array, "sparse") and array.dtypes.apply(is_sparse).any():
-                warnings.warn(
-                    "pandas.DataFrame with sparse columns found."
-                    "It will be converted to a dense numpy array."
-                )
+        if hasattr(array, "sparse") and array.dtypes.apply(is_pd_sparse).all():
+            # All columns of the pandas.DataFrame are sparse. Note that the `sparse`
+            # attribute is not a guaranteed detection for all sparse columns.
+            is_pandas_fully_sparse_df = True
+        elif array.dtypes.apply(is_pd_sparse).any():
+            warnings.warn(
+                "pandas.DataFrame with sparse columns found."
+                "It will be converted to a dense numpy array."
+            )
 
         dtypes_orig = list(array.dtypes)
         pandas_requires_conversion = any(
             _pandas_dtype_needs_early_conversion(i) for i in dtypes_orig
         )
+        has_pandas_string = any(_is_pandas_string_dtype(d) for d in dtypes_orig)
         if all(isinstance(dtype_iter, np.dtype) for dtype_iter in dtypes_orig):
             dtype_orig = np.result_type(*dtypes_orig)
+        elif has_pandas_string:
+            # Force object if any of the dtypes is a StringDtype.
+            dtype_orig = object
         elif pandas_requires_conversion and any(d == object for d in dtypes_orig):
             # Force object if any of the dtypes is an object
             dtype_orig = object
@@ -907,20 +930,23 @@ def check_array(
     elif (_is_extension_array_dtype(array) or hasattr(array, "iloc")) and hasattr(
         array, "dtype"
     ):
-        # array is a pandas series
+        # array is a pandas series or a pandas array.
         type_if_series = type(array)
         pandas_requires_conversion = _pandas_dtype_needs_early_conversion(array.dtype)
         if isinstance(array.dtype, np.dtype):
             dtype_orig = array.dtype
+        elif _is_pandas_string_dtype(array.dtype):
+            # pandas 3 uses StringDtype for string columns instead of object.
+            # Treat as object so that dtype_numeric detection works correctly.
+            dtype_orig = object
         else:
             # Set to None to let array.astype work out the best dtype
             dtype_orig = None
 
     if dtype_numeric:
-        if (
-            dtype_orig is not None
-            and hasattr(dtype_orig, "kind")
-            and dtype_orig.kind == "O"
+        if dtype_orig is not None and (
+            (hasattr(dtype_orig, "kind") and dtype_orig.kind == "O")
+            or dtype_orig == object
         ):
             # if input is object, convert to float.
             dtype = xp.float64
@@ -959,26 +985,9 @@ def check_array(
     context = " by %s" % estimator_name if estimator is not None else ""
 
     # When all dataframe columns are sparse, convert to a sparse array
-    if hasattr(array, "sparse") and array.ndim > 1:
-        with suppress(ImportError):
-            from pandas import SparseDtype
-
-            def is_sparse(dtype):
-                return isinstance(dtype, SparseDtype)
-
-            if array.dtypes.apply(is_sparse).all():
-                # DataFrame.sparse only supports `to_coo`
-                array = array.sparse.to_coo()
-                if array.dtype == np.dtype("object"):
-                    unique_dtypes = set([dt.subtype.name for dt in array_orig.dtypes])
-                    if len(unique_dtypes) > 1:
-                        raise ValueError(
-                            "Pandas DataFrame with mixed sparse extension arrays "
-                            "generated a sparse matrix with object dtype which "
-                            "can not be converted to a scipy sparse matrix."
-                            "Sparse extension arrays should all have the same "
-                            "numeric type."
-                        )
+    if is_pandas_fully_sparse_df and array.ndim > 1:
+        # DataFrame.sparse only supports `to_coo`
+        array = array.sparse.to_coo()
 
     if sp.issparse(array):
         _ensure_no_complex_data(array)
@@ -2161,7 +2170,7 @@ def _check_sample_weight(
         if force_float_dtype and dtype is None:
             dtype = float_dtypes
         if is_array_api and ensure_same_device:
-            sample_weight = xp.asarray(sample_weight, device=device)
+            sample_weight = move_to(sample_weight, xp=xp, device=device)
         sample_weight = check_array(
             sample_weight,
             accept_sparse=False,
@@ -2326,42 +2335,30 @@ def _check_method_params(X, params, indices=None):
 def _get_feature_names(X):
     """Get feature names from X.
 
-    Support for other array containers should place its implementation here.
+    Support for other (2d) data containers should place its implementation here.
 
     Parameters
     ----------
     X : {ndarray, dataframe} of shape (n_samples, n_features)
         Array container to extract feature names.
 
-        - pandas dataframe : The columns will be considered to be feature
-          names. If the dataframe contains non-string feature names, `None` is
-          returned.
+        - narwhals compliant dataframe : The columns will be considered to be feature
+          names.
         - All other array containers will return `None`.
 
     Returns
     -------
     names: ndarray or None
-        Feature names of `X`. Unrecognized array containers will return `None`.
+        Feature names of `X`. Unrecognized data containers will return `None`.
     """
     feature_names = None
 
-    # extract feature names for support array containers
-    if is_pandas_df(X):
-        # Make sure we can inspect columns names from pandas, even with
-        # versions too old to expose a working implementation of
-        # __dataframe__.column_names() and avoid introducing any
-        # additional copy.
-        # TODO: remove the pandas-specific branch once the minimum supported
-        # version of pandas has a working implementation of
-        # __dataframe__.column_names() that is guaranteed to not introduce any
-        # additional copy of the data without having to impose allow_copy=False
-        # that could fail with other libraries. Note: in the longer term, we
-        # could decide to instead rely on the __dataframe_namespace__ API once
-        # adopted by our minimally supported pandas version.
-        feature_names = np.asarray(X.columns, dtype=object)
-    elif hasattr(X, "__dataframe__"):
-        df_protocol = X.__dataframe__()
-        feature_names = np.asarray(list(df_protocol.column_names()), dtype=object)
+    # Extract feature names for supported data containers.
+    if nw.dependencies.is_into_dataframe(X):
+        # Note: Narwhals API says that the .columns property ist a list of strings, but
+        # this does not hold. If pandas has integer column names, .columns returns a
+        # list of integers, see https://github.com/narwhals-dev/narwhals/issues/3571.
+        feature_names = np.asarray(nw.from_native(X).columns, dtype=object)
 
     if feature_names is None or len(feature_names) == 0:
         return
@@ -2472,6 +2469,129 @@ def _generate_get_feature_names_out(estimator, n_features_out, input_features=No
     )
 
 
+def _check_categorical_features(X, categorical_features):
+    """Check and validate categorical features in X
+
+    Parameters
+    ----------
+    X : {array-like, pandas DataFrame} of shape (n_samples, n_features)
+        Input data.
+
+    categorical_features : array-like of {bool, int, str} of shape (n_features) \
+            or shape (n_categorical_features,), default='from_dtype'
+        Indicates the categorical features in `X`.
+
+        - None : no feature will be considered categorical.
+        - boolean array-like : boolean mask indicating categorical features.
+        - integer array-like : integer indices indicating categorical
+          features.
+        - str array-like: names of categorical features (assuming the training
+          data has feature names).
+        - `"from_dtype"`: dataframe columns with dtype "Categorical" and "Enum" are
+          considered to be categorical features. The input must be a dataframe that
+          is supported by narwhals (or supports it): :func:`narwhals.from_native` must
+          work. This is the case, for instance, for pandas and polars DataFrames.
+
+    Return
+    ------
+    is_categorical : ndarray of shape (n_features,) or None, dtype=bool
+        Indicates whether a feature is categorical. If no feature is
+        categorical, this is None.
+    """
+    if nw.dependencies.is_into_dataframe(X):
+        X = nw.from_native(X)
+        dtypes = X.schema.dtypes()
+        X_is_dataframe = True
+        categorical_columns_mask = np.asarray(
+            [d in (nw.Categorical, nw.Enum) for d in dtypes]
+        )
+    else:
+        X_is_dataframe = False
+        categorical_columns_mask = None
+
+    categorical_by_dtype = (
+        isinstance(categorical_features, str) and categorical_features == "from_dtype"
+    )
+    no_categorical_dtype = categorical_features is None or (
+        categorical_by_dtype and not X_is_dataframe
+    )
+
+    if no_categorical_dtype:
+        return None
+
+    if categorical_by_dtype and X_is_dataframe:
+        categorical_features = categorical_columns_mask
+    else:
+        categorical_features = np.asarray(categorical_features)
+
+    if categorical_features.size == 0:
+        return None
+
+    if categorical_features.dtype.kind not in ("i", "b", "U", "O"):
+        raise ValueError(
+            "categorical_features must be an array-like of bool, int or "
+            f"str, got: {categorical_features.dtype.name}."
+        )
+
+    if categorical_features.dtype.kind == "O":
+        types = set(type(f) for f in categorical_features)
+        if types != {str}:
+            raise ValueError(
+                "categorical_features must be an array-like of bool, int or "
+                f"str, got: {', '.join(sorted(t.__name__ for t in types))}."
+            )
+
+    n_features = X.shape[1]
+    # At this point `validate_data` was not called yet because we use the original
+    # dtypes to discover the categorical features. Thus `feature_names_in_`
+    # is not defined yet.
+    feature_names_in_ = getattr(X, "columns", None)
+
+    if categorical_features.dtype.kind in ("U", "O"):
+        # check for feature names
+        if feature_names_in_ is None:
+            raise ValueError(
+                "categorical_features should be passed as an array of "
+                "integers or as a boolean mask when the model is fitted "
+                "on data without feature names."
+            )
+        is_categorical = np.zeros(n_features, dtype=bool)
+        feature_names = list(feature_names_in_)
+        for feature_name in categorical_features:
+            try:
+                is_categorical[feature_names.index(feature_name)] = True
+            except ValueError as e:
+                raise ValueError(
+                    f"categorical_features has an item value '{feature_name}' "
+                    "which is not a valid feature name of the training "
+                    f"data. Observed feature names: {feature_names}"
+                ) from e
+    elif categorical_features.dtype.kind == "i":
+        # check for categorical features as indices
+        if (
+            np.max(categorical_features) >= n_features
+            or np.min(categorical_features) < 0
+        ):
+            raise ValueError(
+                "categorical_features set as integer "
+                "indices must be in [0, n_features - 1]"
+            )
+        is_categorical = np.zeros(n_features, dtype=bool)
+        is_categorical[categorical_features] = True
+    else:
+        if categorical_features.shape[0] != n_features:
+            raise ValueError(
+                "categorical_features set as a boolean mask "
+                "must have shape (n_features,), got: "
+                f"{categorical_features.shape}"
+            )
+        is_categorical = categorical_features
+
+    if not np.any(is_categorical):
+        return None
+    return is_categorical
+
+
 def _check_monotonic_cst(estimator, monotonic_cst=None):
     """Check the monotonic constraints and return the corresponding array.
 
@@ -2519,13 +2639,13 @@ def _check_monotonic_cst(estimator, monotonic_cst=None):
                 set(original_monotonic_cst) - set(estimator.feature_names_in_)
             )
             unexpected_feature_names.sort()  # deterministic error message
-            n_unexpeced = len(unexpected_feature_names)
+            n_unexpected = len(unexpected_feature_names)
             if unexpected_feature_names:
                 if len(unexpected_feature_names) > 5:
                     unexpected_feature_names = unexpected_feature_names[:5]
                     unexpected_feature_names.append("...")
                 raise ValueError(
-                    f"monotonic_cst contains {n_unexpeced} unexpected feature "
+                    f"monotonic_cst contains {n_unexpected} unexpected feature "
                     f"names: {unexpected_feature_names}."
                 )
             for feature_idx, feature_name in enumerate(estimator.feature_names_in_):

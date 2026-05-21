@@ -12,6 +12,7 @@ from functools import partial
 from itertools import chain
 from numbers import Integral, Real
 
+import narwhals.stable.v2 as nw
 import numpy as np
 from scipy import sparse
 
@@ -746,10 +747,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             )
         ]
         for Xs, name in zip(result, names):
-            if not getattr(Xs, "ndim", 0) == 2 and not hasattr(Xs, "__dataframe__"):
+            if not (
+                getattr(Xs, "ndim", 0) == 2 or nw.dependencies.is_into_dataframe(Xs)
+            ):
                 raise ValueError(
-                    "The output of the '{0}' transformer should be 2D (numpy array, "
-                    "scipy sparse array, dataframe).".format(name)
+                    f"The output of the '{name}' transformer should be 2D (numpy "
+                    "array, scipy sparse array, dataframe)."
                 )
         if _get_output_config("transform", self)["dense"] == "pandas":
             return
@@ -1041,7 +1044,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         # were not present in fit time, and the order of the columns doesn't
         # matter.
         fit_dataframe_and_transform_dataframe = hasattr(self, "feature_names_in_") and (
-            is_pandas_df(X) or hasattr(X, "__dataframe__")
+            nw.dependencies.is_into_dataframe(X)
         )
 
         n_samples = _num_samples(X)
@@ -1289,7 +1292,7 @@ def _check_X(X):
     """Use check_array only when necessary, e.g. on lists and other non-array-likes."""
     if (
         (hasattr(X, "__array__") and hasattr(X, "shape"))
-        or hasattr(X, "__dataframe__")
+        or nw.dependencies.is_into_dataframe(X)
         or sparse.issparse(X)
     ):
         return X

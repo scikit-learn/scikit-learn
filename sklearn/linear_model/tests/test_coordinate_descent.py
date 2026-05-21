@@ -968,7 +968,7 @@ def test_check_input_false():
     X, y, _, _ = build_dataset(n_samples=20, n_features=10)
     X = check_array(X, order="F", dtype="float64")
     y = check_array(X, order="F", dtype="float64")
-    clf = ElasticNet(selection="cyclic", tol=1e-7)
+    clf = ElasticNet(selection="cyclic", tol=1e-6)
     # Check that no error is raised if data is provided in the right format
     clf.fit(X, y, check_input=False)
     # With check_input=False, an exhaustive check is not made on y but its
@@ -1007,7 +1007,7 @@ def test_enet_copy_X_False_check_input_False():
     assert np.any(np.not_equal(original_X, X))
 
 
-def test_overrided_gram_matrix():
+def test_overridden_gram_matrix():
     X, y, _, _ = build_dataset(n_samples=20, n_features=10)
     Gram = X.T.dot(X)
     clf = ElasticNet(selection="cyclic", tol=1e-8, precompute=Gram)
@@ -1624,11 +1624,11 @@ def test_enet_sample_weight_does_not_overwrite_sample_weight(check_input):
 @pytest.mark.parametrize(
     ["precompute", "n_targets"], [(False, 1), (True, 1), (False, 3)]
 )
-def test_enet_ridge_consistency(ridge_alpha, precompute, n_targets):
+def test_enet_ridge_consistency(ridge_alpha, precompute, n_targets, global_random_seed):
     # Check that ElasticNet(l1_ratio=0) converges to the same solution as Ridge
     # provided that the value of alpha is adapted.
 
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 300
     X, y = make_regression(
         n_samples=n_samples,
@@ -1660,9 +1660,10 @@ def test_enet_ridge_consistency(ridge_alpha, precompute, n_targets):
     # The CD solver using the gram matrix (precompute = True) loses numerical precision
     # by working with the squares of matrices like Q=X'X (=gram) and
     # R^2 = y^2 + wQw - 2yQw (=square of residuals).
-    rtol = 1e-5 if precompute else 1e-7
-    assert_allclose(enet.coef_, ridge.coef_, rtol=rtol)
-    assert_allclose(enet.intercept_, ridge.intercept_)
+    rtol = 1e-5 if precompute else 5e-7
+    atol = 3e-11
+    assert_allclose(enet.coef_, ridge.coef_, rtol=rtol, atol=atol)
+    assert_allclose(enet.intercept_, ridge.intercept_, atol=atol)
 
 
 @pytest.mark.filterwarnings("ignore:With alpha=0, this algorithm:UserWarning")
@@ -1772,4 +1773,24 @@ def test_enet_path_check_input_false(precompute):
     """Test enet_path works with check_input=False and various precompute settings."""
     X, y = make_regression(n_samples=100, n_features=5, n_informative=2, random_state=0)
     X = np.asfortranarray(X)
-    alphas, _, _ = enet_path(X, y, n_alphas=3, check_input=False, precompute=precompute)
+    alphas, _, _ = enet_path(X, y, alphas=3, check_input=False, precompute=precompute)
+
+
+# TODO(1.11): remove
+@pytest.mark.parametrize("path_func", [lasso_path, enet_path])
+def test_path_function_deprecated_n_alphas(path_func):
+    """Check deprecation of n_alphas in favor of alphas."""
+    X, y = make_regression(n_samples=9, n_features=5, n_informative=2, random_state=42)
+
+    msg = "'n_alphas' was deprecated in 1.9 and will be removed in 1.11"
+    with pytest.warns(FutureWarning, match=msg):
+        path_func(X, y, n_alphas=5)
+
+    msg = "'alphas=None' is deprecated and will be removed in 1.11"
+    with pytest.warns(FutureWarning, match=msg):
+        path_func(X, y, alphas=None)
+
+    # Assert that no warning is raised when n_alphas is not used.
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        path_func(X, y, alphas=5)

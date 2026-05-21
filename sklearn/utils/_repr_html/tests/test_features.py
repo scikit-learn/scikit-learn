@@ -1,8 +1,10 @@
 import numpy as np
 import pytest
 
+from sklearn.base import clone
 from sklearn.compose import ColumnTransformer
 from sklearn.decomposition import PCA, TruncatedSVD
+from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.pipeline import FeatureUnion, Pipeline
 from sklearn.preprocessing import Normalizer, StandardScaler
 from sklearn.utils._repr_html.estimator import estimator_html_repr
@@ -50,8 +52,8 @@ def test_estimator_html_repr_col_names(pandas, feature_cols):
     else:
         X = np.array([[0, 2], [1, 1]])
 
-    ct.fit(X)
-    out = estimator_html_repr(ct)
+    ct_cloned = clone(ct).fit(X)
+    out = estimator_html_repr(ct_cloned)
     assert feature_cols[0] in out
     assert feature_cols[1] in out
 
@@ -71,8 +73,8 @@ def test_estimator_html_repr_total_feature_names(pandas, total_output_features):
     else:
         X = np.array([[0, 2, 3], [1, 1, 3], [3, 5, 4]])
 
-    ct.fit(X)
-    out = estimator_html_repr(ct)
+    ct_cloned = clone(ct).fit(X)
+    out = estimator_html_repr(ct_cloned)
 
     assert "<div class='total_features'>" in out
     assert "3 features</div>" in out
@@ -82,8 +84,9 @@ def test_estimator_html_repr_total_feature_names(pandas, total_output_features):
 
 def test_estimator_html_col_names_featureunion():
     X = [[0.0, 1.0, 3], [2.0, 2.0, 5]]
-    ct2.fit_transform(X)
-    out = estimator_html_repr(ct2)
+    ct2_cloned = clone(ct2)
+    ct2_cloned.fit_transform(X)
+    out = estimator_html_repr(ct2_cloned)
 
     assert "pca__pca0" in out
     assert "svd__truncatedsvd0" in out
@@ -100,6 +103,21 @@ def test_features_html_with_pipeline():
     pipe.fit(X)
     html = estimator_html_repr(pipe)
     assert "3 features" in html
+
+
+def test_countvectorizer_output_features():
+    """Non-regression test for
+    https://github.com/scikit-learn/scikit-learn/issues/33772"""
+    corpus = [
+        "cat",
+        "dog",
+        "mouse",
+        "bird",
+    ]
+    vectorizer = CountVectorizer()
+    vectorizer.fit_transform(corpus)
+    html = estimator_html_repr(vectorizer)
+    assert "4 features" in html
 
 
 def test_features_html_empty_features():
