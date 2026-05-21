@@ -988,7 +988,7 @@ def check_array(
     context = " by %s" % estimator_name if estimator is not None else ""
 
     # When all dataframe columns are sparse, convert to a sparse array
-    if is_pandas_fully_sparse_df and len(array_df.shape) > 1:
+    if is_pandas_fully_sparse_df:
         # DataFrame.sparse only supports `to_coo`
         array = df_pandas.sparse.to_coo()
 

@@ -1005,10 +1005,10 @@ def _convert_container(
         # Search for backend.
         for lib_name in ["pandas", "polars"]:
             try:
-                sys.modules[lib_name]
+                importlib.import_module(lib_name)
                 constructor_name = lib_name
                 break
-            except KeyError:
+            except ModuleNotFoundError:
                 continue
         else:
             pytest.skip("no dataframe backend for narwhals is installed")
