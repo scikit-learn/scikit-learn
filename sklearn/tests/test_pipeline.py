@@ -45,7 +45,13 @@ from sklearn.linear_model import Lasso, LinearRegression, LogisticRegression
 from sklearn.metrics import accuracy_score, r2_score
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import LocalOutlierFactor
-from sklearn.pipeline import FeatureUnion, Pipeline, make_pipeline, make_union
+from sklearn.pipeline import (
+    FeatureUnion,
+    Pipeline,
+    _transform_one,
+    make_pipeline,
+    make_union,
+)
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
 from sklearn.svm import SVC
 from sklearn.tests.metadata_routing_common import (
@@ -2551,6 +2557,24 @@ def test_feature_union_metadata_routing(transformer):
                 parent="fit",
                 **kwargs,
             )
+
+
+def test_transform_one_accepts_plain_dict_params():
+    """Regression test for #34005.
+
+    Some joblib backends (notably dask) downgrade ``Bunch`` to plain ``dict``
+    when serializing task kwargs. ``_transform_one`` must keep working after
+    that downgrade, so it must use item access on ``params``, not attribute
+    access.
+    """
+    from sklearn.preprocessing import StandardScaler
+
+    X = np.array([[0.0, 1.0], [2.0, 3.0]])
+    scaler = StandardScaler().fit(X)
+
+    # Pass a plain dict (not a Bunch) to simulate the post-dask shape.
+    out = _transform_one(scaler, X, None, weight=None, params={"transform": {}})
+    np.testing.assert_allclose(out, scaler.transform(X))
 
 
 # End of routing tests
