@@ -379,7 +379,7 @@ class SimpleImputer(_BaseImputer):
             self._fit_dtype = X.dtype
 
         _check_inputs_dtype(X, self.missing_values)
-        if X.dtype.kind =='b' and self.strategy not in ("most_frequent", "constant"):
+        if X.dtype.kind == 'b' and self.strategy not in ("most_frequent", "constant"):
             raise ValueError(
                 "SimpleImputer does not support bool dtype with"
                 "strategy={!r}. Use 'most_frequent' or " 
