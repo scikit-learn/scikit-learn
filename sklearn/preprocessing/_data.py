@@ -16,6 +16,7 @@ from sklearn.base import (
     TransformerMixin,
     _fit_context,
 )
+from sklearn.callback import CallbackSupportMixin
 from sklearn.preprocessing._encoders import OneHotEncoder
 from sklearn.utils import _array_api, check_array, metadata_routing, resample
 from sklearn.utils._array_api import (
@@ -738,7 +739,9 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     return X
 
 
-class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
+class StandardScaler(
+    CallbackSupportMixin, OneToOneFeatureMixin, TransformerMixin, BaseEstimator
+):
     """Standardize features by removing the mean and scaling to unit variance.
 
     The standard score of a sample `x` is calculated as:
@@ -969,6 +972,11 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         )
         n_features = X.shape[1]
 
+        callback_ctx = self._init_callback_context()
+        callback_ctx.call_on_fit_task_begin(
+            estimator=self, X=X, y=y, metadata={"sample_weight": sample_weight}
+        )
+
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
@@ -1070,6 +1078,14 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             )
         else:
             self.scale_ = None
+
+        callback_ctx.call_on_fit_task_end(
+            estimator=self,
+            X=X,
+            y=y,
+            metadata={"sample_weight": sample_weight},
+            reconstruction_attributes={},
+        )
 
         return self
 

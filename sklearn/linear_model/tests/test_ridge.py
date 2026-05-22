@@ -1495,12 +1495,14 @@ def test_ridge_classifier_multilabel_array_api(
     y_np = y.astype(dtype_name)
     ridge_np = estimator.fit(X_np, y_np)
     pred_np = ridge_np.predict(X_np)
+    classes_np = ridge_np.classes_.copy()
     with config_context(array_api_dispatch=True):
         X_xp, y_xp = xp.asarray(X_np, device=device), xp.asarray(y_np, device=device)
         ridge_xp = estimator.fit(X_xp, y_xp)
         pred_xp = ridge_xp.predict(X_xp)
         assert pred_xp.shape == pred_np.shape == y.shape
         assert_allclose(move_to(pred_xp, xp=np, device="cpu"), pred_np)
+        assert_array_equal(move_to(ridge_xp.classes_, xp=np, device="cpu"), classes_np)
 
 
 @pytest.mark.parametrize(
