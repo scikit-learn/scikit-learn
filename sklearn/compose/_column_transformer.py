@@ -20,7 +20,6 @@ from sklearn.base import TransformerMixin, _fit_context, clone
 from sklearn.pipeline import _fit_transform_one, _name_estimators, _transform_one
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils import Bunch
-from sklearn.utils._dataframe import is_pandas_df
 from sklearn.utils._indexing import (
     _determine_key_type,
     _get_column_indices,
@@ -759,9 +758,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         try:
             import pandas as pd
         except ImportError:
+            # result cannot contain pd.DataFrame => early return
             return
         for Xs, name in zip(result, names):
-            if not is_pandas_df(Xs):
+            if not isinstance(Xs, pd.DataFrame):
                 continue
             for col_name, dtype in Xs.dtypes.to_dict().items():
                 if getattr(dtype, "na_value", None) is not pd.NA:

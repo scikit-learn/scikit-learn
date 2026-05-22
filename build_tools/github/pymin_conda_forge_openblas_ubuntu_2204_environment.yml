@@ -13,6 +13,7 @@ dependencies:
   - narwhals
   - threadpoolctl
   - pandas
+  - rich
   - pyamg
   - pytest
   - pytest-xdist
