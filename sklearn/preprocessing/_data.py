@@ -2830,13 +2830,12 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
                 average=True,
             ).T
         else:
-            self.quantiles_ = np.zeros((len(references), n_features))
-            for feature_idx in range(n_features):
-                self.quantiles_[:, feature_idx] = np.nanpercentile(
-                    X[:, feature_idx],
-                    references,
-                    method="averaged_inverted_cdf",
-                )
+            self.quantiles_ = np.nanpercentile(
+                X,
+                references,
+                method="averaged_inverted_cdf",
+                axis=0,
+            )
 
     def _sparse_fit(self, X, random_state):
         """Compute percentiles for sparse matrices.
