@@ -1254,19 +1254,6 @@ def test_multioutput_regression_invariance_to_dimension_shuffling(name):
         )
 
 
-def test_aa():
-    y_true = [0, 0, 1, 1, 2, 2]
-    y_scores = [
-        [0.7, 0.2, 0.1],
-        [0.4, 0.3, 0.3],
-        [0.1, 0.8, 0.1],
-        [0.2, 0.3, 0.5],
-        [0.4, 0.4, 0.2],
-        [0.1, 0.2, 0.7],
-    ]
-    average_precision_score(y_true, y_scores)
-
-
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.UndefinedMetricWarning")
 @pytest.mark.parametrize("name", sorted(MULTILABELS_METRICS))
 @pytest.mark.parametrize("coo_container", COO_CONTAINERS)
