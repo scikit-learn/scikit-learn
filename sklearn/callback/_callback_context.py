@@ -495,25 +495,23 @@ class CallbackContext:
             )
         ]
         if callbacks_to_propagate and not hasattr(sub_estimator, "set_callbacks"):
+            sub_estimator_name = sub_estimator.__class__.__name__
             warning_message = (
-                f"{sub_estimator.__class__.__name__} estimators do not support "
-                f"callbacks. The callbacks attached to {self.estimator_name} will not "
-                f"be propagated to its {sub_estimator.__class__.__name__} "
-                "sub-estimators."
+                f"{sub_estimator_name} does not support callbacks. The callbacks "
+                f"attached to {self.estimator_name} will not be propagated to its "
+                f"{sub_estimator_name} sub-estimators."
             )
             # Check on the root context not to repeat the same warning.
             root_context = get_context_path(self)[0]
-            if not hasattr(
-                root_context, "_raised_no_callback_support_subestimator_warnings"
-            ):
-                root_context._raised_no_callback_support_subestimator_warnings = set()
+            if not hasattr(root_context, "_subestimator_support_warnings"):
+                root_context._subestimator_support_warnings = set()
             if (
-                warning_message
-                not in root_context._raised_no_callback_support_subestimator_warnings
-            ):
+                self.estimator_name,
+                sub_estimator_name,
+            ) not in root_context._subestimator_support_warnings:
                 warnings.warn(warning_message)
-                root_context._raised_no_callback_support_subestimator_warnings.add(
-                    warning_message
+                root_context._subestimator_support_warnings.add(
+                    (self.estimator_name, sub_estimator_name)
                 )
             callbacks_to_propagate = []
 

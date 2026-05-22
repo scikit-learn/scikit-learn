@@ -345,7 +345,7 @@ def test_autopropagation_to_callback_agnostic_subestimator():
 
     with pytest.warns(
         UserWarning,
-        match="NoCallbackEstimator estimators do not support callbacks.",
+        match="NoCallbackEstimator does not support callbacks.",
     ) as caught_warnings:
         meta_estimator.fit()
 
