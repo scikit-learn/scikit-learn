@@ -335,6 +335,11 @@ METRIC_UNDEFINED_MULTICLASS = {
     "roc_auc_score",
     "weighted_roc_auc",
     "jaccard_score",
+    "label_ranking_loss",
+    "label_ranking_average_precision_score",
+    "dcg_score",
+    "ndcg_score",
+    "coverage_error",
     # with default average='binary', multiclass is prohibited
     "precision_score",
     "recall_score",
