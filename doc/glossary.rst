@@ -1142,9 +1142,9 @@ Callbacks
     autopropagated
         A :term:`callback` is auto-propagated if, when registered on a
         :term:`meta-estimator`, it can be propagated to the sub-estimators of that
-        meta-estimator. This propagation means that the callback gets registered on the
-        sub-estimators, and thus it will have its :term:`hooks` called during their
-        :term:`fitting` too.
+        meta-estimator. This propagation means that the callback gets automatically
+        registered on the sub-estimators, and thus it will have its :term:`hooks`
+        called during their :term:`fitting` too.
 
     callback
     callbacks
