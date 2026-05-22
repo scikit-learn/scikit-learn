@@ -1345,15 +1345,9 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         )
 
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
-        xp_y, y_is_array_api = get_namespace(y)
         Y = self._label_binarizer.fit_transform(y)
         Y = move_to(Y, xp=xp, device=device_)
-        if y_is_array_api and xp_y.isdtype(y.dtype, "numeric"):
-            self.classes_ = move_to(
-                self._label_binarizer.classes_, xp=xp, device=device_
-            )
-        else:
-            self.classes_ = self._label_binarizer.classes_
+        self.classes_ = self._label_binarizer.classes_
         if not self._label_binarizer.y_type_.startswith("multilabel"):
             y = column_or_1d(y, warn=True)
 

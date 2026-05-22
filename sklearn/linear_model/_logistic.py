@@ -20,6 +20,7 @@ from sklearn._loss.loss import (
     HalfMultinomialLossArrayAPI,
 )
 from sklearn.base import _fit_context
+from sklearn.callback import CallbackSupportMixin
 from sklearn.linear_model._base import (
     BaseEstimator,
     LinearClassifierMixin,
@@ -38,6 +39,7 @@ from sklearn.utils import (
     check_consistent_length,
     check_random_state,
     compute_class_weight,
+    metadata_routing,
 )
 from sklearn.utils._array_api import (
     _is_numpy_namespace,
@@ -64,6 +66,7 @@ from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import (
     _check_method_params,
     _check_sample_weight,
+    _deprecate_positional_args,
     check_is_fitted,
     validate_data,
 )
@@ -98,6 +101,121 @@ def _check_solver(solver, penalty, dual):
     return solver
 
 
+class _LbfgsCallbackBridge:
+    """Forward sklearn callbacks to ``scipy.optimize.minimize`` for L-BFGS.
+
+    ``scipy.optimize.minimize`` calls ``callback(xk)`` at the end of each L-BFGS
+    iteration. We map that onto a pair of sklearn hooks per iteration:
+
+    - end the iteration that just finished (``on_fit_task_end`` on the current
+      subcontext),
+    - start the next iteration's subcontext (``on_fit_task_begin``).
+
+    The first iteration's subcontext is created at construction time using the
+    initial weights ``w0``. After ``scipy.optimize.minimize`` returns, the last
+    subcontext created by ``__call__`` corresponds to an iteration that never ran.
+    ``close`` ends it as an empty task so every ``on_fit_task_begin`` call has a
+    matching ``on_fit_task_end`` call.
+    """
+
+    def __init__(
+        self,
+        callback_ctx,
+        estimator,
+        X,
+        y,
+        metadata,
+        w0,
+        *,
+        n_classes,
+        is_binary,
+        fit_intercept,
+        coefs_order,
+        xp,
+        device_,
+    ):
+        self._callback_ctx = callback_ctx
+        self._estimator = estimator
+        self._X = X
+        self._y = y
+        self._metadata = metadata
+        self._coef_kwargs = dict(
+            n_classes=n_classes,
+            is_binary=is_binary,
+            fit_intercept=fit_intercept,
+            coefs_order=coefs_order,
+            dtype=X.dtype,
+            xp=xp,
+            device_=device_,
+        )
+        # Start the first iteration's subcontext, using the initial weights.
+        self._iter_ctx = self._start_iter(w0)
+
+    def _start_iter(self, w):
+        coef, intercept = _compute_coef_intercept(w, **self._coef_kwargs)
+        ctx = self._callback_ctx.subcontext(task_name="lbfgs-iter")
+        ctx.call_on_fit_task_begin(
+            estimator=self._estimator,
+            X=self._X,
+            y=self._y,
+            metadata=self._metadata,
+            reconstruction_attributes={"coef_": coef, "intercept_": intercept},
+        )
+        return ctx
+
+    def __call__(self, xk):
+        coef, intercept = _compute_coef_intercept(xk, **self._coef_kwargs)
+        # End hook for the iteration that scipy just finished.
+        self._iter_ctx.call_on_fit_task_end(
+            estimator=self._estimator,
+            X=self._X,
+            y=self._y,
+            metadata=self._metadata,
+            reconstruction_attributes={"coef_": coef, "intercept_": intercept},
+        )
+        # TODO(1.10): use the return value of ``call_on_fit_task_end`` (a bool
+        # requesting early stopping) to ``raise StopIteration()``. scipy's
+        # ``callback`` honours ``StopIteration`` only from scipy > 1.10, which
+        # is the min supported scipy in scikit-learn 1.10.
+
+        # Begin hook for the next iteration's subcontext.
+        self._iter_ctx = self._start_iter(xk)
+
+    def close(self):
+        """Invoke ``on_fit_task_end`` for the left-over subcontext.
+
+        The last subcontext created by ``__call__`` corresponds to an iteration
+        that ``scipy.optimize.minimize`` did not actually run. It corresponds to
+        an empty task so we don't forward anything to the ``on_fit_task_end``
+        hooks.
+        """
+        self._iter_ctx.call_on_fit_task_end(estimator=self._estimator)
+
+
+def _compute_coef_intercept(
+    w, *, n_classes, is_binary, fit_intercept, coefs_order, dtype, xp, device_
+):
+    """Helper to compute coef and intercept from a flattened array of parameters."""
+    if is_binary:
+        coef = xp.asarray(w.copy(order=coefs_order), dtype=dtype, device=device_)
+        if fit_intercept:
+            intercept = coef[-1:]
+            coef = coef[:-1][None, :]
+        else:
+            intercept = xp.zeros(1, dtype=dtype, device=device_)
+            coef = coef[None, :]
+    else:
+        multi_w = np.reshape(w, (n_classes, -1), order="F")
+        coef = xp.asarray(multi_w.copy(order=coefs_order), dtype=dtype, device=device_)
+        if fit_intercept:
+            intercept = coef[:, -1]
+            coef = coef[:, :-1]
+        else:
+            intercept = xp.zeros(n_classes, dtype=dtype, device=device_)
+
+    return coef, intercept
+
+
 def _logistic_regression_path(
     X,
     y,
@@ -120,6 +238,8 @@ def _logistic_regression_path(
     sample_weight=None,
     l1_ratio=None,
     n_threads=1,
+    callback_ctx=None,
+    estimator=None,
 ):
     """Compute a Logistic Regression model for a list of regularization
     parameters.
@@ -236,6 +356,14 @@ def _logistic_regression_path(
 
     n_threads : int, default=1
        Number of OpenMP threads to use.
+
+    callback_ctx : CallbackContext or None, default=None
+        The callback context of the fit task calling this function. If set to None, the
+        callbacks will not be invoked.
+
+    estimator : estimator instance or None, default=None
+        The estimator instance in which fit this function is called, forwarded to the
+        callbacks if callback_ctx is not None.
 
     Returns
     -------
@@ -421,8 +549,34 @@ def _logistic_regression_path(
     coefs = list()
     n_iter = xp.zeros(len(Cs), dtype=xp.int32, device=device_)
     coefs_order = "C" if not _is_numpy_namespace(xp) else "K"
+    callback_metadata = (
+        {"sample_weight": sample_weight} if sample_weight is not None else None
+    )
     for i, C in enumerate(Cs):
         if solver == "lbfgs":
+            # In LogisticRegression.fit, Cs is always a one-element list, so we don't
+            # add additional callback subcontexts inside this for-loop to avoid
+            # introducing an unnecessary subtask level.
+            # TODO(callbacks) When adding callback support to LogisticRegressionCV,
+            # another subcontext level will be necessary, so we'll need to add a level
+            # only in the LogisticRegressionCV, keeping the LogisticRegression version
+            # without that extra level.
+            lbfgs_bridge = None
+            if callback_ctx is not None and hasattr(estimator, "_skl_callbacks"):
+                lbfgs_bridge = _LbfgsCallbackBridge(
+                    callback_ctx,
+                    estimator,
+                    X,
+                    y,
+                    callback_metadata,
+                    w0,
+                    n_classes=n_classes,
+                    is_binary=is_binary,
+                    fit_intercept=fit_intercept,
+                    coefs_order=coefs_order,
+                    xp=xp,
+                    device_=device_,
+                )
             l2_reg_strength = 1.0 / (C * sw_sum)
             iprint = [-1, 50, 1, 100, 101][
                 np.searchsorted(np.array([0, 1, 2, 3]), verbose)
@@ -440,6 +594,7 @@ def _logistic_regression_path(
                     "ftol": 64 * np.finfo(float).eps,
                     **_get_additional_lbfgs_options_dict("iprint", iprint),
                 },
+                callback=lbfgs_bridge,
             )
             n_iter_i = _check_optimize_result(
                 solver,
@@ -448,6 +603,8 @@ def _logistic_regression_path(
                 extra_warning_msg=_LOGISTIC_SOLVER_CONVERGENCE_MSG,
             )
             w0, loss = opt_res.x, opt_res.fun
+            if lbfgs_bridge is not None:
+                lbfgs_bridge.close()
         elif solver == "newton-cg":
             l2_reg_strength = 1.0 / (C * sw_sum)
             args = (X, target, sample_weight, l2_reg_strength, n_threads)
@@ -746,6 +903,8 @@ def _log_reg_scoring_path(
         check_input=False,
         max_squared_sum=max_squared_sum,
         sample_weight=sw_train,
+        callback_ctx=None,
+        estimator=None,
     )
 
     log_reg = LogisticRegression(solver=solver)
@@ -812,7 +971,9 @@ def _log_reg_scoring_path(
     return coefs, Cs, np.array(scores), n_iter
 
 
-class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
+class LogisticRegression(
+    CallbackSupportMixin, LinearClassifierMixin, SparseCoefMixin, BaseEstimator
+):
     """
     Logistic Regression (aka logit, MaxEnt) classifier.
 
@@ -1163,6 +1324,28 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self.warm_start = warm_start
         self.n_jobs = n_jobs
 
+    # TODO(callbacks): update/remove as more solvers get supported.
+    def set_callbacks(self, *callbacks):
+        """Set callbacks for the estimator.
+
+        Parameters
+        ----------
+        *callbacks : callback instances
+            The callbacks to set.
+
+        Returns
+        -------
+        self : estimator instance
+            The estimator instance itself.
+        """
+        if self.solver != "lbfgs":
+            warnings.warn(
+                f"Callbacks are only supported in {self.__class__.__name__} for"
+                f" solver='lbfgs'. This estimator has solver='{self.solver}', callbacks"
+                " will be ignored during the solving of the regression."
+            )
+        return super().set_callbacks(*callbacks)
+
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """
@@ -1282,6 +1465,18 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         n_classes = size(self.classes_)
         is_binary = n_classes == 2
 
+        # With lbfgs, the fit task will have a subtask even if max_iter is 0.
+        # There's also always one extra empty subtask due to the scipy.optimize.minimize
+        # callback logic.
+        max_subtasks = max(self.max_iter, 1) + 1
+        callback_ctx = self._init_callback_context(max_subtasks=max_subtasks)
+        callback_metadata = (
+            {"sample_weight": sample_weight} if sample_weight is not None else None
+        )
+        callback_ctx.call_on_fit_task_begin(
+            estimator=self, X=X, y=y, metadata=callback_metadata
+        )
+
         if solver == "liblinear":
             if not is_binary:
                 raise ValueError(
@@ -1360,6 +1555,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             max_squared_sum=max_squared_sum,
             sample_weight=sample_weight,
             n_threads=n_threads,
+            callback_ctx=callback_ctx,
+            estimator=self,
         )
 
         self.n_iter_ = xp.asarray(n_iter, dtype=xp.int32)
@@ -1378,6 +1575,14 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 self.coef_ = self.coef_[None, :]
             else:
                 self.intercept_ = xp.zeros(n_classes, dtype=X.dtype, device=device_)
+
+        callback_ctx.call_on_fit_task_end(
+            estimator=self,
+            X=X,
+            y=y,
+            metadata=callback_metadata,
+            reconstruction_attributes={},
+        )
 
         return self
 
@@ -1780,6 +1985,9 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     -0.041...
     """
 
+    # TODO(1.11): remove this when sample_weight as positional arg is removed
+    # from the `score` signature
+    __metadata_request__score = {"sample_weight": metadata_routing.UNUSED}
     _parameter_constraints: dict = {**LogisticRegression._parameter_constraints}
 
     for param in ["C", "warm_start", "l1_ratio"]:
@@ -2261,7 +2469,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         return self
 
-    def score(self, X, y, sample_weight=None, **score_params):
+    # TODO(1.11): remove this decorator along with `sample_weight` from the `score`
+    #  signature
+    @_deprecate_positional_args(version="1.11")
+    def score(self, X, y, *, sample_weight=None, **score_params):
         """Score using the `scoring` option on the given test data and labels.
 
         Parameters
@@ -2275,6 +2486,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
+            .. deprecated:: 1.9
+              `sample_weight` needs to be passed as a keyword argument and not as a
+              positional argument.
+
         **score_params : dict
             Parameters to pass to the `score` method of the underlying scorer.
 
@@ -2285,21 +2500,29 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         score : float
             Score of self.predict(X) w.r.t. y.
         """
+        # TODO(1.11): for backwards compatibility, when `sample_weight` becomes a part
+        # of **score_params, it should be skipped in the following check so that people
+        # can still pass it w/o metadata routing enabled.
         _raise_for_params(score_params, self, "score")
+        # TODO(1.11): remove this when sample_weight is removed from the `score`
+        # signature
+        if sample_weight is not None:
+            score_params["sample_weight"] = sample_weight
 
         scoring = self._get_scorer()
         if _routing_enabled():
             routed_params = process_routing(
                 self,
                 "score",
-                sample_weight=sample_weight,
                 **score_params,
             )
         else:
             routed_params = Bunch()
             routed_params.scorer = Bunch(score={})
-            if sample_weight is not None:
-                routed_params.scorer.score["sample_weight"] = sample_weight
+            if score_params.get("sample_weight") is not None:
+                routed_params.scorer.score["sample_weight"] = score_params[
+                    "sample_weight"
+                ]
 
         return scoring(
             self,
