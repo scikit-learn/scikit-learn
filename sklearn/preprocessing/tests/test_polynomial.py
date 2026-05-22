@@ -272,12 +272,12 @@ def test_spline_transformer_periodic_linear_regression(bias, intercept):
     assert_allclose(predictions[0:100], predictions[100:200], rtol=1e-3)
 
 
-def test_spline_transformer_periodic_spline_backport():
-    """Test that the backport of extrapolate="periodic" works correctly"""
+def test_spline_transformer_periodic_vs_scipy():
+    """Test that B-Spline with extrapolate="periodic" matches scipy"""
     X = np.linspace(-2, 3.5, 10)[:, None]
     degree = 2
 
-    # Use periodic extrapolation backport in SplineTransformer
+    # Use periodic extrapolation in SplineTransformer
     transformer = SplineTransformer(
         degree=degree, extrapolation="periodic", knots=[[-1.0], [0.0], [1.0]]
     )
