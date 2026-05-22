@@ -670,3 +670,23 @@ def test_from_model_estimator_attribute_error():
         from_model.fit(data, y).partial_fit(data)
     assert isinstance(exec_info.value.__cause__, AttributeError)
     assert inner_msg in str(exec_info.value.__cause__)
+
+
+@pytest.mark.parametrize(
+    "feature_importance",
+    [
+        lambda estimator: estimator.sparsify().coef_,
+        lambda estimator: estimator.sparsify().coef_.tocsc(),
+    ],
+)
+def test_feature_importance_sparse(feature_importance):
+    from_model_sparse = SelectFromModel(
+        estimator=LogisticRegression(), importance_getter=feature_importance
+    )
+    from_model_dense = SelectFromModel(estimator=LogisticRegression())
+
+    from_model_sparse.fit(data, y)
+    from_model_dense.fit(data, y)
+
+    assert_array_equal(from_model_sparse.get_support(), from_model_dense.get_support())
+    assert_allclose(from_model_sparse.transform(data), from_model_dense.transform(data))

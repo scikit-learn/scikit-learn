@@ -3,7 +3,6 @@
 ==================
 Density Estimation
 ==================
-.. sectionauthor:: Jake Vanderplas <vanderplas@astro.washington.edu>
 
 Density estimation walks the line between unsupervised learning, feature
 engineering, and data modeling.  Some of the most popular and useful

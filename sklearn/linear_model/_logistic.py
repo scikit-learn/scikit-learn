@@ -5,6 +5,7 @@ Logistic Regression
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import inspect
 import numbers
 import warnings
 from numbers import Integral, Real
@@ -12,8 +13,14 @@ from numbers import Integral, Real
 import numpy as np
 from scipy import optimize
 
-from sklearn._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
+from sklearn._loss.loss import (
+    HalfBinomialLoss,
+    HalfBinomialLossArrayAPI,
+    HalfMultinomialLoss,
+    HalfMultinomialLossArrayAPI,
+)
 from sklearn.base import _fit_context
+from sklearn.callback import CallbackSupportMixin
 from sklearn.linear_model._base import (
     BaseEstimator,
     LinearClassifierMixin,
@@ -22,7 +29,7 @@ from sklearn.linear_model._base import (
 from sklearn.linear_model._glm.glm import NewtonCholeskySolver
 from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.linear_model._sag import sag_solver
-from sklearn.metrics import get_scorer, get_scorer_names
+from sklearn.metrics import get_scorer, get_scorer_names, make_scorer
 from sklearn.model_selection import check_cv
 from sklearn.preprocessing import LabelEncoder
 from sklearn.svm._base import _fit_liblinear
@@ -32,6 +39,16 @@ from sklearn.utils import (
     check_consistent_length,
     check_random_state,
     compute_class_weight,
+    metadata_routing,
+)
+from sklearn.utils._array_api import (
+    _is_numpy_namespace,
+    _matching_numpy_dtype,
+    check_same_namespace,
+    get_namespace,
+    get_namespace_and_device,
+    move_to,
+    size,
 )
 from sklearn.utils._param_validation import Hidden, Interval, StrOptions
 from sklearn.utils.extmath import row_norms, softmax
@@ -49,6 +66,7 @@ from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import (
     _check_method_params,
     _check_sample_weight,
+    _deprecate_positional_args,
     check_is_fitted,
     validate_data,
 )
@@ -83,6 +101,121 @@ def _check_solver(solver, penalty, dual):
     return solver
 
 
+class _LbfgsCallbackBridge:
+    """Forward sklearn callbacks to ``scipy.optimize.minimize`` for L-BFGS.
+
+    ``scipy.optimize.minimize`` calls ``callback(xk)`` at the end of each L-BFGS
+    iteration. We map that onto a pair of sklearn hooks per iteration:
+
+    - end the iteration that just finished (``on_fit_task_end`` on the current
+      subcontext),
+    - start the next iteration's subcontext (``on_fit_task_begin``).
+
+    The first iteration's subcontext is created at construction time using the
+    initial weights ``w0``. After ``scipy.optimize.minimize`` returns, the last
+    subcontext created by ``__call__`` corresponds to an iteration that never ran.
+    ``close`` ends it as an empty task so every ``on_fit_task_begin`` call has a
+    matching ``on_fit_task_end`` call.
+    """
+
+    def __init__(
+        self,
+        callback_ctx,
+        estimator,
+        X,
+        y,
+        metadata,
+        w0,
+        *,
+        n_classes,
+        is_binary,
+        fit_intercept,
+        coefs_order,
+        xp,
+        device_,
+    ):
+        self._callback_ctx = callback_ctx
+        self._estimator = estimator
+        self._X = X
+        self._y = y
+        self._metadata = metadata
+        self._coef_kwargs = dict(
+            n_classes=n_classes,
+            is_binary=is_binary,
+            fit_intercept=fit_intercept,
+            coefs_order=coefs_order,
+            dtype=X.dtype,
+            xp=xp,
+            device_=device_,
+        )
+        # Start the first iteration's subcontext, using the initial weights.
+        self._iter_ctx = self._start_iter(w0)
+
+    def _start_iter(self, w):
+        coef, intercept = _compute_coef_intercept(w, **self._coef_kwargs)
+        ctx = self._callback_ctx.subcontext(task_name="lbfgs-iter")
+        ctx.call_on_fit_task_begin(
+            estimator=self._estimator,
+            X=self._X,
+            y=self._y,
+            metadata=self._metadata,
+            reconstruction_attributes={"coef_": coef, "intercept_": intercept},
+        )
+        return ctx
+
+    def __call__(self, xk):
+        coef, intercept = _compute_coef_intercept(xk, **self._coef_kwargs)
+        # End hook for the iteration that scipy just finished.
+        self._iter_ctx.call_on_fit_task_end(
+            estimator=self._estimator,
+            X=self._X,
+            y=self._y,
+            metadata=self._metadata,
+            reconstruction_attributes={"coef_": coef, "intercept_": intercept},
+        )
+        # TODO(1.10): use the return value of ``call_on_fit_task_end`` (a bool
+        # requesting early stopping) to ``raise StopIteration()``. scipy's
+        # ``callback`` honours ``StopIteration`` only from scipy > 1.10, which
+        # is the min supported scipy in scikit-learn 1.10.
+
+        # Begin hook for the next iteration's subcontext.
+        self._iter_ctx = self._start_iter(xk)
+
+    def close(self):
+        """Invoke ``on_fit_task_end`` for the left-over subcontext.
+
+        The last subcontext created by ``__call__`` corresponds to an iteration
+        that ``scipy.optimize.minimize`` did not actually run. It corresponds to
+        an empty task so we don't forward anything to the ``on_fit_task_end``
+        hooks.
+        """
+        self._iter_ctx.call_on_fit_task_end(estimator=self._estimator)
+
+
+def _compute_coef_intercept(
+    w, *, n_classes, is_binary, fit_intercept, coefs_order, dtype, xp, device_
+):
+    """Helper to compute coef and intercept from a flattened array of parameters."""
+    if is_binary:
+        coef = xp.asarray(w.copy(order=coefs_order), dtype=dtype, device=device_)
+        if fit_intercept:
+            intercept = coef[-1:]
+            coef = coef[:-1][None, :]
+        else:
+            intercept = xp.zeros(1, dtype=dtype, device=device_)
+            coef = coef[None, :]
+    else:
+        multi_w = np.reshape(w, (n_classes, -1), order="F")
+        coef = xp.asarray(multi_w.copy(order=coefs_order), dtype=dtype, device=device_)
+        if fit_intercept:
+            intercept = coef[:, -1]
+            coef = coef[:, :-1]
+        else:
+            intercept = xp.zeros(n_classes, dtype=dtype, device=device_)
+
+    return coef, intercept
+
+
 def _logistic_regression_path(
     X,
     y,
@@ -105,6 +238,8 @@ def _logistic_regression_path(
     sample_weight=None,
     l1_ratio=None,
     n_threads=1,
+    callback_ctx=None,
+    estimator=None,
 ):
     """Compute a Logistic Regression model for a list of regularization
     parameters.
@@ -222,6 +357,14 @@ def _logistic_regression_path(
     n_threads : int, default=1
        Number of OpenMP threads to use.
 
+    callback_ctx : CallbackContext or None, default=None
+        The callback context of the fit task calling this function. If set to None, the
+        callbacks will not be invoked.
+
+    estimator : estimator instance or None, default=None
+        The estimator instance in which fit this function is called, forwarded to the
+        callbacks if callback_ctx is not None.
+
     Returns
     -------
     coefs : ndarray of shape (n_cs, n_classes, n_features + int(fit_intercept)) or \
@@ -250,23 +393,26 @@ def _logistic_regression_path(
         Cs = np.logspace(-4, 4, Cs)
 
     solver = _check_solver(solver, penalty, dual)
+    xp, _, device_ = get_namespace_and_device(X)
 
     # Preprocessing.
     if check_input:
         X = check_array(
             X,
             accept_sparse="csr",
-            dtype=np.float64,
+            dtype=[xp.float64, xp.float32],
             accept_large_sparse=solver not in ["liblinear", "sag", "saga"],
         )
         y = check_array(y, ensure_2d=False, dtype=None)
         check_consistent_length(X, y)
 
     if sample_weight is not None or class_weight is not None:
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype, copy=True)
+        sample_weight = _check_sample_weight(
+            sample_weight, X, dtype=X.dtype, copy=True, ensure_same_device=True
+        )
 
     n_samples, n_features = X.shape
-    n_classes = len(classes)
+    n_classes = classes.shape[0] if hasattr(classes, "shape") else len(classes)
     is_binary = n_classes == 2
 
     if solver == "liblinear" and not is_binary:
@@ -284,12 +430,18 @@ def _logistic_regression_path(
         class_weight_ = compute_class_weight(
             class_weight, classes=classes, y=y, sample_weight=sample_weight
         )
-        sample_weight *= class_weight_[le.transform(y)]
+        class_weight_ = xp.asarray(
+            class_weight_[le.transform(y)], dtype=X.dtype, device=device_
+        )
+        sample_weight *= class_weight_
 
     if is_binary:
-        w0 = np.zeros(n_features + int(fit_intercept), dtype=X.dtype)
-        mask = y == classes[1]
-        y_bin = np.ones(y.shape, dtype=X.dtype)
+        w0 = np.zeros(
+            n_features + int(fit_intercept), dtype=_matching_numpy_dtype(X, xp=xp)
+        )
+        # classes[1] is the "positive label"
+        mask = move_to(y == classes[1], xp=xp, device=device_)
+        y_bin = xp.ones(y.shape, dtype=X.dtype, device=device_)
         if solver == "liblinear":
             y_bin[~mask] = -1.0
         else:
@@ -300,10 +452,12 @@ def _logistic_regression_path(
         # All solvers capable of a multinomial need LabelEncoder, not LabelBinarizer,
         # i.e. y as a 1d-array of integers. LabelEncoder also saves memory
         # compared to LabelBinarizer, especially when n_classes is large.
-        Y_multi = le.transform(y).astype(X.dtype, copy=False)
+        Y_multi = xp.asarray(le.transform(y), dtype=X.dtype, device=device_)
         # It is important that w0 is F-contiguous.
         w0 = np.zeros(
-            (classes.size, n_features + int(fit_intercept)), order="F", dtype=X.dtype
+            (size(classes), n_features + int(fit_intercept)),
+            order="F",
+            dtype=_matching_numpy_dtype(X, xp=xp),
         )
 
     # IMPORTANT NOTE:
@@ -317,7 +471,7 @@ def _logistic_regression_path(
         # This needs to be calculated after sample_weight is multiplied by
         # class_weight. It is even tested that passing class_weight is equivalent to
         # passing sample_weights according to class_weight.
-        sw_sum = n_samples if sample_weight is None else np.sum(sample_weight)
+        sw_sum = n_samples if sample_weight is None else float(xp.sum(sample_weight))
 
     if coef is not None:
         if is_binary:
@@ -352,7 +506,12 @@ def _logistic_regression_path(
     if is_binary:
         target = y_bin
         loss = LinearModelLoss(
-            base_loss=HalfBinomialLoss(), fit_intercept=fit_intercept
+            base_loss=(
+                HalfBinomialLoss()
+                if _is_numpy_namespace(xp)
+                else HalfBinomialLossArrayAPI(xp=xp, device=device_)
+            ),
+            fit_intercept=fit_intercept,
         )
         if solver == "lbfgs":
             func = loss.loss_gradient
@@ -363,7 +522,13 @@ def _logistic_regression_path(
         warm_start_sag = {"coef": np.expand_dims(w0, axis=1)}
     else:  # multinomial
         loss = LinearModelLoss(
-            base_loss=HalfMultinomialLoss(n_classes=classes.size),
+            base_loss=(
+                HalfMultinomialLoss(n_classes=size(classes))
+                if _is_numpy_namespace(xp)
+                else HalfMultinomialLossArrayAPI(
+                    n_classes=size(classes), xp=xp, device=device_
+                )
+            ),
             fit_intercept=fit_intercept,
         )
         target = Y_multi
@@ -382,9 +547,36 @@ def _logistic_regression_path(
         warm_start_sag = {"coef": w0.T}
 
     coefs = list()
-    n_iter = np.zeros(len(Cs), dtype=np.int32)
+    n_iter = xp.zeros(len(Cs), dtype=xp.int32, device=device_)
+    coefs_order = "C" if not _is_numpy_namespace(xp) else "K"
+    callback_metadata = (
+        {"sample_weight": sample_weight} if sample_weight is not None else None
+    )
     for i, C in enumerate(Cs):
         if solver == "lbfgs":
+            # In LogisticRegression.fit, Cs is always a one-element list, so we don't
+            # add additional callback subcontexts inside this for-loop to avoid
+            # introducing an unnecessary subtask level.
+            # TODO(callbacks) When adding callback support to LogisticRegressionCV,
+            # another subcontext level will be necessary, so we'll need to add a level
+            # only in the LogisticRegressionCV, keeping the LogisticRegression version
+            # without that extra level.
+            lbfgs_bridge = None
+            if callback_ctx is not None and hasattr(estimator, "_skl_callbacks"):
+                lbfgs_bridge = _LbfgsCallbackBridge(
+                    callback_ctx,
+                    estimator,
+                    X,
+                    y,
+                    callback_metadata,
+                    w0,
+                    n_classes=n_classes,
+                    is_binary=is_binary,
+                    fit_intercept=fit_intercept,
+                    coefs_order=coefs_order,
+                    xp=xp,
+                    device_=device_,
+                )
             l2_reg_strength = 1.0 / (C * sw_sum)
             iprint = [-1, 50, 1, 100, 101][
                 np.searchsorted(np.array([0, 1, 2, 3]), verbose)
@@ -402,6 +594,7 @@ def _logistic_regression_path(
                     "ftol": 64 * np.finfo(float).eps,
                     **_get_additional_lbfgs_options_dict("iprint", iprint),
                 },
+                callback=lbfgs_bridge,
             )
             n_iter_i = _check_optimize_result(
                 solver,
@@ -410,6 +603,8 @@ def _logistic_regression_path(
                 extra_warning_msg=_LOGISTIC_SOLVER_CONVERGENCE_MSG,
             )
             w0, loss = opt_res.x, opt_res.fun
+            if lbfgs_bridge is not None:
+                lbfgs_bridge.close()
         elif solver == "newton-cg":
             l2_reg_strength = 1.0 / (C * sw_sum)
             args = (X, target, sample_weight, l2_reg_strength, n_threads)
@@ -503,17 +698,23 @@ def _logistic_regression_path(
             raise ValueError(msg)
 
         if is_binary:
-            coefs.append(w0.copy())
+            coefs.append(
+                xp.asarray(w0.copy(order=coefs_order), dtype=X.dtype, device=device_)
+            )
         else:
             if solver in ["lbfgs", "newton-cg", "newton-cholesky"]:
                 multi_w0 = np.reshape(w0, (n_classes, -1), order="F")
             else:
                 multi_w0 = w0
-            coefs.append(multi_w0.copy())
+            coefs.append(
+                xp.asarray(
+                    multi_w0.copy(order=coefs_order), dtype=X.dtype, device=device_
+                )
+            )
 
         n_iter[i] = n_iter_i
 
-    return np.array(coefs), np.array(Cs), n_iter
+    return xp.stack(coefs), xp.asarray(Cs, device=device_), n_iter
 
 
 # helper function for LogisticCV
@@ -702,6 +903,8 @@ def _log_reg_scoring_path(
         check_input=False,
         max_squared_sum=max_squared_sum,
         sample_weight=sw_train,
+        callback_ctx=None,
+        estimator=None,
     )
 
     log_reg = LogisticRegression(solver=solver)
@@ -711,8 +914,51 @@ def _log_reg_scoring_path(
 
     scores = list()
 
+    # Prepare the call to get the score per fold: calc_score
     scoring = get_scorer(scoring)
-    for w in coefs:
+    if scoring is None:
+
+        def calc_score(log_reg):
+            return log_reg.score(X_test, y_test, sample_weight=sw_test)
+
+    else:
+        is_binary = len(classes) <= 2
+        score_params = score_params or {}
+        score_params = _check_method_params(X=X, params=score_params, indices=test)
+        # We need to pass the classes as "labels" argument to scorers that support
+        # it, e.g. scoring = "neg_brier_score", because y_test may not contain all
+        # class labels.
+        # There are at least 2 possibilities:
+        # 1. Metadata routing is enabled: A try except clause is possible with
+        #   adding labels to score_params. We could then pass the already instantiated
+        #   log_reg instance to scoring.
+        # 2. We reconstruct the scorer and pass labels as kwargs explicitly.
+        # We implement the 2nd option even if it seems a bit hacky because it works
+        # with and without metadata routing.
+        if hasattr(scoring, "_score_func"):
+            sig = inspect.signature(scoring._score_func).parameters
+        else:
+            sig = []
+
+        if "labels" in sig:
+            pos_label_kwarg = {}
+            if is_binary and "pos_label" in sig:
+                # see _logistic_regression_path
+                pos_label_kwarg["pos_label"] = classes[-1]
+            scoring = make_scorer(
+                scoring._score_func,
+                greater_is_better=True if scoring._sign == 1 else False,
+                response_method=scoring._response_method,
+                labels=classes,
+                **pos_label_kwarg,
+                **getattr(scoring, "_kwargs", {}),
+            )
+
+        def calc_score(log_reg):
+            return scoring(log_reg, X_test, y_test, **score_params)
+
+    for w, C in zip(coefs, Cs):
+        log_reg.C = C
         if fit_intercept:
             log_reg.coef_ = w[..., :-1]
             log_reg.intercept_ = w[..., -1]
@@ -720,19 +966,14 @@ def _log_reg_scoring_path(
             log_reg.coef_ = w
             log_reg.intercept_ = 0.0
 
-        if scoring is None:
-            scores.append(log_reg.score(X_test, y_test, sample_weight=sw_test))
-        else:
-            score_params = score_params or {}
-            score_params = _check_method_params(X=X, params=score_params, indices=test)
-            # FIXME: If scoring = "neg_brier_score" and if not all class labels
-            # are present in y_test, the following fails. Maybe we can pass
-            # "labels=classes" to the call of scoring.
-            scores.append(scoring(log_reg, X_test, y_test, **score_params))
+        scores.append(calc_score(log_reg))
+
     return coefs, Cs, np.array(scores), n_iter
 
 
-class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
+class LogisticRegression(
+    CallbackSupportMixin, LinearClassifierMixin, SparseCoefMixin, BaseEstimator
+):
     """
     Logistic Regression (aka logit, MaxEnt) classifier.
 
@@ -1083,6 +1324,28 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self.warm_start = warm_start
         self.n_jobs = n_jobs
 
+    # TODO(callbacks): update/remove as more solvers get supported.
+    def set_callbacks(self, *callbacks):
+        """Set callbacks for the estimator.
+
+        Parameters
+        ----------
+        *callbacks : callback instances
+            The callbacks to set.
+
+        Returns
+        -------
+        self : estimator instance
+            The estimator instance itself.
+        """
+        if self.solver != "lbfgs":
+            warnings.warn(
+                f"Callbacks are only supported in {self.__class__.__name__} for"
+                f" solver='lbfgs'. This estimator has solver='{self.solver}', callbacks"
+                " will be ignored during the solving of the regression."
+            )
+        return super().set_callbacks(*callbacks)
+
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """
@@ -1165,13 +1428,17 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         if penalty == "elasticnet" and self.l1_ratio is None:
             raise ValueError("l1_ratio must be specified when penalty is elasticnet.")
 
+        xp, _, device_ = get_namespace_and_device(X)
+        sample_weight = move_to(sample_weight, xp=xp, device=device_)
+        xp_y, _ = get_namespace(y)
+
         if self.penalty is None:
             if self.C != 1.0:  # default value
                 warnings.warn(
                     "Setting penalty=None will ignore the C and l1_ratio parameters"
                 )
                 # Note that check for l1_ratio is done right above
-            C_ = np.inf
+            C_ = xp.inf
             penalty = "l2"
         else:
             C_ = self.C
@@ -1183,25 +1450,32 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         if self.n_jobs is not None:
             warnings.warn(msg, category=FutureWarning)
 
-        if solver == "lbfgs":
-            _dtype = np.float64
-        else:
-            _dtype = [np.float64, np.float32]
-
         X, y = validate_data(
             self,
             X,
             y,
             accept_sparse="csr",
-            dtype=_dtype,
+            dtype=[xp.float64, xp.float32],
             order="C",
             accept_large_sparse=solver not in ["liblinear", "sag", "saga"],
         )
         n_features = X.shape[1]
         check_classification_targets(y)
-        self.classes_ = np.unique(y)
-        n_classes = len(self.classes_)
+        self.classes_ = xp_y.unique_values(y)
+        n_classes = size(self.classes_)
         is_binary = n_classes == 2
+
+        # With lbfgs, the fit task will have a subtask even if max_iter is 0.
+        # There's also always one extra empty subtask due to the scipy.optimize.minimize
+        # callback logic.
+        max_subtasks = max(self.max_iter, 1) + 1
+        callback_ctx = self._init_callback_context(max_subtasks=max_subtasks)
+        callback_metadata = (
+            {"sample_weight": sample_weight} if sample_weight is not None else None
+        )
+        callback_ctx.call_on_fit_task_begin(
+            estimator=self, X=X, y=y, metadata=callback_metadata
+        )
 
         if solver == "liblinear":
             if not is_binary:
@@ -1250,10 +1524,13 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             warm_start_coef = getattr(self, "coef_", None)
         else:
             warm_start_coef = None
-        if warm_start_coef is not None and self.fit_intercept:
-            warm_start_coef = np.append(
-                warm_start_coef, self.intercept_[:, np.newaxis], axis=1
-            )
+        if warm_start_coef is not None:
+            warm_start_coef = move_to(warm_start_coef, xp=np, device="cpu")
+            if self.fit_intercept:
+                intercept_np = move_to(self.intercept_, xp=np, device="cpu")
+                warm_start_coef = np.concatenate(
+                    [warm_start_coef, intercept_np[:, None]], axis=1
+                )
 
         # TODO: enable multi-threading if benchmarks show a positive effect,
         # see https://github.com/scikit-learn/scikit-learn/issues/32162
@@ -1278,11 +1555,13 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             max_squared_sum=max_squared_sum,
             sample_weight=sample_weight,
             n_threads=n_threads,
+            callback_ctx=callback_ctx,
+            estimator=self,
         )
 
-        self.n_iter_ = np.asarray(n_iter, dtype=np.int32)
+        self.n_iter_ = xp.asarray(n_iter, dtype=xp.int32)
 
-        self.coef_ = coefs[0]
+        self.coef_ = coefs[0, ...]
         if self.fit_intercept:
             if is_binary:
                 self.intercept_ = self.coef_[-1:]
@@ -1292,10 +1571,18 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 self.coef_ = self.coef_[:, :-1]
         else:
             if is_binary:
-                self.intercept_ = np.zeros(1, dtype=X.dtype)
+                self.intercept_ = xp.zeros(1, dtype=X.dtype, device=device_)
                 self.coef_ = self.coef_[None, :]
             else:
-                self.intercept_ = np.zeros(n_classes, dtype=X.dtype)
+                self.intercept_ = xp.zeros(n_classes, dtype=X.dtype, device=device_)
+
+        callback_ctx.call_on_fit_task_end(
+            estimator=self,
+            X=X,
+            y=y,
+            metadata=callback_metadata,
+            reconstruction_attributes={},
+        )
 
         return self
 
@@ -1322,8 +1609,9 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             where classes are ordered as they are in ``self.classes_``.
         """
         check_is_fitted(self)
+        check_same_namespace(X, self, attribute="coef_", method="predict_proba")
 
-        is_binary = self.classes_.size <= 2
+        is_binary = size(self.classes_) <= 2
         if is_binary:
             return super()._predict_proba_lr(X)
         else:
@@ -1349,11 +1637,14 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             Returns the log-probability of the sample for each class in the
             model, where classes are ordered as they are in ``self.classes_``.
         """
-        return np.log(self.predict_proba(X))
+        check_same_namespace(X, self, attribute="coef_", method="predict_log_proba")
+        xp, _ = get_namespace(X)
+        return xp.log(self.predict_proba(X))
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.sparse = True
+        tags.array_api_support = self.solver == "lbfgs"
         if self.solver == "liblinear":
             tags.classifier_tags.multi_class = False
 
@@ -1454,6 +1745,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         - callable: a scorer callable object (e.g., function) with signature
           ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
         - `None`: :ref:`accuracy <accuracy_score>` is used.
+
+        .. versionchanged:: 1.11
+           The default will change from None, i.e. accuracy, to 'neg_log_loss' in
+           version 1.11.
 
     solver : {'lbfgs', 'liblinear', 'newton-cg', 'newton-cholesky', 'sag', 'saga'}, \
             default='lbfgs'
@@ -1677,16 +1972,22 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     >>> from sklearn.linear_model import LogisticRegressionCV
     >>> X, y = load_iris(return_X_y=True)
     >>> clf = LogisticRegressionCV(
-    ...     cv=5, random_state=0, use_legacy_attributes=False, l1_ratios=(0,)
+    ...     cv=5, random_state=0,
+    ...     use_legacy_attributes=False,
+    ...     l1_ratios=(0,),
+    ...     scoring="neg_log_loss",
     ... ).fit(X, y)
     >>> clf.predict(X[:2, :])
     array([0, 0])
     >>> clf.predict_proba(X[:2, :]).shape
     (2, 3)
     >>> clf.score(X, y)
-    0.98...
+    -0.041...
     """
 
+    # TODO(1.11): remove this when sample_weight as positional arg is removed
+    # from the `score` signature
+    __metadata_request__score = {"sample_weight": metadata_routing.UNUSED}
     _parameter_constraints: dict = {**LogisticRegression._parameter_constraints}
 
     for param in ["C", "warm_start", "l1_ratio"]:
@@ -1697,7 +1998,12 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             "Cs": [Interval(Integral, 1, None, closed="left"), "array-like"],
             "l1_ratios": ["array-like", None, Hidden(StrOptions({"warn"}))],
             "cv": ["cv_object"],
-            "scoring": [StrOptions(set(get_scorer_names())), callable, None],
+            "scoring": [
+                StrOptions(set(get_scorer_names())),
+                callable,
+                None,
+                Hidden(StrOptions({"warn"})),
+            ],
             "refit": ["boolean"],
             "penalty": [
                 StrOptions({"l1", "l2", "elasticnet"}),
@@ -1716,7 +2022,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         cv=None,
         dual=False,
         penalty="deprecated",
-        scoring=None,
+        scoring="warn",
         solver="lbfgs",
         tol=1e-4,
         max_iter=100,
@@ -1818,6 +2124,19 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 ),
                 FutureWarning,
             )
+
+        if self.scoring == "warn":
+            warnings.warn(
+                "The default value of the parameter 'scoring' will change from None, "
+                "i.e. accuracy, to 'neg_log_loss' in version 1.11. To silence this "
+                "warning, explicitly set the scoring parameter: "
+                "scoring='neg_log_loss' for the new, scoring='accuracy' or "
+                "scoring=None for the old default.",
+                FutureWarning,
+            )
+            scoring = None
+        else:
+            scoring = self.scoring
 
         if self.use_legacy_attributes == "warn":
             warnings.warn(
@@ -1965,7 +2284,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 max_iter=self.max_iter,
                 verbose=self.verbose,
                 class_weight=class_weight,
-                scoring=self.scoring,
+                scoring=scoring,
                 intercept_scaling=self.intercept_scaling,
                 random_state=self.random_state,
                 max_squared_sum=max_squared_sum,
@@ -2084,7 +2403,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 best_indices_l1 = best_indices[:, 1]
                 self.l1_ratio_.append(np.mean(l1_ratios_[best_indices_l1]))
             else:
-                self.l1_ratio_.append(None)
+                self.l1_ratio_.append(0.0)
 
         if is_binary:
             self.coef_ = w[:, :n_features] if w.ndim == 2 else w[:n_features][None, :]
@@ -2150,7 +2469,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         return self
 
-    def score(self, X, y, sample_weight=None, **score_params):
+    # TODO(1.11): remove this decorator along with `sample_weight` from the `score`
+    #  signature
+    @_deprecate_positional_args(version="1.11")
+    def score(self, X, y, *, sample_weight=None, **score_params):
         """Score using the `scoring` option on the given test data and labels.
 
         Parameters
@@ -2164,6 +2486,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
+            .. deprecated:: 1.9
+              `sample_weight` needs to be passed as a keyword argument and not as a
+              positional argument.
+
         **score_params : dict
             Parameters to pass to the `score` method of the underlying scorer.
 
@@ -2174,21 +2500,29 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         score : float
             Score of self.predict(X) w.r.t. y.
         """
+        # TODO(1.11): for backwards compatibility, when `sample_weight` becomes a part
+        # of **score_params, it should be skipped in the following check so that people
+        # can still pass it w/o metadata routing enabled.
         _raise_for_params(score_params, self, "score")
+        # TODO(1.11): remove this when sample_weight is removed from the `score`
+        # signature
+        if sample_weight is not None:
+            score_params["sample_weight"] = sample_weight
 
         scoring = self._get_scorer()
         if _routing_enabled():
             routed_params = process_routing(
                 self,
                 "score",
-                sample_weight=sample_weight,
                 **score_params,
             )
         else:
             routed_params = Bunch()
             routed_params.scorer = Bunch(score={})
-            if sample_weight is not None:
-                routed_params.scorer.score["sample_weight"] = sample_weight
+            if score_params.get("sample_weight") is not None:
+                routed_params.scorer.score["sample_weight"] = score_params[
+                    "sample_weight"
+                ]
 
         return scoring(
             self,
@@ -2232,10 +2566,13 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         """Get the scorer based on the scoring method specified.
         The default scoring method is `accuracy`.
         """
+        if self.scoring == "warn":  # TODO(1.11): remove
+            return get_scorer("accuracy")
         scoring = self.scoring or "accuracy"
         return get_scorer(scoring)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.sparse = True
+        tags.array_api_support = False
         return tags

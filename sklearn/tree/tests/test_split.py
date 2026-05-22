@@ -167,11 +167,6 @@ def make_simple_dataset(
 def test_split_impurity(Tree, criterion, sparse, missing_values, global_random_seed):
     is_clf = criterion in CLF_CRITERIONS
 
-    # TODO: (remove in PR #32119)
-    if missing_values and criterion == "absolute_error":
-        pytest.skip("AE + missing values not supported yet")
-    if missing_values and criterion == "poisson":
-        pytest.xfail("Poisson criterion is faulty for now")
     rng = np.random.default_rng(global_random_seed)
 
     ns = [5] * 5 + [10] * 5 + [20, 30, 50, 100]

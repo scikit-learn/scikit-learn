@@ -84,8 +84,7 @@ from sklearn.tests.metadata_routing_common import (
 from sklearn.utils import shuffle
 from sklearn.utils._array_api import (
     _atol_for_type,
-    _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
+    move_to,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
@@ -96,6 +95,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
 )
+from sklearn.utils.estimator_checks import _NotAnArray
 from sklearn.utils.fixes import COO_CONTAINERS, CSR_CONTAINERS
 from sklearn.utils.validation import _num_samples
 
@@ -388,6 +388,14 @@ def test_cross_validate_invalid_scoring_param():
 
     with pytest.warns(UserWarning, match=warning_message):
         cross_validate(estimator, X, y, scoring={"foo": multiclass_scorer})
+
+
+def test_cross_validate_array_function_not_called():
+    """Check that `__array_function__` (NEP18) is not called."""
+    X = _NotAnArray([[1, 1], [1, 2], [1, 3], [1, 4], [2, 1], [2, 2], [2, 3], [2, 4]])
+    y = _NotAnArray([1, 1, 1, 2, 2, 2, 1, 1])
+    estimator = LogisticRegression(random_state=0)
+    cross_validate(estimator, X, y, cv=2)
 
 
 def test_cross_validate_nested_estimator():
@@ -1560,30 +1568,6 @@ def test_learning_curve_incremental_learning_params():
             error_score="raise",
         )
 
-    err_msg = "Fit parameter sample_weight has length 3; expected"
-    with pytest.raises(AssertionError, match=err_msg):
-        learning_curve(
-            estimator,
-            X,
-            y,
-            cv=3,
-            exploit_incremental_learning=True,
-            train_sizes=np.linspace(0.1, 1.0, 10),
-            error_score="raise",
-            params={"sample_weight": np.ones(3)},
-        )
-
-    learning_curve(
-        estimator,
-        X,
-        y,
-        cv=3,
-        exploit_incremental_learning=True,
-        train_sizes=np.linspace(0.1, 1.0, 10),
-        error_score="raise",
-        params={"sample_weight": np.ones(2)},
-    )
-
 
 def test_validation_curve():
     X, y = make_classification(
@@ -2567,7 +2551,7 @@ def test_passed_unrequested_metadata(func, extra_args):
         (cross_val_score, {}),
         (cross_val_predict, {}),
         (learning_curve, {}),
-        (permutation_test_score, {}),
+        (permutation_test_score, {"n_permutations": 20}),
         (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
     ],
 )
@@ -2584,8 +2568,12 @@ def test_validation_functions_routing(func, extra_args):
         groups="split_groups", metadata="split_metadata"
     )
     estimator_registry = _Registry()
-    estimator = ConsumingClassifier(registry=estimator_registry).set_fit_request(
-        sample_weight="fit_sample_weight", metadata="fit_metadata"
+    estimator = (
+        ConsumingClassifier(registry=estimator_registry)
+        .set_fit_request(sample_weight="fit_sample_weight", metadata="fit_metadata")
+        .set_partial_fit_request(
+            sample_weight="fit_sample_weight", metadata="fit_metadata"
+        )
     )
 
     n_samples = _num_samples(X)
@@ -2635,19 +2623,30 @@ def test_validation_functions_routing(func, extra_args):
     for _scorer in scorer_registry:
         check_recorded_metadata(
             obj=_scorer,
-            method="score",
-            parent=func.__name__,
+            method="_score",
+            parent="__call__",
             split_params=("sample_weight", "metadata"),
             sample_weight=score_weights,
             metadata=score_metadata,
         )
 
     assert len(splitter_registry)
+    func_names = {
+        "cross_validate": {"split": "<genexpr>", "fit": "_fit_and_score"},
+        "cross_val_score": {"split": "<genexpr>", "fit": "_fit_and_score"},
+        "cross_val_predict": {"split": "cross_val_predict", "fit": "_fit_and_predict"},
+        "learning_curve": {"split": "learning_curve", "fit": "_fit_and_score"},
+        "permutation_test_score": {
+            "split": "_permutation_test_score",
+            "fit": "_permutation_test_score",
+        },
+        "validation_curve": {"split": "<genexpr>", "fit": "_fit_and_score"},
+    }
     for _splitter in splitter_registry:
         check_recorded_metadata(
             obj=_splitter,
             method="split",
-            parent=func.__name__,
+            parent=func_names[func.__name__]["split"],
             groups=split_groups,
             metadata=split_metadata,
         )
@@ -2657,7 +2656,7 @@ def test_validation_functions_routing(func, extra_args):
         check_recorded_metadata(
             obj=_estimator,
             method="fit",
-            parent=func.__name__,
+            parent=func_names[func.__name__]["fit"],
             split_params=("sample_weight", "metadata"),
             sample_weight=fit_sample_weight,
             metadata=fit_metadata,
@@ -2695,7 +2694,7 @@ def test_learning_curve_exploit_incremental_learning_routing():
         check_recorded_metadata(
             obj=_estimator,
             method="partial_fit",
-            parent="learning_curve",
+            parent="_incremental_fit_estimator",
             split_params=("sample_weight", "metadata"),
             sample_weight=fit_sample_weight,
             metadata=fit_metadata,
@@ -2713,17 +2712,16 @@ def test_learning_curve_exploit_incremental_learning_routing():
 )
 @pytest.mark.parametrize("cv", [None, 3, 5])
 @pytest.mark.parametrize(
-    "namespace, device_, dtype_name",
+    "namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 def test_cross_val_predict_array_api_compliance(
-    estimator, cv, namespace, device_, dtype_name
+    estimator, cv, namespace, device_name, dtype_name
 ):
     """Test that `cross_val_predict` functions correctly with the array API
     with both a classifier and a regressor."""
 
-    xp = _array_api_for_tests(namespace, device_)
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
     if is_classifier(estimator):
         X, y = make_classification(
             n_samples=1000, n_features=5, n_classes=3, n_informative=3, random_state=42
@@ -2735,13 +2733,13 @@ def test_cross_val_predict_array_api_compliance(
 
     X_np = X.astype(dtype_name)
     y_np = y.astype(dtype_name)
-    X_xp = xp.asarray(X_np, device=device_)
-    y_xp = xp.asarray(y_np, device=device_)
+    X_xp = xp.asarray(X_np, device=device)
+    y_xp = xp.asarray(y_np, device=device)
 
     with config_context(array_api_dispatch=True):
         pred_xp = cross_val_predict(estimator, X_xp, y_xp, cv=cv)
 
     pred_np = cross_val_predict(estimator, X_np, y_np, cv=cv)
     assert_allclose(
-        _convert_to_numpy(pred_xp, xp), pred_np, atol=_atol_for_type(dtype_name)
+        move_to(pred_xp, xp=np, device="cpu"), pred_np, atol=_atol_for_type(dtype_name)
     )

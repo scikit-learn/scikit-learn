@@ -137,7 +137,12 @@ METAESTIMATORS: list = [
     },
     {
         "metaestimator": LogisticRegressionCV,
-        "init_args": {"use_legacy_attributes": False, "l1_ratios": (0,)},
+        # TODO(1.11): remove scoring because neg_log_loss is default now
+        "init_args": {
+            "use_legacy_attributes": False,
+            "l1_ratios": (0,),
+            "scoring": "neg_log_loss",
+        },
         "X": X,
         "y": y,
         "scorer_name": "scoring",
@@ -218,6 +223,10 @@ METAESTIMATORS: list = [
         "y": y_binary,
         "estimator_routing_methods": ["fit"],
         "preserves_metadata": "subset",
+        "scorer_name": "scoring",
+        "scorer_routing_methods": ["fit", "score"],
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
     },
     {
         "metaestimator": OneVsRestClassifier,
@@ -879,6 +888,8 @@ def test_metadata_is_routed_correctly_to_scorer(metaestimator):
         # This test only makes sense for CV estimators
         return
 
+    X = metaestimator["X"]
+    y = metaestimator["y"]
     metaestimator_class = metaestimator["metaestimator"]
     routing_methods = metaestimator["scorer_routing_methods"]
     method_mapping = metaestimator.get("method_mapping", {})

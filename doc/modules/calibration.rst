@@ -36,8 +36,8 @@ good a classifier is calibrated.
     decomposition of Murphy [1]_. As it is not clear which term dominates, the score is
     of limited use for assessing calibration alone (unless one computes each term of
     the decomposition). A lower Brier loss, for instance, does not necessarily
-    mean a better calibrated model, it could also mean a worse calibrated model with much
-    more discriminatory power, e.g. using many more features.
+    mean a better calibrated model, it could also mean a worse calibrated model with
+    much more discriminatory power, e.g. using many more features.
 
 .. _calibration_curve:
 
@@ -317,7 +317,7 @@ parameters for each single class.
 .. [1] Allan H. Murphy (1973).
        :doi:`"A New Vector Partition of the Probability Score"
        <10.1175/1520-0450(1973)012%3C0595:ANVPOT%3E2.0.CO;2>`
-       Journal of Applied Meteorology and Climatology
+       Journal of Applied Meteorology and Climatology, 12(4), 595-600
 
 .. [2] `On the combination of forecast probabilities for
        consecutive precipitation periods.

@@ -1,0 +1,5 @@
+- Internal NumPy CPU conversions now always attempt a generic DLPack-based
+  transfer and only fallback to library-specific methods when necessary. This
+  should ease support for additional array API and DLPack compliant input types
+  without extending the ad hoc conversion helpers.
+  By :user:`Olivier Grisel <ogrisel>`.

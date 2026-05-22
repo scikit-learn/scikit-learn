@@ -34,6 +34,7 @@ from sklearn.utils.fixes import (
     CSC_CONTAINERS,
     CSR_CONTAINERS,
     LIL_CONTAINERS,
+    SCIPY_VERSION_BELOW_1_12,
 )
 
 
@@ -285,12 +286,12 @@ def test_imputation_mean_median_error_invalid_type(strategy, dtype):
 
 
 @pytest.mark.parametrize("strategy", ["mean", "median"])
-@pytest.mark.parametrize("type", ["list", "dataframe"])
-def test_imputation_mean_median_error_invalid_type_list_pandas(strategy, type):
+@pytest.mark.parametrize("constructor_name", ["list", "pandas"])
+def test_imputation_mean_median_error_invalid_type_list_pandas(
+    strategy, constructor_name
+):
     X = [["a", "b", 3], [4, "e", 6], ["g", "h", 9]]
-    if type == "dataframe":
-        pd = pytest.importorskip("pandas")
-        X = pd.DataFrame(X)
+    X = _convert_container(X, constructor_name)
     msg = "non-numeric data:\ncould not convert string to float:"
     with pytest.raises(ValueError, match=msg):
         imputer = SimpleImputer(strategy=strategy)
@@ -1789,9 +1790,11 @@ def test_simple_imputer_keep_empty_features(strategy, array_type, keep_empty_fea
         X_imputed = getattr(imputer, method)(X)
         if keep_empty_features:
             assert X_imputed.shape == X.shape
-            constant_feature = (
-                X_imputed[:, 0].toarray() if array_type == "sparse" else X_imputed[:, 0]
-            )
+            if SCIPY_VERSION_BELOW_1_12 and array_type == "sparse":
+                constant_feature = X_imputed[:, [0]].toarray()
+            else:
+                col0 = X_imputed[:, 0]
+                constant_feature = col0.toarray() if array_type == "sparse" else col0
             assert_array_equal(constant_feature, 0)
         else:
             assert X_imputed.shape == (X.shape[0], X.shape[1] - 1)

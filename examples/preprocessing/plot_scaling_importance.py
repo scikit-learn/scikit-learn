@@ -65,6 +65,7 @@ scaled_X_train = scaler.fit_transform(X_train)
 # of features.
 
 import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
 
 from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.neighbors import KNeighborsClassifier
@@ -83,7 +84,10 @@ def fit_and_plot_model(X_plot, y, clf, ax):
         alpha=0.5,
         ax=ax,
     )
-    disp.ax_.scatter(X_plot["proline"], X_plot["hue"], c=y, s=20, edgecolor="k")
+    cmap = ListedColormap(disp.multiclass_colors_)
+    disp.ax_.scatter(
+        X_plot["proline"], X_plot["hue"], c=y, cmap=cmap, s=20, edgecolor="k"
+    )
     disp.ax_.set_xlim((X_plot["proline"].min(), X_plot["proline"].max()))
     disp.ax_.set_ylim((X_plot["hue"].min(), X_plot["hue"].max()))
     return disp.ax_
@@ -207,14 +211,25 @@ from sklearn.pipeline import make_pipeline
 Cs = np.logspace(-5, 5, 20)
 
 unscaled_clf = make_pipeline(
-    pca, LogisticRegressionCV(Cs=Cs, use_legacy_attributes=False, l1_ratios=(0,))
+    pca,
+    LogisticRegressionCV(
+        Cs=Cs,
+        use_legacy_attributes=False,
+        l1_ratios=(0,),  # TODO(1.10): remove because it is default now
+        scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
+    ),
 )
 unscaled_clf.fit(X_train, y_train)
 
 scaled_clf = make_pipeline(
     scaler,
     pca,
-    LogisticRegressionCV(Cs=Cs, use_legacy_attributes=False, l1_ratios=(0,)),
+    LogisticRegressionCV(
+        Cs=Cs,
+        use_legacy_attributes=False,
+        l1_ratios=(0,),  # TODO(1.10): remove because it is default now
+        scoring="neg_log_loss",  # TODO(1.11): remove because it is default now,
+    ),
 )
 scaled_clf.fit(X_train, y_train)
 
