@@ -379,16 +379,21 @@ class SimpleImputer(_BaseImputer):
             self._fit_dtype = X.dtype
 
         _check_inputs_dtype(X, self.missing_values)
-        if X.dtype.kind not in ("i", "u", "f", "O"):
+        if X.dtype.kind =='b' and self.strategy not in ("most_frequent", "constant"):
             raise ValueError(
-                "SimpleImputer does not support data with dtype "
-                "{0}. Please provide either a numeric array (with"
-                " a floating point or integer dtype) or "
-                "categorical data represented either as an array "
-                "with integer dtype or an array of string values "
+                "SimpleImputer does not support bool dtype with"
+                "strategy={!r}. Use 'most_frequent' or " 
+                "'constant' instead.".format(self.strategy)
+            )
+        elif X.dtype.kind not in ("i", "u", "f", "O","b"):
+            raise ValueError(
+                "SimpleImputer does not support data with dtype"
+                "{0}. Please provide either a numeric array( with"
+                " a floating poit or integer dtype) or"
+                "categorical data represented either as an array"
+                "with integer dtype or an array of string values"
                 "with an object dtype.".format(X.dtype)
             )
-
         if sp.issparse(X) and self.missing_values == 0:
             # missing_values = 0 not allowed with sparse data as it would
             # force densification
