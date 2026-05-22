@@ -1714,15 +1714,6 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             monotonic_cst=monotonic_cst,
         )
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        # XXX: nan values are only accepted in dense arrays, but we set this for
-        # common test to pass, specifically: check_estimators_nan_inf
-        allow_nan = self.splitter == "random"
-        tags.classifier_tags.multi_label = True
-        tags.input_tags.allow_nan = allow_nan
-        return tags
-
 
 class ExtraTreeRegressor(DecisionTreeRegressor):
     """An extremely randomized tree regressor.
@@ -1968,11 +1959,3 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             ccp_alpha=ccp_alpha,
             monotonic_cst=monotonic_cst,
         )
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        # XXX: nan values are only accepted in dense arrays, but we set this for
-        # common test to pass, specifically: check_estimators_nan_inf
-        allow_nan = self.splitter == "random"
-        tags.input_tags.allow_nan = allow_nan
-        return tags
