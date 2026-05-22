@@ -438,35 +438,27 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
   div.sk-item {
     border: 1px solid blue;
     position: relative;
-    /* margin-left: 20px; */
-
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     justify-content: left;
     background-color: var(--sklearn-color-background);
-    /* border: 2px solid red; */
+
   }
 
   div.sk-serial:has(> div.features),
   div.sk-serial:has(> div.total_features) {
-  display: grid;
-  grid-template-columns: minmax(min-content, auto) max-content;
-  column-gap: 0.6rem;
-  row-gap: 0.4rem;
-  align-items:start;
-  justify-content: start;
+  display: flex;
+  flex-direction: row;
 }
 
 div.sk-serial > div.sk-item {
-  grid-column: 1;
-  margin-bottom: 0;
+
 }
 
 div.sk-serial > div.features,
 div.sk-serial > div.total_features {
-  grid-column: 2;
-  align-self: flex-end;
+
 }
   div.sk-parallel-item:only-child::after {
     width: 0;
