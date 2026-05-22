@@ -76,7 +76,7 @@ for name, clf in zip(names, classifiers):
     )
 
     # Plot also the training and testing points
-    cmap = ListedColormap(disp.multiclass_colors_)
+    cmap = ListedColormap(disp.label_colors_)
     plt.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap, edgecolor="k", s=20)
     plt.title(f"{name} (k = {n_neighbors})")
     plt.text(
