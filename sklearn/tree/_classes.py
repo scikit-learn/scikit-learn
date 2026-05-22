@@ -25,7 +25,7 @@ from sklearn.base import (
     clone,
     is_classifier,
 )
-from sklearn.tree import _criterion, _splitter
+from sklearn.tree import _criterion, _splitter  # type: ignore[attr-defined]
 from sklearn.tree._criterion import Criterion
 from sklearn.tree._tree import (
     BestFirstTreeBuilder,
