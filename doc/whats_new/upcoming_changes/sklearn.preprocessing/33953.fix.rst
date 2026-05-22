@@ -1,4 +1,3 @@
 - A few cases with missing values in :class:`preprocessing.SplineTransformer` are now
-  handled correctly. Also new is a `UserWarning` during :term:`fit` when only one
-  unique value for the knots is found.
+  handled correctly.
   By :user:`Christian Lorentzen <lorentzenchr>`.
