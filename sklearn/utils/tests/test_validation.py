@@ -7,6 +7,7 @@ from itertools import product
 from operator import itemgetter
 from tempfile import NamedTemporaryFile
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import pytest
 import scipy.sparse as sp
@@ -1917,7 +1918,7 @@ def test_check_sparse_pandas_sp_format(convert_to_narwhals, sp_format):
 
     sdf = pd.DataFrame.sparse.from_spmatrix(sp_mat)
     if convert_to_narwhals:
-        sdf = _convert_container(sdf, constructor_name="narwhals")
+        sdf = nw.from_native(sdf)
     result = check_array(sdf, accept_sparse=sp_format)
 
     if sp_format is True:
