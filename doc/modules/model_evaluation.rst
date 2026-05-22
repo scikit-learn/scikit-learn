@@ -2421,15 +2421,18 @@ ordering, the ranking loss should be preferred; if the ground-truth consists of
 actual usefulness scores (e.g. 0 for irrelevant, 1 for relevant, 2 for very
 relevant), NDCG can be used.
 
-For one sample, given the vector of continuous ground-truth values for each
-target :math:`y \in \mathbb{R}^{M}`, where :math:`M` is the number of outputs, and
-the prediction :math:`\hat{y}`, which induces the ranking function :math:`f`, the
-DCG score is
+For one sample, let :math:`y \in \mathbb{R}^{M}` denote the ground-truth values
+for :math:`M` outputs, and :math:`\hat{y}` the predicted scores.
+The ranking function :math:`f` orders the outputs by :math:`\hat{y}` in
+descending order. The DCG score is then:
 
 .. math::
    \sum_{r=1}^{\min(K, M)}\frac{y_{f(r)}}{\log(1 + r)}
 
-and the NDCG score is the DCG score divided by the DCG score obtained for
+where :math:`y_{f(r)}` is the true target value for the element at rank position
+:math:`r` in the predicted order.
+
+The NDCG score is the DCG score divided by the DCG score obtained for
 :math:`y`.
 
 .. dropdown:: References
