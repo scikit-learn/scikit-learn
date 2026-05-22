@@ -1345,7 +1345,7 @@ def test_continuous_multilabel_representation_invariance(name):
     y_score /= y_score.sum(axis=1, keepdims=True)
 
     # To make sure at least one empty label is present
-    y_true = np.vstack([y_true, [[0] * n_classes]])
+    y_true[-1] = [0] * n_classes
 
     y_true_list_array_indicator = list(y_true)
     y_score_list_array = list(y_score)
