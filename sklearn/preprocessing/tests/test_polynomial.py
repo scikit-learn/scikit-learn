@@ -69,12 +69,25 @@ def test_spline_transformer_input_validation(params, err_msg):
         SplineTransformer(**params).fit(X)
 
 
-def test_spline_transformer_warns_for_one_unique_knot():
-    """Test that SplineTransformer warns for knots with a single unique value."""
+@pytest.mark.parametrize(["n_knots", "degree"], [(3, 1), (5, 3)])
+@pytest.mark.parametrize("periodic", [False, True])
+def test_spline_transformer_for_one_unique_knot(n_knots, degree, periodic):
+    """Test that SplineTransformer for knots with a single unique value."""
+    n_splines = n_knots + (1 - periodic) * degree - 1
+    extrapolation = "periodic" if periodic else "constant"
     X = [[1, 2, 3], [1, 22, 3], [1, 222, 3]]
-    msg = r"The spline for feature\(s\) \[0 2\] has.*"
-    with pytest.warns(UserWarning, match=msg):
-        SplineTransformer().fit(X)
+    splt = SplineTransformer(
+        n_knots=n_knots, degree=degree, extrapolation=extrapolation
+    ).fit(X)
+    assert_allclose(splt.bsplines_[0].t, 1)
+    assert_allclose(splt.bsplines_[2].t, 3)
+
+    X_trans = splt.transform(X)
+    assert X_trans.shape[1] == 3 * n_splines
+    assert_array_equal(X_trans[:, :n_splines], 0)
+    assert_array_equal(X_trans[:, 2 * n_splines :], 0)
+    # The spline in the middle should not be zero.
+    assert np.all(np.sum(X_trans[:, n_splines : 2 * n_splines], axis=0) > 0)
 
 
 @pytest.mark.parametrize("extrapolation", ["continue", "periodic"])
@@ -593,8 +606,7 @@ def test_spline_transformer_handles_all_nans(extrapolation, sparse_output):
         extrapolation=extrapolation,
         sparse_output=sparse_output,
     )
-    with pytest.warns(UserWarning, match="The spline for feature.*"):
-        spline.fit(X)
+    spline.fit(X)
 
     all_missing_column_encoded = spline.transform(X_nan_full_column)
     nan_mask = _get_mask(X_nan_full_column, np.nan)
