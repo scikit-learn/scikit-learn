@@ -2832,9 +2832,9 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         else:
             self.quantiles_ = np.zeros((len(references), n_features))
             for feature_idx in range(n_features):
-                self.quantiles_[:, feature_idx] = np.nanquantile(
+                self.quantiles_[:, feature_idx] = np.nanpercentile(
                     X[:, feature_idx],
-                    references / 100.0,
+                    references,
                     method="averaged_inverted_cdf",
                 )
 
