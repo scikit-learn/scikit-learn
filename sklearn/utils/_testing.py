@@ -38,11 +38,9 @@ from numpy.testing import (
 
 from sklearn import __file__ as sklearn_path
 from sklearn.externals.array_api_compat import get_namespace
-from sklearn.externals.array_api_extra._lib._testing import (
-    xp_assert_close,
-    xp_assert_equal,
-    xp_assert_less,
-)
+from sklearn.externals.array_api_extra.testing import assert_close as xp_assert_close
+from sklearn.externals.array_api_extra.testing import assert_equal as xp_assert_equal
+from sklearn.externals.array_api_extra.testing import assert_less as xp_assert_less
 from sklearn.utils import (
     ClassifierTags,
     RegressorTags,
@@ -291,11 +289,14 @@ def assert_allclose(
     dtypes = []
     if hasattr(actual, "__array_namespace__"):
         xp = get_namespace(actual)
+        actual, desired = xp.asarray(actual), xp.asarray(desired)
     elif hasattr(desired, "__array_namespace__"):
         xp = get_namespace(desired)
+        actual, desired = xp.asarray(actual), xp.asarray(desired)
     else:
         xp = np
-    actual, desired = xp.asarray(actual), xp.asarray(desired)
+        actual, desired = np.asanyarray(actual), np.asanyarray(desired)
+    # actual, desired = xp.asarray(actual), xp.asarray(desired)
     dtypes = [actual.dtype, desired.dtype]
 
     if rtol is None:
