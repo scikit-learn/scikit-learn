@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import copy
+import html
 import inspect
 import uuid
 import warnings
@@ -178,12 +179,119 @@ class CallbackContext:
         for context in self._children_map.values():
             yield from context
 
+    def _walk_context_tree(
+        self,
+        enter_node,
+        *,
+        leave_node=None,
+        path_is_last=(),
+    ):
+        """Walk the subtree rooted at this context."""
+        is_last = True if len(path_is_last) == 0 else path_is_last[-1]
+        enter_node(node=self, is_last=is_last, path_is_last=path_is_last)
+
+        n_children = len(self._children_map)
+        for i, child in enumerate(self._children_map.values()):
+            child_is_last = i == n_children - 1
+            child._walk_context_tree(
+                enter_node,
+                leave_node=leave_node,
+                path_is_last=path_is_last + (child_is_last,),
+            )
+
+        if leave_node is not None:
+            leave_node(node=self, is_last=is_last, path_is_last=path_is_last)
+
     def __repr__(self):
         return (
             f"{self.__class__.__name__}("
             f"estimator_name={self.estimator_name!r}, "
             f"task_name={self.task_name!r}, "
             f"task_id={self.task_id})"
+        )
+
+    def __str__(self):
+        """Return a tree representation rooted at this context."""
+        lines = []
+
+        def _enter_node(node, is_last, path_is_last):
+            prefix = "".join("    " if flag else "│   " for flag in path_is_last[:-1])
+            connector = ("└── " if is_last else "├── ") if len(path_is_last) > 0 else ""
+            lines.append(f"{prefix}{connector}{node._task_label}")
+
+        self._walk_context_tree(_enter_node)
+        return "\n".join(lines)
+
+    def _repr_html_(self):
+        """Return an HTML representation rooted at this context."""
+        styles = (
+            "<style>"
+            ".sk-context-tree ul{list-style:none !important;margin:0 !important;"
+            "padding:0 !important;padding-left:0 !important;"
+            "padding-inline-start:0 !important;}"
+            ".sk-context-tree .sk-context-tree-root{padding:0 !important;"
+            "padding-left:0 !important;padding-inline-start:0 !important;}"
+            ".sk-context-tree li{list-style:none;margin:0;}"
+            ".sk-context-tree li::marker{content:'';}"
+            ".sk-context-tree details{margin:0;padding:0;}"
+            ".sk-context-tree details>ul{list-style:none !important;"
+            "margin:0 !important;padding:0 !important;padding-left:0 !important;"
+            "padding-inline-start:0 !important;}"
+            ".sk-context-tree summary{cursor:pointer;list-style:none;display:block;"
+            "margin:0;padding:0;padding-inline-start:0;}"
+            ".sk-context-tree summary::marker{content:'';}"
+            ".sk-context-tree summary::-webkit-details-marker{display:none;}"
+            '.sk-context-tree summary::after{content:" [+]";font-family:monospace;}'
+            '.sk-context-tree details[open]>summary::after{content:" [-]";}'
+            ".sk-context-tree-row{font-family:monospace;white-space:pre;}"
+            ".sk-context-tree-prefix{white-space:pre;}"
+            "</style>"
+        )
+        parts = [
+            styles,
+            '<div class="sk-context-tree"><ul class="sk-context-tree-root">',
+        ]
+
+        def _enter_node(node, is_last, path_is_last):
+            prefix = "".join("    " if flag else "│   " for flag in path_is_last[:-1])
+            connector = ("└── " if is_last else "├── ") if len(path_is_last) > 0 else ""
+            label = html.escape(node._task_label)
+            row_prefix = html.escape(prefix + connector)
+            row = (
+                '<span class="sk-context-tree-row">'
+                f'<span class="sk-context-tree-prefix">{row_prefix}</span>{label}'
+                "</span>"
+            )
+            has_children = len(node._children_map) > 0
+            open_attr = " open" if len(path_is_last) == 0 else ""
+            prefix_html = (
+                f"<li><details{open_attr}><summary>" if has_children else "<li>"
+            )
+            suffix_html = "</summary><ul>" if has_children else "</li>"
+            parts.append(f"{prefix_html}{row}{suffix_html}")
+
+        def _leave_node(node, is_last, path_is_last):
+            if len(node._children_map) > 0:
+                parts.append("</ul></details></li>")
+
+        self._walk_context_tree(_enter_node, leave_node=_leave_node)
+        parts.append("</ul></div>")
+        return "".join(parts)
+
+    @property
+    def _task_label(self):
+        """Display label for this context in the task tree."""
+        if self.source_estimator_name is not None and self.source_task_name is not None:
+            source = (
+                f'{self.source_estimator_name} "{self.source_task_name}" '
+                f"({self.task_id}) | "
+            )
+            return f'{source}{self.estimator_name} "{self.task_name}"'
+
+        return (
+            f'{self.estimator_name} "{self.task_name}"'
+            if self.parent is None
+            else f'{self.estimator_name} "{self.task_name}" ({self.task_id})'
         )
 
     def _add_child(self, child_context):
