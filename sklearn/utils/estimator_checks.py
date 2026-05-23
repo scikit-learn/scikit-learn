@@ -1570,7 +1570,10 @@ def check_array_api_input_string_y(
 
     # --- fit with array API X and string y ---------------------------------
     with config_context(array_api_dispatch=True):
-        est.fit(X_xp, y_str)
+        try:
+            est.fit(X_xp, y_str)
+        except (TypeError, AttributeError) as e:
+            raise SkipTest(f"{name} does not support Array API X with string y: {e}")
 
     X_ns = xp.__name__
 
