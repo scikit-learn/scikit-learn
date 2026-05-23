@@ -335,6 +335,11 @@ METRIC_UNDEFINED_MULTICLASS = {
     "roc_auc_score",
     "weighted_roc_auc",
     "jaccard_score",
+    "label_ranking_loss",
+    "label_ranking_average_precision_score",
+    "dcg_score",
+    "ndcg_score",
+    "coverage_error",
     # with default average='binary', multiclass is prohibited
     "precision_score",
     "recall_score",
@@ -1331,6 +1336,34 @@ def test_multilabel_representation_invariance(coo_container):
             )
             % name,
         )
+
+
+@pytest.mark.parametrize(
+    "name", sorted(set(CONTINUOUS_CLASSIFICATION_METRICS) - METRIC_UNDEFINED_MULTICLASS)
+)
+def test_continuous_multiclass_representation_invariance(name):
+    # Check representation invariance for continuous multiclass metrics.
+    n_samples = 50
+    random_state = check_random_state(0)
+    y_true = random_state.randint(0, 5, size=(n_samples,))
+    y_score = random_state.random_sample(size=(n_samples, 5))
+    # Some metrics (e.g. log_loss) require y_score to be probabilities (sum to 1)
+    y_score /= y_score.sum(axis=1, keepdims=True)
+
+    y_true_list = list(y_true)
+    y_score_list = [list(a) for a in y_score]
+
+    metric = ALL_METRICS[name]
+    measure = metric(y_true, y_score)
+
+    assert_almost_equal(
+        metric(y_true_list, y_score_list),
+        measure,
+        err_msg=(
+            f"{name} failed representation invariance  "
+            "between dense array and list format."
+        ),
+    )
 
 
 @pytest.mark.parametrize("name", sorted(MULTILABELS_METRICS))
