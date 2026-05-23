@@ -13,6 +13,9 @@ the :class:`sklearn.preprocessing.SplineTransformer` class and its
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Data exploration on the Bike Sharing Demand dataset
 # ---------------------------------------------------
@@ -20,9 +23,7 @@ the :class:`sklearn.preprocessing.SplineTransformer` class and its
 # We start by loading the data from the OpenML repository.
 from sklearn.datasets import fetch_openml
 
-bike_sharing = fetch_openml(
-    "Bike_Sharing_Demand", version=2, as_frame=True, parser="pandas"
-)
+bike_sharing = fetch_openml("Bike_Sharing_Demand", version=2, as_frame=True)
 df = bike_sharing.frame
 
 # %%
@@ -49,7 +50,7 @@ _ = ax.set(
 # %%
 #
 # The target of the prediction problem is the absolute count of bike rentals on
-# a hourly basis:
+# an hourly basis:
 df["count"].max()
 
 # %%
@@ -60,7 +61,7 @@ df["count"].max()
 #
 # .. note::
 #
-#     The fit method of the models used in this notebook all minimize the
+#     The fit method of the models used in this notebook all minimizes the
 #     mean squared error to estimate the conditional mean.
 #     The absolute error, however, would estimate the conditional median.
 #
@@ -106,7 +107,13 @@ X["weather"].value_counts()
 # train machine learning models with cross validation. Instead, we simplify the
 # representation by collapsing those into the `"rain"` category.
 #
-X["weather"].replace(to_replace="heavy_rain", value="rain", inplace=True)
+X["weather"] = (
+    X["weather"]
+    .astype(object)
+    .replace(to_replace="heavy_rain", value="rain")
+    .astype("category")
+)
+
 # %%
 X["weather"].value_counts()
 
@@ -167,19 +174,16 @@ X.iloc[train_4]
 # -----------------
 #
 # Gradient Boosting Regression with decision trees is often flexible enough to
-# efficiently handle heterogenous tabular data with a mix of categorical and
+# efficiently handle heterogeneous tabular data with a mix of categorical and
 # numerical features as long as the number of samples is large enough.
 #
 # Here, we use the modern
 # :class:`~sklearn.ensemble.HistGradientBoostingRegressor` with native support
-# for categorical features. Therefore, we only do minimal ordinal encoding for
-# the categorical variables and then
-# let the model know that it should treat those as categorical variables by
-# using a dedicated tree splitting rule. Since we use an ordinal encoder, we
-# pass the list of categorical values explicitly to use a logical order when
-# encoding the categories as integers instead of the lexicographical order.
-# This also has the added benefit of preventing any issue with unknown
-# categories when using cross-validation.
+# for categorical features. Therefore, we only need to set
+# `categorical_features="from_dtype"` such that features with categorical dtype
+# are considered categorical features. For reference, we extract the categorical
+# features from the dataframe based on the dtype. The internal trees use a dedicated
+# tree splitting rule for these features.
 #
 # The numerical variables need no preprocessing and, for the sake of simplicity,
 # we only try the default hyper-parameters for this model:
@@ -187,46 +191,14 @@ from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.model_selection import cross_validate
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import OrdinalEncoder
 
-categorical_columns = [
-    "weather",
-    "season",
-    "holiday",
-    "workingday",
-]
-categories = [
-    ["clear", "misty", "rain"],
-    ["spring", "summer", "fall", "winter"],
-    ["False", "True"],
-    ["False", "True"],
-]
-ordinal_encoder = OrdinalEncoder(categories=categories)
-
-
-gbrt_pipeline = make_pipeline(
-    ColumnTransformer(
-        transformers=[
-            ("categorical", ordinal_encoder, categorical_columns),
-        ],
-        remainder="passthrough",
-        # Use short feature names to make it easier to specify the categorical
-        # variables in the HistGradientBoostingRegressor in the next
-        # step of the pipeline.
-        verbose_feature_names_out=False,
-    ),
-    HistGradientBoostingRegressor(
-        max_iter=300,
-        early_stopping=True,
-        validation_fraction=0.1,
-        categorical_features=categorical_columns,
-        random_state=42,
-    ),
-).set_output(transform="pandas")
+gbrt = HistGradientBoostingRegressor(categorical_features="from_dtype", random_state=42)
+categorical_columns = X.columns[X.dtypes == "category"]
+print("Categorical features:", categorical_columns.tolist())
 
 # %%
 #
-# Lets evaluate our gradient boosting model with the mean absolute error of the
+# Let's evaluate our gradient boosting model with the mean absolute error of the
 # relative demand averaged across our 5 time-based cross-validation splits:
 import numpy as np
 
@@ -238,7 +210,7 @@ def evaluate(model, X, y, cv, model_prop=None, model_step=None):
         y,
         cv=cv,
         scoring=["neg_mean_absolute_error", "neg_root_mean_squared_error"],
-        return_estimator=model_prop is not None,
+        return_estimator=True,
     )
     if model_prop is not None:
         if model_step is not None:
@@ -254,16 +226,11 @@ def evaluate(model, X, y, cv, model_prop=None, model_step=None):
         f"Mean Absolute Error:     {mae.mean():.3f} +/- {mae.std():.3f}\n"
         f"Root Mean Squared Error: {rmse.mean():.3f} +/- {rmse.std():.3f}"
     )
+    # To display the fitted estimator diagrams in the notebook.
+    return cv_results["estimator"][0]
 
 
-evaluate(
-    gbrt_pipeline,
-    X,
-    y,
-    cv=ts_cv,
-    model_prop="n_iter_",
-    model_step="histgradientboostingregressor",
-)
+evaluate(gbrt, X, y, cv=ts_cv, model_prop="n_iter_")
 
 # %%
 # We see that we set `max_iter` large enough such that early stopping took place.
@@ -296,6 +263,7 @@ naive_linear_pipeline = make_pipeline(
             ("categorical", one_hot_encoder, categorical_columns),
         ],
         remainder=MinMaxScaler(),
+        verbose_feature_names_out=False,
     ),
     RidgeCV(alphas=alphas),
 )
@@ -343,6 +311,7 @@ one_hot_linear_pipeline = make_pipeline(
             ("one_hot_time", one_hot_encoder, ["hour", "weekday", "month"]),
         ],
         remainder=MinMaxScaler(),
+        verbose_feature_names_out=False,
     ),
     RidgeCV(alphas=alphas),
 )
@@ -383,11 +352,15 @@ from sklearn.preprocessing import FunctionTransformer
 
 
 def sin_transformer(period):
-    return FunctionTransformer(lambda x: np.sin(x / period * 2 * np.pi))
+    return FunctionTransformer(
+        lambda x: np.sin(x / period * 2 * np.pi), feature_names_out="one-to-one"
+    )
 
 
 def cos_transformer(period):
-    return FunctionTransformer(lambda x: np.cos(x / period * 2 * np.pi))
+    return FunctionTransformer(
+        lambda x: np.cos(x / period * 2 * np.pi), feature_names_out="one-to-one"
+    )
 
 
 # %%
@@ -434,6 +407,7 @@ cyclic_cossin_transformer = ColumnTransformer(
         ("hour_cos", cos_transformer(24), ["hour"]),
     ],
     remainder=MinMaxScaler(),
+    verbose_feature_names_out=True,
 )
 cyclic_cossin_linear_pipeline = make_pipeline(
     cyclic_cossin_transformer,
@@ -507,6 +481,7 @@ cyclic_spline_transformer = ColumnTransformer(
         ("cyclic_hour", periodic_spline_transformer(24, n_splines=12), ["hour"]),
     ],
     remainder=MinMaxScaler(),
+    verbose_feature_names_out=False,
 )
 cyclic_spline_linear_pipeline = make_pipeline(
     cyclic_spline_transformer,
@@ -650,8 +625,15 @@ hour_workday_interaction = make_pipeline(
     ColumnTransformer(
         [
             ("cyclic_hour", periodic_spline_transformer(24, n_splines=8), ["hour"]),
-            ("workingday", FunctionTransformer(lambda x: x == "True"), ["workingday"]),
-        ]
+            (
+                "workingday",
+                FunctionTransformer(
+                    lambda x: x == "True", feature_names_out="one-to-one"
+                ),
+                ["workingday"],
+            ),
+        ],
+        verbose_feature_names_out=False,
     ),
     PolynomialFeatures(degree=2, interaction_only=True, include_bias=False),
 )
@@ -666,8 +648,9 @@ cyclic_spline_interactions_pipeline = make_pipeline(
         [
             ("marginal", cyclic_spline_transformer),
             ("interactions", hour_workday_interaction),
-        ]
-    ),
+        ],
+        verbose_feature_names_out=True,
+    ).set_output(transform="pandas"),
     RidgeCV(alphas=alphas),
 )
 evaluate(cyclic_spline_interactions_pipeline, X, y, cv=ts_cv)
@@ -718,10 +701,11 @@ one_hot_poly_pipeline = make_pipeline(
             ("one_hot_time", one_hot_encoder, ["hour", "weekday", "month"]),
         ],
         remainder="passthrough",
+        verbose_feature_names_out=False,
     ),
     Nystroem(kernel="poly", degree=2, n_components=300, random_state=0),
     RidgeCV(alphas=alphas),
-)
+).set_output(transform="pandas")
 evaluate(one_hot_poly_pipeline, X, y, cv=ts_cv)
 
 
@@ -735,8 +719,8 @@ evaluate(one_hot_poly_pipeline, X, y, cv=ts_cv)
 # Let us now have a qualitative look at the predictions of the kernel models
 # and of the gradient boosted trees that should be able to better model
 # non-linear interactions between features:
-gbrt_pipeline.fit(X.iloc[train_0], y.iloc[train_0])
-gbrt_predictions = gbrt_pipeline.predict(X.iloc[test_0])
+gbrt.fit(X.iloc[train_0], y.iloc[train_0])
+gbrt_predictions = gbrt.predict(X.iloc[test_0])
 
 one_hot_poly_pipeline.fit(X.iloc[train_0], y.iloc[train_0])
 one_hot_poly_predictions = one_hot_poly_pipeline.predict(X.iloc[test_0])
@@ -855,10 +839,10 @@ plt.show()
 # :class:`~sklearn.neural_network.MLPRegressor` with one or two hidden layers
 # and we would have obtained quite similar results.
 #
-# The dataset we used in this case study is sampled on a hourly basis. However
+# The dataset we used in this case study is sampled on an hourly basis. However
 # cyclic spline-based features could model time-within-day or time-within-week
 # very efficiently with finer-grained time resolutions (for instance with
-# measurements taken every minute instead of every hours) without introducing
+# measurements taken every minute instead of every hour) without introducing
 # more features. One-hot encoding time representations would not offer this
 # flexibility.
 #

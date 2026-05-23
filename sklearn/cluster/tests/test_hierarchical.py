@@ -2,9 +2,10 @@
 Several basic tests for hierarchical clustering procedures
 
 """
-# Authors: Vincent Michel, 2010, Gael Varoquaux 2012,
-#          Matteo Visconti di Oleggio Castello 2014
-# License: BSD 3 clause
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import itertools
 import shutil
 from functools import partial
@@ -176,6 +177,7 @@ def test_agglomerative_clustering_distances(
         assert not hasattr(clustering, "distances_")
 
 
+@pytest.mark.no_check_spmatrix  # pickle breaks check_spmatrix
 @pytest.mark.parametrize("lil_container", LIL_CONTAINERS)
 def test_agglomerative_clustering(global_random_seed, lil_container):
     # Check that we obtain the correct number of clusters with
@@ -224,17 +226,6 @@ def test_agglomerative_clustering(global_random_seed, lil_container):
         )
         with pytest.raises(ValueError):
             clustering.fit(X)
-
-    # Test that using ward with another metric than euclidean raises an
-    # exception
-    clustering = AgglomerativeClustering(
-        n_clusters=10,
-        connectivity=connectivity.toarray(),
-        metric="manhattan",
-        linkage="ward",
-    )
-    with pytest.raises(ValueError):
-        clustering.fit(X)
 
     # Test using another metric than euclidean works with linkage complete
     for metric in PAIRED_DISTANCES.keys():
@@ -849,7 +840,7 @@ def test_invalid_shape_precomputed_dist_matrix():
         AgglomerativeClustering(metric="precomputed", linkage="complete").fit(X)
 
 
-def test_precomputed_connectivity_affinity_with_2_connected_components():
+def test_precomputed_connectivity_metric_with_2_connected_components():
     """Check that connecting components works when connectivity and
     affinity are both precomputed and the number of connected components is
     greater than 1. Non-regression test for #16151.
@@ -872,7 +863,7 @@ def test_precomputed_connectivity_affinity_with_2_connected_components():
 
     X_dist = pairwise_distances(X)
     clusterer_precomputed = AgglomerativeClustering(
-        affinity="precomputed", connectivity=connectivity_matrix, linkage="complete"
+        metric="precomputed", connectivity=connectivity_matrix, linkage="complete"
     )
     msg = "Completing it to avoid stopping the tree early"
     with pytest.warns(UserWarning, match=msg):
@@ -888,24 +879,40 @@ def test_precomputed_connectivity_affinity_with_2_connected_components():
     assert_array_equal(clusterer.children_, clusterer_precomputed.children_)
 
 
-# TODO(1.4): Remove
-def test_deprecate_affinity():
-    rng = np.random.RandomState(42)
-    X = rng.randn(50, 10)
+@pytest.mark.parametrize("Clustering", [AgglomerativeClustering, FeatureAgglomeration])
+def test_agglomeration_ward_constrained_metric(Clustering):
+    """Check that we raise an error when 'euclidean' or 'l2' are not passed with
+    ward linkage."""
+    rng = np.random.RandomState(0)
+    mask = np.ones([10, 10], dtype=bool)
+    n_samples = 100
+    X = rng.randn(n_samples, 50)
+    connectivity = grid_to_graph(*mask.shape)
 
-    af = AgglomerativeClustering(affinity="euclidean")
-    msg = (
-        "Attribute `affinity` was deprecated in version 1.2 and will be removed in 1.4."
-        " Use `metric` instead"
+    clustering = Clustering(
+        n_clusters=10,
+        connectivity=connectivity.toarray(),
+        metric="manhattan",
+        linkage="ward",
     )
-    with pytest.warns(FutureWarning, match=msg):
-        af.fit(X)
-    with pytest.warns(FutureWarning, match=msg):
-        af.fit_predict(X)
+    with pytest.raises(ValueError):
+        clustering.fit(X)
 
-    af = AgglomerativeClustering(metric="euclidean", affinity="euclidean")
-    msg = "Both `affinity` and `metric` attributes were set. Attribute"
-    with pytest.raises(ValueError, match=msg):
-        af.fit(X)
-    with pytest.raises(ValueError, match=msg):
-        af.fit_predict(X)
+
+@pytest.mark.parametrize("Clustering", [AgglomerativeClustering, FeatureAgglomeration])
+@pytest.mark.parametrize("metric", ["euclidean", "l2"])
+def test_agglomeration_ward_euclidean(Clustering, metric):
+    """Check that we can pass 'euclidean' and 'l2' as metric with Ward linkage."""
+    rng = np.random.RandomState(0)
+    mask = np.ones([10, 10], dtype=bool)
+    n_samples = 100
+    X = rng.randn(n_samples, 100)
+    connectivity = grid_to_graph(*mask.shape)
+
+    clustering = Clustering(
+        n_clusters=10,
+        connectivity=connectivity.toarray(),
+        metric=metric,
+        linkage="ward",
+    )
+    clustering.fit(X)

@@ -2,6 +2,7 @@
 Benchmarks for sampling without replacement of integer.
 
 """
+
 import gc
 import operator
 import optparse

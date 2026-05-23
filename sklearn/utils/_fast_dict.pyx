@@ -2,8 +2,8 @@
 Uses C++ map containers for fast dict-like behavior with keys being
 integers, and values float.
 """
-# Author: Gael Varoquaux
-# License: BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # C++
 from cython.operator cimport dereference as deref, preincrement as inc
@@ -12,7 +12,7 @@ from libcpp.map cimport map as cpp_map
 
 import numpy as np
 
-from ._typedefs cimport float64_t, intp_t
+from sklearn.utils._typedefs cimport float64_t, intp_t
 
 
 ###############################################################################

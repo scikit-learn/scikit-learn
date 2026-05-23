@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from joblib import parallel_backend
 from numpy.testing import assert_allclose
 
 from sklearn.compose import ColumnTransformer
@@ -22,13 +23,16 @@ from sklearn.metrics import (
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import KBinsDiscretizer, OneHotEncoder, StandardScaler, scale
-from sklearn.utils import parallel_backend
 from sklearn.utils._testing import _convert_container
+from sklearn.utils.estimator_checks import _NotAnArray
 
 
 @pytest.mark.parametrize("n_jobs", [1, 2])
 @pytest.mark.parametrize("max_samples", [0.5, 1.0])
-def test_permutation_importance_correlated_feature_regression(n_jobs, max_samples):
+@pytest.mark.parametrize("sample_weight", [None, "ones"])
+def test_permutation_importance_correlated_feature_regression(
+    n_jobs, max_samples, sample_weight
+):
     # Make sure that feature highly correlated to the target have a higher
     # importance
     rng = np.random.RandomState(42)
@@ -39,6 +43,7 @@ def test_permutation_importance_correlated_feature_regression(n_jobs, max_sample
 
     X = np.hstack([X, y_with_little_noise])
 
+    weights = np.ones_like(y) if sample_weight == "ones" else sample_weight
     clf = RandomForestRegressor(n_estimators=10, random_state=42)
     clf.fit(X, y)
 
@@ -46,6 +51,7 @@ def test_permutation_importance_correlated_feature_regression(n_jobs, max_sample
         clf,
         X,
         y,
+        sample_weight=weights,
         n_repeats=n_repeats,
         random_state=rng,
         n_jobs=n_jobs,
@@ -234,7 +240,7 @@ def test_permutation_importance_mixed_types_pandas():
     assert np.all(result.importances_mean[-1] > result.importances_mean[:-1])
 
 
-def test_permutation_importance_linear_regresssion():
+def test_permutation_importance_linear_regression():
     X, y = make_regression(n_samples=500, n_features=10, random_state=0)
 
     X = scale(X)
@@ -306,7 +312,11 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs, max_samples)
     X_df = pd.DataFrame(X)
 
     # Add a categorical feature that is statistically linked to y:
-    binner = KBinsDiscretizer(n_bins=3, encode="ordinal")
+    binner = KBinsDiscretizer(
+        n_bins=3,
+        encode="ordinal",
+        quantile_method="averaged_inverted_cdf",
+    )
     cat_column = binner.fit_transform(y.reshape(-1, 1))
 
     # Concatenate the extra column to the numpy array: integers will be
@@ -314,17 +324,13 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs, max_samples)
     X = np.hstack([X, cat_column])
     assert X.dtype.kind == "f"
 
-    # Insert extra column as a non-numpy-native dtype (while keeping backward
-    # compat for old pandas versions):
-    if hasattr(pd, "Categorical"):
-        cat_column = pd.Categorical(cat_column.ravel())
-    else:
-        cat_column = cat_column.ravel()
+    # Insert extra column as a non-numpy-native dtype:
+    cat_column = pd.Categorical(cat_column.ravel())
     new_col_idx = len(X_df.columns)
     X_df[new_col_idx] = cat_column
     assert X_df[new_col_idx].dtype == cat_column.dtype
 
-    # Stich an arbitrary index to the dataframe:
+    # Stitch an arbitrary index to the dataframe:
     X_df.index = np.arange(len(X_df)).astype(str)
 
     rf = RandomForestRegressor(n_estimators=5, max_depth=3, random_state=0)
@@ -347,7 +353,7 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs, max_samples)
     imp_max = importance_array["importances"].max()
     assert imp_max - imp_min > 0.3
 
-    # Now check that importances computed on dataframe matche the values
+    # Now check that importances computed on dataframe match the values
     # of those computed on the array with the same data.
     importance_dataframe = permutation_importance(
         rf,
@@ -363,7 +369,7 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs, max_samples)
     )
 
 
-@pytest.mark.parametrize("input_type", ["array", "dataframe"])
+@pytest.mark.parametrize("input_type", ["array", "pandas"])
 def test_permutation_importance_large_memmaped_data(input_type):
     # Smoke, non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/15810
@@ -432,9 +438,7 @@ def test_permutation_importance_sample_weight():
     # the second half of the samples approaches to infinity, the ratio of
     # the two features importance should equal to 2 on expectation (when using
     # mean absolutes error as the loss function).
-    w = np.hstack(
-        [np.repeat(10.0**10, n_half_samples), np.repeat(1.0, n_half_samples)]
-    )
+    w = np.hstack([np.repeat(10.0**10, n_half_samples), np.repeat(1.0, n_half_samples)])
     lr.fit(x, y, w)
     pi = permutation_importance(
         lr,
@@ -535,3 +539,12 @@ def test_permutation_importance_max_samples_error():
 
     with pytest.raises(ValueError, match=err_msg):
         permutation_importance(clf, X, y, max_samples=5)
+
+
+def test_permutation_importance_array_function_not_called():
+    """Check that `__array_function__` (NEP18) is not called."""
+    X = _NotAnArray([[1, 1], [1, 2], [1, 3], [1, 4], [2, 1], [2, 2], [2, 3], [2, 4]])
+    y = _NotAnArray([1, 1, 1, 2, 2, 2, 1, 1])
+    estimator = LogisticRegression(random_state=0)
+    estimator.fit(X, y)
+    permutation_importance(estimator, X, y, n_repeats=2, random_state=0)

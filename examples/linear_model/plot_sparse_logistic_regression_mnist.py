@@ -17,8 +17,8 @@ multi-layer perceptron model on this dataset.
 
 """
 
-# Author: Arthur Mensch <arthur.mensch@m4x.org>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import time
 
@@ -36,9 +36,7 @@ t0 = time.time()
 train_samples = 5000
 
 # Load data from https://www.openml.org/d/554
-X, y = fetch_openml(
-    "mnist_784", version=1, return_X_y=True, as_frame=False, parser="pandas"
-)
+X, y = fetch_openml("mnist_784", version=1, return_X_y=True, as_frame=False)
 
 random_state = check_random_state(0)
 permutation = random_state.permutation(X.shape[0])
@@ -55,7 +53,7 @@ X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
 # Turn up tolerance for faster convergence
-clf = LogisticRegression(C=50.0 / train_samples, penalty="l1", solver="saga", tol=0.1)
+clf = LogisticRegression(C=50.0 / train_samples, l1_ratio=1, solver="saga", tol=0.1)
 clf.fit(X_train, y_train)
 sparsity = np.mean(clf.coef_ == 0) * 100
 score = clf.score(X_test, y_test)
@@ -77,7 +75,7 @@ for i in range(10):
     )
     l1_plot.set_xticks(())
     l1_plot.set_yticks(())
-    l1_plot.set_xlabel("Class %i" % i)
+    l1_plot.set_xlabel(f"Class {i}")
 plt.suptitle("Classification vector for...")
 
 run_time = time.time() - t0

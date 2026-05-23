@@ -1,34 +1,24 @@
-"""
-The :mod:`sklearn.utils.sparsefuncs_fast` module includes a collection of utilities to
-work with sparse matrices and arrays written in Cython.
-"""
+"""Utilities to work with sparse matrices and arrays written in Cython."""
 
-# Authors: Mathieu Blondel
-#          Olivier Grisel
-#          Peter Prettenhofer
-#          Lars Buitinck
-#          Giorgio Patrini
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from libc.math cimport fabs, sqrt, isnan
 from libc.stdint cimport intptr_t
 
-cimport numpy as cnp
 import numpy as np
 from cython cimport floating
-from ..utils._typedefs cimport float64_t, int32_t, intp_t, uint64_t
+from sklearn.utils.fixes import _ensure_sparse_index_int32
+from sklearn.utils._typedefs cimport float64_t, int32_t, int64_t, intp_t, uint64_t
 
-cnp.import_array()
 
-
-# This `integral` fused type is defined to be used over `cython.integral`
-# to only generate implementations for `int{32,64}_t`.
-# TODO: use `{int,float}{32,64}_t` when cython#5230 is resolved:
-# https://github.com/cython/cython/issues/5230
 ctypedef fused integral:
-    int  # int32_t
-    long long  # int64_t
+    int32_t
+    int64_t
+
+ctypedef fused integral2:
+    int32_t
+    int64_t
 
 
 def csr_row_norms(X):
@@ -61,7 +51,7 @@ def _sqeuclidean_row_norms_sparse(
 def csr_mean_variance_axis0(X, weights=None, return_sum_weights=False):
     """Compute mean and variance along axis 0 on a CSR matrix
 
-    Uses a np.float64 accumulator.
+    Uses an np.float64 accumulator.
 
     Parameters
     ----------
@@ -195,7 +185,7 @@ def _csr_mean_variance_axis0(
 def csc_mean_variance_axis0(X, weights=None, return_sum_weights=False):
     """Compute mean and variance along axis 0 on a CSC matrix
 
-    Uses a np.float64 accumulator.
+    Uses an np.float64 accumulator.
 
     Parameters
     ----------
@@ -382,6 +372,7 @@ def incr_mean_variance_axis0(X, last_mean, last_var, last_n, weights=None):
     if last_n.dtype not in [np.float32, np.float64]:
         last_n = last_n.astype(np.float64, copy=False)
 
+    _ensure_sparse_index_int32(X)
     return _incr_mean_variance_axis0(X.data,
                                      np.sum(weights),
                                      X.shape[1],
@@ -492,7 +483,33 @@ def _incr_mean_variance_axis0(
 
 
 def inplace_csr_row_normalize_l1(X):
-    """Inplace row normalize using the l1 norm"""
+    """Normalize inplace the rows of a CSR matrix or array by their L1 norm.
+
+    Parameters
+    ----------
+    X : scipy.sparse.csr_matrix and scipy.sparse.csr_array, \
+            shape=(n_samples, n_features)
+        The input matrix or array to be modified inplace.
+
+    Examples
+    --------
+    >>> from scipy.sparse import csr_array
+    >>> from sklearn.utils.sparsefuncs_fast import inplace_csr_row_normalize_l1
+    >>> import numpy as np
+    >>> indptr = np.array([0, 2, 3, 4])
+    >>> indices = np.array([0, 1, 2, 3])
+    >>> data = np.array([1.0, 2.0, 3.0, 4.0])
+    >>> X = csr_array((data, indices, indptr), shape=(3, 4))
+    >>> X.toarray()
+    array([[1., 2., 0., 0.],
+           [0., 0., 3., 0.],
+           [0., 0., 0., 4.]])
+    >>> inplace_csr_row_normalize_l1(X)
+    >>> X.toarray()
+    array([[0.33...   , 0.66...   , 0.        , 0.        ],
+           [0.        , 0.        , 1.        , 0.        ],
+           [0.        , 0.        , 0.        , 1.        ]])
+    """
     _inplace_csr_row_normalize_l1(X.data, X.shape, X.indices, X.indptr)
 
 
@@ -529,7 +546,32 @@ def _inplace_csr_row_normalize_l1(
 
 
 def inplace_csr_row_normalize_l2(X):
-    """Inplace row normalize using the l2 norm"""
+    """Normalize inplace the rows of a CSR matrix or array by their L2 norm.
+
+    Parameters
+    ----------
+    X : scipy.sparse.csr_matrix, shape=(n_samples, n_features)
+        The input matrix or array to be modified inplace.
+
+    Examples
+    --------
+    >>> from scipy.sparse import csr_array
+    >>> from sklearn.utils.sparsefuncs_fast import inplace_csr_row_normalize_l2
+    >>> import numpy as np
+    >>> indptr = np.array([0, 2, 3, 4])
+    >>> indices = np.array([0, 1, 2, 3])
+    >>> data = np.array([1.0, 2.0, 3.0, 4.0])
+    >>> X = csr_array((data, indices, indptr), shape=(3, 4))
+    >>> X.toarray()
+    array([[1., 2., 0., 0.],
+           [0., 0., 3., 0.],
+           [0., 0., 0., 4.]])
+    >>> inplace_csr_row_normalize_l2(X)
+    >>> X.toarray()
+    array([[0.44...   , 0.89...   , 0.        , 0.        ],
+           [0.        , 0.        , 1.        , 0.        ],
+           [0.        , 0.        , 0.        , 1.        ]])
+    """
     _inplace_csr_row_normalize_l2(X.data, X.shape, X.indices, X.indptr)
 
 
@@ -575,7 +617,7 @@ def assign_rows_csr(
 
     Parameters
     ----------
-    X : scipy.sparse.csr_matrix, shape=(n_samples, n_features)
+    X : scipy.sparse.csr_array, shape=(n_samples, n_features)
     X_rows : array, dtype=np.intp, shape=n_rows
     out_rows : array, dtype=np.intp, shape=n_rows
     out : array, shape=(arbitrary, n_features)
@@ -602,3 +644,42 @@ def assign_rows_csr(
             for ind in range(indptr[rX], indptr[rX + 1]):
                 j = indices[ind]
                 out[out_rows[i], j] = data[ind]
+
+
+def csr_matmul_csr_to_dense(
+    const floating[:] a_data,
+    const integral[:] a_indices,
+    const integral[:] a_indptr,
+    const floating[:] b_data,
+    const integral2[:] b_indices,
+    const integral2[:] b_indptr,
+    floating[:, :] out,
+    uint64_t n1,
+    uint64_t n2,
+    uint64_t n3,
+):
+    """Computes a @ b for sparse csr a and b, returns dense array.
+
+    The shape of `a` is `(n1, n2)` and the shape of `b` is `(n2, n3)`.
+
+    See also
+    Gamma: Leveraging Gustavson's Algorithm to Accelerate Sparse Matrix Multiplication
+    https://dl.acm.org/doi/pdf/10.1145/3445814.3446702
+    """
+    cdef uint64_t i
+    cdef uint64_t j
+    cdef integral2 j_ind
+    cdef uint64_t k
+    cdef integral k_ind
+    cdef floating a_value
+
+    for i in range(n1):
+        for j in range(n3):
+            out[i, j] = 0
+        for k_ind in range(a_indptr[i], a_indptr[i + 1]):  # n2
+            k = a_indices[k_ind]
+            a_value = a_data[k_ind]
+            for j_ind in range(b_indptr[k], b_indptr[k + 1]):  # n3
+                j = b_indices[j_ind]
+                # out[i, j] += a[i, k] * b[k, j]
+                out[i, j] += a_value * b_data[j_ind]

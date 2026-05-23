@@ -5,7 +5,6 @@ from functools import partial
 
 import numpy as np
 import pytest
-import threadpoolctl
 from scipy.spatial.distance import cdist
 
 from sklearn.metrics import euclidean_distances, pairwise_distances
@@ -23,6 +22,7 @@ from sklearn.utils._testing import (
     create_memmap_backed_data,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS
+from sklearn.utils.parallel import _get_threadpool_controller
 
 # Common supported metric between scipy.spatial.distance.cdist
 # and BaseDistanceReductionDispatcher.
@@ -120,7 +120,7 @@ def assert_no_missing_neighbors(
     For radius queries, the threshold is just the radius minus the expected
     precision level.
 
-    For k-NN queries, it is the maxium distance to the k-th neighbor minus the
+    For k-NN queries, it is the maximum distance to the k-th neighbor minus the
     expected precision level.
     """
     mask_a = dist_row_a < threshold
@@ -130,8 +130,8 @@ def assert_no_missing_neighbors(
     if len(missing_from_a) > 0 or len(missing_from_b) > 0:
         raise AssertionError(
             f"Query vector with index {query_idx} lead to mismatched result indices:\n"
-            f"neighors in b missing from a: {missing_from_a}\n"
-            f"neighors in a missing from b: {missing_from_b}\n"
+            f"neighbors in b missing from a: {missing_from_a}\n"
+            f"neighbors in a missing from b: {missing_from_b}\n"
             f"dist_row_a={dist_row_a}\n"
             f"dist_row_b={dist_row_b}\n"
             f"indices_row_a={indices_row_a}\n"
@@ -197,7 +197,7 @@ def assert_compatible_argkmin_results(
         #
         # (1 - rtol) * dist_k - atol
         #
-        # Where dist_k is defined as the maxium distance to the kth-neighbor
+        # Where dist_k is defined as the maximum distance to the kth-neighbor
         # among the two result sets. This way of defining the threshold is
         # stricter than taking the minimum of the two.
         threshold = (1 - rtol) * np.maximum(
@@ -228,9 +228,9 @@ def _non_trivial_radius(
     # on average. Yielding too many results would make the test slow (because
     # checking the results is expensive for large result sets), yielding 0 most
     # of the time would make the test useless.
-    assert (
-        precomputed_dists is not None or metric is not None
-    ), "Either metric or precomputed_dists must be provided."
+    assert precomputed_dists is not None or metric is not None, (
+        "Either metric or precomputed_dists must be provided."
+    )
 
     if precomputed_dists is None:
         assert X is not None
@@ -437,7 +437,7 @@ def test_assert_compatible_argkmin_results():
     # Detect missing indices within the expected precision level, even when the
     # distances match exactly.
     msg = re.escape(
-        "neighors in b missing from a: [12]\nneighors in a missing from b: [1]"
+        "neighbors in b missing from a: [12]\nneighbors in a missing from b: [1]"
     )
     with pytest.raises(AssertionError, match=msg):
         assert_compatible_argkmin_results(
@@ -450,7 +450,7 @@ def test_assert_compatible_argkmin_results():
 
     # Detect missing indices outside the expected precision level.
     msg = re.escape(
-        "neighors in b missing from a: []\nneighors in a missing from b: [3]"
+        "neighbors in b missing from a: []\nneighbors in a missing from b: [3]"
     )
     with pytest.raises(AssertionError, match=msg):
         assert_compatible_argkmin_results(
@@ -464,7 +464,7 @@ def test_assert_compatible_argkmin_results():
     # Detect missing indices outside the expected precision level, in the other
     # direction:
     msg = re.escape(
-        "neighors in b missing from a: [5]\nneighors in a missing from b: []"
+        "neighbors in b missing from a: [5]\nneighbors in a missing from b: []"
     )
     with pytest.raises(AssertionError, match=msg):
         assert_compatible_argkmin_results(
@@ -571,8 +571,8 @@ def test_assert_compatible_radius_results(check_sorted):
     # Any discrepancy outside the tolerated rounding error range is invalid and
     # indicates a missing neighbor in one of the result sets.
     msg = re.escape(
-        "Query vector with index 0 lead to mismatched result indices:\nneighors in b"
-        " missing from a: []\nneighors in a missing from b: [3]"
+        "Query vector with index 0 lead to mismatched result indices:\nneighbors in b"
+        " missing from a: []\nneighbors in a missing from b: [3]"
     )
     with pytest.raises(AssertionError, match=msg):
         assert_compatible_radius_results(
@@ -585,8 +585,8 @@ def test_assert_compatible_radius_results(check_sorted):
             **tols,
         )
     msg = re.escape(
-        "Query vector with index 0 lead to mismatched result indices:\nneighors in b"
-        " missing from a: [4]\nneighors in a missing from b: [2]"
+        "Query vector with index 0 lead to mismatched result indices:\nneighbors in b"
+        " missing from a: [4]\nneighbors in a missing from b: [2]"
     )
     with pytest.raises(AssertionError, match=msg):
         assert_compatible_radius_results(
@@ -695,10 +695,13 @@ def test_pairwise_distances_reduction_is_usable_for(csr_container):
         X, Y_csr, metric="sqeuclidean"
     )
 
-    assert BaseDistancesReductionDispatcher.is_usable_for(
+    # FIXME: the current Cython implementation is too slow for a large number of
+    # features. We temporarily disable it to fallback on SciPy's implementation.
+    # See: https://github.com/scikit-learn/scikit-learn/issues/28191
+    assert not BaseDistancesReductionDispatcher.is_usable_for(
         X_csr, Y_csr, metric="sqeuclidean"
     )
-    assert BaseDistancesReductionDispatcher.is_usable_for(
+    assert not BaseDistancesReductionDispatcher.is_usable_for(
         X_csr, Y_csr, metric="euclidean"
     )
 
@@ -1197,7 +1200,7 @@ def test_n_threads_agnosticism(
         **compute_parameters,
     )
 
-    with threadpoolctl.threadpool_limits(limits=1, user_api="openmp"):
+    with _get_threadpool_controller().limit(limits=1, user_api="openmp"):
         dist, indices = Dispatcher.compute(
             X,
             Y,

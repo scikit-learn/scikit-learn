@@ -1,5 +1,5 @@
-# Authors: William Mill (bill@billmill.org)
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 
@@ -22,10 +22,10 @@ class DrawTree:
         self.number = number
 
     def left(self):
-        return self.thread or len(self.children) and self.children[0]
+        return self.thread or (len(self.children) and self.children[0])
 
     def right(self):
-        return self.thread or len(self.children) and self.children[-1]
+        return self.thread or (len(self.children) and self.children[-1])
 
     def lbrother(self):
         n = None

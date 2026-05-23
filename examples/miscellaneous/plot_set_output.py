@@ -10,7 +10,7 @@ output pandas DataFrames. `set_output` can be configured per estimator by callin
 the `set_output` method or globally by setting `set_config(transform_output="pandas")`.
 For details, see
 `SLEP018 <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep018/proposal.html>`__.
-"""  # noqa
+"""  # noqa: CPY001
 
 # %%
 # First, we load the iris dataset as a DataFrame to demonstrate the `set_output` API.
@@ -64,13 +64,26 @@ clf.fit(X_train, y_train)
 clf[-1].feature_names_in_
 
 # %%
+# .. note:: If one uses the method `set_params`, the transformer will be
+#    replaced by a new one with the default output format.
+clf.set_params(standardscaler=StandardScaler())
+clf.fit(X_train, y_train)
+clf[-1].feature_names_in_
+
+# %%
+# To keep the intended behavior, use `set_output` on the new transformer
+# beforehand
+scaler = StandardScaler().set_output(transform="pandas")
+clf.set_params(standardscaler=scaler)
+clf.fit(X_train, y_train)
+clf[-1].feature_names_in_
+
+# %%
 # Next we load the titanic dataset to demonstrate `set_output` with
 # :class:`compose.ColumnTransformer` and heterogeneous data.
 from sklearn.datasets import fetch_openml
 
-X, y = fetch_openml(
-    "titanic", version=1, as_frame=True, return_X_y=True, parser="pandas"
-)
+X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True)
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y)
 
 # %%

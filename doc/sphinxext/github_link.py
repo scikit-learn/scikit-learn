@@ -26,10 +26,10 @@ def _linkcode_resolve(domain, info, package, url_fmt, revision):
     >>> _linkcode_resolve('py', {'module': 'tty',
     ...                          'fullname': 'setraw'},
     ...                   package='tty',
-    ...                   url_fmt='http://hg.python.org/cpython/file/'
+    ...                   url_fmt='https://hg.python.org/cpython/file/'
     ...                           '{revision}/Lib/{package}/{path}#L{lineno}',
     ...                   revision='xxxx')
-    'http://hg.python.org/cpython/file/xxxx/Lib/tty/tty.py#L18'
+    'https://hg.python.org/cpython/file/xxxx/Lib/tty/tty.py#L18'
     """
 
     if revision is None:
@@ -58,8 +58,11 @@ def _linkcode_resolve(domain, info, package, url_fmt, revision):
             fn = None
     if not fn:
         return
+    try:
+        fn = os.path.relpath(fn, start=os.path.dirname(__import__(package).__file__))
+    except ValueError:
+        return None
 
-    fn = os.path.relpath(fn, start=os.path.dirname(__import__(package).__file__))
     try:
         lineno = inspect.getsourcelines(obj)[1]
     except Exception:

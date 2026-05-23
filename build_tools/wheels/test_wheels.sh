@@ -3,16 +3,20 @@
 set -e
 set -x
 
-UNAME=$(uname)
+PROJECT_DIR="$1"
 
-if [[ "$UNAME" != "Linux" ]]; then
-    # The Linux test environment is run in a Docker container and
-    # it is not possible to copy the test configuration file (yet)
-    cp $CONFTEST_PATH $CONFTEST_NAME
-fi
+python $PROJECT_DIR/build_tools/wheels/check_license.py
 
 python -c "import joblib; print(f'Number of cores (physical): \
 {joblib.cpu_count()} ({joblib.cpu_count(only_physical_cores=True)})')"
+
+FREE_THREADED_BUILD="$(python -c"import sysconfig; print(bool(sysconfig.get_config_var('Py_GIL_DISABLED')))")"
+if [[ $FREE_THREADED_BUILD == "True" ]]; then
+    # TODO: delete when importing numpy no longer enables the GIL
+    # setting to zero ensures the GIL is disabled while running the
+    # tests under free-threaded python
+    export PYTHON_GIL=0
+fi
 
 # Test that there are no links to system libraries in the
 # threadpoolctl output section of the show_versions output:

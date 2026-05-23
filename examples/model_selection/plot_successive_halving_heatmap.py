@@ -8,6 +8,9 @@ This example compares the parameter search performed by
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from time import time
 
 import matplotlib.pyplot as plt
@@ -15,7 +18,7 @@ import numpy as np
 import pandas as pd
 
 from sklearn import datasets
-from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401
 from sklearn.model_selection import GridSearchCV, HalvingGridSearchCV
 from sklearn.svm import SVC
 

@@ -8,10 +8,8 @@ the predicted probabilities.
 
 """
 
-# Author: Vincent Dubourg <vincent.dubourg@gmail.com>
-# Adapted to GaussianProcessClassifier:
-#         Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 from matplotlib import cm

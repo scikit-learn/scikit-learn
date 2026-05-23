@@ -12,17 +12,17 @@ We will compare the results with an exact reconstruction using
 
 We will use USPS digits dataset to reproduce presented in Sect. 4 of [1]_.
 
-.. topic:: References
+.. rubric:: References
 
-   .. [1] `Bakır, Gökhan H., Jason Weston, and Bernhard Schölkopf.
-      "Learning to find pre-images."
-      Advances in neural information processing systems 16 (2004): 449-456.
-      <https://papers.nips.cc/paper/2003/file/ac1ad983e08ad3304a97e147f522747e-Paper.pdf>`_
+.. [1] `Bakır, Gökhan H., Jason Weston, and Bernhard Schölkopf.
+    "Learning to find pre-images."
+    Advances in neural information processing systems 16 (2004): 449-456.
+    <https://papers.nips.cc/paper/2003/file/ac1ad983e08ad3304a97e147f522747e-Paper.pdf>`_
 
 """
 
-# Authors: Guillaume Lemaitre <guillaume.lemaitre@inria.fr>
-# Licence: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Load the dataset via OpenML
@@ -37,7 +37,7 @@ from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 
-X, y = fetch_openml(data_id=41082, as_frame=False, return_X_y=True, parser="pandas")
+X, y = fetch_openml(data_id=41082, as_frame=False, return_X_y=True)
 X = MinMaxScaler().fit_transform(X)
 
 # %%

@@ -24,8 +24,8 @@ those effects.
 
 """
 
-# Author: Narine Kokhlikyan <narine@slice.com>
-# License: BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from time import time
 
@@ -63,7 +63,7 @@ for i, perplexity in enumerate(perplexities):
         init="random",
         random_state=0,
         perplexity=perplexity,
-        n_iter=300,
+        max_iter=300,
     )
     Y = tsne.fit_transform(X)
     t1 = time()
@@ -93,7 +93,7 @@ for i, perplexity in enumerate(perplexities):
         random_state=0,
         perplexity=perplexity,
         learning_rate="auto",
-        n_iter=300,
+        max_iter=300,
     )
     Y = tsne.fit_transform(X)
     t1 = time()
@@ -130,7 +130,7 @@ for i, perplexity in enumerate(perplexities):
         init="random",
         random_state=0,
         perplexity=perplexity,
-        n_iter=400,
+        max_iter=400,
     )
     Y = tsne.fit_transform(X)
     t1 = time()

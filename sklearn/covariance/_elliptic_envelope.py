@@ -1,16 +1,15 @@
-# Author: Virgile Fritsch <virgile.fritsch@inria.fr>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Real
 
 import numpy as np
 
-from ..base import OutlierMixin, _fit_context
-from ..metrics import accuracy_score
-from ..utils._param_validation import Interval
-from ..utils.validation import check_is_fitted
-from ._robust_covariance import MinCovDet
+from sklearn.base import OutlierMixin, _fit_context
+from sklearn.covariance._robust_covariance import MinCovDet
+from sklearn.metrics import accuracy_score
+from sklearn.utils._param_validation import Interval
+from sklearn.utils.validation import check_is_fitted
 
 
 class EllipticEnvelope(OutlierMixin, MinCovDet):
@@ -35,7 +34,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
     support_fraction : float, default=None
         The proportion of points to be included in the support of the raw
         MCD estimate. If None, the minimum value of support_fraction will
-        be used within the algorithm: `[n_sample + n_features + 1] / 2`.
+        be used within the algorithm: `(n_samples + n_features + 1) / 2 * n_samples`.
         Range is (0, 1).
 
     contamination : float, default=0.1
@@ -136,10 +135,10 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
     ...              [3, 3]])
     array([ 1, -1])
     >>> cov.covariance_
-    array([[0.7411..., 0.2535...],
-           [0.2535..., 0.3053...]])
+    array([[0.8102, 0.2736],
+           [0.2736, 0.3330]])
     >>> cov.location_
-    array([0.0813... , 0.0427...])
+    array([0.0769 , 0.0397])
     """
 
     _parameter_constraints: dict = {

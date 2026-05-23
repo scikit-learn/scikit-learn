@@ -1,12 +1,12 @@
 """Testing for K-means"""
+
 import re
 import sys
-import warnings
 from io import StringIO
 
 import numpy as np
 import pytest
-from scipy import sparse as sp
+from threadpoolctl import threadpool_info
 
 from sklearn.base import clone
 from sklearn.cluster import KMeans, MiniBatchKMeans, k_means, kmeans_plusplus
@@ -31,14 +31,8 @@ from sklearn.utils._testing import (
     create_memmap_backed_data,
 )
 from sklearn.utils.extmath import row_norms
-from sklearn.utils.fixes import CSR_CONTAINERS, threadpool_limits
-
-# TODO(1.4): Remove
-msg = (
-    r"The default value of `n_init` will change from \d* to 'auto' in 1.4. Set the"
-    r" value of `n_init` explicitly to suppress the warning:FutureWarning"
-)
-pytestmark = pytest.mark.filterwarnings("ignore:" + msg)
+from sklearn.utils.fixes import CSR_CONTAINERS, _sparse_random_array
+from sklearn.utils.parallel import _get_threadpool_controller
 
 # non centered, sparse centers to check the
 centers = np.array(
@@ -208,34 +202,6 @@ def test_kmeans_convergence(algorithm, global_random_seed):
     assert km.n_iter_ < max_iter
 
 
-@pytest.mark.parametrize("algorithm", ["auto", "full"])
-def test_algorithm_auto_full_deprecation_warning(algorithm):
-    X = np.random.rand(100, 2)
-    kmeans = KMeans(algorithm=algorithm)
-    with pytest.warns(
-        FutureWarning,
-        match=(
-            f"algorithm='{algorithm}' is deprecated, it will "
-            "be removed in 1.3. Using 'lloyd' instead."
-        ),
-    ):
-        kmeans.fit(X)
-        assert kmeans._algorithm == "lloyd"
-
-
-@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
-def test_predict_sample_weight_deprecation_warning(Estimator):
-    X = np.random.rand(100, 2)
-    sample_weight = np.random.uniform(size=100)
-    kmeans = Estimator()
-    kmeans.fit(X, sample_weight=sample_weight)
-    warn_msg = (
-        "'sample_weight' was deprecated in version 1.3 and will be removed in 1.5."
-    )
-    with pytest.warns(FutureWarning, match=warn_msg):
-        kmeans.predict(X, sample_weight=sample_weight)
-
-
 @pytest.mark.parametrize("X_csr", X_as_any_csr)
 def test_minibatch_update_consistency(X_csr, global_random_seed):
     # Check that dense and sparse minibatch update give the same results
@@ -321,7 +287,7 @@ def _check_fitted_model(km):
 )
 @pytest.mark.parametrize(
     "init",
-    ["random", "k-means++", centers, lambda X, k, random_state: centers],
+    ["random", "k-means++", centers.copy(), lambda X, k, random_state: centers.copy()],
     ids=["random", "k-means++", "ndarray", "callable"],
 )
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
@@ -336,10 +302,14 @@ def test_all_init(Estimator, input_data, init):
 
 @pytest.mark.parametrize(
     "init",
-    ["random", "k-means++", centers, lambda X, k, random_state: centers],
+    ["random", "k-means++", centers, lambda X, k, random_state: centers.copy()],
     ids=["random", "k-means++", "ndarray", "callable"],
 )
 def test_minibatch_kmeans_partial_fit_init(init):
+    if hasattr(init, "copy"):
+        # Avoid mutating a shared array in place to avoid side effects in other tests.
+        init = init.copy()
+
     # Check MiniBatchKMeans init with partial_fit
     n_init = 10 if isinstance(init, str) else 1
     km = MiniBatchKMeans(
@@ -471,21 +441,24 @@ def test_minibatch_sensible_reassign(global_random_seed):
         n_clusters=20, batch_size=10, random_state=global_random_seed, init="random"
     ).fit(zeroed_X)
     # there should not be too many exact zero cluster centers
-    assert km.cluster_centers_.any(axis=1).sum() > 10
+    num_non_zero_clusters = km.cluster_centers_.any(axis=1).sum()
+    assert num_non_zero_clusters > 9, f"{num_non_zero_clusters=} is too small"
 
     # do the same with batch-size > X.shape[0] (regression test)
     km = MiniBatchKMeans(
         n_clusters=20, batch_size=200, random_state=global_random_seed, init="random"
     ).fit(zeroed_X)
     # there should not be too many exact zero cluster centers
-    assert km.cluster_centers_.any(axis=1).sum() > 10
+    num_non_zero_clusters = km.cluster_centers_.any(axis=1).sum()
+    assert num_non_zero_clusters > 9, f"{num_non_zero_clusters=} is too small"
 
     # do the same with partial_fit API
     km = MiniBatchKMeans(n_clusters=20, random_state=global_random_seed, init="random")
     for i in range(100):
         km.partial_fit(zeroed_X)
     # there should not be too many exact zero cluster centers
-    assert km.cluster_centers_.any(axis=1).sum() > 10
+    num_non_zero_clusters = km.cluster_centers_.any(axis=1).sum()
+    assert num_non_zero_clusters > 9, f"{num_non_zero_clusters=} is too small"
 
 
 @pytest.mark.parametrize(
@@ -771,7 +744,7 @@ def test_transform(Estimator, global_random_seed):
     # In particular, diagonal must be 0
     assert_array_equal(Xt.diagonal(), np.zeros(n_clusters))
 
-    # Transorfming X should return the pairwise distances between X and the
+    # Transforming X should return the pairwise distances between X and the
     # centers
     Xt = km.transform(X)
     assert_allclose(Xt, pairwise_distances(X, km.cluster_centers_))
@@ -821,6 +794,13 @@ def test_k_means_function(global_random_seed):
     ids=data_containers_ids,
 )
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+@pytest.mark.skipif(
+    not any(i for i in threadpool_info() if i["user_api"] == "blas"),
+    reason=(
+        "Fails for some global_random_seed on Atlas which cannot be detected by "
+        "threadpoolctl."
+    ),
+)
 def test_float_precision(Estimator, input_data, global_random_seed):
     # Check that the results are the same for single and double precision.
     km = Estimator(n_init=1, random_state=global_random_seed)
@@ -849,10 +829,11 @@ def test_float_precision(Estimator, input_data, global_random_seed):
 
     # compare arrays with low precision since the difference between 32 and
     # 64 bit comes from an accumulation of rounding errors.
-    assert_allclose(inertia[np.float32], inertia[np.float64], rtol=1e-4)
-    assert_allclose(Xt[np.float32], Xt[np.float64], atol=Xt[np.float64].max() * 1e-4)
+    rtol = 1e-4
+    assert_allclose(inertia[np.float32], inertia[np.float64], rtol=rtol)
+    assert_allclose(Xt[np.float32], Xt[np.float64], atol=Xt[np.float64].max() * rtol)
     assert_allclose(
-        centers[np.float32], centers[np.float64], atol=centers[np.float64].max() * 1e-4
+        centers[np.float32], centers[np.float64], atol=centers[np.float64].max() * rtol
     )
     assert_array_equal(labels[np.float32], labels[np.float64])
 
@@ -1002,13 +983,13 @@ def test_result_equal_in_diff_n_threads(Estimator, global_random_seed):
     rnd = np.random.RandomState(global_random_seed)
     X = rnd.normal(size=(50, 10))
 
-    with threadpool_limits(limits=1, user_api="openmp"):
+    with _get_threadpool_controller().limit(limits=1, user_api="openmp"):
         result_1 = (
             Estimator(n_clusters=n_clusters, random_state=global_random_seed)
             .fit(X)
             .labels_
         )
-    with threadpool_limits(limits=2, user_api="openmp"):
+    with _get_threadpool_controller().limit(limits=2, user_api="openmp"):
         result_2 = (
             Estimator(n_clusters=n_clusters, random_state=global_random_seed)
             .fit(X)
@@ -1061,8 +1042,8 @@ def test_euclidean_distance(dtype, squared, global_random_seed):
     # Check that the _euclidean_(dense/sparse)_dense helpers produce correct
     # results
     rng = np.random.RandomState(global_random_seed)
-    a_sparse = sp.random(
-        1, 100, density=0.5, format="csr", random_state=rng, dtype=dtype
+    a_sparse = _sparse_random_array(
+        (1, 100), density=0.5, format="csr", rng=rng, dtype=dtype
     )
     a_dense = a_sparse.toarray().reshape(-1)
     b = rng.randn(100).astype(dtype, copy=False)
@@ -1086,8 +1067,8 @@ def test_euclidean_distance(dtype, squared, global_random_seed):
 def test_inertia(dtype, global_random_seed):
     # Check that the _inertia_(dense/sparse) helpers produce correct results.
     rng = np.random.RandomState(global_random_seed)
-    X_sparse = sp.random(
-        100, 10, density=0.5, format="csr", random_state=rng, dtype=dtype
+    X_sparse = _sparse_random_array(
+        (100, 10), density=0.5, format="csr", rng=rng, dtype=dtype
     )
     X_dense = X_sparse.toarray()
     sample_weight = rng.randn(100).astype(dtype, copy=False)
@@ -1123,24 +1104,6 @@ def test_inertia(dtype, global_random_seed):
     assert_allclose(inertia_dense, inertia_sparse, rtol=rtol)
     assert_allclose(inertia_dense, expected, rtol=rtol)
     assert_allclose(inertia_sparse, expected, rtol=rtol)
-
-
-# TODO(1.4): Remove
-@pytest.mark.parametrize("Klass, default_n_init", [(KMeans, 10), (MiniBatchKMeans, 3)])
-def test_change_n_init_future_warning(Klass, default_n_init):
-    est = Klass(n_init=1)
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", FutureWarning)
-        est.fit(X)
-
-    default_n_init = 10 if Klass.__name__ == "KMeans" else 3
-    msg = (
-        f"The default value of `n_init` will change from {default_n_init} to 'auto'"
-        " in 1.4"
-    )
-    est = Klass()
-    with pytest.warns(FutureWarning, match=msg):
-        est.fit(X)
 
 
 @pytest.mark.parametrize("Klass, default_n_init", [(KMeans, 10), (MiniBatchKMeans, 3)])
@@ -1393,3 +1356,21 @@ def test_sample_weight_zero(init, global_random_seed):
     # (i.e. be at a distance=0 from it)
     d = euclidean_distances(X[::2], clusters_weighted)
     assert not np.any(np.isclose(d, 0))
+
+
+@pytest.mark.parametrize("array_constr", data_containers, ids=data_containers_ids)
+@pytest.mark.parametrize("algorithm", ["lloyd", "elkan"])
+def test_relocating_with_duplicates(algorithm, array_constr):
+    """Check that kmeans stops when there are more centers than non-duplicate samples
+
+    Non-regression test for issue:
+    https://github.com/scikit-learn/scikit-learn/issues/28055
+    """
+    X = np.array([[0, 0], [1, 1], [1, 1], [1, 0], [0, 1]])
+    km = KMeans(n_clusters=5, init=X, algorithm=algorithm)
+
+    msg = r"Number of distinct clusters \(4\) found smaller than n_clusters \(5\)"
+    with pytest.warns(ConvergenceWarning, match=msg):
+        km.fit(array_constr(X))
+
+    assert km.n_iter_ == 1

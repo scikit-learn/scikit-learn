@@ -123,6 +123,28 @@ def test_dbscan_input_not_modified(metric, csr_container):
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_dbscan_input_not_modified_precomputed_sparse_nodiag(csr_container):
+    """Check that we don't modify in-place the pre-computed sparse matrix.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27508
+    """
+    X = np.random.RandomState(0).rand(10, 10)
+    # Add zeros on the diagonal that will be implicit when creating
+    # the sparse matrix. If `X` is modified in-place, the zeros from
+    # the diagonal will be made explicit.
+    np.fill_diagonal(X, 0)
+    X = csr_container(X)
+    assert all(row != col for row, col in zip(*X.nonzero()))
+    X_copy = X.copy()
+    dbscan(X, metric="precomputed")
+    # Make sure that we did not modify `X` in-place even by creating
+    # explicit 0s values.
+    assert X.nnz == X_copy.nnz
+    assert_array_equal(X.toarray(), X_copy.toarray())
+
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_dbscan_no_core_samples(csr_container):
     rng = np.random.RandomState(0)
     X = rng.rand(40, 10)
@@ -269,7 +291,7 @@ def test_input_validation():
 def test_pickle():
     obj = DBSCAN()
     s = pickle.dumps(obj)
-    assert type(pickle.loads(s)) == obj.__class__
+    assert type(pickle.loads(s)) is obj.__class__
 
 
 def test_boundaries():

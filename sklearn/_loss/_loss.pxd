@@ -89,3 +89,13 @@ cdef class CyExponentialLoss(CyLossFunction):
     cdef double cy_loss(self, double y_true, double raw_prediction) noexcept nogil
     cdef double cy_gradient(self, double y_true, double raw_prediction) noexcept nogil
     cdef double_pair cy_grad_hess(self, double y_true, double raw_prediction) noexcept nogil
+
+
+cdef class CyHalfMultinomialLoss():
+    cdef void cy_gradient(
+        self,
+        const floating_in y_true,
+        const floating_in[::1] raw_prediction,
+        const floating_in sample_weight,
+        floating_out[::1] gradient_out,
+    ) noexcept nogil

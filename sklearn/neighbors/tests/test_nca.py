@@ -2,9 +2,8 @@
 Testing for Neighborhood Component Analysis module (sklearn.neighbors.nca)
 """
 
-# Authors: William de Vazelhes <wdevazelhes@gmail.com>
-#          John Chiotellis <ioannis.chiotellis@in.tum.de>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import re
 
@@ -20,13 +19,17 @@ from sklearn.metrics import pairwise_distances
 from sklearn.neighbors import NeighborhoodComponentsAnalysis
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import check_random_state
+from sklearn.utils.validation import validate_data
 
 rng = check_random_state(0)
-# load and shuffle iris dataset
+# Load and shuffle the iris dataset.
 iris = load_iris()
 perm = rng.permutation(iris.target.size)
 iris_data = iris.data[perm]
 iris_target = iris.target[perm]
+# Avoid having test data introducing dependencies between tests.
+iris_data.flags.writeable = False
+iris_target.flags.writeable = False
 EPS = np.finfo(float).eps
 
 
@@ -71,7 +74,7 @@ def test_toy_example_collapse_points():
             # Initialize a fake NCA and variables needed to compute the loss:
             self.fake_nca = NeighborhoodComponentsAnalysis()
             self.fake_nca.n_iter_ = np.inf
-            self.X, y = self.fake_nca._validate_data(X, y, ensure_min_samples=2)
+            self.X, y = validate_data(self.fake_nca, X, y, ensure_min_samples=2)
             y = LabelEncoder().fit_transform(y)
             self.same_class_mask = y[:, np.newaxis] == y[np.newaxis, :]
 
@@ -398,7 +401,7 @@ def test_verbose(init_name, capsys):
             line,
         )
     assert re.match(
-        r"\[NeighborhoodComponentsAnalysis\] Training took\ *" r"\d+\.\d{2}s\.",
+        r"\[NeighborhoodComponentsAnalysis\] Training took\ *\d+\.\d{2}s\.",
         lines[-2],
     )
     assert lines[-1] == ""
@@ -414,8 +417,8 @@ def test_no_verbose(capsys):
 
 
 def test_singleton_class():
-    X = iris_data
-    y = iris_target
+    X = iris_data.copy()
+    y = iris_target.copy()
 
     # one singleton class
     singleton_class = 1
@@ -488,7 +491,7 @@ def test_expected_transformation_shape():
             # function:
             self.fake_nca = NeighborhoodComponentsAnalysis()
             self.fake_nca.n_iter_ = np.inf
-            self.X, y = self.fake_nca._validate_data(X, y, ensure_min_samples=2)
+            self.X, y = validate_data(self.fake_nca, X, y, ensure_min_samples=2)
             y = LabelEncoder().fit_transform(y)
             self.same_class_mask = y[:, np.newaxis] == y[np.newaxis, :]
 
@@ -531,18 +534,30 @@ def test_parameters_valid_types(param, value):
     nca.fit(X, y)
 
 
-def test_nca_feature_names_out():
-    """Check `get_feature_names_out` for `NeighborhoodComponentsAnalysis`."""
+@pytest.mark.parametrize("n_components", [None, 2])
+def test_nca_feature_names_out(n_components):
+    """Check `get_feature_names_out` for `NeighborhoodComponentsAnalysis`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/28293
+    """
 
     X = iris_data
     y = iris_target
 
-    est = NeighborhoodComponentsAnalysis().fit(X, y)
+    est = NeighborhoodComponentsAnalysis(n_components=n_components).fit(X, y)
     names_out = est.get_feature_names_out()
 
     class_name_lower = est.__class__.__name__.lower()
+
+    if n_components is not None:
+        expected_n_features = n_components
+    else:
+        expected_n_features = X.shape[1]
+
     expected_names_out = np.array(
-        [f"{class_name_lower}{i}" for i in range(est.components_.shape[1])],
+        [f"{class_name_lower}{i}" for i in range(expected_n_features)],
         dtype=object,
     )
+
     assert_array_equal(names_out, expected_names_out)

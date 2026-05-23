@@ -56,58 +56,50 @@ Core contributors that have not contributed to the project, corresponding to
 their role, in the past 12 months will be asked if they want to become emeritus
 members and recant their rights until they become active again. The list of
 members, active and emeritus (with dates at which they became active) is public
-on the scikit-learn website.
+on the scikit-learn website. It is the responsibility of the active core
+contributors to send such a yearly reminder email.
 
-The following teams form the core contributors group.
+The following teams form the core contributors group:
 
+* **Contributor Experience Team**
+  The contributor experience team improves the experience of contributors by
+  helping with the triage of issues and pull requests, as well as noticing any
+  repeating patterns where people might struggle, and to help with improving
+  those aspects of the project.
 
-Contributor Experience Team
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  To this end, they have the required permissions on GitHub to label and close
+  issues. :ref:`Their work <bug_triaging>` is crucial to improve the
+  communication in the project and limit the crowding of the issue tracker.
 
-The contributor experience team improves the experience of contributors by
-helping with the triage of issues and pull requests, as well as noticing any
-repeating patterns where people might struggle, and to help with improving
-those aspects of the project.
+  .. _communication_team:
 
-To this end, they have the required permissions on github to label and close
-issues. :ref:`Their work <bug_triaging>` is crucial to improve the
-communication in the project and limit the crowding of the issue tracker.
+* **Communication Team**
+  Members of the communication team help with outreach and communication
+  for scikit-learn. The goal of the team is to develop public awareness of
+  scikit-learn, of its features and usage, as well as branding.
 
-.. _communication_team:
+  For this, they can operate the scikit-learn accounts on various social networks
+  and produce materials. They also have the required rights to our blog
+  repository and other relevant accounts and platforms.
 
-Communication team
-~~~~~~~~~~~~~~~~~~
+* **Documentation Team**
+  Members of the documentation team engage with the documentation of the project
+  among other things. They might also be involved in other aspects of the
+  project, but their reviews on documentation contributions are considered
+  authoritative, and can merge such contributions.
 
-Members of the communication team help with outreach and communication
-for scikit-learn. The goal of the team is to develop public awareness of
-scikit-learn, of its features and usage, as well as branding.
+  To this end, they have permissions to merge pull requests in scikit-learn's
+  repository.
 
-For this, they can operate the scikit-learn accounts on various social networks
-and produce materials. They also have the required rights to our blog
-repository and other relevant accounts and platforms.
-
-Documentation team
-~~~~~~~~~~~~~~~~~~
-
-Members of the documentation team engage with the documentation of the project
-among other things. They might also be involved in other aspects of the
-project, but their reviews on documentation contributions are considered
-authoritative, and can merge such contributions.
-
-To this end, they have permissions to merge pull requests in scikit-learn's
-repository.
-
-Maintainers
-~~~~~~~~~~~
-
-Maintainers are community members who have shown that they are dedicated to the
-continued development of the project through ongoing engagement with the
-community. They have shown they can be trusted to maintain scikit-learn with
-care. Being a maintainer allows contributors to more easily carry on with their
-project related activities by giving them direct access to the project's
-repository. Maintainers are expected to review code contributions, merge
-approved pull requests, cast votes for and against merging a pull-request,
-and to be involved in deciding major changes to the API.
+* **Maintainers Team**
+  Maintainers are community members who have shown that they are dedicated to the
+  continued development of the project through ongoing engagement with the
+  community. They have shown they can be trusted to maintain scikit-learn with
+  care. Being a maintainer allows contributors to more easily carry on with their
+  project related activities by giving them direct access to the project's
+  repository. Maintainers are expected to review code contributions, merge
+  approved pull requests, cast votes for and against merging a pull request,
+  and to be involved in deciding major changes to the API.
 
 Technical Committee
 -------------------
@@ -154,20 +146,22 @@ decision making process**".
 Decisions (in addition to adding core contributors and TC membership as above)
 are made according to the following rules:
 
-* **Minor Documentation changes**, such as typo fixes, or addition / correction
+* **Minor code and documentation changes**, such as small maintenance changes without
+  modification of code logic, typo fixes, or addition / correction
   of a sentence, but no change of the ``scikit-learn.org`` landing page or the
-  “about” page: Requires +1 by a maintainer, no -1 by a maintainer (lazy
-  consensus), happens on the issue or pull request page. Maintainers are
-  expected to give “reasonable time” to others to give their opinion on the
+  “about” page: Requires +1 by a core contributor, no -1 by a core contributor
+  (lazy consensus), happens on the issue or pull request page. Core contributors
+  are expected to give “reasonable time” to others to give their opinion on the
   pull request if they're not confident others would agree.
 
 * **Code changes and major documentation changes**
-  require +1 by two maintainers, no -1 by a maintainer (lazy
-  consensus), happens on the issue of pull-request page.
+  require +1 by two core contributors, no -1 by a core contributor (lazy
+  consensus), happens on the issue or pull request page.
 
 * **Changes to the API principles and changes to dependencies or supported
-  versions** happen via a :ref:`slep` and follows the decision-making process
-  outlined above.
+  versions** follow the decision-making process outlined above. In particular
+  changes to API principles are backed via :ref:`slep`. Smaller decisions
+  like supported versions can happen on a GitHub issue or pull request.
 
 * **Changes to the governance model** follow the process outlined in `SLEP020
   <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep020/proposal.html>`__.
@@ -179,15 +173,15 @@ the decision making procedure outlined above.
 Governance Model Changes
 ------------------------
 
-Governance model changes occur through an enhancement proposal or a GitHub Pull
-Request. An enhancement proposal will go through "**the decision-making process**"
+Governance model changes occur through an enhancement proposal or a GitHub pull
+request. An enhancement proposal will go through "**the decision-making process**"
 described in the previous section. Alternatively, an author may propose a change
-directly to the governance model with a GitHub Pull Request. Logistically, an
-author can open a Draft Pull Request for feedback and follow up with a new
-revised Pull Request for voting. Once that author is happy with the state of the
-Pull Request, they can call for a vote on the public mailing list. During the
-one-month voting period, the Pull Request can not change. A Pull Request
-Approval will count as a positive vote, and a "Request Changes" review will
+directly to the governance model with a GitHub pull request. Logistically, an
+author can open a draft pull request for feedback and follow up with a new
+revised pull request for voting. Once that author is happy with the state of the
+pull request, they can call for a vote on the public mailing list. During the
+one-month voting period, the pull request can not change. A pull request
+approval will count as a positive vote, and a "Request Changes" review will
 count as a negative vote. If two-thirds of the cast votes are positive, then
 the governance model change is accepted.
 
@@ -198,7 +192,7 @@ Enhancement proposals (SLEPs)
 For all votes, a proposal must have been made public and discussed before the
 vote. Such proposal must be a consolidated document, in the form of a
 "Scikit-Learn Enhancement Proposal" (SLEP), rather than a long discussion on an
-issue. A SLEP must be submitted as a pull-request to `enhancement proposals
+issue. A SLEP must be submitted as a pull request to `enhancement proposals
 <https://scikit-learn-enhancement-proposals.readthedocs.io>`_ using the `SLEP
 template
 <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_.

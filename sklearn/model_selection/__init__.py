@@ -1,8 +1,22 @@
+"""Tools for model selection, such as cross validation and hyper-parameter tuning."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import typing
 
-from ._plot import LearningCurveDisplay, ValidationCurveDisplay
-from ._search import GridSearchCV, ParameterGrid, ParameterSampler, RandomizedSearchCV
-from ._split import (
+from sklearn.model_selection._classification_threshold import (
+    FixedThresholdClassifier,
+    TunedThresholdClassifierCV,
+)
+from sklearn.model_selection._plot import LearningCurveDisplay, ValidationCurveDisplay
+from sklearn.model_selection._search import (
+    GridSearchCV,
+    ParameterGrid,
+    ParameterSampler,
+    RandomizedSearchCV,
+)
+from sklearn.model_selection._split import (
     BaseCrossValidator,
     BaseShuffleSplit,
     GroupKFold,
@@ -23,7 +37,7 @@ from ._split import (
     check_cv,
     train_test_split,
 )
-from ._validation import (
+from sklearn.model_selection._validation import (
     cross_val_predict,
     cross_val_score,
     cross_validate,
@@ -35,7 +49,7 @@ from ._validation import (
 if typing.TYPE_CHECKING:
     # Avoid errors in type checkers (e.g. mypy) for experimental estimators.
     # TODO: remove this check once the estimator is no longer experimental.
-    from ._search_successive_halving import (  # noqa
+    from sklearn.model_selection._search_successive_halving import (
         HalvingGridSearchCV,
         HalvingRandomSearchCV,
     )
@@ -44,35 +58,39 @@ if typing.TYPE_CHECKING:
 __all__ = [
     "BaseCrossValidator",
     "BaseShuffleSplit",
+    "FixedThresholdClassifier",
     "GridSearchCV",
-    "TimeSeriesSplit",
-    "KFold",
     "GroupKFold",
     "GroupShuffleSplit",
+    "HalvingGridSearchCV",
+    "HalvingRandomSearchCV",
+    "KFold",
+    "LearningCurveDisplay",
     "LeaveOneGroupOut",
     "LeaveOneOut",
     "LeavePGroupsOut",
     "LeavePOut",
-    "RepeatedKFold",
-    "RepeatedStratifiedKFold",
     "ParameterGrid",
     "ParameterSampler",
     "PredefinedSplit",
     "RandomizedSearchCV",
+    "RepeatedKFold",
+    "RepeatedStratifiedKFold",
     "ShuffleSplit",
-    "StratifiedKFold",
     "StratifiedGroupKFold",
+    "StratifiedKFold",
     "StratifiedShuffleSplit",
+    "TimeSeriesSplit",
+    "TunedThresholdClassifierCV",
+    "ValidationCurveDisplay",
     "check_cv",
     "cross_val_predict",
     "cross_val_score",
     "cross_validate",
     "learning_curve",
-    "LearningCurveDisplay",
     "permutation_test_score",
     "train_test_split",
     "validation_curve",
-    "ValidationCurveDisplay",
 ]
 
 

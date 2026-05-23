@@ -1,13 +1,7 @@
-"""
-The :mod:`sklearn.feature_extraction.image` submodule gathers utilities to
-extract features from images.
-"""
+"""Utilities to extract features from images."""
 
-# Authors: Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
-#          Gael Varoquaux <gael.varoquaux@normalesup.org>
-#          Olivier Grisel
-#          Vlad Niculae
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from itertools import product
 from numbers import Integral, Number, Real
@@ -16,9 +10,14 @@ import numpy as np
 from numpy.lib.stride_tricks import as_strided
 from scipy import sparse
 
-from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils import check_array, check_random_state
-from ..utils._param_validation import Hidden, Interval, RealNotInt, validate_params
+from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.utils import _align_api_if_sparse, check_array, check_random_state
+from sklearn.utils._param_validation import (
+    Hidden,
+    Interval,
+    RealNotInt,
+    validate_params,
+)
 
 __all__ = [
     "PatchExtractor",
@@ -27,6 +26,8 @@ __all__ = [
     "img_to_graph",
     "reconstruct_from_patches_2d",
 ]
+
+from sklearn.utils.validation import validate_data
 
 ###############################################################################
 # From an image to a graph
@@ -93,7 +94,7 @@ def _mask_edges_weights(mask, edges, weights=None):
 
 
 def _to_graph(
-    n_x, n_y, n_z, mask=None, img=None, return_as=sparse.coo_matrix, dtype=None
+    n_x, n_y, n_z, mask=None, img=None, return_as=sparse.coo_array, dtype=None
 ):
     """Auxiliary function for img_to_graph and grid_to_graph"""
     edges = _make_edges_3d(n_x, n_y, n_z)
@@ -126,7 +127,7 @@ def _to_graph(
     diag_idx = np.arange(n_voxels)
     i_idx = np.hstack((edges[0], edges[1]))
     j_idx = np.hstack((edges[1], edges[0]))
-    graph = sparse.coo_matrix(
+    graph = sparse.coo_array(
         (
             np.hstack((weights, weights, diag)),
             (np.hstack((i_idx, diag_idx)), np.hstack((j_idx, diag_idx))),
@@ -136,7 +137,7 @@ def _to_graph(
     )
     if return_as is np.ndarray:
         return graph.toarray()
-    return return_as(graph)
+    return _align_api_if_sparse(return_as(graph))
 
 
 @validate_params(
@@ -148,7 +149,7 @@ def _to_graph(
     },
     prefer_skip_nested_validation=True,
 )
-def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
+def img_to_graph(img, *, mask=None, return_as=sparse.coo_array, dtype=None):
     """Graph of the pixel-to-pixel gradient connections.
 
     Edges are weighted with the gradient values.
@@ -164,7 +165,7 @@ def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
         An optional mask of the image, to consider only part of the
         pixels.
     return_as : np.ndarray or a sparse matrix class, \
-            default=sparse.coo_matrix
+            default=sparse.coo_array
         The class to use to build the returned adjacency matrix.
     dtype : dtype, default=None
         The data of the returned sparse matrix. By default it is the
@@ -175,14 +176,16 @@ def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
     graph : ndarray or a sparse matrix class
         The computed adjacency matrix.
 
-    Notes
-    -----
-    For scikit-learn versions 0.14.1 and prior, return_as=np.ndarray was
-    handled by returning a dense np.matrix instance.  Going forward, np.ndarray
-    returns an np.ndarray, as expected.
-
-    For compatibility, user code relying on this method should wrap its
-    calls in ``np.asarray`` to avoid type issues.
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.feature_extraction.image import img_to_graph
+    >>> img = np.array([[0, 0], [0, 1]])
+    >>> img_to_graph(img, return_as=np.ndarray)
+    array([[0, 0, 0, 0],
+           [0, 0, 0, 1],
+           [0, 0, 0, 1],
+           [0, 1, 1, 1]])
     """
     img = np.atleast_3d(img)
     n_x, n_y, n_z = img.shape
@@ -200,12 +203,12 @@ def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
     },
     prefer_skip_nested_validation=True,
 )
-def grid_to_graph(
-    n_x, n_y, n_z=1, *, mask=None, return_as=sparse.coo_matrix, dtype=int
-):
+def grid_to_graph(n_x, n_y, n_z=1, *, mask=None, return_as=sparse.coo_array, dtype=int):
     """Graph of the pixel-to-pixel connections.
 
     Edges exist if 2 voxels are connected.
+
+    Read more in the :ref:`User Guide <connectivity_graph_image>`.
 
     Parameters
     ----------
@@ -219,7 +222,7 @@ def grid_to_graph(
         An optional mask of the image, to consider only part of the
         pixels.
     return_as : np.ndarray or a sparse matrix class, \
-            default=sparse.coo_matrix
+            default=sparse.coo_array
         The class to use to build the returned adjacency matrix.
     dtype : dtype, default=int
         The data of the returned sparse matrix. By default it is int.
@@ -229,14 +232,20 @@ def grid_to_graph(
     graph : np.ndarray or a sparse matrix class
         The computed adjacency matrix.
 
-    Notes
-    -----
-    For scikit-learn versions 0.14.1 and prior, return_as=np.ndarray was
-    handled by returning a dense np.matrix instance.  Going forward, np.ndarray
-    returns an np.ndarray, as expected.
-
-    For compatibility, user code relying on this method should wrap its
-    calls in ``np.asarray`` to avoid type issues.
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.feature_extraction.image import grid_to_graph
+    >>> shape_img = (4, 4, 1)
+    >>> mask = np.zeros(shape=shape_img, dtype=bool)
+    >>> mask[[1, 2], [1, 2], :] = True
+    >>> graph = grid_to_graph(*shape_img, mask=mask)
+    >>> print(graph)
+    <COOrdinate sparse matrix of dtype 'int64'
+      with 2 stored elements and shape (2, 2)>
+      Coords	Values
+      (0, 0)    1
+      (1, 1)    1
     """
     return _to_graph(n_x, n_y, n_z, mask=mask, return_as=return_as, dtype=dtype)
 
@@ -481,6 +490,23 @@ def reconstruct_from_patches_2d(patches, image_size):
     -------
     image : ndarray of shape image_size
         The reconstructed image.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_sample_image
+    >>> from sklearn.feature_extraction import image
+    >>> one_image = load_sample_image("china.jpg")
+    >>> print('Image shape: {}'.format(one_image.shape))
+    Image shape: (427, 640, 3)
+    >>> image_patches = image.extract_patches_2d(image=one_image, patch_size=(10, 10))
+    >>> print('Patches shape: {}'.format(image_patches.shape))
+    Patches shape: (263758, 10, 10, 3)
+    >>> image_reconstructed = image.reconstruct_from_patches_2d(
+    ...     patches=image_patches,
+    ...     image_size=one_image.shape
+    ... )
+    >>> print(f"Reconstructed shape: {image_reconstructed.shape}")
+    Reconstructed shape: (427, 640, 3)
     """
     i_h, i_w = image_size[:2]
     p_h, p_w = patches.shape[1:3]
@@ -495,7 +521,9 @@ def reconstruct_from_patches_2d(patches, image_size):
         for j in range(i_w):
             # divide by the amount of overlap
             # XXX: is this the most efficient way? memory-wise yes, cpu wise?
-            img[i, j] /= float(min(i + 1, p_h, i_h - i) * min(j + 1, p_w, i_w - j))
+            img[i, j] /= float(
+                min(i + 1, p_h, n_h, i_h - i) * min(j + 1, p_w, n_w, i_w - j)
+            )
     return img
 
 
@@ -611,7 +639,8 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
             `n_patches` is either `n_samples * max_patches` or the total
             number of patches that can be extracted.
         """
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X=X,
             ensure_2d=False,
             allow_nd=True,
@@ -655,5 +684,9 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
             )
         return patches
 
-    def _more_tags(self):
-        return {"X_types": ["3darray"], "stateless": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.two_d_array = False
+        tags.input_tags.three_d_array = True
+        tags.requires_fit = False
+        return tags

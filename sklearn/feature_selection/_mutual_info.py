@@ -1,5 +1,5 @@
-# Author: Nikolay Mayorov <n59_ru@hotmail.com>
-# License: 3-clause BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Integral
 
@@ -7,13 +7,14 @@ import numpy as np
 from scipy.sparse import issparse
 from scipy.special import digamma
 
-from ..metrics.cluster import mutual_info_score
-from ..neighbors import KDTree, NearestNeighbors
-from ..preprocessing import scale
-from ..utils import check_random_state
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.multiclass import check_classification_targets
-from ..utils.validation import check_array, check_X_y
+from sklearn.metrics.cluster import mutual_info_score
+from sklearn.neighbors import KDTree, NearestNeighbors
+from sklearn.preprocessing import scale
+from sklearn.utils import check_random_state
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import check_array, check_X_y
 
 
 def _compute_mi_cc(x, y, n_neighbors):
@@ -31,8 +32,8 @@ def _compute_mi_cc(x, y, n_neighbors):
     Returns
     -------
     mi : float
-        Estimated mutual information. If it turned out to be negative it is
-        replace by 0.
+        Estimated mutual information in nat units. If it turned out to be
+        negative it is replaced by 0.
 
     Notes
     -----
@@ -96,8 +97,8 @@ def _compute_mi_cd(c, d, n_neighbors):
     Returns
     -------
     mi : float
-        Estimated mutual information. If it turned out to be negative it is
-        replace by 0.
+        Estimated mutual information in nat units. If it turned out to be
+        negative it is replaced by 0.
 
     Notes
     -----
@@ -201,11 +202,13 @@ def _iterate_columns(X, columns=None):
 def _estimate_mi(
     X,
     y,
+    *,
     discrete_features="auto",
     discrete_target=False,
     n_neighbors=3,
     copy=True,
     random_state=None,
+    n_jobs=None,
 ):
     """Estimate mutual information between the features and the target.
 
@@ -242,11 +245,21 @@ def _estimate_mi(
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
+    n_jobs : int, default=None
+        The number of jobs to use for computing the mutual information.
+        The parallelization is done on the columns of `X`.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+        .. versionadded:: 1.5
+
+
     Returns
     -------
     mi : ndarray, shape (n_features,)
-        Estimated mutual information between each feature and the target.
-        A negative value will be replaced by 0.
+        Estimated mutual information between each feature and the target in
+        nat units. A negative value will be replaced by 0.
 
     References
     ----------
@@ -301,10 +314,10 @@ def _estimate_mi(
             * rng.standard_normal(size=n_samples)
         )
 
-    mi = [
-        _compute_mi(x, y, discrete_feature, discrete_target, n_neighbors)
+    mi = Parallel(n_jobs=n_jobs)(
+        delayed(_compute_mi)(x, y, discrete_feature, discrete_target, n_neighbors)
         for x, discrete_feature in zip(_iterate_columns(X), discrete_mask)
-    ]
+    )
 
     return np.array(mi)
 
@@ -317,11 +330,19 @@ def _estimate_mi(
         "n_neighbors": [Interval(Integral, 1, None, closed="left")],
         "copy": ["boolean"],
         "random_state": ["random_state"],
+        "n_jobs": [Integral, None],
     },
     prefer_skip_nested_validation=True,
 )
 def mutual_info_regression(
-    X, y, *, discrete_features="auto", n_neighbors=3, copy=True, random_state=None
+    X,
+    y,
+    *,
+    discrete_features="auto",
+    n_neighbors=3,
+    copy=True,
+    random_state=None,
+    n_jobs=None,
 ):
     """Estimate mutual information for a continuous target variable.
 
@@ -367,10 +388,21 @@ def mutual_info_regression(
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
+    n_jobs : int, default=None
+        The number of jobs to use for computing the mutual information.
+        The parallelization is done on the columns of `X`.
+
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+        .. versionadded:: 1.5
+
     Returns
     -------
     mi : ndarray, shape (n_features,)
-        Estimated mutual information between each feature and the target.
+        Estimated mutual information between each feature and the target in
+        nat units.
 
     Notes
     -----
@@ -395,8 +427,27 @@ def mutual_info_regression(
            Data Sets". PLoS ONE 9(2), 2014.
     .. [4] L. F. Kozachenko, N. N. Leonenko, "Sample Estimate of the Entropy
            of a Random Vector", Probl. Peredachi Inf., 23:2 (1987), 9-16
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_regression
+    >>> from sklearn.feature_selection import mutual_info_regression
+    >>> X, y = make_regression(
+    ...     n_samples=50, n_features=3, n_informative=1, noise=1e-4, random_state=42
+    ... )
+    >>> mutual_info_regression(X, y)
+    array([0.117, 2.645, 0.0287])
     """
-    return _estimate_mi(X, y, discrete_features, False, n_neighbors, copy, random_state)
+    return _estimate_mi(
+        X,
+        y,
+        discrete_features=discrete_features,
+        discrete_target=False,
+        n_neighbors=n_neighbors,
+        copy=copy,
+        random_state=random_state,
+        n_jobs=n_jobs,
+    )
 
 
 @validate_params(
@@ -407,11 +458,19 @@ def mutual_info_regression(
         "n_neighbors": [Interval(Integral, 1, None, closed="left")],
         "copy": ["boolean"],
         "random_state": ["random_state"],
+        "n_jobs": [Integral, None],
     },
     prefer_skip_nested_validation=True,
 )
 def mutual_info_classif(
-    X, y, *, discrete_features="auto", n_neighbors=3, copy=True, random_state=None
+    X,
+    y,
+    *,
+    discrete_features="auto",
+    n_neighbors=3,
+    copy=True,
+    random_state=None,
+    n_jobs=None,
 ):
     """Estimate mutual information for a discrete target variable.
 
@@ -457,10 +516,20 @@ def mutual_info_classif(
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
+    n_jobs : int, default=None
+        The number of jobs to use for computing the mutual information.
+        The parallelization is done on the columns of `X`.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+        .. versionadded:: 1.5
+
     Returns
     -------
     mi : ndarray, shape (n_features,)
-        Estimated mutual information between each feature and the target.
+        Estimated mutual information between each feature and the target in
+        nat units.
 
     Notes
     -----
@@ -485,6 +554,27 @@ def mutual_info_classif(
            Data Sets". PLoS ONE 9(2), 2014.
     .. [4] L. F. Kozachenko, N. N. Leonenko, "Sample Estimate of the Entropy
            of a Random Vector:, Probl. Peredachi Inf., 23:2 (1987), 9-16
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.feature_selection import mutual_info_classif
+    >>> X, y = make_classification(
+    ...     n_samples=100, n_features=10, n_informative=2, n_clusters_per_class=1,
+    ...     shuffle=False, random_state=42
+    ... )
+    >>> mutual_info_classif(X, y)
+    array([0.589, 0.107, 0.196, 0.0968 , 0.,
+           0.   , 0.   , 0.   , 0.     , 0.])
     """
     check_classification_targets(y)
-    return _estimate_mi(X, y, discrete_features, True, n_neighbors, copy, random_state)
+    return _estimate_mi(
+        X,
+        y,
+        discrete_features=discrete_features,
+        discrete_target=True,
+        n_neighbors=n_neighbors,
+        copy=copy,
+        random_state=random_state,
+        n_jobs=n_jobs,
+    )

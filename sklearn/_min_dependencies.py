@@ -1,23 +1,19 @@
 """All minimum dependencies for scikit-learn."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import argparse
-import platform
 from collections import defaultdict
 
 # scipy and cython should by in sync with pyproject.toml
-
-# NumPy version should match oldest-supported-numpy for the minimum supported
-# Python version.
-# see: https://github.com/scipy/oldest-supported-numpy/blob/main/setup.cfg
-if platform.python_implementation() == "PyPy":
-    NUMPY_MIN_VERSION = "1.19.2"
-else:
-    NUMPY_MIN_VERSION = "1.17.3"
-
-SCIPY_MIN_VERSION = "1.5.0"
-JOBLIB_MIN_VERSION = "1.2.0"
-THREADPOOLCTL_MIN_VERSION = "2.0.0"
+NUMPY_MIN_VERSION = "1.24.1"
+SCIPY_MIN_VERSION = "1.10.0"
+JOBLIB_MIN_VERSION = "1.4.0"
+NARWHALS_MIN_VERSION = "2.0.1"
+THREADPOOLCTL_MIN_VERSION = "3.5.0"
 PYTEST_MIN_VERSION = "7.1.2"
-CYTHON_MIN_VERSION = "0.29.33"
+CYTHON_MIN_VERSION = "3.1.2"
 
 
 # 'build' and 'install' is included to have structured metadata for CI.
@@ -27,33 +23,40 @@ dependent_packages = {
     "numpy": (NUMPY_MIN_VERSION, "build, install"),
     "scipy": (SCIPY_MIN_VERSION, "build, install"),
     "joblib": (JOBLIB_MIN_VERSION, "install"),
+    "narwhals": (NARWHALS_MIN_VERSION, "install"),
     "threadpoolctl": (THREADPOOLCTL_MIN_VERSION, "install"),
     "cython": (CYTHON_MIN_VERSION, "build"),
-    "matplotlib": ("3.3.4", "benchmark, docs, examples, tests"),
-    "scikit-image": ("0.16.2", "docs, examples, tests"),
-    "pandas": ("1.0.5", "benchmark, docs, examples, tests"),
-    "seaborn": ("0.9.0", "docs, examples"),
+    "meson-python": ("0.17.1", "build"),
+    "matplotlib": ("3.6.1", "benchmark, docs, examples, tests"),
+    "scikit-image": ("0.22.0", "docs, examples"),
+    "pandas": ("1.5.0", "benchmark, docs, examples, tests"),
+    "rich": ("14.1.0", "docs, examples, tests"),
+    "seaborn": ("0.13.0", "docs, examples"),
     "memory_profiler": ("0.57.0", "benchmark, docs"),
     "pytest": (PYTEST_MIN_VERSION, "tests"),
     "pytest-cov": ("2.9.0", "tests"),
-    "ruff": ("0.0.272", "tests"),
-    "black": ("23.3.0", "tests"),
-    "mypy": ("1.3", "tests"),
-    "pyamg": ("4.0.0", "tests"),
-    "polars": ("0.18.2", "tests"),
-    "pyarrow": ("12.0.0", "tests"),
-    "sphinx": ("6.0.0", "docs"),
+    "ruff": ("0.12.2", "tests"),
+    "mypy": ("1.15", "tests"),
+    "pyamg": ("5.0.0", "tests"),
+    "polars": ("0.20.30", "docs, tests"),
+    "pyarrow": ("13.0.0", "tests"),
+    "sphinx": ("7.3.7", "docs"),
     "sphinx-copybutton": ("0.5.2", "docs"),
-    "sphinx-gallery": ("0.10.1", "docs"),
+    "sphinx-gallery": ("0.17.1", "docs"),
     "numpydoc": ("1.2.0", "docs, tests"),
-    "Pillow": ("7.1.2", "docs"),
-    "pooch": ("1.6.0", "docs, examples, tests"),
-    "sphinx-prompt": ("1.3.0", "docs"),
-    "sphinxext-opengraph": ("0.4.2", "docs"),
-    "plotly": ("5.14.0", "docs, examples"),
+    "Pillow": ("12.1.1", "docs"),
+    "pooch": ("1.8.0", "docs, examples, tests"),
+    "sphinx-prompt": ("1.4.0", "docs"),
+    "sphinxext-opengraph": ("0.9.1", "docs"),
+    "plotly": ("5.22.0", "docs, examples"),
+    "sphinxcontrib-sass": ("0.3.4", "docs"),
+    "sphinx-remove-toctrees": ("1.0.0.post1", "docs"),
+    "sphinx-design": ("0.6.0", "docs"),
+    "pydata-sphinx-theme": ("0.15.3", "docs"),
+    "towncrier": ("24.8.0", "docs"),
     # XXX: Pin conda-lock to the latest released version (needs manual update
     # from time to time)
-    "conda-lock": ("2.1.1", "maintenance"),
+    "conda-lock": ("3.0.1", "maintenance"),
 }
 
 

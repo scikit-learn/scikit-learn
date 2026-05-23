@@ -30,50 +30,50 @@ We thus transform the KDD Data set into two different data sets: SA and SF.
 * http and smtp are two subsets of SF corresponding with third feature
   equal to 'http' (resp. to 'smtp').
 
-General KDD structure :
+General KDD structure:
 
-    ================      ==========================================
-    Samples total         4898431
-    Dimensionality        41
-    Features              discrete (int) or continuous (float)
-    Targets               str, 'normal.' or name of the anomaly type
-    ================      ==========================================
+================      ==========================================
+Samples total         4898431
+Dimensionality        41
+Features              discrete (int) or continuous (float)
+Targets               str, 'normal.' or name of the anomaly type
+================      ==========================================
 
-    SA structure :
+SA structure:
 
-    ================      ==========================================
-    Samples total         976158
-    Dimensionality        41
-    Features              discrete (int) or continuous (float)
-    Targets               str, 'normal.' or name of the anomaly type
-    ================      ==========================================
+================      ==========================================
+Samples total         976158
+Dimensionality        41
+Features              discrete (int) or continuous (float)
+Targets               str, 'normal.' or name of the anomaly type
+================      ==========================================
 
-    SF structure :
+SF structure:
 
-    ================      ==========================================
-    Samples total         699691
-    Dimensionality        4
-    Features              discrete (int) or continuous (float)
-    Targets               str, 'normal.' or name of the anomaly type
-    ================      ==========================================
+================      ==========================================
+Samples total         699691
+Dimensionality        4
+Features              discrete (int) or continuous (float)
+Targets               str, 'normal.' or name of the anomaly type
+================      ==========================================
 
-    http structure :
+http structure:
 
-    ================      ==========================================
-    Samples total         619052
-    Dimensionality        3
-    Features              discrete (int) or continuous (float)
-    Targets               str, 'normal.' or name of the anomaly type
-    ================      ==========================================
+================      ==========================================
+Samples total         619052
+Dimensionality        3
+Features              discrete (int) or continuous (float)
+Targets               str, 'normal.' or name of the anomaly type
+================      ==========================================
 
-    smtp structure :
+smtp structure:
 
-    ================      ==========================================
-    Samples total         95373
-    Dimensionality        3
-    Features              discrete (int) or continuous (float)
-    Targets               str, 'normal.' or name of the anomaly type
-    ================      ==========================================
+================      ==========================================
+Samples total         95373
+Dimensionality        3
+Features              discrete (int) or continuous (float)
+Targets               str, 'normal.' or name of the anomaly type
+================      ==========================================
 
 :func:`sklearn.datasets.fetch_kddcup99` will load the kddcup99 dataset; it
 returns a dictionary-like object with the feature matrix in the ``data`` member
@@ -81,14 +81,14 @@ and the target values in ``target``. The "as_frame" optional argument converts
 ``data`` into a pandas DataFrame and ``target`` into a pandas Series. The
 dataset will be downloaded from the web if necessary.
 
-.. topic:: References
+.. rubric:: References
 
-    .. [2] Analysis and Results of the 1999 DARPA Off-Line Intrusion
-           Detection Evaluation, Richard Lippmann, Joshua W. Haines,
-           David J. Fried, Jonathan Korba, Kumar Das.
+.. [2] Analysis and Results of the 1999 DARPA Off-Line Intrusion
+       Detection Evaluation, Richard Lippmann, Joshua W. Haines,
+       David J. Fried, Jonathan Korba, Kumar Das.
 
-    .. [3] K. Yamanishi, J.-I. Takeuchi, G. Williams, and P. Milne. Online
-           unsupervised outlier detection using finite mixtures with
-           discounting learning algorithms. In Proceedings of the sixth
-           ACM SIGKDD international conference on Knowledge discovery
-           and data mining, pages 320-324. ACM Press, 2000.
+.. [3] K. Yamanishi, J.-I. Takeuchi, G. Williams, and P. Milne. Online
+       unsupervised outlier detection using finite mixtures with
+       discounting learning algorithms. In Proceedings of the sixth
+       ACM SIGKDD international conference on Knowledge discovery
+       and data mining, pages 320-324. ACM Press, 2000.
