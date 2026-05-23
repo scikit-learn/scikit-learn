@@ -2388,7 +2388,7 @@ Here is a small example of usage of this function::
     Data mining and knowledge discovery handbook (pp. 667-685). Springer US.
 
 
-.. _dcg_ndcg:
+.. _ndcg:
 
 Normalized Discounted Cumulative Gain
 -------------------------------------
