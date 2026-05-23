@@ -1,12 +1,13 @@
 """
-Regression tests for Issue #34003:
-  Array API: Ridge with alpha as an array fails due to misconfigured checks
+Regression tests for Issue #34003: Array API: Ridge with alpha as an array
+fails due to misconfigured checks.
 
 Two root causes:
   1. _BaseRidge._parameter_constraints uses np.ndarray instead of "array-like",
      rejecting non-NumPy array-like objects (e.g. torch.Tensor) at _validate_params.
-  2. _ridge_regression's scalar detection uses isinstance(alpha, type(xp.asarray([0.0]))),
-     which is broken when xp is derived from X (e.g. torch) but alpha is np.ndarray.
+  2. _ridge_regression's scalar detection uses
+     isinstance(alpha, type(xp.asarray([0.0]))), which is broken when xp is
+     derived from X (e.g. torch) but alpha is np.ndarray.
 """
 
 import numpy as np
