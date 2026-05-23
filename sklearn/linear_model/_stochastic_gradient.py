@@ -637,6 +637,12 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             allow_all_zero_weights=self.early_stopping,
         )
 
+        # If all sample weights are zero and the model is already fitted,
+        # there is nothing to learn - return early without mutating the model.
+        # (If this is the first call, we still need to allocate parameters below.)
+        if not first_call and not np.any(sample_weight):
+            return self
+
         if getattr(self, "coef_", None) is None or coef_init is not None:
             self._allocate_parameter_mem(
                 n_classes=n_classes,
@@ -1518,6 +1524,11 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         n_samples, n_features = X.shape
 
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+
+        # If all sample weights are zero and the model is already fitted,
+        # there is nothing to learn - return early without mutating the model.
+        if not first_call and not np.any(sample_weight):
+            return self
 
         # Allocate datastructures from input arguments
         if first_call:
