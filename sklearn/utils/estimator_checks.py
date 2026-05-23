@@ -1551,9 +1551,7 @@ def check_array_api_input_string_y(
     """
     xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
-    X_np, y_numeric = make_classification(
-        n_samples=30, n_features=10, random_state=42
-    )
+    X_np, y_numeric = make_classification(n_samples=30, n_features=10, random_state=42)
 
     if dtype_name is None:
         max_float_dtype = _max_precision_float_dtype(xp, device)
@@ -1645,8 +1643,7 @@ def check_array_api_input_string_y(
         f"got {type(predictions)}"
     )
     assert set(predictions).issubset(set(y_str)), (
-        f"predict returned unexpected class labels: "
-        f"{set(predictions) - set(y_str)}"
+        f"predict returned unexpected class labels: {set(predictions) - set(y_str)}"
     )
 
 
