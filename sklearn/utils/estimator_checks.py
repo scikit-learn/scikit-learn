@@ -392,6 +392,21 @@ def _yield_array_api_checks(estimator, only_numpy=False):
             array_namespace="array_api_strict",
         )
 
+        # 4. For classifiers: check that string y with array API X works
+        # for fit and score. See scikit-learn/scikit-learn#34094.
+        if is_classifier(estimator):
+            for (
+                array_namespace,
+                device_name,
+                dtype_name,
+            ) in yield_namespace_device_dtype_combinations():
+                yield partial(
+                    check_array_api_input_string_y,
+                    array_namespace=array_namespace,
+                    device_name=device_name,
+                    dtype_name=dtype_name,
+                )
+
 
 def _yield_all_checks(estimator, legacy: bool):
     name = estimator.__class__.__name__
@@ -1494,6 +1509,145 @@ def check_array_api_same_namespace(
                 f"Add a call to check_same_namespace() at the start of "
                 f"{method_name} to fix this."
             )
+
+
+def check_array_api_input_string_y(
+    name,
+    estimator_orig,
+    array_namespace,
+    device_name=None,
+    dtype_name=None,
+):
+    """Check classifiers work with string `y` and array API `X`.
+
+    Classifiers supporting array API should accept string targets
+    together with array API dispatched feature arrays for both ``fit``
+    and ``score`` without raising errors.
+
+    The check verifies that:
+    * ``fit`` succeeds and fitted attributes that are arrays have the
+      expected namespace, device, shape and dtype;
+    * ``score`` returns a Python float;
+    * ``predict`` returns an array in the expected namespace/device and
+      its values are a subset of the string classes.
+
+    Parameters
+    ----------
+    name : str
+        The name of the estimator.
+
+    estimator_orig : estimator
+        Original (uncloned) estimator instance.
+
+    array_namespace : str
+        The name of the Array API namespace for ``X``.
+
+    device_name : str, default=None
+        The name of the device on which to allocate the ``X`` arrays.
+
+    dtype_name : str, default=None
+        The name of the float dtype for ``X``. If ``None``,
+        ``_max_precision_float_dtype`` is used for the namespace/device.
+    """
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
+
+    X_np, y_numeric = make_classification(
+        n_samples=30, n_features=10, random_state=42
+    )
+
+    if dtype_name is None:
+        max_float_dtype = _max_precision_float_dtype(xp, device)
+        dtype_name = "float32" if max_float_dtype == xp.float32 else "float64"
+
+    X_np = X_np.astype(dtype_name, copy=False)
+    X_np = _enforce_estimator_tags_X(estimator_orig, X_np)
+
+    # Convert numeric targets to string labels
+    y_str = np.array([f"class_{v}" for v in y_numeric])
+
+    X_xp = xp.asarray(X_np, device=device)
+
+    est = clone(estimator_orig)
+    set_random_state(est)
+
+    # --- fit with array API X and string y ---------------------------------
+    with config_context(array_api_dispatch=True):
+        est.fit(X_xp, y_str)
+
+    X_ns = xp.__name__
+
+    # Check fitted array attributes have the expected namespace, device,
+    # shape and dtype (mirroring the attribute checks in _check_array_api_core).
+    est_np = clone(estimator_orig)
+    set_random_state(est_np)
+    est_np.fit(X_np, y_str)
+
+    array_attributes = {
+        key: value
+        for key, value in vars(est_np).items()
+        if isinstance(value, np.ndarray)
+    }
+
+    for key, attribute in array_attributes.items():
+        est_xp_param = getattr(est, key)
+        with config_context(array_api_dispatch=True):
+            attribute_ns = get_namespace(est_xp_param)[0].__name__
+
+        # classes_ is expected to remain as a numpy string array
+        if key == "classes_":
+            assert isinstance(est_xp_param, np.ndarray), (
+                f"'classes_' should be a numpy array of strings, "
+                f"got {type(est_xp_param)}"
+            )
+            continue
+
+        assert attribute_ns == X_ns, (
+            f"'{key}' attribute is in wrong namespace, expected {X_ns} "
+            f"got {attribute_ns}"
+        )
+
+        with config_context(array_api_dispatch=True):
+            assert array_device(est_xp_param) == array_device(X_xp), (
+                f"'{key}' attribute is on wrong device"
+            )
+
+        est_xp_param_np = move_to(est_xp_param, xp=np, device="cpu")
+        assert attribute.shape == est_xp_param_np.shape, (
+            f"'{key}' shape mismatch: expected {attribute.shape}, "
+            f"got {est_xp_param_np.shape}"
+        )
+
+        expected_dtype = attribute.dtype
+        if np.issubdtype(attribute.dtype, np.floating):
+            max_float_dtype = _max_precision_float_dtype(xp, device)
+            if max_float_dtype == xp.float32:
+                expected_dtype = np.float32
+        assert est_xp_param_np.dtype == expected_dtype, (
+            f"'{key}' dtype mismatch: expected {expected_dtype}, "
+            f"got {est_xp_param_np.dtype}"
+        )
+
+    # --- score with array API X and string y --------------------------------
+    with config_context(array_api_dispatch=True):
+        score_result = est.score(X_xp, y_str)
+
+    assert isinstance(score_result, float), (
+        f"score should return a Python float, got {type(score_result)}"
+    )
+
+    # --- predict with array API X -------------------------------------------
+    with config_context(array_api_dispatch=True):
+        predictions = est.predict(X_xp)
+
+    # predictions for string targets should be numpy string arrays
+    assert isinstance(predictions, np.ndarray), (
+        f"predict should return a numpy array for string targets, "
+        f"got {type(predictions)}"
+    )
+    assert set(predictions).issubset(set(y_str)), (
+        f"predict returned unexpected class labels: "
+        f"{set(predictions) - set(y_str)}"
+    )
 
 
 def check_estimator_sparse_tag(name, estimator_orig):
