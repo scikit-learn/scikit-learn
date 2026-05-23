@@ -1,4 +1,4 @@
-
+"""
 Regression tests for Issue #34003:
   Array API: Ridge with alpha as an array fails due to misconfigured checks
 
