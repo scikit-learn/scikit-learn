@@ -353,10 +353,20 @@ class LinearModelLoss:
 
         if not self.base_loss.is_multiclass:
             grad = np.empty_like(coef, dtype=weights.dtype)
-            X_grad = X.T @ grad_pointwise
-            grad[:n_features] = (
-                move_to(X_grad, xp=np, device="cpu") + l2_reg_strength * weights
-            )
+
+            with np.errstate(all="raise"):
+                try:
+                    grad_X = grad_pointwise.T @ X
+                    grad[ :n_features] = (
+                        move_to(grad_X, xp=np, device="cpu")
+                        + l2_reg_strength * weights
+                    )
+                except FloatingPointError:
+                    raise ValueError(
+                        "Overflow detected. Try scaling the target variable or"
+                        " features, or using a different solver"
+                    ) from None
+
             if self.fit_intercept:
                 grad[-1] = xp.sum(grad_pointwise)
         else:
@@ -365,10 +375,18 @@ class LinearModelLoss:
             # support the array API.
             grad = np.empty((n_classes, n_dof), dtype=weights.dtype, order="F")
             # grad_pointwise.shape = (n_samples, n_classes)
-            grad_X = grad_pointwise.T @ X
-            grad[:, :n_features] = (
-                move_to(grad_X, xp=np, device="cpu") + l2_reg_strength * weights
-            )
+            with np.errstate(all="raise"):
+                try:
+                    grad_X = grad_pointwise.T @ X
+                    grad[:, :n_features] = (
+                        move_to(grad_X, xp=np, device="cpu") + l2_reg_strength * weights
+                    )
+                except FloatingPointError:
+                    raise ValueError(
+                        "Overflow detected. Try scaling the target variable or"
+                        " features, or using a different solver"
+                    ) from None
+            
             if self.fit_intercept:
                 grad[:, -1] = move_to(
                     xp.sum(grad_pointwise, axis=0), xp=np, device="cpu"
