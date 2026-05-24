@@ -14,7 +14,6 @@ import joblib
 import numpy as np
 import pytest
 from joblib.numpy_pickle import NumpyPickler
-from numpy.testing import assert_allclose
 
 from sklearn import clone, datasets, tree
 from sklearn.dummy import DummyRegressor
@@ -56,6 +55,7 @@ from sklearn.tree._tree import Tree as CythonTree
 from sklearn.utils import compute_sample_weight
 from sklearn.utils._array_api import xpx
 from sklearn.utils._testing import (
+    assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,

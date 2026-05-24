@@ -6,7 +6,6 @@ import warnings
 import joblib
 import numpy as np
 import pytest
-from numpy.testing import assert_array_equal
 
 from sklearn import config_context, get_config
 from sklearn.compose import make_column_transformer
@@ -16,6 +15,7 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.utils._testing import assert_array_equal
 from sklearn.utils.fixes import _IS_WASM
 from sklearn.utils.parallel import Parallel, delayed
 

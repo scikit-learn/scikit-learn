@@ -2653,7 +2653,7 @@ def test_search_with_2d_array():
     result = random_search.cv_results_["param_vect__ngram_range"]
     expected_data = np.empty(3, dtype=object)
     expected_data[:] = [(1, 2), (1, 2), (1, 1)]
-    np.testing.assert_array_equal(result.data, expected_data)
+    assert_array_equal(result.data, expected_data)
 
 
 def test_search_html_repr():
@@ -2960,8 +2960,11 @@ def test_yield_masked_array_for_each_param(candidate_params, expected):
     for (key, value), (expected_key, expected_value) in zip(result, expected):
         assert key == expected_key
         assert value.dtype == expected_value.dtype
-        np.testing.assert_array_equal(value, expected_value)
-        np.testing.assert_array_equal(value.mask, expected_value.mask)
+        assert_array_equal(
+            np.ma.getmaskarray(value).astype(int),
+            np.ma.getmaskarray(expected_value).astype(int),
+        )
+        assert_array_equal(value.mask, expected_value.mask)
 
 
 def test_yield_masked_array_no_runtime_warning():

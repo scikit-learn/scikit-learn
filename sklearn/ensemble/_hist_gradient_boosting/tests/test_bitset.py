@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose
 
 from sklearn.ensemble._hist_gradient_boosting._bitset import (
     in_bitset_memoryview,
@@ -8,6 +7,7 @@ from sklearn.ensemble._hist_gradient_boosting._bitset import (
     set_raw_bitset_from_binned_bitset,
 )
 from sklearn.ensemble._hist_gradient_boosting.common import X_DTYPE
+from sklearn.utils._testing import assert_allclose
 
 
 @pytest.mark.parametrize(

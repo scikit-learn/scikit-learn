@@ -15,6 +15,7 @@ from sklearn.utils._testing import (
     _get_warnings_filters_info_list,
     assert_allclose,
     assert_allclose_dense_sparse,
+    assert_array_equal,
     assert_docstring_consistency,
     assert_run_python_script_without_output,
     check_docstring_parameters,
@@ -830,7 +831,7 @@ def check_memmap(input_array, mmap_data, mmap_mode="r"):
     assert isinstance(mmap_data, np.memmap)
     writeable = mmap_mode != "r"
     assert mmap_data.flags.writeable is writeable
-    np.testing.assert_array_equal(input_array, mmap_data)
+    assert_array_equal(input_array, mmap_data)
 
 
 def test_tempmemmap(monkeypatch):

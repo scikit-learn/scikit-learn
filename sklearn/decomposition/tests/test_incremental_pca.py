@@ -5,14 +5,15 @@ import warnings
 
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose, assert_array_equal
 
 from sklearn import datasets
 from sklearn.decomposition import PCA, IncrementalPCA
 from sklearn.utils._testing import (
+    assert_allclose,
     assert_allclose_dense_sparse,
     assert_almost_equal,
     assert_array_almost_equal,
+    assert_array_equal,
 )
 from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS, LIL_CONTAINERS
 
@@ -30,7 +31,7 @@ def test_incremental_pca():
     X_transformed = ipca.fit_transform(X)
 
     assert X_transformed.shape == (X.shape[0], 2)
-    np.testing.assert_allclose(
+    assert_allclose(
         ipca.explained_variance_ratio_.sum(),
         pca.explained_variance_ratio_.sum(),
         rtol=1e-3,
@@ -41,9 +42,7 @@ def test_incremental_pca():
         ipca.fit(X)
         cov = ipca.get_covariance()
         precision = ipca.get_precision()
-        np.testing.assert_allclose(
-            np.dot(cov, precision), np.eye(X.shape[1]), atol=1e-13
-        )
+        assert_allclose(np.dot(cov, precision), np.eye(X.shape[1]), atol=1e-13)
 
 
 @pytest.mark.parametrize(
@@ -61,7 +60,7 @@ def test_incremental_pca_sparse(sparse_container):
     X_transformed = ipca.fit_transform(X_sparse)
 
     assert X_transformed.shape == (X_sparse.shape[0], 2)
-    np.testing.assert_allclose(
+    assert_allclose(
         ipca.explained_variance_ratio_.sum(),
         pca.explained_variance_ratio_.sum(),
         rtol=1e-3,
@@ -72,9 +71,7 @@ def test_incremental_pca_sparse(sparse_container):
         ipca.fit(X_sparse)
         cov = ipca.get_covariance()
         precision = ipca.get_precision()
-        np.testing.assert_allclose(
-            np.dot(cov, precision), np.eye(X_sparse.shape[1]), atol=1e-13
-        )
+        assert_allclose(np.dot(cov, precision), np.eye(X_sparse.shape[1]), atol=1e-13)
 
     with pytest.raises(
         TypeError,
@@ -459,9 +456,7 @@ def test_incremental_pca_partial_fit_float_division():
     pca2.partial_fit(B)
     singular_vals_int_samples_seen = pca2.singular_values_
 
-    np.testing.assert_allclose(
-        singular_vals_float_samples_seen, singular_vals_int_samples_seen
-    )
+    assert_allclose(singular_vals_float_samples_seen, singular_vals_int_samples_seen)
 
 
 def test_incremental_pca_fit_overflow_error():
@@ -476,7 +471,7 @@ def test_incremental_pca_fit_overflow_error():
     pca = PCA(n_components=2)
     pca.fit(A)
 
-    np.testing.assert_allclose(ipca.singular_values_, pca.singular_values_)
+    assert_allclose(ipca.singular_values_, pca.singular_values_)
 
 
 def test_incremental_pca_feature_names_out():

@@ -2,7 +2,6 @@ import warnings
 
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose
 from scipy.sparse import issparse
 
 from sklearn import datasets
@@ -14,7 +13,7 @@ from sklearn.metrics.cluster import (
     silhouette_score,
 )
 from sklearn.metrics.cluster._unsupervised import _silhouette_reduce
-from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_allclose, assert_array_equal
 from sklearn.utils.fixes import (
     CSC_CONTAINERS,
     CSR_CONTAINERS,

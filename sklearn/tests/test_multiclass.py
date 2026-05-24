@@ -3,7 +3,6 @@ from re import escape
 import numpy as np
 import pytest
 import scipy.sparse as sp
-from numpy.testing import assert_allclose
 
 from sklearn import datasets, svm
 from sklearn.base import BaseEstimator, ClassifierMixin
@@ -36,7 +35,11 @@ from sklearn.utils import (
     shuffle,
 )
 from sklearn.utils._mocking import CheckingClassifier
-from sklearn.utils._testing import assert_almost_equal, assert_array_equal
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_equal,
+)
 from sklearn.utils.fixes import (
     COO_CONTAINERS,
     CSC_CONTAINERS,

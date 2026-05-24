@@ -8,7 +8,6 @@ from unittest.mock import Mock
 
 import numpy as np
 import pytest
-from numpy.testing import assert_array_equal
 from scipy import sparse
 
 from sklearn import config_context
@@ -50,6 +49,7 @@ from sklearn.utils._mocking import CheckingClassifier
 from sklearn.utils._testing import (
     assert_allclose,
     assert_allclose_dense_sparse,
+    assert_array_equal,
     ignore_warnings,
 )
 from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, CSR_CONTAINERS

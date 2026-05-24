@@ -5,7 +5,6 @@ from io import StringIO
 import numpy as np
 import pytest
 import scipy.sparse as sp
-from numpy.testing import assert_allclose
 from scipy.optimize import check_grad
 from scipy.spatial.distance import pdist, squareform
 
@@ -34,6 +33,7 @@ from sklearn.metrics.pairwise import (
 from sklearn.neighbors import NearestNeighbors, kneighbors_graph
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import (
+    assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,

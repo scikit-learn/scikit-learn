@@ -3,7 +3,6 @@ import sys
 
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose, assert_array_equal
 from scipy import sparse
 from scipy.interpolate import BSpline
 from scipy.sparse import random as sparse_random
@@ -31,8 +30,10 @@ from sklearn.utils._array_api import (
 from sklearn.utils._mask import _get_mask
 from sklearn.utils._testing import (
     _array_api_for_tests,
+    assert_allclose,
     assert_allclose_dense_sparse,
     assert_array_almost_equal,
+    assert_array_equal,
 )
 from sklearn.utils.fixes import (
     CSC_CONTAINERS,

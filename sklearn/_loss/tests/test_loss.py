@@ -3,7 +3,6 @@ import pickle
 
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose, assert_array_equal
 from pytest import approx
 from scipy.optimize import (
     LinearConstraint,
@@ -45,6 +44,8 @@ from sklearn.utils._array_api import (
 )
 from sklearn.utils._testing import (
     _array_api_for_tests,
+    assert_allclose,
+    assert_array_equal,
     create_memmap_backed_data,
     skip_if_32bit,
 )

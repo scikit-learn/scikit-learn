@@ -2,9 +2,9 @@ import pickle
 
 import numpy as np
 import pytest
-from numpy.testing import assert_array_equal
 
 from sklearn.utils._encode import _check_unknown, _encode, _get_counts, _unique
+from sklearn.utils._testing import assert_array_equal
 
 
 @pytest.mark.parametrize(

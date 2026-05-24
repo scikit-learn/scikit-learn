@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose
 
 from sklearn.datasets import make_regression
 from sklearn.ensemble._hist_gradient_boosting._bitset import (
@@ -21,6 +20,7 @@ from sklearn.ensemble._hist_gradient_boosting.predictor import TreePredictor
 from sklearn.metrics import r2_score
 from sklearn.model_selection import train_test_split
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils._testing import assert_allclose
 
 n_threads = _openmp_effective_n_threads()
 

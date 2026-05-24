@@ -7,7 +7,6 @@ from functools import partial
 import joblib
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose
 
 from sklearn import config_context
 from sklearn.base import BaseEstimator, ClassifierMixin
@@ -59,6 +58,7 @@ from sklearn.tests.metadata_routing_common import (
 )
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._testing import (
+    assert_allclose,
     assert_almost_equal,
     assert_array_equal,
     ignore_warnings,

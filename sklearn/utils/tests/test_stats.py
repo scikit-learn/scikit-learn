@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose, assert_array_equal
 from pytest import approx
 
 from sklearn._config import config_context
@@ -10,6 +9,7 @@ from sklearn.utils._array_api import (
     move_to,
     yield_namespace_device_dtype_combinations,
 )
+from sklearn.utils._testing import assert_allclose, assert_array_equal
 from sklearn.utils.estimator_checks import _array_api_for_tests
 from sklearn.utils.fixes import np_version, parse_version
 from sklearn.utils.stats import _weighted_percentile

@@ -5,7 +5,6 @@ import numpy
 import pytest
 import scipy
 import scipy.sparse as sp
-from numpy.testing import assert_allclose
 from scipy.special import expit, logit
 
 from sklearn._config import config_context
@@ -52,6 +51,7 @@ from sklearn.utils._testing import (
     SkipTest,
     _array_api_for_tests,
     _convert_container,
+    assert_allclose,
     assert_array_equal,
     skip_if_array_api_compat_not_configured,
 )

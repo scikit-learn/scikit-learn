@@ -978,7 +978,7 @@ def test_confusion_matrix_at_thresholds_implicit_pos_label(curve_func):
     int_curve = curve_func([0, 1, 1, 0], y_pred)
     float_curve = curve_func([0.0, 1.0, 1.0, 0.0], y_pred)
     for int_curve_part, float_curve_part in zip(int_curve, float_curve):
-        np.testing.assert_allclose(int_curve_part, float_curve_part)
+        assert_allclose(int_curve_part, float_curve_part)
 
 
 @pytest.mark.filterwarnings("ignore:Support for labels represented as bytes")

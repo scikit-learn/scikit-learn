@@ -8,7 +8,6 @@ import warnings
 import numpy as np
 import pytest
 import scipy.sparse as sp
-from numpy.testing import assert_allclose
 
 import sklearn
 from sklearn import config_context, datasets
@@ -34,6 +33,7 @@ from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._set_output import _get_output_config
 from sklearn.utils._testing import (
     _convert_container,
+    assert_allclose,
     assert_array_equal,
 )
 from sklearn.utils.validation import _check_n_features, validate_data

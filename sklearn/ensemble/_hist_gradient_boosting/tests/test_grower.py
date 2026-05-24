@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose, assert_array_equal
 from pytest import approx
 
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
@@ -14,6 +13,7 @@ from sklearn.ensemble._hist_gradient_boosting.common import (
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils._testing import assert_allclose, assert_array_equal
 
 n_threads = _openmp_effective_n_threads()
 
@@ -435,8 +435,8 @@ def test_split_on_nan_with_infinite_values():
         missing_values_bin_idx=bin_mapper.missing_values_bin_idx_,
         n_threads=n_threads,
     )
-    np.testing.assert_allclose(predictions, -gradients)
-    np.testing.assert_allclose(predictions_binned, -gradients)
+    assert_allclose(predictions, -gradients)
+    assert_allclose(predictions_binned, -gradients)
 
 
 def test_grow_tree_categories():
@@ -565,7 +565,7 @@ def test_ohe_equivalence(min_samples_leaf, n_unique_categories, target):
         # OHE needs more splits to achieve the same predictions
         assert predictor.get_max_depth() < predictor_ohe.get_max_depth()
 
-    np.testing.assert_allclose(preds, preds_ohe)
+    assert_allclose(preds, preds_ohe)
 
 
 def test_grower_interaction_constraints():
