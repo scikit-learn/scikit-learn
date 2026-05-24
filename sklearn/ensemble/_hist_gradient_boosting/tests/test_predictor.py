@@ -2,10 +2,6 @@ import numpy as np
 import pytest
 
 from sklearn.datasets import make_regression
-from sklearn.ensemble._hist_gradient_boosting._bitset import (
-    set_bitset_memoryview,
-    set_raw_bitset_from_binned_bitset,
-)
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.ensemble._hist_gradient_boosting.common import (
     ALMOST_INF,
@@ -19,6 +15,10 @@ from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.ensemble._hist_gradient_boosting.predictor import TreePredictor
 from sklearn.metrics import r2_score
 from sklearn.model_selection import train_test_split
+from sklearn.utils._bitset import (
+    set_bitset_memoryview,
+    set_raw_bitset_from_binned_bitset,
+)
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._testing import assert_allclose
 

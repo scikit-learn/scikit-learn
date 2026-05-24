@@ -169,7 +169,7 @@ def test_assert_request_is_empty():
 @config_context(enable_metadata_routing=True)
 def test_estimator_puts_self_in_registry(estimator):
     """Check that an estimator puts itself in the registry upon fit."""
-    estimator.fit(X, y)
+    estimator = clone(estimator).fit(X, y)
     assert estimator in estimator.registry
 
 
@@ -596,6 +596,39 @@ def test_removing_non_existing_param_raises():
 
     with pytest.raises(ValueError, match="Trying to remove parameter"):
         InvalidRequestRemoval().get_metadata_routing()
+
+
+def test_get_class_level_metadata_request_values():
+    """Test `_get_class_level_metadata_request_values`, which infers metadata
+    requests from callables; used for class methods in consumers and by scorers
+    for custom `score_func`s.
+    """
+
+    class Dummy(BaseEstimator):
+        def fit(self, X, y, sample_weight=None, extra=None):
+            return self
+
+    # Baseline: sniff the class method's signature.
+    assert Dummy._get_class_level_metadata_request_values("fit") == {
+        "sample_weight": None,
+        "extra": None,
+    }
+
+    # `ignore_params` filters names out of the result.
+    assert Dummy._get_class_level_metadata_request_values(
+        "fit", ignore_params={"sample_weight"}
+    ) == {"extra": None}
+
+    # `method` lets us inspect a different callable; first arg is auto-skipped.
+    def score_func(y_true, y_pred, sample_weight=None):
+        return 0  # pragma: no cover
+
+    assert Dummy._get_class_level_metadata_request_values(
+        "score", method=score_func, ignore_params={"y_pred"}
+    ) == {"sample_weight": None}
+
+    # No matching class method and no `method` callable -> empty dict.
+    assert Dummy._get_class_level_metadata_request_values("predict") == {}
 
 
 @config_context(enable_metadata_routing=True)
@@ -1162,3 +1195,42 @@ def test_unbound_set_methods_work():
     # Test positional arguments error after making the descriptor method unbound.
     with pytest.raises(TypeError, match=error_message):
         A().set_fit_request(True)
+
+
+@config_context(enable_metadata_routing=True)
+def test_removing_metadata_in_subclass_correctly_works():
+    """Test that removing a metadata with UNUSED marker affects child's method."""
+
+    class A(ConsumingClassifier):
+        __metadata_request__score = {
+            "sample_weight": metadata_routing.UNUSED,
+            "metadata": metadata_routing.UNUSED,
+        }
+
+    # Here we make sure that the parent class has the method as usual
+    assert hasattr(ConsumingClassifier(), "set_score_request")
+    # And that the child class doesn't have it since all metadata for the score method
+    # are removed.
+    with pytest.raises(
+        TypeError,
+        match=re.escape(
+            "Unexpected args: {'sample_weight'} in score. Accepted arguments are: set()"
+        ),
+    ):
+        A().set_score_request(sample_weight=True)
+
+
+@config_context(enable_metadata_routing=True)
+def test_explicitly_defined_set_method_request_is_not_overriden():
+    """Test that explicitly defined set_{method}_request is not overridden."""
+
+    class A(BaseEstimator):
+        def set_score_request(self, sample_weight=None, metadata=None):
+            return self  # pragma: no cover
+
+    class B(A):
+        def score(self, X, y=None):
+            pass  # pragma: no cover
+
+    # This should work as usual since the method is explicitly defined.
+    B().set_score_request(sample_weight=True)

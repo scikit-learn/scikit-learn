@@ -1,8 +1,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import warnings
-
 import numpy as np
 import pytest
 from scipy import linalg, sparse
@@ -20,6 +18,7 @@ from sklearn.linear_model._base import (
 from sklearn.preprocessing import add_dummy_feature
 from sklearn.utils._array_api import get_namespace_and_device, move_estimator_to
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
@@ -371,34 +370,6 @@ def test_inplace_data_preprocessing(sparse_container, use_sw, global_random_seed
         assert_allclose(sample_weight, original_sw_data)
 
 
-def test_linear_regression_pd_sparse_dataframe_warning():
-    pd = pytest.importorskip("pandas")
-
-    # Warning is raised only when some of the columns is sparse
-    df = pd.DataFrame({"0": np.random.randn(10)})
-    for col in range(1, 4):
-        arr = np.random.randn(10)
-        arr[:8] = 0
-        # all columns but the first column is sparse
-        if col != 0:
-            arr = pd.arrays.SparseArray(arr, fill_value=0)
-        df[str(col)] = arr
-
-    msg = "pandas.DataFrame with sparse columns found."
-
-    reg = LinearRegression()
-    with pytest.warns(UserWarning, match=msg):
-        reg.fit(df.iloc[:, 0:2], df.iloc[:, 3])
-
-    # does not warn when the whole dataframe is sparse
-    df["0"] = pd.arrays.SparseArray(df["0"], fill_value=0)
-    assert hasattr(df, "sparse")
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", UserWarning)
-        reg.fit(df.iloc[:, 0:2], df.iloc[:, 3])
-
-
 def test_preprocess_data(global_random_seed):
     rng = np.random.RandomState(global_random_seed)
     n_samples = 200
@@ -695,6 +666,25 @@ def test_dtype_preprocess_data(rescale_with_sw, fit_intercept, global_random_see
     assert_allclose(X_scale_32, X_scale_64)
     if rescale_with_sw:
         assert_allclose(sqrt_sw_32, sqrt_sw_64, rtol=1e-6)
+
+
+def test_preprocess_data_integer_array_api_on_float32_only_device():
+    xp, device = _array_api_for_tests("torch", device_name="mps", dtype_name="float32")
+
+    # TODO: replace this torch/MPS-specific coverage by array-api-strict once
+    # https://github.com/data-apis/array-api-strict/pull/206 is released.
+    X_np = np.asarray([[1, 2], [3, 4], [5, 6]], dtype=np.int64)
+    y_np = np.asarray([1, 2, 4], dtype=np.int64)
+    X_xp = xp.asarray(X_np, device=device)
+    y_xp = xp.asarray(y_np, device=device)
+
+    with config_context(array_api_dispatch=True):
+        X_out, y_out, *_ = _preprocess_data(
+            X_xp, y_xp, fit_intercept=True, check_input=True
+        )
+
+    assert X_out.dtype == xp.float32
+    assert y_out.dtype == xp.float32
 
 
 @pytest.mark.parametrize("n_targets", [None, 2])
