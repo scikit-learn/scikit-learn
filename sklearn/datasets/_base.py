@@ -357,11 +357,11 @@ def load_csv_data(
         A 2D array with each row representing one sample and the columns
         representing the features of a given sample.
 
-    target : ndarry of shape (n_samples,)
+    target : ndarray of shape (n_samples,)
         A 1D array holding target variables for all the samples in `data`.
         For example target[0] is the target variable for data[0].
 
-    target_names : ndarry of shape (n_samples,)
+    target_names : ndarray of shape (n_samples,)
         A 1D array containing the names of the classifications. For example
         target_names[0] is the name of the target[0] class.
 
