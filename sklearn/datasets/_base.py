@@ -524,7 +524,7 @@ def load_wine(*, return_X_y=False, as_frame=False):
     ----------
     return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object.
-        See below for more information about the `data` and `target` object.
+        See below for more information about the `data` and `target` objects.
 
     as_frame : bool, default=False
         If True, the data is a pandas DataFrame including columns with
@@ -647,7 +647,7 @@ def load_iris(*, return_X_y=False, as_frame=False):
     ----------
     return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object. See
-        below for more information about the `data` and `target` object.
+        below for more information about the `data` and `target` objects.
 
         .. versionadded:: 0.18
 
@@ -775,7 +775,7 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
     ----------
     return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object.
-        See below for more information about the `data` and `target` object.
+        See below for more information about the `data` and `target` objects.
 
         .. versionadded:: 0.18
 
@@ -933,7 +933,7 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
 
     return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object.
-        See below for more information about the `data` and `target` object.
+        See below for more information about the `data` and `target` objects.
 
         .. versionadded:: 0.18
 
@@ -1066,7 +1066,7 @@ def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
     ----------
     return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object.
-        See below for more information about the `data` and `target` object.
+        See below for more information about the `data` and `target` objects.
 
         .. versionadded:: 0.18
 
@@ -1189,7 +1189,7 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
     ----------
     return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object.
-        See below for more information about the `data` and `target` object.
+        See below for more information about the `data` and `target` objects.
 
         .. versionadded:: 0.18
 
