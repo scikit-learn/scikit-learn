@@ -355,7 +355,7 @@ def load_csv_data(
     -------
     data : ndarray of shape (n_samples, n_features)
         A 2D array with each row representing one sample and the columns
-        representing one feature of a given sample.
+        representing the features of a given sample.
 
     target : ndarry of shape (n_samples,)
         A 1D array holding target variables for all the samples in `data`.
