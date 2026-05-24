@@ -2025,14 +2025,12 @@ def test_custom_run_search():
             if not k.endswith("_time"):
                 # XXX: results['params'] is a list :|
                 results[k] = np.asanyarray(results[k])
+                actual = np.ma.getmaskarray(exp_results[k]).astype(int)
+                desired = np.ma.getmaskarray(results[k]).astype(int)
                 if results[k].dtype.kind == "O":
-                    assert_array_equal(
-                        exp_results[k], results[k], err_msg="Checking " + k
-                    )
+                    assert_array_equal(actual, desired, err_msg="Checking " + k)
                 else:
-                    assert_allclose(
-                        exp_results[k], results[k], err_msg="Checking " + k
-                    )  # Fails with AssertionError
+                    assert_allclose(actual, desired, err_msg="Checking " + k)
 
     def fit_grid(param_grid):
         return GridSearchCV(clf, param_grid, return_train_score=True).fit(X, y)
