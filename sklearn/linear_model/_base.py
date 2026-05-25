@@ -26,7 +26,6 @@ from sklearn.utils._array_api import (
     _asarray_with_order,
     _average,
     _expit,
-    _is_numpy_namespace,
     check_same_namespace,
     get_namespace,
     get_namespace_and_device,
@@ -171,7 +170,10 @@ def _preprocess_data(
 
     if check_input:
         X = check_array(
-            X, copy=copy, accept_sparse=["csr", "csc"], dtype=supported_float_dtypes(xp)
+            X,
+            copy=copy,
+            accept_sparse=["csr", "csc"],
+            dtype=supported_float_dtypes(xp, device=device_),
         )
         y = check_array(y, dtype=X.dtype, copy=True, ensure_2d=False)
     else:
@@ -302,13 +304,13 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features)
+        X : array-like or sparse matrix of shape (n_samples, n_features)
             Samples.
 
         Returns
         -------
-        C : array, shape (n_samples,)
-            Returns predicted values.
+        C : ndarray of shape (n_samples,)
+            Predicted values.
         """
         check_same_namespace(X, self, attribute="coef_", method="predict")
         return self._decision_function(X)
@@ -331,6 +333,26 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
 
         else:
             self.intercept_ = 0.0
+
+
+class MultiOutputLinearModel(MultiOutputMixin, LinearModel):
+    # Provides consistent docstring to `predict` for linear models that support
+    # multi-output.
+    def predict(self, X):
+        """
+        Predict using the linear model.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape (n_samples, n_features)
+            Samples.
+
+        Returns
+        -------
+        C : ndarray of shape (n_samples,) or (n_samples, n_outputs)
+            Predicted values.
+        """
+        return super().predict(X)
 
 
 # XXX Should this derive from LinearModel? It should be a mixin, not an ABC.
@@ -388,21 +410,21 @@ class LinearClassifierMixin(ClassifierMixin):
             Vector containing the class labels for each sample.
         """
         check_same_namespace(X, self, attribute="coef_", method="predict")
-        xp, _ = get_namespace(X)
+        xp, _, device_ = get_namespace_and_device(X)
         scores = self.decision_function(X)
         if len(scores.shape) == 1:
             indices = xp.astype(scores > 0, indexing_dtype(xp))
         else:
             indices = xp.argmax(scores, axis=1)
 
-        # If `y` consists of strings during fitting then `self.classes_` will
-        # also contain strings and we handle such a scenario by returning the
-        # predictions according to the namespace of `self.classes_` i.e. numpy.
-        xp_classes, _ = get_namespace(self.classes_)
-        if _is_numpy_namespace(xp_classes):
-            indices = move_to(indices, xp=np, device="cpu")
+        xp_classes, _, device_classes = get_namespace_and_device(self.classes_)
+        indices = move_to(indices, xp=xp_classes, device=device_classes)
 
-        return xp_classes.take(self.classes_, indices, axis=0)
+        y_pred = xp_classes.take(self.classes_, indices, axis=0)
+        if isinstance(y_pred[0], str):
+            return y_pred
+        else:
+            return move_to(y_pred, xp=xp, device=device_)
 
     def _predict_proba_lr(self, X):
         """Probability estimation for OvR logistic regression.
@@ -487,7 +509,7 @@ class SparseCoefMixin:
         return self
 
 
-class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
+class LinearRegression(RegressorMixin, MultiOutputLinearModel):
     """
     Ordinary least squares Linear Regression.
 
@@ -507,12 +529,14 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
     tol : float, default=1e-6
         The precision of the solution (`coef_`) is determined by `tol` which
-        specifies a different convergence criterion for the `lsqr` solver.
-        `tol` is set as `atol` and `btol` of :func:`scipy.sparse.linalg.lsqr` when
-        fitting on sparse training data. This parameter has no effect when fitting
-        on dense data.
+        specifies the convergence criterion of the underlying solver. `tol` is
+        set as `atol` and `btol` of :func:`scipy.sparse.linalg.lsqr` when
+        fitting on sparse training data. `tol` is set as `cond` of
+        :func:`scipy.linalg.lstsq` when fitting on dense training data.
 
         .. versionadded:: 1.7
+        .. versionchanged:: 1.9
+            Now supported on dense data, interpreted as the `cond` parameter.
 
     n_jobs : int, default=None
         The number of jobs to use for the computation. This will only provide
@@ -718,9 +742,9 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                 )
                 self.coef_ = np.vstack([out[0] for out in outs])
         else:
-            # cut-off ratio for small singular values
-            cond = max(X.shape) * np.finfo(X.dtype).eps
-            self.coef_, _, self.rank_, self.singular_ = linalg.lstsq(X, y, cond=cond)
+            self.coef_, _, self.rank_, self.singular_ = linalg.lstsq(
+                X, y, cond=self.tol
+            )
             self.coef_ = self.coef_.T
 
         if y.ndim == 1:

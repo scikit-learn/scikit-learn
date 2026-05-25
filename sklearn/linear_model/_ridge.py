@@ -1258,7 +1258,9 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
             Fitted estimator.
         """
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), self.solver)
-        xp, _ = get_namespace(X, y, sample_weight)
+        xp, _, device_ = get_namespace_and_device(X)
+        y, sample_weight = move_to(y, sample_weight, xp=xp, device=device_)
+
         X, y = validate_data(
             self,
             X,
@@ -1270,6 +1272,22 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
             y_numeric=True,
         )
         return super().fit(X, y, sample_weight=sample_weight)
+
+    def predict(self, X):
+        """
+        Predict using the linear model.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape (n_samples, n_features)
+            Samples.
+
+        Returns
+        -------
+        C : ndarray of shape (n_samples,) or (n_samples, n_outputs)
+            Predicted values.
+        """
+        return super().predict(X)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -1327,15 +1345,9 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         )
 
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
-        xp_y, y_is_array_api = get_namespace(y)
         Y = self._label_binarizer.fit_transform(y)
         Y = move_to(Y, xp=xp, device=device_)
-        if y_is_array_api and xp_y.isdtype(y.dtype, "numeric"):
-            self.classes_ = move_to(
-                self._label_binarizer.classes_, xp=xp, device=device_
-            )
-        else:
-            self.classes_ = self._label_binarizer.classes_
+        self.classes_ = self._label_binarizer.classes_
         if not self._label_binarizer.y_type_.startswith("multilabel"):
             y = column_or_1d(y, warn=True)
 
@@ -1379,7 +1391,7 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         return tags
 
     def _get_scorer_instance(self):
-        """Return a scorer which corresponds to what's defined in ClassiferMixin
+        """Return a scorer which corresponds to what's defined in ClassifierMixin
         parent class. This is used for routing `sample_weight`.
         """
         return get_scorer("accuracy")
@@ -2734,6 +2746,8 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         settings: multiple prediction targets). When set to `True`, after
         fitting, the `alpha_` attribute will contain a value for each target.
         When set to `False`, a single alpha is used for all targets.
+        This flag is only compatible with ``cv=None`` (i.e. using
+        Leave-One-Out Cross-Validation).
 
         .. versionadded:: 0.24
 
@@ -2836,6 +2850,22 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         """
         super().fit(X, y, sample_weight=sample_weight, **params)
         return self
+
+    def predict(self, X):
+        """
+        Predict using the linear model.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape (n_samples, n_features)
+            Samples.
+
+        Returns
+        -------
+        C : ndarray of shape (n_samples,) or (n_samples, n_outputs)
+            Predicted values.
+        """
+        return super().predict(X)
 
     def _get_scorer_instance(self):
         """Return a scorer which corresponds to what's defined in RegressorMixin

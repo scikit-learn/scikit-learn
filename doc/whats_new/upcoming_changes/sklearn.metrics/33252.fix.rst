@@ -1,0 +1,5 @@
+- Fixed :func:`metrics.pairwise_distances_argmin` and
+  :func:`metrics.pairwise_distances_argmin_min` to avoid a quadratic-time path
+  when many distances are identical, which could lead to severe slowdowns or
+  even a stack overflow (segmentation fault) on large inputs.
+  By :user:`Arthur Lacote <cakedev0>`.

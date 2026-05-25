@@ -71,34 +71,34 @@ rbf_svc = (
     "SVC with rbf kernel\n(equivalent to Self-training with 100% labeled data)",
 )
 
-tab10 = plt.get_cmap("tab10")
-color_map = {cls: tab10(cls) for cls in np.unique(y)}
-color_map[-1] = (1, 1, 1)
 classifiers = (ls10, st10, ls30, st30, ls100, rbf_svc)
 
 fig, axes = plt.subplots(nrows=3, ncols=2, sharex="col", sharey="row", figsize=(10, 12))
 axes = axes.ravel()
-
-handles = [
-    mpatches.Patch(facecolor=tab10(i), edgecolor="black", label=iris.target_names[i])
-    for i in np.unique(y)
-]
-handles.append(mpatches.Patch(facecolor="white", edgecolor="black", label="Unlabeled"))
-
 for ax, (clf, y_train, title) in zip(axes, classifiers):
-    DecisionBoundaryDisplay.from_estimator(
+    disp = DecisionBoundaryDisplay.from_estimator(
         clf,
         X,
         response_method="predict_proba",
         plot_method="contourf",
         ax=ax,
     )
-    colors = [color_map[label] for label in y_train]
+    colors = [
+        (1, 1, 1, 1) if label == -1 else disp.multiclass_colors_[label]
+        for label in y_train
+    ]
     ax.scatter(X[:, 0], X[:, 1], c=colors, edgecolor="black")
     ax.set_title(title)
 fig.suptitle(
     "Semi-supervised decision boundaries with varying fractions of labeled data", y=1
 )
+handles = [
+    mpatches.Patch(
+        facecolor=color, edgecolor="black", label=iris.target_names[class_idx]
+    )
+    for class_idx, color in enumerate(disp.multiclass_colors_)
+]
+handles.append(mpatches.Patch(facecolor="white", edgecolor="black", label="Unlabeled"))
 fig.legend(
     handles=handles, loc="lower center", ncol=len(handles), bbox_to_anchor=(0.5, 0.0)
 )

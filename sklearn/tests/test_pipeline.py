@@ -6,7 +6,7 @@ import itertools
 import re
 import shutil
 import time
-from tempfile import mkdtemp
+from tempfile import TemporaryDirectory, mkdtemp
 
 import joblib
 import numpy as np
@@ -20,6 +20,12 @@ from sklearn.base import (
     clone,
     is_classifier,
     is_regressor,
+)
+from sklearn.callback.tests._utils import (
+    MaxIterEstimator,
+    RecordingAutoPropagatedCallback,
+    RecordingCallback,
+    skip_callback_test_if_wasm,
 )
 from sklearn.cluster import KMeans
 from sklearn.datasets import load_iris
@@ -306,6 +312,7 @@ def test_pipeline_invalid_parameters():
 )
 def test_meta_estimator_raises_class_not_instance_error(meta_estimators, class_name):
     # non-regression tests for https://github.com/scikit-learn/scikit-learn/issues/32719
+    meta_estimators = clone(meta_estimators)
     msg = re.escape(
         f"Expected an estimator instance ({class_name}()), "
         f"got estimator class instead ({class_name})."
@@ -1378,6 +1385,55 @@ def test_feature_union_passthrough_get_feature_names_out_false_errors_overlap_ov
         union.get_feature_names_out()
 
 
+# DfOutTransformer that does not define get_feature_names_out
+class DfOutTransformer(BaseEstimator):
+    def __init__(self, offset=1.0):
+        self.offset = offset
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        return X - self.offset
+
+    def set_output(self, transform=None):
+        # This transformer will always output a DataFrame regardless of the
+        # configuration.
+        return self
+
+
+@pytest.mark.parametrize("df_lib_name", ["pandas", "polars"])
+@pytest.mark.parametrize(
+    "T1",
+    [StandardScaler(), DfOutTransformer(), "passthrough"],
+    ids=["StandardScaler", "DfOutTransformer", "passthrough"],
+)
+def test_feature_union_duplicate_column_names(df_lib_name, T1):
+    """Check FeatureUnion behavior when transformers output duplicate column names.
+
+    Check that an error is raised when verbose_feature_names_out is False.
+    Check that no error is raised and columns are correctly prefixed when
+    verbose_feature_names_out is True.
+
+    Non-regression test for issue #32104
+    """
+    df_lib = pytest.importorskip(df_lib_name)
+    df = df_lib.DataFrame({"a": [1, 2, 3, 4], "b": [1, 2, 3, 4]})
+    fu = FeatureUnion([("t1", T1), ("t2", StandardScaler())])
+    fu.set_output(transform=df_lib_name)
+
+    # by default, verbose_feature_names_out is True
+    df_t = fu.fit_transform(df)
+    assert list(df_t.columns) == ["t1__a", "t1__b", "t2__a", "t2__b"]
+
+    # input dataframe is not mutated
+    assert list(df.columns) == ["a", "b"]
+
+    fu.set_params(verbose_feature_names_out=False)
+    with pytest.raises(ValueError, match=r"Output feature names:.*are not unique"):
+        fu.fit_transform(df)
+
+
 def test_step_name_validation():
     error_message_1 = r"Estimator names must not contain __: got \['a__q'\]"
     error_message_2 = r"Names provided are not unique: \['a', 'a'\]"
@@ -1831,7 +1887,7 @@ def test_feature_union_check_if_fitted():
 def test_pipeline_get_feature_names_out_passes_names_through():
     """Check that pipeline passes names through.
 
-    Non-regresion test for #21349.
+    Non-regression test for #21349.
     """
     X, y = iris.data, iris.target
 
@@ -1966,7 +2022,7 @@ def test_feature_union_1d_output():
 )
 def test_feature_union_array_api_compliance(array_namespace, device_name, dtype_name):
     """Test that FeatureUnion with Array API-compatible transformers works."""
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     rnd = np.random.RandomState(0)
     n_samples, n_features = 20, 10
     X_np = rnd.uniform(size=(n_samples, n_features)).astype(dtype_name)
@@ -2548,3 +2604,85 @@ def test_feature_union_metadata_routing(transformer):
 
 # End of routing tests
 # ====================
+
+
+@skip_callback_test_if_wasm
+def test_pipeline_with_callbacks():
+    """Check that callbacks are propagated correctly for a pipeline.
+
+    passthrough step is counted as one task.
+    """
+    X, y = load_iris(return_X_y=True)
+    max_iter = 3
+    callback = RecordingAutoPropagatedCallback()
+
+    Pipeline(
+        [
+            ("sc", StandardScaler()),
+            ("passthrough", "passthrough"),
+            ("est", MaxIterEstimator(max_iter=max_iter)),
+        ]
+    ).set_callbacks(callback).fit(X, y)
+
+    assert callback.count_hooks("setup") == 1
+    assert callback.count_hooks("teardown") == 1
+    # 1 root for Pipeline + 1 task for "sc" + 1 task for "passthrough"
+    # + (1 root + max_iter leaves for "est")
+    assert callback.count_hooks("on_fit_task_begin") == 1 + 1 + 1 + (1 + max_iter)
+    assert callback.count_hooks("on_fit_task_end") == 1 + 1 + 1 + (1 + max_iter)
+
+
+@skip_callback_test_if_wasm
+def test_pipeline_with_callbacks_on_steps():
+    """Check that callbacks registered on steps are correctly invoked."""
+    X, y = load_iris(return_X_y=True)
+
+    sc_callback = RecordingCallback()
+    sc = StandardScaler().set_callbacks(sc_callback)
+
+    max_iter = 3
+    est_callback = RecordingCallback()
+    est = MaxIterEstimator(max_iter=max_iter).set_callbacks(est_callback)
+
+    Pipeline([("sc", sc), ("est", est)]).fit(X, y)
+
+    assert sc_callback.count_hooks("setup") == 1
+    assert sc_callback.count_hooks("teardown") == 1
+    assert sc_callback.count_hooks("on_fit_task_begin") == 1
+    assert sc_callback.count_hooks("on_fit_task_end") == 1
+
+    assert est_callback.count_hooks("setup") == 1
+    assert est_callback.count_hooks("teardown") == 1
+    assert est_callback.count_hooks("on_fit_task_begin") == 1 + max_iter
+    assert est_callback.count_hooks("on_fit_task_end") == 1 + max_iter
+
+
+@skip_callback_test_if_wasm
+def test_pipeline_memory_callbacks_second_fit_same_pipeline():
+    """Check that callbacks don't break the caching mechanism of the pipeline."""
+    X, y = load_iris(return_X_y=True)
+    with TemporaryDirectory() as cachedir:
+        max_iter = 3
+        pipe = Pipeline(
+            [
+                ("sc", StandardScaler()),
+                ("passthrough", "passthrough"),
+                ("est", MaxIterEstimator(max_iter=max_iter)),
+            ],
+            memory=joblib.Memory(location=cachedir),
+        )
+        callback = RecordingAutoPropagatedCallback()
+        pipe.set_callbacks(callback)
+        pipe.fit(X, y)
+        n_task_begin = callback.count_hooks("on_fit_task_begin")
+        n_task_end = callback.count_hooks("on_fit_task_end")
+        # propagated callbacks are not kept on the cached transformer
+        assert not hasattr(pipe.named_steps["sc"], "_skl_callbacks")
+
+        # Fit again on same data hits the cache and skips the scaler step so we expect
+        # 1 fewer task begin and end (StandardScaler has only one task).
+        callback = RecordingAutoPropagatedCallback()
+        pipe.set_callbacks(callback).fit(X, y)
+        assert callback.count_hooks("on_fit_task_begin") == n_task_begin - 1
+        assert callback.count_hooks("on_fit_task_end") == n_task_end - 1
+        assert not hasattr(pipe.named_steps["sc"], "_skl_callbacks")

@@ -833,7 +833,7 @@ additions in the following areas:
     using the `.. rubric:: Note` directive.
 
   * Add one or two **snippets** of code in "Example" section to show how it can
-    be used. The code should be runable as is, i.e. it should include all
+    be used. The code should be runnable as is, i.e. it should include all
     required imports. Keep this section as brief as possible.
 
 

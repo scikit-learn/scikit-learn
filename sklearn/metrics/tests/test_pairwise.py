@@ -157,7 +157,7 @@ def test_pairwise_distances_for_dense_data(global_dtype):
 @pytest.mark.parametrize("metric", ["cosine", "euclidean", "manhattan"])
 def test_pairwise_distances_array_api(array_namespace, device_name, dtype_name, metric):
     # Test array API support in pairwise_distances.
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     rng = np.random.RandomState(0)
     # Euclidean distance should be equivalent to calling the function.
@@ -186,6 +186,24 @@ def test_pairwise_distances_array_api(array_namespace, device_name, dtype_name, 
 
         D_np = pairwise_distances(X_np, Y=Y_np, metric=metric)
         assert_allclose(D_xp_np, D_np)
+
+
+def test_pairwise_distances_array_api_no_warnings():
+    # Regression test for https://github.com/scikit-learn/scikit-learn/issues/33829
+    # pairwise_distances should not emit cross-library dtype comparison warnings
+    # when called with Array API inputs under array_api_dispatch=True.
+    xp, device = _array_api_for_tests("array_api_strict")
+
+    rng = np.random.RandomState(0)
+    X_np = rng.random_sample((5, 4))
+    Y_np = rng.random_sample((3, 4))
+    X_xp = xp.asarray(X_np, device=device)
+    Y_xp = xp.asarray(Y_np, device=device)
+
+    with config_context(array_api_dispatch=True):
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            pairwise_distances(X_xp, Y_xp, metric="euclidean")
 
 
 @pytest.mark.parametrize("coo_container", COO_CONTAINERS)
@@ -404,7 +422,7 @@ def test_pairwise_parallel(func, metric, kwds, dtype):
 def test_pairwise_parallel_array_api(
     func, metric, kwds, array_namespace, device_name, dtype_name
 ):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     rng = np.random.RandomState(0)
     X_np = np.array(5 * rng.random_sample((5, 4)), dtype=dtype_name)
     Y_np = np.array(5 * rng.random_sample((3, 4)), dtype=dtype_name)
@@ -488,7 +506,7 @@ def test_pairwise_kernels(metric, csr_container):
 )
 def test_pairwise_kernels_array_api(metric, array_namespace, device_name, dtype_name):
     # Test array API support in pairwise_kernels.
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     rng = np.random.RandomState(0)
     X_np = 10 * rng.random_sample((5, 4))
@@ -858,6 +876,25 @@ def test_parallel_pairwise_distances_diagonal(metric, global_dtype):
     assert_allclose(np.diag(distances), 0, atol=1e-10)
 
 
+def test_parallel_pairwise_distances_y_norm_squared():
+    """Check that Y_norm_squared is correctly sliced alongside Y.
+
+    Non-regression test for issue #33877.
+    """
+    rng = np.random.RandomState(42)
+    X = rng.rand(13, 4)
+    Y = rng.rand(15, 4)
+    Y_norm_squared = (Y**2).sum(axis=1)
+
+    D_single = pairwise_distances(
+        X, Y, metric="euclidean", n_jobs=1, Y_norm_squared=Y_norm_squared
+    )
+    D_parallel = pairwise_distances(
+        X, Y, metric="euclidean", n_jobs=2, Y_norm_squared=Y_norm_squared
+    )
+    assert_allclose(D_parallel, D_single)
+
+
 @pytest.mark.filterwarnings("ignore:Could not adhere to working_memory config")
 def test_pairwise_distances_chunked(global_dtype):
     # Test the pairwise_distance helper function.
@@ -1201,7 +1238,7 @@ def test_nan_euclidean_distances_complete_nan(missing_value):
 
 
 @pytest.mark.parametrize("missing_value", [np.nan, -1])
-def test_nan_euclidean_distances_not_trival(missing_value):
+def test_nan_euclidean_distances_not_trivial(missing_value):
     X = np.array(
         [
             [1.0, missing_value, 3.0, 4.0, 2.0],
