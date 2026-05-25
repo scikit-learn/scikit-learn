@@ -822,7 +822,7 @@ def _ridge_regression(
         )
 
     if solver == "svd":
-        if X_is_sparse:
+        if X_is_sparse or getattr(X, "is_sparse", False):
             raise TypeError("SVD solver does not support sparse inputs currently")
         coef = _solve_svd(X, y, alpha, xp)
 
@@ -887,6 +887,7 @@ def resolve_solver_for_numpy(positive, return_intercept, is_sparse):
         return "cholesky"
 
     return "sparse_cg"
+
 
 
 class _BaseRidge(LinearModel, metaclass=ABCMeta):

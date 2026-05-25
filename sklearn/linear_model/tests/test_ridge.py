@@ -915,6 +915,20 @@ def test_regularization_limits_ridge(
     assert_allclose(ridge.intercept_, expected_intercept, atol=1e-10)
 
 
+def test_ridge_svd_rejects_sparse_torch_tensor():
+    """Ridge with solver='svd' should raise TypeError for sparse torch tensors."""
+    torch = pytest.importorskip("torch")
+
+    X = np.array([[1.0, 2.0], [3.0, 0.0], [0.0, 4.0]])
+    y = np.array([1.0, 2.0, 3.0])
+
+    X_sparse = torch.tensor(X).to_sparse()
+    y_torch = torch.tensor(y)
+
+    with config_context(array_api_dispatch=True):
+        with pytest.raises(TypeError, match="SVD solver does not support sparse inputs"):
+            Ridge(solver="svd").fit(X_sparse, y_torch)
+
 @pytest.mark.parametrize("alpha", [1e-16, 1e16], ids=["zero_alpha", "inf_alpha"])
 @pytest.mark.parametrize("gcv_mode", ["ignored"])
 @pytest.mark.parametrize("fit_intercept", [True, False])

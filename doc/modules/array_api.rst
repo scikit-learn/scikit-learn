@@ -136,6 +136,12 @@ For Intel GPUs, install PyTorch 2.12 or newer with XPU support following the
 <https://docs.pytorch.org/docs/stable/notes/get_start_xpu.html>`_ and use
 `device="xpu"` instead of `device="cuda"`.
 
+.. note::
+    Sparse PyTorch tensors (created with ``.to_sparse()``) are not officially
+    supported. Their behavior may be undefined or inconsistent across estimators.
+    Estimators that do not support sparse inputs (such as :class:`linear_model.Ridge`
+    with ``solver="svd"``) will raise a :exc:`TypeError`.
+
 dpnp Support
 ------------
 
