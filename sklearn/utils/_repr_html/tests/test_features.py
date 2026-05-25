@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from sklearn.base import clone, BaseEstimator, TransformerMixin
+from sklearn.base import BaseEstimator, TransformerMixin, clone
 from sklearn.compose import ColumnTransformer, make_column_transformer
 from sklearn.datasets import load_iris
 from sklearn.decomposition import PCA, TruncatedSVD
