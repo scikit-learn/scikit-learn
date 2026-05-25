@@ -117,7 +117,7 @@ class Perceptron(BaseSGDClassifier):
     classes_ : ndarray of shape (n_classes,)
         The unique classes labels.
 
-    coef_ : ndarray or sparse matrix of shape (1, n_features) if n_classes == 2 else \
+    coef_ : ndarray or CSR array/matrix of shape (1, n_features) if n_classes == 2 else \
             (n_classes, n_features)
         Weights assigned to the features.
 
