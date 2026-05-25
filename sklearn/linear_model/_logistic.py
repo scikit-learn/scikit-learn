@@ -1016,9 +1016,9 @@ class LogisticRegression(
 
         .. deprecated:: 1.8
            `penalty` was deprecated in version 1.8 and will be removed in 1.10.
-           Use `l1_ratio` instead. `l1_ratio=0` for `penalty='l2'`, `l1_ratio=1` for
-           `penalty='l1'` and `l1_ratio` set to any float between 0 and 1 for
-           `'penalty='elasticnet'`.
+           Use `l1_ratio` and `C` instead. `l1_ratio=0` for `penalty='l2'`,
+           `l1_ratio=1` for `penalty='l1'`, `l1_ratio` set to any float between 0 and 1
+           for `penalty='elasticnet'`, and `C=np.inf` for `penalty=None`.
 
     C : float, default=1.0
         Inverse of regularization strength; must be a positive float.
@@ -1401,8 +1401,9 @@ class LogisticRegression(
                     " 1.10. To avoid this warning, leave 'penalty' set to its default"
                     " value and use 'l1_ratio' or 'C' instead."
                     " Use l1_ratio=0 instead of penalty='l2',"
-                    " l1_ratio=1 instead of penalty='l1', and "
-                    "C=np.inf instead of penalty=None."
+                    " l1_ratio=1 instead of penalty='l1',"
+                    " l1_ratio set to a float between 0 and 1 instead of"
+                    " penalty='elasticnet', and C=np.inf instead of penalty=None."
                 ),
                 FutureWarning,
             )
@@ -1734,9 +1735,9 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         .. deprecated:: 1.8
            `penalty` was deprecated in version 1.8 and will be removed in 1.10.
-           Use `l1_ratio` instead. `l1_ratio=0` for `penalty='l2'`, `l1_ratio=1` for
-           `penalty='l1'` and `l1_ratio` set to any float between 0 and 1 for
-           `'penalty='elasticnet'`.
+           Use `l1_ratio` and `C` instead. `l1_ratio=0` for `penalty='l2'`,
+           `l1_ratio=1` for `penalty='l1'`, `l1_ratio` set to any float between 0 and 1
+           for `penalty='elasticnet'`, and `C=np.inf` for `penalty=None`.
 
     scoring : str or callable, default=None
         The scoring method to use for cross-validation. Options:
@@ -2118,9 +2119,11 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 (
                     "'penalty' was deprecated in version 1.8 and will be removed in"
                     " 1.10. To avoid this warning, leave 'penalty' set to its default"
-                    " value and use 'l1_ratios' instead."
-                    " Use l1_ratios=(0,) instead of penalty='l2' "
-                    " and l1_ratios=(1,) instead of penalty='l1'."
+                    " value and use 'l1_ratios' and 'Cs' instead."
+                    " Use l1_ratios=(0,) instead of penalty='l2',"
+                    " l1_ratios=(1,) instead of penalty='l1',"
+                    " l1_ratios set to floats between 0 and 1 instead of"
+                    " penalty='elasticnet', and Cs=(np.inf,) instead of penalty=None."
                 ),
                 FutureWarning,
             )
