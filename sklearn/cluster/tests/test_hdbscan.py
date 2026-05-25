@@ -590,4 +590,3 @@ def test_hdbscan_cosine_metric_invalid_algorithm(invalid_algo):
     hdbscan = HDBSCAN(metric="cosine", algorithm=invalid_algo, copy=False)
     with pytest.raises(ValueError, match="cosine is not a valid metric"):
         hdbscan.fit_predict(X)
-
