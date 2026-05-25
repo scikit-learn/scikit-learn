@@ -583,8 +583,9 @@ keyword arguments to its super class. Super classes' `__init_subclass__` should
 For transformers that return multiple arrays in `transform`, auto wrapping will
 only wrap the first array and not alter the other arrays.
 
-See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`
-for an example on how to use the API.
+Refer to the :ref:`user guide <df_output_transform>` for more details
+and :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py` for an
+example on how to use the API.
 
 .. _developer_api_check_is_fitted:
 

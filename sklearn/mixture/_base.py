@@ -17,12 +17,12 @@ from sklearn.cluster import kmeans_plusplus
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils import check_random_state
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
     _is_numpy_namespace,
     _logsumexp,
     _max_precision_float_dtype,
     get_namespace,
     get_namespace_and_device,
+    move_to,
 )
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.validation import check_is_fitted, validate_data
@@ -459,7 +459,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         _, n_features = self.means_.shape
         rng = check_random_state(self.random_state)
         n_samples_comp = rng.multinomial(
-            n_samples, _convert_to_numpy(self.weights_, xp)
+            n_samples, move_to(self.weights_, xp=np, device="cpu")
         )
 
         if self.covariance_type == "full":
@@ -467,8 +467,8 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                 [
                     rng.multivariate_normal(mean, covariance, int(sample))
                     for (mean, covariance, sample) in zip(
-                        _convert_to_numpy(self.means_, xp),
-                        _convert_to_numpy(self.covariances_, xp),
+                        move_to(self.means_, xp=np, device="cpu"),
+                        move_to(self.covariances_, xp=np, device="cpu"),
                         n_samples_comp,
                     )
                 ]
@@ -477,10 +477,12 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             X = np.vstack(
                 [
                     rng.multivariate_normal(
-                        mean, _convert_to_numpy(self.covariances_, xp), int(sample)
+                        mean,
+                        move_to(self.covariances_, xp=np, device="cpu"),
+                        int(sample),
                     )
                     for (mean, sample) in zip(
-                        _convert_to_numpy(self.means_, xp), n_samples_comp
+                        move_to(self.means_, xp=np, device="cpu"), n_samples_comp
                     )
                 ]
             )
@@ -491,8 +493,8 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                     + rng.standard_normal(size=(sample, n_features))
                     * np.sqrt(covariance)
                     for (mean, covariance, sample) in zip(
-                        _convert_to_numpy(self.means_, xp),
-                        _convert_to_numpy(self.covariances_, xp),
+                        move_to(self.means_, xp=np, device="cpu"),
+                        move_to(self.covariances_, xp=np, device="cpu"),
                         n_samples_comp,
                     )
                 ]

@@ -18,14 +18,14 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@63fd63b352a9a8bdcc24791c9dbee952ee9a8abc # v3.3.0
+        uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1
         env:
-          CIBW_BUILD: cp313-manylinux_x86_64
+          CIBW_BUILD: cp314-manylinux_x86_64
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
           CIBW_BUILD_VERBOSITY: 1
           CIBW_ARCHS: x86_64
 
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: cibw-wheels
           path: ./wheelhouse/*.whl
@@ -40,7 +40,7 @@ jobs:
     timeout-minutes: 20
     name: Run Array API unit tests
     steps:
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           pattern: cibw-wheels
           path: ~/dist
@@ -66,6 +66,16 @@ jobs:
           conda activate sklearn
           python -c "import sklearn; sklearn.show_versions()"
 
-          SCIPY_ARRAY_API=1 pytest --pyargs sklearn -k 'array_api' -vl
+          # Since we are billed GPU usage by the minute, we only run the tests that
+          # are likely to exercise the CUDA GPU and rely on free CI runners to run
+          # the tests with PyTorch on non-CUDA devices.
+          SCIPY_ARRAY_API=1 pytest --pyargs sklearn -k 'cuda or cupy' -vl
         # Run in /home/runner to not load sklearn from the checkout repo
         working-directory: /home/runner
+
+      - name: Run doctests in doc/modules/array_api.rst
+        run: |
+          source "${HOME}/conda/etc/profile.d/conda.sh"
+          conda activate sklearn
+          cd doc
+          SCIPY_ARRAY_API=1 pytest --doctest-modules modules/array_api.rst

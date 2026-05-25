@@ -2,6 +2,7 @@
 # following script to centralize the configuration for CI builds:
 # build_tools/update_environments_and_lock_files.py
 channels:
+  - rapidsai
   - conda-forge
 dependencies:
   - python
@@ -10,9 +11,11 @@ dependencies:
   - scipy
   - cython
   - joblib
+  - narwhals
   - threadpoolctl
   - matplotlib
   - pandas
+  - rich
   - pyamg
   - pytest
   - pytest-xdist
@@ -27,4 +30,6 @@ dependencies:
   - polars
   - pyarrow
   - cupy
+  - cuvs
   - array-api-strict
+  - scipy-doctest

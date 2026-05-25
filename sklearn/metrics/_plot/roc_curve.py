@@ -2,16 +2,12 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 
-import numpy as np
-
 from sklearn.metrics._ranking import auc, roc_curve
 from sklearn.utils import _safe_indexing
 from sklearn.utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
     _check_param_lengths,
     _convert_to_list_leaving_none,
-    _deprecate_estimator_name,
-    _deprecate_y_pred_parameter,
     _despine,
     _validate_style_kwargs,
 )
@@ -60,28 +56,26 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     name : str or list of str, default=None
         Name for labeling legend entries. The number of legend entries is determined
         by the `curve_kwargs` passed to `plot`, and is not affected by `name`.
-        To label each curve, provide a list of strings. To avoid labeling
-        individual curves that have the same appearance, a list cannot be used in
-        conjunction with `curve_kwargs` being a dictionary or None. If a
-        string is provided, it will be used to either label the single legend entry
-        or if there are multiple legend entries, label each individual curve with
-        the same name. If `None`, no name is shown in the legend.
+
+        If a string is provided, it will be used to either label the single legend
+        entry or if there are multiple legend entries, label each individual curve
+        with the same name.
+
+        If a list is provided, it will be used to label each curve individually.
+        Passing a list will raise an error if `curve_kwargs` is not a list to avoid
+        labeling individual curves that have the same appearance.
+
+        If `None`, no name is shown in the legend.
 
         .. versionchanged:: 1.7
-            `estimator_name` was deprecated in favor of `name`.
+            `estimator_name` was deprecated in favor of `name` and now accepts
+            a list for plotting multiple curves.
 
     pos_label : int, float, bool or str, default=None
         The class considered the positive class when ROC AUC metrics computed.
         If not `None`, this value is displayed in the x- and y-axes labels.
 
         .. versionadded:: 0.24
-
-    estimator_name : str, default=None
-        Name of estimator. If None, the estimator name is not shown.
-
-        .. deprecated:: 1.7
-            `estimator_name` is deprecated and will be removed in 1.9. Use `name`
-            instead.
 
     Attributes
     ----------
@@ -138,12 +132,11 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         roc_auc=None,
         name=None,
         pos_label=None,
-        estimator_name="deprecated",
     ):
         self.fpr = fpr
         self.tpr = tpr
         self.roc_auc = roc_auc
-        self.name = _deprecate_estimator_name(estimator_name, name, "1.7")
+        self.name = name
         self.pos_label = pos_label
 
     def _validate_plot_params(self, *, ax, name):
@@ -173,7 +166,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         plot_chance_level=False,
         chance_level_kw=None,
         despine=False,
-        **kwargs,
     ):
         """Plot visualization.
 
@@ -184,15 +176,19 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             created.
 
         name : str or list of str, default=None
-            Name for labeling legend entries. The number of legend entries
-            is determined by `curve_kwargs`, and is not affected by `name`.
-            To label each curve, provide a list of strings. To avoid labeling
-            individual curves that have the same appearance, a list cannot be used in
-            conjunction with `curve_kwargs` being a dictionary or None. If a
-            string is provided, it will be used to either label the single legend entry
-            or if there are multiple legend entries, label each individual curve with
-            the same name. If `None`, set to `name` provided at `RocCurveDisplay`
-            initialization. If still `None`, no name is shown in the legend.
+            Name for labeling legend entries. The number of legend entries is determined
+            by the `curve_kwargs` passed to `plot`, and is not affected by `name`.
+
+            If a string is provided, it will be used to either label the single legend
+            entry or if there are multiple legend entries, label each individual curve
+            with the same name.
+
+            If a list is provided, it will be used to label each curve individually.
+            Passing a list will raise an error if `curve_kwargs` is not a list to avoid
+            labeling individual curves that have the same appearance.
+
+            If `None`, set to `name` provided at `RocCurveDisplay` initialization. If
+            still `None`, no name is shown in the legend.
 
             .. versionadded:: 1.7
 
@@ -224,13 +220,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
             .. versionadded:: 1.6
 
-        **kwargs : dict
-            Keyword arguments to be passed to matplotlib's `plot`.
-
-            .. deprecated:: 1.7
-                kwargs is deprecated and will be removed in 1.9. Pass matplotlib
-                arguments to `curve_kwargs` as a dictionary instead.
-
         Returns
         -------
         display : :class:`~sklearn.metrics.RocCurveDisplay`
@@ -238,14 +227,9 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         """
         fpr, tpr, roc_auc, name = self._validate_plot_params(ax=ax, name=name)
         n_curves = len(fpr)
-        if not isinstance(curve_kwargs, list) and n_curves > 1:
-            if roc_auc:
-                legend_metric = {"mean": np.mean(roc_auc), "std": np.std(roc_auc)}
-            else:
-                legend_metric = {"mean": None, "std": None}
-        else:
-            roc_auc = roc_auc if roc_auc is not None else [None] * n_curves
-            legend_metric = {"metric": roc_auc}
+        roc_auc, legend_metric = self._get_legend_metric(
+            curve_kwargs, n_curves, roc_auc
+        )
 
         curve_kwargs = self._validate_curve_kwargs(
             n_curves,
@@ -258,7 +242,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
                 "linestyle": "--",
                 "color": "blue",
             },
-            **kwargs,
         )
 
         default_chance_level_line_kw = {
@@ -327,7 +310,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         plot_chance_level=False,
         chance_level_kw=None,
         despine=False,
-        **kwargs,
     ):
         """Create a ROC Curve display from an estimator.
 
@@ -397,13 +379,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
             .. versionadded:: 1.6
 
-        **kwargs : dict
-            Keyword arguments to be passed to matplotlib's `plot`.
-
-            .. deprecated:: 1.7
-                kwargs is deprecated and will be removed in 1.9. Pass matplotlib
-                arguments to `curve_kwargs` as a dictionary instead.
-
         Returns
         -------
         display : :class:`~sklearn.metrics.RocCurveDisplay`
@@ -455,7 +430,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
             despine=despine,
-            **kwargs,
         )
 
     @classmethod
@@ -473,8 +447,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         plot_chance_level=False,
         chance_level_kw=None,
         despine=False,
-        y_pred="deprecated",
-        **kwargs,
     ):
         """Plot ROC curve given the true and predicted values.
 
@@ -492,8 +464,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         y_score : array-like of shape (n_samples,)
             Target scores, can either be probability estimates of the positive
-            class, confidence values, or non-thresholded measure of decisions
-            (as returned by “decision_function” on some classifiers).
+            class or non-thresholded decision values (as returned by
+            :term:`decision_function` on some classifiers).
 
             .. versionadded:: 1.7
                 `y_pred` has been renamed to `y_score`.
@@ -541,22 +513,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
             .. versionadded:: 1.6
 
-        y_pred : array-like of shape (n_samples,)
-            Target scores, can either be probability estimates of the positive
-            class, confidence values, or non-thresholded measure of decisions
-            (as returned by “decision_function” on some classifiers).
-
-            .. deprecated:: 1.7
-                `y_pred` is deprecated and will be removed in 1.9. Use
-                `y_score` instead.
-
-        **kwargs : dict
-            Additional keywords arguments passed to matplotlib `plot` function.
-
-            .. deprecated:: 1.7
-                kwargs is deprecated and will be removed in 1.9. Pass matplotlib
-                arguments to `curve_kwargs` as a dictionary instead.
-
         Returns
         -------
         display : :class:`~sklearn.metrics.RocCurveDisplay`
@@ -587,7 +543,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        y_score = _deprecate_y_pred_parameter(y_score, y_pred, "1.7")
         pos_label_validated, name = cls._validate_from_predictions_params(
             y_true, y_score, sample_weight=sample_weight, pos_label=pos_label, name=name
         )
@@ -615,7 +570,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
             despine=despine,
-            **kwargs,
         )
 
     @classmethod
@@ -678,14 +632,18 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             created.
 
         name : str or list of str, default=None
-            Name for labeling legend entries. The number of legend entries
-            is determined by `curve_kwargs`, and is not affected by `name`.
-            To label each curve, provide a list of strings. To avoid labeling
-            individual curves that have the same appearance, a list cannot be used in
-            conjunction with `curve_kwargs` being a dictionary or None. If a
-            string is provided, it will be used to either label the single legend entry
-            or if there are multiple legend entries, label each individual curve with
-            the same name. If `None`, no name is shown in the legend.
+            Name for labeling legend entries. The number of legend entries is determined
+            by the `curve_kwargs` passed to `plot`, and is not affected by `name`.
+
+            If a string is provided, it will be used to either label the single legend
+            entry or if there are multiple legend entries, label each individual curve
+            with the same name.
+
+            If a list is provided, it will be used to label each curve individually.
+            Passing a list will raise an error if `curve_kwargs` is not a list to avoid
+            labeling individual curves that have the same appearance.
+
+            If `None`, no name is shown in the legend.
 
         curve_kwargs : dict or list of dict, default=None
             Keywords arguments to be passed to matplotlib's `plot` function
@@ -747,7 +705,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             cv_results["estimator"], cv_results["indices"]["test"]
         ):
             y_true = _safe_indexing(y, test_indices)
-            y_pred, pos_label_ = _get_response_values_binary(
+            y_score, pos_label_ = _get_response_values_binary(
                 estimator,
                 _safe_indexing(X, test_indices),
                 response_method=response_method,
@@ -760,7 +718,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             )
             fpr, tpr, _ = roc_curve(
                 y_true,
-                y_pred,
+                y_score,
                 pos_label=pos_label_,
                 sample_weight=sample_weight_fold,
                 drop_intermediate=drop_intermediate,

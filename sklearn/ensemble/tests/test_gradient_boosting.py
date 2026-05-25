@@ -1035,7 +1035,7 @@ def test_monitor_early_stopping(Cls):
 
 
 def test_complete_classification():
-    # Test greedy trees with max_depth + 1 leafs.
+    # Test greedy trees with max_depth + 1 leaves.
     from sklearn.tree._tree import TREE_LEAF
 
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
@@ -1052,7 +1052,7 @@ def test_complete_classification():
 
 
 def test_complete_regression():
-    # Test greedy trees with max_depth + 1 leafs.
+    # Test greedy trees with max_depth + 1 leaves.
     from sklearn.tree._tree import TREE_LEAF
 
     k = 4
@@ -1390,7 +1390,7 @@ def test_gradient_boosting_with_init_pipeline():
 
     # Passing sample_weight to a pipeline raises a ValueError. This test makes
     # sure we make the distinction between ValueError raised by a pipeline that
-    # was passed sample_weight, and a InvalidParameterError raised by a regular
+    # was passed sample_weight, and an InvalidParameterError raised by a regular
     # estimator whose input checking failed.
     invalid_nu = 1.5
     err_msg = (

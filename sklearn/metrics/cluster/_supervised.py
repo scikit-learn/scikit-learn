@@ -17,13 +17,12 @@ from scipy import sparse as sp
 from sklearn.metrics.cluster._expected_mutual_info_fast import (
     expected_mutual_information,
 )
-from sklearn.utils import deprecated
+from sklearn.utils import _align_api_if_sparse, deprecated
 from sklearn.utils._array_api import (
     _max_precision_float_dtype,
     get_namespace_and_device,
 )
 from sklearn.utils._param_validation import (
-    Hidden,
     Interval,
     StrOptions,
     validate_params,
@@ -139,11 +138,11 @@ def contingency_matrix(
     -------
     contingency : {array-like, sparse}, shape=[n_classes_true, n_classes_pred]
         Matrix :math:`C` such that :math:`C_{i, j}` is the number of samples in
-        true class :math:`i` and in predicted class :math:`j`. If
-        ``eps is None``, the dtype of this array will be integer unless set
+        true class :math:`i` and in predicted class :math:`j`.
+        If ``eps is None``, the dtype of this array will be integer unless set
         otherwise with the ``dtype`` argument. If ``eps`` is given, the dtype
         will be float.
-        Will be a ``sklearn.sparse.csr_matrix`` if ``sparse=True``.
+        If ``sparse=True`` will be a sparse CSR contingency.
 
     Examples
     --------
@@ -166,12 +165,13 @@ def contingency_matrix(
     # Using coo_matrix to accelerate simple histogram calculation,
     # i.e. bins are consecutive integers
     # Currently, coo_matrix is faster than histogram2d for simple cases
-    contingency = sp.coo_matrix(
+    contingency = sp.coo_array(
         (np.ones(class_idx.shape[0]), (class_idx, cluster_idx)),
         shape=(n_classes, n_clusters),
         dtype=dtype,
     )
     if sparse:
+        contingency = _align_api_if_sparse(contingency)
         contingency = contingency.tocsr()
         contingency.sum_duplicates()
     else:
@@ -209,10 +209,10 @@ def pair_confusion_matrix(labels_true, labels_pred):
 
     Parameters
     ----------
-    labels_true : array-like of shape (n_samples,), dtype=integral
+    labels_true : array-like of shape (n_samples,)
         Ground truth class labels to be used as a reference.
 
-    labels_pred : array-like of shape (n_samples,), dtype=integral
+    labels_pred : array-like of shape (n_samples,)
         Cluster labels to evaluate.
 
     Returns
@@ -295,10 +295,10 @@ def rand_score(labels_true, labels_pred):
 
     Parameters
     ----------
-    labels_true : array-like of shape (n_samples,), dtype=integral
+    labels_true : array-like of shape (n_samples,)
         Ground truth class labels to be used as a reference.
 
-    labels_pred : array-like of shape (n_samples,), dtype=integral
+    labels_pred : array-like of shape (n_samples,)
         Cluster labels to evaluate.
 
     Returns
@@ -384,10 +384,10 @@ def adjusted_rand_score(labels_true, labels_pred):
 
     Parameters
     ----------
-    labels_true : array-like of shape (n_samples,), dtype=int
+    labels_true : array-like of shape (n_samples,)
         Ground truth class labels to be used as a reference.
 
-    labels_pred : array-like of shape (n_samples,), dtype=int
+    labels_pred : array-like of shape (n_samples,)
         Cluster labels to evaluate.
 
     Returns
@@ -855,11 +855,11 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
 
     Parameters
     ----------
-    labels_true : array-like of shape (n_samples,), dtype=integral
+    labels_true : array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets, called :math:`U` in
         the above formula.
 
-    labels_pred : array-like of shape (n_samples,), dtype=integral
+    labels_pred : array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets, called :math:`V` in
         the above formula.
 
@@ -972,11 +972,11 @@ def adjusted_mutual_info_score(
 
     Parameters
     ----------
-    labels_true : int array-like of shape (n_samples,)
+    labels_true : array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets, called :math:`U` in
         the above formula.
 
-    labels_pred : int array-like of shape (n_samples,)
+    labels_pred : array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets, called :math:`V` in
         the above formula.
 
@@ -1108,10 +1108,10 @@ def normalized_mutual_info_score(
 
     Parameters
     ----------
-    labels_true : int array-like of shape (n_samples,)
+    labels_true : array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
-    labels_pred : int array-like of shape (n_samples,)
+    labels_pred : array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
     average_method : {'min', 'geometric', 'arithmetic', 'max'}, default='arithmetic'
@@ -1189,11 +1189,10 @@ def normalized_mutual_info_score(
     {
         "labels_true": ["array-like"],
         "labels_pred": ["array-like"],
-        "sparse": ["boolean", Hidden(StrOptions({"deprecated"}))],
     },
     prefer_skip_nested_validation=True,
 )
-def fowlkes_mallows_score(labels_true, labels_pred, *, sparse="deprecated"):
+def fowlkes_mallows_score(labels_true, labels_pred):
     """Measure the similarity of two clusterings of a set of points.
 
     .. versionadded:: 0.18
@@ -1218,18 +1217,11 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse="deprecated"):
 
     Parameters
     ----------
-    labels_true : array-like of shape (n_samples,), dtype=int
+    labels_true : array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
-    labels_pred : array-like of shape (n_samples,), dtype=int
+    labels_pred : array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
-
-    sparse : bool, default=False
-        Compute contingency matrix internally with sparse matrix.
-
-        .. deprecated:: 1.7
-            The ``sparse`` parameter is deprecated and will be removed in 1.9. It has
-            no effect.
 
     Returns
     -------
@@ -1264,13 +1256,6 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse="deprecated"):
       >>> fowlkes_mallows_score([0, 0, 0, 0], [0, 1, 2, 3])
       0.0
     """
-    # TODO(1.9): remove the sparse parameter
-    if sparse != "deprecated":
-        warnings.warn(
-            "The 'sparse' parameter was deprecated in 1.7 and will be removed in 1.9. "
-            "It has no effect. Leave it to its default value to silence this warning.",
-            FutureWarning,
-        )
 
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     (n_samples,) = labels_true.shape
@@ -1288,7 +1273,7 @@ def _entropy(labels):
 
     Parameters
     ----------
-    labels : array-like of shape (n_samples,), dtype=int
+    labels : array-like of shape (n_samples,)
         The labels.
 
     Returns
@@ -1326,7 +1311,7 @@ def entropy(labels):
 
     Parameters
     ----------
-    labels : array-like of shape (n_samples,), dtype=int
+    labels : array-like of shape (n_samples,)
         The labels.
 
     Returns
