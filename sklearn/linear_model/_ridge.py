@@ -700,19 +700,6 @@ def _ridge_regression(
             # we implement sample_weight via a simple rescaling.
             X, y, sample_weight_sqrt = _rescale_data(X, y, sample_weight)
 
-    # Some callers of this method might pass alpha as single
-    # element array which already has been validated.
-    if alpha is not None and not isinstance(
-        alpha, (type(xp.asarray([0.0])), np.ndarray)
-    ):
-        alpha = check_scalar(
-            alpha,
-            "alpha",
-            target_type=numbers.Real,
-            min_val=0.0,
-            include_boundaries="left",
-        )
-
     # There should be either 1 or n_targets penalties
     alpha = _ravel(xp.asarray(alpha, device=device_, dtype=X.dtype), xp=xp)
     if alpha.shape[0] not in [1, n_targets]:
@@ -1049,7 +1036,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
     Parameters
     ----------
-    alpha : {float, ndarray of shape (n_targets,)}, default=1.0
+    alpha : float or array-like of shape (n_targets,), default=1.0
         Constant that multiplies the L2 term, controlling regularization
         strength. `alpha` must be a non-negative float i.e. in `[0, inf)`.
 
@@ -1416,7 +1403,7 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
 
     Parameters
     ----------
-    alpha : float, default=1.0
+    alpha : float or array-like of shape (n_targets,), default=1.0
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
