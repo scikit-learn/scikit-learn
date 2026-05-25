@@ -3,12 +3,13 @@
 
 import warnings
 
+import narwhals.stable.v2 as nw
 import numpy as np
 
 from sklearn.base import is_classifier, is_clusterer, is_outlier_detector, is_regressor
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import _safe_indexing
-from sklearn.utils._dataframe import is_pandas_df, is_polars_df
+from sklearn.utils._dataframe import is_polars_df
 from sklearn.utils._optional_dependencies import check_matplotlib_support
 from sklearn.utils._response import _get_response_values
 from sklearn.utils._set_output import _get_adapter_from_container
@@ -655,7 +656,7 @@ class DecisionBoundaryDisplay:
         )
 
         X_grid = np.c_[xx0.ravel(), xx1.ravel()]
-        if is_pandas_df(X) or is_polars_df(X):
+        if nw.dependencies.is_pandas_dataframe(X) or is_polars_df(X):
             adapter = _get_adapter_from_container(X)
             X_grid = adapter.create_container(
                 X_grid,

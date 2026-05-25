@@ -20,9 +20,9 @@ of splitting strategies:
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+from libc.math cimport INFINITY
 from libc.string cimport memcpy
 
-from sklearn.utils._typedefs cimport int8_t
 from sklearn.tree._criterion cimport Criterion
 from sklearn.tree._partitioner cimport (
     FEATURE_THRESHOLD, DensePartitioner, SparsePartitioner,
@@ -39,9 +39,6 @@ import numpy as np
 ctypedef fused Partitioner:
     DensePartitioner
     SparsePartitioner
-
-
-cdef float64_t INFINITY = np.inf
 
 
 cdef inline void _init_split(SplitRecord* self, intp_t start_pos) noexcept nogil:

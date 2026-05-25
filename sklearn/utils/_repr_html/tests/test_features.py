@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.base import clone, BaseEstimator, TransformerMixin
 from sklearn.compose import ColumnTransformer, make_column_transformer
 from sklearn.datasets import load_iris
 from sklearn.decomposition import PCA, TruncatedSVD
@@ -60,8 +60,8 @@ def test_estimator_html_repr_col_names(pandas, feature_cols):
     else:
         X = np.array([[0, 2], [1, 1]])
 
-    ct.fit(X)
-    out = estimator_html_repr(ct)
+    ct_cloned = clone(ct).fit(X)
+    out = estimator_html_repr(ct_cloned)
     assert feature_cols[0] in out
     assert feature_cols[1] in out
 
@@ -81,8 +81,8 @@ def test_estimator_html_repr_total_feature_names(pandas, total_output_features):
     else:
         X = np.array([[0, 2, 3], [1, 1, 3], [3, 5, 4]])
 
-    ct.fit(X)
-    out = estimator_html_repr(ct)
+    ct_cloned = clone(ct).fit(X)
+    out = estimator_html_repr(ct_cloned)
 
     assert "<div class='total_features'>" in out
     assert "3 features</div>" in out
@@ -92,8 +92,9 @@ def test_estimator_html_repr_total_feature_names(pandas, total_output_features):
 
 def test_estimator_html_col_names_featureunion():
     X = [[0.0, 1.0, 3], [2.0, 2.0, 5]]
-    ct2.fit_transform(X)
-    out = estimator_html_repr(ct2)
+    ct2_cloned = clone(ct2)
+    ct2_cloned.fit_transform(X)
+    out = estimator_html_repr(ct2_cloned)
 
     assert "pca__pca0" in out
     assert "svd__truncatedsvd0" in out

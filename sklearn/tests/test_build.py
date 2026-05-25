@@ -28,15 +28,18 @@ def test_extension_type_module():
         path=sklearn_path, prefix="sklearn.", onerror=lambda _: None
     ):
         # Packages are directories, not modules that can hold extension
-        # types. ``tests``, ``externals`` (vendored third-party code) and
+        # types. ``tests``, ``externals`` (vendored third-party code),
         # ``_build_utils`` (build-time helpers that import ``Cython``, which
-        # is not installed in the wheel test environment) are out of scope
-        # for this check.
+        # is not installed in the wheel test environment) and ``_cyutility`` (that is a
+        # Cython shared utility module whose classes report a runtime-level module path)
+        # are out of scope for this check. The latter is needed for the pyodide
+        # platform in particular.
         if (
             ispkg
             or ".tests." in modname
             or ".externals." in modname
             or "._build_utils." in modname
+            or "._cyutility" in modname
         ):
             continue
         mod = importlib.import_module(modname)
