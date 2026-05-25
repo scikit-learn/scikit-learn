@@ -15,7 +15,7 @@ from sklearn.callback._base import AutoPropagatedCallback
 VALID_HOOK_PARAMS_OUT = ["X", "y", "metadata", "fitted_estimator"]
 
 
-_cached_signature = functools.lru_cache(maxsize=None)(inspect.signature)
+_cached_signature = functools.lru_cache()(inspect.signature)
 
 
 class CallbackContext:
