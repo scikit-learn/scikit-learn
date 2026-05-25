@@ -18,3 +18,4 @@ Developer's Guide
    bug_triaging
    maintainer
    plotting
+   callbacks

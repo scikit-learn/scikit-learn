@@ -6,4 +6,4 @@
   Another reason for its adoption was that the dataframe interchange protocol
   (`__dataframe__`) on which scikit-learn relied so far for non-pandas dataframes got
   deprecated by polars and has run its course.
-  By :user:`Christian Lorentzen <lorentzenchr>`.
+  By :user:`Christian Lorentzen <lorentzenchr>` and :user:`Marco Gorelli<MarcoGorelli>`.

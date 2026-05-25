@@ -18,6 +18,7 @@ from sklearn.linear_model._base import (
 from sklearn.preprocessing import add_dummy_feature
 from sklearn.utils._array_api import get_namespace_and_device, move_estimator_to
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
@@ -665,6 +666,25 @@ def test_dtype_preprocess_data(rescale_with_sw, fit_intercept, global_random_see
     assert_allclose(X_scale_32, X_scale_64)
     if rescale_with_sw:
         assert_allclose(sqrt_sw_32, sqrt_sw_64, rtol=1e-6)
+
+
+def test_preprocess_data_integer_array_api_on_float32_only_device():
+    xp, device = _array_api_for_tests("torch", device_name="mps", dtype_name="float32")
+
+    # TODO: replace this torch/MPS-specific coverage by array-api-strict once
+    # https://github.com/data-apis/array-api-strict/pull/206 is released.
+    X_np = np.asarray([[1, 2], [3, 4], [5, 6]], dtype=np.int64)
+    y_np = np.asarray([1, 2, 4], dtype=np.int64)
+    X_xp = xp.asarray(X_np, device=device)
+    y_xp = xp.asarray(y_np, device=device)
+
+    with config_context(array_api_dispatch=True):
+        X_out, y_out, *_ = _preprocess_data(
+            X_xp, y_xp, fit_intercept=True, check_input=True
+        )
+
+    assert X_out.dtype == xp.float32
+    assert y_out.dtype == xp.float32
 
 
 @pytest.mark.parametrize("n_targets", [None, 2])
