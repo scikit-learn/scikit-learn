@@ -152,7 +152,7 @@ def density(w):
     --------
     >>> from scipy import sparse
     >>> from sklearn.utils.extmath import density
-    >>> X = sparse.random(10, 10, density=0.25, random_state=0)
+    >>> X = sparse.random_array((10, 10), density=0.25, rng=0)
     >>> density(X)
     0.25
     """
@@ -169,7 +169,9 @@ def safe_sparse_dot(a, b, *, dense_output=False):
     Parameters
     ----------
     a : {ndarray, sparse matrix}
+        First operand of the dot product.
     b : {ndarray, sparse matrix}
+        Second operand of the dot product.
     dense_output : bool, default=False
         When False, ``a`` and ``b`` both being sparse will yield sparse output.
         When True, output will always be a dense array.
@@ -181,9 +183,9 @@ def safe_sparse_dot(a, b, *, dense_output=False):
 
     Examples
     --------
-    >>> from scipy.sparse import csr_matrix
+    >>> from scipy.sparse import csr_array
     >>> from sklearn.utils.extmath import safe_sparse_dot
-    >>> X = csr_matrix([[1, 2], [3, 4], [5, 6]])
+    >>> X = csr_array([[1, 2], [3, 4], [5, 6]])
     >>> dot_product = safe_sparse_dot(X, X.T)
     >>> dot_product.toarray()
     array([[ 5, 11, 17],
@@ -216,10 +218,10 @@ def safe_sparse_dot(a, b, *, dense_output=False):
         dense_output
         and a.ndim == 2
         and b.ndim == 2
-        and a.dtype in (np.float32, np.float64)
-        and b.dtype in (np.float32, np.float64)
         and (sparse.issparse(a) and a.format in ("csc", "csr"))
         and (sparse.issparse(b) and b.format in ("csc", "csr"))
+        and a.dtype in (np.float32, np.float64)
+        and b.dtype in (np.float32, np.float64)
     ):
         # Use dedicated fast method for dense_C = sparse_A @ sparse_B
         return sparse_matmul_to_dense(a, b)
@@ -318,21 +320,23 @@ def _randomized_range_finder(
     # Generating normal random vectors with shape: (A.shape[1], size)
     # XXX: generate random number directly from xp if it's possible
     # one day.
-    Q = xp.asarray(random_state.normal(size=(A.shape[1], size)))
-    if hasattr(A, "dtype") and xp.isdtype(A.dtype, kind="real floating"):
-        # Use float32 computation and components if A has a float32 dtype.
-        Q = xp.astype(Q, A.dtype, copy=False)
+    Q = random_state.normal(size=(A.shape[1], size))
+    if A.dtype == xp.float32 or (
+        is_array_api_compliant
+        and _max_precision_float_dtype(xp, device=device(A)) == xp.float32
+    ):
+        # Use float32 computation and components if A has a float32 dtype
+        # or if A has integer dtype and device doesn't not support float64.
 
-    # Move Q to device if needed only after converting to float32 if needed to
-    # avoid allocating unnecessary memory on the device.
+        # Downcast while Q is still a NumPy array to avoid allocating float64
+        # on devices that do not support it. The Array API does not require
+        # xp.asarray(..., dtype=..., device=device) to accept such a downcast.
+        Q = Q.astype(np.float32, copy=False)
 
-    # Note: we cannot combine the astype and to_device operations in one go
-    # using xp.asarray(..., dtype=dtype, device=device) because downcasting
-    # from float64 to float32 in asarray might not always be accepted as only
-    # casts following type promotion rules are guarateed to work.
-    # https://github.com/data-apis/array-api/issues/647
     if is_array_api_compliant:
         Q = xp.asarray(Q, device=device(A))
+    else:
+        Q = xp.asarray(Q)
 
     # Deal with "auto" mode
     if power_iteration_normalizer == "auto":
@@ -571,7 +575,7 @@ def _randomized_svd(
     if sparse.issparse(M) and M.format in ("lil", "dok"):
         warnings.warn(
             "Calculating SVD of a {} is expensive. "
-            "csr_matrix is more efficient.".format(type(M).__name__),
+            "CSR format is more efficient.".format(type(M).__name__),
             sparse.SparseEfficiencyWarning,
         )
 

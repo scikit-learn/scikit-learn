@@ -22,8 +22,8 @@ At this stage, this support is **considered experimental** and must be enabled
 explicitly by the `array_api_dispatch` configuration. See below for details.
 
 .. note::
-    Currently, only `array-api-strict`, `cupy`, and `PyTorch` are known to work
-    with scikit-learn's estimators.
+    Currently, only `array-api-strict`, `cupy`, `PyTorch`, and `dpnp` are
+    regularly tested to work with scikit-learn's estimators.
 
 The following video provides an overview of the standard's design principles
 and how it facilitates interoperability between array libraries:
@@ -89,23 +89,35 @@ The example code snippet below demonstrates how to use `CuPy
     >>> X_trans.device
     <CUDA Device 0>
 
-After the model is trained, fitted attributes that are arrays will also be
-from the same Array API namespace as the training data. For example, if CuPy's
-Array API namespace was used for training, then fitted attributes will be on the
-GPU. We provide an experimental `_estimator_with_converted_arrays` utility that
-transfers an estimator attributes from Array API to an ndarray::
+After the model is trained, fitted attributes that are arrays will also be from
+the same Array API namespace as the training data. For example, if CuPy's Array
+API namespace was used for training, then fitted attributes will be on the GPU.
+Passing data in a different namespace or in a different device within the same
+namespace to ``transform`` or ``predict`` is an error::
 
-    >>> from sklearn.utils._array_api import _estimator_with_converted_arrays
-    >>> cupy_to_ndarray = lambda array : array.get()
-    >>> lda_np = _estimator_with_converted_arrays(lda, cupy_to_ndarray)
-    >>> X_trans = lda_np.transform(X_np)
+    >>> with config_context(array_api_dispatch=True):
+    ...     lda.transform(X_np)
+    Traceback (most recent call last):
+        ...
+    ValueError: Inputs passed to LinearDiscriminantAnalysis.transform() must use the same namespace and the same device as those passed to fit()...
+
+We provide ``move_estimator_to`` to transfer an estimator's array attributes
+to a different namespace and device::
+
+    >>> from sklearn.utils._array_api import move_estimator_to, get_namespace_and_device
+    >>> import numpy as np
+    >>> lda_np = move_estimator_to(lda, np, device="cpu")
+    >>> with config_context(array_api_dispatch=True):
+    ...     X_trans = lda_np.transform(X_np)
     >>> type(X_trans)
     <class 'numpy.ndarray'>
 
 PyTorch Support
 ---------------
 
-PyTorch Tensors can also be passed directly::
+PyTorch tensors can also be passed directly. The following example uses a CUDA
+device, but the same pattern also works with PyTorch tensors on CPU, MPS, and
+XPU devices::
 
     >>> import torch
     >>> X_torch = torch.asarray(X_np, device="cuda", dtype=torch.float32)
@@ -118,6 +130,32 @@ PyTorch Tensors can also be passed directly::
     <class 'torch.Tensor'>
     >>> X_trans.device.type
     'cuda'
+
+For Intel GPUs, install PyTorch 2.12 or newer with XPU support following the
+`PyTorch XPU installation instructions
+<https://docs.pytorch.org/docs/stable/notes/get_start_xpu.html>`_ and use
+`device="xpu"` instead of `device="cuda"`.
+
+dpnp Support
+------------
+
+`dpnp <https://intelpython.github.io/dpnp/>`_ arrays can also be passed
+directly on supported SYCL devices such as CPU and Intel GPU devices:
+
+.. code-block:: python
+
+    import dpnp
+
+    X_dpnp = dpnp.asarray(X_np, device="gpu", dtype=dpnp.float32)
+    y_dpnp = dpnp.asarray(y_np, device="gpu")
+
+    with config_context(array_api_dispatch=True):
+        lda = LinearDiscriminantAnalysis()
+        X_trans = lda.fit_transform(X_dpnp, y_dpnp)
+
+See the `dpnp quick start guide
+<https://intelpython.github.io/dpnp/quick_start_guide.html#installation>`_
+for hardware driver and installation instructions.
 
 .. _array_api_supported:
 
@@ -132,10 +170,12 @@ Estimators
 - :class:`decomposition.PCA` (with `svd_solver="full"`, `svd_solver="covariance_eigh"`, or
   `svd_solver="randomized"` (`svd_solver="randomized"` only if `power_iteration_normalizer="QR"`))
 - :class:`kernel_approximation.Nystroem`
+- :class:`linear_model.LogisticRegression` (with `solver="lbfgs"`)
+- :class:`linear_model.PoissonRegressor` (with `solver="lbfgs"`)
 - :class:`linear_model.Ridge` (with `solver="svd"`)
-- :class:`linear_model.RidgeCV` (with `solver="svd"`, see :ref:`device_support_for_float64`)
+- :class:`linear_model.RidgeCV` (see :ref:`device_support_for_float64`)
 - :class:`linear_model.RidgeClassifier` (with `solver="svd"`)
-- :class:`linear_model.RidgeClassifierCV` (with `solver="svd"`, see :ref:`device_support_for_float64`)
+- :class:`linear_model.RidgeClassifierCV` (see :ref:`device_support_for_float64`)
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` (with `solver="svd"`)
 - :class:`naive_bayes.GaussianNB`
 - :class:`preprocessing.Binarizer`
@@ -157,6 +197,7 @@ Meta-estimators that accept Array API inputs conditioned on the fact that the
 base estimator also does:
 
 - :class:`calibration.CalibratedClassifierCV` (with `method="temperature"`)
+- :class:`pipeline.FeatureUnion`
 - :class:`model_selection.GridSearchCV`
 - :class:`model_selection.RandomizedSearchCV`
 - :class:`model_selection.HalvingGridSearchCV`
@@ -169,7 +210,7 @@ Metrics
 - :func:`sklearn.metrics.average_precision_score`
 - :func:`sklearn.metrics.balanced_accuracy_score`
 - :func:`sklearn.metrics.brier_score_loss`
-- :func:`sklearn.metrics.cluster.calinski_harabasz_score`
+- :func:`sklearn.metrics.calinski_harabasz_score`
 - :func:`sklearn.metrics.cohen_kappa_score`
 - :func:`sklearn.metrics.confusion_matrix`
 - :func:`sklearn.metrics.d2_absolute_error_score`
@@ -189,7 +230,7 @@ Metrics
 - :func:`sklearn.metrics.mean_absolute_percentage_error`
 - :func:`sklearn.metrics.mean_gamma_deviance`
 - :func:`sklearn.metrics.mean_pinball_loss`
-- :func:`sklearn.metrics.mean_poisson_deviance` (requires `enabling array API support for SciPy <https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html#using-array-api-standard-support>`_)
+- :func:`sklearn.metrics.mean_poisson_deviance`
 - :func:`sklearn.metrics.mean_squared_error`
 - :func:`sklearn.metrics.mean_squared_log_error`
 - :func:`sklearn.metrics.mean_tweedie_deviance`
@@ -199,8 +240,8 @@ Metrics
 - :func:`sklearn.metrics.pairwise.chi2_kernel`
 - :func:`sklearn.metrics.pairwise.cosine_similarity`
 - :func:`sklearn.metrics.pairwise.cosine_distances`
-- :func:`sklearn.metrics.pairwise.pairwise_distances` (only supports "cosine", "euclidean", "manhattan" and "l2" metrics)
-- :func:`sklearn.metrics.pairwise.pairwise_distances_argmin`
+- :func:`sklearn.metrics.pairwise_distances` (only supports "cosine", "euclidean", "manhattan" and "l2" metrics)
+- :func:`sklearn.metrics.pairwise_distances_argmin`
 - :func:`sklearn.metrics.pairwise.euclidean_distances` (see :ref:`device_support_for_float64`)
 - :func:`sklearn.metrics.pairwise.laplacian_kernel`
 - :func:`sklearn.metrics.pairwise.linear_kernel`
@@ -320,11 +361,14 @@ vanilla NumPy and array API inputs.
 To run these checks you need to install
 `array-api-strict <https://data-apis.org/array-api-strict/>`_ in your
 test environment. This allows you to run checks without having a
-GPU. To run the full set of checks you also need to install
-`PyTorch <https://pytorch.org/>`_, `CuPy <https://cupy.dev/>`_ and have
-a GPU. Checks that can not be executed or have missing dependencies will be
-automatically skipped. Therefore it's important to run the tests with the
-`-v` flag to see which checks are skipped:
+GPU. To run checks on real GPU devices you also need to install
+`PyTorch <https://pytorch.org/>`_, `CuPy <https://cupy.dev/>`_, and/or
+`dpnp <https://intelpython.github.io/dpnp/>`_, and have compatible GPU
+hardware. Full GPU coverage is expected to be split across machines because
+CUDA, MPS, and Intel GPU backends require different hardware. Checks that can
+not be executed or have missing dependencies will be automatically skipped.
+Therefore it's important to run the tests with the `-v` flag to see which
+checks are skipped:
 
 .. prompt:: bash $
 
@@ -336,12 +380,15 @@ most code problems related to handling multiple device inputs via the use of
 simulated non-CPU devices. This allows for fast iterative development and debugging of
 array API related code.
 
-However, to ensure full handling of PyTorch or CuPy inputs allocated on actual GPU
-devices, it is necessary to run the tests against those libraries and hardware.
-This can either be achieved by using
+However, to ensure full handling of PyTorch, CuPy, or dpnp inputs allocated on
+actual GPU devices, it is necessary to run the tests against those libraries and
+hardware. This can either be achieved by using
 `Google Colab <https://gist.github.com/EdAbati/ff3bdc06bafeb92452b3740686cc8d7c>`_
-or leveraging our CI infrastructure on pull requests (manually triggered by maintainers
-for cost reasons).
+for CUDA or leveraging our CI infrastructure on pull requests. CUDA and Intel
+GPU tests are manually triggered by maintainers. Intel GPU testing for PyTorch
+XPU and dpnp is run on a dedicated self-hosted runner:
+`probabl-ai/scikit-learn-intel-workflow
+<https://github.com/probabl-ai/scikit-learn-intel-workflow>`_.
 
 .. _mps_support:
 
@@ -373,9 +420,10 @@ Note on device support for ``float64``
 Certain operations within scikit-learn will automatically perform operations
 on floating-point values with `float64` precision to prevent overflows and ensure
 correctness (e.g., :func:`metrics.pairwise.euclidean_distances`,
-:class:`preprocessing.StandardScaler`). However,
-certain combinations of array namespaces and devices, such as `PyTorch on MPS`
-(see :ref:`mps_support`) do not support the `float64` data type. In these cases,
-scikit-learn will revert to using the `float32` data type instead. This can result in
-different behavior (typically numerically unstable results) compared to not using array
-API dispatching or using a device with `float64` support.
+:class:`preprocessing.StandardScaler`). However, certain combinations of array
+namespaces and devices, such as `PyTorch on MPS` (see :ref:`mps_support`) and
+some Intel GPU devices with PyTorch XPU or dpnp, do not support the `float64`
+data type. In these cases, scikit-learn will revert to using the `float32` data
+type instead. This can result in different behavior (typically numerically
+unstable results) compared to not using array API dispatching or using a device
+with `float64` support.

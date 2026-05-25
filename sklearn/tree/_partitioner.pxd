@@ -3,10 +3,8 @@
 
 # See _partitioner.pyx for details.
 
-from cython cimport floating
-
 from sklearn.utils._typedefs cimport (
-    float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t
+    float32_t, float64_t, int32_t, intp_t, uint8_t
 )
 from sklearn.tree._splitter cimport SplitRecord
 
@@ -49,7 +47,8 @@ cdef const float32_t FEATURE_THRESHOLD = 1e-7
 #     cdef void next_p(
 #         self,
 #         intp_t* p_prev,
-#         intp_t* p
+#         intp_t* p,
+#         bint missing_go_to_left
 #     ) noexcept nogil
 #     cdef intp_t partition_samples(
 #         self,
@@ -57,10 +56,7 @@ cdef const float32_t FEATURE_THRESHOLD = 1e-7
 #     ) noexcept nogil
 #     cdef void partition_samples_final(
 #         self,
-#         intp_t best_pos,
-#         float64_t best_threshold,
-#         intp_t best_feature,
-#         intp_t n_missing,
+#         const SplitRecord* best_split,
 #     ) noexcept nogil
 
 
@@ -76,10 +72,12 @@ cdef class DensePartitioner:
     cdef intp_t end
     cdef intp_t n_missing
     cdef const uint8_t[::1] missing_values_in_feature_mask
+    cdef char[::1] swap_buffer
 
     cdef void sort_samples_and_feature_values(
         self, intp_t current_feature
     ) noexcept nogil
+    cdef void shift_missing_to_the_left(self) noexcept nogil
     cdef void init_node_split(
         self,
         intp_t start,
@@ -94,18 +92,17 @@ cdef class DensePartitioner:
     cdef void next_p(
         self,
         intp_t* p_prev,
-        intp_t* p
+        intp_t* p,
+        bint missing_go_to_left
     ) noexcept nogil
     cdef intp_t partition_samples(
         self,
-        float64_t current_threshold
+        float64_t current_threshold,
+        bint missing_go_to_left
     ) noexcept nogil
     cdef void partition_samples_final(
         self,
-        intp_t best_pos,
-        float64_t best_threshold,
-        intp_t best_feature,
-        intp_t n_missing,
+        const SplitRecord* best_split,
     ) noexcept nogil
 
 
@@ -134,6 +131,7 @@ cdef class SparsePartitioner:
     cdef void sort_samples_and_feature_values(
         self, intp_t current_feature
     ) noexcept nogil
+    cdef void shift_missing_to_the_left(self) noexcept nogil
     cdef void init_node_split(
         self,
         intp_t start,
@@ -148,18 +146,17 @@ cdef class SparsePartitioner:
     cdef void next_p(
         self,
         intp_t* p_prev,
-        intp_t* p
+        intp_t* p,
+        bint missing_go_to_left
     ) noexcept nogil
     cdef intp_t partition_samples(
         self,
-        float64_t current_threshold
+        float64_t current_threshold,
+        bint missing_go_to_left,
     ) noexcept nogil
     cdef void partition_samples_final(
         self,
-        intp_t best_pos,
-        float64_t best_threshold,
-        intp_t best_feature,
-        intp_t n_missing,
+        const SplitRecord* best_split,
     ) noexcept nogil
 
     cdef void extract_nnz(
@@ -168,16 +165,10 @@ cdef class SparsePartitioner:
     ) noexcept nogil
     cdef intp_t _partition(
         self,
-        float64_t threshold,
-        intp_t zero_pos
+        float64_t threshold
     ) noexcept nogil
 
 
-cdef void shift_missing_values_to_left_if_required(
-    SplitRecord* best,
-    intp_t[::1] samples,
-    intp_t end,
-) noexcept nogil
-
-
-cdef void sort(floating* feature_values, intp_t* samples, intp_t n) noexcept nogil
+ctypedef fused array_data_type:
+    intp_t
+    float32_t

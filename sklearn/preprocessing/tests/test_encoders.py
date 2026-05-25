@@ -39,6 +39,16 @@ def test_one_hot_encoder_sparse_dense():
     assert_array_equal(X_trans_sparse.toarray(), X_trans_dense)
 
 
+def test_one_hot_encoder_sparse_index_array_int32():
+    X = np.array([[3, 2, 1], [0, 1, 1]])
+    enc_sparse = OneHotEncoder(sparse_output=True)
+
+    X_trans_sparse = enc_sparse.fit_transform(X)
+    assert X_trans_sparse.format == "csr"
+    assert X_trans_sparse.indices.dtype == np.int32
+    assert X_trans_sparse.indptr.dtype == np.int32
+
+
 @pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist", "warn"])
 def test_one_hot_encoder_handle_unknown(handle_unknown):
     X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2]])
@@ -333,7 +343,7 @@ def test_one_hot_encoder_inverse_transform_raise_error_with_unknown(
     X, X_trans, sparse_
 ):
     """Check that `inverse_transform` raise an error with unknown samples, no
-    dropped feature, and `handle_unknow="error`.
+    dropped feature, and `handle_unknown="error`.
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/14934
     """
@@ -1384,7 +1394,7 @@ def test_ohe_infrequent_user_cats_unknown_training_errors(kwargs):
 @pytest.mark.parametrize(
     "input_dtype, category_dtype", ["OO", "OU", "UO", "UU", "SO", "SU", "SS"]
 )
-@pytest.mark.parametrize("array_type", ["list", "array", "dataframe"])
+@pytest.mark.parametrize("array_type", ["list", "array", "pandas"])
 def test_encoders_string_categories(input_dtype, category_dtype, array_type):
     """Check that encoding work with object, unicode, and byte string dtypes.
     Non-regression test for:
@@ -2411,10 +2421,13 @@ def test_onehotencoder_handle_unknown_warn_maps_to_infrequent():
         min_frequency=2,
         drop="first",
     )
+
     encoder_infreq.fit(train_data)
-    result_infreq = encoder_infreq.transform(test_data)
 
     warning_match = "unknown categories will be encoded as the infrequent category"
+    # The warning is raised because `drop is not None`.
+    with pytest.warns(UserWarning, match=warning_match):
+        result_infreq = encoder_infreq.transform(test_data)
 
     with pytest.warns(UserWarning, match=warning_match):
         result_warn = encoder_warn.transform(test_data)
