@@ -1,4 +1,0 @@
-- Fixed incomplete deprecation message for the :class:`linear_model.LogisticRegression`
-  and :class:`linear_model.LogisticRegressionCV` ``penalty`` parameter, which was
-  missing the ``penalty=None`` and ``penalty='elasticnet'`` migration guidance.
-  By :user:`baynecheke <baynecheke>`.
