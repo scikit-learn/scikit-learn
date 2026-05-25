@@ -979,6 +979,28 @@ def test_logsumexp_like_scipy_logsumexp(array_namespace, device_name, dtype_name
         assert_allclose(res_np_2, res_xp_2, rtol=rtol)
 
 
+@pytest.mark.parametrize("axis", [0, 1, None])
+def test_logsumexp_integer_array_api_on_float32_only_device(axis):
+    xp, device = _array_api_for_tests("torch", device_name="mps", dtype_name="float32")
+
+    # TODO: replace this torch/MPS-specific coverage by array-api-strict once
+    # https://github.com/data-apis/array-api-strict/pull/206 is released.
+    array_np = numpy.asarray(
+        [[0, 3, 1000], [2, -1, 1000], [-10, 0, 0]], dtype=numpy.int64
+    )
+    array_xp = xp.asarray(array_np, device=device)
+
+    with config_context(array_api_dispatch=True):
+        res_xp = _logsumexp(array_xp, axis=axis)
+
+    assert res_xp.dtype == xp.float32
+    assert_allclose(
+        move_to(res_xp, xp=numpy, device="cpu"),
+        scipy.special.logsumexp(array_np, axis=axis),
+        rtol=1e-6,
+    )
+
+
 @pytest.mark.parametrize(
     ("namespace", "device_", "expected_types"),
     [
@@ -1040,5 +1062,6 @@ def test_matching_numpy_dtype(namespace, device_name, dtype_name):
     xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
     X_np = numpy.arange(1000).astype(dtype_name)
     X_xp = xp.asarray(X_np, device=device)
-    ret_dtype = _matching_numpy_dtype(X_xp, xp=xp)
+    with config_context(array_api_dispatch=True):
+        ret_dtype = _matching_numpy_dtype(X_xp, xp=xp)
     assert ret_dtype == X_np.dtype

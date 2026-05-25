@@ -135,6 +135,8 @@ from sklearn.utils.validation import _num_samples, check_random_state
 #   - CONTINUOUS_CLASSIFICATION_METRICS: all classification metrics which
 #     compare a ground truth and a continuous score, e.g. estimated
 #     probabilities or decision function (format might vary)
+#   - CURVE_METRICS: all metrics that output arrays for plotting performance curves
+#     from continuous classification scores.
 #
 # Those dictionaries will be used to test systematically some invariance
 # properties, e.g. invariance toward several input layout.
