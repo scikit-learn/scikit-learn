@@ -2941,6 +2941,12 @@ void get_n_iter(const model *model_, int* n_iter)
     if (labels == 2)
         labels = 1;
 
+    // MCSVM_CS solver stores only a single n_iter value (the total iterations
+    // of the multi-class solver), not one per class. Reading beyond slot 0
+    // would be an out-of-bounds access on the allocated buffer.
+    if (model_->param.solver_type == MCSVM_CS)
+        labels = 1;
+
     if (model_->n_iter != NULL)
         for(int i=0;i<labels;i++)
             n_iter[i] = model_->n_iter[i];
