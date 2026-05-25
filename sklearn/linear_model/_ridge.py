@@ -968,6 +968,9 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         else:
             solver = self.solver
 
+        if solver == "svd" and getattr(X, "is_sparse", False):
+            raise TypeError("SVD solver does not support sparse inputs currently")
+
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
