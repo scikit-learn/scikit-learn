@@ -232,6 +232,7 @@ def average_precision_score(
     0.77
     """
     xp, _, device = get_namespace_and_device(y_score)
+    y_score = check_array(y_score, ensure_2d=False)
     # To allow mixed string `y_true`/numeric `y_score` input, cannot move `y_true`
     # until it has been converted to an integer (e.g., via `label_binarize`)
     # Ensures `test_array_api_classification_mixed_string_numeric_input` passes.
