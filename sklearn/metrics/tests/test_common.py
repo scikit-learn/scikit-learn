@@ -2775,10 +2775,7 @@ def test_mixed_array_api_namespace_input_compliance(
                     sample_weight_np, device=device_other
                 )
                 metric_kwargs_xp.update({"sample_weight": sample_weight_xp})
-            if (
-                data_case == "regression_multioutput"
-                and metric_name in MULTIOUTPUT_METRICS
-            ):
+            if data_case == "regression_multioutput":
                 # Use float32 to avoid MPS max float
                 multioutput_np = np.array(multioutput, dtype=np.float32)
                 metric_kwargs_np.update({"multioutput": multioutput_np})
