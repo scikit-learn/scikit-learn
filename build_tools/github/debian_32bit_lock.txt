@@ -6,7 +6,7 @@
 #
 coverage[toml]==7.14.0
     # via pytest-cov
-cython==3.2.4
+cython==3.2.5
     # via -r build_tools/github/debian_32bit_requirements.txt
 execnet==2.1.2
     # via pytest-xdist
