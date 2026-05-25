@@ -73,7 +73,9 @@ def _weighted_percentile(
         unit `sample_weight`, such that the total of `sample_weight` below or equal to
         `_weighted_percentile(percentile_rank)` is the same as the total of
         `sample_weight` above or equal to `_weighted_percentile(100-percentile_rank)`.
-        This symmetry is not guaranteed with non-unit weights.
+        This symmetry is not guaranteed with non-unit weights. With floating-point
+        `sample_weight`, numerical roundoff can also affect whether the requested
+        percentile is treated as falling exactly on a cumulative weight boundary.
 
     xp : array_namespace, default=None
         The standard-compatible namespace for `array`. Default: infer.
