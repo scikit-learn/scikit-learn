@@ -9,6 +9,7 @@ import os
 import pkgutil
 import re
 import warnings
+from copy import deepcopy
 from functools import partial
 from itertools import chain
 
@@ -118,6 +119,11 @@ def test_get_check_estimator_ids(val, expected):
     list(_tested_estimators()), expected_failed_checks=_get_expected_failed_checks
 )
 def test_estimators(estimator, check, request):
+    # Make sure the shared estimator created by @parametrize_with_checks
+    # remains unchanged, especially important for --parallel-threads tests.
+    # clone() will often only do a safe=True copy, thus deepcopy just to be
+    # certain no sharing happens.
+    estimator = deepcopy(estimator)
     # Common tests for estimator instances
     with ignore_warnings(
         category=(FutureWarning, ConvergenceWarning, UserWarning, LinAlgWarning)
