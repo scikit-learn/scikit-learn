@@ -1215,7 +1215,7 @@ def test_method_metadata_request_clone_does_not_copy_owner():
     req = MethodMetadataRequest(owner=owner, method="fit")
     req.add_request(param="sample_weight", alias=True)
 
-    new = req._clone()
+    new = clone(req)
 
     # owner is shared by reference, not copied
     assert new.owner is owner
@@ -1232,7 +1232,7 @@ def test_metadata_request_clone_does_not_copy_owner():
     req = MetadataRequest(owner=owner)
     req.fit.add_request(param="sample_weight", alias=True)
 
-    new = req._clone()
+    new = clone(req)
 
     assert new.owner is owner
     for method in SIMPLE_METHODS:
@@ -1254,7 +1254,7 @@ def test_metadata_router_clone_does_not_copy_owner():
         method_mapping=MethodMapping().add(caller="fit", callee="fit"),
     )
 
-    new = router._clone()
+    new = clone(router)
 
     assert new.owner is owner
     assert new._route_mappings["est"].router.owner is sub_owner

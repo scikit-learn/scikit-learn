@@ -130,7 +130,7 @@ def _clone_parametrized(estimator, *, safe=True):
 
     new_object = klass(**new_object_params)
     try:
-        new_object._metadata_request = estimator._metadata_request._clone()
+        new_object._metadata_request = clone(estimator._metadata_request)
     except AttributeError:
         pass
 

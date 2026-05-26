@@ -350,15 +350,15 @@ class MethodMetadataRequest:
         self.owner = owner
         self.method = method
 
-    def _clone(self):
+    def __sklearn_clone__(self):
         # `owner` is a reference to the estimator and is only used by
         # `_routing_repr` for display; deep-copying it would drag the full
         # estimator state (and fail for non-picklable attributes) for no benefit.
-        new = self.__class__.__new__(self.__class__)
-        new.owner = self.owner
-        new.method = self.method
-        new._requests = deepcopy(self._requests)
-        return new
+        return MethodMetadataRequest(
+            owner=self.owner,
+            method=self.method,
+            requests=deepcopy(self._requests),
+        )
 
     @property
     def requests(self):
@@ -617,13 +617,12 @@ class MetadataRequest:
                 MethodMetadataRequest(owner=owner, method=method),
             )
 
-    def _clone(self):
+    def __sklearn_clone__(self):
         # `owner` is a reference to the estimator and is only used by
-        # `_routing_repr` for display; see MethodMetadataRequest._clone.
-        new = self.__class__.__new__(self.__class__)
-        new.owner = self.owner
+        # `_routing_repr` for display; see MethodMetadataRequest.__sklearn_clone__.
+        new = MetadataRequest(owner=self.owner)
         for method in SIMPLE_METHODS:
-            setattr(new, method, getattr(self, method)._clone())
+            setattr(new, method, getattr(self, method).__sklearn_clone__())
         return new
 
     def consumes(self, method, params):
@@ -932,17 +931,19 @@ class MetadataRouter:
         self._self_request = None
         self.owner = owner
 
-    def _clone(self):
+    def __sklearn_clone__(self):
         # `owner` is a reference to the estimator and is only used by
-        # `_routing_repr` for display; see MethodMetadataRequest._clone.
-        new = self.__class__.__new__(self.__class__)
-        new.owner = self.owner
+        # `_routing_repr` for display; see MethodMetadataRequest.__sklearn_clone__.
+        new = MetadataRouter(owner=self.owner)
         new._self_request = (
-            self._self_request._clone() if self._self_request is not None else None
+            self._self_request.__sklearn_clone__()
+            if self._self_request is not None
+            else None
         )
         new._route_mappings = {
             name: RouterMappingPair(
-                mapping=deepcopy(pair.mapping), router=pair.router._clone()
+                mapping=deepcopy(pair.mapping),
+                router=pair.router.__sklearn_clone__(),
             )
             for name, pair in self._route_mappings.items()
         }
@@ -973,9 +974,9 @@ class MetadataRouter:
             Returns `self`.
         """
         if getattr(obj, "_type", None) == "metadata_request":
-            self._self_request = obj._clone()
+            self._self_request = obj.__sklearn_clone__()
         elif hasattr(obj, "_get_metadata_request"):
-            self._self_request = obj._get_metadata_request()._clone()
+            self._self_request = obj._get_metadata_request().__sklearn_clone__()
         else:
             raise ValueError(
                 "Given `obj` is neither a `MetadataRequest` nor does it implement the"
@@ -1324,10 +1325,10 @@ def get_routing_for_object(obj=None):
     # doing this instead of a try/except since an AttributeError could be raised
     # for other reasons.
     if hasattr(obj, "get_metadata_routing"):
-        return obj.get_metadata_routing()._clone()
+        return obj.get_metadata_routing().__sklearn_clone__()
 
     elif getattr(obj, "_type", None) in ["metadata_request", "metadata_router"]:
-        return obj._clone()
+        return obj.__sklearn_clone__()
 
     return MetadataRequest(owner=None)
 
