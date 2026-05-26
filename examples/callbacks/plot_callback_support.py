@@ -17,7 +17,7 @@ without modifying the core algorithm of the process.
 In scikit-learn, callbacks take the form of classes following a `protocol
 <https://typing.python.org/en/latest/spec/protocol.html>`__. This protocol requires the
 callback classes to implement specific methods (referred to as callback hooks) which
-will be called at specific steps of the fitting of an estimator or a meta-estimator.
+are called at specific steps of the fitting of an estimator or a meta-estimator.
 These hooks are :meth:`~FitCallback.setup`, :meth:`~FitCallback.on_fit_task_begin`,
 :meth:`~FitCallback.on_fit_task_end` and :meth:`~FitCallback.teardown`. The
 :meth:`~FitCallback.setup` and :meth:`~FitCallback.teardown` hooks are called only once,
@@ -129,13 +129,13 @@ class SimpleKMeans(CallbackSupportMixin, BaseEstimator):  # noqa: F811
         return np.argmin(euclidean_distances(X, self.cluster_centers_), axis=1)
 
     # Then the `fit` function must be decorated with the `with_callbacks`
-    # decorator, which will take care of the proper teardown of callbacks.
+    # decorator, which takes care of the proper teardown of callbacks.
     @with_callbacks
     def fit(self, X, y=None):
         X = validate_data(self, X)
         random_state = check_random_state(self.random_state)
         # The `CallbackContext` object must be instantiated with the
-        # `_init_callback_context` method provided by the mixin, which will call the
+        # `_init_callback_context` method provided by the mixin, which calls the
         # `setup` hooks of the callbacks. This context corresponds to the root task of
         # the fit function.
         callback_ctx = self._init_callback_context(
@@ -178,7 +178,7 @@ class SimpleKMeans(CallbackSupportMixin, BaseEstimator):  # noqa: F811
                     "cluster_centers_": self.cluster_centers_,
                 },
             ):
-                # The `call_on_fit_task_end` method returns a boolean, which will be set
+                # The `call_on_fit_task_end` method returns a boolean, which is set
                 # to True if any of the callbacks' `on_fit_task_end` methods return
                 # True. This enables the interruption of the `fit` process by the
                 # callbacks, for example to implement early stopping. Thus the
@@ -301,8 +301,8 @@ class SimpleGridSearch(BaseEstimator):
 # Now let's update the class to support callbacks.
 
 
-# The parallelized function will need to receive the callback context corresponding to
-# its task and the instance calling it.
+# The parallelized function needs to receive the callback context corresponding to its
+# task and the instance calling it.
 def _fit_and_score_cv(estimator, X, y, cv, score_func, outer_subcontext, caller):
     # The outer sub-context's `call_on_fit_task_begin` must be called.
     outer_subcontext.call_on_fit_task_begin(estimator=caller, X=X, y=y)
@@ -315,8 +315,8 @@ def _fit_and_score_cv(estimator, X, y, cv, score_func, outer_subcontext, caller)
         inner_subcontext = outer_subcontext.subcontext(task_name=f"fold {i}")
         # Since a sub-estimator is fitted in this task, the callbacks must be propagated
         # to that estimator with the `propagate_callback_context` context manager. Note
-        # that only the callbacks following the `AutoPropagatedCallback` protocol will
-        # be propagated.
+        # that only the callbacks following the `AutoPropagatedCallback` protocol can be
+        # propagated.
         with inner_subcontext.propagate_callback_context(cloned_estimator):
             # After the propagation, the inner sub-context's `call_on_fit_task_begin`
             # method must be called.
@@ -399,8 +399,8 @@ class SimpleGridSearch(CallbackSupportMixin, BaseEstimator):  # noqa: F811
 # .. note::
 #
 #     A meta-estimator that supports callback can be used with sub-estimators that do
-#     not. In that case a warning will be raised when trying to propagate the callbacks
-#     and the callbacks will be ignored in the sub-estimator.
+#     not. In that case a warning is raised when trying to propagate the callbacks
+#     and the callbacks are ignored in the sub-estimator.
 
 
 # %%
@@ -408,7 +408,7 @@ class SimpleGridSearch(CallbackSupportMixin, BaseEstimator):  # noqa: F811
 # -------------------------------------------
 # Callbacks are registered to a meta-estimator the same way as to regular estimators.
 # The callbacks which respect the :class:`~AutoPropagatedCallback` protocol (such as
-# :class:`~ProgressBar`) will be propagated to the sub-estimators.
+# :class:`~ProgressBar`) are propagated to the sub-estimators.
 
 
 param_list = [{"n_clusters": 5, "n_iter": 20}, {"n_clusters": 4, "n_iter": 50}]
