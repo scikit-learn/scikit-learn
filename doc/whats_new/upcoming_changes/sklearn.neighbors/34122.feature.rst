@@ -1,0 +1,3 @@
+- :class:`neighbors.NeighborhoodComponentsAnalysis` now supports PCA
+  initialization with sparse input matrices. By :user:`Arturo Amor
+  <ArturoAmorQ>`.
