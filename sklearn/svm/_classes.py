@@ -806,7 +806,7 @@ class SVC(BaseSVC):
     support_ : ndarray of shape (n_SV)
         Indices of support vectors.
 
-    support_vectors_ : ndarray or sparse  array/matrix of shape (n_SV, n_features)
+    support_vectors_ : ndarray or sparse array/matrix of shape (n_SV, n_features)
         Support vectors. An empty array if kernel is precomputed.
         If `X` is sparse, these will also be sparse.
 
