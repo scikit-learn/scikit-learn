@@ -34,7 +34,7 @@ In order to support the callbacks, estimators need to initialize and manage
 contextual information necessary to run the callback hooks. They are also responsible
 for calling the callback hooks at the right time.
 
-In the following, we will show how to convert an example estimator class and an example
+In the following, we show how to convert an example estimator class and an example
 meta-estimator class to make them compliant with the scikit-learn callback
 infrastructure.
 
@@ -234,10 +234,10 @@ estimator.fit(X)
 # %%
 # Custom meta-estimator
 # ---------------------
-# Now we will demonstrate how to implement a custom meta-estimator that supports
-# callbacks. For the example, we will implement a simplified version of a grid search,
-# where only a list of parameter combinations is searched through instead of a grid,
-# parallelizing the evaluation of the parameters.
+# Now we demonstrate how to implement a custom meta-estimator that supports callbacks.
+# For the example, we implement a simplified version of a grid search, where only a list
+# of parameter combinations is searched through instead of a grid, parallelizing the
+# evaluation of the parameters.
 # Let's start with the implementation without the callback support.
 
 
