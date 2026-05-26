@@ -141,9 +141,10 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
     Attributes
     ----------
-    coef_ : ndarray of shape (1, n_features) if n_classes == 2 else \
-            (n_classes, n_features)
-        Weights assigned to the features.
+    coef_ : ndarray or sparse matrix of shape (1, n_features) if n_classes == 2 \
+                else (n_classes, n_features)
+            Weights assigned to the features. ``coef_`` is a dense ndarray by
+            default. It becomes a sparse matrix after calling ``sparsify()``.
 
     intercept_ : ndarray of shape (1,) if n_classes == 2 else (n_classes,)
         Constants in decision function.
@@ -452,9 +453,9 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
     Attributes
     ----------
-    coef_ : array, shape = [1, n_features] if n_classes == 2 else [n_classes,\
-            n_features]
-        Weights assigned to the features.
+    coef_ : ndarray or sparse matrix of shape (n_features,)
+            Weights assigned to the features. ``coef_`` is a dense ndarray by
+            default. It becomes a sparse matrix after calling ``sparsify()``.
 
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.

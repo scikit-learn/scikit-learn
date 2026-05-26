@@ -1192,9 +1192,10 @@ class SGDClassifier(BaseSGDClassifier):
 
     Attributes
     ----------
-    coef_ : ndarray of shape (1, n_features) if n_classes == 2 else \
-            (n_classes, n_features)
-        Weights assigned to the features.
+    coef_ : ndarray or sparse matrix of shape (1, n_features) if n_classes == 2 \
+                else (n_classes, n_features)
+            Weights assigned to the features. ``coef_`` is a dense ndarray by
+            default. It becomes a sparse matrix after calling ``sparsify()``.
 
     intercept_ : ndarray of shape (1,) if n_classes == 2 else (n_classes,)
         Constants in decision function.
@@ -2006,8 +2007,9 @@ class SGDRegressor(BaseSGDRegressor):
 
     Attributes
     ----------
-    coef_ : ndarray of shape (n_features,)
-        Weights assigned to the features.
+    coef_ : ndarray or sparse matrix of shape (n_features,)
+            Weights assigned to the features. ``coef_`` is a dense ndarray by
+            default. It becomes a sparse matrix after calling ``sparsify()``.
 
     intercept_ : ndarray of shape (1,)
         The intercept term.
@@ -2219,8 +2221,9 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
 
     Attributes
     ----------
-    coef_ : ndarray of shape (1, n_features)
-        Weights assigned to the features.
+    coef_ : ndarray or sparse matrix of shape (1, n_features)
+            Weights assigned to the features. ``coef_`` is a dense ndarray by
+            default. It becomes a sparse matrix after calling ``sparsify()``.
 
     offset_ : ndarray of shape (1,)
         Offset used to define the decision function from the raw scores.

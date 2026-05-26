@@ -153,10 +153,13 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
     Attributes
     ----------
-    coef_ : ndarray of shape (1, n_features) if n_classes == 2 \
+    coef_ : ndarray or sparse matrix of shape (1, n_features) if n_classes == 2 \
             else (n_classes, n_features)
         Weights assigned to the features (coefficients in the primal
-        problem).
+        problem). 
+        
+        ``coef_`` is a dense ndarray by default. It becomes a
+        sparse matrix after calling ``sparsify()``.
 
         ``coef_`` is a readonly property derived from ``raw_coef_`` that
         follows the internal memory layout of liblinear.
