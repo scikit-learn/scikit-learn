@@ -492,6 +492,13 @@ class SparseCoefMixin:
         self
             Fitted estimator.
 
+        .. warning::
+            This method is not supported for estimators fitted with Array API
+            inputs (i.e. when :func:`sklearn.config_context` is used with
+            ``array_api_dispatch=True``). The call may succeed but subsequent
+            calls to :meth:`predict` and other methods involving passing arrays
+            may raise or return unexpected results.
+
         Notes
         -----
         For non-sparse models, i.e. when there are not many zeros in ``coef_``,
