@@ -1080,7 +1080,7 @@ class NuSVC(BaseSVC):
     support_ : ndarray of shape (n_SV,)
         Indices of support vectors.
 
-    support_vectors_ : ndarray or sparse  array/matrix of shape (n_SV, n_features)
+    support_vectors_ : ndarray or sparse array/matrix of shape (n_SV, n_features)
         Support vectors. If `X` is sparse, these will also be sparse.
 
     n_support_ : ndarray of shape (n_classes,), dtype=int32
