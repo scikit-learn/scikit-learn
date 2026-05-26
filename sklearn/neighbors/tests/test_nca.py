@@ -19,6 +19,8 @@ from sklearn.metrics import pairwise_distances
 from sklearn.neighbors import NeighborhoodComponentsAnalysis
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import check_random_state
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils.fixes import CSR_CONTAINERS
 from sklearn.utils.validation import validate_data
 
 rng = check_random_state(0)
@@ -261,6 +263,20 @@ def test_init_transformation():
     )
     with pytest.raises(ValueError, match=re.escape(msg)):
         nca.fit(X, y)
+
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_pca_init_sparse_matrix(csr_container):
+    # NCA with init="pca" should accept sparse input and produce results
+    # consistent with those obtained on the equivalent dense matrix.
+    rng = check_random_state(0)
+    X = rng.randn(50, 10)
+    X[(rng.randint(0, 50, 25), rng.randint(0, 10, 25))] = 0.0
+    y = np.array([0] * 25 + [1] * 25)
+    nca = NeighborhoodComponentsAnalysis(n_components=2, init="pca", random_state=0)
+    X_embedded_sparse = nca.fit_transform(csr_container(X), y)
+    X_embedded_dense = nca.fit_transform(X, y)
+    assert_allclose(X_embedded_sparse, X_embedded_dense, rtol=1e-6, atol=1e-6)
 
 
 @pytest.mark.parametrize("n_samples", [3, 5, 7, 11])
