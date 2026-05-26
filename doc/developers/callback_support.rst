@@ -6,10 +6,10 @@ Implementing callback support in estimators
 
 .. currentmodule:: sklearn.callback
 
-Adding callback support in an estimator boils down to enabling the registration of
-callbacks, expressing :term:`fit` as a tree of tasks, and invoking the callbacks at the
-beginning and end of each of these tasks. To achieve this, scikit-learn provides the
-following helpers from the :mod:`~sklearn.callback` module:
+Adding :term:`callback` support in an estimator boils down to enabling the registration
+of callbacks, expressing :term:`fit` as a tree of :term:`tasks <fit task>`, and invoking
+the callbacks at the beginning and end of each of these tasks. To achieve this,
+scikit-learn provides the following helpers from the :mod:`~sklearn.callback` module:
 
 - :class:`~CallbackSupportMixin`, which enables callback registration and initializes
   callback handling at the beginning of fit.
@@ -191,7 +191,7 @@ To dynamically build the context tree and manage the callbacks during fit, the
   single context in the combined tree.
 
   In addition, :meth:`~CallbackContext.propagate_callback_context` is a context manager
-  that propagates the auto-propagated callbacks from the meta-estimator to the
+  that propagates the :term:`auto-propagated` callbacks from the meta-estimator to the
   sub-estimator such that they are called at the tasks of the sub-estimator as well. It
   also clears the propagated callbacks on exit such that the fitted sub-estimator no
   longer holds any locally registered callbacks.
