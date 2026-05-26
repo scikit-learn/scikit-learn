@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import copy
+import functools
 import inspect
 import uuid
 import warnings
@@ -12,6 +13,9 @@ from sklearn.callback._base import AutoPropagatedCallback
 
 # List of the parameters expected to be in the hooks signatures
 VALID_HOOK_PARAMS_OUT = ["X", "y", "metadata", "fitted_estimator"]
+
+
+_cached_signature = functools.lru_cache()(inspect.signature)
 
 
 class CallbackContext:
@@ -317,7 +321,7 @@ class CallbackContext:
                 # sub-estimator's root context (both represent the same task).
                 continue
 
-            signature = inspect.signature(getattr(callback, hook_name))
+            signature = _cached_signature(getattr(callback, hook_name))
             params_names = {
                 p.name
                 for p in signature.parameters.values()
