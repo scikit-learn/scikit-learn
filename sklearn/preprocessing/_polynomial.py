@@ -1029,20 +1029,15 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 if self.sparse_output:
                     output_list.append(sparse.csr_array((n_samples, n_splines)))
                 continue
+
+            x = X[:, feature_idx]
             spl = self.bsplines_[feature_idx]
             # Get indicator for nan values in the current column.
-            nan_row_indices = np.flatnonzero(_get_mask(X[:, feature_idx], np.nan))
+            nan_row_indices = np.flatnonzero(_get_mask(x, np.nan))
 
             if self.extrapolation in ("continue", "error", "periodic"):
-                n = spl.t.size - spl.k - 1
-                if spl.t[n] - spl.t[spl.k] <= 0:
-                    # This can happen if the column has a single non-nan value. Treat
-                    # as a constant feature.
-                    x = np.zeros_like(X[:, feature_idx])
-                else:
-                    # Note that BSpline(.., extrapolate="periodic") maps x to the
-                    # segment [spl.t[k], spl.t[n]].
-                    x = X[:, feature_idx]
+                # Note that BSpline(.., extrapolate="periodic") maps x to the
+                # segment [spl.t[k], spl.t[n]] with n = spl.t.size - spl.k - 1.
 
                 if self.sparse_output:
                     # We replace the nan values in the input column by some arbitrary,
@@ -1092,13 +1087,11 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 f_min, f_max = spl(xmin), spl(xmax)
                 # Values outside of the feature range during fit and nan values get
                 # filtered out:
-                inside_range_mask = (xmin <= X[:, feature_idx]) & (
-                    X[:, feature_idx] <= xmax
-                )
+                inside_range_mask = (xmin <= x) & (x <= xmax)
 
                 if self.sparse_output:
                     outside_range_mask = ~inside_range_mask
-                    x = X[:, feature_idx].copy()
+                    x = x.copy()
                     # Set to some arbitrary value within the range of values
                     # observed on the training set before calling
                     # BSpline.design_matrix. Those transformed will be
@@ -1116,7 +1109,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     XBS[
                         inside_range_mask,
                         (feature_idx * n_splines) : ((feature_idx + 1) * n_splines),
-                    ] = spl(X[inside_range_mask, feature_idx])
+                    ] = spl(x[inside_range_mask])
 
             # Replace any indicated values with 0:
             if nan_row_indices.shape[0] > 0:
