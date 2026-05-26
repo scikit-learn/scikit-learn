@@ -142,7 +142,7 @@ def test_fcm_convergence_to_kmeans():
     """
     from sklearn.cluster import KMeans
 
-    X, y = make_blobs(n_samples=50, n_features=2, centers=2, random_state=1)
+    X, _ = make_blobs(n_samples=50, n_features=2, centers=2, random_state=1)
 
     # Fit FuzzyCMeans with very small m (close to 1)
     fcm = FuzzyCMeans(n_clusters=2, m=1.05, random_state=42).fit(X)

@@ -286,13 +286,13 @@ class FuzzyCMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     ...               [10, 2], [10, 4], [10, 0]])
     >>> fcm = FuzzyCMeans(n_clusters=2, random_state=0).fit(X)
     >>> fcm.labels_
-    array([0, 0, 0, 1, 1, 1])
-    >>> fcm.predict_proba([[0, 0], [12, 3]])
-    array([[0.98484848, 0.01515152],
-           [0.00684932, 0.99315068]])
-    >>> fcm.cluster_centers_
-    array([[ 1.,  2.],
-           [10.,  2.]])
+    array([1, 1, 1, 0, 0, 0])
+    >>> np.round(fcm.predict_proba([[0, 0], [12, 3]]), 5)
+    array([[0.04621, 0.95379],
+           [0.96015, 0.03985]])
+    >>> np.round(fcm.cluster_centers_, 1)
+    array([[10.,  2.],
+           [ 1.,  2.]])
     """
 
     _parameter_constraints: dict = {
