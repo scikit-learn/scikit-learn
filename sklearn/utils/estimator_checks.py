@@ -974,7 +974,7 @@ def _regression_dataset():
         X = StandardScaler().fit_transform(X)
         REGRESSION_DATASET = X, y
     X, y = REGRESSION_DATASET
-    # Make a copy, in case tests mutate this data:
+    # Make a copy, in case the caller wants to mutate this data:
     return X.copy(), y.copy()
 
 
