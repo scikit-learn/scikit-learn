@@ -60,22 +60,11 @@ class Parallel(joblib.Parallel):
         if self._thread_safety_testing:
             # Try to force the threading backend for joblib:
             bound = Signature.from_callable(super().__init__).bind(*args, **kwargs)
-            if (
-                bound.arguments.get("require") == "sharedmem"
-                or bound.arguments.get("prefer") == "threads"
-            ):
-                # If the API is explicitly using thread pools, for now don't
-                # bother with testing it, for now at least:
-                #
-                # 1. Hopefully it was already designed to be thread-safe.
-                # 2. It has edge cases the test infrastructure can't handle yet.
-                self._thread_safety_testing = False
-            else:
-                # Force threading:
-                bound.arguments["backend"] = "threading"
-                # Force result to a be list:
-                bound.arguments["return_as"] = "list"
-                args, kwargs = bound.args, bound.kwargs
+            # Force threading:
+            bound.arguments["backend"] = "threading"
+            # Force result to a be list:
+            bound.arguments["return_as"] = "list"
+            args, kwargs = bound.args, bound.kwargs
 
         super().__init__(*args, **kwargs)
 

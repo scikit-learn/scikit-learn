@@ -15,6 +15,15 @@ class CallbackSupportMixin:
     .. automethod:: _init_callback_context
     """
 
+    __sklearn_thread_safe_attributes__ = {
+        "_skl_callbacks": "OK if set_callbacks() is called before dispatch to Parallel",
+    }
+
+    __sklearn_thread_buggy_attributes__ = {
+        "_callback_fit_ctx": "Doesn't appear thread-safe, should file bug.",
+        "_skl_callbacks_to_teardown": "Doesn't appear thread-safe, should file bug.",
+    }
+
     def set_callbacks(self, *callbacks):
         """Set callbacks for the estimator.
 
