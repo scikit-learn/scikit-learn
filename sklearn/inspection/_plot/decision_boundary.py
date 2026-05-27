@@ -643,11 +643,11 @@ class DecisionBoundaryDisplay:
             Possible inputs are:
 
             * None: defaults to list of accessible `Petroff colors
-            <https://github.com/matplotlib/matplotlib/issues/9460#issuecomment-875185352>`_
-            if `n_classes <= 10`, otherwise 'gist_rainbow' colormap
+              <https://github.com/matplotlib/matplotlib/issues/9460#issuecomment-875185352>`_
+              if `n_classes <= 10`, otherwise 'gist_rainbow' colormap
             * str: name of :class:`matplotlib.colors.Colormap`
             * list: list of length `n_classes` of `matplotlib colors
-            <https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def>`_
+              <https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def>`_
 
             Single color (fading to white) colormaps will be generated from the colors
             in the list or colors taken from the colormap, and passed to the `cmap`
