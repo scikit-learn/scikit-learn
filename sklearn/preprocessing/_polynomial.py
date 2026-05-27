@@ -1035,6 +1035,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             # Get indicator for nan values in the current column.
             nan_row_indices = np.flatnonzero(_get_mask(x, np.nan))
 
+            # 1. Calculate spline basis functions.
             if self.extrapolation in ("continue", "error", "periodic"):
                 # Note that BSpline(.., extrapolate="periodic") maps x to the
                 # segment [spl.t[k], spl.t[n]] with n = spl.t.size - spl.k - 1.
@@ -1071,7 +1072,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                         # See the construction of coef in fit. We need to add the last
                         # degree spline basis function to the first degree ones and
                         # then drop the last ones.
-                        # Note: See comment about SparseEfficiencyWarning below.
+                        # Note: Without converting to lil_matrix we would get:
+                        # scipy.sparse._base.SparseEfficiencyWarning: Changing the
+                        # sparsity structure of CSC is expensive. LIL is more efficient.
                         XBS_sparse = XBS_sparse.tolil()
                         XBS_sparse[:, :degree] += XBS_sparse[:, -degree:]
                         XBS_sparse = XBS_sparse[:, :-degree]
@@ -1098,9 +1101,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     # reassigned later when handling with extrapolation.
                     x[outside_range_mask] = xmin
                     XBS_sparse = BSpline.design_matrix(x, spl.t, spl.k)
-                    # Note: Without converting to lil_matrix we would get:
-                    # scipy.sparse._base.SparseEfficiencyWarning: Changing the sparsity
-                    # structure of CSC is expensive. LIL is more efficient.
+                    # Note: See comment about SparseEfficiencyWarning above.
                     if np.any(outside_range_mask):
                         XBS_sparse = XBS_sparse.tolil()
                         XBS_sparse[outside_range_mask, :] = 0
@@ -1111,7 +1112,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                         (feature_idx * n_splines) : ((feature_idx + 1) * n_splines),
                     ] = spl(x[inside_range_mask])
 
-            # Replace any indicated values with 0:
+            # 2. Set nan input to 0.
             if nan_row_indices.shape[0] > 0:
                 if self.sparse_output:
                     # Note: See comment about SparseEfficiencyWarning below.
@@ -1124,8 +1125,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                         output_feature_idx : output_feature_idx + n_splines,
                     ] = 0
 
-            # Note for extrapolation:
-            # 'continue' is already returned as is by scipy BSplines
+            # 3. Deal with extrapolation.
+            # Note that "continue" is already returned as is by scipy BSplines.
             if self.extrapolation == "error":
                 has_nan_output_values = False
                 if self.sparse_output:
@@ -1181,11 +1182,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                         ] = f_max[-degree:]
 
             elif self.extrapolation == "linear":
-                # Continue the degree first and degree last spline bases
-                # linearly beyond the boundaries, with slope = derivative at
-                # the boundary.
-                # Note that all others have derivative = value = 0 at the
-                # boundaries.
+                # Continue the degree first and degree last spline bases linearly
+                # beyond the boundaries, with slope = derivative at the boundary.
+                # Note that all others have derivative = value = 0 at the boundaries.
 
                 # spline derivatives = slopes at boundaries
                 fp_min, fp_max = spl(xmin, nu=1), spl(xmax, nu=1)
@@ -1228,6 +1227,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                                 linear_extr
                             )
 
+            # 4. Collect output.
             if self.sparse_output:
                 XBS_sparse = XBS_sparse.tocsr()
                 output_list.append(XBS_sparse)
