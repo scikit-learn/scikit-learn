@@ -6,11 +6,8 @@ Array API support (experimental)
 
 .. currentmodule:: sklearn
 
-The `Array API <https://data-apis.org/array-api/latest/>`_ specification defines
+The `array API <https://data-apis.org/array-api/latest/>`__ specification defines
 a standard API for all array manipulation libraries with a NumPy-like API.
-Scikit-learn vendors pinned copies of
-`array-api-compat <https://github.com/data-apis/array-api-compat>`__
-and `array-api-extra <https://github.com/data-apis/array-api-extra>`__.
 
 Some scikit-learn estimators that primarily rely on NumPy (as opposed to using
 Cython) to implement the algorithmic logic of their `fit`, `predict` or
@@ -25,14 +22,15 @@ versions libraries are installed. See below for details.
 The following video provides an overview of the standard's design principles
 and how it facilitates interoperability between array libraries:
 
-- `Scikit-learn on GPUs with Array API <https://www.youtube.com/watch?v=c_s8tr1AizA>`_
+- `Scikit-learn on GPUs with Array API <https://www.youtube.com/watch?v=c_s8tr1AizA>`__
   by :user:`Thomas Fan <thomasjpfan>` at PyData NYC 2023.
 
 Supported array libraries
 =========================
 The following table lists the libraries and hardware for which we run automated
-compliance tests on a regular basis. Other array API comforming libraries and
+compliance tests on a regular basis. Other array API conforming libraries and
 devices might also work out of the box.
+
 .. list-table::
    :header-rows: 1
    :widths: 15 10 20 30
@@ -44,19 +42,19 @@ devices might also work out of the box.
    * - `PyTorch <https://pytorch.org/>`_
      - `Install <https://pytorch.org/get-started/locally/>`_
      - CPU, NVIDIA GPU (CUDA), Apple GPU (MPS), Intel GPU (XPU)
-     - See :ref:`mps_support`; XPU requires PyTorch >= 2.12;
+     - See :ref:`mps_support`; see :ref:`xpu_support`;
        see :ref:`device_support_for_float64`
-   * - `CuPy <https://cupy.dev/>`_
-     - `Install <https://docs.cupy.dev/en/stable/install.html>`_
+   * - `CuPy <https://cupy.dev/>`__
+     - `Install <https://docs.cupy.dev/en/stable/install.html>`__
      - CUDA
      -
-   * - `dpnp <https://intelpython.github.io/dpnp/>`_
-     - `Install <https://intelpython.github.io/dpnp/quick_start_guide.html>`_
+   * - `dpnp <https://intelpython.github.io/dpnp/>`__
+     - `Install <https://intelpython.github.io/dpnp/quick_start_guide.html>`__
      - CPU, Intel GPU (SYCL)
-     - See install link for driver setup;
+     - See install link for driver setup; see :ref:`xpu_support`;
        see :ref:`device_support_for_float64`
-   * - `array-api-strict <https://data-apis.org/array-api-strict/>`_
-     - `Install <https://data-apis.org/array-api-strict/>`_
+   * - `array-api-strict <https://data-apis.org/array-api-strict/>`__
+     - `Install <https://data-apis.org/array-api-strict/>`__
      - CPU (testing only)
      - Reference implementation for development/testing
 
@@ -81,7 +79,7 @@ Scikit-learn's support for the array API standard requires the environment varia
 
 Please note that this environment variable is intended for temporary use.
 For more details, refer to SciPy's `Array API documentation
-<https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html#using-array-api-standard-support>`_.
+<https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html#using-array-api-standard-support>`__.
 
 The array API functionality assumes that the latest versions of scikit-learn's dependencies are
 installed. Older versions might work, but we make no promises. While array API support is marked
@@ -100,7 +98,7 @@ Example usage
 =============
 
 The example code snippet below demonstrates how to use `PyTorch
-<https://pytorch.org/>`_ to run
+<https://pytorch.org/>`__ to run
 :class:`~discriminant_analysis.LinearDiscriminantAnalysis` on a CUDA GPU::
 
     >>> from sklearn.datasets import make_classification
@@ -153,10 +151,10 @@ to a different namespace and device::
 
 .. _array_api_supported:
 
-Support for `Array API`-compatible inputs
-=========================================
+Support for array API compatible inputs
+=======================================
 
-Estimators and other tools in scikit-learn that support Array API compatible inputs.
+Estimators and other tools in scikit-learn that support array API compatible inputs.
 
 Estimators
 ----------
@@ -224,7 +222,7 @@ Metrics
 - :func:`sklearn.metrics.mean_absolute_percentage_error`
 - :func:`sklearn.metrics.mean_gamma_deviance`
 - :func:`sklearn.metrics.mean_pinball_loss`
-- :func:`sklearn.metrics.mean_poisson_deviance` (requires `enabling array API support for SciPy <https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html#using-array-api-standard-support>`_)
+- :func:`sklearn.metrics.mean_poisson_deviance`
 - :func:`sklearn.metrics.mean_squared_error`
 - :func:`sklearn.metrics.mean_squared_log_error`
 - :func:`sklearn.metrics.mean_tweedie_deviance`
@@ -350,11 +348,11 @@ common tests to verify that the estimators' results are the same when using
 vanilla NumPy and array API inputs.
 
 To run these checks you need to install
-`array-api-strict <https://data-apis.org/array-api-strict/>`_ in your
+`array-api-strict <https://data-apis.org/array-api-strict/>`__ in your
 test environment. This allows you to run checks without having a
 GPU. To run checks on real GPU devices you also need to install
-`PyTorch <https://pytorch.org/>`_, `CuPy <https://cupy.dev/>`_, and/or
-`dpnp <https://intelpython.github.io/dpnp/>`_, and have compatible GPU
+`PyTorch <https://pytorch.org/>`__, `CuPy <https://cupy.dev/>`__, and/or
+`dpnp <https://intelpython.github.io/dpnp/>`__, and have compatible GPU
 hardware. Full GPU coverage is expected to be split across machines because
 CUDA, MPS, and Intel GPU backends require different hardware. Checks that can
 not be executed or have missing dependencies will be automatically skipped.
@@ -374,12 +372,12 @@ array API related code.
 However, to ensure full handling of PyTorch, CuPy, or dpnp inputs allocated on
 actual GPU devices, it is necessary to run the tests against those libraries and
 hardware. This can either be achieved by using
-`Google Colab <https://gist.github.com/EdAbati/ff3bdc06bafeb92452b3740686cc8d7c>`_
+`Google Colab <https://gist.github.com/EdAbati/ff3bdc06bafeb92452b3740686cc8d7c>`__
 for CUDA or leveraging our CI infrastructure on pull requests. CUDA and Intel
 GPU tests are manually triggered by maintainers. Intel GPU testing for PyTorch
 XPU and dpnp is run on a dedicated self-hosted runner:
 `probabl-ai/scikit-learn-intel-workflow
-<https://github.com/probabl-ai/scikit-learn-intel-workflow>`_.
+<https://github.com/probabl-ai/scikit-learn-intel-workflow>`__.
 
 Notes
 =====
@@ -421,3 +419,12 @@ data type. In these cases, scikit-learn will revert to using the `float32` data
 type instead. This can result in different behavior (typically numerically
 unstable results) compared to not using array API dispatching or using a device
 with `float64` support.
+
+.. _xpu_support:
+
+Note on Intel GPU support
+-------------------------
+
+PyTorch XPU support is only available in PyTorch >= 2.12. For detailed compatibility
+information and setup instructions, see the `PyTorch XPU documentation
+<https://docs.pytorch.org/docs/2.12/notes/get_start_xpu.html>`__.
