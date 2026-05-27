@@ -117,9 +117,10 @@ def _check_reg_targets(
         correct keyword.
     """
     if xp is None or device is None:
-        xp, _, device = get_namespace_and_device(y_true, y_pred, multioutput, xp=xp)
-
-    # Ensure `y_true`, `sample_weight` are on the `y_pred` device and namespace.
+        xp, _, device = get_namespace_and_device(
+            y_true, y_pred, sample_weight, multioutput, xp=xp
+        )
+    # Ensure `y_true` and `sample_weight` are on the `y_pred` device and namespace.
     y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
 
     check_consistent_length(y_true, y_pred, sample_weight)
@@ -152,7 +153,7 @@ def _check_reg_targets(
                 )
             )
     elif multioutput is not None:
-        # Ensure `multioutput` are on the `y_pred` device and namespace.
+        # Ensure `multioutput` is on the `y_pred` device and namespace.
         multioutput = move_to(multioutput, xp=xp, device=device)
         multioutput = check_array(multioutput, ensure_2d=False)
         if n_outputs == 1:
