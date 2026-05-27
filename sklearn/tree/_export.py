@@ -195,8 +195,9 @@ def plot_tree(
         Size of text font. If None, determined automatically to fit figure.
 
     fill_colors : list, optional (default=None)
-        A list of length ``decision_tree.n_classes[0]`` to be used
-        as colors to fill the tree nodes.
+        A list of length ``decision_tree.n_classes[0]`` to be used as colors
+        to fill the tree nodes. Each element can be any valid matplotlib color
+        specification (e.g. a color name, a hex string, or an RGB tuple).
 
     Returns
     -------
@@ -922,8 +923,9 @@ def export_graphviz(
         Name of font used to render text.
 
     fill_colors : list, optional (default=None)
-        A list of length ``decision_tree.n_classes[0]`` to be used
-        as colors to fill the tree nodes.
+        A list of length ``decision_tree.n_classes[0]`` to be used as colors
+        to fill the tree nodes. Each element can be any valid matplotlib color
+        specification (e.g. a color name, a hex string, or an RGB tuple).
 
     Returns
     -------
