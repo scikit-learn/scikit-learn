@@ -1374,3 +1374,49 @@ def test_relocating_with_duplicates(algorithm, array_constr):
         km.fit(array_constr(X))
 
     assert km.n_iter_ == 1
+
+
+def test_kmeans_empty_cluster_relocation_labels_consistency():
+    """Check that labels_ are consistent with cluster_centers_ after empty cluster relocation.
+
+    Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/34074
+    When empty cluster relocation mutates centers but labels stay the same,
+    strict convergence should not skip the final E-step.
+    """
+    import scipy.sparse as sp
+
+    X = sp.csr_matrix(np.array([[1.0], [2.0], [3.0]]))
+    init = np.array([[4.0], [0.0], [1.0]])
+
+    for algorithm in ["lloyd", "elkan"]:
+        km = KMeans(
+            n_clusters=3,
+            init=init,
+            n_init=1,
+            max_iter=10,
+            tol=0,
+            algorithm=algorithm,
+        )
+        km.fit(X)
+
+        predicted = km.predict(X)
+        assert_array_equal(
+            km.labels_,
+            predicted,
+            err_msg=(
+                f"labels_ inconsistent with predict() for {algorithm}. "
+                f"This indicates the final E-step was skipped after empty "
+                f"cluster relocation (strict convergence bug)."
+            ),
+        )
+
+        # Also verify inertia_ is consistent with labels_
+        from sklearn.cluster._kmeans import _labels_inertia
+        labels_fresh, inertia_fresh = _labels_inertia(
+            X, sample_weight=None, centers=km.cluster_centers_
+        )
+        assert_allclose(
+            km.inertia_,
+            inertia_fresh,
+            err_msg=f"inertia_ stale for {algorithm}",
+        )

@@ -601,23 +601,24 @@ def _kmeans_single_elkan(
 
         labels_old[:] = labels
 
-    if not strict_convergence:
-        # rerun E-step so that predicted labels match cluster centers
-        elkan_iter(
-            X,
-            sample_weight,
-            centers,
-            centers,
-            weight_in_clusters,
-            center_half_distances,
-            distance_next_center,
-            upper_bounds,
-            lower_bounds,
-            labels,
-            center_shift,
-            n_threads,
-            update_centers=False,
-        )
+    # Always run final E-step so that predicted labels match cluster centers.
+    # Empty cluster relocation can mutate centers without updating labels,
+    # causing stale labels_/inertia_ on strict convergence.
+    elkan_iter(
+        X,
+        sample_weight,
+        centers,
+        centers,
+        weight_in_clusters,
+        center_half_distances,
+        distance_next_center,
+        upper_bounds,
+        lower_bounds,
+        labels,
+        center_shift,
+        n_threads,
+        update_centers=False,
+    )
 
     inertia = _inertia(X, sample_weight, centers, labels, n_threads)
 
@@ -739,19 +740,20 @@ def _kmeans_single_lloyd(
 
         labels_old[:] = labels
 
-    if not strict_convergence:
-        # rerun E-step so that predicted labels match cluster centers
-        lloyd_iter(
-            X,
-            sample_weight,
-            centers,
-            centers,
-            weight_in_clusters,
-            labels,
-            center_shift,
-            n_threads,
-            update_centers=False,
-        )
+    # Always run final E-step so that predicted labels match cluster centers.
+    # Empty cluster relocation can mutate centers without updating labels,
+    # causing stale labels_/inertia_ on strict convergence.
+    lloyd_iter(
+        X,
+        sample_weight,
+        centers,
+        centers,
+        weight_in_clusters,
+        labels,
+        center_shift,
+        n_threads,
+        update_centers=False,
+    )
 
     inertia = _inertia(X, sample_weight, centers, labels, n_threads)
 
