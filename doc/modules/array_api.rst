@@ -30,7 +30,9 @@ and how it facilitates interoperability between array libraries:
 
 Supported array libraries
 =========================
-
+The following table lists the libraries and hardware for which we run automated
+compliance tests on a regular basis. Other array API comforming libraries and
+devices might also work out of the box.
 .. list-table::
    :header-rows: 1
    :widths: 15 10 20 30
