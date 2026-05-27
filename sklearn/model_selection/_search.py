@@ -993,6 +993,9 @@ class BaseSearchCV(
             Instance of fitted estimator.
         """
         scorers, refit_metric = self._get_scorers()
+        root_callback_ctx = self._init_callback_context(
+            max_subtasks=1 + (self.refit is not False)  # refit can be str or callable
+        )
 
         X, y = indexable(X, y)
         params = _check_method_params(X, params=params)
@@ -1002,9 +1005,12 @@ class BaseSearchCV(
             metadata_callbacks = {"sample_weight": sample_weight}
         else:
             metadata_callbacks = None
-        root_callback_ctx = self._init_callback_context(
-            max_subtasks=1 + (self.refit is not False)  # refit can be str or callable
-        ).call_on_fit_task_begin(estimator=self, X=X, y=y, metadata=metadata_callbacks)
+        root_callback_ctx.call_on_fit_task_begin(
+            estimator=self,
+            X=X,
+            y=y,
+            **routed_params.callback_context.call_on_fit_task_begin,
+        )
 
         self._checked_cv_orig = check_cv(
             self.cv, y, classifier=is_classifier(self.estimator)
@@ -1090,6 +1096,7 @@ class BaseSearchCV(
                         **fit_and_score_kwargs,
                         caller=self,
                         callback_ctx=evaluation_ctx,
+                        callback_metadata=routed_params,
                     )
                     for (
                         ((cand_idx, parameters), (split_idx, (train, test))),
@@ -1173,7 +1180,10 @@ class BaseSearchCV(
 
             with refit_subctx.propagate_callback_context(self.best_estimator_):
                 refit_subctx.call_on_fit_task_begin(
-                    estimator=self, X=X, y=y, metadata=metadata_callbacks
+                    estimator=self,
+                    X=X,
+                    y=y,
+                    **routed_params.callback_context.call_on_fit_task_begin,
                 )
 
                 refit_start_time = time.time()
@@ -1188,7 +1198,10 @@ class BaseSearchCV(
                 self.feature_names_in_ = self.best_estimator_.feature_names_in_
 
             refit_subctx.call_on_fit_task_end(
-                estimator=self, X=X, y=y, metadata=metadata_callbacks
+                estimator=self,
+                X=X,
+                y=y,
+                **routed_params.callback_context.call_on_fit_task_end,
             )
 
         # Store the only scorer not as a dict for single metric evaluation
@@ -1200,7 +1213,10 @@ class BaseSearchCV(
         self.cv_results_ = results
 
         root_callback_ctx.call_on_fit_task_end(
-            estimator=self, X=X, y=y, metadata=metadata_callbacks
+            estimator=self,
+            X=X,
+            y=y,
+            **routed_params.callback_context.call_on_fit_task_end,
         )
 
         return self
@@ -1323,6 +1339,12 @@ class BaseSearchCV(
         router.add(
             splitter=self.cv,
             method_mapping=MethodMapping().add(caller="fit", callee="split"),
+        )
+        router.add(
+            callback_context=self._callback_fit_ctx,
+            method_mapping=MethodMapping()
+            .add(caller="fit", callee="call_on_fit_task_begin")
+            .add(caller="fit", callee="call_on_fit_task_end"),
         )
         return router
 

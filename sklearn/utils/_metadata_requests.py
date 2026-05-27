@@ -124,6 +124,10 @@ SIMPLE_METHODS = [
     "split",
     "transform",
     "inverse_transform",
+    "call_on_fit_task_begin",
+    "call_on_fit_task_end",
+    "on_fit_task_begin",
+    "on_fit_task_end",
 ]
 
 # These methods are a composite of other methods and one cannot set their
@@ -1506,6 +1510,10 @@ class _MetadataRequester:
         def set_split_request(self, **kwargs): pass
         def set_transform_request(self, **kwargs): pass
         def set_inverse_transform_request(self, **kwargs): pass
+        def set_call_on_fit_task_begin_request(self, **kwargs): pass
+        def set_call_on_fit_task_end_request(self, **kwargs): pass
+        def set_on_fit_task_begin_request(self, **kwargs): pass
+        def set_on_fit_task_end_request(self, **kwargs): pass
         # fmt: on
 
     def __init_subclass__(cls, **kwargs):

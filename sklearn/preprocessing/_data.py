@@ -37,6 +37,11 @@ from sklearn.utils._param_validation import (
 )
 from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.extmath import _incremental_mean_and_var, row_norms
+from sklearn.utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    process_routing,
+)
 from sklearn.utils.sparsefuncs import (
     incr_mean_variance_axis,
     inplace_column_scale,
@@ -928,7 +933,7 @@ class StandardScaler(
         return self.partial_fit(X, y, sample_weight)
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def partial_fit(self, X, y=None, sample_weight=None):
+    def partial_fit(self, X, y=None, sample_weight=None, **params):
         """Online computation of mean and std on X for later scaling.
 
         All of X is processed as a single batch. This is intended for cases
@@ -955,6 +960,9 @@ class StandardScaler(
             .. versionadded:: 0.24
                parameter *sample_weight* support to StandardScaler.
 
+        **params : dict
+            Routed params.
+
         Returns
         -------
         self : object
@@ -973,8 +981,12 @@ class StandardScaler(
         n_features = X.shape[1]
 
         callback_ctx = self._init_callback_context()
+        routed_params = process_routing(process_routing(self, "fit", **params))
         callback_ctx.call_on_fit_task_begin(
-            estimator=self, X=X, y=y, metadata={"sample_weight": sample_weight}
+            estimator=self,
+            X=X,
+            y=y,
+            **routed_params.callback_context.call_on_fit_task_begin,
         )
 
         if sample_weight is not None:
@@ -1083,8 +1095,8 @@ class StandardScaler(
             estimator=self,
             X=X,
             y=y,
-            metadata={"sample_weight": sample_weight},
             reconstruction_attributes={},
+            **routed_params.callback_context.call_on_fit_task_end,
         )
 
         return self
@@ -1185,6 +1197,15 @@ class StandardScaler(
         tags.transformer_tags.preserves_dtype = ["float64", "float32"]
         tags.array_api_support = True
         return tags
+
+    def get_metadata_routing(self):
+        router = MetadataRouter(owner=self).add(
+            callback_context=self._callback_fit_ctx,
+            method_mapping=MethodMapping()
+            .add(caller="fit", callee="call_on_fit_task_begin")
+            .add(caller="fit", callee="call_on_fit_task_end"),
+        )
+        return router
 
 
 class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):

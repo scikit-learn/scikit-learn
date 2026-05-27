@@ -8,8 +8,14 @@ from dataclasses import dataclass
 
 from sklearn.callback._callback_context import get_context_path
 from sklearn.callback._transport import can_reuse_listener, open_listener, send
+from sklearn.utils._metadata_requests import _MetadataRequester
 from sklearn.utils._optional_dependencies import check_pandas_support
 from sklearn.utils._param_validation import StrOptions, validate_params
+from sklearn.utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    process_routing,
+)
 
 
 @dataclass
@@ -73,17 +79,30 @@ class ScoringMonitorLog:
         )
 
 
-class ScoringMonitor:
+def _convert_to_multiscorer(scoring):
+    """Utility function to turn the scoring into a MultimetricScorer."""
+    from sklearn.metrics._scorer import _BaseScorer
+
+    if isinstance(scoring, str):
+        if scoring in ("no_train_score", "no_val_score"):
+            return scoring
+        return [scoring]
+    elif callable(scoring) and isinstance(scoring, _BaseScorer):
+        return {"score": scoring}
+    return scoring
+
+
+class ScoringMonitor(_MetadataRequester):
     """Callback that monitors a score for each iterative step of an estimator.
 
-    The specified scorer is called on the training data at each iterative step of the
-    estimator, and the score is logged by the callback. The logs can be retrieved
-    through the `get_logs` method.
+    The specified scorers are called on the training and validation data at each
+    iterative step of the estimator, and the score is logged by the callback. The logs
+    can be retrieved through the `get_logs` method.
 
     Parameters
     ----------
-    scoring : str, callable, list, tuple, dict or None
-        The scoring method to use to monitor the model.
+    scoring_train : str, callable, list, tuple, dict or None, default="no_train_score"
+        The scoring method to use to monitor the model on the training data.
 
         If `scoring` represents a single score, one can use:
 
@@ -98,30 +117,59 @@ class ScoringMonitor:
         - a callable returning a dictionary where the keys are the metric
           names and the values are the metric scores;
         - a dictionary with metric names as keys and callables as values.
+
+        The string 'no_train_score' is a special value to indicate that no scorer should
+        be run on the training data.
+
+    scoring_val : str, callable, list, tuple, dict or None, default="no_val_score"
+        The scoring method to use to monitor the model on the validation data.
+
+        If `scoring` represents a single score, one can use:
+
+        - a single string (see :ref:`scoring_string_names`);
+        - a callable (see :ref:`scoring_callable`) that returns a single value;
+        - `None`, the `estimator`'s
+          :ref:`default evaluation criterion <scoring_api_overview>` is used.
+
+        If `scoring` represents multiple scores, one can use:
+
+        - a list or tuple of unique strings;
+        - a callable returning a dictionary where the keys are the metric
+          names and the values are the metric scores;
+        - a dictionary with metric names as keys and callables as values.
+
+        The string 'no_val_score' is a special value to indicate that no scorer should
+        be run on the validation data.
     """
 
     @validate_params(
-        {"scoring": [str, callable, list, tuple, dict, None]},
+        {
+            "scoring_train": [str, callable, list, tuple, dict, None],
+            "scoring_va": [str, callable, list, tuple, dict, None],
+        },
         prefer_skip_nested_validation=True,
     )
-    def __init__(self, *, scoring):
-        from sklearn.metrics._scorer import _BaseScorer
+    def __init__(self, *, scoring_train="no_train_score", scoring_val="no_val_score"):
+        if scoring_train == "no_train_score" and scoring_val == "no_val_score":
+            raise ValueError(
+                f"{self.__class__.__name__} was initialized with "
+                "`scoring_train='no_train_score'` and `scoring_val='no_val_score'`, "
+                "making it unable to run any scorer. Please change at least one of "
+                "these values."
+            )
 
-        self._scoring = scoring
-        # Turn the scorer into a MultimetricScorer for convenience
-        if isinstance(scoring, str):
-            self._scoring = [scoring]
-        elif callable(scoring) and isinstance(scoring, _BaseScorer):
-            self._scoring = {"score": scoring}
+        # Turn the scorers into MultimetricScorer for convenience
+        self._scoring_train = _convert_to_multiscorer(scoring_train)
+        self._scoring_val = _convert_to_multiscorer(scoring_val)
 
         self._log = []
         self._estimator_scorers = {}
 
         # Handle to the main-process listener, opened eagerly so that any worker that
         # receives a pickled copy of this callback can send data to the main process.
-        # `self._log.append` is the message consumer that `send` calls will use to
+        # `self._log.extend` is the message consumer that `send` calls will use to
         # to grow the main process's log.
-        self._listener_handle = open_listener(self._log.append, owner=self)
+        self._listener_handle = open_listener(self._log.extend, owner=self)
 
     def setup(self, estimator, context):
         # A scorer per estimator is needed to avoid race conditions when the callback is
@@ -129,7 +177,20 @@ class ScoringMonitor:
         if estimator not in self._estimator_scorers:
             from sklearn.metrics import check_scoring
 
-            self._estimator_scorers[estimator] = check_scoring(estimator, self._scoring)
+            scorer_train = (
+                check_scoring(estimator, self._scoring_train)
+                if self._scoring_train != "no_train_score"
+                else None
+            )
+            scorer_val = (
+                check_scoring(estimator, self._scoring_val)
+                if self._scoring_val != "no_val_score"
+                else None
+            )
+            self._estimator_scorers[estimator] = {
+                "training": scorer_train,
+                "validation": scorer_val,
+            }
 
     def teardown(self, estimator, context):
         self._estimator_scorers.pop(estimator, None)
@@ -144,8 +205,10 @@ class ScoringMonitor:
         *,
         X=None,
         y=None,
+        X_val=None,
+        y_val=None,
         fitted_estimator=None,
-        metadata=None,
+        **metadata,
     ):
         if fitted_estimator is None:
             return
@@ -169,19 +232,46 @@ class ScoringMonitor:
             for ctx in context_path
         ]
 
-        scores = {}
-        metadata = {} if metadata is None else metadata
-        if X is not None and y is not None:
-            scorer = self._estimator_scorers[estimator]
-            scores.update(scorer(fitted_estimator, X, y, **metadata))
+        send_package = []
+        routed_params = process_routing(self, "on_fit_task_end", **metadata)
+        for dataset in ("training", "validation"):
+            data_X, data_y = (X, y) if dataset == "training" else (X_val, y_val)
+            scorer = self._estimator_scorers[estimator][dataset]
+            idx = list(self._estimator_scorers.keys()).index(estimator)
+            if data_X is not None and data_y is not None and scorer is not None:
+                scores = scorer(
+                    fitted_estimator,
+                    data_X,
+                    data_y,
+                    **getattr(routed_params, f"scorer_estimator_{idx}_{dataset}").score,
+                )
+                send_package.append((run_id, run_info, task_info_path, dataset, scores))
 
-        send(self._listener_handle, (run_id, run_info, task_info_path, scores))
+        send(self._listener_handle, send_package)
 
     def __setstate__(self, state):
         """Restore state, opening a fresh listener if the inherited one is unusable."""
         self.__dict__.update(state)
         if not can_reuse_listener(self._listener_handle):
-            self._listener_handle = open_listener(self._log.append, owner=self)
+            self._listener_handle = open_listener(self._log.extend, owner=self)
+
+    def get_metadata_routing(self):
+        router = MetadataRouter(owner=self)
+        for i, estimator in enumerate(self._estimator_scorers):
+            for dataset in ("training", "validation"):
+                if self._estimator_scorers[estimator][dataset] is None:
+                    continue
+                router.add(
+                    **{
+                        f"scorer_estimator_{i}_{dataset}": self._estimator_scorers[
+                            estimator
+                        ][dataset]
+                    },
+                    method_mapping=MethodMapping().add(
+                        caller="on_fit_task_end", callee="score"
+                    ),
+                )
+        return router
 
     @validate_params(
         {
@@ -246,7 +336,7 @@ class ScoringMonitor:
             )
 
         # group logs by run
-        for run_id, run_info, task_info_path, scores in self._log:
+        for run_id, run_info, task_info_path, dataset, scores in self._log:
             logs[run_id].update(run_info)
 
             task_id_path = tuple(task_info["task_id"] for task_info in task_info_path)
@@ -257,6 +347,7 @@ class ScoringMonitor:
                     "parent_task_id_path": task_id_path[:-1],
                     "parent_task_info_path": task_info_path[:-1],
                     **task_info_path[-1],
+                    "dataset": dataset,
                     **scores,
                 }
             )

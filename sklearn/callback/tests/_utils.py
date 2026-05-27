@@ -10,6 +10,11 @@ from sklearn.base import BaseEstimator, _fit_context, clone
 from sklearn.callback import CallbackSupportMixin, with_callbacks
 from sklearn.callback._transport import open_listener, send
 from sklearn.utils.fixes import _IS_WASM
+from sklearn.utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    process_routing,
+)
 from sklearn.utils.parallel import Parallel, delayed
 
 skip_callback_test_if_wasm = pytest.mark.skipif(
@@ -187,21 +192,19 @@ class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
         self.computation_intensity = computation_intensity
 
     @_fit_context(prefer_skip_nested_validation=False)
-    def fit(
-        self,
-        X=None,
-        y=None,
-        *,
-        sample_weight=None,
-    ):
+    def fit(self, X=None, y=None, **fit_params):
         callback_ctx = self._init_callback_context(max_subtasks=self.max_iter)
-        metadata = {"sample_weight": sample_weight} if sample_weight is not None else {}
-        callback_ctx.call_on_fit_task_begin(estimator=self, X=X, y=y, metadata=metadata)
+        routed_params = process_routing(self, "fit", **fit_params)
+        callback_begin_metadata = routed_params.callback_context.call_on_fit_task_begin
+        callback_end_metadata = routed_params.callback_context.call_on_fit_task_end
+        callback_ctx.call_on_fit_task_begin(
+            estimator=self, X=X, y=y, **callback_begin_metadata
+        )
 
         for i in range(self.max_iter):
             subcontext = callback_ctx.subcontext(task_name=f"iteration {i}")
             subcontext.call_on_fit_task_begin(
-                estimator=self, X=X, y=y, metadata=metadata
+                estimator=self, X=X, y=y, **callback_begin_metadata
             )
 
             time.sleep(self.computation_intensity)  # Computation intensive task
@@ -210,8 +213,8 @@ class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
                 estimator=self,
                 X=X,
                 y=y,
-                metadata=metadata,
                 reconstruction_attributes=lambda: {"n_iter_": i + 1},
+                **callback_end_metadata,
             ):
                 break
 
@@ -221,14 +224,23 @@ class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
             estimator=self,
             X=X,
             y=y,
-            metadata=metadata,
             reconstruction_attributes={},
+            **callback_end_metadata,
         )
 
         return self
 
     def predict(self, X):
         return np.mean(X, axis=1) * self.n_iter_
+
+    def get_metadata_routing(self):
+        router = MetadataRouter(owner=self).add(
+            callback_context=self._callback_fit_ctx,
+            method_mapping=MethodMapping()
+            .add(caller="fit", callee="call_on_fit_task_begin")
+            .add(caller="fit", callee="call_on_fit_task_end"),
+        )
+        return router
 
 
 class WhileEstimator(CallbackSupportMixin, BaseEstimator):
@@ -348,12 +360,17 @@ class MetaEstimator(CallbackSupportMixin, BaseEstimator):
         self.prefer = prefer
 
     @_fit_context(prefer_skip_nested_validation=False)
-    def fit(self, X=None, y=None, sample_weight=None):
+    def fit(self, X=None, y=None, **fit_params):
         callback_ctx = self._init_callback_context(
             max_subtasks=self.n_outer, sequential_subtasks=False
         )
-        metadata = {"sample_weight": sample_weight} if sample_weight is not None else {}
-        callback_ctx.call_on_fit_task_begin(estimator=self, X=X, y=y, metadata=metadata)
+        routed_params = process_routing(self, "fit", **fit_params)
+        callback_ctx.call_on_fit_task_begin(
+            estimator=self,
+            X=X,
+            y=y,
+            **routed_params.callback_context.call_on_fit_task_begin,
+        )
 
         outer_callback_contexts = [
             callback_ctx.subcontext(
@@ -368,22 +385,42 @@ class MetaEstimator(CallbackSupportMixin, BaseEstimator):
                 self.estimator,
                 X=X,
                 y=y,
-                metadata=metadata,
+                routed_params=routed_params,
                 outer_callback_ctx=outer_callback_contexts[i],
             )
             for i in range(self.n_outer)
         )
 
-        callback_ctx.call_on_fit_task_end(estimator=self, X=X, y=y, metadata=metadata)
+        callback_ctx.call_on_fit_task_end(
+            estimator=self,
+            X=X,
+            y=y,
+            **routed_params.callback_context.call_on_fit_task_end,
+        )
 
         return self
 
+    def get_metadata_routing(self):
+        router = MetadataRouter(owner=self).add(
+            callback_context=self._callback_fit_ctx,
+            method_mapping=MethodMapping()
+            .add(caller="fit", callee="call_on_fit_task_begin")
+            .add(caller="fit", callee="call_on_fit_task_end"),
+        )
+        router.add(
+            estimator=self.estimator,
+            method_mapping=MethodMapping().add(caller="fit", callee="fit"),
+        )
+        return router
+
 
 def _fit_subestimator(
-    meta_estimator, inner_estimator, *, X, y, metadata, outer_callback_ctx
+    meta_estimator, inner_estimator, *, X, y, routed_params, outer_callback_ctx
 ):
+    callback_begin_metadata = routed_params.callback_context.call_on_fit_task_begin
+    callback_end_metadata = routed_params.callback_context.call_on_fit_task_end
     outer_callback_ctx.call_on_fit_task_begin(
-        estimator=meta_estimator, X=X, y=y, metadata=metadata
+        estimator=meta_estimator, X=X, y=y, **callback_begin_metadata
     )
 
     for i in range(meta_estimator.n_inner):
@@ -392,17 +429,17 @@ def _fit_subestimator(
         inner_ctx = outer_callback_ctx.subcontext(task_name="inner")
         with inner_ctx.propagate_callback_context(est):
             inner_ctx.call_on_fit_task_begin(
-                estimator=meta_estimator, X=X, y=y, metadata=metadata
+                estimator=meta_estimator, X=X, y=y, **callback_begin_metadata
             )
 
-            est.fit(X=X, y=y, **metadata)
+            est.fit(X=X, y=y, **routed_params.estimator.fit)
 
             inner_ctx.call_on_fit_task_end(
-                estimator=meta_estimator, X=X, y=y, metadata=metadata
+                estimator=meta_estimator, X=X, y=y, **callback_end_metadata
             )
 
     outer_callback_ctx.call_on_fit_task_end(
-        estimator=meta_estimator, X=X, y=y, metadata=metadata
+        estimator=meta_estimator, X=X, y=y, **callback_end_metadata
     )
 
 

@@ -158,8 +158,8 @@ class _LbfgsCallbackBridge:
             estimator=self._estimator,
             X=self._X,
             y=self._y,
-            metadata=self._metadata,
             reconstruction_attributes={"coef_": coef, "intercept_": intercept},
+            **self._metadata.callback_context.call_on_fit_task_begin,
         )
         return ctx
 
@@ -170,8 +170,8 @@ class _LbfgsCallbackBridge:
             estimator=self._estimator,
             X=self._X,
             y=self._y,
-            metadata=self._metadata,
             reconstruction_attributes={"coef_": coef, "intercept_": intercept},
+            **self._metadata.callback_context.call_on_fit_task_end,
         )
         # TODO(1.10): use the return value of ``call_on_fit_task_end`` (a bool
         # requesting early stopping) to ``raise StopIteration()``. scipy's
@@ -239,6 +239,7 @@ def _logistic_regression_path(
     l1_ratio=None,
     n_threads=1,
     callback_ctx=None,
+    callback_metadata=None,
     estimator=None,
 ):
     """Compute a Logistic Regression model for a list of regularization
@@ -360,6 +361,9 @@ def _logistic_regression_path(
     callback_ctx : CallbackContext or None, default=None
         The callback context of the fit task calling this function. If set to None, the
         callbacks will not be invoked.
+
+    callback_metadata : Bunch or None, default=None
+        The metadata routed towards the callbacks.
 
     estimator : estimator instance or None, default=None
         The estimator instance in which fit this function is called, forwarded to the
@@ -549,9 +553,6 @@ def _logistic_regression_path(
     coefs = list()
     n_iter = xp.zeros(len(Cs), dtype=xp.int32, device=device_)
     coefs_order = "C" if not _is_numpy_namespace(xp) else "K"
-    callback_metadata = (
-        {"sample_weight": sample_weight} if sample_weight is not None else None
-    )
     for i, C in enumerate(Cs):
         if solver == "lbfgs":
             # In LogisticRegression.fit, Cs is always a one-element list, so we don't
@@ -1347,25 +1348,32 @@ class LogisticRegression(
         return super().set_callbacks(*callbacks)
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, **params):
         """
         Fit the model according to the given training data.
 
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vector, where `n_samples` is the number of samples and
-            `n_features` is the number of features.
+            Training vector, where `n_samples` is the number of samples and `n_features`
+            is the number of features.
 
         y : array-like of shape (n_samples,)
             Target vector relative to X.
 
         sample_weight : array-like of shape (n_samples,) default=None
-            Array of weights that are assigned to individual samples.
-            If not provided, then each sample is given unit weight.
+            Array of weights that are assigned to individual samples. If not provided,
+            then each sample is given unit weight.
 
             .. versionadded:: 0.17
                *sample_weight* support to LogisticRegression.
+
+        **params : dict
+            - If `enable_metadata_routing=False` (default): Parameters directly passed
+              to the callbacks.
+
+            - If `enable_metadata_routing=True`: Parameters safely routed to the
+              callbacks.
 
         Returns
         -------
@@ -1470,11 +1478,12 @@ class LogisticRegression(
         # callback logic.
         max_subtasks = max(self.max_iter, 1) + 1
         callback_ctx = self._init_callback_context(max_subtasks=max_subtasks)
-        callback_metadata = (
-            {"sample_weight": sample_weight} if sample_weight is not None else None
-        )
+        callback_metadata = process_routing(self, "fit", **params)
         callback_ctx.call_on_fit_task_begin(
-            estimator=self, X=X, y=y, metadata=callback_metadata
+            estimator=self,
+            X=X,
+            y=y,
+            **callback_metadata.callback_context.call_on_fit_task_begin,
         )
 
         if solver == "liblinear":
@@ -1556,6 +1565,7 @@ class LogisticRegression(
             sample_weight=sample_weight,
             n_threads=n_threads,
             callback_ctx=callback_ctx,
+            callback_metadata=callback_metadata,
             estimator=self,
         )
 
@@ -1580,8 +1590,8 @@ class LogisticRegression(
             estimator=self,
             X=X,
             y=y,
-            metadata=callback_metadata,
             reconstruction_attributes={},
+            **callback_metadata.callback_context.call_on_fit_task_end,
         )
 
         return self
@@ -1649,6 +1659,15 @@ class LogisticRegression(
             tags.classifier_tags.multi_class = False
 
         return tags
+
+    def get_metadata_routing(self):
+        router = MetadataRouter(owner=self).add(
+            callback_context=self._callback_fit_ctx,
+            method_mapping=MethodMapping()
+            .add(caller="fit", callee="call_on_fit_task_begin")
+            .add(caller="fit", callee="call_on_fit_task_end"),
+        )
+        return router
 
 
 class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstimator):

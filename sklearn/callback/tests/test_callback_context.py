@@ -405,7 +405,7 @@ def test_hook_calling_lazy_evaluation():
     kwargs are not evaluated if no callback uses them.
     They are evaluated only once and passed to all callbacks that use them.
     """
-    eval_counts = {"X": 0, "metadata": 0}
+    eval_counts = {"X": 0, "reconstruction_attributes": 0}
 
     def eval_kwarg(key):
         eval_counts[key] += 1
@@ -418,10 +418,10 @@ def test_hook_calling_lazy_evaluation():
     context.call_on_fit_task_end(
         estimator=estimator,
         X=partial(eval_kwarg, "X"),
-        metadata=partial(eval_kwarg, "metadata"),
+        reconstruction_attributes=partial(eval_kwarg, "reconstruction_attributes"),
     )
     assert eval_counts["X"] == 1
-    assert eval_counts["metadata"] == 0
+    assert eval_counts["reconstruction_attributes"] == 0
 
     # kwarg used twice is evaluated only once
     eval_counts = {"X": 0}

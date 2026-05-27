@@ -685,6 +685,7 @@ def _fit_and_score(
     error_score=np.nan,
     caller=None,
     callback_ctx=None,
+    callback_metadata=None,
 ):
     """Fit estimator and compute scores for a given dataset split.
 
@@ -761,6 +762,9 @@ def _fit_and_score(
     callback_ctx : `CallbackContext` object or None, default=None
         Callback context for the evaluation task.
 
+    callback_metadata : Bunch or None, default=None
+        The metadata routed towards the callbacks.
+
     Returns
     -------
     result : dict with the following attributes
@@ -832,18 +836,16 @@ def _fit_and_score(
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
 
-    if (sample_weight := fit_params.get("sample_weight")) is not None:
-        metadata_callbacks = {"sample_weight": sample_weight}
-    else:
-        metadata_callbacks = None
-
     result = {}
 
     try:
         if callback_ctx is not None:
             with callback_ctx.propagate_callback_context(estimator):
                 callback_ctx.call_on_fit_task_begin(
-                    estimator=caller, X=X_train, y=y_train, metadata=metadata_callbacks
+                    estimator=caller,
+                    X=X_train,
+                    y=y_train,
+                    **callback_metadata.callback_context.call_on_fit_task_begin,
                 )
                 if y_train is None:
                     estimator.fit(X_train, **fit_params)
@@ -886,7 +888,10 @@ def _fit_and_score(
     finally:
         if callback_ctx is not None:
             callback_ctx.call_on_fit_task_end(
-                estimator=caller, X=X_train, y=y_train, metadata=metadata_callbacks
+                estimator=caller,
+                X=X_train,
+                y=y_train,
+                **callback_metadata.callback_context.call_on_fit_task_end,
             )
 
     if verbose > 1:

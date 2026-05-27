@@ -27,7 +27,7 @@ def _pb():
 
 
 def _sm():
-    return ScoringMonitor(scoring="r2")
+    return ScoringMonitor(scoring_train="r2")
 
 
 CALLBACK_FACTORIES = [
@@ -66,7 +66,7 @@ def test_callbacks_refit_after_pickle_in_same_process(capsys):
 
     X, y = make_regression(n_samples=30, n_features=2, random_state=0)
 
-    sm = ScoringMonitor(scoring="r2")
+    sm = ScoringMonitor(scoring_train="r2")
     estimator = MaxIterEstimator(max_iter=3).set_callbacks(ProgressBar(), sm)
     estimator.fit(X=X, y=y)
 
@@ -99,7 +99,7 @@ def test_callbacks_refit_after_load_in_fresh_process(tmp_path, capsys):
 
     X, y = make_regression(n_samples=20, n_features=3, random_state=0)
 
-    sm = ScoringMonitor(scoring="r2")
+    sm = ScoringMonitor(scoring_train="r2")
     estimator = MaxIterEstimator(max_iter=3).set_callbacks(ProgressBar(), sm)
     estimator.fit(X=X, y=y)
 

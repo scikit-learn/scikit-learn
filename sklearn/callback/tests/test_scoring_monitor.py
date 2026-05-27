@@ -4,6 +4,7 @@
 import numpy as np
 import pytest
 
+from sklearn import set_config
 from sklearn.base import clone
 from sklearn.callback import ScoringMonitor
 from sklearn.callback._scoring_monitor import ScoringMonitorLog
@@ -13,22 +14,34 @@ from sklearn.callback.tests._utils import (
     WhileEstimator,
 )
 from sklearn.datasets import make_regression
-from sklearn.metrics import check_scoring, make_scorer
+from sklearn.metrics import check_scoring, get_scorer, make_scorer
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils.parallel import Parallel, delayed
 
 
+def _get_score_names(scoring, scorer):
+    if isinstance(scoring, str):
+        return [scoring]
+    elif callable(scoring):
+        return ["score"]
+    else:  # multi-scorer
+        return list(scorer._scorers.keys())
+
+
 def _make_expected_output_MaxIterEstimator(
-    max_iter, scoring, as_pandas, X, y, root_task_id=0
+    max_iter, scoring_train, scoring_val, as_pandas, X, y, X_val, y_val, root_task_id=0
 ):
     """Generate the expected output of a ScoringMonitor on a MaxIterEstimator."""
-    scorer = check_scoring(None, scoring)
-    if isinstance(scoring, str):
-        score_names = [scoring]
-    elif callable(scoring):
-        score_names = ["score"]
-    else:  # multi-scorer
-        score_names = list(scorer._scorers.keys())
+    scorer_train = (
+        check_scoring(None, scoring_train)
+        if scoring_train != "no_train_score"
+        else None
+    )
+    score_names_train = _get_score_names(scoring_train, scorer_train)
+    scorer_val = (
+        check_scoring(None, scoring_val) if scoring_val != "no_val_score" else None
+    )
+    score_names_val = _get_score_names(scoring_val, scorer_val)
 
     est_name = MaxIterEstimator.__name__
 
@@ -44,10 +57,16 @@ def _make_expected_output_MaxIterEstimator(
         "task_id": root_task_id,
         "sequential_subtasks": True,
     }
-    scores = scorer(fitted_est, X, y)
-    if not isinstance(scores, dict):
-        scores = {score_names[0]: scores}
-    expected_log.append({**log_item, **scores})
+    if scorer_train is not None:
+        scores = scorer_train(fitted_est, X, y)
+        if not isinstance(scores, dict):
+            scores = {score_names_train[0]: scores}
+        expected_log.append({**log_item, "dataset": "training", **scores})
+    if scorer_val is not None and X_val is not None:
+        scores = scorer_train(fitted_est, X_val, y_val)
+        if not isinstance(scores, dict):
+            scores = {score_names_val[0]: scores}
+        expected_log.append({**log_item, "dataset": "validation", **scores})
 
     # fit loop iterations
     for i in range(max_iter):
@@ -60,10 +79,16 @@ def _make_expected_output_MaxIterEstimator(
             "task_id": i,
             "sequential_subtasks": True,
         }
-        scores = scorer(fitted_est, X, y)
-        if not isinstance(scores, dict):
-            scores = {score_names[0]: scores}
-        expected_log.append({**log_item, **scores})
+        if scorer_train is not None:
+            scores = scorer_train(fitted_est, X, y)
+            if not isinstance(scores, dict):
+                scores = {score_names_train[0]: scores}
+            expected_log.append({**log_item, "dataset": "training", **scores})
+        if scorer_val is not None and X_val is not None:
+            scores = scorer_val(fitted_est, X_val, y_val)
+            if not isinstance(scores, dict):
+                scores = {score_names_val[0]: scores}
+            expected_log.append({**log_item, "dataset": "validation", **scores})
 
     if as_pandas:
         pd = pytest.importorskip("pandas")
@@ -73,7 +98,17 @@ def _make_expected_output_MaxIterEstimator(
 
 
 def _make_expected_output_MetaEstimator(
-    n_outer, n_inner, max_iter, scoring, as_pandas, include_lineage, X, y
+    n_outer,
+    n_inner,
+    max_iter,
+    scoring_train,
+    scoring_val,
+    as_pandas,
+    include_lineage,
+    X,
+    y,
+    X_val,
+    y_val,
 ):
     """Generate the expected output of a ScoringMonitor on a MetaEstimator.
 
@@ -85,7 +120,15 @@ def _make_expected_output_MetaEstimator(
     for i in range(n_outer):
         for j in range(n_inner):
             estimator_log = _make_expected_output_MaxIterEstimator(
-                max_iter, scoring, False, X, y, root_task_id=j
+                max_iter,
+                scoring_train,
+                scoring_val,
+                False,
+                X,
+                y,
+                X_val,
+                y_val,
+                root_task_id=j,
             )
             for row in estimator_log:
                 row["task_id_path"] = (0, i) + row["task_id_path"]
@@ -140,7 +183,7 @@ def test_score_after_fit():
     X, y = make_regression(n_samples=100, n_features=2, random_state=0)
 
     max_iter = 10
-    callback = ScoringMonitor(scoring="r2")
+    callback = ScoringMonitor(scoring_train="r2")
     estimator = MaxIterEstimator(max_iter=max_iter).set_callbacks(callback)
     estimator.fit(X=X, y=y)
 
@@ -166,7 +209,7 @@ def test_logged_values(scoring, as_pandas):
         pytest.importorskip("pandas")
 
     max_iter = 3
-    callback = ScoringMonitor(scoring=scoring)
+    callback = ScoringMonitor(scoring_train=scoring)
     estimator = MaxIterEstimator(max_iter=max_iter).set_callbacks(callback)
     X, y = make_regression(n_samples=100, n_features=2, random_state=0)
 
@@ -175,7 +218,7 @@ def test_logged_values(scoring, as_pandas):
     attr = "data" if not as_pandas else "data_as_pandas"
     log = getattr(callback.get_logs(), attr)
     expected_log = _make_expected_output_MaxIterEstimator(
-        max_iter, scoring, as_pandas, X, y
+        max_iter, scoring, "no_val_score", as_pandas, X, y, None, None
     )
 
     if as_pandas:
@@ -197,7 +240,7 @@ def test_logged_values_meta_estimator(prefer, scoring, as_pandas, include_lineag
         pytest.importorskip("pandas")
 
     n_outer, n_inner, max_iter = 3, 2, 5
-    callback = ScoringMonitor(scoring=scoring)
+    callback = ScoringMonitor(scoring_train=scoring)
     est = MaxIterEstimator(max_iter=max_iter).set_callbacks(callback)
     meta_est = MetaEstimator(
         est, n_outer=n_outer, n_inner=n_inner, n_jobs=2, prefer=prefer
@@ -210,7 +253,17 @@ def test_logged_values_meta_estimator(prefer, scoring, as_pandas, include_lineag
     log = callback.get_logs(include_lineage=include_lineage)
     log = getattr(log, attr)
     expected_log = _make_expected_output_MetaEstimator(
-        n_outer, n_inner, max_iter, scoring, as_pandas, include_lineage, X, y
+        n_outer,
+        n_inner,
+        max_iter,
+        scoring,
+        "no_val_score",
+        as_pandas,
+        include_lineage,
+        X,
+        y,
+        None,
+        None,
     )
 
     if as_pandas:
@@ -222,7 +275,7 @@ def test_logged_values_meta_estimator(prefer, scoring, as_pandas, include_lineag
 @pytest.mark.parametrize("select", ["all", "most_recent"])
 def test_get_logs_output_type_no_fit(select):
     """Check that get_logs raises an error before fit."""
-    callback = ScoringMonitor(scoring="neg_mean_squared_error")
+    callback = ScoringMonitor(scoring_train="neg_mean_squared_error")
 
     with pytest.raises(ValueError, match="No logs to retrieve"):
         callback.get_logs(select=select)
@@ -234,7 +287,7 @@ def test_get_logs_output_type(as_pandas):
     if as_pandas:
         pd = pytest.importorskip("pandas")
 
-    callback = ScoringMonitor(scoring="neg_mean_squared_error")
+    callback = ScoringMonitor(scoring_train="neg_mean_squared_error")
     estimator = MaxIterEstimator().set_callbacks(callback)
     X, y = make_regression(n_samples=100, n_features=2, random_state=0)
 
@@ -259,26 +312,31 @@ def test_get_logs_output_type(as_pandas):
 @pytest.mark.parametrize("select", ["all", "most_recent"])
 def test_estimator_without_reconstruction_attributes(select):
     """Smoke test on an estimator which does not provide reconstruction_attributes."""
-    callback = ScoringMonitor(scoring="r2")
+    callback = ScoringMonitor(scoring_train="r2")
     WhileEstimator().set_callbacks(callback).fit()
 
     with pytest.raises(ValueError, match="No logs to retrieve"):
         callback.get_logs(select=select)
 
 
-def test_scoringmonitor_sample_weights():
+@pytest.mark.parametrize("enable_metadata_routing", [True, False])
+def test_scoringmonitor_sample_weights_metadata(enable_metadata_routing):
     """Check that the ScoringMonitor works with sample weights."""
     rng = np.random.RandomState(0)
     X, y = make_regression(n_samples=100, n_features=2, random_state=rng)
     sample_weight = rng.randint(0, 5, size=X.shape[0])
+    scorer = get_scorer("r2")
 
     # no sample weights
-    callback = ScoringMonitor(scoring="r2")
+    callback = ScoringMonitor(scoring_train=scorer)
     MaxIterEstimator().set_callbacks(callback).fit(X=X, y=y)
     log_no_sw = callback.get_logs().data
 
     # sample weights
-    callback = ScoringMonitor(scoring="r2")
+    if enable_metadata_routing:
+        set_config(enable_metadata_routing=True)
+        scorer.set_score_request(sample_weight=True)
+    callback = ScoringMonitor(scoring_train=scorer)
     MaxIterEstimator().set_callbacks(callback).fit(
         X=X, y=y, sample_weight=sample_weight
     )
@@ -328,7 +386,7 @@ def test_get_logs_include_lineage_ancestor_retrieval(as_pandas):
         pytest.importorskip("pandas")
 
     n_outer, n_inner, max_iter = 2, 3, 5
-    callback = ScoringMonitor(scoring="r2")
+    callback = ScoringMonitor(scoring_train="r2")
     est = MaxIterEstimator(max_iter=max_iter).set_callbacks(callback)
     meta_est = MetaEstimator(est, n_outer=n_outer, n_inner=n_inner)
     X, y = make_regression(n_samples=100, n_features=2, random_state=0)
@@ -389,7 +447,7 @@ def test_scoring_monitor_no_callback_support(backend):
     max_iter = 3
     n_fits = 4
 
-    callback = ScoringMonitor(scoring="r2")
+    callback = ScoringMonitor(scoring_train="r2")
     X, y = make_regression(n_samples=100, n_features=2, random_state=0)
     func(
         MaxIterEstimator(max_iter=max_iter).set_callbacks(callback), X, y, n_fits=n_fits
@@ -397,7 +455,14 @@ def test_scoring_monitor_no_callback_support(backend):
     log_all = callback.get_logs(select="all")
 
     expected_log = _make_expected_output_MaxIterEstimator(
-        max_iter, scoring="r2", as_pandas=False, X=X, y=y
+        max_iter,
+        scoring_train="r2",
+        scoring_val="no_val_score",
+        as_pandas=False,
+        X=X,
+        y=y,
+        X_val=None,
+        y_val=None,
     )
 
     assert len(log_all) == n_fits
@@ -410,7 +475,7 @@ def test_scoring_monitor_listener_closed_on_gc():
     """Check that listener is closed when callback is garbage collected."""
     from sklearn.callback._transport import _listeners, _message_consumers
 
-    callback = ScoringMonitor(scoring="r2")
+    callback = ScoringMonitor(scoring_train="r2")
     listener_address = callback._listener_handle.address
     assert listener_address in _listeners
     assert listener_address in _message_consumers
@@ -418,3 +483,12 @@ def test_scoring_monitor_listener_closed_on_gc():
     del callback
     assert listener_address not in _listeners
     assert listener_address not in _message_consumers
+
+
+def test_no_scorer_error():
+    """Test the error when not setting a scorer."""
+    with pytest.raises(
+        ValueError,
+        match="`scoring_train='no_train_score'` and `scoring_val='no_val_score'`",
+    ):
+        ScoringMonitor()

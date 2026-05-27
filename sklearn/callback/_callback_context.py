@@ -9,9 +9,14 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 
 from sklearn.callback._base import AutoPropagatedCallback
+from sklearn.utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    process_routing,
+)
 
 # List of the parameters expected to be in the hooks signatures
-VALID_HOOK_PARAMS_OUT = ["X", "y", "metadata", "fitted_estimator"]
+VALID_HOOK_PARAMS_OUT = ["X", "y", "X_val", "y_val", "metadata", "fitted_estimator"]
 
 
 class CallbackContext:
@@ -282,7 +287,7 @@ class CallbackContext:
             sequential_subtasks=sequential_subtasks,
         )
 
-    def _call_hooks(self, estimator, hook_name, **kwargs):
+    def _call_hooks(self, estimator, hook_name, routed_params, **kwargs):
         """Helper to call the hook of all callbacks with their respective arguments.
 
         Provide the right arguments to each hook by inspecting their signatures. Any
@@ -310,7 +315,9 @@ class CallbackContext:
         # Keep a cache of the evaluated args to evaluate them only once.
         evaluated_args = {}
 
-        for callback in self._callbacks:
+        for i, callback in enumerate(self._callbacks):
+            args_to_pass = getattr(getattr(routed_params, f"callback_{i}"), hook_name)
+
             if callback in getattr(self, "_propagated_callbacks", []):
                 # Only call the `on_fit_task_end` hook of callbacks that are not
                 # propagated. For propagated callbacks, the hook will be called by the
@@ -330,7 +337,6 @@ class CallbackContext:
                     f"are: {VALID_HOOK_PARAMS_OUT}."
                 )
 
-            args_to_pass = {}
             for param_name in params_names:
                 if param_name not in evaluated_args:
                     # Special case: "reconstruction_attributes" is not directly passed
@@ -359,13 +365,7 @@ class CallbackContext:
         return result
 
     def call_on_fit_task_begin(
-        self,
-        *,
-        estimator,
-        X=None,
-        y=None,
-        metadata=None,
-        reconstruction_attributes=None,
+        self, *, estimator, X=None, y=None, reconstruction_attributes=None, **metadata
     ):
         """Call the `on_fit_task_begin` hook of the callbacks.
 
@@ -380,34 +380,32 @@ class CallbackContext:
         y : array-like or None, default=None
             The training targets of the current task.
 
-        metadata : dict or None, default=None
-            A dictionary containing training metadata for the current task.
-
         reconstruction_attributes : dict or None, default=None
             A dictionary of the sufficient fitted attributes needed to construct a
             `fitted_estimator` from the current state of the estimator, i.e. an
             estimator instance ready to predict, transform, etc ... as if the fit had
             stopped at the beginning of this task. The `fitted_estimator` is the
             object that will be passed to the callbacks, if required.
+
+        **metadata : dict of str -> object
+            If `enable_metadata_routing=True`: Parameters requested and accepted by
+            callbacks.
+            See :ref:`Metadata Routing User Guide <metadata_routing>` for more
+            details.
         """
+        routed_params = process_routing(self, "call_on_fit_task_begin", **metadata)
         self._call_hooks(
             estimator,
             hook_name="on_fit_task_begin",
             X=X,
             y=y,
-            metadata=metadata,
+            routed_params=routed_params,
             reconstruction_attributes=reconstruction_attributes,
         )
         return self
 
     def call_on_fit_task_end(
-        self,
-        *,
-        estimator,
-        X=None,
-        y=None,
-        metadata=None,
-        reconstruction_attributes=None,
+        self, *, estimator, X=None, y=None, reconstruction_attributes=None, **metadata
     ):
         """Call the `on_fit_task_end` hook of the callbacks.
 
@@ -422,9 +420,6 @@ class CallbackContext:
         y : array-like or None, default=None
             The training targets of the current task.
 
-        metadata : dict or None, default=None
-            A dictionary containing training metadata of the current task.
-
         reconstruction_attributes : dict or None, default=None
             A dictionary of the sufficient fitted attributes needed to construct a
             `fitted_estimator` from the current state of the estimator, i.e. an
@@ -432,18 +427,25 @@ class CallbackContext:
             stopped at the end of this task. The `fitted_estimator` is the object
             that will be passed to the callbacks, if required.
 
+        **metadata : dict of str -> object
+            If `enable_metadata_routing=True`: Parameters requested and accepted by
+            callbacks.
+            See :ref:`Metadata Routing User Guide <metadata_routing>` for more
+            details.
+
         Returns
         -------
         stop : bool
             Whether or not to stop the current level of iterations at this end of this
             task.
         """
+        routed_params = process_routing(self, "call_on_fit_task_end", **metadata)
         return self._call_hooks(
             estimator,
             hook_name="on_fit_task_end",
             X=X,
             y=y,
-            metadata=metadata,
+            routed_params=routed_params,
             reconstruction_attributes=reconstruction_attributes,
         )
 
@@ -518,6 +520,17 @@ class CallbackContext:
                 ]
                 sub_estimator.set_callbacks(*kept_callbacks)
             del sub_estimator._parent_callback_ctx
+
+    def get_metadata_routing(self):
+        router = MetadataRouter(owner=self)
+        for i, callback in enumerate(self._callbacks):
+            router.add(
+                **{f"callback_{i}": callback},
+                method_mapping=MethodMapping()
+                .add(caller="call_on_fit_task_begin", callee="on_fit_task_begin")
+                .add(caller="call_on_fit_task_end", callee="on_fit_task_end"),
+            )
+        return router
 
 
 def _from_reconstruction_attributes(estimator, reconstruction_attributes):
