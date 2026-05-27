@@ -43,7 +43,7 @@ devices might also work out of the box.
      - Notes
    * - `PyTorch <https://pytorch.org/>`_
      - `Install <https://pytorch.org/get-started/locally/>`_
-     - CPU, CUDA, MPS, XPU
+     - CPU, NVIDIA GPU (CUDA), Apple GPU (MPS), Intel GPU (XPU)
      - See :ref:`mps_support`; XPU requires PyTorch >= 2.12;
        see :ref:`device_support_for_float64`
    * - `CuPy <https://cupy.dev/>`_
