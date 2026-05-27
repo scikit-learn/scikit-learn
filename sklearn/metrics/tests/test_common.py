@@ -2507,6 +2507,7 @@ def check_array_api_metric_pairwise(metric, array_namespace, device_name, dtype_
 
 
 array_api_metric_checkers = {
+    # Classification metrics
     accuracy_score: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
@@ -2574,6 +2575,7 @@ array_api_metric_checkers = {
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
     ],
+    # Continuous classification metrics
     brier_score_loss: [
         check_array_api_binary_continuous_classification_metric,
         check_array_api_multiclass_continuous_classification_metric,
@@ -2594,7 +2596,7 @@ array_api_metric_checkers = {
         check_array_api_multiclass_continuous_classification_metric,
         check_array_api_multilabel_continuous_classification_metric,
     ],
-    cosine_similarity: [check_array_api_metric_pairwise],
+    # Regression metrics
     d2_absolute_error_score: [
         check_array_api_regression_metric,
         check_array_api_regression_metric_multioutput,
@@ -2660,9 +2662,11 @@ array_api_metric_checkers = {
         check_array_api_regression_metric,
         check_array_api_regression_metric_multioutput,
     ],
+    # Pairwise metrics
     additive_chi2_kernel: [check_array_api_metric_pairwise],
     chi2_kernel: [check_array_api_metric_pairwise],
     cosine_distances: [check_array_api_metric_pairwise],
+    cosine_similarity: [check_array_api_metric_pairwise],
     euclidean_distances: [check_array_api_metric_pairwise],
     laplacian_kernel: [check_array_api_metric_pairwise],
     linear_kernel: [check_array_api_metric_pairwise],
