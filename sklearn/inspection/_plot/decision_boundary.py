@@ -633,45 +633,45 @@ class DecisionBoundaryDisplay:
             or `colors` can be passed as kwargs instead, otherwise, the default colormap
             ('viridis') is used.
 
-        .. versionadded:: 1.10
-            `multiclass_colors` was renamed to `label_colors`
+            .. versionadded:: 1.10
+                `multiclass_colors` was renamed to `label_colors`
 
-    multiclass_colors : str or list of matplotlib colors, default=None
-        Specifies how to color each class when plotting all classes of
-        :term:`multiclass` problems.
+        multiclass_colors : str or list of matplotlib colors, default=None
+            Specifies how to color each class when plotting all classes of
+            :term:`multiclass` problems.
 
-        Possible inputs are:
+            Possible inputs are:
 
-        * None: defaults to list of accessible `Petroff colors
-          <https://github.com/matplotlib/matplotlib/issues/9460#issuecomment-875185352>`_
-          if `n_classes <= 10`, otherwise 'gist_rainbow' colormap
-        * str: name of :class:`matplotlib.colors.Colormap`
-        * list: list of length `n_classes` of `matplotlib colors
-          <https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def>`_
+            * None: defaults to list of accessible `Petroff colors
+            <https://github.com/matplotlib/matplotlib/issues/9460#issuecomment-875185352>`_
+            if `n_classes <= 10`, otherwise 'gist_rainbow' colormap
+            * str: name of :class:`matplotlib.colors.Colormap`
+            * list: list of length `n_classes` of `matplotlib colors
+            <https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def>`_
 
-        Single color (fading to white) colormaps will be generated from the colors in
-        the list or colors taken from the colormap, and passed to the `cmap` parameter
-        of the `plot_method`.
+            Single color (fading to white) colormaps will be generated from the colors
+            in the list or colors taken from the colormap, and passed to the `cmap`
+            parameter of the `plot_method`.
 
-        When `response_method='predict'` and `plot_method='contour'`,
-        `label_colors` is ignored and the class boundaries are plotted in black
-        instead as the boundary lines may overlap and the colors don't necessarily
-        correspond to the classes.
+            When `response_method='predict'` and `plot_method='contour'`,
+            `label_colors` is ignored and the class boundaries are plotted in black
+            instead as the boundary lines may overlap and the colors don't necessarily
+            correspond to the classes.
 
-        For :term:`binary` problems, `label_colors` is also ignored and `cmap` or
-        `colors` can be passed as kwargs instead, otherwise, the default colormap
-        ('viridis') is used.
+            For :term:`binary` problems, `label_colors` is also ignored and `cmap` or
+            `colors` can be passed as kwargs instead, otherwise, the default colormap
+            ('viridis') is used.
 
-        .. versionadded:: 1.7
-        .. versionchanged:: 1.9
-            `label_colors` is now also used when `response_method="predict"`,
-            except for when `plot_method='contour'`, where it is ignored and "black" is
-            used instead.
-            The default colors changed from 'tab10' to the more accessible `Petroff
-            colors <https://github.com/matplotlib/matplotlib/issues/9460#issuecomment-875185352>`_.
-        .. deprecated:: 1.10
-            `multiclass_colors` was renamed to `label_colors` in 1.10 and will be
-            removed in 1.12.
+            .. versionadded:: 1.7
+            .. versionchanged:: 1.9
+                `label_colors` is now also used when `response_method="predict"`,
+                except for when `plot_method='contour'`, where it is ignored and "black"
+                is used instead.
+                The default colors changed from 'tab10' to the more accessible `Petroff
+                colors <https://github.com/matplotlib/matplotlib/issues/9460#issuecomment-875185352>`_.
+            .. deprecated:: 1.10
+                `multiclass_colors` was renamed to `label_colors` in 1.10 and will be
+                removed in 1.12.
 
         xlabel : str, default=None
             The label used for the x-axis. If `None`, an attempt is made to
