@@ -30,6 +30,7 @@ from sklearn.decomposition._online_lda_fast import (
 from sklearn.decomposition._online_lda_fast import _dirichlet_expectation_2d
 from sklearn.decomposition._online_lda_fast import mean_change as cy_mean_change
 from sklearn.utils import check_random_state, gen_batches, gen_even_slices
+from sklearn.utils._parallel_testing import mark_thread_buggy
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import check_is_fitted, check_non_negative, validate_data
@@ -468,7 +469,7 @@ class LatentDirichletAllocation(
                 self.max_doc_update_iter,
                 self.mean_change_tol,
                 cal_sstats,
-                random_state,
+                mark_thread_buggy(random_state, "TODO this should probably be cloned?"),
             )
             for idx_slice in gen_even_slices(X.shape[0], n_jobs)
         )

@@ -5,14 +5,13 @@
 
 from collections import Counter
 from collections.abc import Iterable
-from copy import deepcopy
 from dataclasses import dataclass
+from hashlib import md5
 from inspect import getmro
-from pickle import dumps, loads
+from io import BytesIO
+from pickle import Pickler, PicklingError
 from types import MethodType
 from typing import Any, TypeVar
-
-from deepdiff import DeepHash
 
 from sklearn.utils.parallel import _FuncWrapper
 
@@ -29,7 +28,7 @@ class DetectChanges:
     def __init__(self):
         self.counts = Counter()
         self.hashes = {}
-        self.old_objects = {}
+        self.old_attributes = {}
         self.objects = {}
 
     def store_object(self, obj: Any) -> None:
@@ -44,12 +43,9 @@ class DetectChanges:
         self.counts[obj_id] += 1
         self.hashes[obj_id] = obj_hash
         self.objects[obj_id] = obj
-        if hasattr(obj, "__deepcopy__"):
-            # Fallback to pickle:
-            copied = loads(dumps(obj))
-        else:
-            copied = deepcopy(obj)
-        self.old_objects[obj_id] = obj
+        self.old_attributes[obj_id] = {
+            attr: object_hash(getattr(obj, attr)) for attr in _get_immutable_attrs(obj)
+        }
 
     def store_parallel_calls(
         self, iterable: Iterable[tuple[_FuncWrapper, tuple[Any], dict[str, Any]]]
@@ -86,29 +82,16 @@ class DetectChanges:
                 continue
             obj = self.objects[obj_id]
             old_hash = self.hashes[obj_id]
-            orig_obj = self.old_objects[obj_id]
             if object_hash(obj) != old_hash:
                 changed = set()
-                if hasattr(orig_obj, "__dict__"):
-                    attrs = orig_obj.__dict__.keys()
-                else:
-                    attrs = set()
-                attrs |= set(getattr(orig_obj, "__slots__", ()))
-                for attr in attrs:
-                    if not attr.startswith("__") and object_hash(
-                        getattr(orig_obj, attr)
-                    ) != object_hash(getattr(obj, attr)):
+                for attr, old_attr_hash in self.old_attributes[obj_id].items():
+                    if old_attr_hash != object_hash(getattr(obj, attr)):
                         changed.add(attr)
-
-                expected_changed = get_thread_mutable_attributes(obj)
-                if expected_changed and changed <= expected_changed:
-                    continue
 
                 raise AssertionError(
                     f"Hash for object of type {type(obj)} has changed, "
                     "suggesting potential thread unsafety. Attrs that "
-                    f"changed unexpectedly: {changed - expected_changed}. "
-                    f"Attrs whose change was expected: {changed & expected_changed}."
+                    f"changed unexpectedly: {changed}"
                 )
 
 
@@ -165,19 +148,44 @@ def mark_thread_buggy(obj: _T, reason: str = "") -> _T:
     return mark_thread_safe(obj)
 
 
-def object_hash(obj: Any) -> str:
+def _get_immutable_attrs(obj: Any) -> set[str]:
+    """Return attributes that shouldn't change."""
+    return {
+        attr
+        for attr in (
+            (getattr(obj, "__dict__", {}).keys() | getattr(obj, "__slots__", set()))
+            - get_thread_mutable_attributes(obj)
+        )
+        if not attr.startswith("__")
+    }
+
+
+def _noop(obj):
+    """Meaningless placeholder for the pickler."""
+
+
+class _HashingPickler(Pickler):
+    """Write-only pickler designed for hashing."""
+
+    def reducer_override(self, obj: Any) -> Any:
+        changing_attrs = get_thread_mutable_attributes(obj)
+        if not changing_attrs:
+            # Fall back to normal pickling:
+            return NotImplemented
+
+        return _noop, ({attr: getattr(obj, attr) for attr in _get_immutable_attrs(obj)})
+
+
+def object_hash(obj: Any) -> bytes:
     """
     Hash a Python object; mutating the object should change the result.
 
     Raises ``TypeError`` in some rare cases.
     """
-    return DeepHash(
-        obj,
-        exclude_paths=get_thread_mutable_attributes(obj),
-        ignore_repetition=False,
-        ignore_string_type_changes=False,
-        ignore_iterable_order=False,
-        # Apparently bytes are encoded into strings... this suggests long term
-        # might want to recreate this library, or submit fixes.
-        encodings=["utf-8", "latin-1"],
-    )[obj]
+    f = BytesIO()
+    hasher = _HashingPickler(f)
+    try:
+        hasher.dump(obj)
+    except PicklingError:
+        raise TypeError
+    return md5(f.getvalue()).digest()

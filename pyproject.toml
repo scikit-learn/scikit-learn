@@ -92,7 +92,6 @@ tests = [
     "pyarrow>=13.0.0",
     "numpydoc>=1.2.0",
     "pooch>=1.8.0",
-    "deepdiff>9.1.0",
 ]
 maintenance = ["conda-lock==3.0.1"]
 
