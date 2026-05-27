@@ -53,10 +53,6 @@ devices might also work out of the box.
      - CPU, Intel GPU (SYCL)
      - See install link for driver setup; see :ref:`xpu_support`;
        see :ref:`device_support_for_float64`
-   * - `array-api-strict <https://data-apis.org/array-api-strict/>`__
-     - `Install <https://data-apis.org/array-api-strict/>`__
-     - CPU (testing only)
-     - Reference implementation for development/testing
 
 Coverage is expected to grow over time.
 
