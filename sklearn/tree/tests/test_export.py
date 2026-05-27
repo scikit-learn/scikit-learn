@@ -460,6 +460,24 @@ def test_graphviz_errors():
         export_graphviz(clf, out, class_names=[])
 
 
+def test_graphviz_fill_colors_length_mismatch_error():
+    pytest.importorskip("matplotlib")
+
+    clf = DecisionTreeClassifier(
+        max_depth=2, min_samples_split=2, criterion="gini", random_state=0
+    )
+    clf.fit(X, y)
+
+    msg = r"len\(self\.fill_colors\)=1"
+    with pytest.raises(ValueError, match=msg):
+        export_graphviz(
+            clf,
+            filled=True,
+            fill_colors=["red"],
+            out_file=None,
+        )
+
+
 @pytest.mark.parametrize("criterion", CLF_CRITERIONS + REG_CRITERIONS)
 def test_criterion_in_gradient_boosting_graphviz(criterion):
     dot_data = StringIO()

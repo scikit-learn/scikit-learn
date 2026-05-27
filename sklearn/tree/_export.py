@@ -32,7 +32,7 @@ def _to_rgb(color):
     """Convert any valid maptlotlib color to rgb in range [0, 255]"""
     try:
         from matplotlib.colors import to_rgb
-    except ImportError:
+    except ImportError:  # pragma: no cover
         raise ImportError("matplotlib is needed if you want to provide your own colors")
     return [int(channel * 255) for channel in to_rgb(color)]
 
