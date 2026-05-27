@@ -423,9 +423,14 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 }
 
 @scope (.sk-global.sk-vertical) {
+  :scope {
+      margin: 0;
+      padding: 0;
+  }
   div.features.fitted {
-      max-inline-size: 150px;
-      margin-inline: auto;
+      max-inline-size: 200em;
+      max-block-size: 2em;
+      margin: auto;
   }
 
   div.sk-parallel-item,
@@ -433,6 +438,7 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
   div.sk-item {
     background-image: none;
   }
+
   div.sk-parallel-item::after {
   display: none;
   }
@@ -443,41 +449,60 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
   div.sk-item {
     border: 1px solid blue;
     position: relative;
-    /* margin-left: 20px; */
-
+    margin-left: 20px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    justify-content: left;
     background-color: var(--sklearn-color-background);
-    /* border: 2px solid red; */
     min-inline-size: 15em;
 
   }
 
   div.sk-serial:has(> div.features),
   div.sk-serial:has(> div.total_features) {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  /* gap: 2rem; */
-  align-items:start;
-  /* justify-content: stretch; */
-
-
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    margin: 0;
 }
 
-div.sk-serial > div.sk-item {
-  grid-column: 1;
-
+div.sk-serial div.sk-item::before,
+div.sk-parallel div.sk-parallel::before{
+  position:absolute;
+   left:-20px;
+    /* top:0px; */
+    border-left:.2em solid orange; /* left vertical -colors used to debug */
+    border-bottom:.2em solid purple; /* left horizontal*/
+    /* border-left:.2em solid var(--sklearn-color-text-on-default-background); */
+    /* border-bottom:.2em solid var(--sklearn-color-text-on-default-background); */
+    content: "";
+    width: 20px;
+    height: 1.15em;
+    margin-left: -10px;
 }
 
-div.sk-serial > div.features,
-div.sk-serial > div.total_features {
-  grid-column: 2;
-  align-self: flex-end;
+div.sk-serial div.sk-item::after,
+  div.sk-parallel div.sk-item::after{
+  position:absolute;
+   left:-20px;
+    bottom:0px;
+    border-left:.2em solid rgb(0, 255, 132);
+    /* border-left:.2em solid var(--sklearn-color-text-on-default-background);*/
+    content: "";
+    width: 20px;
+    height: 100%;
+    padding-left: 10px;
+    margin-left: -10px;
 }
-  div.sk-parallel-item:only-child::after {
-    width: 0;
-  }
+
+/* So the vertical line doesn't go too low */
+
+div.sk-serial div.sk-item:last-child::after,
+div.sk-parallel div.sk-item:last-child::after{
+  display: none;
+}
+
+/*div.sk-serial div.sk-item:has(> .sk-estimator) {
+  margin-left: 0;
+}*/
 
 }
