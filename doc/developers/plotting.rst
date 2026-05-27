@@ -95,3 +95,20 @@ the grid. Positions that are not used are set to `None`. Furthermore, the
 matplotlib Artists are stored in `lines_` and `contours_` where the key is the
 position on the grid. When a list of axes is passed in, the `axes_`, `lines_`,
 and `contours_` are a 1d ndarray corresponding to the list of axes passed in.
+
+Using `matplotlib`
+------------------
+
+To keep `scikit-learn` as lightweight as possible, `matplotlib` is not a required
+dependency for building and using the package (it is only required for building the
+docs). Therefore, it is also not imported globally in the display classes, but only
+within the plotting functions where it is actually needed. To import it, use
+:func:`sklearn.utils._optional_dependencies.check_matplotlib_support`, which will check
+if it is installed, and if not, also raises a comprehensive error message including the
+module that requested it, for reference.
+
+For testing, use the [`pyplot`
+fixture](https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/conftest.py#L256)
+as the first argument in every test that requires it, which imports `matplotlib.pyplot`
+(or skips the test, if it is not installed) and also takes care of closing all figures
+before and after running the test.
