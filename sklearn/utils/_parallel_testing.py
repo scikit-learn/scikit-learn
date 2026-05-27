@@ -44,7 +44,8 @@ class DetectChanges:
         self.hashes[obj_id] = obj_hash
         self.objects[obj_id] = obj
         self.old_attributes[obj_id] = {
-            attr: object_hash(getattr(obj, attr)) for attr in _get_immutable_attrs(obj)
+            attr: object_hash(getattr(obj, attr))
+            for attr in _get_hopefully_immutable_attrs(obj)
         }
 
     def store_parallel_calls(
@@ -95,7 +96,7 @@ class DetectChanges:
                 )
 
 
-def get_thread_mutable_attributes(obj: Any) -> set[str]:
+def _get_thread_mutable_attributes(obj: Any) -> set[str]:
     """
     Return attributes that are known to be mutated from multiple threads.
 
@@ -126,54 +127,70 @@ class _ThreadSafe:
 _T = TypeVar("_T")
 
 
-def mark_thread_safe(obj: _T, reason: str = "") -> _T:
+def mark_thread_safe(obj: _T, reason: str) -> _T:
     """Mark object passed to ``delayed()`` as thread-safe."""
+    # If we import at top-level it's circular import.
     from sklearn.utils.parallel import Parallel
+
+    del reason  # Only passed in for documentation purposes
 
     if Parallel._thread_safety_testing:
         # The return type doesn't match the signature, but this is only used in
-        # debug mode, which has special handling for it in
-        # DelayedChanges.store_parallel_calls().
+        # free-threading debug mode, which hands it off for special handling
+        # and unwrapping in DelayedChanges.store_parallel_calls().
         return _ThreadSafe(obj)  # type: ignore[return-value]
 
     return obj
 
 
-def mark_thread_buggy(obj: _T, reason: str = "") -> _T:
+def mark_thread_buggy(obj: _T, reason: str) -> _T:
     """
     Mark object passed to ``delayed()`` as thread-buggy.
 
     This is a separate function in order to aid in grepping.
     """
-    return mark_thread_safe(obj)
+    return mark_thread_safe(obj, reason)
 
 
-def _get_immutable_attrs(obj: Any) -> set[str]:
+def _get_hopefully_immutable_attrs(obj: Any) -> set[str]:
     """Return attributes that shouldn't change."""
     return {
         attr
         for attr in (
             (getattr(obj, "__dict__", {}).keys() | getattr(obj, "__slots__", set()))
-            - get_thread_mutable_attributes(obj)
+            - _get_thread_mutable_attributes(obj)
         )
         if not attr.startswith("__")
     }
 
 
-def _noop(obj):
+def _noop(_):
     """Meaningless placeholder for the pickler."""
 
 
 class _HashingPickler(Pickler):
     """Write-only pickler designed for hashing."""
 
+    # TODO Semantically identical but different objects might be hiding
+    # thread-safety, should add id(obj) to the result, perhaps via
+    # persistent_id().
+
     def reducer_override(self, obj: Any) -> Any:
-        changing_attrs = get_thread_mutable_attributes(obj)
+        # Check if there are any attributes to omit from the hash:
+        changing_attrs = _get_thread_mutable_attributes(obj)
         if not changing_attrs:
             # Fall back to normal pickling:
+
+            # TODO Attributes that don't get pickled might be hiding
+            # thread-safety!
             return NotImplemented
 
-        return _noop, ({attr: getattr(obj, attr) for attr in _get_immutable_attrs(obj)})
+        # TODO If you have a subclass of a built-in type that also has
+        # __sklearn_thread_buggy/safe_attributes__, then this will give the
+        # wrong result.
+        return _noop, (
+            {attr: getattr(obj, attr) for attr in _get_hopefully_immutable_attrs(obj)}
+        )
 
 
 def object_hash(obj: Any) -> bytes:
