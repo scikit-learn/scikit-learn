@@ -607,6 +607,21 @@ def test_check_fitted_attribute():
             est.predict(numpy.asarray([0]))
 
 
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize("X", [[[1.3, 4.5]], sp.csr_array([[1.3, 4.5]])])
+def test_check_fitted_attribute_with_non_array_input(X):
+    xp = pytest.importorskip("array_api_strict")
+
+    with config_context(array_api_dispatch=True):
+        est = SimpleEstimator().fit(numpy.asarray([[1.3, 4.5]]))
+        # shouldn't raise:
+        est.predict(X)
+
+        est = SimpleEstimator().fit(xp.asarray([[1.3, 4.5]]))
+        with pytest.raises(ValueError, match=".*Array namespaces.*not compatible"):
+            est.predict(X)
+
+
 @pytest.mark.parametrize(
     "namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
