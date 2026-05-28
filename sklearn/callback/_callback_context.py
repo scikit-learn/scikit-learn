@@ -109,6 +109,7 @@ class CallbackContext:
         new_ctx._children_map = {}
         new_ctx.source_estimator_name = None
         new_ctx.source_task_name = None
+        new_ctx._subestimator_support_warnings = set()
 
         if hasattr(estimator, "_parent_callback_ctx"):
             # This context's task is the root task of the estimator which itself
@@ -497,14 +498,12 @@ class CallbackContext:
         if callbacks_to_propagate and not hasattr(sub_estimator, "set_callbacks"):
             sub_estimator_name = sub_estimator.__class__.__name__
             warning_message = (
-                f"The auto-propagated callbacks attached to {self.estimator_name} will
-                f"not be propagated to {sub_estimator_name} because it does not support
-                f"callbacks."
+                f"The auto-propagated callbacks attached to {self.estimator_name} will "
+                f"not be propagated to {sub_estimator_name} because it does not support"
+                " callbacks."
             )
             # Check on the root context not to repeat the same warning.
             root_context = get_context_path(self)[0]
-            if not hasattr(root_context, "_subestimator_support_warnings"):
-                root_context._subestimator_support_warnings = set()
             key = (self.estimator_name, sub_estimator_name)
             if key not in root_context._subestimator_support_warnings:
                 warnings.warn(warning_message)
