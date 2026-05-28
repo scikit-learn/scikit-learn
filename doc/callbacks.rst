@@ -12,9 +12,9 @@ Callbacks
   <callback_compatible_estimators>` for more information. It may change without the
   usual deprecation cycle.
 
-This guide demonstrates how to use scikit-learn's callbacks on compatible estimators.
-For information about how to implement the callback API, you can refer to the following
-sections of the developer's guide:
+This guide demonstrates how to use scikit-learn's :term:`callbacks` on compatible
+:term:`estimators`. For information about how to implement the callback API, you can
+refer to the following sections of the developer's guide:
 
 - the :ref:`Implementing callback support in estimators <callbacks_support>` section for
   making estimators compatible with callbacks.
@@ -25,7 +25,7 @@ sections of the developer's guide:
 In scikit-learn, callbacks are objects from the :mod:`~sklearn.callback` module that can
 be registered on an estimator to insert custom logic like monitoring progress or
 metrics, without modifying the underlying learning algorithm. The registered callbacks
-are invoked at specific steps of the fitting process.
+are invoked at specific steps of the :term:`fitting` process.
 
 Registering callbacks
 *********************
@@ -62,13 +62,13 @@ Multiple callbacks can be registered on the same estimator, for example a
 Callback invocation
 *******************
 
-During `fit`, the callbacks are invoked at the start and end of each task, where tasks
-are arbitrary units of work defined by the estimator. Usually, tasks correspond to
-iterations of the estimator's learning algorithm, but they can also correspond to more
-abstract operations like fitting an estimator, steps of a pipeline, cross-validation
-folds, etc. Within `fit`, tasks are divided into subtasks, which can themselves be
-divided and so on, giving them a natural :ref:`tree structure <example_task_tree>` where
-fitting the estimator is the root task.
+During `fit`, the callbacks are invoked at the start and end of each :term:`task <fit
+task>`, where tasks are arbitrary units of work defined by the estimator. Usually, tasks
+correspond to iterations of the estimator's learning algorithm, but they can also
+correspond to more abstract operations like fitting an estimator, steps of a pipeline,
+cross-validation folds, etc. Within `fit`, tasks are divided into subtasks, which can
+themselves be divided and so on, giving them a natural :ref:`tree structure
+<example_task_tree>` where fitting the estimator is the root task.
 
 This tree structure will usually be reflected in a callback's generated objects and
 tasks will be identified by their name, id, and a reference to their parent task.
@@ -150,13 +150,13 @@ the grid search::
 Auto-propagated callbacks
 -------------------------
 
-Auto-propagated callbacks are meant to be invoked within the `fit` of all
-(meta-)estimators in an estimator composition. Their goal is usually to report more
-general information about the status at each step of the composition.
+:term:`Auto-propagated <auto-propagated>` callbacks are meant to be invoked within the
+`fit` of all (meta-)estimators in an estimator composition. Their goal is usually to
+report more general information about the status at each step of the composition.
 :class:`~ProgressBar` for instance displays nested progress bars for the
-meta-estimators, their sub-estimators and so on. When registered on a meta-estimator,
-an auto-propagated callback will automatically be registered on all its sub-estimators
-that support callbacks.
+meta-estimators, their sub-estimators and so on. When registered on a meta-estimator, an
+auto-propagated callback will automatically be registered on all its sub-estimators that
+support callbacks.
 
 .. dropdown:: registration restrictions
 

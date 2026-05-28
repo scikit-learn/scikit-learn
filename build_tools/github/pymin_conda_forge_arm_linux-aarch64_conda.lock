@@ -12,7 +12,7 @@ https://conda.anaconda.org/conda-forge/linux-aarch64/libzlib-1.3.2-hdc9db2a_2.co
 https://conda.anaconda.org/conda-forge/noarch/python_abi-3.11-8_cp311.conda#8fcb6b0e2161850556231336dae58358
 https://conda.anaconda.org/conda-forge/noarch/tzdata-2025c-hc9c84f9_1.conda#ad659d0a2b3e47e38d829aa8cad2d610
 https://conda.anaconda.org/conda-forge/linux-aarch64/_openmp_mutex-4.5-20_gnu.conda#468fd3bb9e1f671d36c2cbc677e56f1d
-https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.4.22-hbd8a1cb_0.conda#e18ad67cf881dcadee8b8d9e2f8e5f73
+https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.5.20-hbd8a1cb_0.conda#489b8e97e666c93f68fdb35c3c9b957f
 https://conda.anaconda.org/conda-forge/noarch/fonts-conda-forge-1-hc364b38_1.conda#a7970cd949a077b7cb9696379d338681
 https://conda.anaconda.org/conda-forge/linux-aarch64/libegl-1.7.0-hd24410f_2.conda#cf105bce884e4ef8c8ccdca9fe6695e7
 https://conda.anaconda.org/conda-forge/linux-aarch64/libopengl-1.7.0-hd24410f_2.conda#cf9d12bfab305e48d095a4c79002c922
@@ -25,7 +25,7 @@ https://conda.anaconda.org/conda-forge/linux-aarch64/bzip2-1.0.8-h4777abc_9.cond
 https://conda.anaconda.org/conda-forge/linux-aarch64/keyutils-1.6.3-h86ecc28_0.conda#e7df0aab10b9cbb73ab2a467ebfaf8c7
 https://conda.anaconda.org/conda-forge/linux-aarch64/libbrotlicommon-1.2.0-he30d5cf_1.conda#8ec1d03f3000108899d1799d9964f281
 https://conda.anaconda.org/conda-forge/linux-aarch64/libdeflate-1.25-h1af38f5_0.conda#a9138815598fe6b91a1d6782ca657b0c
-https://conda.anaconda.org/conda-forge/linux-aarch64/libexpat-2.8.0-hfae3067_0.conda#3bacd6171f0a3f8fddd06c3d5ae01955
+https://conda.anaconda.org/conda-forge/linux-aarch64/libexpat-2.8.1-hfae3067_0.conda#513dd884361dfb8a554298ed69b58823
 https://conda.anaconda.org/conda-forge/linux-aarch64/libffi-3.5.2-h376a255_0.conda#2f364feefb6a7c00423e80dcb12db62a
 https://conda.anaconda.org/conda-forge/linux-aarch64/libgcc-ng-15.2.0-he9431aa_19.conda#770cf892e5530f43e63cadc673e85653
 https://conda.anaconda.org/conda-forge/linux-aarch64/libgfortran5-15.2.0-h1b7bec0_19.conda#779dbb494de6d3d6477cab52eb34285a
@@ -92,7 +92,7 @@ https://conda.anaconda.org/conda-forge/linux-aarch64/cyrus-sasl-2.1.28-h6598af7_
 https://conda.anaconda.org/conda-forge/linux-aarch64/cython-3.2.4-py311hdc11669_0.conda#931a90956062cc7219c6bce6c6ccfe7f
 https://conda.anaconda.org/conda-forge/linux-aarch64/dbus-1.16.2-h70963c4_1.conda#a4b6b82427d15f0489cef0df2d82f926
 https://conda.anaconda.org/conda-forge/noarch/execnet-2.1.2-pyhd8ed1ab_0.conda#a57b4be42619213a94f31d2c69c5dda7
-https://conda.anaconda.org/conda-forge/linux-aarch64/fontconfig-2.17.1-hba86a56_0.conda#0fed1ff55f4938a65907f3ecf62609db
+https://conda.anaconda.org/conda-forge/linux-aarch64/fontconfig-2.18.0-hba86a56_0.conda#b660d59a9d0fb3297327418624acaec3
 https://conda.anaconda.org/conda-forge/linux-aarch64/freetype-2.14.3-h8af1aa0_0.conda#f11edf8adf0d119148b97f745548390d
 https://conda.anaconda.org/conda-forge/noarch/iniconfig-2.3.0-pyhd8ed1ab_0.conda#9614359868482abba1bd15ce465e3c42
 https://conda.anaconda.org/conda-forge/linux-aarch64/kiwisolver-1.5.0-py311h229e7f7_0.conda#aeade47300d466d9d6ba01daaca31a86
@@ -132,7 +132,7 @@ https://conda.anaconda.org/conda-forge/linux-aarch64/libcblas-3.11.0-7_hd72aa62_
 https://conda.anaconda.org/conda-forge/linux-aarch64/libgl-1.7.0-hd24410f_2.conda#0d00176464ebb25af83d40736a2cd3bb
 https://conda.anaconda.org/conda-forge/linux-aarch64/libglx-devel-1.7.0-hd24410f_2.conda#1f9ddbb175a63401662d1c6222cef6ff
 https://conda.anaconda.org/conda-forge/linux-aarch64/liblapack-3.11.0-7_h88aeb00_openblas.conda#5899cbd743cc74fd655c1ed2af7120f3
-https://conda.anaconda.org/conda-forge/linux-aarch64/libllvm22-22.1.5-hfd2ba90_1.conda#b033ae799252b9b2fa63a9b6502aba75
+https://conda.anaconda.org/conda-forge/linux-aarch64/libllvm22-22.1.6-hfd2ba90_0.conda#e97298140523188fce1e30687b76bda5
 https://conda.anaconda.org/conda-forge/linux-aarch64/libxkbcommon-1.13.1-h3c6a4c8_0.conda#22c1ce28d481e490f3635c1b6a2bb23f
 https://conda.anaconda.org/conda-forge/linux-aarch64/libxslt-1.1.43-h6700d25_1.conda#0f31501ccd51a40f0a91381080ae7368
 https://conda.anaconda.org/conda-forge/linux-aarch64/openldap-2.6.13-h2fb54aa_0.conda#67eea19865a3463f75ca0d3a1d096350
@@ -148,13 +148,13 @@ https://conda.anaconda.org/conda-forge/linux-aarch64/xorg-libxi-1.8.3-he30d5cf_0
 https://conda.anaconda.org/conda-forge/linux-aarch64/xorg-libxrandr-1.5.5-he30d5cf_0.conda#1f64c613f0b8d67e9fb0e165d898fb6b
 https://conda.anaconda.org/conda-forge/linux-aarch64/xorg-libxxf86vm-1.1.7-he30d5cf_0.conda#b15ca02584678f38df6e114c32f93959
 https://conda.anaconda.org/conda-forge/linux-aarch64/harfbuzz-14.2.0-h1134a53_0.conda#1775defbef30aa990498e753a948cb18
-https://conda.anaconda.org/conda-forge/linux-aarch64/libclang13-22.1.5-default_h3185f35_1.conda#b1ef5c835d8e6b210391d890d79ef902
+https://conda.anaconda.org/conda-forge/linux-aarch64/libclang13-22.1.6-default_h3185f35_1.conda#5c43f2a4f21ab5af1eac1afe1310d0b9
 https://conda.anaconda.org/conda-forge/linux-aarch64/libgl-devel-1.7.0-hd24410f_2.conda#5d8323dff6a93596fb6f985cf6e8521a
 https://conda.anaconda.org/conda-forge/linux-aarch64/liblapacke-3.11.0-7_hb558247_openblas.conda#1f2c59f5bd2d46fde0f816b98648d0b9
 https://conda.anaconda.org/conda-forge/linux-aarch64/libpq-18.4-hccacd55_0.conda#ceebd82dd3ab72dd8d0b365b5bd4327b
 https://conda.anaconda.org/conda-forge/linux-aarch64/libvulkan-loader-1.4.341.0-h8b8848b_0.conda#06bb91a87fb97ea09398d2e121e00c39
 https://conda.anaconda.org/conda-forge/noarch/meson-python-0.19.0-pyh7e86bf3_2.conda#369afcc2d4965e7a6a075ab82e2a26b8
-https://conda.anaconda.org/conda-forge/linux-aarch64/numpy-2.4.5-py311hecca567_0.conda#91089211352c637a559a80c239b14cee
+https://conda.anaconda.org/conda-forge/linux-aarch64/numpy-2.4.6-py311hecca567_0.conda#fa4589f7437e1601e42eb14ba2988b94
 https://conda.anaconda.org/conda-forge/noarch/pip-26.1.1-pyh8b19718_0.conda#35870d32aed92041d31cbb15e822dca3
 https://conda.anaconda.org/conda-forge/noarch/pytest-9.0.3-pyhc364b38_1.conda#6a991452eadf2771952f39d43615bb3e
 https://conda.anaconda.org/conda-forge/linux-aarch64/xorg-libxtst-1.2.5-h57736b2_3.conda#c05698071b5c8e0da82a282085845860
