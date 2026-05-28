@@ -426,10 +426,11 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
   :scope {
       margin: 0;
       padding: 0;
+      box-sizing: border-box;
   }
   div.features.fitted {
-      max-inline-size: 200em;
-      max-block-size: 2em;
+      /* max-inline-size: 200em;
+      max-block-size: 2em;*/
       margin: auto;
   }
 
@@ -437,69 +438,48 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
   div.sk-serial,
   div.sk-item {
     background-image: none;
+
   }
 
   div.sk-parallel-item::after {
-  display: none;
+    display: none;
   }
 
   div.sk-parallel-item,
   div.sk-serial,
   div.sk-parallel,
   div.sk-item {
-    border: 1px solid blue;
+    /* border: 1px solid blue; */
     position: relative;
-    margin-left: 20px;
+    /* margin-left: 10px; */
+    padding: 0;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
     background-color: var(--sklearn-color-background);
     min-inline-size: 15em;
-
   }
 
   div.sk-serial:has(> div.features),
   div.sk-serial:has(> div.total_features) {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    margin: 0;
+  }
+
+  div.sk-serial > div.features.fitted {
+  position: relative;
 }
 
-div.sk-serial div.sk-item::before,
-div.sk-parallel div.sk-parallel::before{
-  position:absolute;
-   left:-20px;
-    /* top:0px; */
-    border-left:.2em solid orange; /* left vertical -colors used to debug */
-    border-bottom:.2em solid purple; /* left horizontal*/
-    /* border-left:.2em solid var(--sklearn-color-text-on-default-background); */
-    /* border-bottom:.2em solid var(--sklearn-color-text-on-default-background); */
-    content: "";
-    width: 20px;
-    height: 1.15em;
-    margin-left: -10px;
-}
-
-div.sk-serial div.sk-item::after,
-  div.sk-parallel div.sk-item::after{
-  position:absolute;
-   left:-20px;
-    bottom:0px;
-    border-left:.2em solid rgb(0, 255, 132);
-    /* border-left:.2em solid var(--sklearn-color-text-on-default-background);*/
-    content: "";
-    width: 20px;
-    height: 100%;
-    padding-left: 10px;
-    margin-left: -10px;
-}
-
-/* So the vertical line doesn't go too low */
-
-div.sk-serial div.sk-item:last-child::after,
-div.sk-parallel div.sk-item:last-child::after{
-  display: none;
-}
+/* div.sk-serial > div.sk-item + div.features.fitted::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 0.9em;
+  border-top: 0.2em solid var(--sklearn-color-text-on-default-background);
+  transform: translate(-100%, -50%);
+  pointer-events: none;
+} */
 
 /*div.sk-serial div.sk-item:has(> .sk-estimator) {
   margin-left: 0;
