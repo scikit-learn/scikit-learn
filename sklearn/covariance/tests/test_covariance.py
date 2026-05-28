@@ -390,7 +390,7 @@ def test_empirical_covariance_array_api(
     array_namespace, device_name, dtype_name, assume_centered
 ):
     """empirical_covariance() should return the same result with array API inputs."""
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     X_np = X.astype(dtype_name, copy=False)
     X_xp = xp.asarray(X_np, device=device)
@@ -413,7 +413,7 @@ def test_ledoit_wolf_shrinkage_array_api(
     array_namespace, device_name, dtype_name, n_features
 ):
     """ledoit_wolf_shrinkage() should return the same result with array API inputs."""
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     X_np = X[:, :n_features].astype(dtype_name, copy=False)
     X_xp = xp.asarray(X_np, device=device)
@@ -433,7 +433,7 @@ def test_ledoit_wolf_shrinkage_array_api(
 )
 def test_log_likelihood_array_api(array_namespace, device_name, dtype_name):
     """log_likelihood() should work with array API inputs."""
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     X_np = X.astype(dtype_name, copy=False)
     emp_cov_np = empirical_covariance(X_np)
@@ -460,7 +460,7 @@ def test_log_likelihood_array_api(array_namespace, device_name, dtype_name):
 @pytest.mark.parametrize("store_precision", [True, False])
 def test_score_array_api(array_namespace, device_name, dtype_name, store_precision):
     """LedoitWolf.score() should work with array API inputs."""
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     X_np = X.astype(dtype_name, copy=False)
     X_xp = xp.asarray(X_np, device=device)
@@ -483,7 +483,7 @@ def test_score_array_api(array_namespace, device_name, dtype_name, store_precisi
 @pytest.mark.parametrize("norm", ["frobenius", "spectral"])
 def test_error_norm_array_api(array_namespace, device_name, dtype_name, norm):
     """error_norm() should work with array API inputs."""
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     X_np = X.astype(dtype_name, copy=False)
     X_xp = xp.asarray(X_np, device=device)
@@ -508,7 +508,7 @@ def test_error_norm_array_api(array_namespace, device_name, dtype_name, norm):
 )
 def test_mahalanobis_array_api(array_namespace, device_name, dtype_name):
     """mahalanobis() should work with array API inputs."""
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     X_np = X.astype(dtype_name, copy=False)
     X_xp = xp.asarray(X_np, device=device)
