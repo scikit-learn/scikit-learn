@@ -503,6 +503,9 @@ class SimpleEstimator(BaseEstimator):
         check_same_namespace(X, self, attribute="X_", method="predict")
         return X
 
+    def sparsify(self):
+        self.X_ = sp.csr_matrix(self.X_)
+
 
 class SimpleEstimatorCustomLogic(BaseEstimator):
     def fit(self, X, y=None):
@@ -616,6 +619,11 @@ def test_check_fitted_attribute_with_non_array_input(X):
         est = SimpleEstimator().fit(numpy.asarray([[1.3, 4.5]]))
         # shouldn't raise:
         est.predict(X)
+
+        est.sparsify()
+        # shouldn't raise either:
+        est.predict(X)
+        est.predict(numpy.asarray([[1.3, 4.5]]))
 
         est = SimpleEstimator().fit(xp.asarray([[1.3, 4.5]]))
         with pytest.raises(ValueError, match="Array namespaces.*not compatible"):
