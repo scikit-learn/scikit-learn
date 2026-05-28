@@ -973,7 +973,9 @@ def _regression_dataset():
         )
         X = StandardScaler().fit_transform(X)
         REGRESSION_DATASET = X, y
-    return REGRESSION_DATASET
+    X, y = REGRESSION_DATASET
+    # Make a copy, in case the caller wants to mutate this data:
+    return X.copy(), y.copy()
 
 
 class _NotAnArray:
