@@ -1065,7 +1065,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
                     # Note: spl.extrapolate is True for extrapolation in
                     # ["periodic", "continue"]. It is "periodic" for
-                    # etrapolation = "periodic".
+                    # extrapolation = "periodic".
                     XBS_sparse = BSpline.design_matrix(x, spl.t, spl.k, spl.extrapolate)
 
                     if self.extrapolation == "periodic":
