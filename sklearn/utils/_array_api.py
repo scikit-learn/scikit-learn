@@ -1132,13 +1132,15 @@ def check_same_namespace(X, estimator, *, attribute, method):
 
     X_xp, _, X_device = get_namespace_and_device(X)
 
-    if X_xp == a_xp and (
-        # device matches
-        X_device == a_device
-        # or: X is a list/dataframe/sparse matrix/etc.
-        # and the estimator was fitted on Numpy/CPU
-        or (X_device is None and _is_numpy_namespace(a_xp))
-    ):
+    if X_xp == a_xp and X_device == a_device:
+        return
+
+    if _is_numpy_namespace(a_xp) and _is_numpy_namespace(X_xp):
+        # this condition is reached when either:
+        # - `X` is array-like or sparse-matrix and the estimator was fitted with numpy
+        # - `attr` is a sparse matrix and `X` is a numpy array
+        # in which case devices are different (None vs "cpu") but
+        # `check_same_namespace` should not raise
         return
 
     if X_device is None:
