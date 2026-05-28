@@ -588,7 +588,16 @@ def move_to(*arrays, xp, device):
                     # only used as fallback in case of failure.
                     # Note: copy=None is the default since array-api 2023.12. Namespace
                     # libraries should only trigger a copy automatically if needed.
-                    array_converted = xp.from_dlpack(array, device=device)
+                    try:
+                array_converted = xp.from_dlpack(array, device=device)
+            except (TypeError, AssertionError):
+                # Some namespaces (e.g. PyTorch) do not support the `device`
+                # keyword argument in `from_dlpack` when the input is already
+                # a DLPack capsule. In that case, we convert first and then
+                # move to the target device.
+                array_converted = xp.from_dlpack(array)
+                if device is not None:
+                    array_converted = xp.to_device(array_converted, device)
                     # `AttributeError` occurs when `__dlpack__` and `__dlpack_device__`
                     # methods are not present on the input array
                     # `TypeError` and `NotImplementedError` for packages that do not
