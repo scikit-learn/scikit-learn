@@ -618,7 +618,7 @@ def test_check_fitted_attribute_with_non_array_input(X):
         est.predict(X)
 
         est = SimpleEstimator().fit(xp.asarray([[1.3, 4.5]]))
-        with pytest.raises(ValueError, match=".*Array namespaces.*not compatible"):
+        with pytest.raises(ValueError, match="Array namespaces.*not compatible"):
             est.predict(X)
 
 
