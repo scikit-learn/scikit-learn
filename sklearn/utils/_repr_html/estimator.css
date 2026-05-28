@@ -460,12 +460,6 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
     min-inline-size: 15em;
   }
 
-  div.sk-serial:has(> div.features),
-  div.sk-serial:has(> div.total_features) {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-  }
-
   div.sk-serial > div.features.fitted {
   position: relative;
 }
