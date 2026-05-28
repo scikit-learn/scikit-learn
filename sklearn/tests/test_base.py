@@ -30,6 +30,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import SVC, SVR
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils import deprecated
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._set_output import _get_output_config
 from sklearn.utils._testing import (
@@ -1024,6 +1025,28 @@ def test_get_fitted_attr_html():
     assert fitted_attr_html["components_"]["type_name"] == ("ndarray")
     assert fitted_attr_html["components_"]["shape"] == (2, 2)
     assert_allclose(fitted_attr_html["components_"]["value"], pca.components_)
+
+
+def test_get_fitted_attr_html_no_warnings():
+    """Check that deprecated fitted attrs don't generate a warning in the repr.
+
+    Non-regression test for
+    https://github.com/scikit-learn/scikit-learn/issues/34056
+    """
+
+    class Estimator(BaseEstimator):
+        @deprecated("Attribute `foo` is deprecated")
+        @property
+        def foo_(self):
+            return 1
+
+    model = Estimator()
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
+        html = model._get_fitted_attr_html()
+
+    assert html["foo_"] == {"type_name": "int", "value": 1}
 
 
 def make_estimator_with_param(default_value):

@@ -13,6 +13,7 @@ dependencies:
   - narwhals
   - threadpoolctl
   - matplotlib=3.6.1  # min
+  - rich=14.1.0  # min
   - pyamg=5.0.0  # min
   - pytest
   - pytest-xdist

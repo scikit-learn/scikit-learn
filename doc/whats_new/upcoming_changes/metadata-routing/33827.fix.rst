@@ -1,0 +1,8 @@
+- Metadata routing objects (:class:`~utils.metadata_routing.MetadataRequest`,
+  :class:`~utils.metadata_routing.MetadataRouter`, and their per-method requests)
+  no longer deep-copy the owning estimator. Since scikit-learn 1.8, the routing
+  objects hold a reference to the owner estimator for display purposes, which
+  caused :func:`~utils.metadata_routing.get_routing_for_object` and
+  :meth:`~utils.metadata_routing.MetadataRouter.add_self_request` to transitively
+  deep-copy the full estimator state, which can fail, and is very inefficient.
+  By `Adrin Jalali`_.

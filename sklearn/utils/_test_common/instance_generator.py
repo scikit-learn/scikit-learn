@@ -1162,7 +1162,7 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     Nystroem: {
         "check_array_api_same_namespace": "check_same_namespace not yet added",
-        "check_transformer_preserves_dtypes": (
+        "check_transformer_preserve_dtypes": (
             "dtypes are preserved but not at a close enough precision"
         ),
     },
@@ -1263,7 +1263,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         )
     },
     RidgeClassifier: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
         "check_non_transformer_estimators_n_iter": (
             "n_iter_ cannot be easily accessed."
         ),

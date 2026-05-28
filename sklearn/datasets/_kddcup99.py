@@ -124,7 +124,7 @@ def fetch_kddcup99(
 
     return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object. See
-        below for more information about the `data` and `target` object.
+        below for more information about the `data` and `target` objects.
 
         .. versionadded:: 0.20
 
