@@ -153,14 +153,15 @@ def mark_thread_buggy(obj: _T, reason: str) -> _T:
 
 
 def _get_hopefully_immutable_attrs(obj: Any) -> set[str]:
-    """Return attributes that shouldn't change."""
+    """
+    Return attributes that shouldn't change.
+    """
     return {
         attr
         for attr in (
             (getattr(obj, "__dict__", {}).keys() | getattr(obj, "__slots__", set()))
             - _get_thread_mutable_attributes(obj)
         )
-        if not attr.startswith("__")
     }
 
 
