@@ -1132,8 +1132,22 @@ def check_same_namespace(X, estimator, *, attribute, method):
 
     X_xp, _, X_device = get_namespace_and_device(X)
 
-    if X_xp == a_xp and X_device == a_device:
+    if X_xp == a_xp and (
+        # device matches
+        X_device == a_device
+        # or: X is a list/dataframe/sparse matrix/etc.
+        # and the estimator was fitted on Numpy/CPU
+        or (X_device is None and _is_numpy_namespace(a_xp))
+    ):
         return
+
+    if X_device is None:
+        type_name = "sparse matrix" if sp.issparse(X) else "array-like"
+        msg = (
+            f"Array namespaces used during fit ({a_xp.__name__}) "
+            f"is not compatible with the {type_name} input passed to {method}. "
+            f"Only NumPy namespaces might compatible with {type_name} inputs."
+        )
 
     if X_xp != a_xp:
         msg = (
