@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from hashlib import md5
 from inspect import getmro
 from io import BytesIO
-from pickle import Pickler, PicklingError
+from pickle import Pickler, PicklingError, dumps
 from types import MethodType
 from typing import Any, TypeVar
 
@@ -43,10 +43,12 @@ class DetectChanges:
         self.counts[obj_id] += 1
         self.hashes[obj_id] = obj_hash
         self.objects[obj_id] = obj
-        self.old_attributes[obj_id] = {
-            attr: object_hash(getattr(obj, attr))
-            for attr in _get_hopefully_immutable_attrs(obj)
-        }
+        self.old_attributes[obj_id] = attrs = {}
+        for attr in _get_hopefully_immutable_attrs(obj):
+            try:
+                attrs[attr] = object_hash(getattr(obj, attr))
+            except TypeError:
+                continue
 
     def store_parallel_calls(
         self, iterable: Iterable[tuple[_FuncWrapper, tuple[Any], dict[str, Any]]]
@@ -177,6 +179,12 @@ class _HashingPickler(Pickler):
     # persistent_id().
 
     def reducer_override(self, obj: Any) -> Any:
+        # If the object isn't pickleable, just hash a repr.
+        try:
+            _ = dumps(obj)
+        except (PicklingError, TypeError):
+            return _noop, (repr(obj),)
+
         # Check if there are any attributes to omit from the hash:
         changing_attrs = _get_thread_mutable_attributes(obj)
         if not changing_attrs:
