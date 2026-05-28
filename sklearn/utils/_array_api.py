@@ -1146,7 +1146,7 @@ def check_same_namespace(X, estimator, *, attribute, method):
         msg = (
             f"Array namespaces used during fit ({a_xp.__name__}) "
             f"is not compatible with the {type_name} input passed to {method}. "
-            f"Only NumPy namespaces might compatible with {type_name} inputs."
+            f"Only NumPy namespaces might be compatible with {type_name} inputs."
         )
 
     if X_xp != a_xp:
