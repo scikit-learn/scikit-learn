@@ -70,6 +70,7 @@ def _name_details_html(name_details, is_fitted_css_class=""):
         <div class="name-details {is_fitted_css_class}">
           <div class="name-details-container">
             <table class="name-details-table">
+              <caption>Input features</caption>
               <tbody>
                 {rows}
               </tbody>
