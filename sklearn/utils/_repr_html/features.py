@@ -59,3 +59,36 @@ def _features_html(features, is_fitted_css_class=""):
         is_fitted_css_class=html.escape(is_fitted_css_class),
         rows="".join(rows),
     )
+
+
+def _name_details_html(name_details, is_fitted_css_class=""):
+    """Generate collapsible table HTML for list-like name details."""
+    if len(name_details) == 0:
+        return ""
+
+    NAME_DETAILS_TABLE_TEMPLATE = """
+        <div class="name-details {is_fitted_css_class}">
+          <div class="name-details-container">
+            <table class="name-details-table">
+              <tbody>
+                {rows}
+              </tbody>
+            </table>
+          </div>
+        </div>
+    """
+
+    NAME_DETAILS_ROW_TEMPLATE = """
+        <tr>
+          <td>{item}</td>
+        </tr>
+
+    """
+    rows = [
+        NAME_DETAILS_ROW_TEMPLATE.format(item=html.escape(str(item)))
+        for item in name_details
+    ]
+    return NAME_DETAILS_TABLE_TEMPLATE.format(
+        is_fitted_css_class=html.escape(is_fitted_css_class),
+        rows="".join(rows),
+    )

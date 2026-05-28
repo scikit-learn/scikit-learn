@@ -73,6 +73,46 @@ def test_write_label_html(checked):
             assert "checked>" in html_label
 
 
+@pytest.mark.parametrize("name_details", [["city", "country"], ("city", "country")])
+def test_write_label_html_list_like_name_details_as_table(name_details):
+    with closing(StringIO()) as out:
+        _write_label_html(out, "", "", "OneHotEncoder", name_details)
+        html_label = out.getvalue()
+
+    assert "name-details-table" in html_label
+    assert "<summary>" not in html_label
+    assert "<td>city</td>" in html_label
+    assert "<td>country</td>" in html_label
+    assert "<pre>" not in html_label
+
+
+def test_write_label_html_scalar_name_details_keeps_pre():
+    with closing(StringIO()) as out:
+        _write_label_html(out, "", "", "OneHotEncoder", "hello-world")
+        html_label = out.getvalue()
+
+    assert "<pre>hello-world</pre>" in html_label
+    assert "name-details-table" not in html_label
+
+
+def test_write_label_html_empty_list_name_details_renders_nothing():
+    with closing(StringIO()) as out:
+        _write_label_html(out, "", "", "OneHotEncoder", [])
+        html_label = out.getvalue()
+
+    assert "name-details-table" not in html_label
+    assert "<pre>" not in html_label
+
+
+def test_write_label_html_list_name_details_escaped():
+    with closing(StringIO()) as out:
+        _write_label_html(out, "", "", "OneHotEncoder", ["<city>", "a&b"])
+        html_label = out.getvalue()
+
+    assert "&lt;city&gt;" in html_label
+    assert "a&amp;b" in html_label
+
+
 @pytest.mark.parametrize("est", ["passthrough", "drop", None])
 def test_get_visual_block_single_str_none(est):
     # Test estimators that are represented by strings
@@ -224,8 +264,10 @@ def test_estimator_html_repr_pipeline():
         assert "<div><div>passthrough</div></div></label>" in html_output
         assert html.escape(str(num_trans["imputer"])) in html_output
 
+        assert "<summary>" not in html_output
         for _, _, cols in preprocess.transformers:
-            assert f"<pre>{html.escape(str(cols))}</pre>" in html_output
+            for col in cols:
+                assert f"<td>{html.escape(str(col))}</td>" in html_output
 
         # feature union
         for name, _ in feat_u.transformer_list:

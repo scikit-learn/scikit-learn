@@ -9,7 +9,7 @@ from pathlib import Path
 
 from sklearn import config_context
 from sklearn.utils._repr_html.base import _IDCounter
-from sklearn.utils._repr_html.features import _features_html
+from sklearn.utils._repr_html.features import _features_html, _name_details_html
 
 
 def _get_css_style():
@@ -165,6 +165,7 @@ def _write_label_html(
         f' class="{inner_class} {is_fitted_css_class} sk-toggleable">'
     )
     name = html.escape(name)
+    raw_name_details = name_details
     if name_details is not None:
         name_details = html.escape(str(name_details))
         checked_str = "checked" if checked else ""
@@ -212,10 +213,11 @@ def _write_label_html(
 
         out.write(params)
         out.write(attrs)
-        if name_details and ("Pipeline" not in name) and not params:
-            if name == "passthrough" or name_details == "[]":
-                name_details = ""
-            out.write(f"<pre>{name_details}</pre>")
+        if raw_name_details is not None and ("Pipeline" not in name) and not params:
+            if isinstance(raw_name_details, (list, tuple)):
+                out.write(_name_details_html(raw_name_details, is_fitted_css_class))
+            elif name != "passthrough" and name_details not in ("", "[]"):
+                out.write(f"<pre>{name_details}</pre>")
 
         out.write("</div>")
         if features is None or len(features) == 0:
