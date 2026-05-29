@@ -21,10 +21,11 @@ import logging
 import os
 import random
 
+import joblib
+
 from sklearn._config import config_context, get_config, set_config
 
 logger = logging.getLogger(__name__)
-
 
 # PEP0440 compatible formatted version, see:
 # https://www.python.org/dev/peps/pep-0440/
@@ -149,3 +150,16 @@ def setup_module(module):
     print("I: Seeding RNGs with %r" % _random_seed)
     np.random.seed(_random_seed)
     random.seed(_random_seed)
+
+
+def _enable_threading():
+    threading_mode = os.getenv("SKLEARN_THREADING")
+    if threading_mode is None:
+        return
+
+    # TODO figuer out if parallel_config()'s public API guarantees
+    # non-contextmanager usage works.
+    joblib.parallel_config(backend="threading").__enter__()
+
+
+_enable_threading()
