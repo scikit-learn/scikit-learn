@@ -9,7 +9,7 @@ Analysis of the convergence of penalized logistic regression models
 The purpose of this example is three-fold:
 
 1. Demonstrate registering a :class:`~ScoringMonitor` on the logistic
-   regression step of a pipeline nested inside :class:`~GridSearchCV`.
+   regression step of a pipeline nested inside :class:`~sklearn.model_selection.GridSearchCV`.
 
 2. Show how to plot the metric values collected at each iteration of each fit
    of the logistic regression model during the grid search and analyze the
