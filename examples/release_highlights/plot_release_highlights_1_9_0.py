@@ -69,5 +69,28 @@ grid_search.fit(X, y)
 # --------------------
 #
 # %%
-# Output features and fitted attributes in HTML diagrams
-# ------------------------------------------------------
+# Improvements to the HTML representation of estimators
+# -----------------------------------------------------
+# The HTML representation of estimators now includes information made available after
+# fit. There is a new "Fitted attributes" table that lists the fitted attributes and
+# their type and values. In addition, the HTML representation of transformers includes
+# new visual blocks showing the number and names of the output features.
+#
+# Expand the diagram below by clicking on the different visual blocks to see the new
+# features.
+
+import pandas as pd
+
+from sklearn.compose import make_column_transformer
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+
+X = pd.DataFrame({"num": [0.1, 0.2, 0.3, 0.4], "cat": ["A", "C", "B", "C"]})
+y = [1, 3, 1, 2]
+
+pipe = make_pipeline(
+    make_column_transformer((StandardScaler(), ["num"]), (OneHotEncoder(), ["cat"])),
+    LogisticRegression(),
+)
+pipe.fit(X, y)
