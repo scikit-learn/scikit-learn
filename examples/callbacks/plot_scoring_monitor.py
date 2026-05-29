@@ -9,8 +9,7 @@ Analysis of the convergence of penalized logistic regression models
 The purpose of this example is three-fold:
 
 1. Demonstrate registering a :class:`~ScoringMonitor` on the logistic
-   regression step of a pipeline nested inside :class:`~GridSearchCV`, together
-   with an auto-propagating :class:`~ProgressBar`.
+   regression step of a pipeline nested inside :class:`~GridSearchCV`.
 
 2. Show how to plot the metric values collected at each iteration of each fit
    of the logistic regression model during the grid search and analyze the
@@ -22,6 +21,7 @@ The purpose of this example is three-fold:
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Let's first define the pipeline and the grid search. Here we register a
 # :class:`~ScoringMonitor` callback on the logistic regression model to monitor
@@ -53,7 +53,7 @@ model = make_pipeline(
 
 param_grid = {
     "standardscaler__with_std": [True, False],
-    "logisticregression__C": np.logspace(-2, 2, 3),
+    "logisticregression__C": np.geomspace(0.01, 100, 3),
 }
 
 grid_search = GridSearchCV(
@@ -61,7 +61,7 @@ grid_search = GridSearchCV(
     param_grid,
     cv=5,
     scoring=scoring_metrics,
-    n_jobs=4,
+    n_jobs=2,
     error_score="raise",
     refit=scoring_metrics[0],
 )
@@ -91,7 +91,7 @@ grid_search.set_callbacks(ProgressBar()).fit(X, y)
 #
 # Also note that when running this code interactively in a notebook or a
 # terminal, several progress bars are updated concurrently: this is due to the
-# fact that the grid search is executed with `n_jobs=4`, spawning 4 worker
+# fact that the grid search is executed with `n_jobs=2`, spawning 2 worker
 # processes that fit models for different candidate/split pairs in parallel.
 
 
