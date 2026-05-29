@@ -65,10 +65,6 @@ grid_search.fit(X, y)
 # The callback API is experimental and may evolve without deprecation.
 
 # %%
-# metric_at_thresholds
-# --------------------
-#
-# %%
 # Improvements to the HTML representation of estimators
 # -----------------------------------------------------
 # The HTML representation of estimators now includes information made available after
@@ -94,3 +90,31 @@ pipe = make_pipeline(
     LogisticRegression(),
 )
 pipe.fit(X, y)
+
+# %%
+# Computing metrics across thresholds
+# -----------------------------------
+# A new function :func:`~sklearn.metrics.metric_at_thresholds` has been added to compute
+# an arbitray binary classification metric across all possible decision thresholds.
+
+import matplotlib.pyplot as plt
+
+from sklearn.datasets import make_classification
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, f1_score, metric_at_thresholds
+
+X, y = make_classification(weights=[0.9, 0.1], random_state=0)
+lr = LogisticRegression(random_state=0).fit(X, y)
+y_score = lr.predict_proba(X)[:, 1]
+
+accuracy, thresholds = metric_at_thresholds(y, y_score, accuracy_score)
+f1, _ = metric_at_thresholds(y, y_score, f1_score)
+
+_, ax = plt.subplots()
+ax.plot(thresholds, accuracy, label="Accuracy")
+ax.plot(thresholds, f1, label="F1")
+ax.set_xlabel("threshold")
+ax.set_ylabel("metric value")
+ax.legend()
+plt.show()
+# %%
