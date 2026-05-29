@@ -90,11 +90,6 @@ grid_search.set_callbacks(ProgressBar()).fit(X, y)
 # In addition, the grid search performs a final refit on the full dataset with
 # the best hyperparameter combination found during the grid search. This is
 # visible as the "refit-with-best-params" task in the output above.
-#
-# Also note that when running this code interactively in a notebook or a
-# terminal, several progress bars are updated concurrently: this is due to the
-# fact that the grid search is executed with `n_jobs=2`, spawning 2 worker
-# processes that fit models for different candidate/split pairs in parallel.
 
 
 # %%
