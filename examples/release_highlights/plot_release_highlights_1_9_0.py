@@ -24,6 +24,43 @@ or with conda::
 # %%
 # Callbacks
 # ---------
+# This release introduces callbacks in scikit-learn. They are objects that can be
+# registered on estimators, through the `set_callbacks` method, to be invoked at the
+# beginning and end of key steps during fit. See the :ref:`user guide <callbacks_user>`
+# for more details and for the list of supported estimators.
+#
+# Two built-in callbacks are available for now:
+# - :class:`~sklearn.callback.ProgressBar`, to display progress bars.
+# - :class:`~sklearn.callback.ScoringMonitor`, to compute and log scoring metrics.
+
+from sklearn.datasets import make_classification
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV
+from sklearn.callback import ProgressBar, ScoringMonitor
+
+X, y = make_classification(
+    n_samples=1000, n_features=50, n_classes=10, n_informative=20, random_state=0
+)
+
+scoring_monitor = ScoringMonitor(scoring="d2_log_loss_score")
+logreg = LogisticRegression(solver="lbfgs")
+logreg.set_callbacks(scoring_monitor, ProgressBar())
+logreg.fit(X, y)
+
+log = scoring_monitor.get_logs().data_as_pandas
+print(log[["task_name", "task_id", "d2_log_loss_score"]])
+
+# Progress bars can also be displayed for compositions of estimators.
+grid_search = GridSearchCV(LogisticRegression(solver="lbfgs"), {"C": [10, 1, 0.1]})
+grid_search.set_callbacks(ProgressBar())
+grid_search.fit(X, y)
+
+# %%
+# There is also a public API to implement callback support in third-party estimators and
+# to implement custom callbacks. See the :ref:`developer's guide <callbacks>` for more
+# details.
+#
+# The callback API is experimental and may evolve without deprecation.
 
 # %%
 # metric_at_thresholds
