@@ -123,20 +123,25 @@
   margin-top: 0.5em;
 }
 
-/* we need the extra class name-details-table so jupyter doesn't overwrite rules*/
+.name-details-table caption {
+  color: var(--sklearn-color-text) /* Needed for jupyter */
+}
+
+/* We need the extra class "name-details-table" so jupyter
+doesn't overwrite rules*/
 .name-details .name-details-table {
   width: 100%;
   table-layout: inherit;
 }
 
-.sk-global input.sk-toggleable__control:checked ~ div.sk-toggleable__content:has(.name-details),
-.sk-global input.sk-toggleable__control ~ div.sk-toggleable__content:has(.name-details) {
-/* .sk-label-container:has(.name-details){ */
+.sk-global input.sk-toggleable__control:checked
+~ div.sk-toggleable__content:has(.name-details),
+.sk-global input.sk-toggleable__control
+~ div.sk-toggleable__content:has(.name-details) {
   border-radius: .20em;
   max-inline-size: 15em;
   margin-inline: auto;
 }
-
 
 /* .sk-toggleable__label.fitted.sk-toggleable__label-arrow {
   border-radius: 5px;
