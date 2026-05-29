@@ -1163,7 +1163,7 @@ def check_same_namespace(X, estimator, *, attribute, method):
         "must use the same namespace and the same device as those passed to fit(). "
         f"{msg} "
         "You can move the estimator to the same namespace and device as X with: "
-        "'from sklearn.utils._array_api import move_estimator_to; "
+        "'from sklearn.utils._array_api import get_namespace_and_device, move_estimator_to; "
         "xp, _, device = get_namespace_and_device(X); "
         "estimator = move_estimator_to(estimator, xp, device)'"
     )
