@@ -109,7 +109,7 @@
 }
 
 .features .features-container table td,
-.name-details table td  {
+.name-details  .name-details-table td {
   text-align: left;
   padding: 0 0.5em;
   border: 1px solid rgba(106, 105, 104, 0.232);
@@ -123,15 +123,21 @@
   margin-top: 0.5em;
 }
 
-.name-details-table {
+/* we need the extra class name-details-table so jupyter doesn't overwrite rules*/
+.name-details .name-details-table {
   width: 100%;
   table-layout: inherit;
 }
 
-.name-details table td {
-  text-align: left;
-  padding: 0 0.5em;
-  border: 1px solid rgba(106, 105, 104, 0.232);
-  white-space: nowrap;
-  color: var(--sklearn-color-text);
+.sk-global input.sk-toggleable__control:checked ~ div.sk-toggleable__content:has(.name-details),
+.sk-global input.sk-toggleable__control ~ div.sk-toggleable__content:has(.name-details) {
+/* .sk-label-container:has(.name-details){ */
+  border-radius: .20em;
+  max-inline-size: 15em;
+  margin-inline: auto;
 }
+
+
+/* .sk-toggleable__label.fitted.sk-toggleable__label-arrow {
+  border-radius: 5px;
+}  */
