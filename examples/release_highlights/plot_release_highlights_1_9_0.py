@@ -27,9 +27,10 @@ or with conda::
 # This release introduces callbacks in scikit-learn. They are objects that can be
 # registered on estimators, through the `set_callbacks` method, to be invoked at the
 # beginning and end of key steps during fit. See the :ref:`user guide <callbacks_user>`
-# for more details and for the list of supported estimators.
+# for more details. Only a few estimators support callbacks for now, see the
+# :ref:`list of supported estimators <callback_compatible_estimators>`.
 #
-# Two built-in callbacks are available for now:
+# Two built-in callbacks are provided in this release:
 #
 # - :class:`~sklearn.callback.ProgressBar`, to display progress bars.
 # - :class:`~sklearn.callback.ScoringMonitor`, to compute and log scoring metrics.
@@ -62,7 +63,8 @@ grid_search.fit(X, y)
 # to implement custom callbacks. See the :ref:`developer's guide <callbacks>` for more
 # details.
 #
-# The callback API is experimental and may evolve without deprecation.
+# New callbacks and callback support in more estimators will be added in future
+# releases. The callback API is experimental and may evolve without deprecation.
 
 # %%
 # Improvements to the HTML representation of estimators
