@@ -215,7 +215,7 @@ def _write_label_html(
         out.write(attrs)
         if raw_name_details is not None and ("Pipeline" not in name) and not params:
             if isinstance(raw_name_details, (list, tuple)):
-                out.write(_name_details_html(raw_name_details))
+                out.write(_name_details_html(raw_name_details, is_fitted_css_class))
             elif name != "passthrough" and name_details not in ("", "[]"):
                 out.write(f"<pre>{name_details}</pre>")
 

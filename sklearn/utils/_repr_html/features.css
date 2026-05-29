@@ -1,4 +1,4 @@
-.features {
+.features, .name-details {
   font-family: monospace;
   cursor: pointer;
   background-color: var(--sklearn-color-unfitted-level-0);
@@ -8,7 +8,7 @@
   font-size: inherit; /* Needed for jupyter */
 }
 
-.features.fitted {
+.features.fitted, .name-details.fitted {
   background-color: var(--sklearn-color-fitted-level-0);
 }
 
@@ -53,7 +53,7 @@
   background-color: var(--sklearn-color-fitted-level-2);
 }
 
-.features .features-container {
+.features .features-container, .name-details {
   max-width: 15em;
   max-height: 10em;
   overflow: auto;
@@ -62,18 +62,6 @@
   background-color: var(--sklearn-color-unfitted-level-0);
   border-radius: 0 0 .5em .5em;
 }
-
-.name-details {
-  font-family: monospace;
-  background-color: var(--sklearn-color-unfitted-level-0);
-  border: 1px dotted var(--sklearn-color-border-box);
-  border-radius: .20em;
-  margin: 0.25em;
-}
-
-
-
-
 
 .features.fitted .features-container {
   background-color: var(--sklearn-color-fitted-level-0);
@@ -101,15 +89,18 @@
   margin: 0.01em;
 }
 
-.features .features-container table tr:nth-child(odd) {
+.features .features-container table tr:nth-child(odd),
+.name-details table tr:nth-child(odd) {
   background-color: #fff;
 }
 
-.features .features-container table tr:nth-child(even) {
+.features .features-container table tr:nth-child(even),
+.name-details table tr:nth-child(even) {
   background-color: #f6f6f6;
 }
 
-.features .features-container table tr:hover {
+.features .features-container table tr:hover,
+.name-details table tr:hover {
   background-color: #e0e0e0;
 }
 
@@ -117,7 +108,8 @@
   table-layout: inherit;
 }
 
-.features .features-container table td {
+.features .features-container table td,
+.name-details table td  {
   text-align: left;
   padding: 0 0.5em;
   border: 1px solid rgba(106, 105, 104, 0.232);
@@ -131,35 +123,12 @@
   margin-top: 0.5em;
 }
 
-.name-details  {
-  max-width: 20em;
-  max-height: 10em;
-  overflow: auto;
-  scrollbar-width: thin;
-  padding: .25em 0.1rem;
-  background-color: var(--sklearn-color-fitted-level-0);
-  border-radius: .20em;
-}
-
-.name-details .name-details-table {
+.name-details-table {
   width: 100%;
-
   table-layout: inherit;
 }
 
-.name-details .name-details-table tr:nth-child(odd) {
-  background-color: #fff;
-}
-
-.name-details .name-details-table tr:nth-child(even) {
-  background-color: #f6f6f6;
-}
-
-.name-details .name-details-table tr:hover {
-  background-color: #e0e0e0;
-}
-
-.name-details .name-details-table td {
+.name-details table td {
   text-align: left;
   padding: 0 0.5em;
   border: 1px solid rgba(106, 105, 104, 0.232);
