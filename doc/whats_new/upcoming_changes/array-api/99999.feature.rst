@@ -1,0 +1,5 @@
+- :class:`calibration.CalibratedClassifierCV` now supports array API compatible
+  inputs with `method="sigmoid"` and `method="isotonic"` (in addition to the
+  already-supported `method="temperature"`), when the underlying `estimator`
+  also supports the array API.
+  By :user:`<tiagocpaz>` and :user:`<tabtempera>`.

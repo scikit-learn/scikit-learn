@@ -10,7 +10,6 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy.optimize import minimize, minimize_scalar
-from scipy.special import expit
 
 from sklearn._loss import (
     HalfBinomialLoss,
@@ -477,7 +476,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                         classes=self.classes_,
                         pos_label=self.classes_[1],
                     )
-                predictions = predictions.reshape(-1, 1)
+                predictions = xp.reshape(predictions, (-1, 1))
 
             if sample_weight is not None:
                 # Check that the sample_weight dtype is consistent with the
@@ -590,8 +589,10 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         tags = super().__sklearn_tags__()
         estimator_tags = get_tags(self._get_estimator())
         tags.input_tags.sparse = estimator_tags.input_tags.sparse
-        tags.array_api_support = (
-            estimator_tags.array_api_support and self.method == "temperature"
+        tags.array_api_support = estimator_tags.array_api_support and self.method in (
+            "temperature",
+            "sigmoid",
+            "isotonic",
         )
         return tags
 
@@ -664,7 +665,7 @@ def _fit_classifier_calibrator_pair(
     )
     if predictions.ndim == 1:
         # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
-        predictions = predictions.reshape(-1, 1)
+        predictions = xp.reshape(predictions, (-1, 1))
 
     if sample_weight is not None:
         # Check that the sample_weight dtype is consistent with the predictions
@@ -723,16 +724,83 @@ def _fit_calibrator(clf, predictions, y, classes, method, xp, sample_weight=None
     """
     calibrators = []
 
-    if method in ("isotonic", "sigmoid"):
-        Y = label_binarize(y, classes=classes)
-        label_encoder = LabelEncoder().fit(classes)
-        pos_class_indices = label_encoder.transform(clf.classes_)
-        for class_idx, this_pred in zip(pos_class_indices, predictions.T):
-            if method == "isotonic":
-                calibrator = IsotonicRegression(out_of_bounds="clip")
-            else:  # "sigmoid"
-                calibrator = _SigmoidCalibration()
+    if method == "sigmoid":
+        # `label_binarize` is NumPy-only, so `y` and `classes` must be in
+        # NumPy for it. `predictions` is kept in the original namespace so
+        # that `_SigmoidCalibration` stores its parameters there.
+        _, _, device_ = get_namespace_and_device(predictions)
+        if not _is_numpy_namespace(xp):
+            y_np = _convert_to_numpy(y, xp=xp)
+            classes_np = _convert_to_numpy(classes, xp=xp)
+        else:
+            y_np = y
+            classes_np = classes
+        # `clf.classes_` may live in a non-NumPy namespace (e.g. when the
+        # underlying estimator was fitted with xp arrays). Detect and convert.
+        clf_classes_xp, _ = get_namespace(clf.classes_)
+        if not _is_numpy_namespace(clf_classes_xp):
+            clf_classes_np = _convert_to_numpy(clf.classes_, xp=clf_classes_xp)
+        else:
+            clf_classes_np = clf.classes_
+        Y_np = label_binarize(y_np, classes=classes_np)
+        # Convert `Y` back to the original namespace and device so that
+        # `_SigmoidCalibration.fit` sees consistent inputs (it requires all
+        # arrays to live on the same device).
+        if not _is_numpy_namespace(xp):
+            Y = xp.asarray(Y_np, device=device_)
+        else:
+            Y = Y_np
+        # Map each estimator class to its column index in the full sorted
+        # `classes` array. We use `np.searchsorted` rather than
+        # `LabelEncoder.transform` because the latter mishandles NumPy dtype
+        # objects under `SCIPY_ARRAY_API=1`.
+        sorted_classes_np = np.sort(np.asarray(classes_np))
+        pos_class_indices = np.searchsorted(sorted_classes_np, clf_classes_np)
+        # Index columns positionally because some Array API namespaces (e.g.
+        # array_api_strict) disallow iterating over an array. Bounding the
+        # loop by `predictions.shape[1]` also covers the binary case, where
+        # `predictions` has a single column but `pos_class_indices` has two
+        # entries (only the positive class is calibrated).
+        for i in range(predictions.shape[1]):
+            class_idx = int(pos_class_indices[i])
+            this_pred = predictions[:, i]
+            # `_SigmoidCalibration` accepts xp inputs; passing `this_pred`
+            # in the original namespace ensures `a_`/`b_` are stored there.
+            calibrator = _SigmoidCalibration()
             calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
+            calibrators.append(calibrator)
+    elif method == "isotonic":
+        # `IsotonicRegression` is implemented in Cython and only supports
+        # NumPy. Convert all relevant inputs to NumPy up-front.
+        if not _is_numpy_namespace(xp):
+            y_np = _convert_to_numpy(y, xp=xp)
+            classes_np = _convert_to_numpy(classes, xp=xp)
+            predictions_np = _convert_to_numpy(predictions, xp=xp)
+            if sample_weight is not None:
+                sample_weight_np = _convert_to_numpy(sample_weight, xp=xp)
+            else:
+                sample_weight_np = None
+        else:
+            y_np = y
+            classes_np = classes
+            predictions_np = predictions
+            sample_weight_np = sample_weight
+        clf_classes_xp, _ = get_namespace(clf.classes_)
+        if not _is_numpy_namespace(clf_classes_xp):
+            clf_classes_np = _convert_to_numpy(clf.classes_, xp=clf_classes_xp)
+        else:
+            clf_classes_np = clf.classes_
+        Y = label_binarize(y_np, classes=classes_np)
+        sorted_classes_np = np.sort(np.asarray(classes_np))
+        pos_class_indices = np.searchsorted(sorted_classes_np, clf_classes_np)
+        # Use the number of prediction columns to preserve the binary
+        # classification special case (`predictions_np.shape[1] == 1` while
+        # `pos_class_indices` has two entries).
+        for i in range(predictions_np.shape[1]):
+            class_idx = int(pos_class_indices[i])
+            this_pred = predictions_np[:, i]
+            calibrator = IsotonicRegression(out_of_bounds="clip")
+            calibrator.fit(this_pred, Y[:, class_idx], sample_weight_np)
             calibrators.append(calibrator)
     elif method == "temperature":
         if classes.shape[0] == 2 and predictions.shape[-1] == 1:
@@ -795,6 +863,8 @@ class _CalibratedClassifier:
         proba : array, shape (n_samples, n_classes)
             The predicted probabilities. Can be exact zeros.
         """
+        xp, _, device_ = get_namespace_and_device(X)
+
         predictions, _ = _get_response_values(
             self.estimator,
             X,
@@ -802,15 +872,40 @@ class _CalibratedClassifier:
         )
         if predictions.ndim == 1:
             # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
-            predictions = predictions.reshape(-1, 1)
+            predictions = xp.reshape(predictions, (-1, 1))
 
         n_classes = self.classes.shape[0]
 
         proba = np.zeros((_num_samples(X), n_classes))
 
         if self.method in ("sigmoid", "isotonic"):
-            label_encoder = LabelEncoder().fit(self.classes)
-            pos_class_indices = label_encoder.transform(self.estimator.classes_)
+            # IsotonicRegression and the probability aggregation below use
+            # NumPy-only paths. Convert predictions to NumPy if needed; proba
+            # is built in NumPy and converted back to the input namespace
+            # before returning.
+            if not _is_numpy_namespace(xp):
+                predictions = _convert_to_numpy(predictions, xp=xp)
+
+            # Map each estimator class to its column index in the full sorted
+            # `classes` array. Class labels may live in a non-NumPy namespace
+            # (e.g. when the estimator was fitted with xp arrays), so they are
+            # converted to NumPy first. We use `np.searchsorted` rather than
+            # `LabelEncoder.transform` because the latter mishandles NumPy
+            # dtype objects under `SCIPY_ARRAY_API=1`.
+            classes_xp, _ = get_namespace(self.classes)
+            if not _is_numpy_namespace(classes_xp):
+                classes_np = _convert_to_numpy(self.classes, xp=classes_xp)
+            else:
+                classes_np = np.asarray(self.classes)
+            estimator_classes_xp, _ = get_namespace(self.estimator.classes_)
+            if not _is_numpy_namespace(estimator_classes_xp):
+                estimator_classes_np = _convert_to_numpy(
+                    self.estimator.classes_, xp=estimator_classes_xp
+                )
+            else:
+                estimator_classes_np = np.asarray(self.estimator.classes_)
+            sorted_classes_np = np.sort(classes_np)
+            pos_class_indices = np.searchsorted(sorted_classes_np, estimator_classes_np)
             for class_idx, this_pred, calibrator in zip(
                 pos_class_indices, predictions.T, self.calibrators
             ):
@@ -818,7 +913,14 @@ class _CalibratedClassifier:
                     # When binary, `predictions` consists only of predictions for
                     # clf.classes_[1] but `pos_class_indices` = 0
                     class_idx += 1
-                proba[:, class_idx] = calibrator.predict(this_pred)
+                # `_SigmoidCalibration.predict` may return an xp array when
+                # its parameters were stored in a non-NumPy namespace during
+                # fit. Coerce back to NumPy so the slot assignment works.
+                pred = calibrator.predict(this_pred)
+                pred_xp, _ = get_namespace(pred)
+                if not _is_numpy_namespace(pred_xp):
+                    pred = _convert_to_numpy(pred, xp=pred_xp)
+                proba[:, class_idx] = pred
             # Normalize the probabilities
             if n_classes == 2:
                 proba[:, 0] = 1.0 - proba[:, 1]
@@ -832,7 +934,6 @@ class _CalibratedClassifier:
                     proba, denominator, out=uniform_proba, where=denominator != 0
                 )
         elif self.method == "temperature":
-            xp, _ = get_namespace(predictions)
             if n_classes == 2 and predictions.shape[-1] == 1:
                 response_method_name = _check_response_method(
                     self.estimator,
@@ -844,6 +945,10 @@ class _CalibratedClassifier:
 
         # Deal with cases where the predicted probability minimally exceeds 1.0
         proba[(1.0 < proba) & (proba <= 1.0 + 1e-5)] = 1.0
+
+        # Convert result back to the input namespace if we used the NumPy path.
+        if not _is_numpy_namespace(xp) and self.method in ("sigmoid", "isotonic"):
+            proba = xp.asarray(proba, device=device_)
 
         return proba
 
@@ -857,10 +962,10 @@ def _sigmoid_calibration(
 
     Parameters
     ----------
-    predictions : ndarray of shape (n_samples,)
+    predictions : array-like of shape (n_samples,)
         The decision function or predict proba for the samples.
 
-    y : ndarray of shape (n_samples,)
+    y : array-like of shape (n_samples,)
         The targets.
 
     sample_weight : array-like of shape (n_samples,), default=None
@@ -878,6 +983,16 @@ def _sigmoid_calibration(
     ----------
     Platt, "Probabilistic Outputs for Support Vector Machines"
     """
+    # scipy.optimize.minimize and HalfBinomialLoss require NumPy arrays.
+    # The caller is responsible for wrapping the returned scalars back to
+    # the original namespace.
+    xp, _ = get_namespace(predictions, y, sample_weight)
+    if not _is_numpy_namespace(xp):
+        predictions = _convert_to_numpy(predictions, xp=xp)
+        y = _convert_to_numpy(y, xp=xp)
+        if sample_weight is not None:
+            sample_weight = _convert_to_numpy(sample_weight, xp=xp)
+
     predictions = column_or_1d(predictions)
     y = column_or_1d(y)
 
@@ -1016,11 +1131,11 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
 
     Attributes
     ----------
-    a_ : float
-        The slope.
+    a_ : array of shape ()
+        The slope, stored as a 0-d array in the input namespace.
 
-    b_ : float
-        The intercept.
+    b_ : array of shape ()
+        The intercept, stored as a 0-d array in the input namespace.
     """
 
     def fit(self, X, y, sample_weight=None):
@@ -1042,11 +1157,16 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
         self : object
             Returns an instance of self.
         """
+        xp, _, device_ = get_namespace_and_device(X, y)
         X = column_or_1d(X)
         y = column_or_1d(y)
         X, y = indexable(X, y)
 
-        self.a_, self.b_ = _sigmoid_calibration(X, y, sample_weight)
+        a, b = _sigmoid_calibration(X, y, sample_weight)
+        # _sigmoid_calibration returns Python/NumPy scalars; wrap them as
+        # 0-d arrays in the original namespace so predict() stays consistent.
+        self.a_ = xp.asarray(a, device=device_)
+        self.b_ = xp.asarray(b, device=device_)
         return self
 
     def predict(self, T):
@@ -1059,11 +1179,29 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
 
         Returns
         -------
-        T_ : ndarray of shape (n_samples,)
-            The predicted data.
+        T_ : array-like of shape (n_samples,)
+            The predicted data, in the same namespace as ``T``.
         """
+        xp, _, device_ = get_namespace_and_device(T)
         T = column_or_1d(T)
-        return expit(-(self.a_ * T + self.b_))
+        # `self.a_` and `self.b_` are stored in the training namespace, which
+        # may differ from the prediction namespace (e.g. when the calibrator
+        # was fitted on xp data but called with NumPy inputs during the
+        # internal NumPy aggregation path of `_CalibratedClassifier.predict_proba`).
+        # Coerce them to the namespace and device of ``T`` to avoid mixed
+        # namespace errors during arithmetic.
+        a_xp, _ = get_namespace(self.a_)
+        if a_xp.__name__ != xp.__name__:
+            a = xp.asarray(_convert_to_numpy(self.a_, xp=a_xp), device=device_)
+            b = xp.asarray(_convert_to_numpy(self.b_, xp=a_xp), device=device_)
+        else:
+            a = self.a_
+            b = self.b_
+        # Sigmoid of the linear score: P(y=1) = 1 / (1 + exp(a * T + b)).
+        # We compute it with `xp.exp` rather than `scipy.special.expit`
+        # because the latter only supports NumPy, so the result stays in the
+        # input namespace.
+        return 1 / (1 + xp.exp(a * T + b))
 
 
 class _TemperatureScaling(RegressorMixin, BaseEstimator):

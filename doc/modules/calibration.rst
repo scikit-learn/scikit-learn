@@ -305,12 +305,36 @@ provides a natural way to obtain (better) calibrated multi-class probabilities w
 just one free parameter in contrast to using a "One-vs-Rest" scheme that adds more
 parameters for each single class.
 
+.. _calibration_array_api:
+
+Array API support
+-----------------
+
+:class:`CalibratedClassifierCV` supports the :ref:`Array API <array_api>`
+for all three calibration methods (``sigmoid``, ``isotonic`` and
+``temperature``), provided the underlying ``estimator`` also supports it.
+The input namespace and device are preserved in the output.
+
+The calibration step itself relies on NumPy/Cython routines that cannot
+operate on non-NumPy namespaces (``scipy.optimize`` for ``sigmoid`` and
+``temperature``, and the Cython Pool Adjacent Violators algorithm of
+:class:`~sklearn.isotonic.IsotonicRegression` for ``isotonic``). The
+relevant inputs are therefore converted to NumPy only for these inner
+routines, and the resulting parameters and probabilities are converted
+back. Only the small calibration parameters cross namespaces; the bulk
+training and prediction data can stay on the device of the underlying
+estimator.
+
+For a worked example, see
+:ref:`sphx_glr_auto_examples_calibration_plot_calibration_array_api.py`.
+
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve.py`
 * :ref:`sphx_glr_auto_examples_calibration_plot_calibration_multiclass.py`
 * :ref:`sphx_glr_auto_examples_calibration_plot_calibration.py`
 * :ref:`sphx_glr_auto_examples_calibration_plot_compare_calibration.py`
+* :ref:`sphx_glr_auto_examples_calibration_plot_calibration_array_api.py`
 
 .. rubric:: References
 
