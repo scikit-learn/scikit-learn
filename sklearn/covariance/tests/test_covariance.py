@@ -20,7 +20,7 @@ from sklearn.covariance import (
 from sklearn.covariance._shrunk_covariance import _ledoit_wolf, _oas
 from sklearn.utils._array_api import (
     _atol_for_type,
-    _convert_to_numpy,
+    move_to,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._test_common.instance_generator import _get_check_estimator_ids
@@ -400,7 +400,7 @@ def test_empirical_covariance_array_api(
     with config_context(array_api_dispatch=True):
         result_xp = empirical_covariance(X_xp, assume_centered=assume_centered)
 
-    result_xp_np = _convert_to_numpy(result_xp, xp=xp)
+    result_xp_np = move_to(result_xp, xp=np, device="cpu")
     assert_allclose(result_np, result_xp_np, atol=_atol_for_type(dtype_name))
 
 
@@ -520,7 +520,7 @@ def test_mahalanobis_array_api(array_namespace, device_name, dtype_name):
         lw_xp = LedoitWolf().fit(X_xp)
         dist_xp = lw_xp.mahalanobis(X_xp)
 
-    dist_xp_np = _convert_to_numpy(dist_xp, xp=xp)
+    dist_xp_np = move_to(dist_xp, xp=np, device="cpu")
     assert_allclose(dist_np, dist_xp_np, atol=_atol_for_type(dtype_name))
 
 
