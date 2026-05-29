@@ -77,7 +77,7 @@ for clf, title, ax in zip(models, titles, sub.flatten()):
         clf,
         X,
         response_method="predict",
-        label_colors="coolwarm",
+        target_colors="coolwarm",
         alpha=0.8,
         ax=ax,
         xlabel=iris.feature_names[0],

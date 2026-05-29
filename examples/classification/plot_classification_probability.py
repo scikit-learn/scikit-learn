@@ -162,7 +162,7 @@ for classifier_idx, (name, classifier) in enumerate(classifiers.items()):
         axes[classifier_idx, max_col].scatter(
             X_test[mask_label, 0],
             X_test[mask_label, 1],
-            c=max_class_disp.label_colors_[[label], :],
+            c=max_class_disp.target_colors_[[label], :],
             **scatter_kwargs,
         )
 

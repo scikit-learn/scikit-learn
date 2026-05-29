@@ -73,7 +73,7 @@ for ax, weights in zip(axs, ("uniform", "distance")):
         alpha=0.5,
         ax=ax,
     )
-    cmap = mpl.colors.ListedColormap(disp.label_colors_)
+    cmap = mpl.colors.ListedColormap(disp.target_colors_)
     scatter = disp.ax_.scatter(
         X.iloc[:, 0], X.iloc[:, 1], c=y, cmap=cmap, edgecolors="k"
     )

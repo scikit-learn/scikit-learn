@@ -58,24 +58,24 @@ def _check_boundary_response_method(estimator, response_method):
 
 
 # TODO(1.12): remove
-def _deprecate_multiclass_colors(multiclass_colors, label_colors):
-    """Handle deprecation of `multiclass_colors` renamed to `label_colors`."""
+def _deprecate_multiclass_colors(multiclass_colors, target_colors):
+    """Handle deprecation of `multiclass_colors` renamed to `target_colors`."""
     if multiclass_colors != "deprecated":
         warnings.warn(
-            "'multiclass_colors' was renamed to 'label_colors' in 1.10 and will be "
+            "'multiclass_colors' was renamed to 'target_colors' in 1.10 and will be "
             "removed in 1.12.",
             FutureWarning,
         )
-        if label_colors is not None:
+        if target_colors is not None:
             raise ValueError(
-                "'multiclass_colors' and 'label_colors' cannot be used together. "
-                "Pass `label_colors` only."
+                "'multiclass_colors' and 'target_colors' cannot be used together. "
+                "Pass `target_colors` only."
             )
         return multiclass_colors
-    return label_colors
+    return target_colors
 
 
-def _select_colors(mpl, label_colors, n_classes):
+def _select_colors(mpl, target_colors, n_classes):
     """Select colors for multiclass decision boundary display.
 
     Parameters
@@ -83,7 +83,7 @@ def _select_colors(mpl, label_colors, n_classes):
     mpl : module
         Imported `matplotlib` module.
 
-    label_colors : str or list of matplotlib colors, default=None
+    target_colors : str or list of matplotlib colors, default=None
         The colormap or colors to select.
 
         Possible inputs are:
@@ -105,47 +105,47 @@ def _select_colors(mpl, label_colors, n_classes):
 
     """
 
-    if label_colors is None:
+    if target_colors is None:
         # select accessible colors according to Matthew A. Petroff, see
         # https://arxiv.org/abs/2107.02270 and
         # https://github.com/matplotlib/matplotlib/issues/9460#issuecomment-875185352
         if n_classes <= 10:
-            label_colors = PETROFF_COLORS[:n_classes]
+            target_colors = PETROFF_COLORS[:n_classes]
         else:
-            label_colors = "gist_rainbow"
+            target_colors = "gist_rainbow"
 
-    if isinstance(label_colors, str):
-        if label_colors not in mpl.pyplot.colormaps():
+    if isinstance(target_colors, str):
+        if target_colors not in mpl.pyplot.colormaps():
             raise ValueError(
-                "When 'label_colors' is a string, it must be a valid "
-                f"Matplotlib colormap. Got: {label_colors}"
+                "When 'target_colors' is a string, it must be a valid "
+                f"Matplotlib colormap. Got: {target_colors}"
             )
-        cmap = mpl.pyplot.get_cmap(label_colors)
+        cmap = mpl.pyplot.get_cmap(target_colors)
         if cmap.N < n_classes:
             raise ValueError(
-                f"Colormap '{label_colors}' only has {cmap.N} colors, but "
+                f"Colormap '{target_colors}' only has {cmap.N} colors, but "
                 f"{n_classes} classes are to be displayed. Please specify a "
                 "different colormap or provide a list of colors via "
-                "'label_colors'."
+                "'target_colors'."
             )
         return cmap(np.linspace(0, 1, n_classes))
 
-    elif isinstance(label_colors, list):
-        if len(label_colors) != n_classes:
+    elif isinstance(target_colors, list):
+        if len(target_colors) != n_classes:
             raise ValueError(
-                "When 'label_colors' is a list, it must be of the same "
+                "When 'target_colors' is a list, it must be of the same "
                 f"length as the classes or labels to plot ({n_classes}), got: "
-                f"{len(label_colors)}."
+                f"{len(target_colors)}."
             )
-        elif any(not mpl.colors.is_color_like(col) for col in label_colors):
+        elif any(not mpl.colors.is_color_like(col) for col in target_colors):
             raise ValueError(
-                "When 'label_colors' is a list, it can only contain valid"
-                f" Matplotlib color names. Got: {label_colors}"
+                "When 'target_colors' is a list, it can only contain valid"
+                f" Matplotlib color names. Got: {target_colors}"
             )
-        return mpl.colors.to_rgba_array(label_colors)
+        return mpl.colors.to_rgba_array(target_colors)
 
     else:
-        raise TypeError("'label_colors' must be a list or a str.")
+        raise TypeError("'target_colors' must be a list or a str.")
 
 
 class DecisionBoundaryDisplay:
@@ -189,7 +189,7 @@ class DecisionBoundaryDisplay:
             (grid_resolution, grid_resolution, n_classes)
         Values of the response function.
 
-    label_colors : str or list of matplotlib colors, default=None
+    target_colors : str or list of matplotlib colors, default=None
         Specifies how to color each class when plotting all classes of
         :term:`multiclass` problems.
 
@@ -207,16 +207,16 @@ class DecisionBoundaryDisplay:
         of the `plot_method`.
 
         When `response_method='predict'` and `plot_method='contour'`,
-        `label_colors` is ignored and the class boundaries are plotted in black
+        `target_colors` is ignored and the class boundaries are plotted in black
         instead as the boundary lines may overlap and the colors don't necessarily
         correspond to the classes.
 
-        For :term:`binary` problems, `label_colors` is also ignored and `cmap` or
+        For :term:`binary` problems, `target_colors` is also ignored and `cmap` or
         `colors` can be passed as kwargs instead, otherwise, the default colormap
         ('viridis') is used.
 
         .. versionadded:: 1.10
-            `multiclass_colors` was renamed to `label_colors`
+            `multiclass_colors` was renamed to `target_colors`
 
     multiclass_colors : str or list of matplotlib colors, default=None
         Specifies how to color each class when plotting all classes of
@@ -236,23 +236,23 @@ class DecisionBoundaryDisplay:
         of the `plot_method`.
 
         When `response_method='predict'` and `plot_method='contour'`,
-        `label_colors` is ignored and the class boundaries are plotted in black
+        `target_colors` is ignored and the class boundaries are plotted in black
         instead as the boundary lines may overlap and the colors don't necessarily
         correspond to the classes.
 
-        For :term:`binary` problems, `label_colors` is also ignored and `cmap` or
+        For :term:`binary` problems, `target_colors` is also ignored and `cmap` or
         `colors` can be passed as kwargs instead, otherwise, the default colormap
         ('viridis') is used.
 
         .. versionadded:: 1.7
         .. versionchanged:: 1.9
-            `label_colors` is now also used when `response_method="predict"`,
+            `target_colors` is now also used when `response_method="predict"`,
             except for when `plot_method='contour'`, where it is ignored and "black" is
             used instead.
             The default colors changed from 'tab10' to the more accessible `Petroff
             colors <https://github.com/matplotlib/matplotlib/issues/9460#issuecomment-875185352>`_.
         .. deprecated:: 1.10
-            `multiclass_colors` was renamed to `label_colors` in 1.10 and will be
+            `multiclass_colors` was renamed to `target_colors` in 1.10 and will be
             removed in 1.12.
 
     xlabel : str, default=None
@@ -269,12 +269,12 @@ class DecisionBoundaryDisplay:
         `plot_method` is 'pcolormesh', `surface_` is
         :class:`QuadMesh <matplotlib.collections.QuadMesh>`.
 
-    label_colors_ : array of shape (n_classes, 4)
+    target_colors_ : array of shape (n_classes, 4)
         Colors used to plot each class in multiclass problems.
         Only defined when `n_classes` > 2.
 
         .. versionadded:: 1.10
-            `multiclass_colors_` was renamed to `label_colors_`
+            `multiclass_colors_` was renamed to `target_colors_`
 
     multiclass_colors_ : array of shape (n_classes, 4)
         Colors used to plot each class in multiclass problems.
@@ -282,7 +282,7 @@ class DecisionBoundaryDisplay:
 
         .. versionadded:: 1.7
         .. deprecated:: 1.10
-            `multiclass_colors_` was renamed to `label_colors_` in 1.10 and will be
+            `multiclass_colors_` was renamed to `target_colors_` in 1.10 and will be
             removed in 1.12.
 
     ax_ : matplotlib Axes
@@ -325,7 +325,7 @@ class DecisionBoundaryDisplay:
     ...             ax=ax,
     ...             alpha=0.5,
     ...         )
-    ...         cmap = mpl.colors.ListedColormap(display.label_colors_)
+    ...         cmap = mpl.colors.ListedColormap(display.target_colors_)
     ...         ax.scatter(
     ...             data[:, 0],
     ...             data[:, 1],
@@ -346,7 +346,7 @@ class DecisionBoundaryDisplay:
         xx1,
         n_classes,
         response,
-        label_colors=None,
+        target_colors=None,
         multiclass_colors="deprecated",  # TODO(1.12): remove
         xlabel=None,
         ylabel=None,
@@ -355,21 +355,21 @@ class DecisionBoundaryDisplay:
         self.xx1 = xx1
         self.n_classes = n_classes
         self.response = response
-        # TODO(1.12): remove and replace with `self.label_colors = label_colors`
-        self.label_colors = _deprecate_multiclass_colors(
-            multiclass_colors, label_colors
+        # TODO(1.12): remove and replace with `self.target_colors = target_colors`
+        self.target_colors = _deprecate_multiclass_colors(
+            multiclass_colors, target_colors
         )
         self.xlabel = xlabel
         self.ylabel = ylabel
 
     # TODO(1.12): remove
     @deprecated(  # type: ignore[prop-decorator]
-        "Attribute `multiclass_colors_` was renamed to `label_colors_` in 1.10 and will"
-        " be removed in 1.12. Use `label_colors_` instead."
+        "Attribute `multiclass_colors_` was renamed to `target_colors_` in 1.10 and"
+        " will be removed in 1.12. Use `target_colors_` instead."
     )
     @property
     def multiclass_colors_(self):
-        return self.label_colors_
+        return self.target_colors_
 
     def plot(self, plot_method="contourf", ax=None, xlabel=None, ylabel=None, **kwargs):
         """Plot visualization.
@@ -439,7 +439,7 @@ class DecisionBoundaryDisplay:
         ...     iris.data[:, 0],
         ...     iris.data[:, 1],
         ...     c=iris.target,
-        ...     cmap=mpl.colors.ListedColormap(display.label_colors_),
+        ...     cmap=mpl.colors.ListedColormap(display.target_colors_),
         ...     edgecolor="black"
         ... )
         <...>
@@ -465,12 +465,14 @@ class DecisionBoundaryDisplay:
             for kwarg in ("cmap", "colors"):
                 if kwarg in kwargs:
                     warnings.warn(
-                        f"'{kwarg}' is ignored in favor of 'label_colors' "
+                        f"'{kwarg}' is ignored in favor of 'target_colors' "
                         "in the multiclass case."
                     )
                     del kwargs[kwarg]
 
-            self.label_colors_ = _select_colors(mpl, self.label_colors, self.n_classes)
+            self.target_colors_ = _select_colors(
+                mpl, self.target_colors, self.n_classes
+            )
 
             # If not set by the user, set default values for `zorder` to ensure that the
             # decision boundary is plotted in the background (in case a scatter plot is
@@ -484,7 +486,7 @@ class DecisionBoundaryDisplay:
                         f"colormap_{class_idx}",
                         [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)],
                     )
-                    for class_idx, (r, g, b, _) in enumerate(self.label_colors_)
+                    for class_idx, (r, g, b, _) in enumerate(self.target_colors_)
                 ]
                 self.surface_ = []
                 for class_idx, cmap in enumerate(multiclass_cmaps):
@@ -524,7 +526,7 @@ class DecisionBoundaryDisplay:
                     )
                 else:
                     # `pcolormesh` requires cmap, for `contourf` it makes no difference
-                    cmap = mpl.colors.ListedColormap(self.label_colors_)
+                    cmap = mpl.colors.ListedColormap(self.target_colors_)
                     self.surface_ = plot_func(
                         self.xx0, self.xx1, self.response, cmap=cmap, **kwargs
                     )
@@ -551,7 +553,7 @@ class DecisionBoundaryDisplay:
         plot_method="contourf",
         response_method="auto",
         class_of_interest=None,
-        label_colors=None,
+        target_colors=None,
         multiclass_colors="deprecated",  # TODO(1.12): remove
         xlabel=None,
         ylabel=None,
@@ -603,11 +605,11 @@ class DecisionBoundaryDisplay:
             the decision boundary plot; when `response_method` is :term:`predict_proba`
             or :term:`decision_function`, the class with the highest response value
             at each point is plotted. The color of each class can be set via
-            `label_colors`.
+            `target_colors`.
 
             .. versionadded:: 1.4
 
-        label_colors : str or list of matplotlib colors, default=None
+        target_colors : str or list of matplotlib colors, default=None
             Specifies how to color each class when plotting :term:`multiclass` problems
             and `class_of_interest` is None.
 
@@ -625,16 +627,16 @@ class DecisionBoundaryDisplay:
             parameter of the `plot_method`.
 
             When `response_method='predict'` and `plot_method='contour'`,
-            `label_colors` is ignored and the class boundaries are plotted in black
+            `target_colors` is ignored and the class boundaries are plotted in black
             instead as the boundary lines may overlap and the colors don't necessarily
             correspond to the classes.
 
-            For :term:`binary` problems, `label_colors` is also ignored and `cmap`
+            For :term:`binary` problems, `target_colors` is also ignored and `cmap`
             or `colors` can be passed as kwargs instead, otherwise, the default colormap
             ('viridis') is used.
 
             .. versionadded:: 1.10
-                `multiclass_colors` was renamed to `label_colors`
+                `multiclass_colors` was renamed to `target_colors`
 
         multiclass_colors : str or list of matplotlib colors, default=None
             Specifies how to color each class when plotting all classes of
@@ -654,23 +656,23 @@ class DecisionBoundaryDisplay:
             parameter of the `plot_method`.
 
             When `response_method='predict'` and `plot_method='contour'`,
-            `label_colors` is ignored and the class boundaries are plotted in black
+            `target_colors` is ignored and the class boundaries are plotted in black
             instead as the boundary lines may overlap and the colors don't necessarily
             correspond to the classes.
 
-            For :term:`binary` problems, `label_colors` is also ignored and `cmap` or
+            For :term:`binary` problems, `target_colors` is also ignored and `cmap` or
             `colors` can be passed as kwargs instead, otherwise, the default colormap
             ('viridis') is used.
 
             .. versionadded:: 1.7
             .. versionchanged:: 1.9
-                `label_colors` is now also used when `response_method="predict"`,
+                `target_colors` is now also used when `response_method="predict"`,
                 except for when `plot_method='contour'`, where it is ignored and "black"
                 is used instead.
                 The default colors changed from 'tab10' to the more accessible `Petroff
                 colors <https://github.com/matplotlib/matplotlib/issues/9460#issuecomment-875185352>`_.
             .. deprecated:: 1.10
-                `multiclass_colors` was renamed to `label_colors` in 1.10 and will be
+                `multiclass_colors` was renamed to `target_colors` in 1.10 and will be
                 removed in 1.12.
 
         xlabel : str, default=None
@@ -718,7 +720,7 @@ class DecisionBoundaryDisplay:
         ...     xlabel=iris.feature_names[0], ylabel=iris.feature_names[1],
         ...     alpha=0.5,
         ... )
-        >>> cmap = mpl.colors.ListedColormap(disp.label_colors_)
+        >>> cmap = mpl.colors.ListedColormap(disp.target_colors_)
         >>> disp.ax_.scatter(X[:, 0], X[:, 1], c=iris.target, edgecolor="k", cmap=cmap)
         <...>
         >>> plt.show()
@@ -838,14 +840,14 @@ class DecisionBoundaryDisplay:
         if ylabel is None:
             ylabel = X.columns[1] if hasattr(X, "columns") else ""
 
-        # TODO(1.12): remove and replace with direct use of `label_colors`
-        label_colors = _deprecate_multiclass_colors(multiclass_colors, label_colors)
+        # TODO(1.12): remove and replace with direct use of `target_colors`
+        target_colors = _deprecate_multiclass_colors(multiclass_colors, target_colors)
         display = cls(
             xx0=xx0,
             xx1=xx1,
             n_classes=n_classes,
             response=response,
-            label_colors=label_colors,
+            target_colors=target_colors,
             xlabel=xlabel,
             ylabel=ylabel,
         )

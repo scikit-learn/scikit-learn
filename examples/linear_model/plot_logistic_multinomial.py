@@ -88,7 +88,7 @@ for model, title, ax in [
         ax=ax,
         response_method="predict",
         alpha=0.8,
-        label_colors=cmap,
+        target_colors=cmap,
     )
     scatter = ax.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap, edgecolor="k")
     legend = ax.legend(*scatter.legend_elements(), title="Classes")

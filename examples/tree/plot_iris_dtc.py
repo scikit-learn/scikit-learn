@@ -59,7 +59,7 @@ for pairidx, pair in enumerate([[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]])
         X[:, 0],
         X[:, 1],
         c=y,
-        cmap=ListedColormap(disp.label_colors_),
+        cmap=ListedColormap(disp.target_colors_),
         edgecolor="black",
         s=15,
     )
