@@ -23,6 +23,9 @@ The purpose of this example is three-fold:
 # SPDX-License-Identifier: BSD-3-Clause
 
 # %%
+# Setup
+# -----
+#
 # Let's first define the pipeline and the grid search. Here we register a
 # :class:`~ScoringMonitor` callback on the logistic regression model to monitor
 # the scores at each iteration of the L-BFGS solver.
@@ -68,7 +71,6 @@ grid_search = GridSearchCV(
 
 
 # %%
-#
 # Let's fit the grid search with the auto-propagating progress bar callback.
 # Feel free to set max_propagation_depth=3 in the ProgressBar constructor to
 # get a more detailed output by displaying the progress bars for the pipeline,
@@ -76,14 +78,13 @@ grid_search = GridSearchCV(
 grid_search.set_callbacks(ProgressBar()).fit(X, y)
 
 # %%
-#
 # We use a grid search with 3 values for the regularization parameter ``C`` and
 # 2 values for the standardization of the features resulting in 6 parameter
 # combinations.
 #
 # Since we use 5-fold cross-validation (``cv=5``), we will have 5 fits of the
 # logistic regression model for each parameter combination resulting in 30 fits
-# as subtasks of the "search" task.
+# as subtasks of the "search" :term:`fit task`.
 #
 # In addition, the grid search performs a final refit on the full dataset with
 # the best hyperparameter combination found during the grid search. This is
@@ -96,13 +97,14 @@ grid_search.set_callbacks(ProgressBar()).fit(X, y)
 
 
 # %%
+# Consolidation of the grid search results
+# ----------------------------------------
 #
 # Let's look at the results of the grid search.
 cv_results = pd.DataFrame(grid_search.cv_results_)
 cv_results.sort_values(by="rank_test_d2_log_loss_score", ascending=True)
 
 # %%
-#
 # We observe that the best models use regularization (small ``C``). Feature
 # standardization does not seem to matter much but helps reduce the fit times.
 # We notice that many models have similar accuracy scores but different D²
@@ -122,7 +124,6 @@ cv_results.sort_values(by="rank_test_d2_log_loss_score", ascending=True)
 all_tasks_log = scoring_monitor.get_logs().data_as_pandas
 all_tasks_log
 # %%
-#
 # Let's enrich this log with the candidate parameters and the split index so we
 # can plot the scores for each parameter combination for a particular CV split
 # of interest.
@@ -141,7 +142,6 @@ lbfgs_log["split_idx"] = lbfgs_log["eval_task_id"] % n_splits
 lbfgs_log = lbfgs_log.query("split_idx == 0").join(candidate_params, on="candidate_idx")
 
 # %%
-#
 # Exclude the final refit on the full dataset (``parent_task_id_path``
 # starts with ``(0, 1)`` instead of ``(0, 0)`` for cross-validation fits). Note
 # that it is possible to call `scoring_monitor.get_logs(include_lineage=True)`
@@ -191,9 +191,9 @@ _ = axes[-1].set_xlabel("L-BFGS iteration")
 # D² log-loss convergence
 # ^^^^^^^^^^^^^^^^^^^^^^^
 #
-# The D² log-loss scores generally improve monotonically for all models.
-# This is expected because the logistic regression model is fitted by
-# minimizing the (regularized) log-loss computed on the training set.
+# The D² log-loss scores generally improve monotonically for all models. This
+# is expected because the logistic regression model is fitted by minimizing the
+# (regularized) log-loss computed on the training set.
 #
 # Accuracy fluctuations
 # ^^^^^^^^^^^^^^^^^^^^^
@@ -211,11 +211,11 @@ _ = axes[-1].set_xlabel("L-BFGS iteration")
 # to reach higher D² log-loss scores, and models trained on scaled features
 # converge in much fewer iterations.
 #
-# Furthermore, models trained with low ``C`` values converge to a final D²
-# log-loss value that depends on the regularization strength: this highlights
-# the impact of scaling the features on the effect of regularization.
-# As a result, tuning the regularization strength is coupled to tuning the
-# scaler hyperparameters.
+# Furthermore, models trained with high regularization (lower ``C`` values)
+# converge to a final D² log-loss value that depends on the regularization
+# strength while this is not the case for models trained with low
+# regularization: there is a strong coupling between the optimal regularization
+# strength and the feature scaling.
 #
 # Average precision vs log-loss, refinement vs calibration
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -240,15 +240,17 @@ _ = axes[-1].set_xlabel("L-BFGS iteration")
 # on scaled features suggest that the first iterations mostly improve
 # refinement of the models temporarily leaving calibration behind. In later
 # iterations, the log-loss score continues to improve but average precision
-# values worsen, which suggests that the logistic regression model progressively
-# trades off refinement for calibration over the course of the final
-# iterations. This phenomenon has been studied in [1]_.
+# values worsen, which suggests that the logistic regression model
+# progressively trades off refinement for calibration over the course of the
+# final iterations. This phenomenon has been studied in [1]_.
 #
 # It would be interesting to see if this also happens when evaluating the model
 # on a validation set so we could implement early stopping on average precision
-# to explicitly select a model with high refinement on a validation set. This is
-# not yet possible at the time of writing. Giving callbacks access to the
-# validation set is planned for a future version of scikit-learn.
+# to explicitly select a model with high refinement on a validation set. This
+# is not yet possible at the time of writing. Giving callbacks access to the
+# validation set is planned for a future version of scikit-learn. Note that the
+# callbacks API is still experimental and may change without the usual
+# deprecation cycle.
 #
 # References
 # ----------
