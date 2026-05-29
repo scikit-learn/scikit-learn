@@ -8,9 +8,9 @@ Analysis of the convergence of penalized logistic regression models
 
 The purpose of this example is three-fold:
 
-1. Demonstrate the use of a :class:`~ScoringMonitor` callback directly
-   registered on a specific sub-estimator of a pipeline, itself embedded in a
-   grid search and a :class:`~ProgressBar` auto-propagated callback.
+1. Demonstrate registering a :class:`~ScoringMonitor` on the logistic
+   regression step of a pipeline nested inside :class:`~GridSearchCV`, together
+   with an auto-propagating :class:`~ProgressBar`.
 
 2. Show how to plot the metric values collected at each iteration of each fit
    of the logistic regression model during the grid search and analyze the
@@ -27,8 +27,8 @@ The purpose of this example is three-fold:
 # :class:`~ScoringMonitor` callback on the logistic regression model to monitor
 # the scores at each iteration of the L-BFGS solver.
 #
-# We reuse the same scoring metrics for the grid search itself and use the D² log
-# loss as the primary metric to select the best hyper-parameter combination.
+# We reuse the same scoring metrics for the grid search itself and use the D²
+# log-loss as the primary metric to select the best hyperparameter combination.
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -69,7 +69,7 @@ grid_search = GridSearchCV(
 
 # %%
 #
-# Let's fit the grid search with the progress bar auto-propagated callback.
+# Let's fit the grid search with the auto-propagating progress bar callback.
 # Feel free to set max_propagation_depth=3 in the ProgressBar constructor to
 # get a more detailed output by displaying the progress bars for the pipeline,
 # the standard scaler and the logistic regression.
@@ -81,17 +81,18 @@ grid_search.set_callbacks(ProgressBar()).fit(X, y)
 # 2 values for the standardization of the features resulting in 6 parameter
 # combinations.
 #
-# Since we use CV=5, we will have 5 fits of the logistic regression model for
-# each parameter combination resulting in 30 fits as subtasks of the "search" task.
+# Since we use 5-fold cross-validation (``cv=5``), we will have 5 fits of the
+# logistic regression model for each parameter combination resulting in 30 fits
+# as subtasks of the "search" task.
 #
 # In addition, the grid search performs a final refit on the full dataset with
-# the best hyper-parameter combination found during the grid search. This is
+# the best hyperparameter combination found during the grid search. This is
 # visible as the "refit-with-best-params" task in the output above.
 #
-# Also note that when running this code interactively in a notebook or a terminal,
-# several progress bars are updated concurrently: this is due to the fact that
-# the grid search is executed with `n_jobs=4`, spawning 4 subprocesses to fit
-# the logistic regression model for each parameter combination in parallel.
+# Also note that when running this code interactively in a notebook or a
+# terminal, several progress bars are updated concurrently: this is due to the
+# fact that the grid search is executed with `n_jobs=4`, spawning 4 worker
+# processes that fit models for different candidate/split pairs in parallel.
 
 
 # %%
@@ -103,7 +104,7 @@ cv_results.sort_values(by="rank_test_d2_log_loss_score", ascending=True)
 # %%
 #
 # We observe that the best models use regularization (small ``C``). Feature
-# standardization does not seem to matter much but help reduce the fit times.
+# standardization does not seem to matter much but helps reduce the fit times.
 # We notice that many models have similar accuracy scores but different D²
 # log-loss scores and average precision scores. D² log-loss and average
 # precision are more sensitive to the quality of the model than accuracy
@@ -112,22 +113,28 @@ cv_results.sort_values(by="rank_test_d2_log_loss_score", ascending=True)
 #
 # Let's now refine this analysis by looking at the same metrics computed on the
 # training set at each iteration of the L-BFGS solver and for each parameter
-# combination.
+# combination. Note that these are training-set scores recorded during L-BFGS
+# iterations, not the held-out CV scores from ``cv_results_``.
 #
-# Those values are stored in the `scoring_monitor` callback object:
+# These values are stored in the `scoring_monitor` callback object:
 
 # %%
 all_tasks_log = scoring_monitor.get_logs().data_as_pandas
 all_tasks_log
 # %%
 #
-# Let's enrich this log with the candidate parameters and the split index so as
-# to be able to plot the scores for each parameter combination for a particular
-# CV split of interest.
+# Let's enrich this log with the candidate parameters and the split index so we
+# can plot the scores for each parameter combination for a particular CV split
+# of interest.
 candidate_params = pd.DataFrame(grid_search.cv_results_["params"]).add_prefix("param_")
 
 n_splits = grid_search.n_splits_
-lbfgs_log = all_tasks_log.query("task_name == 'lbfgs-iter'")
+lbfgs_log = all_tasks_log.query(
+    "estimator_name == 'LogisticRegression' and task_name == 'lbfgs-iter'"
+).copy()
+# Index 2 in ``task_id_path`` is the ``candidate-split-evaluation`` task id.
+# Future versions of scikit-learn will provide a more convenient way to
+# retrieve this task id.
 lbfgs_log["eval_task_id"] = lbfgs_log["task_id_path"].map(lambda path: path[2])
 lbfgs_log["candidate_idx"] = lbfgs_log["eval_task_id"] // n_splits
 lbfgs_log["split_idx"] = lbfgs_log["eval_task_id"] % n_splits
@@ -175,32 +182,43 @@ for idx, (metric, ylabel) in enumerate(metrics.items()):
         ax.set_title("CV split 0")
         ax.legend(title="Hyperparameters", fontsize="small")
 
-axes[-1].set_xlabel("L-BFGS iteration")
+_ = axes[-1].set_xlabel("L-BFGS iteration")
+
 # %%
-# ## Analysis of the convergence of the logistic regression models
+# Analysis of the convergence of the logistic regression models
+# -------------------------------------------------------------
 #
-# There are many things to observe about the convergence of the logistic
-# regression models.
+# D² log-loss convergence
+# ^^^^^^^^^^^^^^^^^^^^^^^
 #
-# The D² log-loss scores smoothly and monotonically improve for all models.
+# The D² log-loss scores generally improve monotonically for all models.
 # This is expected because the logistic regression model is fitted by
 # minimizing the (regularized) log-loss computed on the training set.
+#
+# Accuracy fluctuations
+# ^^^^^^^^^^^^^^^^^^^^^
 #
 # The accuracy score improves with the number of iterations, albeit with some
 # local fluctuations. This is expected because accuracy is discontinuous and
 # not directly optimized by the model. Instead the model minimizes the log-loss
-# which is a smooth surrogate of the zero-one loss (the opposite of the
-# accuracy score).
+# which is a smooth surrogate for the zero-one loss (and thus related to, but
+# not directly optimized by, accuracy).
 #
-# We also observe that the least regularized models (smaller ``C`` values) tend
-# to reach higher D² log-loss scores, and models trained on scaled features do
-# it in much fewer iterations.
+# Regularization and scaling
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^
+#
+# We also observe that the least regularized models (larger ``C`` values) tend
+# to reach higher D² log-loss scores, and models trained on scaled features
+# converge in much fewer iterations.
 #
 # Furthermore, models trained with low ``C`` values converge to a final D²
 # log-loss value that depends on the regularization strength: this highlights
-# the impacts of the scaling of the features on the effect of regularization.
+# the impact of scaling the features on the effect of regularization.
 # As a result, tuning the regularization strength is coupled to tuning the
 # scaler hyperparameters.
+#
+# Average precision vs log-loss, refinement vs calibration
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 #
 # Finally, we observe that the average precision value measured on the training
 # set can improve quickly in the first iterations and then worsen even though
@@ -212,24 +230,24 @@ axes[-1].set_xlabel("L-BFGS iteration")
 # samples of a given class higher than the samples of the other classes, but
 # does not take into account the calibration of the predicted probabilities. In
 # other words, average precision only evaluates if the predicted probabilities
-# are relative to one-another but is insensitive to their absolute values. The
+# are relative to one another but is insensitive to their absolute values. The
 # log-loss, on the other hand, is a strictly proper scoring rule that accounts
-# both for the refinement (ranking power) of the model and the calibration of
+# for both the refinement (ranking power) of the model and the calibration of
 # the predicted probabilities.
 #
 # Therefore, the average precision curves of the low-regularized models trained
 # on scaled features suggest that the first iterations mostly improve
-# refinement of the models temporarily leaving calibration behind. Since for
-# latter iterations, log-loss score continues to improve but average precision
-# values worsen, this suggests that the logistic regression model progressively
+# refinement of the models temporarily leaving calibration behind. In later
+# iterations, the log-loss score continues to improve but average precision
+# values worsen, which suggests that the logistic regression model progressively
 # trades off refinement for calibration over the course of the final
 # iterations. This phenomenon has been studied in [1]_.
 #
 # It would be interesting to see if this also happens when evaluating the model
-# on a validation set so as to implement early stopping on average precision to
-# explicitly select a model with high refinement on a validation set. This is
+# on a validation set so we could implement early stopping on average precision
+# to explicitly select a model with high refinement on a validation set. This is
 # not yet possible at the time of writing. Giving callbacks access to the
-# validation is planned for a future version of scikit-learn.
+# validation set is planned for a future version of scikit-learn.
 #
 # References
 # ----------
