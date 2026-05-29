@@ -33,10 +33,10 @@ or with conda::
 # - :class:`~sklearn.callback.ProgressBar`, to display progress bars.
 # - :class:`~sklearn.callback.ScoringMonitor`, to compute and log scoring metrics.
 
+from sklearn.callback import ProgressBar, ScoringMonitor
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV
-from sklearn.callback import ProgressBar, ScoringMonitor
 
 X, y = make_classification(
     n_samples=1000, n_features=50, n_classes=10, n_informative=20, random_state=0
