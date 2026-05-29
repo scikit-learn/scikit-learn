@@ -117,4 +117,21 @@ ax.set_xlabel("threshold")
 ax.set_ylabel("metric value")
 ax.legend()
 plt.show()
+
 # %%
+# Sparse array configuration
+# --------------------------
+# In continuation of preparing for
+# `SciPy's migration from sparse matrices to sparse arrays <https://docs.scipy.org/doc/scipy/reference/sparse.migration_to_sparray.html>`_,
+# a new config key `"sparse_interface"` has been added to control whether functions and
+# estimators that produce sparse objects return sparse matrices or sparse arrays.
+
+import sklearn
+from sklearn.preprocessing import OneHotEncoder
+
+X = [["fox", "dog", "cat"]]
+ohe = OneHotEncoder()
+
+with sklearn.config_context(sparse_interface="sparray"):
+    Xt = ohe.fit_transform(X)
+Xt
