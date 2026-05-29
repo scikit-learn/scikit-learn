@@ -67,15 +67,14 @@ def _name_details_html(name_details, is_fitted_css_class=""):
         return ""
 
     NAME_DETAILS_TABLE_TEMPLATE = """
-        <div class="name-details {is_fitted_css_class}">
-          <div class="name-details-container">
+        <div class="name-details">
             <table class="name-details-table">
               <caption>Input features</caption>
               <tbody>
                 {rows}
               </tbody>
             </table>
-          </div>
+
         </div>
     """
 
