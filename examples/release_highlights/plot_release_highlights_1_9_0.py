@@ -95,7 +95,7 @@ pipe.fit(X, y)
 # Computing metrics across thresholds
 # -----------------------------------
 # A new function :func:`~sklearn.metrics.metric_at_thresholds` has been added to compute
-# an arbitray binary classification metric across all possible decision thresholds.
+# an arbitrary binary classification metric across all possible decision thresholds.
 
 import matplotlib.pyplot as plt
 
