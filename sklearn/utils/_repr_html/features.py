@@ -74,7 +74,6 @@ def _name_details_html(name_details, is_fitted_css_class=""):
                 {rows}
               </tbody>
             </table>
-
         </div>
     """
 
@@ -82,7 +81,6 @@ def _name_details_html(name_details, is_fitted_css_class=""):
         <tr>
           <td>{item}</td>
         </tr>
-
     """
     rows = [
         NAME_DETAILS_ROW_TEMPLATE.format(item=html.escape(str(item)))
