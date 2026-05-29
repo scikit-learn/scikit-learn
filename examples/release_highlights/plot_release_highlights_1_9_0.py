@@ -30,6 +30,7 @@ or with conda::
 # for more details and for the list of supported estimators.
 #
 # Two built-in callbacks are available for now:
+#
 # - :class:`~sklearn.callback.ProgressBar`, to display progress bars.
 # - :class:`~sklearn.callback.ScoringMonitor`, to compute and log scoring metrics.
 
@@ -48,8 +49,9 @@ logreg.set_callbacks(scoring_monitor, ProgressBar())
 logreg.fit(X, y)
 
 log = scoring_monitor.get_logs().data_as_pandas
-print(log[["task_name", "task_id", "d2_log_loss_score"]])
+log[["task_name", "task_id", "d2_log_loss_score"]]
 
+# %%
 # Progress bars can also be displayed for compositions of estimators.
 grid_search = GridSearchCV(LogisticRegression(solver="lbfgs"), {"C": [10, 1, 0.1]})
 grid_search.set_callbacks(ProgressBar())
