@@ -164,6 +164,13 @@ details.sd-dropdown {
   }
 }
 
+/* sphinx-gallery HTML outputs (e.g. pandas DataFrames) */
+
+div.rendered_html {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
 /* Download/launcher links and top hint (sphinx-gallery) */
 
 // https://sphinx-gallery.github.io/stable/advanced.html#using-sphinx-gallery-sidebar-components
