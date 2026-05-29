@@ -230,10 +230,11 @@ _ = axes[-1].set_xlabel("L-BFGS iteration")
 # samples of a given class higher than the samples of the other classes, but
 # does not take into account the calibration of the predicted probabilities. In
 # other words, average precision only evaluates if the predicted probabilities
-# are relative to one another but is insensitive to their absolute values. The
-# log-loss, on the other hand, is a strictly proper scoring rule that accounts
-# for both the refinement (ranking power) of the model and the calibration of
-# the predicted probabilities.
+# are well ordered relatively to one another but is insensitive to a rank
+# preserving transformation of their absolute values. The log-loss, on the
+# other hand, is a strictly proper scoring rule that accounts for both the
+# refinement (ranking power) of the model and the calibration of the predicted
+# probabilities.
 #
 # Therefore, the average precision curves of the low-regularized models trained
 # on scaled features suggest that the first iterations mostly improve
