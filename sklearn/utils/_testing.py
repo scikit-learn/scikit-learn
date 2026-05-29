@@ -27,7 +27,6 @@ from itertools import chain, groupby
 from subprocess import STDOUT, CalledProcessError, TimeoutExpired, check_output
 
 import joblib
-import narwhals.stable.v2 as nw
 import numpy as np
 import scipy as sp
 from numpy.testing import assert_allclose as np_assert_allclose
@@ -982,7 +981,7 @@ def _convert_container(
     constructor_name : {"list", "tuple", "array", "sparse", \
             "pandas", "series", "index", "slice", "sparse_csr", "sparse_csc", \
             "sparse_csr_array", "sparse_csc_array", "pyarrow", "polars", \
-            "polars_series", "narwhals"}
+            "polars_series"}
         The type of the returned container.
     column_names : index or array-like, default=None
         For pandas/polars container supporting `column_names`, it will affect
@@ -999,20 +998,6 @@ def _convert_container(
     -------
     converted_container
     """
-    convert_to_nw = False
-    if constructor_name == "narwhals":
-        convert_to_nw = True
-        # Search for backend.
-        for lib_name in ["pandas", "polars"]:
-            try:
-                importlib.import_module(lib_name)
-                constructor_name = lib_name
-                break
-            except ModuleNotFoundError:
-                continue
-        else:
-            pytest.skip("no dataframe backend for narwhals is installed")
-
     if constructor_name == "list":
         if dtype is None:
             return list(container)
@@ -1031,8 +1016,6 @@ def _convert_container(
         if categorical_feature_names is not None:
             for col_name in categorical_feature_names:
                 result[col_name] = result[col_name].astype("category")
-        if convert_to_nw:
-            return nw.from_native(result)
         return result
     elif constructor_name == "pyarrow":
         pa = pytest.importorskip("pyarrow", minversion=minversion)
@@ -1055,8 +1038,6 @@ def _convert_container(
         if categorical_feature_names is not None:
             for col_name in categorical_feature_names:
                 result = result.with_columns(pl.col(col_name).cast(pl.Categorical))
-        if convert_to_nw:
-            return nw.from_native(result)
         return result
     elif constructor_name == "series":
         pd = pytest.importorskip("pandas", minversion=minversion)
