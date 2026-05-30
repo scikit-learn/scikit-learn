@@ -953,6 +953,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     CalibratedClassifierCV: {
         "check_array_api_mixed_inputs": "mixed array API input support not added yet",
+        "check_array_api_string_and_numeric_inputs": (
+            "mixed array API input support not added yet"
+        ),
     },
     ColumnTransformer: {
         "check_estimators_empty_data_messages": "FIXME",
@@ -989,9 +992,15 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     GaussianMixture: {
         "check_array_api_mixed_inputs": "mixed array API input support not added yet",
+        "check_array_api_string_and_numeric_inputs": (
+            "mixed array API input support not added yet"
+        ),
     },
     GaussianNB: {
         "check_array_api_mixed_inputs": "mixed array API input support not added yet",
+        "check_array_api_string_and_numeric_inputs": (
+            "mixed array API input support not added yet"
+        ),
         "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     GradientBoostingClassifier: {
@@ -1018,6 +1027,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     HalvingGridSearchCV: {
         "check_array_api_mixed_inputs": "mixed array API input support not added yet",
+        "check_array_api_string_and_numeric_inputs": (
+            "mixed array API input support not added yet"
+        ),
         "check_fit2d_1sample": (
             "Fail during parameter check since min/max resources requires more samples"
         ),
@@ -1029,6 +1041,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     HalvingRandomSearchCV: {
         "check_array_api_mixed_inputs": "mixed array API input support not added yet",
+        "check_array_api_string_and_numeric_inputs": (
+            "mixed array API input support not added yet"
+        ),
         "check_fit2d_1sample": (
             "Fail during parameter check since min/max resources requires more samples"
         ),
@@ -1087,6 +1102,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     LinearDiscriminantAnalysis: {
         "check_array_api_mixed_inputs": "mixed array API input support not added yet",
+        "check_array_api_string_and_numeric_inputs": (
+            "mixed array API input support not added yet"
+        ),
     },
     LabelEncoder: {
         "check_array_api_same_namespace": "check_same_namespace not yet added",
@@ -1177,6 +1195,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     PCA: {
         "check_array_api_mixed_inputs": "mixed array API input support not added yet",
+        "check_array_api_string_and_numeric_inputs": (
+            "mixed array API input support not added yet"
+        ),
         # TODO: see gh-33205 for details
         "check_array_api_input": "`linalg.inv` fails because input is singular",
         "check_array_api_same_namespace": "check_same_namespace not yet added",
@@ -1202,6 +1223,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     PoissonRegressor: {
         "check_array_api_mixed_inputs": "mixed array API input support not added yet",
+        "check_array_api_string_and_numeric_inputs": (
+            "mixed array API input support not added yet"
+        ),
         "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     PolynomialFeatures: {

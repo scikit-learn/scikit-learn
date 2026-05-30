@@ -384,7 +384,7 @@ def _yield_array_api_checks(estimator, only_numpy=False):
                 other_ns_and_device=other_ns_and_device,
                 X_ns_and_device=X_ns_and_device,
             )
-        # 3. String `y` and numeric `X` from all namespace/devices
+        # 3. String `y` and numeric `X` from all supported namespace/devices
         for (
             array_namespace,
             device_name,
@@ -1182,15 +1182,16 @@ def _check_array_api_core(
             )
         else:
             assert attribute.shape == est_xp_param_np.shape
-            expected_dtype = attribute.dtype
-            if np.issubdtype(attribute.dtype, np.floating):
-                max_float_dtype = _max_precision_float_dtype(
-                    xp_X, device=X_ns_and_device.device
-                )
-                # for some devices the maximum supported floating dtype is float32
-                if max_float_dtype == xp_X.float32:
-                    expected_dtype = np.float32
-            assert est_xp_param_np.dtype == expected_dtype
+            if key != "classes_":
+                expected_dtype = attribute.dtype
+                if np.issubdtype(attribute.dtype, np.floating):
+                    max_float_dtype = _max_precision_float_dtype(
+                        xp_X, device=X_ns_and_device.device
+                    )
+                    # for some devices the maximum supported floating dtype is float32
+                    if max_float_dtype == xp_X.float32:
+                        expected_dtype = np.float32
+                assert est_xp_param_np.dtype == expected_dtype
 
     # Check supported estimator methods give the same results
     methods = (
