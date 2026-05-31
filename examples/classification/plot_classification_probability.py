@@ -152,7 +152,6 @@ for classifier_idx, (name, classifier) in enumerate(classifiers.items()):
         response_method="predict_proba",
         class_of_interest=None,
         ax=axes[classifier_idx, len(y_unique)],
-        multiclass_colors="viridis",
         vmin=0,
         vmax=1,
         levels=levels,

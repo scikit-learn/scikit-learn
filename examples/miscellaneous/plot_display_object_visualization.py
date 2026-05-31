@@ -79,7 +79,7 @@ pr_display = PrecisionRecallDisplay(precision=prec, recall=recall).plot()
 # Combining the display objects into a single plot
 # ################################################
 # The display objects store the computed values that were passed as arguments.
-# This allows for the visualizations to be easliy combined using matplotlib's
+# This allows for the visualizations to be easily combined using matplotlib's
 # API. In the following example, we place the displays next to each other in a
 # row.
 

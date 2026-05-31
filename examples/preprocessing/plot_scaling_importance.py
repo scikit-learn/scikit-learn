@@ -65,6 +65,7 @@ scaled_X_train = scaler.fit_transform(X_train)
 # of features.
 
 import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
 
 from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.neighbors import KNeighborsClassifier
@@ -83,7 +84,10 @@ def fit_and_plot_model(X_plot, y, clf, ax):
         alpha=0.5,
         ax=ax,
     )
-    disp.ax_.scatter(X_plot["proline"], X_plot["hue"], c=y, s=20, edgecolor="k")
+    cmap = ListedColormap(disp.multiclass_colors_)
+    disp.ax_.scatter(
+        X_plot["proline"], X_plot["hue"], c=y, cmap=cmap, s=20, edgecolor="k"
+    )
     disp.ax_.set_xlim((X_plot["proline"].min(), X_plot["proline"].max()))
     disp.ax_.set_ylim((X_plot["hue"].min(), X_plot["hue"].max()))
     return disp.ax_

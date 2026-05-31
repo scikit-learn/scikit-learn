@@ -3,11 +3,11 @@
 
 from cpython cimport Py_INCREF, PyObject, PyTypeObject
 
+from libc.math cimport INFINITY, isnan
 from libc.stdlib cimport free
 from libc.string cimport memcpy
 from libc.string cimport memset
 from libc.stdint cimport INTPTR_MAX
-from libc.math cimport isnan
 from libcpp.vector cimport vector
 from libcpp.algorithm cimport pop_heap
 from libcpp.algorithm cimport push_heap
@@ -39,10 +39,6 @@ cdef extern from "numpy/arrayobject.h":
 # Types and constants
 # =============================================================================
 
-from numpy import float32 as DTYPE
-from numpy import float64 as DOUBLE
-
-cdef float64_t INFINITY = np.inf
 cdef float64_t EPSILON = np.finfo('double').eps
 
 # Some handy constants (BestFirstTreeBuilder)
@@ -98,19 +94,19 @@ cdef class TreeBuilder:
             X = X.tocsc()
             X.sort_indices()
 
-            if X.data.dtype != DTYPE:
-                X.data = np.ascontiguousarray(X.data, dtype=DTYPE)
+            if X.data.dtype != np.float32:
+                X.data = np.ascontiguousarray(X.data, dtype=np.float32)
 
             if X.indices.dtype != np.int32 or X.indptr.dtype != np.int32:
                 raise ValueError("No support for np.int64 index based "
                                  "sparse matrices")
 
-        elif X.dtype != DTYPE:
+        elif X.dtype != np.float32:
             # since we have to copy we will make it fortran for efficiency
-            X = np.asfortranarray(X, dtype=DTYPE)
+            X = np.asfortranarray(X, dtype=np.float32)
 
         if sample_weight is not None and not sample_weight.base.flags.contiguous:
-            sample_weight = np.asarray(sample_weight, dtype=DOUBLE, order="C")
+            sample_weight = np.asarray(sample_weight, dtype=np.float64, order="C")
 
         return X, y, sample_weight
 
@@ -620,7 +616,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         if node_id == INTPTR_MAX:
             return -1
 
-        # compute values also for split nodes (might become leafs later).
+        # compute values also for split nodes (might become leaves later).
         splitter.node_value(tree.value + node_id * tree.value_stride)
         if splitter.with_monotonic_cst:
             splitter.clip_node_value(tree.value + node_id * tree.value_stride, parent_record.lower_bound, parent_record.upper_bound)
@@ -963,7 +959,7 @@ cdef class Tree:
             raise ValueError("X should be in np.ndarray format, got %s"
                              % type(X))
 
-        if X.dtype != DTYPE:
+        if X.dtype != np.float32:
             raise ValueError("X.dtype should be np.float32, got %s" % X.dtype)
 
         # Extract input
@@ -1007,7 +1003,7 @@ cdef class Tree:
             raise ValueError("X should be in CSR sparse format, got %s"
                              % type(X))
 
-        if X.dtype != DTYPE:
+        if X.dtype != np.float32:
             raise ValueError("X.dtype should be np.float32, got %s" % X.dtype)
 
         # Extract input
@@ -1083,7 +1079,7 @@ cdef class Tree:
             raise ValueError("X should be in np.ndarray format, got %s"
                              % type(X))
 
-        if X.dtype != DTYPE:
+        if X.dtype != np.float32:
             raise ValueError("X.dtype should be np.float32, got %s" % X.dtype)
 
         # Extract input
@@ -1142,7 +1138,7 @@ cdef class Tree:
             raise ValueError("X should be in CSR sparse format, got %s"
                              % type(X))
 
-        if X.dtype != DTYPE:
+        if X.dtype != np.float32:
             raise ValueError("X.dtype should be np.float32, got %s" % X.dtype)
 
         # Extract input

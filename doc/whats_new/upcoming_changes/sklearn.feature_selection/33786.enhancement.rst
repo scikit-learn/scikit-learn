@@ -1,0 +1,5 @@
+- :class:`feature_selection.SelectFromModel` and :class:`feature_selection.RFE`
+  now support estimators whose feature importance is a sparse matrix or array, notably
+  by passing a user-defined callable to the parameter `importance_getter`.
+  By :user:`andymucyo-ops <andymucyo-ops>` and
+  :user:`isaacambrogetti <isaacambrogetti>`.

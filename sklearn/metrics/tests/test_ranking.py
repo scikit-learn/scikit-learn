@@ -2380,7 +2380,7 @@ def test_ranking_metric_pos_label_types(metric, classes):
         assert not np.isnan(thresholds).any()
 
 
-def test_roc_curve_with_probablity_estimates(global_random_seed):
+def test_roc_curve_with_probability_estimates(global_random_seed):
     """Check that thresholds do not exceed 1.0 when `y_score` is a probability
     estimate.
 

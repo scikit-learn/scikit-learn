@@ -1225,7 +1225,7 @@ def test_repeated_cv_repr(RepeatedCV):
     assert repeated_cv_repr == repr(repeated_cv)
 
 
-def test_repeated_kfold_determinstic_split():
+def test_repeated_kfold_deterministic_split():
     X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
     random_state = 258173307
     rkf = RepeatedKFold(n_splits=2, n_repeats=2, random_state=random_state)
@@ -1270,7 +1270,7 @@ def test_get_n_splits_for_repeated_stratified_kfold():
     assert expected_n_splits == rskf.get_n_splits()
 
 
-def test_repeated_stratified_kfold_determinstic_split():
+def test_repeated_stratified_kfold_deterministic_split():
     X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
     y = [1, 1, 1, 0, 0]
     random_state = 1944695409
@@ -1356,7 +1356,7 @@ def test_train_test_split_default_test_size(train_size, exp_train, exp_test):
 def test_array_api_train_test_split(
     shuffle, stratify, array_namespace, device_name, dtype_name
 ):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     X = np.arange(100).reshape((10, 10))
     y = np.arange(10)

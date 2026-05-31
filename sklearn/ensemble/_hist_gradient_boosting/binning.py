@@ -14,7 +14,6 @@ from numpy.lib.stride_tricks import sliding_window_view
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.ensemble._hist_gradient_boosting._binning import _map_to_bins
-from sklearn.ensemble._hist_gradient_boosting._bitset import set_bitset_memoryview
 from sklearn.ensemble._hist_gradient_boosting.common import (
     ALMOST_INF,
     X_BINNED_DTYPE,
@@ -22,6 +21,7 @@ from sklearn.ensemble._hist_gradient_boosting.common import (
     X_DTYPE,
 )
 from sklearn.utils import check_array, check_random_state
+from sklearn.utils._bitset import set_bitset_memoryview
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.stats import _weighted_percentile
