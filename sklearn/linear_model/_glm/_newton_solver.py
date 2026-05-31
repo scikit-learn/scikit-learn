@@ -323,18 +323,15 @@ class NewtonSolver(ABC):
                     break
 
             # Set a smart new value of alpha, smaller than previous one, larger 0.
+            # We know phi(0) = phi_0, phi(alpha) = phi_1, phi'(0) = phi_prime_0.
+            # We fit a quadratic polynomial though those 3 points and take the
+            # minimum alpha as next trial step length.
+            # See Nocedal & Wright 2nd ed. Chapter 3.5, page 58, Eq 3.58.
             phi_1 = self.loss_value
-            if i == 0:
-                # We know phi(0) = phi_0, phi(alpha) = phi_1, phi'(0) = phi_prime_0.
-                # We fit a quadratic polynomial though those 3 points and take the
-                # minimum alpha as next trial step length.
-                # See Nocedal & Wright 2nd ed. Chapter 3.5, page 58, Eq 3.58.
-                alpha_trial = (
-                    -phi_prime_0
-                    * alpha**2
-                    / (2 * (phi_1 - phi_0 - phi_prime_0 * alpha))
-                )
-            else:
+            alpha_trial = (
+                -phi_prime_0 * alpha**2 / (2 * (phi_1 - phi_0 - phi_prime_0 * alpha))
+            )
+            if i > 0:
                 # We additionally know phi(alpha_old) = phi_old and use cubic
                 # interpolation.
                 # See Nocedal & Wright 2nd ed. Chapter 3.5, page 58, below Eq 3.58.
@@ -345,13 +342,7 @@ class NewtonSolver(ABC):
                 b = (-(alpha_old**3) * vec0 + alpha**3 * vec1) / denom
                 if a != 0 and b**2 - 3 * a * phi_prime_0 >= 0:
                     alpha_trial = (-b + math.sqrt(b**2 - 3 * a * phi_prime_0)) / (3 * a)
-                else:
-                    # Resort to quadratic.
-                    alpha_trial = (
-                        -phi_prime_0
-                        * alpha**2
-                        / (2 * (phi_1 - phi_0 - phi_prime_0 * alpha))
-                    )
+                # else we keep the quadratic alpha_trial from above
 
             alpha_old = alpha
             phi_old = phi_1
