@@ -185,7 +185,7 @@ def _write_label_html(
             name_caption = ""
         name_caption_div = (
             ""
-            if name_caption is None
+            if name_caption is None or name_caption == ""
             else f'<div class="caption">{html.escape(name_caption)}</div>'
         )
         name_caption_div = f"<div><div>{name}</div>{name_caption_div}</div>"
