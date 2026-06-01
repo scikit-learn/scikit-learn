@@ -1,5 +1,8 @@
 name: BLIS macOS arm64 reproducer
 
+permissions:
+  contents: read
+
 on:
   pull_request:
   workflow_dispatch:
