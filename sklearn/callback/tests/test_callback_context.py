@@ -335,7 +335,7 @@ def test_autopropagation_to_callback_agnostic_subestimator():
 
     The number of task begins and ends is just the number of nodes in the context tree
     of the meta-estimator. Also check that the warning for no callback support in
-    sub-estimator is raised and only once.
+    sub-estimator is raised once.
     """
     n_outer, n_inner = 2, 3
     callback = RecordingAutoPropagatedCallback()

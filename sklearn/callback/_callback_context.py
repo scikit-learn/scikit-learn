@@ -503,8 +503,8 @@ class CallbackContext:
             sub_estimator_name = sub_estimator.__class__.__name__
             warning_message = (
                 f"The auto-propagated callbacks attached to {self.estimator_name} will "
-                f"not be propagated to {sub_estimator_name} because it does not support"
-                " callbacks."
+                f"not be propagated to {sub_estimator_name} because the latter does "
+                "not support callbacks."
             )
             # Check on the root context not to repeat the same warning.
             root_context = get_context_path(self)[0]
