@@ -643,6 +643,76 @@ def test_negative_weights_svc_leave_just_one_label(Classifier, err_msg, sample_w
         clf.fit(X, Y, sample_weight=sample_weight)
 
 
+def test_nusvc_infeasible_nu_skips_callable_kernel():
+    """nu feasibility must be checked before computing a callable kernel.
+
+    Non-regression test for
+    https://github.com/scikit-learn/scikit-learn/issues/33478: with an
+    infeasible `nu`, `NuSVC` should raise "specified nu is infeasible" without
+    ever evaluating a (potentially expensive) callable kernel.
+    """
+    n_calls = {"count": 0}
+
+    def counting_kernel(X, Y):
+        n_calls["count"] += 1
+        return np.dot(X, Y.T)
+
+    # Imbalanced binary problem: 2 vs 8 samples. nu is feasible iff
+    # nu * (n_i + n_j) / 2 <= min(n_i, n_j), i.e. nu * 10 / 2 <= 2 -> nu <= 0.4.
+    rng = np.random.RandomState(0)
+    X_unbalanced = rng.randn(10, 3)
+    y_unbalanced = np.array([0, 0, 1, 1, 1, 1, 1, 1, 1, 1])
+
+    # Infeasible nu: error is raised and the kernel is never computed.
+    with pytest.raises(ValueError, match="specified nu is infeasible"):
+        svm.NuSVC(kernel=counting_kernel, nu=0.9).fit(X_unbalanced, y_unbalanced)
+    assert n_calls["count"] == 0
+
+    # Feasible nu: model fits normally and the kernel is computed as before.
+    svm.NuSVC(kernel=counting_kernel, nu=0.3).fit(X_unbalanced, y_unbalanced)
+    assert n_calls["count"] > 0
+
+
+def test_nusvc_early_nu_feasibility_matches_libsvm():
+    """The early nu-feasibility check must match libsvm's exact boundary.
+
+    Non-regression test for
+    https://github.com/scikit-learn/scikit-learn/issues/33478. For each `nu`,
+    the result of the callable-kernel path (which is checked early, in Python)
+    must agree with the built-in-kernel path (checked inside libsvm), including
+    the effect of ``sample_weight`` on the per-class counts.
+    """
+    rng = np.random.RandomState(0)
+    X_unbalanced = rng.randn(10, 3)
+    y_unbalanced = np.array([0, 0, 1, 1, 1, 1, 1, 1, 1, 1])
+
+    def callable_linear(X, Y):
+        return np.dot(X, Y.T)
+
+    for nu in [0.1, 0.39, 0.4, 0.41, 0.8, 1.0]:
+        early_infeasible = False
+        try:
+            svm.NuSVC(kernel=callable_linear, nu=nu).fit(X_unbalanced, y_unbalanced)
+        except ValueError:
+            early_infeasible = True
+
+        libsvm_infeasible = False
+        try:
+            svm.NuSVC(kernel="linear", nu=nu).fit(X_unbalanced, y_unbalanced)
+        except ValueError:
+            libsvm_infeasible = True
+
+        assert early_infeasible == libsvm_infeasible
+
+    # sample_weight rescales the class counts: weighting the two minority-class
+    # samples by 4 balances the problem (weighted counts 8 vs 8), making nu=0.9
+    # feasible where it was infeasible with uniform weights.
+    sample_weight = np.array([4.0, 4.0, 1, 1, 1, 1, 1, 1, 1, 1])
+    svm.NuSVC(kernel=callable_linear, nu=0.9).fit(
+        X_unbalanced, y_unbalanced, sample_weight=sample_weight
+    )
+
+
 @pytest.mark.parametrize(
     "Classifier, model",
     [
