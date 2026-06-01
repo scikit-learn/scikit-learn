@@ -73,8 +73,10 @@ def open_listener(message_consumer, *, owner=None):
     Parameters
     ----------
     message_consumer : callable
-        A one-argument function, `message_consumer(message)`, that processes incoming
-        message to update the callback's state.
+        A one-argument function, `message_consumer(message)`, that processes
+        incoming messages to update the callback's state.
+        It must be thread-safe because it can be called concurrently by multiple
+        listener threads when workers use threads instead of processes.
 
     owner : callback instance, default=None
         Optional owner callback. When provided, the listener is automatically closed
