@@ -18,17 +18,26 @@ import numpy as np
 from sklearn.base import _fit_context
 from sklearn.covariance import EmpiricalCovariance, empirical_covariance
 from sklearn.utils import check_array
+from sklearn.utils._array_api import (
+    _add_to_diagonal,
+    _is_numpy_namespace,
+    get_namespace,
+    get_namespace_and_device,
+    supported_float_dtypes,
+)
 from sklearn.utils._param_validation import Interval, validate_params
 from sklearn.utils.validation import validate_data
 
 
 def _ledoit_wolf(X, *, assume_centered, block_size):
     """Estimate the shrunk Ledoit-Wolf covariance matrix."""
+    xp, _ = get_namespace(X)
+
     # for only one feature, the result is the same whatever the shrinkage
     if len(X.shape) == 2 and X.shape[1] == 1:
         if not assume_centered:
-            X = X - X.mean()
-        return np.atleast_2d((X**2).mean()), 0.0
+            X = X - xp.mean(X)
+        return xp.reshape(xp.mean(X**2), (1, 1)), 0.0
     n_features = X.shape[1]
 
     # get Ledoit-Wolf shrinkage
@@ -36,9 +45,9 @@ def _ledoit_wolf(X, *, assume_centered, block_size):
         X, assume_centered=assume_centered, block_size=block_size
     )
     emp_cov = empirical_covariance(X, assume_centered=assume_centered)
-    mu = np.sum(np.trace(emp_cov)) / n_features
+    mu = float(xp.linalg.trace(emp_cov)) / n_features
     shrunk_cov = (1.0 - shrinkage) * emp_cov
-    shrunk_cov.flat[:: n_features + 1] += shrinkage * mu
+    _add_to_diagonal(shrunk_cov, shrinkage * mu, xp)
 
     return shrunk_cov, shrinkage
 
@@ -339,11 +348,13 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     np.float64(0.23)
     """
     X = check_array(X)
+    xp, _ = get_namespace(X)
+
     # for only one feature, the result is the same whatever the shrinkage
     if len(X.shape) == 2 and X.shape[1] == 1:
         return 0.0
     if X.ndim == 1:
-        X = np.reshape(X, (1, -1))
+        X = xp.reshape(X, (1, -1))
 
     if X.shape[0] == 1:
         warnings.warn(
@@ -353,43 +364,51 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
 
     # optionally center data
     if not assume_centered:
-        X = X - X.mean(0)
+        X = X - xp.mean(X, axis=0)
 
-    # A non-blocked version of the computation is present in the tests
-    # in tests/test_covariance.py
-
-    # number of blocks to split the covariance matrix into
-    n_splits = int(n_features / block_size)
     X2 = X**2
-    emp_cov_trace = np.sum(X2, axis=0) / n_samples
-    mu = np.sum(emp_cov_trace) / n_features
-    beta_ = 0.0  # sum of the coefficients of <X2.T, X2>
-    delta_ = 0.0  # sum of the *squared* coefficients of <X.T, X>
-    # starting block computation
-    for i in range(n_splits):
-        for j in range(n_splits):
+    emp_cov_trace = xp.sum(X2, axis=0) / n_samples
+    mu = float(xp.sum(emp_cov_trace)) / n_features
+
+    # TODO: gh-33986 discusses the idea of automatically determining the best
+    # chunk size instead of having this branching.
+    if _is_numpy_namespace(xp):
+        # Blocked computation for memory efficiency on CPU
+        # A non-blocked version of the computation is present in the tests
+        # in tests/test_covariance.py
+
+        # number of blocks to split the covariance matrix into
+        n_splits = int(n_features / block_size)
+        beta_ = 0.0  # sum of the coefficients of <X2.T, X2>
+        delta_ = 0.0  # sum of the *squared* coefficients of <X.T, X>
+        # starting block computation
+        for i in range(n_splits):
+            for j in range(n_splits):
+                rows = slice(block_size * i, block_size * (i + 1))
+                cols = slice(block_size * j, block_size * (j + 1))
+                beta_ += np.sum(X2.T[rows] @ X2[:, cols])
+                delta_ += np.sum((X.T[rows] @ X[:, cols]) ** 2)
             rows = slice(block_size * i, block_size * (i + 1))
+            beta_ += np.sum(X2.T[rows] @ X2[:, block_size * n_splits :])
+            delta_ += np.sum((X.T[rows] @ X[:, block_size * n_splits :]) ** 2)
+        for j in range(n_splits):
             cols = slice(block_size * j, block_size * (j + 1))
-            beta_ += np.sum(np.dot(X2.T[rows], X2[:, cols]))
-            delta_ += np.sum(np.dot(X.T[rows], X[:, cols]) ** 2)
-        rows = slice(block_size * i, block_size * (i + 1))
-        beta_ += np.sum(np.dot(X2.T[rows], X2[:, block_size * n_splits :]))
-        delta_ += np.sum(np.dot(X.T[rows], X[:, block_size * n_splits :]) ** 2)
-    for j in range(n_splits):
-        cols = slice(block_size * j, block_size * (j + 1))
-        beta_ += np.sum(np.dot(X2.T[block_size * n_splits :], X2[:, cols]))
-        delta_ += np.sum(np.dot(X.T[block_size * n_splits :], X[:, cols]) ** 2)
-    delta_ += np.sum(
-        np.dot(X.T[block_size * n_splits :], X[:, block_size * n_splits :]) ** 2
-    )
-    delta_ /= n_samples**2
-    beta_ += np.sum(
-        np.dot(X2.T[block_size * n_splits :], X2[:, block_size * n_splits :])
-    )
+            beta_ += np.sum(X2.T[block_size * n_splits :] @ X2[:, cols])
+            delta_ += np.sum((X.T[block_size * n_splits :] @ X[:, cols]) ** 2)
+        delta_ += np.sum(
+            (X.T[block_size * n_splits :] @ X[:, block_size * n_splits :]) ** 2
+        )
+        delta_ /= n_samples**2
+        beta_ += np.sum(X2.T[block_size * n_splits :] @ X2[:, block_size * n_splits :])
+    else:
+        # Non-blocked computation: GPU-friendly (single large matmul)
+        beta_ = float(xp.sum(X2.T @ X2))
+        delta_ = float(xp.sum((X.T @ X) ** 2)) / n_samples**2
+
     # use delta_ to compute beta
     beta = 1.0 / (n_features * n_samples) * (beta_ / n_samples - delta_)
     # delta is the sum of the squared coefficients of (<X.T,X> - mu*Id) / p
-    delta = delta_ - 2.0 * mu * emp_cov_trace.sum() + n_features * mu**2
+    delta = delta_ - 2.0 * mu * float(xp.sum(emp_cov_trace)) + n_features * mu**2
     delta /= n_features
     # get final beta as the min between beta and delta
     # We do this to prevent shrinking more than "1", which would invert
@@ -580,6 +599,11 @@ class LedoitWolf(EmpiricalCovariance):
         )
         self.block_size = block_size
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.array_api_support = True
+        return tags
+
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the Ledoit-Wolf shrunk covariance model to X.
@@ -599,11 +623,12 @@ class LedoitWolf(EmpiricalCovariance):
         """
         # Not calling the parent object to fit, to avoid computing the
         # covariance matrix (and potentially the precision)
-        X = validate_data(self, X)
+        xp, _, device_ = get_namespace_and_device(X)
+        X = validate_data(self, X, dtype=supported_float_dtypes(xp, device_))
         if self.assume_centered:
-            self.location_ = np.zeros(X.shape[1])
+            self.location_ = xp.zeros(X.shape[1], dtype=X.dtype, device=device_)
         else:
-            self.location_ = X.mean(0)
+            self.location_ = xp.mean(X, axis=0)
         covariance, shrinkage = _ledoit_wolf(
             X - self.location_, assume_centered=True, block_size=self.block_size
         )

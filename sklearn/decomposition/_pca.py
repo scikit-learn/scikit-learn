@@ -15,7 +15,7 @@ from sklearn.base import _fit_context
 from sklearn.decomposition._base import _BasePCA
 from sklearn.utils import check_random_state
 from sklearn.utils._arpack import _init_arpack_v0
-from sklearn.utils._array_api import device, get_namespace
+from sklearn.utils._array_api import _cov, device, get_namespace
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
 from sklearn.utils.extmath import _randomized_svd, fast_logdet, svd_flip
 from sklearn.utils.sparsefuncs import _implicit_column_offset, mean_variance_axis
@@ -585,29 +585,11 @@ class PCA(_BasePCA):
 
         else:
             assert self._fit_svd_solver == "covariance_eigh"
-            # In the following, we center the covariance matrix C afterwards
-            # (without centering the data X first) to avoid an unnecessary copy
-            # of X. Note that the mean_ attribute is still needed to center
-            # test data in the transform method.
-            #
-            # Note: at the time of writing, `xp.cov` does not exist in the
-            # Array API standard:
-            # https://github.com/data-apis/array-api/issues/43
-            #
-            # Besides, using `numpy.cov`, as of numpy 1.26.0, would not be
-            # memory efficient for our use case when `n_samples >> n_features`:
-            # `numpy.cov` centers a copy of the data before computing the
-            # matrix product instead of subtracting a small `(n_features,
-            # n_features)` square matrix from the gram matrix X.T @ X, as we do
-            # below.
+            # Center the covariance post-hoc (without centering X first) to
+            # avoid an unnecessary copy of X. The mean_ attribute is still
+            # needed to center test data in the transform method.
             x_is_centered = False
-            C = X.T @ X
-            C -= (
-                n_samples
-                * xp.reshape(self.mean_, (-1, 1))
-                * xp.reshape(self.mean_, (1, -1))
-            )
-            C /= n_samples - 1
+            C = _cov(X, ddof=1, mean=self.mean_, xp=xp)
             eigenvals, eigenvecs = xp.linalg.eigh(C)
 
             # When X is a scipy sparse matrix, the following two datastructures
