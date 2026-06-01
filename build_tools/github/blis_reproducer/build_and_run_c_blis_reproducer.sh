@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 workdir="${RUNNER_TEMP:-/tmp}/blis-c-repro"
 rm -rf "$workdir"
 mkdir -p "$workdir"
@@ -11,7 +12,12 @@ tar -xzf blis.tar.gz
 cd blis-1.1
 
 ./configure --enable-cblas auto
-make -j"$(sysctl -n hw.ncpu)"
+if command -v nproc >/dev/null 2>&1; then
+  n_jobs="$(nproc)"
+else
+  n_jobs="$(sysctl -n hw.ncpu)"
+fi
+make -j"${n_jobs}"
 
 lib_dir="$(find "$workdir/blis-1.1/lib" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
 if [[ -z "${lib_dir}" ]]; then
@@ -25,11 +31,15 @@ if [[ ! -d "$include_dir" ]]; then
   include_dir="$workdir/blis-1.1/include"
 fi
 
-cd /tmp/workspace/scikit-learn/scikit-learn
+cblas_include="$workdir/blis-1.1/build"
+
 cc \
+  -I"$cblas_include" \
   -I"$include_dir" \
+  -I"$include_dir/blis" \
   -I"$workdir/blis-1.1/include" \
-  build_tools/github/blis_reproducer/blis_gemm_reproducer.c \
+  -I"$workdir/blis-1.1" \
+  "${script_dir}/blis_gemm_reproducer.c" \
   -L"$lib_dir" \
   -lblis -lm \
   -Wl,-rpath,"$lib_dir" \

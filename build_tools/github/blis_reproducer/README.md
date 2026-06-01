@@ -2,7 +2,7 @@
 
 This folder contains two independent reproducers for the macOS arm64 BLAS regressions:
 
-- `numpy_blis_reproducer.py`: numpy-only reproducer that compares a GEMM-based pairwise distance computation against a pure numpy reference implementation.
+- `numpy_blis_reproducer.py`: numpy-only reproducer that compares a GEMM-based pairwise distance computation against a pure numpy reference implementation and verifies the requested BLAS backend is actually used.
 - `blis_gemm_reproducer.c`: pure C reproducer that calls `cblas_dgemm` and validates results against a scalar long-double reference loop.
 
 ## Run the numpy reproducer in dedicated BLAS envs

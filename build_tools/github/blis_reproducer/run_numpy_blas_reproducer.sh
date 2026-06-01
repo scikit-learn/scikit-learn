@@ -27,9 +27,13 @@ export VECLIB_MAXIMUM_THREADS=1
 if [[ "$blas_impl" == "blis" ]]; then
   export BLIS_NUM_THREADS=8
   unset OPENBLAS_NUM_THREADS
-else
+elif [[ "$blas_impl" == "openblas" ]]; then
   export OPENBLAS_NUM_THREADS=8
+  unset BLIS_NUM_THREADS
+else
+  unset OPENBLAS_NUM_THREADS
   unset BLIS_NUM_THREADS
 fi
 
-"$mamba_bin" run -n "$env_name" python build_tools/github/blis_reproducer/numpy_blis_reproducer.py
+"$mamba_bin" run -n "$env_name" \
+  python build_tools/github/blis_reproducer/numpy_blis_reproducer.py --expected-blas "$blas_impl"

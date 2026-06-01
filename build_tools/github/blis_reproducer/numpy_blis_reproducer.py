@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import os
 import sys
+from typing import Any
 
 import numpy as np
 
@@ -25,6 +26,17 @@ def _pairwise_reference(x: np.ndarray) -> np.ndarray:
 
 def _digest(a: np.ndarray) -> str:
     return hashlib.sha256(np.ascontiguousarray(a).view(np.uint8)).hexdigest()
+
+
+def _detected_blas_name() -> str:
+    if hasattr(np.__config__, "show"):
+        try:
+            cfg: dict[str, Any] = np.__config__.show(mode="dicts")
+            return str(cfg.get("Build Dependencies", {}).get("blas", {}).get("name", "")).lower()
+        except TypeError:
+            # Older NumPy versions do not support show(mode="dicts").
+            pass
+    return ""
 
 
 def run(seed: int, n_samples: int, n_features: int, repeats: int, atol: float, rtol: float) -> int:
@@ -53,6 +65,7 @@ def run(seed: int, n_samples: int, n_features: int, repeats: int, atol: float, r
             )
 
     print(f"numpy={np.__version__}")
+    print(f"detected_blas={_detected_blas_name() or 'unknown'}")
     print(f"BLIS_NUM_THREADS={os.getenv('BLIS_NUM_THREADS')}")
     print(f"OPENBLAS_NUM_THREADS={os.getenv('OPENBLAS_NUM_THREADS')}")
     print(f"ACCELERATE_LOG_LEVEL={os.getenv('ACCELERATE_LOG_LEVEL')}")
@@ -81,11 +94,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--repeats", type=int, default=20)
     parser.add_argument("--atol", type=float, default=1e-6)
     parser.add_argument("--rtol", type=float, default=1e-6)
+    parser.add_argument("--expected-blas", choices=["blis", "openblas", "newaccelerate"], default=None)
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
+    detected_blas = _detected_blas_name()
+    if args.expected_blas is not None:
+        expected_fragment = "accelerate" if args.expected_blas == "newaccelerate" else args.expected_blas
+        if expected_fragment not in detected_blas:
+            print(
+                f"FAIL: requested BLAS '{args.expected_blas}' but NumPy reports '{detected_blas or 'unknown'}'"
+            )
+            sys.exit(1)
     sys.exit(
         run(
             seed=args.seed,
