@@ -137,9 +137,6 @@ doesn't overwrite rules*/
 .sk-global input.sk-toggleable__control
 ~ div.sk-toggleable__content:has(.name-details) {
   border-radius: .20em;
-  max-inline-size: 10em;
-  max-block-size: 15em;
-  margin-inline: auto;
   scrollbar-width: thin;
 }
 
