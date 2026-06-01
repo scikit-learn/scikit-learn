@@ -24,10 +24,11 @@ or with conda::
 # %%
 # Callbacks
 # ---------
-# This release introduces callbacks in scikit-learn. They are objects that can be
-# registered on estimators, through the `set_callbacks` method, to be invoked at the
-# beginning and end of key steps during fit. See the :ref:`user guide <callbacks_user>`
-# for more details. Only a few estimators support callbacks for now, see the
+# This release introduces **experimental** support for callbacks in scikit-learn. They
+# are objects that can be registered on estimators, through the `set_callbacks` method,
+# to be invoked at the beginning and end of key steps during fit. See the
+# :ref:`user guide <callbacks_user>` for more details. **Only a few estimators support
+# callbacks for now**, see the
 # :ref:`list of supported estimators <callback_compatible_estimators>`.
 #
 # Two built-in callbacks are provided in this release:
@@ -123,10 +124,11 @@ plt.show()
 # %%
 # Sparse array configuration
 # --------------------------
-# In continuation of preparing for
-# `SciPy's migration from sparse matrices to sparse arrays <https://docs.scipy.org/doc/scipy/reference/sparse.migration_to_sparray.html>`_,
-# a new config key `"sparse_interface"` has been added to control whether functions and
-# estimators that produce sparse objects return sparse matrices or sparse arrays.
+# A new configuration key `"sparse_interface"` has been added to control the type of
+# sparse objects produced by functions and estimators. It is now possible to produce
+# sparse arrays instead of sparse matrices (default).
+# This continues the effort to prepare for
+# `SciPy's migration from sparse matrices to sparse arrays <https://docs.scipy.org/doc/scipy/reference/sparse.migration_to_sparray.html>`_.
 
 import sklearn
 from sklearn.preprocessing import OneHotEncoder
