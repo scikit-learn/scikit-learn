@@ -5,6 +5,7 @@ name: Remove "CUDA CI" Label
 # trigger which has an API token with write access.
 on:
   pull_request_target:
+    branches: [never-run]
     types:
       - labeled
 

@@ -5,7 +5,8 @@ permissions:
   contents: read
 
 on:
-  - pull_request
+  pull_request:
+    branches: [never-run]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref }}

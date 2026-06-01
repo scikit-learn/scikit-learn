@@ -4,7 +4,9 @@ permissions:
 
 on:
   push:
+    branches: [never-run]
   pull_request:
+    branches: [never-run]
   schedule:
     # Nightly build at 02:30 UTC
     - cron: "30 2 * * *"

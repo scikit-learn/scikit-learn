@@ -1,6 +1,7 @@
 name: Pull Request Regex Title Labeler
 on:
   pull_request_target:
+    branches: [never-run]
     types: [opened, edited]
 
 # Restrict the permissions granted to the use of secrets.GITHUB_TOKEN in this

@@ -7,6 +7,7 @@ permissions:
 # To bypass this check, label the PR with "No Changelog Needed".
 on:
   pull_request:
+    branches: [never-run]
     types: [opened, synchronize, labeled, unlabeled]
 
 jobs:

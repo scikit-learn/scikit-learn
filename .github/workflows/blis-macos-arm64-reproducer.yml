@@ -1,0 +1,40 @@
+name: BLIS macOS arm64 reproducer
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  numpy-reproducer:
+    runs-on: macos-15
+    strategy:
+      fail-fast: false
+      matrix:
+        blas_impl: [blis, openblas, newaccelerate]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup micromamba
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          micromamba-version: "latest"
+          init-shell: bash
+
+      - name: Run numpy-only reproducer
+        shell: bash -el {0}
+        run: |
+          ./build_tools/github/blis_reproducer/run_numpy_blas_reproducer.sh "${{ matrix.blas_impl }}"
+
+  c-reproducer:
+    runs-on: macos-15
+    needs: [numpy-reproducer]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build BLIS from source and run C reproducer
+        run: |
+          ./build_tools/github/blis_reproducer/build_and_run_c_blis_reproducer.sh

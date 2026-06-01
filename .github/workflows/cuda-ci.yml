@@ -6,6 +6,7 @@ permissions:
 # 'CUDA CI' label.
 on:
   pull_request:
+    branches: [never-run]
     types:
       - labeled
 
