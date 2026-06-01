@@ -1,0 +1,3 @@
+- Fix passing an array as ``alpha`` in :class:`linear_model.Ridge` when using
+  the array API.
+  By :user:`Thomas Moreau <tommoral>`.
