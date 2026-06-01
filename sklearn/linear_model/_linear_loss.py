@@ -745,6 +745,14 @@ class LinearModelLoss:
         weights, intercept, raw_prediction = self.weight_intercept_raw(coef, X)
         sw_sum = n_samples if sample_weight is None else np.sum(sample_weight)
 
+        # For sparse X, the matrix-vector operation X @ vector will always first
+        # convert X to CSR and then __matmul__: X.tocsr() @ vector. While conversion
+        # to CSR is fast, we call this operation many times. Therefore we get a speed
+        # up for no "additional" memory cost by keeping a CSR copy of X.T for
+        # X.T @ vector.
+        sparse_X = sparse.issparse(X)
+        XT = X.T.tocsr() if sparse_X else X.T  # dense X.T is a view, no copy
+
         if not self.base_loss.is_multiclass:
             grad_pointwise, hess_pointwise = self.base_loss.gradient_hessian(
                 y_true=y,
@@ -755,13 +763,13 @@ class LinearModelLoss:
             grad_pointwise /= sw_sum
             hess_pointwise /= sw_sum
             grad = np.empty_like(coef, dtype=weights.dtype)
-            grad[:n_features] = X.T @ grad_pointwise + l2_reg_strength * weights
+            grad[:n_features] = XT @ grad_pointwise + l2_reg_strength * weights
             if self.fit_intercept:
                 grad[-1] = grad_pointwise.sum()
 
             # Precompute as much as possible: hX, hX_sum and hessian_sum
             hessian_sum = hess_pointwise.sum()
-            if sparse.issparse(X):
+            if sparse_X:
                 hX = (
                     sparse.dia_array((hess_pointwise, 0), shape=(n_samples, n_samples))
                     @ X
@@ -783,10 +791,10 @@ class LinearModelLoss:
             # res[-1] = 1' @ hX @ s[:n_features] + sum(h) * s[-1]
             def hessp(s):
                 ret = np.empty_like(s)
-                if sparse.issparse(X):
-                    ret[:n_features] = X.T @ (hX @ s[:n_features])
+                if sparse_X:
+                    ret[:n_features] = XT @ (hX @ s[:n_features])
                 else:
-                    ret[:n_features] = np.linalg.multi_dot([X.T, hX, s[:n_features]])
+                    ret[:n_features] = np.linalg.multi_dot([XT, hX, s[:n_features]])
                 ret[:n_features] += l2_reg_strength * s[:n_features]
 
                 if self.fit_intercept:
@@ -848,7 +856,7 @@ class LinearModelLoss:
                 # hess_prod = empty_like(grad), but we ravel grad below and this
                 # function is run after that.
                 hess_prod = np.empty((n_classes, n_dof), dtype=weights.dtype, order="F")
-                hess_prod[:, :n_features] = (tmp.T @ X) / sw_sum + l2_reg_strength * s
+                hess_prod[:, :n_features] = (XT @ tmp).T / sw_sum + l2_reg_strength * s
                 if self.fit_intercept:
                     hess_prod[:, -1] = tmp.sum(axis=0) / sw_sum
                 if coef.ndim == 1:
