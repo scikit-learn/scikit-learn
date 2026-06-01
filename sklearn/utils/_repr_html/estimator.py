@@ -10,7 +10,6 @@ from pathlib import Path
 from sklearn import config_context
 from sklearn.utils._repr_html.base import _IDCounter
 from sklearn.utils._repr_html.features import _features_html, _name_details_html
-from sklearn.utils.validation import _is_arraylike
 
 
 def _get_css_style():
@@ -167,10 +166,10 @@ def _write_label_html(
     )
     name = html.escape(name)
     if name_details is not None:
-        if _is_arraylike(name_details):
-            name_details = [html.escape(str(item)) for item in name_details]
-        else:
+        if isinstance(name_details, str) or isinstance(name_details, slice):
             name_details = html.escape(str(name_details))
+        else:
+            name_details = [item for item in name_details]
         checked_str = "checked" if checked else ""
         est_id = _ESTIMATOR_ID_COUNTER.get_id()
 
