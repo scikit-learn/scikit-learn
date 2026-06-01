@@ -26,14 +26,13 @@ class ProgressBar:
         The maximum depth of nested levels of estimators to display progress bars for.
         0 means that the progress of only the outermost estimator is displayed.
         If set to None, all levels are displayed.
-        
+
     NOTES
     -----
     This callback requires the "rich" package. Install it with::
-    
+
         pip install rich
     """
-    
 
     @validate_params(
         {"max_propagation_depth": [Interval(Integral, 0, None, closed="left"), None]},
