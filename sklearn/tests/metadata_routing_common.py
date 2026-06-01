@@ -17,6 +17,7 @@ from sklearn.metrics._scorer import _Scorer, mean_squared_error
 from sklearn.model_selection import BaseCrossValidator
 from sklearn.model_selection._split import GroupKFold, GroupsConsumerMixin
 from sklearn.utils._metadata_requests import (
+    METHODS,
     SIMPLE_METHODS,
 )
 from sklearn.utils.metadata_routing import (
@@ -36,8 +37,22 @@ def record_metadata(obj, record_default=True, **kwargs):
 
     """
     stack = inspect.stack()
-    callee = stack[1].function
-    caller = stack[2].function
+    # try to take the innermost stack frame whose `function` is in METHODS" or infer
+    # the callee and caller positionally if not succeeding:
+    callee = caller = None
+    for frame in stack:
+        if callee is None:
+            if frame.function in METHODS:
+                callee = frame.function
+            continue
+        if frame.function in METHODS:
+            caller = frame.function
+            break
+    if "callee" == None:
+        callee = stack[1].function
+    if "caller" == None:
+        caller = stack[2].function
+
     if not hasattr(obj, "_records"):
         obj._records = defaultdict(lambda: defaultdict(list))
     if not record_default:
@@ -71,11 +86,13 @@ def check_recorded_metadata(obj, method, parent, split_params=tuple(), **kwargs)
     all_records = (
         getattr(obj, "_records", dict()).get(method, dict()).get(parent, list())
     )
+    assert all_records
+
     for record in all_records:
         # first check that the names of the metadata passed are the same as
         # expected. The names are stored as keys in `record`.
         assert set(kwargs.keys()) == set(record.keys()), (
-            f"Expected {kwargs.keys()} vs {record.keys()}"
+            f"Expected {kwargs.keys()}, got {record.keys()}"
         )
         for key, value in kwargs.items():
             recorded_value = record[key]
