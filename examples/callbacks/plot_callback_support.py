@@ -26,7 +26,7 @@ responsible for setting up and shutting down the callback. The
 :meth:`~FitCallback.on_fit_task_begin` and :meth:`~FitCallback.on_fit_task_end` hooks
 are respectively called at the beginning and end of each task in `fit` and are
 responsible for the actual callback work. In scikit-learn estimators, a task in `fit` is
-usually one step of a loop, with nested loops corresponding to netsed tasks. In general,
+usually one step of a loop, with nested loops corresponding to nested tasks. In general,
 a task can be whatever unit of work the estimator's developer wants it to be.
 
 In order to support the callbacks, estimators need to initialize and manage
