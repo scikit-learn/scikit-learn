@@ -345,6 +345,7 @@ def type_of_target(y, input_name="", raise_unknown=False):
             "Expected array-like (array or non-string sequence), got %r" % y
         )
 
+    # TODO(1.10): SparseSeries and SparseArray was removed in pandas 2.0.
     sparse_pandas = y.__class__.__name__ in ["SparseSeries", "SparseArray"]
     if sparse_pandas:
         raise ValueError("y cannot be class 'SparseSeries' or 'SparseArray'")

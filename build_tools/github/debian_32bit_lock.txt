@@ -6,7 +6,7 @@
 #
 coverage[toml]==7.14.0
     # via pytest-cov
-cython==3.2.4
+cython==3.2.5
     # via -r build_tools/github/debian_32bit_requirements.txt
 execnet==2.1.2
     # via pytest-xdist
@@ -18,7 +18,7 @@ meson==1.11.1
     # via meson-python
 meson-python==0.19.0
     # via -r build_tools/github/debian_32bit_requirements.txt
-narwhals==2.21.0
+narwhals==2.21.2
     # via -r build_tools/github/debian_32bit_requirements.txt
 ninja==1.13.0
     # via -r build_tools/github/debian_32bit_requirements.txt

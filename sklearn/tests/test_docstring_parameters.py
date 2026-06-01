@@ -12,6 +12,7 @@ import numpy as np
 import pytest
 
 import sklearn
+from sklearn.callback._base import _BaseCallback
 from sklearn.datasets import make_classification
 
 # make it possible to discover experimental estimators when calling `all_estimators`
@@ -56,6 +57,7 @@ _DOCSTRING_IGNORES = [
     "sklearn.pipeline.make_pipeline",
     "sklearn.pipeline.make_union",
     "HalfBinomialLoss",
+    "ScoringMonitorLog",  # dataclass
 ]
 
 # Methods where y param should be ignored if y=None by default
@@ -113,6 +115,17 @@ def test_docstring_parameters():
             this_incorrect += check_docstring_parameters(cls.__init__, cdoc)
 
             for method_name in cdoc.methods:
+                # Skip callback hooks: the callbacks hooks are documented in the
+                # Callback protocol, so there is no need for callback implementations
+                # to duplicate this information. Since we use a protocol rather than
+                # class inheritance, docstrings for those methods are not inherited.
+                if isinstance(cls, _BaseCallback) and method_name in (
+                    "setup",
+                    "teardown",
+                    "on_fit_task_begin",
+                    "on_fit_task_end",
+                ):
+                    continue
                 method = getattr(cls, method_name)
                 if _is_deprecated(method):
                     continue

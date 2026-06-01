@@ -1,0 +1,3 @@
+- :func:`~model_selection.learning_curve` now correctly routes `sample_weight` to the
+  sub-estimator's partial_fit method if `exploit_incremental_learning` is set to `True`.
+  By :user:`Stefanie Senger <StefanieSenger>`.

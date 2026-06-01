@@ -58,6 +58,7 @@ def _get_deps_info():
         "matplotlib",
         "joblib",
         "threadpoolctl",
+        "narwhals",
     ]
 
     deps_info = {
