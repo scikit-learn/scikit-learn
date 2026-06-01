@@ -80,7 +80,7 @@ log[["task_name", "task_id", "d2_log_loss_score"]]
 #        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #4 ━━━━━━━━━━━━━━━━━━━━━╸                    54% 0:00:01
 #        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #5 ━━━━━━━━━━━━━━━━━                         44% 0:00:01
 #
-# Final output::
+# Final output displaying all the completed nested subtasks::
 #
 #    GridSearchCV - fit                                                           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
 #      GridSearchCV - search #0                                                   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
