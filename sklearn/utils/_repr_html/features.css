@@ -124,13 +124,17 @@
 }
 
 .name-details-table caption {
-  color: var(--sklearn-color-text) /* Needed for jupyter */
+  font-weight: bold;
+  color: var(--sklearn-color-text); /* Needed for jupyter */
+  padding: 0.5em;
+  text-align: left;
+  text-wrap: nowrap;
 }
 
 /* We need the extra class "name-details-table" so jupyter
 doesn't overwrite rules*/
 .name-details .name-details-table {
-  width: 100%;
+  margin: auto;
   table-layout: inherit;
 }
 
@@ -138,6 +142,8 @@ doesn't overwrite rules*/
 ~ div.sk-toggleable__content:has(.name-details) {
   border-radius: .20em;
   scrollbar-width: thin;
+  margin-inline: auto;
+  max-inline-size: 10em;
 }
 
 /* .sk-toggleable__label.fitted.sk-toggleable__label-arrow {
