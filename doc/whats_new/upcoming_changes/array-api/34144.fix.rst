@@ -1,0 +1,5 @@
+- Fixed a bug where NumPy-fitted estimators could raise an error with
+  ``config_context(array_api_dispatch=True)`` when making predictions with
+  array-like or SciPy sparse inputs, or when a fitted attribute was sparse,
+  such as after calling :meth:`linear_model.LogisticRegression.sparsify`.
+  By :user:`Arthur Lacote <cakedev0>`.

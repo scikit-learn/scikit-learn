@@ -1135,7 +1135,22 @@ def check_same_namespace(X, estimator, *, attribute, method):
     if X_xp == a_xp and X_device == a_device:
         return
 
-    if X_xp != a_xp:
+    if _is_numpy_namespace(a_xp) and _is_numpy_namespace(X_xp):
+        # this condition is reached when either:
+        # - `X` is array-like or sparse-matrix and the estimator was fitted with numpy
+        # - `attr` is a sparse matrix and `X` is a numpy array
+        # in which case devices are different (None vs "cpu") but
+        # `check_same_namespace` should not raise
+        return
+
+    if X_device is None:
+        type_name = "sparse array" if sp.issparse(X) else "array-like"
+        msg = (
+            f"Array namespace used during fit ({a_xp.__name__}) "
+            f"is not compatible with the {type_name} input passed to {method}. "
+            f"Only the NumPy namespace is compatible with {type_name} inputs."
+        )
+    elif X_xp != a_xp:
         msg = (
             f"Array namespaces used during fit ({a_xp.__name__}) "
             f"and {method} ({X_xp.__name__}) differ."
@@ -1148,7 +1163,8 @@ def check_same_namespace(X, estimator, *, attribute, method):
         "must use the same namespace and the same device as those passed to fit(). "
         f"{msg} "
         "You can move the estimator to the same namespace and device as X with: "
-        "'from sklearn.utils._array_api import move_estimator_to; "
+        "'from sklearn.utils._array_api import get_namespace_and_device, "
+        "move_estimator_to; "
         "xp, _, device = get_namespace_and_device(X); "
         "estimator = move_estimator_to(estimator, xp, device)'"
     )
