@@ -167,6 +167,7 @@ Estimators and other tools in scikit-learn that support Array API compatible inp
 Estimators
 ----------
 
+- :class:`covariance.LedoitWolf` (see :ref:`device_support_for_float64`)
 - :class:`decomposition.PCA` (with `svd_solver="full"`, `svd_solver="covariance_eigh"`, or
   `svd_solver="randomized"` (`svd_solver="randomized"` only if `power_iteration_normalizer="QR"`))
 - :class:`kernel_approximation.Nystroem`
