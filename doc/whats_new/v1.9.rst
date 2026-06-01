@@ -8,19 +8,8 @@
 Version 1.9
 ===========
 
-..
-  -- UNCOMMENT WHEN 1.9.0 IS RELEASED --
-  For a short description of the main highlights of the release, please refer to
-  :ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_9_0.py`.
-
-
-..
-  DELETE WHEN 1.9.0 IS RELEASED
-  Since October 2024, DO NOT add your changelog entry in this file.
-..
-  Instead, create a file named `<PR_NUMBER>.<TYPE>.rst` in the relevant sub-folder in
-  `doc/whats_new/upcoming_changes/`. For full details, see:
-  https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md
+For a short description of the main highlights of the release, please refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_9_0.py`.
 
 .. include:: changelog_legend.inc
 
@@ -31,7 +20,7 @@ Version 1.9
 Version 1.9.0
 =============
 
-**May 2026**
+**June 2026**
 
 Changed models
 --------------
@@ -186,6 +175,23 @@ See :ref:`array_api` for more details.
   and internal linear-model preprocessing and log-sum-exp utilities.
   By :user:`Arthur Lacote <cakedev0>`. :pr:`33898`
 
+- |Fix| Fix passing an array as ``alpha`` in :class:`linear_model.Ridge` when using
+  the array API.
+  By :user:`Thomas Moreau <tommoral>`. :pr:`34004`
+
+- |Fix| :class:`linear_model.RidgeClassifier` and
+  :class:`linear_model.RidgeClassifierCV` now store `classes_` in the namespace
+  and on the device of `y` when fitted with array API inputs from mixed
+  namespaces/devices, making them consistent with
+  :class:`linear_model.LogisticRegression`.
+  By :user:`Arthur Lacote <cakedev0>`. :pr:`34065`
+
+- |Fix| Fixed a bug where NumPy-fitted estimators could raise an error with
+  ``config_context(array_api_dispatch=True)`` when making predictions with
+  array-like or SciPy sparse inputs, or when a fitted attribute was sparse,
+  such as after calling :meth:`linear_model.LogisticRegression.sparsify`.
+  By :user:`Arthur Lacote <cakedev0>`. :pr:`34144`
+
 Metadata routing
 ----------------
 
@@ -197,6 +203,29 @@ more details.
   :meth:`~preprocessing.TargetEncoder.fit_transform`.
   By :user:`Samruddhi Baviskar <samruddhibaviskar11>` and
   :user:`Stefanie Senger <StefanieSenger>`. :pr:`33089`
+
+- |Fix| Scorers now correctly request for metadata, and their `set_score_request` methods
+  correctly detect metadata available in the signature of their `score_func`. Also,
+  :class:`sklearn.linear_model.LogisticRegressionCV` now correctly routes metadata
+  to the underlying scorer when its ``.score(...)`` method is called.
+  By `Adrin Jalali`_ :pr:`30859`
+
+- |Fix| If a class explicitly defines a `set_{method}_request` method, it will not be
+  overridden by the metadata routing machinery.
+  By `Adrin Jalali`_ :pr:`32111`
+
+- |Fix| Metadata routing objects (:class:`~utils.metadata_routing.MetadataRequest`,
+  :class:`~utils.metadata_routing.MetadataRouter`, and their per-method requests)
+  no longer deep-copy the owning estimator. Since scikit-learn 1.8, the routing
+  objects hold a reference to the owner estimator for display purposes, which
+  caused :func:`~utils.metadata_routing.get_routing_for_object` and
+  :meth:`~utils.metadata_routing.MetadataRouter.add_self_request` to transitively
+  deep-copy the full estimator state, which can fail, and is very inefficient.
+  By `Adrin Jalali`_. :pr:`33827`
+
+- |Fix| :func:`~model_selection.learning_curve` now correctly routes `sample_weight` to the
+  sub-estimator's partial_fit method if `exploit_incremental_learning` is set to `True`.
+  By :user:`Stefanie Senger <StefanieSenger>`. :pr:`34039`
 
 Callbacks
 ---------
@@ -457,7 +486,7 @@ Callbacks
   `coef_` and `offset_` as well as the predictions made using this class.
   By :user:`Omar Salman <OmarManzoor>`. :pr:`32778`
 
-- |Fix| :func:`linear_model.enet_path` now correctly handles the ``precompute`` 
+- |Fix| :func:`linear_model.enet_path` now correctly handles the ``precompute``
   parameter when ``check_input=False``. Previously, the value of
   ``precompute`` was not properly treated which could lead to a ValueError.
   This also affects :class:`linear_model.ElasticNetCV`, :class:`linear_model.LassoCV`,
@@ -501,6 +530,11 @@ Callbacks
 - |Fix| :class:`linear_model.BayesianRidge` and :class:`linear_model.ARDRegression` now
   center test features during :meth:`predict` to correctly compute predictive variance.
   By :user:`Danilo Silva <danilo-silva-ufsc>`. :pr:`33918`
+
+- |API| Passing `sample_weight` as a positional argument to
+  :meth:`linear_model.LogisticRegressionCV.score` is deprecated and will be
+  removed in version 1.11. Pass it as a keyword argument instead.
+  By `Adrin Jalali`_ :pr:`30859` :pr:`30859`
 
 - |API| The default value of the `scoring` parameter in
   :class:`linear_model.LogisticRegressionCV` will change in version 1.11 from `None`,
@@ -576,8 +610,8 @@ Callbacks
   even a stack overflow (segmentation fault) on large inputs.
   By :user:`Arthur Lacote <cakedev0>`. :pr:`33252`
 
-- |Fix| :meth:`metrics.PrecisionRecallDisplay.from_estimator` and 
-  :meth:`metrics.PrecisionRecallDisplay.from_predictions` now 
+- |Fix| :meth:`metrics.PrecisionRecallDisplay.from_estimator` and
+  :meth:`metrics.PrecisionRecallDisplay.from_predictions` now
   correctly plot chance level line when `y_true` is a pytorch tensor.
   By :user:`Lucas Oliveira <lucolivi>`. :pr:`33405`
 
@@ -641,9 +675,9 @@ Callbacks
 :mod:`sklearn.pipeline`
 -----------------------
 
-- |Fix| Fixed :class:`pipeline.FeatureUnion` to properly handle column renaming when using
-  Polars output, preventing duplicate column names.
-  By :user:`Levente Csibi <leweex95>`. :pr:`32853`
+- |Fix| Fixed a bug in :class:`pipeline.FeatureUnion` with `set_output(transform="polars")`
+  when transformers produce duplicate column names.
+  By :user:`Jérémie du Boisberranger <jeremiedbb>` and :user:`Levente Csibi <leweex95>`. :pr:`32106`
 
 - |Fix| :class:`pipeline.Pipeline` now raises an `AttributeError` when accessing attributes
   that are not available on an empty pipeline. It's therefore possible to call `dir`
@@ -772,4 +806,26 @@ Callbacks
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.8, including:
 
-TODO: update at the time of the release.
+AAAZZZR, ABHISHEK, Adrin Jalali, Agnus Paul, Albert Dorador Chalar, Alex
+Kuleshov, alexshacked, ANAND VENUGOPAL, Andres Nayeem Mejia, Andy, Anne Beyer,
+antoinebaker, Anvay, Arthur, Arthur Lacote, Arturo Amor, Ashutosh Devpura,
+Auguste Baum, Balaji Seshadri, baynecheke, Ben Pedigo, Bharat Raghunathan,
+Bodhi Russell Silberling, Bodhi Silberling, Chaitanya Dasari, Chani Fainendler,
+Charlie Tonneslan, Christian Lorentzen, Christian Veenhuis, Christine P. Chai,
+CipherCat, clijo, Copilot, C. Titus Brown, cui, Daniel Agyapong,
+danilo-silva-ufsc, Dan Schult, david-cortes-intel, Dea María Léon, Dhruv Sharma,
+DhyeyTeraiya, Dimitri Papadopoulos Orfanos, Dmitry Kobak, EdenRochmanSharabi,
+Emily (Xinyi) Chen, Eric Prestat, fabianhenning, Florian Bourgey, François Paugam,
+Gaetan, GarimaGarg222, GAUTAM V DATLA, Guillaume Lemaitre, holodata-ej, Ho Yin Chau,
+Isaacc, Itamar Turner-Trauring, Jake Blitch, James Dean, James Lamb, Jérémie du
+Boisberranger, Jim Crist-Harif, John Hendricks, Junteng Li, Karthik, Kiyarash
+Fazeli, Kunle, Lev, Levente Csibi, Loic Esteve, Lucas Colley, Lucas Oliveira,
+Lucy Liu, Marco Edward Gorelli, marikabergengren, Matthias De Lozzo, Mohammad
+Ahmadullah Khan, Nguyen Cat Luong, Nikita, Nithurshen, Olivier Grisel, Omar
+Salman, pavitra danappa byali, pomrakna, prakritim01, Quentin Barthélemy, Ralf
+Gommers, Ram, Remi Gau, Reshama Shaikh, Riya Jha, Robert Pollak, Rudrendu Paul,
+Samuel O. Ronsin, Sarvesh V, sauravyadav1008, Seyi Kuforiji,
+shifanaaaa, Shruti Nath, Shyan Paul, Simon-Martin Schröder, Sophia Houhamdi,
+Stanislav Terliakov, Stefanie Senger, Taoufik KEHAL, Tejas, TejasAnalyst,
+Thomas Moreau, Thomas S., Tim Head, Unique Shrestha, Varun Agnihotri, Virgil
+Chan, Wiktor Olszowy, Xiao Yuan, Yann Lechelle

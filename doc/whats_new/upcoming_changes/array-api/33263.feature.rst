@@ -1,2 +1,0 @@
-- :class:`pipeline.FeatureUnion` now supports Array API compliant inputs when all
-  its transformers do. By :user:`Olivier Grisel <ogrisel>`.
