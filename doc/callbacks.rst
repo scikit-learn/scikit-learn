@@ -32,7 +32,13 @@ Registering callbacks
 
 Estimators that support callbacks expose a :meth:`~CallbackSupportMixin.set_callbacks`
 method to register callbacks on them. The following example shows how to register a
-:class:`~ProgressBar` callback on a :class:`~sklearn.linear_model.LogisticRegression`::
+:class:`~ProgressBar` callback on a :class:`~sklearn.linear_model.LogisticRegression`.
+
+.. note::
+   The :class:`~ProgressBar` callback requires the optional dependency ``rich`` to be
+   installed, for example with ``pip install rich``.
+
+For example::
 
     >>> from sklearn.callback import ProgressBar
     >>> from sklearn.linear_model import LogisticRegression
