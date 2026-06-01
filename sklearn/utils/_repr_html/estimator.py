@@ -10,6 +10,7 @@ from pathlib import Path
 from sklearn import config_context
 from sklearn.utils._repr_html.base import _IDCounter
 from sklearn.utils._repr_html.features import _features_html, _name_details_html
+from sklearn.utils.validation import _is_arraylike_not_scalar
 
 
 def _get_css_style():
@@ -166,10 +167,8 @@ def _write_label_html(
     )
     name = html.escape(name)
     if name_details is not None:
-        if isinstance(name_details, str) or isinstance(name_details, slice):
+        if isinstance(name_details, str):
             name_details = html.escape(str(name_details))
-        else:
-            name_details = [item for item in name_details]
         checked_str = "checked" if checked else ""
         est_id = _ESTIMATOR_ID_COUNTER.get_id()
 
@@ -183,7 +182,7 @@ def _write_label_html(
                 f'<a class="sk-estimator-doc-link {is_fitted_css_class}"'
                 f' rel="noreferrer" target="_blank" href="{doc_link}">?{doc_label}</a>'
             )
-        if name == "passthrough" or name_details == "[]":
+        if name == "passthrough":
             name_caption = ""
         name_caption_div = (
             ""
@@ -216,7 +215,7 @@ def _write_label_html(
         out.write(params)
         out.write(attrs)
         if ("Pipeline" not in name) and not params:
-            if isinstance(name_details, list):
+            if _is_arraylike_not_scalar(name_details):
                 out.write(_name_details_html(name_details, is_fitted_css_class))
             elif name != "passthrough" and name_details not in ("", "[]"):
                 out.write(f"<pre>{name_details}</pre>")
