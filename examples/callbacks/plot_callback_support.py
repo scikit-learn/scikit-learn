@@ -88,7 +88,7 @@ class SimpleKMeans(BaseEstimator):
         # https://scikit-learn.org/stable/developers/develop.html#input-validation.
         X = validate_data(self, X)
         random_state = check_random_state(self.random_state)
-        # Randomnly initialize the centroids.
+        # Randomly initialize the centroids.
         self.cluster_centers_ = random_state.rand(self.n_clusters, X.shape[1])
 
         for i in range(self.n_iter):
@@ -144,7 +144,7 @@ class SimpleKMeans(CallbackSupportMixin, BaseEstimator):  # noqa: F811
         # Then the callback context's `call_on_fit_task_begin` method must be called. It
         # will call all the callbacks' `on_fit_task_begin` hooks. The `estimator`
         # argument is mandatory and optional `kwargs` can be passed to provide extra
-        # contextual information for the callbacks, for example here `X` and`y` are
+        # contextual information for the callbacks, for example here `X` and `y` are
         # passed. See the following note for more details on these extra `kwargs`.
         callback_ctx.call_on_fit_task_begin(estimator=self, X=X, y=y)
 
@@ -222,7 +222,7 @@ class SimpleKMeans(CallbackSupportMixin, BaseEstimator):  # noqa: F811
 
 # %%
 # Registering callbacks to the custom estimator
-# -------------------
+# ---------------------------------------------
 # Now the `SimpleKMeans` estimator can be used with callbacks, for example with the
 # :class:`~ProgressBar` callback to monitor progress.
 
