@@ -1146,9 +1146,9 @@ def check_same_namespace(X, estimator, *, attribute, method):
     if X_device is None:
         type_name = "sparse array" if sp.issparse(X) else "array-like"
         msg = (
-            f"Array namespaces used during fit ({a_xp.__name__}) "
+            f"Array namespace used during fit ({a_xp.__name__}) "
             f"is not compatible with the {type_name} input passed to {method}. "
-            f"Only NumPy namespaces might be compatible with {type_name} inputs."
+            f"Only the NumPy namespace is compatible with {type_name} inputs."
         )
     elif X_xp != a_xp:
         msg = (
