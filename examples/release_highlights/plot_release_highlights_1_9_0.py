@@ -63,16 +63,28 @@ log[["task_name", "task_id", "d2_log_loss_score"]]
 #    from sklearn.model_selection import GridSearchCV
 #
 #    X, y = load_iris(return_X_y=True)
-#    grid_search = GridSearchCV(LogisticRegression(solver="lbfgs"), {"C": [10, 1, 0.1]})
+#    logreg = LogisticRegression(solver="lbfgs")
+#    grid_search = GridSearchCV(logreg, {"C": [10, 1, 0.1]}, n_jobs=2)
 #    grid_search.set_callbacks(ProgressBar())
 #    grid_search.fit(X, y)
 #
-# Output::
+# Intermediate output::
+#
+#    GridSearchCV - fit                                                          ━━━━━━╸                                   17% 0:00:02
+#      GridSearchCV - search #0                                                  ━━━━━━━━━━━━━╸                            34% 0:00:01
+#        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #1 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+#        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #0 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+#        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #2 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+#        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #3 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+#        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #4 ━━━━━━━━━━━━━━━━━━━━━╸                    54% 0:00:01
+#        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #5 ━━━━━━━━━━━━━━━━━                         44% 0:00:01
+#
+# Final output::
 #
 #    GridSearchCV - fit                                                           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
 #      GridSearchCV - search #0                                                   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
-#        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #0  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
 #        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #1  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+#        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #0  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
 #        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #2  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
 #        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #3  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
 #        GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #4  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
