@@ -10,7 +10,7 @@ curl -L -o blis.tar.gz https://github.com/flame/blis/archive/refs/tags/1.1.tar.g
 tar -xzf blis.tar.gz
 cd blis-1.1
 
-./configure auto --enable-cblas
+./configure --enable-cblas auto
 make -j"$(sysctl -n hw.ncpu)"
 
 lib_dir="$(find "$workdir/blis-1.1/lib" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
