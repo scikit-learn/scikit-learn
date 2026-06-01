@@ -165,8 +165,8 @@ def _write_label_html(
         f' class="{inner_class} {is_fitted_css_class} sk-toggleable">'
     )
     name = html.escape(name)
-    raw_name_details = name_details
     if name_details is not None:
+        raw_name_details = name_details
         name_details = html.escape(str(name_details))
         checked_str = "checked" if checked else ""
         est_id = _ESTIMATOR_ID_COUNTER.get_id()
@@ -185,7 +185,7 @@ def _write_label_html(
             name_caption = ""
         name_caption_div = (
             ""
-            if name_caption is None or name_caption == ""
+            if name_caption is None
             else f'<div class="caption">{html.escape(name_caption)}</div>'
         )
         name_caption_div = f"<div><div>{name}</div>{name_caption_div}</div>"
@@ -213,7 +213,7 @@ def _write_label_html(
 
         out.write(params)
         out.write(attrs)
-        if raw_name_details is not None and ("Pipeline" not in name) and not params:
+        if ("Pipeline" not in name) and not params:
             if isinstance(raw_name_details, (list, tuple)):
                 out.write(_name_details_html(raw_name_details, is_fitted_css_class))
             elif name != "passthrough" and name_details not in ("", "[]"):

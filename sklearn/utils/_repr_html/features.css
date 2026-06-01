@@ -109,7 +109,7 @@
 }
 
 .features .features-container table td,
-.name-details  .name-details-table td {
+.name-details .name-details-table td {
   text-align: left;
   padding: 0 0.5em;
   border: 1px solid rgba(106, 105, 104, 0.232);
@@ -134,8 +134,6 @@ doesn't overwrite rules*/
   table-layout: inherit;
 }
 
-.sk-global input.sk-toggleable__control:checked
-~ div.sk-toggleable__content:has(.name-details),
 .sk-global input.sk-toggleable__control
 ~ div.sk-toggleable__content:has(.name-details) {
   border-radius: .20em;
