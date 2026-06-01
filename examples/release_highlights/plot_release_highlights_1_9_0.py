@@ -68,7 +68,8 @@ log[["task_name", "task_id", "d2_log_loss_score"]]
 #    grid_search.set_callbacks(ProgressBar())
 #    grid_search.fit(X, y)
 #
-# Intermediate output::
+# Intermediate output. Note that two sub-tasks progress concurrently because we
+# set `n_jobs=2`::
 #
 #    GridSearchCV - fit                                                          ━━━━━━╸                                   17% 0:00:02
 #      GridSearchCV - search #0                                                  ━━━━━━━━━━━━━╸                            34% 0:00:01
