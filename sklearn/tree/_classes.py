@@ -1456,6 +1456,10 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
     Warning: Extra-trees should only be used within ensemble methods.
 
+    From an implementation perspective, this model is effectively a
+    :class:`~sklearn.tree.DecisionTreeClassifier` with ``splitter="random"``
+    by default.
+
     Read more in the :ref:`User Guide <tree>`.
 
     Parameters
@@ -1739,6 +1743,9 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     decision tree.
 
     Warning: Extra-trees should only be used within ensemble methods.
+
+    From an implementation perspective, this model is effectively a
+    :class:`~sklearn.tree.DecisionTreeRegressor` with ``splitter="random"`` by default.
 
     Read more in the :ref:`User Guide <tree>`.
 
