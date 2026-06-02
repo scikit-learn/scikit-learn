@@ -227,6 +227,6 @@ cv_results[
 # not used for hyperparameter tuning.
 #
 print(
-    "accuracy of the best model from randomized search: "
+    "accuracy of the best model from randomized search:  TESTING build"
     f"{search_cv.score(X_test, y_test):.3f}"
 )
