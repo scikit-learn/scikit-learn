@@ -158,10 +158,12 @@ implementation_specific_values = [
 #     """Compute the maximum distance between two nodes"""
 
 cdef extern from "binarytree.h":
+    # It's actually a thread local int, but Cython has no way to express that
+    # at the moment, see https://github.com/cython/cython/issues/6745
     ctypedef int tls_int
 
 cimport numpy as cnp
-from cython cimport floating
+from cython cimport floating, critical_section
 from libc.math cimport fabs, sqrt, exp, cos, pow, log, lgamma
 from libc.math cimport fmin, fmax
 from libc.stdlib cimport calloc, malloc, free
@@ -786,11 +788,12 @@ cdef class NodeHeap:
 def newObj(obj):
     return obj.__new__(obj)
 
-# Thread-local variables for BinaryTree.query(). These will need to be
-# statically defined in the modules that include this file.
+# Thread-local variables for BinaryTree.query() and friends.
+
 cdef tls_int tls_n_leaves
 cdef tls_int tls_n_splits
 cdef tls_int tls_n_trims
+cdef tls_int tls_n_calls
 
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE, NPY_TYPE in implementation_specific_values}}
 
@@ -1017,7 +1020,8 @@ cdef class BinaryTree{{name_suffix}}:
     cdef inline float64_t dist(self, const {{INPUT_DTYPE_t}}* x1, const {{INPUT_DTYPE_t}}* x2,
                              intp_t size) except -1 nogil:
         """Compute the distance between arrays x1 and x2"""
-        self.n_calls += 1
+        global tls_n_calls
+        tls_n_calls += 1
         if self.euclidean:
             return euclidean_dist{{name_suffix}}(x1, x2, size)
         else:
@@ -1032,7 +1036,8 @@ cdef class BinaryTree{{name_suffix}}:
         relative rankings of the true distance.  For example, the reduced
         distance for the Euclidean metric is the squared-euclidean distance.
         """
-        self.n_calls += 1
+        global tls_n_calls
+        tls_n_calls += 1
         if self.euclidean:
             return euclidean_rdist{{name_suffix}}(x1, x2, size)
         else:
@@ -1090,6 +1095,23 @@ cdef class BinaryTree{{name_suffix}}:
             self._recursive_build(node_data, 2 * i_node + 2,
                                   idx_start + n_mid, idx_end)
 
+    cdef _prep_thread_locals(self):
+        global tls_n_trims, tls_n_leaves, tls_n_splits, tls_n_calls
+        tls_n_trims = 0
+        tls_n_leaves = 0
+        tls_n_splits = 0
+        tls_n_calls = 0
+
+    cdef _update_stats(self):
+        global tls_n_splits, tls_n_leaves, tls_n_trims, tls_n_calls
+        # Thread-safe on GIL Python because have GIL, thread-safe on free-threaded
+        # Python because of the critical section:
+        with critical_section(self):
+            self.n_splits += tls_n_splits
+            self.n_leaves += tls_n_leaves
+            self.n_trims += tls_n_trims
+            self.n_calls += tls_n_calls
+
     def query(self, X, k=1, return_distance=True,
               dualtree=False, breadth_first=False,
               sort_results=True):
@@ -1145,6 +1167,8 @@ cdef class BinaryTree{{name_suffix}}:
             raise ValueError("k must be less than or equal "
                              "to the number of training points")
 
+        self._prep_thread_locals()
+
         # flatten X, and save original shape information
         np_Xarr = X.reshape((-1, self.data.shape[1]))
         cdef const {{INPUT_DTYPE_t}}[:, ::1] Xarr = np_Xarr
@@ -1162,11 +1186,6 @@ cdef class BinaryTree{{name_suffix}}:
 
         # bounds is needed for the dual tree algorithm
         cdef float64_t[::1] bounds
-
-        global tls_n_trims, tls_n_leaves, tls_n_splits
-        tls_n_trims = 0
-        tls_n_leaves = 0
-        tls_n_splits = 0
 
         if dualtree:
             other = self.__class__(np_Xarr, metric=self.dist_metric,
@@ -1196,14 +1215,7 @@ cdef class BinaryTree{{name_suffix}}:
         distances, indices = heap.get_arrays(sort=sort_results)
         distances = self.dist_metric.rdist_to_dist(distances)
 
-        global tls_n_splits, tls_n_leaves, tls_n_trims
-        # Thread-safe on GIL Python because have GIL, thread-safe on free-threaded
-        # Python because of the critical section:
-        with cython.gil:
-            with cython.critical_section(self):
-                self.n_splits += tls_n_splits
-                self.n_leaves += tls_n_leaves
-                self.n_trims += tls_n_trims
+        self._update_stats()
 
         # deflatten results
         if return_distance:
@@ -1281,6 +1293,8 @@ cdef class BinaryTree{{name_suffix}}:
         cdef intp_t** indices = NULL
         cdef {{INPUT_DTYPE_t}}** distances = NULL
 
+        self._prep_thread_locals()
+
         # validate X and prepare for query
         X = check_array(X, dtype={{INPUT_DTYPE}}, order='C')
 
@@ -1353,6 +1367,8 @@ cdef class BinaryTree{{name_suffix}}:
                         memory_error = True
                         break
                     memcpy(distances[i], &dist_arr_i[0], counts[i] * sizeof({{INPUT_DTYPE_t}}))
+
+        self._update_stats()
 
         try:
             if memory_error:
@@ -1468,6 +1484,8 @@ cdef class BinaryTree{{name_suffix}}:
         cdef intp_t i
         cdef KernelType kernel_c
 
+        self._prep_thread_locals()
+
         # validate kernel
         if kernel == 'gaussian':
             kernel_c = GAUSSIAN_KERNEL
@@ -1548,6 +1566,8 @@ cdef class BinaryTree{{name_suffix}}:
 
         log_density_arr = log_density_arr.reshape(X.shape[:X.ndim - 1])
 
+        self._update_stats()
+
         if return_log:
             return log_density_arr
         else:
@@ -1579,6 +1599,8 @@ cdef class BinaryTree{{name_suffix}}:
         """
         cdef intp_t n_features = self.data.shape[1]
         cdef intp_t i
+
+        self._prep_thread_locals()
 
         # validate X and prepare for query
         X = check_array(X, dtype={{INPUT_DTYPE}}, order='C')
@@ -1615,6 +1637,8 @@ cdef class BinaryTree{{name_suffix}}:
                 self._two_point_single(0, pt, &rarr[0], &carr[0],
                                        0, rarr.shape[0])
                 pt += n_features
+
+        self._update_stats()
 
         return count
 
