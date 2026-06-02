@@ -503,6 +503,9 @@ class SimpleEstimator(BaseEstimator):
         check_same_namespace(X, self, attribute="X_", method="predict")
         return X
 
+    def sparsify(self):
+        self.X_ = sp.csr_matrix(self.X_)
+
 
 class SimpleEstimatorCustomLogic(BaseEstimator):
     def fit(self, X, y=None):
@@ -605,6 +608,31 @@ def test_check_fitted_attribute():
 
         with pytest.raises(ValueError, match=".*must use the same namespace"):
             est.predict(numpy.asarray([0]))
+
+
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize("X", [[[1.3, 4.5]], sp.csr_array([[1.3, 4.5]])])
+def test_check_fitted_attribute_with_non_array_input(X):
+    """Check validation of non-array input against fitted attribute ``X_``.
+
+    ``SimpleEstimator.predict`` calls ``check_same_namespace`` with
+    ``attribute="X_"`` to compare the input with the fitted data.
+    """
+    xp = pytest.importorskip("array_api_strict")
+
+    with config_context(array_api_dispatch=True):
+        est = SimpleEstimator().fit(numpy.asarray([[1.3, 4.5]]))
+        # shouldn't raise:
+        est.predict(X)
+
+        est.sparsify()
+        # shouldn't raise either:
+        est.predict(X)
+        est.predict(numpy.asarray([[1.3, 4.5]]))
+
+        est = SimpleEstimator().fit(xp.asarray([[1.3, 4.5]]))
+        with pytest.raises(ValueError, match="Array namespace.*not compatible"):
+            est.predict(X)
 
 
 @pytest.mark.parametrize(
