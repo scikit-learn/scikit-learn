@@ -29,7 +29,7 @@ class ProgressBar:
 
     Notes
     -----
-    This callback requires the ``rich`` package to be installed.
+    This callback requires rich to be installed.
     """
 
     @validate_params(
