@@ -1131,6 +1131,7 @@ def _check_array_api_core(
         xp_other, device_other = np, "cpu"
         # Convert binary `y` to string
         y_xp = np.array(["a", "b"])[y]
+        y = y_xp
     else:
         xp_other, device_other = _array_api_for_tests(
             other_ns_and_device.xp, other_ns_and_device.device
@@ -1163,17 +1164,14 @@ def _check_array_api_core(
     # except `classes_`, to allow it to be string when `y` is string.
     for key, attribute in array_attributes.items():
         est_xp_param = getattr(est_xp, key)
-        with config_context(array_api_dispatch=True):
-            attribute_ns = get_namespace(est_xp_param)[0].__name__
         if key != "classes_":
+            with config_context(array_api_dispatch=True):
+                attribute_ns = get_namespace(est_xp_param)[0].__name__
+                assert array_device(est_xp_param) == array_device(X_xp)
             assert attribute_ns == X_ns, (
                 f"'{key}' attribute is in wrong namespace, expected {X_ns} "
                 f"got {attribute_ns}"
             )
-
-        with config_context(array_api_dispatch=True):
-            if key != "classes_":
-                assert array_device(est_xp_param) == array_device(X_xp)
 
         est_xp_param_np = move_to(est_xp_param, xp=np, device="cpu")
         if check_values:
@@ -1264,10 +1262,12 @@ def _check_array_api_core(
 
         with config_context(array_api_dispatch=True):
             result_ns = get_namespace(result_xp)[0].__name__
-        assert result_ns == X_ns, (
-            f"'{method}' output is in wrong namespace, expected {X_ns}, "
-            f"got {result_ns}."
-        )
+        # `predict` would be string when `y` is string
+        if not (other_ns_and_device == "string" and method_name == "predict"):
+            assert result_ns == X_ns, (
+                f"'{method}' output is in wrong namespace, expected {X_ns}, "
+                f"got {result_ns}."
+            )
 
         if expect_only_array_outputs:
             with config_context(array_api_dispatch=True):
