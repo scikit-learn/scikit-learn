@@ -1196,11 +1196,14 @@ cdef class BinaryTree{{name_suffix}}:
         distances, indices = heap.get_arrays(sort=sort_results)
         distances = self.dist_metric.rdist_to_dist(distances)
 
-        # TODO still a race condition
         global tls_n_splits, tls_n_leaves, tls_n_trims
-        self.n_splits += tls_n_splits
-        self.n_leaves += tls_n_leaves
-        self.n_trims += tls_n_trims
+        # Thread-safe on GIL Python because have GIL, thread-safe on free-threaded
+        # Python because of the critical section:
+        with cython.gil:
+            with cython.critical_section(self):
+                self.n_splits += tls_n_splits
+                self.n_leaves += tls_n_leaves
+                self.n_trims += tls_n_trims
 
         # deflatten results
         if return_distance:
