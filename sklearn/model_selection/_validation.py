@@ -845,7 +845,7 @@ def _fit_and_score(
                     estimator=caller,
                     X=X_train,
                     y=y_train,
-                    **callback_metadata.callback_context.call_on_fit_task_begin,
+                    metadata=callback_metadata,
                 )
                 if y_train is None:
                     estimator.fit(X_train, **fit_params)
@@ -891,7 +891,7 @@ def _fit_and_score(
                 estimator=caller,
                 X=X_train,
                 y=y_train,
-                **callback_metadata.callback_context.call_on_fit_task_end,
+                metadata=callback_metadata,
             )
 
     if verbose > 1:

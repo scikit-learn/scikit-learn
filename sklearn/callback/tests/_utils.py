@@ -9,8 +9,10 @@ import pytest
 from sklearn.base import BaseEstimator, _fit_context, clone
 from sklearn.callback import CallbackSupportMixin, with_callbacks
 from sklearn.callback._transport import open_listener, send
+from sklearn.utils._metadata_requests import _MetadataRequester
 from sklearn.utils.fixes import _IS_WASM
 from sklearn.utils.metadata_routing import (
+    MetadataRequest,
     MetadataRouter,
     MethodMapping,
     process_routing,
@@ -175,6 +177,36 @@ class NotRequiredKwargsCallback(RecordingCallback):
         super().on_fit_task_end(estimator, context, X=X, y=y)
 
 
+class MetadataRequesterCallback(_MetadataRequester, RecordingCallback):
+    """A callback that can request metadata.
+
+    `requested_arg_begin` can be requested for `on_fit_task_begin`
+    `requested_arg_end` can be requested for `on_fit_task_end`
+    """
+
+    def on_fit_task_begin(self, estimator, context, *, metadata=None):
+        return super().on_fit_task_begin(estimator, context, metadata=metadata)
+
+    def on_fit_task_end(self, estimator, context, *, metadata=None):
+        return super().on_fit_task_end(estimator, context, metadata=metadata)
+
+    def set_on_fit_task_begin_request(self, requested_arg_begin):
+        if not hasattr(self, "_metadata_request"):
+            self._metadata_request = MetadataRequest(owner=self)
+        self._metadata_request.on_fit_task_begin.add_request(
+            param="requested_arg_begin", alias=requested_arg_begin
+        )
+        return self
+
+    def set_on_fit_task_end_request(self, requested_arg_end):
+        if not hasattr(self, "_metadata_request"):
+            self._metadata_request = MetadataRequest(owner=self)
+        self._metadata_request.on_fit_task_end.add_request(
+            param="requested_arg_end", alias=requested_arg_end
+        )
+        return self
+
+
 class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
     """A class that mimics the behavior of an estimator.
 
@@ -194,17 +226,13 @@ class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
     @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X=None, y=None, **fit_params):
         callback_ctx = self._init_callback_context(max_subtasks=self.max_iter)
-        routed_params = process_routing(self, "fit", **fit_params)
-        callback_begin_metadata = routed_params.callback_context.call_on_fit_task_begin
-        callback_end_metadata = routed_params.callback_context.call_on_fit_task_end
-        callback_ctx.call_on_fit_task_begin(
-            estimator=self, X=X, y=y, **callback_begin_metadata
-        )
+        metadata = process_routing(self, "fit", **fit_params)
+        callback_ctx.call_on_fit_task_begin(estimator=self, X=X, y=y, metadata=metadata)
 
         for i in range(self.max_iter):
             subcontext = callback_ctx.subcontext(task_name=f"iteration {i}")
             subcontext.call_on_fit_task_begin(
-                estimator=self, X=X, y=y, **callback_begin_metadata
+                estimator=self, X=X, y=y, metadata=metadata
             )
 
             time.sleep(self.computation_intensity)  # Computation intensive task
@@ -214,7 +242,7 @@ class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
                 X=X,
                 y=y,
                 reconstruction_attributes=lambda: {"n_iter_": i + 1},
-                **callback_end_metadata,
+                metadata=metadata,
             ):
                 break
 
@@ -225,7 +253,7 @@ class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
             X=X,
             y=y,
             reconstruction_attributes={},
-            **callback_end_metadata,
+            metadata=metadata,
         )
 
         return self
@@ -234,12 +262,14 @@ class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
         return np.mean(X, axis=1) * self.n_iter_
 
     def get_metadata_routing(self):
-        router = MetadataRouter(owner=self).add(
-            callback_context=self._callback_fit_ctx,
-            method_mapping=MethodMapping()
-            .add(caller="fit", callee="call_on_fit_task_begin")
-            .add(caller="fit", callee="call_on_fit_task_end"),
-        )
+        router = MetadataRouter(owner=self)
+        for i, callback in enumerate(getattr(self, "_skl_callbacks", [])):
+            router.add(
+                **{f"callback_{i}": callback},
+                method_mapping=MethodMapping()
+                .add(caller="fit", callee="on_fit_task_begin")
+                .add(caller="fit", callee="on_fit_task_end"),
+            )
         return router
 
 
@@ -369,7 +399,7 @@ class MetaEstimator(CallbackSupportMixin, BaseEstimator):
             estimator=self,
             X=X,
             y=y,
-            **routed_params.callback_context.call_on_fit_task_begin,
+            metadata=routed_params,
         )
 
         outer_callback_contexts = [
@@ -395,32 +425,31 @@ class MetaEstimator(CallbackSupportMixin, BaseEstimator):
             estimator=self,
             X=X,
             y=y,
-            **routed_params.callback_context.call_on_fit_task_end,
+            metadata=routed_params,
         )
 
         return self
 
     def get_metadata_routing(self):
         router = MetadataRouter(owner=self).add(
-            callback_context=self._callback_fit_ctx,
-            method_mapping=MethodMapping()
-            .add(caller="fit", callee="call_on_fit_task_begin")
-            .add(caller="fit", callee="call_on_fit_task_end"),
-        )
-        router.add(
             estimator=self.estimator,
             method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
+        for i, callback in enumerate(getattr(self, "_skl_callbacks", [])):
+            router.add(
+                **{f"callback_{i}": callback},
+                method_mapping=MethodMapping()
+                .add(caller="fit", callee="on_fit_task_begin")
+                .add(caller="fit", callee="on_fit_task_end"),
+            )
         return router
 
 
 def _fit_subestimator(
     meta_estimator, inner_estimator, *, X, y, routed_params, outer_callback_ctx
 ):
-    callback_begin_metadata = routed_params.callback_context.call_on_fit_task_begin
-    callback_end_metadata = routed_params.callback_context.call_on_fit_task_end
     outer_callback_ctx.call_on_fit_task_begin(
-        estimator=meta_estimator, X=X, y=y, **callback_begin_metadata
+        estimator=meta_estimator, X=X, y=y, metadata=routed_params
     )
 
     for i in range(meta_estimator.n_inner):
@@ -429,17 +458,17 @@ def _fit_subestimator(
         inner_ctx = outer_callback_ctx.subcontext(task_name="inner")
         with inner_ctx.propagate_callback_context(est):
             inner_ctx.call_on_fit_task_begin(
-                estimator=meta_estimator, X=X, y=y, **callback_begin_metadata
+                estimator=meta_estimator, X=X, y=y, metadata=routed_params
             )
 
             est.fit(X=X, y=y, **routed_params.estimator.fit)
 
             inner_ctx.call_on_fit_task_end(
-                estimator=meta_estimator, X=X, y=y, **callback_end_metadata
+                estimator=meta_estimator, X=X, y=y, metadata=routed_params
             )
 
     outer_callback_ctx.call_on_fit_task_end(
-        estimator=meta_estimator, X=X, y=y, **callback_end_metadata
+        estimator=meta_estimator, X=X, y=y, metadata=routed_params
     )
 
 

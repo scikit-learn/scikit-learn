@@ -86,7 +86,7 @@ def test_callbacks_refit_after_pickle_in_same_process(capsys):
 
     restored_logs = restored._skl_callbacks[1].get_logs(select="all")
     assert len(restored_logs) == 2
-    assert restored_logs[0].data == original_logs[0].data
+    assert restored_logs[0].train_scores == original_logs[0].train_scores
 
 
 def test_callbacks_refit_after_load_in_fresh_process(tmp_path, capsys):
@@ -128,7 +128,7 @@ def test_callbacks_refit_after_load_in_fresh_process(tmp_path, capsys):
 
         restored_logs = est._skl_callbacks[1].get_logs(select="all")
         assert len(restored_logs) == 2
-        assert restored_logs[0].data == {original_logs[0].data}
+        assert restored_logs[0].train_scores == {original_logs[0].train_scores}
         """
     )
 

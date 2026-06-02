@@ -6,6 +6,7 @@ from functools import partial
 import numpy as np
 import pytest
 
+from sklearn import config_context
 from sklearn.callback import CallbackSupportMixin, with_callbacks
 from sklearn.callback._callback_context import (
     CallbackContext,
@@ -14,6 +15,7 @@ from sklearn.callback._callback_context import (
 )
 from sklearn.callback.tests._utils import (
     MaxIterEstimator,
+    MetadataRequesterCallback,
     MetaEstimator,
     NoCallbackEstimator,
     NoSubtaskEstimator,
@@ -533,3 +535,61 @@ def test_callback_context_repr():
         "task_id=42)"
     )
     assert repr(context) == expected_repr
+
+
+@config_context(enable_metadata_routing=True)
+def test_metadata_routing_callback_consumer():
+    """Test a callback that requests metadata."""
+
+    cb = (
+        MetadataRequesterCallback()
+        .set_on_fit_task_begin_request(requested_arg_begin="foo")
+        .set_on_fit_task_end_request(requested_arg_end=True)
+    )
+
+    MaxIterEstimator().set_callbacks(cb).fit(foo="val_1", requested_arg_end="val_2")
+    task_begin_metadatas = [
+        rec["kwargs"]["metadata"]
+        for rec in cb.record
+        if rec["name"] == "on_fit_task_begin"
+    ]
+    task_end_metadatas = [
+        rec["kwargs"]["metadata"]
+        for rec in cb.record
+        if rec["name"] == "on_fit_task_end"
+    ]
+    assert task_begin_metadatas
+    assert task_end_metadatas
+    assert all([m == {"requested_arg_begin": "val_1"} for m in task_begin_metadatas])
+    assert all([m == {"requested_arg_end": "val_2"} for m in task_end_metadatas])
+
+
+@config_context(enable_metadata_routing=True)
+@pytest.mark.parametrize("n_jobs", [1, 2])
+def test_metadata_routing_callback_consumer_in_metaestimator(n_jobs):
+    """Test a callback that requests metadata in a meta-estimator."""
+
+    cb = (
+        MetadataRequesterCallback()
+        .set_on_fit_task_begin_request(requested_arg_begin="foo")
+        .set_on_fit_task_end_request(requested_arg_end=True)
+    )
+
+    estimator = MaxIterEstimator().set_callbacks(cb)
+    MetaEstimator(estimator=estimator, n_jobs=n_jobs).fit(
+        foo="val_1", requested_arg_end="val_2"
+    )
+    task_begin_metadatas = [
+        rec["kwargs"]["metadata"]
+        for rec in cb.record
+        if rec["name"] == "on_fit_task_begin"
+    ]
+    task_end_metadatas = [
+        rec["kwargs"]["metadata"]
+        for rec in cb.record
+        if rec["name"] == "on_fit_task_end"
+    ]
+    assert task_begin_metadatas
+    assert task_end_metadatas
+    assert all([m == {"requested_arg_begin": "val_1"} for m in task_begin_metadatas])
+    assert all([m == {"requested_arg_end": "val_2"} for m in task_end_metadatas])

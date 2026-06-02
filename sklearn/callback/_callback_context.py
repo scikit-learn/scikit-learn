@@ -9,14 +9,9 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 
 from sklearn.callback._base import AutoPropagatedCallback
-from sklearn.utils.metadata_routing import (
-    MetadataRouter,
-    MethodMapping,
-    process_routing,
-)
 
 # List of the parameters expected to be in the hooks signatures
-VALID_HOOK_PARAMS_OUT = ["X", "y", "X_val", "y_val", "metadata", "fitted_estimator"]
+VALID_HOOK_PARAMS_OUT = ["X", "y", "metadata", "fitted_estimator"]
 
 
 class CallbackContext:
@@ -287,7 +282,7 @@ class CallbackContext:
             sequential_subtasks=sequential_subtasks,
         )
 
-    def _call_hooks(self, estimator, hook_name, routed_params, **kwargs):
+    def _call_hooks(self, estimator, hook_name, metadata, **kwargs):
         """Helper to call the hook of all callbacks with their respective arguments.
 
         Provide the right arguments to each hook by inspecting their signatures. Any
@@ -301,6 +296,12 @@ class CallbackContext:
 
         hook_name : str
             Name of the callback hook to call.
+
+        metadata : dict of str -> object or None
+            If `enable_metadata_routing=True`: Parameters requested and accepted by
+            callbacks.
+            See :ref:`Metadata Routing User Guide <metadata_routing>` for more
+            details.
 
         **kwargs: dict
             Optional keyword arguments passed to the callback context.
@@ -316,11 +317,9 @@ class CallbackContext:
         evaluated_args = {}
 
         for i, callback in enumerate(self._callbacks):
-            args_to_pass = getattr(getattr(routed_params, f"callback_{i}"), hook_name)
-
             if callback in getattr(self, "_propagated_callbacks", []):
-                # Only call the `on_fit_task_end` hook of callbacks that are not
-                # propagated. For propagated callbacks, the hook will be called by the
+                # Only call the `on_fit_task_...` hooks of callbacks that are not
+                # propagated. For propagated callbacks, the hooks will be called by the
                 # sub-estimator's root context (both represent the same task).
                 continue
 
@@ -337,8 +336,18 @@ class CallbackContext:
                     f"are: {VALID_HOOK_PARAMS_OUT}."
                 )
 
+            args_to_pass = {}
             for param_name in params_names:
-                if param_name not in evaluated_args:
+                if param_name == "metadata":
+                    # Special case: "metadata" is the routed metadata.
+                    # TODO(metadata_routing) remove the `None` in the two following
+                    # `getattr` when metadata routing is always enabled.
+                    metadata_callback = getattr(metadata, f"callback_{i}", None)
+                    evaluated_args[param_name] = getattr(
+                        metadata_callback, hook_name, None
+                    )
+
+                elif param_name not in evaluated_args:
                     # Special case: "reconstruction_attributes" is not directly passed
                     # to the hook. A ready to predict/transform estimator is created
                     # from these attributes and passed to the hook as "fitted_estimator"
@@ -365,7 +374,13 @@ class CallbackContext:
         return result
 
     def call_on_fit_task_begin(
-        self, *, estimator, X=None, y=None, reconstruction_attributes=None, **metadata
+        self,
+        *,
+        estimator,
+        X=None,
+        y=None,
+        reconstruction_attributes=None,
+        metadata=None,
     ):
         """Call the `on_fit_task_begin` hook of the callbacks.
 
@@ -387,25 +402,30 @@ class CallbackContext:
             stopped at the beginning of this task. The `fitted_estimator` is the
             object that will be passed to the callbacks, if required.
 
-        **metadata : dict of str -> object
+        metadata : dict of str -> object or None, default=None
             If `enable_metadata_routing=True`: Parameters requested and accepted by
             callbacks.
             See :ref:`Metadata Routing User Guide <metadata_routing>` for more
             details.
         """
-        routed_params = process_routing(self, "call_on_fit_task_begin", **metadata)
         self._call_hooks(
             estimator,
             hook_name="on_fit_task_begin",
             X=X,
             y=y,
-            routed_params=routed_params,
+            metadata=metadata,
             reconstruction_attributes=reconstruction_attributes,
         )
         return self
 
     def call_on_fit_task_end(
-        self, *, estimator, X=None, y=None, reconstruction_attributes=None, **metadata
+        self,
+        *,
+        estimator,
+        X=None,
+        y=None,
+        reconstruction_attributes=None,
+        metadata=None,
     ):
         """Call the `on_fit_task_end` hook of the callbacks.
 
@@ -427,7 +447,7 @@ class CallbackContext:
             stopped at the end of this task. The `fitted_estimator` is the object
             that will be passed to the callbacks, if required.
 
-        **metadata : dict of str -> object
+        metadata : dict of str -> object or None, default=None
             If `enable_metadata_routing=True`: Parameters requested and accepted by
             callbacks.
             See :ref:`Metadata Routing User Guide <metadata_routing>` for more
@@ -439,13 +459,12 @@ class CallbackContext:
             Whether or not to stop the current level of iterations at this end of this
             task.
         """
-        routed_params = process_routing(self, "call_on_fit_task_end", **metadata)
         return self._call_hooks(
             estimator,
             hook_name="on_fit_task_end",
             X=X,
             y=y,
-            routed_params=routed_params,
+            metadata=metadata,
             reconstruction_attributes=reconstruction_attributes,
         )
 
@@ -520,17 +539,6 @@ class CallbackContext:
                 ]
                 sub_estimator.set_callbacks(*kept_callbacks)
             del sub_estimator._parent_callback_ctx
-
-    def get_metadata_routing(self):
-        router = MetadataRouter(owner=self)
-        for i, callback in enumerate(self._callbacks):
-            router.add(
-                **{f"callback_{i}": callback},
-                method_mapping=MethodMapping()
-                .add(caller="call_on_fit_task_begin", callee="on_fit_task_begin")
-                .add(caller="call_on_fit_task_end", callee="on_fit_task_end"),
-            )
-        return router
 
 
 def _from_reconstruction_attributes(estimator, reconstruction_attributes):

@@ -8,10 +8,11 @@ from dataclasses import dataclass
 
 from sklearn.callback._callback_context import get_context_path
 from sklearn.callback._transport import can_reuse_listener, open_listener, send
-from sklearn.utils._metadata_requests import _MetadataRequester
+from sklearn.utils._metadata_requests import _MetadataRequester, _routing_enabled
 from sklearn.utils._optional_dependencies import check_pandas_support
 from sklearn.utils._param_validation import StrOptions, validate_params
 from sklearn.utils.metadata_routing import (
+    MetadataRequest,
     MetadataRouter,
     MethodMapping,
     process_routing,
@@ -50,26 +51,41 @@ class ScoringMonitorLog:
     timestamp : datetime.datetime
         The timestamp of the start of the run.
 
-    data : list[dict]
-        The recorded scores for the run.
+    train_scores : list[dict]
+        The recorded scores on the training data for the run.
 
-    data_as_pandas : pandas.DataFrame
-        The recorded scores for the run as a Pandas DataFrame.
+    train_scores_as_pandas : pandas.DataFrame
+        The recorded scores on the training data for the run as a Pandas DataFrame.
+
+    val_scores : list[dict]
+        The recorded scores on the validation data for the run.
+
+    val_scores_as_pandas : pandas.DataFrame
+        The recorded scores on the validation data for the run as a Pandas DataFrame.
     """
 
     run_id: uuid.UUID
     estimator_name: str
     timestamp: datetime.datetime
-    data: list[dict]
+    train_scores: list[dict]
+    val_scores: list[dict]
 
-    _data_as_pandas = None
+    _train_scores_as_pandas = None
+    _val_scores_as_pandas = None
 
     @property
-    def data_as_pandas(self):
-        pd = check_pandas_support(f"`{self.__class__.__name__}.data_as_pandas`")
-        if self._data_as_pandas is None:
-            self._data_as_pandas = pd.DataFrame(self.data)
-        return self._data_as_pandas
+    def train_scores_as_pandas(self):
+        pd = check_pandas_support(f"`{self.__class__.__name__}.train_scores_as_pandas`")
+        if self._train_scores_as_pandas is None:
+            self._train_scores_as_pandas = pd.DataFrame(self.train_scores)
+        return self._train_scores_as_pandas
+
+    @property
+    def val_scores_as_pandas(self):
+        pd = check_pandas_support(f"`{self.__class__.__name__}.val_scores_as_pandas`")
+        if self._val_scores_as_pandas is None:
+            self._val_scores_as_pandas = pd.DataFrame(self.val_scores)
+        return self._val_scores_as_pandas
 
     def __repr__(self):
         return (
@@ -157,6 +173,19 @@ class ScoringMonitor(_MetadataRequester):
                 "making it unable to run any scorer. Please change at least one of "
                 "these values."
             )
+        if scoring_val != "no_val_score":
+            if not _routing_enabled():
+                raise (
+                    ValueError(
+                        "Using a scorer on validation data in "
+                        f"{self.__class__.__name__} is only supported if "
+                        "enable_metadata_routing=True, which you can set using "
+                        "`sklearn.set_config`. See the User Guide "
+                        "<https://scikit-learn.org/stable/metadata_routing.html> for "
+                        "more details."
+                    )
+                )
+            self.set_on_fit_task_end_request(X_val=True, y_val=True)
 
         # Turn the scorers into MultimetricScorer for convenience
         self._scoring_train = _convert_to_multiscorer(scoring_train)
@@ -188,8 +217,8 @@ class ScoringMonitor(_MetadataRequester):
                 else None
             )
             self._estimator_scorers[estimator] = {
-                "training": scorer_train,
-                "validation": scorer_val,
+                "train": scorer_train,
+                "val": scorer_val,
             }
 
     def teardown(self, estimator, context):
@@ -205,10 +234,8 @@ class ScoringMonitor(_MetadataRequester):
         *,
         X=None,
         y=None,
-        X_val=None,
-        y_val=None,
         fitted_estimator=None,
-        **metadata,
+        metadata=None,
     ):
         if fitted_estimator is None:
             return
@@ -233,17 +260,27 @@ class ScoringMonitor(_MetadataRequester):
         ]
 
         send_package = []
-        routed_params = process_routing(self, "on_fit_task_end", **metadata)
-        for dataset in ("training", "validation"):
-            data_X, data_y = (X, y) if dataset == "training" else (X_val, y_val)
+        if metadata is not None:
+            routed_params = process_routing(self, "on_fit_task_end", **metadata)
+            X_val = metadata.get("X_val", None)
+            y_val = metadata.get("y_val", None)
+        else:
+            routed_params, X_val, y_val = None, None, None
+        for dataset in ("train", "val"):
+            data_X, data_y = (X, y) if dataset == "train" else (X_val, y_val)
             scorer = self._estimator_scorers[estimator][dataset]
             idx = list(self._estimator_scorers.keys()).index(estimator)
             if data_X is not None and data_y is not None and scorer is not None:
+                scorer_routed_params = (
+                    getattr(routed_params, f"scorer_estimator_{idx}_{dataset}").score
+                    if routed_params is not None
+                    else {}
+                )
                 scores = scorer(
                     fitted_estimator,
                     data_X,
                     data_y,
-                    **getattr(routed_params, f"scorer_estimator_{idx}_{dataset}").score,
+                    **scorer_routed_params,
                 )
                 send_package.append((run_id, run_info, task_info_path, dataset, scores))
 
@@ -256,22 +293,48 @@ class ScoringMonitor(_MetadataRequester):
             self._listener_handle = open_listener(self._log.extend, owner=self)
 
     def get_metadata_routing(self):
-        router = MetadataRouter(owner=self)
+        router = MetadataRouter(owner=self).add_self_request(self)
         for i, estimator in enumerate(self._estimator_scorers):
-            for dataset in ("training", "validation"):
-                if self._estimator_scorers[estimator][dataset] is None:
-                    continue
-                router.add(
-                    **{
-                        f"scorer_estimator_{i}_{dataset}": self._estimator_scorers[
-                            estimator
-                        ][dataset]
-                    },
-                    method_mapping=MethodMapping().add(
-                        caller="on_fit_task_end", callee="score"
-                    ),
-                )
+            for dataset in ("train", "val"):
+                if self._estimator_scorers[estimator][dataset] is not None:
+                    router.add(
+                        **{
+                            f"scorer_estimator_{i}_{dataset}": self._estimator_scorers[
+                                estimator
+                            ][dataset]
+                        },
+                        method_mapping=MethodMapping().add(
+                            caller="on_fit_task_end", callee="score"
+                        ),
+                    )
         return router
+
+    def set_on_fit_task_end_request(self, X_val, y_val):
+        """Set requested parameters by the callback for its `on_fit_task_end` hook.
+
+        Please see :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        Parameters
+        ----------
+        X_val : bool, None or str
+            - If a bool, indicates whether `X_val` is requested or not.
+            - If None, indicates that `X_val` is not requested an error is raised if it
+              is provided.
+            - If a string, indicates that `X_val` is requested under the alias given by
+              the string.
+
+        y_val : bool, None or str
+            - If a bool, indicates whether `y_val` is requested or not.
+            - If None, indicates that `y_val` is not requested an error is raised if it
+              is provided.
+            - If a string, indicates that `y_val` is requested under the alias given by
+              the string.
+        """
+        self._metadata_request = MetadataRequest(owner=self)
+        self._metadata_request.on_fit_task_end.add_request(param="X_val", alias=X_val)
+        self._metadata_request.on_fit_task_end.add_request(param="y_val", alias=y_val)
+        return self
 
     @validate_params(
         {
@@ -295,9 +358,14 @@ class ScoringMonitor(_MetadataRequester):
         - `run_id`: a unique identifier for the run;
         - `estimator_name`: the name of the (meta-)estimator of the run;
         - `timestamp`: the timestamp of the start of the run;
-        - `data`: the recorded scores for the run. Each score value is associated
-          with the context of the task for which the score was computed;
-        - `data_as_pandas`: the recorded scores as a Pandas DataFrame.
+        - `train_scores`: the recorded scores on the training data for the run. Each
+          score value is associated with the context of the task for which the score was
+          computed;
+        - `train_scores_as_pandas`: the recorded training scores as a Pandas DataFrame.
+        - `val_scores`: the recorded scores on the validation data for the run. Each
+          score value is associated with the context of the task for which the score was
+          computed;
+        - `val_scores_as_pandas`: the recorded validation scores as a Pandas DataFrame.
 
         See :class:`ScoringMonitorLog` for more details about the structure of the
         recorded scores.
@@ -326,7 +394,7 @@ class ScoringMonitor(_MetadataRequester):
             :class:`ScoringMonitorLog` object. Otherwise, returns the list of all
             run logs.
         """
-        logs = defaultdict(lambda: {"data": []})
+        logs = defaultdict(lambda: {"train_scores": [], "val_scores": []})
         run_to_task_id_path = defaultdict(set)
 
         if len(self._log) == 0:
@@ -341,13 +409,12 @@ class ScoringMonitor(_MetadataRequester):
 
             task_id_path = tuple(task_info["task_id"] for task_info in task_info_path)
 
-            logs[run_id]["data"].append(
+            logs[run_id][f"{dataset}_scores"].append(
                 {
                     "task_id_path": task_id_path,
                     "parent_task_id_path": task_id_path[:-1],
                     "parent_task_info_path": task_info_path[:-1],
                     **task_info_path[-1],
-                    "dataset": dataset,
                     **scores,
                 }
             )
@@ -355,31 +422,33 @@ class ScoringMonitor(_MetadataRequester):
 
         for run_id, log in logs.items():
             if include_lineage:
-                extra_rows = []
-                for row in log["data"]:
-                    for i in range(len(row["parent_task_info_path"])):
-                        task_info_path = row["parent_task_info_path"][: i + 1]
-                        task_id_path = tuple(
-                            task_info["task_id"] for task_info in task_info_path
-                        )
-                        if task_id_path not in run_to_task_id_path[run_id]:
-                            extra_rows.append(
-                                {
-                                    "task_id_path": task_id_path,
-                                    "parent_task_id_path": task_id_path[:-1],
-                                    "parent_task_info_path": task_info_path[:-1],
-                                    **task_info_path[-1],
-                                }
+                for score_dataset in ("train_scores", "val_scores"):
+                    extra_rows = []
+                    for row in log[score_dataset]:
+                        for i in range(len(row["parent_task_info_path"])):
+                            task_info_path = row["parent_task_info_path"][: i + 1]
+                            task_id_path = tuple(
+                                task_info["task_id"] for task_info in task_info_path
                             )
-                            run_to_task_id_path[run_id].add(task_id_path)
-                log["data"] += extra_rows
+                            if task_id_path not in run_to_task_id_path[run_id]:
+                                extra_rows.append(
+                                    {
+                                        "task_id_path": task_id_path,
+                                        "parent_task_id_path": task_id_path[:-1],
+                                        "parent_task_info_path": task_info_path[:-1],
+                                        **task_info_path[-1],
+                                    }
+                                )
+                                run_to_task_id_path[run_id].add(task_id_path)
+                    log[score_dataset] += extra_rows
 
             # sort rows by recursive task ids so that tasks of a same parent are grouped
             sorting_key = lambda x: (len(x["task_id_path"]), x["task_id_path"])
-            log["data"] = sorted(log["data"], key=sorting_key)
+            for score_dataset in ("train_scores", "val_scores"):
+                log[score_dataset] = sorted(log[score_dataset], key=sorting_key)
 
-            for row in log["data"]:
-                row.pop("parent_task_info_path", None)
+                for row in log[score_dataset]:
+                    row.pop("parent_task_info_path", None)
 
         # sort logs by run timestamp and estimator name
         logs = [ScoringMonitorLog(run_id=run_id, **log) for run_id, log in logs.items()]

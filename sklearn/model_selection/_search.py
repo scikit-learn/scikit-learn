@@ -999,6 +999,7 @@ class BaseSearchCV(
 
         X, y = indexable(X, y)
         params = _check_method_params(X, params=params)
+
         routed_params = self._get_routed_params_for_fit(params)
 
         if (sample_weight := params.get("sample_weight")) is not None:
@@ -1009,7 +1010,7 @@ class BaseSearchCV(
             estimator=self,
             X=X,
             y=y,
-            **routed_params.callback_context.call_on_fit_task_begin,
+            metadata=routed_params,
         )
 
         self._checked_cv_orig = check_cv(
@@ -1183,7 +1184,7 @@ class BaseSearchCV(
                     estimator=self,
                     X=X,
                     y=y,
-                    **routed_params.callback_context.call_on_fit_task_begin,
+                    metadata=routed_params,
                 )
 
                 refit_start_time = time.time()
@@ -1201,7 +1202,7 @@ class BaseSearchCV(
                 estimator=self,
                 X=X,
                 y=y,
-                **routed_params.callback_context.call_on_fit_task_end,
+                metadata=routed_params,
             )
 
         # Store the only scorer not as a dict for single metric evaluation
@@ -1216,7 +1217,7 @@ class BaseSearchCV(
             estimator=self,
             X=X,
             y=y,
-            **routed_params.callback_context.call_on_fit_task_end,
+            metadata=routed_params,
         )
 
         return self
@@ -1340,12 +1341,13 @@ class BaseSearchCV(
             splitter=self.cv,
             method_mapping=MethodMapping().add(caller="fit", callee="split"),
         )
-        router.add(
-            callback_context=self._callback_fit_ctx,
-            method_mapping=MethodMapping()
-            .add(caller="fit", callee="call_on_fit_task_begin")
-            .add(caller="fit", callee="call_on_fit_task_end"),
-        )
+        for i, callback in enumerate(getattr(self, "_skl_callbacks", [])):
+            router.add(
+                **{f"callback_{i}": callback},
+                method_mapping=MethodMapping()
+                .add(caller="fit", callee="on_fit_task_begin")
+                .add(caller="fit", callee="on_fit_task_end"),
+            )
         return router
 
     def _sk_visual_block_(self):

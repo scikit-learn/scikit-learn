@@ -159,7 +159,7 @@ class _LbfgsCallbackBridge:
             X=self._X,
             y=self._y,
             reconstruction_attributes={"coef_": coef, "intercept_": intercept},
-            **self._metadata.callback_context.call_on_fit_task_begin,
+            metadata=self._metadata,
         )
         return ctx
 
@@ -171,7 +171,7 @@ class _LbfgsCallbackBridge:
             X=self._X,
             y=self._y,
             reconstruction_attributes={"coef_": coef, "intercept_": intercept},
-            **self._metadata.callback_context.call_on_fit_task_end,
+            metadata=self._metadata,
         )
         # TODO(1.10): use the return value of ``call_on_fit_task_end`` (a bool
         # requesting early stopping) to ``raise StopIteration()``. scipy's
@@ -1483,7 +1483,7 @@ class LogisticRegression(
             estimator=self,
             X=X,
             y=y,
-            **callback_metadata.callback_context.call_on_fit_task_begin,
+            metadata=callback_metadata,
         )
 
         if solver == "liblinear":
@@ -1591,7 +1591,7 @@ class LogisticRegression(
             X=X,
             y=y,
             reconstruction_attributes={},
-            **callback_metadata.callback_context.call_on_fit_task_end,
+            metadata=callback_metadata,
         )
 
         return self
@@ -1661,12 +1661,25 @@ class LogisticRegression(
         return tags
 
     def get_metadata_routing(self):
-        router = MetadataRouter(owner=self).add(
-            callback_context=self._callback_fit_ctx,
-            method_mapping=MethodMapping()
-            .add(caller="fit", callee="call_on_fit_task_begin")
-            .add(caller="fit", callee="call_on_fit_task_end"),
-        )
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self).add_self_request(self)
+        for i, callback in enumerate(getattr(self, "_skl_callbacks", [])):
+            router.add(
+                **{f"callback_{i}": callback},
+                method_mapping=MethodMapping()
+                .add(caller="fit", callee="on_fit_task_begin")
+                .add(caller="fit", callee="on_fit_task_end"),
+            )
         return router
 
 

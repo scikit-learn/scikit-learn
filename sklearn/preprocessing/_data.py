@@ -981,12 +981,12 @@ class StandardScaler(
         n_features = X.shape[1]
 
         callback_ctx = self._init_callback_context()
-        routed_params = process_routing(process_routing(self, "fit", **params))
+        routed_params = process_routing(self, "fit", **params)
         callback_ctx.call_on_fit_task_begin(
             estimator=self,
             X=X,
             y=y,
-            **routed_params.callback_context.call_on_fit_task_begin,
+            metadata=routed_params,
         )
 
         if sample_weight is not None:
@@ -1096,7 +1096,7 @@ class StandardScaler(
             X=X,
             y=y,
             reconstruction_attributes={},
-            **routed_params.callback_context.call_on_fit_task_end,
+            metadata=routed_params,
         )
 
         return self
@@ -1199,12 +1199,25 @@ class StandardScaler(
         return tags
 
     def get_metadata_routing(self):
-        router = MetadataRouter(owner=self).add(
-            callback_context=self._callback_fit_ctx,
-            method_mapping=MethodMapping()
-            .add(caller="fit", callee="call_on_fit_task_begin")
-            .add(caller="fit", callee="call_on_fit_task_end"),
-        )
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self)
+        for i, callback in enumerate(getattr(self, "_skl_callbacks", [])):
+            router.add(
+                **{f"callback_{i}": callback},
+                method_mapping=MethodMapping()
+                .add(caller="fit", callee="on_fit_task_begin")
+                .add(caller="fit", callee="on_fit_task_end"),
+            )
         return router
 
 
