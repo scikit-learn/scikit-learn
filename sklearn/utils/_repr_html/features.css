@@ -134,8 +134,7 @@
 /* We need the extra class "name-details-table" so jupyter
 doesn't overwrite rules*/
 .name-details .name-details-table {
-  margin: auto;
-  table-layout: inherit;
+  width: 100%;
 }
 
 .sk-global input.sk-toggleable__control
