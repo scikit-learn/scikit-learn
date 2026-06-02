@@ -766,7 +766,7 @@ def test_rfe_sparse_coef(feature_importance):
     X = [[0, 1, 3], [1, 0, 0], [2, 0, 4], [0, 2, 4]]
     y = [0, 1, 2, 3]
 
-    estimator = LogisticRegression()
+    estimator = LogisticRegression(alpha=1e-4)
     selector_sparse = RFE(
         estimator, n_features_to_select=1, importance_getter=feature_importance
     )

@@ -394,7 +394,7 @@ def test_cross_validate_array_function_not_called():
     """Check that `__array_function__` (NEP18) is not called."""
     X = _NotAnArray([[1, 1], [1, 2], [1, 3], [1, 4], [2, 1], [2, 2], [2, 3], [2, 4]])
     y = _NotAnArray([1, 1, 1, 2, 2, 2, 1, 1])
-    estimator = LogisticRegression(random_state=0)
+    estimator = LogisticRegression(alpha=1e-4)
     cross_validate(estimator, X, y, cv=2)
 
 

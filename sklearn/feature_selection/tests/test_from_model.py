@@ -683,9 +683,9 @@ def test_from_model_estimator_attribute_error():
 )
 def test_feature_importance_sparse(feature_importance):
     from_model_sparse = SelectFromModel(
-        estimator=LogisticRegression(), importance_getter=feature_importance
+        estimator=LogisticRegression(alpha=1e-4), importance_getter=feature_importance
     )
-    from_model_dense = SelectFromModel(estimator=LogisticRegression())
+    from_model_dense = SelectFromModel(estimator=LogisticRegression(alpha=1e-4))
 
     from_model_sparse.fit(data, y)
     from_model_dense.fit(data, y)

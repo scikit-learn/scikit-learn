@@ -243,7 +243,7 @@ class DecisionBoundaryDisplay:
     >>> from sklearn.inspection import DecisionBoundaryDisplay
     >>> data = np.array([[0, 0], [1, 1], [2, 1], [2, 2], [3, 2], [3, 3]])
     >>> target = np.arange(data.shape[0])
-    >>> clf = LogisticRegression().fit(data, target)
+    >>> clf = LogisticRegression(alpha=1e-4).fit(data, target)
     >>> plot_methods = ["contourf", "contour", "pcolormesh"]
     >>> response_methods = ["predict_proba", "decision_function", "predict"]
     >>> _, axes = plt.subplots(

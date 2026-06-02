@@ -140,7 +140,7 @@ def test_meta_estimator_output_features():
         (StandardScaler(), [0, 1]),
         (MinMaxScaler(), [2, 3]),
     )
-    estimator = make_pipeline(preprocessor, LogisticRegression())
+    estimator = make_pipeline(preprocessor, LogisticRegression(alpha=1e-4))
     meta_estimator = TunedThresholdClassifierCV(
         estimator, store_cv_results=True, random_state=0
     ).fit(X, y)
