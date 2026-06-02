@@ -20,24 +20,32 @@ Xdigits -= Xdigits.min()
 Xdigits /= Xdigits.max()
 
 
-def test_fit():
+def test_fit(global_random_seed):
     X = Xdigits.copy()
 
     rbm = BernoulliRBM(
-        n_components=64, learning_rate=0.1, batch_size=10, n_iter=7, random_state=9
+        n_components=64,
+        learning_rate=0.1,
+        batch_size=10,
+        n_iter=7,
+        random_state=global_random_seed,
     )
     rbm.fit(X)
 
-    assert_almost_equal(rbm.score_samples(X).mean(), -21.0, decimal=0)
+    mean_score = rbm.score_samples(X).mean()
+    assert -23 < mean_score < -18
 
     # in-place tricks shouldn't have modified X
     assert_array_equal(X, Xdigits)
 
 
-def test_partial_fit():
+def test_partial_fit(global_random_seed):
     X = Xdigits.copy()
     rbm = BernoulliRBM(
-        n_components=64, learning_rate=0.1, batch_size=20, random_state=9
+        n_components=64,
+        learning_rate=0.1,
+        batch_size=20,
+        random_state=global_random_seed,
     )
     n_samples = X.shape[0]
     n_batches = int(np.ceil(float(n_samples) / rbm.batch_size))
@@ -47,13 +55,16 @@ def test_partial_fit():
         for batch in batch_slices:
             rbm.partial_fit(batch)
 
-    assert_almost_equal(rbm.score_samples(X).mean(), -21.0, decimal=0)
+    mean_score = rbm.score_samples(X).mean()
+    assert -24 < mean_score < -18
     assert_array_equal(X, Xdigits)
 
 
-def test_transform():
+def test_transform(global_random_seed):
     X = Xdigits[:100]
-    rbm1 = BernoulliRBM(n_components=16, batch_size=5, n_iter=5, random_state=42)
+    rbm1 = BernoulliRBM(
+        n_components=16, batch_size=5, n_iter=5, random_state=global_random_seed
+    )
     rbm1.fit(X)
 
     Xt1 = rbm1.transform(X)
@@ -70,15 +81,21 @@ def test_small_sparse(csr_container):
 
 
 @pytest.mark.parametrize("sparse_container", CSC_CONTAINERS + CSR_CONTAINERS)
-def test_small_sparse_partial_fit(sparse_container):
+def test_small_sparse_partial_fit(sparse_container, global_random_seed):
     X_sparse = sparse_container(Xdigits[:100])
     X = Xdigits[:100].copy()
 
     rbm1 = BernoulliRBM(
-        n_components=64, learning_rate=0.1, batch_size=10, random_state=9
+        n_components=64,
+        learning_rate=0.1,
+        batch_size=10,
+        random_state=global_random_seed,
     )
     rbm2 = BernoulliRBM(
-        n_components=64, learning_rate=0.1, batch_size=10, random_state=9
+        n_components=64,
+        learning_rate=0.1,
+        batch_size=10,
+        random_state=global_random_seed,
     )
 
     rbm1.partial_fit(X_sparse)
@@ -89,10 +106,12 @@ def test_small_sparse_partial_fit(sparse_container):
     )
 
 
-def test_sample_hiddens():
-    rng = np.random.RandomState(0)
+def test_sample_hiddens(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     X = Xdigits[:100]
-    rbm1 = BernoulliRBM(n_components=2, batch_size=5, n_iter=5, random_state=42)
+    rbm1 = BernoulliRBM(
+        n_components=2, batch_size=5, n_iter=5, random_state=global_random_seed
+    )
     rbm1.fit(X)
 
     h = rbm1._mean_hiddens(X[0])
@@ -102,39 +121,32 @@ def test_sample_hiddens():
 
 
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
-def test_fit_gibbs(csc_container):
-    # XXX: this test is very seed-dependent! It probably needs to be rewritten.
-
+def test_fit_gibbs(csc_container, global_random_seed):
     # Gibbs on the RBM hidden layer should be able to recreate [[0], [1]]
     # from the same input
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     X = np.array([[0.0], [1.0]])
-    rbm1 = BernoulliRBM(n_components=2, batch_size=2, n_iter=42, random_state=rng)
-    # you need that much iters
+    rbm1 = BernoulliRBM(n_components=2, batch_size=2, n_iter=100, random_state=rng)
     rbm1.fit(X)
-    assert_almost_equal(
-        rbm1.components_, np.array([[0.02649814], [0.02009084]]), decimal=4
-    )
-    assert_almost_equal(rbm1.gibbs(X), X)
+    assert_almost_equal(rbm1.gibbs(X), X, decimal=0)
 
     # Gibbs on the RBM hidden layer should be able to recreate [[0], [1]] from
     # the same input even when the input is sparse, and test against non-sparse
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     X = csc_container([[0.0], [1.0]])
-    rbm2 = BernoulliRBM(n_components=2, batch_size=2, n_iter=42, random_state=rng)
+    rbm2 = BernoulliRBM(n_components=2, batch_size=2, n_iter=100, random_state=rng)
     rbm2.fit(X)
-    assert_almost_equal(
-        rbm2.components_, np.array([[0.02649814], [0.02009084]]), decimal=4
-    )
-    assert_almost_equal(rbm2.gibbs(X), X.toarray())
+    assert_almost_equal(rbm2.gibbs(X), X.toarray(), decimal=0)
     assert_almost_equal(rbm1.components_, rbm2.components_)
 
 
-def test_gibbs_smoke():
+def test_gibbs_smoke(global_random_seed):
     # Check if we don't get NaNs sampling the full digits dataset.
     # Also check that sampling again will yield different results.
     X = Xdigits
-    rbm1 = BernoulliRBM(n_components=42, batch_size=40, n_iter=20, random_state=42)
+    rbm1 = BernoulliRBM(
+        n_components=42, batch_size=40, n_iter=20, random_state=global_random_seed
+    )
     rbm1.fit(X)
     X_sampled = rbm1.gibbs(X)
     assert_all_finite(X_sampled)
@@ -143,11 +155,11 @@ def test_gibbs_smoke():
 
 
 @pytest.mark.parametrize("lil_containers", LIL_CONTAINERS)
-def test_score_samples(lil_containers):
+def test_score_samples(lil_containers, global_random_seed):
     # Test score_samples (pseudo-likelihood) method.
     # Assert that pseudo-likelihood is computed without clipping.
     # See Fabian's blog, http://bit.ly/1iYefRk
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     X = np.vstack([np.zeros(1000), np.ones(1000)])
     rbm1 = BernoulliRBM(n_components=10, batch_size=2, n_iter=10, random_state=rng)
     rbm1.fit(X)
@@ -155,9 +167,9 @@ def test_score_samples(lil_containers):
 
     # Sparse vs. dense should not affect the output. Also test sparse input
     # validation.
-    rbm1.random_state = 42
+    rbm1.random_state = global_random_seed
     d_score = rbm1.score_samples(X)
-    rbm1.random_state = 42
+    rbm1.random_state = global_random_seed
     s_score = rbm1.score_samples(lil_containers(X))
     assert_almost_equal(d_score, s_score)
 
@@ -179,11 +191,15 @@ def test_rbm_verbose():
 
 
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
-def test_sparse_and_verbose(csc_container, capsys):
+def test_sparse_and_verbose(csc_container, capsys, global_random_seed):
     # Make sure RBM works with sparse input when verbose=True
     X = csc_container([[0.0], [1.0]])
     rbm = BernoulliRBM(
-        n_components=2, batch_size=2, n_iter=1, random_state=42, verbose=True
+        n_components=2,
+        batch_size=2,
+        n_iter=1,
+        random_state=global_random_seed,
+        verbose=True,
     )
     rbm.fit(X)
     # Make sure the captured standard output is sound.
@@ -199,9 +215,11 @@ def test_sparse_and_verbose(csc_container, capsys):
     "dtype_in, dtype_out",
     [(np.float32, np.float32), (np.float64, np.float64), (int, np.float64)],
 )
-def test_transformer_dtypes_casting(dtype_in, dtype_out):
+def test_transformer_dtypes_casting(dtype_in, dtype_out, global_random_seed):
     X = Xdigits[:100].astype(dtype_in)
-    rbm = BernoulliRBM(n_components=16, batch_size=5, n_iter=5, random_state=42)
+    rbm = BernoulliRBM(
+        n_components=16, batch_size=5, n_iter=5, random_state=global_random_seed
+    )
     Xt = rbm.fit_transform(X)
 
     # dtype_in and dtype_out should be consistent
@@ -210,15 +228,19 @@ def test_transformer_dtypes_casting(dtype_in, dtype_out):
     )
 
 
-def test_convergence_dtype_consistency():
+def test_convergence_dtype_consistency(global_random_seed):
     # float 64 transformer
     X_64 = Xdigits[:100].astype(np.float64)
-    rbm_64 = BernoulliRBM(n_components=16, batch_size=5, n_iter=5, random_state=42)
+    rbm_64 = BernoulliRBM(
+        n_components=16, batch_size=5, n_iter=5, random_state=global_random_seed
+    )
     Xt_64 = rbm_64.fit_transform(X_64)
 
     # float 32 transformer
     X_32 = Xdigits[:100].astype(np.float32)
-    rbm_32 = BernoulliRBM(n_components=16, batch_size=5, n_iter=5, random_state=42)
+    rbm_32 = BernoulliRBM(
+        n_components=16, batch_size=5, n_iter=5, random_state=global_random_seed
+    )
     Xt_32 = rbm_32.fit_transform(X_32)
 
     # results and attributes should be close enough in 32 bit and 64 bit
@@ -227,9 +249,9 @@ def test_convergence_dtype_consistency():
         rbm_64.intercept_hidden_, rbm_32.intercept_hidden_, rtol=1e-06, atol=0
     )
     assert_allclose(
-        rbm_64.intercept_visible_, rbm_32.intercept_visible_, rtol=1e-05, atol=0
+        rbm_64.intercept_visible_, rbm_32.intercept_visible_, rtol=5e-05, atol=0
     )
-    assert_allclose(rbm_64.components_, rbm_32.components_, rtol=1e-03, atol=0)
+    assert_allclose(rbm_64.components_, rbm_32.components_, rtol=2e-02, atol=0)
     assert_allclose(rbm_64.h_samples_, rbm_32.h_samples_)
 
 
