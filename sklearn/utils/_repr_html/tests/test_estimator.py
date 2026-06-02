@@ -635,15 +635,28 @@ def test_estimator_html_repr_table():
 
 
 @pytest.mark.parametrize("name_details", [["city", "country"], ("city", "country")])
-def test_write_label_html_list_like_name_details_as_table(name_details):
+def test_write_label_html_name_details_as_table__strings(name_details):
     with closing(StringIO()) as out:
         _write_label_html(out, "", "", "OneHotEncoder", name_details)
         html_label = out.getvalue()
 
     assert "name-details-table" in html_label
-    assert "<summary>" not in html_label
+    assert "<caption>Input features</caption>" in html_label
     assert "<td>city</td>" in html_label
     assert "<td>country</td>" in html_label
+    assert "<pre>" not in html_label
+
+
+@pytest.mark.parametrize("name_details", [[0, 3], np.array([0, 3])])
+def test_write_label_html_name_details_as_table_integers(name_details):
+    with closing(StringIO()) as out:
+        _write_label_html(out, "", "", "OneHotEncoder", name_details)
+        html_label = out.getvalue()
+
+    assert "name-details-table" in html_label
+    assert "<caption>Input features</caption>" in html_label
+    assert "<td>0</td>" in html_label
+    assert "<td>3</td>" in html_label
     assert "<pre>" not in html_label
 
 
