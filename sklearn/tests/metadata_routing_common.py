@@ -38,7 +38,7 @@ def record_metadata(obj, record_default=True, **kwargs):
     """
     stack = inspect.stack()
     # for callee, extract the innermost `function` (which is in METHODS) from stack
-    # frame; for caller, extract next one following it; as a fallback, infer callee and
+    # frame; for caller, extract outmost function; as a fallback, infer callee and
     # caller positionally:
     callee = caller = None
     for frame in stack:
@@ -48,7 +48,6 @@ def record_metadata(obj, record_default=True, **kwargs):
             continue
         if frame.function in METHODS:
             caller = frame.function
-            break
     callee = callee or stack[1].function
     caller = caller or stack[2].function
 
@@ -89,7 +88,7 @@ def check_recorded_metadata(
     )
     print(
         f"obj: {obj.__class__.__name__}, method: {method}, parent: {parent}, recorded: "
-        "{[(k1, k2) for k1, d in obj._records.items() for k2 in d]}"
+        f"{[(k1, k2) for k1, d in obj._records.items() for k2 in d]}"
     )
     print("")
     assert all_records

@@ -67,6 +67,7 @@ from sklearn.preprocessing import TargetEncoder
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.tests.metadata_routing_common import (
     ConsumingClassifier,
+    ConsumingClassifierWithOnlyPredict,
     ConsumingRegressor,
     ConsumingScorer,
     ConsumingSplitter,
@@ -348,11 +349,6 @@ METAESTIMATORS: list = [
             "predict_log_proba",
             "decision_function",
         ],
-        "method_mapping": {
-            "predict": ["predict", "predict_proba"],
-            "predict_proba": ["predict", "predict_proba"],
-            "predict_log_proba": ["predict", "predict_proba", "predict_log_proba"],
-        },
     },
     {
         "metaestimator": BaggingRegressor,
@@ -559,7 +555,10 @@ def get_init_args(metaestimator_info, sub_estimator_consumes):
             if sub_estimator_type == "regressor":
                 estimator = ConsumingRegressor(estimator_registry)
             elif sub_estimator_type == "classifier":
-                estimator = ConsumingClassifier(estimator_registry)
+                if metaestimator_info["metaestimator"] is BaggingClassifier:
+                    estimator = ConsumingClassifierWithOnlyPredict(estimator_registry)
+                else:
+                    estimator = ConsumingClassifier(estimator_registry)
             else:
                 raise ValueError("Unpermitted `sub_estimator_type`.")  # pragma: nocover
         else:
