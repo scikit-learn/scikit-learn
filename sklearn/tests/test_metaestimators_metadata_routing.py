@@ -834,6 +834,7 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
                     method=method_name,
                     parent=method_name,
                     split_params=split_params,
+                    preserves_metadata=preserves_metadata,
                     **method_kwargs,
                 )
 

@@ -37,8 +37,9 @@ def record_metadata(obj, record_default=True, **kwargs):
 
     """
     stack = inspect.stack()
-    # try to take the innermost stack frame whose `function` is in METHODS" or infer
-    # the callee and caller positionally if not succeeding:
+    # for callee, extract the innermost `function` (which is in METHODS) from stack
+    # frame; for caller, extract next one following it; as a fallback, infer callee and
+    # caller positionally:
     callee = caller = None
     for frame in stack:
         if callee is None:
@@ -48,10 +49,8 @@ def record_metadata(obj, record_default=True, **kwargs):
         if frame.function in METHODS:
             caller = frame.function
             break
-    if "callee" == None:
-        callee = stack[1].function
-    if "caller" == None:
-        caller = stack[2].function
+    callee = callee or stack[1].function
+    caller = caller or stack[2].function
 
     if not hasattr(obj, "_records"):
         obj._records = defaultdict(lambda: defaultdict(list))
@@ -64,7 +63,9 @@ def record_metadata(obj, record_default=True, **kwargs):
     obj._records[callee][caller].append(kwargs)
 
 
-def check_recorded_metadata(obj, method, parent, split_params=tuple(), **kwargs):
+def check_recorded_metadata(
+    obj, method, parent, split_params=tuple(), preserves_metadata=True, **kwargs
+):
     """Check whether the expected metadata is passed to the object's method.
 
     Parameters
@@ -86,6 +87,11 @@ def check_recorded_metadata(obj, method, parent, split_params=tuple(), **kwargs)
     all_records = (
         getattr(obj, "_records", dict()).get(method, dict()).get(parent, list())
     )
+    print(
+        f"obj: {obj.__class__.__name__}, method: {method}, parent: {parent}, recorded: "
+        "{[(k1, k2) for k1, d in obj._records.items() for k2 in d]}"
+    )
+    print("")
     assert all_records
 
     for record in all_records:
@@ -94,6 +100,8 @@ def check_recorded_metadata(obj, method, parent, split_params=tuple(), **kwargs)
         assert set(kwargs.keys()) == set(record.keys()), (
             f"Expected {kwargs.keys()}, got {record.keys()}"
         )
+        if not preserves_metadata:
+            continue
         for key, value in kwargs.items():
             recorded_value = record[key]
             # The following condition is used to check for any specified parameters
