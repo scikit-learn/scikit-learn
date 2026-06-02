@@ -167,8 +167,6 @@ def _write_label_html(
     )
     name = html.escape(name)
     if name_details is not None:
-        if isinstance(name_details, str):
-            name_details = html.escape(str(name_details))
         checked_str = "checked" if checked else ""
         est_id = _ESTIMATOR_ID_COUNTER.get_id()
 
@@ -217,8 +215,8 @@ def _write_label_html(
         if ("Pipeline" not in name) and not params:
             if _is_arraylike_not_scalar(name_details):
                 out.write(_name_details_html(name_details, is_fitted_css_class))
-            elif name != "passthrough" and name_details not in ("", "[]"):
-                out.write(f"<pre>{name_details}</pre>")
+            elif name != "passthrough" and name_details != "":
+                out.write(f"<pre>{html.escape(str(name_details))}</pre>")
 
         out.write("</div>")
         if features is None or len(features) == 0:
