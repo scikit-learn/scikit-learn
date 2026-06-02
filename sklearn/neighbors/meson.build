@@ -10,6 +10,7 @@ _binary_tree_pxi = custom_target(
 neighbors_cython_tree = [
   fs.copyfile('__init__.py'),
   fs.copyfile('_partition_nodes.pxd'),
+  fs.copyfile('binarytree.h'),
   _binary_tree_pxi,
 ]
 

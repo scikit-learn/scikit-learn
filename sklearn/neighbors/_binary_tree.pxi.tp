@@ -157,6 +157,9 @@ implementation_specific_values = [
 #                                   BinaryTree tree2, intp_t i_node2):
 #     """Compute the maximum distance between two nodes"""
 
+cdef extern from "binarytree.h":
+    ctypedef int tls_int
+
 cimport numpy as cnp
 from cython cimport floating
 from libc.math cimport fabs, sqrt, exp, cos, pow, log, lgamma
@@ -783,6 +786,11 @@ cdef class NodeHeap:
 def newObj(obj):
     return obj.__new__(obj)
 
+# Thread-local variables for BinaryTree.query(). These will need to be
+# statically defined in the modules that include this file.
+cdef tls_int tls_n_leaves
+cdef tls_int tls_n_splits
+cdef tls_int tls_n_trims
 
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE, NPY_TYPE in implementation_specific_values}}
 
@@ -1155,9 +1163,10 @@ cdef class BinaryTree{{name_suffix}}:
         # bounds is needed for the dual tree algorithm
         cdef float64_t[::1] bounds
 
-        self.n_trims = 0
-        self.n_leaves = 0
-        self.n_splits = 0
+        global tls_n_trims, tls_n_leaves, tls_n_splits
+        tls_n_trims = 0
+        tls_n_leaves = 0
+        tls_n_splits = 0
 
         if dualtree:
             other = self.__class__(np_Xarr, metric=self.dist_metric,
@@ -1186,6 +1195,12 @@ cdef class BinaryTree{{name_suffix}}:
 
         distances, indices = heap.get_arrays(sort=sort_results)
         distances = self.dist_metric.rdist_to_dist(distances)
+
+        # TODO still a race condition
+        global tls_n_splits, tls_n_leaves, tls_n_trims
+        self.n_splits += tls_n_splits
+        self.n_leaves += tls_n_leaves
+        self.n_trims += tls_n_trims
 
         # deflatten results
         if return_distance:
@@ -1620,12 +1635,14 @@ cdef class BinaryTree{{name_suffix}}:
         # Case 1: query point is outside node radius:
         #         trim it from the query
         if reduced_dist_LB > heap.largest(i_pt):
-            self.n_trims += 1
+            global tls_n_trims
+            tls_n_trims += 1
 
         # ------------------------------------------------------------
         # Case 2: this is a leaf node.  Update set of nearby points
         elif node_info.is_leaf:
-            self.n_leaves += 1
+            global tls_n_leaves
+            tls_n_leaves += 1
             for i in range(node_info.idx_start, node_info.idx_end):
                 dist_pt = self.rdist(pt,
                                      &self.data[self.idx_array[i], 0],
@@ -1636,7 +1653,8 @@ cdef class BinaryTree{{name_suffix}}:
         # Case 3: Node is not a leaf.  Recursively query subnodes
         #         starting with the closest
         else:
-            self.n_splits += 1
+            global tls_n_splits
+            tls_n_splits += 1
             i1 = 2 * i_node + 1
             i2 = i1 + 1
             reduced_dist_LB_1 = min_rdist{{name_suffix}}(self, i1, pt)
@@ -1684,12 +1702,14 @@ cdef class BinaryTree{{name_suffix}}:
             # Case 1: query point is outside node radius:
             #         trim it from the query
             if reduced_dist_LB > heap.largest(i_pt):
-                self.n_trims += 1
+                global tls_n_trims
+                tls_n_trims += 1
 
             # ------------------------------------------------------------
             # Case 2: this is a leaf node.  Update set of nearby points
             elif node_data[i_node].is_leaf:
-                self.n_leaves += 1
+                global tls_n_leaves
+                tls_n_leaves += 1
                 for i in range(node_data[i_node].idx_start,
                                node_data[i_node].idx_end):
                     dist_pt = self.rdist(pt,
@@ -1700,7 +1720,8 @@ cdef class BinaryTree{{name_suffix}}:
             # ------------------------------------------------------------
             # Case 3: Node is not a leaf.  Add subnodes to the node heap
             else:
-                self.n_splits += 1
+                global tls_n_splits
+                tls_n_splits += 1
                 for i in range(2 * i_node + 1, 2 * i_node + 3):
                     nodeheap_item.i1 = i
                     nodeheap_item.val = min_rdist{{name_suffix}}(self, i, pt)
