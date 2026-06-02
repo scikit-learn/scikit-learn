@@ -647,6 +647,10 @@ support for missing values for `splitter='random'`, where the splits
 are determined randomly. For more details on how the splitter differs on
 non-missing values, see the :ref:`Forest section <forest>`.
 
+This support applies to both dense arrays and sparse matrices (``csc_matrix`` or
+``csr_matrix``). Sparse matrices with explicit NaN values in their ``.data``
+attribute are handled the same way as dense arrays.
+
 First we will describe how :class:`DecisionTreeClassifier`, :class:`DecisionTreeRegressor`
 handle missing-values in the data.
 

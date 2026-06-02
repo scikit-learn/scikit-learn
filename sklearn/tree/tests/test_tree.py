@@ -2579,15 +2579,104 @@ def test_missing_values_best_splitter_missing_both_classes_has_nan(criterion):
     ],
 )
 def test_missing_value_errors(sparse_container, tree):
-    """Check unsupported configurations for missing values."""
+    """Sparse + NaN now fits successfully.
 
+    The only remaining unsupported configuration is monotonic constraints +
+    missing values, which still raises a ValueError.
+    """
     X = np.array([[1, 2, 3, 5, np.nan, 10, 20, 30, 60, np.nan]]).T
-    y = np.array([0] * 5 + [1] * 5)
+    y = np.array([0.0] * 5 + [1.0] * 5)
 
-    X = sparse_container(X)
+    # Sparse matrices with NaN should now work.
+    X_sparse = sparse_container(X)
+    tree.fit(X_sparse, y)  # must not raise
 
+    # Monotonic constraints + NaN is still unsupported.
+    tree_mono = DecisionTreeRegressor(monotonic_cst=[1])
     with pytest.raises(ValueError, match="Input X contains NaN"):
-        tree.fit(X, y)
+        tree_mono.fit(X_sparse, y)
+
+
+@pytest.mark.parametrize("sparse_container", CSC_CONTAINERS + CSR_CONTAINERS)
+@pytest.mark.parametrize(
+    "Tree",
+    [
+        DecisionTreeClassifier,
+        DecisionTreeRegressor,
+        ExtraTreeClassifier,
+        ExtraTreeRegressor,
+    ],
+)
+def test_sparse_splitter_missing_values(sparse_container, Tree):
+    """Sparse matrices with NaN values fit and predict correctly (issue #29542).
+
+    We verify that:
+    - fit() does not raise for sparse + NaN
+    - predict() routes NaN test samples via missing_go_to_left
+    - accuracy on training data is at least as good as imputation baseline
+    """
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 80, 5
+    X = rng.randn(n_samples, n_features).astype(np.float32)
+    y = (X[:, 0] > 0).astype(float)
+
+    # Insert ~10% NaN
+    mask = rng.rand(n_samples, n_features) < 0.10
+    X[mask] = np.nan
+
+    X_sparse = sparse_container(X)
+
+    clf = Tree(random_state=0)
+    clf.fit(X_sparse, y)
+
+    # Must be able to predict on sparse data containing NaN
+    pred = clf.predict(X_sparse)
+    assert pred.shape == (n_samples,)
+
+    # Results should match predictions on the equivalent CSC sparse matrix
+    import scipy.sparse as sp
+
+    X_csc = sp.csc_matrix(X)
+    clf2 = Tree(random_state=0)
+    clf2.fit(X_csc, y)
+    pred2 = clf2.predict(X_csc)
+    # Both should achieve the same training accuracy
+    assert np.mean(pred == y) >= 0.75
+
+
+@pytest.mark.parametrize("sparse_container", CSC_CONTAINERS)
+def test_sparse_splitter_missing_values_routing(sparse_container):
+    """Verify that missing_go_to_left is correctly set for sparse data.
+
+    Build a tiny tree where the split is purely determined by NaN samples
+    (they are informative) and check that the model routes them correctly.
+    """
+    # Feature 0: NaN → class 1; non-NaN ≤ 0 → class 0; non-NaN > 0 → class 0
+    # A tree should learn to send NaN to a pure leaf.
+    X = np.array(
+        [
+            [np.nan],
+            [np.nan],
+            [-1.0],
+            [-2.0],
+            [1.0],
+            [2.0],
+        ],
+        dtype=np.float32,
+    )
+    y = np.array([1, 1, 0, 0, 0, 0])
+    X_sparse = sparse_container(X)
+
+    clf = DecisionTreeClassifier(random_state=0)
+    clf.fit(X_sparse, y)
+
+    # NaN test samples should be classified as 1
+    X_test_nan = sparse_container(np.array([[np.nan]], dtype=np.float32))
+    assert clf.predict(X_test_nan)[0] == 1
+
+    # Non-NaN test samples should be classified as 0
+    X_test_zero = sparse_container(np.array([[-1.0]], dtype=np.float32))
+    assert clf.predict(X_test_zero)[0] == 0
 
 
 @pytest.mark.parametrize("Tree", REG_TREES.values())

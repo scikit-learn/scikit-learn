@@ -1,0 +1,4 @@
+- :class:`tree.DecisionTreeClassifier`, :class:`tree.DecisionTreeRegressor`,
+  :class:`tree.ExtraTreeClassifier`, and :class:`tree.ExtraTreeRegressor` now support
+  missing values (NaNs) in sparse input matrices (``csc_matrix`` / ``csr_matrix``).
+  By :user:`Sravan Kundurthi <sravankundurthi>`.
