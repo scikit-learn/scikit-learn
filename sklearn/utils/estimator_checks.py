@@ -385,17 +385,18 @@ def _yield_array_api_checks(estimator, only_numpy=False):
                 X_ns_and_device=X_ns_and_device,
             )
         # 3. String `y` and numeric `X` from all supported namespace/devices
-        for (
-            array_namespace,
-            device_name,
-            dtype_name,
-        ) in yield_namespace_device_dtype_combinations():
-            yield partial(
-                check_array_api_string_and_numeric_inputs,
-                array_namespace=array_namespace,
-                device_name=device_name,
-                dtype_name=dtype_name,
-            )
+        if is_classifier(estimator):
+            for (
+                array_namespace,
+                device_name,
+                dtype_name,
+            ) in yield_namespace_device_dtype_combinations():
+                yield partial(
+                    check_array_api_string_and_numeric_inputs,
+                    array_namespace=array_namespace,
+                    device_name=device_name,
+                    dtype_name=dtype_name,
+                )
         # 4. Namespace/device consistency between fit and predict/transform
         # Only test with one namespace to keep costs down
         # There should be no dependency on the exact namespace used.
