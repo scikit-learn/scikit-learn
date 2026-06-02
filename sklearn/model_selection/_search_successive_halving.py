@@ -603,17 +603,23 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         for details.
         For an example of analysing ``cv_results_``,
         see :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`.
-
-    best_estimator_ : estimator or dict
+    968best_estimator_ : estimator or dict
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
-        on the left out data. Not available if ``refit=False``.
+        on the left out data **in the last halving iteration**.
+        Not available if ``refit=False``.
 
     best_score_ : float
-        Mean cross-validated score of the best_estimator.
+        Mean cross-validated score of the best_estimator, corresponding
+        to the last halving iteration. Note that this may differ from
+        the highest score in ``cv_results_``, which includes results
+        from all iterations.
 
     best_params_ : dict
-        Parameter setting that gave the best results on the hold out data.
+        Parameter setting that gave the best results on the hold out
+        data in the last halving iteration. Note that earlier iterations
+        may show higher scores in ``cv_results_`` due to evaluating
+        candidates on fewer resources.
 
     best_index_ : int
         The index (of the ``cv_results_`` arrays) which corresponds to the best
@@ -968,13 +974,20 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     best_estimator_ : estimator or dict
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
-        on the left out data. Not available if ``refit=False``.
+        on the left out data **in the last halving iteration**.
+        Not available if ``refit=False``.
 
     best_score_ : float
-        Mean cross-validated score of the best_estimator.
+        Mean cross-validated score of the best_estimator, corresponding
+        to the last halving iteration. Note that this may differ from
+        the highest score in ``cv_results_``, which includes results
+        from all iterations.
 
     best_params_ : dict
-        Parameter setting that gave the best results on the hold out data.
+        Parameter setting that gave the best results on the hold out
+        data in the last halving iteration. Note that earlier iterations
+        may show higher scores in ``cv_results_`` due to evaluating
+        candidates on fewer resources.
 
     best_index_ : int
         The index (of the ``cv_results_`` arrays) which corresponds to the best
