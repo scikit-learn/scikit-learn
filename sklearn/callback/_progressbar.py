@@ -20,6 +20,9 @@ _run_monitors = {}
 class ProgressBar:
     """Callback that displays progress bars for each iterative step of an estimator.
 
+    This callback requires `rich <https://rich.readthedocs.io>`_ to be installed.
+    It can be installed with ``pip install rich``.
+
     Parameters
     ----------
     max_propagation_depth : int, default=1
