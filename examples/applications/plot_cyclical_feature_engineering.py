@@ -316,7 +316,10 @@ one_hot_linear_pipeline = make_pipeline(
     RidgeCV(alphas=alphas),
 )
 
-evaluate(one_hot_linear_pipeline, X, y, cv=ts_cv)
+est = evaluate(one_hot_linear_pipeline, X, y, cv=ts_cv)
+
+# %%
+est
 
 # %%
 # The average error rate of this model is 10% which is much better than using
