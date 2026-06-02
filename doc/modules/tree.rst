@@ -699,7 +699,7 @@ Decisions are made as follows:
 :class:`ExtraTreeClassifier`, and :class:`ExtraTreeRegressor` (``splitter='random'``)
 handle missing values in a slightly different way. When splitting a node, a random
 threshold will be chosen to split the non-missing values on, while the missing values
-are all randomly assigned to one side or the other. This is repeated for every
+are assigned together to one randomly chosen side. This is repeated for every
 feature considered at each split. The best split among these is chosen.
 
 During prediction, the treatment of missing-values is the same as that of the
