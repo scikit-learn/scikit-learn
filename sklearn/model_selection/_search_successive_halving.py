@@ -970,6 +970,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
         on the left out data, in the last halving iteration.
+        Not available if ``refit=False``.
 
         .. note::
             ``best_estimator_`` reflects the winner of the final iteration
