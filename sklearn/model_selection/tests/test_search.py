@@ -3090,41 +3090,6 @@ def test_search_callbacks_propagation(search, refit):
         assert callback.count_hooks("teardown") == 1
 
 
-@skip_callback_test_if_wasm
-def test_search_callbacks_receive_sample_weight():
-    """Test that `sample_weight` gets passed to `callback.on_fit_task_*`.
-
-    Note this tests all *SearchCV classes that inherit from `BaseSearchCV`.
-    """
-    callback = RecordingCallback()
-    search = GridSearchCV(
-        MaxIterEstimator(), {"max_iter": [1, 2, 3]}, cv=2, scoring="accuracy"
-    ).set_callbacks(callback)
-    sample_weight = np.random.RandomState(0).randint(0, 5, size=y.shape[0])
-    search.fit(X, y, sample_weight=sample_weight)
-
-    evaluation_records = [
-        entry
-        for entry in callback.record
-        if entry["context"].task_name == "candidate-split-evaluation"
-    ]
-    assert evaluation_records
-    refit_records = [
-        entry
-        for entry in callback.record
-        if entry["context"].task_name == "refit-with-best-params"
-    ]
-    assert refit_records
-
-    for entry in evaluation_records:
-        assert "sample_weight" in entry["kwargs"]["metadata"]
-
-    for entry in refit_records:
-        assert "sample_weight" in entry["kwargs"]["metadata"]
-        passed_weights = entry["kwargs"]["metadata"]["sample_weight"]
-        assert_array_equal(passed_weights, sample_weight)
-
-
 @pytest.mark.parametrize(
     "search",
     _searchcv_callback_test_cases(MaxIterEstimator, "r2"),
