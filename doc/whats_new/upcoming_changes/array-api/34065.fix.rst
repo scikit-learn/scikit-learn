@@ -1,6 +1,0 @@
-- :class:`linear_model.RidgeClassifier` and
-  :class:`linear_model.RidgeClassifierCV` now store `classes_` in the namespace
-  and on the device of `y` when fitted with array API inputs from mixed
-  namespaces/devices, making them consistent with
-  :class:`linear_model.LogisticRegression`.
-  By :user:`Arthur Lacote <cakedev0>`.
