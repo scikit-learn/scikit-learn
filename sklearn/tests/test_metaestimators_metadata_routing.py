@@ -433,6 +433,7 @@ METAESTIMATORS: list = [
         "estimator": "classifier",
         "X": X,
         "y": y,
+        "preserves_metadata": "subset",
         "estimator_routing_methods": ["fit"],
         "scorer_name": "scoring",
         "scorer_routing_methods": ["fit"],
@@ -654,7 +655,7 @@ def set_requests(obj, *, method_mapping, methods, metadata_name, value=True):
                 set_request_for_method(classes=True)
 
 
-def _get_callee_from_caller(instance, caller):
+def _get_callee_from_caller(instance, estimator_name, caller):
     """Helper function to extract `callee` via the router of a routing instance.
 
     Parameters
@@ -666,11 +667,10 @@ def _get_callee_from_caller(instance, caller):
         Method from the parent class object, where the metadata is routed from.
     """
 
-    mapping = instance.get_metadata_routing()._route_mappings["estimator"].mapping
+    mapping = instance.get_metadata_routing()._route_mappings[estimator_name].mapping
     for pair in mapping:
         if pair.caller == caller:
-            callee = pair.callee
-            return callee
+            return pair.callee
     raise KeyError(
         f"Caller {caller} not in method mapping for {type(instance).__name__}."
     )
@@ -853,7 +853,9 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
             for estimator in registry:
                 check_recorded_metadata(
                     estimator,
-                    method=_get_callee_from_caller(instance, method_name),
+                    method=_get_callee_from_caller(
+                        instance, metaestimator["estimator_name"], method_name
+                    ),
                     parent=method_name,
                     split_params=split_params,
                     preserves_metadata=preserves_metadata,
