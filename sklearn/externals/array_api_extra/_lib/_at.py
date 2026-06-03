@@ -21,7 +21,7 @@ from ._utils._typing import Array, SetIndex
 
 if TYPE_CHECKING:  # pragma: no cover
     # TODO import from typing (requires Python >=3.11)
-    from typing import Self
+    from typing_extensions import Self
 
 
 class _AtOp(Enum):

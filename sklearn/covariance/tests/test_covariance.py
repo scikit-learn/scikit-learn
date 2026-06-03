@@ -372,18 +372,6 @@ def test_oas():
     assert_array_almost_equal((X_1f**2).sum() / n_samples, oa.covariance_, 4)
 
 
-def test_oas_function_does_not_store_precision():
-    """Check that the oas() convenience function returns consistent results
-    with the OAS estimator and does not store the precision matrix."""
-    cov, shrinkage = oas(X)
-
-    oa = OAS()
-    oa.fit(X)
-
-    assert_array_almost_equal(cov, oa.covariance_)
-    assert_almost_equal(shrinkage, oa.shrinkage_)
-
-
 def test_EmpiricalCovariance_validates_mahalanobis():
     """Checks that EmpiricalCovariance validates data with mahalanobis."""
     cov = EmpiricalCovariance().fit(X)
@@ -547,7 +535,7 @@ def test_mahalanobis_array_api(array_namespace, device_name, dtype_name):
 )
 @pytest.mark.parametrize(
     "estimator",
-    [LedoitWolf()],
+    [LedoitWolf(), OAS()],
     ids=_get_check_estimator_ids,
 )
 def test_covariance_array_api_compliance(

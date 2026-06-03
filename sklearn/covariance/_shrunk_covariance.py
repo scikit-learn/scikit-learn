@@ -708,7 +708,6 @@ def oas(X, *, assume_centered=False):
     """
     estimator = OAS(
         assume_centered=assume_centered,
-        store_precision=False,
     ).fit(X)
     return estimator.covariance_, estimator.shrinkage_
 

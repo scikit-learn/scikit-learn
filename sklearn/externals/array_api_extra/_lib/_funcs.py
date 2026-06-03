@@ -8,11 +8,7 @@ from typing import Literal, cast, overload
 
 from ._at import at
 from ._utils import _compat, _helpers
-from ._utils._compat import (
-    array_namespace,
-    is_dask_namespace,
-    is_jax_array,
-)
+from ._utils._compat import array_namespace, is_dask_namespace, is_jax_array
 from ._utils._helpers import (
     asarrays,
     capabilities,
@@ -32,7 +28,6 @@ __all__ = [
     "kron",
     "nunique",
     "pad",
-    "searchsorted",
     "setdiff1d",
     "sinc",
 ]
@@ -46,7 +41,6 @@ def apply_where(  # numpydoc ignore=GL08
     f2: Callable[..., Array],
     /,
     *,
-    kwargs: dict[str, Array] | None = None,
     xp: ModuleType | None = None,
 ) -> Array: ...
 
@@ -59,7 +53,6 @@ def apply_where(  # numpydoc ignore=GL08
     /,
     *,
     fill_value: Array | complex,
-    kwargs: dict[str, Array] | None = None,
     xp: ModuleType | None = None,
 ) -> Array: ...
 
@@ -72,7 +65,6 @@ def apply_where(  # numpydoc ignore=PR01,PR02
     /,
     *,
     fill_value: Array | complex | None = None,
-    kwargs: dict[str, Array] | None = None,
     xp: ModuleType | None = None,
 ) -> Array:
     """
@@ -99,9 +91,6 @@ def apply_where(  # numpydoc ignore=PR01,PR02
         It does not need to be scalar; it needs however to be broadcastable with
         `cond` and `args`.
         Mutually exclusive with `f2`. You must provide one or the other.
-    kwargs : dict of str : Array pairs
-        Keyword argument(s) to `f1` (and `f2`). Values must be broadcastable with
-        `cond`.
     xp : array_namespace, optional
         The standard-compatible namespace for `cond` and `args`. Default: infer.
 
@@ -140,11 +129,6 @@ def apply_where(  # numpydoc ignore=PR01,PR02
     args_ = list(args) if isinstance(args, tuple) else [args]
     del args
 
-    kwargs_ = {} if kwargs is None else kwargs
-    kwkeys = list(kwargs_.keys())
-    args_ = [*args_, *kwargs_.values()]
-    del kwargs
-
     xp = array_namespace(cond, fill_value, *args_) if xp is None else xp
 
     if isinstance(fill_value, int | float | complex | NoneType):
@@ -155,11 +139,8 @@ def apply_where(  # numpydoc ignore=PR01,PR02
     if is_dask_namespace(xp):
         meta_xp = meta_namespace(cond, fill_value, *args_, xp=xp)
         # map_blocks doesn't descend into tuples of Arrays
-        return xp.map_blocks(
-            _apply_where, cond, f1, f2, fill_value, *args_, kwkeys=kwkeys, xp=meta_xp
-        )
-
-    return _apply_where(cond, f1, f2, fill_value, *args_, kwkeys=kwkeys, xp=xp)
+        return xp.map_blocks(_apply_where, cond, f1, f2, fill_value, *args_, xp=meta_xp)
+    return _apply_where(cond, f1, f2, fill_value, *args_, xp=xp)
 
 
 def _apply_where(  # numpydoc ignore=PR01,RT01
@@ -168,26 +149,15 @@ def _apply_where(  # numpydoc ignore=PR01,RT01
     f2: Callable[..., Array] | None,
     fill_value: Array | int | float | complex | bool | None,
     *args: Array,
-    kwkeys: list[str],
     xp: ModuleType,
 ) -> Array:
     """Helper of `apply_where`. On Dask, this runs on a single chunk."""
 
-    nargs = len(args) - len(kwkeys)
-    kwargs = dict(zip(kwkeys, args[nargs:], strict=True))
-    args = args[:nargs]
-
     if not capabilities(xp, device=_compat.device(cond))["boolean indexing"]:
         # jax.jit does not support assignment by boolean mask
-        return xp.where(
-            cond,
-            f1(*args, **kwargs),
-            f2(*args, **kwargs) if f2 is not None else fill_value,
-        )
+        return xp.where(cond, f1(*args), f2(*args) if f2 is not None else fill_value)
 
-    temp1 = f1(
-        *(arr[cond] for arr in args), **{key: val[cond] for key, val in kwargs.items()}
-    )
+    temp1 = f1(*(arr[cond] for arr in args))
 
     if f2 is None:
         dtype = xp.result_type(temp1, fill_value)
@@ -197,10 +167,7 @@ def _apply_where(  # numpydoc ignore=PR01,RT01
             out = xp.astype(fill_value, dtype, copy=True)
     else:
         ncond = ~cond
-        temp2 = f2(
-            *(arr[ncond] for arr in args),
-            **{key: val[ncond] for key, val in kwargs.items()},
-        )
+        temp2 = f2(*(arr[ncond] for arr in args))
         dtype = xp.result_type(temp1, temp2)
         out = xp.empty_like(cond, dtype=dtype)
         out = at(out, ncond).set(temp2)
@@ -208,9 +175,42 @@ def _apply_where(  # numpydoc ignore=PR01,RT01
     return at(out, cond).set(temp1)
 
 
-def atleast_nd(x: Array, /, *, ndim: int, xp: ModuleType) -> Array:
-    # numpydoc ignore=PR01,RT01
-    """See docstring in array_api_extra._delegation."""
+def atleast_nd(x: Array, /, *, ndim: int, xp: ModuleType | None = None) -> Array:
+    """
+    Recursively expand the dimension of an array to at least `ndim`.
+
+    Parameters
+    ----------
+    x : array
+        Input array.
+    ndim : int
+        The minimum number of dimensions for the result.
+    xp : array_namespace, optional
+        The standard-compatible namespace for `x`. Default: infer.
+
+    Returns
+    -------
+    array
+        An array with ``res.ndim`` >= `ndim`.
+        If ``x.ndim`` >= `ndim`, `x` is returned.
+        If ``x.ndim`` < `ndim`, `x` is expanded by prepending new axes
+        until ``res.ndim`` equals `ndim`.
+
+    Examples
+    --------
+    >>> import array_api_strict as xp
+    >>> import array_api_extra as xpx
+    >>> x = xp.asarray([1])
+    >>> xpx.atleast_nd(x, ndim=3, xp=xp)
+    Array([[[1]]], dtype=array_api_strict.int64)
+
+    >>> x = xp.asarray([[[1, 2],
+    ...                  [3, 4]]])
+    >>> xpx.atleast_nd(x, ndim=1, xp=xp) is x
+    True
+    """
+    if xp is None:
+        xp = array_namespace(x)
 
     if x.ndim < ndim:
         x = xp.expand_dims(x, axis=0)
@@ -281,17 +281,74 @@ def broadcast_shapes(*shapes: tuple[float | None, ...]) -> tuple[int | None, ...
     return tuple(out)
 
 
-def cov(
-    m: Array,
-    /,
-    *,
-    correction: int | float = 1,
-    fweights: Array | None = None,
-    aweights: Array | None = None,
-    xp: ModuleType,
-) -> Array:  # numpydoc ignore=PR01,RT01
-    """See docstring in array_api_extra._delegation."""
-    m = xp.asarray(m)
+def cov(m: Array, /, *, xp: ModuleType | None = None) -> Array:
+    """
+    Estimate a covariance matrix.
+
+    Covariance indicates the level to which two variables vary together.
+    If we examine N-dimensional samples, :math:`X = [x_1, x_2, ... x_N]^T`,
+    then the covariance matrix element :math:`C_{ij}` is the covariance of
+    :math:`x_i` and :math:`x_j`. The element :math:`C_{ii}` is the variance
+    of :math:`x_i`.
+
+    This provides a subset of the functionality of ``numpy.cov``.
+
+    Parameters
+    ----------
+    m : array
+        A 1-D or 2-D array containing multiple variables and observations.
+        Each row of `m` represents a variable, and each column a single
+        observation of all those variables.
+    xp : array_namespace, optional
+        The standard-compatible namespace for `m`. Default: infer.
+
+    Returns
+    -------
+    array
+        The covariance matrix of the variables.
+
+    Examples
+    --------
+    >>> import array_api_strict as xp
+    >>> import array_api_extra as xpx
+
+    Consider two variables, :math:`x_0` and :math:`x_1`, which
+    correlate perfectly, but in opposite directions:
+
+    >>> x = xp.asarray([[0, 2], [1, 1], [2, 0]]).T
+    >>> x
+    Array([[0, 1, 2],
+           [2, 1, 0]], dtype=array_api_strict.int64)
+
+    Note how :math:`x_0` increases while :math:`x_1` decreases. The covariance
+    matrix shows this clearly:
+
+    >>> xpx.cov(x, xp=xp)
+    Array([[ 1., -1.],
+           [-1.,  1.]], dtype=array_api_strict.float64)
+
+    Note that element :math:`C_{0,1}`, which shows the correlation between
+    :math:`x_0` and :math:`x_1`, is negative.
+
+    Further, note how `x` and `y` are combined:
+
+    >>> x = xp.asarray([-2.1, -1,  4.3])
+    >>> y = xp.asarray([3,  1.1,  0.12])
+    >>> X = xp.stack((x, y), axis=0)
+    >>> xpx.cov(X, xp=xp)
+    Array([[11.71      , -4.286     ],
+           [-4.286     ,  2.14413333]], dtype=array_api_strict.float64)
+
+    >>> xpx.cov(x, xp=xp)
+    Array(11.71, dtype=array_api_strict.float64)
+
+    >>> xpx.cov(y, xp=xp)
+    Array(2.14413333, dtype=array_api_strict.float64)
+    """
+    if xp is None:
+        xp = array_namespace(m)
+
+    m = xp.asarray(m, copy=True)
     dtype = (
         xp.float64 if xp.isdtype(m.dtype, "integral") else xp.result_type(m, xp.float64)
     )
@@ -299,61 +356,21 @@ def cov(
     m = atleast_nd(m, ndim=2, xp=xp)
     m = xp.astype(m, dtype)
 
-    # Validate weight shapes (eager metadata, lazy-safe). Native backends
-    # validate themselves; this covers the generic path (array-api-strict,
-    # sparse, and the dask+weights fallback where the native check is
-    # bypassed to preserve laziness).
-    n_obs = m.shape[-1]
-    for name, w_in in (("fweights", fweights), ("aweights", aweights)):
-        if w_in is None:
-            continue
-        if w_in.ndim != 1:
-            msg = f"`{name}` must be 1-D, got ndim={w_in.ndim}"
-            raise ValueError(msg)
-        if w_in.shape[0] != n_obs:
-            msg = (
-                f"`{name}` has length {w_in.shape[0]} but `m` has {n_obs} observations"
-            )
-            raise ValueError(msg)
-
-    fw = None
-    if fweights is not None:
-        fw = xp.astype(xp.asarray(fweights), dtype)
-    aw = None
-    if aweights is not None:
-        aw = xp.astype(xp.asarray(aweights), dtype)
-    if fw is None and aw is None:
-        w = None
-    elif fw is None:
-        w = aw
-    elif aw is None:
-        w = fw
-    else:
-        w = fw * aw
+    avg = _helpers.mean(m, axis=1, xp=xp)
 
     m_shape = eager_shape(m)
-    if w is None:
-        avg = xp.mean(m, axis=-1, keepdims=True)
-        fact = m_shape[-1] - correction
-        if fact <= 0:
-            warnings.warn(
-                "Degrees of freedom <= 0 for slice", RuntimeWarning, stacklevel=2
-            )
-            fact = 0
-    else:
-        v1 = xp.sum(w, axis=-1)
-        avg = xp.sum(m * w, axis=-1, keepdims=True) / v1
-        if aw is None:
-            fact = v1 - correction
-        else:
-            fact = v1 - correction * xp.sum(w * aw, axis=-1) / v1
+    fact = m_shape[1] - 1
 
-    m_c = m - avg
-    m_w = m_c if w is None else m_c * w
-    m_cT = xp.matrix_transpose(m_c)
-    if xp.isdtype(m_cT.dtype, "complex floating"):
-        m_cT = xp.conj(m_cT)
-    c = (m_w @ m_cT) / fact
+    if fact <= 0:
+        warnings.warn("Degrees of freedom <= 0 for slice", RuntimeWarning, stacklevel=2)
+        fact = 0
+
+    m -= avg[:, None]
+    m_transpose = m.T
+    if xp.isdtype(m_transpose.dtype, "complex floating"):
+        m_transpose = xp.conj(m_transpose)
+    c = m @ m_transpose
+    c /= fact
     axes = tuple(axis for axis, length in enumerate(c.shape) if length == 1)
     return xp.squeeze(c, axis=axes)
 
@@ -376,9 +393,53 @@ def one_hot(
 
 
 def create_diagonal(
-    x: Array, /, *, offset: int = 0, xp: ModuleType
-) -> Array:  # numpydoc ignore=PR01,RT01
-    """See docstring in array_api_extra._delegation."""
+    x: Array, /, *, offset: int = 0, xp: ModuleType | None = None
+) -> Array:
+    """
+    Construct a diagonal array.
+
+    Parameters
+    ----------
+    x : array
+        An array having shape ``(*batch_dims, k)``.
+    offset : int, optional
+        Offset from the leading diagonal (default is ``0``).
+        Use positive ints for diagonals above the leading diagonal,
+        and negative ints for diagonals below the leading diagonal.
+    xp : array_namespace, optional
+        The standard-compatible namespace for `x`. Default: infer.
+
+    Returns
+    -------
+    array
+        An array having shape ``(*batch_dims, k+abs(offset), k+abs(offset))`` with `x`
+        on the diagonal (offset by `offset`).
+
+    Examples
+    --------
+    >>> import array_api_strict as xp
+    >>> import array_api_extra as xpx
+    >>> x = xp.asarray([2, 4, 8])
+
+    >>> xpx.create_diagonal(x, xp=xp)
+    Array([[2, 0, 0],
+           [0, 4, 0],
+           [0, 0, 8]], dtype=array_api_strict.int64)
+
+    >>> xpx.create_diagonal(x, offset=-2, xp=xp)
+    Array([[0, 0, 0, 0, 0],
+           [0, 0, 0, 0, 0],
+           [2, 0, 0, 0, 0],
+           [0, 4, 0, 0, 0],
+           [0, 0, 8, 0, 0]], dtype=array_api_strict.int64)
+    """
+    if xp is None:
+        xp = array_namespace(x)
+
+    if x.ndim == 0:
+        err_msg = "`x` must be at least 1-dimensional."
+        raise ValueError(err_msg)
+
     x_shape = eager_shape(x)
     batch_dims = x_shape[:-1]
     n = x_shape[-1] + abs(offset)
@@ -432,9 +493,87 @@ def default_dtype(
         raise ValueError(msg) from e
 
 
-def expand_dims(a: Array, /, *, axis: tuple[int, ...] = (0,), xp: ModuleType) -> Array:
-    # numpydoc ignore=PR01,RT01
-    """See docstring in array_api_extra._delegation."""
+def expand_dims(
+    a: Array, /, *, axis: int | tuple[int, ...] = (0,), xp: ModuleType | None = None
+) -> Array:
+    """
+    Expand the shape of an array.
+
+    Insert (a) new axis/axes that will appear at the position(s) specified by
+    `axis` in the expanded array shape.
+
+    This is ``xp.expand_dims`` for `axis` an int *or a tuple of ints*.
+    Roughly equivalent to ``numpy.expand_dims`` for NumPy arrays.
+
+    Parameters
+    ----------
+    a : array
+        Array to have its shape expanded.
+    axis : int or tuple of ints, optional
+        Position(s) in the expanded axes where the new axis (or axes) is/are placed.
+        If multiple positions are provided, they should be unique (note that a position
+        given by a positive index could also be referred to by a negative index -
+        that will also result in an error).
+        Default: ``(0,)``.
+    xp : array_namespace, optional
+        The standard-compatible namespace for `a`. Default: infer.
+
+    Returns
+    -------
+    array
+        `a` with an expanded shape.
+
+    Examples
+    --------
+    >>> import array_api_strict as xp
+    >>> import array_api_extra as xpx
+    >>> x = xp.asarray([1, 2])
+    >>> x.shape
+    (2,)
+
+    The following is equivalent to ``x[xp.newaxis, :]`` or ``x[xp.newaxis]``:
+
+    >>> y = xpx.expand_dims(x, axis=0, xp=xp)
+    >>> y
+    Array([[1, 2]], dtype=array_api_strict.int64)
+    >>> y.shape
+    (1, 2)
+
+    The following is equivalent to ``x[:, xp.newaxis]``:
+
+    >>> y = xpx.expand_dims(x, axis=1, xp=xp)
+    >>> y
+    Array([[1],
+           [2]], dtype=array_api_strict.int64)
+    >>> y.shape
+    (2, 1)
+
+    ``axis`` may also be a tuple:
+
+    >>> y = xpx.expand_dims(x, axis=(0, 1), xp=xp)
+    >>> y
+    Array([[[1, 2]]], dtype=array_api_strict.int64)
+
+    >>> y = xpx.expand_dims(x, axis=(2, 0), xp=xp)
+    >>> y
+    Array([[[1],
+            [2]]], dtype=array_api_strict.int64)
+    """
+    if xp is None:
+        xp = array_namespace(a)
+
+    if not isinstance(axis, tuple):
+        axis = (axis,)
+    ndim = a.ndim + len(axis)
+    if axis != () and (min(axis) < -ndim or max(axis) >= ndim):
+        err_msg = (
+            f"a provided axis position is out of bounds for array of dimension {a.ndim}"
+        )
+        raise IndexError(err_msg)
+    axis = tuple(dim % ndim for dim in axis)
+    if len(set(axis)) != len(axis):
+        err_msg = "Duplicate dimensions specified in `axis`."
+        raise ValueError(err_msg)
     for i in sorted(axis):
         a = xp.expand_dims(a, axis=i)
     return a
@@ -683,7 +822,7 @@ def nunique(x: Array, /, *, xp: ModuleType | None = None) -> Array:
 
     # xp does not have unique_counts; O(n*logn) complexity
     x = xp.reshape(x, (-1,))
-    x = xp.sort(x, stable=False)
+    x = xp.sort(x)
     mask = x != xp.roll(x, -1)
     default_int = default_dtype(xp, "integral", device=_compat.device(x))
     return xp.maximum(
@@ -746,50 +885,50 @@ def pad(
     return at(padded, tuple(slices)).set(x)
 
 
-def searchsorted(
-    x1: Array,
-    x2: Array,
-    /,
-    *,
-    side: Literal["left", "right"] = "left",
-    xp: ModuleType,
-) -> Array:
-    # numpydoc ignore=PR01,RT01
-    """See docstring in `array_api_extra._delegation.py`."""
-    a = xp.full(x2.shape, 0, device=_compat.device(x1))
-
-    if x1.shape[-1] == 0:
-        return a
-
-    n = xp.count_nonzero(~xp.isnan(x1), axis=-1, keepdims=True)
-    b = xp.broadcast_to(n, x2.shape)
-
-    compare = xp.less_equal if side == "left" else xp.less
-
-    # while xp.any(b - a > 1):
-    # refactored to for loop with ~log2(n) iterations for JAX JIT
-    for _ in range(int(math.log2(x1.shape[-1])) + 1):  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
-        c = (a + b) // 2
-        x0 = xp.take_along_axis(x1, c, axis=-1)
-        j = compare(x2, x0)
-        b = xp.where(j, c, b)
-        a = xp.where(j, a, c)
-
-    out = xp.where(compare(x2, xp.min(x1, axis=-1, keepdims=True)), 0, b)
-    out = xp.where(xp.isnan(x2), x1.shape[-1], out) if side == "right" else out
-    return xp.astype(out, default_dtype(xp, kind="integral"), copy=False)
-
-
 def setdiff1d(
     x1: Array | complex,
     x2: Array | complex,
     /,
     *,
     assume_unique: bool = False,
-    xp: ModuleType,
-) -> Array:  # numpydoc ignore=PR01,RT01
-    """See docstring in `array_api_extra._delegation.py`."""
+    xp: ModuleType | None = None,
+) -> Array:
+    """
+    Find the set difference of two arrays.
 
+    Return the unique values in `x1` that are not in `x2`.
+
+    Parameters
+    ----------
+    x1 : array | int | float | complex | bool
+        Input array.
+    x2 : array
+        Input comparison array.
+    assume_unique : bool
+        If ``True``, the input arrays are both assumed to be unique, which
+        can speed up the calculation. Default is ``False``.
+    xp : array_namespace, optional
+        The standard-compatible namespace for `x1` and `x2`. Default: infer.
+
+    Returns
+    -------
+    array
+        1D array of values in `x1` that are not in `x2`. The result
+        is sorted when `assume_unique` is ``False``, but otherwise only sorted
+        if the input is sorted.
+
+    Examples
+    --------
+    >>> import array_api_strict as xp
+    >>> import array_api_extra as xpx
+
+    >>> x1 = xp.asarray([1, 2, 3, 2, 4, 1])
+    >>> x2 = xp.asarray([3, 4, 5, 6])
+    >>> xpx.setdiff1d(x1, x2, xp=xp)
+    Array([1, 2], dtype=array_api_strict.int64)
+    """
+    if xp is None:
+        xp = array_namespace(x1, x2)
     # https://github.com/microsoft/pyright/issues/10103
     x1_, x2_ = asarrays(x1, x2, xp=xp)
 
@@ -803,10 +942,86 @@ def setdiff1d(
     return x1_[_helpers.in1d(x1_, x2_, assume_unique=True, invert=True, xp=xp)]
 
 
-def sinc(x: Array, /, *, xp: ModuleType) -> Array:
-    # numpydoc ignore=PR01,RT01
-    """See docstring in `array_api_extra._delegation.py`."""
+def sinc(x: Array, /, *, xp: ModuleType | None = None) -> Array:
+    r"""
+    Return the normalized sinc function.
 
+    The sinc function is equal to :math:`\sin(\pi x)/(\pi x)` for any argument
+    :math:`x\ne 0`. ``sinc(0)`` takes the limit value 1, making ``sinc`` not
+    only everywhere continuous but also infinitely differentiable.
+
+    .. note::
+
+        Note the normalization factor of ``pi`` used in the definition.
+        This is the most commonly used definition in signal processing.
+        Use ``sinc(x / xp.pi)`` to obtain the unnormalized sinc function
+        :math:`\sin(x)/x` that is more common in mathematics.
+
+    Parameters
+    ----------
+    x : array
+        Array (possibly multi-dimensional) of values for which to calculate
+        ``sinc(x)``. Must have a real floating point dtype.
+    xp : array_namespace, optional
+        The standard-compatible namespace for `x`. Default: infer.
+
+    Returns
+    -------
+    array
+        ``sinc(x)`` calculated elementwise, which has the same shape as the input.
+
+    Notes
+    -----
+    The name sinc is short for "sine cardinal" or "sinus cardinalis".
+
+    The sinc function is used in various signal processing applications,
+    including in anti-aliasing, in the construction of a Lanczos resampling
+    filter, and in interpolation.
+
+    For bandlimited interpolation of discrete-time signals, the ideal
+    interpolation kernel is proportional to the sinc function.
+
+    References
+    ----------
+    #. Weisstein, Eric W. "Sinc Function." From MathWorld--A Wolfram Web
+       Resource. https://mathworld.wolfram.com/SincFunction.html
+    #. Wikipedia, "Sinc function",
+       https://en.wikipedia.org/wiki/Sinc_function
+
+    Examples
+    --------
+    >>> import array_api_strict as xp
+    >>> import array_api_extra as xpx
+    >>> x = xp.linspace(-4, 4, 41)
+    >>> xpx.sinc(x, xp=xp)
+    Array([-3.89817183e-17, -4.92362781e-02,
+           -8.40918587e-02, -8.90384387e-02,
+           -5.84680802e-02,  3.89817183e-17,
+            6.68206631e-02,  1.16434881e-01,
+            1.26137788e-01,  8.50444803e-02,
+           -3.89817183e-17, -1.03943254e-01,
+           -1.89206682e-01, -2.16236208e-01,
+           -1.55914881e-01,  3.89817183e-17,
+            2.33872321e-01,  5.04551152e-01,
+            7.56826729e-01,  9.35489284e-01,
+            1.00000000e+00,  9.35489284e-01,
+            7.56826729e-01,  5.04551152e-01,
+            2.33872321e-01,  3.89817183e-17,
+           -1.55914881e-01, -2.16236208e-01,
+           -1.89206682e-01, -1.03943254e-01,
+           -3.89817183e-17,  8.50444803e-02,
+            1.26137788e-01,  1.16434881e-01,
+            6.68206631e-02,  3.89817183e-17,
+           -5.84680802e-02, -8.90384387e-02,
+           -8.40918587e-02, -4.92362781e-02,
+           -3.89817183e-17], dtype=array_api_strict.float64)
+    """
+    if xp is None:
+        xp = array_namespace(x)
+
+    if not xp.isdtype(x.dtype, "real floating"):
+        err_msg = "`x` must have a real floating data type."
+        raise ValueError(err_msg)
     # no scalars in `where` - array-api#807
     y = xp.pi * xp.where(
         xp.astype(x, xp.bool),
@@ -814,55 +1029,3 @@ def sinc(x: Array, /, *, xp: ModuleType) -> Array:
         xp.asarray(xp.finfo(x.dtype).eps, dtype=x.dtype, device=_compat.device(x)),
     )
     return xp.sin(y) / y
-
-
-def partition(  # numpydoc ignore=PR01,RT01
-    x: Array,
-    kth: int,  # noqa: ARG001
-    /,
-    axis: int = -1,
-    *,
-    xp: ModuleType,
-) -> Array:
-    """See docstring in `array_api_extra._delegation.py`."""
-    return xp.sort(x, axis=axis, stable=False)
-
-
-def argpartition(  # numpydoc ignore=PR01,RT01
-    x: Array,
-    kth: int,  # noqa: ARG001
-    /,
-    axis: int = -1,
-    *,
-    xp: ModuleType,
-) -> Array:
-    """See docstring in `array_api_extra._delegation.py`."""
-    return xp.argsort(x, axis=axis, stable=False)
-
-
-def isin(  # numpydoc ignore=PR01,RT01
-    a: Array,
-    b: Array,
-    /,
-    *,
-    assume_unique: bool = False,
-    invert: bool = False,
-    xp: ModuleType,
-) -> Array:
-    """See docstring in `array_api_extra._delegation.py`."""
-    original_a_shape = a.shape
-    a = xp.reshape(a, (-1,))
-    b = xp.reshape(b, (-1,))
-    return xp.reshape(
-        _helpers.in1d(a, b, assume_unique=assume_unique, invert=invert, xp=xp),
-        original_a_shape,
-    )
-
-
-def union1d(a: Array, b: Array, /, *, xp: ModuleType) -> Array:
-    # numpydoc ignore=PR01,RT01
-    """See docstring in `array_api_extra._delegation.py`."""
-    a = xp.reshape(a, (-1,))
-    b = xp.reshape(b, (-1,))
-    # XXX: `sparse` returns NumPy arrays from `unique_values`
-    return xp.asarray(xp.unique_values(xp.concat([a, b])))

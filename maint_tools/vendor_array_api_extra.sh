@@ -5,8 +5,8 @@
 set -o nounset
 set -o errexit
 
-URL="https://github.com/bruAristimunha/array-api-extra.git"
-VERSION="e34d415ec22eaa3f069fa0d3a35b62ed1d4e181d"
+URL="https://github.com/data-apis/array-api-extra.git"
+VERSION="v0.8.2"
 
 ROOT_DIR=sklearn/externals/array_api_extra
 
