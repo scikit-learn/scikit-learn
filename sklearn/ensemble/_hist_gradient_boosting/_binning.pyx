@@ -63,7 +63,7 @@ cdef void _map_col_to_bins(
 
     assert len(binning_thresholds) < 256
     for i in prange(data.shape[0], schedule='static', nogil=True,
-                    num_threads=1):
+                    num_threads=n_threads):
         if (
             isnan(data[i]) or
             # To follow LightGBM's conventions, negative values for
@@ -92,32 +92,19 @@ cdef inline int _binary_search(
 ) nogil:
     cdef:
         int left
-        unsigned int i
-        int initial_middle
+        int half
+        int mid
+
     left = 0
-
-    # Do one special-cased round, to handle sizes that aren't power of 2:
-    i = log2ceil(size) - 1
-    initial_middle = size - (1 << (log2ceil(size) - 1))
-    if binning_thresholds[initial_middle - 1] < value:
-        left += initial_middle
-
-    size = (1 << (log2ceil(size) - 1))
-    # with gil:
-    #     print(value, list(binning_thresholds), initial_middle, left, size)
-
-    # Do the rest with assumption of power of 2:
-    while i != 0:
-        i -= 1
-        size /= 2
-        if binning_thresholds[left + size - 1] < value:
-            left += size
+    while half := (size // 2) > 0:
+        mid = left + half
+        left = mid if (binning_thresholds[mid] < value) else left
+        size -= half
         # with gil:
-        #     print(value, list(binning_thresholds), left, size)
+        #    print(half, mid, left, size)
 
-    if value > binning_thresholds[len(binning_thresholds) - 1]:
-        left = len(binning_thresholds)
-    return left  # min(left, len(binning_thresholds) - 1)
+    left = left + 1 if value > binning_thresholds[left] else left
+    return left
 
 
 cdef int bins_to_ints[256]
