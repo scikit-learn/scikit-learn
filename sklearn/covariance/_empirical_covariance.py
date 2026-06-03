@@ -15,7 +15,6 @@ from scipy import linalg
 
 from sklearn import config_context
 from sklearn.base import BaseEstimator, _fit_context
-from sklearn.externals import array_api_extra as xpx
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.utils import check_array, metadata_routing
 from sklearn.utils._array_api import (
