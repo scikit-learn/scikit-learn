@@ -84,7 +84,9 @@
   filter: grayscale(100%) opacity(60%);
 }
 
-.features .features-container table {
+.features .features-container table,
+/* class "name-details-table" needed jupyter */
+.name-details .name-details-table {
   width: 100%;
   margin: 0.01em;
 }
@@ -102,10 +104,6 @@
 .features .features-container table tr:hover,
 .name-details table tr:hover {
   background-color: #e0e0e0;
-}
-
-.features .features-container table {
-  table-layout: inherit;
 }
 
 .features .features-container table td,
@@ -127,14 +125,8 @@
   font-weight: bold;
   color: var(--sklearn-color-text); /* Needed for jupyter */
   padding: 0.5em;
-  text-align: left;
+  text-align: center;
   text-wrap: nowrap;
-}
-
-/* We need the extra class "name-details-table" so jupyter
-doesn't overwrite rules*/
-.name-details .name-details-table {
-  width: 100%;
 }
 
 .sk-global input.sk-toggleable__control
