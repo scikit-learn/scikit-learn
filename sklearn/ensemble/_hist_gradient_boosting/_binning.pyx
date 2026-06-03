@@ -103,8 +103,8 @@ cdef inline int _binary_search(
         left += initial_middle
 
     size = (1 << (log2ceil(size) - 1))
-    with gil:
-        print(value, list(binning_thresholds), initial_middle, left, size)
+    # with gil:
+    #     print(value, list(binning_thresholds), initial_middle, left, size)
 
     # Do the rest with assumption of power of 2:
     while i != 0:
@@ -112,8 +112,8 @@ cdef inline int _binary_search(
         size /= 2
         if binning_thresholds[left + size - 1] < value:
             left += size
-        with gil:
-            print(value, list(binning_thresholds), left, size)
+        # with gil:
+        #     print(value, list(binning_thresholds), left, size)
 
     if value > binning_thresholds[len(binning_thresholds) - 1]:
         left = len(binning_thresholds)
