@@ -61,14 +61,14 @@ cdef void _map_col_to_bins(
     cdef:
         int i
 
-    assert len(binning_thresholds) <= 256
+    assert len(binning_thresholds) < 256
     for i in prange(data.shape[0], schedule='static', nogil=True,
-                    num_threads=n_threads):
+                    num_threads=1):
         if (
             isnan(data[i]) or
             # To follow LightGBM's conventions, negative values for
             # categorical features are considered as missing values.
-            (is_categorical and data[i] < 0)
+            (is_categorical and data[i] <= 0)
         ):
             binned[i] = missing_values_bin_idx
         else:
@@ -99,22 +99,24 @@ cdef inline int _binary_search(
     # Do one special-cased round, to handle sizes that aren't power of 2:
     i = log2ceil(size) - 1
     initial_middle = size - (1 << (log2ceil(size) - 1))
-    if binning_thresholds[initial_middle] < value:
+    if binning_thresholds[initial_middle - 1] < value:
         left += initial_middle
 
     size = (1 << (log2ceil(size) - 1))
-    # with gil:
-    #    print(left, size)
+    with gil:
+        print(value, list(binning_thresholds), initial_middle, left, size)
 
     # Do the rest with assumption of power of 2:
     while i != 0:
         i -= 1
         size /= 2
-        if binning_thresholds[left + size] < value:
+        if binning_thresholds[left + size - 1] < value:
             left += size
-        # with gil:
-        #    print(left, size)
+        with gil:
+            print(value, list(binning_thresholds), left, size)
 
+    if value > binning_thresholds[len(binning_thresholds) - 1]:
+        left = len(binning_thresholds)
     return left  # min(left, len(binning_thresholds) - 1)
 
 
