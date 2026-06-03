@@ -29,7 +29,8 @@ class ProgressBar:
 
     Notes
     -----
-    This callback requires rich to be installed.
+    This callback requires `rich <https://rich.readthedocs.io>`_ to be installed.
+    It can be installed with ``pip install rich``.
     """
 
     @validate_params(
