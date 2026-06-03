@@ -372,6 +372,8 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     emp_cov_trace = xp.sum(X2, axis=0) / n_samples
     mu = float(xp.sum(emp_cov_trace)) / n_features
 
+    # TODO: gh-33986 discusses the idea of automatically determining the best
+    # chunk size instead of having this branching.
     if _is_numpy_namespace(xp):
         # Blocked computation for memory efficiency on CPU
         # A non-blocked version of the computation is present in the tests

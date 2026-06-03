@@ -1410,7 +1410,7 @@ def _test_tolerance(sparse_container):
 def check_array_api_attributes(
     name, estimator, array_namespace, device_name, dtype_name, rtol=None
 ):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     X_iris_np = X_iris.astype(dtype_name)
     y_iris_np = y_iris.astype(dtype_name)
@@ -1489,18 +1489,53 @@ def test_ridge_array_api_compliance(
 def test_ridge_classifier_multilabel_array_api(
     estimator, array_namespace, device_name, dtype_name
 ):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     X, y = make_multilabel_classification(random_state=0)
     X_np = X.astype(dtype_name)
     y_np = y.astype(dtype_name)
     ridge_np = estimator.fit(X_np, y_np)
     pred_np = ridge_np.predict(X_np)
+    classes_np = ridge_np.classes_.copy()
     with config_context(array_api_dispatch=True):
         X_xp, y_xp = xp.asarray(X_np, device=device), xp.asarray(y_np, device=device)
         ridge_xp = estimator.fit(X_xp, y_xp)
         pred_xp = ridge_xp.predict(X_xp)
         assert pred_xp.shape == pred_np.shape == y.shape
         assert_allclose(move_to(pred_xp, xp=np, device="cpu"), pred_np)
+        assert_array_equal(move_to(ridge_xp.classes_, xp=np, device="cpu"), classes_np)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_ridge_per_target_alpha_array_api(array_namespace, device_name, dtype_name):
+    """Check that passing an array for alpha works with array API dispatch.
+
+    Non-regression test for issue #34003.
+    """
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
+    X, y = make_regression(n_targets=3, n_features=10, random_state=0)
+    X_np = X.astype(dtype_name)
+    y_np = y.astype(dtype_name)
+    alphas = np.asarray([1e-2, 0.1, 1.0], dtype=dtype_name)
+
+    ridge_np = Ridge(alpha=alphas, solver="svd").fit(X_np, y_np)
+    pred_np = ridge_np.predict(X_np)
+
+    with config_context(array_api_dispatch=True):
+        X_xp, y_xp = xp.asarray(X_np, device=device), xp.asarray(y_np, device=device)
+
+        # alpha can be a numpy array or an array on the same device
+        for alpha in (alphas, xp.asarray(alphas, device=device)):
+            ridge_xp = Ridge(alpha=alpha, solver="svd").fit(X_xp, y_xp)
+            pred_xp = ridge_xp.predict(X_xp)
+            assert pred_xp.shape == pred_np.shape == y.shape
+            assert_allclose(
+                move_to(pred_xp, xp=np, device="cpu"),
+                pred_np,
+                atol=_atol_for_type(dtype_name),
+            )
 
 
 @pytest.mark.parametrize(

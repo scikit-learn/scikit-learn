@@ -9,8 +9,9 @@ from collections import defaultdict
 # scipy and cython should by in sync with pyproject.toml
 NUMPY_MIN_VERSION = "1.24.1"
 SCIPY_MIN_VERSION = "1.10.0"
-JOBLIB_MIN_VERSION = "1.3.0"
-THREADPOOLCTL_MIN_VERSION = "3.2.0"
+JOBLIB_MIN_VERSION = "1.4.0"
+NARWHALS_MIN_VERSION = "2.0.1"
+THREADPOOLCTL_MIN_VERSION = "3.5.0"
 PYTEST_MIN_VERSION = "7.1.2"
 CYTHON_MIN_VERSION = "3.1.2"
 
@@ -22,12 +23,14 @@ dependent_packages = {
     "numpy": (NUMPY_MIN_VERSION, "build, install"),
     "scipy": (SCIPY_MIN_VERSION, "build, install"),
     "joblib": (JOBLIB_MIN_VERSION, "install"),
+    "narwhals": (NARWHALS_MIN_VERSION, "install"),
     "threadpoolctl": (THREADPOOLCTL_MIN_VERSION, "install"),
     "cython": (CYTHON_MIN_VERSION, "build"),
     "meson-python": ("0.17.1", "build"),
     "matplotlib": ("3.6.1", "benchmark, docs, examples, tests"),
     "scikit-image": ("0.22.0", "docs, examples"),
     "pandas": ("1.5.0", "benchmark, docs, examples, tests"),
+    "rich": ("14.1.0", "docs, examples, tests"),
     "seaborn": ("0.13.0", "docs, examples"),
     "memory_profiler": ("0.57.0", "benchmark, docs"),
     "pytest": (PYTEST_MIN_VERSION, "tests"),
@@ -36,16 +39,16 @@ dependent_packages = {
     "mypy": ("1.15", "tests"),
     "pyamg": ("5.0.0", "tests"),
     "polars": ("0.20.30", "docs, tests"),
-    "pyarrow": ("12.0.0", "tests"),
+    "pyarrow": ("13.0.0", "tests"),
     "sphinx": ("7.3.7", "docs"),
     "sphinx-copybutton": ("0.5.2", "docs"),
     "sphinx-gallery": ("0.17.1", "docs"),
     "numpydoc": ("1.2.0", "docs, tests"),
-    "Pillow": ("10.1.0", "docs"),
+    "Pillow": ("12.1.1", "docs"),
     "pooch": ("1.8.0", "docs, examples, tests"),
     "sphinx-prompt": ("1.4.0", "docs"),
     "sphinxext-opengraph": ("0.9.1", "docs"),
-    "plotly": ("5.18.0", "docs, examples"),
+    "plotly": ("5.22.0", "docs, examples"),
     "sphinxcontrib-sass": ("0.3.4", "docs"),
     "sphinx-remove-toctrees": ("1.0.0.post1", "docs"),
     "sphinx-design": ("0.6.0", "docs"),
