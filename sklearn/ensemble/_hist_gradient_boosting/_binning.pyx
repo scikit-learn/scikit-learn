@@ -1,6 +1,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import math
+
 from cython.parallel import prange
 from libc.math cimport isnan
 
@@ -49,18 +51,15 @@ def _map_to_bins(const X_DTYPE_C [:, :] data,
 
 cdef void _map_col_to_bins(
     const X_DTYPE_C [:] data,
-    const X_DTYPE_C [:] binning_thresholds,
+    const X_DTYPE_C [::1] binning_thresholds,
     const uint8_t is_categorical,
     const uint8_t missing_values_bin_idx,
     int n_threads,
-    X_BINNED_DTYPE_C [:] binned
+    X_BINNED_DTYPE_C [::1] binned
 ):
     """Binary search to find the bin index for each value in the data."""
     cdef:
         int i
-        int left
-        int right
-        int middle
 
     for i in prange(data.shape[0], schedule='static', nogil=True,
                     num_threads=n_threads):
@@ -73,13 +72,48 @@ cdef void _map_col_to_bins(
             binned[i] = missing_values_bin_idx
         else:
             # for known values, use binary search
-            left, right = 0, binning_thresholds.shape[0]
-            while left < right:
-                # equal to (right + left - 1) // 2 but avoids overflow
-                middle = left + (right - left - 1) // 2
-                if data[i] <= binning_thresholds[middle]:
-                    right = middle
-                else:
-                    left = middle + 1
+            binned[i] = _binary_search(data[i], binning_thresholds, len(binning_thresholds))
 
-            binned[i] = left
+
+# For testing
+def binary_search(
+    X_DTYPE_C value,
+    const X_DTYPE_C [::1] binning_thresholds,
+    int size,
+):
+    return _binary_search(value, binning_thresholds, size)
+
+
+cdef inline int _binary_search(
+    X_DTYPE_C value,
+    const X_DTYPE_C [::1] binning_thresholds,
+    int size,
+) nogil:
+    cdef:
+        int left
+        unsigned int i
+        bint smaller
+    left = 0
+    i = log2ceil(size)
+    with gil:
+        print(value, list(binning_thresholds), i, left, size)
+    while i != 0:
+        i -= 1
+        size /= 2
+        smaller = binning_thresholds[left + size] <= value
+        if smaller:
+            left += size
+        with gil:
+            print(value, list(binning_thresholds), i, left, size)
+
+    return left
+
+
+cdef int bins_to_ints[256]
+bins_to_ints[0] = 0
+for i in range(1, 256):
+    bins_to_ints[i] = int(math.ceil(math.log2(i)))
+
+
+cdef inline unsigned int log2ceil(unsigned int x) nogil:
+    return bins_to_ints[x]
