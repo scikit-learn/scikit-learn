@@ -96,12 +96,11 @@ cdef inline int _binary_search(
         int mid
 
     left = 0
-    while half := (size // 2) > 0:
+    for _ in range(log2ceil(size)):
+        half = size >> 1
         mid = left + half
         left = mid if (binning_thresholds[mid] < value) else left
         size -= half
-        # with gil:
-        #    print(half, mid, left, size)
 
     left = left + 1 if value > binning_thresholds[left] else left
     return left
