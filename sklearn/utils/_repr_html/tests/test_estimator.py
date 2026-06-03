@@ -635,7 +635,7 @@ def test_estimator_html_repr_table():
 
 
 @pytest.mark.parametrize("name_details", [["city", "country"], ("city", "country")])
-def test_write_label_html_name_details_as_table__strings(name_details):
+def test_write_label_html_name_details_as_table_strings(name_details):
     with closing(StringIO()) as out:
         _write_label_html(out, "", "", "OneHotEncoder", name_details)
         html_label = out.getvalue()
