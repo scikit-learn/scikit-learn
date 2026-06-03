@@ -3720,3 +3720,15 @@ def test_confusion_matrix_array_api(array_namespace, device_name, dtype_name):
         result = confusion_matrix(y_true, y_pred, labels=labels)
         assert get_namespace(result)[0] == get_namespace(y_pred)[0]
         assert array_api_device(result) == array_api_device(y_pred)
+
+
+# TODO(1.12): remove
+def test_precision_recall_fscore_support_average_deprecation_warning():
+    """Test the deprecation warning for `average` in precision_recall_fscore_support."""
+
+    with pytest.warns(
+        FutureWarning, match="`average` will change from None to 'binary' in 1.12"
+    ):
+        precision_recall_fscore_support(y_true=[1, 2, 3], y_pred=[1, 2, 3])
+
+    precision_recall_fscore_support(y_true=[1, 2, 3], y_pred=[1, 2, 3], average=None)
