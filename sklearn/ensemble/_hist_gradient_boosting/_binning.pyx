@@ -1,8 +1,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import math
-
 from cython.parallel import prange
 from libc.math cimport isnan
 
@@ -68,21 +66,12 @@ cdef void _map_col_to_bins(
             isnan(data[i]) or
             # To follow LightGBM's conventions, negative values for
             # categorical features are considered as missing values.
-            (is_categorical and data[i] <= 0)
+            (is_categorical and data[i] < 0)
         ):
             binned[i] = missing_values_bin_idx
         else:
             # for known values, use binary search
             binned[i] = _binary_search(data[i], binning_thresholds, len(binning_thresholds))
-
-
-# For testing
-def binary_search(
-    X_DTYPE_C value,
-    const X_DTYPE_C [::1] binning_thresholds,
-    int size,
-):
-    return _binary_search(value, binning_thresholds, size)
 
 
 cdef inline int _binary_search(
@@ -106,11 +95,29 @@ cdef inline int _binary_search(
     return left
 
 
-cdef int bins_to_ints[256]
-bins_to_ints[0] = 0
-for i in range(1, 256):
-    bins_to_ints[i] = int(math.ceil(math.log2(i)))
-
+# Created with:
+#
+#  int_to_log2ceil[0] = 0
+#  for i in range(1, 256):
+#      int_to_log2ceil[i] = int(math.ceil(math.log2(i)))
+cdef int[256] int_to_log2ceil = [
+    0, 0, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4,
+    4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+    5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+    6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+    6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+    7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+    7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+    7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+    7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+    8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+    8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+    8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+    8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+    8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+    8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+    8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8
+]
 
 cdef inline unsigned int log2ceil(unsigned int x) nogil:
-    return bins_to_ints[x]
+    return int_to_log2ceil[x]
