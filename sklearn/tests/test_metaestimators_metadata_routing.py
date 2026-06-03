@@ -67,7 +67,6 @@ from sklearn.preprocessing import TargetEncoder
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.tests.metadata_routing_common import (
     ConsumingClassifier,
-    ConsumingClassifierWithOnlyPredict,
     ConsumingRegressor,
     ConsumingScorer,
     ConsumingSplitter,
@@ -349,6 +348,11 @@ METAESTIMATORS: list = [
             "predict_log_proba",
             "decision_function",
         ],
+        "method_mapping": {
+            "predict": ["predict", "predict_proba"],
+            "predict_proba": ["predict", "predict_proba"],
+            "predict_log_proba": ["predict", "predict_proba", "predict_log_proba"],
+        },
     },
     {
         "metaestimator": BaggingRegressor,
@@ -555,10 +559,7 @@ def get_init_args(metaestimator_info, sub_estimator_consumes):
             if sub_estimator_type == "regressor":
                 estimator = ConsumingRegressor(estimator_registry)
             elif sub_estimator_type == "classifier":
-                if metaestimator_info["metaestimator"] is BaggingClassifier:
-                    estimator = ConsumingClassifierWithOnlyPredict(estimator_registry)
-                else:
-                    estimator = ConsumingClassifier(estimator_registry)
+                estimator = ConsumingClassifier(estimator_registry)
             else:
                 raise ValueError("Unpermitted `sub_estimator_type`.")  # pragma: nocover
         else:
@@ -827,10 +828,21 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
             split_params = (
                 method_kwargs.keys() if preserves_metadata == "subset" else ()
             )
+
+            def get_callee_from_caller(caller):  # add instance to signature
+                mapping = (
+                    instance.get_metadata_routing()._route_mappings["estimator"].mapping
+                )
+                for pair in mapping:
+                    if pair.caller == caller:
+                        callee = pair.callee
+                        return callee
+                raise TypeError
+
             for estimator in registry:
                 check_recorded_metadata(
                     estimator,
-                    method=method_name,
+                    method=get_callee_from_caller(method_name),
                     parent=method_name,
                     split_params=split_params,
                     preserves_metadata=preserves_metadata,
