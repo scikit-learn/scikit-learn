@@ -654,6 +654,28 @@ def set_requests(obj, *, method_mapping, methods, metadata_name, value=True):
                 set_request_for_method(classes=True)
 
 
+def _get_callee_from_caller(instance, caller):
+    """Helper function to extract `callee` via the router of a routing instance.
+
+    Parameters
+    ----------
+    instance : object
+        Meta-estimator instance.
+
+    caller : str
+        Method from the parent class object, where the metadata is routed from.
+    """
+
+    mapping = instance.get_metadata_routing()._route_mappings["estimator"].mapping
+    for pair in mapping:
+        if pair.caller == caller:
+            callee = pair.callee
+            return callee
+    raise KeyError(
+        f"Caller {caller} not in method mapping for {type(instance).__name__}."
+    )
+
+
 @pytest.mark.parametrize("estimator", UNSUPPORTED_ESTIMATORS)
 @config_context(enable_metadata_routing=True)
 def test_unsupported_estimators_get_metadata_routing(estimator):
@@ -828,21 +850,10 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
             split_params = (
                 method_kwargs.keys() if preserves_metadata == "subset" else ()
             )
-
-            def get_callee_from_caller(caller):  # add instance to signature
-                mapping = (
-                    instance.get_metadata_routing()._route_mappings["estimator"].mapping
-                )
-                for pair in mapping:
-                    if pair.caller == caller:
-                        callee = pair.callee
-                        return callee
-                raise TypeError
-
             for estimator in registry:
                 check_recorded_metadata(
                     estimator,
-                    method=get_callee_from_caller(method_name),
+                    method=_get_callee_from_caller(instance, method_name),
                     parent=method_name,
                     split_params=split_params,
                     preserves_metadata=preserves_metadata,
