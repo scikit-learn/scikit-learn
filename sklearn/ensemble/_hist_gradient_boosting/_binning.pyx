@@ -61,6 +61,7 @@ cdef void _map_col_to_bins(
     cdef:
         int i
 
+    assert len(binning_thresholds) <= 256
     for i in prange(data.shape[0], schedule='static', nogil=True,
                     num_threads=n_threads):
         if (
@@ -92,21 +93,29 @@ cdef inline int _binary_search(
     cdef:
         int left
         unsigned int i
-        bint smaller
+        int initial_middle
     left = 0
-    i = log2ceil(size)
-    with gil:
-        print(value, list(binning_thresholds), i, left, size)
+
+    # Do one special-cased round, to handle sizes that aren't power of 2:
+    i = log2ceil(size) - 1
+    initial_middle = size - (1 << (log2ceil(size) - 1))
+    if binning_thresholds[initial_middle] < value:
+        left += initial_middle
+
+    size = (1 << (log2ceil(size) - 1))
+    # with gil:
+    #    print(left, size)
+
+    # Do the rest with assumption of power of 2:
     while i != 0:
         i -= 1
         size /= 2
-        smaller = binning_thresholds[left + size] <= value
-        if smaller:
+        if binning_thresholds[left + size] < value:
             left += size
-        with gil:
-            print(value, list(binning_thresholds), i, left, size)
+        # with gil:
+        #    print(left, size)
 
-    return left
+    return left  # min(left, len(binning_thresholds) - 1)
 
 
 cdef int bins_to_ints[256]
