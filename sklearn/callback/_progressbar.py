@@ -26,6 +26,10 @@ class ProgressBar:
         The maximum depth of nested levels of estimators to display progress bars for.
         0 means that the progress of only the outermost estimator is displayed.
         If set to None, all levels are displayed.
+
+    Notes
+    -----
+    This callback requires rich to be installed.
     """
 
     @validate_params(
