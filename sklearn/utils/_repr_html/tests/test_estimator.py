@@ -305,7 +305,7 @@ def test_birch_duck_typing_meta():
 
     # inner estimators do not show changes
     with config_context(print_changed_only=True):
-        assert f"{html.escape(str(birch.n_clusters))}" in html_output
+        assert f"<td>{html.escape(str(birch.n_clusters))}</td>" in html_output
 
         p = r"<div><div>AgglomerativeClustering</div></div><div>.+</div></label>"
         re_compiled = re.compile(p)
@@ -322,7 +322,7 @@ def test_ovo_classifier_duck_typing_meta():
 
     # inner estimators do not show changes
     with config_context(print_changed_only=True):
-        assert f"{html.escape(str(ovo.estimator))}" in html_output
+        assert f"<td>{html.escape(str(ovo.estimator))}</td>" in html_output
         # regex to match the start of the tag
         p = (
             r'<label for="sk-estimator-id-[0-9]*" '
@@ -641,7 +641,7 @@ def test_write_label_html_name_details_as_table__strings(name_details):
         html_label = out.getvalue()
 
     assert "name-details-table" in html_label
-    assert "<caption>Input features</caption>" in html_label
+    assert "<caption>Input</caption>" in html_label
     assert "<td>city</td>" in html_label
     assert "<td>country</td>" in html_label
     assert "<pre>" not in html_label
@@ -654,7 +654,7 @@ def test_write_label_html_name_details_as_table_integers(name_details):
         html_label = out.getvalue()
 
     assert "name-details-table" in html_label
-    assert "<caption>Input features</caption>" in html_label
+    assert "<caption>Input</caption>" in html_label
     assert "<td>0</td>" in html_label
     assert "<td>3</td>" in html_label
     assert "<pre>" not in html_label
