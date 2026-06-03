@@ -1270,8 +1270,10 @@ def _check_array_api_core(
             )
 
         if expect_only_array_outputs:
-            with config_context(array_api_dispatch=True):
-                assert array_device(result_xp) == array_device(X_xp)
+            # `predict` would be string and thus different device when `y` is string
+            if not (other_ns_and_device == "string" and method_name == "predict"):
+                with config_context(array_api_dispatch=True):
+                    assert array_device(result_xp) == array_device(X_xp)
 
             result_xp_np = move_to(result_xp, xp=np, device="cpu")
             if check_values:
