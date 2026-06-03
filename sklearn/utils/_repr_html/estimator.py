@@ -216,7 +216,7 @@ def _write_label_html(
             if _is_arraylike_not_scalar(name_details):
                 out.write(_name_details_html(name_details, is_fitted_css_class))
             elif name != "passthrough" and name_details != "":
-                out.write(f"<pre>{html.escape(str(name_details))}</pre>")
+                out.write(_name_details_html([name_details], is_fitted_css_class))
 
         out.write("</div>")
         if features is None or len(features) == 0:

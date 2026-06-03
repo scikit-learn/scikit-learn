@@ -67,7 +67,7 @@ def test_write_label_html(checked):
         re_compiled = re.compile(p)
         assert re_compiled.search(html_label)
         assert html_label.startswith('<div class="sk-label-container">')
-        assert "<pre>hello-world</pre>" in html_label
+        assert "<td>hello-world</td>" in html_label
 
         if checked:
             assert "checked>" in html_label
@@ -305,7 +305,7 @@ def test_birch_duck_typing_meta():
 
     # inner estimators do not show changes
     with config_context(print_changed_only=True):
-        assert f"<pre>{html.escape(str(birch.n_clusters))}" in html_output
+        assert f"{html.escape(str(birch.n_clusters))}" in html_output
 
         p = r"<div><div>AgglomerativeClustering</div></div><div>.+</div></label>"
         re_compiled = re.compile(p)
@@ -322,7 +322,7 @@ def test_ovo_classifier_duck_typing_meta():
 
     # inner estimators do not show changes
     with config_context(print_changed_only=True):
-        assert f"<pre>{html.escape(str(ovo.estimator))}" in html_output
+        assert f"{html.escape(str(ovo.estimator))}" in html_output
         # regex to match the start of the tag
         p = (
             r'<label for="sk-estimator-id-[0-9]*" '
@@ -660,22 +660,12 @@ def test_write_label_html_name_details_as_table_integers(name_details):
     assert "<pre>" not in html_label
 
 
-def test_write_label_html_scalar_name_details_keeps_pre():
-    with closing(StringIO()) as out:
-        _write_label_html(out, "", "", "OneHotEncoder", "hello-world")
-        html_label = out.getvalue()
-
-    assert "<pre>hello-world</pre>" in html_label
-    assert "name-details-table" not in html_label
-
-
 def test_write_label_html_empty_list_name_details_renders_nothing():
     with closing(StringIO()) as out:
         _write_label_html(out, "", "", "OneHotEncoder", [])
         html_label = out.getvalue()
 
     assert "name-details-table" not in html_label
-    assert "<pre>" not in html_label
 
 
 def test_write_label_html_list_name_details_escaped():
