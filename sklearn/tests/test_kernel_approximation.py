@@ -488,6 +488,45 @@ def test_nystroem_precomputed_kernel():
             ny.fit(K)
 
 
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS + [None])
+def test_nystroem_precomputed_kernel_subsampling(csr_container):
+    # Non-regression: Nystroem with a precomputed kernel and
+    # n_components < n_samples used to fail because only the rows of the
+    # kernel matrix were subsampled, leaving a non-square basis kernel.
+    # https://github.com/scikit-learn/scikit-learn/issues/29353
+    rnd = np.random.RandomState(12)
+    X = rnd.uniform(size=(20, 4))
+    gamma = 0.3
+    n_components = 5
+
+    K = rbf_kernel(X, gamma=gamma)
+    if csr_container is not None:
+        K = csr_container(K)
+
+    nystroem = Nystroem(kernel="precomputed", n_components=n_components, random_state=0)
+    X_transformed = nystroem.fit_transform(K)
+    assert X_transformed.shape == (X.shape[0], n_components)
+
+    # The precomputed kernel result matches passing the data directly with the
+    # same kernel.
+    reference = Nystroem(
+        kernel="rbf", gamma=gamma, n_components=n_components, random_state=0
+    )
+    X_reference = reference.fit_transform(X)
+    assert_allclose(X_transformed, X_reference)
+
+
+def test_nystroem_precomputed_kernel_non_square():
+    # A precomputed kernel must be square; otherwise it cannot be subsampled
+    # on both axes and we raise a clear error.
+    rnd = np.random.RandomState(12)
+    K = rnd.uniform(size=(10, 8))
+    nystroem = Nystroem(kernel="precomputed", n_components=5)
+    msg = "Precomputed kernel matrix must be a square matrix"
+    with pytest.raises(ValueError, match=msg):
+        nystroem.fit(K)
+
+
 def test_nystroem_component_indices():
     """Check that `component_indices_` corresponds to the subset of
     training points used to construct the feature map.
