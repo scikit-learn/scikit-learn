@@ -760,7 +760,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
 
-        Note: splitting may inspect more than ``max_features`` features when
+        Note: splitting may inspect more than ``max_features`` features if
         needed to find a valid split.
 
     random_state : int, RandomState instance or None, default=None
