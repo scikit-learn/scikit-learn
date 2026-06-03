@@ -138,6 +138,7 @@ class Parallel(joblib.Parallel):
         # Given this limitation, algorithms that cannot saturate all cores
         # should having documentation suggesting either sticking to process
         # pools, or choosing a better BLAS library.
+        # TODO don't do this on process pools:
         with _get_threadpool_controller().limit(
             limits=max(joblib.cpu_count() // self.n_jobs, 1)
         ):
