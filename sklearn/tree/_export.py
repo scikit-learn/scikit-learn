@@ -19,6 +19,7 @@ from sklearn.tree import (
     _tree,
 )
 from sklearn.tree._reingold_tilford import Tree, buchheim
+from sklearn.utils._optional_dependencies import check_matplotlib_support
 from sklearn.utils._param_validation import (
     HasMethods,
     Interval,
@@ -28,12 +29,11 @@ from sklearn.utils._param_validation import (
 from sklearn.utils.validation import check_array, check_is_fitted
 
 
-def _to_rgb(color):
+def _to_rgb(color, caller_name):
     """Convert any valid matplotlib color to rgb in range [0, 255]"""
-    try:
-        from matplotlib.colors import to_rgb
-    except ImportError:  # pragma: no cover
-        raise ImportError("matplotlib is needed if you want to provide your own colors")
+    check_matplotlib_support(caller_name)
+    from matplotlib.colors import to_rgb
+
     return [int(channel * 255) for channel in to_rgb(color)]
 
 
@@ -299,7 +299,9 @@ class _BaseTreeExporter:
                         f"fill_colors has {len(self.fill_colors)} elements "
                         f"but tree has {tree.n_classes[0]} classes"
                     )
-                self.colors["rgb"] = [_to_rgb(c) for c in self.fill_colors]
+                self.colors["rgb"] = [
+                    _to_rgb(c, "fill_colors") for c in self.fill_colors
+                ]
             else:
                 self.colors["rgb"] = _color_brew(tree.n_classes[0])
 
