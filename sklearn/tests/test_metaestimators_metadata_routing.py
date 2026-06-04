@@ -930,7 +930,7 @@ def test_metadata_is_routed_correctly_to_scorer(metaestimator):
     method_mapping = metaestimator.get("method_mapping", {})
 
     for method_name in routing_methods:
-        kwargs, (estimator, _, _), (scorer, registry, _), (cv, _) = get_init_args(
+        kwargs, (estimator, _, _), (scorer, registry), (cv, _) = get_init_args(
             metaestimator, sub_estimator_consumes=True
         )
         scorer.set_score_request(sample_weight=True)
@@ -954,7 +954,7 @@ def test_metadata_is_routed_correctly_to_scorer(metaestimator):
         for _scorer in registry:
             check_recorded_metadata(
                 obj=_scorer,
-                method="score",
+                method="consuming_metric",
                 parent=method_name,
                 split_params=("sample_weight",),
                 **method_kwargs,

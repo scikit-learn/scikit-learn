@@ -43,7 +43,7 @@ def record_metadata(obj, record_default=True, **kwargs):
     callee = caller = None
     for frame in stack:
         if callee is None:
-            if frame.function in METHODS:
+            if frame.function in METHODS + ["consuming_metric"]:
                 callee = frame.function
             continue
         if frame.function in METHODS:
@@ -83,17 +83,13 @@ def check_recorded_metadata(
     **kwargs : dict
         passed metadata
     """
-    all_records = (
-        getattr(obj, "_records", dict()).get(method, dict()).get(parent, list())
+    records = getattr(obj, "_records", dict()).get(method, dict()).get(parent, list())
+    assert records, (
+        f"No overlapping records. Checked routing for obj: `{obj.__class__.__name__}` "
+        f"with callee: `{method}`, caller: `{parent}`; recorded as callee-caller pair: "
+        f"{[(k1, k2) for k1, d in obj._records.items() for k2 in d]}."
     )
-    print(
-        f"obj: {obj.__class__.__name__}, method: {method}, parent: {parent}, recorded: "
-        f"{[(k1, k2) for k1, d in obj._records.items() for k2 in d]}"
-    )
-    print("")
-    assert all_records
-
-    for record in all_records:
+    for record in records:
         # first check that the names of the metadata passed are the same as
         # expected. The names are stored as keys in `record`.
         assert set(kwargs.keys()) == set(record.keys()), (
@@ -319,10 +315,10 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         record_metadata_not_default(
             self, sample_weight=sample_weight, metadata=metadata
         )
-        y_score = np.empty(shape=(len(X),), dtype="int8")
-        y_score[len(X) // 2 :] = 0
-        y_score[: len(X) // 2] = 1
-        return y_score
+        y_pred = np.empty(shape=(len(X),), dtype="int8")
+        y_pred[len(X) // 2 :] = 0
+        y_pred[: len(X) // 2] = 1
+        return y_pred
 
     def predict_proba(self, X, sample_weight="default", metadata="default"):
         record_metadata_not_default(
