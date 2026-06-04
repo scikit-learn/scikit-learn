@@ -3159,6 +3159,9 @@ def test_balanced_accuracy_score(y_true, y_pred):
     assert adjusted == (balanced - chance) / (1 - chance)
 
 
+# TODO(1.12): remove the filterwarnings when the default value of average in
+# precision_recall_fscore_support is changed.
+@pytest.mark.filterwarnings("ignore:.*default value of `average`.*:FutureWarning")
 @pytest.mark.parametrize(
     "metric",
     [
