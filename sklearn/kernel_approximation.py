@@ -1049,18 +1049,25 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         n_components = min(n_samples, n_components)
         inds = rnd.permutation(n_samples)
         basis_inds = xp.asarray(inds[:n_components], dtype=xp.int64, device=device)
-        if sp.issparse(X):
-            basis = X[basis_inds]
-        else:
-            basis = _safe_indexing(X, basis_inds, axis=0)
 
-        basis_kernel = pairwise_kernels(
-            basis,
-            metric=self.kernel,
-            filter_params=True,
-            n_jobs=self.n_jobs,
-            **self._get_kernel_params(),
-        )
+        kernel_params = self._get_kernel_params()
+
+        if self.kernel == "precomputed":
+            basis_kernel = X[np.ix_(basis_inds, basis_inds)]
+            basis = None
+        else:
+            if sp.issparse(X):
+                basis = X[basis_inds]
+            else:
+                basis = _safe_indexing(X, basis_inds, axis=0)
+
+            basis_kernel = pairwise_kernels(
+                basis,
+                metric=self.kernel,
+                filter_params=True,
+                n_jobs=self.n_jobs,
+                **kernel_params,
+            )
 
         # sqrt of kernel matrix on basis vectors
         _, _, dtype = _find_floating_dtype_allow_sparse(basis_kernel, Y=None, xp=xp)
@@ -1094,15 +1101,18 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         xp, _, device = get_namespace_and_device(X)
         X = validate_data(self, X, accept_sparse="csr", reset=False)
 
-        kernel_params = self._get_kernel_params()
-        embedded = pairwise_kernels(
-            X,
-            self.components_,
-            metric=self.kernel,
-            filter_params=True,
-            n_jobs=self.n_jobs,
-            **kernel_params,
-        )
+        if self.kernel == "precomputed":
+            embedded = X[:, self.component_indices_]
+        else:
+            kernel_params = self._get_kernel_params()
+            embedded = pairwise_kernels(
+                X,
+                self.components_,
+                metric=self.kernel,
+                filter_params=True,
+                n_jobs=self.n_jobs,
+                **kernel_params,
+            )
         dtype = _find_matching_floating_dtype(embedded, xp=xp)
         embedded = xp.asarray(embedded, dtype=dtype, device=device)
         return embedded @ self.normalization_.T

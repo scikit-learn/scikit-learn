@@ -488,6 +488,27 @@ def test_nystroem_precomputed_kernel():
             ny.fit(K)
 
 
+def test_nystroem_precomputed_kernel_subsample():
+    """Check Nystroem with precomputed kernel and n_components < n_samples.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/29353
+    """
+    rnd = np.random.RandomState(0)
+    X = rnd.randn(50, 5)
+    K = polynomial_kernel(X, degree=2, coef0=0.1)
+
+    n_components = 20
+    nystroem = Nystroem(kernel="precomputed", n_components=n_components, random_state=0)
+    X_transformed = nystroem.fit_transform(K)
+    assert X_transformed.shape == (50, n_components)
+
+    X_transformed2 = nystroem.transform(K)
+    assert_array_almost_equal(X_transformed, X_transformed2)
+
+    assert nystroem.components_ is None
+
+
 def test_nystroem_component_indices():
     """Check that `component_indices_` corresponds to the subset of
     training points used to construct the feature map.
