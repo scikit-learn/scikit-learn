@@ -551,6 +551,8 @@ class NewtonCholeskySolver(NewtonSolver):
             n_classes = self.linear_loss.base_loss.n_classes
             # intercept -= intercept of last class
             self.coef[-n_classes:] -= self.coef[-1]
+        # Track linear algebra warnings
+        self.has_already_warned = False
 
     def update_gradient_hessian(self, X, y, sample_weight):
         _, _, self.hessian_warning = self.linear_loss.gradient_hessian(
@@ -657,35 +659,80 @@ class NewtonCholeskySolver(NewtonSolver):
                     self.use_fallback_lbfgs_solve = True
                     return
         except (np.linalg.LinAlgError, scipy.linalg.LinAlgWarning) as e:
-            warnings.warn(
-                f"The inner solver of {self.__class__.__name__} stumbled upon a "
-                "singular or very ill-conditioned Hessian matrix at iteration "
-                f"{self.iteration}. It will now resort to lbfgs instead.\n"
-                "Further options are to use another solver or to avoid such situation "
-                "in the first place. Possible remedies are removing collinear features"
-                " of X or increasing the penalization strengths.\n"
-                "The original Linear Algebra message was:\n" + str(e),
-                scipy.linalg.LinAlgWarning,
-            )
             # Possible causes:
-            # 1. hess_pointwise is negative. But this is already taken care in
+            # 1. hess_pointwise is negative. But this is already taken care of in
             #    LinearModelLoss.gradient_hessian.
             # 2. X is singular or ill-conditioned
             #    This might be the most probable cause.
-            #
+            if not self.has_already_warned:
+                # We only warn once.
+                warnings.warn(
+                    f"The inner solver of {self.__class__.__name__} stumbled upon a "
+                    "singular or very ill-conditioned Hessian matrix at iteration "
+                    f"{self.iteration}. It will now resort to using an "
+                    "eigendecomposition of the Hessian, which is expensive, and only"
+                    "take large enough eigenvalues into consideration. For too small "
+                    "or negative eigenvalues, it will resort to lbfgs instead.\n"
+                    "Further options are to use another solver or to avoid such a "
+                    "situation in the first place. Possible remedies are removing "
+                    "collinear features of X or increasing the penalization strengths."
+                    "\n"
+                    "The original Linear Algebra message was:\n" + str(e),
+                    scipy.linalg.LinAlgWarning,
+                )
+            self.has_already_warned = True
             # There are many possible ways to deal with this situation. Most of them
             # add, explicitly or implicitly, a matrix to the hessian to make it
             # positive definite, confer to Chapter 3.4 of Nocedal & Wright 2nd ed.
-            # Instead, we resort to lbfgs.
+            # We use an eigenvalue decomposition of the hessian and only use the
+            # eigenvectors corresponding to large enough eigenvalues. The eigenvalues
+            # correspond to curvature, negative curvature is bad (non-convex problem),
+            # tiny eigenvalues mean flat space.
+            eval, evec = scipy.linalg.eigh(self.hessian)
+            max_eval = eval[-1]
+            eps = np.sqrt(np.finfo(X.dtype).eps)
+            if max_eval <= eps:
+                # For flat space and negative curvature, we resort to lbfgs instead.
+                if self.verbose:
+                    print(
+                        "  The inner solver stumbled upon a singular or ill-"
+                        "conditioned Hessian matrix and resorts to LBFGS instead."
+                    )
+                self.use_fallback_lbfgs_solve = True
+                return
+
             if self.verbose:
                 print(
                     "  The inner solver stumbled upon a singular or ill-conditioned "
-                    "Hessian matrix and resorts to LBFGS instead."
+                    "Hessian matrix and resorts to an eigendecomposition of the "
+                    "Hessian."
                 )
-            self.use_fallback_lbfgs_solve = True
+            idx = np.flatnonzero(eval >= eps * np.abs(max_eval))
+            # Eigendecomposition Hessian = Q D Q', Newton step = -Q D^(-1) Q' grad
+            # As Hessian is symmetric, Q is an orthonormal matrix.
+            Q = evec[:, idx]
+            self.coef_newton = -Q @ ((1 / eval[idx]) * (Q.T @ self.gradient))
+            self.gradient_times_newton = self.gradient @ self.coef_newton
             return
 
     def finalize(self, X, y, sample_weight):
+        if self.has_already_warned:
+            # X might be singular, try to find minimum norm solution.
+            if self.linear_loss.fit_intercept:
+                Xe = np.concat((X, np.ones((X.shape[0], 1), dtype=X.dtype)), axis=1)
+            else:
+                Xe = X
+            eps = np.finfo(X.dtype).eps
+            # As long as Xe @ coef remains constant, we are allowed to change coef.
+            # This corresponds to the nullspace Z of Xe.
+            Z = scipy.linalg.null_space(Xe, rcond=np.sqrt(eps))
+            if (k := Z.shape[1]) > 0:
+                # For any x of length Z.shape[1], we are free to add Z @ x to the
+                # coefficients: coef_new = coef + Z @ x. We want to minimize
+                # ||coef_new||_2^2 = ||coef + Z @ x||_2^2 which is a least squares.
+                res = scipy.linalg.lstsq(Z, -self.coef)
+                self.coef += Z @ res[0]
+
         if self.is_multinomial_no_penalty:
             # Our convention is usually the symmetric parametrization where
             # sum(coef[classes, features], axis=0) = 0.
