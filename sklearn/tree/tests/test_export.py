@@ -32,12 +32,11 @@ w = [1, 1, 1, 0.5, 0.5, 0.5]
 y_degraded = [1, 1, 1, 1, 1, 1]
 
 
-def test_color_to_rgb():
-    pytest.importorskip("matplotlib")
+def test_color_to_rgb(pyplot):
     from sklearn.tree._export import _to_rgb
 
-    assert _to_rgb("red") == [255, 0, 0]
-    assert _to_rgb((0, 1.0, 0)) == [0, 255, 0]
+    assert _to_rgb("red", "test_color_to_rgb") == [255, 0, 0]
+    assert _to_rgb((0, 1.0, 0), "test_color_to_rgb") == [0, 255, 0]
 
 
 def test_rgb_to_hexstring():
@@ -374,53 +373,28 @@ def test_graphviz_feature_class_names_array_support(constructor):
     assert contents1 == contents2
 
 
-def test_export_graphviz_fill_colors():
+@pytest.mark.parametrize(
+    "fill_colors",
+    [["red", "blue"], ["#FF0000", "#0000FF"], [(1.0, 0.0, 0.0), (0.0, 0.0, 1.0)]],
+)
+def test_export_graphviz_fill_colors(pyplot, fill_colors):
     # Test export_graphviz with custom fill_colors parameter
-    pytest.importorskip("matplotlib")
-
     clf = DecisionTreeClassifier(
         max_depth=2, min_samples_split=2, criterion="gini", random_state=0
     )
     clf.fit(X, y)
 
-    # Test with color names
     contents = export_graphviz(
         clf,
         filled=True,
-        fill_colors=["red", "blue"],
+        fill_colors=fill_colors,
         out_file=None,
     )
 
     # Verify custom colors appear in output (red and blue hex codes)
     # Red = #ff0000, Blue = #0000ff
-    assert 'fillcolor="#ff0000"' in contents or 'fillcolor="#0000ff"' in contents
+    assert 'fillcolor="#ff0000"' in contents and 'fillcolor="#0000ff"' in contents
     assert "digraph Tree" in contents
-
-    # Test with hex colors
-    contents_hex = export_graphviz(
-        clf,
-        filled=True,
-        fill_colors=["#FF0000", "#0000FF"],
-        out_file=None,
-    )
-
-    # Verify hex colors appear in output
-    assert (
-        'fillcolor="#ff0000"' in contents_hex or 'fillcolor="#0000ff"' in contents_hex
-    )
-
-    # Test with RGB tuples
-    contents_rgb = export_graphviz(
-        clf,
-        filled=True,
-        fill_colors=[(1.0, 0.0, 0.0), (0.0, 0.0, 1.0)],
-        out_file=None,
-    )
-
-    # Verify RGB tuple colors appear in output
-    assert (
-        'fillcolor="#ff0000"' in contents_rgb or 'fillcolor="#0000ff"' in contents_rgb
-    )
 
 
 def test_graphviz_errors():
@@ -460,9 +434,7 @@ def test_graphviz_errors():
         export_graphviz(clf, out, class_names=[])
 
 
-def test_graphviz_fill_colors_length_mismatch_error():
-    pytest.importorskip("matplotlib")
-
+def test_graphviz_fill_colors_length_mismatch_error(pyplot):
     clf = DecisionTreeClassifier(
         max_depth=2, min_samples_split=2, criterion="gini", random_state=0
     )
@@ -475,6 +447,13 @@ def test_graphviz_fill_colors_length_mismatch_error():
             filled=True,
             fill_colors=["red"],
             out_file=None,
+        )
+
+    with pytest.raises(ValueError, match=msg):
+        plot_tree(
+            clf,
+            filled=True,
+            fill_colors=["red"],
         )
 
 
@@ -716,9 +695,12 @@ def test_plot_tree_gini(pyplot, fontsize):
     assert nodes[4].get_text() == "  False"
 
 
-def test_plot_tree_fill_colors(pyplot):
+@pytest.mark.parametrize(
+    "fill_colors",
+    [["red", "blue"], ["#FF0000", "#0000FF"], [(1.0, 0.0, 0.0), (0.0, 0.0, 1.0)]],
+)
+def test_plot_tree_fill_colors(pyplot, fill_colors):
     # Test plot_tree with custom fill_colors parameter
-    pytest.importorskip("matplotlib")
     from matplotlib.colors import to_rgba
 
     clf = DecisionTreeClassifier(
@@ -726,8 +708,6 @@ def test_plot_tree_fill_colors(pyplot):
     )
     clf.fit(X, y)
 
-    # Test with color names
-    fill_colors = ["red", "blue"]
     nodes = plot_tree(
         clf,
         filled=True,
@@ -735,51 +715,23 @@ def test_plot_tree_fill_colors(pyplot):
     )
 
     # Verify plot was created successfully (returns list of artists)
-    assert len(nodes) > 0
-    assert isinstance(nodes, list)
+    assert len(nodes) == 5
 
     # Check that facecolors are applied to node bbox patches
-    def _check_facecolors(nodes, expected_colors: list):
-        facecolors = []
-        for node in nodes:
-            if hasattr(node, "get_bbox_patch"):
-                bbox_patch = node.get_bbox_patch()
-                if bbox_patch is not None:
-                    facecolors.append(bbox_patch.get_facecolor())
+    facecolors = set()
+    for node in nodes:
+        if hasattr(node, "get_bbox_patch"):
+            bbox_patch = node.get_bbox_patch()
+            if bbox_patch is not None:
+                facecolors.add(bbox_patch.get_facecolor())
 
-        assert len(facecolors) > 0  # Ensure we found some boxes with colors
-        # Verify that all expected colors are present in the facecolors list
-        for color in expected_colors:
-            color_rgba = to_rgba("red")
-            assert any(fc == color_rgba for fc in facecolors), (
-                f"Expected color {color} not found in node facecolors"
-            )
-
-    _check_facecolors(nodes, fill_colors)
-
-    # Test with hex colors
-    fill_colors = ["#FF0000", "#0000FF"]
-    nodes_hex = plot_tree(
-        clf,
-        filled=True,
-        fill_colors=fill_colors,
-    )
-
-    assert len(nodes_hex) > 0
-    assert isinstance(nodes_hex, list)
-    _check_facecolors(nodes_hex, fill_colors)
-
-    # Test with RGB tuples
-    fill_colors = [(1.0, 0.0, 0.0), (0.0, 0.0, 1.0)]
-    nodes_rgb = plot_tree(
-        clf,
-        filled=True,
-        fill_colors=fill_colors,
-    )
-
-    assert len(nodes_rgb) > 0
-    assert isinstance(nodes_rgb, list)
-    _check_facecolors(nodes_rgb, fill_colors)
+    assert len(facecolors) > 0  # Ensure we found some boxes with colors
+    # Verify that all expected colors are present in the facecolors list
+    for color in fill_colors:
+        color_rgba = to_rgba(color)
+        assert color_rgba in facecolors, (
+            f"Expected color {color} not found in node facecolors"
+        )
 
 
 def test_not_fitted_tree(pyplot):
