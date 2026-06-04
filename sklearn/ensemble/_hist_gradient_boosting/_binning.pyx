@@ -88,17 +88,23 @@ cdef inline size_t _binary_search(
         size_t left
         size_t half
         size_t middle
+        size_t remaining_size
 
     left = 0
+    remaining_size = size
+
     # Fixed number of loops, instead of less-predictable while loop:
     for _ in range(log2ceil(size)):
-        half = size / 2
+        half = remaining_size / 2
         middle = left + half
         # Try for cmov instead of branch:
         left = middle if (binning_thresholds[middle] < value) else left
-        size -= half
+        remaining_size -= half
 
-    left = left + 1 if value > binning_thresholds[left] else left
+    # Try for cmov instead of branch:
+    left = left + 1 if (
+        (left < size) and (value > binning_thresholds[left])
+    ) else left
     return left
 
 
