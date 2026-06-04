@@ -70,18 +70,17 @@ for name, penalty in (("unreg", 1), ("reg", 0.05)):
 
     plt.axis("tight")
     x_min = -4.8
-    x_max = 4.2
-    y_min = -6
-    y_max = 6
+    x_max = 4.1
+    y_min = -5
+    y_max = 5
 
     DecisionBoundaryDisplay.from_estimator(
         clf,
         X,
         ax=plt.gca(),
-        cmap=plt.get_cmap("RdBu"),
+        cmap="RdBu",
         alpha=0.5,
         response_method="decision_function",
-        plot_method="contourf",
     )
 
     plt.xlim(x_min, x_max)
