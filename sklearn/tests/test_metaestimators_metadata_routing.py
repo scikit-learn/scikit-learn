@@ -447,12 +447,14 @@ METAESTIMATORS: list = [
         "X": X,
         "y": y,
         "estimator_routing_methods": ["fit", "predict", "score"],
+        "filter_registry": {"predict": slice(-1, None), "score": slice(-1, None)},
     },
     {
         "metaestimator": RFECV,
         "estimator": "classifier",
         "estimator_name": "estimator",
         "estimator_routing_methods": ["fit"],
+        "filter_registry": {"predict": -1, "score": -1},
         "cv_name": "cv",
         "cv_routing_methods": ["fit"],
         "scorer_name": "scoring",
@@ -506,6 +508,9 @@ The keys are as follows:
 - method_mapping: a dict of the form `{caller: [callee1, ...]}` which signals
   which `.set_{method}_request` methods should be called to set request values.
   If not present, a one-to-one mapping is assumed.
+- filter_registry: if _Registry to run `check_recorded_metadata` on needs to be filtered
+  for certain methods (for instance `RFE` fits in several clones of the sub-estimator,
+  but discards them for `predict` and `score`); default is False
 """
 
 # IDs used by pytest to get meaningful verbose messages when running the tests
@@ -549,7 +554,7 @@ def get_init_args(metaestimator_info, sub_estimator_consumes):
     # Avoid mutating the original init_args dict to keep the test execution
     # thread-safe.
     kwargs = metaestimator_info.get("init_args", {}).copy()
-    estimator, estimator_registry = None, None
+    estimator, estimator_registry, filter_registry = None, None, None
     scorer, scorer_registry = None, None
     cv, cv_registry = None, None
     if "estimator" in metaestimator_info:
@@ -584,10 +589,12 @@ def get_init_args(metaestimator_info, sub_estimator_consumes):
         else:
             cv = ConsumingSplitter(registry=cv_registry)
         kwargs[cv_name] = cv
+    if "filter_registry" in metaestimator_info:
+        filter_registry = metaestimator_info["filter_registry"]
 
     return (
         kwargs,
-        (estimator, estimator_registry),
+        (estimator, estimator_registry, filter_registry),
         (scorer, scorer_registry),
         (cv, cv_registry),
     )
@@ -746,7 +753,7 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
 
     for method_name, metadata_keys in routing_methods.items():
         for key in metadata_keys:
-            kwargs, (estimator, _), (scorer, _), *_ = get_init_args(
+            kwargs, (estimator, _, _), (scorer, _), *_ = get_init_args(
                 metaestimator, sub_estimator_consumes=True
             )
             if scorer:
@@ -812,8 +819,8 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
             val = {"sample_weight": sample_weight, "metadata": metadata}[key]
             method_kwargs = {key: val}
 
-            kwargs, (estimator, registry), (scorer, _), (cv, _) = get_init_args(
-                metaestimator, sub_estimator_consumes=True
+            kwargs, (estimator, registry, filter_registry), (scorer, _), (cv, _) = (
+                get_init_args(metaestimator, sub_estimator_consumes=True)
             )
             if scorer:
                 set_requests(
@@ -850,6 +857,8 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
             split_params = (
                 method_kwargs.keys() if preserves_metadata == "subset" else ()
             )
+            if filter_registry:
+                registry = registry[filter_registry.get(method_name, slice(None))]
             for estimator in registry:
                 check_recorded_metadata(
                     estimator,
@@ -886,7 +895,7 @@ def test_non_consuming_estimator_works(metaestimator):
         metaestimator["estimator_routing_methods"]
     )
     for method_name in routing_methods:
-        kwargs, (estimator, _), (_, _), (_, _) = get_init_args(
+        kwargs, (estimator, _, _), (_, _), (_, _) = get_init_args(
             metaestimator, sub_estimator_consumes=False
         )
         instance = metaestimator_class(**kwargs)
@@ -920,7 +929,7 @@ def test_metadata_is_routed_correctly_to_scorer(metaestimator):
     method_mapping = metaestimator.get("method_mapping", {})
 
     for method_name in routing_methods:
-        kwargs, (estimator, _), (scorer, registry), (cv, _) = get_init_args(
+        kwargs, (estimator, _), (scorer, registry, _), (cv, _) = get_init_args(
             metaestimator, sub_estimator_consumes=True
         )
         scorer.set_score_request(sample_weight=True)
@@ -967,7 +976,7 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
     y_ = metaestimator["y"]
 
     for method_name in routing_methods:
-        kwargs, (estimator, _), (scorer, _), (cv, registry) = get_init_args(
+        kwargs, (estimator, _, _), (scorer, _), (cv, registry) = get_init_args(
             metaestimator, sub_estimator_consumes=True
         )
         if estimator:
