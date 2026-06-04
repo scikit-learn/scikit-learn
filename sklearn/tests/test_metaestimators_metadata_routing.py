@@ -461,6 +461,7 @@ METAESTIMATORS: list = [
         "scorer_routing_methods": ["fit", "score"],
         "X": X,
         "y": y,
+        "preserves_metadata": "subset",
     },
     {
         "metaestimator": TargetEncoder,
@@ -509,8 +510,8 @@ The keys are as follows:
   which `.set_{method}_request` methods should be called to set request values.
   If not present, a one-to-one mapping is assumed.
 - filter_registry: if _Registry to run `check_recorded_metadata` on needs to be filtered
-  for certain methods (for instance `RFE` fits in several clones of the sub-estimator,
-  but discards them for `predict` and `score`); default is False
+  for certain methods (for instance `RFE` `fits` several clones of the sub-estimator,
+  but discards them for `predict` and `score`).
 """
 
 # IDs used by pytest to get meaningful verbose messages when running the tests
@@ -929,7 +930,7 @@ def test_metadata_is_routed_correctly_to_scorer(metaestimator):
     method_mapping = metaestimator.get("method_mapping", {})
 
     for method_name in routing_methods:
-        kwargs, (estimator, _), (scorer, registry, _), (cv, _) = get_init_args(
+        kwargs, (estimator, _, _), (scorer, registry, _), (cv, _) = get_init_args(
             metaestimator, sub_estimator_consumes=True
         )
         scorer.set_score_request(sample_weight=True)
