@@ -332,3 +332,17 @@ def test_compute_sample_weight_sparse(csc_container):
     y = csc_container(np.asarray([[0], [1], [1]]))
     sample_weight = compute_sample_weight("balanced", y)
     assert_allclose(sample_weight, [1.5, 0.75, 0.75])
+def test_compute_class_weight_all_zero_sample_weight():
+    """Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/34139
+    When a class has all-zero sample weights, a clear ValueError
+    should be raised instead of returning inf or nan.
+    """
+    y = np.array([0, 0, 1, 1, 2, 2])
+    classes = np.unique(y)
+    sample_weight = np.array([1.0, 1.0, 1.0, 1.0, 0.0, 0.0])
+
+    with pytest.raises(ValueError, match="all-zero sample weights"):
+        compute_class_weight(
+            "balanced", classes=classes, y=y, sample_weight=sample_weight
+        )
