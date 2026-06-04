@@ -604,12 +604,16 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
 
     if y_type == "binary":
         if n_classes == 1:
+            y = column_or_1d(y)
+            y_in_class = xp.reshape(
+                xp.astype(xp.asarray(y == classes[0]), int_dtype_), (n_samples, 1)
+            )
             if sparse_output:
-                return _align_api_if_sparse(sp.csr_array((n_samples, 1), dtype=int))
+                return _align_api_if_sparse(
+                    sp.csr_array(y_in_class * pos_label + (1 - y_in_class) * neg_label)
+                )
             else:
-                Y = xp.zeros((n_samples, 1), dtype=int_dtype_)
-                Y += neg_label
-                return Y
+                return y_in_class * pos_label + (1 - y_in_class) * neg_label
         elif n_classes >= 3:
             y_type = "multiclass"
 

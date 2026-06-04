@@ -48,11 +48,11 @@ def toarray(a):
 
 
 def test_label_binarizer():
-    # one-class case defaults to negative label
+    # one-class case: matching labels get pos_label
     # For dense case:
     inp = ["pos", "pos", "pos", "pos"]
     lb = LabelBinarizer(sparse_output=False)
-    expected = np.array([[0, 0, 0, 0]]).T
+    expected = np.array([[1, 1, 1, 1]]).T
     got = lb.fit_transform(inp)
     assert_array_equal(lb.classes_, ["pos"])
     assert_array_equal(expected, got)
@@ -708,6 +708,26 @@ def test_label_binarize_binary():
     expected = np.array([[3, 0], [0, 3], [3, 0]])[:, 1].reshape((-1, 1))
 
     check_binarized_results(y, classes, pos_label, neg_label, expected)
+
+
+def test_label_binarize_single_class():
+    """Check label_binarize with a single class marks matching labels correctly.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/13674
+    """
+    y = [1, 1, 0, 1]
+    classes = [1]
+    result = label_binarize(y, classes=classes)
+    expected = np.array([[1], [1], [0], [1]])
+    assert_array_equal(result, expected)
+
+    result_sparse = label_binarize(y, classes=classes, sparse_output=True)
+    assert_array_equal(result_sparse.toarray(), expected)
+
+    result_custom = label_binarize(y, classes=classes, pos_label=5, neg_label=-1)
+    expected_custom = np.array([[5], [5], [-1], [5]])
+    assert_array_equal(result_custom, expected_custom)
 
 
 def test_label_binarize_multiclass():
