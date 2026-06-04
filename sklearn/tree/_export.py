@@ -296,7 +296,8 @@ class _BaseTreeExporter:
             if self.fill_colors is not None:
                 if len(self.fill_colors) != tree.n_classes[0]:
                     raise ValueError(
-                        f"{len(self.fill_colors)=} must be {tree.n_classes[0]=}"
+                        f"fill_colors has {len(self.fill_colors)} elements "
+                        f"but tree has {tree.n_classes[0]} classes"
                     )
                 self.colors["rgb"] = [_to_rgb(c) for c in self.fill_colors]
             else:
