@@ -60,7 +60,10 @@ cdef void _map_col_to_bins(
     cdef:
         int i
 
+    # If this limit increases, log2ceil will need to be changed to support
+    # higher numbers:
     assert len(binning_thresholds) < 256
+
     for i in prange(data.shape[0], schedule='static', nogil=True,
                     num_threads=n_threads):
         if (
@@ -90,6 +93,9 @@ cdef inline size_t _binary_search(
         size_t middle
         size_t remaining_size
 
+    # This implementation is designed to minimize branch mispredictions. See:
+    # https://pvk.ca/Blog/2012/07/03/binary-search-star-eliminates-star-branch-mispredictions/
+    # https://pvk.ca/Blog/2015/11/29/retrospective-on-binary-search-and-on-compression-slash-compilation/
     left = 0
     remaining_size = size
 
@@ -97,7 +103,8 @@ cdef inline size_t _binary_search(
     for _ in range(log2ceil(size)):
         half = remaining_size / 2
         middle = left + half
-        # Try for cmov instead of branch:
+        # Try for cmov instead of branch; see
+        # https://en.algorithmica.org/hpc/pipelining/branchless/ for details:
         left = middle if (binning_thresholds[middle] < value) else left
         remaining_size -= half
 
@@ -133,4 +140,5 @@ cdef uint8_t[256] int_to_log2ceil = [
 ]
 
 cdef inline uint8_t log2ceil(uint8_t x) nogil:
+    # Using a lookup table is slightly faster than calculating on demand:
     return int_to_log2ceil[x]
