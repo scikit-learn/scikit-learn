@@ -3,6 +3,7 @@
 
 from cython.parallel import prange
 from libc.math cimport isnan
+from libc.stdint cimport uint8_t
 
 from sklearn.ensemble._hist_gradient_boosting.common cimport X_DTYPE_C, X_BINNED_DTYPE_C
 from sklearn.utils._typedefs cimport uint8_t
@@ -71,24 +72,30 @@ cdef void _map_col_to_bins(
             binned[i] = missing_values_bin_idx
         else:
             # for known values, use binary search
-            binned[i] = _binary_search(data[i], binning_thresholds, len(binning_thresholds))
+            binned[i] = _binary_search(
+                data[i],
+                binning_thresholds,
+                len(binning_thresholds)
+            )
 
 
-cdef inline int _binary_search(
+cdef inline size_t _binary_search(
     X_DTYPE_C value,
     const X_DTYPE_C [::1] binning_thresholds,
-    int size,
+    size_t size,
 ) nogil:
     cdef:
-        int left
-        int half
-        int mid
+        size_t left
+        size_t half
+        size_t middle
 
     left = 0
+    # Fixed number of loops, instead of less-predictable while loop:
     for _ in range(log2ceil(size)):
-        half = size >> 1
-        mid = left + half
-        left = mid if (binning_thresholds[mid] < value) else left
+        half = size / 2
+        middle = left + half
+        # Try for cmov instead of branch:
+        left = middle if (binning_thresholds[middle] < value) else left
         size -= half
 
     left = left + 1 if value > binning_thresholds[left] else left
@@ -100,7 +107,7 @@ cdef inline int _binary_search(
 #  int_to_log2ceil[0] = 0
 #  for i in range(1, 256):
 #      int_to_log2ceil[i] = int(math.ceil(math.log2(i)))
-cdef int[256] int_to_log2ceil = [
+cdef uint8_t[256] int_to_log2ceil = [
     0, 0, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4,
     4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
     5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
@@ -119,5 +126,5 @@ cdef int[256] int_to_log2ceil = [
     8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8
 ]
 
-cdef inline unsigned int log2ceil(unsigned int x) nogil:
+cdef inline uint8_t log2ceil(uint8_t x) nogil:
     return int_to_log2ceil[x]
