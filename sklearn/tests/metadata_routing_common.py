@@ -170,6 +170,12 @@ class _Registry(list):
     def __copy__(self):
         return self
 
+    def __repr__(self):
+        return (
+            f"_Registry(n={len(self)}, "
+            f"estimators={[x.__class__.__name__ for x in self]})."
+        )
+
 
 class ConsumingRegressor(RegressorMixin, BaseEstimator):
     """A regressor consuming metadata.

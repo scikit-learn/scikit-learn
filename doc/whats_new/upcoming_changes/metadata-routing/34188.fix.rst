@@ -1,5 +1,3 @@
-- Fixed metadata routing for :class:`ensemble.BaggingClassifier` when ``predict`` or
-  ``predict_proba`` dynamically dispatch to a different method on the underlying
-  estimator (for example, routing ``sample_weight`` to ``predict_proba`` instead of
-  ``predict``).
+- :class:`ensemble.BaggingClassifier` now correctly routes metadata via `predict` and
+  `predict_proba` dynamically to the corresponding method on the sub-estimator.
   By :user:`Stefanie Senger <StefanieSenger>`.
