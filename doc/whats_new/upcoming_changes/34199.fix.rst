@@ -1,0 +1,1 @@
+:func:`utils.class_weight.compute_class_weight` now raises a :class:`ValueError` when a class has all-zero sample weights instead of silently returning ``inf`` or ``nan``. :pr:`34199` by :user:`Shahaborakzai`. 

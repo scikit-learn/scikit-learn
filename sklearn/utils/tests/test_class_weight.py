@@ -332,6 +332,8 @@ def test_compute_sample_weight_sparse(csc_container):
     y = csc_container(np.asarray([[0], [1], [1]]))
     sample_weight = compute_sample_weight("balanced", y)
     assert_allclose(sample_weight, [1.5, 0.75, 0.75])
+
+
 def test_compute_class_weight_all_zero_sample_weight():
     """Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/34139
