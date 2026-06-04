@@ -303,6 +303,26 @@ def test_f_regression_corner_case(
     np.testing.assert_array_almost_equal(p_values, expected_p_values)
 
 
+def test_f_regression_constant_column():
+    """Check f_regression does not raise on constant columns.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/11395
+    """
+    rng = np.random.RandomState(0)
+    X = rng.randn(100, 5)
+    X[:, 2] = 1.0  # constant column
+    y = rng.randn(100)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        F, pv = f_regression(X, y)
+
+    assert np.isfinite(F).all()
+    assert np.isfinite(pv).all()
+    assert F[2] == 0.0
+
+
 def test_f_classif_multi_class():
     # Test whether the F test yields meaningful results
     # on a simple simulated classification problem
