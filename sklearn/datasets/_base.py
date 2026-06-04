@@ -354,14 +354,14 @@ def load_csv_data(
     Returns
     -------
     data : ndarray of shape (n_samples, n_features)
-        A 2D array with each row representing one sample and each column
+        A 2D array with each row representing one sample and the columns
         representing the features of a given sample.
 
-    target : ndarry of shape (n_samples,)
+    target : ndarray of shape (n_samples,)
         A 1D array holding target variables for all the samples in `data`.
         For example target[0] is the target variable for data[0].
 
-    target_names : ndarry of shape (n_samples,)
+    target_names : ndarray of shape (n_samples,)
         A 1D array containing the names of the classifications. For example
         target_names[0] is the name of the target[0] class.
 
@@ -441,7 +441,7 @@ def load_gzip_compressed_csv_data(
     Returns
     -------
     data : ndarray of shape (n_samples, n_features)
-        A 2D array with each row representing one sample and each column
+        A 2D array with each row representing one sample and the columns
         representing the features and/or target of a given sample.
 
     descr : str, optional
@@ -466,15 +466,13 @@ def load_descr(descr_file_name, *, descr_module=DESCR_MODULE, encoding="utf-8"):
 
     Parameters
     ----------
-    descr_file_name : str, default=None
+    descr_file_name : str
         Name of rst file to be loaded from `descr_module/descr_file_name`.
-        For example `'wine_data.rst'`. See also :func:`load_descr`.
-        If not None, also returns the corresponding description of
-        the dataset.
+        For example `'wine_data.rst'`.
 
     descr_module : str or module, default='sklearn.datasets.descr'
-        Module where `descr_file_name` lives. See also :func:`load_descr`.
-        The default  is `'sklearn.datasets.descr'`.
+        Module where `descr_file_name` lives.
+        The default is `'sklearn.datasets.descr'`.
 
     encoding : str, default="utf-8"
         Name of the encoding that `descr_file_name` will be decoded with.
@@ -559,9 +557,11 @@ def load_wine(*, return_X_y=False, as_frame=False):
             The full description of the dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
-        A tuple of two ndarrays by default. The first contains a 2D array of shape
-        (178, 13) with each row representing one sample and each column representing
-        the features. The second array of shape (178,) contains the target samples.
+        A tuple of two ndarrays. The first contains a 2D array of
+        shape (178, 13) with each row representing one sample and the columns
+        representing the features. The second array of shape (178,) contains
+        the target samples. If `as_frame=True`, both arrays are pandas objects,
+        i.e. `X` a dataframe and `y` a series.
 
     Examples
     --------
@@ -625,8 +625,7 @@ def load_wine(*, return_X_y=False, as_frame=False):
 def load_iris(*, return_X_y=False, as_frame=False):
     """Load and return the iris dataset (classification).
 
-    The iris dataset is a classic and very easy multi-class classification
-    dataset.
+    The iris dataset is a classic and very easy multi-class classification dataset.
 
     =================   ==============
     Classes                          3
@@ -688,10 +687,11 @@ def load_iris(*, return_X_y=False, as_frame=False):
             .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
-        A tuple of two ndarray. The first containing a 2D array of shape
-        (n_samples, n_features) with each row representing one sample and
-        each column representing the features. The second ndarray of shape
-        (n_samples,) containing the target samples.
+        A tuple of two ndarrays. The first contains a 2D array of
+        shape (150, 4) with each row representing one sample and the columns
+        representing the features. The second ndarray of shape (150,) contains
+        the target samples. If `as_frame=True`, both arrays are pandas objects,
+        i.e. `X` a dataframe and `y` a series.
 
         .. versionadded:: 0.18
 
@@ -816,10 +816,10 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
             .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
-        A tuple of two ndarrays by default. The first contains a 2D ndarray of
-        shape (569, 30) with each row representing one sample and each column
+        A tuple of two ndarrays. The first contains a 2D ndarray of
+        shape (569, 30) with each row representing one sample and the columns
         representing the features. The second ndarray of shape (569,) contains
-        the target samples.  If `as_frame=True`, both arrays are pandas objects,
+        the target samples. If `as_frame=True`, both arrays are pandas objects,
         i.e. `X` a dataframe and `y` a series.
 
         .. versionadded:: 0.18
@@ -975,10 +975,10 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
             The full description of the dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
-        A tuple of two ndarrays by default. The first contains a 2D ndarray of
-        shape (1797, 64) with each row representing one sample and each column
-        representing the features. The second ndarray of shape (1797) contains
-        the target samples.  If `as_frame=True`, both arrays are pandas objects,
+        A tuple of two ndarrays. The first contains a 2D ndarray of
+        shape (1797, 64) with each row representing one sample and the columns
+        representing the features. The second ndarray of shape (1797,) contains
+        the target samples. If `as_frame=True`, both arrays are pandas objects,
         i.e. `X` a dataframe and `y` a series.
 
         .. versionadded:: 0.18
@@ -1112,9 +1112,11 @@ def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
             The path to the location of the target.
 
     (data, target) : tuple if ``return_X_y`` is True
-        Returns a tuple of two ndarray of shape (n_samples, n_features)
-        A 2D array with each row representing one sample and each column
-        representing the features and/or target of a given sample.
+        A tuple of two ndarrays. The first contains a 2D ndarray of
+        shape (442, 10) with each row representing one sample and the columns
+        representing the features. The second ndarray of shape (442,) contains
+        the target samples. If `as_frame=True`, both arrays are pandas objects,
+        i.e. `X` a dataframe and `y` a series.
 
         .. versionadded:: 0.18
 
@@ -1232,9 +1234,10 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
             .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
-        Returns a tuple of two ndarrays or dataframe of shape
-        `(20, 3)`. Each row represents one sample and each column represents the
-        features in `X` and a target in `y` of a given sample.
+        A tuple of two ndarrays. The first contains a 2D ndarray of
+        shape `(20, 3)` with each row representing one sample and the columns
+        representing the features. The second ndarray of shape `(20, 3)` contains
+        the multi target samples. If `as_frame=True`, both arrays are pandas dataframes.
 
         .. versionadded:: 0.18
 
