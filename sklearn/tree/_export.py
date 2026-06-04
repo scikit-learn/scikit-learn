@@ -29,7 +29,7 @@ from sklearn.utils.validation import check_array, check_is_fitted
 
 
 def _to_rgb(color):
-    """Convert any valid maptlotlib color to rgb in range [0, 255]"""
+    """Convert any valid matplotlib color to rgb in range [0, 255]"""
     try:
         from matplotlib.colors import to_rgb
     except ImportError:  # pragma: no cover
@@ -194,10 +194,11 @@ def plot_tree(
     fontsize : int, default=None
         Size of text font. If None, determined automatically to fit figure.
 
-    fill_colors : list, optional (default=None)
+    fill_colors : list, default=None
         A list of length ``decision_tree.n_classes[0]`` to be used as colors
         to fill the tree nodes. Each element can be any valid matplotlib color
         specification (e.g. a color name, a hex string, or an RGB tuple).
+        If None, colors with equally spaced hues are generated automatically.
 
     Returns
     -------
@@ -924,10 +925,11 @@ def export_graphviz(
     fontname : str, default='helvetica'
         Name of font used to render text.
 
-    fill_colors : list, optional (default=None)
+    fill_colors : list, default=None
         A list of length ``decision_tree.n_classes[0]`` to be used as colors
         to fill the tree nodes. Each element can be any valid matplotlib color
         specification (e.g. a color name, a hex string, or an RGB tuple).
+        If None, colors with equally spaced hues are generated automatically.
 
     Returns
     -------
