@@ -27,15 +27,16 @@ is merged. See https://github.com/blog/1506-closing-issues-via-pull-requests
 
 #### AI usage disclosure
 <!--
-If AI tools were involved in creating this PR, please check all boxes that apply
-below and make sure that you adhere to our Automated Contributions Policy:
+Edit the list below to show when/how you used AI tools to create this PR.
+Keep the ones that apply, delete the rest.
+Make sure that you adhere to our Automated Contributions Policy:
 https://scikit-learn.org/dev/developers/contributing.html#automated-contributions-policy
 -->
 I used AI assistance for:
-- [ ] Code generation (e.g., when writing an implementation or fixing a bug)
-- [ ] Test/benchmark generation
-- [ ] Documentation (including examples)
-- [ ] Research and understanding
+- Code generation (e.g., when writing an implementation or fixing a bug)
+- Test/benchmark generation
+- Documentation (including examples)
+- Research and understanding
 
 
 #### Any other comments?
