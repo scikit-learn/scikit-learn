@@ -199,6 +199,7 @@ def plot_tree(
         to fill the tree nodes. Each element can be any valid matplotlib color
         specification (e.g. a color name, a hex string, or an RGB tuple).
         If None, colors with equally spaced hues are generated automatically.
+        Ignored if ``filled=False``.
 
     Returns
     -------
@@ -933,6 +934,7 @@ def export_graphviz(
         to fill the tree nodes. Each element can be any valid matplotlib color
         specification (e.g. a color name, a hex string, or an RGB tuple).
         If None, colors with equally spaced hues are generated automatically.
+        Ignored if ``filled=False``.
 
     Returns
     -------
