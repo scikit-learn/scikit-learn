@@ -98,17 +98,13 @@ class ContainerAdapterProtocol(Protocol):
             Container with new names.
         """
 
-    def hstack(self, Xs, feature_names=None):
+    def hstack(self, Xs):
         """Stack containers horizontally (column-wise).
 
         Parameters
         ----------
         Xs : list of containers
             List of containers to stack.
-
-        feature_names : array-like of str, default=None
-            The feature names for the stacked container. If provided, the
-            columns of the result will be renamed to these names.
 
         Returns
         -------
@@ -154,12 +150,9 @@ class PandasAdapter:
         X.columns = columns
         return X
 
-    def hstack(self, Xs, feature_names=None):
+    def hstack(self, Xs):
         pd = check_library_installed("pandas")
-        result = pd.concat(Xs, axis=1)
-        if feature_names is not None:
-            self.rename_columns(result, feature_names)
-        return result
+        return pd.concat(Xs, axis=1)
 
 
 class PolarsAdapter:
@@ -188,16 +181,8 @@ class PolarsAdapter:
         X.columns = columns
         return X
 
-    def hstack(self, Xs, feature_names=None):
+    def hstack(self, Xs):
         pl = check_library_installed("polars")
-        if feature_names is not None:
-            # Rename columns in each X before concat to avoid duplicates
-            start = 0
-            for X in Xs:
-                n_features = X.shape[1]
-                names = feature_names[start : start + n_features]
-                self.rename_columns(X, names)
-                start += n_features
         return pl.concat(Xs, how="horizontal")
 
 
