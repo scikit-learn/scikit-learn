@@ -93,6 +93,18 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
 
         sample_weight = _check_sample_weight(sample_weight, y)
         weighted_class_counts = _bincount(y_ind, weights=sample_weight, xp=xp)
+        # Check for classes with all-zero sample weights (causes division by zero)
+        zero_weight_classes = np.where(
+            move_to(weighted_class_counts, xp=np, device="cpu") == 0
+        )[0]
+        if len(zero_weight_classes) > 0:
+            zero_class_labels = le.classes_[zero_weight_classes].tolist()
+            raise ValueError(
+                f"Classes {zero_class_labels} have all-zero sample weights. "
+                "The 'balanced' class_weight mode cannot be used when all "
+                "samples of a class have zero weight, as this would result "
+                "in a division by zero."
+            )
         recip_freq = xp.sum(weighted_class_counts) / (
             size(le.classes_) * weighted_class_counts
         )
