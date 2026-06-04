@@ -157,7 +157,17 @@ implementation_specific_values = [
 #                                   BinaryTree tree2, intp_t i_node2):
 #     """Compute the maximum distance between two nodes"""
 
-cdef extern from "binarytree.h":
+cdef extern from *:
+    """
+    #if defined(_MSC_VER)
+      // MS compiler doesn't do standardized _Thread_local until very
+      // recent versions:
+      #define tls_int __declspec(thread) int
+    #else
+      // _Thread_local is available in C11 and later:
+      #define tls_int _Thread_local int
+    #endif
+    """
     # It's actually a thread local int, but Cython has no way to express that
     # at the moment, see https://github.com/cython/cython/issues/6745
     ctypedef int tls_int
