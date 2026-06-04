@@ -85,9 +85,9 @@ def check_recorded_metadata(
     """
     records = getattr(obj, "_records", dict()).get(method, dict()).get(parent, list())
     assert records, (
-        f"No overlapping records. Checked routing for obj: `{obj.__class__.__name__}` "
-        f"with callee: `{method}`, caller: `{parent}`; recorded as callee-caller pair: "
-        f"{[(k1, k2) for k1, d in obj._records.items() for k2 in d]}."
+        f"No overlapping records. Checked routing for obj `{obj.__class__.__name__}` "
+        f"with callee: `{method}`, caller: `{parent}`; records exist for callee-caller "
+        f"pairs: {[(k1, k2) for k1, d in obj._records.items() for k2 in d]}."
     )
     for record in records:
         # first check that the names of the metadata passed are the same as
