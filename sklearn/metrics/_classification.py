@@ -71,7 +71,7 @@ def _check_zero_division(zero_division):
         return np.nan
 
 
-def _check_targets(y_true, y_pred, sample_weight=None):
+def _check_targets(y_true, y_pred, sample_weight=None, xp=None, device=None):
     """Check that y_true and y_pred belong to the same classification task.
 
     This converts multiclass or binary types to a common shape, and raises a
@@ -95,6 +95,18 @@ def _check_targets(y_true, y_pred, sample_weight=None):
 
     sample_weight : array-like, default=None
 
+    xp : module, default=None
+        Precomputed array namespace module. When passed, along with `device`,
+        typically from a caller that has already performed inspection of its own
+        inputs, skips array namespace inspection. If `None`, the inputs are converted
+        to the namespace of `y_pred`.
+
+    device : device, default=None
+        Precomputed device. When passed, along with `xp`, typically from a caller
+        that has already performed inspection of its own inputs, skips device
+        inspection and move everything to that device. If `None`, the inputs are
+        converted to the device of `y_pred`.
+
     Returns
     -------
     type_true : one of {'multilabel-indicator', 'multiclass', 'binary'}
@@ -111,7 +123,12 @@ def _check_targets(y_true, y_pred, sample_weight=None):
 
     sample_weight : array or None
     """
-    xp, _ = get_namespace(y_true, y_pred, sample_weight)
+    if xp is None or device is None:
+        xp, _, device = get_namespace_and_device(y_pred, xp=xp)
+    # Ensure `y_true` and `sample_weight` are on the `y_pred` device and namespace.
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
+    y_true, y_pred = attach_unique(y_true, y_pred)
+
     check_consistent_length(y_true, y_pred, sample_weight)
     type_true = type_of_target(y_true, input_name="y_true")
     type_pred = type_of_target(y_pred, input_name="y_pred")
@@ -399,11 +416,10 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     0.5
     """
     xp, _, device = get_namespace_and_device(y_pred)
-    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
     # Compute accuracy for each possible representation
     y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, _, y_true, y_pred, sample_weight = _check_targets(
-        y_true, y_pred, sample_weight
+        y_true, y_pred, sample_weight, xp=xp, device=device
     )
 
     if y_type.startswith("multilabel"):
@@ -512,7 +528,9 @@ def confusion_matrix(
     >>> (tn, fp, fn, tp)
     (0, 2, 1, 1)
     """
-    xp, _, device_ = get_namespace_and_device(y_true, y_pred, labels, sample_weight)
+    # For converting output (back) to `y_pred` input namespace and device.
+    # For the sake of consistency with other metric functions.
+    xp, _, device_ = get_namespace_and_device(y_pred)
     y_true = check_array(
         y_true,
         dtype=None,
@@ -541,7 +559,7 @@ def confusion_matrix(
 
     if len(sample_weight) > 0:
         y_type, unique_labels, y_true, y_pred, sample_weight = _check_targets(
-            y_true, y_pred, sample_weight
+            y_true, y_pred, sample_weight, xp=np, device="cpu"
         )
     else:
         # This is needed to handle the special case where y_true, y_pred and
@@ -549,7 +567,9 @@ def confusion_matrix(
         # In this case we don't pass sample_weight to _check_targets that would
         # check that sample_weight is not empty and we don't reuse the returned
         # sample_weight
-        y_type, unique_labels, y_true, y_pred, _ = _check_targets(y_true, y_pred)
+        y_type, unique_labels, y_true, y_pred, _ = _check_targets(
+            y_true, y_pred, xp=np, device="cpu"
+        )
 
     y_true, y_pred = attach_unique(y_true, y_pred)
     if y_type not in ("binary", "multiclass"):
@@ -735,10 +755,7 @@ def multilabel_confusion_matrix(
            [[2, 1],
             [1, 2]]])
     """
-    y_true, y_pred = attach_unique(y_true, y_pred)
-
     xp, _, device_ = get_namespace_and_device(y_pred)
-    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device_)
     y_type, present_labels, y_true, y_pred, sample_weight = _check_targets(
         y_true, y_pred, sample_weight
     )
@@ -750,7 +767,7 @@ def multilabel_confusion_matrix(
         labels = present_labels
         n_labels = None
     else:
-        labels = xp.asarray(labels, device=device_)
+        labels = move_to(labels, xp=xp, device=device_)
         n_labels = labels.shape[0]
         labels = xp.concat(
             [labels, xpx.setdiff1d(present_labels, labels, assume_unique=True, xp=xp)],
@@ -1897,7 +1914,9 @@ def _warn_prf(average, modifier, msg_start, result_size):
     warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
 
 
-def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
+def _check_set_wise_labels(
+    y_true, y_pred, average, labels, pos_label, xp=None, device=None
+):
     """Validation associated with set-wise metrics.
 
     Returns identified labels.
@@ -1906,8 +1925,9 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
     if average not in average_options and average != "binary":
         raise ValueError("average has to be one of " + str(average_options))
 
-    y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, present_labels, y_true, y_pred, _ = _check_targets(y_true, y_pred)
+    y_type, present_labels, y_true, y_pred, _ = _check_targets(
+        y_true, y_pred, xp=xp, device=device
+    )
     if average == "binary":
         if y_type == "binary":
             if pos_label not in present_labels:
@@ -2141,8 +2161,9 @@ def precision_recall_fscore_support(
     """
     _check_zero_division(zero_division)
     xp, _, device_ = get_namespace_and_device(y_pred)
-    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device_)
-    labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
+    labels = _check_set_wise_labels(
+        y_true, y_pred, average, labels, pos_label, xp=xp, device=device_
+    )
 
     # Calculate tp_sum, pred_sum, true_sum ###
     samplewise = average == "samples"
@@ -2359,7 +2380,6 @@ def class_likelihood_ratios(
     >>> class_likelihood_ratios(y_true, y_pred, labels=["non-cat", "cat"])
     (1.5, 0.75)
     """
-    y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, _, y_true, y_pred, sample_weight = _check_targets(
         y_true, y_pred, sample_weight
     )
@@ -3083,8 +3103,6 @@ def classification_report(
     weighted avg       1.00      0.67      0.80         3
     <BLANKLINE>
     """
-
-    y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, unique_labels_, y_true, y_pred, sample_weight = _check_targets(
         y_true, y_pred, sample_weight
     )
@@ -3098,7 +3116,7 @@ def classification_report(
 
     # labelled micro average
     micro_is_accuracy = (y_type == "multiclass" or y_type == "binary") and (
-        not labels_given or (set(labels) >= set(unique_labels(y_true, y_pred)))
+        not labels_given or (set(labels) >= set(unique_labels_))
     )
 
     if target_names is not None and len(labels) != len(target_names):
@@ -3279,7 +3297,6 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
     >>> hamming_loss(np.array([[0, 1], [1, 1]]), np.zeros((2, 2)))
     0.75
     """
-    y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, _, y_true, y_pred, sample_weight = _check_targets(
         y_true, y_pred, sample_weight
     )

@@ -69,6 +69,10 @@ from sklearn.utils.validation import check_random_state
 # Utilities for testing
 
 
+def test_aa():
+    confusion_matrix([0, 1], [1, 0], sample_weight=np.array([]))
+
+
 def make_prediction(dataset=None, binary=False):
     """Make some classification predictions on a toy dataset using an SVC
 
