@@ -424,21 +424,18 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 
 @scope (.sk-global.sk-vertical) {
   :scope {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+      /* margin: 0; */
+    padding: 0;
+    box-sizing: border-box;
   }
   div.features.fitted {
-      /* max-inline-size: 200em;
-      max-block-size: 2em;*/
-      margin: auto;
+     margin: auto;
   }
 
   div.sk-parallel-item,
   div.sk-serial,
   div.sk-item {
     background-image: none;
-
   }
 
   div.sk-parallel-item::after {
@@ -449,10 +446,8 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
   div.sk-serial,
   div.sk-parallel,
   div.sk-item {
-    border: 1px solid blue;
+    border: 1px solid rgb(0, 42, 255);
     position: relative;
-    /* margin-left: 20px; */
-
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -463,31 +458,26 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 
   div.sk-serial:has(> div.features),
   div.sk-serial:has(> div.total_features) {
-  display: grid;
-  grid-template-columns: 1fr ;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1em;
+    align-content: start;
+    justify-content: start;
+  }
 
-}
+  div.sk-serial > div.sk-item,
+  div.sk-serial > div.features,
+  div.sk-serial > div.total_features {
+    grid-column: 1;
+  }
 
-div.sk-serial > div.sk-item,
-div.sk-serial > div.features,
-div.sk-serial > div.total_features {
-  grid-column: 1;
-  /* align-self: flex-end; */
-}
-
-div.sk-serial > div.features.fitted:last-child {
+  div.sk-serial > div.features.fitted:last-child {
     color:red;
-     grid-column: 2;
- }
+    grid-column: -1;
+   }
 
-/* div.sk-serial > div.sk-item + div.features.fitted::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 0;
-  width: 0.9em;
-  border-top: 0.2em solid var(--sklearn-color-text-on-default-background);
-  transform: translate(-100%, -50%);
-  pointer-events: none;
-} */
+  div.total_features  {
+    border: 2px green solid;
+    align-self: center;
+  }
 }
