@@ -36,6 +36,14 @@ def record_metadata(obj, record_default=True, **kwargs):
     are skipped.
 
     """
+    validation_functions = [
+        "cross_validate",
+        "cross_val_score",
+        "cross_val_predict",
+        "learning_curve",
+        "permutation_test_score",
+        "validation_curve",
+    ]
     stack = inspect.stack()
     # for callee, extract the innermost `function` (which is in METHODS) from stack
     # frame; for caller, extract outmost function; as a fallback, infer callee and
@@ -46,7 +54,7 @@ def record_metadata(obj, record_default=True, **kwargs):
             if frame.function in METHODS + ["consuming_metric"]:
                 callee = frame.function
             continue
-        if frame.function in METHODS:
+        if frame.function in METHODS + validation_functions:
             caller = frame.function
     callee = callee or stack[1].function
     caller = caller or stack[2].function
@@ -463,6 +471,9 @@ class ConsumingNoFitTransformTransformer(BaseEstimator):
 
 
 def consuming_metric(y_pred, y_true, registry=None, **kwargs):
+    # Emulates metric function used in a `_Scorer`.
+    # Note, the `registry` of `consuming_metric` needs to be cleared after each test
+    # run to prevent accumulation of entries over the whole module.
     if registry is not None:
         registry.append(consuming_metric)
     record_metadata_not_default(consuming_metric, **kwargs)
