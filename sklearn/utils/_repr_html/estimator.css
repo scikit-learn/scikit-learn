@@ -424,12 +424,15 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 
 @scope (.sk-global.sk-vertical) {
   :scope {
-      /* margin: 0; */
+    margin: 0;
     padding: 0;
     box-sizing: border-box;
   }
   div.features.fitted {
      margin: auto;
+  }
+  div.sk-estimator.fitted {
+    margin: 0;
   }
 
   div.sk-parallel-item,
@@ -451,9 +454,9 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    justify-content: left;
+    justify-content: center;
     background-color: var(--sklearn-color-background);
-    /* border: 2px solid red; */
+    margin: 0;
   }
 
   div.sk-serial:has(> div.features),
@@ -476,8 +479,9 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
     grid-column: -1;
    }
 
-  div.total_features  {
+   div.total_features  {
     border: 2px green solid;
-    align-self: center;
+    margin-left: 60%;
+
   }
 }
