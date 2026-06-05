@@ -2099,8 +2099,8 @@ def test_feature_union_array_api_support_tag():
 
 
 @config_context(enable_metadata_routing=True)
-@pytest.mark.parametrize("method", ["fit", "fit_transform"])
-def test_transform_input_pipeline(method):
+@pytest.mark.parametrize("pipeline_method", ["fit", "fit_transform"])
+def test_transform_input_pipeline(pipeline_method):
     """Test that with transform_input, data is correctly transformed for each step."""
 
     def get_transformer(registry, sample_weight, metadata):
@@ -2132,17 +2132,16 @@ def test_transform_input_pipeline(method):
         )
         return pipe, registry_1, registry_2, registry_3, registry_4
 
-    def check_metadata(registry, methods, **metadata):
+    def check_metadata(registry, callees, **metadata):
         """Check that the right metadata was recorded for the given methods."""
         assert registry
-        for estimator in registry:
-            for method in methods:
-                check_recorded_metadata(
-                    estimator,
-                    method=method,
-                    parent=method,
-                    **metadata,
-                )
+        for callee in callees:
+            check_recorded_metadata(
+                registry[-1],  # we have one transformer in registry per step
+                method=callee,
+                parent=pipeline_method,
+                **metadata,
+            )
 
     X = np.array([[1, 2], [3, 4]])
     y = np.array([0, 1])
@@ -2151,7 +2150,7 @@ def test_transform_input_pipeline(method):
     metadata = np.array([[100, 200]])
 
     pipe, registry_1, registry_2, registry_3, registry_4 = get_pipeline()
-    pipe.fit(
+    getattr(pipe, pipeline_method)(
         X,
         y,
         sample_weight=sample_weight,
@@ -2160,18 +2159,18 @@ def test_transform_input_pipeline(method):
     )
 
     check_metadata(
-        registry_1, ["fit", "transform"], sample_weight=sample_weight, metadata=metadata
+        registry_1, ["fit_transform"], sample_weight=sample_weight, metadata=metadata
     )
-    check_metadata(registry_2, ["fit", "transform"])
+    check_metadata(registry_2, ["fit_transform"])
     check_metadata(
         registry_3,
-        ["fit", "transform"],
+        ["fit_transform"],
         sample_weight=sample_weight + 2,
         metadata=metadata,
     )
     check_metadata(
         registry_4,
-        method.split("_"),  # ["fit", "transform"] if "fit_transform", ["fit"] otherwise
+        ["fit"] if pipeline_method == "fit" else ["fit_transform", "fit", "transform"],
         sample_weight=other_weights + 3,
         metadata=metadata,
     )
