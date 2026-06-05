@@ -24,7 +24,8 @@ from sklearn.base import (
     is_classifier,
 )
 from sklearn.model_selection import cross_val_predict
-from sklearn.utils import Bunch, check_random_state, get_tags
+from sklearn.utils import Bunch, _safe_indexing, check_random_state, get_tags
+from sklearn.utils._dataframe import is_pandas_df_or_series
 from sklearn.utils._param_validation import HasMethods, StrOptions
 from sklearn.utils._response import _get_response_values
 from sklearn.utils._sparse import _align_api_if_sparse
@@ -42,6 +43,8 @@ from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import (
     _check_method_params,
     _check_response_method,
+    check_array,
+    check_consistent_length,
     check_is_fitted,
     has_fit_parameter,
     validate_data,
@@ -62,6 +65,43 @@ def _fit_estimator(estimator, X, y, sample_weight=None, **fit_params):
     else:
         estimator.fit(X, y, **fit_params)
     return estimator
+
+
+def _is_pandas_dataframe(X):
+    """Return True only for pandas DataFrame inputs."""
+    return is_pandas_df_or_series(X) and getattr(X, "ndim", None) == 2
+
+
+def _regressor_chain_feature_names(X, n_outputs):
+    """Return non-conflicting names for chain target columns."""
+    existing_names = set(getattr(X, "columns", ()))
+    names = []
+    for chain_idx in range(n_outputs):
+        name = f"regressorchain_y_{chain_idx}"
+        while name in existing_names:
+            name = f"_{name}"
+        names.append(name)
+        existing_names.add(name)
+    return names
+
+
+def _hstack_pandas_regressor_chain(X, Y, chain_feature_names):
+    """Append chain target columns to a pandas DataFrame."""
+    if Y.shape[1] == 0:
+        return X
+    Y_df = X.__class__(
+        Y,
+        index=X.index,
+        columns=chain_feature_names[: Y.shape[1]],
+    )
+    return X.join(Y_df)
+
+
+def _safe_column_slice(X, stop):
+    """Slice estimator inputs by column position while preserving DataFrames."""
+    if _is_pandas_dataframe(X):
+        return _safe_indexing(X, slice(0, stop), axis=1)
+    return X[:, :stop]
 
 
 def _partial_fit_estimator(
@@ -667,14 +707,20 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
     def _get_predictions(self, X, *, output_method):
         """Get predictions for each model in the chain."""
         check_is_fitted(self)
-        X = validate_data(self, X, accept_sparse=True, reset=False)
+        X_is_pandas = _is_pandas_dataframe(X)
+        X = validate_data(
+            self,
+            X,
+            accept_sparse=True,
+            reset=False,
+            skip_check_array=X_is_pandas,
+        )
         Y_output_chain = np.zeros((X.shape[0], len(self.estimators_)))
         Y_feature_chain = np.zeros((X.shape[0], len(self.estimators_)))
 
         # `RegressorChain` does not have a `chain_method_` parameter so we
         # default to "predict"
         chain_method = getattr(self, "chain_method_", "predict")
-        hstack = sp.hstack if sp.issparse(X) else np.hstack
         for chain_idx, estimator in enumerate(self.estimators_):
             previous_predictions = Y_feature_chain[:, :chain_idx]
             # if `X` is a scipy sparse dok_array, we convert it to a sparse
@@ -682,7 +728,13 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             # https://github.com/scipy/scipy/issues/20060#issuecomment-1937007039:
             if sp.issparse(X) and not sp.isspmatrix(X) and X.format == "dok":
                 X = sp.coo_array(X)
-            X_aug = hstack((X, previous_predictions))
+            if X_is_pandas:
+                X_aug = _hstack_pandas_regressor_chain(
+                    X, previous_predictions, self._chain_feature_names_
+                )
+            else:
+                hstack = sp.hstack if sp.issparse(X) else np.hstack
+                X_aug = hstack((X, previous_predictions))
 
             feature_predictions, _ = _get_response_values(
                 estimator,
@@ -726,7 +778,26 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         self : object
             Returns a fitted instance.
         """
-        X, Y = validate_data(self, X, Y, multi_output=True, accept_sparse=True)
+        X_is_pandas = _is_pandas_dataframe(X)
+        if X_is_pandas:
+            X = validate_data(
+                self,
+                X,
+                accept_sparse=True,
+                skip_check_array=True,
+            )
+            Y = check_array(
+                Y,
+                accept_sparse="csr",
+                ensure_all_finite=True,
+                ensure_2d=False,
+                dtype=None,
+                input_name="y",
+                estimator=self,
+            )
+            check_consistent_length(X, Y)
+        else:
+            X, Y = validate_data(self, X, Y, multi_output=True, accept_sparse=True)
 
         random_state = check_random_state(self.random_state)
         self.order_ = self.order
@@ -743,13 +814,28 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
 
         self.estimators_ = [clone(self.estimator) for _ in range(Y.shape[1])]
 
+        if X_is_pandas:
+            self._chain_feature_names_ = _regressor_chain_feature_names(X, Y.shape[1])
+        else:
+            self._chain_feature_names_ = None
+
         if self.cv is None:
             Y_pred_chain = Y[:, self.order_]
-            if sp.issparse(X):
+            if X_is_pandas:
+                X_aug = _hstack_pandas_regressor_chain(
+                    X, Y_pred_chain, self._chain_feature_names_
+                )
+            elif sp.issparse(X):
                 X_aug = sp.hstack((X, Y_pred_chain), format="lil")
                 X_aug = X_aug.tocsr()
             else:
                 X_aug = np.hstack((X, Y_pred_chain))
+
+        elif X_is_pandas:
+            Y_pred_chain = np.zeros((X.shape[0], Y.shape[1]))
+            X_aug = _hstack_pandas_regressor_chain(
+                X, Y_pred_chain, self._chain_feature_names_
+            )
 
         elif sp.issparse(X):
             # TODO: remove this condition check when the minimum supported scipy version
@@ -797,7 +883,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             y = Y[:, self.order_[chain_idx]]
             with _print_elapsed_time("Chain", message):
                 estimator.fit(
-                    X_aug[:, : (X.shape[1] + chain_idx)],
+                    _safe_column_slice(X_aug, X.shape[1] + chain_idx),
                     y,
                     **routed_params.estimator.fit,
                 )
@@ -806,7 +892,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
                 col_idx = X.shape[1] + chain_idx
                 cv_result = cross_val_predict(
                     self.estimator,
-                    X_aug[:, :col_idx],
+                    _safe_column_slice(X_aug, col_idx),
                     y=y,
                     cv=self.cv,
                     method=chain_method,
@@ -814,7 +900,9 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
                 # `predict_proba` output is 2D, we use only output for classes[-1]
                 if cv_result.ndim > 1:
                     cv_result = cv_result[:, 1]
-                if sp.issparse(X_aug):
+                if X_is_pandas:
+                    X_aug.iloc[:, col_idx] = cv_result
+                elif sp.issparse(X_aug):
                     X_aug[:, col_idx] = np.expand_dims(cv_result, 1)
                 else:
                     X_aug[:, col_idx] = cv_result
