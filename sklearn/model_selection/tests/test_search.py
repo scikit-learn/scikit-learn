@@ -2735,7 +2735,7 @@ def test_multi_metric_search_forwards_metadata(SearchCV, param_search):
             metadata=score_metadata,
         )
 
-    # clear registry on consuming_metric, used in ConsumingScorer, since it accumulates
+    # clear module-level consuming_metric._records (ConsumingScorer) each iteration
     if hasattr(consuming_metric, "_records"):
         consuming_metric._records.clear()
 

@@ -931,7 +931,7 @@ def test_metadata_is_routed_correctly_to_scorer(metaestimator):
     method_mapping = metaestimator.get("method_mapping", {})
 
     for method_name in routing_methods:
-        # clear records of consuming_metric, so it doesn't accumulate over test runs
+        # clear module-level consuming_metric._records (ConsumingScorer) each iteration
         if hasattr(consuming_metric, "_records"):
             consuming_metric._records.clear()
         kwargs, (estimator, _, _), (scorer, registry), (cv, _) = get_init_args(

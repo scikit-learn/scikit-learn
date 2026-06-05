@@ -2630,7 +2630,7 @@ def test_validation_functions_routing(func, extra_args):
             sample_weight=score_weights,
             metadata=score_metadata,
         )
-    # clear registry on consuming_metric, used in ConsumingScorer, since it accumulates
+    # clear module-level consuming_metric._records (ConsumingScorer) each iteration
     if hasattr(consuming_metric, "_records"):
         consuming_metric._records.clear()
 

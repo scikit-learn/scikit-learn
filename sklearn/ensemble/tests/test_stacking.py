@@ -949,8 +949,8 @@ def test_get_metadata_routing_without_fit(Estimator, Child):
 @config_context(enable_metadata_routing=True)
 def test_metadata_routing_for_stacking_estimators(Estimator, Child, prop, prop_value):
     """Test that metadata is routed correctly for Stacking*. Note that `fit_transform`
-    like `fit` goes through `_BaseStacking.fit().transform()` and thus not a separate
-    test for this is needed."""
+    like `fit` goes through `_BaseStacking.fit().transform()` and thus no separate test
+    is needed."""
 
     est = Estimator(
         [
