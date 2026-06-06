@@ -663,8 +663,15 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
         display : :class:`~sklearn.model_selection.ValidationCurveDisplay`
             Object that stores computed values.
         """
+        param_range = np.asarray(self.param_range)
+        is_categorical = not np.issubdtype(param_range.dtype, np.number)
+        if is_categorical:
+            x_data = np.arange(len(param_range))
+        else:
+            x_data = param_range
+
         self._plot_curve(
-            self.param_range,
+            x_data,
             ax=ax,
             negate_score=negate_score,
             score_name=score_name,
@@ -674,6 +681,9 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
             fill_between_kw=fill_between_kw,
             errorbar_kw=errorbar_kw,
         )
+        if is_categorical:
+            self.ax_.set_xticks(x_data)
+            self.ax_.set_xticklabels(param_range)
         self.ax_.set_xlabel(f"{self.param_name}")
         return self
 
