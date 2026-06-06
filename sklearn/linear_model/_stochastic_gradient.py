@@ -2221,8 +2221,7 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
 
     Attributes
     ----------
-    coef_ : ndarray or CSR array/matrix of shape \
-        (1, n_features)
+    coef_ : ndarray or CSR array/matrix of shape (1, n_features)
         Weights assigned to the features.
 
     offset_ : ndarray of shape (1,)
