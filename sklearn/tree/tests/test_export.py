@@ -440,7 +440,7 @@ def test_graphviz_fill_colors_length_mismatch_error(pyplot):
     )
     clf.fit(X, y)
 
-    msg = r"len\(self\.fill_colors\)=1"
+    msg = r"fill_colors has 1 elements but tree has 2 classes"
     with pytest.raises(ValueError, match=msg):
         export_graphviz(
             clf,
@@ -726,6 +726,7 @@ def test_plot_tree_fill_colors(pyplot, fill_colors):
                 facecolors.add(bbox_patch.get_facecolor())
 
     assert len(facecolors) > 0  # Ensure we found some boxes with colors
+
     # Verify that all expected colors are present in the facecolors list
     for color in fill_colors:
         color_rgba = to_rgba(color)
