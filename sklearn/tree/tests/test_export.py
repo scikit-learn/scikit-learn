@@ -32,11 +32,11 @@ w = [1, 1, 1, 0.5, 0.5, 0.5]
 y_degraded = [1, 1, 1, 1, 1, 1]
 
 
-def test_color_to_rgb(pyplot):
-    from sklearn.tree._export import _to_rgb
+def test_matplotlib_to_rgb(pyplot):
+    from sklearn.tree._export import _matplotlib_to_rgb
 
-    assert _to_rgb("red", "test_color_to_rgb") == [255, 0, 0]
-    assert _to_rgb((0, 1.0, 0), "test_color_to_rgb") == [0, 255, 0]
+    assert _matplotlib_to_rgb("red") == [255, 0, 0]
+    assert _matplotlib_to_rgb((0, 1.0, 0)) == [0, 255, 0]
 
 
 def test_rgb_to_hexstring():
@@ -454,6 +454,32 @@ def test_graphviz_fill_colors_length_mismatch_error(pyplot):
             clf,
             filled=True,
             fill_colors=["red"],
+        )
+
+
+def test_graphviz_plot_tree_fill_colors_no_matplotlib(hide_available_matplotlib):
+    clf = DecisionTreeClassifier(
+        max_depth=2, min_samples_split=2, criterion="gini", random_state=0
+    )
+    clf.fit(X, y)
+
+    with pytest.raises(
+        ImportError, match=r"export_graphviz.*fill_colors.*requires matplotlib"
+    ):
+        export_graphviz(
+            clf,
+            filled=True,
+            fill_colors=["red", "blue"],
+            out_file=None,
+        )
+
+    with pytest.raises(
+        ImportError, match=r"plot_tree.*fill_colors.*requires matplotlib"
+    ):
+        plot_tree(
+            clf,
+            filled=True,
+            fill_colors=["red", "blue"],
         )
 
 

@@ -29,17 +29,16 @@ from sklearn.utils._param_validation import (
 from sklearn.utils.validation import check_array, check_is_fitted
 
 
-def _to_rgb(color, caller_name):
+def _matplotlib_to_rgb(color):
     """Convert any valid matplotlib color to rgb in range [0, 255]"""
-    check_matplotlib_support(caller_name)
     from matplotlib.colors import to_rgb
 
     return [int(channel * 255) for channel in to_rgb(color)]
 
 
-def _rgb_to_hexstring(rgb):
+def _rgb_to_hexstring(rgb: tuple[int, int, int]):
     """Convert 8bit integer rgb color to html hexstring"""
-    return "#%02x%02x%02x" % tuple(rgb)
+    return "#{:02x}{:02x}{:02x}".format(*rgb)  # pylint: disable=consider-using-f-string
 
 
 def _color_brew(n):
@@ -220,6 +219,9 @@ def plot_tree(
     [...]
     """
 
+    if fill_colors is not None:
+        check_matplotlib_support(f"plot_tree(..., {fill_colors=})")
+
     check_is_fitted(decision_tree)
 
     exporter = _MPLTreeExporter(
@@ -300,9 +302,7 @@ class _BaseTreeExporter:
                         f"fill_colors has {len(self.fill_colors)} elements "
                         f"but tree has {tree.n_classes[0]} classes"
                     )
-                self.colors["rgb"] = [
-                    _to_rgb(c, "fill_colors") for c in self.fill_colors
-                ]
+                self.colors["rgb"] = [_matplotlib_to_rgb(c) for c in self.fill_colors]
             else:
                 self.colors["rgb"] = _color_brew(tree.n_classes[0])
 
@@ -966,6 +966,9 @@ def export_graphviz(
         class_names = check_array(
             class_names, ensure_2d=False, dtype=None, ensure_min_samples=0
         )
+
+    if fill_colors is not None:
+        check_matplotlib_support(f"export_graphviz(..., {fill_colors=})")
 
     check_is_fitted(decision_tree)
     own_file = False
