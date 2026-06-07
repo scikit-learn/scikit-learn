@@ -457,7 +457,21 @@ def test_graphviz_fill_colors_length_mismatch_error(pyplot):
         )
 
 
-def test_graphviz_plot_tree_fill_colors_no_matplotlib(hide_available_matplotlib):
+def test_plot_tree_no_matplotlib(hide_available_matplotlib):
+    # Check that plot_tree raises an ImportError with a clear message when matplotlib
+    # is not available.
+    clf = DecisionTreeClassifier(
+        max_depth=2, min_samples_split=2, criterion="gini", random_state=0
+    )
+    clf.fit(X, y)
+
+    with pytest.raises(ImportError, match=r"plot_tree requires matplotlib"):
+        plot_tree(clf)
+
+
+def test_graphviz_fill_colors_no_matplotlib(hide_available_matplotlib):
+    # Check that export_graphviz raises an ImportError with a clear message when
+    # when matplotlib is not available and fill_colors is used.
     clf = DecisionTreeClassifier(
         max_depth=2, min_samples_split=2, criterion="gini", random_state=0
     )
@@ -471,15 +485,6 @@ def test_graphviz_plot_tree_fill_colors_no_matplotlib(hide_available_matplotlib)
             filled=True,
             fill_colors=["red", "blue"],
             out_file=None,
-        )
-
-    with pytest.raises(
-        ImportError, match=r"plot_tree.*fill_colors.*requires matplotlib"
-    ):
-        plot_tree(
-            clf,
-            filled=True,
-            fill_colors=["red", "blue"],
         )
 
 

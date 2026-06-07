@@ -219,8 +219,7 @@ def plot_tree(
     [...]
     """
 
-    if fill_colors is not None:
-        check_matplotlib_support(f"plot_tree(..., {fill_colors=})")
+    check_matplotlib_support("plot_tree")
 
     check_is_fitted(decision_tree)
 
