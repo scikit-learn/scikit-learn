@@ -225,7 +225,7 @@ METAESTIMATORS: list = [
         "estimator_routing_methods": ["fit"],
         "preserves_metadata": "subset",
         "scorer_name": "scoring",
-        "scorer_routing_methods": ["fit", "score"],
+        "scorer_routing_methods": ["fit"],
         "cv_name": "cv",
         "cv_routing_methods": ["fit"],
     },
