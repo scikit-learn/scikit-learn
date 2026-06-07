@@ -2380,9 +2380,11 @@ class SimpleEstimator(BaseEstimator):
 
 
 # split and partial_fit not relevant for pipelines
-@pytest.mark.parametrize("method", sorted(set(METHODS) - {"split", "partial_fit"}))
+@pytest.mark.parametrize(
+    "parent_method", sorted(set(METHODS) - {"split", "partial_fit"})
+)
 @config_context(enable_metadata_routing=True)
-def test_metadata_routing_for_pipeline(method):
+def test_metadata_routing_for_pipeline(parent_method):
     """Test that metadata is routed correctly for pipelines."""
 
     def set_request(est, method, **kwarg):
@@ -2405,7 +2407,7 @@ def test_metadata_routing_for_pipeline(method):
 
     # test that metadata is routed correctly for pipelines when requested
     est = SimpleEstimator()
-    est = set_request(est, method, sample_weight=True, prop=True)
+    est = set_request(est, parent_method, sample_weight=True, prop=True)
     est = set_request(est, "fit", sample_weight=True, prop=True)
     trs = (
         ConsumingTransformer()
@@ -2415,32 +2417,50 @@ def test_metadata_routing_for_pipeline(method):
     )
     pipeline = Pipeline([("trs", trs), ("estimator", est)])
 
-    if "fit" not in method:
+    if "fit" not in parent_method:
         pipeline = pipeline.fit(X, y, sample_weight=sample_weight, prop=prop)
+        trs._records.clear()  # clear records so we don't  check these records below
 
     try:
-        getattr(pipeline, method)(
+        getattr(pipeline, parent_method)(
             X, y, sample_weight=sample_weight, prop=prop, metadata=metadata
         )
     except TypeError:
         # Some methods don't accept y
-        getattr(pipeline, method)(
+        getattr(pipeline, parent_method)(
             X, sample_weight=sample_weight, prop=prop, metadata=metadata
         )
 
     # Make sure the transformer has received the metadata
-    # For the transformer, always only `fit` and `transform` are called.
-    check_recorded_metadata(
-        obj=trs,
-        method="fit",
-        parent="fit",
-        sample_weight=sample_weight,
-        metadata=metadata,
-    )
+
+    # If `inverse_transform` is called on the pipeline, only `inverse_transform` is
+    # called on the transformer:
+    if parent_method == "inverse_transform":
+        check_recorded_metadata(
+            obj=trs,
+            method="inverse_transform",
+            parent=parent_method,
+            sample_weight=sample_weight,
+            metadata=metadata,
+        )
+        return
+
+    # `fit` is only called on the transformer, if pipeline calls via pipeline.fit but if
+    # the pipeline calls `predict`, `score` or `transform`, ..., the transformer is not
+    # refitted:
+
+    if "fit" in parent_method:
+        check_recorded_metadata(
+            obj=trs,
+            method="fit",
+            parent=parent_method,
+            sample_weight=sample_weight,
+            metadata=metadata,
+        )
     check_recorded_metadata(
         obj=trs,
         method="transform",
-        parent="transform",
+        parent=parent_method,
         sample_weight=sample_weight,
         metadata=metadata,
     )
