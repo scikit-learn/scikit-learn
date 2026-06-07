@@ -199,7 +199,7 @@ def _parallel_predict_proba(
     for estimator, features in zip(estimators, estimators_features):
         if hasattr(estimator, "predict_proba"):
             proba_estimator = estimator.predict_proba(
-                X[:, features], **(predict_params or {})
+                X[:, features], **(predict_proba_params or {})
             )
 
             if n_classes == len(estimator.classes_):
@@ -212,9 +212,7 @@ def _parallel_predict_proba(
 
         else:
             # Resort to voting
-            predictions = estimator.predict(
-                X[:, features], **(predict_proba_params or {})
-            )
+            predictions = estimator.predict(X[:, features], **(predict_params or {}))
 
             for i in range(n_samples):
                 proba[i, predictions[i]] += 1

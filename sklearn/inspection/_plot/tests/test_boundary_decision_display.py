@@ -485,7 +485,7 @@ def test_dataframe_support(pyplot, constructor_name):
     * https://github.com/scikit-learn/scikit-learn/issues/28717
     """
     df = _convert_container(
-        X, constructor_name=constructor_name, columns_name=["col_x", "col_y"]
+        X, constructor_name=constructor_name, column_names=["col_x", "col_y"]
     )
     estimator = LogisticRegression().fit(df, y)
 
@@ -936,7 +936,7 @@ def test_n_classes_attribute(pyplot, estimator, n_blobs, expected_n_classes):
     assert disp_coi.n_classes == 2
 
 
-def test_n_classes_raises_if_not_inferrable(pyplot):
+def test_n_classes_raises_if_not_inferable(pyplot):
     """Check behaviour if `n_classes` can't be inferred.
 
     Non-regression test for issue #33194.
