@@ -981,23 +981,22 @@ def _score(estimator, X_test, y_test, scorer, score_params, error_score="raise")
                 )
 
     error_msg = "scoring must return a number, got %s (%s) instead. (scorer=%s)"
-    if not isinstance(estimator, (_MultiOutputEstimator, _BaseChain)):
-        if isinstance(scores, dict):
-            for name, score in scores.items():
-                if hasattr(score, "item"):
-                    with suppress(ValueError):
-                        # e.g. unwrap memmapped scalars
-                        score = score.item()
-                if not isinstance(score, numbers.Number):
-                    raise ValueError(error_msg % (score, type(score), name))
-                scores[name] = score
-        else:  # scalar
-            if hasattr(scores, "item"):
+    if isinstance(scores, dict):
+        for name, score in scores.items():
+            if hasattr(score, "item"):
                 with suppress(ValueError):
                     # e.g. unwrap memmapped scalars
-                    scores = scores.item()
-            if not isinstance(scores, numbers.Number):
-                raise ValueError(error_msg % (scores, type(scores), scorer))
+                    score = score.item()
+            if not isinstance(score, numbers.Number):
+                raise ValueError(error_msg % (score, type(score), name))
+            scores[name] = score
+    else:  # scalar
+        if hasattr(scores, "item"):
+            with suppress(ValueError):
+                # e.g. unwrap memmapped scalars
+                scores = scores.item()
+        if not isinstance(scores, numbers.Number):
+            raise ValueError(error_msg % (scores, type(scores), scorer))
     return scores
 
 
