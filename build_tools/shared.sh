@@ -52,7 +52,7 @@ activate_environment() {
     # through `pixi run`, so nothing is needed there. Only the apt-based builds
     # (ubuntu_atlas and the debian-32 docker image) rely on a plain virtualenv
     # that we activate here.
-    if [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
+    if [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" || "$DISTRIB" == "scipy-dev" ]]; then
         source $VIRTUALENV/bin/activate
     fi
 }

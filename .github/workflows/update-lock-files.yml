@@ -43,9 +43,11 @@ jobs:
           token: ${{ secrets.BOT_GITHUB_TOKEN }}
           push-to-fork: scikit-learn-bot/scikit-learn
           # The markers in the commit message trigger the conditional CI jobs
-          # (scipy-dev, free-threaded and the documentation build) so that the
-          # updated environments are actually exercised on the PR.
-          commit-message: "Update CI pixi lock file [scipy-dev] [free-threaded] [doc build]"
+          # (free-threaded and the documentation build) so that the updated
+          # environments are actually exercised on the PR. scipy-dev is not
+          # included on purpose: it does not use pixi and installs the latest
+          # development dependencies at run time, independently of the lock file.
+          commit-message: "Update CI pixi lock file [free-threaded] [doc build]"
           committer: "Lock file bot <noreply@github.com>"
           author: "Lock file bot <noreply@github.com>"
           delete-branch: true

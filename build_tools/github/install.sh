@@ -38,6 +38,12 @@ pre_python_environment_install() {
         sudo apt-get install python3-scipy python3-matplotlib \
              libatlas3-base libatlas-base-dev python3-venv ccache
 
+    elif [[ "$DISTRIB" == "scipy-dev" ]]; then
+        # ccache is provided by conda/pixi for the other builds; here we install
+        # it with apt since this build deliberately does not use pixi.
+        sudo apt-get update
+        sudo apt-get install -y ccache
+
     elif [[ "$DISTRIB" == "debian-32" ]]; then
         apt-get update
         apt-get install -y python3-dev python3-numpy python3-scipy \
@@ -46,20 +52,53 @@ pre_python_environment_install() {
     fi
 }
 
+check_packages_dev_version() {
+    for package in $@; do
+        package_version=$(python -c "import $package; print($package.__version__)")
+        if [[ $package_version =~ ^[.0-9]+$ ]]; then
+            echo "$package is not a development version: $package_version"
+            exit 1
+        fi
+    done
+}
+
 python_environment_install_and_activate() {
-    # Conda-based environments are now provisioned by pixi (see the
-    # ``[tool.pixi.*]`` section in pyproject.toml). When this script is run
-    # through ``pixi run`` the environment is already created and activated, so
-    # there is nothing to do here. The nightly/git development dependencies used
-    # by the scipy-dev build are likewise pinned in the pixi ``scipy-dev``
-    # environment instead of being installed at runtime.
-    #
-    # Only the apt-based builds (ubuntu_atlas and the debian-32 docker image)
-    # still rely on a plain virtualenv populated from a pip lock file.
+    # Conda-based environments are provisioned by pixi (see the ``[tool.pixi.*]``
+    # section in pyproject.toml) and are already created and activated when this
+    # script runs, so there is nothing to do here for those builds.
     if [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
+        # apt-based builds: a plain virtualenv populated from a pip lock file.
         python3 -m venv --system-site-packages $VIRTUALENV
         activate_environment
         pip install -r "${LOCK_FILE}"
+
+    elif [[ "$DISTRIB" == "scipy-dev" ]]; then
+        # scipy-dev is intentionally NOT managed by pixi: it must always test the
+        # very latest development versions of our dependencies, which cannot be
+        # pinned in a weekly-updated lock file. Everything is therefore installed
+        # at run time in a fresh virtualenv (Python is provided by
+        # actions/setup-python).
+        python -m venv $VIRTUALENV
+        activate_environment
+        python -m pip install --upgrade pip
+
+        echo "Installing build and test dependencies with regular releases"
+        pip install meson-python ninja pytest pytest-xdist "pytest-cov<=6.3.0" \
+            coverage threadpoolctl pooch sphinx numpydoc python-dateutil
+
+        echo "Installing numpy, scipy and pandas nightly wheels"
+        dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
+        dev_packages="numpy scipy pandas"
+        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages --only-binary :all:
+        check_packages_dev_version $dev_packages
+
+        echo "Installing Cython from latest sources"
+        # NO_CYTHON_COMPILE=true installs Cython as a pure Python package (faster install)
+        NO_CYTHON_COMPILE=true pip install https://github.com/cython/cython/archive/master.zip
+        echo "Installing joblib from latest sources"
+        pip install https://github.com/joblib/joblib/archive/master.zip
+        echo "Installing pillow from latest sources"
+        pip install https://github.com/python-pillow/Pillow/archive/main.zip
     fi
 }
 

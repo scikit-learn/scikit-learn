@@ -166,7 +166,6 @@ jobs:
             PIXI_ENVIRONMENT: pip-pandas
             SKLEARN_TESTS_GLOBAL_RANDOM_SEED: 3  # non-default seed
             SCIPY_ARRAY_API: 1
-            CHECK_PYTEST_SOFT_DEPENDENCY: true
             SKLEARN_WARNINGS_AS_ERRORS: 1
             # disable pytest-xdist to have 1 job where OpenMP and BLAS are not single
             # threaded because by default the tests configuration (sklearn/conftest.py)
@@ -180,7 +179,6 @@ jobs:
             SKLEARN_TESTS_GLOBAL_RANDOM_SEED: 5  # non-default seed
             SCIPY_ARRAY_API: 1
             PYTORCH_ENABLE_MPS_FALLBACK: 1
-            CHECK_PYTEST_SOFT_DEPENDENCY: true
 
           - name: macOS x86-64 pylatest_conda_forge_mkl_no_openmp
             os: macos-15-intel
@@ -284,10 +282,6 @@ jobs:
         run: bash build_tools/github/test_docs.sh
         if: ${{ needs.retrieve-selected-tests.outputs.tests == ''}}
 
-      - name: Run pytest soft dependency test
-        run: bash build_tools/github/test_pytest_soft_dependency.sh
-        if: ${{ env.CHECK_PYTEST_SOFT_DEPENDENCY == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
-
       - name: Combine coverage reports from parallel test runners
         run: bash build_tools/github/combine_coverage_reports.sh
         if: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
@@ -334,21 +328,141 @@ jobs:
     steps: *unit-tests-steps
 
   scipy-dev:
+    # This build deliberately does NOT use pixi. It tests the very latest
+    # development versions of our dependencies (numpy/scipy/pandas nightly wheels
+    # and git-master cython/joblib/pillow), which change daily and therefore
+    # cannot be pinned in the weekly-updated pixi lock file. Everything is
+    # installed at run time in a virtualenv on top of actions/setup-python; see
+    # the `scipy-dev` branch in build_tools/github/install.sh.
     name: &scipy-dev-job-name
       Linux x86-64 pylatest_pip_scipy_dev
     runs-on: ubuntu-22.04
     needs: [lint, retrieve-commit-message, retrieve-selected-tests]
     if: contains(needs.retrieve-commit-message.outputs.message, '[scipy-dev]') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     env:
-      PIXI_ENVIRONMENT: scipy-dev
+      DISTRIB: scipy-dev
       SKLEARN_WARNINGS_AS_ERRORS: 1
-      CHECK_PYTEST_SOFT_DEPENDENCY: true
       # To be able to access the job name in the steps, it must be set as an env variable.
       JOB_NAME: *scipy-dev-job-name
     defaults:
       run:
         shell: bash -l {0}
-    steps: *unit-tests-steps
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Create cache for ccache
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ccache-v1-${{ env.JOB_NAME }}-${{ hashFiles('**/*.pyx*', '**/*.pxd*', '**/*.pxi*', '**/*.h', '**/*.c', '**/*.cpp') }}
+          restore-keys: ccache-${{ env.JOB_NAME }}
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: '3.13'
+
+      - name: Build scikit-learn
+        run: bash build_tools/github/install.sh
+
+      # Enable global random seed randomization to discover seed-sensitive tests
+      # only on nightly builds.
+      - name: Set random global random seed for nightly/manual runs
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: |
+          SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$((RANDOM % 20))
+          echo "SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$SKLEARN_TESTS_GLOBAL_RANDOM_SEED" >> $GITHUB_ENV
+          echo "To reproduce this test run, set the following environment variable:"
+          echo "    SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$SKLEARN_TESTS_GLOBAL_RANDOM_SEED"
+          echo "See: https://scikit-learn.org/dev/computing/parallelism.html#sklearn-tests-global-random-seed"
+
+      - name: Run float32 tests for nightly/manual runs
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: |
+          echo SKLEARN_RUN_FLOAT32_TESTS=1 >> $GITHUB_ENV
+
+      - name: Run tests
+        env:
+          COMMIT_MESSAGE: ${{ needs.retrieve-commit-message.outputs.message }}
+          SELECTED_TESTS: ${{ needs.retrieve-selected-tests.outputs.tests }}
+          COVERAGE: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
+        run: bash build_tools/github/test_script.sh
+
+      - name: Run doctests in .py and .rst files
+        run: bash build_tools/github/test_docs.sh
+        if: ${{ needs.retrieve-selected-tests.outputs.tests == ''}}
+
+      - name: Combine coverage reports from parallel test runners
+        run: bash build_tools/github/combine_coverage_reports.sh
+        if: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
+
+      - name: Upload coverage report to Codecov
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v6
+        if: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
+        with:
+          files: ./coverage.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
+          disable_search: true
+
+      - name: Update tracking issue
+        if: ${{ always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')}}
+        run: |
+          set -ex
+
+          pip install defusedxml PyGithub
+          python maint_tools/update_tracking_issue.py \
+            ${{ secrets.BOT_GITHUB_TOKEN }} \
+            "$GITHUB_WORKFLOW $JOB_NAME" \
+            "$GITHUB_REPOSITORY" \
+            https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID \
+            --junit-file $TEST_DIR/$JUNITXML \
+            --auto-close false \
+            --job-name "$JOB_NAME"
+
+  pytest-soft-dependency:
+    # Check that scikit-learn's estimator checks can be imported and used when
+    # pytest is not installed (pytest is only a soft dependency for end users).
+    # This runs in a dedicated pixi environment that does not ship pytest, so
+    # nothing is uninstalled at runtime. It is only tested on Linux.
+    name: &pytest-soft-dependency-job-name
+      Linux x86-64 pytest_soft_dependency
+    runs-on: ubuntu-latest
+    needs: [lint, retrieve-commit-message, retrieve-selected-tests]
+    if: github.repository == 'scikit-learn/scikit-learn'
+    env:
+      PIXI_ENVIRONMENT: pytest-soft-dependency
+      COVERAGE: false
+      JOB_NAME: *pytest-soft-dependency-job-name
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Create cache for ccache
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ccache-v1-${{ env.JOB_NAME }}-${{ hashFiles('**/*.pyx*', '**/*.pxd*', '**/*.pxi*', '**/*.h', '**/*.c', '**/*.cpp', 'pixi.lock') }}
+          restore-keys: ccache-${{ env.JOB_NAME }}
+
+      - name: Set up pixi
+        uses: prefix-dev/setup-pixi@5185adfbffb4bd703da3010310260805d89ebb11 # v0.9.6
+        with:
+          pixi-version: ${{ env.PIXI_VERSION }}
+          manifest-path: pyproject.toml
+          environments: ${{ env.PIXI_ENVIRONMENT }}
+          locked: true
+          activate-environment: ${{ env.PIXI_ENVIRONMENT }}
+          cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+
+      - name: Build scikit-learn
+        run: bash build_tools/github/install.sh
+
+      - name: Run pytest soft dependency test
+        run: bash build_tools/github/test_pytest_soft_dependency.sh
 
   ubuntu-atlas:
     # Linux environment to test that scikit-learn can be built against versions
@@ -504,10 +618,6 @@ jobs:
         run: docker exec skcontainer bash -l build_tools/github/test_docs.sh
         if: ${{ needs.retrieve-selected-tests.outputs.tests == ''}}
 
-      - name: Run pytest soft dependency test
-        run: docker exec skcontainer build_tools/github/test_pytest_soft_dependency.sh
-        if: ${{ env.CHECK_PYTEST_SOFT_DEPENDENCY == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
-
       - name: Combine coverage reports from parallel test runners
         run: docker exec skcontainer bash -l build_tools/github/combine_coverage_reports.sh
         if: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
@@ -541,7 +651,7 @@ jobs:
     name: Check all job statuses
     runs-on: ubuntu-latest
     if: always() && github.repository == 'scikit-learn/scikit-learn'
-    needs: [lint, unit-tests, ubuntu-atlas, debian-32bit, free-threaded, scipy-dev]
+    needs: [lint, unit-tests, pytest-soft-dependency, ubuntu-atlas, debian-32bit, free-threaded, scipy-dev]
     steps:
       - uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # release/v1
         with:

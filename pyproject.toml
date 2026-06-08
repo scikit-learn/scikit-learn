@@ -427,45 +427,39 @@ ccache = "*"
 pip = "*"
 
 # ----------------------------------------------------------------------------
-# Linux x86-64 - SciPy/NumPy/pandas nightly wheels + git-master Cython/joblib/Pillow
-# build: pylatest_pip_scipy_dev
-# NOTE: this environment deliberately tracks development versions. The pins in
-# pixi.lock will go stale quickly; it is refreshed by the scheduled lock-update
-# workflow (and on demand with `pixi update --environment scipy-dev`).
+# Linux x86-64 - environment WITHOUT pytest, used to check that scikit-learn's
+# estimator checks can be imported and used when pytest is not installed (pytest
+# is only a soft dependency for end users).
+# build: pytest_soft_dependency (Linux only, see build_tools/github/
+# test_pytest_soft_dependency.sh)
+# NOTE: pytest (and pytest-xdist/pytest-cov) are intentionally absent here so the
+# test runs against a genuine pytest-free environment rather than uninstalling
+# pytest at runtime.
 # ----------------------------------------------------------------------------
-[tool.pixi.feature.scipy-dev]
+[tool.pixi.feature.pytest-soft-dependency]
 platforms = ["linux-64"]
-[tool.pixi.feature.scipy-dev.dependencies]
+[tool.pixi.feature.pytest-soft-dependency.dependencies]
 python = "*"
+numpy = "*"
+blas = "*"
+scipy = "*"
+cython = "*"
+meson-python = "*"
+ninja = "*"
+joblib = "*"
+narwhals = "*"
+threadpoolctl = "*"
 ccache = "*"
 pip = "*"
-[tool.pixi.feature.scipy-dev.pypi-options]
-extra-index-urls = [
-    "https://pypi.anaconda.org/scientific-python-nightly-wheels/simple",
-]
-index-strategy = "unsafe-best-match"
-prerelease-mode = "allow"
-[tool.pixi.feature.scipy-dev.pypi-dependencies]
-# Nightly wheels from the scientific-python-nightly-wheels index.
-numpy = "*"
-scipy = "*"
-pandas = "*"
-# Development versions installed straight from the git default branch.
-cython = { git = "https://github.com/cython/cython.git", branch = "master" }
-joblib = { git = "https://github.com/joblib/joblib.git", branch = "main" }
-pillow = { git = "https://github.com/python-pillow/Pillow.git", branch = "main" }
-# Remaining test/build dependencies (regular PyPI releases).
-threadpoolctl = "*"
-pytest = "*"
-pytest-xdist = "*"
-pytest-cov = "<=6.3.0"
-coverage = "*"
-ninja = "*"
-meson-python = "*"
-pooch = "*"
-sphinx = "*"
-numpydoc = "*"
-python-dateutil = "*"
+
+# ----------------------------------------------------------------------------
+# NOTE: the scipy-dev build (numpy/scipy/pandas nightly wheels + git-master
+# Cython/joblib/Pillow) is intentionally NOT managed by pixi. Those development
+# versions change every day, while pixi.lock is only refreshed weekly, so
+# pinning them would mean testing stale "dev" versions and churning the lock.
+# That build installs its dependencies at run time instead; see the `scipy-dev`
+# job in .github/workflows/unit-tests.yml and the `scipy-dev` branch in
+# build_tools/github/install.sh.
 
 # ----------------------------------------------------------------------------
 # Linux x86-64 - CUDA / Array API GPU build (label-triggered)
@@ -619,7 +613,7 @@ ubuntu = { features = ["ubuntu"], no-default-feature = true }
 min = { features = ["min"], no-default-feature = true }
 pip-pandas = { features = ["pip-pandas"], no-default-feature = true }
 free-threaded = { features = ["free-threaded"], no-default-feature = true }
-scipy-dev = { features = ["scipy-dev"], no-default-feature = true }
+pytest-soft-dependency = { features = ["pytest-soft-dependency"], no-default-feature = true }
 cuda = { features = ["cuda"], no-default-feature = true }
 doc = { features = ["doc"], no-default-feature = true }
 doc-min = { features = ["doc-min"], no-default-feature = true }
