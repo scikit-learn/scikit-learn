@@ -578,11 +578,6 @@ Support for Python 3.4 and below has been officially dropped.
     >>> # now you can import normally from sklearn.impute
     >>> from sklearn.impute import IterativeImputer
 
-  .. note::
-      Update: since version 1.10, :class:`impute.IterativeImputer` is not
-      experimental anymore and you don't need to use `from sklearn.experimental
-      import enable_iterative_imputer`.
-
 
 - |Feature| The :class:`impute.SimpleImputer` and
   :class:`impute.IterativeImputer` have a new parameter ``'add_indicator'``,
