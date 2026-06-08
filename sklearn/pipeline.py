@@ -713,7 +713,9 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
         callback_ctx.call_on_fit_task_begin(estimator=self, X=X, y=y)
 
         routed_params = self._check_method_params(method="fit_transform", props=params)
-        Xt = self._fit(X, y, routed_params, callback_ctx=callback_ctx)
+        Xt = self._fit(
+            X, y, routed_params, raw_params=params, callback_ctx=callback_ctx
+        )
 
         last_step = self._final_estimator
         with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
@@ -859,7 +861,9 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
         callback_ctx.call_on_fit_task_begin(estimator=self, X=X, y=y)
 
         routed_params = self._check_method_params(method="fit_predict", props=params)
-        Xt = self._fit(X, y, routed_params, callback_ctx=callback_ctx)
+        Xt = self._fit(
+            X, y, routed_params, raw_params=params, callback_ctx=callback_ctx
+        )
 
         subcontext = callback_ctx.subcontext(task_name="fit-predict-final-estimator")
         with subcontext.propagate_callback_context(self._final_estimator):
