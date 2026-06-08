@@ -1197,8 +1197,7 @@ class SGDClassifier(BaseSGDClassifier):
         Weights assigned to the features.
 
         By default, it will be created as a dense array, but can be turned to
-        sparse (CSR format) through :meth:`sparsify` (which can be beneficial
-        under L1 regularization when many coefficients are zero), and back to
+        sparse (CSR format) through :meth:`sparsify`, and back to
         dense through :meth:`densify`.
 
     intercept_ : ndarray of shape (1,) if n_classes == 2 else (n_classes,)
@@ -2015,8 +2014,7 @@ class SGDRegressor(BaseSGDRegressor):
         Weights assigned to the features.
 
         By default, it will be created as a dense array, but can be turned to
-        sparse (CSR format) through :meth:`sparsify` (which can be beneficial
-        under L1 regularization when many coefficients are zero), and back to
+        sparse (CSR format) through :meth:`sparsify`, and back to
         dense through :meth:`densify`.
 
     intercept_ : ndarray of shape (1,)
@@ -2233,8 +2231,7 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
         Weights assigned to the features.
 
         By default, it will be created as a dense array, but can be turned to
-        sparse (CSR format) through :meth:`sparsify` (which can be beneficial
-        under L1 regularization when many coefficients are zero), and back to
+        sparse (CSR format) through :meth:`sparsify`, and back to
         dense through :meth:`densify`.
 
     offset_ : ndarray of shape (1,)
