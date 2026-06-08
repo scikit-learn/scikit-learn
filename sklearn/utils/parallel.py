@@ -36,7 +36,7 @@ class ConstrainedThreadingBackend(ThreadingBackend):
     def _limit_nested_thread_pools(self):
         # OpenMP thread limits are per-thread:
         _get_threadpool_controller().limit(
-            limits=joblib.cpu_count() // self._n_jobs, user_api="openmp"
+            limits=max(joblib.cpu_count() // self._n_jobs, 1), user_api="openmp"
         )
 
     # TODO: this is a private joblib API
