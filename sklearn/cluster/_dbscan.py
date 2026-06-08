@@ -14,7 +14,7 @@ from scipy import sparse
 from sklearn.base import BaseEstimator, ClusterMixin, _fit_context
 from sklearn.cluster._dbscan_inner import dbscan_inner
 from sklearn.metrics.pairwise import _VALID_METRICS
-from sklearn.neighbors import NearestNeighbors
+from sklearn.neighbors import NearestNeighbors,sort_graph_by_row_values
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.validation import _check_sample_weight, validate_data
 
@@ -434,6 +434,14 @@ class DBSCAN(ClusterMixin, BaseEstimator):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", sparse.SparseEfficiencyWarning)
                 X.setdiag(X.diagonal())
+                
+            X = sort_graph_by_row_values(
+             X,
+             copy=False,
+                   warn_when_not_sorted=False,
+)
+
+        
 
         neighbors_model = NearestNeighbors(
             radius=self.eps,

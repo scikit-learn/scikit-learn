@@ -144,6 +144,38 @@ def test_dbscan_input_not_modified_precomputed_sparse_nodiag(csr_container):
     assert_array_equal(X.toarray(), X_copy.toarray())
 
 
+
+
+def test_dbscan_precomputed_sorted_graph_no_efficiency_warning():
+    rng = np.random.RandomState(0)
+    X = rng.randn(200, 10)
+
+    from sklearn.neighbors import (
+        kneighbors_graph,
+        sort_graph_by_row_values,
+    )
+
+    graph = kneighbors_graph(
+        X,
+        n_neighbors=20,
+        mode="distance",
+    )
+
+    graph = sort_graph_by_row_values(graph)
+
+    with warnings.catch_warnings(record=True) as recorded_warnings:
+        warnings.simplefilter("always")
+        DBSCAN(metric="precomputed", eps=0.5).fit(graph)
+
+    efficiency_warnings = [
+        w
+        for w in recorded_warnings
+        if "Precomputed sparse input was not sorted by row values"
+        in str(w.message)
+    ]
+
+    assert len(efficiency_warnings) == 0
+    
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_dbscan_no_core_samples(csr_container):
     rng = np.random.RandomState(0)
