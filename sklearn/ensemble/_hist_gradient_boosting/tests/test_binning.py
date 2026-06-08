@@ -1,15 +1,18 @@
 import numpy as np
-from numpy.testing import assert_array_equal, assert_allclose
 import pytest
+from numpy.testing import assert_allclose, assert_array_equal
+from scipy.stats import kstest
 
 from sklearn.ensemble._hist_gradient_boosting.binning import (
     _BinMapper,
     _find_binning_thresholds,
     _map_to_bins,
 )
-from sklearn.ensemble._hist_gradient_boosting.common import X_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.common import ALMOST_INF
+from sklearn.ensemble._hist_gradient_boosting.common import (
+    ALMOST_INF,
+    X_BINNED_DTYPE,
+    X_DTYPE,
+)
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 
 n_threads = _openmp_effective_n_threads()
@@ -95,8 +98,9 @@ def test_map_to_bins(max_bins):
         _find_binning_thresholds(DATA[:, i], max_bins=max_bins) for i in range(2)
     ]
     binned = np.zeros_like(DATA, dtype=X_BINNED_DTYPE, order="F")
+    is_categorical = np.zeros(2, dtype=np.uint8)
     last_bin_idx = max_bins
-    _map_to_bins(DATA, bin_thresholds, last_bin_idx, n_threads, binned)
+    _map_to_bins(DATA, bin_thresholds, is_categorical, last_bin_idx, n_threads, binned)
     assert binned.shape == DATA.shape
     assert binned.dtype == np.uint8
     assert binned.flags.f_contiguous
@@ -108,6 +112,22 @@ def test_map_to_bins(max_bins):
         assert binned[min_idx, feature_idx] == 0
     for feature_idx, max_idx in enumerate(max_indices):
         assert binned[max_idx, feature_idx] == max_bins - 1
+
+
+def test_unique_bins_repeated_weighted():
+    # Test sample weight equivalence for the degenerate case
+    # when only one unique bin value exists and should be trimmed
+    # due to repeated values. Since the first discrete value of 1
+    # is repeated/weighted 1000 times we expect the quantile bin
+    # threshold values found to be repeated values of 1, which are
+    # trimmed to return a single unique bin threshold of [1.]
+    col_data = np.asarray([1, 2, 3, 4, 5, 6]).reshape(-1, 1)
+    sample_weight = np.asarray([1000, 1, 1, 1, 1, 1])
+    col_data_repeated = np.asarray(([1] * 1000) + [2, 3, 4, 5, 6]).reshape(-1, 1)
+
+    binmapper = _BinMapper(n_bins=4).fit(col_data, sample_weight=sample_weight)
+    binmapper_repeated = _BinMapper(n_bins=4).fit(col_data_repeated)
+    assert_array_equal(binmapper.bin_thresholds_, binmapper_repeated.bin_thresholds_)
 
 
 @pytest.mark.parametrize("max_bins", [5, 10, 42])
@@ -193,6 +213,69 @@ def test_bin_mapper_repeated_values_invariance(n_distinct):
 
     assert_allclose(mapper_1.bin_thresholds_[0], mapper_2.bin_thresholds_[0])
     assert_array_equal(binned_1, binned_2)
+
+
+@pytest.mark.parametrize("n_bins", [50, 250])
+def test_binmapper_weighted_vs_repeated_equivalence(global_random_seed, n_bins):
+    rng = np.random.RandomState(global_random_seed)
+
+    n_samples = 200
+    X = rng.randn(n_samples, 3)
+    sw = rng.randint(0, 5, size=n_samples)
+    X_repeated = np.repeat(X, sw, axis=0)
+
+    est_weighted = _BinMapper(n_bins=n_bins).fit(X, sample_weight=sw)
+    est_repeated = _BinMapper(n_bins=n_bins).fit(X_repeated, sample_weight=None)
+    assert_allclose(est_weighted.bin_thresholds_, est_repeated.bin_thresholds_)
+
+    X_trans_weighted = est_weighted.transform(X)
+    X_trans_repeated = est_repeated.transform(X)
+    assert_array_equal(X_trans_weighted, X_trans_repeated)
+
+
+# Note: we use a small number of RNG seeds to check that the tests is not seed
+# dependent while keeping the statistical test valid. If we had used the
+# global_random_seed fixture, it would have been expected to get some wrong
+# rejections of the null hypothesis because of the large number of
+# tests run by the fixture.
+@pytest.mark.parametrize("seed", [0, 1, 42])
+@pytest.mark.parametrize("n_bins", [3, 5])
+def test_subsampled_weighted_vs_repeated_equivalence(seed, n_bins):
+    rng = np.random.RandomState(seed)
+
+    n_samples = 500
+    X = rng.randn(n_samples, 3)
+
+    sw = rng.randint(0, 5, size=n_samples)
+    X_repeated = np.repeat(X, sw, axis=0)
+
+    # Collect estimated bins thresholds on the weighted/repeated datasets for
+    # `n_resampling_iterations` subsampling. `n_resampling_iterations` is large
+    # enough to ensure a well-powered statistical test.
+    n_resampling_iterations = 500
+    bins_weighted = []
+    bins_repeated = []
+    for _ in range(n_resampling_iterations):
+        params = dict(n_bins=n_bins, subsample=300, random_state=rng)
+        est_weighted = _BinMapper(**params).fit(X, sample_weight=sw)
+        est_repeated = _BinMapper(**params).fit(X_repeated, sample_weight=None)
+        bins_weighted.append(np.hstack(est_weighted.bin_thresholds_))
+        bins_repeated.append(np.hstack(est_repeated.bin_thresholds_))
+
+    bins_weighted = np.stack(bins_weighted).T
+    bins_repeated = np.stack(bins_repeated).T
+    # bins_weighted and bins_weighted of shape (n_thresholds, n_subsample)
+    # kstest_pval of shape (n_thresholds,)
+    kstest_pval = np.asarray(
+        [
+            kstest(bin_weighted, bin_repeated).pvalue
+            for bin_weighted, bin_repeated in zip(bins_weighted, bins_repeated)
+        ]
+    )
+    # We should not be able to reject the null hypothesis that the two samples
+    # come from the same distribution for all bins at level 5% with Bonferroni
+    # correction.
+    assert np.min(kstest_pval) > 0.05 / len(kstest_pval)
 
 
 @pytest.mark.parametrize(
@@ -294,9 +377,9 @@ def test_missing_values_support(n_bins, n_bins_non_missing, X_trans_expected):
 
     X = [
         [1, 1, 0],
-        [np.NaN, np.NaN, 0],
+        [np.nan, np.nan, 0],
         [2, 1, 0],
-        [np.NaN, 2, 1],
+        [np.nan, 2, 1],
         [3, 2, 1],
         [4, 1, 0],
     ]
@@ -357,10 +440,35 @@ def test_categorical_feature(n_bins):
     expected_trans = np.array([[0, 1, 2, n_bins - 1, 3, 4, 5]]).T
     assert_array_equal(bin_mapper.transform(X), expected_trans)
 
-    # For unknown categories, the mapping is incorrect / undefined. This never
-    # happens in practice. This check is only for illustration purpose.
-    X = np.array([[-1, 100]], dtype=X_DTYPE).T
-    expected_trans = np.array([[0, 6]]).T
+    # Negative categories are mapped to the missing values' bin
+    # (i.e. the bin of index `missing_values_bin_idx_ == n_bins - 1).
+    # Unknown positive categories does not happen in practice and tested
+    # for illustration purpose.
+    X = np.array([[-4, -1, 100]], dtype=X_DTYPE).T
+    expected_trans = np.array([[n_bins - 1, n_bins - 1, 6]]).T
+    assert_array_equal(bin_mapper.transform(X), expected_trans)
+
+
+def test_categorical_feature_negative_missing():
+    """Make sure bin mapper treats negative categories as missing values."""
+    X = np.array(
+        [[4] * 500 + [1] * 3 + [5] * 10 + [-1] * 3 + [np.nan] * 4], dtype=X_DTYPE
+    ).T
+    bin_mapper = _BinMapper(
+        n_bins=4,
+        is_categorical=np.array([True]),
+        known_categories=[np.array([1, 4, 5], dtype=X_DTYPE)],
+    ).fit(X)
+
+    assert bin_mapper.n_bins_non_missing_ == [3]
+
+    X = np.array([[-1, 1, 3, 5, np.nan]], dtype=X_DTYPE).T
+
+    # Negative values for categorical features are considered as missing values.
+    # They are mapped to the bin of index `bin_mapper.missing_values_bin_idx_`,
+    # which is 3 here.
+    assert bin_mapper.missing_values_bin_idx_ == 3
+    expected_trans = np.array([[3, 0, 1, 2, 3]]).T
     assert_array_equal(bin_mapper.transform(X), expected_trans)
 
 

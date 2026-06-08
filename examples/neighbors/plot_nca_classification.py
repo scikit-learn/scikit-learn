@@ -4,7 +4,7 @@ Comparing Nearest Neighbors with and without Neighborhood Components Analysis
 =============================================================================
 
 An example comparing nearest neighbors classification with and without
-Neighborhood Components Analysis.
+:ref:`nca`.
 
 It will plot the class decision boundaries given by a Nearest Neighbors
 classifier when using the Euclidean distance on the original features, versus
@@ -15,17 +15,18 @@ training set.
 
 """
 
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
+
 from sklearn import datasets
+from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier, NeighborhoodComponentsAnalysis
 from sklearn.pipeline import Pipeline
-from sklearn.inspection import DecisionBoundaryDisplay
-
+from sklearn.preprocessing import StandardScaler
 
 n_neighbors = 1
 
@@ -40,11 +41,6 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, stratify=y, test_size=0.7, random_state=42
 )
 
-h = 0.05  # step size in the mesh
-
-# Create color maps
-cmap_light = ListedColormap(["#FFAAAA", "#AAFFAA", "#AAAAFF"])
-cmap_bold = ListedColormap(["#FF0000", "#00FF00", "#0000FF"])
 
 names = ["KNN", "NCA, KNN"]
 
@@ -65,16 +61,14 @@ classifiers = [
 ]
 
 for name, clf in zip(names, classifiers):
-
     clf.fit(X_train, y_train)
     score = clf.score(X_test, y_test)
 
     _, ax = plt.subplots()
-    DecisionBoundaryDisplay.from_estimator(
+    disp = DecisionBoundaryDisplay.from_estimator(
         clf,
         X,
-        cmap=cmap_light,
-        alpha=0.8,
+        alpha=0.5,
         ax=ax,
         response_method="predict",
         plot_method="pcolormesh",
@@ -82,12 +76,13 @@ for name, clf in zip(names, classifiers):
     )
 
     # Plot also the training and testing points
-    plt.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap_bold, edgecolor="k", s=20)
-    plt.title("{} (k = {})".format(name, n_neighbors))
+    cmap = ListedColormap(disp.multiclass_colors_)
+    plt.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap, edgecolor="k", s=20)
+    plt.title(f"{name} (k = {n_neighbors})")
     plt.text(
         0.9,
         0.1,
-        "{:.2f}".format(score),
+        f"{score:.2f}",
         size=15,
         ha="center",
         va="center",

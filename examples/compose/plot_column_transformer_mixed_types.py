@@ -25,29 +25,26 @@ model.
 
 """
 
-# Author: Pedro Morales <part.morales@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 import numpy as np
 
 from sklearn.compose import ColumnTransformer
 from sklearn.datasets import fetch_openml
-from sklearn.pipeline import Pipeline
-from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from sklearn.feature_selection import SelectPercentile, chi2
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import RandomizedSearchCV, train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 np.random.seed(0)
 
 # %%
 # Load data from https://www.openml.org/d/40945
-X, y = fetch_openml(
-    "titanic", version=1, as_frame=True, return_X_y=True, parser="pandas"
-)
+X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True)
 
 # Alternatively X and y can be obtained directly from the frame attribute:
 # X = titanic.frame.drop('survived', axis=1)
@@ -81,7 +78,7 @@ numeric_transformer = Pipeline(
 categorical_features = ["embarked", "sex", "pclass"]
 categorical_transformer = Pipeline(
     steps=[
-        ("encoder", OneHotEncoder(handle_unknown="ignore")),
+        ("encoder", OneHotEncoder(handle_unknown="ignore", sparse_output=False)),
         ("selector", SelectPercentile(chi2, percentile=50)),
     ]
 )
@@ -97,7 +94,7 @@ preprocessor = ColumnTransformer(
 # Now we have a full prediction pipeline.
 clf = Pipeline(
     steps=[("preprocessor", preprocessor), ("classifier", LogisticRegression())]
-)
+).set_output(transform="pandas")
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 
@@ -202,6 +199,7 @@ search_cv.fit(X_train, y_train)
 
 print("Best params:")
 print(search_cv.best_params_)
+search_cv
 
 # %%
 # The internal cross-validation scores obtained by those parameters is:

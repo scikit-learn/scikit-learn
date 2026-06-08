@@ -11,8 +11,10 @@ the number of dimensions.
 
 In both cases, only 10% of the features are informative.
 """
+
 import gc
 from time import time
+
 import numpy as np
 
 from sklearn.datasets import make_regression
@@ -59,8 +61,9 @@ def compute_bench(alpha, n_samples, n_features, precompute):
 
 
 if __name__ == "__main__":
-    from sklearn.linear_model import Lasso, LassoLars
     import matplotlib.pyplot as plt
+
+    from sklearn.linear_model import Lasso, LassoLars
 
     alpha = 0.01  # regularization parameter
 

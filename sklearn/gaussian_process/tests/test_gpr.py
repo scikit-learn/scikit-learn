@@ -1,32 +1,34 @@
-"""Testing for Gaussian process regression """
+"""Testing for Gaussian process regression"""
 
-# Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-# Modified by: Pete Green <p.l.green@liverpool.ac.uk>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import warnings
-import sys
 import re
-import numpy as np
+import sys
+import warnings
 
+import numpy as np
+import pytest
 from scipy.optimize import approx_fprime
 
-import pytest
-
+from sklearn.base import clone
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import (
     RBF,
-    ConstantKernel as C,
+    DotProduct,
+    ExpSineSquared,
     WhiteKernel,
 )
-from sklearn.gaussian_process.kernels import DotProduct, ExpSineSquared
+from sklearn.gaussian_process.kernels import (
+    ConstantKernel as C,
+)
 from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
-from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils._testing import (
-    assert_array_less,
+    assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
-    assert_allclose,
+    assert_array_less,
 )
 
 
@@ -139,17 +141,31 @@ def test_solution_inside_bounds(kernel):
     assert_array_less(gpr.kernel_.theta, bounds[:, 1] + tiny)
 
 
-@pytest.mark.parametrize("kernel", kernels)
-def test_lml_gradient(kernel):
+@pytest.mark.xfail(
+    raises=AssertionError,
+    reason="https://github.com/scikit-learn/scikit-learn/issues/31366",
+)
+@pytest.mark.parametrize("kernel", non_fixed_kernels)
+@pytest.mark.parametrize("length_scale", np.logspace(-3, 3, 13))
+def test_lml_gradient(kernel, length_scale):
+    # Clone the kernel object prior to mutating it to avoid any side effects between
+    # GP tests:
+    kernel = clone(kernel)
+    length_scale_param_name = next(
+        name for name in kernel.get_params() if name.endswith("length_scale")
+    )
+    kernel.set_params(**{length_scale_param_name: length_scale})
+
     # Compare analytic and numeric gradient of log marginal likelihood.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
-
-    lml, lml_gradient = gpr.log_marginal_likelihood(kernel.theta, True)
+    _, lml_gradient = gpr.log_marginal_likelihood(kernel.theta, eval_gradient=True)
+    epsilon = 1e-9
     lml_gradient_approx = approx_fprime(
-        kernel.theta, lambda theta: gpr.log_marginal_likelihood(theta, False), 1e-10
+        kernel.theta.copy(),
+        lambda theta: gpr.log_marginal_likelihood(theta, False),
+        epsilon=epsilon,
     )
-
-    assert_almost_equal(lml_gradient, lml_gradient_approx, 3)
+    assert_allclose(lml_gradient, lml_gradient_approx, rtol=1e-4, atol=epsilon * 100)
 
 
 @pytest.mark.parametrize("kernel", kernels)
@@ -185,11 +201,13 @@ def test_sample_statistics(kernel):
     )
 
 
-def test_no_optimizer():
-    # Test that kernel parameters are unmodified when optimizer is None.
-    kernel = RBF(1.0)
-    gpr = GaussianProcessRegressor(kernel=kernel, optimizer=None).fit(X, y)
-    assert np.exp(gpr.kernel_.theta) == 1.0
+@pytest.mark.parametrize("optimizer", [None, "fmin_l_bfgs_b"])
+@pytest.mark.parametrize("kernel", [None, RBF()])
+def test_no_optimizer(optimizer, kernel):
+    """Test that kernel parameters are unmodified when optimizer is None."""
+    gpr = GaussianProcessRegressor(kernel=kernel, optimizer=optimizer)
+    gpr.fit(X, y)
+    assert bool((gpr.kernel_.theta == 0.0).all()) is (optimizer is None)
 
 
 @pytest.mark.parametrize("kernel", kernels)
@@ -288,7 +306,7 @@ def test_y_normalization(kernel):
 
 def test_large_variance_y():
     """
-    Here we test that, when noramlize_y=True, our GP can produce a
+    Here we test that, when normalize_y=True, our GP can produce a
     sensible fit to training data whose variance is significantly
     larger than unity. This test was made in response to issue #15612.
 
@@ -393,8 +411,9 @@ def test_custom_optimizer(kernel):
     # Define a dummy optimizer that simply tests 50 random hyperparameters
     def optimizer(obj_func, initial_theta, bounds):
         rng = np.random.RandomState(0)
-        theta_opt, func_min = initial_theta, obj_func(
-            initial_theta, eval_gradient=False
+        theta_opt, func_min = (
+            initial_theta,
+            obj_func(initial_theta, eval_gradient=False),
         )
         for _ in range(50):
             theta = np.atleast_1d(
@@ -491,8 +510,7 @@ def test_warning_bounds():
 
         assert issubclass(record[0].category, ConvergenceWarning)
         assert (
-            record[0].message.args[0]
-            == "The optimal value found for "
+            record[0].message.args[0] == "The optimal value found for "
             "dimension 0 of parameter "
             "k1__noise_level is close to the "
             "specified upper bound 0.001. "
@@ -502,8 +520,7 @@ def test_warning_bounds():
 
         assert issubclass(record[1].category, ConvergenceWarning)
         assert (
-            record[1].message.args[0]
-            == "The optimal value found for "
+            record[1].message.args[0] == "The optimal value found for "
             "dimension 0 of parameter "
             "k2__length_scale is close to the "
             "specified lower bound 1000.0. "
@@ -523,8 +540,7 @@ def test_warning_bounds():
 
         assert issubclass(record[0].category, ConvergenceWarning)
         assert (
-            record[0].message.args[0]
-            == "The optimal value found for "
+            record[0].message.args[0] == "The optimal value found for "
             "dimension 0 of parameter "
             "length_scale is close to the "
             "specified lower bound 10.0. "
@@ -534,8 +550,7 @@ def test_warning_bounds():
 
         assert issubclass(record[1].category, ConvergenceWarning)
         assert (
-            record[1].message.args[0]
-            == "The optimal value found for "
+            record[1].message.args[0] == "The optimal value found for "
             "dimension 1 of parameter "
             "length_scale is close to the "
             "specified lower bound 10.0. "
@@ -773,6 +788,57 @@ def test_sample_y_shapes(normalize_y, n_targets):
     assert y_samples.shape == y_test_shape
 
 
+@pytest.mark.parametrize("n_targets", [None, 1, 2, 3])
+@pytest.mark.parametrize("n_samples", [1, 5])
+def test_sample_y_shape_with_prior(n_targets, n_samples):
+    """Check the output shape of `sample_y` is consistent before and after `fit`."""
+    rng = np.random.RandomState(1024)
+
+    X = rng.randn(10, 3)
+    y = rng.randn(10, n_targets if n_targets is not None else 1)
+
+    model = GaussianProcessRegressor(n_targets=n_targets)
+    shape_before_fit = model.sample_y(X, n_samples=n_samples).shape
+    model.fit(X, y)
+    shape_after_fit = model.sample_y(X, n_samples=n_samples).shape
+    assert shape_before_fit == shape_after_fit
+
+
+@pytest.mark.parametrize("n_targets", [None, 1, 2, 3])
+def test_predict_shape_with_prior(n_targets):
+    """Check the output shape of `predict` with prior distribution."""
+    rng = np.random.RandomState(1024)
+
+    n_sample = 10
+    X = rng.randn(n_sample, 3)
+    y = rng.randn(n_sample, n_targets if n_targets is not None else 1)
+
+    model = GaussianProcessRegressor(n_targets=n_targets)
+    mean_prior, cov_prior = model.predict(X, return_cov=True)
+    _, std_prior = model.predict(X, return_std=True)
+
+    model.fit(X, y)
+    mean_post, cov_post = model.predict(X, return_cov=True)
+    _, std_post = model.predict(X, return_std=True)
+
+    assert mean_prior.shape == mean_post.shape
+    assert cov_prior.shape == cov_post.shape
+    assert std_prior.shape == std_post.shape
+
+
+def test_n_targets_error():
+    """Check that an error is raised when the number of targets seen at fit is
+    inconsistent with n_targets.
+    """
+    rng = np.random.RandomState(0)
+    X = rng.randn(10, 3)
+    y = rng.randn(10, 2)
+
+    model = GaussianProcessRegressor(n_targets=1)
+    with pytest.raises(ValueError, match="The number of targets seen in `y`"):
+        model.fit(X, y)
+
+
 class CustomKernel(C):
     """
     A custom kernel that has a diag method that returns the first column of the
@@ -798,3 +864,15 @@ def test_gpr_predict_input_not_modified():
     _, _ = gpr.predict(X2, return_std=True)
 
     assert_allclose(X2, X2_copy)
+
+
+@pytest.mark.parametrize("kernel", kernels)
+def test_gpr_predict_no_cov_no_std_return(kernel):
+    """
+    Check that only y_mean is returned when return_cov=False and
+    return_std=False.
+    """
+    gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+    y_pred = gpr.predict(X, return_cov=False, return_std=False)
+
+    assert_allclose(y_pred, y)

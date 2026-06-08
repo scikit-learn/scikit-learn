@@ -15,6 +15,9 @@ this question is crucial to policy makers, `Omitted-Variable Biases
 identifying that causal effect.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # The dataset: simulated hourly wages
 # -----------------------------------

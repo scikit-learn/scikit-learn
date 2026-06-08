@@ -13,6 +13,9 @@ models by looking at their computational cost and not only at their statistical
 accuracy.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Learning Curve
 # ==============
@@ -21,8 +24,8 @@ accuracy.
 # process. The effect is depicted by checking the statistical performance of
 # the model in terms of training score and testing score.
 #
-# Here, we compute the learning curve of a naive Bayes classifier and a SVM
-# classifier with a RBF kernel using the digits dataset.
+# Here, we compute the learning curve of a naive Bayes classifier and an SVM
+# classifier with an RBF kernel using the digits dataset.
 from sklearn.datasets import load_digits
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
@@ -38,6 +41,7 @@ svc = SVC(kernel="rbf", gamma=0.001)
 # a cross-validation procedure.
 import matplotlib.pyplot as plt
 import numpy as np
+
 from sklearn.model_selection import LearningCurveDisplay, ShuffleSplit
 
 fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(10, 6), sharey=True)

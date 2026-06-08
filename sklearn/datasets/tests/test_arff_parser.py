@@ -1,5 +1,5 @@
-from io import BytesIO
 import textwrap
+from io import BytesIO
 
 import pytest
 

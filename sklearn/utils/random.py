@@ -1,12 +1,16 @@
-# Author: Hamzeh Alsalhi <ha258@cornell.edu>
-#
-# License: BSD 3 clause
-import numpy as np
-import scipy.sparse as sp
+"""Utilities for random sampling."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import array
 
-from . import check_random_state
-from ._random import sample_without_replacement
+import numpy as np
+import scipy.sparse as sp
+
+from sklearn.utils import check_random_state
+from sklearn.utils._random import sample_without_replacement
+from sklearn.utils._sparse import _align_api_if_sparse
 
 __all__ = ["sample_without_replacement"]
 
@@ -75,7 +79,8 @@ def _random_choice_csc(n_samples, classes, class_probability=None, random_state=
         # If there are nonzero classes choose randomly using class_probability
         rng = check_random_state(random_state)
         if classes[j].shape[0] > 1:
-            p_nonzero = 1 - class_prob_j[classes[j] == 0]
+            index_class_0 = np.flatnonzero(classes[j] == 0).item()
+            p_nonzero = 1 - class_prob_j[index_class_0]
             nnz = int(n_samples * p_nonzero)
             ind_sample = sample_without_replacement(
                 n_population=n_samples, n_samples=nnz, random_state=random_state
@@ -94,4 +99,5 @@ def _random_choice_csc(n_samples, classes, class_probability=None, random_state=
             data.extend(classes[j][classes_j_nonzero][classes_ind])
         indptr.append(len(indices))
 
-    return sp.csc_matrix((data, indices, indptr), (n_samples, len(classes)), dtype=int)
+    csc = sp.csc_array((data, indices, indptr), (n_samples, len(classes)), dtype=int)
+    return _align_api_if_sparse(csc)

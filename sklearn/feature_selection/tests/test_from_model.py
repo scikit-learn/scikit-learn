@@ -1,54 +1,61 @@
 import re
-import pytest
-import numpy as np
 import warnings
 from unittest.mock import Mock
 
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import skip_if_32bit
-from sklearn.utils._testing import MinimalClassifier
+import numpy as np
+import pytest
 
 from sklearn import datasets
+from sklearn.base import BaseEstimator
 from sklearn.cross_decomposition import CCA, PLSCanonical, PLSRegression
-from sklearn.datasets import make_friedman1
+from sklearn.datasets import make_friedman1, make_regression
+from sklearn.decomposition import PCA
+from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
 from sklearn.exceptions import NotFittedError
+from sklearn.feature_selection import SelectFromModel
 from sklearn.linear_model import (
-    LogisticRegression,
-    SGDClassifier,
-    Lasso,
-    LassoCV,
     ElasticNet,
     ElasticNetCV,
+    Lasso,
+    LassoCV,
+    LinearRegression,
+    LogisticRegression,
+    SGDClassifier,
 )
-from sklearn.svm import LinearSVC
-from sklearn.feature_selection import SelectFromModel
-from sklearn.ensemble import RandomForestClassifier, HistGradientBoostingClassifier
-from sklearn.linear_model import PassiveAggressiveClassifier
-from sklearn.base import BaseEstimator
 from sklearn.pipeline import make_pipeline
-from sklearn.decomposition import PCA
+from sklearn.svm import LinearSVC
+from sklearn.utils._testing import (
+    MinimalClassifier,
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+    skip_if_32bit,
+)
 
 
 class NaNTag(BaseEstimator):
-    def _more_tags(self):
-        return {"allow_nan": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        return tags
 
 
 class NoNaNTag(BaseEstimator):
-    def _more_tags(self):
-        return {"allow_nan": False}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = False
+        return tags
 
 
 class NaNTagRandomForest(RandomForestClassifier):
-    def _more_tags(self):
-        return {"allow_nan": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        return tags
 
 
 iris = datasets.load_iris()
 data, y = iris.data, iris.target
-rng = np.random.RandomState(0)
 
 
 def test_invalid_input():
@@ -74,19 +81,9 @@ def test_input_estimator_unchanged():
     "max_features, err_type, err_msg",
     [
         (
-            data.shape[1] + 1,
-            ValueError,
-            "max_features ==",
-        ),
-        (
             lambda X: 1.5,
             TypeError,
             "max_features must be an instance of int, not float.",
-        ),
-        (
-            lambda X: data.shape[1] + 1,
-            ValueError,
-            "max_features ==",
         ),
         (
             lambda X: -1,
@@ -385,8 +382,8 @@ def test_2d_coef():
 
 
 def test_partial_fit():
-    est = PassiveAggressiveClassifier(
-        random_state=0, shuffle=False, max_iter=5, tol=None
+    est = SGDClassifier(
+        random_state=0, shuffle=False, max_iter=5, tol=None, learning_rate="pa1"
     )
     transformer = SelectFromModel(estimator=est)
     transformer.partial_fit(data, y, classes=np.unique(y))
@@ -481,6 +478,21 @@ def test_prefit_max_features():
         model.transform(data)
 
 
+def test_get_feature_names_out_elasticnetcv():
+    """Check if ElasticNetCV works with a list of floats.
+
+    Non-regression test for #30936."""
+    X, y = make_regression(n_features=5, n_informative=3, random_state=0)
+    estimator = ElasticNetCV(l1_ratio=[0.25, 0.5, 0.75], random_state=0)
+    selector = SelectFromModel(estimator=estimator)
+    selector.fit(X, y)
+
+    names_out = selector.get_feature_names_out()
+    mask = selector.get_support()
+    expected = np.array([f"x{i}" for i in range(X.shape[1])])[mask]
+    assert_array_equal(names_out, expected)
+
+
 def test_prefit_get_feature_names_out():
     """Check the interaction between prefit and the feature names."""
     clf = RandomForestClassifier(n_estimators=2, random_state=0)
@@ -532,8 +544,8 @@ def test_fit_accepts_nan_inf():
     model = SelectFromModel(estimator=clf)
 
     nan_data = data.copy()
-    nan_data[0] = np.NaN
-    nan_data[1] = np.Inf
+    nan_data[0] = np.nan
+    nan_data[1] = np.inf
 
     model.fit(data, y)
 
@@ -546,8 +558,8 @@ def test_transform_accepts_nan_inf():
     model = SelectFromModel(estimator=clf)
     model.fit(nan_data, y)
 
-    nan_data[0] = np.NaN
-    nan_data[1] = np.Inf
+    nan_data[0] = np.nan
+    nan_data[1] = np.inf
 
     model.transform(nan_data)
 
@@ -555,11 +567,11 @@ def test_transform_accepts_nan_inf():
 def test_allow_nan_tag_comes_from_estimator():
     allow_nan_est = NaNTag()
     model = SelectFromModel(estimator=allow_nan_est)
-    assert model._get_tags()["allow_nan"] is True
+    assert model.__sklearn_tags__().input_tags.allow_nan is True
 
     no_nan_est = NoNaNTag()
     model = SelectFromModel(estimator=no_nan_est)
-    assert model._get_tags()["allow_nan"] is False
+    assert model.__sklearn_tags__().input_tags.allow_nan is False
 
 
 def _pca_importances(pca_estimator):
@@ -625,27 +637,6 @@ def test_estimator_does_not_support_feature_names():
         selector.transform(X.iloc[1:3])
 
 
-@pytest.mark.parametrize(
-    "error, err_msg, max_features",
-    (
-        [ValueError, "max_features == 10, must be <= 4", 10],
-        [ValueError, "max_features == 5, must be <= 4", lambda x: x.shape[1] + 1],
-    ),
-)
-def test_partial_fit_validate_max_features(error, err_msg, max_features):
-    """Test that partial_fit from SelectFromModel validates `max_features`."""
-    X, y = datasets.make_classification(
-        n_samples=100,
-        n_features=4,
-        random_state=0,
-    )
-
-    with pytest.raises(error, match=err_msg):
-        SelectFromModel(
-            estimator=SGDClassifier(), max_features=max_features
-        ).partial_fit(X, y, classes=[0, 1])
-
-
 @pytest.mark.parametrize("as_frame", [True, False])
 def test_partial_fit_validate_feature_names(as_frame):
     """Test that partial_fit from SelectFromModel validates `feature_names_in_`."""
@@ -659,3 +650,43 @@ def test_partial_fit_validate_feature_names(as_frame):
         assert_array_equal(selector.feature_names_in_, X.columns)
     else:
         assert not hasattr(selector, "feature_names_in_")
+
+
+def test_from_model_estimator_attribute_error():
+    """Check that we raise the proper AttributeError when the estimator
+    does not implement the `partial_fit` method, which is decorated with
+    `available_if`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/28108
+    """
+    # `LinearRegression` does not implement 'partial_fit' and should raise an
+    # AttributeError
+    from_model = SelectFromModel(estimator=LinearRegression())
+
+    outer_msg = "This 'SelectFromModel' has no attribute 'partial_fit'"
+    inner_msg = "'LinearRegression' object has no attribute 'partial_fit'"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
+        from_model.fit(data, y).partial_fit(data)
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg in str(exec_info.value.__cause__)
+
+
+@pytest.mark.parametrize(
+    "feature_importance",
+    [
+        lambda estimator: estimator.sparsify().coef_,
+        lambda estimator: estimator.sparsify().coef_.tocsc(),
+    ],
+)
+def test_feature_importance_sparse(feature_importance):
+    from_model_sparse = SelectFromModel(
+        estimator=LogisticRegression(), importance_getter=feature_importance
+    )
+    from_model_dense = SelectFromModel(estimator=LogisticRegression())
+
+    from_model_sparse.fit(data, y)
+    from_model_dense.fit(data, y)
+
+    assert_array_equal(from_model_sparse.get_support(), from_model_dense.get_support())
+    assert_allclose(from_model_sparse.transform(data), from_model_dense.transform(data))

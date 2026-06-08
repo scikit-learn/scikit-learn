@@ -1,21 +1,25 @@
 import numpy as np
 import pytest
 
-from sklearn.base import clone
-from sklearn.base import ClassifierMixin
-from sklearn.base import is_classifier
-
-from sklearn.datasets import make_classification
-from sklearn.datasets import make_regression
-from sklearn.datasets import load_iris, load_diabetes
+from sklearn.base import ClassifierMixin, clone, is_classifier
+from sklearn.datasets import (
+    load_diabetes,
+    load_iris,
+    make_classification,
+    make_regression,
+)
+from sklearn.ensemble import (
+    RandomForestClassifier,
+    RandomForestRegressor,
+    StackingClassifier,
+    StackingRegressor,
+    VotingClassifier,
+    VotingRegressor,
+)
 from sklearn.impute import SimpleImputer
-from sklearn.linear_model import LogisticRegression, LinearRegression
-from sklearn.svm import LinearSVC, LinearSVR, SVC, SVR
+from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import make_pipeline
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-
-from sklearn.ensemble import StackingClassifier, StackingRegressor
-from sklearn.ensemble import VotingClassifier, VotingRegressor
+from sklearn.svm import SVC, SVR, LinearSVC
 
 X, y = load_iris(return_X_y=True)
 
@@ -51,7 +55,7 @@ X_r, y_r = load_diabetes(return_X_y=True)
             StackingRegressor(
                 estimators=[
                     ("lr", LinearRegression()),
-                    ("svm", LinearSVR()),
+                    ("svm", SVR(kernel="linear")),
                     ("rf", RandomForestRegressor(n_estimators=5, max_depth=3)),
                 ],
                 cv=2,
@@ -62,7 +66,7 @@ X_r, y_r = load_diabetes(return_X_y=True)
             VotingRegressor(
                 estimators=[
                     ("lr", LinearRegression()),
-                    ("svm", LinearSVR()),
+                    ("svm", SVR(kernel="linear")),
                     ("rf", RandomForestRegressor(n_estimators=5, max_depth=3)),
                 ]
             ),
@@ -79,6 +83,7 @@ def test_ensemble_heterogeneous_estimators_behavior(X, y, estimator):
     # check that the behavior of `estimators`, `estimators_`,
     # `named_estimators`, `named_estimators_` is consistent across all
     # ensemble classes and when using `set_params()`.
+    estimator = clone(estimator)  # Avoid side effects from shared instances
 
     # before fit
     assert "svm" in estimator.named_estimators
@@ -107,7 +112,7 @@ def test_ensemble_heterogeneous_estimators_behavior(X, y, estimator):
         == estimator.named_estimators.rf.get_params()
     )
 
-    # check the behavior when setting an dropping an estimator
+    # check the behavior when setting and dropping an estimator
     estimator_dropped = clone(estimator)
     estimator_dropped.set_params(svm="drop")
     estimator_dropped.fit(X, y)

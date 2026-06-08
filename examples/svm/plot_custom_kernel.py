@@ -3,20 +3,24 @@
 SVM with custom kernel
 ======================
 
-Simple usage of Support Vector Machines to classify a sample. It will
-plot the decision surface and the support vectors.
+Simple usage of :ref:`svm` classifier with a custom kernel. It will
+plot the decision surface and highlight the support vectors.
 
 """
 
-import numpy as np
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.pyplot as plt
-from sklearn import svm, datasets
+import numpy as np
+
+from sklearn import datasets, svm
 from sklearn.inspection import DecisionBoundaryDisplay
 
-# import some data to play with
+# Import some data to play with.
 iris = datasets.load_iris()
-X = iris.data[:, :2]  # we only take the first two features. We could
-# avoid this ugly slicing by using a two-dim dataset
+X = iris.data[:, :2]  # We only take the first two features. We could
+# avoid this ugly slicing by using a two-dim dataset.
 Y = iris.target
 
 
@@ -32,9 +36,7 @@ def my_kernel(X, Y):
     return np.dot(np.dot(X, M), Y.T)
 
 
-h = 0.02  # step size in the mesh
-
-# we create an instance of SVM and fit out data.
+# We create an instance of SVC with that kernel and fit it on the data.
 clf = svm.SVC(kernel=my_kernel)
 clf.fit(X, Y)
 
@@ -42,15 +44,23 @@ ax = plt.gca()
 DecisionBoundaryDisplay.from_estimator(
     clf,
     X,
-    cmap=plt.cm.Paired,
+    multiclass_colors="Paired",
     ax=ax,
     response_method="predict",
     plot_method="pcolormesh",
     shading="auto",
+    alpha=0.5,
 )
 
-# Plot also the training points
-plt.scatter(X[:, 0], X[:, 1], c=Y, cmap=plt.cm.Paired, edgecolors="k")
+# Plot the training points
+plt.scatter(X[:, 0], X[:, 1], c=Y, cmap=plt.cm.Paired)
+# Highlight the support vectors
+plt.scatter(
+    X[clf.support_, 0],
+    X[clf.support_, 1],
+    facecolor="none",
+    edgecolors="k",
+)
 plt.title("3-Class classification using Support Vector Machine with custom kernel")
 plt.axis("tight")
 plt.show()

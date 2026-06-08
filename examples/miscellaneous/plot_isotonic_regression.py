@@ -13,22 +13,21 @@ the target function besides monotonicity. For comparison a linear regression is
 also presented.
 
 The plot on the right-hand side shows the model prediction function that
-results from the linear interpolation of thresholds points. The thresholds
+results from the linear interpolation of threshold points. The threshold
 points are a subset of the training input observations and their matching
 target values are computed by the isotonic non-parametric fit.
 
 """
 
-# Author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
-#         Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# License: BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.collections import LineCollection
 
-from sklearn.linear_model import LinearRegression
 from sklearn.isotonic import IsotonicRegression
+from sklearn.linear_model import LinearRegression
 from sklearn.utils import check_random_state
 
 n = 100

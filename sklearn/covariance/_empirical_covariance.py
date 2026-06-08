@@ -3,25 +3,39 @@ Maximum likelihood covariance estimator.
 
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Gael Varoquaux <gael.varoquaux@normalesup.org>
-#         Virgile Fritsch <virgile.fritsch@inria.fr>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # avoid division truncation
+import math
 import warnings
+
 import numpy as np
 from scipy import linalg
 
-from .. import config_context
-from ..base import BaseEstimator
-from ..utils import check_array
-from ..utils._param_validation import validate_params
-from ..utils.extmath import fast_logdet
-from ..metrics.pairwise import pairwise_distances
+from sklearn import config_context
+from sklearn.base import BaseEstimator, _fit_context
+from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.utils import check_array, metadata_routing
+from sklearn.utils._array_api import (
+    _cov,
+    _is_numpy_namespace,
+    get_namespace,
+    get_namespace_and_device,
+    supported_float_dtypes,
+)
+from sklearn.utils._param_validation import validate_params
+from sklearn.utils.extmath import fast_logdet
+from sklearn.utils.validation import validate_data
 
 
+@validate_params(
+    {
+        "emp_cov": ["array-like"],
+        "precision": ["array-like"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def log_likelihood(emp_cov, precision):
     """Compute the sample mean of the log_likelihood under a covariance model.
 
@@ -31,10 +45,10 @@ def log_likelihood(emp_cov, precision):
 
     Parameters
     ----------
-    emp_cov : ndarray of shape (n_features, n_features)
+    emp_cov : array-like of shape (n_features, n_features)
         Maximum Likelihood Estimator of covariance.
 
-    precision : ndarray of shape (n_features, n_features)
+    precision : array-like of shape (n_features, n_features)
         The precision matrix of the covariance model to be tested.
 
     Returns
@@ -42,9 +56,12 @@ def log_likelihood(emp_cov, precision):
     log_likelihood_ : float
         Sample mean of the log-likelihood.
     """
+    xp, _ = get_namespace(emp_cov, precision)
     p = precision.shape[0]
-    log_likelihood_ = -np.sum(emp_cov * precision) + fast_logdet(precision)
-    log_likelihood_ -= p * np.log(2 * np.pi)
+    log_likelihood_ = -float(xp.sum(emp_cov * precision)) + float(
+        fast_logdet(precision)
+    )
+    log_likelihood_ -= p * math.log(2 * math.pi)
     log_likelihood_ /= 2.0
     return log_likelihood_
 
@@ -53,7 +70,8 @@ def log_likelihood(emp_cov, precision):
     {
         "X": ["array-like"],
         "assume_centered": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def empirical_covariance(X, *, assume_centered=False):
     """Compute the Maximum likelihood covariance estimator.
@@ -84,10 +102,11 @@ def empirical_covariance(X, *, assume_centered=False):
            [0.25, 0.25, 0.25],
            [0.25, 0.25, 0.25]])
     """
-    X = np.asarray(X)
+    X = check_array(X, ensure_2d=False, ensure_all_finite=False)
+    xp, _ = get_namespace(X)
 
     if X.ndim == 1:
-        X = np.reshape(X, (1, -1))
+        X = xp.reshape(X, (1, -1))
 
     if X.shape[0] == 1:
         warnings.warn(
@@ -95,12 +114,18 @@ def empirical_covariance(X, *, assume_centered=False):
         )
 
     if assume_centered:
-        covariance = np.dot(X.T, X) / X.shape[0]
-    else:
+        covariance = X.T @ X / X.shape[0]
+    elif _is_numpy_namespace(xp):
+        # Preserve numpy path, because `np.cov` always returns float64
+        # and callers like GraphicalLasso and GraphicalLassoCV rely on
+        # this behavior.
         covariance = np.cov(X.T, bias=1)
+    else:
+        covariance = _cov(X, xp=xp)
 
     if covariance.ndim == 0:
-        covariance = np.array([[covariance]])
+        covariance = xp.reshape(covariance, (1, 1))
+
     return covariance
 
 
@@ -126,7 +151,7 @@ class EmpiricalCovariance(BaseEstimator):
         Estimated location, i.e. the estimated mean.
 
     covariance_ : ndarray of shape (n_features, n_features)
-        Estimated covariance matrix
+        Estimated covariance matrix.
 
     precision_ : ndarray of shape (n_features, n_features)
         Estimated pseudo-inverse matrix.
@@ -168,11 +193,14 @@ class EmpiricalCovariance(BaseEstimator):
     ...                             size=500)
     >>> cov = EmpiricalCovariance().fit(X)
     >>> cov.covariance_
-    array([[0.7569..., 0.2818...],
-           [0.2818..., 0.3928...]])
+    array([[0.7569, 0.2818],
+           [0.2818, 0.3928]])
     >>> cov.location_
-    array([0.0622..., 0.0193...])
+    array([0.0622, 0.0193])
     """
+
+    # X_test should have been called X
+    __metadata_request__score = {"X_test": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         "store_precision": ["boolean"],
@@ -195,12 +223,16 @@ class EmpiricalCovariance(BaseEstimator):
             Estimated covariance matrix to be stored, and from which precision
             is computed.
         """
+        xp, _ = get_namespace(covariance)
         covariance = check_array(covariance)
         # set covariance
         self.covariance_ = covariance
         # set precision
         if self.store_precision:
-            self.precision_ = linalg.pinvh(covariance, check_finite=False)
+            if _is_numpy_namespace(xp):
+                self.precision_ = linalg.pinvh(covariance, check_finite=False)
+            else:
+                self.precision_ = xp.linalg.pinv(covariance)
         else:
             self.precision_ = None
 
@@ -215,9 +247,14 @@ class EmpiricalCovariance(BaseEstimator):
         if self.store_precision:
             precision = self.precision_
         else:
-            precision = linalg.pinvh(self.covariance_, check_finite=False)
+            xp, _ = get_namespace(self.covariance_)
+            if _is_numpy_namespace(xp):
+                precision = linalg.pinvh(self.covariance_, check_finite=False)
+            else:
+                precision = xp.linalg.pinv(self.covariance_)
         return precision
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the maximum likelihood covariance estimator to X.
 
@@ -235,12 +272,12 @@ class EmpiricalCovariance(BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-        X = self._validate_data(X)
+        xp, _, device_ = get_namespace_and_device(X)
+        X = validate_data(self, X, dtype=supported_float_dtypes(xp, device_))
         if self.assume_centered:
-            self.location_ = np.zeros(X.shape[1])
+            self.location_ = xp.zeros(X.shape[1], dtype=X.dtype, device=device_)
         else:
-            self.location_ = X.mean(0)
+            self.location_ = xp.mean(X, axis=0)
         covariance = empirical_covariance(X, assume_centered=self.assume_centered)
         self._set_covariance(covariance)
 
@@ -269,7 +306,7 @@ class EmpiricalCovariance(BaseEstimator):
             The log-likelihood of `X_test` with `self.location_` and `self.covariance_`
             as estimators of the Gaussian model mean and covariance matrix respectively.
         """
-        X_test = self._validate_data(X_test, reset=False)
+        X_test = validate_data(self, X_test, reset=False)
         # compute empirical covariance of the test set
         test_cov = empirical_covariance(X_test - self.location_, assume_centered=True)
         # compute log likelihood
@@ -307,12 +344,17 @@ class EmpiricalCovariance(BaseEstimator):
             `self` and `comp_cov` covariance estimators.
         """
         # compute the error
+        xp, _ = get_namespace(comp_cov, self.covariance_)
         error = comp_cov - self.covariance_
         # compute the error norm
         if norm == "frobenius":
-            squared_norm = np.sum(error**2)
+            squared_norm = float(xp.sum(error**2))
         elif norm == "spectral":
-            squared_norm = np.amax(linalg.svdvals(np.dot(error.T, error)))
+            if _is_numpy_namespace(xp):
+                squared_norm = float(np.amax(linalg.svdvals(error.T @ error)))
+            else:
+                s = xp.linalg.svdvals(error.T @ error)
+                squared_norm = float(xp.max(s))
         else:
             raise NotImplementedError(
                 "Only spectral and frobenius norms are implemented"
@@ -324,12 +366,15 @@ class EmpiricalCovariance(BaseEstimator):
         if squared:
             result = squared_norm
         else:
-            result = np.sqrt(squared_norm)
+            result = math.sqrt(squared_norm)
 
         return result
 
     def mahalanobis(self, X):
         """Compute the squared Mahalanobis distances of given observations.
+
+        For a detailed example of how outliers affects the Mahalanobis distance,
+        see :ref:`sphx_glr_auto_examples_covariance_plot_mahalanobis_distances.py`.
 
         Parameters
         ----------
@@ -343,13 +388,22 @@ class EmpiricalCovariance(BaseEstimator):
         dist : ndarray of shape (n_samples,)
             Squared Mahalanobis distances of the observations.
         """
-        X = self._validate_data(X, reset=False)
+        xp, _, device_ = get_namespace_and_device(X)
+        X = validate_data(
+            self, X, reset=False, dtype=supported_float_dtypes(xp, device_)
+        )
 
         precision = self.get_precision()
-        with config_context(assume_finite=True):
-            # compute mahalanobis distances
-            dist = pairwise_distances(
-                X, self.location_[np.newaxis, :], metric="mahalanobis", VI=precision
-            )
+        if _is_numpy_namespace(xp):
+            with config_context(assume_finite=True):
+                # compute mahalanobis distances
+                dist = pairwise_distances(
+                    X, self.location_[np.newaxis, :], metric="mahalanobis", VI=precision
+                )
 
-        return np.reshape(dist, (len(X),)) ** 2
+            return np.reshape(dist, (len(X),)) ** 2
+        else:
+            # XXX: pairwise_distances does not support array API with
+            # metric="mahalanobis" at the time of writing.
+            X_centered = X - self.location_
+            return xp.sum((X_centered @ precision) * X_centered, axis=1)

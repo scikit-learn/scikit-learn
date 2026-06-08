@@ -1,6 +1,9 @@
-import warnings
-import functools
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
+import functools
+import warnings
+from inspect import signature
 
 __all__ = ["deprecated"]
 
@@ -15,10 +18,11 @@ class deprecated:
     and the docstring. Note: to use this with the default value for extra, put
     in an empty of parentheses:
 
+    Examples
+    --------
     >>> from sklearn.utils import deprecated
     >>> deprecated()
     <sklearn.utils.deprecation.deprecated object at ...>
-
     >>> @deprecated()
     ... def some_function(): pass
 
@@ -44,8 +48,8 @@ class deprecated:
         if isinstance(obj, type):
             return self._decorate_class(obj)
         elif isinstance(obj, property):
-            # Note that this is only triggered properly if the `property`
-            # decorator comes before the `deprecated` decorator, like so:
+            # Note that this is only triggered properly if the `deprecated`
+            # decorator is placed before the `property` decorator, like so:
             #
             # @deprecated(msg)
             # @property
@@ -60,17 +64,21 @@ class deprecated:
         if self.extra:
             msg += "; %s" % self.extra
 
-        # FIXME: we should probably reset __new__ for full generality
-        init = cls.__init__
+        new = cls.__new__
+        sig = signature(cls)
 
-        def wrapped(*args, **kwargs):
+        def wrapped(cls, *args, **kwargs):
             warnings.warn(msg, category=FutureWarning)
-            return init(*args, **kwargs)
+            if new is object.__new__:
+                return object.__new__(cls)
 
-        cls.__init__ = wrapped
+            return new(cls, *args, **kwargs)
 
-        wrapped.__name__ = "__init__"
-        wrapped.deprecated_original = init
+        cls.__new__ = wrapped
+
+        wrapped.__name__ = "__new__"
+        # Restore the original signature, see PEP 362.
+        cls.__signature__ = sig
 
         return cls
 
@@ -96,7 +104,7 @@ class deprecated:
         msg = self.extra
 
         @property
-        @functools.wraps(prop)
+        @functools.wraps(prop.fget)
         def wrapped(*args, **kwargs):
             warnings.warn(msg, category=FutureWarning)
             return prop.fget(*args, **kwargs)

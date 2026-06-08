@@ -36,15 +36,14 @@ contributed to fewer projections than the central disk.
 
 """
 
-# Author: Emmanuelle Gouillart <emmanuelle.gouillart@nsup.org>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import numpy as np
-from scipy import sparse
-from scipy import ndimage
-from sklearn.linear_model import Lasso
-from sklearn.linear_model import Ridge
 import matplotlib.pyplot as plt
+import numpy as np
+from scipy import ndimage, sparse
+
+from sklearn.linear_model import Lasso, Ridge
 
 
 def _weights(x, dx=1, orig=0):
@@ -90,7 +89,9 @@ def build_projection_operator(l_x, n_dir):
         weights += list(w[mask])
         camera_inds += list(inds[mask] + i * l_x)
         data_inds += list(data_unravel_indices[mask])
-    proj_operator = sparse.coo_matrix((weights, (camera_inds, data_inds)))
+    camera_inds = np.array(camera_inds, dtype=np.int32)  # lasso needs int32 inds
+    data_inds = np.array(data_inds, dtype=np.int32)
+    proj_operator = sparse.coo_array((weights, (camera_inds, data_inds)))
     return proj_operator
 
 

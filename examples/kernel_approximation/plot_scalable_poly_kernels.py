@@ -1,17 +1,17 @@
 """
-=======================================================
+======================================================
 Scalable learning with polynomial kernel approximation
-=======================================================
+======================================================
+
+.. currentmodule:: sklearn.kernel_approximation
 
 This example illustrates the use of :class:`PolynomialCountSketch` to
 efficiently generate polynomial kernel feature-space approximations.
 This is used to train linear classifiers that approximate the accuracy
 of kernelized ones.
 
-.. currentmodule:: sklearn.kernel_approximation
-
-We use the Covtype dataset [2], trying to reproduce the experiments on the
-original paper of Tensor Sketch [1], i.e. the algorithm implemented by
+We use the Covtype dataset [2]_, trying to reproduce the experiments on the
+original paper of Tensor Sketch [1]_, i.e. the algorithm implemented by
 :class:`PolynomialCountSketch`.
 
 First, we compute the accuracy of a linear classifier on the original
@@ -21,8 +21,8 @@ approximating the accuracy of a kernelized classifier in a scalable manner.
 
 """
 
-# Author: Daniel Lopez-Sanchez <lope@usal.es>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Preparing the data
@@ -33,7 +33,7 @@ approximating the accuracy of a kernelized classifier in a scalable manner.
 # is to predict forest cover type from cartographic variables only
 # (no remotely sensed data). After loading, we transform it into a binary
 # classification problem to match the version of the dataset in the
-# LIBSVM webpage [2], which was the one used in [1].
+# LIBSVM webpage [2]_, which was the one used in [1]_.
 
 from sklearn.datasets import fetch_covtype
 
@@ -62,10 +62,10 @@ X_train, X_test, y_train, y_test = train_test_split(
 #
 # Now scale features to the range [0, 1] to match the format of the dataset in
 # the LIBSVM webpage, and then normalize to unit length as done in the
-# original Tensor Sketch paper [1].
+# original Tensor Sketch paper [1]_.
 
-from sklearn.preprocessing import MinMaxScaler, Normalizer
 from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import MinMaxScaler, Normalizer
 
 mm = make_pipeline(MinMaxScaler(), Normalizer())
 X_train = mm.fit_transform(X_train)
@@ -80,6 +80,7 @@ X_test = mm.transform(X_test)
 # plot them later.
 
 import time
+
 from sklearn.svm import LinearSVC
 
 results = {}
@@ -120,11 +121,9 @@ n_runs = 1
 N_COMPONENTS = [250, 500, 1000, 2000]
 
 for n_components in N_COMPONENTS:
-
     ps_lsvm_time = 0
     ps_lsvm_score = 0
     for _ in range(n_runs):
-
         pipeline = make_pipeline(
             PolynomialCountSketch(n_components=n_components, degree=4),
             LinearSVC(),
@@ -144,7 +143,7 @@ for n_components in N_COMPONENTS:
     }
     print(
         f"Linear SVM score on {n_components} PolynomialCountSketch "
-        + f"features: {ps_lsvm_score:.2f}%"
+        f"features: {ps_lsvm_score:.2f}%"
     )
 
 # %%
@@ -244,9 +243,9 @@ plt.show()
 # References
 # ==========
 #
-# [1] Pham, Ninh and Rasmus Pagh. "Fast and scalable polynomial kernels via
-# explicit feature maps." KDD '13 (2013).
-# https://doi.org/10.1145/2487575.2487591
+# .. [1] Pham, Ninh and Rasmus Pagh. "Fast and scalable polynomial kernels via
+#        explicit feature maps." KDD '13 (2013).
+#        https://doi.org/10.1145/2487575.2487591
 #
-# [2] LIBSVM binary datasets repository
-# https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html
+# .. [2] LIBSVM binary datasets repository
+#        https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html

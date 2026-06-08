@@ -1,32 +1,74 @@
-from os import environ
-from functools import wraps
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+import builtins
 import platform
 import sys
+from contextlib import suppress
+from functools import wraps
+from os import environ
+from unittest import SkipTest
 
-import pytest
+import joblib
 import numpy as np
-from threadpoolctl import threadpool_limits
+import pytest
 from _pytest.doctest import DoctestItem
+from scipy.datasets import face
+from threadpoolctl import threadpool_limits
 
-from sklearn.utils import _IS_32BIT
-from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn._min_dependencies import PYTEST_MIN_VERSION
-from sklearn.utils.fixes import parse_version
-from sklearn.datasets import fetch_20newsgroups
-from sklearn.datasets import fetch_20newsgroups_vectorized
-from sklearn.datasets import fetch_california_housing
-from sklearn.datasets import fetch_covtype
-from sklearn.datasets import fetch_kddcup99
-from sklearn.datasets import fetch_olivetti_faces
-from sklearn.datasets import fetch_rcv1
-from sklearn.tests import random_seed
+from sklearn.datasets import (
+    fetch_20newsgroups,
+    fetch_20newsgroups_vectorized,
+    fetch_california_housing,
+    fetch_covtype,
+    fetch_kddcup99,
+    fetch_lfw_pairs,
+    fetch_lfw_people,
+    fetch_olivetti_faces,
+    fetch_rcv1,
+    fetch_species_distributions,
+)
+from sklearn.utils._testing import get_pytest_filterwarning_lines
+from sklearn.utils.fixes import (
+    _IS_32BIT,
+    np_base_version,
+    parse_version,
+    sp_version,
+)
 
+try:
+    import pytest_run_parallel  # noqa:F401
+
+    PARALLEL_RUN_AVAILABLE = True
+except ImportError:
+    PARALLEL_RUN_AVAILABLE = False
+
+
+try:
+    from scipy_doctest.conftest import dt_config
+except ModuleNotFoundError:
+    dt_config = None
 
 if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
     raise ImportError(
-        "Your version of pytest is too old, you should have "
-        "at least pytest >= {} installed.".format(PYTEST_MIN_VERSION)
+        f"Your version of pytest is too old. Got version {pytest.__version__}, you"
+        f" should have pytest >= {PYTEST_MIN_VERSION} installed."
     )
+
+
+def raccoon_face_or_skip():
+    # SciPy requires network access to get data
+    run_network_tests = environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "0"
+    if not run_network_tests:
+        raise SkipTest("test is enabled when SKLEARN_SKIP_NETWORK_TESTS=0")
+    try:
+        import pooch  # noqa: F401
+    except ImportError:
+        raise SkipTest("test requires pooch to be installed")
+
+    return face(gray=True)
+
 
 dataset_fetchers = {
     "fetch_20newsgroups_fxt": fetch_20newsgroups,
@@ -34,9 +76,14 @@ dataset_fetchers = {
     "fetch_california_housing_fxt": fetch_california_housing,
     "fetch_covtype_fxt": fetch_covtype,
     "fetch_kddcup99_fxt": fetch_kddcup99,
+    "fetch_lfw_pairs_fxt": fetch_lfw_pairs,
+    "fetch_lfw_people_fxt": fetch_lfw_people,
     "fetch_olivetti_faces_fxt": fetch_olivetti_faces,
     "fetch_rcv1_fxt": fetch_rcv1,
+    "fetch_species_distributions_fxt": fetch_species_distributions,
 }
+
+dataset_fetchers["raccoon_face_fxt"] = raccoon_face_or_skip
 
 _SKIP32_MARK = pytest.mark.skipif(
     environ.get("SKLEARN_RUN_FLOAT32_TESTS", "0") != "1",
@@ -59,7 +106,7 @@ def _fetch_fixture(f):
         kwargs["download_if_missing"] = download_if_missing
         try:
             return f(*args, **kwargs)
-        except IOError as e:
+        except OSError as e:
             if str(e) != "Data not found and `download_if_missing` is False":
                 raise
             pytest.skip("test is enabled when SKLEARN_SKIP_NETWORK_TESTS=0")
@@ -73,8 +120,12 @@ fetch_20newsgroups_vectorized_fxt = _fetch_fixture(fetch_20newsgroups_vectorized
 fetch_california_housing_fxt = _fetch_fixture(fetch_california_housing)
 fetch_covtype_fxt = _fetch_fixture(fetch_covtype)
 fetch_kddcup99_fxt = _fetch_fixture(fetch_kddcup99)
+fetch_lfw_pairs_fxt = _fetch_fixture(fetch_lfw_pairs)
+fetch_lfw_people_fxt = _fetch_fixture(fetch_lfw_people)
 fetch_olivetti_faces_fxt = _fetch_fixture(fetch_olivetti_faces)
 fetch_rcv1_fxt = _fetch_fixture(fetch_rcv1)
+fetch_species_distributions_fxt = _fetch_fixture(fetch_species_distributions)
+raccoon_face_fxt = pytest.fixture(raccoon_face_or_skip)
 
 
 def pytest_collection_modifyitems(config, items):
@@ -96,10 +147,16 @@ def pytest_collection_modifyitems(config, items):
     datasets_to_download = set()
 
     for item in items:
-        if not hasattr(item, "fixturenames"):
+        if isinstance(item, DoctestItem) and "fetch_" in item.name:
+            fetcher_function_name = item.name.split(".")[-1]
+            dataset_fetchers_key = f"{fetcher_function_name}_fxt"
+            dataset_to_fetch = set([dataset_fetchers_key]) & dataset_features_set
+        elif not hasattr(item, "fixturenames"):
             continue
-        item_fixtures = set(item.fixturenames)
-        dataset_to_fetch = item_fixtures & dataset_features_set
+        else:
+            item_fixtures = set(item.fixturenames)
+            dataset_to_fetch = item_fixtures & dataset_features_set
+
         if not dataset_to_fetch:
             continue
 
@@ -115,7 +172,8 @@ def pytest_collection_modifyitems(config, items):
     worker_id = environ.get("PYTEST_XDIST_WORKER", "gw0")
     if worker_id == "gw0" and run_network_tests:
         for name in datasets_to_download:
-            dataset_fetchers[name]()
+            with suppress(SkipTest):
+                dataset_fetchers[name]()
 
     for item in items:
         # Known failure on with GradientBoostingClassifier on ARM64
@@ -123,18 +181,17 @@ def pytest_collection_modifyitems(config, items):
             item.name.endswith("GradientBoostingClassifier")
             and platform.machine() == "aarch64"
         ):
-
             marker = pytest.mark.xfail(
                 reason=(
                     "know failure. See "
-                    "https://github.com/scikit-learn/scikit-learn/issues/17797"  # noqa
+                    "https://github.com/scikit-learn/scikit-learn/issues/17797"
                 )
             )
             item.add_marker(marker)
 
     skip_doctests = False
     try:
-        import matplotlib  # noqa
+        import matplotlib  # noqa: F401
     except ImportError:
         skip_doctests = True
         reason = "matplotlib is required to run the doctests"
@@ -147,6 +204,17 @@ def pytest_collection_modifyitems(config, items):
             "doctests are not run for Windows because numpy arrays "
             "repr is inconsistent across platforms."
         )
+        skip_doctests = True
+
+    if np_base_version < parse_version("2"):
+        # TODO: configure numpy to output scalar arrays as regular Python scalars
+        # once possible to improve readability of the tests docstrings.
+        # https://numpy.org/neps/nep-0051-scalar-representation.html#implementation
+        reason = "Due to NEP 51 numpy scalar repr has changed in numpy 2"
+        skip_doctests = True
+
+    if sp_version < parse_version("1.14"):
+        reason = "Scipy sparse matrix repr has changed in scipy 1.14"
         skip_doctests = True
 
     # Normally doctest has the entire module's scope. Here we set globs to an empty dict
@@ -168,7 +236,7 @@ def pytest_collection_modifyitems(config, items):
                 if item.name != "sklearn._config.config_context":
                     item.add_marker(skip_marker)
     try:
-        import PIL  # noqa
+        import PIL  # noqa: F401
 
         pillow_installed = True
     except ImportError:
@@ -203,25 +271,170 @@ def pyplot():
     pyplot.close("all")
 
 
-def pytest_runtest_setup(item):
-    """Set the number of openmp threads based on the number of workers
-    xdist is using to prevent oversubscription.
+def munge_scipy_to_check_spmatrix_usage():
+    import scipy
 
-    Parameters
-    ----------
-    item : pytest item
-        item to be processed
+    def flag_this_call(*args, **kwds):
+        raise ValueError("Old spmatrix function called. Use e.g. block or random.")
+
+    scipy.sparse._construct.bmat = flag_this_call
+    scipy.sparse._construct.rand = flag_this_call
+    scipy.sparse._construct.rand = flag_this_call
+
+    class _strict_mul_mixin:
+        def __mul__(self, other):
+            if not scipy.sparse._sputils.isscalarlike(other):
+                raise ValueError("Operator * used here! Change to @?")
+            return super().__mul__(other)
+
+        def __rmul__(self, other):
+            if not scipy.sparse._sputils.isscalarlike(other):
+                raise ValueError("Operator * used here! Change to @?")
+            return super().__rmul__(other)
+
+        def __imul__(self, other):
+            if not scipy.sparse._sputils.isscalarlike(other):
+                raise ValueError("Operator * used here! Change to @?")
+            return super().__imul__(other)
+
+        def __pow__(self, *args, **kwargs):
+            raise ValueError("spmatrix ** used here! Use sparse.linalg.matrix_power?")
+
+        @property
+        def A(self):
+            raise TypeError("spmatrix A property is not allowed! Use .toarray()")
+
+        @property
+        def H(self):
+            raise TypeError("spmatrix H property is not allowed! Use .conjugate().T")
+
+        def asfptype(self):
+            raise TypeError("spmatrix asfptype is not allowed! rewrite needed")
+
+        def get_shape(self):
+            raise TypeError("spmatrix get_shape is not allowed! Use .shape")
+
+        def getformat(self):
+            raise TypeError("spmatrix getformat is not allowed! Use .shape")
+
+        def getmaxprint(self):
+            raise TypeError("spmatrix getmaxprint is not allowed! Use .shape")
+
+        def getnnz(self):
+            raise TypeError("spmatrix getnnz is not allowed! Use .shape")
+
+        def getH(self):
+            raise TypeError("spmatrix getH is not allowed! Use .shape")
+
+        def getrow(self):
+            raise TypeError("spmatrix getrow is not allowed! Use .shape")
+
+        def getcol(self):
+            raise TypeError("spmatrix getcol is not allowed! Use .shape")
+
+    class _strict_coo_matrix(_strict_mul_mixin, scipy.sparse.coo_matrix):
+        pass
+
+    class _strict_bsr_matrix(_strict_mul_mixin, scipy.sparse.bsr_matrix):
+        pass
+
+    class _strict_csr_matrix(_strict_mul_mixin, scipy.sparse.csr_matrix):
+        pass
+
+    class _strict_csc_matrix(_strict_mul_mixin, scipy.sparse.csc_matrix):
+        pass
+
+    class _strict_dok_matrix(_strict_mul_mixin, scipy.sparse.dok_matrix):
+        pass
+
+    class _strict_lil_matrix(_strict_mul_mixin, scipy.sparse.lil_matrix):
+        pass
+
+    class _strict_dia_matrix(_strict_mul_mixin, scipy.sparse.dia_matrix):
+        pass
+
+    scipy.sparse.coo_matrix = scipy.sparse._coo.coo_matrix = _strict_coo_matrix
+    scipy.sparse.bsr_matrix = scipy.sparse._bsr.bsr_matrix = _strict_bsr_matrix
+    scipy.sparse.csr_matrix = scipy.sparse._csr.csr_matrix = _strict_csr_matrix
+    scipy.sparse.csc_matrix = scipy.sparse._csc.csc_matrix = _strict_csc_matrix
+    scipy.sparse.dok_matrix = scipy.sparse._dok.dok_matrix = _strict_dok_matrix
+    scipy.sparse.lil_matrix = scipy.sparse._lil.lil_matrix = _strict_lil_matrix
+    scipy.sparse.dia_matrix = scipy.sparse._dia.dia_matrix = _strict_dia_matrix
+
+    scipy.sparse._construct.bsr_matrix = _strict_bsr_matrix
+    scipy.sparse._construct.coo_matrix = _strict_coo_matrix
+    scipy.sparse._construct.csc_matrix = _strict_csc_matrix
+    scipy.sparse._construct.csr_matrix = _strict_csr_matrix
+    scipy.sparse._construct.dia_matrix = _strict_dia_matrix
+
+    scipy.sparse._matrix.bsr_matrix = _strict_bsr_matrix
+    scipy.sparse._matrix.coo_matrix = _strict_coo_matrix
+    scipy.sparse._matrix.csc_matrix = _strict_csc_matrix
+    scipy.sparse._matrix.csr_matrix = _strict_csr_matrix
+    scipy.sparse._matrix.dia_matrix = _strict_dia_matrix
+    scipy.sparse._matrix.dok_matrix = _strict_dok_matrix
+    scipy.sparse._matrix.lil_matrix = _strict_lil_matrix
+
+
+def pytest_generate_tests(metafunc):
+    """Parametrization of global_random_seed fixture
+
+    based on the SKLEARN_TESTS_GLOBAL_RANDOM_SEED environment variable.
+
+    The goal of this fixture is to prevent tests that use it to be sensitive
+    to a specific seed value while still being deterministic by default.
+
+    See the documentation for the SKLEARN_TESTS_GLOBAL_RANDOM_SEED
+    variable for instructions on how to use this fixture.
+
+    https://scikit-learn.org/dev/computing/parallelism.html#sklearn-tests-global-random-seed
+
     """
-    xdist_worker_count = environ.get("PYTEST_XDIST_WORKER_COUNT")
-    if xdist_worker_count is None:
-        # returns if pytest-xdist is not installed
-        return
-    else:
-        xdist_worker_count = int(xdist_worker_count)
+    # When using pytest-xdist this function is called in the xdist workers.
+    # We rely on SKLEARN_TESTS_GLOBAL_RANDOM_SEED environment variable which is
+    # set in before running pytest and is available in xdist workers since they
+    # are subprocesses.
+    RANDOM_SEED_RANGE = list(range(100))  # All seeds in [0, 99] should be valid.
+    random_seed_var = environ.get("SKLEARN_TESTS_GLOBAL_RANDOM_SEED")
 
-    openmp_threads = _openmp_effective_n_threads()
-    threads_per_worker = max(openmp_threads // xdist_worker_count, 1)
-    threadpool_limits(threads_per_worker, user_api="openmp")
+    default_random_seeds = [42]
+
+    if random_seed_var is None:
+        random_seeds = default_random_seeds
+    elif random_seed_var == "all":
+        random_seeds = RANDOM_SEED_RANGE
+    else:
+        if "-" in random_seed_var:
+            start, stop = random_seed_var.split("-")
+            random_seeds = list(range(int(start), int(stop) + 1))
+        else:
+            random_seeds = [int(random_seed_var)]
+
+        if min(random_seeds) < 0 or max(random_seeds) > 99:
+            raise ValueError(
+                "The value(s) of the environment variable "
+                "SKLEARN_TESTS_GLOBAL_RANDOM_SEED must be in the range [0, 99] "
+                f"(or 'all'), got: {random_seed_var}"
+            )
+
+    if "global_random_seed" in metafunc.fixturenames:
+        metafunc.parametrize("global_random_seed", random_seeds)
+
+
+def pytest_addoption(parser, pluginmanager):
+    if not PARALLEL_RUN_AVAILABLE:
+        parser.addini("thread_unsafe_fixtures", "list of stuff")
+    parser.addoption(
+        "--check_spmatrix",
+        action="store_true",
+        default=False,
+        help="raise for spmatrix usage that breaks sparray",
+    )
+
+
+def pytest_runtest_setup(item):
+    if "no_check_spmatrix" in item.keywords and item.config.option.check_spmatrix:
+        pytest.skip("skip due to check_spmatrix scipy patch breaking this test")
 
 
 def pytest_configure(config):
@@ -233,6 +446,63 @@ def pytest_configure(config):
     except ImportError:
         pass
 
-    # Register global_random_seed plugin if it is not already registered
-    if not config.pluginmanager.hasplugin("sklearn.tests.random_seed"):
-        config.pluginmanager.register(random_seed)
+    allowed_parallelism = joblib.cpu_count(only_physical_cores=True)
+    xdist_worker_count = environ.get("PYTEST_XDIST_WORKER_COUNT")
+    if xdist_worker_count is not None:
+        # Set the number of OpenMP and BLAS threads based on the number of workers
+        # xdist is using to prevent oversubscription.
+        allowed_parallelism = max(allowed_parallelism // int(xdist_worker_count), 1)
+    threadpool_limits(allowed_parallelism)
+
+    if environ.get("SKLEARN_WARNINGS_AS_ERRORS", "0") != "0":
+        # This seems like the only way to programmatically change the config
+        # filterwarnings. This was suggested in
+        # https://github.com/pytest-dev/pytest/issues/3311#issuecomment-373177592
+        for line in get_pytest_filterwarning_lines():
+            config.addinivalue_line("filterwarnings", line)
+
+    if config.option.check_spmatrix:
+        # Note: this patches scipy.sparse to raise upon outdated spmatrix usage
+        # If you run into this with new PR code to sklearn, make sure it:
+        # - converts spmatrix input to sparray
+        # - uses the sparray interface for manipulating the sparse object
+        # - uses align_api_if_sparse(X) just before returning a sparse object
+        munge_scipy_to_check_spmatrix_usage()
+
+    if not PARALLEL_RUN_AVAILABLE:
+        config.addinivalue_line(
+            "markers",
+            "parallel_threads(n): run the given test function in parallel "
+            "using `n` threads.",
+        )
+        config.addinivalue_line(
+            "markers",
+            "thread_unsafe: mark the test function as single-threaded",
+        )
+        config.addinivalue_line(
+            "markers",
+            "iterations(n): run the given test function `n` times in each thread",
+        )
+        config.addinivalue_line(
+            "markers",
+            "iterations(n): run the given test function `n` times in each thread",
+        )
+
+
+@pytest.fixture
+def hide_available_pandas(monkeypatch):
+    """Pretend pandas was not installed."""
+    import_orig = builtins.__import__
+
+    def mocked_import(name, *args, **kwargs):
+        if name == "pandas":
+            raise ImportError()
+        return import_orig(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", mocked_import)
+
+
+if dt_config is not None:
+    # Strict mode to differentiate between 3.14 and np.float64(3.14)
+    dt_config.strict_check = True
+    # dt_config.rtol = 0.01

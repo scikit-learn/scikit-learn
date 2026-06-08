@@ -1,17 +1,15 @@
+import numpy as np
 import pytest
 
-import numpy as np
-from scipy import sparse
-
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_allclose_dense_sparse
-from sklearn.utils._testing import assert_array_equal
-
-from sklearn.experimental import enable_iterative_imputer  # noqa
-
-from sklearn.impute import IterativeImputer
-from sklearn.impute import KNNImputer
-from sklearn.impute import SimpleImputer
+from sklearn.base import clone
+from sklearn.experimental import enable_iterative_imputer  # noqa: F401
+from sklearn.impute import IterativeImputer, KNNImputer, SimpleImputer
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_allclose_dense_sparse,
+    assert_array_equal,
+)
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 
 def imputers():
@@ -30,6 +28,7 @@ def test_imputation_missing_value_in_test_array(imputer):
     # not throw an error and return a finite dataset
     train = [[1], [2]]
     test = [[3], [np.nan]]
+    imputer = clone(imputer)
     imputer.set_params(add_indicator=True)
     imputer.fit(train).transform(test)
 
@@ -55,6 +54,7 @@ def test_imputers_add_indicator(marker, imputer):
             [0.0, 0.0, 0.0, 1.0],
         ]
     )
+    imputer = clone(imputer)
     imputer.set_params(missing_values=marker, add_indicator=True)
 
     X_trans = imputer.fit_transform(X)
@@ -72,8 +72,10 @@ def test_imputers_add_indicator(marker, imputer):
 @pytest.mark.parametrize(
     "imputer", sparse_imputers(), ids=lambda x: x.__class__.__name__
 )
-def test_imputers_add_indicator_sparse(imputer, marker):
-    X = sparse.csr_matrix(
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_imputers_add_indicator_sparse(imputer, marker, csr_container):
+    imputer = clone(imputer)  # Avoid side effects from shared instances.
+    X = csr_container(
         [
             [marker, 1, 5, marker, 1],
             [2, marker, 1, marker, 2],
@@ -81,7 +83,7 @@ def test_imputers_add_indicator_sparse(imputer, marker):
             [1, 2, 9, marker, 4],
         ]
     )
-    X_true_indicator = sparse.csr_matrix(
+    X_true_indicator = csr_container(
         [
             [1.0, 0.0, 0.0, 1.0],
             [0.0, 1.0, 0.0, 1.0],
@@ -174,6 +176,7 @@ def test_imputers_feature_names_out_pandas(imputer, add_indicator):
 def test_keep_empty_features(imputer, keep_empty_features):
     """Check that the imputer keeps features with only missing values."""
     X = np.array([[np.nan, 1], [np.nan, 2], [np.nan, 3]])
+    imputer = clone(imputer)
     imputer = imputer.set_params(
         add_indicator=False, keep_empty_features=keep_empty_features
     )
@@ -184,3 +187,40 @@ def test_keep_empty_features(imputer, keep_empty_features):
             assert X_imputed.shape == X.shape
         else:
             assert X_imputed.shape == (X.shape[0], X.shape[1] - 1)
+
+
+@pytest.mark.parametrize("imputer", imputers(), ids=lambda x: x.__class__.__name__)
+@pytest.mark.parametrize("missing_value_test", [np.nan, 1])
+def test_imputation_adds_missing_indicator_if_add_indicator_is_true(
+    imputer, missing_value_test
+):
+    """Check that missing indicator always exists when add_indicator=True.
+
+    Non-regression test for gh-26590.
+    """
+    X_train = np.array([[0, np.nan], [1, 2]])
+
+    # Test data where missing_value_test variable can be set to np.nan or 1.
+    X_test = np.array([[0, missing_value_test], [1, 2]])
+
+    imputer = clone(imputer)
+    imputer.set_params(add_indicator=True)
+    imputer.fit(X_train)
+
+    X_test_imputed_with_indicator = imputer.transform(X_test)
+    assert X_test_imputed_with_indicator.shape == (2, 3)
+
+    imputer.set_params(add_indicator=False)
+    imputer.fit(X_train)
+    X_test_imputed_without_indicator = imputer.transform(X_test)
+    assert X_test_imputed_without_indicator.shape == (2, 2)
+
+    assert_allclose(
+        X_test_imputed_with_indicator[:, :-1], X_test_imputed_without_indicator
+    )
+    if np.isnan(missing_value_test):
+        expected_missing_indicator = [1, 0]
+    else:
+        expected_missing_indicator = [0, 0]
+
+    assert_allclose(X_test_imputed_with_indicator[:, -1], expected_missing_indicator)

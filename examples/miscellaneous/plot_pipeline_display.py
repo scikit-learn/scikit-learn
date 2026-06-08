@@ -11,18 +11,21 @@ To see more detailed steps in the visualization of the pipeline, click on the
 steps in the pipeline.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Displaying a Pipeline with a Preprocessing Step and Classifier
-################################################################################
+# ##############################################################
 # This section constructs a :class:`~sklearn.pipeline.Pipeline` with a preprocessing
 # step, :class:`~sklearn.preprocessing.StandardScaler`, and classifier,
 # :class:`~sklearn.linear_model.LogisticRegression`, and displays its visual
 # representation.
 
+from sklearn import set_config
+from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression
-from sklearn import set_config
 
 steps = [
     ("preprocessing", StandardScaler()),
@@ -46,16 +49,16 @@ set_config(display="diagram")
 
 # %%
 # Displaying a Pipeline Chaining Multiple Preprocessing Steps & Classifier
-################################################################################
+# ########################################################################
 # This section constructs a :class:`~sklearn.pipeline.Pipeline` with multiple
 # preprocessing steps, :class:`~sklearn.preprocessing.PolynomialFeatures` and
 # :class:`~sklearn.preprocessing.StandardScaler`, and a classifier step,
 # :class:`~sklearn.linear_model.LogisticRegression`, and displays its visual
 # representation.
 
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler, PolynomialFeatures
 from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 
 steps = [
     ("standard_scaler", StandardScaler()),
@@ -67,15 +70,15 @@ pipe  # click on the diagram below to see the details of each step
 
 # %%
 # Displaying a Pipeline and Dimensionality Reduction and Classifier
-################################################################################
+# #################################################################
 # This section constructs a :class:`~sklearn.pipeline.Pipeline` with a
 # dimensionality reduction step, :class:`~sklearn.decomposition.PCA`,
 # a classifier, :class:`~sklearn.svm.SVC`, and displays its visual
 # representation.
 
+from sklearn.decomposition import PCA
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
-from sklearn.decomposition import PCA
 
 steps = [("reduce_dim", PCA(n_components=4)), ("classifier", SVC(kernel="linear"))]
 pipe = Pipeline(steps)
@@ -83,19 +86,19 @@ pipe  # click on the diagram below to see the details of each step
 
 # %%
 # Displaying a Complex Pipeline Chaining a Column Transformer
-################################################################################
+# ###########################################################
 # This section constructs a complex :class:`~sklearn.pipeline.Pipeline` with a
 # :class:`~sklearn.compose.ColumnTransformer` and a classifier,
 # :class:`~sklearn.linear_model.LogisticRegression`, and displays its visual
 # representation.
 
 import numpy as np
-from sklearn.pipeline import make_pipeline
-from sklearn.pipeline import Pipeline
-from sklearn.impute import SimpleImputer
+
 from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 numeric_preprocessor = Pipeline(
     steps=[
@@ -126,20 +129,20 @@ pipe  # click on the diagram below to see the details of each step
 
 # %%
 # Displaying a Grid Search over a Pipeline with a Classifier
-################################################################################
+# ##########################################################
 # This section constructs a :class:`~sklearn.model_selection.GridSearchCV`
 # over a :class:`~sklearn.pipeline.Pipeline` with
 # :class:`~sklearn.ensemble.RandomForestClassifier` and displays its visual
 # representation.
 
 import numpy as np
-from sklearn.pipeline import make_pipeline
-from sklearn.pipeline import Pipeline
-from sklearn.impute import SimpleImputer
+
 from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.impute import SimpleImputer
 from sklearn.model_selection import GridSearchCV
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 numeric_preprocessor = Pipeline(
     steps=[

@@ -1,13 +1,15 @@
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
-from sklearn.datasets import make_classification, make_regression
 import numpy as np
 import pytest
 
-from sklearn.ensemble import HistGradientBoostingRegressor
-from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.datasets import make_classification, make_regression
+from sklearn.ensemble import (
+    HistGradientBoostingClassifier,
+    HistGradientBoostingRegressor,
+)
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.ensemble._hist_gradient_boosting.utils import get_equivalent_estimator
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
 
 
 @pytest.mark.parametrize("seed", range(5))
@@ -91,7 +93,7 @@ def test_same_predictions_regression(
     est_lightgbm.fit(X_train, y_train)
     est_sklearn.fit(X_train, y_train)
 
-    # We need X to be treated an numerical data, not pre-binned data.
+    # We need X to be treated a numerical data, not pre-binned data.
     X_train, X_test = X_train.astype(np.float32), X_test.astype(np.float32)
 
     pred_lightgbm = est_lightgbm.predict(X_train)
@@ -168,7 +170,7 @@ def test_same_predictions_classification(
     est_lightgbm.fit(X_train, y_train)
     est_sklearn.fit(X_train, y_train)
 
-    # We need X to be treated an numerical data, not pre-binned data.
+    # We need X to be treated a numerical data, not pre-binned data.
     X_train, X_test = X_train.astype(np.float32), X_test.astype(np.float32)
 
     pred_lightgbm = est_lightgbm.predict(X_train)
@@ -180,7 +182,6 @@ def test_same_predictions_classification(
     np.testing.assert_almost_equal(acc_lightgbm, acc_sklearn)
 
     if max_leaf_nodes < 10 and n_samples >= 1000:
-
         pred_lightgbm = est_lightgbm.predict(X_test)
         pred_sklearn = est_sklearn.predict(X_test)
         assert np.mean(pred_sklearn == pred_lightgbm) > 0.89
@@ -244,7 +245,7 @@ def test_same_predictions_multiclass_classification(
     est_lightgbm.fit(X_train, y_train)
     est_sklearn.fit(X_train, y_train)
 
-    # We need X to be treated an numerical data, not pre-binned data.
+    # We need X to be treated a numerical data, not pre-binned data.
     X_train, X_test = X_train.astype(np.float32), X_test.astype(np.float32)
 
     pred_lightgbm = est_lightgbm.predict(X_train)
@@ -263,7 +264,6 @@ def test_same_predictions_multiclass_classification(
     np.testing.assert_allclose(acc_lightgbm, acc_sklearn, rtol=0, atol=5e-2)
 
     if max_leaf_nodes < 10 and n_samples >= 1000:
-
         pred_lightgbm = est_lightgbm.predict(X_test)
         pred_sklearn = est_sklearn.predict(X_test)
         assert np.mean(pred_sklearn == pred_lightgbm) > 0.89

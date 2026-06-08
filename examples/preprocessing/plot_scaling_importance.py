@@ -12,13 +12,13 @@ Even if tree based models are (almost) not affected by scaling, many other
 algorithms require features to be normalized, often for different reasons: to
 ease the convergence (such as a non-penalized logistic regression), to create a
 completely different model fit compared to the fit with unscaled data (such as
-KNeighbors models). The latter is demoed on the first part of the present
+KNeighbors models). The latter is demonstrated on the first part of the present
 example.
 
-On the second part of the example we show how Principle Component Analysis (PCA)
+On the second part of the example we show how Principal Component Analysis (PCA)
 is impacted by normalization of features. To illustrate this, we compare the
 principal components found using :class:`~sklearn.decomposition.PCA` on unscaled
-data with those obatined when using a
+data with those obtained when using a
 :class:`~sklearn.preprocessing.StandardScaler` to scale data first.
 
 In the last part of the example we show the effect of the normalization on the
@@ -26,10 +26,8 @@ accuracy of a model trained on PCA-reduced data.
 
 """
 
-# Author: Tyler Lanigan <tylerlanigan@gmail.com>
-#         Sebastian Raschka <mail@sebastianraschka.com>
-#         Arturo Amor <david-arturo.amor-quiroz@inria.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Load and prepare data
@@ -52,6 +50,8 @@ X_train, X_test, y_train, y_test = train_test_split(
 scaled_X_train = scaler.fit_transform(X_train)
 
 # %%
+# .. _neighbors_scaling:
+#
 # Effect of rescaling on a k-neighbors models
 # ===========================================
 #
@@ -65,9 +65,10 @@ scaled_X_train = scaler.fit_transform(X_train)
 # of features.
 
 import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
+
 from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.neighbors import KNeighborsClassifier
-
 
 X_plot = X[["proline", "hue"]]
 X_plot_scaled = scaler.fit_transform(X_plot)
@@ -83,7 +84,10 @@ def fit_and_plot_model(X_plot, y, clf, ax):
         alpha=0.5,
         ax=ax,
     )
-    disp.ax_.scatter(X_plot["proline"], X_plot["hue"], c=y, s=20, edgecolor="k")
+    cmap = ListedColormap(disp.multiclass_colors_)
+    disp.ax_.scatter(
+        X_plot["proline"], X_plot["hue"], c=y, cmap=cmap, s=20, edgecolor="k"
+    )
     disp.ax_.set_xlim((X_plot["proline"].min(), X_plot["proline"].max()))
     disp.ax_.set_ylim((X_plot["hue"].min(), X_plot["hue"].max()))
     return disp.ax_
@@ -100,7 +104,7 @@ ax2.set_ylabel("scaled hue")
 _ = ax2.set_title("KNN with scaling")
 
 # %%
-# Here the desicion boundary shows that fitting scaled or non-scaled data lead
+# Here the decision boundary shows that fitting scaled or non-scaled data lead
 # to completely different models. The reason is that the variable "proline" has
 # values which vary between 0 and 1,000; whereas the variable "hue" varies
 # between 1 and 10. Because of this, distances between samples are mostly
@@ -122,6 +126,7 @@ _ = ax2.set_title("KNN with scaling")
 # We can inspect the first principal components using all the original features:
 
 import pandas as pd
+
 from sklearn.decomposition import PCA
 
 pca = PCA(n_components=2).fit(X_train)
@@ -187,7 +192,7 @@ _ = plt.tight_layout()
 # %%
 # From the plot above we observe that scaling the features before reducing the
 # dimensionality results in components with the same order of magnitude. In this
-# case it also improves the separability of the clases. Indeed, in the next
+# case it also improves the separability of the classes. Indeed, in the next
 # section we confirm that a better separability has a good repercussion on the
 # overall model's performance.
 #
@@ -199,27 +204,44 @@ _ = plt.tight_layout()
 # non-scaling of the data:
 
 import numpy as np
-from sklearn.pipeline import make_pipeline
+
 from sklearn.linear_model import LogisticRegressionCV
+from sklearn.pipeline import make_pipeline
 
 Cs = np.logspace(-5, 5, 20)
 
-unscaled_clf = make_pipeline(pca, LogisticRegressionCV(Cs=Cs))
+unscaled_clf = make_pipeline(
+    pca,
+    LogisticRegressionCV(
+        Cs=Cs,
+        use_legacy_attributes=False,
+        l1_ratios=(0,),  # TODO(1.10): remove because it is default now
+        scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
+    ),
+)
 unscaled_clf.fit(X_train, y_train)
 
-scaled_clf = make_pipeline(scaler, pca, LogisticRegressionCV(Cs=Cs))
+scaled_clf = make_pipeline(
+    scaler,
+    pca,
+    LogisticRegressionCV(
+        Cs=Cs,
+        use_legacy_attributes=False,
+        l1_ratios=(0,),  # TODO(1.10): remove because it is default now
+        scoring="neg_log_loss",  # TODO(1.11): remove because it is default now,
+    ),
+)
 scaled_clf.fit(X_train, y_train)
 
-print(f"Optimal C for the unscaled PCA: {unscaled_clf[-1].C_[0]:.4f}\n")
-print(f"Optimal C for the standardized data with PCA: {scaled_clf[-1].C_[0]:.2f}")
+print(f"Optimal C for the unscaled PCA: {unscaled_clf[-1].C_:.4f}\n")
+print(f"Optimal C for the standardized data with PCA: {scaled_clf[-1].C_:.2f}")
 
 # %%
 # The need for regularization is higher (lower values of `C`) for the data that
 # was not scaled before applying PCA. We now evaluate the effect of scaling on
 # the accuracy and the mean log-loss of the optimal models:
 
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import log_loss
+from sklearn.metrics import accuracy_score, log_loss
 
 y_pred = unscaled_clf.predict(X_test)
 y_pred_scaled = scaled_clf.predict(X_test)

@@ -1,12 +1,10 @@
-import pytest
-
 import numpy as np
-
-from sklearn.utils._mask import _get_mask
-from sklearn.utils._testing import _convert_container, assert_allclose
+import pytest
 
 from sklearn.impute._base import _BaseImputer
 from sklearn.impute._iterative import _assign_where
+from sklearn.utils._mask import _get_mask
+from sklearn.utils._testing import _convert_container, assert_allclose
 
 
 @pytest.fixture
@@ -92,7 +90,7 @@ def test_base_no_precomputed_mask_transform(data):
         imputer.fit_transform(data)
 
 
-@pytest.mark.parametrize("X1_type", ["array", "dataframe"])
+@pytest.mark.parametrize("X1_type", ["array", "pandas"])
 def test_assign_where(X1_type):
     """Check the behaviour of the private helpers `_assign_where`."""
     rng = np.random.RandomState(0)
@@ -104,6 +102,6 @@ def test_assign_where(X1_type):
 
     _assign_where(X1, X2, mask)
 
-    if X1_type == "dataframe":
+    if X1_type == "pandas":
         X1 = X1.to_numpy()
     assert_allclose(X1[mask], X2[mask])

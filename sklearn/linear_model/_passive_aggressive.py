@@ -1,22 +1,49 @@
-# Authors: Rob Zinkov, Mathieu Blondel
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from numbers import Real
 
-from ._stochastic_gradient import BaseSGDClassifier
-from ._stochastic_gradient import BaseSGDRegressor
-from ._stochastic_gradient import DEFAULT_EPSILON
-from ..utils._param_validation import Interval, StrOptions
+from sklearn.base import _fit_context
+from sklearn.linear_model._stochastic_gradient import (
+    DEFAULT_EPSILON,
+    BaseSGDClassifier,
+    BaseSGDRegressor,
+)
+from sklearn.utils import deprecated
+from sklearn.utils._param_validation import Interval, StrOptions
 
 
+# TODO(1.10): Remove
+@deprecated(
+    "this is deprecated in version 1.8 and will be removed in 1.10. "
+    "Use `SGDClassifier(loss='hinge', penalty=None, learning_rate='pa1', eta0=1.0)` "
+    "instead."
+)
 class PassiveAggressiveClassifier(BaseSGDClassifier):
     """Passive Aggressive Classifier.
+
+    .. deprecated:: 1.8
+        The whole class `PassiveAggressiveClassifier` was deprecated in version 1.8
+        and will be removed in 1.10. Instead use:
+
+        .. code-block:: python
+
+            clf = SGDClassifier(
+                loss="hinge",
+                penalty=None,
+                learning_rate="pa1",  # or "pa2"
+                eta0=1.0,  # for parameter C
+            )
 
     Read more in the :ref:`User Guide <passive_aggressive>`.
 
     Parameters
     ----------
     C : float, default=1.0
-        Maximum step size (regularization). Defaults to 1.0.
+        Aggressiveness parameter for the passive-aggressive algorithm, see [1].
+        For PA-I it is the maximum step size. For PA-II it regularizes the
+        step size (the smaller `C` the more it regularizes).
+        As a general rule-of-thumb, `C` should be small when the data is noisy.
 
     fit_intercept : bool, default=True
         Whether the intercept should be estimated or not. If False, the
@@ -25,7 +52,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     max_iter : int, default=1000
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
-        :meth:`partial_fit` method.
+        :meth:`~sklearn.linear_model.PassiveAggressiveClassifier.partial_fit` method.
 
         .. versionadded:: 0.19
 
@@ -36,11 +63,11 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         .. versionadded:: 0.19
 
     early_stopping : bool, default=False
-        Whether to use early stopping to terminate training when validation.
+        Whether to use early stopping to terminate training when validation
         score is not improving. If set to True, it will automatically set aside
         a stratified fraction of training data as validation and terminate
-        training when validation score is not improving by at least tol for
-        n_iter_no_change consecutive epochs.
+        training when validation score is not improving by at least `tol` for
+        `n_iter_no_change` consecutive epochs.
 
         .. versionadded:: 0.20
 
@@ -143,9 +170,6 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         Number of weight updates performed during training.
         Same as ``(n_iter_ * n_samples + 1)``.
 
-    loss_function_ : callable
-        Loss function used by the algorithm.
-
     See Also
     --------
     SGDClassifier : Incrementally trained logistic regression.
@@ -153,9 +177,9 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
     References
     ----------
-    Online Passive-Aggressive Algorithms
-    <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>
-    K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
+    .. [1] Online Passive-Aggressive Algorithms
+       <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>
+       K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
 
     Examples
     --------
@@ -179,6 +203,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         "loss": [StrOptions({"hinge", "squared_hinge"})],
         "C": [Interval(Real, 0, None, closed="right")],
     }
+    _parameter_constraints.pop("eta0")
 
     def __init__(
         self,
@@ -210,7 +235,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
             shuffle=shuffle,
             verbose=verbose,
             random_state=random_state,
-            eta0=1.0,
+            eta0=C,
             warm_start=warm_start,
             class_weight=class_weight,
             average=average,
@@ -220,6 +245,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         self.C = C
         self.loss = loss
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y, classes=None):
         """Fit linear model with Passive Aggressive algorithm.
 
@@ -245,7 +271,6 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
             Fitted estimator.
         """
         if not hasattr(self, "classes_"):
-            self._validate_params()
             self._more_validate_params(for_partial_fit=True)
 
             if self.class_weight == "balanced":
@@ -261,12 +286,13 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
                     "parameter."
                 )
 
+        # For an explanation, see
+        # https://github.com/scikit-learn/scikit-learn/pull/1259#issuecomment-9818044
         lr = "pa1" if self.loss == "hinge" else "pa2"
         return self._partial_fit(
             X,
             y,
             alpha=1.0,
-            C=self.C,
             loss="hinge",
             learning_rate=lr,
             max_iter=1,
@@ -276,6 +302,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
             intercept_init=None,
         )
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, coef_init=None, intercept_init=None):
         """Fit linear model with Passive Aggressive algorithm.
 
@@ -298,7 +325,6 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
         self._more_validate_params()
 
         lr = "pa1" if self.loss == "hinge" else "pa2"
@@ -306,7 +332,6 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
             X,
             y,
             alpha=1.0,
-            C=self.C,
             loss="hinge",
             learning_rate=lr,
             coef_init=coef_init,
@@ -314,8 +339,27 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         )
 
 
+# TODO(1.10): Remove
+@deprecated(
+    "this is deprecated in version 1.8 and will be removed in 1.10. "
+    "Use `SGDRegressor(loss='epsilon_insensitive', penalty=None, learning_rate='pa1', "
+    "eta0 = 1.0)` instead."
+)
 class PassiveAggressiveRegressor(BaseSGDRegressor):
     """Passive Aggressive Regressor.
+
+    .. deprecated:: 1.8
+        The whole class `PassiveAggressiveRegressor` was deprecated in version 1.8
+        and will be removed in 1.10. Instead use:
+
+        .. code-block:: python
+
+            reg = SGDRegressor(
+                loss="epsilon_insensitive",
+                penalty=None,
+                learning_rate="pa1",  # or "pa2"
+                eta0=1.0,  # for parameter C
+            )
 
     Read more in the :ref:`User Guide <passive_aggressive>`.
 
@@ -323,7 +367,10 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     ----------
 
     C : float, default=1.0
-        Maximum step size (regularization). Defaults to 1.0.
+        Aggressiveness parameter for the passive-aggressive algorithm, see [1].
+        For PA-I it is the maximum step size. For PA-II it regularizes the
+        step size (the smaller `C` the more it regularizes).
+        As a general rule-of-thumb, `C` should be small when the data is noisy.
 
     fit_intercept : bool, default=True
         Whether the intercept should be estimated or not. If False, the
@@ -332,7 +379,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     max_iter : int, default=1000
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
-        :meth:`partial_fit` method.
+        :meth:`~sklearn.linear_model.PassiveAggressiveRegressor.partial_fit` method.
 
         .. versionadded:: 0.19
 
@@ -465,6 +512,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         "C": [Interval(Real, 0, None, closed="right")],
         "epsilon": [Interval(Real, 0, None, closed="left")],
     }
+    _parameter_constraints.pop("eta0")
 
     def __init__(
         self,
@@ -485,10 +533,11 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         average=False,
     ):
         super().__init__(
+            loss=loss,
             penalty=None,
             l1_ratio=0,
             epsilon=epsilon,
-            eta0=1.0,
+            eta0=C,
             fit_intercept=fit_intercept,
             max_iter=max_iter,
             tol=tol,
@@ -502,8 +551,8 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
             average=average,
         )
         self.C = C
-        self.loss = loss
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y):
         """Fit linear model with Passive Aggressive algorithm.
 
@@ -521,7 +570,6 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
             Fitted estimator.
         """
         if not hasattr(self, "coef_"):
-            self._validate_params()
             self._more_validate_params(for_partial_fit=True)
 
         lr = "pa1" if self.loss == "epsilon_insensitive" else "pa2"
@@ -529,7 +577,6 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
             X,
             y,
             alpha=1.0,
-            C=self.C,
             loss="epsilon_insensitive",
             learning_rate=lr,
             max_iter=1,
@@ -538,6 +585,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
             intercept_init=None,
         )
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, coef_init=None, intercept_init=None):
         """Fit linear model with Passive Aggressive algorithm.
 
@@ -560,7 +608,6 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
         self._more_validate_params()
 
         lr = "pa1" if self.loss == "epsilon_insensitive" else "pa2"
@@ -568,7 +615,6 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
             X,
             y,
             alpha=1.0,
-            C=self.C,
             loss="epsilon_insensitive",
             learning_rate=lr,
             coef_init=coef_init,

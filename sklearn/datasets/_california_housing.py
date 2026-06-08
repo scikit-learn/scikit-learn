@@ -6,7 +6,7 @@ The original database is available from StatLib
 
 The data contains 20,640 observations on 9 variables.
 
-This dataset contains the average house value as target variable
+This dataset contains the median house value as target variable
 and the following input variables (features): average income,
 housing average age, average rooms, average bedrooms, population,
 average occupation, latitude, and longitude in that order.
@@ -15,33 +15,35 @@ References
 ----------
 
 Pace, R. Kelley and Ronald Barry, Sparse Spatial Autoregressions,
-Statistics and Probability Letters, 33 (1997) 291-297.
+Statistics and Probability Letters, 33:291-297, 1997.
 
 """
-# Authors: Peter Prettenhofer
-# License: BSD 3 clause
 
-from os.path import exists
-from os import makedirs, remove
-import tarfile
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import numpy as np
 import logging
+import tarfile
+from numbers import Integral, Real
+from os import PathLike, remove
+from os.path import exists
 
 import joblib
+import numpy as np
 
-from . import get_data_home
-from ._base import _convert_data_dataframe
-from ._base import _fetch_remote
-from ._base import _pkl_filepath
-from ._base import RemoteFileMetadata
-from ._base import load_descr
-from ..utils import Bunch
-from ..utils._param_validation import validate_params
-
+from sklearn.datasets import get_data_home
+from sklearn.datasets._base import (
+    RemoteFileMetadata,
+    _convert_data_dataframe,
+    _fetch_remote,
+    _pkl_filepath,
+    load_descr,
+)
+from sklearn.utils import Bunch
+from sklearn.utils._param_validation import Interval, validate_params
 
 # The original data can be found at:
-# https://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz
+# https://lib.stat.cmu.edu/datasets/houses.zip
 ARCHIVE = RemoteFileMetadata(
     filename="cal_housing.tgz",
     url="https://ndownloader.figshare.com/files/5976036",
@@ -53,14 +55,23 @@ logger = logging.getLogger(__name__)
 
 @validate_params(
     {
-        "data_home": [str, None],
+        "data_home": [str, PathLike, None],
         "download_if_missing": ["boolean"],
         "return_X_y": ["boolean"],
         "as_frame": ["boolean"],
-    }
+        "n_retries": [Interval(Integral, 1, None, closed="left")],
+        "delay": [Interval(Real, 0.0, None, closed="neither")],
+    },
+    prefer_skip_nested_validation=True,
 )
 def fetch_california_housing(
-    *, data_home=None, download_if_missing=True, return_X_y=False, as_frame=False
+    *,
+    data_home=None,
+    download_if_missing=True,
+    return_X_y=False,
+    as_frame=False,
+    n_retries=3,
+    delay=1.0,
 ):
     """Load the California housing dataset (regression).
 
@@ -75,12 +86,12 @@ def fetch_california_housing(
 
     Parameters
     ----------
-    data_home : str, default=None
+    data_home : str or path-like, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     download_if_missing : bool, default=True
-        If False, raise a IOError if the data is not locally available
+        If False, raise an OSError if the data is not locally available
         instead of trying to download the data from the source site.
 
     return_X_y : bool, default=False
@@ -96,6 +107,16 @@ def fetch_california_housing(
 
         .. versionadded:: 0.23
 
+    n_retries : int, default=3
+        Number of retries when HTTP errors are encountered.
+
+        .. versionadded:: 1.5
+
+    delay : float, default=1.0
+        Number of seconds between retries.
+
+        .. versionadded:: 1.5
+
     Returns
     -------
     dataset : :class:`~sklearn.utils.Bunch`
@@ -105,7 +126,7 @@ def fetch_california_housing(
             Each row corresponding to the 8 feature values in order.
             If ``as_frame`` is True, ``data`` is a pandas object.
         target : numpy array of shape (20640,)
-            Each value corresponds to the average
+            Each value corresponds to the median
             house value in units of 100,000.
             If ``as_frame`` is True, ``target`` is a pandas object.
         feature_names : list of length 8
@@ -130,21 +151,33 @@ def fetch_california_housing(
     -----
 
     This dataset consists of 20,640 samples and 9 features.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import fetch_california_housing
+    >>> housing = fetch_california_housing()
+    >>> print(housing.data.shape, housing.target.shape)
+    (20640, 8) (20640,)
+    >>> print(housing.feature_names[0:6])
+    ['MedInc', 'HouseAge', 'AveRooms', 'AveBedrms', 'Population', 'AveOccup']
     """
     data_home = get_data_home(data_home=data_home)
-    if not exists(data_home):
-        makedirs(data_home)
 
     filepath = _pkl_filepath(data_home, "cal_housing.pkz")
     if not exists(filepath):
         if not download_if_missing:
-            raise IOError("Data not found and `download_if_missing` is False")
+            raise OSError("Data not found and `download_if_missing` is False")
 
         logger.info(
             "Downloading Cal. housing from {} to {}".format(ARCHIVE.url, data_home)
         )
 
-        archive_path = _fetch_remote(ARCHIVE, dirname=data_home)
+        archive_path = _fetch_remote(
+            ARCHIVE,
+            dirname=data_home,
+            n_retries=n_retries,
+            delay=delay,
+        )
 
         with tarfile.open(mode="r:gz", name=archive_path) as f:
             cal_housing = np.loadtxt(

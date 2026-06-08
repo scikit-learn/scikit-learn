@@ -1,30 +1,36 @@
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#         Maria Telenczuk <https://github.com/maikia>
-#
-# License: BSD 3 clause
-
-import pytest
-import warnings
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
-from scipy import sparse
-from scipy import linalg
+import pytest
+from scipy import linalg, sparse
 
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_allclose
-
+from sklearn import config_context
+from sklearn.base import BaseEstimator
+from sklearn.datasets import load_iris, make_regression, make_sparse_uncorrelated
 from sklearn.linear_model import LinearRegression
-from sklearn.linear_model._base import _deprecate_normalize
-from sklearn.linear_model._base import _preprocess_data
-from sklearn.linear_model._base import _rescale_data
-from sklearn.linear_model._base import make_dataset
-from sklearn.datasets import make_sparse_uncorrelated
-from sklearn.datasets import make_regression
-from sklearn.datasets import load_iris
-from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model._base import (
+    LinearClassifierMixin,
+    _preprocess_data,
+    _rescale_data,
+    make_dataset,
+)
 from sklearn.preprocessing import add_dummy_feature
+from sklearn.utils._array_api import get_namespace_and_device, move_estimator_to
+from sklearn.utils._testing import (
+    _array_api_for_tests,
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+    skip_if_array_api_compat_not_configured,
+)
+from sklearn.utils.fixes import (
+    COO_CONTAINERS,
+    CSC_CONTAINERS,
+    CSR_CONTAINERS,
+    LIL_CONTAINERS,
+    _sparse_eye_array,
+)
 
 rtol = 1e-6
 
@@ -53,23 +59,50 @@ def test_linear_regression():
     assert_array_almost_equal(reg.predict(X), [0])
 
 
-@pytest.mark.parametrize("array_constr", [np.array, sparse.csr_matrix])
+@pytest.mark.parametrize("dtype", [np.float64, np.float32])
+def test_linear_regression_vs_lstsq(dtype):
+    """
+    Check that LinearRegression is as good as `scipy.linalg.lstsq`.
+    Non regression test for issue #33032.
+    """
+    rng = np.random.RandomState(1137)
+    n_samples = 500_000
+
+    x1 = rng.rand(n_samples)
+    x2 = 0.3 * x1 + 0.1 * rng.rand(n_samples)
+    X = np.column_stack([x1, x2])
+    y = X @ [0.5, 2.0] + 0.1 * rng.rand(n_samples)
+
+    X = X.astype(dtype)
+    y = y.astype(dtype)
+
+    coef_scipy = linalg.lstsq(X, y)[0]
+    coef_sklearn = LinearRegression(fit_intercept=False).fit(X, y).coef_
+
+    rmse_scipy = np.linalg.norm(y - X @ coef_scipy)
+    rmse_sklearn = np.linalg.norm(y - X @ coef_sklearn)
+    assert rmse_sklearn == pytest.approx(rmse_scipy, rel=1e-6)
+
+
+@pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
 @pytest.mark.parametrize("fit_intercept", [True, False])
 def test_linear_regression_sample_weights(
-    array_constr, fit_intercept, global_random_seed
+    sparse_container, fit_intercept, global_random_seed
 ):
     rng = np.random.RandomState(global_random_seed)
 
     # It would not work with under-determined systems
     n_samples, n_features = 6, 5
 
-    X = array_constr(rng.normal(size=(n_samples, n_features)))
+    X = rng.normal(size=(n_samples, n_features))
+    if sparse_container is not None:
+        X = sparse_container(X)
     y = rng.normal(size=n_samples)
 
     sample_weight = 1.0 + rng.uniform(size=n_samples)
 
     # LinearRegression with explicit sample_weight
-    reg = LinearRegression(fit_intercept=fit_intercept)
+    reg = LinearRegression(fit_intercept=fit_intercept, tol=1e-16)
     reg.fit(X, y, sample_weight=sample_weight)
     coefs1 = reg.coef_
     inter1 = reg.intercept_
@@ -93,9 +126,9 @@ def test_linear_regression_sample_weights(
 
 
 def test_raises_value_error_if_positive_and_sparse():
-    error_msg = "A sparse matrix was passed, but dense data is required."
+    error_msg = "Sparse data was passed for X, but dense data is required."
     # X must not be sparse if positive == True
-    X = sparse.eye(10)
+    X = _sparse_eye_array(10)
     y = np.ones(10)
 
     reg = LinearRegression(positive=True)
@@ -141,47 +174,11 @@ def test_fit_intercept():
     assert lr2_without_intercept.coef_.ndim == lr3_without_intercept.coef_.ndim
 
 
-def test_error_on_wrong_normalize():
-    normalize = "wrong"
-    error_msg = "Leave 'normalize' to its default"
-    with pytest.raises(ValueError, match=error_msg):
-        _deprecate_normalize(normalize, "estimator")
-
-
-# TODO(1.4): remove
-@pytest.mark.parametrize("normalize", [True, False, "deprecated"])
-def test_deprecate_normalize(normalize):
-    # test all possible case of the normalize parameter deprecation
-    if normalize == "deprecated":
-        # no warning
-        output = False
-        expected = None
-        warning_msg = []
-    else:
-        output = normalize
-        expected = FutureWarning
-        warning_msg = ["1.4"]
-        if not normalize:
-            warning_msg.append("default value")
-        else:
-            warning_msg.append("StandardScaler(")
-
-    if expected is None:
-        with warnings.catch_warnings():
-            warnings.simplefilter("error", FutureWarning)
-            _normalize = _deprecate_normalize(normalize, "estimator")
-    else:
-        with pytest.warns(expected) as record:
-            _normalize = _deprecate_normalize(normalize, "estimator")
-        assert all([warning in str(record[0].message) for warning in warning_msg])
-    assert _normalize == output
-
-
 def test_linear_regression_sparse(global_random_seed):
     # Test that linear regression also works with sparse data
     rng = np.random.RandomState(global_random_seed)
     n = 100
-    X = sparse.eye(n, n)
+    X = _sparse_eye_array(n, n)
     beta = rng.rand(n)
     y = X @ beta
 
@@ -193,14 +190,15 @@ def test_linear_regression_sparse(global_random_seed):
 
 
 @pytest.mark.parametrize("fit_intercept", [True, False])
-def test_linear_regression_sparse_equal_dense(fit_intercept):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_linear_regression_sparse_equal_dense(fit_intercept, csr_container):
     # Test that linear regression agrees between sparse and dense
     rng = np.random.RandomState(0)
     n_samples = 200
     n_features = 2
     X = rng.randn(n_samples, n_features)
     X[X < 0.1] = 0.0
-    Xcsr = sparse.csr_matrix(X)
+    Xcsr = csr_container(X)
     y = rng.rand(n_samples)
     params = dict(fit_intercept=fit_intercept)
     clf_dense = LinearRegression(**params)
@@ -228,11 +226,12 @@ def test_linear_regression_multiple_outcome():
     assert_array_almost_equal(np.vstack((y_pred, y_pred)).T, Y_pred, decimal=3)
 
 
-def test_linear_regression_sparse_multiple_outcome(global_random_seed):
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+def test_linear_regression_sparse_multiple_outcome(global_random_seed, coo_container):
     # Test multiple-outcome linear regressions with sparse data
     rng = np.random.RandomState(global_random_seed)
     X, y = make_sparse_uncorrelated(random_state=rng)
-    X = sparse.coo_matrix(X)
+    X = coo_container(X)
     Y = np.vstack((y, y)).T
     n_features = X.shape[1]
 
@@ -315,32 +314,60 @@ def test_linear_regression_positive_vs_nonpositive_when_positive(global_random_s
     assert np.mean((reg.coef_ - regn.coef_) ** 2) < 1e-6
 
 
-def test_linear_regression_pd_sparse_dataframe_warning():
-    pd = pytest.importorskip("pandas")
+@pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
+@pytest.mark.parametrize("use_sw", [True, False])
+def test_inplace_data_preprocessing(sparse_container, use_sw, global_random_seed):
+    # Check that the data is not modified inplace by the linear regression
+    # estimator.
+    rng = np.random.RandomState(global_random_seed)
+    original_X_data = rng.randn(10, 12)
+    original_y_data = rng.randn(10, 2)
+    original_sw_data = rng.rand(10)
 
-    # Warning is raised only when some of the columns is sparse
-    df = pd.DataFrame({"0": np.random.randn(10)})
-    for col in range(1, 4):
-        arr = np.random.randn(10)
-        arr[:8] = 0
-        # all columns but the first column is sparse
-        if col != 0:
-            arr = pd.arrays.SparseArray(arr, fill_value=0)
-        df[str(col)] = arr
+    if sparse_container is not None:
+        X = sparse_container(original_X_data)
+    else:
+        X = original_X_data.copy()
+    y = original_y_data.copy()
+    # XXX: Note hat y_sparse is not supported (broken?) in the current
+    # implementation of LinearRegression.
 
-    msg = "pandas.DataFrame with sparse columns found."
+    if use_sw:
+        sample_weight = original_sw_data.copy()
+    else:
+        sample_weight = None
 
+    # Do not allow inplace preprocessing of X and y:
     reg = LinearRegression()
-    with pytest.warns(UserWarning, match=msg):
-        reg.fit(df.iloc[:, 0:2], df.iloc[:, 3])
+    reg.fit(X, y, sample_weight=sample_weight)
+    if sparse_container is not None:
+        assert_allclose(X.toarray(), original_X_data)
+    else:
+        assert_allclose(X, original_X_data)
+    assert_allclose(y, original_y_data)
 
-    # does not warn when the whole dataframe is sparse
-    df["0"] = pd.arrays.SparseArray(df["0"], fill_value=0)
-    assert hasattr(df, "sparse")
+    if use_sw:
+        assert_allclose(sample_weight, original_sw_data)
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", UserWarning)
-        reg.fit(df.iloc[:, 0:2], df.iloc[:, 3])
+    # Allow inplace preprocessing of X and y
+    reg = LinearRegression(copy_X=False)
+    reg.fit(X, y, sample_weight=sample_weight)
+    if sparse_container is not None:
+        # No optimization relying on the inplace modification of sparse input
+        # data has been implemented at this time.
+        assert_allclose(X.toarray(), original_X_data)
+    else:
+        # X has been offset (and optionally rescaled by sample weights)
+        # inplace. The 0.42 threshold is arbitrary and has been found to be
+        # robust to any random seed in the admissible range.
+        assert np.linalg.norm(X - original_X_data) > 0.42
+
+    # y should not have been modified inplace by LinearRegression.fit.
+    assert_allclose(y, original_y_data)
+
+    if use_sw:
+        # Sample weights have no reason to ever be modified inplace.
+        assert_allclose(sample_weight, original_sw_data)
 
 
 def test_preprocess_data(global_random_seed):
@@ -350,38 +377,31 @@ def test_preprocess_data(global_random_seed):
     X = rng.rand(n_samples, n_features)
     y = rng.rand(n_samples)
     expected_X_mean = np.mean(X, axis=0)
-    expected_X_scale = np.std(X, axis=0) * np.sqrt(X.shape[0])
     expected_y_mean = np.mean(y, axis=0)
 
-    Xt, yt, X_mean, y_mean, X_scale = _preprocess_data(
-        X, y, fit_intercept=False, normalize=False
+    Xt, yt, X_mean, y_mean, X_scale, sqrt_sw = _preprocess_data(
+        X, y, fit_intercept=False
     )
     assert_array_almost_equal(X_mean, np.zeros(n_features))
     assert_array_almost_equal(y_mean, 0)
     assert_array_almost_equal(X_scale, np.ones(n_features))
+    assert sqrt_sw is None
     assert_array_almost_equal(Xt, X)
     assert_array_almost_equal(yt, y)
 
-    Xt, yt, X_mean, y_mean, X_scale = _preprocess_data(
-        X, y, fit_intercept=True, normalize=False
+    Xt, yt, X_mean, y_mean, X_scale, sqrt_sw = _preprocess_data(
+        X, y, fit_intercept=True
     )
     assert_array_almost_equal(X_mean, expected_X_mean)
     assert_array_almost_equal(y_mean, expected_y_mean)
     assert_array_almost_equal(X_scale, np.ones(n_features))
+    assert sqrt_sw is None
     assert_array_almost_equal(Xt, X - expected_X_mean)
     assert_array_almost_equal(yt, y - expected_y_mean)
 
-    Xt, yt, X_mean, y_mean, X_scale = _preprocess_data(
-        X, y, fit_intercept=True, normalize=True
-    )
-    assert_array_almost_equal(X_mean, expected_X_mean)
-    assert_array_almost_equal(y_mean, expected_y_mean)
-    assert_array_almost_equal(X_scale, expected_X_scale)
-    assert_array_almost_equal(Xt, (X - expected_X_mean) / expected_X_scale)
-    assert_array_almost_equal(yt, y - expected_y_mean)
 
-
-def test_preprocess_data_multioutput(global_random_seed):
+@pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS)
+def test_preprocess_data_multioutput(global_random_seed, sparse_container):
     rng = np.random.RandomState(global_random_seed)
     n_samples = 200
     n_features = 3
@@ -390,27 +410,23 @@ def test_preprocess_data_multioutput(global_random_seed):
     y = rng.rand(n_samples, n_outputs)
     expected_y_mean = np.mean(y, axis=0)
 
-    args = [X, sparse.csc_matrix(X)]
-    for X in args:
-        _, yt, _, y_mean, _ = _preprocess_data(
-            X, y, fit_intercept=False, normalize=False
-        )
-        assert_array_almost_equal(y_mean, np.zeros(n_outputs))
-        assert_array_almost_equal(yt, y)
+    if sparse_container is not None:
+        X = sparse_container(X)
 
-        _, yt, _, y_mean, _ = _preprocess_data(
-            X, y, fit_intercept=True, normalize=False
-        )
-        assert_array_almost_equal(y_mean, expected_y_mean)
-        assert_array_almost_equal(yt, y - y_mean)
+    _, yt, _, y_mean, _, _ = _preprocess_data(X, y, fit_intercept=False)
+    assert_array_almost_equal(y_mean, np.zeros(n_outputs))
+    assert_array_almost_equal(yt, y)
 
-        _, yt, _, y_mean, _ = _preprocess_data(X, y, fit_intercept=True, normalize=True)
-        assert_array_almost_equal(y_mean, expected_y_mean)
-        assert_array_almost_equal(yt, y - y_mean)
+    _, yt, _, y_mean, _, _ = _preprocess_data(X, y, fit_intercept=True)
+    assert_array_almost_equal(y_mean, expected_y_mean)
+    assert_array_almost_equal(yt, y - y_mean)
 
 
-@pytest.mark.parametrize("is_sparse", [False, True])
-def test_preprocess_data_weighted(is_sparse, global_random_seed):
+@pytest.mark.parametrize("rescale_with_sw", [False, True])
+@pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
+def test_preprocess_data_weighted(
+    rescale_with_sw, sparse_container, global_random_seed
+):
     rng = np.random.RandomState(global_random_seed)
     n_samples = 200
     n_features = 4
@@ -432,7 +448,7 @@ def test_preprocess_data_weighted(is_sparse, global_random_seed):
     X[:, 3] = 0.0
     y = rng.rand(n_samples)
 
-    sample_weight = rng.rand(n_samples)
+    sample_weight = np.abs(rng.rand(n_samples)) + 1
     expected_X_mean = np.average(X, axis=0, weights=sample_weight)
     expected_y_mean = np.average(y, axis=0, weights=sample_weight)
 
@@ -447,222 +463,233 @@ def test_preprocess_data_weighted(is_sparse, global_random_seed):
     # near constant features should not be scaled
     expected_X_scale[constant_mask] = 1
 
-    if is_sparse:
-        X = sparse.csr_matrix(X)
+    if sparse_container is not None:
+        X = sparse_container(X)
 
-    # normalize is False
-    Xt, yt, X_mean, y_mean, X_scale = _preprocess_data(
+    Xt, yt, X_mean, y_mean, X_scale, sqrt_sw = _preprocess_data(
         X,
         y,
         fit_intercept=True,
-        normalize=False,
         sample_weight=sample_weight,
+        rescale_with_sw=rescale_with_sw,
     )
+    if sparse_container is not None:
+        # Simplifies asserts
+        X = X.toarray()
+        Xt = Xt.toarray()
+
     assert_array_almost_equal(X_mean, expected_X_mean)
     assert_array_almost_equal(y_mean, expected_y_mean)
     assert_array_almost_equal(X_scale, np.ones(n_features))
-    if is_sparse:
-        assert_array_almost_equal(Xt.toarray(), X.toarray())
+    if rescale_with_sw:
+        assert_allclose(sqrt_sw, np.sqrt(sample_weight))
+        if sparse_container is not None:
+            assert_allclose(Xt, sqrt_sw[:, None] * X)
+        else:
+            assert_allclose(Xt, sqrt_sw[:, None] * (X - expected_X_mean))
+        assert_allclose(yt, sqrt_sw * (y - expected_y_mean))
     else:
-        assert_array_almost_equal(Xt, X - expected_X_mean)
-    assert_array_almost_equal(yt, y - expected_y_mean)
-
-    # normalize is True
-    Xt, yt, X_mean, y_mean, X_scale = _preprocess_data(
-        X,
-        y,
-        fit_intercept=True,
-        normalize=True,
-        sample_weight=sample_weight,
-    )
-
-    assert_array_almost_equal(X_mean, expected_X_mean)
-    assert_array_almost_equal(y_mean, expected_y_mean)
-    assert_array_almost_equal(X_scale, expected_X_scale)
-
-    if is_sparse:
-        # X is not centered
-        assert_array_almost_equal(Xt.toarray(), X.toarray() / expected_X_scale)
-    else:
-        assert_array_almost_equal(Xt, (X - expected_X_mean) / expected_X_scale)
-
-    # _preprocess_data with normalize=True scales the data by the feature-wise
-    # euclidean norms while StandardScaler scales the data by the feature-wise
-    # standard deviations.
-    # The two are equivalent up to a ratio of np.sqrt(n_samples) if unweighted
-    # or np.sqrt(sample_weight.sum()) if weighted.
-    if is_sparse:
-        scaler = StandardScaler(with_mean=False).fit(X, sample_weight=sample_weight)
-
-        # Non-constant features are scaled similarly with np.sqrt(n_samples)
-        assert_array_almost_equal(
-            scaler.transform(X).toarray()[:, :2] / np.sqrt(sample_weight.sum()),
-            Xt.toarray()[:, :2],
-        )
-
-        # Constant features go through un-scaled.
-        assert_array_almost_equal(
-            scaler.transform(X).toarray()[:, 2:], Xt.toarray()[:, 2:]
-        )
-    else:
-        scaler = StandardScaler(with_mean=True).fit(X, sample_weight=sample_weight)
-        assert_array_almost_equal(scaler.mean_, X_mean)
-        assert_array_almost_equal(
-            scaler.transform(X) / np.sqrt(sample_weight.sum()),
-            Xt,
-        )
-    assert_array_almost_equal(yt, y - expected_y_mean)
+        assert sqrt_sw is None
+        if sparse_container is not None:
+            assert_allclose(Xt, X)
+        else:
+            assert_allclose(Xt, X - expected_X_mean)
+        assert_allclose(yt, y - expected_y_mean)
 
 
-def test_sparse_preprocess_data_offsets(global_random_seed):
+@pytest.mark.parametrize("lil_container", LIL_CONTAINERS)
+def test_sparse_preprocess_data_offsets(global_random_seed, lil_container):
     rng = np.random.RandomState(global_random_seed)
     n_samples = 200
     n_features = 2
     X = sparse.rand(n_samples, n_features, density=0.5, random_state=rng)
-    X = X.tolil()
+    X = lil_container(X)
     y = rng.rand(n_samples)
     XA = X.toarray()
-    expected_X_scale = np.std(XA, axis=0) * np.sqrt(X.shape[0])
 
-    Xt, yt, X_mean, y_mean, X_scale = _preprocess_data(
-        X, y, fit_intercept=False, normalize=False
+    Xt, yt, X_mean, y_mean, X_scale, sqrt_sw = _preprocess_data(
+        X, y, fit_intercept=False
     )
     assert_array_almost_equal(X_mean, np.zeros(n_features))
     assert_array_almost_equal(y_mean, 0)
     assert_array_almost_equal(X_scale, np.ones(n_features))
-    assert_array_almost_equal(Xt.A, XA)
+    assert sqrt_sw is None
+    assert_array_almost_equal(Xt.toarray(), XA)
     assert_array_almost_equal(yt, y)
 
-    Xt, yt, X_mean, y_mean, X_scale = _preprocess_data(
-        X, y, fit_intercept=True, normalize=False
+    Xt, yt, X_mean, y_mean, X_scale, sqrt_sw = _preprocess_data(
+        X, y, fit_intercept=True
     )
     assert_array_almost_equal(X_mean, np.mean(XA, axis=0))
     assert_array_almost_equal(y_mean, np.mean(y, axis=0))
     assert_array_almost_equal(X_scale, np.ones(n_features))
-    assert_array_almost_equal(Xt.A, XA)
-    assert_array_almost_equal(yt, y - np.mean(y, axis=0))
-
-    Xt, yt, X_mean, y_mean, X_scale = _preprocess_data(
-        X, y, fit_intercept=True, normalize=True
-    )
-    assert_array_almost_equal(X_mean, np.mean(XA, axis=0))
-    assert_array_almost_equal(y_mean, np.mean(y, axis=0))
-    assert_array_almost_equal(X_scale, expected_X_scale)
-    assert_array_almost_equal(Xt.A, XA / expected_X_scale)
+    assert sqrt_sw is None
+    assert_array_almost_equal(Xt.toarray(), XA)
     assert_array_almost_equal(yt, y - np.mean(y, axis=0))
 
 
-def test_csr_preprocess_data():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_csr_preprocess_data(csr_container):
     # Test output format of _preprocess_data, when input is csr
     X, y = make_regression()
     X[X < 2.5] = 0.0
-    csr = sparse.csr_matrix(X)
-    csr_, y, _, _, _ = _preprocess_data(csr, y, True)
-    assert csr_.getformat() == "csr"
+    csr = csr_container(X)
+    csr_, y, _, _, _, _ = _preprocess_data(csr, y, fit_intercept=True)
+    assert csr_.format == "csr"
 
 
-@pytest.mark.parametrize("is_sparse", (True, False))
+@pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
 @pytest.mark.parametrize("to_copy", (True, False))
-def test_preprocess_copy_data_no_checks(is_sparse, to_copy):
+@pytest.mark.parametrize("use_sample_weight", (False, True))
+def test_preprocess_copy_data_no_checks(sparse_container, to_copy, use_sample_weight):
     X, y = make_regression()
     X[X < 2.5] = 0.0
 
-    if is_sparse:
-        X = sparse.csr_matrix(X)
+    sample_weight = np.ones(len(y)) if use_sample_weight else None
 
-    X_, y_, _, _, _ = _preprocess_data(X, y, True, copy=to_copy, check_input=False)
+    if sparse_container is not None:
+        X = sparse_container(X)
 
-    if to_copy and is_sparse:
-        assert not np.may_share_memory(X_.data, X.data)
-    elif to_copy:
-        assert not np.may_share_memory(X_, X)
-    elif is_sparse:
-        assert np.may_share_memory(X_.data, X.data)
+    X_, y_, _, _, _, _ = _preprocess_data(
+        X,
+        y,
+        sample_weight=sample_weight,
+        fit_intercept=True,
+        copy=to_copy,
+        check_input=False,
+    )
+
+    if sparse_container is not None:
+        if to_copy or use_sample_weight:
+            # sparse X, y always copied when use_sample_weight, regardless of to_copy
+            assert not np.may_share_memory(X_.data, X.data)
+        else:
+            assert np.may_share_memory(X_.data, X.data)
     else:
-        assert np.may_share_memory(X_, X)
+        assert np.may_share_memory(X_, X) == (not to_copy)
 
 
-def test_dtype_preprocess_data(global_random_seed):
+@pytest.mark.parametrize("rescale_with_sw", [False, True])
+@pytest.mark.parametrize("fit_intercept", [False, True])
+def test_dtype_preprocess_data(rescale_with_sw, fit_intercept, global_random_seed):
     rng = np.random.RandomState(global_random_seed)
     n_samples = 200
     n_features = 2
     X = rng.rand(n_samples, n_features)
     y = rng.rand(n_samples)
+    sw = rng.rand(n_samples) + 1
 
     X_32 = np.asarray(X, dtype=np.float32)
     y_32 = np.asarray(y, dtype=np.float32)
+    sw_32 = np.asarray(sw, dtype=np.float32)
     X_64 = np.asarray(X, dtype=np.float64)
     y_64 = np.asarray(y, dtype=np.float64)
+    sw_64 = np.asarray(sw, dtype=np.float64)
 
-    for fit_intercept in [True, False]:
-        for normalize in [True, False]:
+    Xt_32, yt_32, X_mean_32, y_mean_32, X_scale_32, sqrt_sw_32 = _preprocess_data(
+        X_32,
+        y_32,
+        fit_intercept=fit_intercept,
+        sample_weight=sw_32,
+        rescale_with_sw=rescale_with_sw,
+    )
 
-            Xt_32, yt_32, X_mean_32, y_mean_32, X_scale_32 = _preprocess_data(
-                X_32,
-                y_32,
-                fit_intercept=fit_intercept,
-                normalize=normalize,
-            )
+    Xt_64, yt_64, X_mean_64, y_mean_64, X_scale_64, sqrt_sw_64 = _preprocess_data(
+        X_64,
+        y_64,
+        fit_intercept=fit_intercept,
+        sample_weight=sw_64,
+        rescale_with_sw=rescale_with_sw,
+    )
 
-            Xt_64, yt_64, X_mean_64, y_mean_64, X_scale_64 = _preprocess_data(
-                X_64,
-                y_64,
-                fit_intercept=fit_intercept,
-                normalize=normalize,
-            )
+    Xt_3264, yt_3264, X_mean_3264, y_mean_3264, X_scale_3264, sqrt_sw_3264 = (
+        _preprocess_data(
+            X_32,
+            y_64,
+            fit_intercept=fit_intercept,
+            sample_weight=sw_32,  # sample_weight must have same dtype as X
+            rescale_with_sw=rescale_with_sw,
+        )
+    )
 
-            Xt_3264, yt_3264, X_mean_3264, y_mean_3264, X_scale_3264 = _preprocess_data(
-                X_32,
-                y_64,
-                fit_intercept=fit_intercept,
-                normalize=normalize,
-            )
+    Xt_6432, yt_6432, X_mean_6432, y_mean_6432, X_scale_6432, sqrt_sw_6432 = (
+        _preprocess_data(
+            X_64,
+            y_32,
+            fit_intercept=fit_intercept,
+            sample_weight=sw_64,  # sample_weight must have same dtype as X
+            rescale_with_sw=rescale_with_sw,
+        )
+    )
 
-            Xt_6432, yt_6432, X_mean_6432, y_mean_6432, X_scale_6432 = _preprocess_data(
-                X_64,
-                y_32,
-                fit_intercept=fit_intercept,
-                normalize=normalize,
-            )
+    assert Xt_32.dtype == np.float32
+    assert yt_32.dtype == np.float32
+    assert X_mean_32.dtype == np.float32
+    assert y_mean_32.dtype == np.float32
+    assert X_scale_32.dtype == np.float32
+    if rescale_with_sw:
+        assert sqrt_sw_32.dtype == np.float32
 
-            assert Xt_32.dtype == np.float32
-            assert yt_32.dtype == np.float32
-            assert X_mean_32.dtype == np.float32
-            assert y_mean_32.dtype == np.float32
-            assert X_scale_32.dtype == np.float32
+    assert Xt_64.dtype == np.float64
+    assert yt_64.dtype == np.float64
+    assert X_mean_64.dtype == np.float64
+    assert y_mean_64.dtype == np.float64
+    assert X_scale_64.dtype == np.float64
+    if rescale_with_sw:
+        assert sqrt_sw_64.dtype == np.float64
 
-            assert Xt_64.dtype == np.float64
-            assert yt_64.dtype == np.float64
-            assert X_mean_64.dtype == np.float64
-            assert y_mean_64.dtype == np.float64
-            assert X_scale_64.dtype == np.float64
+    assert Xt_3264.dtype == np.float32
+    assert yt_3264.dtype == np.float32
+    assert X_mean_3264.dtype == np.float32
+    assert y_mean_3264.dtype == np.float32
+    assert X_scale_3264.dtype == np.float32
+    if rescale_with_sw:
+        assert sqrt_sw_3264.dtype == np.float32
 
-            assert Xt_3264.dtype == np.float32
-            assert yt_3264.dtype == np.float32
-            assert X_mean_3264.dtype == np.float32
-            assert y_mean_3264.dtype == np.float32
-            assert X_scale_3264.dtype == np.float32
+    assert Xt_6432.dtype == np.float64
+    assert yt_6432.dtype == np.float64
+    assert X_mean_6432.dtype == np.float64
+    assert y_mean_6432.dtype == np.float64
+    assert X_scale_3264.dtype == np.float32
+    if rescale_with_sw:
+        assert sqrt_sw_6432.dtype == np.float64
 
-            assert Xt_6432.dtype == np.float64
-            assert yt_6432.dtype == np.float64
-            assert X_mean_6432.dtype == np.float64
-            assert y_mean_6432.dtype == np.float64
-            assert X_scale_6432.dtype == np.float64
+    assert X_32.dtype == np.float32
+    assert y_32.dtype == np.float32
+    assert X_64.dtype == np.float64
+    assert y_64.dtype == np.float64
 
-            assert X_32.dtype == np.float32
-            assert y_32.dtype == np.float32
-            assert X_64.dtype == np.float64
-            assert y_64.dtype == np.float64
+    assert_allclose(Xt_32, Xt_64, rtol=1e-3, atol=1e-6)
+    assert_allclose(yt_32, yt_64, rtol=1e-3, atol=1e-6)
+    assert_allclose(X_mean_32, X_mean_64, rtol=1e-6)
+    assert_allclose(y_mean_32, y_mean_64, rtol=1e-6)
+    assert_allclose(X_scale_32, X_scale_64)
+    if rescale_with_sw:
+        assert_allclose(sqrt_sw_32, sqrt_sw_64, rtol=1e-6)
 
-            assert_array_almost_equal(Xt_32, Xt_64)
-            assert_array_almost_equal(yt_32, yt_64)
-            assert_array_almost_equal(X_mean_32, X_mean_64)
-            assert_array_almost_equal(y_mean_32, y_mean_64)
-            assert_array_almost_equal(X_scale_32, X_scale_64)
+
+def test_preprocess_data_integer_array_api_on_float32_only_device():
+    xp, device = _array_api_for_tests("torch", device_name="mps", dtype_name="float32")
+
+    # TODO: replace this torch/MPS-specific coverage by array-api-strict once
+    # https://github.com/data-apis/array-api-strict/pull/206 is released.
+    X_np = np.asarray([[1, 2], [3, 4], [5, 6]], dtype=np.int64)
+    y_np = np.asarray([1, 2, 4], dtype=np.int64)
+    X_xp = xp.asarray(X_np, device=device)
+    y_xp = xp.asarray(y_np, device=device)
+
+    with config_context(array_api_dispatch=True):
+        X_out, y_out, *_ = _preprocess_data(
+            X_xp, y_xp, fit_intercept=True, check_input=True
+        )
+
+    assert X_out.dtype == xp.float32
+    assert y_out.dtype == xp.float32
 
 
 @pytest.mark.parametrize("n_targets", [None, 2])
-def test_rescale_data_dense(n_targets, global_random_seed):
+@pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
+def test_rescale_data(n_targets, sparse_container, global_random_seed):
     rng = np.random.RandomState(global_random_seed)
     n_samples = 200
     n_features = 2
@@ -673,27 +700,48 @@ def test_rescale_data_dense(n_targets, global_random_seed):
         y = rng.rand(n_samples)
     else:
         y = rng.rand(n_samples, n_targets)
-    rescaled_X, rescaled_y, sqrt_sw = _rescale_data(X, y, sample_weight)
-    rescaled_X2 = X * sqrt_sw[:, np.newaxis]
+
+    expected_sqrt_sw = np.sqrt(sample_weight)
+    expected_rescaled_X = X * expected_sqrt_sw[:, np.newaxis]
+
     if n_targets is None:
-        rescaled_y2 = y * sqrt_sw
+        expected_rescaled_y = y * expected_sqrt_sw
     else:
-        rescaled_y2 = y * sqrt_sw[:, np.newaxis]
-    assert_array_almost_equal(rescaled_X, rescaled_X2)
-    assert_array_almost_equal(rescaled_y, rescaled_y2)
+        expected_rescaled_y = y * expected_sqrt_sw[:, np.newaxis]
+
+    if sparse_container is not None:
+        X = sparse_container(X)
+        if n_targets is None:
+            y = sparse_container(y.reshape(-1, 1))
+        else:
+            y = sparse_container(y)
+
+    rescaled_X, rescaled_y, sqrt_sw = _rescale_data(X, y, sample_weight)
+
+    assert_allclose(sqrt_sw, expected_sqrt_sw)
+
+    if sparse_container is not None:
+        rescaled_X = rescaled_X.toarray()
+        rescaled_y = rescaled_y.toarray()
+        if n_targets is None:
+            rescaled_y = rescaled_y.ravel()
+
+    assert_allclose(rescaled_X, expected_rescaled_X)
+    assert_allclose(rescaled_y, expected_rescaled_y)
 
 
-def test_fused_types_make_dataset():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_fused_types_make_dataset(csr_container):
     iris = load_iris()
 
     X_32 = iris.data.astype(np.float32)
     y_32 = iris.target.astype(np.float32)
-    X_csr_32 = sparse.csr_matrix(X_32)
+    X_csr_32 = csr_container(X_32)
     sample_weight_32 = np.arange(y_32.size, dtype=np.float32)
 
     X_64 = iris.data.astype(np.float64)
     y_64 = iris.target.astype(np.float64)
-    X_csr_64 = sparse.csr_matrix(X_64)
+    X_csr_64 = csr_container(X_64)
     sample_weight_64 = np.arange(y_64.size, dtype=np.float64)
 
     # array
@@ -726,3 +774,146 @@ def test_fused_types_make_dataset():
     assert_array_equal(xi_data_64, xicsr_data_64)
     assert_array_equal(yi_32, yicsr_32)
     assert_array_equal(yi_64, yicsr_64)
+
+
+@pytest.mark.parametrize("X_shape", [(10, 5), (10, 20), (100, 100)])
+@pytest.mark.parametrize(
+    "sparse_container",
+    [None]
+    + [
+        pytest.param(
+            container,
+            marks=pytest.mark.xfail(
+                reason="Known to fail for CSR arrays, see issue #30131."
+            ),
+        )
+        for container in CSR_CONTAINERS
+    ],
+)
+@pytest.mark.parametrize("fit_intercept", [False, True])
+def test_linear_regression_sample_weight_consistency(
+    X_shape, sparse_container, fit_intercept, global_random_seed
+):
+    """Test that the impact of sample_weight is consistent.
+
+    Note that this test is stricter than the common test
+    check_sample_weight_equivalence alone and also tests sparse X.
+    It is very similar to test_enet_sample_weight_consistency.
+    """
+    rng = np.random.RandomState(global_random_seed)
+    n_samples, n_features = X_shape
+
+    X = rng.rand(n_samples, n_features)
+    y = rng.rand(n_samples)
+    if sparse_container is not None:
+        X = sparse_container(X)
+    params = dict(fit_intercept=fit_intercept)
+
+    reg = LinearRegression(**params).fit(X, y, sample_weight=None)
+    coef = reg.coef_.copy()
+    if fit_intercept:
+        intercept = reg.intercept_
+
+    # 1) sample_weight=np.ones(..) must be equivalent to sample_weight=None,
+    # a special case of check_sample_weight_equivalence(name, reg), but we also
+    # test with sparse input.
+    sample_weight = np.ones_like(y)
+    reg.fit(X, y, sample_weight=sample_weight)
+    assert_allclose(reg.coef_, coef, rtol=1e-6)
+    if fit_intercept:
+        assert_allclose(reg.intercept_, intercept)
+
+    # 2) sample_weight=None should be equivalent to sample_weight = number
+    sample_weight = 123.0
+    reg.fit(X, y, sample_weight=sample_weight)
+    assert_allclose(reg.coef_, coef, rtol=1e-6)
+    if fit_intercept:
+        assert_allclose(reg.intercept_, intercept)
+
+    # 3) scaling of sample_weight should have no effect, cf. np.average()
+    sample_weight = rng.uniform(low=0.01, high=2, size=X.shape[0])
+    reg = reg.fit(X, y, sample_weight=sample_weight)
+    coef = reg.coef_.copy()
+    if fit_intercept:
+        intercept = reg.intercept_
+
+    reg.fit(X, y, sample_weight=np.pi * sample_weight)
+    assert_allclose(reg.coef_, coef, rtol=1e-6 if sparse_container is None else 1e-5)
+    if fit_intercept:
+        assert_allclose(reg.intercept_, intercept)
+
+    # 4) setting elements of sample_weight to 0 is equivalent to removing these samples
+    sample_weight_0 = sample_weight.copy()
+    sample_weight_0[-5:] = 0
+    y[-5:] *= 1000  # to make excluding those samples important
+    reg.fit(X, y, sample_weight=sample_weight_0)
+    coef_0 = reg.coef_.copy()
+    if fit_intercept:
+        intercept_0 = reg.intercept_
+    reg.fit(X[:-5], y[:-5], sample_weight=sample_weight[:-5])
+    assert_allclose(reg.coef_, coef_0, rtol=1e-5)
+    if fit_intercept:
+        assert_allclose(reg.intercept_, intercept_0)
+
+    # 5) check that multiplying sample_weight by 2 is equivalent to repeating
+    # corresponding samples twice
+    if sparse_container is not None:
+        X2 = sparse.vstack([X, X[: n_samples // 2]], format="csc")
+    else:
+        X2 = np.concatenate([X, X[: n_samples // 2]], axis=0)
+    y2 = np.concatenate([y, y[: n_samples // 2]])
+    sample_weight_1 = sample_weight.copy()
+    sample_weight_1[: n_samples // 2] *= 2
+    sample_weight_2 = np.concatenate(
+        [sample_weight, sample_weight[: n_samples // 2]], axis=0
+    )
+
+    reg1 = LinearRegression(**params).fit(X, y, sample_weight=sample_weight_1)
+    reg2 = LinearRegression(**params).fit(X2, y2, sample_weight=sample_weight_2)
+    assert_allclose(reg1.coef_, reg2.coef_, rtol=1e-6)
+    if fit_intercept:
+        assert_allclose(reg1.intercept_, reg2.intercept_)
+
+
+@skip_if_array_api_compat_not_configured
+def test_array_api_move_estimator_to():
+    xp = pytest.importorskip("array_api_strict")
+    rng = np.random.default_rng(0)
+    X = rng.normal(size=(10, 5))
+    y = rng.normal(size=10)
+
+    reg = LinearRegression().fit(X, y)
+    X_xp = xp.asarray(X)
+    reg.predict(X_xp)
+
+    with config_context(array_api_dispatch=True):
+        with pytest.raises(ValueError, match=".*must use the same namespace"):
+            reg.predict(X_xp)
+        xp_target, _, device = get_namespace_and_device(X_xp)
+        reg = move_estimator_to(reg, xp_target, device)
+        reg.predict(X_xp)
+
+
+def test_predict_proba_lr_large_values():
+    """Test that _predict_proba_lr of LinearClassifierMixin deals with large
+    negative values.
+
+    Note that exp(-1000) = 0.
+    """
+
+    class MockClassifier(LinearClassifierMixin, BaseEstimator):
+        def __init__(self):
+            pass
+
+        def fit(self, X, y):
+            self.__sklearn_is_fitted__ = True
+
+        def decision_function(self, X):
+            n_samples = X.shape[0]
+            return np.tile([-1000.0] * 4, [n_samples, 1])
+
+    clf = MockClassifier()
+    clf.fit(X=None, y=None)
+
+    proba = clf._predict_proba_lr(np.ones(5))
+    assert_allclose(np.sum(proba, axis=1), 1)

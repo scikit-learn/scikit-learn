@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 ================================================================
 Using KBinsDiscretizer to discretize continuous features
@@ -28,12 +27,11 @@ up the data anywhere.
 
 """
 
-# Author: Andreas Müller
-#         Hanmin Qin <qinhanmin2005@sina.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import KBinsDiscretizer
@@ -46,7 +44,9 @@ y = np.sin(X) + rnd.normal(size=len(X)) / 3
 X = X.reshape(-1, 1)
 
 # transform the dataset with KBinsDiscretizer
-enc = KBinsDiscretizer(n_bins=10, encode="onehot")
+enc = KBinsDiscretizer(
+    n_bins=10, encode="onehot", quantile_method="averaged_inverted_cdf"
+)
 X_binned = enc.fit_transform(X)
 
 # predict with original dataset

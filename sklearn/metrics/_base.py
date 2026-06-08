@@ -2,22 +2,22 @@
 Common code for all metrics.
 
 """
-# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Olivier Grisel <olivier.grisel@ensta.org>
-#          Arnaud Joly <a.joly@ulg.ac.be>
-#          Jochen Wersdorfer <jochen@wersdoerfer.de>
-#          Lars Buitinck
-#          Joel Nothman <joel.nothman@gmail.com>
-#          Noel Dawe <noel@dawe.me>
-# License: BSD 3 clause
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from itertools import combinations
 
 import numpy as np
 
-from ..utils import check_array, check_consistent_length
-from ..utils.multiclass import type_of_target
+import sklearn.externals.array_api_extra as xpx
+from sklearn.utils import check_array, check_consistent_length
+from sklearn.utils._array_api import (
+    _average,
+    _ravel,
+    get_namespace_and_device,
+)
+from sklearn.utils.multiclass import type_of_target
 
 
 def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight=None):
@@ -25,12 +25,16 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
 
     Parameters
     ----------
+    binary_metric : callable, returns shape [n_classes]
+        The binary metric function to use.
+
     y_true : array, shape = [n_samples] or [n_samples, n_classes]
         True binary labels in binary label indicators.
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or binary decisions.
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
 
     average : {None, 'micro', 'macro', 'samples', 'weighted'}, default='macro'
         If ``None``, the scores for each class are returned. Otherwise,
@@ -53,9 +57,6 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    binary_metric : callable, returns shape [n_classes]
-        The binary metric function to use.
-
     Returns
     -------
     score : float or array of shape [n_classes]
@@ -63,6 +64,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
         classes.
 
     """
+    xp, _, _device = get_namespace_and_device(y_score, sample_weight)
     average_options = (None, "micro", "macro", "weighted", "samples")
     if average not in average_options:
         raise ValueError("average has to be one of {0}".format(average_options))
@@ -84,18 +86,23 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
 
     if average == "micro":
         if score_weight is not None:
-            score_weight = np.repeat(score_weight, y_true.shape[1])
-        y_true = y_true.ravel()
-        y_score = y_score.ravel()
+            score_weight = xp.repeat(score_weight, y_true.shape[1])
+        y_true = _ravel(y_true)
+        y_score = _ravel(y_score)
 
     elif average == "weighted":
         if score_weight is not None:
-            average_weight = np.sum(
-                np.multiply(y_true, np.reshape(score_weight, (-1, 1))), axis=0
+            #  Mixed integer and float type promotion not defined in array standard
+            y_true = xp.asarray(y_true, dtype=score_weight.dtype)
+            average_weight = xp.sum(
+                xp.multiply(y_true, xp.reshape(score_weight, (-1, 1))), axis=0
             )
         else:
-            average_weight = np.sum(y_true, axis=0)
-        if np.isclose(average_weight.sum(), 0.0):
+            average_weight = xp.sum(y_true, axis=0)
+        if xpx.isclose(
+            xp.sum(average_weight),
+            xp.asarray(0, dtype=average_weight.dtype, device=_device),
+        ):
             return 0
 
     elif average == "samples":
@@ -105,16 +112,20 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
         not_average_axis = 0
 
     if y_true.ndim == 1:
-        y_true = y_true.reshape((-1, 1))
+        y_true = xp.reshape(y_true, (-1, 1))
 
     if y_score.ndim == 1:
-        y_score = y_score.reshape((-1, 1))
+        y_score = xp.reshape(y_score, (-1, 1))
 
     n_classes = y_score.shape[not_average_axis]
-    score = np.zeros((n_classes,))
+    score = xp.zeros((n_classes,), device=_device)
     for c in range(n_classes):
-        y_true_c = y_true.take([c], axis=not_average_axis).ravel()
-        y_score_c = y_score.take([c], axis=not_average_axis).ravel()
+        y_true_c = _ravel(
+            xp.take(y_true, xp.asarray([c], device=_device), axis=not_average_axis)
+        )
+        y_score_c = _ravel(
+            xp.take(y_score, xp.asarray([c], device=_device), axis=not_average_axis)
+        )
         score[c] = binary_metric(y_true_c, y_score_c, sample_weight=score_weight)
 
     # Average the results
@@ -122,9 +133,8 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
         if average_weight is not None:
             # Scores with 0 weights are forced to be 0, preventing the average
             # score from being affected by 0-weighted NaN elements.
-            average_weight = np.asarray(average_weight)
             score[average_weight == 0] = 0
-        return np.average(score, weights=average_weight)
+        return float(_average(score, weights=average_weight, xp=xp))
     else:
         return score
 
@@ -197,55 +207,3 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average="macro
         pair_scores[ix] = (a_true_score + b_true_score) / 2
 
     return np.average(pair_scores, weights=prevalence)
-
-
-def _check_pos_label_consistency(pos_label, y_true):
-    """Check if `pos_label` need to be specified or not.
-
-    In binary classification, we fix `pos_label=1` if the labels are in the set
-    {-1, 1} or {0, 1}. Otherwise, we raise an error asking to specify the
-    `pos_label` parameters.
-
-    Parameters
-    ----------
-    pos_label : int, str or None
-        The positive label.
-    y_true : ndarray of shape (n_samples,)
-        The target vector.
-
-    Returns
-    -------
-    pos_label : int
-        If `pos_label` can be inferred, it will be returned.
-
-    Raises
-    ------
-    ValueError
-        In the case that `y_true` does not have label in {-1, 1} or {0, 1},
-        it will raise a `ValueError`.
-    """
-    # ensure binary classification if pos_label is not specified
-    # classes.dtype.kind in ('O', 'U', 'S') is required to avoid
-    # triggering a FutureWarning by calling np.array_equal(a, b)
-    # when elements in the two arrays are not comparable.
-    classes = np.unique(y_true)
-    if pos_label is None and (
-        classes.dtype.kind in "OUS"
-        or not (
-            np.array_equal(classes, [0, 1])
-            or np.array_equal(classes, [-1, 1])
-            or np.array_equal(classes, [0])
-            or np.array_equal(classes, [-1])
-            or np.array_equal(classes, [1])
-        )
-    ):
-        classes_repr = ", ".join(repr(c) for c in classes)
-        raise ValueError(
-            f"y_true takes value in {{{classes_repr}}} and pos_label is not "
-            "specified: either make y_true take value in {0, 1} or "
-            "{-1, 1} or pass pos_label explicitly."
-        )
-    elif pos_label is None:
-        pos_label = 1
-
-    return pos_label

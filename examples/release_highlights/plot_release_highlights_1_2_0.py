@@ -1,4 +1,4 @@
-# flake8: noqa
+# ruff: noqa: CPY001, E501
 """
 =======================================
 Release Highlights for scikit-learn 1.2
@@ -9,7 +9,7 @@ Release Highlights for scikit-learn 1.2
 We are pleased to announce the release of scikit-learn 1.2! Many bug fixes
 and improvements were added, as well as some new key features. We detail
 below a few of the major features of this release. **For an exhaustive list of
-all the changes**, please refer to the :ref:`release notes <changes_1_2>`.
+all the changes**, please refer to the :ref:`release notes <release_notes_1_2>`.
 
 To install the latest version (with pip)::
 
@@ -31,9 +31,10 @@ or with conda::
 # (some examples) <https://youtu.be/5bCg8VfX2x8>`__.
 
 import numpy as np
-from sklearn.datasets import load_iris
-from sklearn.preprocessing import StandardScaler, KBinsDiscretizer
+
 from sklearn.compose import ColumnTransformer
+from sklearn.datasets import load_iris
+from sklearn.preprocessing import KBinsDiscretizer, StandardScaler
 
 X, y = load_iris(as_frame=True, return_X_y=True)
 sepal_cols = ["sepal length (cm)", "sepal width (cm)"]
@@ -42,7 +43,11 @@ petal_cols = ["petal length (cm)", "petal width (cm)"]
 preprocessor = ColumnTransformer(
     [
         ("scaler", StandardScaler(), sepal_cols),
-        ("kbin", KBinsDiscretizer(encode="ordinal"), petal_cols),
+        (
+            "kbin",
+            KBinsDiscretizer(encode="ordinal", quantile_method="averaged_inverted_cdf"),
+            petal_cols,
+        ),
     ],
     verbose_feature_names_out=False,
 ).set_output(transform="pandas")
@@ -74,6 +79,7 @@ hist_no_interact.fit(X, y)
 # :class:`~metrics.PredictionErrorDisplay` provides a way to analyze regression
 # models in a qualitative manner.
 import matplotlib.pyplot as plt
+
 from sklearn.metrics import PredictionErrorDisplay
 
 fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(12, 5))
@@ -105,8 +111,8 @@ X, y = fetch_openml(
 X = X.select_dtypes(["number", "category"]).drop(columns=["body"])
 
 # %%
-from sklearn.preprocessing import OrdinalEncoder
 from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import OrdinalEncoder
 
 categorical_features = ["pclass", "sex", "embarked"]
 model = make_pipeline(
@@ -163,4 +169,4 @@ X.head()
 # the sparse-dense and dense-sparse combinations for the Euclidean and Squared
 # Euclidean Distance metrics.
 # A detailed list of the impacted estimators can be found in the
-# :ref:`changelog <changes_1_2>`.
+# :ref:`changelog <release_notes_1_2>`.

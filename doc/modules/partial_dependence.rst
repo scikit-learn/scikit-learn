@@ -79,19 +79,21 @@ parameter takes a list of indices, names of the categorical features or a boolea
 mask. The graphical representation of partial dependence for categorical features is
 a bar plot or a 2D heatmap.
 
-For multi-class classification, you need to set the class label for which
-the PDPs should be created via the ``target`` argument::
+.. dropdown:: PDPs for multi-class classification
 
-    >>> from sklearn.datasets import load_iris
-    >>> iris = load_iris()
-    >>> mc_clf = GradientBoostingClassifier(n_estimators=10,
-    ...     max_depth=1).fit(iris.data, iris.target)
-    >>> features = [3, 2, (3, 2)]
-    >>> PartialDependenceDisplay.from_estimator(mc_clf, X, features, target=0)
-    <...>
+    For multi-class classification, you need to set the class label for which
+    the PDPs should be created via the ``target`` argument::
 
-The same parameter ``target`` is used to specify the target in multi-output
-regression settings.
+        >>> from sklearn.datasets import load_iris
+        >>> iris = load_iris()
+        >>> mc_clf = GradientBoostingClassifier(n_estimators=10,
+        ...     max_depth=1).fit(iris.data, iris.target)
+        >>> features = [3, 2, (3, 2)]
+        >>> PartialDependenceDisplay.from_estimator(mc_clf, X, features, target=0)
+        <...>
+
+    The same parameter ``target`` is used to specify the target in multi-output
+    regression settings.
 
 If you need the raw values of the partial dependence function rather than
 the plots, you can use the
@@ -102,7 +104,7 @@ the plots, you can use the
     >>> results = partial_dependence(clf, X, [0])
     >>> results["average"]
     array([[ 2.466...,  2.466..., ...
-    >>> results["values"]
+    >>> results["grid_values"]
     [array([-1.624..., -1.592..., ...
 
 The values at which the partial dependence should be evaluated are directly
@@ -126,8 +128,8 @@ Due to the limits of human perception, only one input feature of interest is
 supported for ICE plots.
 
 The figures below show two ICE plots for the bike sharing dataset,
-with a :class:`~sklearn.ensemble.HistGradientBoostingRegressor`:.
-The figures plot the corresponding PD line overlaid on ICE lines.
+with a :class:`~sklearn.ensemble.HistGradientBoostingRegressor`. The figures plot
+the corresponding PD line overlaid on ICE lines.
 
 .. figure:: ../auto_examples/inspection/images/sphx_glr_plot_partial_dependence_004.png
    :target: ../auto_examples/inspection/plot_partial_dependence.html
@@ -138,8 +140,8 @@ While the PDPs are good at showing the average effect of the target features,
 they can obscure a heterogeneous relationship created by interactions.
 When interactions are present the ICE plot will provide many more insights.
 For example, we see that the ICE for the temperature feature gives us some
-additional information: Some of the ICE lines are flat while some others
-shows a decrease of the dependence for temperature above 35 degrees Celsius.
+additional information: some of the ICE lines are flat while some others
+show a decrease of the dependence for temperature above 35 degrees Celsius.
 We observe a similar pattern for the humidity feature: some of the ICE
 lines show a sharp decrease when the humidity is above 80%.
 
@@ -209,11 +211,11 @@ Computation methods
 ===================
 
 There are two main methods to approximate the integral above, namely the
-'brute' and 'recursion' methods. The `method` parameter controls which method
+`'brute'` and `'recursion'` methods. The `method` parameter controls which method
 to use.
 
-The 'brute' method is a generic method that works with any estimator. Note that
-computing ICE plots is only supported with the 'brute' method. It
+The `'brute'` method is a generic method that works with any estimator. Note that
+computing ICE plots is only supported with the `'brute'` method. It
 approximates the above integral by computing an average over the data `X`:
 
 .. math::
@@ -227,23 +229,23 @@ over the dataset `X` which is computationally intensive.
 Each of the :math:`f(x_{S}, x_{C}^{(i)})` corresponds to one ICE line evaluated
 at :math:`x_{S}`. Computing this for multiple values of :math:`x_{S}`, one
 obtains a full ICE line. As one can see, the average of the ICE lines
-correspond to the partial dependence line.
+corresponds to the partial dependence line.
 
-The 'recursion' method is faster than the 'brute' method, but it is only
+The `'recursion'` method is faster than the `'brute'` method, but it is only
 supported for PDP plots by some tree-based estimators. It is computed as
 follows. For a given point :math:`x_S`, a weighted tree traversal is performed:
 if a split node involves an input feature of interest, the corresponding left
 or right branch is followed; otherwise both branches are followed, each branch
 being weighted by the fraction of training samples that entered that branch.
 Finally, the partial dependence is given by a weighted average of all the
-visited leaves values.
+visited leaves' values.
 
-With the 'brute' method, the parameter `X` is used both for generating the
+With the `'brute'` method, the parameter `X` is used both for generating the
 grid of values :math:`x_S` and the complement feature values :math:`x_C`.
 However with the 'recursion' method, `X` is only used for the grid values:
 implicitly, the :math:`x_C` values are those of the training data.
 
-By default, the 'recursion' method is used for plotting PDPs on tree-based
+By default, the `'recursion'` method is used for plotting PDPs on tree-based
 estimators that support it, and 'brute' is used for the rest.
 
 .. _pdp_method_differences:
@@ -251,18 +253,18 @@ estimators that support it, and 'brute' is used for the rest.
 .. note::
 
     While both methods should be close in general, they might differ in some
-    specific settings. The 'brute' method assumes the existence of the
+    specific settings. The `'brute'` method assumes the existence of the
     data points :math:`(x_S, x_C^{(i)})`. When the features are correlated,
-    such artificial samples may have a very low probability mass. The 'brute'
-    and 'recursion' methods will likely disagree regarding the value of the
+    such artificial samples may have a very low probability mass. The `'brute'`
+    and `'recursion'` methods will likely disagree regarding the value of the
     partial dependence, because they will treat these unlikely
     samples differently. Remember, however, that the primary assumption for
     interpreting PDPs is that the features should be independent.
 
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
+* :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
 
 .. rubric:: Footnotes
 
@@ -270,21 +272,20 @@ estimators that support it, and 'brute' is used for the rest.
    class (the positive class for binary classification), or the decision
    function.
 
-.. topic:: References
+.. rubric:: References
 
-    .. [H2009] T. Hastie, R. Tibshirani and J. Friedman,
-               `The Elements of Statistical Learning
-               <https://web.stanford.edu/~hastie/ElemStatLearn//>`_,
-               Second Edition, Section 10.13.2, Springer, 2009.
+.. [H2009] T. Hastie, R. Tibshirani and J. Friedman,
+    `The Elements of Statistical Learning
+    <https://web.stanford.edu/~hastie/ElemStatLearn//>`_,
+    Second Edition, Section 10.13.2, Springer, 2009.
 
-    .. [M2019] C. Molnar,
-               `Interpretable Machine Learning
-               <https://christophm.github.io/interpretable-ml-book/>`_,
-               Section 5.1, 2019.
+.. [M2019] C. Molnar,
+    `Interpretable Machine Learning
+    <https://christophm.github.io/interpretable-ml-book/>`_,
+    Section 5.1, 2019.
 
-    .. [G2015] :arxiv:`A. Goldstein, A. Kapelner, J. Bleich, and E. Pitkin,
-               "Peeking Inside the Black Box: Visualizing Statistical
-               Learning With Plots of Individual Conditional Expectation"
-               Journal of Computational and Graphical Statistics,
-               24(1): 44-65, Springer, 2015.
-               <1309.6392>`
+.. [G2015] :arxiv:`A. Goldstein, A. Kapelner, J. Bleich, and E. Pitkin,
+    "Peeking Inside the Black Box: Visualizing Statistical
+    Learning With Plots of Individual Conditional Expectation"
+    Journal of Computational and Graphical Statistics,
+    24(1): 44-65, Springer, 2015. <1309.6392>`

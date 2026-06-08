@@ -25,16 +25,14 @@ by Thomas P. Minka is also compared.
 
 """
 
-# Authors: Alexandre Gramfort
-#          Denis A. Engemann
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Create the data
 # ---------------
 
 import numpy as np
-
 from scipy import linalg
 
 n_samples, n_features, rank = 500, 25, 5
@@ -56,10 +54,9 @@ X_hetero = X + rng.randn(n_samples, n_features) * sigmas
 
 import matplotlib.pyplot as plt
 
+from sklearn.covariance import LedoitWolf, ShrunkCovariance
 from sklearn.decomposition import PCA, FactorAnalysis
-from sklearn.covariance import ShrunkCovariance, LedoitWolf
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, cross_val_score
 
 n_components = np.arange(0, n_features, 5)  # options for n_components
 

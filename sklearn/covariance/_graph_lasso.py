@@ -2,33 +2,42 @@
 estimator.
 """
 
-# Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
-# License: BSD 3 clause
-# Copyright: INRIA
-import warnings
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import operator
 import sys
 import time
-
+import warnings
 from numbers import Integral, Real
+
 import numpy as np
 from scipy import linalg
 
-from . import empirical_covariance, EmpiricalCovariance, log_likelihood
+from sklearn.base import _fit_context
+from sklearn.covariance import EmpiricalCovariance, empirical_covariance, log_likelihood
+from sklearn.exceptions import ConvergenceWarning
 
-from ..exceptions import ConvergenceWarning
-from ..utils.validation import (
+# mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
+from sklearn.linear_model import _cd_fast as cd_fast  # type: ignore[attr-defined]
+from sklearn.linear_model import lars_path_gram
+from sklearn.model_selection import check_cv, cross_val_score
+from sklearn.utils import Bunch
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    _raise_for_params,
+    _routing_enabled,
+    process_routing,
+)
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
     _is_arraylike_not_scalar,
     check_random_state,
     check_scalar,
+    validate_data,
 )
-from ..utils.parallel import delayed, Parallel
-from ..utils._param_validation import Interval, StrOptions
-
-# mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
-from ..linear_model import _cd_fast as cd_fast  # type: ignore
-from ..linear_model import lars_path_gram
-from ..model_selection import check_cv, cross_val_score
 
 
 # Helper functions to compute the objective and dual objective functions
@@ -58,6 +67,147 @@ def _dual_gap(emp_cov, precision_, alpha):
     return gap
 
 
+# The g-lasso algorithm
+def _graphical_lasso(
+    emp_cov,
+    alpha,
+    *,
+    cov_init=None,
+    mode="cd",
+    tol=1e-4,
+    enet_tol=1e-4,
+    max_iter=100,
+    verbose=False,
+    eps=np.finfo(np.float64).eps,
+):
+    _, n_features = emp_cov.shape
+    if alpha == 0:
+        # Early return without regularization
+        precision_ = linalg.inv(emp_cov)
+        cost = -2.0 * log_likelihood(emp_cov, precision_)
+        cost += n_features * np.log(2 * np.pi)
+        d_gap = np.sum(emp_cov * precision_) - n_features
+        return emp_cov, precision_, (cost, d_gap), 0
+
+    if cov_init is None:
+        covariance_ = emp_cov.copy()
+    else:
+        covariance_ = cov_init.copy()
+    # As a trivial regularization (Tikhonov like), we scale down the
+    # off-diagonal coefficients of our starting point: This is needed, as
+    # in the cross-validation the cov_init can easily be
+    # ill-conditioned, and the CV loop blows. Beside, this takes
+    # conservative stand-point on the initial conditions, and it tends to
+    # make the convergence go faster.
+    covariance_ *= 0.95
+    diagonal = emp_cov.flat[:: n_features + 1]
+    covariance_.flat[:: n_features + 1] = diagonal
+    precision_ = linalg.pinvh(covariance_)
+
+    indices = np.arange(n_features)
+    i = 0  # initialize the counter to be robust to `max_iter=0`
+    costs = list()
+    # The different l1 regression solver have different numerical errors
+    if mode == "cd":
+        errors = dict(over="raise", invalid="ignore")
+    else:
+        errors = dict(invalid="raise")
+    try:
+        # be robust to the max_iter=0 edge case, see:
+        # https://github.com/scikit-learn/scikit-learn/issues/4134
+        d_gap = np.inf
+        # set a sub_covariance buffer
+        sub_covariance = np.copy(covariance_[1:, 1:], order="C")
+        for i in range(max_iter):
+            for idx in range(n_features):
+                # To keep the contiguous matrix `sub_covariance` equal to
+                # covariance_[indices != idx].T[indices != idx]
+                # we only need to update 1 column and 1 line when idx changes
+                if idx > 0:
+                    di = idx - 1
+                    sub_covariance[di] = covariance_[di][indices != idx]
+                    sub_covariance[:, di] = covariance_[:, di][indices != idx]
+                else:
+                    sub_covariance[:] = covariance_[1:, 1:]
+                row = emp_cov[idx, indices != idx]
+                with np.errstate(**errors):
+                    if mode == "cd":
+                        # Use coordinate descent
+                        coefs = -(
+                            precision_[indices != idx, idx]
+                            / (precision_[idx, idx] + 1000 * eps)
+                        )
+                        coefs, _, _, _ = cd_fast.enet_coordinate_descent_gram(
+                            w=coefs,
+                            alpha=alpha,
+                            beta=0,
+                            Q=sub_covariance,
+                            q=row,
+                            y=row,
+                            # TODO: It is not ideal that the max_iter of the outer
+                            # solver (graphical lasso) is coupled with the max_iter of
+                            # the inner solver (CD). Ideally, CD has its own parameter
+                            # enet_max_iter (like enet_tol). A minimum of 20 is rather
+                            # arbitrary, but not unreasonable.
+                            max_iter=max(20, max_iter),
+                            tol=enet_tol,
+                            rng=check_random_state(None),
+                            random=False,
+                            positive=False,
+                            do_screening=True,
+                        )
+                    else:  # mode == "lars"
+                        _, _, coefs = lars_path_gram(
+                            Xy=row,
+                            Gram=sub_covariance,
+                            n_samples=row.size,
+                            alpha_min=alpha / (n_features - 1),
+                            copy_Gram=True,
+                            eps=eps,
+                            method="lars",
+                            return_path=False,
+                        )
+                # Update the precision matrix
+                precision_[idx, idx] = 1.0 / (
+                    covariance_[idx, idx]
+                    - np.dot(covariance_[indices != idx, idx], coefs)
+                )
+                precision_[indices != idx, idx] = -precision_[idx, idx] * coefs
+                precision_[idx, indices != idx] = -precision_[idx, idx] * coefs
+                coefs = np.dot(sub_covariance, coefs)
+                covariance_[idx, indices != idx] = coefs
+                covariance_[indices != idx, idx] = coefs
+            if not np.isfinite(precision_.sum()):
+                raise FloatingPointError(
+                    "The system is too ill-conditioned for this solver"
+                )
+            d_gap = _dual_gap(emp_cov, precision_, alpha)
+            cost = _objective(emp_cov, precision_, alpha)
+            if verbose:
+                print(
+                    "[graphical_lasso] Iteration % 3i, cost % 3.2e, dual gap %.3e"
+                    % (i, cost, d_gap)
+                )
+            costs.append((cost, d_gap))
+            if np.abs(d_gap) < tol:
+                break
+            if not np.isfinite(cost) and i > 0:
+                raise FloatingPointError(
+                    "Non SPD result: the system is too ill-conditioned for this solver"
+                )
+        else:
+            warnings.warn(
+                "graphical_lasso: did not converge after %i iteration: dual gap: %.3e"
+                % (max_iter, d_gap),
+                ConvergenceWarning,
+            )
+    except FloatingPointError as e:
+        e.args = (e.args[0] + ". The system is too ill-conditioned for this solver",)
+        raise e
+
+    return covariance_, precision_, costs, i + 1
+
+
 def alpha_max(emp_cov):
     """Find the maximum alpha for which there are some non-zeros off-diagonal.
 
@@ -77,12 +227,18 @@ def alpha_max(emp_cov):
     return np.max(np.abs(A))
 
 
-# The g-lasso algorithm
+@validate_params(
+    {
+        "emp_cov": ["array-like"],
+        "return_costs": ["boolean"],
+        "return_n_iter": ["boolean"],
+    },
+    prefer_skip_nested_validation=False,
+)
 def graphical_lasso(
     emp_cov,
     alpha,
     *,
-    cov_init=None,
     mode="cd",
     tol=1e-4,
     enet_tol=1e-4,
@@ -101,17 +257,13 @@ def graphical_lasso(
 
     Parameters
     ----------
-    emp_cov : ndarray of shape (n_features, n_features)
+    emp_cov : array-like of shape (n_features, n_features)
         Empirical covariance from which to compute the covariance estimate.
 
     alpha : float
         The regularization parameter: the higher alpha, the more
         regularization, the sparser the inverse covariance.
         Range is (0, inf].
-
-    cov_init : array of shape (n_features, n_features), default=None
-        The initial guess for the covariance. If None, then the empirical
-        covariance is used.
 
     mode : {'cd', 'lars'}, default='cd'
         The Lasso solver to use: coordinate descent or LARS. Use LARS for
@@ -177,142 +329,40 @@ def graphical_lasso(
 
     One possible difference with the `glasso` R package is that the
     diagonal coefficients are not penalized.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import make_sparse_spd_matrix
+    >>> from sklearn.covariance import empirical_covariance, graphical_lasso
+    >>> true_cov = make_sparse_spd_matrix(n_dim=3,random_state=42)
+    >>> rng = np.random.RandomState(42)
+    >>> X = rng.multivariate_normal(mean=np.zeros(3), cov=true_cov, size=3)
+    >>> emp_cov = empirical_covariance(X, assume_centered=True)
+    >>> emp_cov, _ = graphical_lasso(emp_cov, alpha=0.05)
+    >>> emp_cov
+    array([[ 1.687,  0.212, -0.209],
+           [ 0.212,  0.221, -0.0817],
+           [-0.209, -0.0817, 0.232]])
     """
-    _, n_features = emp_cov.shape
-    if alpha == 0:
-        if return_costs:
-            precision_ = linalg.inv(emp_cov)
-            cost = -2.0 * log_likelihood(emp_cov, precision_)
-            cost += n_features * np.log(2 * np.pi)
-            d_gap = np.sum(emp_cov * precision_) - n_features
-            if return_n_iter:
-                return emp_cov, precision_, (cost, d_gap), 0
-            else:
-                return emp_cov, precision_, (cost, d_gap)
-        else:
-            if return_n_iter:
-                return emp_cov, linalg.inv(emp_cov), 0
-            else:
-                return emp_cov, linalg.inv(emp_cov)
-    if cov_init is None:
-        covariance_ = emp_cov.copy()
-    else:
-        covariance_ = cov_init.copy()
-    # As a trivial regularization (Tikhonov like), we scale down the
-    # off-diagonal coefficients of our starting point: This is needed, as
-    # in the cross-validation the cov_init can easily be
-    # ill-conditioned, and the CV loop blows. Beside, this takes
-    # conservative stand-point on the initial conditions, and it tends to
-    # make the convergence go faster.
-    covariance_ *= 0.95
-    diagonal = emp_cov.flat[:: n_features + 1]
-    covariance_.flat[:: n_features + 1] = diagonal
-    precision_ = linalg.pinvh(covariance_)
+    model = GraphicalLasso(
+        alpha=alpha,
+        mode=mode,
+        covariance="precomputed",
+        tol=tol,
+        enet_tol=enet_tol,
+        max_iter=max_iter,
+        verbose=verbose,
+        eps=eps,
+        assume_centered=True,
+    ).fit(emp_cov)
 
-    indices = np.arange(n_features)
-    costs = list()
-    # The different l1 regression solver have different numerical errors
-    if mode == "cd":
-        errors = dict(over="raise", invalid="ignore")
-    else:
-        errors = dict(invalid="raise")
-    try:
-        # be robust to the max_iter=0 edge case, see:
-        # https://github.com/scikit-learn/scikit-learn/issues/4134
-        d_gap = np.inf
-        # set a sub_covariance buffer
-        sub_covariance = np.copy(covariance_[1:, 1:], order="C")
-        for i in range(max_iter):
-            for idx in range(n_features):
-                # To keep the contiguous matrix `sub_covariance` equal to
-                # covariance_[indices != idx].T[indices != idx]
-                # we only need to update 1 column and 1 line when idx changes
-                if idx > 0:
-                    di = idx - 1
-                    sub_covariance[di] = covariance_[di][indices != idx]
-                    sub_covariance[:, di] = covariance_[:, di][indices != idx]
-                else:
-                    sub_covariance[:] = covariance_[1:, 1:]
-                row = emp_cov[idx, indices != idx]
-                with np.errstate(**errors):
-                    if mode == "cd":
-                        # Use coordinate descent
-                        coefs = -(
-                            precision_[indices != idx, idx]
-                            / (precision_[idx, idx] + 1000 * eps)
-                        )
-                        coefs, _, _, _ = cd_fast.enet_coordinate_descent_gram(
-                            coefs,
-                            alpha,
-                            0,
-                            sub_covariance,
-                            row,
-                            row,
-                            max_iter,
-                            enet_tol,
-                            check_random_state(None),
-                            False,
-                        )
-                    else:  # mode == "lars"
-                        _, _, coefs = lars_path_gram(
-                            Xy=row,
-                            Gram=sub_covariance,
-                            n_samples=row.size,
-                            alpha_min=alpha / (n_features - 1),
-                            copy_Gram=True,
-                            eps=eps,
-                            method="lars",
-                            return_path=False,
-                        )
-                # Update the precision matrix
-                precision_[idx, idx] = 1.0 / (
-                    covariance_[idx, idx]
-                    - np.dot(covariance_[indices != idx, idx], coefs)
-                )
-                precision_[indices != idx, idx] = -precision_[idx, idx] * coefs
-                precision_[idx, indices != idx] = -precision_[idx, idx] * coefs
-                coefs = np.dot(sub_covariance, coefs)
-                covariance_[idx, indices != idx] = coefs
-                covariance_[indices != idx, idx] = coefs
-            if not np.isfinite(precision_.sum()):
-                raise FloatingPointError(
-                    "The system is too ill-conditioned for this solver"
-                )
-            d_gap = _dual_gap(emp_cov, precision_, alpha)
-            cost = _objective(emp_cov, precision_, alpha)
-            if verbose:
-                print(
-                    "[graphical_lasso] Iteration % 3i, cost % 3.2e, dual gap %.3e"
-                    % (i, cost, d_gap)
-                )
-            if return_costs:
-                costs.append((cost, d_gap))
-            if np.abs(d_gap) < tol:
-                break
-            if not np.isfinite(cost) and i > 0:
-                raise FloatingPointError(
-                    "Non SPD result: the system is too ill-conditioned for this solver"
-                )
-        else:
-            warnings.warn(
-                "graphical_lasso: did not converge after %i iteration: dual gap: %.3e"
-                % (max_iter, d_gap),
-                ConvergenceWarning,
-            )
-    except FloatingPointError as e:
-        e.args = (e.args[0] + ". The system is too ill-conditioned for this solver",)
-        raise e
-
+    output = [model.covariance_, model.precision_]
     if return_costs:
-        if return_n_iter:
-            return covariance_, precision_, costs, i + 1
-        else:
-            return covariance_, precision_, costs
-    else:
-        if return_n_iter:
-            return covariance_, precision_, i + 1
-        else:
-            return covariance_, precision_
+        output.append(model.costs_)
+    if return_n_iter:
+        output.append(model.n_iter_)
+    return tuple(output)
 
 
 class BaseGraphicalLasso(EmpiricalCovariance):
@@ -323,6 +373,7 @@ class BaseGraphicalLasso(EmpiricalCovariance):
         "max_iter": [Interval(Integral, 0, None, closed="left")],
         "mode": [StrOptions({"cd", "lars"})],
         "verbose": ["verbose"],
+        "eps": [Interval(Real, 0, None, closed="both")],
     }
     _parameter_constraints.pop("store_precision")
 
@@ -333,6 +384,7 @@ class BaseGraphicalLasso(EmpiricalCovariance):
         max_iter=100,
         mode="cd",
         verbose=False,
+        eps=np.finfo(np.float64).eps,
         assume_centered=False,
     ):
         super().__init__(assume_centered=assume_centered)
@@ -341,10 +393,14 @@ class BaseGraphicalLasso(EmpiricalCovariance):
         self.max_iter = max_iter
         self.mode = mode
         self.verbose = verbose
+        self.eps = eps
 
 
 class GraphicalLasso(BaseGraphicalLasso):
     """Sparse inverse covariance estimation with an l1-penalized estimator.
+
+    For a usage example see
+    :ref:`sphx_glr_auto_examples_applications_plot_stock_market.py`.
 
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 
@@ -363,6 +419,13 @@ class GraphicalLasso(BaseGraphicalLasso):
         very sparse underlying graphs, where p > n. Elsewhere prefer cd
         which is more numerically stable.
 
+    covariance : "precomputed", default=None
+        If covariance is "precomputed", the input data in `fit` is assumed
+        to be the covariance matrix. If `None`, the empirical covariance
+        is estimated from the data `X`.
+
+        .. versionadded:: 1.3
+
     tol : float, default=1e-4
         The tolerance to declare convergence: if the dual gap goes below
         this value, iterations are stopped. Range is (0, inf].
@@ -379,6 +442,13 @@ class GraphicalLasso(BaseGraphicalLasso):
     verbose : bool, default=False
         If verbose is True, the objective function and dual gap are
         plotted at each iteration.
+
+    eps : float, default=eps
+        The machine-precision regularization in the computation of the
+        Cholesky diagonal factors. Increase this for very ill-conditioned
+        systems. Default is `np.finfo(np.float64).eps`.
+
+        .. versionadded:: 1.3
 
     assume_centered : bool, default=False
         If True, data are not centered before computation.
@@ -399,6 +469,12 @@ class GraphicalLasso(BaseGraphicalLasso):
 
     n_iter_ : int
         Number of iterations run.
+
+    costs_ : list of (objective, dual_gap) pairs
+        The list of values of the objective function and the dual gap at
+        each iteration. Returned only if return_costs is True.
+
+        .. versionadded:: 1.3
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -441,7 +517,8 @@ class GraphicalLasso(BaseGraphicalLasso):
 
     _parameter_constraints: dict = {
         **BaseGraphicalLasso._parameter_constraints,
-        "alpha": [Interval(Real, 0, None, closed="right")],
+        "alpha": [Interval(Real, 0, None, closed="both")],
+        "covariance": [StrOptions({"precomputed"}), None],
     }
 
     def __init__(
@@ -449,10 +526,12 @@ class GraphicalLasso(BaseGraphicalLasso):
         alpha=0.01,
         *,
         mode="cd",
+        covariance=None,
         tol=1e-4,
         enet_tol=1e-4,
         max_iter=100,
         verbose=False,
+        eps=np.finfo(np.float64).eps,
         assume_centered=False,
     ):
         super().__init__(
@@ -461,10 +540,13 @@ class GraphicalLasso(BaseGraphicalLasso):
             max_iter=max_iter,
             mode=mode,
             verbose=verbose,
+            eps=eps,
             assume_centered=assume_centered,
         )
         self.alpha = alpha
+        self.covariance = covariance
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the GraphicalLasso model to X.
 
@@ -481,24 +563,29 @@ class GraphicalLasso(BaseGraphicalLasso):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         # Covariance does not make sense for a single feature
-        X = self._validate_data(X, ensure_min_features=2, ensure_min_samples=2)
+        X = validate_data(self, X, ensure_min_features=2, ensure_min_samples=2)
 
-        if self.assume_centered:
+        if self.covariance == "precomputed":
+            emp_cov = X.copy()
             self.location_ = np.zeros(X.shape[1])
         else:
-            self.location_ = X.mean(0)
-        emp_cov = empirical_covariance(X, assume_centered=self.assume_centered)
-        self.covariance_, self.precision_, self.n_iter_ = graphical_lasso(
+            emp_cov = empirical_covariance(X, assume_centered=self.assume_centered)
+            if self.assume_centered:
+                self.location_ = np.zeros(X.shape[1])
+            else:
+                self.location_ = X.mean(0)
+
+        self.covariance_, self.precision_, self.costs_, self.n_iter_ = _graphical_lasso(
             emp_cov,
             alpha=self.alpha,
+            cov_init=None,
             mode=self.mode,
             tol=self.tol,
             enet_tol=self.enet_tol,
             max_iter=self.max_iter,
             verbose=self.verbose,
-            return_n_iter=True,
+            eps=self.eps,
         )
         return self
 
@@ -514,6 +601,7 @@ def graphical_lasso_path(
     enet_tol=1e-4,
     max_iter=100,
     verbose=False,
+    eps=np.finfo(np.float64).eps,
 ):
     """l1-penalized covariance estimator along a path of decreasing alphas
 
@@ -557,6 +645,13 @@ def graphical_lasso_path(
         The higher the verbosity flag, the more information is printed
         during the fitting.
 
+    eps : float, default=eps
+        The machine-precision regularization in the computation of the
+        Cholesky diagonal factors. Increase this for very ill-conditioned
+        systems. Default is `np.finfo(np.float64).eps`.
+
+        .. versionadded:: 1.3
+
     Returns
     -------
     covariances_ : list of shape (n_alphas,) of ndarray of shape \
@@ -586,7 +681,7 @@ def graphical_lasso_path(
     for alpha in alphas:
         try:
             # Capture the errors, and move on
-            covariance_, precision_ = graphical_lasso(
+            covariance_, precision_, _, _ = _graphical_lasso(
                 emp_cov,
                 alpha=alpha,
                 cov_init=covariance_,
@@ -595,6 +690,7 @@ def graphical_lasso_path(
                 enet_tol=enet_tol,
                 max_iter=max_iter,
                 verbose=inner_verbose,
+                eps=eps,
             )
             covariances_.append(covariance_)
             precisions_.append(precision_)
@@ -651,11 +747,11 @@ class GraphicalLassoCV(BaseGraphicalLasso):
         Possible inputs for cv are:
 
         - None, to use the default 5-fold cross-validation,
-        - integer, to specify the number of folds.
+        - integer, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
-        For integer/None inputs :class:`KFold` is used.
+        For integer/None inputs :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -695,6 +791,13 @@ class GraphicalLassoCV(BaseGraphicalLasso):
         If verbose is True, the objective function and duality gap are
         printed at each iteration.
 
+    eps : float, default=eps
+        The machine-precision regularization in the computation of the
+        Cholesky diagonal factors. Increase this for very ill-conditioned
+        systems. Default is `np.finfo(np.float64).eps`.
+
+        .. versionadded:: 1.3
+
     assume_centered : bool, default=False
         If True, data are not centered before computation.
         Useful when working with data whose mean is almost, but not exactly
@@ -711,6 +814,12 @@ class GraphicalLassoCV(BaseGraphicalLasso):
 
     precision_ : ndarray of shape (n_features, n_features)
         Estimated precision matrix (inverse covariance).
+
+    costs_ : list of (objective, dual_gap) pairs
+        The list of values of the objective function and the dual gap at
+        each iteration. Returned only if return_costs is True.
+
+        .. versionadded:: 1.3
 
     alpha_ : float
         Penalization parameter selected.
@@ -791,11 +900,16 @@ class GraphicalLassoCV(BaseGraphicalLasso):
            [0.017, 0.036, 0.094, 0.69 ]])
     >>> np.around(cov.location_, decimals=3)
     array([0.073, 0.04 , 0.038, 0.143])
+
+    For an example comparing :class:`sklearn.covariance.GraphicalLassoCV`,
+    :func:`sklearn.covariance.ledoit_wolf` shrinkage and the empirical covariance
+    on high-dimensional gaussian data, see
+    :ref:`sphx_glr_auto_examples_covariance_plot_sparse_cov.py`.
     """
 
     _parameter_constraints: dict = {
         **BaseGraphicalLasso._parameter_constraints,
-        "alphas": [Interval(Integral, 1, None, closed="left"), "array-like"],
+        "alphas": [Interval(Integral, 0, None, closed="left"), "array-like"],
         "n_refinements": [Interval(Integral, 1, None, closed="left")],
         "cv": ["cv_object"],
         "n_jobs": [Integral, None],
@@ -813,6 +927,7 @@ class GraphicalLassoCV(BaseGraphicalLasso):
         mode="cd",
         n_jobs=None,
         verbose=False,
+        eps=np.finfo(np.float64).eps,
         assume_centered=False,
     ):
         super().__init__(
@@ -821,6 +936,7 @@ class GraphicalLassoCV(BaseGraphicalLasso):
             max_iter=max_iter,
             mode=mode,
             verbose=verbose,
+            eps=eps,
             assume_centered=assume_centered,
         )
         self.alphas = alphas
@@ -828,7 +944,8 @@ class GraphicalLassoCV(BaseGraphicalLasso):
         self.cv = cv
         self.n_jobs = n_jobs
 
-    def fit(self, X, y=None):
+    @_fit_context(prefer_skip_nested_validation=True)
+    def fit(self, X, y=None, **params):
         """Fit the GraphicalLasso covariance model to X.
 
         Parameters
@@ -839,14 +956,26 @@ class GraphicalLassoCV(BaseGraphicalLasso):
         y : Ignored
             Not used, present for API consistency by convention.
 
+        **params : dict, default=None
+            Parameters to be passed to the CV splitter and the
+            cross_val_score function.
+
+            .. versionadded:: 1.5
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
         Returns
         -------
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         # Covariance does not make sense for a single feature
-        X = self._validate_data(X, ensure_min_features=2)
+        _raise_for_params(params, self, "fit")
+
+        X = validate_data(self, X, ensure_min_features=2)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:
@@ -878,6 +1007,11 @@ class GraphicalLassoCV(BaseGraphicalLasso):
             alpha_0 = 1e-2 * alpha_1
             alphas = np.logspace(np.log10(alpha_0), np.log10(alpha_1), n_alphas)[::-1]
 
+        if _routing_enabled():
+            routed_params = process_routing(self, "fit", **params)
+        else:
+            routed_params = Bunch(splitter=Bunch(split={}))
+
         t0 = time.time()
         for i in range(n_refinements):
             with warnings.catch_warnings():
@@ -900,8 +1034,9 @@ class GraphicalLassoCV(BaseGraphicalLasso):
                         enet_tol=self.enet_tol,
                         max_iter=int(0.1 * self.max_iter),
                         verbose=inner_verbose,
+                        eps=self.eps,
                     )
-                    for train, test in cv.split(X, y)
+                    for train, test in cv.split(X, y, **routed_params.splitter.split)
                 )
 
             # Little danse to transform the list in what we need
@@ -967,6 +1102,7 @@ class GraphicalLassoCV(BaseGraphicalLasso):
                 cv=cv,
                 n_jobs=self.n_jobs,
                 verbose=inner_verbose,
+                params=params,
             )
         )
         grid_scores = np.array(grid_scores)
@@ -983,7 +1119,7 @@ class GraphicalLassoCV(BaseGraphicalLasso):
         self.alpha_ = best_alpha
 
         # Finally fit the model with the selected alpha
-        self.covariance_, self.precision_, self.n_iter_ = graphical_lasso(
+        self.covariance_, self.precision_, self.costs_, self.n_iter_ = _graphical_lasso(
             emp_cov,
             alpha=best_alpha,
             mode=self.mode,
@@ -991,6 +1127,26 @@ class GraphicalLassoCV(BaseGraphicalLasso):
             enet_tol=self.enet_tol,
             max_iter=self.max_iter,
             verbose=inner_verbose,
-            return_n_iter=True,
+            eps=self.eps,
         )
         return self
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.5
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self).add(
+            splitter=check_cv(self.cv),
+            method_mapping=MethodMapping().add(callee="split", caller="fit"),
+        )
+        return router

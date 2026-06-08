@@ -12,6 +12,9 @@ for a demo of different clustering algorithms on 2D datasets.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Data generation
 # ---------------
@@ -41,11 +44,12 @@ plt.show()
 # --------------
 #
 # One can access the labels assigned by :class:`~sklearn.cluster.DBSCAN` using
-# the `labels_` attribute. Noisy samples are given the label math:`-1`.
+# the `labels_` attribute. Noisy samples are given the label :math:`-1`.
 
 import numpy as np
-from sklearn.cluster import DBSCAN
+
 from sklearn import metrics
+from sklearn.cluster import DBSCAN
 
 db = DBSCAN(eps=0.3, min_samples=10).fit(X)
 labels = db.labels_
@@ -89,7 +93,7 @@ print(f"Silhouette Coefficient: {metrics.silhouette_score(X, labels):.3f}")
 # ------------
 #
 # Core samples (large dots) and non-core samples (small dots) are color-coded
-# according to the asigned cluster. Samples tagged as noise are represented in
+# according to the assigned cluster. Samples tagged as noise are represented in
 # black.
 
 unique_labels = set(labels)
