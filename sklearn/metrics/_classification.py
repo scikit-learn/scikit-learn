@@ -1246,10 +1246,16 @@ def jaccard_score(
         "y_true": ["array-like"],
         "y_pred": ["array-like"],
         "sample_weight": ["array-like", None],
+        "replace_undefined_by": [
+            Interval(Real, -1.0, 1.0, closed="both"),
+            np.nan,
+        ],
     },
     prefer_skip_nested_validation=True,
 )
-def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
+def matthews_corrcoef(
+    y_true, y_pred, *, sample_weight=None, replace_undefined_by=np.nan
+):
     """Compute the Matthews correlation coefficient (MCC).
 
     The Matthews correlation coefficient is used in machine learning as a
@@ -1279,6 +1285,17 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
         Sample weights.
 
         .. versionadded:: 0.18
+
+    replace_undefined_by : np.nan, float in [-1.0, 1.0], default=np.nan
+        Sets the return value when the metric is undefined. This can happen when
+        `y_true` or `y_pred` has zero variance. In this case, an
+        :class:`~sklearn.exceptions.UndefinedMetricWarning` is raised. Can take
+        the following values:
+
+        - `np.nan` to return `np.nan`
+        - a floating point value in the range of [-1.0, 1.0] to return a specific value
+
+        .. versionadded:: 1.10
 
     Returns
     -------
@@ -1335,7 +1352,14 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
 
     cov_ypyp_ytyt = cov_ypyp * cov_ytyt
     if cov_ypyp_ytyt == 0:
-        return 0.0
+        msg = (
+            "The Matthews correlation coefficient is undefined because `y_true` "
+            "or `y_pred` has zero variance. The score is set to the value defined "
+            "by the `replace_undefined_by` param, which is set to "
+            f"{replace_undefined_by}."
+        )
+        warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
+        return replace_undefined_by
     else:
         return float(cov_ytyp / np.sqrt(cov_ypyp_ytyt))
 
