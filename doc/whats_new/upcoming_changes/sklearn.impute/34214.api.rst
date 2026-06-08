@@ -1,0 +1,8 @@
+- :class:`impute.IterativeImputer` is no longer experimental. It can now be
+  imported directly with ``from sklearn.impute import IterativeImputer``, and
+  importing ``sklearn.experimental.enable_iterative_imputer`` is no longer
+  required (doing so now raises a warning and is a no-op). The :ref:`User Guide
+  <iterative_imputer_convergence>` now documents why the imputed values are not
+  guaranteed to converge and why investing in better imputation often yields
+  diminishing returns for prediction.
+  By :user:`Guillaume Lemaitre <glemaitre>`.

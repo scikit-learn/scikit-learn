@@ -21,10 +21,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.exceptions import ConvergenceWarning
 
 # make it possible to discover experimental estimators when calling `all_estimators`
-from sklearn.experimental import (
-    enable_halving_search_cv,  # noqa: F401
-    enable_iterative_imputer,  # noqa: F401
-)
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import FeatureUnion, make_pipeline
 from sklearn.preprocessing import (
@@ -128,6 +125,10 @@ def test_estimators(estimator, check, request):
 @pytest.mark.filterwarnings(
     "ignore:Since version 1.0, it is not needed to import "
     "enable_hist_gradient_boosting anymore"
+)
+@pytest.mark.filterwarnings(
+    "ignore:Since version 1.10, it is not needed to import "
+    "enable_iterative_imputer anymore"
 )
 @pytest.mark.thread_unsafe  # import side-effects
 def test_import_all_consistency():

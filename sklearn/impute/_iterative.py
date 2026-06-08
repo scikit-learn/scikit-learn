@@ -67,16 +67,18 @@ class IterativeImputer(_BaseImputer):
 
     .. versionadded:: 0.21
 
+    .. versionchanged:: 1.10
+        :class:`IterativeImputer` is no longer experimental and can be imported
+        directly from :mod:`sklearn.impute` without enabling it through
+        ``sklearn.experimental``.
+
     .. note::
 
-      This estimator is still **experimental** for now: the predictions
-      and the API might change without any deprecation cycle. To use it,
-      you need to explicitly import `enable_iterative_imputer`::
-
-        >>> # explicitly require this experimental feature
-        >>> from sklearn.experimental import enable_iterative_imputer  # noqa
-        >>> # now you can import normally from sklearn.impute
-        >>> from sklearn.impute import IterativeImputer
+        The stopping criterion of this imputer rarely improves the downstream
+        predictive performance, and the imputed values are not guaranteed to
+        converge with the number of iterations. See the
+        :ref:`User Guide <iterative_imputer_convergence>` for details on why
+        chasing convergence is usually not worthwhile.
 
     Parameters
     ----------
@@ -274,7 +276,6 @@ class IterativeImputer(_BaseImputer):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.experimental import enable_iterative_imputer
     >>> from sklearn.impute import IterativeImputer
     >>> imp_mean = IterativeImputer(random_state=0)
     >>> imp_mean.fit([[7, 2, 3], [4, np.nan, 6], [10, 5, 9]])

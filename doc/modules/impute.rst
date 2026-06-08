@@ -105,19 +105,9 @@ of ``y``.  This is done for each feature in an iterative fashion, and then is
 repeated for ``max_iter`` imputation rounds. The results of the final
 imputation round are returned.
 
-.. note::
-
-   This estimator is still **experimental** for now: default parameters or
-   details of behaviour might change without any deprecation cycle. Resolving
-   the following issues would help stabilize :class:`IterativeImputer`:
-   convergence criteria (:issue:`14338`) and default estimators
-   (:issue:`13286`). To use it, you need to explicitly import
-   ``enable_iterative_imputer``.
-
 ::
 
     >>> import numpy as np
-    >>> from sklearn.experimental import enable_iterative_imputer
     >>> from sklearn.impute import IterativeImputer
     >>> imp = IterativeImputer(max_iter=10, random_state=0)
     >>> imp.fit([[1, 2], [3, 6], [4, 8], [np.nan, 3], [7, np.nan]])
@@ -132,6 +122,50 @@ imputation round are returned.
 Both :class:`SimpleImputer` and :class:`IterativeImputer` can be used in a
 Pipeline as a way to build a composite estimator that supports imputation.
 See :ref:`sphx_glr_auto_examples_impute_plot_missing_values.py`.
+
+.. _iterative_imputer_convergence:
+
+Convergence and diminishing returns
+-----------------------------------
+
+:class:`IterativeImputer` repeats the round-robin imputation for ``max_iter``
+rounds and stops early when the change between two consecutive rounds falls
+below ``tol`` (when ``sample_posterior=False``). In practice, this stopping
+criterion is often not met: the difference between rounds does not necessarily
+decrease monotonically and the imputed values may not converge, even as
+``max_iter`` grows (:issue:`14338`). This is expected rather than a defect of
+the implementation: the round-robin scheme is a Gibbs-sampler-like procedure
+that is not guaranteed to converge to a fixed point, and the optimization
+target is the conditional model of each feature, not the agreement between
+successive rounds.
+
+More importantly, chasing convergence is usually not worthwhile when the goal
+is prediction. Le Morvan and Varoquaux [3]_ quantify, across 19 datasets and a
+range of imputation and predictive models, how gains in *imputation accuracy*
+translate into gains in *predictive performance*, and report strongly
+diminishing returns: large improvements in imputation accuracy yield only small
+improvements in downstream prediction. The effect of better imputation is
+further reduced when
+
+- the downstream model is expressive (e.g. gradient-boosted trees), as a
+  flexible model can compensate for a crude imputation;
+- a missingness indicator is appended to the data (see ``add_indicator`` in
+  :class:`IterativeImputer` and :class:`SimpleImputer`, and the
+  :class:`MissingIndicator` transformer), which is beneficial for prediction
+  even when values are Missing Completely At Random;
+- the relationship between features and target is non-linear, as is typical of
+  real-world data.
+
+These results were obtained in a favorable Missing-Completely-At-Random
+setting; with the Missing-Not-At-Random patterns common in real data, the
+benefit of advanced imputation is expected to be even smaller. The practical
+takeaway is that running :class:`IterativeImputer` for more iterations to reach
+convergence, or investing in more elaborate imputation in general, rarely
+improves prediction. A small, fixed number of rounds combined with a
+missingness indicator and an expressive downstream model is usually a better
+use of compute. When the goal is to *reconstruct* the data accurately rather
+than to predict, the convergence behavior and the choice of imputer remain
+relevant and should be assessed on the task at hand.
 
 Flexibility of IterativeImputer
 -------------------------------
@@ -183,6 +217,11 @@ cannot be achieved by a single call to ``transform``.
 
 .. [2] Roderick J A Little and Donald B Rubin (1986). "Statistical Analysis
    with Missing Data". John Wiley & Sons, Inc., New York, NY, USA.
+
+.. [3] `Marine Le Morvan, Gaël Varoquaux (2025). "Imputation for prediction:
+   beware of diminishing returns". International Conference on Learning
+   Representations (ICLR).
+   <https://arxiv.org/abs/2407.19804>`_
 
 .. _knnimpute:
 
