@@ -208,10 +208,12 @@ jobs:
 
     defaults:
       run:
-        # Run all steps in a login bash shell (git-bash on Windows) so the
-        # build/test scripts behave the same way on every runner. The pixi
-        # environment is put on PATH by the "Set up pixi" step below.
-        shell: bash -l {0}
+        # Use the cross-platform `bash` shell (git-bash on Windows). We must NOT
+        # use a login shell (`bash -l {0}`): on macOS a login shell triggers
+        # `path_helper` from /etc/profile, which reorders PATH and pushes the
+        # system framework Python ahead of the pixi environment that the
+        # "Set up pixi" step prepends via $GITHUB_PATH (activate-environment).
+        shell: bash
 
     steps: &unit-tests-steps
       - name: Checkout
@@ -324,7 +326,7 @@ jobs:
       JOB_NAME: *free-threaded-job-name
     defaults:
       run:
-        shell: bash -l {0}
+        shell: bash
     steps: *unit-tests-steps
 
   scipy-dev:
@@ -346,7 +348,7 @@ jobs:
       JOB_NAME: *scipy-dev-job-name
     defaults:
       run:
-        shell: bash -l {0}
+        shell: bash
     steps:
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
@@ -436,7 +438,7 @@ jobs:
       JOB_NAME: *pytest-soft-dependency-job-name
     defaults:
       run:
-        shell: bash -l {0}
+        shell: bash
     steps:
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
@@ -482,7 +484,7 @@ jobs:
       JOB_NAME: *ubuntu-atlas-job-name
     defaults:
       run:
-        shell: bash -l {0}
+        shell: bash
     steps:
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
