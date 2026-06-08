@@ -1,0 +1,48 @@
+name: Welcome first-time contributor
+# Post a welcome comment when a first-time contributor opens a pull request.
+
+permissions:
+  contents: read
+  pull-requests: write
+
+on:
+  pull_request_target:
+    types:
+      - opened
+
+jobs:
+
+  post_comment:
+    name: welcome
+    if: github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Post welcome comment
+        run: |
+          gh api \
+          --method POST \
+          -H "Accept: application/vnd.github+json" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          /repos/$GH_REPO/issues/$PULL_REQUEST_NUMBER/comments \
+          -f "body=$BODY"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
+          BODY: >
+            Thank you for opening your first pull request to scikit-learn! 🎉
+
+
+            Here are a few things to help get your contribution reviewed:
+
+            - [ ] Fill out the [PR template](https://github.com/scikit-learn/scikit-learn/blob/main/.github/PULL_REQUEST_TEMPLATE.md)
+
+            - [ ] Make sure that the PR addresses an existing issue that is ready for
+                  contribution (e.g. not tagged as "Needs Triage", "Needs Decision",
+                  ...). If you are proposing a new feature, please open an issue to
+                  discuss it first.
+
+            - [ ] Follow the [PR checklist](https://scikit-learn.org/stable/developers/contributing.html#pull-request-checklist).
+                  In particular, make sure that linting and tests pass.
