@@ -159,18 +159,26 @@ implementation_specific_values = [
 
 cdef extern from *:
     """
+    typedef struct {
+        int n_leaves;
+        int n_splits;
+        int n_trims;
+        int n_calls;
+    } tree_stats_t;
+
     #if defined(_MSC_VER)
-      // MS compiler doesn't do standardized _Thread_local until very
-      // recent versions:
-      #define tls_int __declspec(thread) int
+      #define tls_tree_stats_t __declspec(thread) tree_stats_t
     #else
-      // _Thread_local is available in C11 and later:
-      #define tls_int _Thread_local int
+      #define tls_tree_stats_t _Thread_local tree_stats_t
     #endif
     """
-    # It's actually a thread local int, but Cython has no way to express that
-    # at the moment, see https://github.com/cython/cython/issues/6745
-    ctypedef int tls_int
+    ctypedef struct tree_stats_t:
+        int n_leaves
+        int n_splits
+        int n_trims
+        int n_calls
+    ctypedef tree_stats_t tls_tree_stats_t
+
 
 cimport numpy as cnp
 from cython cimport floating, critical_section
@@ -798,12 +806,9 @@ cdef class NodeHeap:
 def newObj(obj):
     return obj.__new__(obj)
 
-# Thread-local variables for BinaryTree.query() and friends.
 
-cdef tls_int tls_n_leaves
-cdef tls_int tls_n_splits
-cdef tls_int tls_n_trims
-cdef tls_int tls_n_calls
+# Thread-local variables for BinaryTree.query() and friends.
+cdef tls_tree_stats_t tree_stats
 
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE, NPY_TYPE in implementation_specific_values}}
 
@@ -1030,8 +1035,7 @@ cdef class BinaryTree{{name_suffix}}:
     cdef inline float64_t dist(self, const {{INPUT_DTYPE_t}}* x1, const {{INPUT_DTYPE_t}}* x2,
                              intp_t size) except -1 nogil:
         """Compute the distance between arrays x1 and x2"""
-        global tls_n_calls
-        tls_n_calls += 1
+        tree_stats.n_calls += 1
         if self.euclidean:
             return euclidean_dist{{name_suffix}}(x1, x2, size)
         else:
@@ -1046,8 +1050,7 @@ cdef class BinaryTree{{name_suffix}}:
         relative rankings of the true distance.  For example, the reduced
         distance for the Euclidean metric is the squared-euclidean distance.
         """
-        global tls_n_calls
-        tls_n_calls += 1
+        tree_stats.n_calls += 1
         if self.euclidean:
             return euclidean_rdist{{name_suffix}}(x1, x2, size)
         else:
@@ -1106,21 +1109,19 @@ cdef class BinaryTree{{name_suffix}}:
                                   idx_start + n_mid, idx_end)
 
     cdef _prep_thread_locals(self):
-        global tls_n_trims, tls_n_leaves, tls_n_splits, tls_n_calls
-        tls_n_trims = 0
-        tls_n_leaves = 0
-        tls_n_splits = 0
-        tls_n_calls = 0
+        tree_stats.n_trims = 0
+        tree_stats.n_leaves = 0
+        tree_stats.n_splits = 0
+        tree_stats.n_calls = 0
 
     cdef _update_stats(self):
-        global tls_n_splits, tls_n_leaves, tls_n_trims, tls_n_calls
         # Thread-safe on GIL Python because have GIL, thread-safe on free-threaded
         # Python because of the critical section:
         with critical_section(self):
-            self.n_splits += tls_n_splits
-            self.n_leaves += tls_n_leaves
-            self.n_trims += tls_n_trims
-            self.n_calls += tls_n_calls
+            self.n_splits += tree_stats.n_splits
+            self.n_leaves += tree_stats.n_leaves
+            self.n_trims += tree_stats.n_trims
+            self.n_calls += tree_stats.n_calls
 
     def query(self, X, k=1, return_distance=True,
               dualtree=False, breadth_first=False,
@@ -1672,14 +1673,12 @@ cdef class BinaryTree{{name_suffix}}:
         # Case 1: query point is outside node radius:
         #         trim it from the query
         if reduced_dist_LB > heap.largest(i_pt):
-            global tls_n_trims
-            tls_n_trims += 1
+            tree_stats.n_trims += 1
 
         # ------------------------------------------------------------
         # Case 2: this is a leaf node.  Update set of nearby points
         elif node_info.is_leaf:
-            global tls_n_leaves
-            tls_n_leaves += 1
+            tree_stats.n_leaves += 1
             for i in range(node_info.idx_start, node_info.idx_end):
                 dist_pt = self.rdist(pt,
                                      &self.data[self.idx_array[i], 0],
@@ -1690,8 +1689,7 @@ cdef class BinaryTree{{name_suffix}}:
         # Case 3: Node is not a leaf.  Recursively query subnodes
         #         starting with the closest
         else:
-            global tls_n_splits
-            tls_n_splits += 1
+            tree_stats.n_splits += 1
             i1 = 2 * i_node + 1
             i2 = i1 + 1
             reduced_dist_LB_1 = min_rdist{{name_suffix}}(self, i1, pt)
@@ -1739,14 +1737,12 @@ cdef class BinaryTree{{name_suffix}}:
             # Case 1: query point is outside node radius:
             #         trim it from the query
             if reduced_dist_LB > heap.largest(i_pt):
-                global tls_n_trims
-                tls_n_trims += 1
+                tree_stats.n_trims += 1
 
             # ------------------------------------------------------------
             # Case 2: this is a leaf node.  Update set of nearby points
             elif node_data[i_node].is_leaf:
-                global tls_n_leaves
-                tls_n_leaves += 1
+                tree_stats.n_leaves += 1
                 for i in range(node_data[i_node].idx_start,
                                node_data[i_node].idx_end):
                     dist_pt = self.rdist(pt,
@@ -1757,8 +1753,7 @@ cdef class BinaryTree{{name_suffix}}:
             # ------------------------------------------------------------
             # Case 3: Node is not a leaf.  Add subnodes to the node heap
             else:
-                global tls_n_splits
-                tls_n_splits += 1
+                tree_stats.n_splits += 1
                 for i in range(2 * i_node + 1, 2 * i_node + 3):
                     nodeheap_item.i1 = i
                     nodeheap_item.val = min_rdist{{name_suffix}}(self, i, pt)
