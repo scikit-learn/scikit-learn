@@ -186,7 +186,7 @@ jobs:
           miniforge-version: latest
 
       - name: Build and test wheels
-        uses: pypa/cibuildwheel@v3
+        uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1
         env:
           CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
