@@ -125,18 +125,34 @@ requires = [
 channels = ["conda-forge"]
 platforms = ["linux-64", "linux-aarch64", "osx-64", "osx-arm64", "win-64"]
 
-# Default (a.k.a. local development) environment. CI environments all set
-# ``no-default-feature = true`` so these dependencies never leak into them.
+# Default feature: ONLY the minimal dependencies needed to build and run
+# scikit-learn (mirrors ``[build-system].requires`` and ``[project].dependencies``).
+# Test, documentation and interactive-development dependencies live in the
+# dedicated ``tests``, ``docs`` and ``dev`` features below and are combined in
+# the ``dev`` environment. CI environments all set ``no-default-feature = true``
+# so these dependencies never leak into them.
 [tool.pixi.dependencies]
 python = "*"
+pip = "*"
+ccache = "*"
+# Build dependencies (see ``[build-system].requires``).
 numpy = "*"
 scipy = "*"
 cython = ">=3.1.2"
 meson-python = ">=0.17.1"
 ninja = "*"
+# Runtime dependencies (see ``[project].dependencies``).
 joblib = "*"
 narwhals = "*"
 threadpoolctl = "*"
+
+# Test dependencies (mirrors ``[project.optional-dependencies].tests`` plus the
+# extra test runners and linters used by build_tools/linting.sh).
+[tool.pixi.feature.tests.dependencies]
+pytest = "*"
+pytest-xdist = "*"
+pytest-cov = "<=6.3.0"
+coverage = "*"
 matplotlib = "*"
 pandas = "*"
 rich = "*"
@@ -144,16 +160,44 @@ pyamg = "*"
 polars = "*"
 pyarrow = "*"
 pillow = "*"
-pytest = "*"
-pytest-xdist = "*"
-pytest-cov = "<=6.3.0"
-coverage = "*"
+numpydoc = "*"
+pooch = "*"
+array-api-strict = "*"
 ruff = "*"
 mypy = "*"
 cython-lint = "*"
-array-api-strict = "*"
-pip = "*"
-ccache = "*"
+
+# Documentation dependencies (mirrors ``[project.optional-dependencies].docs``).
+[tool.pixi.feature.docs.dependencies]
+matplotlib = "*"
+scikit-image = "*"
+pandas = "*"
+rich = "*"
+seaborn = "*"
+memory_profiler = "*"
+sphinx = "*"
+sphinx-copybutton = "*"
+sphinx-gallery = "*"
+numpydoc = "*"
+pillow = "*"
+pooch = "*"
+sphinx-prompt = "*"
+sphinxext-opengraph = "*"
+plotly = "*"
+polars = "*"
+sphinx-design = "*"
+pydata-sphinx-theme = "*"
+sphinx-remove-toctrees = "*"
+towncrier = "*"
+[tool.pixi.feature.docs.pypi-dependencies]
+sphinxcontrib-sass = "*"
+
+# Interactive development tools, combined with the features above in the ``dev``
+# environment.
+[tool.pixi.feature.dev.dependencies]
+ipython = "*"
+ipykernel = "*"
+pre-commit = "*"
 
 # ----------------------------------------------------------------------------
 # Linux x86-64 - conda-forge + MKL + PyTorch (main CI build)
@@ -600,10 +644,14 @@ towncrier = "==24.8.0"  # min
 sphinxcontrib-sass = "==0.3.4"  # min
 
 # ----------------------------------------------------------------------------
-# Environments: one per CI build. ``no-default-feature`` keeps the development
-# dependencies (the default feature) out of the CI environments.
+# Environments. The implicit ``default`` environment only contains the minimal
+# build/run dependencies. ``dev`` is the full local development environment
+# (build/run + tests + docs + interactive tooling); it includes the default
+# feature implicitly. The remaining environments are one per CI build and set
+# ``no-default-feature`` so the default dependencies stay out of them.
 # ----------------------------------------------------------------------------
 [tool.pixi.environments]
+dev = { features = ["tests", "docs", "dev"] }
 mkl = { features = ["mkl"], no-default-feature = true }
 osx-arm64 = { features = ["osx-arm64"], no-default-feature = true }
 mkl-no-openmp = { features = ["mkl-no-openmp"], no-default-feature = true }
@@ -808,7 +856,7 @@ package = "sklearn"  # name of your package
         whatsnew_pattern = 'doc/whatsnew/upcoming_changes/[^/]+/\d+\.[^.]+\.rst'
 
 [tool.codespell]
-skip = ["./.git", "*.svg", "./.mypy_cache", "*sklearn/feature_extraction/_stop_words.py", "*sklearn/feature_extraction/tests/test_text.py", "./doc/_build", "./doc/auto_examples", "./doc/modules/generated"]
+skip = ["pixi.lock", "./.git", "*.svg", "./.mypy_cache", "*sklearn/feature_extraction/_stop_words.py", "*sklearn/feature_extraction/tests/test_text.py", "./doc/_build", "./doc/auto_examples", "./doc/modules/generated"]
 ignore-words = "build_tools/codespell_ignore_words.txt"
 
 [tool.towncrier]
