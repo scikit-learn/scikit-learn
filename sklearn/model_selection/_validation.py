@@ -39,6 +39,7 @@ from sklearn.utils._param_validation import (
     StrOptions,
     validate_params,
 )
+from sklearn.utils._tags import get_tags
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -988,7 +989,10 @@ def _score(estimator, X_test, y_test, scorer, score_params, error_score="raise")
                     # e.g. unwrap memmapped scalars
                     score = score.item()
             if not isinstance(score, numbers.Number):
-                raise ValueError(error_msg % (score, type(score), name))
+                if get_tags(estimator).target_tags.multi_output:
+                    pass  # legitimate multioutput score — let it through
+                else:
+                    raise ValueError(error_msg % (score, type(score), name))
             scores[name] = score
     else:  # scalar
         if hasattr(scores, "item"):

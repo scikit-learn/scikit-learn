@@ -839,6 +839,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
+        tags.target_tags.multi_output = True
         return tags
 
 
@@ -1118,7 +1119,6 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         # FIXME
         tags._skip_test = True
         tags.target_tags.single_output = False
-        tags.target_tags.multi_output = True
         return tags
 
 
@@ -1271,5 +1271,4 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.target_tags.single_output = False
-        tags.target_tags.multi_output = True
         return tags
