@@ -12,6 +12,7 @@ from warnings import warn
 
 import numpy as np
 from scipy.optimize import minimize
+from scipy.sparse import issparse
 
 from sklearn.base import (
     BaseEstimator,
@@ -251,6 +252,11 @@ class NeighborhoodComponentsAnalysis(
             ),
         )
         check_classification_targets(y)
+        if issparse(X) and self.init not in ["pca", "random", "identity"]:
+            raise ValueError(
+                "Sparse input is only supported for init in "
+                "['pca', 'random', 'identity']"
+            )
         y = LabelEncoder().fit_transform(y)
 
         # Check the preferred dimensionality of the projected space
