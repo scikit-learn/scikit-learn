@@ -899,7 +899,8 @@ def test_estimators_samples_deterministic():
     X, y = iris.data, iris.target
 
     base_pipeline = make_pipeline(
-        SparseRandomProjection(n_components=2), LogisticRegression()
+        SparseRandomProjection(n_components=2, random_state=0),
+        LogisticRegression(random_state=0),
     )
     clf = BaggingClassifier(estimator=base_pipeline, max_samples=0.5, random_state=0)
     clf.fit(X, y)
