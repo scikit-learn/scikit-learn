@@ -2,7 +2,7 @@
 
 .. raw:: html
 
-   <h1 align="center" style="margin-top: 0.5rem; margin-bottom: 0.5rem; font-size: 4rem;">
+   <h1 align="center" style="margin-top: 0.5rem; margin-bottom: 0.5rem; font-size: 2.5rem;">
      Simple and efficient tools for predictive data analysis in Python
    </h1>
 
