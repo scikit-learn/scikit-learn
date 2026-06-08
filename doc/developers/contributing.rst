@@ -577,31 +577,42 @@ that are directly modified by the pull request are executed.
 Resolve conflicts in lock files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Here is a bash snippet that helps resolving conflicts in environment and lock files:
+Most CI environments are described by the ``[tool.pixi.*]`` section of
+``pyproject.toml`` and resolved into a single ``pixi.lock`` file. A couple of
+builds (``ubuntu_atlas`` and ``debian_32bit``) install their dependencies with
+apt and a pip lock file under ``build_tools/``.
+
+Here is a bash snippet that helps resolving conflicts in ``pixi.lock`` and the
+remaining pip lock/requirement files:
 
 .. prompt:: bash
 
   # pull latest upstream/main
   git pull upstream main --no-rebase
   # resolve conflicts - keeping the upstream/main version for specific files
-  git checkout --theirs  build_tools/*/*.lock build_tools/*/*environment.yml \
-      build_tools/*/*lock.txt build_tools/*/*requirements.txt
-  git add build_tools/*/*.lock build_tools/*/*environment.yml \
-      build_tools/*/*lock.txt build_tools/*/*requirements.txt
+  git checkout --theirs  pixi.lock build_tools/*/*lock.txt build_tools/*/*requirements.txt
+  git add pixi.lock build_tools/*/*lock.txt build_tools/*/*requirements.txt
   git merge --continue
 
 This will merge `upstream/main` into our branch, automatically prioritising the
-`upstream/main` for conflicting environment and lock files (this is good enough, because
-we will re-generate the lock files afterwards).
+`upstream/main` for conflicting lock files (this is good enough, because we will
+re-generate the lock files afterwards).
 
-Note that this only fixes conflicts in environment and lock files and you might have
-other conflicts to resolve.
+Note that this only fixes conflicts in lock files and you might have other
+conflicts to resolve.
 
-Finally, we have to re-generate the environment and lock files for the CIs by running:
+Finally, we have to re-generate the lock files. The pixi lock file is updated
+with:
 
 .. prompt:: bash
 
-  python build_tools/update_environments_and_lock_files.py
+  pixi update
+
+and the remaining pip lock files with:
+
+.. prompt:: bash
+
+  python build_tools/update_environments_and_lock_files.py --select-build "debian_32bit|ubuntu_atlas"
 
 .. _stalled_pull_request:
 
@@ -1044,8 +1055,9 @@ an offline setting. To build the PDF manual, run:
    While we do our best to have the documentation build under as many
    versions of Sphinx as possible, the different versions tend to
    behave slightly differently. To get the best results, you should
-   use the same version as the one we used on CircleCI. Look at this
-   `GitHub search <https://github.com/search?q=repo%3Ascikit-learn%2Fscikit-learn+%2F%5C%2Fsphinx-%5B0-9.%5D%2B%2F+path%3Abuild_tools%2Fcircle%2Fdoc_linux-64_conda.lock&type=code>`_
+   use the same version as the one we used on CircleCI, which is the version
+   pinned for the ``doc`` environment in ``pixi.lock``. Look at this
+   `GitHub search <https://github.com/search?q=repo%3Ascikit-learn%2Fscikit-learn+%2F%5C%2Fsphinx-%5B0-9.%5D%2B%2F+path%3Apixi.lock&type=code>`_
    to know the exact version.
 
 

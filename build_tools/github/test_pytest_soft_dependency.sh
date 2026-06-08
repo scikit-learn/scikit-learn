@@ -2,9 +2,11 @@
 
 set -e
 
-# called when DISTRIB=="conda"
-source activate $VIRTUALENV
-conda remove -y py pytest || pip uninstall -y py pytest
+# This script is run through `pixi run -e <env> ...`, so the environment is
+# already activated. We uninstall pytest (and the legacy `py` package) to check
+# that scikit-learn's test utilities can still be imported when pytest is not
+# available (pytest is a soft dependency for end users).
+pip uninstall -y py pytest
 
 if [[ "$COVERAGE" == "true" ]]; then
     # conda may remove coverage when uninstall pytest and py

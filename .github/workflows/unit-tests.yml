@@ -21,6 +21,9 @@ env:
   CCACHE_DIR: ${{ github.workspace }}/ccache
   COVERAGE: 'true'
   JUNITXML: 'test-data.xml'
+  # Version of pixi used to provision the conda/PyPI environments. Keep this in
+  # sync with the version used in the other workflows and in the lock file.
+  PIXI_VERSION: v0.70.1
 
 jobs:
   lint:
@@ -30,8 +33,8 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: '3.12'
           cache: 'pip'
@@ -54,7 +57,7 @@ jobs:
     outputs:
       message: ${{ steps.git-log.outputs.message }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - id: git-log
@@ -124,13 +127,11 @@ jobs:
         include:
           - name: Linux pymin_conda_forge_arm
             os: ubuntu-24.04-arm
-            DISTRIB: conda
-            LOCK_FILE: build_tools/github/pymin_conda_forge_arm_linux-aarch64_conda.lock
+            PIXI_ENVIRONMENT: arm
 
           - name: Linux x86-64 pylatest_conda_forge_mkl
             os: ubuntu-22.04
-            DISTRIB: conda
-            LOCK_FILE: build_tools/github/pylatest_conda_forge_mkl_linux-64_conda.lock
+            PIXI_ENVIRONMENT: mkl
             COVERAGE: true
             SKLEARN_TESTS_GLOBAL_RANDOM_SEED: 42  # default global random seed
             SCIPY_ARRAY_API: 1
@@ -141,8 +142,7 @@ jobs:
           # Check compilation with Ubuntu 22.04 LTS (Jammy Jellyfish) and scipy from conda-forge
           - name: Linux x86-64 pymin_conda_forge_openblas_ubuntu_2204
             os: ubuntu-22.04
-            DISTRIB: conda
-            LOCK_FILE: build_tools/github/pymin_conda_forge_openblas_ubuntu_2204_linux-64_conda.lock
+            PIXI_ENVIRONMENT: ubuntu
             SKLEARN_WARNINGS_AS_ERRORS: 1
             COVERAGE: false
             SKLEARN_TESTS_GLOBAL_RANDOM_SEED: 0  # non-default seed
@@ -150,8 +150,7 @@ jobs:
           # Linux build with minimum supported version of dependencies
           - name: Linux x86-64 pymin_conda_forge_openblas_min_dependencies
             os: ubuntu-22.04
-            DISTRIB: conda
-            LOCK_FILE: build_tools/github/pymin_conda_forge_openblas_min_dependencies_linux-64_conda.lock
+            PIXI_ENVIRONMENT: min
             # Enable debug Cython directives to capture IndexError exceptions in
             # combination with the -Werror::pytest.PytestUnraisableExceptionWarning
             # flag for pytest.
@@ -164,8 +163,7 @@ jobs:
           # It runs tests requiring lightgbm, pandas and PyAMG.
           - name: Linux pylatest_pip_openblas_pandas
             os: ubuntu-24.04
-            DISTRIB: conda
-            LOCK_FILE: build_tools/github/pylatest_pip_openblas_pandas_linux-64_conda.lock
+            PIXI_ENVIRONMENT: pip-pandas
             SKLEARN_TESTS_GLOBAL_RANDOM_SEED: 3  # non-default seed
             SCIPY_ARRAY_API: 1
             CHECK_PYTEST_SOFT_DEPENDENCY: true
@@ -176,20 +174,9 @@ jobs:
             PYTEST_XDIST_VERSION: none
             PIP_BUILD_ISOLATION: true
 
-          # Linux environment to test that scikit-learn can be built against
-          # versions of numpy, scipy with ATLAS that comes with Ubuntu 24.04
-          # Noble Numbat i.e. numpy 1.26.4 and scipy 1.11.4
-          - name: Linux x86-64 ubuntu_atlas
-            os: ubuntu-24.04
-            DISTRIB: ubuntu
-            LOCK_FILE: build_tools/github/ubuntu_atlas_lock.txt
-            COVERAGE: false
-            SKLEARN_TESTS_GLOBAL_RANDOM_SEED: 1  # non-default seed
-
           - name: macOS pylatest_conda_forge_arm
             os: macos-15
-            DISTRIB: conda
-            LOCK_FILE: build_tools/github/pylatest_conda_forge_osx-arm64_conda.lock
+            PIXI_ENVIRONMENT: osx-arm64
             SKLEARN_TESTS_GLOBAL_RANDOM_SEED: 5  # non-default seed
             SCIPY_ARRAY_API: 1
             PYTORCH_ENABLE_MPS_FALLBACK: 1
@@ -197,16 +184,14 @@ jobs:
 
           - name: macOS x86-64 pylatest_conda_forge_mkl_no_openmp
             os: macos-15-intel
-            DISTRIB: conda
-            LOCK_FILE: build_tools/github/pylatest_conda_forge_mkl_no_openmp_osx-64_conda.lock
+            PIXI_ENVIRONMENT: mkl-no-openmp
             SKLEARN_TEST_NO_OPENMP: true
             SKLEARN_SKIP_OPENMP_TEST: true
             SKLEARN_TESTS_GLOBAL_RANDOM_SEED: 6  # non-default seed
 
           - name: Windows x64 pymin_conda_forge_openblas
             os: windows-latest
-            DISTRIB: conda
-            LOCK_FILE: build_tools/github/pymin_conda_forge_openblas_win-64_conda.lock
+            PIXI_ENVIRONMENT: win
             SKLEARN_WARNINGS_AS_ERRORS: 1
             # The Windows runner is typically much slower than other CI runners
             # due to the lack of compiler cache. Running the tests with coverage
@@ -223,43 +208,56 @@ jobs:
 
     env: ${{ matrix }}
 
+    defaults:
+      run:
+        # Run all steps in a login bash shell (git-bash on Windows) so the
+        # build/test scripts behave the same way on every runner. The pixi
+        # environment is put on PATH by the "Set up pixi" step below.
+        shell: bash -l {0}
+
     steps: &unit-tests-steps
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       # This step is necessary to access the job name the same way in both matrix and
       # non-matrix jobs (like free-threaded or scipy-dev builds).
       - name: Set JOB_NAME variable
-        shell: bash
         run: |
           if [[ -z "$JOB_NAME" ]]; then
             echo "JOB_NAME=${{ matrix.name }}" >> $GITHUB_ENV
           fi
 
       - name: Create cache for ccache
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ${{ env.CCACHE_DIR }}
-          key: ccache-v1-${{ env.JOB_NAME }}-${{ hashFiles('**/*.pyx*', '**/*.pxd*', '**/*.pxi*', '**/*.h', '**/*.c', '**/*.cpp', format('{0}', env.LOCK_FILE)) }}
+          key: ccache-v1-${{ env.JOB_NAME }}-${{ hashFiles('**/*.pyx*', '**/*.pxd*', '**/*.pxi*', '**/*.h', '**/*.c', '**/*.cpp', 'pixi.lock') }}
           restore-keys: ccache-${{ env.JOB_NAME }}
 
-      - name: Set up conda
-        uses: conda-incubator/setup-miniconda@v4
-        if: ${{ startsWith(env.DISTRIB, 'conda') }}
+      - name: Set up pixi
+        uses: prefix-dev/setup-pixi@5185adfbffb4bd703da3010310260805d89ebb11 # v0.9.6
         with:
-          miniforge-version: latest
-          auto-activate: true
-          activate-environment: ""
+          pixi-version: ${{ env.PIXI_VERSION }}
+          manifest-path: pyproject.toml
+          environments: ${{ env.PIXI_ENVIRONMENT }}
+          locked: true
+          # Put the environment's binaries on PATH (and export CONDA_PREFIX etc.)
+          # for the subsequent steps. This lets the build/test scripts run the
+          # same way on every OS without a `pixi run` wrapper (which would fail
+          # on Windows where the environment does not ship a bash interpreter).
+          activate-environment: ${{ env.PIXI_ENVIRONMENT }}
+          # Only write to the GitHub Actions cache from the default branch to
+          # keep the 10 GB cache budget under control.
+          cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
 
       - name: Build scikit-learn
-        run: bash -l build_tools/github/install.sh
+        run: bash build_tools/github/install.sh
 
       # Enable global random seed randomization to discover seed-sensitive tests
       # only on nightly builds.
       # https://scikit-learn.org/stable/computing/parallelism.html#sklearn-tests-global-random-seed
       - name: Set random global random seed for nightly/manual runs
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-        shell: bash
         run: |
           SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$((RANDOM % 20))
           echo "SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$SKLEARN_TESTS_GLOBAL_RANDOM_SEED" >> $GITHUB_ENV
@@ -272,7 +270,6 @@ jobs:
       # https://scikit-learn.org/stable/computing/parallelism.html#sklearn-run-float32-tests
       - name: Run float32 tests for nightly/manual runs
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-        shell: bash
         run: |
           echo SKLEARN_RUN_FLOAT32_TESTS=1 >> $GITHUB_ENV
 
@@ -281,22 +278,22 @@ jobs:
           COMMIT_MESSAGE: ${{ needs.retrieve-commit-message.outputs.message }}
           SELECTED_TESTS: ${{ needs.retrieve-selected-tests.outputs.tests }}
           COVERAGE: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
-        run: bash -l build_tools/github/test_script.sh
+        run: bash build_tools/github/test_script.sh
 
       - name: Run doctests in .py and .rst files
-        run: bash -l build_tools/github/test_docs.sh
+        run: bash build_tools/github/test_docs.sh
         if: ${{ needs.retrieve-selected-tests.outputs.tests == ''}}
 
       - name: Run pytest soft dependency test
-        run: bash -l build_tools/github/test_pytest_soft_dependency.sh
+        run: bash build_tools/github/test_pytest_soft_dependency.sh
         if: ${{ env.CHECK_PYTEST_SOFT_DEPENDENCY == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
 
       - name: Combine coverage reports from parallel test runners
-        run: bash -l build_tools/github/combine_coverage_reports.sh
+        run: bash build_tools/github/combine_coverage_reports.sh
         if: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
 
       - name: Upload coverage report to Codecov
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v6
         if: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
         with:
           files: ./coverage.xml
@@ -305,7 +302,6 @@ jobs:
 
       - name: Update tracking issue
         if: ${{ always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')}}
-        shell: bash
         run: |
           set -ex
 
@@ -326,13 +322,15 @@ jobs:
     needs: [lint, retrieve-commit-message, retrieve-selected-tests]
     if: contains(needs.retrieve-commit-message.outputs.message, '[free-threaded]') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     env:
-      DISTRIB: conda-free-threaded
-      LOCK_FILE: build_tools/github/pylatest_free_threaded_linux-64_conda.lock
+      PIXI_ENVIRONMENT: free-threaded
       COVERAGE: false
       # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
       PYTEST_XDIST_VERSION: none
       # To be able to access the job name in the steps, it must be set as an env variable.
       JOB_NAME: *free-threaded-job-name
+    defaults:
+      run:
+        shell: bash -l {0}
     steps: *unit-tests-steps
 
   scipy-dev:
@@ -342,13 +340,81 @@ jobs:
     needs: [lint, retrieve-commit-message, retrieve-selected-tests]
     if: contains(needs.retrieve-commit-message.outputs.message, '[scipy-dev]') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     env:
-      DISTRIB: conda-pip-scipy-dev
-      LOCK_FILE: build_tools/github/pylatest_pip_scipy_dev_linux-64_conda.lock
+      PIXI_ENVIRONMENT: scipy-dev
       SKLEARN_WARNINGS_AS_ERRORS: 1
       CHECK_PYTEST_SOFT_DEPENDENCY: true
       # To be able to access the job name in the steps, it must be set as an env variable.
       JOB_NAME: *scipy-dev-job-name
+    defaults:
+      run:
+        shell: bash -l {0}
     steps: *unit-tests-steps
+
+  ubuntu-atlas:
+    # Linux environment to test that scikit-learn can be built against versions
+    # of numpy, scipy with ATLAS that comes with Ubuntu 24.04 Noble Numbat i.e.
+    # numpy 1.26.4 and scipy 1.11.4. This build deliberately uses the system
+    # packages installed with apt rather than a conda/pixi environment, so it
+    # keeps using the legacy pip lock file.
+    name: &ubuntu-atlas-job-name
+      Linux x86-64 ubuntu_atlas
+    runs-on: ubuntu-24.04
+    needs: [lint, retrieve-commit-message, retrieve-selected-tests]
+    env:
+      DISTRIB: ubuntu
+      LOCK_FILE: build_tools/github/ubuntu_atlas_lock.txt
+      COVERAGE: false
+      SKLEARN_TESTS_GLOBAL_RANDOM_SEED: 1  # non-default seed
+      JOB_NAME: *ubuntu-atlas-job-name
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Create cache for ccache
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ccache-v1-${{ env.JOB_NAME }}-${{ hashFiles('**/*.pyx*', '**/*.pxd*', '**/*.pxi*', '**/*.h', '**/*.c', '**/*.cpp', format('{0}', env.LOCK_FILE)) }}
+          restore-keys: ccache-${{ env.JOB_NAME }}
+
+      - name: Build scikit-learn
+        run: bash build_tools/github/install.sh
+
+      - name: Set random global random seed for nightly/manual runs
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: |
+          SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$((RANDOM % 20))
+          echo "SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$SKLEARN_TESTS_GLOBAL_RANDOM_SEED" >> $GITHUB_ENV
+
+      - name: Run float32 tests for nightly/manual runs
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: |
+          echo SKLEARN_RUN_FLOAT32_TESTS=1 >> $GITHUB_ENV
+
+      - name: Run tests
+        env:
+          COMMIT_MESSAGE: ${{ needs.retrieve-commit-message.outputs.message }}
+          SELECTED_TESTS: ${{ needs.retrieve-selected-tests.outputs.tests }}
+          COVERAGE: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
+        run: bash build_tools/github/test_script.sh
+
+      - name: Update tracking issue
+        if: ${{ always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')}}
+        run: |
+          set -ex
+
+          pip install defusedxml PyGithub
+          python maint_tools/update_tracking_issue.py \
+            ${{ secrets.BOT_GITHUB_TOKEN }} \
+            "$GITHUB_WORKFLOW $JOB_NAME" \
+            "$GITHUB_REPOSITORY" \
+            https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID \
+            --junit-file $TEST_DIR/$JUNITXML \
+            --auto-close false \
+            --job-name "$JOB_NAME"
 
   debian-32bit:
     name: &debian-32bit-job-name
@@ -364,22 +430,14 @@ jobs:
       JOB_NAME: *debian-32bit-job-name
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Create cache for ccache
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ${{ env.CCACHE_DIR }}
           key: ccache-v1-${{ env.JOB_NAME }}-${{ hashFiles('**/*.pyx*', '**/*.pxd*', '**/*.pxi*', '**/*.h', '**/*.c', '**/*.cpp', format('{0}', env.LOCK_FILE)) }}
           restore-keys: ccache-${{ env.JOB_NAME }}
-
-      - name: Set up conda
-        uses: conda-incubator/setup-miniconda@v4
-        if: ${{ startsWith(env.DISTRIB, 'conda') }}
-        with:
-          miniforge-version: latest
-          auto-activate: true
-          activate-environment: ""
 
       # Enable global random seed randomization to discover seed-sensitive tests
       # only on nightly builds.
@@ -455,7 +513,7 @@ jobs:
         if: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
 
       - name: Upload coverage report to Codecov
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v6
         if: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
         with:
           files: ./coverage.xml
@@ -483,9 +541,9 @@ jobs:
     name: Check all job statuses
     runs-on: ubuntu-latest
     if: always() && github.repository == 'scikit-learn/scikit-learn'
-    needs: [lint, unit-tests, debian-32bit, free-threaded, scipy-dev]
+    needs: [lint, unit-tests, ubuntu-atlas, debian-32bit, free-threaded, scipy-dev]
     steps:
-      - uses: re-actors/alls-green@release/v1
+      - uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # release/v1
         with:
           jobs: ${{ toJSON(needs) }}
           allowed-skips: free-threaded,scipy-dev

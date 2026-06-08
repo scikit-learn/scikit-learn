@@ -46,44 +46,20 @@ pre_python_environment_install() {
     fi
 }
 
-check_packages_dev_version() {
-    for package in $@; do
-        package_version=$(python -c "import $package; print($package.__version__)")
-        if [[ $package_version =~ ^[.0-9]+$ ]]; then
-            echo "$package is not a development version: $package_version"
-            exit 1
-        fi
-    done
-}
-
 python_environment_install_and_activate() {
-    if [[ "$DISTRIB" == "conda"* ]]; then
-        create_conda_environment_from_lock_file $VIRTUALENV $LOCK_FILE
-        activate_environment
-
-    elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
+    # Conda-based environments are now provisioned by pixi (see the
+    # ``[tool.pixi.*]`` section in pyproject.toml). When this script is run
+    # through ``pixi run`` the environment is already created and activated, so
+    # there is nothing to do here. The nightly/git development dependencies used
+    # by the scipy-dev build are likewise pinned in the pixi ``scipy-dev``
+    # environment instead of being installed at runtime.
+    #
+    # Only the apt-based builds (ubuntu_atlas and the debian-32 docker image)
+    # still rely on a plain virtualenv populated from a pip lock file.
+    if [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
         python3 -m venv --system-site-packages $VIRTUALENV
         activate_environment
         pip install -r "${LOCK_FILE}"
-
-    fi
-
-    # Install additional packages on top of the lock-file in specific cases
-    if [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
-        echo "Installing development dependency wheels"
-        dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
-        dev_packages="numpy scipy pandas"
-        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages --only-binary :all:
-
-        check_packages_dev_version $dev_packages
-
-        echo "Installing Cython from latest sources"
-        # NO_CYTHON_COMPILE=true installs Cython as a pure Python package (faster install)
-        NO_CYTHON_COMPILE=true pip install https://github.com/cython/cython/archive/master.zip
-        echo "Installing joblib from latest sources"
-        pip install https://github.com/joblib/joblib/archive/master.zip
-        echo "Installing pillow from latest sources"
-        pip install https://github.com/python-pillow/Pillow/archive/main.zip
     fi
 }
 

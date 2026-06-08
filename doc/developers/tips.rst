@@ -244,48 +244,42 @@ Debugging CI issues
 CI issues may arise for a variety of reasons, so this is by no means a
 comprehensive guide, but rather a list of useful tips and tricks.
 
-Using a lock-file to get an environment close to the CI
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Using the pixi lock-file to get an environment close to the CI
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-`conda-lock` can be used to create a conda environment with the exact same
-conda and pip packages as on the CI. For example, the following command will
-create a conda environment named `scikit-learn-doc` that is similar to the CI:
+Most CI environments are described in the ``[tool.pixi.*]`` section of
+``pyproject.toml`` and locked in ``pixi.lock``. You can recreate any of them
+locally with `pixi <https://pixi.sh>`_, which installs the exact same package
+versions as on the CI. For example, to enter a shell with the same packages as
+the documentation build (the ``doc`` environment):
 
 .. prompt:: bash $
 
-    conda-lock install -n scikit-learn-doc build_tools/circle/doc_linux-64_conda.lock
+    pixi shell --environment doc
+
+or to run a single command in that environment without activating a shell:
+
+.. prompt:: bash $
+
+    pixi run --environment doc python -c "import sklearn; sklearn.show_versions()"
+
+The available environment names are the keys of the
+``[tool.pixi.environments]`` table in ``pyproject.toml`` (e.g. ``mkl``, ``min``,
+``doc`` or ``doc-min``).
 
 .. note::
 
-    It only works if you have the same OS as the CI build (check `platform:` in
-    the lock-file). For example, the previous command will only work if you are
-    on a Linux machine. Also this may not allow you to reproduce some of the
-    issues that are more tied to the particularities of the CI environment, for
-    example CPU architecture reported by OpenBLAS in `sklearn.show_versions()`.
+    Each environment is only solved for the platforms declared in its feature
+    (check ``platforms`` in the corresponding ``[tool.pixi.feature.*]`` table).
+    For example, the ``doc`` environment is only solved for ``linux-64``, so
+    ``pixi`` will refuse to install it on another OS. Even with matching package
+    versions, this may not allow you to reproduce some issues that are tied to
+    the particularities of the CI environment, for example the CPU architecture
+    reported by OpenBLAS in ``sklearn.show_versions()``.
 
-If you don't have the same OS as the CI build you can still create a conda
-environment from the right environment yaml file, although it won't be as close
-as the CI environment as using the associated lock-file. For example for the
-doc build:
-
-.. prompt:: bash $
-
-    conda env create -n scikit-learn-doc -f build_tools/circle/doc_environment.yml -y
-
-This may not give you exactly the same package versions as in the CI for a
-variety of reasons, for example:
-
-- some packages may have had new releases between the time the lock files were
-  last updated in the `main` branch and the time you run the `conda create`
-  command. You can always try to look at the version in the lock-file and
-  specify the versions by hand for some specific packages that you think would
-  help reproducing the issue.
-- different packages may be installed by default depending on the OS. For
-  example, the default BLAS library when installing numpy is OpenBLAS on Linux
-  and MKL on Windows.
-
-Also the problem may be OS specific so the only way to be able to reproduce
-would be to have the same OS as the CI build.
+The ``ubuntu_atlas`` and ``debian_32bit`` builds do not use ``pixi``: they rely
+on system packages installed with apt together with a pip lock file under
+``build_tools/``.
 
 .. highlight:: default
 

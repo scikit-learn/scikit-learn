@@ -56,7 +56,7 @@ if [[ -n "$SELECTED_TESTS" ]]; then
     export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
 fi
 
-if [[ "$DISTRIB" == "conda-free-threaded" ]]; then
+if [[ "$DISTRIB" == "conda-free-threaded" || "$PIXI_ENVIRONMENT" == "free-threaded" ]]; then
     # Use pytest-run-parallel
     TEST_CMD="$TEST_CMD --parallel-threads $NUM_CORES --iterations 1"
 fi

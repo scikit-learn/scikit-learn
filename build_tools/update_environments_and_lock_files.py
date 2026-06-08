@@ -779,8 +779,6 @@ def main(select_build, skip_build, select_tag, verbose, very_verbose):
     if very_verbose:
         logger.setLevel(TRACE)
         handler.setLevel(TRACE)
-    check_conda_lock_version()
-    check_conda_version()
 
     filtered_build_metadata_list = [
         each for each in build_metadata_list if re.search(select_build, each["name"])
@@ -810,6 +808,12 @@ def main(select_build, skip_build, select_tag, verbose, very_verbose):
     ]
 
     if filtered_conda_build_metadata_list:
+        # conda-lock is only required when generating conda lock files. Checking
+        # it here (rather than unconditionally) lets the pip-only builds, e.g.
+        # ubuntu_atlas and debian_32bit, be updated without installing
+        # conda-lock.
+        check_conda_lock_version()
+        check_conda_version()
         logger.info("# Writing conda environments")
         write_all_conda_environments(filtered_conda_build_metadata_list)
         logger.info("# Writing conda lock files")
