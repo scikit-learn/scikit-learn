@@ -268,7 +268,7 @@ def test_init_transformation():
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 @pytest.mark.parametrize("init", ["lda", "pca", "random", "identity"])
 def test_init_sparse_matrix(csr_container, init):
-    # NCA any init other than "laa" should accept sparse input and produce
+    # NCA with any init other than "lda" should accept sparse input and produce
     # results consistent with those obtained on the equivalent dense matrix.
     rng = check_random_state(0)
     X = rng.randn(50, 10)
@@ -282,7 +282,10 @@ def test_init_sparse_matrix(csr_container, init):
     else:
         X_embedded_sparse = nca.fit_transform(csr_container(X), y)
         X_embedded_dense = nca.fit_transform(X, y)
+        sparse_components = nca.fit(csr_container(X), y).components_
+        dense_components = nca.fit(X, y).components_
         assert_allclose(X_embedded_sparse, X_embedded_dense, rtol=1e-6, atol=1e-6)
+        assert_allclose(sparse_components, dense_components)
 
 
 @pytest.mark.parametrize("n_samples", [3, 5, 7, 11])
