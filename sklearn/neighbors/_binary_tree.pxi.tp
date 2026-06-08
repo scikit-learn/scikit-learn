@@ -813,12 +813,6 @@ cdef class BinaryTree{{name_suffix}}:
     cdef DistanceMetric{{name_suffix}} dist_metric
     cdef int euclidean
 
-    # variables to keep track of building & querying stats
-    cdef int n_trims
-    cdef int n_leaves
-    cdef int n_splits
-    cdef int n_calls
-
     valid_metrics = VALID_METRIC_IDS{{name_suffix}}
 
     # Use cinit to initialize all arrays to empty: this will prevent memory
@@ -838,11 +832,6 @@ cdef class BinaryTree{{name_suffix}}:
         self.n_nodes = 0
 
         self.euclidean = False
-
-        self.n_trims = 0
-        self.n_leaves = 0
-        self.n_splits = 0
-        self.n_calls = 0
 
     def __init__(self, data,
                  leaf_size=40, metric='minkowski', sample_weight=None, **kwargs):
@@ -924,10 +913,6 @@ cdef class BinaryTree{{name_suffix}}:
                 int(self.leaf_size),
                 int(self.n_levels),
                 int(self.n_nodes),
-                int(self.n_trims),
-                int(self.n_leaves),
-                int(self.n_splits),
-                int(self.n_calls),
                 self.dist_metric,
                 sample_weight)
 
@@ -942,51 +927,13 @@ cdef class BinaryTree{{name_suffix}}:
         self.leaf_size = state[4]
         self.n_levels = state[5]
         self.n_nodes = state[6]
-        self.n_trims = state[7]
-        self.n_leaves = state[8]
-        self.n_splits = state[9]
-        self.n_calls = state[10]
-        self.dist_metric = state[11]
-        sample_weight = state[12]
+        self.dist_metric = state[7]
+        sample_weight = state[8]
 
         self.euclidean = (self.dist_metric.__class__.__name__
                           == 'EuclideanDistance64')
         n_samples = self.data.shape[0]
         self._update_sample_weight(n_samples, sample_weight)
-
-    def get_tree_stats(self):
-        """
-        get_tree_stats()
-
-        Get tree status.
-
-        Returns
-        -------
-        tree_stats: tuple of int
-            (number of trims, number of leaves, number of splits)
-        """
-        return (self.n_trims, self.n_leaves, self.n_splits)
-
-    def reset_n_calls(self):
-        """
-        reset_n_calls()
-
-        Reset number of calls to 0.
-        """
-        self.n_calls = 0
-
-    def get_n_calls(self):
-        """
-        get_n_calls()
-
-        Get number of calls.
-
-        Returns
-        -------
-        n_calls: int
-            number of distance computation calls
-        """
-        return self.n_calls
 
     def get_arrays(self):
         """
@@ -1009,7 +956,6 @@ cdef class BinaryTree{{name_suffix}}:
     cdef inline float64_t dist(self, const {{INPUT_DTYPE_t}}* x1, const {{INPUT_DTYPE_t}}* x2,
                              intp_t size) except -1 nogil:
         """Compute the distance between arrays x1 and x2"""
-        self.n_calls += 1
         if self.euclidean:
             return euclidean_dist{{name_suffix}}(x1, x2, size)
         else:
@@ -1024,7 +970,6 @@ cdef class BinaryTree{{name_suffix}}:
         relative rankings of the true distance.  For example, the reduced
         distance for the Euclidean metric is the squared-euclidean distance.
         """
-        self.n_calls += 1
         if self.euclidean:
             return euclidean_rdist{{name_suffix}}(x1, x2, size)
         else:
@@ -1154,10 +1099,6 @@ cdef class BinaryTree{{name_suffix}}:
 
         # bounds is needed for the dual tree algorithm
         cdef float64_t[::1] bounds
-
-        self.n_trims = 0
-        self.n_leaves = 0
-        self.n_splits = 0
 
         if dualtree:
             other = self.__class__(np_Xarr, metric=self.dist_metric,
@@ -1620,12 +1561,11 @@ cdef class BinaryTree{{name_suffix}}:
         # Case 1: query point is outside node radius:
         #         trim it from the query
         if reduced_dist_LB > heap.largest(i_pt):
-            self.n_trims += 1
+            pass
 
         # ------------------------------------------------------------
         # Case 2: this is a leaf node.  Update set of nearby points
         elif node_info.is_leaf:
-            self.n_leaves += 1
             for i in range(node_info.idx_start, node_info.idx_end):
                 dist_pt = self.rdist(pt,
                                      &self.data[self.idx_array[i], 0],
@@ -1636,7 +1576,6 @@ cdef class BinaryTree{{name_suffix}}:
         # Case 3: Node is not a leaf.  Recursively query subnodes
         #         starting with the closest
         else:
-            self.n_splits += 1
             i1 = 2 * i_node + 1
             i2 = i1 + 1
             reduced_dist_LB_1 = min_rdist{{name_suffix}}(self, i1, pt)
@@ -1684,12 +1623,11 @@ cdef class BinaryTree{{name_suffix}}:
             # Case 1: query point is outside node radius:
             #         trim it from the query
             if reduced_dist_LB > heap.largest(i_pt):
-                self.n_trims += 1
+                pass
 
             # ------------------------------------------------------------
             # Case 2: this is a leaf node.  Update set of nearby points
             elif node_data[i_node].is_leaf:
-                self.n_leaves += 1
                 for i in range(node_data[i_node].idx_start,
                                node_data[i_node].idx_end):
                     dist_pt = self.rdist(pt,
@@ -1700,7 +1638,6 @@ cdef class BinaryTree{{name_suffix}}:
             # ------------------------------------------------------------
             # Case 3: Node is not a leaf.  Add subnodes to the node heap
             else:
-                self.n_splits += 1
                 for i in range(2 * i_node + 1, 2 * i_node + 3):
                     nodeheap_item.i1 = i
                     nodeheap_item.val = min_rdist{{name_suffix}}(self, i, pt)

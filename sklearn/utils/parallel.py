@@ -8,6 +8,7 @@ usage.
 import functools
 import warnings
 from functools import update_wrapper
+from inspect import Signature
 
 import joblib
 from threadpoolctl import ThreadpoolController
@@ -51,6 +52,22 @@ class Parallel(joblib.Parallel):
     .. versionadded:: 1.3
     """
 
+    # If True, enable additional testing infrastructure: parallelization will
+    # always happen with thread pools, and thread safety will be tested.
+    _thread_safety_testing = False
+
+    def __init__(self, *args, **kwargs):
+        if self._thread_safety_testing:
+            # Try to force the threading backend for joblib:
+            bound = Signature.from_callable(super().__init__).bind(*args, **kwargs)
+            # Force threading:
+            bound.arguments["backend"] = "threading"
+            # Force result to a be list:
+            bound.arguments["return_as"] = "list"
+            args, kwargs = bound.args, bound.kwargs
+
+        super().__init__(*args, **kwargs)
+
     def __call__(self, iterable):
         """Dispatch the tasks and return the results.
 
@@ -80,6 +97,12 @@ class Parallel(joblib.Parallel):
             filters_func() if filters_func is not None else warnings.filters
         )
 
+        if self._thread_safety_testing:
+            from sklearn.utils._parallel_testing import DetectChanges
+
+            detect_changes = DetectChanges()
+            iterable = detect_changes.store_parallel_calls(iterable)
+
         iterable_with_config_and_warning_filters = (
             (
                 _with_config_and_warning_filters(delayed_func, config, warning_filters),
@@ -88,7 +111,18 @@ class Parallel(joblib.Parallel):
             )
             for delayed_func, args, kwargs in iterable
         )
-        return super().__call__(iterable_with_config_and_warning_filters)
+
+        result = super().__call__(iterable_with_config_and_warning_filters)
+
+        if self._thread_safety_testing:
+            # We forced result to be a list so we're guaranteed to have
+            # finished running all threaded code.
+            assert isinstance(result, list)
+            # For now only check objects that appear at least twice, meaning
+            # they were likely passed to multiple tasks in the thread pool:
+            detect_changes.assert_objects_unchanged(min_count=2)
+
+        return result
 
 
 # remove when https://github.com/joblib/joblib/issues/1071 is fixed
