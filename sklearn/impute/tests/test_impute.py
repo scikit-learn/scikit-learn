@@ -11,7 +11,6 @@ from scipy.stats import kstest
 from sklearn import tree
 from sklearn.datasets import load_diabetes
 from sklearn.dummy import DummyRegressor
-from sklearn.exceptions import ConvergenceWarning
 from sklearn.impute import IterativeImputer, KNNImputer, MissingIndicator, SimpleImputer
 from sklearn.impute._base import _most_frequent
 from sklearn.linear_model import ARDRegression, BayesianRidge, RidgeCV
@@ -1424,12 +1423,9 @@ def test_imputation_order(order, idx_order):
     X[:20, 2] = np.nan
     X[:10, 4] = np.nan
 
-    with pytest.warns(ConvergenceWarning):
-        trs = IterativeImputer(max_iter=1, imputation_order=order, random_state=0).fit(
-            X
-        )
-        idx = [x.feat_idx for x in trs.imputation_sequence_]
-        assert idx == idx_order
+    trs = IterativeImputer(max_iter=1, imputation_order=order, random_state=0).fit(X)
+    idx = [x.feat_idx for x in trs.imputation_sequence_]
+    assert idx == idx_order
 
 
 @pytest.mark.parametrize("missing_value", [-1, np.nan])

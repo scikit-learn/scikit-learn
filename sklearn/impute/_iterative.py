@@ -1,7 +1,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import warnings
 from collections import namedtuple
 from numbers import Integral, Real
 from time import time
@@ -10,7 +9,6 @@ import numpy as np
 from scipy import stats
 
 from sklearn.base import _fit_context, clone
-from sklearn.exceptions import ConvergenceWarning
 from sklearn.impute._base import SimpleImputer, _BaseImputer, _check_inputs_dtype
 from sklearn.preprocessing import normalize
 from sklearn.utils import _safe_indexing, check_array, check_random_state
@@ -863,12 +861,6 @@ class IterativeImputer(_BaseImputer):
                         print("[IterativeImputer] Early stopping criterion reached.")
                     break
                 Xt_previous = Xt.copy()
-        else:
-            if not self.sample_posterior:
-                warnings.warn(
-                    "[IterativeImputer] Early stopping criterion not reached.",
-                    ConvergenceWarning,
-                )
         _assign_where(Xt, X, cond=~mask_missing_values)
 
         return super()._concatenate_indicator(Xt, X_indicator)
