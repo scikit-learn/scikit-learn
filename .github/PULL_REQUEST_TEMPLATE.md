@@ -27,7 +27,8 @@ is merged. See https://github.com/blog/1506-closing-issues-via-pull-requests
 
 #### First time contributor introduction
 <!-- If you are new to the scikit-learn community, please introduce yourself. How do you
- use scikit-learn, what prompted you to make this contribution? Getting to know you helps us trust your judgement and welcome you into the community. 
+ use scikit-learn, what prompted you to make this contribution? Getting to know you
+ helps us build trust in your judgement and welcome you into the community. 
 -->
 
 
