@@ -138,48 +138,34 @@ def test_newton_cg_verbosity(capsys, verbose):
         for m in msg:
             assert m in captured.out
 
-        # Set up a badly conditioned Hessian that leads to tiny curvature.
-        # X.T @ X have singular values array([1.00000400e+01, 1.00008192e-11])
-        A = np.array([[1.0, 2], [1, 2 + 1e-15]])
-        b = np.array([-2.0, 1])
+        # Function with locally negative curvature at x0=b.
+        # f   = (x-2)*(x-1)*(x+1)*(x+4) + 2x
+        # f'  = 2 x (2 x^2 + 3 x - 9)
+        # f'' = 12 x^2 + 12 x - 18
+        # global min at x=-3, local max (saddlepoint) at x=0
+        # negative curvature between (-1-sqrt(7))/2 and (-1+sqrt(7))/2
+        b = np.array([(-1 + np.sqrt(7)) / 2 - 1e-2])  # point of negative curvature
         with pytest.warns(ConvergenceWarning):
             _newton_cg(
-                grad_hess=lambda x: (A @ x - b, lambda z: A @ z),
-                func=lambda x: 0.5 * x @ A @ x - b @ x,
-                grad=lambda x: A @ x - b,
+                grad_hess=lambda x: (
+                    2 * x * (2 * x**2 + 3 * x - 9),
+                    lambda z: (12 * x**2 + 12 * x - 18)[:, None] @ z,
+                ),
+                func=lambda x: ((x - 2) * (x - 1) * (x + 1) * (x + 4) + 2 * x)[0],
+                grad=lambda x: 2 * x * (2 * x**2 + 3 * x - 9),
                 x0=b,
                 verbose=verbose,
                 maxiter=2,
             )
         captured = capsys.readouterr()
         msg = [
-            "tiny_|p| = eps * ||p||^2",
+            "Inner CG solver iteration 0 detected a negative curvature",
+            "curvature at p < -eps * ||p||^2",
         ]
         for m in msg:
             assert m in captured.out
 
-        # Test for a case with negative Hessian.
-        # We do not trigger "Inner CG solver iteration {i} stopped with negative
-        # curvature", but that is very hard to trigger.
-        A = np.eye(2)
-        b = np.array([-2.0, 1])
-        with pytest.warns((RuntimeWarning, UserWarning)):
-            _newton_cg(
-                # Note the wrong sign in the hessian product.
-                grad_hess=lambda x: (A @ x - b, lambda z: -A @ z),
-                func=lambda x: 0.5 * x @ A @ x - b @ x,
-                grad=lambda x: A @ x - b,
-                x0=np.array([1.0, 1.0]),
-                verbose=verbose,
-                maxiter=3,
-            )
-        captured = capsys.readouterr()
-        msg = [
-            "Inner CG solver iteration 0 fell back to steepest descent",
-        ]
-        for m in msg:
-            assert m in captured.out
-
+        # Successful inner CG.
         A = np.diag([1e-3, 1, 1e3])
         b = np.array([-2.0, 1, 2.0])
         with pytest.warns(ConvergenceWarning):
@@ -193,9 +179,7 @@ def test_newton_cg_verbosity(capsys, verbose):
                 maxinner=1,
             )
         captured = capsys.readouterr()
-        msg = [
-            "Inner CG solver stopped reaching maxiter=1",
-        ]
+        msg = ["Inner CG solver stopped reaching maxiter=1"]
         for m in msg:
             assert m in captured.out
 
