@@ -1484,7 +1484,9 @@ class LogisticRegression(
         # callback logic.
         max_subtasks = max(self.max_iter, 1) + 1
         callback_ctx = self._init_callback_context(max_subtasks=max_subtasks)
-        callback_metadata = process_routing(self, "fit", **params)
+        callback_metadata = (
+            process_routing(self, "fit", **params) if _routing_enabled() else None
+        )
         callback_ctx.call_on_fit_task_begin(
             estimator=self,
             X=X,

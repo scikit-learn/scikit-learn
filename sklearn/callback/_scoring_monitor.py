@@ -97,15 +97,16 @@ class ScoringMonitorLog:
 
 def _convert_to_multiscorer(scoring):
     """Utility function to turn the scoring into a MultimetricScorer."""
+    from sklearn.metrics import check_scoring
     from sklearn.metrics._scorer import _BaseScorer
 
     if isinstance(scoring, str):
         if scoring in ("no_train_score", "no_val_score"):
             return scoring
-        return [scoring]
+        return check_scoring(scoring=[scoring])
     elif callable(scoring) and isinstance(scoring, _BaseScorer):
-        return {"score": scoring}
-    return scoring
+        return check_scoring(scoring={"score": scoring})
+    return check_scoring(scoring=scoring)
 
 
 class ScoringMonitor(_MetadataRequester):
@@ -174,22 +175,13 @@ class ScoringMonitor(_MetadataRequester):
                 "these values."
             )
         if scoring_val != "no_val_score":
-            if not _routing_enabled():
-                raise (
-                    ValueError(
-                        "Using a scorer on validation data in "
-                        f"{self.__class__.__name__} is only supported if "
-                        "enable_metadata_routing=True, which you can set using "
-                        "`sklearn.set_config`. See the User Guide "
-                        "<https://scikit-learn.org/stable/metadata_routing.html> for "
-                        "more details."
-                    )
-                )
             self.set_on_fit_task_end_request(X_val=True, y_val=True)
 
         # Turn the scorers into MultimetricScorer for convenience
-        self._scoring_train = _convert_to_multiscorer(scoring_train)
-        self._scoring_val = _convert_to_multiscorer(scoring_val)
+        self._scorers = {
+            "train": _convert_to_multiscorer(scoring_train),
+            "val": _convert_to_multiscorer(scoring_val),
+        }
 
         self._log = []
         self._estimator_scorers = {}
@@ -201,25 +193,26 @@ class ScoringMonitor(_MetadataRequester):
         self._listener_handle = open_listener(self._log.extend, owner=self)
 
     def setup(self, estimator, context):
+        if not _routing_enabled() and self._scorers["val"] != "no_val_score":
+            raise (
+                ValueError(
+                    "Using a scorer on validation data in "
+                    f"{self.__class__.__name__} is only supported when metadata "
+                    "routing is enabled. You can enable it using "
+                    "`sklearn.set_config(enable_metadata_routing=True)`. See the "
+                    "User Guide "
+                    "<https://scikit-learn.org/stable/metadata_routing.html> for "
+                    "more details on metadata routing."
+                )
+            )
         # A scorer per estimator is needed to avoid race conditions when the callback is
         # set on different estimators and the scorer is the estimator's default scorer.
-        if estimator not in self._estimator_scorers:
+        if estimator not in self._estimator_scorers and (
+            self._scorers["train"] is None or self._scorers["val"] is None
+        ):
             from sklearn.metrics import check_scoring
 
-            scorer_train = (
-                check_scoring(estimator, self._scoring_train)
-                if self._scoring_train != "no_train_score"
-                else None
-            )
-            scorer_val = (
-                check_scoring(estimator, self._scoring_val)
-                if self._scoring_val != "no_val_score"
-                else None
-            )
-            self._estimator_scorers[estimator] = {
-                "train": scorer_train,
-                "val": scorer_val,
-            }
+            self._estimator_scorers[estimator] = check_scoring(estimator)
 
     def teardown(self, estimator, context):
         self._estimator_scorers.pop(estimator, None)
@@ -268,21 +261,30 @@ class ScoringMonitor(_MetadataRequester):
             routed_params, X_val, y_val = None, None, None
         for dataset in ("train", "val"):
             data_X, data_y = (X, y) if dataset == "train" else (X_val, y_val)
-            scorer = self._estimator_scorers[estimator][dataset]
-            idx = list(self._estimator_scorers.keys()).index(estimator)
-            if data_X is not None and data_y is not None and scorer is not None:
+            if (
+                self._scorers[dataset] == f"no_{dataset}_score"
+                or data_X is None
+                or data_y is None
+            ):
+                continue
+
+            if self._scorers[dataset] is None:
+                scorer = self._estimator_scorers[estimator]
+                scorer_routed_params = {}
+            else:
+                scorer = self._scorers[dataset]
                 scorer_routed_params = (
-                    getattr(routed_params, f"scorer_estimator_{idx}_{dataset}").score
+                    getattr(routed_params, f"scorer_{dataset}").score
                     if routed_params is not None
                     else {}
                 )
-                scores = scorer(
-                    fitted_estimator,
-                    data_X,
-                    data_y,
-                    **scorer_routed_params,
-                )
-                send_package.append((run_id, run_info, task_info_path, dataset, scores))
+            scores = scorer(
+                fitted_estimator,
+                data_X,
+                data_y,
+                **scorer_routed_params,
+            )
+            send_package.append((run_id, run_info, task_info_path, dataset, scores))
 
         send(self._listener_handle, send_package)
 
@@ -294,19 +296,17 @@ class ScoringMonitor(_MetadataRequester):
 
     def get_metadata_routing(self):
         router = MetadataRouter(owner=self).add_self_request(self)
-        for i, estimator in enumerate(self._estimator_scorers):
-            for dataset in ("train", "val"):
-                if self._estimator_scorers[estimator][dataset] is not None:
-                    router.add(
-                        **{
-                            f"scorer_estimator_{i}_{dataset}": self._estimator_scorers[
-                                estimator
-                            ][dataset]
-                        },
-                        method_mapping=MethodMapping().add(
-                            caller="on_fit_task_end", callee="score"
-                        ),
-                    )
+        for dataset in ("train", "val"):
+            if (
+                self._scorers[dataset] is not None
+                and self._scorers[dataset] != f"no_{dataset}_score"
+            ):
+                router.add(
+                    **{f"scorer_{dataset}": self._scorers[dataset]},
+                    method_mapping=MethodMapping().add(
+                        caller="on_fit_task_end", callee="score"
+                    ),
+                )
         return router
 
     def set_on_fit_task_end_request(self, X_val, y_val):
