@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -euxo pipefail
+set -exo pipefail
 
 PROJECT_DIR="$1"
 LICENSE_FILE="$PROJECT_DIR/COPYING"
