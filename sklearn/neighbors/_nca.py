@@ -245,7 +245,6 @@ class NeighborhoodComponentsAnalysis(
             self,
             X,
             y,
-            ensure_min_samples=2,
             validate_separately=(
                 {"accept_sparse": True, "ensure_min_samples": 2},
                 {"accept_sparse": False, "ensure_2d": False},
