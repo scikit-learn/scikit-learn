@@ -455,7 +455,7 @@ METAESTIMATORS: list = [
         "estimator": "classifier",
         "estimator_name": "estimator",
         "estimator_routing_methods": ["fit"],
-        "filter_registry": {"predict": -1, "score": -1},
+        "filter_registry": {"predict": slice(-1, None), "score": slice(-1, None)},
         "cv_name": "cv",
         "cv_routing_methods": ["fit"],
         "scorer_name": "scoring",
@@ -593,6 +593,13 @@ def get_init_args(metaestimator_info, sub_estimator_consumes):
         kwargs[cv_name] = cv
     if "filter_registry" in metaestimator_info:
         filter_registry = metaestimator_info["filter_registry"]
+        for method_name, index in filter_registry.items():
+            if not isinstance(index, slice):
+                raise TypeError(
+                    f"`filter_registry` values must be slices, got {index!r} for "
+                    f"method {method_name!r}. Use e.g. `slice(-1, None)` to select "
+                    "the last fitted sub-estimator."
+                )
 
     return (
         kwargs,
