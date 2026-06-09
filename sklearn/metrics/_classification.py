@@ -73,7 +73,10 @@ def _check_zero_division(zero_division):
 
 def _check_replaced_undefined_by(replaced_undefined_by):
     """Validate and convert `replaced_undefined_by` to a usable float value."""
-    if isinstance(replaced_undefined_by, (int, float)) and replaced_undefined_by in [0, 1]:
+    if isinstance(replaced_undefined_by, (int, float)) and replaced_undefined_by in [
+        0,
+        1,
+    ]:
         return np.float64(replaced_undefined_by)
     else:  # np.isnan(replaced_undefined_by)
         return np.nan
@@ -140,9 +143,8 @@ def _check_targets(y_true, y_pred, sample_weight=None):
 
     if len(y_type) > 1:
         raise ValueError(
-            "Classification metrics can't handle a mix of {0} and {1} targets".format(
-                type_true, type_pred
-            )
+            f"Classification metrics can't handle a mix of "
+            f"{type_true} and {type_pred} targets"
         )
 
     # We can't have more than one value in y_type => The set is no more needed
@@ -150,7 +152,7 @@ def _check_targets(y_true, y_pred, sample_weight=None):
 
     # No metrics support "multiclass-multioutput" format
     if y_type not in ["binary", "multiclass", "multilabel-indicator"]:
-        raise ValueError("{0} is not supported".format(y_type))
+        raise ValueError(f"{y_type} is not supported")
 
     if y_type in ["binary", "multiclass"]:
         try:
@@ -165,9 +167,8 @@ def _check_targets(y_true, y_pred, sample_weight=None):
                 raise
 
     unique_labels_ = unique_labels(y_true, y_pred, ys_types={y_type})
-    if y_type == "binary":
-        if unique_labels_.shape[0] > 2:
-            y_type = "multiclass"
+    if y_type == "binary" and unique_labels_.shape[0] > 2:
+        y_type = "multiclass"
 
     xp, _ = get_namespace(y_true, y_pred)
     if y_type.startswith("multilabel"):
@@ -217,14 +218,14 @@ def _one_hot_encoding_multiclass_target(y_true, labels, target_xp, target_device
     if lb.classes_.shape[0] == 1:
         if labels is None:
             raise ValueError(
-                "y_true contains only one label ({0}). Please "
+                f"y_true contains only one label ({lb.classes_[0]}). Please "
                 "provide the list of all expected class labels explicitly through the "
-                "labels argument.".format(lb.classes_[0])
+                "labels argument."
             )
         else:
             raise ValueError(
                 "The labels array needs to contain at least two "
-                "labels, got {0}.".format(lb.classes_)
+                f"labels, got {lb.classes_}."
             )
 
     transformed_labels = lb.transform(y_true)
@@ -319,18 +320,17 @@ def _validate_multiclass_probabilistic_prediction(
         if labels is None:
             raise ValueError(
                 "y_true and y_prob contain different number of "
-                "classes: {0} vs {1}. Please provide the true "
+                f"classes: {transformed_labels.shape[1]} vs "
+                f"{y_prob.shape[1]}. Please provide the true "
                 "labels explicitly through the labels argument. "
                 "Classes found in "
-                "y_true: {2}".format(
-                    transformed_labels.shape[1], y_prob.shape[1], lb_classes
-                )
+                f"y_true: {lb_classes}"
             )
         else:
             raise ValueError(
                 "The number of classes in labels is different "
                 "from that in y_prob. Classes found in "
-                "labels: {0}".format(lb_classes)
+                f"labels: {lb_classes}"
             )
 
     return transformed_labels, y_prob
@@ -1937,18 +1937,20 @@ def _warn_prf(average, modifier, msg_start, result_size, replaced_undefined_by=n
         axis0, axis1 = axis1, axis0
     replaced_val = (
         "np.nan"
-        if (isinstance(replaced_undefined_by, float) and np.isnan(replaced_undefined_by))
+        if (
+            isinstance(replaced_undefined_by, float) and np.isnan(replaced_undefined_by)
+        )
         else str(replaced_undefined_by)
     )
     msg = (
-        "{0} ill-defined and being set to {1} {{0}} "
-        "no {2} {3}s. Use `replaced_undefined_by` parameter to control"
-        " this behavior.".format(msg_start, replaced_val, modifier, axis0)
+        f"{msg_start} ill-defined and being set to {replaced_val} {{0}} "
+        f"no {modifier} {axis0}s. Use `replaced_undefined_by` parameter to control"
+        " this behavior."
     )
     if result_size == 1:
         msg = msg.format("due to")
     else:
-        msg = msg.format("in {0}s with".format(axis1))
+        msg = msg.format(f"in {axis1}s with")
     warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
 
 
@@ -1965,12 +1967,11 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
     y_type, present_labels, y_true, y_pred, _ = _check_targets(y_true, y_pred)
     if average == "binary":
         if y_type == "binary":
-            if pos_label not in present_labels:
-                if len(present_labels) >= 2:
-                    raise ValueError(
-                        f"pos_label={pos_label} is not a valid label. It "
-                        f"should be one of {present_labels}"
-                    )
+            if pos_label not in present_labels and len(present_labels) >= 2:
+                raise ValueError(
+                    f"pos_label={pos_label} is not a valid label. It "
+                    f"should be one of {present_labels}"
+                )
             labels = [pos_label]
         else:
             average_options = list(average_options)
@@ -2236,10 +2237,22 @@ def precision_recall_fscore_support(
     # Divide, and on zero-division, set scores and/or warn according to
     # zero_division:
     precision = _prf_divide(
-        tp_sum, pred_sum, "precision", "predicted", average, warn_for, replaced_undefined_by=replaced_undefined_by
+        tp_sum,
+        pred_sum,
+        "precision",
+        "predicted",
+        average,
+        warn_for,
+        replaced_undefined_by=replaced_undefined_by,
     )
     recall = _prf_divide(
-        tp_sum, true_sum, "recall", "true", average, warn_for, replaced_undefined_by=replaced_undefined_by
+        tp_sum,
+        true_sum,
+        "recall",
+        "true",
+        average,
+        warn_for,
+        replaced_undefined_by=replaced_undefined_by,
     )
 
     if np.isposinf(beta):
@@ -3189,15 +3202,14 @@ def classification_report(
     if target_names is not None and len(labels) != len(target_names):
         if labels_given:
             warnings.warn(
-                "labels size, {0}, does not match size of target_names, {1}".format(
-                    len(labels), len(target_names)
-                )
+                f"labels size, {len(labels)}, does not match size of "
+                f"target_names, {len(target_names)}"
             )
         else:
             raise ValueError(
-                "Number of classes, {0}, does not match size of "
-                "target_names, {1}. Try specifying the labels "
-                "parameter".format(len(labels), len(target_names))
+                f"Number of classes, {len(labels)}, does not match size of "
+                f"target_names, {len(target_names)}. Try specifying the labels "
+                "parameter"
             )
     if target_names is None:
         target_names = ["%s" % l for l in labels]
@@ -3272,7 +3284,7 @@ def classification_report(
                 report += row_fmt.format(line_heading, *avg, width=width, digits=digits)
 
     if output_dict:
-        if "accuracy" in report_dict.keys():
+        if "accuracy" in report_dict:
             report_dict["accuracy"] = report_dict["accuracy"]["precision"]
         return report_dict
     else:
@@ -3391,7 +3403,7 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
             _average(y_true != y_pred, weights=sample_weight, normalize=True, xp=xp)
         )
     else:
-        raise ValueError("{0} is not supported".format(y_type))
+        raise ValueError(f"{y_type} is not supported")
 
 
 @validate_params(
