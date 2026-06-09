@@ -252,11 +252,6 @@ class NeighborhoodComponentsAnalysis(
             ),
         )
         check_classification_targets(y)
-        if issparse(X) and self.init not in ["pca", "random", "identity"]:
-            raise ValueError(
-                "Sparse input is only supported for init in "
-                "['pca', 'random', 'identity']"
-            )
         y = LabelEncoder().fit_transform(y)
 
         # Check the preferred dimensionality of the projected space
@@ -441,6 +436,11 @@ class NeighborhoodComponentsAnalysis(
                 elif init == "lda":
                     from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
+                    if issparse(X):
+                        raise ValueError(
+                            "Sparse input is only supported for init in "
+                            "['pca', 'random', 'identity']"
+                        )
                     lda = LinearDiscriminantAnalysis(n_components=n_components)
                     if self.verbose:
                         print("Finding most discriminative components... ", end="")
