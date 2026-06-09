@@ -21,6 +21,7 @@ _global_config = {
     "enable_metadata_routing": False,
     "skip_parameter_validation": False,
     "sparse_interface": "spmatrix",
+    "progressbar_by_default": True,
 }
 _threadlocal = threading.local()
 
@@ -73,6 +74,7 @@ def set_config(
     enable_metadata_routing=None,
     skip_parameter_validation=None,
     sparse_interface=None,
+    progressbar_by_default=None,
 ):
     """Set global scikit-learn configuration.
 
@@ -206,6 +208,12 @@ def set_config(
 
         .. versionadded:: 1.9
 
+    progressbar_by_default : bool, default=None
+        Use the ProgressBar callback by default for estimators that support callbacks,
+        when they have no callback registered. Global default: True.
+
+        .. versionadded:: 1.10
+
     See Also
     --------
     config_context : Context manager for global scikit-learn configuration.
@@ -243,6 +251,8 @@ def set_config(
         local_config["skip_parameter_validation"] = skip_parameter_validation
     if sparse_interface is not None:
         local_config["sparse_interface"] = sparse_interface
+    if progressbar_by_default is not None:
+        local_config["progressbar_by_default"] = progressbar_by_default
 
 
 @contextmanager
@@ -259,6 +269,7 @@ def config_context(
     enable_metadata_routing=None,
     skip_parameter_validation=None,
     sparse_interface=None,
+    progressbar_by_default=None,
 ):
     """Context manager to temporarily change the global scikit-learn configuration.
 
@@ -387,6 +398,12 @@ def config_context(
 
         .. versionadded:: 1.8
 
+    progressbar_by_default : bool, default=None
+        Use the ProgressBar callback by default for estimators that support callbacks,
+        when they have no callback registered. Global default: True.
+
+        .. versionadded:: 1.10
+
     Yields
     ------
     None.
@@ -427,6 +444,7 @@ def config_context(
         enable_metadata_routing=enable_metadata_routing,
         skip_parameter_validation=skip_parameter_validation,
         sparse_interface=sparse_interface,
+        progressbar_by_default=progressbar_by_default,
     )
 
     try:
