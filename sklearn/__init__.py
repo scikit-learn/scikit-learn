@@ -112,14 +112,309 @@ _submodules = [
     "compose",
 ]
 
-__all__ = _submodules + [
-    # Non-modules:
-    "clone",
-    "get_config",
-    "set_config",
-    "config_context",
-    "show_versions",
-]
+# Mapping from a public submodule to the estimators it exposes. This is used to
+# make all estimators lazily accessible from the top-level `sklearn` namespace
+# through the module-level `__getattr__` below, without eagerly importing every
+# submodule when `sklearn` is first imported.
+_estimators = {
+    "sklearn.calibration": [
+        "CalibratedClassifierCV",
+    ],
+    "sklearn.cluster": [
+        "AffinityPropagation",
+        "AgglomerativeClustering",
+        "Birch",
+        "BisectingKMeans",
+        "DBSCAN",
+        "FeatureAgglomeration",
+        "HDBSCAN",
+        "KMeans",
+        "MeanShift",
+        "MiniBatchKMeans",
+        "OPTICS",
+        "SpectralBiclustering",
+        "SpectralClustering",
+        "SpectralCoclustering",
+    ],
+    "sklearn.compose": [
+        "ColumnTransformer",
+        "TransformedTargetRegressor",
+    ],
+    "sklearn.covariance": [
+        "EllipticEnvelope",
+        "EmpiricalCovariance",
+        "GraphicalLasso",
+        "GraphicalLassoCV",
+        "LedoitWolf",
+        "MinCovDet",
+        "OAS",
+        "ShrunkCovariance",
+    ],
+    "sklearn.cross_decomposition": [
+        "CCA",
+        "PLSCanonical",
+        "PLSRegression",
+        "PLSSVD",
+    ],
+    "sklearn.decomposition": [
+        "DictionaryLearning",
+        "FactorAnalysis",
+        "FastICA",
+        "IncrementalPCA",
+        "KernelPCA",
+        "LatentDirichletAllocation",
+        "MiniBatchDictionaryLearning",
+        "MiniBatchNMF",
+        "MiniBatchSparsePCA",
+        "NMF",
+        "PCA",
+        "SparseCoder",
+        "SparsePCA",
+        "TruncatedSVD",
+    ],
+    "sklearn.discriminant_analysis": [
+        "LinearDiscriminantAnalysis",
+        "QuadraticDiscriminantAnalysis",
+    ],
+    "sklearn.dummy": [
+        "DummyClassifier",
+        "DummyRegressor",
+    ],
+    "sklearn.ensemble": [
+        "AdaBoostClassifier",
+        "AdaBoostRegressor",
+        "BaggingClassifier",
+        "BaggingRegressor",
+        "ExtraTreesClassifier",
+        "ExtraTreesRegressor",
+        "GradientBoostingClassifier",
+        "GradientBoostingRegressor",
+        "HistGradientBoostingClassifier",
+        "HistGradientBoostingRegressor",
+        "IsolationForest",
+        "RandomForestClassifier",
+        "RandomForestRegressor",
+        "RandomTreesEmbedding",
+        "StackingClassifier",
+        "StackingRegressor",
+        "VotingClassifier",
+        "VotingRegressor",
+    ],
+    "sklearn.feature_extraction": [
+        "DictVectorizer",
+        "FeatureHasher",
+    ],
+    "sklearn.feature_extraction.image": [
+        "PatchExtractor",
+    ],
+    "sklearn.feature_extraction.text": [
+        "CountVectorizer",
+        "HashingVectorizer",
+        "TfidfTransformer",
+        "TfidfVectorizer",
+    ],
+    "sklearn.feature_selection": [
+        "GenericUnivariateSelect",
+        "RFE",
+        "RFECV",
+        "SelectFdr",
+        "SelectFpr",
+        "SelectFromModel",
+        "SelectFwe",
+        "SelectKBest",
+        "SelectPercentile",
+        "SequentialFeatureSelector",
+        "VarianceThreshold",
+    ],
+    "sklearn.frozen": [
+        "FrozenEstimator",
+    ],
+    "sklearn.gaussian_process": [
+        "GaussianProcessClassifier",
+        "GaussianProcessRegressor",
+    ],
+    "sklearn.impute": [
+        "KNNImputer",
+        "MissingIndicator",
+        "SimpleImputer",
+    ],
+    "sklearn.isotonic": [
+        "IsotonicRegression",
+    ],
+    "sklearn.kernel_approximation": [
+        "AdditiveChi2Sampler",
+        "Nystroem",
+        "PolynomialCountSketch",
+        "RBFSampler",
+        "SkewedChi2Sampler",
+    ],
+    "sklearn.kernel_ridge": [
+        "KernelRidge",
+    ],
+    "sklearn.linear_model": [
+        "ARDRegression",
+        "BayesianRidge",
+        "ElasticNet",
+        "ElasticNetCV",
+        "GammaRegressor",
+        "HuberRegressor",
+        "Lars",
+        "LarsCV",
+        "Lasso",
+        "LassoCV",
+        "LassoLars",
+        "LassoLarsCV",
+        "LassoLarsIC",
+        "LinearRegression",
+        "LogisticRegression",
+        "LogisticRegressionCV",
+        "MultiTaskElasticNet",
+        "MultiTaskElasticNetCV",
+        "MultiTaskLasso",
+        "MultiTaskLassoCV",
+        "OrthogonalMatchingPursuit",
+        "OrthogonalMatchingPursuitCV",
+        "PassiveAggressiveClassifier",
+        "PassiveAggressiveRegressor",
+        "Perceptron",
+        "PoissonRegressor",
+        "QuantileRegressor",
+        "RANSACRegressor",
+        "Ridge",
+        "RidgeCV",
+        "RidgeClassifier",
+        "RidgeClassifierCV",
+        "SGDClassifier",
+        "SGDOneClassSVM",
+        "SGDRegressor",
+        "TheilSenRegressor",
+        "TweedieRegressor",
+    ],
+    "sklearn.manifold": [
+        "ClassicalMDS",
+        "Isomap",
+        "LocallyLinearEmbedding",
+        "MDS",
+        "SpectralEmbedding",
+        "TSNE",
+    ],
+    "sklearn.mixture": [
+        "BayesianGaussianMixture",
+        "GaussianMixture",
+    ],
+    "sklearn.model_selection": [
+        "FixedThresholdClassifier",
+        "GridSearchCV",
+        "RandomizedSearchCV",
+        "TunedThresholdClassifierCV",
+    ],
+    "sklearn.multiclass": [
+        "OneVsOneClassifier",
+        "OneVsRestClassifier",
+        "OutputCodeClassifier",
+    ],
+    "sklearn.multioutput": [
+        "ClassifierChain",
+        "MultiOutputClassifier",
+        "MultiOutputRegressor",
+        "RegressorChain",
+    ],
+    "sklearn.naive_bayes": [
+        "BernoulliNB",
+        "CategoricalNB",
+        "ComplementNB",
+        "GaussianNB",
+        "MultinomialNB",
+    ],
+    "sklearn.neighbors": [
+        "KNeighborsClassifier",
+        "KNeighborsRegressor",
+        "KNeighborsTransformer",
+        "KernelDensity",
+        "LocalOutlierFactor",
+        "NearestCentroid",
+        "NearestNeighbors",
+        "NeighborhoodComponentsAnalysis",
+        "RadiusNeighborsClassifier",
+        "RadiusNeighborsRegressor",
+        "RadiusNeighborsTransformer",
+    ],
+    "sklearn.neural_network": [
+        "BernoulliRBM",
+        "MLPClassifier",
+        "MLPRegressor",
+    ],
+    "sklearn.pipeline": [
+        "FeatureUnion",
+        "Pipeline",
+    ],
+    "sklearn.preprocessing": [
+        "Binarizer",
+        "FunctionTransformer",
+        "KBinsDiscretizer",
+        "KernelCenterer",
+        "LabelBinarizer",
+        "LabelEncoder",
+        "MaxAbsScaler",
+        "MinMaxScaler",
+        "MultiLabelBinarizer",
+        "Normalizer",
+        "OneHotEncoder",
+        "OrdinalEncoder",
+        "PolynomialFeatures",
+        "PowerTransformer",
+        "QuantileTransformer",
+        "RobustScaler",
+        "SplineTransformer",
+        "StandardScaler",
+        "TargetEncoder",
+    ],
+    "sklearn.random_projection": [
+        "GaussianRandomProjection",
+        "SparseRandomProjection",
+    ],
+    "sklearn.semi_supervised": [
+        "LabelPropagation",
+        "LabelSpreading",
+        "SelfTrainingClassifier",
+    ],
+    "sklearn.svm": [
+        "LinearSVC",
+        "LinearSVR",
+        "NuSVC",
+        "NuSVR",
+        "OneClassSVM",
+        "SVC",
+        "SVR",
+    ],
+    "sklearn.tree": [
+        "DecisionTreeClassifier",
+        "DecisionTreeRegressor",
+        "ExtraTreeClassifier",
+        "ExtraTreeRegressor",
+    ],
+}
+
+# Reverse mapping from an estimator name to the public submodule it lives in,
+# used by `__getattr__` to lazily import the estimator on first access.
+_estimator_to_module = {
+    estimator: module
+    for module, estimators in _estimators.items()
+    for estimator in estimators
+}
+
+__all__ = (
+    _submodules
+    + sorted(_estimator_to_module)
+    + [
+        # Non-modules:
+        "clone",
+        "get_config",
+        "set_config",
+        "config_context",
+        "show_versions",
+    ]
+)
 
 
 def __dir__():
@@ -129,6 +424,12 @@ def __dir__():
 def __getattr__(name):
     if name in _submodules:
         return _importlib.import_module(f"sklearn.{name}")
+    elif name in _estimator_to_module:
+        module = _importlib.import_module(_estimator_to_module[name])
+        estimator = getattr(module, name)
+        # Cache on the module so subsequent accesses bypass `__getattr__`.
+        globals()[name] = estimator
+        return estimator
     else:
         try:
             return globals()[name]

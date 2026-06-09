@@ -37,6 +37,7 @@ from sklearn.utils._testing import (
     _convert_container,
     assert_array_equal,
 )
+from sklearn.utils.discovery import all_estimators
 from sklearn.utils.validation import _check_n_features, validate_data
 
 
@@ -1138,3 +1139,24 @@ def test_param_is_default(default_value, test_value):
     estimator = make_estimator_with_param(default_value)(param=test_value)
     non_default = estimator._get_params_html().non_default
     assert "param" not in non_default
+
+
+def test_all_estimators_accessible_from_top_level():
+    """Check that every estimator is lazily importable from the top-level
+    ``sklearn`` namespace.
+
+    This guards the ``sklearn._estimators`` mapping against drifting out of sync
+    with :func:`sklearn.utils.discovery.all_estimators`.
+    """
+    for name, Estimator in all_estimators():
+        assert hasattr(sklearn, name), (
+            f"{name} is not accessible from the top-level `sklearn` namespace. "
+            "It should be added to the `sklearn._estimators` mapping in "
+            "`sklearn/__init__.py`."
+        )
+        assert getattr(sklearn, name) is Estimator
+
+    # `__dir__` should also expose the estimator names for discoverability.
+    sklearn_dir = dir(sklearn)
+    for name, _ in all_estimators():
+        assert name in sklearn_dir
