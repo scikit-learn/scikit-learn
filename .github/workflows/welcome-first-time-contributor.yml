@@ -37,7 +37,7 @@ jobs:
 
             To help get your contribution reviewed, please make sure that:
 
-            - You have filled out the [pull request template](https://github.com/scikit-learn/scikit-learn/blob/main/.github/PULL_REQUEST_TEMPLATE.md)
+            - You have filled out the [pull request template](https://github.com/scikit-learn/scikit-learn/blob/main/.github/PULL_REQUEST_TEMPLATE.md).
             - The pull request addresses an existing issue that is ready for
               contribution (e.g. not tagged as "Needs Triage", "Needs Decision", ...).
               If you are proposing a new feature, please open an issue to discuss it first.
