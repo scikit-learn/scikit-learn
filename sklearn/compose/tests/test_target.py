@@ -6,6 +6,7 @@ import pytest
 from sklearn import config_context, datasets
 from sklearn.base import BaseEstimator, TransformerMixin, clone
 from sklearn.compose import TransformedTargetRegressor
+from sklearn.datasets import make_regression
 from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import LinearRegression, OrthogonalMatchingPursuit
 from sklearn.pipeline import Pipeline
@@ -437,3 +438,11 @@ def test_transform_target_regressor_preserves_input_shape(ndim):
 
     regr = TransformedTargetRegressor(regressor=ValidateDimensionRegressor(ndim))
     regr.fit(X, y)
+
+
+@config_context(enable_metadata_routing=True)
+def test_transform_target_regressor_metadata_routing_default_estimator():
+    """Test that metadata request is set on the default regressor"""
+    X, y = make_regression()
+    ttr = TransformedTargetRegressor()
+    ttr.fit(X, y, sample_weight=np.empty(shape=(X.shape[0],)))
