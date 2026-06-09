@@ -1115,7 +1115,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             # 2. Set nan input to 0.
             if nan_row_indices.shape[0] > 0:
                 if self.sparse_output:
-                    # Note: See comment about SparseEfficiencyWarning below.
+                    # Note: See comment about SparseEfficiencyWarning above.
                     XBS_sparse = XBS_sparse.tolil()
                     XBS_sparse[nan_row_indices, :] = 0
                 else:
