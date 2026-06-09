@@ -374,4 +374,3 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             method_mapping=MethodMapping().add(caller="fit", callee="score"),
         )
         return router
-    

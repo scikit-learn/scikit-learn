@@ -377,4 +377,3 @@ def test_dataframe_with_non_numeric_features(direction):
     assert sfs.n_features_in_ == X.shape[1]
     assert_array_equal(sfs.feature_names_in_, X.columns)
     assert sfs.n_features_to_select_ == 2
-    
