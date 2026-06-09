@@ -218,6 +218,12 @@ class DecisionBoundaryDisplay:
         .. versionadded:: 1.10
             `multiclass_colors` was renamed to `target_colors`
 
+    xlabel : str, default=None
+        Default label to place on x axis.
+
+    ylabel : str, default=None
+        Default label to place on y axis.
+
     multiclass_colors : str or list of matplotlib colors, default=None
         Specifies how to color each class when plotting all classes of
         :term:`multiclass` problems.
@@ -255,12 +261,6 @@ class DecisionBoundaryDisplay:
             `multiclass_colors` was renamed to `target_colors` in 1.10 and will be
             removed in 1.12.
 
-    xlabel : str, default=None
-        Default label to place on x axis.
-
-    ylabel : str, default=None
-        Default label to place on y axis.
-
     Attributes
     ----------
     surface_ : matplotlib `QuadContourSet` or `QuadMesh` or list of such objects
@@ -276,6 +276,12 @@ class DecisionBoundaryDisplay:
         .. versionadded:: 1.10
             `multiclass_colors_` was renamed to `target_colors_`
 
+    ax_ : matplotlib Axes
+        Axes with decision boundary.
+
+    figure_ : matplotlib Figure
+        Figure containing the decision boundary.
+
     multiclass_colors_ : array of shape (n_classes, 4)
         Colors used to plot each class in multiclass problems.
         Only defined when `n_classes` > 2.
@@ -284,12 +290,6 @@ class DecisionBoundaryDisplay:
         .. deprecated:: 1.10
             `multiclass_colors_` was renamed to `target_colors_` in 1.10 and will be
             removed in 1.12.
-
-    ax_ : matplotlib Axes
-        Axes with decision boundary.
-
-    figure_ : matplotlib Figure
-        Figure containing the decision boundary.
 
     See Also
     --------
@@ -554,10 +554,10 @@ class DecisionBoundaryDisplay:
         response_method="auto",
         class_of_interest=None,
         target_colors=None,
-        multiclass_colors="deprecated",  # TODO(1.12): remove
         xlabel=None,
         ylabel=None,
         ax=None,
+        multiclass_colors="deprecated",  # TODO(1.12): remove
         **kwargs,
     ):
         """Plot decision boundary given an estimator.
@@ -638,6 +638,20 @@ class DecisionBoundaryDisplay:
             .. versionadded:: 1.10
                 `multiclass_colors` was renamed to `target_colors`
 
+        xlabel : str, default=None
+            The label used for the x-axis. If `None`, an attempt is made to
+            extract a label from `X` if it is a dataframe, otherwise an empty
+            string is used.
+
+        ylabel : str, default=None
+            The label used for the y-axis. If `None`, an attempt is made to
+            extract a label from `X` if it is a dataframe, otherwise an empty
+            string is used.
+
+        ax : Matplotlib axes, default=None
+            Axes object to plot on. If `None`, a new figure and axes is
+            created.
+
         multiclass_colors : str or list of matplotlib colors, default=None
             Specifies how to color each class when plotting all classes of
             :term:`multiclass` problems.
@@ -674,20 +688,6 @@ class DecisionBoundaryDisplay:
             .. deprecated:: 1.10
                 `multiclass_colors` was renamed to `target_colors` in 1.10 and will be
                 removed in 1.12.
-
-        xlabel : str, default=None
-            The label used for the x-axis. If `None`, an attempt is made to
-            extract a label from `X` if it is a dataframe, otherwise an empty
-            string is used.
-
-        ylabel : str, default=None
-            The label used for the y-axis. If `None`, an attempt is made to
-            extract a label from `X` if it is a dataframe, otherwise an empty
-            string is used.
-
-        ax : Matplotlib axes, default=None
-            Axes object to plot on. If `None`, a new figure and axes is
-            created.
 
         **kwargs : dict
             Additional keyword arguments to be passed to the `plot_method`.
