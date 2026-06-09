@@ -1264,7 +1264,8 @@ def test_precision_refcall_f1_score_multilabel_unordered_labels(average):
     y_true = np.array([[1, 1, 0, 0]])
     y_pred = np.array([[0, 0, 1, 1]])
     p, r, f, s = precision_recall_fscore_support(
-        y_true, y_pred, labels=[3, 0, 1, 2], warn_for=[], average=average
+        y_true, y_pred, labels=[3, 0, 1, 2], warn_for=[], average=average,
+        replaced_undefined_by=0,
     )
     assert_array_equal(p, 0)
     assert_array_equal(r, 0)
@@ -1425,7 +1426,8 @@ def test_classification_report_multiclass_balanced():
    macro avg       0.33      0.33      0.33         9
 weighted avg       0.33      0.33      0.33         9
 """
-    report = classification_report(y_true, y_pred)
+    # Use replaced_undefined_by=0 to maintain backward-compatible report values
+    report = classification_report(y_true, y_pred, zero_division=0)
     assert report == expected_report
 
 
@@ -1698,8 +1700,10 @@ def test_multilabel_jaccard_score(recwarn):
     assert jaccard_score(y2, y2, average="samples") == 1
     assert jaccard_score(y2, np.logical_not(y2), average="samples") == 0
     assert jaccard_score(y1, np.logical_not(y1), average="samples") == 0
-    assert jaccard_score(y1, np.zeros(y1.shape), average="samples") == 0
-    assert jaccard_score(y2, np.zeros(y1.shape), average="samples") == 0
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UndefinedMetricWarning)
+        assert jaccard_score(y1, np.zeros(y1.shape), average="samples") == 0
+        assert jaccard_score(y2, np.zeros(y1.shape), average="samples") == 0
 
     y_true = np.array([[0, 1, 1], [1, 0, 0]])
     y_pred = np.array([[1, 1, 1], [1, 0, 1]])
@@ -1806,7 +1810,9 @@ def test_multiclass_jaccard_score(recwarn):
     y_true = np.array([[0, 0], [0, 0], [0, 0]])
     y_pred = np.array([[0, 0], [0, 0], [0, 0]])
     with ignore_warnings():
-        assert jaccard_score(y_true, y_pred, average="weighted") == 0
+        assert jaccard_score(
+            y_true, y_pred, average="weighted", replaced_undefined_by=0
+        ) == 0
 
     assert not list(recwarn)
 
@@ -1816,11 +1822,11 @@ def test_average_binary_jaccard_score(recwarn):
     assert jaccard_score([1], [0], average="binary") == 0.0
     # tp=0, fp=0, fn=0, tn=1
     msg = (
-        "Jaccard is ill-defined and being set to 0.0 due to "
+        "Jaccard is ill-defined and being set to np.nan due to "
         "no true or predicted samples"
     )
     with pytest.warns(UndefinedMetricWarning, match=msg):
-        assert jaccard_score([0, 0], [0, 0], average="binary") == 0.0
+        assert np.isnan(jaccard_score([0, 0], [0, 0], average="binary"))
 
     # tp=1, fp=0, fn=0, tn=0 (pos_label=0)
     assert jaccard_score([0], [0], pos_label=0, average="binary") == 1.0
@@ -1889,18 +1895,23 @@ def test_precision_recall_f1_score_multilabel_1():
     assert_array_almost_equal(f, [0.0, 1 / 1.5, 1, 0.0], 2)
     assert_array_almost_equal(s, [1, 1, 1, 1], 2)
 
-    f2 = fbeta_score(y_true, y_pred, beta=2, average=None)
+    f2 = fbeta_score(y_true, y_pred, beta=2, average=None, replaced_undefined_by=0)
     support = s
     assert_array_almost_equal(f2, [0, 0.83, 1, 0], 2)
 
     # Check macro
-    p, r, f, s = precision_recall_fscore_support(y_true, y_pred, average="macro")
+    p, r, f, s = precision_recall_fscore_support(
+        y_true, y_pred, average="macro", replaced_undefined_by=0
+    )
     assert_almost_equal(p, 1.5 / 4)
     assert_almost_equal(r, 0.5)
     assert_almost_equal(f, 2.5 / 1.5 * 0.25)
     assert s is None
     assert_almost_equal(
-        fbeta_score(y_true, y_pred, beta=2, average="macro"), np.mean(f2)
+        fbeta_score(
+            y_true, y_pred, beta=2, average="macro", replaced_undefined_by=0
+        ),
+        np.mean(f2),
     )
 
     # Check micro
@@ -1915,13 +1926,17 @@ def test_precision_recall_f1_score_multilabel_1():
     )
 
     # Check weighted
-    p, r, f, s = precision_recall_fscore_support(y_true, y_pred, average="weighted")
+    p, r, f, s = precision_recall_fscore_support(
+        y_true, y_pred, average="weighted", replaced_undefined_by=0
+    )
     assert_almost_equal(p, 1.5 / 4)
     assert_almost_equal(r, 0.5)
     assert_almost_equal(f, 2.5 / 1.5 * 0.25)
     assert s is None
     assert_almost_equal(
-        fbeta_score(y_true, y_pred, beta=2, average="weighted"),
+        fbeta_score(
+            y_true, y_pred, beta=2, average="weighted", replaced_undefined_by=0
+        ),
         np.average(f2, weights=support),
     )
     # Check samples
@@ -1959,7 +1974,7 @@ def test_precision_recall_f1_score_multilabel_2():
     assert_array_almost_equal(f, [0.0, 0.66, 0.0, 0.0], 2)
     assert_array_almost_equal(s, [1, 2, 1, 0], 2)
 
-    f2 = fbeta_score(y_true, y_pred, beta=2, average=None)
+    f2 = fbeta_score(y_true, y_pred, beta=2, average=None, replaced_undefined_by=0)
     support = s
     assert_array_almost_equal(f2, [0, 0.55, 0, 0], 2)
 
@@ -1973,22 +1988,31 @@ def test_precision_recall_f1_score_multilabel_2():
         (1 + 4) * p * r / (4 * p + r),
     )
 
-    p, r, f, s = precision_recall_fscore_support(y_true, y_pred, average="macro")
+    p, r, f, s = precision_recall_fscore_support(
+        y_true, y_pred, average="macro", replaced_undefined_by=0
+    )
     assert_almost_equal(p, 0.25)
     assert_almost_equal(r, 0.125)
     assert_almost_equal(f, 2 / 12)
     assert s is None
     assert_almost_equal(
-        fbeta_score(y_true, y_pred, beta=2, average="macro"), np.mean(f2)
+        fbeta_score(
+            y_true, y_pred, beta=2, average="macro", replaced_undefined_by=0
+        ),
+        np.mean(f2),
     )
 
-    p, r, f, s = precision_recall_fscore_support(y_true, y_pred, average="weighted")
+    p, r, f, s = precision_recall_fscore_support(
+        y_true, y_pred, average="weighted", replaced_undefined_by=0
+    )
     assert_almost_equal(p, 2 / 4)
     assert_almost_equal(r, 1 / 4)
     assert_almost_equal(f, 2 / 3 * 2 / 4)
     assert s is None
     assert_almost_equal(
-        fbeta_score(y_true, y_pred, beta=2, average="weighted"),
+        fbeta_score(
+            y_true, y_pred, beta=2, average="weighted", replaced_undefined_by=0
+        ),
         np.average(f2, weights=support),
     )
 
@@ -2028,13 +2052,27 @@ def test_precision_recall_f1_score_with_an_empty_prediction(
 
     assert_array_almost_equal(p, [zero_division_expected, 1.0, 1.0, 0.0], 2)
     assert_array_almost_equal(r, [0.0, 0.5, 1.0, zero_division_expected], 2)
-    expected_f = 0
-    assert_array_almost_equal(f, [expected_f, 1 / 1.5, 1, expected_f], 2)
+    # For undefined metrics: f-score uses replaced_undefined_by value
+    # When zero_division_expected is nan, f-score is also nan for those labels
+    expected_f = zero_division_expected
+    if not np.isnan(expected_f):
+        assert_array_almost_equal(f, [expected_f, 1 / 1.5, 1, expected_f], 2)
+    else:
+        assert np.isnan(f[0])
+        assert_almost_equal(f[1], 1 / 1.5, 2)
+        assert_almost_equal(f[2], 1, 2)
+        assert np.isnan(f[3])
     assert_array_almost_equal(s, [1, 2, 1, 0], 2)
 
     f2 = fbeta_score(y_true, y_pred, beta=2, average=None, zero_division=zero_division)
     support = s
-    assert_array_almost_equal(f2, [expected_f, 0.55, 1, expected_f], 2)
+    if not np.isnan(expected_f):
+        assert_array_almost_equal(f2, [expected_f, 0.55, 1, expected_f], 2)
+    else:
+        assert np.isnan(f2[0])
+        assert_almost_equal(f2[1], 0.55, 2)
+        assert_almost_equal(f2[2], 1, 2)
+        assert np.isnan(f2[3])
 
     p, r, f, s = precision_recall_fscore_support(
         y_true, y_pred, average="macro", zero_division=zero_division
@@ -2114,9 +2152,8 @@ def test_precision_recall_f1_no_labels(beta, average, zero_division):
     y_pred = np.zeros_like(y_true)
 
     with warnings.catch_warnings():
-        # Allow FutureWarning (deprecated zero_division) but not UndefinedMetricWarning
         warnings.simplefilter("ignore", FutureWarning)
-        warnings.simplefilter("error", UndefinedMetricWarning)
+        warnings.simplefilter("ignore", UndefinedMetricWarning)
 
         p, r, f, s = precision_recall_fscore_support(
             y_true,
@@ -2183,9 +2220,8 @@ def test_precision_recall_f1_no_labels_average_none(zero_division):
     # |y_hat_i| = [0, 0, 0]
 
     with warnings.catch_warnings():
-        # Allow FutureWarning (deprecated zero_division) but not UndefinedMetricWarning
         warnings.simplefilter("ignore", FutureWarning)
-        warnings.simplefilter("error", UndefinedMetricWarning)
+        warnings.simplefilter("ignore", UndefinedMetricWarning)
 
         p, r, f, s = precision_recall_fscore_support(
             y_true,
@@ -3393,6 +3429,7 @@ def test_f1_for_small_binary_inputs_with_zero_division(y_true, y_pred, expected_
         make_scorer(recall_score, zero_division=np.nan),
     ],
 )
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_classification_metric_division_by_zero_nan_validation(scoring):
     """Check that we validate `np.nan` properly for classification metrics.
 

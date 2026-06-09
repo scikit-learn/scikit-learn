@@ -1577,6 +1577,16 @@ def f1_score(
         .. versionadded:: 1.3
            `np.nan` option was added.
 
+        .. deprecated:: 1.10
+            Use ``replaced_undefined_by`` instead. This parameter will be
+            removed in version 1.12.
+
+    replaced_undefined_by : {0.0, 1.0, np.nan}, default=np.nan
+        Replaces the metric value for labels with no true or predicted samples.
+        If set to ``np.nan``, such values are excluded from averages.
+
+        .. versionadded:: 1.10
+
     Returns
     -------
     f1_score : float or array of float, shape = [n_unique_labels]
@@ -1788,6 +1798,16 @@ def fbeta_score(
 
         .. versionadded:: 1.3
            `np.nan` option was added.
+
+        .. deprecated:: 1.10
+            Use ``replaced_undefined_by`` instead. This parameter will be
+            removed in version 1.12.
+
+    replaced_undefined_by : {0.0, 1.0, np.nan}, default=np.nan
+        Replaces the metric value for labels with no true or predicted samples.
+        If set to ``np.nan``, such values are excluded from averages.
+
+        .. versionadded:: 1.10
 
     Returns
     -------
@@ -2137,6 +2157,16 @@ def precision_recall_fscore_support(
 
         .. versionadded:: 1.3
            `np.nan` option was added.
+
+        .. deprecated:: 1.10
+            Use ``replaced_undefined_by`` instead. This parameter will be
+            removed in version 1.12.
+
+    replaced_undefined_by : {0.0, 1.0, np.nan}, default=np.nan
+        Replaces the metric value for labels with no true or predicted samples.
+        If set to ``np.nan``, such values are excluded from averages.
+
+        .. versionadded:: 1.10
 
     Returns
     -------
@@ -2678,6 +2708,16 @@ def precision_score(
         .. versionadded:: 1.3
            `np.nan` option was added.
 
+        .. deprecated:: 1.10
+            Use ``replaced_undefined_by`` instead. This parameter will be
+            removed in version 1.12.
+
+    replaced_undefined_by : {0.0, 1.0, np.nan}, default=np.nan
+        Replaces the metric value for labels with no true or predicted samples.
+        If set to ``np.nan``, such values are excluded from averages.
+
+        .. versionadded:: 1.10
+
     Returns
     -------
     precision : float (if average is not None) or array of float of shape \
@@ -2865,6 +2905,16 @@ def recall_score(
 
         .. versionadded:: 1.3
            `np.nan` option was added.
+
+        .. deprecated:: 1.10
+            Use ``replaced_undefined_by`` instead. This parameter will be
+            removed in version 1.12.
+
+    replaced_undefined_by : {0.0, 1.0, np.nan}, default=np.nan
+        Replaces the metric value for labels with no true or predicted samples.
+        If set to ``np.nan``, such values are excluded from averages.
+
+        .. versionadded:: 1.10
 
     Returns
     -------
@@ -3112,6 +3162,16 @@ def classification_report(
 
         .. versionadded:: 1.3
            `np.nan` option was added.
+
+        .. deprecated:: 1.10
+            Use ``replaced_undefined_by`` instead. This parameter will be
+            removed in version 1.12.
+
+    replaced_undefined_by : {0.0, 1.0, np.nan}, default=np.nan
+        Replaces the metric value for labels with no true or predicted samples.
+        If set to ``np.nan``, such values are excluded from averages.
+
+        .. versionadded:: 1.10
 
     Returns
     -------

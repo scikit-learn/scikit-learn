@@ -2489,7 +2489,7 @@ def test_metric_at_thresholds_pos_label(pos_label):
         y_true,
         y_score,
         precision_score,
-        metric_params={"pos_label": pos_label, "zero_division": 0},
+        metric_params={"pos_label": pos_label, "replaced_undefined_by": 0},
     )
 
     expected_scores = []
@@ -2598,7 +2598,7 @@ def test_metric_at_thresholds_with_nan_outputs():
     y_score = np.array([0.1, 0.2, 0.3, 0.4, 0.5])
 
     metric_values, _ = metric_at_thresholds(
-        y_true, y_score, recall_score, metric_params={"zero_division": np.nan}
+        y_true, y_score, recall_score, metric_params={"replaced_undefined_by": np.nan}
     )
 
     assert np.all(np.isnan(metric_values))

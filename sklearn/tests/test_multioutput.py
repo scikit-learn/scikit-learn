@@ -560,8 +560,10 @@ def test_classifier_chain_vs_independent_models():
     chain.fit(X_train, Y_train)
     Y_pred_chain = chain.predict(X_test)
 
-    assert jaccard_score(Y_test, Y_pred_chain, average="samples") > jaccard_score(
-        Y_test, Y_pred_ovr, average="samples"
+    assert jaccard_score(
+        Y_test, Y_pred_chain, average="samples", replaced_undefined_by=0
+    ) > jaccard_score(
+        Y_test, Y_pred_ovr, average="samples", replaced_undefined_by=0
     )
 
 
@@ -663,7 +665,7 @@ def test_base_chain_crossval_fit_and_predict(chain_type, chain_method):
     assert Y_pred_cv.shape == Y_pred.shape
     assert not np.all(Y_pred == Y_pred_cv)
     if isinstance(chain, ClassifierChain):
-        assert jaccard_score(Y, Y_pred_cv, average="samples") > 0.4
+        assert jaccard_score(Y, Y_pred_cv, average="samples", replaced_undefined_by=0) > 0.4
     else:
         assert mean_squared_error(Y, Y_pred_cv) < 0.25
 
