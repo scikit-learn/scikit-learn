@@ -178,17 +178,17 @@ def test_plot_partial_dependence_kind(
 @pytest.mark.parametrize(
     "input_type, feature_names_type",
     [
-        ("dataframe", None),
-        ("dataframe", "list"),
+        ("pandas", None),
+        ("pandas", "list"),
         ("list", "list"),
         ("array", "list"),
-        ("dataframe", "array"),
+        ("pandas", "array"),
         ("list", "array"),
         ("array", "array"),
-        ("dataframe", "series"),
+        ("pandas", "series"),
         ("list", "series"),
         ("array", "series"),
-        ("dataframe", "index"),
+        ("pandas", "index"),
         ("list", "index"),
         ("array", "index"),
     ],
@@ -205,13 +205,9 @@ def test_plot_partial_dependence_str_features(
     age = diabetes.data[:, diabetes.feature_names.index("age")]
     bmi = diabetes.data[:, diabetes.feature_names.index("bmi")]
 
-    if input_type == "dataframe":
-        pd = pytest.importorskip("pandas")
-        X = pd.DataFrame(diabetes.data, columns=diabetes.feature_names)
-    elif input_type == "list":
-        X = diabetes.data.tolist()
-    else:
-        X = diabetes.data
+    X = _convert_container(
+        diabetes.data, input_type, column_names=diabetes.feature_names
+    )
 
     if feature_names_type is None:
         feature_names = None
@@ -803,7 +799,7 @@ def test_plot_partial_dependence_does_not_override_ylabel(
 @pytest.mark.parametrize(
     "categorical_features, array_type",
     [
-        (["col_A", "col_C"], "dataframe"),
+        (["col_A", "col_C"], "pandas"),
         ([0, 2], "array"),
         ([True, False, True], "array"),
     ],
@@ -812,8 +808,8 @@ def test_plot_partial_dependence_with_categorical(
     pyplot, categorical_features, array_type
 ):
     X = [[1, 1, "A"], [2, 0, "C"], [3, 2, "B"]]
-    column_name = ["col_A", "col_B", "col_C"]
-    X = _convert_container(X, array_type, columns_name=column_name)
+    column_names = ["col_A", "col_B", "col_C"]
+    X = _convert_container(X, array_type, column_names=column_names)
     y = np.array([1.2, 0.5, 0.45]).T
 
     preprocessor = make_column_transformer((OneHotEncoder(), categorical_features))
@@ -825,7 +821,7 @@ def test_plot_partial_dependence_with_categorical(
         model,
         X,
         features=["col_C"],
-        feature_names=column_name,
+        feature_names=column_names,
         categorical_features=categorical_features,
     )
 
@@ -847,7 +843,7 @@ def test_plot_partial_dependence_with_categorical(
         model,
         X,
         features=[("col_A", "col_C")],
-        feature_names=column_name,
+        feature_names=column_names,
         categorical_features=categorical_features,
     )
 
@@ -985,7 +981,7 @@ def test_partial_dependence_overwrite_labels(
 @pytest.mark.parametrize(
     "categorical_features, array_type",
     [
-        (["col_A", "col_C"], "dataframe"),
+        (["col_A", "col_C"], "pandas"),
         ([0, 2], "array"),
         ([True, False, True], "array"),
     ],
@@ -995,8 +991,8 @@ def test_grid_resolution_with_categorical(pyplot, categorical_features, array_ty
     respect to the number of categories in the categorical features targeted.
     """
     X = [["A", 1, "A"], ["B", 0, "C"], ["C", 2, "B"]]
-    column_name = ["col_A", "col_B", "col_C"]
-    X = _convert_container(X, array_type, columns_name=column_name)
+    column_names = ["col_A", "col_B", "col_C"]
+    X = _convert_container(X, array_type, column_names=column_names)
     y = np.array([1.2, 0.5, 0.45]).T
 
     preprocessor = make_column_transformer((OneHotEncoder(), categorical_features))
@@ -1011,7 +1007,7 @@ def test_grid_resolution_with_categorical(pyplot, categorical_features, array_ty
             model,
             X,
             features=["col_C"],
-            feature_names=column_name,
+            feature_names=column_names,
             categorical_features=categorical_features,
             grid_resolution=2,
         )
