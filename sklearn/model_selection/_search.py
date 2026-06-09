@@ -1002,10 +1002,6 @@ class BaseSearchCV(
 
         routed_params = self._get_routed_params_for_fit(params)
 
-        if (sample_weight := params.get("sample_weight")) is not None:
-            metadata_callbacks = {"sample_weight": sample_weight}
-        else:
-            metadata_callbacks = None
         root_callback_ctx.call_on_fit_task_begin(
             estimator=self,
             X=X,

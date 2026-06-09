@@ -348,7 +348,7 @@ class CallbackContext:
                     # TODO(metadata_routing) remove the `None` in the two following
                     # `getattr` when metadata routing is always enabled.
                     metadata_callback = getattr(metadata, f"callback_{i}", None)
-                    evaluated_args[param_name] = getattr(
+                    evaluated_args["metadata"] = getattr(
                         metadata_callback, hook_name, None
                     )
 

@@ -135,8 +135,7 @@ class ScoringMonitor(_MetadataRequester):
           names and the values are the metric scores;
         - a dictionary with metric names as keys and callables as values.
 
-        The string 'no_train_score' is a special value to indicate that no scorer should
-        be run on the training data.
+        If `scoring = 'no_train_score'`, scores are not computed on the train set.
 
     scoring_val : str, callable, list, tuple, dict or None, default="no_val_score"
         The scoring method to use to monitor the model on the validation data.
