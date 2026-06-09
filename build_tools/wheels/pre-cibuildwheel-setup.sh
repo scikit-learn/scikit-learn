@@ -1,5 +1,6 @@
 set -xe
 
+PLATFORM_ID=$1
 # Set environment variables to make our wheel build easier to reproduce byte
 # for byte from source. See https://reproducible-builds.org/. The long term
 # motivation would be to be able to detect supply chain attacks.
@@ -10,6 +11,9 @@ set -xe
 # issue for more details on what remains to do:
 # https://github.com/scikit-learn/scikit-learn/issues/28151
 echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> "$GITHUB_ENV"
+# TODO PYTHONHASHSEED needs to be passed into the container in the Linux case.
+# SOURCE_DATE_EPOCH is always passed in. Maybe use both in CIBW_ENVIRONMENT for
+# simplicity?
 echo PYTHONHASHSEED=0 >> "$GITHUB_ENV"
 
 # OpenMP is not present on macOS by default
@@ -18,7 +22,8 @@ if [[ $(uname) == "Darwin" ]]; then
     # supported version of the macos SDK as libomp will be vendored into the
     # scikit-learn wheels for macos.
 
-    if [[ "$CIBW_BUILD" == *-macosx_arm64 ]]; then
+    # TODO this is the problem here, CIBW_BUILD does not exist ...
+    if [[ "$PLATFORM_ID" == macosx_arm64 ]]; then
         # SciPy requires 12.0 on arm to prevent kernel panics
         # https://github.com/scipy/scipy/issues/14688
         # We use the same deployment target to match SciPy.
