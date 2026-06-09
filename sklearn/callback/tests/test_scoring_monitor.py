@@ -4,7 +4,7 @@
 import numpy as np
 import pytest
 
-from sklearn import set_config
+from sklearn import config_context, set_config
 from sklearn.base import clone
 from sklearn.callback import ScoringMonitor
 from sklearn.callback._scoring_monitor import ScoringMonitorLog
@@ -332,8 +332,35 @@ def test_estimator_without_reconstruction_attributes(select):
         callback.get_logs(select=select)
 
 
+@config_context(enable_metadata_routing=True)
+def test_scoringmonitor_metadata_routing():
+    """Test the routing of metadata to the scorer."""
+    score_func = lambda y_true, y_pred, req_arg: 0
+    scorer_train = make_scorer(score_func).set_score_request(req_arg=True)
+    scorer_val = make_scorer(score_func).set_score_request(req_arg="req_arg_val")
+    cb = ScoringMonitor(scoring_train=scorer_train, scoring_val=scorer_val)
+    X, y = make_regression(n_samples=10, n_features=2, random_state=0)
+    MaxIterEstimator().set_callbacks(cb).fit(
+        X, y, X_val=X, y_val=y, req_arg="req_arg", req_arg_val="req_arg_val"
+    )
+
+
+@config_context(enable_metadata_routing=True)
+def test_scoringmonitor_metadata_routing_meta_estimator():
+    """Test the routing of metadata to the scorer in a meta-estimator."""
+    score_func = lambda y_true, y_pred, req_arg: 0
+    scorer_train = make_scorer(score_func).set_score_request(req_arg=True)
+    scorer_val = make_scorer(score_func).set_score_request(req_arg="req_arg_val")
+    cb = ScoringMonitor(scoring_train=scorer_train, scoring_val=scorer_val)
+    X, y = make_regression(n_samples=10, n_features=2, random_state=0)
+    est = MaxIterEstimator().set_callbacks(cb)
+    MetaEstimator(estimator=est).fit(
+        X, y, X_val=X, y_val=y, req_arg="req_arg", req_arg_val="req_arg_val"
+    )
+
+
 @pytest.mark.parametrize("enable_metadata_routing", [True, False])
-def test_scoringmonitor_sample_weights_metadata(enable_metadata_routing):
+def test_scoringmonitor_sample_weights(enable_metadata_routing):
     """Check that the ScoringMonitor works with sample weights."""
     rng = np.random.RandomState(0)
     X, y = make_regression(n_samples=100, n_features=2, random_state=rng)
