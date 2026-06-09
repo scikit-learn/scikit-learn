@@ -44,7 +44,19 @@ OpenmlFeaturesType = List[Dict[str, str]]
 
 
 def _get_local_path(openml_path: str, data_home: str) -> str:
-    return os.path.join(data_home, "openml.org", openml_path + ".gz")
+    cache_dir = os.path.join(data_home, "openml.org")
+    local_path = os.path.normpath(os.path.join(cache_dir, openml_path + ".gz"))
+    # ``openml_path`` is derived from a server-provided URL. Reject paths that
+    # escape the cache directory so a malicious response cannot read, overwrite
+    # or delete files outside of ``data_home``.
+    if (
+        os.path.commonpath([os.path.abspath(cache_dir), os.path.abspath(local_path)])
+        != os.path.abspath(cache_dir)
+    ):
+        raise ValueError(
+            f"Invalid OpenML path escaping the cache directory: {openml_path!r}"
+        )
+    return local_path
 
 
 def _openml_path_from_url(url: str) -> str:
