@@ -765,7 +765,7 @@ def multilabel_confusion_matrix(
         labels = present_labels
         n_labels = None
     else:
-        labels = move_to(labels, xp=xp, device=device_)
+        labels = xp.asarray(labels, device=device_)
         n_labels = labels.shape[0]
         labels = xp.concat(
             [labels, xpx.setdiff1d(present_labels, labels, assume_unique=True, xp=xp)],
