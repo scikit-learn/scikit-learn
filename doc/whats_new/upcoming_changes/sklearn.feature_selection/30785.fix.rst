@@ -1,0 +1,3 @@
+- :class:`feature_selection.SequentialFeatureSelector` now passes pandas
+  DataFrames to the underlying estimator unchanged during cross-validation,
+  preserving non-numeric dtypes.

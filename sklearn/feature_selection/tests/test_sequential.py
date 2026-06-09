@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
 
+from sklearn.base import BaseEstimator
 from sklearn.cluster import KMeans
 from sklearn.datasets import make_blobs, make_classification, make_regression
 from sklearn.ensemble import HistGradientBoostingRegressor
@@ -330,3 +331,51 @@ def test_fit_rejects_params_with_no_routing_enabled():
 
     with pytest.raises(ValueError, match="is only supported if"):
         sfs.fit(X, y, sample_weight=np.ones_like(y))
+
+
+@pytest.mark.parametrize("direction", ("forward", "backward"))
+def test_dataframe_with_non_numeric_features(direction):
+    """Check that SFS passes a DataFrame to the underlying estimator.
+
+    Non-regression test for #30785.
+    """
+    pd = pytest.importorskip("pandas")
+
+    received_types = []
+
+    class TypeRecordingEstimator(BaseEstimator):
+        def fit(self, X, y):
+            received_types.append(type(X))
+            return self
+
+        def score(self, X, y):
+            return 1.0
+
+    rng = np.random.RandomState(42)
+    n_samples = 60
+    X = pd.DataFrame(
+        {
+            "num1": rng.randn(n_samples),
+            "cat": pd.Categorical(["a", "b"] * (n_samples // 2)),
+            "num2": rng.randn(n_samples),
+            "num3": rng.randn(n_samples),
+        }
+    )
+    y = rng.randn(n_samples)
+
+    sfs = SequentialFeatureSelector(
+        TypeRecordingEstimator(),
+        n_features_to_select=2,
+        direction=direction,
+        cv=2,
+    )
+    sfs.fit(X, y)
+
+    assert all(t is pd.DataFrame for t in received_types), (
+        f"Expected all calls to pass DataFrame, got types: {set(received_types)}"
+    )
+    assert sfs.n_features_in_ == X.shape[1]
+    assert_array_equal(sfs.feature_names_in_, X.columns)
+    assert sfs.n_features_to_select_ == 2
+
+

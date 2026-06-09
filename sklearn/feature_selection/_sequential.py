@@ -19,6 +19,7 @@ from sklearn.base import (
 from sklearn.feature_selection._base import SelectorMixin
 from sklearn.metrics import check_scoring, get_scorer_names
 from sklearn.model_selection import check_cv, cross_val_score
+from sklearn.utils import _safe_indexing
 from sklearn.utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
@@ -235,6 +236,9 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         """
         _raise_for_params(params, self, "fit")
         tags = self.__sklearn_tags__()
+        # Keep the original container; validate_data may convert DataFrames
+        # to numpy, which would lose non-numeric dtypes.
+        X_original = X
         X = validate_data(
             self,
             X,
@@ -243,6 +247,9 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             ensure_all_finite=not tags.input_tags.allow_nan,
         )
         n_features = X.shape[1]
+        # Pass the original container to the estimator for DataFrames so that
+        # non-numeric dtypes are preserved; use the validated array otherwise.
+        X_loop = X_original if hasattr(X_original, "iloc") else X
 
         if self.n_features_to_select == "auto":
             if self.tol is not None:
@@ -287,7 +294,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             process_routing(self, "fit", **params)
         for _ in range(n_iterations):
             new_feature_idx, new_score = self._get_best_new_feature_score(
-                cloned_estimator, X, y, cv, current_mask, **params
+                cloned_estimator, X_loop, y, cv, current_mask, **params
             )
             if is_auto_select and ((new_score - old_score) < self.tol):
                 break
@@ -316,7 +323,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             candidate_mask[feature_idx] = True
             if self.direction == "backward":
                 candidate_mask = ~candidate_mask
-            X_new = X[:, candidate_mask]
+            X_new = _safe_indexing(X, candidate_mask, axis=1)
             scores[feature_idx] = cross_val_score(
                 estimator,
                 X_new,
