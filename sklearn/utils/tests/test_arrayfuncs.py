@@ -5,10 +5,10 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils.arrayfuncs import _all_with_any_reduction_axis_1, min_pos
 
 
-def test_min_pos():
+def test_min_pos(global_random_seed):
     # Check that min_pos returns a positive value and that it's consistent
     # between float and double
-    X = np.random.RandomState(0).randn(100)
+    X = np.random.RandomState(global_random_seed).randn(100)
 
     min_double = min_pos(X)
     min_float = min_pos(X.astype(np.float32))

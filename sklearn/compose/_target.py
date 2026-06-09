@@ -394,7 +394,10 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
     def _get_regressor(self, get_clone=False):
         if self.regressor is None:
-            return LinearRegression()
+            if _routing_enabled():
+                return LinearRegression().set_fit_request(sample_weight=True)
+            else:
+                return LinearRegression()
 
         return clone(self.regressor) if get_clone else self.regressor
 

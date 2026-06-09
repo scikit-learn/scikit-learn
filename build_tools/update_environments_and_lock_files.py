@@ -156,6 +156,13 @@ build_metadata_list = [
             "pytorch-cpu",
             "array-api-strict",
         ],
+        # Temporarily pin blas to use OpenBLAS instead of BLIS because the latter has
+        # numerical issues, see https://github.com/scikit-learn/scikit-learn/pull/34162
+        # TODO: remove when BLIS is fixed or not shipped by default (which seems
+        # unexpected) by conda-forge.
+        "package_constraints": {
+            "blas": "[build=openblas]",
+        },
     },
     {
         "name": "pylatest_conda_forge_mkl_no_openmp",

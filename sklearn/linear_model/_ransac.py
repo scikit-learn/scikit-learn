@@ -655,7 +655,7 @@ class RANSACRegressor(
 
         Parameters
         ----------
-        X : (array-like or sparse matrix} of shape (n_samples, n_features)
+        X : {array-like or sparse matrix} of shape (n_samples, n_features)
             Training data.
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)

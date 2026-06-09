@@ -1016,9 +1016,9 @@ class LogisticRegression(
 
         .. deprecated:: 1.8
            `penalty` was deprecated in version 1.8 and will be removed in 1.10.
-           Use `l1_ratio` instead. `l1_ratio=0` for `penalty='l2'`, `l1_ratio=1` for
-           `penalty='l1'` and `l1_ratio` set to any float between 0 and 1 for
-           `'penalty='elasticnet'`.
+           Use `l1_ratio` and `C` instead. `l1_ratio=0` for `penalty='l2'`,
+           `l1_ratio=1` for `penalty='l1'`, `l1_ratio` set to any float between 0 and 1
+           for `penalty='elasticnet'`, and `C=np.inf` for `penalty=None`.
 
     C : float, default=1.0
         Inverse of regularization strength; must be a positive float.
@@ -1178,10 +1178,15 @@ class LogisticRegression(
     classes_ : ndarray of shape (n_classes, )
         A list of class labels known to the classifier.
 
-    coef_ : ndarray of shape (1, n_features) or (n_classes, n_features)
-        Coefficient of the features in the decision function.
+    coef_ : ndarray or CSR matrix of shape (1, n_features) or (n_classes, n_features)
+        Coefficients of the features in the decision function.
 
         `coef_` is of shape (1, n_features) when the given problem is binary.
+
+        By default, it will be created as a dense array, but can be turned to
+        sparse (CSR format) through :meth:`sparsify` (which can be beneficial
+        under L1 regularization when many coefficients are zero), and back to
+        dense through :meth:`densify`.
 
     intercept_ : ndarray of shape (1,) or (n_classes,)
         Intercept (a.k.a. bias) added to the decision function.
@@ -1401,8 +1406,9 @@ class LogisticRegression(
                     " 1.10. To avoid this warning, leave 'penalty' set to its default"
                     " value and use 'l1_ratio' or 'C' instead."
                     " Use l1_ratio=0 instead of penalty='l2',"
-                    " l1_ratio=1 instead of penalty='l1', and "
-                    "C=np.inf instead of penalty=None."
+                    " l1_ratio=1 instead of penalty='l1',"
+                    " l1_ratio set to a float between 0 and 1 instead of"
+                    " penalty='elasticnet', and C=np.inf instead of penalty=None."
                 ),
                 FutureWarning,
             )
@@ -1734,9 +1740,9 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         .. deprecated:: 1.8
            `penalty` was deprecated in version 1.8 and will be removed in 1.10.
-           Use `l1_ratio` instead. `l1_ratio=0` for `penalty='l2'`, `l1_ratio=1` for
-           `penalty='l1'` and `l1_ratio` set to any float between 0 and 1 for
-           `'penalty='elasticnet'`.
+           Use `l1_ratio` and `C` instead. `l1_ratio=0` for `penalty='l2'`,
+           `l1_ratio=1` for `penalty='l1'`, `l1_ratio` set to any float between 0 and 1
+           for `penalty='elasticnet'`, and `C=np.inf` for `penalty=None`.
 
     scoring : str or callable, default=None
         The scoring method to use for cross-validation. Options:
@@ -2118,9 +2124,11 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 (
                     "'penalty' was deprecated in version 1.8 and will be removed in"
                     " 1.10. To avoid this warning, leave 'penalty' set to its default"
-                    " value and use 'l1_ratios' instead."
-                    " Use l1_ratios=(0,) instead of penalty='l2' "
-                    " and l1_ratios=(1,) instead of penalty='l1'."
+                    " value and use 'l1_ratios' and 'Cs' instead."
+                    " Use l1_ratios=(0,) instead of penalty='l2',"
+                    " l1_ratios=(1,) instead of penalty='l1',"
+                    " l1_ratios set to floats between 0 and 1 instead of"
+                    " penalty='elasticnet', and Cs=(np.inf,) instead of penalty=None."
                 ),
                 FutureWarning,
             )
