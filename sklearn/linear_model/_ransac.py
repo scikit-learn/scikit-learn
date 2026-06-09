@@ -438,10 +438,11 @@ class RANSACRegressor(
         if _routing_enabled():
             routed_params = process_routing(self, "fit", **fit_params)
         else:
-            sw = {}
-            if sample_weight is not None:
-                sample_weight = _check_sample_weight(sample_weight, X)
-                sw["sample_weight"] = sample_weight
+            sw = (
+                {"sample_weight": _check_sample_weight(sample_weight, X)}
+                if sample_weight is not None
+                else {}
+            )
             routed_params = _manual_routing({"estimator": {"fit": sw}})
 
         n_inliers_best = 1
