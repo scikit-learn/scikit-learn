@@ -2208,8 +2208,6 @@ def precision_recall_fscore_support(
             stacklevel=2,
         )
         replaced_undefined_by = _check_zero_division(zero_division)
-    else:
-        _check_zero_division(zero_division)
     xp, _, device_ = get_namespace_and_device(y_pred)
     y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device_)
     labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
