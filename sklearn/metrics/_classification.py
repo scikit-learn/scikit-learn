@@ -548,8 +548,6 @@ def confusion_matrix(
     # Convert the input arrays to NumPy (on CPU) irrespective of the original
     # namespace and device so as to be able to leverage the efficient
     # counting operations implemented by SciPy in the coo_matrix constructor.
-    # The final results will be converted back to the input namespace and device
-    # for the sake of consistency with other metric functions with array API support.
     y_true = move_to(y_true, xp=np, device="cpu")
     y_pred = move_to(y_pred, xp=np, device="cpu")
     if sample_weight is None:
