@@ -1145,18 +1145,42 @@ def test_all_estimators_accessible_from_top_level():
     """Check that every estimator is lazily importable from the top-level
     ``sklearn`` namespace.
 
-    This guards the ``sklearn._estimators`` mapping against drifting out of sync
+    This guards the `sklearn._estimators` mapping against drifting out of sync
     with :func:`sklearn.utils.discovery.all_estimators`.
     """
-    for name, Estimator in all_estimators():
+    # If `sklearn.experimental.enable_halving_search_cv` is imported, then
+    # the `Halving*SearchCV` are returned by `all_estimators`. These should not
+    # be included at the top level.
+    experimental_estimators = {"HalvingGridSearchCV", "HalvingRandomSearchCV"}
+    estimators = [
+        (name, Estimator)
+        for name, Estimator in all_estimators()
+        if name not in experimental_estimators
+    ]
+
+    for name, Estimator in estimators:
         assert hasattr(sklearn, name), (
             f"{name} is not accessible from the top-level `sklearn` namespace. "
             "It should be added to the `sklearn._estimators` mapping in "
-            "`sklearn/__init__.py`."
+            "`sklearn/_all.py`."
         )
         assert getattr(sklearn, name) is Estimator
 
     # `__dir__` should also expose the estimator names for discoverability.
     sklearn_dir = dir(sklearn)
-    for name, _ in all_estimators():
+    for name, _ in estimators:
         assert name in sklearn_dir
+
+    # Ensure that `sklearn._estimators` covers `all_estimators` exactly, i.e. it
+    # neither misses an estimator nor lists a stale one.
+    all_estimator_names = {name for name, _ in estimators}
+    mapped_estimator_names = {
+        name for names in sklearn._estimators.values() for name in names
+    }
+    assert mapped_estimator_names == all_estimator_names
+
+
+def test_all_estimators_have_unique_values():
+    estimators = [name for name, _ in all_estimators()]
+    unique_estimator_names = set(estimators)
+    assert len(estimators) == len(unique_estimator_names)
