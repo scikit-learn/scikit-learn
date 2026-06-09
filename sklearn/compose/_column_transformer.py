@@ -26,7 +26,6 @@ from sklearn.utils._indexing import (
     _get_column_indices,
     _safe_indexing,
 )
-from sklearn.utils._metadata_requests import METHODS
 from sklearn.utils._param_validation import HasMethods, Hidden, Interval, StrOptions
 from sklearn.utils._repr_html.estimator import _VisualBlock
 from sklearn.utils._set_output import (
@@ -39,7 +38,6 @@ from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
-    _routing_enabled,
     process_routing,
 )
 from sklearn.utils.metaestimators import _BaseComposition
@@ -971,10 +969,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self._validate_column_callables(X)
         self._validate_remainder(X)
 
-        if _routing_enabled():
-            routed_params = process_routing(self, "fit_transform", **params)
-        else:
-            routed_params = self._get_empty_routing()
+        # ``params`` is empty unless routing is enabled (guaranteed by
+        # ``_raise_for_params`` above), so the call below produces a properly
+        # shaped empty routing in the disabled case.
+        routed_params = process_routing(self, "fit_transform", **params)
 
         result = self._call_func_on_transformers(
             X,
@@ -1071,10 +1069,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             # check that n_features_in_ is consistent
             _check_n_features(self, X, reset=False)
 
-        if _routing_enabled():
-            routed_params = process_routing(self, "transform", **params)
-        else:
-            routed_params = self._get_empty_routing()
+        routed_params = process_routing(self, "transform", **params)
 
         Xs = self._call_func_on_transformers(
             X,
@@ -1206,26 +1201,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             ) from e
         except KeyError as e:
             raise KeyError(f"'{key}' is not a valid transformer name") from e
-
-    def _get_empty_routing(self):
-        """Return empty routing.
-
-        Used while routing can be disabled.
-
-        TODO: Remove when ``set_config(enable_metadata_routing=False)`` is no
-        more an option.
-        """
-        return Bunch(
-            **{
-                name: Bunch(**{method: {} for method in METHODS})
-                for name, step, _, _ in self._iter(
-                    fitted=False,
-                    column_as_labels=False,
-                    skip_drop=True,
-                    skip_empty_columns=True,
-                )
-            }
-        )
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.

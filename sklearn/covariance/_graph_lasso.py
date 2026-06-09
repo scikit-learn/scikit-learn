@@ -22,11 +22,11 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import _cd_fast as cd_fast  # type: ignore[attr-defined]
 from sklearn.linear_model import lars_path_gram
 from sklearn.model_selection import check_cv, cross_val_score
-from sklearn.utils import Bunch
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _raise_for_params,
     _routing_enabled,
     process_routing,
@@ -1010,7 +1010,7 @@ class GraphicalLassoCV(BaseGraphicalLasso):
         if _routing_enabled():
             routed_params = process_routing(self, "fit", **params)
         else:
-            routed_params = Bunch(splitter=Bunch(split={}))
+            routed_params = _manual_routing({"splitter": {}})
 
         t0 = time.time()
         for i in range(n_refinements):

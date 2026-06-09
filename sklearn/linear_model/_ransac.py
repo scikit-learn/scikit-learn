@@ -17,7 +17,6 @@ from sklearn.base import (
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model._base import LinearRegression
 from sklearn.utils import check_consistent_length, check_random_state, get_tags
-from sklearn.utils._bunch import Bunch
 from sklearn.utils._param_validation import (
     HasMethods,
     Interval,
@@ -28,6 +27,7 @@ from sklearn.utils._param_validation import (
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _raise_for_params,
     _routing_enabled,
     process_routing,
@@ -438,11 +438,12 @@ class RANSACRegressor(
         if _routing_enabled():
             routed_params = process_routing(self, "fit", **fit_params)
         else:
-            routed_params = Bunch()
-            routed_params.estimator = Bunch(fit={}, predict={}, score={})
-            if sample_weight is not None:
-                sample_weight = _check_sample_weight(sample_weight, X)
-                routed_params.estimator.fit = {"sample_weight": sample_weight}
+            sw = (
+                {"sample_weight": _check_sample_weight(sample_weight, X)}
+                if sample_weight is not None
+                else {}
+            )
+            routed_params = _manual_routing({"estimator": {"fit": sw}})
 
         n_inliers_best = 1
         score_best = -np.inf

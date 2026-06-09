@@ -25,10 +25,11 @@ from sklearn.linear_model._base import (
 from sklearn.model_selection import check_cv
 
 # mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
-from sklearn.utils import Bunch, arrayfuncs, as_float_array, check_random_state
+from sklearn.utils import arrayfuncs, as_float_array, check_random_state
 from sklearn.utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _raise_for_params,
     _routing_enabled,
     process_routing,
@@ -1737,7 +1738,7 @@ class LarsCV(Lars):
         if _routing_enabled():
             routed_params = process_routing(self, "fit", **params)
         else:
-            routed_params = Bunch(splitter=Bunch(split={}))
+            routed_params = _manual_routing({"splitter": {}})
 
         # As we use cross-validation, the Gram matrix is not precomputed here
         Gram = self.precompute

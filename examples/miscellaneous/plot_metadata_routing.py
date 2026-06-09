@@ -199,18 +199,20 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         routed_params = process_routing(self, "fit", **fit_params)
         # A sub-estimator is fitted and its classes are attributed to the
         # meta-estimator. Since we call the sub-estimator's fit method, we pass the
-        # the metadata stored in `routed_params.estimator.fit`.
-        self.estimator_ = clone(self.estimator).fit(X, y, **routed_params.estimator.fit)
+        # the metadata stored in `routed_params["estimator"]["fit"]`.
+        self.estimator_ = clone(self.estimator).fit(
+            X, y, **routed_params["estimator"]["fit"]
+        )
         self.classes_ = self.estimator_.classes_
         return self
 
     def predict(self, X, **predict_params):
         check_is_fitted(self)
-        # As in `fit`, we get information on all the metadata that should be routed and
-        # pass the metadata that is stored in `routed_params.estimator.predict` to the
-        # sub-estimator's predict method.
+        # As in `fit`, we get information on all the metadata that should be routed
+        # and pass the metadata that is stored in
+        # `routed_params["estimator"]["predict"]` to the sub-estimator's predict method.
         routed_params = process_routing(self, "predict", **predict_params)
-        return self.estimator_.predict(X, **routed_params.estimator.predict)
+        return self.estimator_.predict(X, **routed_params["estimator"]["predict"])
 
 
 # %%
@@ -219,8 +221,9 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 # In each method, we use the ``process_routing`` function to construct a
 # :class:`~utils.Bunch` of the form ``{"object_name": {"method_name": {"metadata":
 # value}}}`` to pass to the underlying estimator's method. The ``object_name``
-# (``estimator`` in ``routed_params.estimator.fit``) is the same as the `estimator`
-# added in the ``get_metadata_routing``. ``process_routing`` also validates the input
+# (``estimator`` in ``routed_params["estimator"]["fit"]``) is the same as the
+# `estimator` added in the ``get_metadata_routing``. ``process_routing`` also validates
+# the input
 # metadata: it makes sure all given metadata are requested to avoid silent bugs.
 
 # %%
@@ -376,14 +379,16 @@ class RouterConsumerClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimato
         if sample_weight is not None:
             fit_params["sample_weight"] = sample_weight
         routed_params = process_routing(self, "fit", **fit_params)
-        self.estimator_ = clone(self.estimator).fit(X, y, **routed_params.estimator.fit)
+        self.estimator_ = clone(self.estimator).fit(
+            X, y, **routed_params["estimator"]["fit"]
+        )
         self.classes_ = self.estimator_.classes_
         return self
 
     def predict(self, X, **predict_params):
         check_is_fitted(self)
         routed_params = process_routing(self, "predict", **predict_params)
-        return self.estimator_.predict(X, **routed_params.estimator.predict)
+        return self.estimator_.predict(X, **routed_params["estimator"]["predict"])
 
 
 # %%
@@ -496,14 +501,14 @@ class SimplePipeline(ClassifierMixin, BaseEstimator):
         routed_params = process_routing(self, "fit", **fit_params)
 
         self.transformer_ = clone(self.transformer).fit(
-            X, y, **routed_params.transformer.fit
+            X, y, **routed_params["transformer"]["fit"]
         )
         X_transformed = self.transformer_.transform(
-            X, **routed_params.transformer.transform
+            X, **routed_params["transformer"]["transform"]
         )
 
         self.classifier_ = clone(self.classifier).fit(
-            X_transformed, y, **routed_params.classifier.fit
+            X_transformed, y, **routed_params["classifier"]["fit"]
         )
         return self
 
@@ -511,10 +516,10 @@ class SimplePipeline(ClassifierMixin, BaseEstimator):
         routed_params = process_routing(self, "predict", **predict_params)
 
         X_transformed = self.transformer_.transform(
-            X, **routed_params.transformer.transform
+            X, **routed_params["transformer"]["transform"]
         )
         return self.classifier_.predict(
-            X_transformed, **routed_params.classifier.predict
+            X_transformed, **routed_params["classifier"]["predict"]
         )
 
 
@@ -597,7 +602,9 @@ class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
 
     def fit(self, X, y, **fit_params):
         routed_params = process_routing(self, "fit", **fit_params)
-        self.estimator_ = clone(self.estimator).fit(X, y, **routed_params.estimator.fit)
+        self.estimator_ = clone(self.estimator).fit(
+            X, y, **routed_params["estimator"]["fit"]
+        )
 
     def get_metadata_routing(self):
         router = MetadataRouter(owner=self).add(
@@ -633,7 +640,9 @@ class WeightedMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
             self, "fit", sample_weight=sample_weight, **fit_params
         )
         check_metadata(self, sample_weight=sample_weight)
-        self.estimator_ = clone(self.estimator).fit(X, y, **routed_params.estimator.fit)
+        self.estimator_ = clone(self.estimator).fit(
+            X, y, **routed_params["estimator"]["fit"]
+        )
 
     def get_metadata_routing(self):
         router = (
