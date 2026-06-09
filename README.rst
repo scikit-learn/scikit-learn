@@ -43,8 +43,9 @@
 .. |PytestMinVersion| replace:: 7.1.2
 .. |PlotlyMinVersion| replace:: 5.22.0
 
-.. image:: https://raw.githubusercontent.com/scikit-learn/scikit-learn/main/doc/logos/scikit-learn-logo.png
+.. image:: https://raw.githubusercontent.com/scikit-learn/scikit-learn/main/doc/logos/scikit-learn-logo-contour.png
   :target: https://scikit-learn.org/
+  :align: center
 
 **scikit-learn** is a Python module for machine learning built on top of
 SciPy and is distributed under the 3-Clause BSD license.
