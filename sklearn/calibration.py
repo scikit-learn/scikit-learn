@@ -1264,7 +1264,7 @@ def calibration_curve(
         ``ceil(n_samples ** (1/3))`` to balance the trade-off between
         bias and variance.
 
-        .. versionadded:: 1.9
+        .. versionadded:: 1.10
            The "cube_root" option was added.
 
     strategy : {'uniform', 'quantile'}, default='uniform'
@@ -1549,7 +1549,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             ``ceil(n_samples ** (1/3))`` to balance the trade-off
             between bias and variance.
 
-            .. versionadded:: 1.9
+            .. versionadded:: 1.10
                The "cube_root" option was added.
 
         strategy : {'uniform', 'quantile'}, default='uniform'
@@ -1673,7 +1673,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             ``ceil(n_samples ** (1/3))`` to balance the trade-off
             between bias and variance.
 
-            .. versionadded:: 1.9
+            .. versionadded:: 1.10
                The "cube_root" option was added.
 
         strategy : {'uniform', 'quantile'}, default='uniform'

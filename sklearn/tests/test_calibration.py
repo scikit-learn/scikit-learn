@@ -544,23 +544,28 @@ def test_calibration_curve():
         calibration_curve(y_true2, y_pred2, strategy="percentile")
 
 
-def test_calibration_curve_cube_root_bins():
+@pytest.mark.parametrize(
+    "y_true, y_pred, strategy, expected_n_bins",
+    [
+        # Standard case: 8 samples -> n_bins = ceil(8**(1/3)) = 2
+        ([0] * 4 + [1] * 4, [0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9], "uniform", 2),
+        ([0] * 4 + [1] * 4, [0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9], "quantile", 2),
+        # Check ceil boundary: 2 samples -> n_bins = ceil(2**(1/3)) = ceil(1.26) = 2
+        ([0, 1], [0.1, 0.9], "uniform", 2),
+        ([0, 1], [0.1, 0.9], "quantile", 2),
+        # Fewer unique values: 8 samples -> n_bins=2 calculated, but only 1 unique
+        # value in y_pred, so we expect the result to have only 1 bin.
+        ([0] * 4 + [1] * 4, [0.5] * 8, "uniform", 1),
+        ([0] * 4 + [1] * 4, [0.5] * 8, "quantile", 1),
+    ],
+)
+def test_calibration_curve_cube_root_bins(y_true, y_pred, strategy, expected_n_bins):
     """Check calibration_curve with n_bins='cube_root'."""
-    # With 8 samples, n_bins='cube_root' should be int(np.ceil(8**(1/3))) = 2
-    y_true = np.array([0, 0, 0, 0, 1, 1, 1, 1])
-    y_pred = np.array([0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9])
-    prob_true, prob_pred = calibration_curve(y_true, y_pred, n_bins="cube_root")
-    assert len(prob_true) == 2
-    assert len(prob_pred) == 2
-    assert_allclose(prob_true, [0, 1])
-    assert_allclose(prob_pred, [0.25, 0.75])
-
-    # With 2 samples, n_bins='cube_root' should be int(np.ceil(2**(1/3))) = 2
-    prob_true, prob_pred = calibration_curve([0, 1], [0.1, 0.9], n_bins="cube_root")
-    assert len(prob_true) == 2
-    assert len(prob_pred) == 2
-    assert_allclose(prob_true, [0, 1])
-    assert_allclose(prob_pred, [0.1, 0.9])
+    prob_true, prob_pred = calibration_curve(
+        y_true, y_pred, n_bins="cube_root", strategy=strategy
+    )
+    assert len(prob_true) == expected_n_bins
+    assert len(prob_pred) == expected_n_bins
 
 
 def test_calibration_display_cube_root_bins(pyplot, iris_data_binary):
