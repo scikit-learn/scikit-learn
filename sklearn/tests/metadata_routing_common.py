@@ -483,11 +483,11 @@ def consuming_metric(y_pred, y_true, registry=None, **kwargs):
 
 class ConsumingScorer(_Scorer):
     def __init__(self, registry=None):
-        score_func = partial(consuming_metric, registry=registry)
+        self.registry = registry
+        score_func = partial(consuming_metric, registry=registry, scorer=self)
         super().__init__(
             score_func=score_func, sign=1, kwargs={}, response_method="predict"
         )
-        self.registry = registry
 
 
 class ConsumingSplitter(GroupsConsumerMixin, BaseCrossValidator):
