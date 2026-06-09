@@ -347,9 +347,9 @@ class DecisionBoundaryDisplay:
         n_classes,
         response,
         target_colors=None,
-        multiclass_colors="deprecated",  # TODO(1.12): remove
         xlabel=None,
         ylabel=None,
+        multiclass_colors="deprecated",  # TODO(1.12): remove
     ):
         self.xx0 = xx0
         self.xx1 = xx1
