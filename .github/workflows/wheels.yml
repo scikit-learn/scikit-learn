@@ -187,7 +187,7 @@ jobs:
 
 
       - name: Pre-cibuildwheel setup
-        run: bash build_tools/wheels/pre-cibuildwheel-setup.sh ${{ matrix.platform_id }}
+        run: bash build_tools/wheels/pre-cibuildwheel-setup.sh
 
       - name: Build and test wheels
         uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1

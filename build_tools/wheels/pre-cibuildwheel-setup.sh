@@ -1,6 +1,5 @@
 set -xe
 
-PLATFORM_ID=$1
 # Set environment variables to make our wheel build easier to reproduce byte
 # for byte from source. See https://reproducible-builds.org/. The long term
 # motivation would be to be able to detect supply chain attacks.
@@ -22,8 +21,7 @@ if [[ $(uname) == "Darwin" ]]; then
     # supported version of the macos SDK as libomp will be vendored into the
     # scikit-learn wheels for macos.
 
-    # TODO this is the problem here, CIBW_BUILD does not exist ...
-    if [[ "$PLATFORM_ID" == macosx_arm64 ]]; then
+    if [[ $(uname -m) == "arm64" ]]; then
         # SciPy requires 12.0 on arm to prevent kernel panics
         # https://github.com/scipy/scipy/issues/14688
         # We use the same deployment target to match SciPy.
