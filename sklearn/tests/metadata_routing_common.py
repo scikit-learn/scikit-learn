@@ -45,9 +45,10 @@ def record_metadata(obj, record_default=True, **kwargs):
         "validation_curve",
     ]
     stack = inspect.stack()
-    # for callee, extract the innermost `function` (which is in METHODS) from stack
-    # frame; for caller, extract outmost function; as a fallback, infer callee and
-    # caller positionally:
+    # for callee, extract the innermost `function` (which is in METHODS) from the
+    # stack; for caller, extract the *outermost* matching function so the expected
+    # `parent` is the top-level public entry point (e.g. `cross_validate`) rather
+    # than an internal helper whose name may change. Fall back to positional frames:
     callee = caller = None
     for frame in stack:
         if callee is None:
@@ -470,13 +471,14 @@ class ConsumingNoFitTransformTransformer(BaseEstimator):
         return X
 
 
-def consuming_metric(y_pred, y_true, registry=None, **kwargs):
-    # Emulates metric function used in a `_Scorer`.
-    # Note, the `registry` of `consuming_metric` needs to be cleared after each test
-    # run to prevent accumulation of entries over the whole module.
+def consuming_metric(y_pred, y_true, registry=None, scorer=None, **kwargs):
+    # Emulates metric function used in a `_Scorer`. Records are stored on the
+    # per-test `scorer` instance, not on this module-level function, so they
+    # don't leak across tests.
+    holder = scorer if scorer is not None else consuming_metric
     if registry is not None:
-        registry.append(consuming_metric)
-    record_metadata_not_default(consuming_metric, **kwargs)
+        registry.append(holder)
+    record_metadata_not_default(holder, **kwargs)
     sample_weight = kwargs.get("sample_weight", None)
     return mean_squared_error(y_pred, y_true, sample_weight=sample_weight)
 

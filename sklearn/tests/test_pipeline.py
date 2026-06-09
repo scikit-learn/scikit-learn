@@ -2419,7 +2419,7 @@ def test_metadata_routing_for_pipeline(parent_method):
 
     if "fit" not in parent_method:
         pipeline = pipeline.fit(X, y, sample_weight=sample_weight, prop=prop)
-        trs._records.clear()  # clear records so we don't  check these records below
+        trs._records.clear()  # clear records so we don't check these records below
 
     try:
         getattr(pipeline, parent_method)(
