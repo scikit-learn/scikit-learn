@@ -10,10 +10,6 @@
     <p>Jérémie du Boisberranger</p>
     </div>
     <div>
-    <a href='https://github.com/virchan'><img src='https://avatars.githubusercontent.com/u/25701849?v=4' class='avatar' /></a> <br />
-    <p>Virgil Chan</p>
-    </div>
-    <div>
     <a href='https://github.com/lesteve'><img src='https://avatars.githubusercontent.com/u/1680079?v=4' class='avatar' /></a> <br />
     <p>Loïc Estève</p>
     </div>
