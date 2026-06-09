@@ -665,7 +665,10 @@ def test_base_chain_crossval_fit_and_predict(chain_type, chain_method):
     assert Y_pred_cv.shape == Y_pred.shape
     assert not np.all(Y_pred == Y_pred_cv)
     if isinstance(chain, ClassifierChain):
-        assert jaccard_score(Y, Y_pred_cv, average="samples", replaced_undefined_by=0) > 0.4
+        assert (
+            jaccard_score(Y, Y_pred_cv, average="samples", replaced_undefined_by=0)
+            > 0.4
+        )
     else:
         assert mean_squared_error(Y, Y_pred_cv) < 0.25
 

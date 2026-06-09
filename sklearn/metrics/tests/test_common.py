@@ -1517,7 +1517,10 @@ def _check_averaging(
     # Macro measure
     macro_measure = metric(y_true, y_pred, average="macro")
     # With replaced_undefined_by=np.nan (new default), nan labels are skipped
-    expected_macro = np.nanmean(label_measure) if np.any(np.isnan(label_measure)) else np.mean(label_measure)
+    if np.any(np.isnan(label_measure)):
+        expected_macro = np.nanmean(label_measure)
+    else:
+        expected_macro = np.mean(label_measure)
     if np.isnan(macro_measure):
         assert np.all(np.isnan(label_measure))
     else:

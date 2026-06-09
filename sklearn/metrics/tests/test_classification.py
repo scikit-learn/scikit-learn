@@ -1264,7 +1264,11 @@ def test_precision_refcall_f1_score_multilabel_unordered_labels(average):
     y_true = np.array([[1, 1, 0, 0]])
     y_pred = np.array([[0, 0, 1, 1]])
     p, r, f, s = precision_recall_fscore_support(
-        y_true, y_pred, labels=[3, 0, 1, 2], warn_for=[], average=average,
+        y_true,
+        y_pred,
+        labels=[3, 0, 1, 2],
+        warn_for=[],
+        average=average,
         replaced_undefined_by=0,
     )
     assert_array_equal(p, 0)
@@ -1810,9 +1814,10 @@ def test_multiclass_jaccard_score(recwarn):
     y_true = np.array([[0, 0], [0, 0], [0, 0]])
     y_pred = np.array([[0, 0], [0, 0], [0, 0]])
     with ignore_warnings():
-        assert jaccard_score(
-            y_true, y_pred, average="weighted", replaced_undefined_by=0
-        ) == 0
+        assert (
+            jaccard_score(y_true, y_pred, average="weighted", replaced_undefined_by=0)
+            == 0
+        )
 
     assert not list(recwarn)
 
@@ -1908,9 +1913,7 @@ def test_precision_recall_f1_score_multilabel_1():
     assert_almost_equal(f, 2.5 / 1.5 * 0.25)
     assert s is None
     assert_almost_equal(
-        fbeta_score(
-            y_true, y_pred, beta=2, average="macro", replaced_undefined_by=0
-        ),
+        fbeta_score(y_true, y_pred, beta=2, average="macro", replaced_undefined_by=0),
         np.mean(f2),
     )
 
@@ -1996,9 +1999,7 @@ def test_precision_recall_f1_score_multilabel_2():
     assert_almost_equal(f, 2 / 12)
     assert s is None
     assert_almost_equal(
-        fbeta_score(
-            y_true, y_pred, beta=2, average="macro", replaced_undefined_by=0
-        ),
+        fbeta_score(y_true, y_pred, beta=2, average="macro", replaced_undefined_by=0),
         np.mean(f2),
     )
 
