@@ -32,7 +32,7 @@ if [[ $(uname) == "Darwin" ]]; then
     conda create -n build $OPENMP_URL
     PREFIX="$HOME/miniconda3/envs/build"
 
-    echo C=/usr/bin/clang >> "$GITHUB_ENV"
+    echo CC=/usr/bin/clang >> "$GITHUB_ENV"
     echo CXX=/usr/bin/clang++ >> "$GITHUB_ENV"
     echo "CPPFLAGS=$CPPFLAGS -Xpreprocessor -fopenmp" >> "$GITHUB_ENV"
     echo "CFLAGS=$CFLAGS -I$PREFIX/include" >> "$GITHUB_ENV"
