@@ -1,0 +1,9 @@
+- Added an `interaction_cst` parameter to
+  :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier`,
+  :class:`ensemble.ExtraTreesRegressor`,
+  :class:`ensemble.GradientBoostingClassifier` and
+  :class:`ensemble.GradientBoostingRegressor`, enabling interaction
+  constraints in these estimators through their underlying decision trees.
+  By :user:`Arthur Lacote <cakedev0>`.
