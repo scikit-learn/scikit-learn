@@ -21,7 +21,7 @@ from sklearn.linear_model._base import (
     _pre_fit,
 )
 from sklearn.model_selection import check_cv
-from sklearn.utils import Bunch, check_array, check_scalar, metadata_routing
+from sklearn.utils import check_array, check_scalar, metadata_routing
 from sklearn.utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
@@ -35,7 +35,11 @@ from sklearn.utils._param_validation import (
 )
 from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.extmath import safe_sparse_dot
-from sklearn.utils.metadata_routing import _routing_enabled, process_routing
+from sklearn.utils.metadata_routing import (
+    _manual_routing,
+    _routing_enabled,
+    process_routing,
+)
 from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.sparsefuncs import mean_variance_axis
 from sklearn.utils.validation import (
@@ -1910,8 +1914,7 @@ class LinearModelCV(MultiOutputLinearModel, ABC):
                 **params,
             )
         else:
-            routed_params = Bunch()
-            routed_params.splitter = Bunch(split=Bunch())
+            routed_params = _manual_routing({"splitter": {}})
 
         # Compute path for all folds and compute MSE to get the best alpha
         folds = list(cv.split(X, y, **routed_params.splitter.split))

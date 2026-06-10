@@ -31,6 +31,7 @@ from sklearn.utils._repr_html.estimator import _VisualBlock
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _raise_for_params,
     _routing_enabled,
     process_routing,
@@ -191,13 +192,12 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         if _routing_enabled():
             routed_params = process_routing(self, "fit", **fit_params)
         else:
-            routed_params = Bunch()
-            for name in names:
-                routed_params[name] = Bunch(fit={})
-                if "sample_weight" in fit_params:
-                    routed_params[name].fit["sample_weight"] = fit_params[
-                        "sample_weight"
-                    ]
+            sw = (
+                {"sample_weight": fit_params["sample_weight"]}
+                if "sample_weight" in fit_params
+                else {}
+            )
+            routed_params = _manual_routing({name: {"fit": sw} for name in names})
 
         if self.cv == "prefit":
             self.estimators_ = []
@@ -753,9 +753,9 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             routed_params = process_routing(self, "predict", **predict_params)
         else:
             # TODO(SLEP6): remove when metadata routing cannot be disabled.
-            routed_params = Bunch()
-            routed_params.final_estimator_ = Bunch(predict={})
-            routed_params.final_estimator_.predict = predict_params
+            routed_params = _manual_routing(
+                {"final_estimator_": {"predict": predict_params}}
+            )
 
         y_pred = super().predict(X, **routed_params.final_estimator_["predict"])
         if isinstance(self._label_encoder, list):
@@ -1137,9 +1137,9 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
             routed_params = process_routing(self, "predict", **predict_params)
         else:
             # TODO(SLEP6): remove when metadata routing cannot be disabled.
-            routed_params = Bunch()
-            routed_params.final_estimator_ = Bunch(predict={})
-            routed_params.final_estimator_.predict = predict_params
+            routed_params = _manual_routing(
+                {"final_estimator_": {"predict": predict_params}}
+            )
 
         y_pred = super().predict(X, **routed_params.final_estimator_["predict"])
 

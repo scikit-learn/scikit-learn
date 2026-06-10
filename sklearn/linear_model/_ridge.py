@@ -34,7 +34,6 @@ from sklearn.metrics import check_scoring, get_scorer, get_scorer_names
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import (
-    Bunch,
     check_array,
     check_consistent_length,
     check_scalar,
@@ -56,6 +55,7 @@ from sklearn.utils.fixes import _sparse_linalg_cg
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _raise_for_params,
     _routing_enabled,
     process_routing,
@@ -2535,9 +2535,12 @@ class _BaseRidgeCV(LinearModel):
                     **params,
                 )
             else:
-                routed_params = Bunch(scorer=Bunch(score={}))
-                if sample_weight is not None:
-                    routed_params.scorer.score["sample_weight"] = sample_weight
+                sw = (
+                    {"sample_weight": sample_weight}
+                    if sample_weight is not None
+                    else {}
+                )
+                routed_params = _manual_routing({"scorer": {"score": sw}})
 
             # reset `scorer` variable to original user-intend if no scoring is passed
             if self.scoring is None:

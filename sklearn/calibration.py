@@ -31,7 +31,7 @@ from sklearn.isotonic import IsotonicRegression
 from sklearn.model_selection import LeaveOneOut, check_cv, cross_val_predict
 from sklearn.preprocessing import LabelEncoder, label_binarize
 from sklearn.svm import LinearSVC
-from sklearn.utils import Bunch, _safe_indexing, column_or_1d, get_tags, indexable
+from sklearn.utils import _safe_indexing, column_or_1d, get_tags, indexable
 from sklearn.utils._array_api import (
     _is_numpy_namespace,
     get_namespace,
@@ -53,6 +53,7 @@ from sklearn.utils.extmath import softmax
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _routing_enabled,
     process_routing,
 )
@@ -402,11 +403,12 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     " Be warned that the result of the calibration is likely to be"
                     " incorrect."
                 )
-            routed_params = Bunch()
-            routed_params.splitter = Bunch(split={})  # no routing for splitter
-            routed_params.estimator = Bunch(fit=fit_params)
+            fit_kwargs = dict(fit_params)
             if sample_weight is not None and supports_sw:
-                routed_params.estimator.fit["sample_weight"] = sample_weight
+                fit_kwargs["sample_weight"] = sample_weight
+            routed_params = _manual_routing(
+                {"splitter": {}, "estimator": {"fit": fit_kwargs}}
+            )
 
         xp, is_array_api, device_ = get_namespace_and_device(X)
         if is_array_api:
