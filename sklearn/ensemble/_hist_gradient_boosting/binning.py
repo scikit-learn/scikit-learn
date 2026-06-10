@@ -76,8 +76,7 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
 
     if n_distincts == 1:
         return np.asarray([])
-
-    if n_distincts <= max_bins:
+    elif n_distincts <= max_bins:
         # Calculate midpoints if distinct values <= max_bins
         distinct_values = col_data[distinct_mask]
         bin_thresholds = sliding_window_view(distinct_values, 2).mean(axis=1)
