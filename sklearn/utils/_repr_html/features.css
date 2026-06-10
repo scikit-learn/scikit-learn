@@ -106,6 +106,10 @@
   background-color: #e0e0e0;
 }
 
+.features .features-container table {
+  table-layout: inherit;
+}
+
 .features .features-container table td,
 .name-details .name-details-table td {
   text-align: left;
