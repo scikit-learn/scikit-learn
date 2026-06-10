@@ -4,17 +4,17 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 __all__ = [
-    "NotFittedError",
     "ConvergenceWarning",
     "DataConversionWarning",
     "DataDimensionalityWarning",
     "EfficiencyWarning",
+    "EstimatorCheckFailedWarning",
     "FitFailedWarning",
+    "NotFittedError",
+    "PositiveSpectrumWarning",
     "SkipTestWarning",
     "UndefinedMetricWarning",
-    "PositiveSpectrumWarning",
     "UnsetMetadataPassedError",
-    "EstimatorCheckFailedWarning",
 ]
 
 
@@ -158,7 +158,7 @@ class PositiveSpectrumWarning(UserWarning):
 
 
 class InconsistentVersionWarning(UserWarning):
-    """Warning raised when an estimator is unpickled with a inconsistent version.
+    """Warning raised when an estimator is unpickled with an inconsistent version.
 
     Parameters
     ----------

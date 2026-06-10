@@ -15,29 +15,32 @@ import numpy as np
 from scipy import sparse
 from scipy.sparse.csgraph import connected_components
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     ClusterMixin,
     _fit_context,
 )
-from ..metrics import DistanceMetric
-from ..metrics._dist_metrics import METRIC_MAPPING64
-from ..metrics.pairwise import _VALID_METRICS, paired_distances
-from ..utils import check_array
-from ..utils._fast_dict import IntFloatDict
-from ..utils._param_validation import (
+
+# mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
+from sklearn.cluster import (  # type: ignore[attr-defined]
+    _hierarchical_fast as _hierarchical,
+)
+from sklearn.cluster._feature_agglomeration import AgglomerationTransform
+from sklearn.metrics import DistanceMetric
+from sklearn.metrics._dist_metrics import METRIC_MAPPING64
+from sklearn.metrics.pairwise import _VALID_METRICS, paired_distances
+from sklearn.utils import check_array
+from sklearn.utils._fast_dict import IntFloatDict
+from sklearn.utils._param_validation import (
     HasMethods,
     Interval,
     StrOptions,
     validate_params,
 )
-from ..utils.graph import _fix_connected_components
-from ..utils.validation import check_memory, validate_data
-
-# mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
-from . import _hierarchical_fast as _hierarchical  # type: ignore
-from ._feature_agglomeration import AgglomerationTransform
+from sklearn.utils._sparse import _align_api_if_sparse
+from sklearn.utils.graph import _fix_connected_components
+from sklearn.utils.validation import check_memory, validate_data
 
 ###############################################################################
 # For non fully-connected graphs
@@ -90,7 +93,7 @@ def _fix_connectivity(X, connectivity, affinity):
 
     # Convert connectivity matrix to LIL
     if not sparse.issparse(connectivity):
-        connectivity = sparse.lil_matrix(connectivity)
+        connectivity = sparse.lil_array(connectivity)
 
     # `connectivity` is a sparse matrix at this point
     if connectivity.format != "lil":
@@ -116,7 +119,7 @@ def _fix_connectivity(X, connectivity, affinity):
             mode="connectivity",
         )
 
-    return connectivity, n_connected_components
+    return _align_api_if_sparse(connectivity), n_connected_components
 
 
 def _single_linkage_tree(
@@ -793,10 +796,13 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     metric : str or callable, default="euclidean"
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
         "manhattan", "cosine", or "precomputed". If linkage is "ward", only
-        "euclidean" is accepted. If "precomputed", a distance matrix is needed
+        "euclidean" and "l2" are accepted. If "precomputed", a distance matrix is needed
         as input for the fit method. If connectivity is None, linkage is
         "single" and affinity is not "precomputed" any valid pairwise distance
         metric can be assigned.
+
+        For an example of agglomerative clustering with different metrics, see
+        :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering_metrics.py`.
 
         .. versionadded:: 1.2
 
@@ -815,7 +821,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         For an example of connectivity matrix using
         :class:`~sklearn.neighbors.kneighbors_graph`, see
-        :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`.
+        :ref:`sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured.py`.
 
     compute_full_tree : 'auto' or bool, default='auto'
         Stop early the construction of the tree at ``n_clusters``. This is
@@ -1015,10 +1021,10 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
                 "compute_full_tree must be True if distance_threshold is set."
             )
 
-        if self.linkage == "ward" and self.metric != "euclidean":
+        if self.linkage == "ward" and self.metric not in ("euclidean", "l2"):
             raise ValueError(
                 f"{self.metric} was provided as metric. Ward can only "
-                "work with euclidean distances."
+                "work with euclidean distances (i.e. 'euclidean' and 'l2')."
             )
 
         tree_builder = _TREE_BUILDERS[self.linkage]
@@ -1136,7 +1142,7 @@ class FeatureAgglomeration(
     metric : str or callable, default="euclidean"
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
         "manhattan", "cosine", or "precomputed". If linkage is "ward", only
-        "euclidean" is accepted. If "precomputed", a distance matrix is needed
+        "euclidean" and "l2" are accepted. If "precomputed", a distance matrix is needed
         as input for the fit method.
 
         .. versionadded:: 1.2

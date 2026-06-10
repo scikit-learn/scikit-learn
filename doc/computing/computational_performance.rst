@@ -154,10 +154,9 @@ prediction latency too much. We will now review this idea for different
 families of supervised models.
 
 For :mod:`sklearn.linear_model` (e.g. Lasso, ElasticNet,
-SGDClassifier/Regressor, Ridge & RidgeClassifier,
-PassiveAggressiveClassifier/Regressor, LinearSVC, LogisticRegression...) the
-decision function that is applied at prediction time is the same (a dot product)
-, so latency should be equivalent.
+SGDClassifier/Regressor, Ridge & RidgeClassifier, LinearSVC, LogisticRegression...) the
+decision function that is applied at prediction time is the same (a dot product), so
+latency should be equivalent.
 
 Here is an example using
 :class:`~linear_model.SGDClassifier` with the
@@ -179,7 +178,7 @@ non-zero coefficients.
 For the :mod:`sklearn.svm` family of algorithms with a non-linear kernel,
 the latency is tied to the number of support vectors (the fewer the faster).
 Latency and throughput should (asymptotically) grow linearly with the number
-of support vectors in a SVC or SVR model. The kernel will also influence the
+of support vectors in an SVC or SVR model. The kernel will also influence the
 latency as it is used to compute the projection of the input vector once per
 support vector. In the following graph the ``nu`` parameter of
 :class:`~svm.NuSVR` was used to influence the number of
@@ -352,7 +351,7 @@ feature selection components in a pipeline once we know which features to
 keep from a previous run. Finally, it can help reduce processing time and I/O
 usage upstream in the data access and feature extraction layers by not
 collecting and building features that are discarded by the model. For instance
-if the raw data come from a database, it can make it possible to write simpler
+if the raw data come from a database, it is possible to write simpler
 and faster queries or reduce I/O usage by making the queries return lighter
 records.
 At the moment, reshaping needs to be performed manually in scikit-learn.

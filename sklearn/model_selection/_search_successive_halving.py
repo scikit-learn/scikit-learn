@@ -7,15 +7,15 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from ..base import _fit_context, is_classifier
-from ..metrics._scorer import get_scorer_names
-from ..utils import resample
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.multiclass import check_classification_targets
-from ..utils.validation import _num_samples, validate_data
-from . import ParameterGrid, ParameterSampler
-from ._search import BaseSearchCV
-from ._split import _yields_constant_splits, check_cv
+from sklearn.base import _fit_context, is_classifier
+from sklearn.metrics._scorer import get_scorer_names
+from sklearn.model_selection import ParameterGrid, ParameterSampler
+from sklearn.model_selection._search import BaseSearchCV
+from sklearn.model_selection._split import _yields_constant_splits
+from sklearn.utils import resample
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.validation import _num_samples, validate_data
 
 __all__ = ["HalvingGridSearchCV", "HalvingRandomSearchCV"]
 
@@ -239,15 +239,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
         self : object
             Instance of fitted estimator.
         """
-        self._checked_cv_orig = check_cv(
-            self.cv, y, classifier=is_classifier(self.estimator)
-        )
-
-        routed_params = self._get_routed_params_for_fit(params)
-        self._check_input_parameters(
-            X=X, y=y, split_params=routed_params.splitter.split
-        )
-
         self._n_samples_orig = _num_samples(X)
 
         super().fit(X, y=y, **params)
@@ -257,7 +248,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
         return self
 
-    def _run_search(self, evaluate_candidates):
+    def _run_search(self, evaluate_candidates, *, callback_ctx):
         candidate_params = self._generate_candidate_params()
 
         if self.resource != "n_samples" and any(
@@ -309,7 +300,20 @@ class BaseSuccessiveHalving(BaseSearchCV):
         self.n_resources_ = []
         self.n_candidates_ = []
 
+        search_callback_ctx = callback_ctx.subcontext(
+            task_name="search",
+            max_subtasks=n_iterations,
+        ).call_on_fit_task_begin(estimator=self)
+
         for itr in range(n_iterations):
+            n_candidates = len(candidate_params)
+
+            iteration_callback_ctx = search_callback_ctx.subcontext(
+                task_name="halving-iteration",
+                max_subtasks=n_candidates * self.n_splits_,
+                sequential_subtasks=False,
+            ).call_on_fit_task_begin(estimator=self)
+
             power = itr  # default
             if self.aggressive_elimination:
                 # this will set n_resources to the initial value (i.e. the
@@ -323,7 +327,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
             n_resources = min(n_resources, self.max_resources_)
             self.n_resources_.append(n_resources)
 
-            n_candidates = len(candidate_params)
             self.n_candidates_.append(n_candidates)
 
             if self.verbose:
@@ -355,20 +358,34 @@ class BaseSuccessiveHalving(BaseSearchCV):
             }
 
             results = evaluate_candidates(
-                candidate_params, cv, more_results=more_results
+                candidate_params,
+                cv,
+                more_results=more_results,
+                callback_ctx=iteration_callback_ctx,
             )
 
             n_candidates_to_keep = ceil(n_candidates / self.factor)
             candidate_params = _top_k(results, n_candidates_to_keep, itr)
+
+            iteration_callback_ctx.call_on_fit_task_end(estimator=self)
 
         self.n_remaining_candidates_ = len(candidate_params)
         self.n_required_iterations_ = n_required_iterations
         self.n_possible_iterations_ = n_possible_iterations
         self.n_iterations_ = n_iterations
 
+        search_callback_ctx.call_on_fit_task_end(estimator=self)
+
     @abstractmethod
     def _generate_candidate_params(self):
         pass
+
+    def __sklearn_tags__(self):
+        # TODO: remove this when we add array API support to
+        # `BaseSuccessiveHalving`
+        tags = super().__sklearn_tags__()
+        tags.array_api_support = False
+        return tags
 
 
 class HalvingGridSearchCV(BaseSuccessiveHalving):
@@ -461,7 +478,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -487,13 +504,25 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         - `None`: the `estimator`'s
           :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
-    refit : bool, default=True
-        If True, refit an estimator using the best found parameters on the
-        whole dataset.
+    refit : bool or callable, default=True
+        Refit an estimator using the best found parameters on the whole
+        dataset.
+
+        Where there are considerations other than maximum score in
+        choosing a best estimator, ``refit`` can be set to a function which
+        returns the selected ``best_index_`` given ``cv_results_``. In that
+        case, the ``best_estimator_`` and ``best_params_`` will be set
+        according to the returned ``best_index_`` while the ``best_score_``
+        attribute will not be available.
 
         The refitted estimator is made available at the ``best_estimator_``
         attribute and permits using ``predict`` directly on this
         ``HalvingGridSearchCV`` instance.
+
+        See :ref:`this example
+        <sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py>`
+        for an example of how to use ``refit=callable`` to balance model
+        complexity and cross-validated score.
 
     error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
@@ -572,17 +601,30 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         for analysing the results of a search.
         Please refer to the :ref:`User guide<successive_halving_cv_results>`
         for details.
+        For an example of analysing ``cv_results_``,
+        see :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`.
 
     best_estimator_ : estimator or dict
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
-        on the left out data. Not available if ``refit=False``.
+        on the left out data, in the last halving iteration.
+        Not available if ``refit=False``.
+
+        .. note::
+            ``best_estimator_`` reflects the winner of the final iteration
+            only. ``cv_results_`` may contain candidates with a higher
+            ``rank_test_score``, but those scores were obtained with fewer
+            resources and are less reliable. To inspect final-iteration results
+            explicitly, filter ``cv_results_`` by
+            ``cv_results_['iter'] == n_iterations_ - 1``.
 
     best_score_ : float
-        Mean cross-validated score of the best_estimator.
+        Mean cross-validated score of the ``best_estimator_``, computed over
+        the candidates from the last halving iteration only.
 
     best_params_ : dict
-        Parameter setting that gave the best results on the hold out data.
+        Parameter setting that gave the best results on the hold out data in
+        the last halving iteration.
 
     best_index_ : int
         The index (of the ``cv_results_`` arrays) which corresponds to the best
@@ -806,7 +848,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -832,13 +874,25 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         - `None`: the `estimator`'s
           :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
-    refit : bool, default=True
-        If True, refit an estimator using the best found parameters on the
-        whole dataset.
+    refit : bool or callable, default=True
+        Refit an estimator using the best found parameters on the whole
+        dataset.
+
+        Where there are considerations other than maximum score in
+        choosing a best estimator, ``refit`` can be set to a function which
+        returns the selected ``best_index_`` given ``cv_results_``. In that
+        case, the ``best_estimator_`` and ``best_params_`` will be set
+        according to the returned ``best_index_`` while the ``best_score_``
+        attribute will not be available.
 
         The refitted estimator is made available at the ``best_estimator_``
         attribute and permits using ``predict`` directly on this
         ``HalvingRandomSearchCV`` instance.
+
+        See :ref:`this example
+        <sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py>`
+        for an example of how to use ``refit=callable`` to balance model
+        complexity and cross-validated score.
 
     error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
@@ -919,17 +973,30 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         for analysing the results of a search.
         Please refer to the :ref:`User guide<successive_halving_cv_results>`
         for details.
+        For an example of analysing ``cv_results_``,
+        see :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`.
 
     best_estimator_ : estimator or dict
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
-        on the left out data. Not available if ``refit=False``.
+        on the left out data, in the last halving iteration.
+        Not available if ``refit=False``.
+
+        .. note::
+            ``best_estimator_`` reflects the winner of the final iteration
+            only. ``cv_results_`` may contain candidates with a higher
+            ``rank_test_score``, but those scores were obtained with fewer
+            resources and are less reliable. To inspect final-iteration results
+            explicitly, filter ``cv_results_`` by
+            ``cv_results_['iter'] == n_iterations_ - 1``.
 
     best_score_ : float
-        Mean cross-validated score of the best_estimator.
+        Mean cross-validated score of the ``best_estimator_``, computed over
+        the candidates from the last halving iteration only.
 
     best_params_ : dict
-        Parameter setting that gave the best results on the hold out data.
+        Parameter setting that gave the best results on the hold out data in
+        the last halving iteration.
 
     best_index_ : int
         The index (of the ``cv_results_`` arrays) which corresponds to the best
@@ -1061,8 +1128,8 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     def _generate_candidate_params(self):
         n_candidates_first_iter = self.n_candidates
         if n_candidates_first_iter == "exhaust":
-            # This will generate enough candidate so that the last iteration
-            # uses as much resources as possible
+            # This will generate enough candidates so that the last iteration
+            # uses as many resources as possible
             n_candidates_first_iter = self.max_resources_ // self.min_resources_
         return ParameterSampler(
             self.param_distributions,

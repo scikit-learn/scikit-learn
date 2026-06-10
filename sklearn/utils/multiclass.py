@@ -10,10 +10,10 @@ from itertools import chain
 import numpy as np
 from scipy.sparse import issparse
 
-from ..utils._array_api import get_namespace
-from ..utils.fixes import VisibleDeprecationWarning
-from ._unique import attach_unique, cached_unique
-from .validation import _assert_all_finite, check_array
+from sklearn.utils._array_api import _is_numpy_namespace, get_namespace
+from sklearn.utils._unique import attach_unique, cached_unique
+from sklearn.utils.fixes import VisibleDeprecationWarning
+from sklearn.utils.validation import _assert_all_finite, _num_samples, check_array
 
 
 def _unique_multiclass(y, xp=None):
@@ -38,13 +38,13 @@ _FN_UNIQUE_LABELS = {
 }
 
 
-def unique_labels(*ys):
+def unique_labels(*ys, ys_types=None):
     """Extract an ordered array of unique labels.
 
     We don't allow:
         - mix of multilabel and multiclass (single label) targets
-        - mix of label indicator matrix and anything else,
-          because there are no explicit labels)
+        - mix of label indicator matrix and anything else
+          (because there are no explicit labels)
         - mix of label indicator matrices of different sizes
         - mix of string and integer labels
 
@@ -54,6 +54,10 @@ def unique_labels(*ys):
     ----------
     *ys : array-likes
         Label values.
+
+    ys_types : set, default=None
+        Set of target types of `ys` (as determined by `type_of_target`),
+        with `{"binary", "multiclass"}` being amended to `{"multiclass"}`.
 
     Returns
     -------
@@ -74,15 +78,17 @@ def unique_labels(*ys):
     xp, is_array_api_compliant = get_namespace(*ys)
     if len(ys) == 0:
         raise ValueError("No argument has been passed.")
+
+    if ys_types is None:
+        ys_types = set(type_of_target(x) for x in ys)
+        if ys_types == {"binary", "multiclass"}:
+            ys_types = {"multiclass"}
+
     # Check that we don't mix label format
-
-    ys_types = set(type_of_target(x) for x in ys)
-    if ys_types == {"binary", "multiclass"}:
-        ys_types = {"multiclass"}
-
     if len(ys_types) > 1:
         raise ValueError("Mix type of y not allowed, got types %s" % ys_types)
 
+    # We can't have more than one value in y_type => The set is no more needed
     label_type = ys_types.pop()
 
     # Check consistency for the indicator format
@@ -104,8 +110,8 @@ def unique_labels(*ys):
     if not _unique_labels:
         raise ValueError("Unknown label type: %s" % repr(ys))
 
-    if is_array_api_compliant:
-        # array_api does not allow for mixed dtypes
+    if is_array_api_compliant and not _is_numpy_namespace(xp):
+        # non-NumPy array API inputs do not allow for mixed dtypes
         unique_ys = xp.concat([_unique_labels(y, xp=xp) for y in ys])
         return xp.unique_values(unique_ys)
 
@@ -114,7 +120,10 @@ def unique_labels(*ys):
     )
     # Check that we don't mix string type with number type
     if len(set(isinstance(label, str) for label in ys_labels)) > 1:
-        raise ValueError("Mix of label input types (string and number)")
+        msg_details = (
+            "Got " + " and ".join([f"{xp.unique_values(y)}" for y in ys]) + "."
+        )
+        raise ValueError(f"Mix of label input types (string and number); {msg_details}")
 
     return xp.asarray(sorted(ys_labels))
 
@@ -137,7 +146,7 @@ def is_multilabel(y):
     Returns
     -------
     out : bool
-        Return ``True``, if ``y`` is in a multilabel format, else ```False``.
+        Return ``True``, if ``y`` is in a multilabel format, else ``False``.
 
     Examples
     --------
@@ -185,9 +194,8 @@ def is_multilabel(y):
         if y.format in ("dok", "lil"):
             y = y.tocsr()
         labels = xp.unique_values(y.data)
-        return (
-            len(y.data) == 0
-            or (labels.size == 1 or (labels.size == 2) and (0 in labels))
+        return len(y.data) == 0 or (
+            (labels.size == 1 or ((labels.size == 2) and (0 in labels)))
             and (y.dtype.kind in "biu" or _is_integral_float(labels))  # bool, int, uint
         )
     else:
@@ -224,6 +232,18 @@ def check_classification_targets(y):
             "classifier, which expects discrete classes on a "
             "regression target with continuous values."
         )
+
+    if "multiclass" in y_type:
+        n_samples = _num_samples(y)
+        if n_samples > 20 and cached_unique(y).shape[0] > round(0.5 * n_samples):
+            # Only raise the warning when we have at least 20 samples.
+            warnings.warn(
+                "The number of unique classes is greater than 50% of the number "
+                "of samples. `y` could represent a regression problem, not a "
+                "classification problem.",
+                UserWarning,
+                stacklevel=2,
+            )
 
 
 def type_of_target(y, input_name="", raise_unknown=False):
@@ -318,14 +338,14 @@ def type_of_target(y, input_name="", raise_unknown=False):
     valid = (
         (isinstance(y, Sequence) or issparse(y) or hasattr(y, "__array__"))
         and not isinstance(y, str)
-        or is_array_api_compliant
-    )
+    ) or is_array_api_compliant
 
     if not valid:
         raise ValueError(
             "Expected array-like (array or non-string sequence), got %r" % y
         )
 
+    # TODO(1.10): SparseSeries and SparseArray was removed in pandas 2.0.
     sparse_pandas = y.__class__.__name__ in ["SparseSeries", "SparseArray"]
     if sparse_pandas:
         raise ValueError("y cannot be class 'SparseSeries' or 'SparseArray'")
@@ -360,17 +380,12 @@ def type_of_target(y, input_name="", raise_unknown=False):
                 y = check_array(y, dtype=object, **check_y_kwargs)
 
     try:
-        # TODO(1.7): Change to ValueError when byte labels is deprecated.
-        # labels in bytes format
         first_row_or_val = y[[0], :] if issparse(y) else y[0]
+        # labels in bytes format
         if isinstance(first_row_or_val, bytes):
-            warnings.warn(
-                (
-                    "Support for labels represented as bytes is deprecated in v1.5 and"
-                    " will error in v1.7. Convert the labels to a string or integer"
-                    " format."
-                ),
-                FutureWarning,
+            raise TypeError(
+                "Support for labels represented as bytes is not supported. Convert "
+                "the labels to a string or integer format."
             )
         # The old sequence of sequences format
         if (
@@ -413,7 +428,11 @@ def type_of_target(y, input_name="", raise_unknown=False):
     if xp.isdtype(y.dtype, "real floating"):
         # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
         data = y.data if issparse(y) else y
-        if xp.any(data != xp.astype(data, int)):
+        integral_data = xp.astype(data, xp.int64)
+        # conversion back to the original float dtype of y is required to
+        # satisfy array-api-strict which does not allow a comparison between
+        # arrays having different dtypes.
+        if xp.any(data != xp.astype(integral_data, y.dtype)):
             _assert_all_finite(data, input_name=input_name)
             return "continuous" + suffix
 
@@ -516,7 +535,7 @@ def class_distribution(y, sample_weight=None):
             if 0 in classes_k:
                 class_prior_k[classes_k == 0] += zeros_samp_weight_sum
 
-            # If an there is an implicit zero and it is not in classes and
+            # If there is an implicit zero and it is not in classes and
             # class_prior, make an entry for it
             if 0 not in classes_k and y_nnz[k] < y.shape[0]:
                 classes_k = np.insert(classes_k, 0, 0)

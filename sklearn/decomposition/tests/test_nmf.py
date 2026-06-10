@@ -1,6 +1,5 @@
 import re
 import sys
-import warnings
 from io import StringIO
 
 import numpy as np
@@ -919,33 +918,6 @@ def test_minibatch_nmf_verbose():
         sys.stdout = old_stdout
 
 
-# TODO(1.7): remove this test
-@pytest.mark.parametrize("Estimator", [NMF, MiniBatchNMF])
-def test_NMF_inverse_transform_Xt_deprecation(Estimator):
-    rng = np.random.RandomState(42)
-    A = np.abs(rng.randn(6, 5))
-    est = Estimator(
-        n_components=3,
-        init="random",
-        random_state=0,
-        tol=1e-6,
-    )
-    X = est.fit_transform(A)
-
-    with pytest.raises(TypeError, match="Missing required positional argument"):
-        est.inverse_transform()
-
-    with pytest.raises(TypeError, match="Cannot use both X and Xt. Use X only"):
-        est.inverse_transform(X=X, Xt=X)
-
-    with warnings.catch_warnings(record=True):
-        warnings.simplefilter("error")
-        est.inverse_transform(X)
-
-    with pytest.warns(FutureWarning, match="Xt was renamed X in version 1.5"):
-        est.inverse_transform(Xt=X)
-
-
 @pytest.mark.parametrize("Estimator", [NMF, MiniBatchNMF])
 def test_nmf_n_components_auto(Estimator):
     # Check that n_components is correctly inferred
@@ -1036,3 +1008,18 @@ def test_nmf_custom_init_shape_error():
 
     with pytest.raises(ValueError, match="Array with wrong second dimension passed"):
         nmf.fit(X, H=H, W=rng.random_sample((6, 3)))
+
+
+@pytest.mark.parametrize("init", (None, "nndsvd", "nndsvda", "nndsvdar", "random"))
+@pytest.mark.parametrize("shape", ((30, 10), (10, 30)), ids=("tall", "wide"))
+@pytest.mark.parametrize("solver", ("cd", "mu"))
+def test_nmf_smoke(init, shape, solver):
+    """Smoke test NMF with all inits, solvers on tall/wide arrays."""
+    rng = np.random.RandomState(0)
+    X = np.abs(rng.random_sample(shape))
+
+    nmf = NMF(n_components=5, init=init, random_state=0, solver=solver)
+    W = nmf.fit_transform(X)
+
+    assert W.shape == (shape[0], 5)
+    assert nmf.components_.shape == (5, shape[1])

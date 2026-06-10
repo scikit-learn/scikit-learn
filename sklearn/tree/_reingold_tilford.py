@@ -22,10 +22,10 @@ class DrawTree:
         self.number = number
 
     def left(self):
-        return self.thread or len(self.children) and self.children[0]
+        return self.thread or (len(self.children) and self.children[0])
 
     def right(self):
-        return self.thread or len(self.children) and self.children[-1]
+        return self.thread or (len(self.children) and self.children[-1])
 
     def lbrother(self):
         n = None

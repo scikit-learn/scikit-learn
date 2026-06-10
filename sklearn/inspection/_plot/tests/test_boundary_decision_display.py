@@ -3,10 +3,15 @@ import warnings
 import numpy as np
 import pytest
 
-from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.base import (
+    BaseEstimator,
+    ClassifierMixin,
+)
+from sklearn.cluster import KMeans
 from sklearn.datasets import (
     load_diabetes,
     load_iris,
+    make_blobs,
     make_classification,
     make_multilabel_classification,
 )
@@ -14,13 +19,15 @@ from sklearn.ensemble import IsolationForest
 from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.inspection._plot.decision_boundary import _check_boundary_response_method
 from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import scale
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler, scale
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._testing import (
     _convert_container,
     assert_allclose,
     assert_array_equal,
 )
+from sklearn.utils.fixes import PETROFF_COLORS, parse_version
 
 X, y = make_classification(
     n_informative=1,
@@ -53,7 +60,7 @@ def test_input_data_dimension(pyplot):
 
 
 def test_check_boundary_response_method_error():
-    """Check that we raise an error for the cases not supported by
+    """Check error raised for multi-output multi-class classifiers by
     `_check_boundary_response_method`.
     """
 
@@ -62,83 +69,55 @@ def test_check_boundary_response_method_error():
 
     err_msg = "Multi-label and multi-output multi-class classifiers are not supported"
     with pytest.raises(ValueError, match=err_msg):
-        _check_boundary_response_method(MultiLabelClassifier(), "predict", None)
-
-    class MulticlassClassifier:
-        classes_ = [0, 1, 2]
-
-    err_msg = "Multiclass classifiers are only supported when `response_method` is"
-    for response_method in ("predict_proba", "decision_function"):
-        with pytest.raises(ValueError, match=err_msg):
-            _check_boundary_response_method(
-                MulticlassClassifier(), response_method, None
-            )
+        _check_boundary_response_method(MultiLabelClassifier(), "predict")
 
 
 @pytest.mark.parametrize(
-    "estimator, response_method, class_of_interest, expected_prediction_method",
+    "estimator, response_method, expected_prediction_method",
     [
-        (DecisionTreeRegressor(), "predict", None, "predict"),
-        (DecisionTreeRegressor(), "auto", None, "predict"),
-        (LogisticRegression().fit(*load_iris_2d_scaled()), "predict", None, "predict"),
-        (LogisticRegression().fit(*load_iris_2d_scaled()), "auto", None, "predict"),
+        (DecisionTreeRegressor(), "predict", "predict"),
+        (DecisionTreeRegressor(), "auto", "predict"),
+        (LogisticRegression().fit(*load_iris_2d_scaled()), "predict", "predict"),
+        (
+            LogisticRegression().fit(*load_iris_2d_scaled()),
+            "auto",
+            ["decision_function", "predict_proba", "predict"],
+        ),
         (
             LogisticRegression().fit(*load_iris_2d_scaled()),
             "predict_proba",
-            0,
             "predict_proba",
         ),
         (
             LogisticRegression().fit(*load_iris_2d_scaled()),
             "decision_function",
-            0,
             "decision_function",
         ),
         (
             LogisticRegression().fit(X, y),
             "auto",
-            None,
             ["decision_function", "predict_proba", "predict"],
         ),
-        (LogisticRegression().fit(X, y), "predict", None, "predict"),
+        (LogisticRegression().fit(X, y), "predict", "predict"),
         (
             LogisticRegression().fit(X, y),
             ["predict_proba", "decision_function"],
-            None,
             ["predict_proba", "decision_function"],
         ),
     ],
 )
 def test_check_boundary_response_method(
-    estimator, response_method, class_of_interest, expected_prediction_method
+    estimator, response_method, expected_prediction_method
 ):
     """Check the behaviour of `_check_boundary_response_method` for the supported
     cases.
     """
-    prediction_method = _check_boundary_response_method(
-        estimator, response_method, class_of_interest
-    )
+    prediction_method = _check_boundary_response_method(estimator, response_method)
     assert prediction_method == expected_prediction_method
 
 
-@pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
-def test_multiclass_error(pyplot, response_method):
-    """Check multiclass errors."""
-    X, y = make_classification(n_classes=3, n_informative=3, random_state=0)
-    X = X[:, [0, 1]]
-    lr = LogisticRegression().fit(X, y)
-
-    msg = (
-        "Multiclass classifiers are only supported when `response_method` is 'predict'"
-        " or 'auto'"
-    )
-    with pytest.raises(ValueError, match=msg):
-        DecisionBoundaryDisplay.from_estimator(lr, X, response_method=response_method)
-
-
-@pytest.mark.parametrize("response_method", ["auto", "predict"])
-def test_multiclass(pyplot, response_method):
-    """Check multiclass gives expected results."""
+def test_multiclass_predict(pyplot):
+    """Check multiclass `response=predict` gives expected results."""
     grid_resolution = 10
     eps = 1.0
     X, y = make_classification(n_classes=3, n_informative=3, random_state=0)
@@ -146,7 +125,7 @@ def test_multiclass(pyplot, response_method):
     lr = LogisticRegression(random_state=0).fit(X, y)
 
     disp = DecisionBoundaryDisplay.from_estimator(
-        lr, X, response_method=response_method, grid_resolution=grid_resolution, eps=1.0
+        lr, X, response_method="predict", grid_resolution=grid_resolution, eps=1.0
     )
 
     x0_min, x0_max = X[:, 0].min() - eps, X[:, 0].max() + eps
@@ -184,6 +163,44 @@ def test_input_validation_errors(pyplot, kwargs, error_msg, fitted_clf):
     """Check input validation from_estimator."""
     with pytest.raises(ValueError, match=error_msg):
         DecisionBoundaryDisplay.from_estimator(fitted_clf, X, **kwargs)
+
+
+@pytest.mark.parametrize(
+    "kwargs, error_type, error_msg",
+    [
+        (
+            {"target_colors": {"dict": "not_list"}},
+            TypeError,
+            "'target_colors' must be a list or a str.",
+        ),
+        (
+            {"target_colors": "not_cmap"},
+            ValueError,
+            "it must be a valid Matplotlib colormap",
+        ),
+        (
+            {"target_colors": ["red", "green"]},
+            ValueError,
+            "it must be of the same length",
+        ),
+        (
+            {"target_colors": ["red", "green", "blue", "yellow"]},
+            ValueError,
+            "it must be of the same length",
+        ),
+        (
+            {"target_colors": ["red", "green", "not color"]},
+            ValueError,
+            "it can only contain valid Matplotlib color names",
+        ),
+    ],
+)
+def test_input_validation_errors_target_colors(pyplot, kwargs, error_type, error_msg):
+    """Check input validation for `target_colors` in `from_estimator`."""
+    X, y = load_iris_2d_scaled()
+    clf = LogisticRegression().fit(X, y)
+    with pytest.raises(error_type, match=error_msg):
+        DecisionBoundaryDisplay.from_estimator(clf, X, **kwargs)
 
 
 def test_display_plot_input_error(pyplot, fitted_clf):
@@ -236,7 +253,7 @@ def test_decision_boundary_display_classifier(
 
 
 @pytest.mark.parametrize("response_method", ["auto", "predict", "decision_function"])
-@pytest.mark.parametrize("plot_method", ["contourf", "contour"])
+@pytest.mark.parametrize("plot_method", ["contourf", "contour", "pcolormesh"])
 def test_decision_boundary_display_outlier_detector(
     pyplot, response_method, plot_method
 ):
@@ -253,7 +270,10 @@ def test_decision_boundary_display_outlier_detector(
         eps=eps,
         ax=ax,
     )
-    assert isinstance(disp.surface_, pyplot.matplotlib.contour.QuadContourSet)
+    if plot_method == "pcolormesh":
+        assert isinstance(disp.surface_, pyplot.matplotlib.collections.QuadMesh)
+    else:
+        assert isinstance(disp.surface_, pyplot.matplotlib.contour.QuadContourSet)
     assert disp.ax_ == ax
     assert disp.figure_ == fig
 
@@ -285,7 +305,12 @@ def test_decision_boundary_display_regressor(pyplot, response_method, plot_metho
         eps=eps,
         plot_method=plot_method,
     )
-    assert isinstance(disp.surface_, pyplot.matplotlib.contour.QuadContourSet)
+    if disp.n_classes == 2 or plot_method == "contour":
+        assert isinstance(disp.surface_, pyplot.matplotlib.contour.QuadContourSet)
+    else:
+        assert isinstance(disp.surface_, list)
+        for surface in disp.surface_:
+            assert isinstance(surface, pyplot.matplotlib.contour.QuadContourSet)
     assert disp.ax_ == ax
     assert disp.figure_ == fig
 
@@ -387,20 +412,6 @@ def test_multioutput_regressor_error(pyplot):
         DecisionBoundaryDisplay.from_estimator(tree, X, response_method="predict")
 
 
-@pytest.mark.parametrize(
-    "response_method",
-    ["predict_proba", "decision_function", ["predict_proba", "predict"]],
-)
-def test_regressor_unsupported_response(pyplot, response_method):
-    """Check that we can display the decision boundary for a regressor."""
-    X, y = load_diabetes(return_X_y=True)
-    X = X[:, :2]
-    tree = DecisionTreeRegressor().fit(X, y)
-    err_msg = "should either be a classifier to be used with response_method"
-    with pytest.raises(ValueError, match=err_msg):
-        DecisionBoundaryDisplay.from_estimator(tree, X, response_method=response_method)
-
-
 @pytest.mark.filterwarnings(
     # We expect to raise the following warning because the classifier is fit on a
     # NumPy array
@@ -472,7 +483,7 @@ def test_dataframe_support(pyplot, constructor_name):
     * https://github.com/scikit-learn/scikit-learn/issues/28717
     """
     df = _convert_container(
-        X, constructor_name=constructor_name, columns_name=["col_x", "col_y"]
+        X, constructor_name=constructor_name, column_names=["col_x", "col_y"]
     )
     estimator = LogisticRegression().fit(df, y)
 
@@ -565,9 +576,7 @@ def test_class_of_interest_multiclass(pyplot, response_method):
     response = getattr(estimator, response_method)(grid)[:, class_of_interest_idx]
     assert_allclose(response.reshape(*disp.response.shape), disp.response)
 
-    # check that we raise an error for unknown labels
-    # this test should already be handled in `_get_response_values` but we can have this
-    # test here as well
+    # Check that we raise an error for unknown labels.
     err_msg = "class_of_interest=2 is not a valid label: It should be one of"
     with pytest.raises(ValueError, match=err_msg):
         DecisionBoundaryDisplay.from_estimator(
@@ -577,17 +586,452 @@ def test_class_of_interest_multiclass(pyplot, response_method):
             class_of_interest=class_of_interest_idx,
         )
 
-    # TODO: remove this test when we handle multiclass with class_of_interest=None
-    # by showing the max of the decision function or the max of the predicted
-    # probabilities.
-    err_msg = "Multiclass classifiers are only supported"
-    with pytest.raises(ValueError, match=err_msg):
-        DecisionBoundaryDisplay.from_estimator(
-            estimator,
-            X,
-            response_method=response_method,
-            class_of_interest=None,
+
+@pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
+def test_multiclass_plot_max_class(pyplot, response_method):
+    """Check plot correct when plotting max multiclass class."""
+
+    X, y = load_iris_2d_scaled()
+    clf = LogisticRegression().fit(X, y)
+
+    disp = DecisionBoundaryDisplay.from_estimator(
+        clf,
+        X,
+        plot_method="pcolormesh",
+        response_method=response_method,
+    )
+
+    grid = np.concatenate([disp.xx0.reshape(-1, 1), disp.xx1.reshape(-1, 1)], axis=1)
+    response = getattr(clf, response_method)(grid).reshape(*disp.response.shape)
+    assert_allclose(response, disp.response)
+
+    assert len(disp.surface_) == len(clf.classes_)
+    # Get which class has highest response and check it is plotted
+    highest_class = np.argmax(response, axis=2)
+    for idx, quadmesh in enumerate(disp.surface_):
+        # Note quadmesh mask is True (i.e. masked) when `idx` is NOT the highest class
+        assert_array_equal(
+            highest_class != idx,
+            quadmesh.get_array().mask.reshape(*highest_class.shape),
         )
+
+
+@pytest.mark.parametrize(
+    "target_colors, n_classes",
+    [
+        (None, 3),
+        (None, 11),
+        ("plasma", 3),
+        ("Blues", 3),
+        ("tab20", 20),
+        (["red", "green", "blue"], 3),
+    ],
+)
+@pytest.mark.parametrize(
+    "response_method", ["decision_function", "predict_proba", "predict"]
+)
+@pytest.mark.parametrize("plot_method", ["contourf", "contour", "pcolormesh"])
+def test_target_colors_cmap(
+    pyplot,
+    n_classes,
+    response_method,
+    plot_method,
+    target_colors,
+):
+    """Check correct cmap used for all `target_colors` inputs."""
+    import matplotlib as mpl
+
+    X, y = make_blobs(n_samples=150, centers=n_classes, n_features=2, random_state=42)
+    clf = LogisticRegression().fit(X, y)
+
+    disp = DecisionBoundaryDisplay.from_estimator(
+        clf,
+        X,
+        response_method=response_method,
+        plot_method=plot_method,
+        target_colors=target_colors,
+    )
+
+    # Non-regression test for PR #33651
+    assert isinstance(disp.target_colors_, np.ndarray)
+
+    if target_colors is None:
+        # Make sure the correct colors are selected from the corresponding petroff color
+        # sequences or "gist_rainbow"
+        if len(clf.classes_) == 3:
+            target_colors = PETROFF_COLORS[:3]
+        else:
+            target_colors = "gist_rainbow"
+
+    if isinstance(target_colors, str):
+        cmap = pyplot.get_cmap(target_colors)
+        colors = cmap(np.linspace(0, 1, len(clf.classes_)))
+    else:
+        colors = mpl.colors.to_rgba_array(target_colors)
+
+    # Make sure the colormap has enough distinct colors.
+    assert disp.n_classes == len(np.unique(colors, axis=0))
+
+    if response_method == "predict":
+        if plot_method == "contour":
+            assert disp.surface_.colors == "black"
+        else:
+            cmap = mpl.colors.ListedColormap(colors)
+            assert disp.surface_.cmap == cmap
+
+    else:
+        if plot_method == "contour":
+            # the last display additionally contains the class boundary contours
+            assert disp.surface_[-1].colors == "black"
+            del disp.surface_[-1]
+        cmaps = [
+            mpl.colors.LinearSegmentedColormap.from_list(
+                f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
+            )
+            for class_idx, (r, g, b, _) in enumerate(colors)
+        ]
+        # Make sure every class has its own surface.
+        assert len(disp.surface_) == disp.n_classes
+
+        for idx, quad in enumerate(disp.surface_):
+            assert quad.cmap == cmaps[idx]
+
+
+def test_multiclass_not_enough_colors_error(pyplot):
+    """
+    Check that an error is raised if a qualitative colormap doesn't have enough colors.
+
+    Non-regression test for PR 33419.
+
+    Note: List length mismatch is already checked in
+    `test_input_validation_errors_target_colors`.
+    """
+    X = np.array(
+        [
+            [-1, -1],
+            [-2, -1],
+            [1, 1],
+            [2, 1],
+            [2, 2],
+            [3, 2],
+            [3, 3],
+            [4, 3],
+            [4, 4],
+            [5, 4],
+            [5, 5],
+        ]
+    )
+    y = np.arange(11)
+    clf = LogisticRegression().fit(X, y)
+    msg = "Colormap 'tab10' only has 10 colors, but 11 classes are to be displayed."
+    with pytest.raises(ValueError, match=msg):
+        DecisionBoundaryDisplay.from_estimator(clf, X, target_colors="tab10")
+
+
+@pytest.mark.parametrize("y", [np.arange(6), [str(i) for i in np.arange(6)]])
+@pytest.mark.parametrize(
+    "response_method, plot_method",
+    [
+        ("decision_function", "contour"),
+        ("predict_proba", "contour"),
+        ("predict", "contour"),
+        ("predict", "contourf"),
+    ],
+)
+def test_multiclass_levels(pyplot, y, response_method, plot_method):
+    """
+    Test that `levels` are set such that all classes and class boundaries are displayed.
+
+    This is only relevant for "contour" and "predict" with "contourf".
+    Non-regression test for issue #32866.
+    """
+    X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1], [2, 2], [3, 2]])
+
+    clf = LogisticRegression().fit(X, y)
+
+    disp = DecisionBoundaryDisplay.from_estimator(
+        clf,
+        X,
+        response_method=response_method,
+        plot_method=plot_method,
+        target_colors="gist_rainbow",
+    )
+
+    if plot_method == "contour":
+        expected_levels = np.arange(6)
+    else:
+        expected_levels = np.arange(7) - 0.5
+
+    if isinstance(disp.surface_, list):
+        # This is the case for "decision_function" and "predict_proba" with "contour",
+        # which have a separate surface for each class contour and contain the decision
+        # boundary contour (which requires the correct levels) on the last surface.
+        levels = disp.surface_[-1].levels
+    else:
+        levels = disp.surface_.levels
+
+    assert_allclose(levels, expected_levels)
+
+    # Check that all expected colors are visible for contourf:
+    if plot_method == "contourf":
+        expected_colors = pyplot.get_cmap("gist_rainbow")(np.linspace(0, 1, 6))
+        # TODO: Remove version check and the else branch once 3.10 is the minimal
+        # supported matplotlib version.
+        import matplotlib as mpl
+
+        # disp.surface_ is QuadContourSet. In matplotlib 3.10.0, the API for
+        # QuadContourSet was changed to produce only one collection per plot and
+        # `.collections` was deprecated, whereas before, a collection was created for
+        # each level separately.
+        if parse_version(mpl.__version__) >= parse_version("3.10.0"):
+            surface_colors = disp.surface_.get_facecolor()
+        else:
+            surface_colors = [
+                collection.get_facecolor()[0]
+                for collection in disp.surface_.collections
+            ]
+        assert_allclose(expected_colors, surface_colors)
+
+
+@pytest.mark.parametrize(
+    "response_method", ["decision_function", "predict_proba", "predict"]
+)
+@pytest.mark.parametrize("plot_method", ["contourf", "contour", "pcolormesh"])
+def test_zorder(pyplot, response_method, plot_method):
+    """Check that decision boundaries are plotted in the background."""
+    X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1], [2, 2], [3, 2]])
+    y = np.arange(6)
+    clf = LogisticRegression().fit(X, y)
+    disp = DecisionBoundaryDisplay.from_estimator(
+        clf, X, response_method=response_method, plot_method=plot_method
+    )
+    # TODO: Remove version check and the else branch once 3.10 is the minimal
+    # supported matplotlib version.
+    import matplotlib as mpl
+
+    # disp.surface_ is QuadContourSet or QuadMesh (for "pcolormesh"). In matplotlib
+    # 3.10.0, the API for QuadContourSet was changed to produce only one collection
+    # per plot (as it was and is the case for QuadMesh) and `.collections` was
+    # deprecated, whereas before, a collection was created for each level
+    # separately.
+    if (
+        parse_version(mpl.__version__) >= parse_version("3.10.0")
+        or plot_method == "pcolormesh"
+    ):
+        if isinstance(disp.surface_, list):
+            for surface in disp.surface_:
+                assert surface.get_zorder() == -1
+        else:
+            assert disp.surface_.get_zorder() == -1
+    else:
+        if isinstance(disp.surface_, list):
+            for surface in disp.surface_:
+                for collection in surface.collections:
+                    assert collection.get_zorder() == -1
+        else:
+            for collection in disp.surface_.collections:
+                assert collection.get_zorder() == -1
+
+
+# estimator classes for non-regression test cases for issue #33194
+class CustomBinaryEstimator(BaseEstimator):
+    def fit(self, X, y):
+        self.fitted_ = True
+        return self
+
+    def predict(self, X):
+        return np.arange(X.shape[0]) % 2
+
+
+class CustomMulticlassEstimator(BaseEstimator):
+    def fit(self, X, y):
+        self.fitted_ = True
+        return self
+
+    def predict(self, X):
+        return np.arange(X.shape[0]) % 7
+
+
+class CustomContinuousEstimator(BaseEstimator):
+    def fit(self, X, y):
+        self.fitted_ = True
+        return self
+
+    def predict(self, X):
+        return np.arange(X.shape[0]) * 0.5
+
+
+@pytest.mark.parametrize(
+    "estimator, n_blobs, expected_n_classes",
+    [
+        (DecisionTreeClassifier(random_state=0), 7, 7),
+        (DecisionTreeClassifier(random_state=0), 2, 2),
+        (KMeans(n_clusters=7, random_state=0), 7, 7),
+        (KMeans(n_clusters=2, random_state=0), 2, 2),
+        (DecisionTreeRegressor(random_state=0), 7, 2),
+        (IsolationForest(random_state=0), 7, 2),
+        (CustomBinaryEstimator(), 2, 2),
+        (CustomMulticlassEstimator(), 7, 7),
+        (CustomContinuousEstimator(), 7, 2),
+        (
+            Pipeline(
+                [
+                    ("scale", StandardScaler()),
+                    ("dt", DecisionTreeClassifier(random_state=0)),
+                ]
+            ),
+            7,
+            7,
+        ),
+        # non-regression test case for issue #33194
+        (
+            Pipeline(
+                [
+                    ("scale", StandardScaler()),
+                    ("kmeans", KMeans(n_clusters=7, random_state=0)),
+                ]
+            ),
+            7,
+            7,
+        ),
+        (
+            Pipeline(
+                [
+                    ("scale", StandardScaler()),
+                    ("reg", DecisionTreeRegressor(random_state=0)),
+                ]
+            ),
+            7,
+            2,
+        ),
+        (
+            Pipeline(
+                [
+                    ("scale", StandardScaler()),
+                    ("kmeans", IsolationForest(random_state=0)),
+                ]
+            ),
+            7,
+            2,
+        ),
+    ],
+)
+def test_n_classes_attribute(pyplot, estimator, n_blobs, expected_n_classes):
+    """Check that `n_classes` is set correctly.
+
+    Introduced in https://github.com/scikit-learn/scikit-learn/pull/33015.
+    """
+
+    X, y = make_blobs(n_samples=150, centers=n_blobs, n_features=2, random_state=42)
+    clf = estimator.fit(X, y)
+    disp = DecisionBoundaryDisplay.from_estimator(clf, X, response_method="predict")
+    assert disp.n_classes == expected_n_classes
+
+    # Test that setting class_of_interest always converts to a binary problem.
+    disp_coi = DecisionBoundaryDisplay.from_estimator(
+        clf, X, class_of_interest=y[0], response_method="predict"
+    )
+    assert disp_coi.n_classes == 2
+
+
+def test_n_classes_raises_if_not_inferable(pyplot):
+    """Check behaviour if `n_classes` can't be inferred.
+
+    Non-regression test for issue #33194.
+    """
+
+    class CustomUnknownEstimator(BaseEstimator):
+        def fit(self, X, y):
+            self.fitted_ = True
+            return self
+
+        def predict(self, X):
+            return np.array(0)
+
+    X, y = load_iris_2d_scaled()
+    est = CustomUnknownEstimator().fit(X, y)
+    msg = "Number of classes or labels cannot be inferred from CustomUnknownEstimator"
+    with pytest.raises(ValueError, match=msg):
+        DecisionBoundaryDisplay.from_estimator(est, X, response_method="predict")
+
+
+def test_cmap_and_colors_logic(pyplot):
+    """Check the handling logic for `cmap` and `colors`."""
+    X, y = load_iris_2d_scaled()
+    clf = LogisticRegression().fit(X, y)
+
+    with pytest.warns(
+        UserWarning,
+        match="'cmap' is ignored in favor of 'target_colors'",
+    ):
+        DecisionBoundaryDisplay.from_estimator(
+            clf,
+            X,
+            target_colors="plasma",
+            cmap="Blues",
+        )
+
+    with pytest.warns(
+        UserWarning,
+        match="'colors' is ignored in favor of 'target_colors'",
+    ):
+        DecisionBoundaryDisplay.from_estimator(
+            clf,
+            X,
+            target_colors="plasma",
+            colors="blue",
+        )
+
+
+# TODO(1.12): remove
+def test_multiclass_colors_deprecation(pyplot):
+    """Check that using `multiclass_colors` raises as expected."""
+    X, y = load_iris_2d_scaled()
+    clf = LogisticRegression().fit(X, y)
+
+    with pytest.warns(
+        FutureWarning,
+        match="'multiclass_colors' was renamed to 'target_colors' in 1.10",
+    ):
+        DecisionBoundaryDisplay.from_estimator(clf, X, multiclass_colors="plasma")
+
+    # test constructor call as well
+    with pytest.warns(
+        FutureWarning,
+        match="'multiclass_colors' was renamed to 'target_colors' in 1.10",
+    ):
+        disp = DecisionBoundaryDisplay.from_estimator(clf, X)
+        DecisionBoundaryDisplay(
+            xx0=disp.xx0,
+            xx1=disp.xx1,
+            n_classes=disp.n_classes,
+            response=disp.response,
+            multiclass_colors="plasma",
+        )
+
+    with pytest.raises(ValueError, match="cannot be used together"):
+        with pytest.warns(FutureWarning):
+            DecisionBoundaryDisplay.from_estimator(
+                clf, X, target_colors="tab10", multiclass_colors="plasma"
+            )
+
+
+# TODO(1.12): remove
+def test_multiclass_colors_attribute_deprecation(pyplot):
+    """Test renaming of `multiclass_colors_` attribute.
+
+    Check that FutureWarning is raised and `target_colors_` is returned.
+    """
+    X, y = load_iris_2d_scaled()
+    clf = LogisticRegression().fit(X, y)
+
+    disp = DecisionBoundaryDisplay.from_estimator(clf, X)
+    with pytest.warns(
+        FutureWarning,
+        match="`multiclass_colors_` was renamed to `target_colors_` in 1.10",
+    ):
+        colors = disp.multiclass_colors_
+    assert_array_equal(colors, disp.target_colors_)
 
 
 def test_subclass_named_constructors_return_type_is_subclass(pyplot):

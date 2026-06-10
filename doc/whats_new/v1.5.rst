@@ -220,8 +220,7 @@ Support for building with Meson
 -------------------------------
 
 From scikit-learn 1.5 onwards, Meson is the main supported way to build
-scikit-learn, see :ref:`Building from source <install_bleeding_edge>` for more
-details.
+scikit-learn.
 
 Unless we discover a major blocker, setuptools support will be dropped in
 scikit-learn 1.6. The 1.5.x releases will support building scikit-learn with
@@ -347,12 +346,13 @@ Changelog
   the previous predicted values were not affected by this bug.
   :pr:`28612` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |API| Deprecates `Y` in favor of `y` in the methods fit, transform and
-  inverse_transform of:
-  :class:`cross_decomposition.PLSRegression`.
+- |API| Deprecates `Y` in favor of `y` in the methods `fit`, `transform` and
+  `inverse_transform` of:
+  :class:`cross_decomposition.PLSRegression`,
   :class:`cross_decomposition.PLSCanonical`,
-  :class:`cross_decomposition.CCA`,
-  and :class:`cross_decomposition.PLSSVD`.
+  and :class:`cross_decomposition.CCA`,
+  and methods `fit` and `transform` of:
+  :class:`cross_decomposition.PLSSVD`.
   `Y` will be removed in version 1.7.
   :pr:`28604` by :user:`David Leon <davidleon123>`.
 
@@ -502,13 +502,13 @@ Changelog
 
 - |API| Parameter `multi_class` was deprecated in
   :class:`linear_model.LogisticRegression` and
-  :class:`linear_model.LogisticRegressionCV`. `multi_class` will be removed in 1.7,
+  :class:`linear_model.LogisticRegressionCV`. `multi_class` will be removed in 1.8,
   and internally, for 3 and more classes, it will always use multinomial.
   If you still want to use the one-vs-rest scheme, you can use
   `OneVsRestClassifier(LogisticRegression(..))`.
   :pr:`28703` by :user:`Christian Lorentzen <lorentzenchr>`.
 
-- |API| `store_cv_values` and `cv_values_` are deprecated in favor of
+- |API| Parameters `store_cv_values` and `cv_values_` are deprecated in favor of
   `store_cv_results` and `cv_results_` in `~linear_model.RidgeCV` and
   `~linear_model.RidgeClassifierCV`.
   :pr:`28915` by :user:`Lucy Liu <lucyleeow>`.
@@ -656,7 +656,7 @@ Changelog
 - |API| :func:`utils.tosequence` is deprecated and will be removed in version 1.7.
   :pr:`28763` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |API| :class:`utils.parallel_backend` and :func:`utils.register_parallel_backend` are
+- |API| `utils.parallel_backend` and `utils.register_parallel_backend` are
   deprecated and will be removed in version 1.7. Use `joblib.parallel_backend` and
   `joblib.register_parallel_backend` instead.
   :pr:`28847` by :user:`Jérémie du Boisberranger <jeremiedbb>`.

@@ -1,3 +1,4 @@
+import warnings
 from itertools import product
 
 import numpy as np
@@ -7,13 +8,18 @@ from scipy.sparse import issparse
 from sklearn import config_context, datasets
 from sklearn.model_selection import ShuffleSplit
 from sklearn.svm import SVC
-from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
+from sklearn.utils._array_api import (
+    _atol_for_type,
+    move_to,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._testing import (
     _array_api_for_tests,
     _convert_container,
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
+    skip_if_array_api_compat_not_configured,
 )
 from sklearn.utils.estimator_checks import _NotAnArray
 from sklearn.utils.fixes import (
@@ -263,7 +269,7 @@ MULTILABEL_SEQUENCES = [
 
 def test_unique_labels():
     # Empty iterable
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="No argument has been passed"):
         unique_labels()
 
     # Multiclass problem
@@ -283,12 +289,81 @@ def test_unique_labels():
     assert_array_equal(unique_labels((0, 1, 2), (0,), (2, 1)), np.arange(3))
 
     # Border line case with binary indicator matrix
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Mix type of y not allowed"):
         unique_labels([4, 0, 2], np.ones((5, 5)))
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Multi-label binary indicator input with"):
         unique_labels(np.ones((5, 4)), np.ones((5, 5)))
 
     assert_array_equal(unique_labels(np.ones((4, 5)), np.ones((5, 5))), np.arange(5))
+
+    # Mixed label input types
+    with pytest.raises(
+        ValueError, match=r"Mix of label input types \(string and number\)"
+    ):
+        unique_labels([4, 0, 2], ["a", "b", "c"])
+    with pytest.raises(
+        ValueError, match=r"Mix of label input types \(string and number\)"
+    ):
+        # Note string array is NOT object dtype, but string 'U'
+        unique_labels(np.array([4, 0, 2]), np.array(["a", "b", "c"]))
+
+
+@skip_if_array_api_compat_not_configured
+def test_unique_labels_mixed_str_numerical_array_api():
+    """Test error is raised for mixed string and numerical input and dispatch enabled.
+
+    Mixed string and numerical NumPy input with array API dispatch enabled should raise
+    the correct error.
+    """
+    y_string = np.array(["a", "b", "a", "a"])
+    y_object = np.array(["a", "b", "a", "a"], dtype=object)
+    y_numerical = np.array([1, 0, 0, 1])
+
+    with config_context(array_api_dispatch=True):
+        with pytest.raises(ValueError, match="Mix of label input types"):
+            unique_labels(y_string, y_numerical)
+        with pytest.raises(ValueError, match="Mix of label input types"):
+            unique_labels(y_object, y_numerical)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_unique_labels_array_api(array_namespace, device, dtype_name):
+    """Check `unique_labels` compliance for array API."""
+    xp, device_ = _array_api_for_tests(array_namespace, device)
+    y1_np = np.array([1, 2, 3], dtype=dtype_name)
+    y2_np = np.array([2, 3, 4], dtype=dtype_name)
+
+    y1_xp = xp.asarray(y1_np, device=device_)
+    y2_xp = xp.asarray(y2_np, device=device_)
+
+    labels_np = unique_labels(y1_np, y2_np)
+    with config_context(array_api_dispatch=True):
+        labels_xp = unique_labels(y1_xp, y2_xp)
+        labels_xp_np = move_to(labels_xp, xp=np, device="cpu")
+        assert_allclose(labels_np, labels_xp_np, atol=_atol_for_type(dtype_name))
+
+
+def test_check_classification_targets_too_many_unique_classes():
+    """Check that we raise a warning when the number of unique classes is greater than
+    50% of the number of samples.
+
+    We need to check that we don't raise if we have less than 20 samples.
+    """
+
+    # Create array of unique labels. This does raise a warning.
+    y = np.arange(25)
+    msg = r"The number of unique classes is greater than 50% of the number of samples."
+    with pytest.warns(UserWarning, match=msg):
+        check_classification_targets(y)
+
+    # less than 20 samples, no warning should be raised
+    y = np.arange(10)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        check_classification_targets(y)
 
 
 def test_unique_labels_non_specific():
@@ -366,25 +441,25 @@ def test_is_multilabel():
                     )
                 ]
                 for exmpl_sparse in examples_sparse:
-                    assert sparse_exp == is_multilabel(
-                        exmpl_sparse
-                    ), f"is_multilabel({exmpl_sparse!r}) should be {sparse_exp}"
+                    assert sparse_exp == is_multilabel(exmpl_sparse), (
+                        f"is_multilabel({exmpl_sparse!r}) should be {sparse_exp}"
+                    )
 
             # Densify sparse examples before testing
             if issparse(example):
                 example = example.toarray()
 
-            assert dense_exp == is_multilabel(
-                example
-            ), f"is_multilabel({example!r}) should be {dense_exp}"
+            assert dense_exp == is_multilabel(example), (
+                f"is_multilabel({example!r}) should be {dense_exp}"
+            )
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
 )
-def test_is_multilabel_array_api_compliance(array_namespace, device, dtype_name):
-    xp = _array_api_for_tests(array_namespace, device)
+def test_is_multilabel_array_api_compliance(array_namespace, device_name, dtype_name):
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     for group, group_examples in ARRAY_API_EXAMPLES.items():
         dense_exp = group == "multilabel-indicator"
@@ -396,9 +471,9 @@ def test_is_multilabel_array_api_compliance(array_namespace, device, dtype_name)
             example = xp.asarray(example, device=device)
 
             with config_context(array_api_dispatch=True):
-                assert dense_exp == is_multilabel(
-                    example
-                ), f"is_multilabel({example!r}) should be {dense_exp}"
+                assert dense_exp == is_multilabel(example), (
+                    f"is_multilabel({example!r}) should be {dense_exp}"
+                )
 
 
 def test_check_classification_targets():
@@ -416,12 +491,13 @@ def test_check_classification_targets():
 def test_type_of_target():
     for group, group_examples in EXAMPLES.items():
         for example in group_examples:
-            assert (
-                type_of_target(example) == group
-            ), "type_of_target(%r) should be %r, got %r" % (
-                example,
-                group,
-                type_of_target(example),
+            assert type_of_target(example) == group, (
+                "type_of_target(%r) should be %r, got %r"
+                % (
+                    example,
+                    group,
+                    type_of_target(example),
+                )
             )
 
     for example in NON_ARRAY_LIKE_EXAMPLES:
@@ -545,7 +621,7 @@ def test_safe_split_with_precomputed_kernel():
     K = np.dot(X, X.T)
 
     cv = ShuffleSplit(test_size=0.25, random_state=0)
-    train, test = list(cv.split(X))[0]
+    train, test = next(iter(cv.split(X)))
 
     X_train, y_train = _safe_split(clf, X, y, train)
     K_train, y_train2 = _safe_split(clfp, K, y, train)
@@ -597,16 +673,12 @@ def test_ovr_decision_function():
     assert_allclose(dec_values, dec_values_one, atol=1e-6)
 
 
-# TODO(1.7): Change to ValueError when byte labels is deprecated.
 @pytest.mark.parametrize("input_type", ["list", "array"])
-def test_labels_in_bytes_format(input_type):
+def test_labels_in_bytes_format_error(input_type):
     # check that we raise an error with bytes encoded labels
     # non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/16980
     target = _convert_container([b"a", b"b"], input_type)
-    err_msg = (
-        "Support for labels represented as bytes is deprecated in v1.5 and will"
-        " error in v1.7. Convert the labels to a string or integer format."
-    )
-    with pytest.warns(FutureWarning, match=err_msg):
+    err_msg = "Support for labels represented as bytes is not supported"
+    with pytest.raises(TypeError, match=err_msg):
         type_of_target(target)

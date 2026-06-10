@@ -6,9 +6,7 @@ Testing for Multi-layer Perceptron module (sklearn.neural_network)
 # SPDX-License-Identifier: BSD-3-Clause
 
 import re
-import sys
 import warnings
-from io import StringIO
 
 import joblib
 import numpy as np
@@ -17,10 +15,12 @@ import pytest
 from sklearn.datasets import (
     load_digits,
     load_iris,
+    make_classification,
     make_multilabel_classification,
     make_regression,
 )
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model import PoissonRegressor
 from sklearn.metrics import roc_auc_score
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 from sklearn.preprocessing import LabelBinarizer, MinMaxScaler, scale
@@ -663,20 +663,18 @@ def test_tolerance():
     assert clf.max_iter > clf.n_iter_
 
 
-def test_verbose_sgd():
+def test_verbose_sgd(capsys):
     # Test verbose.
     X = [[3, 2], [1, 6]]
     y = [1, 0]
     clf = MLPClassifier(solver="sgd", max_iter=2, verbose=10, hidden_layer_sizes=2)
-    old_stdout = sys.stdout
-    sys.stdout = output = StringIO()
 
     with ignore_warnings(category=ConvergenceWarning):
         clf.fit(X, y)
     clf.partial_fit(X, y)
 
-    sys.stdout = old_stdout
-    assert "Iteration" in output.getvalue()
+    out, _ = capsys.readouterr()
+    assert "Iteration" in out
 
 
 @pytest.mark.parametrize("MLPEstimator", [MLPClassifier, MLPRegressor])
@@ -825,9 +823,37 @@ def test_early_stopping_stratified():
 
     mlp = MLPClassifier(early_stopping=True)
     with pytest.raises(
-        ValueError, match="The least populated class in y has only 1 member"
+        ValueError,
+        match=(
+            r"The least populated classes in y have only 1 member.*Classes with "
+            r"too few members are: \['True'\]"
+        ),
     ):
         mlp.fit(X, y)
+
+
+def test_mlp_early_stopping_string_labels():
+    """Check that labels can be strings when `early_stopping=True`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/33760
+    """
+    X, y = make_classification(
+        n_samples=200,
+        n_features=10,
+        n_classes=3,
+        n_informative=5,
+        random_state=42,
+    )
+    labels = np.array(["class_a", "class_b", "class_c"], dtype=object)
+    y = labels[y]
+
+    mlp = MLPClassifier(early_stopping=True, max_iter=50, random_state=42)
+    mlp.fit(X, y)
+
+    assert mlp.validation_scores_ is not None
+    assert len(mlp.validation_scores_) == mlp.n_iter_
+    assert np.isfinite(mlp.validation_scores_).all()
 
 
 def test_mlp_classifier_dtypes_casting():
@@ -1046,3 +1072,48 @@ def test_mlp_sample_weight_with_early_stopping():
 
     m2 = MLPRegressor(**params).fit(X, y, sample_weight=None)
     assert_allclose(m1.predict(X), m2.predict(X))
+
+
+def test_mlp_vs_poisson_glm_equivalent(global_random_seed):
+    """Test MLP with Poisson loss and no hidden layer equals GLM."""
+    n = 100
+    rng = np.random.default_rng(global_random_seed)
+    X = np.linspace(0, 1, n)
+    y = rng.poisson(np.exp(X + 1))
+    X = X.reshape(n, -1)
+    glm = PoissonRegressor(alpha=0, tol=1e-7).fit(X, y)
+    # Unfortunately, we can't set a zero hidden_layer_size, so we use a trick by using
+    # just one hidden layer node with an identity activation. Coefficients will
+    # therefore be different, but predictions are the same.
+    mlp = MLPRegressor(
+        loss="poisson",
+        hidden_layer_sizes=(1,),
+        activation="identity",
+        alpha=0,
+        solver="lbfgs",
+        tol=1e-7,
+        random_state=np.random.RandomState(global_random_seed + 1),
+    ).fit(X, y)
+
+    assert_allclose(mlp.predict(X), glm.predict(X), rtol=1e-4)
+
+    # The same does not work with the squared error because the output activation is
+    # the identity instead of the exponential.
+    mlp = MLPRegressor(
+        loss="squared_error",
+        hidden_layer_sizes=(1,),
+        activation="identity",
+        alpha=0,
+        solver="lbfgs",
+        tol=1e-7,
+        random_state=np.random.RandomState(global_random_seed + 1),
+    ).fit(X, y)
+    assert not np.allclose(mlp.predict(X), glm.predict(X), rtol=1e-4)
+
+
+def test_minimum_input_sample_size():
+    """Check error message when the validation set is too small."""
+    X, y = make_regression(n_samples=2, n_features=5, random_state=0)
+    model = MLPRegressor(early_stopping=True, random_state=0)
+    with pytest.raises(ValueError, match="The validation set is too small"):
+        model.fit(X, y)

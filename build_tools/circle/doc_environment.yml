@@ -4,15 +4,17 @@
 channels:
   - conda-forge
 dependencies:
-  - python=3.9
+  - python=3.14
   - numpy
   - blas
   - scipy
   - cython
   - joblib
+  - narwhals
   - threadpoolctl
   - matplotlib
   - pandas
+  - rich
   - pyamg
   - pytest
   - pytest-xdist
@@ -37,8 +39,8 @@ dependencies:
   - sphinx-design
   - pydata-sphinx-theme
   - towncrier
+  - jupyterlite-sphinx
+  - jupyterlite-pyodide-kernel
   - pip
   - pip:
-    - jupyterlite-sphinx
-    - jupyterlite-pyodide-kernel
     - sphinxcontrib-sass

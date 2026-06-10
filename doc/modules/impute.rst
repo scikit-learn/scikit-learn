@@ -50,17 +50,17 @@ that contain the missing values::
     >>> X = [[np.nan, 2], [6, np.nan], [7, 6]]
     >>> print(imp.transform(X))
     [[4.          2.        ]
-     [6.          3.666...]
+     [6.          3.666]
      [7.          6.        ]]
 
 The :class:`SimpleImputer` class also supports sparse matrices::
 
     >>> import scipy.sparse as sp
-    >>> X = sp.csc_matrix([[1, 2], [0, -1], [8, 4]])
+    >>> X = sp.csc_array([[1, 2], [0, -1], [8, 4]])
     >>> imp = SimpleImputer(missing_values=-1, strategy='mean')
     >>> imp.fit(X)
     SimpleImputer(missing_values=-1)
-    >>> X_test = sp.csc_matrix([[-1, 2], [6, -1], [7, 6]])
+    >>> X_test = sp.csc_array([[-1, 2], [6, -1], [7, 6]])
     >>> print(imp.transform(X_test).toarray())
     [[3. 2.]
      [6. 3.]
@@ -175,8 +175,7 @@ Note that a call to the ``transform`` method of :class:`IterativeImputer` is
 not allowed to change the number of samples. Therefore multiple imputations
 cannot be achieved by a single call to ``transform``.
 
-References
-----------
+.. rubric:: References
 
 .. [1] `Stef van Buuren, Karin Groothuis-Oudshoorn (2011). "mice: Multivariate
    Imputation by Chained Equations in R". Journal of Statistical Software 45:

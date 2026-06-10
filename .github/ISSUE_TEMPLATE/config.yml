@@ -13,5 +13,5 @@ contact_links:
     url: https://discord.gg/h9qyrK8Jc8
     about: Developers and users can be found on the Discord server
   - name: Blank issue
-    url: https://github.com/scikit-learn/scikit-learn/issues/new
+    url: https://github.com/scikit-learn/scikit-learn/issues/new?template=BLANK_ISSUE
     about: Please note that GitHub Discussions should be used in most cases instead

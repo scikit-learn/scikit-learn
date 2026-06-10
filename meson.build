@@ -3,7 +3,7 @@ project(
   'c', 'cpp', 'cython',
   version: run_command('sklearn/_build_utils/version.py', check: true).stdout().strip(),
   license: 'BSD-3',
-  meson_version: '>= 1.1.0',
+  meson_version: '>= 1.9.0',
   default_options: [
     'c_std=c11',
     'cpp_std=c++14',
@@ -42,7 +42,7 @@ if m_dep.found()
   add_project_link_arguments('-lm', language : 'c')
 endif
 
-tempita = files('sklearn/_build_utils/tempita.py')
+tempita = find_program('sklearn/_build_utils/tempita.py')
 
 py = import('python').find_installation(pure: false)
 

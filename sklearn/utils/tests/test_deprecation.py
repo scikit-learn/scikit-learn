@@ -20,7 +20,7 @@ class MockClass2:
     def method(self):
         pass
 
-    @deprecated("n_features_ is deprecated")  # type: ignore
+    @deprecated("n_features_ is deprecated")  # type: ignore[prop-decorator]
     @property
     def n_features_(self):
         """Number of input features."""

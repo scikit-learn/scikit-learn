@@ -3,21 +3,26 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import itertools
+
 import numpy as np
 import scipy.sparse as sp
 from scipy.sparse.linalg import LinearOperator
 
-from ..utils.fixes import _sparse_min_max, _sparse_nan_min_max
-from ..utils.validation import _check_sample_weight
-from .sparsefuncs_fast import (
+from sklearn.utils.fixes import _sparse_min_max, _sparse_nan_min_max
+from sklearn.utils.sparsefuncs_fast import (
     csc_mean_variance_axis0 as _csc_mean_var_axis0,
 )
-from .sparsefuncs_fast import (
+from sklearn.utils.sparsefuncs_fast import (
+    csr_matmul_csr_to_dense,
+)
+from sklearn.utils.sparsefuncs_fast import (
     csr_mean_variance_axis0 as _csr_mean_var_axis0,
 )
-from .sparsefuncs_fast import (
+from sklearn.utils.sparsefuncs_fast import (
     incr_mean_variance_axis0 as _incr_mean_var_axis0,
 )
+from sklearn.utils.validation import _check_sample_weight
 
 
 def _raise_typeerror(X):
@@ -58,18 +63,18 @@ def inplace_csr_column_scale(X, scale):
     >>> indices = np.array([0, 1, 2, 2])
     >>> data = np.array([8, 1, 2, 5])
     >>> scale = np.array([2, 3, 2])
-    >>> csr = sparse.csr_matrix((data, indices, indptr))
+    >>> csr = sparse.csr_array((data, indices, indptr))
     >>> csr.todense()
-    matrix([[8, 1, 2],
-            [0, 0, 5],
-            [0, 0, 0],
-            [0, 0, 0]])
+    array([[8, 1, 2],
+           [0, 0, 5],
+           [0, 0, 0],
+           [0, 0, 0]])
     >>> sparsefuncs.inplace_csr_column_scale(csr, scale)
     >>> csr.todense()
-    matrix([[16,  3,  4],
-            [ 0,  0, 10],
-            [ 0,  0,  0],
-            [ 0,  0,  0]])
+    array([[16,  3,  4],
+           [ 0,  0, 10],
+           [ 0,  0,  0],
+           [ 0,  0,  0]])
     """
     assert scale.shape[0] == X.shape[1]
     X.data *= scale.take(X.indices, mode="clip")
@@ -138,12 +143,12 @@ def mean_variance_axis(X, axis, weights=None, return_sum_weights=False):
     >>> indices = np.array([0, 1, 2, 2])
     >>> data = np.array([8, 1, 2, 5])
     >>> scale = np.array([2, 3, 2])
-    >>> csr = sparse.csr_matrix((data, indices, indptr))
+    >>> csr = sparse.csr_array((data, indices, indptr))
     >>> csr.todense()
-    matrix([[8, 1, 2],
-            [0, 0, 5],
-            [0, 0, 0],
-            [0, 0, 0]])
+    array([[8, 1, 2],
+           [0, 0, 5],
+           [0, 0, 0],
+           [0, 0, 0]])
     >>> sparsefuncs.mean_variance_axis(csr, axis=0)
     (array([2.  , 0.25, 1.75]), array([12.    ,  0.1875,  4.1875]))
     """
@@ -240,16 +245,16 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n, weights=Non
     >>> indices = np.array([0, 1, 2, 2])
     >>> data = np.array([8, 1, 2, 5])
     >>> scale = np.array([2, 3, 2])
-    >>> csr = sparse.csr_matrix((data, indices, indptr))
+    >>> csr = sparse.csr_array((data, indices, indptr))
     >>> csr.todense()
-    matrix([[8, 1, 2],
-            [0, 0, 5],
-            [0, 0, 0],
-            [0, 0, 0]])
+    array([[8, 1, 2],
+           [0, 0, 5],
+           [0, 0, 0],
+           [0, 0, 0]])
     >>> sparsefuncs.incr_mean_variance_axis(
     ...     csr, axis=0, last_mean=np.zeros(3), last_var=np.zeros(3), last_n=2
     ... )
-    (array([1.3..., 0.1..., 1.1...]), array([8.8..., 0.1..., 3.4...]),
+    (array([1.33, 0.167, 1.17]), array([8.88, 0.139, 3.47]),
     array([6., 6., 6.]))
     """
     _raise_error_wrong_axis(axis)
@@ -310,18 +315,18 @@ def inplace_column_scale(X, scale):
     >>> indices = np.array([0, 1, 2, 2])
     >>> data = np.array([8, 1, 2, 5])
     >>> scale = np.array([2, 3, 2])
-    >>> csr = sparse.csr_matrix((data, indices, indptr))
+    >>> csr = sparse.csr_array((data, indices, indptr))
     >>> csr.todense()
-    matrix([[8, 1, 2],
-            [0, 0, 5],
-            [0, 0, 0],
-            [0, 0, 0]])
+    array([[8, 1, 2],
+           [0, 0, 5],
+           [0, 0, 0],
+           [0, 0, 0]])
     >>> sparsefuncs.inplace_column_scale(csr, scale)
     >>> csr.todense()
-    matrix([[16,  3,  4],
-            [ 0,  0, 10],
-            [ 0,  0,  0],
-            [ 0,  0,  0]])
+    array([[16,  3,  4],
+           [ 0,  0, 10],
+           [ 0,  0,  0],
+           [ 0,  0,  0]])
     """
     if sp.issparse(X) and X.format == "csc":
         inplace_csr_row_scale(X.T, scale)
@@ -354,18 +359,18 @@ def inplace_row_scale(X, scale):
     >>> indices = np.array([0, 1, 2, 3, 3])
     >>> data = np.array([8, 1, 2, 5, 6])
     >>> scale = np.array([2, 3, 4, 5])
-    >>> csr = sparse.csr_matrix((data, indices, indptr))
+    >>> csr = sparse.csr_array((data, indices, indptr))
     >>> csr.todense()
-    matrix([[8, 1, 0, 0],
-            [0, 0, 2, 0],
-            [0, 0, 0, 5],
-            [0, 0, 0, 6]])
+    array([[8, 1, 0, 0],
+           [0, 0, 2, 0],
+           [0, 0, 0, 5],
+           [0, 0, 0, 6]])
     >>> sparsefuncs.inplace_row_scale(csr, scale)
     >>> csr.todense()
-     matrix([[16,  2,  0,  0],
-             [ 0,  0,  6,  0],
-             [ 0,  0,  0, 20],
-             [ 0,  0,  0, 30]])
+     array([[16,  2,  0,  0],
+            [ 0,  0,  6,  0],
+            [ 0,  0,  0, 20],
+            [ 0,  0,  0, 30]])
     """
     if sp.issparse(X) and X.format == "csc":
         inplace_csr_column_scale(X.T, scale)
@@ -491,18 +496,18 @@ def inplace_swap_row(X, m, n):
     >>> indptr = np.array([0, 2, 3, 3, 3])
     >>> indices = np.array([0, 2, 2])
     >>> data = np.array([8, 2, 5])
-    >>> csr = sparse.csr_matrix((data, indices, indptr))
+    >>> csr = sparse.csr_array((data, indices, indptr))
     >>> csr.todense()
-    matrix([[8, 0, 2],
-            [0, 0, 5],
-            [0, 0, 0],
-            [0, 0, 0]])
+    array([[8, 0, 2],
+           [0, 0, 5],
+           [0, 0, 0],
+           [0, 0, 0]])
     >>> sparsefuncs.inplace_swap_row(csr, 0, 1)
     >>> csr.todense()
-    matrix([[0, 0, 5],
-            [8, 0, 2],
-            [0, 0, 0],
-            [0, 0, 0]])
+    array([[0, 0, 5],
+           [8, 0, 2],
+           [0, 0, 0],
+           [0, 0, 0]])
     """
     if sp.issparse(X) and X.format == "csc":
         inplace_swap_row_csc(X, m, n)
@@ -536,18 +541,18 @@ def inplace_swap_column(X, m, n):
     >>> indptr = np.array([0, 2, 3, 3, 3])
     >>> indices = np.array([0, 2, 2])
     >>> data = np.array([8, 2, 5])
-    >>> csr = sparse.csr_matrix((data, indices, indptr))
+    >>> csr = sparse.csr_array((data, indices, indptr))
     >>> csr.todense()
-    matrix([[8, 0, 2],
-            [0, 0, 5],
-            [0, 0, 0],
-            [0, 0, 0]])
+    array([[8, 0, 2],
+           [0, 0, 5],
+           [0, 0, 0],
+           [0, 0, 0]])
     >>> sparsefuncs.inplace_swap_column(csr, 0, 1)
     >>> csr.todense()
-    matrix([[0, 8, 2],
-            [0, 0, 5],
-            [0, 0, 0],
-            [0, 0, 0]])
+    array([[0, 8, 2],
+           [0, 0, 5],
+           [0, 0, 0],
+           [0, 0, 0]])
     """
     if m < 0:
         m += X.shape[1]
@@ -704,7 +709,7 @@ def csc_median_axis_0(X):
     n_samples, n_features = X.shape
     median = np.zeros(n_features)
 
-    for f_ind, (start, end) in enumerate(zip(indptr[:-1], indptr[1:])):
+    for f_ind, (start, end) in enumerate(itertools.pairwise(indptr)):
         # Prevent modifying X in place
         data = np.copy(X.data[start:end])
         nz = n_samples - data.size
@@ -738,3 +743,66 @@ def _implicit_column_offset(X, offset):
         dtype=X.dtype,
         shape=X.shape,
     )
+
+
+def sparse_matmul_to_dense(A, B, out=None):
+    """Compute A @ B for sparse and 2-dim A and B while returning an ndarray.
+
+    Parameters
+    ----------
+    A : sparse matrix of shape (n1, n2) and format CSC or CSR
+        Left-side input matrix.
+    B : sparse matrix of shape (n2, n3) and format CSC or CSR
+        Right-side input matrix.
+    out : ndarray of shape (n1, n3) or None
+        Optional ndarray into which the result is written.
+
+    Returns
+    -------
+    out
+        An ndarray, new created if out=None.
+    """
+    if not (sp.issparse(A) and A.format in ("csc", "csr") and A.ndim == 2):
+        raise ValueError("Input 'A' must be a sparse 2-dim CSC or CSR array.")
+    if not (sp.issparse(B) and B.format in ("csc", "csr") and B.ndim == 2):
+        raise ValueError("Input 'B' must be a sparse 2-dim CSC or CSR array.")
+    if A.shape[1] != B.shape[0]:
+        msg = (
+            "Shapes must fulfil A.shape[1] == B.shape[0], "
+            f"got {A.shape[1]} == {B.shape[0]}."
+        )
+        raise ValueError(msg)
+    n1, n2 = A.shape
+    n3 = B.shape[1]
+    if A.dtype != B.dtype or A.dtype not in (np.float32, np.float64):
+        msg = "Dtype of A and B must be the same, either both float32 or float64."
+        raise ValueError(msg)
+    if out is None:
+        out = np.empty((n1, n3), dtype=A.data.dtype)
+    else:
+        if out.shape[0] != n1 or out.shape[1] != n3:
+            raise ValueError("Shape of out must be ({n1}, {n3}), got {out.shape}.")
+        if out.dtype != A.data.dtype:
+            raise ValueError("Dtype of out must match that of input A.")
+
+    transpose_out = False
+    if A.format == "csc":
+        if B.format == "csc":
+            # out.T = (A @ B).T = B.T @ A.T, note that A.T and B.T are csr
+            transpose_out = True
+            A, B, out = B.T, A.T, out.T
+            n1, n3 = n3, n1
+        else:
+            # It seems best to just convert to csr.
+            A = A.tocsr()
+    elif B.format == "csc":
+        # It seems best to just convert to csr.
+        B = B.tocsr()
+
+    csr_matmul_csr_to_dense(
+        A.data, A.indices, A.indptr, B.data, B.indices, B.indptr, out, n1, n2, n3
+    )
+    if transpose_out:
+        out = out.T
+
+    return out

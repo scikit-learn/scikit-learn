@@ -381,11 +381,10 @@ The parameter `deep` controls whether or not the parameters of the
     subestimator__dual -> False
     subestimator__fit_intercept -> True
     subestimator__intercept_scaling -> 1
-    subestimator__l1_ratio -> None
+    subestimator__l1_ratio -> 0.0
     subestimator__max_iter -> 100
-    subestimator__multi_class -> deprecated
     subestimator__n_jobs -> None
-    subestimator__penalty -> l2
+    subestimator__penalty -> deprecated
     subestimator__random_state -> None
     subestimator__solver -> lbfgs
     subestimator__tol -> 0.0001
@@ -499,7 +498,7 @@ Estimator Tags
 The estimator tags are annotations of estimators that allow programmatic inspection of
 their capabilities, such as sparse matrix support, supported output types and supported
 methods. The estimator tags are an instance of :class:`~sklearn.utils.Tags` returned by
-the method :meth:`~sklearn.base.BaseEstimator.__sklearn_tags__()`. These tags are used
+the method :meth:`~sklearn.base.BaseEstimator.__sklearn_tags__`. These tags are used
 in different places, such as :func:`~base.is_regressor` or the common checks run by
 :func:`~sklearn.utils.estimator_checks.check_estimator` and
 :func:`~sklearn.utils.estimator_checks.parametrize_with_checks`, where tags determine
@@ -524,7 +523,7 @@ You can create a new subclass of :class:`~sklearn.utils.Tags` if you wish to add
 tags to the existing set. Note that all attributes that you add in a child class need
 to have a default value. It can be of the form::
 
-    from dataclasses import dataclass, asdict
+    from dataclasses import dataclass, fields
 
     @dataclass
     class MyTags(Tags):
@@ -584,8 +583,9 @@ keyword arguments to its super class. Super classes' `__init_subclass__` should
 For transformers that return multiple arrays in `transform`, auto wrapping will
 only wrap the first array and not alter the other arrays.
 
-See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`
-for an example on how to use the API.
+Refer to the :ref:`user guide <df_output_transform>` for more details
+and :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py` for an
+example on how to use the API.
 
 .. _developer_api_check_is_fitted:
 
@@ -660,13 +660,11 @@ In addition, we add the following guidelines:
 * Avoid multiple statements on one line. Prefer a line return after
   a control flow statement (``if``/``for``).
 
-* Use relative imports for references inside scikit-learn.
+* Use absolute imports
 
-* Unit tests are an exception to the previous rule;
-  they should use absolute imports, exactly as client code would.
-  A corollary is that, if ``sklearn.foo`` exports a class or function
-  that is implemented in ``sklearn.foo.bar.baz``,
-  the test should import it from ``sklearn.foo``.
+* Unit tests should use imports exactly as client code would.
+  If ``sklearn.foo`` exports a class or function that is implemented in
+  ``sklearn.foo.bar.baz``, the test should import it from ``sklearn.foo``.
 
 * **Please don't use** ``import *`` **in any case**. It is considered harmful
   by the `official Python recommendations

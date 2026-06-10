@@ -71,8 +71,8 @@ def plot_subfigure(X, Y, subplot, title, transform):
     plt.subplot(2, 2, subplot)
     plt.title(title)
 
-    zero_class = np.where(Y[:, 0])
-    one_class = np.where(Y[:, 1])
+    zero_class = (Y[:, 0]).nonzero()
+    one_class = (Y[:, 1]).nonzero()
     plt.scatter(X[:, 0], X[:, 1], s=40, c="gray", edgecolors=(0, 0, 0))
     plt.scatter(
         X[zero_class, 0],

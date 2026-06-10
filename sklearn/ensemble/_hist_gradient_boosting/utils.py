@@ -3,8 +3,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from ...base import is_classifier
-from .binning import _BinMapper
+from sklearn.base import is_classifier
+from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 
 
 def get_equivalent_estimator(estimator, lib="lightgbm", n_classes=None):
@@ -72,7 +72,7 @@ def get_equivalent_estimator(estimator, lib="lightgbm", n_classes=None):
         # LightGBM 3.0 introduced a different scaling of the hessian for the multiclass
         # case.
         # It is equivalent of scaling the learning rate.
-        # See https://github.com/microsoft/LightGBM/pull/3256.
+        # See https://github.com/lightgbm-org/LightGBM/pull/3256.
         if n_classes is not None:
             lightgbm_params["learning_rate"] *= n_classes / (n_classes - 1)
 
@@ -106,7 +106,7 @@ def get_equivalent_estimator(estimator, lib="lightgbm", n_classes=None):
     catboost_loss_mapping = {
         "squared_error": "RMSE",
         # catboost does not support MAE when leaf_estimation_method is Newton
-        "absolute_error": "LEAST_ASBOLUTE_DEV_NOT_SUPPORTED",
+        "absolute_error": "LEAST_ABSOLUTE_DEV_NOT_SUPPORTED",
         "log_loss": "Logloss" if n_classes == 2 else "MultiClass",
         "gamma": None,
         "poisson": "Poisson",

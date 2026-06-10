@@ -2,6 +2,7 @@
 Testing Recursive feature elimination
 """
 
+import re
 from operator import attrgetter
 
 import numpy as np
@@ -541,7 +542,11 @@ def test_rfecv_std_and_mean(global_random_seed):
 
     rfecv = RFECV(estimator=SVC(kernel="linear"))
     rfecv.fit(X, y)
-    split_keys = [key for key in rfecv.cv_results_.keys() if "split" in key]
+    split_keys = [
+        key
+        for key in rfecv.cv_results_.keys()
+        if re.search(r"split\d+_test_score", key)
+    ]
     cv_scores = np.asarray([rfecv.cv_results_[key] for key in split_keys])
     expected_mean = np.mean(cv_scores, axis=0)
     expected_std = np.std(cv_scores, axis=0)
@@ -660,7 +665,7 @@ def test_rfe_estimator_attribute_error():
 )
 def test_rfe_n_features_to_select_warning(ClsRFE, param):
     """Check if the correct warning is raised when trying to initialize a RFE
-    object with a n_features_to_select attribute larger than the number of
+    object with an n_features_to_select attribute larger than the number of
     features present in the X variable that is passed to the fit method
     """
     X, y = make_classification(n_features=20, random_state=0)
@@ -721,3 +726,53 @@ def test_rfe_with_joblib_threading_backend(global_random_seed):
         rfe.fit(X, y)
 
     assert_array_equal(ranking_ref, rfe.ranking_)
+
+
+def test_results_per_cv_in_rfecv(global_random_seed):
+    """
+    Test that the results of RFECV are consistent across the different folds
+    in terms of length of the arrays.
+    """
+    X, y = make_classification(random_state=global_random_seed)
+
+    clf = LogisticRegression()
+    rfecv = RFECV(
+        estimator=clf,
+        n_jobs=2,
+        cv=5,
+    )
+
+    rfecv.fit(X, y)
+
+    assert len(rfecv.cv_results_["split1_test_score"]) == len(
+        rfecv.cv_results_["split2_test_score"]
+    )
+    assert len(rfecv.cv_results_["split1_support"]) == len(
+        rfecv.cv_results_["split2_support"]
+    )
+    assert len(rfecv.cv_results_["split1_ranking"]) == len(
+        rfecv.cv_results_["split2_ranking"]
+    )
+
+
+@pytest.mark.parametrize(
+    "feature_importance",
+    [
+        lambda estimator: estimator.sparsify().coef_,
+        lambda estimator: estimator.sparsify().coef_.tocsc(),
+    ],
+)
+def test_rfe_sparse_coef(feature_importance):
+    X = [[0, 1, 3], [1, 0, 0], [2, 0, 4], [0, 2, 4]]
+    y = [0, 1, 2, 3]
+
+    estimator = LogisticRegression()
+    selector_sparse = RFE(
+        estimator, n_features_to_select=1, importance_getter=feature_importance
+    )
+    selector_dense = RFE(estimator, n_features_to_select=1)
+    selector_sparse.fit(X, y)
+    selector_dense.fit(X, y)
+
+    assert_array_equal(selector_sparse.support_, selector_dense.support_)
+    assert_array_equal(selector_sparse.ranking_, selector_dense.ranking_)

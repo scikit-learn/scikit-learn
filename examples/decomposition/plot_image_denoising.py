@@ -39,11 +39,7 @@ necessarily related to visualisation.
 # Generate distorted image
 # ------------------------
 import numpy as np
-
-try:  # Scipy >= 1.10
-    from scipy.datasets import face
-except ImportError:
-    from scipy.misc import face
+from scipy.datasets import face
 
 raccoon_face = face(gray=True)
 

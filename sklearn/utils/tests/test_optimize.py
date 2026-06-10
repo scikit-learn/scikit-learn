@@ -1,16 +1,21 @@
+import warnings
+
 import numpy as np
 import pytest
 from scipy.optimize import fmin_ncg
 
+from sklearn import config_context
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils.optimize import _newton_cg
+from sklearn.utils._array_api import move_to, yield_namespace_device_dtype_combinations
+from sklearn.utils._bunch import Bunch
+from sklearn.utils._testing import _array_api_for_tests, assert_allclose
+from sklearn.utils.optimize import _check_optimize_result, _newton_cg
 
 
-def test_newton_cg():
+def test_newton_cg(global_random_seed):
     # Test that newton_cg gives same result as scipy's fmin_ncg
 
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     A = rng.normal(size=(10, 10))
     x0 = np.ones(10)
 
@@ -27,9 +32,46 @@ def test_newton_cg():
     def grad_hess(x):
         return grad(x), lambda x: A.T.dot(A.dot(x))
 
-    assert_array_almost_equal(
-        _newton_cg(grad_hess, func, grad, x0, tol=1e-10)[0],
+    # func is a definite positive quadratic form, so the minimum is at x = 0
+    # hence the use of absolute tolerance.
+    assert np.all(np.abs(_newton_cg(grad_hess, func, grad, x0, tol=1e-10)[0]) <= 1e-7)
+    assert_allclose(
+        _newton_cg(grad_hess, func, grad, x0, tol=1e-7)[0],
         fmin_ncg(f=func, x0=x0, fprime=grad, fhess_p=hess),
+        atol=1e-5,
+    )
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_newton_cg_array_api_compliance(array_namespace, device_name, dtype_name):
+    """Test that newton_cg works with Array API input."""
+    xp, device = _array_api_for_tests(array_namespace, device_name)
+    A = xp.asarray(np.array([[3, -1], [-1, 1]]).astype(dtype_name), device=device)
+    y = xp.asarray(np.arange(2).astype(dtype_name), device=device)
+    x0 = xp.asarray(np.ones(2).astype(dtype_name), device=device)
+
+    def func(x):
+        return 0.5 * (y - A @ x) @ (y - A @ x)
+
+    def grad(x):
+        return A.T @ (A @ x - y)
+
+    def hess(x, p):
+        return A.T @ (A @ p)
+
+    def grad_hess(x):
+        return grad(x), lambda p: hess(x, p)
+
+    with config_context(array_api_dispatch=True):
+        res = _newton_cg(grad_hess, func, grad, x0, tol=1e-10)
+
+    assert_allclose(
+        move_to(res[0], xp=np, device="cpu"),
+        [1 / 2, 3 / 2],
+        atol=1e-10,
     )
 
 
@@ -78,7 +120,7 @@ def test_newton_cg_verbosity(capsys, verbose):
         b = np.array([1.0, 2.0])
         # Note that scipy.optimize._linesearch LineSearchWarning inherits from
         # RuntimeWarning, but we do not want to import from non public APIs.
-        with pytest.warns(RuntimeWarning):
+        with pytest.warns((RuntimeWarning, UserWarning)):
             _newton_cg(
                 grad_hess=lambda x: (A @ x - b, lambda z: A @ z),
                 func=lambda x: 0.5 * x @ A @ x - b @ x,
@@ -121,7 +163,7 @@ def test_newton_cg_verbosity(capsys, verbose):
         # curvature", but that is very hard to trigger.
         A = np.eye(2)
         b = np.array([-2.0, 1])
-        with pytest.warns(RuntimeWarning):
+        with pytest.warns((RuntimeWarning, UserWarning)):
             _newton_cg(
                 # Note the wrong sign in the hessian product.
                 grad_hess=lambda x: (A @ x - b, lambda z: -A @ z),
@@ -156,3 +198,58 @@ def test_newton_cg_verbosity(capsys, verbose):
         ]
         for m in msg:
             assert m in captured.out
+
+
+def test_check_optimize():
+    # Mock some lbfgs output using a Bunch instance:
+    result = Bunch()
+
+    # First case: no warnings
+    result.nit = 1
+    result.status = 0
+    result.message = "OK"
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        _check_optimize_result("lbfgs", result)
+
+    # Second case: warning about implicit `max_iter`: do not recommend the user
+    # to increase `max_iter` this is not a user settable parameter.
+    result.status = 1
+    result.message = "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT"
+    with pytest.warns(ConvergenceWarning) as record:
+        _check_optimize_result("lbfgs", result)
+
+    assert len(record) == 1
+    warn_msg = record[0].message.args[0]
+    assert "lbfgs failed to converge after 1 iteration(s)" in warn_msg
+    assert result.message in warn_msg
+    assert "Increase the number of iterations" not in warn_msg
+    assert "scale the data" in warn_msg
+
+    # Third case: warning about explicit `max_iter`: recommend user to increase
+    # `max_iter`.
+    with pytest.warns(ConvergenceWarning) as record:
+        _check_optimize_result("lbfgs", result, max_iter=1)
+
+    assert len(record) == 1
+    warn_msg = record[0].message.args[0]
+    assert "lbfgs failed to converge after 1 iteration(s)" in warn_msg
+    assert result.message in warn_msg
+    assert "Increase the number of iterations" in warn_msg
+    assert "scale the data" in warn_msg
+
+    # Fourth case: other convergence problem before reaching `max_iter`: do not
+    # recommend increasing `max_iter`.
+    result.nit = 2
+    result.status = 2
+    result.message = "ABNORMAL"
+    with pytest.warns(ConvergenceWarning) as record:
+        _check_optimize_result("lbfgs", result, max_iter=10)
+
+    assert len(record) == 1
+    warn_msg = record[0].message.args[0]
+    assert "lbfgs failed to converge after 2 iteration(s)" in warn_msg
+    assert result.message in warn_msg
+    assert "Increase the number of iterations" not in warn_msg
+    assert "scale the data" in warn_msg

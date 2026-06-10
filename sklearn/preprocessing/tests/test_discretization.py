@@ -13,7 +13,6 @@ from sklearn.utils._testing import (
     assert_array_equal,
     ignore_warnings,
 )
-from sklearn.utils.fixes import np_version, parse_version
 
 X = [[-2, 1.5, -4, -1], [-1, 2.5, -3, -0.5], [0, 3.5, -2, 0.5], [1, 4.5, -1, 2]]
 
@@ -23,13 +22,13 @@ X = [[-2, 1.5, -4, -1], [-1, 2.5, -3, -0.5], [0, 3.5, -2, 0.5], [1, 4.5, -1, 2]]
     [
         (
             "uniform",
-            "warn",  # default, will not warn when strategy != "quantile"
+            "averaged_inverted_cdf",  # default
             [[0, 0, 0, 0], [1, 1, 1, 0], [2, 2, 2, 1], [2, 2, 2, 2]],
             None,
         ),
         (
             "kmeans",
-            "warn",  # default, will not warn when strategy != "quantile"
+            "averaged_inverted_cdf",  # default
             [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2]],
             None,
         ),
@@ -41,13 +40,13 @@ X = [[-2, 1.5, -4, -1], [-1, 2.5, -3, -0.5], [0, 3.5, -2, 0.5], [1, 4.5, -1, 2]]
         ),
         (
             "uniform",
-            "warn",  # default, will not warn when strategy != "quantile"
+            "averaged_inverted_cdf",  # default
             [[0, 0, 0, 0], [1, 1, 1, 0], [2, 2, 2, 1], [2, 2, 2, 2]],
             [1, 1, 2, 1],
         ),
         (
             "uniform",
-            "warn",  # default, will not warn when strategy != "quantile"
+            "averaged_inverted_cdf",  # default
             [[0, 0, 0, 0], [1, 1, 1, 0], [2, 2, 2, 1], [2, 2, 2, 2]],
             [1, 1, 1, 1],
         ),
@@ -71,13 +70,13 @@ X = [[-2, 1.5, -4, -1], [-1, 2.5, -3, -0.5], [0, 3.5, -2, 0.5], [1, 4.5, -1, 2]]
         ),
         (
             "kmeans",
-            "warn",  # default, will not warn when strategy != "quantile"
+            "averaged_inverted_cdf",  # default
             [[0, 0, 0, 0], [1, 1, 1, 0], [1, 1, 1, 1], [2, 2, 2, 2]],
             [1, 0, 3, 1],
         ),
         (
             "kmeans",
-            "warn",  # default, will not warn when strategy != "quantile"
+            "averaged_inverted_cdf",  # default
             [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2]],
             [1, 1, 1, 1],
         ),
@@ -146,13 +145,13 @@ def test_invalid_n_bins_array():
     [
         (
             "uniform",
-            "warn",  # default, will not warn when strategy != "quantile"
+            "averaged_inverted_cdf",  # default
             [[0, 0, 0, 0], [0, 1, 1, 0], [1, 2, 2, 1], [1, 2, 2, 2]],
             None,
         ),
         (
             "kmeans",
-            "warn",  # default, will not warn when strategy != "quantile"
+            "averaged_inverted_cdf",  # default
             [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [1, 2, 2, 2]],
             None,
         ),
@@ -188,7 +187,7 @@ def test_invalid_n_bins_array():
         ),
         (
             "kmeans",
-            "warn",  # default, will not warn when strategy != "quantile"
+            "averaged_inverted_cdf",  # default
             [[0, 0, 0, 0], [0, 1, 1, 0], [1, 1, 1, 1], [1, 2, 2, 2]],
             [1, 0, 3, 1],
         ),
@@ -329,8 +328,20 @@ def test_encode_options():
 @pytest.mark.parametrize(
     "strategy, quantile_method, expected_2bins, expected_3bins, expected_5bins",
     [
-        ("uniform", "warn", [0, 0, 0, 0, 1, 1], [0, 0, 0, 0, 2, 2], [0, 0, 1, 1, 4, 4]),
-        ("kmeans", "warn", [0, 0, 0, 0, 1, 1], [0, 0, 1, 1, 2, 2], [0, 0, 1, 2, 3, 4]),
+        (
+            "uniform",
+            "averaged_inverted_cdf",
+            [0, 0, 0, 0, 1, 1],
+            [0, 0, 0, 0, 2, 2],
+            [0, 0, 1, 1, 4, 4],
+        ),
+        (
+            "kmeans",
+            "averaged_inverted_cdf",
+            [0, 0, 0, 0, 1, 1],
+            [0, 0, 1, 1, 2, 2],
+            [0, 0, 1, 2, 3, 4],
+        ),
         (
             "quantile",
             "averaged_inverted_cdf",
@@ -378,7 +389,7 @@ def test_nonuniform_strategies(
                 [0.5, 4.0, -1.5, 0.5],
                 [0.5, 4.0, -1.5, 1.5],
             ],
-            "warn",  # default, will not warn when strategy != "quantile"
+            "averaged_inverted_cdf",  # default
         ),
         (
             "kmeans",
@@ -388,7 +399,7 @@ def test_nonuniform_strategies(
                 [-0.125, 3.375, -2.125, 0.5625],
                 [0.75, 4.25, -1.25, 1.625],
             ],
-            "warn",  # default, will not warn when strategy != "quantile"
+            "averaged_inverted_cdf",  # default
         ),
         (
             "quantile",
@@ -453,7 +464,7 @@ def test_overwrite():
     "strategy, expected_bin_edges, quantile_method",
     [
         ("quantile", [0, 1.5, 3], "averaged_inverted_cdf"),
-        ("kmeans", [0, 1.5, 3], "warn"),
+        ("kmeans", [0, 1.5, 3], "averaged_inverted_cdf"),
     ],
 )
 def test_redundant_bins(strategy, expected_bin_edges, quantile_method):
@@ -635,20 +646,6 @@ def test_kbinsdiscretizer_subsample(strategy, global_random_seed):
     )
 
 
-def test_quantile_method_future_warnings():
-    X = [[-2, 1, -4], [-1, 2, -3], [0, 3, -2], [1, 4, -1]]
-    with pytest.warns(
-        FutureWarning,
-        match="The current default behavior, quantile_method='linear', will be "
-        "changed to quantile_method='averaged_inverted_cdf' in "
-        "scikit-learn version 1.9 to naturally support sample weight "
-        "equivalence properties by default. Pass "
-        "quantile_method='averaged_inverted_cdf' explicitly to silence this "
-        "warning.",
-    ):
-        KBinsDiscretizer(strategy="quantile").fit(X)
-
-
 def test_invalid_quantile_method_with_sample_weight():
     X = [[-2, 1, -4], [-1, 2, -3], [0, 3, -2], [1, 4, -1]]
     expected_msg = (
@@ -664,42 +661,3 @@ def test_invalid_quantile_method_with_sample_weight():
             X,
             sample_weight=[1, 1, 2, 2],
         )
-
-
-# TODO(1.7): remove this test
-@pytest.mark.parametrize(
-    "strategy, quantile_method",
-    [("uniform", "warn"), ("quantile", "averaged_inverted_cdf"), ("kmeans", "warn")],
-)
-def test_KBD_inverse_transform_Xt_deprecation(strategy, quantile_method):
-    X = np.arange(10)[:, None]
-    kbd = KBinsDiscretizer(strategy=strategy, quantile_method=quantile_method)
-    X = kbd.fit_transform(X)
-
-    with pytest.raises(TypeError, match="Missing required positional argument"):
-        kbd.inverse_transform()
-
-    with pytest.raises(TypeError, match="Cannot use both X and Xt. Use X only"):
-        kbd.inverse_transform(X=X, Xt=X)
-
-    with warnings.catch_warnings(record=True):
-        warnings.simplefilter("error")
-        kbd.inverse_transform(X)
-
-    with pytest.warns(FutureWarning, match="Xt was renamed X in version 1.5"):
-        kbd.inverse_transform(Xt=X)
-
-
-# TODO: remove this test when numpy min version >= 1.22
-@pytest.mark.skipif(
-    condition=np_version >= parse_version("1.22"),
-    reason="newer numpy versions do support the 'method' parameter",
-)
-def test_invalid_quantile_method_on_old_numpy():
-    expected_msg = (
-        "quantile_method='closest_observation' is not supported with numpy < 1.22"
-    )
-    with pytest.raises(ValueError, match=expected_msg):
-        KBinsDiscretizer(
-            quantile_method="closest_observation", strategy="quantile"
-        ).fit(X)

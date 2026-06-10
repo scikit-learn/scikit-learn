@@ -4,12 +4,19 @@ from unittest import SkipTest
 
 import numpy as np
 import pytest
+from narwhals.exceptions import DuplicateError
 from scipy.stats import kstest
 
 import sklearn
 from sklearn.externals._packaging.version import parse as parse_version
 from sklearn.utils import _safe_indexing, resample, shuffle
-from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
+from sklearn.utils._array_api import (
+    device as array_api_device,
+)
+from sklearn.utils._array_api import (
+    move_to,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._indexing import (
     _determine_key_type,
     _get_column_indices,
@@ -19,6 +26,7 @@ from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._testing import (
     _array_api_for_tests,
     _convert_container,
+    assert_allclose,
     assert_allclose_dense_sparse,
     assert_array_equal,
     skip_if_array_api_compat_not_configured,
@@ -105,20 +113,21 @@ def test_determine_key_type_slice_error():
 
 @skip_if_array_api_compat_not_configured
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
 )
-def test_determine_key_type_array_api(array_namespace, device, dtype_name):
-    xp = _array_api_for_tests(array_namespace, device)
+def test_determine_key_type_array_api(array_namespace, device_name, dtype_name):
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     with sklearn.config_context(array_api_dispatch=True):
-        int_array_key = xp.asarray([1, 2, 3])
+        int_array_key = xp.asarray([1, 2, 3], device=device)
         assert _determine_key_type(int_array_key) == "int"
 
-        bool_array_key = xp.asarray([True, False, True])
+        bool_array_key = xp.asarray([True, False, True], device=device)
         assert _determine_key_type(bool_array_key) == "bool"
 
         try:
-            complex_array_key = xp.asarray([1 + 1j, 2 + 2j, 3 + 3j])
+            complex_array_key = xp.asarray([1 + 1j, 2 + 2j, 3 + 3j], device=device)
         except TypeError:
             # Complex numbers are not supported by all Array API libraries.
             complex_array_key = None
@@ -128,8 +137,43 @@ def test_determine_key_type_array_api(array_namespace, device, dtype_name):
                 _determine_key_type(complex_array_key)
 
 
+@skip_if_array_api_compat_not_configured
 @pytest.mark.parametrize(
-    "array_type", ["list", "array", "sparse", "dataframe", "polars"]
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+@pytest.mark.parametrize(
+    "indexing_key",
+    (
+        0,
+        -1,
+        [1, 3],
+        np.array([1, 3]),
+        slice(1, 2),
+        [True, False, True, True],
+        np.asarray([False, False, False, False]),
+    ),
+)
+@pytest.mark.parametrize("axis", [0, 1])
+def test_safe_indexing_array_api_support(
+    array_namespace, device_name, dtype_name, indexing_key, axis
+):
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
+
+    array_to_index_np = np.arange(16).reshape(4, 4)
+    expected_result = _safe_indexing(array_to_index_np, indexing_key, axis=axis)
+    array_to_index_xp = move_to(array_to_index_np, xp=xp, device=device)
+
+    with sklearn.config_context(array_api_dispatch=True):
+        indexed_array_xp = _safe_indexing(array_to_index_xp, indexing_key, axis=axis)
+        assert array_api_device(indexed_array_xp) == array_api_device(array_to_index_xp)
+        assert indexed_array_xp.dtype == array_to_index_xp.dtype
+
+    assert_allclose(move_to(indexed_array_xp, xp=np, device="cpu"), expected_result)
+
+
+@pytest.mark.parametrize(
+    "array_type", ["list", "array", "sparse", "pandas", "polars", "pyarrow"]
 )
 @pytest.mark.parametrize("indices_type", ["list", "tuple", "array", "series", "slice"])
 def test_safe_indexing_2d_container_axis_0(array_type, indices_type):
@@ -144,7 +188,9 @@ def test_safe_indexing_2d_container_axis_0(array_type, indices_type):
     )
 
 
-@pytest.mark.parametrize("array_type", ["list", "array", "series", "polars_series"])
+@pytest.mark.parametrize(
+    "array_type", ["list", "array", "series", "polars_series", "pyarrow_array"]
+)
 @pytest.mark.parametrize("indices_type", ["list", "tuple", "array", "series", "slice"])
 def test_safe_indexing_1d_container(array_type, indices_type):
     indices = [1, 2]
@@ -156,7 +202,9 @@ def test_safe_indexing_1d_container(array_type, indices_type):
     assert_allclose_dense_sparse(subset, _convert_container([2, 3], array_type))
 
 
-@pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe", "polars"])
+@pytest.mark.parametrize(
+    "array_type", ["array", "sparse", "pandas", "polars", "pyarrow"]
+)
 @pytest.mark.parametrize("indices_type", ["list", "tuple", "array", "series", "slice"])
 @pytest.mark.parametrize("indices", [[1, 2], ["col_1", "col_2"]])
 def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
@@ -166,13 +214,13 @@ def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
     if indices_type == "slice" and isinstance(indices[1], int):
         indices_converted[1] += 1
 
-    columns_name = ["col_0", "col_1", "col_2"]
+    column_names = ["col_0", "col_1", "col_2"]
     array = _convert_container(
-        [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, columns_name
+        [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, column_names
     )
     indices_converted = _convert_container(indices_converted, indices_type)
 
-    if isinstance(indices[0], str) and array_type not in ("dataframe", "polars"):
+    if isinstance(indices[0], str) and array_type in ("array", "sparse"):
         err_msg = (
             "Specifying the columns using strings is only supported for dataframes"
         )
@@ -187,7 +235,9 @@ def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
 
 @pytest.mark.parametrize("array_read_only", [True, False])
 @pytest.mark.parametrize("indices_read_only", [True, False])
-@pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe", "polars"])
+@pytest.mark.parametrize(
+    "array_type", ["array", "sparse", "pandas", "polars", "pyarrow"]
+)
 @pytest.mark.parametrize("indices_type", ["array", "series"])
 @pytest.mark.parametrize(
     "axis, expected_array", [(0, [[4, 5, 6], [7, 8, 9]]), (1, [[2, 3], [5, 6], [8, 9]])]
@@ -207,7 +257,9 @@ def test_safe_indexing_2d_read_only_axis_1(
     assert_allclose_dense_sparse(subset, _convert_container(expected_array, array_type))
 
 
-@pytest.mark.parametrize("array_type", ["list", "array", "series", "polars_series"])
+@pytest.mark.parametrize(
+    "array_type", ["list", "array", "series", "polars_series", "pyarrow_array"]
+)
 @pytest.mark.parametrize("indices_type", ["list", "tuple", "array", "series"])
 def test_safe_indexing_1d_container_mask(array_type, indices_type):
     indices = [False] + [True] * 2 + [False] * 6
@@ -217,16 +269,18 @@ def test_safe_indexing_1d_container_mask(array_type, indices_type):
     assert_allclose_dense_sparse(subset, _convert_container([2, 3], array_type))
 
 
-@pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe", "polars"])
+@pytest.mark.parametrize(
+    "array_type", ["array", "sparse", "pandas", "polars", "pyarrow"]
+)
 @pytest.mark.parametrize("indices_type", ["list", "tuple", "array", "series"])
 @pytest.mark.parametrize(
     "axis, expected_subset",
     [(0, [[4, 5, 6], [7, 8, 9]]), (1, [[2, 3], [5, 6], [8, 9]])],
 )
 def test_safe_indexing_2d_mask(array_type, indices_type, axis, expected_subset):
-    columns_name = ["col_0", "col_1", "col_2"]
+    column_names = ["col_0", "col_1", "col_2"]
     array = _convert_container(
-        [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, columns_name
+        [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, column_names
     )
     indices = [False, True, True]
     indices = _convert_container(indices, indices_type)
@@ -243,8 +297,9 @@ def test_safe_indexing_2d_mask(array_type, indices_type, axis, expected_subset):
         ("list", "list"),
         ("array", "array"),
         ("sparse", "sparse"),
-        ("dataframe", "series"),
+        ("pandas", "series"),
         ("polars", "polars_series"),
+        ("pyarrow", "pyarrow_array"),
     ],
 )
 def test_safe_indexing_2d_scalar_axis_0(array_type, expected_output_type):
@@ -255,7 +310,9 @@ def test_safe_indexing_2d_scalar_axis_0(array_type, expected_output_type):
     assert_allclose_dense_sparse(subset, expected_array)
 
 
-@pytest.mark.parametrize("array_type", ["list", "array", "series", "polars_series"])
+@pytest.mark.parametrize(
+    "array_type", ["list", "array", "series", "polars_series", "pyarrow_array"]
+)
 def test_safe_indexing_1d_scalar(array_type):
     array = _convert_container([1, 2, 3, 4, 5, 6, 7, 8, 9], array_type)
     indices = 2
@@ -268,18 +325,19 @@ def test_safe_indexing_1d_scalar(array_type):
     [
         ("array", "array"),
         ("sparse", "sparse"),
-        ("dataframe", "series"),
+        ("pandas", "series"),
         ("polars", "polars_series"),
+        ("pyarrow", "pyarrow_array"),
     ],
 )
 @pytest.mark.parametrize("indices", [2, "col_2"])
 def test_safe_indexing_2d_scalar_axis_1(array_type, expected_output_type, indices):
-    columns_name = ["col_0", "col_1", "col_2"]
+    column_names = ["col_0", "col_1", "col_2"]
     array = _convert_container(
-        [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, columns_name
+        [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, column_names
     )
 
-    if isinstance(indices, str) and array_type not in ("dataframe", "polars"):
+    if isinstance(indices, str) and array_type in ("array", "sparse"):
         err_msg = (
             "Specifying the columns using strings is only supported for dataframes"
         )
@@ -316,7 +374,9 @@ def test_safe_indexing_error_axis(axis):
         _safe_indexing(X_toy, [0, 1], axis=axis)
 
 
-@pytest.mark.parametrize("X_constructor", ["array", "series", "polars_series"])
+@pytest.mark.parametrize(
+    "X_constructor", ["array", "series", "polars_series", "pyarrow_array"]
+)
 def test_safe_indexing_1d_array_error(X_constructor):
     # check that we are raising an error if the array-like passed is 1D and
     # we try to index on the 2nd dimension
@@ -329,6 +389,9 @@ def test_safe_indexing_1d_array_error(X_constructor):
     elif X_constructor == "polars_series":
         pl = pytest.importorskip("polars")
         X_constructor = pl.Series(values=X)
+    elif X_constructor == "pyarrow_array":
+        pa = pytest.importorskip("pyarrow")
+        X_constructor = pa.array(X)
 
     err_msg = "'X' should be a 2D NumPy array, 2D sparse matrix or dataframe"
     with pytest.raises(ValueError, match=err_msg):
@@ -338,7 +401,7 @@ def test_safe_indexing_1d_array_error(X_constructor):
 def test_safe_indexing_container_axis_0_unsupported_type():
     indices = ["col_1", "col_2"]
     array = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    err_msg = "String indexing is not supported with 'axis=0'"
+    err_msg = r"String indexing.*is not supported with 'axis=0'"
     with pytest.raises(ValueError, match=err_msg):
         _safe_indexing(array, indices, axis=0)
 
@@ -377,7 +440,7 @@ def test_safe_indexing_list_axis_1_unsupported(indices):
         _safe_indexing(X, indices, axis=1)
 
 
-@pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe"])
+@pytest.mark.parametrize("array_type", ["array", "sparse", "pandas"])
 def test_safe_assign(array_type):
     """Check that `_safe_assign` works as expected."""
     rng = np.random.RandomState(0)
@@ -415,7 +478,10 @@ def test_safe_assign(array_type):
     "key, err_msg",
     [
         (10, r"all features must be in \[0, 2\]"),
-        ("whatever", "A given column is not a column of the dataframe"),
+        (
+            "whatever",
+            r"Some column names are not columns of the dataframe: \{'whatever'\}",
+        ),
         (object(), "No valid specification of the columns"),
     ],
 )
@@ -436,50 +502,47 @@ def test_get_column_indices_pandas_nonunique_columns_error(key):
     columns = ["col1", "col1", "col2", "col3", "col2"]
     X = pd.DataFrame(toy, columns=columns)
 
-    err_msg = "Selected columns, {}, are not unique in dataframe".format(key)
-    with pytest.raises(ValueError) as exc_info:
+    err_msg = "Expected unique column names, got.*"
+    with pytest.raises(DuplicateError, match=err_msg):
         _get_column_indices(X, key)
-    assert str(exc_info.value) == err_msg
 
 
-def test_get_column_indices_interchange():
-    """Check _get_column_indices for edge cases with the interchange"""
-    pd = pytest.importorskip("pandas", minversion="1.5")
-
-    df = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=["a", "b", "c"])
-
-    # Hide the fact that this is a pandas dataframe to trigger the dataframe protocol
-    # code path.
-    class MockDataFrame:
-        def __init__(self, df):
-            self._df = df
-
-        def __getattr__(self, name):
-            return getattr(self._df, name)
-
-    df_mocked = MockDataFrame(df)
+@pytest.mark.parametrize(
+    "constructor_name", ["array", "sparse", "pandas", "pyarrow", "polars"]
+)
+def test_get_column_indices_dataframes(constructor_name):
+    """Check _get_column_indices for edge cases with 2d input X."""
+    df = _convert_container(
+        [[1, 2, 3], [4, 5, 6]], constructor_name, column_names=["a", "b", "c"]
+    )
 
     key_results = [
-        (slice(1, None), [1, 2]),
-        (slice(None, 2), [0, 1]),
-        (slice(1, 2), [1]),
-        (["b", "c"], [1, 2]),
-        (slice("a", "b"), [0, 1]),
-        (slice("a", None), [0, 1, 2]),
-        (slice(None, "a"), [0]),
-        (["c", "a"], [2, 0]),
-        ([], []),
+        (slice(1, None), [1, 2], False),
+        (slice(None, 2), [0, 1], False),
+        (slice(1, 2), [1], False),
+        (["b", "c"], [1, 2], True),
+        (slice("a", "b"), [0, 1], True),
+        (slice("a", None), [0, 1, 2], True),
+        (slice(None, "a"), [0], True),
+        (["c", "a"], [2, 0], True),
+        ([], [], False),
     ]
-    for key, result in key_results:
-        assert _get_column_indices(df_mocked, key) == result
+    msg = "Specifying the columns using strings is only supported for dataframes"
+    for key, result, use_names in key_results:
+        if constructor_name in ("array", "sparse") and use_names:
+            with pytest.raises(ValueError, match=msg):
+                _get_column_indices(df, key)
+        else:
+            assert _get_column_indices(df, key) == result
 
-    msg = "A given column is not a column of the dataframe"
-    with pytest.raises(ValueError, match=msg):
-        _get_column_indices(df_mocked, ["not_a_column"])
+    if constructor_name not in ("array", "sparse"):
+        msg = r"Some column names are not columns of the dataframe: \{'not_a_column'\}"
+        with pytest.raises(ValueError, match=msg):
+            _get_column_indices(df, ["not_a_column"])
 
-    msg = "key.step must be 1 or None"
-    with pytest.raises(NotImplementedError, match=msg):
-        _get_column_indices(df_mocked, slice("a", None, 2))
+        msg = "key.step must be 1 or None"
+        with pytest.raises(NotImplementedError, match=msg):
+            _get_column_indices(df, slice("a", None, 2))
 
 
 def test_resample():
@@ -588,7 +651,6 @@ def test_resample_stratify_2dy():
 
 
 def test_notimplementederror():
-
     with pytest.raises(
         NotImplementedError,
         match="Resampling with sample_weight is only implemented for replace=True.",
@@ -636,15 +698,15 @@ def test_shuffle_dont_convert_to_array(csc_container):
     a_s, b_s, c_s, d_s, e_s = shuffle(a, b, c, d, e, random_state=0)
 
     assert a_s == ["c", "b", "a"]
-    assert type(a_s) == list  # noqa: E721
+    assert type(a_s) == list
 
     assert_array_equal(b_s, ["c", "b", "a"])
     assert b_s.dtype == object
 
     assert c_s == [3, 2, 1]
-    assert type(c_s) == list  # noqa: E721
+    assert type(c_s) == list
 
     assert_array_equal(d_s, np.array([["c", 2], ["b", 1], ["a", 0]], dtype=object))
-    assert type(d_s) == MockDataFrame  # noqa: E721
+    assert type(d_s) == MockDataFrame
 
     assert_array_equal(e_s.toarray(), np.array([[4, 5], [2, 3], [0, 1]]))

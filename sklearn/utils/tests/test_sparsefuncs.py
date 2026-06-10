@@ -7,7 +7,12 @@ from scipy import linalg
 
 from sklearn.datasets import make_classification
 from sklearn.utils._testing import assert_allclose
-from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS, LIL_CONTAINERS
+from sklearn.utils.fixes import (
+    CSC_CONTAINERS,
+    CSR_CONTAINERS,
+    LIL_CONTAINERS,
+    _sparse_random_array,
+)
 from sklearn.utils.sparsefuncs import (
     _implicit_column_offset,
     count_nonzero,
@@ -19,6 +24,7 @@ from sklearn.utils.sparsefuncs import (
     inplace_swap_row,
     mean_variance_axis,
     min_max_axis,
+    sparse_matmul_to_dense,
 )
 from sklearn.utils.sparsefuncs_fast import (
     assign_rows_csr,
@@ -436,15 +442,15 @@ def test_incr_mean_variance_axis_dim_mismatch(sparse_constructor):
     "X1, X2",
     [
         (
-            sp.random(5, 2, density=0.8, format="csr", random_state=0),
-            sp.random(13, 2, density=0.8, format="csr", random_state=0),
+            _sparse_random_array((5, 2), density=0.8, format="csr", rng=0),
+            _sparse_random_array((13, 2), density=0.8, format="csr", rng=0),
         ),
         (
-            sp.random(5, 2, density=0.8, format="csr", random_state=0),
+            _sparse_random_array((5, 2), density=0.8, format="csr", rng=0),
             sp.hstack(
                 [
                     np.full((13, 1), fill_value=np.nan),
-                    sp.random(13, 1, density=0.8, random_state=42),
+                    _sparse_random_array((13, 1), density=0.8, rng=42),
                 ],
                 format="csr",
             ),
@@ -477,8 +483,8 @@ def test_incr_mean_variance_axis_equivalence_mean_variance(X1, X2, csr_container
 def test_incr_mean_variance_no_new_n():
     # check the behaviour when we update the variance with an empty matrix
     axis = 0
-    X1 = sp.random(5, 1, density=0.8, random_state=0).tocsr()
-    X2 = sp.random(0, 1, density=0.8, random_state=0).tocsr()
+    X1 = _sparse_random_array((5, 1), density=0.8, format="csr", rng=0)
+    X2 = _sparse_random_array((0, 1), density=0.8, format="csr", rng=0)
     last_mean, last_var = np.zeros(X1.shape[1]), np.zeros(X1.shape[1])
     last_n = np.zeros(X1.shape[1], dtype=np.int64)
     last_mean, last_var, last_n = incr_mean_variance_axis(
@@ -496,7 +502,7 @@ def test_incr_mean_variance_no_new_n():
 def test_incr_mean_variance_n_float():
     # check the behaviour when last_n is just a number
     axis = 0
-    X = sp.random(5, 2, density=0.8, random_state=0).tocsr()
+    X = _sparse_random_array((5, 2), density=0.8, format="csr", rng=0)
     last_mean, last_var = np.zeros(X.shape[1]), np.zeros(X.shape[1])
     last_n = 0
     _, _, new_n = incr_mean_variance_axis(
@@ -604,7 +610,7 @@ def test_densify_rows(csr_container):
 
 def test_inplace_column_scale():
     rng = np.random.RandomState(0)
-    X = sp.rand(100, 200, 0.05)
+    X = _sparse_random_array((100, 200), density=0.05)
     Xr = X.tocsr()
     Xc = X.tocsc()
     XA = X.toarray()
@@ -636,7 +642,7 @@ def test_inplace_column_scale():
 
 def test_inplace_row_scale():
     rng = np.random.RandomState(0)
-    X = sp.rand(100, 200, 0.05)
+    X = _sparse_random_array((100, 200), density=0.05)
     Xr = X.tocsr()
     Xc = X.tocsc()
     XA = X.toarray()
@@ -909,7 +915,7 @@ def test_csc_row_median(csc_container, csr_container):
 )
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_inplace_normalize(csr_container, inplace_csr_row_normalize):
-    if csr_container is sp.csr_matrix:
+    if issubclass(sp.csr_matrix, csr_container):
         ones = np.ones((10, 1))
     else:
         ones = np.ones(10)
@@ -937,7 +943,7 @@ def test_inplace_normalize(csr_container, inplace_csr_row_normalize):
 def test_csr_row_norms(dtype):
     # checks that csr_row_norms returns the same output as
     # scipy.sparse.linalg.norm, and that the dype is the same as X.dtype.
-    X = sp.random(100, 10, format="csr", dtype=dtype, random_state=42)
+    X = _sparse_random_array((100, 10), format="csr", dtype=dtype, rng=42)
 
     scipy_norms = sp.linalg.norm(X, axis=1) ** 2
     norms = csr_row_norms(X)
@@ -952,10 +958,10 @@ def centered_matrices(request):
     """Returns equivalent tuple[sp.linalg.LinearOperator, np.ndarray]."""
     sparse_container = request.param
 
-    random_state = np.random.default_rng(42)
+    rng = np.random.default_rng(42)
 
     X_sparse = sparse_container(
-        sp.random(500, 100, density=0.1, format="csr", random_state=random_state)
+        _sparse_random_array((500, 100), density=0.1, format="csr", rng=rng)
     )
     X_dense = X_sparse.toarray()
     mu = np.asarray(X_sparse.mean(axis=0)).ravel()
@@ -996,3 +1002,58 @@ def test_implit_center_rmatvec(global_random_seed, centered_matrices):
     y = rng.standard_normal(X_dense_centered.shape[0])
     assert_allclose(X_dense_centered.T @ y, X_sparse_centered.rmatvec(y))
     assert_allclose(X_dense_centered.T @ y, X_sparse_centered.T @ y)
+
+
+@pytest.mark.parametrize(
+    ["A", "B", "out", "msg"],
+    [
+        (sp.eye(3, format="csr"), sp.eye(2, format="csr"), None, "Shapes must fulfil"),
+        (sp.eye(2, format="csr"), sp.eye(2, format="csr"), np.eye(3), "Shape of out"),
+        (sp.eye(2, format="coo"), sp.eye(2, format="csr"), None, "Input 'A' must"),
+        (sp.eye(2, format="csr"), sp.eye(2, format="coo"), None, "Input 'B' must"),
+        (
+            sp.eye(2, format="csr", dtype=np.int32),
+            sp.eye(2, format="csr"),
+            None,
+            "Dtype of A and B",
+        ),
+        (
+            sp.eye(2, format="csr", dtype=np.float32),
+            sp.eye(2, format="csr", dtype=np.float64),
+            None,
+            "Dtype of A and B",
+        ),
+    ],
+)
+def test_sparse_matmul_to_dense_raises(A, B, out, msg):
+    """Test that sparse_matmul_to_dense raises when it should."""
+    with pytest.raises(ValueError, match=msg):
+        sparse_matmul_to_dense(A, B, out=out)
+
+
+@pytest.mark.parametrize("out_is_None", [False, True])
+@pytest.mark.parametrize("a_container", CSC_CONTAINERS + CSR_CONTAINERS)
+@pytest.mark.parametrize("b_container", CSC_CONTAINERS + CSR_CONTAINERS)
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_sparse_matmul_to_dense(
+    global_random_seed, out_is_None, a_container, b_container, dtype
+):
+    """Test that sparse_matmul_to_dense computes correctly."""
+    rng = np.random.default_rng(global_random_seed)
+    n1, n2, n3 = 10, 19, 13
+    a_dense = rng.standard_normal((n1, n2)).astype(dtype)
+    b_dense = rng.standard_normal((n2, n3)).astype(dtype)
+    a_dense.flat[rng.choice([False, True], size=n1 * n2, p=[0.5, 0.5])] = 0
+    b_dense.flat[rng.choice([False, True], size=n2 * n3, p=[0.5, 0.5])] = 0
+    a = a_container(a_dense)
+    b = b_container(b_dense)
+    if out_is_None:
+        out = None
+    else:
+        out = np.empty((n1, n3), dtype=dtype)
+
+    result = sparse_matmul_to_dense(a, b, out=out)
+    # Use atol to account for the wide range of values in the computed matrix.
+    assert_allclose(result, a_dense @ b_dense, atol=1e-7)
+    if not out_is_None:
+        assert_allclose(out, result, atol=1e-7)

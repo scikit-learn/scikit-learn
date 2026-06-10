@@ -6,11 +6,13 @@ fitting classification and regression tasks.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from .loss import (
+from sklearn._loss.loss import (
     AbsoluteError,
     HalfBinomialLoss,
+    HalfBinomialLossArrayAPI,
     HalfGammaLoss,
     HalfMultinomialLoss,
+    HalfMultinomialLossArrayAPI,
     HalfPoissonLoss,
     HalfSquaredError,
     HalfTweedieLoss,
@@ -20,14 +22,16 @@ from .loss import (
 )
 
 __all__ = [
-    "HalfSquaredError",
     "AbsoluteError",
-    "PinballLoss",
-    "HuberLoss",
-    "HalfPoissonLoss",
+    "HalfBinomialLoss",
+    "HalfBinomialLossArrayAPI",
     "HalfGammaLoss",
+    "HalfMultinomialLoss",
+    "HalfMultinomialLossArrayAPI",
+    "HalfPoissonLoss",
+    "HalfSquaredError",
     "HalfTweedieLoss",
     "HalfTweedieLossIdentity",
-    "HalfBinomialLoss",
-    "HalfMultinomialLoss",
+    "HuberLoss",
+    "PinballLoss",
 ]
