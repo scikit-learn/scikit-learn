@@ -2507,6 +2507,7 @@ def check_array_api_metric_pairwise(metric, array_namespace, device_name, dtype_
 
 
 array_api_metric_checkers = {
+    # Classification metrics
     accuracy_score: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
@@ -2540,6 +2541,11 @@ array_api_metric_checkers = {
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
     ],
+    hamming_loss: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
     jaccard_score: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
@@ -2550,33 +2556,27 @@ array_api_metric_checkers = {
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
     ],
+    precision_recall_curve: [check_array_api_binary_classification_metric],
     precision_score: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
     ],
-    precision_recall_curve: [check_array_api_binary_classification_metric],
     recall_score: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
+    ],
+    roc_curve: [
+        check_array_api_binary_classification_metric,
     ],
     zero_one_loss: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
     ],
-    hamming_loss: [
-        check_array_api_binary_classification_metric,
-        check_array_api_multiclass_classification_metric,
-        check_array_api_multilabel_classification_metric,
-    ],
+    # Continuous classification metrics
     brier_score_loss: [
-        check_array_api_binary_continuous_classification_metric,
-        check_array_api_multiclass_continuous_classification_metric,
-        check_array_api_multilabel_continuous_classification_metric,
-    ],
-    log_loss: [
         check_array_api_binary_continuous_classification_metric,
         check_array_api_multiclass_continuous_classification_metric,
         check_array_api_multilabel_continuous_classification_metric,
@@ -2591,38 +2591,12 @@ array_api_metric_checkers = {
         check_array_api_multiclass_continuous_classification_metric,
         check_array_api_multilabel_continuous_classification_metric,
     ],
-    mean_tweedie_deviance: [check_array_api_regression_metric],
-    partial(mean_tweedie_deviance, power=-0.5): [check_array_api_regression_metric],
-    partial(mean_tweedie_deviance, power=1.5): [check_array_api_regression_metric],
-    r2_score: [
-        check_array_api_regression_metric,
-        check_array_api_regression_metric_multioutput,
+    log_loss: [
+        check_array_api_binary_continuous_classification_metric,
+        check_array_api_multiclass_continuous_classification_metric,
+        check_array_api_multilabel_continuous_classification_metric,
     ],
-    cosine_similarity: [check_array_api_metric_pairwise],
-    explained_variance_score: [
-        check_array_api_regression_metric,
-        check_array_api_regression_metric_multioutput,
-    ],
-    mean_absolute_error: [
-        check_array_api_regression_metric,
-        check_array_api_regression_metric_multioutput,
-    ],
-    mean_pinball_loss: [
-        check_array_api_regression_metric,
-        check_array_api_regression_metric_multioutput,
-    ],
-    mean_squared_error: [
-        check_array_api_regression_metric,
-        check_array_api_regression_metric_multioutput,
-    ],
-    mean_squared_log_error: [
-        check_array_api_regression_metric,
-        check_array_api_regression_metric_multioutput,
-    ],
-    median_absolute_error: [
-        check_array_api_regression_metric,
-        check_array_api_regression_metric_multioutput,
-    ],
+    # Regression metrics
     d2_absolute_error_score: [
         check_array_api_regression_metric,
         check_array_api_regression_metric_multioutput,
@@ -2642,25 +2616,44 @@ array_api_metric_checkers = {
     d2_tweedie_score: [
         check_array_api_regression_metric,
     ],
-    paired_cosine_distances: [check_array_api_metric_pairwise],
-    mean_poisson_deviance: [check_array_api_regression_metric],
-    additive_chi2_kernel: [check_array_api_metric_pairwise],
-    mean_gamma_deviance: [check_array_api_regression_metric],
+    explained_variance_score: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
     max_error: [check_array_api_regression_metric],
+    mean_absolute_error: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
     mean_absolute_percentage_error: [
         check_array_api_regression_metric,
         check_array_api_regression_metric_multioutput,
     ],
-    chi2_kernel: [check_array_api_metric_pairwise],
-    paired_euclidean_distances: [check_array_api_metric_pairwise],
-    paired_manhattan_distances: [check_array_api_metric_pairwise],
-    cosine_distances: [check_array_api_metric_pairwise],
-    euclidean_distances: [check_array_api_metric_pairwise],
-    manhattan_distances: [check_array_api_metric_pairwise],
-    linear_kernel: [check_array_api_metric_pairwise],
-    laplacian_kernel: [check_array_api_metric_pairwise],
-    polynomial_kernel: [check_array_api_metric_pairwise],
-    rbf_kernel: [check_array_api_metric_pairwise],
+    mean_gamma_deviance: [check_array_api_regression_metric],
+    mean_pinball_loss: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
+    mean_poisson_deviance: [check_array_api_regression_metric],
+    mean_squared_error: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
+    mean_squared_log_error: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
+    mean_tweedie_deviance: [check_array_api_regression_metric],
+    partial(mean_tweedie_deviance, power=-0.5): [check_array_api_regression_metric],
+    partial(mean_tweedie_deviance, power=1.5): [check_array_api_regression_metric],
+    median_absolute_error: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
+    r2_score: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
     root_mean_squared_error: [
         check_array_api_regression_metric,
         check_array_api_regression_metric_multioutput,
@@ -2669,13 +2662,24 @@ array_api_metric_checkers = {
         check_array_api_regression_metric,
         check_array_api_regression_metric_multioutput,
     ],
-    sigmoid_kernel: [check_array_api_metric_pairwise],
-    pairwise_kernels: [check_array_api_metric_pairwise],
-    roc_curve: [
-        check_array_api_binary_classification_metric,
-    ],
+    # Pairwise metrics
+    additive_chi2_kernel: [check_array_api_metric_pairwise],
+    chi2_kernel: [check_array_api_metric_pairwise],
+    cosine_distances: [check_array_api_metric_pairwise],
+    cosine_similarity: [check_array_api_metric_pairwise],
+    euclidean_distances: [check_array_api_metric_pairwise],
+    laplacian_kernel: [check_array_api_metric_pairwise],
+    linear_kernel: [check_array_api_metric_pairwise],
+    manhattan_distances: [check_array_api_metric_pairwise],
+    paired_cosine_distances: [check_array_api_metric_pairwise],
+    paired_euclidean_distances: [check_array_api_metric_pairwise],
+    paired_manhattan_distances: [check_array_api_metric_pairwise],
     pairwise_distances: [check_array_api_metric_pairwise],
     pairwise_distances_argmin: [check_array_api_metric_pairwise],
+    pairwise_kernels: [check_array_api_metric_pairwise],
+    polynomial_kernel: [check_array_api_metric_pairwise],
+    rbf_kernel: [check_array_api_metric_pairwise],
+    sigmoid_kernel: [check_array_api_metric_pairwise],
 }
 
 
