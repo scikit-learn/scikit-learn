@@ -1,4 +1,4 @@
-
+"""
 Functions named as ``*_score`` return a scalar value to maximize: the higher
 the better.
 
