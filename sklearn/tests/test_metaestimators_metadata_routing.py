@@ -594,7 +594,7 @@ def get_init_args(metaestimator_info, sub_estimator_consumes):
         filter_registry = metaestimator_info["filter_registry"]
         for method_name, index in filter_registry.items():
             if not isinstance(index, slice):
-                raise TypeError(  # pragma: nocover
+                raise TypeError(  # pragma: no cover
                     f"`filter_registry` values must be slices, got {index!r} for "
                     f"method {method_name!r}. Use e.g. `slice(-1, None)` to select "
                     "the last fitted sub-estimator."
