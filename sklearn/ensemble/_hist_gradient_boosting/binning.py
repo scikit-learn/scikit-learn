@@ -65,20 +65,26 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
         col_data = col_data[nnz_sw]
         sample_weight = sample_weight[nnz_sw]
 
-    # The data will be sorted anyway in np.unique and again in percentile, so we do it
-    # here. Sorting also returns a contiguous array.
-    sort_idx = np.argsort(col_data)
-    col_data = col_data[sort_idx]
-    if sample_weight is not None:
+    # The data will be sorted anyway to find distinc values and again in percentile,
+    # so we do it here. Sorting also returns a contiguous array.
+    if sample_weight is None:
+        col_data = np.sort(col_data)
+    else:
+        sort_idx = np.argsort(col_data)
+        col_data = col_data[sort_idx]
         sample_weight = sample_weight[sort_idx]
 
-    distinct_values = np.unique(col_data).astype(X_DTYPE)
+    distinct_mask = np.empty(len(col_data), dtype=bool)
+    distinct_mask[0] = True
+    distinct_mask[1:] = col_data[1:] != col_data[:-1]
+    n_distincts = distinct_mask.sum()
 
-    if len(distinct_values) == 1:
+    if n_distincts == 1:
         return np.asarray([])
 
-    if len(distinct_values) <= max_bins:
+    if n_distincts <= max_bins:
         # Calculate midpoints if distinct values <= max_bins
+        distinct_values = col_data[distinct_mask]
         bin_thresholds = sliding_window_view(distinct_values, 2).mean(axis=1)
     elif sample_weight is None:
         # We compute bin edges using the output of np.percentile with
@@ -101,9 +107,7 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
         )
         assert bin_thresholds.shape[0] == max_bins - 1
     # Remove duplicated thresholds if they exist.
-    unique_bin_values = np.unique(bin_thresholds)
-    if unique_bin_values.shape[0] != bin_thresholds.shape[0]:
-        bin_thresholds = unique_bin_values
+    bin_thresholds = np.unique(bin_thresholds, sorted=True)
 
     # We avoid having +inf thresholds: +inf thresholds are only allowed in
     # a "split on nan" situation.
