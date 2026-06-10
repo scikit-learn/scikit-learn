@@ -269,7 +269,7 @@ def _logistic_regression_path(
         Each of the values in `alphas` describe the regularization strength that
         multiplies the penalty term (both L1 and L2). In this case, values must be in
         the range `[0.0, inf)`.
-        If `alphas` is as an integer, then a grid of `alpha` values is chosen on a
+        If `alphas` is an integer, then a grid of `alpha` values is chosen on a
         logarithmic scale, with between 1e-7 and 1e2.
 
     Cs : int or array-like of shape (n_alphas,), default=10
