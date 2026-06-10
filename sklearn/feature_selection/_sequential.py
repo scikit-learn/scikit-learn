@@ -29,7 +29,12 @@ from sklearn.utils._metadata_requests import (
 )
 from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
 from sklearn.utils._tags import get_tags
-from sklearn.utils.validation import _num_features, check_is_fitted, validate_data
+from sklearn.utils.validation import (
+    _num_features,
+    check_array,
+    check_is_fitted,
+    validate_data,
+)
 
 
 class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
@@ -235,14 +240,26 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             Returns the instance itself.
         """
         _raise_for_params(params, self, "fit")
+        tags = get_tags(self)
         X = validate_data(self, X, skip_check_array=True)
+        # Inputs without .shape (e.g. lists, _NotAnArray) must be converted to
+        # a numpy array so that _safe_indexing(axis=1) works later.
+        # DataFrames, proper numpy arrays, and sparse matrices keep their type.
+        if not hasattr(X, "shape"):
+            X = np.asarray(X)
+        # Validate content (raises on bad dtypes, NaN/inf, 1-D input, etc.)
+        # while leaving the container type intact.  ensure_min_features=2
+        # also produces the shape-annotated error message required by the
+        # estimator checks.
+        check_array(
+            X,
+            accept_sparse=tags.input_tags.sparse,
+            ensure_all_finite=not tags.input_tags.allow_nan,
+            ensure_2d=True,
+            ensure_min_features=2,
+            estimator=self,
+        )
         n_features = _num_features(X)
-
-        if n_features < 2:
-            raise ValueError(
-                f"Found array with {n_features} feature(s) while a minimum of 2 is"
-                " required."
-            )
 
         if self.n_features_to_select == "auto":
             if self.tol is not None:
