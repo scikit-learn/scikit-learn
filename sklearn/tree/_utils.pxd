@@ -16,9 +16,6 @@ ctypedef union SplitValue:
     # For categorical features, left_cat_bitset stores the set of
     # categories that go to the left child.
     float64_t threshold
-    # Array size = ceil(MAX_NUM_CATEGORIES / 32).
-    # Currently MAX_NUM_CATEGORIES = 256, so 256/32 = 8 words.
-    # If you change MAX_NUM_CATEGORIES, update BITSET_DTYPE_C accordingly.
     BITSET_DTYPE_C left_cat_bitset
 
 cdef struct Node:
