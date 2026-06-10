@@ -359,6 +359,43 @@ def test_hdbscan_allow_single_cluster_with_epsilon():
     assert counts[unique_labels == -1] == 2
 
 
+@pytest.mark.parametrize("cluster_selection_method", ["eom", "leaf"])
+def test_hdbscan_epsilon_merges_micro_clusters(cluster_selection_method):
+    """Non-regression test for a non-zero `cluster_selection_epsilon`.
+
+    On hierarchical data (tight micro-clusters nested inside far-apart
+    super-clusters), selecting clusters with a non-zero epsilon exercises the
+    `epsilon_search`/`traverse_upwards` code path. This used to raise
+    ``TypeError: only 0-dimensional arrays can be converted to Python scalars``
+    because a size-1 array was implicitly converted to a scalar, which NumPy 2.x
+    no longer allows.
+    """
+    rng = np.random.RandomState(0)
+    blobs = [
+        rng.normal(loc=(center + offset, 0.0), scale=0.03, size=(20, 2))
+        for center in (0.0, 20.0, 40.0)
+        for offset in (0.0, 0.3, 0.6)
+    ]
+    X = np.vstack(blobs)
+
+    # Without epsilon the micro-clusters survive as distinct leaves.
+    labels_no_epsilon = HDBSCAN(
+        min_cluster_size=5,
+        cluster_selection_epsilon=0.0,
+        cluster_selection_method=cluster_selection_method,
+    ).fit_predict(X)
+    assert len(set(labels_no_epsilon[labels_no_epsilon >= 0])) > 3
+
+    # A large enough epsilon merges the micro-clusters back into the 3 super-clusters
+    labels = HDBSCAN(
+        min_cluster_size=5,
+        cluster_selection_epsilon=1.0,
+        cluster_selection_method=cluster_selection_method,
+    ).fit_predict(X)
+    assert len(set(labels[labels >= 0])) == 3
+    assert -1 not in labels
+
+
 def test_hdbscan_better_than_dbscan():
     """
     Validate that HDBSCAN can properly cluster this difficult synthetic
