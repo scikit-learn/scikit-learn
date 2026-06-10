@@ -164,9 +164,9 @@ details.sd-dropdown {
   }
 }
 
-/* sphinx-gallery HTML outputs (e.g. pandas DataFrames) */
+/* sphinx-gallery HTML outputs: allow horizontal scrolling for pandas DataFrames */
 
-div.rendered_html {
+div.rendered_html:has(table.dataframe) {
   overflow-x: auto;
   max-width: 100%;
 }
