@@ -88,7 +88,6 @@ from sklearn.tests.metadata_routing_common import (
     ConsumingScorer,
     _Registry,
     check_recorded_metadata,
-    consuming_metric,
 )
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._array_api import (
@@ -2734,10 +2733,6 @@ def test_multi_metric_search_forwards_metadata(SearchCV, param_search):
             sample_weight=score_weights,
             metadata=score_metadata,
         )
-
-    # clear module-level consuming_metric._records (ConsumingScorer) each iteration
-    if hasattr(consuming_metric, "_records"):
-        consuming_metric._records.clear()
 
 
 @pytest.mark.parametrize(

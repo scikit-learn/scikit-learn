@@ -80,7 +80,6 @@ from sklearn.tests.metadata_routing_common import (
     ConsumingSplitter,
     _Registry,
     check_recorded_metadata,
-    consuming_metric,
 )
 from sklearn.utils import shuffle
 from sklearn.utils._array_api import (
@@ -2630,9 +2629,6 @@ def test_validation_functions_routing(func, extra_args):
             sample_weight=score_weights,
             metadata=score_metadata,
         )
-    # clear module-level consuming_metric._records (ConsumingScorer) each iteration
-    if hasattr(consuming_metric, "_records"):
-        consuming_metric._records.clear()
 
     assert len(splitter_registry)
     for _splitter in splitter_registry:

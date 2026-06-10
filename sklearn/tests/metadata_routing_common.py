@@ -50,11 +50,11 @@ def record_metadata(obj, record_default=True, **kwargs):
     # `parent` is the top-level public entry point (e.g. `cross_validate`) rather
     # than an internal helper whose name may change. Fall back to positional frames:
     callee = caller = None
-    for frame in stack:
-        if callee is None:
-            if frame.function in METHODS + ["consuming_metric"]:
-                callee = frame.function
-            continue
+    for i, frame in enumerate(stack):
+        if frame.function in METHODS + ["consuming_metric"]:
+            callee = frame.function
+            break
+    for frame in stack[i + 1 :]:
         if frame.function in METHODS + validation_functions:
             caller = frame.function
     callee = callee or stack[1].function

@@ -76,7 +76,6 @@ from sklearn.tests.metadata_routing_common import (
     _Registry,
     assert_request_is_empty,
     check_recorded_metadata,
-    consuming_metric,
 )
 from sklearn.utils.metadata_routing import MetadataRouter
 
@@ -938,9 +937,6 @@ def test_metadata_is_routed_correctly_to_scorer(metaestimator):
     method_mapping = metaestimator.get("method_mapping", {})
 
     for method_name in routing_methods:
-        # clear module-level consuming_metric._records (ConsumingScorer) each iteration
-        if hasattr(consuming_metric, "_records"):
-            consuming_metric._records.clear()
         kwargs, (estimator, _, _), (scorer, registry), (cv, _) = get_init_args(
             metaestimator, sub_estimator_consumes=True
         )
