@@ -128,23 +128,23 @@ See :ref:`sphx_glr_auto_examples_impute_plot_missing_values.py`.
 Convergence and diminishing returns
 -----------------------------------
 
-:class:`IterativeImputer` repeats the round-robin imputation for ``max_iter``
-rounds and stops early when the change between two consecutive rounds falls
-below ``tol`` (when ``sample_posterior=False``). In practice, the imputed
-values often do not converge: the round-robin scheme is not guaranteed to
-reach a fixed point, so the number of iterations is best seen as a trade-off
-against the available time budget rather than a target to be met.
+:class:`IterativeImputer` repeats the round-robin imputation for ``max_iter`` rounds and
+stops early when the change between two consecutive rounds falls below ``tol`` (when
+``sample_posterior=False``). In practice, the imputed values often do not converge: the
+round-robin scheme is not guaranteed to reach a fixed point, so the number of iterations
+is best seen as a trade-off against the available time budget rather than a target to be
+met.
 
-This is rarely a problem when the goal is prediction. Le Morvan and Varoquaux
-[3]_ report strongly diminishing returns: better imputation accuracy yields
-only small gains in downstream predictive performance, especially with an
-expressive model and a missingness indicator (``add_indicator``).
+This is rarely a problem when the goal is prediction. Le Morvan and Varoquaux [3]_
+report strongly diminishing returns: better imputation accuracy yields only small gains
+in downstream predictive performance, especially with an expressive model and a
+missingness indicator (``add_indicator``).
 
-In practice, prefer a small, fixed ``max_iter`` (i.e. `max_iter=10`) together with 
-a missingness indicator and an expressive downstream model over investing 
-in convergence. When imputation itself is the goal (e.i. for *reconstructing data*) 
-rather than predicting, the number of iterations (i.e. `max_iter>50`) and the 
-choice of imputer matter more and should be assessed on the task at hand.
+In practice, prefer a small, fixed ``max_iter`` (i.e. `max_iter=10`) together with a
+missingness indicator and an expressive downstream model over investing in convergence.
+When imputation itself is the goal (e.i. for *reconstructing data*) rather than
+predicting, the number of iterations (i.e. `max_iter>50`) and the choice of imputer
+matter more and should be assessed on the task at hand.
 
 Flexibility of IterativeImputer
 -------------------------------
