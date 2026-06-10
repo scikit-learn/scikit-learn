@@ -1768,11 +1768,11 @@ class RandomForestRegressor(ForestRegressor):
             Float `max_samples` is relative to `sample_weight.sum()` instead of
             `X.shape[0]` for weighted samples.
 
-    monotonic_cst : array-like of int of shape (n_features), default=None
+    monotonic_cst : array-like of int of shape (n_features,), default=None
         Indicates the monotonicity constraint to enforce on each feature.
-          - 1: monotonically increasing
-          - 0: no constraint
-          - -1: monotonically decreasing
+          - 1: monotonically increasing.
+          - 0: no constraint.
+          - -1: monotonically decreasing.
 
         If monotonic_cst is None, no constraints are applied.
 
