@@ -169,36 +169,34 @@ def test_input_validation_errors(pyplot, kwargs, error_msg, fitted_clf):
     "kwargs, error_type, error_msg",
     [
         (
-            {"multiclass_colors": {"dict": "not_list"}},
+            {"target_colors": {"dict": "not_list"}},
             TypeError,
-            "'multiclass_colors' must be a list or a str.",
+            "'target_colors' must be a list or a str.",
         ),
         (
-            {"multiclass_colors": "not_cmap"},
+            {"target_colors": "not_cmap"},
             ValueError,
             "it must be a valid Matplotlib colormap",
         ),
         (
-            {"multiclass_colors": ["red", "green"]},
+            {"target_colors": ["red", "green"]},
             ValueError,
             "it must be of the same length",
         ),
         (
-            {"multiclass_colors": ["red", "green", "blue", "yellow"]},
+            {"target_colors": ["red", "green", "blue", "yellow"]},
             ValueError,
             "it must be of the same length",
         ),
         (
-            {"multiclass_colors": ["red", "green", "not color"]},
+            {"target_colors": ["red", "green", "not color"]},
             ValueError,
             "it can only contain valid Matplotlib color names",
         ),
     ],
 )
-def test_input_validation_errors_multiclass_colors(
-    pyplot, kwargs, error_type, error_msg
-):
-    """Check input validation for `multiclass_colors` in `from_estimator`."""
+def test_input_validation_errors_target_colors(pyplot, kwargs, error_type, error_msg):
+    """Check input validation for `target_colors` in `from_estimator`."""
     X, y = load_iris_2d_scaled()
     clf = LogisticRegression().fit(X, y)
     with pytest.raises(error_type, match=error_msg):
@@ -619,7 +617,7 @@ def test_multiclass_plot_max_class(pyplot, response_method):
 
 
 @pytest.mark.parametrize(
-    "multiclass_colors, n_classes",
+    "target_colors, n_classes",
     [
         (None, 3),
         (None, 11),
@@ -633,14 +631,14 @@ def test_multiclass_plot_max_class(pyplot, response_method):
     "response_method", ["decision_function", "predict_proba", "predict"]
 )
 @pytest.mark.parametrize("plot_method", ["contourf", "contour", "pcolormesh"])
-def test_multiclass_colors_cmap(
+def test_target_colors_cmap(
     pyplot,
     n_classes,
     response_method,
     plot_method,
-    multiclass_colors,
+    target_colors,
 ):
-    """Check correct cmap used for all `multiclass_colors` inputs."""
+    """Check correct cmap used for all `target_colors` inputs."""
     import matplotlib as mpl
 
     X, y = make_blobs(n_samples=150, centers=n_classes, n_features=2, random_state=42)
@@ -651,25 +649,25 @@ def test_multiclass_colors_cmap(
         X,
         response_method=response_method,
         plot_method=plot_method,
-        multiclass_colors=multiclass_colors,
+        target_colors=target_colors,
     )
 
     # Non-regression test for PR #33651
-    assert isinstance(disp.multiclass_colors_, np.ndarray)
+    assert isinstance(disp.target_colors_, np.ndarray)
 
-    if multiclass_colors is None:
+    if target_colors is None:
         # Make sure the correct colors are selected from the corresponding petroff color
         # sequences or "gist_rainbow"
         if len(clf.classes_) == 3:
-            multiclass_colors = PETROFF_COLORS[:3]
+            target_colors = PETROFF_COLORS[:3]
         else:
-            multiclass_colors = "gist_rainbow"
+            target_colors = "gist_rainbow"
 
-    if isinstance(multiclass_colors, str):
-        cmap = pyplot.get_cmap(multiclass_colors)
+    if isinstance(target_colors, str):
+        cmap = pyplot.get_cmap(target_colors)
         colors = cmap(np.linspace(0, 1, len(clf.classes_)))
     else:
-        colors = mpl.colors.to_rgba_array(multiclass_colors)
+        colors = mpl.colors.to_rgba_array(target_colors)
 
     # Make sure the colormap has enough distinct colors.
     assert disp.n_classes == len(np.unique(colors, axis=0))
@@ -706,7 +704,7 @@ def test_multiclass_not_enough_colors_error(pyplot):
     Non-regression test for PR 33419.
 
     Note: List length mismatch is already checked in
-    `test_input_validation_errors_multiclass_colors`.
+    `test_input_validation_errors_target_colors`.
     """
     X = np.array(
         [
@@ -727,7 +725,7 @@ def test_multiclass_not_enough_colors_error(pyplot):
     clf = LogisticRegression().fit(X, y)
     msg = "Colormap 'tab10' only has 10 colors, but 11 classes are to be displayed."
     with pytest.raises(ValueError, match=msg):
-        DecisionBoundaryDisplay.from_estimator(clf, X, multiclass_colors="tab10")
+        DecisionBoundaryDisplay.from_estimator(clf, X, target_colors="tab10")
 
 
 @pytest.mark.parametrize("y", [np.arange(6), [str(i) for i in np.arange(6)]])
@@ -756,7 +754,7 @@ def test_multiclass_levels(pyplot, y, response_method, plot_method):
         X,
         response_method=response_method,
         plot_method=plot_method,
-        multiclass_colors="gist_rainbow",
+        target_colors="gist_rainbow",
     )
 
     if plot_method == "contour":
@@ -964,25 +962,76 @@ def test_cmap_and_colors_logic(pyplot):
 
     with pytest.warns(
         UserWarning,
-        match="'cmap' is ignored in favor of 'multiclass_colors'",
+        match="'cmap' is ignored in favor of 'target_colors'",
     ):
         DecisionBoundaryDisplay.from_estimator(
             clf,
             X,
-            multiclass_colors="plasma",
+            target_colors="plasma",
             cmap="Blues",
         )
 
     with pytest.warns(
         UserWarning,
-        match="'colors' is ignored in favor of 'multiclass_colors'",
+        match="'colors' is ignored in favor of 'target_colors'",
     ):
         DecisionBoundaryDisplay.from_estimator(
             clf,
             X,
-            multiclass_colors="plasma",
+            target_colors="plasma",
             colors="blue",
         )
+
+
+# TODO(1.12): remove
+def test_multiclass_colors_deprecation(pyplot):
+    """Check that using `multiclass_colors` raises as expected."""
+    X, y = load_iris_2d_scaled()
+    clf = LogisticRegression().fit(X, y)
+
+    with pytest.warns(
+        FutureWarning,
+        match="'multiclass_colors' was renamed to 'target_colors' in 1.10",
+    ):
+        DecisionBoundaryDisplay.from_estimator(clf, X, multiclass_colors="plasma")
+
+    # test constructor call as well
+    with pytest.warns(
+        FutureWarning,
+        match="'multiclass_colors' was renamed to 'target_colors' in 1.10",
+    ):
+        disp = DecisionBoundaryDisplay.from_estimator(clf, X)
+        DecisionBoundaryDisplay(
+            xx0=disp.xx0,
+            xx1=disp.xx1,
+            n_classes=disp.n_classes,
+            response=disp.response,
+            multiclass_colors="plasma",
+        )
+
+    with pytest.raises(ValueError, match="cannot be used together"):
+        with pytest.warns(FutureWarning):
+            DecisionBoundaryDisplay.from_estimator(
+                clf, X, target_colors="tab10", multiclass_colors="plasma"
+            )
+
+
+# TODO(1.12): remove
+def test_multiclass_colors_attribute_deprecation(pyplot):
+    """Test renaming of `multiclass_colors_` attribute.
+
+    Check that FutureWarning is raised and `target_colors_` is returned.
+    """
+    X, y = load_iris_2d_scaled()
+    clf = LogisticRegression().fit(X, y)
+
+    disp = DecisionBoundaryDisplay.from_estimator(clf, X)
+    with pytest.warns(
+        FutureWarning,
+        match="`multiclass_colors_` was renamed to `target_colors_` in 1.10",
+    ):
+        colors = disp.multiclass_colors_
+    assert_array_equal(colors, disp.target_colors_)
 
 
 def test_subclass_named_constructors_return_type_is_subclass(pyplot):
