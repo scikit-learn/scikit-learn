@@ -686,7 +686,7 @@ def _get_callee_from_caller(instance, estimator_name, caller):
     for pair in mapping:
         if pair.caller == caller:
             return pair.callee
-    raise KeyError(  # pragma: nocover
+    raise KeyError(  # pragma: no cover
         f"Caller {caller} not in method mapping for {type(instance).__name__}."
     )
 
