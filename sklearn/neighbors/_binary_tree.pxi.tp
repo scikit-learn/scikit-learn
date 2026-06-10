@@ -204,7 +204,7 @@ from sklearn.metrics._dist_metrics cimport (
 from sklearn.neighbors._partition_nodes cimport partition_node_indices
 
 from sklearn.metrics._dist_metrics import get_valid_metric_ids
-from sklearn.utils import check_array
+from sklearn.utils import check_array, deprecated
 from sklearn.utils._typedefs cimport float32_t, float64_t, intp_t
 from sklearn.utils._heap cimport heap_push
 from sklearn.utils._sorting cimport simultaneous_sort as _simultaneous_sort
@@ -810,6 +810,13 @@ def newObj(obj):
 # Thread-local variables for BinaryTree.query() and friends.
 cdef tls_tree_stats_t tree_stats
 
+
+_STATS_DEPRECATION = (
+    "APIs for getting/clearing stats and number of calls are deprecated in "
+    "1.10 and will be removed in 1.12."
+)
+
+
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE, NPY_TYPE in implementation_specific_values}}
 
 ######################################################################
@@ -980,6 +987,7 @@ cdef class BinaryTree{{name_suffix}}:
         n_samples = self.data.shape[0]
         self._update_sample_weight(n_samples, sample_weight)
 
+    @deprecated(_STATS_DEPRECATION)
     def get_tree_stats(self):
         """
         get_tree_stats()
@@ -993,6 +1001,7 @@ cdef class BinaryTree{{name_suffix}}:
         """
         return (self.n_trims, self.n_leaves, self.n_splits)
 
+    @deprecated(_STATS_DEPRECATION)
     def reset_n_calls(self):
         """
         reset_n_calls()
@@ -1001,6 +1010,7 @@ cdef class BinaryTree{{name_suffix}}:
         """
         self.n_calls = 0
 
+    @deprecated(_STATS_DEPRECATION)
     def get_n_calls(self):
         """
         get_n_calls()
