@@ -1,0 +1,4 @@
+- Mutating `kwargs` in a custom scorer no longer affects other scorers, for example when
+  passing multiple scorers to the `scoring` parameter of
+  :func:`model_selection.cross_validate` or or :class:`model_selection.GridSearchCV`.
+  By :user:`Stefanie Senger <StefanieSenger>`.
