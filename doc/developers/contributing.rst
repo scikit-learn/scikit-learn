@@ -272,10 +272,7 @@ To get started, you need to
 #. :ref:`setup_development_environment`
 #. Find an issue to work on (see :ref:`new_contributors`)
 #. Follow the :ref:`development_workflow`
-#. Make sure, you noted the :ref:`pr_checklist`
-
-If you want to contribute :ref:`contribute_documentation`,
-make sure you are able to :ref:`build it locally <building_documentation>`, before submitting a PR.
+#. Make sure you can tick everything off from the :ref:`pr_checklist`
 
 .. note::
 
@@ -303,6 +300,15 @@ contribution must conform to the project's :ref:`coding guidelines
 - Only write inline comments that add value and avoid stating the obvious: explain
   the "why" rather than the "what".
 - **Most importantly**: Do not contribute code that you don't understand.
+
+.. seealso::
+
+   For two very well documented and more detailed guides on development
+   workflow, please pay a visit to the `Scipy Development Workflow
+   <https://scipy.github.io/devdocs/dev/dev_quickstart.html>`_ -
+   and the `Astropy Workflow for Developers
+   <https://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
+   sections.
 
 .. _development_workflow:
 
@@ -383,44 +389,171 @@ line
 Pull request checklist
 ----------------------
 
-Before a PR can be merged, it needs to be approved by two core developers.
-An incomplete contribution -- where you expect to do more work before receiving
-a full review -- should be marked as a `draft pull request
-<https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request>`__
-and changed to "ready for review" when it matures. Draft PRs may be useful to:
-indicate you are working on something to avoid duplicated work, request
-broad review of functionality or API, or seek collaborators. Draft PRs often
-benefit from the inclusion of a `task list
-<https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments>`_ in
-the PR description.
+.. raw:: html
 
-In order to ease the reviewing process, we recommend that your contribution
-complies with the following rules before marking a PR as "ready for review". The
-**bolded** ones are especially important:
+  <style>
+    /* Show caption on large screens */
+    @media screen and (min-width: 960px) {
+      .contribution-types .sd-tab-set {
+        --tab-caption-width: 20%;
+      }
 
-1. **Give your pull request a helpful title** that summarizes what your
-   contribution does. This title will often become the commit message once
-   merged so it should summarize your contribution for posterity. In some
-   cases "Fix <ISSUE TITLE>" is enough. "Fix #<ISSUE NUMBER>" is never a
-   good title.
+      .contribution-types .sd-tab-set.contrib-type::before {
+        content: "Type of Contribution";
+      }
 
-2. **Pull requests are expected to resolve one or more issues**.
-   Please **do not open PRs for issues that are labeled as "Needs triage"**
-   (see :ref:`issues_tagged_needs_triage`) or with other kinds of "Needs ..."
-   labels. Please do not open PRs for issues for which:
+    }
+    p.rubric.rubric-large {
+      font-size: 1.3em;
+      border-bottom: none;
+    }
+    .contribution-types li {
+      list-style-type: "✓ ";
+    }
+    .contribution-types li li {
+      list-style-type: "✗ ";
+    }
+  </style>
 
-   - the discussion has not settled down to an explicit resolution plan,
-   - the reporter has already expressed interest in opening a PR,
-   - there already exists cross-referenced and active PRs.
+.. div:: contribution-types
 
-   If merging your pull request means that some other issues/PRs should be closed,
-   you should `use keywords to create link to them
-   <https://github.com/blog/1506-closing-issues-via-pull-requests/>`_
-   (e.g., ``Fixes #1234``; multiple issues/PRs are allowed as long as each
-   one is preceded by a keyword). Upon merging, those issues/PRs will
-   automatically be closed by GitHub. If your pull request is simply
-   related to some other issues/PRs, or it only partially resolves the target
-   issue, create a link to them without using the keywords (e.g., ``Towards #1234``).
+  .. tab-set::
+    :class: contrib-type
+
+    .. tab-item:: Code
+      :class-label: tab-6
+
+      .. rubric:: BEFORE opening a PR, make sure that:
+         :class: rubric-large
+
+      * The PR relates to at least one existing issue that is ready for
+        contribution.
+        Please **do not** open PRs for issues:
+
+        - that are labeled with `"Needs triage" <issues_tagged_needs_triage>`_ or any
+          other kind of "Needs..." labels,
+        - where the discussion has not settled down to an explicit resolution plan,
+        - where the reporter has already expressed interest in opening a PR, or
+        - that already have cross-referenced and active PRs.
+
+        If no related issue exists yet, please :ref:`open one <submitting_bug_feature>`
+        to discuss your proposal first.
+
+      * You followed the :ref:`coding-guidelines` and properly commented and
+        documented your code.
+
+      * When applicable, you used the validation tools and scripts in the
+        :mod:`sklearn.utils` module. A list of utility routines available for developers
+        can be found in the :ref:`developers-utils` page.
+
+      * You added new tests for your bug-fixes or new features. In the
+        case of bug fixes, at the time of the PR, the tests should fail for the code
+        base in the ``main`` branch and pass for the PR code. (The code coverage CI test
+        will fail if newly added code paths are not covered by a test)
+
+      * All tests pass locally
+
+      .. rubric:: WHEN opening a PR
+         :class: rubric-large
+
+      * Give your pull request a helpful title that summarizes what your
+        contribution does. This title will become the commit message once merged. In
+        some cases "Fix <ISSUE TITLE>" is enough.
+        "Fix #<ISSUE NUMBER>" is **not** a good title.
+
+      * Fill out the `pull request template <https://github.com/scikit-learn/scikit-learn/blob/main/.github/PULL_REQUEST_TEMPLATE.md>`_.
+
+      * If the pull request resolves any issues/PRs, use `keywords to create a link to them
+        <https://github.com/blog/1506-closing-issues-via-pull-requests/>`_
+        (e.g., ``Fixes #1234``; multiple issues/PRs are allowed as long as each
+        one is preceded by a keyword). **Upon merging, those issues/PRs will
+        automatically be closed by GitHub**. If your pull request is simply
+        related to some other issues/PRs, or it only partially resolves the target
+        issue, create a link to them without using the keywords (e.g., ``Towards #1234``).
+
+      .. rubric:: AFTER opening a PR
+         :class: rubric-large
+
+      * Add a `changelog entry
+        <https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md>`_
+        describing the changes if the PR is likely to affect users.
+
+      * Make sure all CI tests pass (check the provided links for more information on
+        any errors).
+
+      * If any part of the documentation was changed (which is very likely), also
+        check the rendered docs, see :ref:`generated_doc_CI`.
+
+      Before a PR can be merged, it needs to be approved by **two** core developers.
+      An incomplete contribution -- where you expect to do more work before receiving
+      a full review -- should be marked as a `draft pull request
+      <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request>`__
+      and changed to "ready for review" when it matures. Draft PRs may be useful to:
+      indicate you are working on something to avoid duplicated work, request
+      broad review of functionality or API, or seek collaborators. Draft PRs often
+      benefit from the inclusion of a `task list
+      <https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments>`_ in
+      the PR description.
+
+
+    .. tab-item:: Documentation
+      :class-label: tab-6
+
+      .. rubric:: BEFORE opening a PR
+         :class: rubric-large
+
+      * If the changes are mainly fixing typos or obvious inconsistencies in the
+        documentation, ignore this point.
+        Otherwise, make sure the PR relates to at least one existing issue that is
+        ready for contribution. Please **do not** open PRs for issues:
+
+        - that are labeled with `"Needs triage" <issues_tagged_needs_triage>`_ or any
+          other kind of "Needs..." labels,
+        - where the discussion has not settled down to an explicit resolution plan,
+        - where the reporter has already expressed interest in opening a PR, or
+        - that already have cross-referenced and active PRs.
+
+      * Make sure to follow the guidelines on contributing
+        :ref:`contribute_documentation`.
+
+      * Check that you can :ref:`build the documentation locally <building_documentation>`.
+
+      .. rubric:: WHEN opening a PR
+         :class: rubric-large
+
+      * Give the pull request a helpful title, starting with "DOC", that summarizes
+        what the contribution does. This title will become the commit message once
+        merged.
+
+      * Fill out the `pull request template <https://github.com/scikit-learn/scikit-learn/blob/main/.github/PULL_REQUEST_TEMPLATE.md>`_.
+
+      * If the pull request resolves any issues/PRs, use `keywords to create a link to them
+        <https://github.com/blog/1506-closing-issues-via-pull-requests/>`_
+        (e.g., ``Fixes #1234``; multiple issues/PRs are allowed as long as each
+        one is preceded by a keyword). **Upon merging, those issues/PRs will
+        automatically be closed by GitHub**. If the pull request is simply
+        related to some other issues/PRs, or it only partially resolves the target
+        issue, create a link to them without using the keywords (e.g., ``Towards #1234``).
+
+      .. rubric:: AFTER opening a PR
+         :class: rubric-large
+
+      * Make sure all CI tests pass (check the provided links for more information on
+        any errors).
+
+      * Check the rendered docs, see :ref:`generated_doc_CI`.
+
+      Before a PR can be merged, it needs to be approved by **one** core developer.
+      An incomplete contribution -- where you expect to do more work before receiving
+      a full review -- should be marked as a `draft pull request
+      <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request>`__
+      and changed to "ready for review" when it matures. Draft PRs may be useful to:
+      indicate you are working on something to avoid duplicated work, request
+      broad review of functionality or API, or seek collaborators. Draft PRs often
+      benefit from the inclusion of a `task list
+      <https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments>`_ in
+      the PR description.
+
 
 3. **Make sure your code passes the tests**. The whole test suite can be run
    with `pytest`, but it is usually not recommended since it takes a long
@@ -444,30 +577,6 @@ complies with the following rules before marking a PR as "ready for review". The
    There may be other failing tests, but they will be caught by the CI so
    you don't need to run the whole test suite locally. For guidelines on how
    to use ``pytest`` efficiently, see the :ref:`pytest_tips`.
-
-4. **Make sure your code is properly commented and documented**, and **make
-   sure the documentation renders properly**. To build the documentation, please
-   refer to our :ref:`contribute_documentation` guidelines. The CI will also
-   build the docs: please refer to :ref:`generated_doc_CI`.
-
-5. **Tests are necessary for enhancements to be
-   accepted**. Bug-fixes or new features should be provided with non-regression tests.
-   These tests verify the correct behavior of the fix or feature. In this manner,
-   further modifications on the code base are granted to be consistent with the
-   desired behavior. In the case of bug fixes, at the time of the PR, the
-   non-regression tests should fail for the code base in the ``main`` branch
-   and pass for the PR code.
-
-6. If your PR is likely to affect users, you need to add a changelog entry describing
-   your PR changes. See the
-   `README <https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md>`_
-   for more details.
-
-7. Follow the :ref:`coding-guidelines`.
-
-8. When applicable, use the validation tools and scripts in the :mod:`sklearn.utils`
-   module. A list of utility routines available for developers can be found in the
-   :ref:`developers-utils` page.
 
 9. PRs should often substantiate the change, through benchmarks of
    performance and efficiency (see :ref:`monitoring_performances`) or through
@@ -528,15 +637,6 @@ profiling and Cython optimizations.
   all of those guidelines, but we expect that enforcing those constraints
   on all new contributions will get the overall code base quality in the
   right direction.
-
-.. seealso::
-
-   For two very well documented and more detailed guides on development
-   workflow, please pay a visit to the `Scipy Development Workflow
-   <https://scipy.github.io/devdocs/dev/dev_quickstart.html>`_ -
-   and the `Astropy Workflow for Developers
-   <https://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
-   sections.
 
 Continuous Integration (CI)
 ---------------------------
