@@ -348,7 +348,7 @@ class CallbackContext:
                     metadata_callback = getattr(
                         kwargs["metadata"], f"callback_{i}", None
                     )
-                    evaluated_args[param_name] = getattr(
+                    evaluated_args["metadata"] = getattr(
                         metadata_callback, hook_name, None
                     )
 
