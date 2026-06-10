@@ -138,13 +138,13 @@ against the available time budget rather than a target to be met.
 This is rarely a problem when the goal is prediction. Le Morvan and Varoquaux
 [3]_ report strongly diminishing returns: better imputation accuracy yields
 only small gains in downstream predictive performance, especially with an
-expressive model and a missingness indicator (see ``add_indicator``).
+expressive model and a missingness indicator (``add_indicator``).
 
-In practice, prefer a small, fixed ``max_iter`` together with a missingness
-indicator and an expressive downstream model over investing in convergence.
-When the goal is to *reconstruct* the data rather than predict, the number of
-iterations and the choice of imputer matter more and should be assessed on the
-task at hand.
+In practice, prefer a small, fixed ``max_iter`` (i.e. `max_iter=10`) together with 
+a missingness indicator and an expressive downstream model over investing 
+in convergence. When imputation itself is the goal (e.i. for *reconstructing data*) 
+rather than predicting, the number of iterations (i.e. `max_iter>50`) and the 
+choice of imputer matter more and should be assessed on the task at hand.
 
 Flexibility of IterativeImputer
 -------------------------------
