@@ -639,16 +639,12 @@ Note that it is 3–6× slower to fit than the MSE criterion as of version 1.8.
 Missing Values Support
 ======================
 
-:class:`DecisionTreeClassifier`, :class:`DecisionTreeRegressor`
-have built-in support for missing values using `splitter='best'`, where
-the splits are determined in a greedy fashion.
+:class:`DecisionTreeClassifier`, :class:`DecisionTreeRegressor` and
 :class:`ExtraTreeClassifier`, and :class:`ExtraTreeRegressor` have built-in
-support for missing values for `splitter='random'`, where the splits
-are determined randomly. For more details on how the splitter differs on
-non-missing values, see the :ref:`Forest section <forest>`.
+support for missing values except for sparse inputs.
 
 First we will describe how :class:`DecisionTreeClassifier`, :class:`DecisionTreeRegressor`
-handle missing-values in the data.
+(``splitter='best'``) handle missing-values in the data.
 
 For each potential threshold on the non-missing data, the splitter will evaluate
 the split with all the missing values going to the left node or the right node.
@@ -700,12 +696,11 @@ Decisions are made as follows:
     >>> tree.predict(X_test)
     array([1])
 
-:class:`ExtraTreeClassifier`, and :class:`ExtraTreeRegressor` handle missing values
-in a slightly different way. When splitting a node, a random threshold will be chosen
-to split the non-missing values on. Then the non-missing values will be sent to the
-left and right child based on the randomly selected threshold, while the missing
-values will also be randomly sent to the left or right child. This is repeated for
-every feature considered at each split. The best split among these is chosen.
+:class:`ExtraTreeClassifier`, and :class:`ExtraTreeRegressor` (``splitter='random'``)
+handle missing values in a slightly different way. When splitting a node, a random
+threshold will be chosen to split the non-missing values on, while the missing values
+are assigned together to one randomly chosen side. This is repeated for every
+feature considered at each split. The best split among these is chosen.
 
 During prediction, the treatment of missing-values is the same as that of the
 decision tree:
