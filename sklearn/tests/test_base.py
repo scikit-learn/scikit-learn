@@ -1151,7 +1151,11 @@ def test_all_estimators_accessible_from_top_level():
     # If `sklearn.experimental.enable_halving_search_cv` is imported, then
     # the `Halving*SearchCV` are returned by `all_estimators`. These should not
     # be included at the top level.
-    experimental_estimators = {"HalvingGridSearchCV", "HalvingRandomSearchCV"}
+    experimental_estimators = {
+        "HalvingGridSearchCV",
+        "HalvingRandomSearchCV",
+        "IterativeImputer",
+    }
     estimators = [
         (name, Estimator)
         for name, Estimator in all_estimators()
