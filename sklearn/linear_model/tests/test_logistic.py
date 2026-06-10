@@ -177,10 +177,10 @@ def test_logistic_glmnet(solver):
     )
 
 
+# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
+@pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 # TODO(1.11): remove filterwarnings with change of default scoring
 @pytest.mark.filterwarnings("ignore:The default value.*scoring.*:FutureWarning")
-# TODO(1.11): remove filterwarnings with deprecation period of C and Cs
-@pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 # TODO(1.10): remove filterwarnings with deprecation period of use_legacy_attributes
 @pytest.mark.filterwarnings("ignore:.*use_legacy_attributes.*:FutureWarning")
 @pytest.mark.parametrize("LR", [LogisticRegression, LogisticRegressionCV])
@@ -450,7 +450,7 @@ def test_liblinear_dual_random_state(global_random_seed):
 
 # TODO(1.12): remove deprecated use_legacy_attributes
 @pytest.mark.parametrize("use_legacy_attributes", [True, False])
-# TODO(1.11): remove filterwarnings with deprecation of C_.
+# TODO(1.12): remove filterwarnings with deprecation of C_.
 @pytest.mark.filterwarnings("ignore:.*Cs_ is deprecated.*:FutureWarning")
 def test_logistic_cv(global_random_seed, use_legacy_attributes):
     # test for LogisticRegressionCV object
@@ -562,7 +562,7 @@ def test_logistic_cv_mock_scorer():
     assert mock_scorer.calls == 1
 
 
-# TODO(1.11): remove filterwarnings with deprecation period of C and Cs
+# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
 @pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "scoring, multiclass_agg_list",
@@ -594,7 +594,7 @@ def test_logistic_cv_multinomial_score(scoring, multiclass_agg_list):
     # TODO(1.10) for consistency we may want to adapt _log_reg_scoring_path to
     # use only l1_ratio rather than penalty + l1_ratio
     params["penalty"] = "l2"
-    # TODO(1.11) for consistency we may want to adapt _log_reg_scoring_path to
+    # TODO(1.12) for consistency we may want to adapt _log_reg_scoring_path to
     # use only alpha rather than C.
     del params["alpha"]
 
@@ -1992,7 +1992,7 @@ def test_LogisticRegressionCV_GridSearchCV_elastic_net(n_classes):
     assert gs.best_params_["alpha"] == lrcv.alpha_
 
 
-# TODO(1.11): remove filterwarnings with deprecation of C_.
+# TODO(1.12): remove filterwarnings with deprecation of C_.
 @pytest.mark.filterwarnings("ignore:.*C_ is deprecated.*:FutureWarning")
 @pytest.mark.parametrize("l1_ratios", ((0,), np.linspace(0, 1, 2)))
 @pytest.mark.parametrize("n_classes", (2, 3))
@@ -2031,7 +2031,7 @@ def test_LogisticRegressionCV_no_refit(l1_ratios, n_classes):
         assert_allclose(lrcv.l1_ratio_, lrcv.l1_ratio_[0])
 
 
-# TODO(1.11): remove filterwarnings with deprecation of C_.
+# TODO(1.12): remove filterwarnings with deprecation of C_.
 @pytest.mark.filterwarnings("ignore:.*C_ is deprecated.*:FutureWarning")
 @pytest.mark.parametrize("n_classes", (2, 3))
 def test_LogisticRegressionCV_elasticnet_attribute_shapes(n_classes):
@@ -2563,7 +2563,7 @@ def test_single_feature_newton_cg():
     LogisticRegression(solver="newton-cg", fit_intercept=True, alpha=1e-4).fit(X, y)
 
 
-# TODO(1.11): remove filterwarnings with deprecation period of C and Cs
+# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
 @pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 def test_liblinear_not_stuck(global_random_seed):
     # Non-regression https://github.com/scikit-learn/scikit-learn/issues/18264
@@ -2754,7 +2754,7 @@ def test_newton_cholesky_fallback_to_lbfgs():
     assert n_iter_nc_limited == lr_nc_limited.max_iter - 1
 
 
-# TODO(1.11): remove filterwarnings with deprecation period of C and Cs
+# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
 @pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 # TODO(1.11): remove filterwarnings with change of default scoring
 @pytest.mark.filterwarnings("ignore:The default value.*scoring.*:FutureWarning")
@@ -2768,7 +2768,7 @@ def test_liblinear_multiclass_raises(Estimator):
         Estimator(solver="liblinear").fit(iris.data, iris.target)
 
 
-# TODO(1.11): remove filterwarnings with deprecation period of C and Cs
+# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
 @pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 # TODO(1.10): remove after deprecation cycle of penalty.
 @pytest.mark.filterwarnings("ignore:The default value.*scoring.*:FutureWarning")
@@ -2999,7 +2999,7 @@ def test_get_default_scorer():
     assert lr._get_scorer()._score_func.__name__ == "accuracy_score"
 
 
-# TODO(1.11): remove after deprecation cycle.
+# TODO(1.12): remove after deprecation cycle.
 def test_C_deprecated():
     """Check that C in LogisticRegression is deprecated."""
     X, y = make_classification(n_classes=2, n_samples=20, n_informative=6)
@@ -3020,7 +3020,7 @@ def test_C_deprecated():
         lr.fit(X, y)
 
 
-# TODO(1.11): remove after deprecation cycle.
+# TODO(1.12): remove after deprecation cycle.
 def test_Cs_deprecated():
     """Check that Cs in LogisticRegressionCV is deprecated."""
     X, y = make_classification(n_classes=2, n_samples=20, n_informative=6)

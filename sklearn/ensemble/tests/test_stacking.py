@@ -64,7 +64,7 @@ X_multilabel, y_multilabel = make_multilabel_classification(
 X_binary, y_binary = make_classification(n_classes=2, random_state=42)
 
 
-# TODO(1.11): remove filterwarnings with deprecation period of C and Cs
+# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
 @pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "cv", [3, StratifiedKFold(n_splits=3, shuffle=True, random_state=42)]
@@ -112,7 +112,7 @@ def test_stacking_classifier_iris(cv, final_estimator, passthrough):
         assert_allclose(X_test, X_trans[:, -4:])
 
 
-# TODO(1.11): remove filterwarnings with deprecation period of C and Cs
+# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
 @pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 def test_stacking_classifier_drop_column_binary_classification():
     # check that a column is dropped in binary classification
@@ -270,7 +270,7 @@ def test_stacking_classifier_sparse_passthrough(sparse_container):
     assert X_test.format == X_trans.format
 
 
-# TODO(1.11): remove filterwarnings with deprecation period of C and Cs
+# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
 @pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 def test_stacking_classifier_drop_binary_prob():
     # check that classifier will drop one of the probability column for
@@ -304,7 +304,7 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
         return self.clf.fit(X, y)
 
 
-# TODO(1.11): remove filterwarnings with deprecation period of C and Cs
+# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
 @pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "y, params, type_err, msg_err",
@@ -383,7 +383,7 @@ def test_stacking_regressor_error(y, params, type_err, msg_err):
         reg.fit(scale(X_diabetes), y, sample_weight=np.ones(X_diabetes.shape[0]))
 
 
-# TODO(1.11): remove filterwarnings with deprecation period of C and Cs
+# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
 @pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "estimator, X, y",
@@ -431,7 +431,7 @@ def test_stacking_randomness(estimator, X, y):
     )
 
 
-# TODO(1.11): remove filterwarnings with deprecation period of C and Cs
+# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
 @pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 def test_stacking_classifier_stratify_default():
     # check that we stratify the classes for the default CV
@@ -623,7 +623,7 @@ def test_stacking_prefit(Stacker, Estimator, stack_method, final_estimator, X, y
         stack_func_mock.assert_called_with(X_train2)
 
 
-# TODO(1.11): remove filterwarnings with deprecation period of C and Cs
+# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
 @pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "stacker, X, y",
@@ -656,7 +656,7 @@ def test_stacking_prefit_error(stacker, X, y):
         stacker.fit(X, y)
 
 
-# TODO(1.11): remove filterwarnings with deprecation period of C and Cs
+# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
 @pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "make_dataset, Stacking, Estimator",
@@ -801,7 +801,7 @@ def test_stacking_classifier_multilabel_auto_predict(stack_method, passthrough):
     assert_array_equal(clf.classes_, [np.array([0, 1])] * n_outputs)
 
 
-# TODO(1.11): remove filterwarnings with deprecation period of C and Cs
+# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
 @pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "stacker, feature_names, X, y, expected_names",
@@ -1027,7 +1027,7 @@ def test_metadata_routing_for_stacking_estimators(Estimator, Child, prop, prop_v
     )
 
 
-# TODO(1.11): remove filterwarnings with deprecation period of C and Cs
+# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
 @pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "Estimator, Child",

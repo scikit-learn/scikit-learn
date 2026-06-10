@@ -245,7 +245,7 @@ def test_ensemble_heterogeneous_estimators_all_dropped(X, y, estimator):
         estimator.fit(X, y)
 
 
-# TODO(1.11): remove filterwarnings with deprecation period of C and Cs
+# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
 @pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "Ensemble, Estimator, X, y",

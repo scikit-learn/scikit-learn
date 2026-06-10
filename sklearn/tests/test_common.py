@@ -204,7 +204,7 @@ def test_all_tests_are_importable():
     )
 
 
-# TODO(1.11): remove filterwarnings with deprecation period of C and Cs
+# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
 @pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 def test_class_support_removed():
     # Make sure passing classes to check_estimator or parametrize_with_checks

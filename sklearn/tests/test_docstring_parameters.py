@@ -184,7 +184,7 @@ def _construct_sparse_coder(Estimator):
     return Estimator(dictionary=dictionary)
 
 
-# TODO(1.11): remove filterwarnings with deprecation period of C and Cs
+# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
 @pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 # TODO(1.10): remove copy warning filter
 @pytest.mark.filterwarnings(

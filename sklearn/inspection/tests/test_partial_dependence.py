@@ -67,7 +67,7 @@ multioutput_regression_data = (
 iris = load_iris()
 
 
-# TODO(1.11): remove filterwarnings with deprecation period of C and Cs
+# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
 @pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "Estimator, method, data",
@@ -989,7 +989,7 @@ def test_partial_dependence_unfitted(estimator):
         partial_dependence(estimator, X, features=[0, 2], grid_resolution=10)
 
 
-# TODO(1.11): remove filterwarnings with deprecation period of C and Cs
+# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
 @pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "Estimator, data",
@@ -1009,7 +1009,7 @@ def test_kind_average_and_average_of_individual(Estimator, data):
     assert_allclose(avg_ind, pdp_avg["average"])
 
 
-# TODO(1.11): remove filterwarnings with deprecation period of C and Cs
+# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
 @pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "Estimator, data",
@@ -1074,7 +1074,7 @@ def test_partial_dependence_non_null_weight_idx(estimator, non_null_weight_idx):
         )
 
 
-# TODO(1.11): remove filterwarnings with deprecation period of C and Cs
+# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
 @pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "Estimator, data",

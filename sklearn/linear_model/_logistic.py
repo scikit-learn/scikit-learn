@@ -274,7 +274,7 @@ def _logistic_regression_path(
 
     Cs : int or array-like of shape (n_alphas,), default=10
 
-        .. deprecated:: 1.9
+        .. deprecated:: 1.10
 
     fit_intercept : bool, default=True
         Whether to fit an intercept for the model. In this case the shape of
@@ -388,7 +388,7 @@ def _logistic_regression_path(
     Cs : ndarray
         Grid of alphas used for cross-validation.
 
-        .. deprecated:: 1.9
+        .. deprecated:: 1.10
 
     n_iter : array of shape (n_alphas,)
         Actual number of iteration for each alpha in alphas.
@@ -401,7 +401,7 @@ def _logistic_regression_path(
     .. versionchanged:: 0.19
         The "copy" parameter was removed.
     """
-    use_alpha = True  # TODO(1.11): remove
+    use_alpha = True  # TODO(1.12): remove
     if Cs is None:
         if isinstance(alphas, numbers.Integral):
             alphas = np.logspace(2, -7, alphas)  # descending
@@ -480,7 +480,7 @@ def _logistic_regression_path(
             dtype=_matching_numpy_dtype(X, xp=xp),
         )
 
-    # TODO(1.11): Modify or remove this note with the deprecation/removal of C.
+    # TODO(1.12): Modify or remove this note with the deprecation/removal of C.
     # IMPORTANT NOTE:
     # All solvers relying on LinearModelLoss need to scale the penalty with n_samples
     # or the sum of sample weights because the implemented logistic regression
@@ -814,7 +814,7 @@ def _log_reg_scoring_path(
         regularization strength. If Cs is as an int, then a grid of Cs
         values are chosen in a logarithmic scale between 1e-4 and 1e4.
 
-        .. deprecated:: 1.9
+        .. deprecated:: 1.10
 
     scoring : str, callable or None
         The scoring method to use for cross-validation. Options:
@@ -916,7 +916,7 @@ def _log_reg_scoring_path(
     Cs : ndarray of shape (n_alphas,)
         Grid of Cs used for cross-validation.
 
-        .. deprecated:: 1.9
+        .. deprecated:: 1.10
 
     scores : ndarray of shape (n_alphas,)
         Scores obtained for each Cs.
@@ -1110,7 +1110,7 @@ class LogisticRegression(
            in order to use it. If you do not set `alpha` to some value, the value of
            `C` will be used.
            Also note that the default of `alpha` will change from `None` to `1e-4`
-           in version 1.11.
+           in version 1.12.
 
     C : float, default=1.0
         Inverse of regularization strength; must be a positive float.
@@ -1120,11 +1120,11 @@ class LogisticRegression(
         with an L1 penalty, see:
         :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_path.py`.
 
-        .. deprecated:: 1.9
-           `C` was deprecated in version 1.9 and will be removed in 1.11.
+        .. deprecated:: 1.10
+           `C` was deprecated in version 1.10 and will be removed in 1.12.
            Use `alpha=1/(C * n_samples)` or `alpha=1/(C * np.sum(sample_weight))`
            instead.
-           The new default in version 1.11 will be `alpha=1e-4`.
+           The new default in version 1.12 will be `alpha=1e-4`.
 
     l1_ratio : float, default=0.0
         The Elastic-Net mixing parameter, with `0 <= l1_ratio <= 1`. Setting
@@ -1486,10 +1486,10 @@ class LogisticRegression(
         The SAGA solver supports both float64 and float32 bit arrays.
         """
         depr_msg = (
-            "'C' was deprecated in version 1.9 and will be removed in 1.11. "
+            "'C' was deprecated in version 1.10 and will be removed in 1.12. "
             "Use alpha=1/(C * n_samples) or alpha=1/(C * np.sum(sample_weight)) "
             "instead. Set either 'alpha' or 'C' explicitly to avoid this warning. "
-            "The new default in version 1.11 will be alpha=1e-4."
+            "The new default in version 1.12 will be alpha=1e-4."
         )
         if self.C != "deprecated":
             if self.alpha is None:
@@ -1848,7 +1848,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            in order to use it. If you do not set `alphas` to some value, the value of
            `Cs` will be used.
            Also note that the default of `alphas` will change from `None` to `10`
-           in version 1.11. This creates a grid of 10 values between 1e2 and 1e-7,
+           in version 1.12. This creates a grid of 10 values between 1e2 and 1e-7,
            equally spaced on the log scale.
 
     Cs : int or list of floats, default=10
@@ -1858,8 +1858,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         Like in support vector machines, smaller values specify stronger
         regularization.
 
-        .. deprecated:: 1.9
-           `Cs` was deprecated in version 1.9 and will be removed in 1.11.
+        .. deprecated:: 1.10
+           `Cs` was deprecated in version 1.10 and will be removed in 1.12.
            For integers, use `alphas=Cs`.
            For arrays, use `alphas=1/(Cs * n_samples)` or
            `alphas=1/(Cs * np.sum(sample_weight))` instead.
@@ -2093,8 +2093,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         Array of C i.e. inverse of regularization parameter values used
         for cross-validation.
 
-        .. deprecated:: 1.9
-           `Cs_` was deprecated in version 1.9 and will be removed in 1.11.
+        .. deprecated:: 1.10
+           `Cs_` was deprecated in version 1.10 and will be removed in 1.12.
            Use the new attribute `alphas_` instead.
 
     l1_ratios_ : ndarray of shape (n_l1_ratios)
@@ -2134,8 +2134,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         `C_` is of shape (1,) when the problem is binary.
         See also parameter `use_legacy_attributes`.
 
-        .. deprecated:: 1.9
-           `C_` was deprecated in version 1.9 and will be removed in 1.11.
+        .. deprecated:: 1.10
+           `C_` was deprecated in version 1.10 and will be removed in 1.12.
            Use the new attribute `alpha_` instead.
 
     l1_ratio_ : ndarray of shape (n_classes,) or (n_classes - 1,)
@@ -2291,7 +2291,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         _raise_for_params(params, self, "fit")
 
         depr_msg = (
-            "'Cs' was deprecated in version 1.9 and will be removed in 1.11. "
+            "'Cs' was deprecated in version 1.10 and will be removed in 1.12. "
             "For integers, use alphas=Cs. "
             "For arrays, use `alphas=1/(Cs * n_samples)` or "
             "alphas=1/(Cs * np.sum(sample_weight))` instead. "
