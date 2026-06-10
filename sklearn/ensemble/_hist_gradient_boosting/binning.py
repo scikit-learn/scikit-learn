@@ -87,6 +87,8 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
         if missing_mask.any():
             col_data = col_data[~missing_mask]
             sample_weight = sample_weight[~missing_mask]
+        else:
+            col_data = np.ascontiguousarray(col_data)
 
         sort_idx = np.argsort(col_data)
         col_data = col_data[sort_idx]
