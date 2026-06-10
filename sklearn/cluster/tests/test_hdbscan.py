@@ -383,6 +383,7 @@ def test_hdbscan_epsilon_merges_micro_clusters(cluster_selection_method):
         min_cluster_size=5,
         cluster_selection_epsilon=0.0,
         cluster_selection_method=cluster_selection_method,
+        copy=False,
     ).fit_predict(X)
     assert len(set(labels_no_epsilon[labels_no_epsilon >= 0])) > 3
 
@@ -391,6 +392,7 @@ def test_hdbscan_epsilon_merges_micro_clusters(cluster_selection_method):
         min_cluster_size=5,
         cluster_selection_epsilon=1.0,
         cluster_selection_method=cluster_selection_method,
+        copy=False,
     ).fit_predict(X)
     assert len(set(labels[labels >= 0])) == 3
     assert -1 not in labels
