@@ -6,15 +6,45 @@ Imputation of missing values
 
 .. currentmodule:: sklearn.impute
 
-For various reasons, many real world datasets contain missing values, often
-encoded as blanks, NaNs or other placeholders. Such datasets however are
-incompatible with scikit-learn estimators which assume that all values in an
-array are numerical, and that all have and hold meaning. A basic strategy to
-use incomplete datasets is to discard entire rows and/or columns containing
-missing values. However, this comes at the price of losing data which may be
-valuable (even though incomplete). A better strategy is to impute the missing
-values, i.e., to infer them from the known part of the data. See the
-glossary entry on :term:`imputation`.
+For various reasons, many real-world datasets contain missing values, often
+encoded as blanks, NaNs or other placeholders. They arise from faulty
+measurements, unanswered questionnaire items, or information that was simply
+never recorded, and can affect both the data ``X`` and the target ``y``. Most
+scikit-learn estimators assume that every entry of an array is numerical and
+holds meaning, and therefore cannot be trained directly on incomplete data.
+
+A naive way to meet that requirement is to discard every row or column that
+contains a missing value. This is detrimental on two counts: it throws away
+potentially valuable information, and it generally introduces bias, since the
+remaining samples are rarely representative of the original population (unless
+values are missing completely at random). The same caution applies to the
+target: silently dropping samples whose outcome ``y`` is unknown biases the
+analysis. In particular, when an outcome has not been observed yet, the problem
+is one of censoring and should be handled with dedicated methods from `survival
+analysis <https://en.wikipedia.org/wiki/Survival_analysis>`_ rather than by
+discarding data.
+
+The tools described on this page address missing values in ``X``. A better
+strategy than discarding data is to impute the missing values, i.e. to infer
+them from the known part of the data (see the glossary entry on
+:term:`imputation`). scikit-learn provides simple column statistics with
+:class:`SimpleImputer`, as well as the model-based :class:`IterativeImputer`
+and :class:`KNNImputer`.
+
+When the goal is prediction rather than reconstructing the data, a few
+high-level guidelines help choose among these tools [3]_:
+
+- Start simple: constant or mean / most-frequent imputation with
+  :class:`SimpleImputer` is a strong and cheap baseline, and more elaborate
+  imputation often brings only marginal gains in predictive performance.
+- Flag missing entries: adding a missingness indicator (the ``add_indicator``
+  option of the imputers, or :class:`MissingIndicator`) tends to help
+  prediction, even when values are missing completely at random.
+- Prefer expressive models: flexible estimators benefit even less from
+  sophisticated imputation, and some handle missing values natively without
+  any imputation (see :ref:`estimators_that_handle_nan`).
+- Invest in imputation quality mainly when reconstructing the data itself, not
+  prediction, is the objective.
 
 
 Univariate vs. Multivariate Imputation
@@ -367,6 +397,8 @@ wrap this in a :class:`~sklearn.pipeline.Pipeline` with a classifier (e.g., a
   >>> results = clf.predict(X_test)
   >>> results.shape
   (100,)
+
+.. _estimators_that_handle_nan:
 
 Estimators that handle NaN values
 =================================
