@@ -156,7 +156,7 @@ class _MultimetricScorer:
                 {
                     name: {
                         "score": {
-                            **common_kwargs,
+                            **copy.deepcopy(common_kwargs),
                             **(
                                 {"sample_weight": sw}
                                 if sw is not None and scorer._accept_sample_weight()
