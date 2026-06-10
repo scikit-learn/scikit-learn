@@ -2445,10 +2445,9 @@ def test_metadata_routing_for_pipeline(parent_method):
         )
         return
 
-    # `fit` is only called on the transformer, if pipeline calls via pipeline.fit but if
-    # the pipeline calls `predict`, `score` or `transform`, ..., the transformer is not
-    # refitted:
-
+    # `fit` is only called on the transformer, if pipeline calls via pipeline.fit but
+    # if the pipeline calls `predict`, `score` or `transform`, ..., the transformer
+    # is not refitted:
     if "fit" in parent_method:
         check_recorded_metadata(
             obj=trs,
