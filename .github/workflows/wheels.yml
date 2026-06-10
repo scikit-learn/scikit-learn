@@ -180,7 +180,7 @@ jobs:
         with:
           python-version: "3.11" # update once build dependencies are available
 
-      - uses: conda-incubator/setup-miniconda@v3
+      - uses: conda-incubator/setup-miniconda@v4
         if: ${{ startsWith(matrix.platform_id, 'macosx') }}
         with:
           miniforge-version: latest
