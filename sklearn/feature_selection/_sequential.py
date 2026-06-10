@@ -8,6 +8,7 @@ Sequential feature selection
 from numbers import Integral, Real
 
 import numpy as np
+from scipy.sparse import issparse
 
 from sklearn.base import (
     BaseEstimator,
@@ -247,18 +248,29 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         # DataFrames, proper numpy arrays, and sparse matrices keep their type.
         if not hasattr(X, "shape"):
             X = np.asarray(X)
-        # Validate content (raises on bad dtypes, NaN/inf, 1-D input, etc.)
-        # while leaving the container type intact.  ensure_min_features=2
-        # also produces the shape-annotated error message required by the
-        # estimator checks.
-        check_array(
+        # Validate content (raises on bad dtypes, NaN/inf, 1-D input, etc.).
+        # For sparse inputs, also normalise to CSR/CSC/LIL — the only formats
+        # _safe_indexing(axis=1) supports.  Unsupported formats (dia, bsr, …)
+        # are silently converted; accept_sparse=False raises with a "Sparse …"
+        # message when the inner estimator does not advertise sparse support.
+        # For DataFrames and numpy arrays the return value is discarded so the
+        # original container is preserved.
+        # input_name="X" makes the NaN/inf message read "Input X contains …"
+        # as expected by the existing regression test.
+        _accept_sparse = ["csr", "csc", "lil"] if tags.input_tags.sparse else False
+        X_validated = check_array(
             X,
-            accept_sparse=tags.input_tags.sparse,
+            accept_sparse=_accept_sparse,
             ensure_all_finite=not tags.input_tags.allow_nan,
             ensure_2d=True,
             ensure_min_features=2,
+            input_name="X",
             estimator=self,
         )
+        if issparse(X):
+            # Adopt the normalised sparse matrix; leaves DataFrames / numpy
+            # arrays untouched.
+            X = X_validated
         n_features = _num_features(X)
 
         if self.n_features_to_select == "auto":
