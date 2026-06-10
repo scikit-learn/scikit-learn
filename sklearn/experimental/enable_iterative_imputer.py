@@ -11,6 +11,8 @@ imported normally from ``sklearn.impute``.
 # Don't remove this file, we don't want to break users code just because the
 # feature isn't experimental anymore.
 
+# TODO(1.14): is it long enough to start a full deprecation cycle?
+
 import warnings
 
 warnings.warn(
