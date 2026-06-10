@@ -114,10 +114,16 @@ def test_thread_safety(global_random_seed):
         tree.query_radius(Y_64, r=4, return_distance=True)
 
     def get_stats():
-        return np.array(tree.get_tree_stats() + (tree.get_n_calls(),))
+        with pytest.warns(FutureWarning, match="Function get_tree_stats is deprecated"):
+            stats = tree.get_tree_stats()
+        with pytest.warns(FutureWarning, match="Function get_n_calls is deprecated"):
+            calls = (tree.get_n_calls(),)
+        return np.array(stats + calls)
 
     query()
     one_run = get_stats()
+    for v in one_run:
+        assert v > 0
     query()
     second = get_stats()
     assert np.array_equal(second, one_run * 2)
