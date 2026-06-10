@@ -8,7 +8,7 @@ ctypedef uint32_t BITSET_INNER_DTYPE_C
 ctypedef BITSET_INNER_DTYPE_C[8] BITSET_DTYPE_C
 
 # Note: we have to use an enum because assigning to const in pxd files
-# are not allowed.
+# are not allowed, see https://github.com/cython/cython/issues/4369.
 cdef enum:
     N_BITSETS = 256  # = 8 * size(BITSET_INNER_DTYPE_C)
 
