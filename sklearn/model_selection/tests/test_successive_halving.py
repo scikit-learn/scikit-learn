@@ -201,6 +201,32 @@ def test_aggressive_elimination(
 
 
 @pytest.mark.parametrize("Est", (HalvingGridSearchCV, HalvingRandomSearchCV))
+def test_exhaust_min_resources_uses_actual_iterations(GridSearchCV):
+    # Non-regression test for gh-27422: min_resources='exhaust' must size r0
+    # from the actual number of iterations, not n_required_iterations.
+    X, y = make_classification(
+        n_samples=1050, n_classes=2, n_informative=4, random_state=0
+    )
+    param_grid = {"a": range(8), "b": range(10), "c": range(2)}  # 160 candidates
+    base_estimator = FastClassifier()
+
+    sh = GridSearchCV(
+        base_estimator,
+        param_grid,
+        cv=5,
+        factor=2,
+        min_resources="exhaust",
+    )
+    if GridSearchCV is HalvingRandomSearchCV:
+        sh.set_params(n_candidates=160)
+
+    sh.fit(X, y)
+
+    assert sh.min_resources_ == 32
+    assert sh.n_resources_[-1] == 1024
+
+
+@pytest.mark.parametrize("Est", (HalvingGridSearchCV, HalvingRandomSearchCV))
 @pytest.mark.parametrize(
     (
         "min_resources,"
@@ -224,7 +250,7 @@ def test_aggressive_elimination(
         ("exhaust", 599, 2, 2, [199, 597]),
         ("exhaust", 300, 2, 2, [100, 300]),
         ("exhaust", 60, 2, 2, [20, 60]),
-        ("exhaust", 50, 1, 1, [20]),
+        ("exhaust", 50, 1, 1, [50]),
         ("exhaust", 20, 1, 1, [20]),
     ],
 )
