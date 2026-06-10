@@ -991,7 +991,7 @@ def test_cmap_and_colors_logic(pyplot):
 def test_multiclass_colors_deprecation(pyplot):
     """Check that using `multiclass_colors` raises as expected."""
     X, y = load_iris_2d_scaled()
-    clf = LogisticRegression().fit(X, y)
+    clf = LogisticRegression(alpha=1e-4).fit(X, y)
 
     with pytest.warns(
         FutureWarning,
@@ -1027,7 +1027,7 @@ def test_multiclass_colors_attribute_deprecation(pyplot):
     Check that FutureWarning is raised and `target_colors_` is returned.
     """
     X, y = load_iris_2d_scaled()
-    clf = LogisticRegression().fit(X, y)
+    clf = LogisticRegression(alpha=1e-4).fit(X, y)
 
     disp = DecisionBoundaryDisplay.from_estimator(clf, X)
     with pytest.warns(
