@@ -2105,8 +2105,8 @@ def test_feature_union_array_api_support_tag():
 
 
 @config_context(enable_metadata_routing=True)
-@pytest.mark.parametrize("method", ["fit", "fit_transform"])
-def test_transform_input_pipeline(method):
+@pytest.mark.parametrize("pipeline_method", ["fit", "fit_transform"])
+def test_transform_input_pipeline(pipeline_method):
     """Test that with transform_input, data is correctly transformed for each step."""
 
     def get_transformer(registry, sample_weight, metadata):
@@ -2138,18 +2138,6 @@ def test_transform_input_pipeline(method):
         )
         return pipe, registry_1, registry_2, registry_3, registry_4
 
-    def check_metadata(registry, methods, **metadata):
-        """Check that the right metadata was recorded for the given methods."""
-        assert registry
-        for estimator in registry:
-            for method in methods:
-                check_recorded_metadata(
-                    estimator,
-                    method=method,
-                    parent=method,
-                    **metadata,
-                )
-
     X = np.array([[1, 2], [3, 4]])
     y = np.array([0, 1])
     sample_weight = np.array([[1, 2]])
@@ -2157,7 +2145,7 @@ def test_transform_input_pipeline(method):
     metadata = np.array([[100, 200]])
 
     pipe, registry_1, registry_2, registry_3, registry_4 = get_pipeline()
-    pipe.fit(
+    getattr(pipe, pipeline_method)(
         X,
         y,
         sample_weight=sample_weight,
@@ -2165,22 +2153,34 @@ def test_transform_input_pipeline(method):
         metadata=metadata,
     )
 
-    check_metadata(
-        registry_1, ["fit", "transform"], sample_weight=sample_weight, metadata=metadata
+    check_recorded_metadata(
+        registry_1[-1],
+        method="fit_transform",
+        parent=pipeline_method,
+        sample_weight=sample_weight,
+        metadata=metadata,
     )
-    check_metadata(registry_2, ["fit", "transform"])
-    check_metadata(
-        registry_3,
-        ["fit", "transform"],
+    check_recorded_metadata(
+        registry_2[-1], method="fit_transform", parent=pipeline_method
+    )
+    check_recorded_metadata(
+        registry_3[-1],
+        method="fit_transform",
+        parent=pipeline_method,
         sample_weight=sample_weight + 2,
         metadata=metadata,
     )
-    check_metadata(
-        registry_4,
-        method.split("_"),  # ["fit", "transform"] if "fit_transform", ["fit"] otherwise
-        sample_weight=other_weights + 3,
-        metadata=metadata,
+    last_callees = (
+        ["fit"] if pipeline_method == "fit" else ["fit_transform", "fit", "transform"]
     )
+    for callee in last_callees:
+        check_recorded_metadata(
+            registry_4[-1],
+            method=callee,
+            parent=pipeline_method,
+            sample_weight=other_weights + 3,
+            metadata=metadata,
+        )
 
 
 @config_context(enable_metadata_routing=True)
@@ -2386,9 +2386,11 @@ class SimpleEstimator(BaseEstimator):
 
 
 # split and partial_fit not relevant for pipelines
-@pytest.mark.parametrize("method", sorted(set(METHODS) - {"split", "partial_fit"}))
+@pytest.mark.parametrize(
+    "parent_method", sorted(set(METHODS) - {"split", "partial_fit"})
+)
 @config_context(enable_metadata_routing=True)
-def test_metadata_routing_for_pipeline(method):
+def test_metadata_routing_for_pipeline(parent_method):
     """Test that metadata is routed correctly for pipelines."""
 
     def set_request(est, method, **kwarg):
@@ -2411,7 +2413,7 @@ def test_metadata_routing_for_pipeline(method):
 
     # test that metadata is routed correctly for pipelines when requested
     est = SimpleEstimator()
-    est = set_request(est, method, sample_weight=True, prop=True)
+    est = set_request(est, parent_method, sample_weight=True, prop=True)
     est = set_request(est, "fit", sample_weight=True, prop=True)
     trs = (
         ConsumingTransformer()
@@ -2421,32 +2423,49 @@ def test_metadata_routing_for_pipeline(method):
     )
     pipeline = Pipeline([("trs", trs), ("estimator", est)])
 
-    if "fit" not in method:
+    if "fit" not in parent_method:
         pipeline = pipeline.fit(X, y, sample_weight=sample_weight, prop=prop)
+        trs._records.clear()  # clear records so we don't check these records below
 
     try:
-        getattr(pipeline, method)(
+        getattr(pipeline, parent_method)(
             X, y, sample_weight=sample_weight, prop=prop, metadata=metadata
         )
     except TypeError:
         # Some methods don't accept y
-        getattr(pipeline, method)(
+        getattr(pipeline, parent_method)(
             X, sample_weight=sample_weight, prop=prop, metadata=metadata
         )
 
     # Make sure the transformer has received the metadata
-    # For the transformer, always only `fit` and `transform` are called.
-    check_recorded_metadata(
-        obj=trs,
-        method="fit",
-        parent="fit",
-        sample_weight=sample_weight,
-        metadata=metadata,
-    )
+
+    # If `inverse_transform` is called on the pipeline, only `inverse_transform` is
+    # called on the transformer:
+    if parent_method == "inverse_transform":
+        check_recorded_metadata(
+            obj=trs,
+            method="inverse_transform",
+            parent=parent_method,
+            sample_weight=sample_weight,
+            metadata=metadata,
+        )
+        return
+
+    # `fit` is only called on the transformer, if pipeline calls via pipeline.fit but
+    # if the pipeline calls `predict`, `score` or `transform`, ..., the transformer
+    # is not refitted:
+    if "fit" in parent_method:
+        check_recorded_metadata(
+            obj=trs,
+            method="fit",
+            parent=parent_method,
+            sample_weight=sample_weight,
+            metadata=metadata,
+        )
     check_recorded_metadata(
         obj=trs,
         method="transform",
-        parent="transform",
+        parent=parent_method,
         sample_weight=sample_weight,
         metadata=metadata,
     )
