@@ -275,7 +275,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             # Categorical feature selection must see the original container for
             # names/dtypes, but tree fitting needs numeric values. Encode selected
             # columns before the final numeric validation, preserving column order.
-            X = self._fit_transform_categorical_features(X)
+            self._fit_categorical_features(X)
+            X = self._transform_categorical_features(X)
             if check_input:
                 X = check_array(X, input_name="X", estimator=self, **check_X_params)
                 _check_n_features(self, X, reset=False)
@@ -468,9 +469,36 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 # *positive class*, all signs must be flipped.
                 monotonic_cst *= -1
 
-        self.n_categories_in_feature_ = self._validate_categorical_fit(
-            X, monotonic_cst, is_categorical_
-        )
+        # Validate fit-time categorical data and infer category counts.
+        # Fit-time validation for categorical columns includes:
+        # - at most ``MAX_NUM_CATEGORIES`` encoded categories,
+        # - no non-zero monotonic constraints on categorical features.
+        self.n_categories_in_feature_ = np.full(self.n_features_in_, -1, dtype=np.intp)
+        if is_categorical_ is not None:
+            base_msg = (
+                f"Values for categorical features should be integers in "
+                f"[0, {MAX_NUM_CATEGORIES - 1}]."
+            )
+
+            for idx, categories in zip(
+                np.flatnonzero(is_categorical_), self._categorical_encoder.categories_
+            ):
+                # OrdinalEncoder places np.nan last if missing values reach fit.
+                if len(categories) and is_scalar_nan(categories[-1]):
+                    categories = categories[:-1]
+
+                n_categories = categories.size
+                self.n_categories_in_feature_[idx] = n_categories
+
+                max_encoded_value = n_categories - 1
+                if max_encoded_value >= MAX_NUM_CATEGORIES:
+                    raise ValueError(f"{base_msg} Found {max_encoded_value}.")
+
+                if monotonic_cst is not None and monotonic_cst[idx] != 0:
+                    raise ValueError(
+                        "A categorical feature cannot have a non-null monotonic"
+                        " constraint. "
+                    )
 
         if has_categorical and self.splitter == "random":
             raise ValueError(
@@ -574,21 +602,16 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if np.any(missing_mask):
             raise ValueError("Missing values are not supported in categorical features")
 
-    def _replace_categorical_features(self, X, X_categorical):
-        X = np.asarray(X, dtype=object).copy()
-        X[:, self.is_categorical_] = X_categorical
-        return X
+    def _fit_categorical_features(self, X):
+        """Fit the categorical feature encoder on selected columns.
 
-    def _fit_transform_categorical_features(self, X):
-        """Encode categorical columns while preserving input feature order.
-
-        Fit the internal ordinal encoder on selected categorical columns, reject
-        scalar NaN values, and replace those columns with contiguous float32
-        codes. The returned data is ready for numeric validation with
-        ``check_array``.
+        The encoder sees the original container so dataframe-backed categorical
+        dtypes and string/object values are preserved until encoding.
         """
         X_categorical = _safe_indexing(X, self.is_categorical_, axis=1)
         self._check_categorical_missing(X_categorical)
+        # TODO: HGBT encodes missing values as np.nan, which we can support
+        #   but would need to add missing categorical values support
         self._categorical_encoder = OrdinalEncoder(
             dtype=np.float32,  # trees require X to be float32
             categories="auto",
@@ -596,8 +619,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             unknown_value=-1,
             encoded_missing_value=np.nan,
         )
-        X_categorical = self._categorical_encoder.fit_transform(X_categorical)
-        return self._replace_categorical_features(X, X_categorical)
+        self._categorical_encoder.fit(X_categorical)
 
     def _transform_categorical_features(self, X):
         if not hasattr(X, "shape"):
@@ -615,54 +637,18 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 "Found unknown categories in categorical feature "
                 f"{feature_idx} during transform."
             )
-        return self._replace_categorical_features(X, X_categorical)
 
-    def _validate_categorical_fit(self, X, monotonic_cst, is_categorical):
-        """Validate fit-time categorical data and infer category counts.
+        # replace features with the encoded categorical values
+        X_out = np.empty(X.shape, dtype=np.float32)
+        X_out[:, self.is_categorical_] = X_categorical
 
-        Fit-time validation for categorical columns includes:
-        - at most ``MAX_NUM_CATEGORIES`` encoded categories,
-        - no non-zero monotonic constraints on categorical features.
-        
-        Parameters
-        ----------
-        X : ndarray of shape (n_samples, n_features)
-            Training data after `validate_data`.
-        monotonic_cst : ndarray of shape (n_features,) or None
-            Monotonic constraints for each feature.
-        is_categorical : ndarray of shape (n_features,), dtype=bool
-            Boolean mask indicating categorical features.
+        is_numerical = ~self.is_categorical_
+        if np.any(is_numerical):
+            X_numerical = _safe_indexing(X, is_numerical, axis=1)
+            X_out[:, is_numerical] = np.asarray(X_numerical, dtype=np.float32)
 
-        Returns
-        -------
-        n_categories_in_feature : ndarray of shape (n_features,), dtype=intp
-            For categorical feature `j`, stores ``max(X[:, j]) + 1``; for
-            non-categorical features, stores ``-1``.
-        """
-        n_categories_in_feature = np.full(self.n_features_in_, -1, dtype=np.intp)
-        if is_categorical is None:
-            return n_categories_in_feature
+        return X_out
 
-        base_msg = (
-            f"Values for categorical features should be integers in "
-            f"[0, {MAX_NUM_CATEGORIES - 1}]."
-        )
-
-        for idx in np.flatnonzero(is_categorical):
-            X_idx_max = np.max(X[:, idx]).astype(np.intp)
-            n_categories_in_feature[idx] = X_idx_max + 1
-
-            if X_idx_max >= MAX_NUM_CATEGORIES:
-                raise ValueError(f"{base_msg} Found {X_idx_max}.")
-            
-            if monotonic_cst is not None and monotonic_cst[idx] != 0:
-                raise ValueError(
-                    "A categorical feature cannot have a non-null monotonic"
-                    " constraint. "
-                )
-
-        return n_categories_in_feature
-        
     def _validate_X_predict(self, X, check_input):
         """Validate the training data on predict (probabilities)."""
         has_categorical = np.any(self.n_categories_in_feature_ > 0)

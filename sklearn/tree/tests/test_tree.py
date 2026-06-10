@@ -3312,6 +3312,27 @@ def test_predict_categorical_list_input(Tree):
 
 
 @pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
+def test_fit_categorical_mixed_object_array(Tree):
+    """Check mixed object arrays preserve numeric and encoded categorical columns."""
+    X = np.array(
+        [
+            [0.0, "low"],
+            [1.0, "high"],
+            [2.0, "low"],
+            [3.0, "high"],
+        ],
+        dtype=object,
+    )
+    y = np.array([0, 1, 0, 1])
+
+    est = Tree(categorical_features=[1], random_state=0).fit(X, y)
+
+    assert_array_equal(est.is_categorical_, [False, True])
+    assert_array_equal(est.n_categories_in_feature_, [-1, 2])
+    assert_array_equal(est.predict(X), y)
+
+
+@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
 @pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
 @pytest.mark.parametrize("categorical_features", [["f_cat"], "from_dtype"])
 def test_dataframe_categorical_features(Tree, dataframe_lib, categorical_features):
