@@ -430,7 +430,7 @@ Pull request checklist
         contribution.
         Please **do not** open PRs for issues:
 
-        - that are labeled with `"Needs triage" <issues_tagged_needs_triage>`_ or any
+        - that are labeled with :ref:`"Needs triage" <issues_tagged_needs_triage>` or any
           other kind of "Needs..." labels,
         - where the discussion has not settled down to an explicit resolution plan,
         - where the reporter has already expressed interest in opening a PR, or
@@ -507,7 +507,7 @@ Pull request checklist
         Otherwise, make sure the PR relates to at least one existing issue that is
         ready for contribution. Please **do not** open PRs for issues:
 
-        - that are labeled with `"Needs triage" <issues_tagged_needs_triage>`_ or any
+        - that are labeled with :ref:`"Needs triage" <issues_tagged_needs_triage>` or any
           other kind of "Needs..." labels,
         - where the discussion has not settled down to an explicit resolution plan,
         - where the reporter has already expressed interest in opening a PR, or
