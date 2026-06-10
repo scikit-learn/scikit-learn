@@ -307,7 +307,7 @@ contribution must conform to the project's :ref:`coding guidelines
    workflow, please pay a visit to the `Scipy Development Workflow
    <https://scipy.github.io/devdocs/dev/dev_quickstart.html>`_ -
    and the `Astropy Workflow for Developers
-   <https://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
+   <https://docs.astropy.org/en/latest/development/git_edit_workflow_examples.html>`_
    sections.
 
 .. _development_workflow:
