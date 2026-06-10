@@ -76,19 +76,24 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
     # so we do it here. Sorting also returns a contiguous array.
     if sample_weight is None:
         col_data = np.sort(col_data)
+        # ignore missing values when computing bin thresholds
+        idx_nan = np.searchsorted(col_data, np.nan)
+        col_data = col_data[:idx_nan]
     else:
+        # remove missing values first
+        # because argsort is quite slower when missing values are present
+        # (which is not the case for sort)
+        missing_mask = np.isnan(col_data)
+        if missing_mask.any():
+            col_data = col_data[~missing_mask]
+            sample_weight = sample_weight[~missing_mask]
+
         sort_idx = np.argsort(col_data)
         col_data = col_data[sort_idx]
         sample_weight = sample_weight[sort_idx]
 
-    # ignore missing values when computing bin thresholds
-    idx_nan = np.searchsorted(col_data, np.nan)
-    col_data = col_data[:idx_nan]
-
-    # If sample_weight is not None and 0-weighted values exist, we need to
-    # remove those before calculating the distinct points.
-    if sample_weight is not None:
-        sample_weight = sample_weight[:idx_nan]
+        # If 0-weighted values exist, we need to remove those
+        # before calculating the distinct points.
         nnz_sw = sample_weight != 0
         col_data = col_data[nnz_sw]
         sample_weight = sample_weight[nnz_sw]
