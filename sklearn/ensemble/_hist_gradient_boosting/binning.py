@@ -24,8 +24,30 @@ from sklearn.utils import check_array, check_random_state
 from sklearn.utils._bitset import set_bitset_memoryview
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils.parallel import Parallel, delayed
-from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import check_is_fitted
+
+
+def _weighted_quantile_1d_sorted(col_data, sample_weight, quantiles):
+    """Compute weighted quantiles for sorted 1D data.
+
+    This implements the "averaged_inverted_cdf" method used by
+    `_weighted_percentile(..., average=True)` for the restricted input expected
+    by `_find_binning_thresholds`: `col_data` is sorted, has no NaN values, and
+    `sample_weight` has strictly positive values.
+    """
+    weight_cdf = np.cumsum(sample_weight, dtype=col_data.dtype)
+    adjusted_quantiles = quantiles * weight_cdf[-1]
+
+    percentile_indices = np.searchsorted(weight_cdf, adjusted_quantiles)
+
+    fraction_above = weight_cdf[percentile_indices] - adjusted_quantiles
+    is_fraction_above = fraction_above > np.finfo(col_data.dtype).eps
+
+    return np.where(
+        is_fraction_above,
+        col_data[percentile_indices],
+        (col_data[percentile_indices] + col_data[percentile_indices + 1]) / 2,
+    )
 
 
 def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
@@ -91,13 +113,10 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
         )
         assert bin_thresholds.shape[0] == max_bins - 1
     else:
-        percentiles = np.linspace(0, 100, num=max_bins + 1)
-        percentiles = percentiles[1:-1]
-        bin_thresholds = np.array(
-            [
-                _weighted_percentile(col_data, sample_weight, percentile, average=True)
-                for percentile in percentiles
-            ]
+        quantiles = np.linspace(0, 1, num=max_bins + 1)
+        quantiles = quantiles[1:-1]
+        bin_thresholds = _weighted_quantile_1d_sorted(
+            col_data, sample_weight, quantiles
         )
         assert bin_thresholds.shape[0] == max_bins - 1
     # Remove duplicated thresholds if they exist.
