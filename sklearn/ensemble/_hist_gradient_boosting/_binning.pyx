@@ -86,7 +86,7 @@ cdef inline size_t _binary_search(
     X_DTYPE_C value,
     const X_DTYPE_C [::1] binning_thresholds,
     size_t size,
-) nogil:
+) noexcept nogil:
     cdef:
         size_t left
         size_t half
@@ -139,6 +139,6 @@ cdef uint8_t[256] int_to_log2ceil = [
     8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8
 ]
 
-cdef inline uint8_t log2ceil(uint8_t x) nogil:
+cdef inline uint8_t log2ceil(uint8_t x) noexcept nogil:
     # Using a lookup table is slightly faster than calculating on demand:
     return int_to_log2ceil[x]
