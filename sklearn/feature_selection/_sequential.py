@@ -29,7 +29,7 @@ from sklearn.utils._metadata_requests import (
 )
 from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
 from sklearn.utils._tags import get_tags
-from sklearn.utils.validation import check_is_fitted, validate_data
+from sklearn.utils.validation import _num_features, check_is_fitted, validate_data
 
 
 class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
@@ -235,21 +235,14 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             Returns the instance itself.
         """
         _raise_for_params(params, self, "fit")
-        tags = self.__sklearn_tags__()
-        # Keep the original container; validate_data may convert DataFrames
-        # to numpy, which would lose non-numeric dtypes.
-        X_original = X
-        X = validate_data(
-            self,
-            X,
-            accept_sparse="csc",
-            ensure_min_features=2,
-            ensure_all_finite=not tags.input_tags.allow_nan,
-        )
-        n_features = X.shape[1]
-        # Pass the original container to the estimator for DataFrames so that
-        # non-numeric dtypes are preserved; use the validated array otherwise.
-        X_loop = X_original if hasattr(X_original, "iloc") else X
+        X = validate_data(self, X, skip_check_array=True)
+        n_features = _num_features(X)
+
+        if n_features < 2:
+            raise ValueError(
+                f"Found array with {n_features} feature(s) while a minimum of 2 is"
+                " required."
+            )
 
         if self.n_features_to_select == "auto":
             if self.tol is not None:
@@ -294,7 +287,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             process_routing(self, "fit", **params)
         for _ in range(n_iterations):
             new_feature_idx, new_score = self._get_best_new_feature_score(
-                cloned_estimator, X_loop, y, cv, current_mask, **params
+                cloned_estimator, X, y, cv, current_mask, **params
             )
             if is_auto_select and ((new_score - old_score) < self.tol):
                 break

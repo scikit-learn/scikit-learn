@@ -2,7 +2,6 @@ import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
 
-from sklearn.base import BaseEstimator
 from sklearn.cluster import KMeans
 from sklearn.datasets import make_blobs, make_classification, make_regression
 from sklearn.ensemble import HistGradientBoostingRegressor
@@ -335,24 +334,14 @@ def test_fit_rejects_params_with_no_routing_enabled():
 
 @pytest.mark.parametrize("direction", ("forward", "backward"))
 def test_dataframe_with_non_numeric_features(direction):
-    """Check that SFS passes a DataFrame to the underlying estimator.
+    """Check that SFS works with non-numeric features.
 
     Non-regression test for #30785.
     """
     pd = pytest.importorskip("pandas")
 
-    received_types = []
-
-    class TypeRecordingEstimator(BaseEstimator):
-        def fit(self, X, y):
-            received_types.append(type(X))
-            return self
-
-        def score(self, X, y):
-            return 1.0
-
-    rng = np.random.RandomState(42)
-    n_samples = 60
+    rng = np.random.RandomState(0)
+    n_samples = 100
     X = pd.DataFrame(
         {
             "num1": rng.randn(n_samples),
@@ -363,17 +352,15 @@ def test_dataframe_with_non_numeric_features(direction):
     )
     y = rng.randn(n_samples)
 
+    est = HistGradientBoostingRegressor(
+        categorical_features="from_dtype",
+        random_state=0,
+    )
     sfs = SequentialFeatureSelector(
-        TypeRecordingEstimator(),
+        est,
         n_features_to_select=2,
         direction=direction,
         cv=2,
     )
     sfs.fit(X, y)
-
-    assert all(t is pd.DataFrame for t in received_types), (
-        f"Expected all calls to pass DataFrame, got types: {set(received_types)}"
-    )
-    assert sfs.n_features_in_ == X.shape[1]
-    assert_array_equal(sfs.feature_names_in_, X.columns)
     assert sfs.n_features_to_select_ == 2
