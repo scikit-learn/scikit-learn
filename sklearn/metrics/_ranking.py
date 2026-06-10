@@ -1,4 +1,3 @@
-"""Metrics to assess performance on classification task given scores.
 
 Functions named as ``*_score`` return a scalar value to maximize: the higher
 the better.
@@ -1896,7 +1895,7 @@ def dcg_score(
     )
 
 
-def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
+def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False, replaced_undefined_by=np.nan):
     """Compute Normalized Discounted Cumulative Gain.
 
     Sum the true scores ranked in the order induced by the predicted scores,
@@ -1942,7 +1941,16 @@ def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
     # change the value of the re-ordered y_true)
     normalizing_gain = _dcg_sample_scores(y_true, y_true, k, ignore_ties=True)
     all_irrelevant = normalizing_gain == 0
-    gain[all_irrelevant] = 0
+    if np.any(all_irrelevant):
+        warnings.warn(
+            "NDCG is not defined when all true relevance values are zero for a "
+            f"sample. {int(all_irrelevant.sum())} sample(s) have an undefined NDCG "
+            "score. Use the `replaced_undefined_by` parameter to set the return "
+            "value for such samples.",
+            UndefinedMetricWarning,
+            stacklevel=4,
+        )
+    gain[all_irrelevant] = replaced_undefined_by
     gain[~all_irrelevant] /= normalizing_gain[~all_irrelevant]
     return gain
 
@@ -1954,10 +1962,11 @@ def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
         "k": [Interval(Integral, 1, None, closed="left"), None],
         "sample_weight": ["array-like", None],
         "ignore_ties": ["boolean"],
+        "replaced_undefined_by": [Interval(Real, 0.0, 1.0, closed="both"), np.nan],
     },
     prefer_skip_nested_validation=True,
 )
-def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False):
+def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False, replaced_undefined_by=np.nan):
     """Compute Normalized Discounted Cumulative Gain.
 
     Sum the true scores ranked in the order induced by the predicted scores,
@@ -1991,10 +2000,22 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
         Assume that there are no ties in y_score (which is likely to be the
         case if y_score is continuous) for efficiency gains.
 
+    replaced_undefined_by : float in [0., 1.] or np.nan, default=np.nan
+        Value to assign to samples where the NDCG score is undefined (i.e.
+        when all true relevance values are zero for that sample).  When set to
+        ``np.nan`` (the default), undefined samples are excluded from the
+        averaged score and an :class:`~sklearn.exceptions.UndefinedMetricWarning`
+        is raised. Set to ``0.0`` or ``1.0`` to suppress the warning and
+        include those samples in the average with the given value.
+
+        .. versionadded:: 1.8
+
     Returns
     -------
-    normalized_discounted_cumulative_gain : float in [0., 1.]
-        The averaged NDCG scores for all samples.
+    normalized_discounted_cumulative_gain : float in [0., 1.] or np.nan
+        The averaged NDCG scores for all samples.  Returns ``np.nan`` when
+        all samples have undefined NDCG scores and ``replaced_undefined_by``
+        is ``np.nan``.
 
     See Also
     --------
@@ -2063,7 +2084,18 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
             f"Got {y_true.shape[1]} instead."
         )
     _check_dcg_target_type(y_true)
-    gain = _ndcg_sample_scores(y_true, y_score, k=k, ignore_ties=ignore_ties)
+    gain = _ndcg_sample_scores(
+        y_true, y_score, k=k, ignore_ties=ignore_ties,
+        replaced_undefined_by=replaced_undefined_by,
+    )
+    # When replaced_undefined_by is nan, exclude undefined samples from average.
+    if np.isnan(replaced_undefined_by):
+        defined_mask = ~np.isnan(gain)
+        if not np.any(defined_mask):
+            return np.nan
+        if sample_weight is not None:
+            sample_weight = np.asarray(sample_weight)[defined_mask]
+        gain = gain[defined_mask]
     return float(np.average(gain, weights=sample_weight))
 
 
