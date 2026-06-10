@@ -1895,7 +1895,9 @@ def dcg_score(
     )
 
 
-def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False, replaced_undefined_by=np.nan):
+def _ndcg_sample_scores(
+    y_true, y_score, k=None, ignore_ties=False, replaced_undefined_by=np.nan
+):
     """Compute Normalized Discounted Cumulative Gain.
 
     Sum the true scores ranked in the order induced by the predicted scores,
@@ -1966,7 +1968,15 @@ def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False, replaced_und
     },
     prefer_skip_nested_validation=True,
 )
-def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False, replaced_undefined_by=np.nan):
+def ndcg_score(
+    y_true,
+    y_score,
+    *,
+    k=None,
+    sample_weight=None,
+    ignore_ties=False,
+    replaced_undefined_by=np.nan,
+):
     """Compute Normalized Discounted Cumulative Gain.
 
     Sum the true scores ranked in the order induced by the predicted scores,
@@ -2085,7 +2095,10 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
         )
     _check_dcg_target_type(y_true)
     gain = _ndcg_sample_scores(
-        y_true, y_score, k=k, ignore_ties=ignore_ties,
+        y_true,
+        y_score,
+        k=k,
+        ignore_ties=ignore_ties,
         replaced_undefined_by=replaced_undefined_by,
     )
     # When replaced_undefined_by is nan, exclude undefined samples from average.
@@ -2376,5 +2389,4 @@ def metric_at_thresholds(
         y_pred = (y_score >= threshold).astype(np.int32)
         metric_values.append(metric_func(y_true, y_pred, **metric_params))
 
-    metric_values = np.asarray(metric_values)
-    return metric_values, thresholds
+    metric_values = np
