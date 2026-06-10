@@ -26,9 +26,8 @@ from sklearn.base import (
     is_classifier,
 )
 from sklearn.preprocessing import OrdinalEncoder
-from sklearn.tree import _criterion, _splitter
+from sklearn.tree import _criterion, _splitter  # type: ignore[attr-defined]
 from sklearn.tree._criterion import Criterion
-from sklearn.tree._splitter import Splitter
 from sklearn.tree._tree import MAX_NUM_CATEGORIES_PY as MAX_NUM_CATEGORIES
 from sklearn.tree._tree import (
     BestFirstTreeBuilder,
@@ -430,9 +429,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             # might be shared and modified concurrently during parallel fitting
             criterion = copy.deepcopy(criterion)
 
-        SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
-
-        splitter = self.splitter
         if self.monotonic_cst is None:
             monotonic_cst = None
         else:
@@ -491,15 +487,15 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 f"Found {self.n_classes_.max()} classes."
             )
 
-        if not isinstance(self.splitter, Splitter):
-            splitter = SPLITTERS[self.splitter](
-                criterion,
-                self.max_features_,
-                min_samples_leaf,
-                min_weight_leaf,
-                random_state,
-                monotonic_cst,
-            )
+        SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
+        splitter = SPLITTERS[self.splitter](
+            criterion,
+            self.max_features_,
+            min_samples_leaf,
+            min_weight_leaf,
+            random_state,
+            monotonic_cst,
+        )
 
         if is_classifier(self):
             self.tree_ = Tree(
@@ -626,7 +622,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         Fit-time validation for categorical columns includes:
         - at most ``MAX_NUM_CATEGORIES`` encoded categories,
         - no non-zero monotonic constraints on categorical features.
-
+        
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
@@ -646,11 +642,18 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if is_categorical is None:
             return n_categories_in_feature
 
-        self._validate_categorical_values(X, is_categorical)
+        base_msg = (
+            f"Values for categorical features should be integers in "
+            f"[0, {MAX_NUM_CATEGORIES - 1}]."
+        )
 
-        for idx in np.where(is_categorical)[0]:
+        for idx in np.flatnonzero(is_categorical):
             X_idx_max = np.max(X[:, idx]).astype(np.intp)
             n_categories_in_feature[idx] = X_idx_max + 1
+
+            if X_idx_max >= MAX_NUM_CATEGORIES:
+                raise ValueError(f"{base_msg} Found {X_idx_max}.")
+            
             if monotonic_cst is not None and monotonic_cst[idx] != 0:
                 raise ValueError(
                     "A categorical feature cannot have a non-null monotonic"
@@ -658,29 +661,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 )
 
         return n_categories_in_feature
-
-    def _validate_categorical_values(self, X, is_categorical):
-        """Validate encoded values in categorical columns.
-
-        Checks that encoded categorical entries have strictly fewer than
-        ``MAX_NUM_CATEGORIES`` distinct values.
-
-        Parameters
-        ----------
-        X : ndarray of shape (n_samples, n_features)
-            Encoded input samples.
-        is_categorical : ndarray of shape (n_features,), dtype=bool
-            Mask of categorical columns in ``X``.
-        """
-        base_msg = (
-            f"Values for categorical features should be integers in "
-            f"[0, {MAX_NUM_CATEGORIES - 1}]."
-        )
-        for idx in np.where(is_categorical)[0]:
-            X_col_max = np.max(X[:, idx]).astype(np.intp)
-            if X_col_max >= MAX_NUM_CATEGORIES:
-                raise ValueError(f"{base_msg} Found {X_col_max}.")
-
+        
     def _validate_X_predict(self, X, check_input):
         """Validate the training data on predict (probabilities)."""
         has_categorical = np.any(self.n_categories_in_feature_ > 0)
@@ -2050,15 +2031,6 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             categorical_features=categorical_features,
         )
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        # XXX: nan values are only accepted in dense arrays, but we set this for
-        # common test to pass, specifically: check_estimators_nan_inf
-        allow_nan = self.splitter == "random"
-        tags.classifier_tags.multi_label = True
-        tags.input_tags.allow_nan = allow_nan
-        return tags
-
 
 class ExtraTreeRegressor(DecisionTreeRegressor):
     """An extremely randomized tree regressor.
@@ -2335,11 +2307,3 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             monotonic_cst=monotonic_cst,
             categorical_features=categorical_features,
         )
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        # XXX: nan values are only accepted in dense arrays, but we set this for
-        # common test to pass, specifically: check_estimators_nan_inf
-        allow_nan = self.splitter == "random"
-        tags.input_tags.allow_nan = allow_nan
-        return tags

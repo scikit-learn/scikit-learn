@@ -244,7 +244,7 @@ jobs:
           restore-keys: ccache-${{ env.JOB_NAME }}
 
       - name: Set up conda
-        uses: conda-incubator/setup-miniconda@v3
+        uses: conda-incubator/setup-miniconda@v4
         if: ${{ startsWith(env.DISTRIB, 'conda') }}
         with:
           miniforge-version: latest
@@ -296,7 +296,7 @@ jobs:
         if: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
 
       - name: Upload coverage report to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         if: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
         with:
           files: ./coverage.xml
@@ -374,7 +374,7 @@ jobs:
           restore-keys: ccache-${{ env.JOB_NAME }}
 
       - name: Set up conda
-        uses: conda-incubator/setup-miniconda@v3
+        uses: conda-incubator/setup-miniconda@v4
         if: ${{ startsWith(env.DISTRIB, 'conda') }}
         with:
           miniforge-version: latest
@@ -455,7 +455,7 @@ jobs:
         if: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
 
       - name: Upload coverage report to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         if: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
         with:
           files: ./coverage.xml

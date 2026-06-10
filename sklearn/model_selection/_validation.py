@@ -25,7 +25,7 @@ from sklearn.metrics import check_scoring, get_scorer_names
 from sklearn.metrics._scorer import _MultimetricScorer
 from sklearn.model_selection._split import check_cv
 from sklearn.preprocessing import LabelEncoder
-from sklearn.utils import Bunch, _safe_indexing, check_random_state, indexable
+from sklearn.utils import _safe_indexing, check_random_state, indexable
 from sklearn.utils._array_api import (
     device,
     get_namespace,
@@ -42,6 +42,7 @@ from sklearn.utils._param_validation import (
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _routing_enabled,
     process_routing,
 )
@@ -356,10 +357,13 @@ def cross_validate(
                 routed_params=e.routed_params,
             )
     else:
-        routed_params = Bunch()
-        routed_params.splitter = Bunch(split={"groups": groups})
-        routed_params.estimator = Bunch(fit=params)
-        routed_params.scorer = Bunch(score={})
+        routed_params = _manual_routing(
+            {
+                "splitter": {"split": {"groups": groups}},
+                "estimator": {"fit": params},
+                "scorer": {},
+            }
+        )
 
     indices = cv.split(X, y, **routed_params.splitter.split)
     if return_indices:
@@ -683,6 +687,8 @@ def _fit_and_score(
     split_progress=None,
     candidate_progress=None,
     error_score=np.nan,
+    caller=None,
+    callback_ctx=None,
 ):
     """Fit estimator and compute scores for a given dataset split.
 
@@ -752,6 +758,12 @@ def _fit_and_score(
 
     return_estimator : bool, default=False
         Whether to return the fitted estimator.
+
+    caller : estimator instance or None, default=None
+        The *SearchCV instance that called this function.
+
+    callback_ctx : `CallbackContext` object or None, default=None
+        Callback context for the evaluation task.
 
     Returns
     -------
@@ -824,12 +836,28 @@ def _fit_and_score(
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
 
+    if (sample_weight := fit_params.get("sample_weight")) is not None:
+        metadata_callbacks = {"sample_weight": sample_weight}
+    else:
+        metadata_callbacks = None
+
     result = {}
+
     try:
-        if y_train is None:
-            estimator.fit(X_train, **fit_params)
-        else:
-            estimator.fit(X_train, y_train, **fit_params)
+        if callback_ctx is not None:
+            with callback_ctx.propagate_callback_context(estimator):
+                callback_ctx.call_on_fit_task_begin(
+                    estimator=caller, X=X_train, y=y_train, metadata=metadata_callbacks
+                )
+                if y_train is None:
+                    estimator.fit(X_train, **fit_params)
+                else:
+                    estimator.fit(X_train, y_train, **fit_params)
+        else:  # custom search class that does not support callbacks
+            if y_train is None:
+                estimator.fit(X_train, **fit_params)
+            else:
+                estimator.fit(X_train, y_train, **fit_params)
 
     except Exception:
         # Note fit time as time until error
@@ -858,6 +886,11 @@ def _fit_and_score(
         if return_train_score:
             train_scores = _score(
                 estimator, X_train, y_train, scorer, score_params_train, error_score
+            )
+    finally:
+        if callback_ctx is not None:
+            callback_ctx.call_on_fit_task_end(
+                estimator=caller, X=X_train, y=y_train, metadata=metadata_callbacks
             )
 
     if verbose > 1:
@@ -897,6 +930,7 @@ def _fit_and_score(
         result["parameters"] = parameters
     if return_estimator:
         result["estimator"] = estimator
+
     return result
 
 
@@ -1173,9 +1207,12 @@ def cross_val_predict(
                 routed_params=e.routed_params,
             )
     else:
-        routed_params = Bunch()
-        routed_params.splitter = Bunch(split={"groups": groups})
-        routed_params.estimator = Bunch(fit=params)
+        routed_params = _manual_routing(
+            {
+                "splitter": {"split": {"groups": groups}},
+                "estimator": {"fit": params},
+            }
+        )
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
     splits = list(cv.split(X, y, **routed_params.splitter.split))
@@ -1646,10 +1683,13 @@ def permutation_test_score(
             )
 
     else:
-        routed_params = Bunch()
-        routed_params.estimator = Bunch(fit=params)
-        routed_params.splitter = Bunch(split={"groups": groups})
-        routed_params.scorer = Bunch(score={})
+        routed_params = _manual_routing(
+            {
+                "estimator": {"fit": params},
+                "splitter": {"split": {"groups": groups}},
+                "scorer": {},
+            }
+        )
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
@@ -1982,10 +2022,13 @@ def learning_curve(
             )
 
     else:
-        routed_params = Bunch()
-        routed_params.estimator = Bunch(fit=params, partial_fit=params)
-        routed_params.splitter = Bunch(split={"groups": groups})
-        routed_params.scorer = Bunch(score={})
+        routed_params = _manual_routing(
+            {
+                "estimator": {"fit": params, "partial_fit": params},
+                "splitter": {"split": {"groups": groups}},
+                "scorer": {},
+            }
+        )
 
     # Store cv as list as we will be iterating over the list multiple times
     cv_iter = list(cv.split(X, y, **routed_params.splitter.split))
@@ -2153,15 +2196,12 @@ def _incremental_fit_estimator(
     """Train estimator on training subsets incrementally and compute scores."""
     train_scores, test_scores, fit_times, score_times = [], [], [], []
     partitions = zip(train_sizes, np.split(train, train_sizes)[:-1])
-    if fit_params is None:
-        fit_params = {}
+    fit_params = fit_params or {}
+    score_params = score_params or {}
     if classes is None:
-        partial_fit_func = partial(estimator.partial_fit, **fit_params)
+        partial_fit_func = partial(estimator.partial_fit)
     else:
-        partial_fit_func = partial(estimator.partial_fit, classes=classes, **fit_params)
-    score_params = score_params if score_params is not None else {}
-    score_params_train = _check_method_params(X, params=score_params, indices=train)
-    score_params_test = _check_method_params(X, params=score_params, indices=test)
+        partial_fit_func = partial(estimator.partial_fit, classes=classes)
 
     for n_train_samples, partial_train in partitions:
         train_subset = train[:n_train_samples]
@@ -2169,14 +2209,26 @@ def _incremental_fit_estimator(
         X_partial_train, y_partial_train = _safe_split(estimator, X, y, partial_train)
         X_test, y_test = _safe_split(estimator, X, y, test, train_subset)
         start_fit = time.time()
+
+        fit_params_iter = _check_method_params(
+            X, params=fit_params, indices=partial_train
+        )
+
         if y_partial_train is None:
-            partial_fit_func(X_partial_train)
+            partial_fit_func(X_partial_train, **fit_params_iter)
         else:
-            partial_fit_func(X_partial_train, y_partial_train)
+            partial_fit_func(X_partial_train, y_partial_train, **fit_params_iter)
         fit_time = time.time() - start_fit
         fit_times.append(fit_time)
 
         start_score = time.time()
+
+        score_params_test_iter = _check_method_params(
+            X, params=score_params, indices=test
+        )
+        score_params_train_iter = _check_method_params(
+            X, params=score_params, indices=train_subset
+        )
 
         test_scores.append(
             _score(
@@ -2184,7 +2236,7 @@ def _incremental_fit_estimator(
                 X_test,
                 y_test,
                 scorer,
-                score_params=score_params_test,
+                score_params=score_params_test_iter,
                 error_score=error_score,
             )
         )
@@ -2194,7 +2246,7 @@ def _incremental_fit_estimator(
                 X_train,
                 y_train,
                 scorer,
-                score_params=score_params_train,
+                score_params=score_params_train_iter,
                 error_score=error_score,
             )
         )
@@ -2425,10 +2477,13 @@ def validation_curve(
             )
 
     else:
-        routed_params = Bunch()
-        routed_params.estimator = Bunch(fit=params)
-        routed_params.splitter = Bunch(split={"groups": groups})
-        routed_params.scorer = Bunch(score={})
+        routed_params = _manual_routing(
+            {
+                "estimator": {"fit": params},
+                "splitter": {"split": {"groups": groups}},
+                "scorer": {},
+            }
+        )
 
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch, verbose=verbose)
     results = parallel(
