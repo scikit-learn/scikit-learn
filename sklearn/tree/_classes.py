@@ -475,6 +475,13 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         # - no non-zero monotonic constraints on categorical features.
         self.n_categories_in_feature_ = np.full(self.n_features_in_, -1, dtype=np.intp)
         if is_categorical_ is not None:
+            if monotonic_cst is not None and np.any(
+                np.logical_and(is_categorical_, monotonic_cst != 0)
+            ):
+                raise ValueError(
+                    "Categorical features cannot have monotonic constraints."
+                )
+
             base_msg = (
                 f"Values for categorical features should be integers in "
                 f"[0, {MAX_NUM_CATEGORIES - 1}]."
@@ -493,12 +500,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 max_encoded_value = n_categories - 1
                 if max_encoded_value >= MAX_NUM_CATEGORIES:
                     raise ValueError(f"{base_msg} Found {max_encoded_value}.")
-
-                if monotonic_cst is not None and monotonic_cst[idx] != 0:
-                    raise ValueError(
-                        "A categorical feature cannot have a non-null monotonic"
-                        " constraint. "
-                    )
 
         if has_categorical and self.splitter == "random":
             raise ValueError(

@@ -3233,7 +3233,7 @@ def test_fit_categorical_with_monotonic_constraint(Tree):
     y = np.array([0, 1, 0, 1])
 
     with pytest.raises(
-        ValueError, match="A categorical feature cannot have a non-null monotonic"
+        ValueError, match="Categorical features cannot have monotonic constraints"
     ):
         Tree(categorical_features=[0], monotonic_cst=[1], random_state=0).fit(X, y)
 
