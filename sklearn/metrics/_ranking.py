@@ -1895,9 +1895,7 @@ def dcg_score(
     )
 
 
-def _ndcg_sample_scores(
-    y_true, y_score, k=None, ignore_ties=False, replaced_undefined_by=np.nan
-):
+def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
     """Compute Normalized Discounted Cumulative Gain.
 
     Sum the true scores ranked in the order induced by the predicted scores,
@@ -1943,16 +1941,7 @@ def _ndcg_sample_scores(
     # change the value of the re-ordered y_true)
     normalizing_gain = _dcg_sample_scores(y_true, y_true, k, ignore_ties=True)
     all_irrelevant = normalizing_gain == 0
-    if np.any(all_irrelevant):
-        warnings.warn(
-            "NDCG is not defined when all true relevance values are zero for a "
-            f"sample. {int(all_irrelevant.sum())} sample(s) have an undefined NDCG "
-            "score. Use the `replaced_undefined_by` parameter to set the return "
-            "value for such samples.",
-            UndefinedMetricWarning,
-            stacklevel=4,
-        )
-    gain[all_irrelevant] = replaced_undefined_by
+    gain[all_irrelevant] = 0
     gain[~all_irrelevant] /= normalizing_gain[~all_irrelevant]
     return gain
 
@@ -2094,13 +2083,21 @@ def ndcg_score(
             f"Got {y_true.shape[1]} instead."
         )
     _check_dcg_target_type(y_true)
-    gain = _ndcg_sample_scores(
-        y_true,
-        y_score,
-        k=k,
-        ignore_ties=ignore_ties,
-        replaced_undefined_by=replaced_undefined_by,
-    )
+    gain = _ndcg_sample_scores(y_true, y_score, k=k, ignore_ties=ignore_ties)
+    # Handle samples where all true relevance values are zero (NDCG is undefined).
+    all_irrelevant = (y_true == 0).all(axis=1)
+    if np.any(all_irrelevant):
+        if np.isnan(replaced_undefined_by):
+            warnings.warn(
+                "NDCG is not defined when all true relevance values are zero for a "
+                f"sample. {int(all_irrelevant.sum())} sample(s) have an undefined "
+                "NDCG score. Use the `replaced_undefined_by` parameter to set the "
+                "return value for such samples.",
+                UndefinedMetricWarning,
+                stacklevel=2,
+            )
+        gain = gain.astype(float)
+        gain[all_irrelevant] = replaced_undefined_by
     # When replaced_undefined_by is nan, exclude undefined samples from average.
     if np.isnan(replaced_undefined_by):
         defined_mask = ~np.isnan(gain)
@@ -2386,7 +2383,4 @@ def metric_at_thresholds(
     thresholds = y_score[threshold_idxs]
     metric_values = []
     for threshold in thresholds:
-        y_pred = (y_score >= threshold).astype(np.int32)
-        metric_values.append(metric_func(y_true, y_pred, **metric_params))
-
-    metric_values = np
+        y_p
