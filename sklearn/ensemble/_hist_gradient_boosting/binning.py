@@ -50,21 +50,6 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
         A given value x will be mapped into bin value i iff
         bining_thresholds[i - 1] < x <= binning_thresholds[i]
     """
-    # ignore missing values when computing bin thresholds
-    missing_mask = np.isnan(col_data)
-    any_missing = missing_mask.any()
-    if any_missing:
-        col_data = col_data[~missing_mask]
-
-    # If sample_weight is not None and 0-weighted values exist, we need to
-    # remove those before calculating the distinct points.
-    if sample_weight is not None:
-        if any_missing:
-            sample_weight = sample_weight[~missing_mask]
-        nnz_sw = sample_weight != 0
-        col_data = col_data[nnz_sw]
-        sample_weight = sample_weight[nnz_sw]
-
     # The data will be sorted anyway to find distinc values and again in percentile,
     # so we do it here. Sorting also returns a contiguous array.
     if sample_weight is None:
@@ -73,6 +58,16 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
         sort_idx = np.argsort(col_data)
         col_data = col_data[sort_idx]
         sample_weight = sample_weight[sort_idx]
+
+    # ignore missing values when computing bin thresholds
+    col_data = col_data[: np.searchsorted(col_data, np.nan)]
+
+    # If sample_weight is not None and 0-weighted values exist, we need to
+    # remove those before calculating the distinct points.
+    if sample_weight is not None:
+        nnz_sw = sample_weight != 0
+        col_data = col_data[nnz_sw]
+        sample_weight = sample_weight[nnz_sw]
 
     distinct_mask = np.empty(len(col_data), dtype=bool)
     distinct_mask[0] = True
