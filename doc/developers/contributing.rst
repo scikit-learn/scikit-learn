@@ -301,15 +301,6 @@ contribution must conform to the project's :ref:`coding guidelines
   the "why" rather than the "what".
 - **Most importantly**: Do not contribute code that you don't understand.
 
-.. seealso::
-
-   For two very well documented and more detailed guides on development
-   workflow, please pay a visit to the `Scipy Development Workflow
-   <https://scipy.github.io/devdocs/dev/dev_quickstart.html>`_ -
-   and the `Astropy Workflow for Developers
-   <https://docs.astropy.org/en/latest/development/git_edit_workflow_examples.html>`_
-   sections.
-
 .. _development_workflow:
 
 Development workflow
