@@ -82,11 +82,13 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
         sample_weight = sample_weight[sort_idx]
 
     # ignore missing values when computing bin thresholds
-    col_data = col_data[: np.searchsorted(col_data, np.nan)]
+    idx_nan = np.searchsorted(col_data, np.nan)
+    col_data = col_data[:idx_nan]
 
     # If sample_weight is not None and 0-weighted values exist, we need to
     # remove those before calculating the distinct points.
     if sample_weight is not None:
+        sample_weight = sample_weight[:idx_nan]
         nnz_sw = sample_weight != 0
         col_data = col_data[nnz_sw]
         sample_weight = sample_weight[nnz_sw]
