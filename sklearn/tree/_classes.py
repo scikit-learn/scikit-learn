@@ -594,7 +594,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         X_categorical = _safe_indexing(X, self.is_categorical_, axis=1)
         self._check_categorical_missing(X_categorical)
         self._categorical_encoder = OrdinalEncoder(
-            dtype=np.float32,
+            dtype=np.float32,  # trees require X to be float32
+            categories="auto",
             handle_unknown="use_encoded_value",
             unknown_value=-1,
             encoded_missing_value=np.nan,
