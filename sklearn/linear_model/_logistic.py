@@ -1484,14 +1484,14 @@ class LogisticRegression(
         # callback logic.
         max_subtasks = max(self.max_iter, 1) + 1
         callback_ctx = self._init_callback_context(max_subtasks=max_subtasks)
-        callback_metadata = (
-            process_routing(self, "fit", **params) if _routing_enabled() else None
+        routed_params = (
+            process_routing(self, "fit", **params) if _routing_enabled() else Bunch()
         )
         callback_ctx.call_on_fit_task_begin(
             estimator=self,
             X=X,
             y=y,
-            metadata=callback_metadata,
+            metadata=routed_params,
         )
 
         if solver == "liblinear":
@@ -1573,7 +1573,7 @@ class LogisticRegression(
             sample_weight=sample_weight,
             n_threads=n_threads,
             callback_ctx=callback_ctx,
-            callback_metadata=callback_metadata,
+            callback_metadata=routed_params,
             estimator=self,
         )
 
@@ -1599,7 +1599,7 @@ class LogisticRegression(
             X=X,
             y=y,
             reconstruction_attributes={},
-            metadata=callback_metadata,
+            metadata=routed_params,
         )
 
         return self
@@ -1681,14 +1681,7 @@ class LogisticRegression(
             routing information.
         """
         router = MetadataRouter(owner=self).add_self_request(self)
-        for i, callback in enumerate(getattr(self, "_skl_callbacks", [])):
-            router.add(
-                **{f"callback_{i}": callback},
-                method_mapping=MethodMapping()
-                .add(caller="fit", callee="on_fit_task_begin")
-                .add(caller="fit", callee="on_fit_task_end"),
-            )
-        return router
+        return self._add_callback_routing(router)
 
 
 class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstimator):

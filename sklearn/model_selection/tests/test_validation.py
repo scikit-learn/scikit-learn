@@ -2072,8 +2072,7 @@ def test_fit_and_score_failing():
         test=test,
         verbose=0,
         parameters=None,
-        fit_params=None,
-        score_params=None,
+        routed_params=None,
     )
     # passing error score to trigger the warning message
     fit_and_score_args["error_score"] = "raise"
@@ -2098,8 +2097,7 @@ def test_fit_and_score_working():
         test=test,
         verbose=0,
         parameters={"max_iter": 100, "tol": 0.1},
-        fit_params=None,
-        score_params=None,
+        routed_params=None,
         return_parameters=True,
     )
     result = _fit_and_score(**fit_and_score_args)
@@ -2327,8 +2325,7 @@ def test_fit_and_score_verbosity(
         test=test,
         verbose=verbose,
         parameters=None,
-        fit_params=None,
-        score_params=None,
+        routed_params=None,
         return_train_score=train_score,
         split_progress=split_prg,
         candidate_progress=cdt_prg,

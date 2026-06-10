@@ -1029,8 +1029,7 @@ class BaseSearchCV(
 
         fit_and_score_kwargs = dict(
             scorer=scorers,
-            fit_params=routed_params.estimator.fit,
-            score_params=routed_params.scorer.score,
+            routed_params=routed_params,
             return_train_score=self.return_train_score,
             return_n_test_samples=True,
             return_times=True,
@@ -1097,7 +1096,6 @@ class BaseSearchCV(
                         **fit_and_score_kwargs,
                         caller=self,
                         callback_ctx=evaluation_ctx,
-                        callback_metadata=routed_params,
                     )
                     for (
                         ((cand_idx, parameters), (split_idx, (train, test))),
@@ -1341,14 +1339,7 @@ class BaseSearchCV(
             splitter=self.cv,
             method_mapping=MethodMapping().add(caller="fit", callee="split"),
         )
-        for i, callback in enumerate(getattr(self, "_skl_callbacks", [])):
-            router.add(
-                **{f"callback_{i}": callback},
-                method_mapping=MethodMapping()
-                .add(caller="fit", callee="on_fit_task_begin")
-                .add(caller="fit", callee="on_fit_task_end"),
-            )
-        return router
+        return self._add_callback_routing(router)
 
     def _sk_visual_block_(self):
         if hasattr(self, "best_estimator_"):

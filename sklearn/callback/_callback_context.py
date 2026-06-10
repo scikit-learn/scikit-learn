@@ -287,7 +287,7 @@ class CallbackContext:
             sequential_subtasks=sequential_subtasks,
         )
 
-    def _call_hooks(self, estimator, hook_name, metadata, **kwargs):
+    def _call_hooks(self, estimator, hook_name, **kwargs):
         """Helper to call the hook of all callbacks with their respective arguments.
 
         Provide the right arguments to each hook by inspecting their signatures. Any
@@ -345,9 +345,9 @@ class CallbackContext:
             for param_name in params_names:
                 if param_name == "metadata":
                     # Special case: "metadata" is the routed metadata.
-                    # TODO(metadata_routing) remove the `None` in the two following
-                    # `getattr` when metadata routing is always enabled.
-                    metadata_callback = getattr(metadata, f"callback_{i}", None)
+                    metadata_callback = getattr(
+                        kwargs["metadata"], f"callback_{i}", None
+                    )
                     evaluated_args[param_name] = getattr(
                         metadata_callback, hook_name, None
                     )
@@ -384,8 +384,8 @@ class CallbackContext:
         estimator,
         X=None,
         y=None,
-        reconstruction_attributes=None,
         metadata=None,
+        reconstruction_attributes=None,
     ):
         """Call the `on_fit_task_begin` hook of the callbacks.
 
@@ -400,18 +400,18 @@ class CallbackContext:
         y : array-like or None, default=None
             The training targets of the current task.
 
+        metadata : dict of str -> object or None, default=None
+            If `enable_metadata_routing=True`: Parameters requested and accepted by
+            callbacks.
+            See :ref:`Metadata Routing User Guide <metadata_routing>` for more
+            details.
+
         reconstruction_attributes : dict or None, default=None
             A dictionary of the sufficient fitted attributes needed to construct a
             `fitted_estimator` from the current state of the estimator, i.e. an
             estimator instance ready to predict, transform, etc ... as if the fit had
             stopped at the beginning of this task. The `fitted_estimator` is the
             object that will be passed to the callbacks, if required.
-
-        metadata : dict of str -> object or None, default=None
-            If `enable_metadata_routing=True`: Parameters requested and accepted by
-            callbacks.
-            See :ref:`Metadata Routing User Guide <metadata_routing>` for more
-            details.
         """
         self._call_hooks(
             estimator,
@@ -429,8 +429,8 @@ class CallbackContext:
         estimator,
         X=None,
         y=None,
-        reconstruction_attributes=None,
         metadata=None,
+        reconstruction_attributes=None,
     ):
         """Call the `on_fit_task_end` hook of the callbacks.
 
@@ -445,18 +445,18 @@ class CallbackContext:
         y : array-like or None, default=None
             The training targets of the current task.
 
+        metadata : dict of str -> object or None, default=None
+            If `enable_metadata_routing=True`: Parameters requested and accepted by
+            callbacks.
+            See :ref:`Metadata Routing User Guide <metadata_routing>` for more
+            details.
+
         reconstruction_attributes : dict or None, default=None
             A dictionary of the sufficient fitted attributes needed to construct a
             `fitted_estimator` from the current state of the estimator, i.e. an
             estimator instance ready to predict, transform, etc ... as if the fit had
             stopped at the end of this task. The `fitted_estimator` is the object
             that will be passed to the callbacks, if required.
-
-        metadata : dict of str -> object or None, default=None
-            If `enable_metadata_routing=True`: Parameters requested and accepted by
-            callbacks.
-            See :ref:`Metadata Routing User Guide <metadata_routing>` for more
-            details.
 
         Returns
         -------

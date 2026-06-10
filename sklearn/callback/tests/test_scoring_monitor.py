@@ -1,6 +1,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import re
+
 import numpy as np
 import pytest
 
@@ -332,31 +334,47 @@ def test_estimator_without_reconstruction_attributes(select):
         callback.get_logs(select=select)
 
 
+def test_scoring_monitor_no_metadata_routing_estimator():
+    """Smoke test for estimators that don't implement metadata routing."""
+    X, y = make_regression(n_samples=10, n_features=2, random_state=0)
+    cb = ScoringMonitor(scoring_train="r2")
+    est = WhileEstimator().set_callbacks(cb)
+    est.fit(X, y)
+    expected_log_length = 22  # WhileEstimator does 21 iterations + fit task
+    assert len(cb.get_logs().train_scores) == expected_log_length
+
+
 @config_context(enable_metadata_routing=True)
 def test_scoringmonitor_metadata_routing():
     """Test the routing of metadata to the scorer."""
-    score_func = lambda y_true, y_pred, req_arg: 0
+    score_func = lambda y_true, y_pred, req_arg: req_arg
     scorer_train = make_scorer(score_func).set_score_request(req_arg=True)
     scorer_val = make_scorer(score_func).set_score_request(req_arg="req_arg_val")
     cb = ScoringMonitor(scoring_train=scorer_train, scoring_val=scorer_val)
     X, y = make_regression(n_samples=10, n_features=2, random_state=0)
-    MaxIterEstimator().set_callbacks(cb).fit(
-        X, y, X_val=X, y_val=y, req_arg="req_arg", req_arg_val="req_arg_val"
+    MaxIterEstimator(max_iter=2).set_callbacks(cb).fit(
+        X, y, X_val=X, y_val=y, req_arg="train_value", req_arg_val="val_value"
     )
+    logs = cb.get_logs()
+    assert all([ll["score"] == "train_value" for ll in logs.train_scores])
+    assert all([ll["score"] == "val_value" for ll in logs.val_scores])
 
 
 @config_context(enable_metadata_routing=True)
 def test_scoringmonitor_metadata_routing_meta_estimator():
     """Test the routing of metadata to the scorer in a meta-estimator."""
-    score_func = lambda y_true, y_pred, req_arg: 0
+    score_func = lambda y_true, y_pred, req_arg: req_arg
     scorer_train = make_scorer(score_func).set_score_request(req_arg=True)
     scorer_val = make_scorer(score_func).set_score_request(req_arg="req_arg_val")
     cb = ScoringMonitor(scoring_train=scorer_train, scoring_val=scorer_val)
     X, y = make_regression(n_samples=10, n_features=2, random_state=0)
     est = MaxIterEstimator().set_callbacks(cb)
     MetaEstimator(estimator=est).fit(
-        X, y, X_val=X, y_val=y, req_arg="req_arg", req_arg_val="req_arg_val"
+        X, y, X_val=X, y_val=y, req_arg="train_value", req_arg_val="val_value"
     )
+    logs = cb.get_logs()
+    assert all([ll["score"] == "train_value" for ll in logs.train_scores])
+    assert all([ll["score"] == "val_value" for ll in logs.val_scores])
 
 
 @pytest.mark.parametrize("enable_metadata_routing", [True, False])
@@ -565,3 +583,14 @@ def test_scoring_val_no_metadata_routing_error():
         match="scorer on validation data .* supported when metadata routing is enabled",
     ):
         MaxIterEstimator().set_callbacks(cb).fit()
+
+
+def test_repr_scoringmonitorlog():
+    """Test the repr of the ScoringMonitorLog."""
+    cb = ScoringMonitor(scoring_train="r2")
+    X, y = make_regression(n_samples=10, n_features=2)
+    MaxIterEstimator().set_callbacks(cb).fit(X, y)
+    pattern = (
+        r"ScoringMonitorLog\(run_id=.*, estimator_name=MaxIterEstimator, timestamp=.*\)"
+    )
+    assert re.match(pattern, repr(cb.get_logs()))

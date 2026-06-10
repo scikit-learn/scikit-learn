@@ -9,7 +9,7 @@ functions to validate the model.
 import numbers
 import time
 import warnings
-from collections import Counter
+from collections import Counter, defaultdict
 from contextlib import suppress
 from functools import partial
 from numbers import Real
@@ -379,8 +379,7 @@ def cross_validate(
             test=test,
             verbose=verbose,
             parameters=None,
-            fit_params=routed_params.estimator.fit,
-            score_params=routed_params.scorer.score,
+            routed_params=routed_params,
             return_train_score=return_train_score,
             return_times=True,
             return_estimator=return_estimator,
@@ -673,8 +672,7 @@ def _fit_and_score(
     test,
     verbose,
     parameters,
-    fit_params,
-    score_params,
+    routed_params,
     return_train_score=False,
     return_parameters=False,
     return_n_test_samples=False,
@@ -685,7 +683,6 @@ def _fit_and_score(
     error_score=np.nan,
     caller=None,
     callback_ctx=None,
-    callback_metadata=None,
 ):
     """Fit estimator and compute scores for a given dataset split.
 
@@ -728,11 +725,8 @@ def _fit_and_score(
     parameters : dict or None
         Parameters to be set on the estimator.
 
-    fit_params : dict or None
-        Parameters that will be passed to ``estimator.fit``.
-
-    score_params : dict or None
-        Parameters that will be passed to the scorer.
+    routed_params : dict or None
+        Parameters to be routed to ``estimator.fit``, to the scorer or to the callbacks.
 
     return_train_score : bool, default=False
         Compute and return score on training set.
@@ -761,9 +755,6 @@ def _fit_and_score(
 
     callback_ctx : `CallbackContext` object or None, default=None
         Callback context for the evaluation task.
-
-    callback_metadata : Bunch or None, default=None
-        The metadata routed towards the callbacks.
 
     Returns
     -------
@@ -818,11 +809,22 @@ def _fit_and_score(
         print(f"{start_msg}{(80 - len(start_msg)) * '.'}")
 
     # Adjust length of sample weights
-    fit_params = fit_params if fit_params is not None else {}
+    fit_params = routed_params.estimator.fit if routed_params is not None else {}
     fit_params = _check_method_params(X, params=fit_params, indices=train)
-    score_params = score_params if score_params is not None else {}
+    score_params = routed_params.scorer.score if routed_params is not None else {}
     score_params_train = _check_method_params(X, params=score_params, indices=train)
     score_params_test = _check_method_params(X, params=score_params, indices=test)
+    if routed_params is not None and _routing_enabled():
+        callback_params_train = defaultdict(dict)
+        for hook in ("on_fit_task_begin", "on_fit_task_end"):
+            for i in range(len(getattr(caller, "_skl_callbacks", []))):
+                callback_params_train[f"callback_{i}"][hook] = _check_method_params(
+                    X,
+                    params=routed_params[f"callback_{i}"][hook],
+                    indices=train,
+                )
+    else:
+        callback_params_train = None
 
     if parameters is not None:
         # here we clone the parameters, since sometimes the parameters
@@ -845,7 +847,7 @@ def _fit_and_score(
                     estimator=caller,
                     X=X_train,
                     y=y_train,
-                    metadata=callback_metadata,
+                    metadata=callback_params_train,
                 )
                 if y_train is None:
                     estimator.fit(X_train, **fit_params)
@@ -891,7 +893,7 @@ def _fit_and_score(
                 estimator=caller,
                 X=X_train,
                 y=y_train,
-                metadata=callback_metadata,
+                metadata=callback_params_train,
             )
 
     if verbose > 1:
@@ -2076,8 +2078,7 @@ def learning_curve(
                 test=test,
                 verbose=verbose,
                 parameters=None,
-                fit_params=routed_params.estimator.fit,
-                score_params=routed_params.scorer.score,
+                routed_params=routed_params,
                 return_train_score=True,
                 error_score=error_score,
                 return_times=return_times,
@@ -2485,8 +2486,7 @@ def validation_curve(
             test=test,
             verbose=verbose,
             parameters={param_name: v},
-            fit_params=routed_params.estimator.fit,
-            score_params=routed_params.scorer.score,
+            routed_params=routed_params,
             return_train_score=True,
             error_score=error_score,
         )

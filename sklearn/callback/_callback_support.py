@@ -6,6 +6,10 @@ from contextlib import contextmanager
 
 from sklearn.callback._base import AutoPropagatedCallback, FitCallback
 from sklearn.callback._callback_context import CallbackContext
+from sklearn.utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+)
 
 
 class CallbackSupportMixin:
@@ -99,6 +103,32 @@ class CallbackSupportMixin:
                 callback.setup(estimator=self, context=self._callback_fit_ctx)
 
         return self._callback_fit_ctx
+
+    def _add_callback_routing(self, router):
+        """Utility method to add the routing to callbacks to the estimator's router."""
+        for i, callback in enumerate(getattr(self, "_skl_callbacks", [])):
+            router.add(
+                **{f"callback_{i}": callback},
+                method_mapping=MethodMapping()
+                .add(caller="fit", callee="on_fit_task_begin")
+                .add(caller="fit", callee="on_fit_task_end"),
+            )
+        return router
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self)
+        return self._add_callback_routing(router)
 
 
 @contextmanager

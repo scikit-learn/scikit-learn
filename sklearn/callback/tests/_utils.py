@@ -25,13 +25,17 @@ skip_callback_test_if_wasm = pytest.mark.skipif(
 )
 
 
-class RecordingCallback:
+class RecordingCallback(_MetadataRequester):
     """A minimal callback used for smoke testing purposes.
 
     This callback keeps a record of the hooks called for introspection.
 
     This callback doesn't define `max_propagation_depth` and is therefore not an
     `AutoPropagatedCallback`: it should not be propagated to sub-estimators.
+
+    It can request metadata:
+        `requested_arg_begin` can be requested for `on_fit_task_begin`
+        `requested_arg_end` can be requested for `on_fit_task_end`
     """
 
     def __init__(self):
@@ -102,6 +106,22 @@ class RecordingCallback:
 
     def count_hooks(self, hook_name):
         return len([rec for rec in self.record if rec["name"] == hook_name])
+
+    def set_on_fit_task_begin_request(self, requested_arg_begin):
+        if not hasattr(self, "_metadata_request"):
+            self._metadata_request = MetadataRequest(owner=self)
+        self._metadata_request.on_fit_task_begin.add_request(
+            param="requested_arg_begin", alias=requested_arg_begin
+        )
+        return self
+
+    def set_on_fit_task_end_request(self, requested_arg_end):
+        if not hasattr(self, "_metadata_request"):
+            self._metadata_request = MetadataRequest(owner=self)
+        self._metadata_request.on_fit_task_end.add_request(
+            param="requested_arg_end", alias=requested_arg_end
+        )
+        return self
 
 
 class RecordingAutoPropagatedCallback(RecordingCallback):
@@ -177,36 +197,6 @@ class NotRequiredKwargsCallback(RecordingCallback):
         super().on_fit_task_end(estimator, context, X=X, y=y)
 
 
-class MetadataRequesterCallback(_MetadataRequester, RecordingCallback):
-    """A callback that can request metadata.
-
-    `requested_arg_begin` can be requested for `on_fit_task_begin`
-    `requested_arg_end` can be requested for `on_fit_task_end`
-    """
-
-    def on_fit_task_begin(self, estimator, context, *, metadata=None):
-        return super().on_fit_task_begin(estimator, context, metadata=metadata)
-
-    def on_fit_task_end(self, estimator, context, *, metadata=None):
-        return super().on_fit_task_end(estimator, context, metadata=metadata)
-
-    def set_on_fit_task_begin_request(self, requested_arg_begin):
-        if not hasattr(self, "_metadata_request"):
-            self._metadata_request = MetadataRequest(owner=self)
-        self._metadata_request.on_fit_task_begin.add_request(
-            param="requested_arg_begin", alias=requested_arg_begin
-        )
-        return self
-
-    def set_on_fit_task_end_request(self, requested_arg_end):
-        if not hasattr(self, "_metadata_request"):
-            self._metadata_request = MetadataRequest(owner=self)
-        self._metadata_request.on_fit_task_end.add_request(
-            param="requested_arg_end", alias=requested_arg_end
-        )
-        return self
-
-
 class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
     """A class that mimics the behavior of an estimator.
 
@@ -261,17 +251,6 @@ class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
     def predict(self, X):
         return np.mean(X, axis=1) * self.n_iter_
 
-    def get_metadata_routing(self):
-        router = MetadataRouter(owner=self)
-        for i, callback in enumerate(getattr(self, "_skl_callbacks", [])):
-            router.add(
-                **{f"callback_{i}": callback},
-                method_mapping=MethodMapping()
-                .add(caller="fit", callee="on_fit_task_begin")
-                .add(caller="fit", callee="on_fit_task_end"),
-            )
-        return router
-
 
 class WhileEstimator(CallbackSupportMixin, BaseEstimator):
     """A class that mimics the behavior of an estimator.
@@ -297,7 +276,12 @@ class WhileEstimator(CallbackSupportMixin, BaseEstimator):
 
             time.sleep(self.computation_intensity)  # Computation intensive task
 
-            if subcontext.call_on_fit_task_end(estimator=self, X=X, y=y):
+            if subcontext.call_on_fit_task_end(
+                estimator=self,
+                X=X,
+                y=y,
+                reconstruction_attributes={"n_iter_": i + 1},
+            ):
                 break
 
             if i == 20:
@@ -305,9 +289,16 @@ class WhileEstimator(CallbackSupportMixin, BaseEstimator):
 
             i += 1
 
-        callback_ctx.call_on_fit_task_end(estimator=self, X=X, y=y)
+        self.n_iter_ = i + 1
+
+        callback_ctx.call_on_fit_task_end(
+            estimator=self, X=X, y=y, reconstruction_attributes={}
+        )
 
         return self
+
+    def predict(self, X):
+        return np.mean(X, axis=1) * self.n_iter_
 
 
 class ThirdPartyEstimator(CallbackSupportMixin):
@@ -435,14 +426,7 @@ class MetaEstimator(CallbackSupportMixin, BaseEstimator):
             estimator=self.estimator,
             method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
-        for i, callback in enumerate(getattr(self, "_skl_callbacks", [])):
-            router.add(
-                **{f"callback_{i}": callback},
-                method_mapping=MethodMapping()
-                .add(caller="fit", callee="on_fit_task_begin")
-                .add(caller="fit", callee="on_fit_task_end"),
-            )
-        return router
+        return self._add_callback_routing(router)
 
 
 def _fit_subestimator(

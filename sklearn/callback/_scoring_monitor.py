@@ -155,8 +155,7 @@ class ScoringMonitor(_MetadataRequester):
           names and the values are the metric scores;
         - a dictionary with metric names as keys and callables as values.
 
-        The string 'no_val_score' is a special value to indicate that no scorer should
-        be run on the validation data.
+        If `scoring = 'no_val_score'`, scores are not computed on the validation set.
     """
 
     @validate_params(
@@ -188,9 +187,9 @@ class ScoringMonitor(_MetadataRequester):
 
         # Handle to the main-process listener, opened eagerly so that any worker that
         # receives a pickled copy of this callback can send data to the main process.
-        # `self._log.extend` is the message consumer that `send` calls will use to
+        # `self._log.append` is the message consumer that `send` calls will use to
         # to grow the main process's log.
-        self._listener_handle = open_listener(self._log.extend, owner=self)
+        self._listener_handle = open_listener(self._log.append, owner=self)
 
     def setup(self, estimator, context):
         if not _routing_enabled() and self._scorers["val"] != "no_val_score":
@@ -284,15 +283,16 @@ class ScoringMonitor(_MetadataRequester):
                 data_y,
                 **scorer_routed_params,
             )
-            send_package.append((run_id, run_info, task_info_path, dataset, scores))
-
-        send(self._listener_handle, send_package)
+            send(
+                self._listener_handle,
+                (run_id, run_info, task_info_path, dataset, scores),
+            )
 
     def __setstate__(self, state):
         """Restore state, opening a fresh listener if the inherited one is unusable."""
         self.__dict__.update(state)
         if not can_reuse_listener(self._listener_handle):
-            self._listener_handle = open_listener(self._log.extend, owner=self)
+            self._listener_handle = open_listener(self._log.append, owner=self)
 
     def get_metadata_routing(self):
         router = MetadataRouter(owner=self).add_self_request(self)

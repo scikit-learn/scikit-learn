@@ -15,7 +15,6 @@ from sklearn.callback._callback_context import (
 )
 from sklearn.callback.tests._utils import (
     MaxIterEstimator,
-    MetadataRequesterCallback,
     MetaEstimator,
     NoCallbackEstimator,
     NoSubtaskEstimator,
@@ -528,7 +527,7 @@ def test_metadata_routing_callback_consumer():
     """Test a callback that requests metadata."""
 
     cb = (
-        MetadataRequesterCallback()
+        RecordingCallback()
         .set_on_fit_task_begin_request(requested_arg_begin="foo")
         .set_on_fit_task_end_request(requested_arg_end=True)
     )
@@ -556,7 +555,7 @@ def test_metadata_routing_callback_consumer_in_metaestimator(n_jobs):
     """Test a callback that requests metadata in a meta-estimator."""
 
     cb = (
-        MetadataRequesterCallback()
+        RecordingCallback()
         .set_on_fit_task_begin_request(requested_arg_begin="foo")
         .set_on_fit_task_end_request(requested_arg_end=True)
     )

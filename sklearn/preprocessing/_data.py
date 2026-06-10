@@ -37,11 +37,7 @@ from sklearn.utils._param_validation import (
 )
 from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.extmath import _incremental_mean_and_var, row_norms
-from sklearn.utils.metadata_routing import (
-    MetadataRouter,
-    MethodMapping,
-    process_routing,
-)
+from sklearn.utils.metadata_routing import process_routing
 from sklearn.utils.sparsefuncs import (
     incr_mean_variance_axis,
     inplace_column_scale,
@@ -1197,28 +1193,6 @@ class StandardScaler(
         tags.transformer_tags.preserves_dtype = ["float64", "float32"]
         tags.array_api_support = True
         return tags
-
-    def get_metadata_routing(self):
-        """Get metadata routing of this object.
-
-        Please check :ref:`User Guide <metadata_routing>` on how the routing
-        mechanism works.
-
-        Returns
-        -------
-        routing : MetadataRouter
-            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
-            routing information.
-        """
-        router = MetadataRouter(owner=self)
-        for i, callback in enumerate(getattr(self, "_skl_callbacks", [])):
-            router.add(
-                **{f"callback_{i}": callback},
-                method_mapping=MethodMapping()
-                .add(caller="fit", callee="on_fit_task_begin")
-                .add(caller="fit", callee="on_fit_task_end"),
-            )
-        return router
 
 
 class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):

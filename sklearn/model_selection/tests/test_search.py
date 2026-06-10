@@ -16,6 +16,7 @@ from scipy.stats import bernoulli, expon, randint, uniform
 
 from sklearn import config_context
 from sklearn.base import BaseEstimator, ClassifierMixin, clone, is_classifier
+from sklearn.callback import ScoringMonitor
 from sklearn.callback.tests._utils import (
     MaxIterEstimator,
     NoCallbackEstimator,
@@ -3140,3 +3141,33 @@ def test_search_callbacks_with_partial_fit_failures():
     expected_n_tasks = 1 + 1 + 4  # root + search + 4 candidate-split evaluations
     assert callback.count_hooks("on_fit_task_begin") == expected_n_tasks
     assert callback.count_hooks("on_fit_task_end") == expected_n_tasks
+
+
+@skip_callback_test_if_wasm
+@config_context(enable_metadata_routing=True)
+def test_search_callbacks_with_metadata_routing():
+    """Check that metadata routed to callbacks and scorers don't interfere.
+
+    The goal is to verify that having different metadata routed to the gridsearch's
+    scorer and the callback's scorer does not cause any trouble.
+    """
+    score_func = lambda y_true, y_pred, req_arg: req_arg
+    callback_scorer = make_scorer(score_func=score_func).set_score_request(
+        req_arg="arg_callback"
+    )
+    search_scorer = make_scorer(score_func=score_func).set_score_request(
+        req_arg="arg_scorer"
+    )
+
+    callback = ScoringMonitor(scoring_train=callback_scorer)
+    search = GridSearchCV(
+        MaxIterEstimator().set_callbacks(callback),
+        {"max_iter": [2, 3]},
+        scoring=search_scorer,
+        cv=2,
+        refit=False,
+    ).fit(X, y, arg_callback="callback_score", arg_scorer=42)
+    assert all(
+        [ll["score"] == "callback_score" for ll in callback.get_logs().train_scores]
+    )
+    assert search.best_score_ == 42
