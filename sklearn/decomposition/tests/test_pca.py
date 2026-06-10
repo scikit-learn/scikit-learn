@@ -1086,14 +1086,22 @@ def test_pca_mle_array_api_compliance(
         atol=atol,
     )
 
-    # If the number of components differ, check that the explained variance of
-    # the trimmed components is very small.
+    # The MLE dimensionality selection can keep a different number of
+    # components across namespaces/devices. The explained variance spectrum of
+    # this dataset has a cliff between the signal components (variance >> atol)
+    # and a few numerically zero noise directions (variance ~1e-14, e.g. from
+    # the redundant features of `make_classification`); float32 rounding can tip
+    # the likelihood comparison so that one backend keeps one extra noise
+    # direction. This is only acceptable when the trimmed components are indeed
+    # at the noise floor, i.e. their explained variance is negligible. Note that
+    # we cannot compare them to the smallest *retained* variance
+    # (`explained_variance_np[-1]`), as the latter can be a genuine signal
+    # component when the trimming happens exactly at the cliff.
     if components_xp_np.shape[0] != components_np.shape[0]:
-        reference_variance = explained_variance_np[-1]
         extra_variance_np = explained_variance_np[min_components:]
         extra_variance_xp_np = explained_variance_xp_np[min_components:]
-        assert all(np.abs(extra_variance_np - reference_variance) < atol)
-        assert all(np.abs(extra_variance_xp_np - reference_variance) < atol)
+        assert all(np.abs(extra_variance_np) < atol)
+        assert all(np.abs(extra_variance_xp_np) < atol)
 
 
 @pytest.mark.skipif(
@@ -1128,3 +1136,80 @@ def test_array_api_error_and_warnings_on_unsupported_params():
     with pytest.warns(UserWarning, match=expected_msg):
         with config_context(array_api_dispatch=True):
             pca.fit(iris_xp)
+
+
+@pytest.mark.skipif(
+    os.environ.get("SCIPY_ARRAY_API") != "1", reason="SCIPY_ARRAY_API not set to 1."
+)
+@pytest.mark.parametrize("array_namespace", ["numpy", "torch"])
+@pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
+@pytest.mark.parametrize("power_iteration_normalizer", ["auto", "QR", "LU", "none"])
+def test_array_api_dispatch_array_like_invariants(
+    array_namespace, svd_solver, power_iteration_normalizer
+):
+    """Enabling ``array_api_dispatch`` only changes the output namespace.
+
+    For any array-like that NumPy can consume (NumPy arrays, torch CPU tensors),
+    the set of working ``(input, solver)`` combinations must not depend on
+    whether ``array_api_dispatch`` is enabled. The only difference is the
+    namespace of the fitted attributes:
+
+    * With dispatch disabled (the default), the input is coerced to NumPy and
+      fitting always succeeds with NumPy fitted attributes, for every solver.
+    * With dispatch enabled, fitting still always succeeds, and the fitted
+      attributes live in the input's namespace. For solvers that have no Array
+      API implementation (``arpack`` and ``randomized``/``"LU"``, both backed by
+      SciPy) PCA transparently computes on NumPy and moves the result back to
+      the input namespace. For NumPy input this is additionally a strict no-op:
+      no Array API-specific warning and the same fitted attributes as with
+      dispatch disabled (in particular ``arpack`` and ``randomized``/``"LU"``
+      must not raise -- they used to, because the guards keyed off
+      ``is_array_api_compliant``, which is ``True`` for NumPy under dispatch).
+
+    ``array_api_strict`` is deliberately not covered here: it is a conformance
+    testing namespace (not a user-facing array-like) for which unsupported
+    solvers keep raising, see
+    ``test_array_api_error_and_warnings_on_unsupported_params``.
+    """
+    X_np = iris.data
+    if array_namespace == "numpy":
+        X = X_np
+        expected_dispatch_type = np.ndarray
+    else:
+        torch = pytest.importorskip("torch")
+        X = torch.asarray(X_np, dtype=torch.float64)
+        expected_dispatch_type = torch.Tensor
+
+    params = dict(
+        n_components=2,
+        svd_solver=svd_solver,
+        power_iteration_normalizer=power_iteration_normalizer,
+        random_state=0,
+    )
+
+    # Dispatch disabled: any array-like is coerced to NumPy and always works.
+    # Force the config explicitly so the test is robust to the ambient config
+    # (e.g. when the whole suite is run with array_api_dispatch enabled).
+    with config_context(array_api_dispatch=False):
+        pca_off = PCA(**params).fit(X)
+    assert isinstance(pca_off.components_, np.ndarray)
+
+    # Dispatch enabled: fitting still always works, and the fitted attributes
+    # live in the input's namespace.
+    with config_context(array_api_dispatch=True):
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            pca_on = PCA(**params).fit(X)
+        assert isinstance(pca_on.components_, expected_dispatch_type)
+
+    if array_namespace == "numpy":
+        # Strict no-op for NumPy: no Array API-specific warning and the same
+        # fitted attributes as with dispatch disabled. The randomized solver
+        # uses numpy.linalg.svd under dispatch and scipy.linalg.svd otherwise
+        # (an intentional, documented difference), hence the looser tolerance.
+        array_api_warnings = [w for w in caught if "Array API" in str(w.message)]
+        assert not array_api_warnings, (
+            "Enabling array_api_dispatch emitted an Array API-specific warning "
+            f"for NumPy input: {[str(w.message) for w in array_api_warnings]}"
+        )
+        _check_fitted_pca_close(pca_off, pca_on, rtol=1e-5, atol=1e-8)

@@ -15,11 +15,17 @@ from sklearn.base import _fit_context
 from sklearn.decomposition._base import _BasePCA
 from sklearn.utils import check_random_state
 from sklearn.utils._arpack import _init_arpack_v0
-from sklearn.utils._array_api import _cov, device, get_namespace
+from sklearn.utils._array_api import (
+    _cov,
+    _is_numpy_namespace,
+    _is_xp_namespace,
+    device,
+    get_namespace,
+)
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
 from sklearn.utils.extmath import _randomized_svd, fast_logdet, svd_flip
 from sklearn.utils.sparsefuncs import _implicit_column_offset, mean_variance_axis
-from sklearn.utils.validation import check_is_fitted, validate_data
+from sklearn.utils.validation import _is_arraylike, check_is_fitted, validate_data
 
 
 def _assess_dimension(spectrum, rank, n_samples):
@@ -478,6 +484,55 @@ class PCA(_BasePCA):
         else:  # solver="covariance_eigh" does not compute U at fit time.
             return self._transform(X, xp, x_is_centered=x_is_centered)
 
+    def _solver_requires_numpy(self):
+        """Whether the configured solver has no Array API implementation.
+
+        These solvers are backed by SciPy (``scipy.sparse.linalg.svds`` for
+        arpack, ``scipy.linalg.lu`` for the "LU" power iteration normalizer) and
+        therefore require NumPy inputs.
+        """
+        return self.svd_solver == "arpack" or (
+            self.svd_solver == "randomized" and self.power_iteration_normalizer == "LU"
+        )
+
+    def _fit_with_numpy_fallback(self, X, xp):
+        """Fit a SciPy-backed solver on NumPy, then move results to ``xp``.
+
+        ``X`` is coerced to a NumPy array (mirroring the conversion performed
+        when ``array_api_dispatch`` is disabled), the regular NumPy code path is
+        run, and the fitted array attributes as well as the values returned for
+        ``fit_transform`` are moved back to the ``xp`` namespace and to the
+        device of the original input.
+        """
+        input_device = device(X)
+        # np.asarray mirrors the coercion used when array_api_dispatch is off:
+        # it succeeds for host array-likes (e.g. CPU tensors) and raises for
+        # inputs whose data lives on another device (e.g. GPU tensors).
+        X_np = np.asarray(X)
+
+        # Recurses into the NumPy code path: get_namespace(X_np) reports the
+        # NumPy namespace, so this branch is not taken again.
+        U, S, Vt, X_fitted, x_is_centered, _ = self._fit(X_np)
+
+        def to_xp(array):
+            if array is None:
+                return None
+            # np.ascontiguousarray avoids negative/0 strides (e.g. from the
+            # arpack output reversals) that some namespaces cannot consume.
+            return xp.asarray(np.ascontiguousarray(array), device=input_device)
+
+        for name in (
+            "components_",
+            "explained_variance_",
+            "explained_variance_ratio_",
+            "singular_values_",
+            "mean_",
+            "noise_variance_",
+        ):
+            setattr(self, name, to_xp(getattr(self, name)))
+
+        return to_xp(U), to_xp(S), to_xp(Vt), to_xp(X_fitted), x_is_centered, xp
+
     def _fit(self, X):
         """Dispatch to the right submethod depending on the chosen solver."""
         xp, is_array_api_compliant = get_namespace(X)
@@ -489,7 +544,30 @@ class PCA(_BasePCA):
                 f' "covariance_eigh" solvers, while "{self.svd_solver}" was passed. See'
                 " TruncatedSVD for a possible alternative."
             )
-        if self.svd_solver == "arpack" and is_array_api_compliant:
+        # The arpack solver (scipy.sparse.linalg.svds) and the randomized solver
+        # with the "LU" power iteration normalizer (scipy.linalg.lu) are backed
+        # by SciPy and have no Array API implementation. Enabling
+        # array_api_dispatch must not change which inputs work: an array-like
+        # that NumPy can consume (e.g. a CPU tensor) works with dispatch
+        # disabled because it is coerced to NumPy, so it must keep working with
+        # dispatch enabled. We therefore transparently compute on NumPy and move
+        # the fitted attributes back to the input namespace and device.
+        #
+        # array_api_strict is intentionally excluded: it is a conformance
+        # testing namespace meant to exercise the pure Array API code paths and
+        # is never passed by end users, so unsupported solvers keep raising for
+        # it. Inputs whose data is not on the host (e.g. GPU tensors) cannot be
+        # consumed by NumPy and raise during the coercion below, exactly as they
+        # already do with array_api_dispatch disabled.
+        if (
+            not _is_numpy_namespace(xp)
+            and self._solver_requires_numpy()
+            and _is_arraylike(X)
+            and not _is_xp_namespace(xp, "array_api_strict")
+        ):
+            return self._fit_with_numpy_fallback(X, xp)
+
+        if self.svd_solver == "arpack" and not _is_numpy_namespace(xp):
             raise ValueError(
                 "PCA with svd_solver='arpack' is not supported for Array API inputs."
             )

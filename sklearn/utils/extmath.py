@@ -317,13 +317,19 @@ def _randomized_range_finder(
     xp, is_array_api_compliant = get_namespace(A)
     random_state = check_random_state(random_state)
 
+    # Plain NumPy arrays are reported as array API compliant when
+    # array_api_dispatch is enabled. Gate the Array-API-specific code paths
+    # (which fall back to QR because the Array API has no LU factorization,
+    # and which avoid SciPy) on the namespace actually being a non-NumPy one,
+    # so that enabling array_api_dispatch is a no-op for NumPy inputs.
+    use_array_api = is_array_api_compliant and not _is_numpy_namespace(xp)
+
     # Generating normal random vectors with shape: (A.shape[1], size)
     # XXX: generate random number directly from xp if it's possible
     # one day.
     Q = random_state.normal(size=(A.shape[1], size))
     if A.dtype == xp.float32 or (
-        is_array_api_compliant
-        and _max_precision_float_dtype(xp, device=device(A)) == xp.float32
+        use_array_api and _max_precision_float_dtype(xp, device=device(A)) == xp.float32
     ):
         # Use float32 computation and components if A has a float32 dtype
         # or if A has integer dtype and device doesn't not support float64.
@@ -333,7 +339,7 @@ def _randomized_range_finder(
         # xp.asarray(..., dtype=..., device=device) to accept such a downcast.
         Q = Q.astype(np.float32, copy=False)
 
-    if is_array_api_compliant:
+    if use_array_api:
         Q = xp.asarray(Q, device=device(A))
     else:
         Q = xp.asarray(Q)
@@ -342,7 +348,7 @@ def _randomized_range_finder(
     if power_iteration_normalizer == "auto":
         if n_iter <= 2:
             power_iteration_normalizer = "none"
-        elif is_array_api_compliant:
+        elif use_array_api:
             # XXX: https://github.com/data-apis/array-api/issues/627
             warnings.warn(
                 "Array API does not support LU factorization, falling back to QR"
@@ -352,13 +358,13 @@ def _randomized_range_finder(
             power_iteration_normalizer = "QR"
         else:
             power_iteration_normalizer = "LU"
-    elif power_iteration_normalizer == "LU" and is_array_api_compliant:
+    elif power_iteration_normalizer == "LU" and use_array_api:
         raise ValueError(
             "Array API does not support LU factorization. Set "
             "`power_iteration_normalizer='QR'` instead."
         )
 
-    if is_array_api_compliant:
+    if use_array_api:
         qr_normalizer = partial(xp.linalg.qr, mode="reduced")
     else:
         # Use scipy.linalg instead of numpy.linalg when not explicitly
