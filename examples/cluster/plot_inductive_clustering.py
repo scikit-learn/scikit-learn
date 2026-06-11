@@ -126,7 +126,7 @@ DecisionBoundaryDisplay.from_estimator(
     inductive_learner,
     X,
     response_method="predict",
-    multiclass_colors="viridis",
+    target_colors="viridis",
     alpha=0.4,
     ax=ax,
 )
