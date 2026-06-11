@@ -87,18 +87,16 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
         if missing_mask.any():
             col_data = col_data[~missing_mask]
             sample_weight = sample_weight[~missing_mask]
-        else:
-            col_data = np.ascontiguousarray(col_data)
-
-        sort_idx = np.argsort(col_data)
-        col_data = col_data[sort_idx]
-        sample_weight = sample_weight[sort_idx]
 
         # If 0-weighted values exist, we need to remove those
         # before calculating the distinct points.
         nnz_sw = sample_weight != 0
         col_data = col_data[nnz_sw]
         sample_weight = sample_weight[nnz_sw]
+
+        sort_idx = np.argsort(col_data)
+        col_data = col_data[sort_idx]
+        sample_weight = sample_weight[sort_idx]
 
     distinct_mask = np.empty(len(col_data), dtype=bool)
     distinct_mask[0] = True
