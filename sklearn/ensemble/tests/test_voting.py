@@ -55,15 +55,15 @@ X_r, y_r = datasets.load_diabetes(return_X_y=True)
             "Invalid 'estimators' attribute, 'estimators' should be a non-empty list",
         ),
         (
-            {"estimators": [LogisticRegression(alpha=1e-4)]},
+            {"estimators": [LogisticRegression()]},
             "Invalid 'estimators' attribute, 'estimators' should be a non-empty list",
         ),
         (
-            {"estimators": [(213, LogisticRegression(alpha=1e-4))]},
+            {"estimators": [(213, LogisticRegression())]},
             "Invalid 'estimators' attribute, 'estimators' should be a non-empty list",
         ),
         (
-            {"estimators": [("lr", LogisticRegression(alpha=1e-4))], "weights": [1, 2]},
+            {"estimators": [("lr", LogisticRegression())], "weights": [1, 2]},
             "Number of `estimators` and weights must be equal",
         ),
     ],
@@ -76,10 +76,7 @@ def test_voting_classifier_estimator_init(params, err_msg):
 
 def test_predictproba_hardvoting():
     eclf = VotingClassifier(
-        estimators=[
-            ("lr1", LogisticRegression(alpha=1e-4)),
-            ("lr2", LogisticRegression(alpha=1e-4)),
-        ],
+        estimators=[("lr1", LogisticRegression()), ("lr2", LogisticRegression())],
         voting="hard",
     )
 
@@ -97,10 +94,7 @@ def test_predictproba_hardvoting():
 
 def test_notfitted():
     eclf = VotingClassifier(
-        estimators=[
-            ("lr1", LogisticRegression(alpha=1e-4)),
-            ("lr2", LogisticRegression(alpha=1e-4)),
-        ],
+        estimators=[("lr1", LogisticRegression()), ("lr2", LogisticRegression())],
         voting="soft",
     )
     ereg = VotingRegressor([("dr", DummyRegressor())])
@@ -122,7 +116,7 @@ def test_notfitted():
 
 def test_majority_label_iris(global_random_seed):
     """Check classification by majority label on dataset iris."""
-    clf1 = LogisticRegression(alpha=1e-4)
+    clf1 = LogisticRegression()
     clf2 = RandomForestClassifier(n_estimators=10, random_state=global_random_seed)
     clf3 = GaussianNB()
     eclf = VotingClassifier(
@@ -145,7 +139,7 @@ def test_tie_situation():
 
 def test_weights_iris(global_random_seed):
     """Check classification by average probabilities on dataset iris."""
-    clf1 = LogisticRegression(alpha=1e-4)
+    clf1 = LogisticRegression()
     clf2 = RandomForestClassifier(n_estimators=10, random_state=global_random_seed)
     clf3 = GaussianNB()
     eclf = VotingClassifier(
@@ -195,7 +189,7 @@ def test_weights_regressor():
 
 def test_predict_on_toy_problem(global_random_seed):
     """Manually check predicted class labels for toy dataset."""
-    clf1 = LogisticRegression(alpha=1e-4)
+    clf1 = LogisticRegression()
     clf2 = RandomForestClassifier(n_estimators=10, random_state=global_random_seed)
     clf3 = GaussianNB()
 
@@ -293,7 +287,7 @@ def test_multilabel():
 
 def test_gridsearch():
     """Check GridSearch support."""
-    clf1 = LogisticRegression(alpha=1e-4)
+    clf1 = LogisticRegression()
     clf2 = RandomForestClassifier(random_state=1, n_estimators=3)
     clf3 = GaussianNB()
     eclf = VotingClassifier(
@@ -312,7 +306,7 @@ def test_gridsearch():
 
 def test_parallel_fit(global_random_seed):
     """Check parallel backend of VotingClassifier on toy dataset."""
-    clf1 = LogisticRegression(alpha=1e-4)
+    clf1 = LogisticRegression()
     clf2 = RandomForestClassifier(n_estimators=10, random_state=global_random_seed)
     clf3 = GaussianNB()
     X = np.array([[-1.1, -1.5], [-1.2, -1.4], [-3.4, -2.2], [1.1, 1.2]])
@@ -331,7 +325,7 @@ def test_parallel_fit(global_random_seed):
 
 def test_sample_weight(global_random_seed):
     """Tests sample_weight parameter of VotingClassifier"""
-    clf1 = LogisticRegression(alpha=1e-4)
+    clf1 = LogisticRegression()
     clf2 = GradientBoostingClassifier(n_estimators=10, random_state=global_random_seed)
     clf3 = CalibratedClassifierCV(SVC(random_state=global_random_seed), ensemble=False)
     eclf1 = VotingClassifier(
@@ -392,7 +386,7 @@ def test_sample_weight_kwargs():
 
 def test_voting_classifier_set_params(global_random_seed):
     # check equivalence in the output when setting underlying estimators
-    clf1 = LogisticRegression(alpha=1e-4)
+    clf1 = LogisticRegression()
     clf2 = RandomForestClassifier(
         n_estimators=10, random_state=global_random_seed, max_depth=None
     )
@@ -417,7 +411,7 @@ def test_voting_classifier_set_params(global_random_seed):
 def test_set_estimator_drop():
     # VotingClassifier set_params should be able to set estimators as drop
     # Test predict
-    clf1 = LogisticRegression(alpha=1e-4)
+    clf1 = LogisticRegression()
     clf2 = RandomForestClassifier(n_estimators=10, random_state=123)
     clf3 = GaussianNB()
     eclf1 = VotingClassifier(
@@ -481,7 +475,7 @@ def test_set_estimator_drop():
 
 def test_estimator_weights_format(global_random_seed):
     # Test estimator weights inputs as list and array
-    clf1 = LogisticRegression(alpha=1e-4)
+    clf1 = LogisticRegression()
     clf2 = RandomForestClassifier(n_estimators=10, random_state=global_random_seed)
     eclf1 = VotingClassifier(
         estimators=[("lr", clf1), ("rf", clf2)], weights=[1, 2], voting="soft"
@@ -498,7 +492,7 @@ def test_estimator_weights_format(global_random_seed):
 
 def test_transform(global_random_seed):
     """Check transform method of VotingClassifier on toy dataset."""
-    clf1 = LogisticRegression(alpha=1e-4)
+    clf1 = LogisticRegression()
     clf2 = RandomForestClassifier(n_estimators=10, random_state=global_random_seed)
     clf3 = GaussianNB()
     X = np.array([[-1.1, -1.5], [-1.2, -1.4], [-3.4, -2.2], [1.1, 1.2]])
@@ -535,7 +529,7 @@ def test_transform(global_random_seed):
             y,
             VotingClassifier(
                 [
-                    ("lr", LogisticRegression(alpha=1e-4)),
+                    ("lr", LogisticRegression()),
                     ("rf", RandomForestClassifier(n_estimators=5)),
                 ]
             ),
@@ -577,7 +571,7 @@ def test_none_estimator_with_weights(X, y, voter):
         ),
         VotingClassifier(
             estimators=[
-                ("lr", LogisticRegression(alpha=1e-4)),
+                ("lr", LogisticRegression()),
                 ("tree", DecisionTreeClassifier(random_state=0)),
             ]
         ),
@@ -606,7 +600,7 @@ def test_n_features_in(est):
         ),
         VotingClassifier(
             estimators=[
-                ("lr", LogisticRegression(alpha=1e-4)),
+                ("lr", LogisticRegression()),
                 ("rf", RandomForestClassifier(random_state=123)),
             ],
             verbose=True,
@@ -669,7 +663,7 @@ def test_get_features_names_out_classifier(kwargs, expected_names):
 
     voting = VotingClassifier(
         estimators=[
-            ("lr", LogisticRegression(alpha=1e-4)),
+            ("lr", LogisticRegression()),
             ("tree", DecisionTreeClassifier(random_state=0)),
         ],
         **kwargs,
@@ -689,7 +683,7 @@ def test_get_features_names_out_classifier_error():
 
     voting = VotingClassifier(
         estimators=[
-            ("lr", LogisticRegression(alpha=1e-4)),
+            ("lr", LogisticRegression()),
             ("tree", DecisionTreeClassifier(random_state=0)),
         ],
         voting="soft",

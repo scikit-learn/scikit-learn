@@ -3,7 +3,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import warnings
 from abc import ABCMeta, abstractmethod
 from copy import deepcopy
 from numbers import Integral
@@ -587,7 +586,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     ...                           LinearSVC(random_state=42)))
     ... ]
     >>> clf = StackingClassifier(
-    ...     estimators=estimators, final_estimator=LogisticRegression(alpha=1e-4)
+    ...     estimators=estimators, final_estimator=LogisticRegression()
     ... )
     >>> from sklearn.model_selection import train_test_split
     >>> X_train, X_test, y_train, y_test = train_test_split(
@@ -626,15 +625,6 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         )
 
     def _validate_final_estimator(self):
-        if self.final_estimator is None:
-            warnings.warn(
-                "The default 'final_estimator' is LogisticRegression(). Note that "
-                "its parameter 'C' was deprecated in version 1.9. In version 1.11, "
-                "the new parameter 'alpha=1e-4' is the default. I might be a good idea "
-                "to try other values of penalty alpha or to perform a cross validation "
-                "search for it, e.g. by using LogisticRegressionCV instead.",
-                FutureWarning,
-            )
         self._clone_final_estimator(default=LogisticRegression())
         if not is_classifier(self.final_estimator_):
             raise ValueError(

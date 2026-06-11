@@ -46,7 +46,7 @@ def test_fit_and_score_over_thresholds_curve_scorers():
     for the different accepted curve scorers."""
     X, y = make_classification(n_samples=100, random_state=0)
     train_idx, val_idx = np.arange(50), np.arange(50, 100)
-    classifier = LogisticRegression(alpha=1e-4)
+    classifier = LogisticRegression()
 
     curve_scorer = _CurveScorer(
         score_func=balanced_accuracy_score,
@@ -115,7 +115,7 @@ def test_fit_and_score_over_thresholds_sample_weight():
     sample_weight = np.ones_like(y)
     sample_weight[:50] *= 2
 
-    classifier = LogisticRegression(alpha=1e-4)
+    classifier = LogisticRegression()
     train_repeated_idx = np.arange(X_repeated.shape[0])
     val_repeated_idx = np.arange(X_repeated.shape[0])
     curve_scorer = _CurveScorer(
@@ -196,7 +196,7 @@ def test_tuned_threshold_classifier_no_binary(data):
     """Check that we raise an informative error message for non-binary problem."""
     err_msg = "Only binary classification is supported."
     with pytest.raises(ValueError, match=err_msg):
-        TunedThresholdClassifierCV(LogisticRegression(alpha=1e-4)).fit(*data)
+        TunedThresholdClassifierCV(LogisticRegression()).fit(*data)
 
 
 @pytest.mark.parametrize(
@@ -225,12 +225,12 @@ def test_tuned_threshold_classifier_conflict_cv_refit(params, err_type, err_msg)
     """
     X, y = make_classification(n_samples=100, random_state=0)
     with pytest.raises(err_type, match=err_msg):
-        TunedThresholdClassifierCV(LogisticRegression(alpha=1e-4), **params).fit(X, y)
+        TunedThresholdClassifierCV(LogisticRegression(), **params).fit(X, y)
 
 
 @pytest.mark.parametrize(
     "estimator",
-    [LogisticRegression(alpha=1e-4), SVC(), GradientBoostingClassifier(n_estimators=4)],
+    [LogisticRegression(), SVC(), GradientBoostingClassifier(n_estimators=4)],
 )
 @pytest.mark.parametrize(
     "response_method", ["predict_proba", "predict_log_proba", "decision_function"]
@@ -277,7 +277,7 @@ def test_tuned_threshold_classifier_without_constraint_value(response_method):
     X = np.vstack([X[indices_neg], X[indices_pos]])
     y = np.hstack([y[indices_neg], y[indices_pos]])
 
-    lr = make_pipeline(StandardScaler(), LogisticRegression(alpha=1e-4)).fit(X, y)
+    lr = make_pipeline(StandardScaler(), LogisticRegression()).fit(X, y)
     thresholds = 100
     model = TunedThresholdClassifierCV(
         estimator=lr,
@@ -299,7 +299,7 @@ def test_tuned_threshold_classifier_metric_with_parameter():
     `beta=2`.
     """
     X, y = load_breast_cancer(return_X_y=True)
-    lr = make_pipeline(StandardScaler(), LogisticRegression(alpha=1e-2)).fit(X, y)
+    lr = make_pipeline(StandardScaler(), LogisticRegression()).fit(X, y)
     model_fbeta_1 = TunedThresholdClassifierCV(
         estimator=lr, scoring=make_scorer(fbeta_score, beta=1)
     ).fit(X, y)
@@ -336,7 +336,7 @@ def test_tuned_threshold_classifier_with_string_targets(response_method, metric)
     classes = np.array(["cancer", "healthy"], dtype=object)
     y = classes[y]
     model = TunedThresholdClassifierCV(
-        estimator=make_pipeline(StandardScaler(), LogisticRegression(alpha=1e-4)),
+        estimator=make_pipeline(StandardScaler(), LogisticRegression()),
         scoring=metric,
         response_method=response_method,
         thresholds=100,
@@ -359,7 +359,7 @@ def test_tuned_threshold_classifier_refit(with_sample_weight, global_random_seed
         sample_weight = None
 
     # check that `estimator_` if fitted on the full dataset when `refit=True`
-    estimator = LogisticRegression(alpha=1e-4).set_fit_request(sample_weight=True)
+    estimator = LogisticRegression().set_fit_request(sample_weight=True)
     model = TunedThresholdClassifierCV(
         estimator,
         refit=True,
@@ -372,7 +372,7 @@ def test_tuned_threshold_classifier_refit(with_sample_weight, global_random_seed
     assert_allclose(model.estimator_.intercept_, estimator.intercept_)
 
     # check that `estimator_` was not altered when `refit=False` and `cv="prefit"`
-    estimator = LogisticRegression(alpha=1e-4).set_fit_request(sample_weight=True)
+    estimator = LogisticRegression().set_fit_request(sample_weight=True)
     estimator.fit(X, y, sample_weight=sample_weight)
     coef = estimator.coef_.copy()
     model = TunedThresholdClassifierCV(
@@ -386,7 +386,7 @@ def test_tuned_threshold_classifier_refit(with_sample_weight, global_random_seed
     assert_allclose(model.estimator_.coef_, coef)
 
     # check that we train `estimator_` on the training split of a given cross-validation
-    estimator = LogisticRegression(alpha=1e-4).set_fit_request(sample_weight=True)
+    estimator = LogisticRegression().set_fit_request(sample_weight=True)
     cv = [
         (np.arange(50), np.arange(50, 100)),
     ]  # single split
@@ -437,7 +437,7 @@ def test_tuned_threshold_classifier_cv_zeros_sample_weights_equivalence():
     sample_weight[::2] = 1
 
     estimator = (
-        LogisticRegression(alpha=1e-4)
+        LogisticRegression()
         .set_fit_request(sample_weight=True)
         .set_score_request(sample_weight=True)
     )
@@ -464,7 +464,7 @@ def test_tuned_threshold_classifier_thresholds_array():
     """Check that we can pass an array to `thresholds` and it is used as candidate
     threshold internally."""
     X, y = make_classification(random_state=0)
-    estimator = LogisticRegression(alpha=1e-4)
+    estimator = LogisticRegression()
     thresholds = np.linspace(0, 1, 11)
     tuned_model = TunedThresholdClassifierCV(
         estimator,
@@ -479,7 +479,7 @@ def test_tuned_threshold_classifier_thresholds_array():
 def test_tuned_threshold_classifier_store_cv_results(store_cv_results):
     """Check that if `cv_results_` exists depending on `store_cv_results`."""
     X, y = make_classification(random_state=0)
-    estimator = LogisticRegression(alpha=1e-4)
+    estimator = LogisticRegression()
     tuned_model = TunedThresholdClassifierCV(
         estimator, store_cv_results=store_cv_results
     ).fit(X, y)
@@ -497,7 +497,7 @@ def test_tuned_threshold_classifier_cv_float():
     # on the training set given by a ShuffleSplit. We check that we get the same model
     # coefficients.
     test_size = 0.3
-    estimator = LogisticRegression(alpha=1e-4)
+    estimator = LogisticRegression()
     tuned_model = TunedThresholdClassifierCV(
         estimator, cv=test_size, refit=False, random_state=0
     ).fit(X, y)
@@ -537,7 +537,7 @@ def test_fixed_threshold_classifier_equivalence_default(response_method):
     classifier.
     """
     X, y = make_classification(random_state=0)
-    classifier = LogisticRegression(alpha=1e-4).fit(X, y)
+    classifier = LogisticRegression().fit(X, y)
     classifier_default_threshold = FixedThresholdClassifier(
         estimator=clone(classifier), response_method=response_method
     )
@@ -564,7 +564,7 @@ def test_fixed_threshold_classifier(response_method, threshold, pos_label):
     threshold to the output of the response method.
     """
     X, y = make_classification(n_samples=50, random_state=0)
-    logistic_regression = LogisticRegression(alpha=1e-4).fit(X, y)
+    logistic_regression = LogisticRegression().fit(X, y)
     model = FixedThresholdClassifier(
         estimator=clone(logistic_regression),
         threshold=threshold,
@@ -603,7 +603,7 @@ def test_fixed_threshold_classifier_metadata_routing():
     X, y = make_classification(random_state=0)
     sample_weight = np.ones_like(y)
     sample_weight[::2] = 2
-    classifier = LogisticRegression(alpha=1e-4).set_fit_request(sample_weight=True)
+    classifier = LogisticRegression().set_fit_request(sample_weight=True)
     classifier.fit(X, y, sample_weight=sample_weight)
     classifier_default_threshold = FixedThresholdClassifier(estimator=clone(classifier))
     classifier_default_threshold.fit(X, y, sample_weight=sample_weight)
@@ -616,7 +616,7 @@ def test_fixed_threshold_classifier_metadata_routing():
 def test_fixed_threshold_classifier_fitted_estimator(method):
     """Check that if the underlying estimator is already fitted, no fit is required."""
     X, y = make_classification(random_state=0)
-    classifier = LogisticRegression(alpha=1e-4).fit(X, y)
+    classifier = LogisticRegression().fit(X, y)
     fixed_threshold_classifier = FixedThresholdClassifier(estimator=classifier)
     # This should not raise an error
     getattr(fixed_threshold_classifier, method)(X)
@@ -628,8 +628,8 @@ def test_fixed_threshold_classifier_classes_():
     with pytest.raises(
         AttributeError, match="The underlying estimator is not fitted yet."
     ):
-        FixedThresholdClassifier(estimator=LogisticRegression(alpha=1e-4)).classes_
+        FixedThresholdClassifier(estimator=LogisticRegression()).classes_
 
-    classifier = LogisticRegression(alpha=1e-4).fit(X, y)
+    classifier = LogisticRegression().fit(X, y)
     fixed_threshold_classifier = FixedThresholdClassifier(estimator=classifier)
     assert_array_equal(fixed_threshold_classifier.classes_, classifier.classes_)

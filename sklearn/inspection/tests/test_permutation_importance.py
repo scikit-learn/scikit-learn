@@ -194,7 +194,7 @@ def test_permutation_importance_mixed_types():
     X = np.array([[1.0, 2.0, 3.0, np.nan], [2, 1, 2, 1]]).T
     y = np.array([0, 1, 0, 1])
 
-    clf = make_pipeline(SimpleImputer(), LogisticRegression(alpha=1e-4))
+    clf = make_pipeline(SimpleImputer(), LogisticRegression(solver="lbfgs"))
     clf.fit(X, y)
     result = permutation_importance(clf, X, y, n_repeats=n_repeats, random_state=rng)
 
@@ -229,7 +229,7 @@ def test_permutation_importance_mixed_types_pandas():
     preprocess = ColumnTransformer(
         [("num", num_preprocess, ["col1"]), ("cat", OneHotEncoder(), ["col2"])]
     )
-    clf = make_pipeline(preprocess, LogisticRegression(alpha=1e-4))
+    clf = make_pipeline(preprocess, LogisticRegression(solver="lbfgs"))
     clf.fit(X, y)
 
     result = permutation_importance(clf, X, y, n_repeats=n_repeats, random_state=rng)
@@ -532,7 +532,7 @@ def test_permutation_importance_max_samples_error():
     X = np.array([(1.0, 2.0, 3.0, 4.0)]).T
     y = np.array([0, 1, 0, 1])
 
-    clf = LogisticRegression(alpha=1e-4)
+    clf = LogisticRegression()
     clf.fit(X, y)
 
     err_msg = r"max_samples must be <= n_samples"
@@ -545,6 +545,6 @@ def test_permutation_importance_array_function_not_called():
     """Check that `__array_function__` (NEP18) is not called."""
     X = _NotAnArray([[1, 1], [1, 2], [1, 3], [1, 4], [2, 1], [2, 2], [2, 3], [2, 4]])
     y = _NotAnArray([1, 1, 1, 2, 2, 2, 1, 1])
-    estimator = LogisticRegression(alpha=1e-4)
+    estimator = LogisticRegression(random_state=0)
     estimator.fit(X, y)
     permutation_importance(estimator, X, y, n_repeats=2, random_state=0)

@@ -521,7 +521,7 @@ def test_rfe_allow_nan_inf_in_x(cv):
 
 
 def test_w_pipeline_2d_coef_():
-    pipeline = make_pipeline(StandardScaler(), LogisticRegression(alpha=1e-4))
+    pipeline = make_pipeline(StandardScaler(), LogisticRegression())
 
     data, y = load_iris(return_X_y=True)
     sfm = RFE(
@@ -614,7 +614,7 @@ def test_pipeline_with_nans(ClsRFE):
     pipe = make_pipeline(
         SimpleImputer(),
         StandardScaler(),
-        LogisticRegression(alpha=1e-4),
+        LogisticRegression(),
     )
 
     fs = ClsRFE(
@@ -673,7 +673,7 @@ def test_rfe_n_features_to_select_warning(ClsRFE, param):
     with pytest.warns(UserWarning, match=f"{param}=21 > n_features=20"):
         # Create RFE/RFECV with n_features_to_select/min_features_to_select
         # larger than the number of features present in the X variable
-        clsrfe = ClsRFE(estimator=LogisticRegression(alpha=1e-4), **{param: 21})
+        clsrfe = ClsRFE(estimator=LogisticRegression(), **{param: 21})
         clsrfe.fit(X, y)
 
 
@@ -713,7 +713,7 @@ def test_rfe_with_sample_weight():
 def test_rfe_with_joblib_threading_backend(global_random_seed):
     X, y = make_classification(random_state=global_random_seed)
 
-    clf = LogisticRegression(alpha=1e-4)
+    clf = LogisticRegression()
     rfe = RFECV(
         estimator=clf,
         n_jobs=2,
@@ -735,7 +735,7 @@ def test_results_per_cv_in_rfecv(global_random_seed):
     """
     X, y = make_classification(random_state=global_random_seed)
 
-    clf = LogisticRegression(alpha=1e-4)
+    clf = LogisticRegression()
     rfecv = RFECV(
         estimator=clf,
         n_jobs=2,
@@ -766,7 +766,7 @@ def test_rfe_sparse_coef(feature_importance):
     X = [[0, 1, 3], [1, 0, 0], [2, 0, 4], [0, 2, 4]]
     y = [0, 1, 2, 3]
 
-    estimator = LogisticRegression(alpha=1e-4)
+    estimator = LogisticRegression()
     selector_sparse = RFE(
         estimator, n_features_to_select=1, importance_getter=feature_importance
     )

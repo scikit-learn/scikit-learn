@@ -170,7 +170,7 @@ def _construct_compose_pipeline_instance(Estimator):
     if Estimator.__name__ == "ColumnTransformer":
         return Estimator(transformers=[("transformer", "passthrough", [0, 1])])
     elif Estimator.__name__ == "Pipeline":
-        return Estimator(steps=[("clf", LogisticRegression(alpha=1e-4))])
+        return Estimator(steps=[("clf", LogisticRegression())])
     elif Estimator.__name__ == "FeatureUnion":
         return Estimator(transformer_list=[("transformer", FunctionTransformer())])
 
@@ -184,7 +184,7 @@ def _construct_sparse_coder(Estimator):
     return Estimator(dictionary=dictionary)
 
 
-# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
+# TODO(1.14): remove filterwarnings with deprecation period of C and Cs
 @pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 # TODO(1.10): remove copy warning filter
 @pytest.mark.filterwarnings(
@@ -216,7 +216,7 @@ def test_fit_docstring_attributes(name, Estimator):
         est = _construct_sparse_coder(Estimator)
     elif Estimator.__name__ == "FrozenEstimator":
         X, y = make_classification(n_samples=20, n_features=5, random_state=0)
-        est = Estimator(LogisticRegression(alpha=1e-4).fit(X, y))
+        est = Estimator(LogisticRegression().fit(X, y))
     else:
         # TODO(devtools): use _tested_estimators instead of all_estimators in the
         # decorator

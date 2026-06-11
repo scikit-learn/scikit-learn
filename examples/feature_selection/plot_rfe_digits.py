@@ -37,14 +37,7 @@ y = digits.target
 pipe = Pipeline(
     [
         ("scaler", MinMaxScaler()),
-        (
-            "rfe",
-            RFE(
-                estimator=LogisticRegression(alpha=1e-4),
-                n_features_to_select=1,
-                step=1,
-            ),
-        ),
+        ("rfe", RFE(estimator=LogisticRegression(), n_features_to_select=1, step=1)),
     ]
 )
 

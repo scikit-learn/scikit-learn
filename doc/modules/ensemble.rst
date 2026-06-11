@@ -1383,7 +1383,7 @@ The following example shows how to fit the majority rule classifier::
    >>> iris = datasets.load_iris()
    >>> X, y = iris.data[:, 1:3], iris.target
 
-   >>> clf1 = LogisticRegression(alpha=1e-4)
+   >>> clf1 = LogisticRegression(random_state=1)
    >>> clf2 = RandomForestClassifier(n_estimators=50, random_state=1)
    >>> clf3 = GaussianNB()
 
@@ -1469,7 +1469,7 @@ Optionally, weights can be provided for the individual classifiers::
   hyperparameters of the individual estimators::
 
     >>> from sklearn.model_selection import GridSearchCV
-    >>> clf1 = LogisticRegression(alpha=1e-4)
+    >>> clf1 = LogisticRegression()
     >>> clf2 = RandomForestClassifier(random_state=1)
     >>> clf3 = GaussianNB()
     >>> eclf = VotingClassifier(

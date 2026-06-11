@@ -94,7 +94,7 @@ def make_prediction(dataset=None, binary=False):
     X = np.c_[X, rng.randn(n_samples, 200 * n_features)]
 
     # run classifier, get class probabilities and label predictions
-    clf = LogisticRegression(alpha=1e-2)
+    clf = LogisticRegression(random_state=0)
     y_score = clf.fit(X[:half], y[:half]).predict_proba(X[half:])
 
     if binary:
@@ -2198,7 +2198,7 @@ def test_top_k_accuracy_score_increasing():
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-    clf = LogisticRegression(alpha=1e-3)
+    clf = LogisticRegression(random_state=0)
     clf.fit(X_train, y_train)
 
     for X, y in zip((X_train, X_test), (y_train, y_test)):

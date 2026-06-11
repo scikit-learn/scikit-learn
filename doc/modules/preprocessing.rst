@@ -96,13 +96,13 @@ use in the early steps of a :class:`~sklearn.pipeline.Pipeline`::
 
   >>> X, y = make_classification(random_state=42)
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
-  >>> pipe = make_pipeline(StandardScaler(), LogisticRegression(alpha=1e-4))
+  >>> pipe = make_pipeline(StandardScaler(), LogisticRegression())
   >>> pipe.fit(X_train, y_train)  # apply scaling on training data
   Pipeline(steps=[('standardscaler', StandardScaler()),
-                  ('logisticregression', LogisticRegression(alpha=0.0001))])
+                  ('logisticregression', LogisticRegression())])
 
   >>> pipe.score(X_test, y_test)  # apply scaling on testing data, without leaking training data.
-  1.0
+  0.96
 
 It is possible to disable either centering or scaling by either
 passing ``with_mean=False`` or ``with_std=False`` to the constructor

@@ -238,7 +238,7 @@ raises an error, since it hasn't been explicitly specified whether ``sample_weig
 should be passed to the estimator's scorer or not::
 
     >>> param_grid = {"alpha": [1e-1, 1e-2]}
-    >>> lr = LogisticRegression(alpha=1e-4).set_fit_request(sample_weight=True)
+    >>> lr = LogisticRegression().set_fit_request(sample_weight=True)
     >>> try:
     ...     GridSearchCV(
     ...         estimator=lr, param_grid=param_grid
@@ -253,7 +253,7 @@ should be passed to the estimator's scorer or not::
 
 The issue can be fixed by explicitly setting the request value::
 
-    >>> lr = LogisticRegression(alpha=1e-4).set_fit_request(
+    >>> lr = LogisticRegression().set_fit_request(
     ...     sample_weight=True
     ... ).set_score_request(sample_weight=False)
 

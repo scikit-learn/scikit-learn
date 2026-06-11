@@ -63,7 +63,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import jaccard_score
 from sklearn.multiclass import OneVsRestClassifier
 
-base_lr = LogisticRegression(alpha=1e-4)
+base_lr = LogisticRegression()
 ovr = OneVsRestClassifier(base_lr)
 ovr.fit(X_train, Y_train)
 Y_pred_ovr = ovr.predict(X_test)

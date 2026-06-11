@@ -2062,7 +2062,7 @@ class RandomizedSearchCV(BaseSearchCV):
     >>> from scipy.stats import loguniform
     >>> iris = load_iris()
     >>> logistic = LogisticRegression(
-    ...     alpha=1e-4, solver='saga', tol=1e-2, max_iter=200, random_state=0
+    ...     solver='saga', tol=1e-2, max_iter=200, random_state=0
     ... )
     >>> distributions = dict(alpha=loguniform(a=1e-4, b=4), l1_ratio=[0, 1])
     >>> clf = RandomizedSearchCV(logistic, distributions, random_state=0)

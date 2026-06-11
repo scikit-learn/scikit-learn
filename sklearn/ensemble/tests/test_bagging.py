@@ -144,7 +144,7 @@ def test_sparse_classification(sparse_container, params, method):
 
     # Trained on sparse format
     sparse_classifier = BaggingClassifier(
-        estimator=CustomClassifier(alpha=1e-4),
+        estimator=CustomClassifier(),
         random_state=1,
         **params,
     ).fit(X_train_sparse, y_train)
@@ -153,7 +153,7 @@ def test_sparse_classification(sparse_container, params, method):
 
     # Trained on dense format
     dense_classifier = BaggingClassifier(
-        estimator=CustomClassifier(alpha=1e-4),
+        estimator=CustomClassifier(),
         random_state=1,
         **params,
     ).fit(X_train, y_train)
@@ -353,7 +353,7 @@ def test_probability():
 
         # Degenerate case, where some classes are missing
         ensemble = BaggingClassifier(
-            estimator=LogisticRegression(alpha=1e-4), random_state=rng, max_samples=5
+            estimator=LogisticRegression(), random_state=rng, max_samples=5
         ).fit(X_train, y_train)
 
         assert_array_almost_equal(
@@ -855,7 +855,7 @@ def test_estimators_samples():
     # using data saved in object attributes.
     X, y = make_hastie_10_2(n_samples=200, random_state=1)
     bagging = BaggingClassifier(
-        LogisticRegression(alpha=1e-4),
+        LogisticRegression(),
         max_samples=0.5,
         max_features=0.5,
         random_state=1,
@@ -899,7 +899,7 @@ def test_estimators_samples_deterministic():
     X, y = iris.data, iris.target
 
     base_pipeline = make_pipeline(
-        SparseRandomProjection(n_components=2), LogisticRegression(alpha=1e-4)
+        SparseRandomProjection(n_components=2), LogisticRegression()
     )
     clf = BaggingClassifier(estimator=base_pipeline, max_samples=0.5, random_state=0)
     clf.fit(X, y)
@@ -1042,9 +1042,7 @@ def test_bagging_small_max_features():
     X = np.array([[1, 2], [3, 4]])
     y = np.array([1, 0])
 
-    bagging = BaggingClassifier(
-        LogisticRegression(alpha=1e-4), max_features=0.3, random_state=1
-    )
+    bagging = BaggingClassifier(LogisticRegression(), max_features=0.3, random_state=1)
     bagging.fit(X, y)
 
 
@@ -1074,7 +1072,7 @@ def test_bagging_get_estimators_indices(global_random_seed):
     [
         (BaggingClassifier(HistGradientBoostingClassifier(max_iter=1)), True),
         (BaggingRegressor(HistGradientBoostingRegressor(max_iter=1)), True),
-        (BaggingClassifier(LogisticRegression(alpha=1e-4)), False),
+        (BaggingClassifier(LogisticRegression()), False),
         (BaggingRegressor(SVR()), False),
     ],
 )

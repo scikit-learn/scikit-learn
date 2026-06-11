@@ -29,7 +29,7 @@ from sklearn.preprocessing import StandardScaler
 
 steps = [
     ("preprocessing", StandardScaler()),
-    ("classifier", LogisticRegression(alpha=1e-4)),
+    ("classifier", LogisticRegression()),
 ]
 pipe = Pipeline(steps)
 
@@ -124,7 +124,7 @@ preprocessor = ColumnTransformer(
     ]
 )
 
-pipe = make_pipeline(preprocessor, LogisticRegression(alpha=1e-4, max_iter=500))
+pipe = make_pipeline(preprocessor, LogisticRegression(max_iter=500))
 pipe  # click on the diagram below to see the details of each step
 
 # %%

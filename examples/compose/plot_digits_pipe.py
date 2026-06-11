@@ -31,7 +31,7 @@ pca = PCA()
 scaler = StandardScaler()
 
 # set the tolerance to a large value to make the example faster
-logistic = LogisticRegression(alpha=1e-4, max_iter=10000, tol=0.1)
+logistic = LogisticRegression(max_iter=10000, tol=0.1)
 pipe = Pipeline(steps=[("scaler", scaler), ("pca", pca), ("logistic", logistic)])
 
 X_digits, y_digits = datasets.load_digits(return_X_y=True)

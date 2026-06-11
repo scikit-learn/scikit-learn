@@ -275,6 +275,7 @@ def _logistic_regression_path(
     Cs : int or array-like of shape (n_alphas,), default=10
 
         .. deprecated:: 1.10
+           Will be removed in 1.14.
 
     fit_intercept : bool, default=True
         Whether to fit an intercept for the model. In this case the shape of
@@ -389,6 +390,7 @@ def _logistic_regression_path(
         Grid of alphas used for cross-validation.
 
         .. deprecated:: 1.10
+           Will be removed in 1.14.
 
     n_iter : array of shape (n_alphas,)
         Actual number of iteration for each alpha in alphas.
@@ -401,16 +403,16 @@ def _logistic_regression_path(
     .. versionchanged:: 0.19
         The "copy" parameter was removed.
     """
-    use_alpha = True  # TODO(1.12): remove
+    use_alpha = True  # TODO(1.14): remove
     if Cs is None:
         if isinstance(alphas, numbers.Integral):
             alphas = np.logspace(2, -7, alphas)  # descending
-        Cs = [None] * len(alphas)
+        Cs = [None] * len(alphas)  # to ease ignoring it
     else:
         use_alpha = False
         if isinstance(Cs, numbers.Integral):
             Cs = np.logspace(-4, 4, Cs)
-        alphas = [None] * len(Cs)
+        alphas = [None] * len(Cs)  # to ease ignoring it
 
     solver = _check_solver(solver, penalty, dual)
     xp, _, device_ = get_namespace_and_device(X)
@@ -445,6 +447,11 @@ def _logistic_regression_path(
 
     random_state = check_random_state(random_state)
 
+    if sample_weight is None:
+        sw_sum_original = n_samples
+    else:
+        sw_sum_original = float(xp.sum(sample_weight))
+
     le = LabelEncoder().fit(classes)
     if class_weight is not None:
         class_weight_ = compute_class_weight(
@@ -454,6 +461,9 @@ def _logistic_regression_path(
             class_weight_[le.transform(y)], dtype=X.dtype, device=device_
         )
         sample_weight *= class_weight_
+        sw_sum_after_class_weights = float(xp.sum(sample_weight))
+    else:
+        sw_sum_after_class_weights = sw_sum_original
 
     if is_binary:
         w0 = np.zeros(
@@ -480,19 +490,20 @@ def _logistic_regression_path(
             dtype=_matching_numpy_dtype(X, xp=xp),
         )
 
-    # TODO(1.12): Modify or remove this note with the deprecation/removal of C.
+    # TODO(1.14): Modify or remove this note with the deprecation/removal of C and Cs.
     # IMPORTANT NOTE:
     # All solvers relying on LinearModelLoss need to scale the penalty with n_samples
     # or the sum of sample weights because the implemented logistic regression
     # objective here is (unfortunately)
     #     C * sum(pointwise_loss) + penalty
+    # or equivalently
+    #    mean(pointwise_loss) + 1/(n*C) * penalty
     # instead of (as LinearModelLoss does)
-    #     mean(pointwise_loss) + 1/C * penalty
+    #     mean(pointwise_loss) + alpha * penalty
     # At least for solver in ["lbfgs", "newton-cg", "newton-cholesky"]
     # this needs to be calculated after sample_weight is multiplied by
     # class_weight. It is even tested that passing class_weight is equivalent to
     # passing sample_weights according to class_weight.
-    sw_sum = n_samples if sample_weight is None else float(xp.sum(sample_weight))
 
     if coef is not None:
         if is_binary:
@@ -573,11 +584,16 @@ def _logistic_regression_path(
     callback_metadata = (
         {"sample_weight": sample_weight} if sample_weight is not None else None
     )
+    alphas_numerical = []
     for i, (alpha, C) in enumerate(zip(alphas, Cs)):
         if use_alpha:
-            l2_reg_strength = alpha
+            if alpha == "1/n_samples":
+                l2_reg_strength = 1.0 / sw_sum_original
+            else:
+                l2_reg_strength = alpha
+            alphas_numerical.append(l2_reg_strength)
         else:
-            l2_reg_strength = 1.0 / (C * sw_sum)
+            l2_reg_strength = 1.0 / (C * sw_sum_after_class_weights)
 
         if solver == "lbfgs":
             # In LogisticRegression.fit, Cs is always a one-element list, so we don't
@@ -658,7 +674,7 @@ def _logistic_regression_path(
             coef_, intercept_, n_iter_i = _fit_liblinear(
                 X,
                 target,
-                1 / (l2_reg_strength * sw_sum) if use_alpha else C,
+                1 / (l2_reg_strength * sw_sum_original) if use_alpha else C,
                 fit_intercept,
                 intercept_scaling,
                 None,
@@ -687,21 +703,23 @@ def _logistic_regression_path(
             # alpha is for L2-norm, beta is for L1-norm
             if penalty == "l1":
                 if use_alpha:
-                    beta = alpha * sw_sum
+                    beta = l2_reg_strength * sw_sum_after_class_weights
                     alpha = 0.0
                 else:
                     alpha = 0.0
                     beta = 1.0 / C
             elif penalty == "l2":
                 if use_alpha:
-                    alpha = alpha * sw_sum
+                    alpha = l2_reg_strength * sw_sum_after_class_weights
                 else:
                     alpha = 1.0 / C
                 beta = 0.0
             else:  # Elastic-Net penalty
                 if use_alpha:
-                    beta = alpha * sw_sum * l1_ratio
-                    alpha = alpha * sw_sum * (1 - l1_ratio)
+                    beta = l2_reg_strength * sw_sum_after_class_weights * l1_ratio
+                    alpha = (
+                        l2_reg_strength * sw_sum_after_class_weights * (1 - l1_ratio)
+                    )
                 else:
                     alpha = (1.0 / C) * (1 - l1_ratio)
                     beta = (1.0 / C) * l1_ratio
@@ -749,7 +767,7 @@ def _logistic_regression_path(
         n_iter[i] = n_iter_i
 
     if use_alpha:
-        alphas = xp.asarray(alphas, device=device_)
+        alphas = xp.asarray(alphas_numerical, device=device_)
         Cs = None
     else:
         alphas = None
@@ -815,6 +833,7 @@ def _log_reg_scoring_path(
         values are chosen in a logarithmic scale between 1e-4 and 1e4.
 
         .. deprecated:: 1.10
+           Will be removed in 1.14.
 
     scoring : str, callable or None
         The scoring method to use for cross-validation. Options:
@@ -917,6 +936,7 @@ def _log_reg_scoring_path(
         Grid of Cs used for cross-validation.
 
         .. deprecated:: 1.10
+           Will be removed in 1.14.
 
     scores : ndarray of shape (n_alphas,)
         Scores obtained for each Cs.
@@ -1099,18 +1119,23 @@ class LogisticRegression(
            `l1_ratio=1` for `penalty='l1'`, `l1_ratio` set to any float between 0 and 1
            for `penalty='elasticnet'`, and `C=np.inf` for `penalty=None`.
 
-    alpha : float, default=None
+    alpha : float, str, default='1/n_samples'
         Regularization strength that multiplies the penalty term (both L1 and L2).
         ``alpha = 0`` is equivalent to unpenalized logistic regression. In this case,
         the design matrix `X` must have full column rank (no collinearities).
         Values of `alpha` must be in the range `[0.0, inf)`.
+        If set to `'1/n_samples'`, it will use
+
+        - `alpha=1 / X.shape[0]` if `samples_weight` is None.
+        - `alpha=1 / np.sum(sample_weight)` otherwise.
 
         .. warning::
-           During the deprecation period of `C`, you need to set `alpha` explicitly
-           in order to use it. If you do not set `alpha` to some value, the value of
-           `C` will be used.
-           Also note that the default of `alpha` will change from `None` to `1e-4`
-           in version 1.12.
+           In order to already use `alpha` during the deprecation period of `C`, just
+           set `alpha` explicitly and don't change `C` (leave `C` at its default).
+           If `C` is set to any value other than its default, `C` will be used and
+           `alpha` is ignored.
+           Note that the new default of `alpha='1/n_samples'` gives the same results
+           as the old default `C=1.0` as long as `class_weight=None`.
 
     C : float, default=1.0
         Inverse of regularization strength; must be a positive float.
@@ -1121,10 +1146,17 @@ class LogisticRegression(
         :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_path.py`.
 
         .. deprecated:: 1.10
-           `C` was deprecated in version 1.10 and will be removed in 1.12.
-           Use `alpha=1/(C * n_samples)` or `alpha=1/(C * np.sum(sample_weight))`
-           instead.
-           The new default in version 1.12 will be `alpha=1e-4`.
+           `C` was deprecated in version 1.10 and will be removed in 1.14.
+           Use `alpha` instead.
+           Note that the new default of `alpha='1/n_samples'` gives the same results
+           as the old default `C=1.0` as long as `class_weight=None`. The
+           correspondence between `C` and `alpha` is
+
+           - `alpha / (C * n_samples)` if `sample_weight` is None
+           - `alpha / (C * np.sum(n_samples))` otherwise
+
+           Starting with version 1.12, an informative deprecation warning will be
+           raised if `C` is used.
 
     l1_ratio : float, default=0.0
         The Elastic-Net mixing parameter, with `0 <= l1_ratio <= 1`. Setting
@@ -1375,7 +1407,10 @@ class LogisticRegression(
             None,
             Hidden(StrOptions({"deprecated"})),
         ],
-        "alpha": [Interval(Real, 0.0, None, closed="left"), None],
+        "alpha": [
+            Interval(Real, 0.0, None, closed="left"),
+            StrOptions({"1/n_samples"}),
+        ],
         "C": [
             Interval(Real, 0, None, closed="right"),
             Hidden(StrOptions({"deprecated"})),
@@ -1402,7 +1437,7 @@ class LogisticRegression(
         self,
         penalty="deprecated",
         *,
-        alpha=None,
+        alpha="1/n_samples",
         C="deprecated",
         l1_ratio=0.0,
         dual=False,
@@ -1486,19 +1521,23 @@ class LogisticRegression(
         The SAGA solver supports both float64 and float32 bit arrays.
         """
         depr_msg = (
-            "'C' was deprecated in version 1.10 and will be removed in 1.12. "
-            "Use alpha=1/(C * n_samples) or alpha=1/(C * np.sum(sample_weight)) "
-            "instead. Set either 'alpha' or 'C' explicitly to avoid this warning. "
-            "The new default in version 1.12 will be alpha=1e-4."
+            "'C' was deprecated in version 1.10 and will be removed in 1.14. "
+            "Use alpha instead. "
+            "Note that the new default of alpha='1/n_samples' gives the same results "
+            "as the old default C=1.0 as long as class_weight=None. The "
+            "correspondence between C and alpha is\n"
+            "    - alpha / (C * n_samples) if sample_weight is None\n"
+            "    - alpha / (C * np.sum(n_samples)), otherwise"
+            # TODO How to avoid this warning
         )
         if self.C != "deprecated":
-            if self.alpha is None:
-                warnings.warn("You are using 'C'. " + depr_msg, FutureWarning)
+            if self.alpha == "1/n_samples":  # the default alpha
+                # TODO(1.12): raise deprecation warning
+                # warnings.warn(depr_msg, FutureWarning)
+                pass
             else:
                 msg = "You must set either 'alpha' or the deprecated 'C', but not both."
                 raise ValueError(msg)
-        elif self.C == "deprecated" and self.alpha is None:
-            warnings.warn(depr_msg, FutureWarning)
 
         if self.penalty == "deprecated":
             if self.l1_ratio == 0 or self.l1_ratio is None:
@@ -1581,25 +1620,21 @@ class LogisticRegression(
 
         if self.penalty is None:
             # if not default values
-            if self.C != "deprecated" or self.alpha is not None:
+            if self.C != "deprecated" or self.alpha != "1/n_samples":
                 warnings.warn(
                     "Setting penalty=None will ignore the alpha, C and l1_ratio "
                     "parameters",
                     UserWarning,
                 )
-                # Note that check for l1_ratio is done right above
+                # Note that check for l1_ratio was done right above.
             alpha_ = 0
             C_ = None
             penalty = "l2"
         elif self.C == "deprecated":
-            if self.alpha is None:
-                C_ = 1.0  # the old default
-                alpha_ = None
-            else:
-                alpha_ = self.alpha
-                C_ = None
-        else:
             alpha_ = self.alpha
+            C_ = None
+        else:
+            alpha_ = None
             C_ = self.C
 
         # With lbfgs, the fit task will have a subtask even if max_iter is 0.
@@ -1648,7 +1683,10 @@ class LogisticRegression(
                 else:
                     sw_sum = float(xp.sum(sample_weight))
 
-                C_ = 1 / (alpha_ * sw_sum)
+                if alpha_ == "1/n_samples":
+                    C_ = 1.0
+                else:
+                    C_ = 1 / (alpha_ * sw_sum)
 
             self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
                 X,
@@ -1841,10 +1879,12 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         multiplies the penalty term (both L1 and L2). In this case, values must be in
         the range `[0.0, inf)`.
         If `alphas` is as an integer, then a grid of `alpha` values is chosen on a
-        logarithmic scale between 1e-7 and 1e2.
+        logarithmic scale between 1e-7 and 1e2. If the computed attribute `alpha_` is
+        on the boundary (either 1e-7 or 1e2), it might be a good idea to use a larger
+        search space.
 
         .. warning::
-           During the deprecation period of `Cs`, you need to set `alpha` explicitly
+           During the deprecation period of `Cs`, you need to set `alphas` explicitly
            in order to use it. If you do not set `alphas` to some value, the value of
            `Cs` will be used.
            Also note that the default of `alphas` will change from `None` to `10`
@@ -1859,11 +1899,11 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         regularization.
 
         .. deprecated:: 1.10
-           `Cs` was deprecated in version 1.10 and will be removed in 1.12.
+           `Cs` was deprecated in version 1.10 and will be removed in 1.14.
            For integers, use `alphas=Cs`.
            For arrays, use `alphas=1/(Cs * n_samples)` or
            `alphas=1/(Cs * np.sum(sample_weight))` instead.
-           The new default will be `alpha=10` (automatic grid of 10 values between
+           The new default will be `alphas=10` (automatic grid of 10 values between
            1e2 and 1e-7).
 
     l1_ratios : array-like of shape (n_l1_ratios), default=None
@@ -2094,7 +2134,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         for cross-validation.
 
         .. deprecated:: 1.10
-           `Cs_` was deprecated in version 1.10 and will be removed in 1.12.
+           `Cs_` was deprecated in version 1.10 and will be removed in 1.14.
            Use the new attribute `alphas_` instead.
 
     l1_ratios_ : ndarray of shape (n_l1_ratios)
@@ -2135,7 +2175,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         See also parameter `use_legacy_attributes`.
 
         .. deprecated:: 1.10
-           `C_` was deprecated in version 1.10 and will be removed in 1.12.
+           `C_` was deprecated in version 1.10 and will be removed in 1.14.
            Use the new attribute `alpha_` instead.
 
     l1_ratio_ : ndarray of shape (n_classes,) or (n_classes - 1,)
@@ -2291,12 +2331,12 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         _raise_for_params(params, self, "fit")
 
         depr_msg = (
-            "'Cs' was deprecated in version 1.10 and will be removed in 1.12. "
+            "'Cs' was deprecated in version 1.10 and will be removed in 1.14. "
             "For integers, use alphas=Cs. "
             "For arrays, use `alphas=1/(Cs * n_samples)` or "
             "alphas=1/(Cs * np.sum(sample_weight))` instead. "
             "The new default will be alpha=10 (automatic grid of 10 values "
-            "between 1e2 and 1e-7)."
+            "between 1e2 and 1e-7) as of version 1.12."
         )
         if not (isinstance(self.Cs, str) and self.Cs == "deprecated"):
             if self.alphas is None:

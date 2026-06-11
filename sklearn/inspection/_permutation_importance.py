@@ -258,7 +258,7 @@ def permutation_importance(
     >>> X = [[1, 9, 9],[1, 9, 9],[1, 9, 9],
     ...      [0, 9, 9],[0, 9, 9],[0, 9, 9]]
     >>> y = [1, 1, 1, 0, 0, 0]
-    >>> clf = LogisticRegression(alpha=1e-4).fit(X, y)
+    >>> clf = LogisticRegression().fit(X, y)
     >>> result = permutation_importance(clf, X, y, n_repeats=10,
     ...                                 random_state=0)
     >>> result.importances_mean

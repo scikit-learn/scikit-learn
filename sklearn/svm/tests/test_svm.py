@@ -518,7 +518,7 @@ def test_weight():
     )
 
     for clf in (
-        linear_model.LogisticRegression(alpha=1e-4),
+        linear_model.LogisticRegression(),
         svm.LinearSVC(random_state=0),
         svm.SVC(),
     ):
@@ -704,7 +704,7 @@ def test_auto_weight():
     for clf in (
         svm.SVC(kernel="linear"),
         svm.LinearSVC(random_state=0),
-        LogisticRegression(alpha=1e-4),
+        LogisticRegression(),
     ):
         # check that score is better when class='balanced' is set.
         y_pred = clf.fit(X[unbalanced], y[unbalanced]).predict(X)

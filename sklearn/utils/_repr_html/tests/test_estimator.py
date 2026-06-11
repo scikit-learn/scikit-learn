@@ -422,11 +422,11 @@ def test_estimator_html_repr_unfitted_vs_fitted():
 @pytest.mark.parametrize(
     "estimator",
     [
-        LogisticRegression(alpha=1e-4),
-        make_pipeline(StandardScaler(), LogisticRegression(alpha=1e-4)),
+        LogisticRegression(),
+        make_pipeline(StandardScaler(), LogisticRegression()),
         make_pipeline(
             make_column_transformer((StandardScaler(), slice(0, 3))),
-            LogisticRegression(alpha=1e-4),
+            LogisticRegression(),
         ),
     ],
 )

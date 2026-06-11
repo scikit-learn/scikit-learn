@@ -57,7 +57,7 @@ model = make_pipeline(
 
 param_grid = {
     "standardscaler__with_std": [True, False],
-    "logisticregression__C": np.geomspace(0.01, 100, 3),
+    "logisticregression__alpha": np.geomspace(1e-4, 1, 3),
 }
 
 grid_search = GridSearchCV(
@@ -79,7 +79,7 @@ grid_search = GridSearchCV(
 grid_search.set_callbacks(ProgressBar()).fit(X, y)
 
 # %%
-# We use a grid search with 3 values for the regularization parameter ``C`` and
+# We use a grid search with 3 values for the regularization parameter ``alpha`` and
 # 2 values for the standardization of the features resulting in 6 parameter
 # combinations.
 #
@@ -101,7 +101,7 @@ cv_results = pd.DataFrame(grid_search.cv_results_)
 cv_results.sort_values(by="rank_test_d2_log_loss_score", ascending=True)
 
 # %%
-# We observe that the best models use regularization (small ``C``). Feature
+# We observe that the best models use stronger regularization ``alpha``. Feature
 # standardization does not seem to matter much but helps reduce the fit times.
 # We notice that many models have similar accuracy scores but different D²
 # log-loss scores and average precision scores. D² log-loss and average
@@ -152,7 +152,7 @@ cv_lbfgs_log = lbfgs_log[
 cv_lbfgs_log["param_label"] = cv_lbfgs_log.apply(
     lambda row: (
         f"with_std={row['param_standardscaler__with_std']}, "
-        f"C={row['param_logisticregression__C']:.2g}"
+        f"alpha={row['param_logisticregression__alpha']:.2g}"
     ),
     axis=1,
 )
@@ -203,11 +203,11 @@ _ = axes[-1].set_xlabel("L-BFGS iteration")
 # Regularization and scaling
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^
 #
-# We also observe that the least regularized models (larger ``C`` values) tend
+# We also observe that the least regularized models (smallest ``alpha`` values) tend
 # to reach higher D² log-loss scores, and models trained on scaled features
 # converge in much fewer iterations.
 #
-# Furthermore, models trained with high regularization (lower ``C`` values)
+# Furthermore, models trained with high regularization `àlpha``
 # converge to a final D² log-loss value that depends on the regularization
 # strength while this is not the case for models trained with low
 # regularization: there is a strong coupling between the optimal regularization

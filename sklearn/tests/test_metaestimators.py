@@ -310,7 +310,7 @@ def _get_meta_estimator_id(estimator):
     return estimator.__class__.__name__
 
 
-# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
+# TODO(1.14): remove filterwarnings with deprecation period of C and Cs
 @pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "estimator", DATA_VALIDATION_META_ESTIMATORS, ids=_get_meta_estimator_id

@@ -479,7 +479,7 @@ def test_thresholded_scorers():
     # Test scorers that take thresholds.
     X, y = make_blobs(random_state=0, centers=2)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    clf = LogisticRegression(alpha=1e-4)
+    clf = LogisticRegression(random_state=0)
     clf.fit(X_train, y_train)
     score1 = get_scorer("roc_auc")(clf, X_test, y_test)
     score2 = roc_auc_score(y_test, clf.decision_function(X_test))
@@ -711,9 +711,9 @@ def test_scorer_memmap_input(name, memmap_data_and_estimators):
 
 def test_scoring_is_not_metric():
     with pytest.raises(ValueError, match="make_scorer"):
-        check_scoring(LogisticRegression(alpha=1e-4), scoring=f1_score)
+        check_scoring(LogisticRegression(), scoring=f1_score)
     with pytest.raises(ValueError, match="make_scorer"):
-        check_scoring(LogisticRegression(alpha=1e-4), scoring=roc_auc_score)
+        check_scoring(LogisticRegression(), scoring=roc_auc_score)
     with pytest.raises(ValueError, match="make_scorer"):
         check_scoring(Ridge(), scoring=r2_score)
     with pytest.raises(ValueError, match="make_scorer"):
@@ -778,7 +778,7 @@ def test_multimetric_scorer_calls_method_once(
             return pos_proba
 
     mock_est = MyClassifier().fit(X, y)
-    scorer_dict = _check_multimetric_scoring(LogisticRegression(alpha=1e-4), scorers)
+    scorer_dict = _check_multimetric_scoring(LogisticRegression(), scorers)
     multi_scorer = _MultimetricScorer(scorers=scorer_dict)
     results = multi_scorer(mock_est, X, y)
 
@@ -944,7 +944,7 @@ def test_multiclass_roc_proba_scorer(scorer_name, metric):
     X, y = make_classification(
         n_classes=3, n_informative=3, n_samples=20, random_state=0
     )
-    lr = LogisticRegression(alpha=1e-4).fit(X, y)
+    lr = LogisticRegression().fit(X, y)
     y_proba = lr.predict_proba(X)
     expected_score = metric(y, y_proba)
 
@@ -961,7 +961,7 @@ def test_multiclass_roc_proba_scorer_label():
     X, y = make_classification(
         n_classes=3, n_informative=3, n_samples=20, random_state=0
     )
-    lr = LogisticRegression(alpha=1e-4).fit(X, y)
+    lr = LogisticRegression().fit(X, y)
     y_proba = lr.predict_proba(X)
 
     y_binary = y == 0
@@ -1036,7 +1036,7 @@ def string_labeled_classification_problem():
         stratify=y,
         random_state=0,
     )
-    classifier = LogisticRegression(alpha=1e-4).fit(X_train, y_train)
+    classifier = LogisticRegression().fit(X_train, y_train)
     y_pred = classifier.predict(X_test)
     y_pred_proba = classifier.predict_proba(X_test)
     y_pred_decision = classifier.decision_function(X_test)
@@ -1176,7 +1176,7 @@ def test_scorer_select_proba_error(scorer):
     X, y = make_classification(
         n_classes=2, n_informative=3, n_samples=20, random_state=0
     )
-    lr = LogisticRegression(alpha=1e-4).fit(X, y)
+    lr = LogisticRegression().fit(X, y)
     assert scorer._kwargs["pos_label"] not in np.unique(y).tolist()
 
     err_msg = "is not a valid label"
@@ -1191,7 +1191,7 @@ def test_invalid_default_pos_label_ignored_on_multiclass():
 
     assert type_of_target(y) == "multiclass"
 
-    clf = LogisticRegression(alpha=1e-4, max_iter=1000, random_state=0).fit(X, y)
+    clf = LogisticRegression(max_iter=1000, random_state=0).fit(X, y)
 
     # The default of average_precision_score pos_label is 1. It's not one of
     # the string class labels but it should be ignored when the scorer is
@@ -1228,7 +1228,7 @@ def test_scorer_no_op_multiclass_select_proba():
     X, y = make_classification(
         n_classes=3, n_informative=3, n_samples=20, random_state=0
     )
-    lr = LogisticRegression(alpha=1e-4).fit(X, y)
+    lr = LogisticRegression().fit(X, y)
 
     mask_last_class = y == lr.classes_[-1]
     X_test, y_test = X[~mask_last_class], y[~mask_last_class]
@@ -1331,7 +1331,7 @@ def test_metadata_kwarg_conflict():
     X, y = make_classification(
         n_classes=3, n_informative=3, n_samples=20, random_state=0
     )
-    lr = LogisticRegression(alpha=1e-4).fit(X, y)
+    lr = LogisticRegression().fit(X, y)
 
     scorer = make_scorer(
         roc_auc_score,
@@ -1349,9 +1349,7 @@ def test_metadata_kwarg_conflict():
 @config_context(enable_metadata_routing=True)
 def test_PassthroughScorer_set_score_request():
     """Test that _PassthroughScorer.set_score_request raises when routing enabled."""
-    est = LogisticRegression(alpha=1e-4).set_score_request(
-        sample_weight="estimator_weights"
-    )
+    est = LogisticRegression().set_score_request(sample_weight="estimator_weights")
     # make a `_PassthroughScorer` with `check_scoring`:
     scorer = check_scoring(est, None)
     with pytest.raises(
@@ -1364,7 +1362,7 @@ def test_PassthroughScorer_set_score_request():
 def test_PassthroughScorer_set_score_request_raises_without_routing_enabled():
     """Test that _PassthroughScorer.set_score_request raises if metadata routing is
     disabled."""
-    scorer = check_scoring(LogisticRegression(alpha=1e-4), None)
+    scorer = check_scoring(LogisticRegression(), None)
 
     with pytest.raises(
         AttributeError,
@@ -1513,7 +1511,7 @@ def test_get_scorer_multimetric(pass_estimator):
     """Check that check_scoring is compatible with multi-metric configurations."""
     X, y = make_classification(n_samples=150, n_features=10, random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    clf = LogisticRegression(alpha=1e-4)
+    clf = LogisticRegression(random_state=0)
 
     if pass_estimator:
         check_scoring_ = check_scoring
@@ -1577,7 +1575,7 @@ def test_check_scoring_multimetric_raise_exc():
 
     X, y = make_classification(n_samples=150, n_features=10, random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    clf = LogisticRegression(alpha=1e-4).fit(X_train, y_train)
+    clf = LogisticRegression().fit(X_train, y_train)
 
     # "raising_scorer" is raising ValueError and should return a string representation
     # of the error of the last scorer:
@@ -1614,7 +1612,7 @@ def test_metadata_routing_multimetric_metadata_routing(enable_metadata_routing):
 def test_curve_scorer():
     """Check the behaviour of the `_CurveScorer` class."""
     X, y = make_classification(random_state=0)
-    estimator = LogisticRegression(alpha=1e-4).fit(X, y)
+    estimator = LogisticRegression().fit(X, y)
     curve_scorer = _CurveScorer(
         balanced_accuracy_score,
         sign=1,
@@ -1665,7 +1663,7 @@ def test_curve_scorer_pos_label(global_random_seed):
     X, y = make_classification(
         n_samples=n_samples, weights=[0.9, 0.1], random_state=global_random_seed
     )
-    estimator = LogisticRegression(alpha=1e-4).fit(X, y)
+    estimator = LogisticRegression().fit(X, y)
 
     curve_scorer = _CurveScorer(
         recall_score,
@@ -1715,11 +1713,11 @@ def test_Pipeline_in_PassthroughScorer():
         [
             (
                 "logistic",
-                LogisticRegression(alpha=1e-4)
+                LogisticRegression()
                 .set_fit_request(sample_weight=True)
                 .set_score_request(sample_weight=True),
             )
         ]
     )
-    search = GridSearchCV(pipe, {"logistic__alpha": [0.1, 1]}, n_jobs=1, cv=3)
+    search = GridSearchCV(pipe, {"logistic__C": [0.1, 1]}, n_jobs=1, cv=3)
     search.fit(X, y, sample_weight=sample_weight)

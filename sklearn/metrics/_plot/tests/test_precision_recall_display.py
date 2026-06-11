@@ -54,7 +54,7 @@ def test_precision_recall_display_plotting(
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
     pos_label = 1
 
-    classifier = LogisticRegression(alpha=1e-4).fit(X, y)
+    classifier = LogisticRegression().fit(X, y)
     classifier.fit(X, y)
 
     if with_sample_weight:
@@ -130,12 +130,7 @@ def test_precision_recall_display_from_cv_results_plotting(
     pos_label = 1
 
     cv_results = cross_validate(
-        LogisticRegression(alpha=1e-4),
-        X,
-        y,
-        cv=3,
-        return_estimator=True,
-        return_indices=True,
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
     )
 
     if with_sample_weight:
@@ -287,7 +282,7 @@ def test_precision_recall_chance_level_line(
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
     pos_prevalence = Counter(y)[1] / len(y)
 
-    lr = LogisticRegression(alpha=1e-4)
+    lr = LogisticRegression()
     y_score = lr.fit(X, y).predict_proba(X)[:, 1]
 
     if constructor_name == "from_estimator":
@@ -336,12 +331,7 @@ def test_precision_recall_chance_level_line_from_cv_results(
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
     n_cv = 3
     cv_results = cross_validate(
-        LogisticRegression(alpha=1e-4),
-        X,
-        y,
-        cv=n_cv,
-        return_estimator=True,
-        return_indices=True,
+        LogisticRegression(), X, y, cv=n_cv, return_estimator=True, return_indices=True
     )
 
     display = PrecisionRecallDisplay.from_cv_results(
@@ -399,7 +389,7 @@ def test_precision_recall_display_name(pyplot, constructor_name, default_label):
     X, y = make_classification(n_classes=2, n_samples=100, random_state=0)
     pos_label = 1
 
-    classifier = LogisticRegression(alpha=1e-4)
+    classifier = LogisticRegression()
     n_cv = 3
     cv_results = cross_validate(
         classifier, X, y, cv=n_cv, return_estimator=True, return_indices=True
@@ -459,10 +449,9 @@ def test_precision_recall_display_name(pyplot, constructor_name, default_label):
 @pytest.mark.parametrize(
     "clf",
     [
-        make_pipeline(StandardScaler(), LogisticRegression(alpha=1e-4)),
+        make_pipeline(StandardScaler(), LogisticRegression()),
         make_pipeline(
-            make_column_transformer((StandardScaler(), [0, 1])),
-            LogisticRegression(alpha=1e-4),
+            make_column_transformer((StandardScaler(), [0, 1])), LogisticRegression()
         ),
     ],
 )
@@ -480,7 +469,7 @@ def test_precision_recall_display_string_labels(pyplot):
     cancer = load_breast_cancer()
     X, y = cancer.data, cancer.target_names[cancer.target]
 
-    lr = make_pipeline(StandardScaler(), LogisticRegression(alpha=1e-4))
+    lr = make_pipeline(StandardScaler(), LogisticRegression())
     n_cv = 3
     cv_results = cross_validate(
         lr, X, y, cv=n_cv, return_estimator=True, return_indices=True
@@ -601,7 +590,7 @@ def test_precision_recall_prevalence_pos_label_reusable(pyplot, constructor_name
 
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
-    lr = LogisticRegression(alpha=1e-4)
+    lr = LogisticRegression()
     n_cv = 3
     cv_results = cross_validate(
         lr, X, y, cv=n_cv, return_estimator=True, return_indices=True
@@ -661,14 +650,10 @@ def test_plot_precision_recall_despine(pyplot, despine, constructor_name):
     # Check that the despine keyword is working correctly
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
-    clf = LogisticRegression(alpha=1e-4).fit(X, y)
+    clf = LogisticRegression().fit(X, y)
+    clf.fit(X, y)
     cv_results = cross_validate(
-        LogisticRegression(alpha=1e-4),
-        X,
-        y,
-        cv=3,
-        return_estimator=True,
-        return_indices=True,
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
     )
 
     y_score = clf.decision_function(X)

@@ -207,9 +207,9 @@ INIT_PARAMS = {
     BernoulliRBM: dict(n_iter=5, batch_size=10),
     Birch: dict(n_clusters=2),
     BisectingKMeans: dict(n_init=2, n_clusters=2, max_iter=5),
-    CalibratedClassifierCV: dict(estimator=LogisticRegression(alpha=1e-4), cv=3),
+    CalibratedClassifierCV: dict(estimator=LogisticRegression(), cv=3),
     CCA: dict(n_components=1, max_iter=5),
-    ClassifierChain: dict(estimator=LogisticRegression(alpha=1e-4), cv=3),
+    ClassifierChain: dict(estimator=LogisticRegression(), cv=3),
     ColumnTransformer: dict(transformers=[("trans1", StandardScaler(), [0, 1])]),
     DictionaryLearning: dict(max_iter=20, transform_algorithm="lasso_lars"),
     # the default strategy prior would output constant predictions and fail
@@ -223,7 +223,7 @@ INIT_PARAMS = {
     FastICA: dict(max_iter=5),
     FeatureAgglomeration: dict(n_clusters=2),
     FeatureUnion: dict(transformer_list=[("trans1", StandardScaler())]),
-    FixedThresholdClassifier: dict(estimator=LogisticRegression(alpha=1e-4)),
+    FixedThresholdClassifier: dict(estimator=LogisticRegression()),
     GammaRegressor: dict(max_iter=5),
     GaussianMixture: dict(n_init=2, max_iter=5),
     # Due to the jl lemma and often very few samples, the number
@@ -245,7 +245,7 @@ INIT_PARAMS = {
         dict(
             cv=2,
             error_score="raise",
-            estimator=LogisticRegression(alpha=1e-4),
+            estimator=LogisticRegression(),
             param_grid={"alpha": [0.1, 1.0]},
         ),
         dict(
@@ -260,7 +260,7 @@ INIT_PARAMS = {
             estimator=Pipeline(
                 steps=[
                     ("pca", PCA()),
-                    ("logisticregression", LogisticRegression(alpha=1e-4)),
+                    ("logisticregression", LogisticRegression()),
                 ]
             ),
             param_grid={"logisticregression__alpha": [0.1, 1.0]},
@@ -278,7 +278,7 @@ INIT_PARAMS = {
         dict(
             cv=2,
             error_score="raise",
-            estimator=LogisticRegression(alpha=1e-4),
+            estimator=LogisticRegression(),
             min_resources="smallest",
             param_grid={"alpha": [0.1, 1.0]},
             random_state=0,
@@ -297,7 +297,7 @@ INIT_PARAMS = {
             estimator=Pipeline(
                 steps=[
                     ("pca", PCA()),
-                    ("logisticregression", LogisticRegression(alpha=1e-4)),
+                    ("logisticregression", LogisticRegression()),
                 ]
             ),
             min_resources="smallest",
@@ -316,7 +316,7 @@ INIT_PARAMS = {
         dict(
             cv=2,
             error_score="raise",
-            estimator=LogisticRegression(alpha=1e-4),
+            estimator=LogisticRegression(),
             param_distributions={"alpha": [0.1, 1.0]},
             random_state=0,
         ),
@@ -333,7 +333,7 @@ INIT_PARAMS = {
             estimator=Pipeline(
                 steps=[
                     ("pca", PCA()),
-                    ("logisticregression", LogisticRegression(alpha=1e-4)),
+                    ("logisticregression", LogisticRegression()),
                 ]
             ),
             param_distributions={"logisticregression__alpha": [0.1, 1.0]},
@@ -366,10 +366,11 @@ INIT_PARAMS = {
     LinearSVR: dict(max_iter=20),
     LocallyLinearEmbedding: dict(max_iter=5),
     # TODO(1.11): remove scoring because it is default now
+    # TODO(1.14): remove alphas=10 because it is default now
     LogisticRegressionCV: dict(
         alphas=10, max_iter=7, cv=3, use_legacy_attributes=False, scoring="neg_log_loss"
     ),
-    LogisticRegression: dict(alpha=1e-4, max_iter=5),
+    LogisticRegression: dict(max_iter=5),
     MDS: dict(n_init=2, max_iter=5),
     # In the case of check_fit2d_1sample, bandwidth is set to None and
     # is thus estimated. De facto it is 0.0 as a single sample is provided
@@ -381,7 +382,7 @@ INIT_PARAMS = {
     MiniBatchSparsePCA: dict(max_iter=5, batch_size=10),
     MLPClassifier: dict(max_iter=100),
     MLPRegressor: dict(max_iter=100),
-    MultiOutputClassifier: dict(estimator=LogisticRegression(alpha=1e-4)),
+    MultiOutputClassifier: dict(estimator=LogisticRegression()),
     MultiOutputRegressor: dict(estimator=Ridge()),
     MultiTaskElasticNetCV: dict(max_iter=5, cv=3),
     MultiTaskElasticNet: dict(max_iter=5),
@@ -405,7 +406,7 @@ INIT_PARAMS = {
         {
             "steps": [
                 ("scaler", StandardScaler()),
-                ("final_estimator", LogisticRegression(alpha=1e-4)),
+                ("final_estimator", LogisticRegression()),
             ]
         },
     ],
@@ -426,7 +427,7 @@ INIT_PARAMS = {
         dict(
             cv=2,
             error_score="raise",
-            estimator=LogisticRegression(alpha=1e-4),
+            estimator=LogisticRegression(),
             param_distributions={"alpha": [0.1, 1.0]},
             random_state=0,
         ),
@@ -443,7 +444,7 @@ INIT_PARAMS = {
             estimator=Pipeline(
                 steps=[
                     ("pca", PCA()),
-                    ("logisticregression", LogisticRegression(alpha=1e-4)),
+                    ("logisticregression", LogisticRegression()),
                 ]
             ),
             param_distributions={"logisticregression__alpha": [0.1, 1.0]},
@@ -457,8 +458,8 @@ INIT_PARAMS = {
     # is the default estimator in `RANSACRegressor` instead of `Ridge`.
     RANSACRegressor: dict(estimator=LinearRegression(), max_trials=10),
     RegressorChain: dict(estimator=Ridge(), cv=3),
-    RFECV: dict(estimator=LogisticRegression(alpha=1e-4), cv=3),
-    RFE: dict(estimator=LogisticRegression(alpha=1e-4)),
+    RFECV: dict(estimator=LogisticRegression(), cv=3),
+    RFE: dict(estimator=LogisticRegression()),
     # be tolerant of noisy datasets (not actually speed)
     SelectFdr: dict(alpha=0.5),
     # Increases coverage because SGDRegressor has partial_fit
@@ -466,8 +467,8 @@ INIT_PARAMS = {
     # SelectKBest has a default of k=10
     # which is more feature than we have in most case.
     SelectKBest: dict(k=1),
-    SelfTrainingClassifier: dict(estimator=LogisticRegression(alpha=1e-4), max_iter=5),
-    SequentialFeatureSelector: dict(estimator=LogisticRegression(alpha=1e-4), cv=3),
+    SelfTrainingClassifier: dict(estimator=LogisticRegression(), max_iter=5),
+    SequentialFeatureSelector: dict(estimator=LogisticRegression(), cv=3),
     SGDClassifier: dict(max_iter=5),
     SGDOneClassSVM: dict(max_iter=5),
     SGDRegressor: dict(max_iter=5),

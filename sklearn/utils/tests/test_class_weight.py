@@ -112,9 +112,9 @@ def test_compute_class_weight_invariance():
     X_ = np.vstack([X] * 2)
     y_ = np.hstack([y] * 2)
     # results should be identical
-    logreg1 = LogisticRegression(alpha=1e-4, class_weight="balanced").fit(X_1, y_1)
-    logreg0 = LogisticRegression(alpha=1e-4, class_weight="balanced").fit(X_0, y_0)
-    logreg = LogisticRegression(alpha=1e-4, class_weight="balanced").fit(X_, y_)
+    logreg1 = LogisticRegression(class_weight="balanced").fit(X_1, y_1)
+    logreg0 = LogisticRegression(class_weight="balanced").fit(X_0, y_0)
+    logreg = LogisticRegression(class_weight="balanced").fit(X_, y_)
     assert_array_almost_equal(logreg1.coef_, logreg0.coef_)
     assert_array_almost_equal(logreg.coef_, logreg0.coef_)
 

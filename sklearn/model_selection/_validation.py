@@ -1625,17 +1625,17 @@ def permutation_test_score(
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.model_selection import permutation_test_score
     >>> X, y = make_classification(random_state=0)
-    >>> estimator = LogisticRegression(alpha=1e-4)
+    >>> estimator = LogisticRegression()
     >>> score, permutation_scores, pvalue = permutation_test_score(
     ...     estimator, X, y, random_state=0
     ... )
     >>> print(f"Original Score: {score:.3f}")
-    Original Score: 0.770
+    Original Score: 0.810
     >>> print(
     ...     f"Permutation Scores: {permutation_scores.mean():.3f} +/- "
     ...     f"{permutation_scores.std():.3f}"
     ... )
-    Permutation Scores: 0.506 +/- 0.060
+    Permutation Scores: 0.505 +/- 0.057
     >>> print(f"P-value: {pvalue:.3f}")
     P-value: 0.010
     """

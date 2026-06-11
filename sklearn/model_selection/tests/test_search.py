@@ -1224,7 +1224,7 @@ def test_random_search_cv_results_multimetric():
             # If True, for multi-metric pass refit='accuracy'
             if refit and isinstance(scoring, tuple):
                 refit = "accuracy"
-            clf = LogisticRegression(alpha=1e-4)
+            clf = LogisticRegression()
             random_search = RandomizedSearchCV(
                 clf,
                 n_iter=n_search_iter,
@@ -2673,7 +2673,7 @@ def test_search_html_repr():
     X, y = make_classification(random_state=42)
 
     pipeline = Pipeline([("scale", StandardScaler()), ("clf", DummyClassifier())])
-    param_grid = {"clf": [DummyClassifier(), LogisticRegression(alpha=1e-4)]}
+    param_grid = {"clf": [DummyClassifier(), LogisticRegression()]}
 
     # Unfitted shows the original pipeline
     search_cv = GridSearchCV(pipeline, param_grid=param_grid, refit=False)
@@ -2798,7 +2798,7 @@ def test_cv_results_dtype_issue_29074():
         "parameter4": ["str1", "str2"],
     }
     grid_search = GridSearchCV(
-        estimator=MetaEstimator(LogisticRegression(alpha=1e-4)),
+        estimator=MetaEstimator(LogisticRegression()),
         param_grid=param_grid,
         cv=3,
     )
@@ -2852,7 +2852,7 @@ def test_cv_results_multi_size_array():
 
     spline_reg_pipe = make_pipeline(
         SplineTransformer(extrapolation="periodic"),
-        LogisticRegression(alpha=1e-4),
+        LogisticRegression(),
     )
 
     n_knots_list = [n_features * i for i in [10, 11, 12]]

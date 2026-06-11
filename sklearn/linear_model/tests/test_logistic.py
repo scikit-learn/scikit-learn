@@ -177,7 +177,7 @@ def test_logistic_glmnet(solver):
     )
 
 
-# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
+# TODO(1.14): remove filterwarnings with deprecation period of C and Cs
 @pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 # TODO(1.11): remove filterwarnings with change of default scoring
 @pytest.mark.filterwarnings("ignore:The default value.*scoring.*:FutureWarning")
@@ -252,7 +252,7 @@ def test_sparsify(coo_container):
     n_samples, n_features = iris.data.shape
     target = iris.target_names[iris.target]
     X = scale(iris.data)
-    clf = LogisticRegression(alpha=1e-4).fit(X, target)
+    clf = LogisticRegression().fit(X, target)
 
     pred_d_d = clf.decision_function(X)
 
@@ -278,7 +278,7 @@ def test_inconsistent_input():
     y_ = np.ones(X_.shape[0])
     y_[0] = 0
 
-    clf = LogisticRegression(alpha=1e-4)
+    clf = LogisticRegression()
 
     # Wrong dimensions for training data
     y_wrong = y_[:-1]
@@ -295,7 +295,7 @@ def test_inconsistent_input():
 
 def test_write_parameters():
     # Test that we can write to coef_ and intercept_
-    clf = LogisticRegression(alpha=1e-4)
+    clf = LogisticRegression()
     clf.fit(X, Y1)
     clf.coef_[:] = 0
     clf.intercept_[:] = 0
@@ -307,7 +307,7 @@ def test_nan():
     # Regression test for Issue #252: fit used to go into an infinite loop.
     Xnan = np.array(X, dtype=np.float64)
     Xnan[0, 1] = np.nan
-    clf = LogisticRegression(alpha=1e-4)
+    clf = LogisticRegression()
 
     with pytest.raises(ValueError, match="Input X contains NaN."):
         clf.fit(Xnan, Y1)
@@ -450,7 +450,7 @@ def test_liblinear_dual_random_state(global_random_seed):
 
 # TODO(1.12): remove deprecated use_legacy_attributes
 @pytest.mark.parametrize("use_legacy_attributes", [True, False])
-# TODO(1.12): remove filterwarnings with deprecation of C_.
+# TODO(1.14): remove filterwarnings with deprecation of C_.
 @pytest.mark.filterwarnings("ignore:.*Cs_ is deprecated.*:FutureWarning")
 def test_logistic_cv(global_random_seed, use_legacy_attributes):
     # test for LogisticRegressionCV object
@@ -562,8 +562,6 @@ def test_logistic_cv_mock_scorer():
     assert mock_scorer.calls == 1
 
 
-# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
-@pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "scoring, multiclass_agg_list",
     [
@@ -717,7 +715,7 @@ def test_multinomial_cv_iris(use_legacy_attributes):
 
     # Test that for the iris data multinomial gives a better accuracy than OvR
     clf_ovr = GridSearchCV(
-        OneVsRestClassifier(LogisticRegression(alpha=1e-4, solver="newton-cholesky")),
+        OneVsRestClassifier(LogisticRegression(solver="newton-cholesky")),
         {"estimator__alpha": np.logspace(-7, 2, num=10)},
         scoring="neg_log_loss",
     ).fit(X, y)
@@ -1182,9 +1180,7 @@ def test_logistic_regression_sample_weights(problem, solver, global_random_seed)
 
     if problem == "single":
         LR = LogisticRegression
-        kw_weighted.update(dict(alpha=1e-4))
-        kw_repeated.update(dict(alpha=1e-4))
-    elif problem == "cv":
+    if problem == "cv":
         LR = LogisticRegressionCV
         # We weight the first fold 2 times more.
         groups_weighted = np.concatenate(
@@ -1237,8 +1233,6 @@ def test_logistic_regression_solver_class_weights(solver, global_random_seed):
         random_state=global_random_seed,
     )
 
-    sample_weight = y + 1
-
     kw_weighted = {
         "random_state": global_random_seed,
         "fit_intercept": False,
@@ -1251,6 +1245,9 @@ def test_logistic_regression_solver_class_weights(solver, global_random_seed):
     )
     clf_cw_12.fit(X, y)
     clf_sw_12 = LogisticRegression(solver=solver, **kw_weighted)
+
+    sample_weight = np.ones_like(y)
+    sample_weight[y == 1] = 2
     clf_sw_12.fit(X, y, sample_weight=sample_weight)
     assert_allclose(clf_cw_12.coef_, clf_sw_12.coef_, atol=1e-6)
 
@@ -1992,7 +1989,7 @@ def test_LogisticRegressionCV_GridSearchCV_elastic_net(n_classes):
     assert gs.best_params_["alpha"] == lrcv.alpha_
 
 
-# TODO(1.12): remove filterwarnings with deprecation of C_.
+# TODO(1.14): remove filterwarnings with deprecation of C_.
 @pytest.mark.filterwarnings("ignore:.*C_ is deprecated.*:FutureWarning")
 @pytest.mark.parametrize("l1_ratios", ((0,), np.linspace(0, 1, 2)))
 @pytest.mark.parametrize("n_classes", (2, 3))
@@ -2031,7 +2028,7 @@ def test_LogisticRegressionCV_no_refit(l1_ratios, n_classes):
         assert_allclose(lrcv.l1_ratio_, lrcv.l1_ratio_[0])
 
 
-# TODO(1.12): remove filterwarnings with deprecation of C_.
+# TODO(1.14): remove filterwarnings with deprecation of C_.
 @pytest.mark.filterwarnings("ignore:.*C_ is deprecated.*:FutureWarning")
 @pytest.mark.parametrize("n_classes", (2, 3))
 def test_LogisticRegressionCV_elasticnet_attribute_shapes(n_classes):
@@ -2563,7 +2560,7 @@ def test_single_feature_newton_cg():
     LogisticRegression(solver="newton-cg", fit_intercept=True, alpha=1e-4).fit(X, y)
 
 
-# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
+# TODO(1.14): remove filterwarnings with deprecation period of C and Cs
 @pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 def test_liblinear_not_stuck(global_random_seed):
     # Non-regression https://github.com/scikit-learn/scikit-learn/issues/18264
@@ -2754,7 +2751,7 @@ def test_newton_cholesky_fallback_to_lbfgs():
     assert n_iter_nc_limited == lr_nc_limited.max_iter - 1
 
 
-# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
+# TODO(1.14): remove filterwarnings with deprecation period of C and Cs
 @pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 # TODO(1.11): remove filterwarnings with change of default scoring
 @pytest.mark.filterwarnings("ignore:The default value.*scoring.*:FutureWarning")
@@ -2768,7 +2765,7 @@ def test_liblinear_multiclass_raises(Estimator):
         Estimator(solver="liblinear").fit(iris.data, iris.target)
 
 
-# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
+# TODO(1.14): remove filterwarnings with deprecation period of C and Cs
 @pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 # TODO(1.10): remove after deprecation cycle of penalty.
 @pytest.mark.filterwarnings("ignore:The default value.*scoring.*:FutureWarning")
@@ -2999,20 +2996,45 @@ def test_get_default_scorer():
     assert lr._get_scorer()._score_func.__name__ == "accuracy_score"
 
 
-# TODO(1.12): remove after deprecation cycle.
+# TODO(1.14): remove filterwarnings with deprecation period of C and Cs
+@pytest.mark.parametrize("n_classes", [2, 3])
+@pytest.mark.parametrize("sample_weight", [False, True])
+@pytest.mark.parametrize("solver", SOLVERS)
+def test_equivalence_of_default_C_and_alpha(n_classes, sample_weight, solver):
+    """Test that the default values of old C and new alpha give same results."""
+    if n_classes > 2 and solver == "liblinear":
+        pytest.skip("Solver does not support multiclass.")
+    X, y = make_classification(
+        n_classes=n_classes,
+        n_samples=300,
+        n_features=5,
+        n_informative=4,
+        n_redundant=0,
+        random_state=42,
+    )
+    params = dict(solver=solver, tol=1e-9, max_iter=2000, random_state=44)
+    if sample_weight:
+        sample_weight = np.arange(X.shape[0]) % 3
+    else:
+        sample_weight = None
+
+    clf_C = LogisticRegression(C=1.0, **params).fit(X, y, sample_weight)
+    # alpha="1/n_samples"
+    clf_alpha = LogisticRegression(**params).fit(X, y, sample_weight)
+
+    assert_allclose(clf_C.coef_, clf_alpha.coef_)
+
+
+# TODO(1.14): remove after deprecation cycle.
 def test_C_deprecated():
     """Check that C in LogisticRegression is deprecated."""
     X, y = make_classification(n_classes=2, n_samples=20, n_informative=6)
 
-    lr = LogisticRegression()
-    msg = "'C' was deprecated"
-    with pytest.warns(FutureWarning, match=msg):
-        lr.fit(X, y)
-
-    lr = LogisticRegression(C=1)
-    msg = "You are using 'C'. 'C' was deprecated"
-    with pytest.warns(FutureWarning, match=msg):
-        lr.fit(X, y)
+    # TODO(1.12): uncomment code, we now have a deprecation warning.
+    # lr = LogisticRegression(C=1.0)
+    # msg = "'C' was deprecated"
+    # with pytest.warns(FutureWarning, match=msg):
+    #     lr.fit(X, y)
 
     lr = LogisticRegression(C=1, alpha=1)
     msg = "You must set either 'alpha' or the deprecated 'C'"
@@ -3020,7 +3042,7 @@ def test_C_deprecated():
         lr.fit(X, y)
 
 
-# TODO(1.12): remove after deprecation cycle.
+# TODO(1.14): remove after deprecation cycle of Cs.
 def test_Cs_deprecated():
     """Check that Cs in LogisticRegressionCV is deprecated."""
     X, y = make_classification(n_classes=2, n_samples=20, n_informative=6)

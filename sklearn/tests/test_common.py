@@ -204,8 +204,6 @@ def test_all_tests_are_importable():
     )
 
 
-# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
-@pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 def test_class_support_removed():
     # Make sure passing classes to check_estimator or parametrize_with_checks
     # raises an error
@@ -242,7 +240,7 @@ def _estimators_that_predict_in_fit():
 column_name_estimators = list(
     chain(
         _tested_estimators(),
-        [make_pipeline(LogisticRegression(alpha=1e-4))],
+        [make_pipeline(LogisticRegression())],
         _estimators_that_predict_in_fit(),
     )
 )

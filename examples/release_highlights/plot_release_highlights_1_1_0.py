@@ -94,7 +94,7 @@ preprocessor = ColumnTransformer(
     ],
     verbose_feature_names_out=False,
 )
-log_reg = make_pipeline(preprocessor, SelectKBest(k=7), LogisticRegression(alpha=1e-4))
+log_reg = make_pipeline(preprocessor, SelectKBest(k=7), LogisticRegression())
 log_reg.fit(X, y)
 
 

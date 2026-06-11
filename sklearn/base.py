@@ -83,7 +83,7 @@ def clone(estimator, *, safe=True):
     >>> from sklearn.linear_model import LogisticRegression
     >>> X = [[-1, 0], [0, 1], [0, -1], [1, 0]]
     >>> y = [0, 0, 1, 1]
-    >>> classifier = LogisticRegression(alpha=1e-4).fit(X, y)
+    >>> classifier = LogisticRegression().fit(X, y)
     >>> cloned_classifier = clone(classifier)
     >>> hasattr(classifier, "classes_")
     True
@@ -1211,14 +1211,14 @@ class MetaEstimatorMixin:
     ...         self.estimator = estimator
     ...     def fit(self, X, y=None):
     ...         if self.estimator is None:
-    ...             self.estimator_ = LogisticRegression(alpha=1e-4)
+    ...             self.estimator_ = LogisticRegression()
     ...         else:
     ...             self.estimator_ = self.estimator
     ...         return self
     >>> X, y = load_iris(return_X_y=True)
     >>> estimator = MyEstimator().fit(X, y)
     >>> estimator.estimator_
-    LogisticRegression(alpha=0.0001)
+    LogisticRegression()
     """
 
 

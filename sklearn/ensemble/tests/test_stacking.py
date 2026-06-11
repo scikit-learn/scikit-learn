@@ -64,8 +64,6 @@ X_multilabel, y_multilabel = make_multilabel_classification(
 X_binary, y_binary = make_classification(n_classes=2, random_state=42)
 
 
-# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
-@pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "cv", [3, StratifiedKFold(n_splits=3, shuffle=True, random_state=42)]
 )
@@ -79,7 +77,7 @@ def test_stacking_classifier_iris(cv, final_estimator, passthrough):
     X_train, X_test, y_train, y_test = train_test_split(
         scale(X_iris), y_iris, stratify=y_iris, random_state=42
     )
-    estimators = [("lr", LogisticRegression(alpha=1e-4)), ("svc", LinearSVC())]
+    estimators = [("lr", LogisticRegression()), ("svc", LinearSVC())]
     clf = StackingClassifier(
         estimators=estimators,
         final_estimator=final_estimator,
@@ -112,8 +110,6 @@ def test_stacking_classifier_iris(cv, final_estimator, passthrough):
         assert_allclose(X_test, X_trans[:, -4:])
 
 
-# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
-@pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 def test_stacking_classifier_drop_column_binary_classification():
     # check that a column is dropped in binary classification
     X, y = load_breast_cancer(return_X_y=True)
@@ -123,7 +119,7 @@ def test_stacking_classifier_drop_column_binary_classification():
 
     # both classifiers implement 'predict_proba' and will both drop one column
     estimators = [
-        ("lr", LogisticRegression(alpha=1e-4)),
+        ("lr", LogisticRegression()),
         ("rf", RandomForestClassifier(random_state=42)),
     ]
     clf = StackingClassifier(estimators=estimators, cv=3)
@@ -133,7 +129,7 @@ def test_stacking_classifier_drop_column_binary_classification():
     assert X_trans.shape[1] == 2
 
     # LinearSVC does not implement 'predict_proba' and will not drop one column
-    estimators = [("lr", LogisticRegression(alpha=1e-4)), ("svc", LinearSVC())]
+    estimators = [("lr", LogisticRegression()), ("svc", LinearSVC())]
     clf.set_params(estimators=estimators)
 
     clf.fit(X_train, y_train)
@@ -258,7 +254,7 @@ def test_stacking_classifier_sparse_passthrough(sparse_container):
     X_train, X_test, y_train, _ = train_test_split(
         sparse_container(scale(X_iris)), y_iris, random_state=42
     )
-    estimators = [("lr", LogisticRegression(alpha=1e-4)), ("svc", LinearSVC())]
+    estimators = [("lr", LogisticRegression()), ("svc", LinearSVC())]
     rf = RandomForestClassifier(n_estimators=10, random_state=42)
     clf = StackingClassifier(
         estimators=estimators, final_estimator=rf, cv=5, passthrough=True
@@ -270,8 +266,6 @@ def test_stacking_classifier_sparse_passthrough(sparse_container):
     assert X_test.format == X_trans.format
 
 
-# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
-@pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 def test_stacking_classifier_drop_binary_prob():
     # check that classifier will drop one of the probability column for
     # binary classification problem
@@ -279,10 +273,7 @@ def test_stacking_classifier_drop_binary_prob():
     # Select only the 2 first classes
     X_, y_ = scale(X_iris[:100]), y_iris[:100]
 
-    estimators = [
-        ("lr", LogisticRegression(alpha=1e-4)),
-        ("rf", RandomForestClassifier()),
-    ]
+    estimators = [("lr", LogisticRegression()), ("rf", RandomForestClassifier())]
     clf = StackingClassifier(estimators=estimators)
     clf.fit(X_, y_)
     X_meta = clf.transform(X_)
@@ -304,8 +295,6 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
         return self.clf.fit(X, y)
 
 
-# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
-@pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "y, params, type_err, msg_err",
     [
@@ -314,7 +303,7 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
             y_iris,
             {
                 "estimators": [
-                    ("lr", LogisticRegression(alpha=1e-4)),
+                    ("lr", LogisticRegression()),
                     ("svm", SVC(max_iter=50_000)),
                 ],
                 "stack_method": "predict_proba",
@@ -326,7 +315,7 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
             y_iris,
             {
                 "estimators": [
-                    ("lr", LogisticRegression(alpha=1e-4)),
+                    ("lr", LogisticRegression()),
                     ("cor", NoWeightClassifier()),
                 ]
             },
@@ -337,7 +326,7 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
             y_iris,
             {
                 "estimators": [
-                    ("lr", LogisticRegression(alpha=1e-4)),
+                    ("lr", LogisticRegression()),
                     ("cor", LinearSVC(max_iter=50_000)),
                 ],
                 "final_estimator": NoWeightClassifier(),
@@ -383,15 +372,13 @@ def test_stacking_regressor_error(y, params, type_err, msg_err):
         reg.fit(scale(X_diabetes), y, sample_weight=np.ones(X_diabetes.shape[0]))
 
 
-# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
-@pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "estimator, X, y",
     [
         (
             StackingClassifier(
                 estimators=[
-                    ("first", LogisticRegression(alpha=1e-4)),
+                    ("first", LogisticRegression(random_state=0)),
                     ("second", LinearSVC(random_state=0)),
                 ]
             ),
@@ -431,13 +418,11 @@ def test_stacking_randomness(estimator, X, y):
     )
 
 
-# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
-@pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 def test_stacking_classifier_stratify_default():
     # check that we stratify the classes for the default CV
     clf = StackingClassifier(
         estimators=[
-            ("lr", LogisticRegression(alpha=1e-4, max_iter=10_000)),
+            ("lr", LogisticRegression(max_iter=10_000)),
             ("svm", LinearSVC(max_iter=10_000)),
         ]
     )
@@ -452,10 +437,10 @@ def test_stacking_classifier_stratify_default():
         (
             StackingClassifier(
                 estimators=[
-                    ("lr", LogisticRegression(alpha=1e-4)),
+                    ("lr", LogisticRegression()),
                     ("svm", LinearSVC(random_state=42)),
                 ],
-                final_estimator=LogisticRegression(alpha=1e-4),
+                final_estimator=LogisticRegression(),
                 cv=KFold(shuffle=True, random_state=42),
             ),
             *load_breast_cancer(return_X_y=True),
@@ -521,10 +506,10 @@ def test_stacking_classifier_sample_weight_fit_param():
         (
             StackingClassifier(
                 estimators=[
-                    ("lr", LogisticRegression(alpha=1e-4)),
+                    ("lr", LogisticRegression()),
                     ("svm", LinearSVC(random_state=42)),
                 ],
-                final_estimator=LogisticRegression(alpha=1e-4),
+                final_estimator=LogisticRegression(),
             ),
             *load_breast_cancer(return_X_y=True),
         ),
@@ -574,7 +559,7 @@ def test_stacking_cv_influence(stacker, X, y):
             StackingClassifier,
             DummyClassifier,
             "predict_proba",
-            LogisticRegression(alpha=1e-4),
+            LogisticRegression(random_state=42),
             X_iris,
             y_iris,
         ),
@@ -623,8 +608,6 @@ def test_stacking_prefit(Stacker, Estimator, stack_method, final_estimator, X, y
         stack_func_mock.assert_called_with(X_train2)
 
 
-# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
-@pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "stacker, X, y",
     [
@@ -656,8 +639,6 @@ def test_stacking_prefit_error(stacker, X, y):
         stacker.fit(X, y)
 
 
-# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
-@pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "make_dataset, Stacking, Estimator",
     [
@@ -801,15 +782,13 @@ def test_stacking_classifier_multilabel_auto_predict(stack_method, passthrough):
     assert_array_equal(clf.classes_, [np.array([0, 1])] * n_outputs)
 
 
-# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
-@pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "stacker, feature_names, X, y, expected_names",
     [
         (
             StackingClassifier(
                 estimators=[
-                    ("lr", LogisticRegression(alpha=1e-4)),
+                    ("lr", LogisticRegression(random_state=0)),
                     ("svm", LinearSVC(random_state=0)),
                 ]
             ),
@@ -828,7 +807,7 @@ def test_stacking_classifier_multilabel_auto_predict(stack_method, passthrough):
         (
             StackingClassifier(
                 estimators=[
-                    ("lr", LogisticRegression(alpha=1e-4)),
+                    ("lr", LogisticRegression(random_state=0)),
                     ("other", "drop"),
                     ("svm", LinearSVC(random_state=0)),
                 ]
@@ -884,10 +863,7 @@ def test_stacking_classifier_base_regressor():
     X_train, X_test, y_train, y_test = train_test_split(
         scale(X_iris), y_iris, stratify=y_iris, random_state=42
     )
-    clf = StackingClassifier(
-        estimators=[("ridge", Ridge())],
-        final_estimator=LogisticRegression(alpha=1e-3),
-    )
+    clf = StackingClassifier(estimators=[("ridge", Ridge())])
     clf.fit(X_train, y_train)
     clf.predict(X_test)
     clf.predict_proba(X_test)
@@ -905,7 +881,7 @@ def test_stacking_final_estimator_attribute_error():
     X, y = make_classification(random_state=42)
 
     estimators = [
-        ("lr", LogisticRegression(alpha=1e-4)),
+        ("lr", LogisticRegression()),
         ("rf", RandomForestClassifier(n_estimators=2, random_state=42)),
     ]
     # RandomForestClassifier does not implement 'decision_function' and should raise
@@ -921,16 +897,6 @@ def test_stacking_final_estimator_attribute_error():
         clf.fit(X, y).decision_function(X)
     assert isinstance(exec_info.value.__cause__, AttributeError)
     assert inner_msg in str(exec_info.value.__cause__)
-
-
-# TODO(1.11): remove with the deprecation of C in LogisticRegression
-def test_stacking_classifier_warning_default_C_deprecated():
-    clf = StackingClassifier(estimators=[("logreg", LogisticRegression(alpha=1e-4))])
-    with pytest.warns(FutureWarning) as record:
-        clf.fit(scale(X_iris), y_iris)
-    assert len(record) == 2
-    assert record[0].message.args[0].startswith("The default 'final_estimator' is")
-    assert record[1].message.args[0].startswith("'C' was deprecated")
 
 
 # Metadata Routing Tests
@@ -1026,8 +992,6 @@ def test_metadata_routing_for_stacking_estimators(Estimator, Child, prop, prop_v
     )
 
 
-# TODO(1.12): remove filterwarnings with deprecation period of C and Cs
-@pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "Estimator, Child",
     [
