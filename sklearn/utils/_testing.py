@@ -29,15 +29,18 @@ from subprocess import STDOUT, CalledProcessError, TimeoutExpired, check_output
 import joblib
 import numpy as np
 import scipy as sp
-from numpy.testing import assert_allclose as np_assert_allclose
 from numpy.testing import (
     assert_almost_equal,
     assert_array_almost_equal,
-    assert_array_equal,
-    assert_array_less,
+    # assert_array_equal,
+    # assert_array_less,
 )
 
 from sklearn import __file__ as sklearn_path
+from sklearn.externals.array_api_compat import get_namespace
+from sklearn.externals.array_api_extra.testing import assert_close as xp_assert_close
+from sklearn.externals.array_api_extra.testing import assert_equal as xp_assert_equal
+from sklearn.externals.array_api_extra.testing import assert_less as xp_assert_less
 from sklearn.utils import (
     ClassifierTags,
     RegressorTags,
@@ -171,8 +174,67 @@ class _IgnoreWarnings:
         self.log[:] = []
 
 
+def assert_array_less(x, y, err_msg="", check_shape=False, check_dtype=False):
+    dtypes = []
+    if hasattr(x, "__array_namespace__"):
+        xp = get_namespace(x)
+    elif hasattr(y, "__array_namespace__"):
+        xp = get_namespace(y)
+    else:
+        xp = np
+    x, y = xp.asarray(x), xp.asarray(y)
+    dtypes = [x.dtype, y.dtype]
+
+    # least_precise_dtype = _max_precision_float_dtype(dtypes)
+
+    # if least_precise_dtype is not None:
+    #     x = x.astype(least_precise_dtype)
+    #     y = y.astype(least_precise_dtype)
+
+    xp_assert_less(
+        x, y, err_msg=err_msg, check_shape=check_shape, check_dtype=check_dtype
+    )
+
+
+def assert_array_equal(
+    actual, desired, err_msg="", check_shape=False, check_dtype=False
+):
+    dtypes = []
+
+    if hasattr(actual, "__array_namespace__"):
+        xp = get_namespace(actual)
+    elif hasattr(desired, "__array_namespace__"):
+        xp = get_namespace(desired)
+    else:
+        xp = np
+    actual, desired = xp.asarray(actual), xp.asarray(desired)
+    dtypes = [actual.dtype, desired.dtype]
+
+    # least_precise_dtype = _max_precision_float_dtype(dtypes)
+
+    # if least_precise_dtype is not None:
+    #     actual = actual.astype(least_precise_dtype)
+    #     desired = desired.astype(least_precise_dtype)
+
+    xp_assert_equal(
+        actual,
+        desired,
+        err_msg=err_msg,
+        check_shape=check_shape,
+        check_dtype=check_dtype,
+    )
+
+
 def assert_allclose(
-    actual, desired, rtol=None, atol=0.0, equal_nan=True, err_msg="", verbose=True
+    actual,
+    desired,
+    rtol=None,
+    atol=0.0,
+    equal_nan=True,
+    err_msg="",
+    verbose=True,
+    check_shape: bool = False,
+    check_dtype: bool = False,
 ):
     """dtype-aware variant of numpy.testing.assert_allclose
 
@@ -225,15 +287,23 @@ def assert_allclose(
     >>> assert_allclose(a, 1e-5)
     """
     dtypes = []
-
-    actual, desired = np.asanyarray(actual), np.asanyarray(desired)
+    if hasattr(actual, "__array_namespace__"):
+        xp = get_namespace(actual)
+        actual, desired = xp.asarray(actual), xp.asarray(desired)
+    elif hasattr(desired, "__array_namespace__"):
+        xp = get_namespace(desired)
+        actual, desired = xp.asarray(actual), xp.asarray(desired)
+    else:
+        xp = np
+        actual, desired = np.asanyarray(actual), np.asanyarray(desired)
+    # actual, desired = xp.asarray(actual), xp.asarray(desired)
     dtypes = [actual.dtype, desired.dtype]
 
     if rtol is None:
         rtols = [1e-4 if dtype == np.float32 else 1e-7 for dtype in dtypes]
         rtol = max(rtols)
 
-    np_assert_allclose(
+    xp_assert_close(
         actual,
         desired,
         rtol=rtol,
@@ -241,6 +311,8 @@ def assert_allclose(
         equal_nan=equal_nan,
         err_msg=err_msg,
         verbose=verbose,
+        check_shape=check_shape,
+        check_dtype=check_dtype,
     )
 
 
@@ -274,9 +346,11 @@ def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-9, err_msg=""):
         y = y.tocsr()
         x.sum_duplicates()
         y.sum_duplicates()
-        assert_array_equal(x.indices, y.indices, err_msg=err_msg)
-        assert_array_equal(x.indptr, y.indptr, err_msg=err_msg)
-        assert_allclose(x.data, y.data, rtol=rtol, atol=atol, err_msg=err_msg)
+        assert_array_equal(x.indices, y.indices, err_msg=err_msg, check_shape=False)
+        assert_array_equal(x.indptr, y.indptr, err_msg=err_msg, check_shape=False)
+        assert_allclose(
+            x.data, y.data, rtol=rtol, atol=atol, err_msg=err_msg, check_shape=False
+        )
     elif not sp.sparse.issparse(x) and not sp.sparse.issparse(y):
         # both dense
         assert_allclose(x, y, rtol=rtol, atol=atol, err_msg=err_msg)

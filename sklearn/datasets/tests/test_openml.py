@@ -1462,8 +1462,8 @@ def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
         as_frame=False,
         parser="liac-arff",
     )
-    np.testing.assert_array_equal(X_fetched, X_cached)
-    np.testing.assert_array_equal(y_fetched, y_cached)
+    assert_array_equal(X_fetched, X_cached)
+    assert_array_equal(y_fetched, y_cached)
 
 
 @pytest.mark.parametrize(

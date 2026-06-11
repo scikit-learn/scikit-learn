@@ -616,7 +616,7 @@ def test_sparse_coder_estimator():
     Xr = coder.inverse_transform(code)
     assert not np.all(code == 0)
     assert np.sqrt(np.sum((np.dot(code, V) - X) ** 2)) < 0.1
-    np.testing.assert_allclose(Xr, np.dot(code, V))
+    assert_allclose(Xr, np.dot(code, V))
 
 
 def test_sparse_coder_estimator_clone():
@@ -629,10 +629,10 @@ def test_sparse_coder_estimator_clone():
     )
     cloned = clone(coder)
     assert id(cloned) != id(coder)
-    np.testing.assert_allclose(cloned.dictionary, coder.dictionary)
+    assert_allclose(cloned.dictionary, coder.dictionary)
     assert id(cloned.dictionary) != id(coder.dictionary)
     data = np.random.rand(n_samples, n_features).astype(np.float32)
-    np.testing.assert_allclose(cloned.transform(data), coder.transform(data))
+    assert_allclose(cloned.transform(data), coder.transform(data))
 
 
 # TODO: remove mark once loky bug is fixed:

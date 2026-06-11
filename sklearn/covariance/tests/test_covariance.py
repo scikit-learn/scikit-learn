@@ -203,8 +203,8 @@ def test_ledoit_wolf():
     lw = LedoitWolf()
     lw.fit(X_1d)
     assert_allclose(
-        X_1d.var(ddof=0),
         _ledoit_wolf(X=X_1d, assume_centered=False, block_size=10000)[0],
+        X_1d.var(ddof=0),
     )
     lw_cov_from_mle, lw_shrinkage_from_mle = ledoit_wolf(X_1d)
     assert_array_almost_equal(lw_cov_from_mle, lw.covariance_, 4)

@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose
 
 from sklearn import config_context
 from sklearn._loss.link import (
@@ -15,7 +14,7 @@ from sklearn.utils._array_api import (
     move_to,
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._testing import _array_api_for_tests
+from sklearn.utils._testing import _array_api_for_tests, assert_allclose
 
 LINK_FUNCTIONS = list(_LINKS.values())
 

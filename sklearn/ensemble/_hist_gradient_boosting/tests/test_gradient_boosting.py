@@ -11,7 +11,6 @@ import joblib
 import numpy as np
 import pytest
 from joblib.numpy_pickle import NumpyPickler
-from numpy.testing import assert_allclose, assert_array_equal
 
 import sklearn.ensemble._hist_gradient_boosting.gradient_boosting as hgb_module
 from sklearn._loss.loss import (
@@ -39,7 +38,11 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler, OneHotEncoder
 from sklearn.utils import check_random_state, shuffle
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
-from sklearn.utils._testing import _convert_container
+from sklearn.utils._testing import (
+    _convert_container,
+    assert_allclose,
+    assert_array_equal,
+)
 from sklearn.utils.fixes import _IS_32BIT
 
 n_threads = _openmp_effective_n_threads()
@@ -635,7 +638,7 @@ def test_infinite_values():
 
     gbdt = HistGradientBoostingRegressor(min_samples_leaf=1)
     gbdt.fit(X, y)
-    np.testing.assert_allclose(gbdt.predict(X), y, atol=1e-4)
+    assert_allclose(gbdt.predict(X), y, atol=1e-4)
 
 
 def test_consistent_lengths():

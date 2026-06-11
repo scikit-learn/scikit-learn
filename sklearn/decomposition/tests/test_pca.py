@@ -4,7 +4,6 @@ import warnings
 
 import numpy as np
 import pytest
-from numpy.testing import assert_array_equal
 
 from sklearn import config_context, datasets
 from sklearn.base import clone
@@ -18,7 +17,11 @@ from sklearn.utils._array_api import (
 )
 from sklearn.utils._array_api import device as array_device
 from sklearn.utils._test_common.instance_generator import _get_check_estimator_ids
-from sklearn.utils._testing import _array_api_for_tests, assert_allclose
+from sklearn.utils._testing import (
+    _array_api_for_tests,
+    assert_allclose,
+    assert_array_equal,
+)
 from sklearn.utils.estimator_checks import (
     check_array_api_input_and_values,
 )
@@ -784,7 +787,9 @@ def check_pca_float_dtype_preservation(svd_solver, seed):
     # The atol and rtol are set such that the test passes for all random seeds
     # on all supported platforms on our CI and conda-forge with the default
     # random seed.
-    assert_allclose(pca_64.components_, pca_32.components_, rtol=1e-3, atol=1e-3)
+    assert_allclose(
+        pca_64.components_, pca_32.components_, rtol=1e-3, atol=1e-3, check_dtype=False
+    )
 
 
 def check_pca_int_dtype_upcast_to_double(svd_solver):
@@ -801,7 +806,9 @@ def check_pca_int_dtype_upcast_to_double(svd_solver):
     assert pca_64.transform(X_i64).dtype == np.float64
     assert pca_32.transform(X_i32).dtype == np.float64
 
-    assert_allclose(pca_64.components_, pca_32.components_, rtol=1e-4)
+    assert_allclose(
+        pca_64.components_, pca_32.components_, rtol=1e-4, check_dtype=False
+    )
 
 
 def test_pca_n_components_mostly_explained_variance_ratio():
@@ -932,7 +939,7 @@ def test_variance_correctness(copy):
     pca = PCA().fit(X)
     pca_var = pca.explained_variance_ / pca.explained_variance_ratio_
     true_var = np.var(X, ddof=1, axis=0).sum()
-    np.testing.assert_allclose(pca_var, true_var)
+    assert_allclose(pca_var, true_var)
 
 
 def check_array_api_get_precision(

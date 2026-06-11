@@ -5,7 +5,6 @@ import re
 
 import numpy as np
 import pytest
-from numpy.testing import assert_array_equal
 
 from sklearn import config_context
 from sklearn.base import (
@@ -25,7 +24,7 @@ from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import RobustScaler, StandardScaler
-from sklearn.utils._testing import set_random_state
+from sklearn.utils._testing import assert_array_equal, set_random_state
 from sklearn.utils.validation import check_is_fitted
 
 

@@ -3,7 +3,6 @@
 
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose
 
 from sklearn import config_context
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
@@ -60,6 +59,7 @@ from sklearn.utils._tags import get_tags
 from sklearn.utils._testing import (
     _array_api_for_tests,
     _convert_container,
+    assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,

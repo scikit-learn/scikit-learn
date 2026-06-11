@@ -1656,7 +1656,7 @@ def test_max_samples_boundary_classifiers(name):
     )
     ms_None_proba = ms_None_model.fit(X_train, y_train).predict_proba(X_test)
 
-    np.testing.assert_allclose(ms_1_proba, ms_None_proba)
+    assert_allclose(ms_1_proba, ms_None_proba)
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)

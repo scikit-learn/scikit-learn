@@ -568,7 +568,7 @@ def test_shuffle_kfold_stratifiedkfold_reproducibility(kfold):
             # Ensure that the splits for data are not same
             # when random state is not set
             with pytest.raises(AssertionError):
-                np.testing.assert_array_equal(test_a, test_b)
+                assert_array_equal(test_a, test_b)
 
 
 def test_shuffle_stratifiedkfold():

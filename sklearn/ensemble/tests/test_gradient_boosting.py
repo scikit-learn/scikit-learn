@@ -7,7 +7,6 @@ import warnings
 
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose
 
 from sklearn import datasets
 from sklearn.base import clone
@@ -27,6 +26,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils._mocking import NoSampleWeightWrapper
 from sklearn.utils._param_validation import InvalidParameterError
 from sklearn.utils._testing import (
+    assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
     skip_if_32bit,

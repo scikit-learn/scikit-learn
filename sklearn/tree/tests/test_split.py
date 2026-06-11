@@ -4,7 +4,6 @@ from operator import itemgetter
 
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose
 from scipy.sparse import csc_array
 from scipy.special import xlogy
 
@@ -15,6 +14,7 @@ from sklearn.tree import (
     ExtraTreeClassifier,
     ExtraTreeRegressor,
 )
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils.stats import _weighted_percentile
 
 CLF_CRITERIONS = ("gini", "log_loss")
@@ -192,8 +192,8 @@ def test_split_impurity(Tree, criterion, sparse, missing_values, global_random_s
         # Check root's impurity:
         # The root is 0, left child is 1 and right child is 2.
         root_val, root_impurity = naive_splitter.compute_node_value_and_impurity(y, w)
-        assert_allclose(root_impurity, actual_impurity[0], atol=1e-12)
-        assert_allclose(root_val, actual_value[0], atol=1e-12)
+        assert_allclose(actual_impurity[0], root_impurity, atol=1e-12)
+        assert_allclose(actual_value[0], root_val, atol=1e-12)
 
         if tree.tree_.node_count == 1:
             # if no splits was made assert that either:
@@ -213,10 +213,10 @@ def test_split_impurity(Tree, criterion, sparse, missing_values, global_random_s
         }
         nodes = naive_splitter.compute_split_nodes(X_dense, y, w, **actual_split)
         (left_val, left_impurity), (right_val, right_impurity) = nodes
-        assert_allclose(left_impurity, actual_impurity[1], atol=1e-12)
-        assert_allclose(right_impurity, actual_impurity[2], atol=1e-12)
-        assert_allclose(left_val, actual_value[1], atol=1e-12)
-        assert_allclose(right_val, actual_value[2], atol=1e-12)
+        assert_allclose(actual_impurity[1], left_impurity, atol=1e-12)
+        assert_allclose(actual_impurity[2], right_impurity, atol=1e-12)
+        assert_allclose(actual_value[1], left_val, atol=1e-12)
+        assert_allclose(actual_value[2], right_val, atol=1e-12)
 
         if "Extra" in Tree.__name__:
             # The remainder of the test checks for optimality of the found split.
