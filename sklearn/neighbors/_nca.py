@@ -383,8 +383,9 @@ class NeighborhoodComponentsAnalysis(
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            The training samples.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The training samples. Sparse matrices are only supported for
+            ``init`` in ``['pca', 'random', 'identity']``.
 
         y : array-like of shape (n_samples,)
             The training labels.
