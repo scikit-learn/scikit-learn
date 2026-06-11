@@ -79,8 +79,8 @@ def main(wheel_dirname):
     print(f"Copying {VCOMP140_SRC_PATH} to {target_folder}.")
     shutil.copy2(VCOMP140_SRC_PATH, target_folder)
 
-    print(f"Copying {MSVCP140_SRC_PATH} to {target_folder}.")
-    shutil.copy2(MSVCP140_SRC_PATH, target_folder)
+    # print(f"Copying {MSVCP140_SRC_PATH} to {target_folder}.")
+    # shutil.copy2(MSVCP140_SRC_PATH, target_folder)
 
     # Generate the _distributor_init file in the source tree
     print("Generating the '_distributor_init.py' file.")
