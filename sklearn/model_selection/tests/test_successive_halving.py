@@ -113,15 +113,8 @@ def test_nan_handling(HalvingSearch, fail_at):
     # estimators that failed during fit/predict should never be selected as the
     # best candidate
     assert not search.best_params_[f"fail_{fail_at}"]
-
-    # `all_cv_results_` keeps the failing candidates (with NaN scores) but does
-    # not expose a ranking: ranking across iterations using a varying number of
-    # resources is not meaningful.
     assert "rank_test_score" not in search.all_cv_results_
     assert np.isnan(search.all_cv_results_["mean_test_score"]).any()
-
-    # the ranking is only available in `cv_results_` (the last iteration) where
-    # all candidates were evaluated with the same amount of resources.
     assert "rank_test_score" in search.cv_results_
 
 
