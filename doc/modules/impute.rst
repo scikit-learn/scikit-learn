@@ -25,13 +25,13 @@ scikit-learn estimators assume that every entry of an array is numerical and
 holds meaning, and therefore cannot be trained directly on incomplete data.
 
 A naive way to meet that requirement is to discard every row or column that
-contains a missing value. This is detrimental on two counts: it throws away
-potentially valuable information, and it generally introduces bias, since the
+contains a missing value. This is detrimental on two counts: valuable 
+information from those cases is lost, and it generally introduces bias, since the
 remaining samples are rarely representative of the original population (unless
 values are missing completely at random). The same caution applies to the
 target: silently dropping samples whose outcome ``y`` is unknown biases the
-analysis. In particular, when an outcome has not been observed yet, the problem
-is one of censoring and should be handled with dedicated methods from `survival
+analysis. In particular, when an outcome has not been observed yet, it is a
+censoring problem and should be handled with dedicated methods from `survival
 analysis <https://en.wikipedia.org/wiki/Survival_analysis>`_ rather than by
 discarding data.
 
