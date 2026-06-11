@@ -1174,7 +1174,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
 
-        Note: splitting may inspect more than ``max_features`` features when
+        Note: splitting may inspect more than ``max_features`` features if
         needed to find a valid split.
 
     random_state : int, RandomState instance or None, default=None
@@ -1520,7 +1520,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         .. versionchanged:: 1.1
             The default of `max_features` changed from `"auto"` to `"sqrt"`.
 
-        Note: splitting may inspect more than ``max_features`` features when
+        Note: splitting may inspect more than ``max_features`` features if
         needed to find a valid split.
 
     random_state : int, RandomState instance or None, default=None
@@ -1819,7 +1819,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         .. versionchanged:: 1.1
             The default of `max_features` changed from `"auto"` to `1.0`.
 
-        Note: splitting may inspect more than ``max_features`` features when
+        Note: splitting may inspect more than ``max_features`` features if
         needed to find a valid split.
 
     random_state : int, RandomState instance or None, default=None
