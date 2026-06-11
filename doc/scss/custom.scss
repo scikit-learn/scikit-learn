@@ -164,9 +164,9 @@ details.sd-dropdown {
   }
 }
 
-/* sphinx-gallery HTML outputs: allow horizontal scrolling for pandas DataFrames */
+/* Override sphinx-gallery's layout for dataframes to allow horizontal scrolling */
 
-div.rendered_html .table.dataframe {
+.table.dataframe {
   overflow-x: auto;
   display: block;
 }
