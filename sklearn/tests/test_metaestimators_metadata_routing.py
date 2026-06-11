@@ -63,6 +63,7 @@ from sklearn.multioutput import (
     MultiOutputRegressor,
     RegressorChain,
 )
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import TargetEncoder
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.tests.metadata_routing_common import (
@@ -1001,6 +1002,64 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
             check_recorded_metadata(
                 obj=_splitter, method="split", parent=method_name, **method_kwargs
             )
+
+
+@pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
+@config_context(enable_metadata_routing=True)
+def test_metadata_routed_to_sub_estimator_in_pipeline(metaestimator):
+    """Check that metadata is routed to a sub-estimator when the meta-estimator
+    is an intermediate (transformer) step of a ``Pipeline``.
+
+    A ``Pipeline`` routes metadata to the ``fit_transform`` method of its
+    intermediate steps. Resolving the routed parameters for the composite
+    ``fit_transform`` method must reach the sub-estimator the same way a direct
+    ``fit`` call does.
+
+    Non-regression test for
+    https://github.com/scikit-learn/scikit-learn/issues/30527
+    """
+    if "estimator" not in metaestimator:
+        # This test only applies to meta-estimators wrapping a sub-estimator.
+        return
+    if "fit" not in filter_metadata_in_routing_methods(
+        metaestimator["estimator_routing_methods"]
+    ):
+        return
+
+    metaestimator_class = metaestimator["metaestimator"]
+    X = metaestimator["X"]
+    y = metaestimator["y"]
+
+    kwargs, (estimator, registry, _), (scorer, _), (cv, _) = get_init_args(
+        metaestimator, sub_estimator_consumes=True
+    )
+    estimator.set_fit_request(sample_weight=True)
+    if scorer:
+        scorer.set_score_request(sample_weight=True)
+    if cv:
+        cv.set_split_request(groups=True, metadata=True)
+    instance = metaestimator_class(**kwargs)
+
+    if not hasattr(instance, "transform"):
+        # Only transformers can be used as intermediate steps of a Pipeline.
+        return
+
+    # The final estimator is non-consuming so that ``sample_weight`` is only
+    # routed to (and required by) the intermediate meta-estimator's
+    # sub-estimator.
+    pipe = Pipeline([("selector", instance), ("consumer", NonConsumingClassifier())])
+    pipe.fit(X, y, sample_weight=sample_weight)
+
+    assert registry, "The sub-estimator was not fitted."
+    for sub_estimator in registry:
+        fit_records = [
+            record
+            for records in sub_estimator._records.get("fit", {}).values()
+            for record in records
+        ]
+        assert fit_records and all(
+            "sample_weight" in record for record in fit_records
+        ), f"sample_weight was not routed to {type(sub_estimator).__name__}.fit"
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)

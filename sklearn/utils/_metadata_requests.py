@@ -1098,7 +1098,13 @@ class MetadataRouter:
             )
 
         if method in COMPOSITE_METHODS:
-            methods = COMPOSITE_METHODS[method]
+            # A composite method (e.g. ``fit_transform``) routes metadata for
+            # each of its component methods (``fit`` and ``transform``), but a
+            # route mapping may also be declared directly on the composite
+            # method itself (e.g. ``TargetEncoder`` maps ``fit_transform`` to
+            # its splitter's ``split``). We therefore match the composite method
+            # as well as its components.
+            methods = [method] + COMPOSITE_METHODS[method]
         else:
             methods = [method]
 
