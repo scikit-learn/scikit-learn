@@ -11,7 +11,8 @@ Imputation of missing values
 
    * Avoid dropping rows with missing values; it risks creating bias.
 
-   * Tree-based learners can natively predict on data with missing values
+   * :ref:`Some supervised learning methods <estimators_that_handle_nan>` (typically
+     tree-based learners) can natively predict on data with missing values
      and work fairly well with no additional cost.
 
   * Imputation can be very computationaly costly, and quickly hits
