@@ -304,8 +304,7 @@ working memory (defaulting to 1GB) using :func:`set_config` or
 :func:`config_context`. See :ref:`SKLEARN_WORKING_MEMORY <envvar_SKLEARN_WORKING_MEMORY>`
 which can be used to change the global default.
 
-The following suggests to limit temporary working
-memory to 128 MiB::
+The following suggests to limit temporary working memory to 128 MiB::
 
   >>> import sklearn
   >>> with sklearn.config_context(working_memory=128):
