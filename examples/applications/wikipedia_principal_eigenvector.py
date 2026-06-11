@@ -27,7 +27,9 @@ of the latent structured data of the Wikipedia content.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+# %%
 import os
+import shutil
 from bz2 import BZ2File
 from datetime import datetime
 from pprint import pprint
@@ -42,10 +44,10 @@ from sklearn.decomposition import randomized_svd
 # %%
 # Download data, if not already on disk
 # -------------------------------------
-redirects_url = "http://downloads.dbpedia.org/3.5.1/en/redirects_en.nt.bz2"
+redirects_url = "https://downloads.dbpedia.org/3.5.1/en/redirects_en.nt.bz2"
 redirects_filename = redirects_url.rsplit("/", 1)[1]
 
-page_links_url = "http://downloads.dbpedia.org/3.5.1/en/page_links_en.nt.bz2"
+page_links_url = "https://downloads.dbpedia.org/3.5.1/en/page_links_en.nt.bz2"
 page_links_filename = page_links_url.rsplit("/", 1)[1]
 
 resources = [
@@ -53,13 +55,23 @@ resources = [
     (page_links_url, page_links_filename),
 ]
 
+
+def download_file(url, filename):
+    """Download `url` to `filename` without leaving a broken file behind."""
+    print("Downloading data from '%s', please wait..." % url)
+    tmp_filename = filename + ".part"
+    with urlopen(url) as response, open(tmp_filename, "wb") as f:
+        expected_size = response.length  # Content-Length, or None if unknown
+        shutil.copyfileobj(response, f)
+    if expected_size is not None and os.path.getsize(tmp_filename) != expected_size:
+        os.remove(tmp_filename)
+        raise IOError("Download of %s was incomplete; please run again." % filename)
+    os.replace(tmp_filename, filename)
+
+
 for url, filename in resources:
     if not os.path.exists(filename):
-        print("Downloading data from '%s', please wait..." % url)
-        opener = urlopen(url)
-        with open(filename, "wb") as f:
-            f.write(opener.read())
-        print()
+        download_file(url, filename)
 
 
 # %%
@@ -206,7 +218,7 @@ def centrality_scores(X, alpha=0.85, max_iter=100, tol=1e-10):
         print("power iteration #%d" % i)
         prev_scores = scores
         scores = (
-            alpha * (scores * X + np.dot(dangle, prev_scores))
+            alpha * (scores @ X + np.dot(dangle, prev_scores))
             + (1 - alpha) * prev_scores.sum() / n
         )
         # check convergence: normalized l_inf norm
