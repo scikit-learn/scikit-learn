@@ -44,6 +44,8 @@ them from the known part of the data (see the glossary entry on
 :class:`SimpleImputer`, as well as the model-based :class:`IterativeImputer`
 and :class:`KNNImputer`.
 
+Invest in imputation quality mainly when reconstructing the data itself, not
+prediction, is the objective.
 When the goal is prediction rather than reconstructing the data, a few
 high-level guidelines help choose among these tools [3]_:
 
