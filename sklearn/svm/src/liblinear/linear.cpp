@@ -29,6 +29,9 @@
      Sylvain Marie, Schneider Electric
      See <https://github.com/scikit-learn/scikit-learn/pull/13511#issuecomment-481729756>
 
+   Modified 2026:
+   - Fixed a memory leak due to conditional deallocation of `newprob` attributes;
+     see <https://github.com/scikit-learn/scikit-learn/pull/34256>
  */
 
 #include <math.h>
