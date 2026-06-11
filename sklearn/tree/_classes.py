@@ -25,8 +25,9 @@ from sklearn.base import (
     clone,
     is_classifier,
 )
-from sklearn.tree import _criterion, _splitter  # type: ignore[attr-defined]
+from sklearn.tree import _criterion, _splitter
 from sklearn.tree._criterion import Criterion
+from sklearn.tree._splitter import Splitter
 from sklearn.tree._tree import (
     BestFirstTreeBuilder,
     DepthFirstTreeBuilder,
@@ -380,6 +381,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             # might be shared and modified concurrently during parallel fitting
             criterion = copy.deepcopy(criterion)
 
+        SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
+
+        splitter = self.splitter
         if self.monotonic_cst is None:
             monotonic_cst = None
         else:
@@ -419,15 +423,15 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 # *positive class*, all signs must be flipped.
                 monotonic_cst *= -1
 
-        SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
-        splitter = SPLITTERS[self.splitter](
-            criterion,
-            self.max_features_,
-            min_samples_leaf,
-            min_weight_leaf,
-            random_state,
-            monotonic_cst,
-        )
+        if not isinstance(self.splitter, Splitter):
+            splitter = SPLITTERS[self.splitter](
+                criterion,
+                self.max_features_,
+                min_samples_leaf,
+                min_weight_leaf,
+                random_state,
+                monotonic_cst,
+            )
 
         if is_classifier(self):
             self.tree_ = Tree(self.n_features_in_, self.n_classes_, self.n_outputs_)
@@ -1714,6 +1718,53 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             monotonic_cst=monotonic_cst,
         )
 
+    @_fit_context(prefer_skip_nested_validation=True)
+    def fit(self, X, y, sample_weight=None, check_input=True):
+        """Build an extremely randomized tree classifier from the training set (X, y).
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The training input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csc_matrix``.
+
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
+            The target values (class labels) as integers or strings.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If None, then samples are equally weighted. Splits
+            that would create child nodes with net zero or negative weight are
+            ignored while searching for a split in each node. Splits are also
+            ignored if they would result in any single class carrying a
+            negative weight in either child node.
+
+        check_input : bool, default=True
+            Allow to bypass several input checking.
+            Don't use this parameter unless you know what you're doing.
+
+        Returns
+        -------
+        self : ExtraTreeClassifier
+            Fitted estimator.
+        """
+        super().fit(
+            X,
+            y,
+            sample_weight=sample_weight,
+            check_input=check_input,
+        )
+        return self
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        # XXX: nan values are only accepted in dense arrays, but we set this for
+        # common test to pass, specifically: check_estimators_nan_inf
+        allow_nan = self.splitter == "random"
+        tags.classifier_tags.multi_label = True
+        tags.input_tags.allow_nan = allow_nan
+        return tags
+
 
 class ExtraTreeRegressor(DecisionTreeRegressor):
     """An extremely randomized tree regressor.
@@ -1959,3 +2010,48 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             ccp_alpha=ccp_alpha,
             monotonic_cst=monotonic_cst,
         )
+
+    @_fit_context(prefer_skip_nested_validation=True)
+    def fit(self, X, y, sample_weight=None, check_input=True):
+        """Build an extremely randomized tree regressor from the training set (X, y).
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The training input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csc_matrix``.
+
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
+            The target values (real numbers). Use ``dtype=np.float64`` and
+            ``order='C'`` for maximum efficiency.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If None, then samples are equally weighted. Splits
+            that would create child nodes with net zero or negative weight are
+            ignored while searching for a split in each node.
+
+        check_input : bool, default=True
+            Allow to bypass several input checking.
+            Don't use this parameter unless you know what you're doing.
+
+        Returns
+        -------
+        self : ExtraTreeRegressor
+            Fitted estimator.
+        """
+        super().fit(
+            X,
+            y,
+            sample_weight=sample_weight,
+            check_input=check_input,
+        )
+        return self
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        # XXX: nan values are only accepted in dense arrays, but we set this for
+        # common test to pass, specifically: check_estimators_nan_inf
+        allow_nan = self.splitter == "random"
+        tags.input_tags.allow_nan = allow_nan
+        return tags
