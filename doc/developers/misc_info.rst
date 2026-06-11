@@ -18,12 +18,12 @@ as `/usr/bin/gcc`, it does not directly support OpenMP.
 
 .. note::
 
-  If OpenMP is not supported by the compiler, the build will be done with
-  OpenMP functionalities disabled. This is not recommended since it will force
-  some estimators to run in sequential mode instead of leveraging thread-based
-  parallelism. Setting the ``SKLEARN_FAIL_NO_OPENMP`` environment variable
-  (before cythonization) will force the build to fail if OpenMP is not
-  supported. See :ref:`environment_variable` for details.
+    If OpenMP is not supported by the compiler, the build will be done with
+    OpenMP functionalities disabled. This is not recommended since it will force
+    some estimators to run in sequential mode instead of leveraging thread-based
+    parallelism. Setting the ``SKLEARN_FAIL_NO_OPENMP`` environment variable
+    (before cythonization) will force the build to fail if OpenMP is not
+    supported. See :ref:`environment_variable` for details.
 
 To check if `scikit-learn` has been built correctly with OpenMP, run
 
