@@ -46,7 +46,7 @@ def make_distributor_init_64_bits(
                 vcomp140_dll_filename = op.join(libs_path, "{0}")
                 msvcp140_dll_filename = op.join(libs_path, "{1}")
                 WinDLL(op.abspath(vcomp140_dll_filename))
-                WinDLL(op.abspath(msvcp140_dll_filename))
+                # WinDLL(op.abspath(msvcp140_dll_filename))
             """.format(
                     vcomp140_dll_filename,
                     msvcp140_dll_filename,
