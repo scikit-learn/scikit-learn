@@ -27,8 +27,8 @@ from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import check_is_fitted
 
 
-def _weighted_quantile_1d_sorted(col_data, sample_weight, quantiles):
-    """Compute weighted quantiles for sorted 1D data.
+def _weighted_percentile_1d_sorted(col_data, sample_weight, percentiles):
+    """Compute weighted percentiles for sorted 1D data.
 
     This implements the "averaged_inverted_cdf" method used by
     `_weighted_percentile(..., average=True)` for the restricted input expected
@@ -36,7 +36,7 @@ def _weighted_quantile_1d_sorted(col_data, sample_weight, quantiles):
     `sample_weight` has strictly positive values.
     """
     weight_cdf = np.cumsum(sample_weight, dtype=col_data.dtype)
-    adjusted_quantiles = quantiles * weight_cdf[-1]
+    adjusted_quantiles = percentiles / 100 * weight_cdf[-1]
 
     percentile_indices = np.searchsorted(weight_cdf, adjusted_quantiles)
 
@@ -120,10 +120,10 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
         )
         assert bin_thresholds.shape[0] == max_bins - 1
     else:
-        quantiles = np.linspace(0, 1, num=max_bins + 1)
-        quantiles = quantiles[1:-1]
-        bin_thresholds = _weighted_quantile_1d_sorted(
-            col_data, sample_weight, quantiles
+        percentiles = np.linspace(0, 100, num=max_bins + 1)
+        percentiles = percentiles[1:-1]
+        bin_thresholds = _weighted_percentile_1d_sorted(
+            col_data, sample_weight, percentiles
         )
         assert bin_thresholds.shape[0] == max_bins - 1
     # Remove duplicated thresholds if they exist.
