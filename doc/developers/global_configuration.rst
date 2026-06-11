@@ -1,7 +1,7 @@
+.. _environment_variable:
+
 Global configuration and environment variables
 ==============================================
-
-.. _environment_variable:
 
 :func:`sklearn.set_config` and :func:`sklearn.config_context` can be used to
 change global scikit-learn configuration at runtime.
