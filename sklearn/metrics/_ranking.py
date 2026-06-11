@@ -2383,4 +2383,8 @@ def metric_at_thresholds(
     thresholds = y_score[threshold_idxs]
     metric_values = []
     for threshold in thresholds:
-        y_p
+        y_pred = (y_score >= threshold).astype(np.int32)
+        metric_values.append(metric_func(y_true, y_pred, **metric_params))
+
+    metric_values = np.asarray(metric_values)
+    return metric_values, thresholds
