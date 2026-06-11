@@ -31,7 +31,9 @@ remaining samples are rarely representative of the original population (unless
 values are missing completely at random). The same caution applies to the
 target: silently dropping samples whose outcome ``y`` is unknown biases the
 analysis. In particular, when an outcome has not been observed yet, it is a
-censoring problem and should be handled with dedicated methods from `survival
+`censoring
+problem <https://en.wikipedia.org/wiki/Survival_analysis#Censoring>`_
+and should be handled with dedicated methods from `survival
 analysis <https://en.wikipedia.org/wiki/Survival_analysis>`_ rather than by
 discarding data.
 
