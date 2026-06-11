@@ -15,7 +15,7 @@ Guide, we may minimize redundancy and inconsistency.
 
 We begin by listing general concepts (and any that didn't fit elsewhere), but
 more specific sets of related terms are listed below:
-:ref:`glossary_estimator_types`, 
+:ref:`glossary_estimator_types`,
 :ref:`glossary_metadata_routing`,
 :ref:`glossary_callbacks`,
 :ref:`glossary_target_types`,
