@@ -405,6 +405,11 @@ class NeighborhoodComponentsAnalysis(
         elif isinstance(init, np.ndarray):
             pass
         else:
+            if issparse(X) and init not in ("pca", "random", "identity"):
+                raise ValueError(
+                    "Sparse input is only supported for init in "
+                    "['pca', 'random', 'identity']"
+                )
             n_samples, n_features = X.shape
             n_components = self.n_components or n_features
             if init == "auto":
@@ -435,11 +440,6 @@ class NeighborhoodComponentsAnalysis(
                 elif init == "lda":
                     from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
-                    if issparse(X):
-                        raise ValueError(
-                            "Sparse input is only supported for init in "
-                            "['pca', 'random', 'identity']"
-                        )
                     lda = LinearDiscriminantAnalysis(n_components=n_components)
                     if self.verbose:
                         print("Finding most discriminative components... ", end="")
@@ -544,7 +544,7 @@ class NeighborhoodComponentsAnalysis(
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.target_tags.required = True
-        tags.input_tags.sparse = True
+        tags.input_tags.sparse = self.init in ("pca", "random", "identity")
         return tags
 
     @property
