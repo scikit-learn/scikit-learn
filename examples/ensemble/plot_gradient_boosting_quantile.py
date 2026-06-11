@@ -210,7 +210,6 @@ pd.DataFrame(results).set_index("model").style.apply(highlight_min)
 # %%
 from pprint import pprint
 
-from sklearn.experimental import enable_halving_search_cv  # noqa: F401
 from sklearn.metrics import make_scorer
 from sklearn.model_selection import HalvingRandomSearchCV
 
@@ -229,9 +228,6 @@ gbr = GradientBoostingRegressor(loss="quantile", alpha=0.05, random_state=0)
 search_05p = HalvingRandomSearchCV(
     gbr,
     param_grid,
-    resource="n_estimators",
-    max_resources=250,
-    min_resources=50,
     scoring=neg_mean_pinball_loss_05p_scorer,
     n_jobs=2,
     random_state=0,

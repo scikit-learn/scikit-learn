@@ -83,9 +83,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
             Interval(Integral, 0, None, closed="neither"),
             StrOptions({"exhaust", "smallest"}),
         ],
-        "resource": [str],
         "factor": [Interval(Real, 0, None, closed="neither")],
-        "aggressive_elimination": ["boolean"],
     }
     _parameter_constraints.pop("pre_dispatch")  # not used in this class
 
@@ -103,9 +101,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
         return_train_score=True,
         max_resources="auto",
         min_resources="exhaust",
-        resource="n_samples",
         factor=3,
-        aggressive_elimination=False,
     ):
         super().__init__(
             estimator,
@@ -120,10 +116,8 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
         self.random_state = random_state
         self.max_resources = max_resources
-        self.resource = resource
         self.factor = factor
         self.min_resources = min_resources
-        self.aggressive_elimination = aggressive_elimination
 
     def _check_input_parameters(self, X, y, split_params):
         # We need to enforce that successive calls to cv.split() yield the same
@@ -133,15 +127,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 "The cv parameter must yield consistent folds across "
                 "calls to split(). Set its random_state to an int, or set "
                 "shuffle=False."
-            )
-
-        if (
-            self.resource != "n_samples"
-            and self.resource not in self.estimator.get_params()
-        ):
-            raise ValueError(
-                f"Cannot use resource={self.resource} which is not supported "
-                f"by estimator {self.estimator.__class__.__name__}"
             )
 
         if isinstance(self, HalvingRandomSearchCV):
@@ -155,27 +140,20 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
         self.min_resources_ = self.min_resources
         if self.min_resources_ in ("smallest", "exhaust"):
-            if self.resource == "n_samples":
-                n_splits = self._checked_cv_orig.get_n_splits(X, y, **split_params)
-                # please see https://gph.is/1KjihQe for a justification
-                magic_factor = 2
-                self.min_resources_ = n_splits * magic_factor
-                if is_classifier(self.estimator):
-                    y = validate_data(self, X="no_validation", y=y)
-                    check_classification_targets(y)
-                    n_classes = np.unique(y).shape[0]
-                    self.min_resources_ *= n_classes
-            else:
-                self.min_resources_ = 1
+            n_splits = self._checked_cv_orig.get_n_splits(X, y, **split_params)
+            # please see https://gph.is/1KjihQe for a justification
+            magic_factor = 2
+            self.min_resources_ = n_splits * magic_factor
+            if is_classifier(self.estimator):
+                y = validate_data(self, X="no_validation", y=y)
+                check_classification_targets(y)
+                n_classes = np.unique(y).shape[0]
+                self.min_resources_ *= n_classes
             # if 'exhaust', min_resources_ might be set to a higher value later
             # in _run_search
 
         self.max_resources_ = self.max_resources
         if self.max_resources_ == "auto":
-            if not self.resource == "n_samples":
-                raise ValueError(
-                    "resource can only be 'n_samples' when max_resources='auto'"
-                )
             self.max_resources_ = _num_samples(X)
 
         if self.min_resources_ > self.max_resources_:
@@ -251,15 +229,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
     def _run_search(self, evaluate_candidates, *, callback_ctx):
         candidate_params = self._generate_candidate_params()
 
-        if self.resource != "n_samples" and any(
-            self.resource in candidate for candidate in candidate_params
-        ):
-            # Can only check this now since we need the candidates list
-            raise ValueError(
-                f"Cannot use parameter {self.resource} as the resource since "
-                "it is part of the searched parameters."
-            )
-
         # n_required_iterations is the number of iterations needed so that the
         # last iterations evaluates less than `factor` candidates.
         n_required_iterations = 1 + floor(log(len(candidate_params), self.factor))
@@ -283,10 +252,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
             log(self.max_resources_ // self.min_resources_, self.factor)
         )
 
-        if self.aggressive_elimination:
-            n_iterations = n_required_iterations
-        else:
-            n_iterations = min(n_possible_iterations, n_required_iterations)
+        n_iterations = min(n_possible_iterations, n_required_iterations)
 
         if self.verbose:
             print(f"n_iterations: {n_iterations}")
@@ -294,7 +260,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
             print(f"n_possible_iterations: {n_possible_iterations}")
             print(f"min_resources_: {self.min_resources_}")
             print(f"max_resources_: {self.max_resources_}")
-            print(f"aggressive_elimination: {self.aggressive_elimination}")
             print(f"factor: {self.factor}")
 
         self.n_resources_ = []
@@ -314,15 +279,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 sequential_subtasks=False,
             ).call_on_fit_task_begin(estimator=self)
 
-            power = itr  # default
-            if self.aggressive_elimination:
-                # this will set n_resources to the initial value (i.e. the
-                # value of n_resources at the first iteration) for as many
-                # iterations as needed (while candidates are being
-                # eliminated), and then go on as usual.
-                power = max(0, itr - n_required_iterations + n_possible_iterations)
-
-            n_resources = int(self.factor**power * self.min_resources_)
+            n_resources = int(self.factor**itr * self.min_resources_)
             # guard, probably not needed
             n_resources = min(n_resources, self.max_resources_)
             self.n_resources_.append(n_resources)
@@ -335,22 +292,13 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 print(f"n_candidates: {n_candidates}")
                 print(f"n_resources: {n_resources}")
 
-            if self.resource == "n_samples":
-                # subsampling will be done in cv.split()
-                cv = _SubsampleMetaSplitter(
-                    base_cv=self._checked_cv_orig,
-                    fraction=n_resources / self._n_samples_orig,
-                    subsample_test=True,
-                    random_state=self.random_state,
-                )
-
-            else:
-                # Need copy so that the n_resources of next iteration does
-                # not overwrite
-                candidate_params = [c.copy() for c in candidate_params]
-                for candidate in candidate_params:
-                    candidate[self.resource] = n_resources
-                cv = self._checked_cv_orig
+            # subsampling will be done in cv.split()
+            cv = _SubsampleMetaSplitter(
+                base_cv=self._checked_cv_orig,
+                fraction=n_resources / self._n_samples_orig,
+                subsample_test=True,
+                random_state=self.random_state,
+            )
 
             more_results = {
                 "iter": [itr] * n_candidates,
@@ -397,16 +345,9 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
     Read more in the :ref:`User guide <successive_halving_user_guide>`.
 
-    .. note::
-
-      This estimator is still **experimental** for now: the predictions
-      and the API might change without any deprecation cycle. To use it,
-      you need to explicitly import ``enable_halving_search_cv``::
-
-        >>> # explicitly require this experimental feature
-        >>> from sklearn.experimental import enable_halving_search_cv # noqa
-        >>> # now you can import normally from model_selection
-        >>> from sklearn.model_selection import HalvingGridSearchCV
+    .. versionchanged:: 1.10
+        This estimator is no longer experimental and can be imported directly
+        from :mod:`sklearn.model_selection`.
 
     Parameters
     ----------
@@ -427,31 +368,20 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         that are selected for each subsequent iteration. For example,
         ``factor=3`` means that only one third of the candidates are selected.
 
-    resource : ``'n_samples'`` or str, default='n_samples'
-        Defines the resource that increases with each iteration. By default,
-        the resource is the number of samples. It can also be set to any
-        parameter of the base estimator that accepts positive integer
-        values, e.g. 'n_iterations' or 'n_estimators' for a gradient
-        boosting estimator. In this case ``max_resources`` cannot be 'auto'
-        and must be set explicitly.
-
     max_resources : int, default='auto'
-        The maximum amount of resource that any candidate is allowed to use
-        for a given iteration. By default, this is set to ``n_samples`` when
-        ``resource='n_samples'`` (default), else an error is raised.
+        The maximum number of training samples that any candidate is allowed to
+        use for a given iteration. By default, this is set to ``n_samples``.
 
     min_resources : {'exhaust', 'smallest'} or int, default='exhaust'
-        The minimum amount of resource that any candidate is allowed to use
-        for a given iteration. Equivalently, this defines the amount of
+        The minimum number of training samples that any candidate is allowed to
+        use for a given iteration. Equivalently, this defines the amount of
         resources `r0` that are allocated for each candidate at the first
         iteration.
 
         - 'smallest' is a heuristic that sets `r0` to a small value:
 
-          - ``n_splits * 2`` when ``resource='n_samples'`` for a regression problem
-          - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
-            classification problem
-          - ``1`` when ``resource != 'n_samples'``
+          - ``n_splits * 2`` for a regression problem
+          - ``n_classes * n_splits * 2`` for a classification problem
 
         - 'exhaust' will set `r0` such that the **last** iteration uses as
           much resources as possible. Namely, the last iteration will use the
@@ -462,15 +392,6 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
         Note that the amount of resources used at each iteration is always a
         multiple of ``min_resources``.
-
-    aggressive_elimination : bool, default=False
-        This is only relevant in cases where there isn't enough resources to
-        reduce the remaining candidates to at most `factor` after the last
-        iteration. If ``True``, then the search process will 'replay' the
-        first iteration for as long as needed until the number of candidates
-        is small enough. This is ``False`` by default, which means that the
-        last iteration may evaluate more than ``factor`` candidates. See
-        :ref:`aggressive_elimination` for more details.
 
     cv : int, cross-validation generator or iterable, default=5
         Determines the cross-validation splitting strategy.
@@ -541,7 +462,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
     random_state : int, RandomState instance or None, default=None
         Pseudo random number generator state used for subsampling the dataset
-        when `resources != 'n_samples'`. Ignored otherwise.
+        at each iteration.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
@@ -580,9 +501,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
     n_iterations_ : int
         The actual number of iterations that were run. This is equal to
-        ``n_required_iterations_`` if ``aggressive_elimination`` is ``True``.
-        Else, this is equal to ``min(n_possible_iterations_,
-        n_required_iterations_)``.
+        ``min(n_possible_iterations_, n_required_iterations_)``.
 
     n_possible_iterations_ : int
         The number of iterations that are possible starting with
@@ -686,7 +605,6 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.ensemble import RandomForestClassifier
-    >>> from sklearn.experimental import enable_halving_search_cv  # noqa
     >>> from sklearn.model_selection import HalvingGridSearchCV
     ...
     >>> X, y = load_iris(return_X_y=True)
@@ -694,11 +612,9 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
     ...
     >>> param_grid = {"max_depth": [3, None],
     ...               "min_samples_split": [5, 10]}
-    >>> search = HalvingGridSearchCV(clf, param_grid, resource='n_estimators',
-    ...                              max_resources=10,
-    ...                              random_state=0).fit(X, y)
+    >>> search = HalvingGridSearchCV(clf, param_grid, random_state=0).fit(X, y)
     >>> search.best_params_  # doctest: +SKIP
-    {'max_depth': None, 'min_samples_split': 10, 'n_estimators': 9}
+    {'max_depth': None, 'min_samples_split': 10}
     """
 
     _parameter_constraints: dict = {
@@ -712,10 +628,8 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         param_grid,
         *,
         factor=3,
-        resource="n_samples",
         max_resources="auto",
         min_resources="exhaust",
-        aggressive_elimination=False,
         cv=5,
         scoring=None,
         refit=True,
@@ -736,10 +650,8 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
             error_score=error_score,
             return_train_score=return_train_score,
             max_resources=max_resources,
-            resource=resource,
             factor=factor,
             min_resources=min_resources,
-            aggressive_elimination=aggressive_elimination,
         )
         self.param_grid = param_grid
 
@@ -759,16 +671,9 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
     Read more in the :ref:`User guide<successive_halving_user_guide>`.
 
-    .. note::
-
-      This estimator is still **experimental** for now: the predictions
-      and the API might change without any deprecation cycle. To use it,
-      you need to explicitly import ``enable_halving_search_cv``::
-
-        >>> # explicitly require this experimental feature
-        >>> from sklearn.experimental import enable_halving_search_cv # noqa
-        >>> # now you can import normally from model_selection
-        >>> from sklearn.model_selection import HalvingRandomSearchCV
+    .. versionchanged:: 1.10
+        This estimator is no longer experimental and can be imported directly
+        from :mod:`sklearn.model_selection`.
 
     Parameters
     ----------
@@ -797,31 +702,20 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         that are selected for each subsequent iteration. For example,
         ``factor=3`` means that only one third of the candidates are selected.
 
-    resource : ``'n_samples'`` or str, default='n_samples'
-        Defines the resource that increases with each iteration. By default,
-        the resource is the number of samples. It can also be set to any
-        parameter of the base estimator that accepts positive integer
-        values, e.g. 'n_iterations' or 'n_estimators' for a gradient
-        boosting estimator. In this case ``max_resources`` cannot be 'auto'
-        and must be set explicitly.
-
     max_resources : int, default='auto'
-        The maximum number of resources that any candidate is allowed to use
-        for a given iteration. By default, this is set ``n_samples`` when
-        ``resource='n_samples'`` (default), else an error is raised.
+        The maximum number of training samples that any candidate is allowed to
+        use for a given iteration. By default, this is set to ``n_samples``.
 
     min_resources : {'exhaust', 'smallest'} or int, default='smallest'
-        The minimum amount of resource that any candidate is allowed to use
-        for a given iteration. Equivalently, this defines the amount of
+        The minimum number of training samples that any candidate is allowed to
+        use for a given iteration. Equivalently, this defines the amount of
         resources `r0` that are allocated for each candidate at the first
         iteration.
 
         - 'smallest' is a heuristic that sets `r0` to a small value:
 
-          - ``n_splits * 2`` when ``resource='n_samples'`` for a regression problem
-          - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
-            classification problem
-          - ``1`` when ``resource != 'n_samples'``
+          - ``n_splits * 2`` for a regression problem
+          - ``n_classes * n_splits * 2`` for a classification problem
 
         - 'exhaust' will set `r0` such that the **last** iteration uses as
           much resources as possible. Namely, the last iteration will use the
@@ -832,15 +726,6 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
         Note that the amount of resources used at each iteration is always a
         multiple of ``min_resources``.
-
-    aggressive_elimination : bool, default=False
-        This is only relevant in cases where there isn't enough resources to
-        reduce the remaining candidates to at most `factor` after the last
-        iteration. If ``True``, then the search process will 'replay' the
-        first iteration for as long as needed until the number of candidates
-        is small enough. This is ``False`` by default, which means that the
-        last iteration may evaluate more than ``factor`` candidates. See
-        :ref:`aggressive_elimination` for more details.
 
     cv : int, cross-validation generator or an iterable, default=5
         Determines the cross-validation splitting strategy.
@@ -911,9 +796,8 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
     random_state : int, RandomState instance or None, default=None
         Pseudo random number generator state used for subsampling the dataset
-        when `resources != 'n_samples'`. Also used for random uniform
-        sampling from lists of possible values instead of scipy.stats
-        distributions.
+        at each iteration. Also used for random uniform sampling from lists of
+        possible values instead of scipy.stats distributions.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
@@ -952,9 +836,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
     n_iterations_ : int
         The actual number of iterations that were run. This is equal to
-        ``n_required_iterations_`` if ``aggressive_elimination`` is ``True``.
-        Else, this is equal to ``min(n_possible_iterations_,
-        n_required_iterations_)``.
+        ``min(n_possible_iterations_, n_required_iterations_)``.
 
     n_possible_iterations_ : int
         The number of iterations that are possible starting with
@@ -1058,7 +940,6 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.ensemble import RandomForestClassifier
-    >>> from sklearn.experimental import enable_halving_search_cv  # noqa
     >>> from sklearn.model_selection import HalvingRandomSearchCV
     >>> from scipy.stats import randint
     >>> import numpy as np
@@ -1070,11 +951,9 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     >>> param_distributions = {"max_depth": [3, None],
     ...                        "min_samples_split": randint(2, 11)}
     >>> search = HalvingRandomSearchCV(clf, param_distributions,
-    ...                                resource='n_estimators',
-    ...                                max_resources=10,
     ...                                random_state=0).fit(X, y)
     >>> search.best_params_  # doctest: +SKIP
-    {'max_depth': None, 'min_samples_split': 10, 'n_estimators': 9}
+    {'max_depth': None, 'min_samples_split': 10}
     """
 
     _parameter_constraints: dict = {
@@ -1093,10 +972,8 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         *,
         n_candidates="exhaust",
         factor=3,
-        resource="n_samples",
         max_resources="auto",
         min_resources="smallest",
-        aggressive_elimination=False,
         cv=5,
         scoring=None,
         refit=True,
@@ -1117,10 +994,8 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
             error_score=error_score,
             return_train_score=return_train_score,
             max_resources=max_resources,
-            resource=resource,
             factor=factor,
             min_resources=min_resources,
-            aggressive_elimination=aggressive_elimination,
         )
         self.param_distributions = param_distributions
         self.n_candidates = n_candidates

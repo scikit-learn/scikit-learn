@@ -33,17 +33,13 @@ or with conda::
 # :class:`~sklearn.model_selection.RandomizedSearchCV`.
 # Successive Halving is an iterative selection process illustrated in the
 # figure below. The first iteration is run with a small amount of resources,
-# where the resource typically corresponds to the number of training samples,
-# but can also be an arbitrary integer parameter such as `n_estimators` in a
-# random forest. Only a subset of the parameter candidates are selected for the
-# next iteration, which will be run with an increasing amount of allocated
-# resources. Only a subset of candidates will last until the end of the
+# where the resource is the number of training samples. Only a subset of the
+# parameter candidates are selected for the next iteration, which will be run
+# with an increasing amount of allocated resources. Only a subset of candidates will last until the end of the
 # iteration process, and the best parameter candidate is the one that has the
 # highest score on the last iteration.
 #
-# Read more in the :ref:`User Guide <successive_halving_user_guide>` (note:
-# the Successive Halving estimators are still :term:`experimental
-# <experimental>`).
+# Read more in the :ref:`User Guide <successive_halving_user_guide>`.
 #
 # .. figure:: ../model_selection/images/sphx_glr_plot_successive_halving_iterations_001.png
 #   :target: ../model_selection/plot_successive_halving_iterations.html
@@ -54,7 +50,6 @@ from scipy.stats import randint
 
 from sklearn.datasets import make_classification
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.experimental import enable_halving_search_cv  # noqa: F401
 from sklearn.model_selection import HalvingRandomSearchCV
 
 rng = np.random.RandomState(0)

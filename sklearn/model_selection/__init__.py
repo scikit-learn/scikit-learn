@@ -3,8 +3,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import typing
-
 from sklearn.model_selection._classification_threshold import (
     FixedThresholdClassifier,
     TunedThresholdClassifierCV,
@@ -15,6 +13,10 @@ from sklearn.model_selection._search import (
     ParameterGrid,
     ParameterSampler,
     RandomizedSearchCV,
+)
+from sklearn.model_selection._search_successive_halving import (
+    HalvingGridSearchCV,
+    HalvingRandomSearchCV,
 )
 from sklearn.model_selection._split import (
     BaseCrossValidator,
@@ -45,15 +47,6 @@ from sklearn.model_selection._validation import (
     permutation_test_score,
     validation_curve,
 )
-
-if typing.TYPE_CHECKING:
-    # Avoid errors in type checkers (e.g. mypy) for experimental estimators.
-    # TODO: remove this check once the estimator is no longer experimental.
-    from sklearn.model_selection._search_successive_halving import (
-        HalvingGridSearchCV,
-        HalvingRandomSearchCV,
-    )
-
 
 __all__ = [
     "BaseCrossValidator",
@@ -92,15 +85,3 @@ __all__ = [
     "train_test_split",
     "validation_curve",
 ]
-
-
-# TODO: remove this check once the estimator is no longer experimental.
-def __getattr__(name):
-    if name in {"HalvingGridSearchCV", "HalvingRandomSearchCV"}:
-        raise ImportError(
-            f"{name} is experimental and the API might change without any "
-            "deprecation cycle. To use it, you need to explicitly import "
-            "enable_halving_search_cv:\n"
-            "from sklearn.experimental import enable_halving_search_cv"
-        )
-    raise AttributeError(f"module {__name__} has no attribute {name}")

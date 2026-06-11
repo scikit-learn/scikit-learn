@@ -19,9 +19,6 @@ import sklearn
 from sklearn.base import BaseEstimator
 from sklearn.compose import ColumnTransformer
 from sklearn.exceptions import ConvergenceWarning
-
-# make it possible to discover experimental estimators when calling `all_estimators`
-from sklearn.experimental import enable_halving_search_cv  # noqa: F401
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import FeatureUnion, make_pipeline
 from sklearn.preprocessing import (
