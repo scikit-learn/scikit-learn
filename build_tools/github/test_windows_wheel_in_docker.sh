@@ -16,7 +16,7 @@ MNT_FOLDER="C:/mnt"
 CONTAINER_ID=$(docker run -it -v "$(cygpath -w "$PWD"):$MNT_FOLDER" -d "$DOCKER_IMAGE")
 
 function exec_inside_container() {
-    docker exec "$CONTAINER_ID" powershell -NoProfile -Command "$1"
+    docker exec "$CONTAINER_ID" powershell -Command "$1"
 }
 
 exec_inside_container "python -m venv C:/venv"
