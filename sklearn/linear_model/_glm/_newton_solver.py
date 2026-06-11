@@ -347,7 +347,7 @@ class NewtonSolver(ABC):
             alpha_old = alpha
             phi_old = phi_1
             # Safeguards
-            if alpha_trial >= alpha or alpha_trial <= 0:
+            if alpha_trial >= alpha or alpha_trial <= min_step_length:
                 alpha_trial = 0.5 * alpha
             # Avoid too large reduction of alpha.
             alpha = max(alpha_trial, min_step_reduction * alpha, min_step_length)
