@@ -23,7 +23,7 @@ as `/usr/bin/gcc`, it does not directly support OpenMP.
   some estimators to run in sequential mode instead of leveraging thread-based
   parallelism. Setting the ``SKLEARN_FAIL_NO_OPENMP`` environment variable
   (before cythonization) will force the build to fail if OpenMP is not
-  supported.
+  supported. See :ref:`environment_variable` for details.
 
 To check if `scikit-learn` has been built correctly with OpenMP, run
 

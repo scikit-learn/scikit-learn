@@ -256,7 +256,7 @@ jobs:
 
       # Enable global random seed randomization to discover seed-sensitive tests
       # only on nightly builds.
-      # https://scikit-learn.org/stable/computing/parallelism.html#sklearn-tests-global-random-seed
+      # https://scikit-learn.org/stable/developers/global_configuration.html#sklearn-tests-global-random-seed
       - name: Set random global random seed for nightly/manual runs
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         shell: bash
@@ -265,11 +265,11 @@ jobs:
           echo "SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$SKLEARN_TESTS_GLOBAL_RANDOM_SEED" >> $GITHUB_ENV
           echo "To reproduce this test run, set the following environment variable:"
           echo "    SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$SKLEARN_TESTS_GLOBAL_RANDOM_SEED"
-          echo "See: https://scikit-learn.org/dev/computing/parallelism.html#sklearn-tests-global-random-seed"
+          echo "See: https://scikit-learn.org/dev/developers/global_configuration.html#sklearn-tests-global-random-seed"
 
       # Enable global dtype fixture for all nightly builds to discover
       # numerical-sensitive tests.
-      # https://scikit-learn.org/stable/computing/parallelism.html#sklearn-run-float32-tests
+      # https://scikit-learn.org/stable/developers/global_configuration.html#sklearn-run-float32-tests
       - name: Run float32 tests for nightly/manual runs
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         shell: bash
@@ -383,7 +383,7 @@ jobs:
 
       # Enable global random seed randomization to discover seed-sensitive tests
       # only on nightly builds.
-      # https://scikit-learn.org/stable/computing/parallelism.html#sklearn-tests-global-random-seed
+      # https://scikit-learn.org/stable/developers/global_configuration.html#sklearn-tests-global-random-seed
       - name: Set random global random seed for nightly/manual runs
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         shell: bash
@@ -392,11 +392,11 @@ jobs:
           echo "SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$SKLEARN_TESTS_GLOBAL_RANDOM_SEED" >> $GITHUB_ENV
           echo "To reproduce this test run, set the following environment variable:"
           echo "    SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$SKLEARN_TESTS_GLOBAL_RANDOM_SEED"
-          echo "See: https://scikit-learn.org/dev/computing/parallelism.html#sklearn-tests-global-random-seed"
+          echo "See: https://scikit-learn.org/dev/developers/global_configuration.html#sklearn-tests-global-random-seed"
 
       # Enable global dtype fixture for all nightly builds to discover
       # numerical-sensitive tests.
-      # https://scikit-learn.org/stable/computing/parallelism.html#sklearn-run-float32-tests
+      # https://scikit-learn.org/stable/developers/global_configuration.html#sklearn-run-float32-tests
       - name: Run float32 tests for nightly/manual runs
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         shell: bash

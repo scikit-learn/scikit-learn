@@ -77,8 +77,8 @@ Scikit-learn does some validation on data that increases the overhead per
 call to ``predict`` and similar functions. In particular, checking that
 features are finite (not NaN or infinite) involves a full pass over the
 data. If you ensure that your data is acceptable, you may suppress
-checking for finiteness by setting the environment variable
-``SKLEARN_ASSUME_FINITE`` to a non-empty string before importing
+checking for finiteness by setting
+:ref:`SKLEARN_ASSUME_FINITE <envvar_SKLEARN_ASSUME_FINITE>` before importing
 scikit-learn, or configure it in Python with :func:`set_config`.
 For more control than these global settings, a :func:`config_context`
 allows you to set this configuration within a specified context::
@@ -301,7 +301,10 @@ involve using a large amount of temporary memory.  This may potentially exhaust
 system memory.  Where computations can be performed in fixed-memory chunks, we
 attempt to do so, and allow the user to hint at the maximum size of this
 working memory (defaulting to 1GB) using :func:`set_config` or
-:func:`config_context`.  The following suggests to limit temporary working
+:func:`config_context`. See :ref:`SKLEARN_WORKING_MEMORY <envvar_SKLEARN_WORKING_MEMORY>`
+which can be used to change the global default.
+
+The following suggests to limit temporary working
 memory to 128 MiB::
 
   >>> import sklearn
