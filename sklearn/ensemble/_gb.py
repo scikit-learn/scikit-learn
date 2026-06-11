@@ -211,6 +211,7 @@ def _update_terminal_regions(
             hessian = weighted_neg_grad.copy()
             hessian[y == 0] *= -1
         else:
+            # (loss is HalfBinomialLoss or HalfMultinomialLoss)
             # denominator = hessian = w * prob * (1 - prob)
             # with prob = y - neg_gradient
             prob = y - neg_gradient
