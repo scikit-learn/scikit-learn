@@ -1,0 +1,4 @@
+- :class:`tree.ExtraTreeClassifier` and :class:`tree.ExtraTreeRegressor`
+  now have their own ``fit`` methods to document the correct returned types
+  and build descriptions instead of inheriting from standard decision trees.
+  By :user:`Sai Teja Bandaru <saitejabandaru-in>`.
