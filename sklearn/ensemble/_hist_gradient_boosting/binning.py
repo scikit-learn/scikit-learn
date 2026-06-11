@@ -129,7 +129,7 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
         )
         assert bin_thresholds.shape[0] == max_bins - 1
     # Remove duplicated thresholds if they exist.
-    bin_thresholds = np.unique(bin_thresholds, sorted=True)
+    bin_thresholds = np.unique(bin_thresholds)
 
     # We avoid having +inf thresholds: +inf thresholds are only allowed in
     # a "split on nan" situation.
