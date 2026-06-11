@@ -417,7 +417,7 @@ API_REFERENCE = {
         "sections": [
             {
                 "title": None,
-                "autosummary": ["enable_iterative_imputer"],
+                "autosummary": [],
             },
         ],
     },

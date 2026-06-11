@@ -783,13 +783,6 @@ for sub_sg_dir in (Path(".") / sg_examples_dir).iterdir():
 carousel_thumbs = {"sphx_glr_plot_classifier_comparison_001.png": 600}
 
 
-# enable experimental module so that experimental estimators can be
-# discovered properly by sphinx
-from sklearn.experimental import (  # noqa: F401
-    enable_iterative_imputer,
-)
-
-
 def make_carousel_thumbs(app, exception):
     """produces the final resized carousel images"""
     if exception is not None:
