@@ -10,13 +10,11 @@ Imputation of missing values
 .. topic:: Key points for machine-learning with missing values
 
    * Avoid dropping rows with missing values; it risks creating bias.
-
    * :ref:`Some supervised learning methods <estimators_that_handle_nan>` (typically
      tree-based learners) can natively predict on data with missing values
      and work fairly well with no additional cost.
-
-  * Imputation can be very computationaly costly, and quickly hits
-    diminishing returns to improve subsequent prediction performance [3]_.
+   * Imputation can be very computationaly costly, and quickly hits
+     diminishing returns to improve subsequent prediction performance [3]_.
 
 For various reasons, many real-world datasets contain missing values, often
 encoded as blanks, NaNs or other placeholders. They arise from faulty
@@ -26,7 +24,7 @@ scikit-learn estimators assume that every entry of an array is numerical and
 holds meaning, and therefore cannot be trained directly on incomplete data.
 
 A naive way to meet that requirement is to discard every row or column that
-contains a missing value. This is detrimental on two counts: valuable 
+contains a missing value. This is detrimental on two counts: valuable
 information from those cases is lost, and it generally introduces bias, since the
 remaining samples are rarely representative of the original population (unless
 values are missing completely at random). The same caution applies to the
