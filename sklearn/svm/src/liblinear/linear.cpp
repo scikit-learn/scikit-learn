@@ -2453,7 +2453,7 @@ static void remove_zero_weight(problem *newprob, const problem *prob)
 model* train(const problem *prob, const parameter *param, BlasFunctions *blas_functions)
 {
 	problem newprob;
-	remove_zero_weight(&newprob, prob);
+	remove_zero_weight(&newprob, prob);  // This allocates memory for newprob
 	prob = &newprob;
 	int i,j;
 	int l = prob->l;
@@ -2587,10 +2587,10 @@ model* train(const problem *prob, const parameter *param, BlasFunctions *blas_fu
 		free(sub_prob.y);
 		free(sub_prob.W);
 		free(weighted_C);
-		free(newprob.x);
-		free(newprob.y);
-		free(newprob.W);
 	}
+	free(newprob.x);
+	free(newprob.y);
+	free(newprob.W);
 	return model_;
 }
 
