@@ -110,20 +110,19 @@ def test_nan_handling(HalvingSearch, fail_at):
 
     search.fit(X, y)
 
-    # estimators that failed during fit/predict should always rank lower
-    # than ones where the fit/predict succeeded
+    # estimators that failed during fit/predict should never be selected as the
+    # best candidate
     assert not search.best_params_[f"fail_{fail_at}"]
-    scores = search.all_cv_results_["mean_test_score"]
-    ranks = search.all_cv_results_["rank_test_score"]
 
-    # some scores should be NaN
-    assert np.isnan(scores).any()
+    # `all_cv_results_` keeps the failing candidates (with NaN scores) but does
+    # not expose a ranking: ranking across iterations using a varying number of
+    # resources is not meaningful.
+    assert "rank_test_score" not in search.all_cv_results_
+    assert np.isnan(search.all_cv_results_["mean_test_score"]).any()
 
-    unique_nan_ranks = np.unique(ranks[np.isnan(scores)])
-    # all NaN scores should have the same rank
-    assert unique_nan_ranks.shape[0] == 1
-    # NaNs should have the lowest rank
-    assert (unique_nan_ranks[0] >= ranks).all()
+    # the ranking is only available in `cv_results_` (the last iteration) where
+    # all candidates were evaluated with the same amount of resources.
+    assert "rank_test_score" in search.cv_results_
 
 
 @pytest.mark.parametrize("Est", (HalvingGridSearchCV, HalvingRandomSearchCV))
@@ -815,6 +814,24 @@ def test_trim_cv_results_to_last_iter():
     assert np.array_equal(trimmed["rank_test_score"], np.array([3, 2, 1]))
 
 
+def test_trim_cv_results_to_last_iter_nan_ranking():
+    """Check that NaN scores share the lowest rank in the last iteration."""
+    results = {
+        "iter": np.array([0, 0, 1, 1, 1]),
+        "n_resources": np.array([1, 1, 3, 3, 3]),
+        "mean_test_score": np.array([4.0, 3.0, 9.0, np.nan, np.nan]),
+        "params": ["a", "b", "c", "d", "e"],
+    }
+    best_index = 2
+
+    trimmed, new_best_index = _trim_cv_results_to_last_iter(results, best_index)
+
+    assert new_best_index == 0
+    # the non-NaN candidate ranks first, the two NaN candidates share the
+    # lowest rank
+    assert np.array_equal(trimmed["rank_test_score"], np.array([1, 2, 2]))
+
+
 def test_halving_random_search_list_of_dicts():
     """Check the behaviour of the `HalvingRandomSearchCV` with `param_distribution`
     being a list of dictionary.
@@ -848,6 +865,9 @@ def test_halving_random_search_list_of_dicts():
         "mean_score_time",
         "std_score_time",
     )
+    # `all_cv_results_` does not expose a ranking column since ranking across
+    # iterations using a varying number of resources is not meaningful.
+    all_score_keys = tuple(key for key in score_keys if key != "rank_test_score")
     extra_keys = ("n_resources", "iter")
 
     search = HalvingRandomSearchCV(
@@ -863,7 +883,7 @@ def test_halving_random_search_list_of_dicts():
         cv_results, param_keys, score_keys, n_candidates_last, extra_keys
     )
     check_cv_results_keys(
-        all_cv_results, param_keys, score_keys, n_candidates_all, extra_keys
+        all_cv_results, param_keys, all_score_keys, n_candidates_all, extra_keys
     )
     expected_cv_results_kinds = {
         "param_C": "f",

@@ -267,7 +267,11 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
         super().fit(X, y=y, **params)
 
-        self.all_cv_results_ = self.cv_results_
+        self.all_cv_results_ = {
+            key: value
+            for key, value in self.cv_results_.items()
+            if key != "rank_test_score"
+        }
         self.cv_results_, self.best_index_ = _trim_cv_results_to_last_iter(
             self.all_cv_results_, self.best_index_
         )
@@ -637,8 +641,9 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         A dict with the same structure as ``cv_results_``, containing the
         cross-validation results for all candidates across all halving
         iterations. Each row is identified by the ``iter`` and
-        ``n_resources`` columns. ``rank_test_score`` is computed globally
-        across all iterations.
+        ``n_resources`` columns. Unlike ``cv_results_``, it does not include a
+        ``rank_test_score`` column: ranking candidates evaluated with a varying
+        number of resources against each other is not meaningful.
         Please refer to the :ref:`User guide<successive_halving_cv_results>`
         for details.
 
@@ -1008,8 +1013,9 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         A dict with the same structure as ``cv_results_``, containing the
         cross-validation results for all candidates across all halving
         iterations. Each row is identified by the ``iter`` and
-        ``n_resources`` columns. ``rank_test_score`` is computed globally
-        across all iterations.
+        ``n_resources`` columns. Unlike ``cv_results_``, it does not include a
+        ``rank_test_score`` column: ranking candidates evaluated with a varying
+        number of resources against each other is not meaningful.
         Please refer to the :ref:`User guide<successive_halving_cv_results>`
         for details.
 
