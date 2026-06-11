@@ -1,12 +1,9 @@
-from math import ceil
-
 import numpy as np
 import pytest
 from scipy.stats import expon, norm, randint
 
 from sklearn.datasets import make_classification
 from sklearn.dummy import DummyClassifier
-from sklearn.experimental import enable_halving_search_cv  # noqa: F401
 from sklearn.model_selection import (
     GroupKFold,
     GroupShuffleSplit,
@@ -101,9 +98,6 @@ def test_nan_handling(HalvingSearch, fail_at):
     search = HalvingSearch(
         SometimesFailClassifier(),
         {f"fail_{fail_at}": [False, True], "a": range(3)},
-        resource="n_estimators",
-        max_resources=6,
-        min_resources=1,
         factor=2,
     )
 
@@ -123,81 +117,6 @@ def test_nan_handling(HalvingSearch, fail_at):
     assert unique_nan_ranks.shape[0] == 1
     # NaNs should have the lowest rank
     assert (unique_nan_ranks[0] >= ranks).all()
-
-
-@pytest.mark.parametrize("Est", (HalvingGridSearchCV, HalvingRandomSearchCV))
-@pytest.mark.parametrize(
-    (
-        "aggressive_elimination,"
-        "max_resources,"
-        "expected_n_iterations,"
-        "expected_n_required_iterations,"
-        "expected_n_possible_iterations,"
-        "expected_n_remaining_candidates,"
-        "expected_n_candidates,"
-        "expected_n_resources,"
-    ),
-    [
-        # notice how it loops at the beginning
-        # also, the number of candidates evaluated at the last iteration is
-        # <= factor
-        (True, "limited", 4, 4, 3, 1, [60, 20, 7, 3], [20, 20, 60, 180]),
-        # no aggressive elimination: we end up with less iterations, and
-        # the number of candidates at the last iter is > factor, which isn't
-        # ideal
-        (False, "limited", 3, 4, 3, 3, [60, 20, 7], [20, 60, 180]),
-        #  # When the amount of resource isn't limited, aggressive_elimination
-        #  # has no effect. Here the default min_resources='exhaust' will take
-        #  # over.
-        (True, "unlimited", 4, 4, 4, 1, [60, 20, 7, 3], [37, 111, 333, 999]),
-        (False, "unlimited", 4, 4, 4, 1, [60, 20, 7, 3], [37, 111, 333, 999]),
-    ],
-)
-def test_aggressive_elimination(
-    Est,
-    aggressive_elimination,
-    max_resources,
-    expected_n_iterations,
-    expected_n_required_iterations,
-    expected_n_possible_iterations,
-    expected_n_remaining_candidates,
-    expected_n_candidates,
-    expected_n_resources,
-):
-    # Test the aggressive_elimination parameter.
-
-    n_samples = 1000
-    X, y = make_classification(n_samples=n_samples, random_state=0)
-    param_grid = {"a": ("l1", "l2"), "b": list(range(30))}
-    base_estimator = FastClassifier()
-
-    if max_resources == "limited":
-        max_resources = 180
-    else:
-        max_resources = n_samples
-
-    sh = Est(
-        base_estimator,
-        param_grid,
-        aggressive_elimination=aggressive_elimination,
-        max_resources=max_resources,
-        factor=3,
-    )
-    sh.set_params(verbose=True)  # just for test coverage
-
-    if Est is HalvingRandomSearchCV:
-        # same number of candidates as with the grid
-        sh.set_params(n_candidates=2 * 30, min_resources="exhaust")
-
-    sh.fit(X, y)
-
-    assert sh.n_iterations_ == expected_n_iterations
-    assert sh.n_required_iterations_ == expected_n_required_iterations
-    assert sh.n_possible_iterations_ == expected_n_possible_iterations
-    assert sh.n_resources_ == expected_n_resources
-    assert sh.n_candidates_ == expected_n_candidates
-    assert sh.n_remaining_candidates_ == expected_n_remaining_candidates
-    assert ceil(sh.n_candidates_[-1] / sh.factor) == sh.n_remaining_candidates_
 
 
 @pytest.mark.parametrize("Est", (HalvingGridSearchCV, HalvingRandomSearchCV))
@@ -306,46 +225,6 @@ def test_n_iterations(Est, max_resources, n_iterations, n_possible_iterations):
     assert sh.n_possible_iterations_ == n_possible_iterations
 
 
-@pytest.mark.parametrize("Est", (HalvingRandomSearchCV, HalvingGridSearchCV))
-def test_resource_parameter(Est):
-    # Test the resource parameter
-
-    n_samples = 1000
-    X, y = make_classification(n_samples=n_samples, random_state=0)
-    param_grid = {"a": [1, 2], "b": list(range(10))}
-    base_estimator = FastClassifier()
-    sh = Est(base_estimator, param_grid, cv=2, resource="c", max_resources=10, factor=3)
-    sh.fit(X, y)
-    assert set(sh.n_resources_) == set([1, 3, 9])
-    for r_i, params, param_c in zip(
-        sh.cv_results_["n_resources"],
-        sh.cv_results_["params"],
-        sh.cv_results_["param_c"],
-    ):
-        assert r_i == params["c"] == param_c
-
-    with pytest.raises(
-        ValueError, match="Cannot use resource=1234 which is not supported "
-    ):
-        sh = HalvingGridSearchCV(
-            base_estimator, param_grid, cv=2, resource="1234", max_resources=10
-        )
-        sh.fit(X, y)
-
-    with pytest.raises(
-        ValueError,
-        match=(
-            "Cannot use parameter c as the resource since it is part "
-            "of the searched parameters."
-        ),
-    ):
-        param_grid = {"a": [1, 2], "b": [1, 2], "c": [1, 3]}
-        sh = HalvingGridSearchCV(
-            base_estimator, param_grid, cv=2, resource="c", max_resources=10
-        )
-        sh.fit(X, y)
-
-
 @pytest.mark.parametrize(
     "max_resources, n_candidates, expected_n_candidates",
     [
@@ -410,18 +289,6 @@ def test_random_search_discrete_distributions(
 @pytest.mark.parametrize(
     "params, expected_error_message",
     [
-        (
-            {"resource": "not_a_parameter"},
-            "Cannot use resource=not_a_parameter which is not supported",
-        ),
-        (
-            {"resource": "a", "max_resources": 100},
-            "Cannot use parameter a as the resource since it is part of",
-        ),
-        (
-            {"max_resources": "auto", "resource": "b"},
-            "resource can only be 'n_samples' when max_resources='auto'",
-        ),
         (
             {"min_resources": 15, "max_resources": 14},
             "min_resources_=15 is greater than max_resources_=14",

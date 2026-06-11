@@ -190,9 +190,7 @@ halving (SH) is like a tournament among candidate parameter combinations.
 SH is an iterative selection process where all candidates (the
 parameter combinations) are evaluated with a small amount of resources at
 the first iteration. Only some of these candidates are selected for the next
-iteration, which will be allocated more resources. For parameter tuning, the
-resource is typically the number of training samples, but it can also be an
-arbitrary numeric parameter such as `n_estimators` in a random forest.
+iteration, which will be allocated more resources. For parameter tuning, the resource is the number of training samples.
 
 .. note::
 
@@ -214,22 +212,13 @@ interactions are described more in detail in the dropdown section below. The
 ``factor`` (> 1) parameter controls the rate at which the resources grow, and
 the rate at which the number of candidates decreases. In each iteration, the
 number of resources per candidate is multiplied by ``factor`` and the number
-of candidates is divided by the same factor. Along with ``resource`` and
-``min_resources``, ``factor`` is the most important parameter to control the
-search in our implementation, though a value of 3 usually works well.
-``factor`` effectively controls the number of iterations in
-:class:`HalvingGridSearchCV` and the number of candidates (by default) and
-iterations in :class:`HalvingRandomSearchCV`. ``aggressive_elimination=True``
-can also be used if the number of available resources is small. More control
-is available through tuning the ``min_resources`` parameter.
-
-These estimators are still **experimental**: their predictions
-and their API might change without any deprecation cycle. To use them, you
-need to explicitly import ``enable_halving_search_cv``::
-
-  >>> from sklearn.experimental import enable_halving_search_cv  # noqa
-  >>> from sklearn.model_selection import HalvingGridSearchCV
-  >>> from sklearn.model_selection import HalvingRandomSearchCV
+of candidates is divided by the same factor. Along with ``min_resources``,
+``factor`` is the most important parameter to control the search in our
+implementation, though a value of 3 usually works well. ``factor`` effectively
+controls the number of iterations in :class:`HalvingGridSearchCV` and the
+number of candidates (by default) and iterations in
+:class:`HalvingRandomSearchCV`. More control is available through tuning the
+``min_resources`` parameter.
 
 .. rubric:: Examples
 
@@ -360,33 +349,6 @@ The sections below dive into technical aspects of successive halving.
   The amount of resources that is used at each iteration can be found in the
   `n_resources_` attribute.
 
-.. dropdown:: Choosing a resource
-
-  By default, the resource is defined in terms of number of samples. That is,
-  each iteration will use an increasing amount of samples to train on. You can
-  however manually specify a parameter to use as the resource with the
-  ``resource`` parameter. Here is an example where the resource is defined in
-  terms of the number of estimators of a random forest::
-
-      >>> from sklearn.datasets import make_classification
-      >>> from sklearn.ensemble import RandomForestClassifier
-      >>> from sklearn.experimental import enable_halving_search_cv  # noqa
-      >>> from sklearn.model_selection import HalvingGridSearchCV
-      >>> import pandas as pd
-      >>> param_grid = {'max_depth': [3, 5, 10],
-      ...               'min_samples_split': [2, 5, 10]}
-      >>> base_estimator = RandomForestClassifier(random_state=0)
-      >>> X, y = make_classification(n_samples=1000, random_state=0)
-      >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
-      ...                          factor=2, resource='n_estimators',
-      ...                          max_resources=30).fit(X, y)
-      >>> sh.best_estimator_
-      RandomForestClassifier(max_depth=5, n_estimators=24, random_state=0)
-
-  Note that it is not possible to budget on a parameter that is part of the
-  parameter grid.
-
-
 .. dropdown:: Exhausting the available resources
 
   As mentioned above, the number of resources that is used at each iteration
@@ -396,7 +358,6 @@ The sections below dive into technical aspects of successive halving.
 
       >>> from sklearn.datasets import make_classification
       >>> from sklearn.svm import SVC
-      >>> from sklearn.experimental import enable_halving_search_cv  # noqa
       >>> from sklearn.model_selection import HalvingGridSearchCV
       >>> import pandas as pd
       >>> param_grid= {'kernel': ('linear', 'rbf'),
@@ -439,60 +400,6 @@ The sections below dive into technical aspects of successive halving.
 
   In general, exhausting the total number of resources leads to a better final
   candidate parameter, and is slightly more time-intensive.
-
-.. _aggressive_elimination:
-
-Aggressive elimination of candidates
-------------------------------------
-
-Using the ``aggressive_elimination`` parameter, you can force the search
-process to end up with less than ``factor`` candidates at the last
-iteration.
-
-.. dropdown:: Code example of aggressive elimination
-
-  Ideally, we want the last iteration to evaluate ``factor`` candidates. We
-  then just have to pick the best one. When the number of available resources is
-  small with respect to the number of candidates, the last iteration may have to
-  evaluate more than ``factor`` candidates::
-
-      >>> from sklearn.datasets import make_classification
-      >>> from sklearn.svm import SVC
-      >>> from sklearn.experimental import enable_halving_search_cv  # noqa
-      >>> from sklearn.model_selection import HalvingGridSearchCV
-      >>> import pandas as pd
-      >>> param_grid = {'kernel': ('linear', 'rbf'),
-      ...               'C': [1, 10, 100]}
-      >>> base_estimator = SVC(gamma='scale')
-      >>> X, y = make_classification(n_samples=1000)
-      >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
-      ...                          factor=2, max_resources=40,
-      ...                          aggressive_elimination=False).fit(X, y)
-      >>> sh.n_resources_
-      [20, 40]
-      >>> sh.n_candidates_
-      [6, 3]
-
-  Since we cannot use more than ``max_resources=40`` resources, the process
-  has to stop at the second iteration which evaluates more than ``factor=2``
-  candidates.
-
-  When using ``aggressive_elimination``, the process will eliminate as many
-  candidates as necessary using ``min_resources`` resources::
-
-      >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
-      ...                            factor=2,
-      ...                            max_resources=40,
-      ...                            aggressive_elimination=True,
-      ...                            ).fit(X, y)
-      >>> sh.n_resources_
-      [20, 20, 40]
-      >>> sh.n_candidates_
-      [6, 3, 2]
-
-  Notice that we end with 2 candidates at the last iteration since we have
-  eliminated enough candidates during the first iterations, using ``n_resources =
-  min_resources = 20``.
 
 .. _successive_halving_cv_results:
 

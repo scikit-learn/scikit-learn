@@ -34,7 +34,6 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.exceptions import FitFailedWarning
-from sklearn.experimental import enable_halving_search_cv  # noqa: F401
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import (
@@ -2995,14 +2994,12 @@ def _searchcv_callback_test_cases(estimator, scoring):
             estimator(),
             {"max_iter": [1, 2, 3]},
             cv=2,
-            aggressive_elimination=True,
             scoring=scoring,
         ),
         HalvingRandomSearchCV(
             estimator(),
             {"max_iter": randint(1, 4)},
             cv=2,
-            aggressive_elimination=True,
             scoring=scoring,
             random_state=42,
         ),

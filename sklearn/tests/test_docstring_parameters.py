@@ -16,10 +16,7 @@ from sklearn.callback._base import _BaseCallback
 from sklearn.datasets import make_classification
 
 # make it possible to discover experimental estimators when calling `all_estimators`
-from sklearn.experimental import (
-    enable_halving_search_cv,  # noqa: F401
-    enable_iterative_imputer,  # noqa: F401
-)
+from sklearn.experimental import enable_iterative_imputer  # noqa: F401
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils import all_estimators

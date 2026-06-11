@@ -1,35 +1,22 @@
-"""Enables Successive Halving search-estimators
+"""This is now a no-op and can be safely removed from your code.
 
-The API and results of these estimators might change without any deprecation
-cycle.
-
-Importing this file dynamically sets the
-:class:`~sklearn.model_selection.HalvingRandomSearchCV` and
-:class:`~sklearn.model_selection.HalvingGridSearchCV` as attributes of the
-`model_selection` module::
-
-    >>> # explicitly require this experimental feature
-    >>> from sklearn.experimental import enable_halving_search_cv # noqa
-    >>> # now you can import normally from model_selection
-    >>> from sklearn.model_selection import HalvingRandomSearchCV
-    >>> from sklearn.model_selection import HalvingGridSearchCV
-
-
-The ``# noqa`` comment comment can be removed: it just tells linters like
-flake8 to ignore the import, which appears as unused.
+It used to enable the use of
+:class:`~sklearn.model_selection.HalvingGridSearchCV` and
+:class:`~sklearn.model_selection.HalvingRandomSearchCV` when they were still
+:term:`experimental`, but these estimators are now stable and can be imported
+normally from `sklearn.model_selection`.
 """
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from sklearn import model_selection
-from sklearn.model_selection._search_successive_halving import (
-    HalvingGridSearchCV,
-    HalvingRandomSearchCV,
+# TODO(1.14): remove this file
+
+import warnings
+
+warnings.warn(
+    "Since version 1.10, it is not needed to import enable_halving_search_cv "
+    "anymore. HalvingGridSearchCV and HalvingRandomSearchCV are now stable and "
+    "can be imported normally from sklearn.model_selection.",
+    UserWarning,
 )
-
-# use settattr to avoid mypy errors when monkeypatching
-setattr(model_selection, "HalvingRandomSearchCV", HalvingRandomSearchCV)
-setattr(model_selection, "HalvingGridSearchCV", HalvingGridSearchCV)
-
-model_selection.__all__ += ["HalvingRandomSearchCV", "HalvingGridSearchCV"]

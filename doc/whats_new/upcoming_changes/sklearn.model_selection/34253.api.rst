@@ -1,0 +1,10 @@
+- :class:`model_selection.HalvingGridSearchCV` and
+  :class:`model_selection.HalvingRandomSearchCV` are no longer experimental.
+  They can now be imported directly with
+  ``from sklearn.model_selection import HalvingGridSearchCV`` (or
+  ``HalvingRandomSearchCV``), and importing
+  ``sklearn.experimental.enable_halving_search_cv`` is no longer required
+  (doing so now raises a warning and is a no-op). They also no longer expose the
+  ``resource`` and ``aggressive_elimination`` parameters: the search now always
+  budgets on the number of training samples.
+  By :user:`Guillaume Lemaitre <glemaitre>`.
