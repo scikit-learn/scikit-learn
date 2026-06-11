@@ -545,7 +545,11 @@ class NeighborhoodComponentsAnalysis(
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.target_tags.required = True
-        tags.input_tags.sparse = self.init in ("pca", "random", "identity")
+        tags.input_tags.sparse = isinstance(self.init, str) and self.init in (
+            "pca",
+            "random",
+            "identity",
+        )
         return tags
 
     @property
