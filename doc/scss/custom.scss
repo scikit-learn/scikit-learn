@@ -164,6 +164,13 @@ details.sd-dropdown {
   }
 }
 
+/* Override sphinx-gallery's layout for dataframes to allow horizontal scrolling */
+
+table.dataframe {
+  overflow-x: auto;
+  display: block;
+}
+
 /* Download/launcher links and top hint (sphinx-gallery) */
 
 // https://sphinx-gallery.github.io/stable/advanced.html#using-sphinx-gallery-sidebar-components
