@@ -125,9 +125,10 @@ def test_estimators(estimator, check, request):
         check(estimator)
 
 
+# TODO(1.12): remove filter
 @pytest.mark.filterwarnings(
-    "ignore:Since version 1.0, it is not needed to import "
-    "enable_hist_gradient_boosting anymore"
+    "ignore:The sklearn.experimental.enable_hist_gradient_boosting module is "
+    "deprecated:FutureWarning"
 )
 @pytest.mark.thread_unsafe  # import side-effects
 def test_import_all_consistency():

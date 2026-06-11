@@ -71,6 +71,11 @@ _METHODS_IGNORE_NONE_Y = [
 ]
 
 
+# TODO(1.12): remove filter
+@pytest.mark.filterwarnings(
+    "ignore:The sklearn.experimental.enable_hist_gradient_boosting module is "
+    "deprecated:FutureWarning"
+)
 def test_docstring_parameters():
     # Test module docstring formatting
 
