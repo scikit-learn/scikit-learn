@@ -65,7 +65,7 @@ def _top_k(results, k, itr):
 
 
 def _trim_cv_results_to_last_iter(results, best_index):
-    """Trim cv_results_ to the last halving iteration only."""
+    """Trim results to the last halving iteration only."""
     last_iter_indices = np.flatnonzero(results["iter"] == np.max(results["iter"]))
     start = int(last_iter_indices[0])  # the last iteration is always at the end
     trimmed = {key: value[start:] for key, value in results.items()}
