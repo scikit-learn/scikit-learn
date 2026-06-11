@@ -1,20 +1,5 @@
 set -xe
 
-# Set environment variables to make our wheel build easier to reproduce byte
-# for byte from source. See https://reproducible-builds.org/. The long term
-# motivation would be to be able to detect supply chain attacks.
-#
-# In particular we set SOURCE_DATE_EPOCH to the commit date of the last commit.
-#
-# XXX: setting those environment variables is not enough. See the following
-# issue for more details on what remains to do:
-# https://github.com/scikit-learn/scikit-learn/issues/28151
-echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> "$GITHUB_ENV"
-# TODO PYTHONHASHSEED needs to be passed into the container in the Linux case.
-# SOURCE_DATE_EPOCH is always passed in. Maybe use both in CIBW_ENVIRONMENT for
-# simplicity?
-echo PYTHONHASHSEED=0 >> "$GITHUB_ENV"
-
 # OpenMP is not present on macOS by default
 if [[ $(uname) == "Darwin" ]]; then
     # Make sure to use a libomp version binary compatible with the oldest
