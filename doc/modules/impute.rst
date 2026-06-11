@@ -6,6 +6,17 @@ Imputation of missing values
 
 .. currentmodule:: sklearn.impute
 
+
+.. topic:: Key points for machine-learning with missing values
+
+   * Avoid dropping rows with missing values; it risks creating bias.
+
+   * Tree-based learners can natively predict on data with missing values
+     and work fairly well with no additional cost.
+
+  * Imputation can be very computationaly costly, and quickly hits
+    diminishing returns to improve subsequent prediction performance [3]_.
+
 For various reasons, many real-world datasets contain missing values, often
 encoded as blanks, NaNs or other placeholders. They arise from faulty
 measurements, unanswered questionnaire items, or information that was simply
@@ -40,11 +51,13 @@ high-level guidelines help choose among these tools [3]_:
 - Flag missing entries: adding a missingness indicator (the ``add_indicator``
   option of the imputers, or :class:`MissingIndicator`) tends to help
   prediction, even when values are missing completely at random.
-- Prefer expressive models: flexible estimators benefit even less from
-  sophisticated imputation, and some handle missing values natively without
-  any imputation (see :ref:`estimators_that_handle_nan`).
-- Invest in imputation quality mainly when reconstructing the data itself, not
-  prediction, is the objective.
+- Prefer expressive models for the supervised-learner step: flexible estimators
+  benefit even less from sophisticated imputation, and some handle missing
+  values natively without any imputation (see :ref:`estimators_that_handle_nan`).
+- Sophisticated imputation can help prediction, but it can be very
+  computationally cost (it scales poorly with data size).
+- Invest heavily in imputation quality mainly when reconstructing the data
+  itself, not prediction, is the objective.
 
 
 Univariate vs. Multivariate Imputation
