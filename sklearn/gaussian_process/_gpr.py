@@ -276,7 +276,8 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         )
 
         # y_scale ensures that in the likelihood calculation,
-        # the targets have the same scale as the first target in the default case of normalize_y=False
+        # the targets have the same scale as the first target
+        # in the default case of normalize_y=False;
         # for normalize_y=True targets are normalised using standard scaling.
         # y_unscale ensures that
         # the posterior statistics have the same scales as in the original target data.
