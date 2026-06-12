@@ -374,18 +374,26 @@ def test_y_multioutput(normalise_y):
 
     gpr = GaussianProcessRegressor(kernel=kernel, optimizer=None)
     gpr.fit(X, y)
-
+gpr_2 = GaussianProcessRegressor(
+        kernel=kernel, optimizer=None, normalize_y=normalize_y
+    )
+    gpr_2.fit(X, y * scale)
     gpr_2d = GaussianProcessRegressor(kernel=kernel, optimizer=None)
     gpr_2d.fit(X, y_2d)
 
     y_pred_1d, y_std_1d = gpr.predict(X2, return_std=True)
     y_pred_2d, y_std_2d = gpr_2d.predict(X2, return_std=True)
+      y_pred_2, y_std_2 = gpr_2.predict(X2, return_std=True)
+    _, y_cov_2 = gpr_2.predict(X2, return_cov=True)
     _, y_cov_1d = gpr.predict(X2, return_cov=True)
     _, y_cov_2d = gpr_2d.predict(X2, return_cov=True)
 
     assert_almost_equal(y_pred_1d, y_pred_2d[:, 0])
     assert_almost_equal(y_std_1d, y_std_2d[..., 0])
     assert_almost_equal(y_cov_1d, y_cov_2d[..., 0])
+assert_almost_equal(y_pred_2d[:, 1], y_pred_2)
+assert_almost_equal(y_std_2d[:, 1], y_std_2)
+assert_almost_equal(y_cov_2d[..., 1], y_cov_2)
 
     # The second output is equal to the first one, up to a scale factor.
     assert_almost_equal(y_pred_2d[:, 1], y_pred_1d * scale)
