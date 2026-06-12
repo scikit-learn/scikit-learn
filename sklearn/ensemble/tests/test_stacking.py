@@ -948,7 +948,9 @@ def test_get_metadata_routing_without_fit(Estimator, Child):
 )
 @config_context(enable_metadata_routing=True)
 def test_metadata_routing_for_stacking_estimators(Estimator, Child, prop, prop_value):
-    """Test that metadata is routed correctly for Stacking*."""
+    """Test that metadata is routed correctly for Stacking*. Note that `fit_transform`
+    like `fit` goes through `_BaseStacking.fit().transform()` and thus no separate test
+    is needed."""
 
     est = Estimator(
         [
@@ -965,30 +967,27 @@ def test_metadata_routing_for_stacking_estimators(Estimator, Child, prop, prop_v
     )
 
     est.fit(X_iris, y_iris, **{prop: prop_value})
-    est.fit_transform(X_iris, y_iris, **{prop: prop_value})
+
+    for estimator in est.estimators_:
+        registry = estimator.registry
+        assert len(registry)
+        check_recorded_metadata(
+            obj=estimator,
+            method="fit",
+            parent="fit",
+            split_params=(prop,),
+            **{prop: prop_value},
+        )
 
     est.predict(X_iris, **{prop: prop_value})
 
-    for estimator in est.estimators:
-        # access sub-estimator in (name, est) with estimator[1]:
-        registry = estimator[1].registry
-        assert len(registry)
-        for sub_est in registry:
-            check_recorded_metadata(
-                obj=sub_est,
-                method="fit",
-                parent="fit",
-                split_params=(prop),
-                **{prop: prop_value},
-            )
-    # access final_estimator:
     registry = est.final_estimator_.registry
     assert len(registry)
     check_recorded_metadata(
-        obj=registry[-1],
+        obj=est.final_estimator_,
         method="predict",
         parent="predict",
-        split_params=(prop),
+        split_params=(prop,),
         **{prop: prop_value},
     )
 

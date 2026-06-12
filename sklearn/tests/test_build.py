@@ -11,6 +11,11 @@ from sklearn import __version__
 from sklearn.utils._openmp_helpers import _openmp_parallelism_enabled
 
 
+# TODO(1.12): remove filter
+@pytest.mark.filterwarnings(
+    "ignore:The sklearn.experimental.enable_hist_gradient_boosting module is "
+    "deprecated:FutureWarning"
+)
 @pytest.mark.thread_unsafe  # import side-effects
 def test_extension_type_module():
     """Check that Cython extension types have a correct ``__module__``.
