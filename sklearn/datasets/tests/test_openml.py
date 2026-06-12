@@ -1544,7 +1544,7 @@ def test_fetch_openml_verify_checksum(
     # Both the redownload warning and the checksum error report the download
     # URL, plus the local cache path (rooted at ``data_home``) when caching is on.
     if cache:
-        cache_path = re.escape(data_home) + r".*openml\.org/.*/anneal\.arff\.gz"
+        cache_path = re.escape(data_home) + r".*1666876/anneal\.arff\.gz"
         warn_match = f"Invalid cache, redownloading file to {cache_path}"
         error_match = (
             f"md5 checksum of the file downloaded from {re.escape(download_url)} "
