@@ -50,7 +50,7 @@ def _object_dtype_isnan(X):
 
 # TODO: Remove when SciPy 1.11 is the minimum supported version
 def _mode(a, axis=0):
-    import scipy.stats
+    import scipy.stats  # lazy import, speeds up `import sklearn`
 
     mode = scipy.stats.mode(a, axis=axis, keepdims=True)
     if sp_version >= parse_version("1.10.999"):

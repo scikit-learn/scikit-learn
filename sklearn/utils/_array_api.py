@@ -632,7 +632,7 @@ def _expit(x, out=None, xp=None):
     # but not in the Array API specification.
     xp, _ = get_namespace(x, xp=xp)
     if _is_numpy_namespace(xp):
-        from scipy.special import expit
+        from scipy.special import expit  # lazy import, speeds up `import sklearn`
 
         return expit(x, out=out)
 
@@ -644,7 +644,7 @@ def _logit(x, out=None, xp=None):
     # but not in the Array API specification.
     xp, _ = get_namespace(x, xp=xp)
     if _is_numpy_namespace(xp):
-        from scipy.special import logit
+        from scipy.special import logit  # lazy import, speeds up `import sklearn`
 
         return logit(x, out=out)
 
