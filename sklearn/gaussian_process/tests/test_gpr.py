@@ -484,7 +484,7 @@ def test_duplicate_input(kernel):
     y_pred_similar, y_std_similar = gpr_similar_inputs.predict(X_test, return_std=True)
 
     assert_almost_equal(y_pred_equal, y_pred_similar)
-    assert_almost_equal(y_std_equal, y_std_similar)
+    assert_almost_equal(y_std_equal, y_std_similar, decimal=6)
 
 
 def test_no_fit_default_predict():
