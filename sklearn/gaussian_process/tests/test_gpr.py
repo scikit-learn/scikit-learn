@@ -362,8 +362,9 @@ def test_large_variance_y():
     # made by GPy.
     assert_allclose(y_pred_std, y_pred_std_gpy, rtol=0.15, atol=0)
 
+
 @pytest.mark.parametrize("normalize_y", [False, True])
-def test_y_multioutput(normalise_y):
+def test_y_multioutput(normalize_y):
     # Test that GPR can deal with multi-dimensional target values
     scale = 2
     y_2d = np.vstack((y, y * scale)).T
@@ -372,52 +373,57 @@ def test_y_multioutput(normalise_y):
     # of 1d GP and that second dimension is twice as large
     kernel = RBF(length_scale=1.0)
 
-    gpr = GaussianProcessRegressor(kernel=kernel, optimizer=None)
-    gpr.fit(X, y)
-gpr_2 = GaussianProcessRegressor(
+    gpr_1 = GaussianProcessRegressor(
         kernel=kernel, optimizer=None, normalize_y=normalize_y
     )
-    gpr_2.fit(X, y * scale)
-    gpr_2d = GaussianProcessRegressor(kernel=kernel, optimizer=None)
-    gpr_2d.fit(X, y_2d)
+    gpr_1.fit(X, y_2d[:, 0])
 
-    y_pred_1d, y_std_1d = gpr.predict(X2, return_std=True)
-    y_pred_2d, y_std_2d = gpr_2d.predict(X2, return_std=True)
-      y_pred_2, y_std_2 = gpr_2.predict(X2, return_std=True)
+    gpr_2 = GaussianProcessRegressor(
+        kernel=kernel, optimizer=None, normalize_y=normalize_y
+    )
+    gpr_2.fit(X, y_2d[:, 1])
+
+    gpr_12 = GaussianProcessRegressor(
+        kernel=kernel, optimizer=None, normalize_y=normalize_y
+    )
+    gpr_12.fit(X, y_2d)
+
+    y_pred_1, y_std_1 = gpr_1.predict(X2, return_std=True)
+    y_pred_2, y_std_2 = gpr_2.predict(X2, return_std=True)
+    y_pred_12, y_std_12 = gpr_12.predict(X2, return_std=True)
+    _, y_cov_1 = gpr_1.predict(X2, return_cov=True)
     _, y_cov_2 = gpr_2.predict(X2, return_cov=True)
-    _, y_cov_1d = gpr.predict(X2, return_cov=True)
-    _, y_cov_2d = gpr_2d.predict(X2, return_cov=True)
+    _, y_cov_12 = gpr_12.predict(X2, return_cov=True)
 
-    assert_almost_equal(y_pred_1d, y_pred_2d[:, 0])
-    assert_almost_equal(y_std_1d, y_std_2d[..., 0])
-    assert_almost_equal(y_cov_1d, y_cov_2d[..., 0])
-assert_almost_equal(y_pred_2d[:, 1], y_pred_2)
-assert_almost_equal(y_std_2d[:, 1], y_std_2)
-assert_almost_equal(y_cov_2d[..., 1], y_cov_2)
+    assert_almost_equal(y_pred_12[:, 0], y_pred_1)
+    assert_almost_equal(y_std_12[..., 0], y_std_1)
+    assert_almost_equal(y_cov_12[..., 0], y_cov_1)
 
-    # The second output is equal to the first one, up to a scale factor.
-    assert_almost_equal(y_pred_2d[:, 1], y_pred_1d * scale)
-    assert_almost_equal(y_std_2d[..., 1], y_std_1d * scale)
-    assert_almost_equal(y_cov_2d[..., 1], y_cov_1d * scale**2)
+    assert_almost_equal(y_pred_12[:, 1], y_pred_2)
+    assert_almost_equal(y_pred_12[:, 1], y_pred_1 * scale)
+    assert_almost_equal(y_std_12[..., 1], y_std_2)
+    assert_almost_equal(y_std_12[..., 1], y_std_1 * scale)
+    assert_almost_equal(y_cov_12[..., 1], y_cov_2)
+    assert_almost_equal(y_cov_12[..., 1], y_cov_1 * scale**2)
 
-    y_sample_1d = gpr.sample_y(X2, n_samples=10)
-    y_sample_2d = gpr_2d.sample_y(X2, n_samples=10)
+    y_sample_1 = gpr_1.sample_y(X2, n_samples=10)
+    y_sample_12 = gpr_12.sample_y(X2, n_samples=10)
 
-    assert y_sample_1d.shape == (5, 10)
-    assert y_sample_2d.shape == (5, 2, 10)
+    assert y_sample_1.shape == (5, 10)
+    assert y_sample_12.shape == (5, 2, 10)
     # Only the first target will be equal
-    assert_almost_equal(y_sample_1d, y_sample_2d[:, 0, :])
-    assert not np.allclose(y_sample_1d, y_sample_2d[:, 1, :])
+    assert_almost_equal(y_sample_1, y_sample_12[:, 0, :])
+    assert not np.allclose(y_sample_1, y_sample_12[:, 1, :])
 
     # Test hyperparameter optimization
     for kernel in kernels:
-        gpr = GaussianProcessRegressor(kernel=kernel, normalize_y=True)
-        gpr.fit(X, y)
+        gpr_1 = GaussianProcessRegressor(kernel=kernel, normalize_y=True)
+        gpr_1.fit(X, y)
 
-        gpr_2d = GaussianProcessRegressor(kernel=kernel, normalize_y=True)
-        gpr_2d.fit(X, np.vstack((y, y)).T)
+        gpr_12 = GaussianProcessRegressor(kernel=kernel, normalize_y=True)
+        gpr_12.fit(X, np.vstack((y, y)).T)
 
-        assert_almost_equal(gpr.kernel_.theta, gpr_2d.kernel_.theta, 4)
+        assert_almost_equal(gpr_1.kernel_.theta, gpr_12.kernel_.theta, 4)
 
 
 @pytest.mark.parametrize("kernel", non_fixed_kernels)
