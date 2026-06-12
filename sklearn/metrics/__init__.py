@@ -7,6 +7,7 @@ from sklearn.metrics import cluster
 from sklearn.metrics._classification import (
     accuracy_score,
     balanced_accuracy_score,
+    brier_calibration_error,
     brier_score_loss,
     class_likelihood_ratios,
     classification_report,
@@ -115,6 +116,7 @@ __all__ = [
     "auc",
     "average_precision_score",
     "balanced_accuracy_score",
+    "brier_calibration_error",
     "brier_score_loss",
     "calinski_harabasz_score",
     "check_scoring",
