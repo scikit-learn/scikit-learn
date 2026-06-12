@@ -2481,7 +2481,8 @@ def test_groups_with_routing_validation(func, extra_args):
         (cross_val_score, {}),
         (cross_val_predict, {}),
         (learning_curve, {}),
-        (permutation_test_score, {}),
+        # Few permutations: this test only checks the params=None code path.
+        (permutation_test_score, {"n_permutations": 5}),
         (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
     ],
 )
