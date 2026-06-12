@@ -218,30 +218,28 @@ def _partial_dependence_recursion(est, grid, features):
     return averaged_predictions
 
 
-def _partial_dependence_tree_accurate(est, X, all_features, all_grids):
-    """Calculate partial dependence using the tree_accurate method.
+def _partial_dependence_tree_accurate(est, X, feature, grid):
+    """Calculate partial dependence for a single feature using tree_accurate.
 
     Performs a single O(m * D²) background pass over ``X`` per tree to collect
-    per-leaf statistics, then combines them with a vectorised pass over each grid.
+    per-leaf statistics, then combines them with a vectorised pass over the grid.
     Only ``kind='average'`` is supported.
-    Returns one centred averaged-prediction array per feature,
-    shifted by the mean prediction so results are on the same scale as 'brute'.
 
     Parameters
     ----------
-    est : DecisionTreeRegressor or RandomForestRegressor
-        A fitted tree-based regressor (single- or multi-output).
+    est : DecisionTreeRegressor, RandomForestRegressor, DecisionTreeClassifier,
+          or RandomForestClassifier
+        A fitted tree-based estimator.
     X : ndarray of shape (n_samples, n_features), dtype=np.float32
         Background dataset used for marginalisation.
-    all_features : list of int
-        Global column indices of the target features, one per requested feature.
-    all_grids : list of ndarray of shape (n_grid_j,)
-        1-D grid of values for each target feature.
+    feature : int
+        Global column index of the target feature.
+    grid : ndarray of shape (n_grid,), dtype=np.float32
+        Grid of values for the target feature.
 
     Returns
     -------
-    averaged_predictions : list of ndarray of shape (n_outputs, n_grid_j)
-        One array per feature in ``all_features``.
+    averaged_predictions : ndarray of shape (n_outputs, n_grid)
     """
     m = X.shape[0]
 
@@ -251,33 +249,20 @@ def _partial_dependence_tree_accurate(est, X, all_features, all_grids):
     else:
         n_effective_outputs = est.n_outputs_
 
-    grid_sizes = [len(g) for g in all_grids]
-    n_grid_max = max(grid_sizes)
-    n_required = len(all_features)
-
-    # Build padded grid: shape (n_grid_max, n_required).
-    grid_2d = np.zeros((n_grid_max, n_required), dtype=np.float32)
-    for i, grid_1d in enumerate(all_grids):
-        grid_2d[: grid_sizes[i], i] = grid_1d
-
-    required_features_arr = np.array(all_features, dtype=np.intp)
-    out = np.zeros((n_effective_outputs, n_required, n_grid_max), dtype=np.float64)
+    out = np.zeros((n_effective_outputs, len(grid)), dtype=np.float64)
 
     if isinstance(est, (DecisionTreeRegressor, DecisionTreeClassifier)):
-        est.tree_.compute_partial_dependence_tree_accurate(
-            X, grid_2d, required_features_arr, out
-        )
+        est.tree_.compute_partial_dependence_tree_accurate(X, grid, feature, out)
         out /= m
     elif isinstance(est, (RandomForestRegressor, RandomForestClassifier)):
         n_trees = len(est.estimators_)
         for tree_est in est.estimators_:
             tree_est.tree_.compute_partial_dependence_tree_accurate(
-                X, grid_2d, required_features_arr, out
+                X, grid, feature, out
             )
         out /= m * n_trees
 
-    # Extract per-feature results, dropping any padded grid entries.
-    return [out[:, i, : grid_sizes[i]] for i in range(n_required)]
+    return out
 
 
 def _partial_dependence_brute(
@@ -594,10 +579,10 @@ def partial_dependence(
         samples in the dataset or one value per sample or both.
         See Returns below.
 
-        Note that the fast `method='recursion'` option is only available for
-        `kind='average'` and `sample_weights=None`. Computing individual
-        dependencies and doing weighted averages requires using the slower
-        `method='brute'`.
+        Note that the fast `method='recursion'` and `method='tree_accurate'`
+        options are only available for `kind='average'`.
+        Computing individual dependencies and doing weighted averages requires
+        using the slower `method='brute'`.
 
         .. versionadded:: 0.24
 
@@ -861,10 +846,11 @@ def partial_dependence(
         )
     elif method == "tree_accurate":
         X_bg = np.asarray(X, dtype=np.float32, order="C")
-        per_feature_preds = _partial_dependence_tree_accurate(
-            estimator, X_bg, list(features_indices), values
+        feature = int(features_indices[0])
+        grid_1d = np.asarray(values[0], dtype=np.float32)
+        averaged_predictions = _partial_dependence_tree_accurate(
+            estimator, X_bg, feature, grid_1d
         )
-        averaged_predictions = np.concatenate(per_feature_preds, axis=1)
     else:
         averaged_predictions = _partial_dependence_recursion(
             estimator, grid, features_indices
