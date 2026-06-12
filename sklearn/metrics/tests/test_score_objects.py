@@ -110,6 +110,7 @@ CLF_SCORERS = [
     "recall_micro",
     "neg_log_loss",
     "neg_brier_score",
+    "neg_brier_calibration_error",
     "jaccard",
     "jaccard_weighted",
     "jaccard_macro",
@@ -444,6 +445,21 @@ def test_classification_multiclass_scores(scorer_name, metric):
     score = get_scorer(scorer_name)(clf, X_test, y_test)
     expected_score = metric(y_test, clf.predict(X_test))
     assert score == pytest.approx(expected_score)
+
+
+def test_brier_calibration_error_scorer_multiclass_error():
+    X, y = make_classification(
+        n_classes=3, n_informative=3, n_samples=30, random_state=0
+    )
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, random_state=0, stratify=y
+    )
+    clf = DecisionTreeClassifier(random_state=0).fit(X_train, y_train)
+
+    scorer = get_scorer("neg_brier_calibration_error")
+    err_msg = "brier_calibration_error only supports binary classification"
+    with pytest.raises(ValueError, match=err_msg):
+        scorer(clf, X_test, y_test)
 
 
 def test_custom_scorer_pickling():

@@ -11,13 +11,14 @@ from scipy.stats import bernoulli
 
 from sklearn import datasets, svm
 from sklearn.base import config_context
-from sklearn.calibration import CalibratedClassifierCV
+from sklearn.calibration import CalibratedClassifierCV, calibration_curve
 from sklearn.datasets import make_multilabel_classification
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.metrics import (
     accuracy_score,
     average_precision_score,
     balanced_accuracy_score,
+    brier_calibration_error,
     brier_score_loss,
     class_likelihood_ratios,
     classification_report,
@@ -3132,6 +3133,158 @@ def test_brier_score_loss_warnings():
         )
 
 
+def test_brier_calibration_error_calibrated_predictions():
+    y_true = np.array([0, 0, 0, 1] + [0, 1, 1, 1])
+    y_proba = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
+
+    assert brier_calibration_error(y_true, y_proba) == pytest.approx(0.0)
+
+
+def test_brier_calibration_error_uncalibrated_predictions():
+    y_true = np.array([0, 0, 0, 0] + [1, 1, 1, 1])
+    y_proba = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
+
+    assert brier_calibration_error(y_true, y_proba) == pytest.approx(0.0625)
+
+
+def test_brier_calibration_error_matches_calibration_curve():
+    n_groups = 5
+    n_samples_per_bin = 20
+    rng = check_random_state(0)
+    y_proba = np.concatenate(
+        [
+            rng.uniform(i / n_groups, (i + 1) / n_groups, size=n_samples_per_bin)
+            for i in range(n_groups)
+        ]
+    )
+    y_true = rng.binomial(1, y_proba)
+    permutation = rng.permutation(y_true.shape[0])
+    y_true = y_true[permutation]
+    y_proba = y_proba[permutation]
+    n_bins = int(np.ceil(np.cbrt(y_true.shape[0])))
+
+    prob_true, prob_pred = calibration_curve(
+        y_true, y_proba, n_bins=n_bins, strategy="quantile"
+    )
+    expected = np.mean((prob_true - prob_pred) ** 2)
+
+    assert brier_calibration_error(y_true, y_proba) == pytest.approx(expected)
+
+
+def test_brier_calibration_error_default_pos_label_single_class():
+    y_true = np.array([0, 0])
+    y_proba = np.array([0.1, 0.2])
+
+    assert brier_calibration_error(y_true, y_proba) == pytest.approx(
+        brier_calibration_error(y_true, y_proba, pos_label=1)
+    )
+    assert brier_calibration_error(y_true, y_proba) == pytest.approx(0.025)
+
+
+def test_brier_calibration_error_absent_pos_label_single_class():
+    y_true = np.zeros(8)
+    y_proba = np.array([0.25, 0.25, 0.25, 0.25, 0.75, 0.75, 0.75, 0.75])
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        result = brier_calibration_error(y_true, y_proba, pos_label=2)
+
+    assert result == pytest.approx(0.3125)
+
+
+def test_brier_calibration_error_sample_weights():
+    y_true = np.array([0, 0, 0, 1] + [1, 1, 1, 1])
+    y_proba = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
+    sample_weight = np.array([1, 1, 1, 1] + [3, 3, 3, 3])
+
+    assert brier_calibration_error(
+        y_true, y_proba, sample_weight=sample_weight.tolist()
+    ) == pytest.approx(
+        brier_calibration_error(y_true, y_proba, sample_weight=sample_weight)
+    )
+    assert brier_calibration_error(
+        y_true, y_proba, sample_weight=sample_weight
+    ) == pytest.approx(0.03515625)
+
+
+@pytest.mark.parametrize(
+    "case, kwargs, err_msg",
+    [
+        ("inconsistent-lengths", {}, "inconsistent numbers of samples"),
+        ("probabilities-above-one", {}, "values greater than 1"),
+        ("probabilities-below-zero", {}, "values less than 0"),
+        (
+            "negative-sample-weight",
+            {"sample_weight": [1, 1, 1, 1, 1, 1, 1, -1]},
+            "Negative values in data passed to `sample_weight`",
+        ),
+        ("invalid-pos-label", {"pos_label": 2}, "pos_label=2 is not a valid label"),
+        (
+            "invalid-string-pos-label",
+            {"pos_label": "positive"},
+            "pos_label='positive' is not a valid label",
+        ),
+        (
+            "multiclass-proba",
+            {},
+            "brier_calibration_error only supports binary classification",
+        ),
+        ("multiclass-target", {}, "inferred from y_true is multiclass"),
+        ("nan-target-pos-label", {"pos_label": 1}, "Input contains NaN"),
+    ],
+)
+def test_brier_calibration_error_raises(case, kwargs, err_msg):
+    y_true = np.array([0, 0, 0, 1] + [1, 1, 1, 1])
+    y_proba = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
+
+    if case == "inconsistent-lengths":
+        y_proba = y_proba[1:]
+    elif case == "probabilities-above-one":
+        y_proba = y_proba + 1
+    elif case == "probabilities-below-zero":
+        y_proba = y_proba - 1
+    elif case == "multiclass-proba":
+        y_proba = np.column_stack([1 - y_proba, y_proba, np.zeros_like(y_proba)])
+    elif case == "multiclass-target":
+        y_true[0] = 2
+    elif case == "nan-target-pos-label":
+        y_true = y_true.astype(float)
+        y_true[0] = np.nan
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        with pytest.raises(ValueError, match=err_msg):
+            brier_calibration_error(y_true, y_proba, **kwargs)
+
+
+def test_brier_calibration_error_auto_bin_count():
+    y_true = np.array([0, 1, 0, 1])
+    y_proba = np.array([0.1, 0.3, 0.6, 0.9])
+
+    assert brier_calibration_error(y_true, y_proba) == pytest.approx(0.07625)
+
+
+def test_brier_calibration_error_auto_bin_count_perfect_cube():
+    y_true = np.array([0, 1] * 32)
+    y_proba = np.linspace(0.01, 0.99, num=64)
+
+    # A perfect cube number of samples should produce 4 bins, not 5.
+    n_bins = int(np.ceil(np.cbrt(y_true.shape[0])))
+    prob_true, prob_pred = calibration_curve(
+        y_true, y_proba, n_bins=n_bins, strategy="quantile"
+    )
+    expected = np.mean((prob_true - prob_pred) ** 2)
+
+    assert brier_calibration_error(y_true, y_proba) == pytest.approx(expected)
+
+
+def test_brier_calibration_error_repeated_probabilities():
+    y_true = np.array([1, 0, 0, 1])
+    y_proba = np.array([0.25, 0.25, 0.75, 0.75])
+
+    assert brier_calibration_error(y_true, y_proba) == pytest.approx(0.0625)
+
+
 def test_balanced_accuracy_score_unseen():
     msg = "y_pred contains classes not in y_true"
     with pytest.warns(UserWarning, match=msg):
@@ -3168,6 +3321,7 @@ def test_balanced_accuracy_score(y_true, y_pred):
         precision_recall_fscore_support,
         precision_score,
         recall_score,
+        brier_calibration_error,
         brier_score_loss,
     ],
 )
@@ -3183,7 +3337,7 @@ def test_classification_metric_pos_label_types(metric, classes):
     rng = np.random.RandomState(42)
     n_samples, pos_label = 10, classes[-1]
     y_true = rng.choice(classes, size=n_samples, replace=True)
-    if metric is brier_score_loss:
+    if metric in (brier_calibration_error, brier_score_loss):
         # brier score loss requires probabilities
         y_pred = rng.uniform(size=n_samples)
     else:

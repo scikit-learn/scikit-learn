@@ -54,6 +54,7 @@ from sklearn.utils._param_validation import (
 from sklearn.utils._unique import attach_unique
 from sklearn.utils.extmath import _nanaverage
 from sklearn.utils.multiclass import type_of_target, unique_labels
+from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import (
     _check_pos_label_consistency,
     _check_sample_weight,
@@ -3865,6 +3866,158 @@ def brier_score_loss(
         brier_score *= 0.5
 
     return float(brier_score)
+
+
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_proba": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "pos_label": [Real, str, "boolean", None],
+    },
+    prefer_skip_nested_validation=True,
+)
+def brier_calibration_error(
+    y_true,
+    y_proba,
+    *,
+    sample_weight=None,
+    pos_label=None,
+):
+    """Compute the Brier calibration error for binary probabilistic predictions.
+
+    The Brier calibration error is the binned calibration term of the Brier
+    score decomposition. For each bin, it compares the average predicted
+    probability of the positive class with the fraction of samples that
+    actually belong to the positive class. Bins are defined by weighted
+    quantiles of the predicted probabilities, also known as uniform-mass
+    binning. Following [1]_, the number of bins is set to
+    ``int(np.ceil(np.cbrt(n_samples)))``.
+
+    Read more in the :ref:`User Guide <brier_calibration_error>`.
+
+    .. versionadded:: 1.10
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,)
+        True targets of a binary classification task.
+
+    y_proba : array-like of shape (n_samples,)
+        Probabilities of the positive class.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    pos_label : int, float, bool or str, default=None
+        Label of the positive class. If ``None``, `pos_label` will be inferred
+        in the following manner:
+
+        * if `y_true` in {-1, 1} or {0, 1}, `pos_label` defaults to 1;
+        * else if `y_true` contains string, an error will be raised and
+          `pos_label` should be explicitly specified;
+        * otherwise, `pos_label` defaults to the greater label,
+          i.e. `np.unique(y_true)[-1]`.
+
+    Returns
+    -------
+    score : float
+        Brier calibration error.
+
+    References
+    ----------
+    .. [1] `Zeyu Sun, Dogyoon Song, Alfred Hero. Minimum-Risk Recalibration
+           of Classifiers. arXiv:2305.10886, 2023.
+           <https://arxiv.org/abs/2305.10886>`_
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import brier_calibration_error
+    >>> y_true = np.array([0, 0, 0, 1] + [0, 1, 1, 1])
+    >>> y_proba = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
+    >>> brier_calibration_error(y_true, y_proba)
+    0.0
+    >>> y_true = np.array([0, 0, 0, 0] + [1, 1, 1, 1])
+    >>> brier_calibration_error(y_true, y_proba)
+    0.0625
+    """
+    y_proba = check_array(
+        y_proba, ensure_2d=False, ensure_all_finite=False, input_name="y_proba"
+    )
+    if y_proba.ndim == 2 and y_proba.shape[1] > 1:
+        raise ValueError(
+            "brier_calibration_error only supports binary classification. "
+            "y_proba must be a 1d array of probabilities for the positive class; "
+            f"got an array with shape {y_proba.shape}."
+        )
+
+    xp, _, device_ = get_namespace_and_device(y_proba)
+    if sample_weight is not None:
+        sample_weight = move_to(sample_weight, xp=xp, device=device_)
+
+    if pos_label is not None:
+        y_true = column_or_1d(y_true)
+        assert_all_finite(y_true)
+        xp_y_true, _ = get_namespace(y_true)
+        labels = xp_y_true.unique_values(y_true)
+        labels = move_to(labels, xp=np, device="cpu")
+        if labels.shape[0] == 2:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", FutureWarning)
+                pos_label_in_labels = pos_label in labels
+            if not pos_label_in_labels:
+                raise ValueError(
+                    "pos_label=%r is not a valid label: %r" % (pos_label, labels)
+                )
+
+    y_true, y_proba = _validate_binary_probabilistic_prediction(
+        y_true, y_proba, sample_weight, pos_label
+    )
+    y_true = y_true[:, 1]
+    y_proba = y_proba[:, 1]
+
+    float_dtype = _find_matching_floating_dtype(y_proba, sample_weight, xp=xp)
+    y_true = xp.astype(y_true, float_dtype, copy=False)
+    y_proba = xp.astype(y_proba, float_dtype, copy=False)
+
+    if sample_weight is not None:
+        sample_weight = _check_sample_weight(
+            sample_weight,
+            y_proba,
+            force_float_dtype=False,
+            ensure_non_negative=True,
+        )
+    else:
+        sample_weight = xp.ones(y_true.shape[0], dtype=float_dtype, device=device_)
+    sample_weight = xp.astype(sample_weight, float_dtype, copy=False)
+
+    n_samples = int(float(xp.sum(xp.astype(sample_weight != 0, float_dtype))))
+    n_bins = int(np.ceil(np.cbrt(n_samples)))
+    quantiles = xp.linspace(0, 100, n_bins + 1, dtype=float_dtype, device=device_)
+    bins = _weighted_percentile(y_proba, sample_weight, quantiles, average=True, xp=xp)
+
+    bin_ids = xp.searchsorted(bins[1:-1], y_proba)
+    bin_weights = _bincount(bin_ids, weights=sample_weight, minlength=n_bins, xp=xp)
+    nonzero = bin_weights != 0
+
+    freq_true = (
+        _bincount(bin_ids, weights=y_true * sample_weight, minlength=n_bins, xp=xp)[
+            nonzero
+        ]
+        / bin_weights[nonzero]
+    )
+    mean_pred = (
+        _bincount(bin_ids, weights=y_proba * sample_weight, minlength=n_bins, xp=xp)[
+            nonzero
+        ]
+        / bin_weights[nonzero]
+    )
+
+    error = xp.sum(bin_weights[nonzero] * (freq_true - mean_pred) ** 2) / xp.sum(
+        sample_weight, dtype=float_dtype
+    )
+    return float(error)
 
 
 @validate_params(
