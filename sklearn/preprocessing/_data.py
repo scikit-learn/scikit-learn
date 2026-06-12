@@ -2916,7 +2916,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             Individual weights for each sample. Sample weights are not
             supported for sparse inputs.
 
-            .. versionadded:: 1.9
+            .. versionadded:: 1.10
 
         Returns
         -------
