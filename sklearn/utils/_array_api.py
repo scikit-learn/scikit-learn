@@ -13,7 +13,6 @@ from functools import partial
 import numpy
 import scipy
 import scipy.sparse as sp
-import scipy.special as special
 
 from sklearn._config import get_config
 from sklearn.externals import array_api_compat
@@ -633,7 +632,9 @@ def _expit(x, out=None, xp=None):
     # but not in the Array API specification.
     xp, _ = get_namespace(x, xp=xp)
     if _is_numpy_namespace(xp):
-        return special.expit(x, out=out)
+        from scipy.special import expit  # lazy import, speeds up `import sklearn`
+
+        return expit(x, out=out)
 
     return 1.0 / (1.0 + xp.exp(-x))
 
@@ -643,7 +644,9 @@ def _logit(x, out=None, xp=None):
     # but not in the Array API specification.
     xp, _ = get_namespace(x, xp=xp)
     if _is_numpy_namespace(xp):
-        return special.logit(x, out=out)
+        from scipy.special import logit  # lazy import, speeds up `import sklearn`
+
+        return logit(x, out=out)
 
     # See https://github.com/scipy/xsf/blob/e0c4d22d6ae768b39efc69586f1e8d5560a32fc5/include/xsf/log_exp.h#L30
     def logit_v2(x):
