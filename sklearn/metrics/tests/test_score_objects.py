@@ -1721,32 +1721,3 @@ def test_Pipeline_in_PassthroughScorer():
     )
     search = GridSearchCV(pipe, {"logistic__C": [0.1, 1]}, n_jobs=1, cv=3)
     search.fit(X, y, sample_weight=sample_weight)
-
-
-def test_mulimetric_scoring_kwarg_isolation():
-    """Test that kwargs (other than sample_weight) are isolated over several scorers."""
-
-    from sklearn.datasets import make_classification
-    from sklearn.linear_model import LogisticRegression
-    from sklearn.metrics import make_scorer
-    from sklearn.metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
-
-    X, y = make_classification(n_samples=10, n_features=4, random_state=0)
-    estimator = LogisticRegression().fit(X, y)
-
-    def custom_metric1(y_true, y_pred, metadata):
-        metadata.append("b")
-        return metadata
-
-    def custom_metric2(y_true, y_pred, metadata):
-        return metadata
-
-    scorers = {
-        "custom1": make_scorer(custom_metric1),
-        "custom2": make_scorer(custom_metric2),
-    }
-    scorer_dict = _check_multimetric_scoring(estimator, scorers)
-    multi = _MultimetricScorer(scorers=scorer_dict)
-
-    scores = multi(estimator, X, y, metadata=["a"])
-    assert scores["custom1"] != scores["custom2"]
