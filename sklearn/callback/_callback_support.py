@@ -10,14 +10,14 @@ from sklearn.callback._callback_context import CallbackContext
 
 
 def _progressbar_by_default():
-    """Return whether metadata routing is enabled.
+    """Return whether progressbar are added by default to compatible estimators.
 
     .. versionadded:: 1.3
 
     Returns
     -------
     enabled : bool
-        Whether metadata routing is enabled. If the config is not set, it
+        Whether progressbar by default is enabled. If the config is not set, it
         defaults to False.
     """
     return get_config().get("progressbar_by_default", False)
