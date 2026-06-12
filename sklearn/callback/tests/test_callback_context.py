@@ -19,7 +19,6 @@ from sklearn.callback.tests._utils import (
     NoCallbackEstimator,
     NoSubtaskEstimator,
     NotRequiredKwargsCallback,
-    NotValidHookCallback,
     ParentFitEstimator,
     RecordingAutoPropagatedCallback,
     RecordingCallback,
@@ -359,17 +358,6 @@ def test_autopropagation_to_callback_agnostic_subestimator():
     assert callback.count_hooks("teardown") == 1
 
 
-# TODO(callbacks): should be a common test in a dev test suite instead of a check
-# in the hook calls to avoid repeating the same check for each call of the same hook.
-def test_hook_calling_invalid_kwargs_out():
-    """Check that a callback with invalid kwargs in its signatures raises an error."""
-    estimator = MaxIterEstimator()
-    context = estimator.set_callbacks(NotValidHookCallback())._init_callback_context()
-    msg = r"on_fit_task_begin .* has parameters that are not valid"
-    with pytest.raises(TypeError, match=msg):
-        context.call_on_fit_task_begin(estimator=estimator, X=1, y=2)
-
-
 def test_hook_calling_return_value():
     """Check the return value of the hook calls."""
     estimator = MaxIterEstimator()
@@ -546,21 +534,19 @@ def test_metadata_routing_callback_consumer():
         (cb2.record, "bar", "foobar"),
     ]:
         task_begin_metadatas = [
-            rec["kwargs"]["metadata"]
+            rec["kwargs"]["requested_arg_begin"]
             for rec in record
             if rec["name"] == "on_fit_task_begin"
         ]
         task_end_metadatas = [
-            rec["kwargs"]["metadata"]
+            rec["kwargs"]["requested_arg_end"]
             for rec in record
             if rec["name"] == "on_fit_task_end"
         ]
         assert task_begin_metadatas
         assert task_end_metadatas
-        assert all(
-            [m == {"requested_arg_begin": val_begin} for m in task_begin_metadatas]
-        )
-        assert all([m == {"requested_arg_end": val_end} for m in task_end_metadatas])
+        assert all([m == val_begin for m in task_begin_metadatas])
+        assert all([m == val_end for m in task_end_metadatas])
 
 
 @config_context(enable_metadata_routing=True)
@@ -579,16 +565,16 @@ def test_metadata_routing_callback_consumer_in_metaestimator(n_jobs):
         foo="val_1", requested_arg_end="val_2"
     )
     task_begin_metadatas = [
-        rec["kwargs"]["metadata"]
+        rec["kwargs"]["requested_arg_begin"]
         for rec in cb.record
         if rec["name"] == "on_fit_task_begin"
     ]
     task_end_metadatas = [
-        rec["kwargs"]["metadata"]
+        rec["kwargs"]["requested_arg_end"]
         for rec in cb.record
         if rec["name"] == "on_fit_task_end"
     ]
     assert task_begin_metadatas
     assert task_end_metadatas
-    assert all([m == {"requested_arg_begin": "val_1"} for m in task_begin_metadatas])
-    assert all([m == {"requested_arg_end": "val_2"} for m in task_end_metadatas])
+    assert all([m == "val_1" for m in task_begin_metadatas])
+    assert all([m == "val_2" for m in task_end_metadatas])

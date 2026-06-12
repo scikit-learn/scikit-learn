@@ -1639,6 +1639,8 @@ class _MetadataRequester:
         This method (being a class-method), does not take request values set at
         instance level into account.
         """
+        from sklearn.callback._base import _BaseCallback
+
         # Here we use `isfunction` instead of `ismethod` because calling `getattr`
         # on a class instead of an instance returns an unbound function.
         # If the given method doesn't exist or is not a function on the class, we simply
@@ -1662,6 +1664,8 @@ class _MetadataRequester:
 
         ignore_params = set() if ignore_params is None else set(ignore_params)
         ignore_params.update({"X", "y", "Y", "Xt", "yt"})
+        if isinstance(cls, _BaseCallback):
+            ignore_params.update({"estimator", "context", "fitted_estimator"})
 
         params = defaultdict(
             str,

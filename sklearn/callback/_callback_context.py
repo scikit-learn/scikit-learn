@@ -11,8 +11,8 @@ from datetime import datetime, timezone
 
 from sklearn.callback._base import AutoPropagatedCallback
 
-# List of the parameters expected to be in the hooks signatures
-VALID_HOOK_PARAMS_OUT = ["X", "y", "metadata", "fitted_estimator"]
+# Set of the hook parameters that do not come from metadata routing
+HOOK_NOT_ROUTED_PARAMS = {"X", "y", "fitted_estimator"}
 
 
 _cached_signature = functools.lru_cache()(inspect.signature)
@@ -328,31 +328,18 @@ class CallbackContext:
                 # sub-estimator's root context (both represent the same task).
                 continue
 
+            args_to_pass = getattr(
+                getattr(kwargs["metadata"], f"callback_{i}", None), hook_name, {}
+            )
+
             signature = _cached_signature(getattr(callback, hook_name))
-            params_names = {
+            kwarg_names = {
                 p.name
                 for p in signature.parameters.values()
                 if p.kind == p.KEYWORD_ONLY
             }
-            if diff := set(params_names) - set(VALID_HOOK_PARAMS_OUT):
-                raise TypeError(
-                    f"Hook {hook_name} of the callback {callback.__class__.__name__} "
-                    f"has parameters that are not valid: {diff}. The valid parameters "
-                    f"are: {VALID_HOOK_PARAMS_OUT}."
-                )
-
-            args_to_pass = {}
-            for param_name in params_names:
-                if param_name == "metadata":
-                    # Special case: "metadata" is the routed metadata.
-                    metadata_callback = getattr(
-                        kwargs["metadata"], f"callback_{i}", None
-                    )
-                    evaluated_args["metadata"] = getattr(
-                        metadata_callback, hook_name, None
-                    )
-
-                elif param_name not in evaluated_args:
+            for param_name in HOOK_NOT_ROUTED_PARAMS & kwarg_names:
+                if param_name not in evaluated_args:
                     # Special case: "reconstruction_attributes" is not directly passed
                     # to the hook. A ready to predict/transform estimator is created
                     # from these attributes and passed to the hook as "fitted_estimator"

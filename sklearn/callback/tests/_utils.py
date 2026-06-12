@@ -55,7 +55,7 @@ class RecordingCallback(_MetadataRequester):
         *,
         X=None,
         y=None,
-        metadata=None,
+        requested_arg_begin=None,
         fitted_estimator=None,
     ):
         send(
@@ -67,7 +67,7 @@ class RecordingCallback(_MetadataRequester):
                 "kwargs": {
                     "X": X,
                     "y": y,
-                    "metadata": metadata,
+                    "requested_arg_begin": requested_arg_begin,
                     "fitted_estimator": fitted_estimator,
                 },
             },
@@ -80,7 +80,7 @@ class RecordingCallback(_MetadataRequester):
         *,
         X=None,
         y=None,
-        metadata=None,
+        requested_arg_end=None,
         fitted_estimator=None,
     ):
         send(
@@ -92,7 +92,7 @@ class RecordingCallback(_MetadataRequester):
                 "kwargs": {
                     "X": X,
                     "y": y,
-                    "metadata": metadata,
+                    "requested_arg_end": requested_arg_end,
                     "fitted_estimator": fitted_estimator,
                 },
             },

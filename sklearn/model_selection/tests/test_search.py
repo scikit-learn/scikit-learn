@@ -3152,13 +3152,13 @@ def test_search_callback_metadata():
         X, y, requested_arg_begin="value"
     )
     task_begin_metadatas = [
-        rec["kwargs"]["metadata"]
+        rec["kwargs"]["requested_arg_begin"]
         for rec in cb.record
         if rec["name"] == "on_fit_task_begin"
         and rec["context"].task_name not in ("candidate-split-evaluation", "search")
     ]
     assert task_begin_metadatas
-    assert all([m == {"requested_arg_begin": "value"} for m in task_begin_metadatas])
+    assert all([m == "value" for m in task_begin_metadatas])
 
 
 @skip_callback_test_if_wasm

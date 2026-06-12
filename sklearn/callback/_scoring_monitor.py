@@ -12,7 +12,6 @@ from sklearn.utils._metadata_requests import _MetadataRequester, _routing_enable
 from sklearn.utils._optional_dependencies import check_pandas_support
 from sklearn.utils._param_validation import StrOptions, validate_params
 from sklearn.utils.metadata_routing import (
-    MetadataRequest,
     MetadataRouter,
     MethodMapping,
     process_routing,
@@ -173,6 +172,18 @@ class ScoringMonitor(_MetadataRequester):
                 "these values."
             )
         if scoring_val != "no_val_score":
+            if not _routing_enabled():
+                raise (
+                    ValueError(
+                        "Using a scorer on validation data in "
+                        f"{self.__class__.__name__} is only supported when metadata "
+                        "routing is enabled. You can enable it using "
+                        "`sklearn.set_config(enable_metadata_routing=True)`. See the "
+                        "User Guide "
+                        "<https://scikit-learn.org/stable/metadata_routing.html> for "
+                        "more details on metadata routing."
+                    )
+                )
             self.set_on_fit_task_end_request(X_val=True, y_val=True)
 
         # Turn the scorers into MultimetricScorer for convenience
@@ -191,18 +202,6 @@ class ScoringMonitor(_MetadataRequester):
         self._listener_handle = open_listener(self._log.append, owner=self)
 
     def setup(self, estimator, context):
-        if not _routing_enabled() and self._scorers["val"] != "no_val_score":
-            raise (
-                ValueError(
-                    "Using a scorer on validation data in "
-                    f"{self.__class__.__name__} is only supported when metadata "
-                    "routing is enabled. You can enable it using "
-                    "`sklearn.set_config(enable_metadata_routing=True)`. See the "
-                    "User Guide "
-                    "<https://scikit-learn.org/stable/metadata_routing.html> for "
-                    "more details on metadata routing."
-                )
-            )
         # A scorer per estimator is needed to avoid race conditions when the callback is
         # set on different estimators and the scorer is the estimator's default scorer.
         if estimator not in self._estimator_scorers and (
@@ -226,7 +225,9 @@ class ScoringMonitor(_MetadataRequester):
         X=None,
         y=None,
         fitted_estimator=None,
-        metadata=None,
+        X_val=None,
+        y_val=None,
+        **score_params,
     ):
         if fitted_estimator is None:
             return
@@ -250,13 +251,7 @@ class ScoringMonitor(_MetadataRequester):
             for ctx in context_path
         ]
 
-        send_package = []
-        if metadata is not None:
-            routed_params = process_routing(self, "on_fit_task_end", **metadata)
-            X_val = metadata.get("X_val", None)
-            y_val = metadata.get("y_val", None)
-        else:
-            routed_params, X_val, y_val = None, None, None
+        routed_params = process_routing(self, "on_fit_task_end", **score_params)
         for dataset in ("train", "val"):
             data_X, data_y = (X, y) if dataset == "train" else (X_val, y_val)
             if (
@@ -307,33 +302,6 @@ class ScoringMonitor(_MetadataRequester):
                     ),
                 )
         return router
-
-    def set_on_fit_task_end_request(self, *, X_val, y_val):
-        """Set requested parameters by the callback for its `on_fit_task_end` hook.
-
-        Please see :ref:`User Guide <metadata_routing>` on how the routing
-        mechanism works.
-
-        Parameters
-        ----------
-        X_val : bool, None or str
-            - If a bool, indicates whether `X_val` is requested or not.
-            - If None, indicates that `X_val` is not requested an error is raised if it
-              is provided.
-            - If a string, indicates that `X_val` is requested under the alias given by
-              the string.
-
-        y_val : bool, None or str
-            - If a bool, indicates whether `y_val` is requested or not.
-            - If None, indicates that `y_val` is not requested an error is raised if it
-              is provided.
-            - If a string, indicates that `y_val` is requested under the alias given by
-              the string.
-        """
-        self._metadata_request = MetadataRequest(owner=self)
-        self._metadata_request.on_fit_task_end.add_request(param="X_val", alias=X_val)
-        self._metadata_request.on_fit_task_end.add_request(param="y_val", alias=y_val)
-        return self
 
     @validate_params(
         {

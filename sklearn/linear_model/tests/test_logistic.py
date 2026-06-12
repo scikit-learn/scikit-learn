@@ -3017,22 +3017,18 @@ def test_logistic_regression_callback_metadata(solver):
         X, y, requested_arg_begin="val_begin", alias="val_end"
     )
     task_begin_metadatas = [
-        rec["kwargs"]["metadata"]
+        rec["kwargs"]["requested_arg_begin"]
         for rec in cb.record
         if rec["name"] == "on_fit_task_begin"
     ]
     task_end_metadatas = [
-        rec["kwargs"]["metadata"]
+        rec["kwargs"]["requested_arg_end"]
         for rec in cb.record
         if rec["name"] == "on_fit_task_end"
     ]
     assert task_begin_metadatas
     assert task_end_metadatas
-    assert all(
-        [m == {"requested_arg_begin": "val_begin"} for m in task_begin_metadatas]
-    )
-    n_metadata_found = sum(
-        [m == {"requested_arg_end": "val_end"} for m in task_end_metadatas]
-    )
+    assert all([m == "val_begin" for m in task_begin_metadatas])
+    n_metadata_found = sum([m == "val_end" for m in task_end_metadatas])
     # The last task of lbfgs is a fake one, so on_fit_task_end does not get metadata.
     assert n_metadata_found == len(task_end_metadatas) - 1
