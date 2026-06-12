@@ -198,7 +198,7 @@ def centrality_scores(X, alpha=0.85, max_iter=100, tol=1e-10):
         print("power iteration #%d" % i)
         prev_scores = scores
         scores = (
-            alpha * (scores @ X + np.dot(dangle, prev_scores))
+            alpha * (scores @ X + dangle @ prev_scores)
             + (1 - alpha) * prev_scores.sum() / n
         )
         # check convergence: normalized l_inf norm
