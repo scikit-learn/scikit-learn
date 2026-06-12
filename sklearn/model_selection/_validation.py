@@ -879,13 +879,22 @@ def _fit_and_score(
         result["fit_error"] = None
 
         fit_time = time.time() - start_time
+        # Align per-fold predictions onto the full set of classes so that
+        # probability-based scorers do not fail when the training fold misses a
+        # class. The original `estimator` is left untouched for `return_estimator`.
+        scoring_estimator = _wrap_classifier_for_aligned_scoring(estimator, y)
         test_scores = _score(
-            estimator, X_test, y_test, scorer, score_params_test, error_score
+            scoring_estimator, X_test, y_test, scorer, score_params_test, error_score
         )
         score_time = time.time() - start_time - fit_time
         if return_train_score:
             train_scores = _score(
-                estimator, X_train, y_train, scorer, score_params_train, error_score
+                scoring_estimator,
+                X_train,
+                y_train,
+                scorer,
+                score_params_train,
+                error_score,
             )
     finally:
         if callback_ctx is not None:
@@ -1432,6 +1441,127 @@ def _enforce_prediction_order(classes, predictions, n_classes, method):
         predictions_for_all_classes[:, classes] = predictions
         predictions = predictions_for_all_classes
     return predictions
+
+
+def _align_predictions_to_classes(predictions, *, column_indices, n_classes, method):
+    """Re-index probabilistic predictions onto the full set of classes.
+
+    Used by :class:`_AlignedClassifier` to scatter the columns produced by an
+    estimator trained on a subset of the classes into an array spanning all
+    classes. Missing classes are filled with a neutral value (``0`` for
+    probabilities, the smallest representable float for log-probabilities and
+    decision values).
+    """
+    xp, _ = get_namespace(predictions)
+
+    if method == "decision_function" and predictions.ndim == 1:
+        # A 1D `decision_function` is produced by binary classifiers. There is
+        # no meaningful way to map it onto more than two classes.
+        raise ValueError(
+            "Only 2 class/es in training fold, but predictions are expected for "
+            f"{n_classes} classes. Aligning a 1D `decision_function` output is not "
+            "supported. To fix this, use a cross-validation technique resulting in "
+            "properly stratified folds."
+        )
+
+    fill_values = {
+        "decision_function": xp.finfo(predictions.dtype).min,
+        "predict_log_proba": xp.finfo(predictions.dtype).min,
+        "predict_proba": 0,
+    }
+    aligned = xp.full(
+        (_num_samples(predictions), n_classes),
+        fill_values[method],
+        dtype=predictions.dtype,
+    )
+    aligned[:, column_indices] = predictions
+    return aligned
+
+
+class _AlignedClassifier:
+    """Adapter exposing a fitted classifier's outputs on the full class set.
+
+    When a cross-validation training fold does not contain every class, the
+    fitted estimator's ``classes_`` is a strict subset of the classes present in
+    the whole dataset. Its ``predict_proba`` / ``predict_log_proba`` /
+    ``decision_function`` outputs then miss the corresponding columns, which
+    makes probability-based metrics (e.g. ``neg_log_loss``, ``roc_auc_ovr``)
+    fail with a shape mismatch. This adapter wraps such an estimator so that its
+    probabilistic outputs span ``classes`` and ``classes_`` reports the full set.
+
+    Everything other than the probabilistic response methods is delegated to the
+    wrapped estimator. ``predict`` is intentionally delegated unchanged since it
+    returns labels and does not suffer from the missing-column issue.
+    """
+
+    _aligned_methods = ("predict_proba", "predict_log_proba", "decision_function")
+
+    def __init__(self, estimator, classes):
+        self.estimator = estimator
+        self.classes_ = classes
+        # Position of each class seen by the fold within the full set of classes.
+        self._column_indices = np.searchsorted(classes, estimator.classes_)
+        # Only expose the response methods actually implemented by the wrapped
+        # estimator so that response-method discovery keeps working.
+        for method in self._aligned_methods:
+            if hasattr(estimator, method):
+                setattr(self, method, self._make_aligned_method(method))
+
+    def _make_aligned_method(self, method_name):
+        def aligned_method(X):
+            predictions = getattr(self.estimator, method_name)(X)
+            return _align_predictions_to_classes(
+                predictions,
+                column_indices=self._column_indices,
+                n_classes=self.classes_.shape[0],
+                method=method_name,
+            )
+
+        aligned_method.__name__ = method_name
+        return aligned_method
+
+    def __sklearn_tags__(self):
+        return self.estimator.__sklearn_tags__()
+
+    def __getattr__(self, name):
+        # Only reached for attributes not set on the instance or class, e.g.
+        # `predict` or estimator-specific attributes. Delegate to the estimator.
+        return getattr(self.__dict__["estimator"], name)
+
+
+def _wrap_classifier_for_aligned_scoring(estimator, y):
+    """Wrap a classifier so scoring sees all classes present in ``y``.
+
+    If ``estimator`` is a classifier trained on a strict subset of the classes
+    present in ``y``, return an :class:`_AlignedClassifier` wrapping it and warn
+    that the fold is missing classes. Otherwise return ``estimator`` unchanged.
+    """
+    if y is None or not is_classifier(estimator):
+        return estimator
+
+    classes = getattr(estimator, "classes_", None)
+    # Skip estimators without `classes_` and multilabel/multioutput targets
+    # (where `classes_` is a list of arrays).
+    if classes is None or isinstance(classes, list):
+        return estimator
+
+    y_array = move_to(y, xp=np, device="cpu")
+    if y_array.ndim != 1:
+        return estimator
+
+    full_classes = np.unique(y_array)
+    if full_classes.shape[0] == classes.shape[0]:
+        # The fold contains every class: nothing to align.
+        return estimator
+
+    warnings.warn(
+        "Number of classes in training fold ({}) does not match total number "
+        "of classes ({}). Results may not be appropriate for your use case. "
+        "To fix this, use a cross-validation technique resulting in properly "
+        "stratified folds".format(classes.shape[0], full_classes.shape[0]),
+        RuntimeWarning,
+    )
+    return _AlignedClassifier(estimator, full_classes)
 
 
 def _check_is_permutation(indices, n_samples):

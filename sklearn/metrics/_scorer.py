@@ -459,14 +459,31 @@ class _Scorer(_BaseScorer):
 
         pos_label = None if is_regressor(estimator) else self._get_pos_label()
         response_method = _check_response_method(estimator, self._response_method)
+        response_method_name = _get_response_method_name(response_method)
         y_pred = method_caller(
             estimator,
-            _get_response_method_name(response_method),
+            response_method_name,
             X,
             pos_label=pos_label,
         )
 
         scoring_kwargs = {**self._kwargs, **kwargs}
+        # For probability/threshold-based metrics, the columns of `y_pred`
+        # correspond to `estimator.classes_`. When the metric supports a
+        # `labels` argument, pass `estimator.classes_` explicitly so that the
+        # metric does not have to infer the labels from `y_true`. This keeps the
+        # number of expected classes consistent with the columns of `y_pred`,
+        # which matters when `y_true` does not contain every class (e.g. a rare
+        # class missing from a cross-validation fold).
+        if (
+            response_method_name
+            in ("predict_proba", "predict_log_proba", "decision_function")
+            and "labels" not in scoring_kwargs
+            and not is_regressor(estimator)
+            and hasattr(estimator, "classes_")
+            and "labels" in signature(self._score_func).parameters
+        ):
+            scoring_kwargs["labels"] = estimator.classes_
         return self._sign * self._score_func(y_true, y_pred, **scoring_kwargs)
 
 
