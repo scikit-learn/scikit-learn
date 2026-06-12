@@ -193,6 +193,7 @@ halving_search = HalvingRandomSearchCV(
     n_candidates=n_candidates,
     scoring="roc_auc_ovr",
     random_state=42,
+    min_resources=100,
 )
 start = time()
 with warnings.catch_warnings():
