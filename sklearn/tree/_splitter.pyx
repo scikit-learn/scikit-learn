@@ -196,7 +196,7 @@ cdef class Splitter:
         # Initialize the number of categories for each feature
         # A value of -1 indicates a non-categorical feature
         if n_categories is None:
-            self.n_categories = np.array([-1] * n_features, dtype=np.intp)
+            self.n_categories = np.full(n_features, -1, dtype=np.intp)
         else:
             self.n_categories = n_categories
         return 0

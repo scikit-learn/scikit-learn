@@ -40,7 +40,7 @@ cdef class Tree:
     cdef public intp_t n_outputs         # Number of outputs in y
     cdef public intp_t max_n_classes     # max(n_classes)
     cdef intp_t* n_categories            # (n_features,) array giving number of
-    #                                    # categories (<0 for non-categorical)
+    #                                    # categories (-1 for non-categorical)
 
     # Inner structures: values are stored separately from node structure,
     # since size is determined at runtime.

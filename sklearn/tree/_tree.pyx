@@ -73,7 +73,7 @@ BITSET_LENGTH = 8
 #   – total itemsize must be 32 (so union = max(size of FLOAT64=8, size of 8×uint32=32))
 # Number of uint32 words in the categorical bitset.
 # Must match BITSET_DTYPE_C in SplitValue (see _utils.pxd).
-SplitValue_dtype = np.dtype({
+SPLIT_VALUE_DTYPE = np.dtype({
     'names':   ['threshold', 'left_cat_bitset'],
     'formats': [np.float64,     (np.uint32, BITSET_LENGTH)],
     'offsets': [0,              0],
