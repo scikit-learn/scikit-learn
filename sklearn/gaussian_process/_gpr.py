@@ -228,6 +228,11 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self.n_targets = n_targets
         self.random_state = random_state
 
+    @staticmethod
+    def _create_default_kernel():
+        """Create a default kernel."""
+        return C() * RBF()
+
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit Gaussian process regression model.
@@ -245,7 +250,9 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self : object
             GaussianProcessRegressor class instance.
         """
-        self.kernel_ = C() * RBF() if self.kernel is None else clone(self.kernel)
+        self.kernel_ = (
+            self._create_default_kernel() if self.kernel is None else clone(self.kernel)
+        )
 
         self._rng = check_random_state(self.random_state)
 
