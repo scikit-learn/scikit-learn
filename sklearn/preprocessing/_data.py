@@ -2948,10 +2948,10 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
             effective_sample_size = np.sum(sample_weight)
 
-        if self.n_quantiles > effective_sample_size:
+        if self.n_quantiles > n_samples:
             warnings.warn(
-                f"n_quantiles ({self.n_quantiles}) is greater than the effective "
-                f"sample size ({effective_sample_size}). n_quantiles is set to "
+                f"n_quantiles ({self.n_quantiles}) is greater than the "
+                f"sample size ({n_samples}). n_quantiles is set to "
                 f"effective_sample_size ({n_samples})."
             )
         self.n_quantiles_ = max(1, min(self.n_quantiles, n_samples))
