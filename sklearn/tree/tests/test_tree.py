@@ -8,7 +8,6 @@ import io
 import pickle
 import re
 import struct
-import warnings
 from itertools import chain, pairwise, product
 
 import joblib
@@ -30,12 +29,7 @@ from sklearn.metrics import (
 from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.random_projection import _sparse_random_matrix
-from sklearn.tree import (
-    DecisionTreeClassifier,
-    DecisionTreeRegressor,
-    ExtraTreeClassifier,
-    ExtraTreeRegressor,
-)
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.tree._classes import (
     CRITERIA_CLF,
     CRITERIA_REG,
@@ -132,17 +126,6 @@ y_small_reg = [
     0.9,
     0,
 ]
-
-
-@pytest.mark.parametrize(
-    "Tree",
-    [ExtraTreeClassifier, ExtraTreeRegressor],
-)
-def test_extra_tree_deprecated(Tree):
-    msg = f"Class {Tree.__name__} is deprecated.*will be removed in 1.12"
-    with pytest.warns(FutureWarning, match=msg):
-        warnings.simplefilter("always", FutureWarning)
-        Tree()
 
 
 # toy sample
