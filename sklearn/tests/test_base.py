@@ -30,6 +30,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import SVC, SVR
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils import deprecated
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._set_output import _get_output_config
 from sklearn.utils._testing import (
@@ -914,17 +915,17 @@ def test_estimator_getstate_using_slots_error_message():
 @pytest.mark.parametrize(
     "constructor_name, minversion",
     [
-        ("dataframe", "1.5.0"),
-        ("pyarrow", "12.0.0"),
+        ("pandas", "1.5.0"),
+        ("pyarrow", "13.0.0"),
         ("polars", "0.20.23"),
     ],
 )
-def test_dataframe_protocol(constructor_name, minversion):
-    """Uses the dataframe exchange protocol to get feature names."""
+def test_feature_names_in_on_dataframes(constructor_name, minversion):
+    """Test that feature_names_in_ is correctly set for dataframe X."""
     data = [[1, 4, 2], [3, 3, 6]]
     columns = ["col_0", "col_1", "col_2"]
     df = _convert_container(
-        data, constructor_name, columns_name=columns, minversion=minversion
+        data, constructor_name, column_names=columns, minversion=minversion
     )
 
     class NoOpTransformer(TransformerMixin, BaseEstimator):
@@ -946,7 +947,7 @@ def test_dataframe_protocol(constructor_name, minversion):
         assert_allclose(df, X_out)
 
     bad_names = ["a", "b", "c"]
-    df_bad = _convert_container(data, constructor_name, columns_name=bad_names)
+    df_bad = _convert_container(data, constructor_name, column_names=bad_names)
     with pytest.raises(ValueError, match="The feature names should match"):
         no_op.transform(df_bad)
 
@@ -1024,6 +1025,28 @@ def test_get_fitted_attr_html():
     assert fitted_attr_html["components_"]["type_name"] == ("ndarray")
     assert fitted_attr_html["components_"]["shape"] == (2, 2)
     assert_allclose(fitted_attr_html["components_"]["value"], pca.components_)
+
+
+def test_get_fitted_attr_html_no_warnings():
+    """Check that deprecated fitted attrs don't generate a warning in the repr.
+
+    Non-regression test for
+    https://github.com/scikit-learn/scikit-learn/issues/34056
+    """
+
+    class Estimator(BaseEstimator):
+        @deprecated("Attribute `foo` is deprecated")
+        @property
+        def foo_(self):
+            return 1
+
+    model = Estimator()
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
+        html = model._get_fitted_attr_html()
+
+    assert html["foo_"] == {"type_name": "int", "value": 1}
 
 
 def make_estimator_with_param(default_value):
