@@ -2952,9 +2952,9 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             warnings.warn(
                 f"n_quantiles ({self.n_quantiles}) is greater than the effective "
                 f"sample size ({effective_sample_size}). n_quantiles is set to "
-                f"effective_sample_size ({effective_sample_size})."
+                f"effective_sample_size ({n_samples})."
             )
-        self.n_quantiles_ = int(max(1, min(self.n_quantiles, effective_sample_size)))
+        self.n_quantiles_ = max(1, min(self.n_quantiles, n_samples))
 
         rng = check_random_state(self.random_state)
 
