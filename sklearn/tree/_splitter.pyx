@@ -63,8 +63,7 @@ cdef class Splitter:
         intp_t min_samples_leaf,
         float64_t min_weight_leaf,
         object random_state,
-        const int8_t[:] monotonic_cst,
-        *argv
+        const int8_t[:] monotonic_cst
     ):
         """
         Parameters

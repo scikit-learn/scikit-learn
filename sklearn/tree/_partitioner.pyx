@@ -19,7 +19,12 @@ import numpy as np
 cimport numpy as cnp
 cnp.import_array()
 from scipy.sparse import issparse
-from sklearn.utils._bitset cimport BITSET_DTYPE_C, init_bitset, set_bitset
+from sklearn.utils._bitset cimport (
+    BITSET_DTYPE_C,
+    BITSET_INNER_BITS,
+    init_bitset,
+    set_bitset,
+)
 from sklearn.tree._utils cimport goes_left
 from sklearn.tree._tree cimport MAX_NUM_CATEGORIES
 from sklearn.tree._splitter cimport SplitRecord
@@ -62,7 +67,6 @@ cdef class DensePartitioner:
 
         self.n_categories_in_feature = n_categories_in_feature
         self.n_categories = 0
-        self.n_words = -1
 
         # for breiman shortcut:
         self.counts = np.empty(MAX_NUM_CATEGORIES, dtype=np.intp)
@@ -136,10 +140,6 @@ cdef class DensePartitioner:
 
         self.n_missing = n_missing
         self.n_categories = self.n_categories_in_feature[current_feature]
-        if self.n_categories > 0:
-            self.n_words = (self.n_categories + 31) >> 5   # divide by 32 with ceil
-        else:
-            self.n_words = 0
 
         if n_missing == self.end - self.start:
             # if all the values at this point are missing, the values are sorted by default
@@ -472,7 +472,6 @@ cdef class DensePartitioner:
                 self.n_categories,
                 &self.counts[0],
                 split.left_cat_bitset,
-                self.n_words
             )
             return split
 
@@ -1016,7 +1015,6 @@ cdef inline void split_pos_to_bitset_words(
     intp_t n_sorted,
     const intp_t* counts,
     BITSET_DTYPE_C out_words,
-    intp_t n_words
 ) noexcept nogil:
     """Build a categorical-split bitset from a prefix of sorted categories.
 
@@ -1038,17 +1036,7 @@ cdef inline void split_pos_to_bitset_words(
     counts : const intp_t*
         Per-category sample counts (node-local histogram).
     out_words : BITSET_DTYPE_C
-        Output buffer of 32-bit words; zeroed and filled by
-        this function.
-    n_words : intp_t
-        Length of `out_words`.  Must satisfy
-        ``n_words >= ceil((max_category_id + 1) / 32)``.
-
-    Notes
-    -----
-    Caller must guarantee that every id in `sorted_cat` satisfies
-    ``0 <= id < 32 * n_words``.  No bounds checking is performed.
-    This function is ``nogil`` and performs no allocation.
+        Output bitset word buffer; zeroed and filled by this function.
     """
     cdef intp_t r, c
     cdef intp_t offset = 0

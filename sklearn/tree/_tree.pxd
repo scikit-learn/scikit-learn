@@ -17,7 +17,7 @@ from sklearn.utils._bitset cimport N_BITSETS
 
 
 cdef enum:
-    MAX_NUM_CATEGORIES = N_BITSETS  # = 8 * size(BITSET_INNER_DTYPE_C)
+    MAX_NUM_CATEGORIES = N_BITSETS
 
 
 cdef struct ParentInfo:

@@ -24,7 +24,7 @@ from scipy.sparse import issparse
 from scipy.sparse import csr_array
 
 from sklearn.utils import _align_api_if_sparse
-from sklearn.utils._bitset cimport in_bitset
+from sklearn.utils._bitset cimport BITSET_LENGTH, N_BITSETS, in_bitset
 
 from sklearn.tree._utils cimport goes_left
 from sklearn.tree._utils cimport safe_realloc
@@ -54,10 +54,7 @@ TREE_UNDEFINED = -2
 cdef intp_t _TREE_LEAF = TREE_LEAF
 cdef intp_t _TREE_UNDEFINED = TREE_UNDEFINED
 
-MAX_NUM_CATEGORIES_PY = 256
-
-# Number of bits per bitset word. see: sklearn/utils/_bitset.pxd BITSET_DTYPE_C
-BITSET_LENGTH = 8
+MAX_NUM_CATEGORIES_PY = N_BITSETS
 
 # Note: an old simple method for getting the numpy dtype of Node
 # Build the corresponding numpy dtype for Node.
@@ -67,12 +64,11 @@ BITSET_LENGTH = 8
 # cdef Node dummy
 # NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
 
-# A 32‐byte union “SplitValue” ──
-#   – threshold is a float64 at offset 0
-#   – left_cat_bitset is an array of eight uint32’s at offset 0 (i.e. fully overlapping)
-#   – total itemsize must be 32 (so union = max(size of FLOAT64=8, size of 8×uint32=32))
-# Number of uint32 words in the categorical bitset.
-# Must match BITSET_DTYPE_C in SplitValue (see _utils.pxd).
+# SplitValue layout mirrors the C union:
+# - threshold is a float64 at offset 0.
+# - left_cat_bitset is BITSET_LENGTH uint32 words at offset 0.
+# With BITSET_LENGTH == 8 and uint32_t words, this is currently 32 bytes.
+# BITSET_LENGTH must match BITSET_DTYPE_C in SplitValue (see _utils.pxd).
 SPLIT_VALUE_DTYPE = np.dtype({
     'names':   ['threshold', 'left_cat_bitset'],
     'formats': [np.float64,     (np.uint32, BITSET_LENGTH)],
@@ -80,14 +76,14 @@ SPLIT_VALUE_DTYPE = np.dtype({
     'itemsize': BITSET_LENGTH * 4,
 })
 NODE_DTYPE = np.dtype([
-    ('left_child',              np.intp),           # 8 bytes  (offset 0)
-    ('right_child',             np.intp),           # 8 bytes  (offset 8)
-    ('feature',                 np.intp),           # 8 bytes  (offset 16)
-    ('split_value',             SplitValue_dtype),  # 32 bytes (offset 24)
-    ('impurity',                np.float64),        # 8 bytes (offset 56)
-    ('n_node_samples',          np.intp),           # 8 bytes (offset 64)
-    ('weighted_n_node_samples', np.float64),        # 8 bytes (offset 72)
-    ('missing_go_to_left',      np.uint8),          # 1 byte  (offset 80)
+    ('left_child',              np.intp),            # 8 bytes  (offset 0)
+    ('right_child',             np.intp),            # 8 bytes  (offset 8)
+    ('feature',                 np.intp),            # 8 bytes  (offset 16)
+    ('split_value',             SPLIT_VALUE_DTYPE),  # 32 bytes (offset 24)
+    ('impurity',                np.float64),         # 8 bytes (offset 56)
+    ('n_node_samples',          np.intp),            # 8 bytes (offset 64)
+    ('weighted_n_node_samples', np.float64),         # 8 bytes (offset 72)
+    ('missing_go_to_left',      np.uint8),           # 1 byte  (offset 80)
     # NumPy will auto‐pad to a multiple of 8 (so total sizeof Node_dtype = 88 bytes),
     # exactly matching C’s sizeof(Node) on a 64‐bit machine.
 ], align=True)

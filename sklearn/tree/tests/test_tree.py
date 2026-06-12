@@ -283,9 +283,9 @@ def _make_categorical(
     if not regression:
         y = (y < y.mean()).astype(int)
 
-    meaningful_features = np.concat([
-        np.arange(n_num_meaningful), np.arange(n_cat_meaningful) + n_numerical
-    ])
+    meaningful_features = np.concat(
+        [np.arange(n_num_meaningful), np.arange(n_cat_meaningful) + n_numerical]
+    )
 
     if return_tuple:
         return X, y, meaningful_features

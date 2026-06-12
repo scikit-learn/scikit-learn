@@ -82,7 +82,6 @@ cdef class DensePartitioner:
     # memoryview of the n_categories in every feature
     cdef const intp_t[::1] n_categories_in_feature
     cdef intp_t n_categories  # keep track of n_categories in current split
-    cdef intp_t n_words
 
     # purely for Breiman shortcut
     cdef intp_t[::1] counts
@@ -157,7 +156,6 @@ cdef class SparsePartitioner:
     # memoryview of the n_categories in every feature
     cdef const intp_t[::1] n_categories_in_feature
     cdef intp_t n_categories  # keep track of n_categories in current split
-    cdef intp_t n_words
 
     # purely for Breiman shortcut
     cdef intp_t[::1] counts
