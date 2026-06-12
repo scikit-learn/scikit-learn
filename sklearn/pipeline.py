@@ -138,6 +138,8 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
         them. Requirement is defined via :ref:`metadata routing <metadata_routing>`.
         For instance, this can be used to pass a validation set through the pipeline.
 
+        By default, the validation set `X_val` is always transformed.
+
         You can only use this if metadata routing is enabled, which you
         can enable using ``sklearn.set_config(enable_metadata_routing=True)``.
 
@@ -1493,6 +1495,8 @@ def make_pipeline(*steps, memory=None, transform_input=("X_val",), verbose=False
         to be transformed by the steps of the pipeline up to the step which requires
         them. Requirement is defined via :ref:`metadata routing <metadata_routing>`.
         This can be used to pass a validation set through the pipeline for instance.
+
+        By default, the validation set `X_val` is always transformed.
 
         You can only use this if metadata routing is enabled, which you
         can enable using ``sklearn.set_config(enable_metadata_routing=True)``.
