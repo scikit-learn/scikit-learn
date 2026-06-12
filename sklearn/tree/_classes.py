@@ -41,6 +41,7 @@ from sklearn.utils import (
     metadata_routing,
 )
 from sklearn.utils._param_validation import Hidden, Interval, RealNotInt, StrOptions
+from sklearn.utils.deprecation import deprecated
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     _assert_all_finite_element_wise,
@@ -1440,6 +1441,11 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         return tags
 
 
+@deprecated(
+    "The `ExtraTreeClassifier` class is deprecated in version 1.10 and will be "
+    "removed in 1.12. Use `sklearn.tree.DecisionTreeClassifier` with "
+    "`splitter='random'` instead."
+)
 class ExtraTreeClassifier(DecisionTreeClassifier):
     """An extremely randomized tree classifier.
 
@@ -1715,6 +1721,11 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         )
 
 
+@deprecated(
+    "The `ExtraTreeRegressor` class is deprecated in version 1.10 and will be "
+    "removed in 1.12. Use `sklearn.tree.DecisionTreeRegressor` with "
+    "`splitter='random'` instead."
+)
 class ExtraTreeRegressor(DecisionTreeRegressor):
     """An extremely randomized tree regressor.
 

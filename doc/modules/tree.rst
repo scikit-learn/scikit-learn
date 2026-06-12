@@ -639,8 +639,7 @@ Note that it is 3–6× slower to fit than the MSE criterion as of version 1.8.
 Missing Values Support
 ======================
 
-:class:`DecisionTreeClassifier`, :class:`DecisionTreeRegressor` and
-:class:`ExtraTreeClassifier`, and :class:`ExtraTreeRegressor` have built-in
+:class:`DecisionTreeClassifier` and :class:`DecisionTreeRegressor` have built-in
 support for missing values except for sparse inputs.
 
 First we will describe how :class:`DecisionTreeClassifier`, :class:`DecisionTreeRegressor`
@@ -696,11 +695,12 @@ Decisions are made as follows:
     >>> tree.predict(X_test)
     array([1])
 
-:class:`ExtraTreeClassifier`, and :class:`ExtraTreeRegressor` (``splitter='random'``)
-handle missing values in a slightly different way. When splitting a node, a random
-threshold will be chosen to split the non-missing values on, while the missing values
-are assigned together to one randomly chosen side. This is repeated for every
-feature considered at each split. The best split among these is chosen.
+:class:`DecisionTreeClassifier` and :class:`DecisionTreeRegressor` with
+``splitter='random'`` handle missing values in a slightly different way. When
+splitting a node, a random threshold will be chosen to split the non-missing
+values on, while the missing values are assigned together to one randomly chosen
+side. This is repeated for every feature considered at each split. The best split
+among these is chosen.
 
 During prediction, the treatment of missing-values is the same as that of the
 decision tree:
