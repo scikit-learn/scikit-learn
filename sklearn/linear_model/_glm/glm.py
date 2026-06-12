@@ -91,7 +91,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             Hessian, it is a good solver when `X` is sparse or when `X` has many
             features.
 
-            .. versionadded:: 1.9
+            .. versionadded:: 1.10
 
         'newton-cholesky'
             Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
@@ -546,7 +546,7 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
             Hessian, it is a good solver when `X` is sparse or when `X` has many
             features.
 
-            .. versionadded:: 1.9
+            .. versionadded:: 1.10
 
         'newton-cholesky'
             Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
@@ -694,7 +694,7 @@ class GammaRegressor(_GeneralizedLinearRegressor):
             Hessian, it is a good solver when `X` is sparse or when `X` has many
             features.
 
-            .. versionadded:: 1.9
+            .. versionadded:: 1.10
 
         'newton-cholesky'
             Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
@@ -865,7 +865,7 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
             Hessian, it is a good solver when `X` is sparse or when `X` has many
             features.
 
-            .. versionadded:: 1.9
+            .. versionadded:: 1.10
 
         'newton-cholesky'
             Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
