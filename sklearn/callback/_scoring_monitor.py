@@ -308,7 +308,7 @@ class ScoringMonitor(_MetadataRequester):
                 )
         return router
 
-    def set_on_fit_task_end_request(self, X_val, y_val):
+    def set_on_fit_task_end_request(self, *, X_val, y_val):
         """Set requested parameters by the callback for its `on_fit_task_end` hook.
 
         Please see :ref:`User Guide <metadata_routing>` on how the routing

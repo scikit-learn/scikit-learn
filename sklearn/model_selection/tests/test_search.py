@@ -3145,7 +3145,25 @@ def test_search_callbacks_with_partial_fit_failures():
 
 @skip_callback_test_if_wasm
 @config_context(enable_metadata_routing=True)
-def test_search_callbacks_with_metadata_routing():
+def test_search_callback_metadata():
+    """Test the metadata routing to callbacks."""
+    cb = RecordingCallback().set_on_fit_task_begin_request(requested_arg_begin=True)
+    GridSearchCV(LogisticRegression(), {"C": [1, 10]}, cv=2).set_callbacks(cb).fit(
+        X, y, requested_arg_begin="value"
+    )
+    task_begin_metadatas = [
+        rec["kwargs"]["metadata"]
+        for rec in cb.record
+        if rec["name"] == "on_fit_task_begin"
+        and rec["context"].task_name not in ("candidate-split-evaluation", "search")
+    ]
+    assert task_begin_metadatas
+    assert all([m == {"requested_arg_begin": "value"} for m in task_begin_metadatas])
+
+
+@skip_callback_test_if_wasm
+@config_context(enable_metadata_routing=True)
+def test_search_callbacks_and_scorer_with_metadata_routing():
     """Check that metadata routed to callbacks and scorers don't interfere.
 
     The goal is to verify that having different metadata routed to the gridsearch's

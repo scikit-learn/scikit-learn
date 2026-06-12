@@ -1004,12 +1004,12 @@ class BaseSearchCV(
         params = _check_method_params(X, params=params)
 
         routed_params = self._get_routed_params_for_fit(params)
-
+        callbacks_params = self._get_callbacks_routed_params(routed_params)
         root_callback_ctx.call_on_fit_task_begin(
             estimator=self,
             X=X,
             y=y,
-            metadata=routed_params,
+            metadata=callbacks_params,
         )
 
         self._checked_cv_orig = check_cv(
@@ -1026,15 +1026,18 @@ class BaseSearchCV(
 
         parallel = Parallel(n_jobs=self.n_jobs, pre_dispatch=self.pre_dispatch)
 
-        fit_and_score_kwargs = dict(
+        fit_score_and_callback_kwargs = dict(
             scorer=scorers,
-            routed_params=routed_params,
+            fit_params=routed_params.estimator.fit,
+            score_params=routed_params.scorer.score,
             return_train_score=self.return_train_score,
             return_n_test_samples=True,
             return_times=True,
             return_parameters=False,
             error_score=self.error_score,
             verbose=self.verbose,
+            caller=self,
+            callbacks_params=callbacks_params,
         )
         results = {}
         with parallel:
@@ -1092,9 +1095,8 @@ class BaseSearchCV(
                         parameters=parameters,
                         split_progress=(split_idx, n_splits),
                         candidate_progress=(cand_idx, n_candidates),
-                        **fit_and_score_kwargs,
-                        caller=self,
                         callback_ctx=evaluation_ctx,
+                        **fit_score_and_callback_kwargs,
                     )
                     for (
                         ((cand_idx, parameters), (split_idx, (train, test))),
@@ -1181,7 +1183,7 @@ class BaseSearchCV(
                     estimator=self,
                     X=X,
                     y=y,
-                    metadata=routed_params,
+                    metadata=callbacks_params,
                 )
 
                 refit_start_time = time.time()
@@ -1199,7 +1201,7 @@ class BaseSearchCV(
                 estimator=self,
                 X=X,
                 y=y,
-                metadata=routed_params,
+                metadata=callbacks_params,
             )
 
         # Store the only scorer not as a dict for single metric evaluation
@@ -1214,7 +1216,7 @@ class BaseSearchCV(
             estimator=self,
             X=X,
             y=y,
-            metadata=routed_params,
+            metadata=callbacks_params,
         )
 
         return self
