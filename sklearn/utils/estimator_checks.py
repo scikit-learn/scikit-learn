@@ -16,6 +16,7 @@ from numbers import Integral, Real
 from typing import Callable, Literal
 
 import joblib
+import narwhals.stable.v2 as nw
 import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
@@ -95,6 +96,7 @@ from sklearn.utils._test_common.instance_generator import (
 from sklearn.utils._testing import (
     SkipTest,
     _array_api_for_tests,
+    _convert_container,
     _get_args,
     assert_allclose,
     assert_allclose_dense_sparse,
@@ -106,7 +108,12 @@ from sklearn.utils._testing import (
     raises,
     set_random_state,
 )
-from sklearn.utils.validation import _num_samples, check_is_fitted, has_fit_parameter
+from sklearn.utils.validation import (
+    _num_features,
+    _num_samples,
+    check_is_fitted,
+    has_fit_parameter,
+)
 
 REGRESSION_DATASET = None
 
@@ -198,6 +205,9 @@ def _yield_checks(estimator):
     yield check_estimator_sparse_tag
     yield check_estimator_sparse_array
     yield check_estimator_sparse_matrix
+
+    if tags.input_tags.preserves_dataframe:
+        yield check_metaestimator_preserves_dataframe
 
     # Test that estimators can be pickled, and once pickled
     # give the same answer as before.
@@ -4872,6 +4882,100 @@ scikit-learn versions.
                 " `__sklearn_tags__` and `_more_tags` or `_get_tags`. This change was"
                 " introduced in scikit-learn=1.6"
             )
+
+
+class _DataFramePreservingRegressor(RegressorMixin, BaseEstimator):
+    """Sub-estimator that requires a dataframe input, for common checks.
+
+    Refuses any input that is not a dataframe and exposes
+    ``coef_``/``feature_importances_`` so it can drive selectors such as
+    :class:`~sklearn.feature_selection.RFE`. Used by
+    ``check_metaestimator_preserves_dataframe``.
+    """
+
+    def fit(self, X, y=None):
+        if not nw.dependencies.is_into_dataframe(X):
+            raise AssertionError(
+                f"the meta-estimator passed a {type(X).__name__} to its "
+                "sub-estimator's `fit` instead of a dataframe"
+            )
+        n_features = _num_features(X)
+        self.coef_ = np.arange(1.0, n_features + 1.0)
+        self.feature_importances_ = self.coef_
+        self.n_features_in_ = n_features
+        return self
+
+    def predict(self, X):
+        if not nw.dependencies.is_into_dataframe(X):
+            raise AssertionError(
+                f"the meta-estimator passed a {type(X).__name__} to its "
+                "sub-estimator's `predict` instead of a dataframe"
+            )
+        return np.zeros(_num_samples(X))
+
+
+def check_metaestimator_preserves_dataframe(name, estimator_orig):
+    """Check that a meta-estimator forwards a dataframe to its sub-estimator.
+
+    Estimators tagged with ``input_tags.preserves_dataframe`` must hand the
+    wrapped sub-estimator the original dataframe -- preserving column dtypes
+    such as categoricals -- instead of converting it to a NumPy array. The
+    sub-estimator is replaced by a proxy that fails if it does not receive a
+    dataframe. Run for every dataframe library supported via narwhals that is
+    installed.
+    """
+    rng = np.random.RandomState(0)
+    n_samples = 60
+    data = np.column_stack(
+        [
+            rng.standard_normal(n_samples),
+            np.array(["a", "b"] * (n_samples // 2), dtype=object),
+            rng.standard_normal(n_samples),
+            rng.standard_normal(n_samples),
+        ]
+    )
+    column_names = ["num1", "cat", "num2", "num3"]
+    y = rng.standard_normal(n_samples)
+
+    ran_any = False
+    for constructor_name in ("pandas", "polars", "pyarrow"):
+        try:
+            __import__(constructor_name)
+        except ImportError:
+            continue
+        ran_any = True
+        X = _convert_container(
+            data,
+            constructor_name,
+            column_names=column_names,
+            categorical_feature_names=["cat"],
+        )
+        estimator = clone(estimator_orig)
+        sub_estimators = [
+            key
+            for key, value in estimator.get_params(deep=False).items()
+            if isinstance(value, BaseEstimator)
+        ]
+        if not sub_estimators:
+            raise SkipTest(
+                f"{name} is tagged preserves_dataframe but exposes no "
+                "sub-estimator parameter to replace."
+            )
+        estimator.set_params(
+            **{key: _DataFramePreservingRegressor() for key in sub_estimators}
+        )
+        set_random_state(estimator, 0)
+        # the proxy sub-estimator raises if it is handed anything but a dataframe,
+        # both during fit and when a prediction method delegates to it
+        estimator.fit(X, y)
+        check_is_fitted(estimator)
+        for method in ("predict", "decision_function", "predict_proba", "score"):
+            if hasattr(estimator, method):
+                args = (X, y) if method == "score" else (X,)
+                getattr(estimator, method)(*args)
+
+    if not ran_any:
+        raise SkipTest("pandas, polars or pyarrow is required for this check.")
 
 
 def check_dataframe_column_names_consistency(name, estimator_orig):

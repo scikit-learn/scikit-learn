@@ -330,37 +330,3 @@ def test_fit_rejects_params_with_no_routing_enabled():
 
     with pytest.raises(ValueError, match="is only supported if"):
         sfs.fit(X, y, sample_weight=np.ones_like(y))
-
-
-@pytest.mark.parametrize("direction", ("forward", "backward"))
-def test_dataframe_with_non_numeric_features(direction):
-    """Check that SFS works with non-numeric features.
-
-    Non-regression test for #30785.
-    """
-    pd = pytest.importorskip("pandas")
-
-    rng = np.random.RandomState(0)
-    n_samples = 100
-    X = pd.DataFrame(
-        {
-            "num1": rng.randn(n_samples),
-            "cat": pd.Categorical(["a", "b"] * (n_samples // 2)),
-            "num2": rng.randn(n_samples),
-            "num3": rng.randn(n_samples),
-        }
-    )
-    y = rng.randn(n_samples)
-
-    est = HistGradientBoostingRegressor(
-        categorical_features="from_dtype",
-        random_state=0,
-    )
-    sfs = SequentialFeatureSelector(
-        est,
-        n_features_to_select=2,
-        direction=direction,
-        cv=2,
-    )
-    sfs.fit(X, y)
-    assert sfs.n_features_to_select_ == 2

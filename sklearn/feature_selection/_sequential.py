@@ -8,7 +8,6 @@ Sequential feature selection
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.sparse import issparse
 
 from sklearn.base import (
     BaseEstimator,
@@ -32,7 +31,6 @@ from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt, St
 from sklearn.utils._tags import get_tags
 from sklearn.utils.validation import (
     _num_features,
-    check_array,
     check_is_fitted,
     validate_data,
 )
@@ -242,35 +240,19 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         """
         _raise_for_params(params, self, "fit")
         tags = get_tags(self)
-        X = validate_data(self, X, skip_check_array=True)
-        # Inputs without .shape (e.g. lists, _NotAnArray) must be converted to
-        # a numpy array so that _safe_indexing(axis=1) works later.
-        # DataFrames, proper numpy arrays, and sparse matrices keep their type.
-        if not hasattr(X, "shape"):
-            X = np.asarray(X)
-        # Validate content (raises on bad dtypes, NaN/inf, 1-D input, etc.).
-        # For sparse inputs, also normalise to CSR/CSC/LIL — the only formats
-        # _safe_indexing(axis=1) supports.  Unsupported formats (dia, bsr, …)
-        # are silently converted; accept_sparse=False raises with a "Sparse …"
-        # message when the inner estimator does not advertise sparse support.
-        # For DataFrames and numpy arrays the return value is discarded so the
-        # original container is preserved.
-        # input_name="X" makes the NaN/inf message read "Input X contains …"
-        # as expected by the existing regression test.
-        _accept_sparse = ["csr", "csc", "lil"] if tags.input_tags.sparse else False
-        X_validated = check_array(
+        # Keep dataframes untouched so the underlying estimator receives the
+        # original column dtypes (e.g. categoricals); any other array-like is
+        # validated and converted as usual, with sparse input normalised to a
+        # format that ``_safe_indexing(..., axis=1)`` supports.
+        accept_sparse = ["csr", "csc", "lil"] if tags.input_tags.sparse else False
+        X = validate_data(
+            self,
             X,
-            accept_sparse=_accept_sparse,
+            accept_sparse=accept_sparse,
             ensure_all_finite=not tags.input_tags.allow_nan,
-            ensure_2d=True,
             ensure_min_features=2,
-            input_name="X",
-            estimator=self,
+            skip_check_array="if-dataframe",
         )
-        if issparse(X):
-            # Adopt the normalised sparse matrix; leaves DataFrames / numpy
-            # arrays untouched.
-            X = X_validated
         n_features = _num_features(X)
 
         if self.n_features_to_select == "auto":
@@ -366,6 +348,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         tags = super().__sklearn_tags__()
         tags.input_tags.allow_nan = get_tags(self.estimator).input_tags.allow_nan
         tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
+        # dataframe inputs are forwarded to the sub-estimator with their dtypes
+        tags.input_tags.preserves_dataframe = True
         return tags
 
     def get_metadata_routing(self):
