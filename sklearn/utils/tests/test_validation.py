@@ -356,6 +356,19 @@ def test_check_array_series_err_msg():
         check_array(ser, ensure_2d=True)
 
 
+def test_check_array_polars_lazyframe():
+    """check_array raises a clear TypeError for Polars LazyFrame."""
+    pytest.importorskip("polars")
+    import polars as pl
+
+    X_lazy = pl.LazyFrame({"a": [1.0, 2.0], "b": [3.0, 4.0]})
+    with pytest.raises(
+        TypeError,
+        match="A polars LazyFrame was passed.*Use '.collect\\(\\)' to convert",
+    ):
+        check_array(X_lazy)
+
+
 @pytest.mark.filterwarnings("ignore:Can't check dok sparse matrix for nan or inf")
 def test_check_array():
     # accept_sparse == False

@@ -864,6 +864,12 @@ def check_array(
             "https://numpy.org/doc/stable/reference/generated/numpy.matrix.html"
         )
 
+    if nw.dependencies.is_polars_lazyframe(array):
+        raise TypeError(
+            "A polars LazyFrame was passed, but lazy dataframes are not supported. "
+            "Use '.collect()' to convert it to a polars DataFrame."
+        )
+
     xp, is_array_api_compliant = get_namespace(array)
 
     # store reference to original array to check if copy is needed when
