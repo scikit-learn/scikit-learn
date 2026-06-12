@@ -882,7 +882,7 @@ def test_set_pipeline_step_passthrough(passthrough):
         "memory": None,
         "m2__mult": 2,
         "last__mult": 5,
-        "transform_input": ["X_val"],
+        "transform_input": ("X_val",),
         "verbose": False,
     }
 
@@ -2227,7 +2227,7 @@ def test_transform_input_no_slep6():
     with pytest.raises(ValueError, match=msg):
         make_pipeline(DummyTransf(), transform_input=["blah"]).fit(X, y)
 
-    # default ["X_val"] doesn't raise even if X_val is not passed
+    # default ("X_val",) doesn't raise even when X_val is not passed
     make_pipeline(DummyTransf()).fit(X, y)
 
     # the usual metadata-routing error is raised if X_val is passed
