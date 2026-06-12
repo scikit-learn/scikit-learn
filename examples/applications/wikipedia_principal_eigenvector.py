@@ -28,50 +28,30 @@ of the latent structured data of the Wikipedia content.
 # SPDX-License-Identifier: BSD-3-Clause
 
 # %%
-import os
-import shutil
 from bz2 import BZ2File
 from datetime import datetime
 from pprint import pprint
 from time import time
-from urllib.request import urlopen
 
 import numpy as np
 from scipy import sparse
 
+from sklearn.datasets import fetch_file
 from sklearn.decomposition import randomized_svd
 
 # %%
 # Download data, if not already on disk
 # -------------------------------------
 redirects_url = "https://downloads.dbpedia.org/3.5.1/en/redirects_en.nt.bz2"
-redirects_filename = redirects_url.rsplit("/", 1)[1]
+redirects_filename = fetch_file(redirects_url)
 
 page_links_url = "https://downloads.dbpedia.org/3.5.1/en/page_links_en.nt.bz2"
-page_links_filename = page_links_url.rsplit("/", 1)[1]
+page_links_filename = fetch_file(page_links_url)
 
 resources = [
     (redirects_url, redirects_filename),
     (page_links_url, page_links_filename),
 ]
-
-
-def download_file(url, filename):
-    """Download `url` to `filename` without leaving a broken file behind."""
-    print("Downloading data from '%s', please wait..." % url)
-    tmp_filename = filename + ".part"
-    with urlopen(url) as response, open(tmp_filename, "wb") as f:
-        expected_size = response.length  # Content-Length, or None if unknown
-        shutil.copyfileobj(response, f)
-    if expected_size is not None and os.path.getsize(tmp_filename) != expected_size:
-        os.remove(tmp_filename)
-        raise IOError("Download of %s was incomplete; please run again." % filename)
-    os.replace(tmp_filename, filename)
-
-
-for url, filename in resources:
-    if not os.path.exists(filename):
-        download_file(url, filename)
 
 
 # %%
