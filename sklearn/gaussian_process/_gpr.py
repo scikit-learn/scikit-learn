@@ -279,7 +279,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         # the targets have the same scale as the first target in the default case of normalize_y=False
         # for normalize_y=True targets are normalised using standard scaling.
         # y_unscale ensures that
-        # the posterior statistics have the same scales as in the training data.
+        # the posterior statistics have the same scales as in the original target data.
         if self.normalize_y:
             y = (y - self._y_train_mean) / self._y_train_std
             self.__y_scale = np.ones(self._y_train_std.size)
