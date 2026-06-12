@@ -53,6 +53,7 @@ def _openml_path_from_url(url: str) -> str:
     This is the path component of the URL, used both to download the resource
     and to mirror it as sub-folders of the local cache folder.
 
+    >>> from sklearn.datasets._openml import _openml_path_from_url
     >>> _openml_path_from_url("https://www.openml.org/data/v1/download/42/iris.arff")
     'data/v1/download/42/iris.arff'
     """
