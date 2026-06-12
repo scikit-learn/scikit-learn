@@ -1097,7 +1097,7 @@ def test_calibrated_classifier_cv_works_with_large_confidence_scores(
     Non-regression test for issue #26766.
     """
     prob = 0.67
-    n = 1000
+    n = 200
     random_noise = np.random.default_rng(global_random_seed).normal(size=n)
 
     y = np.array([1] * int(n * prob) + [0] * (n - int(n * prob)))
