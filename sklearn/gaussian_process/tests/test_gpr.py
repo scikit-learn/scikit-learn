@@ -363,7 +363,7 @@ def test_large_variance_y():
     assert_allclose(y_pred_std, y_pred_std_gpy, rtol=0.15, atol=0)
 
 @pytest.mark.parametrize("normalize_y", [False, True])
-def test_y_multioutput():
+def test_y_multioutput(normalise_y):
     # Test that GPR can deal with multi-dimensional target values
     scale = 2
     y_2d = np.vstack((y, y * scale)).T
