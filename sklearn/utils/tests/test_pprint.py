@@ -304,7 +304,7 @@ Pipeline(memory=None,
                                     multi_class='warn', n_jobs=None,
                                     random_state=None, solver='warn',
                                     tol=0.0001, verbose=0, warm_start=False))],
-         transform_input=("X_val",), verbose=False)"""
+         transform_input=('X_val',), verbose=False)"""
 
     expected = expected[1:]  # remove first \n
     assert pipeline.__repr__() == expected
