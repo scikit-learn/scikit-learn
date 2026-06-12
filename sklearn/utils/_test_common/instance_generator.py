@@ -186,6 +186,7 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import all_estimators
 from sklearn.utils._tags import get_tags
 from sklearn.utils._testing import SkipTest
+from sklearn.utils.deprecation import _is_deprecated
 from sklearn.utils.fixes import _IS_32BIT, parse_version, sp_base_version
 
 CROSS_DECOMPOSITION = ["PLSCanonical", "PLSRegression", "CCA", "PLSSVD"]
@@ -810,6 +811,9 @@ def _construct_instances(Estimator):
     If parameter sets in INIT_PARAMS are provided, use them. If there are a list
     of parameter sets, return one instance for each set.
     """
+    if _is_deprecated(Estimator.__new__):
+        raise SkipTest(f"Skipping deprecated estimator {Estimator.__name__}")
+
     if Estimator in SKIPPED_ESTIMATORS:
         msg = f"Can't instantiate estimator {Estimator.__name__}"
         # raise additional warning to be shown by pytest

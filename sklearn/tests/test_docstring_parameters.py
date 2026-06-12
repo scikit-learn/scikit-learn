@@ -199,6 +199,9 @@ def test_fit_docstring_attributes(name, Estimator):
     pytest.importorskip("numpydoc")
     from numpydoc import docscrape
 
+    if _is_deprecated(Estimator.__new__):
+        pytest.skip(f"Skipping deprecated estimator {name}")
+
     doc = docscrape.ClassDoc(Estimator)
     attributes = doc["Attributes"]
 
