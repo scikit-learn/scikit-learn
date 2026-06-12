@@ -1,6 +1,0 @@
-- :func:`model_selection.cross_validate`, :func:`model_selection.cross_val_score`
-  and the ``*SearchCV`` estimators now align the per-fold classifier predictions
-  onto the full set of classes before scoring. Probability-based scorers such as
-  ``neg_log_loss`` and ``roc_auc_ovr`` no longer raise a shape-mismatch error
-  when a training fold does not contain every class.
-  By :user:`Guillaume Lemaitre <glemaitre>`.

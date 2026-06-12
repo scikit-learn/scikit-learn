@@ -460,30 +460,41 @@ class _Scorer(_BaseScorer):
         pos_label = None if is_regressor(estimator) else self._get_pos_label()
         response_method = _check_response_method(estimator, self._response_method)
         response_method_name = _get_response_method_name(response_method)
+
+        # For probability/threshold-based metrics, the columns of `y_pred`
+        # correspond to `estimator.classes_`. When the estimator was trained on a
+        # subset of the classes present at scoring time (e.g. a rare class
+        # missing from a cross-validation training fold), `y_pred` misses the
+        # corresponding columns and the metric would fail with a shape mismatch.
+        # We align the response onto the union of the classes seen by the
+        # estimator and those present in `y_true`, and pass that same set as
+        # `labels` to metrics that support it so the two stay consistent.
+        response_classes = None
+        if (
+            response_method_name
+            in ("predict_proba", "predict_log_proba", "decision_function")
+            and not is_regressor(estimator)
+            and y_true is not None
+            and getattr(estimator, "classes_", None) is not None
+            and not isinstance(estimator.classes_, list)
+        ):
+            response_classes = np.union1d(estimator.classes_, np.unique(y_true))
+
         y_pred = method_caller(
             estimator,
             response_method_name,
             X,
             pos_label=pos_label,
+            labels=response_classes,
         )
 
         scoring_kwargs = {**self._kwargs, **kwargs}
-        # For probability/threshold-based metrics, the columns of `y_pred`
-        # correspond to `estimator.classes_`. When the metric supports a
-        # `labels` argument, pass `estimator.classes_` explicitly so that the
-        # metric does not have to infer the labels from `y_true`. This keeps the
-        # number of expected classes consistent with the columns of `y_pred`,
-        # which matters when `y_true` does not contain every class (e.g. a rare
-        # class missing from a cross-validation fold).
         if (
-            response_method_name
-            in ("predict_proba", "predict_log_proba", "decision_function")
+            response_classes is not None
             and "labels" not in scoring_kwargs
-            and not is_regressor(estimator)
-            and hasattr(estimator, "classes_")
             and "labels" in signature(self._score_func).parameters
         ):
-            scoring_kwargs["labels"] = estimator.classes_
+            scoring_kwargs["labels"] = response_classes
         return self._sign * self._score_func(y_true, y_pred, **scoring_kwargs)
 
 

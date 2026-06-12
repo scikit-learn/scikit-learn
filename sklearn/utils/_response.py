@@ -9,8 +9,13 @@ It allows to make uniform checks and validation.
 import numpy as np
 
 from sklearn.base import is_classifier
+from sklearn.utils._array_api import get_namespace
 from sklearn.utils.multiclass import type_of_target
-from sklearn.utils.validation import _check_response_method, check_is_fitted
+from sklearn.utils.validation import (
+    _check_response_method,
+    _num_samples,
+    check_is_fitted,
+)
 
 
 def _process_predict_proba(*, y_pred, target_type, classes, pos_label):
@@ -114,12 +119,71 @@ def _process_decision_function(*, y_pred, target_type, classes, pos_label):
     return y_pred
 
 
+def _align_response_to_classes(y_pred, *, classes, labels, response_method):
+    """Re-index a 2D response onto a larger, ordered set of classes.
+
+    When a classifier has been trained on a subset of the classes that the
+    metric must score (e.g. a class missing from a cross-validation training
+    fold), its ``predict_proba`` / ``predict_log_proba`` / ``decision_function``
+    output misses the corresponding columns. This scatters the available columns
+    into an array spanning ``labels``, filling the missing classes with a neutral
+    value (``0`` for probabilities, the smallest representable float for
+    log-probabilities and decision values).
+
+    Parameters
+    ----------
+    y_pred : ndarray of shape (n_samples, len(classes))
+        The 2D response computed for ``classes``.
+
+    classes : ndarray of shape (n_classes,)
+        The classes seen by the estimator, i.e. ``estimator.classes_``.
+
+    labels : ndarray of shape (n_labels,)
+        The ordered set of classes to score on. Must be a superset of
+        ``classes``.
+
+    response_method : {"predict_proba", "predict_log_proba", "decision_function"}
+        The response method that produced ``y_pred``.
+
+    Returns
+    -------
+    aligned : ndarray of shape (n_samples, len(labels))
+        The response re-indexed onto ``labels``.
+    """
+    xp, _ = get_namespace(y_pred)
+
+    if response_method == "decision_function" and y_pred.ndim == 1:
+        # A 1D `decision_function` is produced by binary classifiers; there is no
+        # meaningful way to map it onto more than two classes.
+        raise ValueError(
+            f"Only {classes.shape[0]} classes were seen by the estimator but "
+            f"predictions are expected for {labels.shape[0]} classes. Aligning a "
+            "1D `decision_function` output is not supported. To fix this, use a "
+            "cross-validation technique resulting in properly stratified folds."
+        )
+
+    fill_values = {
+        "decision_function": xp.finfo(y_pred.dtype).min,
+        "predict_log_proba": xp.finfo(y_pred.dtype).min,
+        "predict_proba": 0,
+    }
+    column_indices = np.searchsorted(labels, classes)
+    aligned = xp.full(
+        (_num_samples(y_pred), labels.shape[0]),
+        fill_values[response_method],
+        dtype=y_pred.dtype,
+    )
+    aligned[:, column_indices] = y_pred
+    return aligned
+
+
 def _get_response_values(
     estimator,
     X,
     response_method,
     pos_label=None,
     return_response_method_used=False,
+    labels=None,
 ):
     """Compute the response values of a classifier, an outlier detector, a regressor
     or a clusterer.
@@ -173,6 +237,16 @@ def _get_response_values(
 
         .. versionadded:: 1.4
 
+    labels : array-like of shape (n_labels,), default=None
+        The ordered set of classes the response should span, used only for
+        classifiers and the `predict_proba`, `predict_log_proba` and
+        `decision_function` response methods. When provided and larger than
+        `estimator.classes_` (e.g. a class is missing from a cross-validation
+        training fold), the response is computed as if the target were
+        multiclass and its columns are re-indexed onto `labels`, filling the
+        classes unseen by the estimator with a neutral value. Must be a superset
+        of `estimator.classes_`.
+
     Returns
     -------
     y_pred : ndarray of shape (n_samples,), (n_samples, n_classes) or \
@@ -201,7 +275,18 @@ def _get_response_values(
 
     if is_classifier(estimator):
         classes = estimator.classes_
-        target_type = type_of_target(classes)
+        # `labels` lets the caller score on a larger set of classes than those
+        # seen by the estimator. In that case the target type and column layout
+        # are driven by `labels` so that, e.g., a 2-class fold of a multiclass
+        # problem is not collapsed to a binary (1D) response.
+        align_to_labels = (
+            labels is not None
+            and prediction_method.__name__
+            in ("predict_proba", "predict_log_proba", "decision_function")
+            and labels.shape[0] != classes.shape[0]
+        )
+        scoring_classes = labels if align_to_labels else classes
+        target_type = type_of_target(scoring_classes)
 
         if target_type == "binary":
             if pos_label is not None and pos_label not in classes.tolist():
@@ -227,6 +312,14 @@ def _get_response_values(
                 target_type=target_type,
                 classes=classes,
                 pos_label=pos_label,
+            )
+
+        if align_to_labels:
+            y_pred = _align_response_to_classes(
+                y_pred,
+                classes=classes,
+                labels=labels,
+                response_method=prediction_method.__name__,
             )
     else:
         y_pred, pos_label = prediction_method(X), None

@@ -1953,11 +1953,12 @@ def test_cross_val_predict_with_method_multilabel_rf_rare_class():
 
 @pytest.mark.parametrize("scoring", ["neg_log_loss", "roc_auc_ovr"])
 def test_cross_validate_rare_class_proba_scoring(scoring):
-    # Non-regression test: when a training fold misses a class, the fitted
-    # classifier's `classes_` is incomplete and `predict_proba` returns fewer
-    # columns than the number of classes in the dataset. Probability-based
-    # scorers used to raise a shape-mismatch error. `cross_validate` now aligns
-    # the per-fold predictions onto the full set of classes.
+    """Check scoring with classifier on a rare class problem.
+
+    In this context, the classifier might have missed some classes during training and
+    scoring will fail if we are not aligning the predictions onto the full set of
+    classes.
+    """
     X = np.array(
         [
             [-2.0, -2.0],
@@ -1973,15 +1974,14 @@ def test_cross_validate_rare_class_proba_scoring(scoring):
     test_idx = np.array([1, 3, 4])  # classes {0, 1, 2} present at scoring time
     custom_splits = [(train_idx, test_idx)]
 
-    with pytest.warns(RuntimeWarning, match="Number of classes in training fold"):
-        cv_results = cross_validate(
-            LogisticRegression(),
-            X,
-            y,
-            cv=custom_splits,
-            scoring=scoring,
-            error_score="raise",
-        )
+    cv_results = cross_validate(
+        LogisticRegression(),
+        X,
+        y,
+        cv=custom_splits,
+        scoring=scoring,
+        error_score="raise",
+    )
 
     assert np.isfinite(cv_results["test_score"]).all()
 

@@ -1,0 +1,7 @@
+- Probability- and threshold-based scorers (e.g. ``neg_log_loss``,
+  ``roc_auc_ovr``) now align the estimator's response onto the union of the
+  classes seen during ``fit`` and those present in ``y_true`` before computing
+  the metric, passing that same set as ``labels``. This fixes a shape-mismatch
+  error raised by :func:`model_selection.cross_validate` and the ``*SearchCV``
+  estimators when a training fold does not contain every class.
+  By :user:`Guillaume Lemaitre <glemaitre>`.
