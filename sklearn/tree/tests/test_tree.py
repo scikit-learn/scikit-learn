@@ -8,6 +8,7 @@ import io
 import pickle
 import re
 import struct
+import warnings
 from itertools import chain, pairwise, product
 
 import joblib
@@ -73,26 +74,8 @@ from sklearn.utils.validation import check_random_state
 CLF_CRITERIONS = ("gini", "log_loss")
 REG_CRITERIONS = ("squared_error", "absolute_error", "friedman_mse", "poisson")
 
-CLF_TREES = {
-    "DecisionTreeClassifier": DecisionTreeClassifier,
-    "ExtraTreeClassifier": ExtraTreeClassifier,
-}
-
-REG_TREES = {
-    "DecisionTreeRegressor": DecisionTreeRegressor,
-    "ExtraTreeRegressor": ExtraTreeRegressor,
-}
-
-ALL_TREES: dict = dict()
-ALL_TREES.update(CLF_TREES)
-ALL_TREES.update(REG_TREES)
-
-SPARSE_TREES = [
-    "DecisionTreeClassifier",
-    "DecisionTreeRegressor",
-    "ExtraTreeClassifier",
-    "ExtraTreeRegressor",
-]
+SPLITTERS = ("best", "random")
+TREE_CLASSES = (DecisionTreeClassifier, DecisionTreeRegressor)
 
 
 X_small = np.array(
@@ -149,6 +132,18 @@ y_small_reg = [
     0.9,
     0,
 ]
+
+
+@pytest.mark.parametrize(
+    "Tree",
+    [ExtraTreeClassifier, ExtraTreeRegressor],
+)
+def test_extra_tree_deprecated(Tree):
+    msg = f"Class {Tree.__name__} is deprecated.*will be removed in 1.12"
+    with pytest.warns(FutureWarning, match=msg):
+        warnings.simplefilter("always", FutureWarning)
+        Tree()
+
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -242,35 +237,35 @@ def assert_tree_equal(d, s, message):
     )
 
 
-def test_classification_toy():
+@pytest.mark.parametrize("splitter", SPLITTERS)
+def test_classification_toy(splitter):
     # Check classification on a toy dataset.
-    for name, Tree in CLF_TREES.items():
-        clf = Tree(random_state=0)
-        clf.fit(X, y)
-        assert_array_equal(clf.predict(T), true_result, "Failed with {0}".format(name))
+    clf = DecisionTreeClassifier(random_state=0, splitter=splitter)
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(T), true_result)
 
-        clf = Tree(max_features=1, random_state=1)
-        clf.fit(X, y)
-        assert_array_equal(clf.predict(T), true_result, "Failed with {0}".format(name))
+    clf = DecisionTreeClassifier(max_features=1, random_state=1, splitter=splitter)
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(T), true_result)
 
 
-def test_weighted_classification_toy():
+@pytest.mark.parametrize("splitter", SPLITTERS)
+def test_weighted_classification_toy(splitter):
     # Check classification on a weighted toy dataset.
-    for name, Tree in CLF_TREES.items():
-        clf = Tree(random_state=0)
+    clf = DecisionTreeClassifier(random_state=0, splitter=splitter)
 
-        clf.fit(X, y, sample_weight=np.ones(len(X)))
-        assert_array_equal(clf.predict(T), true_result, "Failed with {0}".format(name))
+    clf.fit(X, y, sample_weight=np.ones(len(X)))
+    assert_array_equal(clf.predict(T), true_result)
 
-        clf.fit(X, y, sample_weight=np.full(len(X), 0.5))
-        assert_array_equal(clf.predict(T), true_result, "Failed with {0}".format(name))
+    clf.fit(X, y, sample_weight=np.full(len(X), 0.5))
+    assert_array_equal(clf.predict(T), true_result)
 
 
 # TODO(1.11): remove the deprecated friedman_mse criterion parametrization
 @pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
-@pytest.mark.parametrize("Tree", REG_TREES.values())
+@pytest.mark.parametrize("splitter", SPLITTERS)
 @pytest.mark.parametrize("criterion", REG_CRITERIONS)
-def test_regression_toy(Tree, criterion):
+def test_regression_toy(splitter, criterion):
     # Check regression on a toy dataset.
     if criterion == "poisson":
         # make target positive while not touching the original y and
@@ -282,16 +277,19 @@ def test_regression_toy(Tree, criterion):
         y_train = y
         y_test = true_result
 
-    reg = Tree(criterion=criterion, random_state=1)
+    reg = DecisionTreeRegressor(criterion=criterion, random_state=1, splitter=splitter)
     reg.fit(X, y_train)
     assert_allclose(reg.predict(T), y_test)
 
-    clf = Tree(criterion=criterion, max_features=1, random_state=1)
+    clf = DecisionTreeRegressor(
+        criterion=criterion, max_features=1, random_state=1, splitter=splitter
+    )
     clf.fit(X, y_train)
     assert_allclose(reg.predict(T), y_test)
 
 
-def test_xor():
+@pytest.mark.parametrize("splitter", SPLITTERS)
+def test_xor(splitter):
     # Check on an XOR problem
     y = np.zeros((10, 10))
     y[:5, :5] = 1
@@ -302,52 +300,48 @@ def test_xor():
     X = np.vstack([gridx.ravel(), gridy.ravel()]).T
     y = y.ravel()
 
-    for name, Tree in CLF_TREES.items():
-        clf = Tree(random_state=0)
-        clf.fit(X, y)
-        assert clf.score(X, y) == 1.0, "Failed with {0}".format(name)
+    clf = DecisionTreeClassifier(random_state=0, splitter=splitter)
+    clf.fit(X, y)
+    assert clf.score(X, y) == 1.0
 
-        clf = Tree(random_state=0, max_features=1)
-        clf.fit(X, y)
-        assert clf.score(X, y) == 1.0, "Failed with {0}".format(name)
+    clf = DecisionTreeClassifier(random_state=0, max_features=1, splitter=splitter)
+    clf.fit(X, y)
+    assert clf.score(X, y) == 1.0
 
 
-def test_iris():
+@pytest.mark.parametrize("splitter", SPLITTERS)
+@pytest.mark.parametrize("criterion", CLF_CRITERIONS)
+def test_iris(splitter, criterion):
     # Check consistency on dataset iris.
-    for (name, Tree), criterion in product(CLF_TREES.items(), CLF_CRITERIONS):
-        clf = Tree(criterion=criterion, random_state=0)
-        clf.fit(iris.data, iris.target)
-        score = accuracy_score(clf.predict(iris.data), iris.target)
-        assert score > 0.9, "Failed with {0}, criterion = {1} and score = {2}".format(
-            name, criterion, score
-        )
+    clf = DecisionTreeClassifier(criterion=criterion, random_state=0, splitter=splitter)
+    clf.fit(iris.data, iris.target)
+    score = accuracy_score(clf.predict(iris.data), iris.target)
+    assert score > 0.9
 
-        clf = Tree(criterion=criterion, max_features=2, random_state=0)
-        clf.fit(iris.data, iris.target)
-        score = accuracy_score(clf.predict(iris.data), iris.target)
-        assert score > 0.5, "Failed with {0}, criterion = {1} and score = {2}".format(
-            name, criterion, score
-        )
+    clf = DecisionTreeClassifier(
+        criterion=criterion, max_features=2, random_state=0, splitter=splitter
+    )
+    clf.fit(iris.data, iris.target)
+    score = accuracy_score(clf.predict(iris.data), iris.target)
+    assert score > 0.5
 
 
 # TODO(1.11): remove the deprecated friedman_mse criterion parametrization
 @pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
-@pytest.mark.parametrize("name, Tree", REG_TREES.items())
+@pytest.mark.parametrize("splitter", SPLITTERS)
 @pytest.mark.parametrize("criterion", REG_CRITERIONS)
-def test_diabetes_overfit(name, Tree, criterion):
+def test_diabetes_overfit(splitter, criterion):
     # check consistency of overfitted trees on the diabetes dataset
     # since the trees will overfit, we expect an MSE of 0
-    reg = Tree(criterion=criterion, random_state=0)
+    reg = DecisionTreeRegressor(criterion=criterion, random_state=0, splitter=splitter)
     reg.fit(diabetes.data, diabetes.target)
     score = mean_squared_error(diabetes.target, reg.predict(diabetes.data))
-    assert score == pytest.approx(0), (
-        f"Failed with {name}, criterion = {criterion} and score = {score}"
-    )
+    assert score == pytest.approx(0)
 
 
 # TODO(1.11): remove the deprecated friedman_mse criterion parametrization
 @pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
-@pytest.mark.parametrize("Tree", REG_TREES.values())
+@pytest.mark.parametrize("splitter", SPLITTERS)
 @pytest.mark.parametrize(
     "criterion, metric",
     [
@@ -357,73 +351,69 @@ def test_diabetes_overfit(name, Tree, criterion):
         ("poisson", mean_poisson_deviance),
     ],
 )
-def test_diabetes_underfit(Tree, criterion, metric, global_random_seed):
+def test_diabetes_underfit(splitter, criterion, metric, global_random_seed):
     # check consistency of trees when the depth and the number of features are
     # limited
-    kwargs = dict(criterion=criterion, max_features=6, random_state=global_random_seed)
+    kwargs = dict(
+        criterion=criterion,
+        max_features=6,
+        random_state=global_random_seed,
+        splitter=splitter,
+    )
     X, y = diabetes.data, diabetes.target
-    loss1 = metric(y, Tree(**kwargs, max_depth=1).fit(X, y).predict(X))
-    loss4 = metric(y, Tree(**kwargs, max_depth=4).fit(X, y).predict(X))
-    loss7 = metric(y, Tree(**kwargs, max_depth=7).fit(X, y).predict(X))
+    loss1 = metric(y, DecisionTreeRegressor(**kwargs, max_depth=1).fit(X, y).predict(X))
+    loss4 = metric(y, DecisionTreeRegressor(**kwargs, max_depth=4).fit(X, y).predict(X))
+    loss7 = metric(y, DecisionTreeRegressor(**kwargs, max_depth=7).fit(X, y).predict(X))
     # less depth => higher error
     # diabetes.data.shape[0] > 2^7 so it can't overfit to get a 0 error
     assert 0 < loss7 < loss4 < loss1, (loss7, loss4, loss1)
 
 
-def test_probability():
+@pytest.mark.parametrize("splitter", SPLITTERS)
+def test_probability(splitter):
     # Predict probabilities using DecisionTreeClassifier.
 
-    for name, Tree in CLF_TREES.items():
-        clf = Tree(max_depth=1, max_features=1, random_state=42)
-        clf.fit(iris.data, iris.target)
+    clf = DecisionTreeClassifier(
+        max_depth=1, max_features=1, random_state=42, splitter=splitter
+    )
+    clf.fit(iris.data, iris.target)
 
-        prob_predict = clf.predict_proba(iris.data)
-        assert_array_almost_equal(
-            np.sum(prob_predict, 1),
-            np.ones(iris.data.shape[0]),
-            err_msg="Failed with {0}".format(name),
-        )
-        assert_array_equal(
-            np.argmax(prob_predict, 1),
-            clf.predict(iris.data),
-            err_msg="Failed with {0}".format(name),
-        )
-        assert_almost_equal(
-            clf.predict_proba(iris.data),
-            np.exp(clf.predict_log_proba(iris.data)),
-            8,
-            err_msg="Failed with {0}".format(name),
-        )
+    prob_predict = clf.predict_proba(iris.data)
+    assert_array_almost_equal(np.sum(prob_predict, 1), np.ones(iris.data.shape[0]))
+    assert_array_equal(np.argmax(prob_predict, 1), clf.predict(iris.data))
+    assert_almost_equal(
+        clf.predict_proba(iris.data), np.exp(clf.predict_log_proba(iris.data)), 8
+    )
 
 
-def test_arrayrepr():
+@pytest.mark.parametrize("splitter", SPLITTERS)
+def test_arrayrepr(splitter):
     # Check the array representation.
     # Check resize
     X = np.arange(10000)[:, np.newaxis]
     y = np.arange(10000)
 
-    for name, Tree in REG_TREES.items():
-        reg = Tree(max_depth=None, random_state=0)
-        reg.fit(X, y)
+    reg = DecisionTreeRegressor(max_depth=None, random_state=0, splitter=splitter)
+    reg.fit(X, y)
 
 
-def test_pure_set():
+@pytest.mark.parametrize("splitter", SPLITTERS)
+def test_pure_set(splitter):
     # Check when y is pure.
     X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
     y = [1, 1, 1, 1, 1, 1]
 
-    for name, TreeClassifier in CLF_TREES.items():
-        clf = TreeClassifier(random_state=0)
-        clf.fit(X, y)
-        assert_array_equal(clf.predict(X), y, err_msg="Failed with {0}".format(name))
+    clf = DecisionTreeClassifier(random_state=0, splitter=splitter)
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(X), y)
 
-    for name, TreeRegressor in REG_TREES.items():
-        reg = TreeRegressor(random_state=0)
-        reg.fit(X, y)
-        assert_almost_equal(reg.predict(X), y, err_msg="Failed with {0}".format(name))
+    reg = DecisionTreeRegressor(random_state=0, splitter=splitter)
+    reg.fit(X, y)
+    assert_almost_equal(reg.predict(X), y)
 
 
-def test_numerical_stability():
+@pytest.mark.parametrize("splitter", SPLITTERS)
+def test_numerical_stability(splitter):
     # Check numerical stability.
     X = np.array(
         [
@@ -440,15 +430,15 @@ def test_numerical_stability():
     y = np.array([1.0, 0.70209277, 0.53896582, 0.0, 0.90914464, 0.48026916, 0.49622521])
 
     with np.errstate(all="raise"):
-        for name, Tree in REG_TREES.items():
-            reg = Tree(random_state=0)
-            reg.fit(X, y)
-            reg.fit(X, -y)
-            reg.fit(-X, y)
-            reg.fit(-X, -y)
+        reg = DecisionTreeRegressor(random_state=0, splitter=splitter)
+        reg.fit(X, y)
+        reg.fit(X, -y)
+        reg.fit(-X, y)
+        reg.fit(-X, -y)
 
 
-def test_importances():
+@pytest.mark.parametrize("splitter", SPLITTERS)
+def test_importances(splitter):
     # Check variable importances.
     X, y = datasets.make_classification(
         n_samples=5000,
@@ -460,15 +450,14 @@ def test_importances():
         random_state=0,
     )
 
-    for name, Tree in CLF_TREES.items():
-        clf = Tree(random_state=0)
+    clf = DecisionTreeClassifier(random_state=0, splitter=splitter)
 
-        clf.fit(X, y)
-        importances = clf.feature_importances_
-        n_important = np.sum(importances > 0.1)
+    clf.fit(X, y)
+    importances = clf.feature_importances_
+    n_important = np.sum(importances > 0.1)
 
-        assert importances.shape[0] == 10, "Failed with {0}".format(name)
-        assert n_important == 3, "Failed with {0}".format(name)
+    assert importances.shape[0] == 10
+    assert n_important == 3
 
     # Check on iris that importances are the same for all builders
     clf = DecisionTreeClassifier(random_state=0)
@@ -516,99 +505,100 @@ def test_importances_gini_equal_squared_error():
     assert_array_equal(clf.tree_.n_node_samples, reg.tree_.n_node_samples)
 
 
-def test_max_features():
+@pytest.mark.parametrize("TreeEstimator", TREE_CLASSES)
+@pytest.mark.parametrize("splitter", SPLITTERS)
+def test_max_features(TreeEstimator, splitter):
     # Check max_features.
-    for name, TreeEstimator in ALL_TREES.items():
-        est = TreeEstimator(max_features="sqrt")
-        est.fit(iris.data, iris.target)
-        assert est.max_features_ == int(np.sqrt(iris.data.shape[1]))
+    est = TreeEstimator(max_features="sqrt", splitter=splitter)
+    est.fit(iris.data, iris.target)
+    assert est.max_features_ == int(np.sqrt(iris.data.shape[1]))
 
-        est = TreeEstimator(max_features="log2")
-        est.fit(iris.data, iris.target)
-        assert est.max_features_ == int(np.log2(iris.data.shape[1]))
+    est = TreeEstimator(max_features="log2", splitter=splitter)
+    est.fit(iris.data, iris.target)
+    assert est.max_features_ == int(np.log2(iris.data.shape[1]))
 
-        est = TreeEstimator(max_features=1)
-        est.fit(iris.data, iris.target)
-        assert est.max_features_ == 1
+    est = TreeEstimator(max_features=1, splitter=splitter)
+    est.fit(iris.data, iris.target)
+    assert est.max_features_ == 1
 
-        est = TreeEstimator(max_features=3)
-        est.fit(iris.data, iris.target)
-        assert est.max_features_ == 3
+    est = TreeEstimator(max_features=3, splitter=splitter)
+    est.fit(iris.data, iris.target)
+    assert est.max_features_ == 3
 
-        est = TreeEstimator(max_features=0.01)
-        est.fit(iris.data, iris.target)
-        assert est.max_features_ == 1
+    est = TreeEstimator(max_features=0.01, splitter=splitter)
+    est.fit(iris.data, iris.target)
+    assert est.max_features_ == 1
 
-        est = TreeEstimator(max_features=0.5)
-        est.fit(iris.data, iris.target)
-        assert est.max_features_ == int(0.5 * iris.data.shape[1])
+    est = TreeEstimator(max_features=0.5, splitter=splitter)
+    est.fit(iris.data, iris.target)
+    assert est.max_features_ == int(0.5 * iris.data.shape[1])
 
-        est = TreeEstimator(max_features=1.0)
-        est.fit(iris.data, iris.target)
-        assert est.max_features_ == iris.data.shape[1]
+    est = TreeEstimator(max_features=1.0, splitter=splitter)
+    est.fit(iris.data, iris.target)
+    assert est.max_features_ == iris.data.shape[1]
 
-        est = TreeEstimator(max_features=None)
-        est.fit(iris.data, iris.target)
-        assert est.max_features_ == iris.data.shape[1]
+    est = TreeEstimator(max_features=None, splitter=splitter)
+    est.fit(iris.data, iris.target)
+    assert est.max_features_ == iris.data.shape[1]
 
 
-def test_error():
+@pytest.mark.parametrize("splitter", SPLITTERS)
+def test_error(splitter):
     # Test that it gives proper exception on deficient input.
-    for name, TreeEstimator in CLF_TREES.items():
-        # predict before fit
-        est = TreeEstimator()
-        with pytest.raises(NotFittedError):
-            est.predict_proba(X)
+    # predict before fit
+    est = DecisionTreeClassifier(splitter=splitter)
+    with pytest.raises(NotFittedError):
+        est.predict_proba(X)
 
-        est.fit(X, y)
-        X2 = [[-2, -1, 1]]  # wrong feature shape for sample
-        with pytest.raises(ValueError):
-            est.predict_proba(X2)
+    est.fit(X, y)
+    X2 = [[-2, -1, 1]]  # wrong feature shape for sample
+    with pytest.raises(ValueError):
+        est.predict_proba(X2)
 
-        # Wrong dimensions
-        est = TreeEstimator()
-        y2 = y[:-1]
-        with pytest.raises(ValueError):
-            est.fit(X, y2)
+    # Wrong dimensions
+    est = DecisionTreeClassifier(splitter=splitter)
+    y2 = y[:-1]
+    with pytest.raises(ValueError):
+        est.fit(X, y2)
 
-        # Test with arrays that are non-contiguous.
-        Xf = np.asfortranarray(X)
-        est = TreeEstimator()
-        est.fit(Xf, y)
-        assert_almost_equal(est.predict(T), true_result)
+    # Test with arrays that are non-contiguous.
+    Xf = np.asfortranarray(X)
+    est = DecisionTreeClassifier(splitter=splitter)
+    est.fit(Xf, y)
+    assert_almost_equal(est.predict(T), true_result)
 
-        # predict before fitting
-        est = TreeEstimator()
-        with pytest.raises(NotFittedError):
-            est.predict(T)
+    # predict before fitting
+    est = DecisionTreeClassifier(splitter=splitter)
+    with pytest.raises(NotFittedError):
+        est.predict(T)
 
-        # predict on vector with different dims
-        est.fit(X, y)
-        t = np.asarray(T)
-        with pytest.raises(ValueError):
-            est.predict(t[:, 1:])
+    # predict on vector with different dims
+    est.fit(X, y)
+    t = np.asarray(T)
+    with pytest.raises(ValueError):
+        est.predict(t[:, 1:])
 
-        # wrong sample shape
-        Xt = np.array(X).T
+    # wrong sample shape
+    Xt = np.array(X).T
 
-        est = TreeEstimator()
-        est.fit(np.dot(X, Xt), y)
-        with pytest.raises(ValueError):
-            est.predict(X)
-        with pytest.raises(ValueError):
-            est.apply(X)
+    est = DecisionTreeClassifier(splitter=splitter)
+    est.fit(np.dot(X, Xt), y)
+    with pytest.raises(ValueError):
+        est.predict(X)
+    with pytest.raises(ValueError):
+        est.apply(X)
 
-        clf = TreeEstimator()
-        clf.fit(X, y)
-        with pytest.raises(ValueError):
-            clf.predict(Xt)
-        with pytest.raises(ValueError):
-            clf.apply(Xt)
+    clf = DecisionTreeClassifier(splitter=splitter)
+    clf.fit(X, y)
+    with pytest.raises(ValueError):
+        clf.predict(Xt)
+    with pytest.raises(ValueError):
+        clf.apply(Xt)
 
-        # apply before fitting
-        est = TreeEstimator()
-        with pytest.raises(NotFittedError):
-            est.apply(T)
+    # apply before fitting
+    est = DecisionTreeClassifier(splitter=splitter)
+    with pytest.raises(NotFittedError):
+        est.apply(T)
 
     # non positive target for Poisson splitting Criterion
     est = DecisionTreeRegressor(criterion="poisson")
@@ -618,71 +608,81 @@ def test_error():
         est.fit([[0, 1, 2]], [5, -0.1, 2])
 
 
-def test_min_samples_split():
+@pytest.mark.parametrize("TreeEstimator", TREE_CLASSES)
+@pytest.mark.parametrize("splitter", SPLITTERS)
+@pytest.mark.parametrize("max_leaf_nodes", [None, 1000])
+def test_min_samples_split(TreeEstimator, splitter, max_leaf_nodes):
     """Test min_samples_split parameter"""
     X = np.asfortranarray(iris.data, dtype=np.float32)
     y = iris.target
 
-    # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
-    # by setting max_leaf_nodes
-    for max_leaf_nodes, name in product((None, 1000), ALL_TREES.keys()):
-        TreeEstimator = ALL_TREES[name]
+    # test for integer parameter
+    est = TreeEstimator(
+        min_samples_split=10,
+        max_leaf_nodes=max_leaf_nodes,
+        random_state=0,
+        splitter=splitter,
+    )
+    est.fit(X, y)
+    # count samples on nodes, -1 means it is a leaf
+    node_samples = est.tree_.n_node_samples[est.tree_.children_left != -1]
 
-        # test for integer parameter
-        est = TreeEstimator(
-            min_samples_split=10, max_leaf_nodes=max_leaf_nodes, random_state=0
-        )
-        est.fit(X, y)
-        # count samples on nodes, -1 means it is a leaf
-        node_samples = est.tree_.n_node_samples[est.tree_.children_left != -1]
+    assert np.min(node_samples) > 9
 
-        assert np.min(node_samples) > 9, "Failed with {0}".format(name)
+    # test for float parameter
+    est = TreeEstimator(
+        min_samples_split=0.2,
+        max_leaf_nodes=max_leaf_nodes,
+        random_state=0,
+        splitter=splitter,
+    )
+    est.fit(X, y)
+    # count samples on nodes, -1 means it is a leaf
+    node_samples = est.tree_.n_node_samples[est.tree_.children_left != -1]
 
-        # test for float parameter
-        est = TreeEstimator(
-            min_samples_split=0.2, max_leaf_nodes=max_leaf_nodes, random_state=0
-        )
-        est.fit(X, y)
-        # count samples on nodes, -1 means it is a leaf
-        node_samples = est.tree_.n_node_samples[est.tree_.children_left != -1]
-
-        assert np.min(node_samples) > 9, "Failed with {0}".format(name)
+    assert np.min(node_samples) > 9
 
 
-def test_min_samples_leaf():
+@pytest.mark.parametrize("TreeEstimator", TREE_CLASSES)
+@pytest.mark.parametrize("splitter", SPLITTERS)
+@pytest.mark.parametrize("max_leaf_nodes", [None, 1000])
+def test_min_samples_leaf(TreeEstimator, splitter, max_leaf_nodes):
     # Test if leaves contain more than leaf_count training examples
     X = np.asfortranarray(iris.data, dtype=np.float32)
     y = iris.target
 
-    # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
-    # by setting max_leaf_nodes
-    for max_leaf_nodes, name in product((None, 1000), ALL_TREES.keys()):
-        TreeEstimator = ALL_TREES[name]
+    # test integer parameter
+    est = TreeEstimator(
+        min_samples_leaf=5,
+        max_leaf_nodes=max_leaf_nodes,
+        random_state=0,
+        splitter=splitter,
+    )
+    est.fit(X, y)
+    out = est.tree_.apply(X)
+    node_counts = np.bincount(out)
+    # drop inner nodes
+    leaf_count = node_counts[node_counts != 0]
+    assert np.min(leaf_count) > 4
 
-        # test integer parameter
-        est = TreeEstimator(
-            min_samples_leaf=5, max_leaf_nodes=max_leaf_nodes, random_state=0
-        )
-        est.fit(X, y)
-        out = est.tree_.apply(X)
-        node_counts = np.bincount(out)
-        # drop inner nodes
-        leaf_count = node_counts[node_counts != 0]
-        assert np.min(leaf_count) > 4, "Failed with {0}".format(name)
-
-        # test float parameter
-        est = TreeEstimator(
-            min_samples_leaf=0.1, max_leaf_nodes=max_leaf_nodes, random_state=0
-        )
-        est.fit(X, y)
-        out = est.tree_.apply(X)
-        node_counts = np.bincount(out)
-        # drop inner nodes
-        leaf_count = node_counts[node_counts != 0]
-        assert np.min(leaf_count) > 4, "Failed with {0}".format(name)
+    # test float parameter
+    est = TreeEstimator(
+        min_samples_leaf=0.1,
+        max_leaf_nodes=max_leaf_nodes,
+        random_state=0,
+        splitter=splitter,
+    )
+    est.fit(X, y)
+    out = est.tree_.apply(X)
+    node_counts = np.bincount(out)
+    # drop inner nodes
+    leaf_count = node_counts[node_counts != 0]
+    assert np.min(leaf_count) > 4
 
 
-def check_min_weight_fraction_leaf(name, datasets, sparse_container=None):
+def check_min_weight_fraction_leaf(
+    TreeEstimator, splitter, datasets, sparse_container=None
+):
     """Test if leaves contain at least min_weight_fraction_leaf of the
     training set"""
     X = DATASETS[datasets]["X"].astype(np.float32)
@@ -693,13 +693,14 @@ def check_min_weight_fraction_leaf(name, datasets, sparse_container=None):
     weights = rng.rand(X.shape[0])
     total_weight = np.sum(weights)
 
-    TreeEstimator = ALL_TREES[name]
-
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
     # by setting max_leaf_nodes
     for max_leaf_nodes, frac in product((None, 1000), np.linspace(0, 0.5, 6)):
         est = TreeEstimator(
-            min_weight_fraction_leaf=frac, max_leaf_nodes=max_leaf_nodes, random_state=0
+            min_weight_fraction_leaf=frac,
+            max_leaf_nodes=max_leaf_nodes,
+            random_state=0,
+            splitter=splitter,
         )
         est.fit(X, y, sample_weight=weights)
 
@@ -711,18 +712,17 @@ def check_min_weight_fraction_leaf(name, datasets, sparse_container=None):
         node_weights = np.bincount(out, weights=weights)
         # drop inner nodes
         leaf_weights = node_weights[node_weights != 0]
-        assert np.min(leaf_weights) >= total_weight * est.min_weight_fraction_leaf, (
-            "Failed with {0} min_weight_fraction_leaf={1}".format(
-                name, est.min_weight_fraction_leaf
-            )
-        )
+        assert np.min(leaf_weights) >= total_weight * est.min_weight_fraction_leaf
 
     # test case with no weights passed in
     total_weight = X.shape[0]
 
     for max_leaf_nodes, frac in product((None, 1000), np.linspace(0, 0.5, 6)):
         est = TreeEstimator(
-            min_weight_fraction_leaf=frac, max_leaf_nodes=max_leaf_nodes, random_state=0
+            min_weight_fraction_leaf=frac,
+            max_leaf_nodes=max_leaf_nodes,
+            random_state=0,
+            splitter=splitter,
         )
         est.fit(X, y)
 
@@ -734,26 +734,28 @@ def check_min_weight_fraction_leaf(name, datasets, sparse_container=None):
         node_weights = np.bincount(out)
         # drop inner nodes
         leaf_weights = node_weights[node_weights != 0]
-        assert np.min(leaf_weights) >= total_weight * est.min_weight_fraction_leaf, (
-            "Failed with {0} min_weight_fraction_leaf={1}".format(
-                name, est.min_weight_fraction_leaf
-            )
-        )
+        assert np.min(leaf_weights) >= total_weight * est.min_weight_fraction_leaf
 
 
-@pytest.mark.parametrize("name", ALL_TREES)
-def test_min_weight_fraction_leaf_on_dense_input(name):
-    check_min_weight_fraction_leaf(name, "iris")
+@pytest.mark.parametrize("TreeEstimator", TREE_CLASSES)
+@pytest.mark.parametrize("splitter", SPLITTERS)
+def test_min_weight_fraction_leaf_on_dense_input(TreeEstimator, splitter):
+    check_min_weight_fraction_leaf(TreeEstimator, splitter, "iris")
 
 
-@pytest.mark.parametrize("name", SPARSE_TREES)
+@pytest.mark.parametrize("TreeEstimator", TREE_CLASSES)
+@pytest.mark.parametrize("splitter", SPLITTERS)
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
-def test_min_weight_fraction_leaf_on_sparse_input(name, csc_container):
-    check_min_weight_fraction_leaf(name, "multilabel", sparse_container=csc_container)
+def test_min_weight_fraction_leaf_on_sparse_input(
+    TreeEstimator, splitter, csc_container
+):
+    check_min_weight_fraction_leaf(
+        TreeEstimator, splitter, "multilabel", sparse_container=csc_container
+    )
 
 
 def check_min_weight_fraction_leaf_with_min_samples_leaf(
-    name, datasets, sparse_container=None
+    TreeEstimator, splitter, datasets, sparse_container=None
 ):
     """Test the interaction between min_weight_fraction_leaf and
     min_samples_leaf when sample_weights is not provided in fit."""
@@ -763,7 +765,6 @@ def check_min_weight_fraction_leaf_with_min_samples_leaf(
     y = DATASETS[datasets]["y"]
 
     total_weight = X.shape[0]
-    TreeEstimator = ALL_TREES[name]
     for max_leaf_nodes, frac in product((None, 1000), np.linspace(0, 0.5, 3)):
         # test integer min_samples_leaf
         est = TreeEstimator(
@@ -771,6 +772,7 @@ def check_min_weight_fraction_leaf_with_min_samples_leaf(
             max_leaf_nodes=max_leaf_nodes,
             min_samples_leaf=5,
             random_state=0,
+            splitter=splitter,
         )
         est.fit(X, y)
 
@@ -784,8 +786,6 @@ def check_min_weight_fraction_leaf_with_min_samples_leaf(
         leaf_weights = node_weights[node_weights != 0]
         assert np.min(leaf_weights) >= max(
             (total_weight * est.min_weight_fraction_leaf), 5
-        ), "Failed with {0} min_weight_fraction_leaf={1}, min_samples_leaf={2}".format(
-            name, est.min_weight_fraction_leaf, est.min_samples_leaf
         )
     for max_leaf_nodes, frac in product((None, 1000), np.linspace(0, 0.5, 3)):
         # test float min_samples_leaf
@@ -794,6 +794,7 @@ def check_min_weight_fraction_leaf_with_min_samples_leaf(
             max_leaf_nodes=max_leaf_nodes,
             min_samples_leaf=0.1,
             random_state=0,
+            splitter=splitter,
         )
         est.fit(X, y)
 
@@ -808,36 +809,38 @@ def check_min_weight_fraction_leaf_with_min_samples_leaf(
         assert np.min(leaf_weights) >= max(
             (total_weight * est.min_weight_fraction_leaf),
             (total_weight * est.min_samples_leaf),
-        ), "Failed with {0} min_weight_fraction_leaf={1}, min_samples_leaf={2}".format(
-            name, est.min_weight_fraction_leaf, est.min_samples_leaf
         )
 
 
-@pytest.mark.parametrize("name", ALL_TREES)
-def test_min_weight_fraction_leaf_with_min_samples_leaf_on_dense_input(name):
-    check_min_weight_fraction_leaf_with_min_samples_leaf(name, "iris")
-
-
-@pytest.mark.parametrize("name", SPARSE_TREES)
-@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
-def test_min_weight_fraction_leaf_with_min_samples_leaf_on_sparse_input(
-    name, csc_container
+@pytest.mark.parametrize("TreeEstimator", TREE_CLASSES)
+@pytest.mark.parametrize("splitter", SPLITTERS)
+def test_min_weight_fraction_leaf_with_min_samples_leaf_on_dense_input(
+    TreeEstimator, splitter
 ):
     check_min_weight_fraction_leaf_with_min_samples_leaf(
-        name, "multilabel", sparse_container=csc_container
+        TreeEstimator, splitter, "iris"
+    )
+
+
+@pytest.mark.parametrize("TreeEstimator", TREE_CLASSES)
+@pytest.mark.parametrize("splitter", SPLITTERS)
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+def test_min_weight_fraction_leaf_with_min_samples_leaf_on_sparse_input(
+    TreeEstimator, splitter, csc_container
+):
+    check_min_weight_fraction_leaf_with_min_samples_leaf(
+        TreeEstimator, splitter, "multilabel", sparse_container=csc_container
     )
 
 
 # TODO(1.11): remove the deprecated friedman_mse criterion parametrization
 @pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
-@pytest.mark.parametrize(
-    "TreeEstimator, criterion",
-    [
-        *product(REG_TREES.values(), REG_CRITERIONS),
-        *product(CLF_TREES.values(), CLF_CRITERIONS),
-    ],
-)
-def test_min_impurity_decrease(TreeEstimator, criterion, global_random_seed):
+@pytest.mark.parametrize("criterion", REG_CRITERIONS + CLF_CRITERIONS)
+@pytest.mark.parametrize("splitter", SPLITTERS)
+def test_min_impurity_decrease(criterion, splitter, global_random_seed):
+    TreeEstimator = (
+        DecisionTreeRegressor if criterion in REG_CRITERIONS else DecisionTreeClassifier
+    )
     # test if min_impurity_decrease ensure that a split is made only if
     # if the impurity decrease is at least that value
     X, y = datasets.make_classification(n_samples=100, random_state=global_random_seed)
@@ -851,6 +854,7 @@ def test_min_impurity_decrease(TreeEstimator, criterion, global_random_seed):
                 max_leaf_nodes=max_leaf_nodes,
                 min_impurity_decrease=expected_decrease,
                 random_state=global_random_seed,
+                splitter=splitter,
             )
             est.fit(X, y)
             tree = est.tree_
@@ -873,67 +877,57 @@ def test_min_impurity_decrease(TreeEstimator, criterion, global_random_seed):
                     assert actual_decrease > expected_decrease - 1e-10
 
 
-def test_pickle():
+@pytest.mark.parametrize("TreeEstimator", TREE_CLASSES)
+@pytest.mark.parametrize("splitter", SPLITTERS)
+def test_pickle(TreeEstimator, splitter):
     """Test pickling preserves Tree properties and performance."""
-    for name, TreeEstimator in ALL_TREES.items():
-        if "Classifier" in name:
-            X, y = iris.data, iris.target
-        else:
-            X, y = diabetes.data, diabetes.target
+    if TreeEstimator is DecisionTreeClassifier:
+        X, y = iris.data, iris.target
+    else:
+        X, y = diabetes.data, diabetes.target
 
-        est = TreeEstimator(random_state=0)
-        est.fit(X, y)
-        score = est.score(X, y)
+    est = TreeEstimator(random_state=0, splitter=splitter)
+    est.fit(X, y)
+    score = est.score(X, y)
 
-        # test that all class properties are maintained
-        attributes = [
-            "max_depth",
-            "node_count",
-            "capacity",
-            "n_classes",
-            "children_left",
-            "children_right",
-            "n_leaves",
-            "feature",
-            "threshold",
-            "impurity",
-            "n_node_samples",
-            "weighted_n_node_samples",
-            "value",
-        ]
-        fitted_attribute = {
-            attribute: getattr(est.tree_, attribute) for attribute in attributes
-        }
+    # test that all class properties are maintained
+    attributes = [
+        "max_depth",
+        "node_count",
+        "capacity",
+        "n_classes",
+        "children_left",
+        "children_right",
+        "n_leaves",
+        "feature",
+        "threshold",
+        "impurity",
+        "n_node_samples",
+        "weighted_n_node_samples",
+        "value",
+    ]
+    fitted_attribute = {
+        attribute: getattr(est.tree_, attribute) for attribute in attributes
+    }
 
-        serialized_object = pickle.dumps(est)
-        est2 = pickle.loads(serialized_object)
-        assert type(est2) == est.__class__
+    serialized_object = pickle.dumps(est)
+    est2 = pickle.loads(serialized_object)
+    assert type(est2) == est.__class__
 
-        score2 = est2.score(X, y)
-        assert score == score2, (
-            "Failed to generate same score  after pickling with {0}".format(name)
+    score2 = est2.score(X, y)
+    assert score == score2
+    for attribute in fitted_attribute:
+        assert_array_equal(
+            getattr(est2.tree_, attribute),
+            fitted_attribute[attribute],
         )
-        for attribute in fitted_attribute:
-            assert_array_equal(
-                getattr(est2.tree_, attribute),
-                fitted_attribute[attribute],
-                err_msg=(
-                    f"Failed to generate same attribute {attribute} after pickling with"
-                    f" {name}"
-                ),
-            )
 
 
 # TODO(1.11): remove the deprecated friedman_mse criterion parametrization
 @pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
-@pytest.mark.parametrize(
-    "Tree, criterion",
-    [
-        *product(REG_TREES.values(), REG_CRITERIONS),
-        *product(CLF_TREES.values(), CLF_CRITERIONS),
-    ],
-)
-def test_multioutput(Tree, criterion):
+@pytest.mark.parametrize("criterion", REG_CRITERIONS + CLF_CRITERIONS)
+@pytest.mark.parametrize("splitter", SPLITTERS)
+def test_multioutput(criterion, splitter):
     # Check estimators on multi-output problems.
     X = [
         [-2, -1],
@@ -970,15 +964,16 @@ def test_multioutput(Tree, criterion):
     T = [[-1, -1], [1, 1], [-1, 1], [1, -1]]
     y_true = np.array([[-1, 0], [1, 1], [-1, 2], [1, 3]])
 
-    is_clf = criterion in CLF_CRITERIONS
     if criterion == "poisson":
         # poisson doesn't support negative y, and ignores null y.
         y[y <= 0] += 4
         y_true[y_true <= 0] += 4
 
-    if is_clf:
+    if criterion in CLF_CRITERIONS:
         # toy classification problem
-        clf = Tree(random_state=0, criterion=criterion)
+        clf = DecisionTreeClassifier(
+            random_state=0, criterion=criterion, splitter=splitter
+        )
         y_hat = clf.fit(X, y).predict(T)
         assert_array_equal(y_hat, y_true)
         assert y_hat.shape == (4, 2)
@@ -994,87 +989,89 @@ def test_multioutput(Tree, criterion):
         assert log_proba[1].shape == (4, 4)
     else:
         # toy regression problem
-        reg = Tree(random_state=0, criterion=criterion)
+        reg = DecisionTreeRegressor(
+            random_state=0, criterion=criterion, splitter=splitter
+        )
         y_hat = reg.fit(X, y).predict(T)
         assert_almost_equal(y_hat, y_true)
         assert y_hat.shape == (4, 2)
 
 
-def test_classes_shape():
+@pytest.mark.parametrize("splitter", SPLITTERS)
+def test_classes_shape(splitter):
     # Test that n_classes_ and classes_ have proper shape.
-    for name, TreeClassifier in CLF_TREES.items():
-        # Classification, single output
-        clf = TreeClassifier(random_state=0)
-        clf.fit(X, y)
+    # Classification, single output
+    clf = DecisionTreeClassifier(random_state=0, splitter=splitter)
+    clf.fit(X, y)
 
-        assert clf.n_classes_ == 2
-        assert_array_equal(clf.classes_, [-1, 1])
+    assert clf.n_classes_ == 2
+    assert_array_equal(clf.classes_, [-1, 1])
 
-        # Classification, multi-output
-        _y = np.vstack((y, np.array(y) * 2)).T
-        clf = TreeClassifier(random_state=0)
-        clf.fit(X, _y)
-        assert len(clf.n_classes_) == 2
-        assert len(clf.classes_) == 2
-        assert_array_equal(clf.n_classes_, [2, 2])
-        assert_array_equal(clf.classes_, [[-1, 1], [-2, 2]])
+    # Classification, multi-output
+    _y = np.vstack((y, np.array(y) * 2)).T
+    clf = DecisionTreeClassifier(random_state=0, splitter=splitter)
+    clf.fit(X, _y)
+    assert len(clf.n_classes_) == 2
+    assert len(clf.classes_) == 2
+    assert_array_equal(clf.n_classes_, [2, 2])
+    assert_array_equal(clf.classes_, [[-1, 1], [-2, 2]])
 
 
-def test_unbalanced_iris():
+@pytest.mark.parametrize("splitter", SPLITTERS)
+def test_unbalanced_iris(splitter):
     # Check class rebalancing.
     unbalanced_X = iris.data[:125]
     unbalanced_y = iris.target[:125]
     sample_weight = compute_sample_weight("balanced", unbalanced_y)
 
-    for name, TreeClassifier in CLF_TREES.items():
-        clf = TreeClassifier(random_state=0)
-        clf.fit(unbalanced_X, unbalanced_y, sample_weight=sample_weight)
-        assert_almost_equal(clf.predict(unbalanced_X), unbalanced_y)
+    clf = DecisionTreeClassifier(random_state=0, splitter=splitter)
+    clf.fit(unbalanced_X, unbalanced_y, sample_weight=sample_weight)
+    assert_almost_equal(clf.predict(unbalanced_X), unbalanced_y)
 
 
-def test_memory_layout():
+@pytest.mark.parametrize("TreeEstimator", TREE_CLASSES)
+@pytest.mark.parametrize("splitter", SPLITTERS)
+@pytest.mark.parametrize("dtype", [np.float64, np.float32])
+def test_memory_layout(TreeEstimator, splitter, dtype):
     # Check that it works no matter the memory layout
-    for (name, TreeEstimator), dtype in product(
-        ALL_TREES.items(), [np.float64, np.float32]
-    ):
-        est = TreeEstimator(random_state=0)
+    est = TreeEstimator(random_state=0, splitter=splitter)
 
-        # Nothing
-        X = np.asarray(iris.data, dtype=dtype)
+    # Nothing
+    X = np.asarray(iris.data, dtype=dtype)
+    y = iris.target
+    assert_array_equal(est.fit(X, y).predict(X), y)
+
+    # C-order
+    X = np.asarray(iris.data, order="C", dtype=dtype)
+    y = iris.target
+    assert_array_equal(est.fit(X, y).predict(X), y)
+
+    # F-order
+    X = np.asarray(iris.data, order="F", dtype=dtype)
+    y = iris.target
+    assert_array_equal(est.fit(X, y).predict(X), y)
+
+    # Contiguous
+    X = np.ascontiguousarray(iris.data, dtype=dtype)
+    y = iris.target
+    assert_array_equal(est.fit(X, y).predict(X), y)
+
+    # csr
+    for csr_container in CSR_CONTAINERS:
+        X = csr_container(iris.data, dtype=dtype)
         y = iris.target
         assert_array_equal(est.fit(X, y).predict(X), y)
 
-        # C-order
-        X = np.asarray(iris.data, order="C", dtype=dtype)
+    # csc
+    for csc_container in CSC_CONTAINERS:
+        X = csc_container(iris.data, dtype=dtype)
         y = iris.target
         assert_array_equal(est.fit(X, y).predict(X), y)
 
-        # F-order
-        X = np.asarray(iris.data, order="F", dtype=dtype)
-        y = iris.target
-        assert_array_equal(est.fit(X, y).predict(X), y)
-
-        # Contiguous
-        X = np.ascontiguousarray(iris.data, dtype=dtype)
-        y = iris.target
-        assert_array_equal(est.fit(X, y).predict(X), y)
-
-        # csr
-        for csr_container in CSR_CONTAINERS:
-            X = csr_container(iris.data, dtype=dtype)
-            y = iris.target
-            assert_array_equal(est.fit(X, y).predict(X), y)
-
-        # csc
-        for csc_container in CSC_CONTAINERS:
-            X = csc_container(iris.data, dtype=dtype)
-            y = iris.target
-            assert_array_equal(est.fit(X, y).predict(X), y)
-
-        # Strided
-        X = np.asarray(iris.data[::3], dtype=dtype)
-        y = iris.target[::3]
-        assert_array_equal(est.fit(X, y).predict(X), y)
+    # Strided
+    X = np.asarray(iris.data[::3], dtype=dtype)
+    y = iris.target[::3]
+    assert_array_equal(est.fit(X, y).predict(X), y)
 
 
 def test_sample_weight():
@@ -1153,33 +1150,36 @@ def test_sample_weight_invalid():
         clf.fit(X, y, sample_weight=sample_weight)
 
 
-@pytest.mark.parametrize("name", CLF_TREES)
-def test_class_weights(name):
+@pytest.mark.parametrize("splitter", SPLITTERS)
+def test_class_weights(splitter):
     # Test that class_weights resemble sample_weights behavior.
-    TreeClassifier = CLF_TREES[name]
-
     # Iris is balanced, so no effect expected for using 'balanced' weights
-    clf1 = TreeClassifier(random_state=0)
+    clf1 = DecisionTreeClassifier(random_state=0, splitter=splitter)
     clf1.fit(iris.data, iris.target)
-    clf2 = TreeClassifier(class_weight="balanced", random_state=0)
+    clf2 = DecisionTreeClassifier(
+        class_weight="balanced", random_state=0, splitter=splitter
+    )
     clf2.fit(iris.data, iris.target)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
     # Make a multi-output problem with three copies of Iris
     iris_multi = np.vstack((iris.target, iris.target, iris.target)).T
     # Create user-defined weights that should balance over the outputs
-    clf3 = TreeClassifier(
+    clf3 = DecisionTreeClassifier(
         class_weight=[
             {0: 2.0, 1: 2.0, 2: 1.0},
             {0: 2.0, 1: 1.0, 2: 2.0},
             {0: 1.0, 1: 2.0, 2: 2.0},
         ],
         random_state=0,
+        splitter=splitter,
     )
     clf3.fit(iris.data, iris_multi)
     assert_almost_equal(clf2.feature_importances_, clf3.feature_importances_)
     # Check against multi-output "auto" which should also have no effect
-    clf4 = TreeClassifier(class_weight="balanced", random_state=0)
+    clf4 = DecisionTreeClassifier(
+        class_weight="balanced", random_state=0, splitter=splitter
+    )
     clf4.fit(iris.data, iris_multi)
     assert_almost_equal(clf3.feature_importances_, clf4.feature_importances_)
 
@@ -1187,49 +1187,58 @@ def test_class_weights(name):
     sample_weight = np.ones(iris.target.shape)
     sample_weight[iris.target == 1] *= 100
     class_weight = {0: 1.0, 1: 100.0, 2: 1.0}
-    clf1 = TreeClassifier(random_state=0)
+    clf1 = DecisionTreeClassifier(random_state=0, splitter=splitter)
     clf1.fit(iris.data, iris.target, sample_weight)
-    clf2 = TreeClassifier(class_weight=class_weight, random_state=0)
+    clf2 = DecisionTreeClassifier(
+        class_weight=class_weight, random_state=0, splitter=splitter
+    )
     clf2.fit(iris.data, iris.target)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
     # Check that sample_weight and class_weight are multiplicative
-    clf1 = TreeClassifier(random_state=0)
+    clf1 = DecisionTreeClassifier(random_state=0, splitter=splitter)
     clf1.fit(iris.data, iris.target, sample_weight**2)
-    clf2 = TreeClassifier(class_weight=class_weight, random_state=0)
+    clf2 = DecisionTreeClassifier(
+        class_weight=class_weight, random_state=0, splitter=splitter
+    )
     clf2.fit(iris.data, iris.target, sample_weight)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
 
-@pytest.mark.parametrize("name", CLF_TREES)
-def test_class_weight_errors(name):
+@pytest.mark.parametrize("splitter", SPLITTERS)
+def test_class_weight_errors(splitter):
     # Test if class_weight raises errors and warnings when expected.
-    TreeClassifier = CLF_TREES[name]
     _y = np.vstack((y, np.array(y) * 2)).T
 
     # Incorrect length list for multi-output
-    clf = TreeClassifier(class_weight=[{-1: 0.5, 1: 1.0}], random_state=0)
+    clf = DecisionTreeClassifier(
+        class_weight=[{-1: 0.5, 1: 1.0}], random_state=0, splitter=splitter
+    )
     err_msg = "number of elements in class_weight should match number of outputs."
     with pytest.raises(ValueError, match=err_msg):
         clf.fit(X, _y)
 
 
-def test_max_leaf_nodes():
+@pytest.mark.parametrize("TreeEstimator", TREE_CLASSES)
+@pytest.mark.parametrize("splitter", SPLITTERS)
+def test_max_leaf_nodes(TreeEstimator, splitter):
     # Test greedy trees with max_depth + 1 leaves.
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     k = 4
-    for name, TreeEstimator in ALL_TREES.items():
-        est = TreeEstimator(max_depth=None, max_leaf_nodes=k + 1).fit(X, y)
-        assert est.get_n_leaves() == k + 1
+    est = TreeEstimator(max_depth=None, max_leaf_nodes=k + 1, splitter=splitter).fit(
+        X, y
+    )
+    assert est.get_n_leaves() == k + 1
 
 
-def test_max_leaf_nodes_max_depth():
+@pytest.mark.parametrize("TreeEstimator", TREE_CLASSES)
+@pytest.mark.parametrize("splitter", SPLITTERS)
+def test_max_leaf_nodes_max_depth(TreeEstimator, splitter):
     # Test precedence of max_leaf_nodes over max_depth.
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     k = 4
-    for name, TreeEstimator in ALL_TREES.items():
-        est = TreeEstimator(max_depth=1, max_leaf_nodes=k).fit(X, y)
-        assert est.get_depth() == 1
+    est = TreeEstimator(max_depth=1, max_leaf_nodes=k, splitter=splitter).fit(X, y)
+    assert est.get_depth() == 1
 
 
 def test_arrays_persist():
@@ -1250,18 +1259,20 @@ def test_arrays_persist():
         assert -3 <= value.flat[0] < 3, "Array points to arbitrary memory"
 
 
-def test_only_constant_features():
+@pytest.mark.parametrize("TreeEstimator", TREE_CLASSES)
+@pytest.mark.parametrize("splitter", SPLITTERS)
+def test_only_constant_features(TreeEstimator, splitter):
     random_state = check_random_state(0)
     X = np.zeros((10, 20))
     y = random_state.randint(0, 2, (10,))
-    for name, TreeEstimator in ALL_TREES.items():
-        est = TreeEstimator(random_state=0)
-        est.fit(X, y)
-        assert est.tree_.max_depth == 0
+    est = TreeEstimator(random_state=0, splitter=splitter)
+    est.fit(X, y)
+    assert est.tree_.max_depth == 0
 
 
-@pytest.mark.parametrize("tree_cls", ALL_TREES.values())
-def test_almost_constant_feature(tree_cls):
+@pytest.mark.parametrize("TreeEstimator", TREE_CLASSES)
+@pytest.mark.parametrize("splitter", SPLITTERS)
+def test_almost_constant_feature(TreeEstimator, splitter):
     # Non regression test for
     # https://github.com/scikit-learn/scikit-learn/pull/32259
     # Make sure that almost constant features are discarded.
@@ -1273,7 +1284,7 @@ def test_almost_constant_feature(tree_cls):
     X[:, 0] *= feature_threshold  # almost constant feature
     y = random_state.randint(0, 2, (10,))
 
-    est = tree_cls(random_state=0)
+    est = TreeEstimator(random_state=0, splitter=splitter)
     est.fit(X, y)
     # the almost constant feature should not be used
     assert est.feature_importances_[0] == 0
@@ -1281,35 +1292,34 @@ def test_almost_constant_feature(tree_cls):
     assert est.feature_importances_[1] > 0
 
 
-def test_behaviour_constant_feature_after_splits():
+@pytest.mark.parametrize("TreeEstimator", TREE_CLASSES)
+@pytest.mark.parametrize("splitter", SPLITTERS)
+def test_behaviour_constant_feature_after_splits(TreeEstimator, splitter):
     X = np.transpose(
         np.vstack(([[0, 0, 0, 0, 0, 1, 2, 4, 5, 6, 7]], np.zeros((4, 11))))
     )
     y = [0, 0, 0, 1, 1, 2, 2, 2, 3, 3, 3]
-    for name, TreeEstimator in ALL_TREES.items():
-        # do not check extra random trees
-        if "ExtraTree" not in name:
-            est = TreeEstimator(random_state=0, max_features=1)
-            est.fit(X, y)
-            assert est.tree_.max_depth == 2
-            assert est.tree_.node_count == 5
+    est = TreeEstimator(random_state=0, max_features=1, splitter=splitter)
+    est.fit(X, y)
+    assert est.tree_.max_depth == 2
+    expected_node_count = 5 if splitter == "best" else 7
+    assert est.tree_.node_count == expected_node_count
 
 
-def test_with_only_one_non_constant_features():
+@pytest.mark.parametrize("splitter", SPLITTERS)
+def test_with_only_one_non_constant_features(splitter):
     X = np.hstack([np.array([[1.0], [1.0], [0.0], [0.0]]), np.zeros((4, 1000))])
 
     y = np.array([0.0, 1.0, 0.0, 1.0])
-    for name, TreeEstimator in CLF_TREES.items():
-        est = TreeEstimator(random_state=0, max_features=1)
-        est.fit(X, y)
-        assert est.tree_.max_depth == 1
-        assert_array_equal(est.predict_proba(X), np.full((4, 2), 0.5))
+    est = DecisionTreeClassifier(random_state=0, max_features=1, splitter=splitter)
+    est.fit(X, y)
+    assert est.tree_.max_depth == 1
+    assert_array_equal(est.predict_proba(X), np.full((4, 2), 0.5))
 
-    for name, TreeEstimator in REG_TREES.items():
-        est = TreeEstimator(random_state=0, max_features=1)
-        est.fit(X, y)
-        assert est.tree_.max_depth == 1
-        assert_array_equal(est.predict(X), np.full((4,), 0.5))
+    est = DecisionTreeRegressor(random_state=0, max_features=1, splitter=splitter)
+    est.fit(X, y)
+    assert est.tree_.max_depth == 1
+    assert_array_equal(est.predict(X), np.full((4,), 0.5))
 
 
 def test_big_input():
@@ -1348,8 +1358,7 @@ def test_huge_allocations():
         clf.fit(X, y)
 
 
-def check_sparse_input(tree, dataset, max_depth=None):
-    TreeEstimator = ALL_TREES[tree]
+def check_sparse_input(TreeEstimator, splitter, dataset, max_depth=None):
     X = DATASETS[dataset]["X"]
     y = DATASETS[dataset]["y"]
 
@@ -1363,17 +1372,21 @@ def check_sparse_input(tree, dataset, max_depth=None):
         X_sparse = sparse_container(X)
 
         # Check the default (depth first search)
-        d = TreeEstimator(random_state=0, max_depth=max_depth).fit(X, y)
-        s = TreeEstimator(random_state=0, max_depth=max_depth).fit(X_sparse, y)
+        d = TreeEstimator(random_state=0, max_depth=max_depth, splitter=splitter).fit(
+            X, y
+        )
+        s = TreeEstimator(random_state=0, max_depth=max_depth, splitter=splitter).fit(
+            X_sparse, y
+        )
 
         assert_tree_equal(
             d.tree_,
             s.tree_,
-            "{0} with dense and sparse format gave different trees".format(tree),
+            "Dense and sparse input gave different trees.",
         )
 
         y_pred = d.predict(X)
-        if tree in CLF_TREES:
+        if TreeEstimator is DecisionTreeClassifier:
             y_proba = d.predict_proba(X)
             y_log_proba = d.predict_log_proba(X)
 
@@ -1382,14 +1395,15 @@ def check_sparse_input(tree, dataset, max_depth=None):
 
             assert_array_almost_equal(s.predict(X_sparse_test), y_pred)
 
-            if tree in CLF_TREES:
+            if TreeEstimator is DecisionTreeClassifier:
                 assert_array_almost_equal(s.predict_proba(X_sparse_test), y_proba)
                 assert_array_almost_equal(
                     s.predict_log_proba(X_sparse_test), y_log_proba
                 )
 
 
-@pytest.mark.parametrize("tree_type", SPARSE_TREES)
+@pytest.mark.parametrize("TreeEstimator", TREE_CLASSES)
+@pytest.mark.parametrize("splitter", SPLITTERS)
 @pytest.mark.parametrize(
     "dataset",
     (
@@ -1403,69 +1417,79 @@ def check_sparse_input(tree, dataset, max_depth=None):
         "zeros",
     ),
 )
-def test_sparse_input(tree_type, dataset):
+def test_sparse_input(TreeEstimator, splitter, dataset):
     max_depth = 3 if dataset == "digits" else None
-    check_sparse_input(tree_type, dataset, max_depth)
+    check_sparse_input(TreeEstimator, splitter, dataset, max_depth)
 
 
-@pytest.mark.parametrize("tree_type", sorted(set(SPARSE_TREES).intersection(REG_TREES)))
+@pytest.mark.parametrize("splitter", SPLITTERS)
 @pytest.mark.parametrize("dataset", ["diabetes", "reg_small"])
-def test_sparse_input_reg_trees(tree_type, dataset):
+def test_sparse_input_reg_trees(splitter, dataset):
     # Due to numerical instability of MSE and too strict test, we limit the
     # maximal depth
-    check_sparse_input(tree_type, dataset, 2)
+    check_sparse_input(DecisionTreeRegressor, splitter, dataset, 2)
 
 
-@pytest.mark.parametrize("tree_type", SPARSE_TREES)
+@pytest.mark.parametrize("TreeEstimator", TREE_CLASSES)
+@pytest.mark.parametrize("splitter", SPLITTERS)
 @pytest.mark.parametrize("dataset", ["sparse-pos", "sparse-neg", "sparse-mix", "zeros"])
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
-def test_sparse_parameters(tree_type, dataset, csc_container):
-    TreeEstimator = ALL_TREES[tree_type]
+def test_sparse_parameters(TreeEstimator, splitter, dataset, csc_container):
     X = DATASETS[dataset]["X"]
     X_sparse = csc_container(X)
     y = DATASETS[dataset]["y"]
 
     # Check max_features
-    d = TreeEstimator(random_state=0, max_features=1, max_depth=2).fit(X, y)
-    s = TreeEstimator(random_state=0, max_features=1, max_depth=2).fit(X_sparse, y)
+    d = TreeEstimator(
+        random_state=0, max_features=1, max_depth=2, splitter=splitter
+    ).fit(X, y)
+    s = TreeEstimator(
+        random_state=0, max_features=1, max_depth=2, splitter=splitter
+    ).fit(X_sparse, y)
     assert_tree_equal(
         d.tree_,
         s.tree_,
-        "{0} with dense and sparse format gave different trees".format(tree_type),
+        "Dense and sparse input gave different trees.",
     )
     assert_array_almost_equal(s.predict(X), d.predict(X))
 
     # Check min_samples_split
-    d = TreeEstimator(random_state=0, max_features=1, min_samples_split=10).fit(X, y)
-    s = TreeEstimator(random_state=0, max_features=1, min_samples_split=10).fit(
-        X_sparse, y
-    )
+    d = TreeEstimator(
+        random_state=0, max_features=1, min_samples_split=10, splitter=splitter
+    ).fit(X, y)
+    s = TreeEstimator(
+        random_state=0, max_features=1, min_samples_split=10, splitter=splitter
+    ).fit(X_sparse, y)
     assert_tree_equal(
         d.tree_,
         s.tree_,
-        "{0} with dense and sparse format gave different trees".format(tree_type),
+        "Dense and sparse input gave different trees.",
     )
     assert_array_almost_equal(s.predict(X), d.predict(X))
 
     # Check min_samples_leaf
-    d = TreeEstimator(random_state=0, min_samples_leaf=X_sparse.shape[0] // 2).fit(X, y)
-    s = TreeEstimator(random_state=0, min_samples_leaf=X_sparse.shape[0] // 2).fit(
+    d = TreeEstimator(
+        random_state=0, min_samples_leaf=X_sparse.shape[0] // 2, splitter=splitter
+    ).fit(X, y)
+    s = TreeEstimator(
+        random_state=0, min_samples_leaf=X_sparse.shape[0] // 2, splitter=splitter
+    ).fit(X_sparse, y)
+    assert_tree_equal(
+        d.tree_,
+        s.tree_,
+        "Dense and sparse input gave different trees.",
+    )
+    assert_array_almost_equal(s.predict(X), d.predict(X))
+
+    # Check best-first search
+    d = TreeEstimator(random_state=0, max_leaf_nodes=3, splitter=splitter).fit(X, y)
+    s = TreeEstimator(random_state=0, max_leaf_nodes=3, splitter=splitter).fit(
         X_sparse, y
     )
     assert_tree_equal(
         d.tree_,
         s.tree_,
-        "{0} with dense and sparse format gave different trees".format(tree_type),
-    )
-    assert_array_almost_equal(s.predict(X), d.predict(X))
-
-    # Check best-first search
-    d = TreeEstimator(random_state=0, max_leaf_nodes=3).fit(X, y)
-    s = TreeEstimator(random_state=0, max_leaf_nodes=3).fit(X_sparse, y)
-    assert_tree_equal(
-        d.tree_,
-        s.tree_,
-        "{0} with dense and sparse format gave different trees".format(tree_type),
+        "Dense and sparse input gave different trees.",
     )
     assert_array_almost_equal(s.predict(X), d.predict(X))
 
@@ -1473,37 +1497,39 @@ def test_sparse_parameters(tree_type, dataset, csc_container):
 # TODO(1.11): remove the deprecated friedman_mse criterion parametrization
 @pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
 @pytest.mark.parametrize(
-    "tree_type, criterion",
-    list(product([tree for tree in SPARSE_TREES if tree in REG_TREES], REG_CRITERIONS))
-    + list(
-        product([tree for tree in SPARSE_TREES if tree in CLF_TREES], CLF_CRITERIONS)
-    ),
+    "TreeEstimator, criterion",
+    list(product([DecisionTreeRegressor], REG_CRITERIONS))
+    + list(product([DecisionTreeClassifier], CLF_CRITERIONS)),
 )
+@pytest.mark.parametrize("splitter", SPLITTERS)
 @pytest.mark.parametrize("dataset", ["sparse-pos", "sparse-neg", "sparse-mix", "zeros"])
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
-def test_sparse_criteria(tree_type, dataset, csc_container, criterion):
-    TreeEstimator = ALL_TREES[tree_type]
+def test_sparse_criteria(TreeEstimator, criterion, splitter, dataset, csc_container):
     X = DATASETS[dataset]["X"]
     X_sparse = csc_container(X)
     y = DATASETS[dataset]["y"]
 
-    d = TreeEstimator(random_state=0, max_depth=3, criterion=criterion).fit(X, y)
-    s = TreeEstimator(random_state=0, max_depth=3, criterion=criterion).fit(X_sparse, y)
+    d = TreeEstimator(
+        random_state=0, max_depth=3, criterion=criterion, splitter=splitter
+    ).fit(X, y)
+    s = TreeEstimator(
+        random_state=0, max_depth=3, criterion=criterion, splitter=splitter
+    ).fit(X_sparse, y)
 
     assert_tree_equal(
         d.tree_,
         s.tree_,
-        "{0} with dense and sparse format gave different trees".format(tree_type),
+        "Dense and sparse input gave different trees.",
     )
     assert_array_almost_equal(s.predict(X), d.predict(X))
 
 
-@pytest.mark.parametrize("tree_type", SPARSE_TREES)
+@pytest.mark.parametrize("TreeEstimator", TREE_CLASSES)
+@pytest.mark.parametrize("splitter", SPLITTERS)
 @pytest.mark.parametrize(
     "csc_container,csr_container", zip(CSC_CONTAINERS, CSR_CONTAINERS)
 )
-def test_explicit_sparse_zeros(tree_type, csc_container, csr_container):
-    TreeEstimator = ALL_TREES[tree_type]
+def test_explicit_sparse_zeros(TreeEstimator, splitter, csc_container, csr_container):
     max_depth = 3
     n_features = 10
 
@@ -1546,13 +1572,15 @@ def test_explicit_sparse_zeros(tree_type, csc_container, csr_container):
     assert (X_sparse_test.data == 0.0).sum() > 0
 
     # Perform the comparison
-    d = TreeEstimator(random_state=0, max_depth=max_depth).fit(X, y)
-    s = TreeEstimator(random_state=0, max_depth=max_depth).fit(X_sparse, y)
+    d = TreeEstimator(random_state=0, max_depth=max_depth, splitter=splitter).fit(X, y)
+    s = TreeEstimator(random_state=0, max_depth=max_depth, splitter=splitter).fit(
+        X_sparse, y
+    )
 
     assert_tree_equal(
         d.tree_,
         s.tree_,
-        "{0} with dense and sparse format gave different trees".format(tree),
+        "Dense and sparse input gave different trees.",
     )
 
     Xs = (X_test, X_sparse_test)
@@ -1573,67 +1601,67 @@ def test_explicit_sparse_zeros(tree_type, csc_container, csr_container):
 
         assert_array_almost_equal(s.predict(X1), d.predict(X2))
 
-        if tree in CLF_TREES:
+        if TreeEstimator is DecisionTreeClassifier:
             assert_array_almost_equal(s.predict_proba(X1), d.predict_proba(X2))
 
 
-def check_raise_error_on_1d_input(name):
-    TreeEstimator = ALL_TREES[name]
-
+def check_raise_error_on_1d_input(TreeEstimator, splitter):
     X = iris.data[:, 0].ravel()
     X_2d = iris.data[:, 0].reshape((-1, 1))
     y = iris.target
 
     with pytest.raises(ValueError):
-        TreeEstimator(random_state=0).fit(X, y)
+        TreeEstimator(random_state=0, splitter=splitter).fit(X, y)
 
-    est = TreeEstimator(random_state=0)
+    est = TreeEstimator(random_state=0, splitter=splitter)
     est.fit(X_2d, y)
     with pytest.raises(ValueError):
         est.predict([X])
 
 
-@pytest.mark.parametrize("name", ALL_TREES)
-def test_1d_input(name):
+@pytest.mark.parametrize("TreeEstimator", TREE_CLASSES)
+@pytest.mark.parametrize("splitter", SPLITTERS)
+def test_1d_input(TreeEstimator, splitter):
     with ignore_warnings():
-        check_raise_error_on_1d_input(name)
+        check_raise_error_on_1d_input(TreeEstimator, splitter)
 
 
-@pytest.mark.parametrize("name", ALL_TREES)
+@pytest.mark.parametrize("TreeEstimator", TREE_CLASSES)
+@pytest.mark.parametrize("splitter", SPLITTERS)
 @pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS)
-def test_min_weight_leaf_split_level(name, sparse_container):
-    TreeEstimator = ALL_TREES[name]
-
+def test_min_weight_leaf_split_level(TreeEstimator, splitter, sparse_container):
     X = np.array([[0], [0], [0], [0], [1]])
     y = [0, 0, 0, 0, 1]
     sample_weight = [0.2, 0.2, 0.2, 0.2, 0.2]
     if sparse_container is not None:
         X = sparse_container(X)
 
-    est = TreeEstimator(random_state=0)
+    est = TreeEstimator(random_state=0, splitter=splitter)
     est.fit(X, y, sample_weight=sample_weight)
     assert est.tree_.max_depth == 1
 
-    est = TreeEstimator(random_state=0, min_weight_fraction_leaf=0.4)
+    est = TreeEstimator(random_state=0, min_weight_fraction_leaf=0.4, splitter=splitter)
     est.fit(X, y, sample_weight=sample_weight)
     assert est.tree_.max_depth == 0
 
 
-@pytest.mark.parametrize("name", ALL_TREES)
-def test_public_apply_all_trees(name):
+@pytest.mark.parametrize("TreeEstimator", TREE_CLASSES)
+@pytest.mark.parametrize("splitter", SPLITTERS)
+def test_public_apply_all_trees(TreeEstimator, splitter):
     X_small32 = X_small.astype(np.float32, copy=False)
 
-    est = ALL_TREES[name]()
+    est = TreeEstimator(splitter=splitter)
     est.fit(X_small, y_small)
     assert_array_equal(est.apply(X_small), est.tree_.apply(X_small32))
 
 
-@pytest.mark.parametrize("name", SPARSE_TREES)
+@pytest.mark.parametrize("TreeEstimator", TREE_CLASSES)
+@pytest.mark.parametrize("splitter", SPLITTERS)
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_public_apply_sparse_trees(name, csr_container):
+def test_public_apply_sparse_trees(TreeEstimator, splitter, csr_container):
     X_small32 = csr_container(X_small.astype(np.float32, copy=False))
 
-    est = ALL_TREES[name]()
+    est = TreeEstimator(splitter=splitter)
     est.fit(X_small, y_small)
     assert_array_equal(est.apply(X_small), est.tree_.apply(X_small32))
 
@@ -1657,14 +1685,14 @@ def test_decision_path_hardcoded():
     assert_array_equal(n_node_samples, tree.tree_.n_node_samples)
 
 
-@pytest.mark.parametrize("name", ALL_TREES)
-def test_decision_path(name):
+@pytest.mark.parametrize("TreeEstimator", TREE_CLASSES)
+@pytest.mark.parametrize("splitter", SPLITTERS)
+def test_decision_path(TreeEstimator, splitter):
     X = iris.data
     y = iris.target
     n_samples = X.shape[0]
 
-    TreeEstimator = ALL_TREES[name]
-    est = TreeEstimator(random_state=0, max_depth=2)
+    est = TreeEstimator(random_state=0, max_depth=2, splitter=splitter)
     est.fit(X, y)
 
     node_indicator_csr = est.decision_path(X)
@@ -1687,14 +1715,14 @@ def test_decision_path(name):
     assert est.tree_.max_depth <= max_depth
 
 
-@pytest.mark.parametrize("name", ALL_TREES)
+@pytest.mark.parametrize("TreeEstimator", TREE_CLASSES)
+@pytest.mark.parametrize("splitter", SPLITTERS)
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_no_sparse_y_support(name, csr_container):
+def test_no_sparse_y_support(TreeEstimator, splitter, csr_container):
     # Currently we don't support sparse y
     X, y = X_multilabel, csr_container(y_multilabel)
-    TreeEstimator = ALL_TREES[name]
     with pytest.raises(TypeError):
-        TreeEstimator(random_state=0).fit(X, y)
+        TreeEstimator(random_state=0, splitter=splitter).fit(X, y)
 
 
 def test_mae():
@@ -1888,11 +1916,11 @@ def test_empty_leaf_infinite_threshold(sparse_container):
 @pytest.mark.parametrize(
     "dataset", sorted(set(DATASETS.keys()) - {"reg_small", "diabetes"})
 )
-@pytest.mark.parametrize("tree_cls", [DecisionTreeClassifier, ExtraTreeClassifier])
-def test_prune_tree_classifier_are_subtrees(dataset, tree_cls):
+@pytest.mark.parametrize("splitter", ["best", "random"])
+def test_prune_tree_classifier_are_subtrees(dataset, splitter):
     dataset = DATASETS[dataset]
     X, y = dataset["X"], dataset["y"]
-    est = tree_cls(max_leaf_nodes=20, random_state=0)
+    est = DecisionTreeClassifier(splitter=splitter, max_leaf_nodes=20, random_state=0)
     info = est.cost_complexity_pruning_path(X, y)
 
     pruning_path = info.ccp_alphas
@@ -1900,16 +1928,21 @@ def test_prune_tree_classifier_are_subtrees(dataset, tree_cls):
     assert np.all(np.diff(pruning_path) >= 0)
     assert np.all(np.diff(impurities) >= 0)
 
-    assert_pruning_creates_subtree(tree_cls, X, y, pruning_path)
+    assert_pruning_creates_subtree(
+        lambda **kwargs: DecisionTreeClassifier(splitter=splitter, **kwargs),
+        X,
+        y,
+        pruning_path,
+    )
 
 
 @pytest.mark.parametrize("dataset", DATASETS.keys())
-@pytest.mark.parametrize("tree_cls", [DecisionTreeRegressor, ExtraTreeRegressor])
-def test_prune_tree_regression_are_subtrees(dataset, tree_cls):
+@pytest.mark.parametrize("splitter", ["best", "random"])
+def test_prune_tree_regression_are_subtrees(dataset, splitter):
     dataset = DATASETS[dataset]
     X, y = dataset["X"], dataset["y"]
 
-    est = tree_cls(max_leaf_nodes=20, random_state=0)
+    est = DecisionTreeRegressor(splitter=splitter, max_leaf_nodes=20, random_state=0)
     info = est.cost_complexity_pruning_path(X, y)
 
     pruning_path = info.ccp_alphas
@@ -1917,7 +1950,12 @@ def test_prune_tree_regression_are_subtrees(dataset, tree_cls):
     assert np.all(np.diff(pruning_path) >= 0)
     assert np.all(np.diff(impurities) >= 0)
 
-    assert_pruning_creates_subtree(tree_cls, X, y, pruning_path)
+    assert_pruning_creates_subtree(
+        lambda **kwargs: DecisionTreeRegressor(splitter=splitter, **kwargs),
+        X,
+        y,
+        pruning_path,
+    )
 
 
 def test_prune_single_node_tree():
@@ -1987,10 +2025,10 @@ def assert_is_subtree(tree, subtree):
             )
 
 
-@pytest.mark.parametrize("name", ALL_TREES)
-@pytest.mark.parametrize("splitter", ["best", "random"])
+@pytest.mark.parametrize("TreeEstimator", TREE_CLASSES)
+@pytest.mark.parametrize("splitter", SPLITTERS)
 @pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS + CSR_CONTAINERS)
-def test_apply_path_readonly_all_trees(name, splitter, sparse_container):
+def test_apply_path_readonly_all_trees(TreeEstimator, splitter, sparse_container):
     dataset = DATASETS["clf_small"]
     X_small = dataset["X"].astype(np.float32, copy=False)
     if sparse_container is None:
@@ -2008,7 +2046,7 @@ def test_apply_path_readonly_all_trees(name, splitter, sparse_container):
         )
 
     y_readonly = create_memmap_backed_data(np.array(y_small, dtype=np.float32))
-    est = ALL_TREES[name](splitter=splitter)
+    est = TreeEstimator(splitter=splitter)
     est.fit(X_readonly, y_readonly)
     assert_array_equal(est.predict(X_readonly), est.predict(X_small))
     assert_array_equal(
@@ -2019,15 +2057,15 @@ def test_apply_path_readonly_all_trees(name, splitter, sparse_container):
 # TODO(1.11): remove the deprecated friedman_mse criterion parametrization
 @pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
 @pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse", "poisson"])
-@pytest.mark.parametrize("Tree", REG_TREES.values())
-def test_balance_property(criterion, Tree):
+@pytest.mark.parametrize("splitter", SPLITTERS)
+def test_balance_property(criterion, splitter):
     # Test that sum(y_pred)=sum(y_true) on training set.
     # This works if the mean is predicted (should even be true for each leaf).
     # MAE predicts the median and is therefore excluded from this test.
 
     # Choose a training set with non-negative targets (for poisson)
     X, y = diabetes.data, diabetes.target
-    reg = Tree(criterion=criterion)
+    reg = DecisionTreeRegressor(criterion=criterion, splitter=splitter)
     reg.fit(X, y)
     assert np.sum(reg.predict(X)) == pytest.approx(np.sum(y))
 
@@ -2108,9 +2146,9 @@ def test_poisson_vs_mse():
         assert metric_poi < 0.75 * metric_dummy
 
 
-@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, ExtraTreeClassifier])
+@pytest.mark.parametrize("splitter", ["best", "random"])
 @pytest.mark.parametrize("n_classes", [2, 4])
-def test_criterion_entropy_same_as_log_loss(Tree, n_classes):
+def test_criterion_entropy_same_as_log_loss(splitter, n_classes):
     """Test that criterion=entropy gives same as log_loss."""
     n_samples, n_features = 50, 5
     X, y = datasets.make_classification(
@@ -2121,13 +2159,18 @@ def test_criterion_entropy_same_as_log_loss(Tree, n_classes):
         n_redundant=0,
         random_state=42,
     )
-    tree_log_loss = Tree(criterion="log_loss", random_state=43).fit(X, y)
-    tree_entropy = Tree(criterion="entropy", random_state=43).fit(X, y)
+    tree_log_loss = DecisionTreeClassifier(
+        criterion="log_loss", splitter=splitter, random_state=43
+    ).fit(X, y)
+    tree_entropy = DecisionTreeClassifier(
+        criterion="entropy", splitter=splitter, random_state=43
+    ).fit(X, y)
 
     assert_tree_equal(
         tree_log_loss.tree_,
         tree_entropy.tree_,
-        f"{Tree!r} with criterion 'entropy' and 'log_loss' gave different trees.",
+        f"splitter={splitter!r} with criterion 'entropy' and 'log_loss' gave "
+        "different trees.",
     )
     assert_allclose(tree_log_loss.predict(X), tree_entropy.predict(X))
 
@@ -2418,8 +2461,9 @@ def test_tree_deserialization_from_read_only_buffer(tmpdir):
     )
 
 
-@pytest.mark.parametrize("Tree", ALL_TREES.values())
-def test_min_sample_split_1_error(Tree):
+@pytest.mark.parametrize("Tree", TREE_CLASSES)
+@pytest.mark.parametrize("splitter", SPLITTERS)
+def test_min_sample_split_1_error(Tree, splitter):
     """Check that an error is raised when min_sample_split=1.
 
     non-regression test for issue gh-25481.
@@ -2428,10 +2472,10 @@ def test_min_sample_split_1_error(Tree):
     y = np.array([0, 1])
 
     # min_samples_split=1.0 is valid
-    Tree(min_samples_split=1.0).fit(X, y)
+    Tree(min_samples_split=1.0, splitter=splitter).fit(X, y)
 
     # min_samples_split=1 is invalid
-    tree = Tree(min_samples_split=1)
+    tree = Tree(min_samples_split=1, splitter=splitter)
     msg = (
         r"'min_samples_split' .* must be an int in the range \[2, inf\) "
         r"or a float in the range \(0.0, 1.0\]"
@@ -2474,15 +2518,17 @@ def test_missing_values_best_splitter_on_equal_nodes_no_missing(criterion):
 @pytest.mark.parametrize("seed", range(3))
 @pytest.mark.parametrize("criterion", REG_CRITERIONS)
 def test_missing_values_random_splitter_on_equal_nodes_no_missing(criterion, seed):
-    """Check missing values go to the correct node during predictions for ExtraTree.
+    """Check missing values go to the correct node with random splits.
 
-    Since ETC use random splits, we use different seeds to verify that the
+    Since the tree uses random splits, we use different seeds to verify that the
     left/right node is chosen correctly when the splits occur.
     """
     X = np.array([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
     y = np.array([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
 
-    etr = ExtraTreeRegressor(random_state=seed, max_depth=1, criterion=criterion)
+    etr = DecisionTreeRegressor(
+        splitter="random", random_state=seed, max_depth=1, criterion=criterion
+    )
     etr.fit(X, y)
 
     # Get the left and right children of the root node
@@ -2571,14 +2617,7 @@ def test_missing_values_best_splitter_missing_both_classes_has_nan(criterion):
 
 
 @pytest.mark.parametrize("sparse_container", CSR_CONTAINERS)
-@pytest.mark.parametrize(
-    "tree",
-    [
-        DecisionTreeRegressor(),
-        ExtraTreeRegressor(),
-    ],
-)
-def test_missing_value_errors(sparse_container, tree):
+def test_missing_value_errors(sparse_container):
     """Check unsupported configurations for missing values."""
 
     X = np.array([[1, 2, 3, 5, np.nan, 10, 20, 30, 60, np.nan]]).T
@@ -2587,11 +2626,12 @@ def test_missing_value_errors(sparse_container, tree):
     X = sparse_container(X)
 
     with pytest.raises(ValueError, match="Input X contains NaN"):
+        tree = DecisionTreeRegressor()
         tree.fit(X, y)
 
 
-@pytest.mark.parametrize("Tree", REG_TREES.values())
-def test_missing_values_poisson(Tree):
+@pytest.mark.parametrize("splitter", SPLITTERS)
+def test_missing_values_poisson(splitter):
     """Smoke test for poisson regression and missing values."""
     X, y = diabetes.data.copy(), diabetes.target
 
@@ -2599,7 +2639,7 @@ def test_missing_values_poisson(Tree):
     X[::5, 0] = np.nan
     X[::6, -1] = np.nan
 
-    reg = Tree(criterion="poisson", random_state=42)
+    reg = DecisionTreeRegressor(criterion="poisson", random_state=42, splitter=splitter)
     reg.fit(X, y)
 
     y_pred = reg.predict(X)
@@ -2613,23 +2653,24 @@ def make_friedman1_classification(*args, **kwargs):
 
 
 @pytest.mark.parametrize(
-    "make_data, Tree, tolerance",
+    "make_data, Tree, splitter, tolerance",
     [
         # Due to the sine link between X and y, we expect the native handling of
         # missing values to always be better than the naive mean imputation in the
         # regression case.
         #
-        # Due to randomness in ExtraTree, we expect the native handling of missing
-        # values to be sometimes better than the naive mean imputation, but not always
-        (datasets.make_friedman1, DecisionTreeRegressor, 0),
-        (datasets.make_friedman1, ExtraTreeRegressor, 0.07),
-        (make_friedman1_classification, DecisionTreeClassifier, 0.03),
-        (make_friedman1_classification, ExtraTreeClassifier, 0.12),
+        # Due to randomness in the splitter, we expect the native handling of
+        # missing values to be sometimes better than the naive mean imputation,
+        # but not always.
+        (datasets.make_friedman1, DecisionTreeRegressor, "best", 0),
+        (datasets.make_friedman1, DecisionTreeRegressor, "random", 0.07),
+        (make_friedman1_classification, DecisionTreeClassifier, "best", 0.03),
+        (make_friedman1_classification, DecisionTreeClassifier, "random", 0.12),
     ],
 )
 @pytest.mark.parametrize("sample_weight_train", [None, "ones"])
 def test_missing_values_is_resilience(
-    make_data, Tree, sample_weight_train, global_random_seed, tolerance
+    make_data, Tree, splitter, sample_weight_train, global_random_seed, tolerance
 ):
     """Check that trees can deal with missing values have decent performance."""
     n_samples, n_features = 5_000, 10
@@ -2654,12 +2695,15 @@ def test_missing_values_is_resilience(
     # max_depth is used to avoid overfitting and also improve the runtime
     # of the test.
     max_depth = 10
-    native_tree = Tree(max_depth=max_depth, random_state=global_random_seed)
+    native_tree = Tree(
+        splitter=splitter, max_depth=max_depth, random_state=global_random_seed
+    )
     native_tree.fit(X_missing_train, y_train, sample_weight=sample_weight)
     score_native_tree = native_tree.score(X_missing_test, y_test)
 
     tree_with_imputer = make_pipeline(
-        SimpleImputer(), Tree(max_depth=max_depth, random_state=global_random_seed)
+        SimpleImputer(),
+        Tree(splitter=splitter, max_depth=max_depth, random_state=global_random_seed),
     )
     tree_with_imputer.fit(X_missing_train, y_train)
     score_tree_with_imputer = tree_with_imputer.score(X_missing_test, y_test)
@@ -2670,11 +2714,17 @@ def test_missing_values_is_resilience(
     )
 
 
-# A single ExtraTree will randomly send missing values down the left, or right child,
-# and therefore will not necessarily have the same performance as the greedy
-# handling of missing values.
-@pytest.mark.parametrize("Tree, expected_score", zip(CLF_TREES.values(), [0.85, 0.53]))
-def test_missing_value_is_predictive(Tree, expected_score, global_random_seed):
+# A single tree with random splits will randomly send missing values down the
+# left or right child, and therefore will not necessarily have the same
+# performance as the greedy handling of missing values.
+@pytest.mark.parametrize(
+    "splitter, expected_score",
+    [
+        ("best", 0.85),
+        ("random", 0.53),
+    ],
+)
+def test_missing_value_is_predictive(splitter, expected_score, global_random_seed):
     """Check the tree learns when only the missing value is predictive."""
     rng = np.random.RandomState(0)
     n_samples = 500
@@ -2693,7 +2743,7 @@ def test_missing_value_is_predictive(Tree, expected_score, global_random_seed):
 
     X[:, 5] = X_predictive
 
-    tree = Tree(random_state=global_random_seed)
+    tree = DecisionTreeClassifier(random_state=global_random_seed, splitter=splitter)
 
     # Check that the tree can learn the predictive feature
     # over an average of cross-validation fits.
@@ -2747,7 +2797,7 @@ def test_deterministic_pickle():
 
 # TODO(1.11): remove the deprecated friedman_mse criterion parametrization
 @pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
-@pytest.mark.parametrize("Tree", [DecisionTreeRegressor, ExtraTreeRegressor])
+@pytest.mark.parametrize("splitter", ["best", "random"])
 @pytest.mark.parametrize(
     "X",
     [
@@ -2760,7 +2810,7 @@ def test_deterministic_pickle():
     ],
 )
 @pytest.mark.parametrize("criterion", REG_CRITERIONS)
-def test_regression_tree_missing_values_toy(Tree, X, criterion, global_random_seed):
+def test_regression_tree_missing_values_toy(splitter, X, criterion, global_random_seed):
     """Check that regression trees correctly handle missing values in impurity
     calculations.
 
@@ -2779,7 +2829,9 @@ def test_regression_tree_missing_values_toy(Tree, X, criterion, global_random_se
     X = X.reshape(-1, 1)
     y = np.arange(1, 7)
 
-    tree = Tree(criterion=criterion, random_state=global_random_seed).fit(X, y)
+    tree = DecisionTreeRegressor(
+        splitter=splitter, criterion=criterion, random_state=global_random_seed
+    ).fit(X, y)
     tree_ref = clone(tree).fit(y.reshape(-1, 1), y)
 
     impurity = tree.tree_.impurity
@@ -2787,7 +2839,7 @@ def test_regression_tree_missing_values_toy(Tree, X, criterion, global_random_se
 
     # Note: the impurity matches after the first split only on greedy trees
     # see https://github.com/scikit-learn/scikit-learn/issues/32125
-    if Tree is DecisionTreeRegressor:
+    if splitter == "best":
         # Check the impurity match after the first split
         assert_allclose(tree.tree_.impurity[:2], tree_ref.tree_.impurity[:2])
 
@@ -2798,7 +2850,7 @@ def test_regression_tree_missing_values_toy(Tree, X, criterion, global_random_se
     assert_allclose(tree.tree_.impurity[leaves_idx], 0.0)
 
 
-def test_regression_extra_tree_missing_values_toy(global_random_seed):
+def test_regression_random_splitter_missing_values_toy(global_random_seed):
     rng = np.random.RandomState(global_random_seed)
     n_samples = 100
     X = np.arange(n_samples, dtype=np.float64).reshape(-1, 1)
@@ -2806,7 +2858,9 @@ def test_regression_extra_tree_missing_values_toy(global_random_seed):
     rng.shuffle(X)
     y = np.arange(n_samples)
 
-    tree = ExtraTreeRegressor(random_state=global_random_seed, max_depth=5).fit(X, y)
+    tree = DecisionTreeRegressor(
+        splitter="random", random_state=global_random_seed, max_depth=5
+    ).fit(X, y)
 
     impurity = tree.tree_.impurity
     assert all(impurity >= 0), impurity  # MSE should always be positive
@@ -3039,7 +3093,7 @@ def test_random_splitter_missing_values_uses_non_missing_min_max(X, y):
     Non-regression test for a subtle bug, see
     https://github.com/scikit-learn/scikit-learn/pull/32119#issuecomment-3765288780
     """
-    tree = ExtraTreeRegressor(max_depth=1, random_state=0)
+    tree = DecisionTreeRegressor(splitter="random", max_depth=1, random_state=0)
     tree.fit(X, y)
 
     assert tree.tree_.children_left[0] != TREE_LEAF
