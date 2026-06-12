@@ -13,12 +13,6 @@ import struct
 import numpy as np
 import scipy
 import scipy.sparse.linalg
-import scipy.stats
-
-try:
-    import pandas as pd
-except ImportError:
-    pd = None
 
 from sklearn.externals._packaging.version import parse as parse_version
 from sklearn.utils.parallel import _get_threadpool_controller
@@ -56,6 +50,8 @@ def _object_dtype_isnan(X):
 
 # TODO: Remove when SciPy 1.11 is the minimum supported version
 def _mode(a, axis=0):
+    import scipy.stats
+
     mode = scipy.stats.mode(a, axis=axis, keepdims=True)
     if sp_version >= parse_version("1.10.999"):
         # scipy.stats.mode has changed returned array shape with axis=None
