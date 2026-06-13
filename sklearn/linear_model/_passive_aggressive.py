@@ -452,11 +452,10 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
     Attributes
     ----------
-    coef_ : array, shape = [1, n_features] if n_classes == 2 else [n_classes,\
-            n_features]
+    coef_ : ndarray of shape (n_features,)
         Weights assigned to the features.
 
-    intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
+    intercept_ : ndarray of shape (1,)
         Constants in decision function.
 
     n_features_in_ : int
