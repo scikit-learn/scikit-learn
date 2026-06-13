@@ -283,7 +283,7 @@ def _make_categorical(
     if not regression:
         y = (y < y.mean()).astype(int)
 
-    meaningful_features = np.concat(
+    meaningful_features = np.concatenate(
         [np.arange(n_num_meaningful), np.arange(n_cat_meaningful) + n_numerical]
     )
 
