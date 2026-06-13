@@ -24,7 +24,7 @@ from scipy.sparse import issparse
 from scipy.sparse import csr_array
 
 from sklearn.utils import _align_api_if_sparse
-from sklearn.utils._bitset cimport BITSET_LENGTH, N_BITSETS, in_bitset
+from sklearn.utils._bitset cimport N_BITSETS, in_bitset, BITSET_DTYPE_C, BITSET_LENGTH
 
 from sklearn.tree._utils cimport goes_left
 from sklearn.tree._utils cimport safe_realloc
@@ -64,28 +64,25 @@ MAX_NUM_CATEGORIES_PY = N_BITSETS
 # cdef Node dummy
 # NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
 
-# SplitValue layout mirrors the C union:
-# - threshold is a float64 at offset 0.
-# - left_cat_bitset is BITSET_LENGTH uint32 words at offset 0.
-# With BITSET_LENGTH == 8 and uint32_t words, this is currently 32 bytes.
-# BITSET_LENGTH must match BITSET_DTYPE_C in SplitValue (see _utils.pxd).
-SPLIT_VALUE_DTYPE = np.dtype({
-    'names':   ['threshold', 'left_cat_bitset'],
-    'formats': [np.float64,     (np.uint32, BITSET_LENGTH)],
-    'offsets': [0,              0],
-    'itemsize': BITSET_LENGTH * 4,
-})
+# NODE_DTYPE mirrors the flattened Node struct in _utils.pxd. On 64-bit
+# platforms, the aligned layout is:
+# - threshold at offset 24.
+# - left_cat_bitset at offset 32, currently 32 bytes.
+# - impurity at offset 64.
+# - n_node_samples at offset 72.
+# - weighted_n_node_samples at offset 80.
+# - missing_go_to_left at offset 88.
+# NumPy pads the dtype to 96 bytes to match sizeof(Node).
 NODE_DTYPE = np.dtype([
     ('left_child',              np.intp),            # 8 bytes  (offset 0)
     ('right_child',             np.intp),            # 8 bytes  (offset 8)
     ('feature',                 np.intp),            # 8 bytes  (offset 16)
-    ('split_value',             SPLIT_VALUE_DTYPE),  # 32 bytes (offset 24)
-    ('impurity',                np.float64),         # 8 bytes (offset 56)
-    ('n_node_samples',          np.intp),            # 8 bytes (offset 64)
-    ('weighted_n_node_samples', np.float64),         # 8 bytes (offset 72)
-    ('missing_go_to_left',      np.uint8),           # 1 byte  (offset 80)
-    # NumPy will auto‐pad to a multiple of 8 (so total sizeof Node_dtype = 88 bytes),
-    # exactly matching C’s sizeof(Node) on a 64‐bit machine.
+    ('threshold',               np.float64),         # 8 bytes  (offset 24)
+    ('left_cat_bitset',         (np.uint32, BITSET_LENGTH)),  # 32 bytes (offset 32)
+    ('impurity',                np.float64),         # 8 bytes  (offset 64)
+    ('n_node_samples',          np.intp),            # 8 bytes  (offset 72)
+    ('weighted_n_node_samples', np.float64),         # 8 bytes  (offset 80)
+    ('missing_go_to_left',      np.uint8),           # 1 byte   (offset 88)
 ], align=True)
 
 cdef inline void _init_parent_record(ParentInfo* record) noexcept nogil:
@@ -283,7 +280,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                                 min_impurity_decrease))
 
                 node_id = tree._add_node(parent, is_left, is_leaf, split.feature,
-                                         split.split_value,
+                                         split.threshold, split.left_cat_bitset,
                                          parent_record.impurity,
                                          n_node_samples, weighted_n_node_samples,
                                          split.missing_go_to_left)
@@ -497,7 +494,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                     node.left_child = _TREE_LEAF
                     node.right_child = _TREE_LEAF
                     node.feature = _TREE_UNDEFINED
-                    node.split_value.threshold = _TREE_UNDEFINED
+                    node.threshold = _TREE_UNDEFINED
 
                 else:
                     # Node is expandable
@@ -644,7 +641,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                  else _TREE_UNDEFINED,
                                  is_left, is_leaf,
                                  split.feature,
-                                 split.split_value,
+                                 split.threshold,
+                                 split.left_cat_bitset,
                                  parent_record.impurity,
                                  n_node_samples, weighted_n_node_samples,
                                  split.missing_go_to_left)
@@ -777,11 +775,11 @@ cdef class Tree:
 
     @property
     def threshold(self):
-        return self._get_node_ndarray()['split_value']['threshold'][:self.node_count]
+        return self._get_node_ndarray()['threshold'][:self.node_count]
 
     @property
     def left_cat_bitset(self):
-        return self._get_node_ndarray()['split_value']['left_cat_bitset'][:self.node_count]
+        return self._get_node_ndarray()['left_cat_bitset'][:self.node_count]
 
     @property
     def impurity(self):
@@ -955,7 +953,8 @@ cdef class Tree:
 
     cdef intp_t _add_node(self, intp_t parent, bint is_left, bint is_leaf,
                           intp_t feature,
-                          SplitValue split_value,
+                          float64_t threshold,
+                          BITSET_DTYPE_C left_cat_bitset,
                           float64_t impurity,
                           intp_t n_node_samples,
                           float64_t weighted_n_node_samples,
@@ -974,8 +973,8 @@ cdef class Tree:
 
         cdef Node* node = &self.nodes[node_id]
 
-        # Zero the whole union so unused bytes don't leak into pickle.
-        memset(<void*> &node.split_value, 0, sizeof(SplitValue))
+        # Clear unused categorical split bytes for deterministic pickles.
+        memset(<void*> node.left_cat_bitset, 0, sizeof(node.left_cat_bitset))
 
         node.impurity = impurity
         node.n_node_samples = n_node_samples
@@ -991,20 +990,20 @@ cdef class Tree:
             node.left_child = _TREE_LEAF
             node.right_child = _TREE_LEAF
             node.feature = _TREE_UNDEFINED
-            node.split_value.threshold = _TREE_UNDEFINED
+            node.threshold = _TREE_UNDEFINED
 
         else:
             # left_child and right_child will be set later
             node.feature = feature
             if self.n_categories[feature] > 0:
-                node.split_value.threshold = -INFINITY
+                node.threshold = -INFINITY
                 memcpy(
-                    node.split_value.left_cat_bitset,
-                    split_value.left_cat_bitset,
-                    sizeof(node.split_value.left_cat_bitset),
+                    node.left_cat_bitset,
+                    left_cat_bitset,
+                    sizeof(node.left_cat_bitset),
                 )
             else:
-                node.split_value.threshold = split_value.threshold
+                node.threshold = threshold
             node.missing_go_to_left = missing_go_to_left
 
         self.node_count += 1
@@ -1060,7 +1059,8 @@ cdef class Tree:
                     X_i_node_feature = X_ndarray[i, node.feature]
                     is_categorical = self.n_categories[node.feature] > 0
                     go_left = goes_left(
-                        node.split_value,
+                        node.threshold,
+                        node.left_cat_bitset,
                         node.missing_go_to_left,
                         is_categorical,
                         X_i_node_feature,
@@ -1130,7 +1130,7 @@ cdef class Tree:
                     else:
                         feature_value = 0.
 
-                    if feature_value <= node.split_value.threshold:
+                    if feature_value <= node.threshold:
                         node = &self.nodes[node.left_child]
                     else:
                         node = &self.nodes[node.right_child]
@@ -1195,13 +1195,13 @@ cdef class Tree:
                             node = &self.nodes[node.right_child]
                     elif self.n_categories[node.feature] > 0:
                         if in_bitset(
-                            node.split_value.left_cat_bitset,
+                            node.left_cat_bitset,
                             <uint8_t> X_i_node_feature
                         ):
                             node = &self.nodes[node.left_child]
                         else:
                             node = &self.nodes[node.right_child]
-                    elif X_i_node_feature <= node.split_value.threshold:
+                    elif X_i_node_feature <= node.threshold:
                         node = &self.nodes[node.left_child]
                     else:
                         node = &self.nodes[node.right_child]
@@ -1281,7 +1281,7 @@ cdef class Tree:
                     else:
                         feature_value = 0.
 
-                    if feature_value <= node.split_value.threshold:
+                    if feature_value <= node.threshold:
                         node = &self.nodes[node.left_child]
                     else:
                         node = &self.nodes[node.right_child]
@@ -1485,7 +1485,8 @@ cdef class Tree:
                         # In this case, we push left or right child on stack
                         is_categorical = self.n_categories[current_node.feature] > 0
                         go_left = goes_left(
-                            current_node.split_value,
+                            current_node.threshold,
+                            current_node.left_cat_bitset,
                             current_node.missing_go_to_left,
                             is_categorical,
                             X[sample_idx, feature_idx],
@@ -2031,7 +2032,7 @@ cdef void _build_pruned_tree(
 
             new_node_id = tree._add_node(
                 parent, is_left, is_leaf, node.feature,
-                node.split_value,
+                node.threshold, node.left_cat_bitset,
                 node.impurity, node.n_node_samples,
                 node.weighted_n_node_samples, node.missing_go_to_left)
 

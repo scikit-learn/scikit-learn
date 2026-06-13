@@ -24,7 +24,7 @@ cdef void init_bitset(BITSET_DTYPE_C bitset) noexcept nogil
 
 cdef void set_bitset(BITSET_DTYPE_C bitset, uint8_t val) noexcept nogil
 
-cdef uint8_t in_bitset(BITSET_DTYPE_C bitset, uint8_t val) noexcept nogil
+cdef uint8_t in_bitset(const BITSET_INNER_DTYPE_C* bitset, uint8_t val) noexcept nogil
 
 cpdef uint8_t in_bitset_memoryview(
     const BITSET_INNER_DTYPE_C[:] bitset, uint8_t val

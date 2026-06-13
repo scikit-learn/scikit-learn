@@ -23,7 +23,9 @@ cdef inline void set_bitset(BITSET_DTYPE_C bitset, uint8_t val) noexcept nogil:
     bitset[val // BITSET_INNER_BITS] |= (1 << (val % BITSET_INNER_BITS))
 
 
-cdef inline uint8_t in_bitset(BITSET_DTYPE_C bitset, uint8_t val) noexcept nogil:
+cdef inline uint8_t in_bitset(
+    const BITSET_INNER_DTYPE_C* bitset, uint8_t val
+) noexcept nogil:
     return (bitset[val // BITSET_INNER_BITS] >> (val % BITSET_INNER_BITS)) & 1
 
 

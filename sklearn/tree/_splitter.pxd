@@ -9,8 +9,7 @@ from sklearn.utils._typedefs cimport (
 
 from sklearn.tree._criterion cimport Criterion
 from sklearn.tree._tree cimport ParentInfo
-from sklearn.tree._utils cimport SplitValue
-from sklearn.utils._bitset cimport BITSET_INNER_DTYPE_C
+from sklearn.utils._bitset cimport BITSET_INNER_DTYPE_C, BITSET_DTYPE_C
 
 cdef struct SplitRecord:
     # Data to track sample split
@@ -19,8 +18,13 @@ cdef struct SplitRecord:
     #                      # i.e. count of samples below threshold for feature.
     #                      # pos is >= end if the node is a leaf.
 
-    SplitValue split_value    # Generalized threshold for categorical and
-    #                         # non-categorical features to split samples.
+    # Threshold for numerical features splits:
+    # - feature values less than or equal to the threshold go left, and values greater than the threshold go right.
+    float64_t threshold
+
+    # Threshold for categorical features splits:
+    # - left_cat_bitset stores the set of categories that go to the left child.
+    BITSET_DTYPE_C left_cat_bitset
 
     float64_t improvement     # Impurity improvement given parent node.
     float64_t impurity_left   # Impurity of the left split.

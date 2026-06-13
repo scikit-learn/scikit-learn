@@ -13,7 +13,7 @@ from sklearn.tree._splitter cimport Splitter, SplitRecord
 
 from sklearn.tree._splitter cimport Splitter, SplitRecord
 from sklearn.tree._utils cimport SplitValue, Node
-from sklearn.utils._bitset cimport N_BITSETS
+from sklearn.utils._bitset cimport N_BITSETS, BITSET_DTYPE_C
 
 
 cdef enum:
@@ -54,7 +54,8 @@ cdef class Tree:
     # Methods
     cdef intp_t _add_node(self, intp_t parent, bint is_left, bint is_leaf,
                           intp_t feature,
-                          SplitValue split_value,
+                          float64_t threshold,
+                          BITSET_DTYPE_C left_cat_bitset,
                           float64_t impurity,
                           intp_t n_node_samples,
                           float64_t weighted_n_node_samples,

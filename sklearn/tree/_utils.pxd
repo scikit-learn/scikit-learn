@@ -5,16 +5,20 @@
 cimport numpy as cnp
 from sklearn.neighbors._quad_tree cimport Cell
 from sklearn.utils._typedefs cimport float32_t, float64_t, intp_t, uint8_t, int32_t, uint32_t, uint64_t
-from sklearn.utils._bitset cimport BITSET_DTYPE_C
+from sklearn.utils._bitset cimport BITSET_DTYPE_C, BITSET_INNER_DTYPE_C
 
 ctypedef union SplitValue:
     # Union type to generalize the concept of a threshold to categorical
-    # features. The floating point view, i.e. ``SplitValue.split_value.threshold`` is used
+    # features. The floating point view, i.e. ``SplitValue.threshold`` is used
     # for numerical features, where feature values less than or equal to the
     # threshold go left, and values greater than the threshold go right.
     #
     # For categorical features, left_cat_bitset stores the set of
     # categories that go to the left child.
+    #
+    # Note: this is used in generalizing returns, but our Node stores
+    # the threshold and bitset separately instead of a union type to simplify
+    # implementation for only an extra 8 bytes per node.
     float64_t threshold
     BITSET_DTYPE_C left_cat_bitset
 
@@ -24,17 +28,23 @@ cdef struct Node:
     intp_t left_child                    # id of the left child of the node
     intp_t right_child                   # id of the right child of the node
     intp_t feature                       # Feature used for splitting the node
-    SplitValue split_value               # Generalized threshold for categorical and
-    #                                    # non-categorical features
+    # Threshold for numerical features splits:
+    # - feature values less than or equal to the threshold go left, and values greater than the threshold go right.
+    float64_t threshold
+
+    # Threshold for categorical features splits:
+    # - left_cat_bitset stores the set of categories that go to the left child.
+    BITSET_DTYPE_C left_cat_bitset
 
     float64_t impurity                   # Impurity of the node (i.e., the value of the criterion)
     intp_t n_node_samples                # Number of samples at the node
     float64_t weighted_n_node_samples    # Weighted number of samples at the node
-    uint8_t missing_go_to_left     # Whether features have missing values
+    uint8_t missing_go_to_left           # Whether features have missing values
 
 
 cdef bint goes_left(
-    SplitValue split_value,
+    float64_t threshold,
+    const BITSET_INNER_DTYPE_C* left_cat_bitset,
     bint missing_go_to_left,
     bint is_categorical,
     float32_t value,

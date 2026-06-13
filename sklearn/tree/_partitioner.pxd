@@ -6,7 +6,9 @@
 from sklearn.utils._typedefs cimport (
     float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t, uint64_t
 )
-from sklearn.tree._splitter cimport SplitRecord, SplitValue
+from sklearn.tree._splitter cimport SplitRecord
+from sklearn.tree._utils cimport SplitValue
+from sklearn.utils._bitset cimport BITSET_DTYPE_C
 
 # Mitigate precision differences between 32 bit and 64 bit
 cdef const float32_t FEATURE_THRESHOLD = 1e-7
@@ -30,8 +32,12 @@ cdef const float32_t FEATURE_THRESHOLD = 1e-7
 #     cdef const uint8_t[::1] missing_values_in_feature_mask
 #     cdef intp_t n_categories
 
-#     cdef inline SplitValue position_to_split_value(
-#         self, intp_t p_prev, intp_t p
+#     cdef inline float64_t position_to_split_threshold(
+#         self, intp_t p_prev, intp_t p, bint missing_go_to_left
+#     ) noexcept nogil
+#     cdef inline void position_to_split_bitset(
+#         self, intp_t p_prev, intp_t p, bint missing_go_to_left,
+#         BITSET_DTYPE_C left_cat_bitset
 #     ) noexcept nogil
 #     cdef bint sort_samples_and_feature_values(
 #         self, intp_t current_feature
@@ -120,11 +126,19 @@ cdef class DensePartitioner:
         self,
         const SplitRecord* best_split,
     ) noexcept nogil
-    cdef SplitValue position_to_split_value(
+
+    cdef float64_t position_to_split_threshold(
         self,
         intp_t p_prev,
         intp_t p,
         bint missing_go_to_left
+    ) noexcept nogil
+    cdef void position_to_split_bitset(
+        self,
+        intp_t p_prev,
+        intp_t p,
+        bint missing_go_to_left,
+        BITSET_DTYPE_C left_cat_bitset
     ) noexcept nogil
     cdef void _breiman_sort_categories(
         self,
@@ -196,13 +210,19 @@ cdef class SparsePartitioner:
         const SplitRecord* best_split,
     ) noexcept nogil
 
-    cdef SplitValue position_to_split_value(
+    cdef float64_t position_to_split_threshold(
         self,
         intp_t p_prev,
         intp_t p,
         bint missing_go_to_left
     ) noexcept nogil
-
+    cdef void position_to_split_bitset(
+        self,
+        intp_t p_prev,
+        intp_t p,
+        bint missing_go_to_left,
+        BITSET_DTYPE_C left_cat_bitset
+    ) noexcept nogil
     cdef void extract_nnz(
         self,
         intp_t feature

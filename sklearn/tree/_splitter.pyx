@@ -45,7 +45,7 @@ cdef inline void _init_split(SplitRecord* self, intp_t start_pos) noexcept nogil
     self.impurity_right = INFINITY
     self.pos = start_pos
     self.feature = 0
-    self.split_value.threshold = 0.
+    self.threshold = 0.
     self.improvement = -INFINITY
     self.missing_go_to_left = False
 
@@ -453,7 +453,15 @@ cdef inline int node_split_best(
                     best_proxy_improvement = current_proxy_improvement
 
                     # given previous position and the new position, compute the value of this split
-                    current_split.split_value = partitioner.position_to_split_value(p_prev, p, missing_go_to_left)
+                    if partitioner.n_categories > 0:
+                        partitioner.position_to_split_bitset(
+                            p_prev,
+                            p,
+                            missing_go_to_left,
+                            current_split.left_cat_bitset,
+                        )
+                    else:
+                        current_split.threshold = partitioner.position_to_split_threshold(p_prev, p, missing_go_to_left)
 
                     # If there are no missing values in the training data, during
                     # test time, we send missing values to the branch that contains
@@ -625,7 +633,7 @@ cdef inline int node_split_random(
         has_missing = n_missing != 0
 
         # Draw a random threshold
-        current_split.split_value.threshold = rand_uniform(
+        current_split.threshold = rand_uniform(
             min_feature_value,
             max_feature_value,
             random_state,
@@ -645,12 +653,12 @@ cdef inline int node_split_random(
         else:
             missing_go_to_left = 0
 
-        if current_split.split_value.threshold == max_feature_value:
-            current_split.split_value.threshold = min_feature_value
+        if current_split.threshold == max_feature_value:
+            current_split.threshold = min_feature_value
 
         # Partition
         current_split.pos = partitioner.partition_samples(
-            current_split.split_value.threshold, missing_go_to_left
+            current_split.threshold, missing_go_to_left
         )
 
         n_left = current_split.pos - start

@@ -10,11 +10,12 @@ from libc.string cimport memset
 cimport numpy as cnp
 cnp.import_array()
 
-from sklearn.utils._bitset cimport in_bitset
+from sklearn.utils._bitset cimport BITSET_INNER_DTYPE_C, in_bitset
 from sklearn.utils._random cimport our_rand_r
 
 cdef inline bint goes_left(
-    SplitValue split_value,
+    float64_t threshold,
+    const BITSET_INNER_DTYPE_C* left_cat_bitset,
     bint missing_go_to_left,
     bint is_categorical,
     float32_t value,
@@ -22,9 +23,9 @@ cdef inline bint goes_left(
     if isnan(value):
         return missing_go_to_left
     elif is_categorical:
-        return in_bitset(split_value.left_cat_bitset, <uint8_t> value)
+        return in_bitset(left_cat_bitset, <uint8_t> value)
     else:
-        return value <= split_value.threshold
+        return value <= threshold
 
 # =============================================================================
 # Helper functions
