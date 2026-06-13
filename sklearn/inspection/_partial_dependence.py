@@ -668,7 +668,8 @@ def partial_dependence(
         )
 
     if method == "tree_accurate":
-        if any(isinstance(f, (list, tuple)) for f in features):
+        _features_iter = [features] if isinstance(features, (str, int)) else features
+        if any(isinstance(f, (list, tuple)) for f in _features_iter):
             raise ValueError(
                 "The 'tree_accurate' method does not support joint PDP "
                 "(tuples in features). Use method='brute' instead."
