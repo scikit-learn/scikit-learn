@@ -880,13 +880,6 @@ cdef class Tree:
         node_ndarray = d['nodes']
         value_ndarray = d['values']
 
-        # If the array is big-endian, swap it back to native first:
-        if not node_ndarray.dtype.isnative:
-            # byteswap() returns a new array with the data swapped in place,
-            # then newbyteorder() marks it as native‐endian dtype.
-            _swapped = node_ndarray.byteswap()
-            node_ndarray = _swapped.view(_swapped.dtype.newbyteorder())
-
         value_shape = (node_ndarray.shape[0], self.n_outputs,
                        self.max_n_classes)
 
