@@ -1123,6 +1123,35 @@ the "saga" solver is usually faster (than "lbfgs"), in particular for low precis
 For large dataset, you may also consider using :class:`SGDClassifier`
 with `loss="log_loss"`, which might be even faster but requires more tuning.
 
+.. dropdown:: References
+
+  The following references explain some of the solvers.
+
+  * For "lbfgs", see documentation of
+    :func:`SciPy minimized <scipy:scipy.optimize.minimize>`
+
+  * "liblinear"
+
+    * Fan, R. E., Chang, K. W., Hsieh, C. J., Wang, X. R., & Lin, C. J. (2008).
+      LIBLINEAR: A library for large linear classification.
+      the Journal of machine Learning research, 9, 1871-1874.
+      https://www.jmlr.org/papers/volume9/fan08a/fan08a.pdf
+
+    * :doi:`Yu, H. F., Huang, F. L., & Lin, C. J. (2011).
+      Dual coordinate descent methods for logistic regression and maximum entropy
+      models. Machine Learning, 85(1), 41-75.
+      <10.1007/s10994-010-5221-8>`
+
+  * SAG -- :arxiv:`Schmidt, M., Le Roux, N., & Bach, F. (2017).
+    Minimizing finite sums with the stochastic average gradient.
+    Mathematical Programming, 162(1), 83-112.
+    <1309.2388>`
+
+  * SAGA -- :arxiv:`Defazio, A., Bach, F., & Lacoste-Julien, S. (2014).
+    SAGA: A fast incremental gradient method with support for non-strongly convex
+    composite objectives. Advances in neural information processing systems, 27.
+    <1407.0202>`
+
 .. _liblinear_differences:
 
 Differences between solvers

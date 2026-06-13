@@ -1089,8 +1089,9 @@ class LogisticRegression(
            *class_weight='balanced'*
 
     random_state : int, RandomState instance, default=None
-        Used when ``solver`` == 'sag', 'saga' or 'liblinear' to shuffle the
-        data. See :term:`Glossary <random_state>` for details.
+        Only used for `solver` == 'sag', 'saga' or 'liblinear' to shuffle the
+        data. It  has no effect on the other solvers.
+        See :term:`Glossary <random_state>` for details.
 
     solver : {'lbfgs', 'liblinear', 'newton-cg', 'newton-cholesky', 'sag', 'saga'}, \
             default='lbfgs'
@@ -1221,37 +1222,14 @@ class LogisticRegression(
 
     Notes
     -----
-    The underlying C implementation uses a random number generator to
-    select features when fitting the model. It is thus not uncommon,
-    to have slightly different results for the same input data. If
-    that happens, try with a smaller tol parameter.
+    For several reasons (floating point arithmetic, random number generators, etc.)
+    the coefficients of a fitted model might differ slightly (among machines,
+    scikit-learn versions, etc.) for the same input data. If that happens and you
+    want to avoid it, you can try with a smaller `tol` parameter.
 
     Predict output may not match that of standalone liblinear in certain
     cases. See :ref:`differences from liblinear <liblinear_differences>`
     in the narrative documentation.
-
-    References
-    ----------
-
-    L-BFGS-B -- Software for Large-scale Bound-constrained Optimization
-        Ciyou Zhu, Richard Byrd, Jorge Nocedal and Jose Luis Morales.
-        http://users.iems.northwestern.edu/~nocedal/lbfgsb.html
-
-    LIBLINEAR -- A Library for Large Linear Classification
-        https://www.csie.ntu.edu.tw/~cjlin/liblinear/
-
-    SAG -- Mark Schmidt, Nicolas Le Roux, and Francis Bach
-        Minimizing Finite Sums with the Stochastic Average Gradient
-        https://hal.inria.fr/hal-00860051/document
-
-    SAGA -- Defazio, A., Bach F. & Lacoste-Julien S. (2014).
-            :arxiv:`"SAGA: A Fast Incremental Gradient Method With Support
-            for Non-Strongly Convex Composite Objectives" <1407.0202>`
-
-    Hsiang-Fu Yu, Fang-Lan Huang, Chih-Jen Lin (2011). Dual coordinate descent
-        methods for logistic regression and maximum entropy models.
-        Machine Learning 85(1-2):41-75.
-        https://www.csie.ntu.edu.tw/~cjlin/papers/maxent_dual.pdf
 
     Examples
     --------
@@ -1862,7 +1840,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             (and therefore on the intercept) `intercept_scaling` has to be increased.
 
     random_state : int, RandomState instance, default=None
-        Used when `solver='sag'`, 'saga' or 'liblinear' to shuffle the data.
+        Only used for `solver` == 'sag', 'saga' or 'liblinear' to shuffle the
+        data. It  has no effect on the other solvers.
         Note that this only applies to the solver and not the cross-validation
         generator. See :term:`Glossary <random_state>` for details.
 
