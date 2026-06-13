@@ -1539,20 +1539,31 @@ cdef class Tree:
         intp_t required_feature,
         float64_t[:, ::1] out,
     ):
-        """Partial dependence via background-data tree traversal (tree_accurate method).
+        """Partial dependence via background-data tree traversal (tree_accurate).
 
-        Uses a single DFS per background sample: for each sample the natural
-        prediction path is followed, and at every split on the required feature a
-        shadow path is spawned that diverges to the other branch.  Shadows may
-        re-diverge on the same feature (handling repeated splits), so the
-        per-sample work is O(D + total shadow nodes).
-        Per-leaf statistics (``reached`` and ``diverged_on_required``) are
-        accumulated with O(1) per-leaf updates.
+        Two traversals are performed, both using the same split test as
+        prediction (so missing-value routing and any future split kind stay
+        consistent automatically):
 
-        Memory overhead is O(N) where N = node_count.
+        * Background pass -- the heavy, ``O(n_background * depth)`` part. Each
+          sample is routed through the tree, branching both ways at splits on
+          ``required_feature`` and following the sample everywhere else; the
+          number of arrivals per leaf is accumulated into ``count``.
+          ``count[leaf]`` is thus the number of background samples routed to
+          that leaf when ``required_feature`` is treated as a wildcard.
 
-        Accumulates raw sums into ``out``; the caller is responsible for dividing
-        by the number of background samples (and, for forests, by n_estimators).
+        * Grid pass -- ``O(n_grid * node_count)``. Each grid value is routed
+          through the tree, following it at ``required_feature`` splits and
+          branching both ways elsewhere; ``value * count`` is accumulated at
+          every leaf reached. The result for grid value ``g`` equals
+          ``n_background * PDP(g)``.
+
+        ``required_feature`` of each sample is never read -- marginalising it is
+        exactly the both-ways branching above. Working memory is
+        ``O(node_count)``.
+
+        Accumulates raw sums into ``out``; the caller divides by the number of
+        background samples (and, for forests, by n_estimators).
 
         Parameters
         ----------
@@ -1569,178 +1580,84 @@ cdef class Tree:
             intp_t n_grid = grid.shape[0]
             intp_t n_background = X_bg.shape[0]
             intp_t _TREE_LEAF_SENTINEL = TREE_LEAF
+            intp_t K = out.shape[0]
+            intp_t stack_size, sample_idx, node_idx, j, k, cnt
+            float64_t g
+            Node* node
+            float64_t[:, ::1] node_values
 
         if n_background == 0 or n_grid == 0 or self.node_count == 0:
             return
 
-        # ----------------------------------------------------------------------- #
-        # Phase 0: single DFS over the tree structure, O(node_count). It builds: #
-        #   leaf_conditions: split conditions along each root-to-leaf path        #
-        #                    (needed by Phase 2)                                  #
-        # ----------------------------------------------------------------------- #
+        node_values = self._tree_accurate_node_values()
 
-        children_left_arr = np.asarray(self.children_left)
-        children_right_arr = np.asarray(self.children_right)
-        features_arr = np.asarray(self.feature)
-        thresholds_arr = np.asarray(self.threshold)
-
-        # Classifier detection: regressors have n_classes[0] == 1.
-        cdef intp_t _n_clf_classes = self.max_n_classes
-        cdef bint _is_clf = _n_clf_classes > 1
-
-        # leaf_conditions[node_id] = (req_seen, conditions, leaf_values)
-        #   req_seen   : True if required_feature appeared on this path
-        #   conditions : list of (split_threshold, goes_left) for required_feature
-        #   leaf_values: ndarray of shape (n_outputs,)
-        leaf_conditions = {}
-
-        # Python DFS — stack entries: (node_id, req_seen, req_conditions)
-        dfs_stack = [(0, False, [])]
-        while dfs_stack:
-            node_id, req_seen, req_conditions = dfs_stack.pop()
-
-            if children_left_arr[node_id] == TREE_LEAF:
-                if _is_clf:
-                    # Normalise raw class counts to probabilities, matching
-                    # predict_proba: divide each class count by the total count.
-                    # Sum the counts from the buffer directly (same as predict_proba).
-                    total = sum(
-                        self.value[node_id * self.value_stride + c]
-                        for c in range(_n_clf_classes)
-                    )
-                    if _n_clf_classes == 2:
-                        # Binary: keep only positive-class probability.
-                        leaf_values = np.array(
-                            [self.value[node_id * self.value_stride + 1] / total],
-                            dtype=np.float64,
-                        )
-                    else:
-                        leaf_values = np.array(
-                            [self.value[node_id * self.value_stride + c] / total
-                             for c in range(_n_clf_classes)],
-                            dtype=np.float64,
-                        )
-                else:
-                    leaf_values = np.array(
-                        [self.value[node_id * self.value_stride + k]
-                         for k in range(self.n_outputs)],
-                        dtype=np.float64,
-                    )
-                leaf_conditions[node_id] = (req_seen, req_conditions, leaf_values)
-            else:
-                split_feature = int(features_arr[node_id])
-                split_threshold = float(thresholds_arr[node_id])
-                left_child_idx = int(children_left_arr[node_id])
-                right_child_idx = int(children_right_arr[node_id])
-
-                child_req_seen = req_seen or (split_feature == required_feature)
-
-                for child_idx, goes_left in ((left_child_idx, True), (right_child_idx, False)):
-                    child_conditions = list(req_conditions)
-                    if split_feature == required_feature:
-                        child_conditions.append((split_threshold, goes_left))
-                    dfs_stack.append((child_idx, child_req_seen, child_conditions))
-
-        # ------------------------------------------------------------------ #
-        # Phase 1: background pass  (Cython hot loop)                        #
-        #                                                                     #
-        # Per-leaf accumulators (node_count sized, but only leaves used):    #
-        #   reached[leaf]             — samples that naturally landed here    #
-        #   diverged_on_required[leaf] — samples whose shadow (spawned at a  #
-        #                               required_feature split) landed here   #
-        #                                                                     #
-        # Stack entries: (node_idx, diverged_on_target)                      #
-        #   diverged_on_target >= 0  → this is a shadow traversal            #
-        #   diverged_on_target  < 0  → this is the main traversal            #
-        # ------------------------------------------------------------------ #
-
-        cdef intp_t[:] reached = np.zeros(self.node_count, dtype=np.intp)
-        cdef intp_t[:] diverged_on_required = np.zeros(self.node_count, dtype=np.intp)
-
-        # Stack: at most 2 entries pushed per node (proceed + diverge); +4 for safety
+        # ---- Pass B: wildcard routing counts (heavy, m-dependent) -----------
+        cdef intp_t[::1] count = np.zeros(self.node_count, dtype=np.intp)
         cdef intp_t stack_capacity = 2 * (self.max_depth + 2) + 4
-        cdef intp_t[:] stack_node = np.empty(stack_capacity, dtype=np.intp)
-        cdef intp_t[:] stack_diverged_on_target = np.empty(stack_capacity, dtype=np.intp)
-
-        cdef:
-            intp_t stack_size, sample_idx, node_idx, diverged_on_target
-            intp_t current_feature
-            intp_t proceed_child, diverge_child
-            Node* node
-            bint sample_goes_left
+        cdef intp_t[::1] stack_node = np.empty(stack_capacity, dtype=np.intp)
 
         for sample_idx in range(n_background):
             stack_size = 1
             stack_node[0] = 0
-            stack_diverged_on_target[0] = -1
-
             while stack_size > 0:
                 stack_size -= 1
                 node_idx = stack_node[stack_size]
-                diverged_on_target = stack_diverged_on_target[stack_size]
                 node = &self.nodes[node_idx]
-
                 if node.left_child == _TREE_LEAF_SENTINEL:
-                    if diverged_on_target < 0:
-                        reached[node_idx] += 1
-                    else:
-                        diverged_on_required[node_idx] += 1
+                    count[node_idx] += 1
+                elif node.feature == required_feature:
+                    stack_node[stack_size] = node.left_child
+                    stack_size += 1
+                    stack_node[stack_size] = node.right_child
+                    stack_size += 1
                 else:
-                    current_feature = node.feature
-                    sample_goes_left = X_bg[sample_idx, current_feature] <= node.threshold
-
-                    proceed_child = node.left_child  if sample_goes_left else node.right_child
-                    diverge_child = node.right_child if sample_goes_left else node.left_child
-
-                    # Push natural direction (main path or shadow continues)
-                    stack_node[stack_size] = proceed_child
-                    stack_diverged_on_target[stack_size] = diverged_on_target
+                    if X_bg[sample_idx, node.feature] <= node.threshold:
+                        stack_node[stack_size] = node.left_child
+                    else:
+                        stack_node[stack_size] = node.right_child
                     stack_size += 1
 
-                    # Spawn a shadow only at required_feature splits.
-                    if current_feature == required_feature:
-                        stack_node[stack_size] = diverge_child
-                        stack_diverged_on_target[stack_size] = current_feature
-                        stack_size += 1
-
-        # ------------------------------------------------------------------ #
-        # Phase 2: consumer patterns + accumulation  (numpy, O(L * n_grid))  #
-        # ------------------------------------------------------------------ #
-
-        reached_arr = np.asarray(reached)
-        diverged_on_required_arr = np.asarray(diverged_on_required)
-        grid_arr = np.asarray(grid)   # 1D: (n_grid,)
-        out_arr = np.asarray(out)     # 2D: (n_outputs, n_grid)
-
-        # avg_pred_sum accumulates leaf_values * reached[leaf] over all leaves.
-        # Adding it to out_arr (then dividing by m in the caller) gives the
-        # absolute mean prediction.
-        avg_pred_sum = np.zeros(out_arr.shape[0], dtype=np.float64)
-
-        for leaf_node_idx, (req_seen, conditions, leaf_values) in leaf_conditions.items():
-            avg_pred_sum += leaf_values * float(reached_arr[leaf_node_idx])
-
-            if not req_seen:
-                # required_feature never appeared on this path; only contributes
-                # to avg_pred.
-                continue
-
-            # Which grid values satisfy all split conditions on required_feature?
-            mask = np.ones(n_grid, dtype=np.bool_)
-            for split_threshold, goes_left in conditions:
-                if goes_left:
-                    mask &= grid_arr <= split_threshold
+        # ---- Pass C: per grid value, accumulate value * count ---------------
+        for j in range(n_grid):
+            g = grid[j]
+            stack_size = 1
+            stack_node[0] = 0
+            while stack_size > 0:
+                stack_size -= 1
+                node_idx = stack_node[stack_size]
+                node = &self.nodes[node_idx]
+                if node.left_child == _TREE_LEAF_SENTINEL:
+                    cnt = count[node_idx]
+                    if cnt != 0:
+                        for k in range(K):
+                            out[k, j] += node_values[node_idx, k] * cnt
+                elif node.feature == required_feature:
+                    if g <= node.threshold:
+                        stack_node[stack_size] = node.left_child
+                    else:
+                        stack_node[stack_size] = node.right_child
+                    stack_size += 1
                 else:
-                    mask &= grid_arr > split_threshold
+                    stack_node[stack_size] = node.left_child
+                    stack_size += 1
+                    stack_node[stack_size] = node.right_child
+                    stack_size += 1
 
-            diverged = float(diverged_on_required_arr[leaf_node_idx])
-            multipliers = np.where(mask, diverged, -float(reached_arr[leaf_node_idx]))
+    def _tree_accurate_node_values(self):
+        """Per-node output values matching predict / decision_function.
 
-            # out_arr: (n_outputs, n_grid)
-            out_arr += leaf_values[:, None] * multipliers[None, :]
-
-        # Fold avg_pred into out so the caller just divides by m.
-        out_arr += avg_pred_sum[:, np.newaxis]
+        Returns a C-contiguous ``(node_count, K)`` float64 array: regression
+        values, all class probabilities for multiclass, or the positive-class
+        probability only for binary classification.
+        """
+        value_3d = np.asarray(self._get_value_ndarray())
+        if self.max_n_classes > 1:
+            class_counts = value_3d[:, 0, :]
+            probs = class_counts / class_counts.sum(axis=1, keepdims=True)
+            if self.max_n_classes == 2:
+                return np.ascontiguousarray(probs[:, 1:2])
+            return np.ascontiguousarray(probs)
+        return np.ascontiguousarray(value_3d[:, :, 0])
 
 
 def _check_n_classes(n_classes, expected_dtype):
