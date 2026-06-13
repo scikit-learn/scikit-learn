@@ -61,8 +61,8 @@ view (less bias), it also requires more data to ensure that each bin has a suffi
 number of samples to produce a stable estimate of the fraction of positives (variance).
 When `n_bins="cube_root"`, the number of bins is automatically set to
 :math:`\lceil n_{\text{samples}}^{1/3} \rceil`.
-This choice aims to balance this trade-off. Up to a factor, it is asymptotically
-optimal (large sample limit).
+This choice aims to balance this trade-off. The exponent 1/3 from the cube root is
+asymptotically optimal (large sample limit).
 
 The top calibration curve plot is created with
 :func:`CalibrationDisplay.from_estimator`, which uses :func:`calibration_curve` to
