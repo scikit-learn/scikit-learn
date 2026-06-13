@@ -7,7 +7,6 @@ from sklearn.utils._typedefs cimport (
     float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t, uint64_t
 )
 from sklearn.tree._splitter cimport SplitRecord
-from sklearn.tree._utils cimport SplitValue
 from sklearn.utils._bitset cimport BITSET_DTYPE_C
 
 # Mitigate precision differences between 32 bit and 64 bit

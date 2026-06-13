@@ -699,7 +699,7 @@ cdef class SparsePartitioner:
         self.extract_nnz(best_split[0].feature)
         self._partition(best_split[0].threshold)
 
-    # TODO: use splitValue when refactored to support categorical data
+    # TODO: add left_cat_bitset when refactored to support categorical data
     cdef inline intp_t _partition(self, float64_t threshold) noexcept nogil:
         """
         Partition samples[start:end] based on threshold.

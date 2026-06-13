@@ -7,20 +7,6 @@ from sklearn.neighbors._quad_tree cimport Cell
 from sklearn.utils._typedefs cimport float32_t, float64_t, intp_t, uint8_t, int32_t, uint32_t, uint64_t
 from sklearn.utils._bitset cimport BITSET_DTYPE_C, BITSET_INNER_DTYPE_C
 
-ctypedef union SplitValue:
-    # Union type to generalize the concept of a threshold to categorical
-    # features. The floating point view, i.e. ``SplitValue.threshold`` is used
-    # for numerical features, where feature values less than or equal to the
-    # threshold go left, and values greater than the threshold go right.
-    #
-    # For categorical features, left_cat_bitset stores the set of
-    # categories that go to the left child.
-    #
-    # Note: this is used in generalizing returns, but our Node stores
-    # the threshold and bitset separately instead of a union type to simplify
-    # implementation for only an extra 8 bytes per node.
-    float64_t threshold
-    BITSET_DTYPE_C left_cat_bitset
 
 cdef struct Node:
     # Base storage structure for the nodes in a Tree object

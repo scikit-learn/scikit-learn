@@ -12,7 +12,7 @@ from sklearn.utils._typedefs cimport (
 from sklearn.tree._splitter cimport Splitter, SplitRecord
 
 from sklearn.tree._splitter cimport Splitter, SplitRecord
-from sklearn.tree._utils cimport SplitValue, Node
+from sklearn.tree._utils cimport Node
 from sklearn.utils._bitset cimport N_BITSETS, BITSET_DTYPE_C
 
 
