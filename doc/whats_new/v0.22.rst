@@ -1077,7 +1077,7 @@ These changes mostly affect library developers.
 - Estimators are now expected to raise a ``NotFittedError`` if ``predict`` or
   ``transform`` is called before ``fit``; previously an ``AttributeError`` or
   ``ValueError`` was acceptable.
-  :pr:`13013` by by :user:`Agamemnon Krasoulis <agamemnonc>`.
+  :pr:`13013` by :user:`Agamemnon Krasoulis <agamemnonc>`.
 
 - Binary only classifiers are now supported in estimator checks.
   Such classifiers need to have the `binary_only=True` estimator tag.
