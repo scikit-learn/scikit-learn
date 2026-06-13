@@ -1591,7 +1591,7 @@ cdef class Tree:
 
         node_values = self._tree_accurate_node_values()
 
-        # ---- Pass B: wildcard routing counts (heavy, m-dependent) -----------
+        # ---- Pass A: wildcard routing counts (heavy, m-dependent) -----------
         cdef intp_t[::1] count = np.zeros(self.node_count, dtype=np.intp)
         cdef intp_t stack_capacity = 2 * (self.max_depth + 2) + 4
         cdef intp_t[::1] stack_node = np.empty(stack_capacity, dtype=np.intp)
@@ -1617,7 +1617,7 @@ cdef class Tree:
                         stack_node[stack_size] = node.right_child
                     stack_size += 1
 
-        # ---- Pass C: per grid value, accumulate value * count ---------------
+        # ---- Pass B: per grid value, accumulate value * count ---------------
         for j in range(n_grid):
             g = grid[j]
             stack_size = 1
