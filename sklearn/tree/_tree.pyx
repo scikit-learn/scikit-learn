@@ -778,10 +778,6 @@ cdef class Tree:
         return self._get_node_ndarray()['threshold'][:self.node_count]
 
     @property
-    def left_cat_bitset(self):
-        return self._get_node_ndarray()['left_cat_bitset'][:self.node_count]
-
-    @property
     def impurity(self):
         return self._get_node_ndarray()['impurity'][:self.node_count]
 
