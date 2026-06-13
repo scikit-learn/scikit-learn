@@ -3646,7 +3646,7 @@ def test_single_tree_equivalence_with_hgbt_regressor_categorical():
         # canonical: smaller side first (then lexicographic tie-break)
         a, b = sorted((tuple(sorted(cat_set)), tuple(sorted(comp))))
         return (a, b)
-    
+
     # TODO: when tree_ exposes public attribute for the raw left cat bitsets, we can
     # test this.
     # DT root split set
