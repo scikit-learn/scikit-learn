@@ -2547,7 +2547,7 @@ def test_liblinear_with_large_values():
         "solver or rescale the input X."
     )
     with pytest.raises(ValueError, match=msg):
-        LogisticRegression(solver="liblinear", alpha=1e-4).fit(X, y)
+        LogisticRegression(solver="liblinear").fit(X, y)
 
 
 def test_single_feature_newton_cg():
