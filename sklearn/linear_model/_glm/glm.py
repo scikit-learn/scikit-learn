@@ -19,7 +19,12 @@ from sklearn._loss.loss import (
     HalfTweedieLossIdentity,
 )
 from sklearn.base import BaseEstimator, RegressorMixin, _fit_context
-from sklearn.linear_model._glm._newton_solver import NewtonCholeskySolver, NewtonSolver
+from sklearn.linear_model._glm._newton_solver import (
+    NewtonCDGramSolver,
+    NewtonCDSolver,
+    NewtonCholeskySolver,
+    NewtonSolver,
+)
 from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.utils import check_array
 from sklearn.utils._array_api import (
@@ -154,6 +159,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         "fit_intercept": ["boolean"],
         "solver": [
             StrOptions({"lbfgs", "newton-cholesky"}),
+            Hidden(StrOptions({"newton-cd", "newton-cd-gram"})),
             Hidden(type),
         ],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
@@ -206,8 +212,9 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             self,
             X,
             y,
-            accept_sparse=["csc", "csr"],
+            accept_sparse="csc" if self.solver == "newton-cd" else ["csc", "csr"],
             dtype=[xp.float64, xp.float32],
+            order="F" if self.solver == "newton-cd" else None,
             y_numeric=True,
             multi_output=False,
         )
@@ -291,7 +298,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                     "ftol": 64 * np.finfo(float).eps,
                     **_get_additional_lbfgs_options_dict("iprint", self.verbose - 1),
                 },
-                args=(X, y, sample_weight, l2_reg_strength, n_threads),
+                args=(X, y, sample_weight, 0, l2_reg_strength, n_threads),
             )
             self.n_iter_ = _check_optimize_result(
                 "lbfgs", opt_res, max_iter=self.max_iter
@@ -302,10 +309,16 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 dtype=X.dtype,
                 device=device_,
             )
-        elif self.solver == "newton-cholesky":
-            sol = NewtonCholeskySolver(
+        elif self.solver in ("newton-cd", "newton-cd-gram", "newton-cholesky"):
+            sol = {
+                "newton-cd": NewtonCDSolver,
+                "newton-cd-gram": NewtonCDGramSolver,
+                "newton-cholesky": NewtonCholeskySolver,
+            }[self.solver]
+            sol = sol(
                 coef=coef,
                 linear_loss=linear_loss,
+                # l1_reg_strength=0.0,  # default value for NewtonCDGramSolver
                 l2_reg_strength=l2_reg_strength,
                 tol=self.tol,
                 max_iter=self.max_iter,
