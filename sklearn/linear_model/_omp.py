@@ -11,14 +11,15 @@ import numpy as np
 from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
 
-from sklearn.base import MultiOutputMixin, RegressorMixin, _fit_context
-from sklearn.linear_model._base import LinearModel, _pre_fit
+from sklearn.base import RegressorMixin, _fit_context
+from sklearn.linear_model._base import LinearModel, MultiOutputLinearModel, _pre_fit
 from sklearn.model_selection import check_cv
-from sklearn.utils import Bunch, as_float_array, check_array
+from sklearn.utils import as_float_array, check_array
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _raise_for_params,
     _routing_enabled,
     process_routing,
@@ -642,7 +643,7 @@ def orthogonal_mp_gram(
         return np.squeeze(coef)
 
 
-class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
+class OrthogonalMatchingPursuit(RegressorMixin, MultiOutputLinearModel):
     """Orthogonal Matching Pursuit model (OMP).
 
     Read more in the :ref:`User Guide <omp>`.
@@ -1070,8 +1071,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
             routed_params = process_routing(self, "fit", **fit_params)
         else:
             # TODO(SLEP6): remove when metadata routing cannot be disabled.
-            routed_params = Bunch()
-            routed_params.splitter = Bunch(split={})
+            routed_params = _manual_routing({"splitter": {}})
         max_iter = (
             min(max(int(0.1 * X.shape[1]), 5), X.shape[1])
             if not self.max_iter
