@@ -1012,7 +1012,7 @@ def test_balanced_weight(klass):
     # to use "balanced"
     assert_array_almost_equal(clf.coef_, clf_balanced.coef_, 6)
 
-    # build a very very imbalanced dataset out of iris data
+    # build a very imbalanced dataset out of iris data
     X_0 = X[y == 0, :]
     y_0 = y[y == 0]
 
