@@ -65,11 +65,12 @@ class Split:
     def from_tree(cls, tree):
         ftr = int(tree.tree_.feature[0])
         if tree.n_categories_in_feature_[ftr] > 0:
-            cat_bitset = tree.tree_.left_cat_bitset[0]
-            threshold = bitset_to_tuple(
-                cat_bitset,
-                n_categories=int(tree.tree_.n_categories[ftr]),
-            )
+            raise RuntimeError("Not implemented yet.")
+            # cat_bitset = tree.tree_.left_cat_bitset[0]
+            # threshold = bitset_to_tuple(
+            #     cat_bitset,
+            #     n_categories=int(tree.tree_.n_categories[ftr]),
+            # )
         else:
             threshold = tree.tree_.threshold[0]
         missing_left = bool(tree.tree_.missing_go_to_left[0])
@@ -244,6 +245,9 @@ def test_split_impurity(
             is_categorical = rng.random(d) < 0.5
             n_classes = 2
             tree_kwargs["categorical_features"] = is_categorical
+
+            # TODO: can support once we expose left cat bitset publicly from Cython Tree
+            continue
         else:
             is_categorical = np.zeros(d, dtype=bool)
 
