@@ -364,7 +364,9 @@ def test_large_variance_y():
 def test_y_multioutput(normalize_y):
     # Test that GPR can deal with multi-dimensional target values
     scale = 2
-    y_2d = np.vstack((y, y * scale)).T
+    y1 = y
+    y2 = y * scale
+    y_2d = np.vstack((y1, y2)).T
 
     # Test for fixed kernel that first dimension of 2d GP equals the output
     # of 1d GP and that second dimension is twice as large
@@ -373,12 +375,12 @@ def test_y_multioutput(normalize_y):
     gpr_1 = GaussianProcessRegressor(
         kernel=kernel, optimizer=None, normalize_y=normalize_y
     )
-    gpr_1.fit(X, y_2d[:, 0])
+    gpr_1.fit(X, (y1 - y1.min()) / (y1.max() - y1.min()))
 
     gpr_2 = GaussianProcessRegressor(
         kernel=kernel, optimizer=None, normalize_y=normalize_y
     )
-    gpr_2.fit(X, y_2d[:, 1])
+    gpr_2.fit(X, (y2 - y2.min()) / (y2.max() - y2.min()))
 
     gpr_12 = GaussianProcessRegressor(
         kernel=kernel, optimizer=None, normalize_y=normalize_y
@@ -391,6 +393,12 @@ def test_y_multioutput(normalize_y):
     _, y_cov_1 = gpr_1.predict(X2, return_cov=True)
     _, y_cov_2 = gpr_2.predict(X2, return_cov=True)
     _, y_cov_12 = gpr_12.predict(X2, return_cov=True)
+    y_pred_1 = y_pred_1 * (y1.max() - y1.min()) + y1.min()
+    y_pred_2 = y_pred_2 * (y2.max() - y2.min()) + y2.min()
+    y_std_1 = y_std_1 * (y1.max() - y1.min())
+    y_std_2 = y_std_2 * (y2.max() - y2.min())
+    y_cov_1 = y_cov_1 * (y1.max() - y1.min()) ** 2
+    y_cov_2 = y_cov_2 * (y2.max() - y2.min()) ** 2
 
     assert_almost_equal(y_pred_12[:, 0], y_pred_1)
     assert_almost_equal(y_std_12[..., 0], y_std_1)
@@ -403,7 +411,7 @@ def test_y_multioutput(normalize_y):
     assert_almost_equal(y_cov_12[..., 1], y_cov_2)
     assert_almost_equal(y_cov_12[..., 1], y_cov_1 * scale**2)
 
-    y_sample_1 = gpr_1.sample_y(X2, n_samples=10)
+    y_sample_1 = gpr_1.sample_y(X2, n_samples=10) * (y1.max() - y1.min()) + y1.min()
     y_sample_12 = gpr_12.sample_y(X2, n_samples=10)
 
     assert y_sample_1.shape == (5, 10)

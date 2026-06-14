@@ -111,10 +111,11 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         run is performed.
 
     normalize_y : bool, default=False
-        Whether :meth:`fit` must normalize the training target values `y`
-        by removing the mean and scaling to unit-variance.
-        This is recommended
-        when zero-mean, unit-variance priors are used.
+        Whether or not to normalize the target values `y` by removing the mean
+        and scaling to unit-variance. This is recommended for cases where
+        zero-mean, unit-variance priors are used. Note that, in this
+        implementation, the normalisation is reversed before the GP predictions
+        are reported.
 
         .. versionchanged:: 0.23
 
@@ -193,7 +194,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     >>> gpr.score(X, y)
     0.3680...
     >>> gpr.predict(X[:2,:], return_std=True)
-    (array([653.0, 592.1]), array([316.6, 316.6]))
+    (array([653.08792288, 592.16905327]), array([316.68016218, 316.65121679]))
     """
 
     _parameter_constraints: dict = {
@@ -277,13 +278,24 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 f"`n_targets`. Got {n_targets_seen} != {self.n_targets}."
             )
 
-        self._y_train_mean = np.mean(y, axis=0)
-        self._y_train_std = np.atleast_1d(
-            _handle_zeros_in_scale(np.std(y, axis=0), copy=False)
-        )
+        n_targets = 1 if y.ndim == 1 else y.shape[1]
+        if n_targets == 1:
+            self._y_min = 0
+            self._y_range = 1
+        else:
+            self._y_min = y.min(0)
+            self._y_range = _handle_zeros_in_scale(y.max(0) - self._y_min)
+            y = (y - self._y_min) / self._y_range
 
         if self.normalize_y:
+            self._y_train_mean = np.mean(y, axis=0)
+            self._y_train_std = _handle_zeros_in_scale(np.std(y, axis=0), copy=False)
+
+            # Remove mean and make unit variance
             y = (y - self._y_train_mean) / self._y_train_std
+        else:
+            self._y_train_mean = np.zeros(n_targets)
+            self._y_train_std = np.ones(n_targets)
 
         if np.iterable(self.alpha) and self.alpha.shape[0] != y.shape[0]:
             if self.alpha.shape[0] == 1:
@@ -447,9 +459,9 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             K_trans = self.kernel_(X, self.X_train_)
             y_mean = K_trans @ self.alpha_
 
-            if self.normalize_y:
-                # undo normalisation
-                y_mean = self._y_train_std * y_mean + self._y_train_mean
+            # undo normalisation
+            y_mean = y_mean * self._y_train_std + self._y_train_mean
+            y_mean = y_mean * self._y_range + self._y_min
 
             # if y_mean has shape (n_samples, 1), reshape to (n_samples,)
             if y_mean.ndim > 1 and y_mean.shape[1] == 1:
@@ -466,8 +478,11 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             if return_cov:
                 # Alg 2.1, page 19, line 6 -> K(X_test, X_test) - v^T. v
                 y_cov = self.kernel_(X) - V.T @ V
-                y_cov = np.outer(y_cov, self._y_train_std**2).reshape(*y_cov.shape, -1)
 
+                # undo normalisation
+                y_cov = np.outer(
+                    y_cov, self._y_train_std**2 * self._y_range**2
+                ).reshape(*y_cov.shape, -1)
                 # if y_cov has shape (n_samples, n_samples, 1), reshape to
                 # (n_samples, n_samples)
                 if y_cov.shape[2] == 1:
@@ -491,7 +506,10 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     )
                     y_var[y_var_negative] = 0.0
 
-                y_var = np.outer(y_var, self._y_train_std**2).reshape(*y_var.shape, -1)
+                # undo normalisation
+                y_var = np.outer(
+                    y_var, self._y_train_std**2 * self._y_range**2
+                ).reshape(*y_var.shape, -1)
 
                 # if y_var has shape (n_samples, 1), reshape to (n_samples,)
                 if y_var.shape[1] == 1:
@@ -598,8 +616,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             y_train = y_train[:, np.newaxis]
 
         # Alg 2.1, page 19, line 3 -> alpha = L^T \ (L \ y)
-        scale = 1 if self.normalize_y else self._y_train_std / self._y_train_std[0]
-        alpha = cho_solve((L, GPR_CHOLESKY_LOWER), y_train / scale, check_finite=False)
+        alpha = cho_solve((L, GPR_CHOLESKY_LOWER), y_train, check_finite=False)
 
         # Alg 2.1, page 19, line 7
         # -0.5 . y^T . alpha - sum(log(diag(L))) - n_samples / 2 log(2*pi)
