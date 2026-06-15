@@ -81,9 +81,8 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
         idx_nan = np.searchsorted(col_data, np.nan)
         col_data = col_data[:idx_nan]
     else:
-        # remove missing values first
-        # because argsort is quite slower when missing values are present
-        # (which is not the case for sort)
+        # first remove missing values because argsort is much slower when missing
+        values are present (which is not the case for sort)
         missing_mask = np.isnan(col_data)
         if missing_mask.any():
             col_data = col_data[~missing_mask]
