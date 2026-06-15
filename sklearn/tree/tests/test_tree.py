@@ -2538,14 +2538,24 @@ def test_min_sample_split_1_error(Tree):
 
 # TODO(1.11): remove the deprecated friedman_mse criterion parametrization
 @pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
+@pytest.mark.parametrize(
+    "categorical_features", [None, [True]], ids=["numerical", "categorical"]
+)
 @pytest.mark.parametrize("criterion", REG_CRITERIONS)
-def test_missing_values_best_splitter_on_equal_nodes_no_missing(criterion):
+def test_missing_values_best_splitter_on_equal_nodes_no_missing(
+    criterion, categorical_features
+):
     """Check missing values goes to correct node during predictions."""
     X = np.array([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
     y = np.array([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
     node_value_func = np.median if criterion == "absolute_error" else np.mean
 
-    dtc = DecisionTreeRegressor(random_state=42, max_depth=1, criterion=criterion)
+    dtc = DecisionTreeRegressor(
+        random_state=42,
+        max_depth=1,
+        criterion=criterion,
+        categorical_features=categorical_features,
+    )
     dtc.fit(X, y)
 
     # Goes to right node because it has the most data points
@@ -2556,7 +2566,12 @@ def test_missing_values_best_splitter_on_equal_nodes_no_missing(criterion):
     X_equal = X[:-1]
     y_equal = y[:-1]
 
-    dtc = DecisionTreeRegressor(random_state=42, max_depth=1, criterion=criterion)
+    dtc = DecisionTreeRegressor(
+        random_state=42,
+        max_depth=1,
+        criterion=criterion,
+        categorical_features=categorical_features,
+    )
     dtc.fit(X_equal, y_equal)
 
     # Goes to right node because the implementation sets:
