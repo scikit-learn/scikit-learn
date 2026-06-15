@@ -86,10 +86,10 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
         'newton-cg'
             Uses a slightly adapted version of scipy's Newton-CG optimizer. This is
-            sometimes called truncated Newton method. Because it does not construct
-            the Hessian matrix but only uses gradients and vector products of the
-            Hessian, it is a good solver when `X` is sparse or when `X` has many
-            features.
+            sometimes called the truncated Newton method. Due to the fact that it
+            does not construct the Hessian matrix but only uses gradients and
+            vector products of the Hessian, it is a good solver when `X` is sparse
+            or when `X` has many features.
 
             .. versionadded:: 1.10
 
@@ -541,10 +541,10 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
 
         'newton-cg'
             Uses a slightly adapted version of scipy's Newton-CG optimizer. This is
-            sometimes called truncated Newton method. Because it does not construct
-            the Hessian matrix but only uses gradients and vector products of the
-            Hessian, it is a good solver when `X` is sparse or when `X` has many
-            features.
+            sometimes called the truncated Newton method. Due to the fact that it
+            does not construct the Hessian matrix but only uses gradients and
+            vector products of the Hessian, it is a good solver when `X` is sparse
+            or when `X` has many features.
 
             .. versionadded:: 1.10
 
@@ -689,10 +689,10 @@ class GammaRegressor(_GeneralizedLinearRegressor):
 
         'newton-cg'
             Uses a slightly adapted version of scipy's Newton-CG optimizer. This is
-            sometimes called truncated Newton method. Because it does not construct
-            the Hessian matrix but only uses gradients and vector products of the
-            Hessian, it is a good solver when `X` is sparse or when `X` has many
-            features.
+            sometimes called the truncated Newton method. Due to the fact that it
+            does not construct the Hessian matrix but only uses gradients and
+            vector products of the Hessian, it is a good solver when `X` is sparse
+            or when `X` has many features.
 
             .. versionadded:: 1.10
 
@@ -860,10 +860,10 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
 
         'newton-cg'
             Uses a slightly adapted version of scipy's Newton-CG optimizer. This is
-            sometimes called truncated Newton method. Because it does not construct
-            the Hessian matrix but only uses gradients and vector products of the
-            Hessian, it is a good solver when `X` is sparse or when `X` has many
-            features.
+            sometimes called the truncated Newton method. Due to the fact that it
+            does not construct the Hessian matrix but only uses gradients and
+            vector products of the Hessian, it is a good solver when `X` is sparse
+            or when `X` has many features.
 
             .. versionadded:: 1.10
 

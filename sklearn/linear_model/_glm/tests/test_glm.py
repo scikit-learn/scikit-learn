@@ -443,7 +443,7 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
             # solution by adding a very small penalty. Even that fails for a reason we
             # do not properly understand at this point.
         else:
-            # When `fit_intercept=False`, LBFGS and newton-cg naturally converges to
+            # When `fit_intercept=False`, LBFGS and newton-cg naturally converge to
             # the minimum norm solution on this problem.
             # XXX: Do we have any theoretical guarantees why this should be the case?
             assert model.intercept_ == pytest.approx(intercept, rel=rtol)
