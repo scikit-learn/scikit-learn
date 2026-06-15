@@ -1662,6 +1662,9 @@ def test_quantile_transformer_sparse_subsampling():
     quantiles = qt.quantiles_.T
     # we ignore zeros, and values are strictly positive so:
     assert (qt.quantiles_ > 0).all()
+    # guard against the historical failure mode where one sparse column
+    # could end up with degenerate fitted quantiles under subsampling:
+    assert not np.all(quantiles[1] == quantiles[1][0])
 
     # given that X[:, 0] and X[:, 1] are very similar,
     # you would expect similar quantiles:
