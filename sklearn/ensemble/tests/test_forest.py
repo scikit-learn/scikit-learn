@@ -1955,9 +1955,10 @@ def test_forest_feature_names_in_on_estimators(ForestClass):
     for tree in est.estimators_:
         assert hasattr(tree, "feature_names_in_")
         assert_array_equal(tree.feature_names_in_, ["a", "b"])
-        # predict or predict_proba on individual trees shouldn't raise user warning
-        # about feature names
-        with pytest.warns(None) as record:
+        import warnings
+
+        with warnings.catch_warnings(record=True) as record:
+            warnings.simplefilter("always")
             if hasattr(tree, "predict_proba"):
                 tree.predict_proba(X)
             else:
