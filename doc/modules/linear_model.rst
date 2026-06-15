@@ -1128,7 +1128,7 @@ with `loss="log_loss"`, which might be even faster but requires more tuning.
   The following references explain some of the solvers.
 
   * For "lbfgs", see documentation of
-    :func:`SciPy minimized <scipy:scipy.optimize.minimize>`
+    :func:`SciPy minimized <scipy:scipy.optimize.minimize>`.
 
   * "liblinear"
 
