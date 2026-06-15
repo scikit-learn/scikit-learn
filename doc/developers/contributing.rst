@@ -481,10 +481,9 @@ Pull request checklist
       .. rubric:: BEFORE opening a PR
          :class: rubric-large
 
-      * If the changes are mainly fixing typos or obvious inconsistencies in the
-        documentation, ignore this point.
-        Otherwise, make sure the PR relates to at least one existing issue that is
-        ready for contribution. Please **do not** open PRs for issues:
+      * Unless you're only fixing typos or obvious inconsistencies in the
+        documentation, make sure the PR relates to at least one existing issue 
+        that is ready for contribution. Please **do not** open PRs for issues:
 
         - that are labeled with :ref:`"Needs triage" <issues_tagged_needs_triage>` or any
           other kind of "Needs..." labels,
