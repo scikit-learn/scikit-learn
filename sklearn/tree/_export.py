@@ -36,7 +36,7 @@ def _matplotlib_to_rgb(color):
     return [int(channel * 255) for channel in to_rgb(color)]
 
 
-def _rgb_to_hexstring(rgb: tuple[int, int, int]):
+def _rgb_to_hexstring(rgb):
     """Convert 8bit integer rgb color to html hexstring"""
     return "#{:02x}{:02x}{:02x}".format(*rgb)  # pylint: disable=consider-using-f-string
 
