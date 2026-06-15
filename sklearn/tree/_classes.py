@@ -603,7 +603,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             dtype=np.float32,  # trees require X to be float32
             categories="auto",
             handle_unknown="use_encoded_value",
-            unknown_value=-1,
+            unknown_value=np.nan,
             encoded_missing_value=np.nan,
         )
         self._categorical_encoder.fit(X_categorical)
@@ -616,16 +616,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         missing_mask = _get_mask(np.asarray(X_categorical), np.nan)
         X_categorical = self._categorical_encoder.transform(X_categorical)
         X_categorical[missing_mask] = np.nan
-        unknown_mask = X_categorical == -1
-        if np.any(unknown_mask):
-            categorical_indices = np.flatnonzero(self.is_categorical_)
-            feature_idx = categorical_indices[
-                np.flatnonzero(unknown_mask.any(axis=0))[0]
-            ]
-            raise ValueError(
-                "Found unknown categories in categorical feature "
-                f"{feature_idx} during transform."
-            )
 
         # replace features with the encoded categorical values
         X_out = np.empty(X.shape, dtype=np.float32)

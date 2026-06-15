@@ -3203,27 +3203,6 @@ def test_no_sparse_with_categorical(name):
 
 
 @pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
-@pytest.mark.parametrize(
-    "X_test, match",
-    [
-        (np.array([[2.0]], dtype=np.float64), "Found unknown categories"),
-        (np.array([[0.5]], dtype=np.float64), "Found unknown categories"),
-        (np.array([[-1.0]], dtype=np.float64), "Found unknown categories"),
-    ],
-)
-def test_predict_invalid_categorical_values(Tree, X_test, match):
-    X = np.array([[0.0], [1.0], [0.0], [1.0]], dtype=np.float64)
-    if Tree is DecisionTreeClassifier:
-        y = np.array([0, 1, 0, 1])
-    else:
-        y = np.array([0.0, 1.0, 0.0, 1.0])
-
-    est = Tree(categorical_features=[0], random_state=0).fit(X, y)
-    with pytest.raises(ValueError, match=match):
-        est.predict(X_test)
-
-
-@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
 def test_fit_categorical_with_monotonic_constraint(Tree):
     X = np.array([[0.0], [1.0], [0.0], [1.0]], dtype=np.float64)
     y = np.array([0, 1, 0, 1])
@@ -3278,19 +3257,21 @@ def test_fit_categorical_too_many_categories(Tree):
 
 @pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
 @pytest.mark.parametrize(
-    "X, X_missing",
+    "X, X_missing, X_unknown",
     [
         (
             np.array([[0.0], [0.0], [1.0], [1.0], [np.nan], [np.nan]]),
             np.array([[np.nan]], dtype=np.float64),
+            [[2]],
         ),
         (
             np.array([["a"], ["a"], ["b"], ["b"], [np.nan], [np.nan]], dtype=object),
             np.array([[np.nan]], dtype=object),
+            [["c"]],
         ),
     ],
 )
-def test_fit_categorical_missing_values(Tree, X, X_missing):
+def test_fit_categorical_missing_values(Tree, X, X_missing, X_unknown):
     y = np.array([0, 0, 0, 0, 1, 1])
 
     est = Tree(categorical_features=[0], max_depth=1, random_state=0).fit(X, y)
@@ -3302,15 +3283,8 @@ def test_fit_categorical_missing_values(Tree, X, X_missing):
     assert_array_equal(non_missing_prediction, [0])
     assert missing_prediction[0] != non_missing_prediction[0]
 
-
-@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
-def test_predict_unknown_string_category(Tree):
-    X = np.array([["a"], ["b"], ["a"], ["b"]], dtype=object)
-    y = np.array([0, 1, 0, 1])
-    est = Tree(categorical_features=[0], random_state=0).fit(X, y)
-
-    with pytest.raises(ValueError, match="Found unknown categories"):
-        est.predict(np.array([["c"]], dtype=object))
+    unknown_prediction = est.predict(X_unknown)
+    assert_array_equal(unknown_prediction, missing_prediction)
 
 
 @pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
