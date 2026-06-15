@@ -987,6 +987,7 @@ cdef class BinaryTree{{name_suffix}}:
         n_samples = self.data.shape[0]
         self._update_sample_weight(n_samples, sample_weight)
 
+    # TODO(1.12): remove get_tree_stats
     @deprecated(_STATS_DEPRECATION)
     def get_tree_stats(self):
         """
@@ -1001,6 +1002,7 @@ cdef class BinaryTree{{name_suffix}}:
         """
         return (self.n_trims, self.n_leaves, self.n_splits)
 
+    # TODO(1.12): remove reset_n_calls
     @deprecated(_STATS_DEPRECATION)
     def reset_n_calls(self):
         """
@@ -1010,6 +1012,7 @@ cdef class BinaryTree{{name_suffix}}:
         """
         self.n_calls = 0
 
+    # TODO(1.12): remove get_n_calls
     @deprecated(_STATS_DEPRECATION)
     def get_n_calls(self):
         """
