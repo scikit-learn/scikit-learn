@@ -12,7 +12,7 @@ from sklearn.utils._array_api import (
 )
 from sklearn.utils.estimator_checks import _array_api_for_tests
 from sklearn.utils.fixes import np_version, parse_version
-from sklearn.utils.stats import _weighted_percentile
+from sklearn.utils.stats import _weighted_percentile, _weighted_percentile_1d_sorted
 
 
 @pytest.mark.parametrize("average", [True, False])
@@ -181,6 +181,23 @@ def test_weighted_percentile_constant_multiplier(
         x, weights_multiplied, percentile_rank, average=average
     )
     assert percentile == approx(percentile_multiplier)
+
+
+@pytest.mark.parametrize("percentile_rank", [np.array([0]), np.array([20, 50, 100])])
+def test_weighted_percentile_1d_sorted_matches_weighted_percentile(
+    global_random_seed, percentile_rank
+):
+    """Check sorted 1D helper against `_weighted_percentile`."""
+    rng = np.random.RandomState(global_random_seed)
+    x = np.sort(rng.uniform(size=100))
+    sample_weight = rng.uniform(low=0.1, high=10, size=x.shape[0])
+
+    percentile = _weighted_percentile_1d_sorted(x, sample_weight, percentile_rank)
+    expected_percentile = _weighted_percentile(
+        x, sample_weight, percentile_rank, average=True
+    )
+
+    assert_allclose(percentile, expected_percentile)
 
 
 @pytest.mark.parametrize("percentile_rank", [50, [20, 35, 50]])

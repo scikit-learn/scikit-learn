@@ -24,31 +24,8 @@ from sklearn.utils import check_array, check_random_state
 from sklearn.utils._bitset import set_bitset_memoryview
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.stats import _weighted_percentile_1d_sorted
 from sklearn.utils.validation import check_is_fitted
-
-
-def _weighted_percentile_1d_sorted(col_data, sample_weight, percentiles):
-    """Compute weighted percentiles for sorted 1D data.
-
-    This implements the "averaged_inverted_cdf" method as computed by
-    `_weighted_percentile(..., average=True)`, but it expects:
-    - input `col_data` is sorted
-    - input `col_data` has no NaN values
-    - `sample_weight` has strictly positive values
-    """
-    weight_cdf = np.cumsum(sample_weight, dtype=col_data.dtype)
-    adjusted_quantiles = percentiles / 100 * weight_cdf[-1]
-
-    percentile_indices = np.searchsorted(weight_cdf, adjusted_quantiles)
-
-    fraction_above = weight_cdf[percentile_indices] - adjusted_quantiles
-    is_fraction_above = fraction_above > np.finfo(col_data.dtype).eps
-
-    return np.where(
-        is_fraction_above,
-        col_data[percentile_indices],
-        (col_data[percentile_indices] + col_data[percentile_indices + 1]) / 2,
-    )
 
 
 def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
@@ -82,7 +59,7 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
         col_data = col_data[:idx_nan]
     else:
         # first remove missing values because argsort is much slower when missing
-        values are present (which is not the case for sort)
+        # values are present (which is not the case for sort)
         missing_mask = np.isnan(col_data)
         if missing_mask.any():
             col_data = col_data[~missing_mask]
