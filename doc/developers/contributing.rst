@@ -439,18 +439,18 @@ Pull request checklist
 
       * You added new tests for your bug-fixes or new features. In the
         case of bug fixes, at the time of the PR, the tests should fail for the code
-        base in the ``main`` branch and pass for the PR code. (The code coverage CI test
-        will fail if newly added code paths are not covered by a test)
+        base in the ``main`` branch and pass for the PR code. The code coverage CI test
+        will fail if newly added code paths are not covered by a test.
 
-      * All tests pass locally
+      * All :ref:`tests pass locally<testing_coverage>`
 
       .. rubric:: WHEN opening a PR
          :class: rubric-large
 
       * Give your pull request a helpful title that summarizes what your
         contribution does. This title will become the commit message once merged. In
-        some cases "Fix <ISSUE TITLE>" is enough.
-        "Fix #<ISSUE NUMBER>" is **not** a good title.
+        some cases "Fix <ISSUE TITLE>" is enough. "Fix #<ISSUE NUMBER>" is **not** a
+        good title.
 
       * Fill out the `pull request template <https://github.com/scikit-learn/scikit-learn/blob/main/.github/PULL_REQUEST_TEMPLATE.md>`_.
 
@@ -544,30 +544,6 @@ Pull request checklist
       benefit from the inclusion of a `task list
       <https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments>`_ in
       the PR description.
-
-
-3. **Make sure your code passes the tests**. The whole test suite can be run
-   with `pytest`, but it is usually not recommended since it takes a long
-   time. It is often enough to only run the test related to your changes:
-   for example, if you changed something in
-   `sklearn/linear_model/_logistic.py`, running the following commands will
-   usually be enough:
-
-   - `pytest sklearn/linear_model/_logistic.py` to make sure the doctest
-     examples are correct
-   - `pytest sklearn/linear_model/tests/test_logistic.py` to run the tests
-     specific to the file
-   - `pytest sklearn/linear_model` to test the whole
-     :mod:`~sklearn.linear_model` module
-   - `pytest doc/modules/linear_model.rst` to make sure the user guide
-     examples are correct.
-   - `pytest sklearn/tests/test_common.py -k LogisticRegression` to run all our
-     estimator checks (specifically for `LogisticRegression`, if that's the
-     estimator you changed).
-
-   There may be other failing tests, but they will be caught by the CI so
-   you don't need to run the whole test suite locally. For guidelines on how
-   to use ``pytest`` efficiently, see the :ref:`pytest_tips`.
 
 9. PRs should often substantiate the change, through benchmarks of
    performance and efficiency (see :ref:`monitoring_performances`) or through
@@ -1161,15 +1137,33 @@ Testing and improving test coverage
 High-quality `unit testing <https://en.wikipedia.org/wiki/Unit_testing>`_
 is a corner-stone of the scikit-learn development process. For this
 purpose, we use the `pytest <https://docs.pytest.org>`_
-package. The tests are functions appropriately named, located in `tests`
+package.
+
+The tests are functions appropriately named, located in `tests`
 subdirectories, that check the validity of the algorithms and the
 different options of the code.
 
-Running `pytest` in a folder will run all the tests of the corresponding
-subpackages. For a more detailed `pytest` workflow, please refer to the
-:ref:`pr_checklist`.
+The whole test suite can be run with `pytest`, but it is usually not recommended since
+it takes a long time. It is often enough to only run the test related to your changes:
+for example, if you changed something in
+`sklearn/linear_model/_logistic.py`, running the following commands will
+usually be enough:
 
-We expect code coverage of new features to be at least around 90%.
+- `pytest sklearn/linear_model/_logistic.py` to make sure the doctest
+  examples are correct
+- `pytest sklearn/linear_model/tests/test_logistic.py` to run the tests
+  specific to the file
+- `pytest sklearn/linear_model` to test the whole
+  :mod:`~sklearn.linear_model` module
+- `pytest doc/modules/linear_model.rst` to make sure the user guide
+  examples are correct.
+- `pytest sklearn/tests/test_common.py -k LogisticRegression` to run all our
+  estimator checks (specifically for `LogisticRegression`, if that's the
+  estimator you changed).
+
+There may be other failing tests, but they will be caught by the CI so
+you don't need to run the whole test suite locally. For guidelines on how
+to use ``pytest`` efficiently, see the :ref:`pytest_tips`.
 
 .. dropdown:: Writing matplotlib-related tests
 
