@@ -397,9 +397,7 @@ def test_countvectorizer_empty_vocabulary_ngram_range():
 
     # word analyzer with single-word documents and ngram_range=(3, 3)
     with pytest.raises(ValueError, match=r"ngram_range\[0\]=3"):
-        CountVectorizer(ngram_range=(3, 3)).fit_transform(
-            ["hello", "world", "foo"]
-        )
+        CountVectorizer(ngram_range=(3, 3)).fit_transform(["hello", "world", "foo"])
 
     # ngram_range=(1, 1) should NOT mention ngram_range
     with pytest.raises(ValueError, match="^(?!.*ngram_range).*empty vocabulary"):
