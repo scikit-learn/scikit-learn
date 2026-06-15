@@ -160,6 +160,10 @@ def _enable_threading():
     # TODO figuer out if parallel_config()'s public API guarantees
     # non-contextmanager usage works.
     joblib.parallel_config(backend="threading").__enter__()
+    if threading_mode == "tod":
+        import openblas_tod
+
+        openblas_tod.install()
 
 
 _enable_threading()
