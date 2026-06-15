@@ -1,2 +1,0 @@
-- :func:`metrics.cluster.entropy` is deprecated and will be removed in v1.10.
-  By :user:`Lucy Liu <lucyleeow>`

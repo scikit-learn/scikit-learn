@@ -381,11 +381,10 @@ The parameter `deep` controls whether or not the parameters of the
     subestimator__dual -> False
     subestimator__fit_intercept -> True
     subestimator__intercept_scaling -> 1
-    subestimator__l1_ratio -> None
+    subestimator__l1_ratio -> 0.0
     subestimator__max_iter -> 100
-    subestimator__multi_class -> deprecated
     subestimator__n_jobs -> None
-    subestimator__penalty -> l2
+    subestimator__penalty -> deprecated
     subestimator__random_state -> None
     subestimator__solver -> lbfgs
     subestimator__tol -> 0.0001
@@ -584,8 +583,9 @@ keyword arguments to its super class. Super classes' `__init_subclass__` should
 For transformers that return multiple arrays in `transform`, auto wrapping will
 only wrap the first array and not alter the other arrays.
 
-See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`
-for an example on how to use the API.
+Refer to the :ref:`user guide <df_output_transform>` for more details
+and :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py` for an
+example on how to use the API.
 
 .. _developer_api_check_is_fitted:
 

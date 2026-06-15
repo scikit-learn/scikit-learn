@@ -40,11 +40,20 @@ def _calculate_threshold(estimator, importances, threshold):
         is_elasticnetcv_l1_penalized = est_name == "ElasticNetCV" and (
             hasattr(estimator, "l1_ratio_") and np.isclose(estimator.l1_ratio_, 1.0)
         )
+        is_logreg_l1_penalized = est_name == "LogisticRegression" and (
+            hasattr(estimator, "l1_ratio") and np.isclose(estimator.l1_ratio, 1.0)
+        )
+        is_logregcv_l1_penalized = est_name == "LogisticRegressionCV" and (
+            hasattr(estimator, "l1_ratio_")
+            and np.all(np.isclose(estimator.l1_ratio_, 1.0))
+        )
         if (
             is_l1_penalized
             or is_lasso
             or is_elasticnet_l1_penalized
             or is_elasticnetcv_l1_penalized
+            or is_logreg_l1_penalized
+            or is_logregcv_l1_penalized
         ):
             # the natural default threshold is 0 when l1 penalty was used
             threshold = 1e-5
@@ -468,7 +477,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     @property
     def n_features_in_(self):
         """Number of features seen during `fit`."""
-        # For consistency with other estimators we raise a AttributeError so
+        # For consistency with other estimators we raise an AttributeError so
         # that hasattr() fails if the estimator isn't fitted.
         try:
             check_is_fitted(self)

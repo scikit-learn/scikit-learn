@@ -21,10 +21,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.exceptions import ConvergenceWarning
 
 # make it possible to discover experimental estimators when calling `all_estimators`
-from sklearn.experimental import (
-    enable_halving_search_cv,  # noqa: F401
-    enable_iterative_imputer,  # noqa: F401
-)
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import FeatureUnion, make_pipeline
 from sklearn.preprocessing import (
@@ -45,6 +42,7 @@ from sklearn.utils._testing import (
     ignore_warnings,
 )
 from sklearn.utils.estimator_checks import (
+    check_all_zero_sample_weights_error,
     check_dataframe_column_names_consistency,
     check_estimator,
     check_get_feature_names_out_error,
@@ -59,6 +57,7 @@ from sklearn.utils.estimator_checks import (
     check_transformer_get_feature_names_out_pandas,
     parametrize_with_checks,
 )
+from sklearn.utils.validation import has_fit_parameter
 
 
 @pytest.mark.thread_unsafe  # import side-effects
@@ -111,6 +110,7 @@ def test_get_check_estimator_ids(val, expected):
     assert _get_check_estimator_ids(val) == expected
 
 
+@pytest.mark.no_check_spmatrix  # pickle breaks check_spmatrix
 @parametrize_with_checks(
     list(_tested_estimators()), expected_failed_checks=_get_expected_failed_checks
 )
@@ -122,9 +122,14 @@ def test_estimators(estimator, check, request):
         check(estimator)
 
 
+# TODO(1.12): remove filter
 @pytest.mark.filterwarnings(
-    "ignore:Since version 1.0, it is not needed to import "
-    "enable_hist_gradient_boosting anymore"
+    "ignore:The sklearn.experimental.enable_hist_gradient_boosting module is "
+    "deprecated:FutureWarning"
+)
+@pytest.mark.filterwarnings(
+    "ignore:Since version 1.10, it is not needed to import "
+    "enable_iterative_imputer anymore"
 )
 @pytest.mark.thread_unsafe  # import side-effects
 def test_import_all_consistency():
@@ -399,3 +404,17 @@ def test_check_inplace_ensure_writeable(estimator):
         estimator.set_params(kernel="precomputed")
 
     check_inplace_ensure_writeable(name, estimator)
+
+
+ESTIMATORS_ACCEPTING_SAMPLE_WEIGHTS = [
+    est for est in _tested_estimators() if has_fit_parameter(est, "sample_weight")
+]
+
+
+@pytest.mark.parametrize(
+    "estimator", ESTIMATORS_ACCEPTING_SAMPLE_WEIGHTS, ids=_get_check_estimator_ids
+)
+def test_check_all_zero_sample_weights_error(estimator):
+    name = estimator.__class__.__name__
+
+    check_all_zero_sample_weights_error(name, estimator)

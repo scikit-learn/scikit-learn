@@ -10,6 +10,7 @@ import time
 from contextlib import closing
 from functools import wraps
 from os.path import join
+from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 from urllib.error import HTTPError, URLError
@@ -33,10 +34,10 @@ from sklearn.utils._param_validation import (
 
 __all__ = ["fetch_openml"]
 
-_SEARCH_NAME = "https://api.openml.org/api/v1/json/data/list/data_name/{}/limit/2"
-_DATA_INFO = "https://api.openml.org/api/v1/json/data/{}"
-_DATA_FEATURES = "https://api.openml.org/api/v1/json/data/features/{}"
-_DATA_QUALITIES = "https://api.openml.org/api/v1/json/data/qualities/{}"
+_SEARCH_NAME = "https://www.openml.org/api/v1/json/data/list/data_name/{}/limit/2"
+_DATA_INFO = "https://www.openml.org/api/v1/json/data/{}"
+_DATA_FEATURES = "https://www.openml.org/api/v1/json/data/features/{}"
+_DATA_QUALITIES = "https://www.openml.org/api/v1/json/data/qualities/{}"
 
 OpenmlQualitiesType = List[Dict[str, str]]
 OpenmlFeaturesType = List[Dict[str, str]]
@@ -46,22 +47,35 @@ def _get_local_path(openml_path: str, data_home: str) -> str:
     return os.path.join(data_home, "openml.org", openml_path + ".gz")
 
 
+def _openml_path_from_url(url: str) -> str:
+    """Return the OpenML cache-relative path encoded in a download/API ``url``.
+
+    This is the path component of the URL, used both to download the resource
+    and to mirror it as sub-folders of the local cache folder.
+
+    >>> from sklearn.datasets._openml import _openml_path_from_url
+    >>> _openml_path_from_url("https://www.openml.org/data/v1/download/42/iris.arff")
+    'data/v1/download/42/iris.arff'
+    """
+    return urlparse(url).path.lstrip("/")
+
+
 def _retry_with_clean_cache(
     openml_path: str,
     data_home: Optional[str],
     no_retry_exception: Optional[Exception] = None,
 ) -> Callable:
-    """If the first call to the decorated function fails, the local cached
-    file is removed, and the function is called again. If ``data_home`` is
-    ``None``, then the function is called once. We can provide a specific
-    exception to not retry on using `no_retry_exception` parameter.
+    """If the first call to the decorated function fails, the local cached file
+    (if any) is removed and the function is called again. The retry happens
+    whether or not ``data_home`` is set: when caching is disabled there is no
+    file to remove and the function is simply called a second time. We can
+    provide a specific exception to not retry on using `no_retry_exception`
+    parameter.
     """
 
     def decorator(f):
         @wraps(f)
         def wrapper(*args, **kw):
-            if data_home is None:
-                return f(*args, **kw)
             try:
                 return f(*args, **kw)
             except URLError:
@@ -71,10 +85,18 @@ def _retry_with_clean_cache(
                     exc, no_retry_exception
                 ):
                     raise
-                warn("Invalid cache, redownloading file", RuntimeWarning)
-                local_path = _get_local_path(openml_path, data_home)
-                if os.path.exists(local_path):
-                    os.unlink(local_path)
+                if data_home is None:
+                    warn(
+                        "Downloaded file could have been corrupted, redownloading.",
+                        RuntimeWarning,
+                    )
+                else:
+                    local_path = _get_local_path(openml_path, data_home)
+                    warn(
+                        f"Invalid cache, redownloading file to {local_path}",
+                        RuntimeWarning,
+                    )
+                    Path(local_path).unlink(missing_ok=True)
                 return f(*args, **kw)
 
         return wrapper
@@ -163,7 +185,7 @@ def _open_openml_url(
             return gzip.GzipFile(fileobj=fsrc, mode="rb")
         return fsrc
 
-    openml_path = urlparse(url).path.lstrip("/")
+    openml_path = _openml_path_from_url(url)
     local_path = _get_local_path(openml_path, data_home)
     dir_name, file_name = os.path.split(local_path)
     if not os.path.exists(local_path):
@@ -240,7 +262,7 @@ def _get_json_content_from_openml_api(
         An exception otherwise.
     """
 
-    @_retry_with_clean_cache(url, data_home=data_home)
+    @_retry_with_clean_cache(_openml_path_from_url(url), data_home=data_home)
     def _load_json():
         with closing(
             _open_openml_url(url, data_home, n_retries=n_retries, delay=delay)
@@ -529,11 +551,15 @@ def _load_arff_response(
         actual_md5_checksum = md5.hexdigest()
 
     if actual_md5_checksum != md5_checksum:
+        location = f"downloaded from {url}"
+        if data_home is not None:
+            local_path = _get_local_path(_openml_path_from_url(url), data_home)
+            location += f" and cached at {local_path}"
         raise ValueError(
-            f"md5 checksum of local file for {url} does not match description: "
-            f"expected: {md5_checksum} but got {actual_md5_checksum}. "
-            "Downloaded file could have been modified / corrupted, clean cache "
-            "and retry..."
+            f"The md5 checksum of the file {location} does not match the expected "
+            f"checksum from the dataset description: expected {md5_checksum} but "
+            f"got {actual_md5_checksum}. The downloaded file could have been "
+            "modified or corrupted; clean the cache and retry."
         )
 
     def _open_url_and_load_gzip_file(url, data_home, n_retries, delay, arff_params):
@@ -687,7 +713,7 @@ def _download_data_to_bunch(
         no_retry_exception = ParserError
 
     X, y, frame, categories = _retry_with_clean_cache(
-        url, data_home, no_retry_exception
+        _openml_path_from_url(url), data_home, no_retry_exception
     )(_load_arff_response)(
         url,
         data_home,
@@ -892,7 +918,7 @@ def fetch_openml(
 
     read_csv_kwargs : dict, default=None
         Keyword arguments passed to :func:`pandas.read_csv` when loading the data
-        from a ARFF file and using the pandas parser. It can allow to
+        from an ARFF file and using the pandas parser. It can allow to
         overwrite some default parameters.
 
         .. versionadded:: 1.3

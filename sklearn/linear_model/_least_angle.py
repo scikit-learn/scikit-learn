@@ -15,16 +15,21 @@ import numpy as np
 from scipy import interpolate, linalg
 from scipy.linalg.lapack import get_lapack_funcs
 
-from sklearn.base import MultiOutputMixin, RegressorMixin, _fit_context
+from sklearn.base import RegressorMixin, _fit_context
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.linear_model._base import LinearModel, LinearRegression, _preprocess_data
+from sklearn.linear_model._base import (
+    LinearRegression,
+    MultiOutputLinearModel,
+    _preprocess_data,
+)
 from sklearn.model_selection import check_cv
 
 # mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
-from sklearn.utils import Bunch, arrayfuncs, as_float_array, check_random_state
+from sklearn.utils import arrayfuncs, as_float_array, check_random_state
 from sklearn.utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _raise_for_params,
     _routing_enabled,
     process_routing,
@@ -917,8 +922,8 @@ def _lars_path_solver(
 # Estimator classes
 
 
-class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
-    """Least Angle Regression model a.k.a. LAR.
+class Lars(RegressorMixin, MultiOutputLinearModel):
+    """Least Angle Regression model aka LAR.
 
     Read more in the :ref:`User Guide <least_angle_regression>`.
 
@@ -1208,7 +1213,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
 
 
 class LassoLars(Lars):
-    """Lasso model fit with Least Angle Regression a.k.a. Lars.
+    """Lasso model fit with Least Angle Regression aka Lars.
 
     It is a Linear Model trained with an L1 prior as regularizer.
 
@@ -1542,9 +1547,9 @@ class LarsCV(Lars):
         Possible inputs for cv are:
 
         - None, to use the default 5-fold cross-validation,
-        - integer, to specify the number of folds.
+        - integer, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, :class:`~sklearn.model_selection.KFold` is used.
 
@@ -1733,7 +1738,7 @@ class LarsCV(Lars):
         if _routing_enabled():
             routed_params = process_routing(self, "fit", **params)
         else:
-            routed_params = Bunch(splitter=Bunch(split={}))
+            routed_params = _manual_routing({"splitter": {}})
 
         # As we use cross-validation, the Gram matrix is not precomputed here
         Gram = self.precompute
@@ -1862,9 +1867,9 @@ class LassoLarsCV(LarsCV):
         Possible inputs for cv are:
 
         - None, to use the default 5-fold cross-validation,
-        - integer, to specify the number of folds.
+        - integer, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, :class:`~sklearn.model_selection.KFold` is used.
 

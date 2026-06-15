@@ -71,7 +71,7 @@ loglik_real = -log_likelihood(emp_cov, linalg.inv(real_cov))
 #   according to a grid of potential shrinkage parameters.
 #
 # * A close formula proposed by Ledoit and Wolf to compute
-#   the asymptotically optimal regularization parameter (minimizing a MSE
+#   the asymptotically optimal regularization parameter (minimizing an MSE
 #   criterion), yielding the :class:`~sklearn.covariance.LedoitWolf`
 #   covariance estimate.
 #

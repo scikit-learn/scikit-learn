@@ -6,7 +6,7 @@ import itertools
 import re
 import shutil
 import time
-from tempfile import mkdtemp
+from tempfile import TemporaryDirectory, mkdtemp
 
 import joblib
 import numpy as np
@@ -21,6 +21,12 @@ from sklearn.base import (
     is_classifier,
     is_regressor,
 )
+from sklearn.callback.tests._utils import (
+    MaxIterEstimator,
+    RecordingAutoPropagatedCallback,
+    RecordingCallback,
+    skip_callback_test_if_wasm,
+)
 from sklearn.cluster import KMeans
 from sklearn.datasets import load_iris
 from sklearn.decomposition import PCA, TruncatedSVD
@@ -34,11 +40,18 @@ from sklearn.exceptions import NotFittedError, UnsetMetadataPassedError
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.impute import SimpleImputer
+from sklearn.kernel_approximation import Nystroem
 from sklearn.linear_model import Lasso, LinearRegression, LogisticRegression
 from sklearn.metrics import accuracy_score, r2_score
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import LocalOutlierFactor
-from sklearn.pipeline import FeatureUnion, Pipeline, make_pipeline, make_union
+from sklearn.pipeline import (
+    FeatureUnion,
+    Pipeline,
+    _transform_one,
+    make_pipeline,
+    make_union,
+)
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
 from sklearn.svm import SVC
 from sklearn.tests.metadata_routing_common import (
@@ -48,11 +61,18 @@ from sklearn.tests.metadata_routing_common import (
     check_recorded_metadata,
 )
 from sklearn.utils import get_tags
+from sklearn.utils._array_api import (
+    _atol_for_type,
+    get_namespace_and_device,
+    move_to,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._metadata_requests import COMPOSITE_METHODS, METHODS
 from sklearn.utils._testing import (
     MinimalClassifier,
     MinimalRegressor,
     MinimalTransformer,
+    _array_api_for_tests,
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
@@ -282,6 +302,31 @@ def test_pipeline_invalid_parameters():
     assert params == params2
 
 
+@pytest.mark.parametrize(
+    "meta_estimators, class_name",
+    [
+        (Pipeline([("pca", PCA)]), "PCA"),
+        (Pipeline([("pca", PCA), ("ident", None)]), "PCA"),
+        (Pipeline([("passthrough", "passthrough"), ("pca", PCA)]), "PCA"),
+        (Pipeline([("passthrough", None), ("pca", PCA)]), "PCA"),
+        (Pipeline([("scale", StandardScaler), ("pca", PCA())]), "StandardScaler"),
+        (FeatureUnion([("pca", PCA), ("svd", TruncatedSVD())]), "PCA"),
+        (FeatureUnion([("pca", PCA()), ("svd", TruncatedSVD)]), "TruncatedSVD"),
+        (FeatureUnion([("drop", "drop"), ("svd", TruncatedSVD)]), "TruncatedSVD"),
+        (FeatureUnion([("pca", PCA), ("passthrough", "passthrough")]), "PCA"),
+    ],
+)
+def test_meta_estimator_raises_class_not_instance_error(meta_estimators, class_name):
+    # non-regression tests for https://github.com/scikit-learn/scikit-learn/issues/32719
+    meta_estimators = clone(meta_estimators)
+    msg = re.escape(
+        f"Expected an estimator instance ({class_name}()), "
+        f"got estimator class instead ({class_name})."
+    )
+    with pytest.raises(TypeError, match=msg):
+        meta_estimators.fit([[1]])
+
+
 def test_empty_pipeline():
     X = iris.data
     y = iris.target
@@ -290,6 +335,13 @@ def test_empty_pipeline():
     msg = "The pipeline is empty. Please add steps."
     with pytest.raises(ValueError, match=msg):
         pipe.fit(X, y)
+
+
+def test_empty_pipeline_dir():
+    """Check that dir() works on an empty pipeline"""
+    pipe = Pipeline([])
+    attrs = dir(pipe)
+    assert "steps" in attrs
 
 
 def test_pipeline_init_tuple():
@@ -386,14 +438,14 @@ def test_pipeline_raise_set_params_error():
         pipe.set_params(cls__invalid_param="nope")
 
 
-def test_pipeline_methods_pca_svm():
+def test_pipeline_methods_pca_classifier():
     # Test the various methods of the pipeline (pca + svm).
     X = iris.data
     y = iris.target
-    # Test with PCA + SVC
-    clf = SVC(probability=True, random_state=0)
+    # Test with PCA + LogisticRegression
+    clf = LogisticRegression()
     pca = PCA(svd_solver="full", n_components="mle", whiten=True)
-    pipe = Pipeline([("pca", pca), ("svc", clf)])
+    pipe = Pipeline([("pca", pca), ("classifier", clf)])
     pipe.fit(X, y)
     pipe.predict(X)
     pipe.predict_proba(X)
@@ -434,7 +486,7 @@ def test_score_samples_on_pipeline_without_score_samples():
     assert inner_msg in str(exec_info.value.__cause__)
 
 
-def test_pipeline_methods_preprocessing_svm():
+def test_pipeline_methods_preprocessing_classifier():
     # Test the various methods of the pipeline (preprocessing + svm).
     X = iris.data
     y = iris.target
@@ -442,7 +494,7 @@ def test_pipeline_methods_preprocessing_svm():
     n_classes = len(np.unique(y))
     scaler = StandardScaler()
     pca = PCA(n_components=2, svd_solver="randomized", whiten=True)
-    clf = SVC(probability=True, random_state=0, decision_function_shape="ovr")
+    clf = LogisticRegression()
 
     for preprocessing in [scaler, pca]:
         pipe = Pipeline([("preprocess", preprocessing), ("svc", clf)])
@@ -830,7 +882,7 @@ def test_set_pipeline_step_passthrough(passthrough):
         "memory": None,
         "m2__mult": 2,
         "last__mult": 5,
-        "transform_input": None,
+        "transform_input": ("X_val",),
         "verbose": False,
     }
 
@@ -1339,6 +1391,55 @@ def test_feature_union_passthrough_get_feature_names_out_false_errors_overlap_ov
         union.get_feature_names_out()
 
 
+# DfOutTransformer that does not define get_feature_names_out
+class DfOutTransformer(BaseEstimator):
+    def __init__(self, offset=1.0):
+        self.offset = offset
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        return X - self.offset
+
+    def set_output(self, transform=None):
+        # This transformer will always output a DataFrame regardless of the
+        # configuration.
+        return self
+
+
+@pytest.mark.parametrize("df_lib_name", ["pandas", "polars"])
+@pytest.mark.parametrize(
+    "T1",
+    [StandardScaler(), DfOutTransformer(), "passthrough"],
+    ids=["StandardScaler", "DfOutTransformer", "passthrough"],
+)
+def test_feature_union_duplicate_column_names(df_lib_name, T1):
+    """Check FeatureUnion behavior when transformers output duplicate column names.
+
+    Check that an error is raised when verbose_feature_names_out is False.
+    Check that no error is raised and columns are correctly prefixed when
+    verbose_feature_names_out is True.
+
+    Non-regression test for issue #32104
+    """
+    df_lib = pytest.importorskip(df_lib_name)
+    df = df_lib.DataFrame({"a": [1, 2, 3, 4], "b": [1, 2, 3, 4]})
+    fu = FeatureUnion([("t1", T1), ("t2", StandardScaler())])
+    fu.set_output(transform=df_lib_name)
+
+    # by default, verbose_feature_names_out is True
+    df_t = fu.fit_transform(df)
+    assert list(df_t.columns) == ["t1__a", "t1__b", "t2__a", "t2__b"]
+
+    # input dataframe is not mutated
+    assert list(df.columns) == ["a", "b"]
+
+    fu.set_params(verbose_feature_names_out=False)
+    with pytest.raises(ValueError, match=r"Output feature names:.*are not unique"):
+        fu.fit_transform(df)
+
+
 def test_step_name_validation():
     error_message_1 = r"Estimator names must not contain __: got \['a__q'\]"
     error_message_2 = r"Names provided are not unique: \['a', 'a'\]"
@@ -1792,7 +1893,7 @@ def test_feature_union_check_if_fitted():
 def test_pipeline_get_feature_names_out_passes_names_through():
     """Check that pipeline passes names through.
 
-    Non-regresion test for #21349.
+    Non-regression test for #21349.
     """
     X, y = iris.data, iris.target
 
@@ -1826,20 +1927,22 @@ def test_pipeline_set_output_integration():
     assert_array_equal(feature_names_in_, log_reg_feature_names)
 
 
-def test_feature_union_set_output():
+@pytest.mark.parametrize("df_library", ["pandas", "polars"])
+def test_feature_union_set_output(df_library):
     """Test feature union with set_output API."""
-    pd = pytest.importorskip("pandas")
+    lib = pytest.importorskip(df_library)
 
     X, _ = load_iris(as_frame=True, return_X_y=True)
     X_train, X_test = train_test_split(X, random_state=0)
     union = FeatureUnion([("scalar", StandardScaler()), ("pca", PCA())])
-    union.set_output(transform="pandas")
+    union.set_output(transform=df_library)
     union.fit(X_train)
 
     X_trans = union.transform(X_test)
-    assert isinstance(X_trans, pd.DataFrame)
+    assert isinstance(X_trans, lib.DataFrame)
     assert_array_equal(X_trans.columns, union.get_feature_names_out())
-    assert_array_equal(X_trans.index, X_test.index)
+    if df_library == "pandas":
+        assert_array_equal(X_trans.index, X_test.index)
 
 
 def test_feature_union_getitem():
@@ -1919,13 +2022,91 @@ def test_feature_union_1d_output():
         ).fit_transform(X)
 
 
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_feature_union_array_api_compliance(array_namespace, device_name, dtype_name):
+    """Test that FeatureUnion with Array API-compatible transformers works."""
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
+    rnd = np.random.RandomState(0)
+    n_samples, n_features = 20, 10
+    X_np = rnd.uniform(size=(n_samples, n_features)).astype(dtype_name)
+    X_xp = xp.asarray(X_np, device=device)
+
+    n_components_1, n_components_2 = 5, 8
+    union = FeatureUnion(
+        [
+            ("nystroem1", Nystroem(n_components=n_components_1, random_state=0)),
+            ("nystroem2", Nystroem(n_components=n_components_2, random_state=1)),
+        ]
+    )
+
+    X_np_transformed = union.fit_transform(X_np)
+
+    with config_context(array_api_dispatch=True):
+        X_xp_transformed = union.fit_transform(X_xp)
+        X_xp_transformed_np = move_to(X_xp_transformed, xp=np, device="cpu")
+
+        for name, trans in union.transformer_list:
+            for attr in ["components_", "normalization_"]:
+                if hasattr(trans, attr):
+                    trans_xp, _, trans_device = get_namespace_and_device(
+                        getattr(trans, attr)
+                    )
+                    assert trans_xp is xp
+                    assert trans_device == get_namespace_and_device(X_xp)[2]
+
+    atol = _atol_for_type(dtype_name)
+    assert_allclose(X_np_transformed, X_xp_transformed_np, atol=atol)
+    assert X_xp_transformed_np.shape == (
+        n_samples,
+        n_components_1 + n_components_2,
+    )
+
+
+def test_feature_union_array_api_support_tag():
+    """Check that FeatureUnion.array_api_support tag reflects its transformers."""
+    # All transformers support Array API -> union supports it
+    union = FeatureUnion(
+        [
+            ("scaler", StandardScaler()),
+            ("nystroem", Nystroem(n_components=5, random_state=0)),
+        ]
+    )
+    assert get_tags(union).array_api_support is True
+
+    # One transformer does not support Array API -> union does not
+    union = FeatureUnion(
+        [
+            ("scaler", StandardScaler()),
+            ("svd", TruncatedSVD(n_components=2)),
+        ]
+    )
+    assert get_tags(union).array_api_support is False
+
+    # passthrough/drop are treated as supporting Array API
+    union = FeatureUnion(
+        [
+            ("scaler", StandardScaler()),
+            ("pass", "passthrough"),
+            ("dropped", "drop"),
+        ]
+    )
+    assert get_tags(union).array_api_support is True
+
+    # Only drop and passthrough -> True
+    union = make_union("drop", "passthrough")
+    assert get_tags(union).array_api_support is True
+
+
 # transform_input tests
 # =====================
 
 
 @config_context(enable_metadata_routing=True)
-@pytest.mark.parametrize("method", ["fit", "fit_transform"])
-def test_transform_input_pipeline(method):
+@pytest.mark.parametrize("pipeline_method", ["fit", "fit_transform"])
+def test_transform_input_pipeline(pipeline_method):
     """Test that with transform_input, data is correctly transformed for each step."""
 
     def get_transformer(registry, sample_weight, metadata):
@@ -1957,18 +2138,6 @@ def test_transform_input_pipeline(method):
         )
         return pipe, registry_1, registry_2, registry_3, registry_4
 
-    def check_metadata(registry, methods, **metadata):
-        """Check that the right metadata was recorded for the given methods."""
-        assert registry
-        for estimator in registry:
-            for method in methods:
-                check_recorded_metadata(
-                    estimator,
-                    method=method,
-                    parent=method,
-                    **metadata,
-                )
-
     X = np.array([[1, 2], [3, 4]])
     y = np.array([0, 1])
     sample_weight = np.array([[1, 2]])
@@ -1976,7 +2145,7 @@ def test_transform_input_pipeline(method):
     metadata = np.array([[100, 200]])
 
     pipe, registry_1, registry_2, registry_3, registry_4 = get_pipeline()
-    pipe.fit(
+    getattr(pipe, pipeline_method)(
         X,
         y,
         sample_weight=sample_weight,
@@ -1984,22 +2153,34 @@ def test_transform_input_pipeline(method):
         metadata=metadata,
     )
 
-    check_metadata(
-        registry_1, ["fit", "transform"], sample_weight=sample_weight, metadata=metadata
+    check_recorded_metadata(
+        registry_1[-1],
+        method="fit_transform",
+        parent=pipeline_method,
+        sample_weight=sample_weight,
+        metadata=metadata,
     )
-    check_metadata(registry_2, ["fit", "transform"])
-    check_metadata(
-        registry_3,
-        ["fit", "transform"],
+    check_recorded_metadata(
+        registry_2[-1], method="fit_transform", parent=pipeline_method
+    )
+    check_recorded_metadata(
+        registry_3[-1],
+        method="fit_transform",
+        parent=pipeline_method,
         sample_weight=sample_weight + 2,
         metadata=metadata,
     )
-    check_metadata(
-        registry_4,
-        method.split("_"),  # ["fit", "transform"] if "fit_transform", ["fit"] otherwise
-        sample_weight=other_weights + 3,
-        metadata=metadata,
+    last_callees = (
+        ["fit"] if pipeline_method == "fit" else ["fit_transform", "fit", "transform"]
     )
+    for callee in last_callees:
+        check_recorded_metadata(
+            registry_4[-1],
+            method=callee,
+            parent=pipeline_method,
+            sample_weight=other_weights + 3,
+            metadata=metadata,
+        )
 
 
 @config_context(enable_metadata_routing=True)
@@ -2040,9 +2221,18 @@ def test_transform_input_no_slep6():
     """Make sure the right error is raised if slep6 is not enabled."""
     X = np.array([[1, 2], [3, 4]])
     y = np.array([0, 1])
-    msg = "The `transform_input` parameter can only be set if metadata"
+
+    # non-default / non-empty transform_input raises
+    msg = "The `transform_input` parameter can only be used if metadata"
     with pytest.raises(ValueError, match=msg):
         make_pipeline(DummyTransf(), transform_input=["blah"]).fit(X, y)
+
+    # default ("X_val",) doesn't raise even when X_val is not passed
+    make_pipeline(DummyTransf()).fit(X, y)
+
+    # the usual metadata-routing error is raised if X_val is passed
+    with pytest.raises(ValueError, match="Pipeline.fit does not accept"):
+        make_pipeline(DummyTransf()).fit(X, y, X_val=X)
 
 
 @config_context(enable_metadata_routing=True)
@@ -2205,9 +2395,11 @@ class SimpleEstimator(BaseEstimator):
 
 
 # split and partial_fit not relevant for pipelines
-@pytest.mark.parametrize("method", sorted(set(METHODS) - {"split", "partial_fit"}))
+@pytest.mark.parametrize(
+    "parent_method", sorted(set(METHODS) - {"split", "partial_fit"})
+)
 @config_context(enable_metadata_routing=True)
-def test_metadata_routing_for_pipeline(method):
+def test_metadata_routing_for_pipeline(parent_method):
     """Test that metadata is routed correctly for pipelines."""
 
     def set_request(est, method, **kwarg):
@@ -2230,7 +2422,7 @@ def test_metadata_routing_for_pipeline(method):
 
     # test that metadata is routed correctly for pipelines when requested
     est = SimpleEstimator()
-    est = set_request(est, method, sample_weight=True, prop=True)
+    est = set_request(est, parent_method, sample_weight=True, prop=True)
     est = set_request(est, "fit", sample_weight=True, prop=True)
     trs = (
         ConsumingTransformer()
@@ -2240,32 +2432,49 @@ def test_metadata_routing_for_pipeline(method):
     )
     pipeline = Pipeline([("trs", trs), ("estimator", est)])
 
-    if "fit" not in method:
+    if "fit" not in parent_method:
         pipeline = pipeline.fit(X, y, sample_weight=sample_weight, prop=prop)
+        trs._records.clear()  # clear records so we don't check these records below
 
     try:
-        getattr(pipeline, method)(
+        getattr(pipeline, parent_method)(
             X, y, sample_weight=sample_weight, prop=prop, metadata=metadata
         )
     except TypeError:
         # Some methods don't accept y
-        getattr(pipeline, method)(
+        getattr(pipeline, parent_method)(
             X, sample_weight=sample_weight, prop=prop, metadata=metadata
         )
 
     # Make sure the transformer has received the metadata
-    # For the transformer, always only `fit` and `transform` are called.
-    check_recorded_metadata(
-        obj=trs,
-        method="fit",
-        parent="fit",
-        sample_weight=sample_weight,
-        metadata=metadata,
-    )
+
+    # If `inverse_transform` is called on the pipeline, only `inverse_transform` is
+    # called on the transformer:
+    if parent_method == "inverse_transform":
+        check_recorded_metadata(
+            obj=trs,
+            method="inverse_transform",
+            parent=parent_method,
+            sample_weight=sample_weight,
+            metadata=metadata,
+        )
+        return
+
+    # `fit` is only called on the transformer, if pipeline calls via pipeline.fit but
+    # if the pipeline calls `predict`, `score` or `transform`, ..., the transformer
+    # is not refitted:
+    if "fit" in parent_method:
+        check_recorded_metadata(
+            obj=trs,
+            method="fit",
+            parent=parent_method,
+            sample_weight=sample_weight,
+            metadata=metadata,
+        )
     check_recorded_metadata(
         obj=trs,
         method="transform",
-        parent="transform",
+        parent=parent_method,
         sample_weight=sample_weight,
         metadata=metadata,
     )
@@ -2427,5 +2636,105 @@ def test_feature_union_metadata_routing(transformer):
             )
 
 
+def test_transform_one_accepts_plain_dict_params():
+    """Regression test for #34005.
+
+    Some joblib backends (notably dask) downgrade ``Bunch`` to plain ``dict``
+    when serializing task kwargs. ``_transform_one`` must keep working after
+    that downgrade, so it must use item access on ``params``, not attribute
+    access.
+    """
+    from sklearn.preprocessing import StandardScaler
+
+    X = np.array([[0.0, 1.0], [2.0, 3.0]])
+    scaler = StandardScaler().fit(X)
+
+    # Pass a plain dict (not a Bunch) to simulate the post-dask shape.
+    out = _transform_one(scaler, X, None, weight=None, params={"transform": {}})
+    np.testing.assert_allclose(out, scaler.transform(X))
+
+
 # End of routing tests
 # ====================
+
+
+@skip_callback_test_if_wasm
+def test_pipeline_with_callbacks():
+    """Check that callbacks are propagated correctly for a pipeline.
+
+    passthrough step is counted as one task.
+    """
+    X, y = load_iris(return_X_y=True)
+    max_iter = 3
+    callback = RecordingAutoPropagatedCallback()
+
+    Pipeline(
+        [
+            ("sc", StandardScaler()),
+            ("passthrough", "passthrough"),
+            ("est", MaxIterEstimator(max_iter=max_iter)),
+        ]
+    ).set_callbacks(callback).fit(X, y)
+
+    assert callback.count_hooks("setup") == 1
+    assert callback.count_hooks("teardown") == 1
+    # 1 root for Pipeline + 1 task for "sc" + 1 task for "passthrough"
+    # + (1 root + max_iter leaves for "est")
+    assert callback.count_hooks("on_fit_task_begin") == 1 + 1 + 1 + (1 + max_iter)
+    assert callback.count_hooks("on_fit_task_end") == 1 + 1 + 1 + (1 + max_iter)
+
+
+@skip_callback_test_if_wasm
+def test_pipeline_with_callbacks_on_steps():
+    """Check that callbacks registered on steps are correctly invoked."""
+    X, y = load_iris(return_X_y=True)
+
+    sc_callback = RecordingCallback()
+    sc = StandardScaler().set_callbacks(sc_callback)
+
+    max_iter = 3
+    est_callback = RecordingCallback()
+    est = MaxIterEstimator(max_iter=max_iter).set_callbacks(est_callback)
+
+    Pipeline([("sc", sc), ("est", est)]).fit(X, y)
+
+    assert sc_callback.count_hooks("setup") == 1
+    assert sc_callback.count_hooks("teardown") == 1
+    assert sc_callback.count_hooks("on_fit_task_begin") == 1
+    assert sc_callback.count_hooks("on_fit_task_end") == 1
+
+    assert est_callback.count_hooks("setup") == 1
+    assert est_callback.count_hooks("teardown") == 1
+    assert est_callback.count_hooks("on_fit_task_begin") == 1 + max_iter
+    assert est_callback.count_hooks("on_fit_task_end") == 1 + max_iter
+
+
+@skip_callback_test_if_wasm
+def test_pipeline_memory_callbacks_second_fit_same_pipeline():
+    """Check that callbacks don't break the caching mechanism of the pipeline."""
+    X, y = load_iris(return_X_y=True)
+    with TemporaryDirectory() as cachedir:
+        max_iter = 3
+        pipe = Pipeline(
+            [
+                ("sc", StandardScaler()),
+                ("passthrough", "passthrough"),
+                ("est", MaxIterEstimator(max_iter=max_iter)),
+            ],
+            memory=joblib.Memory(location=cachedir),
+        )
+        callback = RecordingAutoPropagatedCallback()
+        pipe.set_callbacks(callback)
+        pipe.fit(X, y)
+        n_task_begin = callback.count_hooks("on_fit_task_begin")
+        n_task_end = callback.count_hooks("on_fit_task_end")
+        # propagated callbacks are not kept on the cached transformer
+        assert not hasattr(pipe.named_steps["sc"], "_skl_callbacks")
+
+        # Fit again on same data hits the cache and skips the scaler step so we expect
+        # 1 fewer task begin and end (StandardScaler has only one task).
+        callback = RecordingAutoPropagatedCallback()
+        pipe.set_callbacks(callback).fit(X, y)
+        assert callback.count_hooks("on_fit_task_begin") == n_task_begin - 1
+        assert callback.count_hooks("on_fit_task_end") == n_task_end - 1
+        assert not hasattr(pipe.named_steps["sc"], "_skl_callbacks")

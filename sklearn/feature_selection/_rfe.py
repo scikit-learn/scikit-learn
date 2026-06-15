@@ -21,10 +21,11 @@ from sklearn.feature_selection._base import SelectorMixin, _get_feature_importan
 from sklearn.metrics import get_scorer
 from sklearn.model_selection import check_cv
 from sklearn.model_selection._validation import _score
-from sklearn.utils import Bunch, metadata_routing
+from sklearn.utils import metadata_routing
 from sklearn.utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _raise_for_params,
     _routing_enabled,
     process_routing,
@@ -271,7 +272,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         if _routing_enabled():
             routed_params = process_routing(self, "fit", **fit_params)
         else:
-            routed_params = Bunch(estimator=Bunch(fit=fit_params))
+            routed_params = _manual_routing({"estimator": {"fit": fit_params}})
 
         return self._fit(X, y, **routed_params.estimator.fit)
 
@@ -347,7 +348,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
                 self.importance_getter,
                 transform_func="square",
             )
-            ranks = np.argsort(importances)
+            ranks = np.argsort(importances, kind="stable")
 
             # for sparse case ranks is matrix
             ranks = np.ravel(ranks)
@@ -405,7 +406,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         if _routing_enabled():
             routed_params = process_routing(self, "predict", **predict_params)
         else:
-            routed_params = Bunch(estimator=Bunch(predict={}))
+            routed_params = _manual_routing({"estimator": {}})
 
         return self.estimator_.predict(
             self.transform(X), **routed_params.estimator.predict
@@ -446,7 +447,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         if _routing_enabled():
             routed_params = process_routing(self, "score", **score_params)
         else:
-            routed_params = Bunch(estimator=Bunch(score=score_params))
+            routed_params = _manual_routing({"estimator": {"score": score_params}})
 
         return self.estimator_.score(
             self.transform(X), y, **routed_params.estimator.score
@@ -597,9 +598,9 @@ class RFECV(RFE):
         Possible inputs for cv are:
 
         - None, to use the default 5-fold cross-validation,
-        - integer, to specify the number of folds.
+        - integer, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
         :class:`~sklearn.model_selection.StratifiedKFold` is used. If the
@@ -840,10 +841,12 @@ class RFECV(RFE):
         if _routing_enabled():
             routed_params = process_routing(self, "fit", **params)
         else:
-            routed_params = Bunch(
-                estimator=Bunch(fit={}),
-                splitter=Bunch(split={"groups": params.pop("groups", None)}),
-                scorer=Bunch(score={}),
+            routed_params = _manual_routing(
+                {
+                    "estimator": {},
+                    "splitter": {"split": {"groups": params.pop("groups", None)}},
+                    "scorer": {},
+                }
             )
 
         # Initialization
@@ -966,8 +969,7 @@ class RFECV(RFE):
         if _routing_enabled():
             routed_params = process_routing(self, "score", **score_params)
         else:
-            routed_params = Bunch()
-            routed_params.scorer = Bunch(score={})
+            routed_params = _manual_routing({"scorer": {}})
 
         return scoring(self, X, y, **routed_params.scorer.score)
 
@@ -988,7 +990,9 @@ class RFECV(RFE):
         router = MetadataRouter(owner=self)
         router.add(
             estimator=self.estimator,
-            method_mapping=MethodMapping().add(caller="fit", callee="fit"),
+            method_mapping=MethodMapping()
+            .add(caller="fit", callee="fit")
+            .add(caller="predict", callee="predict"),
         )
         router.add(
             splitter=check_cv(self.cv),

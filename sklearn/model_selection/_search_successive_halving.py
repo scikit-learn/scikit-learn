@@ -6,13 +6,15 @@ from math import ceil, floor, log
 from numbers import Integral, Real
 
 import numpy as np
+from scipy.stats import rankdata
 
 from sklearn.base import _fit_context, is_classifier
 from sklearn.metrics._scorer import get_scorer_names
 from sklearn.model_selection import ParameterGrid, ParameterSampler
 from sklearn.model_selection._search import BaseSearchCV
-from sklearn.model_selection._split import _yields_constant_splits, check_cv
+from sklearn.model_selection._split import _yields_constant_splits
 from sklearn.utils import resample
+from sklearn.utils._array_api import xpx
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import _num_samples, validate_data
@@ -60,6 +62,30 @@ def _top_k(results, k, itr):
     # highest scores.
     sorted_indices = np.roll(np.argsort(scores), np.count_nonzero(np.isnan(scores)))
     return np.array(params[iter_indices][sorted_indices[-k:]])
+
+
+def _trim_cv_results_to_last_iter(results, best_index):
+    """Trim results to the last halving iteration only."""
+    last_iter_indices = np.flatnonzero(results["iter"] == np.max(results["iter"]))
+    start = int(last_iter_indices[0])  # the last iteration is always at the end
+    trimmed = {key: value[start:] for key, value in results.items()}
+
+    mean_test_score = trimmed["mean_test_score"]
+    if np.isnan(mean_test_score).all():
+        rank_result = np.ones_like(mean_test_score, dtype=np.int32)
+    else:
+        min_array_means = np.nanmin(mean_test_score) - 1
+        scores_for_rank = xpx.nan_to_num(mean_test_score, fill_value=min_array_means)
+        rank_result = rankdata(-scores_for_rank, method="min").astype(
+            np.int32, copy=False
+        )
+    trimmed["rank_test_score"] = rank_result
+
+    # `best_index` is guaranteed to lie in the last-iteration slice because
+    # `BaseSuccessiveHalving._select_best_index` only returns indices from it.
+    new_best_index = best_index - start
+
+    return trimmed, new_best_index
 
 
 class BaseSuccessiveHalving(BaseSearchCV):
@@ -239,25 +265,25 @@ class BaseSuccessiveHalving(BaseSearchCV):
         self : object
             Instance of fitted estimator.
         """
-        self._checked_cv_orig = check_cv(
-            self.cv, y, classifier=is_classifier(self.estimator)
-        )
-
-        routed_params = self._get_routed_params_for_fit(params)
-        self._check_input_parameters(
-            X=X, y=y, split_params=routed_params.splitter.split
-        )
-
         self._n_samples_orig = _num_samples(X)
 
         super().fit(X, y=y, **params)
+
+        self.all_cv_results_ = {
+            key: value
+            for key, value in self.cv_results_.items()
+            if key != "rank_test_score"
+        }
+        self.cv_results_, self.best_index_ = _trim_cv_results_to_last_iter(
+            self.all_cv_results_, self.best_index_
+        )
 
         # Set best_score_: BaseSearchCV does not set it, as refit is a callable
         self.best_score_ = self.cv_results_["mean_test_score"][self.best_index_]
 
         return self
 
-    def _run_search(self, evaluate_candidates):
+    def _run_search(self, evaluate_candidates, *, callback_ctx):
         candidate_params = self._generate_candidate_params()
 
         if self.resource != "n_samples" and any(
@@ -309,7 +335,20 @@ class BaseSuccessiveHalving(BaseSearchCV):
         self.n_resources_ = []
         self.n_candidates_ = []
 
+        search_callback_ctx = callback_ctx.subcontext(
+            task_name="search",
+            max_subtasks=n_iterations,
+        ).call_on_fit_task_begin(estimator=self)
+
         for itr in range(n_iterations):
+            n_candidates = len(candidate_params)
+
+            iteration_callback_ctx = search_callback_ctx.subcontext(
+                task_name="halving-iteration",
+                max_subtasks=n_candidates * self.n_splits_,
+                sequential_subtasks=False,
+            ).call_on_fit_task_begin(estimator=self)
+
             power = itr  # default
             if self.aggressive_elimination:
                 # this will set n_resources to the initial value (i.e. the
@@ -323,7 +362,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
             n_resources = min(n_resources, self.max_resources_)
             self.n_resources_.append(n_resources)
 
-            n_candidates = len(candidate_params)
             self.n_candidates_.append(n_candidates)
 
             if self.verbose:
@@ -355,20 +393,34 @@ class BaseSuccessiveHalving(BaseSearchCV):
             }
 
             results = evaluate_candidates(
-                candidate_params, cv, more_results=more_results
+                candidate_params,
+                cv,
+                more_results=more_results,
+                callback_ctx=iteration_callback_ctx,
             )
 
             n_candidates_to_keep = ceil(n_candidates / self.factor)
             candidate_params = _top_k(results, n_candidates_to_keep, itr)
+
+            iteration_callback_ctx.call_on_fit_task_end(estimator=self)
 
         self.n_remaining_candidates_ = len(candidate_params)
         self.n_required_iterations_ = n_required_iterations
         self.n_possible_iterations_ = n_possible_iterations
         self.n_iterations_ = n_iterations
 
+        search_callback_ctx.call_on_fit_task_end(estimator=self)
+
     @abstractmethod
     def _generate_candidate_params(self):
         pass
+
+    def __sklearn_tags__(self):
+        # TODO: remove this when we add array API support to
+        # `BaseSuccessiveHalving`
+        tags = super().__sklearn_tags__()
+        tags.array_api_support = False
+        return tags
 
 
 class HalvingGridSearchCV(BaseSuccessiveHalving):
@@ -461,7 +513,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -580,20 +632,31 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
     cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, that can be
-        imported into a pandas ``DataFrame``. It contains lots of information
-        for analysing the results of a search.
-        Please refer to the :ref:`User guide<successive_halving_cv_results>`
-        for details.
+        imported into a pandas ``DataFrame``. It contains the cross-validation
+        results for the candidates evaluated in the **last** halving
+        iteration only. ``rank_test_score`` is computed among those
+        candidates.
         For an example of analysing ``cv_results_``,
         see :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`.
+
+    all_cv_results_ : dict of numpy (masked) ndarrays
+        A dict with the same structure as ``cv_results_``, containing the
+        cross-validation results for all candidates across all halving
+        iterations. Each row is identified by the ``iter`` and
+        ``n_resources`` columns. Unlike ``cv_results_``, it does not include a
+        ``rank_test_score`` column: ranking candidates evaluated with a varying
+        number of resources against each other is not meaningful.
+        Please refer to the :ref:`User guide<successive_halving_cv_results>`
+        for details.
 
     best_estimator_ : estimator or dict
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
-        on the left out data. Not available if ``refit=False``.
+        on the left out data, in the last halving iteration.
+        Not available if ``refit=False``.
 
     best_score_ : float
-        Mean cross-validated score of the best_estimator.
+        Mean cross-validated score of the ``best_estimator_``.
 
     best_params_ : dict
         Parameter setting that gave the best results on the hold out data.
@@ -820,7 +883,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -941,20 +1004,31 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
     cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, that can be
-        imported into a pandas ``DataFrame``. It contains lots of information
-        for analysing the results of a search.
-        Please refer to the :ref:`User guide<successive_halving_cv_results>`
-        for details.
+        imported into a pandas ``DataFrame``. It contains the cross-validation
+        results for the candidates evaluated in the **last** halving
+        iteration only. ``rank_test_score`` is computed among those
+        candidates.
         For an example of analysing ``cv_results_``,
         see :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`.
+
+    all_cv_results_ : dict of numpy (masked) ndarrays
+        A dict with the same structure as ``cv_results_``, containing the
+        cross-validation results for all candidates across all halving
+        iterations. Each row is identified by the ``iter`` and
+        ``n_resources`` columns. Unlike ``cv_results_``, it does not include a
+        ``rank_test_score`` column: ranking candidates evaluated with a varying
+        number of resources against each other is not meaningful.
+        Please refer to the :ref:`User guide<successive_halving_cv_results>`
+        for details.
 
     best_estimator_ : estimator or dict
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
-        on the left out data. Not available if ``refit=False``.
+        on the left out data, in the last halving iteration.
+        Not available if ``refit=False``.
 
     best_score_ : float
-        Mean cross-validated score of the best_estimator.
+        Mean cross-validated score of the ``best_estimator_``.
 
     best_params_ : dict
         Parameter setting that gave the best results on the hold out data.
@@ -1089,8 +1163,8 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     def _generate_candidate_params(self):
         n_candidates_first_iter = self.n_candidates
         if n_candidates_first_iter == "exhaust":
-            # This will generate enough candidate so that the last iteration
-            # uses as much resources as possible
+            # This will generate enough candidates so that the last iteration
+            # uses as many resources as possible
             n_candidates_first_iter = self.max_resources_ // self.min_resources_
         return ParameterSampler(
             self.param_distributions,

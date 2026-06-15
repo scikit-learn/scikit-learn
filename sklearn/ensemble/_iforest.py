@@ -12,7 +12,6 @@ from scipy.sparse import issparse
 from sklearn.base import OutlierMixin, _fit_context
 from sklearn.ensemble._bagging import BaseBagging
 from sklearn.tree import ExtraTreeRegressor
-from sklearn.tree._tree import DTYPE as tree_dtype
 from sklearn.utils import check_array, check_random_state, gen_batches
 from sklearn.utils._chunking import get_chunk_n_rows
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
@@ -319,7 +318,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
             Fitted estimator.
         """
         X = validate_data(
-            self, X, accept_sparse=["csc"], dtype=tree_dtype, ensure_all_finite=False
+            self, X, accept_sparse=["csc"], dtype=np.float32, ensure_all_finite=False
         )
 
         if sample_weight is not None:
@@ -441,7 +440,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         of the leaf containing this observation, which is equivalent to
         the number of splittings required to isolate this point. In case of
         several observations n_left in the leaf, the average path length of
-        a n_left samples isolation tree is added.
+        an n_left samples isolation tree is added.
 
         Parameters
         ----------
@@ -492,7 +491,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         of the leaf containing this observation, which is equivalent to
         the number of splittings required to isolate this point. In case of
         several observations n_left in the leaf, the average path length of
-        a n_left samples isolation tree is added.
+        an n_left samples isolation tree is added.
 
         Parameters
         ----------
@@ -528,7 +527,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
             self,
             X,
             accept_sparse="csr",
-            dtype=tree_dtype,
+            dtype=np.float32,
             reset=False,
             ensure_all_finite=False,
         )
@@ -647,7 +646,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
 def _average_path_length(n_samples_leaf):
     """
-    The average path length in a n_samples iTree, which is equal to
+    The average path length in an n_samples iTree, which is equal to
     the average path length of an unsuccessful BST search since the
     latter has the same structure as an isolation tree.
     Parameters

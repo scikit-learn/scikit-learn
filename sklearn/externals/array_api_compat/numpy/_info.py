@@ -27,6 +27,7 @@ from numpy import (
     uint64,
 )
 
+from ..common._typing import DefaultDTypes
 from ._typing import Device, DType
 
 
@@ -139,7 +140,7 @@ class __array_namespace_info__:
         self,
         *,
         device: Device | None = None,
-    ) -> dict[str, dtype[intp | float64 | complex128]]:
+    ) -> DefaultDTypes:
         """
         The default data types used for new NumPy arrays.
 
@@ -331,7 +332,7 @@ class __array_namespace_info__:
             return res
         raise ValueError(f"unsupported kind: {kind!r}")
 
-    def devices(self) -> list[Device]:
+    def devices(self) -> tuple[Device]:
         """
         The devices supported by NumPy.
 
@@ -356,7 +357,7 @@ class __array_namespace_info__:
         ['cpu']
 
         """
-        return ["cpu"]
+        return ("cpu",)
 
 
 __all__ = ["__array_namespace_info__"]

@@ -135,6 +135,7 @@ Reference Steps
         * [ ] Backport news and what's new date in release branch
         {%- endif %}
         {%- if key == "final" %}
+        * [ ] Cleanup the doc repo to free up space
         * [ ] Update symlink for stable in https://github.com/scikit-learn/scikit-learn.github.io
         {%- endif %}
         {%- if key != "rc" %}
@@ -324,6 +325,27 @@ Reference Steps
     {% endif %}
 
     {% if key == "final" %}
+    - The `scikit-learn/scikit-learn.github.io` needs to be cleaned up so that ideally
+      it stays <5GB in size. Before doing this, create a new fresh fork of the existing
+      repo in your own user, to have a place with the history of the repo in case it's
+      needed. These commands will purge the history from the repo.
+
+      .. prompt:: bash
+
+        # need a non-shallow copy, and using https is much faster than ssh here
+        # note that this will be a large download size, up to 100GB (repo size limit)
+        git clone https://github.com/scikit-learn/scikit-learn.github.io.git
+        cd scikit-learn.github.io
+        git remote add write git@github.com:scikit-learn/scikit-learn.github.io.git
+        # checkout an orphan branch w/o history
+        git checkout --orphan temp_branch
+        git add -A
+        git commit -m "Initial commit after purging history"
+        git branch -D main
+        # rename current branch to main to replace it
+        git branch -m main
+        git push --force write main
+
     - Update the symlink for `stable` and the `latestStable` variable in
       `versionwarning.js` in https://github.com/scikit-learn/scikit-learn.github.io.
 
@@ -379,7 +401,7 @@ Guideline for bumping minimum versions of our dependencies
   release (`X.Y.0`) that has wheels for our minimum Python version. In practice
   this means that our minimum supported version is around 3 years old, maybe a
   bit less.
-- **pure Python dependencies** (joblib, threadpoolctl): at the time of the
+- **pure Python dependencies** (joblib, narwhals, threadpoolctl): at the time of the
   scikit-learn release our minimum supported version is the most recent minor
   release (`X.Y.0`) that is at least 2 years old.
 - we may decide to be less conservative than this guideline in some edge cases.

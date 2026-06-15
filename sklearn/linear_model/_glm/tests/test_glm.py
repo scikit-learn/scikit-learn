@@ -11,6 +11,7 @@ import scipy
 from scipy import linalg
 from scipy.optimize import minimize, root
 
+from sklearn import config_context
 from sklearn._loss import HalfBinomialLoss, HalfPoissonLoss, HalfTweedieLoss
 from sklearn._loss.link import IdentityLink, LogLink
 from sklearn.base import clone
@@ -27,13 +28,21 @@ from sklearn.linear_model._glm._newton_solver import NewtonCholeskySolver
 from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.metrics import d2_tweedie_score, mean_poisson_deviance
 from sklearn.model_selection import train_test_split
-from sklearn.utils._testing import assert_allclose
+from sklearn.utils._array_api import (
+    _atol_for_type,
+    move_to,
+    yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._array_api import (
+    device as array_api_device,
+)
+from sklearn.utils._testing import _array_api_for_tests, assert_allclose
 
 SOLVERS = ["lbfgs", "newton-cholesky"]
 
 
 class BinomialRegressor(_GeneralizedLinearRegressor):
-    def _get_loss(self):
+    def _get_loss(self, xp=None, device=None):
         return HalfBinomialLoss()
 
 
@@ -991,7 +1000,7 @@ def test_linalg_warning_with_newton_solver(global_random_seed):
 
     # We check that the model could successfully fit information in X_orig to
     # improve upon the constant baseline by a large margin (when evaluated on
-    # the traing set).
+    # the training set).
     assert constant_model_deviance - original_newton_deviance > 0.1
 
     # LBFGS is robust to a collinear design because its approximation of the
@@ -1140,3 +1149,108 @@ def test_newton_solver_verbosity(capsys, verbose):
             "The inner solver detected a pointwise Hessian with many negative values"
             " and resorts to lbfgs instead." in captured.out
         )
+
+
+@pytest.mark.parametrize("use_sample_weight", [False, True])
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+@pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
+def test_poisson_regressor_array_api_compliance(
+    use_sample_weight,
+    array_namespace,
+    device_name,
+    dtype_name,
+    global_random_seed,
+):
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
+    rng = np.random.default_rng(global_random_seed)
+    n_samples = 1000
+    n_features = 3
+    X_np = rng.normal(size=(n_samples, n_features))
+    beta = np.array([0.5, -0.3, 0.8])  # true coefficients
+    intercept = 1.0
+    mu = np.exp(X_np @ beta + intercept)  # Poisson mean with log-link.
+    y_np = rng.poisson(mu)
+    # Ensure that we have non-zero targets for meaningful testing:
+    assert (y_np > 0).mean() > 0.1
+
+    X_np = X_np.astype(dtype_name, copy=False)
+    y_np = y_np.astype(dtype_name, copy=False)
+    X_xp = xp.asarray(X_np, device=device)
+    y_xp = xp.asarray(y_np, device=device)
+
+    if use_sample_weight:
+        sample_weight = (
+            rng.uniform(-1, 5, size=n_samples)
+            .clip(0, None)  # over-represent null weights to cover edge-cases.
+            .astype(dtype_name)
+        )
+    else:
+        sample_weight = None
+
+    params = dict(alpha=1, solver="lbfgs", max_iter=500)
+    params["tol"] = 3e-6 if dtype_name == "float32" else 1e-13
+    glm_np = PoissonRegressor(**params).fit(X_np, y_np, sample_weight=sample_weight)
+    assert glm_np.n_iter_ < glm_np.max_iter
+
+    # Test that alpha was not too large for meaningful testing.
+    assert np.abs(glm_np.coef_).max() > 0.1
+
+    predict_np = glm_np.predict(X_np)
+    atol = _atol_for_type(dtype_name)
+    rtol = 2e-3 if dtype_name == "float32" else 3e-7
+
+    with config_context(array_api_dispatch=True):
+        glm_xp = PoissonRegressor(**params).fit(X_xp, y_xp, sample_weight=sample_weight)
+        if dtype_name == "float64":
+            assert abs(glm_xp.n_iter_ - glm_np.n_iter_) <= 1
+
+        for attr_name in ("coef_", "intercept_"):
+            attr_xp = getattr(glm_xp, attr_name)
+            attr_np = getattr(glm_np, attr_name)
+            assert_allclose(
+                move_to(attr_xp, xp=np, device="cpu"), attr_np, rtol=rtol, atol=atol
+            )
+            assert attr_xp.dtype == X_xp.dtype
+            assert array_api_device(attr_xp) == array_api_device(X_xp)
+
+        predict_xp = glm_xp.predict(X_xp)
+        assert_allclose(
+            move_to(predict_xp, xp=np, device="cpu"),
+            predict_np,
+            rtol=rtol,
+            atol=atol,
+        )
+        assert predict_xp.dtype == X_xp.dtype
+        assert array_api_device(predict_xp) == array_api_device(X_xp)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+@pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
+def test_poisson_regressor_array_api_warm_start(
+    array_namespace,
+    device_name,
+    dtype_name,
+):
+    """Test that incremental fitting of PoissonRegressor works correctly
+    with the array API when warm_start is True."""
+    rng = np.random.default_rng(42)
+    X = rng.standard_normal((200, 5)).astype(dtype_name)
+    y = np.abs(rng.standard_normal(200)) + 0.1
+    y = y.astype(dtype_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
+    X_xp = xp.asarray(X, device=device)
+    y_xp = xp.asarray(y, device=device)
+    with config_context(array_api_dispatch=True):
+        reg_xp = PoissonRegressor(
+            alpha=1.0, solver="lbfgs", max_iter=300, warm_start=True
+        )
+        reg_xp.fit(X_xp, y_xp)
+        reg_xp.predict(X_xp)
+        # fit again and ensure there is no error
+        reg_xp.fit(X_xp, y_xp)

@@ -351,7 +351,7 @@ cdef class UnionFind(object):
 
 def _single_linkage_label(const float64_t[:, :] L):
     """
-    Convert an linkage array or MST to a tree by labelling clusters at merges.
+    Convert a linkage array or MST to a tree by labelling clusters at merges.
     This is done by using a Union find structure to keep track of merges
     efficiently. This is the private version of the function that assumes that
     ``L`` has been properly validated. See ``single_linkage_label`` for the
@@ -399,7 +399,7 @@ def _single_linkage_label(const float64_t[:, :] L):
 @cython.wraparound(True)
 def single_linkage_label(L):
     """
-    Convert an linkage array or MST to a tree by labelling clusters at merges.
+    Convert a linkage array or MST to a tree by labelling clusters at merges.
     This is done by using a Union find structure to keep track of merges
     efficiently.
 

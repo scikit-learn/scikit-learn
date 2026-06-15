@@ -3,7 +3,6 @@ Testing for the partial dependence module.
 """
 
 import re
-import warnings
 
 import numpy as np
 import pytest
@@ -411,7 +410,6 @@ def test_recursion_decision_tree_vs_forest_and_gbdt(seed):
     gbdt = GradientBoostingRegressor(
         n_estimators=1,
         learning_rate=1,
-        criterion="squared_error",
         max_depth=max_depth,
         random_state=equiv_random_state,
     )
@@ -642,7 +640,7 @@ def test_partial_dependence_unknown_feature_string(estimator):
     estimator = clone(estimator).fit(df, y)
 
     features = ["random"]
-    err_msg = "A given column is not a column of the dataframe"
+    err_msg = "Some column names are not columns of the dataframe"
     with pytest.raises(ValueError, match=err_msg):
         partial_dependence(estimator, df, features)
 
@@ -1145,26 +1143,21 @@ def test_reject_array_with_integer_dtype():
     y = np.array([0, 1, 0, 1])
     clf = DummyClassifier()
     clf.fit(X, y)
-    with pytest.warns(
-        FutureWarning, match=re.escape("The column 0 contains integer data.")
+    with pytest.raises(
+        ValueError, match=re.escape("The column 0 contains integer data.")
     ):
         partial_dependence(clf, X, features=0)
-
-    with pytest.warns(
-        FutureWarning, match=re.escape("The column 1 contains integer data.")
+    with pytest.raises(
+        ValueError, match=re.escape("The column 1 contains integer data.")
     ):
         partial_dependence(clf, X, features=[1], categorical_features=[0])
-
-    with pytest.warns(
-        FutureWarning, match=re.escape("The column 0 contains integer data.")
+    with pytest.raises(
+        ValueError, match=re.escape("The column 0 contains integer data.")
     ):
         partial_dependence(clf, X, features=[0, 1])
-
     # The following should not raise as we do not compute numerical partial
     # dependence on integer columns.
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        partial_dependence(clf, X, features=1, categorical_features=[1])
+    partial_dependence(clf, X, features=1, categorical_features=[1])
 
 
 def test_reject_pandas_with_integer_dtype():
@@ -1180,22 +1173,18 @@ def test_reject_pandas_with_integer_dtype():
     clf = DummyClassifier()
     clf.fit(X, y)
 
-    with pytest.warns(
-        FutureWarning, match=re.escape("The column 'c' contains integer data.")
+    with pytest.raises(
+        ValueError, match=re.escape("The column 'c' contains integer data.")
     ):
         partial_dependence(clf, X, features="c")
-
-    with pytest.warns(
-        FutureWarning, match=re.escape("The column 'c' contains integer data.")
+    with pytest.raises(
+        ValueError, match=re.escape("The column 'c' contains integer data.")
     ):
         partial_dependence(clf, X, features=["a", "c"])
-
     # The following should not raise as we do not compute numerical partial
     # dependence on integer columns.
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        partial_dependence(clf, X, features=["a"])
-        partial_dependence(clf, X, features=["c"], categorical_features=["c"])
+    partial_dependence(clf, X, features=["a"])
+    partial_dependence(clf, X, features=["c"], categorical_features=["c"])
 
 
 def test_partial_dependence_empty_categorical_features():

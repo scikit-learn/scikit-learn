@@ -627,7 +627,15 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         self._expanded_class_weight = compute_class_weight(
             self.class_weight, classes=self.classes_, y=y
         )
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+
+        # Skip check that validation weights are not all zero when `early_stopping` is
+        # set to True as `_make_validation_split` will raise a more informative error.
+        sample_weight = _check_sample_weight(
+            sample_weight,
+            X,
+            dtype=X.dtype,
+            allow_all_zero_weights=self.early_stopping,
+        )
 
         if getattr(self, "coef_", None) is None or coef_init is not None:
             self._allocate_parameter_mem(
@@ -1101,7 +1109,7 @@ class SGDClassifier(BaseSGDClassifier):
         Values must be in the range `(0.0, inf)`.
 
         For PA-1 (`learning_rate=pa1`) and PA-II (`pa2`), it specifies the
-        aggressiveness parameter for the passive-agressive algorithm, see [1] where it
+        aggressiveness parameter for the passive-aggressive algorithm, see [1] where it
         is called C:
 
         - For PA-I it is the maximum step size.
@@ -1925,7 +1933,7 @@ class SGDRegressor(BaseSGDRegressor):
         Values must be in the range `(0.0, inf)`.
 
         For PA-1 (`learning_rate=pa1`) and PA-II (`pa2`), it specifies the
-        aggressiveness parameter for the passive-agressive algorithm, see [1] where it
+        aggressiveness parameter for the passive-aggressive algorithm, see [1] where it
         is called C:
 
         - For PA-I it is the maximum step size.
@@ -2492,7 +2500,7 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
         if not hasattr(self, "coef_"):
             self._more_validate_params(for_partial_fit=True)
 
-        alpha = self.nu / 2
+        alpha = self.nu
         return self._partial_fit(
             X,
             alpha,
@@ -2596,7 +2604,7 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
         """
         self._more_validate_params()
 
-        alpha = self.nu / 2
+        alpha = self.nu
         self._fit(
             X,
             alpha=alpha,

@@ -124,7 +124,7 @@ def fetch_kddcup99(
 
     return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object. See
-        below for more information about the `data` and `target` object.
+        below for more information about the `data` and `target` objects.
 
         .. versionadded:: 0.20
 
@@ -402,12 +402,8 @@ def _fetch_brute_kddcup99(
 
         X = Xy[:, :-1]
         y = Xy[:, -1]
-        # XXX bug when compress!=0:
-        # (error: 'Incorrect data length while decompressing[...] the file
-        #  could be corrupted.')
-
-        joblib.dump(X, samples_path, compress=0)
-        joblib.dump(y, targets_path, compress=0)
+        joblib.dump(X, samples_path, compress=3)
+        joblib.dump(y, targets_path, compress=3)
     else:
         raise OSError("Data not found and `download_if_missing` is False")
 

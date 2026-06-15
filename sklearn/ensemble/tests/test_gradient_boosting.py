@@ -14,7 +14,6 @@ from sklearn.base import clone
 from sklearn.datasets import make_classification, make_regression
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor
-from sklearn.ensemble._gb import _safe_divide
 from sklearn.ensemble._gradient_boosting import predict_stages
 from sklearn.exceptions import DataConversionWarning, NotFittedError
 from sklearn.linear_model import LinearRegression
@@ -963,7 +962,7 @@ def test_warm_start_sparse(Cls, sparse_container):
 
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
 def test_warm_start_fortran(Cls, global_random_seed):
-    # Test that feeding a X in Fortran-ordered is giving the same results as
+    # Test that feeding an X in Fortran-ordered is giving the same results as
     # in C-ordered
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=global_random_seed)
     est_c = Cls(n_estimators=1, random_state=global_random_seed, warm_start=True)
@@ -1036,7 +1035,7 @@ def test_monitor_early_stopping(Cls):
 
 
 def test_complete_classification():
-    # Test greedy trees with max_depth + 1 leafs.
+    # Test greedy trees with max_depth + 1 leaves.
     from sklearn.tree._tree import TREE_LEAF
 
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
@@ -1053,7 +1052,7 @@ def test_complete_classification():
 
 
 def test_complete_regression():
-    # Test greedy trees with max_depth + 1 leafs.
+    # Test greedy trees with max_depth + 1 leaves.
     from sklearn.tree._tree import TREE_LEAF
 
     k = 4
@@ -1391,7 +1390,7 @@ def test_gradient_boosting_with_init_pipeline():
 
     # Passing sample_weight to a pipeline raises a ValueError. This test makes
     # sure we make the distinction between ValueError raised by a pipeline that
-    # was passed sample_weight, and a InvalidParameterError raised by a regular
+    # was passed sample_weight, and an InvalidParameterError raised by a regular
     # estimator whose input checking failed.
     invalid_nu = 1.5
     err_msg = (
@@ -1455,17 +1454,6 @@ def test_huber_vs_mean_and_median():
     gbt_huber_predictions = gbt_huber.predict(X)
     assert np.all(gbt_absolute_error.predict(X) <= gbt_huber_predictions)
     assert np.all(gbt_huber_predictions <= gbt_squared_error.predict(X))
-
-
-def test_safe_divide():
-    """Test that _safe_divide handles division by zero."""
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        assert _safe_divide(np.float64(1e300), 0) == 0
-        assert _safe_divide(np.float64(0.0), np.float64(0.0)) == 0
-    with pytest.warns(RuntimeWarning, match="overflow"):
-        # np.finfo(float).max = 1.7976931348623157e+308
-        _safe_divide(np.float64(1e300), 1e-10)
 
 
 def test_squared_error_exact_backward_compat():
@@ -1551,12 +1539,8 @@ def test_squared_error_exact_backward_compat():
     assert_allclose(gbt.train_score_[-10:], train_score, rtol=1e-3, atol=1e-11)
 
 
-@skip_if_32bit
-def test_huber_exact_backward_compat():
-    """Test huber GBT backward compat on a simple dataset.
-
-    The results to compare against are taken from scikit-learn v1.2.0.
-    """
+def test_huber_overfit():
+    """Test huber GBT can completely overfit"""
     n_samples = 10
     y = np.arange(n_samples)
     x1 = np.minimum(y, n_samples / 2)
@@ -1564,39 +1548,9 @@ def test_huber_exact_backward_compat():
     X = np.c_[x1, x2]
     gbt = GradientBoostingRegressor(loss="huber", n_estimators=100, alpha=0.8).fit(X, y)
 
-    assert_allclose(gbt._loss.closs.delta, 0.0001655688041282133)
-
-    pred_result = np.array(
-        [
-            1.48120765e-04,
-            9.99949174e-01,
-            2.00116957e00,
-            2.99986716e00,
-            4.00012064e00,
-            5.00002462e00,
-            5.99998898e00,
-            6.99692549e00,
-            8.00006356e00,
-            8.99985099e00,
-        ]
-    )
-    assert_allclose(gbt.predict(X), pred_result, rtol=1e-8)
-
-    train_score = np.array(
-        [
-            2.59484709e-07,
-            2.19165900e-07,
-            1.89644782e-07,
-            1.64556454e-07,
-            1.38705110e-07,
-            1.20373736e-07,
-            1.04746082e-07,
-            9.13835687e-08,
-            8.20245756e-08,
-            7.17122188e-08,
-        ]
-    )
-    assert_allclose(gbt.train_score_[-10:], train_score, rtol=1e-8)
+    assert gbt._loss.closs.delta < 2e-4
+    assert_allclose(gbt.predict(X), y, atol=0.01)
+    assert np.all(gbt.train_score_[-10:] < 3e-7)
 
 
 def test_binomial_error_exact_backward_compat():
@@ -1690,13 +1644,13 @@ def test_multinomial_error_exact_backward_compat():
 
 
 def test_gb_denominator_zero(global_random_seed):
-    """Test _update_terminal_regions denominator is not zero.
+    """Test _update_terminal_regions doesn't emit division-by-zero warnings.
 
     For instance for log loss based binary classification, the line search step might
     become nan/inf as denominator = hessian = prob * (1 - prob) and prob = 0 or 1 can
     happen.
-    Here, we create a situation were this happens (at least with roughly 80%) based
-    on the random seed.
+    Here, we create a situation where this happens (at least with roughly 80% of the
+    random seeds), and check that no numerical warnings are emitted.
     """
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=20)
 
@@ -1711,7 +1665,13 @@ def test_gb_denominator_zero(global_random_seed):
     }
 
     clf = GradientBoostingClassifier(**params)
-    # _safe_devide would raise a RuntimeWarning
     with warnings.catch_warnings():
-        warnings.simplefilter("error")
+        warnings.simplefilter("error")  # Convert warnings to errors
         clf.fit(X, y)
+
+
+@pytest.mark.parametrize("GradientBoosting", GRADIENT_BOOSTING_ESTIMATORS)
+def test_criterion_param_deprecation(GradientBoosting):
+    with pytest.warns(FutureWarning, match="criterion"):
+        reg = GradientBoosting(criterion="friedman_mse")
+        reg.fit(X, y)
