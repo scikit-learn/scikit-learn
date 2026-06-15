@@ -382,6 +382,29 @@ def test_countvectorizer_empty_vocabulary():
         # fit on stopwords only
         v.fit(["to be or not to be", "and me too", "and so do you"])
 
+def test_countvectorizer_empty_vocabulary_ngram_range():
+    """Check that an informative error is raised when the vocabulary is empty
+    because all documents are shorter than the minimum n-gram length.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/33981
+    """
+    # char analyzer with single-character documents and ngram_range=(2, 4)
+    with pytest.raises(ValueError, match=r"ngram_range\[0\]=2"):
+        CountVectorizer(analyzer="char", ngram_range=(2, 4)).fit_transform(
+            list("abcdefghij")
+        )
+
+    # word analyzer with single-word documents and ngram_range=(3, 3)
+    with pytest.raises(ValueError, match=r"ngram_range\[0\]=3"):
+        CountVectorizer(ngram_range=(3, 3)).fit_transform(
+            ["hello", "world", "foo"]
+        )
+
+    # ngram_range=(1, 1) should NOT mention ngram_range
+    with pytest.raises(ValueError, match="^(?!.*ngram_range).*empty vocabulary"):
+        CountVectorizer(stop_words="english").fit(["the", "a", "an"])
+
 
 def test_fit_countvectorizer_twice():
     cv = CountVectorizer()
