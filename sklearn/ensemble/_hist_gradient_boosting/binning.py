@@ -99,6 +99,7 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
         col_data = col_data[sort_idx]
         sample_weight = sample_weight[sort_idx]
 
+    # fast way for n_distinct = len(np.unique(col_data))
     distinct_mask = np.empty(len(col_data), dtype=bool)
     distinct_mask[0] = True
     distinct_mask[1:] = col_data[1:] != col_data[:-1]
