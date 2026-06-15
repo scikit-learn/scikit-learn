@@ -449,7 +449,7 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
   div.sk-serial,
   div.sk-parallel,
   div.sk-item {
-    border: 1px solid rgb(0, 42, 255);
+    /* border: 1px solid rgb(0, 42, 255); */
     position: relative;
     display: flex;
     flex-direction: column;
@@ -475,12 +475,12 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
   }
 
   div.sk-serial > div.features.fitted:last-child {
-    color:red;
+    /* color:red; */
     grid-column: -1;
    }
 
    div.total_features  {
-    border: 2px green solid;
+    /* border: 2px green solid; */
     margin-left: 60%;
 
   }
