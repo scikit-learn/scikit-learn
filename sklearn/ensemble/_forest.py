@@ -141,11 +141,15 @@ def _parallel_build_trees(
     class_weight=None,
     n_samples_bootstrap=None,
     missing_values_in_feature_mask=None,
+    feature_names_in_=None,
 ):
     """
     Private function used to fit a single tree in parallel."""
     if verbose > 1:
         print("building tree %d of %d" % (tree_idx + 1, n_trees))
+
+    if feature_names_in_ is not None:
+        tree.feature_names_in_ = feature_names_in_
 
     if bootstrap:
         n_samples = X.shape[0]
@@ -482,6 +486,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     class_weight=self.class_weight,
                     n_samples_bootstrap=n_samples_bootstrap,
                     missing_values_in_feature_mask=missing_values_in_feature_mask,
+                    feature_names_in_=getattr(self, "feature_names_in_", None),
                 )
                 for i, t in enumerate(trees)
             )

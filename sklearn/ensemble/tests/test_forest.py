@@ -1933,3 +1933,36 @@ def test_missing_value_is_predictive(Forest, criterion, global_random_seed):
 def test_friedman_mse_deprecation(Forest):
     with pytest.warns(FutureWarning, match="friedman_mse"):
         _ = Forest(criterion="friedman_mse")
+
+
+@pytest.mark.parametrize("ForestClass", FOREST_CLASSIFIERS_REGRESSORS.values())
+def test_forest_feature_names_in_on_estimators(ForestClass):
+    # Check that feature_names_in_ is correctly passed down to all trees
+    # in the forest. Non-regression test for #26140.
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame([[1, 2], [3, 4]], columns=["a", "b"])
+    if ForestClass.__name__.endswith("Classifier"):
+        y = [0, 1]
+    else:
+        y = [0.1, 0.2]
+
+    est = ForestClass(n_estimators=2, random_state=0)
+    est.fit(X, y)
+
+    assert hasattr(est, "feature_names_in_")
+    assert_array_equal(est.feature_names_in_, ["a", "b"])
+
+    for tree in est.estimators_:
+        assert hasattr(tree, "feature_names_in_")
+        assert_array_equal(tree.feature_names_in_, ["a", "b"])
+        # predict or predict_proba on individual trees shouldn't raise user warning
+        # about feature names
+        with pytest.warns(None) as record:
+            if hasattr(tree, "predict_proba"):
+                tree.predict_proba(X)
+            else:
+                tree.predict(X)
+
+        # Check that no UserWarning related to feature names was raised
+        for warning in record:
+            assert "feature names" not in str(warning.message)
