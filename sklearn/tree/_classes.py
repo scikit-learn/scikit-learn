@@ -43,7 +43,6 @@ from sklearn.utils import (
     compute_sample_weight,
     metadata_routing,
 )
-from sklearn.utils._mask import _get_mask
 from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._param_validation import Hidden, Interval, RealNotInt, StrOptions
 from sklearn.utils.multiclass import check_classification_targets
@@ -613,9 +612,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             X = np.asarray(X, dtype=object)
         X_categorical = _safe_indexing(X, self.is_categorical_, axis=1)
         X_categorical = self._prepare_categorical_X_for_encoder(X_categorical)
-        missing_mask = _get_mask(np.asarray(X_categorical), np.nan)
         X_categorical = self._categorical_encoder.transform(X_categorical)
-        X_categorical[missing_mask] = np.nan
 
         # replace features with the encoded categorical values
         X_out = np.empty(X.shape, dtype=np.float32)
