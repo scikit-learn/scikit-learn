@@ -30,10 +30,11 @@ from sklearn.utils.validation import check_is_fitted
 def _weighted_percentile_1d_sorted(col_data, sample_weight, percentiles):
     """Compute weighted percentiles for sorted 1D data.
 
-    This implements the "averaged_inverted_cdf" method used by
-    `_weighted_percentile(..., average=True)` for the restricted input expected
-    by `_find_binning_thresholds`: `col_data` is sorted, has no NaN values, and
-    `sample_weight` has strictly positive values.
+    This implements the "averaged_inverted_cdf" method as computed by
+    `_weighted_percentile(..., average=True)`, but it expects:
+    - input `col_data` is sorted
+    - input `col_data` has no NaN values
+    - `sample_weight` has strictly positive values
     """
     weight_cdf = np.cumsum(sample_weight, dtype=col_data.dtype)
     adjusted_quantiles = percentiles / 100 * weight_cdf[-1]
@@ -73,7 +74,7 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
         bining_thresholds[i - 1] < x <= binning_thresholds[i]
     """
     # The data will be sorted anyway to find distinc values and again in percentile,
-    # so we do it here. Sorting also returns a contiguous array.
+    # so we do it here, like once and for all. Sorting also returns a contiguous array.
     if sample_weight is None:
         col_data = np.sort(col_data)
         # ignore missing values when computing bin thresholds
