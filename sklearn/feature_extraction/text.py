@@ -11,7 +11,7 @@ from collections import defaultdict
 from collections.abc import Mapping
 from functools import partial
 from numbers import Integral
-from operator import itemgetter
+from operator import itemgetterh
 
 import numpy as np
 import scipy.sparse as sp
@@ -1290,9 +1290,18 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             # disable defaultdict behaviour
             vocabulary = dict(vocabulary)
             if not vocabulary:
-                raise ValueError(
-                    "empty vocabulary; perhaps the documents only contain stop words"
+                msg = (
+                    "empty vocabulary; perhaps the documents only"
+                    " contain stop words"
                 )
+                min_n = self.ngram_range[0]
+                if min_n > 1:
+                    msg += (
+                        ", or the documents contain only tokens shorter"
+                        " than the minimum n-gram size"
+                        f" (ngram_range[0]={min_n})"
+                    )
+                raise ValueError(msg)
 
         if indptr[-1] > np.iinfo(np.int32).max:  # = 2**31 - 1
             if _IS_32BIT:
