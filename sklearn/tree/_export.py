@@ -30,7 +30,10 @@ from sklearn.utils.validation import check_array, check_is_fitted
 
 
 def _matplotlib_to_rgb(color):
-    """Convert any valid matplotlib color to rgb in range [0, 255]"""
+    """Convert any valid matplotlib color to rgb in range [0, 255].
+
+    The graphviz DOT language expects RGB colors expressed in that range.
+    """
     from matplotlib.colors import to_rgb
 
     return [int(channel * 255) for channel in to_rgb(color)]
