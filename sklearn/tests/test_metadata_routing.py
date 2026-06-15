@@ -1322,7 +1322,7 @@ def test_removing_metadata_in_subclass_correctly_works():
 
 
 @config_context(enable_metadata_routing=True)
-def test_explicitly_defined_set_method_request_is_not_overriden():
+def test_explicitly_defined_set_method_request_is_not_overridden():
     """Test that explicitly defined set_{method}_request is not overridden."""
 
     class A(BaseEstimator):
