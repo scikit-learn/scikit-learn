@@ -106,6 +106,7 @@ def test_kernel_density_numerical_consistency(global_random_seed, metric):
     assert density32.dtype == np.float32
 
 
+# TODO(1.12): remove test_thread_safety
 @ignore_warnings(category=FutureWarning)
 def test_thread_safety(global_random_seed):
     X_64, _, Y_64, _ = get_dataset_for_binary_tree(random_seed=global_random_seed)
@@ -138,6 +139,7 @@ def test_thread_safety(global_random_seed):
     assert np.array_equal(get_stats(), one_run * 12)
 
 
+# TODO(1.12): remove test_stats_deprecated
 def test_stats_deprecated():
     tree = KDTree(np.array([[1.0]]), 10)
     with pytest.warns(FutureWarning, match="Function get_tree_stats is deprecated"):
