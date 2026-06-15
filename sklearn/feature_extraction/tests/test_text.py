@@ -382,6 +382,7 @@ def test_countvectorizer_empty_vocabulary():
         # fit on stopwords only
         v.fit(["to be or not to be", "and me too", "and so do you"])
 
+
 def test_countvectorizer_empty_vocabulary_ngram_range():
     """Check that an informative error is raised when the vocabulary is empty
     because all documents are shorter than the minimum n-gram length.
