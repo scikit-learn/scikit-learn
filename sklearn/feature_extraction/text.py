@@ -11,7 +11,7 @@ from collections import defaultdict
 from collections.abc import Mapping
 from functools import partial
 from numbers import Integral
-from operator import itemgetterh
+from operator import itemgetter
 
 import numpy as np
 import scipy.sparse as sp
