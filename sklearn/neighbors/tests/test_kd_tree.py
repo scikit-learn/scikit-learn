@@ -6,6 +6,7 @@ from numpy.testing import assert_allclose, assert_equal
 
 from sklearn.neighbors._kd_tree import KDTree, KDTree32, KDTree64
 from sklearn.neighbors.tests.test_ball_tree import get_dataset_for_binary_tree
+from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.parallel import Parallel, delayed
 
 DIMENSION = 3
@@ -105,6 +106,7 @@ def test_kernel_density_numerical_consistency(global_random_seed, metric):
     assert density32.dtype == np.float32
 
 
+@ignore_warnings(category=FutureWarning)
 def test_thread_safety(global_random_seed):
     X_64, _, Y_64, _ = get_dataset_for_binary_tree(random_seed=global_random_seed)
     tree = KDTree(X_64, 10)
@@ -114,10 +116,8 @@ def test_thread_safety(global_random_seed):
         tree.query_radius(Y_64, r=4, return_distance=True)
 
     def get_stats():
-        with pytest.warns(FutureWarning, match="Function get_tree_stats is deprecated"):
-            stats = tree.get_tree_stats()
-        with pytest.warns(FutureWarning, match="Function get_n_calls is deprecated"):
-            calls = (tree.get_n_calls(),)
+        stats = tree.get_tree_stats()
+        calls = (tree.get_n_calls(),)
         return np.array(stats + calls)
 
     query()
@@ -136,3 +136,11 @@ def test_thread_safety(global_random_seed):
     for t in threads:
         t.join()
     assert np.array_equal(get_stats(), one_run * 12)
+
+
+def test_stats_deprecated():
+    tree = KDTree(np.array([[1.0]]), 10)
+    with pytest.warns(FutureWarning, match="Function get_tree_stats is deprecated"):
+        tree.get_tree_stats()
+    with pytest.warns(FutureWarning, match="Function get_n_calls is deprecated"):
+        tree.get_n_calls()
