@@ -63,7 +63,7 @@ from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 steps = [
     ("standard_scaler", StandardScaler()),
     ("polynomial", PolynomialFeatures(degree=3)),
-    ("classifier", LogisticRegression(C=2.0)),
+    ("classifier", LogisticRegression(alpha=0.2)),
 ]
 pipe = Pipeline(steps)
 pipe  # click on the diagram below to see the details of each step

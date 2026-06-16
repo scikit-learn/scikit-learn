@@ -208,12 +208,12 @@ import numpy as np
 from sklearn.linear_model import LogisticRegressionCV
 from sklearn.pipeline import make_pipeline
 
-Cs = np.logspace(-5, 5, 20)
+alphas = np.logspace(-6, 4, 21)
 
 unscaled_clf = make_pipeline(
     pca,
     LogisticRegressionCV(
-        Cs=Cs,
+        alphas=alphas,
         use_legacy_attributes=False,
         l1_ratios=(0,),  # TODO(1.10): remove because it is default now
         scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
@@ -225,7 +225,7 @@ scaled_clf = make_pipeline(
     scaler,
     pca,
     LogisticRegressionCV(
-        Cs=Cs,
+        alphas=alphas,
         use_legacy_attributes=False,
         l1_ratios=(0,),  # TODO(1.10): remove because it is default now
         scoring="neg_log_loss",  # TODO(1.11): remove because it is default now,
@@ -233,11 +233,11 @@ scaled_clf = make_pipeline(
 )
 scaled_clf.fit(X_train, y_train)
 
-print(f"Optimal C for the unscaled PCA: {unscaled_clf[-1].C_:.4f}\n")
-print(f"Optimal C for the standardized data with PCA: {scaled_clf[-1].C_:.2f}")
+print(f"Optimal alpha for the unscaled PCA: {unscaled_clf[-1].alpha_:.3g}\n")
+print(f"Optimal alpha for the standardized data with PCA: {scaled_clf[-1].alpha_:.3g}")
 
 # %%
-# The need for regularization is higher (lower values of `C`) for the data that
+# The need for regularization is higher (higher values of `alpha`) for the data that
 # was not scaled before applying PCA. We now evaluate the effect of scaling on
 # the accuracy and the mean log-loss of the optimal models:
 

@@ -56,6 +56,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import l1_min_c
 
 cs = l1_min_c(X, y, loss="log") * np.logspace(0, 1, 16)
+alphas = 1 / (cs * X.shape[0])
 
 # %%
 # Create a pipeline with `StandardScaler` and `LogisticRegression`, to normalize
@@ -74,8 +75,8 @@ clf = make_pipeline(
     ),
 )
 coefs_ = []
-for c in cs:
-    clf.set_params(logisticregression__C=c)
+for alpha in alphas:
+    clf.set_params(logisticregression__alpha=alpha)
     clf.fit(X, y)
     coefs_.append(clf["logisticregression"].coef_.ravel().copy())
 
@@ -92,10 +93,12 @@ colors = ["#648FFF", "#785EF0", "#DC267F", "#FE6100"]
 
 plt.figure(figsize=(10, 6))
 for i in range(coefs_.shape[1]):
-    plt.semilogx(cs, coefs_[:, i], marker="o", color=colors[i], label=feature_names[i])
+    plt.semilogx(
+        alphas, coefs_[:, i], marker="o", color=colors[i], label=feature_names[i]
+    )
 
 ymin, ymax = plt.ylim()
-plt.xlabel("C")
+plt.xlabel("alpha")
 plt.ylabel("Coefficients")
 plt.title("Logistic Regression Path")
 plt.legend()

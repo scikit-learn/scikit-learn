@@ -403,8 +403,18 @@ def test_response_values_type_of_target_on_classes_no_warning():
         (LogisticRegression(), "predict", "multiclass", (10,)),
         (LogisticRegression(), "predict_proba", "multiclass", (10, 4)),
         (LogisticRegression(), "decision_function", "multiclass", (10, 4)),
-        (ClassifierChain(LogisticRegression()), "predict", "multilabel", (10, 2)),
-        (ClassifierChain(LogisticRegression()), "predict_proba", "multilabel", (10, 2)),
+        (
+            ClassifierChain(LogisticRegression()),
+            "predict",
+            "multilabel",
+            (10, 2),
+        ),
+        (
+            ClassifierChain(LogisticRegression()),
+            "predict_proba",
+            "multilabel",
+            (10, 2),
+        ),
         (
             ClassifierChain(LogisticRegression()),
             "decision_function",

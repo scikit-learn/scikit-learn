@@ -1120,7 +1120,7 @@ def test_classes_property():
     with pytest.raises(AttributeError):
         getattr(reg, "classes_")
 
-    clf = make_pipeline(SelectKBest(k=1), LogisticRegression(random_state=0))
+    clf = make_pipeline(SelectKBest(k=1), LogisticRegression())
     with pytest.raises(AttributeError):
         getattr(clf, "classes_")
     clf.fit(X, y)
@@ -1481,7 +1481,7 @@ def test_step_name_validation():
 def test_set_params_nested_pipeline():
     estimator = Pipeline([("a", Pipeline([("b", DummyRegressor())]))])
     estimator.set_params(a__b__alpha=0.001, a__b=Lasso())
-    estimator.set_params(a__steps=[("b", LogisticRegression())], a__b__C=5)
+    estimator.set_params(a__steps=[("b", LogisticRegression())], a__b__alpha=0.2)
 
 
 def test_pipeline_memory():
@@ -1491,7 +1491,7 @@ def test_pipeline_memory():
     try:
         memory = joblib.Memory(location=cachedir, verbose=10)
         # Test with transformer + logistic regression
-        clf = LogisticRegression(random_state=0)
+        clf = LogisticRegression()
         transf = DummyTransf()
         pipe = Pipeline([("transf", clone(transf)), ("logreg", clf)])
         cached_pipe = Pipeline([("transf", transf), ("logreg", clf)], memory=memory)
@@ -1524,7 +1524,7 @@ def test_pipeline_memory():
         assert ts == cached_pipe.named_steps["transf"].timestamp_
         # Create a new pipeline with cloned estimators
         # Check that even changing the name step does not affect the cache hit
-        clf_2 = LogisticRegression(random_state=0)
+        clf_2 = LogisticRegression()
         transf_2 = DummyTransf()
         cached_pipe_2 = Pipeline(
             [("transf_2", transf_2), ("logreg", clf_2)], memory=memory

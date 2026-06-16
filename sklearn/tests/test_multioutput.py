@@ -370,7 +370,9 @@ def test_multiclass_multioutput_estimator_predict_proba():
 
     Y = np.concatenate([y1, y2], axis=1)
 
-    clf = MultiOutputClassifier(LogisticRegression(random_state=seed))
+    clf = MultiOutputClassifier(
+        LogisticRegression(random_state=seed, alpha=1 / X.shape[0])
+    )
 
     clf.fit(X, Y)
 
@@ -552,11 +554,11 @@ def test_classifier_chain_vs_independent_models():
     Y_train = Y[:600, :]
     Y_test = Y[600:, :]
 
-    ovr = OneVsRestClassifier(LogisticRegression())
+    ovr = OneVsRestClassifier(LogisticRegression(alpha=1e-2))
     ovr.fit(X_train, Y_train)
     Y_pred_ovr = ovr.predict(X_test)
 
-    chain = ClassifierChain(LogisticRegression())
+    chain = ClassifierChain(LogisticRegression(alpha=1e-2))
     chain.fit(X_train, Y_train)
     Y_pred_chain = chain.predict(X_test)
 
@@ -620,7 +622,10 @@ def test_base_chain_fit_and_predict_with_sparse_data_and_cv(csr_container):
 def test_base_chain_random_order():
     # Fit base chain with random order
     X, Y = generate_multilabel_dataset_with_correlations()
-    for chain in [ClassifierChain(LogisticRegression()), RegressorChain(Ridge())]:
+    for chain in [
+        ClassifierChain(LogisticRegression()),
+        RegressorChain(Ridge()),
+    ]:
         chain_random = clone(chain).set_params(order="random", random_state=42)
         chain_random.fit(X, Y)
         chain_fixed = clone(chain).set_params(order=chain_random.order_)
@@ -651,7 +656,9 @@ def test_base_chain_crossval_fit_and_predict(chain_type, chain_method):
     X, Y = generate_multilabel_dataset_with_correlations()
 
     if chain_type == "classifier":
-        chain = ClassifierChain(LogisticRegression(), chain_method=chain_method)
+        chain = ClassifierChain(
+            LogisticRegression(alpha=1e-2), chain_method=chain_method
+        )
     else:
         chain = RegressorChain(Ridge())
     chain.fit(X, Y)
@@ -741,6 +748,8 @@ def test_regressor_chain_w_fit_params():
         assert est.sample_weight_ is weight
 
 
+# TODO(1.14): remove filterwarnings with deprecation period of C and Cs
+@pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "MultiOutputEstimator, Estimator",
     [(MultiOutputClassifier, LogisticRegression), (MultiOutputRegressor, Ridge)],

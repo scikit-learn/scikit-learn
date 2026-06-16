@@ -2429,14 +2429,14 @@ def validation_curve(
     >>> from sklearn.linear_model import LogisticRegression
     >>> X, y = make_classification(n_samples=1_000, random_state=0)
     >>> logistic_regression = LogisticRegression()
-    >>> param_name, param_range = "C", np.logspace(-8, 3, 10)
+    >>> param_name, param_range = "alpha", np.logspace(-5, 4, 10)
     >>> train_scores, test_scores = validation_curve(
     ...     logistic_regression, X, y, param_name=param_name, param_range=param_range
     ... )
     >>> print(f"The average train accuracy is {train_scores.mean():.2f}")
-    The average train accuracy is 0.81
+    The average train accuracy is 0.84
     >>> print(f"The average test accuracy is {test_scores.mean():.2f}")
-    The average test accuracy is 0.81
+    The average test accuracy is 0.83
     """
     _check_groups_routing_disabled(groups)
     params = {} if params is None else params

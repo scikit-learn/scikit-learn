@@ -676,7 +676,7 @@ def test_stacking_without_n_features_in(make_dataset, Stacking, Estimator):
     "estimator",
     [
         # output a 2D array of the probability of the positive class for each output
-        MLPClassifier(random_state=42),
+        MLPClassifier(random_state=42, tol=1e-2),
         # output a list of 2D array containing the probability of each class
         # for each output
         RandomForestClassifier(random_state=42),
@@ -748,7 +748,7 @@ def test_stacking_classifier_multilabel_auto_predict(stack_method, passthrough):
     n_outputs = 3
 
     estimators = [
-        ("mlp", MLPClassifier(random_state=42)),
+        ("mlp", MLPClassifier(random_state=42, tol=1e-2)),
         ("rf", RandomForestClassifier(random_state=42)),
         ("ridge", RidgeClassifier()),
     ]

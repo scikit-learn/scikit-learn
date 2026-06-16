@@ -37,7 +37,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-model = make_pipeline(StandardScaler(with_std=False), LogisticRegression(C=2.0))
+model = make_pipeline(StandardScaler(with_std=False), LogisticRegression())
 model
 
 # %%
@@ -81,7 +81,7 @@ from sklearn.metrics import RocCurveDisplay
 from sklearn.model_selection import cross_validate
 
 X, y = make_classification(n_samples=150, random_state=0)
-clf = LogisticRegression(random_state=0)
+clf = LogisticRegression()
 cv_results = cross_validate(clf, X, y, cv=5, return_estimator=True, return_indices=True)
 _ = RocCurveDisplay.from_cv_results(cv_results, X, y)
 
