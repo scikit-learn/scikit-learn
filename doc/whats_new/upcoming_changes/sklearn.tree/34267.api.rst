@@ -1,0 +1,7 @@
+- |API| :class:`tree.ExtraTreeClassifier` and :class:`tree.ExtraTreeRegressor`
+  are deprecated and will be removed in 1.12. Use
+  :class:`tree.DecisionTreeClassifier` and :class:`tree.DecisionTreeRegressor`
+  with ``splitter="random"`` instead. The internal estimators used by
+  :class:`ensemble.ExtraTreesClassifier`, :class:`ensemble.ExtraTreesRegressor`,
+  :class:`ensemble.RandomTreesEmbedding`, and :class:`ensemble.IsolationForest`
+  are now decision trees with random splits instead of the deprecated classes.

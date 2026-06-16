@@ -8,28 +8,35 @@ from sklearn.ensemble import (
     RandomForestClassifier,
     RandomForestRegressor,
 )
-from sklearn.tree import (
-    DecisionTreeClassifier,
-    DecisionTreeRegressor,
-    ExtraTreeClassifier,
-    ExtraTreeRegressor,
-)
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils.fixes import CSC_CONTAINERS
 
-TREE_CLASSIFIER_CLASSES = [DecisionTreeClassifier, ExtraTreeClassifier]
-TREE_REGRESSOR_CLASSES = [DecisionTreeRegressor, ExtraTreeRegressor]
+TREE_CLASSIFIER_CLASSES = [
+    (DecisionTreeClassifier, "best"),
+    (DecisionTreeClassifier, "random"),
+]
+TREE_REGRESSOR_CLASSES = [
+    (DecisionTreeRegressor, "best"),
+    (DecisionTreeRegressor, "random"),
+]
 TREE_BASED_CLASSIFIER_CLASSES = TREE_CLASSIFIER_CLASSES + [
-    RandomForestClassifier,
-    ExtraTreesClassifier,
+    (RandomForestClassifier, None),
+    (ExtraTreesClassifier, None),
 ]
 TREE_BASED_REGRESSOR_CLASSES = TREE_REGRESSOR_CLASSES + [
-    RandomForestRegressor,
-    ExtraTreesRegressor,
+    (RandomForestRegressor, None),
+    (ExtraTreesRegressor, None),
 ]
 
 
-@pytest.mark.parametrize("TreeClassifier", TREE_BASED_CLASSIFIER_CLASSES)
+def _make_estimator(Estimator, splitter, **params):
+    if splitter is not None:
+        params["splitter"] = splitter
+    return Estimator(**params)
+
+
+@pytest.mark.parametrize("TreeClassifier, splitter", TREE_BASED_CLASSIFIER_CLASSES)
 @pytest.mark.parametrize(
     "sparse_splitter, with_missing",
     [
@@ -43,6 +50,7 @@ TREE_BASED_REGRESSOR_CLASSES = TREE_REGRESSOR_CLASSES + [
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 def test_monotonic_constraints_classifications(
     TreeClassifier,
+    splitter,
     sparse_splitter,
     depth_first_builder,
     with_missing,
@@ -73,9 +81,13 @@ def test_monotonic_constraints_classifications(
     monotonic_cst[1] = -1
 
     if depth_first_builder:
-        est = TreeClassifier(max_depth=None, monotonic_cst=monotonic_cst)
+        est = _make_estimator(
+            TreeClassifier, splitter, max_depth=None, monotonic_cst=monotonic_cst
+        )
     else:
-        est = TreeClassifier(
+        est = _make_estimator(
+            TreeClassifier,
+            splitter,
             max_depth=None,
             monotonic_cst=monotonic_cst,
             max_leaf_nodes=n_samples_train,
@@ -107,7 +119,7 @@ def test_monotonic_constraints_classifications(
     assert np.all(est.predict_proba(X_test_1decr)[:, 1] >= proba_test[:, 1])
 
 
-@pytest.mark.parametrize("TreeRegressor", TREE_BASED_REGRESSOR_CLASSES)
+@pytest.mark.parametrize("TreeRegressor, splitter", TREE_BASED_REGRESSOR_CLASSES)
 @pytest.mark.parametrize(
     "sparse_splitter, with_missing",
     [
@@ -122,6 +134,7 @@ def test_monotonic_constraints_classifications(
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 def test_monotonic_constraints_regressions(
     TreeRegressor,
+    splitter,
     sparse_splitter,
     depth_first_builder,
     with_missing,
@@ -152,13 +165,17 @@ def test_monotonic_constraints_regressions(
     monotonic_cst[1] = -1
 
     if depth_first_builder:
-        est = TreeRegressor(
+        est = _make_estimator(
+            TreeRegressor,
+            splitter,
             max_depth=None,
             monotonic_cst=monotonic_cst,
             criterion=criterion,
         )
     else:
-        est = TreeRegressor(
+        est = _make_estimator(
+            TreeRegressor,
+            splitter,
             max_depth=8,
             monotonic_cst=monotonic_cst,
             criterion=criterion,
@@ -187,8 +204,8 @@ def test_monotonic_constraints_regressions(
     assert np.all(y_decr <= y)
 
 
-@pytest.mark.parametrize("TreeClassifier", TREE_BASED_CLASSIFIER_CLASSES)
-def test_multiclass_raises(TreeClassifier):
+@pytest.mark.parametrize("TreeClassifier, splitter", TREE_BASED_CLASSIFIER_CLASSES)
+def test_multiclass_raises(TreeClassifier, splitter):
     X, y = make_classification(
         n_samples=100, n_features=5, n_classes=3, n_informative=3, random_state=0
     )
@@ -196,47 +213,69 @@ def test_multiclass_raises(TreeClassifier):
     monotonic_cst = np.zeros(X.shape[1])
     monotonic_cst[0] = -1
     monotonic_cst[1] = 1
-    est = TreeClassifier(max_depth=None, monotonic_cst=monotonic_cst, random_state=0)
+    est = _make_estimator(
+        TreeClassifier,
+        splitter,
+        max_depth=None,
+        monotonic_cst=monotonic_cst,
+        random_state=0,
+    )
 
     msg = "Monotonicity constraints are not supported with multiclass classification"
     with pytest.raises(ValueError, match=msg):
         est.fit(X, y)
 
 
-@pytest.mark.parametrize("TreeClassifier", TREE_BASED_CLASSIFIER_CLASSES)
-def test_multiple_output_raises(TreeClassifier):
+@pytest.mark.parametrize("TreeClassifier, splitter", TREE_BASED_CLASSIFIER_CLASSES)
+def test_multiple_output_raises(TreeClassifier, splitter):
     X = [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]]
     y = [[1, 0, 1, 0, 1], [1, 0, 1, 0, 1]]
 
-    est = TreeClassifier(
-        max_depth=None, monotonic_cst=np.array([-1, 1]), random_state=0
+    est = _make_estimator(
+        TreeClassifier,
+        splitter,
+        max_depth=None,
+        monotonic_cst=np.array([-1, 1]),
+        random_state=0,
     )
     msg = "Monotonicity constraints are not supported with multiple output"
     with pytest.raises(ValueError, match=msg):
         est.fit(X, y)
 
 
-@pytest.mark.parametrize("TreeClassifier", TREE_BASED_CLASSIFIER_CLASSES)
-def test_bad_monotonic_cst_raises(TreeClassifier):
+@pytest.mark.parametrize("TreeClassifier, splitter", TREE_BASED_CLASSIFIER_CLASSES)
+def test_bad_monotonic_cst_raises(TreeClassifier, splitter):
     X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
     y = [1, 0, 1, 0, 1]
 
     msg = "monotonic_cst has shape 3 but the input data X has 2 features."
-    est = TreeClassifier(
-        max_depth=None, monotonic_cst=np.array([-1, 1, 0]), random_state=0
+    est = _make_estimator(
+        TreeClassifier,
+        splitter,
+        max_depth=None,
+        monotonic_cst=np.array([-1, 1, 0]),
+        random_state=0,
     )
     with pytest.raises(ValueError, match=msg):
         est.fit(X, y)
 
     msg = "monotonic_cst must be None or an array-like of -1, 0 or 1."
-    est = TreeClassifier(
-        max_depth=None, monotonic_cst=np.array([-2, 2]), random_state=0
+    est = _make_estimator(
+        TreeClassifier,
+        splitter,
+        max_depth=None,
+        monotonic_cst=np.array([-2, 2]),
+        random_state=0,
     )
     with pytest.raises(ValueError, match=msg):
         est.fit(X, y)
 
-    est = TreeClassifier(
-        max_depth=None, monotonic_cst=np.array([-1, 0.8]), random_state=0
+    est = _make_estimator(
+        TreeClassifier,
+        splitter,
+        max_depth=None,
+        monotonic_cst=np.array([-1, 0.8]),
+        random_state=0,
     )
     with pytest.raises(ValueError, match=msg + "(.*)0.8]"):
         est.fit(X, y)
@@ -291,31 +330,32 @@ def assert_1d_reg_monotonic(clf, monotonic_sign, min_x, max_x, n_steps):
         assert (np.diff(y_pred_grid) <= 0.0).all()
 
 
-@pytest.mark.parametrize("TreeRegressor", TREE_REGRESSOR_CLASSES)
-def test_1d_opposite_monotonicity_cst_data(TreeRegressor):
+@pytest.mark.parametrize("TreeRegressor, splitter", TREE_REGRESSOR_CLASSES)
+def test_1d_opposite_monotonicity_cst_data(TreeRegressor, splitter):
     # Check that positive monotonic data with negative monotonic constraint
     # yield constant predictions, equal to the average of target values
     X = np.linspace(-2, 2, 10).reshape(-1, 1)
     y = X.ravel()
-    clf = TreeRegressor(monotonic_cst=[-1])
+    clf = _make_estimator(TreeRegressor, splitter, monotonic_cst=[-1])
     clf.fit(X, y)
     assert clf.tree_.node_count == 1
     assert clf.tree_.value[0] == 0.0
 
     # Swap monotonicity
-    clf = TreeRegressor(monotonic_cst=[1])
+    clf = _make_estimator(TreeRegressor, splitter, monotonic_cst=[1])
     clf.fit(X, -y)
     assert clf.tree_.node_count == 1
     assert clf.tree_.value[0] == 0.0
 
 
-@pytest.mark.parametrize("TreeRegressor", TREE_REGRESSOR_CLASSES)
+@pytest.mark.parametrize("TreeRegressor, splitter", TREE_REGRESSOR_CLASSES)
 @pytest.mark.parametrize("with_missing", (True, False))
 @pytest.mark.parametrize("monotonic_sign", (-1, 1))
 @pytest.mark.parametrize("depth_first_builder", (True, False))
 @pytest.mark.parametrize("criterion", ("absolute_error", "squared_error"))
 def test_1d_tree_nodes_values(
     TreeRegressor,
+    splitter,
     with_missing,
     monotonic_sign,
     depth_first_builder,
@@ -347,14 +387,18 @@ def test_1d_tree_nodes_values(
 
     if depth_first_builder:
         # No max_leaf_nodes, default depth first tree builder
-        clf = TreeRegressor(
+        clf = _make_estimator(
+            TreeRegressor,
+            splitter,
             monotonic_cst=[monotonic_sign],
             criterion=criterion,
             random_state=global_random_seed,
         )
     else:
         # max_leaf_nodes triggers best first tree builder
-        clf = TreeRegressor(
+        clf = _make_estimator(
+            TreeRegressor,
+            splitter,
             monotonic_cst=[monotonic_sign],
             max_leaf_nodes=n_samples,
             criterion=criterion,
@@ -473,13 +517,14 @@ def test_assert_nd_reg_tree_children_monotonic_bounded():
         assert_nd_reg_tree_children_monotonic_bounded(reg.tree_, [1])
 
 
-@pytest.mark.parametrize("TreeRegressor", TREE_REGRESSOR_CLASSES)
+@pytest.mark.parametrize("TreeRegressor, splitter", TREE_REGRESSOR_CLASSES)
 @pytest.mark.parametrize("with_missing", (True, False))
 @pytest.mark.parametrize("monotonic_sign", (-1, 1))
 @pytest.mark.parametrize("depth_first_builder", (True, False))
 @pytest.mark.parametrize("criterion", ("absolute_error", "squared_error"))
 def test_nd_tree_nodes_values(
     TreeRegressor,
+    splitter,
     with_missing,
     monotonic_sign,
     depth_first_builder,
@@ -515,14 +560,18 @@ def test_nd_tree_nodes_values(
 
     if depth_first_builder:
         # No max_leaf_nodes, default depth first tree builder
-        clf = TreeRegressor(
+        clf = _make_estimator(
+            TreeRegressor,
+            splitter,
             monotonic_cst=monotonic_cst,
             criterion=criterion,
             random_state=global_random_seed,
         )
     else:
         # max_leaf_nodes triggers best first tree builder
-        clf = TreeRegressor(
+        clf = _make_estimator(
+            TreeRegressor,
+            splitter,
             monotonic_cst=monotonic_cst,
             max_leaf_nodes=n_samples,
             criterion=criterion,

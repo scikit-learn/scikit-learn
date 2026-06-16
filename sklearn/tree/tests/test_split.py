@@ -9,27 +9,12 @@ from scipy.sparse import csc_array
 from scipy.special import xlogy
 
 from sklearn.metrics import mean_poisson_deviance
-from sklearn.tree import (
-    DecisionTreeClassifier,
-    DecisionTreeRegressor,
-    ExtraTreeClassifier,
-    ExtraTreeRegressor,
-)
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils.stats import _weighted_percentile
 
 CLF_CRITERIONS = ("gini", "log_loss")
 
 REG_CRITERIONS = ("squared_error", "absolute_error", "poisson")
-
-CLF_TREES = {
-    "DecisionTreeClassifier": DecisionTreeClassifier,
-    "ExtraTreeClassifier": ExtraTreeClassifier,
-}
-
-REG_TREES = {
-    "DecisionTreeRegressor": DecisionTreeRegressor,
-    "ExtraTreeRegressor": ExtraTreeRegressor,
-}
 
 
 @dataclass
@@ -153,10 +138,10 @@ def make_simple_dataset(
 
 @pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
 @pytest.mark.parametrize(
-    "Tree, criterion",
+    "Tree, criterion, splitter",
     [
-        *product(REG_TREES.values(), REG_CRITERIONS),
-        *product(CLF_TREES.values(), CLF_CRITERIONS),
+        *product([DecisionTreeRegressor], REG_CRITERIONS, ["best", "random"]),
+        *product([DecisionTreeClassifier], CLF_CRITERIONS, ["best", "random"]),
     ],
 )
 @pytest.mark.parametrize(
@@ -164,7 +149,9 @@ def make_simple_dataset(
     [(False, False), (True, False), (False, True)],
     ids=["dense-without_missing", "sparse-without_missing", "dense-with_missing"],
 )
-def test_split_impurity(Tree, criterion, sparse, missing_values, global_random_seed):
+def test_split_impurity(
+    Tree, criterion, splitter, sparse, missing_values, global_random_seed
+):
     is_clf = criterion in CLF_CRITERIONS
 
     rng = np.random.default_rng(global_random_seed)
@@ -182,6 +169,7 @@ def test_split_impurity(Tree, criterion, sparse, missing_values, global_random_s
 
         tree = Tree(
             criterion=criterion,
+            splitter=splitter,
             max_depth=1,
             random_state=global_random_seed,
         )
@@ -198,7 +186,7 @@ def test_split_impurity(Tree, criterion, sparse, missing_values, global_random_s
         if tree.tree_.node_count == 1:
             # if no splits was made assert that either:
             assert (
-                "Extra" in Tree.__name__
+                splitter == "random"
                 or root_impurity < 1e-12  # root impurity is 0
                 # or no valid split can be made:
                 or naive_splitter.best_split_naive(X_dense, y, w)[0] == np.inf
@@ -218,7 +206,7 @@ def test_split_impurity(Tree, criterion, sparse, missing_values, global_random_s
         assert_allclose(left_val, actual_value[1], atol=1e-12)
         assert_allclose(right_val, actual_value[2], atol=1e-12)
 
-        if "Extra" in Tree.__name__:
+        if splitter == "random":
             # The remainder of the test checks for optimality of the found split.
             # However, randomized trees are not guaranteed to find an optimal split
             # but only a "better-than-nothing" split.

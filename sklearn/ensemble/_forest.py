@@ -25,8 +25,8 @@ The module structure is the following:
 
 - The ``ExtraTreesClassifier`` and ``ExtraTreesRegressor`` derived
   classes provide the user with concrete implementations of the
-  forest ensemble method using the extremely randomized trees
-  ``ExtraTreeClassifier`` and ``ExtraTreeRegressor`` as
+  forest ensemble method using extremely randomized
+  ``DecisionTreeClassifier`` and ``DecisionTreeRegressor`` as
   sub-estimator implementations.
 
 Single and multi-output problems are both handled.
@@ -61,8 +61,6 @@ from sklearn.tree import (
     BaseDecisionTree,
     DecisionTreeClassifier,
     DecisionTreeRegressor,
-    ExtraTreeClassifier,
-    ExtraTreeRegressor,
 )
 from sklearn.utils import (
     check_random_state,
@@ -2181,7 +2179,7 @@ class ExtraTreesClassifier(ForestClassifier):
 
     Attributes
     ----------
-    estimator_ : :class:`~sklearn.tree.ExtraTreeClassifier`
+    estimator_ : :class:`~sklearn.tree.DecisionTreeClassifier`
         The child estimator template used to create the collection of fitted
         sub-estimators.
 
@@ -2309,7 +2307,7 @@ class ExtraTreesClassifier(ForestClassifier):
         monotonic_cst=None,
     ):
         super().__init__(
-            estimator=ExtraTreeClassifier(),
+            estimator=DecisionTreeClassifier(splitter="random"),
             n_estimators=n_estimators,
             estimator_params=(
                 "criterion",
@@ -2553,7 +2551,7 @@ class ExtraTreesRegressor(ForestRegressor):
 
     Attributes
     ----------
-    estimator_ : :class:`~sklearn.tree.ExtraTreeRegressor`
+    estimator_ : :class:`~sklearn.tree.DecisionTreeRegressor`
         The child estimator template used to create the collection of fitted
         sub-estimators.
 
@@ -2664,7 +2662,7 @@ class ExtraTreesRegressor(ForestRegressor):
         monotonic_cst=None,
     ):
         super().__init__(
-            estimator=ExtraTreeRegressor(),
+            estimator=DecisionTreeRegressor(splitter="random"),
             n_estimators=n_estimators,
             estimator_params=(
                 "criterion",
@@ -2825,14 +2823,14 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
 
     Attributes
     ----------
-    estimator_ : :class:`~sklearn.tree.ExtraTreeRegressor` instance
+    estimator_ : :class:`~sklearn.tree.DecisionTreeRegressor` instance
         The child estimator template used to create the collection of fitted
         sub-estimators.
 
         .. versionadded:: 1.2
            `base_estimator_` was renamed to `estimator_`.
 
-    estimators_ : list of :class:`~sklearn.tree.ExtraTreeRegressor` instances
+    estimators_ : list of :class:`~sklearn.tree.DecisionTreeRegressor` instances
         The collection of fitted sub-estimators.
 
     feature_importances_ : ndarray of shape (n_features,)
@@ -2867,10 +2865,8 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
     ExtraTreesRegressor : An extra-trees regressor.
     RandomForestClassifier : A random forest classifier.
     RandomForestRegressor : A random forest regressor.
-    sklearn.tree.ExtraTreeClassifier: An extremely randomized
-        tree classifier.
-    sklearn.tree.ExtraTreeRegressor : An extremely randomized
-        tree regressor.
+    sklearn.tree.DecisionTreeClassifier: A decision tree classifier.
+    sklearn.tree.DecisionTreeRegressor : A decision tree regressor.
 
     References
     ----------
@@ -2926,7 +2922,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         warm_start=False,
     ):
         super().__init__(
-            estimator=ExtraTreeRegressor(),
+            estimator=DecisionTreeRegressor(splitter="random", max_features=1),
             n_estimators=n_estimators,
             estimator_params=(
                 "criterion",

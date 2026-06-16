@@ -527,7 +527,6 @@ def test_partial_dependence_easy_target(est, power):
     "Estimator",
     (
         sklearn.tree.DecisionTreeClassifier,
-        sklearn.tree.ExtraTreeClassifier,
         sklearn.ensemble.ExtraTreesClassifier,
         sklearn.neighbors.KNeighborsClassifier,
         sklearn.neighbors.RadiusNeighborsClassifier,

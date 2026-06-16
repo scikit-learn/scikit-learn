@@ -278,10 +278,10 @@ Hence, when a forest of random trees collectively produce shorter path
 lengths for particular samples, they are highly likely to be anomalies.
 
 The implementation of :class:`ensemble.IsolationForest` is based on an ensemble
-of :class:`tree.ExtraTreeRegressor`. Following Isolation Forest original paper,
-the maximum depth of each tree is set to :math:`\lceil \log_2(n) \rceil` where
-:math:`n` is the number of samples used to build the tree (see [1]_
-for more details).
+of :class:`tree.DecisionTreeRegressor` with ``splitter="random"``. Following
+Isolation Forest original paper, the maximum depth of each tree is set to
+:math:`\lceil \log_2(n) \rceil` where :math:`n` is the number of samples used
+to build the tree (see [1]_ for more details).
 
 This algorithm is illustrated below.
 

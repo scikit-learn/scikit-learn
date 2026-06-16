@@ -11,7 +11,7 @@ from scipy.sparse import issparse
 
 from sklearn.base import OutlierMixin, _fit_context
 from sklearn.ensemble._bagging import BaseBagging
-from sklearn.tree import ExtraTreeRegressor
+from sklearn.tree import DecisionTreeRegressor
 from sklearn.utils import check_array, check_random_state, gen_batches
 from sklearn.utils._chunking import get_chunk_n_rows
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
@@ -142,14 +142,14 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
     Attributes
     ----------
-    estimator_ : :class:`~sklearn.tree.ExtraTreeRegressor` instance
+    estimator_ : :class:`~sklearn.tree.DecisionTreeRegressor` instance
         The child estimator template used to create the collection of
         fitted sub-estimators.
 
         .. versionadded:: 1.2
            `base_estimator_` was renamed to `estimator_`.
 
-    estimators_ : list of ExtraTreeRegressor instances
+    estimators_ : list of DecisionTreeRegressor instances
         The collection of fitted sub-estimators.
 
     estimators_features_ : list of ndarray
@@ -197,8 +197,9 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
     Notes
     -----
-    The implementation is based on an ensemble of ExtraTreeRegressor. The
-    maximum depth of each tree is set to ``ceil(log_2(n))`` where
+    The implementation is based on an ensemble of
+    :class:`~sklearn.tree.DecisionTreeRegressor` instances with random splits.
+    The maximum depth of each tree is set to ``ceil(log_2(n))`` where
     :math:`n` is the number of samples used to build the tree
     (see [1]_ for more details).
 
@@ -277,7 +278,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         self.contamination = contamination
 
     def _get_estimator(self):
-        return ExtraTreeRegressor(
+        return DecisionTreeRegressor(
             # here max_features has no links with self.max_features
             max_features=1,
             splitter="random",
@@ -288,7 +289,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         raise NotImplementedError("OOB score not supported by iforest")
 
     def _parallel_args(self):
-        # ExtraTreeRegressor releases the GIL, so it's more efficient to use
+        # DecisionTreeRegressor releases the GIL, so it's more efficient to use
         # a thread-based backend rather than a process-based backend so as
         # to avoid suffering from communication overhead and extra memory
         # copies. This is only used in the fit method.
