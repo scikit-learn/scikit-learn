@@ -2,6 +2,6 @@
 # following script to centralize the configuration for CI builds:
 # build_tools/update_environments_and_lock_files.py
 pytest
-ruff
-mypy
+ruff==0.12.2  # min
+mypy==1.15  # min
 cython-lint

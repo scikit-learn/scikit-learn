@@ -488,6 +488,10 @@ build_metadata_list = [
         "tag": "lint",
         "folder": "build_tools/github",
         "pip_dependencies": ["pytest", "ruff", "mypy", "cython-lint"],
+        "package_constraints": {
+            "ruff": "min",
+            "mypy": "min",
+        },
         "python_version": "3.11",
     },
 ]
