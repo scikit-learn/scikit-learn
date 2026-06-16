@@ -482,6 +482,14 @@ build_metadata_list = [
         },
         "python_version": "3.12.3",
     },
+    {
+        "name": "lint",
+        "type": "pip",
+        "tag": "lint",
+        "folder": "build_tools/github",
+        "pip_dependencies": ["pytest", "ruff", "mypy", "cython-lint"],
+        "python_version": "3.11",
+    },
 ]
 
 
