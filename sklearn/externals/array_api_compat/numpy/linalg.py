@@ -19,6 +19,7 @@ from ._typing import Array
 cross = get_xp(np)(_linalg.cross)
 outer = get_xp(np)(_linalg.outer)
 EighResult = _linalg.EighResult
+EigResult = _linalg.EigResult
 QRResult = _linalg.QRResult
 SlogdetResult = _linalg.SlogdetResult
 SVDResult = _linalg.SVDResult
@@ -95,6 +96,85 @@ def solve(x1: Array, x2: Array, /) -> Array:
         r: Array = gufunc(x1, x2, signature=signature)
 
     return wrap(r.astype(result_t, copy=False))
+
+
+# Unlike numpy.linalg.eig, Array API version always returns complex results
+
+def eig(x: Array, /) -> tuple[Array, Array]:
+    try:
+        from numpy.linalg._linalg import (  # type: ignore[attr-defined]
+            _assert_stacked_square,
+            _assert_finite,
+            _commonType,
+            _makearray,
+            _raise_linalgerror_eigenvalues_nonconvergence,
+            isComplexType,
+            _complexType,
+        )
+    except ImportError:
+        from numpy.linalg.linalg import (  # type: ignore[attr-defined]
+            _assert_stacked_square,
+            _assert_finite,
+            _commonType,
+            _makearray,
+            _raise_linalgerror_eigenvalues_nonconvergence,
+            isComplexType,
+            _complexType,
+        )
+    from numpy.linalg import _umath_linalg
+
+    x, wrap = _makearray(x)
+    _assert_stacked_square(x)
+    _assert_finite(x)
+    t, result_t = _commonType(x)
+
+    signature = 'D->DD' if isComplexType(t) else 'd->DD'
+    with np.errstate(call=_raise_linalgerror_eigenvalues_nonconvergence,
+                  invalid='call', over='ignore', divide='ignore',
+                  under='ignore'):
+        w, vt = _umath_linalg.eig(x, signature=signature)
+
+    result_t = _complexType(result_t)
+    vt = vt.astype(result_t, copy=False)
+    return EigResult(w.astype(result_t, copy=False), wrap(vt))
+
+
+def eigvals(x: Array, /) -> Array:
+    try:
+        from numpy.linalg._linalg import (  # type: ignore[attr-defined]
+            _assert_stacked_square,
+            _assert_finite,
+            _commonType,
+            _makearray,
+            _raise_linalgerror_eigenvalues_nonconvergence,
+            isComplexType,
+            _complexType,
+        )
+    except ImportError:
+        from numpy.linalg.linalg import (  # type: ignore[attr-defined]
+            _assert_stacked_square,
+            _assert_finite,
+            _commonType,
+            _makearray,
+            _raise_linalgerror_eigenvalues_nonconvergence,
+            isComplexType,
+            _complexType,
+        )
+    from numpy.linalg import _umath_linalg
+
+    x, wrap = _makearray(x)
+    _assert_stacked_square(x)
+    _assert_finite(x)
+    t, result_t = _commonType(x)
+
+    signature = 'D->D' if isComplexType(t) else 'd->D'
+    with np.errstate(call=_raise_linalgerror_eigenvalues_nonconvergence,
+                  invalid='call', over='ignore', divide='ignore',
+                  under='ignore'):
+        w = _umath_linalg.eigvals(x, signature=signature)
+
+    result_t = _complexType(result_t)
+    return w.astype(result_t, copy=False)
 
 
 # These functions are completely new here. If the library already has them

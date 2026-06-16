@@ -30,6 +30,7 @@ from sklearn.utils._repr_html.estimator import _VisualBlock
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _raise_for_params,
     _routing_enabled,
     process_routing,
@@ -88,13 +89,12 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         if _routing_enabled():
             routed_params = process_routing(self, "fit", **fit_params)
         else:
-            routed_params = Bunch()
-            for name in names:
-                routed_params[name] = Bunch(fit={})
-                if "sample_weight" in fit_params:
-                    routed_params[name].fit["sample_weight"] = fit_params[
-                        "sample_weight"
-                    ]
+            sw = (
+                {"sample_weight": fit_params["sample_weight"]}
+                if "sample_weight" in fit_params
+                else {}
+            )
+            routed_params = _manual_routing({name: {"fit": sw} for name in names})
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_single_estimator)(

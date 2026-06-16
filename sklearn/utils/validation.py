@@ -846,7 +846,8 @@ def check_array(
     Returns
     -------
     array_converted : object
-        The converted and validated array.
+        The converted and validated array: a numpy array, Array API compatible array,
+        sparse array or sparse matrix.
 
     Examples
     --------
@@ -903,17 +904,19 @@ def check_array(
         def is_pd_sparse(dtype):
             return isinstance(dtype, SparseDtype)
 
-        if hasattr(array, "sparse") and array.dtypes.apply(is_pd_sparse).all():
+        # Note that array may be a narhwals.DataFrame backed by a pandas.DataFrame.
+        df_pandas = array_df.to_native()
+        if hasattr(df_pandas, "sparse") and df_pandas.dtypes.apply(is_pd_sparse).all():
             # All columns of the pandas.DataFrame are sparse. Note that the `sparse`
             # attribute is not a guaranteed detection for all sparse columns.
             is_pandas_fully_sparse_df = True
-        elif array.dtypes.apply(is_pd_sparse).any():
+        elif df_pandas.dtypes.apply(is_pd_sparse).any():
             warnings.warn(
                 "pandas.DataFrame with sparse columns found."
                 "It will be converted to a dense numpy array."
             )
 
-        dtypes_orig = list(array.dtypes)
+        dtypes_orig = list(df_pandas.dtypes)
         pandas_requires_conversion = any(
             _pandas_dtype_needs_early_conversion(i) for i in dtypes_orig
         )
@@ -985,9 +988,9 @@ def check_array(
     context = " by %s" % estimator_name if estimator is not None else ""
 
     # When all dataframe columns are sparse, convert to a sparse array
-    if is_pandas_fully_sparse_df and array.ndim > 1:
+    if is_pandas_fully_sparse_df:
         # DataFrame.sparse only supports `to_coo`
-        array = array.sparse.to_coo()
+        array = df_pandas.sparse.to_coo()
 
     if sp.issparse(array):
         _ensure_no_complex_data(array)
