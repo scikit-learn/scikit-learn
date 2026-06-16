@@ -554,7 +554,7 @@ def test_stacking_cv_influence(stacker, X, y):
 
 @pytest.mark.parametrize(
     "Stacker, Estimator, stack_method, final_estimator, X, y",
-    [
+    (
         (
             StackingClassifier,
             DummyClassifier,
@@ -571,7 +571,7 @@ def test_stacking_cv_influence(stacker, X, y):
             X_diabetes,
             y_diabetes,
         ),
-    ],
+    ),
 )
 def test_stacking_prefit(Stacker, Estimator, stack_method, final_estimator, X, y):
     """Check the behaviour of stacking when `cv='prefit'`"""
