@@ -80,6 +80,6 @@ from sklearn.tree import plot_tree
 
 plt.figure()
 clf = DecisionTreeClassifier().fit(iris.data, iris.target)
-plot_tree(clf, filled=True)
+plot_tree(clf, filled=True, fill_colors=disp.target_colors_)
 plt.title("Decision tree trained on all the iris features")
 plt.show()
