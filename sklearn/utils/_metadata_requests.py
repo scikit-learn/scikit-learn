@@ -1717,7 +1717,7 @@ class _MetadataRequester:
             A :class:`~sklearn.utils.metadata_routing.MetadataRequest` instance.
         """
         if hasattr(self, "_metadata_request"):
-            requests = get_routing_for_object(self._metadata_request)
+            requests = self._metadata_request.__sklearn_clone__()
         else:
             requests = MetadataRequest(owner=self)
             for method_name in SIMPLE_METHODS:
@@ -1728,11 +1728,16 @@ class _MetadataRequester:
                         owner=self,
                         method=method_name,
                         requests=self._get_class_level_metadata_request_values(
-                            method_name
+                            method_name,
                         ),
                     ),
                 )
         return requests
+
+    def __sklearn_get_metadata_request__(self):
+        """Developer API to be overridden by third party developers for setting custom
+        requests."""
+        return self._get_metadata_request()
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.

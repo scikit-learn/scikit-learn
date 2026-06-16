@@ -387,7 +387,7 @@ class _BaseScorer(_MetadataRequester):
             A :class:`~sklearn.utils.metadata_routing.MetadataRequest` instance.
         """
         if hasattr(self, "_metadata_request"):
-            requests = get_routing_for_object(self._metadata_request)
+            requests = self._metadata_request.__sklearn_clone__()
         else:
             requests = MetadataRequest(owner=self)
             setattr(
