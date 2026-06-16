@@ -605,12 +605,8 @@ pipe.fit(X, y, sample_weight=my_weights, groups=my_groups).predict(
 # %%
 # The imports below are only required for the examples in this section.
 
-from sklearn.utils._metadata_requests import (
-    SIMPLE_METHODS,
-    MethodMetadataRequest,
-    _MetadataRequester,
-)
-from sklearn.utils.metadata_routing import MetadataRequest
+from sklearn.utils._metadata_requests import SIMPLE_METHODS, MethodMetadataRequest
+from sklearn.utils.metadata_routing import MetadataRequest, _MetadataRequester
 
 # %%
 # Developers can exclude data parameters from metadata discovery with `ignore_params`.
