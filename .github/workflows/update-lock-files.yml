@@ -8,73 +8,107 @@ on:
   schedule:
     - cron: '0 5 * * 1'
 
+env:
+  # Keep in sync with the pixi version used in the other workflows.
+  PIXI_VERSION: v0.70.1
+
 jobs:
-  update_lock_files:
+  # Update the single multi-environment pixi lock file that drives most of the
+  # CI builds. A single `pixi update` re-solves every environment declared in
+  # pyproject.toml (conda-forge + PyPI), including the nightly/dev `scipy-dev`
+  # environment and the GPU `cuda` environment.
+  update_pixi_lock_file:
     if: github.repository == 'scikit-learn/scikit-learn'
     runs-on: ubuntu-latest
 
-    strategy:
-      # Ensure that each build will continue even if one build in the matrix fails
-      fail-fast: false
-      matrix:
-        include:
-          - name: main
-            update_script_args: "--select-tag main-ci"
-            additional_commit_message: "[doc build]"
-          - name: scipy-dev
-            update_script_args: "--select-tag scipy-dev"
-            additional_commit_message: "[scipy-dev]"
-          - name: free-threaded
-            update_script_args: "--select-tag free-threaded"
-            additional_commit_message: "[free-threaded]"
-          - name: array-api
-            update_script_args: "--select-tag cuda"
-
     steps:
-      - uses: actions/checkout@v6
-      - name: Generate lock files
-        run: |
-          source build_tools/shared.sh
-          source $CONDA/bin/activate
-          conda update -n base --all
-          conda install -n base conda conda-libmamba-solver -y
-          conda config --set solver libmamba
-          conda install -c conda-forge "$(get_dep conda-lock min)" -y
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
-          python build_tools/update_environments_and_lock_files.py ${{ matrix.update_script_args }}
+      - name: Set up pixi
+        uses: prefix-dev/setup-pixi@5185adfbffb4bd703da3010310260805d89ebb11 # v0.9.6
+        with:
+          pixi-version: ${{ env.PIXI_VERSION }}
+          manifest-path: pyproject.toml
+          # We only need the pixi binary to update the lock file, not the
+          # environments themselves.
+          run-install: false
+
+      - name: Update pixi lock file
+        run: pixi update
 
       - name: Create Pull Request
         id: cpr
-        uses: peter-evans/create-pull-request@v8
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8
         with:
           token: ${{ secrets.BOT_GITHUB_TOKEN }}
           push-to-fork: scikit-learn-bot/scikit-learn
-          commit-message: Update CI lock files ${{ matrix.additional_commit_message }}
+          # The markers in the commit message trigger the conditional CI jobs
+          # (free-threaded and the documentation build) so that the updated
+          # environments are actually exercised on the PR. scipy-dev is not
+          # included on purpose: it does not use pixi and installs the latest
+          # development dependencies at run time, independently of the lock file.
+          commit-message: "Update CI pixi lock file [free-threaded] [doc build]"
           committer: "Lock file bot <noreply@github.com>"
           author: "Lock file bot <noreply@github.com>"
           delete-branch: true
-          branch: auto-update-lock-files-${{ matrix.name }}
-          title: ":lock: :robot: CI Update lock files for ${{ matrix.name }} CI build(s) :lock: :robot:"
+          branch: auto-update-lock-files-pixi
+          # Trigger the (expensive) CUDA GPU CI on the generated PR so that the
+          # updated `cuda` environment is validated as well.
+          labels: "CUDA CI"
+          title: ":lock: :robot: CI Update pixi lock file :lock: :robot:"
           body: |
-            Update lock files.
+            Update the pixi lock file.
 
             ### Note
             If the CI tasks fail, create a new branch based on this PR and add the required fixes to that branch.
 
-      # The CUDA workflow needs to be triggered explicitly as it uses an expensive runner
-      - name: Trigger additional tests
-        if: steps.cpr.outputs.pull-request-number != '' && matrix.name == 'array-api'
-        env:
-          GH_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
-          PR_NUMBER: ${{steps.cpr.outputs.pull-request-number}}
+      - name: Check Pull Request
+        if: steps.cpr.outputs.pull-request-number != ''
         run: |
-          curl -L \
-            -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            https://api.github.com/repos/scikit-learn/scikit-learn/issues/$PR_NUMBER/labels \
-            -d '{"labels":["CUDA CI"]}'
+          echo "### :rocket: Pull-Request Summary" >> ${GITHUB_STEP_SUMMARY}
+          echo "" >> ${GITHUB_STEP_SUMMARY}
+          echo "The following lock files pull-request has been auto-generated:"
+          echo "- **PR** #${{ steps.cpr.outputs.pull-request-number }}" >> ${GITHUB_STEP_SUMMARY}
+          echo "- **URL** ${{ steps.cpr.outputs.pull-request-url }}" >> ${GITHUB_STEP_SUMMARY}
+          echo "- **Operation** [${{ steps.cpr.outputs.pull-request-operation }}]" >> ${GITHUB_STEP_SUMMARY}
+          echo "- **SHA** ${{ steps.cpr.outputs.pull-request-head-sha }}" >> ${GITHUB_STEP_SUMMARY}
+
+  # The ubuntu_atlas and debian_32bit builds do not use a conda/pixi
+  # environment: they install numpy/scipy with apt and the remaining
+  # dependencies from a pip lock file. These two lock files are still maintained
+  # with the legacy `update_environments_and_lock_files.py` script.
+  update_pip_lock_files:
+    if: github.repository == 'scikit-learn/scikit-learn'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Generate pip lock files
+        run: |
+          source $CONDA/bin/activate
+          conda install -n base conda conda-libmamba-solver -y
+          conda config --set solver libmamba
+          python build_tools/update_environments_and_lock_files.py \
+            --select-build "debian_32bit|ubuntu_atlas"
+
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8
+        with:
+          token: ${{ secrets.BOT_GITHUB_TOKEN }}
+          push-to-fork: scikit-learn-bot/scikit-learn
+          commit-message: "Update CI pip lock files"
+          committer: "Lock file bot <noreply@github.com>"
+          author: "Lock file bot <noreply@github.com>"
+          delete-branch: true
+          branch: auto-update-lock-files-pip
+          title: ":lock: :robot: CI Update pip lock files :lock: :robot:"
+          body: |
+            Update the pip lock files for the ubuntu_atlas and debian_32bit builds.
+
+            ### Note
+            If the CI tasks fail, create a new branch based on this PR and add the required fixes to that branch.
 
       - name: Check Pull Request
         if: steps.cpr.outputs.pull-request-number != ''

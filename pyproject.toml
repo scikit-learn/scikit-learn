@@ -105,6 +105,567 @@ requires = [
     "scipy>=1.10.0",
 ]
 
+# =============================================================================
+# pixi configuration
+# =============================================================================
+# This section defines the conda/PyPI environments used by the CI. Each CI build
+# maps to a pixi environment (see ``[tool.pixi.environments]``) which is composed
+# of a single "feature" describing its dependencies and target platform. The
+# resolved versions are stored in ``pixi.lock`` (a single multi-environment lock
+# file that replaces the per-build conda-lock ``*.lock`` files).
+#
+# The minimum-dependency pins (marked with ``# min``) are generated from
+# ``sklearn/_min_dependencies.py`` by ``build_tools/update_pixi_min_pins.py``;
+# do not edit them by hand.
+#
+# scikit-learn itself is intentionally NOT declared as a pixi dependency: the CI
+# builds it with ``pip install --no-build-isolation -e .`` on top of the pixi
+# environment, exactly like the previous conda-lock based setup.
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["linux-64", "linux-aarch64", "osx-64", "osx-arm64", "win-64"]
+
+# Default feature: ONLY the minimal dependencies needed to build and run
+# scikit-learn (mirrors ``[build-system].requires`` and ``[project].dependencies``).
+# Test, documentation and interactive-development dependencies live in the
+# dedicated ``tests``, ``docs`` and ``dev`` features below and are combined in
+# the ``dev`` environment. CI environments all set ``no-default-feature = true``
+# so these dependencies never leak into them.
+[tool.pixi.dependencies]
+python = "*"
+pip = "*"
+ccache = "*"
+# Build dependencies (see ``[build-system].requires``).
+numpy = "*"
+scipy = "*"
+cython = ">=3.1.2"
+meson-python = ">=0.17.1"
+ninja = "*"
+# Runtime dependencies (see ``[project].dependencies``).
+joblib = "*"
+narwhals = "*"
+threadpoolctl = "*"
+
+# Test dependencies (mirrors ``[project.optional-dependencies].tests`` plus the
+# extra test runners and linters used by build_tools/linting.sh).
+[tool.pixi.feature.tests.dependencies]
+pytest = "*"
+pytest-xdist = "*"
+pytest-cov = "<=6.3.0"
+coverage = "*"
+matplotlib = "*"
+pandas = "*"
+rich = "*"
+pyamg = "*"
+polars = "*"
+pyarrow = "*"
+pillow = "*"
+numpydoc = "*"
+pooch = "*"
+array-api-strict = "*"
+ruff = "*"
+mypy = "*"
+cython-lint = "*"
+
+# Documentation dependencies (mirrors ``[project.optional-dependencies].docs``).
+[tool.pixi.feature.docs.dependencies]
+matplotlib = "*"
+scikit-image = "*"
+pandas = "*"
+rich = "*"
+seaborn = "*"
+memory_profiler = "*"
+sphinx = "*"
+sphinx-copybutton = "*"
+sphinx-gallery = "*"
+numpydoc = "*"
+pillow = "*"
+pooch = "*"
+sphinx-prompt = "*"
+sphinxext-opengraph = "*"
+plotly = "*"
+polars = "*"
+sphinx-design = "*"
+pydata-sphinx-theme = "*"
+sphinx-remove-toctrees = "*"
+towncrier = "*"
+[tool.pixi.feature.docs.pypi-dependencies]
+sphinxcontrib-sass = "*"
+
+# Interactive development tools, combined with the features above in the ``dev``
+# environment.
+[tool.pixi.feature.dev.dependencies]
+ipython = "*"
+ipykernel = "*"
+pre-commit = "*"
+
+# ----------------------------------------------------------------------------
+# Linux x86-64 - conda-forge + MKL + PyTorch (main CI build)
+# build: pylatest_conda_forge_mkl_linux-64
+# ----------------------------------------------------------------------------
+[tool.pixi.feature.mkl]
+platforms = ["linux-64"]
+[tool.pixi.feature.mkl.dependencies]
+python = "*"
+numpy = "*"
+blas = { version = "*", build = "mkl" }
+scipy = "*"
+cython = "*"
+joblib = "*"
+narwhals = "*"
+threadpoolctl = "*"
+matplotlib = "*"
+pandas = "*"
+rich = "*"
+pyamg = "*"
+pytest = "*"
+pytest-xdist = "*"
+pytest-cov = "<=6.3.0"
+coverage = "*"
+pillow = "*"
+pip = "*"
+ninja = "*"
+meson-python = "*"
+ccache = "*"
+pytorch = "*"
+pytorch-cpu = "*"
+polars = "*"
+pyarrow = "*"
+array-api-strict = "*"
+scipy-doctest = "*"
+pytest-playwright = "*"
+
+# ----------------------------------------------------------------------------
+# macOS arm64 - conda-forge + OpenBLAS + PyTorch (main CI build)
+# build: pylatest_conda_forge_osx-arm64
+# blas pinned to openblas (BLIS has numerical issues, see PR #34162)
+# ----------------------------------------------------------------------------
+[tool.pixi.feature.osx-arm64]
+platforms = ["osx-arm64"]
+[tool.pixi.feature.osx-arm64.dependencies]
+python = "*"
+numpy = "*"
+blas = { version = "*", build = "openblas" }
+scipy = "*"
+cython = "*"
+joblib = "*"
+narwhals = "*"
+threadpoolctl = "*"
+matplotlib = "*"
+pandas = "*"
+rich = "*"
+pyamg = "*"
+pytest = "*"
+pytest-xdist = "*"
+pytest-cov = "<=6.3.0"
+coverage = "*"
+pillow = "*"
+pip = "*"
+ninja = "*"
+meson-python = "*"
+ccache = "*"
+compilers = "*"
+llvm-openmp = "*"
+pytorch = "*"
+pytorch-cpu = "*"
+array-api-strict = "*"
+
+# ----------------------------------------------------------------------------
+# macOS x86-64 - conda-forge + MKL, build without OpenMP
+# build: pylatest_conda_forge_mkl_no_openmp
+# ----------------------------------------------------------------------------
+[tool.pixi.feature.mkl-no-openmp]
+platforms = ["osx-64"]
+[tool.pixi.feature.mkl-no-openmp.dependencies]
+python = "*"
+numpy = "*"
+blas = { version = "*", build = "mkl" }
+scipy = "*"
+cython = "*"
+joblib = "*"
+narwhals = "*"
+threadpoolctl = "*"
+matplotlib = "*"
+pandas = "*"
+rich = "*"
+pyamg = "*"
+pytest = "*"
+pytest-xdist = "*"
+pytest-cov = "<=6.3.0"
+coverage = "*"
+pillow = "*"
+pip = "*"
+ninja = "*"
+meson-python = "*"
+ccache = "*"
+
+# ----------------------------------------------------------------------------
+# Windows x64 - conda-forge + OpenBLAS, Python 3.11
+# build: pymin_conda_forge_openblas
+# ----------------------------------------------------------------------------
+[tool.pixi.feature.win]
+platforms = ["win-64"]
+[tool.pixi.feature.win.dependencies]
+python = "3.11.*"
+numpy = "*"
+blas = { version = "*", build = "openblas" }
+scipy = "*"
+cython = "*"
+joblib = "*"
+narwhals = "*"
+threadpoolctl = "*"
+matplotlib = "*"
+pytest = "*"
+pytest-xdist = "*"
+pytest-cov = "<=6.3.0"
+coverage = "*"
+pillow = "*"
+pip = "*"
+ninja = "*"
+meson-python = "*"
+wheel = "*"
+
+# ----------------------------------------------------------------------------
+# Linux aarch64 - conda-forge + OpenBLAS, Python 3.11
+# build: pymin_conda_forge_arm
+# ----------------------------------------------------------------------------
+[tool.pixi.feature.arm]
+platforms = ["linux-aarch64"]
+[tool.pixi.feature.arm.dependencies]
+python = "3.11.*"
+numpy = "*"
+# Pin to openblas to avoid pulling the libnvpl blas build.
+blas = { version = "*", build = "openblas" }
+scipy = "*"
+cython = "*"
+joblib = "*"
+narwhals = "*"
+threadpoolctl = "*"
+matplotlib = "*"
+pytest = "*"
+pytest-xdist = "*"
+pytest-cov = "<=6.3.0"
+coverage = "*"
+pillow = "*"
+pip = "*"
+ninja = "*"
+meson-python = "*"
+ccache = "*"
+
+# ----------------------------------------------------------------------------
+# Linux x86-64 - conda-forge + OpenBLAS, Python 3.11 (Ubuntu 22.04 build)
+# build: pymin_conda_forge_openblas_ubuntu_2204
+# ----------------------------------------------------------------------------
+[tool.pixi.feature.ubuntu]
+platforms = ["linux-64"]
+[tool.pixi.feature.ubuntu.dependencies]
+python = "3.11.*"
+numpy = "*"
+blas = { version = "*", build = "openblas" }
+scipy = "*"
+cython = "*"
+joblib = "*"
+narwhals = "*"
+threadpoolctl = "*"
+pandas = "*"
+rich = "*"
+pyamg = "*"
+pytest = "*"
+pytest-xdist = "*"
+pillow = "*"
+pip = "*"
+ninja = "*"
+meson-python = "*"
+sphinx = "*"
+numpydoc = "*"
+ccache = "*"
+
+# ----------------------------------------------------------------------------
+# Linux x86-64 - conda-forge + OpenBLAS, minimum supported dependencies
+# build: pymin_conda_forge_openblas_min_dependencies
+# Pins marked "# min" are generated from sklearn/_min_dependencies.py
+# ----------------------------------------------------------------------------
+[tool.pixi.feature.min]
+platforms = ["linux-64"]
+[tool.pixi.feature.min.dependencies]
+python = "3.11.*"
+numpy = "==1.24.1"  # min
+blas = { version = "*", build = "openblas" }
+scipy = "==1.10.0"  # min
+cython = "==3.1.2"  # min
+joblib = "==1.4.0"  # min
+narwhals = "==2.0.1"  # min
+threadpoolctl = "==3.5.0"  # min
+matplotlib = "==3.6.1"  # min
+rich = "==14.1.0"  # min
+pyamg = "==5.0.0"  # min
+pytest = "*"
+pytest-xdist = "*"
+pytest-cov = "<=6.3.0"
+coverage = "*"
+pillow = "*"
+pip = "*"
+ninja = "*"
+meson-python = "==0.17.1"  # min
+ccache = "*"
+polars = "==0.20.30"  # min
+pyarrow = "==13.0.0"  # min
+[tool.pixi.feature.min.pypi-dependencies]
+# TODO: move pandas to conda dependencies when pandas 1.5.1 is the minimum
+# supported version.
+pandas = "==1.5.0"  # min
+
+# ----------------------------------------------------------------------------
+# Linux x86-64 - latest dependencies installed mostly via pip on top of conda
+# build: pylatest_pip_openblas_pandas
+# ----------------------------------------------------------------------------
+[tool.pixi.feature.pip-pandas]
+platforms = ["linux-64"]
+[tool.pixi.feature.pip-pandas.dependencies]
+# TODO: bump python once pyamg ships wheels for 3.14+ on PyPI.
+python = "3.13.*"
+ccache = "*"
+pip = "*"
+[tool.pixi.feature.pip-pandas.pypi-dependencies]
+numpy = "*"
+scipy = "*"
+cython = "*"
+joblib = "*"
+narwhals = "*"
+threadpoolctl = "*"
+matplotlib = "*"
+pandas = "*"
+rich = "*"
+pyamg = "*"
+pytest = "*"
+pytest-xdist = "*"
+pytest-cov = "<=6.3.0"
+coverage = "*"
+pillow = "*"
+ninja = "*"
+meson-python = "*"
+sphinx = "*"
+numpydoc = "*"
+lightgbm = "*"
+array-api-strict = "*"
+scipy-doctest = "*"
+
+# ----------------------------------------------------------------------------
+# Linux x86-64 - free-threaded CPython build
+# build: pylatest_free_threaded
+# ----------------------------------------------------------------------------
+[tool.pixi.feature.free-threaded]
+platforms = ["linux-64"]
+[tool.pixi.feature.free-threaded.dependencies]
+python-freethreading = "*"
+meson-python = "*"
+cython = "*"
+numpy = "*"
+scipy = "*"
+joblib = "*"
+narwhals = "*"
+threadpoolctl = "*"
+pytest = "*"
+pytest-run-parallel = "*"
+ccache = "*"
+pip = "*"
+
+# ----------------------------------------------------------------------------
+# Linux x86-64 - environment WITHOUT pytest, used to check that scikit-learn's
+# estimator checks can be imported and used when pytest is not installed (pytest
+# is only a soft dependency for end users).
+# build: pytest_soft_dependency (Linux only, see build_tools/github/
+# test_pytest_soft_dependency.sh)
+# NOTE: pytest (and pytest-xdist/pytest-cov) are intentionally absent here so the
+# test runs against a genuine pytest-free environment rather than uninstalling
+# pytest at runtime.
+# ----------------------------------------------------------------------------
+[tool.pixi.feature.pytest-soft-dependency]
+platforms = ["linux-64"]
+[tool.pixi.feature.pytest-soft-dependency.dependencies]
+python = "*"
+numpy = "*"
+blas = "*"
+scipy = "*"
+cython = "*"
+meson-python = "*"
+ninja = "*"
+joblib = "*"
+narwhals = "*"
+threadpoolctl = "*"
+ccache = "*"
+pip = "*"
+
+# ----------------------------------------------------------------------------
+# NOTE: the scipy-dev build (numpy/scipy/pandas nightly wheels + git-master
+# Cython/joblib/Pillow) is intentionally NOT managed by pixi. Those development
+# versions change every day, while pixi.lock is only refreshed weekly, so
+# pinning them would mean testing stale "dev" versions and churning the lock.
+# That build installs its dependencies at run time instead; see the `scipy-dev`
+# job in .github/workflows/unit-tests.yml and the `scipy-dev` branch in
+# build_tools/github/install.sh.
+
+# ----------------------------------------------------------------------------
+# Linux x86-64 - CUDA / Array API GPU build (label-triggered)
+# build: pylatest_conda_forge_cuda_array-api_linux-64
+# ----------------------------------------------------------------------------
+[tool.pixi.feature.cuda]
+platforms = ["linux-64"]
+channels = ["rapidsai", "conda-forge"]
+[tool.pixi.feature.cuda.system-requirements]
+cuda = "12"
+[tool.pixi.feature.cuda.dependencies]
+python = "*"
+numpy = "*"
+blas = "*"
+scipy = "*"
+cython = "*"
+joblib = "*"
+narwhals = "*"
+threadpoolctl = "*"
+matplotlib = "*"
+pandas = "*"
+rich = "*"
+pyamg = "*"
+pytest = "*"
+pytest-xdist = "*"
+pytest-cov = "<=6.3.0"
+coverage = "*"
+pillow = "*"
+pip = "*"
+ninja = "*"
+meson-python = "*"
+ccache = "*"
+pytorch-gpu = "*"
+polars = "*"
+pyarrow = "*"
+cupy = "*"
+# cuvs is needed for cupyx.scipy.spatial.distance.cdist and friends
+cuvs = "*"
+array-api-strict = "*"
+scipy-doctest = "*"
+
+# ----------------------------------------------------------------------------
+# Documentation build - latest dependencies, Python 3.14
+# build: doc
+# ----------------------------------------------------------------------------
+[tool.pixi.feature.doc]
+platforms = ["linux-64"]
+[tool.pixi.feature.doc.dependencies]
+python = "3.14.*"
+numpy = "*"
+blas = "*"
+scipy = "*"
+cython = "*"
+joblib = "*"
+narwhals = "*"
+threadpoolctl = "*"
+matplotlib = "*"
+pandas = "*"
+rich = "*"
+pyamg = "*"
+pytest = "*"
+pytest-xdist = "*"
+pillow = "*"
+pip = "*"
+ninja = "*"
+meson-python = "*"
+scikit-image = "*"
+seaborn = "*"
+memory_profiler = "*"
+compilers = "*"
+sphinx = "*"
+sphinx-gallery = "*"
+sphinx-copybutton = "*"
+numpydoc = "*"
+sphinx-prompt = "*"
+plotly = "*"
+polars = "*"
+pooch = "*"
+sphinxext-opengraph = "*"
+sphinx-remove-toctrees = "*"
+sphinx-design = "*"
+pydata-sphinx-theme = "*"
+towncrier = "*"
+jupyterlite-sphinx = "*"
+jupyterlite-pyodide-kernel = "*"
+[tool.pixi.feature.doc.pypi-dependencies]
+sphinxcontrib-sass = "*"
+
+# ----------------------------------------------------------------------------
+# Documentation build - minimum supported dependencies, Python 3.11
+# build: doc_min_dependencies
+# Pins marked "# min" are generated from sklearn/_min_dependencies.py
+# ----------------------------------------------------------------------------
+[tool.pixi.feature.doc-min]
+platforms = ["linux-64"]
+[tool.pixi.feature.doc-min.dependencies]
+python = "3.11.*"
+numpy = "==1.24.1"  # min
+blas = "*"
+scipy = "==1.10.0"  # min
+cython = "==3.1.2"  # min
+joblib = "*"
+narwhals = "*"
+threadpoolctl = "*"
+matplotlib = "==3.6.1"  # min
+# pandas 1.5.0 (the documented minimum) has no conda-forge build for Python
+# 3.11, and conda-forge packages here (e.g. seaborn) pull in pandas, so unlike
+# the dedicated `min` environment we cannot install 1.5.0 from PyPI on top.
+# 1.5.1 is the lowest conda-forge build compatible with Python 3.11. This pin is
+# intentionally NOT auto-generated from _min_dependencies.py.
+pandas = "==1.5.1"
+rich = "==14.1.0"  # min
+pyamg = "==5.0.0"  # min
+pytest = "*"
+pytest-xdist = "*"
+pillow = "*"
+pip = "*"
+ninja = "*"
+meson-python = "*"
+scikit-image = "==0.22.0"  # min
+seaborn = "*"
+memory_profiler = "*"
+compilers = "*"
+sphinx = "==7.3.7"  # min
+sphinx-gallery = "==0.17.1"  # min
+sphinx-copybutton = "==0.5.2"  # min
+numpydoc = "==1.2.0"  # min
+sphinx-prompt = "==1.4.0"  # min
+plotly = "==5.22.0"  # min
+polars = "==0.20.30"  # min
+pooch = "==1.8.0"  # min
+sphinxext-opengraph = "==0.9.1"  # min
+sphinx-remove-toctrees = "==1.0.0.post1"  # min
+sphinx-design = "==0.6.0"  # min
+pydata-sphinx-theme = "==0.15.3"  # min
+towncrier = "==24.8.0"  # min
+[tool.pixi.feature.doc-min.pypi-dependencies]
+sphinxcontrib-sass = "==0.3.4"  # min
+
+# ----------------------------------------------------------------------------
+# Environments. The implicit ``default`` environment only contains the minimal
+# build/run dependencies. ``dev`` is the full local development environment
+# (build/run + tests + docs + interactive tooling); it includes the default
+# feature implicitly. The remaining environments are one per CI build and set
+# ``no-default-feature`` so the default dependencies stay out of them.
+# ----------------------------------------------------------------------------
+[tool.pixi.environments]
+dev = { features = ["tests", "docs", "dev"] }
+mkl = { features = ["mkl"], no-default-feature = true }
+osx-arm64 = { features = ["osx-arm64"], no-default-feature = true }
+mkl-no-openmp = { features = ["mkl-no-openmp"], no-default-feature = true }
+win = { features = ["win"], no-default-feature = true }
+arm = { features = ["arm"], no-default-feature = true }
+ubuntu = { features = ["ubuntu"], no-default-feature = true }
+min = { features = ["min"], no-default-feature = true }
+pip-pandas = { features = ["pip-pandas"], no-default-feature = true }
+free-threaded = { features = ["free-threaded"], no-default-feature = true }
+pytest-soft-dependency = { features = ["pytest-soft-dependency"], no-default-feature = true }
+cuda = { features = ["cuda"], no-default-feature = true }
+doc = { features = ["doc"], no-default-feature = true }
+doc-min = { features = ["doc-min"], no-default-feature = true }
+
 [tool.pytest.ini_options]
 doctest_optionflags = "NORMALIZE_WHITESPACE ELLIPSIS"
 testpaths = "sklearn"
@@ -295,7 +856,7 @@ package = "sklearn"  # name of your package
         whatsnew_pattern = 'doc/whatsnew/upcoming_changes/[^/]+/\d+\.[^.]+\.rst'
 
 [tool.codespell]
-skip = ["./.git", "*.svg", "./.mypy_cache", "*sklearn/feature_extraction/_stop_words.py", "*sklearn/feature_extraction/tests/test_text.py", "./doc/_build", "./doc/auto_examples", "./doc/modules/generated"]
+skip = ["pixi.lock", "./.git", "*.svg", "./.mypy_cache", "*sklearn/feature_extraction/_stop_words.py", "*sklearn/feature_extraction/tests/test_text.py", "./doc/_build", "./doc/auto_examples", "./doc/modules/generated"]
 ignore-words = "build_tools/codespell_ignore_words.txt"
 
 [tool.towncrier]

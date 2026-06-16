@@ -38,6 +38,12 @@ pre_python_environment_install() {
         sudo apt-get install python3-scipy python3-matplotlib \
              libatlas3-base libatlas-base-dev python3-venv ccache
 
+    elif [[ "$DISTRIB" == "scipy-dev" ]]; then
+        # ccache is provided by conda/pixi for the other builds; here we install
+        # it with apt since this build deliberately does not use pixi.
+        sudo apt-get update
+        sudo apt-get install -y ccache
+
     elif [[ "$DISTRIB" == "debian-32" ]]; then
         apt-get update
         apt-get install -y python3-dev python3-numpy python3-scipy \
@@ -57,24 +63,33 @@ check_packages_dev_version() {
 }
 
 python_environment_install_and_activate() {
-    if [[ "$DISTRIB" == "conda"* ]]; then
-        create_conda_environment_from_lock_file $VIRTUALENV $LOCK_FILE
-        activate_environment
-
-    elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
+    # Conda-based environments are provisioned by pixi (see the ``[tool.pixi.*]``
+    # section in pyproject.toml) and are already created and activated when this
+    # script runs, so there is nothing to do here for those builds.
+    if [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
+        # apt-based builds: a plain virtualenv populated from a pip lock file.
         python3 -m venv --system-site-packages $VIRTUALENV
         activate_environment
         pip install -r "${LOCK_FILE}"
 
-    fi
+    elif [[ "$DISTRIB" == "scipy-dev" ]]; then
+        # scipy-dev is intentionally NOT managed by pixi: it must always test the
+        # very latest development versions of our dependencies, which cannot be
+        # pinned in a weekly-updated lock file. Everything is therefore installed
+        # at run time in a fresh virtualenv (Python is provided by
+        # actions/setup-python).
+        python -m venv $VIRTUALENV
+        activate_environment
+        python -m pip install --upgrade pip
 
-    # Install additional packages on top of the lock-file in specific cases
-    if [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
-        echo "Installing development dependency wheels"
+        echo "Installing build and test dependencies with regular releases"
+        pip install meson-python ninja pytest pytest-xdist "pytest-cov<=6.3.0" \
+            coverage threadpoolctl pooch sphinx numpydoc python-dateutil
+
+        echo "Installing numpy, scipy and pandas nightly wheels"
         dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
         dev_packages="numpy scipy pandas"
         pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages --only-binary :all:
-
         check_packages_dev_version $dev_packages
 
         echo "Installing Cython from latest sources"

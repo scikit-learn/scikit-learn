@@ -162,27 +162,28 @@ sudo -E apt-get -yq update --allow-releaseinfo-change
 sudo -E apt-get -yq --no-install-suggests --no-install-recommends \
     install dvipng gsfonts ccache zip optipng
 
-# deactivate circleci virtualenv and setup a conda env instead
+# deactivate circleci virtualenv and setup a pixi env instead
 if [[ `type -t deactivate` ]]; then
   deactivate
 fi
 
-# Install Miniforge
-MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh"
-curl -L --retry 10 $MINIFORGE_URL -o miniconda.sh
-MINIFORGE_PATH=$HOME/miniforge3
-bash ./miniconda.sh -b -p $MINIFORGE_PATH
-source $MINIFORGE_PATH/etc/profile.d/conda.sh
-conda activate
+# Install pixi. PIXI_VERSION should be kept in sync with the GitHub Actions
+# workflows. The pixi install script honours the PIXI_VERSION environment
+# variable to install a specific version.
+export PIXI_VERSION="v0.70.1"
+curl -fsSL https://pixi.sh/install.sh | bash
+export PATH="$HOME/.pixi/bin:$PATH"
 
-
-create_conda_environment_from_lock_file $CONDA_ENV_NAME $LOCK_FILE
-conda activate $CONDA_ENV_NAME
+# Create the documentation environment from the lock file and activate it in
+# the current shell. PIXI_ENVIRONMENT is either "doc" or "doc-min" and is set
+# by the CircleCI job (see .circleci/config.yml).
+pixi install --locked --manifest-path pyproject.toml --environment "$PIXI_ENVIRONMENT"
+eval "$(pixi shell-hook --manifest-path pyproject.toml --environment "$PIXI_ENVIRONMENT")"
 
 # Sets up ccache when using system compiler
 export PATH="/usr/lib/ccache:$PATH"
-# Sets up ccache when using conda-forge compilers (needs to be after conda
-# activate which sets CC and CXX)
+# Sets up ccache when using conda-forge compilers (needs to be after the pixi
+# environment activation which sets CC and CXX)
 export CC="ccache $CC"
 export CXX="ccache $CXX"
 ccache -M 512M

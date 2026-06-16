@@ -15,7 +15,7 @@ jobs:
     runs-on: "ubuntu-latest"
     name: Build wheel for Pull Request
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Build wheels
         uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1
@@ -25,7 +25,7 @@ jobs:
           CIBW_BUILD_VERBOSITY: 1
           CIBW_ARCHS: x86_64
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: cibw-wheels
           path: ./wheelhouse/*.whl
@@ -39,31 +39,40 @@ jobs:
     # timeout to make abusing this workflow less attractive.
     timeout-minutes: 20
     name: Run Array API unit tests
+    env:
+      # Keep in sync with the pixi version used in the other workflows.
+      PIXI_VERSION: v0.70.1
     steps:
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           pattern: cibw-wheels
           path: ~/dist
 
-      - uses: actions/setup-python@v6
-        with:
-          # XXX: The 3.12.4 release of Python on GitHub Actions is corrupted:
-          # https://github.com/actions/setup-python/issues/886
-          python-version: '3.12.3'
       - name: Checkout main repository
-        uses: actions/checkout@v6
-      - name: Install miniforge
-        run: bash build_tools/github/create_gpu_environment.sh
-      - name: Install scikit-learn
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Set up pixi
+        uses: prefix-dev/setup-pixi@5185adfbffb4bd703da3010310260805d89ebb11 # v0.9.6
+        with:
+          pixi-version: ${{ env.PIXI_VERSION }}
+          manifest-path: pyproject.toml
+          environments: cuda
+          locked: true
+          # Make the cuda environment available on the PATH of the following
+          # steps so that `python`/`pytest` resolve to it without `pixi run`.
+          # This also lets us run from outside the checkout directory.
+          activate-environment: cuda
+
+      - name: Show GPU and environment information
         run: |
-          source "${HOME}/conda/etc/profile.d/conda.sh"
-          conda activate sklearn
-          pip install ~/dist/$(ls ~/dist)
+          nvidia-smi
+          python -c "import sys; print(sys.version)"
+
+      - name: Install scikit-learn
+        run: pip install ~/dist/$(ls ~/dist)
 
       - name: Run array API tests
         run: |
-          source "${HOME}/conda/etc/profile.d/conda.sh"
-          conda activate sklearn
           python -c "import sklearn; sklearn.show_versions()"
 
           # Since we are billed GPU usage by the minute, we only run the tests that
@@ -75,7 +84,5 @@ jobs:
 
       - name: Run doctests in doc/modules/array_api.rst
         run: |
-          source "${HOME}/conda/etc/profile.d/conda.sh"
-          conda activate sklearn
           cd doc
           SCIPY_ARRAY_API=1 pytest --doctest-modules modules/array_api.rst

@@ -16,10 +16,12 @@ get_dep() {
 }
 
 show_installed_libraries(){
-    # use conda list when inside a conda environment. conda list shows more
-    # info than pip list, e.g. whether OpenBLAS or MKL is installed as well as
-    # the version of OpenBLAS or MKL
-    if [[ -n "$CONDA_PREFIX" ]]; then
+    # Use `conda list` when a usable conda CLI is available (e.g. the GPU build
+    # which still relies on miniforge): it shows more info than `pip list`, such
+    # as whether OpenBLAS or MKL is installed and their versions. pixi-managed
+    # environments do not ship the `conda` executable, so we fall back to
+    # `pip list` there.
+    if command -v conda > /dev/null 2>&1 && [[ -n "$CONDA_PREFIX" ]]; then
         conda list
     else
         python -m pip list
@@ -46,25 +48,11 @@ show_cpu_info() {
 }
 
 activate_environment() {
-    if [[ "$DISTRIB" =~ ^conda.* ]]; then
-        source activate $VIRTUALENV
-    elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
+    # pixi-managed environments are already activated when the script is run
+    # through `pixi run`, so nothing is needed there. Only the apt-based builds
+    # (ubuntu_atlas and the debian-32 docker image) rely on a plain virtualenv
+    # that we activate here.
+    if [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" || "$DISTRIB" == "scipy-dev" ]]; then
         source $VIRTUALENV/bin/activate
-    fi
-}
-
-create_conda_environment_from_lock_file() {
-    ENV_NAME=$1
-    LOCK_FILE=$2
-    # Because we are using lock-files with the "explicit" format, conda can
-    # install them directly, provided the lock-file does not contain pip solved
-    # packages. For more details, see
-    # https://conda.github.io/conda-lock/output/#explicit-lockfile
-    lock_file_has_pip_packages=$(grep -q files.pythonhosted.org $LOCK_FILE && echo "true" || echo "false")
-    if [[ "$lock_file_has_pip_packages" == "false" ]]; then
-        conda create --quiet --name $ENV_NAME --file $LOCK_FILE
-    else
-        python -m pip install "$(get_dep conda-lock min)"
-        conda-lock install --name $ENV_NAME $LOCK_FILE
     fi
 }
