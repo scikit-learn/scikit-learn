@@ -322,10 +322,13 @@ class NewtonSolver(ABC):
                 if check:
                     break
 
-            # Set a smart new value of alpha, smaller than previous one, larger 0.
-            # We know phi(0) = phi_0, phi(alpha) = phi_1, phi'(0) = phi_prime_0.
-            # We fit a quadratic polynomial though those 3 points and take the
-            # minimum alpha as next trial step length.
+            # Set a smart new value of alpha, smaller than previous one, larger than 0.
+            # We know that
+            #   - phi(0) = phi_0
+            #   - phi(alpha) = phi_1
+            #   - phi'(0) = phi_prime_0
+            # We fit a quadratic polynomial though those 3 points and take the minimum
+            # alpha as next trial step length.
             # See Nocedal & Wright 2nd ed. Chapter 3.5, page 58, Eq 3.58.
             phi_1 = self.loss_value
             alpha_trial = (
@@ -339,7 +342,7 @@ class NewtonSolver(ABC):
                 vec0 = phi_1 - phi_0 - phi_prime_0 * alpha
                 vec1 = phi_old - phi_0 - phi_prime_0 * alpha_old
                 a = (alpha_old**2 * vec0 - alpha**2 * vec1) / denom
-                b = (-(alpha_old**3) * vec0 + alpha**3 * vec1) / denom
+                b = (alpha**3 * vec1 - alpha_old**3 * vec0) / denom
                 if a != 0 and b**2 - 3 * a * phi_prime_0 >= 0:
                     alpha_trial = (-b + math.sqrt(b**2 - 3 * a * phi_prime_0)) / (3 * a)
                 # else we keep the quadratic alpha_trial from above
@@ -349,7 +352,7 @@ class NewtonSolver(ABC):
             # Safeguards
             if alpha_trial >= alpha or alpha_trial <= min_step_length:
                 alpha_trial = 0.5 * alpha
-            # Avoid too large reduction of alpha.
+            # Avoid too large a reduction of alpha.
             alpha = max(alpha_trial, min_step_reduction * alpha, min_step_length)
         else:
             warnings.warn(
