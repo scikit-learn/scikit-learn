@@ -202,10 +202,7 @@ def test_estimator_html_repr_pipeline():
     )
 
     clf = VotingClassifier(
-        [
-            ("lr", LogisticRegression(solver="lbfgs")),
-            ("mlp", MLPClassifier(alpha=0.001)),
-        ]
+        [("lr", LogisticRegression()), ("mlp", MLPClassifier(alpha=0.001))]
     )
 
     pipe = Pipeline(
