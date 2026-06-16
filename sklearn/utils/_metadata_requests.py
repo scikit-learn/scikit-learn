@@ -1716,6 +1716,21 @@ class _MetadataRequester:
         request : MetadataRequest
             A :class:`~sklearn.utils.metadata_routing.MetadataRequest` instance.
         """
+        return self.__sklearn_get_metadata_request__()
+
+    def __sklearn_get_metadata_request__(self):
+        """Developer API to get requested metadata for the instance.
+
+        To be overridden by third party developers for setting custom requests.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        Returns
+        -------
+        request : MetadataRequest
+            A :class:`~sklearn.utils.metadata_routing.MetadataRequest` instance.
+        """
         if hasattr(self, "_metadata_request"):
             requests = self._metadata_request.__sklearn_clone__()
         else:
@@ -1733,11 +1748,6 @@ class _MetadataRequester:
                     ),
                 )
         return requests
-
-    def __sklearn_get_metadata_request__(self):
-        """Developer API to be overridden by third party developers for setting custom
-        requests."""
-        return self._get_metadata_request()
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.

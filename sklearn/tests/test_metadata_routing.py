@@ -279,9 +279,6 @@ def test_custom_consumer_returns_non_default_request():
         def foo(self):
             pass
 
-        def _get_metadata_request(self):
-            return self.__sklearn_get_metadata_request__()
-
         def __sklearn_get_metadata_request__(self):
             if hasattr(self, "_metadata_request"):
                 requests = self._metadata_request.__sklearn_clone__()
@@ -329,9 +326,6 @@ def test_custom_consumer_returns_non_default_request():
         def consuming_method(self, y, metadata1):
             return self
 
-        def _get_metadata_request(self):
-            return self.__sklearn_get_metadata_request__()
-
         def __sklearn_get_metadata_request__(self):
             if hasattr(self, "_metadata_request"):
                 requests = self._metadata_request.__sklearn_clone__()
@@ -369,9 +363,6 @@ def test_custom_consumer_returns_non_default_request():
         def fit(self, metadata1, metadata2):
             self.func(metadata1)
             return self
-
-        def _get_metadata_request(self):
-            return self.__sklearn_get_metadata_request__()
 
         def __sklearn_get_metadata_request__(self):
             if hasattr(self, "_metadata_request"):
