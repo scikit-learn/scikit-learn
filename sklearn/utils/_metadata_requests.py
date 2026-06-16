@@ -1743,7 +1743,7 @@ class _MetadataRequester:
                         owner=self,
                         method=method_name,
                         requests=self._get_class_level_metadata_request_values(
-                            method_name,
+                            method_name
                         ),
                     ),
                 )

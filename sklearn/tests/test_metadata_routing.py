@@ -276,9 +276,6 @@ def test_custom_consumer_returns_non_default_request():
         def score(self, y_true, y_pred, metadata2):
             return metadata2 + 100
 
-        def foo(self):
-            pass
-
         def __sklearn_get_metadata_request__(self):
             if hasattr(self, "_metadata_request"):
                 requests = self._metadata_request.__sklearn_clone__()
