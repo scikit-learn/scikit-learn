@@ -620,7 +620,7 @@ def test_negative_sample_weights_mask_all_samples(Estimator, err_msg, sample_wei
 
 @pytest.mark.parametrize(
     "Classifier, err_msg",
-    [
+    (
         (
             svm.SVC,
             (
@@ -629,7 +629,7 @@ def test_negative_sample_weights_mask_all_samples(Estimator, err_msg, sample_wei
             ),
         ),
         (svm.NuSVC, "specified nu is infeasible"),
-    ],
+    ),
     ids=["SVC", "NuSVC"],
 )
 @pytest.mark.parametrize(
@@ -645,10 +645,10 @@ def test_negative_weights_svc_leave_just_one_label(Classifier, err_msg, sample_w
 
 @pytest.mark.parametrize(
     "Classifier, model",
-    [
+    (
         (svm.SVC, {"when-left": [0.3998, 0.4], "when-right": [0.4, 0.3999]}),
         (svm.NuSVC, {"when-left": [0.3333, 0.3333], "when-right": [0.3333, 0.3333]}),
-    ],
+    ),
     ids=["SVC", "NuSVC"],
 )
 @pytest.mark.parametrize(
@@ -1249,7 +1249,7 @@ def test_ovr_decision_function():
     assert np.all(pred_class_deci_val[:, 0] < pred_class_deci_val[:, 1])
 
 
-@pytest.mark.parametrize("SVCClass", [svm.SVC, svm.NuSVC])
+@pytest.mark.parametrize("SVCClass", (svm.SVC, svm.NuSVC))
 def test_svc_invalid_break_ties_param(SVCClass, global_random_seed):
     X, y = make_blobs(random_state=global_random_seed)
 
@@ -1264,7 +1264,7 @@ def test_svc_invalid_break_ties_param(SVCClass, global_random_seed):
         svm.predict(y)
 
 
-@pytest.mark.parametrize("SVCClass", [svm.SVC, svm.NuSVC])
+@pytest.mark.parametrize("SVCClass", (svm.SVC, svm.NuSVC))
 def test_svc_ovr_tie_breaking(SVCClass, global_random_seed):
     """Test if predict breaks ties in OVR mode.
     Related issue: https://github.com/scikit-learn/scikit-learn/issues/8277
@@ -1517,7 +1517,7 @@ def test_svm_with_infinite_C(Estimator, make_dataset, C_inf, global_random_seed)
 
 @pytest.mark.parametrize(
     "Estimator, name",
-    [(svm.SVC, "SVC"), (svm.NuSVC, "NuSVC")],
+    ((svm.SVC, "SVC"), (svm.NuSVC, "NuSVC")),
 )
 @pytest.mark.parametrize("probability", [True, False])
 def test_probability_raises_futurewarning(Estimator, name, probability):
@@ -1526,7 +1526,7 @@ def test_probability_raises_futurewarning(Estimator, name, probability):
         Estimator(probability=probability).fit(X, y)
 
 
-@pytest.mark.parametrize("est", [svm.SVC, svm.NuSVC])
+@pytest.mark.parametrize("est", (svm.SVC, svm.NuSVC))
 def test_svc_nusvc_probA_probB_deprecated(est):
     """Test that accessing probA_ and probB_ raises FutureWarning for SVC and NuSVC."""
     X, y = make_classification(n_samples=50, n_informative=5, random_state=0)
