@@ -605,7 +605,7 @@ pipe.fit(X, y, sample_weight=my_weights, groups=my_groups).predict(
 # %%
 # The imports below are only required for the examples in this section.
 
-from sklearn.utils._metadata_requests import SIMPLE_METHODS, MethodMetadataRequest
+from sklearn.utils._metadata_requests import MethodMetadataRequest
 from sklearn.utils.metadata_routing import MetadataRequest, _MetadataRequester
 
 # %%
@@ -627,7 +627,7 @@ class CustomRequestConsumer(_MetadataRequester):
             requests = self._metadata_request.__sklearn_clone__()
         else:
             requests = MetadataRequest(owner=self)
-            for method_name in SIMPLE_METHODS:
+            for method_name in ["fit", "score", "predict"]:
                 setattr(
                     requests,
                     method_name,
