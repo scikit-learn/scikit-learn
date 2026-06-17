@@ -1090,7 +1090,7 @@ class LogisticRegression(
 
     random_state : int, RandomState instance, default=None
         Only used for `solver` == 'sag', 'saga' or 'liblinear' to shuffle the
-        data. It  has no effect on the other solvers.
+        data. It has no effect on the other solvers.
         See :term:`Glossary <random_state>` for details.
 
     solver : {'lbfgs', 'liblinear', 'newton-cg', 'newton-cholesky', 'sag', 'saga'}, \
@@ -1841,7 +1841,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
     random_state : int, RandomState instance, default=None
         Only used for `solver` == 'sag', 'saga' or 'liblinear' to shuffle the
-        data. It  has no effect on the other solvers.
+        data. It has no effect on the other solvers.
         Note that this only applies to the solver and not the cross-validation
         generator. See :term:`Glossary <random_state>` for details.
 
