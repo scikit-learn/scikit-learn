@@ -1224,7 +1224,7 @@ def test_random_search_cv_results_multimetric():
             # If True, for multi-metric pass refit='accuracy'
             if refit and isinstance(scoring, tuple):
                 refit = "accuracy"
-            clf = LogisticRegression(random_state=42)
+            clf = LogisticRegression()
             random_search = RandomizedSearchCV(
                 clf,
                 n_iter=n_search_iter,
