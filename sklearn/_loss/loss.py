@@ -1623,7 +1623,7 @@ class HalfBinomialLossArrayAPI(ArrayAPILossMixin, HalfBinomialLoss):
         sample_weight=None,
         raw_prediction_exp=None,
     ):
-        # See `cgrad_hess_half_binomial`` in _loss.pyx.tp for details.
+        # See `cgrad_hess_half_binomial` in _loss.pyx.tp for details.
         xp = self.xp
         if raw_prediction_exp is None:
             raw_prediction_exp = xp.exp(raw_prediction)
