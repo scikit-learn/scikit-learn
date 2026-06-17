@@ -23,18 +23,6 @@ def check_library_installed(library):
         ) from exc
 
 
-def get_columns(columns):
-    if callable(columns):
-        try:
-            return columns()
-        except AttributeError as e:
-            if "does not provide get_feature_names_out" in str(e):
-                return None
-            else:
-                raise
-    return columns
-
-
 @runtime_checkable
 class ContainerAdapterProtocol(Protocol):
     container_lib: str
@@ -51,9 +39,8 @@ class ContainerAdapterProtocol(Protocol):
             Original input dataframe. This is used to extract the metadata that should
             be passed to `X_output`, e.g. pandas row index.
 
-        columns : callable, ndarray, or None
-            The column names or a callable that returns the column names. The
-            callable is useful if the column names require some computation. If `None`,
+        columns : ndarray or None
+            The column names, e.g. as returned by get_feature_names_out. If `None`,
             then no columns are passed to the container's constructor.
 
         inplace : bool, default=False
@@ -98,17 +85,13 @@ class ContainerAdapterProtocol(Protocol):
             Container with new names.
         """
 
-    def hstack(self, Xs, feature_names=None):
+    def hstack(self, Xs):
         """Stack containers horizontally (column-wise).
 
         Parameters
         ----------
         Xs : list of containers
             List of containers to stack.
-
-        feature_names : array-like of str, default=None
-            The feature names for the stacked container. If provided, the
-            columns of the result will be renamed to these names.
 
         Returns
         -------
@@ -122,7 +105,6 @@ class PandasAdapter:
 
     def create_container(self, X_output, X_original, columns, inplace=True):
         pd = check_library_installed("pandas")
-        columns = get_columns(columns)
 
         if not inplace or not isinstance(X_output, pd.DataFrame):
             # In all these cases, we need to create a new DataFrame
@@ -154,12 +136,9 @@ class PandasAdapter:
         X.columns = columns
         return X
 
-    def hstack(self, Xs, feature_names=None):
+    def hstack(self, Xs):
         pd = check_library_installed("pandas")
-        result = pd.concat(Xs, axis=1)
-        if feature_names is not None:
-            self.rename_columns(result, feature_names)
-        return result
+        return pd.concat(Xs, axis=1)
 
 
 class PolarsAdapter:
@@ -167,7 +146,6 @@ class PolarsAdapter:
 
     def create_container(self, X_output, X_original, columns, inplace=True):
         pl = check_library_installed("polars")
-        columns = get_columns(columns)
         columns = columns.tolist() if isinstance(columns, np.ndarray) else columns
 
         if not inplace or not isinstance(X_output, pl.DataFrame):
@@ -185,19 +163,12 @@ class PolarsAdapter:
     def rename_columns(self, X, columns):
         # we cannot use `rename` since it takes a dictionary and at this stage we have
         # potentially duplicate column names in `X`
+        # Anyway, polars will raise a DuplicateError in that case.
         X.columns = columns
         return X
 
-    def hstack(self, Xs, feature_names=None):
+    def hstack(self, Xs):
         pl = check_library_installed("polars")
-        if feature_names is not None:
-            # Rename columns in each X before concat to avoid duplicates
-            start = 0
-            for X in Xs:
-                n_features = X.shape[1]
-                names = feature_names[start : start + n_features]
-                self.rename_columns(X, names)
-                start += n_features
         return pl.concat(Xs, how="horizontal")
 
 
@@ -319,10 +290,18 @@ def _wrap_data_with_container(method, data_to_wrap, original_input, estimator):
         )
 
     adapter = ADAPTERS_MANAGER.adapters[dense_config]
+
+    try:
+        columns = estimator.get_feature_names_out()
+    except AttributeError as e:
+        if "does not provide get_feature_names_out" in str(e):
+            columns = None
+        else:
+            raise
     return adapter.create_container(
         data_to_wrap,
         original_input,
-        columns=estimator.get_feature_names_out,
+        columns=columns,
     )
 
 
@@ -408,8 +387,9 @@ class _SetOutputMixin:
     def set_output(self, *, transform=None):
         """Set output container.
 
-        See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`
-        for an example on how to use the API.
+        Refer to the :ref:`user guide <df_output_transform>` for more details
+        and :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py` for an
+        example on how to use the API.
 
         Parameters
         ----------

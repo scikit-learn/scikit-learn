@@ -34,7 +34,6 @@ from sklearn.metrics import check_scoring, get_scorer, get_scorer_names
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import (
-    Bunch,
     check_array,
     check_consistent_length,
     check_scalar,
@@ -56,6 +55,7 @@ from sklearn.utils.fixes import _sparse_linalg_cg
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _raise_for_params,
     _routing_enabled,
     process_routing,
@@ -700,17 +700,6 @@ def _ridge_regression(
             # we implement sample_weight via a simple rescaling.
             X, y, sample_weight_sqrt = _rescale_data(X, y, sample_weight)
 
-    # Some callers of this method might pass alpha as single
-    # element array which already has been validated.
-    if alpha is not None and not isinstance(alpha, type(xp.asarray([0.0]))):
-        alpha = check_scalar(
-            alpha,
-            "alpha",
-            target_type=numbers.Real,
-            min_val=0.0,
-            include_boundaries="left",
-        )
-
     # There should be either 1 or n_targets penalties
     alpha = _ravel(xp.asarray(alpha, device=device_, dtype=X.dtype), xp=xp)
     if alpha.shape[0] not in [1, n_targets]:
@@ -891,7 +880,7 @@ def resolve_solver_for_numpy(positive, return_intercept, is_sparse):
 
 class _BaseRidge(LinearModel, metaclass=ABCMeta):
     _parameter_constraints: dict = {
-        "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
+        "alpha": [Interval(Real, 0, None, closed="left"), "array-like"],
         "fit_intercept": ["boolean"],
         "copy_X": ["boolean"],
         "max_iter": [Interval(Integral, 1, None, closed="left"), None],
@@ -1047,7 +1036,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
     Parameters
     ----------
-    alpha : {float, ndarray of shape (n_targets,)}, default=1.0
+    alpha : float or array-like of shape (n_targets,), default=1.0
         Constant that multiplies the L2 term, controlling regularization
         strength. `alpha` must be a non-negative float i.e. in `[0, inf)`.
 
@@ -1345,15 +1334,9 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         )
 
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
-        xp_y, y_is_array_api = get_namespace(y)
         Y = self._label_binarizer.fit_transform(y)
         Y = move_to(Y, xp=xp, device=device_)
-        if y_is_array_api and xp_y.isdtype(y.dtype, "numeric"):
-            self.classes_ = move_to(
-                self._label_binarizer.classes_, xp=xp, device=device_
-            )
-        else:
-            self.classes_ = self._label_binarizer.classes_
+        self.classes_ = self._label_binarizer.classes_
         if not self._label_binarizer.y_type_.startswith("multilabel"):
             y = column_or_1d(y, warn=True)
 
@@ -1397,7 +1380,7 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         return tags
 
     def _get_scorer_instance(self):
-        """Return a scorer which corresponds to what's defined in ClassiferMixin
+        """Return a scorer which corresponds to what's defined in ClassifierMixin
         parent class. This is used for routing `sample_weight`.
         """
         return get_scorer("accuracy")
@@ -2555,9 +2538,12 @@ class _BaseRidgeCV(LinearModel):
                     **params,
                 )
             else:
-                routed_params = Bunch(scorer=Bunch(score={}))
-                if sample_weight is not None:
-                    routed_params.scorer.score["sample_weight"] = sample_weight
+                sw = (
+                    {"sample_weight": sample_weight}
+                    if sample_weight is not None
+                    else {}
+                )
+                routed_params = _manual_routing({"scorer": {"score": sw}})
 
             # reset `scorer` variable to original user-intend if no scoring is passed
             if self.scoring is None:
