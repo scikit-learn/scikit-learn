@@ -489,6 +489,11 @@ build_metadata_list = [
         "folder": "build_tools/github",
         "pip_dependencies": ["pytest", "ruff", "mypy", "cython-lint"],
         "package_constraints": {
+            # We fix the version of the linters to some arbitrary version to
+            # avoid changing linting conventions too often.
+            # The meaning of the "min" values is set in `_min_dependencies.py`
+            # and should be updated from time to time when we feel the need
+            # for it.
             "ruff": "min",
             "mypy": "min",
         },
