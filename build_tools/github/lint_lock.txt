@@ -15,9 +15,7 @@ mypy==1.15.0
 mypy-extensions==1.1.0
     # via mypy
 packaging==26.2
-    # via
-    #   mypy
-    #   pytest
+    # via pytest
 pluggy==1.6.0
     # via pytest
 pycodestyle==2.14.0
