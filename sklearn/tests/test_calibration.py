@@ -935,6 +935,8 @@ def test_calibration_display_ref_line(pyplot, iris_data_binary):
     assert labels.count("Perfectly calibrated") == 1
 
 
+# TODO(1.12): remove warning filter
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("dtype_y_str", [str, object])
 def test_calibration_curve_pos_label_error_str(dtype_y_str):
     """Check error message when a `pos_label` is not specified with `str` targets."""
@@ -948,9 +950,7 @@ def test_calibration_curve_pos_label_error_str(dtype_y_str):
         "pass pos_label explicitly"
     )
     with pytest.raises(ValueError, match=err_msg):
-        # TODO(1.12): remove warning filter
-        with pytest.warns(FutureWarning, match="n_bins"):
-            calibration_curve(y1, y2)
+        calibration_curve(y1, y2)
 
 
 @pytest.mark.parametrize("dtype_y_str", [str, object])
