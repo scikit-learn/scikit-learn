@@ -174,7 +174,8 @@ def test_pairwise_distances_array_api(array_namespace, device_name, dtype_name, 
         assert D_xp.device == X_xp.device
         assert D_xp.dtype == X_xp.dtype
 
-        D_np = pairwise_distances(X_np, metric=metric)
+        with config_context(array_api_dispatch=False):
+            D_np = pairwise_distances(X_np, metric=metric)
         assert_allclose(D_xp_np, D_np)
 
         # Test with Y=Y_np/Y_xp
@@ -184,7 +185,8 @@ def test_pairwise_distances_array_api(array_namespace, device_name, dtype_name, 
         assert D_xp.device == X_xp.device
         assert D_xp.dtype == X_xp.dtype
 
-        D_np = pairwise_distances(X_np, Y=Y_np, metric=metric)
+        with config_context(array_api_dispatch=False):
+            D_np = pairwise_distances(X_np, Y=Y_np, metric=metric)
         assert_allclose(D_xp_np, D_np)
 
 
@@ -431,22 +433,23 @@ def test_pairwise_parallel_array_api(
 
     with config_context(array_api_dispatch=True):
         for y_val in (None, "not none"):
-            Y_xp = None if y_val is None else Y_xp
-            Y_np = None if y_val is None else Y_np
+            Y_xp_val = None if y_val is None else Y_xp
+            Y_np_val = None if y_val is None else Y_np
 
-            n_job1_xp = func(X_xp, Y_xp, metric=metric, n_jobs=1, **kwds)
+            n_job1_xp = func(X_xp, Y_xp_val, metric=metric, n_jobs=1, **kwds)
             n_job1_xp_np = move_to(n_job1_xp, xp=np, device="cpu")
             assert get_namespace(n_job1_xp)[0].__name__ == xp.__name__
             assert n_job1_xp.device == X_xp.device
             assert n_job1_xp.dtype == X_xp.dtype
 
-            n_job2_xp = func(X_xp, Y_xp, metric=metric, n_jobs=2, **kwds)
+            n_job2_xp = func(X_xp, Y_xp_val, metric=metric, n_jobs=2, **kwds)
             n_job2_xp_np = move_to(n_job2_xp, xp=np, device="cpu")
             assert get_namespace(n_job2_xp)[0].__name__ == xp.__name__
             assert n_job2_xp.device == X_xp.device
             assert n_job2_xp.dtype == X_xp.dtype
 
-            n_job2_np = func(X_np, metric=metric, n_jobs=2, **kwds)
+            with config_context(array_api_dispatch=False):
+                n_job2_np = func(X_np, Y_np_val, metric=metric, n_jobs=2, **kwds)
 
             assert_allclose(n_job1_xp_np, n_job2_xp_np)
             assert_allclose(n_job2_xp_np, n_job2_np)
@@ -524,7 +527,8 @@ def test_pairwise_kernels_array_api(metric, array_namespace, device_name, dtype_
         assert K_xp.device == X_xp.device
         assert K_xp.dtype == X_xp.dtype
 
-        K_np = pairwise_kernels(X_np, metric=metric)
+        with config_context(array_api_dispatch=False):
+            K_np = pairwise_kernels(X_np, metric=metric)
         assert_allclose(K_xp_np, K_np)
 
         # Test with Y=Y_np/Y_xp
@@ -534,7 +538,8 @@ def test_pairwise_kernels_array_api(metric, array_namespace, device_name, dtype_
         assert K_xp.device == X_xp.device
         assert K_xp.dtype == X_xp.dtype
 
-        K_np = pairwise_kernels(X_np, Y=Y_np, metric=metric)
+        with config_context(array_api_dispatch=False):
+            K_np = pairwise_kernels(X_np, Y=Y_np, metric=metric)
         assert_allclose(K_xp_np, K_np)
 
 
