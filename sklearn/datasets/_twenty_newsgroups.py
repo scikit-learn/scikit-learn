@@ -25,12 +25,14 @@ uncompressed the train set is 52 MB and the test set is 34 MB.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import binascii
 import codecs
 import logging
 import os
 import pickle
 import re
 import tarfile
+import zlib
 from contextlib import suppress
 from numbers import Integral, Real
 from tempfile import TemporaryDirectory
@@ -321,7 +323,13 @@ def fetch_20newsgroups(
                 compressed_content = f.read()
             uncompressed_content = codecs.decode(compressed_content, "zlib_codec")
             cache = pickle.loads(uncompressed_content)
-        except Exception as e:  # noqa: BLE001
+        except (
+            pickle.UnpicklingError,
+            EOFError,
+            zlib.error,
+            binascii.Error,
+            OSError,
+        ) as e:
             print(80 * "_")
             print("Cache loading failed")
             print(80 * "_")
