@@ -1345,11 +1345,11 @@ def _make_multiclass():
 
 @pytest.mark.parametrize(
     "gb, dataset_maker, init_estimator",
-    [
+    (
         (GradientBoostingClassifier, make_classification, DummyClassifier),
         (GradientBoostingClassifier, _make_multiclass, DummyClassifier),
         (GradientBoostingRegressor, make_regression, DummyRegressor),
-    ],
+    ),
     ids=["binary classification", "multiclass classification", "regression"],
 )
 def test_gradient_boosting_with_init(
