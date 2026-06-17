@@ -59,7 +59,7 @@ for pairidx, pair in enumerate([[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]])
         X[:, 0],
         X[:, 1],
         c=y,
-        cmap=ListedColormap(disp.multiclass_colors_),
+        cmap=ListedColormap(disp.target_colors_),
         edgecolor="black",
         s=15,
     )
@@ -80,6 +80,6 @@ from sklearn.tree import plot_tree
 
 plt.figure()
 clf = DecisionTreeClassifier().fit(iris.data, iris.target)
-plot_tree(clf, filled=True)
+plot_tree(clf, filled=True, fill_colors=disp.target_colors_)
 plt.title("Decision tree trained on all the iris features")
 plt.show()
