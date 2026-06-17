@@ -516,6 +516,87 @@ def get_namespace_and_device(
         return xp, False, arrays_device
 
 
+def _is_numpy_consumable(array):
+    """Determine if an array can be consumed by NumPy.
+
+    Assumes that if ``array`` resides in host (CPU) memory then it can be
+    consumed by NumPy via ``numpy.asarray``.
+
+    Not everything that can be consumed by `np.asarray` will be flagged as
+    consumable by this function (e.g. lists).
+
+    Parameters
+    ----------
+    array : array object
+        Array to inspect.
+
+    Returns
+    -------
+    bool
+        True if ``array`` lives in host memory (and can thus be converted to a
+        NumPy array), False otherwise.
+    """
+    if isinstance(array, (numpy.ndarray, numpy.generic)):
+        return True
+    dlpack_device = getattr(array, "__dlpack_device__", None)
+    # We use the DLPack device type as proxy for whether or not `np.asarray`
+    # will work. We can't call `np.asarray` directly to find out. It will try to
+    # convert the array to a NumPy array, which may not be a cheaper operation.
+    if dlpack_device is None:
+        return False
+    try:
+        device_type = dlpack_device()[0]
+    except Exception:
+        return False
+    # kDLCPU == 1 in the DLPack device type enumeration. torch returns an enum
+    # whose integer value is 1, other libraries return a plain int.
+    return int(device_type) == 1
+
+
+def _should_coerce_to_numpy(estimator, *arrays):
+    """Decide whether an estimator's inputs should be coerced to NumPy.
+
+    For estimators that do not support the array API we coerce inputs to NumPy
+    if they are array-likes that NumPy can consume. Unsupported inputs (e.g.
+    arrays on a non-CPU device) are left untouched so that the subsequent
+    ``np.asarray`` call raises, exactly as it would with dispatch off.
+
+    The goal is to reproduce the dispatch-off behaviour where estimators will
+    accept array-likes (e.g. torch CPU tensors) as input and convert them to NumPy.
+
+    Parameters
+    ----------
+    estimator : estimator instance
+        The estimator whose ``array_api_support`` tag is inspected.
+
+    *arrays : array objects
+        Input arrays used to determine the input namespace.
+
+    Returns
+    -------
+    coerce : bool
+        Whether the inputs should be coerced to NumPy.
+
+    effective_xp : module
+        Namespace to use for downstream validation and computation: the NumPy
+        namespace when ``coerce`` is True, otherwise the input namespace.
+    """
+    # Inline import to avoid a circular import with sklearn.utils._tags.
+    from sklearn.utils._tags import get_tags
+
+    coerce = False
+    for array in arrays:
+        xp, is_array_api_compliant = get_namespace(array)
+        coerce = coerce or (
+            is_array_api_compliant
+            and not _is_numpy_namespace(xp)
+            and not get_tags(estimator).array_api_support
+        )
+    if coerce:
+        return True, np_compat
+    return False, xp
+
+
 def move_to(*arrays, xp, device):
     """Move all arrays to `xp` and `device`.
 
@@ -581,6 +662,18 @@ def move_to(*arrays, xp, device):
             if xp == xp_array and device == device_array:
                 converted_arrays.append(array)
             else:
+                strides = getattr(array, "strides", None)
+                if strides is not None and any(stride < 0 for stride in strides):
+                    # Some libraries (e.g. torch) abort the whole process instead
+                    # of raising a catchable Python exception when importing an
+                    # array with negative strides via DLPack. Such arrays are
+                    # produced for instance by ``a[::-1]`` reversals (as done by
+                    # ARPACK). The ``except`` clause below cannot recover from a
+                    # C++ abort, so the source array is made contiguous first.
+                    # NumPy and CuPy (the libraries that can produce negative
+                    # strides) both expose ``strides`` and ``ascontiguousarray``.
+                    # See https://github.com/scikit-learn/scikit-learn/issues/34307
+                    array = xp_array.ascontiguousarray(array)
                 try:
                     # The dlpack protocol is the future proof and library agnostic
                     # method to transfer arrays across namespace and device boundaries
@@ -601,7 +694,12 @@ def move_to(*arrays, xp, device):
                     # TODO: try removing this once DLPack v1 more widely supported
                     # TODO: ValueError not needed once min NumPy >=2.4.0:
                     # https://github.com/numpy/numpy/issues/30341
+                    # `AssertionError` is raised by recent torch versions to
+                    # signal an unsupported DLPack request, e.g. a `device` kwarg
+                    # with a 0-d array / NumPy scalar, where DLPack scalar support
+                    # is inconsistent across libraries.
                 except (
+                    AssertionError,
                     AttributeError,
                     TypeError,
                     NotImplementedError,
@@ -1136,6 +1234,20 @@ def move_estimator_to(estimator, xp, device):
     return _estimator_with_converted_arrays(
         estimator, partial(move_to, xp=xp, device=device)
     )
+
+
+def move_estimator_arrays_to_inplace(estimator, xp, device):
+    """Move an estimator's array attributes to ``xp``/``device`` in place.
+
+    Unlike :func:`move_estimator_to`, which returns a clone, this mutates
+    ``estimator`` directly. It is meant to move the fitted attributes of an
+    estimator that was fitted on NumPy-coerced inputs (see
+    :func:`_should_coerce_to_numpy`) back to the input namespace and device.
+    Non-array attributes are left unchanged.
+    """
+    converter = partial(move_to, xp=xp, device=device)
+    for key, attribute in vars(estimator).items():
+        setattr(estimator, key, _estimator_with_converted_arrays(attribute, converter))
 
 
 def check_same_namespace(X, estimator, *, attribute, method):
