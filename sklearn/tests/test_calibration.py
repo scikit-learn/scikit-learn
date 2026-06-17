@@ -524,8 +524,10 @@ def test_calibration_curve():
     assert_almost_equal(prob_pred, [0.1, 0.9])
 
     # Probabilities outside [0, 1] should not be accepted at all.
-    with pytest.raises(ValueError):
-        calibration_curve([1], [-0.1])
+    # TODO(1.12): remove warning filter
+    with pytest.warns(FutureWarning, match="n_bins"):
+        with pytest.raises(ValueError):
+            calibration_curve([1], [-0.1])
 
     # test that quantiles work as expected
     y_true2 = np.array([0, 0, 0, 0, 1, 1])
@@ -542,6 +544,16 @@ def test_calibration_curve():
     # Check that error is raised when invalid strategy is selected
     with pytest.raises(ValueError):
         calibration_curve(y_true2, y_pred2, strategy="percentile")
+
+
+def test_calibration_curve_n_bins_future_warning():
+    y_true = np.array([0, 0, 0, 1, 1, 1])
+    y_pred = np.array([0.0, 0.1, 0.2, 0.8, 0.9, 1.0])
+    with pytest.warns(FutureWarning, match="n_bins"):
+        prob_true_default, prob_pred_default = calibration_curve(y_true, y_pred)
+    prob_true_explicit, prob_pred_explicit = calibration_curve(y_true, y_pred, n_bins=5)
+    assert_allclose(prob_true_default, prob_true_explicit)
+    assert_allclose(prob_pred_default, prob_pred_explicit)
 
 
 @pytest.mark.parametrize(
@@ -816,6 +828,8 @@ def test_calibration_display_compute(pyplot, iris_data_binary, n_bins, strategy)
         assert labels.get_text() in expected_legend_labels
 
 
+# TODO(1.12): remove warning filter
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_plot_calibration_curve_pipeline(pyplot, iris_data_binary):
     # Ensure pipelines are supported by CalibrationDisplay.from_estimator
     X, y = iris_data_binary
@@ -869,6 +883,8 @@ def test_calibration_display_label_class_plot(pyplot):
         assert labels.get_text() in expected_legend_labels
 
 
+# TODO(1.12): remove warning filter
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
 def test_calibration_display_name_multiple_calls(
     constructor_name, pyplot, iris_data_binary
@@ -904,6 +920,8 @@ def test_calibration_display_name_multiple_calls(
         assert labels.get_text() in expected_legend_labels
 
 
+# TODO(1.12): remove warning filter
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_calibration_display_ref_line(pyplot, iris_data_binary):
     # Check that `ref_line` only appears once
     X, y = iris_data_binary
@@ -930,7 +948,9 @@ def test_calibration_curve_pos_label_error_str(dtype_y_str):
         "pass pos_label explicitly"
     )
     with pytest.raises(ValueError, match=err_msg):
-        calibration_curve(y1, y2)
+        # TODO(1.12): remove warning filter
+        with pytest.warns(FutureWarning, match="n_bins"):
+            calibration_curve(y1, y2)
 
 
 @pytest.mark.parametrize("dtype_y_str", [str, object])
@@ -954,6 +974,8 @@ def test_calibration_curve_pos_label(dtype_y_str):
     assert_allclose(prob_true, [0, 0, 0.5, 1])
 
 
+# TODO(1.12): remove warning filter
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "kwargs",
     [
@@ -973,6 +995,8 @@ def test_calibration_display_kwargs(pyplot, iris_data_binary, kwargs):
     assert viz.line_.get_linestyle() == "-."
 
 
+# TODO(1.12): remove warning filter
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("pos_label, expected_pos_label", [(None, 1), (0, 0), (1, 1)])
 def test_calibration_display_pos_label(
     pyplot, iris_data_binary, pos_label, expected_pos_label
