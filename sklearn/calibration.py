@@ -1215,7 +1215,7 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
         return tags
 
 
-# TODO(1.12): change default n_bins to 'cube_root'.
+# TODO(1.12): change default n_bins to 'cube_root', see PR #34326.
 @validate_params(
     {
         "y_true": ["array-like"],
@@ -1340,7 +1340,7 @@ def calibration_curve(
         )
     y_true = y_true == pos_label
 
-    # TODO(1.12): remove, see PR for default n_bins change.
+    # TODO(1.12): remove, see PR #34326.
     if n_bins == "warn":
         warnings.warn(
             "The default value of `n_bins` will change from 5 to 'cube_root' in 1.12.",
@@ -1514,7 +1514,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
 
         return self
 
-    # TODO(1.12): change default n_bins to 'cube_root'.
+    # TODO(1.12): change default n_bins to 'cube_root', see PR #34326.
     @classmethod
     def from_estimator(
         cls,
@@ -1648,7 +1648,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             **kwargs,
         )
 
-    # TODO(1.12): change default n_bins to 'cube_root'.
+    # TODO(1.12): change default n_bins to 'cube_root', see PR #34326.
     @classmethod
     def from_predictions(
         cls,
