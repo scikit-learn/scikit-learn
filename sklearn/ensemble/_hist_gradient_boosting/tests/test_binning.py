@@ -216,17 +216,27 @@ def test_bin_mapper_repeated_values_invariance(n_distinct):
 
 
 @pytest.mark.parametrize("n_bins", [50, 250])
-def test_binmapper_weighted_vs_repeated_equivalence(global_random_seed, n_bins):
+@pytest.mark.parametrize("with_missing_values", [False, True])
+def test_binmapper_weighted_vs_repeated_equivalence(
+    global_random_seed, n_bins, with_missing_values
+):
     rng = np.random.RandomState(global_random_seed)
 
     n_samples = 200
     X = rng.randn(n_samples, 3)
+    if with_missing_values:
+        missing_mask = rng.rand(*X.shape) < 0.1
+        X[missing_mask] = np.nan
+
     sw = rng.randint(0, 5, size=n_samples)
     X_repeated = np.repeat(X, sw, axis=0)
 
     est_weighted = _BinMapper(n_bins=n_bins).fit(X, sample_weight=sw)
     est_repeated = _BinMapper(n_bins=n_bins).fit(X_repeated, sample_weight=None)
-    assert_allclose(est_weighted.bin_thresholds_, est_repeated.bin_thresholds_)
+    for thresholds_weighted, thresholds_repeated in zip(
+        est_weighted.bin_thresholds_, est_repeated.bin_thresholds_
+    ):
+        assert_allclose(thresholds_weighted, thresholds_repeated)
 
     X_trans_weighted = est_weighted.transform(X)
     X_trans_repeated = est_repeated.transform(X)
