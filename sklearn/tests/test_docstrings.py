@@ -7,10 +7,7 @@ import pytest
 from sklearn.callback._base import _BaseCallback
 
 # make it possible to discover experimental estimators when calling `all_estimators`
-from sklearn.experimental import (
-    enable_halving_search_cv,  # noqa: F401
-    enable_iterative_imputer,  # noqa: F401
-)
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401
 from sklearn.utils.discovery import all_displays, all_estimators, all_functions
 
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
