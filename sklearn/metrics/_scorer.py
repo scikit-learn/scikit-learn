@@ -68,7 +68,6 @@ from sklearn.metrics.cluster import (
     rand_score,
     v_measure_score,
 )
-from sklearn.utils import Bunch
 from sklearn.utils._metadata_requests import MethodMetadataRequest
 from sklearn.utils._param_validation import (
     HasMethods,
@@ -80,6 +79,7 @@ from sklearn.utils.metadata_routing import (
     MetadataRequest,
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _MetadataRequester,
     _raise_for_params,
     _routing_enabled,
@@ -151,15 +151,22 @@ class _MultimetricScorer:
             common_kwargs = {
                 arg: value for arg, value in kwargs.items() if arg != "sample_weight"
             }
-            routed_params = Bunch(
-                **{name: Bunch(score=common_kwargs.copy()) for name in self._scorers}
+            sw = kwargs.get("sample_weight")
+            routed_params = _manual_routing(
+                {
+                    name: {
+                        "score": {
+                            **common_kwargs,
+                            **(
+                                {"sample_weight": sw}
+                                if sw is not None and scorer._accept_sample_weight()
+                                else {}
+                            ),
+                        }
+                    }
+                    for name, scorer in self._scorers.items()
+                }
             )
-            if "sample_weight" in kwargs:
-                for name, scorer in self._scorers.items():
-                    if scorer._accept_sample_weight():
-                        routed_params[name].score["sample_weight"] = kwargs[
-                            "sample_weight"
-                        ]
 
         for name, scorer in self._scorers.items():
             try:
@@ -313,13 +320,12 @@ class _BaseScorer(_MetadataRequester):
         """
         _raise_for_params(kwargs, self, None)
 
-        _kwargs = copy.deepcopy(kwargs)
         # TODO(1.11): remove this when sample_weight is removed from the `__call__`
         # signature
         if sample_weight is not None:
-            _kwargs["sample_weight"] = sample_weight
+            kwargs["sample_weight"] = sample_weight
 
-        return self._score(partial(_cached_call, None), estimator, X, y_true, **_kwargs)
+        return self._score(partial(_cached_call, None), estimator, X, y_true, **kwargs)
 
     def _warn_overlap(self, message, kwargs):
         """Warn if there is any overlap between ``self._kwargs`` and ``kwargs``.

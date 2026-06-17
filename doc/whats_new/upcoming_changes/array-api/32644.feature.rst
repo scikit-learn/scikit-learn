@@ -1,3 +1,0 @@
-- :class:`linear_model.LogisticRegression` now supports array API compatible inputs
-  with `solver="lbfgs"`.
-  By :user:`Omar Salman <OmarManzoor>` and :user:`Olivier Grisel <ogrisel>`.

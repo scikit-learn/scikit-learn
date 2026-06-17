@@ -2481,7 +2481,8 @@ def test_groups_with_routing_validation(func, extra_args):
         (cross_val_score, {}),
         (cross_val_predict, {}),
         (learning_curve, {}),
-        (permutation_test_score, {}),
+        # Few permutations: this test only checks the params=None code path.
+        (permutation_test_score, {"n_permutations": 5}),
         (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
     ],
 )
@@ -2623,30 +2624,19 @@ def test_validation_functions_routing(func, extra_args):
     for _scorer in scorer_registry:
         check_recorded_metadata(
             obj=_scorer,
-            method="_score",
-            parent="__call__",
+            method="consuming_metric",
+            parent=func.__name__,
             split_params=("sample_weight", "metadata"),
             sample_weight=score_weights,
             metadata=score_metadata,
         )
 
     assert len(splitter_registry)
-    func_names = {
-        "cross_validate": {"split": "<genexpr>", "fit": "_fit_and_score"},
-        "cross_val_score": {"split": "<genexpr>", "fit": "_fit_and_score"},
-        "cross_val_predict": {"split": "cross_val_predict", "fit": "_fit_and_predict"},
-        "learning_curve": {"split": "learning_curve", "fit": "_fit_and_score"},
-        "permutation_test_score": {
-            "split": "_permutation_test_score",
-            "fit": "_permutation_test_score",
-        },
-        "validation_curve": {"split": "<genexpr>", "fit": "_fit_and_score"},
-    }
     for _splitter in splitter_registry:
         check_recorded_metadata(
             obj=_splitter,
             method="split",
-            parent=func_names[func.__name__]["split"],
+            parent=func.__name__,
             groups=split_groups,
             metadata=split_metadata,
         )
@@ -2656,7 +2646,7 @@ def test_validation_functions_routing(func, extra_args):
         check_recorded_metadata(
             obj=_estimator,
             method="fit",
-            parent=func_names[func.__name__]["fit"],
+            parent=func.__name__,
             split_params=("sample_weight", "metadata"),
             sample_weight=fit_sample_weight,
             metadata=fit_metadata,
@@ -2694,7 +2684,7 @@ def test_learning_curve_exploit_incremental_learning_routing():
         check_recorded_metadata(
             obj=_estimator,
             method="partial_fit",
-            parent="_incremental_fit_estimator",
+            parent="learning_curve",
             split_params=("sample_weight", "metadata"),
             sample_weight=fit_sample_weight,
             metadata=fit_metadata,

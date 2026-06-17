@@ -1,4 +1,0 @@
-- Passing `sample_weight` as a positional argument to
-  :meth:`linear_model.LogisticRegressionCV.score` is deprecated and will be
-  removed in version 1.11. Pass it as a keyword argument instead.
-  By `Adrin Jalali`_ :pr:`30859`
