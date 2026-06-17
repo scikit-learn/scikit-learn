@@ -12,9 +12,11 @@ dependencies:
     - scipy
     - cython
     - joblib
+    - narwhals
     - threadpoolctl
     - matplotlib
     - pandas
+    - rich
     - pyamg
     - pytest
     - pytest-xdist

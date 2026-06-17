@@ -232,6 +232,7 @@ def average_precision_score(
     0.77
     """
     xp, _, device = get_namespace_and_device(y_score)
+    y_score = check_array(y_score, ensure_2d=False)
     # To allow mixed string `y_true`/numeric `y_score` input, cannot move `y_true`
     # until it has been converted to an integer (e.g., via `label_binarize`)
     # Ensures `test_array_api_classification_mixed_string_numeric_input` passes.
@@ -671,7 +672,7 @@ def roc_auc_score(
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.metrics import roc_auc_score
     >>> X, y = load_breast_cancer(return_X_y=True)
-    >>> clf = LogisticRegression(solver="newton-cholesky", random_state=0).fit(X, y)
+    >>> clf = LogisticRegression(solver="newton-cholesky").fit(X, y)
     >>> roc_auc_score(y, clf.predict_proba(X)[:, 1])
     0.99
     >>> roc_auc_score(y, clf.decision_function(X))
@@ -2268,7 +2269,7 @@ def metric_at_thresholds(
     r"""Compute `metric_func` per threshold for :term:`binary` data.
 
     Aids visualization of metric values across thresholds when tuning the
-    :ref:`decision threshold <threshold_tunning>`.
+    :ref:`decision threshold <threshold_tuning>`.
 
     Read more in the :ref:`User Guide <metric_at_thresholds>`.
 
