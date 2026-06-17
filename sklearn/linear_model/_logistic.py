@@ -34,7 +34,6 @@ from sklearn.model_selection import check_cv
 from sklearn.preprocessing import LabelEncoder
 from sklearn.svm._base import _fit_liblinear
 from sklearn.utils import (
-    Bunch,
     check_array,
     check_consistent_length,
     check_random_state,
@@ -56,6 +55,7 @@ from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _raise_for_params,
     _routing_enabled,
     process_routing,
@@ -1258,7 +1258,7 @@ class LogisticRegression(
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.linear_model import LogisticRegression
     >>> X, y = load_iris(return_X_y=True)
-    >>> clf = LogisticRegression(random_state=0).fit(X, y)
+    >>> clf = LogisticRegression().fit(X, y)
     >>> clf.predict(X[:2, :])
     array([0, 0])
     >>> clf.predict_proba(X[:2, :])
@@ -2236,11 +2236,12 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 **params,
             )
         else:
-            routed_params = Bunch()
-            routed_params.splitter = Bunch(split={})
-            routed_params.scorer = Bunch(score=params)
+            score_kwargs = dict(params)
             if sample_weight is not None:
-                routed_params.scorer.score["sample_weight"] = sample_weight
+                score_kwargs["sample_weight"] = sample_weight
+            routed_params = _manual_routing(
+                {"splitter": {}, "scorer": {"score": score_kwargs}}
+            )
 
         # init cross-validation generator
         cv = check_cv(self.cv, y, classifier=True)
@@ -2525,12 +2526,12 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 **score_params,
             )
         else:
-            routed_params = Bunch()
-            routed_params.scorer = Bunch(score={})
-            if score_params.get("sample_weight") is not None:
-                routed_params.scorer.score["sample_weight"] = score_params[
-                    "sample_weight"
-                ]
+            sw = (
+                {"sample_weight": score_params["sample_weight"]}
+                if score_params.get("sample_weight") is not None
+                else {}
+            )
+            routed_params = _manual_routing({"scorer": {"score": sw}})
 
         return scoring(
             self,
