@@ -138,6 +138,15 @@ algorithm can lead to prohibitively long running times. On the other hand,
 the KNN kernel will produce a much more memory-friendly sparse matrix
 which can drastically reduce running times.
 
+.. note::
+
+   The ``rbf`` kernel (default) constructs a dense :math:`n \times n`
+   affinity matrix in memory, where :math:`n` is the total number of samples.
+   This becomes infeasible above roughly 20,000-30,000 samples. For larger
+   datasets, use ``kernel='knn'`` to construct a sparse graph, or use
+   :class:`~sklearn.semi_supervised.SelfTrainingClassifier` which avoids the
+   full graph entirely.
+
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_semi_supervised_plot_semi_supervised_versus_svm_iris.py`

@@ -407,6 +407,24 @@ class LabelPropagation(BaseLabelPropagation):
     --------
     LabelSpreading : Alternate label propagation strategy more robust to noise.
 
+    Notes
+    -----
+    **Memory and scalability (RBF kernel):** When ``kernel='rbf'`` (the
+    default), this estimator builds a dense ``n x n`` affinity matrix, where
+    ``n`` is the total number of samples (labeled + unlabeled combined).
+    Memory scales as ``O(n ** 2)``: approximately 200 MB at ``n = 5,000``
+    and 8 GB at ``n = 32,000``. For datasets larger than roughly 20,000
+    samples, the RBF kernel will be prohibitively slow and may exhaust
+    available memory.
+
+    For large datasets prefer ``kernel='knn'``, which builds a sparse
+    k-nearest-neighbor graph with ``O(n * n_neighbors)`` memory::
+
+        LabelPropagation(kernel='knn', n_neighbors=7)
+
+    :class:`LabelSpreading` with ``alpha > 0`` is generally more robust to
+    label noise than :class:`LabelPropagation`, which uses hard clamping.
+
     References
     ----------
     Xiaojin Zhu and Zoubin Ghahramani. Learning from labeled and unlabeled data
@@ -571,6 +589,27 @@ class LabelSpreading(BaseLabelPropagation):
     See Also
     --------
     LabelPropagation : Unregularized graph based semi-supervised learning.
+
+    Notes
+    -----
+    **Memory and scalability (RBF kernel):** When ``kernel='rbf'`` (the
+    default), this estimator builds a dense ``n x n`` affinity matrix, where
+    ``n`` is the total number of samples (labeled + unlabeled combined).
+    Memory scales as ``O(n ** 2)``: approximately 200 MB at ``n = 5,000``,
+    8 GB at ``n = 32,000``, and 200 GB at ``n = 160,000``. For datasets
+    larger than roughly 20,000 samples, the RBF kernel will be prohibitively
+    slow and may exhaust available memory.
+
+    **Recommended approach for large datasets:** Switch to ``kernel='knn'``,
+    which builds a sparse k-nearest-neighbor graph with
+    ``O(n * n_neighbors)`` memory::
+
+        LabelSpreading(kernel='knn', n_neighbors=7, alpha=0.2)
+
+    For datasets larger than ~50,000 samples, consider subsampling the
+    unlabeled pool, or use :class:`SelfTrainingClassifier` instead, which
+    avoids the full graph construction entirely and scales to arbitrarily
+    large unlabeled sets.
 
     References
     ----------
