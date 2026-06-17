@@ -1360,8 +1360,7 @@ def paired_distances(X, Y, *, metric="euclidean", **kwds):
 
     See Also
     --------
-    sklearn.metrics.pairwise_distances : Computes the distance between every pair of
-        samples.
+    pairwise_distances : Computes the distance between every pair of samples.
 
     Examples
     --------
@@ -2426,8 +2425,8 @@ def pairwise_distances(
     pairwise_distances_chunked : Performs the same calculation as this
         function, but returns a generator of chunks of the distance matrix, in
         order to limit memory usage.
-    sklearn.metrics.pairwise.paired_distances : Computes the distances between
-        corresponding elements of two arrays.
+    paired_distances : Computes the distances between corresponding elements of
+        two arrays.
 
     Notes
     -----
