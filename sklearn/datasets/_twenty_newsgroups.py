@@ -30,11 +30,10 @@ import logging
 import os
 import pickle
 import re
-import shutil
-from tempfile import TemporaryDirectory
 import tarfile
 from contextlib import suppress
 from numbers import Integral, Real
+from tempfile import TemporaryDirectory
 
 import joblib
 import numpy as np
@@ -85,35 +84,34 @@ def _download_20newsgroups(cache_path, n_retries, delay):
         test_path = os.path.join(temp_dir, TEST_FOLDER)
 
         logger.info("Downloading dataset from %s (14 MB)", ARCHIVE.url)
-        print("START DOWNLOAD", flush=True)
+
         archive_path = _fetch_remote(
             ARCHIVE, dirname=temp_dir, n_retries=n_retries, delay=delay
         )
 
         logger.debug("Decompressing %s", archive_path)
-        print("DOWNLOAD COMPLETE", flush=True)
+
         with tarfile.open(archive_path, "r:gz") as fp:
             tarfile_extractall(fp, path=temp_dir)
 
         with suppress(FileNotFoundError):
             os.remove(archive_path)
-        print("EXTRACTION COMPLETE", flush=True)
         # Store a zipped pickle
-        cache = dict(
-            train=load_files(train_path, encoding="latin1"),
-            test=load_files(test_path, encoding="latin1"),
-        )
-        print("CACHE BUILT", flush=True)
+        cache = {
+            "train": load_files(train_path, encoding="latin1"),
+            "test": load_files(test_path, encoding="latin1"),
+        }
+
         compressed_content = codecs.encode(pickle.dumps(cache), "zlib_codec")
 
         cache_tmp_path = os.path.join(temp_dir, os.path.basename(cache_path))
         with open(cache_tmp_path, "wb") as f:
             f.write(compressed_content)
-        print("TEMP CACHE WRITTEN", flush=True)
+
         os.replace(cache_tmp_path, cache_path)
-        print("RENAME COMPLETE", flush=True)
 
     return cache
+
 
 def strip_newsgroup_header(text):
     """
@@ -323,7 +321,7 @@ def fetch_20newsgroups(
                 compressed_content = f.read()
             uncompressed_content = codecs.decode(compressed_content, "zlib_codec")
             cache = pickle.loads(uncompressed_content)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(80 * "_")
             print("Cache loading failed")
             print(80 * "_")
@@ -343,10 +341,10 @@ def fetch_20newsgroups(
     if subset in ("train", "test"):
         data = cache[subset]
     elif subset == "all":
-        data_lst = list()
-        target = list()
-        filenames = list()
-        for subset in ("train", "test"):
+        data_lst = []
+        target = []
+        filenames = []
+        for subset_ in ("train", "test"):
             data = cache[subset]
             data_lst.extend(data.data)
             target.extend(data.target)
