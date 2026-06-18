@@ -1340,7 +1340,7 @@ def calibration_curve(
         )
     y_true = y_true == pos_label
 
-    # TODO(1.12): remove, see PR #34326.
+    # TODO(1.12): remove block, see PR #34326.
     if n_bins == "warn":
         warnings.warn(
             "The default value of `n_bins` will change from 5 to 'cube_root' in 1.12.",
