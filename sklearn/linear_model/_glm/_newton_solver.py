@@ -288,7 +288,7 @@ class NewtonSolver(ABC):
             # 2. Tiny gradient / Armijo term.
             # If we are already close to the minimum, gradient and Armijo term are
             # tiny. It is best to use a Newton step length alpha = 1.
-            if i == 0 and armijo_term < self.tol:
+            if i == 0 and np.abs(armijo_term) <= self.tol:
                 # Note that final convergence is checked with the infinity norm.
                 g_max_abs = np.max(np.abs(self.gradient))
                 check = g_max_abs <= self.tol
