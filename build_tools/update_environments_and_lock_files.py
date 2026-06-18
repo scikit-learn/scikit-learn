@@ -496,6 +496,7 @@ build_metadata_list = [
             # for it.
             "ruff": "min",
             "mypy": "min",
+            "cython-lint": "min",
         },
         "python_version": "3.11",
     },

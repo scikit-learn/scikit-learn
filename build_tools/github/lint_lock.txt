@@ -6,7 +6,7 @@
 #
 cython==3.2.5
     # via cython-lint
-cython-lint==0.19.0
+cython-lint==0.20.0
     # via -r build_tools/github/lint_requirements.txt
 iniconfig==2.3.0
     # via pytest

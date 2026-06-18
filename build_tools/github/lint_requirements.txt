@@ -4,4 +4,4 @@
 pytest
 ruff==0.12.2  # min
 mypy==1.15  # min
-cython-lint
+cython-lint==0.20  # min
