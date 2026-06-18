@@ -1421,8 +1421,7 @@ def test_loss_array_api(
         assert array_api_device(result_xp) == array_api_device(raw_prediction_xp)
 
     if method_name == "gradient_hessian" and loss_class != HalfBinomialLoss:
-        # `gradient_hessian` is only implemented for HalfBinomialLossArrayAPI so far
-        return
+        pytest.skip("Not implemented")
 
     if method_name == "gradient_proba" and loss_class != HalfMultinomialLoss:
         # `gradient_proba` is only valid for HalfMultinomialLoss
