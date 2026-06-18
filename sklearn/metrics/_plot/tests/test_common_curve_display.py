@@ -35,6 +35,13 @@ def data_binary(data):
     return X[y < 2], y[y < 2]
 
 
+def _display_constructor_kwargs(Display):
+    """Return extra kwargs for display class constructors."""
+    if Display is CalibrationDisplay:
+        return {"strategy": "uniform"}
+    return {}
+
+
 def _check_pos_label_statistics(
     display_class, response_method, constructor_name, check_metric
 ):
@@ -141,17 +148,19 @@ def test_display_curve_error_binary_classifier(pyplot, data, data_binary, Displa
     # Case 1: multiclass classifier with multiclass target
     msg = "Expected 'estimator' to be a binary classifier. Got 3 classes instead."
     with pytest.raises(ValueError, match=msg):
-        Display.from_estimator(clf, X, y)
+        Display.from_estimator(clf, X, y, **_display_constructor_kwargs(Display))
 
     # Case 2: multiclass classifier with binary target
     with pytest.raises(ValueError, match=msg):
-        Display.from_estimator(clf, X_binary, y_binary)
+        Display.from_estimator(
+            clf, X_binary, y_binary, **_display_constructor_kwargs(Display)
+        )
 
     # Case 3: binary classifier with multiclass target
     clf = DecisionTreeClassifier().fit(X_binary, y_binary)
     msg = "The target y is not binary. Got multiclass type of target."
     with pytest.raises(ValueError, match=msg):
-        Display.from_estimator(clf, X, y)
+        Display.from_estimator(clf, X, y, **_display_constructor_kwargs(Display))
 
 
 @pytest.mark.parametrize(
@@ -167,7 +176,7 @@ def test_display_curve_error_regression(pyplot, data_binary, Display):
 
     msg = "Expected 'estimator' to be a binary classifier. Got DecisionTreeRegressor"
     with pytest.raises(ValueError, match=msg):
-        Display.from_estimator(regressor, X, y)
+        Display.from_estimator(regressor, X, y, **_display_constructor_kwargs(Display))
 
     # Case 2: regression target
     classifier = DecisionTreeClassifier().fit(X, y)
@@ -175,9 +184,11 @@ def test_display_curve_error_regression(pyplot, data_binary, Display):
     y = y + 0.5
     msg = "The target y is not binary. Got continuous type of target."
     with pytest.raises(ValueError, match=msg):
-        Display.from_estimator(classifier, X, y)
+        Display.from_estimator(classifier, X, y, **_display_constructor_kwargs(Display))
     with pytest.raises(ValueError, match=msg):
-        Display.from_predictions(y, regressor.fit(X, y).predict(X))
+        Display.from_predictions(
+            y, regressor.fit(X, y).predict(X), **_display_constructor_kwargs(Display)
+        )
 
 
 @pytest.mark.parametrize(
@@ -251,9 +262,13 @@ def test_display_curve_name_overwritten_by_plot_multiple_calls(
     )
 
     if constructor_name == "from_estimator":
-        disp = Display.from_estimator(clf, X, y, name=clf_name)
+        disp = Display.from_estimator(
+            clf, X, y, name=clf_name, **_display_constructor_kwargs(Display)
+        )
     elif constructor_name == "from_predictions":
-        disp = Display.from_predictions(y, y_pred, name=clf_name)
+        disp = Display.from_predictions(
+            y, y_pred, name=clf_name, **_display_constructor_kwargs(Display)
+        )
     else:  # constructor_name = "from_cv_results"
         if Display in (RocCurveDisplay, PrecisionRecallDisplay):
             disp = Display.from_cv_results(cv_results, X, y, name=clf_name)
@@ -301,9 +316,9 @@ def test_display_curve_not_fitted_errors(pyplot, data_binary, clf, Display):
     # when testing the second and subsequent plotting function
     model = clone(clf)
     with pytest.raises(NotFittedError):
-        Display.from_estimator(model, X, y)
+        Display.from_estimator(model, X, y, **_display_constructor_kwargs(Display))
     model.fit(X, y)
-    disp = Display.from_estimator(model, X, y)
+    disp = Display.from_estimator(model, X, y, **_display_constructor_kwargs(Display))
     assert model.__class__.__name__ in disp.line_.get_label()
     # TODO: Clean-up once `estimator_name` deprecated in all displays
     if Display in (PrecisionRecallDisplay, RocCurveDisplay):
@@ -323,9 +338,13 @@ def test_display_curve_n_samples_consistency(pyplot, data_binary, Display):
 
     msg = "Found input variables with inconsistent numbers of samples"
     with pytest.raises(ValueError, match=msg):
-        Display.from_estimator(classifier, X[:-2], y)
+        Display.from_estimator(
+            classifier, X[:-2], y, **_display_constructor_kwargs(Display)
+        )
     with pytest.raises(ValueError, match=msg):
-        Display.from_estimator(classifier, X, y[:-2])
+        Display.from_estimator(
+            classifier, X, y[:-2], **_display_constructor_kwargs(Display)
+        )
     # `CalibrationDisplay` does not support `sample_weight`
     if Display != CalibrationDisplay:
         with pytest.raises(ValueError, match=msg):
@@ -347,7 +366,7 @@ def test_display_curve_error_pos_label(pyplot, data_binary, Display):
     y_pred = classifier.predict_proba(X)[:, -1]
     msg = r"y_true takes value in {10, 11} and pos_label is not specified"
     with pytest.raises(ValueError, match=msg):
-        Display.from_predictions(y, y_pred)
+        Display.from_predictions(y, y_pred, **_display_constructor_kwargs(Display))
 
 
 @pytest.mark.parametrize(
@@ -388,9 +407,13 @@ def test_classifier_display_curve_named_constructor_return_type(
         pass
 
     if constructor == "from_predictions":
-        curve = SubclassOfDisplay.from_predictions(y, y_pred)
+        curve = SubclassOfDisplay.from_predictions(
+            y, y_pred, **_display_constructor_kwargs(Display)
+        )
     elif constructor == "from_estimator":
-        curve = SubclassOfDisplay.from_estimator(classifier, X, y)
+        curve = SubclassOfDisplay.from_estimator(
+            classifier, X, y, **_display_constructor_kwargs(Display)
+        )
     else:  # `from_cv_results`
         if Display in (RocCurveDisplay, PrecisionRecallDisplay):
             curve = SubclassOfDisplay.from_cv_results(cv_results, X, y)
