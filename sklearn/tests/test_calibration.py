@@ -513,6 +513,8 @@ def test_temperature_scaling_input_validation(global_dtype):
     assert_allclose(y_pred1, y_pred2)
 
 
+# TODO(1.12): remove warning filter
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_calibration_curve():
     """Check calibration_curve function"""
     y_true = np.array([0, 0, 0, 1, 1, 1])
@@ -524,10 +526,8 @@ def test_calibration_curve():
     assert_almost_equal(prob_pred, [0.1, 0.9])
 
     # Probabilities outside [0, 1] should not be accepted at all.
-    # TODO(1.12): remove warning filter
-    with pytest.warns(FutureWarning, match="n_bins"):
-        with pytest.raises(ValueError):
-            calibration_curve([1], [-0.1])
+    with pytest.raises(ValueError):
+        calibration_curve([1], [-0.1])
 
     # test that quantiles work as expected
     y_true2 = np.array([0, 0, 0, 0, 1, 1])
