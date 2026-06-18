@@ -280,8 +280,7 @@ scikit-learn install with the following command::
 
 Optimized BLAS / LAPACK implementations include:
 
-- Atlas (need hardware specific tuning by rebuilding on the target machine)
-- OpenBLAS
+- OpenBLAS (default in PyPI wheels)
 - MKL
 - Apple Accelerate and vecLib frameworks (OSX only)
 
