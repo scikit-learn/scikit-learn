@@ -415,7 +415,8 @@ def enet_coordinate_descent(
 
         # Check convergence before entering the main loop.
         gap, dual_norm_XtA = gap_enet(
-            n_samples, n_features, w, alpha, beta, X, y, R, XtA, positive, False
+            n_samples, n_features, w, alpha, beta, X, y, R, XtA, positive,
+            gap_smaller_eps=False,
         )
         if gap <= tol:
             with gil:
@@ -489,7 +490,8 @@ def enet_coordinate_descent(
                 # than the tolerance: check the duality gap as ultimate
                 # stopping criterion
                 gap, dual_norm_XtA = gap_enet(
-                    n_samples, n_features, w, alpha, beta, X, y, R, XtA, positive, True
+                    n_samples, n_features, w, alpha, beta, X, y, R, XtA, positive,
+                    gap_smaller_eps=True,
                 )
                 if gap <= tol:
                     # return if we reached desired tolerance
@@ -867,7 +869,7 @@ def sparse_enet_coordinate_descent(
             R_sum,
             XtA,
             positive,
-            False,
+            gap_smaller_eps=False,
         )
         if gap <= tol:
             with gil:
@@ -992,7 +994,7 @@ def sparse_enet_coordinate_descent(
                     R_sum,
                     XtA,
                     positive,
-                    True,
+                    gap_smaller_eps=True,
                 )
 
                 if gap <= tol:
@@ -1224,7 +1226,8 @@ def enet_coordinate_descent_gram(
 
         # Check convergence before entering the main loop.
         gap, dual_norm_XtA = gap_enet_gram(
-            n_features, w, alpha, beta, Qw, q, y_norm2, XtA, positive, False
+            n_features, w, alpha, beta, Qw, q, y_norm2, XtA, positive,
+            gap_smaller_eps=False,
         )
         if 0 <= gap <= tol:
             # Only if gap >=0 as singular Q may cause dubious values of gap.
@@ -1303,7 +1306,8 @@ def enet_coordinate_descent_gram(
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
                 gap, dual_norm_XtA = gap_enet_gram(
-                    n_features, w, alpha, beta, Qw, q, y_norm2, XtA, positive, True
+                    n_features, w, alpha, beta, Qw, q, y_norm2, XtA, positive,
+                    gap_smaller_eps=True,
                 )
 
                 if gap <= tol:
