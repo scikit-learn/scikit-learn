@@ -656,10 +656,15 @@ cdef class Splitter:
             unsigned int best_bin_idx
             unsigned int best_n_samples_left
             Y_DTYPE_C best_gain = split_info.gain
+            bint unconstrained
             hist_struct hist
 
         sum_gradient_left, sum_hessian_left = 0., 0.
         n_samples_left = 0
+        unconstrained = (
+            monotonic_cst == MonotonicConstraint.NO_CST
+            and (lower_bound == -INFINITY) and (upper_bound == INFINITY)
+        )
 
         loss_current_node = _loss_from_value(value, sum_gradients)
 
@@ -714,7 +719,8 @@ cdef class Splitter:
                                monotonic_cst,
                                lower_bound,
                                upper_bound,
-                               self.l2_regularization)
+                               self.l2_regularization,
+                               unconstrained)
 
             if gain > best_gain and gain > self.min_gain_to_split:
                 found_better_split = True
@@ -798,6 +804,7 @@ cdef class Splitter:
             Y_DTYPE_C MIN_CAT_SUPPORT = 10.
             # this is equal to 1 for losses where hessians are constant
             Y_DTYPE_C support_factor = n_samples / sum_hessians
+            bint unconstrained
 
         # Details on the split finding:
         # We first order categories by their sum_gradients / sum_hessians
@@ -881,6 +888,10 @@ cdef class Splitter:
               compare_cat_infos)
 
         loss_current_node = _loss_from_value(value, sum_gradients)
+        unconstrained = (
+            monotonic_cst == MonotonicConstraint.NO_CST
+            and (lower_bound == -INFINITY) and (upper_bound == INFINITY)
+        )
 
         scan_direction[0], scan_direction[1] = 1, -1
         for direction in scan_direction:
@@ -925,7 +936,7 @@ cdef class Splitter:
                                    sum_gradient_right, sum_hessian_right,
                                    loss_current_node, monotonic_cst,
                                    lower_bound, upper_bound,
-                                   self.l2_regularization)
+                                   self.l2_regularization, unconstrained)
                 if gain > best_gain and gain > self.min_gain_to_split:
                     found_better_split = True
                     best_gain = gain
@@ -988,7 +999,8 @@ cdef inline Y_DTYPE_C _split_gain(
         signed char monotonic_cst,
         Y_DTYPE_C lower_bound,
         Y_DTYPE_C upper_bound,
-        Y_DTYPE_C l2_regularization) noexcept nogil:
+        Y_DTYPE_C l2_regularization,
+        bint unconstrained) noexcept nogil:
     """Loss reduction
 
     Compute the reduction in loss after taking a split, compared to keeping
@@ -1002,6 +1014,14 @@ cdef inline Y_DTYPE_C _split_gain(
         Y_DTYPE_C gain
         Y_DTYPE_C value_left
         Y_DTYPE_C value_right
+
+    if unconstrained:
+        return loss_current_node + (
+            sum_gradient_left * sum_gradient_left
+            / (sum_hessian_left + l2_regularization + 1e-15) +
+            sum_gradient_right * sum_gradient_right
+            / (sum_hessian_right + l2_regularization + 1e-15)
+        )
 
     # Compute values of potential left and right children
     value_left = compute_node_value(sum_gradient_left, sum_hessian_left,
