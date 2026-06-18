@@ -189,15 +189,19 @@ def test_weighted_percentile_1d_sorted_matches_weighted_percentile(
 ):
     """Check sorted 1D helper against `_weighted_percentile`."""
     rng = np.random.RandomState(global_random_seed)
-    x = np.sort(rng.uniform(size=100))
-    sample_weight = rng.uniform(low=0.1, high=10, size=x.shape[0])
+    for x in [
+        np.sort(rng.uniform(size=100)),
+        np.array([0, 1, 1, 2], dtype=float),
+        np.repeat([0, 1, 2], rng.choice(10, size=3)).astype(np.float32),
+    ]:
+        sample_weight = rng.uniform(low=0.1, high=10, size=x.shape[0])
 
-    percentile = _weighted_percentile_1d_sorted(x, sample_weight, percentile_rank)
-    expected_percentile = _weighted_percentile(
-        x, sample_weight, percentile_rank, average=True
-    )
+        percentile = _weighted_percentile_1d_sorted(x, sample_weight, percentile_rank)
+        expected_percentile = _weighted_percentile(
+            x, sample_weight, percentile_rank, average=True
+        )
 
-    assert_allclose(percentile, expected_percentile)
+        assert_allclose(percentile, expected_percentile)
 
 
 @pytest.mark.parametrize("percentile_rank", [50, [20, 35, 50]])
