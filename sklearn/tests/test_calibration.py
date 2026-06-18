@@ -447,7 +447,7 @@ def test_temperature_scaling(n_classes, ensemble):
         random_state=42,
     )
     X_train, X_cal, y_train, y_cal = train_test_split(X, y, random_state=42)
-    clf = LogisticRegression(C=np.inf, tol=1e-8, max_iter=200, random_state=0)
+    clf = LogisticRegression(C=np.inf, tol=1e-8, max_iter=200)
     clf.fit(X_train, y_train)
     # Train the calibrator on the calibrating set
     cal_clf = CalibratedClassifierCV(
@@ -542,6 +542,48 @@ def test_calibration_curve():
     # Check that error is raised when invalid strategy is selected
     with pytest.raises(ValueError):
         calibration_curve(y_true2, y_pred2, strategy="percentile")
+
+
+@pytest.mark.parametrize(
+    "y_true, y_pred, strategy, expected_n_bins",
+    [
+        # Standard case: 8 samples -> n_bins = ceil(8**(1/3)) = 2
+        ([0] * 4 + [1] * 4, [0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9], "uniform", 2),
+        ([0] * 4 + [1] * 4, [0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9], "quantile", 2),
+        # Check ceil boundary: 2 samples -> n_bins = ceil(2**(1/3)) = ceil(1.26) = 2
+        ([0, 1], [0.1, 0.9], "uniform", 2),
+        ([0, 1], [0.1, 0.9], "quantile", 2),
+        # Fewer unique values: 8 samples -> n_bins=2 calculated, but only 1 unique
+        # value in y_pred, so we expect the result to have only 1 bin.
+        ([0] * 4 + [1] * 4, [0.5] * 8, "uniform", 1),
+        ([0] * 4 + [1] * 4, [0.5] * 8, "quantile", 1),
+    ],
+)
+def test_calibration_curve_cube_root_bins(y_true, y_pred, strategy, expected_n_bins):
+    """Check calibration_curve with n_bins='cube_root'."""
+    prob_true, prob_pred = calibration_curve(
+        y_true, y_pred, n_bins="cube_root", strategy=strategy
+    )
+    assert len(prob_true) == expected_n_bins
+    assert len(prob_pred) == expected_n_bins
+
+
+def test_calibration_display_cube_root_bins(pyplot, iris_data_binary):
+    """Check CalibrationDisplay with n_bins='cube_root'."""
+    X, y = iris_data_binary
+    lr = LogisticRegression().fit(X, y)
+
+    # Smoke test for from_estimator
+    viz = CalibrationDisplay.from_estimator(lr, X, y, n_bins="cube_root")
+    n_samples = X.shape[0]
+    expected_n_bins = int(np.ceil(n_samples ** (1 / 3)))
+    # Note: prob_true might be smaller than expected_n_bins if some bins are empty
+    assert len(viz.prob_true) <= expected_n_bins
+
+    # Smoke test for from_predictions
+    y_prob = lr.predict_proba(X)[:, 1]
+    viz = CalibrationDisplay.from_predictions(y, y_prob, n_bins="cube_root")
+    assert len(viz.prob_true) <= expected_n_bins
 
 
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic", "temperature"])
