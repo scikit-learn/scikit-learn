@@ -1624,7 +1624,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> clf = LogisticRegression()
         >>> clf.fit(X_train, y_train)
         LogisticRegression()
-        >>> disp = CalibrationDisplay.from_estimator(clf, X_test, y_test)
+        >>> disp = CalibrationDisplay.from_estimator(
+        ...     clf, X_test, y_test, n_bins='cube_root')
         >>> plt.show()
         """
         y_prob, pos_label, name = cls._validate_and_get_response_values(
@@ -1752,7 +1753,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> clf.fit(X_train, y_train)
         LogisticRegression()
         >>> y_prob = clf.predict_proba(X_test)[:, 1]
-        >>> disp = CalibrationDisplay.from_predictions(y_test, y_prob)
+        >>> disp = CalibrationDisplay.from_predictions(
+        ...     y_test, y_prob, n_bins='cube_root')
         >>> plt.show()
         """
         pos_label_validated, name = cls._validate_from_predictions_params(
