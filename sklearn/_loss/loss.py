@@ -1781,18 +1781,15 @@ class HalfMultinomialLossArrayAPI(ArrayAPILossMixin, HalfMultinomialLoss):
         raw_prediction,
         sample_weight=None,
     ):
-        grad = self._compute_gradient(
-            y_true=y_true,
-            raw_prediction=raw_prediction,
-            sample_weight=sample_weight,
-        )
         proba = self._compute_proba(
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
         )
+        grad = proba - self.y_true_one_hot
         hess = proba * (1.0 - proba)
         if sample_weight is not None:
+            grad *= sample_weight[:, None]
             hess *= sample_weight[:, None]
         return grad, hess
 
