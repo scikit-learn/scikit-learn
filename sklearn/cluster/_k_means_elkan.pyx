@@ -252,6 +252,12 @@ def elkan_iter_chunked_dense(
         - If False, only the labels will be computed, i.e runs the E-step of
           the algorithm. This is useful especially when calling predict on a
           fitted model.
+
+    Returns
+    -------
+    relocated_empty_clusters : bool
+        True if any empty clusters were relocated during this iteration,
+        False otherwise. Only meaningful when update_centers is True.
     """
     cdef:
         int n_samples = X.shape[0]
@@ -331,10 +337,13 @@ def elkan_iter_chunked_dense(
         free(centers_new_chunk)
         free(weight_in_clusters_chunk)
 
+    cdef bint relocated_empty_clusters = False
+
     if update_centers:
         omp_destroy_lock(&lock)
-        _relocate_empty_clusters_dense(X, sample_weight, centers_old,
-                                       centers_new, weight_in_clusters, labels)
+        relocated_empty_clusters = _relocate_empty_clusters_dense(
+            X, sample_weight, centers_old,
+            centers_new, weight_in_clusters, labels)
 
         _average_centers(centers_new, weight_in_clusters)
         _center_shift(centers_old, centers_new, center_shift)
@@ -347,6 +356,8 @@ def elkan_iter_chunked_dense(
                 lower_bounds[i, j] -= center_shift[j]
                 if lower_bounds[i, j] < 0:
                     lower_bounds[i, j] = 0
+
+    return relocated_empty_clusters
 
 
 cdef void _update_chunk_dense(
@@ -495,6 +506,12 @@ def elkan_iter_chunked_sparse(
         - If False, only the labels will be computed, i.e runs the E-step of
           the algorithm. This is useful especially when calling predict on a
           fitted model.
+
+    Returns
+    -------
+    relocated_empty_clusters : bool
+        True if any empty clusters were relocated during this iteration,
+        False otherwise. Only meaningful when update_centers is True.
     """
     cdef:
         int n_samples = X.shape[0]
@@ -506,7 +523,7 @@ def elkan_iter_chunked_sparse(
         # attempting to compute n_chunks). This can typically happen when
         # calling the prediction function of a bisecting k-means model with a
         # large fraction of outliers.
-        return
+        return False
 
     cdef:
         floating[::1] X_data = X.data
@@ -583,9 +600,11 @@ def elkan_iter_chunked_sparse(
         free(centers_new_chunk)
         free(weight_in_clusters_chunk)
 
+    cdef bint relocated_empty_clusters = False
+
     if update_centers:
         omp_destroy_lock(&lock)
-        _relocate_empty_clusters_sparse(
+        relocated_empty_clusters = _relocate_empty_clusters_sparse(
             X_data, X_indices, X_indptr, sample_weight,
             centers_old, centers_new, weight_in_clusters, labels)
 
@@ -600,6 +619,8 @@ def elkan_iter_chunked_sparse(
                 lower_bounds[i, j] -= center_shift[j]
                 if lower_bounds[i, j] < 0:
                     lower_bounds[i, j] = 0
+
+    return relocated_empty_clusters
 
 
 cdef void _update_chunk_sparse(

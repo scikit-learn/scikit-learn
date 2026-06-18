@@ -72,6 +72,12 @@ def lloyd_iter_chunked_dense(
         - If False, only the labels will be computed, i.e runs the E-step of
           the algorithm. This is useful especially when calling predict on a
           fitted model.
+
+    Returns
+    -------
+    relocated_empty_clusters : bool
+        True if any empty clusters were relocated during this iteration,
+        False otherwise. Only meaningful when update_centers is True.
     """
     cdef:
         int n_samples = X.shape[0]
@@ -155,14 +161,18 @@ def lloyd_iter_chunked_dense(
         free(weight_in_clusters_chunk)
         free(pairwise_distances_chunk)
 
+    cdef bint relocated_empty_clusters = False
+
     if update_centers:
         omp_destroy_lock(&lock)
-        _relocate_empty_clusters_dense(
+        relocated_empty_clusters = _relocate_empty_clusters_dense(
             X, sample_weight, centers_old, centers_new, weight_in_clusters, labels
         )
 
         _average_centers(centers_new, weight_in_clusters)
         _center_shift(centers_old, centers_new, center_shift)
+
+    return relocated_empty_clusters
 
 
 cdef void _update_chunk_dense(
@@ -270,6 +280,12 @@ def lloyd_iter_chunked_sparse(
         - If False, only the labels will be computed, i.e runs the E-step of
           the algorithm. This is useful especially when calling predict on a
           fitted model.
+
+    Returns
+    -------
+    relocated_empty_clusters : bool
+        True if any empty clusters were relocated during this iteration,
+        False otherwise. Only meaningful when update_centers is True.
     """
     cdef:
         int n_samples = X.shape[0]
@@ -281,7 +297,7 @@ def lloyd_iter_chunked_sparse(
         # attempting to compute n_chunks). This can typically happen when
         # calling the prediction function of a bisecting k-means model with a
         # large fraction of outliers.
-        return
+        return False
 
     cdef:
         # Choose same as for dense. Does not have the same impact since with
@@ -355,14 +371,18 @@ def lloyd_iter_chunked_sparse(
         free(centers_new_chunk)
         free(weight_in_clusters_chunk)
 
+    cdef bint relocated_empty_clusters = False
+
     if update_centers:
         omp_destroy_lock(&lock)
-        _relocate_empty_clusters_sparse(
+        relocated_empty_clusters = _relocate_empty_clusters_sparse(
             X_data, X_indices, X_indptr, sample_weight,
             centers_old, centers_new, weight_in_clusters, labels)
 
         _average_centers(centers_new, weight_in_clusters)
         _center_shift(centers_old, centers_new, center_shift)
+
+    return relocated_empty_clusters
 
 
 cdef void _update_chunk_sparse(

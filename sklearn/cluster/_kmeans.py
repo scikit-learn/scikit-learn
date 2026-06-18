@@ -554,7 +554,7 @@ def _kmeans_single_elkan(
     strict_convergence = False
 
     for i in range(max_iter):
-        elkan_iter(
+        relocated_empty_clusters = elkan_iter(
             X,
             sample_weight,
             centers,
@@ -582,8 +582,10 @@ def _kmeans_single_elkan(
 
         centers, centers_new = centers_new, centers
 
-        if np.array_equal(labels, labels_old):
+        if np.array_equal(labels, labels_old) and not relocated_empty_clusters:
             # First check the labels for strict convergence.
+            # Only declare strict convergence if no empty clusters were relocated,
+            # because relocation can change centers without changing labels.
             if verbose:
                 print(f"Converged at iteration {i}: strict convergence.")
             strict_convergence = True
@@ -703,7 +705,7 @@ def _kmeans_single_lloyd(
     strict_convergence = False
 
     for i in range(max_iter):
-        lloyd_iter(
+        relocated_empty_clusters = lloyd_iter(
             X,
             sample_weight,
             centers,
@@ -720,8 +722,10 @@ def _kmeans_single_lloyd(
 
         centers, centers_new = centers_new, centers
 
-        if np.array_equal(labels, labels_old):
+        if np.array_equal(labels, labels_old) and not relocated_empty_clusters:
             # First check the labels for strict convergence.
+            # Only declare strict convergence if no empty clusters were relocated,
+            # because relocation can change centers without changing labels.
             if verbose:
                 print(f"Converged at iteration {i}: strict convergence.")
             strict_convergence = True

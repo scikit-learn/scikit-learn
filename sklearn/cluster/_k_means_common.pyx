@@ -164,7 +164,7 @@ cpdef floating _inertia_sparse(
     return inertia
 
 
-cpdef void _relocate_empty_clusters_dense(
+cpdef bint _relocate_empty_clusters_dense(
         const floating[:, ::1] X,            # IN
         const floating[::1] sample_weight,   # IN
         const floating[:, ::1] centers_old,  # IN
@@ -172,13 +172,19 @@ cpdef void _relocate_empty_clusters_dense(
         floating[::1] weight_in_clusters,    # INOUT
         const int[::1] labels                # IN
 ):
-    """Relocate centers which have no sample assigned to them."""
+    """Relocate centers which have no sample assigned to them.
+
+    Returns
+    -------
+    relocated : bool
+        True if any empty clusters were relocated, False otherwise.
+    """
     cdef:
         int[::1] empty_clusters = np.where(np.equal(weight_in_clusters, 0))[0].astype(np.int32)
         int n_empty = empty_clusters.shape[0]
 
     if n_empty == 0:
-        return
+        return False
 
     cdef:
         int n_features = X.shape[1]
@@ -192,7 +198,7 @@ cpdef void _relocate_empty_clusters_dense(
     if np.max(distances) == 0:
         # Happens when there are more clusters than non-duplicate samples. Relocating
         # is pointless in this case.
-        return
+        return False
 
     for idx in range(n_empty):
 
@@ -210,8 +216,10 @@ cpdef void _relocate_empty_clusters_dense(
         weight_in_clusters[new_cluster_id] = weight
         weight_in_clusters[old_cluster_id] -= weight
 
+    return True
 
-cpdef void _relocate_empty_clusters_sparse(
+
+cpdef bint _relocate_empty_clusters_sparse(
         const floating[::1] X_data,          # IN
         const int[::1] X_indices,            # IN
         const int[::1] X_indptr,             # IN
@@ -221,13 +229,19 @@ cpdef void _relocate_empty_clusters_sparse(
         floating[::1] weight_in_clusters,    # INOUT
         const int[::1] labels                # IN
 ):
-    """Relocate centers which have no sample assigned to them."""
+    """Relocate centers which have no sample assigned to them.
+
+    Returns
+    -------
+    relocated : bool
+        True if any empty clusters were relocated, False otherwise.
+    """
     cdef:
         int[::1] empty_clusters = np.where(np.equal(weight_in_clusters, 0))[0].astype(np.int32)
         int n_empty = empty_clusters.shape[0]
 
     if n_empty == 0:
-        return
+        return False
 
     cdef:
         int n_samples = X_indptr.shape[0] - 1
@@ -246,7 +260,7 @@ cpdef void _relocate_empty_clusters_sparse(
     if np.max(distances) == 0:
         # Happens when there are more clusters than non-duplicate samples. Relocating
         # is pointless in this case.
-        return
+        return False
 
     cdef:
         int[::1] far_from_centers = np.argpartition(distances, -n_empty)[:-n_empty-1:-1].astype(np.int32)
@@ -269,6 +283,8 @@ cpdef void _relocate_empty_clusters_sparse(
 
         weight_in_clusters[new_cluster_id] = weight
         weight_in_clusters[old_cluster_id] -= weight
+
+    return True
 
 
 cdef void _average_centers(
