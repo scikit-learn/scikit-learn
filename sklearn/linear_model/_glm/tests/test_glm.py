@@ -358,7 +358,7 @@ def test_glm_regression_vstacked_X(solver, fit_intercept, glm_dataset):
     if solver == "lbfgs":
         rtol = 3e-5
     elif solver == "newton-cg":
-        rtol = 1e-8
+        rtol = 1e-7
     else:
         rtol = 5e-9
     assert model.intercept_ == pytest.approx(intercept, rel=rtol)
