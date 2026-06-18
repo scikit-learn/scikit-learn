@@ -49,10 +49,9 @@ def _get_local_path(openml_path: str, data_home: str) -> str:
     # ``openml_path`` is derived from a server-provided URL. Reject paths that
     # escape the cache directory so a malicious response cannot read, overwrite
     # or delete files outside of ``data_home``.
-    if (
-        os.path.commonpath([os.path.abspath(cache_dir), os.path.abspath(local_path)])
-        != os.path.abspath(cache_dir)
-    ):
+    if os.path.commonpath(
+        [os.path.abspath(cache_dir), os.path.abspath(local_path)]
+    ) != os.path.abspath(cache_dir):
         raise ValueError(
             f"Invalid OpenML path escaping the cache directory: {openml_path!r}"
         )
