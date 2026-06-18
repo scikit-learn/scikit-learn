@@ -40,6 +40,7 @@ from sklearn.utils._array_api import (
 )
 from sklearn.utils._param_validation import (
     HasMethods,
+    Hidden,
     Interval,
     StrOptions,
     validate_params,
@@ -1224,7 +1225,10 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
             Interval(Integral, 1, None, closed="left"),
             StrOptions({"cube_root"}),
         ],
-        "strategy": [StrOptions({"uniform", "quantile", "warn"})],
+        "strategy": [
+            StrOptions({"uniform", "quantile"}),
+            Hidden(StrOptions({"warn"})),
+        ],
     },
     prefer_skip_nested_validation=True,
 )
