@@ -580,6 +580,14 @@ def move_to(*arrays, xp, device):
             if xp == xp_array and device == device_array:
                 converted_arrays.append(array)
             else:
+                # Some libraries (e.g. torch) may abort the process instead of
+                # raising a catchable exception when a NumPy array with negative
+                # strides is imported via DLPack (such arrays are produced for
+                # instance by ``a[::-1]`` reversals, as done by ARPACK). Make
+                # the source array contiguous first to guarantee positive strides.
+                strides = getattr(array, "strides", None)
+                if strides is not None and any(stride < 0 for stride in strides):
+                    array = numpy.ascontiguousarray(array)
                 try:
                     # The dlpack protocol is the future proof and library agnostic
                     # method to transfer arrays across namespace and device boundaries
