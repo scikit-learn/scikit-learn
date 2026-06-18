@@ -1436,7 +1436,7 @@ class ArrayAPILossMixin:
         hessian_out=None,
         n_threads=1,
     ):
-        """Compute gradient and hessian of loss w.r.t raw_prediction.
+        """Compute gradient and hessian of loss w.r.t. raw_prediction.
 
         Parameters
         ----------
