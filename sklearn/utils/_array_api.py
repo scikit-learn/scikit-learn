@@ -13,7 +13,6 @@ from functools import partial
 import numpy
 import scipy
 import scipy.sparse as sp
-import scipy.special as special
 
 from sklearn._config import get_config
 from sklearn.externals import array_api_compat
@@ -31,6 +30,8 @@ REMOVE_TYPES_DEFAULT = (
     list,
     tuple,
 )
+
+NamespaceAndDevice = namedtuple("NamespaceAndDevice", ["xp", "device"])
 
 
 def yield_namespaces(include_numpy_namespaces=True):
@@ -58,6 +59,7 @@ def yield_namespaces(include_numpy_namespaces=True):
         "array_api_strict",
         "cupy",
         "torch",
+        "dpnp",
     ]:
         if not include_numpy_namespaces and array_namespace in _NUMPY_NAMESPACE_NAMES:
             continue
@@ -99,6 +101,13 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
                 yield array_namespace, device_name, dtype
             yield array_namespace, "mps", "float32"
 
+        elif array_namespace == "dpnp":  # pragma: nocover
+            # XXX: add "accelerator" device type?
+            for device_name, dtype in itertools.product(
+                ("cpu", "gpu"), ("float64", "float32")
+            ):
+                yield array_namespace, device_name, dtype
+
         elif array_namespace == "array_api_strict":
             # Always yield strings for consistent parametrization; _array_api_for_tests
             # creates Device objects when needed.
@@ -123,9 +132,6 @@ def yield_mixed_namespace_input_permutations():
     * array-api-strict to non-NumPy (this pair also has no special hardware
       requirements to allow for local testing)
     """
-
-    NamespaceAndDevice = namedtuple("NamespaceAndDevice", ["xp", "device"])
-
     yield (
         NamespaceAndDevice("cupy", None),
         NamespaceAndDevice("torch", "cuda"),
@@ -260,17 +266,6 @@ def size(x):
 def _is_numpy_namespace(xp):
     """Return True if xp is backed by NumPy."""
     return xp.__name__ in _NUMPY_NAMESPACE_NAMES
-
-
-def _union1d(a, b, xp):
-    if _is_numpy_namespace(xp):
-        # avoid circular import
-        from sklearn.utils._unique import cached_unique
-
-        a_unique, b_unique = cached_unique(a, b, xp=xp)
-        return xp.asarray(numpy.union1d(a_unique, b_unique))
-    assert a.ndim == b.ndim == 1
-    return xp.unique_values(xp.concat([xp.unique_values(a), xp.unique_values(b)]))
 
 
 def supported_float_dtypes(xp, device=None):
@@ -466,7 +461,7 @@ def get_namespace(
     if namespace.__name__ == "array_api_strict" and hasattr(
         namespace, "set_array_api_strict_flags"
     ):
-        namespace.set_array_api_strict_flags(api_version="2024.12")
+        namespace.set_array_api_strict_flags(api_version="2025.12")
 
     return namespace, is_array_api_compliant
 
@@ -549,6 +544,12 @@ def move_to(*arrays, xp, device):
         Tuple of arrays with the same namespace and device as reference. Single array
         returned if only one `arrays` input.
     """
+    if isinstance(device, str) and device == "xpu":  # pragma: nocover
+        # XXX: Workaround for PyTorch XPU bug for `from_dlpack` calls with
+        # device strings that do not include any device number suffix.
+        # https://github.com/pytorch/pytorch/issues/181140
+        device += ":0"
+
     sparse_mask = [sp.issparse(array) for array in arrays]
     none_mask = [array is None for array in arrays]
     if any(sparse_mask) and not _is_numpy_namespace(xp):
@@ -631,7 +632,9 @@ def _expit(x, out=None, xp=None):
     # but not in the Array API specification.
     xp, _ = get_namespace(x, xp=xp)
     if _is_numpy_namespace(xp):
-        return special.expit(x, out=out)
+        from scipy.special import expit  # lazy import, speeds up `import sklearn`
+
+        return expit(x, out=out)
 
     return 1.0 / (1.0 + xp.exp(-x))
 
@@ -641,7 +644,9 @@ def _logit(x, out=None, xp=None):
     # but not in the Array API specification.
     xp, _ = get_namespace(x, xp=xp)
     if _is_numpy_namespace(xp):
-        return special.logit(x, out=out)
+        from scipy.special import logit  # lazy import, speeds up `import sklearn`
+
+        return logit(x, out=out)
 
     # See https://github.com/scipy/xsf/blob/e0c4d22d6ae768b39efc69586f1e8d5560a32fc5/include/xsf/log_exp.h#L30
     def logit_v2(x):
@@ -740,14 +745,23 @@ def _is_xp_namespace(xp, name):
 
 
 def _max_precision_float_dtype(xp, device):
-    """Return the float dtype with the highest precision supported by the device."""
-    # TODO: Update to use `__array_namespace__info__()` from array-api v2023.12
-    # when/if that becomes more widespread.
-    if _is_xp_namespace(xp, "torch") and str(device).startswith(
-        "mps"
-    ):  # pragma: no cover
-        return xp.float32
-    return xp.float64
+    """Return the float dtype with the highest precision supported by the device.
+
+    Note that scikit-learn only considers float32 and float64 as suitable
+    floating point dtypes.
+    """
+    if _is_numpy_namespace(xp):
+        # Special case NumPy for backward compat with older versions that do
+        # not implement __array_namespace_info__.
+        return xp.float64
+
+    floating_dtypes = xp.__array_namespace_info__().dtypes(
+        kind="real floating", device=device
+    )
+    if "float64" in floating_dtypes:
+        return xp.float64
+
+    return xp.float32
 
 
 def _find_matching_floating_dtype(*arrays, xp):
@@ -839,6 +853,44 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
         raise ZeroDivisionError("Weights sum to zero, can't be normalized")
 
     return sum_ / scale
+
+
+def _cov(X, *, ddof=0, mean=None, xp=None):
+    """Compute covariance matrix using post-hoc centering.
+
+    Computes ``X.T @ X`` then subtracts the outer product of means, avoiding
+    allocation of a full centered copy of X.
+
+    Note: ``xp.cov`` does not exist in the Array API
+    standard: https://github.com/data-apis/array-api/issues/43
+
+    Parameters
+    ----------
+    X : array of shape (n_samples, n_features)
+        Data matrix. Assumed NOT centered.
+
+    ddof : int, default=0
+        Degrees of freedom correction. 0 for population covariance,
+        1 for sample covariance.
+
+    mean : array of shape (n_features,), default=None
+        Pre-computed mean of X. If None, computed from X.
+
+    xp : module, default=None
+        Array namespace.
+
+    Returns
+    -------
+    covariance : array of shape (n_features, n_features)
+    """
+    xp, _ = get_namespace(X, xp=xp)
+    n_samples = X.shape[0]
+    if mean is None:
+        mean = xp.mean(X, axis=0)
+    covariance = X.T @ X
+    covariance -= n_samples * (xp.reshape(mean, (-1, 1)) * xp.reshape(mean, (1, -1)))
+    covariance /= n_samples - ddof
+    return covariance
 
 
 def _median(x, axis=None, keepdims=False, xp=None):
@@ -1001,6 +1053,8 @@ def _convert_to_numpy(array, xp):
         return array.get()
     elif _is_xp_namespace(xp, "array_api_strict"):
         return numpy.asarray(xp.asarray(array, device=xp.Device("CPU_DEVICE")))
+    elif _is_xp_namespace(xp, "dpnp"):  # pragma: nocover
+        return array.asnumpy()
 
     return numpy.asarray(array)
 
@@ -1122,7 +1176,22 @@ def check_same_namespace(X, estimator, *, attribute, method):
     if X_xp == a_xp and X_device == a_device:
         return
 
-    if X_xp != a_xp:
+    if _is_numpy_namespace(a_xp) and _is_numpy_namespace(X_xp):
+        # this condition is reached when either:
+        # - `X` is array-like or sparse-matrix and the estimator was fitted with numpy
+        # - `attr` is a sparse matrix and `X` is a numpy array
+        # in which case devices are different (None vs "cpu") but
+        # `check_same_namespace` should not raise
+        return
+
+    if X_device is None:
+        type_name = "sparse array" if sp.issparse(X) else "array-like"
+        msg = (
+            f"Array namespace used during fit ({a_xp.__name__}) "
+            f"is not compatible with the {type_name} input passed to {method}. "
+            f"Only the NumPy namespace is compatible with {type_name} inputs."
+        )
+    elif X_xp != a_xp:
         msg = (
             f"Array namespaces used during fit ({a_xp.__name__}) "
             f"and {method} ({X_xp.__name__}) differ."
@@ -1135,7 +1204,8 @@ def check_same_namespace(X, estimator, *, attribute, method):
         "must use the same namespace and the same device as those passed to fit(). "
         f"{msg} "
         "You can move the estimator to the same namespace and device as X with: "
-        "'from sklearn.utils._array_api import move_estimator_to; "
+        "'from sklearn.utils._array_api import get_namespace_and_device, "
+        "move_estimator_to; "
         "xp, _, device = get_namespace_and_device(X); "
         "estimator = move_estimator_to(estimator, xp, device)'"
     )
@@ -1314,9 +1384,9 @@ def _logsumexp(array, axis=None, xp=None):
     xp, _, device = get_namespace_and_device(array, xp=xp)
     axis = tuple(range(array.ndim)) if axis is None else axis
 
-    supported_dtypes = supported_float_dtypes(xp)
+    supported_dtypes = supported_float_dtypes(xp, device=device)
     if array.dtype not in supported_dtypes:
-        array = xp.asarray(array, dtype=supported_dtypes[0])
+        array = xp.asarray(array, dtype=supported_dtypes[0], device=device)
 
     array_max = xp.max(array, axis=axis, keepdims=True)
     index_max = array == array_max
@@ -1364,11 +1434,11 @@ def _half_multinomial_loss(y, pred, sample_weight=None, xp=None):
 
 
 def _matching_numpy_dtype(X, xp=None):
-    xp, _ = get_namespace(X, xp=xp)
+    xp, _, device_ = get_namespace_and_device(X, xp=xp)
     if _is_numpy_namespace(xp):
         return X.dtype
 
-    dtypes_dict = xp.__array_namespace_info__().dtypes()
+    dtypes_dict = xp.__array_namespace_info__().dtypes(device=device_)
     reversed_dtypes_dict = {dtype: name for name, dtype in dtypes_dict.items()}
     dtype_name = reversed_dtypes_dict[X.dtype]
-    return numpy.__array_namespace_info__().dtypes()[dtype_name]
+    return np_compat.__array_namespace_info__().dtypes()[dtype_name]

@@ -10,8 +10,10 @@ dependencies:
   - scipy
   - cython
   - joblib
+  - narwhals
   - threadpoolctl
   - pandas
+  - rich
   - pyamg
   - pytest
   - pytest-xdist

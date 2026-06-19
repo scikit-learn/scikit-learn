@@ -64,9 +64,11 @@ common_dependencies_without_coverage = [
     "scipy",
     "cython",
     "joblib",
+    "narwhals",
     "threadpoolctl",
     "matplotlib",
     "pandas",
+    "rich",
     "pyamg",
     "pytest",
     "pytest-xdist",
@@ -154,6 +156,13 @@ build_metadata_list = [
             "pytorch-cpu",
             "array-api-strict",
         ],
+        # Temporarily pin blas to use OpenBLAS instead of BLIS because the latter has
+        # numerical issues, see https://github.com/scikit-learn/scikit-learn/pull/34162
+        # TODO: remove when BLIS is fixed or not shipped by default (which seems
+        # unexpected) by conda-forge.
+        "package_constraints": {
+            "blas": "[build=openblas]",
+        },
     },
     {
         "name": "pylatest_conda_forge_mkl_no_openmp",
@@ -187,12 +196,14 @@ build_metadata_list = [
             "matplotlib": "min",
             "cython": "min",
             "joblib": "min",
+            "narwhals": "min",
             "threadpoolctl": "min",
             "meson-python": "min",
             "pandas": "min",
             "polars": "min",
             "pyamg": "min",
             "pyarrow": "min",
+            "rich": "min",
         },
     },
     {
@@ -258,8 +269,10 @@ build_metadata_list = [
                     "numpy",
                     "scipy",
                     "pandas",
+                    "rich",
                     "cython",
                     "joblib",
+                    "narwhals",
                     "pillow",
                 ],
             )
@@ -284,6 +297,7 @@ build_metadata_list = [
             "numpy",
             "scipy",
             "joblib",
+            "narwhals",
             "threadpoolctl",
             "pytest",
             "pytest-run-parallel",
@@ -298,7 +312,9 @@ build_metadata_list = [
         "folder": "build_tools/github",
         "platform": "win-64",
         "channels": ["conda-forge"],
-        "conda_dependencies": remove_from(common_dependencies, ["pandas", "pyamg"])
+        "conda_dependencies": remove_from(
+            common_dependencies, ["pandas", "rich", "pyamg"]
+        )
         + [
             "wheel",
             "pip",
@@ -366,6 +382,7 @@ build_metadata_list = [
             "sphinx-remove-toctrees": "min",
             "pydata-sphinx-theme": "min",
             "towncrier": "min",
+            "rich": "min",
         },
     },
     {
@@ -401,10 +418,7 @@ build_metadata_list = [
             "sphinxcontrib-sass",
         ],
         "package_constraints": {
-            "python": "3.11",
-            # Pinned while https://github.com/pola-rs/polars/issues/25039 is
-            # not fixed.
-            "polars": "1.34.0",
+            "python": "3.14",
         },
     },
     {
@@ -414,7 +428,9 @@ build_metadata_list = [
         "folder": "build_tools/github",
         "platform": "linux-aarch64",
         "channels": ["conda-forge"],
-        "conda_dependencies": remove_from(common_dependencies, ["pandas", "pyamg"])
+        "conda_dependencies": remove_from(
+            common_dependencies, ["pandas", "rich", "pyamg"]
+        )
         + ["pip", "ccache"],
         "package_constraints": {
             "python": "3.11",
@@ -431,6 +447,7 @@ build_metadata_list = [
         "pip_dependencies": [
             "cython",
             "joblib",
+            "narwhals",
             "threadpoolctl",
             "pytest",
             "pytest-xdist",
@@ -450,6 +467,7 @@ build_metadata_list = [
         "pip_dependencies": [
             "cython",
             "joblib",
+            "narwhals",
             "threadpoolctl",
             "pytest",
             "pytest-xdist",
@@ -458,6 +476,7 @@ build_metadata_list = [
         ],
         "package_constraints": {
             "joblib": "min",
+            "narwhals": "min",
             "threadpoolctl": "min",
             "cython": "min",
         },

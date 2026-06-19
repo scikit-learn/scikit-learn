@@ -16,6 +16,10 @@ from sklearn.utils._typedefs cimport int32_t, uint8_t, uint32_t
 from sklearn.utils._random cimport our_rand_r
 
 
+cdef extern from "<float.h>":
+    const float FLT_EPSILON
+    const double DBL_EPSILON
+
 # The following two functions are shamelessly copied from the tree code.
 
 cdef enum:
@@ -143,10 +147,16 @@ cdef inline floating dual_gap_formulation_A(
     floating R_norm2,  # R @ R
     floating Ry,  # R @ y
     floating dual_norm_XtA,
+    bint gap_smaller_eps,
 ) noexcept nogil:
     """Compute dual gap according to formulation A."""
     cdef floating gap, primal, dual
     cdef floating scale  # Scaling factor to achieve dual feasible point.
+
+    if floating is float:
+        eps = FLT_EPSILON
+    else:
+        eps = DBL_EPSILON
 
     primal = 0.5 * (R_norm2 + beta * w_l2_norm2) + alpha * w_l1_norm
 
@@ -156,6 +166,8 @@ cdef inline floating dual_gap_formulation_A(
         scale = 1.0
     dual = -0.5 * (scale ** 2) * (R_norm2 + beta * w_l2_norm2) + scale * Ry
     gap = primal - dual
+    if gap_smaller_eps and abs(gap) <= 2 * eps * primal:
+        gap = 0.0
     return gap
 
 
@@ -170,6 +182,7 @@ cdef (floating, floating) gap_enet(
     const floating[::1] R,  # current residuals = y - X @ w
     floating[::1] XtA,  # XtA = X.T @ R - beta * w is calculated inplace
     bint positive,
+    bint gap_smaller_eps,
 ) noexcept nogil:
     """Compute dual gap for use in enet_coordinate_descent.
 
@@ -177,12 +190,17 @@ cdef (floating, floating) gap_enet(
     alpha = 0 & beta > 0: formulation B of the duality gap
     alpha = beta = 0:     OLS first order condition (=gradient)
     """
-    cdef floating gap = 0.0
+    cdef floating gap, primal, dual
     cdef floating dual_norm_XtA
     cdef floating R_norm2
     cdef floating Ry
     cdef floating w_l1_norm
     cdef floating w_l2_norm2 = 0.0
+
+    if floating is float:
+        eps = FLT_EPSILON
+    else:
+        eps = DBL_EPSILON
 
     # w_l2_norm2 = w @ w
     if beta > 0:
@@ -209,8 +227,11 @@ cdef (floating, floating) gap_enet(
             gap = dual_norm_XtA
             return gap, dual_norm_XtA
         # This is Ridge regression, we use formulation B for the dual gap.
-        gap = R_norm2 + 0.5 * beta * w_l2_norm2 - Ry
-        gap += 1 / (2 * beta) * dual_norm_XtA
+        primal = 0.5 * (R_norm2 + beta * w_l2_norm2)
+        dual = -0.5 * R_norm2 + Ry - 1 / (2 * beta) * dual_norm_XtA
+        gap = primal - dual
+        if gap_smaller_eps and abs(gap) <= 2 * eps * primal:
+            gap = 0.0
         return gap, dual_norm_XtA
 
     # XtA = X.T @ R - beta * w
@@ -236,6 +257,7 @@ cdef (floating, floating) gap_enet(
         R_norm2=R_norm2,
         Ry=Ry,
         dual_norm_XtA=dual_norm_XtA,
+        gap_smaller_eps=gap_smaller_eps,
     )
     return gap, dual_norm_XtA
 
@@ -393,7 +415,8 @@ def enet_coordinate_descent(
 
         # Check convergence before entering the main loop.
         gap, dual_norm_XtA = gap_enet(
-            n_samples, n_features, w, alpha, beta, X, y, R, XtA, positive
+            n_samples, n_features, w, alpha, beta, X, y, R, XtA, positive,
+            gap_smaller_eps=False,
         )
         if gap <= tol:
             with gil:
@@ -461,12 +484,14 @@ def enet_coordinate_descent(
                 w_max == 0.0
                 or d_w_max / w_max <= d_w_tol
                 or n_iter == max_iter - 1
+                or n_active <= 1  # We have an analytical exact solution.
             ):
                 # the biggest coordinate update of this iteration was smaller
                 # than the tolerance: check the duality gap as ultimate
                 # stopping criterion
                 gap, dual_norm_XtA = gap_enet(
-                    n_samples, n_features, w, alpha, beta, X, y, R, XtA, positive
+                    n_samples, n_features, w, alpha, beta, X, y, R, XtA, positive,
+                    gap_smaller_eps=True,
                 )
                 if gap <= tol:
                     # return if we reached desired tolerance
@@ -560,6 +585,7 @@ cdef (floating, floating) gap_enet_sparse(
     floating R_sum,
     floating[::1] XtA,  # XtA = X.T @ R - beta * w is calculated inplace
     bint positive,
+    bint gap_smaller_eps,
 ) noexcept nogil:
     """Compute dual gap for use in sparse_enet_coordinate_descent.
 
@@ -567,13 +593,18 @@ cdef (floating, floating) gap_enet_sparse(
     alpha = 0 & beta > 0: formulation B of the duality gap
     alpha = beta = 0:     OLS first order condition (=gradient)
     """
-    cdef floating gap = 0.0
+    cdef floating gap, primal, dual
     cdef floating dual_norm_XtA
     cdef floating R_norm2
     cdef floating Ry
     cdef floating w_l1_norm
     cdef floating w_l2_norm2 = 0.0
     cdef int32_t i, i_ind, j
+
+    if floating is float:
+        eps = FLT_EPSILON
+    else:
+        eps = DBL_EPSILON
 
     # w_l2_norm2 = w @ w
     if beta > 0:
@@ -613,8 +644,11 @@ cdef (floating, floating) gap_enet_sparse(
             gap = dual_norm_XtA
             return gap, dual_norm_XtA
         # This is Ridge regression, we use formulation B for the dual gap.
-        gap = R_norm2 + 0.5 * beta * w_l2_norm2 - Ry
-        gap += 1 / (2 * beta) * dual_norm_XtA
+        primal = 0.5 * (R_norm2 + beta * w_l2_norm2)
+        dual = -0.5 * R_norm2 + Ry - 1 / (2 * beta) * dual_norm_XtA
+        gap = primal - dual
+        if gap_smaller_eps and abs(gap) <= 2 * eps * primal:
+            gap = 0.0
         return gap, dual_norm_XtA
 
     # XtA = X.T @ R - beta * w
@@ -646,6 +680,7 @@ cdef (floating, floating) gap_enet_sparse(
         R_norm2=R_norm2,
         Ry=Ry,
         dual_norm_XtA=dual_norm_XtA,
+        gap_smaller_eps=gap_smaller_eps,
     )
     return gap, dual_norm_XtA
 
@@ -737,7 +772,7 @@ def sparse_enet_coordinate_descent(
     cdef floating normalize_sum
     cdef unsigned int n_active = n_features
     cdef uint32_t[::1] active_set
-    # TODO: use binset insteaf of array of bools
+    # TODO: use binset instead of array of bools
     cdef uint8_t[::1] excluded_set
     cdef int32_t i, i_ind
     cdef unsigned int j
@@ -834,6 +869,7 @@ def sparse_enet_coordinate_descent(
             R_sum,
             XtA,
             positive,
+            gap_smaller_eps=False,
         )
         if gap <= tol:
             with gil:
@@ -931,7 +967,12 @@ def sparse_enet_coordinate_descent(
 
                 w_max = fmax(w_max, fabs(w[j]))
 
-            if w_max == 0.0 or d_w_max / w_max <= d_w_tol or n_iter == max_iter - 1:
+            if (
+                w_max == 0.0
+                or d_w_max / w_max <= d_w_tol
+                or n_iter == max_iter - 1
+                or n_active <= 1  # We have an analytical exact solution.
+            ):
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
@@ -953,6 +994,7 @@ def sparse_enet_coordinate_descent(
                     R_sum,
                     XtA,
                     positive,
+                    gap_smaller_eps=True,
                 )
 
                 if gap <= tol:
@@ -1015,6 +1057,7 @@ cdef (floating, floating) gap_enet_gram(
     const floating y_norm2,
     floating[::1] XtA,  # XtA = X.T @ R - beta * w is calculated inplace
     bint positive,
+    bint gap_smaller_eps,
 ) noexcept nogil:
     """Compute dual gap for use in enet_coordinate_descent.
 
@@ -1022,7 +1065,7 @@ cdef (floating, floating) gap_enet_gram(
     alpha = 0 & beta > 0: formulation B of the duality gap
     alpha = beta = 0:     OLS first order condition (=gradient)
     """
-    cdef floating gap = 0.0
+    cdef floating gap, primal, dual
     cdef floating dual_norm_XtA
     cdef floating R_norm2
     cdef floating Ry
@@ -1031,6 +1074,11 @@ cdef (floating, floating) gap_enet_gram(
     cdef floating q_dot_w
     cdef floating wQw
     cdef unsigned int j
+
+    if floating is float:
+        eps = FLT_EPSILON
+    else:
+        eps = DBL_EPSILON
 
     # w_l2_norm2 = w @ w
     if beta > 0:
@@ -1060,8 +1108,11 @@ cdef (floating, floating) gap_enet_gram(
             gap = dual_norm_XtA
             return gap, dual_norm_XtA
         # This is Ridge regression, we use formulation B for the dual gap.
-        gap = R_norm2 + 0.5 * beta * w_l2_norm2 - Ry
-        gap += 1 / (2 * beta) * dual_norm_XtA
+        primal = 0.5 * (R_norm2 + beta * w_l2_norm2)
+        dual = -0.5 * R_norm2 + Ry - 1 / (2 * beta) * dual_norm_XtA
+        gap = primal - dual
+        if gap_smaller_eps and abs(gap) <= 2 * eps * primal:
+            gap = 0.0
         return gap, dual_norm_XtA
 
     # XtA = X.T @ R - beta * w = X.T @ y - X.T @ X @ w - beta * w
@@ -1085,6 +1136,7 @@ cdef (floating, floating) gap_enet_gram(
         R_norm2=R_norm2,
         Ry=Ry,
         dual_norm_XtA=dual_norm_XtA,
+        gap_smaller_eps=gap_smaller_eps,
     )
     return gap, dual_norm_XtA
 
@@ -1153,7 +1205,7 @@ def enet_coordinate_descent_gram(
     cdef floating dual_norm_XtA
     cdef unsigned int n_active = n_features
     cdef uint32_t[::1] active_set
-    # TODO: use binset insteaf of array of bools
+    # TODO: use binset instead of array of bools
     cdef uint8_t[::1] excluded_set
     cdef unsigned int j
     cdef unsigned int n_iter = 0
@@ -1174,7 +1226,8 @@ def enet_coordinate_descent_gram(
 
         # Check convergence before entering the main loop.
         gap, dual_norm_XtA = gap_enet_gram(
-            n_features, w, alpha, beta, Qw, q, y_norm2, XtA, positive
+            n_features, w, alpha, beta, Qw, q, y_norm2, XtA, positive,
+            gap_smaller_eps=False,
         )
         if 0 <= gap <= tol:
             # Only if gap >=0 as singular Q may cause dubious values of gap.
@@ -1243,12 +1296,18 @@ def enet_coordinate_descent_gram(
                 if fabs(w[j]) > w_max:
                     w_max = fabs(w[j])
 
-            if w_max == 0.0 or d_w_max / w_max <= d_w_tol or n_iter == max_iter - 1:
+            if (
+                w_max == 0.0
+                or d_w_max / w_max <= d_w_tol
+                or n_iter == max_iter - 1
+                or n_active <= 1  # We have an analytical exact solution.
+            ):
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
                 gap, dual_norm_XtA = gap_enet_gram(
-                    n_features, w, alpha, beta, Qw, q, y_norm2, XtA, positive
+                    n_features, w, alpha, beta, Qw, q, y_norm2, XtA, positive,
+                    gap_smaller_eps=True,
                 )
 
                 if gap <= tol:
@@ -1312,6 +1371,7 @@ cdef (floating, floating) gap_enet_multi_task(
     const floating[::1] R_sum,
     floating[:, ::1] XtA,  # out
     floating[::1] XtA_row_norms,  # out
+    bint gap_smaller_eps,
 ) noexcept nogil:
     """Compute dual gap for use in enet_coordinate_descent_multi_task.
 
@@ -1327,7 +1387,7 @@ cdef (floating, floating) gap_enet_multi_task(
     XtA_row_norms : memoryview of shape n_features
         Inplace calculated as np.sqrt(np.sum(XtA ** 2, axis=1))
     """
-    cdef floating gap = 0.0
+    cdef floating gap, primal, dual
     cdef floating dual_norm_XtA
     cdef floating R_norm2
     cdef floating Ry
@@ -1335,6 +1395,11 @@ cdef (floating, floating) gap_enet_multi_task(
     cdef floating w_l2_norm2 = 0.0
     cdef unsigned int t, j
     cdef int32_t i
+
+    if floating is float:
+        eps = FLT_EPSILON
+    else:
+        eps = DBL_EPSILON
 
     # w_l2_norm2 = linalg.norm(W, ord="fro") ** 2
     if beta > 0:
@@ -1375,8 +1440,11 @@ cdef (floating, floating) gap_enet_multi_task(
             gap = dual_norm_XtA
             return gap, dual_norm_XtA
         # This is Ridge regression, we use formulation B for the dual gap.
-        gap = R_norm2 + 0.5 * beta * w_l2_norm2 - Ry
-        gap += 1 / (2 * beta) * dual_norm_XtA
+        primal = 0.5 * (R_norm2 + beta * w_l2_norm2)
+        dual = -0.5 * R_norm2 + Ry - 1 / (2 * beta) * dual_norm_XtA
+        gap = primal - dual
+        if gap_smaller_eps and abs(gap) <= 2 * eps * primal:
+            gap = 0.0
         return gap, dual_norm_XtA
 
     # XtA = X.T @ R - beta * W.T
@@ -1411,6 +1479,7 @@ cdef (floating, floating) gap_enet_multi_task(
         R_norm2=R_norm2,
         Ry=Ry,
         dual_norm_XtA=dual_norm_XtA,
+        gap_smaller_eps=gap_smaller_eps,
     )
     return gap, dual_norm_XtA
 
@@ -1622,6 +1691,7 @@ def enet_coordinate_descent_multi_task(
             R_sum=R_sum,
             XtA=XtA,
             XtA_row_norms=XtA_row_norms,
+            gap_smaller_eps=False,
         )
         if gap <= tol:
             with gil:
@@ -1750,7 +1820,12 @@ def enet_coordinate_descent_multi_task(
                 if W_j_abs_max > w_max:
                     w_max = W_j_abs_max
 
-            if w_max == 0.0 or d_w_max / w_max <= d_w_tol or n_iter == max_iter - 1:
+            if (
+                w_max == 0.0
+                or d_w_max / w_max <= d_w_tol
+                or n_iter == max_iter - 1
+                or n_active <= 1  # We have an analytical exact solution.
+            ):
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
@@ -1775,6 +1850,7 @@ def enet_coordinate_descent_multi_task(
                     R_sum=R_sum,
                     XtA=XtA,
                     XtA_row_norms=XtA_row_norms,
+                    gap_smaller_eps=True,
                 )
                 if gap <= tol:
                     # return if we reached desired tolerance

@@ -38,7 +38,6 @@ from sklearn.utils._array_api import (
     _is_xp_namespace,
     _isin,
     _max_precision_float_dtype,
-    _union1d,
     _xlogy,
     get_namespace,
     get_namespace_and_device,
@@ -76,9 +75,14 @@ def _check_targets(y_true, y_pred, sample_weight=None):
     """Check that y_true and y_pred belong to the same classification task.
 
     This converts multiclass or binary types to a common shape, and raises a
-    ValueError for a mix of multilabel and multiclass targets, a mix of
-    multilabel formats, for the presence of continuous-valued or multioutput
-    targets, or for targets of different lengths.
+    ValueError for:
+
+        - targets of different lengths,
+        - a mix of multilabel and multiclass targets,
+        - a mix of multilabel target and anything else
+          (because there are no explicit labels),
+        - the presence of continuous-valued or multioutput (or 'unknown') targets,
+        - mix of string and integer labels.
 
     Column vectors are squeezed to 1d, while multilabel formats are returned
     as CSR sparse label indicators.
@@ -96,6 +100,10 @@ def _check_targets(y_true, y_pred, sample_weight=None):
     type_true : one of {'multilabel-indicator', 'multiclass', 'binary'}
         The type of the true target data, as output by
         ``utils.multiclass.type_of_target``.
+
+    unique_labels : array
+        An ordered array of unique labels occurring either in `y_true`, `y_pred` or
+        both.
 
     y_true : array or indicator matrix
 
@@ -129,7 +137,7 @@ def _check_targets(y_true, y_pred, sample_weight=None):
             )
         )
 
-    # We can't have more than one value on y_type => The set is no more needed
+    # We can't have more than one value in y_type => The set is no more needed
     y_type = y_type.pop()
 
     # No metrics support "multiclass-multioutput" format
@@ -148,25 +156,12 @@ def _check_targets(y_true, y_pred, sample_weight=None):
             else:
                 raise
 
-        xp, _ = get_namespace(y_true, y_pred)
-        if y_type == "binary":
-            try:
-                unique_values = _union1d(y_true, y_pred, xp)
-            except TypeError as e:
-                # We expect y_true and y_pred to be of the same data type.
-                # If `y_true` was provided to the classifier as strings,
-                # `y_pred` given by the classifier will also be encoded with
-                # strings. So we raise a meaningful error
-                raise TypeError(
-                    "Labels in y_true and y_pred should be of the same type. "
-                    f"Got y_true={xp.unique(y_true)} and "
-                    f"y_pred={xp.unique(y_pred)}. Make sure that the "
-                    "predictions provided by the classifier coincides with "
-                    "the true labels."
-                ) from e
-            if unique_values.shape[0] > 2:
-                y_type = "multiclass"
+    unique_labels_ = unique_labels(y_true, y_pred, ys_types={y_type})
+    if y_type == "binary":
+        if unique_labels_.shape[0] > 2:
+            y_type = "multiclass"
 
+    xp, _ = get_namespace(y_true, y_pred)
     if y_type.startswith("multilabel"):
         if _is_numpy_namespace(xp):
             # XXX: do we really want to sparse-encode multilabel indicators when
@@ -177,7 +172,7 @@ def _check_targets(y_true, y_pred, sample_weight=None):
             y_pred = _align_api_if_sparse(csr_array(y_pred))
         y_type = "multilabel-indicator"
 
-    return y_type, y_true, y_pred, sample_weight
+    return y_type, unique_labels_, y_true, y_pred, sample_weight
 
 
 def _one_hot_encoding_multiclass_target(y_true, labels, target_xp, target_device):
@@ -407,7 +402,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
     # Compute accuracy for each possible representation
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred, sample_weight = _check_targets(
+    y_type, _, y_true, y_pred, sample_weight = _check_targets(
         y_true, y_pred, sample_weight
     )
 
@@ -545,7 +540,7 @@ def confusion_matrix(
         sample_weight = move_to(sample_weight, xp=np, device="cpu")
 
     if len(sample_weight) > 0:
-        y_type, y_true, y_pred, sample_weight = _check_targets(
+        y_type, unique_labels, y_true, y_pred, sample_weight = _check_targets(
             y_true, y_pred, sample_weight
         )
     else:
@@ -554,14 +549,14 @@ def confusion_matrix(
         # In this case we don't pass sample_weight to _check_targets that would
         # check that sample_weight is not empty and we don't reuse the returned
         # sample_weight
-        y_type, y_true, y_pred, _ = _check_targets(y_true, y_pred)
+        y_type, unique_labels, y_true, y_pred, _ = _check_targets(y_true, y_pred)
 
     y_true, y_pred = attach_unique(y_true, y_pred)
     if y_type not in ("binary", "multiclass"):
         raise ValueError("%s is not supported" % y_type)
 
     if labels is None:
-        labels = unique_labels(y_true, y_pred)
+        labels = unique_labels
     else:
         labels = move_to(labels, xp=np, device="cpu")
         n_labels = labels.size
@@ -741,16 +736,16 @@ def multilabel_confusion_matrix(
             [1, 2]]])
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
+
     xp, _, device_ = get_namespace_and_device(y_pred)
     y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device_)
-    y_type, y_true, y_pred, sample_weight = _check_targets(
+    y_type, present_labels, y_true, y_pred, sample_weight = _check_targets(
         y_true, y_pred, sample_weight
     )
 
     if y_type not in ("binary", "multiclass", "multilabel-indicator"):
         raise ValueError("%s is not supported" % y_type)
 
-    present_labels = unique_labels(y_true, y_pred)
     if labels is None:
         labels = present_labels
         n_labels = None
@@ -1318,7 +1313,7 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     -0.33
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred, sample_weight = _check_targets(
+    y_type, _, y_true, y_pred, sample_weight = _check_targets(
         y_true, y_pred, sample_weight
     )
     if y_type not in {"binary", "multiclass"}:
@@ -1912,8 +1907,7 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
         raise ValueError("average has to be one of " + str(average_options))
 
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred, _ = _check_targets(y_true, y_pred)
-    present_labels = unique_labels(y_true, y_pred)
+    y_type, present_labels, y_true, y_pred, _ = _check_targets(y_true, y_pred)
     if average == "binary":
         if y_type == "binary":
             if pos_label not in present_labels:
@@ -2230,7 +2224,6 @@ def precision_recall_fscore_support(
         "y_pred": ["array-like", "sparse matrix"],
         "labels": ["array-like", None],
         "sample_weight": ["array-like", None],
-        "raise_warning": ["boolean", Hidden(StrOptions({"deprecated"}))],
         "replace_undefined_by": [
             Options(Real, {1.0, np.nan}),
             dict,
@@ -2244,7 +2237,6 @@ def class_likelihood_ratios(
     *,
     labels=None,
     sample_weight=None,
-    raise_warning="deprecated",
     replace_undefined_by=np.nan,
 ):
     """Compute binary classification positive and negative likelihood ratios.
@@ -2302,15 +2294,6 @@ def class_likelihood_ratios(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    raise_warning : bool, default=True
-        Whether or not a case-specific warning message is raised when there is division
-        by zero.
-
-        .. deprecated:: 1.7
-            `raise_warning` was deprecated in version 1.7 and will be removed in 1.9,
-            when an :class:`~sklearn.exceptions.UndefinedMetricWarning` will always
-            raise in case of a division by zero.
-
     replace_undefined_by : np.nan, 1.0, or dict, default=np.nan
         Sets the return values for LR+ and LR- when there is a division by zero. Can
         take the following values:
@@ -2340,10 +2323,8 @@ def class_likelihood_ratios(
     Raises :class:`~sklearn.exceptions.UndefinedMetricWarning` when `y_true` and
     `y_pred` lead to the following conditions:
 
-        - The number of false positives is 0 and `raise_warning` is set to `True`
-          (default): positive likelihood ratio is undefined.
-        - The number of true negatives is 0 and `raise_warning` is set to `True`
-          (default): negative likelihood ratio is undefined.
+        - The number of false positives is 0: positive likelihood ratio is undefined.
+        - The number of true negatives is 0: negative likelihood ratio is undefined.
         - The sum of true positives and false negatives is 0 (no samples of the positive
           class are present in `y_true`): both likelihood ratios are undefined.
 
@@ -2378,12 +2359,8 @@ def class_likelihood_ratios(
     >>> class_likelihood_ratios(y_true, y_pred, labels=["non-cat", "cat"])
     (1.5, 0.75)
     """
-    # TODO(1.9): When `raise_warning` is removed, the following changes need to be made:
-    # The checks for `raise_warning==True` need to be removed and we will always warn,
-    # remove `FutureWarning`, and the Warns section in the docstring should not mention
-    # `raise_warning` anymore.
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred, sample_weight = _check_targets(
+    y_type, _, y_true, y_pred, sample_weight = _check_targets(
         y_true, y_pred, sample_weight
     )
     if y_type != "binary":
@@ -2391,16 +2368,6 @@ def class_likelihood_ratios(
             "class_likelihood_ratios only supports binary classification "
             f"problems, got targets of type: {y_type}"
         )
-
-    msg_deprecated_param = (
-        "`raise_warning` was deprecated in version 1.7 and will be removed in 1.9. An "
-        "`UndefinedMetricWarning` will always be raised in case of a division by zero "
-        "and the value set with the `replace_undefined_by` param will be returned."
-    )
-    if raise_warning != "deprecated":
-        warnings.warn(msg_deprecated_param, FutureWarning)
-    else:
-        raise_warning = True
 
     if replace_undefined_by == 1.0:
         replace_undefined_by = {"LR+": 1.0, "LR-": 1.0}
@@ -2466,18 +2433,17 @@ def class_likelihood_ratios(
 
     # if `fp == 0`a division by zero will occur
     if fp == 0:
-        if raise_warning:
-            if tp == 0:
-                msg_beginning = (
-                    "No samples were predicted for the positive class and "
-                    "`positive_likelihood_ratio` is "
-                )
-            else:
-                msg_beginning = "`positive_likelihood_ratio` is ill-defined and "
-            msg_end = "set to `np.nan`. Use the `replace_undefined_by` param to "
-            "control this behavior. To suppress this warning or turn it into an error, "
-            "see Python's `warnings` module and `warnings.catch_warnings()`."
-            warnings.warn(msg_beginning + msg_end, UndefinedMetricWarning, stacklevel=2)
+        if tp == 0:
+            msg_beginning = (
+                "No samples were predicted for the positive class and "
+                "`positive_likelihood_ratio` is "
+            )
+        else:
+            msg_beginning = "`positive_likelihood_ratio` is ill-defined and "
+        msg_end = "set to `np.nan`. Use the `replace_undefined_by` param to "
+        "control this behavior. To suppress this warning or turn it into an error, "
+        "see Python's `warnings` module and `warnings.catch_warnings()`."
+        warnings.warn(msg_beginning + msg_end, UndefinedMetricWarning, stacklevel=2)
         if isinstance(replace_undefined_by, float) and np.isnan(replace_undefined_by):
             positive_likelihood_ratio = replace_undefined_by
         else:
@@ -2490,14 +2456,13 @@ def class_likelihood_ratios(
 
     # if `tn == 0`a division by zero will occur
     if tn == 0:
-        if raise_warning:
-            msg = (
-                "`negative_likelihood_ratio` is ill-defined and set to `np.nan`. "
-                "Use the `replace_undefined_by` param to control this behavior. To "
-                "suppress this warning or turn it into an error, see Python's "
-                "`warnings` module and `warnings.catch_warnings()`."
-            )
-            warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
+        msg = (
+            "`negative_likelihood_ratio` is ill-defined and set to `np.nan`. "
+            "Use the `replace_undefined_by` param to control this behavior. To "
+            "suppress this warning or turn it into an error, see Python's "
+            "`warnings` module and `warnings.catch_warnings()`."
+        )
+        warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
         if isinstance(replace_undefined_by, float) and np.isnan(replace_undefined_by):
             negative_likelihood_ratio = replace_undefined_by
         else:
@@ -3120,12 +3085,12 @@ def classification_report(
     """
 
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred, sample_weight = _check_targets(
+    y_type, unique_labels_, y_true, y_pred, sample_weight = _check_targets(
         y_true, y_pred, sample_weight
     )
 
     if labels is None:
-        labels = unique_labels(y_true, y_pred)
+        labels = unique_labels_
         labels_given = False
     else:
         labels = np.asarray(labels)
@@ -3315,7 +3280,7 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
     0.75
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred, sample_weight = _check_targets(
+    y_type, _, y_true, y_pred, sample_weight = _check_targets(
         y_true, y_pred, sample_weight
     )
 
@@ -3345,19 +3310,28 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
 @validate_params(
     {
         "y_true": ["array-like"],
-        "y_pred": ["array-like"],
+        "y_proba": ["array-like", Hidden(None)],
         "normalize": ["boolean"],
         "sample_weight": ["array-like", None],
         "labels": ["array-like", None],
+        "y_pred": ["array-like", str],
     },
     prefer_skip_nested_validation=True,
 )
-def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None):
+def log_loss(
+    y_true,
+    y_proba=None,
+    *,
+    normalize=True,
+    sample_weight=None,
+    labels=None,
+    y_pred="deprecated",
+):
     r"""Log loss, aka logistic loss or cross-entropy loss.
 
     This is the loss function used in (multinomial) logistic regression
     and extensions of it such as neural networks, defined as the negative
-    log-likelihood of a logistic model that returns ``y_pred`` probabilities
+    log-likelihood of a logistic model that returns ``y_proba`` probabilities
     for its training data ``y_true``.
     The log loss is only defined for two or more labels.
     For a single sample with true label :math:`y \in \{0,1\}` and
@@ -3374,16 +3348,19 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
     y_true : array-like or label indicator matrix
         Ground truth (correct) labels for n_samples samples.
 
-    y_pred : array-like of float, shape = (n_samples, n_classes) or (n_samples,)
+    y_proba : array-like of float, shape = (n_samples, n_classes) or (n_samples,)
         Predicted probabilities, as returned by a classifier's
-        predict_proba method. If ``y_pred.shape = (n_samples,)``
+        predict_proba method. If ``y_proba.shape = (n_samples,)``
         the probabilities provided are assumed to be that of the
-        positive class. The labels in ``y_pred`` are assumed to be
+        positive class. The labels in ``y_proba`` are assumed to be
         ordered alphabetically, as done by
         :class:`~sklearn.preprocessing.LabelBinarizer`.
 
-        `y_pred` values are clipped to `[eps, 1-eps]` where `eps` is the machine
-        precision for `y_pred`'s dtype.
+        `y_proba` values are clipped to `[eps, 1-eps]` where `eps` is the machine
+        precision for `y_proba`'s dtype.
+
+        .. versionadded:: 1.9
+            `y_pred` was renamed to `y_proba`.
 
     normalize : bool, default=True
         If true, return the mean loss per sample.
@@ -3399,6 +3376,21 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
 
         .. versionadded:: 0.18
 
+    y_pred : array-like of float, shape = (n_samples, n_classes) or (n_samples,)
+        Predicted probabilities, as returned by a classifier's
+        predict_proba method. If ``y_pred.shape = (n_samples,)``
+        the probabilities provided are assumed to be that of the
+        positive class. The labels in ``y_pred`` are assumed to be
+        ordered alphabetically, as done by
+        :class:`~sklearn.preprocessing.LabelBinarizer`.
+
+        `y_pred` values are clipped to `[eps, 1-eps]` where `eps` is the machine
+        precision for `y_pred`'s dtype.
+
+        .. deprecated:: 1.9
+            `y_pred` was deprecated in favor of `y_proba` in v1.9 and will
+            be removed in v1.11.
+
     Returns
     -------
     loss : float
@@ -3410,8 +3402,9 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
 
     References
     ----------
-    C.M. Bishop (2006). Pattern Recognition and Machine Learning. Springer,
-    p. 209.
+    C.M. Bishop (2006). `Pattern Recognition and Machine Learning
+    <https://www.microsoft.com/en-us/research/wp-content/uploads/2006/01/Bishop-Pattern-Recognition-and-Machine-Learning-2006.pdf>`_.
+    Springer, p. 209.
 
     Examples
     --------
@@ -3420,33 +3413,48 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
     ...          [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
     0.21616
     """
-    xp, _, device_ = get_namespace_and_device(y_pred)
-    y_pred = check_array(
-        y_pred, ensure_2d=False, dtype=supported_float_dtypes(xp, device=device_)
+    # TODO(1.11): Remove check and remove default value for `y_proba`.
+    if not (isinstance(y_pred, str) and y_pred == "deprecated"):
+        if y_proba is not None:
+            raise ValueError(
+                "Cannot use both `y_pred` and `y_proba`. `y_pred` is deprecated, "
+                "use `y_proba` instead."
+            )
+        else:
+            warnings.warn(
+                "`y_pred` was renamed to `y_proba` in version 1.9 and will be removed "
+                "in 1.11. Use `y_proba` instead.",
+                FutureWarning,
+            )
+            y_proba = y_pred
+
+    xp, _, device_ = get_namespace_and_device(y_proba)
+    y_proba = check_array(
+        y_proba, ensure_2d=False, dtype=supported_float_dtypes(xp, device=device_)
     )
     if sample_weight is not None:
         sample_weight = move_to(sample_weight, xp=xp, device=device_)
 
-    transformed_labels, y_pred = _validate_multiclass_probabilistic_prediction(
-        y_true, y_pred, sample_weight, labels
+    transformed_labels, y_proba = _validate_multiclass_probabilistic_prediction(
+        y_true, y_proba, sample_weight, labels
     )
     return _log_loss(
         transformed_labels,
-        y_pred,
+        y_proba,
         normalize=normalize,
         sample_weight=sample_weight,
     )
 
 
-def _log_loss(transformed_labels, y_pred, *, normalize=True, sample_weight=None):
+def _log_loss(transformed_labels, y_proba, *, normalize=True, sample_weight=None):
     """Log loss for transformed labels and validated probabilistic predictions."""
-    xp, _, device_ = get_namespace_and_device(y_pred)
+    xp, _, device_ = get_namespace_and_device(y_proba)
     if sample_weight is not None:
         sample_weight = move_to(sample_weight, xp=xp, device=device_)
-    eps = xp.finfo(y_pred.dtype).eps
-    y_pred = xp.clip(y_pred, eps, 1 - eps)
-    transformed_labels = xp.astype(transformed_labels, y_pred.dtype, copy=False)
-    loss = -xp.sum(_xlogy(transformed_labels, y_pred, xp=xp), axis=1)
+    eps = xp.finfo(y_proba.dtype).eps
+    y_proba = xp.clip(y_proba, eps, 1 - eps)
+    transformed_labels = xp.astype(transformed_labels, y_proba.dtype, copy=False)
+    loss = -xp.sum(_xlogy(transformed_labels, y_proba, xp=xp), axis=1)
     return float(_average(loss, weights=sample_weight, normalize=normalize))
 
 
@@ -3851,15 +3859,17 @@ def brier_score_loss(
 @validate_params(
     {
         "y_true": ["array-like"],
-        "y_pred": ["array-like"],
+        "y_proba": ["array-like", Hidden(None)],
         "sample_weight": ["array-like", None],
         "labels": ["array-like", None],
+        "y_pred": ["array-like", str],
     },
     prefer_skip_nested_validation=True,
 )
-def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
-    """
-    :math:`D^2` score function, fraction of log loss explained.
+def d2_log_loss_score(
+    y_true, y_proba=None, *, sample_weight=None, labels=None, y_pred="deprecated"
+):
+    """:math:`D^2` score function, fraction of log loss explained.
 
     Best possible score is 1.0 and it can be negative (because the model can be
     arbitrarily worse). A model that always predicts the per-class proportions
@@ -3874,13 +3884,16 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
     y_true : array-like or label indicator matrix
         The actuals labels for the n_samples samples.
 
-    y_pred : array-like of shape (n_samples, n_classes) or (n_samples,)
+    y_proba : array-like of shape (n_samples, n_classes) or (n_samples,)
         Predicted probabilities, as returned by a classifier's
-        predict_proba method. If ``y_pred.shape = (n_samples,)``
+        predict_proba method. If ``y_proba.shape = (n_samples,)``
         the probabilities provided are assumed to be that of the
-        positive class. The labels in ``y_pred`` are assumed to be
+        positive class. The labels in ``y_proba`` are assumed to be
         ordered alphabetically, as done by
         :class:`~sklearn.preprocessing.LabelBinarizer`.
+
+        .. versionadded:: 1.9
+            `y_pred` was renamed to `y_proba`.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -3889,6 +3902,18 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
         If not provided, labels will be inferred from y_true. If ``labels``
         is ``None`` and ``y_pred`` has shape (n_samples,) the labels are
         assumed to be binary and are inferred from ``y_true``.
+
+    y_pred : array-like of shape (n_samples, n_classes) or (n_samples,)
+        Predicted probabilities, as returned by a classifier's
+        predict_proba method. If ``y_pred.shape = (n_samples,)``
+        the probabilities provided are assumed to be that of the
+        positive class. The labels in ``y_pred`` are assumed to be
+        ordered alphabetically, as done by
+        :class:`~sklearn.preprocessing.LabelBinarizer`.
+
+        .. deprecated:: 1.9
+            `y_pred` was deprecated in favor of `y_proba` in v1.9 and will
+            be removed in v1.11.
 
     Returns
     -------
@@ -3905,35 +3930,50 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
     This metric is not well-defined for a single sample and will return a NaN
     value if n_samples is less than two.
     """
-    check_consistent_length(y_pred, y_true, sample_weight)
-    if _num_samples(y_pred) < 2:
+    # TODO(1.11): Remove check and remove default value for `y_proba`.
+    if not (isinstance(y_pred, str) and y_pred == "deprecated"):
+        if y_proba is not None:
+            raise ValueError(
+                "Cannot use both `y_pred` and `y_proba`. `y_pred` is deprecated, "
+                "use `y_proba` instead."
+            )
+        else:
+            warnings.warn(
+                "`y_pred` was renamed to `y_proba` in version 1.9 and will be removed "
+                "in 1.11. Use `y_proba` instead.",
+                FutureWarning,
+            )
+            y_proba = y_pred
+
+    check_consistent_length(y_proba, y_true, sample_weight)
+    if _num_samples(y_proba) < 2:
         msg = "D^2 score is not well-defined with less than two samples."
         warnings.warn(msg, UndefinedMetricWarning)
         return float("nan")
 
-    xp, _, device_ = get_namespace_and_device(y_pred)
-    y_pred = check_array(
-        y_pred, ensure_2d=False, dtype=supported_float_dtypes(xp, device=device_)
+    xp, _, device_ = get_namespace_and_device(y_proba)
+    y_proba = check_array(
+        y_proba, ensure_2d=False, dtype=supported_float_dtypes(xp, device=device_)
     )
     if sample_weight is not None:
         sample_weight = move_to(sample_weight, xp=xp, device=device_)
 
-    transformed_labels, y_pred = _validate_multiclass_probabilistic_prediction(
-        y_true, y_pred, sample_weight, labels
+    transformed_labels, y_proba = _validate_multiclass_probabilistic_prediction(
+        y_true, y_proba, sample_weight, labels
     )
-    xp, _ = get_namespace(y_pred, transformed_labels)
-    y_pred_null = _average(transformed_labels, axis=0, weights=sample_weight)
-    y_pred_null = xp.tile(y_pred_null, (y_pred.shape[0], 1))
+    xp, _ = get_namespace(y_proba, transformed_labels)
+    y_proba_null = _average(transformed_labels, axis=0, weights=sample_weight)
+    y_proba_null = xp.tile(y_proba_null, (y_proba.shape[0], 1))
 
     numerator = _log_loss(
         transformed_labels,
-        y_pred,
+        y_proba,
         normalize=False,
         sample_weight=sample_weight,
     )
     denominator = _log_loss(
         transformed_labels,
-        y_pred_null,
+        y_proba_null,
         normalize=False,
         sample_weight=sample_weight,
     )

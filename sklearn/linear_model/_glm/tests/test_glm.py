@@ -10,6 +10,7 @@ import pytest
 import scipy
 from scipy import linalg
 from scipy.optimize import minimize, root
+from scipy.optimize._linesearch import LineSearchWarning
 
 from sklearn import config_context
 from sklearn._loss import HalfBinomialLoss, HalfPoissonLoss, HalfTweedieLoss
@@ -38,7 +39,7 @@ from sklearn.utils._array_api import (
 )
 from sklearn.utils._testing import _array_api_for_tests, assert_allclose
 
-SOLVERS = ["lbfgs", "newton-cholesky"]
+SOLVERS = ["lbfgs", "newton-cg", "newton-cholesky"]
 
 
 class BinomialRegressor(_GeneralizedLinearRegressor):
@@ -245,7 +246,12 @@ def test_glm_regression(solver, fit_intercept, glm_dataset):
 
     model.fit(X, y)
 
-    rtol = 5e-5 if solver == "lbfgs" else 1e-9
+    if solver == "lbfgs":
+        rtol = 5e-5
+    elif solver == "newton-cg":
+        rtol = 5e-8
+    else:
+        rtol = 1e-9
     assert model.intercept_ == pytest.approx(intercept, rel=rtol)
     assert_allclose(model.coef_, coef, rtol=rtol)
 
@@ -289,6 +295,9 @@ def test_glm_regression_hstacked_X(solver, fit_intercept, glm_dataset):
         intercept = 0
 
     with warnings.catch_warnings():
+        if solver == "newton-cg":
+            warnings.filterwarnings("ignore", category=LineSearchWarning)
+            warnings.filterwarnings("ignore", category=UserWarning)  # from line search
         # XXX: Investigate if the ConvergenceWarning that can appear in some
         # cases should be considered a bug or not. In the mean time we don't
         # fail when the assertions below pass irrespective of the presence of
@@ -296,7 +305,12 @@ def test_glm_regression_hstacked_X(solver, fit_intercept, glm_dataset):
         warnings.simplefilter("ignore", ConvergenceWarning)
         model.fit(X, y)
 
-    rtol = 2e-4 if solver == "lbfgs" else 5e-9
+    if solver == "lbfgs":
+        rtol = 2e-4
+    elif solver == "newton-cg":
+        rtol = 1e-7
+    else:
+        rtol = 5e-9
     assert model.intercept_ == pytest.approx(intercept, rel=rtol)
     assert_allclose(model.coef_, np.r_[coef, coef], rtol=rtol)
 
@@ -334,9 +348,19 @@ def test_glm_regression_vstacked_X(solver, fit_intercept, glm_dataset):
     else:
         coef = coef_without_intercept
         intercept = 0
-    model.fit(X, y)
 
-    rtol = 3e-5 if solver == "lbfgs" else 5e-9
+    with warnings.catch_warnings():
+        if solver == "newton-cg":
+            warnings.filterwarnings("ignore", category=LineSearchWarning)
+            warnings.filterwarnings("ignore", category=UserWarning)  # from line search
+        model.fit(X, y)
+
+    if solver == "lbfgs":
+        rtol = 3e-5
+    elif solver == "newton-cg":
+        rtol = 1e-7
+    else:
+        rtol = 5e-9
     assert model.intercept_ == pytest.approx(intercept, rel=rtol)
     assert_allclose(model.coef_, coef, rtol=rtol)
 
@@ -375,6 +399,9 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
             # The newton solvers should warn and automatically fallback to LBFGS
             # in this case. The model should still converge.
             warnings.filterwarnings("ignore", category=scipy.linalg.LinAlgWarning)
+        if solver == "newton-cg" and n_samples < n_features:
+            warnings.filterwarnings("ignore", category=LineSearchWarning)
+            warnings.filterwarnings("ignore", category=UserWarning)  # from line search
         # XXX: Investigate if the ConvergenceWarning that can appear in some
         # cases should be considered a bug or not. In the mean time we don't
         # fail when the assertions below pass irrespective of the presence of
@@ -405,7 +432,7 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
             if norm_model < (1 + 1e-12) * norm_solution:
                 assert model.intercept_ == pytest.approx(intercept)
                 assert_allclose(model.coef_, coef, rtol=rtol)
-        elif solver == "lbfgs" and fit_intercept:
+        elif solver in ("lbfgs", "newton-cg") and fit_intercept:
             # But it is not the minimum norm solution. Otherwise the norms would be
             # equal.
             assert norm_model > (1 + 1e-12) * norm_solution
@@ -416,8 +443,8 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
             # solution by adding a very small penalty. Even that fails for a reason we
             # do not properly understand at this point.
         else:
-            # When `fit_intercept=False`, LBFGS naturally converges to the minimum norm
-            # solution on this problem.
+            # When `fit_intercept=False`, LBFGS and newton-cg naturally converge to
+            # the minimum norm solution on this problem.
             # XXX: Do we have any theoretical guarantees why this should be the case?
             assert model.intercept_ == pytest.approx(intercept, rel=rtol)
             assert_allclose(model.coef_, coef, rtol=rtol)
@@ -466,6 +493,9 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
             # The newton solvers should warn and automatically fallback to LBFGS
             # in this case. The model should still converge.
             warnings.filterwarnings("ignore", category=scipy.linalg.LinAlgWarning)
+        if solver == "newton-cg" and n_samples < n_features:
+            warnings.filterwarnings("ignore", category=LineSearchWarning)
+            warnings.filterwarnings("ignore", category=UserWarning)  # from line search
         # XXX: Investigate if the ConvergenceWarning that can appear in some
         # cases should be considered a bug or not. In the mean time we don't
         # fail when the assertions below pass irrespective of the presence of
@@ -492,7 +522,9 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
         # we get a solution, i.e. a (non-unique) minimum of the objective function ...
         rtol = 1e-6 if solver == "lbfgs" else 5e-6
         assert_allclose(model.predict(X), y, rtol=rtol)
-        if (solver == "lbfgs" and fit_intercept) or solver == "newton-cholesky":
+        if (
+            solver in ("lbfgs", "newton-cg") and fit_intercept
+        ) or solver == "newton-cholesky":
             # Same as in test_glm_regression_unpenalized.
             # But it is not the minimum norm solution. Otherwise the norms would be
             # equal.
@@ -547,6 +579,9 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
             # The newton solvers should warn and automatically fallback to LBFGS
             # in this case. The model should still converge.
             warnings.filterwarnings("ignore", category=scipy.linalg.LinAlgWarning)
+        if solver == "newton-cg" and n_samples < n_features:
+            warnings.filterwarnings("ignore", category=LineSearchWarning)
+            warnings.filterwarnings("ignore", category=UserWarning)  # from line search
         # XXX: Investigate if the ConvergenceWarning that can appear in some
         # cases should be considered a bug or not. In the mean time we don't
         # fail when the assertions below pass irrespective of the presence of
@@ -572,7 +607,7 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
             if not (norm_model > (1 + 1e-12) * norm_solution):
                 assert model.intercept_ == pytest.approx(intercept)
                 assert_allclose(model.coef_, coef, rtol=1e-4)
-        elif solver == "lbfgs" and fit_intercept:
+        elif solver in ("lbfgs", "newton-cg") and fit_intercept:
             # Same as in test_glm_regression_unpenalized.
             # But it is not the minimum norm solution. Otherwise the norms would be
             # equal.
@@ -853,7 +888,7 @@ def test_normal_ridge_comparison(
     assert_allclose(glm.predict(X_test), ridge.predict(X_test), rtol=2e-4)
 
 
-@pytest.mark.parametrize("solver", ["lbfgs", "newton-cholesky"])
+@pytest.mark.parametrize("solver", SOLVERS)
 def test_poisson_glmnet(solver):
     """Compare Poisson regression with L2 regularization and LogLink to glmnet"""
     # library("glmnet")
@@ -989,7 +1024,7 @@ def test_linalg_warning_with_newton_solver(global_random_seed):
 
     # We check that the model could successfully fit information in X_orig to
     # improve upon the constant baseline by a large margin (when evaluated on
-    # the traing set).
+    # the training set).
     assert constant_model_deviance - original_newton_deviance > 0.1
 
     # LBFGS is robust to a collinear design because its approximation of the
@@ -1151,14 +1186,20 @@ def test_poisson_regressor_array_api_compliance(
     array_namespace,
     device_name,
     dtype_name,
+    global_random_seed,
 ):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
-    X_np, y_np = make_regression(
-        n_samples=107, n_features=20, n_informative=20, noise=0.5, random_state=2
-    )
-    # make y positive
-    y_np = np.abs(y_np) + 1.0
-    n_samples = X_np.shape[0]
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
+    rng = np.random.default_rng(global_random_seed)
+    n_samples = 1000
+    n_features = 3
+    X_np = rng.normal(size=(n_samples, n_features))
+    beta = np.array([0.5, -0.3, 0.8])  # true coefficients
+    intercept = 1.0
+    mu = np.exp(X_np @ beta + intercept)  # Poisson mean with log-link.
+    y_np = rng.poisson(mu)
+    # Ensure that we have non-zero targets for meaningful testing:
+    assert (y_np > 0).mean() > 0.1
+
     X_np = X_np.astype(dtype_name, copy=False)
     y_np = y_np.astype(dtype_name, copy=False)
     X_xp = xp.asarray(X_np, device=device)
@@ -1166,15 +1207,15 @@ def test_poisson_regressor_array_api_compliance(
 
     if use_sample_weight:
         sample_weight = (
-            np.random.default_rng(0)
-            .uniform(-1, 5, size=n_samples)
+            rng.uniform(-1, 5, size=n_samples)
             .clip(0, None)  # over-represent null weights to cover edge-cases.
             .astype(dtype_name)
         )
     else:
         sample_weight = None
 
-    params = dict(alpha=1, solver="lbfgs", tol=1e-12, max_iter=500)
+    params = dict(alpha=1, solver="lbfgs", max_iter=500)
+    params["tol"] = 3e-6 if dtype_name == "float32" else 1e-13
     glm_np = PoissonRegressor(**params).fit(X_np, y_np, sample_weight=sample_weight)
     assert glm_np.n_iter_ < glm_np.max_iter
 
@@ -1182,13 +1223,13 @@ def test_poisson_regressor_array_api_compliance(
     assert np.abs(glm_np.coef_).max() > 0.1
 
     predict_np = glm_np.predict(X_np)
-    atol = _atol_for_type(dtype_name) * 10
-    rtol = 3e-3 if dtype_name == "float32" else 1e-6
+    atol = _atol_for_type(dtype_name)
+    rtol = 2e-3 if dtype_name == "float32" else 3e-7
 
     with config_context(array_api_dispatch=True):
         glm_xp = PoissonRegressor(**params).fit(X_xp, y_xp, sample_weight=sample_weight)
         if dtype_name == "float64":
-            assert glm_xp.n_iter_ == glm_np.n_iter_
+            assert abs(glm_xp.n_iter_ - glm_np.n_iter_) <= 1
 
         for attr_name in ("coef_", "intercept_"):
             attr_xp = getattr(glm_xp, attr_name)
@@ -1226,7 +1267,7 @@ def test_poisson_regressor_array_api_warm_start(
     X = rng.standard_normal((200, 5)).astype(dtype_name)
     y = np.abs(rng.standard_normal(200)) + 0.1
     y = y.astype(dtype_name)
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     X_xp = xp.asarray(X, device=device)
     y_xp = xp.asarray(y, device=device)
     with config_context(array_api_dispatch=True):
