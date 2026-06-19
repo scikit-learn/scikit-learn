@@ -417,7 +417,7 @@ API_REFERENCE = {
         "sections": [
             {
                 "title": None,
-                "autosummary": ["enable_halving_search_cv", "enable_iterative_imputer"],
+                "autosummary": ["enable_halving_search_cv"],
             },
         ],
     },

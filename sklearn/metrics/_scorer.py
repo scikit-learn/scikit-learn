@@ -321,13 +321,12 @@ class _BaseScorer(_MetadataRequester):
         """
         _raise_for_params(kwargs, self, None)
 
-        _kwargs = copy.deepcopy(kwargs)
         # TODO(1.11): remove this when sample_weight is removed from the `__call__`
         # signature
         if sample_weight is not None:
-            _kwargs["sample_weight"] = sample_weight
+            kwargs["sample_weight"] = sample_weight
 
-        return self._score(partial(_cached_call, None), estimator, X, y_true, **_kwargs)
+        return self._score(partial(_cached_call, None), estimator, X, y_true, **kwargs)
 
     def _warn_overlap(self, message, kwargs):
         """Warn if there is any overlap between ``self._kwargs`` and ``kwargs``.
