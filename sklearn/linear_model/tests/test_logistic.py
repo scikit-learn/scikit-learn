@@ -274,7 +274,7 @@ def test_inconsistent_input():
     y_ = np.ones(X_.shape[0])
     y_[0] = 0
 
-    clf = LogisticRegression(random_state=0)
+    clf = LogisticRegression()
 
     # Wrong dimensions for training data
     y_wrong = y_[:-1]
