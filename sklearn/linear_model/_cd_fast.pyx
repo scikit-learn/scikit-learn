@@ -431,7 +431,7 @@ def enet_coordinate_descent(
         tol *= _dot(n_samples, &y[0], 1, &y[0], 1)
 
         # Check convergence before entering the main loop.
-        # We want to avoid to stop too early and set gap_smaller_eps=False.
+        # We want to avoid stopping too early and set gap_smaller_eps=False.
         gap, dual_norm_XtA = gap_enet(
             n_samples, n_features, w, alpha, beta, X, y, R, XtA, positive,
             gap_smaller_eps=False,
@@ -506,8 +506,9 @@ def enet_coordinate_descent(
             ):
                 # The biggest coordinate update of this iteration was smaller than the
                 # tolerance: check the duality gap as ultimate stopping criterion.
-                # We want to stop in case gap != 0 only because of floating point
-                # arithmetic, and set gap_smaller_eps=True.
+                # We want to stop in case the gap is small enough but not exactly 0
+                # only because of floating point arithmetic, and therefore set
+                # gap_smaller_eps=True.
                 gap, dual_norm_XtA = gap_enet(
                     n_samples, n_features, w, alpha, beta, X, y, R, XtA, positive,
                     gap_smaller_eps=True,
@@ -871,7 +872,7 @@ def sparse_enet_coordinate_descent(
         tol *= _dot(n_samples, &y[0], 1, &yw[0], 1)
 
         # Check convergence before entering the main loop.
-        # We want to avoid to stop too early and set gap_smaller_eps=False.
+        # We want to avoid stopping too early and set gap_smaller_eps=False.
         gap, dual_norm_XtA = gap_enet_sparse(
             n_samples,
             n_features,
@@ -996,8 +997,9 @@ def sparse_enet_coordinate_descent(
             ):
                 # The biggest coordinate update of this iteration was smaller than the
                 # tolerance: check the duality gap as ultimate stopping criterion.
-                # We want to stop in case gap != 0 only because of floating point
-                # arithmetic, and set gap_smaller_eps=True.
+                # We want to stop in case the gap is small enough but not exactly 0
+                # only because of floating point arithmetic, and therefore set
+                # gap_smaller_eps=True.
                 gap, dual_norm_XtA = gap_enet_sparse(
                     n_samples,
                     n_features,
@@ -1248,7 +1250,7 @@ def enet_coordinate_descent_gram(
         tol *= y_norm2
 
         # Check convergence before entering the main loop.
-        # We want to avoid to stop too early and set gap_smaller_eps=False.
+        # We want to avoid stopping too early and set gap_smaller_eps=False.
         gap, dual_norm_XtA = gap_enet_gram(
             n_features, w, alpha, beta, Qw, q, y_norm2, XtA, positive,
             gap_smaller_eps=False,
@@ -1328,8 +1330,9 @@ def enet_coordinate_descent_gram(
             ):
                 # The biggest coordinate update of this iteration was smaller than the
                 # tolerance: check the duality gap as ultimate stopping criterion.
-                # We want to stop in case gap != 0 only because of floating point
-                # arithmetic, and set gap_smaller_eps=True.
+                # We want to stop in case the gap is small enough but not exactly 0
+                # only because of floating point arithmetic, and therefore set
+                # gap_smaller_eps=True.
                 gap, dual_norm_XtA = gap_enet_gram(
                     n_features, w, alpha, beta, Qw, q, y_norm2, XtA, positive,
                     gap_smaller_eps=True,
@@ -1696,7 +1699,7 @@ def enet_coordinate_descent_multi_task(
         tol *= _dot(n_samples * n_tasks, &Y[0, 0], 1, &Yw[0, 0], 1)
 
         # Check convergence before entering the main loop.
-        # We want to avoid to stop too early and set gap_smaller_eps=False.
+        # We want to avoid stopping too early and set gap_smaller_eps=False.
         gap, dual_norm_XtA = gap_enet_multi_task(
             n_samples=n_samples,
             n_features=n_features,
@@ -1855,8 +1858,9 @@ def enet_coordinate_descent_multi_task(
             ):
                 # The biggest coordinate update of this iteration was smaller than the
                 # tolerance: check the duality gap as ultimate stopping criterion.
-                # We want to stop in case gap != 0 only because of floating point
-                # arithmetic, and set gap_smaller_eps=True.
+                # We want to stop in case the gap is small enough but not exactly 0
+                # only because of floating point arithmetic, and therefore set
+                # gap_smaller_eps=True.
                 gap, dual_norm_XtA = gap_enet_multi_task(
                     n_samples=n_samples,
                     n_features=n_features,
