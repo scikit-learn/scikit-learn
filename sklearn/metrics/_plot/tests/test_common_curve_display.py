@@ -286,6 +286,8 @@ def test_display_curve_name_overwritten_by_plot_multiple_calls(
         assert clf_name in disp.line_.get_label()
 
 
+# TODO(1.12): remove warning filter, see PR #33908
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "clf",
     [
@@ -296,8 +298,6 @@ def test_display_curve_name_overwritten_by_plot_multiple_calls(
         ),
     ],
 )
-# TODO(1.12): remove warning filter, see PR #33908
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "Display",
     [CalibrationDisplay, DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay],
@@ -344,8 +344,6 @@ def test_display_curve_n_samples_consistency(pyplot, data_binary, Display):
             )
 
 
-# TODO(1.12): remove warning filter, see PR #33908
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "Display",
     [CalibrationDisplay, DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay],
