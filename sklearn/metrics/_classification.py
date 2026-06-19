@@ -549,25 +549,9 @@ def confusion_matrix(
     # namespace and device so as to be able to leverage the efficient
     # counting operations implemented by SciPy in the coo_matrix constructor.
     y_true = move_to(y_true, xp=np, device="cpu")
-    y_pred = move_to(y_pred, xp=np, device="cpu")
-    if sample_weight is None:
-        sample_weight = np.ones(y_true.shape[0], dtype=np.int64)
-    else:
-        sample_weight = move_to(sample_weight, xp=np, device="cpu")
-
-    if len(sample_weight) > 0:
-        y_type, unique_labels, y_true, y_pred, sample_weight = _check_targets(
-            y_true, y_pred, sample_weight, xp=np, device="cpu"
-        )
-    else:
-        # This is needed to handle the special case where y_true, y_pred and
-        # sample_weight are all empty.
-        # In this case we don't pass sample_weight to _check_targets that would
-        # check that sample_weight is not empty and we don't reuse the returned
-        # sample_weight
-        y_type, unique_labels, y_true, y_pred, _ = _check_targets(
-            y_true, y_pred, xp=np, device="cpu"
-        )
+    y_type, unique_labels, y_true, y_pred, sample_weight = _check_targets(
+        y_true, y_pred, sample_weight, xp=np, device="cpu"
+    )
 
     y_true, y_pred = attach_unique(y_true, y_pred)
     if y_type not in ("binary", "multiclass"):
