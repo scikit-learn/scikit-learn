@@ -376,13 +376,13 @@ def test_ridge_regression_unpenalized_hstacked_X(
         intercept = coef[-1]
         coef = coef[:-1]
         # Put one intercept term into the new X, the other one is the "fit_intercept".
-        X = np.concat((X, X, np.ones((n_samples, 1))), axis=1)
+        X = np.concatenate((X, X, np.ones((n_samples, 1))), axis=1)
         # We omit the factor of 1/2 such that both intercept terms have the same
         # effective design matrix column (all ones).
         # We will need to correct for this factor of 2 later.
     else:
         intercept = 0
-        X = 0.5 * np.concat((X, X), axis=1)
+        X = 0.5 * np.concatenate((X, X), axis=1)
     assert np.linalg.matrix_rank(X) <= min(n_samples, n_features)
 
     with warnings.catch_warnings():
