@@ -953,9 +953,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     CalibratedClassifierCV: {
         "check_array_api_mixed_inputs": "mixed array API input support not added yet",
-        "check_array_api_string_and_numeric_inputs": (
-            "mixed string and numeric array API input support not added yet"
-        ),
+        # "check_array_api_string_and_numeric_inputs": (
+        #     "mixed string and numeric array API input support not added yet"
+        # ),
     },
     ColumnTransformer: {
         "check_estimators_empty_data_messages": "FIXME",
@@ -992,9 +992,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     GaussianMixture: {
         "check_array_api_mixed_inputs": "mixed array API input support not added yet",
-        "check_array_api_string_and_numeric_inputs": (
-            "mixed string and numeric array API input support not added yet"
-        ),
+        # "check_array_api_string_and_numeric_inputs": (
+        #     "mixed string and numeric array API input support not added yet"
+        # ),
     },
     GaussianNB: {
         "check_array_api_mixed_inputs": "mixed array API input support not added yet",
