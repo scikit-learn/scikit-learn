@@ -1260,7 +1260,7 @@ def calibration_curve(
 
         .. versionadded:: 1.1
 
-    n_bins : int or "cube_root", default='cube_root'
+    n_bins : int or "cube_root", default=5
         Number of bins to discretize the [0, 1] interval. A bigger number
         requires more data. Bins with no samples (i.e. without
         corresponding values in `y_prob`) will not be returned, thus the
@@ -1558,7 +1558,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         y : array-like of shape (n_samples,)
             Binary target values.
 
-        n_bins : int or "cube_root", default='cube_root'
+        n_bins : int or "cube_root", default=5
             Number of bins to discretize the [0, 1] interval into when
             calculating the calibration curve. A bigger number requires more
             data.
@@ -1696,7 +1696,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         y_prob : array-like of shape (n_samples,)
             The predicted probabilities of the positive class.
 
-        n_bins : int or "cube_root", default='cube_root'
+        n_bins : int or "cube_root", default=5
             Number of bins to discretize the [0, 1] interval into when
             calculating the calibration curve. A bigger number requires more
             data.
