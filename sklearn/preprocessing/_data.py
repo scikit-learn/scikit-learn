@@ -2852,6 +2852,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
                 method="averaged_inverted_cdf",
                 axis=0,
             )
+        # self.quantiles_ = np.unique(self.quantiles_, axis=0)
 
     def _sparse_fit(self, X, random_state):
         """Compute percentiles for sparse matrices.
@@ -2940,21 +2941,21 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             )
 
         if sample_weight is None or is_sparse:
-            # sample_weight is None, is equivalent to all samples having unit
-            # weight, so the sum of weights is equal to the number of samples.
             # Sparse inputs do not support sample_weight.
-            effective_sample_size = n_samples
+            n_unique = np.unique(X, axis=0).shape[0]
         else:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-            effective_sample_size = np.sum(sample_weight)
+            # Zero-weight samples are ignored and should not contribute to the
+            # unique support used to cap n_quantiles.
+            n_unique = np.unique(X[sample_weight != 0], axis=0).shape[0]
 
-        if self.n_quantiles > n_samples:
+        if self.n_quantiles > n_unique:
             warnings.warn(
                 f"n_quantiles ({self.n_quantiles}) is greater than the "
-                f"sample size ({n_samples}). n_quantiles is set to "
-                f"effective_sample_size ({n_samples})."
+                f"number of unique samples ({n_unique}). n_quantiles is set to "
+                f"n_unique ({n_unique})."
             )
-        self.n_quantiles_ = max(1, min(self.n_quantiles, n_samples))
+        self.n_quantiles_ = max(1, min(self.n_quantiles, n_unique))
 
         rng = check_random_state(self.random_state)
 
