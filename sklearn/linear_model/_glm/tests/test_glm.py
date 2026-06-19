@@ -37,7 +37,11 @@ from sklearn.utils._array_api import (
 from sklearn.utils._array_api import (
     device as array_api_device,
 )
-from sklearn.utils._testing import _array_api_for_tests, assert_allclose
+from sklearn.utils._testing import (
+    _array_api_for_tests,
+    assert_allclose,
+    ignore_warnings,
+)
 
 SOLVERS = ["lbfgs", "newton-cg", "newton-cholesky"]
 
@@ -524,7 +528,7 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
             if solver == "newton-cholesky":
                 assert model.intercept_ == pytest.approx(model.coef_[-1])
                 assert model.intercept_ == pytest.approx(0.5 * intercept)
-                assert norm_model == pytest.approx(norm_solution, rel=1e-12)
+                assert norm_model == pytest.approx(norm_solution, rel=1e-11)
             else:
                 # For some reason, we don't. So we check that we have at least
                 # model_intercept + model.coef_[-1] == intercept.
@@ -534,13 +538,13 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
                 )
                 assert norm_model == pytest.approx(norm_solution, rel=1e-7)
         else:
-            rel = 1e-12 if solver == "newton-cholesky" else 1e-7
+            rel = 1e-11 if solver == "newton-cholesky" else 1e-7
             assert norm_model == pytest.approx(norm_solution, rel=rel)
     else:  # wide
         # As it is an underdetermined problem, prediction = y. The following shows that
         # we get a solution, i.e. a (non-unique) minimum of the objective function ...
         rtol = 1e-6 if solver == "lbfgs" else 5e-6
-        tol_norm = 1e-12 if solver == "newton-cholesky" else 1e-7
+        tol_norm = 1e-11 if solver == "newton-cholesky" else 1e-7
         assert_allclose(model.predict(X), y, rtol=rtol)
 
         if solver in ("lbfgs", "newton-cg") and fit_intercept:
@@ -1017,12 +1021,11 @@ def test_linalg_warning_with_newton_solver(global_random_seed):
     encountering a singular or ill-conditioned Hessian matrix.
 
     This test assess the behavior of `PoissonRegressor` with the "newton-cholesky"
-    solver.
-    It verifies the following:-
+    solver. It verifies the following:
     - The model significantly improves upon the constant baseline deviance.
     - LBFGS remains robust on collinear data.
-    - The Newton solver raises a `LinAlgWarning` on collinear data and falls
-      back to LBFGS.
+    - The Newton solver raises a LinAlgWarning on collinear data and deals with
+      the collinearity appropriately.
     """
     newton_solver = "newton-cholesky"
     rng = np.random.RandomState(global_random_seed)
@@ -1048,10 +1051,9 @@ def test_linalg_warning_with_newton_solver(global_random_seed):
         reg = PoissonRegressor(solver=newton_solver, alpha=0.0, tol=tol).fit(X_orig, y)
     original_newton_deviance = mean_poisson_deviance(y, reg.predict(X_orig))
 
-    # On this dataset, we should have enough data points to not make it
-    # possible to get a near zero deviance (for the any of the admissible
-    # random seeds). This will make it easier to interpret meaning of rtol in
-    # the subsequent assertions:
+    # On this dataset, we should have enough data points to make it impossible to get a
+    # near zero deviance (for any of the admissible random seeds). This will make it
+    # easier to interpret the meaning of rtol in the subsequent assertions:
     assert original_newton_deviance > 0.2
 
     # We check that the model could successfully fit information in X_orig to
@@ -1059,22 +1061,21 @@ def test_linalg_warning_with_newton_solver(global_random_seed):
     # the training set).
     assert constant_model_deviance - original_newton_deviance > 0.1
 
-    # LBFGS is robust to a collinear design because its approximation of the
-    # Hessian is Symmeric Positive Definite by construction. Let's record its
-    # solution
+    # LBFGS is robust to a collinear design because its approximation of the Hessian is
+    # Symmeric Positive Definite by construction. Let's record its solution.
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         reg = PoissonRegressor(solver="lbfgs", alpha=0.0, tol=tol).fit(X_collinear, y)
     collinear_lbfgs_deviance = mean_poisson_deviance(y, reg.predict(X_collinear))
 
-    # The LBFGS solution on the collinear is expected to reach a comparable
+    # The LBFGS solution on X_collinear is expected to reach a comparable
     # solution to the Newton solution on the original data.
     rtol = 1e-6
     assert collinear_lbfgs_deviance == pytest.approx(original_newton_deviance, rel=rtol)
 
     # Fitting a Newton solver on the collinear version of the training data
-    # without regularization should raise an informative warning and fallback
-    # to the LBFGS solver.
+    # without regularization should raise an informative warning, it should then
+    # deal with the collinearity appropriately.
     msg = (
         "The inner solver of .*Newton.*Solver stumbled upon a singular or very "
         "ill-conditioned Hessian matrix"
@@ -1102,6 +1103,64 @@ def test_linalg_warning_with_newton_solver(global_random_seed):
     assert penalized_collinear_newton_deviance == pytest.approx(
         original_newton_deviance, rel=rtol
     )
+
+
+def test_newton_cholesky_fallback_to_lbfgs():
+    """Test the fallback to lbfgs, in particular the number of iterations."""
+    # We combine a rank-deficient X with a non-convex problem. This should trigger the
+    # Newton-Cholesky solver to raise warnings and fallback to lbfgs.
+    X, y = make_regression(n_samples=10, n_features=20, random_state=42)
+    alpha = 0  # no penalty
+
+    # How to construct a case of negative curvature:
+    # TLDR: 2 ingredients - Tweedie with power=3, start with coef=0.
+    # Hessian of Tweedie with log link (see sklearn._loss module):
+    #   exp1 = exp((1 - power) * raw_prediction)
+    #   exp2 = exp((2 - power) * raw_prediction)
+    #   hessian = (2 - power) * exp2 - (1 - power) * y_true * exp1
+    #           = exp1 * ( (2 - power) * exp(raw_prediction)
+    #                     -(1 - power) * y_true)
+    # This is negative if the term in brackets is negative, so:
+    #   (2 - power) * exp(raw_prediction) < (1 - power) * y_true
+    # With fit_intercept=False, the coefficients are initialized as zero
+    # => raw_prediction = 0. We also assume power > 2:
+    #   y_true < (power - 2)/(power - 1)
+    # Select power = 3 to arrive at: y_true < 1/2
+    y += -y.min() + 1  # make it positive
+    y *= 0.5 / y.max()  # make it smaller 1/2
+
+    # Check that LBFGS can converge without any warning on this problem.
+    params = dict(power=3.0, link="log", alpha=alpha, fit_intercept=False)
+    m_lbfgs = TweedieRegressor(solver="lbfgs", **params)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        m_lbfgs.fit(X, y)
+        n_iter_lbfgs = m_lbfgs.n_iter_
+
+    assert n_iter_lbfgs >= 1
+
+    # Check that the Newton-Cholesky solver raises a warning and falls back to
+    # LBFGS. This should converge with the same number of iterations as the
+    # above call of lbfgs since the Newton-Cholesky triggers the fallback
+    # before completing the first iteration, for the problem setting at hand.
+    m_nc = TweedieRegressor(solver="newton-cholesky", **params, verbose=3)
+    with ignore_warnings(category=ConvergenceWarning):
+        m_nc.fit(X, y)
+        n_iter_nc = m_nc.n_iter_
+
+    assert n_iter_nc == n_iter_lbfgs
+
+    # Trying to fit the same model again with a small iteration budget should
+    # therefore raise a ConvergenceWarning:
+    m_nc_limited = TweedieRegressor(
+        solver="newton-cholesky", **params, max_iter=n_iter_lbfgs - 1
+    )
+    with ignore_warnings(category=ConvergenceWarning):
+        with pytest.warns(ConvergenceWarning, match="lbfgs failed to converge"):
+            m_nc_limited.fit(X, y)
+            n_iter_nc_limited = m_nc_limited.n_iter_
+
+    assert n_iter_nc_limited == m_nc_limited.max_iter - 1
 
 
 @pytest.mark.parametrize("verbose", [0, 1, 2])

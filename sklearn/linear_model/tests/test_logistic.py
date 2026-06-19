@@ -11,7 +11,7 @@ from numpy.testing import (
     assert_array_equal,
 )
 from scipy import sparse
-from scipy.linalg import LinAlgWarning, svd
+from scipy.linalg import svd
 
 from sklearn import config_context
 from sklearn._loss import HalfMultinomialLoss
@@ -2592,46 +2592,6 @@ def test_passing_params_without_enabling_metadata_routing():
 
         with pytest.raises(ValueError, match=msg):
             lr_cv.score(X, y, **params)
-
-
-def test_newton_cholesky_fallback_to_lbfgs():
-    # Wide data matrix should lead to a rank-deficient Hessian matrix
-    # hence make the Newton-Cholesky solver raise a warning and fallback to
-    # lbfgs.
-    X, y = make_classification(n_samples=10, n_features=20, random_state=42)
-    C = 1e30  # very high C to nearly disable regularization
-
-    # Check that LBFGS can converge without any warning on this problem.
-    lr_lbfgs = LogisticRegression(solver="lbfgs", C=C)
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        lr_lbfgs.fit(X, y)
-        n_iter_lbfgs = lr_lbfgs.n_iter_[0]
-
-    assert n_iter_lbfgs >= 1
-
-    # Check that the Newton-Cholesky solver raises a warning and falls back to
-    # LBFGS. This should converge with the same number of iterations as the
-    # above call of lbfgs since the Newton-Cholesky triggers the fallback
-    # before completing the first iteration, for the problem setting at hand.
-    lr_nc = LogisticRegression(solver="newton-cholesky", C=C)
-    with ignore_warnings(category=LinAlgWarning):
-        lr_nc.fit(X, y)
-        n_iter_nc = lr_nc.n_iter_[0]
-
-    assert n_iter_nc == n_iter_lbfgs
-
-    # Trying to fit the same model again with a small iteration budget should
-    # therefore raise a ConvergenceWarning:
-    lr_nc_limited = LogisticRegression(
-        solver="newton-cholesky", C=C, max_iter=n_iter_lbfgs - 1
-    )
-    with ignore_warnings(category=LinAlgWarning):
-        with pytest.warns(ConvergenceWarning, match="lbfgs failed to converge"):
-            lr_nc_limited.fit(X, y)
-            n_iter_nc_limited = lr_nc_limited.n_iter_[0]
-
-    assert n_iter_nc_limited == lr_nc_limited.max_iter - 1
 
 
 # TODO(1.11): remove filterwarnings with change of default scoring
