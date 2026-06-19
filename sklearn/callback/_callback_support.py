@@ -142,9 +142,13 @@ def callback_management_context(estimator):
         # Don't show progress bars if verbosity is enabled
         and (not hasattr(estimator, "verbose") or not estimator.verbose)
     ):
-        from sklearn.callback import ProgressBar
+        try:
+            from sklearn.callback import ProgressBar
 
-        estimator._skl_callbacks = [ProgressBar(max_propagation_depth=0)]
+            estimator._skl_callbacks = [ProgressBar(max_propagation_depth=0)]
+        except ImportError:
+            # Don't use progressbars if rich is not installed.
+            auto_probressbar = False
     try:
         yield
     finally:
