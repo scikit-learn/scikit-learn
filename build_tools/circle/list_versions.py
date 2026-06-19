@@ -114,6 +114,7 @@ for i, name in enumerate(
 
     full_name = f"{version_num}" if name[:1].isdigit() else f"{version_num} ({name})"
     path = f"https://scikit-learn.org/{name}/"
+    docs_root_path = f"https://github.com/scikit-learn/scikit-learn.github.io/raw/refs/heads/main/{name}"
 
     # Update JSON for the version switcher; only keep the 8 latest versions to avoid
     # overloading the version switcher dropdown
@@ -128,7 +129,7 @@ for i, name in enumerate(
     if file_size is not None:
         file_extension = get_file_extension(version_num)
         out += (
-            f" (`{file_extension.upper()} {file_size} <{path}/"
+            f" (`{file_extension.upper()} {file_size} <{docs_root_path}/"
             f"_downloads/scikit-learn-docs.{file_extension}>`_)"
         )
     rst_content.append(out)
