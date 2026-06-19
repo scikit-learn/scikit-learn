@@ -3720,12 +3720,15 @@ def _array_api_quantiles(
     When `sample_weight` is provided, interpolation is performed on a normalized
     cumulative-weight scale.
     """
+    # Note: ``.shape[0]`` is used instead of ``.size`` because the latter is a
+    # bound method (not an int) on some array libraries such as PyTorch.
     quantile_probas = xp.asarray(quantile_probas, dtype=float_dtype, device=device)
     if sample_weight is None:
+        n = array.shape[0]
         sorted_array = xp.sort(array)
-        positions = quantile_probas * (array.size - 1)
+        positions = quantile_probas * (n - 1)
         lower_indices = xp.astype(xp.floor(positions), xp.int64)
-        upper_indices = xp.clip(lower_indices + 1, 0, array.size - 1)
+        upper_indices = xp.clip(lower_indices + 1, 0, n - 1)
         interpolation_weights = positions - xp.floor(positions)
     else:
         sorted_indices = xp.argsort(array)
@@ -3734,11 +3737,12 @@ def _array_api_quantiles(
         nonzero_weight_indices = xp.nonzero(sorted_weight != 0)[0]
         sorted_array = xp.take(sorted_array, nonzero_weight_indices, axis=0)
         sorted_weight = xp.take(sorted_weight, nonzero_weight_indices, axis=0)
-        if sorted_array.size == 0:
+        n = sorted_array.shape[0]
+        if n == 0:
             return xp.full(
                 quantile_probas.shape, xp.nan, dtype=float_dtype, device=device
             )
-        if sorted_array.size == 1:
+        if n == 1:
             return quantile_probas * 0 + sorted_array[0]
 
         # Place each sorted value at the normalized cumulative weight *before*
@@ -3750,7 +3754,7 @@ def _array_api_quantiles(
             cumulative_weight[-1] - sorted_weight[-1]
         )
         upper_indices = xp.searchsorted(value_positions, quantile_probas, side="right")
-        upper_indices = xp.clip(upper_indices, 1, sorted_array.size - 1)
+        upper_indices = xp.clip(upper_indices, 1, n - 1)
         lower_indices = upper_indices - 1
         lower_positions = xp.take(value_positions, lower_indices, axis=0)
         upper_positions = xp.take(value_positions, upper_indices, axis=0)
@@ -3781,6 +3785,11 @@ def _weighted_calibration_curve(
     check_consistent_length(y_true, y_prob, sample_weight)
 
     xp, _, device_ = get_namespace_and_device(y_prob)
+    # Move sample_weight onto y_prob's namespace/device before any computation
+    # mixing the two (e.g. _find_matching_floating_dtype), to support inputs
+    # living in different namespaces/devices.
+    if sample_weight is not None:
+        sample_weight = move_to(sample_weight, xp=xp, device=device_)
     float_dtype = _find_matching_floating_dtype(y_prob, sample_weight, xp=xp)
     y_prob = xp.astype(y_prob, float_dtype, copy=False)
 
@@ -3812,7 +3821,6 @@ def _weighted_calibration_curve(
     y_true = xp.astype(y_true, float_dtype, copy=False)
 
     if sample_weight is not None:
-        sample_weight = move_to(sample_weight, xp=xp, device=device_)
         sample_weight = _check_sample_weight(
             sample_weight,
             y_prob,
