@@ -67,15 +67,22 @@ from sklearn.metrics.pairwise import (
     chi2_kernel,
     cosine_distances,
     cosine_similarity,
+    distance_metrics,
     euclidean_distances,
+    haversine_distances,
+    kernel_metrics,
     laplacian_kernel,
     linear_kernel,
     manhattan_distances,
+    nan_euclidean_distances,
     paired_cosine_distances,
+    paired_distances,
     paired_euclidean_distances,
     paired_manhattan_distances,
     pairwise_distances,
     pairwise_distances_argmin,
+    pairwise_distances_argmin_min,
+    pairwise_distances_chunked,
     pairwise_kernels,
     polynomial_kernel,
     rbf_kernel,
@@ -301,6 +308,34 @@ ALL_METRICS.update(CONTINUOUS_CLASSIFICATION_METRICS)
 ALL_METRICS.update(CLASSIFICATION_METRICS)
 ALL_METRICS.update(REGRESSION_METRICS)
 ALL_METRICS.update(CURVE_METRICS)
+
+# Note these are only used in array API tests
+PAIRWISE_METRICS = {
+    "additive_chi2_kernel": additive_chi2_kernel,
+    "chi2_kernel": chi2_kernel,
+    "cosine_distances": cosine_distances,
+    "cosine_similarity": cosine_similarity,
+    "distance_metrics": distance_metrics,
+    "euclidean_distances": euclidean_distances,
+    "haversine_distances": haversine_distances,
+    "kernel_metrics": kernel_metrics,
+    "laplacian_kernel": laplacian_kernel,
+    "linear_kernel": linear_kernel,
+    "manhattan_distances": manhattan_distances,
+    "nan_euclidean_distances": nan_euclidean_distances,
+    "paired_cosine_distances": paired_cosine_distances,
+    "paired_distances": paired_distances,
+    "paired_euclidean_distances": paired_euclidean_distances,
+    "paired_manhattan_distances": paired_manhattan_distances,
+    "pairwise_kernels": pairwise_kernels,
+    "polynomial_kernel": polynomial_kernel,
+    "rbf_kernel": rbf_kernel,
+    "sigmoid_kernel": sigmoid_kernel,
+    "pairwise_distances": pairwise_distances,
+    "pairwise_distances_argmin": pairwise_distances_argmin,
+    "pairwise_distances_argmin_min": pairwise_distances_argmin_min,
+    "pairwise_distances_chunked": pairwise_distances_chunked,
+}
 
 # Lists of metrics with common properties
 # ---------------------------------------
@@ -662,6 +697,94 @@ METRICS_SUPPORTING_MIXED_NAMESPACE = [
     "recall_score",
     "root_mean_squared_error",
     "root_mean_squared_log_error",
+]
+
+METRICS_NOT_SUPPORTING_MIXED_NAMESPACE = [
+    "additive_chi2_kernel",
+    "adjusted_balanced_accuracy_score",
+    "balanced_accuracy_score",
+    "chi2_kernel",
+    "cohen_kappa_score",
+    "confusion_matrix",
+    "cosine_distances",
+    "cosine_similarity",
+    "coverage_error",
+    "dcg_score",
+    "det_curve",
+    "distance_metrics",
+    "euclidean_distances",
+    "f0.5_score",
+    "f2_score",
+    "hamming_loss",
+    "haversine_distances",
+    "hinge_loss",
+    "jaccard_score",
+    "kernel_metrics",
+    "label_ranking_average_precision_score",
+    "label_ranking_loss",
+    "laplacian_kernel",
+    "linear_kernel",
+    "macro_f0.5_score",
+    "macro_f1_score",
+    "macro_f2_score",
+    "macro_jaccard_score",
+    "macro_precision_score",
+    "macro_recall_score",
+    "manhattan_distances",
+    "matthews_corrcoef_score",
+    "micro_average_precision_score",
+    "micro_f0.5_score",
+    "micro_f1_score",
+    "micro_f2_score",
+    "micro_jaccard_score",
+    "micro_precision_score",
+    "micro_recall_score",
+    "micro_roc_auc",
+    "multilabel_confusion_matrix_sample",
+    "nan_euclidean_distances",
+    "ndcg_score",
+    "normalized_confusion_matrix",
+    "ovo_roc_auc",
+    "ovr_roc_auc",
+    "paired_cosine_distances",
+    "paired_distances",
+    "paired_euclidean_distances",
+    "paired_manhattan_distances",
+    "pairwise_distances",
+    "pairwise_distances_argmin",
+    "pairwise_distances_argmin_min",
+    "pairwise_distances_chunked",
+    "pairwise_kernels",
+    "partial_roc_auc",
+    "polynomial_kernel",
+    "precision_recall_curve",
+    "rbf_kernel",
+    "roc_auc_score",
+    "roc_curve",
+    "samples_average_precision_score",
+    "samples_f0.5_score",
+    "samples_f1_score",
+    "samples_f2_score",
+    "samples_jaccard_score",
+    "samples_precision_score",
+    "samples_recall_score",
+    "samples_roc_auc",
+    "sigmoid_kernel",
+    "top_k_accuracy_score",
+    "unnormalized_accuracy_score",
+    "unnormalized_log_loss",
+    "unnormalized_zero_one_loss",
+    "weighted_average_precision_score",
+    "weighted_f0.5_score",
+    "weighted_f1_score",
+    "weighted_f2_score",
+    "weighted_jaccard_score",
+    "weighted_ovo_roc_auc",
+    "weighted_ovr_roc_auc",
+    "weighted_precision_score",
+    "weighted_recall_score",
+    "weighted_roc_auc",
+    "zero_one_loss",
 ]
 
 
@@ -2683,10 +2806,42 @@ array_api_metric_checkers = {
 }
 
 
-def yield_metric_checker_combinations(metric_checkers=array_api_metric_checkers):
-    for metric, checkers in metric_checkers.items():
-        for checker in checkers:
-            yield metric, checker
+def yield_metric_checker_combinations():
+    ALL_METRICS_INCL_PAIRWISE = {**ALL_METRICS, **PAIRWISE_METRICS}
+    for name in sorted(
+        set(ALL_METRICS_INCL_PAIRWISE) - METRICS_NOT_SUPPORTING_MIXED_NAMESPACE
+    ):
+        metric = ALL_METRICS_INCL_PAIRWISE[name]
+
+        if name in CLASSIFICATION_METRICS:
+            if name not in METRIC_UNDEFINED_BINARY:
+                yield metric, check_array_api_binary_classification_metric
+            if name not in METRIC_UNDEFINED_MULTICLASS:
+                yield metric, check_array_api_multiclass_classification_metric
+            if name in MULTILABELS_METRICS:
+                yield metric, check_array_api_multilabel_classification_metric
+
+        elif name in CONTINUOUS_CLASSIFICATION_METRICS:
+            if name not in METRIC_UNDEFINED_BINARY:
+                yield metric, check_array_api_binary_continuous_classification_metric
+            if name not in METRIC_UNDEFINED_MULTICLASS:
+                yield (
+                    metric,
+                    check_array_api_multiclass_continuous_classification_metric,
+                )
+            if name in CONTINUOUS_MULTILABEL_METRICS:
+                yield (
+                    metric,
+                    check_array_api_multilabel_continuous_classification_metric,
+                )
+
+        elif name in REGRESSION_METRICS:
+            yield metric, check_array_api_regression_metric
+            if name in MULTIOUTPUT_METRICS:
+                yield metric, check_array_api_regression_metric_multioutput
+
+        elif name in PAIRWISE_METRICS:
+            yield metric, check_array_api_metric_pairwise
 
 
 @pytest.mark.parametrize(
