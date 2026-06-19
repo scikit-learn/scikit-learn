@@ -2940,13 +2940,16 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
                 "sample_weight is not supported for sparse input."
             )
 
-        if sample_weight is None or is_sparse:
-            # Sparse inputs do not support sample_weight.
+        if is_sparse:
+            # Sparse inputs do not support sample_weight and `np.unique` with
+            # `axis=0` does not support sparse matrices.
+            n_unique = n_samples
+        elif sample_weight is None:
             n_unique = np.unique(X, axis=0).shape[0]
         else:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
             # Zero-weight samples are ignored and should not contribute to the
-            # unique support used to cap n_quantiles.
+            # unique values
             n_unique = np.unique(X[sample_weight != 0], axis=0).shape[0]
 
         if self.n_quantiles > n_unique:
