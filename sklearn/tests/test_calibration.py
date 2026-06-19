@@ -546,6 +546,7 @@ def test_calibration_curve():
         calibration_curve(y_true2, y_pred2, strategy="percentile")
 
 
+# TODO(1.12): remove warning filter, see PR #34326
 def test_calibration_curve_n_bins_future_warning():
     y_true = np.array([0, 0, 0, 1, 1, 1])
     y_pred = np.array([0.0, 0.1, 0.2, 0.8, 0.9, 1.0])
