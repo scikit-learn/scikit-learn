@@ -39,7 +39,9 @@ from sklearn.metrics import (
     zero_one_loss,
 )
 from sklearn.metrics._classification import (
+    _array_api_quantiles,
     _check_targets,
+    _weighted_calibration_curve,
     d2_brier_score,
     d2_log_loss_score,
 )
@@ -51,6 +53,7 @@ from sklearn.utils._array_api import (
 )
 from sklearn.utils._array_api import (
     get_namespace,
+    get_namespace_and_device,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._mocking import MockDataFrame
@@ -3133,6 +3136,81 @@ def test_brier_score_loss_warnings():
         )
 
 
+def test_weighted_calibration_curve():
+    y_true = np.array(["neg", "pos", "pos", "neg"])
+    y_prob = np.array([0.1, 0.2, 0.7, 0.8])
+    sample_weight = np.array([1, 3, 2, 4])
+
+    prob_true, prob_pred, bin_weights = _weighted_calibration_curve(
+        y_true,
+        y_prob,
+        pos_label="pos",
+        n_bins=2,
+        strategy="uniform",
+        sample_weight=sample_weight,
+    )
+
+    assert_allclose(prob_true, [0.75, 1 / 3])
+    assert_allclose(prob_pred, [0.175, 4.6 / 6])
+    assert_allclose(bin_weights, [4, 6])
+
+
+def test_array_api_quantiles_with_weights():
+    array = np.array([0.05, 0.2, 0.35, 0.6, 0.75, 0.95])
+    sample_weight = np.array([1, 3, 2, 1, 4, 2])
+    quantile_probas = np.linspace(0, 1, 5)
+    xp, _, device = get_namespace_and_device(array)
+
+    result = _array_api_quantiles(
+        array,
+        quantile_probas,
+        sample_weight=sample_weight,
+        xp=xp,
+        device=device,
+        float_dtype=np.float64,
+    )
+    expected = np.array([0.05, 0.2875, 0.5375, 0.8125, 0.95])
+
+    assert_allclose(result, expected)
+
+    result_scaled = _array_api_quantiles(
+        array,
+        quantile_probas,
+        sample_weight=0.3 * sample_weight,
+        xp=xp,
+        device=device,
+        float_dtype=np.float64,
+    )
+
+    assert_allclose(result_scaled, result)
+
+
+@pytest.mark.parametrize("strategy", ["uniform", "quantile"])
+@pytest.mark.parametrize("n_bins", [1, 3, 8])
+def test_weighted_calibration_curve_matches_calibration_curve(strategy, n_bins):
+    y_true = np.array([0, 1, 0, 1] * 5)
+    y_prob = np.linspace(0.01, 0.99, num=y_true.shape[0])
+
+    expected_prob_true, expected_prob_pred = calibration_curve(
+        y_true, y_prob, n_bins=n_bins, strategy=strategy
+    )
+    prob_true, prob_pred, bin_weights = _weighted_calibration_curve(
+        y_true, y_prob, n_bins=n_bins, strategy=strategy
+    )
+
+    if strategy == "quantile":
+        bins = np.percentile(y_prob, np.linspace(0, 100, n_bins + 1))
+    else:
+        bins = np.linspace(0, 1, n_bins + 1)
+    bin_ids = np.searchsorted(bins[1:-1], y_prob)
+    expected_bin_weights = np.bincount(bin_ids, minlength=n_bins)
+    expected_bin_weights = expected_bin_weights[expected_bin_weights != 0]
+
+    assert_allclose(prob_true, expected_prob_true)
+    assert_allclose(prob_pred, expected_prob_pred)
+    assert_allclose(bin_weights, expected_bin_weights)
+
+
 def test_brier_calibration_error_calibrated_predictions():
     y_true = np.array([0, 0, 0, 1] + [0, 1, 1, 1])
     y_proba = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
@@ -3140,34 +3218,36 @@ def test_brier_calibration_error_calibrated_predictions():
     assert brier_calibration_error(y_true, y_proba) == pytest.approx(0.0)
 
 
-def test_brier_calibration_error_uncalibrated_predictions():
-    y_true = np.array([0, 0, 0, 0] + [1, 1, 1, 1])
-    y_proba = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
+def _reference_brier_calibration_error(y_true, y_proba, n_bins):
+    """Independent NumPy reference for the unweighted Brier calibration error.
 
-    assert brier_calibration_error(y_true, y_proba) == pytest.approx(0.0625)
+    Quantile (equal-mass) bins are built with linear-interpolation percentiles,
+    then the squared calibration gaps are averaged weighting each bin by its
+    number of samples.
+    """
+    edges = np.percentile(y_proba, np.linspace(0, 100, n_bins + 1))
+    bin_ids = np.searchsorted(edges[1:-1], y_proba)
+    error = total = 0.0
+    for b in np.unique(bin_ids):
+        mask = bin_ids == b
+        weight = np.count_nonzero(mask)
+        error += weight * (y_true[mask].mean() - y_proba[mask].mean()) ** 2
+        total += weight
+    return error / total
 
 
-def test_brier_calibration_error_matches_calibration_curve():
-    n_groups = 5
-    n_samples_per_bin = 20
-    rng = check_random_state(0)
-    y_proba = np.concatenate(
-        [
-            rng.uniform(i / n_groups, (i + 1) / n_groups, size=n_samples_per_bin)
-            for i in range(n_groups)
-        ]
-    )
+# `n_samples` includes values not divisible by the resulting bin count, where a
+# (wrong) unweighted average over bins would disagree with the mass-weighted one.
+@pytest.mark.parametrize("n_samples", [12, 40, 53, 128])
+def test_brier_calibration_error_matches_reference(n_samples):
+    # Cross-check the full pipeline (binning + mass-weighted aggregation) against
+    # an independent reference.
+    rng = check_random_state(n_samples)
+    y_proba = rng.uniform(size=n_samples)
     y_true = rng.binomial(1, y_proba)
-    permutation = rng.permutation(y_true.shape[0])
-    y_true = y_true[permutation]
-    y_proba = y_proba[permutation]
-    n_bins = int(np.ceil(np.cbrt(y_true.shape[0])))
+    n_bins = int(np.ceil(np.cbrt(n_samples)))
 
-    prob_true, prob_pred = calibration_curve(
-        y_true, y_proba, n_bins=n_bins, strategy="quantile"
-    )
-    expected = np.mean((prob_true - prob_pred) ** 2)
-
+    expected = _reference_brier_calibration_error(y_true, y_proba, n_bins)
     assert brier_calibration_error(y_true, y_proba) == pytest.approx(expected)
 
 
@@ -3229,7 +3309,7 @@ def test_brier_calibration_error_sample_weights():
             {},
             "brier_calibration_error only supports binary classification",
         ),
-        ("multiclass-target", {}, "inferred from y_true is multiclass"),
+        ("multiclass-target", {}, "Only binary classification is supported"),
         ("nan-target-pos-label", {"pos_label": 1}, "Input contains NaN"),
     ],
 )
@@ -3257,25 +3337,20 @@ def test_brier_calibration_error_raises(case, kwargs, err_msg):
             brier_calibration_error(y_true, y_proba, **kwargs)
 
 
-def test_brier_calibration_error_auto_bin_count():
-    y_true = np.array([0, 1, 0, 1])
-    y_proba = np.array([0.1, 0.3, 0.6, 0.9])
-
-    assert brier_calibration_error(y_true, y_proba) == pytest.approx(0.07625)
-
-
 def test_brier_calibration_error_auto_bin_count_perfect_cube():
+    # 64 = 4**3 is a boundary where libm `pow` can overshoot the cube root; the
+    # metric must use ceil(cbrt(64)) = 4 bins (np.cbrt avoids the overshoot that
+    # would give 5). Pin this by matching the 4-bin reference and *not* the 5-bin.
     y_true = np.array([0, 1] * 32)
     y_proba = np.linspace(0.01, 0.99, num=64)
 
-    # A perfect cube number of samples should produce 4 bins, not 5.
-    n_bins = int(np.ceil(np.cbrt(y_true.shape[0])))
-    prob_true, prob_pred = calibration_curve(
-        y_true, y_proba, n_bins=n_bins, strategy="quantile"
+    result = brier_calibration_error(y_true, y_proba)
+    assert result == pytest.approx(
+        _reference_brier_calibration_error(y_true, y_proba, 4)
     )
-    expected = np.mean((prob_true - prob_pred) ** 2)
-
-    assert brier_calibration_error(y_true, y_proba) == pytest.approx(expected)
+    assert result != pytest.approx(
+        _reference_brier_calibration_error(y_true, y_proba, 5)
+    )
 
 
 def test_brier_calibration_error_repeated_probabilities():

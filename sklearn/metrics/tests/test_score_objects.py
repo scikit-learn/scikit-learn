@@ -27,6 +27,7 @@ from sklearn.metrics import (
     accuracy_score,
     average_precision_score,
     balanced_accuracy_score,
+    brier_calibration_error,
     brier_score_loss,
     check_scoring,
     f1_score,
@@ -445,6 +446,31 @@ def test_classification_multiclass_scores(scorer_name, metric):
     score = get_scorer(scorer_name)(clf, X_test, y_test)
     expected_score = metric(y_test, clf.predict(X_test))
     assert score == pytest.approx(expected_score)
+
+
+def test_brier_calibration_error_scorer_value():
+    # The scorer must return the negated metric evaluated on the positive-class
+    # probabilities, and route `pos_label` to both the response and the metric.
+    X, y = make_classification(n_classes=2, n_samples=60, random_state=0)
+    y = np.where(y == 1, "spam", "ham")
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, random_state=0, stratify=y
+    )
+    clf = LogisticRegression().fit(X_train, y_train)
+
+    pos_label = "spam"
+    pos_col = list(clf.classes_).index(pos_label)
+    expected = -brier_calibration_error(
+        y_test, clf.predict_proba(X_test)[:, pos_col], pos_label=pos_label
+    )
+
+    scorer = make_scorer(
+        brier_calibration_error,
+        greater_is_better=False,
+        response_method="predict_proba",
+        pos_label=pos_label,
+    )
+    assert scorer(clf, X_test, y_test) == pytest.approx(expected)
 
 
 def test_brier_calibration_error_scorer_multiclass_error():
