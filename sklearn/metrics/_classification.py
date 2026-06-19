@@ -552,6 +552,8 @@ def confusion_matrix(
     y_type, unique_labels, y_true, y_pred, sample_weight = _check_targets(
         y_true, y_pred, sample_weight, xp=np, device="cpu"
     )
+    if sample_weight is None:
+        sample_weight = np.ones(y_true.shape[0], dtype=np.int64)
 
     y_true, y_pred = attach_unique(y_true, y_pred)
     if y_type not in ("binary", "multiclass"):
