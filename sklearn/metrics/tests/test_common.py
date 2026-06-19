@@ -609,8 +609,8 @@ METRICS_WITHOUT_SAMPLE_WEIGHT = {
 
 # These metrics support `sample_weight`, but integer weights are not equivalent
 # to expanding the dataset by repeating samples because their definition depends
-# on the number of samples. In particular, `brier_calibration_error` uses
-# `ceil(cbrt(n_samples))` bins, so repetition can change the quantile bins.
+# on the number of samples. In particular, `brier_calibration_error` sets the
+# number of bins to `ceil(cbrt(n_samples))` before computing quantile bins.
 METRICS_WITH_SAMPLE_WEIGHT_NOT_EQUIVALENT_TO_REPETITION = {
     "brier_calibration_error",
 }
