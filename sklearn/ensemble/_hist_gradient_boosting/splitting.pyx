@@ -559,7 +559,7 @@ cdef class Splitter:
                     # category.
                     for missing_go_to_left in range(has_missing_values[feature_idx] + 1):
 
-                        self._find_best_bin_to_split_left_to_right(
+                        self._find_best_bin_to_split_numerical(
                             feature_idx, has_missing_values[feature_idx],
                             histograms, n_samples, sum_gradients, sum_hessians,
                             value, monotonic_cst[feature_idx],
@@ -611,7 +611,7 @@ cdef class Splitter:
                 best_split_info_idx = split_info_idx
         return best_split_info_idx
 
-    cdef void _find_best_bin_to_split_left_to_right(
+    cdef void _find_best_bin_to_split_numerical(
             Splitter self,
             unsigned int feature_idx,
             uint8_t has_missing_values,
