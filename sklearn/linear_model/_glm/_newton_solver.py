@@ -327,7 +327,7 @@ class NewtonSolver(ABC):
             #   - phi(0) = phi_0
             #   - phi(alpha) = phi_1
             #   - phi'(0) = phi_prime_0
-            # We fit a quadratic polynomial though those 3 points and take the minimum
+            # We fit a quadratic polynomial through those 3 points and take the minimum
             # alpha as next trial step length.
             # See Nocedal & Wright 2nd ed. Chapter 3.5, page 58, Eq 3.58.
             phi_1 = self.loss_value
