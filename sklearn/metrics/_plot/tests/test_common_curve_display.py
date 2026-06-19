@@ -128,6 +128,8 @@ def _check_pos_label_statistics(
     check_metric(display, constructor_name, pos_label)
 
 
+# TODO(1.12): remove warning filter, see PR #34326
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "Display",
     [CalibrationDisplay, DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay],
@@ -154,6 +156,8 @@ def test_display_curve_error_binary_classifier(pyplot, data, data_binary, Displa
         Display.from_estimator(clf, X, y)
 
 
+# TODO(1.12): remove warning filter, see PR #34326
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "Display",
     [CalibrationDisplay, DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay],
@@ -316,6 +320,8 @@ def test_display_curve_not_fitted_errors(pyplot, data_binary, clf, Display):
         assert disp.estimator_name == model.__class__.__name__
 
 
+# TODO(1.12): remove warning filter, see PR #34326
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "Display",
     [CalibrationDisplay, DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay],
