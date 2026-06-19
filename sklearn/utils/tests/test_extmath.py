@@ -44,7 +44,6 @@ from sklearn.utils.extmath import (
     row_norms,
     safe_sparse_dot,
     softmax,
-    stable_cumsum,
     svd_flip,
     weighted_mode,
 )
@@ -993,11 +992,6 @@ def test_softmax():
     exp_X = np.exp(X)
     sum_exp_X = np.sum(exp_X, axis=1).reshape((-1, 1))
     assert_array_almost_equal(softmax(X), exp_X / sum_exp_X)
-
-
-def test_stable_cumsum_deprecation():
-    with pytest.warns(FutureWarning, match="stable_cumsum.+is deprecated"):
-        stable_cumsum([1, 2, 3])
 
 
 @pytest.mark.parametrize(
