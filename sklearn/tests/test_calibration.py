@@ -513,8 +513,6 @@ def test_temperature_scaling_input_validation(global_dtype):
     assert_allclose(y_pred1, y_pred2)
 
 
-# TODO(1.12): remove warning filter, see PR #34326
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_calibration_curve():
     """Check calibration_curve function"""
     y_true = np.array([0, 0, 0, 1, 1, 1])
@@ -546,7 +544,7 @@ def test_calibration_curve():
         calibration_curve(y_true2, y_pred2, strategy="percentile")
 
 
-# TODO(1.12): remove warning filter, see PR #34326
+# TODO(1.12): remove, see PR #34326
 def test_calibration_curve_n_bins_future_warning():
     y_true = np.array([0, 0, 0, 1, 1, 1])
     y_pred = np.array([0.0, 0.1, 0.2, 0.8, 0.9, 1.0])
@@ -936,8 +934,6 @@ def test_calibration_display_ref_line(pyplot, iris_data_binary):
     assert labels.count("Perfectly calibrated") == 1
 
 
-# TODO(1.12): remove warning filter, see PR #34326
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("dtype_y_str", [str, object])
 def test_calibration_curve_pos_label_error_str(dtype_y_str):
     """Check error message when a `pos_label` is not specified with `str` targets."""
