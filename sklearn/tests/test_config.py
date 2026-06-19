@@ -22,7 +22,7 @@ def test_config_context():
         "enable_metadata_routing": False,
         "skip_parameter_validation": False,
         "sparse_interface": "spmatrix",
-        "progressbar_by_default": True,
+        "progressbar_by_default": False,  # disabled for tests
     }
 
     # Not using as a context manager affects nothing
@@ -42,7 +42,7 @@ def test_config_context():
             "enable_metadata_routing": False,
             "skip_parameter_validation": False,
             "sparse_interface": "spmatrix",
-            "progressbar_by_default": True,
+            "progressbar_by_default": False,  # disabled for tests
         }
     assert get_config()["assume_finite"] is False
 
@@ -79,7 +79,7 @@ def test_config_context():
         "enable_metadata_routing": False,
         "skip_parameter_validation": False,
         "sparse_interface": "spmatrix",
-        "progressbar_by_default": True,
+        "progressbar_by_default": False,  # disabled for tests
     }
 
     # No positional arguments
