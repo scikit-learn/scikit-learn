@@ -489,6 +489,7 @@ cdef class Splitter:
             Y_DTYPE_C feature_fraction_per_split = self.feature_fraction_per_split
             uint8_t [:] subsample_mask  # same as npy_bool
             int n_subsampled_features
+            uint8_t missing_go_to_left
 
         has_interaction_cst = allowed_features is not None
         if has_interaction_cst:
