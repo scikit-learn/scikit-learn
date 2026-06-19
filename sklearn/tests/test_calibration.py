@@ -548,6 +548,19 @@ def test_calibration_curve():
         calibration_curve(y_true2, y_pred2, strategy="percentile")
 
 
+# TODO(1.12): remove, see PR #33908
+def test_calibration_curve_strategy_future_warning():
+    y_true = np.array([0, 0, 0, 1, 1, 1])
+    y_pred = np.array([0.0, 0.1, 0.2, 0.8, 0.9, 1.0])
+    with pytest.warns(FutureWarning, match="strategy"):
+        prob_true_default, prob_pred_default = calibration_curve(y_true, y_pred)
+    prob_true_explicit, prob_pred_explicit = calibration_curve(
+        y_true, y_pred, strategy="uniform"
+    )
+    assert_allclose(prob_true_default, prob_true_explicit)
+    assert_allclose(prob_pred_default, prob_pred_explicit)
+
+
 @pytest.mark.parametrize(
     "y_true, y_pred, strategy, expected_n_bins",
     [
