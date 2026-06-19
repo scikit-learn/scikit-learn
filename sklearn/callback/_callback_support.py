@@ -139,7 +139,8 @@ def callback_management_context(estimator):
         _progressbar_by_default()
         and not hasattr(estimator, "_skl_callbacks")
         and not hasattr(estimator, "_parent_callback_ctx")
-        and not hasattr(estimator, "verbose")
+        # Don't show progress bars if verbosity is enabled
+        and (not hasattr(estimator, "verbose") or not estimator.verbose)
     ):
         from sklearn.callback import ProgressBar
 
