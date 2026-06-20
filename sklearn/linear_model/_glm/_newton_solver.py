@@ -719,7 +719,9 @@ class NewtonCholeskySolver(NewtonSolver):
         if self.has_already_warned and not self.linear_loss.base_loss.is_multiclass:
             # X might be singular, try to find minimum norm solution.
             if self.linear_loss.fit_intercept:
-                Xe = np.concat((X, np.ones((X.shape[0], 1), dtype=X.dtype)), axis=1)
+                Xe = np.concatenate(
+                    (X, np.ones((X.shape[0], 1), dtype=X.dtype)), axis=1
+                )
             else:
                 Xe = X
             eps = np.finfo(X.dtype).eps
