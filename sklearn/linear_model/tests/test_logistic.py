@@ -946,13 +946,13 @@ def test_logistic_regression_solvers_multiclass_unpenalized(
     """Test and compare solver results for unpenalized multinomial multiclass."""
     # We want to avoid perfect separation.
     n_samples, n_features, n_classes = 100, 4, 3
-    rng = np.random.RandomState(global_random_seed)
+    rng = np.random.default_rng(global_random_seed)
     X = make_low_rank_matrix(
         n_samples=n_samples,
         n_features=n_features + fit_intercept,
         effective_rank=n_features + fit_intercept,
         tail_strength=0.1,
-        random_state=rng,
+        random_state=rng.integers(2**31),
     )
     if fit_intercept:
         X[:, -1] = 1
@@ -968,10 +968,7 @@ def test_logistic_regression_solvers_multiclass_unpenalized(
 
     loss = HalfMultinomialLoss(n_classes=n_classes)
     proba = loss.link.inverse(raw_prediction)
-    # Only newer numpy version (1.22) support more dimensions on pvals.
-    y = np.zeros(n_samples)
-    for i in range(n_samples):
-        y[i] = np.argwhere(rng.multinomial(n=1, pvals=proba[i, :]))[0, 0]
+    y = np.nonzero(rng.multinomial(n=1, pvals=proba))[1]
 
     tol = 1e-9
     params = dict(fit_intercept=fit_intercept, random_state=global_random_seed)
