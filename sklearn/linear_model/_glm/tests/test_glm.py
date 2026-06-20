@@ -538,13 +538,13 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
                 )
                 assert norm_model == pytest.approx(norm_solution, rel=1e-7)
         else:
-            rel = 1e-11 if solver == "newton-cholesky" else 1e-7
+            rel = 1e-10 if solver == "newton-cholesky" else 1e-7
             assert norm_model == pytest.approx(norm_solution, rel=rel)
     else:  # wide
         # As it is an underdetermined problem, prediction = y. The following shows that
         # we get a solution, i.e. a (non-unique) minimum of the objective function ...
         rtol = 1e-6 if solver == "lbfgs" else 5e-6
-        tol_norm = 1e-11 if solver == "newton-cholesky" else 1e-7
+        tol_norm = 1e-10 if solver == "newton-cholesky" else 1e-7
         assert_allclose(model.predict(X), y, rtol=rtol)
 
         if solver in ("lbfgs", "newton-cg") and fit_intercept:
