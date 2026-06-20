@@ -951,12 +951,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
-    CalibratedClassifierCV: {
-        # "check_array_api_mixed_inputs": "mixed array API input support not added yet",
-        # "check_array_api_string_and_numeric_inputs": (
-        #     "mixed string and numeric array API input support not added yet"
-        # ),
-    },
     ColumnTransformer: {
         "check_estimators_empty_data_messages": "FIXME",
         "check_estimators_nan_inf": "FIXME",
@@ -989,12 +983,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
-    },
-    GaussianMixture: {
-        # "check_array_api_mixed_inputs": "mixed array API input support not added yet",
-        # "check_array_api_string_and_numeric_inputs": (
-        #     "mixed string and numeric array API input support not added yet"
-        # ),
     },
     GaussianNB: {
         "check_array_api_mixed_inputs": "mixed array API input support not added yet",
