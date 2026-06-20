@@ -89,6 +89,9 @@ into NumPy arrays using :func:`numpy.asarray` (or :func:`numpy.array`).
 While this will successfully convert some array API inputs (e.g., JAX array),
 we generally recommend setting `array_api_dispatch=True` when using array API inputs.
 This is because NumPy conversion can often fail, e.g., torch tensor allocated on GPU.
+Also note that output array will be NumPy when `array_api_dispatch=False` whereas
+when `array_api_dispatch=True` output array will depend on input array (see
+:ref:`input_output_array_api` for details).
 
 Example usage
 =============
@@ -260,17 +263,25 @@ Tools
 - :func:`model_selection.train_test_split`
 - :func:`utils.check_consistent_length`
 
+.. _input_output_array_api:
+
 Input and output array type handling
 ====================================
 
 Estimators and scoring functions are able to accept input arrays
 from different array libraries and/or devices. When a mixed set of input arrays is
-passed, scikit-learn converts arrays as needed to make them all consistent.
+passed, scikit-learn converts arrays as needed to make them all consistent. The
+following section describes how input and output array types are handled
+when `array_api_dispatch=True`.
 
 For estimators, the rule is **"everything follows** `X` **"** - mixed array inputs are
 converted so that they all match the array library and device of `X`.
 For scoring functions the rule is **"everything follows** `y_pred` **"** - mixed array
 inputs are converted so that they all match the array library and device of `y_pred`.
+Mixed array input support extends to string `y` with other numeric array input, for
+estimators and scoring functions that accept string `y` (note string type is only
+supported by NumPy). Note that the estimator attribute `classes_` will always remain
+in the same array library as `y`, in order to represent string classes.
 
 When a function or method has been called with array API compatible inputs, the
 convention is to return arrays from the same array library and on the same
