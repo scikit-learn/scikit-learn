@@ -485,13 +485,13 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
         intercept = coef[-1]
         coef = coef[:-1]
         # Put one intercept term into the new X, the other one is the "fit_intercept".
-        X = np.concat((X, X, np.ones((n_samples, 1))), axis=1)
+        X = np.concatenate((X, X, np.ones((n_samples, 1))), axis=1)
         # We omit the factor of 1/2 such that both intercept terms have the same
         # effective design matrix column (all ones).
         # We will need to correct for this factor of 2 later.
     else:
         intercept = 0
-        X = 0.5 * np.concat((X, X), axis=1)
+        X = 0.5 * np.concatenate((X, X), axis=1)
     assert np.linalg.matrix_rank(X) <= min(n_samples, n_features)
 
     with warnings.catch_warnings():
@@ -1143,7 +1143,7 @@ def test_newton_cholesky_fallback_to_lbfgs():
     # LBFGS. This should converge with the same number of iterations as the
     # above call of lbfgs since the Newton-Cholesky triggers the fallback
     # before completing the first iteration, for the problem setting at hand.
-    m_nc = TweedieRegressor(solver="newton-cholesky", **params, verbose=3)
+    m_nc = TweedieRegressor(solver="newton-cholesky", **params)
     with ignore_warnings(category=ConvergenceWarning):
         m_nc.fit(X, y)
         n_iter_nc = m_nc.n_iter_
