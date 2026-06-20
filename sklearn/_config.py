@@ -21,6 +21,7 @@ _global_config = {
     "enable_metadata_routing": False,
     "skip_parameter_validation": False,
     "sparse_interface": "spmatrix",
+    "disable_warnings": False,
 }
 _threadlocal = threading.local()
 
@@ -73,6 +74,7 @@ def set_config(
     enable_metadata_routing=None,
     skip_parameter_validation=None,
     sparse_interface=None,
+    disable_warnings=None,
 ):
     """Set global scikit-learn configuration.
 
@@ -243,6 +245,8 @@ def set_config(
         local_config["skip_parameter_validation"] = skip_parameter_validation
     if sparse_interface is not None:
         local_config["sparse_interface"] = sparse_interface
+    if disable_warnings is not None:
+        local_config["disable_warnings"] = disable_warnings
 
 
 @contextmanager
@@ -259,6 +263,7 @@ def config_context(
     enable_metadata_routing=None,
     skip_parameter_validation=None,
     sparse_interface=None,
+    disable_warnings=None,
 ):
     """Context manager to temporarily change the global scikit-learn configuration.
 
@@ -427,6 +432,7 @@ def config_context(
         enable_metadata_routing=enable_metadata_routing,
         skip_parameter_validation=skip_parameter_validation,
         sparse_interface=sparse_interface,
+        disable_warnings=disable_warnings,
     )
 
     try:
