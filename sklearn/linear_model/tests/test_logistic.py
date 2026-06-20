@@ -5,13 +5,12 @@ import warnings
 
 import numpy as np
 import pytest
+import scipy
 from numpy.testing import (
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
 )
-from scipy import sparse
-from scipy.linalg import svd
 
 from sklearn import config_context
 from sklearn._loss import HalfMultinomialLoss
@@ -253,7 +252,7 @@ def test_sparsify(coo_container):
     pred_d_d = clf.decision_function(X)
 
     clf.sparsify()
-    assert sparse.issparse(clf.coef_)
+    assert scipy.sparse.issparse(clf.coef_)
     pred_s_d = clf.decision_function(X)
 
     sp_data = coo_container(X)
@@ -956,7 +955,7 @@ def test_logistic_regression_solvers_multiclass_unpenalized(
     )
     if fit_intercept:
         X[:, -1] = 1
-    U, s, Vt = svd(X)
+    U, s, Vt = scipy.linalg.svd(X)
     assert np.all(s > 1e-3)  # to be sure that X is not singular
     assert np.max(s) / np.min(s) < 100  # condition number of X
     if fit_intercept:
@@ -1007,6 +1006,27 @@ def test_logistic_regression_solvers_multiclass_unpenalized(
                 rtol=5e-3 if (solver_1 == "saga" or solver_2 == "saga") else 1e-3,
                 err_msg=f"{solver_1} vs {solver_2}",
             )
+
+    # How about the minimum norm solution? See
+    # test_glm_regression_unpenalized_hstacked_X.
+    X2 = np.concatenate((X, X), axis=1)
+    with ignore_warnings(category=scipy.linalg.LinAlgWarning):
+        regressors2 = {
+            solver: LogisticRegression(
+                C=np.inf,
+                solver=solver,
+                tol=solver_tol.get(solver, tol),
+                max_iter=solver_max_iter.get(solver, 100),
+                **params,
+            ).fit(X2, y)
+            for solver in set(SOLVERS) - set(["liblinear"])
+        }
+    for solver in regressors2:
+        assert_allclose(
+            regressors2[solver].coef_,
+            0.5 * np.tile(regressors["lbfgs"].coef_, (1, 2)),
+            rtol=1e-3,
+        )
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
@@ -2410,7 +2430,7 @@ def test_large_sparse_matrix(solver, csr_container):
     # Non-regression test for pull-request #21093.
 
     # generate sparse matrix with int64 indices
-    X = csr_container(sparse.rand(20, 10, random_state=42))
+    X = csr_container(scipy.sparse.rand(20, 10, random_state=42))
     for attr in ["indices", "indptr"]:
         setattr(X, attr, getattr(X, attr).astype("int64"))
     rng = np.random.RandomState(42)

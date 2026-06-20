@@ -544,7 +544,7 @@ class NewtonCholeskySolver(NewtonSolver):
             # This is done by the usual freedom of a (overparametrized) multinomial to
             # add a constant to all classes which doesn't change predictions.
             n_classes = self.linear_loss.base_loss.n_classes
-            coef = self.coef.reshape(n_classes, -1, order="F")  # easier as 2d
+            coef = self.coef.reshape(n_classes, -1, order="F")  # easier as 2d view
             coef -= coef[-1, :]  # coef -= coef of last class
         elif self.is_multinomial_with_intercept:
             # See inner_solve. Same as above, but only for the intercept.
@@ -716,7 +716,7 @@ class NewtonCholeskySolver(NewtonSolver):
             return
 
     def finalize(self, X, y, sample_weight):
-        if self.has_already_warned:
+        if self.has_already_warned and not self.linear_loss.base_loss.is_multiclass:
             # X might be singular, try to find minimum norm solution.
             if self.linear_loss.fit_intercept:
                 Xe = np.concat((X, np.ones((X.shape[0], 1), dtype=X.dtype)), axis=1)
@@ -739,7 +739,7 @@ class NewtonCholeskySolver(NewtonSolver):
             # We convert now to this convention. Note that it does not change
             # the predicted probabilities.
             n_classes = self.linear_loss.base_loss.n_classes
-            self.coef = self.coef.reshape(n_classes, -1, order="F")
+            self.coef = self.coef.reshape(n_classes, -1, order="F")  # easier as 2d
             self.coef -= np.mean(self.coef, axis=0)
         elif self.is_multinomial_with_intercept:
             # Only the intercept needs an update to the symmetric parametrization.
