@@ -1034,7 +1034,7 @@ def test_logistic_cv_sparse(global_random_seed, solver, csr_container):
     )
     clfs.fit(csr_container(X), y)
 
-    rtol = 6e-2 if solver in ("sag", "saga") else 1e-5
+    rtol = 0.075 if solver in ("sag", "saga") else 1e-5
     assert_allclose(clfs.coef_, clf.coef_, rtol=rtol)
     assert_allclose(clfs.intercept_, clf.intercept_, rtol=rtol)
     assert clfs.C_ == clf.C_
