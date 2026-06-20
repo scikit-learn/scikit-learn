@@ -1,0 +1,5 @@
+- Fixed a typo in the Matérn kernel formula for :math:`\nu=5/2` in the user guide.
+  The quadratic term's denominator was incorrectly written as :math:`3l` instead of
+  :math:`3l^2`, which is inconsistent with the reference [RW2006]_ and the actual
+  implementation.
+  By :user:`AYUSH PALLAV <AYUSHPALLAV1>`.

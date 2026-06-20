@@ -1,0 +1,7 @@
+- Fixed an off-by-one indexing error in the docstring of
+  :func:`sklearn.metrics.pairwise.paired_manhattan_distances`. The description
+  stated that distances are computed up to ``(X[n_samples], Y[n_samples])``,
+  which would cause an :class:`IndexError` in Python since valid indices for an
+  array of ``n_samples`` elements range from ``0`` to ``n_samples - 1``. The
+  docstring now correctly reads ``(X[n_samples - 1], Y[n_samples - 1])``.
+  By :user:`AYUSH PALLAV <AYUSHPALLAV1>`.
