@@ -3,7 +3,7 @@
 This module contains weight boosting estimators for both classification and
 regression.
 
-The module structure is the following:
+The module structure is as follows:
 
 - The `BaseWeightBoosting` base class implements a common ``fit`` method
   for all the estimators in the module. Regression and classification
@@ -641,7 +641,7 @@ class AdaBoostClassifier(
         score : ndarray of shape of (n_samples, k)
             The decision function of the input samples. The order of
             outputs is the same as that of the :term:`classes_` attribute.
-            Binary classification is a special cases with ``k == 1``,
+            Binary classification is a special case with ``k == 1``,
             otherwise ``k==n_classes``. For binary classification,
             values closer to -1 or 1 mean more like the first or second
             class in ``classes_``, respectively.
@@ -686,8 +686,8 @@ class AdaBoostClassifier(
         ------
         score : generator of ndarray of shape (n_samples, k)
             The decision function of the input samples. The order of
-            outputs is the same of that of the :term:`classes_` attribute.
-            Binary classification is a special cases with ``k == 1``,
+            outputs are the same as those of the :term:`classes_` attribute.
+            Binary classification is a special case with ``k == 1``,
             otherwise ``k==n_classes``. For binary classification,
             values closer to -1 or 1 mean more like the first or second
             class in ``classes_``, respectively.
@@ -725,7 +725,7 @@ class AdaBoostClassifier(
     def _compute_proba_from_decision(decision, n_classes):
         """Compute probabilities from the decision function.
 
-        This is based eq. (15) of [1] where:
+        This is based on Eq. (15) of [1] where:
             p(y=c|X) = exp((1 / K-1) f_c(X)) / sum_k(exp((1 / K-1) f_k(X)))
                      = softmax((1 / K-1) * f(X))
 
