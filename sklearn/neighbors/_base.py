@@ -19,7 +19,7 @@ from sklearn.exceptions import DataConversionWarning, EfficiencyWarning
 from sklearn.metrics import DistanceMetric, pairwise_distances_chunked
 from sklearn.metrics._pairwise_distances_reduction import ArgKmin, RadiusNeighbors
 from sklearn.metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
-from sklearn.neighbors._ball_tree import BallTree
+from sklearn.neighbors._ball_tree import BallTreeh
 from sklearn.neighbors._kd_tree import KDTree
 from sklearn.utils import _align_api_if_sparse, check_array, gen_even_slices, get_tags
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
@@ -1268,7 +1268,7 @@ class RadiusNeighborsMixin:
             n_jobs = effective_n_jobs(self.n_jobs)
             delayed_query = delayed(self._tree.query_radius)
             chunked_results = Parallel(n_jobs, prefer="threads")(
-                delayed_query(X[s], radius, return_distance, sort_results=sort_results)
+                delayed_query(X[s], radius[s] if np.ndim(radius) > 0 else radius, return_distance, sort_results=sort_results)
                 for s in gen_even_slices(X.shape[0], n_jobs)
             )
             if return_distance:
