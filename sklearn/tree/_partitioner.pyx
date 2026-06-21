@@ -139,6 +139,7 @@ cdef class DensePartitioner:
 
         self.n_missing = n_missing
         self.n_categories = self.n_categories_in_feature[current_feature]
+        end_non_missing = self.end - n_missing
 
         if n_missing == self.end - self.start:
             # if all the values at this point are missing, the values are sorted by default
@@ -150,7 +151,7 @@ cdef class DensePartitioner:
             simultaneous_sort(
                 &feature_values[self.start],
                 &samples[self.start],
-                self.end - self.start - n_missing,
+                end_non_missing - self.start,
                 use_three_way_partition=True,
             )
 
@@ -159,15 +160,17 @@ cdef class DensePartitioner:
             if n_missing > 0:
                 return False
 
-            # end sample index that excludes the missing values
-            end_non_missing = self.end - n_missing
-
             # This feature is considered constant (max - min <= FEATURE_THRESHOLD)
-            return feature_values[end_non_missing - 1] <= feature_values[self.start] + FEATURE_THRESHOLD
+            return (
+                feature_values[end_non_missing - 1]
+                <= feature_values[self.start] + FEATURE_THRESHOLD
+            )
         else:
             # a categorical feature
             self._breiman_sort_categories(self.n_categories)
-            return feature_values[self.start] == feature_values[self.end - 1]
+            if n_missing > 0:
+                return False
+            return feature_values[self.start] == feature_values[end_non_missing - 1]
 
     cdef void _breiman_sort_categories(self, intp_t nc) noexcept nogil:
         """
@@ -194,6 +197,7 @@ cdef class DensePartitioner:
             float32_t* feature_values = &self.feature_values[0]
             intp_t* samples = &self.samples[0]
             intp_t c, r, p, new_p
+            intp_t end_non_missing = self.end - self.n_missing
             float64_t w = 1.
 
         memset(means, 0, nc * sizeof(float64_t))
@@ -201,7 +205,7 @@ cdef class DensePartitioner:
         memset(weighted_counts, 0, nc * sizeof(float64_t))
 
         # compute counts, weighted_counts and means
-        for p in range(self.start, self.end):
+        for p in range(self.start, end_non_missing):
             c = <int> feature_values[p]
             counts[c] += 1
             if self.sample_weight is not None:
@@ -230,7 +234,7 @@ cdef class DensePartitioner:
         # they are ordered by the mean of the category
         # while ensuring samples of the same categories are contiguous
         p = self.start
-        while p < self.end:
+        while p < end_non_missing:
             c = <int> feature_values[p]
             new_p = offsets[c]
             if new_p > p:
@@ -461,13 +465,18 @@ cdef class DensePartitioner:
         From the bitset, one can split the samples into
         left and right child.
 
-        Note: for missing values, this assumes the missing values are on the right-side of
-        the array.
+        Missing samples are routed by ``missing_go_to_left`` and are not encoded
+        in the categorical bitset.
         """
+        cdef intp_t n_left_non_missing = position - self.start
+
+        if missing_go_to_left:
+            n_left_non_missing -= self.n_missing
+
         # if we split categorically, compute a bitset and populate the output
         if self.n_categories > 0:
             split_pos_to_bitset_words(
-                position - self.start,  # since offset of start is possible
+                n_left_non_missing,
                 &self.sorted_cat[0],
                 self.n_categories,
                 &self.counts[0],
