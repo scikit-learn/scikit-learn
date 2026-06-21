@@ -51,6 +51,7 @@ from sklearn.utils.validation import (
     _check_categorical_features,
     _check_n_features,
     _check_sample_weight,
+    _get_feature_names,
     assert_all_finite,
     check_array,
     check_is_fitted,
@@ -247,10 +248,22 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.is_categorical_ = _check_categorical_features(X, self.categorical_features)
         has_categorical = self.is_categorical_ is not None
 
-        if issparse(X) and has_categorical:
-            raise NotImplementedError(
-                "Categorical features not supported with sparse inputs"
-            )
+        if has_categorical:
+            if issparse(X):
+                raise NotImplementedError(
+                    "Categorical features not supported with sparse inputs"
+                )
+
+            feature_names_in = _get_feature_names(X) if check_input else None
+            # Categorical feature selection must see the original container for
+            # names/dtypes, but tree fitting needs numeric values. Encode selected
+            # columns before numeric validation, preserving column order.
+            self._fit_categorical_features(X)
+            X = self._transform_categorical_features(X)
+            if not check_input:
+                X = np.asarray(X, dtype=np.float32)
+        else:
+            self._categorical_encoder = None
 
         if check_input:
             # Need to validate separately here.
@@ -263,29 +276,12 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 dtype=np.float32, accept_sparse="csc", ensure_all_finite=False
             )
             check_y_params = dict(ensure_2d=False, dtype=None)
-            if has_categorical:
-                validate_data(self, X, reset=True, skip_check_array=True)
-            else:
-                X, y = validate_data(
-                    self, X, y, validate_separately=(check_X_params, check_y_params)
-                )
+            X, y = validate_data(
+                self, X, y, validate_separately=(check_X_params, check_y_params)
+            )
+            if has_categorical and feature_names_in is not None:
+                self.feature_names_in_ = feature_names_in
 
-        if has_categorical:
-            # Categorical feature selection must see the original container for
-            # names/dtypes, but tree fitting needs numeric values. Encode selected
-            # columns before the final numeric validation, preserving column order.
-            self._fit_categorical_features(X)
-            X = self._transform_categorical_features(X)
-            if check_input:
-                X = check_array(X, input_name="X", estimator=self, **check_X_params)
-                _check_n_features(self, X, reset=False)
-                y = check_array(y, input_name="y", estimator=self, **check_y_params)
-            else:
-                X = np.asarray(X, dtype=np.float32)
-        else:
-            self._categorical_encoder = None
-
-        if check_input:
             # Note: we must check missing after the categorical features
             # because it is assumed X is fully numeric by then. Thus, missing value mask
             # need to be checked separately.
@@ -466,9 +462,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         # - at most ``MAX_NUM_CATEGORIES`` encoded categories,
         # - no non-zero monotonic constraints on categorical features.
         self.n_categories_in_feature_ = np.full(self.n_features_in_, -1, dtype=np.intp)
-        if is_categorical_ is not None:
+        if self.is_categorical_ is not None:
             if monotonic_cst is not None and np.any(
-                np.logical_and(is_categorical_, monotonic_cst != 0)
+                np.logical_and(self.is_categorical_, monotonic_cst != 0)
             ):
                 raise ValueError(
                     "Categorical features cannot have monotonic constraints."
@@ -480,7 +476,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             )
 
             for idx, categories in zip(
-                np.flatnonzero(is_categorical_), self._categorical_encoder.categories_
+                np.flatnonzero(self.is_categorical_),
+                self._categorical_encoder.categories_,
             ):
                 # OrdinalEncoder places np.nan last if missing values reach fit.
                 if len(categories) and is_scalar_nan(categories[-1]):

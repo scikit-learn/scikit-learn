@@ -19,9 +19,6 @@ from numpy.testing import assert_allclose
 
 from sklearn import clone, datasets, tree
 from sklearn.dummy import DummyRegressor
-from sklearn.ensemble import (
-    HistGradientBoostingRegressor,
-)
 from sklearn.exceptions import NotFittedError
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import (
@@ -3109,12 +3106,10 @@ def test_no_sparse_with_categorical(name):
     ):
         Tree(categorical_features=[3, 4]).fit(X_sparse, y)
 
-
     with pytest.raises(
         NotImplementedError, match="Categorical features not supported with sparse"
     ):
         Tree(categorical_features=[3, 4]).fit(X, y).predict(X_sparse)
-
 
     # Regression check: categorical_features=[0] should also trigger sparse rejection.
     X_fit_cat0 = X.copy()
