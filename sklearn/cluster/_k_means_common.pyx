@@ -21,13 +21,13 @@ cdef floating _euclidean_dense_dense(
 ) noexcept nogil:
     """Euclidean distance between a dense and b dense"""
     cdef:
-        int i
+        int i, _i
         int n = n_features // 4
         int rem = n_features % 4
         floating result = 0
 
     # We manually unroll the loop for better cache optimization.
-    for i in range(n):
+    for _i in range(n):
         result += (
             (a[0] - b[0]) * (a[0] - b[0]) +
             (a[1] - b[1]) * (a[1] - b[1]) +
