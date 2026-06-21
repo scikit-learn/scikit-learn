@@ -887,7 +887,7 @@ def test_partial_dependence_pipeline_custom_values(
 @pytest.mark.parametrize(
     "estimator",
     [
-        LogisticRegression(max_iter=1000, random_state=0),
+        LogisticRegression(max_iter=1000),
         GradientBoostingClassifier(random_state=0, n_estimators=5),
     ],
     ids=["estimator-brute", "estimator-recursion"],
@@ -1001,9 +1001,7 @@ def test_partial_dependence_feature_type(features, custom_values, expected_pd_sh
         (StandardScaler(), [iris.feature_names[i] for i in (0, 2)]),
         (RobustScaler(), [iris.feature_names[i] for i in (1, 3)]),
     )
-    pipe = make_pipeline(
-        preprocessor, LogisticRegression(max_iter=1000, random_state=0)
-    )
+    pipe = make_pipeline(preprocessor, LogisticRegression(max_iter=1000))
     pipe.fit(df, iris.target)
     pdp_pipe = partial_dependence(
         pipe,
