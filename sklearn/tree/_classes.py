@@ -290,13 +290,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             # Note: we must check missing after the categorical features
             # because it is assumed X is fully numeric by then. Thus, missing value mask
             # need to be checked separately.
-            #
-            # TODO: we can support missing values with categories by either:
-            # 1. sending them down randomly through the tree (no assumptions)
-            # 2. sending them down to missing_goes_to_left according to child with
-            # most samples (assumes missing at random, where missingness correlates
-            # with most prevalent observed samples).
-            # To align this with HGBT, we would do #2.
             missing_values_in_feature_mask = (
                 self._compute_missing_values_in_feature_mask(X)
             )
@@ -609,35 +602,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             dtype=np.float32,  # trees require X to be float32
             categories="auto",
             handle_unknown="use_encoded_value",
-            unknown_value=-1,
+            unknown_value=np.nan,
             encoded_missing_value=np.nan,
         )
         self._categorical_encoder.fit(X_categorical)
-
-        # Configure the categorical encoder to preserve scalar NaNs.
-        #
-        # Missing categorical values should flow into the tree's existing
-        # missing-value logic. For that to happen, every categorical feature must
-        # encode scalar NaNs as ``encoded_missing_value`` instead of
-        # ``unknown_value``.
-        missing_indices = self._categorical_encoder._missing_indices
-
-        for feature_idx, categories in enumerate(self._categorical_encoder.categories_):
-            if categories.size and is_scalar_nan(categories[-1]):
-                missing_indices[feature_idx] = categories.size - 1
-                continue
-
-            if categories.dtype.kind in "biuf":
-                categories = categories.astype(np.float64, copy=False)
-                missing_category = np.array([np.nan], dtype=np.float64)
-            else:
-                categories = categories.astype(object, copy=False)
-                missing_category = np.array([np.nan], dtype=object)
-
-            self._categorical_encoder.categories_[feature_idx] = np.concatenate(
-                [categories, missing_category]
-            )
-            missing_indices[feature_idx] = categories.size
 
     def _transform_categorical_features(self, X):
         if not hasattr(X, "shape"):
@@ -645,16 +613,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         X_categorical = _safe_indexing(X, self.is_categorical_, axis=1)
         X_categorical = self._prepare_categorical_X_for_encoder(X_categorical)
         X_categorical = self._categorical_encoder.transform(X_categorical)
-        unknown_mask = X_categorical == -1
-        if np.any(unknown_mask):
-            categorical_indices = np.flatnonzero(self.is_categorical_)
-            feature_idx = categorical_indices[
-                np.flatnonzero(unknown_mask.any(axis=0))[0]
-            ]
-            raise ValueError(
-                "Found unknown categories in categorical feature "
-                f"{feature_idx} during transform."
-            )
 
         # replace features with the encoded categorical values
         X_out = np.empty(X.shape, dtype=np.float32)

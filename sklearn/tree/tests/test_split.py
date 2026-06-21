@@ -7,6 +7,7 @@ import pytest
 from numpy.testing import assert_allclose
 from scipy.sparse import csc_array
 from scipy.special import xlogy
+from scipy.stats import rankdata
 
 from sklearn.metrics import mean_poisson_deviance
 from sklearn.tree import (
@@ -65,12 +66,11 @@ class Split:
     def from_tree(cls, tree):
         ftr = int(tree.tree_.feature[0])
         if tree.n_categories_in_feature_[ftr] > 0:
-            raise RuntimeError("Not implemented yet.")
-            # cat_bitset = tree.tree_.left_cat_bitset[0]
-            # threshold = bitset_to_tuple(
-            #     cat_bitset,
-            #     n_categories=int(tree.tree_.n_categories[ftr]),
-            # )
+            cat_bitset = tree.tree_.__getstate__()["nodes"]["left_cat_bitset"][0]
+            threshold = bitset_to_tuple(
+                cat_bitset,
+                n_categories=int(tree.tree_.n_categories[ftr]),
+            )
         else:
             threshold = tree.tree_.threshold[0]
         missing_left = bool(tree.tree_.missing_go_to_left[0])
@@ -112,10 +112,9 @@ class NaiveSplitter:
     def compute_split_nodes(self, X, y, w, split):
         x = X[:, split.feature]
         if split.is_categorical:
-            x = x.astype(int)
-            cat_go_left = np.zeros(max(max(x), max(split.threshold)) + 1, dtype=bool)
-            cat_go_left[list(split.threshold)] = True
-            go_left = cat_go_left[x]
+            isna = np.isnan(x)
+            go_left = np.zeros(x.size, dtype=bool)
+            go_left[~isna] = self._categorical_goes_left(x[~isna], split)
         else:
             go_left = x <= split.threshold
         if split.missing_left:
@@ -124,6 +123,13 @@ class NaiveSplitter:
             self.compute_node_value_and_impurity(y[go_left], w[go_left]),
             self.compute_node_value_and_impurity(y[~go_left], w[~go_left]),
         )
+
+    @staticmethod
+    def _categorical_goes_left(x, split):
+        x = x.astype(int)
+        cat_go_left = np.zeros(max(max(x), max(split.threshold or [0])) + 1, dtype=bool)
+        cat_go_left[list(split.threshold)] = True
+        return cat_go_left[x]
 
     def compute_split_impurity(self, X, y, w, split):
         nodes = self.compute_split_nodes(X, y, w, split)
@@ -141,8 +147,10 @@ class NaiveSplitter:
                 yield Split(f, th)
             if not nan_mask.any():
                 continue
-            for th in [*thresholds, -np.inf]:
-                # include -inf to test the split with only NaNs on the left node
+            if not self.is_categorical[f]:
+                # Include -inf to test the split with only NaNs on the left node.
+                thresholds = [*thresholds, -np.inf]
+            for th in thresholds:
                 yield Split(f, th, missing_left=True)
 
     def best_split_naive(self, X, y, w):
@@ -158,10 +166,10 @@ class NaiveSplitter:
 
 
 def to_categorical(x, nc, rng):
-    q = np.linspace(0, 1, num=nc + 1)[1:-1]
-    quantiles = np.quantile(x, q)
-    cats = np.searchsorted(quantiles, x)
-    return rng.permutation(nc)[cats]
+    x = (nc * (rankdata(x) - 1) / x.size).astype(int)
+    cats, x = np.unique(x, return_inverse=True)
+    rng.shuffle(cats)
+    return cats[x]
 
 
 def make_simple_dataset(
@@ -178,9 +186,6 @@ def make_simple_dataset(
     y = rng.random(n) + X_dense.sum(axis=1)
     w = rng.integers(0, 5, size=n) if rng.uniform() < 0.5 else rng.random(n)
 
-    for idx in np.flatnonzero(is_categorical):
-        nc = rng.integers(2, 6)  # cant go to high or test will be too slow
-        X_dense[:, idx] = to_categorical(X_dense[:, idx], nc, rng)
     with_duplicates = rng.integers(2) == 0
     if with_duplicates:
         X_dense = X_dense.round(1 if n < 50 else 2)
@@ -188,6 +193,11 @@ def make_simple_dataset(
         nan_density = rng.uniform(0.05, 0.8)
         mask = rng.random(X_dense.shape) < nan_density
         X_dense[mask] = np.nan
+    for idx in np.flatnonzero(is_categorical):
+        nc = rng.integers(2, 6)  # cant go to high or test will be too slow
+        x = X_dense[:, idx]
+        isna = np.isnan(x)
+        X_dense[~isna, idx] = to_categorical(x[~isna], nc, rng)
     if is_sparse:
         density = rng.uniform(0.05, 0.99)
         X_dense -= 0.5
@@ -216,8 +226,14 @@ def make_simple_dataset(
 )
 @pytest.mark.parametrize(
     "sparse, missing_values, categorical",
-    [(0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)],
-    ids=["dense", "sparse", "dense-with_missing", "dense-categorical"],
+    [(0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1), (0, 1, 1)],
+    ids=[
+        "dense",
+        "sparse",
+        "dense-with_missing",
+        "dense-categorical",
+        "dense-categorical-with_missing",
+    ],
 )
 def test_split_impurity(
     Tree, criterion, sparse, missing_values, categorical, global_random_seed
@@ -226,10 +242,6 @@ def test_split_impurity(
 
     if categorical and "Extra" in Tree.__name__:
         pytest.skip("Categorical features not implemented for the random splitter")
-    if missing_values and criterion == "absolute_error":
-        pytest.skip("AE + missing values not supported yet")
-    if missing_values and criterion == "poisson":
-        pytest.xfail("Poisson criterion is faulty for now")
     rng = np.random.default_rng(global_random_seed)
 
     ns = [5] * 5 + [10] * 5 + [20, 30, 50, 100]
@@ -245,9 +257,6 @@ def test_split_impurity(
             is_categorical = rng.random(d) < 0.5
             n_classes = 2
             tree_kwargs["categorical_features"] = is_categorical
-
-            # TODO: can support once we expose left cat bitset publicly from Cython Tree
-            continue
         else:
             is_categorical = np.zeros(d, dtype=bool)
 
