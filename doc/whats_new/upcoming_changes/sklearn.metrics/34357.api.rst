@@ -1,0 +1,4 @@
+- The `y_pred` parameter of :meth:`metrics.PrecisionRecallDisplay.from_predictions`
+  and :meth:`metrics.DetCurveDisplay.from_predictions`, deprecated in 1.8, is now
+  removed. Use `y_score` instead.
+  By :user:`mkusiappiah`.
