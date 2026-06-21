@@ -801,6 +801,11 @@ cdef class Tree:
     def n_categories(self):
         return sizet_ptr_to_ndarray(self.n_categories, self.n_features)
 
+    # TODO: Convert to public property
+    @property
+    def _left_cat_bitset(self):
+        return self._get_node_ndarray()['left_cat_bitset'][:self.node_count]
+
     # TODO: Convert n_classes to cython.integral memory view once
     #  https://github.com/cython/cython/issues/5243 is fixed
     def __cinit__(self, intp_t n_features, cnp.ndarray n_classes, intp_t n_outputs, cnp.ndarray n_categories):
