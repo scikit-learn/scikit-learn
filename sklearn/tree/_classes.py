@@ -244,9 +244,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         missing_values_in_feature_mask=None,
     ):
         random_state = check_random_state(self.random_state)
-        is_categorical_ = _check_categorical_features(X, self.categorical_features)
-        self.is_categorical_ = is_categorical_
-        has_categorical = is_categorical_ is not None
+        self.is_categorical_ = _check_categorical_features(X, self.categorical_features)
+        has_categorical = self.is_categorical_ is not None
 
         if issparse(X) and has_categorical:
             raise NotImplementedError(
