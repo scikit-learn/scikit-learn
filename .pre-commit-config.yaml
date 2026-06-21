@@ -34,9 +34,8 @@ repos:
         files: ^doc/scss/|^doc/js/scripts/
         exclude: ^doc/js/scripts/vendor/
         types_or: ["scss", "javascript"]
-
-- repo: https://github.com/codespell-project/codespell
-  # Configuration for codespell is in pyproject.toml
-  rev: v2.4.1
+- repo: https://github.com/crate-ci/typos
+  # Configuration for typos is in .typos.toml
+  rev: v1.46.0
   hooks:
-  - id: codespell
+  - id: typos

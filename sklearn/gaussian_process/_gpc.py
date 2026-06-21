@@ -123,7 +123,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
     classes_ : array-like of shape (n_classes,)
         Unique class labels.
 
-    kernel_ : kernl instance
+    kernel_ : kernel instance
         The kernel used for prediction. The structure of the kernel is the
         same as the one passed as parameter but with optimized hyperparameters
 
