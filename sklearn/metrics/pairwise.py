@@ -1226,7 +1226,7 @@ def paired_manhattan_distances(X, Y):
     """Compute the paired L1 distances between X and Y.
 
     Distances are calculated between (X[0], Y[0]), (X[1], Y[1]), ...,
-    (X[n_samples], Y[n_samples]).
+    (X[n_samples-1], Y[n_samples-1]).
 
     Read more in the :ref:`User Guide <metrics>`.
 
