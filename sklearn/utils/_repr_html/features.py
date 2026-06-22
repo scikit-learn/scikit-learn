@@ -61,9 +61,8 @@ def _features_html(features, is_fitted_css_class=""):
     """
     total_features = len(features)
     display_features = features[:_MAX_DISPLAY_FEATURES]
-    is_truncated = total_features > _MAX_DISPLAY_FEATURES
 
-    if is_truncated:
+    if total_features > _MAX_DISPLAY_FEATURES:
         total_features_line = (
             f"{_MAX_DISPLAY_FEATURES} of {_format_count(total_features)} features"
         )
