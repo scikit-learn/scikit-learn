@@ -45,7 +45,13 @@ from sklearn.linear_model import Lasso, LinearRegression, LogisticRegression
 from sklearn.metrics import accuracy_score, r2_score
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import LocalOutlierFactor
-from sklearn.pipeline import FeatureUnion, Pipeline, make_pipeline, make_union
+from sklearn.pipeline import (
+    FeatureUnion,
+    Pipeline,
+    _transform_one,
+    make_pipeline,
+    make_union,
+)
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
 from sklearn.svm import SVC
 from sklearn.tests.metadata_routing_common import (
@@ -876,7 +882,7 @@ def test_set_pipeline_step_passthrough(passthrough):
         "memory": None,
         "m2__mult": 2,
         "last__mult": 5,
-        "transform_input": None,
+        "transform_input": ("X_val",),
         "verbose": False,
     }
 
@@ -1114,7 +1120,7 @@ def test_classes_property():
     with pytest.raises(AttributeError):
         getattr(reg, "classes_")
 
-    clf = make_pipeline(SelectKBest(k=1), LogisticRegression(random_state=0))
+    clf = make_pipeline(SelectKBest(k=1), LogisticRegression())
     with pytest.raises(AttributeError):
         getattr(clf, "classes_")
     clf.fit(X, y)
@@ -1485,7 +1491,7 @@ def test_pipeline_memory():
     try:
         memory = joblib.Memory(location=cachedir, verbose=10)
         # Test with transformer + logistic regression
-        clf = LogisticRegression(random_state=0)
+        clf = LogisticRegression()
         transf = DummyTransf()
         pipe = Pipeline([("transf", clone(transf)), ("logreg", clf)])
         cached_pipe = Pipeline([("transf", transf), ("logreg", clf)], memory=memory)
@@ -1518,7 +1524,7 @@ def test_pipeline_memory():
         assert ts == cached_pipe.named_steps["transf"].timestamp_
         # Create a new pipeline with cloned estimators
         # Check that even changing the name step does not affect the cache hit
-        clf_2 = LogisticRegression(random_state=0)
+        clf_2 = LogisticRegression()
         transf_2 = DummyTransf()
         cached_pipe_2 = Pipeline(
             [("transf_2", transf_2), ("logreg", clf_2)], memory=memory
@@ -2099,8 +2105,8 @@ def test_feature_union_array_api_support_tag():
 
 
 @config_context(enable_metadata_routing=True)
-@pytest.mark.parametrize("method", ["fit", "fit_transform"])
-def test_transform_input_pipeline(method):
+@pytest.mark.parametrize("pipeline_method", ["fit", "fit_transform"])
+def test_transform_input_pipeline(pipeline_method):
     """Test that with transform_input, data is correctly transformed for each step."""
 
     def get_transformer(registry, sample_weight, metadata):
@@ -2132,18 +2138,6 @@ def test_transform_input_pipeline(method):
         )
         return pipe, registry_1, registry_2, registry_3, registry_4
 
-    def check_metadata(registry, methods, **metadata):
-        """Check that the right metadata was recorded for the given methods."""
-        assert registry
-        for estimator in registry:
-            for method in methods:
-                check_recorded_metadata(
-                    estimator,
-                    method=method,
-                    parent=method,
-                    **metadata,
-                )
-
     X = np.array([[1, 2], [3, 4]])
     y = np.array([0, 1])
     sample_weight = np.array([[1, 2]])
@@ -2151,7 +2145,7 @@ def test_transform_input_pipeline(method):
     metadata = np.array([[100, 200]])
 
     pipe, registry_1, registry_2, registry_3, registry_4 = get_pipeline()
-    pipe.fit(
+    getattr(pipe, pipeline_method)(
         X,
         y,
         sample_weight=sample_weight,
@@ -2159,22 +2153,34 @@ def test_transform_input_pipeline(method):
         metadata=metadata,
     )
 
-    check_metadata(
-        registry_1, ["fit", "transform"], sample_weight=sample_weight, metadata=metadata
+    check_recorded_metadata(
+        registry_1[-1],
+        method="fit_transform",
+        parent=pipeline_method,
+        sample_weight=sample_weight,
+        metadata=metadata,
     )
-    check_metadata(registry_2, ["fit", "transform"])
-    check_metadata(
-        registry_3,
-        ["fit", "transform"],
+    check_recorded_metadata(
+        registry_2[-1], method="fit_transform", parent=pipeline_method
+    )
+    check_recorded_metadata(
+        registry_3[-1],
+        method="fit_transform",
+        parent=pipeline_method,
         sample_weight=sample_weight + 2,
         metadata=metadata,
     )
-    check_metadata(
-        registry_4,
-        method.split("_"),  # ["fit", "transform"] if "fit_transform", ["fit"] otherwise
-        sample_weight=other_weights + 3,
-        metadata=metadata,
+    last_callees = (
+        ["fit"] if pipeline_method == "fit" else ["fit_transform", "fit", "transform"]
     )
+    for callee in last_callees:
+        check_recorded_metadata(
+            registry_4[-1],
+            method=callee,
+            parent=pipeline_method,
+            sample_weight=other_weights + 3,
+            metadata=metadata,
+        )
 
 
 @config_context(enable_metadata_routing=True)
@@ -2215,9 +2221,18 @@ def test_transform_input_no_slep6():
     """Make sure the right error is raised if slep6 is not enabled."""
     X = np.array([[1, 2], [3, 4]])
     y = np.array([0, 1])
-    msg = "The `transform_input` parameter can only be set if metadata"
+
+    # non-default / non-empty transform_input raises
+    msg = "The `transform_input` parameter can only be used if metadata"
     with pytest.raises(ValueError, match=msg):
         make_pipeline(DummyTransf(), transform_input=["blah"]).fit(X, y)
+
+    # default ("X_val",) doesn't raise even when X_val is not passed
+    make_pipeline(DummyTransf()).fit(X, y)
+
+    # the usual metadata-routing error is raised if X_val is passed
+    with pytest.raises(ValueError, match="Pipeline.fit does not accept"):
+        make_pipeline(DummyTransf()).fit(X, y, X_val=X)
 
 
 @config_context(enable_metadata_routing=True)
@@ -2380,9 +2395,11 @@ class SimpleEstimator(BaseEstimator):
 
 
 # split and partial_fit not relevant for pipelines
-@pytest.mark.parametrize("method", sorted(set(METHODS) - {"split", "partial_fit"}))
+@pytest.mark.parametrize(
+    "parent_method", sorted(set(METHODS) - {"split", "partial_fit"})
+)
 @config_context(enable_metadata_routing=True)
-def test_metadata_routing_for_pipeline(method):
+def test_metadata_routing_for_pipeline(parent_method):
     """Test that metadata is routed correctly for pipelines."""
 
     def set_request(est, method, **kwarg):
@@ -2405,7 +2422,7 @@ def test_metadata_routing_for_pipeline(method):
 
     # test that metadata is routed correctly for pipelines when requested
     est = SimpleEstimator()
-    est = set_request(est, method, sample_weight=True, prop=True)
+    est = set_request(est, parent_method, sample_weight=True, prop=True)
     est = set_request(est, "fit", sample_weight=True, prop=True)
     trs = (
         ConsumingTransformer()
@@ -2415,32 +2432,49 @@ def test_metadata_routing_for_pipeline(method):
     )
     pipeline = Pipeline([("trs", trs), ("estimator", est)])
 
-    if "fit" not in method:
+    if "fit" not in parent_method:
         pipeline = pipeline.fit(X, y, sample_weight=sample_weight, prop=prop)
+        trs._records.clear()  # clear records so we don't check these records below
 
     try:
-        getattr(pipeline, method)(
+        getattr(pipeline, parent_method)(
             X, y, sample_weight=sample_weight, prop=prop, metadata=metadata
         )
     except TypeError:
         # Some methods don't accept y
-        getattr(pipeline, method)(
+        getattr(pipeline, parent_method)(
             X, sample_weight=sample_weight, prop=prop, metadata=metadata
         )
 
     # Make sure the transformer has received the metadata
-    # For the transformer, always only `fit` and `transform` are called.
-    check_recorded_metadata(
-        obj=trs,
-        method="fit",
-        parent="fit",
-        sample_weight=sample_weight,
-        metadata=metadata,
-    )
+
+    # If `inverse_transform` is called on the pipeline, only `inverse_transform` is
+    # called on the transformer:
+    if parent_method == "inverse_transform":
+        check_recorded_metadata(
+            obj=trs,
+            method="inverse_transform",
+            parent=parent_method,
+            sample_weight=sample_weight,
+            metadata=metadata,
+        )
+        return
+
+    # `fit` is only called on the transformer, if pipeline calls via pipeline.fit but
+    # if the pipeline calls `predict`, `score` or `transform`, ..., the transformer
+    # is not refitted:
+    if "fit" in parent_method:
+        check_recorded_metadata(
+            obj=trs,
+            method="fit",
+            parent=parent_method,
+            sample_weight=sample_weight,
+            metadata=metadata,
+        )
     check_recorded_metadata(
         obj=trs,
         method="transform",
-        parent="transform",
+        parent=parent_method,
         sample_weight=sample_weight,
         metadata=metadata,
     )
@@ -2600,6 +2634,24 @@ def test_feature_union_metadata_routing(transformer):
                 parent="fit",
                 **kwargs,
             )
+
+
+def test_transform_one_accepts_plain_dict_params():
+    """Regression test for #34005.
+
+    Some joblib backends (notably dask) downgrade ``Bunch`` to plain ``dict``
+    when serializing task kwargs. ``_transform_one`` must keep working after
+    that downgrade, so it must use item access on ``params``, not attribute
+    access.
+    """
+    from sklearn.preprocessing import StandardScaler
+
+    X = np.array([[0.0, 1.0], [2.0, 3.0]])
+    scaler = StandardScaler().fit(X)
+
+    # Pass a plain dict (not a Bunch) to simulate the post-dask shape.
+    out = _transform_one(scaler, X, None, weight=None, params={"transform": {}})
+    np.testing.assert_allclose(out, scaler.transform(X))
 
 
 # End of routing tests

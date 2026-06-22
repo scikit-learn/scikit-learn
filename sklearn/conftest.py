@@ -502,6 +502,19 @@ def hide_available_pandas(monkeypatch):
     monkeypatch.setattr(builtins, "__import__", mocked_import)
 
 
+@pytest.fixture
+def hide_available_matplotlib(monkeypatch):
+    """Pretend matplotlib was not installed."""
+    import_orig = builtins.__import__
+
+    def mocked_import(name, *args, **kwargs):
+        if name == "matplotlib":
+            raise ImportError()
+        return import_orig(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", mocked_import)
+
+
 if dt_config is not None:
     # Strict mode to differentiate between 3.14 and np.float64(3.14)
     dt_config.strict_check = True
