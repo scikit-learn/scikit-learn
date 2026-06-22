@@ -189,6 +189,11 @@ cdef (floating, floating) gap_enet(
     alpha > 0:            formulation A of the duality gap
     alpha = 0 & beta > 0: formulation B of the duality gap
     alpha = beta = 0:     OLS first order condition (=gradient)
+
+    gap_smaller_eps: If 1 (True), set the dual gap to zero when the gap is around
+        machine precision compared to primal. As gap = primal - dual, we might get
+        gap != 0 in floating point arithmetic, while exact arithmetic would yield
+        gap = 0.
     """
     cdef floating gap, primal, dual
     cdef floating dual_norm_XtA
@@ -274,6 +279,7 @@ def enet_coordinate_descent(
     bint random=0,
     bint positive=0,
     bint do_screening=1,
+    bint early_stopping=1,
 ):
     """
     Cython version of the coordinate descent algorithm for Elastic-Net regression.
@@ -327,6 +333,17 @@ def enet_coordinate_descent(
 
     The dual feasible set is v element real numbers. It requires beta > 0, but
     alpha = 0 is allowed. Strong duality holds and at optimum, v* = y - X w*.
+
+    Further Parameters
+    ------------------
+    positive : bint, default=0 (False)
+        If set to True, forces coefficients w to be positive.
+    do_screening : bint, default=1 (True)
+        If set to True, use gap safe screening rules to screen coefficients
+        (exclude early based on dual gap).
+    early_stopping : bint, default=1 (True)
+        If set to True, check for convergence (with the dual gap) before entering the
+        main iteration loop.
 
     Returns
     -------
@@ -414,11 +431,12 @@ def enet_coordinate_descent(
         tol *= _dot(n_samples, &y[0], 1, &y[0], 1)
 
         # Check convergence before entering the main loop.
+        # We want to avoid stopping too early and set gap_smaller_eps=False.
         gap, dual_norm_XtA = gap_enet(
             n_samples, n_features, w, alpha, beta, X, y, R, XtA, positive,
             gap_smaller_eps=False,
         )
-        if gap <= tol:
+        if early_stopping and gap <= tol:
             with gil:
                 return np.asarray(w), gap, tol, 0
 
@@ -486,9 +504,11 @@ def enet_coordinate_descent(
                 or n_iter == max_iter - 1
                 or n_active <= 1  # We have an analytical exact solution.
             ):
-                # the biggest coordinate update of this iteration was smaller
-                # than the tolerance: check the duality gap as ultimate
-                # stopping criterion
+                # The biggest coordinate update of this iteration was smaller than the
+                # tolerance: check the duality gap as ultimate stopping criterion.
+                # We want to stop in case the gap is small enough but not exactly 0
+                # only because of floating point arithmetic, and therefore set
+                # gap_smaller_eps=True.
                 gap, dual_norm_XtA = gap_enet(
                     n_samples, n_features, w, alpha, beta, X, y, R, XtA, positive,
                     gap_smaller_eps=True,
@@ -701,6 +721,7 @@ def sparse_enet_coordinate_descent(
     bint random=0,
     bint positive=0,
     bint do_screening=1,
+    bint early_stopping=1,
 ):
     """Cython version of the coordinate descent algorithm for Elastic-Net
 
@@ -851,6 +872,7 @@ def sparse_enet_coordinate_descent(
         tol *= _dot(n_samples, &y[0], 1, &yw[0], 1)
 
         # Check convergence before entering the main loop.
+        # We want to avoid stopping too early and set gap_smaller_eps=False.
         gap, dual_norm_XtA = gap_enet_sparse(
             n_samples,
             n_features,
@@ -871,7 +893,7 @@ def sparse_enet_coordinate_descent(
             positive,
             gap_smaller_eps=False,
         )
-        if gap <= tol:
+        if early_stopping and gap <= tol:
             with gil:
                 return np.asarray(w), gap, tol, 0
 
@@ -973,9 +995,11 @@ def sparse_enet_coordinate_descent(
                 or n_iter == max_iter - 1
                 or n_active <= 1  # We have an analytical exact solution.
             ):
-                # the biggest coordinate update of this iteration was smaller than
-                # the tolerance: check the duality gap as ultimate stopping
-                # criterion
+                # The biggest coordinate update of this iteration was smaller than the
+                # tolerance: check the duality gap as ultimate stopping criterion.
+                # We want to stop in case the gap is small enough but not exactly 0
+                # only because of floating point arithmetic, and therefore set
+                # gap_smaller_eps=True.
                 gap, dual_norm_XtA = gap_enet_sparse(
                     n_samples,
                     n_features,
@@ -1154,6 +1178,7 @@ def enet_coordinate_descent_gram(
     bint random=0,
     bint positive=0,
     bint do_screening=1,
+    bint early_stopping=1,
 ):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
@@ -1225,11 +1250,12 @@ def enet_coordinate_descent_gram(
         tol *= y_norm2
 
         # Check convergence before entering the main loop.
+        # We want to avoid stopping too early and set gap_smaller_eps=False.
         gap, dual_norm_XtA = gap_enet_gram(
             n_features, w, alpha, beta, Qw, q, y_norm2, XtA, positive,
             gap_smaller_eps=False,
         )
-        if 0 <= gap <= tol:
+        if early_stopping and 0 <= gap <= tol:
             # Only if gap >=0 as singular Q may cause dubious values of gap.
             with gil:
                 return np.asarray(w), gap, tol, 0
@@ -1302,9 +1328,11 @@ def enet_coordinate_descent_gram(
                 or n_iter == max_iter - 1
                 or n_active <= 1  # We have an analytical exact solution.
             ):
-                # the biggest coordinate update of this iteration was smaller than
-                # the tolerance: check the duality gap as ultimate stopping
-                # criterion
+                # The biggest coordinate update of this iteration was smaller than the
+                # tolerance: check the duality gap as ultimate stopping criterion.
+                # We want to stop in case the gap is small enough but not exactly 0
+                # only because of floating point arithmetic, and therefore set
+                # gap_smaller_eps=True.
                 gap, dual_norm_XtA = gap_enet_gram(
                     n_features, w, alpha, beta, Qw, q, y_norm2, XtA, positive,
                     gap_smaller_eps=True,
@@ -1501,6 +1529,7 @@ def enet_coordinate_descent_multi_task(
     object rng,
     bint random=0,
     bint do_screening=1,
+    bint early_stopping=1,
 ):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net multi-task regression
@@ -1670,6 +1699,7 @@ def enet_coordinate_descent_multi_task(
         tol *= _dot(n_samples * n_tasks, &Y[0, 0], 1, &Yw[0, 0], 1)
 
         # Check convergence before entering the main loop.
+        # We want to avoid stopping too early and set gap_smaller_eps=False.
         gap, dual_norm_XtA = gap_enet_multi_task(
             n_samples=n_samples,
             n_features=n_features,
@@ -1693,7 +1723,7 @@ def enet_coordinate_descent_multi_task(
             XtA_row_norms=XtA_row_norms,
             gap_smaller_eps=False,
         )
-        if gap <= tol:
+        if early_stopping and gap <= tol:
             with gil:
                 return np.asarray(W), gap, tol, 0
 
@@ -1826,9 +1856,11 @@ def enet_coordinate_descent_multi_task(
                 or n_iter == max_iter - 1
                 or n_active <= 1  # We have an analytical exact solution.
             ):
-                # the biggest coordinate update of this iteration was smaller than
-                # the tolerance: check the duality gap as ultimate stopping
-                # criterion
+                # The biggest coordinate update of this iteration was smaller than the
+                # tolerance: check the duality gap as ultimate stopping criterion.
+                # We want to stop in case the gap is small enough but not exactly 0
+                # only because of floating point arithmetic, and therefore set
+                # gap_smaller_eps=True.
                 gap, dual_norm_XtA = gap_enet_multi_task(
                     n_samples=n_samples,
                     n_features=n_features,
