@@ -69,7 +69,7 @@ class Split:
             cat_bitset = tree.tree_._left_cat_bitset[0]
             threshold = bitset_to_tuple(
                 cat_bitset,
-                n_categories=int(tree.tree_.n_categories[ftr]),
+                n_categories=int(tree.tree_._n_categories[ftr]),
             )
         else:
             threshold = tree.tree_.threshold[0]

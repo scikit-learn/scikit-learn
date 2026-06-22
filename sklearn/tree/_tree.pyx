@@ -798,7 +798,7 @@ cdef class Tree:
         return self._get_value_ndarray()[:self.node_count]
 
     @property
-    def n_categories(self):
+    def _n_categories(self):
         return sizet_ptr_to_ndarray(self.n_categories, self.n_features)
 
     # TODO: Convert to public property
