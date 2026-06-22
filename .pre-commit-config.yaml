@@ -15,6 +15,8 @@ repos:
         args: ["--fix", "--output-format=full"]
     -   id: ruff-format
 -   repo: https://github.com/pre-commit/mirrors-mypy
+    # NOTE if you update the mypy version here, remember to update
+    # sklearn/_min_dependencies.py as well
     rev: v1.15.0
     hooks:
      -  id: mypy
@@ -24,7 +26,9 @@ repos:
         # should be updated from time to time in both places.
         additional_dependencies: [pytest==9.1.0]
 -   repo: https://github.com/MarcoGorelli/cython-lint
-    rev: v0.20.0
+    # NOTE if you update the cython-lint version here, remember to update
+    # sklearn/_min_dependencies.py as well
+    rev: v0.21.0
     hooks:
     # TODO: add the double-quote-cython-strings hook when it's usability has improved:
     # possibility to pass a directory and use it as a check instead of auto-formatter.
