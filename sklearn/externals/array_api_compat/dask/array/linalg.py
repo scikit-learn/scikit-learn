@@ -43,7 +43,7 @@ matrix_norm = get_xp(da)(_linalg.matrix_norm)
 # and dask doesn't have the full_matrices keyword
 def svd(x: Array, full_matrices: bool = True, **kwargs: object) -> SVDResult:  # type: ignore[no-redef]
     if full_matrices:
-        raise ValueError("full_matrics=True is not supported by dask.")
+        raise ValueError("full_matrices=True is not supported by dask.")
     return da.linalg.svd(x, coerce_signs=False, **kwargs)
 
 def svdvals(x: Array) -> Array:
