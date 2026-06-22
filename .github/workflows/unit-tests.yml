@@ -30,7 +30,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
@@ -54,7 +54,7 @@ jobs:
     outputs:
       message: ${{ steps.git-log.outputs.message }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - id: git-log
@@ -225,7 +225,7 @@ jobs:
 
     steps: &unit-tests-steps
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # This step is necessary to access the job name the same way in both matrix and
       # non-matrix jobs (like free-threaded or scipy-dev builds).
@@ -364,7 +364,7 @@ jobs:
       JOB_NAME: *debian-32bit-job-name
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Create cache for ccache
         uses: actions/cache@v5
