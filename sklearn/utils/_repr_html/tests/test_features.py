@@ -237,6 +237,7 @@ def test_features_html_structure():
 @pytest.mark.parametrize(
     "num_features, expected_count",
     [
+        (101, "101"),
         (200, "200"),
         (10000, "10,000"),
         (123456, "123,456"),
@@ -244,7 +245,7 @@ def test_features_html_structure():
     ],
 )
 def test_features_html_truncation_format(num_features, expected_count):
-    """Test that large feature counts use .4g formatting in summary."""
+    """Test expected feature count in summary."""
     from sklearn.utils._repr_html.features import _MAX_DISPLAY_FEATURES
 
     features = [f"feat{feature_id}" for feature_id in range(num_features)]
@@ -253,3 +254,14 @@ def test_features_html_truncation_format(num_features, expected_count):
     assert f"{_MAX_DISPLAY_FEATURES} of {expected_count} features" in result
     assert f"feat{_MAX_DISPLAY_FEATURES - 1}" in result
     assert f"feat{_MAX_DISPLAY_FEATURES}" not in result
+
+
+def test_features_html_at_max_display_limit():
+    """Test that exactly _MAX_DISPLAY_FEATURES features are not truncated."""
+    from sklearn.utils._repr_html.features import _MAX_DISPLAY_FEATURES
+
+    features = [f"feat{feature_id}" for feature_id in range(_MAX_DISPLAY_FEATURES)]
+    result = _features_html(features)
+
+    assert f"{_MAX_DISPLAY_FEATURES} features" in result
+    assert " of " not in result
