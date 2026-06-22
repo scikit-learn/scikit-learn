@@ -3079,7 +3079,6 @@ def test_invalid_categorical(name, categorical_features, match):
 @pytest.mark.parametrize("name", ALL_TREES)
 def test_no_sparse_with_categorical(name):
     # Currently we do not support sparse categorical features
-    # Currently we do not support sparse categorical features
     rng = np.random.RandomState(0)
     n_samples, n_features = 50, 5
     X = np.hstack(
