@@ -5,6 +5,7 @@
 Newton solver for Generalized Linear Models
 """
 
+import math
 import warnings
 from abc import ABC, abstractmethod
 
@@ -52,6 +53,10 @@ class NewtonSolver(ABC):
     - Stephen P. Boyd, Lieven Vandenberghe. (2004) "Convex Optimization."
       Cambridge University Press, 2004.
       https://web.stanford.edu/~boyd/cvxbook/bv_cvxbook.pdf
+
+    - Yuan, G., Ho, C., & Lin, C. (2011). "An improved GLMNET for l1-regularized
+      logistic regression." Journal of machine learning research.
+      https://doi.org/10.1145/2020408.2020421
 
     Parameters
     ----------
@@ -169,6 +174,10 @@ class NewtonSolver(ABC):
             - self.gradient_times_newton
         """
 
+    @abstractmethod
+    def compute_d2(self, X, sample_weight):
+        """Compute square of Newton decrement."""
+
     def fallback_lbfgs_solve(self, X, y, sample_weight):
         """Fallback solver in case of emergency.
 
@@ -205,6 +214,17 @@ class NewtonSolver(ABC):
     def line_search(self, X, y, sample_weight):
         """Backtracking line search.
 
+        Define
+
+            phi(alpha) = loss(coef_old + alpha * coef_newton)
+
+        Searches for a step length alpha satisfying the sufficient decrease (Armijo)
+        condition:
+
+            phi(alpha) <= phi(0) + sigma * alpha * phi'(0)
+
+        with sigma = 1/2 ** 11 ~ 5e-4.
+
         Sets:
             - self.coef_old
             - self.coef
@@ -215,11 +235,14 @@ class NewtonSolver(ABC):
             - self.raw_prediction
         """
         # line search parameters
-        beta, sigma = 0.5, 0.00048828125  # 1/2, 1/2**11
-        # Remember: dtype follows X, also the one of self.loss_value. For Array API
+        sigma = 0.00048828125  # 1/2**11, sometimes called c1
+        min_step_reduction = 1e-2  # minimum factor of decrease of alpha per step
+        min_step_length = 1e-12  # absolute minimum value of alpha
+        # Remember: dtype follows X, also the dtype of self.loss_value. For Array API
         # support, self.loss_value might be float instead of np.floatXX.
         eps = 16 * np.finfo(X.dtype).eps
-        t = 1  # step size
+        alpha = 1  # initial step size, Newton methods should always try 1 first.
+        alpha_old = 1
 
         # gradient_times_newton = self.gradient @ self.coef_newton
         # was computed in inner_solve.
@@ -231,6 +254,8 @@ class NewtonSolver(ABC):
         self.coef_old = self.coef
         self.loss_value_old = self.loss_value
         self.gradient_old = self.gradient
+        phi_0 = phi_old = self.loss_value_old  # phi(0)
+        phi_prime_0 = self.gradient_times_newton  # phi'(0) = gradient @ coef_newton
 
         # np.sum(np.abs(self.gradient_old))
         sum_abs_grad_old = -1
@@ -240,9 +265,9 @@ class NewtonSolver(ABC):
             print("  Backtracking Line Search")
             print(f"    eps=16 * finfo.eps={eps}")
 
-        for i in range(21):  # until and including t = beta**20 ~ 1e-6
-            self.coef = self.coef_old + t * self.coef_newton
-            raw = self.raw_prediction + t * raw_prediction_newton
+        for i in range(21):
+            self.coef = self.coef_old + alpha * self.coef_newton
+            raw = self.raw_prediction + alpha * raw_prediction_newton
             self.loss_value, self.gradient = self.linear_loss.loss_gradient(
                 coef=self.coef,
                 X=X,
@@ -259,16 +284,31 @@ class NewtonSolver(ABC):
             # 1. Check Armijo / sufficient decrease condition.
             # The smaller (more negative) the better.
             loss_improvement = self.loss_value - self.loss_value_old
-            check = loss_improvement <= t * armijo_term
+            check = loss_improvement <= alpha * armijo_term
             if is_verbose:
                 print(
-                    f"    line search iteration={i + 1}, step size={t}\n"
+                    f"    line search iteration={i + 1}, step size={alpha}\n"
                     f"      check loss improvement <= armijo term: {loss_improvement} "
-                    f"<= {t * armijo_term} {check}"
+                    f"<= {alpha * armijo_term} {check}"
                 )
             if check:
                 break
-            # 2. Deal with relative loss differences around machine precision.
+            # 2. Tiny gradient / Armijo term.
+            # If we are already close to the minimum, gradient and Armijo term are
+            # tiny. It is best to use a Newton step length alpha = 1.
+            if i == 0 and np.abs(armijo_term) <= self.tol:
+                # Note that final convergence is checked with the infinity norm.
+                g_max_abs = np.max(np.abs(self.gradient))
+                check = g_max_abs <= self.tol
+                if is_verbose:
+                    print(
+                        "      check max |gradient| <= tol: "
+                        f"{g_max_abs} <= {self.tol} {check}"
+                    )
+                if check:
+                    break
+            # 3. Deal with differences around machine precision.
+            # 3.1 Check relative loss difference ~ machine precision
             tiny_loss = np.abs(self.loss_value_old * eps)
             check = np.abs(loss_improvement) <= tiny_loss
             if is_verbose:
@@ -279,7 +319,7 @@ class NewtonSolver(ABC):
             if check:
                 if sum_abs_grad_old < 0:
                     sum_abs_grad_old = scipy.linalg.norm(self.gradient_old, ord=1)
-                # 2.1 Check sum of absolute gradients as alternative condition.
+                # 3.2 Check sum of absolute gradients as alternative condition.
                 sum_abs_grad = scipy.linalg.norm(self.gradient, ord=1)
                 check = sum_abs_grad < sum_abs_grad_old
                 if is_verbose:
@@ -290,7 +330,38 @@ class NewtonSolver(ABC):
                 if check:
                     break
 
-            t *= beta
+            # Set a smart new value of alpha, smaller than previous one, larger than 0.
+            # We know that
+            #   - phi(0) = phi_0
+            #   - phi(alpha) = phi_1
+            #   - phi'(0) = phi_prime_0
+            # We fit a quadratic polynomial through those 3 points and take the minimum
+            # alpha as next trial step length.
+            # See Nocedal & Wright 2nd ed. Chapter 3.5, page 58, Eq 3.58.
+            phi_1 = self.loss_value
+            alpha_trial = (
+                -phi_prime_0 * alpha**2 / (2 * (phi_1 - phi_0 - phi_prime_0 * alpha))
+            )
+            if i > 0:
+                # We additionally know phi(alpha_old) = phi_old and use cubic
+                # interpolation.
+                # See Nocedal & Wright 2nd ed. Chapter 3.5, page 58, below Eq 3.58.
+                denom = (alpha_old * alpha) ** 2 * (alpha - alpha_old)
+                vec0 = phi_1 - phi_0 - phi_prime_0 * alpha
+                vec1 = phi_old - phi_0 - phi_prime_0 * alpha_old
+                a = (alpha_old**2 * vec0 - alpha**2 * vec1) / denom
+                b = (alpha**3 * vec1 - alpha_old**3 * vec0) / denom
+                if a != 0 and b**2 - 3 * a * phi_prime_0 >= 0:
+                    alpha_trial = (-b + math.sqrt(b**2 - 3 * a * phi_prime_0)) / (3 * a)
+                # else we keep the quadratic alpha_trial from above
+
+            alpha_old = alpha
+            phi_old = phi_1
+            # Safeguards
+            if alpha_trial >= alpha or alpha_trial <= min_step_length:
+                alpha_trial = 0.5 * alpha
+            # Avoid too large a reduction of alpha.
+            alpha = max(alpha_trial, min_step_reduction * alpha, min_step_length)
         else:
             warnings.warn(
                 (
@@ -338,8 +409,9 @@ class NewtonSolver(ABC):
         # 2. Criterion: For Newton decrement d, check 1/2 * d^2 <= tol
         #       d = sqrt(grad @ hessian^-1 @ grad)
         #         = sqrt(coef_newton @ hessian @ coef_newton)
-        #    See Boyd, Vanderberghe (2009) "Convex Optimization" Chapter 9.5.1.
-        d2 = self.coef_newton @ self.hessian @ self.coef_newton
+        #    See Boyd, Vandenberghe (2009) "Convex Optimization" Chapter 9.5.1. and
+        #    Eq. 20 of Yuan, Ho, Lin (2011).
+        d2 = self.compute_d2(X, sample_weight=sample_weight)
         check = 0.5 * d2 <= self.tol
         if self.verbose:
             print(f"    2. Newton decrement {0.5 * d2} <= {self.tol} {check}")
@@ -621,6 +693,10 @@ class NewtonCholeskySolver(NewtonSolver):
                 )
             self.use_fallback_lbfgs_solve = True
             return
+
+    def compute_d2(self, X, sample_weight):
+        """Compute square of Newton decrement."""
+        return self.coef_newton @ self.hessian @ self.coef_newton
 
     def finalize(self, X, y, sample_weight):
         if self.is_multinomial_no_penalty:
