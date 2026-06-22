@@ -1,0 +1,5 @@
+- :func:`datasets.fetch_openml` now validates the cache file path derived from
+  the server-provided download URL and rejects paths that escape the local
+  scikit-learn data cache directory. This prevents a malicious or compromised
+  OpenML server from writing to or deleting files outside of the cache.
+  By :user:`jmestwa-coder`.
