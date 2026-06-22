@@ -1,6 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+from datetime import timedelta
 from numbers import Integral
 from queue import Queue
 from threading import Thread
@@ -109,6 +110,7 @@ class ProgressBar:
 try:
     from rich.progress import BarColumn, Progress, TextColumn, TimeRemainingColumn
     from rich.style import Style
+    from rich.text import Text
 
     class _Progress(Progress):
         # Custom Progress class to allow showing the tasks in a given order (given by
@@ -117,19 +119,30 @@ try:
         def get_renderables(self):
             yield self.make_tasks_table(getattr(self, "_ordered_tasks", []))
 
-    class _StyledColumnMixin:
-        """Apply finished/in-progress color style to rendered text."""
+    class _StyledTimeRemainingColumn(TimeRemainingColumn):
+        """Time column with millisecond precision and color styling."""
+
+        def render(self, task):
+            if self.elapsed_when_finished and task.finished:
+                seconds = task.elapsed
+            else:
+                seconds = task.time_remaining
+
+            if seconds is None:
+                return Text("-:--:--.---")
+
+            ms = round(seconds % 1 * 1000)
+            text = Text(f"{timedelta(seconds=int(seconds))}.{ms:03d}")
+            text.style = "#29ABE2" if task.finished else "#F7931E"
+            return text
+
+    class _StyledPercentageColumn(TextColumn):
+        """Percentage column with color styling."""
 
         def render(self, task):
             text = super().render(task)
             text.style = "#29ABE2" if task.finished else "#F7931E"
             return text
-
-    class _StyledTimeRemainingColumn(_StyledColumnMixin, TimeRemainingColumn):
-        """Time column with color styling."""
-
-    class _StyledPercentageColumn(_StyledColumnMixin, TextColumn):
-        """Percentage column with color styling."""
 
 except ImportError:
     pass

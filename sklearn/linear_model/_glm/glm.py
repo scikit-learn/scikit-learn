@@ -33,7 +33,7 @@ from sklearn.utils._array_api import (
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Hidden, Interval, StrOptions
 from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
-from sklearn.utils.optimize import _check_optimize_result
+from sklearn.utils.optimize import _check_optimize_result, _newton_cg
 from sklearn.utils.validation import (
     _check_sample_weight,
     check_is_fitted,
@@ -76,13 +76,22 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
-        added to the linear predictor (X @ coef + intercept).
+        added to the linear predictor (`X @ coef + intercept`).
 
-    solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
+    solver : {'lbfgs', 'newton-cg', 'newton-cholesky'}, default='lbfgs'
         Algorithm to use in the optimization problem:
 
         'lbfgs'
             Calls scipy's L-BFGS-B optimizer.
+
+        'newton-cg'
+            Uses a slightly adapted version of scipy's Newton-CG optimizer. This is
+            sometimes called the truncated Newton method. Due to the fact that it
+            does not construct the Hessian matrix but only uses gradients and
+            vector products of the Hessian, it is a good solver when `X` is sparse
+            or when `X` has many features.
+
+            .. versionadded:: 1.10
 
         'newton-cholesky'
             Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
@@ -153,7 +162,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         "alpha": [Interval(Real, 0.0, None, closed="left")],
         "fit_intercept": ["boolean"],
         "solver": [
-            StrOptions({"lbfgs", "newton-cholesky"}),
+            StrOptions({"lbfgs", "newton-cg", "newton-cholesky"}),
             Hidden(type),
         ],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
@@ -301,6 +310,21 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 coef.copy(order="C" if not _is_numpy_namespace(xp) else "K"),
                 dtype=X.dtype,
                 device=device_,
+            )
+        elif self.solver == "newton-cg":
+            func = linear_loss.loss
+            grad = linear_loss.gradient
+            hess = linear_loss.gradient_hessian_product  # hess = [gradient, hessp]
+
+            coef, self.n_iter_ = _newton_cg(
+                grad_hess=hess,
+                func=func,
+                grad=grad,
+                x0=coef,
+                args=(X, y, sample_weight, l2_reg_strength, n_threads),
+                maxiter=self.max_iter,
+                tol=self.tol,
+                verbose=self.verbose,
             )
         elif self.solver == "newton-cholesky":
             sol = NewtonCholeskySolver(
@@ -509,11 +533,20 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (`X @ coef + intercept`).
 
-    solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
+    solver : {'lbfgs', 'newton-cg', 'newton-cholesky'}, default='lbfgs'
         Algorithm to use in the optimization problem:
 
         'lbfgs'
             Calls scipy's L-BFGS-B optimizer.
+
+        'newton-cg'
+            Uses a slightly adapted version of scipy's Newton-CG optimizer. This is
+            sometimes called the truncated Newton method. Due to the fact that it
+            does not construct the Hessian matrix but only uses gradients and
+            vector products of the Hessian, it is a good solver when `X` is sparse
+            or when `X` has many features.
+
+            .. versionadded:: 1.10
 
         'newton-cholesky'
             Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
@@ -646,13 +679,22 @@ class GammaRegressor(_GeneralizedLinearRegressor):
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
-        added to the linear predictor `X @ coef_ + intercept_`.
+        added to the linear predictor (`X @ coef_ + intercept_`).
 
-    solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
+    solver : {'lbfgs', 'newton-cg', 'newton-cholesky'}, default='lbfgs'
         Algorithm to use in the optimization problem:
 
         'lbfgs'
             Calls scipy's L-BFGS-B optimizer.
+
+        'newton-cg'
+            Uses a slightly adapted version of scipy's Newton-CG optimizer. This is
+            sometimes called the truncated Newton method. Due to the fact that it
+            does not construct the Hessian matrix but only uses gradients and
+            vector products of the Hessian, it is a good solver when `X` is sparse
+            or when `X` has many features.
+
+            .. versionadded:: 1.10
 
         'newton-cholesky'
             Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
@@ -810,11 +852,20 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
         - 'log' for ``power > 0``, e.g. for Poisson, Gamma and Inverse Gaussian
           distributions
 
-    solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
+    solver : {'lbfgs', 'newton-cg', 'newton-cholesky'}, default='lbfgs'
         Algorithm to use in the optimization problem:
 
         'lbfgs'
             Calls scipy's L-BFGS-B optimizer.
+
+        'newton-cg'
+            Uses a slightly adapted version of scipy's Newton-CG optimizer. This is
+            sometimes called the truncated Newton method. Due to the fact that it
+            does not construct the Hessian matrix but only uses gradients and
+            vector products of the Hessian, it is a good solver when `X` is sparse
+            or when `X` has many features.
+
+            .. versionadded:: 1.10
 
         'newton-cholesky'
             Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to

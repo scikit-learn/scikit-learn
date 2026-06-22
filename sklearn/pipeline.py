@@ -16,7 +16,6 @@ from sklearn.exceptions import NotFittedError
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils import Bunch
 from sklearn.utils._array_api import get_namespace, get_namespace_and_device
-from sklearn.utils._metadata_requests import METHODS
 from sklearn.utils._param_validation import HasMethods, Hidden
 from sklearn.utils._repr_html.estimator import _VisualBlock
 from sklearn.utils._set_output import _get_container_adapter, _safe_set_output
@@ -25,6 +24,7 @@ from sklearn.utils._user_interface import _print_elapsed_time
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _raise_for_params,
     _routing_enabled,
     get_routing_for_object,
@@ -129,7 +129,7 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
         must define `fit`. All non-last steps must also define `transform`. See
         :ref:`Combining Estimators <combining_estimators>` for more details.
 
-    transform_input : list of str, default=None
+    transform_input : tuple or list of str, default=("X_val",)
         The names of the :term:`metadata` parameters that should be transformed by the
         pipeline before passing it to the step consuming it.
 
@@ -138,10 +138,15 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
         them. Requirement is defined via :ref:`metadata routing <metadata_routing>`.
         For instance, this can be used to pass a validation set through the pipeline.
 
-        You can only set this if metadata routing is enabled, which you
+        By default, the validation set `X_val` is always transformed.
+
+        You can only use this if metadata routing is enabled, which you
         can enable using ``sklearn.set_config(enable_metadata_routing=True)``.
 
         .. versionadded:: 1.6
+
+        .. versionchanged:: 1.10
+            The default changed from `None` to `("X_val",)`.
 
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the fitted transformers of the pipeline. The last step
@@ -210,12 +215,14 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
     # BaseEstimator interface
     _parameter_constraints: dict = {
         "steps": [list, Hidden(tuple)],
-        "transform_input": [list, None],
+        "transform_input": [list, tuple, None],
         "memory": [None, str, HasMethods(["cache"])],
         "verbose": ["boolean"],
     }
 
-    def __init__(self, steps, *, transform_input=None, memory=None, verbose=False):
+    def __init__(
+        self, steps, *, transform_input=("X_val",), memory=None, verbose=False
+    ):
         self.steps = steps
         self.transform_input = transform_input
         self.memory = memory
@@ -411,32 +418,28 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
 
     def _check_method_params(self, method, props, **kwargs):
         if _routing_enabled():
-            routed_params = process_routing(self, method, **props, **kwargs)
-            return routed_params
-        else:
-            fit_params_steps = Bunch(
-                **{
-                    name: Bunch(**{method: {} for method in METHODS})
-                    for name, step in self.steps
-                    if step is not None
-                }
-            )
-            for pname, pval in props.items():
-                if "__" not in pname:
-                    raise ValueError(
-                        "Pipeline.fit does not accept the {} parameter. "
-                        "You can pass parameters to specific steps of your "
-                        "pipeline using the stepname__parameter format, e.g. "
-                        "`Pipeline.fit(X, y, logisticregression__sample_weight"
-                        "=sample_weight)`.".format(pname)
-                    )
-                step, param = pname.split("__", 1)
-                fit_params_steps[step]["fit"][param] = pval
-                # without metadata routing, fit_transform and fit_predict
-                # get all the same params and pass it to the last fit.
-                fit_params_steps[step]["fit_transform"][param] = pval
-                fit_params_steps[step]["fit_predict"][param] = pval
-            return fit_params_steps
+            return process_routing(self, method, **props, **kwargs)
+        # Routing disabled: fit_params for a step are forwarded to whichever
+        # of fit/fit_transform/fit_predict the step's caller invokes.
+        per_step = {
+            name: {"fit": {}, "fit_transform": {}, "fit_predict": {}}
+            for name, step in self.steps
+            if step is not None
+        }
+        for pname, pval in props.items():
+            if "__" not in pname:
+                raise ValueError(
+                    "Pipeline.fit does not accept the {} parameter. "
+                    "You can pass parameters to specific steps of your "
+                    "pipeline using the stepname__parameter format, e.g. "
+                    "`Pipeline.fit(X, y, logisticregression__sample_weight"
+                    "=sample_weight)`.".format(pname)
+                )
+            step, param = pname.split("__", 1)
+            per_step[step]["fit"][param] = pval
+            per_step[step]["fit_transform"][param] = pval
+            per_step[step]["fit_predict"][param] = pval
+        return _manual_routing(per_step)
 
     def _get_metadata_for_step(self, *, step_idx, step_params, all_params):
         """Get params (metadata) for step `name`.
@@ -625,9 +628,13 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
         callback_ctx = self._init_callback_context(max_subtasks=len(self.steps))
         callback_ctx.call_on_fit_task_begin(estimator=self, X=X, y=y)
 
-        if not _routing_enabled() and self.transform_input is not None:
+        if (
+            not _routing_enabled()
+            and self.transform_input  # don't raise for None or ()
+            and self.transform_input != ("X_val",)
+        ):
             raise ValueError(
-                "The `transform_input` parameter can only be set if metadata "
+                "The `transform_input` parameter can only be used if metadata "
                 "routing is enabled. You can enable metadata routing using "
                 "`sklearn.set_config(enable_metadata_routing=True)`."
             )
@@ -1461,7 +1468,7 @@ def _name_estimators(estimators):
     return list(zip(names, estimators))
 
 
-def make_pipeline(*steps, memory=None, transform_input=None, verbose=False):
+def make_pipeline(*steps, memory=None, transform_input=("X_val",), verbose=False):
     """Construct a :class:`Pipeline` from the given estimators.
 
     This is a shorthand for the :class:`Pipeline` constructor; it does not
@@ -1483,16 +1490,21 @@ def make_pipeline(*steps, memory=None, transform_input=None, verbose=False):
         or ``steps`` to inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.
 
-    transform_input : list of str, default=None
+    transform_input : tuple or list of str, default=("X_val",)
         This enables transforming some input arguments to ``fit`` (other than ``X``)
         to be transformed by the steps of the pipeline up to the step which requires
         them. Requirement is defined via :ref:`metadata routing <metadata_routing>`.
         This can be used to pass a validation set through the pipeline for instance.
 
-        You can only set this if metadata routing is enabled, which you
+        By default, the validation set `X_val` is always transformed.
+
+        You can only use this if metadata routing is enabled, which you
         can enable using ``sklearn.set_config(enable_metadata_routing=True)``.
 
         .. versionadded:: 1.6
+
+        .. versionchanged:: 1.10
+            The default changed from `None` to `("X_val",)`.
 
     verbose : bool, default=False
         If True, the time elapsed while fitting each step will be printed as it
@@ -1547,7 +1559,7 @@ def _transform_one(transformer, X, y, weight, params):
 
         This should be of the form ``process_routing()["step_name"]``.
     """
-    res = transformer.transform(X, **params.transform)
+    res = transformer.transform(X, **params["transform"])
     # if we have a weight for this transformer, multiply output
     if weight is None:
         return res
@@ -1962,10 +1974,9 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             routed_params = process_routing(self, "fit", **fit_params)
         else:
             # TODO(SLEP6): remove when metadata routing cannot be disabled.
-            routed_params = Bunch()
-            for name, _ in self.transformer_list:
-                routed_params[name] = Bunch(fit={})
-                routed_params[name].fit = fit_params
+            routed_params = _manual_routing(
+                {name: {"fit": fit_params} for name, _ in self.transformer_list}
+            )
 
         transformers = self._parallel_func(X, y, _fit_one, routed_params)
 
@@ -2011,15 +2022,14 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             routed_params = process_routing(self, "fit_transform", **params)
         else:
             # TODO(SLEP6): remove when metadata routing cannot be disabled.
-            routed_params = Bunch()
-            for name, obj in self.transformer_list:
-                if hasattr(obj, "fit_transform"):
-                    routed_params[name] = Bunch(fit_transform={})
-                    routed_params[name].fit_transform = params
-                else:
-                    routed_params[name] = Bunch(fit={})
-                    routed_params[name] = Bunch(transform={})
-                    routed_params[name].fit = params
+            # Forward params to whichever of fit_transform / fit the child's
+            # _fit_transform_one path ends up reading.
+            routed_params = _manual_routing(
+                {
+                    name: {"fit": params, "fit_transform": params}
+                    for name, _ in self.transformer_list
+                }
+            )
 
         results = self._parallel_func(X, y, _fit_transform_one, routed_params)
         if not results:
@@ -2085,9 +2095,9 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             routed_params = process_routing(self, "transform", **params)
         else:
             # TODO(SLEP6): remove when metadata routing cannot be disabled.
-            routed_params = Bunch()
-            for name, _ in self.transformer_list:
-                routed_params[name] = Bunch(transform={})
+            routed_params = _manual_routing(
+                {name: {} for name, _ in self.transformer_list}
+            )
 
         Xs = Parallel(n_jobs=self.n_jobs)(
             delayed(_transform_one)(trans, X, None, weight, params=routed_params[name])
