@@ -238,9 +238,9 @@ def test_features_html_structure():
     "num_features, expected_count",
     [
         (200, "200"),
-        (10000, "1e+04"),
-        (123456, "1.235e+05"),
-        (1000000, "1e+06"),
+        (10000, "10,000"),
+        (123456, "123,456"),
+        (1000000, "1,000,000"),
     ],
 )
 def test_features_html_truncation_format(num_features, expected_count):
