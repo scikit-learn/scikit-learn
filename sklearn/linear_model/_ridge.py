@@ -1615,6 +1615,7 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.array_api_support = True
         tags.input_tags.sparse = (self.solver != "svd") and (
             self.solver != "cholesky" or not self.fit_intercept
         )
