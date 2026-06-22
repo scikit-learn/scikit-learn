@@ -683,6 +683,9 @@ In addition, we add the following guidelines:
   :mod:`sklearn.utils` module. A overview of utility routines available for developers
   can be found in the sections below and the :ref:`developers-utils` page.
 
+* Only write inline comments that add value and avoid stating the obvious: explain
+  the "why" rather than the "what".
+
 A good example of code that we like can be found `here
 <https://gist.github.com/nateGeorge/5455d2c57fb33c1ae04706f2dc4fee01>`_.
 

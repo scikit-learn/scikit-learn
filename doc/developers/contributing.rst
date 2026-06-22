@@ -291,16 +291,6 @@ To get started, you need to
   already said they'd be working on the issue in the past 2-3 weeks, please let
   them finish their work, otherwise consider it stalled and take it over.
 
-To maintain the quality of the codebase and ease the review process, any
-contribution must conform to the project's :ref:`coding guidelines
-<coding-guidelines>`, in particular:
-
-- Don't modify unrelated lines to keep the PR focused on the scope stated in its
-  description or issue.
-- Only write inline comments that add value and avoid stating the obvious: explain
-  the "why" rather than the "what".
-- **Most importantly**: Do not contribute code that you don't understand.
-
 .. _development_workflow:
 
 Development workflow
@@ -417,7 +407,7 @@ Pull request checklist
       .. rubric:: BEFORE opening a PR, make sure that:
          :class: rubric-large
 
-      * The PR relates to at least one existing issue that is ready for
+      * Your PR relates to at least one existing issue that is ready for
         contribution.
         Please **do not** open PRs for issues:
 
@@ -429,6 +419,11 @@ Pull request checklist
 
         If no related issue exists yet, please :ref:`open one <submitting_bug_feature>`
         to discuss your proposal first.
+
+      * You understand the code that you are about to submit.
+
+      * You didn't modify unrelated lines. Keep the PR focused on the scope stated in
+        its issue.
 
       * You followed the :ref:`coding-guidelines` and properly commented and
         documented your code.
@@ -487,7 +482,7 @@ Pull request checklist
         - where the reporter has already expressed interest in opening a PR, or
         - that already have cross-referenced and active PRs.
 
-      * Make sure to follow the guidelines on contributing
+      * Make sure you followed the guidelines on contributing
         :ref:`contribute_documentation`.
 
       * Check that you can :ref:`build the documentation locally <building_documentation>`.
