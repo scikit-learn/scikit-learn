@@ -547,29 +547,6 @@ the PR description.
 You can also check our :ref:`code_review` to get an idea of what reviewers
 will expect.
 
-You can check for common programming errors with the following tools:
-
-* Code with a good unit test coverage (at least 80%, better 100%), check with:
-
-  .. prompt:: bash
-
-    pip install pytest pytest-cov
-    pytest --cov sklearn path/to/tests
-
-  See also :ref:`testing_coverage`.
-
-* Run static analysis with `mypy`:
-
-  .. prompt:: bash
-
-      mypy sklearn
-
-  This must not produce new errors in your pull request. Using `# type: ignore`
-  annotation can be a workaround for a few cases that are not supported by
-  mypy, in particular,
-
-  - when importing C or Cython modules,
-  - on properties with decorators.
 
 Bonus points for contributions that include a performance analysis with
 a benchmark script and profiling output (see :ref:`monitoring_performances`).
