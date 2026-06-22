@@ -280,7 +280,7 @@ scikit-learn install with the following command::
 
 Optimized BLAS / LAPACK implementations include:
 
-- OpenBLAS (default in PyPI wheels)
+- OpenBLAS (e.g. default in Numpy and SciPy PyPI wheels)
 - MKL
 - Apple Accelerate and vecLib frameworks (OSX only)
 
