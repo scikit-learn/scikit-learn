@@ -1,9 +1,10 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+from math import log2, ceil
+
 from cython.parallel import prange
 from libc.math cimport isnan
-from libc.stdint cimport uint8_t
 
 from sklearn.ensemble._hist_gradient_boosting.common cimport X_DTYPE_C, X_BINNED_DTYPE_C
 from sklearn.utils._typedefs cimport uint8_t
@@ -59,10 +60,9 @@ cdef void _map_col_to_bins(
     """Binary search to find the bin index for each value in the data."""
     cdef:
         int i
+        uint8_t n_iter_bin_search
 
-    # If this limit increases, log2ceil will need to be changed to support
-    # higher numbers:
-    assert len(binning_thresholds) < 256
+    n_iter_bin_search = int(ceil(log2(len(binning_thresholds))))
 
     for i in prange(data.shape[0], schedule='static', nogil=True,
                     num_threads=n_threads):
@@ -78,7 +78,8 @@ cdef void _map_col_to_bins(
             binned[i] = _binary_search(
                 data[i],
                 binning_thresholds,
-                len(binning_thresholds)
+                len(binning_thresholds),
+                n_iter_bin_search
             )
 
 
@@ -86,6 +87,7 @@ cdef inline size_t _binary_search(
     X_DTYPE_C value,
     const X_DTYPE_C [::1] binning_thresholds,
     size_t size,
+    uint8_t n_iterations
 ) noexcept nogil:
     cdef:
         size_t left
@@ -100,7 +102,7 @@ cdef inline size_t _binary_search(
     remaining_size = size
 
     # Fixed number of loops, instead of less-predictable while loop:
-    for _ in range(log2ceil(size)):
+    for _ in range(n_iterations):
         half = remaining_size / 2
         middle = left + half
         # Try for cmov instead of branch; see
@@ -113,32 +115,3 @@ cdef inline size_t _binary_search(
         (left < size) and (value > binning_thresholds[left])
     ) else left
     return left
-
-
-# Created with:
-#
-#  int_to_log2ceil[0] = 0
-#  for i in range(1, 256):
-#      int_to_log2ceil[i] = int(math.ceil(math.log2(i)))
-cdef uint8_t[256] int_to_log2ceil = [
-    0, 0, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4,
-    4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
-    5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-    6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-    6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-    7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-    7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-    7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-    7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-    8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-    8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-    8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-    8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-    8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-    8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-    8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8
-]
-
-cdef inline uint8_t log2ceil(uint8_t x) noexcept nogil:
-    # Using a lookup table is slightly faster than calculating on demand:
-    return int_to_log2ceil[x]
