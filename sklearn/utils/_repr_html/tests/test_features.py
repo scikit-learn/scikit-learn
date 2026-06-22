@@ -232,3 +232,24 @@ def test_features_html_structure():
     assert "</tbody>" in html
     assert '<i class="copy-paste-icon"' in html
     assert "copyFeatureNamesToClipboard" in html
+
+
+@pytest.mark.parametrize(
+    "num_features, expected_count",
+    [
+        (200, "200"),
+        (10000, "1e+04"),
+        (123456, "1.235e+05"),
+        (1000000, "1e+06"),
+    ],
+)
+def test_features_html_truncation_format(num_features, expected_count):
+    """Test that large feature counts use .4g formatting in summary."""
+    from sklearn.utils._repr_html.features import _MAX_DISPLAY_FEATURES
+
+    features = [f"feat{i}" for i in range(num_features)]
+    result = _features_html(features)
+
+    assert f"{_MAX_DISPLAY_FEATURES} of {expected_count} features" in result
+    assert f"feat{_MAX_DISPLAY_FEATURES - 1}" in result
+    assert f"feat{_MAX_DISPLAY_FEATURES}" not in result

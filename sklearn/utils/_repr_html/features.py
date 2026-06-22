@@ -6,15 +6,6 @@ import html
 _MAX_DISPLAY_FEATURES = 100
 
 
-def _format_count(n):
-    """Format a count with K/M suffixes for readability."""
-    if n >= 1_000_000 and n % 1_000_000 == 0:
-        return f"{n // 1_000_000}M"
-    if n >= 1_000 and n % 1_000 == 0:
-        return f"{n // 1_000}K"
-    return str(n)
-
-
 def _features_html(features, is_fitted_css_class=""):
     """Generate HTML representation of feature names.
 
@@ -64,7 +55,7 @@ def _features_html(features, is_fitted_css_class=""):
 
     if total_features > _MAX_DISPLAY_FEATURES:
         total_features_line = (
-            f"{_MAX_DISPLAY_FEATURES} of {_format_count(total_features)} features"
+            f"{_MAX_DISPLAY_FEATURES} of {total_features:.4g} features"
         )
     else:
         total_features_line = (
