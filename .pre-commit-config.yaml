@@ -19,7 +19,10 @@ repos:
     hooks:
      -  id: mypy
         files: sklearn/
-        additional_dependencies: [pytest==6.2.4]
+        # We set `pytest` to an arbitrary recent version to keep it consistent with the
+        # linting settings in `build_tools/update_environments_and_lock_files.py`. They
+        # should be updated from time to time in both places.
+        additional_dependencies: [pytest==9.1.0]
 -   repo: https://github.com/MarcoGorelli/cython-lint
     rev: v0.20.0
     hooks:
