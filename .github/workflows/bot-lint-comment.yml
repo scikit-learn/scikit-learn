@@ -48,7 +48,7 @@ jobs:
             --jq '"PR_NUMBER=\(.number)"' \
             >> $GITHUB_ENV
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           sparse-checkout: build_tools/get_comment.py
 
