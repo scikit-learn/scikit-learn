@@ -433,10 +433,6 @@ Pull request checklist
       * You followed the :ref:`coding-guidelines` and properly commented and
         documented your code.
 
-      * When applicable, you used the validation tools and scripts in the
-        :mod:`sklearn.utils` module. A list of utility routines available for developers
-        can be found in the :ref:`developers-utils` page.
-
       * You added new tests for your bug-fixes or new features. In the
         case of bug fixes, at the time of the PR, the tests should fail for the code
         base in the ``main`` branch and pass for the PR code. The code coverage CI test
@@ -482,7 +478,7 @@ Pull request checklist
          :class: rubric-large
 
       * Unless you're only fixing typos or obvious inconsistencies in the
-        documentation, make sure the PR relates to at least one existing issue 
+        documentation, make sure the PR relates to at least one existing issue
         that is ready for contribution. Please **do not** open PRs for issues:
 
         - that are labeled with :ref:`"Needs triage" <issues_tagged_needs_triage>` or any
