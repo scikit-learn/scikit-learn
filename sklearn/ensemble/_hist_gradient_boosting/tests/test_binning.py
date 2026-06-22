@@ -136,7 +136,7 @@ def test_bin_mapper_random_data(max_bins):
 
     # max_bins is the number of bins for non-missing values
     n_bins = max_bins + 1
-    mapper = _BinMapper(n_bins=n_bins).fit(DATA)
+    mapper = _BinMapper(n_bins=n_bins, random_state=42, subsample=n_samples + 1).fit(DATA)
     binned = mapper.transform(DATA)
 
     assert binned.shape == (n_samples, n_features)
