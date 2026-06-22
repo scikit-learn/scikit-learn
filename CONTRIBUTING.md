@@ -32,5 +32,5 @@ Quick links
 
 * [Submitting a bug report or feature request](https://scikit-learn.org/dev/developers/contributing.html#submitting-a-bug-report-or-a-feature-request)
 * [Contributing code](https://scikit-learn.org/dev/developers/contributing.html#contributing-code)
-* [Coding guidelines](https://scikit-learn.org/dev/developers/develop.html#coding-guidelines)
+* [Contributing code and documentation](https://scikit-learn.org/dev/developers/contributing.html#contributing-code-and-documentation)
 * [Tips to read current code](https://scikit-learn.org/dev/developers/contributing.html#reading-the-existing-code-base)
