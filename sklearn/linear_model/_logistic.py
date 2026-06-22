@@ -1106,9 +1106,11 @@ class LogisticRegression(
           error.
         - 'newton-cholesky' is a good choice for
           `n_samples` >> `n_features * n_classes`, especially with one-hot encoded
-          categorical features with rare categories. Be aware that the memory usage
-          of this solver has a quadratic dependency on `n_features * n_classes`
-          because it explicitly computes the full Hessian matrix.
+          categorical features. Be aware that the memory usage of this solver has a
+          quadratic dependency on `n_features * n_classes` because it explicitly
+          computes the full Hessian matrix.
+          In case of multicollinearities in `X`, it often recovers the minimum L2-norm
+          solution.
         - For small datasets, 'liblinear' is a good choice, whereas 'sag'
           and 'saga' are faster for large ones;
         - 'liblinear' can only handle binary classification by default. To apply a
@@ -1747,9 +1749,11 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
           error.
         - 'newton-cholesky' is a good choice for
           `n_samples` >> `n_features * n_classes`, especially with one-hot encoded
-          categorical features with rare categories. Be aware that the memory usage
-          of this solver has a quadratic dependency on `n_features * n_classes`
-          because it explicitly computes the full Hessian matrix.
+          categorical features. Be aware that the memory usage of this solver has a
+          quadratic dependency on `n_features * n_classes` because it explicitly
+          computes the full Hessian matrix.
+          In case of multicollinearities in `X`, it often recovers the minimum L2-norm
+          solution.
         - For small datasets, 'liblinear' is a good choice, whereas 'sag'
           and 'saga' are faster for large ones;
         - 'liblinear' might be slower in :class:`LogisticRegressionCV`

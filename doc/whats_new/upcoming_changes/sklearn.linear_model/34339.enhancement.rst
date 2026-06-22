@@ -1,0 +1,10 @@
+- The GLM solver `"newton-cholesky"` of :class:`linear_model.LogisticRegression`,
+  :class:`linear_model.LogisticRegressionCV`, :class:`linear_model.PoissonRegressor`,
+  :class:`linear_model.GammaRegressor` and :class:`linear_model.TweedieRegressor`
+  got a more advanced fallback strategy in case of multicollinearities. If the linear
+  solver fails on the normal equations, it first tries to solve via an
+  eigendecomposition of the Hessian. If that is not possible (e.g. due to negative
+  curvature), it still falls back to lbfgs.
+  Newton-Cholesky now often recovers the minimum norm solution for underdetermined,
+  unpenalized problems.
+  By :user:`Christian Lorentzen <lorentzenchr>`.

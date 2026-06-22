@@ -5,13 +5,12 @@ import warnings
 
 import numpy as np
 import pytest
+import scipy
 from numpy.testing import (
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
 )
-from scipy import sparse
-from scipy.linalg import LinAlgWarning, svd
 
 from sklearn import config_context
 from sklearn._loss import HalfMultinomialLoss
@@ -253,7 +252,7 @@ def test_sparsify(coo_container):
     pred_d_d = clf.decision_function(X)
 
     clf.sparsify()
-    assert sparse.issparse(clf.coef_)
+    assert scipy.sparse.issparse(clf.coef_)
     pred_s_d = clf.decision_function(X)
 
     sp_data = coo_container(X)
@@ -956,7 +955,7 @@ def test_logistic_regression_solvers_multiclass_unpenalized(
     )
     if fit_intercept:
         X[:, -1] = 1
-    U, s, Vt = svd(X)
+    U, s, Vt = scipy.linalg.svd(X)
     assert np.all(s > 1e-3)  # to be sure that X is not singular
     assert np.max(s) / np.min(s) < 100  # condition number of X
     if fit_intercept:
@@ -1007,6 +1006,27 @@ def test_logistic_regression_solvers_multiclass_unpenalized(
                 rtol=5e-3 if (solver_1 == "saga" or solver_2 == "saga") else 1e-3,
                 err_msg=f"{solver_1} vs {solver_2}",
             )
+
+    # How about the minimum norm solution? See
+    # test_glm_regression_unpenalized_hstacked_X.
+    X2 = np.concatenate((X, X), axis=1)
+    with ignore_warnings(category=scipy.linalg.LinAlgWarning):
+        regressors2 = {
+            solver: LogisticRegression(
+                C=np.inf,
+                solver=solver,
+                tol=solver_tol.get(solver, tol),
+                max_iter=solver_max_iter.get(solver, 100),
+                **params,
+            ).fit(X2, y)
+            for solver in set(SOLVERS) - set(["liblinear"])
+        }
+    for solver in regressors2:
+        assert_allclose(
+            regressors2[solver].coef_,
+            0.5 * np.tile(regressors["lbfgs"].coef_, (1, 2)),
+            rtol=1e-3,
+        )
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
@@ -2410,7 +2430,7 @@ def test_large_sparse_matrix(solver, csr_container):
     # Non-regression test for pull-request #21093.
 
     # generate sparse matrix with int64 indices
-    X = csr_container(sparse.rand(20, 10, random_state=42))
+    X = csr_container(scipy.sparse.rand(20, 10, random_state=42))
     for attr in ["indices", "indptr"]:
         setattr(X, attr, getattr(X, attr).astype("int64"))
     rng = np.random.RandomState(42)
@@ -2592,46 +2612,6 @@ def test_passing_params_without_enabling_metadata_routing():
 
         with pytest.raises(ValueError, match=msg):
             lr_cv.score(X, y, **params)
-
-
-def test_newton_cholesky_fallback_to_lbfgs():
-    # Wide data matrix should lead to a rank-deficient Hessian matrix
-    # hence make the Newton-Cholesky solver raise a warning and fallback to
-    # lbfgs.
-    X, y = make_classification(n_samples=10, n_features=20, random_state=42)
-    C = 1e30  # very high C to nearly disable regularization
-
-    # Check that LBFGS can converge without any warning on this problem.
-    lr_lbfgs = LogisticRegression(solver="lbfgs", C=C)
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        lr_lbfgs.fit(X, y)
-        n_iter_lbfgs = lr_lbfgs.n_iter_[0]
-
-    assert n_iter_lbfgs >= 1
-
-    # Check that the Newton-Cholesky solver raises a warning and falls back to
-    # LBFGS. This should converge with the same number of iterations as the
-    # above call of lbfgs since the Newton-Cholesky triggers the fallback
-    # before completing the first iteration, for the problem setting at hand.
-    lr_nc = LogisticRegression(solver="newton-cholesky", C=C)
-    with ignore_warnings(category=LinAlgWarning):
-        lr_nc.fit(X, y)
-        n_iter_nc = lr_nc.n_iter_[0]
-
-    assert n_iter_nc == n_iter_lbfgs
-
-    # Trying to fit the same model again with a small iteration budget should
-    # therefore raise a ConvergenceWarning:
-    lr_nc_limited = LogisticRegression(
-        solver="newton-cholesky", C=C, max_iter=n_iter_lbfgs - 1
-    )
-    with ignore_warnings(category=LinAlgWarning):
-        with pytest.warns(ConvergenceWarning, match="lbfgs failed to converge"):
-            lr_nc_limited.fit(X, y)
-            n_iter_nc_limited = lr_nc_limited.n_iter_[0]
-
-    assert n_iter_nc_limited == lr_nc_limited.max_iter - 1
 
 
 # TODO(1.11): remove filterwarnings with change of default scoring
