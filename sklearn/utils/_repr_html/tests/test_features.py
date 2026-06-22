@@ -247,7 +247,7 @@ def test_features_html_truncation_format(num_features, expected_count):
     """Test that large feature counts use .4g formatting in summary."""
     from sklearn.utils._repr_html.features import _MAX_DISPLAY_FEATURES
 
-    features = [f"feat{i}" for i in range(num_features)]
+    features = [f"feat{feature_id}" for feature_id in range(num_features)]
     result = _features_html(features)
 
     assert f"{_MAX_DISPLAY_FEATURES} of {expected_count} features" in result
