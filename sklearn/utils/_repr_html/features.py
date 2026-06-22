@@ -54,9 +54,7 @@ def _features_html(features, is_fitted_css_class=""):
     display_features = features[:_MAX_DISPLAY_FEATURES]
 
     if total_features > _MAX_DISPLAY_FEATURES:
-        total_features_line = (
-            f"{_MAX_DISPLAY_FEATURES} of {total_features:.4g} features"
-        )
+        total_features_line = f"{_MAX_DISPLAY_FEATURES} of {total_features:,} features"
     else:
         total_features_line = (
             f"{total_features} {'feature' if total_features == 1 else 'features'}"
