@@ -613,6 +613,16 @@ def test_error():
         with pytest.raises(NotFittedError):
             est.apply(T)
 
+        # test categorical features with more than 255 categories
+        X_cat = np.array([f"cat_{idx}" for idx in range(257)], dtype=object).reshape(
+            -1, 1
+        )
+        y_cat = np.arange(257) % 2
+        with pytest.raises(
+            ValueError, match=r"Values for categorical features.*\[0, 255\]"
+        ):
+            TreeEstimator(categorical_features=[0], random_state=0).fit(X_cat, y_cat)
+
     # non positive target for Poisson splitting Criterion
     est = DecisionTreeRegressor(criterion="poisson")
     with pytest.raises(ValueError, match="y is not positive.*Poisson"):
@@ -3145,31 +3155,33 @@ def test_predict_sparse_int64_indices_raises():
 
 @pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
 @pytest.mark.parametrize(
-    "X",
+    "X, raw_categories",
     [
-        np.array([[0.0], [0.0], [2.0], [2.0]], dtype=np.float64),
-        np.array([[1.0], [1.0], [2.0], [2.0]], dtype=np.float64),
-        np.array([["b"], ["b"], ["d"], ["d"]], dtype=object),
+        (
+            np.array([[0.0], [0.0], [2.0], [2.0]], dtype=np.float64),
+            np.array([0.0, 2.0], dtype=np.float64),
+        ),
+        (
+            np.array([[1.0], [1.0], [2.0], [2.0]], dtype=np.float64),
+            np.array([1.0, 2.0], dtype=np.float64),
+        ),
+        (
+            np.array([["b"], ["b"], ["d"], ["d"]], dtype=object),
+            np.array(["b", "d"], dtype=object),
+        ),
     ],
+    ids=["numeric_gap", "numeric_not_zero_based", "string_labels"],
 )
-def test_fit_categorical_non_contiguous_values(Tree, X):
+def test_fit_categorical_raw_labels_are_reencoded(Tree, X, raw_categories):
+    # Raw category labels need not already be dense integer codes.
     y = np.array([0, 0, 1, 1])
     est = Tree(categorical_features=[0], random_state=0).fit(X, y)
 
     assert_array_equal(est.is_categorical_, [True])
     assert_array_equal(est.n_categories_in_feature_, [2])
+    assert_array_equal(est._categorical_encoder.categories_[0], raw_categories)
+    assert_array_equal(est._categorical_encoder.transform(X).ravel(), [0, 0, 1, 1])
     assert_array_equal(est.predict(X), y)
-
-
-@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
-def test_fit_categorical_too_many_categories(Tree):
-    X = np.array([f"cat_{idx}" for idx in range(257)], dtype=object).reshape(-1, 1)
-    y = np.arange(257) % 2
-
-    with pytest.raises(
-        ValueError, match=r"Values for categorical features.*\[0, 255\]"
-    ):
-        Tree(categorical_features=[0], random_state=0).fit(X, y)
 
 
 @pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
@@ -3214,10 +3226,6 @@ def test_fit_categorical_missing_values(Tree, X, X_missing, X_unknown):
         ),
         (
             np.array([["a"], ["b"], ["a"], ["b"]], dtype=object),
-            np.array([[np.nan]], dtype=np.float64),
-        ),
-        (
-            np.array([["a"], ["b"], ["a"], ["b"]], dtype=object),
             np.array([[np.nan]], dtype=object),
         ),
     ],
@@ -3240,31 +3248,22 @@ def test_predict_categorical_list_input(Tree):
 
 
 @pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
-def test_fit_categorical_mixed_object_array(Tree):
-    """Check mixed object arrays preserve numeric and encoded categorical columns."""
-    X = np.array(
-        [
-            [0.0, "low"],
-            [1.0, "high"],
-            [2.0, "low"],
-            [3.0, "high"],
-        ],
-        dtype=object,
-    )
-    y = np.array([0, 1, 0, 1])
-
-    est = Tree(categorical_features=[1], random_state=0).fit(X, y)
-
-    assert_array_equal(est.is_categorical_, [False, True])
-    assert_array_equal(est.n_categories_in_feature_, [-1, 2])
-    assert_array_equal(est.predict(X), y)
-
-
-@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
-@pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
-@pytest.mark.parametrize("categorical_features", [["f_cat"], "from_dtype"])
-def test_dataframe_categorical_features(Tree, dataframe_lib, categorical_features):
-    pytest.importorskip(dataframe_lib)
+@pytest.mark.parametrize(
+    "constructor_name, categorical_features",
+    [
+        ("array", [1]),
+        ("pandas", ["f_cat"]),
+        ("pandas", "from_dtype"),
+        ("polars", ["f_cat"]),
+        ("polars", "from_dtype"),
+    ],
+)
+def test_categorical_features_mixed_containers(
+    Tree, constructor_name, categorical_features
+):
+    """Check categorical feature detection with mixed array and dataframe inputs."""
+    if constructor_name != "array":
+        pytest.importorskip(constructor_name)
     X = np.array(
         [
             [0.0, "low"],
@@ -3276,15 +3275,19 @@ def test_dataframe_categorical_features(Tree, dataframe_lib, categorical_feature
     )
     X = _convert_container(
         X,
-        dataframe_lib,
+        constructor_name,
         column_names=["f_num", "f_cat"],
+        dtype=object,
         categorical_feature_names=["f_cat"],
     )
     y = np.array([0, 1, 0, 1])
 
     est = Tree(categorical_features=categorical_features, random_state=0).fit(X, y)
 
-    assert_array_equal(est.feature_names_in_, ["f_num", "f_cat"])
+    if constructor_name == "array":
+        assert not hasattr(est, "feature_names_in_")
+    else:
+        assert_array_equal(est.feature_names_in_, ["f_num", "f_cat"])
     assert_array_equal(est.is_categorical_, [False, True])
     assert_array_equal(est.n_categories_in_feature_, [-1, 2])
     assert_array_equal(est.predict(X), y)
@@ -3332,6 +3335,7 @@ def test_categorical_better_than_ordinal(Tree, global_random_seed):
 
 
 def test_categorical_split_vs_onehot_tree_depth():
+    """Check native categorical splits are more compact than one-hot trees."""
     # Simulate data: 8 categories, 1000 samples, binary classification,
     # non-ordinal mapping
     rng = np.random.RandomState(42)

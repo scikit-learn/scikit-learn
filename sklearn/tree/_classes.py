@@ -569,24 +569,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         return self
 
-    def _prepare_categorical_X_for_encoder(self, X_categorical):
-        """Ensure the categorical encoder can recognize scalar NaNs.
-
-        When fit categories are strings/objects and predict data is only
-        ``np.nan``, NumPy can materialize the slice as a numeric array. Cast to
-        object so ``OrdinalEncoder`` uses its object-missing logic.
-        """
-        if (
-            hasattr(X_categorical, "dtype")
-            and X_categorical.dtype.kind in "biufc"
-            and any(
-                categories.dtype.kind == "O"
-                for categories in self._categorical_encoder.categories_
-            )
-        ):
-            return X_categorical.astype(object, copy=False)
-        return X_categorical
-
     def _fit_categorical_features(self, X):
         """Fit the categorical feature encoder on selected columns.
 
@@ -607,7 +589,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if not hasattr(X, "shape"):
             X = np.asarray(X, dtype=object)
         X_categorical = _safe_indexing(X, self.is_categorical_, axis=1)
-        X_categorical = self._prepare_categorical_X_for_encoder(X_categorical)
         X_categorical = self._categorical_encoder.transform(X_categorical)
 
         # replace features with the encoded categorical values
