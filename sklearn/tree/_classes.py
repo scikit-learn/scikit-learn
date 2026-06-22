@@ -1028,22 +1028,24 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         (n_categorical_features,), or "from_dtype", default=None
         Indicates which features are treated as categorical.
 
-        - If array-like of int, the entries are feature indices.
-        - If array-like of bool, it is a boolean mask over features.
-        - If array-like of str, the entries are feature names.
-        - If "from_dtype", dataframe columns with dtype "Categorical" or
-          "Enum" are treated as categorical features.
+        - None : no feature will be considered categorical.
+        - boolean array-like : boolean mask indicating categorical features.
+        - integer array-like : integer indices indicating categorical
+          features.
+        - str array-like: names of categorical features (assuming the training
+          data has feature names).
+        - `"from_dtype"`: dataframe columns with dtype "Categorical" and "Enum" are
+          considered to be categorical features. The input must be a dataframe that
+          is supported by narwhals (or supports it): :func:`narwhals.from_native` must
+          work. This is the case, for instance, for pandas and polars DataFrames.
 
-        Categorical features are only supported for dense inputs
-        and single-output targets.
-        Values of categorical features are encoded internally. Each categorical
-        feature can have at most 256 non-missing categories. Missing categorical
-        values are handled by the tree's missing-value logic.
-        Categorical features cannot have non-zero monotonic constraint.
+        For each categorical feature, there must be at most 255 unique
+        categories. Negative values for categorical features encoded as numeric
+        dtypes are treated as missing values. All categorical values are
+        converted to floating point numbers. This means that categorical values
+        of 1.0 and 1 are treated as the same category.
 
-        When these constraints are not met, ``fit`` will raise an error.
-
-        .. versionadded:: 1.9
+        .. versionadded:: 1.10
 
     Attributes
     ----------

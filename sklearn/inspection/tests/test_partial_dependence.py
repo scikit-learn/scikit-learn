@@ -557,8 +557,8 @@ def test_partial_dependence_recursion_decision_tree_missing_target_feature():
 
     est = DecisionTreeRegressor(max_depth=1, random_state=0).fit(X, y)
     assert est.tree_.missing_go_to_left[0]
-    custom_values = {0: [0.0, np.nan, 1.0]}
 
+    custom_values = {0: [0.0, np.nan, 1.0]}
     recursion = partial_dependence(
         est, X, features=[0], method="recursion", custom_values=custom_values
     )

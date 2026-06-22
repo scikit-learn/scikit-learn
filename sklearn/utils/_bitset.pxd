@@ -5,8 +5,7 @@ from sklearn.utils._typedefs cimport float64_t, uint8_t, uint32_t
 
 # Bitsets are stored as BITSET_LENGTH words of type BITSET_INNER_DTYPE_C.
 # BITSET_INNER_DTYPE_C is uint32_t, so BITSET_INNER_BITS currently resolves to 32.
-# With this word size, BITSET_INNER_BITS - 1 is 31 and log2(BITSET_INNER_BITS)
-# is 5. Keep arithmetic derived from BITSET_INNER_BITS instead of hard-coding
+# Here we keep arithmetic derived from BITSET_INNER_BITS instead of hard-coding
 # those values at call sites.
 ctypedef uint32_t BITSET_INNER_DTYPE_C
 
@@ -14,7 +13,7 @@ ctypedef uint32_t BITSET_INNER_DTYPE_C
 # are not allowed, see https://github.com/cython/cython/issues/4369.
 cdef enum:
     BITSET_LENGTH = 8
-    BITSET_INNER_BITS = sizeof(BITSET_INNER_DTYPE_C) * 8
+    BITSET_INNER_BITS = sizeof(BITSET_INNER_DTYPE_C) * 8  # =32
     # Total number of representable categories: 8 * 32 = 256.
     N_BITSETS = BITSET_LENGTH * BITSET_INNER_BITS
 

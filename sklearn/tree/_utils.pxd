@@ -17,7 +17,6 @@ cdef struct Node:
     # Threshold for numerical features splits:
     # - feature values less than or equal to the threshold go left, and values greater than the threshold go right.
     float64_t threshold
-
     # Threshold for categorical features splits:
     # - left_cat_bitset stores the set of categories that go to the left child.
     BITSET_DTYPE_C left_cat_bitset

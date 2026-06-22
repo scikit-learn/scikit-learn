@@ -35,7 +35,7 @@ REG_TREES = {
 
 
 def powerset(iterable):
-    """returns all the subsets of `iterable`."""
+    """returns all the subsets of `iterable` of length len(iterable) - 1."""
     s = list(iterable)
     return chain.from_iterable(
         combinations(s, r) for r in range(1, (len(s) + 1) // 2 + 1)
@@ -194,7 +194,7 @@ def make_simple_dataset(
         mask = rng.random(X_dense.shape) < nan_density
         X_dense[mask] = np.nan
     for idx in np.flatnonzero(is_categorical):
-        nc = rng.integers(2, 6)  # cant go to high or test will be too slow
+        nc = rng.integers(2, 6)  # can't go too high or test will be too slow
         x = X_dense[:, idx]
         isna = np.isnan(x)
         X_dense[~isna, idx] = to_categorical(x[~isna], nc, rng)
