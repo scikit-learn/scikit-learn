@@ -24,7 +24,7 @@ from sklearn.base import (
     is_classifier,
 )
 from sklearn.model_selection import cross_val_predict
-from sklearn.utils import Bunch, check_random_state, get_tags
+from sklearn.utils import check_random_state, get_tags
 from sklearn.utils._param_validation import HasMethods, StrOptions
 from sklearn.utils._response import _get_response_values
 from sklearn.utils._sparse import _align_api_if_sparse
@@ -32,6 +32,7 @@ from sklearn.utils._user_interface import _print_elapsed_time
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _raise_for_params,
     _routing_enabled,
     process_routing,
@@ -179,12 +180,8 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
                     "Underlying estimator does not support sample weights."
                 )
 
-            if sample_weight is not None:
-                routed_params = Bunch(
-                    estimator=Bunch(partial_fit=Bunch(sample_weight=sample_weight))
-                )
-            else:
-                routed_params = Bunch(estimator=Bunch(partial_fit=Bunch()))
+            sw = {"sample_weight": sample_weight} if sample_weight is not None else {}
+            routed_params = _manual_routing({"estimator": {"partial_fit": sw}})
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_partial_fit_estimator)(
@@ -266,10 +263,10 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
                     "Underlying estimator does not support sample weights."
                 )
 
-            fit_params_validated = _check_method_params(X, params=fit_params)
-            routed_params = Bunch(estimator=Bunch(fit=fit_params_validated))
+            fit_kwargs = dict(_check_method_params(X, params=fit_params))
             if sample_weight is not None:
-                routed_params.estimator.fit["sample_weight"] = sample_weight
+                fit_kwargs["sample_weight"] = sample_weight
+            routed_params = _manual_routing({"estimator": {"fit": fit_kwargs}})
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_estimator)(
@@ -776,7 +773,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         if _routing_enabled():
             routed_params = process_routing(self, "fit", **fit_params)
         else:
-            routed_params = Bunch(estimator=Bunch(fit=fit_params))
+            routed_params = _manual_routing({"estimator": {"fit": fit_params}})
 
         if hasattr(self, "chain_method"):
             chain_method = _check_response_method(
@@ -968,7 +965,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     >>> X_train, X_test, Y_train, Y_test = train_test_split(
     ...    X, Y, random_state=0
     ... )
-    >>> base_lr = LogisticRegression(solver='lbfgs', random_state=0)
+    >>> base_lr = LogisticRegression()
     >>> chain = ClassifierChain(base_lr, order='random', random_state=0)
     >>> chain.fit(X_train, Y_train).predict(X_test)
     array([[1., 1., 0.],
