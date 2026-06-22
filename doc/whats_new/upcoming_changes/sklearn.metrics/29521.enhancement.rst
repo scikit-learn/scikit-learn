@@ -1,0 +1,6 @@
+- :func:`metrics.ndcg_score` now exposes a `replaced_undefined_by` parameter
+  controlling the score assigned to a sample with no relevant entries, whose
+  NDCG is undefined (``0 / 0``). By default such samples are set to ``np.nan``
+  and an :class:`exceptions.UndefinedMetricWarning` is raised instead of
+  silently scoring them ``0.0`` and dragging the averaged score below ``1.0``.
+  By :user:`Ahmed Khan <AhmedKhan-GH>`.

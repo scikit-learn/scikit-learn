@@ -36,7 +36,12 @@ from sklearn.utils._array_api import (
     size,
 )
 from sklearn.utils._encode import _encode, _unique
-from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils._param_validation import (
+    Interval,
+    Options,
+    StrOptions,
+    validate_params,
+)
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.sparsefuncs import count_nonzero
 from sklearn.utils.validation import (
@@ -1896,7 +1901,9 @@ def dcg_score(
     )
 
 
-def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
+def _ndcg_sample_scores(
+    y_true, y_score, k=None, ignore_ties=False, replaced_undefined_by=np.nan
+):
     """Compute Normalized Discounted Cumulative Gain.
 
     Sum the true scores ranked in the order induced by the predicted scores,
@@ -1926,6 +1933,12 @@ def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
         Assume that there are no ties in y_score (which is likely to be the
         case if y_score is continuous) for efficiency gains.
 
+    replaced_undefined_by : float, default=np.nan
+        Value assigned to a sample whose NDCG is undefined, which happens when
+        the sample has no relevant entries (its ideal DCG is 0, making the
+        normalization a 0 / 0 division). The default, ``np.nan``, leaves such
+        samples undefined.
+
     Returns
     -------
     normalized_discounted_cumulative_gain : ndarray of shape (n_samples,)
@@ -1942,7 +1955,10 @@ def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
     # change the value of the re-ordered y_true)
     normalizing_gain = _dcg_sample_scores(y_true, y_true, k, ignore_ties=True)
     all_irrelevant = normalizing_gain == 0
-    gain[all_irrelevant] = 0
+    # NDCG is undefined (0 / 0) for a sample with no relevant entries; rather
+    # than silently scoring it 0, assign the caller-chosen value (np.nan by
+    # default) so that ndcg_score can flag it as undefined. See issue #29521.
+    gain[all_irrelevant] = replaced_undefined_by
     gain[~all_irrelevant] /= normalizing_gain[~all_irrelevant]
     return gain
 
@@ -1954,10 +1970,19 @@ def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
         "k": [Interval(Integral, 1, None, closed="left"), None],
         "sample_weight": ["array-like", None],
         "ignore_ties": ["boolean"],
+        "replaced_undefined_by": [Options(Real, {0.0, 1.0}), "nan"],
     },
     prefer_skip_nested_validation=True,
 )
-def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False):
+def ndcg_score(
+    y_true,
+    y_score,
+    *,
+    k=None,
+    sample_weight=None,
+    ignore_ties=False,
+    replaced_undefined_by=np.nan,
+):
     """Compute Normalized Discounted Cumulative Gain.
 
     Sum the true scores ranked in the order induced by the predicted scores,
@@ -1991,10 +2016,24 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
         Assume that there are no ties in y_score (which is likely to be the
         case if y_score is continuous) for efficiency gains.
 
+    replaced_undefined_by : {0.0, 1.0} or np.nan, default=np.nan
+        The NDCG of a sample with no relevant entries (all-zero ``y_true``) is
+        undefined, because its ideal DCG is 0 and the normalization becomes a
+        ``0 / 0`` division. By default such samples are assigned ``np.nan`` and
+        an :class:`~sklearn.exceptions.UndefinedMetricWarning` is raised, which
+        propagates ``np.nan`` to the averaged score. Pass ``0.0`` or ``1.0`` to
+        instead score those samples as the worst or best possible ranking; in
+        particular ``replaced_undefined_by=1.0`` makes ``ndcg_score(y, y)``
+        equal to ``1.0`` even when some samples have no relevant entries.
+
+        .. versionadded:: 1.10
+
     Returns
     -------
     normalized_discounted_cumulative_gain : float in [0., 1.]
-        The averaged NDCG scores for all samples.
+        The averaged NDCG scores for all samples. ``np.nan`` if at least one
+        sample has an undefined NDCG and ``replaced_undefined_by`` is left at
+        its default of ``np.nan``.
 
     See Also
     --------
@@ -2063,7 +2102,21 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
             f"Got {y_true.shape[1]} instead."
         )
     _check_dcg_target_type(y_true)
-    gain = _ndcg_sample_scores(y_true, y_score, k=k, ignore_ties=ignore_ties)
+    gain = _ndcg_sample_scores(
+        y_true,
+        y_score,
+        k=k,
+        ignore_ties=ignore_ties,
+        replaced_undefined_by=replaced_undefined_by,
+    )
+    if np.isnan(gain).any():
+        warnings.warn(
+            "Some samples have no relevant entries, making their NDCG "
+            "undefined. These samples are assigned NaN, which propagates to "
+            "the averaged score. Use the `replaced_undefined_by` parameter to "
+            "score these samples as 0.0 or 1.0 instead.",
+            UndefinedMetricWarning,
+        )
     return float(np.average(gain, weights=sample_weight))
 
 

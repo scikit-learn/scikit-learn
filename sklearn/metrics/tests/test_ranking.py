@@ -2076,8 +2076,10 @@ def test_ndcg_score():
 
 
 def _test_ndcg_score_for(y_true, y_score):
-    ideal = _ndcg_sample_scores(y_true, y_true)
-    score = _ndcg_sample_scores(y_true, y_score)
+    # Score all-zero-relevance samples as 0.0 (instead of the np.nan default)
+    # so the comparisons below remain well-defined for those samples.
+    ideal = _ndcg_sample_scores(y_true, y_true, replaced_undefined_by=0.0)
+    score = _ndcg_sample_scores(y_true, y_score, replaced_undefined_by=0.0)
     assert (score <= ideal).all()
     all_zero = (y_true == 0).all(axis=1)
     assert ideal[~all_zero] == pytest.approx(np.ones((~all_zero).sum()))
@@ -2089,6 +2091,36 @@ def _test_ndcg_score_for(y_true, y_score):
     assert score[all_zero] == pytest.approx(np.zeros(all_zero.sum()))
     assert ideal.shape == (y_true.shape[0],)
     assert score.shape == (y_true.shape[0],)
+
+
+def test_ndcg_all_zero_relevance_undefined_by_default():
+    """Non-regression test for issue #29521.
+
+    A sample with all-zero true relevance makes NDCG undefined (0 / 0). By
+    default such a sample must be set to ``np.nan`` and an
+    ``UndefinedMetricWarning`` raised, instead of silently contributing 0.0 and
+    dragging an otherwise-perfect ranking below 1.0.
+    """
+    y = np.array([[1.0, 0.0, 1.0], [0.0, 0.0, 0.0]])
+    with pytest.warns(UndefinedMetricWarning, match="undefined"):
+        score = ndcg_score(y, y)
+    assert np.isnan(score)
+
+
+def test_ndcg_all_zero_relevance_replaced_undefined_by():
+    """``replaced_undefined_by`` lets the caller define the undefined sample."""
+    y = np.array([[1.0, 0.0, 1.0], [0.0, 0.0, 0.0]])
+    # Treating the all-zero sample as a perfect ranking restores ndcg(y, y) == 1.
+    assert ndcg_score(y, y, replaced_undefined_by=1.0) == pytest.approx(1.0)
+    # Explicitly asking for 0.0 reproduces the historical averaged-down result.
+    assert ndcg_score(y, y, replaced_undefined_by=0.0) == pytest.approx(0.5)
+
+
+def test_ndcg_replaced_undefined_by_invalid_value():
+    """An out-of-domain ``replaced_undefined_by`` is rejected by validation."""
+    y = np.array([[1.0, 0.0, 1.0], [1.0, 1.0, 0.0]])
+    with pytest.raises(ValueError, match="replaced_undefined_by"):
+        ndcg_score(y, y, replaced_undefined_by="bad")
 
 
 def test_partial_roc_auc_score():
