@@ -61,8 +61,13 @@ cdef void _map_col_to_bins(
     cdef:
         int i
         uint8_t n_iter_bin_search
+        size_t n_bin_thresholds
 
-    n_iter_bin_search = int(ceil(log2(len(binning_thresholds))))
+    n_bin_thresholds = len(binning_thresholds)
+    if n_bin_thresholds == 0:
+        n_iter_bin_search = 0
+    else:
+        n_iter_bin_search = int(ceil(log2(n_bin_thresholds)))
 
     for i in prange(data.shape[0], schedule='static', nogil=True,
                     num_threads=n_threads):
@@ -78,7 +83,7 @@ cdef void _map_col_to_bins(
             binned[i] = _binary_search(
                 data[i],
                 binning_thresholds,
-                len(binning_thresholds),
+                n_bin_thresholds,
                 n_iter_bin_search
             )
 
