@@ -22,7 +22,7 @@ def _features_html(features, is_fitted_css_class=""):
             <summary>
               <div class="arrow"></div>
               <div>{total_features_line}</div>
-              <div class="image-container" title="Copy table's output features">
+              <div class="image-container" title="Copy output features (max 100)">
                 <i class="copy-paste-icon"
                   onclick="
                   event.stopPropagation();
