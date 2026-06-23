@@ -232,3 +232,36 @@ def test_features_html_structure():
     assert "</tbody>" in html
     assert '<i class="copy-paste-icon"' in html
     assert "copyFeatureNamesToClipboard" in html
+
+
+@pytest.mark.parametrize(
+    "num_features, expected_count",
+    [
+        (101, "101"),
+        (200, "200"),
+        (10000, "10,000"),
+        (123456, "123,456"),
+        (1000000, "1,000,000"),
+    ],
+)
+def test_features_html_truncation_format(num_features, expected_count):
+    """Test expected feature count in summary."""
+    from sklearn.utils._repr_html.features import _MAX_DISPLAY_FEATURES
+
+    features = [f"feat{feature_id}" for feature_id in range(num_features)]
+    result = _features_html(features)
+
+    assert f"{_MAX_DISPLAY_FEATURES} of {expected_count} features" in result
+    assert f"feat{_MAX_DISPLAY_FEATURES - 1}" in result
+    assert f"feat{_MAX_DISPLAY_FEATURES}" not in result
+
+
+def test_features_html_at_max_display_limit():
+    """Test that exactly _MAX_DISPLAY_FEATURES features are not truncated."""
+    from sklearn.utils._repr_html.features import _MAX_DISPLAY_FEATURES
+
+    features = [f"feat{feature_id}" for feature_id in range(_MAX_DISPLAY_FEATURES)]
+    result = _features_html(features)
+
+    assert f"{_MAX_DISPLAY_FEATURES} features" in result
+    assert " of " not in result
