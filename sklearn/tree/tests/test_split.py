@@ -142,7 +142,8 @@ class NaiveSplitter:
             nan_mask = np.isnan(x)
             thresholds = np.unique(x[~nan_mask])
             if self.is_categorical[f]:
-                thresholds = list(powerset(int(th) for th in thresholds))
+                categories = tuple(int(th) for th in thresholds)
+                thresholds = list(powerset(categories))
             for th in thresholds:
                 yield Split(f, th)
             if not nan_mask.any():
@@ -150,6 +151,10 @@ class NaiveSplitter:
             if not self.is_categorical[f]:
                 # Include -inf to test the split with only NaNs on the left node.
                 thresholds = [*thresholds, -np.inf]
+            elif categories:
+                # With missing values, sending all observed categories to the
+                # left and missing values to the right is a valid split.
+                yield Split(f, categories)
             for th in thresholds:
                 yield Split(f, th, missing_left=True)
 
@@ -268,6 +273,11 @@ def test_split_impurity(
         )
 
         tree.fit(X, y, sample_weight=w)
+        X_split = (
+            tree._transform_categorical_features(X_dense)
+            if tree.is_categorical_ is not None
+            else X_dense
+        )
         actual_impurity = tree.tree_.impurity * tree.tree_.weighted_n_node_samples
         actual_value = tree.tree_.value[:, 0]
 
@@ -283,13 +293,13 @@ def test_split_impurity(
                 "Extra" in Tree.__name__
                 or root_impurity < 1e-12  # root impurity is 0
                 # or no valid split can be made:
-                or naive_splitter.best_split_naive(X_dense, y, w)[0] == np.inf
+                or naive_splitter.best_split_naive(X_split, y, w)[0] == np.inf
             )
             continue
 
         # Check children impurity:
         actual_split = Split.from_tree(tree)
-        nodes = naive_splitter.compute_split_nodes(X_dense, y, w, actual_split)
+        nodes = naive_splitter.compute_split_nodes(X_split, y, w, actual_split)
         (left_val, left_impurity), (right_val, right_impurity) = nodes
         assert_allclose(left_impurity, actual_impurity[1], atol=1e-12)
         assert_allclose(right_impurity, actual_impurity[2], atol=1e-12)
@@ -308,7 +318,7 @@ def test_split_impurity(
         # with the same optimal impurity, so the assertion is made on the impurity
         # value: the split value is only displayed to help debugging in case
         # of assertion failure.
-        best_impurity, best_split = naive_splitter.best_split_naive(X_dense, y, w)
+        best_impurity, best_split = naive_splitter.best_split_naive(X_split, y, w)
         actual_split_impurity = actual_impurity[1:].sum()
         assert np.isclose(best_impurity, actual_split_impurity), (
             best_split,
