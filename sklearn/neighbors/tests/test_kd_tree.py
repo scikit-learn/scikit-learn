@@ -1,3 +1,5 @@
+import threading
+
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_equal
@@ -28,6 +30,9 @@ def test_array_object_type(BinarySearchTree):
         BinarySearchTree(X)
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 @pytest.mark.parametrize("BinarySearchTree", KD_TREE_CLASSES)
 def test_kdtree_picklable_with_joblib(BinarySearchTree):
     """Make sure that KDTree queries work when joblib memmaps.
@@ -98,3 +103,30 @@ def test_kernel_density_numerical_consistency(global_random_seed, metric):
     assert_allclose(density64, density32, rtol=1e-5)
     assert density64.dtype == np.float64
     assert density32.dtype == np.float32
+
+
+def test_thread_safety(global_random_seed):
+    X_64, _, Y_64, _ = get_dataset_for_binary_tree(random_seed=global_random_seed)
+    tree = KDTree(X_64, 10)
+
+    def query():
+        tree.query(Y_64, dualtree=False, breadth_first=False, sort_results=False)
+        tree.query_radius(Y_64, r=4, return_distance=True)
+
+    def get_stats():
+        return np.array(tree.get_tree_stats() + (tree.get_n_calls(),))
+
+    query()
+    one_run = get_stats()
+    query()
+    second = get_stats()
+    assert np.array_equal(second, one_run * 2)
+
+    threads = []
+    for _ in range(10):
+        t = threading.Thread(target=query)
+        threads.append(t)
+        t.start()
+    for t in threads:
+        t.join()
+    assert np.array_equal(get_stats(), one_run * 12)

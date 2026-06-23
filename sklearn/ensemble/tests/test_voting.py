@@ -7,9 +7,11 @@ import pytest
 
 from sklearn import config_context, datasets
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.datasets import make_multilabel_classification
 from sklearn.dummy import DummyRegressor
 from sklearn.ensemble import (
+    GradientBoostingClassifier,
     RandomForestClassifier,
     RandomForestRegressor,
     VotingClassifier,
@@ -114,7 +116,7 @@ def test_notfitted():
 
 def test_majority_label_iris(global_random_seed):
     """Check classification by majority label on dataset iris."""
-    clf1 = LogisticRegression(solver="liblinear", random_state=global_random_seed)
+    clf1 = LogisticRegression()
     clf2 = RandomForestClassifier(n_estimators=10, random_state=global_random_seed)
     clf3 = GaussianNB()
     eclf = VotingClassifier(
@@ -127,17 +129,17 @@ def test_majority_label_iris(global_random_seed):
 
 def test_tie_situation():
     """Check voting classifier selects smaller class label in tie situation."""
-    clf1 = LogisticRegression(random_state=123, solver="liblinear")
+    clf1 = LogisticRegression()
     clf2 = RandomForestClassifier(random_state=123)
     eclf = VotingClassifier(estimators=[("lr", clf1), ("rf", clf2)], voting="hard")
-    assert clf1.fit(X, y).predict(X)[73] == 2
-    assert clf2.fit(X, y).predict(X)[73] == 1
-    assert eclf.fit(X, y).predict(X)[73] == 1
+    assert clf1.fit(X, y).predict(X)[52] == 2
+    assert clf2.fit(X, y).predict(X)[52] == 1
+    assert eclf.fit(X, y).predict(X)[52] == 1
 
 
 def test_weights_iris(global_random_seed):
     """Check classification by average probabilities on dataset iris."""
-    clf1 = LogisticRegression(random_state=global_random_seed)
+    clf1 = LogisticRegression()
     clf2 = RandomForestClassifier(n_estimators=10, random_state=global_random_seed)
     clf3 = GaussianNB()
     eclf = VotingClassifier(
@@ -187,7 +189,7 @@ def test_weights_regressor():
 
 def test_predict_on_toy_problem(global_random_seed):
     """Manually check predicted class labels for toy dataset."""
-    clf1 = LogisticRegression(random_state=global_random_seed)
+    clf1 = LogisticRegression()
     clf2 = RandomForestClassifier(n_estimators=10, random_state=global_random_seed)
     clf3 = GaussianNB()
 
@@ -218,7 +220,7 @@ def test_predict_on_toy_problem(global_random_seed):
 
 def test_predict_proba_on_toy_problem():
     """Calculate predicted probabilities on toy dataset."""
-    clf1 = LogisticRegression(random_state=123)
+    clf1 = LogisticRegression()
     clf2 = RandomForestClassifier(random_state=123)
     clf3 = GaussianNB()
     X = np.array([[-1.1, -1.5], [-1.2, -1.4], [-3.4, -2.2], [1.1, 1.2]])
@@ -285,7 +287,7 @@ def test_multilabel():
 
 def test_gridsearch():
     """Check GridSearch support."""
-    clf1 = LogisticRegression(random_state=1)
+    clf1 = LogisticRegression()
     clf2 = RandomForestClassifier(random_state=1, n_estimators=3)
     clf3 = GaussianNB()
     eclf = VotingClassifier(
@@ -304,7 +306,7 @@ def test_gridsearch():
 
 def test_parallel_fit(global_random_seed):
     """Check parallel backend of VotingClassifier on toy dataset."""
-    clf1 = LogisticRegression(random_state=global_random_seed)
+    clf1 = LogisticRegression()
     clf2 = RandomForestClassifier(n_estimators=10, random_state=global_random_seed)
     clf3 = GaussianNB()
     X = np.array([[-1.1, -1.5], [-1.2, -1.4], [-3.4, -2.2], [1.1, 1.2]])
@@ -321,18 +323,16 @@ def test_parallel_fit(global_random_seed):
     assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
 
 
-# TODO(1.7): remove warning filter when sample_weight is kwarg only
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_sample_weight(global_random_seed):
     """Tests sample_weight parameter of VotingClassifier"""
-    clf1 = LogisticRegression(random_state=global_random_seed)
-    clf2 = RandomForestClassifier(n_estimators=10, random_state=global_random_seed)
-    clf3 = SVC(probability=True, random_state=global_random_seed)
+    clf1 = LogisticRegression()
+    clf2 = GradientBoostingClassifier(n_estimators=10, random_state=global_random_seed)
+    clf3 = CalibratedClassifierCV(SVC(random_state=global_random_seed), ensemble=False)
     eclf1 = VotingClassifier(
-        estimators=[("lr", clf1), ("rf", clf2), ("svc", clf3)], voting="soft"
+        estimators=[("lr", clf1), ("gbdt", clf2), ("svc", clf3)], voting="soft"
     ).fit(X_scaled, y, sample_weight=np.ones((len(y),)))
     eclf2 = VotingClassifier(
-        estimators=[("lr", clf1), ("rf", clf2), ("svc", clf3)], voting="soft"
+        estimators=[("lr", clf1), ("gbdt", clf2), ("svc", clf3)], voting="soft"
     ).fit(X_scaled, y)
     assert_array_equal(eclf1.predict(X_scaled), eclf2.predict(X_scaled))
     assert_array_almost_equal(
@@ -386,7 +386,7 @@ def test_sample_weight_kwargs():
 
 def test_voting_classifier_set_params(global_random_seed):
     # check equivalence in the output when setting underlying estimators
-    clf1 = LogisticRegression(random_state=global_random_seed)
+    clf1 = LogisticRegression()
     clf2 = RandomForestClassifier(
         n_estimators=10, random_state=global_random_seed, max_depth=None
     )
@@ -411,7 +411,7 @@ def test_voting_classifier_set_params(global_random_seed):
 def test_set_estimator_drop():
     # VotingClassifier set_params should be able to set estimators as drop
     # Test predict
-    clf1 = LogisticRegression(random_state=123)
+    clf1 = LogisticRegression()
     clf2 = RandomForestClassifier(n_estimators=10, random_state=123)
     clf3 = GaussianNB()
     eclf1 = VotingClassifier(
@@ -475,7 +475,7 @@ def test_set_estimator_drop():
 
 def test_estimator_weights_format(global_random_seed):
     # Test estimator weights inputs as list and array
-    clf1 = LogisticRegression(random_state=global_random_seed)
+    clf1 = LogisticRegression()
     clf2 = RandomForestClassifier(n_estimators=10, random_state=global_random_seed)
     eclf1 = VotingClassifier(
         estimators=[("lr", clf1), ("rf", clf2)], weights=[1, 2], voting="soft"
@@ -492,7 +492,7 @@ def test_estimator_weights_format(global_random_seed):
 
 def test_transform(global_random_seed):
     """Check transform method of VotingClassifier on toy dataset."""
-    clf1 = LogisticRegression(random_state=global_random_seed)
+    clf1 = LogisticRegression()
     clf2 = RandomForestClassifier(n_estimators=10, random_state=global_random_seed)
     clf3 = GaussianNB()
     X = np.array([[-1.1, -1.5], [-1.2, -1.4], [-3.4, -2.2], [1.1, 1.2]])
@@ -571,7 +571,7 @@ def test_none_estimator_with_weights(X, y, voter):
         ),
         VotingClassifier(
             estimators=[
-                ("lr", LogisticRegression(random_state=0)),
+                ("lr", LogisticRegression()),
                 ("tree", DecisionTreeClassifier(random_state=0)),
             ]
         ),
@@ -579,6 +579,7 @@ def test_none_estimator_with_weights(X, y, voter):
     ids=["VotingRegressor", "VotingClassifier"],
 )
 def test_n_features_in(est):
+    est = clone(est)
     X = [[1, 2], [3, 4], [5, 6]]
     y = [0, 1, 2]
 
@@ -599,7 +600,7 @@ def test_n_features_in(est):
         ),
         VotingClassifier(
             estimators=[
-                ("lr", LogisticRegression(random_state=123)),
+                ("lr", LogisticRegression()),
                 ("rf", RandomForestClassifier(random_state=123)),
             ],
             verbose=True,
@@ -662,7 +663,7 @@ def test_get_features_names_out_classifier(kwargs, expected_names):
 
     voting = VotingClassifier(
         estimators=[
-            ("lr", LogisticRegression(random_state=0)),
+            ("lr", LogisticRegression()),
             ("tree", DecisionTreeClassifier(random_state=0)),
         ],
         **kwargs,
@@ -682,7 +683,7 @@ def test_get_features_names_out_classifier_error():
 
     voting = VotingClassifier(
         estimators=[
-            ("lr", LogisticRegression(random_state=0)),
+            ("lr", LogisticRegression()),
             ("tree", DecisionTreeClassifier(random_state=0)),
         ],
         voting="soft",

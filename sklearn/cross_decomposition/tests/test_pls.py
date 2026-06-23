@@ -354,7 +354,7 @@ def test_convergence_fail():
 
 
 @pytest.mark.parametrize("Est", (PLSSVD, PLSRegression, PLSCanonical))
-def test_attibutes_shapes(Est):
+def test_attributes_shapes(Est):
     # Make sure attributes are of the correct shape depending on n_components
     d = load_linnerud()
     X = d.data
@@ -458,7 +458,8 @@ def _generate_test_scale_and_stability_datasets():
 def test_scale_and_stability(Est, X, y):
     """scale=True is equivalent to scale=False on centered/scaled data
     This allows to check numerical stability over platforms as well"""
-
+    # Avoid in-place modification of X and y to avoid side effects in other tests.
+    X, y = X.copy(), y.copy()
     X_s, y_s, *_ = _center_scale_xy(X, y)
 
     X_score, y_score = Est(scale=True).fit_transform(X, y)

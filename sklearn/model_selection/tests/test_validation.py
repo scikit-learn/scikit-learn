@@ -2,11 +2,9 @@
 
 import os
 import re
-import sys
 import tempfile
 import warnings
 from functools import partial
-from io import StringIO
 from time import sleep
 
 import numpy as np
@@ -14,7 +12,7 @@ import pytest
 from scipy.sparse import issparse
 
 from sklearn import config_context
-from sklearn.base import BaseEstimator, ClassifierMixin, clone
+from sklearn.base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from sklearn.cluster import KMeans
 from sklearn.datasets import (
     load_diabetes,
@@ -24,12 +22,12 @@ from sklearn.datasets import (
     make_multilabel_classification,
     make_regression,
 )
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.exceptions import FitFailedWarning, UnsetMetadataPassedError
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import (
     LogisticRegression,
-    PassiveAggressiveClassifier,
     Ridge,
     RidgeClassifier,
     SGDClassifier,
@@ -84,13 +82,20 @@ from sklearn.tests.metadata_routing_common import (
     check_recorded_metadata,
 )
 from sklearn.utils import shuffle
+from sklearn.utils._array_api import (
+    _atol_for_type,
+    move_to,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
 )
+from sklearn.utils.estimator_checks import _NotAnArray
 from sklearn.utils.fixes import COO_CONTAINERS, CSR_CONTAINERS
 from sklearn.utils.validation import _num_samples
 
@@ -383,6 +388,14 @@ def test_cross_validate_invalid_scoring_param():
 
     with pytest.warns(UserWarning, match=warning_message):
         cross_validate(estimator, X, y, scoring={"foo": multiclass_scorer})
+
+
+def test_cross_validate_array_function_not_called():
+    """Check that `__array_function__` (NEP18) is not called."""
+    X = _NotAnArray([[1, 1], [1, 2], [1, 3], [1, 4], [2, 1], [2, 2], [2, 3], [2, 4]])
+    y = _NotAnArray([1, 1, 1, 2, 2, 2, 1, 1])
+    estimator = LogisticRegression()
+    cross_validate(estimator, X, y, cv=2)
 
 
 def test_cross_validate_nested_estimator():
@@ -982,16 +995,12 @@ def test_cross_val_predict(coo_container):
 def test_cross_val_predict_decision_function_shape():
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
-    preds = cross_val_predict(
-        LogisticRegression(solver="liblinear"), X, y, method="decision_function"
-    )
+    preds = cross_val_predict(LogisticRegression(), X, y, method="decision_function")
     assert preds.shape == (50,)
 
     X, y = load_iris(return_X_y=True)
 
-    preds = cross_val_predict(
-        LogisticRegression(solver="liblinear"), X, y, method="decision_function"
-    )
+    preds = cross_val_predict(LogisticRegression(), X, y, method="decision_function")
     assert preds.shape == (150, 3)
 
     # This specifically tests imbalanced splits for binary
@@ -1034,32 +1043,24 @@ def test_cross_val_predict_decision_function_shape():
 def test_cross_val_predict_predict_proba_shape():
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
-    preds = cross_val_predict(
-        LogisticRegression(solver="liblinear"), X, y, method="predict_proba"
-    )
+    preds = cross_val_predict(LogisticRegression(), X, y, method="predict_proba")
     assert preds.shape == (50, 2)
 
     X, y = load_iris(return_X_y=True)
 
-    preds = cross_val_predict(
-        LogisticRegression(solver="liblinear"), X, y, method="predict_proba"
-    )
+    preds = cross_val_predict(LogisticRegression(), X, y, method="predict_proba")
     assert preds.shape == (150, 3)
 
 
 def test_cross_val_predict_predict_log_proba_shape():
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
-    preds = cross_val_predict(
-        LogisticRegression(solver="liblinear"), X, y, method="predict_log_proba"
-    )
+    preds = cross_val_predict(LogisticRegression(), X, y, method="predict_log_proba")
     assert preds.shape == (50, 2)
 
     X, y = load_iris(return_X_y=True)
 
-    preds = cross_val_predict(
-        LogisticRegression(solver="liblinear"), X, y, method="predict_log_proba"
-    )
+    preds = cross_val_predict(LogisticRegression(), X, y, method="predict_log_proba")
     assert preds.shape == (150, 3)
 
 
@@ -1097,13 +1098,13 @@ def test_cross_val_predict_input_types(coo_container):
 
     # test with X and y as list and non empty method
     predictions = cross_val_predict(
-        LogisticRegression(solver="liblinear"),
+        LogisticRegression(),
         X.tolist(),
         y.tolist(),
         method="decision_function",
     )
     predictions = cross_val_predict(
-        LogisticRegression(solver="liblinear"),
+        LogisticRegression(),
         X,
         y.tolist(),
         method="decision_function",
@@ -1146,7 +1147,7 @@ def test_cross_val_predict_unbalanced():
     )
     # Change the first sample to a new class
     y[0] = 2
-    clf = LogisticRegression(random_state=1, solver="liblinear")
+    clf = LogisticRegression()
     cv = StratifiedKFold(n_splits=2)
     train, test = list(cv.split(X, y))
     yhat_proba = cross_val_predict(clf, X, y, cv=cv, method="predict_proba")
@@ -1221,7 +1222,7 @@ def test_learning_curve():
         assert_array_almost_equal(test_scores.mean(axis=1), np.linspace(0.1, 1.0, 10))
 
         # Cannot use assert_array_almost_equal for fit and score times because
-        # the values are hardware-dependant
+        # the values are hardware-dependent
         assert fit_times.dtype == "float64"
         assert score_times.dtype == "float64"
 
@@ -1260,7 +1261,7 @@ def test_learning_curve_unsupervised():
     assert_array_almost_equal(test_scores.mean(axis=1), np.linspace(0.1, 1.0, 10))
 
 
-def test_learning_curve_verbose():
+def test_learning_curve_verbose(capsys):
     X, y = make_classification(
         n_samples=30,
         n_features=1,
@@ -1271,19 +1272,8 @@ def test_learning_curve_verbose():
         random_state=0,
     )
     estimator = MockImprovingEstimator(20)
-
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-    try:
-        train_sizes, train_scores, test_scores = learning_curve(
-            estimator, X, y, cv=3, verbose=1
-        )
-    finally:
-        out = sys.stdout.getvalue()
-        sys.stdout.close()
-        sys.stdout = old_stdout
-
-    assert "[learning_curve]" in out
+    learning_curve(estimator, X, y, cv=3, verbose=1)
+    assert "[learning_curve]" in capsys.readouterr().out
 
 
 def test_learning_curve_incremental_learning_not_possible():
@@ -1363,7 +1353,7 @@ def test_learning_curve_batch_and_incremental_learning_are_equal():
         random_state=0,
     )
     train_sizes = np.linspace(0.2, 1.0, 5)
-    estimator = PassiveAggressiveClassifier(max_iter=1, tol=None, shuffle=False)
+    estimator = SGDClassifier(max_iter=1, tol=None, shuffle=False)
 
     train_sizes_inc, train_scores_inc, test_scores_inc = learning_curve(
         estimator,
@@ -1482,7 +1472,9 @@ def test_learning_curve_with_shuffle():
     groups = np.array([1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 4, 4, 4, 4])
     # Splits on these groups fail without shuffle as the first iteration
     # of the learning curve doesn't contain label 4 in the training set.
-    estimator = PassiveAggressiveClassifier(max_iter=5, tol=None, shuffle=False)
+    estimator = SGDClassifier(
+        max_iter=5, tol=None, shuffle=False, learning_rate="pa1", eta0=1
+    )
 
     cv = GroupKFold(n_splits=2)
     train_sizes_batch, train_scores_batch, test_scores_batch = learning_curve(
@@ -1575,30 +1567,6 @@ def test_learning_curve_incremental_learning_params():
             train_sizes=np.linspace(0.1, 1.0, 10),
             error_score="raise",
         )
-
-    err_msg = "Fit parameter sample_weight has length 3; expected"
-    with pytest.raises(AssertionError, match=err_msg):
-        learning_curve(
-            estimator,
-            X,
-            y,
-            cv=3,
-            exploit_incremental_learning=True,
-            train_sizes=np.linspace(0.1, 1.0, 10),
-            error_score="raise",
-            params={"sample_weight": np.ones(3)},
-        )
-
-    learning_curve(
-        estimator,
-        X,
-        y,
-        cv=3,
-        exploit_incremental_learning=True,
-        train_sizes=np.linspace(0.1, 1.0, 10),
-        error_score="raise",
-        params={"sample_weight": np.ones(2)},
-    )
 
 
 def test_validation_curve():
@@ -1885,10 +1853,8 @@ def check_cross_val_predict_with_method_multiclass(est):
 
 
 def test_cross_val_predict_with_method():
-    check_cross_val_predict_with_method_binary(LogisticRegression(solver="liblinear"))
-    check_cross_val_predict_with_method_multiclass(
-        LogisticRegression(solver="liblinear")
-    )
+    check_cross_val_predict_with_method_binary(LogisticRegression())
+    check_cross_val_predict_with_method_multiclass(LogisticRegression())
 
 
 def test_cross_val_predict_method_checking():
@@ -1906,9 +1872,7 @@ def test_gridsearchcv_cross_val_predict_with_method():
     iris = load_iris()
     X, y = iris.data, iris.target
     X, y = shuffle(X, y, random_state=0)
-    est = GridSearchCV(
-        LogisticRegression(random_state=42, solver="liblinear"), {"C": [0.1, 1]}, cv=2
-    )
+    est = GridSearchCV(LogisticRegression(), {"C": [0.1, 1]}, cv=2)
     for method in ["decision_function", "predict_proba", "predict_log_proba"]:
         check_cross_val_predict_multiclass(est, X, y, method)
 
@@ -1962,7 +1926,7 @@ def test_cross_val_predict_with_method_rare_class():
     rng = np.random.RandomState(0)
     X = rng.normal(0, 1, size=(14, 10))
     y = np.array([0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 3])
-    est = LogisticRegression(solver="liblinear")
+    est = LogisticRegression()
     for method in ["predict_proba", "predict_log_proba", "decision_function"]:
         with warnings.catch_warnings():
             # Suppress warning about too few examples of a class
@@ -2019,7 +1983,7 @@ def test_cross_val_predict_class_subset():
 
     methods = ["decision_function", "predict_proba", "predict_log_proba"]
     for method in methods:
-        est = LogisticRegression(solver="liblinear")
+        est = LogisticRegression()
 
         # Test with n_splits=3
         predictions = cross_val_predict(est, X, y, method=method, cv=kfold3)
@@ -2484,35 +2448,6 @@ def test_cross_validate_return_indices(global_random_seed):
 # ======================================================
 
 
-# TODO(1.8): remove `learning_curve`, `validation_curve` and `permutation_test_score`.
-@pytest.mark.parametrize(
-    "func, extra_args",
-    [
-        (learning_curve, {}),
-        (permutation_test_score, {}),
-        (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
-    ],
-)
-def test_fit_param_deprecation(func, extra_args):
-    """Check that we warn about deprecating `fit_params`."""
-    with pytest.warns(FutureWarning, match="`fit_params` is deprecated"):
-        func(
-            estimator=ConsumingClassifier(), X=X, y=y, cv=2, fit_params={}, **extra_args
-        )
-
-    with pytest.raises(
-        ValueError, match="`params` and `fit_params` cannot both be provided"
-    ):
-        func(
-            estimator=ConsumingClassifier(),
-            X=X,
-            y=y,
-            fit_params={},
-            params={},
-            **extra_args,
-        )
-
-
 @pytest.mark.parametrize(
     "func, extra_args",
     [
@@ -2546,7 +2481,8 @@ def test_groups_with_routing_validation(func, extra_args):
         (cross_val_score, {}),
         (cross_val_predict, {}),
         (learning_curve, {}),
-        (permutation_test_score, {}),
+        # Few permutations: this test only checks the params=None code path.
+        (permutation_test_score, {"n_permutations": 5}),
         (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
     ],
 )
@@ -2616,7 +2552,7 @@ def test_passed_unrequested_metadata(func, extra_args):
         (cross_val_score, {}),
         (cross_val_predict, {}),
         (learning_curve, {}),
-        (permutation_test_score, {}),
+        (permutation_test_score, {"n_permutations": 20}),
         (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
     ],
 )
@@ -2633,8 +2569,12 @@ def test_validation_functions_routing(func, extra_args):
         groups="split_groups", metadata="split_metadata"
     )
     estimator_registry = _Registry()
-    estimator = ConsumingClassifier(registry=estimator_registry).set_fit_request(
-        sample_weight="fit_sample_weight", metadata="fit_metadata"
+    estimator = (
+        ConsumingClassifier(registry=estimator_registry)
+        .set_fit_request(sample_weight="fit_sample_weight", metadata="fit_metadata")
+        .set_partial_fit_request(
+            sample_weight="fit_sample_weight", metadata="fit_metadata"
+        )
     )
 
     n_samples = _num_samples(X)
@@ -2684,7 +2624,7 @@ def test_validation_functions_routing(func, extra_args):
     for _scorer in scorer_registry:
         check_recorded_metadata(
             obj=_scorer,
-            method="score",
+            method="consuming_metric",
             parent=func.__name__,
             split_params=("sample_weight", "metadata"),
             sample_weight=score_weights,
@@ -2753,3 +2693,43 @@ def test_learning_curve_exploit_incremental_learning_routing():
 
 # End of metadata routing tests
 # =============================
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [Ridge(), LinearDiscriminantAnalysis()],
+    ids=["Ridge", "LinearDiscriminantAnalysis"],
+)
+@pytest.mark.parametrize("cv", [None, 3, 5])
+@pytest.mark.parametrize(
+    "namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_cross_val_predict_array_api_compliance(
+    estimator, cv, namespace, device_name, dtype_name
+):
+    """Test that `cross_val_predict` functions correctly with the array API
+    with both a classifier and a regressor."""
+
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
+    if is_classifier(estimator):
+        X, y = make_classification(
+            n_samples=1000, n_features=5, n_classes=3, n_informative=3, random_state=42
+        )
+    else:
+        X, y = make_regression(
+            n_samples=1000, n_features=5, n_informative=3, random_state=42
+        )
+
+    X_np = X.astype(dtype_name)
+    y_np = y.astype(dtype_name)
+    X_xp = xp.asarray(X_np, device=device)
+    y_xp = xp.asarray(y_np, device=device)
+
+    with config_context(array_api_dispatch=True):
+        pred_xp = cross_val_predict(estimator, X_xp, y_xp, cv=cv)
+
+    pred_np = cross_val_predict(estimator, X_np, y_np, cv=cv)
+    assert_allclose(
+        move_to(pred_xp, xp=np, device="cpu"), pred_np, atol=_atol_for_type(dtype_name)
+    )

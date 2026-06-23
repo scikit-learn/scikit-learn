@@ -499,10 +499,18 @@ iteration.
 Analyzing results with the `cv_results_` attribute
 --------------------------------------------------
 
-The ``cv_results_`` attribute contains useful information for analyzing the
-results of a search. It can be converted to a pandas dataframe with ``df =
-pd.DataFrame(est.cv_results_)``. The ``cv_results_`` attribute of
-:class:`HalvingGridSearchCV` and :class:`HalvingRandomSearchCV` is similar
+The ``cv_results_`` attribute contains the cross-validation results for the
+candidates evaluated in the **last** halving iteration only. It can be
+converted to a pandas dataframe with ``df = pd.DataFrame(est.cv_results_)``.
+
+The ``all_cv_results_`` attribute contains the full history of the search:
+all candidates evaluated across all halving iterations. It has the same
+structure as ``cv_results_``, with additional ``iter`` and ``n_resources``
+columns identifying each row. It can be converted to a pandas dataframe with
+``df = pd.DataFrame(est.all_cv_results_)``.
+
+The ``cv_results_`` and ``all_cv_results_`` attributes of
+:class:`HalvingGridSearchCV` and :class:`HalvingRandomSearchCV` are similar
 to that of :class:`GridSearchCV` and :class:`RandomizedSearchCV`, with
 additional information related to the successive halving process.
 
@@ -525,7 +533,9 @@ additional information related to the successive halving process.
 
   Each row corresponds to a given parameter combination (a candidate) and a given
   iteration. The iteration is given by the ``iter`` column. The ``n_resources``
-  column tells you how many resources were used.
+  column tells you how many resources were used. This table is obtained from
+  ``all_cv_results_``; ``cv_results_`` contains only the rows from the last
+  iteration (here, ``iter`` 3).
 
   In the example above, the best parameter combination is ``{'criterion':
   'log_loss', 'max_depth': None, 'max_features': 9, 'min_samples_split': 10}``
@@ -536,7 +546,7 @@ additional information related to the successive halving process.
 
   .. [1] K. Jamieson, A. Talwalkar,
      `Non-stochastic Best Arm Identification and Hyperparameter
-     Optimization <http://proceedings.mlr.press/v51/jamieson16.html>`_, in
+     Optimization <https://proceedings.mlr.press/v51/jamieson16.html>`_, in
      proc. of Machine Learning Research, 2016.
 
   .. [2] L. Li, K. Jamieson, G. DeSalvo, A. Rostamizadeh, A. Talwalkar,

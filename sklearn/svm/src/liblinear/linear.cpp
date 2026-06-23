@@ -29,6 +29,9 @@
      Sylvain Marie, Schneider Electric
      See <https://github.com/scikit-learn/scikit-learn/pull/13511#issuecomment-481729756>
 
+   Modified 2026:
+   - Fixed a memory leak due to conditional deallocation of `newprob` attributes;
+     see <https://github.com/scikit-learn/scikit-learn/pull/34256>
  */
 
 #include <math.h>
@@ -73,7 +76,7 @@ static void info(const char *fmt,...)
 	char buf[BUFSIZ];
 	va_list ap;
 	va_start(ap,fmt);
-	vsprintf(buf,fmt,ap);
+	vsnprintf(buf,sizeof buf,fmt,ap);
 	va_end(ap);
 	(*liblinear_print_string)(buf);
 }
@@ -2453,7 +2456,7 @@ static void remove_zero_weight(problem *newprob, const problem *prob)
 model* train(const problem *prob, const parameter *param, BlasFunctions *blas_functions)
 {
 	problem newprob;
-	remove_zero_weight(&newprob, prob);
+	remove_zero_weight(&newprob, prob);  // This allocates memory for newprob
 	prob = &newprob;
 	int i,j;
 	int l = prob->l;
@@ -2587,10 +2590,10 @@ model* train(const problem *prob, const parameter *param, BlasFunctions *blas_fu
 		free(sub_prob.y);
 		free(sub_prob.W);
 		free(weighted_C);
-		free(newprob.x);
-		free(newprob.y);
-		free(newprob.W);
 	}
+	free(newprob.x);
+	free(newprob.y);
+	free(newprob.W);
 	return model_;
 }
 

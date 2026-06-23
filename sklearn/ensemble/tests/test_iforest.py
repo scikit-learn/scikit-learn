@@ -260,6 +260,7 @@ def test_iforest_warm_start():
     side_effect=Mock(**{"return_value": 3}),
 )
 @pytest.mark.parametrize("contamination, n_predict_calls", [(0.25, 3), ("auto", 2)])
+@pytest.mark.thread_unsafe  # monkeypatched code
 def test_iforest_chunks_works1(
     mocked_get_chunk, contamination, n_predict_calls, global_random_seed
 ):
@@ -273,6 +274,7 @@ def test_iforest_chunks_works1(
     side_effect=Mock(**{"return_value": 10}),
 )
 @pytest.mark.parametrize("contamination, n_predict_calls", [(0.25, 3), ("auto", 2)])
+@pytest.mark.thread_unsafe  # monkeypatched code
 def test_iforest_chunks_works2(
     mocked_get_chunk, contamination, n_predict_calls, global_random_seed
 ):
@@ -387,7 +389,7 @@ def test_iforest_predict_parallel(global_random_seed, contamination, n_jobs):
     )
     clf_parallel.fit(X)
     with parallel_backend("threading", n_jobs=n_jobs):
-        pred_paralell = clf_parallel.predict(X)
+        pred_parallel = clf_parallel.predict(X)
 
     # assert the same results as non-parallel
-    assert_array_equal(pred, pred_paralell)
+    assert_array_equal(pred, pred_parallel)

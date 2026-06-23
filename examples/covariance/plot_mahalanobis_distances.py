@@ -60,7 +60,7 @@ observation ranking and clustering.
     Proceedings of the National Academy of Sciences of the United States
     of America, 17, 684-688.
 
-"""
+"""  # noqa: E501
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
@@ -109,9 +109,9 @@ import matplotlib.pyplot as plt
 
 from sklearn.covariance import EmpiricalCovariance, MinCovDet
 
-# fit a MCD robust estimator to data
+# fit an MCD robust estimator to data
 robust_cov = MinCovDet().fit(X)
-# fit a MLE estimator to data
+# fit an MLE estimator to data
 emp_cov = EmpiricalCovariance().fit(X)
 print(
     "Estimated covariance matrix:\nMCD (Robust):\n{}\nMLE:\n{}".format(

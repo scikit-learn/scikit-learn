@@ -31,17 +31,15 @@ _datasets_pair_pyx = custom_target(
   output: '_datasets_pair.pyx',
   input: '_datasets_pair.pyx.tp',
   command: [tempita, '@INPUT@', '-o', '@OUTDIR@'],
-  # TODO in principle this should go in py.exension_module below. This is
+  # TODO in principle this should go in py.extension_module below. This is
   # temporary work-around for dependency issue with .pyx.tp files. For more
   # details, see https://github.com/mesonbuild/meson/issues/13212
   depends: [_datasets_pair_pxd, _pairwise_distances_reduction_cython_tree, utils_cython_tree],
 )
 _datasets_pair = py.extension_module(
   '_datasets_pair',
-  _datasets_pair_pyx,
+  cython_gen_cpp.process(_datasets_pair_pyx),
   dependencies: [np_dep],
-  override_options: ['cython_language=cpp'],
-  cython_args: cython_args,
   subdir: 'sklearn/metrics/_pairwise_distances_reduction',
   install: true
 )
@@ -57,7 +55,7 @@ _base_pyx = custom_target(
   output: '_base.pyx',
   input: '_base.pyx.tp',
   command: [tempita, '@INPUT@', '-o', '@OUTDIR@'],
-  # TODO in principle this should go in py.exension_module below. This is
+  # TODO in principle this should go in py.extension_module below. This is
   # temporary work-around for dependency issue with .pyx.tp files. For more
   # details, see https://github.com/mesonbuild/meson/issues/13212
   depends: [_base_pxd, _pairwise_distances_reduction_cython_tree,
@@ -65,10 +63,8 @@ _base_pyx = custom_target(
 )
 _base = py.extension_module(
   '_base',
-  _base_pyx,
+  cython_gen_cpp.process(_base_pyx),
   dependencies: [np_dep, openmp_dep],
-  override_options: ['cython_language=cpp'],
-  cython_args: cython_args,
   subdir: 'sklearn/metrics/_pairwise_distances_reduction',
   install: true
 )
@@ -84,7 +80,7 @@ _middle_term_computer_pyx = custom_target(
   output: '_middle_term_computer.pyx',
   input: '_middle_term_computer.pyx.tp',
   command: [tempita, '@INPUT@', '-o', '@OUTDIR@'],
-  # TODO in principle this should go in py.exension_module below. This is
+  # TODO in principle this should go in py.extension_module below. This is
   # temporary work-around for dependency issue with .pyx.tp files. For more
   # details, see https://github.com/mesonbuild/meson/issues/13212
   depends: [_middle_term_computer_pxd,
@@ -93,10 +89,8 @@ _middle_term_computer_pyx = custom_target(
 )
 _middle_term_computer = py.extension_module(
   '_middle_term_computer',
-  _middle_term_computer_pyx,
+  cython_gen_cpp.process(_middle_term_computer_pyx),
   dependencies: [np_dep],
-  override_options: ['cython_language=cpp'],
-  cython_args: cython_args,
   subdir: 'sklearn/metrics/_pairwise_distances_reduction',
   install: true
 )
@@ -112,7 +106,7 @@ _argkmin_pyx = custom_target(
     output: '_argkmin.pyx',
     input: '_argkmin.pyx.tp',
     command: [tempita, '@INPUT@', '-o', '@OUTDIR@'],
-    # TODO in principle this should go in py.exension_module below. This is
+    # TODO in principle this should go in py.extension_module below. This is
     # temporary work-around for dependency issue with .pyx.tp files. For more
     # details, see https://github.com/mesonbuild/meson/issues/13212
     depends: [_argkmin_pxd,
@@ -121,10 +115,8 @@ _argkmin_pyx = custom_target(
       )
 _argkmin = py.extension_module(
     '_argkmin',
-    _argkmin_pyx,
+    cython_gen_cpp.process(_argkmin_pyx),
     dependencies: [np_dep, openmp_dep],
-    override_options: ['cython_language=cpp'],
-    cython_args: cython_args,
     subdir: 'sklearn/metrics/_pairwise_distances_reduction',
     install: true
 )
@@ -140,7 +132,7 @@ _radius_neighbors_pyx = custom_target(
     output: '_radius_neighbors.pyx',
     input: '_radius_neighbors.pyx.tp',
     command: [tempita, '@INPUT@', '-o', '@OUTDIR@'],
-    # TODO in principle this should go in py.exension_module below. This is
+    # TODO in principle this should go in py.extension_module below. This is
     # temporary work-around for dependency issue with .pyx.tp files. For more
     # details, see https://github.com/mesonbuild/meson/issues/13212
     depends: [_radius_neighbors_pxd,
@@ -149,10 +141,8 @@ _radius_neighbors_pyx = custom_target(
 )
 _radius_neighbors = py.extension_module(
     '_radius_neighbors',
-    _radius_neighbors_pyx,
+    cython_gen_cpp.process(_radius_neighbors_pyx),
     dependencies: [np_dep, openmp_dep],
-    override_options: ['cython_language=cpp'],
-    cython_args: cython_args,
     subdir: 'sklearn/metrics/_pairwise_distances_reduction',
     install: true
 )
@@ -162,7 +152,7 @@ _argkmin_classmode_pyx = custom_target(
   output: '_argkmin_classmode.pyx',
   input: '_argkmin_classmode.pyx.tp',
   command: [tempita, '@INPUT@', '-o', '@OUTDIR@'],
-  # TODO in principle this should go in py.exension_module below. This is
+  # TODO in principle this should go in py.extension_module below. This is
   # temporary work-around for dependency issue with .pyx.tp files. For more
   # details, see https://github.com/mesonbuild/meson/issues/13212
   depends: [_classmode_pxd,
@@ -171,10 +161,8 @@ _argkmin_classmode_pyx = custom_target(
 )
 _argkmin_classmode = py.extension_module(
   '_argkmin_classmode',
-  _argkmin_classmode_pyx,
+  cython_gen_cpp.process(_argkmin_classmode_pyx),
   dependencies: [np_dep, openmp_dep],
-  override_options: ['cython_language=cpp'],
-  cython_args: cython_args,
   # XXX: for some reason -fno-sized-deallocation is needed otherwise there is
   # an error with undefined symbol _ZdlPv at import time in manylinux wheels.
   # See https://github.com/scikit-learn/scikit-learn/issues/28596 for more details.
@@ -188,7 +176,7 @@ _radius_neighbors_classmode_pyx = custom_target(
   output: '_radius_neighbors_classmode.pyx',
   input: '_radius_neighbors_classmode.pyx.tp',
   command: [tempita, '@INPUT@', '-o', '@OUTDIR@'],
-  # TODO in principle this should go in py.exension_module below. This is
+  # TODO in principle this should go in py.extension_module below. This is
   # temporary work-around for dependency issue with .pyx.tp files. For more
   # details, see https://github.com/mesonbuild/meson/issues/13212
   depends: [_classmode_pxd,
@@ -198,10 +186,8 @@ _radius_neighbors_classmode_pyx = custom_target(
 )
 _radius_neighbors_classmode = py.extension_module(
   '_radius_neighbors_classmode',
-  _radius_neighbors_classmode_pyx,
+  cython_gen_cpp.process(_radius_neighbors_classmode_pyx),
   dependencies: [np_dep, openmp_dep],
-  override_options: ['cython_language=cpp'],
-  cython_args: cython_args,
   subdir: 'sklearn/metrics/_pairwise_distances_reduction',
   install: true
 )

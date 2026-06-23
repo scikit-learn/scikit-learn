@@ -41,8 +41,8 @@ API_REFERENCE maps each module name to a dictionary that consists of the followi
 components:
 
 short_summary (required)
-    The text to be printed on the index page; it has nothing to do the API reference
-    page of each module.
+    The text to be printed on the index page; it has nothing to do with
+    the API reference page of each module.
 description (required, `None` if not needed)
     The additional description for the module to be placed under the module
     docstring, before the sections start.
@@ -139,6 +139,25 @@ API_REFERENCE = {
             {
                 "title": "Visualization",
                 "autosummary": ["CalibrationDisplay"],
+            },
+        ],
+    },
+    "sklearn.callback": {
+        "short_summary": "Callbacks.",
+        "description": None,
+        "sections": [
+            {
+                "title": None,
+                "autosummary": [
+                    "AutoPropagatedCallback",
+                    "CallbackContext",
+                    "CallbackSupportMixin",
+                    "FitCallback",
+                    "ProgressBar",
+                    "ScoringMonitor",
+                    "ScoringMonitorLog",
+                    "with_callbacks",
+                ],
             },
         ],
     },
@@ -398,7 +417,7 @@ API_REFERENCE = {
         "sections": [
             {
                 "title": None,
-                "autosummary": ["enable_halving_search_cv", "enable_iterative_imputer"],
+                "autosummary": ["enable_halving_search_cv"],
             },
         ],
     },
@@ -587,7 +606,7 @@ API_REFERENCE = {
                 "autosummary": [
                     "LogisticRegression",
                     "LogisticRegressionCV",
-                    "PassiveAggressiveClassifier",
+                    "PassiveAggressiveClassifier",  # TODO(1.10): remove
                     "Perceptron",
                     "RidgeClassifier",
                     "RidgeClassifierCV",
@@ -603,7 +622,7 @@ API_REFERENCE = {
                 "title": "Regressors with variable selection",
                 "description": (
                     "The following estimators have built-in variable selection fitting "
-                    "procedures, but any estimator using a L1 or elastic-net penalty "
+                    "procedures, but any estimator using an L1 or elastic-net penalty "
                     "also performs variable selection: typically "
                     ":class:`~linear_model.SGDRegressor` or "
                     ":class:`~sklearn.linear_model.SGDClassifier` with an appropriate "
@@ -672,7 +691,7 @@ API_REFERENCE = {
             {
                 "title": "Miscellaneous",
                 "autosummary": [
-                    "PassiveAggressiveRegressor",
+                    "PassiveAggressiveRegressor",  # TODO(1.10): remove
                     "enet_path",
                     "lars_path",
                     "lars_path_gram",
@@ -691,6 +710,7 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
+                    "ClassicalMDS",
                     "Isomap",
                     "LocallyLinearEmbedding",
                     "MDS",
@@ -731,6 +751,8 @@ API_REFERENCE = {
                     "classification_report",
                     "cohen_kappa_score",
                     "confusion_matrix",
+                    "confusion_matrix_at_thresholds",
+                    "d2_brier_score",
                     "d2_log_loss_score",
                     "dcg_score",
                     "det_curve",
@@ -741,6 +763,7 @@ API_REFERENCE = {
                     "jaccard_score",
                     "log_loss",
                     "matthews_corrcoef",
+                    "metric_at_thresholds",
                     "multilabel_confusion_matrix",
                     "ndcg_score",
                     "precision_recall_curve",
@@ -1349,4 +1372,4 @@ DEPRECATED_API_REFERENCE = {
 }
 """
 
-DEPRECATED_API_REFERENCE = {}  # type: ignore
+DEPRECATED_API_REFERENCE = {}  # type: ignore[var-annotated]

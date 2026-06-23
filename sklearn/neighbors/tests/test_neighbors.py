@@ -83,7 +83,7 @@ SPARSE_OR_DENSE = SPARSE_TYPES + (np.asarray,)
 ALGORITHMS = ("ball_tree", "brute", "kd_tree", "auto")
 COMMON_VALID_METRICS = sorted(
     set.intersection(*map(set, neighbors.VALID_METRICS.values()))
-)  # type: ignore
+)
 
 P = (1, 2, 3, 4, np.inf)
 
@@ -155,6 +155,9 @@ def _weight_func(dist):
 WEIGHTS = ["uniform", "distance", _weight_func]
 
 
+# XXX: probably related to the thread-safety bug tracked at:
+# https://github.com/scikit-learn/scikit-learn/issues/31884
+@pytest.mark.thread_unsafe
 @pytest.mark.parametrize(
     "n_samples, n_features, n_query_pts, n_neighbors",
     [
@@ -163,7 +166,7 @@ WEIGHTS = ["uniform", "distance", _weight_func]
     ],
 )
 @pytest.mark.parametrize("query_is_train", [False, True])
-@pytest.mark.parametrize("metric", COMMON_VALID_METRICS + DISTANCE_METRIC_OBJS)  # type: ignore
+@pytest.mark.parametrize("metric", COMMON_VALID_METRICS + DISTANCE_METRIC_OBJS)
 def test_unsupervised_kneighbors(
     global_dtype,
     n_samples,
@@ -248,7 +251,7 @@ def test_unsupervised_kneighbors(
         (1000, 5, 100),
     ],
 )
-@pytest.mark.parametrize("metric", COMMON_VALID_METRICS + DISTANCE_METRIC_OBJS)  # type: ignore
+@pytest.mark.parametrize("metric", COMMON_VALID_METRICS + DISTANCE_METRIC_OBJS)
 @pytest.mark.parametrize("n_neighbors, radius", [(1, 100), (50, 500), (100, 1000)])
 @pytest.mark.parametrize(
     "NeighborsMixinSubclass",
@@ -328,11 +331,11 @@ def test_neigh_predictions_algorithm_agnosticity(
 
 @pytest.mark.parametrize(
     "KNeighborsMixinSubclass",
-    [
+    (
         neighbors.KNeighborsClassifier,
         neighbors.KNeighborsRegressor,
         neighbors.NearestNeighbors,
-    ],
+    ),
 )
 def test_unsupervised_inputs(global_dtype, KNeighborsMixinSubclass):
     # Test unsupervised inputs for neighbors estimators
@@ -2096,6 +2099,9 @@ def test_same_radius_neighbors_parallel(algorithm):
     assert_allclose(graph, graph_parallel)
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 @pytest.mark.parametrize("backend", ["threading", "loky"])
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
 def test_knn_forcing_backend(backend, algorithm):
@@ -2501,3 +2507,25 @@ def test_neighbor_regressors_loocv(nn_model, algorithm):
     loocv = cross_val_predict(nn_model, X, y, cv=LeaveOneOut())
     nn_model.fit(X, y)
     assert_allclose(loocv, nn_model.predict(None))
+
+
+@pytest.mark.parametrize("metric", COMMON_VALID_METRICS)
+@pytest.mark.parametrize(
+    "Estimator", [neighbors.KNeighborsClassifier, neighbors.RadiusNeighborsClassifier]
+)
+def test_neighbors_classifier_with_string_labels(metric, Estimator):
+    """Ensure KNeighborsClassifier(algorithm='brute') works with string labels.
+
+    Non-regression test for issue #33034.
+    """
+    X = rng.normal(size=(5, 3))
+    # String label
+    y = np.array(["foo", "bar", "foo", "bar", "foo"])
+
+    knn = Estimator(algorithm="brute", metric=metric)
+    knn.fit(X, y)
+
+    y_pred = knn.predict(X)
+
+    assert y_pred.shape == (5,)
+    assert all(label in y for label in y_pred)

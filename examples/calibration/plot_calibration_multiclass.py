@@ -468,7 +468,7 @@ for classifier_idx, (name, base_clf) in enumerate(base_classifiers.items()):
                 cal_clf.fit(X_train, y_train)
                 y_pred_cal = cal_clf.predict_proba(X_test)
                 for metric in [log_loss, brier_score_loss]:
-                    # Compute the metric for both uncalibrated and calibrated predictions
+                    # Compute the metric for uncalibrated and calibrated predictions
                     metric_uncal = metric(y_test, y_pred_uncal)
                     metric_cal = metric(y_test, y_pred_cal)
                     scores.append(

@@ -102,7 +102,7 @@ class SimplePipeline(BaseEstimator):
         return self.steps_[-1].predict(X_transformed, **params.predictor.predict)
 
     def get_metadata_routing(self):
-        router = MetadataRouter(owner=self.__class__.__name__)
+        router = MetadataRouter(owner=self)
         for i, step in enumerate(self.steps[:-1]):
             router.add(
                 **{f"step_{i}": step},
@@ -169,7 +169,7 @@ def test_assert_request_is_empty():
 @config_context(enable_metadata_routing=True)
 def test_estimator_puts_self_in_registry(estimator):
     """Check that an estimator puts itself in the registry upon fit."""
-    estimator.fit(X, y)
+    estimator = clone(estimator).fit(X, y)
     assert estimator in estimator.registry
 
 
@@ -215,7 +215,10 @@ def test_default_requests():
         __metadata_request__fit = {
             # set a different default request
             "sample_weight": True
-        }  # type: ignore
+        }  # type: ignore[var-annotated]
+
+        def fit(self, X, y=None):
+            return self  # pragma: no cover
 
     odd_request = get_routing_for_object(OddEstimator())
     assert odd_request.fit.requests == {"sample_weight": True}
@@ -250,11 +253,20 @@ def test_default_request_override():
     class Base(BaseEstimator):
         __metadata_request__split = {"groups": True}
 
+        def split(self, X, y=None):
+            pass  # pragma: no cover
+
     class class_1(Base):
         __metadata_request__split = {"groups": "sample_domain"}
 
+        def split(self, X, y=None):
+            pass  # pragma: no cover
+
     class Class_1(Base):
         __metadata_request__split = {"groups": "sample_domain"}
+
+        def split(self, X, y=None):
+            pass  # pragma: no cover
 
     assert_request_equal(
         class_1()._get_metadata_request(), {"split": {"groups": "sample_domain"}}
@@ -395,10 +407,9 @@ def test_nested_routing():
 
     pipeline.predict(X, sample_weight=w3)
     check_recorded_metadata(
-        pipeline.steps_[0].transformer_,
-        method="transform",
-        parent="fit",
-        sample_weight=w3,
+        pipeline.steps_[1].estimator_,
+        method="predict",
+        parent="predict",
     )
 
 
@@ -425,7 +436,7 @@ def test_nested_routing_conflict():
                 "In WeightedMetaRegressor, there is a conflict on sample_weight between"
                 " what is requested for this estimator and what is requested by its"
                 " children. You can resolve this conflict by using an alias for the"
-                " child estimator(s) requested metadata."
+                " child estimators' requested metadata."
             )
         ),
     ):
@@ -457,19 +468,6 @@ def test_invalid_metadata():
 
 @config_context(enable_metadata_routing=True)
 def test_get_metadata_routing():
-    class TestDefaultsBadMethodName(_MetadataRequester):
-        __metadata_request__fit = {
-            "sample_weight": None,
-            "my_param": None,
-        }
-        __metadata_request__score = {
-            "sample_weight": None,
-            "my_param": True,
-            "my_other_param": None,
-        }
-        # this will raise an error since we don't understand "other_method" as a method
-        __metadata_request__other_method = {"my_param": True}
-
     class TestDefaults(_MetadataRequester):
         __metadata_request__fit = {
             "sample_weight": None,
@@ -482,10 +480,14 @@ def test_get_metadata_routing():
         }
         __metadata_request__predict = {"my_param": True}
 
-    with pytest.raises(
-        AttributeError, match="'MetadataRequest' object has no attribute 'other_method'"
-    ):
-        TestDefaultsBadMethodName().get_metadata_routing()
+        def fit(self, X, y=None):
+            return self  # pragma: no cover
+
+        def score(self, X, y=None):
+            pass  # pragma: no cover
+
+        def predict(self, X):
+            pass  # pragma: no cover
 
     expected = {
         "score": {
@@ -595,6 +597,39 @@ def test_removing_non_existing_param_raises():
         InvalidRequestRemoval().get_metadata_routing()
 
 
+def test_get_class_level_metadata_request_values():
+    """Test `_get_class_level_metadata_request_values`, which infers metadata
+    requests from callables; used for class methods in consumers and by scorers
+    for custom `score_func`s.
+    """
+
+    class Dummy(BaseEstimator):
+        def fit(self, X, y, sample_weight=None, extra=None):
+            return self
+
+    # Baseline: sniff the class method's signature.
+    assert Dummy._get_class_level_metadata_request_values("fit") == {
+        "sample_weight": None,
+        "extra": None,
+    }
+
+    # `ignore_params` filters names out of the result.
+    assert Dummy._get_class_level_metadata_request_values(
+        "fit", ignore_params={"sample_weight"}
+    ) == {"extra": None}
+
+    # `method` lets us inspect a different callable; first arg is auto-skipped.
+    def score_func(y_true, y_pred, sample_weight=None):
+        return 0  # pragma: no cover
+
+    assert Dummy._get_class_level_metadata_request_values(
+        "score", method=score_func, ignore_params={"y_pred"}
+    ) == {"sample_weight": None}
+
+    # No matching class method and no `method` callable -> empty dict.
+    assert Dummy._get_class_level_metadata_request_values("predict") == {}
+
+
 @config_context(enable_metadata_routing=True)
 def test_method_metadata_request():
     mmr = MethodMetadataRequest(owner="test", method="fit")
@@ -621,6 +656,9 @@ def test_get_routing_for_object():
     class Consumer(BaseEstimator):
         __metadata_request__fit = {"prop": None}
 
+        def fit(self, X, y=None):
+            return self  # pragma: no cover
+
     assert_request_is_empty(get_routing_for_object(None))
     assert_request_is_empty(get_routing_for_object(object()))
 
@@ -638,7 +676,7 @@ def test_get_routing_for_object():
 @config_context(enable_metadata_routing=True)
 def test_metadata_request_consumes_method():
     """Test that MetadataRequest().consumes() method works as expected."""
-    request = MetadataRouter(owner="test")
+    request = MetadataRequest(owner="test")
     assert request.consumes(method="fit", params={"foo"}) == set()
 
     request = MetadataRequest(owner="test")
@@ -684,7 +722,7 @@ def test_metaestimator_warnings():
         __metadata_request__fit = {"sample_weight": metadata_routing.WARN}
 
     with pytest.warns(
-        UserWarning, match="Support for .* has recently been added to this class"
+        UserWarning, match="Support for .* has recently been added to .* class"
     ):
         WeightedMetaRegressorWarn(
             estimator=LinearRegression().set_fit_request(sample_weight=False)
@@ -697,7 +735,7 @@ def test_estimator_warnings():
         __metadata_request__fit = {"sample_weight": metadata_routing.WARN}
 
     with pytest.warns(
-        UserWarning, match="Support for .* has recently been added to this class"
+        UserWarning, match="Support for .* has recently been added to .* class"
     ):
         MetaRegressor(estimator=ConsumingRegressorWarn()).fit(
             X, y, sample_weight=my_weights
@@ -1156,3 +1194,144 @@ def test_unbound_set_methods_work():
     # Test positional arguments error after making the descriptor method unbound.
     with pytest.raises(TypeError, match=error_message):
         A().set_fit_request(True)
+
+
+class _UncopyableOwner:
+    """An owner-like object that fails on deepcopy.
+
+    Used to verify that cloning routing objects does not walk into the
+    estimator state. This mirrors the real-world skorch case where the
+    estimator holds attributes (e.g. locally-defined torch modules) that are
+    not picklable / deep-copyable.
+    """
+
+    def __deepcopy__(self, memo):
+        raise AssertionError("owner must not be deep-copied")  # pragma: no cover
+
+
+def test_method_metadata_request_clone_does_not_copy_owner():
+    owner = _UncopyableOwner()
+    req = MethodMetadataRequest(owner=owner, method="fit")
+    req.add_request(param="sample_weight", alias=True)
+
+    new = clone(req)
+
+    # owner is shared by reference, not copied
+    assert new.owner is owner
+    # routing state is deep-copied (independent dict)
+    assert new.requests == {"sample_weight": True}
+    assert new._requests is not req._requests
+    # mutating the copy doesn't affect the original
+    new.add_request(param="groups", alias=True)
+    assert "groups" not in req.requests
+
+
+def test_metadata_request_clone_does_not_copy_owner():
+    owner = _UncopyableOwner()
+    req = MetadataRequest(owner=owner)
+    req.fit.add_request(param="sample_weight", alias=True)
+
+    new = clone(req)
+
+    assert new.owner is owner
+    for method in SIMPLE_METHODS:
+        assert getattr(new, method).owner is owner
+    assert new.fit.requests == {"sample_weight": True}
+    assert new.fit is not req.fit
+    new.fit.add_request(param="groups", alias=True)
+    assert "groups" not in req.fit.requests
+
+
+def test_metadata_router_clone_does_not_copy_owner():
+    owner = _UncopyableOwner()
+    sub_owner = _UncopyableOwner()
+    sub_req = MetadataRequest(owner=sub_owner)
+    sub_req.fit.add_request(param="sample_weight", alias=True)
+
+    router = MetadataRouter(owner=owner).add(
+        est=sub_req,
+        method_mapping=MethodMapping().add(caller="fit", callee="fit"),
+    )
+
+    new = clone(router)
+
+    assert new.owner is owner
+    assert new._route_mappings["est"].router.owner is sub_owner
+    # routing state is independent from the original
+    assert new._route_mappings is not router._route_mappings
+    assert new._route_mappings["est"].router.fit.requests == {"sample_weight": True}
+
+
+@config_context(enable_metadata_routing=True)
+def test_get_routing_for_object_does_not_deepcopy_estimator():
+    # Regression test for the skorch deepcopy issue: asking for routing info
+    # of an estimator should not deep-copy the estimator itself.
+    class Est(BaseEstimator):
+        def fit(self, X, y, sample_weight=None):
+            return self  # pragma: no cover
+
+        def __deepcopy__(self, memo):
+            raise AssertionError(
+                "estimator must not be deep-copied"
+            )  # pragma: no cover
+
+    est = Est().set_fit_request(sample_weight=True)
+    routing = get_routing_for_object(est)
+    assert routing.owner is est
+
+
+@config_context(enable_metadata_routing=True)
+def test_add_self_request_does_not_deepcopy_estimator():
+    class Est(BaseEstimator):
+        def fit(self, X, y, sample_weight=None):
+            return self  # pragma: no cover
+
+        def __deepcopy__(self, memo):
+            raise AssertionError(
+                "estimator must not be deep-copied"
+            )  # pragma: no cover
+
+    est = Est().set_fit_request(sample_weight=True)
+    # add_self_request clones the request internally; it must not reach into
+    # the estimator.
+    router = MetadataRouter(owner=est).add_self_request(est)
+    assert router._self_request.owner is est
+
+
+@config_context(enable_metadata_routing=True)
+def test_removing_metadata_in_subclass_correctly_works():
+    """Test that removing a metadata with UNUSED marker affects child's method."""
+
+    class A(ConsumingClassifier):
+        __metadata_request__score = {
+            "sample_weight": metadata_routing.UNUSED,
+            "metadata": metadata_routing.UNUSED,
+        }
+
+    # Here we make sure that the parent class has the method as usual
+    assert hasattr(ConsumingClassifier(), "set_score_request")
+    # And that the child class doesn't have it since all metadata for the score method
+    # are removed.
+    with pytest.raises(
+        TypeError,
+        match=re.escape(
+            "Unexpected args: {'sample_weight'} in score. Accepted arguments are: set()"
+        ),
+    ):
+        A().set_score_request(sample_weight=True)
+
+
+@config_context(enable_metadata_routing=True)
+def test_explicitly_defined_set_method_request_is_not_overriden():
+    """Test that explicitly defined set_{method}_request is not overridden."""
+
+    class A(BaseEstimator):
+        def set_score_request(self, sample_weight=None, metadata=None):
+            return self  # pragma: no cover
+
+    class B(A):
+        def score(self, X, y=None):
+            pass  # pragma: no cover
+
+    # This should work as usual since the method is explicitly defined.
+    B().set_score_request(sample_weight=True)

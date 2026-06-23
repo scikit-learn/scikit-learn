@@ -1,3 +1,22 @@
+# Check if scipy's cython_blas exports blas_int (ILP64 support).
+scipy_has_blas_int = cython.compiles(
+  'from scipy.linalg.cython_blas cimport blas_int',
+  name: 'scipy cython_blas blas_int'
+)
+
+_blas_int_conf = configuration_data()
+if scipy_has_blas_int
+  _blas_int_conf.set('BLAS_INT_DEF', 'from scipy.linalg.cython_blas cimport blas_int')
+else
+  _blas_int_conf.set('BLAS_INT_DEF', 'ctypedef int blas_int')
+endif
+
+_blas_int_pxi = configure_file(
+  input: '_blas_int.pxi.in',
+  output: '_blas_int.pxi',
+  configuration: _blas_int_conf,
+)
+
 # utils is cimported from other subpackages so this is needed for the cimport
 # to work
 utils_cython_tree = [
@@ -5,6 +24,7 @@ utils_cython_tree = [
   # early in the build
   sklearn_root_cython_tree,
   fs.copyfile('__init__.py'),
+  fs.copyfile('_bitset.pxd'),
   fs.copyfile('_cython_blas.pxd'),
   fs.copyfile('_heap.pxd'),
   fs.copyfile('_openmp_helpers.pxd'),
@@ -16,23 +36,24 @@ utils_cython_tree = [
 
 utils_extension_metadata = {
   'sparsefuncs_fast':
-    {'sources': ['sparsefuncs_fast.pyx']},
-  '_cython_blas': {'sources': ['_cython_blas.pyx']},
-  'arrayfuncs': {'sources': ['arrayfuncs.pyx']},
+    {'sources': [cython_gen.process('sparsefuncs_fast.pyx')]},
+  '_cython_blas': {'sources': [cython_gen.process('_cython_blas.pyx'), _blas_int_pxi]},
+  'arrayfuncs': {'sources': [cython_gen.process('arrayfuncs.pyx')]},
+  '_bitset': {'sources': [cython_gen.process('_bitset.pyx')]},
   'murmurhash': {
-      'sources': ['murmurhash.pyx', 'src' / 'MurmurHash3.cpp'],
+      'sources': [cython_gen.process('murmurhash.pyx'), 'src' / 'MurmurHash3.cpp'],
   },
   '_fast_dict':
-    {'sources': ['_fast_dict.pyx'], 'override_options': ['cython_language=cpp']},
-  '_openmp_helpers': {'sources': ['_openmp_helpers.pyx'], 'dependencies': [openmp_dep]},
-  '_random': {'sources': ['_random.pyx']},
-  '_typedefs': {'sources': ['_typedefs.pyx']},
-  '_heap': {'sources': ['_heap.pyx']},
-  '_sorting': {'sources': ['_sorting.pyx']},
+    {'sources': [cython_gen_cpp.process('_fast_dict.pyx')]},
+  '_openmp_helpers': {'sources': [cython_gen.process('_openmp_helpers.pyx')], 'dependencies': [openmp_dep]},
+  '_random': {'sources': [cython_gen.process('_random.pyx')]},
+  '_typedefs': {'sources': [cython_gen.process('_typedefs.pyx')]},
+  '_heap': {'sources': [cython_gen.process('_heap.pyx')]},
+  '_sorting': {'sources': [cython_gen.process('_sorting.pyx')]},
   '_vector_sentinel':
-    {'sources': ['_vector_sentinel.pyx'], 'override_options': ['cython_language=cpp'],
+    {'sources': [cython_gen_cpp.process('_vector_sentinel.pyx')],
      'dependencies': [np_dep]},
-  '_isfinite': {'sources': ['_isfinite.pyx']},
+  '_isfinite': {'sources': [cython_gen.process('_isfinite.pyx')]},
 }
 
 foreach ext_name, ext_dict : utils_extension_metadata
@@ -40,8 +61,6 @@ foreach ext_name, ext_dict : utils_extension_metadata
     ext_name,
     [ext_dict.get('sources'), utils_cython_tree],
     dependencies: ext_dict.get('dependencies', []),
-    override_options : ext_dict.get('override_options', []),
-    cython_args: cython_args,
     subdir: 'sklearn/utils',
     install: true
   )
@@ -63,15 +82,14 @@ foreach name: util_extension_names
     output: name + '.pyx',
     input: name + '.pyx.tp',
     command: [tempita, '@INPUT@', '-o', '@OUTDIR@'],
-    # TODO in principle this should go in py.exension_module below. This is
+    # TODO in principle this should go in py.extension_module below. This is
     # temporary work-around for dependency issue with .pyx.tp files. For more
     # details, see https://github.com/mesonbuild/meson/issues/13212
     depends: [pxd, utils_cython_tree],
   )
   py.extension_module(
     name,
-    pyx,
-    cython_args: cython_args,
+    cython_gen.process(pyx),
     subdir: 'sklearn/utils',
     install: true
    )

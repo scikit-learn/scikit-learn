@@ -1,7 +1,5 @@
 .. currentmodule:: sklearn
 
-.. TODO: update doc/conftest.py once document is updated and examples run.
-
 .. _metadata_routing:
 
 Metadata Routing
@@ -93,7 +91,8 @@ method and in :func:`~metrics.make_scorer`'s `set_score_request()` method. Both
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(sample_weight=True)
   >>> lr = LogisticRegressionCV(
   ...     cv=GroupKFold(),
-  ...     scoring=weighted_acc
+  ...     scoring=weighted_acc,
+  ...     use_legacy_attributes=False,
   ... ).set_fit_request(sample_weight=True)
   >>> cv_results = cross_validate(
   ...     lr,
@@ -126,7 +125,7 @@ that :func:`~model_selection.cross_validate` does not pass the weights along::
 
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(sample_weight=True)
   >>> lr = LogisticRegressionCV(
-  ...     cv=GroupKFold(), scoring=weighted_acc,
+  ...     cv=GroupKFold(), scoring=weighted_acc, use_legacy_attributes=False
   ... ).set_fit_request(sample_weight=False)
   >>> cv_results = cross_validate(
   ...     lr,
@@ -157,7 +156,7 @@ to it::
 
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(sample_weight=True)
   >>> lr = LogisticRegressionCV(
-  ...     cv=GroupKFold(), scoring=weighted_acc,
+  ...     cv=GroupKFold(), scoring=weighted_acc, use_legacy_attributes=False
   ... ).set_fit_request(sample_weight=True)
   >>> sel = SelectKBest(k=2)
   >>> pipe = make_pipeline(sel, lr)
@@ -183,7 +182,7 @@ consumers. In this example, we pass ``scoring_weight`` to the scorer, and
   ...    sample_weight="scoring_weight"
   ... )
   >>> lr = LogisticRegressionCV(
-  ...     cv=GroupKFold(), scoring=weighted_acc,
+  ...     cv=GroupKFold(), scoring=weighted_acc, use_legacy_attributes=False
   ... ).set_fit_request(sample_weight="fitting_weight")
   >>> cv_results = cross_validate(
   ...     lr,
@@ -318,6 +317,7 @@ Meta-estimators and functions supporting metadata routing:
 - :class:`sklearn.multioutput.MultiOutputClassifier`
 - :class:`sklearn.multioutput.MultiOutputRegressor`
 - :class:`sklearn.multioutput.RegressorChain`
+- :class:`sklearn.preprocessing.TargetEncoder`
 - :class:`sklearn.pipeline.FeatureUnion`
 - :class:`sklearn.pipeline.Pipeline`
 - :class:`sklearn.semi_supervised.SelfTrainingClassifier`

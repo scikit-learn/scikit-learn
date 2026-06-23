@@ -157,8 +157,31 @@ implementation_specific_values = [
 #                                   BinaryTree tree2, intp_t i_node2):
 #     """Compute the maximum distance between two nodes"""
 
+cdef extern from *:
+    """
+    typedef struct {
+        int n_leaves;
+        int n_splits;
+        int n_trims;
+        int n_calls;
+    } tree_stats_t;
+
+    #if defined(_MSC_VER)
+      #define tls_tree_stats_t __declspec(thread) tree_stats_t
+    #else
+      #define tls_tree_stats_t _Thread_local tree_stats_t
+    #endif
+    """
+    ctypedef struct tree_stats_t:
+        int n_leaves
+        int n_splits
+        int n_trims
+        int n_calls
+    ctypedef tree_stats_t tls_tree_stats_t
+
+
 cimport numpy as cnp
-from cython cimport floating
+from cython cimport floating, critical_section
 from libc.math cimport fabs, sqrt, exp, cos, pow, log, lgamma
 from libc.math cimport fmin, fmax
 from libc.stdlib cimport calloc, malloc, free
@@ -166,8 +189,7 @@ from libc.string cimport memcpy
 
 import numpy as np
 import warnings
-
-from ..metrics._dist_metrics cimport (
+from sklearn.metrics._dist_metrics cimport (
     DistanceMetric,
     DistanceMetric64,
     DistanceMetric32,
@@ -179,12 +201,13 @@ from ..metrics._dist_metrics cimport (
     euclidean_dist_to_rdist32,
 )
 
-from ._partition_nodes cimport partition_node_indices
+from sklearn.neighbors._partition_nodes cimport partition_node_indices
 
-from ..utils import check_array
-from ..utils._typedefs cimport float32_t, float64_t, intp_t
-from ..utils._heap cimport heap_push
-from ..utils._sorting cimport simultaneous_sort as _simultaneous_sort
+from sklearn.metrics._dist_metrics import get_valid_metric_ids
+from sklearn.utils import check_array
+from sklearn.utils._typedefs cimport float32_t, float64_t, intp_t
+from sklearn.utils._heap cimport heap_push
+from sklearn.utils._sorting cimport simultaneous_sort as _simultaneous_sort
 
 cnp.import_array()
 
@@ -252,8 +275,8 @@ leaf_size : positive int, default=40
 metric : str or DistanceMetric64 object, default='minkowski'
     Metric to use for distance computation. Default is "minkowski", which
     results in the standard Euclidean distance when p = 2.
-    A list of valid metrics for {BinaryTree} is given by the attribute
-    `valid_metrics`.
+    A :ref:`list of valid metrics <kdtree_and_balltree_classes>` for
+    {BinaryTree} is given by the attribute `valid_metrics`.
     See the documentation of `scipy.spatial.distance
     <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>`_ and
     the metrics listed in :class:`~sklearn.metrics.pairwise.distance_metrics` for
@@ -583,9 +606,9 @@ cdef class NeighborsHeap{{name_suffix}}:
         cdef intp_t row
         for row in range(self.distances.shape[0]):
             _simultaneous_sort(
-                dist=&self.distances[row, 0],
-                idx=&self.indices[row, 0],
-                size=self.distances.shape[1],
+                values=&self.distances[row, 0],
+                indices=&self.indices[row, 0],
+                n=self.distances.shape[1],
             )
         return 0
 
@@ -784,11 +807,13 @@ def newObj(obj):
     return obj.__new__(obj)
 
 
+# Thread-local variables for BinaryTree.query() and friends.
+cdef tls_tree_stats_t tree_stats
+
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE, NPY_TYPE in implementation_specific_values}}
 
 ######################################################################
 # define the reverse mapping of VALID_METRICS{{name_suffix}}
-from sklearn.metrics._dist_metrics import get_valid_metric_ids
 VALID_METRIC_IDS{{name_suffix}} = get_valid_metric_ids(VALID_METRICS{{name_suffix}})
 
 
@@ -1010,7 +1035,7 @@ cdef class BinaryTree{{name_suffix}}:
     cdef inline float64_t dist(self, const {{INPUT_DTYPE_t}}* x1, const {{INPUT_DTYPE_t}}* x2,
                              intp_t size) except -1 nogil:
         """Compute the distance between arrays x1 and x2"""
-        self.n_calls += 1
+        tree_stats.n_calls += 1
         if self.euclidean:
             return euclidean_dist{{name_suffix}}(x1, x2, size)
         else:
@@ -1025,7 +1050,7 @@ cdef class BinaryTree{{name_suffix}}:
         relative rankings of the true distance.  For example, the reduced
         distance for the Euclidean metric is the squared-euclidean distance.
         """
-        self.n_calls += 1
+        tree_stats.n_calls += 1
         if self.euclidean:
             return euclidean_rdist{{name_suffix}}(x1, x2, size)
         else:
@@ -1083,6 +1108,21 @@ cdef class BinaryTree{{name_suffix}}:
             self._recursive_build(node_data, 2 * i_node + 2,
                                   idx_start + n_mid, idx_end)
 
+    cdef _prep_thread_locals(self):
+        tree_stats.n_trims = 0
+        tree_stats.n_leaves = 0
+        tree_stats.n_splits = 0
+        tree_stats.n_calls = 0
+
+    cdef _update_stats(self):
+        # Thread-safe on GIL Python because have GIL, thread-safe on free-threaded
+        # Python because of the critical section:
+        with critical_section(self):
+            self.n_splits += tree_stats.n_splits
+            self.n_leaves += tree_stats.n_leaves
+            self.n_trims += tree_stats.n_trims
+            self.n_calls += tree_stats.n_calls
+
     def query(self, X, k=1, return_distance=True,
               dualtree=False, breadth_first=False,
               sort_results=True):
@@ -1138,6 +1178,8 @@ cdef class BinaryTree{{name_suffix}}:
             raise ValueError("k must be less than or equal "
                              "to the number of training points")
 
+        self._prep_thread_locals()
+
         # flatten X, and save original shape information
         np_Xarr = X.reshape((-1, self.data.shape[1]))
         cdef const {{INPUT_DTYPE_t}}[:, ::1] Xarr = np_Xarr
@@ -1155,10 +1197,6 @@ cdef class BinaryTree{{name_suffix}}:
 
         # bounds is needed for the dual tree algorithm
         cdef float64_t[::1] bounds
-
-        self.n_trims = 0
-        self.n_leaves = 0
-        self.n_splits = 0
 
         if dualtree:
             other = self.__class__(np_Xarr, metric=self.dist_metric,
@@ -1187,6 +1225,8 @@ cdef class BinaryTree{{name_suffix}}:
 
         distances, indices = heap.get_arrays(sort=sort_results)
         distances = self.dist_metric.rdist_to_dist(distances)
+
+        self._update_stats()
 
         # deflatten results
         if return_distance:
@@ -1264,6 +1304,8 @@ cdef class BinaryTree{{name_suffix}}:
         cdef intp_t** indices = NULL
         cdef {{INPUT_DTYPE_t}}** distances = NULL
 
+        self._prep_thread_locals()
+
         # validate X and prepare for query
         X = check_array(X, dtype={{INPUT_DTYPE}}, order='C')
 
@@ -1336,6 +1378,8 @@ cdef class BinaryTree{{name_suffix}}:
                         memory_error = True
                         break
                     memcpy(distances[i], &dist_arr_i[0], counts[i] * sizeof({{INPUT_DTYPE_t}}))
+
+        self._update_stats()
 
         try:
             if memory_error:
@@ -1451,6 +1495,8 @@ cdef class BinaryTree{{name_suffix}}:
         cdef intp_t i
         cdef KernelType kernel_c
 
+        self._prep_thread_locals()
+
         # validate kernel
         if kernel == 'gaussian':
             kernel_c = GAUSSIAN_KERNEL
@@ -1531,6 +1577,8 @@ cdef class BinaryTree{{name_suffix}}:
 
         log_density_arr = log_density_arr.reshape(X.shape[:X.ndim - 1])
 
+        self._update_stats()
+
         if return_log:
             return log_density_arr
         else:
@@ -1562,6 +1610,8 @@ cdef class BinaryTree{{name_suffix}}:
         """
         cdef intp_t n_features = self.data.shape[1]
         cdef intp_t i
+
+        self._prep_thread_locals()
 
         # validate X and prepare for query
         X = check_array(X, dtype={{INPUT_DTYPE}}, order='C')
@@ -1599,6 +1649,8 @@ cdef class BinaryTree{{name_suffix}}:
                                        0, rarr.shape[0])
                 pt += n_features
 
+        self._update_stats()
+
         return count
 
     cdef int _query_single_depthfirst(
@@ -1621,12 +1673,12 @@ cdef class BinaryTree{{name_suffix}}:
         # Case 1: query point is outside node radius:
         #         trim it from the query
         if reduced_dist_LB > heap.largest(i_pt):
-            self.n_trims += 1
+            tree_stats.n_trims += 1
 
         # ------------------------------------------------------------
         # Case 2: this is a leaf node.  Update set of nearby points
         elif node_info.is_leaf:
-            self.n_leaves += 1
+            tree_stats.n_leaves += 1
             for i in range(node_info.idx_start, node_info.idx_end):
                 dist_pt = self.rdist(pt,
                                      &self.data[self.idx_array[i], 0],
@@ -1637,7 +1689,7 @@ cdef class BinaryTree{{name_suffix}}:
         # Case 3: Node is not a leaf.  Recursively query subnodes
         #         starting with the closest
         else:
-            self.n_splits += 1
+            tree_stats.n_splits += 1
             i1 = 2 * i_node + 1
             i2 = i1 + 1
             reduced_dist_LB_1 = min_rdist{{name_suffix}}(self, i1, pt)
@@ -1685,12 +1737,12 @@ cdef class BinaryTree{{name_suffix}}:
             # Case 1: query point is outside node radius:
             #         trim it from the query
             if reduced_dist_LB > heap.largest(i_pt):
-                self.n_trims += 1
+                tree_stats.n_trims += 1
 
             # ------------------------------------------------------------
             # Case 2: this is a leaf node.  Update set of nearby points
             elif node_data[i_node].is_leaf:
-                self.n_leaves += 1
+                tree_stats.n_leaves += 1
                 for i in range(node_data[i_node].idx_start,
                                node_data[i_node].idx_end):
                     dist_pt = self.rdist(pt,
@@ -1701,7 +1753,7 @@ cdef class BinaryTree{{name_suffix}}:
             # ------------------------------------------------------------
             # Case 3: Node is not a leaf.  Add subnodes to the node heap
             else:
-                self.n_splits += 1
+                tree_stats.n_splits += 1
                 for i in range(2 * i_node + 1, 2 * i_node + 3):
                     nodeheap_item.i1 = i
                     nodeheap_item.val = min_rdist{{name_suffix}}(self, i, pt)

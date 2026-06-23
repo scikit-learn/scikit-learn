@@ -1,4 +1,4 @@
-"""Compatibility fixes for older version of python, numpy and scipy
+"""Compatibility fixes for older version of the dependencies
 
 If you add content to this file, please give the version of the package
 at which the fix is no longer needed.
@@ -13,15 +13,9 @@ import struct
 import numpy as np
 import scipy
 import scipy.sparse.linalg
-import scipy.stats
 
-try:
-    import pandas as pd
-except ImportError:
-    pd = None
-
-from ..externals._packaging.version import parse as parse_version
-from .parallel import _get_threadpool_controller
+from sklearn.externals._packaging.version import parse as parse_version
+from sklearn.utils.parallel import _get_threadpool_controller
 
 _IS_32BIT = 8 * struct.calcsize("P") == 32
 _IS_WASM = platform.machine() in ["wasm32", "wasm64"]
@@ -43,7 +37,7 @@ DIA_CONTAINERS = [scipy.sparse.dia_matrix, scipy.sparse.dia_array]
 
 # Remove when minimum scipy version is 1.11.0
 try:
-    from scipy.sparse import sparray  # noqa
+    from scipy.sparse import sparray  # noqa: F401
 
     SPARRAY_PRESENT = True
 except ImportError:
@@ -56,15 +50,25 @@ def _object_dtype_isnan(X):
 
 # TODO: Remove when SciPy 1.11 is the minimum supported version
 def _mode(a, axis=0):
-    if sp_version >= parse_version("1.9.0"):
-        mode = scipy.stats.mode(a, axis=axis, keepdims=True)
-        if sp_version >= parse_version("1.10.999"):
-            # scipy.stats.mode has changed returned array shape with axis=None
-            # and keepdims=True, see https://github.com/scipy/scipy/pull/17561
-            if axis is None:
-                mode = np.ravel(mode)
-        return mode
-    return scipy.stats.mode(a, axis=axis)
+    import scipy.stats  # lazy import, speeds up `import sklearn`
+
+    mode = scipy.stats.mode(a, axis=axis, keepdims=True)
+    if sp_version >= parse_version("1.10.999"):
+        # scipy.stats.mode has changed returned array shape with axis=None
+        # and keepdims=True, see https://github.com/scipy/scipy/pull/17561
+        if axis is None:
+            mode = np.ravel(mode)
+    return mode
+
+
+# TODO: Remove when Scipy 1.12 is the minimum supported version
+#       Use git grep to see where this is used and update them too.
+SCIPY_VERSION_BELOW_1_12 = sp_base_version < parse_version("1.12.0")
+
+
+# TODO: Remove when Scipy 1.15 is the minimum supported version
+#       Use git grep to see where this is used and update them too.
+SCIPY_VERSION_BELOW_1_15 = sp_base_version < parse_version("1.15.0")
 
 
 # TODO: Remove when Scipy 1.12 is the minimum supported version
@@ -81,7 +85,7 @@ else:
 
 
 # TODO: Fuse the modern implementations of _sparse_min_max and _sparse_nan_min_max
-# into the public min_max_axis function when Scipy 1.11 is the minimum supported
+# into the public min_max_axis function when SciPy 1.11 is the minimum supported
 # version and delete the backport in the else branch below.
 if sp_base_version >= parse_version("1.11.0"):
 
@@ -133,13 +137,13 @@ else:
         value = np.compress(mask, value)
 
         if axis == 0:
-            res = scipy.sparse.coo_matrix(
+            res = scipy.sparse.coo_array(
                 (value, (np.zeros(len(value)), major_index)),
                 dtype=X.dtype,
                 shape=(1, M),
             )
         else:
-            res = scipy.sparse.coo_matrix(
+            res = scipy.sparse.coo_array(
                 (value, (major_index, np.zeros(len(value)))),
                 dtype=X.dtype,
                 shape=(M, 1),
@@ -182,7 +186,10 @@ else:
 if np_version >= parse_version("1.25.0"):
     from numpy.exceptions import ComplexWarning, VisibleDeprecationWarning
 else:
-    from numpy import ComplexWarning, VisibleDeprecationWarning  # type: ignore  # noqa
+    from numpy import (  # noqa: F401
+        ComplexWarning,
+        VisibleDeprecationWarning,
+    )
 
 
 # TODO: Adapt when Pandas > 2.2 is the minimum supported version
@@ -194,7 +201,10 @@ def pd_fillna(pd, frame):
         infer_objects_kwargs = (
             {} if parse_version(pd_version) >= parse_version("3") else {"copy": False}
         )
-        with pd.option_context("future.no_silent_downcasting", True):
+        if parse_version(pd_version) < parse_version("3.0"):
+            with pd.option_context("future.no_silent_downcasting", True):
+                frame = frame.fillna(value=np.nan).infer_objects(**infer_objects_kwargs)
+        else:
             frame = frame.fillna(value=np.nan).infer_objects(**infer_objects_kwargs)
     return frame
 
@@ -252,7 +262,7 @@ def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=Fals
     type that can hold the data in the arrays.
 
     This function returns `np.int64` if it either required by `maxval` or based on the
-    largest precision of the dtype of the arrays passed as argument, or by the their
+    largest precision of the dtype of the arrays passed as argument, or by their
     contents (when `check_contents is True`). If none of the condition requires
     `np.int64` then this function returns `np.int32`.
 
@@ -316,19 +326,32 @@ def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=Fals
     return np.int32
 
 
-# TODO: Remove when Scipy 1.12 is the minimum supported version
+# TODO: Remove when SciPy 1.12 is the minimum supported version
 if sp_version < parse_version("1.12"):
-    from ..externals._scipy.sparse.csgraph import laplacian  # type: ignore
+    from sklearn.externals._scipy.sparse.csgraph import laplacian
 else:
-    from scipy.sparse.csgraph import laplacian  # type: ignore  # noqa  # pragma: no cover
+    from scipy.sparse.csgraph import (
+        laplacian,  # noqa: F401  # pragma: no cover
+    )
+
+
+# TODO: Remove when Python min version >= 3.12.
+def tarfile_extractall(tarfile, path):
+    try:
+        # Use filter="data" to prevent the most dangerous security issues.
+        # For more details, see
+        # https://docs.python.org/3/library/tarfile.html#tarfile.TarFile.extractall
+        tarfile.extractall(path, filter="data")
+    except TypeError:
+        tarfile.extractall(path)
 
 
 def _in_unstable_openblas_configuration():
     """Return True if in an unstable configuration for OpenBLAS"""
 
     # Import libraries which might load OpenBLAS.
-    import numpy  # noqa
-    import scipy  # noqa
+    import numpy  # noqa: F401
+    import scipy  # noqa: F401
 
     modules_info = _get_threadpool_controller().info()
 
@@ -354,3 +377,167 @@ def _in_unstable_openblas_configuration():
             # See discussions in https://github.com/numpy/numpy/issues/19411
             return True  # pragma: no cover
     return False
+
+
+# TODO: Remove when Scipy 1.15 is the minimum supported version. In scipy 1.15,
+# the internal info details (via 'iprint' and 'disp' options) were dropped,
+# following the LBFGS rewrite from Fortran to C, see
+# https://github.com/scipy/scipy/issues/23186#issuecomment-2987801035. For
+# scipy 1.15, 'iprint' and 'disp' have no effect and for scipy >= 1.16 a
+# DeprecationWarning is emitted.
+def _get_additional_lbfgs_options_dict(key, value):
+    return {} if sp_version >= parse_version("1.15") else {key: value}
+
+
+# TODO: Replace when Scipy 1.12 is the minimum supported version
+#       fixes for transitioning scipy.sparse function names
+if not SCIPY_VERSION_BELOW_1_12:
+    _sparse_eye_array = scipy.sparse.eye_array
+    _sparse_diags_array = scipy.sparse.diags_array
+
+    def _sparse_random_array(
+        shape,
+        *,
+        density=0.01,
+        format="coo",
+        dtype=None,
+        random_state=None,
+        rng=None,
+        data_sampler=None,
+    ):
+        X = scipy.sparse.random_array(
+            shape,
+            density=density,
+            format=format,
+            dtype=dtype,
+            random_state=rng or random_state,
+            data_sampler=data_sampler,
+        )
+        _ensure_sparse_index_int32(X)
+        return X
+
+else:
+
+    def _sparse_eye_array(m, n=None, *, k=0, dtype=float, format=None):
+        A = scipy.sparse.eye(m, n, k=k, dtype=dtype)
+        return scipy.sparse.dia_array(A).asformat(format)
+
+    def _sparse_diags_array(
+        diagonals, /, *, offsets=0, shape=None, format=None, dtype=None
+    ):
+        A = scipy.sparse.diags(diagonals, offsets=offsets, shape=shape, dtype=dtype)
+        return scipy.sparse.dia_array(A).asformat(format)
+
+    def _sparse_random_array(
+        shape,
+        *,
+        density=0.01,
+        format="coo",
+        dtype=None,
+        random_state=None,
+        rng=None,
+        data_sampler=None,
+    ):
+        A = scipy.sparse.random(
+            *shape,
+            density=density,
+            dtype=dtype,
+            random_state=rng or random_state,
+            data_rvs=data_sampler,
+        )
+        return scipy.sparse.coo_array(A).asformat(format)
+
+
+# TODO: remove when SciPy 1.15 is minimal supported version
+# fix for casting index arrays
+def _ensure_sparse_index_int32(A):
+    """Safely ensure that index arrays are int32."""
+    if A.format in ("csc", "csr", "bsr"):
+        A.indices, A.indptr = _safely_cast_index_arrays(A)
+    elif A.format == "coo":
+        if hasattr(A, "coords"):
+            A.coords = _safely_cast_index_arrays(A)
+        elif hasattr(A, "indices"):
+            A.indices = _safely_cast_index_arrays(A)
+        else:
+            A.row, A.col = _safely_cast_index_arrays(A)
+    elif A.format == "dia":
+        A.offsets = _safely_cast_index_arrays(A)
+
+
+# TODO: remove when SciPy 1.15 is minimal supported version
+#       (based on scipy.sparse._sputils.py function with same name)
+def _safely_cast_index_arrays(A, idx_dtype=np.int32, msg=""):
+    """Safely cast sparse array indices to `idx_dtype`.
+
+    Check the shape of `A` to determine if it is safe to cast its index
+    arrays to dtype `idx_dtype`. If any dimension in shape is larger than
+    fits in the dtype, casting is unsafe so raise ``ValueError``.
+    If safe, cast the index arrays to `idx_dtype` and return the result
+    without changing the input `A`. The caller can assign results to `A`
+    attributes if desired or use the recast index arrays directly.
+
+    Unless downcasting is needed, the original index arrays are returned.
+    You can test e.g. ``A.indptr is new_indptr`` to see if downcasting occurred.
+
+    See SciPy: scipy.sparse._sputils.py for more info on safely_cast_index_arrays()
+    """
+    max_value = np.iinfo(idx_dtype).max
+
+    if A.format in ("csc", "csr"):
+        if A.indptr[-1] > max_value:
+            raise ValueError(f"indptr values too large for {msg}")
+        # check shape vs dtype
+        if max(*A.shape) > max_value:
+            if (A.indices > max_value).any():
+                raise ValueError(f"indices values too large for {msg}")
+
+        indices = A.indices.astype(idx_dtype, copy=False)
+        indptr = A.indptr.astype(idx_dtype, copy=False)
+        return indices, indptr
+
+    elif A.format == "coo":
+        coords = getattr(A, "coords", None)
+        if coords is None:
+            coords = getattr(A, "indices", None)
+            if coords is None:
+                coords = (A.row, A.col)
+        if max(*A.shape) > max_value:
+            if any((co > max_value).any() for co in coords):
+                raise ValueError(f"coords values too large for {msg}")
+        return tuple(co.astype(idx_dtype, copy=False) for co in coords)
+
+    elif A.format == "dia":
+        if max(*A.shape) > max_value:
+            if (A.offsets > max_value).any():
+                raise ValueError(f"offsets values too large for {msg}")
+        offsets = A.offsets.astype(idx_dtype, copy=False)
+        return offsets
+
+    elif A.format == "bsr":
+        R, C = A.blocksize
+        if A.indptr[-1] * R > max_value:
+            raise ValueError("indptr values too large for {msg}")
+        if max(*A.shape) > max_value:
+            if (A.indices * C > max_value).any():
+                raise ValueError(f"indices values too large for {msg}")
+        indices = A.indices.astype(idx_dtype, copy=False)
+        indptr = A.indptr.astype(idx_dtype, copy=False)
+        return indices, indptr
+    # DOK and LIL formats are not associated with index arrays.
+
+
+# TODO remove when matplotlib 3.10 is the minimal supported version
+# and replace usage with `mpl.color_sequences['petroff10']`
+PETROFF_COLORS = [
+    "#3f90da",
+    "#ffa90e",
+    "#bd1f01",
+    "#94a4a2",
+    "#832db6",
+    "#a96b59",
+    "#e76300",
+    "#b9ac70",
+    "#717581",
+    "#92dadd",
+]

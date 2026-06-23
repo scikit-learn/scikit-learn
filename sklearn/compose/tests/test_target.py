@@ -6,6 +6,7 @@ import pytest
 from sklearn import config_context, datasets
 from sklearn.base import BaseEstimator, TransformerMixin, clone
 from sklearn.compose import TransformedTargetRegressor
+from sklearn.datasets import make_regression
 from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import LinearRegression, OrthogonalMatchingPursuit
 from sklearn.pipeline import Pipeline
@@ -410,3 +411,38 @@ def test_transform_target_regressor_not_warns_with_global_output_set(output_form
             TransformedTargetRegressor(
                 regressor=LinearRegression(), func=np.log, inverse_func=np.exp
             ).fit(X, y)
+
+
+class ValidateDimensionRegressor(BaseEstimator):
+    """A regressor that expects the target to have a specific number of dimensions."""
+
+    def __init__(self, ndim):
+        self.ndim = ndim
+
+    def fit(self, X, y):
+        assert y.ndim == self.ndim
+
+    def predict(self, X):
+        pass  # pragma: no cover
+
+
+@pytest.mark.parametrize("ndim", [1, 2])
+def test_transform_target_regressor_preserves_input_shape(ndim):
+    """Check that TransformedTargetRegressor internally preserves the shape of the input
+
+    non-regression test for issue #26530.
+    """
+    X, y = datasets.make_regression(n_samples=10, n_features=5, random_state=42)
+    if ndim == 2:
+        y = y.reshape(-1, 1)
+
+    regr = TransformedTargetRegressor(regressor=ValidateDimensionRegressor(ndim))
+    regr.fit(X, y)
+
+
+@config_context(enable_metadata_routing=True)
+def test_transform_target_regressor_metadata_routing_default_estimator():
+    """Test that metadata request is set on the default regressor"""
+    X, y = make_regression()
+    ttr = TransformedTargetRegressor()
+    ttr.fit(X, y, sample_weight=np.empty(shape=(X.shape[0],)))

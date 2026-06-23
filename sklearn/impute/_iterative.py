@@ -1,7 +1,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import warnings
 from collections import namedtuple
 from numbers import Integral, Real
 from time import time
@@ -9,28 +8,27 @@ from time import time
 import numpy as np
 from scipy import stats
 
-from ..base import _fit_context, clone
-from ..exceptions import ConvergenceWarning
-from ..preprocessing import normalize
-from ..utils import _safe_indexing, check_array, check_random_state
-from ..utils._indexing import _safe_assign
-from ..utils._mask import _get_mask
-from ..utils._missing import is_scalar_nan
-from ..utils._param_validation import HasMethods, Interval, StrOptions
-from ..utils.metadata_routing import (
+from sklearn.base import _fit_context, clone
+from sklearn.impute._base import SimpleImputer, _BaseImputer, _check_inputs_dtype
+from sklearn.preprocessing import normalize
+from sklearn.utils import _safe_indexing, check_array, check_random_state
+from sklearn.utils._indexing import _safe_assign
+from sklearn.utils._mask import _get_mask
+from sklearn.utils._missing import is_scalar_nan
+from sklearn.utils._param_validation import HasMethods, Interval, StrOptions
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     process_routing,
 )
-from ..utils.validation import (
+from sklearn.utils.validation import (
     FLOAT_DTYPES,
     _check_feature_names_in,
     _num_samples,
     check_is_fitted,
     validate_data,
 )
-from ._base import SimpleImputer, _BaseImputer, _check_inputs_dtype
 
 _ImputerTriplet = namedtuple(
     "_ImputerTriplet", ["feat_idx", "neighbor_feat_idx", "estimator"]
@@ -67,16 +65,18 @@ class IterativeImputer(_BaseImputer):
 
     .. versionadded:: 0.21
 
+    .. versionchanged:: 1.10
+        :class:`IterativeImputer` is no longer experimental and can be imported
+        directly from :mod:`sklearn.impute` without enabling it through
+        ``sklearn.experimental``.
+
     .. note::
 
-      This estimator is still **experimental** for now: the predictions
-      and the API might change without any deprecation cycle. To use it,
-      you need to explicitly import `enable_iterative_imputer`::
-
-        >>> # explicitly require this experimental feature
-        >>> from sklearn.experimental import enable_iterative_imputer  # noqa
-        >>> # now you can import normally from sklearn.impute
-        >>> from sklearn.impute import IterativeImputer
+        The stopping criterion of this imputer rarely improves the downstream
+        predictive performance, and the imputed values are not guaranteed to
+        converge with the number of iterations. See the
+        :ref:`User Guide <iterative_imputer_convergence>` for details on why
+        chasing convergence is usually not worthwhile.
 
     Parameters
     ----------
@@ -274,16 +274,15 @@ class IterativeImputer(_BaseImputer):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.experimental import enable_iterative_imputer
     >>> from sklearn.impute import IterativeImputer
     >>> imp_mean = IterativeImputer(random_state=0)
     >>> imp_mean.fit([[7, 2, 3], [4, np.nan, 6], [10, 5, 9]])
     IterativeImputer(random_state=0)
     >>> X = [[np.nan, 2, 3], [4, np.nan, 6], [10, np.nan, 9]]
     >>> imp_mean.transform(X)
-    array([[ 6.9584...,  2.       ,  3.        ],
-           [ 4.       ,  2.6000...,  6.        ],
-           [10.       ,  4.9999...,  9.        ]])
+    array([[ 6.9584,  2.       ,  3.        ],
+           [ 4.       ,  2.6000,  6.        ],
+           [10.       ,  4.9999,  9.        ]])
 
     For a more detailed example see
     :ref:`sphx_glr_auto_examples_impute_plot_missing_values.py` or
@@ -637,12 +636,6 @@ class IterativeImputer(_BaseImputer):
         X_missing_mask = _get_mask(X, self.missing_values)
         mask_missing_values = X_missing_mask.copy()
 
-        # TODO (1.8): remove this once the deprecation is removed. In the meantime,
-        # we need to catch the warning to avoid false positives.
-        catch_warning = (
-            self.initial_strategy == "constant" and not self.keep_empty_features
-        )
-
         if self.initial_imputer_ is None:
             self.initial_imputer_ = SimpleImputer(
                 missing_values=self.missing_values,
@@ -651,23 +644,10 @@ class IterativeImputer(_BaseImputer):
                 keep_empty_features=self.keep_empty_features,
             ).set_output(transform="default")
 
-            # TODO (1.8): remove this once the deprecation is removed to keep only
-            # the code in the else case.
-            if catch_warning:
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore", FutureWarning)
-                    X_filled = self.initial_imputer_.fit_transform(X)
-            else:
-                X_filled = self.initial_imputer_.fit_transform(X)
+            X_filled = self.initial_imputer_.fit_transform(X)
+
         else:
-            # TODO (1.8): remove this once the deprecation is removed to keep only
-            # the code in the else case.
-            if catch_warning:
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore", FutureWarning)
-                    X_filled = self.initial_imputer_.transform(X)
-            else:
-                X_filled = self.initial_imputer_.transform(X)
+            X_filled = self.initial_imputer_.transform(X)
 
         if in_fit:
             self._is_empty_feature = np.all(mask_missing_values, axis=0)
@@ -676,15 +656,6 @@ class IterativeImputer(_BaseImputer):
             # drop empty features
             Xt = X[:, ~self._is_empty_feature]
             mask_missing_values = mask_missing_values[:, ~self._is_empty_feature]
-
-            if self.initial_imputer_.get_params()["strategy"] == "constant":
-                # The constant strategy has a specific behavior and preserve empty
-                # features even with ``keep_empty_features=False``. We need to drop
-                # the column for consistency.
-                # TODO (1.8): remove this `if` branch once the following issue is
-                # addressed:
-                # https://github.com/scikit-learn/scikit-learn/issues/29827
-                X_filled = X_filled[:, ~self._is_empty_feature]
 
         else:
             # mark empty features as not missing and keep the original
@@ -788,7 +759,7 @@ class IterativeImputer(_BaseImputer):
         )
 
         if self.estimator is None:
-            from ..linear_model import BayesianRidge
+            from sklearn.linear_model import BayesianRidge
 
             self._estimator = BayesianRidge()
         else:
@@ -890,12 +861,6 @@ class IterativeImputer(_BaseImputer):
                         print("[IterativeImputer] Early stopping criterion reached.")
                     break
                 Xt_previous = Xt.copy()
-        else:
-            if not self.sample_posterior:
-                warnings.warn(
-                    "[IterativeImputer] Early stopping criterion not reached.",
-                    ConvergenceWarning,
-                )
         _assign_where(Xt, X, cond=~mask_missing_values)
 
         return super()._concatenate_indicator(Xt, X_indicator)
@@ -1023,7 +988,7 @@ class IterativeImputer(_BaseImputer):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__).add(
+        router = MetadataRouter(owner=self).add(
             estimator=self.estimator,
             method_mapping=MethodMapping().add(callee="fit", caller="fit"),
         )

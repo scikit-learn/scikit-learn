@@ -8,8 +8,8 @@ from typing import Protocol, runtime_checkable
 import numpy as np
 from scipy.sparse import issparse
 
-from .._config import get_config
-from ._available_if import available_if
+from sklearn._config import get_config
+from sklearn.utils._available_if import available_if
 
 
 def check_library_installed(library):
@@ -21,15 +21,6 @@ def check_library_installed(library):
             f"Setting output container to '{library}' requires {library} to be"
             " installed"
         ) from exc
-
-
-def get_columns(columns):
-    if callable(columns):
-        try:
-            return columns()
-        except Exception:
-            return None
-    return columns
 
 
 @runtime_checkable
@@ -48,9 +39,8 @@ class ContainerAdapterProtocol(Protocol):
             Original input dataframe. This is used to extract the metadata that should
             be passed to `X_output`, e.g. pandas row index.
 
-        columns : callable, ndarray, or None
-            The column names or a callable that returns the column names. The
-            callable is useful if the column names require some computation. If `None`,
+        columns : ndarray or None
+            The column names, e.g. as returned by get_feature_names_out. If `None`,
             then no columns are passed to the container's constructor.
 
         inplace : bool, default=False
@@ -115,7 +105,6 @@ class PandasAdapter:
 
     def create_container(self, X_output, X_original, columns, inplace=True):
         pd = check_library_installed("pandas")
-        columns = get_columns(columns)
 
         if not inplace or not isinstance(X_output, pd.DataFrame):
             # In all these cases, we need to create a new DataFrame
@@ -124,7 +113,7 @@ class PandasAdapter:
             # because `list` exposes an `index` attribute.
             if isinstance(X_output, pd.DataFrame):
                 index = X_output.index
-            elif isinstance(X_original, pd.DataFrame):
+            elif isinstance(X_original, (pd.DataFrame, pd.Series)):
                 index = X_original.index
             else:
                 index = None
@@ -157,7 +146,6 @@ class PolarsAdapter:
 
     def create_container(self, X_output, X_original, columns, inplace=True):
         pl = check_library_installed("polars")
-        columns = get_columns(columns)
         columns = columns.tolist() if isinstance(columns, np.ndarray) else columns
 
         if not inplace or not isinstance(X_output, pl.DataFrame):
@@ -175,6 +163,7 @@ class PolarsAdapter:
     def rename_columns(self, X, columns):
         # we cannot use `rename` since it takes a dictionary and at this stage we have
         # potentially duplicate column names in `X`
+        # Anyway, polars will raise a DuplicateError in that case.
         X.columns = columns
         return X
 
@@ -301,10 +290,18 @@ def _wrap_data_with_container(method, data_to_wrap, original_input, estimator):
         )
 
     adapter = ADAPTERS_MANAGER.adapters[dense_config]
+
+    try:
+        columns = estimator.get_feature_names_out()
+    except AttributeError as e:
+        if "does not provide get_feature_names_out" in str(e):
+            columns = None
+        else:
+            raise
     return adapter.create_container(
         data_to_wrap,
         original_input,
-        columns=estimator.get_feature_names_out,
+        columns=columns,
     )
 
 
@@ -390,8 +387,9 @@ class _SetOutputMixin:
     def set_output(self, *, transform=None):
         """Set output container.
 
-        See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`
-        for an example on how to use the API.
+        Refer to the :ref:`user guide <df_output_transform>` for more details
+        and :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py` for an
+        example on how to use the API.
 
         Parameters
         ----------

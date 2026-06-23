@@ -1,10 +1,16 @@
-from numpy import * # noqa: F403
+from typing import Final
 
-# from numpy import * doesn't overwrite these builtin names
-from numpy import abs, max, min, round # noqa: F401
+from .._internal import clone_module
+
+# This needs to be loaded explicitly before cloning
+import numpy.typing  # noqa: F401
+
+__all__ = clone_module("numpy", globals())
 
 # These imports may overwrite names from the import * above.
-from ._aliases import * # noqa: F403
+from . import _aliases
+from ._aliases import *  # type: ignore[assignment,no-redef] # noqa: F403
+from ._info import __array_namespace_info__  # noqa: F401
 
 # Don't know why, but we have to do an absolute import to import linalg. If we
 # instead do
@@ -13,18 +19,19 @@ from ._aliases import * # noqa: F403
 #
 # It doesn't overwrite np.linalg from above. The import is generated
 # dynamically so that the library can be vendored.
-__import__(__package__ + '.linalg')
+__import__(__spec__.parent + ".linalg")
 
-__import__(__package__ + '.fft')
+__import__(__spec__.parent + ".fft")
 
-from .linalg import matrix_transpose, vecdot # noqa: F401
+from .linalg import matrix_transpose, vecdot  # type: ignore[no-redef]  # noqa: F401
 
-from ..common._helpers import * # noqa: F403
+__array_api_version__: Final = "2025.12"
 
-try:
-    # Used in asarray(). Not present in older versions.
-    from numpy import _CopyMode # noqa: F401
-except ImportError:
-    pass
+__all__ = sorted(
+    set(__all__) 
+    | set(_aliases.__all__) 
+    | {"__array_api_version__", "__array_namespace_info__", "linalg", "fft"}
+)
 
-__array_api_version__ = '2024.12'
+def __dir__() -> list[str]:
+    return __all__

@@ -6,7 +6,7 @@ from scipy.stats import expon, norm, randint
 
 from sklearn.datasets import make_classification
 from sklearn.dummy import DummyClassifier
-from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401
 from sklearn.model_selection import (
     GroupKFold,
     GroupShuffleSplit,
@@ -22,6 +22,7 @@ from sklearn.model_selection import (
 from sklearn.model_selection._search_successive_halving import (
     _SubsampleMetaSplitter,
     _top_k,
+    _trim_cv_results_to_last_iter,
 )
 from sklearn.model_selection.tests.test_search import (
     check_cv_results_array_types,
@@ -39,10 +40,7 @@ class FastClassifier(DummyClassifier):
     # update the constraints such that we accept all parameters from a to z
     _parameter_constraints: dict = {
         **DummyClassifier._parameter_constraints,
-        **{
-            chr(key): "no_validation"  # type: ignore
-            for key in range(ord("a"), ord("z") + 1)
-        },
+        **{chr(key): "no_validation" for key in range(ord("a"), ord("z") + 1)},
     }
 
     def __init__(
@@ -112,20 +110,12 @@ def test_nan_handling(HalvingSearch, fail_at):
 
     search.fit(X, y)
 
-    # estimators that failed during fit/predict should always rank lower
-    # than ones where the fit/predict succeeded
+    # estimators that failed during fit/predict should never be selected as the
+    # best candidate
     assert not search.best_params_[f"fail_{fail_at}"]
-    scores = search.cv_results_["mean_test_score"]
-    ranks = search.cv_results_["rank_test_score"]
-
-    # some scores should be NaN
-    assert np.isnan(scores).any()
-
-    unique_nan_ranks = np.unique(ranks[np.isnan(scores)])
-    # all NaN scores should have the same rank
-    assert unique_nan_ranks.shape[0] == 1
-    # NaNs should have the lowest rank
-    assert (unique_nan_ranks[0] >= ranks).all()
+    assert "rank_test_score" not in search.all_cv_results_
+    assert np.isnan(search.all_cv_results_["mean_test_score"]).any()
+    assert "rank_test_score" in search.cv_results_
 
 
 @pytest.mark.parametrize("Est", (HalvingGridSearchCV, HalvingRandomSearchCV))
@@ -321,9 +311,9 @@ def test_resource_parameter(Est):
     sh.fit(X, y)
     assert set(sh.n_resources_) == set([1, 3, 9])
     for r_i, params, param_c in zip(
-        sh.cv_results_["n_resources"],
-        sh.cv_results_["params"],
-        sh.cv_results_["param_c"],
+        sh.all_cv_results_["n_resources"],
+        sh.all_cv_results_["params"],
+        sh.all_cv_results_["param_c"],
     ):
         assert r_i == params["c"] == param_c
 
@@ -582,16 +572,28 @@ def test_cv_results(Est):
 
     # non-regression check for
     # https://github.com/scikit-learn/scikit-learn/issues/19203
-    assert isinstance(sh.cv_results_["iter"], np.ndarray)
-    assert isinstance(sh.cv_results_["n_resources"], np.ndarray)
+    assert isinstance(sh.all_cv_results_["iter"], np.ndarray)
+    assert isinstance(sh.all_cv_results_["n_resources"], np.ndarray)
 
-    cv_results_df = pd.DataFrame(sh.cv_results_)
+    assert len(sh.cv_results_["params"]) == sh.n_candidates_[-1]
+    assert len(sh.all_cv_results_["params"]) == sum(sh.n_candidates_)
+    assert np.all(sh.cv_results_["iter"] == sh.n_iterations_ - 1)
+    assert np.all(sh.cv_results_["n_resources"] == sh.n_resources_[-1])
+    n_last = len(sh.cv_results_["params"])
+    assert sh.cv_results_["rank_test_score"].min() == 1
+    assert sh.cv_results_["rank_test_score"].max() == n_last
+    assert len(np.unique(sh.cv_results_["rank_test_score"])) == n_last
+    assert sh.cv_results_["rank_test_score"][sh.best_index_] == 1
+    assert sh.best_params_ == sh.cv_results_["params"][sh.best_index_]
+    assert sh.best_score_ == sh.cv_results_["mean_test_score"][sh.best_index_]
+
+    all_cv_results_df = pd.DataFrame(sh.all_cv_results_)
 
     # just make sure we don't have ties
-    assert len(cv_results_df["mean_test_score"].unique()) == len(cv_results_df)
+    assert len(all_cv_results_df["mean_test_score"].unique()) == len(all_cv_results_df)
 
-    cv_results_df["params_str"] = cv_results_df["params"].apply(str)
-    table = cv_results_df.pivot(
+    all_cv_results_df["params_str"] = all_cv_results_df["params"].apply(str)
+    table = all_cv_results_df.pivot(
         index="params_str", columns="iter", values="mean_test_score"
     )
 
@@ -638,20 +640,20 @@ def test_cv_results(Est):
     # earlier rounds (this isn't generally the case, but worth ensuring it's
     # possible).
 
-    last_iter = cv_results_df["iter"].max()
-    idx_best_last_iter = cv_results_df[cv_results_df["iter"] == last_iter][
+    last_iter = all_cv_results_df["iter"].max()
+    idx_best_last_iter = all_cv_results_df[all_cv_results_df["iter"] == last_iter][
         "mean_test_score"
     ].idxmax()
-    idx_best_all_iters = cv_results_df["mean_test_score"].idxmax()
+    idx_best_all_iters = all_cv_results_df["mean_test_score"].idxmax()
 
-    assert sh.best_params_ == cv_results_df.iloc[idx_best_last_iter]["params"]
+    assert sh.best_params_ == all_cv_results_df.iloc[idx_best_last_iter]["params"]
     assert (
-        cv_results_df.iloc[idx_best_last_iter]["mean_test_score"]
-        < cv_results_df.iloc[idx_best_all_iters]["mean_test_score"]
+        all_cv_results_df.iloc[idx_best_last_iter]["mean_test_score"]
+        < all_cv_results_df.iloc[idx_best_all_iters]["mean_test_score"]
     )
     assert (
-        cv_results_df.iloc[idx_best_last_iter]["params"]
-        != cv_results_df.iloc[idx_best_all_iters]["params"]
+        all_cv_results_df.iloc[idx_best_last_iter]["params"]
+        != all_cv_results_df.iloc[idx_best_all_iters]["params"]
     )
 
 
@@ -710,16 +712,16 @@ def test_base_estimator_inputs(Est):
     passed_n_samples = passed_n_samples[::n_splits]
     passed_params = passed_params[::n_splits]
 
-    cv_results_df = pd.DataFrame(sh.cv_results_)
+    all_cv_results_df = pd.DataFrame(sh.all_cv_results_)
 
-    assert len(passed_params) == len(passed_n_samples) == len(cv_results_df)
+    assert len(passed_params) == len(passed_n_samples) == len(all_cv_results_df)
 
     uniques, counts = np.unique(passed_n_samples, return_counts=True)
     assert (sh.n_resources_ == uniques).all()
     assert (sh.n_candidates_ == counts).all()
 
-    assert (cv_results_df["params"] == passed_params).all()
-    assert (cv_results_df["n_resources"] == passed_n_samples).all()
+    assert (all_cv_results_df["params"] == passed_params).all()
+    assert (all_cv_results_df["n_resources"] == passed_n_samples).all()
 
 
 @pytest.mark.parametrize("Est", (HalvingGridSearchCV, HalvingRandomSearchCV))
@@ -783,6 +785,46 @@ def test_select_best_index(SearchCV):
     assert best_index == 8
 
 
+def test_trim_cv_results_to_last_iter():
+    """Check trimming cv_results_ to the last halving iteration."""
+    results = {
+        "iter": np.array([0, 0, 0, 0, 1, 1, 2, 2, 2]),
+        "n_resources": np.array([1, 1, 1, 1, 3, 3, 9, 9, 9]),
+        "mean_test_score": np.array([4, 3, 5, 1, 11, 10, 5, 6, 9]),
+        "params": ["a", "b", "c", "d", "e", "f", "g", "h", "i"],
+        "rank_test_score": np.array([5, 6, 4, 8, 1, 2, 7, 6, 3]),
+    }
+    best_index = 8
+
+    trimmed, new_best_index = _trim_cv_results_to_last_iter(results, best_index)
+
+    assert len(trimmed["params"]) == 3
+    assert np.all(trimmed["iter"] == 2)
+    assert np.all(trimmed["n_resources"] == 9)
+    assert new_best_index == 2
+    assert trimmed["params"][new_best_index] == "i"
+    assert trimmed["rank_test_score"][new_best_index] == 1
+    assert np.array_equal(trimmed["rank_test_score"], np.array([3, 2, 1]))
+
+
+def test_trim_cv_results_to_last_iter_nan_ranking():
+    """Check that NaN scores share the lowest rank in the last iteration."""
+    results = {
+        "iter": np.array([0, 0, 1, 1, 1]),
+        "n_resources": np.array([1, 1, 3, 3, 3]),
+        "mean_test_score": np.array([4.0, 3.0, 9.0, np.nan, np.nan]),
+        "params": ["a", "b", "c", "d", "e"],
+    }
+    best_index = 2
+
+    trimmed, new_best_index = _trim_cv_results_to_last_iter(results, best_index)
+
+    assert new_best_index == 0
+    # the non-NaN candidate ranks first, the two NaN candidates share the
+    # lowest rank
+    assert np.array_equal(trimmed["rank_test_score"], np.array([1, 2, 2]))
+
+
 def test_halving_random_search_list_of_dicts():
     """Check the behaviour of the `HalvingRandomSearchCV` with `param_distribution`
     being a list of dictionary.
@@ -816,16 +858,26 @@ def test_halving_random_search_list_of_dicts():
         "mean_score_time",
         "std_score_time",
     )
+    # `all_cv_results_` does not expose a ranking column since ranking across
+    # iterations using a varying number of resources is not meaningful.
+    all_score_keys = tuple(key for key in score_keys if key != "rank_test_score")
     extra_keys = ("n_resources", "iter")
 
     search = HalvingRandomSearchCV(
         SVC(), cv=3, param_distributions=params, return_train_score=True, random_state=0
     )
     search.fit(X, y)
-    n_candidates = sum(search.n_candidates_)
+    n_candidates_last = search.n_candidates_[-1]
+    n_candidates_all = sum(search.n_candidates_)
     cv_results = search.cv_results_
+    all_cv_results = search.all_cv_results_
     # Check results structure
-    check_cv_results_keys(cv_results, param_keys, score_keys, n_candidates, extra_keys)
+    check_cv_results_keys(
+        cv_results, param_keys, score_keys, n_candidates_last, extra_keys
+    )
+    check_cv_results_keys(
+        all_cv_results, param_keys, all_score_keys, n_candidates_all, extra_keys
+    )
     expected_cv_results_kinds = {
         "param_C": "f",
         "param_degree": "i",
@@ -838,19 +890,19 @@ def test_halving_random_search_list_of_dicts():
 
     assert all(
         (
-            cv_results["param_C"].mask[i]
-            and cv_results["param_gamma"].mask[i]
-            and not cv_results["param_degree"].mask[i]
+            all_cv_results["param_C"].mask[i]
+            and all_cv_results["param_gamma"].mask[i]
+            and not all_cv_results["param_degree"].mask[i]
         )
-        for i in range(n_candidates)
-        if cv_results["param_kernel"][i] == "poly"
+        for i in range(n_candidates_all)
+        if all_cv_results["param_kernel"][i] == "poly"
     )
     assert all(
         (
-            not cv_results["param_C"].mask[i]
-            and not cv_results["param_gamma"].mask[i]
-            and cv_results["param_degree"].mask[i]
+            not all_cv_results["param_C"].mask[i]
+            and not all_cv_results["param_gamma"].mask[i]
+            and all_cv_results["param_degree"].mask[i]
         )
-        for i in range(n_candidates)
-        if cv_results["param_kernel"][i] == "rbf"
+        for i in range(n_candidates_all)
+        if all_cv_results["param_kernel"][i] == "rbf"
     )

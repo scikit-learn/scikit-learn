@@ -12,7 +12,7 @@ from libcpp.map cimport map as cpp_map
 
 import numpy as np
 
-from ._typedefs cimport float64_t, intp_t
+from sklearn.utils._typedefs cimport float64_t, intp_t
 
 
 ###############################################################################

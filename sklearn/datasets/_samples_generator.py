@@ -14,13 +14,17 @@ import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
 
-from sklearn.utils import Bunch
-
-from ..preprocessing import MultiLabelBinarizer
-from ..utils import check_array, check_random_state
-from ..utils import shuffle as util_shuffle
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.random import sample_without_replacement
+from sklearn.preprocessing import MultiLabelBinarizer
+from sklearn.utils import Bunch, check_array, check_random_state
+from sklearn.utils import shuffle as util_shuffle
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils._sparse import _align_api_if_sparse
+from sklearn.utils.fixes import (
+    _sparse_diags_array,
+    _sparse_eye_array,
+    _sparse_random_array,
+)
+from sklearn.utils.random import sample_without_replacement
 
 
 def _generate_hypercube(samples, dimensions, rng):
@@ -551,10 +555,12 @@ def make_multilabel_classification(
         X_indptr.append(len(X_indices))
         Y.append(y)
     X_data = np.ones(len(X_indices), dtype=np.float64)
-    X = sp.csr_matrix((X_data, X_indices, X_indptr), shape=(n_samples, n_features))
+    X = sp.csr_array((X_data, X_indices, X_indptr), shape=(n_samples, n_features))
     X.sum_duplicates()
     if not sparse:
         X = X.toarray()
+    else:
+        X = _align_api_if_sparse(X)
 
     # return_indicator can be True due to backward compatibility
     if return_indicator in (True, "sparse", "dense"):
@@ -739,13 +745,13 @@ def make_regression(
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(n_samples=5, n_features=2, noise=1, random_state=42)
     >>> X
-    array([[ 0.4967..., -0.1382... ],
-        [ 0.6476...,  1.523...],
-        [-0.2341..., -0.2341...],
-        [-0.4694...,  0.5425...],
-        [ 1.579...,  0.7674...]])
+    array([[ 0.4967, -0.1382 ],
+        [ 0.6476,  1.523],
+        [-0.2341, -0.2341],
+        [-0.4694,  0.5425],
+        [ 1.579,  0.7674]])
     >>> y
-    array([  6.737...,  37.79..., -10.27...,   0.4017...,   42.22...])
+    array([  6.737,  37.79, -10.27,   0.4017,   42.22])
     """
     n_informative = min(n_features, n_informative)
     generator = check_random_state(random_state)
@@ -1228,7 +1234,7 @@ def make_friedman1(n_samples=100, n_features=10, *, noise=0.0, random_state=None
     >>> y.shape
     (100,)
     >>> list(y[:3])
-    [np.float64(16.8...), np.float64(5.8...), np.float64(9.4...)]
+    [np.float64(16.8), np.float64(5.87), np.float64(9.46)]
     """
     generator = check_random_state(random_state)
 
@@ -1310,7 +1316,7 @@ def make_friedman2(n_samples=100, *, noise=0.0, random_state=None):
     >>> y.shape
     (100,)
     >>> list(y[:3])
-    [np.float64(1229.4...), np.float64(27.0...), np.float64(65.6...)]
+    [np.float64(1229.4), np.float64(27.0), np.float64(65.6)]
     """
     generator = check_random_state(random_state)
 
@@ -1394,7 +1400,7 @@ def make_friedman3(n_samples=100, *, noise=0.0, random_state=None):
     >>> y.shape
     (100,)
     >>> list(y[:3])
-    [np.float64(1.5...), np.float64(0.9...), np.float64(0.4...)]
+    [np.float64(1.54), np.float64(0.956), np.float64(0.414)]
     """
     generator = check_random_state(random_state)
 
@@ -1718,8 +1724,8 @@ def make_spd_matrix(n_dim, *, random_state=None):
     --------
     >>> from sklearn.datasets import make_spd_matrix
     >>> make_spd_matrix(n_dim=2, random_state=42)
-    array([[2.09..., 0.34...],
-           [0.34..., 0.21...]])
+    array([[2.093, 0.346],
+           [0.346, 0.218]])
     """
     generator = check_random_state(random_state)
 
@@ -1819,13 +1825,12 @@ def make_sparse_spd_matrix(
     """
     random_state = check_random_state(random_state)
 
-    chol = -sp.eye(n_dim)
-    aux = sp.random(
-        m=n_dim,
-        n=n_dim,
+    chol = -_sparse_eye_array(n_dim)
+    aux = _sparse_random_array(
+        shape=(n_dim, n_dim),
         density=1 - alpha,
-        data_rvs=lambda x: random_state.uniform(
-            low=smallest_coef, high=largest_coef, size=x
+        data_sampler=lambda size: random_state.uniform(
+            low=smallest_coef, high=largest_coef, size=size
         ),
         random_state=random_state,
     )
@@ -1841,13 +1846,13 @@ def make_sparse_spd_matrix(
 
     if norm_diag:
         # Form the diagonal vector into a row matrix
-        d = sp.diags(1.0 / np.sqrt(prec.diagonal()))
+        d = _sparse_diags_array(1.0 / np.sqrt(prec.diagonal()))
         prec = d @ prec @ d
 
     if sparse_format is None:
         return prec.toarray()
     else:
-        return prec.asformat(sparse_format)
+        return _align_api_if_sparse(prec.asformat(sparse_format))
 
 
 @validate_params(
@@ -1863,6 +1868,8 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
     """Generate a swiss roll dataset.
 
     Read more in the :ref:`User Guide <sample_generators>`.
+
+    Adapted with permission from Stephen Marsland's code [1]_.
 
     Parameters
     ----------
@@ -1891,7 +1898,7 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
 
     Notes
     -----
-    The algorithm is from Marsland [1].
+    The algorithm is from Marsland [1]_.
 
     References
     ----------
@@ -2058,11 +2065,13 @@ def make_gaussian_quantiles(
 
     Notes
     -----
-    The dataset is from Zhu et al [1].
+    The dataset is from Zhu et al [1]_.
 
     References
     ----------
-    .. [1] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
+    .. [1] :doi:`J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost."
+           Statistics and its Interface 2.3 (2009): 349-360.
+           <10.4310/SII.2009.v2.n3.a8>`
 
     Examples
     --------

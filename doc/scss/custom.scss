@@ -164,6 +164,13 @@ details.sd-dropdown {
   }
 }
 
+/* Override sphinx-gallery's layout for dataframes to allow horizontal scrolling */
+
+table.dataframe {
+  overflow-x: auto;
+  display: block;
+}
+
 /* Download/launcher links and top hint (sphinx-gallery) */
 
 // https://sphinx-gallery.github.io/stable/advanced.html#using-sphinx-gallery-sidebar-components
@@ -216,13 +223,18 @@ div.sk-authors-container {
 
 @mixin sk-text-image-grid($img-max-height) {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   flex-wrap: wrap;
 
-  div.text-box,
-  div.image-box {
-    width: 50%;
+  div.text-box {
+    width: 65%;
+    @media screen and (max-width: 500px) {
+      width: 100%;
+    }
+  }
 
+  div.image-box {
+    width: 35%;
     @media screen and (max-width: 500px) {
       width: 100%;
     }
@@ -250,4 +262,70 @@ div.sk-text-image-grid-small {
 
 div.sk-text-image-grid-large {
   @include sk-text-image-grid(100px);
+}
+
+/* Institutional support: active funding participation table (institutional_support.rst) */
+
+.bd-article table.sk-funding-participation-table {
+  width: 100%;
+  border-collapse: collapse;
+  --bs-table-striped-bg: #fff;
+  --bs-table-hover-bg: #fff;
+  --bs-table-active-bg: #fff;
+  tbody,
+  tr,
+  td {
+  }
+
+  th,
+  td {
+    padding: 0.75rem 0.5rem;
+    border: 1px solid var(--pst-color-border);
+    text-align: center;
+  }
+
+  li {
+    list-style: none !important;
+    list-style-type: none !important;
+    margin: 0.5rem !important;
+  }
+
+  img {
+    height: 40px !important;
+    padding: 5px;
+  }
+}
+
+/* Funding sidebar secondary panel (doc/templates/funding_links.html) */
+
+.sk-funding-sidepanel {
+  margin-top: 1.25rem;
+
+  .sk-funding-logos img {
+    max-width: 80%;
+    padding: 5px;
+    height: auto !important;
+    width: auto;
+    display: inline-block;
+  }
+}
+
+/* Responsive three-column grid list */
+.grid-list-three-columns {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+
+  @media screen and (max-width: 500px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.navbar-brand {
+  .logo__image.only-light {
+    height: 130%;
+  }
+  .logo__image.only-dark {
+    height: 130%;
+  }
 }

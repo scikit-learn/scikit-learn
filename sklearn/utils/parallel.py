@@ -12,7 +12,7 @@ from functools import update_wrapper
 import joblib
 from threadpoolctl import ThreadpoolController
 
-from .._config import config_context, get_config
+from sklearn._config import config_context, get_config
 
 # Global threadpool controller instance that can be used to locally limit the number of
 # threads without looping through all shared libraries every time.
@@ -70,7 +70,16 @@ class Parallel(joblib.Parallel):
         # in a different thread depending on the backend and on the value of
         # pre_dispatch and n_jobs.
         config = get_config()
-        warning_filters = warnings.filters
+        # In free-threading Python >= 3.14, warnings filters are managed through a
+        # ContextVar and warnings.filters is not modified inside a
+        # warnings.catch_warnings context. You need to use warnings._get_filters().
+        # For more details, see
+        # https://docs.python.org/3.14/whatsnew/3.14.html#concurrent-safe-warnings-control
+        filters_func = getattr(warnings, "_get_filters", None)
+        warning_filters = (
+            filters_func() if filters_func is not None else warnings.filters
+        )
+
         iterable_with_config_and_warning_filters = (
             (
                 _with_config_and_warning_filters(delayed_func, config, warning_filters),
@@ -143,7 +152,35 @@ class _FuncWrapper:
             )
 
         with config_context(**config), warnings.catch_warnings():
-            warnings.filters = warning_filters
+            # TODO is there a simpler way that resetwarnings+ filterwarnings?
+            warnings.resetwarnings()
+            warning_filter_keys = ["action", "message", "category", "module", "lineno"]
+            for filter_args in warning_filters:
+                this_warning_filter_dict = {
+                    k: v
+                    for k, v in zip(warning_filter_keys, filter_args)
+                    if v is not None
+                }
+
+                # Some small discrepancy between warnings filters and what
+                # filterwarnings expect. simplefilter is more lenient, e.g.
+                # accepts a tuple as category. We try simplefilter first and
+                # use filterwarnings in more complicated cases
+                if (
+                    "message" not in this_warning_filter_dict
+                    and "module" not in this_warning_filter_dict
+                ):
+                    warnings.simplefilter(**this_warning_filter_dict, append=True)
+                else:
+                    # 'message' and 'module' are most of the time regex.Pattern but
+                    # can be str as well and filterwarnings wants a str
+                    for special_key in ["message", "module"]:
+                        this_value = this_warning_filter_dict.get(special_key)
+                        if this_value is not None and not isinstance(this_value, str):
+                            this_warning_filter_dict[special_key] = this_value.pattern
+
+                    warnings.filterwarnings(**this_warning_filter_dict, append=True)
+
             return self.function(*args, **kwargs)
 
 

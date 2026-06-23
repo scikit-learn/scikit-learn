@@ -10,7 +10,7 @@ from numbers import Integral
 import numpy as np
 import scipy.sparse as sparse
 
-from ..base import (
+from sklearn.base import (
     ClassifierMixin,
     RegressorMixin,
     TransformerMixin,
@@ -19,31 +19,32 @@ from ..base import (
     is_classifier,
     is_regressor,
 )
-from ..exceptions import NotFittedError
-from ..linear_model import LogisticRegression, RidgeCV
-from ..model_selection import check_cv, cross_val_predict
-from ..preprocessing import LabelEncoder
-from ..utils import Bunch
-from ..utils._estimator_html_repr import _VisualBlock
-from ..utils._param_validation import HasMethods, StrOptions
-from ..utils.metadata_routing import (
+from sklearn.ensemble._base import _BaseHeterogeneousEnsemble, _fit_single_estimator
+from sklearn.exceptions import NotFittedError
+from sklearn.linear_model import LogisticRegression, RidgeCV
+from sklearn.model_selection import check_cv, cross_val_predict
+from sklearn.preprocessing import LabelEncoder
+from sklearn.utils import Bunch
+from sklearn.utils._param_validation import HasMethods, StrOptions
+from sklearn.utils._repr_html.estimator import _VisualBlock
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from ..utils.metaestimators import available_if
-from ..utils.multiclass import check_classification_targets, type_of_target
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import (
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.multiclass import check_classification_targets, type_of_target
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
     _check_feature_names_in,
     _check_response_method,
     _estimator_has,
     check_is_fitted,
     column_or_1d,
 )
-from ._base import _BaseHeterogeneousEnsemble, _fit_single_estimator
 
 
 class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCMeta):
@@ -190,13 +191,12 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         if _routing_enabled():
             routed_params = process_routing(self, "fit", **fit_params)
         else:
-            routed_params = Bunch()
-            for name in names:
-                routed_params[name] = Bunch(fit={})
-                if "sample_weight" in fit_params:
-                    routed_params[name].fit["sample_weight"] = fit_params[
-                        "sample_weight"
-                    ]
+            sw = (
+                {"sample_weight": fit_params["sample_weight"]}
+                if "sample_weight" in fit_params
+                else {}
+            )
+            routed_params = _manual_routing({name: {"fit": sw} for name in names})
 
         if self.cv == "prefit":
             self.estimators_ = []
@@ -397,7 +397,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__)
+        router = MetadataRouter(owner=self)
 
         # `self.estimators` is a list of (name, est) tuples
         for name, estimator in self.estimators:
@@ -743,9 +743,9 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             routed_params = process_routing(self, "predict", **predict_params)
         else:
             # TODO(SLEP6): remove when metadata routing cannot be disabled.
-            routed_params = Bunch()
-            routed_params.final_estimator_ = Bunch(predict={})
-            routed_params.final_estimator_.predict = predict_params
+            routed_params = _manual_routing(
+                {"final_estimator_": {"predict": predict_params}}
+            )
 
         y_pred = super().predict(X, **routed_params.final_estimator_["predict"])
         if isinstance(self._label_encoder, list):
@@ -1127,9 +1127,9 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
             routed_params = process_routing(self, "predict", **predict_params)
         else:
             # TODO(SLEP6): remove when metadata routing cannot be disabled.
-            routed_params = Bunch()
-            routed_params.final_estimator_ = Bunch(predict={})
-            routed_params.final_estimator_.predict = predict_params
+            routed_params = _manual_routing(
+                {"final_estimator_": {"predict": predict_params}}
+            )
 
         y_pred = super().predict(X, **routed_params.final_estimator_["predict"])
 

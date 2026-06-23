@@ -5,20 +5,22 @@ import warnings
 
 import numpy as np
 
-from ..base import BaseEstimator, RegressorMixin, _fit_context, clone
-from ..exceptions import NotFittedError
-from ..linear_model import LinearRegression
-from ..preprocessing import FunctionTransformer
-from ..utils import Bunch, _safe_indexing, check_array
-from ..utils._metadata_requests import (
+from sklearn.base import BaseEstimator, RegressorMixin, _fit_context, clone
+from sklearn.exceptions import NotFittedError
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.utils import _safe_indexing, check_array
+from sklearn.utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _routing_enabled,
     process_routing,
 )
-from ..utils._param_validation import HasMethods
-from ..utils._tags import get_tags
-from ..utils.validation import check_is_fitted
+from sklearn.utils._param_validation import HasMethods
+from sklearn.utils._repr_html.estimator import _VisualBlock
+from sklearn.utils._tags import get_tags
+from sklearn.utils.validation import check_is_fitted
 
 __all__ = ["TransformedTargetRegressor"]
 
@@ -281,14 +283,14 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         # FIXME: a FunctionTransformer can return a 1D array even when validate
         # is set to True. Therefore, we need to check the number of dimension
         # first.
-        if y_trans.ndim == 2 and y_trans.shape[1] == 1:
+        if y_trans.ndim == 2 and y_trans.shape[1] == 1 and self._training_dim == 1:
             y_trans = y_trans.squeeze(axis=1)
 
         self.regressor_ = self._get_regressor(get_clone=True)
         if _routing_enabled():
             routed_params = process_routing(self, "fit", **fit_params)
         else:
-            routed_params = Bunch(regressor=Bunch(fit=fit_params))
+            routed_params = _manual_routing({"regressor": {"fit": fit_params}})
 
         self.regressor_.fit(X, y_trans, **routed_params.regressor.fit)
 
@@ -328,7 +330,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         if _routing_enabled():
             routed_params = process_routing(self, "predict", **predict_params)
         else:
-            routed_params = Bunch(regressor=Bunch(predict=predict_params))
+            routed_params = _manual_routing({"regressor": {"predict": predict_params}})
 
         pred = self.regressor_.predict(X, **routed_params.regressor.predict)
         if pred.ndim == 1:
@@ -355,7 +357,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     @property
     def n_features_in_(self):
         """Number of features seen during :term:`fit`."""
-        # For consistency with other estimators we raise a AttributeError so
+        # For consistency with other estimators we raise an AttributeError so
         # that hasattr() returns False the estimator isn't fitted.
         try:
             check_is_fitted(self)
@@ -382,7 +384,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__).add(
+        router = MetadataRouter(owner=self).add(
             regressor=self._get_regressor(),
             method_mapping=MethodMapping()
             .add(caller="fit", callee="fit")
@@ -392,6 +394,21 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
     def _get_regressor(self, get_clone=False):
         if self.regressor is None:
-            return LinearRegression()
+            if _routing_enabled():
+                return LinearRegression().set_fit_request(sample_weight=True)
+            else:
+                return LinearRegression()
 
         return clone(self.regressor) if get_clone else self.regressor
+
+    def _sk_visual_block_(self):
+        regressor = (
+            self.regressor_ if hasattr(self, "regressor_") else self._get_regressor()
+        )
+        return _VisualBlock(
+            "serial",
+            [regressor],
+            names=[f"regressor: {regressor.__class__.__name__}"],
+            name_details=[str(regressor)],
+            dash_wrapped=True,
+        )
