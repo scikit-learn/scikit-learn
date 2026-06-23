@@ -300,6 +300,27 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         .. versionchanged:: 1.6
             `"auto"` option is added and is the default.
 
+    logit_preprocessing : {'sigmoid', 'softmax', 'auto'} or None, default='auto'
+        How to transform :term:`predict_proba` outputs before calibration.
+
+        - ``'sigmoid'`` maps probabilities to log-odds. For multiclass problems,
+          this uses a one-vs-rest (OvR) convention, which matches how
+          ``method='sigmoid'`` and ``method='isotonic'`` calibrate each class.
+        - ``'softmax'`` maps probabilities to multinomial logits, which matches
+          ``method='temperature'``.
+        - ``'auto'`` selects ``'sigmoid'`` for ``method`` in ``{'sigmoid',
+          'isotonic'}`` and ``'softmax'`` for ``method='temperature'``. The
+          resolved value is stored in :attr:`logit_preprocessing_`.
+        - ``None`` disables conversion. :term:`predict_proba` outputs are passed
+          to the calibrator as probabilities and :term:`decision_function`
+          outputs are used as logits.
+
+        This parameter only affects estimators calibrated via
+        :term:`predict_proba`. Estimators that only expose
+        :term:`decision_function` are unaffected.
+
+        .. versionadded:: 1.10
+
     Attributes
     ----------
     classes_ : ndarray of shape (n_classes,)
@@ -327,6 +348,12 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
         .. versionchanged:: 0.24
             Single calibrated classifier case when `ensemble=False`.
+
+    logit_preprocessing_ : {'sigmoid', 'softmax'} or None
+        Value of :paramref:`logit_preprocessing` used during :term:`fit`, with
+        ``'auto'`` resolved to either ``'sigmoid'`` or ``'softmax'``.
+
+        .. versionadded:: 1.10
 
     See Also
     --------
