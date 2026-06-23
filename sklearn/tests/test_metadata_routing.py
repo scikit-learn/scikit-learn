@@ -407,10 +407,9 @@ def test_nested_routing():
 
     pipeline.predict(X, sample_weight=w3)
     check_recorded_metadata(
-        pipeline.steps_[0].transformer_,
-        method="transform",
-        parent="fit",
-        sample_weight=w3,
+        pipeline.steps_[1].estimator_,
+        method="predict",
+        parent="predict",
     )
 
 

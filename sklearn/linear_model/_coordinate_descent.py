@@ -21,7 +21,7 @@ from sklearn.linear_model._base import (
     _pre_fit,
 )
 from sklearn.model_selection import check_cv
-from sklearn.utils import Bunch, check_array, check_scalar, metadata_routing
+from sklearn.utils import check_array, check_scalar, metadata_routing
 from sklearn.utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
@@ -35,7 +35,11 @@ from sklearn.utils._param_validation import (
 )
 from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.extmath import safe_sparse_dot
-from sklearn.utils.metadata_routing import _routing_enabled, process_routing
+from sklearn.utils.metadata_routing import (
+    _manual_routing,
+    _routing_enabled,
+    process_routing,
+)
 from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.sparsefuncs import mean_variance_axis
 from sklearn.utils.validation import (
@@ -670,6 +674,7 @@ def enet_path(
     random_state = params.pop("random_state", None)
     selection = params.pop("selection", "cyclic")
     do_screening = params.pop("do_screening", True)
+    early_stopping = params.pop("early_stopping", True)
 
     if len(params) > 0:
         raise ValueError("Unexpected parameters in params", params.keys())
@@ -797,6 +802,7 @@ def enet_path(
                 random=random,
                 positive=positive,
                 do_screening=do_screening,
+                early_stopping=early_stopping,
             )
         elif multi_output:
             model = cd_fast.enet_coordinate_descent_multi_task(
@@ -816,6 +822,7 @@ def enet_path(
                 rng=rng,
                 random=random,
                 do_screening=do_screening,
+                early_stopping=early_stopping,
             )
         elif isinstance(precompute, np.ndarray):
             # We expect precompute to be already Fortran ordered when bypassing
@@ -835,6 +842,7 @@ def enet_path(
                 random,
                 positive,
                 do_screening,
+                early_stopping,
             )
         elif precompute is False:
             model = cd_fast.enet_coordinate_descent(
@@ -849,6 +857,7 @@ def enet_path(
                 random,
                 positive,
                 do_screening,
+                early_stopping,
             )
         else:
             raise ValueError(
@@ -1911,8 +1920,7 @@ class LinearModelCV(MultiOutputLinearModel, ABC):
                 **params,
             )
         else:
-            routed_params = Bunch()
-            routed_params.splitter = Bunch(split=Bunch())
+            routed_params = _manual_routing({"splitter": {}})
 
         # Compute path for all folds and compute MSE to get the best alpha
         folds = list(cv.split(X, y, **routed_params.splitter.split))
