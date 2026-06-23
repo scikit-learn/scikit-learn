@@ -605,8 +605,12 @@ pipe.fit(X, y, sample_weight=my_weights, groups=my_groups).predict(
 # %%
 # The imports below are only required for the examples in this section.
 
-from sklearn.utils._metadata_requests import MethodMetadataRequest
-from sklearn.utils.metadata_routing import MetadataRequest, _MetadataRequester
+from sklearn.utils.metadata_routing import (
+    MetadataRequest,
+    MethodMetadataRequest,
+    _MetadataRequester,
+    get_class_level_metadata_request_values,
+)
 
 # %%
 # Developers can exclude data parameters from metadata discovery with `ignore_params`.
@@ -623,23 +627,21 @@ class CustomRequestConsumer(_MetadataRequester):
         return metadata2 + 100
 
     def __sklearn_get_metadata_request__(self):
-        if hasattr(self, "_metadata_request"):
-            requests = self._metadata_request.__sklearn_clone__()
-        else:
-            requests = MetadataRequest(owner=self)
-            for method_name in ["fit", "score", "predict"]:
-                setattr(
-                    requests,
-                    method_name,
-                    MethodMetadataRequest(
-                        owner=self,
-                        method=method_name,
-                        requests=super()._get_class_level_metadata_request_values(
-                            method_name,
-                            ignore_params={"y_true", "y_pred"},
-                        ),
+        requests = MetadataRequest(owner=self)
+        for method_name in ["fit", "score", "predict"]:
+            setattr(
+                requests,
+                method_name,
+                MethodMetadataRequest(
+                    owner=self,
+                    method=method_name,
+                    requests=get_class_level_metadata_request_values(
+                        self,
+                        method_name,
+                        ignore_params={"y_true", "y_pred"},
                     ),
-                )
+                ),
+            )
         return requests
 
 

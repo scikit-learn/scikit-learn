@@ -1716,7 +1716,10 @@ class _MetadataRequester:
         request : MetadataRequest
             A :class:`~sklearn.utils.metadata_routing.MetadataRequest` instance.
         """
-        return self.__sklearn_get_metadata_request__()
+        if hasattr(self, "_metadata_request"):
+            return self._metadata_request.__sklearn_clone__()
+        else:
+            return self.__sklearn_get_metadata_request__()
 
     def __sklearn_get_metadata_request__(self):
         """Developer API to get requested metadata for the instance.
@@ -1731,22 +1734,17 @@ class _MetadataRequester:
         request : MetadataRequest
             A :class:`~sklearn.utils.metadata_routing.MetadataRequest` instance.
         """
-        if hasattr(self, "_metadata_request"):
-            requests = self._metadata_request.__sklearn_clone__()
-        else:
-            requests = MetadataRequest(owner=self)
-            for method_name in SIMPLE_METHODS:
-                setattr(
-                    requests,
-                    method_name,
-                    MethodMetadataRequest(
-                        owner=self,
-                        method=method_name,
-                        requests=self._get_class_level_metadata_request_values(
-                            method_name
-                        ),
-                    ),
-                )
+        requests = MetadataRequest(owner=self)
+        for method_name in SIMPLE_METHODS:
+            setattr(
+                requests,
+                method_name,
+                MethodMetadataRequest(
+                    owner=self,
+                    method=method_name,
+                    requests=get_class_level_metadata_request_values(self, method_name),
+                ),
+            )
         return requests
 
     def get_metadata_routing(self):
@@ -1916,4 +1914,40 @@ def _manual_routing(routing):
             )
             for child, methods in routing.items()
         }
+    )
+
+
+def get_class_level_metadata_request_values(
+    metadata_requester, method_name, method=None, ignore_params=None
+):
+    """Get class level metadata request values.
+
+    Parameters
+    ----------
+    method_name : str
+        The name of the method to get the metadata request values for.
+
+    method : callable, default=None
+        The method to get the metadata request values for. If None, the method
+        from the class with the name `method_name` is used.
+
+    ignore_params : set, default=None
+        A set of parameter names to ignore. The usual parameters
+        `X`, `y`, `Y`, `Xt`, `yt` are always ignored.
+
+    Returns
+    -------
+    requests : dict
+        A dictionary of metadata request values.
+
+    Notes
+    -----
+    This method first checks the `method`'s signature for passable metadata and then
+    updates these with the metadata request values set at class level via the
+    ``__metadata_request__{method}`` class attributes.
+
+    This method, does not take request values set at instance level into account.
+    """
+    return metadata_requester._get_class_level_metadata_request_values(
+        method_name, method, ignore_params
     )
