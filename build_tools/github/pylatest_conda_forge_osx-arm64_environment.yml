@@ -6,13 +6,15 @@ channels:
 dependencies:
   - python
   - numpy
-  - blas
+  - blas[build=openblas]
   - scipy
   - cython
   - joblib
+  - narwhals
   - threadpoolctl
   - matplotlib
   - pandas
+  - rich
   - pyamg
   - pytest
   - pytest-xdist

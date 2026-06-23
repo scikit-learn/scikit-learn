@@ -73,7 +73,7 @@ for ax, weights in zip(axs, ("uniform", "distance")):
         alpha=0.5,
         ax=ax,
     )
-    cmap = mpl.colors.ListedColormap(disp.multiclass_colors_)
+    cmap = mpl.colors.ListedColormap(disp.target_colors_)
     scatter = disp.ax_.scatter(
         X.iloc[:, 0], X.iloc[:, 1], c=y, cmap=cmap, edgecolors="k"
     )
@@ -94,7 +94,7 @@ plt.show()
 # ----------
 #
 # We observe that the parameter `weights` has an impact on the decision boundary. When
-# `weights="unifom"` all nearest neighbors will have the same impact on the decision.
+# `weights="uniform"` all nearest neighbors will have the same impact on the decision.
 # Whereas when `weights="distance"` the weight given to each neighbor is proportional
 # to the inverse of the distance from that neighbor to the query point.
 #

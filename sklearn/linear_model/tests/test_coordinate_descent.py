@@ -3,6 +3,7 @@
 
 import warnings
 from copy import deepcopy
+from functools import partial
 
 import joblib
 import numpy as np
@@ -101,6 +102,7 @@ def test_cython_solver_equivalence(sparse_csc_type):
         "rng": np.random.RandomState(0),  # not used, but needed as argument
         "random": False,
         "positive": False,
+        "early_stopping": True,
     }
 
     def zc():
@@ -166,6 +168,87 @@ def test_cython_solver_equivalence(sparse_csc_type):
             do_screening=do_screening,
         )
         assert_allclose(coef_4, coef_1)
+
+
+@pytest.mark.parametrize("cd", ["enet", "sparse_enet", "enet_gram", "enet_multi"])
+def test_cython_solver_early_stopping(cd):
+    """Test that early_stopping works correctly."""
+    X, y = make_regression()
+    X_mean = X.mean(axis=0)
+    X_centered = np.asfortranarray(X - X_mean)
+    y -= y.mean()
+    alpha_max = np.linalg.norm(X.T @ y, ord=np.inf)
+    params = {
+        "alpha": alpha_max / 100,
+        "beta": 0,
+        "max_iter": 100,
+        "tol": 1e-1,  # Set a high value on purpose.
+        "rng": np.random.RandomState(0),  # not used, but needed as argument
+        "random": False,
+    }
+    if cd == "enet":
+        cd_solve = partial(
+            cd_fast.enet_coordinate_descent,
+            X=X_centered,
+            y=y,
+            **params,
+        )
+    elif cd == "sparse_enet":
+        Xs = sparse.csc_matrix(X)
+        cd_solve = partial(
+            cd_fast.sparse_enet_coordinate_descent,
+            X_data=Xs.data,
+            X_indices=Xs.indices,
+            X_indptr=Xs.indptr,
+            y=y,
+            sample_weight=None,
+            X_mean=X_mean,
+            **params,
+        )
+    elif cd == "enet_gram":
+        cd_solve = partial(
+            cd_fast.enet_coordinate_descent_gram,
+            Q=X_centered.T @ X_centered,
+            q=X_centered.T @ y,
+            y=y,
+            **params,
+        )
+    elif cd == "enet_multi":
+
+        def cd_solve(w, early_stopping=True):
+            return cd_fast.enet_coordinate_descent_multi_task(
+                W=w,
+                X=X_centered,
+                X_is_sparse=False,
+                X_data=None,
+                X_indices=None,
+                X_indptr=None,
+                Y=np.asfortranarray(np.c_[y, y]),
+                sample_weight=None,
+                X_mean=None,
+                **params,
+                early_stopping=early_stopping,
+            )
+
+    if cd == "enet_multi":
+        coef_1 = np.zeros((2, X.shape[1]), order="F")
+    else:
+        coef_1 = np.zeros(X.shape[1])
+    _, gap_1, _, _ = cd_solve(w=coef_1)
+    assert np.sum(coef_1 != 0) > X.shape[1] / 4  # avoid all zeros
+
+    # With early stopping, the coefficients should stay unchanged.
+    coef_2 = coef_1.copy(order="F")
+    _, _, _, n_iter = cd_solve(w=coef_2, early_stopping=True)
+    assert n_iter == 0
+    assert_array_equal(coef_2, coef_1)
+
+    # Without early stopping, the coefficients should change.
+    coef_3 = coef_1.copy(order="F")
+    _, gap_3, _, n_iter = cd_solve(w=coef_3, early_stopping=False)
+    assert n_iter == 1
+    assert gap_3 < gap_1
+    assert not np.all(coef_3 == coef_1)
 
 
 def test_lasso_zero():
@@ -968,7 +1051,7 @@ def test_check_input_false():
     X, y, _, _ = build_dataset(n_samples=20, n_features=10)
     X = check_array(X, order="F", dtype="float64")
     y = check_array(X, order="F", dtype="float64")
-    clf = ElasticNet(selection="cyclic", tol=1e-7)
+    clf = ElasticNet(selection="cyclic", tol=1e-6)
     # Check that no error is raised if data is provided in the right format
     clf.fit(X, y, check_input=False)
     # With check_input=False, an exhaustive check is not made on y but its
@@ -1007,7 +1090,7 @@ def test_enet_copy_X_False_check_input_False():
     assert np.any(np.not_equal(original_X, X))
 
 
-def test_overrided_gram_matrix():
+def test_overridden_gram_matrix():
     X, y, _, _ = build_dataset(n_samples=20, n_features=10)
     Gram = X.T.dot(X)
     clf = ElasticNet(selection="cyclic", tol=1e-8, precompute=Gram)
@@ -1624,11 +1707,11 @@ def test_enet_sample_weight_does_not_overwrite_sample_weight(check_input):
 @pytest.mark.parametrize(
     ["precompute", "n_targets"], [(False, 1), (True, 1), (False, 3)]
 )
-def test_enet_ridge_consistency(ridge_alpha, precompute, n_targets):
+def test_enet_ridge_consistency(ridge_alpha, precompute, n_targets, global_random_seed):
     # Check that ElasticNet(l1_ratio=0) converges to the same solution as Ridge
     # provided that the value of alpha is adapted.
 
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 300
     X, y = make_regression(
         n_samples=n_samples,
@@ -1660,9 +1743,10 @@ def test_enet_ridge_consistency(ridge_alpha, precompute, n_targets):
     # The CD solver using the gram matrix (precompute = True) loses numerical precision
     # by working with the squares of matrices like Q=X'X (=gram) and
     # R^2 = y^2 + wQw - 2yQw (=square of residuals).
-    rtol = 1e-5 if precompute else 1e-7
-    assert_allclose(enet.coef_, ridge.coef_, rtol=rtol)
-    assert_allclose(enet.intercept_, ridge.intercept_)
+    rtol = 1e-5 if precompute else 5e-7
+    atol = 3e-11
+    assert_allclose(enet.coef_, ridge.coef_, rtol=rtol, atol=atol)
+    assert_allclose(enet.intercept_, ridge.intercept_, atol=atol)
 
 
 @pytest.mark.filterwarnings("ignore:With alpha=0, this algorithm:UserWarning")
@@ -1772,4 +1856,24 @@ def test_enet_path_check_input_false(precompute):
     """Test enet_path works with check_input=False and various precompute settings."""
     X, y = make_regression(n_samples=100, n_features=5, n_informative=2, random_state=0)
     X = np.asfortranarray(X)
-    alphas, _, _ = enet_path(X, y, n_alphas=3, check_input=False, precompute=precompute)
+    alphas, _, _ = enet_path(X, y, alphas=3, check_input=False, precompute=precompute)
+
+
+# TODO(1.11): remove
+@pytest.mark.parametrize("path_func", [lasso_path, enet_path])
+def test_path_function_deprecated_n_alphas(path_func):
+    """Check deprecation of n_alphas in favor of alphas."""
+    X, y = make_regression(n_samples=9, n_features=5, n_informative=2, random_state=42)
+
+    msg = "'n_alphas' was deprecated in 1.9 and will be removed in 1.11"
+    with pytest.warns(FutureWarning, match=msg):
+        path_func(X, y, n_alphas=5)
+
+    msg = "'alphas=None' is deprecated and will be removed in 1.11"
+    with pytest.warns(FutureWarning, match=msg):
+        path_func(X, y, alphas=None)
+
+    # Assert that no warning is raised when n_alphas is not used.
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        path_func(X, y, alphas=5)

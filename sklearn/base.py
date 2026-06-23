@@ -130,11 +130,18 @@ def _clone_parametrized(estimator, *, safe=True):
 
     new_object = klass(**new_object_params)
     try:
-        new_object._metadata_request = copy.deepcopy(estimator._metadata_request)
+        new_object._metadata_request = clone(estimator._metadata_request)
     except AttributeError:
         pass
 
     params_set = new_object.get_params(deep=False)
+
+    if hasattr(estimator, "_skl_callbacks"):
+        # Callback classes are expected to be designed in a way that a single instance
+        # can be used by multiple clones of the same estimator as is typically the case
+        # in ensembles or during cross-validation. Therefore it is safe to pass the
+        # callback instances by reference.
+        new_object._skl_callbacks = estimator._skl_callbacks
 
     # quick sanity check of the parameters of the clone
     for name in new_object_params:
@@ -350,7 +357,13 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
         """Get fitted attributes of the estimator."""
 
         fitted_attr = {}
-        for name, value in inspect.getmembers(self):
+        # Ignore deprecation warnings for deprecated fitted attributes when
+        # generating the repr.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", FutureWarning)
+            members = inspect.getmembers(self)
+
+        for name, value in members:
             # We display up to 100 fitted attributes
             if len(fitted_attr) > 100:
                 fitted_attr["..."] = {
@@ -1219,7 +1232,7 @@ class MultiOutputMixin:
 
 
 class _UnstableArchMixin:
-    """Mark estimators that are non-determinstic on 32bit or PowerPC"""
+    """Mark estimators that are non-deterministic on 32bit or PowerPC"""
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -1367,6 +1380,8 @@ def _fit_context(*, prefer_skip_nested_validation):
     def decorator(fit_method):
         @functools.wraps(fit_method)
         def wrapper(estimator, *args, **kwargs):
+            from sklearn.callback._callback_support import callback_management_context
+
             global_skip_validation = get_config()["skip_parameter_validation"]
 
             # we don't want to validate again for each call to partial_fit
@@ -1377,10 +1392,13 @@ def _fit_context(*, prefer_skip_nested_validation):
             if not global_skip_validation and not partial_fit_and_fitted:
                 estimator._validate_params()
 
-            with config_context(
-                skip_parameter_validation=(
-                    prefer_skip_nested_validation or global_skip_validation
-                )
+            with (
+                config_context(
+                    skip_parameter_validation=(
+                        prefer_skip_nested_validation or global_skip_validation
+                    )
+                ),
+                callback_management_context(estimator),
             ):
                 return fit_method(estimator, *args, **kwargs)
 

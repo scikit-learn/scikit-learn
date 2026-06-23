@@ -94,7 +94,7 @@ def make_prediction(dataset=None, binary=False):
     X = np.c_[X, rng.randn(n_samples, 200 * n_features)]
 
     # run classifier, get class probabilities and label predictions
-    clf = LogisticRegression(random_state=0)
+    clf = LogisticRegression()
     y_score = clf.fit(X[:half], y[:half]).predict_proba(X[half:])
 
     if binary:
@@ -2198,7 +2198,7 @@ def test_top_k_accuracy_score_increasing():
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-    clf = LogisticRegression(random_state=0)
+    clf = LogisticRegression()
     clf.fit(X_train, y_train)
 
     for X, y in zip((X_train, X_test), (y_train, y_test)):
@@ -2380,7 +2380,7 @@ def test_ranking_metric_pos_label_types(metric, classes):
         assert not np.isnan(thresholds).any()
 
 
-def test_roc_curve_with_probablity_estimates(global_random_seed):
+def test_roc_curve_with_probability_estimates(global_random_seed):
     """Check that thresholds do not exceed 1.0 when `y_score` is a probability
     estimate.
 
