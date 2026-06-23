@@ -246,9 +246,6 @@ def test_progressbar_by_default(Estimator, verbose, capsys):
     # The progressbar should by set only on compatible estimators, if there is no
     # verbosity set and and if rich is available.
     if rich_available and Estimator == LogisticRegression and not verbose:
-        assert re.search(
-            r"LogisticRegression - fit ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%",
-            captured.out,
-        )
+        assert re.search(r"LogisticRegression - fit ━+ 100%", captured.out)
     else:
         assert not captured.out
