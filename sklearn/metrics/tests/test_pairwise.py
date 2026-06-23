@@ -434,7 +434,6 @@ def test_pairwise_parallel_array_api(
 
     with config_context(array_api_dispatch=True):
         for Y_xp_current, Y_np_current in ((None, None), (Y_xp, Y_np)):
-
             n_job1_xp = func(X_xp, Y_xp_current, metric=metric, n_jobs=1, **kwds)
             n_job1_xp_np = move_to(n_job1_xp, xp=np, device="cpu")
             assert get_namespace(n_job1_xp)[0].__name__ == xp.__name__
