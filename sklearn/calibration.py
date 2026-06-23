@@ -79,7 +79,7 @@ def _ensure_logits(predictions, response_method_name, logit_preprocessing=None):
     (1 - p)) for binary classification and when logit_preprocessing is
     "sigmoid" (p are the OvR columns for each class in this case).
 
-    TODO: replace by _converts_to_logits
+    TODO: replace by _converts_to_logits ?
 
     Parameters
     ----------
@@ -639,6 +639,15 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 n_jobs=self.n_jobs,
                 params=routed_params.estimator.fit,
             )
+            if self.classes_.shape[0] == 2 and method_name == "predict_proba":
+                # Select the probability column of the positive class before
+                # converting to logits.
+                predictions = _process_predict_proba(
+                    y_pred=predictions,
+                    target_type="binary",
+                    classes=self.classes_,
+                    pos_label=self.classes_[1],
+                )
             predictions = _ensure_logits(
                 predictions,
                 response_method_name=method_name,
@@ -646,14 +655,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             )
             if self.classes_.shape[0] == 2:
                 # Ensure shape (n_samples, 1) in the binary case
-                if method_name == "predict_proba":
-                    # Select the probability column of the positive class
-                    predictions = _process_predict_proba(
-                        y_pred=predictions,
-                        target_type="binary",
-                        classes=self.classes_,
-                        pos_label=self.classes_[1],
-                    )
                 predictions = predictions.reshape(-1, 1)
 
             if sample_weight is not None:
@@ -932,7 +933,7 @@ def _fit_calibrator(
                 clf,
                 ["decision_function", "predict_proba"],
             ).__name__
-            if response_method_name == "predict_proba":
+            if response_method_name == "predict_proba" and logit_preprocessing is None:
                 predictions = xp.concat([1 - predictions, predictions], axis=1)
         calibrator = _TemperatureScaling()
         calibrator.fit(predictions, y, sample_weight)
@@ -1048,7 +1049,10 @@ class _CalibratedClassifier:
                     self.estimator,
                     ["decision_function", "predict_proba"],
                 ).__name__
-                if response_method_name == "predict_proba":
+                if (
+                    response_method_name == "predict_proba"
+                    and self.logit_preprocessing is None
+                ):
                     predictions = xp.concat([1 - predictions, predictions], axis=1)
             proba = self.calibrators[0].predict(predictions)
 
