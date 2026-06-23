@@ -7,15 +7,19 @@ from unittest import mock
 
 import pytest
 
+from sklearn import config_context
 from sklearn.base import clone
 from sklearn.callback import ProgressBar
 from sklearn.callback.tests._utils import (
     HeterogeneousMetaEstimator,
     MaxIterEstimator,
     MetaEstimator,
+    NoCallbackEstimator,
     NoSubtaskEstimator,
     WhileEstimator,
 )
+from sklearn.datasets import make_classification
+from sklearn.linear_model import LogisticRegression
 from sklearn.utils._optional_dependencies import check_rich_support
 from sklearn.utils._testing import (
     assert_allclose,
@@ -216,3 +220,35 @@ def test_estimator_without_subtasks(capsys):
     captured = capsys.readouterr()
     assert re.search(r"NoSubtaskEstimator - fit", captured.out)
     assert re.search(r"100%", captured.out)
+
+
+@config_context(progressbar_by_default=True)
+@pytest.mark.parametrize("Estimator", [LogisticRegression, NoCallbackEstimator])
+@pytest.mark.parametrize("verbose", [True, False])
+def test_progressbar_by_default(Estimator, verbose, capsys):
+    """Test that the progressbar is used by default on compatible estimators."""
+    try:
+        import rich  # noqa: F401
+
+        rich_available = True
+    except ImportError:
+        rich_available = False
+
+    X, y = make_classification(
+        n_samples=10, n_features=2, random_state=0, n_informative=2, n_redundant=0
+    )
+    kwargs = {"verbose": verbose} if Estimator == LogisticRegression else {}
+
+    est = Estimator(**kwargs).fit(X, y)
+
+    captured = capsys.readouterr()
+
+    # The progressbar should by set only on compatible estimators, if there is no
+    # verbosity set and and if rich is available.
+    if rich_available and Estimator == LogisticRegression and not verbose:
+        assert re.search(
+            r"LogisticRegression - fit ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%",
+            captured.out,
+        )
+    else:
+        assert not captured.out
