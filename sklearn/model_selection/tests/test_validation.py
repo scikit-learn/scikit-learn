@@ -394,7 +394,7 @@ def test_cross_validate_array_function_not_called():
     """Check that `__array_function__` (NEP18) is not called."""
     X = _NotAnArray([[1, 1], [1, 2], [1, 3], [1, 4], [2, 1], [2, 2], [2, 3], [2, 4]])
     y = _NotAnArray([1, 1, 1, 2, 2, 2, 1, 1])
-    estimator = LogisticRegression(random_state=0)
+    estimator = LogisticRegression()
     cross_validate(estimator, X, y, cv=2)
 
 
@@ -1147,7 +1147,7 @@ def test_cross_val_predict_unbalanced():
     )
     # Change the first sample to a new class
     y[0] = 2
-    clf = LogisticRegression(random_state=1)
+    clf = LogisticRegression()
     cv = StratifiedKFold(n_splits=2)
     train, test = list(cv.split(X, y))
     yhat_proba = cross_val_predict(clf, X, y, cv=cv, method="predict_proba")
@@ -1872,7 +1872,7 @@ def test_gridsearchcv_cross_val_predict_with_method():
     iris = load_iris()
     X, y = iris.data, iris.target
     X, y = shuffle(X, y, random_state=0)
-    est = GridSearchCV(LogisticRegression(random_state=42), {"C": [0.1, 1]}, cv=2)
+    est = GridSearchCV(LogisticRegression(), {"C": [0.1, 1]}, cv=2)
     for method in ["decision_function", "predict_proba", "predict_log_proba"]:
         check_cross_val_predict_multiclass(est, X, y, method)
 
@@ -2481,7 +2481,8 @@ def test_groups_with_routing_validation(func, extra_args):
         (cross_val_score, {}),
         (cross_val_predict, {}),
         (learning_curve, {}),
-        (permutation_test_score, {}),
+        # Few permutations: this test only checks the params=None code path.
+        (permutation_test_score, {"n_permutations": 5}),
         (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
     ],
 )
