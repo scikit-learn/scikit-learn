@@ -302,6 +302,13 @@ By :user:`Loïc Estève <lesteve>` and many other people in the wider Scientific
 Python and CPython ecosystem, for example :user:`Nathan Goldbaum <ngoldbaum>`,
 :user:`Ralf Gommers <rgommers>`, :user:`Edgar Andrés Margffoy Tuay <andfoy>`. :pr:`30360`
 
+:mod:`sklearn.neighbors`
+........................
+
+- |Enhancement| :func:`sklearn.neighbors.KNeighborsRegressor.predict` now accepts `return_std` flag and returns standard deviation of the predictions.
+  :pr:`29711` by :user:`Ankit Dhokariya <ankit-dhokariya>`
+
+
 :mod:`sklearn.base`
 -------------------
 
