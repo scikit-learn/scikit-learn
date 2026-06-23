@@ -4894,7 +4894,7 @@ class _DataFramePreservingRegressor(RegressorMixin, BaseEstimator):
     """
 
     def fit(self, X, y=None):
-        if not nw.dependencies.is_into_dataframe(X):
+        if not nw.dependencies.is_into_dataframe(X):  # pragma: no cover
             raise AssertionError(
                 f"the meta-estimator passed a {type(X).__name__} to its "
                 "sub-estimator's `fit` instead of a dataframe"
@@ -4906,7 +4906,7 @@ class _DataFramePreservingRegressor(RegressorMixin, BaseEstimator):
         return self
 
     def predict(self, X):
-        if not nw.dependencies.is_into_dataframe(X):
+        if not nw.dependencies.is_into_dataframe(X):  # pragma: no cover
             raise AssertionError(
                 f"the meta-estimator passed a {type(X).__name__} to its "
                 "sub-estimator's `predict` instead of a dataframe"
@@ -4956,7 +4956,7 @@ def check_metaestimator_preserves_dataframe(name, estimator_orig):
             for key, value in estimator.get_params(deep=False).items()
             if isinstance(value, BaseEstimator)
         ]
-        if not sub_estimators:
+        if not sub_estimators:  # pragma: no cover
             raise SkipTest(
                 f"{name} is tagged preserves_dataframe but exposes no "
                 "sub-estimator parameter to replace."
@@ -4974,7 +4974,7 @@ def check_metaestimator_preserves_dataframe(name, estimator_orig):
                 args = (X, y) if method == "score" else (X,)
                 getattr(estimator, method)(*args)
 
-    if not ran_any:
+    if not ran_any:  # pragma: no cover
         raise SkipTest("pandas, polars or pyarrow is required for this check.")
 
 
