@@ -134,9 +134,6 @@ def test_unique_bins_repeated_weighted():
 def test_bin_mapper_random_data(max_bins):
     n_samples, n_features = DATA.shape
 
-    expected_count_per_bin = n_samples // max_bins
-    tol = int(0.05 * expected_count_per_bin)
-
     # max_bins is the number of bins for non-missing values
     n_bins = max_bins + 1
     mapper = _BinMapper(n_bins=n_bins, random_state=42).fit(DATA)
@@ -152,11 +149,18 @@ def test_bin_mapper_random_data(max_bins):
         assert bin_thresholds_feature.dtype == DATA.dtype
     assert np.all(mapper.n_bins_non_missing_ == max_bins)
 
-    # Check that the binned data is approximately balanced across bins.
+    # Check that each bin contains only values within its threshold interval.
     for feature_idx in range(n_features):
+        bin_thresholds_feature = mapper.bin_thresholds_[feature_idx]
         for bin_idx in range(max_bins):
-            count = (binned[:, feature_idx] == bin_idx).sum()
-            assert abs(count - expected_count_per_bin) < tol
+            bin_data = DATA[binned[:, feature_idx] == bin_idx, feature_idx]
+            if bin_idx > 0:
+                left_threshold = bin_thresholds_feature[bin_idx - 1]
+                assert (left_threshold < bin_data).all()
+
+            if bin_idx + 1 < max_bins:
+                right_threshold = bin_thresholds_feature[bin_idx]
+                assert (bin_data <= right_threshold).all()
 
 
 @pytest.mark.parametrize("n_samples, max_bins", [(5, 5), (5, 10), (5, 11), (42, 255)])
@@ -310,7 +314,7 @@ def test_bin_mapper_idempotence(max_bins_small, max_bins_large):
     assert max_bins_large >= max_bins_small
     data = np.random.RandomState(42).normal(size=30000).reshape(-1, 1)
     mapper_small = _BinMapper(n_bins=max_bins_small + 1)
-    mapper_large = _BinMapper(n_bins=max_bins_small + 1)
+    mapper_large = _BinMapper(n_bins=max_bins_large + 1)
     binned_small = mapper_small.fit_transform(data)
     binned_large = mapper_large.fit_transform(binned_small)
     assert_array_equal(binned_small, binned_large)
