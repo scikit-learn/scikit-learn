@@ -331,11 +331,11 @@ def test_neigh_predictions_algorithm_agnosticity(
 
 @pytest.mark.parametrize(
     "KNeighborsMixinSubclass",
-    [
+    (
         neighbors.KNeighborsClassifier,
         neighbors.KNeighborsRegressor,
         neighbors.NearestNeighbors,
-    ],
+    ),
 )
 def test_unsupervised_inputs(global_dtype, KNeighborsMixinSubclass):
     # Test unsupervised inputs for neighbors estimators
