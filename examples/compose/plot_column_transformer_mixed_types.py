@@ -211,6 +211,7 @@ import pandas as pd
 
 cv_results = pd.DataFrame(search_cv.cv_results_)
 cv_results = cv_results.sort_values("mean_test_score", ascending=False)
+cv_results.index.name = "rank"
 cv_results[
     [
         "mean_test_score",
@@ -219,7 +220,7 @@ cv_results[
         "param_preprocessor__cat__selector__percentile",
         "param_classifier__C",
     ]
-].reset_index().head(5)
+].head(5)
 
 # %%
 # The best hyper-parameters have be used to re-fit a final model on the full
