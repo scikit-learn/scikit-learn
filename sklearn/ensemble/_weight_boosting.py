@@ -918,6 +918,7 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
            on-Line Learning and an Application to Boosting", 1995.
 
     .. [2] H. Drucker, "Improving Regressors using Boosting Techniques", 1997.
+       http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.31.314
 
     Examples
     --------
