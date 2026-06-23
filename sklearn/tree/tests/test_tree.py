@@ -3173,6 +3173,7 @@ def test_predict_sparse_int64_indices_raises():
     ids=["numeric_gap", "numeric_not_zero_based", "string_labels"],
 )
 def test_fit_categorical_raw_labels_are_reencoded(Tree, X, raw_categories):
+    """Check raw categorical labels are re-encoded for fitting and prediction."""
     # Raw category labels need not already be dense integer codes.
     y = np.array([0, 0, 1, 1])
     est = Tree(categorical_features=[0], random_state=0).fit(X, y)
