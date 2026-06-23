@@ -1209,20 +1209,24 @@ def _check_array_api_core(
         numpy_asarray_works = False
 
     if numpy_asarray_works:
-        # In this case, array_api_dispatch is disabled and we rely on np.asarray
-        # being called to convert the non-NumPy inputs to NumPy arrays when needed.
-        est_fitted_with_as_array = clone(est).fit(X_xp, y_xp)
-        # We only do a smoke test for now, in order to avoid complicating the
-        # test function even further.
-        for method_name in methods:
-            method = getattr(est_fitted_with_as_array, method_name, None)
-            if method is None:
-                continue
+        # In this case, array_api_dispatch is explicitly disabled and we rely on
+        # np.asarray being called to convert the non-NumPy inputs to NumPy arrays
+        # when needed. Pinning the flag to False ensures this branch keeps
+        # exercising the np.asarray fallback path regardless of the default value
+        # of the `array_api_dispatch` config flag.
+        with config_context(array_api_dispatch=False):
+            est_fitted_with_as_array = clone(est).fit(X_xp, y_xp)
+            # We only do a smoke test for now, in order to avoid complicating the
+            # test function even further.
+            for method_name in methods:
+                method = getattr(est_fitted_with_as_array, method_name, None)
+                if method is None:
+                    continue
 
-            if method_name == "score":
-                method(X_xp, y_xp)
-            else:
-                method(X_xp)
+                if method_name == "score":
+                    method(X_xp, y_xp)
+                else:
+                    method(X_xp)
 
     for method_name in methods:
         method = getattr(est, method_name, None)
