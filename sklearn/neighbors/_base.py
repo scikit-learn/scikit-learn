@@ -170,8 +170,8 @@ def _check_precomputed(X):
 
     if graph.format not in ("csr", "csc", "coo", "lil"):
         raise TypeError(
-            "Sparse matrix in {!r} format is not supported due to "
-            "its handling of explicit zeros".format(graph.format)
+            f"Sparse matrix in {graph.format!r} format is not supported due to "
+            "its handling of explicit zeros"
         )
     copied = graph.format != "csr"
     graph = check_array(
@@ -578,7 +578,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             if X.shape[0] != X.shape[1]:
                 raise ValueError(
                     "Precomputed matrix must be square."
-                    " Input is a {}x{} matrix.".format(X.shape[0], X.shape[1])
+                    f" Input is a {X.shape[0]}x{X.shape[1]} matrix."
                 )
             self.n_features_in_ = X.shape[1]
 
@@ -1269,12 +1269,16 @@ class RadiusNeighborsMixin:
             delayed_query = delayed(self._tree.query_radius)
             if hasattr(radius, "__len__") and len(radius) == X.shape[0]:
                 chunked_results = Parallel(n_jobs, prefer="threads")(
-                    delayed_query(X[s], radius[s], return_distance, sort_results=sort_results)
+                    delayed_query(
+                        X[s], radius[s], return_distance, sort_results=sort_results
+                    )
                     for s in gen_even_slices(X.shape[0], n_jobs)
                 )
             else:
                 chunked_results = Parallel(n_jobs, prefer="threads")(
-                    delayed_query(X[s], radius, return_distance, sort_results=sort_results)
+                    delayed_query(
+                        X[s], radius, return_distance, sort_results=sort_results
+                    )
                     for s in gen_even_slices(X.shape[0], n_jobs)
                 )
             if return_distance:
