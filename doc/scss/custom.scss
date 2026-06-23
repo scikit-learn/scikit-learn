@@ -8,6 +8,10 @@
 
 /* Global */
 
+html[data-theme="light"] .highlight {
+  background: #fff;
+}
+
 code.literal {
   border: 0;
 }
