@@ -522,52 +522,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             self.logit_preprocessing_ = self.logit_preprocessing
 
         self.calibrated_classifiers_ = []
-        if self.cv == "prefit":
-            # TODO(1.8): Remove this code branch and cv='prefit'
-            warnings.warn(
-                "The `cv='prefit'` option is deprecated in 1.6 and will be removed in"
-                " 1.8. You can use CalibratedClassifierCV(FrozenEstimator(estimator))"
-                " instead.",
-                category=FutureWarning,
-            )
-            # `classes_` should be consistent with that of estimator
-            check_is_fitted(self.estimator, attributes=["classes_"])
-            self.classes_ = self.estimator.classes_
-
-            predictions, _, response_method_used = _get_response_values(
-                estimator,
-                X,
-                response_method=["decision_function", "predict_proba"],
-                return_response_method_used=True,
-            )
-            predictions = _ensure_logits(
-                predictions,
-                response_method_name=response_method_used,
-                logit_preprocessing=self.logit_preprocessing_,
-            )
-
-            if sample_weight is not None:
-                # Check that the sample_weight dtype is consistent with the predictions
-                # to avoid unintentional upcasts.
-                sample_weight = _check_sample_weight(
-                    sample_weight, predictions, dtype=predictions.dtype
-                )
-
-            calibrated_classifier = _fit_calibrator(
-                estimator,
-                predictions,
-                y,
-                self.classes_,
-                self.method,
-                sample_weight,
-                logit_preprocessing=self.logit_preprocessing_,
-            )
-            self.calibrated_classifiers_.append(calibrated_classifier)
-        else:
-            # Set `classes_` using all `y`
-            label_encoder_ = LabelEncoder().fit(y)
-            self.classes_ = label_encoder_.classes_
-
         # Set `classes_` using all `y`
         label_encoder_ = LabelEncoder().fit(y)
         self.classes_ = label_encoder_.classes_
