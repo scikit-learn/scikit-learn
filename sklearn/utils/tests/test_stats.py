@@ -315,7 +315,8 @@ def test_weighted_percentile_array_api_consistency(
     # Ensure `data` of correct dtype
     X_np = X_np.astype(dtype_name)
 
-    result_np = _weighted_percentile(X_np, weights_np, percentile)
+    with config_context(array_api_dispatch=False):
+        result_np = _weighted_percentile(X_np, weights_np, percentile)
     # Convert to Array API arrays
     X_xp = xp.asarray(X_np, device=device)
     weights_xp = xp.asarray(weights_np, device=device)

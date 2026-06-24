@@ -1018,10 +1018,12 @@ def test_gnb_array_api_compliance(
     else:
         sample_weight = None
 
-    clf_np = GaussianNB().fit(X_np, y_np, sample_weight=sample_weight)
-    y_pred_np = clf_np.predict(X_np)
-    y_pred_proba_np = clf_np.predict_proba(X_np)
-    y_pred_log_proba_np = clf_np.predict_log_proba(X_np)
+    with config_context(array_api_dispatch=False):
+        clf_np = GaussianNB().fit(X_np, y_np, sample_weight=sample_weight)
+        y_pred_np = clf_np.predict(X_np)
+        y_pred_proba_np = clf_np.predict_proba(X_np)
+        y_pred_log_proba_np = clf_np.predict_log_proba(X_np)
+
     with config_context(array_api_dispatch=True):
         clf_xp = GaussianNB().fit(X_xp, y_xp_or_np, sample_weight=sample_weight)
         for fitted_attr in ("class_count_", "class_prior_", "theta_", "var_"):
