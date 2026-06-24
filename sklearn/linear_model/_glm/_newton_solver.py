@@ -54,6 +54,10 @@ class NewtonSolver(ABC):
       Cambridge University Press, 2004.
       https://web.stanford.edu/~boyd/cvxbook/bv_cvxbook.pdf
 
+    - Yuan, G., Ho, C., & Lin, C. (2011). "An improved GLMNET for l1-regularized
+      logistic regression." Journal of machine learning research.
+      https://doi.org/10.1145/2020408.2020421
+
     Parameters
     ----------
     coef : ndarray of shape (n_dof,), (n_classes, n_dof) or (n_classes * n_dof,)
@@ -169,6 +173,10 @@ class NewtonSolver(ABC):
             - self.coef_newton
             - self.gradient_times_newton
         """
+
+    @abstractmethod
+    def compute_d2(self, X, sample_weight):
+        """Compute square of Newton decrement."""
 
     def fallback_lbfgs_solve(self, X, y, sample_weight):
         """Fallback solver in case of emergency.
@@ -401,8 +409,9 @@ class NewtonSolver(ABC):
         # 2. Criterion: For Newton decrement d, check 1/2 * d^2 <= tol
         #       d = sqrt(grad @ hessian^-1 @ grad)
         #         = sqrt(coef_newton @ hessian @ coef_newton)
-        #    See Boyd, Vanderberghe (2009) "Convex Optimization" Chapter 9.5.1.
-        d2 = self.coef_newton @ self.hessian @ self.coef_newton
+        #    See Boyd, Vandenberghe (2009) "Convex Optimization" Chapter 9.5.1. and
+        #    Eq. 20 of Yuan, Ho, Lin (2011).
+        d2 = self.compute_d2(X, sample_weight=sample_weight)
         check = 0.5 * d2 <= self.tol
         if self.verbose:
             print(f"    2. Newton decrement {0.5 * d2} <= {self.tol} {check}")
@@ -525,6 +534,7 @@ class NewtonCholeskySolver(NewtonSolver):
             # Easier with ravelled arrays, e.g., for scipy.linalg.solve.
             # As with LinearModelLoss, we always are contiguous in n_classes.
             self.coef = self.coef.ravel(order="F")
+            n_classes = self.linear_loss.base_loss.n_classes
         # Note that the computation of gradient in LinearModelLoss follows the shape of
         # coef.
         self.gradient = np.empty_like(self.coef)
@@ -543,14 +553,23 @@ class NewtonCholeskySolver(NewtonSolver):
             # that the last class is set to zero.
             # This is done by the usual freedom of a (overparametrized) multinomial to
             # add a constant to all classes which doesn't change predictions.
-            n_classes = self.linear_loss.base_loss.n_classes
             coef = self.coef.reshape(n_classes, -1, order="F")  # easier as 2d
             coef -= coef[-1, :]  # coef -= coef of last class
         elif self.is_multinomial_with_intercept:
             # See inner_solve. Same as above, but only for the intercept.
-            n_classes = self.linear_loss.base_loss.n_classes
             # intercept -= intercept of last class
             self.coef[-n_classes:] -= self.coef[-1]
+
+        # Memory buffers for pointwise gradient and hessian.
+        n_samples = X.shape[0]
+        if self.linear_loss.base_loss.is_multiclass:
+            self.grad_pointwise = np.empty_like(
+                y, shape=(n_samples, n_classes), order="F"
+            )
+            self.hess_pointwise = np.empty_like(self.grad_pointwise)
+        else:
+            self.grad_pointwise = np.empty_like(y, order="F")
+            self.hess_pointwise = np.empty_like(self.grad_pointwise)
 
     def update_gradient_hessian(self, X, y, sample_weight):
         _, _, self.hessian_warning = self.linear_loss.gradient_hessian(
@@ -563,6 +582,8 @@ class NewtonCholeskySolver(NewtonSolver):
             gradient_out=self.gradient,
             hessian_out=self.hessian,
             raw_prediction=self.raw_prediction,  # this was updated in line_search
+            grad_pointwise_out=self.grad_pointwise,
+            hess_pointwise_out=self.hess_pointwise,
         )
 
     def inner_solve(self, X, y, sample_weight):
@@ -684,6 +705,10 @@ class NewtonCholeskySolver(NewtonSolver):
                 )
             self.use_fallback_lbfgs_solve = True
             return
+
+    def compute_d2(self, X, sample_weight):
+        """Compute square of Newton decrement."""
+        return self.coef_newton @ self.hessian @ self.coef_newton
 
     def finalize(self, X, y, sample_weight):
         if self.is_multinomial_no_penalty:
