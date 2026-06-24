@@ -1705,11 +1705,20 @@ class _MetadataRequester:
 
         return {param: alias for param, alias in params.items() if alias is not UNUSED}
 
+    # TODO(SLEP6): this method currently gets class level base request and sets
+    # user-defined requests at the same time; should be two functions (one one gets and
+    # one that sets)
     def _get_metadata_request(self):
-        """Get requested metadata for the instance.
+        """Get the effective metadata request for this instance.
 
-        Please check :ref:`User Guide <metadata_routing>` on how the routing
-        mechanism works.
+        Combines the consumer's class-level requests with any changes made by the user
+        via `set_{method}_request` methods. If a `set_{method}_request` has been called,
+        the stored request is returned as a copy.
+
+        See Also
+        --------
+        __sklearn_get_metadata_request__ : Override point for building class-level
+        requests when `set_{method}_request` has not been called.
 
         Returns
         -------
@@ -1721,13 +1730,28 @@ class _MetadataRequester:
         else:
             return self.__sklearn_get_metadata_request__()
 
-    def __sklearn_get_metadata_request__(self):
-        """Developer API to get requested metadata for the instance.
+    def __sklearn_build_class_level_metadata_request__(self):
+        """Build the class level metadata request for this consumer.
 
-        To be overridden by third party developers for setting custom requests.
+        Third-party consumers can override this method to customise how class-level
+        metadata requests are build; for example to exclude parameters from metadata
+        discovery, or when metadata is consumed by another callable.
 
-        Please check :ref:`User Guide <metadata_routing>` on how the routing
-        mechanism works.
+        This defines class-level requests only. It is called internally from
+        :meth:`_get_metadata_request` when `set_{method}_request` methods have not yet
+        stored any request on the instance. To obtain the effective request (including
+        `set_{method}_request` changes set by users), use :meth:`get_metadata_routing`.
+
+        Read more on developing custom consumers in the :ref:`Metadata Routing
+        Developing Guide
+        <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>`.
+
+        .. versionadded:: 1.9
+
+        See Also
+        --------
+        _get_metadata_request : Return the effective request for this instance.
+        get_class_level_metadata_request_values : Build class-level requests.
 
         Returns
         -------
