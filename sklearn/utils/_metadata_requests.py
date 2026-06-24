@@ -1950,6 +1950,9 @@ def get_class_level_metadata_request_values(
 
     Parameters
     ----------
+    metadata_requester : consumer object
+        The `_MetadataRequester` object (self).
+
     method_name : str
         The name of the method to get the metadata request values for.
 
