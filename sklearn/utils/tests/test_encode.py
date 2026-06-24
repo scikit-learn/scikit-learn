@@ -233,6 +233,10 @@ def test_check_unknown_with_both_missing_values():
     assert_array_equal(valid_mask, [False, True, True, True, False, False, False])
 
 
+NAN1 = float("nan")
+NAN2 = float("nan")
+
+
 @pytest.mark.parametrize(
     "values, uniques, expected_counts",
     [
@@ -266,6 +270,14 @@ def test_check_unknown_with_both_missing_values():
             np.array(["b"] * 4 + ["a"] * 16 + ["c"] * 20, dtype=object),
             ["a", "b", "c", "e"],
             [16, 4, 20, 0],
+        ),
+        (
+            np.array(
+                ["a", np.nan, NAN1, np.nan, NAN2, NAN1, np.nan, "a"],
+                dtype=object,
+            ),
+            ["a", np.nan, NAN1, NAN2],
+            [2, 3, 2, 1],
         ),
     ],
 )

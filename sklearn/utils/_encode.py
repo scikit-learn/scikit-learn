@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from collections import Counter
-from contextlib import suppress
 from typing import NamedTuple
 
 import numpy as np
@@ -321,28 +320,6 @@ def _check_unknown(values, known_values, return_mask=False):
     return diff
 
 
-class _NaNCounter(Counter):
-    """Counter with support for nan values."""
-
-    def __init__(self, items):
-        super().__init__(self._generate_items(items))
-
-    def _generate_items(self, items):
-        """Generate items without nans. Stores the nan counts separately."""
-        for item in items:
-            if not is_scalar_nan(item):
-                yield item
-                continue
-            if not hasattr(self, "nan_count"):
-                self.nan_count = 0
-            self.nan_count += 1
-
-    def __missing__(self, key):
-        if hasattr(self, "nan_count") and is_scalar_nan(key):
-            return self.nan_count
-        raise KeyError(key)
-
-
 def _get_counts(values, uniques):
     """Get the count of each of the `uniques` in `values`.
 
@@ -350,10 +327,18 @@ def _get_counts(values, uniques):
     `uniques` is assumed to be sorted and `np.nan` is at the end.
     """
     if values.dtype.kind in "OU":
-        counter = _NaNCounter(values)
+        counter = Counter(values)
+        nan_count = Counter()
+        for k, v in list(counter.items()):
+            if is_scalar_nan(k):
+                # set() and dict() seem to compare nans by identity:
+                nan_count[k] += v
+                del counter[k]
         output = np.zeros(len(uniques), dtype=np.int64)
         for i, item in enumerate(uniques):
-            with suppress(KeyError):
+            if is_scalar_nan(item):
+                output[i] = nan_count[item]
+            else:
                 output[i] = counter[item]
         return output
 
