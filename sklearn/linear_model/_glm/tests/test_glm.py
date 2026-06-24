@@ -302,7 +302,8 @@ def test_glm_regression_hstacked_X(solver, fit_intercept, glm_dataset):
         # cases should be considered a bug or not. In the mean time we don't
         # fail when the assertions below pass irrespective of the presence of
         # the warning.
-        warnings.simplefilter("ignore", ConvergenceWarning)
+        if solver == "lbfgs":
+            warnings.simplefilter("ignore", ConvergenceWarning)
         model.fit(X, y)
 
     if solver == "lbfgs":
@@ -406,7 +407,8 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
         # cases should be considered a bug or not. In the mean time we don't
         # fail when the assertions below pass irrespective of the presence of
         # the warning.
-        warnings.filterwarnings("ignore", category=ConvergenceWarning)
+        if solver == "lbfgs":
+            warnings.filterwarnings("ignore", category=ConvergenceWarning)
         model.fit(X, y)
 
     # FIXME: `assert_allclose(model.coef_, coef)` should work for all cases but fails
@@ -500,7 +502,8 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
         # cases should be considered a bug or not. In the mean time we don't
         # fail when the assertions below pass irrespective of the presence of
         # the warning.
-        warnings.filterwarnings("ignore", category=ConvergenceWarning)
+        if solver == "lbfgs":
+            warnings.filterwarnings("ignore", category=ConvergenceWarning)
         model.fit(X, y)
 
     if fit_intercept and n_samples < n_features:
@@ -586,7 +589,8 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
         # cases should be considered a bug or not. In the mean time we don't
         # fail when the assertions below pass irrespective of the presence of
         # the warning.
-        warnings.filterwarnings("ignore", category=ConvergenceWarning)
+        if solver == "lbfgs":
+            warnings.filterwarnings("ignore", category=ConvergenceWarning)
         model.fit(X, y)
 
     if n_samples > n_features:
@@ -1126,7 +1130,8 @@ def test_newton_solver_verbosity(capsys, verbose):
     sol.setup(X=X, y=y, sample_weight=None)
     sol.iteration = 1
     sol.update_gradient_hessian(X=X, y=y, sample_weight=None)
-    sol.coef_newton = np.array([1.0, 0])
+    # gradient = [0. , -0.5], hessian = [[0.5 , 0.  ], [0.  , 0.5]]
+    sol.coef_newton = np.array([1.0, -1.0])
     sol.gradient_times_newton = sol.gradient @ sol.coef_newton
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", ConvergenceWarning)
@@ -1144,11 +1149,13 @@ def test_newton_solver_verbosity(capsys, verbose):
         linear_loss=linear_loss,
         l2_reg_strength=0,
         verbose=verbose,
+        tol=1e-12,
     )
     sol.setup(X=X, y=y, sample_weight=None)
     sol.iteration = 1
     sol.update_gradient_hessian(X=X, y=y, sample_weight=None)
-    sol.coef_newton = np.array([1e-6, 0])
+    # gradient = [5.00044450e-13, 3.99440135e-07], hessian = [[0.5, 0], [0, 1.0000004]]
+    sol.coef_newton = np.array([1e-7, 0])
     sol.gradient_times_newton = sol.gradient @ sol.coef_newton
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", ConvergenceWarning)
@@ -1158,6 +1165,7 @@ def test_newton_solver_verbosity(capsys, verbose):
         msg = [
             "line search iteration=",
             "check loss improvement <= armijo term:",
+            "check max |gradient| <= tol:",
             "check loss |improvement| <= eps * |loss_old|:",
             "check sum(|gradient|) < sum(|gradient_old|):",
         ]
