@@ -489,6 +489,7 @@ cdef class Splitter:
             Y_DTYPE_C feature_fraction_per_split = self.feature_fraction_per_split
             uint8_t [:] subsample_mask  # same as npy_bool
             int n_subsampled_features
+            uint8_t missing_go_to_left
 
         has_interaction_cst = allowed_features is not None
         if has_interaction_cst:
@@ -559,7 +560,7 @@ cdef class Splitter:
                     # category.
                     for missing_go_to_left in range(has_missing_values[feature_idx] + 1):
 
-                        self._find_best_bin_to_split_left_to_right(
+                        self._find_best_bin_to_split_numerical(
                             feature_idx, has_missing_values[feature_idx],
                             histograms, n_samples, sum_gradients, sum_hessians,
                             value, monotonic_cst[feature_idx],
@@ -611,7 +612,7 @@ cdef class Splitter:
                 best_split_info_idx = split_info_idx
         return best_split_info_idx
 
-    cdef void _find_best_bin_to_split_left_to_right(
+    cdef void _find_best_bin_to_split_numerical(
             Splitter self,
             unsigned int feature_idx,
             uint8_t has_missing_values,
