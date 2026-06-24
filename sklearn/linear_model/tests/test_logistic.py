@@ -347,7 +347,7 @@ def test_consistency_path(global_random_seed):
             )
 
     # test for fit_intercept=True
-    for solver in ("lbfgs", "newton-cg", "newton-cholesky", "liblinear", "sag", "saga"):
+    for solver in SOLVERS:
         Cs = [1e3]
         coefs, Cs, _ = f(_logistic_regression_path)(
             X,
@@ -1080,7 +1080,7 @@ def test_logistic_regressioncv_class_weights(weight, class_weight, global_random
     with ignore_warnings(category=ConvergenceWarning):
         clf_lbfgs.fit(X, y)
 
-    for solver in set(SOLVERS) - set(["lbfgs", "liblinear", "newton-cholesky"]):
+    for solver in set(SOLVERS) - set(["lbfgs", "liblinear"]):
         clf = LogisticRegressionCV(
             solver=solver,
             scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
@@ -1278,7 +1278,7 @@ def test_logistic_regression_class_weights(global_random_seed, csr_container):
     y = iris.target[45:]
     class_weight_dict = _compute_class_weight_dictionary(y)
 
-    for solver in set(SOLVERS) - set(["liblinear", "newton-cholesky"]):
+    for solver in set(SOLVERS) - set(["liblinear"]):
         params = dict(solver=solver, max_iter=2000, random_state=global_random_seed)
         clf1 = LogisticRegression(class_weight="balanced", **params)
         clf2 = LogisticRegression(class_weight=class_weight_dict, **params)
