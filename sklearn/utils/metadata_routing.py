@@ -19,6 +19,7 @@ from sklearn.utils._metadata_requests import (  # noqa: F401
     _raise_for_unsupported_routing,
     _routing_enabled,
     _RoutingNotSupportedMixin,
+    get_class_level_metadata_request_values,
     get_routing_for_object,
     process_routing,
 )
