@@ -12,8 +12,6 @@ from sklearn.callback._callback_context import CallbackContext
 def _progressbar_by_default():
     """Return whether progressbar are added by default to compatible estimators.
 
-    .. versionadded:: 1.3
-
     Returns
     -------
     enabled : bool
