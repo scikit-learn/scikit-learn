@@ -375,13 +375,15 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
                         " set to 1.0 for affected outputs.",
                         UserWarning,
                     )
-                factor = np.where(
-                    denom_near_zero, 1.0, y_true_mean / y_pred_mean
+                factor = np.where(denom_near_zero, 1.0, y_true_mean / y_pred_mean)
+                self.bias_correction_factor_ = (
+                    factor.item() if factor.size == 1 else factor
                 )
-                self.bias_correction_factor_ = factor.item() if factor.size == 1 else factor
             else:
                 factor = y_true_mean - y_pred_mean
-                self.bias_correction_factor_ = factor.item() if factor.size == 1 else factor
+                self.bias_correction_factor_ = (
+                    factor.item() if factor.size == 1 else factor
+                )
 
             self.residual_variance_ = None
 
@@ -431,7 +433,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         h = np.maximum(np.abs(z_pred) * 1e-4, 1e-4)
         f_plus = self._inverse_transform_array(z_pred + h)
         f_minus = self._inverse_transform_array(z_pred - h)
-        hessian = (f_plus - 2 * y_pred + f_minus) / (h ** 2)
+        hessian = (f_plus - 2 * y_pred + f_minus) / (h**2)
 
         non_finite_mask = ~np.isfinite(hessian)
         if np.any(non_finite_mask):
@@ -517,9 +519,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
             check_is_fitted(self)
         except NotFittedError as nfe:
             raise AttributeError(
-                "{} object has no n_features_in_ attribute.".format(
-                    self.__class__.__name__
-                )
+                f"{self.__class__.__name__} object has no n_features_in_ attribute."
             ) from nfe
 
         return self.regressor_.n_features_in_

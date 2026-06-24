@@ -586,9 +586,7 @@ def test_bias_correction_taylor_per_sample():
     pred_none = tt_none.predict(X)
 
     correction = pred_taylor - pred_none
-    assert np.std(correction) > 1e-10, (
-        "Taylor correction should vary across samples"
-    )
+    assert np.std(correction) > 1e-10, "Taylor correction should vary across samples"
 
 
 def test_bias_correction_none_default():
