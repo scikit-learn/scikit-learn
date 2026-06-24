@@ -6,11 +6,13 @@ import pytest
 from numpy.testing import assert_allclose
 
 from sklearn import config_context
+from sklearn._loss.link import LogitLink, MultinomialLogit
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.calibration import (
     CalibratedClassifierCV,
     CalibrationDisplay,
     _CalibratedClassifier,
+    _ensure_logits,
     _sigmoid_calibration,
     _SigmoidCalibration,
     _TemperatureScaling,
@@ -410,6 +412,109 @@ def test_sigmoid_calibration():
     # arrays
     with pytest.raises(ValueError):
         _SigmoidCalibration().fit(np.vstack((exF, exF)), exY)
+
+
+@pytest.mark.parametrize("logit_preprocessing", ["invalid", "auto", ""])
+def test_ensure_logits_invalid_logit_preprocessing(logit_preprocessing):
+    with pytest.raises(ValueError, match="Unknown logit type"):
+        _ensure_logits(np.array([0.5]), "predict_proba", logit_preprocessing)
+
+
+def test_ensure_logits_no_conversion():
+    logits_1d = np.array([0.0, 1.5, -0.5])
+    assert_array_equal(
+        _ensure_logits(logits_1d, "decision_function", None),
+        logits_1d.reshape(-1, 1),
+    )
+
+    logits_2d = np.array([[0.0, 1.0], [1.0, 0.0]])
+    assert_array_equal(
+        _ensure_logits(logits_2d, "decision_function", None),
+        logits_2d,
+    )
+
+
+@pytest.mark.parametrize(
+    "predictions, expected",
+    [
+        (np.array([0.2, 0.8]), LogitLink().link(np.array([0.2, 0.8]))),
+        (
+            np.array([[0.8, 0.2], [0.3, 0.7]]),
+            LogitLink().link(np.array([0.2, 0.7])),
+        ),
+    ],
+)
+def test_ensure_logits_predict_proba_sigmoid_binary(predictions, expected):
+    logits = _ensure_logits(predictions, "predict_proba", "sigmoid")
+    assert logits.shape == (predictions.shape[0], 1)
+    assert_allclose(logits.ravel(), expected)
+
+
+def test_ensure_logits_predict_proba_sigmoid_multiclass():
+    proba = np.array([[0.1, 0.2, 0.7], [0.5, 0.3, 0.2]])
+    eps = np.finfo(proba.dtype).eps
+    proba_clipped = proba.clip(eps, 1 - eps)
+    sigmoid_link = LogitLink()
+    expected = np.zeros_like(proba)
+    for class_idx in range(proba.shape[1]):
+        expected[:, class_idx] = sigmoid_link.link(proba_clipped[:, class_idx])
+
+    logits = _ensure_logits(proba, "predict_proba", "sigmoid")
+    assert_allclose(logits, expected)
+
+
+def test_ensure_logits_predict_proba_softmax_multiclass():
+    proba = np.array([[0.1, 0.2, 0.7], [0.5, 0.3, 0.2]])
+    eps = np.finfo(proba.dtype).eps
+    expected = MultinomialLogit().link(proba.clip(eps, 1 - eps))
+
+    logits = _ensure_logits(proba, "predict_proba", "softmax")
+    assert_allclose(logits, expected)
+
+
+def test_ensure_logits_decision_function_sigmoid_binary():
+    decision_values = np.array([1.0, -1.0, 0.5])
+    logits = _ensure_logits(decision_values, "decision_function", "sigmoid")
+    assert_array_equal(logits, decision_values.reshape(-1, 1))
+
+
+def test_ensure_logits_decision_function_sigmoid_multiclass():
+    decision_values = np.array([[2.0, 1.0, 0.0], [0.0, 1.0, 2.0]])
+    proba = softmax(decision_values)
+    eps = np.finfo(proba.dtype).eps
+    proba_clipped = proba.clip(eps, 1 - eps)
+    sigmoid_link = LogitLink()
+    expected = np.zeros_like(proba)
+    for class_idx in range(proba.shape[1]):
+        expected[:, class_idx] = sigmoid_link.link(proba_clipped[:, class_idx])
+
+    logits = _ensure_logits(decision_values, "decision_function", "sigmoid")
+    assert_allclose(logits, expected)
+
+
+def test_ensure_logits_decision_function_softmax_passthrough():
+    decision_values = np.array([[2.0, 1.0, 0.0], [0.0, 1.0, 2.0]])
+    assert_array_equal(
+        _ensure_logits(decision_values, "decision_function", "softmax"),
+        decision_values,
+    )
+
+    decision_values_1d = np.array([1.0, -1.0])
+    assert_array_equal(
+        _ensure_logits(decision_values_1d, "decision_function", "softmax"),
+        decision_values_1d.reshape(-1, 1),
+    )
+
+
+def test_ensure_logits_invalid_response_method():
+    with pytest.raises(ValueError, match="Unknown response method name"):
+        _ensure_logits(np.array([0.5]), "predict", "sigmoid")
+
+
+def test_ensure_logits_probability_clipping():
+    proba = np.array([0.0, 1.0])
+    logits = _ensure_logits(proba, "predict_proba", "sigmoid")
+    assert np.all(np.isfinite(logits))
 
 
 @pytest.mark.parametrize(
