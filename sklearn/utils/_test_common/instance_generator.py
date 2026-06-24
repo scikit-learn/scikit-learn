@@ -985,10 +985,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         ),
     },
     GaussianNB: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
-        "check_array_api_string_and_numeric_inputs": (
-            "mixed string and numeric array API input support not added yet"
-        ),
         "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     GradientBoostingClassifier: {
