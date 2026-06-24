@@ -1,6 +1,7 @@
-- Metadata :term:`consumers <consumer>` can now customise metadata requests by
-  overriding `__sklearn_get_metadata_request__` on
-  :class:`~utils.metadata_routing._MetadataRequester`. See the :ref:`metadata routing
+- Metadata :term:`consumers <consumer>` can now customise class-level metadata requests
+  by overriding `__sklearn_build_class_level_metadata_request__` on the consumer
+  (inheriting from :class:`~utils.metadata_routing._MetadataRequester`). This can be
+  useful for custom consumers that are not estimators. See the :ref:`metadata routing
   developing guide <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>`
-  section `Customise Consumers` for details.
+  for examples.
   By :user:`Stefanie Senger <StefanieSenger>`.

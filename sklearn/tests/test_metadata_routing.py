@@ -264,7 +264,7 @@ def test_custom_consumer_returns_class_level_request():
     }
 
     class CustomRequestConsumer(_MetadataRequester):
-        # consumer setting requests that in- and exclude custom params
+        # consumer with custom class-level requests that in- and exclude certain params
         __metadata_request__fit = {"my_param": True}
 
         def fit(self, metadata1):
@@ -294,7 +294,6 @@ def test_custom_consumer_returns_class_level_request():
                 )
             return requests
 
-    # else-branch set default requests:
     consumer = CustomRequestConsumer()
     assert consumer.__sklearn_build_class_level_metadata_request__()._serialize() == {
         "fit": {"metadata1": None, "my_param": True},
@@ -302,7 +301,7 @@ def test_custom_consumer_returns_class_level_request():
     }
 
     class CustomMethodConsumer(_MetadataRequester):
-        # consumer setting requests on behalf of another method
+        # consumer that can route metadata to another method
 
         def fit(self, metadata1, metadata2):
             self.consuming_method(metadata1)
@@ -326,8 +325,8 @@ def test_custom_consumer_returns_class_level_request():
             )
             return requests
 
-    # since we pass `method=self.consuming_method`, we expect default requests set for
-    # the metadata present in `consuming_method`:
+    # since we pass `method=self.consuming_method`, we expect metadata discovered that
+    # is present in `consuming_method`:
     consumer = CustomMethodConsumer()
     assert consumer.__sklearn_build_class_level_metadata_request__()._serialize() == {
         "fit": {"metadata1": None},
@@ -337,7 +336,7 @@ def test_custom_consumer_returns_class_level_request():
         return 1
 
     class CustomFunctionConsumer(_MetadataRequester):
-        # consumer setting requests on behalf of a function (similar to _BaseScorer)
+        # consumer that can route metadata to a function (similar as _BaseScorer)
 
         def __init__(self, func):
             self.func = func
@@ -361,8 +360,8 @@ def test_custom_consumer_returns_class_level_request():
             )
             return requests
 
-    # since we pass `method=self.self.func`, we expect default requests set for the
-    # metadata present in `consuming_function`:
+    # since we pass `method=self.self.func`, we expect metadata discovered that is
+    # present in `consuming_function`:
     consumer = CustomFunctionConsumer(func=consuming_function)
     assert consumer.__sklearn_build_class_level_metadata_request__()._serialize() == {
         "fit": {"metadata1": None},
