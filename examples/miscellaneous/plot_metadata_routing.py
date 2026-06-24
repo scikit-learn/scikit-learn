@@ -647,7 +647,7 @@ class CustomRequestConsumer(_MetadataRequester):
 
 
 consumer = CustomRequestConsumer()
-pprint(consumer.__sklearn_get_metadata_request__()._serialize())
+pprint(consumer.__sklearn_build_class_level_metadata_request__()._serialize())
 
 # %%
 # When metadata is consumed by a different callable than the routed method name, pass
@@ -680,7 +680,7 @@ class CustomFunctionConsumer(_MetadataRequester):
                 owner=self,
                 method="fit",
                 requests=get_class_level_metadata_request_values(
-                    "fit", method=self.func
+                    self, "fit", method=self.func
                 ),
             ),
         )

@@ -1520,6 +1520,9 @@ class _MetadataRequester:
 
     ``BaseEstimator`` inherits from this Mixin.
 
+    Custom :term:`consumers <consumer>` that are not estimators can inherit from this
+    Mixin to participate in metadata routing (e.g. custom scorers or wrappers).
+
     .. versionadded:: 1.3
     """
 
@@ -1731,7 +1734,7 @@ class _MetadataRequester:
         """Build the class level metadata request for this consumer.
 
         Third-party consumers can override this method to customise how class-level
-        metadata requests are build; for example to exclude parameters from metadata
+        metadata requests are built; for example to exclude parameters from metadata
         discovery, or when metadata is consumed by another callable.
 
         This defines class-level requests only. It is called internally from
@@ -1743,17 +1746,17 @@ class _MetadataRequester:
         Developing Guide
         <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>`.
 
-        .. versionadded:: 1.9
-
-        See Also
-        --------
-        _get_metadata_request : Return the effective request for this instance.
-        get_class_level_metadata_request_values : Build class-level requests.
+        .. versionadded:: 1.10
 
         Returns
         -------
         request : MetadataRequest
             A :class:`~sklearn.utils.metadata_routing.MetadataRequest` instance.
+
+        See Also
+        --------
+        _get_metadata_request : Return the effective request for this instance.
+        get_class_level_metadata_request_values : Get class-level requests.
         """
         requests = MetadataRequest(owner=self)
         for method_name in SIMPLE_METHODS:
@@ -1942,6 +1945,8 @@ def get_class_level_metadata_request_values(
     metadata_requester, method_name, method=None, ignore_params=None
 ):
     """Get class level metadata request values per method.
+
+    .. versionadded:: 1.10
 
     Parameters
     ----------
