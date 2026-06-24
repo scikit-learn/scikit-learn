@@ -328,18 +328,9 @@ def _get_counts(values, uniques):
     """
     if values.dtype.kind in "OU":
         counter = Counter(values)
-        nan_count = Counter()
-        for k, v in list(counter.items()):
-            if is_scalar_nan(k):
-                # set() and dict() seem to compare nans by identity:
-                nan_count[k] += v
-                del counter[k]
         output = np.zeros(len(uniques), dtype=np.int64)
         for i, item in enumerate(uniques):
-            if is_scalar_nan(item):
-                output[i] = nan_count[item]
-            else:
-                output[i] = counter[item]
+            output[i] = counter[item]
         return output
 
     unique_values, counts = _unique_np(values, return_counts=True)
