@@ -446,3 +446,355 @@ def test_transform_target_regressor_metadata_routing_default_estimator():
     X, y = make_regression()
     ttr = TransformedTargetRegressor()
     ttr.fit(X, y, sample_weight=np.ones(shape=(X.shape[0],)))
+
+
+# ---------------------------------------------------------------------------
+# Bias correction tests
+# ---------------------------------------------------------------------------
+
+
+def _make_log_regression_data(n_samples=500, noise_scale=0.5, random_state=42):
+    """Generate data where the true relationship is Y = exp(linear + noise).
+
+    A log transform on Y linearises the problem, but inverse-transforming
+    the predicted mean in log-space with exp() introduces a systematic
+    downward bias (Jensen's inequality).
+    """
+    rng = np.random.RandomState(random_state)
+    X = rng.randn(n_samples, 3)
+    z_true = 2 * X[:, 0] + X[:, 1] - 0.5 * X[:, 2]
+    z_noisy = z_true + noise_scale * rng.randn(n_samples)
+    y = np.exp(z_noisy)
+    return X, y
+
+
+def test_bias_correction_multiplicative_reduces_bias():
+    X, y = _make_log_regression_data()
+
+    tt_none = TransformedTargetRegressor(
+        regressor=LinearRegression(),
+        func=np.log,
+        inverse_func=np.exp,
+        bias_correction=None,
+    )
+    tt_mult = TransformedTargetRegressor(
+        regressor=LinearRegression(),
+        func=np.log,
+        inverse_func=np.exp,
+        bias_correction="multiplicative",
+    )
+
+    tt_none.fit(X, y)
+    tt_mult.fit(X, y)
+
+    pred_none = tt_none.predict(X)
+    pred_mult = tt_mult.predict(X)
+
+    bias_none = np.abs(np.mean(pred_none) - np.mean(y))
+    bias_mult = np.abs(np.mean(pred_mult) - np.mean(y))
+
+    assert bias_mult < bias_none, (
+        f"Multiplicative correction did not reduce bias: "
+        f"uncorrected={bias_none:.4f}, corrected={bias_mult:.4f}"
+    )
+
+
+def test_bias_correction_additive_reduces_bias():
+    X, y = _make_log_regression_data()
+
+    tt_none = TransformedTargetRegressor(
+        regressor=LinearRegression(),
+        func=np.log,
+        inverse_func=np.exp,
+        bias_correction=None,
+    )
+    tt_add = TransformedTargetRegressor(
+        regressor=LinearRegression(),
+        func=np.log,
+        inverse_func=np.exp,
+        bias_correction="additive",
+    )
+
+    tt_none.fit(X, y)
+    tt_add.fit(X, y)
+
+    pred_none = tt_none.predict(X)
+    pred_add = tt_add.predict(X)
+
+    bias_none = np.abs(np.mean(pred_none) - np.mean(y))
+    bias_add = np.abs(np.mean(pred_add) - np.mean(y))
+
+    assert bias_add < bias_none, (
+        f"Additive correction did not reduce bias: "
+        f"uncorrected={bias_none:.4f}, corrected={bias_add:.4f}"
+    )
+
+
+def test_bias_correction_taylor_reduces_bias():
+    X, y = _make_log_regression_data()
+
+    tt_none = TransformedTargetRegressor(
+        regressor=LinearRegression(),
+        func=np.log,
+        inverse_func=np.exp,
+        bias_correction=None,
+    )
+    tt_taylor = TransformedTargetRegressor(
+        regressor=LinearRegression(),
+        func=np.log,
+        inverse_func=np.exp,
+        bias_correction="taylor",
+    )
+
+    tt_none.fit(X, y)
+    tt_taylor.fit(X, y)
+
+    pred_none = tt_none.predict(X)
+    pred_taylor = tt_taylor.predict(X)
+
+    bias_none = np.abs(np.mean(pred_none) - np.mean(y))
+    bias_taylor = np.abs(np.mean(pred_taylor) - np.mean(y))
+
+    assert bias_taylor < bias_none, (
+        f"Taylor correction did not reduce bias: "
+        f"uncorrected={bias_none:.4f}, corrected={bias_taylor:.4f}"
+    )
+
+
+def test_bias_correction_taylor_per_sample():
+    """Taylor correction should produce different adjustments for predictions
+    at different magnitudes, unlike the global modes."""
+    X, y = _make_log_regression_data()
+
+    tt = TransformedTargetRegressor(
+        regressor=LinearRegression(),
+        func=np.log,
+        inverse_func=np.exp,
+        bias_correction="taylor",
+    )
+    tt.fit(X, y)
+
+    tt_none = TransformedTargetRegressor(
+        regressor=LinearRegression(),
+        func=np.log,
+        inverse_func=np.exp,
+        bias_correction=None,
+    )
+    tt_none.fit(X, y)
+
+    pred_taylor = tt.predict(X)
+    pred_none = tt_none.predict(X)
+
+    correction = pred_taylor - pred_none
+    assert np.std(correction) > 1e-10, (
+        "Taylor correction should vary across samples"
+    )
+
+
+def test_bias_correction_none_default():
+    """bias_correction=None should behave identically to the original code."""
+    X, y = _make_log_regression_data()
+
+    tt_default = TransformedTargetRegressor(
+        regressor=LinearRegression(),
+        func=np.log,
+        inverse_func=np.exp,
+    )
+    tt_explicit = TransformedTargetRegressor(
+        regressor=LinearRegression(),
+        func=np.log,
+        inverse_func=np.exp,
+        bias_correction=None,
+    )
+
+    tt_default.fit(X, y)
+    tt_explicit.fit(X, y)
+
+    assert_allclose(tt_default.predict(X), tt_explicit.predict(X))
+    assert tt_default.bias_correction_factor_ is None
+    assert tt_default.residual_variance_ is None
+
+
+def test_bias_correction_identity_transform():
+    """With an identity transform there is no Jensen bias, so correction
+    should be effectively a no-op (factor ~1 or ~0, Hessian ~0)."""
+    X, y = _make_log_regression_data()
+
+    for mode in ("additive", "multiplicative", "taylor"):
+        tt = TransformedTargetRegressor(
+            regressor=LinearRegression(),
+            bias_correction=mode,
+        )
+        tt_none = TransformedTargetRegressor(
+            regressor=LinearRegression(),
+            bias_correction=None,
+        )
+
+        tt.fit(X, y)
+        tt_none.fit(X, y)
+
+        assert_allclose(
+            tt.predict(X),
+            tt_none.predict(X),
+            rtol=1e-5,
+            err_msg=f"Identity transform with mode={mode} should be a no-op",
+        )
+
+
+def test_bias_correction_multioutput():
+    """Per-column factors and variance for 2D targets."""
+    rng = np.random.RandomState(0)
+    X = rng.randn(200, 3)
+    z = X @ np.array([[1, 2], [0.5, -1], [0.3, 0.7]])
+    noise = 0.3 * rng.randn(200, 2)
+    y = np.exp(z + noise)
+
+    for mode in ("additive", "multiplicative", "taylor"):
+        tt = TransformedTargetRegressor(
+            regressor=LinearRegression(),
+            func=np.log,
+            inverse_func=np.exp,
+            bias_correction=mode,
+        )
+        tt.fit(X, y)
+        pred = tt.predict(X)
+        assert pred.shape == y.shape, f"Shape mismatch for mode={mode}"
+
+        if mode in ("additive", "multiplicative"):
+            factor = tt.bias_correction_factor_
+            assert hasattr(factor, "__len__") and len(factor) == 2, (
+                f"Expected per-column factor for mode={mode}, got {factor}"
+            )
+        else:
+            var = tt.residual_variance_
+            assert hasattr(var, "__len__") and len(var) == 2, (
+                f"Expected per-column variance for mode={mode}, got {var}"
+            )
+
+
+def test_bias_correction_multiplicative_near_zero_warns():
+    """When inverse-transformed training predictions have near-zero mean,
+    multiplicative mode should warn and default the factor to 1.0."""
+    rng = np.random.RandomState(42)
+    X = rng.randn(100, 2)
+    y = rng.randn(100)
+
+    def to_centered(x):
+        return x
+
+    def from_centered(x):
+        return x * 1e-12
+
+    tt = TransformedTargetRegressor(
+        regressor=LinearRegression(),
+        func=to_centered,
+        inverse_func=from_centered,
+        check_inverse=False,
+        bias_correction="multiplicative",
+    )
+    with pytest.warns(
+        UserWarning,
+        match="near zero",
+    ):
+        tt.fit(X, y)
+    assert_allclose(tt.bias_correction_factor_, 1.0, atol=1e-5)
+
+
+def test_bias_correction_taylor_nonsmooth_warns():
+    """When the Hessian is non-finite (e.g., from a piecewise transform),
+    Taylor mode should warn and skip correction for affected samples."""
+    rng = np.random.RandomState(42)
+    X = rng.randn(100, 2)
+    y = np.abs(rng.randn(100)) + 1
+
+    def piecewise_func(x):
+        return np.where(x > 1.5, np.log(x), x - 1.5 + np.log(1.5))
+
+    def piecewise_inv(x):
+        threshold = np.log(1.5)
+        return np.where(x > threshold, np.exp(x), x + 1.5 - np.log(1.5))
+
+    tt = TransformedTargetRegressor(
+        regressor=LinearRegression(),
+        func=piecewise_func,
+        inverse_func=piecewise_inv,
+        check_inverse=False,
+        bias_correction="taylor",
+    )
+    tt.fit(X, y)
+    pred = tt.predict(X)
+    assert pred.shape == (100,)
+    assert np.all(np.isfinite(pred))
+
+
+def test_bias_correction_with_power_transformer():
+    """All modes should work with a transformer object, not just func/inverse_func."""
+    from sklearn.preprocessing import PowerTransformer
+
+    rng = np.random.RandomState(42)
+    X = rng.randn(200, 3)
+    y = np.abs(X @ np.array([1.0, 0.5, 0.3]) + 0.2 * rng.randn(200)) + 1.0
+
+    for mode in ("additive", "multiplicative", "taylor"):
+        tt = TransformedTargetRegressor(
+            regressor=LinearRegression(),
+            transformer=PowerTransformer(method="yeo-johnson"),
+            bias_correction=mode,
+        )
+        tt.fit(X, y)
+        pred = tt.predict(X)
+        assert pred.shape == y.shape, f"Shape mismatch for mode={mode}"
+        assert np.all(np.isfinite(pred)), f"Non-finite preds for mode={mode}"
+
+
+def test_bias_correction_clone_preserves_param():
+    """clone() should keep the bias_correction param but drop fitted attrs."""
+    tt = TransformedTargetRegressor(
+        regressor=LinearRegression(),
+        func=np.log,
+        inverse_func=np.exp,
+        bias_correction="multiplicative",
+    )
+    X, y = _make_log_regression_data()
+    tt.fit(X, y)
+
+    assert tt.bias_correction_factor_ is not None
+
+    tt_cloned = clone(tt)
+    assert tt_cloned.bias_correction == "multiplicative"
+    assert not hasattr(tt_cloned, "bias_correction_factor_")
+    assert not hasattr(tt_cloned, "residual_variance_")
+
+
+def test_bias_correction_factor_attribute_shape():
+    """bias_correction_factor_ should be a scalar for 1D y and an array
+    matching n_outputs for 2D y."""
+    X, y_1d = _make_log_regression_data(n_samples=200)
+
+    for mode in ("additive", "multiplicative"):
+        tt_1d = TransformedTargetRegressor(
+            regressor=LinearRegression(),
+            func=np.log,
+            inverse_func=np.exp,
+            bias_correction=mode,
+        )
+        tt_1d.fit(X, y_1d)
+        assert np.isscalar(tt_1d.bias_correction_factor_), (
+            f"Expected scalar factor for 1D y with mode={mode}"
+        )
+
+    rng = np.random.RandomState(0)
+    y_2d = np.column_stack([y_1d, np.abs(rng.randn(200)) + 1])
+
+    for mode in ("additive", "multiplicative"):
+        tt_2d = TransformedTargetRegressor(
+            regressor=LinearRegression(),
+            func=np.log,
+            inverse_func=np.exp,
+            bias_correction=mode,
+        )
+        tt_2d.fit(X, y_2d)
+        factor = tt_2d.bias_correction_factor_
+        assert hasattr(factor, "__len__") and len(factor) == 2, (
+            f"Expected 2-element factor for 2D y with mode={mode}, got {factor}"
+        )
