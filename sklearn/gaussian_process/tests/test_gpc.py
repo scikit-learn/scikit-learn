@@ -39,7 +39,7 @@ fX = f(X).ravel()
 y_mc = np.zeros(y.shape, dtype=int)  # multi-class
 y_mc[fX < -0.35] = 0
 y_mc[(fX >= -0.35) & (fX < 0.35)] = 1
-y_mc[fX > 0.35] = 2
+y_mc[fX >= 0.35] = 2
 
 
 fixed_kernel = RBF(length_scale=1.0, length_scale_bounds="fixed")
