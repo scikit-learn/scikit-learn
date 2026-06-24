@@ -315,6 +315,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         support_ = np.ones(n_features, dtype=bool)
         ranking_ = np.ones(n_features, dtype=int)
+        elimination_order_ = []
 
         if step_score:
             self.step_n_features_ = []
@@ -356,8 +357,10 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             # Eliminate the worse features
             threshold = min(step, np.sum(support_) - n_features_to_select)
 
-            support_[features[ranks][:threshold]] = False
+            eliminated = features[ranks][:threshold]
+            support_[eliminated] = False
             ranking_[np.logical_not(support_)] += 1
+            elimination_order_.extend(eliminated.tolist())
 
         # Set final attributes
         features = np.arange(n_features)[support_]
@@ -373,6 +376,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         self.n_features_ = support_.sum()
         self.support_ = support_
         self.ranking_ = ranking_
+        self.elimination_order_ = elimination_order_
 
         return self
 
@@ -721,6 +725,14 @@ class RFECV(RFE):
     support_ : ndarray of shape (n_features,)
         The mask of selected features.
 
+    elimination_order_ : list of int of length (n_features - n_features_,)
+        Indices (in the original feature space) of features in the order
+        they were eliminated during the final recursive feature elimination
+        fit on the full dataset. The first element is the index of the
+        least important feature (eliminated first) and the last element is
+        the index of the last feature removed before the optimal number of
+        features was reached.
+
     See Also
     --------
     RFE : Recursive feature elimination.
@@ -921,6 +933,7 @@ class RFECV(RFE):
         self.support_ = rfe.support_
         self.n_features_ = rfe.n_features_
         self.ranking_ = rfe.ranking_
+        self.elimination_order_ = rfe.elimination_order_
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(self._transform(X), y, **routed_params.estimator.fit)
 
