@@ -917,8 +917,8 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
     .. [1] Y. Freund, R. Schapire, "A Decision-Theoretic Generalization of
            on-Line Learning and an Application to Boosting", 1995.
 
-    .. [2] H. Drucker, "Improving Regressors using Boosting Techniques", 1997.
-           http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.31.314
+    .. [2] `H. Drucker, "Improving Regressors using Boosting Techniques", 1997.
+           <https://dl.acm.org/doi/10.5555/645526.657132>`_
 
     Examples
     --------
