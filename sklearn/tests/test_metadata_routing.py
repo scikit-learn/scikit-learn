@@ -40,6 +40,7 @@ from sklearn.utils._metadata_requests import (
     MethodMetadataRequest,
     MethodPair,
     _MetadataRequester,
+    get_class_level_metadata_request_values,
     request_is_alias,
     request_is_valid,
 )
@@ -244,8 +245,8 @@ def test_default_requests():
 
 
 @config_context(enable_metadata_routing=True)
-def test_custom_consumer_returns_non_default_request():
-    """Check developer API for getting the metadata request object of custom
+def test_custom_consumer_returns_class_level_request():
+    """Check developer API for getting the class-level metadata request values of custom
     consumers."""
 
     class DefaultConsumer(_MetadataRequester):
@@ -255,15 +256,11 @@ def test_custom_consumer_returns_non_default_request():
         def score(self, X, y, metadata):
             return 1
 
-    # requests should be set following _MetadataRequester._get_metadata_request():
-    consumer = (
-        DefaultConsumer()
-        .set_fit_request(sample_weight=True)
-        .set_score_request(metadata=False)
-    )
-    assert consumer.__sklearn_get_metadata_request__()._serialize() == {
-        "fit": {"sample_weight": True},
-        "score": {"metadata": False},
+    # sample_weight and metadata should be discovered but no requests should be set
+    consumer = DefaultConsumer()
+    assert consumer.__sklearn_build_class_level_metadata_request__()._serialize() == {
+        "fit": {"sample_weight": None},
+        "score": {"metadata": None},
     }
 
     class CustomRequestConsumer(_MetadataRequester):
@@ -276,41 +273,32 @@ def test_custom_consumer_returns_non_default_request():
         def score(self, y_true, y_pred, metadata2):
             return metadata2 + 100
 
-        def __sklearn_get_metadata_request__(self):
-            if hasattr(self, "_metadata_request"):
-                requests = self._metadata_request.__sklearn_clone__()
-            else:
-                requests = MetadataRequest(owner=self)
-                for method_name in SIMPLE_METHODS:
-                    setattr(
-                        requests,
-                        method_name,
-                        MethodMetadataRequest(
-                            owner=self,
-                            method=method_name,
-                            requests=super()._get_class_level_metadata_request_values(
-                                method_name,
-                                ignore_params={
-                                    "y_true",
-                                    "y_pred",
-                                },
-                            ),
+        def __sklearn_build_class_level_metadata_request__(self):
+            requests = MetadataRequest(owner=self)
+            for method_name in SIMPLE_METHODS:
+                setattr(
+                    requests,
+                    method_name,
+                    MethodMetadataRequest(
+                        owner=self,
+                        method=method_name,
+                        requests=get_class_level_metadata_request_values(
+                            self,
+                            method_name,
+                            ignore_params={
+                                "y_true",
+                                "y_pred",
+                            },
                         ),
-                    )
+                    ),
+                )
             return requests
 
     # else-branch set default requests:
     consumer = CustomRequestConsumer()
-    assert consumer.__sklearn_get_metadata_request__()._serialize() == {
+    assert consumer.__sklearn_build_class_level_metadata_request__()._serialize() == {
         "fit": {"metadata1": None, "my_param": True},
         "score": {"metadata2": None},
-    }
-    # when the if-branch runs, test that we don't accidentally bypass the custom
-    # implementation with the inherited default _get_metadata_request():
-    consumer.set_fit_request(metadata1=True).set_score_request(metadata2=False)
-    assert consumer.__sklearn_get_metadata_request__()._serialize() == {
-        "fit": {"metadata1": True, "my_param": True},
-        "score": {"metadata2": False},
     }
 
     class CustomMethodConsumer(_MetadataRequester):
@@ -323,28 +311,25 @@ def test_custom_consumer_returns_non_default_request():
         def consuming_method(self, y, metadata1):
             return self
 
-        def __sklearn_get_metadata_request__(self):
-            if hasattr(self, "_metadata_request"):
-                requests = self._metadata_request.__sklearn_clone__()
-            else:
-                requests = MetadataRequest(owner=self)
-                setattr(
-                    requests,
-                    "fit",
-                    MethodMetadataRequest(
-                        owner=self,
-                        method="fit",
-                        requests=super()._get_class_level_metadata_request_values(
-                            "fit", method=self.consuming_method
-                        ),
+        def __sklearn_build_class_level_metadata_request__(self):
+            requests = MetadataRequest(owner=self)
+            setattr(
+                requests,
+                "fit",
+                MethodMetadataRequest(
+                    owner=self,
+                    method="fit",
+                    requests=get_class_level_metadata_request_values(
+                        self, "fit", method=self.consuming_method
                     ),
-                )
+                ),
+            )
             return requests
 
     # since we pass `method=self.consuming_method`, we expect default requests set for
     # the metadata present in `consuming_method`:
     consumer = CustomMethodConsumer()
-    assert consumer.__sklearn_get_metadata_request__()._serialize() == {
+    assert consumer.__sklearn_build_class_level_metadata_request__()._serialize() == {
         "fit": {"metadata1": None},
     }
 
@@ -361,28 +346,25 @@ def test_custom_consumer_returns_non_default_request():
             self.func(metadata1)
             return self
 
-        def __sklearn_get_metadata_request__(self):
-            if hasattr(self, "_metadata_request"):
-                requests = self._metadata_request.__sklearn_clone__()
-            else:
-                requests = MetadataRequest(owner=self)
-                setattr(
-                    requests,
-                    "fit",
-                    MethodMetadataRequest(
-                        owner=self,
-                        method="fit",
-                        requests=super()._get_class_level_metadata_request_values(
-                            "fit", method=self.func
-                        ),
+        def __sklearn_build_class_level_metadata_request__(self):
+            requests = MetadataRequest(owner=self)
+            setattr(
+                requests,
+                "fit",
+                MethodMetadataRequest(
+                    owner=self,
+                    method="fit",
+                    requests=get_class_level_metadata_request_values(
+                        self, "fit", method=self.func
                     ),
-                )
+                ),
+            )
             return requests
 
     # since we pass `method=self.self.func`, we expect default requests set for the
     # metadata present in `consuming_function`:
     consumer = CustomFunctionConsumer(func=consuming_function)
-    assert consumer.__sklearn_get_metadata_request__()._serialize() == {
+    assert consumer.__sklearn_build_class_level_metadata_request__()._serialize() == {
         "fit": {"metadata1": None},
     }
 

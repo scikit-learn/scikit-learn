@@ -1606,7 +1606,7 @@ class _MetadataRequester:
         method: Callable | None = None,
         ignore_params: Iterable[str] | None = None,
     ):
-        """Get class level metadata request values.
+        """Get class level metadata request values per method.
 
         Parameters
         ----------
@@ -1705,9 +1705,6 @@ class _MetadataRequester:
 
         return {param: alias for param, alias in params.items() if alias is not UNUSED}
 
-    # TODO(SLEP6): this method currently gets class level base request and sets
-    # user-defined requests at the same time; should be two functions (one one gets and
-    # one that sets)
     def _get_metadata_request(self):
         """Get the effective metadata request for this instance.
 
@@ -1717,8 +1714,8 @@ class _MetadataRequester:
 
         See Also
         --------
-        __sklearn_get_metadata_request__ : Override point for building class-level
-        requests when `set_{method}_request` has not been called.
+        __sklearn_build_class_level_metadata_request__ : Developer API to override when
+        building class-level requests when `set_{method}_request` has not been called.
 
         Returns
         -------
@@ -1728,7 +1725,7 @@ class _MetadataRequester:
         if hasattr(self, "_metadata_request"):
             return self._metadata_request.__sklearn_clone__()
         else:
-            return self.__sklearn_get_metadata_request__()
+            return self.__sklearn_build_class_level_metadata_request__()
 
     def __sklearn_build_class_level_metadata_request__(self):
         """Build the class level metadata request for this consumer.
@@ -1944,7 +1941,7 @@ def _manual_routing(routing):
 def get_class_level_metadata_request_values(
     metadata_requester, method_name, method=None, ignore_params=None
 ):
-    """Get class level metadata request values.
+    """Get class level metadata request values per method.
 
     Parameters
     ----------
