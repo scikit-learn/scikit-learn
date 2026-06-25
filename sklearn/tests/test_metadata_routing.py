@@ -251,10 +251,10 @@ def test_custom_consumer_returns_class_level_request():
 
     class DefaultConsumer(_MetadataRequester):
         def fit(self, X, y, sample_weight):
-            return self
+            return self  # pragma: no cover
 
         def score(self, X, y, metadata):
-            return 1
+            return 1  # pragma: no cover
 
     # sample_weight and metadata should be discovered but no requests should be set
     consumer = DefaultConsumer()
@@ -268,10 +268,10 @@ def test_custom_consumer_returns_class_level_request():
         __metadata_request__fit = {"my_param": True}
 
         def fit(self, metadata1):
-            return self
+            return self  # pragma: no cover
 
         def score(self, y_true, y_pred, metadata2):
-            return metadata2 + 100
+            return metadata2 + 100  # pragma: no cover
 
         def __sklearn_build_class_level_metadata_request__(self):
             requests = MetadataRequest(owner=self)
@@ -304,11 +304,11 @@ def test_custom_consumer_returns_class_level_request():
         # consumer that can route metadata to another method
 
         def fit(self, metadata1, metadata2):
-            self.consuming_method(metadata1)
-            return self
+            self.consuming_method(metadata1)  # pragma: no cover
+            return self  # pragma: no cover
 
         def consuming_method(self, y, metadata1):
-            return self
+            return self  # pragma: no cover
 
         def __sklearn_build_class_level_metadata_request__(self):
             requests = MetadataRequest(owner=self)
@@ -333,7 +333,7 @@ def test_custom_consumer_returns_class_level_request():
     }
 
     def consuming_function(y, metadata1):
-        return 1
+        return 1  # pragma: no cover
 
     class CustomFunctionConsumer(_MetadataRequester):
         # consumer that can route metadata to a function (similar as _BaseScorer)
@@ -342,8 +342,8 @@ def test_custom_consumer_returns_class_level_request():
             self.func = func
 
         def fit(self, metadata1, metadata2):
-            self.func(metadata1)
-            return self
+            self.func(metadata1)  # pragma: no cover
+            return self  # pragma: no cover
 
         def __sklearn_build_class_level_metadata_request__(self):
             requests = MetadataRequest(owner=self)
