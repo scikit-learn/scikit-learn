@@ -326,8 +326,9 @@ def _check_unknown(values, known_values, return_mask=False):
 def _get_counts(values, uniques, nan_values=(np.nan,)):
     """Get the count of each of the `uniques` in `values`.
 
-    The counts will use the order passed in by `uniques`. For non-object dtypes,
-    `uniques` is assumed to be sorted and `np.nan` is at the end.
+    The counts will use the order passed in by `uniques`.  `np.nan` is assumed
+    to be the last item in `uniques`, if it was one of the values.  For
+    non-object dtypes, `uniques` is assumed to be sorted.
     """
     if values.dtype.kind in "OU":
         counter = Counter(values)

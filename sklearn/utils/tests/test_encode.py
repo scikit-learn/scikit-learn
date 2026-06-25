@@ -279,9 +279,9 @@ def test_get_counts(values, uniques, expected_counts):
 
 
 def test_get_counts_multiple_nans():
-    # Before #34385 was fixed, the result was [2, 6, 6, 6]. In practice, in
-    # most cases only np.nan would be present, so this probably wasn't
-    # impactful.
+    """
+    When both np.nan and float("nan") are present, they get merged into np.nan.
+    """
     values = np.array(
         ["a", np.nan, NAN1, np.nan, NAN2, NAN1, np.nan, "a"],
         dtype=object,
