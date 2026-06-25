@@ -329,7 +329,14 @@ class MethodMetadataRequest:
     """Container for metadata requests associated with a single method.
 
     Instances of this class get used within a :class:`MetadataRequest` - one per each
-    public method (`fit`, `transform`, ...) that its owning consumer has.
+    public method (`fit`, `transform`, ...) that its owning :term:`consumers <consumer>`
+    has.
+
+    This class can be used inside the `__sklearn_build_class_level_metadata_request__`
+    method of :class:`~utils.metadata_routing._MetadataRequester` to override how
+    class-level requests are build. See the :ref:`metadata routing developing guide
+    <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>` for examples on how
+    to use it.
 
     .. versionadded:: 1.3
 
@@ -1521,7 +1528,10 @@ class _MetadataRequester:
     ``BaseEstimator`` inherits from this Mixin.
 
     Custom :term:`consumers <consumer>` that are not estimators can inherit from this
-    Mixin to participate in metadata routing (e.g. custom scorers or wrappers).
+    Mixin to participate in metadata routing (e.g. custom scorers or wrappers). See the
+    :ref:`metadata routing developing guide
+    <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>` for examples on how
+    to use it.
 
     .. versionadded:: 1.3
     """
@@ -1609,7 +1619,7 @@ class _MetadataRequester:
         method: Callable | None = None,
         ignore_params: Iterable[str] | None = None,
     ):
-        """Get class level metadata request values per method.
+        """Get class level metadata request values per consuming method.
 
         Parameters
         ----------
@@ -1944,7 +1954,13 @@ def _manual_routing(routing):
 def get_class_level_metadata_request_values(
     metadata_requester, method_name, method=None, ignore_params=None
 ):
-    """Get class level metadata request values per method.
+    """Get class level metadata request values per consuming method.
+
+    This method can be used inside the `__sklearn_build_class_level_metadata_request__`
+    method of :class:`~utils.metadata_routing._MetadataRequester` to override how
+    class-level requests are build. See the :ref:`metadata routing developing guide
+    <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>` for examples on how
+    to use it.
 
     .. versionadded:: 1.10
 
@@ -1957,12 +1973,12 @@ def get_class_level_metadata_request_values(
         The name of the method to get the metadata request values for.
 
     method : callable, default=None
-        The method to get the metadata request values for. If None, the method
-        from the class with the name `method_name` is used.
+        The method to get the metadata request values for. If None, the method from the
+        class with the name `method_name` is used.
 
     ignore_params : set, default=None
-        A set of parameter names to ignore. The usual parameters
-        `X`, `y`, `Y`, `Xt`, `yt` are always ignored.
+        A set of parameter names to ignore. The usual parameters `X`, `y`, `Y`, `Xt`,
+        `yt` are always ignored.
 
     Returns
     -------

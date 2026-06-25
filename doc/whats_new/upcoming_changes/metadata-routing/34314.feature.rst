@@ -1,0 +1,8 @@
+- Metadata :term:`consumers <consumer>` that inherit from
+  :class:`~utils.metadata_routing._MetadataRequester` can now customise class-level
+  metadata requests by overriding their `__sklearn_build_class_level_metadata_request__`
+  method. :class:`~utils.metadata_routing.MethodMetadataRequest` and
+  :func:`~utils.metadata_routing.get_class_level_metadata_request_values` are now public
+  API for use in such overrides. See the :ref:`metadata routing developing guide
+  <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>` for examples.
+  By :user:`Stefanie Senger <StefanieSenger>`.
