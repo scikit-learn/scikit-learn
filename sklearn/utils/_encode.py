@@ -188,9 +188,36 @@ def _unique_python(values, *, return_inverse, return_counts):
         ret += (_map_to_integer(values, uniques),)
 
     if return_counts:
-        ret += (_get_counts(values, uniques),)
+        counts = _get_counts(values, uniques)
+        if missing_values.nan:
+            counts[-1] = sum(is_scalar_nan(value) for value in values)
+        ret += (counts,)
 
     return ret[0] if len(ret) == 1 else ret
+
+
+def _unique_pandas_categorical(values, *, return_inverse, return_counts):
+    uniques = values.cat.categories.to_numpy()
+    codes = values.cat.codes
+    isna = codes == -1
+    has_missing = isna.any()
+    if has_missing:
+        uniques = np.r_[uniques, np.nan]
+    # also check
+    if not return_inverse and not return_counts:
+        return uniques
+
+    if has_missing:
+        codes = codes.copy()
+        codes[isna] = uniques.size - 1
+
+    ret = (uniques,)
+    if return_inverse:
+        ret += (codes,)
+    if return_counts:
+        ret += (np.bincount(codes),)
+
+    return ret
 
 
 def _encode(values, *, uniques, check_unknown=True):

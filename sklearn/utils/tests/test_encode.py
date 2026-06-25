@@ -215,6 +215,9 @@ def test_unique_util_with_all_missing_values():
     _, inverse = _unique(values, return_inverse=True)
     assert_array_equal(inverse, expected_inverse)
 
+    _, counts = _unique(values, return_counts=True)
+    assert len(values) == sum(counts)
+
 
 def test_check_unknown_with_both_missing_values():
     # test for both types of missing values for object dtype
