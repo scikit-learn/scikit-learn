@@ -188,10 +188,7 @@ def _unique_python(values, *, return_inverse, return_counts):
         ret += (_map_to_integer(values, uniques),)
 
     if return_counts:
-        counts = _get_counts(values, uniques)
-        if missing_values.nan:
-            counts[-1] = sum(is_scalar_nan(value) for value in values)
-        ret += (counts,)
+        ret += (_get_counts(values, uniques),)
 
     return ret[0] if len(ret) == 1 else ret
 
@@ -352,12 +349,19 @@ def _get_counts(values, uniques):
 
     The counts will use the order passed in by `uniques`. For non-object dtypes,
     `uniques` is assumed to be sorted and `np.nan` is at the end.
+
+    This code makes the assumption that:
+    `any(is_scalar_nan(v) for v in uniques[:-1]) is False`
     """
     if values.dtype.kind in "OU":
         counter = Counter(values)
         output = np.zeros(len(uniques), dtype=np.int64)
         for i, item in enumerate(uniques):
             output[i] = counter[item]
+        if is_scalar_nan(uniques[-1]):
+            output[-1] = sum(
+                val for item, val in counter.items() if is_scalar_nan(item)
+            )
         return output
 
     unique_values, counts = _unique_np(values, return_counts=True)
