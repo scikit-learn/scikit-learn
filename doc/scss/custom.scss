@@ -8,6 +8,7 @@
 
 /* Global */
 
+/* Needed to override the pydata sphinx theme's default */
 html[data-theme="light"] .highlight pre {
   background: #fff;
 }
