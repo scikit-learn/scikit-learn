@@ -271,19 +271,28 @@ NAN2 = float("nan")
             ["a", "b", "c", "e"],
             [16, 4, 20, 0],
         ),
-        # Before #34385 was fixed, the result was [2, 6, 6, 6]. In practice, in
-        # most cases only np.nan would be present, so this probably wasn't
-        # impactful.
-        (
-            np.array(
-                ["a", np.nan, NAN1, np.nan, NAN2, NAN1, np.nan, "a"],
-                dtype=object,
-            ),
-            ["a", np.nan, NAN1, NAN2],
-            [2, 3, 2, 1],
-        ),
     ],
 )
 def test_get_counts(values, uniques, expected_counts):
     counts = _get_counts(values, uniques)
     assert_array_equal(counts, expected_counts)
+
+
+def test_get_counts_multiple_nans():
+    # Before #34385 was fixed, the result was [2, 6, 6, 6]. In practice, in
+    # most cases only np.nan would be present, so this probably wasn't
+    # impactful.
+    values = np.array(
+        ["a", np.nan, NAN1, np.nan, NAN2, NAN1, np.nan, "a"],
+        dtype=object,
+    )
+    uniques = ["a", np.nan]
+    expected_counts = [2, 6]
+    assert_array_equal(
+        _get_counts(values, uniques, [np.nan, NAN1, NAN2]), expected_counts
+    )
+
+    # Now try it via _unique, to make sure this works end-to-end:
+    real_uniques, real_counts = _unique(values, return_counts=True)
+    assert_array_equal(uniques, list(real_uniques))
+    assert_array_equal(real_counts, expected_counts)

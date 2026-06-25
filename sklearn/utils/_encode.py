@@ -121,13 +121,16 @@ def _extract_missing(values):
 
     missing_values: MissingValues
         Object with missing value information.
+
+    all_nans: set
+        Set of all different kinds of nans seen
     """
     missing_values_set = {
         value for value in values if value is None or is_scalar_nan(value)
     }
 
     if not missing_values_set:
-        return values, MissingValues(nan=False, none=False)
+        return values, MissingValues(nan=False, none=False), missing_values_set
 
     if None in missing_values_set:
         if len(missing_values_set) == 1:
@@ -141,7 +144,7 @@ def _extract_missing(values):
 
     # create set without the missing values
     output = values - missing_values_set
-    return output, output_missing_values
+    return output, output_missing_values, missing_values_set - {None}
 
 
 class _nandict(dict):
@@ -171,7 +174,7 @@ def _unique_python(values, *, return_inverse, return_counts):
     # Only used in `_uniques`, see docstring there for details
     try:
         uniques_set = set(values)
-        uniques_set, missing_values = _extract_missing(uniques_set)
+        uniques_set, missing_values, all_nans_seen = _extract_missing(uniques_set)
 
         uniques = sorted(uniques_set)
         uniques.extend(missing_values.to_list())
@@ -188,7 +191,7 @@ def _unique_python(values, *, return_inverse, return_counts):
         ret += (_map_to_integer(values, uniques),)
 
     if return_counts:
-        ret += (_get_counts(values, uniques),)
+        ret += (_get_counts(values, uniques, all_nans_seen),)
 
     return ret[0] if len(ret) == 1 else ret
 
@@ -266,10 +269,10 @@ def _check_unknown(values, known_values, return_mask=False):
 
     if not xp.isdtype(values.dtype, "numeric"):
         values_set = set(values)
-        values_set, missing_in_values = _extract_missing(values_set)
+        values_set, missing_in_values, _ = _extract_missing(values_set)
 
         uniques_set = set(known_values)
-        uniques_set, missing_in_uniques = _extract_missing(uniques_set)
+        uniques_set, missing_in_uniques, _ = _extract_missing(uniques_set)
         diff = values_set - uniques_set
 
         nan_in_diff = missing_in_values.nan and not missing_in_uniques.nan
@@ -320,7 +323,7 @@ def _check_unknown(values, known_values, return_mask=False):
     return diff
 
 
-def _get_counts(values, uniques):
+def _get_counts(values, uniques, nan_values=(np.nan,)):
     """Get the count of each of the `uniques` in `values`.
 
     The counts will use the order passed in by `uniques`. For non-object dtypes,
@@ -331,6 +334,9 @@ def _get_counts(values, uniques):
         output = np.zeros(len(uniques), dtype=np.int64)
         for i, item in enumerate(uniques):
             output[i] = counter[item]
+        if len(uniques) > 0 and is_scalar_nan(uniques[-1]):
+            # Should be the sum of all nans:
+            output[-1] = sum(counter[nan] for nan in nan_values)
         return output
 
     unique_values, counts = _unique_np(values, return_counts=True)
