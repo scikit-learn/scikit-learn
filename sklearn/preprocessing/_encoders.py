@@ -15,7 +15,13 @@ from sklearn.base import (
     _fit_context,
 )
 from sklearn.utils import _align_api_if_sparse, _safe_indexing, check_array
-from sklearn.utils._encode import _check_unknown, _encode, _get_counts, _unique
+from sklearn.utils._encode import (
+    _check_unknown,
+    _encode,
+    _get_counts,
+    _unique,
+    _unique_pandas_categorical,
+)
 from sklearn.utils._mask import _get_mask
 from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
@@ -37,7 +43,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
     """
 
-    def _check_X(self, X, ensure_all_finite=True):
+    def _check_X(self, X, ensure_all_finite=True, preserve_pandas_categorical=False):
         """
         Perform custom check_array:
         - convert list of strings to object dtype
@@ -67,12 +73,50 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
         for i in range(n_features):
             Xi = _safe_indexing(X, indices=i, axis=1)
-            Xi = check_array(
+            if self._is_pandas_categorical(Xi) and preserve_pandas_categorical:
+                self._validate_pandas_categorical(Xi, needs_validation)
+                X_columns.append(Xi)
+                continue
+
+            Xi_checked = check_array(
                 Xi, ensure_2d=False, dtype=None, ensure_all_finite=needs_validation
             )
+            if self._is_pandas_categorical(Xi):
+                if preserve_pandas_categorical:
+                    X_columns.append(Xi)
+                    continue
+                Xi = Xi_checked.astype(object, copy=False)
+            else:
+                Xi = Xi_checked
             X_columns.append(Xi)
 
         return X_columns, n_samples, n_features
+
+    def _is_pandas_categorical(self, Xi):
+        """Return True if the input is a pandas Categorical Series."""
+        return hasattr(Xi, "cat") and hasattr(Xi.cat, "categories")
+
+    def _validate_pandas_categorical(self, Xi, ensure_all_finite):
+        """Validate a pandas Categorical Series without materializing values."""
+        if not ensure_all_finite:
+            return
+
+        categories = Xi.cat.categories.to_numpy()
+        if categories.size:
+            check_array(
+                categories,
+                ensure_2d=False,
+                dtype=None,
+                ensure_all_finite=ensure_all_finite,
+            )
+
+        if ensure_all_finite is True and (Xi.cat.codes == -1).any():
+            check_array(
+                np.asarray([np.nan]),
+                ensure_2d=False,
+                dtype=None,
+                ensure_all_finite=ensure_all_finite,
+            )
 
     def _fit(
         self,
@@ -85,7 +129,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         self._check_infrequent_enabled()
         validate_data(self, X=X, reset=True, skip_check_array=True)
         X_list, n_samples, n_features = self._check_X(
-            X, ensure_all_finite=ensure_all_finite
+            X,
+            ensure_all_finite=ensure_all_finite,
+            preserve_pandas_categorical=self.categories == "auto",
         )
         self.n_features_in_ = n_features
 
@@ -104,7 +150,14 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             Xi = X_list[i]
 
             if self.categories == "auto":
-                result = _unique(Xi, return_counts=compute_counts)
+                if self._is_pandas_categorical(Xi):
+                    result = _unique_pandas_categorical(
+                        Xi,
+                        return_inverse=False,
+                        return_counts=compute_counts,
+                    )
+                else:
+                    result = _unique(Xi, return_counts=compute_counts)
                 if compute_counts:
                     cats, counts = result
                     category_counts.append(counts)
@@ -200,7 +253,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         ignore_category_indices=None,
     ):
         X_list, n_samples, n_features = self._check_X(
-            X, ensure_all_finite=ensure_all_finite
+            X,
+            ensure_all_finite=ensure_all_finite,
+            preserve_pandas_categorical=True,
         )
         validate_data(self, X=X, reset=False, skip_check_array=True)
 
@@ -210,7 +265,14 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         columns_with_unknown = []
         for i in range(n_features):
             Xi = X_list[i]
-            diff, valid_mask = _check_unknown(Xi, self.categories_[i], return_mask=True)
+            if self._is_pandas_categorical(Xi):
+                diff, valid_mask, encoded = self._transform_pandas_categorical(
+                    Xi, self.categories_[i]
+                )
+            else:
+                diff, valid_mask = _check_unknown(
+                    Xi, self.categories_[i], return_mask=True
+                )
 
             if not np.all(valid_mask):
                 if handle_unknown == "error":
@@ -226,25 +288,33 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     # continue `The rows are marked `X_mask` and will be
                     # removed later.
                     X_mask[:, i] = valid_mask
-                    # cast Xi into the largest string type necessary
-                    # to handle different lengths of numpy strings
-                    if (
-                        self.categories_[i].dtype.kind in ("U", "S")
-                        and self.categories_[i].itemsize > Xi.itemsize
-                    ):
-                        Xi = Xi.astype(self.categories_[i].dtype)
-                    elif self.categories_[i].dtype.kind == "O" and Xi.dtype.kind == "U":
-                        # categories are objects and Xi are numpy strings.
-                        # Cast Xi to an object dtype to prevent truncation
-                        # when setting invalid values.
-                        Xi = Xi.astype("O")
-                    else:
-                        Xi = Xi.copy()
 
-                    Xi[~valid_mask] = self.categories_[i][0]
-            # We use check_unknown=False, since _check_unknown was
-            # already called above.
-            X_int[:, i] = _encode(Xi, uniques=self.categories_[i], check_unknown=False)
+                    if not self._is_pandas_categorical(Xi):
+                        # cast Xi into the largest string type necessary
+                        # to handle different lengths of numpy strings
+                        if (
+                            self.categories_[i].dtype.kind in ("U", "S")
+                            and self.categories_[i].itemsize > Xi.itemsize
+                        ):
+                            Xi = Xi.astype(self.categories_[i].dtype)
+                        elif (
+                            self.categories_[i].dtype.kind == "O"
+                            and Xi.dtype.kind == "U"
+                        ):
+                            # categories are objects and Xi are numpy strings.
+                            # Cast Xi to an object dtype to prevent truncation
+                            # when setting invalid values.
+                            Xi = Xi.astype("O")
+                        else:
+                            Xi = Xi.copy()
+
+                        Xi[~valid_mask] = self.categories_[i][0]
+
+            if not self._is_pandas_categorical(Xi):
+                # We use check_unknown=False, since _check_unknown was
+                # already called above.
+                encoded = _encode(Xi, uniques=self.categories_[i], check_unknown=False)
+            X_int[:, i] = encoded
         if columns_with_unknown:
             if handle_unknown == "infrequent_if_exist":
                 msg = (
@@ -263,6 +333,59 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
         self._map_infrequent_categories(X_int, X_mask, ignore_category_indices)
         return X_int, X_mask
+
+    def _transform_pandas_categorical(self, Xi, categories):
+        """Encode a pandas Categorical Series from its integer codes."""
+        codes = Xi.cat.codes.to_numpy()
+        valid_mask = np.ones_like(codes, dtype=bool)
+        encoded = codes.astype(int, copy=True)
+        missing_mask = codes == -1
+
+        pandas_categories = Xi.cat.categories.to_numpy()
+        has_missing_category = bool(categories.size) and is_scalar_nan(categories[-1])
+        categories_without_missing = (
+            categories[:-1] if has_missing_category else categories
+        )
+        if np.array_equal(pandas_categories, categories_without_missing):
+            diff = []
+            if missing_mask.any():
+                if has_missing_category:
+                    encoded[missing_mask] = categories.size - 1
+                else:
+                    encoded[missing_mask] = 0
+                    valid_mask[missing_mask] = False
+                    diff.append(np.nan)
+            return diff, valid_mask, encoded
+
+        encoded = np.zeros_like(codes, dtype=int)
+        observed_codes = np.unique(codes[~missing_mask])
+
+        diff = []
+        if observed_codes.size:
+            observed_categories = pandas_categories[observed_codes]
+            diff, valid_observed_mask = _check_unknown(
+                observed_categories, categories, return_mask=True
+            )
+
+            mapping = np.zeros(pandas_categories.shape[0], dtype=int)
+            category_to_index = {category: i for i, category in enumerate(categories)}
+            valid_codes = observed_codes[valid_observed_mask]
+            for code, category in zip(valid_codes, pandas_categories[valid_codes]):
+                mapping[code] = category_to_index[category]
+
+            encoded[~missing_mask] = mapping[codes[~missing_mask]]
+            invalid_codes = observed_codes[~valid_observed_mask]
+            if invalid_codes.size:
+                valid_mask[np.isin(codes, invalid_codes)] = False
+
+        if missing_mask.any():
+            if has_missing_category:
+                encoded[missing_mask] = categories.size - 1
+            else:
+                valid_mask[missing_mask] = False
+                diff.append(np.nan)
+
+        return diff, valid_mask, encoded
 
     @property
     def infrequent_categories_(self):

@@ -1507,6 +1507,36 @@ def test_ohe_missing_value_support_pandas_categorical(pd_nan_type, handle_unknow
     assert np.isnan(ohe.categories_[0][-1])
 
 
+def test_one_hot_encoder_pandas_categorical_uses_dtype_categories():
+    pd = pytest.importorskip("pandas")
+
+    dtype = pd.CategoricalDtype(["b", "a", "c"])
+    df = pd.DataFrame({"col1": pd.Series(["a", "b", "a"], dtype=dtype)})
+
+    ohe = OneHotEncoder(sparse_output=False).fit(df)
+
+    assert_array_equal(ohe.categories_[0], ["b", "a", "c"])
+    assert_allclose(ohe.transform(df), [[0, 1, 0], [1, 0, 0], [0, 1, 0]])
+
+
+def test_one_hot_encoder_pandas_categorical_transform_unknown_category():
+    pd = pytest.importorskip("pandas")
+
+    dtype = pd.CategoricalDtype(["a", "b"])
+    df = pd.DataFrame({"col1": pd.Series(["a", "b"], dtype=dtype)})
+    test_dtype = pd.CategoricalDtype(["a", "b", "c"])
+    df_test = pd.DataFrame({"col1": pd.Series(["a", "c"], dtype=test_dtype)})
+
+    ohe = OneHotEncoder(sparse_output=False, handle_unknown="ignore").fit(df)
+
+    assert_allclose(ohe.transform(df_test), [[1, 0], [0, 0]])
+
+    ohe = OneHotEncoder(sparse_output=False, handle_unknown="error").fit(df)
+    err_msg = r"Found unknown categories \['c'\] in column 0 during transform"
+    with pytest.raises(ValueError, match=err_msg):
+        ohe.transform(df_test)
+
+
 @pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist", "warn"])
 def test_ohe_drop_first_handle_unknown_ignore_warns(handle_unknown):
     """Check drop='first' and handle_unknown='ignore'/'infrequent_if_exist'
@@ -1713,6 +1743,18 @@ def test_ordinal_encoder_missing_value_support_pandas_categorical(
     assert_array_equal(X_inverse[:2, 0], ["c", "a"])
     assert_array_equal(X_inverse[3:, 0], ["b", "a"])
     assert np.isnan(X_inverse[2, 0])
+
+
+def test_ordinal_encoder_pandas_categorical_uses_dtype_categories():
+    pd = pytest.importorskip("pandas")
+
+    dtype = pd.CategoricalDtype(["b", "a", "c"])
+    df = pd.DataFrame({"col1": pd.Series(["a", "b", "a"], dtype=dtype)})
+
+    ordinal = OrdinalEncoder().fit(df)
+
+    assert_array_equal(ordinal.categories_[0], ["b", "a", "c"])
+    assert_allclose(ordinal.transform(df), [[1], [0], [1]])
 
 
 @pytest.mark.parametrize(
@@ -2273,6 +2315,19 @@ def test_ordinal_encoder_infrequent_multiple_categories_dtypes():
 
     X_trans = ordinal.transform(X_test)
     assert_allclose(X_trans, expected_trans)
+
+
+def test_ordinal_encoder_infrequent_pandas_categorical_unobserved_categories():
+    pd = pytest.importorskip("pandas")
+
+    dtype = pd.CategoricalDtype(["b", "a", "c"])
+    df = pd.DataFrame({"col1": pd.Series(["a", "b", "a"], dtype=dtype)})
+
+    ordinal = OrdinalEncoder(max_categories=2).fit(df)
+
+    assert_array_equal(ordinal.categories_[0], ["b", "a", "c"])
+    assert_array_equal(ordinal.infrequent_categories_[0], ["b", "c"])
+    assert_allclose(ordinal.transform(df), [[0], [1], [0]])
 
 
 def test_ordinal_encoder_infrequent_custom_mapping():

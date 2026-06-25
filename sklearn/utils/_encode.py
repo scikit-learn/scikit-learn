@@ -195,12 +195,11 @@ def _unique_python(values, *, return_inverse, return_counts):
 
 def _unique_pandas_categorical(values, *, return_inverse, return_counts):
     uniques = values.cat.categories.to_numpy()
-    codes = values.cat.codes
+    codes = values.cat.codes.to_numpy()
     isna = codes == -1
     has_missing = isna.any()
     if has_missing:
         uniques = np.r_[uniques, np.nan]
-    # also check
     if not return_inverse and not return_counts:
         return uniques
 
@@ -212,7 +211,7 @@ def _unique_pandas_categorical(values, *, return_inverse, return_counts):
     if return_inverse:
         ret += (codes,)
     if return_counts:
-        ret += (np.bincount(codes),)
+        ret += (np.bincount(codes, minlength=uniques.size),)
 
     return ret
 

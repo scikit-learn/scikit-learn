@@ -4,7 +4,13 @@ import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
 
-from sklearn.utils._encode import _check_unknown, _encode, _get_counts, _unique
+from sklearn.utils._encode import (
+    _check_unknown,
+    _encode,
+    _get_counts,
+    _unique,
+    _unique_pandas_categorical,
+)
 
 
 @pytest.mark.parametrize(
@@ -200,6 +206,25 @@ def test_unique_util_missing_values_numeric():
 
     encoded = _encode(values, uniques=uniques)
     assert_array_equal(encoded, expected_inverse)
+
+
+def test_unique_pandas_categorical():
+    pd = pytest.importorskip("pandas")
+
+    values = pd.Series(
+        ["a", None, "b", "a"],
+        dtype=pd.CategoricalDtype(["b", "a", "c"]),
+    )
+    expected_uniques = np.array(["b", "a", "c", np.nan], dtype=object)
+
+    uniques, inverse, counts = _unique_pandas_categorical(
+        values, return_inverse=True, return_counts=True
+    )
+
+    assert_array_equal(uniques[:-1], expected_uniques[:-1])
+    assert np.isnan(uniques[-1])
+    assert_array_equal(inverse, [1, 3, 0, 1])
+    assert_array_equal(counts, [1, 2, 0, 1])
 
 
 def test_unique_util_with_all_missing_values():
