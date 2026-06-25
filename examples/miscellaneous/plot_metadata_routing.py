@@ -592,18 +592,19 @@ pipe.fit(X, y, sample_weight=my_weights, groups=my_groups).predict(
 # ----------------------------------------------------
 # Most :term:`consumers <consumer>` inherit from :class:`~base.BaseEstimator` and use
 # the class-level default metadata requests inferred from method signatures and
-# `__metadata_request__*` class attributes. Third-party developers can override
-# `__sklearn_build_class_level_metadata_request__` when they need control over which
-# parameters to treat as data and which as metadata, or when metadata is forwarded to
-# another callable. Internal code always calls `_get_metadata_request`, which forwards
-# to `__sklearn_build_class_level_metadata_request__`.
+# `__metadata_request__*` class attributes. When consumers are not :term:`estimators
+# <estimator>` or a more nuanced control over which parameters to treat as data or as
+# metadata respectively, or when metadata is forwarded to another callable, third-party
+# developers can instead inherit directly from
+# :class:`~utils.metadata_routing._MetadataRequester` and override its
+# `__sklearn_build_class_level_metadata_request__` method.
 #
 # Custom implementations should follow the same pattern as the default: build a
 # :class:`~utils.metadata_routing.MetadataRequest` using
 # `get_class_level_metadata_request_values`:
 
 # %%
-# The imports below are only required for the examples in this section.
+# These imports are only required for the examples in this section.
 
 from sklearn.utils.metadata_routing import (
     MetadataRequest,
@@ -652,7 +653,7 @@ pprint(consumer.__sklearn_build_class_level_metadata_request__()._serialize())
 # %%
 # When metadata is consumed by a different callable than the routed method name, pass
 # it as `method` to `get_class_level_metadata_request_values`. (This is the same pattern
-# as used in :class:`~metrics._scorer._BaseScorer`.)
+# as internally used in :class:`~metrics._scorer._BaseScorer`.)
 #
 # Be aware that for the callable passed as `method`, the first parameter is always
 # treated as data and excluded from metadata discovery (e.g. `self` for an
