@@ -1784,31 +1784,37 @@ def test_encoder_duplicate_specified_categories(Encoder):
 
 
 @pytest.mark.parametrize(
-    "X, expected_X_trans, X_test",
+    "X, expected_X_trans, X_test, expected_X_test_trans",
     [
         (
             np.array([[1.0, np.nan, 3.0]]).T,
             np.array([[0.0, np.nan, 1.0]]).T,
             np.array([[4.0]]),
+            [[-1.0]],  # unknown value
         ),
         (
             np.array([[1.0, 4.0, 3.0]]).T,
             np.array([[0.0, 2.0, 1.0]]).T,
             np.array([[np.nan]]),
+            [[np.nan]],  # missing value, not unknown
         ),
         (
             np.array([["c", np.nan, "b"]], dtype=object).T,
             np.array([[1.0, np.nan, 0.0]]).T,
             np.array([["d"]], dtype=object),
+            [[-1.0]],  # unknown value
         ),
         (
             np.array([["c", "a", "b"]], dtype=object).T,
             np.array([[2.0, 0.0, 1.0]]).T,
             np.array([[np.nan]], dtype=object),
+            [[np.nan]],  # missing value, not unknown
         ),
     ],
 )
-def test_ordinal_encoder_handle_missing_and_unknown(X, expected_X_trans, X_test):
+def test_ordinal_encoder_handle_missing_and_unknown(
+    X, expected_X_trans, X_test, expected_X_test_trans
+):
     """Test the interaction between missing values and handle_unknown"""
 
     oe = OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)
@@ -1816,7 +1822,7 @@ def test_ordinal_encoder_handle_missing_and_unknown(X, expected_X_trans, X_test)
     X_trans = oe.fit_transform(X)
     assert_allclose(X_trans, expected_X_trans)
 
-    assert_allclose(oe.transform(X_test), [[-1.0]])
+    assert_allclose(oe.transform(X_test), expected_X_test_trans)
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
@@ -2093,6 +2099,55 @@ def test_ordinal_encoder_missing_unknown_encoding_max():
     X_test = np.array([["snake"]])
     X_trans = enc.transform(X_test)
     assert_allclose(X_trans, [[2]])
+
+
+def test_ordinal_encoder_missing_values_not_in_training():
+    """Check that NaN is treated as missing, not unknown, when not in training data.
+
+    Non-regression test for gh-34387.
+    """
+    # Case 1: handle_unknown='use_encoded_value', unknown_value=-1
+    # NaN should return encoded_missing_value (nan), not unknown_value (-1)
+    encoder = OrdinalEncoder(
+        encoded_missing_value=np.nan,
+        unknown_value=-1,
+        handle_unknown="use_encoded_value",
+    )
+    encoder.fit([[0], [1], [np.nan]])
+    result = encoder.transform([[np.nan]])
+    assert_allclose(result, [[np.nan]])
+
+    encoder.fit([[0], [1]])
+    result = encoder.transform([[np.nan]])
+    assert_allclose(result, [[np.nan]])
+
+    # Case 2: default handle_unknown='error'
+    # NaN should NOT raise an error, should return nan
+    encoder = OrdinalEncoder(encoded_missing_value=np.nan)
+    encoder.fit([[0], [1], [np.nan]])
+    result = encoder.transform([[np.nan]])
+    assert_allclose(result, [[np.nan]])
+
+    encoder.fit([[0], [1]])
+    result = encoder.transform([[np.nan]])
+    assert_allclose(result, [[np.nan]])
+
+    # Case 3: object dtype, NaN in training
+    # Should NOT raise, should return nan
+    encoder = OrdinalEncoder(encoded_missing_value=np.nan)
+    encoder.fit(np.array([[0], [1], [np.nan]], dtype=object))
+    result = encoder.transform([[np.nan]])
+    assert_allclose(result, [[np.nan]])
+
+    # Case 4: both unknown_value and encoded_missing_value are nan
+    encoder = OrdinalEncoder(
+        encoded_missing_value=np.nan,
+        unknown_value=np.nan,
+        handle_unknown="use_encoded_value",
+    )
+    encoder.fit(np.array([[0], [1]], dtype=object))
+    result = encoder.transform(np.array([[np.nan]]))
+    assert_allclose(result, [[np.nan]])
 
 
 def test_drop_idx_infrequent_categories():

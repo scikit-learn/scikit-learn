@@ -198,6 +198,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         ensure_all_finite=True,
         warn_on_unknown=False,
         ignore_category_indices=None,
+        nan_as_missing=False,
     ):
         X_list, n_samples, n_features = self._check_X(
             X, ensure_all_finite=ensure_all_finite
@@ -211,6 +212,15 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         for i in range(n_features):
             Xi = X_list[i]
             diff, valid_mask = _check_unknown(Xi, self.categories_[i], return_mask=True)
+
+            # When nan_as_missing is True, NaN values are treated as missing
+            # data (valid) rather than unknown categories.
+            nan_mask = None
+            if nan_as_missing:
+                nan_mask = _get_mask(Xi, np.nan)
+                if nan_mask.any():
+                    valid_mask = valid_mask.copy()
+                    valid_mask[nan_mask] = True
 
             if not np.all(valid_mask):
                 if handle_unknown == "error":
@@ -242,6 +252,14 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         Xi = Xi.copy()
 
                     Xi[~valid_mask] = self.categories_[i][0]
+
+            # When nan_as_missing is True, replace NaN with first category
+            # for encoding purposes. The caller will handle setting the
+            # correct encoded_missing_value.
+            if nan_mask is not None and nan_mask.any():
+                Xi = Xi.copy()
+                Xi[nan_mask] = self.categories_[i][0]
+
             # We use check_unknown=False, since _check_unknown was
             # already called above.
             X_int[:, i] = _encode(Xi, uniques=self.categories_[i], check_unknown=False)
@@ -1596,11 +1614,21 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
             Transformed input.
         """
         check_is_fitted(self, "categories_")
+
+        # Detect NaN positions before transform to handle them as missing values
+        X_list, _, n_features = self._check_X(X, ensure_all_finite="allow-nan")
+        nan_masks = {}
+        for i in range(n_features):
+            nan_mask = _get_mask(X_list[i], np.nan)
+            if nan_mask.any():
+                nan_masks[i] = nan_mask
+
         X_int, X_mask = self._transform(
             X,
             handle_unknown=self.handle_unknown,
             ensure_all_finite="allow-nan",
             ignore_category_indices=self._missing_indices,
+            nan_as_missing=True,
         )
         X_trans = X_int.astype(self.dtype, copy=False)
 
@@ -1608,9 +1636,19 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
             X_missing_mask = X_int[:, cat_idx] == missing_idx
             X_trans[X_missing_mask, cat_idx] = self.encoded_missing_value
 
+        # Handle all NaN positions detected in the input.
+        # When nan_as_missing is True, NaN is encoded as the first category
+        # (a placeholder), so we need to set the correct encoded_missing_value.
+        for i, nan_mask in nan_masks.items():
+            X_trans[nan_mask, i] = self.encoded_missing_value
+
         # create separate category for unknown values
         if self.handle_unknown == "use_encoded_value":
-            X_trans[~X_mask] = self.unknown_value
+            unknown_mask = ~X_mask
+            # Don't overwrite missing values with unknown_value
+            for i, nan_mask in nan_masks.items():
+                unknown_mask[nan_mask, i] = False
+            X_trans[unknown_mask] = self.unknown_value
         return X_trans
 
     def inverse_transform(self, X):
@@ -1652,6 +1690,15 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         for i in range(n_features):
             labels = X[:, i]
 
+            # Handle encoded_missing_value for features not in _missing_indices
+            # (NaN that was not seen during fit)
+            missing_mask = None
+            if i not in self._missing_indices:
+                missing_mask = _get_mask(labels, self.encoded_missing_value)
+                if missing_mask.any():
+                    labels = labels.copy()
+                    labels[missing_mask] = 0  # placeholder for int conversion
+
             # replace values of X[:, i] that were nan with actual indices
             if i in self._missing_indices:
                 X_i_mask = _get_mask(labels, self.encoded_missing_value)
@@ -1684,6 +1731,10 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
             labels_int = labels[rows_to_update].astype("int64", copy=False)
             X_tr[rows_to_update, i] = categories[labels_int]
+
+            # Restore NaN for missing values not in _missing_indices
+            if missing_mask is not None and missing_mask.any():
+                X_tr[missing_mask, i] = np.nan
 
         if found_unknown or infrequent_masks:
             X_tr = X_tr.astype(object, copy=False)
