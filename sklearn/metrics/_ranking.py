@@ -367,7 +367,7 @@ def det_curve(
 
     fnr : ndarray of shape (n_thresholds,)
         False negative rate (FNR) such that element i is the false negative
-        rate of predictions with score >= thresholds[i]. This is occasionally
+        rate of predictions with score < thresholds[i]. This is occasionally
         referred to as false rejection or miss rate.
 
     thresholds : ndarray of shape (n_thresholds,)
