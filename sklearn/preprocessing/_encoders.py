@@ -271,8 +271,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         )
         validate_data(self, X=X, reset=False, skip_check_array=True)
 
-        X_int = np.zeros((n_samples, n_features), dtype=int)
-        X_mask = np.ones((n_samples, n_features), dtype=bool)
+        X_int = np.zeros((n_samples, n_features), dtype=int, order="F")
+        X_mask = np.ones((n_samples, n_features), dtype=bool, order="F")
 
         columns_with_unknown = []
         for i in range(n_features):
@@ -1209,9 +1209,9 @@ class OneHotEncoder(_BaseEncoder):
             X_int[X_int > to_drop] -= 1
             X_mask &= keep_cells
 
-        mask = X_mask.ravel()
         feature_indices = np.cumsum([0] + self._n_features_outs)
-        indices = (X_int + feature_indices[:-1]).ravel()[mask]
+        X_int += feature_indices[:-1]
+        indices = X_int[X_mask].ravel()
 
         indptr = np.empty(n_samples + 1, dtype=int)
         indptr[0] = 0
