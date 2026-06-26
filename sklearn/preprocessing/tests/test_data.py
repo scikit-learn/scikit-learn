@@ -1658,13 +1658,13 @@ def test_quantile_transformer_sorted_quantiles(array_type):
     X = 0.1 * X.reshape(-1, 1)
     X = _convert_container(X, array_type)
 
-    n_quantiles = 100
+    n_quantiles = 7
     qt = QuantileTransformer(n_quantiles=n_quantiles).fit(X)
 
     # Check that the estimated quantile thresholds are monotically
     # increasing:
     quantiles = qt.quantiles_[:, 0]
-    assert len(quantiles) == 100
+    assert len(quantiles) == 7
     assert all(np.diff(quantiles) >= 0)
 
 

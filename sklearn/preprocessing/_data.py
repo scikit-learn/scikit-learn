@@ -2936,7 +2936,6 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             )
 
         X = self._check_inputs(X, in_fit=True, copy=False)
-        n_samples = X.shape[0]
         is_sparse = sparse.issparse(X)
 
         if is_sparse and sample_weight is not None:
