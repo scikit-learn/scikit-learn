@@ -1128,7 +1128,7 @@ def _check_array_api_core(
     X_xp = xp_X.asarray(X, device=device_X)
 
     if other_ns_and_device == "string":
-        xp_other, device_other = np, "cpu"
+        xp_other, device_other = _array_api_for_tests("numpy", "cpu")
         # Convert binary `y` to string
         y_xp = np.array(["a", "b"])[y]
         y = y_xp

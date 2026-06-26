@@ -89,8 +89,8 @@ into NumPy arrays using :func:`numpy.asarray` (or :func:`numpy.array`).
 While this will successfully convert some array API inputs (e.g., JAX array),
 we generally recommend setting `array_api_dispatch=True` when using array API inputs.
 This is because NumPy conversion can often fail, e.g., torch tensor allocated on GPU.
-Also note that output array will be NumPy when `array_api_dispatch=False` whereas
-when `array_api_dispatch=True` output array will depend on input array (see
+Also note that the output array will be NumPy when `array_api_dispatch=False` whereas
+when `array_api_dispatch=True` the output array will depend on the input array (see
 :ref:`input_output_array_api` for details).
 
 Example usage
