@@ -2735,10 +2735,6 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
     Attributes
     ----------
-    n_quantiles_ : int
-        The actual number of quantiles used to discretize the cumulative
-        distribution function.
-
     quantiles_ : ndarray of shape (n_quantiles, n_features)
         The values corresponding the quantiles of reference.
 
