@@ -2698,7 +2698,9 @@ def _check_output(out_np, out_xp, xp_to, y2_xp, msg=""):
         ), f"{msg} Device mismatch; got {out_xp_device}, expected {y2_xp_device}"
     # `classification_report` returns str (with default `output_dict=False`)
     elif isinstance(out_np, str):
-        assert isinstance(out_xp, str), f"{msg} Type mismatch - expected string."
+        assert isinstance(out_xp, str), (
+            f"{msg} Type mismatch; got {type(out_xp)}, expected string."
+        )
 
 
 @pytest.mark.parametrize(
