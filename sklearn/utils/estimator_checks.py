@@ -1163,38 +1163,40 @@ def _check_array_api_core(
 
     # Fitted attributes which are arrays must have the same namespace as `X`,
     # except `classes_`, to allow it to be string when `y` is string.
-    for key, attribute in array_attributes.items():
-        est_xp_param = getattr(est_xp, key)
+    for attribute_name, attribute_value in array_attributes.items():
+        est_xp_attr = getattr(est_xp, attribute_name)
         # `classes_` should be in same ns and device as `y`
-        expected_xp, expected_ns = (y_xp, y_ns) if key == "classes_" else (X_xp, X_ns)
+        expected_xp, expected_ns = (
+            (y_xp, y_ns) if attribute_name == "classes_" else (X_xp, X_ns)
+        )
         with config_context(array_api_dispatch=True):
-            attribute_ns = get_namespace(est_xp_param)[0].__name__
-            assert array_device(est_xp_param) == array_device(expected_xp)
+            attribute_ns = get_namespace(est_xp_attr)[0].__name__
+            assert array_device(est_xp_attr) == array_device(expected_xp)
         assert attribute_ns == expected_ns, (
-            f"'{key}' attribute is in wrong namespace, expected {expected_ns} "
-            f"got {attribute_ns}"
+            f"'{attribute_name}' attribute is in wrong namespace, expected "
+            f"{expected_ns} got {attribute_ns}"
         )
 
-        est_xp_param_np = move_to(est_xp_param, xp=np, device="cpu")
+        est_xp_attr_np = move_to(est_xp_attr, xp=np, device="cpu")
         if check_values:
             assert_allclose(
-                attribute,
-                est_xp_param_np,
-                err_msg=f"{key} not the same",
+                attribute_value,
+                est_xp_attr_np,
+                err_msg=f"{attribute_name} not the same",
                 atol=_atol_for_type(X.dtype),
             )
         else:
-            assert attribute.shape == est_xp_param_np.shape
-            if key != "classes_":
-                expected_dtype = attribute.dtype
-                if np.issubdtype(attribute.dtype, np.floating):
+            assert attribute_value.shape == est_xp_attr_np.shape
+            if attribute_name != "classes_":
+                expected_dtype = attribute_value.dtype
+                if np.issubdtype(attribute_value.dtype, np.floating):
                     max_float_dtype = _max_precision_float_dtype(
                         xp_X, device=X_ns_and_device.device
                     )
                     # for some devices the maximum supported floating dtype is float32
                     if max_float_dtype == xp_X.float32:
                         expected_dtype = np.float32
-                assert est_xp_param_np.dtype == expected_dtype
+                assert est_xp_attr_np.dtype == expected_dtype
 
     # Check supported estimator methods give the same results
     methods = (
