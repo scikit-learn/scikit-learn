@@ -204,8 +204,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         )
         validate_data(self, X=X, reset=False, skip_check_array=True)
 
-        X_int = np.zeros((n_samples, n_features), dtype=int)
-        X_mask = np.ones((n_samples, n_features), dtype=bool)
+        X_int = np.zeros((n_samples, n_features), dtype=int, order="F")
+        X_mask = np.ones((n_samples, n_features), dtype=bool, order="F")
 
         columns_with_unknown = []
         for i in range(n_features):

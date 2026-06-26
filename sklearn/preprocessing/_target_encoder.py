@@ -390,12 +390,14 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             X_out = np.empty(
                 (X_ordinal.shape[0], X_ordinal.shape[1] * len(self.classes_)),
                 dtype=np.float64,
+                order="F",
             )
         else:
             X_out = np.empty_like(X_ordinal, dtype=np.float64)
 
         for train_idx, test_idx in cv.split(X, y, **routed_params.splitter.split):
             X_train, y_train = X_ordinal[train_idx, :], y_encoded[train_idx]
+            X_train = np.asfortranarray(X_train)
             y_train_mean = np.mean(y_train, axis=0)
 
             if self.target_type_ == "multiclass":
@@ -453,6 +455,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             X_out = np.empty(
                 (X_ordinal.shape[0], X_ordinal.shape[1] * len(self.classes_)),
                 dtype=np.float64,
+                order="F",
             )
         else:
             X_out = np.empty_like(X_ordinal, dtype=np.float64)

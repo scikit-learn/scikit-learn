@@ -18,7 +18,7 @@ ctypedef fused Y_DTYPE:
 
 
 def _fit_encoding_fast(
-    INT_DTYPE[:, ::1] X_int,
+    INT_DTYPE[::1, :] X_int,
     const Y_DTYPE[:] y,
     int64_t[::1] n_categories,
     double smooth,
@@ -78,7 +78,7 @@ def _fit_encoding_fast(
 
 
 def _fit_encoding_fast_auto_smooth(
-    INT_DTYPE[:, ::1] X_int,
+    INT_DTYPE[::1, :] X_int,
     const Y_DTYPE[:] y,
     int64_t[::1] n_categories,
     double y_mean,
