@@ -1,0 +1,3 @@
+- Fixed :func:`metrics.median_absolute_error` to handle integer inputs for
+  array namespaces that do not support integer inputs to `quantile` (e.g., PyTorch).
+  By :user:`Lucy Liu <lucyleeow>`.
