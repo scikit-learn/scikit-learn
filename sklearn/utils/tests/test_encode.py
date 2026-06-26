@@ -215,7 +215,7 @@ def test_unique_categorical_pandas():
         ["a", None, "b", "a"],
         dtype=pd.CategoricalDtype(["b", "a", "c"]),
     )
-    expected_uniques = np.array(["b", "a", "c", np.nan], dtype=object)
+    expected_uniques = np.array(["a", "b", "c", np.nan], dtype=object)
 
     uniques, inverse, counts = _unique_categorical(
         values, return_inverse=True, return_counts=True
@@ -223,15 +223,15 @@ def test_unique_categorical_pandas():
 
     assert_array_equal(uniques[:-1], expected_uniques[:-1])
     assert np.isnan(uniques[-1])
-    assert_array_equal(inverse, [1, 3, 0, 1])
-    assert_array_equal(counts, [1, 2, 0, 1])
+    assert_array_equal(inverse, [0, 3, 1, 0])
+    assert_array_equal(counts, [2, 1, 0, 1])
 
 
 def test_unique_categorical_polars():
     pl = pytest.importorskip("polars")
 
     values = pl.Series("x", ["a", None, "b", "a"], dtype=pl.Enum(["b", "a", "c"]))
-    expected_uniques = np.array(["b", "a", "c", np.nan], dtype=object)
+    expected_uniques = np.array(["a", "b", "c", np.nan], dtype=object)
 
     uniques, inverse, counts = _unique_categorical(
         values, return_inverse=True, return_counts=True
@@ -239,8 +239,8 @@ def test_unique_categorical_polars():
 
     assert_array_equal(uniques[:-1], expected_uniques[:-1])
     assert np.isnan(uniques[-1])
-    assert_array_equal(inverse, [1, 3, 0, 1])
-    assert_array_equal(counts, [1, 2, 0, 1])
+    assert_array_equal(inverse, [0, 3, 1, 0])
+    assert_array_equal(counts, [2, 1, 0, 1])
 
 
 def test_unique_util_with_all_missing_values():

@@ -1507,7 +1507,7 @@ def test_ohe_missing_value_support_pandas_categorical(pd_nan_type, handle_unknow
     assert np.isnan(ohe.categories_[0][-1])
 
 
-def test_one_hot_encoder_pandas_categorical_uses_dtype_categories():
+def test_one_hot_encoder_pandas_categorical_sorted_categories():
     pd = pytest.importorskip("pandas")
 
     dtype = pd.CategoricalDtype(["b", "a", "c"])
@@ -1515,8 +1515,8 @@ def test_one_hot_encoder_pandas_categorical_uses_dtype_categories():
 
     ohe = OneHotEncoder(sparse_output=False).fit(df)
 
-    assert_array_equal(ohe.categories_[0], ["b", "a", "c"])
-    assert_allclose(ohe.transform(df), [[0, 1, 0], [1, 0, 0], [0, 1, 0]])
+    assert_array_equal(ohe.categories_[0], ["a", "b", "c"])
+    assert_allclose(ohe.transform(df), [[1, 0, 0], [0, 1, 0], [1, 0, 0]])
 
 
 def test_one_hot_encoder_pandas_categorical_transform_unknown_category():
@@ -1537,7 +1537,7 @@ def test_one_hot_encoder_pandas_categorical_transform_unknown_category():
         ohe.transform(df_test)
 
 
-def test_one_hot_encoder_polars_enum_uses_dtype_categories():
+def test_one_hot_encoder_polars_enum_sorted_categories():
     pl = pytest.importorskip("polars")
 
     dtype = pl.Enum(["b", "a", "c"])
@@ -1545,8 +1545,8 @@ def test_one_hot_encoder_polars_enum_uses_dtype_categories():
 
     ohe = OneHotEncoder(sparse_output=False).fit(df)
 
-    assert_array_equal(ohe.categories_[0], ["b", "a", "c"])
-    assert_allclose(ohe.transform(df), [[0, 1, 0], [1, 0, 0], [0, 1, 0]])
+    assert_array_equal(ohe.categories_[0], ["a", "b", "c"])
+    assert_allclose(ohe.transform(df), [[1, 0, 0], [0, 1, 0], [1, 0, 0]])
 
 
 def test_one_hot_encoder_polars_categorical_missing_values():
@@ -1557,9 +1557,9 @@ def test_one_hot_encoder_polars_categorical_missing_values():
 
     ohe = OneHotEncoder(sparse_output=False).fit(df)
 
-    assert_array_equal(ohe.categories_[0][:-1], ["b", "a", "c"])
+    assert_array_equal(ohe.categories_[0][:-1], ["a", "b", "c"])
     assert np.isnan(ohe.categories_[0][-1])
-    assert_allclose(ohe.transform(df), [[0, 1, 0, 0], [0, 0, 0, 1], [1, 0, 0, 0]])
+    assert_allclose(ohe.transform(df), [[1, 0, 0, 0], [0, 0, 0, 1], [0, 1, 0, 0]])
 
 
 def test_one_hot_encoder_polars_categorical_transform_unknown_category():
@@ -1788,7 +1788,7 @@ def test_ordinal_encoder_missing_value_support_pandas_categorical(
     assert np.isnan(X_inverse[2, 0])
 
 
-def test_ordinal_encoder_pandas_categorical_uses_dtype_categories():
+def test_ordinal_encoder_pandas_categorical_sorted_categories():
     pd = pytest.importorskip("pandas")
 
     dtype = pd.CategoricalDtype(["b", "a", "c"])
@@ -1796,11 +1796,11 @@ def test_ordinal_encoder_pandas_categorical_uses_dtype_categories():
 
     ordinal = OrdinalEncoder().fit(df)
 
-    assert_array_equal(ordinal.categories_[0], ["b", "a", "c"])
-    assert_allclose(ordinal.transform(df), [[1], [0], [1]])
+    assert_array_equal(ordinal.categories_[0], ["a", "b", "c"])
+    assert_allclose(ordinal.transform(df), [[0], [1], [0]])
 
 
-def test_ordinal_encoder_polars_enum_uses_dtype_categories():
+def test_ordinal_encoder_polars_enum_sorted_categories():
     pl = pytest.importorskip("polars")
 
     dtype = pl.Enum(["b", "a", "c"])
@@ -1808,8 +1808,8 @@ def test_ordinal_encoder_polars_enum_uses_dtype_categories():
 
     ordinal = OrdinalEncoder().fit(df)
 
-    assert_array_equal(ordinal.categories_[0], ["b", "a", "c"])
-    assert_allclose(ordinal.transform(df), [[1], [0], [1]])
+    assert_array_equal(ordinal.categories_[0], ["a", "b", "c"])
+    assert_allclose(ordinal.transform(df), [[0], [1], [0]])
 
 
 @pytest.mark.parametrize(
@@ -2380,7 +2380,7 @@ def test_ordinal_encoder_infrequent_pandas_categorical_unobserved_categories():
 
     ordinal = OrdinalEncoder(max_categories=2).fit(df)
 
-    assert_array_equal(ordinal.categories_[0], ["b", "a", "c"])
+    assert_array_equal(ordinal.categories_[0], ["a", "b", "c"])
     assert_array_equal(ordinal.infrequent_categories_[0], ["b", "c"])
     assert_allclose(ordinal.transform(df), [[0], [1], [0]])
 
@@ -2393,7 +2393,7 @@ def test_ordinal_encoder_infrequent_polars_enum_unobserved_categories():
 
     ordinal = OrdinalEncoder(max_categories=2).fit(df)
 
-    assert_array_equal(ordinal.categories_[0], ["b", "a", "c"])
+    assert_array_equal(ordinal.categories_[0], ["a", "b", "c"])
     assert_array_equal(ordinal.infrequent_categories_[0], ["b", "c"])
     assert_allclose(ordinal.transform(df), [[0], [1], [0]])
 

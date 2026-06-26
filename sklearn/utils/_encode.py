@@ -216,7 +216,14 @@ def _get_categorical_categories_and_codes(values):
 
 
 def _unique_categorical(values, *, return_inverse, return_counts):
-    uniques, codes, isna = _get_categorical_categories_and_codes(values)
+    categorical_categories, codes, isna = _get_categorical_categories_and_codes(values)
+    uniques = _unique(categorical_categories)
+    if np.array_equal(categorical_categories, uniques):
+        code_mapping = None
+    else:
+        code_mapping = _encode(
+            categorical_categories, uniques=uniques, check_unknown=False
+        )
     has_missing = isna.any()
     if has_missing:
         uniques = uniques.astype(object, copy=False)
@@ -225,6 +232,8 @@ def _unique_categorical(values, *, return_inverse, return_counts):
         return uniques
 
     codes = codes.copy()
+    if code_mapping is not None:
+        codes[~isna] = code_mapping[codes[~isna]]
     if has_missing:
         codes[isna] = uniques.size - 1
 
