@@ -29,6 +29,8 @@ jobs:
             additional_commit_message: "[free-threaded]"
           - name: array-api
             update_script_args: "--select-tag cuda"
+          - name: lint
+            update_script_args: "--select-tag lint"
 
     steps:
       - uses: actions/checkout@v7
