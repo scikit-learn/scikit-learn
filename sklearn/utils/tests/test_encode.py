@@ -9,7 +9,7 @@ from sklearn.utils._encode import (
     _encode,
     _get_counts,
     _unique,
-    _unique_pandas_categorical,
+    _unique_categorical,
 )
 
 
@@ -208,7 +208,7 @@ def test_unique_util_missing_values_numeric():
     assert_array_equal(encoded, expected_inverse)
 
 
-def test_unique_pandas_categorical():
+def test_unique_categorical_pandas():
     pd = pytest.importorskip("pandas")
 
     values = pd.Series(
@@ -217,7 +217,23 @@ def test_unique_pandas_categorical():
     )
     expected_uniques = np.array(["b", "a", "c", np.nan], dtype=object)
 
-    uniques, inverse, counts = _unique_pandas_categorical(
+    uniques, inverse, counts = _unique_categorical(
+        values, return_inverse=True, return_counts=True
+    )
+
+    assert_array_equal(uniques[:-1], expected_uniques[:-1])
+    assert np.isnan(uniques[-1])
+    assert_array_equal(inverse, [1, 3, 0, 1])
+    assert_array_equal(counts, [1, 2, 0, 1])
+
+
+def test_unique_categorical_polars():
+    pl = pytest.importorskip("polars")
+
+    values = pl.Series("x", ["a", None, "b", "a"], dtype=pl.Enum(["b", "a", "c"]))
+    expected_uniques = np.array(["b", "a", "c", np.nan], dtype=object)
+
+    uniques, inverse, counts = _unique_categorical(
         values, return_inverse=True, return_counts=True
     )
 

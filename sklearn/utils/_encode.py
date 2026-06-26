@@ -4,6 +4,7 @@
 from collections import Counter
 from typing import NamedTuple
 
+import narwhals.stable.v2 as nw
 import numpy as np
 
 from sklearn.utils._array_api import _isin, device, get_namespace, xpx
@@ -193,18 +194,38 @@ def _unique_python(values, *, return_inverse, return_counts):
     return ret[0] if len(ret) == 1 else ret
 
 
-def _unique_pandas_categorical(values, *, return_inverse, return_counts):
-    uniques = values.cat.categories.to_numpy()
-    codes = values.cat.codes.to_numpy()
-    isna = codes == -1
+def _get_categorical_categories_and_codes(values):
+    """Return categorical categories, integer codes, and the missing value mask."""
+    if hasattr(values, "cat") and hasattr(values.cat, "categories"):
+        categories = values.cat.categories.to_numpy()
+        codes = values.cat.codes.to_numpy()
+        isna = codes == -1
+        return categories, codes, isna
+
+    values = nw.from_native(values, allow_series=True)
+    categories = values.cat.get_categories().to_numpy()
+
+    codes = values.cast(nw.UInt32).to_numpy()
+    isna = (
+        np.isnan(codes) if codes.dtype.kind == "f" else np.zeros_like(codes, dtype=bool)
+    )
+
+    codes_no_missing = np.zeros_like(codes, dtype=int)
+    codes_no_missing[~isna] = codes[~isna].astype(int)
+    return categories, codes_no_missing, isna
+
+
+def _unique_categorical(values, *, return_inverse, return_counts):
+    uniques, codes, isna = _get_categorical_categories_and_codes(values)
     has_missing = isna.any()
     if has_missing:
+        uniques = uniques.astype(object, copy=False)
         uniques = np.r_[uniques, np.nan]
     if not return_inverse and not return_counts:
         return uniques
 
+    codes = codes.copy()
     if has_missing:
-        codes = codes.copy()
         codes[isna] = uniques.size - 1
 
     ret = (uniques,)
@@ -357,7 +378,9 @@ def _get_counts(values, uniques):
         output = np.zeros(len(uniques), dtype=np.int64)
         for i, item in enumerate(uniques):
             output[i] = counter[item]
-        if is_scalar_nan(uniques[-1]):
+        if is_scalar_nan(uniques[-1]) and not any(
+            is_scalar_nan(item) for item in uniques[:-1]
+        ):
             output[-1] = sum(
                 val for item, val in counter.items() if is_scalar_nan(item)
             )

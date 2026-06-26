@@ -1537,6 +1537,49 @@ def test_one_hot_encoder_pandas_categorical_transform_unknown_category():
         ohe.transform(df_test)
 
 
+def test_one_hot_encoder_polars_enum_uses_dtype_categories():
+    pl = pytest.importorskip("polars")
+
+    dtype = pl.Enum(["b", "a", "c"])
+    df = pl.DataFrame({"col1": pl.Series("col1", ["a", "b", "a"], dtype=dtype)})
+
+    ohe = OneHotEncoder(sparse_output=False).fit(df)
+
+    assert_array_equal(ohe.categories_[0], ["b", "a", "c"])
+    assert_allclose(ohe.transform(df), [[0, 1, 0], [1, 0, 0], [0, 1, 0]])
+
+
+def test_one_hot_encoder_polars_categorical_missing_values():
+    pl = pytest.importorskip("polars")
+
+    dtype = pl.Enum(["b", "a", "c"])
+    df = pl.DataFrame({"col1": pl.Series("col1", ["a", None, "b"], dtype=dtype)})
+
+    ohe = OneHotEncoder(sparse_output=False).fit(df)
+
+    assert_array_equal(ohe.categories_[0][:-1], ["b", "a", "c"])
+    assert np.isnan(ohe.categories_[0][-1])
+    assert_allclose(ohe.transform(df), [[0, 1, 0, 0], [0, 0, 0, 1], [1, 0, 0, 0]])
+
+
+def test_one_hot_encoder_polars_categorical_transform_unknown_category():
+    pl = pytest.importorskip("polars")
+
+    dtype = pl.Enum(["a", "b"])
+    df = pl.DataFrame({"col1": pl.Series("col1", ["a", "b"], dtype=dtype)})
+    test_dtype = pl.Enum(["a", "b", "c"])
+    df_test = pl.DataFrame({"col1": pl.Series("col1", ["a", "c"], dtype=test_dtype)})
+
+    ohe = OneHotEncoder(sparse_output=False, handle_unknown="ignore").fit(df)
+
+    assert_allclose(ohe.transform(df_test), [[1, 0], [0, 0]])
+
+    ohe = OneHotEncoder(sparse_output=False, handle_unknown="error").fit(df)
+    err_msg = r"Found unknown categories \['c'\] in column 0 during transform"
+    with pytest.raises(ValueError, match=err_msg):
+        ohe.transform(df_test)
+
+
 @pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist", "warn"])
 def test_ohe_drop_first_handle_unknown_ignore_warns(handle_unknown):
     """Check drop='first' and handle_unknown='ignore'/'infrequent_if_exist'
@@ -1750,6 +1793,18 @@ def test_ordinal_encoder_pandas_categorical_uses_dtype_categories():
 
     dtype = pd.CategoricalDtype(["b", "a", "c"])
     df = pd.DataFrame({"col1": pd.Series(["a", "b", "a"], dtype=dtype)})
+
+    ordinal = OrdinalEncoder().fit(df)
+
+    assert_array_equal(ordinal.categories_[0], ["b", "a", "c"])
+    assert_allclose(ordinal.transform(df), [[1], [0], [1]])
+
+
+def test_ordinal_encoder_polars_enum_uses_dtype_categories():
+    pl = pytest.importorskip("polars")
+
+    dtype = pl.Enum(["b", "a", "c"])
+    df = pl.DataFrame({"col1": pl.Series("col1", ["a", "b", "a"], dtype=dtype)})
 
     ordinal = OrdinalEncoder().fit(df)
 
@@ -2322,6 +2377,19 @@ def test_ordinal_encoder_infrequent_pandas_categorical_unobserved_categories():
 
     dtype = pd.CategoricalDtype(["b", "a", "c"])
     df = pd.DataFrame({"col1": pd.Series(["a", "b", "a"], dtype=dtype)})
+
+    ordinal = OrdinalEncoder(max_categories=2).fit(df)
+
+    assert_array_equal(ordinal.categories_[0], ["b", "a", "c"])
+    assert_array_equal(ordinal.infrequent_categories_[0], ["b", "c"])
+    assert_allclose(ordinal.transform(df), [[0], [1], [0]])
+
+
+def test_ordinal_encoder_infrequent_polars_enum_unobserved_categories():
+    pl = pytest.importorskip("polars")
+
+    dtype = pl.Enum(["b", "a", "c"])
+    df = pl.DataFrame({"col1": pl.Series("col1", ["a", "b", "a"], dtype=dtype)})
 
     ordinal = OrdinalEncoder(max_categories=2).fit(df)
 
