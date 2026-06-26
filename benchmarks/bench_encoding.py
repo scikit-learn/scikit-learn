@@ -37,29 +37,13 @@ X = pd.concat([X] * scale)
 y = np.concat([y.astype(np.float32).values] * scale)
 
 
-def _as_polars(X, string_cols, format):
+if args.polars:
     import polars as pl
 
-    string_cols = set(string_cols)
-    data = {}
-    for col in X.columns:
-        if col in string_cols and format != "integer":
-            data[col] = [
-                None if missing else str(value)
-                for value, missing in zip(X[col], X[col].isna())
-            ]
-        else:
-            data[col] = X[col].to_list()
-
-    X_polars = pl.DataFrame(data)
+    # needs pyarrow to work:
+    X = pl.from_pandas(X, include_index=False)
     if format == "categorical":
-        categorical_cols = [col for col in X_polars.columns if col in string_cols]
-        X_polars = X_polars.with_columns(pl.col(categorical_cols).cast(pl.Categorical))
-    return X_polars
-
-
-if args.polars:
-    X = _as_polars(X, string_cols, args.format)
+        X = X.with_columns(pl.col(string_cols).cast(pl.Categorical))
 
 # define encoders:
 encoders = {
@@ -71,7 +55,7 @@ encoders = {
 
 # small measurement helper:
 def measure_ms(func):
-    n_repeats = max(300 // scale, 1)
+    n_repeats = max(100 // scale, 1)
     return round(timeit(func, number=n_repeats) * 1000 / n_repeats, 1)
 
 
