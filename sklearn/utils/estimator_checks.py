@@ -1267,17 +1267,21 @@ def _check_array_api_core(
         with config_context(array_api_dispatch=True):
             result_ns = get_namespace(result_xp)[0].__name__
         # `predict` would be string when `y` is string
-        if not (other_ns_and_device == "string" and method_name == "predict"):
-            assert result_ns == X_ns, (
-                f"'{method}' output is in wrong namespace, expected {X_ns}, "
-                f"got {result_ns}."
-            )
+        expected_ns = X_ns
+        if other_ns_and_device == "string" and method_name == "predict":
+            expected_ns = y_ns
+        assert result_ns == expected_ns, (
+            f"'{method}' output is in wrong namespace, expected {expected_ns}, "
+            f"got {result_ns}."
+        )
 
         if expect_only_array_outputs:
-            # `predict` would be string and thus different device when `y` is string
-            if not (other_ns_and_device == "string" and method_name == "predict"):
-                with config_context(array_api_dispatch=True):
-                    assert array_device(result_xp) == array_device(X_xp)
+            # `predict` would be string and on same device as `y`
+            expected_xp = X_xp
+            if other_ns_and_device == "string" and method_name == "predict":
+                expected_xp = y_xp
+            with config_context(array_api_dispatch=True):
+                assert array_device(result_xp) == array_device(expected_xp)
 
             result_xp_np = move_to(result_xp, xp=np, device="cpu")
             if check_values:
