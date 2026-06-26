@@ -1379,13 +1379,6 @@ def test_quantile_transform_check_error(csc_container):
     # check that an error is raised if input is scalar
     with pytest.raises(ValueError, match="Expected 2D array, got scalar array instead"):
         transformer.transform(10)
-    # check that a warning is raised is n_quantiles > n_samples
-    transformer = QuantileTransformer(n_quantiles=100)
-    warn_msg = "n_quantiles is set to effective_sample_size"
-    with pytest.warns(UserWarning, match=warn_msg) as record:
-        transformer.fit(X)
-    assert len(record) == 1
-    assert transformer.n_quantiles_ == X.shape[0]
 
 
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)

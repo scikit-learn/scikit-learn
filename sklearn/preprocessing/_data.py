@@ -2844,7 +2844,8 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
                 sample_weight=sample_weight,
                 percentile_rank=references,
                 average=True,
-            ).T
+            )
+            self.quantiles_ = np.asarray(self.quantiles_).T
         else:
             self.quantiles_ = np.nanpercentile(
                 X,
@@ -2852,7 +2853,10 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
                 method="averaged_inverted_cdf",
                 axis=0,
             )
-        # self.quantiles_ = np.unique(self.quantiles_, axis=0)
+        self.quantiles_, quantile_idxs = np.unique(
+            self.quantiles_, return_index=True, axis=0
+        )
+        self.references_ = self.references_[quantile_idxs]
 
     def _sparse_fit(self, X, random_state):
         """Compute percentiles for sparse matrices.
@@ -2939,6 +2943,8 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             raise NotImplementedError(
                 "sample_weight is not supported for sparse input."
             )
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         rng = check_random_state(self.random_state)
 
