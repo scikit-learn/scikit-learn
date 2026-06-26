@@ -3,7 +3,7 @@
 This module contains weight boosting estimators for both classification and
 regression.
 
-The module structure is the following:
+The module structure is as following:
 
 - The `BaseWeightBoosting` base class implements a common ``fit`` method
   for all the estimators in the module. Regression and classification
@@ -639,9 +639,8 @@ class AdaBoostClassifier(
         Returns
         -------
         score : ndarray of shape of (n_samples, k)
-            The decision function of the input samples. The order of
-            outputs is the same as that of the :term:`classes_` attribute.
-            Binary classification is a special cases with ``k == 1``,
+            The decision function of the input samples. The order of outputs is the same as that of the :term:`classes_` attribute.
+            Binary classification is a special case with ``k == 1``,
             otherwise ``k==n_classes``. For binary classification,
             values closer to -1 or 1 mean more like the first or second
             class in ``classes_``, respectively.
@@ -685,9 +684,8 @@ class AdaBoostClassifier(
         Yields
         ------
         score : generator of ndarray of shape (n_samples, k)
-            The decision function of the input samples. The order of
-            outputs is the same of that of the :term:`classes_` attribute.
-            Binary classification is a special cases with ``k == 1``,
+            The decision function of the input samples. The order of outputs is the same as that of the :term:`classes_` attribute.
+            Binary classification is a special case with ``k == 1``,
             otherwise ``k==n_classes``. For binary classification,
             values closer to -1 or 1 mean more like the first or second
             class in ``classes_``, respectively.
@@ -756,8 +754,7 @@ class AdaBoostClassifier(
         Returns
         -------
         p : ndarray of shape (n_samples, n_classes)
-            The class probabilities of the input samples. The order of
-            outputs is the same of that of the :term:`classes_` attribute.
+            The class probabilities of the input samples. The order of outputs is the same as that of the :term:`classes_` attribute.
         """
         check_is_fitted(self)
         n_classes = self.n_classes_
@@ -789,8 +786,7 @@ class AdaBoostClassifier(
         Yields
         ------
         p : generator of ndarray of shape (n_samples,)
-            The class probabilities of the input samples. The order of
-            outputs is the same of that of the :term:`classes_` attribute.
+            The class probabilities of the input samples. The order of outputs is the same as that of the :term:`classes_` attribute.
         """
 
         n_classes = self.n_classes_
@@ -814,8 +810,7 @@ class AdaBoostClassifier(
         Returns
         -------
         p : ndarray of shape (n_samples, n_classes)
-            The class probabilities of the input samples. The order of
-            outputs is the same of that of the :term:`classes_` attribute.
+            The class probabilities of the input samples. The order of outputs is the same as that of the :term:`classes_` attribute.
         """
         return np.log(self.predict_proba(X))
 
@@ -823,7 +818,7 @@ class AdaBoostClassifier(
 class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoosting):
     """An AdaBoost regressor.
 
-    An AdaBoost [1] regressor is a meta-estimator that begins by fitting a
+    An AdaBoost [1]_ regressor is a meta-estimator that begins by fitting a
     regressor on the original dataset and then fits additional copies of the
     regressor on the same dataset but where the weights of instances are
     adjusted according to the error of the current prediction. As such,
