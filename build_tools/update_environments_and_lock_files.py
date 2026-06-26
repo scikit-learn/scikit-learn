@@ -354,7 +354,6 @@ build_metadata_list = [
             "towncrier",
         ],
         "pip_dependencies": [
-            "sphinxcontrib-sass",
             # TODO: move pandas to conda_dependencies when pandas 1.5.1 is the minimum
             # supported version
             "pandas",
@@ -378,7 +377,6 @@ build_metadata_list = [
             "pooch": "min",
             "pyamg": "min",
             "sphinx-design": "min",
-            "sphinxcontrib-sass": "min",
             "sphinx-remove-toctrees": "min",
             "pydata-sphinx-theme": "min",
             "towncrier": "min",
@@ -414,9 +412,7 @@ build_metadata_list = [
             "jupyterlite-sphinx",
             "jupyterlite-pyodide-kernel",
         ],
-        "pip_dependencies": [
-            "sphinxcontrib-sass",
-        ],
+        "pip_dependencies": [],
         "package_constraints": {
             "python": "3.14",
         },
