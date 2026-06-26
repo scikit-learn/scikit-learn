@@ -2057,7 +2057,8 @@ def check_array_api_metric(
     a_xp = xp.asarray(a_np, device=device)
     b_xp = xp.asarray(b_np, device=device)
 
-    metric_np = metric(a_np, b_np, **metric_kwargs)
+    with config_context(array_api_dispatch=False):
+        metric_np = metric(a_np, b_np, **metric_kwargs)
 
     if metric_kwargs.get("sample_weight") is not None:
         metric_kwargs["sample_weight"] = xp.asarray(
