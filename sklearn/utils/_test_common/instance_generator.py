@@ -985,6 +985,10 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         ),
     },
     GaussianNB: {
+        # TODO: Remove once fixed: https://github.com/pytorch/pytorch/issues/188128
+        "check_array_api_mixed_inputs": (
+            "PyTorch bug when asarray used on array-api-strict boolean array"
+        ),
         "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     GradientBoostingClassifier: {

@@ -1155,6 +1155,7 @@ def _check_array_api_core(
         est_xp.fit(X_xp, y_xp, **fit_kwargs_xp)
 
     X_ns = xp_X.__name__
+    y_ns = xp_other.__name__
 
     array_attributes = {
         key: value for key, value in vars(est).items() if isinstance(value, np.ndarray)
@@ -1164,14 +1165,15 @@ def _check_array_api_core(
     # except `classes_`, to allow it to be string when `y` is string.
     for key, attribute in array_attributes.items():
         est_xp_param = getattr(est_xp, key)
-        if key != "classes_":
-            with config_context(array_api_dispatch=True):
-                attribute_ns = get_namespace(est_xp_param)[0].__name__
-                assert array_device(est_xp_param) == array_device(X_xp)
-            assert attribute_ns == X_ns, (
-                f"'{key}' attribute is in wrong namespace, expected {X_ns} "
-                f"got {attribute_ns}"
-            )
+        # `classes_` should be in same ns and device as `y`
+        expected_xp, expected_ns = (y_xp, y_ns) if key == "classes_" else (X_xp, X_ns)
+        with config_context(array_api_dispatch=True):
+            attribute_ns = get_namespace(est_xp_param)[0].__name__
+            assert array_device(est_xp_param) == array_device(expected_xp)
+        assert attribute_ns == expected_ns, (
+            f"'{key}' attribute is in wrong namespace, expected {expected_ns} "
+            f"got {attribute_ns}"
+        )
 
         est_xp_param_np = move_to(est_xp_param, xp=np, device="cpu")
         if check_values:
