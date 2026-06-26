@@ -718,6 +718,15 @@ def test_pca_zero_noise_variance_edge_cases(svd_solver):
     pca.score(X.T)
 
 
+def test_pca_get_precision_singular_covariance():
+    """Check get_precision uses the pseudo-inverse for rank-deficient covariance."""
+    X = np.arange(50, dtype=np.float64).reshape(5, 10)
+    pca = PCA().fit(X)
+
+    assert pca.noise_variance_ == 0
+    assert_allclose(pca.get_precision(), np.linalg.pinv(pca.get_covariance()))
+
+
 @pytest.mark.parametrize(
     "n_samples, n_features, n_components, expected_solver",
     [

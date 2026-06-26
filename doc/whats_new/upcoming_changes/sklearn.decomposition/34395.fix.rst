@@ -1,0 +1,3 @@
+- |Fix| :meth:`decomposition.PCA.get_precision` now uses a pseudo-inverse
+  when the estimated covariance is singular.
+  By :user:`dannyward630`.
