@@ -639,7 +639,8 @@ class AdaBoostClassifier(
         Returns
         -------
         score : ndarray of shape of (n_samples, k)
-            The decision function of the input samples. The order of outputs is the same as that of the :term:`classes_` attribute.
+            The decision function of the input samples. The order of
+            outputs is the same as that of the :term:`classes_` attribute.
             Binary classification is a special case with ``k == 1``,
             otherwise ``k==n_classes``. For binary classification,
             values closer to -1 or 1 mean more like the first or second
@@ -684,7 +685,8 @@ class AdaBoostClassifier(
         Yields
         ------
         score : generator of ndarray of shape (n_samples, k)
-            The decision function of the input samples. The order of outputs is the same as that of the :term:`classes_` attribute.
+            The decision function of the input samples. The order of
+            outputs is the same as that of the :term:`classes_` attribute.
             Binary classification is a special case with ``k == 1``,
             otherwise ``k==n_classes``. For binary classification,
             values closer to -1 or 1 mean more like the first or second
@@ -754,7 +756,8 @@ class AdaBoostClassifier(
         Returns
         -------
         p : ndarray of shape (n_samples, n_classes)
-            The class probabilities of the input samples. The order of outputs is the same as that of the :term:`classes_` attribute.
+            The class probabilities of the input samples. The order of
+            outputs is the same as that of the :term:`classes_` attribute.
         """
         check_is_fitted(self)
         n_classes = self.n_classes_
@@ -786,7 +789,8 @@ class AdaBoostClassifier(
         Yields
         ------
         p : generator of ndarray of shape (n_samples,)
-            The class probabilities of the input samples. The order of outputs is the same as that of the :term:`classes_` attribute.
+            The class probabilities of the input samples. The order of
+            outputs is the same as that of the :term:`classes_` attribute.
         """
 
         n_classes = self.n_classes_
@@ -810,7 +814,8 @@ class AdaBoostClassifier(
         Returns
         -------
         p : ndarray of shape (n_samples, n_classes)
-            The class probabilities of the input samples. The order of outputs is the same as that of the :term:`classes_` attribute.
+            The class probabilities of the input samples. The order of
+            outputs is the same as that of the :term:`classes_` attribute.
         """
         return np.log(self.predict_proba(X))
 
