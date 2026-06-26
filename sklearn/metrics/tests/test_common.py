@@ -2683,13 +2683,19 @@ def test_array_api_compliance(
 
 def _check_output(out_np, out_xp, xp_to, y2_xp, msg=""):
     if isinstance(out_np, float):
-        assert isinstance(out_xp, float), f"{msg} Type mismatch - expected float."
-    elif hasattr(out_np, "shape"):
-        assert hasattr(out_xp, "shape"), f"{msg} Type mismatch - expected array-like."
-        assert get_namespace(out_xp)[0] == xp_to, f"{msg} Namespace mismatch."
-        assert array_api_device(out_xp) == array_api_device(y2_xp), (
-            f"{msg} Device mismatch."
+        assert isinstance(out_xp, float), (
+            f"{msg} Type mismatch; got {type(out_xp)}, expected float."
         )
+    elif hasattr(out_np, "shape"):
+        assert hasattr(out_xp, "shape"), (
+            f"{msg} Type mismatch; got {type(out_xp)}, expected array-like."
+        )
+        assert (out_xp_ns := get_namespace(out_xp)[0]) == xp_to, (
+            f"{msg} Namespace mismatch; got {out_xp_ns}, expected {xp_to}"
+        )
+        assert (out_xp_device := array_api_device(out_xp)) == (
+            y2_xp_device := array_api_device(y2_xp)
+        ), f"{msg} Device mismatch; got {out_xp_device}, expected {y2_xp_device}"
     # `classification_report` returns str (with default `output_dict=False`)
     elif isinstance(out_np, str):
         assert isinstance(out_xp, str), f"{msg} Type mismatch - expected string."
