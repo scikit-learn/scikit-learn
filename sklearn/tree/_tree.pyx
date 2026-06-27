@@ -56,23 +56,17 @@ cdef intp_t _TREE_UNDEFINED = TREE_UNDEFINED
 
 MAX_NUM_CATEGORIES_PY = N_BITSETS
 
-# Note: an old simple method for getting the numpy dtype of Node
-# Build the corresponding numpy dtype for Node.
+# Note this old but simple method for getting the numpy dtype of Node:
 # This works by casting `dummy` to an array of Node of length 1, which numpy
 # can construct a `dtype`-object for. See https://stackoverflow.com/q/62448946
 # for a more detailed explanation.
 # cdef Node dummy
 # NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
-
-# NODE_DTYPE mirrors the flattened Node struct in _utils.pxd. On 64-bit
-# platforms, the aligned layout is:
-# - threshold at offset 24.
-# - left_cat_bitset at offset 32, currently 32 bytes.
-# - impurity at offset 64.
-# - n_node_samples at offset 72.
-# - weighted_n_node_samples at offset 80.
-# - missing_go_to_left at offset 88.
-# NumPy pads the dtype to 96 bytes to match sizeof(Node).
+#
+# Instead, we explicitly construct NODE_DTYPE, which mirrors the flattened Node struct
+# in _utils.pxd. It has to be "aligned" because the C struct is packed.
+# In parenthesis, we give the memory offsets on 64-bit platforms. In total size
+# is 96 bytes because numpy pads it to to match sizeof(Node).
 NODE_DTYPE = np.dtype([
     ('left_child',              np.intp),            # 8 bytes  (offset 0)
     ('right_child',             np.intp),            # 8 bytes  (offset 8)
@@ -833,9 +827,8 @@ cdef class Tree:
         # per feature via the Python caller. So this array will never be
         # "None".
         safe_realloc(&self.n_categories, n_features)
-        n_categories = n_categories.astype(np.intp)
         for f in range(n_features):
-            self.n_categories[f] = n_categories[f]
+            self.n_categories[f] = <np.intp>n_categories[f]
 
         # Inner structures
         self.max_depth = 0
