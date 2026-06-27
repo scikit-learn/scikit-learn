@@ -32,10 +32,6 @@ from sklearn.utils._sorting cimport simultaneous_sort
 # in SparsePartitioner
 cdef float32_t EXTRACT_NNZ_SWITCH = 0.1
 
-# Allow for 32 bit float comparisons
-cdef float64_t INFINITY_64t = np.inf
-
-
 @final
 cdef class DensePartitioner:
     """Partitioner specialized for dense data.
@@ -487,41 +483,6 @@ cdef class DensePartitioner:
                 left_cat_bitset,
             )
 
-    cdef inline float64_t position_to_split_threshold(
-        self, intp_t p_prev, intp_t position, bint missing_go_to_left
-    ) noexcept nogil:
-        """Convert a split position into a concrete split value.
-
-        - For numerical features, this returns the usual mid-point threshold.
-
-        From the numerical threshold, one can split the samples into
-        left and right child.
-
-        Note: for missing values, this assumes the missing values are on the right-side of
-        the array.
-        """
-        cdef float64_t threshold
-        cdef intp_t end_non_missing = self.end - self.n_missing
-
-        # if we split numerically, compute a numerical threshold
-        if position == end_non_missing and not missing_go_to_left:
-            # Split with the right node being only the missing values.
-            # Note that partioner.next_p never considers candidate splits for which the
-            # left node would move only the the missing values as this would be
-            # redundant with the split that only send missing values to the right. We
-            # use inf as a threshold because nan <= inf is false according to IEEE 754.
-            threshold = INFINITY_64t
-            return threshold
-
-        # Split between two non-missing values: sum of halves is
-        # used to avoid infinite value.
-        threshold = (
-            self.feature_values[p_prev] / 2.0 + self.feature_values[position] / 2.0
-        )
-
-        return threshold
-
-
 @final
 cdef class SparsePartitioner:
     """Partitioner specialized for sparse CSC data.
@@ -768,35 +729,6 @@ cdef class SparsePartitioner:
         if self.n_categories > 0:
             # TODO: not supported for now, so return an empty bitset.
             init_bitset(left_cat_bitset)
-
-    cdef inline float64_t position_to_split_threshold(
-        self, intp_t p_prev, intp_t p, bint missing_go_to_left
-    ) noexcept nogil:
-        """Convert a split position into a concrete split value.
-
-        - For numerical features, this returns the usual mid-point threshold.
-        - For categorical features, it converts the split position into a bitset
-        over categories.
-
-        From the numerical threshold, or bitset, one can split the samples into
-        left and right child.
-        """
-        cdef float64_t threshold
-        cdef intp_t end_non_missing = self.end - self.n_missing
-
-        # if we split numerically, compute a numerical threshold
-        if p == end_non_missing:
-            # split with the right node being only the missing values
-            threshold = INFINITY_64t
-            return threshold
-
-        # split between two non-missing values
-        # sum of halves is used to avoid infinite value
-        threshold = (
-            self.feature_values[p_prev] / 2.0 + self.feature_values[p] / 2.0
-        )
-
-        return threshold
 
     cdef inline void extract_nnz(self, intp_t feature) noexcept nogil:
         """Extract and partition values for a given feature.

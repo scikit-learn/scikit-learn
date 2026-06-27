@@ -26,6 +26,7 @@ from libc.string cimport memcpy
 from sklearn.tree._criterion cimport Criterion
 from sklearn.tree._partitioner cimport (
     FEATURE_THRESHOLD, DensePartitioner, SparsePartitioner,
+    position_to_split_threshold,
 )
 from sklearn.tree._utils cimport RAND_R_MAX, rand_int, rand_uniform
 import numpy as np
@@ -455,7 +456,13 @@ cdef inline int node_split_best(
                             current_split.left_cat_bitset,
                         )
                     else:  # numerical feature
-                        current_split.threshold = partitioner.position_to_split_threshold(p_prev, p, missing_go_to_left)
+                        current_split.threshold = position_to_split_threshold(
+                            partitioner.feature_values,
+                            p_prev,
+                            p,
+                            end - n_missing,
+                            missing_go_to_left,
+                        )
 
                     # If there are no missing values in the training data, during
                     # test time, we send missing values to the branch that contains

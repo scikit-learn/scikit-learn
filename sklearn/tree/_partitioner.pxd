@@ -3,6 +3,8 @@
 
 # See _partitioner.pyx for details.
 
+from libc.math cimport INFINITY
+
 from sklearn.utils._typedefs cimport (
     float32_t, float64_t, int32_t, intp_t, uint8_t
 )
@@ -11,6 +13,22 @@ from sklearn.tree._splitter cimport SplitRecord
 
 # Mitigate precision differences between 32 bit and 64 bit
 cdef const float32_t FEATURE_THRESHOLD = 1e-7
+
+
+cdef inline float64_t position_to_split_threshold(
+    float32_t[::1] feature_values,
+    intp_t p_prev,
+    intp_t position,
+    intp_t end_non_missing,
+    bint missing_go_to_left,
+) noexcept nogil:
+    """Convert a split position of a numerical feature into a threshold."""
+    if position == end_non_missing and not missing_go_to_left:
+        return INFINITY
+
+    # Split between two non-missing values: sum of halves is
+    # used to avoid infinite value.
+    return feature_values[p_prev] / 2.0 + feature_values[position] / 2.0
 
 
 # We provide here the abstract interface for a Partitioner that would be
@@ -31,9 +49,6 @@ cdef const float32_t FEATURE_THRESHOLD = 1e-7
 #     cdef const uint8_t[::1] missing_values_in_feature_mask
 #     cdef intp_t n_categories
 
-#     cdef inline float64_t position_to_split_threshold(
-#         self, intp_t p_prev, intp_t p, bint missing_go_to_left
-#     ) noexcept nogil
 #     cdef inline void cat_position_to_split_bitset(
 #         self, intp_t p_prev, intp_t p, bint missing_go_to_left,
 #         BITSET_DTYPE_C left_cat_bitset
@@ -126,12 +141,6 @@ cdef class DensePartitioner:
         const SplitRecord* best_split,
     ) noexcept nogil
 
-    cdef float64_t position_to_split_threshold(
-        self,
-        intp_t p_prev,
-        intp_t p,
-        bint missing_go_to_left
-    ) noexcept nogil
     cdef void cat_position_to_split_bitset(
         self,
         intp_t p_prev,
@@ -209,12 +218,6 @@ cdef class SparsePartitioner:
         const SplitRecord* best_split,
     ) noexcept nogil
 
-    cdef float64_t position_to_split_threshold(
-        self,
-        intp_t p_prev,
-        intp_t p,
-        bint missing_go_to_left
-    ) noexcept nogil
     cdef void cat_position_to_split_bitset(
         self,
         intp_t p_prev,
