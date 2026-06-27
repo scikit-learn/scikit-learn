@@ -257,7 +257,7 @@ html_theme_options = {
     # check_switcher may be set to False if docbuild pipeline fails. See
     # https://pydata-sphinx-theme.readthedocs.io/en/stable/user_guide/version-dropdown.html#configure-switcher-json-url
     "check_switcher": True,
-    "pygments_light_style": "tango",
+    "pygments_light_style": "sas",
     "pygments_dark_style": "monokai",
     "logo": {
         "alt_text": "scikit-learn homepage",
@@ -785,10 +785,7 @@ carousel_thumbs = {"sphx_glr_plot_classifier_comparison_001.png": 600}
 
 # enable experimental module so that experimental estimators can be
 # discovered properly by sphinx
-from sklearn.experimental import (  # noqa: F401
-    enable_halving_search_cv,
-    enable_iterative_imputer,
-)
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401
 
 
 def make_carousel_thumbs(app, exception):
