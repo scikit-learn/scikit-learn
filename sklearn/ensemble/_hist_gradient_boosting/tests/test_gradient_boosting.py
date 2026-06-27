@@ -242,6 +242,74 @@ def test_absolute_error_sample_weight():
     gbdt.fit(X, y, sample_weight=sample_weight)
 
 
+def test_huber_loss():
+    # For coverage only.
+    X, y = make_regression(n_samples=500, random_state=0)
+    gbdt = HistGradientBoostingRegressor(loss="huber", random_state=0)
+    gbdt.fit(X, y)
+    assert gbdt.score(X, y) > 0.9
+
+
+def test_huber_loss_sample_weight():
+    # Ensure no error is thrown when fitting with sample_weight.
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    X = rng.uniform(-1, 1, size=(n_samples, 2))
+    y = rng.uniform(-1, 1, size=n_samples)
+    sample_weight = rng.uniform(0, 1, size=n_samples)
+    gbdt = HistGradientBoostingRegressor(loss="huber")
+    gbdt.fit(X, y, sample_weight=sample_weight)
+
+
+def test_huber_loss_outlier_robustness():
+    # Huber loss should give better predictions than squared_error on data
+    # with heavy-tailed noise.
+    rng = np.random.RandomState(0)
+    n_samples = 1000
+    X = rng.randn(n_samples, 5)
+    y = X[:, 0] + 0.1 * rng.randn(n_samples)
+    # Corrupt 10% of samples with large outliers.
+    n_outliers = n_samples // 10
+    outlier_idx = rng.choice(n_samples, n_outliers, replace=False)
+    y[outlier_idx] += 50 * rng.randn(n_outliers)
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=0
+    )
+    gbdt_huber = HistGradientBoostingRegressor(
+        loss="huber", max_iter=50, random_state=0
+    )
+    gbdt_sq = HistGradientBoostingRegressor(
+        loss="squared_error", max_iter=50, random_state=0
+    )
+    from sklearn.metrics import median_absolute_error
+
+    gbdt_huber.fit(X_train, y_train)
+    gbdt_sq.fit(X_train, y_train)
+    err_huber = median_absolute_error(y_test, gbdt_huber.predict(X_test))
+    err_sq = median_absolute_error(y_test, gbdt_sq.predict(X_test))
+    assert err_huber < err_sq
+
+
+def test_huber_default_quantile():
+    # When loss="huber" and quantile=None, default quantile of 0.9 is used.
+    X, y = make_regression(n_samples=100, random_state=0)
+    gbdt = HistGradientBoostingRegressor(loss="huber", quantile=None, random_state=0)
+    gbdt.fit(X, y)
+    assert gbdt._loss.quantile == 0.9
+
+
+@pytest.mark.parametrize("quantile", [0.5, 0.75, 0.9])
+def test_huber_quantile_parameter(quantile):
+    # quantile parameter controls the delta percentile used for Huber loss.
+    X, y = make_regression(n_samples=100, random_state=0)
+    gbdt = HistGradientBoostingRegressor(
+        loss="huber", quantile=quantile, random_state=0
+    )
+    gbdt.fit(X, y)
+    assert gbdt._loss.quantile == quantile
+
+
 @pytest.mark.parametrize("y", [([1.0, -2.0, 0.0]), ([0.0, 1.0, 2.0])])
 def test_gamma_y_positive(y):
     # Test that ValueError is raised if any y_i <= 0.
