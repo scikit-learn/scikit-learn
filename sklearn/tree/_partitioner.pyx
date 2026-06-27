@@ -19,11 +19,7 @@ import numpy as np
 cimport numpy as cnp
 cnp.import_array()
 from scipy.sparse import issparse
-from sklearn.utils._bitset cimport (
-    BITSET_DTYPE_C,
-    init_bitset,
-    set_bitset,
-)
+from sklearn.utils._bitset cimport BITSET_DTYPE_C, init_bitset
 from sklearn.tree._utils cimport goes_left, MAX_NUM_CATEGORIES
 from sklearn.tree._splitter cimport SplitRecord
 from sklearn.utils._sorting cimport simultaneous_sort
@@ -311,27 +307,6 @@ cdef class DensePartitioner:
         """
         Compute the next p_prev and p for iterating over feature values.
 
-        if self.n_categories > 0:
-            # For categorical features (Breiman-sorted), skip samples of the
-            # same category. Feature values are integers so exact equality works.
-            while (
-                p[0] + 1 < end_non_missing and
-                self.feature_values[p[0] + 1] == self.feature_values[p[0]]
-            ):
-                p[0] += 1
-        else:
-            # For numerical features, use threshold-based grouping
-            while (
-                p[0] + 1 < end_non_missing and
-                self.feature_values[p[0] + 1] <= self.feature_values[p[0]] + FEATURE_THRESHOLD
-            ):
-                p[0] += 1
-
-        p_prev[0] = p[0]
-
-        # By adding 1, we have
-        # (feature_values[p] >= end) or (feature_values[p] > feature_values[p - 1])
-        p[0] += 1
         This method is used inside the best-split search function pass which starts
         by setting p = start at the beginning of each search pass and calls
         this method repeatedly with the same missing_go_to_left as for that pass.
@@ -452,36 +427,32 @@ cdef class DensePartitioner:
 
     cdef inline void cat_position_to_split_bitset(
         self,
-        intp_t p_prev,
         intp_t position,
         bint missing_go_to_left,
         BITSET_DTYPE_C left_cat_bitset,
     ) noexcept nogil:
-        """Convert a split position of a categorical feature into a concrete split value.
-
-        - For categorical features, it converts the split position into a bitset
-        over categories.
-
-        From the bitset, one can split the samples into
-        left and right child.
-
-        Missing samples are routed by ``missing_go_to_left`` and are not encoded
-        in the categorical bitset.
-        """
-        cdef intp_t n_left_non_missing = position - self.start
+        """Convert a categorical split position into a bitset."""
+        cdef:
+            intp_t n_left_non_missing = position - start
+            intp_t offset = 0
+            intp_t r
+            intp_t c
 
         if missing_go_to_left:
-            n_left_non_missing -= self.n_missing
+            n_left_non_missing -= n_missing
 
-        # if we split categorically, compute a bitset and populate the output
-        if self.n_categories > 0:
-            split_pos_to_bitset_words(
-                n_left_non_missing,
-                &self.sorted_cat[0],
-                self.n_categories,
-                &self.counts[0],
-                left_cat_bitset,
-            )
+        init_bitset(left_cat_bitset)
+
+        if n_left_non_missing <= 0:
+            return
+
+        for r in range(n_categories):
+            c = sorted_cat[r]
+            set_bitset(left_cat_bitset, <uint8_t> c)
+            offset += counts[c]
+            if offset >= n_left_non_missing:
+                break
+
 
 @final
 cdef class SparsePartitioner:
@@ -712,23 +683,12 @@ cdef class SparsePartitioner:
 
     cdef inline void cat_position_to_split_bitset(
         self,
-        intp_t p_prev,
-        intp_t p,
+        intp_t position,
         bint missing_go_to_left,
         BITSET_DTYPE_C left_cat_bitset,
     ) noexcept nogil:
-        """Convert a split position into a concrete split value.
-
-        - For categorical features, it converts the split position into a bitset
-        over categories.
-
-        From the bitset, one can split the samples into
-        left and right child.
-        """
-        # if we split categorically, compute a bitset and populate the output
-        if self.n_categories > 0:
-            # TODO: not supported for now, so return an empty bitset.
-            init_bitset(left_cat_bitset)
+        # Sparse categorical features are rejected before split search.
+        init_bitset(left_cat_bitset)
 
     cdef inline void extract_nnz(self, intp_t feature) noexcept nogil:
         """Extract and partition values for a given feature.
@@ -980,47 +940,3 @@ def _py_swap_array_slices(cnp.ndarray array, intp_t start, intp_t end, intp_t n)
         swap_array_slices[float32_t](array, start, end, n, buffer)
     else:
         raise ValueError(f"Unsupported dtype: {array.dtype}. Expected np.intp or np.float32")
-
-
-cdef inline void split_pos_to_bitset_words(
-    intp_t max_count,
-    const intp_t* sorted_cat,
-    intp_t n_sorted,
-    const intp_t* counts,
-    BITSET_DTYPE_C out_words,
-) noexcept nogil:
-    """Build a categorical-split bitset from a prefix of sorted categories.
-
-    Walk `sorted_cat` in order (typically sorted by ascending mean target)
-    and set the corresponding bit in `out_words` until the cumulative
-    sample count reaches `max_count`. The result is a packed bitset where
-    bit c is set iff category c belongs to the left child.
-
-    Parameters
-    ----------
-    max_count : intp_t
-        Cumulative-count threshold. Categories are added to the set until
-        `sum(counts[sorted_cat[0..r]]) >= max_count`. If `max_count <= 0` the output is the empty set.
-    sorted_cat : const intp_t*
-        Category ids in split-criterion order (length `n_sorted`).
-    n_sorted : intp_t
-        Number of entries in `sorted_cat` (typically `n_categories`).
-    counts : const intp_t*
-        Per-category sample counts (node-local histogram).
-    out_words : BITSET_DTYPE_C
-        Output bitset word buffer; zeroed and filled by this function.
-    """
-    cdef intp_t r, c
-    cdef intp_t offset = 0
-
-    init_bitset(out_words)
-
-    if max_count <= 0:
-        return
-
-    for r in range(n_sorted):
-        c = sorted_cat[r]
-        set_bitset(out_words, <uint8_t> c)
-        offset += counts[c]
-        if offset >= max_count:
-            break

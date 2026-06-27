@@ -450,7 +450,6 @@ cdef inline int node_split_best(
                     # given previous position and the new position, compute the value of this split
                     if partitioner.n_categories > 0:  # categorical feature
                         partitioner.cat_position_to_split_bitset(
-                            p_prev,
                             p,
                             missing_go_to_left,
                             current_split.left_cat_bitset,
