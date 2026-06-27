@@ -433,23 +433,23 @@ cdef class DensePartitioner:
     ) noexcept nogil:
         """Convert a categorical split position into a bitset."""
         cdef:
-            intp_t n_left_non_missing = position - start
+            intp_t n_left_non_missing = position - self.start
             intp_t offset = 0
             intp_t r
             intp_t c
 
         if missing_go_to_left:
-            n_left_non_missing -= n_missing
+            n_left_non_missing -= self.n_missing
 
         init_bitset(left_cat_bitset)
 
         if n_left_non_missing <= 0:
             return
 
-        for r in range(n_categories):
-            c = sorted_cat[r]
+        for r in range(self.n_categories):
+            c = self.sorted_cat[r]
             set_bitset(left_cat_bitset, <uint8_t> c)
-            offset += counts[c]
+            offset += self.counts[c]
             if offset >= n_left_non_missing:
                 break
 

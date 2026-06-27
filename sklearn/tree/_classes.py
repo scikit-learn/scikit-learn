@@ -613,7 +613,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 ensure_all_finite = True
 
             if has_categorical:
-                validate_data(self, X, reset=False, skip_check_array=True)
                 X = self._transform_categorical_features(X)
                 X = check_array(
                     X,
@@ -624,6 +623,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     ensure_all_finite=ensure_all_finite,
                 )
                 _check_n_features(self, X, reset=False)
+                validate_data(self, X, reset=False, skip_check_array=True)
             else:
                 X = validate_data(
                     self,
