@@ -2473,12 +2473,13 @@ def test_missing_values_best_splitter_on_equal_nodes_no_missing(
     y = np.array([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
     node_value_func = np.median if criterion == "absolute_error" else np.mean
 
-    dtc = DecisionTreeRegressor(
+    params = dict(
         random_state=42,
         max_depth=1,
         criterion=criterion,
         categorical_features=categorical_features,
     )
+    dtc = DecisionTreeRegressor(**params)
     dtc.fit(X, y)
 
     # Goes to right node because it has the most data points
@@ -2489,12 +2490,7 @@ def test_missing_values_best_splitter_on_equal_nodes_no_missing(
     X_equal = X[:-1]
     y_equal = y[:-1]
 
-    dtc = DecisionTreeRegressor(
-        random_state=42,
-        max_depth=1,
-        criterion=criterion,
-        categorical_features=categorical_features,
-    )
+    dtc = DecisionTreeRegressor(**params)
     dtc.fit(X_equal, y_equal)
 
     # Goes to right node because the implementation sets:
@@ -3374,9 +3370,9 @@ def test_categorical_split_exact_tree():
 
     Dataset: 2 binary categorical features, binary classification.
 
-      feat0=0           → y=0  (always, regardless of feat1)
-      feat0=1, feat1=0  → y=0
-      feat0=1, feat1=1  → y=1
+      feat0=0           -> y=0  (always, regardless of feat1)
+      feat0=1, feat1=0  -> y=0
+      feat0=1, feat1=1  -> y=1
 
     Expected tree (5 nodes, depth 2):
       node 0 (root): split feat0, {0} left, {1} right
