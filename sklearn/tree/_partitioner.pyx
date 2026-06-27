@@ -28,6 +28,7 @@ from sklearn.utils._sorting cimport simultaneous_sort
 # in SparsePartitioner
 cdef float32_t EXTRACT_NNZ_SWITCH = 0.1
 
+
 @final
 cdef class DensePartitioner:
     """Partitioner specialized for dense data.
@@ -182,7 +183,7 @@ cdef class DensePartitioner:
         evaluated by the splitter (this is called the Brieman shortcut).
 
         Time complexity: O(n + nc log nc)
-        
+
         See Breiman et al "Classification and Regression Trees" (1984), Chapter 4.2.2.
         """
         cdef:

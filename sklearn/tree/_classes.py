@@ -51,7 +51,6 @@ from sklearn.utils.validation import (
     _check_categorical_features,
     _check_n_features,
     _check_sample_weight,
-    _get_feature_names,
     assert_all_finite,
     check_array,
     check_is_fitted,
@@ -254,6 +253,11 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     "Categorical features not supported with sparse inputs"
                 )
 
+            if check_input:
+                # Capture feature names on the original dataframe-like input before
+                # categorical encoding converts X to a NumPy array.
+                validate_data(self, X, reset=True, skip_check_array=True)
+
             # Categorical feature selection must see the original container for
             # names/dtypes, but tree fitting needs numeric values. Encode selected
             # columns before numeric validation, preserving column order.
@@ -273,9 +277,17 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 dtype=np.float32, accept_sparse="csc", ensure_all_finite=False
             )
             check_y_params = dict(ensure_2d=False, dtype=None)
-            X, y = validate_data(
-                self, X, y, validate_separately=(check_X_params, check_y_params)
-            )
+            if has_categorical:
+                # X has already been encoded to a numeric array. Do not call
+                # validate_data(reset=True) again here because ndarray input would
+                # remove feature_names_in_ captured from the original container.
+                X = check_array(X, input_name="X", estimator=self, **check_X_params)
+                y = check_array(y, input_name="y", estimator=self, **check_y_params)
+                _check_n_features(self, X, reset=False)
+            else:
+                X, y = validate_data(
+                    self, X, y, validate_separately=(check_X_params, check_y_params)
+                )
 
             # Note: we must check missing after the categorical features
             # because it is assumed X is fully numeric by then. Thus, missing value mask
@@ -480,7 +492,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 else:
                     self.n_categories_in_feature_[idx] = len(categories)
 
-                max_encoded_value = n_categories - 1
+                max_encoded_value = self.n_categories_in_feature_[idx] - 1
                 if max_encoded_value >= MAX_NUM_CATEGORIES:
                     raise ValueError(f"{base_msg} Found {max_encoded_value}.")
 
@@ -579,7 +591,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self._categorical_encoder.fit(X_categorical)
 
     def _transform_categorical_features(self, X):
-        if not hasattr(X, "shape"):
+        # _safe_indexing(..., axis=1) does not support Python sequence containers.
+        # Convert them to an object array while preserving dataframe-like inputs.
+        if isinstance(X, (list, tuple)):
             X = np.asarray(X, dtype=object)
         X_categorical = _safe_indexing(X, self.is_categorical_, axis=1)
         X_categorical = self._categorical_encoder.transform(X_categorical)
@@ -591,7 +605,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         is_numerical = ~self.is_categorical_
         if np.any(is_numerical):
             X_numerical = _safe_indexing(X, is_numerical, axis=1)
-            X_numerical = check_array(X_numerical, dtype=np.float32, ensure_all_finite=False)
+            X_numerical = check_array(
+                X_numerical, dtype=np.float32, ensure_all_finite=False
+            )
             X_out[:, is_numerical] = X_numerical
 
         return X_out
@@ -612,7 +628,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 ensure_all_finite = True
 
             if has_categorical:
-                # Check feature names/counts on the original input before categorical
+                # Check feature names on the original input before categorical
                 # encoding converts it to a NumPy array and drops dataframe metadata.
                 validate_data(self, X, reset=False, skip_check_array=True)
                 X = self._transform_categorical_features(X)
