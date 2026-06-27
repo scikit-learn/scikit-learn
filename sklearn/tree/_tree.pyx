@@ -967,9 +967,6 @@ cdef class Tree:
 
         cdef Node* node = &self.nodes[node_id]
 
-        # Clear unused categorical split bytes for deterministic pickles.
-        memset(<void*> node.left_cat_bitset, 0, sizeof(node.left_cat_bitset))
-
         node.impurity = impurity
         node.n_node_samples = n_node_samples
         node.weighted_n_node_samples = weighted_n_node_samples
