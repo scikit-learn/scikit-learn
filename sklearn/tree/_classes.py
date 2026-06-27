@@ -260,8 +260,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             # columns before numeric validation, preserving column order.
             self._fit_categorical_features(X)
             X = self._transform_categorical_features(X)
-            if not check_input:
-                X = np.asarray(X, dtype=np.float32)
         else:
             self._categorical_encoder = None
 
@@ -279,8 +277,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             X, y = validate_data(
                 self, X, y, validate_separately=(check_X_params, check_y_params)
             )
-            if has_categorical and feature_names_in is not None:
-                self.feature_names_in_ = feature_names_in
 
             # Note: we must check missing after the categorical features
             # because it is assumed X is fully numeric by then. Thus, missing value mask
@@ -459,7 +455,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         # Validate fit-time categorical data and infer category counts.
         # Fit-time validation for categorical columns includes:
-        # - at most ``MAX_NUM_CATEGORIES`` encoded categories,
+        # - at most MAX_NUM_CATEGORIES encoded categories,
         # - no non-zero monotonic constraints on categorical features.
         self.n_categories_in_feature_ = np.full(self.n_features_in_, -1, dtype=np.intp)
         if self.is_categorical_ is not None:
@@ -602,7 +598,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         return X_out
 
     def _validate_X_predict(self, X, check_input):
-        """Validate the training data on predict (probabilities)."""
+        """Validate X for predict/predict_proba/apply."""
         has_categorical = self.is_categorical_ is not None
 
         if has_categorical and issparse(X):
@@ -646,7 +642,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             _check_n_features(self, X, reset=False)
             if has_categorical:
                 X = self._transform_categorical_features(X)
-                X = np.asarray(X, dtype=np.float32)
         return X
 
     def predict(self, X, check_input=True):
@@ -1076,10 +1071,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         Boolean mask indicating categorical features. ``None`` when no features
         are categorical.
 
-    n_categories_in_feature_ : ndarray of shape (n_features,), dtype=np.intp
-        Number of categories for each categorical feature. For non-categorical
-        features, the value is -1.
-
     See Also
     --------
     DecisionTreeRegressor : A decision tree regressor.
@@ -1490,10 +1481,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         Boolean mask indicating categorical features. ``None`` when no features
         are categorical.
 
-    n_categories_in_feature_ : ndarray of shape (n_features,), dtype=np.intp
-        Number of categories for each categorical feature. For non-categorical
-        features, the value is -1.
-
     See Also
     --------
     DecisionTreeClassifier : A decision tree classifier.
@@ -1894,10 +1881,6 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         Boolean mask indicating categorical features. ``None`` when no features
         are categorical.
 
-    n_categories_in_feature_ : ndarray of shape (n_features,), dtype=np.intp
-        Number of categories for each categorical feature. For non-categorical
-        features, the value is -1.
-
     See Also
     --------
     ExtraTreeRegressor : An extremely randomized tree regressor.
@@ -2180,10 +2163,6 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     is_categorical_ : ndarray of shape (n_features,), dtype=bool, or None
         Boolean mask indicating categorical features. ``None`` when no features
         are categorical.
-
-    n_categories_in_feature_ : ndarray of shape (n_features,), dtype=np.intp
-        Number of categories for each categorical feature. For non-categorical
-        features, the value is -1.
 
     See Also
     --------
