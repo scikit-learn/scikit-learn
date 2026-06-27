@@ -4,7 +4,7 @@
 # See _splitter.pyx for details.
 
 from sklearn.utils._typedefs cimport (
-    float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t, uint64_t
+    float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t
 )
 
 from sklearn.tree._criterion cimport Criterion
@@ -70,14 +70,10 @@ cdef class Splitter:
     cdef bint with_monotonic_cst
     cdef const float64_t[:] sample_weight
 
-    # We know the number of categories within our dataset across each feature.
-    # If a feature index has -1, then it is not categorical
     # Buffers for categorical feature handling:
-    # - n_categories: an array to store number of categories per feature; if -1,
-    #   then it is not categorical.
-    # - categorical_split_buffer: a bitset to store the categorical split
-    cdef const intp_t[:] n_categories
-    cdef BITSET_INNER_DTYPE_C* categorical_split
+    # - n_categories: stores number of categories per feature; -1 if not categorical.
+    # - categorical_split: bitset to store the set of categories to split.
+    cdef const intp_t[::1] n_categories
 
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,
@@ -102,7 +98,7 @@ cdef class Splitter:
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
         const uint8_t[::1] missing_values_in_feature_mask,
-        const intp_t[::1] n_categories
+        const intp_t[::1] n_categories,
     ) except -1
 
     cdef int node_reset(
