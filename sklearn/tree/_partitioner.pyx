@@ -24,8 +24,7 @@ from sklearn.utils._bitset cimport (
     init_bitset,
     set_bitset,
 )
-from sklearn.tree._utils cimport goes_left
-from sklearn.tree._tree cimport MAX_NUM_CATEGORIES
+from sklearn.tree._utils cimport goes_left, MAX_NUM_CATEGORIES
 from sklearn.tree._splitter cimport SplitRecord
 from sklearn.utils._sorting cimport simultaneous_sort
 

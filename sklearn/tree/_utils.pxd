@@ -5,7 +5,11 @@
 cimport numpy as cnp
 from sklearn.neighbors._quad_tree cimport Cell
 from sklearn.utils._typedefs cimport float32_t, float64_t, intp_t, uint8_t, int32_t, uint32_t, uint64_t
-from sklearn.utils._bitset cimport BITSET_DTYPE_C, BITSET_INNER_DTYPE_C
+from sklearn.utils._bitset cimport BITSET_DTYPE_C, BITSET_INNER_DTYPE_C, N_BITSETS
+
+
+cdef enum:
+    MAX_NUM_CATEGORIES = N_BITSETS
 
 
 cdef struct Node:
