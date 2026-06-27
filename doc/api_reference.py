@@ -1307,7 +1307,6 @@ API_REFERENCE = {
                     "metadata_routing.get_declared_metadata_request_values",
                     "metadata_routing.get_routing_for_object",
                     "metadata_routing.process_routing",
-                    "metadata_routing.MethodMetadataRequest",
                 ],
             },
             {
