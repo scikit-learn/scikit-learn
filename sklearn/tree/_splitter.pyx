@@ -801,7 +801,7 @@ cdef class RandomSplitter(Splitter):
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
         const uint8_t[::1] missing_values_in_feature_mask,
-        const intp_t[::1] n_categories_in_feature
+        const intp_t[::1] n_categories,
     ) except -1:
         Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask, n_categories_in_feature)
         self.partitioner = DensePartitioner(
