@@ -56,10 +56,13 @@ def _oas(X, *, assume_centered=False):
     """Estimate covariance with the Oracle Approximating Shrinkage algorithm.
 
     The formulation is based on [1]_.
-    [1] "Shrinkage algorithms for MMSE covariance estimation.",
-        Chen, Y., Wiesel, A., Eldar, Y. C., & Hero, A. O.
-        IEEE Transactions on Signal Processing, 58(10), 5016-5029, 2010.
-        https://arxiv.org/pdf/0907.4698.pdf
+
+    References
+    ----------
+    .. [1] :arxiv:`"Shrinkage algorithms for MMSE covariance estimation.",
+           Chen, Y., Wiesel, A., Eldar, Y. C., & Hero, A. O.
+           IEEE Transactions on Signal Processing, 58(10), 5016-5029, 2010.
+           <0907.4698>`
     """
     if len(X.shape) == 2 and X.shape[1] == 1:
         # for only one feature, the result is the same whatever the shrinkage
