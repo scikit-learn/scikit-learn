@@ -4,7 +4,7 @@
 # See _partitioner.pyx for details.
 
 from sklearn.utils._typedefs cimport (
-    float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t, uint64_t
+    float32_t, float64_t, int32_t, intp_t, uint8_t
 )
 from sklearn.tree._splitter cimport SplitRecord
 from sklearn.utils._bitset cimport BITSET_DTYPE_C
@@ -74,7 +74,7 @@ cdef class DensePartitioner:
     Note that this partitioner is agnostic to the splitting strategy (best vs. random).
     """
     cdef const float32_t[:, :] X
-    cdef const float64_t[:, :] y
+    cdef const float64_t[:, :] y  # only for sorting of categoricals
     cdef const float64_t[::1] sample_weight
     cdef intp_t[::1] samples
     cdef float32_t[::1] feature_values
@@ -170,7 +170,7 @@ cdef class SparsePartitioner:
     cdef const intp_t[::1] n_categories_in_feature
     cdef intp_t n_categories  # keep track of n_categories in current split
 
-    # purely for Breiman shortcut
+    # purely for Breiman shortcut for categorical features
     cdef intp_t[::1] counts
     cdef float64_t[::1] weighted_counts
     cdef float64_t[::1] means
