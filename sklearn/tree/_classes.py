@@ -254,7 +254,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     "Categorical features not supported with sparse inputs"
                 )
 
-            feature_names_in = _get_feature_names(X) if check_input else None
             # Categorical feature selection must see the original container for
             # names/dtypes, but tree fitting needs numeric values. Encode selected
             # columns before numeric validation, preserving column order.
@@ -477,10 +476,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             ):
                 # OrdinalEncoder places np.nan last if missing values reach fit.
                 if len(categories) and is_scalar_nan(categories[-1]):
-                    categories = categories[:-1]
-
-                n_categories = categories.size
-                self.n_categories_in_feature_[idx] = n_categories
+                    self.n_categories_in_feature_[idx] = len(categories) - 1
+                else:
+                    self.n_categories_in_feature_[idx] = len(categories)
 
                 max_encoded_value = n_categories - 1
                 if max_encoded_value >= MAX_NUM_CATEGORIES:
