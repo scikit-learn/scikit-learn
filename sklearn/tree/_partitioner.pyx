@@ -1051,7 +1051,7 @@ def _py_swap_array_slices(cnp.ndarray array, intp_t start, intp_t end, intp_t n)
 
 
 cdef inline void split_pos_to_bitset_words(
-    intp_t p,
+    intp_t max_count,
     const intp_t* sorted_cat,
     intp_t n_sorted,
     const intp_t* counts,
@@ -1061,14 +1061,14 @@ cdef inline void split_pos_to_bitset_words(
 
     Walk `sorted_cat` in order (typically sorted by ascending mean target)
     and set the corresponding bit in `out_words` until the cumulative
-    sample count reaches `p`. The result is a packed bitset where
+    sample count reaches `max_count`. The result is a packed bitset where
     bit c is set iff category c belongs to the left child.
 
     Parameters
     ----------
-    p : intp_t
+    max_count : intp_t
         Cumulative-count threshold. Categories are added to the set until
-        `sum(counts[sorted_cat[0..r]]) >= p`. If `p <= 0` the output is the empty set.
+        `sum(counts[sorted_cat[0..r]]) >= max_count`. If `max_count <= 0` the output is the empty set.
     sorted_cat : const intp_t*
         Category ids in split-criterion order (length `n_sorted`).
     n_sorted : intp_t
@@ -1083,12 +1083,12 @@ cdef inline void split_pos_to_bitset_words(
 
     init_bitset(out_words)
 
-    if p <= 0:
+    if max_count <= 0:
         return
 
     for r in range(n_sorted):
         c = sorted_cat[r]
         set_bitset(out_words, <uint8_t> c)
         offset += counts[c]
-        if offset >= p:
+        if offset >= max_count:
             break
