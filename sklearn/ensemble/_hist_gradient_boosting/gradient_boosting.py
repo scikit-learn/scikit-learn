@@ -1789,9 +1789,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             )
         elif self.loss == "huber":
             quantile = self.quantile if self.quantile is not None else 0.9
-            return _LOSSES[self.loss](
-                sample_weight=sample_weight, quantile=quantile
-            )
+            return _LOSSES[self.loss](sample_weight=sample_weight, quantile=quantile)
         else:
             return _LOSSES[self.loss](sample_weight=sample_weight)
 
