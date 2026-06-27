@@ -1067,9 +1067,8 @@ cdef inline void split_pos_to_bitset_words(
     Parameters
     ----------
     p : intp_t
-        Cumulative-count threshold.  Categories are added to the set
-        until ``sum(counts[sorted_cat[0..r]]) >= p``.
-        If ``p <= 0`` the output is the empty set.
+        Cumulative-count threshold. Categories are added to the set until
+        `sum(counts[sorted_cat[0..r]]) >= p`. If `p <= 0` the output is the empty set.
     sorted_cat : const intp_t*
         Category ids in split-criterion order (length `n_sorted`).
     n_sorted : intp_t
