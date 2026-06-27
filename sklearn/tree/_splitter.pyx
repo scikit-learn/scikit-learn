@@ -63,7 +63,7 @@ cdef class Splitter:
         intp_t min_samples_leaf,
         float64_t min_weight_leaf,
         object random_state,
-        const int8_t[:] monotonic_cst
+        const int8_t[:] monotonic_cst,
     ):
         """
         Parameters
@@ -123,7 +123,7 @@ cdef class Splitter:
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
         const uint8_t[::1] missing_values_in_feature_mask,
-        const intp_t[::1] n_categories
+        const intp_t[::1] n_categories,
     ) except -1:
         """Initialize the splitter.
 
@@ -152,7 +152,7 @@ cdef class Splitter:
 
         n_categories : ndarray, dtype=intp_t
             Per-feature number of categories for categorical features, and
-            ``-1`` for numerical features.
+            -1 for numerical features.
         """
 
         self.rand_r_state = self.random_state.randint(0, RAND_R_MAX)
@@ -192,8 +192,6 @@ cdef class Splitter:
         self.y = y
 
         self.sample_weight = sample_weight
-        # Initialize the number of categories for each feature
-        # A value of -1 indicates a non-categorical feature
         if n_categories is None:
             self.n_categories = np.full(n_features, -1, dtype=np.intp)
         else:
@@ -325,7 +323,7 @@ cdef inline int node_split_best(
     # n_total_constants = n_known_constants + n_found_constants
     cdef intp_t n_total_constants = n_known_constants
 
-    cdef intp_t i
+    cdef int i
 
     _init_split(&best_split, end)
 
@@ -375,13 +373,9 @@ cdef inline int node_split_best(
         # f_j in the interval [n_total_constants, f_i[
         current_split.feature = features[f_j]
 
-        # argsort samples by feature scoring: either through values for numerical features,
-        # or bitsets for categorical features
-        #
-        # this function determines whether this feature is constant or not
         is_constant = partitioner.sort_samples_and_feature_values(current_split.feature)
-
         n_missing = partitioner.n_missing
+
         if is_constant:
             # We consider this feature constant in this case.
             # Since finding a split among constant feature is not valuable,
@@ -453,14 +447,14 @@ cdef inline int node_split_best(
                     best_proxy_improvement = current_proxy_improvement
 
                     # given previous position and the new position, compute the value of this split
-                    if partitioner.n_categories > 0:
+                    if partitioner.n_categories > 0:  # categorical feature
                         partitioner.position_to_split_bitset(
                             p_prev,
                             p,
                             missing_go_to_left,
                             current_split.left_cat_bitset,
                         )
-                    else:
+                    else:  # numerical feature
                         current_split.threshold = partitioner.position_to_split_threshold(p_prev, p, missing_go_to_left)
 
                     # If there are no missing values in the training data, during
@@ -778,7 +772,7 @@ cdef class BestSparseSplitter(Splitter):
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
         const uint8_t[::1] missing_values_in_feature_mask,
-        const intp_t[::1] n_categories_in_feature
+        const intp_t[::1] n_categories,
     ) except -1:
         Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask, n_categories_in_feature)
         self.partitioner = SparsePartitioner(
