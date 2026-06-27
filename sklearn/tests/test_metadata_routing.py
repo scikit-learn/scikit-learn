@@ -245,9 +245,9 @@ def test_default_requests():
 
 
 @config_context(enable_metadata_routing=True)
-def test_custom_consumer_returns_class_level_request():
-    """Check developer API for getting the class-level metadata request values of custom
-    consumers."""
+def test_custom_consumers_return_declared_metadata_requests():
+    """Check developer API for getting the metadata request values of custom
+    consumers declared on class-level"""
 
     class DefaultConsumer(MetadataRequester):
         def fit(self, X, y, sample_weight):

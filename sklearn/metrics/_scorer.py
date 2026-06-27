@@ -396,7 +396,7 @@ class _BaseScorer(MetadataRequester):
                 MethodMetadataRequest(
                     owner=self,
                     method="score",
-                    requests=self._get_class_level_metadata_request_values(
+                    requests=self._get_declared_metadata_request_values(
                         method_name="score",
                         method=self._score_func,
                         ignore_params={
