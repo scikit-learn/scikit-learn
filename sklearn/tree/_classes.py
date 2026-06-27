@@ -558,7 +558,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             y,
             sample_weight,
             missing_values_in_feature_mask,
-            self.n_categories_in_feature_,
         )
 
         if self.n_outputs_ == 1 and is_classifier(self):

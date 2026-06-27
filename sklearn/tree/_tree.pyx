@@ -99,7 +99,6 @@ cdef class TreeBuilder:
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight=None,
         const uint8_t[::1] missing_values_in_feature_mask=None,
-        const intp_t[::1] n_categories=None,
     ):
         """Build a decision tree from the training set (X, y)."""
         pass
@@ -163,8 +162,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         object X,
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight=None,
-        const uint8_t[::1] missing_values_in_feature_mask=None,
-        const intp_t[::1] n_categories=None
+        const uint8_t[::1] missing_values_in_feature_mask=None
     ):
         """Build a decision tree from the training set (X, y)."""
 
@@ -188,6 +186,10 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef float64_t min_weight_leaf = self.min_weight_leaf
         cdef intp_t min_samples_split = self.min_samples_split
         cdef float64_t min_impurity_decrease = self.min_impurity_decrease
+        cdef cnp.ndarray n_categories_arr = sizet_ptr_to_ndarray(
+            tree.n_categories, tree.n_features
+        )
+        cdef const intp_t[::1] n_categories = n_categories_arr
 
         # Recursive partition (without actual recursion)
         splitter.init(X, y, sample_weight, missing_values_in_feature_mask, n_categories)
@@ -420,8 +422,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         object X,
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight=None,
-        const uint8_t[::1] missing_values_in_feature_mask=None,
-        const intp_t[::1] n_categories=None
+        const uint8_t[::1] missing_values_in_feature_mask=None
     ):
         """Build a decision tree from the training set (X, y)."""
 
@@ -431,6 +432,10 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         # Parameters
         cdef Splitter splitter = self.splitter
         cdef intp_t max_leaf_nodes = self.max_leaf_nodes
+        cdef cnp.ndarray n_categories_arr = sizet_ptr_to_ndarray(
+            tree.n_categories, tree.n_features
+        )
+        cdef const intp_t[::1] n_categories = n_categories_arr
 
         # Recursive partition (without actual recursion)
         splitter.init(X, y, sample_weight, missing_values_in_feature_mask, n_categories)
@@ -828,7 +833,7 @@ cdef class Tree:
         # "None".
         safe_realloc(&self.n_categories, n_features)
         for f in range(n_features):
-            self.n_categories[f] = <np.intp>n_categories[f]
+            self.n_categories[f] = <intp_t>n_categories[f]
 
         # Inner structures
         self.max_depth = 0
