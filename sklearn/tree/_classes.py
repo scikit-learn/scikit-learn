@@ -593,7 +593,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         is_numerical = ~self.is_categorical_
         if np.any(is_numerical):
             X_numerical = _safe_indexing(X, is_numerical, axis=1)
-            X_out[:, is_numerical] = np.asarray(X_numerical, dtype=np.float32)
+            X_numerical = check_array(X_numerical, dtype=np.float32, ensure_all_finite=False)
+            X_out[:, is_numerical] = X_numerical
 
         return X_out
 
