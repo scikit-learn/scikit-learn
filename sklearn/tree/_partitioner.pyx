@@ -43,7 +43,7 @@ cdef class DensePartitioner:
         intp_t[::1] samples,
         float32_t[::1] feature_values,
         const uint8_t[::1] missing_values_in_feature_mask,
-        const intp_t[::1] n_categories_in_feature,
+        const intp_t[::1] n_categories,
     ):
         self.X = X
         self.y = y
@@ -56,8 +56,8 @@ cdef class DensePartitioner:
         # TODO: As optimization we could make `swap_array_slices` always pick the smallest side
         # to get copied in the buffer, which would allow to use a buffer twice smaller.
 
-        self.n_categories_in_feature = n_categories_in_feature
-        self.n_categories = 0
+        self.n_categories = n_categories
+        self.n_categories_current = 0
 
         # for breiman shortcut:
         self.counts = np.empty(MAX_NUM_CATEGORIES, dtype=np.intp)
@@ -133,7 +133,7 @@ cdef class DensePartitioner:
                 feature_values[i] = X[samples[i], current_feature]
 
         self.n_missing = n_missing
-        self.n_categories = self.n_categories_in_feature[current_feature]
+        self.n_categories_current = self.n_categories[current_feature]
         end_non_missing = self.end - n_missing
 
         if n_missing == self.end - self.start:
@@ -141,7 +141,7 @@ cdef class DensePartitioner:
             return True
 
         # apply sort, different paths for numerical and categorical features
-        if self.n_categories <= 0:
+        if self.n_categories_current <= 0:
             # numerical feature: sort the feature values
             simultaneous_sort(
                 &feature_values[self.start],
@@ -162,12 +162,12 @@ cdef class DensePartitioner:
             )
         else:
             # categorical feature: sort feature values by mean target values
-            self._breiman_sort_categories(self.n_categories)
+            self.sort_categories(self.n_categories_current)
             if n_missing > 0:
                 return False
             return feature_values[self.start] == feature_values[end_non_missing - 1]
 
-    cdef void _breiman_sort_categories(self, intp_t nc) noexcept nogil:
+    cdef void sort_categories(self, intp_t nc) noexcept nogil:
         """Sort categorical features for the Breiman shortcut.
 
         Sort categorical feature values by ascending average target value,
@@ -343,7 +343,7 @@ cdef class DensePartitioner:
         # Move to next candidate split position
         p[0] += 1
 
-        if self.n_categories > 0:
+        if self.n_categories_current > 0:
             while (
                 p[0] < end_non_missing and
                 self.feature_values[p[0]] == self.feature_values[p[0] - 1]
@@ -406,7 +406,7 @@ cdef class DensePartitioner:
             intp_t best_feature = best_split[0].feature
             bint best_missing_go_to_left = best_split[0].missing_go_to_left
             float32_t current_value
-            bint is_categorical = self.n_categories_in_feature[best_feature] > 0
+            bint is_categorical = self.n_categories[best_feature] > 0
             bint go_to_left
 
         while partition_start < partition_end:
@@ -447,7 +447,7 @@ cdef class DensePartitioner:
         if n_left_non_missing <= 0:
             return
 
-        for r in range(self.n_categories):
+        for r in range(self.n_categories_current):
             c = self.sorted_cat[r]
             set_bitset(left_cat_bitset, <uint8_t> c)
             offset += self.counts[c]
@@ -468,7 +468,7 @@ cdef class SparsePartitioner:
         intp_t n_samples,
         float32_t[::1] feature_values,
         const uint8_t[::1] missing_values_in_feature_mask,
-        const intp_t[::1] n_categories_in_feature
+        const intp_t[::1] n_categories
     ):
         if not (issparse(X) and X.format == "csc"):
             raise ValueError("X should be in csc format")
@@ -494,8 +494,8 @@ cdef class SparsePartitioner:
 
         self.missing_values_in_feature_mask = missing_values_in_feature_mask
 
-        self.n_categories_in_feature = n_categories_in_feature
-        self.n_categories = 0
+        self.n_categories = n_categories
+        self.n_categories_current = 0
 
     cdef inline void init_node_split(self, intp_t start, intp_t end) noexcept nogil:
         """Initialize splitter at the beginning of node_split."""

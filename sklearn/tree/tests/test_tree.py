@@ -2233,7 +2233,7 @@ def get_different_alignment_node_ndarray(node_ndarray):
 
 def reduce_tree_with_different_bitness(tree):
     new_dtype = np.int64 if _IS_32BIT else np.int32
-    tree_cls, (n_features, n_classes, n_outputs, n_categories_in_feature), state = (
+    tree_cls, (n_features, n_classes, n_outputs, n_categories), state = (
         tree.__reduce__()
     )
     new_n_classes = n_classes.astype(new_dtype, casting="same_kind")
@@ -2243,7 +2243,7 @@ def reduce_tree_with_different_bitness(tree):
 
     return (
         tree_cls,
-        (n_features, new_n_classes, n_outputs, n_categories_in_feature),
+        (n_features, new_n_classes, n_outputs, n_categories),
         new_state,
     )
 

@@ -67,7 +67,7 @@ cdef inline float64_t position_to_split_threshold(
 #     cdef intp_t end
 #     cdef intp_t n_missing
 #     cdef const uint8_t[::1] missing_values_in_feature_mask
-#     cdef intp_t n_categories
+#     cdef intp_t n_categories_current
 
 #     cdef bint sort_samples_and_feature_values(
 #         self, intp_t current_feature
@@ -115,9 +115,9 @@ cdef class DensePartitioner:
     cdef const uint8_t[::1] missing_values_in_feature_mask
     cdef char[::1] swap_buffer
 
-    # memoryview of the n_categories in every feature
-    cdef const intp_t[::1] n_categories_in_feature
-    cdef intp_t n_categories  # keep track of n_categories in current split
+    # memoryview of the n_categories_current in every feature
+    cdef const intp_t[::1] n_categories
+    cdef intp_t n_categories_current  # keep track of n_categories_current in current split
 
     # purely for Breiman shortcut
     cdef intp_t[::1] counts
@@ -163,7 +163,7 @@ cdef class DensePartitioner:
         bint missing_go_to_left,
         BITSET_DTYPE_C left_cat_bitset
     ) noexcept nogil
-    cdef void _breiman_sort_categories(
+    cdef void sort_categories(
         self,
         intp_t nc
     ) noexcept nogil
@@ -190,9 +190,9 @@ cdef class SparsePartitioner:
     cdef intp_t n_missing
     cdef const uint8_t[::1] missing_values_in_feature_mask
 
-    # memoryview of the n_categories in every feature
-    cdef const intp_t[::1] n_categories_in_feature
-    cdef intp_t n_categories  # keep track of n_categories in current split
+    # memoryview of the n_categories_current in every feature
+    cdef const intp_t[::1] n_categories
+    cdef intp_t n_categories_current  # keep track of n_categories_current in current split
 
     # purely for Breiman shortcut for categorical features
     cdef intp_t[::1] counts
