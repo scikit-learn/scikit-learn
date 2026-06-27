@@ -95,7 +95,10 @@ cdef class DensePartitioner:
         For numerical features, this is a standard sort. For categorical
         features, samples are reordered using the Breiman ordering shortcut.
 
-        Returns ``True`` when the feature is constant at the current node.
+        Returns
+        -------
+        bint:
+            True when the feature is constant at the current node.
         """
         cdef:
             intp_t i, current_end, end_non_missing
@@ -144,9 +147,9 @@ cdef class DensePartitioner:
             # if all the values at this point are missing, the values are sorted by default
             return True
 
-        # apply sort, or categorical sort (Breiman shortcut) depending on the dtype
+        # apply sort, different paths for numerical and categorical features
         if self.n_categories <= 0:
-            # not a categorical feature, so we apply sort as before. At this point
+            # numerical feature: sort the feature values
             simultaneous_sort(
                 &feature_values[self.start],
                 &samples[self.start],
@@ -159,33 +162,36 @@ cdef class DensePartitioner:
             if n_missing > 0:
                 return False
 
-            # This feature is considered constant (max - min <= FEATURE_THRESHOLD)
+            # This feature is considered constant if (max - min <= FEATURE_THRESHOLD)
             return (
                 feature_values[end_non_missing - 1]
                 <= feature_values[self.start] + FEATURE_THRESHOLD
             )
         else:
-            # a categorical feature
+            # categorical feature: sort feature values by mean target values
             self._breiman_sort_categories(self.n_categories)
             if n_missing > 0:
                 return False
             return feature_values[self.start] == feature_values[end_non_missing - 1]
 
     cdef void _breiman_sort_categories(self, intp_t nc) noexcept nogil:
-        """
-        Order self.sorted_cat by ascending average target value
-        and order self.features_values & self.samples such that
-        - self.features_values is ordered according to the order of sorted_cat
-        - the relation `self.features_values[p] = self.X[self.samples[p], f]` is
-          preserved
+        """Sort categorical features for the Breiman shortcut.
 
-        E.g. sorted_cat is [2 0 1]
-             features_values is [2 2 2 0 0 1 1 1 1]
+        Sort categorical feature values by ascending average target value,
+        save as self.sorted_cat.
+        self.features_values & self.samples are ordered such that
+        - self.features_values is sorted according to the order of sorted_cat
+        - the relation `self.features_values[p] = self.X[self.samples[p], f]` is
+          preserved, example:
+          sorted_cat is [2 0 1]
+          features_values is [2 2 2 0 0 1 1 1 1]
 
         This ordering ensures the optimal split will be among the candidate splits
         evaluated by the splitter (this is called the Brieman shortcut).
 
         Time complexity: O(n + nc log nc)
+        
+        See Breiman et al "Classification and Regression Trees" (1984), Chapter 4.2.2.
         """
         cdef:
             intp_t* counts = &self.counts[0]
@@ -229,9 +235,8 @@ cdef class DensePartitioner:
             offset += counts[c]
             offsets[c] = self.start + offset - 1
 
-        # sort feature_values & samples in-place such that
-        # they are ordered by the mean of the category
-        # while ensuring samples of the same categories are contiguous
+        # sort feature_values & samples in-place such that they are ordered by the mean
+        # of the category  while ensuring samples of the same categories are contiguous
         p = self.start
         while p < end_non_missing:
             c = <int> feature_values[p]
@@ -449,14 +454,14 @@ cdef class DensePartitioner:
                 samples[partition_start], samples[partition_end] = (
                     samples[partition_end], samples[partition_start])
 
-    cdef inline void position_to_split_bitset(
+    cdef inline void cat_position_to_split_bitset(
         self,
         intp_t p_prev,
         intp_t position,
         bint missing_go_to_left,
         BITSET_DTYPE_C left_cat_bitset,
     ) noexcept nogil:
-        """Convert a split position into a concrete split value.
+        """Convert a split position of a categorical feature into a concrete split value.
 
         - For categorical features, it converts the split position into a bitset
         over categories.
@@ -501,12 +506,10 @@ cdef class DensePartitioner:
         # if we split numerically, compute a numerical threshold
         if position == end_non_missing and not missing_go_to_left:
             # Split with the right node being only the missing values.
-            # Note that partioner.next_p never considers candidate
-            # splits for which the left node would move only the
-            # the missing values as this would be redundant with the
-            # split that only send missing values to the right.
-            # We use inf as a threshold because nan <= inf is false
-            # according to IEEE 754.
+            # Note that partioner.next_p never considers candidate splits for which the
+            # left node would move only the the missing values as this would be
+            # redundant with the split that only send missing values to the right. We
+            # use inf as a threshold because nan <= inf is false according to IEEE 754.
             threshold = INFINITY_64t
             return threshold
 
@@ -1058,8 +1061,8 @@ cdef inline void split_pos_to_bitset_words(
 
     Walk `sorted_cat` in order (typically sorted by ascending mean target)
     and set the corresponding bit in `out_words` until the cumulative
-    sample count reaches `p`.  The result is a packed bitset where
-    bit *c* is set iff category *c* belongs to the left child.
+    sample count reaches `p`. The result is a packed bitset where
+    bit c is set iff category c belongs to the left child.
 
     Parameters
     ----------
