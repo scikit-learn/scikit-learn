@@ -37,10 +37,10 @@ from sklearn.utils._metadata_requests import (
     COMPOSITE_METHODS,
     METHODS,
     SIMPLE_METHODS,
+    MetadataRequester,
     MethodMetadataRequest,
     MethodPair,
-    _MetadataRequester,
-    get_class_level_metadata_request_values,
+    get_declared_metadata_request_values,
     request_is_alias,
     request_is_valid,
 )
@@ -249,7 +249,7 @@ def test_custom_consumer_returns_class_level_request():
     """Check developer API for getting the class-level metadata request values of custom
     consumers."""
 
-    class DefaultConsumer(_MetadataRequester):
+    class DefaultConsumer(MetadataRequester):
         def fit(self, X, y, sample_weight):
             return self  # pragma: no cover
 
@@ -258,12 +258,12 @@ def test_custom_consumer_returns_class_level_request():
 
     # sample_weight and metadata should be discovered but no requests should be set
     consumer = DefaultConsumer()
-    assert consumer.__sklearn_build_class_level_metadata_request__()._serialize() == {
+    assert consumer.__sklearn_build_declared_metadata_request__()._serialize() == {
         "fit": {"sample_weight": None},
         "score": {"metadata": None},
     }
 
-    class CustomRequestConsumer(_MetadataRequester):
+    class CustomRequestConsumer(MetadataRequester):
         # consumer with custom class-level requests that in- and exclude certain params
         __metadata_request__fit = {"my_param": True}
 
@@ -273,7 +273,7 @@ def test_custom_consumer_returns_class_level_request():
         def score(self, y_true, y_pred, metadata2):
             return metadata2 + 100  # pragma: no cover
 
-        def __sklearn_build_class_level_metadata_request__(self):
+        def __sklearn_build_declared_metadata_request__(self):
             requests = MetadataRequest(owner=self)
             for method_name in SIMPLE_METHODS:
                 setattr(
@@ -282,7 +282,7 @@ def test_custom_consumer_returns_class_level_request():
                     MethodMetadataRequest(
                         owner=self,
                         method=method_name,
-                        requests=get_class_level_metadata_request_values(
+                        requests=get_declared_metadata_request_values(
                             self,
                             method_name,
                             ignore_params={
@@ -295,12 +295,12 @@ def test_custom_consumer_returns_class_level_request():
             return requests
 
     consumer = CustomRequestConsumer()
-    assert consumer.__sklearn_build_class_level_metadata_request__()._serialize() == {
+    assert consumer.__sklearn_build_declared_metadata_request__()._serialize() == {
         "fit": {"metadata1": None, "my_param": True},
         "score": {"metadata2": None},
     }
 
-    class CustomMethodConsumer(_MetadataRequester):
+    class CustomMethodConsumer(MetadataRequester):
         # consumer that can route metadata to another method
 
         def fit(self, metadata1, metadata2):
@@ -310,7 +310,7 @@ def test_custom_consumer_returns_class_level_request():
         def consuming_method(self, y, metadata1):
             return self  # pragma: no cover
 
-        def __sklearn_build_class_level_metadata_request__(self):
+        def __sklearn_build_declared_metadata_request__(self):
             requests = MetadataRequest(owner=self)
             setattr(
                 requests,
@@ -318,7 +318,7 @@ def test_custom_consumer_returns_class_level_request():
                 MethodMetadataRequest(
                     owner=self,
                     method="fit",
-                    requests=get_class_level_metadata_request_values(
+                    requests=get_declared_metadata_request_values(
                         self, "fit", method=self.consuming_method
                     ),
                 ),
@@ -328,14 +328,14 @@ def test_custom_consumer_returns_class_level_request():
     # since we pass `method=self.consuming_method`, we expect metadata discovered that
     # is present in `consuming_method`:
     consumer = CustomMethodConsumer()
-    assert consumer.__sklearn_build_class_level_metadata_request__()._serialize() == {
+    assert consumer.__sklearn_build_declared_metadata_request__()._serialize() == {
         "fit": {"metadata1": None},
     }
 
     def consuming_function(y, metadata1):
         return 1  # pragma: no cover
 
-    class CustomFunctionConsumer(_MetadataRequester):
+    class CustomFunctionConsumer(MetadataRequester):
         # consumer that can route metadata to a function (similar as _BaseScorer)
 
         def __init__(self, func):
@@ -345,7 +345,7 @@ def test_custom_consumer_returns_class_level_request():
             self.func(metadata1)  # pragma: no cover
             return self  # pragma: no cover
 
-        def __sklearn_build_class_level_metadata_request__(self):
+        def __sklearn_build_declared_metadata_request__(self):
             requests = MetadataRequest(owner=self)
             setattr(
                 requests,
@@ -353,7 +353,7 @@ def test_custom_consumer_returns_class_level_request():
                 MethodMetadataRequest(
                     owner=self,
                     method="fit",
-                    requests=get_class_level_metadata_request_values(
+                    requests=get_declared_metadata_request_values(
                         self, "fit", method=self.func
                     ),
                 ),
@@ -363,7 +363,7 @@ def test_custom_consumer_returns_class_level_request():
     # since we pass `method=self.self.func`, we expect metadata discovered that is
     # present in `consuming_function`:
     consumer = CustomFunctionConsumer(func=consuming_function)
-    assert consumer.__sklearn_build_class_level_metadata_request__()._serialize() == {
+    assert consumer.__sklearn_build_declared_metadata_request__()._serialize() == {
         "fit": {"metadata1": None},
     }
 
@@ -593,7 +593,7 @@ def test_invalid_metadata():
 
 @config_context(enable_metadata_routing=True)
 def test_get_metadata_routing():
-    class TestDefaults(_MetadataRequester):
+    class TestDefaults(MetadataRequester):
         __metadata_request__fit = {
             "sample_weight": None,
             "my_other_param": None,

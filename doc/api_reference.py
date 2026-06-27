@@ -1299,12 +1299,12 @@ API_REFERENCE = {
                     + _get_guide("metadata_routing")
                 ),
                 "autosummary": [
-                    "metadata_routing._MetadataRequester",
+                    "metadata_routing.MetadataRequester",
                     "metadata_routing.MetadataRequest",
                     "metadata_routing.MetadataRouter",
                     "metadata_routing.MethodMapping",
                     "metadata_routing.MethodMetadataRequest",
-                    "metadata_routing.get_class_level_metadata_request_values",
+                    "metadata_routing.get_declared_metadata_request_values",
                     "metadata_routing.get_routing_for_object",
                     "metadata_routing.process_routing",
                     "metadata_routing.MethodMetadataRequest",

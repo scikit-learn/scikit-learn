@@ -77,10 +77,10 @@ from sklearn.utils._param_validation import (
 from sklearn.utils._response import _get_response_values
 from sklearn.utils.metadata_routing import (
     MetadataRequest,
+    MetadataRequester,
     MetadataRouter,
     MethodMapping,
     _manual_routing,
-    _MetadataRequester,
     _raise_for_params,
     _routing_enabled,
     get_routing_for_object,
@@ -233,7 +233,7 @@ class _MultimetricScorer:
         )
 
 
-class _BaseScorer(_MetadataRequester):
+class _BaseScorer(MetadataRequester):
     """Base scorer that is used as `scorer(estimator, X, y_true)`.
 
     Parameters
@@ -525,7 +525,7 @@ def get_scorer(scoring):
     return scorer
 
 
-class _PassthroughScorer(_MetadataRequester):
+class _PassthroughScorer(MetadataRequester):
     # Passes scoring of estimator's `score` method back to estimator if scoring
     # is `None`.
 
