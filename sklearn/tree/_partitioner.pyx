@@ -749,7 +749,7 @@ cdef class SparsePartitioner:
 
         return partition_end
 
-    cdef inline void position_to_split_bitset(
+    cdef inline void cat_position_to_split_bitset(
         self,
         intp_t p_prev,
         intp_t p,

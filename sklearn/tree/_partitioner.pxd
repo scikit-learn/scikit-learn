@@ -34,7 +34,7 @@ cdef const float32_t FEATURE_THRESHOLD = 1e-7
 #     cdef inline float64_t position_to_split_threshold(
 #         self, intp_t p_prev, intp_t p, bint missing_go_to_left
 #     ) noexcept nogil
-#     cdef inline void position_to_split_bitset(
+#     cdef inline void cat_position_to_split_bitset(
 #         self, intp_t p_prev, intp_t p, bint missing_go_to_left,
 #         BITSET_DTYPE_C left_cat_bitset
 #     ) noexcept nogil
@@ -132,7 +132,7 @@ cdef class DensePartitioner:
         intp_t p,
         bint missing_go_to_left
     ) noexcept nogil
-    cdef void position_to_split_bitset(
+    cdef void cat_position_to_split_bitset(
         self,
         intp_t p_prev,
         intp_t p,
@@ -215,7 +215,7 @@ cdef class SparsePartitioner:
         intp_t p,
         bint missing_go_to_left
     ) noexcept nogil
-    cdef void position_to_split_bitset(
+    cdef void cat_position_to_split_bitset(
         self,
         intp_t p_prev,
         intp_t p,
