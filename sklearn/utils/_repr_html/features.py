@@ -3,6 +3,8 @@
 
 import html
 
+_MAX_DISPLAY_FEATURES = 100
+
 
 def _features_html(features, is_fitted_css_class=""):
     """Generate HTML representation of feature names.
@@ -10,6 +12,9 @@ def _features_html(features, is_fitted_css_class=""):
     Creates a collapsible HTML details element containing a table of feature
     names with a summary line showing the total count. Includes a copy-to-clipboard
     button for all feature names.
+
+    Only the first ``_MAX_DISPLAY_FEATURES`` features are rendered as table
+    rows to keep the HTML lightweight.
     """
     FEATURES_TABLE_TEMPLATE = """
         <div class="features {is_fitted_css_class}">
@@ -17,7 +22,7 @@ def _features_html(features, is_fitted_css_class=""):
             <summary>
               <div class="arrow"></div>
               <div>{total_features_line}</div>
-              <div class="image-container" title="Copy all output features">
+              <div class="image-container" title="Copy output features (max 100)">
                 <i class="copy-paste-icon"
                   onclick="
                   event.stopPropagation();
@@ -46,14 +51,20 @@ def _features_html(features, is_fitted_css_class=""):
 
     """
     total_features = len(features)
-    total_features_line = (
-        f"{total_features} {'feature' if total_features == 1 else 'features'}"
-    )
+    display_features = features[:_MAX_DISPLAY_FEATURES]
+
+    if total_features > _MAX_DISPLAY_FEATURES:
+        total_features_line = f"{_MAX_DISPLAY_FEATURES} of {total_features:,} features"
+    else:
+        total_features_line = (
+            f"{total_features} {'feature' if total_features == 1 else 'features'}"
+        )
 
     rows = [
         FEATURES_ROW_TEMPLATE.format(feature=html.escape(feature))
-        for feature in features
+        for feature in display_features
     ]
+
     return FEATURES_TABLE_TEMPLATE.format(
         total_features_line=total_features_line,
         is_fitted_css_class=html.escape(is_fitted_css_class),
