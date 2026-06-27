@@ -41,11 +41,11 @@ from sklearn.metrics._scorer import _SCORERS
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import FunctionTransformer, LabelEncoder, OrdinalEncoder
 from sklearn.utils import check_random_state, compute_sample_weight, resample
-from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
 from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import (
     _check_categorical_features,
     _check_monotonic_cst,

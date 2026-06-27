@@ -33,7 +33,12 @@ from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.ensemble._hist_gradient_boosting.predictor import TreePredictor
 from sklearn.exceptions import NotFittedError
-from sklearn.metrics import get_scorer, mean_gamma_deviance, mean_poisson_deviance
+from sklearn.metrics import (
+    get_scorer,
+    mean_gamma_deviance,
+    mean_poisson_deviance,
+    median_absolute_error,
+)
 from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler, OneHotEncoder
@@ -282,8 +287,6 @@ def test_huber_loss_outlier_robustness():
     gbdt_sq = HistGradientBoostingRegressor(
         loss="squared_error", max_iter=50, random_state=0
     )
-    from sklearn.metrics import median_absolute_error
-
     gbdt_huber.fit(X_train, y_train)
     gbdt_sq.fit(X_train, y_train)
     err_huber = median_absolute_error(y_test, gbdt_huber.predict(X_test))
