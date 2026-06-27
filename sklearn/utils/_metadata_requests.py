@@ -1597,7 +1597,7 @@ class MetadataRequester:
         try:
             for method in SIMPLE_METHODS:
                 set_method_name = f"set_{method}_request"
-                requests = cls._get_class_level_metadata_request_values(method)
+                requests = cls._get_declared_metadata_request_values(method)
 
                 if _has_explicit_set_method_request(cls, set_method_name):
                     continue
@@ -1615,13 +1615,13 @@ class MetadataRequester:
         super().__init_subclass__(**kwargs)
 
     @classmethod
-    def _get_class_level_metadata_request_values(
+    def _get_declared_metadata_request_values(
         cls,
         method_name: str,
         method: Callable | None = None,
         ignore_params: Iterable[str] | None = None,
     ):
-        """Get class level metadata request values per consuming method.
+        """Get declared metadata request values per consuming method.
 
         Parameters
         ----------
@@ -1996,6 +1996,6 @@ def get_declared_metadata_request_values(
 
     This method, does not take request values set at instance level into account.
     """
-    return metadata_requester._get_class_level_metadata_request_values(
+    return metadata_requester._get_declared_metadata_request_values(
         method_name, method, ignore_params
     )

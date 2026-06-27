@@ -722,8 +722,8 @@ def test_removing_non_existing_param_raises():
         InvalidRequestRemoval().get_metadata_routing()
 
 
-def test_get_class_level_metadata_request_values():
-    """Test `_get_class_level_metadata_request_values`, which infers metadata
+def test_get_declared_metadata_request_values():
+    """Test `_get_declared_metadata_request_values`, which infers metadata
     requests from callables; used for class methods in consumers and by scorers
     for custom `score_func`s.
     """
@@ -733,13 +733,13 @@ def test_get_class_level_metadata_request_values():
             return self
 
     # Baseline: sniff the class method's signature.
-    assert Dummy._get_class_level_metadata_request_values("fit") == {
+    assert Dummy._get_declared_metadata_request_values("fit") == {
         "sample_weight": None,
         "extra": None,
     }
 
     # `ignore_params` filters names out of the result.
-    assert Dummy._get_class_level_metadata_request_values(
+    assert Dummy._get_declared_metadata_request_values(
         "fit", ignore_params={"sample_weight"}
     ) == {"extra": None}
 
@@ -747,12 +747,12 @@ def test_get_class_level_metadata_request_values():
     def score_func(y_true, y_pred, sample_weight=None):
         return 0  # pragma: no cover
 
-    assert Dummy._get_class_level_metadata_request_values(
+    assert Dummy._get_declared_metadata_request_values(
         "score", method=score_func, ignore_params={"y_pred"}
     ) == {"sample_weight": None}
 
     # No matching class method and no `method` callable -> empty dict.
-    assert Dummy._get_class_level_metadata_request_values("predict") == {}
+    assert Dummy._get_declared_metadata_request_values("predict") == {}
 
 
 @config_context(enable_metadata_routing=True)
