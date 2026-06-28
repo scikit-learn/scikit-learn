@@ -468,7 +468,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         # Fit-time validation for categorical columns includes:
         # - at most MAX_NUM_CATEGORIES encoded categories,
         # - no non-zero monotonic constraints on categorical features.
-        self.n_categories_in_feature_ = np.full(self.n_features_in_, -1, dtype=np.intp)
+        n_categories = np.full(self.n_features_in_, -1, dtype=np.intp)
         if self.is_categorical_ is not None:
             if monotonic_cst is not None and np.any(
                 np.logical_and(self.is_categorical_, monotonic_cst != 0)
@@ -488,11 +488,11 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             ):
                 # OrdinalEncoder places np.nan last if missing values reach fit.
                 if len(categories) and is_scalar_nan(categories[-1]):
-                    self.n_categories_in_feature_[idx] = len(categories) - 1
+                    n_categories[idx] = len(categories) - 1
                 else:
-                    self.n_categories_in_feature_[idx] = len(categories)
+                    n_categories[idx] = len(categories)
 
-                max_encoded_value = self.n_categories_in_feature_[idx] - 1
+                max_encoded_value = n_categories[idx] - 1
                 if max_encoded_value >= MAX_NUM_CATEGORIES:
                     raise ValueError(f"{base_msg} Found {max_encoded_value}.")
 
@@ -526,7 +526,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 self.n_features_in_,
                 self.n_classes_,
                 self.n_outputs_,
-                self.n_categories_in_feature_,
+                n_categories,
             )
         else:
             self.tree_ = Tree(
@@ -534,7 +534,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 # TODO: tree shouldn't need this in this case
                 np.array([1] * self.n_outputs_, dtype=np.intp),
                 self.n_outputs_,
-                self.n_categories_in_feature_,
+                n_categories,
             )
 
         # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
@@ -570,7 +570,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
 
-        self._prune_tree()
+        self._prune_tree(n_categories=n_categories)
 
         return self
 
@@ -765,7 +765,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         X = self._validate_X_predict(X, check_input)
         return self.tree_.decision_path(X)
 
-    def _prune_tree(self):
+    def _prune_tree(self, n_categories=None):
         """Prune tree using Minimal Cost-Complexity Pruning."""
         check_is_fitted(self)
 
@@ -779,7 +779,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 self.n_features_in_,
                 n_classes,
                 self.n_outputs_,
-                self.n_categories_in_feature_,
+                n_categories,
             )
         else:
             pruned_tree = Tree(
@@ -787,7 +787,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 # TODO: the tree shouldn't need this param
                 np.array([1] * self.n_outputs_, dtype=np.intp),
                 self.n_outputs_,
-                self.n_categories_in_feature_,
+                n_categories,
             )
         _build_pruned_tree_ccp(pruned_tree, self.tree_, self.ccp_alpha)
 
