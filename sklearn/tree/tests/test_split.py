@@ -65,7 +65,7 @@ class Split:
     @classmethod
     def from_tree(cls, tree):
         ftr = int(tree.tree_.feature[0])
-        if tree.n_categories_[ftr] > 0:
+        if tree.tree_._n_categories[ftr] > 0:
             cat_bitset = tree.tree_._left_cat_bitset[0]
             threshold = bitset_to_tuple(
                 cat_bitset,

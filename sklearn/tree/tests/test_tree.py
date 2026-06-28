@@ -2896,7 +2896,7 @@ def test_build_pruned_tree_py():
 
     n_classes = np.atleast_1d(tree.n_classes_)
     pruned_tree = CythonTree(
-        tree.n_features_in_, n_classes, tree.n_outputs_, tree.n_categories_
+        tree.n_features_in_, n_classes, tree.n_outputs_, tree.tree_._n_categories
     )
 
     # only keep the root note
@@ -2912,7 +2912,7 @@ def test_build_pruned_tree_py():
 
     # now keep all the leaves
     pruned_tree = CythonTree(
-        tree.n_features_in_, n_classes, tree.n_outputs_, tree.n_categories_
+        tree.n_features_in_, n_classes, tree.n_outputs_, tree.tree_._n_categories
     )
     leave_in_subtree = np.zeros(tree.tree_.node_count, dtype=np.uint8)
     leave_in_subtree[1:] = 1
@@ -2932,7 +2932,7 @@ def test_build_pruned_tree_infinite_loop():
     tree.fit(iris.data, iris.target)
     n_classes = np.atleast_1d(tree.n_classes_)
     pruned_tree = CythonTree(
-        tree.n_features_in_, n_classes, tree.n_outputs_, tree.n_categories_
+        tree.n_features_in_, n_classes, tree.n_outputs_, tree.tree_._n_categories
     )
 
     # only keeping one child as a leaf results in an improper tree
@@ -3175,7 +3175,7 @@ def test_fit_categorical_raw_labels_are_reencoded(Tree, X, raw_categories):
     est = Tree(categorical_features=[0], random_state=0).fit(X, y)
 
     assert_array_equal(est.is_categorical_, [True])
-    assert_array_equal(est.n_categories_, [2])
+    assert_array_equal(est.tree_._n_categories, [2])
     assert_array_equal(est._categorical_encoder.categories_[0], raw_categories)
     assert_array_equal(est._categorical_encoder.transform(X).ravel(), [0, 0, 1, 1])
     assert_array_equal(est.predict(X), y)
@@ -3202,7 +3202,7 @@ def test_fit_categorical_missing_values(Tree, X, X_missing, X_unknown):
 
     est = Tree(categorical_features=[0], max_depth=1, random_state=0).fit(X, y)
 
-    assert_array_equal(est.n_categories_, [2])
+    assert_array_equal(est.tree_._n_categories, [2])
     non_missing_prediction = est.predict(X[:1])
     missing_prediction = est.predict(X_missing)
 
@@ -3286,7 +3286,7 @@ def test_categorical_features_mixed_containers(
     else:
         assert_array_equal(est.feature_names_in_, ["f_num", "f_cat"])
     assert_array_equal(est.is_categorical_, [False, True])
-    assert_array_equal(est.n_categories_, [-1, 2])
+    assert_array_equal(est.tree_._n_categories, [-1, 2])
     assert_array_equal(est.predict(X), y)
 
 

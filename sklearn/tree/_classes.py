@@ -570,7 +570,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
 
-        self._prune_tree(n_categories=n_categories)
+        self._prune_tree()
 
         return self
 
@@ -765,12 +765,14 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         X = self._validate_X_predict(X, check_input)
         return self.tree_.decision_path(X)
 
-    def _prune_tree(self, n_categories=None):
+    def _prune_tree(self):
         """Prune tree using Minimal Cost-Complexity Pruning."""
         check_is_fitted(self)
 
         if self.ccp_alpha == 0.0:
             return
+
+        n_categories = self.tree_._n_categories
 
         # build pruned tree
         if is_classifier(self):
