@@ -17,6 +17,7 @@ from sklearn.metrics.pairwise import _VALID_METRICS
 from sklearn.neighbors import NearestNeighbors
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.validation import _check_sample_weight, validate_data
+from . .neighbors import sort_graph_by_row_values
 
 
 @validate_params(
@@ -434,7 +435,9 @@ class DBSCAN(ClusterMixin, BaseEstimator):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", sparse.SparseEfficiencyWarning)
                 X.setdiag(X.diagonal())
-
+                #Sorting could be undone by .setdiag(),we need to make sure its sorted
+                X = sort_graph_by_row_values(X, warn_when_not_sorted=False) 
+                
         neighbors_model = NearestNeighbors(
             radius=self.eps,
             algorithm=self.algorithm,
