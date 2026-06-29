@@ -3185,7 +3185,7 @@ def test_search_callbacks_and_scorer_with_metadata_routing():
         cv=2,
         refit=False,
     ).fit(X, y, arg_callback="callback_score", arg_scorer=42)
-    assert all(
-        [ll["score"] == "callback_score" for ll in callback.get_logs().train_scores]
-    )
+    train_scores = callback.get_logs().train_scores
+    assert train_scores
+    assert all([ll["score"] == "callback_score" for ll in train_scores])
     assert search.best_score_ == 42

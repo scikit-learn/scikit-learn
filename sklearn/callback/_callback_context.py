@@ -302,12 +302,6 @@ class CallbackContext:
         hook_name : str
             Name of the callback hook to call.
 
-        metadata : dict of str -> object or None
-            If `enable_metadata_routing=True`: Parameters requested and accepted by
-            callbacks.
-            See :ref:`Metadata Routing User Guide <metadata_routing>` for more
-            details.
-
         **kwargs: dict
             Optional keyword arguments passed to the callback context.
 

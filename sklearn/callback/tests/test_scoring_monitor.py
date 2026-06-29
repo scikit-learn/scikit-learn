@@ -356,7 +356,9 @@ def test_scoringmonitor_metadata_routing():
         X, y, X_val=X, y_val=y, req_arg="train_value", req_arg_val="val_value"
     )
     logs = cb.get_logs()
+    assert logs.train_scores
     assert all([ll["score"] == "train_value" for ll in logs.train_scores])
+    assert logs.val_scores
     assert all([ll["score"] == "val_value" for ll in logs.val_scores])
 
 
@@ -373,7 +375,9 @@ def test_scoringmonitor_metadata_routing_meta_estimator():
         X, y, X_val=X, y_val=y, req_arg="train_value", req_arg_val="val_value"
     )
     logs = cb.get_logs()
+    assert logs.train_scores
     assert all([ll["score"] == "train_value" for ll in logs.train_scores])
+    assert logs.val_scores
     assert all([ll["score"] == "val_value" for ll in logs.val_scores])
 
 
