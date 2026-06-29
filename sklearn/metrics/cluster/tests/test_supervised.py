@@ -269,7 +269,6 @@ def test_int_overflow_mutual_info_fowlkes_mallows_score():
     assert_all_finite(fowlkes_mallows_score(x, y))
 
 
-
 def test_entropy():
     assert_almost_equal(_entropy([0, 0, 42.0]), 0.6365141, 5)
     assert_almost_equal(_entropy([]), 1)
