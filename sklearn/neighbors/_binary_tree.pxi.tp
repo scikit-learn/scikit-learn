@@ -961,10 +961,21 @@ cdef class BinaryTree{{name_suffix}}:
         """
         set state for pickling
         """
-        self.data = state[0]
-        self.idx_array = state[1]
-        self.node_data = state[2]
-        self.node_bounds = state[3]
+        # joblib's loky backend memory-maps arrays shared between processes as
+        # read-only buffers. Cython typed memoryview attributes (even those
+        # declared const) require writable buffers for assignment via their
+        # Python-level setter descriptors (see cython/cython#5639). We copy
+        # any read-only array before assignment so that deserialization works
+        # regardless of how the buffer was produced.
+        def _ensure_writable(arr):
+            if arr is not None and hasattr(arr, 'flags') and not arr.flags.writeable:
+                return np.array(arr)
+            return arr
+
+        self.data = _ensure_writable(state[0])
+        self.idx_array = _ensure_writable(state[1])
+        self.node_data = _ensure_writable(state[2])
+        self.node_bounds = _ensure_writable(state[3])
         self.leaf_size = state[4]
         self.n_levels = state[5]
         self.n_nodes = state[6]
