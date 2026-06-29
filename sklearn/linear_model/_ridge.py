@@ -1342,7 +1342,10 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         n_aug = X_aug.shape[1]
 
         # Accumulate X_aug^T W X_aug and X_aug^T W y where W = diag(sw).
-        X_sw = X_aug * sample_weight[:, np.newaxis] if sample_weight is not None else X_aug
+        if sample_weight is not None:
+            X_sw = X_aug * sample_weight[:, np.newaxis]
+        else:
+            X_sw = X_aug
         XtX_batch = X_sw.T @ X_aug
         Xty_batch = X_sw.T @ y
 
