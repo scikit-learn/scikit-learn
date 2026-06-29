@@ -433,7 +433,37 @@ Pull request checklist
         base in the ``main`` branch and pass for the PR code. The code coverage CI test
         will fail if newly added code paths are not covered by a test.
 
+      * If your changes relate to performance or efficiency (bug fixes or new features),
+        you included a performance analysis with a benchmark script and profiling output
+        (see :ref:`monitoring_performances`). If relevant, also check out the
+        :ref:`performance-howto` guide for more details on profiling and Cython
+        optimizations.
+
       * All :ref:`tests pass locally<testing_coverage>`
+
+      .. dropdown:: When contributing a new feature, also note the following
+
+        * Make sure your contribution fulfills our `new algorithm requirements
+          <https://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms>`_
+
+        * New features have some maintenance overhead. We expect PR authors
+          to take part in the maintenance for the code they submit, at least
+          initially.
+
+        * New features need to be illustrated with narrative
+          documentation in the user guide, with small code snippets.
+          If relevant, please also add references in the literature, with PDF links
+          when possible. The user guide should also include expected time and space complexity
+          of the algorithm and scalability, e.g. "this algorithm can scale to a
+          large number of samples > 100000, but does not scale in dimensionality:
+          `n_features` is expected to be lower than 100".
+
+        * New features should also include examples of usage. Have a look at other
+          examples in the `examples
+          <https://github.com/scikit-learn/scikit-learn/tree/main/examples>`_ directory
+          for reference. Examples should demonstrate why the new functionality is useful
+          in practice and, if possible, compare it to other methods available in
+          scikit-learn.
 
       .. rubric:: WHEN opening a PR
          :class: rubric-large
@@ -522,36 +552,6 @@ broad review of functionality or API, or seek collaborators. Draft PRs often
 benefit from the inclusion of a `task list
 <https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments>`_ in
 the PR description.
-
-9. PRs should often substantiate the change, through benchmarks of
-   performance and efficiency (see :ref:`monitoring_performances`) or through
-   examples of usage. Examples also illustrate the features and intricacies of
-   the library to users. Have a look at other examples in the `examples/
-   <https://github.com/scikit-learn/scikit-learn/tree/main/examples>`_
-   directory for reference. Examples should demonstrate why the new
-   functionality is useful in practice and, if possible, compare it to other
-   methods available in scikit-learn.
-
-10. New features have some maintenance overhead. We expect PR authors
-    to take part in the maintenance for the code they submit, at least
-    initially. New features need to be illustrated with narrative
-    documentation in the user guide, with small code snippets.
-    If relevant, please also add references in the literature, with PDF links
-    when possible.
-
-11. The user guide should also include expected time and space complexity
-    of the algorithm and scalability, e.g. "this algorithm can scale to a
-    large number of samples > 100000, but does not scale in dimensionality:
-    `n_features` is expected to be lower than 100".
-
-You can also check our :ref:`code_review` to get an idea of what reviewers
-will expect.
-
-
-Bonus points for contributions that include a performance analysis with
-a benchmark script and profiling output (see :ref:`monitoring_performances`).
-Also check out the :ref:`performance-howto` guide for more details on
-profiling and Cython optimizations.
 
 .. note::
 
