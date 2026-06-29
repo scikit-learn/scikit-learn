@@ -2780,7 +2780,7 @@ def test_ridge_partial_fit_fit_resets_state(ridge_partial_fit_data):
     ridge.fit(X, y)
     assert not hasattr(ridge, "_XtX")
     assert not hasattr(ridge, "_Xty")
-    assert not hasattr(ridge, "n_samples_seen_")
+    assert ridge.n_samples_seen_ == 0
 
     # After fit(), partial_fit should start fresh.
     ridge.partial_fit(X[:50], y[:50])

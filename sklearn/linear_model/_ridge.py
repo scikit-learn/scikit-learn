@@ -1158,7 +1158,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         .. versionadded:: 0.17
 
     n_samples_seen_ : int
-        Number of samples processed by :meth:`partial_fit`. Cleared when
+        Number of samples processed by :meth:`partial_fit`. Reset to 0 when
         :meth:`fit` is called.
 
         .. versionadded:: 1.8
@@ -1252,11 +1252,12 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         self : object
             Fitted estimator.
         """
-        # Clear incremental state so that any subsequent partial_fit call
+        # Reset incremental state so that any subsequent partial_fit call
         # starts fresh rather than accumulating on top of stale statistics.
-        for _attr in ("_XtX", "_Xty", "n_samples_seen_"):
+        for _attr in ("_XtX", "_Xty"):
             if hasattr(self, _attr):
                 delattr(self, _attr)
+        self.n_samples_seen_ = 0
 
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), self.solver)
         xp, _, device_ = get_namespace_and_device(X)
