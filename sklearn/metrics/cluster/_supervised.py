@@ -69,9 +69,9 @@ def check_clusterings(labels_true, labels_pred):
 
     # input checks
     if labels_true.ndim != 1:
-        raise ValueError("labels_true must be 1D: shape is %r" % (labels_true.shape,))
+        raise ValueError(f"labels_true must be 1D: shape is {labels_true.shape!r}")
     if labels_pred.ndim != 1:
-        raise ValueError("labels_pred must be 1D: shape is %r" % (labels_pred.shape,))
+        raise ValueError(f"labels_pred must be 1D: shape is {labels_pred.shape!r}")
     check_consistent_length(labels_true, labels_pred)
 
     return labels_true, labels_pred
@@ -1302,4 +1302,3 @@ def _entropy(labels):
     # Always convert the result as a Python scalar (on CPU) instead of a device
     # specific scalar array.
     return float(-xp.sum((pi / pi_sum) * (xp.log(pi) - log(pi_sum))))
-
