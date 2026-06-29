@@ -1225,7 +1225,7 @@ def test_random_search_cv_results_multimetric():
             # If True, for multi-metric pass refit='accuracy'
             if refit and isinstance(scoring, tuple):
                 refit = "accuracy"
-            clf = LogisticRegression(random_state=42)
+            clf = LogisticRegression()
             random_search = RandomizedSearchCV(
                 clf,
                 n_iter=n_search_iter,
@@ -3079,10 +3079,12 @@ def test_search_callbacks_propagation(search, refit):
             # Each MaxIterEstimator has 1 root + max_iter tasks, but we ignore the root
             # because it's the same as the evaluation leaf of the searchcv class.
             # There are n_splits * n_candidates such inner estimators.
+            # For successive halving, `cv_results_` only contains the last
+            # iteration so we rely on `all_cv_results_` to account for the inner
+            # estimators fitted across all iterations.
+            all_cv_results = getattr(search, "all_cv_results_", search.cv_results_)
             search_inner_tasks = sum(
-                p["max_iter"]
-                for p in search.cv_results_["params"]
-                for _ in range(n_splits)
+                p["max_iter"] for p in all_cv_results["params"] for _ in range(n_splits)
             )
             refit_inner_tasks = search.best_estimator_.n_iter_ if refit else 0
             expected = searchcv_tasks + search_inner_tasks + refit_inner_tasks

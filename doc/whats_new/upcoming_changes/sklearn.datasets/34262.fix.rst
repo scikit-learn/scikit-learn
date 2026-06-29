@@ -1,0 +1,3 @@
+- :func:`datasets.fetch_openml` now correctly recovers from a corrupted
+  download by re-downloading it, instead of raising an error.
+  By :user:`Roman Yurchak <rth>`.
