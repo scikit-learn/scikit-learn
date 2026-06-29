@@ -1,0 +1,7 @@
+Remove deprecated public :func:`sklearn.metrics.cluster.entropy`
+----------------------------------------------------------------
+The public :func:`sklearn.metrics.cluster.entropy` function, deprecated
+in version 1.8, has been removed. It was a thin wrapper around the
+internal ``_entropy`` function, which remains unchanged.
+
+:pr:`34411` by :user:`Naman Agrawal <itsmehotpants>`.
