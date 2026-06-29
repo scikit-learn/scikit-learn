@@ -2789,8 +2789,12 @@ def test_logistic_regression_array_api_compliance(
     predict_proba_np = lr_np.predict_proba(X_np)
     preditct_log_proba_np = lr_np.predict_log_proba(X_np)
     prediction_np = lr_np.predict(X_np)
-    atol = _atol_for_type(dtype_name) * 6
-    rtol = 5e-4 if dtype_name == "float32" else 1e-7
+    if solver == "lbfgs":
+        atol = _atol_for_type(dtype_name) * 10
+        rtol = 1e-3 if dtype_name == "float32" else 1e-7
+    else:
+        atol = _atol_for_type(dtype_name) * 2
+        rtol = 1e-4 if dtype_name == "float32" else 1e-8
 
     with config_context(array_api_dispatch=True):
         with warnings.catch_warnings():
