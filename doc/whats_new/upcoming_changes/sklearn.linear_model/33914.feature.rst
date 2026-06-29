@@ -1,5 +1,0 @@
-- :class:`linear_model.Ridge` now supports :meth:`~linear_model.Ridge.partial_fit`
-  for incremental learning. The method accumulates sufficient statistics
-  (:math:`X^\top X` and :math:`X^\top y`) across batches and solves the
-  regularized normal equations via Cholesky factorization.
-  By :user:`Teja1631 <Teja1631>`.
