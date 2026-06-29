@@ -1303,24 +1303,3 @@ def _entropy(labels):
     # specific scalar array.
     return float(-xp.sum((pi / pi_sum) * (xp.log(pi) - log(pi_sum))))
 
-
-# TODO(1.10): Remove
-@deprecated("`entropy` is deprecated in 1.8 and will be removed in 1.10.")
-def entropy(labels):
-    """Calculate the entropy for a labeling.
-
-    Parameters
-    ----------
-    labels : array-like of shape (n_samples,)
-        The labels.
-
-    Returns
-    -------
-    entropy : float
-       The entropy for a labeling.
-
-    Notes
-    -----
-    The logarithm used is the natural logarithm (base-e).
-    """
-    return _entropy(labels)
