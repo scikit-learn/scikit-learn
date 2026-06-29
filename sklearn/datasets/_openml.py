@@ -45,12 +45,14 @@ OpenmlFeaturesType = List[Dict[str, str]]
 
 def _get_local_path(openml_path: str, data_home: str) -> str:
     cache_dir = os.path.join(data_home, "openml.org")
-    local_path = os.path.normpath(os.path.join(cache_dir, openml_path + ".gz"))
+    local_path = os.path.join(cache_dir, openml_path + ".gz")
     # ``openml_path`` is derived from a server-provided URL. Reject paths that
     # escape the cache directory so a malicious response cannot read, overwrite
-    # or delete files outside of ``data_home``.
+    # or delete files outside of ``data_home``. The containment check runs on a
+    # normalized copy while ``local_path`` is returned unchanged.
+    normalized = os.path.normpath(local_path)
     if os.path.commonpath(
-        [os.path.abspath(cache_dir), os.path.abspath(local_path)]
+        [os.path.abspath(cache_dir), os.path.abspath(normalized)]
     ) != os.path.abspath(cache_dir):
         raise ValueError(
             f"Invalid OpenML path escaping the cache directory: {openml_path!r}"
