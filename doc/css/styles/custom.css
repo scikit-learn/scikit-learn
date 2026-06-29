@@ -218,41 +218,7 @@ div.sk-authors-container {
 
 /* scikit-learn text-image grid, used in testimonials and sponsors pages */
 
-div.sk-text-image-grid-small {
-  display: flex;
-  align-items: flex-start;
-  flex-wrap: wrap;
-
-  div.text-box {
-    width: 65%;
-    @media screen and (max-width: 500px) {
-      width: 100%;
-    }
-  }
-
-  div.image-box {
-    width: 35%;
-    @media screen and (max-width: 500px) {
-      width: 100%;
-    }
-  }
-
-  div.text-box .annotation {
-    font-size: 0.9rem;
-    font-style: italic;
-    color: var(--pst-color-text-muted);
-  }
-
-  div.image-box {
-    text-align: center;
-
-    img {
-      max-height: 60px;
-      max-width: 50%;
-    }
-  }
-}
-
+div.sk-text-image-grid-small,
 div.sk-text-image-grid-large {
   display: flex;
   align-items: flex-start;
@@ -260,32 +226,31 @@ div.sk-text-image-grid-large {
 
   div.text-box {
     width: 65%;
-    @media screen and (max-width: 500px) {
-      width: 100%;
-    }
+    @media screen and (max-width: 500px) { width: 100%; }
   }
-
   div.image-box {
     width: 35%;
-    @media screen and (max-width: 500px) {
-      width: 100%;
-    }
+    @media screen and (max-width: 500px) { width: 100%; }
   }
-
   div.text-box .annotation {
     font-size: 0.9rem;
     font-style: italic;
     color: var(--pst-color-text-muted);
   }
-
   div.image-box {
     text-align: center;
-
     img {
-      max-height: 100px;
+      max-height: var(--sk-img-max-height);
       max-width: 50%;
     }
   }
+}
+
+div.sk-text-image-grid-small {
+  --sk-img-max-height: 60px;
+}
+div.sk-text-image-grid-large {
+  --sk-img-max-height: 100px;
 }
 
 /* Institutional support: active funding participation table (institutional_support.rst) */
