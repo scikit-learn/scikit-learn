@@ -226,11 +226,15 @@ div.sk-text-image-grid-large {
 
   div.text-box {
     width: 65%;
-    @media screen and (max-width: 500px) { width: 100%; }
+    @media screen and (max-width: 500px) {
+      width: 100%;
+    }
   }
   div.image-box {
     width: 35%;
-    @media screen and (max-width: 500px) { width: 100%; }
+    @media screen and (max-width: 500px) {
+      width: 100%;
+    }
   }
   div.text-box .annotation {
     font-size: 0.9rem;
