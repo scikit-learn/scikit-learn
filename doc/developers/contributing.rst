@@ -460,7 +460,7 @@ Pull request checklist
 
         * New features should also include examples of usage. Have a look at other
           examples in the `examples
-          <https://github.com/scikit-learn/scikit-learn/tree/main/examples>`_ directory
+          <https://github.com/scikit-learn/scikit-learn/tree/main/examples>`__ directory
           for reference. Examples should demonstrate why the new functionality is useful
           in practice and, if possible, compare it to other methods available in
           scikit-learn.
