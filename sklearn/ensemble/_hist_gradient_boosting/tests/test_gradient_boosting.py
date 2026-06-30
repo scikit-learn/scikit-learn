@@ -291,7 +291,8 @@ def test_huber_loss_outlier_robustness():
     gbdt_sq.fit(X_train, y_train)
     err_huber = median_absolute_error(y_test, gbdt_huber.predict(X_test))
     err_sq = median_absolute_error(y_test, gbdt_sq.predict(X_test))
-    assert err_huber < err_sq
+    # on this dataset, huber is much better for absolute error:
+    assert 2 * err_huber < err_sq
 
 
 def test_huber_default_quantile():
