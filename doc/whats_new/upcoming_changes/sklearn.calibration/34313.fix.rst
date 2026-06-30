@@ -3,9 +3,7 @@
   before calibration instead of passing probabilities directly to the
   calibrator. This aligns Platt scaling with the intended logit input and
   improves calibration for estimators such as :class:`naive_bayes.GaussianNB`.
-  A new ``logit_preprocessing`` parameter (default ``"auto"``) controls this
-  conversion: ``"sigmoid"`` maps probabilities to one-vs-rest log-odds for
-  sigmoid and isotonic calibration, while ``"softmax"`` maps them to
-  multinomial logits for temperature scaling. Estimators that only expose
-  :term:`decision_function` are unaffected.
+  For ``method="temperature"``, :term:`predict_proba` outputs are converted to
+  multinomial logits. Estimators that only expose :term:`decision_function`
+  are unaffected.
   By :user:`Olivier Grisel <ogrisel>` and :user:`Antoine Baker <antoinebaker>`.

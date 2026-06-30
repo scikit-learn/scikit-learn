@@ -72,109 +72,77 @@ from sklearn.utils.validation import (
 )
 
 
-def _ensure_logits(predictions, response_method_name, logit_preprocessing=None):
+def _ensure_logits(predictions, response_method_name, method):
     """Ensure that the predictions are in logits space.
 
-    When response method is "predict_proba", the logits are computed as log(p /
-    (1 - p)) for binary classification and when logit_preprocessing is
-    "sigmoid" (p are the OvR columns for each class in this case).
+    When the response method is ``predict_proba``, probabilities are converted
+    to logits depending on the calibration method:
 
-    TODO: replace by _converts_to_logits ?
+    - For ``method`` in ``{'sigmoid', 'isotonic'}``, Bernoulli logits are
+      computed per class (OvR convention for multiclass).
+    - For ``method='temperature'``, multinomial logits are computed.
+
+    When the response method is ``decision_function``, predictions are assumed
+    to already be in logits space and are returned unchanged (with reshaping
+    for the binary case).
 
     Parameters
     ----------
     predictions : array-like of shape (n_samples, n_classes) or (n_samples,)
         The predictions to be converted.
 
-    response_method_name : str
+    response_method_name : {'decision_function', 'predict_proba'}
         The name of the response method used to obtain the predictions.
 
-    n_classes : int
-        The number of classes.
+    method : {'sigmoid', 'isotonic', 'temperature'}
+        The calibration method.
 
     Returns
     -------
     logits : array-like of shape (n_samples, n_classes) or (n_samples, 1).
         The logits.
     """
-    if logit_preprocessing not in ("sigmoid", "softmax", None):
-        raise ValueError(
-            f"Unknown logit type: {logit_preprocessing}. Expected 'sigmoid', 'softmax'"
-            " or None."
-        )
-
-    # TODO: refactor this by treating the multiclass and binary cases
-    # separately to make the code easier to grasp.
-
-    if logit_preprocessing is None:
-        if predictions.ndim == 1:
-            # Binary case: nothing to do besides ensuring consistent shape.
-            return predictions.reshape(-1, 1)
-        return predictions
-
-    if response_method_name == "predict_proba" or (
-        response_method_name == "decision_function" and logit_preprocessing == "sigmoid"
-    ):
-        if (
-            response_method_name == "decision_function"
-            and logit_preprocessing == "sigmoid"
-        ):
-            if predictions.ndim == 1:
-                # Binary case: we assume that decision_function already returns
-                # sigmoid logits for the positive class so there is nothing to
-                # do besides ensuring consistent shape.
-                return predictions.reshape(-1, 1)
-
-            # Consider that the multiclass predictions are multinomial logits
-            # that need to be converted to OvR Bernoulli logits. So we first
-            # map multinomial probabilities to multinomial logits and then
-            # convert them to Bernoulli logits.
-            predictions = softmax(predictions)
-
-        eps = np.finfo(predictions.dtype).eps
-        # Clip extreme predicted probabilities to ensure finite logits.
-        predictions = predictions.clip(eps, 1 - eps)
-
-        if predictions.ndim == 1:
-            # _get_response_values already extracts the 1d array for the
-            # positive class for binary classification.
-            return LogitLink().link(predictions).reshape(-1, 1)
-        elif predictions.shape[1] == 2:
-            # In case we are fed with a 2D array that is the raw output of
-            # predict_proba on a binary classifier.
-            return LogitLink().link(predictions[:, 1]).reshape(-1, 1)
-        elif predictions.shape[1] > 2:
-            if logit_preprocessing == "sigmoid":
-                # Assume OvR convention and recover Bernoulli logits
-                # for each class.
-                sigmoid_logits = np.zeros_like(predictions)
-                sigmoid_link = LogitLink()
-                for i in range(predictions.shape[1]):
-                    sigmoid_logits[:, i] = sigmoid_link.link(predictions[:, i])
-                return sigmoid_logits
-            else:
-                return MultinomialLogit().link(predictions)
-
-    elif response_method_name == "decision_function":
-        # For decision_function, we assume the predictions are already in logits
-        # space.
-        if predictions.ndim == 1:
-            # We just reshape the predictions to (n_samples, 1) for consistency.
-            return predictions.reshape(-1, 1)
-        # XXX: check that the shape for the multiclass case is (n_samples,
-        # n_classes) and raise an explicit error if not. In particular, we
-        # cannot support estimators such as SVC with OvO conventions and
-        # predictions with shape (n_samples, n_classes * (n_classes - 1) / 2).
-        # As of now, this cannot happen because both sigmoid and isotonic
-        # calibrators only support binary classification and reduce multiclass
-        # problems to binary ones via OvR.
-        return predictions
-    else:
+    if response_method_name not in ("decision_function", "predict_proba"):
         raise ValueError(
             f"Unknown response method name: {response_method_name}. "
             "Expected 'decision_function' or 'predict_proba'."
         )
-    return predictions
+
+    if response_method_name == "decision_function":
+        if predictions.ndim == 1:
+            return predictions.reshape(-1, 1)
+        return predictions
+
+    eps = np.finfo(predictions.dtype).eps
+    predictions = predictions.clip(eps, 1 - eps)
+
+    if method in ("sigmoid", "isotonic"):
+        if predictions.ndim == 1:
+            # _get_response_values already extracts the 1d array for the
+            # positive class for binary classification.
+            return LogitLink().link(predictions).reshape(-1, 1)
+        if predictions.shape[1] == 2:
+            # In case we are fed with a 2D array that is the raw output of
+            # predict_proba on a binary classifier.
+            return LogitLink().link(predictions[:, 1]).reshape(-1, 1)
+        # Assume OvR convention and recover Bernoulli logits for each class.
+        sigmoid_logits = np.zeros_like(predictions)
+        sigmoid_link = LogitLink()
+        for i in range(predictions.shape[1]):
+            sigmoid_logits[:, i] = sigmoid_link.link(predictions[:, i])
+        return sigmoid_logits
+
+    if method == "temperature":
+        if predictions.ndim == 1:
+            predictions = np.column_stack([1 - predictions, predictions])
+        elif predictions.shape[1] == 1:
+            predictions = np.concatenate([1 - predictions, predictions], axis=1)
+        return MultinomialLogit().link(predictions)
+
+    raise ValueError(
+        f"Unknown calibration method: {method}. "
+        "Expected 'sigmoid', 'isotonic', or 'temperature'."
+    )
 
 
 class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
@@ -300,27 +268,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         .. versionchanged:: 1.6
             `"auto"` option is added and is the default.
 
-    logit_preprocessing : {'sigmoid', 'softmax', 'auto'} or None, default='auto'
-        How to transform :term:`predict_proba` outputs before calibration.
-
-        - ``'sigmoid'`` maps probabilities to log-odds. For multiclass problems,
-          this uses a one-vs-rest (OvR) convention, which matches how
-          ``method='sigmoid'`` and ``method='isotonic'`` calibrate each class.
-        - ``'softmax'`` maps probabilities to multinomial logits, which matches
-          ``method='temperature'``.
-        - ``'auto'`` selects ``'sigmoid'`` for ``method`` in ``{'sigmoid',
-          'isotonic'}`` and ``'softmax'`` for ``method='temperature'``. The
-          resolved value is stored in :attr:`logit_preprocessing_`.
-        - ``None`` disables conversion. :term:`predict_proba` outputs are passed
-          to the calibrator as probabilities and :term:`decision_function`
-          outputs are used as logits.
-
-        This parameter only affects estimators calibrated via
-        :term:`predict_proba`. Estimators that only expose
-        :term:`decision_function` are unaffected.
-
-        .. versionadded:: 1.10
-
     Attributes
     ----------
     classes_ : ndarray of shape (n_classes,)
@@ -348,12 +295,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
         .. versionchanged:: 0.24
             Single calibrated classifier case when `ensemble=False`.
-
-    logit_preprocessing_ : {'sigmoid', 'softmax'} or None
-        Value of :paramref:`logit_preprocessing` used during :term:`fit`, with
-        ``'auto'`` resolved to either ``'sigmoid'`` or ``'softmax'``.
-
-        .. versionadded:: 1.10
 
     See Also
     --------
@@ -442,7 +383,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         "cv": ["cv_object"],
         "n_jobs": [Integral, None],
         "ensemble": ["boolean", StrOptions({"auto"})],
-        "logit_preprocessing": [StrOptions({"sigmoid", "softmax", "auto"}), None],
     }
 
     def __init__(
@@ -453,14 +393,12 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         cv=None,
         n_jobs=None,
         ensemble="auto",
-        logit_preprocessing="auto",
     ):
         self.estimator = estimator
         self.method = method
         self.cv = cv
         self.n_jobs = n_jobs
         self.ensemble = ensemble
-        self.logit_preprocessing = logit_preprocessing
 
     def _get_estimator(self):
         """Resolve which estimator to return (default is LinearSVC)"""
@@ -509,17 +447,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         _ensemble = self.ensemble
         if _ensemble == "auto":
             _ensemble = not isinstance(estimator, FrozenEstimator)
-
-        if self.logit_preprocessing == "auto":
-            if self.method in ("sigmoid", "isotonic"):
-                # Since those method handle the multiclass case by reducing it
-                # to OvR calibration problems, we map the probability inputs to
-                # sigmoid / Bernoulli logits in the range (-inf, inf).
-                self.logit_preprocessing_ = "sigmoid"
-            else:
-                self.logit_preprocessing_ = "softmax"
-        else:
-            self.logit_preprocessing_ = self.logit_preprocessing
 
         self.calibrated_classifiers_ = []
         # Set `classes_` using all `y`
@@ -598,7 +525,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     test=test,
                     method=self.method,
                     classes=self.classes_,
-                    logit_preprocessing=self.logit_preprocessing_,
                     xp=xp,
                     sample_weight=sample_weight,
                     fit_params=routed_params.estimator.fit,
@@ -632,9 +558,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             predictions = _ensure_logits(
                 predictions,
                 response_method_name=method_name,
-                logit_preprocessing=self.logit_preprocessing_,
+                method=self.method,
             )
-            if self.classes_.shape[0] == 2:
+            if self.classes_.shape[0] == 2 and self.method in ("sigmoid", "isotonic"):
                 # Ensure shape (n_samples, 1) in the binary case
                 predictions = predictions.reshape(-1, 1)
 
@@ -656,7 +582,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 self.method,
                 xp=xp,
                 sample_weight=sample_weight,
-                logit_preprocessing=self.logit_preprocessing_,
             )
             self.calibrated_classifiers_.append(calibrated_classifier)
 
@@ -767,7 +692,6 @@ def _fit_classifier_calibrator_pair(
     xp,
     sample_weight=None,
     fit_params=None,
-    logit_preprocessing=None,
 ):
     """Fit a classifier/calibration pair on a given train/test split.
 
@@ -827,7 +751,7 @@ def _fit_classifier_calibrator_pair(
     predictions = _ensure_logits(
         predictions,
         response_method_name=response_method_used,
-        logit_preprocessing=logit_preprocessing,
+        method=method,
     )
 
     if sample_weight is not None:
@@ -845,7 +769,6 @@ def _fit_classifier_calibrator_pair(
         method,
         xp=xp,
         sample_weight=sw_test,
-        logit_preprocessing=logit_preprocessing,
     )
     return calibrated_classifier
 
@@ -858,7 +781,6 @@ def _fit_calibrator(
     method,
     xp,
     sample_weight=None,
-    logit_preprocessing=None,
 ):
     """Fit calibrator(s) and return a `_CalibratedClassifier`
     instance.
@@ -909,13 +831,6 @@ def _fit_calibrator(
             calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
             calibrators.append(calibrator)
     elif method == "temperature":
-        if classes.shape[0] == 2 and predictions.shape[-1] == 1:
-            response_method_name = _check_response_method(
-                clf,
-                ["decision_function", "predict_proba"],
-            ).__name__
-            if response_method_name == "predict_proba" and logit_preprocessing is None:
-                predictions = xp.concat([1 - predictions, predictions], axis=1)
         calibrator = _TemperatureScaling()
         calibrator.fit(predictions, y, sample_weight)
         calibrators.append(calibrator)
@@ -925,7 +840,6 @@ def _fit_calibrator(
         calibrators,
         method=method,
         classes=classes,
-        logit_preprocessing=logit_preprocessing,
     )
     return pipeline
 
@@ -960,13 +874,11 @@ class _CalibratedClassifier:
         *,
         classes,
         method="sigmoid",
-        logit_preprocessing=None,
     ):
         self.estimator = estimator
         self.calibrators = calibrators
         self.classes = classes
         self.method = method
-        self.logit_preprocessing = logit_preprocessing
 
     def predict_proba(self, X):
         """Calculate calibrated probabilities.
@@ -993,7 +905,7 @@ class _CalibratedClassifier:
         predictions = _ensure_logits(
             predictions,
             response_method_name=response_method_used,
-            logit_preprocessing=self.logit_preprocessing,
+            method=self.method,
         )
 
         n_classes = self.classes.shape[0]
@@ -1024,17 +936,6 @@ class _CalibratedClassifier:
                     proba, denominator, out=uniform_proba, where=denominator != 0
                 )
         elif self.method == "temperature":
-            xp, _ = get_namespace(predictions)
-            if n_classes == 2 and predictions.shape[-1] == 1:
-                response_method_name = _check_response_method(
-                    self.estimator,
-                    ["decision_function", "predict_proba"],
-                ).__name__
-                if (
-                    response_method_name == "predict_proba"
-                    and self.logit_preprocessing is None
-                ):
-                    predictions = xp.concat([1 - predictions, predictions], axis=1)
             proba = self.calibrators[0].predict(predictions)
 
         # Deal with cases where the predicted probability minimally exceeds 1.0

@@ -414,22 +414,16 @@ def test_sigmoid_calibration():
         _SigmoidCalibration().fit(np.vstack((exF, exF)), exY)
 
 
-@pytest.mark.parametrize("logit_preprocessing", ["invalid", "auto", ""])
-def test_ensure_logits_invalid_logit_preprocessing(logit_preprocessing):
-    with pytest.raises(ValueError, match="Unknown logit type"):
-        _ensure_logits(np.array([0.5]), "predict_proba", logit_preprocessing)
-
-
-def test_ensure_logits_no_conversion():
+def test_ensure_logits_decision_function_passthrough():
     logits_1d = np.array([0.0, 1.5, -0.5])
     assert_array_equal(
-        _ensure_logits(logits_1d, "decision_function", None),
+        _ensure_logits(logits_1d, "decision_function", "sigmoid"),
         logits_1d.reshape(-1, 1),
     )
 
     logits_2d = np.array([[0.0, 1.0], [1.0, 0.0]])
     assert_array_equal(
-        _ensure_logits(logits_2d, "decision_function", None),
+        _ensure_logits(logits_2d, "decision_function", "temperature"),
         logits_2d,
     )
 
@@ -450,6 +444,14 @@ def test_ensure_logits_predict_proba_sigmoid_binary(predictions, expected):
     assert_allclose(logits.ravel(), expected)
 
 
+def test_ensure_logits_predict_proba_isotonic_binary():
+    proba = np.array([0.2, 0.8])
+    expected = LogitLink().link(proba)
+    logits = _ensure_logits(proba, "predict_proba", "isotonic")
+    assert logits.shape == (2, 1)
+    assert_allclose(logits.ravel(), expected)
+
+
 def test_ensure_logits_predict_proba_sigmoid_multiclass():
     proba = np.array([[0.1, 0.2, 0.7], [0.5, 0.3, 0.2]])
     eps = np.finfo(proba.dtype).eps
@@ -463,12 +465,23 @@ def test_ensure_logits_predict_proba_sigmoid_multiclass():
     assert_allclose(logits, expected)
 
 
-def test_ensure_logits_predict_proba_softmax_multiclass():
+def test_ensure_logits_predict_proba_temperature_multiclass():
     proba = np.array([[0.1, 0.2, 0.7], [0.5, 0.3, 0.2]])
     eps = np.finfo(proba.dtype).eps
     expected = MultinomialLogit().link(proba.clip(eps, 1 - eps))
 
-    logits = _ensure_logits(proba, "predict_proba", "softmax")
+    logits = _ensure_logits(proba, "predict_proba", "temperature")
+    assert_allclose(logits, expected)
+
+
+def test_ensure_logits_predict_proba_temperature_binary():
+    proba = np.array([0.2, 0.8])
+    eps = np.finfo(proba.dtype).eps
+    proba_2d = np.column_stack([1 - proba, proba]).clip(eps, 1 - eps)
+    expected = MultinomialLogit().link(proba_2d)
+
+    logits = _ensure_logits(proba, "predict_proba", "temperature")
+    assert logits.shape == (2, 2)
     assert_allclose(logits, expected)
 
 
@@ -478,37 +491,22 @@ def test_ensure_logits_decision_function_sigmoid_binary():
     assert_array_equal(logits, decision_values.reshape(-1, 1))
 
 
-def test_ensure_logits_decision_function_sigmoid_multiclass():
-    decision_values = np.array([[2.0, 1.0, 0.0], [0.0, 1.0, 2.0]])
-    proba = softmax(decision_values)
-    eps = np.finfo(proba.dtype).eps
-    proba_clipped = proba.clip(eps, 1 - eps)
-    sigmoid_link = LogitLink()
-    expected = np.zeros_like(proba)
-    for class_idx in range(proba.shape[1]):
-        expected[:, class_idx] = sigmoid_link.link(proba_clipped[:, class_idx])
-
-    logits = _ensure_logits(decision_values, "decision_function", "sigmoid")
-    assert_allclose(logits, expected)
-
-
-def test_ensure_logits_decision_function_softmax_passthrough():
+def test_ensure_logits_decision_function_multiclass_passthrough():
     decision_values = np.array([[2.0, 1.0, 0.0], [0.0, 1.0, 2.0]])
     assert_array_equal(
-        _ensure_logits(decision_values, "decision_function", "softmax"),
+        _ensure_logits(decision_values, "decision_function", "sigmoid"),
         decision_values,
-    )
-
-    decision_values_1d = np.array([1.0, -1.0])
-    assert_array_equal(
-        _ensure_logits(decision_values_1d, "decision_function", "softmax"),
-        decision_values_1d.reshape(-1, 1),
     )
 
 
 def test_ensure_logits_invalid_response_method():
     with pytest.raises(ValueError, match="Unknown response method name"):
         _ensure_logits(np.array([0.5]), "predict", "sigmoid")
+
+
+def test_ensure_logits_invalid_method():
+    with pytest.raises(ValueError, match="Unknown calibration method"):
+        _ensure_logits(np.array([0.5]), "predict_proba", "invalid")
 
 
 def test_ensure_logits_probability_clipping():
