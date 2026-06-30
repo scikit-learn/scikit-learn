@@ -1486,6 +1486,49 @@ def test_simple_imputation_inverse_transform(missing_value):
         assert_array_equal(X_inv_trans, X)
 
 
+@pytest.mark.parametrize(
+    "empty_col",
+    [0, 1, 2],
+    ids=["empty_col_first", "empty_col_middle", "empty_col_last"],
+)
+def test_simple_imputation_inverse_transform_empty_feature(empty_col):
+    """Regression test for gh-27012.
+
+    inverse_transform must correctly reconstruct column order when one or more
+    features are entirely missing during fit (all-NaN, keep_empty_features=False).
+    """
+    rng = np.random.RandomState(0)
+    n_samples, n_cols = 4, 3
+
+    # Build a fit dataset where `empty_col` is all NaN
+    X_fit = rng.rand(n_samples, n_cols)
+    X_fit[:, empty_col] = np.nan
+
+    # Build a transform dataset with valid values everywhere
+    X_transform = rng.rand(n_samples, n_cols)
+
+    imputer = SimpleImputer(strategy="mean", add_indicator=True)
+    imputer.fit(X_fit)
+
+    X_trans = imputer.transform(X_transform)
+    X_inv = imputer.inverse_transform(X_trans)
+
+    assert X_inv.shape == X_transform.shape, (
+        "inverse_transform must return the original number of columns"
+    )
+    # The all-NaN column should be restored as NaN (missing_values)
+    assert np.isnan(X_inv[:, empty_col]).all(), (
+        f"Column {empty_col} (all-NaN during fit) must be NaN after inverse_transform"
+    )
+    # All other columns must match the transformed input values
+    other_cols = [c for c in range(n_cols) if c != empty_col]
+    np.testing.assert_allclose(
+        X_inv[:, other_cols],
+        X_transform[:, other_cols],
+        err_msg="Non-empty columns must be correctly restored by inverse_transform",
+    )
+
+
 @pytest.mark.parametrize("missing_value", [-1, np.nan])
 def test_simple_imputation_inverse_transform_exceptions(missing_value):
     X_1 = np.array(
