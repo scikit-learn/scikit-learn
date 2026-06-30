@@ -198,7 +198,7 @@ compute_metrics(clf_list, X_train, y_train, X_test, y_test)
 # since both metrics are sensitive to the calibration of the predicted
 # probabilities.
 #
-# The ROC AUC score is a pure ranking metric: it is not unchanged by the
+# The ROC AUC score is a pure ranking metric: it is not changed by the
 # sigmoid calibration method because this method applies a strictly monotonic
 # transformation on the probabilities predicted by the base estimator. However,
 # the isotonic calibration method can degrade the ROC AUC score a bit because
