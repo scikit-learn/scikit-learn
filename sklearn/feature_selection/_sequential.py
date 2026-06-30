@@ -277,7 +277,6 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             else n_features - self.n_features_to_select_
         )
 
-        old_score = -np.inf
         is_auto_select = self.tol is not None and self.n_features_to_select == "auto"
 
         # We only need to verify the routing here and not use the routed params
@@ -285,6 +284,28 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         # `cross_val_score` function.
         if _routing_enabled():
             process_routing(self, "fit", **params)
+
+        if self.direction == "backward" and is_auto_select:
+            # In backward selection the stopping criterion compares the score
+            # obtained after removing a feature with the score obtained before
+            # removing it. The reference score for the first iteration must
+            # therefore be the score using all the features. Keeping the
+            # forward-selection default of `-np.inf` would make the criterion
+            # `(new_score - old_score) < tol` impossible to satisfy on the first
+            # iteration, so at least one feature would always be removed
+            # regardless of its impact on the score.
+            old_score = cross_val_score(
+                cloned_estimator,
+                X,
+                y,
+                cv=cv,
+                scoring=self.scoring,
+                n_jobs=self.n_jobs,
+                params=params,
+            ).mean()
+        else:
+            old_score = -np.inf
+
         for _ in range(n_iterations):
             new_feature_idx, new_score = self._get_best_new_feature_score(
                 cloned_estimator, X, y, cv, current_mask, **params

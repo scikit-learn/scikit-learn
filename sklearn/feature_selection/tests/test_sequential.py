@@ -52,8 +52,14 @@ def test_n_features_to_select_auto(direction):
     """
 
     n_features = 10
-    tol = 1e-3
-    X, y = make_regression(n_features=n_features, random_state=0)
+    n_informative = 5
+    # `tol` is required to be positive when adding features (forward) and can be
+    # negative when removing features (backward), since removing a feature
+    # typically decreases the score.
+    tol = 1e-3 if direction == "forward" else -1e-3
+    X, y = make_regression(
+        n_features=n_features, n_informative=n_informative, noise=10, random_state=0
+    )
     sfs = SequentialFeatureSelector(
         LinearRegression(),
         n_features_to_select="auto",
@@ -69,6 +75,33 @@ def test_n_features_to_select_auto(direction):
     assert sfs.n_features_to_select_ <= max_features_to_select
     assert sfs.transform(X).shape[1] <= max_features_to_select
     assert sfs.get_support(indices=True).shape[0] == sfs.n_features_to_select_
+
+
+def test_backward_auto_keeps_all_features_when_removal_hurts():
+    """Non-regression test for backward auto selection.
+
+    When every feature is informative, removing any of them decreases the
+    cross-validation score, so backward selection with `tol=0` must keep all
+    features. Previously `old_score` was initialized to `-np.inf` regardless of
+    the direction, which made the stopping criterion impossible to satisfy on
+    the first iteration and forced at least one feature to be removed.
+    Non-regression test for
+    https://github.com/scikit-learn/scikit-learn/issues/26369
+    """
+    X, y = make_regression(
+        n_samples=100, n_features=3, n_informative=3, noise=0, random_state=0
+    )
+    sfs = SequentialFeatureSelector(
+        LinearRegression(),
+        n_features_to_select="auto",
+        tol=0,
+        direction="backward",
+        cv=2,
+    )
+    sfs.fit(X, y)
+
+    assert sfs.get_support().all()
+    assert sfs.n_features_to_select_ == X.shape[1]
 
 
 @pytest.mark.parametrize("direction", ("forward", "backward"))
