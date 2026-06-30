@@ -438,7 +438,7 @@ plot_roc_pr_curves(model, tuned_model, title=title)
 tuned_model.set_params(cv=0.75).fit(X_train, y_train)
 
 # %%
-title = "Tuned GBDT model, using a single train-test split"
+title = "Tuned GBDT model using a single train-test split"
 plot_roc_pr_curves(model, tuned_model, title=title)
 
 # %%
@@ -520,7 +520,8 @@ def business_metric(y_true, y_pred, amount):
     return fraudulent_refuse + fraudulent_accept + legitimate_refuse + legitimate_accept
 
 
-# %% From this business metric, we create a scikit-learn scorer that, given a fitted
+# %%
+# From this business metric, we create a scikit-learn scorer that, given a fitted
 # classifier and a test set, computes the business metric. We use the
 # :func:`~sklearn.metrics.make_scorer` factory again here. The variable `amount` is an
 # additional metadata to be passed to the scorer and we need to use :ref:`metadata
