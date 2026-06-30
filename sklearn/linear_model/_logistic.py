@@ -43,6 +43,7 @@ from sklearn.utils import (
 from sklearn.utils._array_api import (
     _is_numpy_namespace,
     _matching_numpy_dtype,
+    _ravel,
     check_same_namespace,
     get_namespace,
     get_namespace_and_device,
@@ -394,8 +395,8 @@ def _logistic_regression_path(
 
     solver = _check_solver(solver, penalty, dual)
     xp, _, device_ = get_namespace_and_device(X)
-    # Only newton-cg supports full Array API, lbfgs still needs coef / w0 as numpy
-    # arrays.
+    # Only newton-cg has complete support of the array API, lbfgs still needs
+    # coef / w0 as numpy arrays.
     coef_as_xp = solver == "newton-cg"
 
     # Preprocessing.
@@ -494,13 +495,15 @@ def _logistic_regression_path(
     if coef is not None:
         if is_binary:
             if coef.ndim == 1 and coef.shape[0] == n_features + int(fit_intercept):
-                w0[:] = move_to(coef, xp=xp, device=device_)
+                w0[:] = move_to(coef, xp=xp, device=device_) if coef_as_xp else coef
             elif (
                 coef.ndim == 2
                 and coef.shape[0] == 1
                 and coef.shape[1] == n_features + int(fit_intercept)
             ):
-                w0[:] = move_to(coef[0], xp=xp, device=device_)
+                w0[:] = (
+                    move_to(coef[0], xp=xp, device=device_) if coef_as_xp else coef[0]
+                )
             else:
                 msg = (
                     f"Initialization coef is of shape {coef.shape}, expected shape "
@@ -513,7 +516,9 @@ def _logistic_regression_path(
                 and coef.shape[0] == n_classes
                 and coef.shape[1] == n_features + int(fit_intercept)
             ):
-                w0[:, : coef.shape[1]] = move_to(coef, xp=xp, device=device_)
+                w0[:, : coef.shape[1]] = (
+                    move_to(coef, xp=xp, device=device_) if coef_as_xp else coef
+                )
             else:
                 msg = (
                     f"Initialization coef is of shape {coef.shape}, expected shape "
@@ -558,7 +563,7 @@ def _logistic_regression_path(
             if _is_numpy_namespace(xp) or not coef_as_xp:
                 w0 = w0.ravel(order="F")
             else:
-                w0 = xp.reshape(w0.T, (-1,))
+                w0 = _ravel(w0.T, xp=xp)
         if solver == "lbfgs":
             func = loss.loss_gradient
         elif solver == "newton-cg":

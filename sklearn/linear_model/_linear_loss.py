@@ -10,6 +10,7 @@ from scipy import sparse
 
 from sklearn.utils._array_api import (
     _is_numpy_namespace,
+    _ravel,
     get_namespace,
     get_namespace_and_device,
     move_to,
@@ -356,10 +357,11 @@ class LinearModelLoss:
 
         grad_pointwise /= sw_sum
 
-        # TODO: The lbfgs solver currently only works with numpy arrays, passes the
-        # argument coef as numpy and wants a result as numpy. So, for the time being,
-        # we stick with a mix of numpy and Array API. We could/should maybe move coef
-        # to the device of X.
+        # TODO: The lbfgs solver currently only works with numpy arrays and expects
+        # both the coef argument and the result to be in numpy. So, for the time
+        # being, we stick with a mix of numpy and array API. We could consider
+        # moving coef to the device of X if lbgfs also becomes compatible with the
+        # array API.
         if not self.base_loss.is_multiclass:
             grad = np.empty_like(coef, dtype=weights.dtype)
             X_grad = X.T @ grad_pointwise
@@ -463,7 +465,7 @@ class LinearModelLoss:
                 if _is_numpy_namespace(xp):
                     return grad.ravel(order="F")
                 else:
-                    return xp.reshape(grad.T, (-1,))
+                    return _ravel(grad.T, xp=xp)
             else:
                 return grad
 
@@ -844,7 +846,6 @@ class LinearModelLoss:
                 n_threads=n_threads,
             )
             grad_pointwise /= sw_sum
-            is_numpy_ns = _is_numpy_namespace(xp)
             if is_numpy_ns:
                 grad = np.empty((n_classes, n_dof), dtype=weights.dtype, order="F")
             else:
@@ -908,7 +909,7 @@ class LinearModelLoss:
                     if is_numpy_ns:
                         return hess_prod.ravel(order="F")
                     else:
-                        return xp.reshape(hess_prod.T, (-1,))
+                        return _ravel(hess_prod.T, xp=xp)
                 else:
                     return hess_prod
 
@@ -916,6 +917,6 @@ class LinearModelLoss:
                 if is_numpy_ns:
                     return grad.ravel(order="F"), hessp
                 else:
-                    return xp.reshape(grad.T, (-1,)), hessp
+                    return _ravel(grad.T, xp=xp), hessp
 
         return grad, hessp
