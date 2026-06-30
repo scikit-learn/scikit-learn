@@ -139,9 +139,9 @@ def test_newton_cg_verbosity(capsys, verbose):
             assert m in captured.out
 
         # Function with locally negative curvature at x0=b.
-        # f   = (x-2)*(x-1)*(x+1)*(x+4) + 2x
-        # f'  = 2 x (2 x^2 + 3 x - 9)
-        # f'' = 12 x^2 + 12 x - 18
+        # f   = (x - 2) * (x - 1) * (x + 1) * (x + 4) + 2x
+        # f'  = 2x (2x^2 + 3x - 9)
+        # f'' = 12x^2 + 12x - 18
         # global min at x=-3, local max (saddlepoint) at x=0
         # negative curvature between (-1-sqrt(7))/2 and (-1+sqrt(7))/2
         b = np.array([(-1 + np.sqrt(7)) / 2 - 1e-2])  # point of negative curvature
