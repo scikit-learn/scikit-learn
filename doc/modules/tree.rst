@@ -522,6 +522,10 @@ parameter:
   feature. This performs a stochastic approximation of the greedy search,
   effectively reducing computation time (see :ref:`tree_complexity`).
 
+:class:`ExtraTreeClassifier` and :class:`ExtraTreeRegressor` use
+``splitter='random'`` by default and share the same implementation as their
+corresponding decision tree estimators, apart from default parameter values.
+
 After choosing the optimal split :math:`\theta^*` at node :math:`m`, the same
 splitting procedure is then applied recursively to each partition
 :math:`Q_m^{left}(\theta^*)` and :math:`Q_m^{right}(\theta^*)` until a stopping

@@ -549,9 +549,11 @@ def nan_euclidean_distances(
         # This may not be the case due to floating point rounding errors.
         np.fill_diagonal(distances, 0.0)
 
-    present_X = 1 - missing_X
-    present_Y = present_X if Y is X else ~missing_Y
-    present_count = np.dot(present_X, present_Y.T)
+    # Cast the boolean presence masks to float so the matrix product runs
+    # through BLAS instead of the much slower integer matmul.
+    present_X = (~missing_X).astype(distances.dtype)
+    present_Y = present_X if Y is X else (~missing_Y).astype(distances.dtype)
+    present_count = present_X @ present_Y.T
     distances[present_count == 0] = np.nan
     # avoid divide by zero
     np.maximum(1, present_count, out=present_count)
