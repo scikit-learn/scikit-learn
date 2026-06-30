@@ -289,11 +289,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             # In backward selection the stopping criterion compares the score
             # obtained after removing a feature with the score obtained before
             # removing it. The reference score for the first iteration must
-            # therefore be the score using all the features. Keeping the
-            # forward-selection default of `-np.inf` would make the criterion
-            # `(new_score - old_score) < tol` impossible to satisfy on the first
-            # iteration, so at least one feature would always be removed
-            # regardless of its impact on the score.
+            # therefore be the score using all the features.
             old_score = cross_val_score(
                 cloned_estimator,
                 X,
