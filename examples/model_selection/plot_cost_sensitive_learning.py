@@ -376,7 +376,7 @@ plot_roc_pr_curves(model, tuned_model, title=title)
 # the same as our business metric. We see that the optimum threshold corresponds to the
 # maximum of the objective score. This maximum is reached for a decision threshold
 # much lower than 0.5: the tuned model enjoys a much higher recall at the cost of
-# of significantly lower precision: the tuned model is much more eager to
+# significantly lower precision: the tuned model is much more eager to
 # predict the "bad" class label for a larger fraction of individuals.
 #
 # We can now check if choosing this cut-off point leads to a better score on the testing
@@ -417,7 +417,7 @@ plot_roc_pr_curves(model, tuned_model, title=title)
 # We observe that the optimum cut-off point is different from the one found
 # in the previous experiment. If we look at the right-hand side plot, we
 # can see that the business gain has a large plateau of near-optimal 0 gain for a
-# large span of decision thresholds. This behavior is symptomatic of an
+# large span of decision thresholds. This behavior is symptomatic of
 # overfitting. Because we disabled cross-validation, we tuned the cut-off point
 # on the same set as the model was trained on, and this is the reason for the
 # observed overfitting.
