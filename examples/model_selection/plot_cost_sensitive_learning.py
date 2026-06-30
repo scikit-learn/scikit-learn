@@ -158,7 +158,7 @@ scoring = {
 # - a `0` gain for true positives and true negatives.
 #
 # Note that theoretically, given that our model is calibrated and our data
-# set representative and large enough, we do not need to tune the
+# set is representative and large enough, we do not need to tune the
 # threshold, but can safely set it to 1/5 of the cost ratio, as stated by
 # Eq. (2) in Elkan's paper [2]_.
 import numpy as np
@@ -372,20 +372,20 @@ plot_roc_pr_curves(model, tuned_model, title=title)
 #
 # The second remark is that the cut-off points of the vanilla and tuned model are
 # different. To understand why the tuned model has chosen this cut-off point, we can
-# look at the right-hand side plot that plots the objective score that is our exactly
+# look at the right-hand side plot that plots the objective score that is exactly
 # the same as our business metric. We see that the optimum threshold corresponds to the
 # maximum of the objective score. This maximum is reached for a decision threshold
 # much lower than 0.5: the tuned model enjoys a much higher recall at the cost of
 # of significantly lower precision: the tuned model is much more eager to
-# predict the "bad" class label to larger fraction of individuals.
+# predict the "bad" class label for a larger fraction of individuals.
 #
 # We can now check if choosing this cut-off point leads to a better score on the testing
 # set:
 print(f"Business defined metric: {scoring['credit_gain'](tuned_model, X_test, y_test)}")
 
 # %%
-# We observe that tuning the decision threshold almost improves our business gains
-# by factor of 2.
+# We observe that tuning the decision threshold improves our business gains
+# by almost a factor of 2.
 #
 # .. _TunedThresholdClassifierCV_no_cv:
 #
@@ -401,8 +401,8 @@ print(f"Business defined metric: {scoring['credit_gain'](tuned_model, X_test, y_
 # These two strategies can be changed by providing the `refit` and `cv` parameters.
 # For instance, one could provide a fitted `estimator` and set `cv="prefit"`, in which
 # case the cut-off point is found on the entire dataset provided at fitting time.
-# Also, the underlying classifier is not be refitted by setting `refit=False`. Here, we
-# can try to do such experiment.
+# This also requires to set `refit=False`, so that the underlying classifier will not be
+# refitted. Here, we can try to do such an experiment:
 model.fit(X_train, y_train)
 tuned_model.set_params(cv="prefit", refit=False).fit(X_train, y_train)
 print(f"{tuned_model.best_threshold_=:0.2f}")
@@ -414,29 +414,31 @@ title = "Tuned GBDT model without refitting and using the entire dataset"
 plot_roc_pr_curves(model, tuned_model, title=title)
 
 # %%
-# We observe the that the optimum cut-off point is different from the one found
+# We observe that the optimum cut-off point is different from the one found
 # in the previous experiment. If we look at the right-hand side plot, we
-# observe that the business gain has large plateau of near-optimal 0 gain for a
+# can see that the business gain has a large plateau of near-optimal 0 gain for a
 # large span of decision thresholds. This behavior is symptomatic of an
-# overfitting. Because we disable cross-validation, we tuned the cut-off point
+# overfitting. Because we disabled cross-validation, we tuned the cut-off point
 # on the same set as the model was trained on, and this is the reason for the
 # observed overfitting.
 #
 # This option should therefore be used with caution. One needs to make sure that the
 # data provided at fitting time to the
 # :class:`~sklearn.model_selection.TunedThresholdClassifierCV` is not the same as the
-# data used to train the underlying classifier. This could happen sometimes when the
+# data used to train the underlying classifier. This can be the case when the
 # idea is just to tune the predictive model on a completely new validation set without a
 # costly complete refit.
 #
 # When cross-validation is too costly, a potential alternative is to use a
 # single train-test split by providing a floating number in range `[0, 1]` to the `cv`
-# parameter. It splits the data into a training and testing set. Let's explore this
-# option:
+# parameter. It splits the data into a training and testing set. (Note that
+# `refit=False` is still set, which means the model will not be refitted on the entire
+# training set once the threshold has been found.)
+# Let's explore this option:
 tuned_model.set_params(cv=0.75).fit(X_train, y_train)
 
 # %%
-title = "Tuned GBDT model without refitting and using the entire dataset"
+title = "Tuned GBDT model, using a single train-test split"
 plot_roc_pr_curves(model, tuned_model, title=title)
 
 # %%
@@ -467,8 +469,7 @@ credit_card.frame.info()
 # The dataset contains information about credit card records from which some are
 # fraudulent and others are legitimate. The goal is therefore to predict whether or
 # not a credit card record is fraudulent.
-columns_to_drop = ["Class"]
-data = credit_card.frame.drop(columns=columns_to_drop)
+data = credit_card.frame.drop(columns=["Class"])
 target = credit_card.frame["Class"].astype(int)
 
 # %%
@@ -488,19 +489,18 @@ target.value_counts()
 # fraudulent transactions.
 fraud = target == 1
 amount_fraud = data["Amount"][fraud]
-_, ax = plt.subplots()
-ax.hist(amount_fraud, bins=30)
-ax.set_title("Amount of fraud transaction")
-_ = ax.set_xlabel("Amount (€)")
+_ = amount_fraud.plot.hist(
+    bins=30, title="Amount of fraud transaction", xlabel="Amount (€)"
+)
 
 # %%
 # Addressing the problem with a business metric
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 #
-# Now, we create the business metric that depends on the amount of each transaction. We
+# Now, we create a business metric that depends on the amount of each transaction. We
 # define the cost matrix similarly to [2]_. Accepting a legitimate transaction provides
 # a gain of 2% of the amount of the transaction. However, accepting a fraudulent
-# transaction result in a loss of the amount of the transaction. As stated in [2]_, the
+# transaction results in a loss of the amount of the transaction. As stated in [2]_, the
 # gain and loss related to refusals (of fraudulent and legitimate transactions) are not
 # trivial to define. Here, we define that a refusal of a legitimate transaction
 # is estimated to a loss of 5€ while the refusal of a fraudulent transaction is
@@ -520,18 +520,17 @@ def business_metric(y_true, y_pred, amount):
     return fraudulent_refuse + fraudulent_accept + legitimate_refuse + legitimate_accept
 
 
-# %%
-# From this business metric, we create a scikit-learn scorer that given a fitted
-# classifier and a test set compute the business metric. In this regard, we use
-# the :func:`~sklearn.metrics.make_scorer` factory. The variable `amount` is an
-# additional metadata to be passed to the scorer and we need to use
-# :ref:`metadata routing <metadata_routing>` to take into account this information.
+# %% From this business metric, we create a scikit-learn scorer that, given a fitted
+# classifier and a test set, computes the business metric. We use the
+# :func:`~sklearn.metrics.make_scorer` factory again here. The variable `amount` is an
+# additional metadata to be passed to the scorer and we need to use :ref:`metadata
+# routing <metadata_routing>` to take this information into account.
 sklearn.set_config(enable_metadata_routing=True)
 business_scorer = make_scorer(business_metric).set_score_request(amount=True)
 
 # %%
 # So at this stage, we observe that the amount of the transaction is used twice: once
-# as a feature to train our predictive model and once as a metadata to compute the
+# as a feature to train our predictive model and once as metadata to compute the
 # the business metric and thus the statistical performance of our model. When used as a
 # feature, we are only required to have a column in `data` that contains the amount of
 # each transaction. To use this information as metadata, we need to have an external
@@ -573,7 +572,7 @@ print(f"Benefit of the 'always reject' policy: {benefit:,.2f}€")
 
 
 # %%
-# Such a policy would entail a catastrophic loss: around 670,000€. This is
+# Such a policy would entail a catastrophic loss: almost 700,000€. This is
 # expected since the vast majority of the transactions are legitimate and the
 # policy would refuse them at a non-trivial cost.
 #
@@ -614,7 +613,7 @@ print(
 # Tuning the decision threshold
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 #
-# Now the question is: is our model optimum for the type of decision that we want to do?
+# Now the question is: is our model optimal for the type of decision that we want to do?
 # Up to now, we did not optimize the decision threshold. We use the
 # :class:`~sklearn.model_selection.TunedThresholdClassifierCV` to optimize the decision
 # given our business scorer. To avoid a nested cross-validation, we will use the
@@ -689,5 +688,5 @@ print(f"Benefit of logistic regression with a tuned threshold:  {business_score:
 # on live data (online evaluation). Note however that A/B testing models is
 # beyond the scope of the scikit-learn library itself.
 #
-# At the end, we disable the configuration flag for metadata routing::
+# At the end, we disable the configuration flag for metadata routing:
 sklearn.set_config(enable_metadata_routing=False)
