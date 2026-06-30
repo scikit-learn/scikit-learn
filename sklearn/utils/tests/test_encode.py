@@ -286,7 +286,7 @@ def test_get_counts_multiple_nans():
         ["a", np.nan, NAN1, np.nan, NAN2, NAN1, np.nan, "a"],
         dtype=object,
     )
-    uniques = ["a", np.nan]
+    uniques = np.array(["a", np.nan], dtype=object)
     expected_counts = [2, 6]
     assert_array_equal(
         _get_counts(values, uniques, [np.nan, NAN1, NAN2]), expected_counts
@@ -294,5 +294,7 @@ def test_get_counts_multiple_nans():
 
     # Now try it via _unique, to make sure this works end-to-end:
     real_uniques, real_counts = _unique(values, return_counts=True)
-    assert_array_equal(uniques, list(real_uniques))
+    # Comparing two arrays with nan fails cause the nans are not equal to
+    # themselves. So compare as Python lists:
+    assert list(uniques) == list(real_uniques)
     assert_array_equal(real_counts, expected_counts)
