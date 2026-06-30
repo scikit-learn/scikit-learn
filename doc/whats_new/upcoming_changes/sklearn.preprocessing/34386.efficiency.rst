@@ -1,5 +1,5 @@
-- Improved the speed of :meth:`preprocessing.OneHotEncoder.fit`
-and :meth:`preprocessing.OrdinalEncoder.fit` on object/string categorical
-features when category counts are needed, for instance with ``min_frequency``
-or ``max_categories``.
+- Improved fit time of :class:`preprocessing.OneHotEncoder`
+  and :class:`preprocessing.OrdinalEncoder` on object/string categorical
+  features when category counts are needed, for instance with ``min_frequency``
+  or ``max_categories``.
   By :user:`Itamar Turner-Trauring <itamarst>`.
