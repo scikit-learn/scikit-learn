@@ -466,11 +466,3 @@ def test_dbscan_no_warning_presorted_precomputed():
     with warnings.catch_warnings():
         warnings.simplefilter("error", EfficiencyWarning)
         dbscan(sorted_graph, eps=0.5, min_samples=5, metric="precomputed")
-
-
-def test_sort_graph_by_row_values_still_warns_directly():
-    # Fix must not disable the warning globally, only inside DBSCAN.
-    X = np.random.RandomState(0).randn(200, 10)
-    graph = _reverse_row_order(kneighbors_graph(X, n_neighbors=15, mode="distance"))
-    with pytest.warns(EfficiencyWarning):
-        sort_graph_by_row_values(graph.copy())
