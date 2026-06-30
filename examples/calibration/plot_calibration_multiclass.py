@@ -451,6 +451,7 @@ plt.show()
 # internal CV procedure of `CalibratedClassifierCV` since we don't want to plot
 # the calibration maps and instead focus on quantitative results. %%
 scores = []
+calibration_methods = ["sigmoid", "isotonic", "temperature"]
 
 for classifier_idx, (name, base_clf) in enumerate(base_classifiers.items()):
     base_clf.fit(X_train, y_train)
@@ -521,8 +522,6 @@ best_logit_results.query(
 best_logit_results.query(
     "metric_name == 'brier_score_loss' and calibration_method == 'sigmoid'"
 ).sort_values("metric_with_cal")
-
-# %%
 # %%
 best_logit_results.query(
     "metric_name == 'log_loss' and calibration_method == 'isotonic'"
@@ -531,5 +530,11 @@ best_logit_results.query(
 best_logit_results.query(
     "metric_name == 'brier_score_loss' and calibration_method == 'isotonic'"
 ).sort_values("metric_with_cal")
-
 # %%
+best_logit_results.query(
+    "metric_name == 'log_loss' and calibration_method == 'temperature'"
+).sort_values("metric_with_cal")
+# %%
+best_logit_results.query(
+    "metric_name == 'brier_score_loss' and calibration_method == 'temperature'"
+).sort_values("metric_with_cal")
