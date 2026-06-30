@@ -69,6 +69,9 @@ def test_n_features_to_select_auto(direction):
     )
     sfs.fit(X, y)
 
+    # Half of the features are uninformative, so both forward and backward
+    # selection stop before reaching all features (backward auto-selection can
+    # otherwise legitimately keep all features when every removal hurts).
     max_features_to_select = n_features - 1
 
     assert sfs.get_support(indices=True).shape[0] <= max_features_to_select
