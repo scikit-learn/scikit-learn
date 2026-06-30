@@ -248,21 +248,14 @@ def test_absolute_error_sample_weight():
 
 
 def test_huber_loss():
-    # For coverage only.
+    # Smoke test: fits without error, achieves good score, and works with sample_weight.
     X, y = make_regression(n_samples=500, random_state=0)
+    rng = np.random.RandomState(0)
     gbdt = HistGradientBoostingRegressor(loss="huber", random_state=0)
     gbdt.fit(X, y)
     assert gbdt.score(X, y) > 0.9
 
-
-def test_huber_loss_sample_weight():
-    # Ensure no error is thrown when fitting with sample_weight.
-    rng = np.random.RandomState(0)
-    n_samples = 100
-    X = rng.uniform(-1, 1, size=(n_samples, 2))
-    y = rng.uniform(-1, 1, size=n_samples)
-    sample_weight = rng.uniform(0, 1, size=n_samples)
-    gbdt = HistGradientBoostingRegressor(loss="huber")
+    sample_weight = rng.uniform(0, 1, size=len(y))
     gbdt.fit(X, y, sample_weight=sample_weight)
 
 
@@ -293,6 +286,27 @@ def test_huber_loss_outlier_robustness():
     err_sq = median_absolute_error(y_test, gbdt_sq.predict(X_test))
     # on this dataset, huber is much better for absolute error:
     assert 2 * err_huber < err_sq
+
+
+def test_huber_vs_absolute_and_squared_error():
+    """Check that Huber predictions lie between absolute and squared error."""
+    n_rep = 100
+    n_samples = 10
+    y = np.tile(np.arange(n_samples), n_rep)
+    x1 = np.minimum(y, n_samples / 2)
+    x2 = np.minimum(-y, -n_samples / 2)
+    X = np.c_[x1, x2]
+
+    rng = np.random.RandomState(42)
+    y = y + rng.exponential(scale=1, size=y.shape)
+
+    gbdt_abs = HistGradientBoostingRegressor(loss="absolute_error").fit(X, y)
+    gbdt_huber = HistGradientBoostingRegressor(loss="huber").fit(X, y)
+    gbdt_sq = HistGradientBoostingRegressor(loss="squared_error").fit(X, y)
+
+    huber_pred = gbdt_huber.predict(X)
+    assert np.all(gbdt_abs.predict(X) <= huber_pred)
+    assert np.all(huber_pred <= gbdt_sq.predict(X))
 
 
 def test_huber_default_quantile():
