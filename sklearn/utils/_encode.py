@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from collections import Counter
+from collections.abc import Iterable
+from numbers import Real
 from typing import NamedTuple
 
 import numpy as np
@@ -95,6 +97,9 @@ class MissingValues(NamedTuple):
 
     nan: bool
     none: bool
+    # All the different nan instances seen, useful because they end up merged
+    # into just np.nan:
+    all_nans: Iterable[Real] = (np.nan,)
 
     def to_list(self):
         """Convert tuple to a list where None is always first."""
@@ -121,30 +126,32 @@ def _extract_missing(values):
 
     missing_values: MissingValues
         Object with missing value information.
-
-    all_nans: set
-        Set of all different kinds of nans seen
     """
     missing_values_set = {
         value for value in values if value is None or is_scalar_nan(value)
     }
 
     if not missing_values_set:
-        return values, MissingValues(nan=False, none=False), missing_values_set
+        return values, MissingValues(nan=False, none=False)
 
+    all_nans = missing_values_set - {None}
     if None in missing_values_set:
         if len(missing_values_set) == 1:
-            output_missing_values = MissingValues(nan=False, none=True)
+            output_missing_values = MissingValues(
+                nan=False, none=True, all_nans=all_nans
+            )
         else:
             # If there is more than one missing value, then it has to be
             # float('nan') or np.nan
-            output_missing_values = MissingValues(nan=True, none=True)
+            output_missing_values = MissingValues(
+                nan=True, none=True, all_nans=all_nans
+            )
     else:
-        output_missing_values = MissingValues(nan=True, none=False)
+        output_missing_values = MissingValues(nan=True, none=False, all_nans=all_nans)
 
     # create set without the missing values
     output = values - missing_values_set
-    return output, output_missing_values, missing_values_set - {None}
+    return output, output_missing_values
 
 
 class _nandict(dict):
@@ -174,7 +181,7 @@ def _unique_python(values, *, return_inverse, return_counts):
     # Only used in `_uniques`, see docstring there for details
     try:
         uniques_set = set(values)
-        uniques_set, missing_values, all_nans_seen = _extract_missing(uniques_set)
+        uniques_set, missing_values = _extract_missing(uniques_set)
 
         uniques = sorted(uniques_set)
         uniques.extend(missing_values.to_list())
@@ -191,7 +198,7 @@ def _unique_python(values, *, return_inverse, return_counts):
         ret += (_map_to_integer(values, uniques),)
 
     if return_counts:
-        ret += (_get_counts(values, uniques, all_nans_seen),)
+        ret += (_get_counts(values, uniques, missing_values.all_nans),)
 
     return ret[0] if len(ret) == 1 else ret
 
@@ -269,10 +276,10 @@ def _check_unknown(values, known_values, return_mask=False):
 
     if not xp.isdtype(values.dtype, "numeric"):
         values_set = set(values)
-        values_set, missing_in_values, _ = _extract_missing(values_set)
+        values_set, missing_in_values = _extract_missing(values_set)
 
         uniques_set = set(known_values)
-        uniques_set, missing_in_uniques, _ = _extract_missing(uniques_set)
+        uniques_set, missing_in_uniques = _extract_missing(uniques_set)
         diff = values_set - uniques_set
 
         nan_in_diff = missing_in_values.nan and not missing_in_uniques.nan
