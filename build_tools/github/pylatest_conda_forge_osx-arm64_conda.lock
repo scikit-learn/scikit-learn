@@ -144,8 +144,8 @@ https://conda.anaconda.org/conda-forge/noarch/pytest-9.1.1-pyhc364b38_2.conda#64
 https://conda.anaconda.org/conda-forge/noarch/rich-15.0.0-pyhcf101f3_0.conda#0242025a3c804966bf71aa04eee82f66
 https://conda.anaconda.org/conda-forge/noarch/sympy-1.14.0-pyh2585a3b_106.conda#32d866e43b25275f61566b9391ccb7b5
 https://conda.anaconda.org/conda-forge/osx-arm64/cctools_impl_osx-arm64-1030.6.3-llvm19_1_he8a363d_4.conda#76c651b923e048f3f3e0ecb22c966f70
-https://conda.anaconda.org/conda-forge/osx-arm64/harfbuzz-14.2.1-h3103d1b_0.conda#389b1c7cb4738fa74f8a142336807a13
 https://conda.anaconda.org/conda-forge/osx-arm64/libblas-3.11.0-8_h51639a9_openblas.conda#dbfe729181a32741ae63ecb41eefbac6
+https://conda.anaconda.org/conda-forge/osx-arm64/libharfbuzz-14.2.1-h5a65909_1.conda#e8d6e86663316dfbdec7dac532824516
 https://conda.anaconda.org/conda-forge/osx-arm64/openblas-0.3.33-openmp_hea878ba_0.conda#d1b81ee41ccdc2518ca268330cd091af
 https://conda.anaconda.org/conda-forge/noarch/pytest-cov-6.3.0-pyhd8ed1ab_0.conda#50d191b852fccb4bf9ab7b59b030c99d
 https://conda.anaconda.org/conda-forge/noarch/pytest-xdist-3.8.0-pyhd8ed1ab_0.conda#8375cfbda7c57fbceeda18229be10417
@@ -153,7 +153,7 @@ https://conda.anaconda.org/conda-forge/osx-arm64/cctools-1030.6.3-llvm19_1_hd01a
 https://conda.anaconda.org/conda-forge/osx-arm64/cctools_osx-arm64-1030.6.3-llvm19_1_hd01ab73_4.conda#0d059c5db9d880ff37b2da53bf06509e
 https://conda.anaconda.org/conda-forge/osx-arm64/libcblas-3.11.0-8_hb0561ab_openblas.conda#03a2ef3491da9e5b4d18c03e9f4b3109
 https://conda.anaconda.org/conda-forge/osx-arm64/liblapack-3.11.0-8_hd9741b5_openblas.conda#85adeb3d469d082dbd9c8c39e36dec57
-https://conda.anaconda.org/conda-forge/osx-arm64/libraqm-0.10.5-h29bd36a_0.conda#4c7999b62691f4ed6e0650832b7b6cff
+https://conda.anaconda.org/conda-forge/osx-arm64/libraqm-0.10.5-h45af499_1.conda#fa1a27aaaa10e92be48372fa01573f7c
 https://conda.anaconda.org/conda-forge/osx-arm64/liblapacke-3.11.0-8_h1b118fd_openblas.conda#bd1b597f41e950e2058978497bf35c2e
 https://conda.anaconda.org/conda-forge/osx-arm64/libtorch-2.12.0-cpu_generic_h5d695db_0.conda#24a9f36e4520d28fa2db397555394709
 https://conda.anaconda.org/conda-forge/osx-arm64/numpy-2.5.0-py314hb79c6fa_0.conda#5283d56d01517fa1780c72f2544e8603

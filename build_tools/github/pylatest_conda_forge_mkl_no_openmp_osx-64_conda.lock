@@ -106,14 +106,14 @@ https://conda.anaconda.org/conda-forge/noarch/meson-python-0.20.0-pyh7e86bf3_0.c
 https://conda.anaconda.org/conda-forge/osx-64/mkl-2023.2.0-h694c41f_50502.conda#0bdfc939c8542e0bc6041cbd9a900219
 https://conda.anaconda.org/conda-forge/noarch/pytest-9.1.1-pyhc364b38_2.conda#64c98a12c4e23eb238bf66bbecafdf3c
 https://conda.anaconda.org/conda-forge/noarch/rich-15.0.0-pyhcf101f3_0.conda#0242025a3c804966bf71aa04eee82f66
-https://conda.anaconda.org/conda-forge/osx-64/harfbuzz-14.2.1-hf0bc557_0.conda#d217d80acf915fd7af2bb416a7d57e5a
 https://conda.anaconda.org/conda-forge/osx-64/libblas-3.9.0-20_osx64_mkl.conda#160fdc97a51d66d51dc782fb67d35205
+https://conda.anaconda.org/conda-forge/osx-64/libharfbuzz-14.2.1-h97ceea7_1.conda#eeb8ef2f2d2ba6d3ff5ba4e7fdf4b73c
 https://conda.anaconda.org/conda-forge/osx-64/mkl-devel-2023.2.0-h694c41f_50502.conda#045f993e4434eaa02518d780fdca34ae
 https://conda.anaconda.org/conda-forge/noarch/pytest-cov-6.3.0-pyhd8ed1ab_0.conda#50d191b852fccb4bf9ab7b59b030c99d
 https://conda.anaconda.org/conda-forge/noarch/pytest-xdist-3.8.0-pyhd8ed1ab_0.conda#8375cfbda7c57fbceeda18229be10417
 https://conda.anaconda.org/conda-forge/osx-64/libcblas-3.9.0-20_osx64_mkl.conda#51089a4865eb4aec2bc5c7468bd07f9f
 https://conda.anaconda.org/conda-forge/osx-64/liblapack-3.9.0-20_osx64_mkl.conda#58f08e12ad487fac4a08f90ff0b87aec
-https://conda.anaconda.org/conda-forge/osx-64/libraqm-0.10.5-hcf81f31_0.conda#2c1e70004d0c00bedc213f167e2794ca
+https://conda.anaconda.org/conda-forge/osx-64/libraqm-0.10.5-h1888d0e_1.conda#4652bf9d34e607edca7e220d2df74ce4
 https://conda.anaconda.org/conda-forge/osx-64/liblapacke-3.9.0-20_osx64_mkl.conda#124ae8e384268a8da66f1d64114a1eda
 https://conda.anaconda.org/conda-forge/osx-64/numpy-2.5.0-py314h7b24d9b_0.conda#1728c5837f104059fa5a596189fc70e1
 https://conda.anaconda.org/conda-forge/osx-64/blas-devel-3.9.0-20_osx64_mkl.conda#cc3260179093918b801e373c6e888e02
