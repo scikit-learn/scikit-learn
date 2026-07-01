@@ -604,6 +604,7 @@ def load_wine(*, return_X_y=False, as_frame=False):
         frame, data, target = _convert_data_dataframe(
             "load_wine", data, target, feature_names, target_columns
         )
+        target = target.astype("category")
 
     if return_X_y:
         return data, target
@@ -731,6 +732,7 @@ def load_iris(*, return_X_y=False, as_frame=False):
         frame, data, target = _convert_data_dataframe(
             "load_iris", data, target, feature_names, target_columns
         )
+        target = target.astype("category")
 
     if return_X_y:
         return data, target
@@ -884,6 +886,7 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
         frame, data, target = _convert_data_dataframe(
             "load_breast_cancer", data, target, feature_names, target_columns
         )
+        target = target.astype("category")
 
     if return_X_y:
         return data, target
@@ -1025,6 +1028,7 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
         frame, flat_data, target = _convert_data_dataframe(
             "load_digits", flat_data, target, feature_names, target_columns
         )
+        target = target.astype("category")
 
     if return_X_y:
         return flat_data, target
