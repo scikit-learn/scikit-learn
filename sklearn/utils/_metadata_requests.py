@@ -704,17 +704,7 @@ class MetadataRequest:
         names : set of str
             A set of strings with the names of all metadata.
         """
-        if method in COMPOSITE_METHODS:
-            methods = COMPOSITE_METHODS[method]
-        else:
-            methods = [method]
-
-        res = set()
-        for method in methods:
-            res = res.union(
-                getattr(self, method)._get_param_names(return_alias=return_alias)
-            )
-        return res
+        return getattr(self, method)._get_param_names(return_alias=return_alias)
 
     def _route_params(self, *, params, method, parent, caller):
         """Prepare the given parameters to be passed to the method.
@@ -1097,20 +1087,15 @@ class MetadataRouter:
                 )
             )
 
-        if method in COMPOSITE_METHODS:
-            # A composite method (e.g. ``fit_transform``) routes metadata for
-            # each of its component methods (``fit`` and ``transform``), but a
-            # route mapping may also be declared directly on the composite
-            # method itself (e.g. ``TargetEncoder`` maps ``fit_transform`` to
-            # its splitter's ``split``). We therefore match the composite method
-            # as well as its components.
-            methods = [method] + COMPOSITE_METHODS[method]
-        else:
-            methods = [method]
-
         for name, route_mapping in self._route_mappings.items():
             for caller, callee in route_mapping.mapping:
-                if caller in methods:
+                # A composite method (e.g. ``fit_transform``) routes metadata for
+                # each of its component methods (``fit`` and ``transform``), but a
+                # route mapping may also be declared directly on the composite
+                # method itself (e.g. ``TargetEncoder`` maps ``fit_transform`` to
+                # its splitter's ``split``). We therefore match the composite
+                # method as well as its components.
+                if (caller == method) or (caller in COMPOSITE_METHODS.get(method, ())):
                     res = res.union(
                         route_mapping.router._get_param_names(
                             method=callee, return_alias=True, ignore_self_request=False

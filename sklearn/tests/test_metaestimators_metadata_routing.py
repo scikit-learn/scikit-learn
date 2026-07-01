@@ -1007,8 +1007,8 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
 @config_context(enable_metadata_routing=True)
 def test_metadata_routed_to_sub_estimator_in_pipeline(metaestimator):
-    """Check that metadata is routed to a sub-estimator when the meta-estimator
-    is an intermediate (transformer) step of a ``Pipeline``.
+    """Check that sample_weight is routed to a sub-estimator when the
+    meta-estimator is an intermediate (transformer) step of a ``Pipeline``.
 
     A ``Pipeline`` routes metadata to the ``fit_transform`` method of its
     intermediate steps. Resolving the routed parameters for the composite
@@ -1034,10 +1034,6 @@ def test_metadata_routed_to_sub_estimator_in_pipeline(metaestimator):
         metaestimator, sub_estimator_consumes=True
     )
     estimator.set_fit_request(sample_weight=True)
-    if scorer:
-        scorer.set_score_request(sample_weight=True)
-    if cv:
-        cv.set_split_request(groups=True, metadata=True)
     instance = metaestimator_class(**kwargs)
 
     if not hasattr(instance, "transform"):
@@ -1047,19 +1043,23 @@ def test_metadata_routed_to_sub_estimator_in_pipeline(metaestimator):
     # The final estimator is non-consuming so that ``sample_weight`` is only
     # routed to (and required by) the intermediate meta-estimator's
     # sub-estimator.
-    pipe = Pipeline([("selector", instance), ("consumer", NonConsumingClassifier())])
+    pipe = Pipeline(
+        [("transformer", instance), ("final_estimator", NonConsumingClassifier())]
+    )
     pipe.fit(X, y, sample_weight=sample_weight)
 
-    assert registry, "The sub-estimator was not fitted."
+    assert registry
+    preserves_metadata = metaestimator.get("preserves_metadata", True)
+    split_params = ("sample_weight",) if preserves_metadata == "subset" else ()
     for sub_estimator in registry:
-        fit_records = [
-            record
-            for records in sub_estimator._records.get("fit", {}).values()
-            for record in records
-        ]
-        assert fit_records and all(
-            "sample_weight" in record for record in fit_records
-        ), f"sample_weight was not routed to {type(sub_estimator).__name__}.fit"
+        check_recorded_metadata(
+            obj=sub_estimator,
+            method="fit",
+            parent="fit",
+            split_params=split_params,
+            preserves_metadata=preserves_metadata,
+            sample_weight=sample_weight,
+        )
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
