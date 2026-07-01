@@ -162,15 +162,16 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     estimators (see :ref:`User Guide <scores_probabilities>` for details).
 
     Already fitted classifiers can be calibrated by wrapping the model in a
-    :class:`~sklearn.frozen.FrozenEstimator`. In this case all provided data is
-    used for calibration. The user has to take care manually that data for
-    model fitting and calibration are disjoint.
+    :class:`~sklearn.frozen.FrozenEstimator`. In this case all provided
+    data is used for calibration. The user has to take care manually that data
+    for model fitting and calibration are disjoint.
 
     The calibration is based on the :term:`decision_function` method of the
     `estimator` if it exists, else on :term:`predict_proba`.
 
-    Read more in the :ref:`User Guide <calibration>`. In order to learn more on
-    the CalibratedClassifierCV class, see the following calibration examples:
+    Read more in the :ref:`User Guide <calibration>`.
+    In order to learn more on the CalibratedClassifierCV class, see the
+    following calibration examples:
     :ref:`sphx_glr_auto_examples_calibration_plot_calibration.py`,
     :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve.py`, and
     :ref:`sphx_glr_auto_examples_calibration_plot_calibration_multiclass.py`.
@@ -179,8 +180,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     ----------
     estimator : estimator instance, default=None
         The classifier whose output need to be calibrated to provide more
-        accurate `predict_proba` outputs. The default classifier is a
-        :class:`~sklearn.svm.LinearSVC`.
+        accurate `predict_proba` outputs. The default classifier is
+        a :class:`~sklearn.svm.LinearSVC`.
 
         .. versionadded:: 1.2
 
@@ -213,8 +214,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
            Added option 'temperature'.
 
     cv : int, cross-validation generator, or iterable, default=None
-        Determines the cross-validation splitting strategy. Possible inputs for
-        cv are:
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
 
         - None, to use the default 5-fold cross-validation,
         - integer, to specify the number of folds,
@@ -233,9 +234,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
     n_jobs : int, default=None
-        Number of jobs to run in parallel. ``None`` means 1 unless in a
-        :obj:`joblib.parallel_backend` context. ``-1`` means using all
-        processors.
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors.
 
         Base estimator clones are fitted in parallel across cross-validation
         iterations.
@@ -257,11 +258,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         average predicted probabilities of all pairs.
 
         If `False`, `cv` is used to compute unbiased predictions, via
-        :func:`~sklearn.model_selection.cross_val_predict`, which are then used
-        for calibration. At prediction time, the classifier used is the
-        `estimator` trained on all the data. Note that this method is also
-        internally implemented  in :mod:`sklearn.svm` estimators with the
-        `probabilities=True` parameter.
+        :func:`~sklearn.model_selection.cross_val_predict`, which are then
+        used for calibration. At prediction time, the classifier used is the
+        `estimator` trained on all the data.
+        Note that this method is also internally implemented  in
+        :mod:`sklearn.svm` estimators with the `probabilities=True` parameter.
 
         .. versionadded:: 0.24
 
@@ -290,8 +291,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
         - When `ensemble=True`, `n_cv` fitted `estimator` and calibrator pairs.
           `n_cv` is the number of cross-validation folds.
-        - When `ensemble=False`, the `estimator`, fitted on all the data, and
-          fitted calibrator.
+        - When `ensemble=False`, the `estimator`, fitted on all the data, and fitted
+          calibrator.
 
         .. versionchanged:: 0.24
             Single calibrated classifier case when `ensemble=False`.
@@ -773,15 +774,7 @@ def _fit_classifier_calibrator_pair(
     return calibrated_classifier
 
 
-def _fit_calibrator(
-    clf,
-    predictions,
-    y,
-    classes,
-    method,
-    xp,
-    sample_weight=None,
-):
+def _fit_calibrator(clf, predictions, y, classes, method, xp, sample_weight=None):
     """Fit calibrator(s) and return a `_CalibratedClassifier`
     instance.
 
