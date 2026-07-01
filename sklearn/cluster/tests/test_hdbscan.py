@@ -172,6 +172,45 @@ def test_hdbscan_algorithms(algo, metric):
         hdb.fit(X)
 
 
+def test_hdbscan_prims_boruvka_exact_consistency():
+    """Exact Boruvka should be consistent with Prim's on dense input."""
+    labels_prims = HDBSCAN(
+        algorithm="kd_tree",
+        mst_algorithm="prims",
+        copy=False,
+    ).fit_predict(X)
+    labels_boruvka = HDBSCAN(
+        algorithm="kd_tree",
+        mst_algorithm="boruvka_exact",
+        copy=False,
+    ).fit_predict(X)
+
+    assert fowlkes_mallows_score(labels_prims, labels_boruvka) == pytest.approx(1.0)
+
+
+def test_hdbscan_mst_algorithm_errors():
+    msg = (
+        "When setting either `algorithm='brute'` or `mst_algorithm='brute'`, both"
+        " keyword arguments must only be set to either 'brute' or 'auto'."
+    )
+    with pytest.raises(ValueError, match=msg):
+        HDBSCAN(algorithm="brute", mst_algorithm="prims", copy=False).fit(X)
+    with pytest.raises(ValueError, match=msg):
+        HDBSCAN(algorithm="kd_tree", mst_algorithm="brute", copy=False).fit(X)
+
+    msg = (
+        "When setting `metric='precomputed'`, both `mst_algorithm` and `algorithm`"
+        " must be set to either 'brute' or 'auto'."
+    )
+    with pytest.raises(ValueError, match=msg):
+        HDBSCAN(
+            metric="precomputed",
+            algorithm="auto",
+            mst_algorithm="prims",
+            copy=False,
+        ).fit(euclidean_distances(X))
+
+
 def test_dbscan_clustering():
     """
     Tests that HDBSCAN can generate a sufficiently accurate dbscan clustering.
@@ -259,7 +298,10 @@ def test_hdbscan_precomputed_non_brute(tree):
     while requesting a tree-based algorithm.
     """
     hdb = HDBSCAN(metric="precomputed", algorithm=tree, copy=False)
-    msg = "precomputed is not a valid metric for"
+    msg = (
+        "When setting `metric='precomputed'`, both `mst_algorithm` and `algorithm`"
+        " must be set to either 'brute' or 'auto'."
+    )
     with pytest.raises(ValueError, match=msg):
         hdb.fit(X)
 
@@ -278,7 +320,7 @@ def test_hdbscan_sparse(csr_container):
     _X_sparse = csr_container(X)
     X_sparse = _X_sparse.copy()
     sparse_labels = HDBSCAN(copy=False).fit(X_sparse).labels_
-    assert_array_equal(dense_labels, sparse_labels)
+    assert fowlkes_mallows_score(dense_labels, sparse_labels) == pytest.approx(1.0)
 
     # Compare that the sparse and dense non-precomputed routines return the same labels
     # where the 0th observation contains the outlier.
@@ -292,7 +334,7 @@ def test_hdbscan_sparse(csr_container):
         X_sparse = _X_sparse.copy()
         X_sparse[0, 0] = outlier_val
         sparse_labels = HDBSCAN(copy=False).fit(X_sparse).labels_
-        assert_array_equal(dense_labels, sparse_labels)
+        assert fowlkes_mallows_score(dense_labels, sparse_labels) == pytest.approx(1.0)
 
     msg = "Sparse data matrices only support algorithm `brute`."
     with pytest.raises(ValueError, match=msg):
@@ -309,7 +351,12 @@ def test_hdbscan_centers(algorithm):
     H, _ = make_blobs(n_samples=2000, random_state=0, centers=centers, cluster_std=0.5)
     hdb = HDBSCAN(store_centers="both", copy=False).fit(H)
 
-    for center, centroid, medoid in zip(centers, hdb.centroids_, hdb.medoids_):
+    expected_centers = np.asarray(centers)
+    expected_centers = expected_centers[np.argsort(expected_centers[:, 0])]
+    centroids = hdb.centroids_[np.argsort(hdb.centroids_[:, 0])]
+    medoids = hdb.medoids_[np.argsort(hdb.medoids_[:, 0])]
+
+    for center, centroid, medoid in zip(expected_centers, centroids, medoids):
         assert_allclose(center, centroid, rtol=1, atol=0.05)
         assert_allclose(center, medoid, rtol=1, atol=0.05)
 
