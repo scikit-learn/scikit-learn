@@ -8,6 +8,11 @@
 
 /* Global */
 
+/* Needed to override the pydata sphinx theme's default */
+html[data-theme="light"] .highlight pre {
+  background: #fff;
+}
+
 code.literal {
   border: 0;
 }
@@ -162,6 +167,13 @@ details.sd-dropdown {
     transform: unset;
     border: 2px solid var(--pst-color-primary);
   }
+}
+
+/* Override sphinx-gallery's layout for dataframes to allow horizontal scrolling */
+
+table.dataframe {
+  overflow-x: auto;
+  display: block;
 }
 
 /* Download/launcher links and top hint (sphinx-gallery) */

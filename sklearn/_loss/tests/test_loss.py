@@ -1387,7 +1387,15 @@ def test_tweedie_log_identity_consistency(p):
     ids=["HalfBinomialLoss", "HalfMultinomialLoss", "HalfPoissonLoss"],
 )
 @pytest.mark.parametrize(
-    "method_name", ["__call__", "gradient", "loss", "loss_gradient"]
+    "method_name",
+    [
+        "__call__",
+        "gradient",
+        "loss",
+        "loss_gradient",
+        "gradient_hessian",
+        "gradient_proba",
+    ],
 )
 @pytest.mark.parametrize("use_sample_weight", [False, True])
 @pytest.mark.parametrize(
@@ -1411,6 +1419,10 @@ def test_loss_array_api(
         )
         assert result_xp.dtype == raw_prediction_xp.dtype
         assert array_api_device(result_xp) == array_api_device(raw_prediction_xp)
+
+    if method_name == "gradient_proba" and loss_class != HalfMultinomialLoss:
+        # `gradient_proba` is only valid for HalfMultinomialLoss
+        pytest.skip("Not implemented")
 
     xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
     atol = _atol_for_type(dtype_name)
