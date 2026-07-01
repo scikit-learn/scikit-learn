@@ -98,14 +98,17 @@ class BayesianGaussianMixture(BaseMixture):
         close to zero. The number of effective components is therefore smaller
         than n_components.
 
-    covariance_type : {'full', 'tied', 'diag', 'spherical'}, default='full'
+    covariance_type : {'full', 'tied', 'tied-diag', 'diag', 'spherical', \
+    'tied-spherical'}, default='full'
         String describing the type of covariance parameters to use.
         Must be one of:
 
         - 'full' (each component has its own general covariance matrix),
         - 'tied' (all components share the same general covariance matrix),
         - 'diag' (each component has its own diagonal covariance matrix),
+        - 'tied-diag': all component share the same diagonal covariance matrix.
         - 'spherical' (each component has its own single variance).
+        - 'tied-spherical': all component share the same single variance.
 
     tol : float, default=1e-3
         The convergence threshold. EM iterations will stop when the
@@ -173,7 +176,9 @@ class BayesianGaussianMixture(BaseMixture):
                 (n_features, n_features) if 'full',
                 (n_features, n_features) if 'tied',
                 (n_features)             if 'diag',
+                (n_features)             if 'tied-diag',
                 float                    if 'spherical'
+                float                    if 'tied-spherical'
 
     random_state : int, RandomState instance or None, default=None
         Controls the random seed given to the method chosen to initialize the
@@ -210,8 +215,10 @@ class BayesianGaussianMixture(BaseMixture):
         The covariance of each mixture component.
         The shape depends on `covariance_type`::
 
-            (n_components,)                        if 'spherical',
+            (1,)                                   if 'tied-spherical',
+            (n_features,)                          if 'tied-diag',
             (n_features, n_features)               if 'tied',
+            (n_components,)                        if 'spherical',
             (n_components, n_features)             if 'diag',
             (n_components, n_features, n_features) if 'full'
 
@@ -224,8 +231,10 @@ class BayesianGaussianMixture(BaseMixture):
         efficient to compute the log-likelihood of new samples at test time.
         The shape depends on ``covariance_type``::
 
-            (n_components,)                        if 'spherical',
+            (1,)                                   if 'tied-spherical',
+            (n_features,)                          if 'tied-diag',
             (n_features, n_features)               if 'tied',
+            (n_components,)                        if 'spherical',
             (n_components, n_features)             if 'diag',
             (n_components, n_features, n_features) if 'full'
 
@@ -238,8 +247,10 @@ class BayesianGaussianMixture(BaseMixture):
         it more efficient to compute the log-likelihood of new samples at test
         time. The shape depends on ``covariance_type``::
 
-            (n_components,)                        if 'spherical',
+            (1,)                                   if 'tied-spherical',
+            (n_features,)                          if 'tied-diag',
             (n_features, n_features)               if 'tied',
+            (n_components,)                        if 'spherical',
             (n_components, n_features)             if 'diag',
             (n_components, n_features, n_features) if 'full'
 
@@ -302,7 +313,9 @@ class BayesianGaussianMixture(BaseMixture):
             (n_features, n_features) if 'full',
             (n_features, n_features) if 'tied',
             (n_features)             if 'diag',
+            (n_features)             if 'tied-diag',
             float                    if 'spherical'
+            float                    if 'tied-spherical'
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -350,7 +363,11 @@ class BayesianGaussianMixture(BaseMixture):
 
     _parameter_constraints: dict = {
         **BaseMixture._parameter_constraints,
-        "covariance_type": [StrOptions({"spherical", "tied", "diag", "full"})],
+        "covariance_type": [
+            StrOptions(
+                {"full", "tied", "diag", "tied-diag", "spherical", "tied-spherical"}
+            )
+        ],
         "weight_concentration_prior_type": [
             StrOptions({"dirichlet_process", "dirichlet_distribution"})
         ],
@@ -485,7 +502,9 @@ class BayesianGaussianMixture(BaseMixture):
                 "full": np.atleast_2d(np.cov(X.T)),
                 "tied": np.atleast_2d(np.cov(X.T)),
                 "diag": np.var(X, axis=0, ddof=1),
+                "tied-diag": np.var(X, axis=0, ddof=1),
                 "spherical": np.var(X, axis=0, ddof=1).mean(),
+                "tied-spherical": np.var(X, axis=0, ddof=1).mean(),
             }[self.covariance_type]
 
         elif self.covariance_type in ["full", "tied"]:
@@ -498,7 +517,7 @@ class BayesianGaussianMixture(BaseMixture):
                 "%s covariance_prior" % self.covariance_type,
             )
             _check_precision_matrix(self.covariance_prior_, self.covariance_type)
-        elif self.covariance_type == "diag":
+        elif self.covariance_type in ["diag", "tied-diag"]:
             self.covariance_prior_ = check_array(
                 self.covariance_prior, dtype=[np.float64, np.float32], ensure_2d=False
             )
@@ -508,9 +527,12 @@ class BayesianGaussianMixture(BaseMixture):
                 "%s covariance_prior" % self.covariance_type,
             )
             _check_precision_positivity(self.covariance_prior_, self.covariance_type)
-        # spherical case
-        else:
+        elif self.covariance_type in ["spherical", "tied-spherical"]:
             self.covariance_prior_ = self.covariance_prior
+        else:
+            raise NotImplementedError(
+                f"The covariance type of `{self.covariance_type}` is not supported"
+            )
 
     def _initialize(self, X, resp):
         """Initialization of the mixture parameters.
@@ -578,13 +600,17 @@ class BayesianGaussianMixture(BaseMixture):
             'full' : (n_components, n_features, n_features)
             'tied' : (n_features, n_features)
             'diag' : (n_components, n_features)
+            'tied-diag' : (n_features)
             'spherical' : (n_components,)
+            'tied-spherical' : (1,)
         """
         {
             "full": self._estimate_wishart_full,
             "tied": self._estimate_wishart_tied,
             "diag": self._estimate_wishart_diag,
+            "tied-diag": self._estimate_wishart_tied_diag,
             "spherical": self._estimate_wishart_spherical,
+            "tied-spherical": self._estimate_wishart_tied_spherical,
         }[self.covariance_type](nk, xk, sk)
 
         self.precisions_cholesky_ = _compute_precision_cholesky(
@@ -596,8 +622,6 @@ class BayesianGaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-
         nk : array-like of shape (n_components,)
 
         xk : array-like of shape (n_components, n_features)
@@ -617,9 +641,9 @@ class BayesianGaussianMixture(BaseMixture):
             diff = xk[k] - self.mean_prior_
             self.covariances_[k] = (
                 self.covariance_prior_
-                + nk[k] * sk[k]
-                + nk[k]
-                * self.mean_precision_prior_
+                + sk[k] * nk[k]
+                + self.mean_precision_prior_
+                * nk[k]
                 / self.mean_precision_[k]
                 * np.outer(diff, diff)
             )
@@ -632,8 +656,6 @@ class BayesianGaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-
         nk : array-like of shape (n_components,)
 
         xk : array-like of shape (n_components, n_features)
@@ -666,8 +688,6 @@ class BayesianGaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-
         nk : array-like of shape (n_components,)
 
         xk : array-like of shape (n_components, n_features)
@@ -682,22 +702,56 @@ class BayesianGaussianMixture(BaseMixture):
         self.degrees_of_freedom_ = self.degrees_of_freedom_prior_ + nk
 
         diff = xk - self.mean_prior_
-        self.covariances_ = self.covariance_prior_ + nk[:, np.newaxis] * (
-            sk
-            + (self.mean_precision_prior_ / self.mean_precision_)[:, np.newaxis]
+        self.covariances_ = (
+            self.covariance_prior_
+            + sk * nk[:, np.newaxis]
+            + (self.mean_precision_prior_ * nk / self.mean_precision_)[:, np.newaxis]
             * np.square(diff)
         )
 
         # Contrary to the original bishop book, we normalize the covariances
         self.covariances_ /= self.degrees_of_freedom_[:, np.newaxis]
 
+    def _estimate_wishart_tied_diag(self, nk, xk, sk):
+        """Estimate the diag Wishart distribution parameters.
+
+        Parameters
+        ----------
+        nk : array-like of shape (n_components,)
+
+        xk : array-like of shape (n_components, n_features)
+
+        sk : array-like of shape (n_components, n_features)
+        """
+        _, n_features = xk.shape
+
+        # Warning : in some Bishop book, there is a typo on the formula 10.63
+        # `degrees_of_freedom_k = degrees_of_freedom_0 + Nk`
+        # is the correct formula
+        self.degrees_of_freedom_ = (
+            self.degrees_of_freedom_prior_ + nk.sum() / self.n_components
+        )
+
+        diff = xk - self.mean_prior_
+        self.covariances_ = (
+            self.covariance_prior_
+            + (sk * nk[:, np.newaxis]).sum(axis=0) / self.n_components
+            + (
+                self.mean_precision_prior_
+                / self.n_components
+                * (nk / self.mean_precision_)[:, np.newaxis]
+                * np.square(diff)
+            ).sum(axis=0)
+        )
+
+        # Contrary to the original bishop book, we normalize the covariances
+        self.covariances_ /= self.degrees_of_freedom_
+
     def _estimate_wishart_spherical(self, nk, xk, sk):
         """Estimate the spherical Wishart distribution parameters.
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-
         nk : array-like of shape (n_components,)
 
         xk : array-like of shape (n_components, n_features)
@@ -712,11 +766,49 @@ class BayesianGaussianMixture(BaseMixture):
         self.degrees_of_freedom_ = self.degrees_of_freedom_prior_ + nk
 
         diff = xk - self.mean_prior_
-        self.covariances_ = self.covariance_prior_ + nk * (
-            sk
+        self.covariances_ = (
+            self.covariance_prior_
+            + sk * nk
             + self.mean_precision_prior_
+            * nk
             / self.mean_precision_
             * np.mean(np.square(diff), 1)
+        )
+
+        # Contrary to the original bishop book, we normalize the covariances
+        self.covariances_ /= self.degrees_of_freedom_
+
+    def _estimate_wishart_tied_spherical(self, nk, xk, sk):
+        """Estimate the spherical Wishart distribution parameters.
+
+        Parameters
+        ----------
+        nk : array-like of shape (n_components,)
+
+        xk : array-like of shape (n_components, n_features)
+
+        sk : array-like of shape (n_components,)
+        """
+        _, n_features = xk.shape
+
+        # Warning : in some Bishop book, there is a typo on the formula 10.63
+        # `degrees_of_freedom_k = degrees_of_freedom_0 + Nk`
+        # is the correct formula
+        self.degrees_of_freedom_ = (
+            self.degrees_of_freedom_prior_ + nk.sum() / self.n_components
+        )
+
+        diff = xk - self.mean_prior_
+        self.covariances_ = (
+            self.covariance_prior_
+            + sk * nk.sum(axis=0) / self.n_components
+            + (
+                self.mean_precision_prior_
+                / self.n_components
+                * nk
+                / self.mean_precision_
+                * np.mean(np.square(diff), 1)
+            ).sum(axis=0)
         )
 
         # Contrary to the original bishop book, we normalize the covariances
@@ -787,8 +879,6 @@ class BayesianGaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-
         log_resp : array, shape (n_samples, n_components)
             Logarithm of the posterior probabilities (or responsibilities) of
             the point of each sample in X.
@@ -810,7 +900,7 @@ class BayesianGaussianMixture(BaseMixture):
             self.precisions_cholesky_, self.covariance_type, n_features
         ) - 0.5 * n_features * np.log(self.degrees_of_freedom_)
 
-        if self.covariance_type == "tied":
+        if self.covariance_type in ("tied", "tied-diag", "tied-spherical"):
             log_wishart = self.n_components * np.float64(
                 _log_wishart_norm(
                     self.degrees_of_freedom_, log_det_precisions_chol, n_features
