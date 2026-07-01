@@ -33,11 +33,12 @@ def _unique(
         values.
 
     allow_mixed_types : bool, default=None
-        If True, allow ``values`` to contain a mix of types (e.g. strings and numbers)
-        by grouping the unique values by type instead of raising a ``TypeError``. 
-        Only affects the object-dtype path. ``False`` behaves like ``None`` but
-        additionally advertises the parameter in the error message; pass ``None`` 
-        (the default) for callers that do not expose the parameter.
+        If True, allow ``values`` to contain a mix of types (e.g. strings and
+        numbers) by grouping the unique values by type instead of raising a
+        ``TypeError``. Only affects the object-dtype path. ``False`` behaves
+        like ``None`` but additionally advertises the parameter in the error
+        message; pass ``None`` (the default) for callers that do not expose the
+        parameter.
 
     Returns
     -------
@@ -213,7 +214,7 @@ def _unique_python(values, *, return_inverse, return_counts, allow_mixed_types=N
             "Encoders require their input argument must be uniformly "
             f"strings or numbers. Got {types}"
         )
-        if allow_mixed_types == False:
+        if allow_mixed_types is False:
             msg += ". If you meant to encode mixed types, set allow_mixed_types=True"
         raise TypeError(msg)
     ret = (uniques,)

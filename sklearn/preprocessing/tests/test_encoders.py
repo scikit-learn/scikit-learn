@@ -313,7 +313,7 @@ def test_one_hot_encoder_allow_mixed_types():
 
 @pytest.mark.parametrize("Encoder", [OneHotEncoder, OrdinalEncoder])
 def test_encoder_allow_mixed_types_error_hint(Encoder):
-    # Test that OneHotEncoder and OrdinalEncoder raise TypeError with a hint 
+    # Test that OneHotEncoder and OrdinalEncoder raise TypeError with a hint
     # to set allow_mixed_types=True
     X = [["a"], ["b"], [1]]
     err_msg = "set allow_mixed_types=True"

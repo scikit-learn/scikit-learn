@@ -624,8 +624,8 @@ class OneHotEncoder(_BaseEncoder):
         .. versionadded:: 1.3
 
     allow_mixed_types : bool, default=False
-        If True, allows encoding an array containing a mixture of types 
-        (e.g. strings and numbers) 
+        If True, allows encoding an array containing a mixture of types
+        (e.g. strings and numbers)
 
         .. versionadded:: x.x
 
@@ -1356,7 +1356,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
             Read more in the :ref:`User Guide <encoder_infrequent_categories>`.
 
     allow_mixed_types : bool, default=False
-        If True, allows encoding an array containing a mixture of types 
+        If True, allows encoding an array containing a mixture of types
         (e.g. strings and numbers).
 
         .. versionadded:: x.x
