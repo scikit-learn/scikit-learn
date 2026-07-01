@@ -35,8 +35,11 @@ dependent_packages = {
     "memory_profiler": ("0.57.0", "benchmark, docs"),
     "pytest": (PYTEST_MIN_VERSION, "tests"),
     "pytest-cov": ("2.9.0", "tests"),
+    # NOTE if you update ruff, mypy or cython-lint here, remember to update
+    # .pre-commit-config.yaml as well
     "ruff": ("0.12.2", "tests"),
     "mypy": ("1.15", "tests"),
+    "cython-lint": ("0.21", "tests"),
     "pyamg": ("5.0.0", "tests"),
     "polars": ("0.20.30", "docs, tests"),
     "pyarrow": ("13.0.0", "tests"),

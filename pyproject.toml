@@ -86,6 +86,7 @@ tests = [
     "pytest-cov>=2.9.0",
     "ruff>=0.12.2",
     "mypy>=1.15",
+    "cython-lint>=0.21",
     "pyamg>=5.0.0",
     "polars>=0.20.30",
     "pyarrow>=13.0.0",
