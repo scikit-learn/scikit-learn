@@ -580,18 +580,13 @@ def move_to(*arrays, xp, device):
             if xp == xp_array and device == device_array:
                 converted_arrays.append(array)
             else:
-                strides = getattr(array, "strides", None)
-                if (
-                    _is_xp_namespace(xp, "torch")
-                    and _is_numpy_namespace(xp_array)
-                    and strides is not None
-                    and any(stride < 0 for stride in strides)
-                ):
-                    # Work around PyTorch aborting the process when importing
-                    # negative-strided NumPy arrays with DLPack. Remove this once
-                    # https://github.com/pytorch/pytorch/issues/188023 is fixed.
-                    # See also https://github.com/scikit-learn/scikit-learn/issues/34307
-                    array = numpy.ascontiguousarray(array)
+                if _is_xp_namespace(xp, "torch") and _is_numpy_namespace(xp_array):
+                    if any(stride < 0 for stride in array.strides):
+                        # Work around PyTorch aborting the process when importing
+                        # negative-strided NumPy arrays with DLPack. Remove this once
+                        # https://github.com/pytorch/pytorch/issues/188023 is fixed.
+                        # See also https://github.com/scikit-learn/scikit-learn/issues/34307
+                        array = numpy.ascontiguousarray(array)
                 try:
                     # The dlpack protocol is the future proof and library agnostic
                     # method to transfer arrays across namespace and device boundaries
