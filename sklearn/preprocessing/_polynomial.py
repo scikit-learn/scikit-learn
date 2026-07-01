@@ -962,8 +962,14 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         coef = np.eye(n_splines, dtype=np.float64)
         if self.extrapolation == "periodic":
             coef = np.concatenate((coef, coef[:degree, :]))
+            extrapolate = "periodic"
+        else:
+            extrapolate = self.extrapolation == "continue"
 
-        extrapolate = self.extrapolation in ["periodic", "continue"]
+        n_unique_knots = np.fromiter(
+            [len(np.unique(knots[:, i])) for i in range(n_features)], dtype=int
+        )
+        self._has_only_one_unique_knot = n_unique_knots == 1
 
         bsplines = [
             BSpline.construct_fast(
@@ -1018,39 +1024,30 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             XBS = np.zeros((n_samples, n_out), dtype=dtype, order=self.order)
 
         for feature_idx in range(n_features):
+            if self._has_only_one_unique_knot[feature_idx]:
+                # Return all zeros. Dense case: XBS is already set to zero.
+                if self.sparse_output:
+                    output_list.append(sparse.csr_array((n_samples, n_splines)))
+                continue
+
+            x = X[:, feature_idx]
             spl = self.bsplines_[feature_idx]
             # Get indicator for nan values in the current column.
-            nan_row_indices = np.flatnonzero(_get_mask(X[:, feature_idx], np.nan))
+            nan_row_indices = np.flatnonzero(_get_mask(x, np.nan))
 
+            # 1. Calculate spline basis functions.
             if self.extrapolation in ("continue", "error", "periodic"):
-                if self.extrapolation == "periodic":
-                    # With periodic extrapolation we map x to the segment
-                    # [spl.t[k], spl.t[n]].
-                    # This is equivalent to BSpline(.., extrapolate="periodic")
-                    # for scipy>=1.0.0.
-                    n = spl.t.size - spl.k - 1
-                    if spl.t[n] - spl.t[spl.k] > 0:
-                        # Assign to new array to avoid inplace operation
-                        x = spl.t[spl.k] + (X[:, feature_idx] - spl.t[spl.k]) % (
-                            spl.t[n] - spl.t[spl.k]
-                        )
-                    else:
-                        # This can happen if the column has a single non-nan
-                        # value. Treat as a constant feature.
-                        x = np.zeros_like(X[:, feature_idx])
-                else:  # self.extrapolation in ("continue", "error")
-                    x = X[:, feature_idx]
+                # Note that BSpline(.., extrapolate="periodic") maps x to the
+                # segment [spl.t[k], spl.t[n]] with n = spl.t.size - spl.k - 1.
 
                 if self.sparse_output:
-                    # We replace the nan values in the input column by some
-                    # arbitrary, in-range, numerical value since
-                    # BSpline.design_matrix() would otherwise raise on any nan
-                    # value in its input. The spline encoded values in
-                    # the output of that function that correspond to missing
-                    # values in the original input will be replaced by 0.0
-                    # afterwards.
+                    # We replace the nan values in the input column by some arbitrary,
+                    # in-range, numerical value since BSpline.design_matrix() would
+                    # otherwise raise on any nan value in its input. The spline encoded
+                    # values in the output of that function that correspond to missing
+                    # values in the original input will be replaced by 0.0 afterwards.
                     #
-                    # Note that in the following we use np.nanmin(x) as the
+                    # Note that in the following we use spl.t[spl.k] as the
                     # input replacement to make sure that this code works even
                     # when `extrapolation == "error"`. Any other choice of
                     # in-range value would have worked work since the
@@ -1059,44 +1056,33 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                         # The column is all np.nan valued. Replace it by a
                         # constant column with an arbitrary non-nan value
                         # inside so that it is encoded as constant column.
-                        x = np.zeros_like(x)  # avoid mutation of input data
+                        x = np.full_like(
+                            x, fill_value=spl.t[spl.k]
+                        )  # avoid mutation of input data
                     elif nan_row_indices.shape[0] > 0:
                         x = x.copy()  # avoid mutation of input data
-                        x[nan_row_indices] = np.nanmin(x)
+                        x[nan_row_indices] = spl.t[spl.k]
 
-                    # Note: self.bsplines_[0].extrapolate is True for extrapolation in
-                    # ["periodic", "continue"]
-                    XBS_sparse = BSpline.design_matrix(
-                        x, spl.t, spl.k, self.bsplines_[0].extrapolate
-                    )
+                    # Note: spl.extrapolate is True for extrapolation in
+                    # ["periodic", "continue"]. It is "periodic" for
+                    # extrapolation = "periodic".
+                    XBS_sparse = BSpline.design_matrix(x, spl.t, spl.k, spl.extrapolate)
 
                     if self.extrapolation == "periodic":
                         # See the construction of coef in fit. We need to add the last
                         # degree spline basis function to the first degree ones and
                         # then drop the last ones.
-                        # Note: See comment about SparseEfficiencyWarning below.
+                        # Note: Without converting to lil_matrix we would get:
+                        # scipy.sparse._base.SparseEfficiencyWarning: Changing the
+                        # sparsity structure of CSC is expensive. LIL is more efficient.
                         XBS_sparse = XBS_sparse.tolil()
                         XBS_sparse[:, :degree] += XBS_sparse[:, -degree:]
                         XBS_sparse = XBS_sparse[:, :-degree]
-
-                    if nan_row_indices.shape[0] > 0:
-                        # Note: See comment about SparseEfficiencyWarning below.
-                        XBS = XBS_sparse.tolil()
 
                 else:
                     XBS[
                         :, (feature_idx * n_splines) : ((feature_idx + 1) * n_splines)
                     ] = spl(x)
-
-                # Replace any indicated values with 0:
-                if nan_row_indices.shape[0] > 0:
-                    for spline_idx in range(n_splines):
-                        output_feature_idx = n_splines * feature_idx + spline_idx
-                        XBS[
-                            nan_row_indices, output_feature_idx : output_feature_idx + 1
-                        ] = 0
-                    if self.sparse_output:
-                        XBS_sparse = XBS
 
             else:  # extrapolation in ("constant", "linear")
                 xmin, xmax = spl.t[degree], spl.t[-degree - 1]
@@ -1104,22 +1090,18 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 f_min, f_max = spl(xmin), spl(xmax)
                 # Values outside of the feature range during fit and nan values get
                 # filtered out:
-                inside_range_mask = (xmin <= X[:, feature_idx]) & (
-                    X[:, feature_idx] <= xmax
-                )
+                inside_range_mask = (xmin <= x) & (x <= xmax)
 
                 if self.sparse_output:
                     outside_range_mask = ~inside_range_mask
-                    x = X[:, feature_idx].copy()
+                    x = x.copy()
                     # Set to some arbitrary value within the range of values
                     # observed on the training set before calling
                     # BSpline.design_matrix. Those transformed will be
                     # reassigned later when handling with extrapolation.
                     x[outside_range_mask] = xmin
                     XBS_sparse = BSpline.design_matrix(x, spl.t, spl.k)
-                    # Note: Without converting to lil_matrix we would get:
-                    # scipy.sparse._base.SparseEfficiencyWarning: Changing the sparsity
-                    # structure of CSC is expensive. LIL is more efficient.
+                    # Note: See comment about SparseEfficiencyWarning above.
                     if np.any(outside_range_mask):
                         XBS_sparse = XBS_sparse.tolil()
                         XBS_sparse[outside_range_mask, :] = 0
@@ -1128,10 +1110,23 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     XBS[
                         inside_range_mask,
                         (feature_idx * n_splines) : ((feature_idx + 1) * n_splines),
-                    ] = spl(X[inside_range_mask, feature_idx])
+                    ] = spl(x[inside_range_mask])
 
-            # Note for extrapolation:
-            # 'continue' is already returned as is by scipy BSplines
+            # 2. Set nan input to 0.
+            if nan_row_indices.shape[0] > 0:
+                if self.sparse_output:
+                    # Note: See comment about SparseEfficiencyWarning above.
+                    XBS_sparse = XBS_sparse.tolil()
+                    XBS_sparse[nan_row_indices, :] = 0
+                else:
+                    output_feature_idx = n_splines * feature_idx
+                    XBS[
+                        nan_row_indices,
+                        output_feature_idx : output_feature_idx + n_splines,
+                    ] = 0
+
+            # 3. Deal with extrapolation.
+            # Note that "continue" is already returned as is by scipy BSplines.
             if self.extrapolation == "error":
                 has_nan_output_values = False
                 if self.sparse_output:
@@ -1148,7 +1143,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
                 if has_nan_output_values:
                     raise ValueError(
-                        "`X` contains values beyond the limits of the knots."
+                        "X contains values beyond the limits of the knots."
                     )
 
             elif self.extrapolation == "constant":
@@ -1187,11 +1182,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                         ] = f_max[-degree:]
 
             elif self.extrapolation == "linear":
-                # Continue the degree first and degree last spline bases
-                # linearly beyond the boundaries, with slope = derivative at
-                # the boundary.
-                # Note that all others have derivative = value = 0 at the
-                # boundaries.
+                # Continue the degree first and degree last spline bases linearly
+                # beyond the boundaries, with slope = derivative at the boundary.
+                # Note that all others have derivative = value = 0 at the boundaries.
 
                 # spline derivatives = slopes at boundaries
                 fp_min, fp_max = spl(xmin, nu=1), spl(xmax, nu=1)
@@ -1234,6 +1227,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                                 linear_extr
                             )
 
+            # 4. Collect output.
             if self.sparse_output:
                 XBS_sparse = XBS_sparse.tocsr()
                 output_list.append(XBS_sparse)

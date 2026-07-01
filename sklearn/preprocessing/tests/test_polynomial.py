@@ -69,6 +69,27 @@ def test_spline_transformer_input_validation(params, err_msg):
         SplineTransformer(**params).fit(X)
 
 
+@pytest.mark.parametrize(["n_knots", "degree"], [(3, 1), (5, 3)])
+@pytest.mark.parametrize("periodic", [False, True])
+def test_spline_transformer_for_one_unique_knot(n_knots, degree, periodic):
+    """Test that SplineTransformer for knots with a single unique value."""
+    n_splines = n_knots + (1 - periodic) * degree - 1
+    extrapolation = "periodic" if periodic else "constant"
+    X = [[1, 2, 3], [1, 22, 3], [1, 222, 3]]
+    splt = SplineTransformer(
+        n_knots=n_knots, degree=degree, extrapolation=extrapolation
+    ).fit(X)
+    assert_allclose(splt.bsplines_[0].t, 1)
+    assert_allclose(splt.bsplines_[2].t, 3)
+
+    X_trans = splt.transform(X)
+    assert X_trans.shape[1] == 3 * n_splines
+    assert_array_equal(X_trans[:, :n_splines], 0)
+    assert_array_equal(X_trans[:, 2 * n_splines :], 0)
+    # The spline in the middle should not be zero.
+    assert np.all(np.sum(X_trans[:, n_splines : 2 * n_splines], axis=0) > 0)
+
+
 @pytest.mark.parametrize("extrapolation", ["continue", "periodic"])
 def test_spline_transformer_integer_knots(extrapolation):
     """Test that SplineTransformer accepts integer value knot positions."""
@@ -251,12 +272,12 @@ def test_spline_transformer_periodic_linear_regression(bias, intercept):
     assert_allclose(predictions[0:100], predictions[100:200], rtol=1e-3)
 
 
-def test_spline_transformer_periodic_spline_backport():
-    """Test that the backport of extrapolate="periodic" works correctly"""
+def test_spline_transformer_periodic_vs_scipy():
+    """Test that B-Spline with extrapolate="periodic" matches scipy"""
     X = np.linspace(-2, 3.5, 10)[:, None]
     degree = 2
 
-    # Use periodic extrapolation backport in SplineTransformer
+    # Use periodic extrapolation in SplineTransformer
     transformer = SplineTransformer(
         degree=degree, extrapolation="periodic", knots=[[-1.0], [0.0], [1.0]]
     )
@@ -379,7 +400,7 @@ def test_spline_transformer_extrapolation(bias, intercept, degree):
         n_knots=4, degree=degree, include_bias=bias, extrapolation="error"
     )
     splt.fit(X)
-    msg = "`X` contains values beyond the limits of the knots"
+    msg = "X contains values beyond the limits of the knots"
     with pytest.raises(ValueError, match=msg):
         splt.transform([[-10]])
     with pytest.raises(ValueError, match=msg):
@@ -453,7 +474,7 @@ def test_spline_transformer_sparse_output(
         np.linspace(X_min - 5, X_min, 10), np.linspace(X_max, X_max + 5, 10)
     ]
     if extrapolation == "error":
-        msg = "`X` contains values beyond the limits of the knots"
+        msg = "X contains values beyond the limits of the knots"
         with pytest.raises(ValueError, match=msg):
             splt_dense.transform(X_extra)
         msg = "Out of bounds"
@@ -574,8 +595,10 @@ def test_spline_transformer_handles_all_nans(extrapolation, sparse_output):
     """Test that SplineTransformer encodes missing values to zeros even for
     all-nan-features."""
 
-    X = np.array([[1, 1], [2, 2], [3, 3], [4, 5], [4, 4]])
-    X_nan_full_column = np.array([[np.nan, np.nan], [np.nan, 1]])
+    X = np.array(
+        [[1, 1, np.nan], [2, 2, np.nan], [3, 3, np.nan], [4, 5, np.nan], [4, 4, np.nan]]
+    )
+    X_nan_full_column = np.array([[np.nan, np.nan, 1], [np.nan, 1, 2]])
 
     spline = SplineTransformer(
         degree=2,
@@ -584,7 +607,7 @@ def test_spline_transformer_handles_all_nans(extrapolation, sparse_output):
         extrapolation=extrapolation,
         sparse_output=sparse_output,
     )
-    spline.fit(X_nan_full_column)
+    spline.fit(X)
 
     all_missing_column_encoded = spline.transform(X_nan_full_column)
     nan_mask = _get_mask(X_nan_full_column, np.nan)
