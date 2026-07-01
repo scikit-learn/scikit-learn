@@ -216,6 +216,51 @@ def test_unique_util_with_all_missing_values():
     assert_array_equal(inverse, expected_inverse)
 
 
+def test_unique_util_allow_mixed_types_raises_by_default():
+    # Test that _unique raises TypeError when allow_mixed_types is not set to True
+    values = np.array(["a", "b", "c", 1], dtype=object)
+    err_msg = "Encoders require their input argument must be uniformly"
+    with pytest.raises(TypeError, match=err_msg):
+        _unique(values)
+
+
+@pytest.mark.parametrize(
+    "values, expected_uniques, expected_inverse",
+    [
+        (
+            np.array(["b", "a", "c", 1], dtype=object),
+            np.array([1, "a", "b", "c"], dtype=object),
+            np.array([2, 1, 3, 0]),
+        ),
+        (
+            # numbers stay in numeric order regardless of the extra string,
+            # and are ordered before other types
+            np.array([2.5, 1, 2, "a"], dtype=object),
+            np.array([1, 2, 2.5, "a"], dtype=object),
+            np.array([2, 0, 1, 3]),
+        ),
+        (
+            # None is treated as a missing value and placed last
+            np.array(["b", "a", 1, None], dtype=object),
+            np.array([1, "a", "b", None], dtype=object),
+            np.array([2, 1, 0, 3]),
+        ),
+    ],
+    ids=["str-int", "str-int-float", "str-int-None"],
+)
+def test_unique_util_allow_mixed_types(values, expected_uniques, expected_inverse):
+    # Test that _unique works with allow_mixed_types=True
+    uniques = _unique(values, allow_mixed_types=True)
+    assert_array_equal(uniques, expected_uniques)
+
+    uniques, inverse = _unique(values, return_inverse=True, allow_mixed_types=True)
+    assert_array_equal(uniques, expected_uniques)
+    assert_array_equal(inverse, expected_inverse)
+
+    encoded = _encode(values, uniques=uniques)
+    assert_array_equal(encoded, expected_inverse)
+
+
 def test_check_unknown_with_both_missing_values():
     # test for both types of missing values for object dtype
     values = np.array([np.nan, "a", "c", "c", None, np.nan, None], dtype=object)
