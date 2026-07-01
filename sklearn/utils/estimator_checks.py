@@ -1507,7 +1507,7 @@ def check_array_api_string_and_numeric_inputs(
     dtype_name : str, default=None
         The name of the data type to use for arrays. If `None`,
         `_max_precision_float_dtype` of namespace and device of
-        `X_ns_and_device` used.
+        `X_ns_and_device` is used.
 
     check_values : bool, default=False
         Whether to check the values of attributes, method outputs (including

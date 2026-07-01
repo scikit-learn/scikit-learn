@@ -287,13 +287,8 @@ ordinal encoding). The result of this is able to be moved to the namespace and d
 of the other inputs, as string-valued arrays are not covered by the array API
 specifications.
 
-Note that the `classes_` estimator attribute  always remain in the same array
+Note that the `classes_` estimator attribute always remains in the same array
 library as the original `y`, in order to support string class labels.
-
-Mixed array input support extends to string `y` with other numeric array input, for
-estimators and scoring functions that accept string `y` (note string type is only
-supported by NumPy). Note that the estimator attribute `classes_` will always remain
-in the same array library as `y`, in order to represent string classes.
 
 When a function or method has been called with array API compatible inputs, the
 convention is to return arrays from the same array library and on the same
