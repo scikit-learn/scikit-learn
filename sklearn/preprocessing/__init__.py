@@ -32,6 +32,7 @@ from sklearn.preprocessing._label import (
     MultiLabelBinarizer,
     label_binarize,
 )
+from sklearn.preprocessing._orthogonal import OrthogonalPolynomialFeatures
 from sklearn.preprocessing._polynomial import PolynomialFeatures, SplineTransformer
 from sklearn.preprocessing._target_encoder import TargetEncoder
 
@@ -48,6 +49,7 @@ __all__ = [
     "Normalizer",
     "OneHotEncoder",
     "OrdinalEncoder",
+    "OrthogonalPolynomialFeatures",
     "PolynomialFeatures",
     "PowerTransformer",
     "QuantileTransformer",
