@@ -412,7 +412,6 @@ build_metadata_list = [
             "jupyterlite-sphinx",
             "jupyterlite-pyodide-kernel",
         ],
-        "pip_dependencies": [],
         "package_constraints": {
             "python": "3.14",
         },
