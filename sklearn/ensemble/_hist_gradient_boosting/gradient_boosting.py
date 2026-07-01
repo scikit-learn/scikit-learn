@@ -794,9 +794,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             if isinstance(self._loss, HuberLoss):
                 abs_residuals = np.abs(y_train - raw_predictions.ravel())
                 if sample_weight_train is None:
-                    delta = np.percentile(
-                        abs_residuals, 100 * self._loss.quantile
-                    )
+                    delta = np.percentile(abs_residuals, 100 * self._loss.quantile)
                 else:
                     delta = _weighted_percentile(
                         abs_residuals,
