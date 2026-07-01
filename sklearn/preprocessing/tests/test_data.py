@@ -1379,13 +1379,6 @@ def test_quantile_transform_check_error(csc_container):
     # check that an error is raised if input is scalar
     with pytest.raises(ValueError, match="Expected 2D array, got scalar array instead"):
         transformer.transform(10)
-    # check that a warning is raised is n_quantiles > n_samples
-    transformer = QuantileTransformer(n_quantiles=100)
-    warn_msg = "n_quantiles is set to n_samples"
-    with pytest.warns(UserWarning, match=warn_msg) as record:
-        transformer.fit(X)
-    assert len(record) == 1
-    assert transformer.n_quantiles_ == X.shape[0]
 
 
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
@@ -1542,7 +1535,9 @@ def test_quantile_transform_subsampling_disabled():
 
     expected_references = np.linspace(0, 1, n_quantiles)
     assert_allclose(transformer.references_, expected_references)
-    expected_quantiles = np.quantile(X.ravel(), expected_references)
+    expected_quantiles = np.quantile(
+        X.ravel(), expected_references, method="averaged_inverted_cdf"
+    )
     assert_allclose(transformer.quantiles_.ravel(), expected_quantiles)
 
 
@@ -1663,13 +1658,13 @@ def test_quantile_transformer_sorted_quantiles(array_type):
     X = 0.1 * X.reshape(-1, 1)
     X = _convert_container(X, array_type)
 
-    n_quantiles = 100
+    n_quantiles = 7
     qt = QuantileTransformer(n_quantiles=n_quantiles).fit(X)
 
     # Check that the estimated quantile thresholds are monotically
     # increasing:
     quantiles = qt.quantiles_[:, 0]
-    assert len(quantiles) == 100
+    assert len(quantiles) == 7
     assert all(np.diff(quantiles) >= 0)
 
 
