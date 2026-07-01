@@ -2707,16 +2707,7 @@ def test_logisticregression_warns_with_n_jobs():
         lr.fit(X, y)
 
 
-@pytest.mark.parametrize("binary", [False, True])
-@pytest.mark.parametrize("use_str_y", [False, True])
-@pytest.mark.parametrize("use_sample_weight", [False, True])
-@pytest.mark.parametrize("class_weight", [None, "balanced", "dict"])
-@pytest.mark.parametrize(
-    "array_namespace, device_name, dtype_name",
-    yield_namespace_device_dtype_combinations(),
-)
-@pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
-def test_logistic_regression_array_api_compliance(
+def _get_data_for_array_api_testing(
     binary,
     use_str_y,
     use_sample_weight,
@@ -2762,6 +2753,39 @@ def test_logistic_regression_array_api_compliance(
         )
     else:
         sample_weight = None
+
+    return X_np, X_xp, y_np, y_xp_or_np, sample_weight, class_weight
+
+
+@pytest.mark.parametrize("binary", [False, True])
+@pytest.mark.parametrize("use_str_y", [False, True])
+@pytest.mark.parametrize("use_sample_weight", [False, True])
+@pytest.mark.parametrize("class_weight", [None, "balanced", "dict"])
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+@pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
+def test_logistic_regression_array_api_compliance(
+    binary,
+    use_str_y,
+    use_sample_weight,
+    class_weight,
+    array_namespace,
+    device_name,
+    dtype_name,
+):
+    X_np, X_xp, y_np, y_xp_or_np, sample_weight, class_weight = (
+        _get_data_for_array_api_testing(
+            binary=binary,
+            use_str_y=use_str_y,
+            use_sample_weight=use_sample_weight,
+            class_weight=class_weight,
+            array_namespace=array_namespace,
+            device_name=device_name,
+            dtype_name=dtype_name,
+        )
+    )
 
     # Use a strong regularization to ensure coef_ can be identified to a higher
     # precision even when taking into account the iterated discrepancies when
@@ -2838,6 +2862,92 @@ def test_logistic_regression_array_api_compliance(
         if not use_str_y:
             prediction_xp = move_to(prediction_xp, xp=np, device="cpu")
         assert_array_equal(prediction_xp, prediction_np)
+
+
+@pytest.mark.parametrize("refit", [True, False])
+@pytest.mark.parametrize("binary", [False, True])
+@pytest.mark.parametrize("use_str_y", [False, True])
+@pytest.mark.parametrize("use_sample_weight", [False, True])
+@pytest.mark.parametrize("class_weight", [None, "balanced", "dict"])
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+@pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
+def test_logistic_regression_cv_array_api_compliance(
+    refit,
+    binary,
+    use_str_y,
+    use_sample_weight,
+    class_weight,
+    array_namespace,
+    device_name,
+    dtype_name,
+):
+    X_np, X_xp, y_np, y_xp_or_np, sample_weight, class_weight = (
+        _get_data_for_array_api_testing(
+            binary=binary,
+            use_str_y=use_str_y,
+            use_sample_weight=use_sample_weight,
+            class_weight=class_weight,
+            array_namespace=array_namespace,
+            device_name=device_name,
+            dtype_name=dtype_name,
+        )
+    )
+    cv = StratifiedKFold(2, shuffle=False)
+    precomputed_folds = list(cv.split(X_np, y_np))
+    lr_cv_params = dict(
+        Cs=[0.01, 0.001],
+        cv=precomputed_folds,
+        solver="lbfgs",
+        tol=5e-3 if dtype_name == "float32" else 1e-10,
+        max_iter=200,
+        class_weight=class_weight,
+        scoring="neg_log_loss",
+        use_legacy_attributes=False,
+        refit=refit,
+    )
+
+    with warnings.catch_warnings():
+        lr_cv_np = LogisticRegressionCV(**lr_cv_params).fit(
+            X_np, y_np, sample_weight=sample_weight
+        )
+        assert np.max(lr_cv_np.n_iter_) < lr_cv_np.max_iter
+
+    assert np.abs(lr_cv_np.coef_).max() > 0.1
+
+    prediction_np = lr_cv_np.predict(X_np)
+    score_np = lr_cv_np.score(X_np, y_np)
+    atol = _atol_for_type(dtype_name) * 10
+    rtol = 6e-2 if dtype_name == "float32" else 2e-4
+    xp, _ = _array_api_for_tests(array_namespace, device_name)
+    with config_context(array_api_dispatch=True):
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", ConvergenceWarning)
+            lr_cv_xp = LogisticRegressionCV(**lr_cv_params).fit(
+                X_xp, y_xp_or_np, sample_weight=sample_weight
+            )
+
+        assert lr_cv_xp.n_iter_.shape == lr_cv_np.n_iter_.shape
+        assert xp.max(lr_cv_xp.n_iter_) < lr_cv_xp.max_iter
+
+        for attr_name in ("coef_", "intercept_"):
+            attr_xp = getattr(lr_cv_xp, attr_name)
+            attr_np = getattr(lr_cv_np, attr_name)
+            assert_allclose(
+                move_to(attr_xp, xp=np, device="cpu"), attr_np, rtol=rtol, atol=atol
+            )
+            assert attr_xp.dtype == X_xp.dtype
+            assert array_api_device(attr_xp) == array_api_device(X_xp)
+
+        prediction_xp = lr_cv_xp.predict(X_xp)
+        if not use_str_y:
+            prediction_xp = move_to(prediction_xp, xp=np, device="cpu")
+        assert_array_equal(prediction_xp, prediction_np)
+
+        score_xp = lr_cv_xp.score(X_xp, y_xp_or_np)
+        assert_allclose(score_xp, score_np, rtol=rtol, atol=atol)
 
 
 # TODO(1.10): remove when penalty is removed

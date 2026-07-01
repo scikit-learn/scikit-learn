@@ -1,0 +1,4 @@
+- :class:`linear_model.LogisticRegressionCV` now supports array API compatible inputs
+  with `solver="lbfgs"` and when the underlying scoring function is also compatible
+  with the array API.
+  By :user:`Omar Salman <OmarManzoor>`.

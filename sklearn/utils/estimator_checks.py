@@ -1143,18 +1143,19 @@ def _check_array_api_core(
 
     # Fitted attributes which are arrays must have the same namespace as `X`,
     # except `classes_`, to allow it to be string when `y` is string.
+    # We also ignore `l1_ratios_` as that can take on values like [None].
     for key, attribute in array_attributes.items():
         est_xp_param = getattr(est_xp, key)
         with config_context(array_api_dispatch=True):
             attribute_ns = get_namespace(est_xp_param)[0].__name__
-        if key != "classes_":
+        if key not in ("classes_", "l1_ratios_"):
             assert attribute_ns == X_ns, (
                 f"'{key}' attribute is in wrong namespace, expected {X_ns} "
                 f"got {attribute_ns}"
             )
 
         with config_context(array_api_dispatch=True):
-            if key != "classes_":
+            if key not in ("classes_", "l1_ratios_"):
                 assert array_device(est_xp_param) == array_device(X_xp)
 
         est_xp_param_np = move_to(est_xp_param, xp=np, device="cpu")
