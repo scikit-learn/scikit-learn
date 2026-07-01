@@ -168,13 +168,12 @@ import matplotlib.pyplot as plt
 from sklearn.inspection import permutation_importance
 from sklearn.utils.fixes import parse_version
 
-# `pandas.DataFrame.plot.box` forwards `vert` to matplotlib and derives the box
-# orientation from it, but `vert` was deprecated in matplotlib 3.11 (replaced by
-# `orientation`, available since matplotlib 3.10) and pandas does not understand
-# `orientation`. We therefore draw the horizontal boxplots directly with
-# matplotlib in a way that is compatible with the matplotlib versions we support.
-# As a user you probably can write simpler code by using `pandas.DataFrame.plot.box`
-# directly with the appropriate arguments.
+# `pandas.DataFrame.plot.box` forwards its `vert` and `labels` arguments to matplotlib.
+# These arguments are deprecated and removed in version 3.11 and 3.9, respectively. We
+# therefore draw the horizontal boxplots directly with matplotlib in a way that is
+# compatible with the matplotlib versions we support. As a user you probably can write
+# simpler code by using `pandas.DataFrame.plot.box` directly with the appropriate
+# arguments.
 tick_labels_parameter_name = (
     "tick_labels"
     if parse_version(matplotlib.__version__) >= parse_version("3.9")
