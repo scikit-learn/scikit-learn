@@ -106,7 +106,7 @@ https://conda.anaconda.org/conda-forge/linux-aarch64/xorg-libxrender-0.9.12-h86e
 https://conda.anaconda.org/conda-forge/linux-aarch64/cairo-1.18.4-h0b6afd8_1.conda#043c13ed3a18396994be9b4fab6572ad
 https://conda.anaconda.org/conda-forge/noarch/colorama-0.4.6-pyhd8ed1ab_1.conda#962b9857ee8e7018c22f2776ffa0b2d7
 https://conda.anaconda.org/conda-forge/noarch/cycler-0.12.1-pyhcf101f3_2.conda#4c2a8fef270f6c69591889b93f9f55c1
-https://conda.anaconda.org/conda-forge/linux-aarch64/cython-3.2.7-py311hd9fb77f_0.conda#9a78421a2a64eb9c2698004176281b3b
+https://conda.anaconda.org/conda-forge/linux-aarch64/cython-3.2.8-py311hd9fb77f_0.conda#4433d2b9bef72217ac17de5896f5c93a
 https://conda.anaconda.org/conda-forge/noarch/execnet-2.1.2-pyhd8ed1ab_0.conda#a57b4be42619213a94f31d2c69c5dda7
 https://conda.anaconda.org/conda-forge/noarch/iniconfig-2.3.0-pyhd8ed1ab_0.conda#9614359868482abba1bd15ce465e3c42
 https://conda.anaconda.org/conda-forge/linux-aarch64/kiwisolver-1.5.0-py311h229e7f7_0.conda#aeade47300d466d9d6ba01daaca31a86
@@ -168,9 +168,9 @@ https://conda.anaconda.org/conda-forge/noarch/pytest-9.1.1-pyhc364b38_2.conda#64
 https://conda.anaconda.org/conda-forge/linux-aarch64/scipy-1.17.1-py311had2d2e4_1.conda#880b9aa5d72d525370d95c3372d6198e
 https://conda.anaconda.org/conda-forge/linux-aarch64/blas-2.308-openblas.conda#a9764b20003d799e96f5a944e579d375
 https://conda.anaconda.org/conda-forge/linux-aarch64/harfbuzz-14.2.1-h8af1aa0_1.conda#41198d1dd71d97c1507e6bd17edd10c7
-https://conda.anaconda.org/conda-forge/linux-aarch64/matplotlib-base-3.11.0-py311h9262181_0.conda#f44dac136ad7d4d08d1de8393ff262c8
+https://conda.anaconda.org/conda-forge/linux-aarch64/matplotlib-base-3.11.0-py311hbf72afc_1.conda#f90b1da721bb5ce1d6599007730d2213
 https://conda.anaconda.org/conda-forge/noarch/pytest-cov-6.3.0-pyhd8ed1ab_0.conda#50d191b852fccb4bf9ab7b59b030c99d
 https://conda.anaconda.org/conda-forge/noarch/pytest-xdist-3.8.0-pyhd8ed1ab_0.conda#8375cfbda7c57fbceeda18229be10417
 https://conda.anaconda.org/conda-forge/linux-aarch64/qt6-main-6.11.1-pl5321heaece2b_1.conda#bff3e4e7be46f5800da83261c2cec35b
 https://conda.anaconda.org/conda-forge/linux-aarch64/pyside6-6.11.1-py311hb02cd75_1.conda#db0863ef768e6817b5f10b1159212067
-https://conda.anaconda.org/conda-forge/linux-aarch64/matplotlib-3.11.0-py311hfecb2dc_0.conda#9d00288eb7328bf9502dee724b1555c2
+https://conda.anaconda.org/conda-forge/linux-aarch64/matplotlib-3.11.0-py311hfecb2dc_1.conda#ea83c7be6ee732f0766829a7cb03cf0e

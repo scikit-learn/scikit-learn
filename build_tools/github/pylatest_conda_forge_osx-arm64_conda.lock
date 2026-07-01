@@ -81,7 +81,7 @@ https://conda.anaconda.org/conda-forge/osx-arm64/brotli-1.2.0-h7d5ae5b_1.conda#4
 https://conda.anaconda.org/conda-forge/noarch/colorama-0.4.6-pyhd8ed1ab_1.conda#962b9857ee8e7018c22f2776ffa0b2d7
 https://conda.anaconda.org/conda-forge/noarch/cpython-3.14.6-py314hd8ed1ab_100.conda#b28fe35fd43d5f425c0dccbe5b5039fd
 https://conda.anaconda.org/conda-forge/noarch/cycler-0.12.1-pyhcf101f3_2.conda#4c2a8fef270f6c69591889b93f9f55c1
-https://conda.anaconda.org/conda-forge/osx-arm64/cython-3.2.6-py314h65f46a9_1.conda#9b49d83ef18b01b49249af3a3c65a486
+https://conda.anaconda.org/conda-forge/osx-arm64/cython-3.2.8-py314h65f46a9_0.conda#79d369d7b561c5fc83ca6e911227d937
 https://conda.anaconda.org/conda-forge/noarch/execnet-2.1.2-pyhd8ed1ab_0.conda#a57b4be42619213a94f31d2c69c5dda7
 https://conda.anaconda.org/conda-forge/noarch/filelock-3.29.4-pyhd8ed1ab_0.conda#66f138d7a6dffb5c959cc4bf6dc2b797
 https://conda.anaconda.org/conda-forge/noarch/fsspec-2026.6.0-pyhd8ed1ab_0.conda#7d7e6c826ba0743fc491ebee0e7b899c
@@ -164,10 +164,10 @@ https://conda.anaconda.org/conda-forge/osx-arm64/pandas-3.0.3-py314he609de1_0.co
 https://conda.anaconda.org/conda-forge/osx-arm64/pytorch-2.12.0-cpu_generic_py314_h30a3122_0.conda#e5ea6806ef6fbddfa0cb5cbce0de8acf
 https://conda.anaconda.org/conda-forge/osx-arm64/scipy-1.18.0-py314h18e1515_0.conda#e55fe08bb5d43e7120672338dd129030
 https://conda.anaconda.org/conda-forge/osx-arm64/blas-2.308-openblas.conda#1f010c1d0d801ccf4b5aa065d31fa9c2
-https://conda.anaconda.org/conda-forge/osx-arm64/matplotlib-base-3.11.0-py314ha5eae4c_0.conda#be491edfb88200e074cee944c46a4296
+https://conda.anaconda.org/conda-forge/osx-arm64/matplotlib-base-3.11.0-py314hf6804ef_1.conda#839648f58bc9c220a496ad342adc34d9
 https://conda.anaconda.org/conda-forge/osx-arm64/pyamg-5.3.0-py314h95ce61a_1.conda#44282cc9330eb206f808c4f5be281fe2
 https://conda.anaconda.org/conda-forge/osx-arm64/pytorch-cpu-2.12.0-cpu_generic_hcc7c195_0.conda#37cec6c840d3f198afa1aafc6f5295a4
-https://conda.anaconda.org/conda-forge/osx-arm64/matplotlib-3.11.0-py314he55896b_0.conda#d61cd6ed508704b12c3a50d5f5fa7f52
+https://conda.anaconda.org/conda-forge/osx-arm64/matplotlib-3.11.0-py314he55896b_1.conda#11593c3fa1f88016c3ef29f677d0f0e6
 https://conda.anaconda.org/conda-forge/osx-arm64/c-compiler-1.11.0-h61f9b84_0.conda#148516e0c9edf4e9331a4d53ae806a9b
 https://conda.anaconda.org/conda-forge/osx-arm64/clang-19.1.7-default_hf9bcbb7_9.conda#20056c993a8c9df01e04a0e165579ec1
 https://conda.anaconda.org/conda-forge/noarch/compiler-rt_osx-arm64-19.1.7-he32a8d3_1.conda#8d99c82e0f5fed6cc36fcf66a11e03f0
