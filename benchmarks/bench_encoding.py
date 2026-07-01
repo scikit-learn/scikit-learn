@@ -66,7 +66,6 @@ for name in args.encoders.split(","):
         encoder = ColumnTransformer(
             transformers=[("categorical", encoder, list(string_cols))],
             remainder="passthrough",
-            sparse_threshold=0.9,
         )
     print(name, "fit", measure_ms(lambda: encoder.fit(X, y)), "ms")
     encoder.fit(X, y)
