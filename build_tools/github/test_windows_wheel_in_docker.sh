@@ -22,4 +22,4 @@ function exec_inside_container() {
 exec_inside_container "python -m venv C:/venv"
 exec_inside_container "C:/venv/Scripts/python -m pip install $MNT_FOLDER/wheelhouse/$WHEEL_NAME"
 exec_inside_container "C:/venv/Scripts/python -c 'import sklearn; sklearn.show_versions()'"
-exec_inside_container "C:/venv/Scripts/python -m sklearn.utils.tests.test_estimator_checks
+exec_inside_container "C:/venv/Scripts/python -m sklearn.utils.tests.test_estimator_checks"
