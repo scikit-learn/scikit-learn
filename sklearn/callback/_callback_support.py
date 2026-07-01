@@ -143,7 +143,9 @@ def callback_management_context(estimator):
         try:
             from sklearn.callback import ProgressBar
 
-            estimator._skl_callbacks = [ProgressBar(max_propagation_depth=0)]
+            estimator._skl_callbacks = [
+                ProgressBar(max_propagation_depth=0, min_duration=2)
+            ]
         except ImportError:
             # Don't use progressbars if rich is not installed.
             auto_probressbar = False
