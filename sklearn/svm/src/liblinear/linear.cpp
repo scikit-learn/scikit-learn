@@ -496,7 +496,7 @@ void l2r_l2_svr_fun::grad(double *w, double *g)
 class Solver_MCSVM_CS
 {
 	public:
-		Solver_MCSVM_CS(const problem *prob, int nr_class, double *C, double eps=0.1, int max_iter=100000);
+		Solver_MCSVM_CS(const problem *prob, int nr_class, double *C, unsigned seed, double eps=0.1, int max_iter=100000);
 		~Solver_MCSVM_CS();
 		int Solve(double *w);
 	private:
@@ -508,9 +508,11 @@ class Solver_MCSVM_CS
 		int max_iter;
 		double eps;
 		const problem *prob;
+		std::mt19937 mt_rand;
+		
 };
 
-Solver_MCSVM_CS::Solver_MCSVM_CS(const problem *prob, int nr_class, double *weighted_C, double eps, int max_iter)
+Solver_MCSVM_CS::Solver_MCSVM_CS(const problem *prob, int nr_class, double *weighted_C, unsigned seed, double eps, int max_iter )
 {
 	this->w_size = prob->n;
 	this->l = prob->l;
@@ -521,6 +523,7 @@ Solver_MCSVM_CS::Solver_MCSVM_CS(const problem *prob, int nr_class, double *weig
 	this->B = new double[nr_class];
 	this->G = new double[nr_class];
 	this->C = new double[prob->l];
+	this->mt_rand = std::mt19937(seed);
 	for(int i = 0; i < prob->l; i++)
 		this->C[i] = prob->W[i] * weighted_C[(int)prob->y[i]];
 }
@@ -629,7 +632,7 @@ int Solver_MCSVM_CS::Solve(double *w)
 		double stopping = -INF;
 		for(i=0;i<active_size;i++)
 		{
-			int j = i+bounded_rand_int(active_size-i);
+			int j = i+bounded_rand_int_local(active_size-i, mt_rand);
 			swap(index[i], index[j]);
 		}
 		for(s=0;s<active_size;s++)
@@ -821,7 +824,7 @@ int Solver_MCSVM_CS::Solve(double *w)
 
 static int solve_l2r_l1l2_svc(
 	const problem *prob, double *w, double eps,
-	double Cp, double Cn, int solver_type, int max_iter)
+	double Cp, double Cn, int solver_type, int max_iter, unsigned seed)
 {
 	int l = prob->l;
 	int w_size = prob->n;
@@ -832,6 +835,7 @@ static int solve_l2r_l1l2_svc(
 	double *alpha = new double[l];
 	schar *y = new schar[l];
 	int active_size = l;
+	std::mt19937 mt_rand(seed);
 
 	// PG: projected gradient, for shrinking and stopping
 	double PG;
@@ -902,7 +906,7 @@ static int solve_l2r_l1l2_svc(
 
 		for (i=0; i<active_size; i++)
 		{
-			int j = i+bounded_rand_int(active_size-i);
+			int j = i+bounded_rand_int_local(active_size-i, mt_rand);
 			swap(index[i], index[j]);
 		}
 
@@ -1063,6 +1067,7 @@ static int solve_l2r_l1l2_svr(
 	int i, s, iter = 0;
 	int active_size = l;
 	int *index = new int[l];
+	std::mt19937 mt_rand(param->seed);
 
 	double d, G, H;
 	double Gmax_old = INF;
@@ -1121,7 +1126,7 @@ static int solve_l2r_l1l2_svr(
 
 		for(i=0; i<active_size; i++)
 		{
-			int j = i+bounded_rand_int(active_size-i);
+			int j = i+bounded_rand_int_local(active_size-i, mt_rand);
 			swap(index[i], index[j]);
 		}
 
@@ -1290,7 +1295,7 @@ static int solve_l2r_l1l2_svr(
 // To support weights for instances, use GETI(i) (i)
 
 int solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, double Cn,
-					   int max_iter)
+					   int max_iter, unsigned seed)
 {
 	int l = prob->l;
 	int w_size = prob->n;
@@ -1303,6 +1308,7 @@ int solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, dou
 	double innereps = 1e-2;
 	double innereps_min = min(1e-8, eps);
 	double *upper_bound = new double [l];
+	std::mt19937 mt_rand(seed);
 
 	for(i=0; i<l; i++)
 	{
@@ -1347,7 +1353,7 @@ int solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, dou
 	{
 		for (i=0; i<l; i++)
 		{
-			int j = i+bounded_rand_int(l-i);
+			int j = i+bounded_rand_int_local(l-i, mt_rand);
 			swap(index[i], index[j]);
 		}
 		int newton_iter = 0;
@@ -1469,13 +1475,14 @@ int solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, dou
 
 static int solve_l1r_l2_svc(
 	problem *prob_col, double *w, double eps,
-	double Cp, double Cn, int max_iter)
+	double Cp, double Cn, int max_iter, unsigned seed)
 {
 	int l = prob_col->l;
 	int w_size = prob_col->n;
 	int j, s, iter = 0;
 	int active_size = w_size;
 	int max_num_linesearch = 20;
+	std::mt19937 mt_rand(seed);
 
 	double sigma = 0.01;
 	double d, G_loss, G, H;
@@ -1535,7 +1542,7 @@ static int solve_l1r_l2_svc(
 
 		for(j=0; j<active_size; j++)
 		{
-			int i = j+bounded_rand_int(active_size-j);
+			int i = j+bounded_rand_int_local(active_size-j, mt_rand);
 			swap(index[i], index[j]);
 		}
 
@@ -1763,7 +1770,7 @@ static int solve_l1r_l2_svc(
 
 static int solve_l1r_lr(
 	const problem *prob_col, double *w, double eps,
-	double Cp, double Cn, int max_newton_iter)
+	double Cp, double Cn, int max_newton_iter, unsigned seed)
 {
 	int l = prob_col->l;
 	int w_size = prob_col->n;
@@ -1773,6 +1780,7 @@ static int solve_l1r_lr(
 	int active_size;
 	int QP_active_size;
 	int QP_no_change = 0;
+	std::mt19937 mt_rand(seed);
 
 	double nu = 1e-12;
 	double inner_eps = 1;
@@ -1922,7 +1930,7 @@ static int solve_l1r_lr(
 
 			for(j=0; j<QP_active_size; j++)
 			{
-				int i = j+bounded_rand_int(QP_active_size-j);
+				int i = j+bounded_rand_int_local(QP_active_size-j, mt_rand);
 				swap(index[i], index[j]);
 			}
 
@@ -2364,17 +2372,17 @@ static int train_one(const problem *prob, const parameter *param, double *w, dou
 			break;
 		}
 		case L2R_L2LOSS_SVC_DUAL:
-			n_iter=solve_l2r_l1l2_svc(prob, w, eps, Cp, Cn, L2R_L2LOSS_SVC_DUAL, max_iter);
+			n_iter=solve_l2r_l1l2_svc(prob, w, eps, Cp, Cn, L2R_L2LOSS_SVC_DUAL, max_iter, param->seed);
 			break;
 		case L2R_L1LOSS_SVC_DUAL:
-			n_iter=solve_l2r_l1l2_svc(prob, w, eps, Cp, Cn, L2R_L1LOSS_SVC_DUAL, max_iter);
+			n_iter=solve_l2r_l1l2_svc(prob, w, eps, Cp, Cn, L2R_L1LOSS_SVC_DUAL, max_iter, param->seed);
 			break;
 		case L1R_L2LOSS_SVC:
 		{
 			problem prob_col;
 			feature_node *x_space = NULL;
 			transpose(prob, &x_space ,&prob_col);
-			n_iter=solve_l1r_l2_svc(&prob_col, w, primal_solver_tol, Cp, Cn, max_iter);
+			n_iter=solve_l1r_l2_svc(&prob_col, w, primal_solver_tol, Cp, Cn, max_iter, param->seed);
 			delete [] prob_col.y;
 			delete [] prob_col.x;
 			delete [] prob_col.W;
@@ -2386,7 +2394,7 @@ static int train_one(const problem *prob, const parameter *param, double *w, dou
 			problem prob_col;
 			feature_node *x_space = NULL;
 			transpose(prob, &x_space ,&prob_col);
-			n_iter=solve_l1r_lr(&prob_col, w, primal_solver_tol, Cp, Cn, max_iter);
+			n_iter=solve_l1r_lr(&prob_col, w, primal_solver_tol, Cp, Cn, max_iter, param->seed);
 			delete [] prob_col.y;
 			delete [] prob_col.x;
 			delete [] prob_col.W;
@@ -2394,7 +2402,7 @@ static int train_one(const problem *prob, const parameter *param, double *w, dou
 			break;
 		}
 		case L2R_LR_DUAL:
-			n_iter=solve_l2r_lr_dual(prob, w, eps, Cp, Cn, max_iter);
+			n_iter=solve_l2r_lr_dual(prob, w, eps, Cp, Cn, max_iter, param->seed);
 			break;
 		case L2R_L2LOSS_SVR:
 		{
@@ -2535,7 +2543,7 @@ model* train(const problem *prob, const parameter *param, BlasFunctions *blas_fu
 			for(i=0;i<nr_class;i++)
 				for(j=start[i];j<start[i]+count[i];j++)
 					sub_prob.y[j] = i;
-			Solver_MCSVM_CS Solver(&sub_prob, nr_class, weighted_C, param->eps);
+			Solver_MCSVM_CS Solver(&sub_prob, nr_class, weighted_C,param->seed, param->eps);
 			model_->n_iter[0]=Solver.Solve(model_->w);
 		}
 		else
@@ -2604,6 +2612,8 @@ void cross_validation(const problem *prob, const parameter *param, int nr_fold, 
 	int *fold_start;
 	int l = prob->l;
 	int *perm = Malloc(int,l);
+	std::mt19937 mt_rand(param->seed);
+
 	if (nr_fold > l)
 	{
 		nr_fold = l;
@@ -2613,7 +2623,7 @@ void cross_validation(const problem *prob, const parameter *param, int nr_fold, 
 	for(i=0;i<l;i++) perm[i]=i;
 	for(i=0;i<l;i++)
 	{
-		int j = i+bounded_rand_int(l-i);
+		int j = i+bounded_rand_int_local(l-i, mt_rand);
 		swap(perm[i],perm[j]);
 	}
 	for(i=0;i<=nr_fold;i++)
