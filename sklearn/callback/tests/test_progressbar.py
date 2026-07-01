@@ -254,6 +254,7 @@ def test_progressbar_by_default(Estimator, verbose, capsys):
 
 def test_progressbar_min_duration(capsys):
     """Test that min_duration enables the hiding of fast estimators' progress bars."""
+    pytest.importorskip("rich")
     cb = ProgressBar(min_duration=1)
     # Fast estimator
     MaxIterEstimator().set_callbacks(cb).fit()
