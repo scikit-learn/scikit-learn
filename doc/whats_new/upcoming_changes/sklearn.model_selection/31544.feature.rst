@@ -1,0 +1,5 @@
+- :class:`model_selection.FixedThresholdClassifier`
+  now supports multi-threshold classification to FixedThresholdClassifier, 
+  enabling discretization of continuous decision scores into multiple classes
+  by accepting a list of thresholds and optional labels.
+  By :user:`Nuno Martins <nunofbiomartins>` and :user:`Pedro Lopes <pedroL0pes>`
