@@ -1,0 +1,4 @@
+- Vectorized the inner loop of Minka's MLE in :func:`_assess_dimension`,
+  speeding up :class:`decomposition.PCA` with ``n_components='mle'`` by
+  ~45x for typical problem sizes.
+  By :user:`Jonathan Berg <jberg5>`.
