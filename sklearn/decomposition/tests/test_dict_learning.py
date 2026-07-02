@@ -681,6 +681,23 @@ def test_sparse_coder_n_features_in():
     assert sc.n_features_in_ == d.shape[1]
 
 
+def test_sparse_encode_omp_clips_n_nonzero_coefs():
+    n_components = 8
+    rng = np.random.RandomState(0)
+    X_small = rng.randn(10, n_features)
+    V = rng.randn(n_components, n_features)
+    V /= np.linalg.norm(V, axis=1)[:, np.newaxis]
+
+    with pytest.warns(UserWarning, match="was clipped to"):
+        code_omp = sparse_encode(
+            X_small, V, algorithm="omp", n_nonzero_coefs=n_components + 5
+        )
+    code_lars = sparse_encode(
+        X_small, V, algorithm="lars", n_nonzero_coefs=n_components + 5
+    )
+    assert code_omp.shape == code_lars.shape == (10, n_components)
+
+
 def test_sparse_encoder_feature_number_error():
     n_components = 10
     rng = np.random.RandomState(0)

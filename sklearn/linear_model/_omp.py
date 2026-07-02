@@ -412,9 +412,13 @@ def orthogonal_mp(
         # but at least one.
         n_nonzero_coefs = max(int(0.1 * X.shape[1]), 1)
     if tol is None and n_nonzero_coefs > X.shape[1]:
-        raise ValueError(
-            "The number of atoms cannot be more than the number of features"
+        warnings.warn(
+            "The number of atoms cannot be more than the number of features. "
+            f"n_nonzero_coefs={n_nonzero_coefs} was clipped to "
+            f"n_features={X.shape[1]}.",
+            UserWarning,
         )
+        n_nonzero_coefs = X.shape[1]
     if precompute == "auto":
         precompute = X.shape[0] > X.shape[1]
     if precompute:
@@ -603,9 +607,13 @@ def orthogonal_mp_gram(
     if tol is None and n_nonzero_coefs <= 0:
         raise ValueError("The number of atoms must be positive")
     if tol is None and n_nonzero_coefs > len(Gram):
-        raise ValueError(
-            "The number of atoms cannot be more than the number of features"
+        warnings.warn(
+            "The number of atoms cannot be more than the number of features. "
+            f"n_nonzero_coefs={n_nonzero_coefs} was clipped to "
+            f"n_features={len(Gram)}.",
+            UserWarning,
         )
+        n_nonzero_coefs = len(Gram)
 
     if return_path:
         coef = np.zeros((len(Gram), Xy.shape[1], len(Gram)), dtype=Gram.dtype)
