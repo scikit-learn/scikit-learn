@@ -1,0 +1,5 @@
+- The convergence issues for certain ill-conditioned problems when using
+  :class:`linear_model.LogisticRegression` with `solver="newton-cg"` have been
+  fixed, particularly those that involve low regularization, nearly collinear
+  features and label signals along the tiny-curvature difference directions.
+  By :user:`Christian Lorentzen <lorentzenchr>`.
