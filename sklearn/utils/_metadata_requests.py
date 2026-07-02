@@ -90,7 +90,7 @@ To give the above representation some structure, we use the following objects:
 The ``set_{method}_request`` methods are dynamically generated for estimators
 which inherit from ``BaseEstimator``. This is done by attaching instances
 of the ``RequestMethod`` descriptor to classes, which is done in the
-``_MetadataRequester`` class, and ``BaseEstimator`` inherits from this mixin.
+``MetadataRequester`` class, and ``BaseEstimator`` inherits from this mixin.
 This mixin also implements the ``get_metadata_routing``, which meta-estimators
 need to override, but it works for simple consumers as is.
 """
@@ -112,7 +112,7 @@ from sklearn.utils._bunch import Bunch
 # methods at the moment involves monkeypatching this list.
 # Note that if this list is changed or monkeypatched, the corresponding method
 # needs to be added under a TYPE_CHECKING condition like the one done here in
-# _MetadataRequester
+# `MetadataRequester`
 SIMPLE_METHODS = [
     "fit",
     "partial_fit",
@@ -329,7 +329,14 @@ class MethodMetadataRequest:
     """Container for metadata requests associated with a single method.
 
     Instances of this class get used within a :class:`MetadataRequest` - one per each
-    public method (`fit`, `transform`, ...) that its owning consumer has.
+    public method (`fit`, `transform`, ...) that its owning :term:`consumers <consumer>`
+    has.
+
+    This class can be used inside the `__sklearn_build_declared_metadata_request__`
+    method of :class:`~utils.metadata_routing.MetadataRequester` to override how
+    class-level requests are build. See the :ref:`metadata routing developing guide
+    <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>` for examples on how
+    to use it.
 
     .. versionadded:: 1.3
 
@@ -1336,7 +1343,7 @@ def get_routing_for_object(obj=None):
 # Request method
 # ==============
 # This section includes what's needed for the `RequestMethod` descriptor and
-# the dynamic generation of `set_{method}_request` methods in the `_MetadataRequester`
+# the dynamic generation of `set_{method}_request` methods in the `MetadataRequester`
 # mixin class.
 
 # These strings are used to dynamically generate the docstrings for the methods.
@@ -1515,12 +1522,20 @@ class RequestMethod:
         return func
 
 
-class _MetadataRequester:
+class MetadataRequester:
     """Mixin class for adding metadata request functionality.
 
     ``BaseEstimator`` inherits from this Mixin.
 
+    Custom :term:`consumers <consumer>` that are not estimators can inherit from this
+    Mixin to participate in metadata routing (e.g. custom scorers or wrappers). See the
+    :ref:`metadata routing developing guide
+    <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>` for examples on how
+    to use it.
+
     .. versionadded:: 1.3
+    .. versionchanged:: 1.10
+       `MetadataRequester` is now part of scikit-learn's developer API.
     """
 
     if TYPE_CHECKING:  # pragma: no cover
@@ -1582,7 +1597,7 @@ class _MetadataRequester:
         try:
             for method in SIMPLE_METHODS:
                 set_method_name = f"set_{method}_request"
-                requests = cls._get_class_level_metadata_request_values(method)
+                requests = cls._get_declared_metadata_request_values(method)
 
                 if _has_explicit_set_method_request(cls, set_method_name):
                     continue
@@ -1600,13 +1615,13 @@ class _MetadataRequester:
         super().__init_subclass__(**kwargs)
 
     @classmethod
-    def _get_class_level_metadata_request_values(
+    def _get_declared_metadata_request_values(
         cls,
         method_name: str,
         method: Callable | None = None,
         ignore_params: Iterable[str] | None = None,
     ):
-        """Get class level metadata request values.
+        """Get declared metadata request values per consuming method.
 
         Parameters
         ----------
@@ -1706,10 +1721,16 @@ class _MetadataRequester:
         return {param: alias for param, alias in params.items() if alias is not UNUSED}
 
     def _get_metadata_request(self):
-        """Get requested metadata for the instance.
+        """Get the effective metadata request for this instance.
 
-        Please check :ref:`User Guide <metadata_routing>` on how the routing
-        mechanism works.
+        Combines the consumer's class-level requests with any changes made by the user
+        via `set_{method}_request` methods. If a `set_{method}_request` has been called,
+        the stored request is returned as a copy.
+
+        See Also
+        --------
+        __sklearn_build_declared_metadata_request__ : Developer API to override when
+        building class-level requests when `set_{method}_request` has not been called.
 
         Returns
         -------
@@ -1717,21 +1738,50 @@ class _MetadataRequester:
             A :class:`~sklearn.utils.metadata_routing.MetadataRequest` instance.
         """
         if hasattr(self, "_metadata_request"):
-            requests = get_routing_for_object(self._metadata_request)
+            return self._metadata_request.__sklearn_clone__()
         else:
-            requests = MetadataRequest(owner=self)
-            for method_name in SIMPLE_METHODS:
-                setattr(
-                    requests,
-                    method_name,
-                    MethodMetadataRequest(
-                        owner=self,
-                        method=method_name,
-                        requests=self._get_class_level_metadata_request_values(
-                            method_name
-                        ),
-                    ),
-                )
+            return self.__sklearn_build_declared_metadata_request__()
+
+    def __sklearn_build_declared_metadata_request__(self):
+        """Build the declared metadata requests for this consumer.
+
+        This method builds metadata request from class-level values only. It is called
+        internally from :meth:`_get_metadata_request` when `set_{method}_request`
+        methods have not yet stored any user-set request on the instance. To obtain the
+        effective request (including `set_{method}_request` changes set by users), use
+        :meth:`get_metadata_routing`.
+
+        Third-party consumers can override this method to customise how to declare
+        metadata requests; for example to exclude parameters from metadata discovery, or
+        when metadata is consumed by another callable.
+
+        Read more on developing custom consumers in the :ref:`Metadata Routing
+        Developing Guide
+        <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>`.
+
+        .. versionadded:: 1.10
+
+        Returns
+        -------
+        request : MetadataRequest
+            A :class:`~sklearn.utils.metadata_routing.MetadataRequest` instance.
+
+        See Also
+        --------
+        _get_metadata_request : Return the effective request for this instance.
+        get_declared_metadata_request_values : Get class-level requests.
+        """
+        requests = MetadataRequest(owner=self)
+        for method_name in SIMPLE_METHODS:
+            setattr(
+                requests,
+                method_name,
+                MethodMetadataRequest(
+                    owner=self,
+                    method=method_name,
+                    requests=get_declared_metadata_request_values(self, method_name),
+                ),
+            )
         return requests
 
     def get_metadata_routing(self):
@@ -1901,4 +1951,51 @@ def _manual_routing(routing):
             )
             for child, methods in routing.items()
         }
+    )
+
+
+def get_declared_metadata_request_values(
+    metadata_requester, method_name, method=None, ignore_params=None
+):
+    """Get declared metadata request values per consuming method.
+
+    This method can be used inside the `__sklearn_build_declared_metadata_request__`
+    method of :class:`~utils.metadata_routing.MetadataRequester` to override how
+    class-level requests are build. See the :ref:`metadata routing developing guide
+    <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>` for examples on how
+    to use it.
+
+    .. versionadded:: 1.10
+
+    Parameters
+    ----------
+    metadata_requester : consumer object
+        The `MetadataRequester` object (self).
+
+    method_name : str
+        The name of the method to get the metadata request values for.
+
+    method : callable, default=None
+        The method to get the metadata request values for. If None, the method from the
+        class with the name `method_name` is used.
+
+    ignore_params : set, default=None
+        A set of parameter names to ignore. The usual parameters `X`, `y`, `Y`, `Xt`,
+        `yt` are always ignored.
+
+    Returns
+    -------
+    requests : dict
+        A dictionary of metadata request values.
+
+    Notes
+    -----
+    This method first checks the `method`'s signature for passable metadata and then
+    updates these with the metadata request values set at class level via the
+    ``__metadata_request__{method}`` class attributes.
+
+    This method, does not take request values set at instance level into account.
+    """
+    return metadata_requester._get_declared_metadata_request_values(
+        method_name, method, ignore_params
     )
