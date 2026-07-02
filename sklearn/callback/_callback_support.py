@@ -4,8 +4,21 @@
 import functools
 from contextlib import contextmanager
 
+from sklearn import get_config
 from sklearn.callback._base import AutoPropagatedCallback, FitCallback
 from sklearn.callback._callback_context import CallbackContext
+
+
+def _progressbar_by_default():
+    """Return whether progressbar are added by default to compatible estimators.
+
+    Returns
+    -------
+    enabled : bool
+        Whether progressbar by default is enabled. If the config is not set, it
+        defaults to False.
+    """
+    return get_config().get("progressbar_by_default", False)
 
 
 class CallbackSupportMixin:
@@ -77,6 +90,7 @@ class CallbackSupportMixin:
         callback_fit_ctx : CallbackContext
             The root callback context for the estimator.
         """
+
         self._callback_fit_ctx = CallbackContext._from_estimator(
             estimator=self,
             task_name=task_name,
@@ -118,6 +132,23 @@ def callback_management_context(estimator):
     ------
     None.
     """
+    # Put a progressbar by default if there is no callback
+    if auto_probressbar := (
+        _progressbar_by_default()
+        and not hasattr(estimator, "_skl_callbacks")
+        and not hasattr(estimator, "_parent_callback_ctx")
+        # Don't show progress bars if verbosity is enabled
+        and (not hasattr(estimator, "verbose") or not estimator.verbose)
+    ):
+        try:
+            from sklearn.callback import ProgressBar
+
+            estimator._skl_callbacks = [
+                ProgressBar(max_propagation_depth=0, min_duration=2)
+            ]
+        except ImportError:
+            # Don't use progressbars if rich is not installed.
+            auto_probressbar = False
     try:
         yield
     finally:
@@ -140,6 +171,9 @@ def callback_management_context(estimator):
                     "The following callback teardown errors occurred",
                     teardown_errors,
                 )
+
+        if auto_probressbar:
+            del estimator._skl_callbacks
 
 
 def with_callbacks(method):

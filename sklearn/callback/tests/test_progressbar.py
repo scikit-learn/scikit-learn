@@ -7,15 +7,18 @@ from unittest import mock
 
 import pytest
 
+from sklearn import config_context
 from sklearn.base import clone
 from sklearn.callback import ProgressBar
 from sklearn.callback.tests._utils import (
     HeterogeneousMetaEstimator,
     MaxIterEstimator,
     MetaEstimator,
+    NoCallbackEstimator,
     NoSubtaskEstimator,
     WhileEstimator,
 )
+from sklearn.datasets import make_classification
 from sklearn.utils._optional_dependencies import check_rich_support
 from sklearn.utils._testing import (
     assert_allclose,
@@ -150,8 +153,8 @@ def test_progress_during_fit():
     records = []
     orig_on_task_end = RichProgressMonitor._on_task_end
 
-    def recording_on_task_end(self, task_info):
-        orig_on_task_end(self, task_info)
+    def recording_on_task_end(self, task_info, visible):
+        orig_on_task_end(self, task_info, visible)
         records.append(self.root_rich_task.progress)
 
     max_iter = 7
@@ -191,9 +194,9 @@ def test_progress_during_fit_composition(meta_estimator):
                 check_progress(child)
         assert_allclose(task.progress, expected)
 
-    def recording_on_task_end(self, task_info):
+    def recording_on_task_end(self, task_info, visible):
         path = task_info["path"]
-        orig_on_task_end(self, task_info)
+        orig_on_task_end(self, task_info, visible)
         records.append([path, self.root_rich_task.progress])
         check_progress(self.root_rich_task)
 
@@ -216,3 +219,48 @@ def test_estimator_without_subtasks(capsys):
     captured = capsys.readouterr()
     assert re.search(r"NoSubtaskEstimator - fit", captured.out)
     assert re.search(r"100%", captured.out)
+
+
+@config_context(progressbar_by_default=True)
+@pytest.mark.parametrize("Estimator", [MaxIterEstimator, NoCallbackEstimator])
+@pytest.mark.parametrize("verbose", [True, False])
+def test_progressbar_by_default(Estimator, verbose, capsys):
+    """Test that the progressbar is used by default on compatible estimators."""
+    try:
+        import rich  # noqa: F401
+
+        rich_available = True
+    except ImportError:
+        rich_available = False
+
+    X, y = make_classification(
+        n_samples=10, n_features=2, random_state=0, n_informative=2, n_redundant=0
+    )
+    kwargs = {"computation_intensity": 0.15} if Estimator == MaxIterEstimator else {}
+
+    est = Estimator(**kwargs)
+    est.verbose = verbose
+    est.fit(X, y)
+
+    captured = capsys.readouterr()
+
+    # The progressbar should by set only on compatible estimators, if there is no
+    # verbosity set and and if rich is available.
+    if Estimator == MaxIterEstimator and rich_available and not verbose:
+        assert re.search(r"MaxIterEstimator - fit ━+ 100%", captured.out)
+    else:
+        assert not captured.out
+
+
+def test_progressbar_min_duration(capsys):
+    """Test that min_duration enables the hiding of fast estimators' progress bars."""
+    pytest.importorskip("rich")
+    cb = ProgressBar(min_duration=1)
+    # Fast estimator
+    MaxIterEstimator().set_callbacks(cb).fit()
+    captured = capsys.readouterr()
+    assert captured.out == "\n"
+    # Slow estimator
+    MaxIterEstimator(computation_intensity=0.3).set_callbacks(cb).fit()
+    captured = capsys.readouterr()
+    assert re.search(r"MaxIterEstimator - fit ━+ 100%", captured.out)
