@@ -562,6 +562,35 @@ features, such as :class:`~preprocessing.StandardScaler`.
 :class:`base.ClassNamePrefixFeaturesOutMixin` is useful when the transformer
 needs to generate its own feature names out, such as :class:`~decomposition.PCA`.
 
+For example, a custom transformer with a one-to-one correspondence between input
+and output features can inherit from :class:`base.OneToOneFeatureMixin` to reuse
+the input feature names when `set_output(transform="pandas")` is configured:
+
+.. code-block:: python
+
+    import pandas as pd
+
+    from sklearn.base import BaseEstimator, OneToOneFeatureMixin, TransformerMixin
+    from sklearn.utils.validation import validate_data
+
+
+    class ScaleByFactor(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
+        def __init__(self, factor=2):
+            self.factor = factor
+
+        def fit(self, X, y=None):
+            validate_data(self, X, reset=True)
+            return self
+
+        def transform(self, X):
+            X = validate_data(self, X, reset=False)
+            return X * self.factor
+
+
+    X = pd.DataFrame({"height": [1.5, 1.8], "weight": [60, 80]})
+    transformer = ScaleByFactor().set_output(transform="pandas")
+    transformer.fit_transform(X)
+
 You can opt-out of the `set_output` API by setting `auto_wrap_output_keys=None`
 when defining a custom subclass::
 
