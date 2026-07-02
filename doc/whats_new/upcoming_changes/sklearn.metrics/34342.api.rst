@@ -1,0 +1,2 @@
+- The ``metrics.cluster.entropy`` function, deprecated in 1.8, is now removed.
+  By :user:`mkusiappiah`.
