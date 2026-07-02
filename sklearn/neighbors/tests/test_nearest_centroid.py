@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 from sklearn import datasets
+from sklearn.datasets import load_iris
 from sklearn.neighbors import NearestCentroid
 from sklearn.utils._testing import (
     assert_allclose,
@@ -183,7 +184,7 @@ def test_features_zero_var():
     X = np.empty((10, 2))
     X[:, 0] = -0.13725701
     X[:, 1] = -0.9853293
-    y = np.zeros((10))
+    y = np.zeros(10)
     y[0] = 1
 
     clf = NearestCentroid(shrink_threshold=0.1)
@@ -235,3 +236,121 @@ def test_error_zero_variances(array_constructor):
     clf = NearestCentroid()
     with pytest.raises(ValueError, match="All features have zero variance"):
         clf.fit(X, y)
+
+
+def test_manhattan_single_class_raises():
+    """Manhattan fit raises if only one class."""
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 1])
+    clf = NearestCentroid(metric="manhattan")
+    with pytest.raises(ValueError, match="greater than one"):
+        clf.fit(X, y)
+
+
+def test_manhattan_empirical_priors():
+    """Manhattan fit works with empirical priors."""
+    X, y = load_iris(return_X_y=True)
+    clf = NearestCentroid(metric="manhattan", priors="empirical")
+    clf.fit(X, y)
+    assert_array_almost_equal(clf.class_prior_.sum(), 1.0)
+    assert clf.class_prior_.shape == (3,)
+
+
+def test_manhattan_custom_array_priors():
+    """Manhattan fit works with custom array priors."""
+    X, y = load_iris(return_X_y=True)
+    clf = NearestCentroid(metric="manhattan", priors=[0.2, 0.3, 0.5])
+    clf.fit(X, y)
+    assert_array_almost_equal(clf.class_prior_, [0.2, 0.3, 0.5])
+
+
+def test_manhattan_negative_priors_raises():
+    """Manhattan fit raises on negative priors."""
+    X, y = load_iris(return_X_y=True)
+    clf = NearestCentroid(metric="manhattan", priors=[-0.1, 0.5, 0.6])
+    with pytest.raises(ValueError, match="non-negative"):
+        clf.fit(X, y)
+
+
+def test_manhattan_non_normalized_priors_warns():
+    """Manhattan fit warns when priors don't sum to 1."""
+    X, y = load_iris(return_X_y=True)
+    clf = NearestCentroid(metric="manhattan", priors=[0.1, 0.1, 0.1])
+    with pytest.warns(UserWarning, match="do not sum to 1"):
+        clf.fit(X, y)
+    assert_array_almost_equal(clf.class_prior_.sum(), 1.0)
+
+
+def test_partial_fit_incremental():
+    """Test partial_fit called multiple times gives same result as fit."""
+    X, y = load_iris(return_X_y=True)
+    clf_fit = NearestCentroid().fit(X, y)
+
+    clf_partial = NearestCentroid()
+    clf_partial.partial_fit(X[:50], y[:50], classes=np.unique(y))
+    clf_partial.partial_fit(X[50:100], y[50:100])
+    clf_partial.partial_fit(X[100:], y[100:])
+
+    assert_array_almost_equal(clf_fit.centroids_, clf_partial.centroids_, decimal=5)
+
+
+def test_partial_fit_predict_proba():
+    """Test predict_proba works after partial_fit."""
+    X, y = load_iris(return_X_y=True)
+    clf = NearestCentroid()
+    clf.partial_fit(X, y, classes=np.unique(y))
+    proba = clf.predict_proba(X)
+    assert proba.shape == (len(y), 3)
+    assert_array_almost_equal(proba.sum(axis=1), np.ones(len(y)))
+
+
+def test_partial_fit_sparse():
+    """Test partial_fit works with sparse input."""
+    from scipy.sparse import csr_matrix
+
+    X, y = load_iris(return_X_y=True)
+    X_sparse = csr_matrix(X)
+    clf = NearestCentroid()
+    clf.partial_fit(X_sparse, y, classes=np.unique(y))
+    assert clf.centroids_.shape == (3, 4)
+
+
+def test_partial_fit_empirical_priors():
+    """Test partial_fit with empirical priors."""
+    X, y = load_iris(return_X_y=True)
+    clf = NearestCentroid(priors="empirical")
+    clf.partial_fit(X, y, classes=np.unique(y))
+    assert_array_almost_equal(clf.class_prior_.sum(), 1.0)
+
+
+def test_partial_fit_custom_priors():
+    """Test partial_fit with custom array priors."""
+    X, y = load_iris(return_X_y=True)
+    clf = NearestCentroid(priors=[0.2, 0.3, 0.5])
+    clf.partial_fit(X, y, classes=np.unique(y))
+    assert_array_almost_equal(clf.class_prior_, [0.2, 0.3, 0.5])
+
+
+def test_partial_fit_shrink_threshold():
+    """Test partial_fit with shrink_threshold."""
+    X, y = load_iris(return_X_y=True)
+    clf = NearestCentroid(shrink_threshold=0.5)
+    clf.partial_fit(X, y, classes=np.unique(y))
+    pred = clf.predict(X)
+    assert pred.shape == (len(y),)
+
+
+def test_partial_fit_manhattan_raises():
+    """Test partial_fit raises for manhattan metric."""
+    X, y = load_iris(return_X_y=True)
+    clf = NearestCentroid(metric="manhattan")
+    with pytest.raises(ValueError, match=r"manhattan.*partial_fit"):
+        clf.partial_fit(X, y, classes=np.unique(y))
+
+
+def test_partial_fit_missing_classes_raises():
+    """Test partial_fit raises if classes not passed on first call."""
+    X, y = load_iris(return_X_y=True)
+    clf = NearestCentroid()
+    with pytest.raises(ValueError, match="classes must be passed"):
+        clf.partial_fit(X, y)
