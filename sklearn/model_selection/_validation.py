@@ -689,6 +689,7 @@ def _fit_and_score(
     error_score=np.nan,
     caller=None,
     callback_ctx=None,
+    callbacks_params=None,
 ):
     """Fit estimator and compute scores for a given dataset split.
 
@@ -765,6 +766,10 @@ def _fit_and_score(
     callback_ctx : `CallbackContext` object or None, default=None
         Callback context for the evaluation task.
 
+    callbacks_params : dict or None
+        Parameters that will be passed to the callbacks' on_fit_task_begin and
+        on_fit_task_end hooks.
+
     Returns
     -------
     result : dict with the following attributes
@@ -823,6 +828,15 @@ def _fit_and_score(
     score_params = score_params if score_params is not None else {}
     score_params_train = _check_method_params(X, params=score_params, indices=train)
     score_params_test = _check_method_params(X, params=score_params, indices=test)
+    # Adjust length of callbacks metadata
+    if callbacks_params is not None:
+        for cb_name in callbacks_params:
+            for hook_name in callbacks_params[cb_name]:
+                callbacks_params[cb_name][hook_name] = _check_method_params(
+                    X,
+                    params=callbacks_params[cb_name][hook_name],
+                    indices=train,
+                )
 
     if parameters is not None:
         # here we clone the parameters, since sometimes the parameters
@@ -836,18 +850,16 @@ def _fit_and_score(
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
 
-    if (sample_weight := fit_params.get("sample_weight")) is not None:
-        metadata_callbacks = {"sample_weight": sample_weight}
-    else:
-        metadata_callbacks = None
-
     result = {}
 
     try:
         if callback_ctx is not None:
             with callback_ctx.propagate_callback_context(estimator):
                 callback_ctx.call_on_fit_task_begin(
-                    estimator=caller, X=X_train, y=y_train, metadata=metadata_callbacks
+                    estimator=caller,
+                    X=X_train,
+                    y=y_train,
+                    metadata=callbacks_params,
                 )
                 if y_train is None:
                     estimator.fit(X_train, **fit_params)
@@ -890,7 +902,10 @@ def _fit_and_score(
     finally:
         if callback_ctx is not None:
             callback_ctx.call_on_fit_task_end(
-                estimator=caller, X=X_train, y=y_train, metadata=metadata_callbacks
+                estimator=caller,
+                X=X_train,
+                y=y_train,
+                metadata=callbacks_params,
             )
 
     if verbose > 1:

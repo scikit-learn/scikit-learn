@@ -1,9 +1,12 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import re
+
 import numpy as np
 import pytest
 
+from sklearn import config_context, set_config
 from sklearn.base import clone
 from sklearn.callback import ScoringMonitor
 from sklearn.callback._scoring_monitor import ScoringMonitorLog
@@ -13,22 +16,30 @@ from sklearn.callback.tests._utils import (
     WhileEstimator,
 )
 from sklearn.datasets import make_regression
-from sklearn.metrics import check_scoring, make_scorer
+from sklearn.metrics import check_scoring, get_scorer, make_scorer
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils.parallel import Parallel, delayed
+
+
+def _get_score_names(scoring, scorer):
+    if isinstance(scoring, str):
+        return [scoring]
+    elif callable(scoring):
+        return ["score"]
+    else:  # multi-scorer
+        return list(scorer._scorers.keys())
 
 
 def _make_expected_output_MaxIterEstimator(
     max_iter, scoring, as_pandas, X, y, root_task_id=0
 ):
     """Generate the expected output of a ScoringMonitor on a MaxIterEstimator."""
-    scorer = check_scoring(None, scoring)
-    if isinstance(scoring, str):
-        score_names = [scoring]
-    elif callable(scoring):
-        score_names = ["score"]
-    else:  # multi-scorer
-        score_names = list(scorer._scorers.keys())
+    scorer = (
+        check_scoring(None, scoring)
+        if scoring not in ("no_train_score", "no_val_score")
+        else None
+    )
+    score_names = _get_score_names(scoring, scorer)
 
     est_name = MaxIterEstimator.__name__
 
@@ -44,10 +55,11 @@ def _make_expected_output_MaxIterEstimator(
         "task_id": root_task_id,
         "sequential_subtasks": True,
     }
-    scores = scorer(fitted_est, X, y)
-    if not isinstance(scores, dict):
-        scores = {score_names[0]: scores}
-    expected_log.append({**log_item, **scores})
+    if scorer is not None:
+        scores = scorer(fitted_est, X, y)
+        if not isinstance(scores, dict):
+            scores = {score_names[0]: scores}
+        expected_log.append({**log_item, **scores})
 
     # fit loop iterations
     for i in range(max_iter):
@@ -60,10 +72,11 @@ def _make_expected_output_MaxIterEstimator(
             "task_id": i,
             "sequential_subtasks": True,
         }
-        scores = scorer(fitted_est, X, y)
-        if not isinstance(scores, dict):
-            scores = {score_names[0]: scores}
-        expected_log.append({**log_item, **scores})
+        if scorer is not None:
+            scores = scorer(fitted_est, X, y)
+            if not isinstance(scores, dict):
+                scores = {score_names[0]: scores}
+            expected_log.append({**log_item, **scores})
 
     if as_pandas:
         pd = pytest.importorskip("pandas")
@@ -73,7 +86,14 @@ def _make_expected_output_MaxIterEstimator(
 
 
 def _make_expected_output_MetaEstimator(
-    n_outer, n_inner, max_iter, scoring, as_pandas, include_lineage, X, y
+    n_outer,
+    n_inner,
+    max_iter,
+    scoring,
+    as_pandas,
+    include_lineage,
+    X,
+    y,
 ):
     """Generate the expected output of a ScoringMonitor on a MetaEstimator.
 
@@ -85,7 +105,12 @@ def _make_expected_output_MetaEstimator(
     for i in range(n_outer):
         for j in range(n_inner):
             estimator_log = _make_expected_output_MaxIterEstimator(
-                max_iter, scoring, False, X, y, root_task_id=j
+                max_iter,
+                scoring,
+                False,
+                X,
+                y,
+                root_task_id=j,
             )
             for row in estimator_log:
                 row["task_id_path"] = (0, i) + row["task_id_path"]
@@ -140,13 +165,15 @@ def test_score_after_fit():
     X, y = make_regression(n_samples=100, n_features=2, random_state=0)
 
     max_iter = 10
-    callback = ScoringMonitor(scoring="r2")
+    callback = ScoringMonitor(scoring_train="r2")
     estimator = MaxIterEstimator(max_iter=max_iter).set_callbacks(callback)
     estimator.fit(X=X, y=y)
 
     log = callback.get_logs()
     # select the rows corresponding to the iteration tasks
-    iter_log = [row for row in log.data if row["task_name"].startswith("iteration")]
+    iter_log = [
+        row for row in log.train_scores if row["task_name"].startswith("iteration")
+    ]
 
     scorer = check_scoring(None, "r2")
     for i in range(max_iter):
@@ -156,48 +183,81 @@ def test_score_after_fit():
 
 
 @pytest.mark.parametrize(
-    "scoring",
-    ["neg_mean_squared_error", ("neg_mean_squared_error", "r2"), custom_score],
+    "scoring_train",
+    [
+        "neg_mean_squared_error",
+        ("neg_mean_squared_error", "r2"),
+        custom_score,
+        "no_train_score",
+    ],
+)
+@pytest.mark.parametrize(
+    "scoring_val",
+    ["neg_mean_squared_error", "no_val_score"],
 )
 @pytest.mark.parametrize("as_pandas", [True, False])
-def test_logged_values(scoring, as_pandas):
+def test_logged_values(scoring_train, scoring_val, as_pandas):
     """Test that the correct values are logged with a simple estimator."""
     if as_pandas:
         pytest.importorskip("pandas")
 
+    if scoring_train == "no_train_score" and scoring_val == "no_val_score":
+        pytest.skip("At least one scorer must be set.")
+
+    if scoring_val != "no_val_score":
+        set_config(enable_metadata_routing=True)
+        X_val, y_val = make_regression(n_samples=10, n_features=2, random_state=1)
+    else:
+        X_val, y_val = None, None
+
     max_iter = 3
-    callback = ScoringMonitor(scoring=scoring)
+    callback = ScoringMonitor(scoring_train=scoring_train, scoring_val=scoring_val)
     estimator = MaxIterEstimator(max_iter=max_iter).set_callbacks(callback)
     X, y = make_regression(n_samples=100, n_features=2, random_state=0)
 
-    estimator.fit(X=X, y=y)
+    if scoring_val != "no_val_score":
+        estimator.fit(X=X, y=y, X_val=X_val, y_val=y_val)
+    else:
+        estimator.fit(X=X, y=y)
 
-    attr = "data" if not as_pandas else "data_as_pandas"
-    log = getattr(callback.get_logs(), attr)
-    expected_log = _make_expected_output_MaxIterEstimator(
-        max_iter, scoring, as_pandas, X, y
+    log = callback.get_logs()
+    log_train = getattr(
+        log, "train_scores" if not as_pandas else "train_scores_as_pandas"
+    )
+    expected_log_train = _make_expected_output_MaxIterEstimator(
+        max_iter, scoring_train, as_pandas, X, y
+    )
+
+    log_val = getattr(log, "val_scores" if not as_pandas else "val_scores_as_pandas")
+    expected_log_val = _make_expected_output_MaxIterEstimator(
+        max_iter, scoring_val, as_pandas, X_val, y_val
     )
 
     if as_pandas:
-        assert log.equals(expected_log)
+        assert log_train.equals(expected_log_train)
+        assert log_val.equals(expected_log_val)
     else:
-        assert log == expected_log
+        assert log_train == expected_log_train
+        assert log_val == expected_log_val
+    set_config(enable_metadata_routing=False)
 
 
 @pytest.mark.parametrize("prefer", ["processes", "threads"])
 @pytest.mark.parametrize(
-    "scoring",
+    "scoring_train",
     ["neg_mean_squared_error", ("neg_mean_squared_error", "r2"), custom_score],
 )
 @pytest.mark.parametrize("as_pandas", [True, False])
 @pytest.mark.parametrize("include_lineage", [True, False])
-def test_logged_values_meta_estimator(prefer, scoring, as_pandas, include_lineage):
+def test_logged_values_meta_estimator_train(
+    prefer, scoring_train, as_pandas, include_lineage
+):
     """Test that the correct values are logged with a meta-estimator."""
     if as_pandas:
         pytest.importorskip("pandas")
 
     n_outer, n_inner, max_iter = 3, 2, 5
-    callback = ScoringMonitor(scoring=scoring)
+    callback = ScoringMonitor(scoring_train=scoring_train)
     est = MaxIterEstimator(max_iter=max_iter).set_callbacks(callback)
     meta_est = MetaEstimator(
         est, n_outer=n_outer, n_inner=n_inner, n_jobs=2, prefer=prefer
@@ -206,23 +266,31 @@ def test_logged_values_meta_estimator(prefer, scoring, as_pandas, include_lineag
 
     meta_est.fit(X=X, y=y)
 
-    attr = "data" if not as_pandas else "data_as_pandas"
+    attr = "train_scores" if not as_pandas else "train_scores_as_pandas"
     log = callback.get_logs(include_lineage=include_lineage)
-    log = getattr(log, attr)
-    expected_log = _make_expected_output_MetaEstimator(
-        n_outer, n_inner, max_iter, scoring, as_pandas, include_lineage, X, y
+    log_train = getattr(log, attr)
+    expected_log_train = _make_expected_output_MetaEstimator(
+        n_outer,
+        n_inner,
+        max_iter,
+        scoring_train,
+        as_pandas,
+        include_lineage,
+        X,
+        y,
     )
 
     if as_pandas:
-        assert log.equals(expected_log)
+        assert log_train.equals(expected_log_train)
     else:
-        assert log == expected_log
+        assert log_train == expected_log_train
+    assert not log.val_scores
 
 
 @pytest.mark.parametrize("select", ["all", "most_recent"])
 def test_get_logs_output_type_no_fit(select):
     """Check that get_logs raises an error before fit."""
-    callback = ScoringMonitor(scoring="neg_mean_squared_error")
+    callback = ScoringMonitor(scoring_train="neg_mean_squared_error")
 
     with pytest.raises(ValueError, match="No logs to retrieve"):
         callback.get_logs(select=select)
@@ -234,7 +302,7 @@ def test_get_logs_output_type(as_pandas):
     if as_pandas:
         pd = pytest.importorskip("pandas")
 
-    callback = ScoringMonitor(scoring="neg_mean_squared_error")
+    callback = ScoringMonitor(scoring_train="neg_mean_squared_error")
     estimator = MaxIterEstimator().set_callbacks(callback)
     X, y = make_regression(n_samples=100, n_features=2, random_state=0)
 
@@ -248,7 +316,7 @@ def test_get_logs_output_type(as_pandas):
     assert all(isinstance(log, ScoringMonitorLog) for log in logs_all)
 
     expected_data_type = pd.DataFrame if as_pandas else list
-    attr = "data" if not as_pandas else "data_as_pandas"
+    attr = "train_scores" if not as_pandas else "train_scores_as_pandas"
     assert all(isinstance(getattr(log, attr), expected_data_type) for log in logs_all)
 
     log_most_recent = callback.get_logs(select="most_recent")
@@ -259,32 +327,109 @@ def test_get_logs_output_type(as_pandas):
 @pytest.mark.parametrize("select", ["all", "most_recent"])
 def test_estimator_without_reconstruction_attributes(select):
     """Smoke test on an estimator which does not provide reconstruction_attributes."""
-    callback = ScoringMonitor(scoring="r2")
+    callback = ScoringMonitor(scoring_train="r2")
     WhileEstimator().set_callbacks(callback).fit()
 
     with pytest.raises(ValueError, match="No logs to retrieve"):
         callback.get_logs(select=select)
 
 
-def test_scoringmonitor_sample_weights():
+def test_scoring_monitor_no_metadata_routing_estimator():
+    """Smoke test for estimators that don't implement metadata routing."""
+    X, y = make_regression(n_samples=10, n_features=2, random_state=0)
+    cb = ScoringMonitor(scoring_train="r2")
+    est = WhileEstimator().set_callbacks(cb)
+    est.fit(X, y)
+    expected_log_length = 22  # WhileEstimator does 21 iterations + fit task
+    assert len(cb.get_logs().train_scores) == expected_log_length
+
+
+@config_context(enable_metadata_routing=True)
+def test_scoringmonitor_metadata_routing():
+    """Test the routing of metadata to the scorer."""
+    score_func = lambda y_true, y_pred, req_arg: req_arg
+    scorer_train = make_scorer(score_func).set_score_request(req_arg=True)
+    scorer_val = make_scorer(score_func).set_score_request(req_arg="req_arg_val")
+    cb = ScoringMonitor(scoring_train=scorer_train, scoring_val=scorer_val)
+    X, y = make_regression(n_samples=10, n_features=2, random_state=0)
+    MaxIterEstimator(max_iter=2).set_callbacks(cb).fit(
+        X, y, X_val=X, y_val=y, req_arg="train_value", req_arg_val="val_value"
+    )
+    logs = cb.get_logs()
+    assert logs.train_scores
+    assert all([ll["score"] == "train_value" for ll in logs.train_scores])
+    assert logs.val_scores
+    assert all([ll["score"] == "val_value" for ll in logs.val_scores])
+
+
+@config_context(enable_metadata_routing=True)
+def test_scoringmonitor_metadata_routing_meta_estimator():
+    """Test the routing of metadata to the scorer in a meta-estimator."""
+    score_func = lambda y_true, y_pred, req_arg: req_arg
+    scorer_train = make_scorer(score_func).set_score_request(req_arg=True)
+    scorer_val = make_scorer(score_func).set_score_request(req_arg="req_arg_val")
+    cb = ScoringMonitor(scoring_train=scorer_train, scoring_val=scorer_val)
+    X, y = make_regression(n_samples=10, n_features=2, random_state=0)
+    est = MaxIterEstimator().set_callbacks(cb)
+    MetaEstimator(estimator=est).fit(
+        X, y, X_val=X, y_val=y, req_arg="train_value", req_arg_val="val_value"
+    )
+    logs = cb.get_logs()
+    assert logs.train_scores
+    assert all([ll["score"] == "train_value" for ll in logs.train_scores])
+    assert logs.val_scores
+    assert all([ll["score"] == "val_value" for ll in logs.val_scores])
+
+
+@pytest.mark.parametrize("enable_metadata_routing", [True, False])
+def test_scoringmonitor_sample_weights(enable_metadata_routing):
     """Check that the ScoringMonitor works with sample weights."""
     rng = np.random.RandomState(0)
     X, y = make_regression(n_samples=100, n_features=2, random_state=rng)
     sample_weight = rng.randint(0, 5, size=X.shape[0])
+    scorer_train = get_scorer("r2")
+    scorer_val = "no_val_score"
+
+    if enable_metadata_routing:
+        set_config(enable_metadata_routing=True)
+        X_val, y_val = make_regression(n_samples=10, n_features=2, random_state=rng)
+        scorer_val = get_scorer("r2")
 
     # no sample weights
-    callback = ScoringMonitor(scoring="r2")
-    MaxIterEstimator().set_callbacks(callback).fit(X=X, y=y)
-    log_no_sw = callback.get_logs().data
+    callback = ScoringMonitor(scoring_train=scorer_train, scoring_val=scorer_val)
+    if enable_metadata_routing:
+        MaxIterEstimator().set_callbacks(callback).fit(
+            X=X, y=y, X_val=X_val, y_val=y_val
+        )
+    else:
+        MaxIterEstimator().set_callbacks(callback).fit(X=X, y=y)
+    log_no_sw = callback.get_logs()
 
     # sample weights
-    callback = ScoringMonitor(scoring="r2")
-    MaxIterEstimator().set_callbacks(callback).fit(
-        X=X, y=y, sample_weight=sample_weight
-    )
-    log_sw = callback.get_logs().data
+    if enable_metadata_routing:
+        scorer_train.set_score_request(sample_weight=True)
+        scorer_val.set_score_request(sample_weight="sample_weight_val")
+    callback = ScoringMonitor(scoring_train=scorer_train, scoring_val=scorer_val)
+    if enable_metadata_routing:
+        MaxIterEstimator().set_callbacks(callback).fit(
+            X=X,
+            y=y,
+            X_val=X_val,
+            y_val=y_val,
+            sample_weight=sample_weight,
+            sample_weight_val=sample_weight[:10],
+        )
+    else:
+        MaxIterEstimator().set_callbacks(callback).fit(
+            X=X, y=y, sample_weight=sample_weight
+        )
+    log_sw = callback.get_logs()
 
-    assert log_no_sw != log_sw
+    assert log_no_sw.train_scores != log_sw.train_scores
+    if enable_metadata_routing:
+        assert log_no_sw.val_scores != log_sw.val_scores
+
+    set_config(enable_metadata_routing=False)
 
 
 def _get_ancestors_info_path(log, parent_task_id_path):
@@ -328,14 +473,14 @@ def test_get_logs_include_lineage_ancestor_retrieval(as_pandas):
         pytest.importorskip("pandas")
 
     n_outer, n_inner, max_iter = 2, 3, 5
-    callback = ScoringMonitor(scoring="r2")
+    callback = ScoringMonitor(scoring_train="r2")
     est = MaxIterEstimator(max_iter=max_iter).set_callbacks(callback)
     meta_est = MetaEstimator(est, n_outer=n_outer, n_inner=n_inner)
     X, y = make_regression(n_samples=100, n_features=2, random_state=0)
 
     meta_est.fit(X=X, y=y)
 
-    attr = "data" if not as_pandas else "data_as_pandas"
+    attr = "train_scores" if not as_pandas else "train_scores_as_pandas"
     log = callback.get_logs(include_lineage=True)
     log = getattr(log, attr)
 
@@ -389,7 +534,7 @@ def test_scoring_monitor_no_callback_support(backend):
     max_iter = 3
     n_fits = 4
 
-    callback = ScoringMonitor(scoring="r2")
+    callback = ScoringMonitor(scoring_train="r2")
     X, y = make_regression(n_samples=100, n_features=2, random_state=0)
     func(
         MaxIterEstimator(max_iter=max_iter).set_callbacks(callback), X, y, n_fits=n_fits
@@ -397,12 +542,16 @@ def test_scoring_monitor_no_callback_support(backend):
     log_all = callback.get_logs(select="all")
 
     expected_log = _make_expected_output_MaxIterEstimator(
-        max_iter, scoring="r2", as_pandas=False, X=X, y=y
+        max_iter,
+        scoring="r2",
+        as_pandas=False,
+        X=X,
+        y=y,
     )
 
     assert len(log_all) == n_fits
     for log in log_all:
-        assert log.data == expected_log
+        assert log.train_scores == expected_log
         assert log.estimator_name == "MaxIterEstimator"
 
 
@@ -410,7 +559,7 @@ def test_scoring_monitor_listener_closed_on_gc():
     """Check that listener is closed when callback is garbage collected."""
     from sklearn.callback._transport import _listeners, _message_consumers
 
-    callback = ScoringMonitor(scoring="r2")
+    callback = ScoringMonitor(scoring_train="r2")
     listener_address = callback._listener_handle.address
     assert listener_address in _listeners
     assert listener_address in _message_consumers
@@ -418,3 +567,32 @@ def test_scoring_monitor_listener_closed_on_gc():
     del callback
     assert listener_address not in _listeners
     assert listener_address not in _message_consumers
+
+
+def test_no_scorer_error():
+    """Test the error when not setting a scorer."""
+    with pytest.raises(
+        ValueError,
+        match="`scoring_train='no_train_score'` and `scoring_val='no_val_score'`",
+    ):
+        ScoringMonitor()
+
+
+def test_scoring_val_no_metadata_routing_error():
+    """Test the error when using a validation scorer with metadata routing disabled."""
+    with pytest.raises(
+        ValueError,
+        match="scorer on validation data .* supported when metadata routing is enabled",
+    ):
+        ScoringMonitor(scoring_val="r2")
+
+
+def test_repr_scoringmonitorlog():
+    """Test the repr of the ScoringMonitorLog."""
+    cb = ScoringMonitor(scoring_train="r2")
+    X, y = make_regression(n_samples=10, n_features=2)
+    MaxIterEstimator().set_callbacks(cb).fit(X, y)
+    pattern = (
+        r"ScoringMonitorLog\(run_id=.*, estimator_name=MaxIterEstimator, timestamp=.*\)"
+    )
+    assert re.match(pattern, repr(cb.get_logs()))

@@ -37,6 +37,7 @@ from sklearn.utils._param_validation import (
 )
 from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.extmath import _incremental_mean_and_var, row_norms
+from sklearn.utils.metadata_routing import process_routing
 from sklearn.utils.sparsefuncs import (
     incr_mean_variance_axis,
     inplace_column_scale,
@@ -928,7 +929,7 @@ class StandardScaler(
         return self.partial_fit(X, y, sample_weight)
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def partial_fit(self, X, y=None, sample_weight=None):
+    def partial_fit(self, X, y=None, sample_weight=None, **params):
         """Online computation of mean and std on X for later scaling.
 
         All of X is processed as a single batch. This is intended for cases
@@ -955,6 +956,9 @@ class StandardScaler(
             .. versionadded:: 0.24
                parameter *sample_weight* support to StandardScaler.
 
+        **params : dict
+            Routed params.
+
         Returns
         -------
         self : object
@@ -973,8 +977,12 @@ class StandardScaler(
         n_features = X.shape[1]
 
         callback_ctx = self._init_callback_context()
+        routed_params = process_routing(self, "fit", **params)
         callback_ctx.call_on_fit_task_begin(
-            estimator=self, X=X, y=y, metadata={"sample_weight": sample_weight}
+            estimator=self,
+            X=X,
+            y=y,
+            metadata=routed_params,
         )
 
         if sample_weight is not None:
@@ -1083,8 +1091,8 @@ class StandardScaler(
             estimator=self,
             X=X,
             y=y,
-            metadata={"sample_weight": sample_weight},
             reconstruction_attributes={},
+            metadata=routed_params,
         )
 
         return self

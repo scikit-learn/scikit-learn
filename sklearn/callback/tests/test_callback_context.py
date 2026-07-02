@@ -6,6 +6,7 @@ from functools import partial
 import numpy as np
 import pytest
 
+from sklearn import config_context
 from sklearn.callback import CallbackSupportMixin, with_callbacks
 from sklearn.callback._callback_context import (
     CallbackContext,
@@ -18,7 +19,6 @@ from sklearn.callback.tests._utils import (
     NoCallbackEstimator,
     NoSubtaskEstimator,
     NotRequiredKwargsCallback,
-    NotValidHookCallback,
     ParentFitEstimator,
     RecordingAutoPropagatedCallback,
     RecordingCallback,
@@ -358,17 +358,6 @@ def test_autopropagation_to_callback_agnostic_subestimator():
     assert callback.count_hooks("teardown") == 1
 
 
-# TODO(callbacks): should be a common test in a dev test suite instead of a check
-# in the hook calls to avoid repeating the same check for each call of the same hook.
-def test_hook_calling_invalid_kwargs_out():
-    """Check that a callback with invalid kwargs in its signatures raises an error."""
-    estimator = MaxIterEstimator()
-    context = estimator.set_callbacks(NotValidHookCallback())._init_callback_context()
-    msg = r"on_fit_task_begin .* has parameters that are not valid"
-    with pytest.raises(TypeError, match=msg):
-        context.call_on_fit_task_begin(estimator=estimator, X=1, y=2)
-
-
 def test_hook_calling_return_value():
     """Check the return value of the hook calls."""
     estimator = MaxIterEstimator()
@@ -391,7 +380,7 @@ def test_hook_calling_lazy_evaluation():
     kwargs are not evaluated if no callback uses them.
     They are evaluated only once and passed to all callbacks that use them.
     """
-    eval_counts = {"X": 0, "metadata": 0}
+    eval_counts = {"X": 0, "reconstruction_attributes": 0}
 
     def eval_kwarg(key):
         eval_counts[key] += 1
@@ -404,10 +393,10 @@ def test_hook_calling_lazy_evaluation():
     context.call_on_fit_task_end(
         estimator=estimator,
         X=partial(eval_kwarg, "X"),
-        metadata=partial(eval_kwarg, "metadata"),
+        reconstruction_attributes=partial(eval_kwarg, "reconstruction_attributes"),
     )
     assert eval_counts["X"] == 1
-    assert eval_counts["metadata"] == 0
+    assert eval_counts["reconstruction_attributes"] == 0
 
     # kwarg used twice is evaluated only once
     eval_counts = {"X": 0}
@@ -519,3 +508,73 @@ def test_callback_context_repr():
         "task_id=42)"
     )
     assert repr(context) == expected_repr
+
+
+@config_context(enable_metadata_routing=True)
+def test_metadata_routing_callback_consumer():
+    """Test the metadata routing to consumer callbacks."""
+
+    cb = (
+        RecordingCallback()
+        .set_on_fit_task_begin_request(requested_arg_begin="foo")
+        .set_on_fit_task_end_request(requested_arg_end=True)
+    )
+    cb2 = (
+        RecordingCallback()
+        .set_on_fit_task_begin_request(requested_arg_begin="bar")
+        .set_on_fit_task_end_request(requested_arg_end="foobar")
+    )
+
+    MaxIterEstimator().set_callbacks(cb, cb2).fit(
+        foo="val_1", requested_arg_end="val_2", bar="bar", foobar="foobar"
+    )
+
+    for record, val_begin, val_end in [
+        (cb.record, "val_1", "val_2"),
+        (cb2.record, "bar", "foobar"),
+    ]:
+        task_begin_metadatas = [
+            rec["kwargs"]["requested_arg_begin"]
+            for rec in record
+            if rec["name"] == "on_fit_task_begin"
+        ]
+        task_end_metadatas = [
+            rec["kwargs"]["requested_arg_end"]
+            for rec in record
+            if rec["name"] == "on_fit_task_end"
+        ]
+        assert task_begin_metadatas
+        assert task_end_metadatas
+        assert all([m == val_begin for m in task_begin_metadatas])
+        assert all([m == val_end for m in task_end_metadatas])
+
+
+@config_context(enable_metadata_routing=True)
+@pytest.mark.parametrize("n_jobs", [1, 2])
+def test_metadata_routing_callback_consumer_in_metaestimator(n_jobs):
+    """Test a callback that requests metadata in a meta-estimator."""
+
+    cb = (
+        RecordingCallback()
+        .set_on_fit_task_begin_request(requested_arg_begin="foo")
+        .set_on_fit_task_end_request(requested_arg_end=True)
+    )
+
+    estimator = MaxIterEstimator().set_callbacks(cb)
+    MetaEstimator(estimator=estimator, n_jobs=n_jobs).fit(
+        foo="val_1", requested_arg_end="val_2"
+    )
+    task_begin_metadatas = [
+        rec["kwargs"]["requested_arg_begin"]
+        for rec in cb.record
+        if rec["name"] == "on_fit_task_begin"
+    ]
+    task_end_metadatas = [
+        rec["kwargs"]["requested_arg_end"]
+        for rec in cb.record
+        if rec["name"] == "on_fit_task_end"
+    ]
+    assert task_begin_metadatas
+    assert task_end_metadatas
+    assert all([m == "val_1" for m in task_begin_metadatas])
+    assert all([m == "val_2" for m in task_end_metadatas])
