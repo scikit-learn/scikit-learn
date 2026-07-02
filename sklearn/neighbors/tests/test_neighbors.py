@@ -2529,3 +2529,29 @@ def test_neighbors_classifier_with_string_labels(metric, Estimator):
 
     assert y_pred.shape == (5,)
     assert all(label in y for label in y_pred)
+
+
+def test_radius_neighbors_array_radius_parallel():
+    # Test that radius_neighbors accepts an array of radii with n_jobs > 1
+    import numpy as np
+
+    from sklearn.neighbors import NearestNeighbors
+
+    X = np.array([[0, 0], [1, 1], [2, 2], [3, 3]])
+    radii = np.array([1.5, 1.5, 1.5, 1.5])
+
+    for algo in ["kd_tree", "ball_tree"]:
+        # n_jobs=1 (was working)
+        nn_single = NearestNeighbors(radius=1.0, algorithm=algo, n_jobs=1)
+        nn_single.fit(X)
+        res_single = nn_single.radius_neighbors(X, radius=radii, return_distance=False)
+
+        # n_jobs=2 (was breaking with ValueError)
+        nn_parallel = NearestNeighbors(radius=1.0, algorithm=algo, n_jobs=2)
+        nn_parallel.fit(X)
+        res_parallel = nn_parallel.radius_neighbors(
+            X, radius=radii, return_distance=False
+        )
+
+        for r1, r2 in zip(res_single, res_parallel):
+            np.testing.assert_array_equal(r1, r2)
