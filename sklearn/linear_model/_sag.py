@@ -13,6 +13,8 @@ from sklearn.linear_model._sag_fast import sag32, sag64
 from sklearn.utils import check_array
 from sklearn.utils.extmath import row_norms
 from sklearn.utils.validation import _check_sample_weight
+from sklearn.utils._warnings import sklearn_warn
+from sklearn.exceptions import ConvergenceWarning
 
 
 def get_auto_step_size(
@@ -345,7 +347,7 @@ def sag_solver(
     )
 
     if n_iter_ == max_iter:
-        warnings.warn(
+        sklearn_warn(
             "The max_iter was reached which means the coef_ did not converge",
             ConvergenceWarning,
         )
