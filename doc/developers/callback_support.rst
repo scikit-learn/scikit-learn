@@ -240,6 +240,6 @@ Here is a typical implementation of callback support in a custom estimator:
             return self
 
 
-.. TODO: add link to example
-.. For a more detailed example of how to make a custom estimator or meta-estimator
-.. compatible with scikit-learn's callback API, you can refer to this example :
+For a more detailed example of how to make a custom estimator or meta-estimator
+compatible with scikit-learn's callback API, you can refer to this example :
+:ref:`sphx_glr_auto_examples_callbacks_plot_callback_support.py`.
