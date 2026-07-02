@@ -45,6 +45,36 @@ def _nw_into_df_or_series(x):
     return nw.dependencies.is_into_dataframe(x) or nw.dependencies.is_into_series(x)
 
 
+def _check_n_samples_and_features(
+    array, *, ensure_min_samples, ensure_min_features, context
+):
+    """Enforce the ``ensure_min_samples``/``ensure_min_features`` invariants.
+
+    Shared by :func:`check_array` and by :func:`validate_data` in its
+    ``skip_check_array="if-dataframe"`` mode, where a dataframe ``X`` is kept
+    as-is and therefore not run through :func:`check_array`. ``array`` may be a
+    NumPy array, a sparse matrix or a dataframe (anything exposing ``shape``).
+    ``context`` is the trailing error-message fragment (e.g. ``" by RFE"``).
+    """
+    if ensure_min_samples > 0:
+        n_samples = _num_samples(array)
+        if n_samples < ensure_min_samples:
+            raise ValueError(
+                "Found array with %d sample(s) (shape=%s) while a"
+                " minimum of %d is required%s."
+                % (n_samples, array.shape, ensure_min_samples, context)
+            )
+
+    if ensure_min_features > 0 and len(array.shape) == 2:
+        n_features = array.shape[1]
+        if n_features < ensure_min_features:
+            raise ValueError(
+                "Found array with %d feature(s) (shape=%s) while"
+                " a minimum of %d is required%s."
+                % (n_features, array.shape, ensure_min_features, context)
+            )
+
+
 # This function is not used anymore at this moment in the code base but we keep it in
 # case that we merge a new public function without kwarg only by mistake, which would
 # require a deprecation cycle to fix.
@@ -1107,23 +1137,12 @@ def check_array(
                     array, dtype=dtype, order=order, copy=True, xp=xp
                 )
 
-    if ensure_min_samples > 0:
-        n_samples = _num_samples(array)
-        if n_samples < ensure_min_samples:
-            raise ValueError(
-                "Found array with %d sample(s) (shape=%s) while a"
-                " minimum of %d is required%s."
-                % (n_samples, array.shape, ensure_min_samples, context)
-            )
-
-    if ensure_min_features > 0 and array.ndim == 2:
-        n_features = array.shape[1]
-        if n_features < ensure_min_features:
-            raise ValueError(
-                "Found array with %d feature(s) (shape=%s) while"
-                " a minimum of %d is required%s."
-                % (n_features, array.shape, ensure_min_features, context)
-            )
+    _check_n_samples_and_features(
+        array,
+        ensure_min_samples=ensure_min_samples,
+        ensure_min_features=ensure_min_features,
+        context=context,
+    )
 
     if ensure_non_negative:
         whom = input_name
@@ -2994,10 +3013,19 @@ def validate_data(
         `estimator=self` is automatically added to these dicts to generate
         more informative error message in case of invalid input data.
 
-    skip_check_array : bool, default=False
+    skip_check_array : bool or "if-dataframe", default=False
         If `True`, `X` and `y` are unchanged and only `feature_names_in_` and
-        `n_features_in_` are checked. Otherwise, :func:`~sklearn.utils.check_array`
-        is called on `X` and `y`.
+        `n_features_in_` are checked. If `"if-dataframe"`, `X` is left unchanged
+        when it is a dataframe -- so its column dtypes are preserved for a
+        downstream estimator -- but :func:`~sklearn.utils.check_array` is still
+        called when `X` is any other array-like (e.g. a list or a NumPy array);
+        the `ensure_min_samples`/`ensure_min_features` invariants are enforced on
+        the dataframe and `y`, when provided, is always validated and its length
+        checked against `X`. Otherwise, :func:`~sklearn.utils.check_array` is
+        called on `X` and `y`.
+
+        .. versionchanged:: 1.10
+            Added the `"if-dataframe"` option.
 
     **check_params : kwargs
         Parameters passed to :func:`~sklearn.utils.check_array` or
@@ -3027,15 +3055,48 @@ def validate_data(
     if no_val_X and no_val_y:
         raise ValueError("Validation should be done on X, y or both.")
 
+    if skip_check_array not in (True, False, "if-dataframe"):
+        raise ValueError(
+            "skip_check_array must be a bool or 'if-dataframe', got "
+            f"{skip_check_array!r}."
+        )
+
     default_check_params = {"estimator": _estimator}
     check_params = {**default_check_params, **check_params}
 
-    if skip_check_array:
+    # In "if-dataframe" mode, keep X untouched when it is a dataframe (preserving
+    # its column dtypes for a downstream estimator) but validate any other
+    # array-like as usual. y, when provided, is always validated.
+    preserve_X = (
+        skip_check_array == "if-dataframe"
+        and not no_val_X
+        and nw.dependencies.is_into_dataframe(X)
+    )
+
+    if skip_check_array is True:
         if not no_val_X and no_val_y:
             out = X
         elif no_val_X and not no_val_y:
             out = y
         else:
+            out = X, y
+    elif preserve_X:
+        _check_n_samples_and_features(
+            X,
+            ensure_min_samples=check_params.get("ensure_min_samples", 1),
+            ensure_min_features=check_params.get("ensure_min_features", 1),
+            context=" by %s" % _check_estimator_name(_estimator),
+        )
+        if no_val_y:
+            out = X
+        else:
+            y = _check_y(
+                y,
+                multi_output=check_params.get("multi_output", False),
+                y_numeric=check_params.get("y_numeric", False),
+                estimator=_estimator,
+            )
+            check_consistent_length(X, y)
             out = X, y
     elif not no_val_X and no_val_y:
         out = check_array(X, input_name="X", **check_params)
