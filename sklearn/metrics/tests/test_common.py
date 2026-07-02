@@ -302,6 +302,11 @@ ALL_METRICS.update(CLASSIFICATION_METRICS)
 ALL_METRICS.update(REGRESSION_METRICS)
 ALL_METRICS.update(CURVE_METRICS)
 
+CLASSIFICATION_METRICS_REPORT = {
+    **CLASSIFICATION_METRICS,
+    "classification_report": classification_report,
+}
+
 # Lists of metrics with common properties
 # ---------------------------------------
 # Lists of metrics with common properties are used to test systematically some
@@ -873,72 +878,72 @@ def test_format_invariance_with_1d_vectors(name):
         assert_allclose(
             metric(y1_list, y2_list),
             measure,
-            err_msg="%s is not representation invariant with list" % name,
+            err_msg=f"{name} is not representation invariant with list",
         )
 
         assert_allclose(
             metric(y1_1d, y2_1d),
             measure,
-            err_msg="%s is not representation invariant with np-array-1d" % name,
+            err_msg=f"{name} is not representation invariant with np-array-1d",
         )
 
         assert_allclose(
             metric(y1_column, y2_column),
             measure,
-            err_msg="%s is not representation invariant with np-array-column" % name,
+            err_msg=f"{name} is not representation invariant with np-array-column",
         )
 
         # Mix format support
         assert_allclose(
             metric(y1_1d, y2_list),
             measure,
-            err_msg="%s is not representation invariant with mix np-array-1d and list"
-            % name,
+            err_msg=(
+                f"{name} is not representation invariant with mix np-array-1d and list"
+            ),
         )
 
         assert_allclose(
             metric(y1_list, y2_1d),
             measure,
-            err_msg="%s is not representation invariant with mix np-array-1d and list"
-            % name,
+            err_msg=(
+                f"{name} is not representation invariant with mix np-array-1d and list"
+            ),
         )
 
         assert_allclose(
             metric(y1_1d, y2_column),
             measure,
             err_msg=(
-                "%s is not representation invariant with mix "
+                f"{name} is not representation invariant with mix "
                 "np-array-1d and np-array-column"
-            )
-            % name,
+            ),
         )
 
         assert_allclose(
             metric(y1_column, y2_1d),
             measure,
             err_msg=(
-                "%s is not representation invariant with mix "
+                f"{name} is not representation invariant with mix "
                 "np-array-1d and np-array-column"
-            )
-            % name,
+            ),
         )
 
         assert_allclose(
             metric(y1_list, y2_column),
             measure,
             err_msg=(
-                "%s is not representation invariant with mix list and np-array-column"
-            )
-            % name,
+                f"{name} is not representation invariant with mix list and "
+                "np-array-column"
+            ),
         )
 
         assert_allclose(
             metric(y1_column, y2_list),
             measure,
             err_msg=(
-                "%s is not representation invariant with mix list and np-array-column"
-            )
-            % name,
+                f"{name} is not representation invariant with mix list and "
+                "np-array-column"
+            ),
         )
 
         # These mix representations aren't allowed
@@ -970,10 +975,167 @@ def test_format_invariance_with_1d_vectors(name):
                     metric(y1_row, y2_row)
 
 
-CLASSIFICATION_METRICS_REPORT = {
-    **CLASSIFICATION_METRICS,
-    "classification_report": classification_report,
-}
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.UndefinedMetricWarning")
+@pytest.mark.parametrize("name", sorted(MULTILABELS_METRICS))
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+def test_multilabel_representation_invariance(name, coo_container):
+    # Check representation invariance for non-continuous multiclass metrics.
+    n_classes = 4
+    n_samples = 50
+
+    _, y1 = make_multilabel_classification(
+        n_features=1,
+        n_classes=n_classes,
+        random_state=0,
+        n_samples=n_samples,
+        allow_unlabeled=True,
+    )
+    _, y2 = make_multilabel_classification(
+        n_features=1,
+        n_classes=n_classes,
+        random_state=1,
+        n_samples=n_samples,
+        allow_unlabeled=True,
+    )
+
+    # To make sure at least one empty label is present
+    y1 = np.vstack([y1, [[0] * n_classes]])
+    y2 = np.vstack([y2, [[0] * n_classes]])
+
+    y1_sparse_indicator = coo_container(y1)
+    y2_sparse_indicator = coo_container(y2)
+
+    y1_list_array_indicator = list(y1)
+    y2_list_array_indicator = list(y2)
+
+    y1_list_list_indicator = [list(a) for a in y1_list_array_indicator]
+    y2_list_list_indicator = [list(a) for a in y2_list_array_indicator]
+
+    metric = ALL_METRICS[name]
+    measure = metric(y1, y2)
+
+    # Check representation invariance
+    assert_allclose(
+        metric(y1_sparse_indicator, y2_sparse_indicator),
+        measure,
+        err_msg=(
+            "%s failed representation invariance between "
+            "dense and sparse indicator formats."
+        )
+        % name,
+    )
+    assert_almost_equal(
+        metric(y1_list_list_indicator, y2_list_list_indicator),
+        measure,
+        err_msg=(
+            "%s failed representation invariance  "
+            "between dense array and list of list "
+            "indicator formats."
+        )
+        % name,
+    )
+    assert_almost_equal(
+        metric(y1_list_array_indicator, y2_list_array_indicator),
+        measure,
+        err_msg=(
+            "%s failed representation invariance  "
+            "between dense and list of array "
+            "indicator formats."
+        )
+        % name,
+    )
+
+
+@pytest.mark.parametrize("name", sorted(CONTINUOUS_MULTILABEL_METRICS))
+def test_continuous_multilabel_representation_invariance(name):
+    # Check representation invariance for continuous multilabel metrics.
+    n_classes = 4
+    random_state = check_random_state(0)
+
+    # Generate binary multilabel indicator for y_true
+    _, y_true = make_multilabel_classification(
+        n_features=1,
+        n_classes=n_classes,
+        random_state=0,
+        n_samples=50,
+        allow_unlabeled=True,
+    )
+    # Generate continuous scores for y_score
+    y_score = random_state.uniform(size=y_true.shape)
+    # Some metrics (e.g. log_loss) require y_score to be probabilities (sum to 1)
+    y_score /= y_score.sum(axis=1, keepdims=True)
+
+    # To make sure at least one empty label is present
+    y_true[-1] = [0] * n_classes
+
+    y_true_list_array_indicator = list(y_true)
+    y_score_list_array = list(y_score)
+
+    y_true_list_list_indicator = [list(a) for a in y_true_list_array_indicator]
+    y_score_list_list = [list(a) for a in y_score_list_array]
+
+    metric = ALL_METRICS[name]
+    measure = metric(y_true, y_score)
+
+    assert_almost_equal(
+        metric(y_true_list_array_indicator, y_score_list_array),
+        measure,
+        err_msg=(
+            f"{name} failed representation invariance  "
+            "between dense array and list of array "
+            "indicator formats."
+        ),
+    )
+
+    assert_almost_equal(
+        metric(y_true_list_list_indicator, y_score_list_list),
+        measure,
+        err_msg=(
+            f"{name} failed representation invariance  "
+            "between dense array and list of list "
+            "indicator formats."
+        ),
+    )
+    # Only these metrics support sparse input
+    if name in {"label_ranking_loss", "label_ranking_average_precision_score"}:
+        for coo_container in COO_CONTAINERS:
+            y_true_sparse = coo_container(y_true)
+            assert_almost_equal(
+                metric(y_true_sparse, y_score),
+                measure,
+                err_msg=(
+                    f"{name} failed representation invariance "
+                    "between dense and sparse indicator formats."
+                ),
+            )
+
+
+@pytest.mark.parametrize(
+    "name", sorted(set(CONTINUOUS_CLASSIFICATION_METRICS) - METRIC_UNDEFINED_MULTICLASS)
+)
+def test_continuous_multiclass_representation_invariance(name):
+    # Check representation invariance for continuous multiclass metrics.
+    n_samples = 50
+    random_state = check_random_state(0)
+    y_true = random_state.randint(0, 5, size=(n_samples,))
+    y_score = random_state.random_sample(size=(n_samples, 5))
+    # Some metrics (e.g. log_loss) require y_score to be probabilities (sum to 1)
+    y_score /= y_score.sum(axis=1, keepdims=True)
+
+    y_true_list = list(y_true)
+    y_score_list = [list(a) for a in y_score]
+
+    metric = ALL_METRICS[name]
+    measure = metric(y_true, y_score)
+
+    assert_almost_equal(
+        metric(y_true_list, y_score_list),
+        measure,
+        err_msg=(
+            f"{name} failed representation invariance  "
+            "between dense array and list format."
+        ),
+    )
 
 
 @pytest.mark.parametrize("metric", CLASSIFICATION_METRICS_REPORT.values())
@@ -1259,111 +1421,6 @@ def test_multioutput_regression_invariance_to_dimension_shuffling(name):
             error,
             err_msg="%s is not dimension shuffling invariant" % (name),
         )
-
-
-@pytest.mark.filterwarnings("ignore::sklearn.exceptions.UndefinedMetricWarning")
-@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
-def test_multilabel_representation_invariance(coo_container):
-    # Generate some data
-    n_classes = 4
-    n_samples = 50
-
-    _, y1 = make_multilabel_classification(
-        n_features=1,
-        n_classes=n_classes,
-        random_state=0,
-        n_samples=n_samples,
-        allow_unlabeled=True,
-    )
-    _, y2 = make_multilabel_classification(
-        n_features=1,
-        n_classes=n_classes,
-        random_state=1,
-        n_samples=n_samples,
-        allow_unlabeled=True,
-    )
-
-    # To make sure at least one empty label is present
-    y1 = np.vstack([y1, [[0] * n_classes]])
-    y2 = np.vstack([y2, [[0] * n_classes]])
-
-    y1_sparse_indicator = coo_container(y1)
-    y2_sparse_indicator = coo_container(y2)
-
-    y1_list_array_indicator = list(y1)
-    y2_list_array_indicator = list(y2)
-
-    y1_list_list_indicator = [list(a) for a in y1_list_array_indicator]
-    y2_list_list_indicator = [list(a) for a in y2_list_array_indicator]
-
-    for name in MULTILABELS_METRICS:
-        metric = ALL_METRICS[name]
-
-        # XXX cruel hack to work with partial functions
-        if isinstance(metric, partial):
-            metric.__module__ = "tmp"
-            metric.__name__ = name
-
-        measure = metric(y1, y2)
-
-        # Check representation invariance
-        assert_allclose(
-            metric(y1_sparse_indicator, y2_sparse_indicator),
-            measure,
-            err_msg=(
-                "%s failed representation invariance between "
-                "dense and sparse indicator formats."
-            )
-            % name,
-        )
-        assert_almost_equal(
-            metric(y1_list_list_indicator, y2_list_list_indicator),
-            measure,
-            err_msg=(
-                "%s failed representation invariance  "
-                "between dense array and list of list "
-                "indicator formats."
-            )
-            % name,
-        )
-        assert_almost_equal(
-            metric(y1_list_array_indicator, y2_list_array_indicator),
-            measure,
-            err_msg=(
-                "%s failed representation invariance  "
-                "between dense and list of array "
-                "indicator formats."
-            )
-            % name,
-        )
-
-
-@pytest.mark.parametrize(
-    "name", sorted(set(CONTINUOUS_CLASSIFICATION_METRICS) - METRIC_UNDEFINED_MULTICLASS)
-)
-def test_continuous_multiclass_representation_invariance(name):
-    # Check representation invariance for continuous multiclass metrics.
-    n_samples = 50
-    random_state = check_random_state(0)
-    y_true = random_state.randint(0, 5, size=(n_samples,))
-    y_score = random_state.random_sample(size=(n_samples, 5))
-    # Some metrics (e.g. log_loss) require y_score to be probabilities (sum to 1)
-    y_score /= y_score.sum(axis=1, keepdims=True)
-
-    y_true_list = list(y_true)
-    y_score_list = [list(a) for a in y_score]
-
-    metric = ALL_METRICS[name]
-    measure = metric(y_true, y_score)
-
-    assert_almost_equal(
-        metric(y_true_list, y_score_list),
-        measure,
-        err_msg=(
-            f"{name} failed representation invariance  "
-            "between dense array and list format."
-        ),
-    )
 
 
 @pytest.mark.parametrize("name", sorted(MULTILABELS_METRICS))
