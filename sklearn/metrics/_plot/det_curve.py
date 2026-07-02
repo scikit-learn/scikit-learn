@@ -5,10 +5,7 @@ import numpy as np
 import scipy as sp
 
 from sklearn.metrics._ranking import det_curve
-from sklearn.utils._plotting import (
-    _BinaryClassifierCurveDisplayMixin,
-    _deprecate_y_pred_parameter,
-)
+from sklearn.utils._plotting import _BinaryClassifierCurveDisplayMixin
 
 
 class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
@@ -212,7 +209,6 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         pos_label=None,
         name=None,
         ax=None,
-        y_pred="deprecated",
         **kwargs,
     ):
         """Plot the DET curve given the true and predicted labels.
@@ -260,15 +256,6 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Axes object to plot on. If `None`, a new figure and axes is
             created.
 
-        y_pred : array-like of shape (n_samples,)
-            Target scores, can either be probability estimates of the positive
-            class or non-thresholded decision values (as returned by
-            :term:`decision_function` on some classifiers).
-
-            .. deprecated:: 1.8
-                `y_pred` is deprecated and will be removed in 1.10. Use
-                `y_score` instead.
-
         **kwargs : dict
             Additional keywords arguments passed to matplotlib `plot` function.
 
@@ -300,7 +287,6 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        y_score = _deprecate_y_pred_parameter(y_score, y_pred, "1.8")
         pos_label_validated, name = cls._validate_from_predictions_params(
             y_true, y_score, sample_weight=sample_weight, pos_label=pos_label, name=name
         )

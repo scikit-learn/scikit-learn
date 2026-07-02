@@ -10,7 +10,6 @@ from sklearn.utils._plotting import (
     _check_param_lengths,
     _convert_to_list_leaving_none,
     _deprecate_estimator_name,
-    _deprecate_y_pred_parameter,
     _despine,
     _validate_style_kwargs,
 )
@@ -575,7 +574,6 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         plot_chance_level=False,
         chance_level_kw=None,
         despine=False,
-        y_pred="deprecated",
         **kwargs,
     ):
         """Plot precision-recall curve given binary class predictions.
@@ -642,13 +640,6 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
             .. versionadded:: 1.6
 
-        y_pred : array-like of shape (n_samples,)
-            Estimated probabilities or output of decision function.
-
-            .. deprecated:: 1.8
-                `y_pred` is deprecated and will be removed in 1.10. Use
-                `y_score` instead.
-
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
 
@@ -697,7 +688,6 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         """
 
         y_true = check_array(y_true, ensure_2d=False, dtype=None)
-        y_score = _deprecate_y_pred_parameter(y_score, y_pred, "1.8")
         pos_label, name = cls._validate_from_predictions_params(
             y_true, y_score, sample_weight=sample_weight, pos_label=pos_label, name=name
         )
