@@ -27,39 +27,32 @@ of the latent structured data of the Wikipedia content.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import os
+# %%
 from bz2 import BZ2File
 from datetime import datetime
 from pprint import pprint
 from time import time
-from urllib.request import urlopen
 
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy import sparse
 
+from sklearn.datasets import fetch_file
 from sklearn.decomposition import randomized_svd
 
 # %%
 # Download data, if not already on disk
 # -------------------------------------
-redirects_url = "http://downloads.dbpedia.org/3.5.1/en/redirects_en.nt.bz2"
-redirects_filename = redirects_url.rsplit("/", 1)[1]
+redirects_url = "https://downloads.dbpedia.org/3.5.1/en/redirects_en.nt.bz2"
+redirects_filename = fetch_file(redirects_url)
 
-page_links_url = "http://downloads.dbpedia.org/3.5.1/en/page_links_en.nt.bz2"
-page_links_filename = page_links_url.rsplit("/", 1)[1]
+page_links_url = "https://downloads.dbpedia.org/3.5.1/en/page_links_en.nt.bz2"
+page_links_filename = fetch_file(page_links_url)
 
 resources = [
     (redirects_url, redirects_filename),
     (page_links_url, page_links_filename),
 ]
-
-for url, filename in resources:
-    if not os.path.exists(filename):
-        print("Downloading data from '%s', please wait..." % url)
-        opener = urlopen(url)
-        with open(filename, "wb") as f:
-            f.write(opener.read())
-        print()
 
 
 # %%
@@ -202,11 +195,12 @@ def centrality_scores(X, alpha=0.85, max_iter=100, tol=1e-10):
     dangle = np.asarray(np.where(np.isclose(X.sum(axis=1), 0), 1.0 / n, 0)).ravel()
 
     scores = np.full(n, 1.0 / n, dtype=np.float32)  # initial guess
+    errors = []
     for i in range(max_iter):
         print("power iteration #%d" % i)
         prev_scores = scores
         scores = (
-            alpha * (scores * X + np.dot(dangle, prev_scores))
+            alpha * (scores @ X + dangle @ prev_scores)
             + (1 - alpha) * prev_scores.sum() / n
         )
         # check convergence: normalized l_inf norm
@@ -214,15 +208,35 @@ def centrality_scores(X, alpha=0.85, max_iter=100, tol=1e-10):
         if scores_max == 0.0:
             scores_max = 1.0
         err = np.abs(scores - prev_scores).max() / scores_max
+        errors.append(err)
         print("error: %0.6f" % err)
         if err < n * tol:
-            return scores
+            break
 
-    return scores
+    return scores, np.asarray(errors)
 
 
 print("Computing principal eigenvector score using a power iteration method")
 t0 = time()
-scores = centrality_scores(X, max_iter=100)
+scores, errors = centrality_scores(X, max_iter=100)
 print("done in %0.3fs" % (time() - t0))
 pprint([names[i] for i in np.abs(scores).argsort()[-10:]])
+
+# %%
+# Plot results
+# ------------
+
+fig, ax = plt.subplots()
+ax.semilogy(range(1, len(errors) + 1), errors)
+ax.set_xlabel("power iteration")
+ax.set_ylabel("convergence error (normalized $\\ell_\\infty$)")
+ax.set_title("PageRank power-iteration convergence")
+plt.show()
+
+# %%
+top = np.abs(scores).argsort()[-10:]
+fig, ax = plt.subplots()
+ax.barh([names[i] for i in top], scores[top])
+ax.set_xlabel("PageRank score")
+ax.set_title("Wikipedia pages with the highest eigenvector centrality")
+plt.show()
