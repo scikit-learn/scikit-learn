@@ -1615,6 +1615,7 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.array_api_support = True
         tags.input_tags.sparse = (self.solver != "svd") and (
             self.solver != "cholesky" or not self.fit_intercept
         )
@@ -2426,6 +2427,10 @@ class _RidgeGCV(LinearModel):
         tags = super().__sklearn_tags__()
         # Required since this is neither a RegressorMixin nor a ClassifierMixin
         tags.target_tags.required = True
+        # `_RidgeGCV` implements the Array API support exposed by `RidgeCV`, so it
+        # must declare it: otherwise the tag-driven coercion in `validate_data`
+        # would coerce its inputs to NumPy.
+        tags.array_api_support = True
         return tags
 
 

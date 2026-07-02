@@ -15,7 +15,16 @@ from sklearn.base import _fit_context
 from sklearn.decomposition._base import _BasePCA
 from sklearn.utils import check_random_state
 from sklearn.utils._arpack import _init_arpack_v0
-from sklearn.utils._array_api import _cov, device, get_namespace
+from sklearn.utils._array_api import (
+    _cov,
+    _is_numpy_consumable,
+    _should_coerce_to_numpy,
+    device,
+    get_namespace,
+    get_namespace_and_device,
+    move_estimator_arrays_to_inplace,
+    move_to,
+)
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
 from sklearn.utils.extmath import _randomized_svd, fast_logdet, svd_flip
 from sklearn.utils.sparsefuncs import _implicit_column_offset, mean_variance_axis
@@ -480,7 +489,10 @@ class PCA(_BasePCA):
 
     def _fit(self, X):
         """Dispatch to the right submethod depending on the chosen solver."""
-        xp, is_array_api_compliant = get_namespace(X)
+        # Capture the input namespace and device before any coercion so that the
+        # fitted attributes can be moved back to it when dispatching is enabled
+        # and we coerce the inputs to NumPy.
+        input_xp, is_array_api_compliant, input_device = get_namespace_and_device(X)
 
         # Raise an error for sparse input and unsupported svd_solver
         if issparse(X) and self.svd_solver not in ["auto", "arpack", "covariance_eigh"]:
@@ -489,9 +501,27 @@ class PCA(_BasePCA):
                 f' "covariance_eigh" solvers, while "{self.svd_solver}" was passed. See'
                 " TruncatedSVD for a possible alternative."
             )
-        if self.svd_solver == "arpack" and is_array_api_compliant:
+
+        # Solvers such as "arpack" (and "randomized" without QR normalization) are
+        # not supported for array API inputs: the estimator's tag is
+        # array_api_support=False, in which case the input is coerced to NumPy in
+        # `validate_data` and the fitted attributes are moved back to the input
+        # namespace/device at the end. `coerce_to_numpy` mirrors that decision;
+        # `xp` is the effective namespace (NumPy when coercing), used both for
+        # `dtype` below and for computation.
+        coerce_to_numpy, xp = _should_coerce_to_numpy(self, X)
+        if coerce_to_numpy and not _is_numpy_consumable(X):
+            # NumPy cannot consume the input (e.g. it lives on a non-CPU device
+            # such as CUDA and we want to coerce. This means the estimator is
+            # configured in a way that is not supported for array API inputs.
+            # Raise a clear, solver-specific error rather than letting the
+            # backend raise a cryptic conversion failure.
             raise ValueError(
-                "PCA with svd_solver='arpack' is not supported for Array API inputs."
+                f"PCA with svd_solver={self.svd_solver!r} only supports Array API "
+                "inputs that reside in CPU/host memory; the provided input is on a "
+                "non-CPU device (e.g. a CUDA tensor). Use svd_solver='full' or "
+                "'covariance_eigh', or move the data to CPU/NumPy before calling "
+                "fit."
             )
 
         # Validate the data, without ever forcing a copy as any solver that
@@ -537,9 +567,20 @@ class PCA(_BasePCA):
 
         # Call different fits for either full or truncated SVD
         if self._fit_svd_solver in ("full", "covariance_eigh"):
-            return self._fit_full(X, n_components, xp, is_array_api_compliant)
+            result = self._fit_full(X, n_components, xp, is_array_api_compliant)
         elif self._fit_svd_solver in ["arpack", "randomized"]:
-            return self._fit_truncated(X, n_components, xp)
+            result = self._fit_truncated(X, n_components, xp)
+
+        if coerce_to_numpy:
+            # The solver ran in NumPy; move the fitted attributes and the arrays
+            # returned for `fit_transform` back to the input namespace/device so
+            # that the estimator behaves as if it had been fitted natively.
+            move_estimator_arrays_to_inplace(self, input_xp, input_device)
+            U, S, Vt, X, x_is_centered, _ = result
+            U, S, Vt, X = move_to(U, S, Vt, X, xp=input_xp, device=input_device)
+            result = (U, S, Vt, X, x_is_centered, input_xp)
+
+        return result
 
     def _fit_full(self, X, n_components, xp, is_array_api_compliant):
         """Fit the model by computing full SVD on X."""

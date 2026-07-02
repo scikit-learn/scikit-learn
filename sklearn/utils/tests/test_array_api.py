@@ -22,6 +22,7 @@ from sklearn.utils._array_api import (
     _expit,
     _fill_diagonal,
     _half_multinomial_loss,
+    _is_numpy_consumable,
     _is_numpy_namespace,
     _isin,
     _logit,
@@ -146,6 +147,30 @@ def test_get_namespace_array_api(monkeypatch):
             get_namespace(X_xp)
 
 
+def test_is_numpy_consumable():
+    """`_is_numpy_consumable` is True for host (CPU) arrays, False otherwise."""
+    assert _is_numpy_consumable(numpy.ones((2, 2)))
+    assert _is_numpy_consumable(numpy.float64(1.0))
+
+    torch = pytest.importorskip("torch")
+    assert _is_numpy_consumable(torch.ones(2, 2))
+
+    strict = pytest.importorskip("array_api_strict")
+    assert _is_numpy_consumable(strict.ones((2, 2)))
+
+    # An array reporting a non-CPU DLPack device is treated as not consumable.
+    class _FakeNonHostArray:
+        def __dlpack_device__(self):
+            # (kDLCUDA, 0); see the DLPack device type enumeration.
+            return (2, 0)
+
+    assert not _is_numpy_consumable(_FakeNonHostArray())
+
+    # Things without DLPack device information are not consumable. This is
+    # a bit strange, but makes sense in the context of how the function is used.
+    assert not _is_numpy_consumable([1, 2, 3.141])
+
+
 @pytest.mark.parametrize(
     "array_input, reference",
     [
@@ -166,6 +191,30 @@ def test_move_to_array_api_conversions(array_input, reference):
         array_out = move_to(array_in, xp=xp_to, device=device_reference)
         assert get_namespace(array_out)[0] == xp_to
         assert array_api_device(array_out) == device_reference
+
+
+def test_move_to_negative_strided_and_scalar():
+    """Negative-strided and 0-d NumPy inputs convert without crashing.
+
+    Negative-strided NumPy arrays (e.g. produced by arpack's ``[::-1]``
+    reversals) make torch's DLPack import abort the process, and 0-d NumPy
+    scalars trigger an ``AssertionError`` in torch's ``from_dlpack``. ``move_to``
+    must handle both gracefully.
+    """
+    torch = pytest.importorskip("torch")
+    with config_context(array_api_dispatch=True):
+        xp, _, device = get_namespace_and_device(torch.asarray([1.0]))
+
+        negative_strided = numpy.arange(12.0).reshape(3, 4)[:, ::-1]
+        assert any(stride < 0 for stride in negative_strided.strides)
+        moved = move_to(negative_strided, xp=xp, device=device)
+        assert get_namespace(moved)[0] == xp
+        assert_array_equal(_convert_to_numpy(moved, xp), negative_strided)
+
+        scalar = numpy.float64(3.5)
+        moved_scalar = move_to(scalar, xp=xp, device=device)
+        assert get_namespace(moved_scalar)[0] == xp
+        assert float(_convert_to_numpy(moved_scalar, xp)) == 3.5
 
 
 def test_move_to_sparse():
