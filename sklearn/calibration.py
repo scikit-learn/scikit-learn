@@ -17,6 +17,7 @@ from sklearn._loss import (
     HalfMultinomialLoss,
     HalfMultinomialLossArrayAPI,
 )
+from sklearn._loss.link import LogitLink, MultinomialLogit
 from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
@@ -69,6 +70,74 @@ from sklearn.utils.validation import (
     check_consistent_length,
     check_is_fitted,
 )
+
+
+def _ensure_logits(predictions, response_method_name, method):
+    """Ensure that the predictions are in logits space.
+
+    When the response method is ``predict_proba``, probabilities are converted
+    to logits depending on the calibration method:
+
+    - For ``method`` in ``{'sigmoid', 'isotonic'}``, Bernoulli logits are
+      computed per class (OvR convention for multiclass).
+    - For ``method='temperature'``, multinomial logits are computed.
+
+    When the response method is ``decision_function``, predictions are assumed
+    to already be in logits space and are returned unchanged (with reshaping
+    for the binary case).
+
+    Parameters
+    ----------
+    predictions : array-like of shape (n_samples, n_classes) or (n_samples,)
+        The predictions to be converted.
+
+    response_method_name : {'decision_function', 'predict_proba'}
+        The name of the response method used to obtain the predictions.
+
+    method : {'sigmoid', 'isotonic', 'temperature'}
+        The calibration method.
+
+    Returns
+    -------
+    logits : array-like of shape (n_samples, n_classes) or (n_samples, 1).
+        The logits.
+    """
+    if response_method_name not in ("decision_function", "predict_proba"):
+        raise ValueError(
+            f"Unknown response method name: {response_method_name}. "
+            "Expected 'decision_function' or 'predict_proba'."
+        )
+
+    if response_method_name == "decision_function":
+        if predictions.ndim == 1:
+            return predictions.reshape(-1, 1)
+        return predictions
+
+    eps = np.finfo(predictions.dtype).eps
+    predictions = predictions.clip(eps, 1 - eps)
+
+    if method in ("sigmoid", "isotonic"):
+        if predictions.ndim == 1:
+            return LogitLink().link(predictions).reshape(-1, 1)
+        if predictions.shape[1] == 2:
+            return LogitLink().link(predictions[:, 1]).reshape(-1, 1)
+        sigmoid_logits = np.zeros_like(predictions)
+        sigmoid_link = LogitLink()
+        for i in range(predictions.shape[1]):
+            sigmoid_logits[:, i] = sigmoid_link.link(predictions[:, i])
+        return sigmoid_logits
+
+    if method == "temperature":
+        if predictions.ndim == 1:
+            predictions = np.column_stack([1 - predictions, predictions])
+        elif predictions.shape[1] == 1:
+            predictions = np.concatenate([1 - predictions, predictions], axis=1)
+        return MultinomialLogit().link(predictions)
+
+    raise ValueError(
+        f"Unknown calibration method: {method}. "
+        "Expected 'sigmoid', 'isotonic', or 'temperature'."
+    )
 
 
 class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
@@ -258,40 +327,46 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
     Examples
     --------
+    Without calibration, the GaussianNB classifier is over-confident, in
+    particular on its training set:
+
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.naive_bayes import GaussianNB
     >>> from sklearn.calibration import CalibratedClassifierCV
     >>> X, y = make_classification(n_samples=100, n_features=2,
     ...                            n_redundant=0, random_state=42)
-    >>> base_clf = GaussianNB()
-    >>> calibrated_clf = CalibratedClassifierCV(base_clf, cv=3)
+    >>> GaussianNB().fit(X, y).predict_proba(X)[:, 1].max()
+    np.float64(0.9999...)
+
+    After calibration with internal cross-validation, the resulting classifier
+    is less over-confident:
+
+    >>> calibrated_clf = CalibratedClassifierCV(GaussianNB(), cv=3)
     >>> calibrated_clf.fit(X, y)
-    CalibratedClassifierCV(...)
+    CalibratedClassifierCV(cv=3, estimator=GaussianNB())
     >>> len(calibrated_clf.calibrated_classifiers_)
     3
-    >>> calibrated_clf.predict_proba(X)[:5, :]
-    array([[0.110, 0.889],
-           [0.072, 0.927],
-           [0.928, 0.072],
-           [0.928, 0.072],
-           [0.072, 0.928]])
+    >>> calibrated_clf.predict_proba(X)[:, 1].max()
+    np.float64(0.989...)
+
+    We can also calibrate a pre-fitted classifier. In this case, we need a held
+    out calibration set instead of relying on internal cross-validation:
+
     >>> from sklearn.model_selection import train_test_split
     >>> X, y = make_classification(n_samples=100, n_features=2,
     ...                            n_redundant=0, random_state=42)
     >>> X_train, X_calib, y_train, y_calib = train_test_split(
     ...        X, y, random_state=42
     ... )
-    >>> base_clf = GaussianNB()
-    >>> base_clf.fit(X_train, y_train)
-    GaussianNB()
+    >>> fitted_clf = GaussianNB().fit(X_train, y_train)
     >>> from sklearn.frozen import FrozenEstimator
-    >>> calibrated_clf = CalibratedClassifierCV(FrozenEstimator(base_clf))
+    >>> calibrated_clf = CalibratedClassifierCV(FrozenEstimator(fitted_clf))
     >>> calibrated_clf.fit(X_calib, y_calib)
     CalibratedClassifierCV(...)
     >>> len(calibrated_clf.calibrated_classifiers_)
     1
-    >>> calibrated_clf.predict_proba([[-0.5, 0.5]])
-    array([[0.936, 0.063]])
+    >>> calibrated_clf.predict_proba(X_calib)[:, 1].max()
+    np.float64(0.965...)
     """
 
     _parameter_constraints: dict = {
@@ -370,7 +445,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             _ensemble = not isinstance(estimator, FrozenEstimator)
 
         self.calibrated_classifiers_ = []
-
         # Set `classes_` using all `y`
         label_encoder_ = LabelEncoder().fit(y)
         self.classes_ = label_encoder_.classes_
@@ -468,17 +542,20 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 n_jobs=self.n_jobs,
                 params=routed_params.estimator.fit,
             )
-            if self.classes_.shape[0] == 2:
-                # Ensure shape (n_samples, 1) in the binary case
-                if method_name == "predict_proba":
-                    # Select the probability column of the positive class
-                    predictions = _process_predict_proba(
-                        y_pred=predictions,
-                        target_type="binary",
-                        classes=self.classes_,
-                        pos_label=self.classes_[1],
-                    )
-                predictions = predictions.reshape(-1, 1)
+            if self.classes_.shape[0] == 2 and method_name == "predict_proba":
+                # Select the probability column of the positive class before
+                # converting to logits.
+                predictions = _process_predict_proba(
+                    y_pred=predictions,
+                    target_type="binary",
+                    classes=self.classes_,
+                    pos_label=self.classes_[1],
+                )
+            predictions = _ensure_logits(
+                predictions,
+                response_method_name=method_name,
+                method=self.method,
+            )
 
             if sample_weight is not None:
                 # Check that the sample_weight dtype is consistent with the
@@ -658,14 +735,17 @@ def _fit_classifier_calibrator_pair(
 
     estimator.fit(X_train, y_train, **fit_params_train)
 
-    predictions, _ = _get_response_values(
+    predictions, _, response_method_used = _get_response_values(
         estimator,
         X_test,
         response_method=["decision_function", "predict_proba"],
+        return_response_method_used=True,
     )
-    if predictions.ndim == 1:
-        # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
-        predictions = predictions.reshape(-1, 1)
+    predictions = _ensure_logits(
+        predictions,
+        response_method_name=response_method_used,
+        method=method,
+    )
 
     if sample_weight is not None:
         # Check that the sample_weight dtype is consistent with the predictions
@@ -736,18 +816,16 @@ def _fit_calibrator(clf, predictions, y, classes, method, xp, sample_weight=None
             calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
             calibrators.append(calibrator)
     elif method == "temperature":
-        if classes.shape[0] == 2 and predictions.shape[-1] == 1:
-            response_method_name = _check_response_method(
-                clf,
-                ["decision_function", "predict_proba"],
-            ).__name__
-            if response_method_name == "predict_proba":
-                predictions = xp.concat([1 - predictions, predictions], axis=1)
         calibrator = _TemperatureScaling()
         calibrator.fit(predictions, y, sample_weight)
         calibrators.append(calibrator)
 
-    pipeline = _CalibratedClassifier(clf, calibrators, method=method, classes=classes)
+    pipeline = _CalibratedClassifier(
+        clf,
+        calibrators,
+        method=method,
+        classes=classes,
+    )
     return pipeline
 
 
@@ -796,14 +874,17 @@ class _CalibratedClassifier:
         proba : array, shape (n_samples, n_classes)
             The predicted probabilities. Can be exact zeros.
         """
-        predictions, _ = _get_response_values(
+        predictions, _, response_method_used = _get_response_values(
             self.estimator,
             X,
             response_method=["decision_function", "predict_proba"],
+            return_response_method_used=True,
         )
-        if predictions.ndim == 1:
-            # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
-            predictions = predictions.reshape(-1, 1)
+        predictions = _ensure_logits(
+            predictions,
+            response_method_name=response_method_used,
+            method=self.method,
+        )
 
         n_classes = self.classes.shape[0]
 
@@ -833,14 +914,6 @@ class _CalibratedClassifier:
                     proba, denominator, out=uniform_proba, where=denominator != 0
                 )
         elif self.method == "temperature":
-            xp, _ = get_namespace(predictions)
-            if n_classes == 2 and predictions.shape[-1] == 1:
-                response_method_name = _check_response_method(
-                    self.estimator,
-                    ["decision_function", "predict_proba"],
-                ).__name__
-                if response_method_name == "predict_proba":
-                    predictions = xp.concat([1 - predictions, predictions], axis=1)
             proba = self.calibrators[0].predict(predictions)
 
         # Deal with cases where the predicted probability minimally exceeds 1.0

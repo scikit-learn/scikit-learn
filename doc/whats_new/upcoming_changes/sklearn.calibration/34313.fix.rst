@@ -1,0 +1,7 @@
+- Fixed :class:`calibration.CalibratedClassifierCV` with ``method="sigmoid"`` or
+  ``method="isotonic"`` to convert :term:`predict_proba` outputs to logits
+  before calibration instead of passing probabilities directly to the
+  calibrator. For ``method="temperature"``, :term:`predict_proba` outputs are
+  converted to multinomial logits. Estimators that only expose
+  :term:`decision_function` are unaffected.
+  By :user:`Olivier Grisel <ogrisel>` and :user:`Antoine Baker <antoinebaker>`.

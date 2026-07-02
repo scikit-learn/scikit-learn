@@ -6,11 +6,13 @@ import pytest
 from numpy.testing import assert_allclose
 
 from sklearn import config_context
+from sklearn._loss.link import LogitLink, MultinomialLogit
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.calibration import (
     CalibratedClassifierCV,
     CalibrationDisplay,
     _CalibratedClassifier,
+    _ensure_logits,
     _sigmoid_calibration,
     _SigmoidCalibration,
     _TemperatureScaling,
@@ -42,7 +44,7 @@ from sklearn.model_selection import (
     cross_val_score,
     train_test_split,
 )
-from sklearn.naive_bayes import MultinomialNB
+from sklearn.naive_bayes import GaussianNB, MultinomialNB
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import LinearSVC
@@ -239,70 +241,56 @@ def test_parallel_execution(data, method, ensemble):
     assert_allclose(probs_parallel, probs_sequential)
 
 
+@pytest.mark.parametrize("clf", [GaussianNB(), LogisticRegression(C=1e-6)])
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
 @pytest.mark.parametrize("ensemble", [True, False])
-# increase the number of RNG seeds to assess the statistical stability of this
-# test:
-@pytest.mark.parametrize("seed", range(2))
-def test_calibration_multiclass(method, ensemble, seed):
-    def multiclass_brier(y_true, proba_pred, n_classes):
-        Y_onehot = np.eye(n_classes)[y_true]
-        return np.sum((Y_onehot - proba_pred) ** 2) / Y_onehot.shape[0]
-
-    # Test calibration for multiclass with classifier that implements
-    # only decision function.
-    clf = LinearSVC(random_state=7)
-    X, y = make_blobs(
-        n_samples=500, n_features=100, random_state=seed, centers=10, cluster_std=15.0
+def test_calibration_multiclass(clf, method, ensemble, global_random_seed):
+    # Test calibration for multiclass with a classifier that is known to be
+    # poorly calibrated by default:
+    # - GaussianNB in the presence of redundant features, hence over-confident;
+    # - LogisticRegression too regularized hence under-confident.
+    #
+    # Note: we need a large number of test data points to get a good estimate
+    # of the metrics and make this step insensitive to the random seed.
+    n_classes = 3
+    X, y = make_classification(
+        n_samples=30_000,
+        n_clusters_per_class=3,
+        n_classes=n_classes,
+        n_features=20,
+        n_informative=4,
+        n_redundant=16,
+        weights=[0.2, 0.2, 0.6],
+        random_state=global_random_seed,
     )
 
-    # Use an unbalanced dataset by collapsing 8 clusters into one class
-    # to make the naive calibration based on a softmax more unlikely
-    # to work.
-    y[y > 2] = 2
-    n_classes = np.unique(y).shape[0]
-    X_train, y_train = X[::2], y[::2]
-    X_test, y_test = X[1::2], y[1::2]
-
+    X_train, X_test, y_train, y_test = train_test_split(
+        X,
+        y,
+        random_state=global_random_seed,
+        stratify=y,
+        train_size=1_000,
+    )
     clf.fit(X_train, y_train)
+    if hasattr(clf, "predict_proba"):
+        y_pred_uncal = clf.predict_proba(X_test)
+    else:
+        # Naive predict_proba for LinearSVC.
+        y_pred_uncal = softmax(clf.decision_function(X_test))
+
+    assert_allclose(np.sum(y_pred_uncal, axis=1), np.ones(len(X_test)))
 
     cal_clf = CalibratedClassifierCV(clf, method=method, cv=5, ensemble=ensemble)
     cal_clf.fit(X_train, y_train)
-    probas = cal_clf.predict_proba(X_test)
-    # Check probabilities sum to 1
-    assert_allclose(np.sum(probas, axis=1), np.ones(len(X_test)))
-
-    # Check that the dataset is not too trivial, otherwise it's hard
-    # to get interesting calibration data during the internal
-    # cross-validation loop.
-    assert 0.65 < clf.score(X_test, y_test) < 0.95
-
-    # Check that the accuracy of the calibrated model is never degraded
-    # too much compared to the original classifier.
-    assert cal_clf.score(X_test, y_test) > 0.95 * clf.score(X_test, y_test)
+    y_pred_cal = cal_clf.predict_proba(X_test)
+    assert_allclose(np.sum(y_pred_cal, axis=1), np.ones(len(X_test)))
 
     # Check that Brier loss of calibrated classifier is smaller than
-    # loss obtained by naively turning OvR decision function to
-    # probabilities via a softmax
-    uncalibrated_brier = multiclass_brier(
-        y_test, softmax(clf.decision_function(X_test)), n_classes=n_classes
-    )
-    calibrated_brier = multiclass_brier(y_test, probas, n_classes=n_classes)
-
-    assert calibrated_brier < 1.1 * uncalibrated_brier
-
-    # Test that calibration of a multiclass classifier decreases log-loss
-    # for RandomForestClassifier
-    clf = RandomForestClassifier(n_estimators=30, random_state=42)
-    clf.fit(X_train, y_train)
-    clf_probs = clf.predict_proba(X_test)
-    uncalibrated_brier = multiclass_brier(y_test, clf_probs, n_classes=n_classes)
-
-    cal_clf = CalibratedClassifierCV(clf, method=method, cv=5, ensemble=ensemble)
-    cal_clf.fit(X_train, y_train)
-    cal_clf_probs = cal_clf.predict_proba(X_test)
-    calibrated_brier = multiclass_brier(y_test, cal_clf_probs, n_classes=n_classes)
-    assert calibrated_brier < 1.1 * uncalibrated_brier
+    # loss obtained on the original classifier.
+    labels = np.arange(n_classes)
+    bs_uncal = brier_score_loss(y_test, y_pred_uncal, labels=labels)
+    bs_cal = brier_score_loss(y_test, y_pred_cal, labels=labels)
+    assert bs_cal < bs_uncal
 
 
 def test_calibration_zero_probability():
@@ -424,6 +412,74 @@ def test_sigmoid_calibration():
     # arrays
     with pytest.raises(ValueError):
         _SigmoidCalibration().fit(np.vstack((exF, exF)), exY)
+
+
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic", "temperature"])
+@pytest.mark.parametrize(
+    "predictions",
+    [
+        np.array([1.0, -1.0, 0.5]),
+        np.array([[0.0, 1.0], [1.0, 0.0]]),
+        np.array([[2.0, 1.0, 0.0], [0.0, 1.0, 2.0]]),
+    ],
+    ids=["1d_binary", "2d_binary", "multiclass"],
+)
+def test_ensure_logits_decision_function(method, predictions):
+    # Apart from reshaping, this is a passthrough.
+    logits = _ensure_logits(predictions, "decision_function", method)
+    assert_allclose(logits.ravel(), predictions.ravel())
+
+
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic", "temperature"])
+@pytest.mark.parametrize(
+    "predictions",
+    [
+        np.array([0.2, 0.8]),
+        np.array([[0.8, 0.2], [0.3, 0.7]]),
+        np.array([[0.1, 0.2, 0.7], [0.5, 0.3, 0.2]]),
+    ],
+    ids=["1d_binary", "2d_binary", "multiclass"],
+)
+def test_ensure_logits_predict_proba(method, predictions):
+    eps = np.finfo(predictions.dtype).eps
+    proba_clipped = predictions.clip(eps, 1 - eps)
+
+    if method in ("sigmoid", "isotonic"):
+        if predictions.ndim == 1:
+            expected = LogitLink().link(proba_clipped).reshape(-1, 1)
+        elif predictions.shape[1] == 2:
+            expected = LogitLink().link(proba_clipped[:, 1]).reshape(-1, 1)
+        else:
+            sigmoid_link = LogitLink()
+            expected = np.zeros_like(predictions)
+            for class_idx in range(predictions.shape[1]):
+                expected[:, class_idx] = sigmoid_link.link(proba_clipped[:, class_idx])
+    else:
+        if predictions.ndim == 1:
+            proba_2d = np.column_stack([1 - proba_clipped, proba_clipped])
+        else:
+            proba_2d = proba_clipped
+        expected = MultinomialLogit().link(proba_2d)
+
+    logits = _ensure_logits(predictions, "predict_proba", method)
+    assert_allclose(logits, expected)
+
+
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic", "temperature"])
+def test_ensure_logits_probability_clipping(method):
+    proba = np.array([0.0, 1.0])
+    logits = _ensure_logits(proba, "predict_proba", method)
+    assert np.all(np.isfinite(logits))
+
+
+def test_ensure_logits_invalid_response_method():
+    with pytest.raises(ValueError, match="Unknown response method name"):
+        _ensure_logits(np.array([0.5]), "predict", "sigmoid")
+
+
+def test_ensure_logits_invalid_method():
+    with pytest.raises(ValueError, match="Unknown calibration method"):
+        _ensure_logits(np.array([0.5]), "predict_proba", "invalid")
 
 
 @pytest.mark.parametrize(
