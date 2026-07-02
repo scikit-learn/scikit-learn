@@ -118,14 +118,9 @@ def _ensure_logits(predictions, response_method_name, method):
 
     if method in ("sigmoid", "isotonic"):
         if predictions.ndim == 1:
-            # _get_response_values already extracts the 1d array for the
-            # positive class for binary classification.
             return LogitLink().link(predictions).reshape(-1, 1)
         if predictions.shape[1] == 2:
-            # In case we are fed with a 2D array that is the raw output of
-            # predict_proba on a binary classifier.
             return LogitLink().link(predictions[:, 1]).reshape(-1, 1)
-        # Assume OvR convention and recover Bernoulli logits for each class.
         sigmoid_logits = np.zeros_like(predictions)
         sigmoid_link = LogitLink()
         for i in range(predictions.shape[1]):
@@ -561,9 +556,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 response_method_name=method_name,
                 method=self.method,
             )
-            if self.classes_.shape[0] == 2 and self.method in ("sigmoid", "isotonic"):
-                # Ensure shape (n_samples, 1) in the binary case
-                predictions = predictions.reshape(-1, 1)
 
             if sample_weight is not None:
                 # Check that the sample_weight dtype is consistent with the
@@ -860,14 +852,7 @@ class _CalibratedClassifier:
         non-parametric approach based on isotonic regression.
     """
 
-    def __init__(
-        self,
-        estimator,
-        calibrators,
-        *,
-        classes,
-        method="sigmoid",
-    ):
+    def __init__(self, estimator, calibrators, *, classes, method="sigmoid"):
         self.estimator = estimator
         self.calibrators = calibrators
         self.classes = classes
