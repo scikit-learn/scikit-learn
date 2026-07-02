@@ -8,7 +8,7 @@ predicted probabilities for a 3-class classification problem. Illustrated is
 the standard 2-simplex, where the three corners correspond to the three
 classes. Arrows point from the probability vectors predicted by an uncalibrated
 classifier to the probability vectors predicted by the same classifier after
-sigmoid calibration on a hold-out validation set. Colors indicate the true
+calibration on a hold-out validation set. Colors indicate the true
 class of an instance (red: class 1, green: class 2, blue: class 3).
 
 """
@@ -29,10 +29,10 @@ class of an instance (red: class 1, green: class 2, blue: class 3).
 # We use a large test set to get reliable estimates of the Brier score and
 # log-loss values.
 #
-# To simplify the example, we use also use a fixed calibration set that is as
+# To simplify the example, we use a fixed calibration set that is as
 # large as the training set. In practice, this would limit the amount of data
 # available for training the classifier and instead we would be better off
-# using a ensemble of calibrated classifier using the internal cross-validation
+# using a ensemble of calibrated classifiers using the internal cross-validation
 # of :class:`~sklearn.calibration.CalibratedClassifierCV`.
 
 import numpy as np
@@ -67,7 +67,7 @@ clf.fit(X_train, y_train)
 
 # %%
 #
-# Then we re-calibrated the model in a 2-stage process by fitting a sigmoid
+# Then we re-calibrate the model in a 2-stage process by fitting a sigmoid
 # correction to the predicted probabilities of the validation set. The sigmoid
 # calibration is done using the
 # :class:`~sklearn.calibration.CalibratedClassifierCV`. The
@@ -86,7 +86,7 @@ cal_clf.fit(X_cal, y_cal)
 # Compare probabilities
 # ---------------------
 # Below we plot a 2-simplex with arrows showing the change in predicted
-# probabilities predicted for some test data points.
+# probabilities on some test data points.
 
 import matplotlib.pyplot as plt
 
@@ -195,23 +195,20 @@ plot_simplex(
 # class with maximum confidence (e.g., 1, 0, 0). The mid point inside the
 # simplex represents predicting the three classes with equal probability (i.e.,
 # 1/3, 1/3, 1/3). Each arrow starts at the uncalibrated probabilities and end
-# with the arrow head at the calibrated probability. The color of the arrow
+# with the arrow head at the calibrated probabilities. The color of the arrow
 # represents the true class of that test sample.
 #
-# First, notice in the figure above that the arrows generally point away from
-# the edges of the simplex, where the probability of one class is 0. Second, a
-# large proportion of the arrows point towards the true class, e.g., green
-# arrows (samples where the true class is 'green') generally point towards the
-# green vertex. This results in fewer over-confident, 0 predicted probabilities
-# and at the same time an increase in the predicted probabilities of the
-# correct class.
+# Notice in the figure above that the arrows generally point away from
+# the edges of the simplex, where the probability of one class is 0.
+# This results in fewer over-confident (near 0 or 1) predicted probabilities.
 #
-# We can show this objectively by comparing the :ref:`log loss <log_loss>` of
-# the uncalibrated and calibrated classifiers on the predictions of the test
+# In this example, the recalibration yields an overall better model. We can show
+# this objectively by comparing the :ref:`log loss <log_loss>` (lower is better)
+# of the uncalibrated and calibrated classifiers on the predictions of the test
 # data points. Note that an alternative would have been to increase the number
 # of base estimators (trees) of the
-# :class:`~sklearn.ensemble.RandomForestClassifier` which could have resulted
-# in a similar decrease in :ref:`log loss <log_loss>`.
+# :class:`~sklearn.ensemble.RandomForestClassifier` which could have resulted in
+# a similar decrease in :ref:`log loss <log_loss>`.
 
 from sklearn.metrics import log_loss
 
@@ -223,7 +220,7 @@ print(f" - uncalibrated classifier: {loss:.3f}")
 print(f" - calibrated classifier: {cal_loss:.3f}")
 
 # %%
-# We can also assess calibration with the Brier score for probabilistic
+# We can also assess model quality with the Brier score for probabilistic
 # predictions (lower is better, possible range is [0, 2]):
 
 from sklearn.metrics import brier_score_loss
@@ -243,7 +240,7 @@ print(f" - calibrated classifier: {cal_loss:.3f}")
 # always guaranteed since the calibration set is finite and sometimes the base
 # classifier is already well calibrated.
 #
-# Finally, we generate a grid of possible uncalibrated probabilities over the
+# Finally, we generate a grid of uncalibrated probabilities over the
 # 2-simplex, compute the corresponding calibrated probabilities and plot arrows
 # for each. The arrows are colored according the highest uncalibrated
 # probability. This illustrates the learned calibration map:
@@ -387,8 +384,8 @@ for classifier_idx, (name, base_clf) in enumerate(base_classifiers.items()):
 # We observe the following:
 #
 # - Some estimators such as highly regularized polynomial classifiers and
-#   shallow tree-based models tend to be under-confident by default and both
-#   kinds of post-hoc calibration move the predictions towards the edges or the
+#   shallow tree-based models tend to be under-confident by default and each
+#   kind of post-hoc calibration moves the predictions towards the edges or the
 #   corners of the simplex.
 #
 # - On the contrary, deep tree-based models and lowly regularized polynomial
