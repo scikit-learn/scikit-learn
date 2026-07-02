@@ -29,6 +29,8 @@ from sklearn.utils import (
     column_or_1d,
 )
 from sklearn.utils._array_api import (
+    _average,
+    _isin,
     _max_precision_float_dtype,
     get_namespace,
     get_namespace_and_device,
@@ -2159,8 +2161,10 @@ def top_k_accuracy_score(
     """
     y_true = check_array(y_true, ensure_2d=False, dtype=None)
     y_true = column_or_1d(y_true)
+    if labels is not None:
+        labels = column_or_1d(labels)
     y_type = type_of_target(y_true, input_name="y_true")
-    if y_type == "binary" and labels is not None and len(labels) > 2:
+    if y_type == "binary" and labels is not None and size(labels) > 2:
         y_type = "multiclass"
     if y_type not in {"binary", "multiclass"}:
         raise ValueError(
@@ -2183,12 +2187,13 @@ def top_k_accuracy_score(
                 f"`y_score.shape={y_score.shape}`."
             )
 
+    xp, _, device_ = get_namespace_and_device(y_true, y_score)
     check_consistent_length(y_true, y_score, sample_weight)
     y_score_n_classes = y_score.shape[1] if y_score.ndim == 2 else 2
 
     if labels is None:
         classes = _unique(y_true)
-        n_classes = len(classes)
+        n_classes = classes.shape[0]
 
         if n_classes != y_score_n_classes:
             raise ValueError(
@@ -2198,15 +2203,15 @@ def top_k_accuracy_score(
                 "to the `labels` parameter."
             )
     else:
-        labels = column_or_1d(labels)
+        labels = xp.asarray(labels, device=device_)
         classes = _unique(labels)
-        n_labels = len(labels)
-        n_classes = len(classes)
+        n_labels = labels.shape[0]
+        n_classes = classes.shape[0]
 
         if n_classes != n_labels:
             raise ValueError("Parameter 'labels' must be unique.")
 
-        if not np.array_equal(classes, labels):
+        if bool(xp.any(classes != labels)):
             raise ValueError("Parameter 'labels' must be ordered.")
 
         if n_classes != y_score_n_classes:
@@ -2215,7 +2220,7 @@ def top_k_accuracy_score(
                 f"number of classes in 'y_score' ({y_score_n_classes})."
             )
 
-        if len(np.setdiff1d(y_true, classes)):
+        if bool(xp.any(_isin(y_true, classes, xp, invert=True))):
             raise ValueError("'y_true' contains labels not in parameter 'labels'.")
 
     if k >= n_classes:
@@ -2231,21 +2236,22 @@ def top_k_accuracy_score(
 
     if y_type == "binary":
         if k == 1:
-            threshold = 0.5 if y_score.min() >= 0 and y_score.max() <= 1 else 0
-            y_pred = (y_score > threshold).astype(np.int64)
+            threshold = (
+                0.5 if bool(xp.min(y_score) >= 0) and bool(xp.max(y_score) <= 1) else 0
+            )
+            y_pred = xp.astype(y_score > threshold, xp.int64)
             hits = y_pred == y_true_encoded
         else:
-            hits = np.ones_like(y_score, dtype=np.bool_)
+            hits = xp.ones_like(y_score, dtype=xp.bool)
     elif y_type == "multiclass":
-        sorted_pred = np.argsort(y_score, axis=1, kind="mergesort")[:, ::-1]
-        hits = (y_true_encoded == sorted_pred[:, :k].T).any(axis=0)
+        # To keep the documented tie-breaking behavior (ties are resolved in
+        # favor of the highest index), flip an ascending stable sort rather
+        # than using a stable descending sort, which would resolve ties in
+        # favor of the lowest index.
+        sorted_pred = xp.flip(xp.argsort(y_score, axis=1, stable=True), axis=1)
+        hits = xp.any(y_true_encoded == sorted_pred[:, :k].T, axis=0)
 
-    if normalize:
-        return float(np.average(hits, weights=sample_weight))
-    elif sample_weight is None:
-        return float(np.sum(hits))
-    else:
-        return float(np.dot(hits, sample_weight))
+    return float(_average(hits, weights=sample_weight, normalize=normalize, xp=xp))
 
 
 @validate_params(
