@@ -235,7 +235,7 @@ jobs:
           fi
 
       - name: Create cache for ccache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ${{ env.CCACHE_DIR }}
           key: ccache-v1-${{ env.JOB_NAME }}-${{ hashFiles('**/*.pyx*', '**/*.pxd*', '**/*.pxi*', '**/*.h', '**/*.c', '**/*.cpp', format('{0}', env.LOCK_FILE)) }}
@@ -294,7 +294,7 @@ jobs:
         if: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
 
       - name: Upload coverage report to Codecov
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         if: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
         with:
           files: ./coverage.xml
@@ -365,7 +365,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Create cache for ccache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ${{ env.CCACHE_DIR }}
           key: ccache-v1-${{ env.JOB_NAME }}-${{ hashFiles('**/*.pyx*', '**/*.pxd*', '**/*.pxi*', '**/*.h', '**/*.c', '**/*.cpp', format('{0}', env.LOCK_FILE)) }}
@@ -453,7 +453,7 @@ jobs:
         if: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
 
       - name: Upload coverage report to Codecov
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         if: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
         with:
           files: ./coverage.xml
