@@ -16,6 +16,7 @@ from sklearn.metrics import (
     average_precision_score,
     balanced_accuracy_score,
     brier_score_loss,
+    class_likelihood_ratios,
     classification_report,
     cohen_kappa_score,
     confusion_matrix,
@@ -2120,7 +2121,7 @@ def check_array_api_metric(
         # e.g. precision_recall_curve:
         if (
             isinstance(metric_np, tuple)
-            and len(set([metric_val.shape for metric_val in metric_np])) > 1
+            and len({getattr(metric_val, "shape", ()) for metric_val in metric_np}) > 1
         ):
             _check_each_metric_matches(metric_xp, metric_np)
 
@@ -2522,6 +2523,9 @@ array_api_metric_checkers = {
     balanced_accuracy_score: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
+    ],
+    class_likelihood_ratios: [
+        check_array_api_binary_classification_metric,
     ],
     cohen_kappa_score: [
         check_array_api_binary_classification_metric,
