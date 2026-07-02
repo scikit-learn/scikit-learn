@@ -1,0 +1,7 @@
+- :class:`model_selection.TunedThresholdClassifierCV` with ``refit=False`` and a
+  float ``cv`` now computes the train/validation split once and reuses it, so the
+  fitted ``estimator_`` and the tuned decision threshold are calibrated on the same
+  data. Previously the split was drawn twice, which with the default
+  ``random_state=None`` could fit ``estimator_`` on a different split than the one
+  used to tune the threshold.
+  By :user:`Gunjan Jaswal <gunjanjaswal>`.
