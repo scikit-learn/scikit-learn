@@ -4,7 +4,13 @@ import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
 
-from sklearn.utils._encode import _check_unknown, _encode, _get_counts, _unique
+from sklearn.utils._encode import (
+    _check_unknown,
+    _encode,
+    _get_counts,
+    _unique,
+    _unique_categorical,
+)
 
 
 @pytest.mark.parametrize(
@@ -202,6 +208,41 @@ def test_unique_util_missing_values_numeric():
     assert_array_equal(encoded, expected_inverse)
 
 
+def test_unique_categorical_pandas():
+    pd = pytest.importorskip("pandas")
+
+    values = pd.Series(
+        ["a", None, "b", "a"],
+        dtype=pd.CategoricalDtype(["b", "a", "c"]),
+    )
+    expected_uniques = np.array(["a", "b", "c", np.nan], dtype=object)
+
+    uniques, inverse, counts = _unique_categorical(
+        values, return_inverse=True, return_counts=True
+    )
+
+    assert_array_equal(uniques[:-1], expected_uniques[:-1])
+    assert np.isnan(uniques[-1])
+    assert_array_equal(inverse, [0, 3, 1, 0])
+    assert_array_equal(counts, [2, 1, 0, 1])
+
+
+def test_unique_categorical_polars():
+    pl = pytest.importorskip("polars")
+
+    values = pl.Series("x", ["a", None, "b", "a"], dtype=pl.Enum(["b", "a", "c"]))
+    expected_uniques = np.array(["a", "b", "c", np.nan], dtype=object)
+
+    uniques, inverse, counts = _unique_categorical(
+        values, return_inverse=True, return_counts=True
+    )
+
+    assert_array_equal(uniques[:-1], expected_uniques[:-1])
+    assert np.isnan(uniques[-1])
+    assert_array_equal(inverse, [0, 3, 1, 0])
+    assert_array_equal(counts, [2, 1, 0, 1])
+
+
 def test_unique_util_with_all_missing_values():
     # test for all types of missing values for object dtype
     values = np.array([np.nan, "a", "c", "c", None, float("nan"), None], dtype=object)
@@ -214,6 +255,9 @@ def test_unique_util_with_all_missing_values():
     expected_inverse = [3, 0, 1, 1, 2, 3, 2]
     _, inverse = _unique(values, return_inverse=True)
     assert_array_equal(inverse, expected_inverse)
+
+    _, counts = _unique(values, return_counts=True)
+    assert len(values) == sum(counts)
 
 
 def test_check_unknown_with_both_missing_values():
@@ -231,6 +275,10 @@ def test_check_unknown_with_both_missing_values():
     assert diff[0] is None
     assert np.isnan(diff[1])
     assert_array_equal(valid_mask, [False, True, True, True, False, False, False])
+
+
+NAN1 = float("nan")
+NAN2 = float("nan")
 
 
 @pytest.mark.parametrize(
@@ -266,6 +314,17 @@ def test_check_unknown_with_both_missing_values():
             np.array(["b"] * 4 + ["a"] * 16 + ["c"] * 20, dtype=object),
             ["a", "b", "c", "e"],
             [16, 4, 20, 0],
+        ),
+        # Before #34385 was fixed, the result was [2, 6, 6, 6]. In practice, in
+        # most cases only np.nan would be present, so this probably wasn't
+        # impactful.
+        (
+            np.array(
+                ["a", np.nan, NAN1, np.nan, NAN2, NAN1, np.nan, "a"],
+                dtype=object,
+            ),
+            ["a", np.nan, NAN1, NAN2],
+            [2, 3, 2, 1],
         ),
     ],
 )

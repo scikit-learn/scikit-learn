@@ -2,9 +2,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from collections import Counter
-from contextlib import suppress
 from typing import NamedTuple
 
+import narwhals.stable.v2 as nw
 import numpy as np
 
 from sklearn.utils._array_api import _isin, device, get_namespace, xpx
@@ -194,6 +194,58 @@ def _unique_python(values, *, return_inverse, return_counts):
     return ret[0] if len(ret) == 1 else ret
 
 
+def _get_categorical_categories_and_codes(values):
+    """Return categorical categories, integer codes, and the missing value mask."""
+    if hasattr(values, "cat") and hasattr(values.cat, "categories"):
+        categories = values.cat.categories.to_numpy()
+        codes = values.cat.codes.to_numpy()
+        isna = codes == -1
+        return categories, codes, isna
+
+    values = nw.from_native(values, allow_series=True)
+    categories = values.cat.get_categories().to_numpy()
+
+    codes = values.cast(nw.UInt32).to_numpy()
+    isna = (
+        np.isnan(codes) if codes.dtype.kind == "f" else np.zeros_like(codes, dtype=bool)
+    )
+
+    codes_no_missing = np.zeros_like(codes, dtype=int)
+    codes_no_missing[~isna] = codes[~isna].astype(int)
+    return categories, codes_no_missing, isna
+
+
+def _unique_categorical(values, *, return_inverse, return_counts):
+    categorical_categories, codes, isna = _get_categorical_categories_and_codes(values)
+    uniques = _unique(categorical_categories)
+    if np.array_equal(categorical_categories, uniques):
+        code_mapping = None
+    else:
+        code_mapping = _encode(
+            categorical_categories, uniques=uniques, check_unknown=False
+        )
+    has_missing = isna.any()
+    if has_missing:
+        uniques = uniques.astype(object, copy=False)
+        uniques = np.r_[uniques, np.nan]
+    if not return_inverse and not return_counts:
+        return uniques
+
+    codes = codes.copy()
+    if code_mapping is not None:
+        codes[~isna] = code_mapping[codes[~isna]]
+    if has_missing:
+        codes[isna] = uniques.size - 1
+
+    ret = (uniques,)
+    if return_inverse:
+        ret += (codes,)
+    if return_counts:
+        ret += (np.bincount(codes, minlength=uniques.size),)
+
+    return ret
+
+
 def _encode(values, *, uniques, check_unknown=True):
     """Helper function to encode values into [0, n_uniques - 1].
 
@@ -321,40 +373,26 @@ def _check_unknown(values, known_values, return_mask=False):
     return diff
 
 
-class _NaNCounter(Counter):
-    """Counter with support for nan values."""
-
-    def __init__(self, items):
-        super().__init__(self._generate_items(items))
-
-    def _generate_items(self, items):
-        """Generate items without nans. Stores the nan counts separately."""
-        for item in items:
-            if not is_scalar_nan(item):
-                yield item
-                continue
-            if not hasattr(self, "nan_count"):
-                self.nan_count = 0
-            self.nan_count += 1
-
-    def __missing__(self, key):
-        if hasattr(self, "nan_count") and is_scalar_nan(key):
-            return self.nan_count
-        raise KeyError(key)
-
-
 def _get_counts(values, uniques):
     """Get the count of each of the `uniques` in `values`.
 
     The counts will use the order passed in by `uniques`. For non-object dtypes,
     `uniques` is assumed to be sorted and `np.nan` is at the end.
+
+    This code makes the assumption that:
+    `any(is_scalar_nan(v) for v in uniques[:-1]) is False`
     """
     if values.dtype.kind in "OU":
-        counter = _NaNCounter(values)
+        counter = Counter(values)
         output = np.zeros(len(uniques), dtype=np.int64)
         for i, item in enumerate(uniques):
-            with suppress(KeyError):
-                output[i] = counter[item]
+            output[i] = counter[item]
+        if is_scalar_nan(uniques[-1]) and not any(
+            is_scalar_nan(item) for item in uniques[:-1]
+        ):
+            output[-1] = sum(
+                val for item, val in counter.items() if is_scalar_nan(item)
+            )
         return output
 
     unique_values, counts = _unique_np(values, return_counts=True)
