@@ -1050,6 +1050,28 @@ def test_matthews_corrcoef_against_jurman(global_random_seed):
     assert_almost_equal(mcc_ours, mcc_jurman, 10)
 
 
+@pytest.mark.parametrize(
+    ("metric_kwargs", "expected_score"),
+    [
+        ({}, np.nan),
+        ({"replace_undefined_by": 0.0}, 0.0),
+    ],
+)
+def test_matthews_corrcoef_replace_undefined_by(metric_kwargs, expected_score):
+    with pytest.warns(
+        UndefinedMetricWarning,
+        match="`y_true` or `y_pred` has zero variance",
+    ):
+        score = matthews_corrcoef(
+            [0, 0, 0],
+            [1, 1, 1],
+            **metric_kwargs,
+        )
+
+    assert_allclose(score, expected_score, equal_nan=True)
+
+
+@ignore_warnings(category=UndefinedMetricWarning)
 def test_matthews_corrcoef(global_random_seed):
     rng = np.random.RandomState(global_random_seed)
     y_true = ["a" if i == 0 else "b" for i in rng.randint(0, 2, size=20)]
@@ -1065,12 +1087,18 @@ def test_matthews_corrcoef(global_random_seed):
     y_true_inv2 = np.where(y_true_inv2, "a", "b")
     assert_almost_equal(matthews_corrcoef(y_true, y_true_inv2), -1)
 
-    # For the zero vector case, the corrcoef cannot be calculated and should
-    # output 0
-    assert_almost_equal(matthews_corrcoef([0, 0, 0, 0], [0, 0, 0, 0]), 0.0)
+    # For the zero vector case, the corrcoef cannot be calculated and can be
+    # set to 0
+    assert_almost_equal(
+        matthews_corrcoef([0, 0, 0, 0], [0, 0, 0, 0], replace_undefined_by=0.0),
+        0.0,
+    )
 
     # And also for any other vector with 0 variance
-    assert_almost_equal(matthews_corrcoef(y_true, ["a"] * len(y_true)), 0.0)
+    assert_almost_equal(
+        matthews_corrcoef(y_true, ["a"] * len(y_true), replace_undefined_by=0.0),
+        0.0,
+    )
 
     # These two vectors have 0 correlation and hence mcc should be 0
     y_1 = [1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1]
@@ -1085,6 +1113,7 @@ def test_matthews_corrcoef(global_random_seed):
         assert_almost_equal(matthews_corrcoef(y_1, y_2, sample_weight=mask), 0.0)
 
 
+@ignore_warnings(category=UndefinedMetricWarning)
 def test_matthews_corrcoef_multiclass(global_random_seed):
     rng = np.random.RandomState(global_random_seed)
     ord_a = ord("a")
@@ -1105,15 +1134,19 @@ def test_matthews_corrcoef_multiclass(global_random_seed):
     y_pred_min = [1, 1, 0, 0, 0, 0]
     assert_almost_equal(matthews_corrcoef(y_true, y_pred_min), -12 / np.sqrt(24 * 16))
 
-    # Zero variance will result in an mcc of zero
+    # Zero variance can result in an mcc of zero
     y_true = [0, 1, 2]
     y_pred = [3, 3, 3]
-    assert_almost_equal(matthews_corrcoef(y_true, y_pred), 0.0)
+    assert_almost_equal(
+        matthews_corrcoef(y_true, y_pred, replace_undefined_by=0.0), 0.0
+    )
 
     # Also for ground truth with zero variance
     y_true = [3, 3, 3]
     y_pred = [0, 1, 2]
-    assert_almost_equal(matthews_corrcoef(y_true, y_pred), 0.0)
+    assert_almost_equal(
+        matthews_corrcoef(y_true, y_pred, replace_undefined_by=0.0), 0.0
+    )
 
     # These two vectors have 0 correlation and hence mcc should be 0
     y_1 = [0, 1, 2, 0, 1, 2, 0, 1, 2]
@@ -1131,13 +1164,19 @@ def test_matthews_corrcoef_multiclass(global_random_seed):
         matthews_corrcoef(y_true, y_pred, sample_weight=sample_weight), -1
     )
 
-    # For the zero vector case, the corrcoef cannot be calculated and should
-    # output 0
+    # For the zero vector case, the corrcoef cannot be calculated and can be
+    # set to 0
     y_true = [0, 0, 1, 2]
     y_pred = [0, 0, 1, 2]
     sample_weight = [1, 1, 0, 0]
     assert_almost_equal(
-        matthews_corrcoef(y_true, y_pred, sample_weight=sample_weight), 0.0
+        matthews_corrcoef(
+            y_true,
+            y_pred,
+            sample_weight=sample_weight,
+            replace_undefined_by=0.0,
+        ),
+        0.0,
     )
 
 
