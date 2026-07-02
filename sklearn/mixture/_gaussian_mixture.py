@@ -527,11 +527,16 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type, xp=N
             log_prob[:, k] = xp.sum(xp.square(y), axis=1)
 
     elif covariance_type == "tied":
-        log_prob = xp.empty((n_samples, n_components), dtype=X.dtype, device=device_)
-        for k in range(means.shape[0]):
-            mu = means[k, :]
-            y = (X @ precisions_chol) - (mu @ precisions_chol)
-            log_prob[:, k] = xp.sum(xp.square(y), axis=1)
+        # In the tied case all components share precisions_chol, so project X
+        # and the means once and expand ||Xp - mu_proj||**2 (as in the diag and
+        # spherical branches below).
+        Xp = X @ precisions_chol
+        mu_proj = means @ precisions_chol
+        log_prob = (
+            row_norms(mu_proj, squared=True)
+            - 2.0 * (Xp @ mu_proj.T)
+            + row_norms(Xp, squared=True)[:, xp.newaxis]
+        )
 
     elif covariance_type == "diag":
         precisions = precisions_chol**2
