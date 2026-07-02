@@ -1995,8 +1995,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         The estimator that provides the initial predictions. Set via the ``init``
         argument.
 
-    estimators_ : ndarray of DecisionTreeRegressor of shape (n_estimators, 1)
-        The collection of fitted sub-estimators.
+    estimators_ : ndarray of DecisionTreeRegressor of shape \
+            (n_estimators, ``n_trees_per_iteration_``)
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
