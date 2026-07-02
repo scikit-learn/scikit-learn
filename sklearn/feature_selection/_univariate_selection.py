@@ -377,7 +377,9 @@ def r_regression(X, y, *, center=True, force_finite=True):
         X_means = X.mean(axis=0)
         X_means = X_means.getA1() if isinstance(X_means, np.matrix) else X_means
         # Compute the scaled standard deviations via moments
-        X_norms = np.sqrt(row_norms(X.T, squared=True) - n_samples * X_means**2)
+        X_norms = row_norms(X.T, squared=True) - n_samples * X_means**2
+        np.maximum(X_norms, 0, out=X_norms)
+        np.sqrt(X_norms, out=X_norms)
     else:
         X_norms = row_norms(X.T)
 
