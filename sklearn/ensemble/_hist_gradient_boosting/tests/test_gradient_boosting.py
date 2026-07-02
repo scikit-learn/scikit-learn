@@ -51,6 +51,44 @@ X_multi_classification, y_multi_classification = make_classification(
 )
 
 
+@pytest.mark.parametrize(
+    "n_samples, n_features, max_threads, expected_n_threads",
+    [
+        (100, 10, 8, 1),
+        (1_000, 100, 8, 1),
+        (10_000, 100, 8, 8),
+        (10_000, 100, 4, 4),
+        (10_000, 1, 8, 1),
+    ],
+)
+def test_adjust_n_threads_for_small_hgb(
+    n_samples, n_features, max_threads, expected_n_threads
+):
+    assert (
+        hgb_module._adjust_n_threads_for_small_hgb(
+            n_samples=n_samples,
+            n_features=n_features,
+            max_threads=max_threads,
+        )
+        == expected_n_threads
+    )
+
+
+def test_fit_adjusts_n_threads_for_small_hgb(monkeypatch):
+    X = X_regression[:50]
+    y = y_regression[:50]
+    adjust_n_threads = Mock(return_value=1)
+
+    monkeypatch.setattr(hgb_module, "_openmp_effective_n_threads", Mock(return_value=8))
+    monkeypatch.setattr(hgb_module, "_adjust_n_threads_for_small_hgb", adjust_n_threads)
+
+    HistGradientBoostingRegressor(max_iter=1, random_state=0).fit(X, y)
+
+    adjust_n_threads.assert_called_once_with(
+        n_samples=X.shape[0], n_features=X.shape[1], max_threads=8
+    )
+
+
 def _make_dumb_dataset(n_samples):
     """Make a dumb dataset to test early stopping."""
     rng = np.random.RandomState(42)
