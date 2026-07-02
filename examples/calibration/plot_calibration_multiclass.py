@@ -248,10 +248,10 @@ print(f" - calibrated classifier: {cal_loss:.3f}")
 # for each. The arrows are colored according the highest uncalibrated
 # probability. This illustrates the learned calibration map:
 
-from scipy.special import logit
+from sklearn.calibration import _ensure_logits
 
 
-def plot_calibrator_map(ovr_calibrators, **kwargs):
+def plot_calibrator_map(cal_clf, **kwargs):
     # Generate grid of probability values
     eps = np.finfo(np.float64).eps
     p1d = np.linspace(0, 1, 21)
@@ -259,30 +259,34 @@ def plot_calibrator_map(ovr_calibrators, **kwargs):
     p2 = 1 - p0 - p1
     original_probability = np.c_[p0.ravel(), p1.ravel(), p2.ravel()]
     original_probability = original_probability[original_probability[:, 2] >= 0]
-    original_probability = original_probability.clip(0 + eps, 1 - eps)
+    original_probability = original_probability.clip(eps, 1 - eps)
 
-    # Map the probabilities to the Bernoulli logits space used by scikit-learn OvR
-    # calibrators.
-    sigmoid_logits = np.concatenate(
-        [
-            logit(original_probability[:, class_idx])[:, np.newaxis]
-            for class_idx in range(original_probability.shape[1])
-        ],
-        axis=1,
+    method = cal_clf.method
+    calibrators = cal_clf.calibrated_classifiers_[0].calibrators
+    logits = _ensure_logits(
+        original_probability, response_method_name="predict_proba", method=method
     )
 
-    # Use the three class-wise OvR calibrators to compute calibrated probabilities.
-    calibrated_predictions = np.vstack(
-        [
-            calibrator.predict(logit_for_class)
-            for calibrator, logit_for_class in zip(ovr_calibrators, sigmoid_logits.T)
-        ]
-    ).T
+    if method in ("sigmoid", "isotonic"):
+        # Use the class-wise OvR calibrators to compute calibrated probabilities.
+        calibrated_predictions = np.vstack(
+            [
+                calibrator.predict(logit_for_class)
+                for calibrator, logit_for_class in zip(calibrators, logits.T)
+            ]
+        ).T
+        # Re-normalize the calibrated predictions to make sure they stay inside the
+        # simplex. This same renormalization step is performed internally by the
+        # predict method of CalibratedClassifierCV on multiclass problems.
+        calibrated_predictions /= calibrated_predictions.sum(axis=1)[:, None]
+    elif method == "temperature":
+        calibrated_predictions = calibrators[0].predict(logits)
+    else:
+        raise ValueError(
+            f"Unknown calibration method: {method}. "
+            "Expected 'sigmoid', 'isotonic', or 'temperature'."
+        )
 
-    # Re-normalize the calibrated predictions to make sure they stay inside the
-    # simplex. This same renormalization step is performed internally by the
-    # predict method of CalibratedClassifierCV on multiclass problems.
-    calibrated_predictions /= calibrated_predictions.sum(axis=1)[:, None]
     plot_simplex(
         original_probability,
         calibrated_predictions,
@@ -291,7 +295,7 @@ def plot_calibrator_map(ovr_calibrators, **kwargs):
     )
 
 
-plot_calibrator_map(cal_clf.calibrated_classifiers_[0].calibrators)
+plot_calibrator_map(cal_clf)
 
 
 # %%
@@ -308,10 +312,11 @@ plot_calibrator_map(cal_clf.calibrated_classifiers_[0].calibrators)
 # %%
 #
 # Let's now do the same for various classifiers with different mis-calibration
-# profiles and the two calibration methods available in
-# `CalibratedClassifierCV`, namely, "sigmoid" and "isotonic". Both methods are
-# implemented via an One-vs-Rest reduction to binary calibration followed by
-# sum-to-one normalization).
+# profiles and the three calibration methods available in
+# `CalibratedClassifierCV`, namely, "sigmoid", "isotonic", and "temperature".
+# Sigmoid and isotonic methods are implemented via an One-vs-Rest reduction to
+# binary calibration followed by sum-to-one normalization. Temperature scaling
+# fits a single temperature parameter on multinomial logits.
 
 from collections import defaultdict
 
@@ -338,11 +343,11 @@ base_classifiers = {
     "Gaussian Naive Bayes": GaussianNB(),
 }
 
-calibration_methods = ["sigmoid", "isotonic"]
+calibration_methods = ["sigmoid", "isotonic", "temperature"]
 fig, axes = plt.subplots(
     nrows=len(base_classifiers),
     ncols=len(calibration_methods),
-    figsize=(10, 5 * len(base_classifiers)),
+    figsize=(15, 5 * len(base_classifiers)),
     tight_layout=True,
 )
 
@@ -358,7 +363,7 @@ for classifier_idx, (name, base_clf) in enumerate(base_classifiers.items()):
         cal_clf.fit(X_cal, y_cal)
         y_pred_cal = cal_clf.predict_proba(X_test)
         plot_calibrator_map(
-            cal_clf.calibrated_classifiers_[0].calibrators,
+            cal_clf,
             title=f"{name} - {calibration_method}",
             annotate=False,
             ax=axes[classifier_idx, method_idx],
@@ -410,6 +415,10 @@ for classifier_idx, (name, base_clf) in enumerate(base_classifiers.items()):
 #   points in the simplex. This effect is more pronounced with smaller
 #   calibration sets.
 #
+# - The temperature scaling method applies a single global rescaling of the
+#   multinomial logits. This induces a smooth mapping that preserves the
+#   ranking of the predicted classes while adjusting their confidence.
+#
 # Let us now consider the quantitative evaluation results of the available
 # calibration methods:
 
@@ -418,20 +427,22 @@ reordered_columns = [
     "Log-loss (original)",
     "Log-loss (sigmoid)",
     "Log-loss (isotonic)",
+    "Log-loss (temperature)",
     "Brier score (original)",
     "Brier score (sigmoid)",
     "Brier score (isotonic)",
+    "Brier score (temperature)",
 ]
 pd.DataFrame(scores.values())[reordered_columns].round(3)
 
 # %%
 #
-# The table above shows that the sigmoid calibration method improves both the
-# log-loss and the Brier score for most classifiers on this task. The results
-# for the isotonic calibration method are more mixed. This could be due to the
-# small size of the calibration set: the extra flexibility of the isotonic
-# calibration method does not seem to be beneficial in this case and the
-# discrete nature of the calibration map can even be detrimental.
+# The table above shows that the sigmoid and temperature calibration methods
+# improve both the log-loss and the Brier score for most classifiers on this
+# task. The results for the isotonic calibration method are more mixed. This
+# could be due to the small size of the calibration set: the extra flexibility
+# of the isotonic calibration method does not seem to be beneficial in this
+# case and the discrete nature of the calibration map can even be detrimental.
 #
 # To conclude, the One-vs-Rest multiclass-calibration strategies implemented in
 # `CalibratedClassifierCV` should not be trusted blindly and it's important to
