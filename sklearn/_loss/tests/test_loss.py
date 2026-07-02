@@ -1454,9 +1454,12 @@ def test_loss_array_api(
 
     method = getattr(loss_instance, method_name)
     array_api_method = getattr(array_api_loss_instance, method_name)
-    result_np = method(
-        y_true=y_true, raw_prediction=raw_prediction, sample_weight=sample_weight_np
-    )
+    with config_context(array_api_dispatch=False):
+        result_np = method(
+            y_true=y_true,
+            raw_prediction=raw_prediction,
+            sample_weight=sample_weight_np,
+        )
     with config_context(array_api_dispatch=True):
         result_xp = array_api_method(
             y_true=y_true_xp,

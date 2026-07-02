@@ -1367,9 +1367,11 @@ def test_array_api_train_test_split(
     y_np = y.astype(dtype_name)
     y_xp = xp.asarray(y_np, device=device)
 
-    X_train_np, X_test_np, y_train_np, y_test_np = train_test_split(
-        X_np, y, random_state=0, shuffle=shuffle, stratify=stratify
-    )
+    with config_context(array_api_dispatch=False):
+        X_train_np, X_test_np, y_train_np, y_test_np = train_test_split(
+            X_np, y, random_state=0, shuffle=shuffle, stratify=stratify
+        )
+
     with config_context(array_api_dispatch=True):
         if stratify is not None:
             stratify_xp = xp.asarray(stratify)

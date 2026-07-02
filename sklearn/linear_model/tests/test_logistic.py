@@ -2775,19 +2775,21 @@ def test_logistic_regression_array_api_compliance(
     lr_params = dict(
         C=1e-2, solver="lbfgs", tol=1e-12, max_iter=500, class_weight=class_weight
     )
-    with warnings.catch_warnings():
-        # Make sure that we converge in the reference fit.
-        lr_np = LogisticRegression(**lr_params).fit(
-            X_np, y_np, sample_weight=sample_weight
-        )
-        assert lr_np.n_iter_ < lr_np.max_iter
 
-    # Test that C was not too large for meaningful testing.
-    assert np.abs(lr_np.coef_).max() > 0.1
+    with config_context(array_api_dispatch=False):
+        with warnings.catch_warnings():
+            # Make sure that we converge in the reference fit.
+            lr_np = LogisticRegression(**lr_params).fit(
+                X_np, y_np, sample_weight=sample_weight
+            )
+            assert lr_np.n_iter_ < lr_np.max_iter
 
-    predict_proba_np = lr_np.predict_proba(X_np)
-    preditct_log_proba_np = lr_np.predict_log_proba(X_np)
-    prediction_np = lr_np.predict(X_np)
+        # Test that C was not too large for meaningful testing.
+        assert np.abs(lr_np.coef_).max() > 0.1
+
+        predict_proba_np = lr_np.predict_proba(X_np)
+        preditct_log_proba_np = lr_np.predict_log_proba(X_np)
+        prediction_np = lr_np.predict(X_np)
     # TODO: those tolerance levels seem quite high. Investigate further if we
     # can hunt down the numerical discrepancies more precisely.
     atol = _atol_for_type(dtype_name) * 10

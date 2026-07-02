@@ -942,9 +942,10 @@ def check_array_api_get_precision(
     iris_np = iris.data.astype(dtype_name)
     iris_xp = xp.asarray(iris_np, device=device)
 
-    estimator.fit(iris_np)
-    precision_np = estimator.get_precision()
-    covariance_np = estimator.get_covariance()
+    with config_context(array_api_dispatch=False):
+        estimator.fit(iris_np)
+        precision_np = estimator.get_precision()
+        covariance_np = estimator.get_covariance()
 
     rtol = 2e-4 if iris_np.dtype == "float32" else 2e-7
     with config_context(array_api_dispatch=True):
@@ -1057,10 +1058,11 @@ def test_pca_mle_array_api_compliance(
     X_xp = xp.asarray(X, device=device)
     y_xp = xp.asarray(y, device=device)
 
-    est.fit(X, y)
+    with config_context(array_api_dispatch=False):
+        est.fit(X, y)
 
-    components_np = est.components_
-    explained_variance_np = est.explained_variance_
+        components_np = est.components_
+        explained_variance_np = est.explained_variance_
 
     est_xp = clone(est)
     with config_context(array_api_dispatch=True):

@@ -1302,14 +1302,16 @@ def test_temperature_scaling_array_api_compliance(
     else:
         sample_weight = None
 
-    clf_np = LinearDiscriminantAnalysis()
-    clf_np.fit(X_train, y_train)
-    cal_clf_np = CalibratedClassifierCV(
-        FrozenEstimator(clf_np), cv=3, method="temperature", ensemble=ensemble
-    ).fit(X_cal, y_cal, sample_weight=sample_weight)
+    with config_context(array_api_dispatch=False):
+        clf_np = LinearDiscriminantAnalysis()
+        clf_np.fit(X_train, y_train)
+        cal_clf_np = CalibratedClassifierCV(
+            FrozenEstimator(clf_np), cv=3, method="temperature", ensemble=ensemble
+        ).fit(X_cal, y_cal, sample_weight=sample_weight)
 
-    calibrator_np = cal_clf_np.calibrated_classifiers_[0].calibrators[0]
-    pred_np = cal_clf_np.predict(X_train)
+        calibrator_np = cal_clf_np.calibrated_classifiers_[0].calibrators[0]
+        pred_np = cal_clf_np.predict(X_train)
+
     with config_context(array_api_dispatch=True):
         clf_xp = LinearDiscriminantAnalysis()
         clf_xp.fit(X_train_xp, y_train_xp)
@@ -1371,15 +1373,17 @@ def test_temperature_scaling_array_api_with_str_y_estimator_not_prefit(
     else:
         sample_weight = None
 
-    cal_clf_np = CalibratedClassifierCV(
-        estimator=LinearDiscriminantAnalysis(),
-        cv=3,
-        method="temperature",
-        ensemble=ensemble,
-    ).fit(X, y_str, sample_weight=sample_weight)
+    with config_context(array_api_dispatch=False):
+        cal_clf_np = CalibratedClassifierCV(
+            estimator=LinearDiscriminantAnalysis(),
+            cv=3,
+            method="temperature",
+            ensemble=ensemble,
+        ).fit(X, y_str, sample_weight=sample_weight)
 
-    calibrator_np = cal_clf_np.calibrated_classifiers_[0].calibrators[0]
-    pred_np = cal_clf_np.predict(X)
+        calibrator_np = cal_clf_np.calibrated_classifiers_[0].calibrators[0]
+        pred_np = cal_clf_np.predict(X)
+
     with config_context(array_api_dispatch=True):
         cal_clf_xp = CalibratedClassifierCV(
             estimator=LinearDiscriminantAnalysis(),
