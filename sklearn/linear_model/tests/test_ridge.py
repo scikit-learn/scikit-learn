@@ -31,7 +31,12 @@ from sklearn.linear_model._ridge import (
     _solve_svd,
     _X_CenterStackOp,
 )
-from sklearn.metrics import get_scorer, make_scorer, mean_squared_error
+from sklearn.metrics import (
+    explained_variance_score,
+    get_scorer,
+    make_scorer,
+    mean_squared_error,
+)
 from sklearn.model_selection import (
     GridSearchCV,
     GroupKFold,
@@ -1011,14 +1016,17 @@ def test_regularization_limits_ridge_gcv(
 
 
 def test_ridge_loo_cv_asym_scoring():
-    # checking on asymmetric scoring
+    # Non-regression test for gh-16041: with an asymmetric scorer such as
+    # "explained_variance", RidgeCV's efficient LOO-GCV path selects the alpha
+    # maximizing the score computed once over the leave-one-out predictions
+    # aggregated across all samples. It is checked here against an explicit
+    # brute-force reference doing the same aggregation.
     scoring = "explained_variance"
     n_samples, n_features = 10, 5
-    n_targets = 1
     X, y = _make_sparse_offset_regression(
         n_samples=n_samples,
         n_features=n_features,
-        n_targets=n_targets,
+        n_targets=1,
         random_state=0,
         shuffle=False,
         noise=1,
@@ -1026,20 +1034,30 @@ def test_ridge_loo_cv_asym_scoring():
     )
 
     alphas = [1e-3, 0.1, 1.0, 10.0, 1e3]
-    loo_ridge = RidgeCV(
-        cv=n_samples, fit_intercept=True, alphas=alphas, scoring=scoring
-    )
+
+    loo = LeaveOneOut()
+    aggregated_scores = []
+    for alpha in alphas:
+        loo_predictions = np.empty(n_samples)
+        for train_index, test_index in loo.split(X):
+            ridge = Ridge(alpha=alpha, fit_intercept=True).fit(
+                X[train_index], y[train_index]
+            )
+            loo_predictions[test_index] = ridge.predict(X[test_index])
+        aggregated_scores.append(explained_variance_score(y, loo_predictions))
+    best_alpha = alphas[np.argmax(aggregated_scores)]
+
+    # The scores must vary across alphas, else the test would pass by chance.
+    assert len(np.unique(aggregated_scores)) > 1
 
     gcv_ridge = RidgeCV(fit_intercept=True, alphas=alphas, scoring=scoring)
-
-    loo_ridge.fit(X, y)
     gcv_ridge.fit(X, y)
 
-    assert gcv_ridge.alpha_ == pytest.approx(loo_ridge.alpha_), (
-        f"{gcv_ridge.alpha_=}, {loo_ridge.alpha_=}"
-    )
-    assert_allclose(gcv_ridge.coef_, loo_ridge.coef_, rtol=1e-3)
-    assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, rtol=1e-3)
+    assert gcv_ridge.alpha_ == pytest.approx(best_alpha)
+
+    ridge = Ridge(alpha=best_alpha, fit_intercept=True).fit(X, y)
+    assert_allclose(gcv_ridge.coef_, ridge.coef_, rtol=1e-3)
+    assert_allclose(gcv_ridge.intercept_, ridge.intercept_, rtol=1e-3)
 
 
 @pytest.mark.parametrize("gcv_mode", ["svd", "eigen"])
