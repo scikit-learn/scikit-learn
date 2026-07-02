@@ -1,0 +1,5 @@
+- :class:`semi_supervised.LabelPropagation` and
+  :class:`semi_supervised.LabelSpreading` now guard against a zero row
+  normalizer in `predict_proba`, returning finite probabilities instead of
+  `nan` for query points far from all training samples.
+  By :user:`Syed Osama Ali Shah <Osamaali313>`.
