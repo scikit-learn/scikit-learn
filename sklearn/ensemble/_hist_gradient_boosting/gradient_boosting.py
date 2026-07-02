@@ -19,6 +19,7 @@ from sklearn._loss.loss import (
     HalfGammaLoss,
     HalfMultinomialLoss,
     HalfPoissonLoss,
+    HuberLoss,
     PinballLoss,
 )
 from sklearn.base import (
@@ -44,6 +45,7 @@ from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
 from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import (
     _check_categorical_features,
     _check_monotonic_cst,
@@ -61,6 +63,7 @@ _LOSSES.update(
         "poisson": HalfPoissonLoss,
         "gamma": HalfGammaLoss,
         "quantile": PinballLoss,
+        "huber": HuberLoss,
     }
 )
 
@@ -73,10 +76,12 @@ def _update_leaves_values(loss, grower, y_true, raw_prediction, sample_weight):
 
     This is only applied if loss.differentiable is False.
     Note: It only works, if the loss is a function of the residual, as is the
-    case for AbsoluteError and PinballLoss. Otherwise, one would need to get
-    the minimum of loss(y_true, raw_prediction + x) in x. A few examples:
+    case for AbsoluteError, PinballLoss, and HuberLoss. Otherwise, one would
+    need to get the minimum of loss(y_true, raw_prediction + x) in x. A few
+    examples:
       - AbsoluteError: median(y_true - raw_prediction).
       - PinballLoss: quantile(y_true - raw_prediction).
+      - HuberLoss: M-estimator of location applied to y_true - raw_prediction.
 
     More background:
     For the standard gradient descent method according to "Greedy Function
@@ -784,6 +789,20 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     "[{}/{}] ".format(iteration + 1, self.max_iter), end="", flush=True
                 )
 
+            # For Huber loss, re-estimate delta each iteration as the quantile-th
+            # percentile of absolute residuals (Friedman 2001, Algorithm 2).
+            if isinstance(self._loss, HuberLoss):
+                abs_residuals = np.abs(y_train - raw_predictions.ravel())
+                if sample_weight_train is None:
+                    delta = np.percentile(abs_residuals, 100 * self._loss.quantile)
+                else:
+                    delta = _weighted_percentile(
+                        abs_residuals,
+                        sample_weight_train,
+                        100 * self._loss.quantile,
+                    )
+                self._loss.closs.delta = delta
+
             # Update gradients and hessians, inplace
             # Note that self._loss expects shape (n_samples,) for
             # n_trees_per_iteration = 1 else shape (n_samples, n_trees_per_iteration).
@@ -1382,15 +1401,18 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     Parameters
     ----------
-    loss : {'squared_error', 'absolute_error', 'gamma', 'poisson', 'quantile'}, \
-            default='squared_error'
+    loss : {'squared_error', 'absolute_error', 'gamma', 'poisson', 'quantile', \
+'huber'}, default='squared_error'
         The loss function to use in the boosting process. Note that the
         "squared error", "gamma" and "poisson" losses actually implement
         "half least squares loss", "half gamma deviance" and "half poisson
         deviance" to simplify the computation of the gradient. Furthermore,
         "gamma" and "poisson" losses internally use a log-link, "gamma"
         requires ``y > 0`` and "poisson" requires ``y >= 0``.
-        "quantile" uses the pinball loss.
+        "quantile" uses the pinball loss. "huber" uses the Huber loss, which
+        is robust to outliers; the transition point ``delta`` is re-estimated
+        at each iteration as the ``quantile``-th percentile of absolute
+        residuals (default ``quantile=0.9``).
 
         .. versionchanged:: 0.23
            Added option 'poisson'.
@@ -1401,9 +1423,14 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         .. versionchanged:: 1.3
            Added option 'gamma'.
 
+        .. versionchanged:: 1.10
+           Added option 'huber'.
+
     quantile : float, default=None
         If loss is "quantile", this parameter specifies which quantile to be estimated
-        and must be between 0 and 1.
+        and must be between 0 and 1. If loss is "huber", this parameter controls the
+        percentile used for per-iteration delta estimation (defaults to 0.9 when not
+        specified).
     learning_rate : float, default=0.1
         The learning rate, also known as *shrinkage*. This is used as a
         multiplicative factor for the leaves values. Use ``1`` for no
@@ -1636,6 +1663,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
                     "poisson",
                     "gamma",
                     "quantile",
+                    "huber",
                 }
             ),
             BaseLoss,
@@ -1755,6 +1783,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             return _LOSSES[self.loss](
                 sample_weight=sample_weight, quantile=self.quantile
             )
+        elif self.loss == "huber":
+            quantile = self.quantile if self.quantile is not None else 0.9
+            return _LOSSES[self.loss](sample_weight=sample_weight, quantile=quantile)
         else:
             return _LOSSES[self.loss](sample_weight=sample_weight)
 
