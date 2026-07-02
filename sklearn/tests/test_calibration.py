@@ -414,89 +414,62 @@ def test_sigmoid_calibration():
         _SigmoidCalibration().fit(np.vstack((exF, exF)), exY)
 
 
-def test_ensure_logits_decision_function_passthrough():
-    logits_1d = np.array([0.0, 1.5, -0.5])
-    assert_array_equal(
-        _ensure_logits(logits_1d, "decision_function", "sigmoid"),
-        logits_1d.reshape(-1, 1),
-    )
-
-    logits_2d = np.array([[0.0, 1.0], [1.0, 0.0]])
-    assert_array_equal(
-        _ensure_logits(logits_2d, "decision_function", "temperature"),
-        logits_2d,
-    )
-
-
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic", "temperature"])
 @pytest.mark.parametrize(
-    "predictions, expected",
+    "predictions",
     [
-        (np.array([0.2, 0.8]), LogitLink().link(np.array([0.2, 0.8]))),
-        (
-            np.array([[0.8, 0.2], [0.3, 0.7]]),
-            LogitLink().link(np.array([0.2, 0.7])),
-        ),
+        np.array([1.0, -1.0, 0.5]),
+        np.array([[0.0, 1.0], [1.0, 0.0]]),
+        np.array([[2.0, 1.0, 0.0], [0.0, 1.0, 2.0]]),
     ],
+    ids=["1d_binary", "2d_binary", "multiclass"],
 )
-def test_ensure_logits_predict_proba_sigmoid_binary(predictions, expected):
-    logits = _ensure_logits(predictions, "predict_proba", "sigmoid")
-    assert logits.shape == (predictions.shape[0], 1)
-    assert_allclose(logits.ravel(), expected)
+def test_ensure_logits_decision_function(method, predictions):
+    # Apart from reshaping, this is a passthrough.
+    logits = _ensure_logits(predictions, "decision_function", method)
+    assert_allclose(logits.ravel(), predictions.ravel())
 
 
-def test_ensure_logits_predict_proba_isotonic_binary():
-    proba = np.array([0.2, 0.8])
-    expected = LogitLink().link(proba)
-    logits = _ensure_logits(proba, "predict_proba", "isotonic")
-    assert logits.shape == (2, 1)
-    assert_allclose(logits.ravel(), expected)
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic", "temperature"])
+@pytest.mark.parametrize(
+    "predictions",
+    [
+        np.array([0.2, 0.8]),
+        np.array([[0.8, 0.2], [0.3, 0.7]]),
+        np.array([[0.1, 0.2, 0.7], [0.5, 0.3, 0.2]]),
+    ],
+    ids=["1d_binary", "2d_binary", "multiclass"],
+)
+def test_ensure_logits_predict_proba(method, predictions):
+    eps = np.finfo(predictions.dtype).eps
+    proba_clipped = predictions.clip(eps, 1 - eps)
 
+    if method in ("sigmoid", "isotonic"):
+        if predictions.ndim == 1:
+            expected = LogitLink().link(proba_clipped).reshape(-1, 1)
+        elif predictions.shape[1] == 2:
+            expected = LogitLink().link(proba_clipped[:, 1]).reshape(-1, 1)
+        else:
+            sigmoid_link = LogitLink()
+            expected = np.zeros_like(predictions)
+            for class_idx in range(predictions.shape[1]):
+                expected[:, class_idx] = sigmoid_link.link(proba_clipped[:, class_idx])
+    else:
+        if predictions.ndim == 1:
+            proba_2d = np.column_stack([1 - proba_clipped, proba_clipped])
+        else:
+            proba_2d = proba_clipped
+        expected = MultinomialLogit().link(proba_2d)
 
-def test_ensure_logits_predict_proba_sigmoid_multiclass():
-    proba = np.array([[0.1, 0.2, 0.7], [0.5, 0.3, 0.2]])
-    eps = np.finfo(proba.dtype).eps
-    proba_clipped = proba.clip(eps, 1 - eps)
-    sigmoid_link = LogitLink()
-    expected = np.zeros_like(proba)
-    for class_idx in range(proba.shape[1]):
-        expected[:, class_idx] = sigmoid_link.link(proba_clipped[:, class_idx])
-
-    logits = _ensure_logits(proba, "predict_proba", "sigmoid")
+    logits = _ensure_logits(predictions, "predict_proba", method)
     assert_allclose(logits, expected)
 
 
-def test_ensure_logits_predict_proba_temperature_multiclass():
-    proba = np.array([[0.1, 0.2, 0.7], [0.5, 0.3, 0.2]])
-    eps = np.finfo(proba.dtype).eps
-    expected = MultinomialLogit().link(proba.clip(eps, 1 - eps))
-
-    logits = _ensure_logits(proba, "predict_proba", "temperature")
-    assert_allclose(logits, expected)
-
-
-def test_ensure_logits_predict_proba_temperature_binary():
-    proba = np.array([0.2, 0.8])
-    eps = np.finfo(proba.dtype).eps
-    proba_2d = np.column_stack([1 - proba, proba]).clip(eps, 1 - eps)
-    expected = MultinomialLogit().link(proba_2d)
-
-    logits = _ensure_logits(proba, "predict_proba", "temperature")
-    assert logits.shape == (2, 2)
-    assert_allclose(logits, expected)
-
-
-def test_ensure_logits_decision_function_sigmoid_binary():
-    decision_values = np.array([1.0, -1.0, 0.5])
-    logits = _ensure_logits(decision_values, "decision_function", "sigmoid")
-    assert_array_equal(logits, decision_values.reshape(-1, 1))
-
-
-def test_ensure_logits_decision_function_multiclass_passthrough():
-    decision_values = np.array([[2.0, 1.0, 0.0], [0.0, 1.0, 2.0]])
-    assert_array_equal(
-        _ensure_logits(decision_values, "decision_function", "sigmoid"),
-        decision_values,
-    )
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic", "temperature"])
+def test_ensure_logits_probability_clipping(method):
+    proba = np.array([0.0, 1.0])
+    logits = _ensure_logits(proba, "predict_proba", method)
+    assert np.all(np.isfinite(logits))
 
 
 def test_ensure_logits_invalid_response_method():
@@ -507,12 +480,6 @@ def test_ensure_logits_invalid_response_method():
 def test_ensure_logits_invalid_method():
     with pytest.raises(ValueError, match="Unknown calibration method"):
         _ensure_logits(np.array([0.5]), "predict_proba", "invalid")
-
-
-def test_ensure_logits_probability_clipping():
-    proba = np.array([0.0, 1.0])
-    logits = _ensure_logits(proba, "predict_proba", "sigmoid")
-    assert np.all(np.isfinite(logits))
 
 
 @pytest.mark.parametrize(
