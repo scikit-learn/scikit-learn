@@ -1352,7 +1352,7 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, spare matrix} of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data matrix for which we want to predict the targets.
 
         Returns
@@ -1461,16 +1461,16 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
           coefficients. It is the most stable solver, in particular more stable
           for singular matrices than 'cholesky' at the cost of being slower.
 
-        - 'cholesky' uses the standard scipy.linalg.solve function to
+        - 'cholesky' uses the standard :func:`scipy.linalg.solve` function to
           obtain a closed-form solution.
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
-          scipy.sparse.linalg.cg. As an iterative algorithm, this solver is
+          :func:`scipy.sparse.linalg.cg`. As an iterative algorithm, this solver is
           more appropriate than 'cholesky' for large-scale data
           (possibility to set `tol` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
-          scipy.sparse.linalg.lsqr. It is the fastest and uses an iterative
+          :func:`scipy.sparse.linalg.lsqr`. It is the fastest and uses an iterative
           procedure.
 
         - 'sag' uses a Stochastic Average Gradient descent, and 'saga' uses
@@ -1536,7 +1536,7 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
     See Also
     --------
     Ridge : Ridge regression.
-    RidgeClassifierCV :  Ridge classifier with built-in cross validation.
+    RidgeClassifierCV : Ridge classifier with built-in cross validation.
 
     Notes
     -----
