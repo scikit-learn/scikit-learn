@@ -1179,7 +1179,8 @@ class LogisticRegression(
     classes_ : ndarray of shape (n_classes, )
         A list of class labels known to the classifier.
 
-    coef_ : ndarray or CSR matrix of shape (1, n_features) or (n_classes, n_features)
+    coef_ : ndarray or CSR array/matrix of shape (1, n_features) or (n_classes, \
+        n_features)
         Coefficients of the features in the decision function.
 
         `coef_` is of shape (1, n_features) when the given problem is binary.
@@ -1875,11 +1876,16 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     classes_ : ndarray of shape (n_classes, )
         A list of class labels known to the classifier.
 
-    coef_ : ndarray of shape (1, n_features) or (n_classes, n_features)
+    coef_ : ndarray or CSR array/matrix of shape (1, n_features) or (n_classes, \
+        n_features)
         Coefficient of the features in the decision function.
 
-        `coef_` is of shape (1, n_features) when the given problem
-        is binary.
+        `coef_` is of shape (1, n_features) when the given problem is binary.
+
+        By default, it will be created as a dense array, but can be turned to
+        sparse (CSR format) through :meth:`sparsify` (which can be beneficial
+        under L1 regularization when many coefficients are zero), and back to
+        dense through :meth:`densify`.
 
     intercept_ : ndarray of shape (1,) or (n_classes,)
         Intercept (a.k.a. bias) added to the decision function.
