@@ -441,6 +441,51 @@ def test_oob_score_regression():
         regr.fit(X_train, y_train)
 
 
+def test_oob_score_classifier_nan_for_never_left_out():
+    """Samples never in the OOB set should have NaN in oob_decision_function_,
+    not 0.0 as in the old (incorrect) behavior."""
+    from sklearn.datasets import make_classification
+
+    X, y = make_classification(n_samples=10, n_features=5, random_state=0)
+    warn_msg = "Some inputs do not have OOB scores"
+    with pytest.warns(UserWarning, match=warn_msg):
+        clf = BaggingClassifier(
+            n_estimators=1, bootstrap=True, oob_score=True, random_state=0
+        )
+        clf.fit(X, y)
+
+    oob_df = clf.oob_decision_function_
+    never_oob = np.isnan(oob_df).any(axis=1)
+    # With n_estimators=1 on a 10-sample dataset, some samples must be never-OOB
+    assert never_oob.any()
+    # Never-left-out rows must be all-NaN (the old code produced 0.0 instead)
+    assert np.all(np.isnan(oob_df[never_oob]))
+    # OOB rows must contain valid probabilities
+    assert not np.any(np.isnan(oob_df[~never_oob]))
+    # oob_score_ must be finite (computed only over OOB samples)
+    assert np.isfinite(clf.oob_score_)
+
+
+def test_oob_score_regressor_nan_for_never_left_out():
+    """Samples never in the OOB set should have NaN in oob_prediction_,
+    not 0.0 as in the old (incorrect) behavior."""
+    from sklearn.datasets import make_regression
+
+    X, y = make_regression(n_samples=10, n_features=5, random_state=0)
+    warn_msg = "Some inputs do not have OOB scores"
+    with pytest.warns(UserWarning, match=warn_msg):
+        regr = BaggingRegressor(
+            n_estimators=1, bootstrap=True, oob_score=True, random_state=0
+        )
+        regr.fit(X, y)
+
+    oob_pred = regr.oob_prediction_
+    never_oob = np.isnan(oob_pred)
+    assert never_oob.any()
+    # oob_score_ must be finite (computed only over OOB samples)
+    assert np.isfinite(regr.oob_score_)
+
+
 def test_single_estimator():
     # Check singleton ensembles.
     rng = check_random_state(0)
