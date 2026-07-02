@@ -218,6 +218,7 @@ Scoring string name                    Function                                 
 'top_k_accuracy'                       :func:`metrics.top_k_accuracy_score`
 'average_precision'                    :func:`metrics.average_precision_score`
 'neg_brier_score'                      :func:`metrics.brier_score_loss`                   requires ``predict_proba`` support
+'neg_brier_calibration_error'          :func:`metrics.brier_calibration_error`            requires ``predict_proba`` support, binary only
 'f1'                                   :func:`metrics.f1_score`                           for binary targets
 'f1_micro'                             :func:`metrics.f1_score`                           micro-averaged
 'f1_macro'                             :func:`metrics.f1_score`                           macro-averaged
@@ -479,6 +480,7 @@ Some of these are restricted to the binary classification case:
 
    precision_recall_curve
    roc_curve
+   brier_calibration_error
    class_likelihood_ratios
    det_curve
    confusion_matrix_at_thresholds
@@ -2010,6 +2012,53 @@ two above definitions to follow.
   :doi:`"A New Vector Partition of the Probability Score"
   <10.1175/1520-0450(1973)012%3C0595:ANVPOT%3E2.0.CO;2>`
   Journal of Applied Meteorology and Climatology, 12(4), 595-600
+
+.. _brier_calibration_error:
+
+Brier calibration error
+-----------------------
+
+The :func:`brier_calibration_error` function computes the binned calibration
+term in the Brier score decomposition for binary probabilistic predictions.
+This metric measures calibration alone by comparing, within each bin, the
+average predicted probability assigned to the positive class and the observed
+fraction of positive samples.
+
+The Brier calibration error is computed as:
+
+.. math::
+
+  BCE(y, \hat{p}) = \sum_k P_k \left(\bar{y}_k - \bar{p}_k\right)^2
+
+where :math:`k` spans all non-empty bins, :math:`P_k` is the normalized weight
+of bin :math:`k`, :math:`\bar{y}_k` is the weighted fraction of positive
+samples in the bin, and :math:`\bar{p}_k` is the weighted average predicted
+probability of the positive class in the bin.
+
+The bins are defined by weighted quantiles of the predicted probabilities,
+so each bin has approximately equal total sample weight. This corresponds to
+uniform-mass binning. Following the analysis of uniform-mass binning in
+[Sun2023]_, the number of bins is set to the ceiling of the cube root of
+:math:`N`, where :math:`N` is the number of samples. The lower the Brier
+calibration error, the better calibrated the predicted probabilities are.
+
+Here is a small example of usage of this function::
+
+    >>> import numpy as np
+    >>> from sklearn.metrics import brier_calibration_error
+    >>> y_true = np.array([0, 0, 0, 1] + [0, 1, 1, 1])
+    >>> y_proba = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
+    >>> brier_calibration_error(y_true, y_proba)
+    0.0
+    >>> y_true = np.array([0, 0, 0, 0] + [1, 1, 1, 1])
+    >>> brier_calibration_error(y_true, y_proba)
+    0.0625
+
+.. rubric:: References
+
+.. [Sun2023] Zeyu Sun, Dogyoon Song, Alfred Hero (2023).
+  `Minimum-Risk Recalibration of Classifiers
+  <https://arxiv.org/abs/2305.10886>`_.
 
 .. _class_likelihood_ratios:
 

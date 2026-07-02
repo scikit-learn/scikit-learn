@@ -1,0 +1,5 @@
+- Add :func:`metrics.brier_calibration_error` to compute the binned calibration
+  term of the Brier score decomposition for binary probabilistic predictions,
+  along with the corresponding `"neg_brier_calibration_error"` scorer. The
+  function supports array API compatible inputs.
+  By :user:`Samuel Ronsin <samronsin>`.

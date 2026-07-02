@@ -3699,6 +3699,171 @@ def _validate_binary_probabilistic_prediction(y_true, y_prob, sample_weight, pos
     return transformed_labels, y_prob
 
 
+def _array_api_quantiles(
+    array, quantile_probas, *, sample_weight=None, xp, device, float_dtype
+):
+    """Compute linearly interpolated quantiles with the Array API.
+
+    For unweighted finite 1D data, the interpolation matches the default
+    `method="linear"` behavior of `np.percentile` and `np.quantile`.
+    When `sample_weight` is provided, interpolation is performed on a normalized
+    cumulative-weight scale.
+    """
+    # Note: ``.shape[0]`` is used instead of ``.size`` because the latter is a
+    # bound method (not an int) on some array libraries such as PyTorch.
+    quantile_probas = xp.asarray(quantile_probas, dtype=float_dtype, device=device)
+    if sample_weight is None:
+        n = array.shape[0]
+        sorted_array = xp.sort(array)
+        positions = quantile_probas * (n - 1)
+        lower_indices = xp.astype(xp.floor(positions), xp.int64)
+        upper_indices = xp.clip(lower_indices + 1, 0, n - 1)
+        interpolation_weights = positions - xp.floor(positions)
+    else:
+        sorted_indices = xp.argsort(array)
+        sorted_array = xp.take(array, sorted_indices, axis=0)
+        sorted_weight = xp.take(sample_weight, sorted_indices, axis=0)
+        nonzero_weight_indices = xp.nonzero(sorted_weight != 0)[0]
+        sorted_array = xp.take(sorted_array, nonzero_weight_indices, axis=0)
+        sorted_weight = xp.take(sorted_weight, nonzero_weight_indices, axis=0)
+        n = sorted_array.shape[0]
+        if n == 0:
+            return xp.full(
+                quantile_probas.shape, xp.nan, dtype=float_dtype, device=device
+            )
+        if n == 1:
+            return quantile_probas * 0 + sorted_array[0]
+
+        # Place each sorted value at the normalized cumulative weight *before*
+        # it, so the smallest value sits at position 0 and the largest at 1.
+        # With uniform weights this reduces to ``i / (n - 1)``, matching the
+        # unweighted branch above.
+        cumulative_weight = xp.cumulative_sum(sorted_weight)
+        value_positions = (cumulative_weight - sorted_weight) / (
+            cumulative_weight[-1] - sorted_weight[-1]
+        )
+        upper_indices = xp.searchsorted(value_positions, quantile_probas, side="right")
+        upper_indices = xp.clip(upper_indices, 1, n - 1)
+        lower_indices = upper_indices - 1
+        lower_positions = xp.take(value_positions, lower_indices, axis=0)
+        upper_positions = xp.take(value_positions, upper_indices, axis=0)
+        interpolation_weights = (quantile_probas - lower_positions) / (
+            upper_positions - lower_positions
+        )
+
+    lower_values = xp.take(sorted_array, lower_indices, axis=0)
+    upper_values = xp.take(sorted_array, upper_indices, axis=0)
+    return lower_values + interpolation_weights * (upper_values - lower_values)
+
+
+def _weighted_calibration_curve(
+    y_true,
+    y_prob,
+    *,
+    pos_label=None,
+    n_bins=5,
+    strategy="uniform",
+    sample_weight=None,
+):
+    """Compute weighted true and predicted probabilities per calibration bin."""
+    y_true = column_or_1d(y_true)
+    y_prob = column_or_1d(y_prob)
+
+    assert_all_finite(y_true)
+    assert_all_finite(y_prob)
+    check_consistent_length(y_true, y_prob, sample_weight)
+
+    xp, _, device_ = get_namespace_and_device(y_prob)
+    # Move sample_weight onto y_prob's namespace/device before any computation
+    # mixing the two (e.g. _find_matching_floating_dtype), to support inputs
+    # living in different namespaces/devices.
+    if sample_weight is not None:
+        sample_weight = move_to(sample_weight, xp=xp, device=device_)
+    float_dtype = _find_matching_floating_dtype(y_prob, sample_weight, xp=xp)
+    y_prob = xp.astype(y_prob, float_dtype, copy=False)
+
+    if xp.max(y_prob) > 1:
+        raise ValueError(f"y_prob contains values greater than 1: {xp.max(y_prob)}")
+    if xp.min(y_prob) < 0:
+        raise ValueError(f"y_prob contains values less than 0: {xp.min(y_prob)}")
+
+    xp_y_true, _ = get_namespace(y_true)
+    labels = xp_y_true.unique_values(y_true)
+    labels = move_to(labels, xp=np, device="cpu")
+    if labels.size > 2:
+        raise ValueError(
+            f"Only binary classification is supported. Provided labels {labels}."
+        )
+    if pos_label is not None and labels.size == 2:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", FutureWarning)
+            pos_label_in_labels = pos_label in labels
+        if not pos_label_in_labels:
+            raise ValueError(
+                "pos_label=%r is not a valid label: %r" % (pos_label, labels)
+            )
+
+    pos_label = _check_pos_label_consistency(pos_label, y_true)
+    y_true = _one_hot_encoding_binary_target(
+        y_true=y_true, pos_label=pos_label, target_xp=xp, target_device=device_
+    )[:, 1]
+    y_true = xp.astype(y_true, float_dtype, copy=False)
+
+    if sample_weight is not None:
+        sample_weight = _check_sample_weight(
+            sample_weight,
+            y_prob,
+            force_float_dtype=False,
+            ensure_non_negative=True,
+        )
+        sample_weight = xp.astype(sample_weight, float_dtype, copy=False)
+
+    if strategy == "quantile":
+        quantiles = xp.linspace(0, 1, n_bins + 1, dtype=float_dtype, device=device_)
+        if sample_weight is None:
+            bins = _array_api_quantiles(
+                y_prob, quantiles, xp=xp, device=device_, float_dtype=float_dtype
+            )
+        else:
+            bins = _array_api_quantiles(
+                y_prob,
+                quantiles,
+                sample_weight=sample_weight,
+                xp=xp,
+                device=device_,
+                float_dtype=float_dtype,
+            )
+    elif strategy == "uniform":
+        bins = xp.linspace(0, 1, n_bins + 1, dtype=float_dtype, device=device_)
+    else:
+        raise ValueError(
+            "Invalid entry to 'strategy' input. Strategy "
+            "must be either 'quantile' or 'uniform'."
+        )
+
+    if sample_weight is None:
+        sample_weight = xp.ones(y_true.shape[0], dtype=float_dtype, device=device_)
+
+    bin_ids = xp.searchsorted(bins[1:-1], y_prob)
+    bin_weights = _bincount(bin_ids, weights=sample_weight, minlength=n_bins, xp=xp)
+    nonzero = bin_weights != 0
+
+    prob_true = (
+        _bincount(bin_ids, weights=y_true * sample_weight, minlength=n_bins, xp=xp)[
+            nonzero
+        ]
+        / bin_weights[nonzero]
+    )
+    prob_pred = (
+        _bincount(bin_ids, weights=y_prob * sample_weight, minlength=n_bins, xp=xp)[
+            nonzero
+        ]
+        / bin_weights[nonzero]
+    )
+
+    return prob_true, prob_pred, bin_weights[nonzero]
+
+
 @validate_params(
     {
         "y_true": ["array-like"],
@@ -3854,6 +4019,114 @@ def brier_score_loss(
         brier_score *= 0.5
 
     return float(brier_score)
+
+
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_proba": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "pos_label": [Real, str, "boolean", None],
+    },
+    prefer_skip_nested_validation=True,
+)
+def brier_calibration_error(
+    y_true,
+    y_proba,
+    *,
+    sample_weight=None,
+    pos_label=None,
+):
+    """Compute the Brier calibration error for binary probabilistic predictions.
+
+    The Brier calibration error is the binned calibration term of the Brier
+    score decomposition. For each bin, it compares the average predicted
+    probability of the positive class with the fraction of samples that
+    actually belong to the positive class. Bins are defined by weighted
+    quantiles of the predicted probabilities, also known as uniform-mass
+    binning. Following [1]_, the number of bins is set to
+    ``int(np.ceil(np.cbrt(n_samples)))``.
+
+    Read more in the :ref:`User Guide <brier_calibration_error>`.
+
+    .. versionadded:: 1.10
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,)
+        True targets of a binary classification task.
+
+    y_proba : array-like of shape (n_samples,)
+        Probabilities of the positive class.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    pos_label : int, float, bool or str, default=None
+        Label of the positive class. If ``None``, `pos_label` will be inferred
+        in the following manner:
+
+        * if `y_true` in {-1, 1} or {0, 1}, `pos_label` defaults to 1;
+        * else if `y_true` contains string, an error will be raised and
+          `pos_label` should be explicitly specified;
+        * otherwise, `pos_label` defaults to the greater label,
+          i.e. `np.unique(y_true)[-1]`.
+
+    Returns
+    -------
+    score : float
+        Brier calibration error.
+
+    References
+    ----------
+    .. [1] `Zeyu Sun, Dogyoon Song, Alfred Hero. Minimum-Risk Recalibration
+           of Classifiers. arXiv:2305.10886, 2023.
+           <https://arxiv.org/abs/2305.10886>`_
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import brier_calibration_error
+    >>> y_true = np.array([0, 0, 0, 1] + [0, 1, 1, 1])
+    >>> y_proba = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
+    >>> brier_calibration_error(y_true, y_proba)
+    0.0
+    >>> y_true = np.array([0, 0, 0, 0] + [1, 1, 1, 1])
+    >>> brier_calibration_error(y_true, y_proba)
+    0.0625
+    """
+    y_proba = check_array(
+        y_proba, ensure_2d=False, ensure_all_finite=False, input_name="y_proba"
+    )
+    if y_proba.ndim == 2 and y_proba.shape[1] > 1:
+        raise ValueError(
+            "brier_calibration_error only supports binary classification. "
+            "y_proba must be a 1d array of probabilities for the positive class; "
+            f"got an array with shape {y_proba.shape}."
+        )
+
+    # The number of bins is derived from the number of effective (non-zero
+    # weight) samples so that zero-weighted samples behave like removed samples.
+    if sample_weight is None:
+        n_samples = y_proba.shape[0]
+    else:
+        sw_xp, _ = get_namespace(sample_weight)
+        sample_weight_array = sw_xp.asarray(sample_weight)
+        n_samples = int(sw_xp.sum(sw_xp.astype(sample_weight_array != 0, sw_xp.int64)))
+    n_bins = int(np.ceil(np.cbrt(n_samples)))
+
+    prob_true, prob_pred, bin_weights = _weighted_calibration_curve(
+        y_true,
+        y_proba,
+        pos_label=pos_label,
+        n_bins=n_bins,
+        strategy="quantile",
+        sample_weight=sample_weight,
+    )
+
+    xp, _ = get_namespace(bin_weights)
+    error = xp.sum(bin_weights * (prob_true - prob_pred) ** 2) / xp.sum(bin_weights)
+    return float(error)
 
 
 @validate_params(
