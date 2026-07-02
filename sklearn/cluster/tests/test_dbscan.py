@@ -11,8 +11,13 @@ from scipy.spatial import distance
 
 from sklearn.cluster import DBSCAN, dbscan
 from sklearn.cluster.tests.common import generate_clustered_data
+from sklearn.exceptions import EfficiencyWarning
 from sklearn.metrics.pairwise import pairwise_distances
-from sklearn.neighbors import NearestNeighbors
+from sklearn.neighbors import (
+    NearestNeighbors,
+    kneighbors_graph,
+    sort_graph_by_row_values,
+)
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils.fixes import CSR_CONTAINERS, LIL_CONTAINERS
 
@@ -432,3 +437,32 @@ def test_dbscan_precomputed_metric_with_initial_rows_zero(csr_container):
     matrix = csr_container(ar)
     labels = DBSCAN(eps=0.2, metric="precomputed", min_samples=2).fit(matrix).labels_
     assert_array_equal(labels, [-1, -1, 0, 0, 0, 1, 1])
+
+
+def _reverse_row_order(graph):
+    # Make sure its NOT sorted by ROW values
+    graph = graph.copy()
+    for i in range(graph.shape[0]):
+        start, end = graph.indptr[i], graph.indptr[i + 1]
+        graph.data[start:end] = graph.data[start:end][::-1]
+        graph.indices[start:end] = graph.indices[start:end][::-1]
+    return graph
+
+
+def test_dbscan_no_warning_unsorted_precomputed():
+    # gh-31030: dbscan() should not warn on unsorted precomputed input.
+    X = np.random.RandomState(0).randn(200, 10)
+    graph = _reverse_row_order(kneighbors_graph(X, n_neighbors=15, mode="distance"))
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", EfficiencyWarning)
+        dbscan(graph, eps=0.5, min_samples=5, metric="precomputed")
+
+
+def test_dbscan_no_warning_presorted_precomputed():
+    # gh-31030: warning must not fire even when caller pre-sorts themselves
+    X = np.random.RandomState(0).randn(200, 10)
+    graph = _reverse_row_order(kneighbors_graph(X, n_neighbors=15, mode="distance"))
+    sorted_graph = sort_graph_by_row_values(graph.copy())
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", EfficiencyWarning)
+        dbscan(sorted_graph, eps=0.5, min_samples=5, metric="precomputed")

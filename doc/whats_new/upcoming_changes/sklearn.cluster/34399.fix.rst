@@ -1,0 +1,5 @@
+- :class:`cluster.DBSCAN` and :func:`cluster.dbscan` no longer raise a
+  spurious :class:`~sklearn.exceptions.EfficiencyWarning` when given a
+  precomputed sparse distance matrix that was already sorted by row
+  values, since internally setting the diagonal could undo that sorting.
+  By :user:`Vadim <Tweezky66>`.
