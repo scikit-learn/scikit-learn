@@ -517,6 +517,32 @@ def test_tuned_threshold_classifier_cv_float():
     assert_allclose(tuned_model.estimator_.coef_, cloned_estimator.coef_)
 
 
+def test_tuned_threshold_classifier_cv_float_single_split(monkeypatch):
+    """Non-regression test for the split-reuse bug with `cv` a float.
+
+    With `cv` a float and `refit=False`, the cross-validation split must be
+    computed once and reused, so that `estimator_` is fit on the same training
+    split that the decision threshold is tuned on. Previously the split was
+    drawn a second time, which with the default `random_state=None` could fit
+    `estimator_` and tune the threshold on different splits.
+    Non-regression test for gh-33540.
+    """
+    X, y = make_classification(random_state=0)
+
+    n_calls = {"split": 0}
+    original_split = StratifiedShuffleSplit.split
+
+    def counting_split(self, X, y=None, groups=None):
+        n_calls["split"] += 1
+        return original_split(self, X, y, groups)
+
+    monkeypatch.setattr(StratifiedShuffleSplit, "split", counting_split)
+
+    TunedThresholdClassifierCV(LogisticRegression(), cv=0.3, refit=False).fit(X, y)
+
+    assert n_calls["split"] == 1
+
+
 def test_tuned_threshold_classifier_error_constant_predictor():
     """Check that we raise a ValueError if the underlying classifier returns constant
     probabilities such that we cannot find any threshold.
