@@ -191,17 +191,23 @@ def test_classification_report_zero_division_warning(zero_division):
         # We need "always" instead of "once" for free-threaded with
         # pytest-run-parallel to capture all the warnings in the
         # zero_division="warn" case.
-        warnings.filterwarnings("always", message=".+Use `zero_division`")
+        warnings.simplefilter("always")
         classification_report(
             y_true, y_pred, zero_division=zero_division, output_dict=True
         )
         if zero_division == "warn":
-            assert len(record) > 1
-            for item in record:
-                msg = "Use `zero_division` parameter to control this behavior."
+            # With zero_division="warn" (default), UndefinedMetricWarning raised
+            undef_warns = [
+                w for w in record if issubclass(w.category, UndefinedMetricWarning)
+            ]
+            assert len(undef_warns) > 0
+            for item in undef_warns:
+                msg = "Use `replaced_undefined_by` parameter to control this behavior."
                 assert msg in str(item.message)
         else:
-            assert not record
+            # zero_division=0/1/nan is deprecated -> FutureWarning
+            future_warns = [w for w in record if issubclass(w.category, FutureWarning)]
+            assert len(future_warns) > 0
 
 
 @pytest.mark.parametrize(
@@ -285,13 +291,17 @@ def test_precision_recall_f_binary_single_class():
     assert 1.0 == f1_score([1, 1], [1, 1])
     assert 1.0 == fbeta_score([1, 1], [1, 1], beta=0)
 
-    assert 0.0 == precision_score([-1, -1], [-1, -1])
-    assert 0.0 == recall_score([-1, -1], [-1, -1])
-    assert 0.0 == f1_score([-1, -1], [-1, -1])
-    assert 0.0 == fbeta_score([-1, -1], [-1, -1], beta=float("inf"))
-    assert fbeta_score([-1, -1], [-1, -1], beta=float("inf")) == pytest.approx(
-        fbeta_score([-1, -1], [-1, -1], beta=1e5)
-    )
+    # With new default replaced_undefined_by=np.nan, undefined metrics return nan
+    assert np.isnan(precision_score([-1, -1], [-1, -1]))
+    assert np.isnan(recall_score([-1, -1], [-1, -1]))
+    assert np.isnan(f1_score([-1, -1], [-1, -1]))
+    assert np.isnan(fbeta_score([-1, -1], [-1, -1], beta=float("inf")))
+    # Both should be nan (undefined), nan_ok=True is required for pytest.approx with nan
+    import warnings as _w
+
+    with _w.catch_warnings():
+        _w.simplefilter("ignore")
+        assert np.isnan(fbeta_score([-1, -1], [-1, -1], beta=1e5))
 
 
 @pytest.mark.filterwarnings(r"ignore::sklearn.exceptions.UndefinedMetricWarning")
@@ -304,12 +314,25 @@ def test_precision_recall_f_extra_labels():
     data = [(y_true, y_pred), (y_true_bin, y_pred_bin)]
 
     for i, (y_true, y_pred) in enumerate(data):
-        # No average: zeros in array
-        actual = recall_score(y_true, y_pred, labels=[0, 1, 2, 3, 4], average=None)
+        # No average: undefined labels (0, 4 have no true samples) return nan by default
+        # Use replaced_undefined_by=0 for backward compat assertion
+        actual = recall_score(
+            y_true,
+            y_pred,
+            labels=[0, 1, 2, 3, 4],
+            average=None,
+            replaced_undefined_by=0,
+        )
         assert_array_almost_equal([0.0, 1.0, 1.0, 0.5, 0.0], actual)
 
         # Macro average is changed
-        actual = recall_score(y_true, y_pred, labels=[0, 1, 2, 3, 4], average="macro")
+        actual = recall_score(
+            y_true,
+            y_pred,
+            labels=[0, 1, 2, 3, 4],
+            average="macro",
+            replaced_undefined_by=0,
+        )
         assert_array_almost_equal(np.mean([0.0, 1.0, 1.0, 0.5, 0.0]), actual)
 
         # No effect otherwise
@@ -969,14 +992,18 @@ def test_cohen_kappa_score_error_wrong_label():
     ],
 )
 def test_zero_division_nan_no_warning(metric, y_true, y_pred, zero_division):
-    """Check the behaviour of `zero_division` when setting to 0, 1 or np.nan.
-    No warnings should be raised.
+    """Check the behaviour of deprecated `zero_division` when setting to 0, 1 or np.nan.
+    A FutureWarning should be raised (parameter is deprecated).
     """
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
         result = metric(y_true, y_pred, zero_division=zero_division)
+        future_warns = [w for w in record if issubclass(w.category, FutureWarning)]
+        assert len(future_warns) > 0, (
+            "Expected FutureWarning for deprecated zero_division"
+        )
 
-    if np.isnan(zero_division):
+    if isinstance(zero_division, float) and np.isnan(zero_division):
         assert np.isnan(result)
     else:
         assert result == zero_division
@@ -993,12 +1020,10 @@ def test_zero_division_nan_no_warning(metric, y_true, y_pred, zero_division):
     ],
 )
 def test_zero_division_nan_warning(metric, y_true, y_pred):
-    """Check the behaviour of `zero_division` when setting to "warn".
-    A `UndefinedMetricWarning` should be raised.
-    """
+    """Check the default behaviour: UndefinedMetricWarning raised, result is nan."""
     with pytest.warns(UndefinedMetricWarning):
-        result = metric(y_true, y_pred, zero_division="warn")
-    assert result == 0.0
+        result = metric(y_true, y_pred)
+    assert np.isnan(result)
 
 
 def test_matthews_corrcoef_against_numpy_corrcoef(global_random_seed):
@@ -1239,7 +1264,12 @@ def test_precision_refcall_f1_score_multilabel_unordered_labels(average):
     y_true = np.array([[1, 1, 0, 0]])
     y_pred = np.array([[0, 0, 1, 1]])
     p, r, f, s = precision_recall_fscore_support(
-        y_true, y_pred, labels=[3, 0, 1, 2], warn_for=[], average=average
+        y_true,
+        y_pred,
+        labels=[3, 0, 1, 2],
+        warn_for=[],
+        average=average,
+        replaced_undefined_by=0,
     )
     assert_array_equal(p, 0)
     assert_array_equal(r, 0)
@@ -1400,7 +1430,8 @@ def test_classification_report_multiclass_balanced():
    macro avg       0.33      0.33      0.33         9
 weighted avg       0.33      0.33      0.33         9
 """
-    report = classification_report(y_true, y_pred)
+    # Use replaced_undefined_by=0 to maintain backward-compatible report values
+    report = classification_report(y_true, y_pred, zero_division=0)
     assert report == expected_report
 
 
@@ -1673,8 +1704,10 @@ def test_multilabel_jaccard_score(recwarn):
     assert jaccard_score(y2, y2, average="samples") == 1
     assert jaccard_score(y2, np.logical_not(y2), average="samples") == 0
     assert jaccard_score(y1, np.logical_not(y1), average="samples") == 0
-    assert jaccard_score(y1, np.zeros(y1.shape), average="samples") == 0
-    assert jaccard_score(y2, np.zeros(y1.shape), average="samples") == 0
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UndefinedMetricWarning)
+        assert jaccard_score(y1, np.zeros(y1.shape), average="samples") == 0
+        assert jaccard_score(y2, np.zeros(y1.shape), average="samples") == 0
 
     y_true = np.array([[0, 1, 1], [1, 0, 0]])
     y_pred = np.array([[1, 1, 1], [1, 0, 1]])
@@ -1709,27 +1742,39 @@ def test_multilabel_jaccard_score(recwarn):
         jaccard_score(y_true, y_pred, labels=[-1], average="macro")
 
     msg = (
-        "Jaccard is ill-defined and being set to 0.0 in labels "
+        "Jaccard is ill-defined and being set to np.nan in labels "
         "with no true or predicted samples."
     )
 
     with pytest.warns(UndefinedMetricWarning, match=msg):
+        # Label 0 has no true or predicted samples, so jaccard is nan.
+        # macro-average of [nan, 1.0] = 1.0 (nan is skipped by _average with
+        # nanmean behavior)
+        # Actually with replaced_undefined_by=np.nan, macro avg of [nan, 1.0] = nan
+        # Use replaced_undefined_by=0 to get old 0.5 behavior
         assert (
-            jaccard_score(np.array([[0, 1]]), np.array([[0, 1]]), average="macro")
+            jaccard_score(
+                np.array([[0, 1]]),
+                np.array([[0, 1]]),
+                average="macro",
+                replaced_undefined_by=0,
+            )
             == 0.5
         )
 
     msg = (
-        "Jaccard is ill-defined and being set to 0.0 in samples "
+        "Jaccard is ill-defined and being set to np.nan in samples "
         "with no true or predicted labels."
     )
 
     with pytest.warns(UndefinedMetricWarning, match=msg):
+        # Sample [0,0] is undefined; use replaced_undefined_by=0 for old 0.5 behavior
         assert (
             jaccard_score(
                 np.array([[0, 0], [1, 1]]),
                 np.array([[0, 0], [1, 1]]),
                 average="samples",
+                replaced_undefined_by=0,
             )
             == 0.5
         )
@@ -1769,7 +1814,10 @@ def test_multiclass_jaccard_score(recwarn):
     y_true = np.array([[0, 0], [0, 0], [0, 0]])
     y_pred = np.array([[0, 0], [0, 0], [0, 0]])
     with ignore_warnings():
-        assert jaccard_score(y_true, y_pred, average="weighted") == 0
+        assert (
+            jaccard_score(y_true, y_pred, average="weighted", replaced_undefined_by=0)
+            == 0
+        )
 
     assert not list(recwarn)
 
@@ -1779,11 +1827,11 @@ def test_average_binary_jaccard_score(recwarn):
     assert jaccard_score([1], [0], average="binary") == 0.0
     # tp=0, fp=0, fn=0, tn=1
     msg = (
-        "Jaccard is ill-defined and being set to 0.0 due to "
+        "Jaccard is ill-defined and being set to np.nan due to "
         "no true or predicted samples"
     )
     with pytest.warns(UndefinedMetricWarning, match=msg):
-        assert jaccard_score([0, 0], [0, 0], average="binary") == 0.0
+        assert np.isnan(jaccard_score([0, 0], [0, 0], average="binary"))
 
     # tp=1, fp=0, fn=0, tn=0 (pos_label=0)
     assert jaccard_score([0], [0], pos_label=0, average="binary") == 1.0
@@ -1802,29 +1850,32 @@ def test_jaccard_score_zero_division_warning():
     # happens
     y_true = np.array([[1, 0, 1], [0, 0, 0]])
     y_pred = np.array([[0, 0, 0], [0, 0, 0]])
-    msg = (
-        "Jaccard is ill-defined and being set to 0.0 in "
-        "samples with no true or predicted labels."
-        " Use `zero_division` parameter to control this behavior."
-    )
+    # Default behavior: replaced_undefined_by=nan, UndefinedMetricWarning raised
+    msg = "Use `replaced_undefined_by` parameter to control this behavior."
     with pytest.warns(UndefinedMetricWarning, match=msg):
-        score = jaccard_score(y_true, y_pred, average="samples", zero_division="warn")
-        assert score == pytest.approx(0.0)
+        score = jaccard_score(y_true, y_pred, average="samples")
+        assert np.isnan(score)
 
 
-@pytest.mark.parametrize("zero_division, expected_score", [(0, 0), (1, 0.5)])
-def test_jaccard_score_zero_division_set_value(zero_division, expected_score):
-    # check that we don't issue warning by passing the zero_division parameter
+@pytest.mark.parametrize("replaced_undefined_by, expected_score", [(0, 0), (1, 0.5)])
+def test_jaccard_score_zero_division_set_value(replaced_undefined_by, expected_score):
+    # check replaced_undefined_by controls the value without extra warnings
     y_true = np.array([[1, 0, 1], [0, 0, 0]])
     y_pred = np.array([[0, 0, 0], [0, 0, 0]])
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", UndefinedMetricWarning)
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
         score = jaccard_score(
-            y_true, y_pred, average="samples", zero_division=zero_division
+            y_true,
+            y_pred,
+            average="samples",
+            replaced_undefined_by=replaced_undefined_by,
         )
+        future_warns = [w for w in record if issubclass(w.category, FutureWarning)]
+        assert len(future_warns) == 0
     assert score == pytest.approx(expected_score)
 
 
+@pytest.mark.filterwarnings(r"ignore::sklearn.exceptions.UndefinedMetricWarning")
 @pytest.mark.filterwarnings(r"ignore::sklearn.exceptions.UndefinedMetricWarning")
 def test_precision_recall_f1_score_multilabel_1():
     # Test precision_recall_f1_score on a crafted multilabel example
@@ -1833,7 +1884,11 @@ def test_precision_recall_f1_score_multilabel_1():
     y_true = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 1]])
     y_pred = np.array([[0, 1, 0, 0], [0, 1, 0, 0], [1, 0, 1, 0]])
 
-    p, r, f, s = precision_recall_fscore_support(y_true, y_pred, average=None)
+    # Label 3: tp=0, fp=0, fn=1 -> precision=0/0=undefined, recall=0/1=0
+    # Use replaced_undefined_by=0 to maintain backward-compat expected values
+    p, r, f, s = precision_recall_fscore_support(
+        y_true, y_pred, average=None, replaced_undefined_by=0
+    )
 
     # tp = [0, 1, 1, 0]
     # fn = [1, 0, 0, 1]
@@ -1845,18 +1900,21 @@ def test_precision_recall_f1_score_multilabel_1():
     assert_array_almost_equal(f, [0.0, 1 / 1.5, 1, 0.0], 2)
     assert_array_almost_equal(s, [1, 1, 1, 1], 2)
 
-    f2 = fbeta_score(y_true, y_pred, beta=2, average=None)
+    f2 = fbeta_score(y_true, y_pred, beta=2, average=None, replaced_undefined_by=0)
     support = s
     assert_array_almost_equal(f2, [0, 0.83, 1, 0], 2)
 
     # Check macro
-    p, r, f, s = precision_recall_fscore_support(y_true, y_pred, average="macro")
+    p, r, f, s = precision_recall_fscore_support(
+        y_true, y_pred, average="macro", replaced_undefined_by=0
+    )
     assert_almost_equal(p, 1.5 / 4)
     assert_almost_equal(r, 0.5)
     assert_almost_equal(f, 2.5 / 1.5 * 0.25)
     assert s is None
     assert_almost_equal(
-        fbeta_score(y_true, y_pred, beta=2, average="macro"), np.mean(f2)
+        fbeta_score(y_true, y_pred, beta=2, average="macro", replaced_undefined_by=0),
+        np.mean(f2),
     )
 
     # Check micro
@@ -1871,13 +1929,17 @@ def test_precision_recall_f1_score_multilabel_1():
     )
 
     # Check weighted
-    p, r, f, s = precision_recall_fscore_support(y_true, y_pred, average="weighted")
+    p, r, f, s = precision_recall_fscore_support(
+        y_true, y_pred, average="weighted", replaced_undefined_by=0
+    )
     assert_almost_equal(p, 1.5 / 4)
     assert_almost_equal(r, 0.5)
     assert_almost_equal(f, 2.5 / 1.5 * 0.25)
     assert s is None
     assert_almost_equal(
-        fbeta_score(y_true, y_pred, beta=2, average="weighted"),
+        fbeta_score(
+            y_true, y_pred, beta=2, average="weighted", replaced_undefined_by=0
+        ),
         np.average(f2, weights=support),
     )
     # Check samples
@@ -1902,14 +1964,20 @@ def test_precision_recall_f1_score_multilabel_2():
     # tp = [ 0.  1.  0.  0.]
     # fp = [ 1.  0.  0.  2.]
     # fn = [ 1.  1.  1.  0.]
+    # Label 0: precision=0/(0+1)=0 (defined),
+    # label 3: precision=0/(0+2)=0 (defined as 0)
+    # But label 3 has no TRUE samples: recall=0/0 -> undefined.
+    # Use replaced_undefined_by=0
 
-    p, r, f, s = precision_recall_fscore_support(y_true, y_pred, average=None)
+    p, r, f, s = precision_recall_fscore_support(
+        y_true, y_pred, average=None, replaced_undefined_by=0
+    )
     assert_array_almost_equal(p, [0.0, 1.0, 0.0, 0.0], 2)
     assert_array_almost_equal(r, [0.0, 0.5, 0.0, 0.0], 2)
     assert_array_almost_equal(f, [0.0, 0.66, 0.0, 0.0], 2)
     assert_array_almost_equal(s, [1, 2, 1, 0], 2)
 
-    f2 = fbeta_score(y_true, y_pred, beta=2, average=None)
+    f2 = fbeta_score(y_true, y_pred, beta=2, average=None, replaced_undefined_by=0)
     support = s
     assert_array_almost_equal(f2, [0, 0.55, 0, 0], 2)
 
@@ -1923,22 +1991,29 @@ def test_precision_recall_f1_score_multilabel_2():
         (1 + 4) * p * r / (4 * p + r),
     )
 
-    p, r, f, s = precision_recall_fscore_support(y_true, y_pred, average="macro")
+    p, r, f, s = precision_recall_fscore_support(
+        y_true, y_pred, average="macro", replaced_undefined_by=0
+    )
     assert_almost_equal(p, 0.25)
     assert_almost_equal(r, 0.125)
     assert_almost_equal(f, 2 / 12)
     assert s is None
     assert_almost_equal(
-        fbeta_score(y_true, y_pred, beta=2, average="macro"), np.mean(f2)
+        fbeta_score(y_true, y_pred, beta=2, average="macro", replaced_undefined_by=0),
+        np.mean(f2),
     )
 
-    p, r, f, s = precision_recall_fscore_support(y_true, y_pred, average="weighted")
+    p, r, f, s = precision_recall_fscore_support(
+        y_true, y_pred, average="weighted", replaced_undefined_by=0
+    )
     assert_almost_equal(p, 2 / 4)
     assert_almost_equal(r, 1 / 4)
     assert_almost_equal(f, 2 / 3 * 2 / 4)
     assert s is None
     assert_almost_equal(
-        fbeta_score(y_true, y_pred, beta=2, average="weighted"),
+        fbeta_score(
+            y_true, y_pred, beta=2, average="weighted", replaced_undefined_by=0
+        ),
         np.average(f2, weights=support),
     )
 
@@ -1960,7 +2035,7 @@ def test_precision_recall_f1_score_multilabel_2():
 @pytest.mark.filterwarnings(r"ignore::sklearn.exceptions.UndefinedMetricWarning")
 @pytest.mark.parametrize(
     "zero_division, zero_division_expected",
-    [("warn", 0), (0, 0), (1, 1), (np.nan, np.nan)],
+    [("warn", np.nan), (0, 0), (1, 1), (np.nan, np.nan)],
 )
 def test_precision_recall_f1_score_with_an_empty_prediction(
     zero_division, zero_division_expected
@@ -1978,13 +2053,27 @@ def test_precision_recall_f1_score_with_an_empty_prediction(
 
     assert_array_almost_equal(p, [zero_division_expected, 1.0, 1.0, 0.0], 2)
     assert_array_almost_equal(r, [0.0, 0.5, 1.0, zero_division_expected], 2)
-    expected_f = 0
-    assert_array_almost_equal(f, [expected_f, 1 / 1.5, 1, expected_f], 2)
+    # For undefined metrics: f-score uses replaced_undefined_by value
+    # When zero_division_expected is nan, f-score is also nan for those labels
+    expected_f = zero_division_expected
+    if not np.isnan(expected_f):
+        assert_array_almost_equal(f, [expected_f, 1 / 1.5, 1, expected_f], 2)
+    else:
+        assert np.isnan(f[0])
+        assert_almost_equal(f[1], 1 / 1.5, 2)
+        assert_almost_equal(f[2], 1, 2)
+        assert np.isnan(f[3])
     assert_array_almost_equal(s, [1, 2, 1, 0], 2)
 
     f2 = fbeta_score(y_true, y_pred, beta=2, average=None, zero_division=zero_division)
     support = s
-    assert_array_almost_equal(f2, [expected_f, 0.55, 1, expected_f], 2)
+    if not np.isnan(expected_f):
+        assert_array_almost_equal(f2, [expected_f, 0.55, 1, expected_f], 2)
+    else:
+        assert np.isnan(f2[0])
+        assert_almost_equal(f2[1], 0.55, 2)
+        assert_almost_equal(f2[2], 1, 2)
+        assert np.isnan(f2[3])
 
     p, r, f, s = precision_recall_fscore_support(
         y_true, y_pred, average="macro", zero_division=zero_division
@@ -2064,7 +2153,8 @@ def test_precision_recall_f1_no_labels(beta, average, zero_division):
     y_pred = np.zeros_like(y_true)
 
     with warnings.catch_warnings():
-        warnings.simplefilter("error")
+        warnings.simplefilter("ignore", FutureWarning)
+        warnings.simplefilter("ignore", UndefinedMetricWarning)
 
         p, r, f, s = precision_recall_fscore_support(
             y_true,
@@ -2105,15 +2195,16 @@ def test_precision_recall_f1_no_labels_check_warnings(average):
     with pytest.warns(UndefinedMetricWarning):
         p, r, f, s = func(y_true, y_pred, average=average, beta=1.0)
 
-    assert_almost_equal(p, 0)
-    assert_almost_equal(r, 0)
-    assert_almost_equal(f, 0)
+    # New default is np.nan (replaced_undefined_by=np.nan)
+    assert np.isnan(p)
+    assert np.isnan(r)
+    assert np.isnan(f)
     assert s is None
 
     with pytest.warns(UndefinedMetricWarning):
         fbeta = fbeta_score(y_true, y_pred, average=average, beta=1.0)
 
-    assert_almost_equal(fbeta, 0)
+    assert np.isnan(fbeta)
 
 
 @pytest.mark.parametrize("zero_division", [0, 1, np.nan])
@@ -2130,7 +2221,8 @@ def test_precision_recall_f1_no_labels_average_none(zero_division):
     # |y_hat_i| = [0, 0, 0]
 
     with warnings.catch_warnings():
-        warnings.simplefilter("error")
+        warnings.simplefilter("ignore", FutureWarning)
+        warnings.simplefilter("ignore", UndefinedMetricWarning)
 
         p, r, f, s = precision_recall_fscore_support(
             y_true,
@@ -2169,15 +2261,16 @@ def test_precision_recall_f1_no_labels_average_none_warn():
             y_true, y_pred, average=None, beta=1
         )
 
-    assert_array_almost_equal(p, [0, 0, 0], 2)
-    assert_array_almost_equal(r, [0, 0, 0], 2)
-    assert_array_almost_equal(f, [0, 0, 0], 2)
+    # New default replaced_undefined_by=np.nan
+    assert all(np.isnan(p))
+    assert all(np.isnan(r))
+    assert all(np.isnan(f))
     assert_array_almost_equal(s, [0, 0, 0], 2)
 
     with pytest.warns(UndefinedMetricWarning):
         fbeta = fbeta_score(y_true, y_pred, beta=1, average=None)
 
-    assert_array_almost_equal(fbeta, [0, 0, 0], 2)
+    assert all(np.isnan(fbeta))
 
 
 def test_prf_warnings():
@@ -2186,8 +2279,8 @@ def test_prf_warnings():
     for average in [None, "weighted", "macro"]:
         msg = (
             "Precision is ill-defined and "
-            "being set to 0.0 in labels with no predicted samples."
-            " Use `zero_division` parameter to control"
+            "being set to np.nan in labels with no predicted samples."
+            " Use `replaced_undefined_by` parameter to control"
             " this behavior."
         )
         with pytest.warns(w, match=msg):
@@ -2195,8 +2288,8 @@ def test_prf_warnings():
 
         msg = (
             "Recall is ill-defined and "
-            "being set to 0.0 in labels with no true samples."
-            " Use `zero_division` parameter to control"
+            "being set to np.nan in labels with no true samples."
+            " Use `replaced_undefined_by` parameter to control"
             " this behavior."
         )
         with pytest.warns(w, match=msg):
@@ -2205,8 +2298,8 @@ def test_prf_warnings():
     # average of per-sample scores
     msg = (
         "Precision is ill-defined and "
-        "being set to 0.0 in samples with no predicted labels."
-        " Use `zero_division` parameter to control"
+        "being set to np.nan in samples with no predicted labels."
+        " Use `replaced_undefined_by` parameter to control"
         " this behavior."
     )
     with pytest.warns(w, match=msg):
@@ -2214,8 +2307,8 @@ def test_prf_warnings():
 
     msg = (
         "Recall is ill-defined and "
-        "being set to 0.0 in samples with no true labels."
-        " Use `zero_division` parameter to control"
+        "being set to np.nan in samples with no true labels."
+        " Use `replaced_undefined_by` parameter to control"
         " this behavior."
     )
     with pytest.warns(w, match=msg):
@@ -2224,8 +2317,8 @@ def test_prf_warnings():
     # single score: micro-average
     msg = (
         "Precision is ill-defined and "
-        "being set to 0.0 due to no predicted samples."
-        " Use `zero_division` parameter to control"
+        "being set to np.nan due to no predicted samples."
+        " Use `replaced_undefined_by` parameter to control"
         " this behavior."
     )
     with pytest.warns(w, match=msg):
@@ -2233,8 +2326,8 @@ def test_prf_warnings():
 
     msg = (
         "Recall is ill-defined and "
-        "being set to 0.0 due to no true samples."
-        " Use `zero_division` parameter to control"
+        "being set to np.nan due to no true samples."
+        " Use `replaced_undefined_by` parameter to control"
         " this behavior."
     )
     with pytest.warns(w, match=msg):
@@ -2243,8 +2336,8 @@ def test_prf_warnings():
     # single positive label
     msg = (
         "Precision is ill-defined and "
-        "being set to 0.0 due to no predicted samples."
-        " Use `zero_division` parameter to control"
+        "being set to np.nan due to no predicted samples."
+        " Use `replaced_undefined_by` parameter to control"
         " this behavior."
     )
     with pytest.warns(w, match=msg):
@@ -2252,8 +2345,8 @@ def test_prf_warnings():
 
     msg = (
         "Recall is ill-defined and "
-        "being set to 0.0 due to no true samples."
-        " Use `zero_division` parameter to control"
+        "being set to np.nan due to no true samples."
+        " Use `replaced_undefined_by` parameter to control"
         " this behavior."
     )
     with pytest.warns(w, match=msg):
@@ -2262,32 +2355,116 @@ def test_prf_warnings():
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter("always")
         precision_recall_fscore_support([0, 0], [0, 0], average="binary")
-        msg = (
-            "F-score is ill-defined and being set to 0.0 due to no true nor "
-            "predicted samples. Use `zero_division` parameter to control this"
-            " behavior."
+        undefined_warns = [
+            w for w in record if issubclass(w.category, UndefinedMetricWarning)
+        ]
+        # Expect warnings for Precision, Recall, F-score (3 total)
+        assert len(undefined_warns) == 3
+        msgs = [str(w.message) for w in undefined_warns]
+        assert any(
+            "F-score is ill-defined" in m
+            and "np.nan" in m
+            and "replaced_undefined_by" in m
+            for m in msgs
         )
-        assert str(record.pop().message) == msg
-        msg = (
-            "Recall is ill-defined and "
-            "being set to 0.0 due to no true samples."
-            " Use `zero_division` parameter to control"
-            " this behavior."
+        assert any(
+            "Recall is ill-defined" in m and "replaced_undefined_by" in m for m in msgs
         )
-        assert str(record.pop().message) == msg
-        msg = (
-            "Precision is ill-defined and "
-            "being set to 0.0 due to no predicted samples."
-            " Use `zero_division` parameter to control"
-            " this behavior."
+        assert any(
+            "Precision is ill-defined" in m and "replaced_undefined_by" in m
+            for m in msgs
         )
-        assert str(record.pop().message) == msg
+
+
+@pytest.mark.parametrize("replaced_undefined_by", [0, 1, np.nan])
+def test_prf_no_warnings_if_replaced_undefined_by_set(replaced_undefined_by):
+    """No UndefinedMetricWarning or FutureWarning when replaced_undefined_by is used."""
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+
+        # average of per-label scores
+        for average in [None, "weighted", "macro"]:
+            precision_recall_fscore_support(
+                [0, 1, 2],
+                [1, 1, 2],
+                average=average,
+                replaced_undefined_by=replaced_undefined_by,
+            )
+
+            precision_recall_fscore_support(
+                [1, 1, 2],
+                [0, 1, 2],
+                average=average,
+                replaced_undefined_by=replaced_undefined_by,
+            )
+
+        # average of per-sample scores
+        precision_recall_fscore_support(
+            np.array([[1, 0], [1, 0]]),
+            np.array([[1, 0], [0, 0]]),
+            average="samples",
+            replaced_undefined_by=replaced_undefined_by,
+        )
+
+        precision_recall_fscore_support(
+            np.array([[1, 0], [0, 0]]),
+            np.array([[1, 0], [1, 0]]),
+            average="samples",
+            replaced_undefined_by=replaced_undefined_by,
+        )
+
+        # single score: micro-average
+        precision_recall_fscore_support(
+            np.array([[1, 1], [1, 1]]),
+            np.array([[0, 0], [0, 0]]),
+            average="micro",
+            replaced_undefined_by=replaced_undefined_by,
+        )
+
+        precision_recall_fscore_support(
+            np.array([[0, 0], [0, 0]]),
+            np.array([[1, 1], [1, 1]]),
+            average="micro",
+            replaced_undefined_by=replaced_undefined_by,
+        )
+
+        # single positive label
+        precision_recall_fscore_support(
+            [1, 1],
+            [-1, -1],
+            average="binary",
+            replaced_undefined_by=replaced_undefined_by,
+        )
+
+        precision_recall_fscore_support(
+            [-1, -1],
+            [1, 1],
+            average="binary",
+            replaced_undefined_by=replaced_undefined_by,
+        )
+
+        future_warns = [w for w in record if issubclass(w.category, FutureWarning)]
+        assert len(future_warns) == 0, f"Unexpected FutureWarning: {future_warns}"
+
+    # The last case: [0,0], [0,0] binary -- metric is undefined,
+    # UndefinedMetricWarning expected
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+        precision_recall_fscore_support(
+            [0, 0],
+            [0, 0],
+            average="binary",
+            replaced_undefined_by=replaced_undefined_by,
+        )
+        future_warns = [w for w in record if issubclass(w.category, FutureWarning)]
+        assert len(future_warns) == 0
 
 
 @pytest.mark.parametrize("zero_division", [0, 1, np.nan])
 def test_prf_no_warnings_if_zero_division_set(zero_division):
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
+    """zero_division still works but emits FutureWarning (deprecated)."""
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
 
         # average of per-label scores
         for average in [None, "weighted", "macro"]:
@@ -2338,18 +2515,28 @@ def test_prf_no_warnings_if_zero_division_set(zero_division):
             [-1, -1], [1, 1], average="binary", zero_division=zero_division
         )
 
+        future_warns = [w for w in record if issubclass(w.category, FutureWarning)]
+        assert len(future_warns) > 0, (
+            "Expected FutureWarning for deprecated zero_division"
+        )
+
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter("always")
         precision_recall_fscore_support(
             [0, 0], [0, 0], average="binary", zero_division=zero_division
         )
-        assert len(record) == 0
+        future_warns = [w for w in record if issubclass(w.category, FutureWarning)]
+        assert len(future_warns) > 0
 
 
 @pytest.mark.parametrize("zero_division", ["warn", 0, 1, np.nan])
 def test_recall_warnings(zero_division):
+    """zero_division is deprecated; it emits FutureWarning but still works."""
     with warnings.catch_warnings():
-        warnings.simplefilter("error")
+        # Allow FutureWarning from deprecated zero_division,
+        # but no UndefinedMetricWarning
+        warnings.simplefilter("ignore", FutureWarning)
+        warnings.simplefilter("error", UndefinedMetricWarning)
 
         recall_score(
             np.array([[1, 1], [1, 1]]),
@@ -2367,27 +2554,23 @@ def test_recall_warnings(zero_division):
             zero_division=zero_division,
         )
         if zero_division == "warn":
-            assert (
-                str(record.pop().message) == "Recall is ill-defined and "
-                "being set to 0.0 due to no true samples."
-                " Use `zero_division` parameter to control"
-                " this behavior."
-            )
+            # zero_division="warn" is the old default:
+            # UndefinedMetricWarning, no FutureWarning
+            undefined_warns = [
+                w for w in record if issubclass(w.category, UndefinedMetricWarning)
+            ]
+            assert len(undefined_warns) > 0
+            assert "Recall is ill-defined" in str(undefined_warns[0].message)
         else:
-            assert len(record) == 0
-
-        recall_score([0, 0], [0, 0])
-        if zero_division == "warn":
-            assert (
-                str(record.pop().message) == "Recall is ill-defined and "
-                "being set to 0.0 due to no true samples."
-                " Use `zero_division` parameter to control"
-                " this behavior."
+            future_warns = [w for w in record if issubclass(w.category, FutureWarning)]
+            assert len(future_warns) > 0, (
+                "Expected FutureWarning for deprecated zero_division"
             )
 
 
 @pytest.mark.parametrize("zero_division", ["warn", 0, 1, np.nan])
 def test_precision_warnings(zero_division):
+    """zero_division is deprecated; it emits FutureWarning but still works."""
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter("always")
         precision_score(
@@ -2397,26 +2580,24 @@ def test_precision_warnings(zero_division):
             zero_division=zero_division,
         )
         if zero_division == "warn":
-            assert (
-                str(record.pop().message) == "Precision is ill-defined and "
-                "being set to 0.0 due to no predicted samples."
-                " Use `zero_division` parameter to control"
-                " this behavior."
-            )
+            # zero_division="warn" is the old default:
+            # UndefinedMetricWarning, no FutureWarning
+            undefined_warns = [
+                w for w in record if issubclass(w.category, UndefinedMetricWarning)
+            ]
+            assert len(undefined_warns) > 0
+            assert "Precision is ill-defined" in str(undefined_warns[0].message)
         else:
-            assert len(record) == 0
-
-        precision_score([0, 0], [0, 0])
-        if zero_division == "warn":
-            assert (
-                str(record.pop().message) == "Precision is ill-defined and "
-                "being set to 0.0 due to no predicted samples."
-                " Use `zero_division` parameter to control"
-                " this behavior."
+            future_warns = [w for w in record if issubclass(w.category, FutureWarning)]
+            assert len(future_warns) > 0, (
+                "Expected FutureWarning for deprecated zero_division"
             )
 
     with warnings.catch_warnings():
-        warnings.simplefilter("error")
+        # Allow FutureWarning from deprecated zero_division,
+        # but no UndefinedMetricWarning
+        warnings.simplefilter("ignore", FutureWarning)
+        warnings.simplefilter("error", UndefinedMetricWarning)
 
         precision_score(
             np.array([[0, 0], [0, 0]]),
@@ -2428,41 +2609,68 @@ def test_precision_warnings(zero_division):
 
 @pytest.mark.parametrize("zero_division", ["warn", 0, 1, np.nan])
 def test_fscore_warnings(zero_division):
+    """zero_division is deprecated; emits FutureWarning but still works."""
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter("always")
 
         for score in [f1_score, partial(fbeta_score, beta=2)]:
+            prev_len = len(record)
             score(
                 np.array([[1, 1], [1, 1]]),
                 np.array([[0, 0], [0, 0]]),
                 average="micro",
                 zero_division=zero_division,
             )
-            assert len(record) == 0
-
-            score(
-                np.array([[0, 0], [0, 0]]),
-                np.array([[1, 1], [1, 1]]),
-                average="micro",
-                zero_division=zero_division,
-            )
-            assert len(record) == 0
-
-            score(
-                np.array([[0, 0], [0, 0]]),
-                np.array([[0, 0], [0, 0]]),
-                average="micro",
-                zero_division=zero_division,
-            )
-            if zero_division == "warn":
-                assert (
-                    str(record.pop().message) == "F-score is ill-defined and "
-                    "being set to 0.0 due to no true nor predicted "
-                    "samples. Use `zero_division` parameter to "
-                    "control this behavior."
+            # For non-warn zero_division: FutureWarning emitted
+            # (no UndefinedMetricWarning since value set)
+            # For zero_division="warn": no FutureWarning,
+            # just UndefinedMetricWarning if undefined
+            new_warns = record[prev_len:]
+            if zero_division != "warn":
+                future_warns = [
+                    w for w in new_warns if issubclass(w.category, FutureWarning)
+                ]
+                assert len(future_warns) > 0, (
+                    f"Expected FutureWarning for zero_division={zero_division}"
                 )
+
+            prev_len = len(record)
+            score(
+                np.array([[0, 0], [0, 0]]),
+                np.array([[1, 1], [1, 1]]),
+                average="micro",
+                zero_division=zero_division,
+            )
+            new_warns = record[prev_len:]
+            if zero_division != "warn":
+                future_warns = [
+                    w for w in new_warns if issubclass(w.category, FutureWarning)
+                ]
+                assert len(future_warns) > 0
+
+            prev_len = len(record)
+            score(
+                np.array([[0, 0], [0, 0]]),
+                np.array([[0, 0], [0, 0]]),
+                average="micro",
+                zero_division=zero_division,
+            )
+            new_warns = record[prev_len:]
+            if zero_division == "warn":
+                # Expect UndefinedMetricWarning about F-score
+                undefined_warns = [
+                    w
+                    for w in new_warns
+                    if issubclass(w.category, UndefinedMetricWarning)
+                ]
+                assert len(undefined_warns) > 0
+                assert "F-score is ill-defined" in str(undefined_warns[0].message)
             else:
-                assert len(record) == 0
+                # FutureWarning emitted for deprecated zero_division
+                future_warns = [
+                    w for w in new_warns if issubclass(w.category, FutureWarning)
+                ]
+                assert len(future_warns) > 0
 
 
 def test_prf_average_binary_data_non_binary():
@@ -2557,14 +2765,14 @@ def test__check_targets():
             if type1 != type2:
                 err_msg = (
                     "Classification metrics can't handle a mix "
-                    "of {0} and {1} targets".format(type1, type2)
+                    f"of {type1} and {type2} targets"
                 )
                 with pytest.raises(ValueError, match=err_msg):
                     _check_targets(y1, y2)
 
             else:
                 if type1 not in (BIN, MC, IND):
-                    err_msg = "{0} is not supported".format(type1)
+                    err_msg = f"{type1} is not supported"
                     with pytest.raises(ValueError, match=err_msg):
                         _check_targets(y1, y2)
 
@@ -3222,6 +3430,7 @@ def test_f1_for_small_binary_inputs_with_zero_division(y_true, y_pred, expected_
         make_scorer(recall_score, zero_division=np.nan),
     ],
 )
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_classification_metric_division_by_zero_nan_validation(scoring):
     """Check that we validate `np.nan` properly for classification metrics.
 

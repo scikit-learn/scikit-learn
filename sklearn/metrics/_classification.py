@@ -71,6 +71,17 @@ def _check_zero_division(zero_division):
         return np.nan
 
 
+def _check_replaced_undefined_by(replaced_undefined_by):
+    """Validate and convert `replaced_undefined_by` to a usable float value."""
+    if isinstance(replaced_undefined_by, (int, float)) and replaced_undefined_by in [
+        0,
+        1,
+    ]:
+        return np.float64(replaced_undefined_by)
+    else:  # np.isnan(replaced_undefined_by)
+        return np.nan
+
+
 def _check_targets(y_true, y_pred, sample_weight=None):
     """Check that y_true and y_pred belong to the same classification task.
 
@@ -132,9 +143,8 @@ def _check_targets(y_true, y_pred, sample_weight=None):
 
     if len(y_type) > 1:
         raise ValueError(
-            "Classification metrics can't handle a mix of {0} and {1} targets".format(
-                type_true, type_pred
-            )
+            f"Classification metrics can't handle a mix of "
+            f"{type_true} and {type_pred} targets"
         )
 
     # We can't have more than one value in y_type => The set is no more needed
@@ -142,7 +152,7 @@ def _check_targets(y_true, y_pred, sample_weight=None):
 
     # No metrics support "multiclass-multioutput" format
     if y_type not in ["binary", "multiclass", "multilabel-indicator"]:
-        raise ValueError("{0} is not supported".format(y_type))
+        raise ValueError(f"{y_type} is not supported")
 
     if y_type in ["binary", "multiclass"]:
         try:
@@ -157,9 +167,8 @@ def _check_targets(y_true, y_pred, sample_weight=None):
                 raise
 
     unique_labels_ = unique_labels(y_true, y_pred, ys_types={y_type})
-    if y_type == "binary":
-        if unique_labels_.shape[0] > 2:
-            y_type = "multiclass"
+    if y_type == "binary" and unique_labels_.shape[0] > 2:
+        y_type = "multiclass"
 
     xp, _ = get_namespace(y_true, y_pred)
     if y_type.startswith("multilabel"):
@@ -209,14 +218,14 @@ def _one_hot_encoding_multiclass_target(y_true, labels, target_xp, target_device
     if lb.classes_.shape[0] == 1:
         if labels is None:
             raise ValueError(
-                "y_true contains only one label ({0}). Please "
+                f"y_true contains only one label ({lb.classes_[0]}). Please "
                 "provide the list of all expected class labels explicitly through the "
-                "labels argument.".format(lb.classes_[0])
+                "labels argument."
             )
         else:
             raise ValueError(
                 "The labels array needs to contain at least two "
-                "labels, got {0}.".format(lb.classes_)
+                f"labels, got {lb.classes_}."
             )
 
     transformed_labels = lb.transform(y_true)
@@ -311,18 +320,17 @@ def _validate_multiclass_probabilistic_prediction(
         if labels is None:
             raise ValueError(
                 "y_true and y_prob contain different number of "
-                "classes: {0} vs {1}. Please provide the true "
+                f"classes: {transformed_labels.shape[1]} vs "
+                f"{y_prob.shape[1]}. Please provide the true "
                 "labels explicitly through the labels argument. "
                 "Classes found in "
-                "y_true: {2}".format(
-                    transformed_labels.shape[1], y_prob.shape[1], lb_classes
-                )
+                f"y_true: {lb_classes}"
             )
         else:
             raise ValueError(
                 "The number of classes in labels is different "
                 "from that in y_prob. Classes found in "
-                "labels: {0}".format(lb_classes)
+                f"labels: {lb_classes}"
             )
 
     return transformed_labels, y_prob
@@ -1053,6 +1061,10 @@ def cohen_kappa_score(
             Options(Real, {0, 1}),
             StrOptions({"warn"}),
         ],
+        "replaced_undefined_by": [
+            Options(Real, {0.0, 1.0}),
+            "nan",
+        ],
     },
     prefer_skip_nested_validation=True,
 )
@@ -1065,6 +1077,7 @@ def jaccard_score(
     average="binary",
     sample_weight=None,
     zero_division="warn",
+    replaced_undefined_by=np.nan,
 ):
     """Jaccard similarity coefficient score.
 
@@ -1218,6 +1231,16 @@ def jaccard_score(
         numerator = xp.asarray(xp.sum(numerator, keepdims=True), device=device_)
         denominator = xp.asarray(xp.sum(denominator, keepdims=True), device=device_)
 
+    # Handle zero_division -> replaced_undefined_by deprecation
+    if zero_division != "warn":
+        warnings.warn(
+            "The `zero_division` parameter is deprecated in 1.10 and will be removed "
+            "in 1.12. Use `replaced_undefined_by` instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        replaced_undefined_by = _check_zero_division(zero_division)
+
     jaccard = _prf_divide(
         numerator,
         denominator,
@@ -1225,7 +1248,7 @@ def jaccard_score(
         "true or predicted",
         average,
         ("jaccard",),
-        zero_division=zero_division,
+        replaced_undefined_by=replaced_undefined_by,
     )
     if average is None:
         return jaccard
@@ -1442,6 +1465,10 @@ def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
             "nan",
             StrOptions({"warn"}),
         ],
+        "replaced_undefined_by": [
+            Options(Real, {0.0, 1.0}),
+            "nan",
+        ],
     },
     prefer_skip_nested_validation=True,
 )
@@ -1454,6 +1481,7 @@ def f1_score(
     average="binary",
     sample_weight=None,
     zero_division="warn",
+    replaced_undefined_by=np.nan,
 ):
     """Compute the F1 score, also known as balanced F-score or F-measure.
 
@@ -1549,6 +1577,16 @@ def f1_score(
         .. versionadded:: 1.3
            `np.nan` option was added.
 
+        .. deprecated:: 1.10
+            Use ``replaced_undefined_by`` instead. This parameter will be
+            removed in version 1.12.
+
+    replaced_undefined_by : {0.0, 1.0, np.nan}, default=np.nan
+        Replaces the metric value for labels with no true or predicted samples.
+        If set to ``np.nan``, such values are excluded from averages.
+
+        .. versionadded:: 1.10
+
     Returns
     -------
     f1_score : float or array of float, shape = [n_unique_labels]
@@ -1617,6 +1655,7 @@ def f1_score(
         average=average,
         sample_weight=sample_weight,
         zero_division=zero_division,
+        replaced_undefined_by=replaced_undefined_by,
     )
 
 
@@ -1637,6 +1676,10 @@ def f1_score(
             "nan",
             StrOptions({"warn"}),
         ],
+        "replaced_undefined_by": [
+            Options(Real, {0.0, 1.0}),
+            "nan",
+        ],
     },
     prefer_skip_nested_validation=True,
 )
@@ -1650,6 +1693,7 @@ def fbeta_score(
     average="binary",
     sample_weight=None,
     zero_division="warn",
+    replaced_undefined_by=np.nan,
 ):
     """Compute the F-beta score.
 
@@ -1755,6 +1799,16 @@ def fbeta_score(
         .. versionadded:: 1.3
            `np.nan` option was added.
 
+        .. deprecated:: 1.10
+            Use ``replaced_undefined_by`` instead. This parameter will be
+            removed in version 1.12.
+
+    replaced_undefined_by : {0.0, 1.0, np.nan}, default=np.nan
+        Replaces the metric value for labels with no true or predicted samples.
+        If set to ``np.nan``, such values are excluded from averages.
+
+        .. versionadded:: 1.10
+
     Returns
     -------
     fbeta_score : float (if average is not None) or array of float, shape =\
@@ -1838,18 +1892,26 @@ def fbeta_score(
         warn_for=("f-score",),
         sample_weight=sample_weight,
         zero_division=zero_division,
+        replaced_undefined_by=replaced_undefined_by,
     )
     return f
 
 
 def _prf_divide(
-    numerator, denominator, metric, modifier, average, warn_for, zero_division="warn"
+    numerator,
+    denominator,
+    metric,
+    modifier,
+    average,
+    warn_for,
+    zero_division="warn",
+    replaced_undefined_by=np.nan,
 ):
     """Performs division and handles divide-by-zero.
 
     On zero-division, sets the corresponding result elements equal to
-    0, 1 or np.nan (according to ``zero_division``). Plus, if
-    ``zero_division != "warn"`` raises a warning.
+    ``replaced_undefined_by`` (default ``np.nan``). An ``UndefinedMetricWarning``
+    is always raised when the metric is undefined.
 
     The metric, modifier and average arguments are used only for determining
     an appropriate warning.
@@ -1864,36 +1926,51 @@ def _prf_divide(
     if not xp.any(mask):
         return result
 
-    # set those with 0 denominator to `zero_division`, and 0 when "warn"
-    zero_division_value = _check_zero_division(zero_division)
-    result[mask] = zero_division_value
-
-    # we assume the user will be removing warnings if zero_division is set
-    # to something different than "warn". If we are computing only f-score
-    # the warning will be raised only if precision and recall are ill-defined
-    if zero_division != "warn" or metric not in warn_for:
+    # Legacy path: zero_division was explicitly set (not "warn")
+    if zero_division != "warn":
+        zero_division_value = _check_zero_division(zero_division)
+        result[mask] = zero_division_value
+        if metric not in warn_for:
+            return result
+        _warn_prf(average, modifier, f"{metric.capitalize()} is", result.shape[0])
         return result
 
-    # build appropriate warning
-    if metric in warn_for:
-        _warn_prf(average, modifier, f"{metric.capitalize()} is", result.shape[0])
+    # New path: use replaced_undefined_by
+    eff_value = _check_replaced_undefined_by(replaced_undefined_by)
+    result[mask] = eff_value
 
+    # Always warn when metric is undefined
+    if metric in warn_for:
+        _warn_prf(
+            average,
+            modifier,
+            f"{metric.capitalize()} is",
+            result.shape[0],
+            replaced_undefined_by=replaced_undefined_by,
+        )
     return result
 
 
-def _warn_prf(average, modifier, msg_start, result_size):
+def _warn_prf(average, modifier, msg_start, result_size, replaced_undefined_by=np.nan):
     axis0, axis1 = "sample", "label"
     if average == "samples":
         axis0, axis1 = axis1, axis0
+    replaced_val = (
+        "np.nan"
+        if (
+            isinstance(replaced_undefined_by, float) and np.isnan(replaced_undefined_by)
+        )
+        else str(replaced_undefined_by)
+    )
     msg = (
-        "{0} ill-defined and being set to 0.0 {{0}} "
-        "no {1} {2}s. Use `zero_division` parameter to control"
-        " this behavior.".format(msg_start, modifier, axis0)
+        f"{msg_start} ill-defined and being set to {replaced_val} {{0}} "
+        f"no {modifier} {axis0}s. Use `replaced_undefined_by` parameter to control"
+        " this behavior."
     )
     if result_size == 1:
         msg = msg.format("due to")
     else:
-        msg = msg.format("in {0}s with".format(axis1))
+        msg = msg.format(f"in {axis1}s with")
     warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
 
 
@@ -1910,12 +1987,11 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
     y_type, present_labels, y_true, y_pred, _ = _check_targets(y_true, y_pred)
     if average == "binary":
         if y_type == "binary":
-            if pos_label not in present_labels:
-                if len(present_labels) >= 2:
-                    raise ValueError(
-                        f"pos_label={pos_label} is not a valid label. It "
-                        f"should be one of {present_labels}"
-                    )
+            if pos_label not in present_labels and len(present_labels) >= 2:
+                raise ValueError(
+                    f"pos_label={pos_label} is not a valid label. It "
+                    f"should be one of {present_labels}"
+                )
             labels = [pos_label]
         else:
             average_options = list(average_options)
@@ -1954,6 +2030,10 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
             "nan",
             StrOptions({"warn"}),
         ],
+        "replaced_undefined_by": [
+            Options(Real, {0.0, 1.0}),
+            "nan",
+        ],
     },
     prefer_skip_nested_validation=True,
 )
@@ -1968,6 +2048,7 @@ def precision_recall_fscore_support(
     warn_for=("precision", "recall", "f-score"),
     sample_weight=None,
     zero_division="warn",
+    replaced_undefined_by=np.nan,
 ):
     """Compute precision, recall, F-measure and support for each class.
 
@@ -2077,6 +2158,16 @@ def precision_recall_fscore_support(
         .. versionadded:: 1.3
            `np.nan` option was added.
 
+        .. deprecated:: 1.10
+            Use ``replaced_undefined_by`` instead. This parameter will be
+            removed in version 1.12.
+
+    replaced_undefined_by : {0.0, 1.0, np.nan}, default=np.nan
+        Replaces the metric value for labels with no true or predicted samples.
+        If set to ``np.nan``, such values are excluded from averages.
+
+        .. versionadded:: 1.10
+
     Returns
     -------
     precision : float (if average is not None) or array of float, shape =\
@@ -2139,7 +2230,15 @@ def precision_recall_fscore_support(
      array([0., 0., 1.]), array([0. , 0. , 0.8]),
      array([2, 2, 2]))
     """
-    _check_zero_division(zero_division)
+    # Handle zero_division -> replaced_undefined_by deprecation
+    if zero_division != "warn":
+        warnings.warn(
+            "The `zero_division` parameter is deprecated in 1.10 and will be removed "
+            "in 1.12. Use `replaced_undefined_by` instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        replaced_undefined_by = _check_zero_division(zero_division)
     xp, _, device_ = get_namespace_and_device(y_pred)
     y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device_)
     labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
@@ -2168,10 +2267,22 @@ def precision_recall_fscore_support(
     # Divide, and on zero-division, set scores and/or warn according to
     # zero_division:
     precision = _prf_divide(
-        tp_sum, pred_sum, "precision", "predicted", average, warn_for, zero_division
+        tp_sum,
+        pred_sum,
+        "precision",
+        "predicted",
+        average,
+        warn_for,
+        replaced_undefined_by=replaced_undefined_by,
     )
     recall = _prf_divide(
-        tp_sum, true_sum, "recall", "true", average, warn_for, zero_division
+        tp_sum,
+        true_sum,
+        "recall",
+        "true",
+        average,
+        warn_for,
+        replaced_undefined_by=replaced_undefined_by,
     )
 
     if np.isposinf(beta):
@@ -2198,7 +2309,7 @@ def precision_recall_fscore_support(
             "true nor predicted",
             average,
             warn_for,
-            zero_division,
+            replaced_undefined_by=replaced_undefined_by,
         )
 
     # Average the results
@@ -2492,6 +2603,10 @@ def class_likelihood_ratios(
             "nan",
             StrOptions({"warn"}),
         ],
+        "replaced_undefined_by": [
+            Options(Real, {0.0, 1.0}),
+            "nan",
+        ],
     },
     prefer_skip_nested_validation=True,
 )
@@ -2504,6 +2619,7 @@ def precision_score(
     average="binary",
     sample_weight=None,
     zero_division="warn",
+    replaced_undefined_by=np.nan,
 ):
     """Compute the precision.
 
@@ -2592,6 +2708,16 @@ def precision_score(
         .. versionadded:: 1.3
            `np.nan` option was added.
 
+        .. deprecated:: 1.10
+            Use ``replaced_undefined_by`` instead. This parameter will be
+            removed in version 1.12.
+
+    replaced_undefined_by : {0.0, 1.0, np.nan}, default=np.nan
+        Replaces the metric value for labels with no true or predicted samples.
+        If set to ``np.nan``, such values are excluded from averages.
+
+        .. versionadded:: 1.10
+
     Returns
     -------
     precision : float (if average is not None) or array of float of shape \
@@ -2655,6 +2781,7 @@ def precision_score(
         warn_for=("precision",),
         sample_weight=sample_weight,
         zero_division=zero_division,
+        replaced_undefined_by=replaced_undefined_by,
     )
     return p
 
@@ -2675,6 +2802,10 @@ def precision_score(
             "nan",
             StrOptions({"warn"}),
         ],
+        "replaced_undefined_by": [
+            Options(Real, {0.0, 1.0}),
+            "nan",
+        ],
     },
     prefer_skip_nested_validation=True,
 )
@@ -2687,6 +2818,7 @@ def recall_score(
     average="binary",
     sample_weight=None,
     zero_division="warn",
+    replaced_undefined_by=np.nan,
 ):
     """Compute the recall.
 
@@ -2774,6 +2906,16 @@ def recall_score(
         .. versionadded:: 1.3
            `np.nan` option was added.
 
+        .. deprecated:: 1.10
+            Use ``replaced_undefined_by`` instead. This parameter will be
+            removed in version 1.12.
+
+    replaced_undefined_by : {0.0, 1.0, np.nan}, default=np.nan
+        Replaces the metric value for labels with no true or predicted samples.
+        If set to ``np.nan``, such values are excluded from averages.
+
+        .. versionadded:: 1.10
+
     Returns
     -------
     recall : float (if average is not None) or array of float of shape \
@@ -2839,6 +2981,7 @@ def recall_score(
         warn_for=("recall",),
         sample_weight=sample_weight,
         zero_division=zero_division,
+        replaced_undefined_by=replaced_undefined_by,
     )
     return r
 
@@ -2961,6 +3104,10 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
             "nan",
             StrOptions({"warn"}),
         ],
+        "replaced_undefined_by": [
+            Options(Real, {0.0, 1.0}),
+            "nan",
+        ],
     },
     prefer_skip_nested_validation=True,
 )
@@ -2974,6 +3121,7 @@ def classification_report(
     digits=2,
     output_dict=False,
     zero_division="warn",
+    replaced_undefined_by=np.nan,
 ):
     """Build a text report showing the main classification metrics.
 
@@ -3014,6 +3162,16 @@ def classification_report(
 
         .. versionadded:: 1.3
            `np.nan` option was added.
+
+        .. deprecated:: 1.10
+            Use ``replaced_undefined_by`` instead. This parameter will be
+            removed in version 1.12.
+
+    replaced_undefined_by : {0.0, 1.0, np.nan}, default=np.nan
+        Replaces the metric value for labels with no true or predicted samples.
+        If set to ``np.nan``, such values are excluded from averages.
+
+        .. versionadded:: 1.10
 
     Returns
     -------
@@ -3104,15 +3262,14 @@ def classification_report(
     if target_names is not None and len(labels) != len(target_names):
         if labels_given:
             warnings.warn(
-                "labels size, {0}, does not match size of target_names, {1}".format(
-                    len(labels), len(target_names)
-                )
+                f"labels size, {len(labels)}, does not match size of "
+                f"target_names, {len(target_names)}"
             )
         else:
             raise ValueError(
-                "Number of classes, {0}, does not match size of "
-                "target_names, {1}. Try specifying the labels "
-                "parameter".format(len(labels), len(target_names))
+                f"Number of classes, {len(labels)}, does not match size of "
+                f"target_names, {len(target_names)}. Try specifying the labels "
+                "parameter"
             )
     if target_names is None:
         target_names = ["%s" % l for l in labels]
@@ -3126,6 +3283,7 @@ def classification_report(
         average=None,
         sample_weight=sample_weight,
         zero_division=zero_division,
+        replaced_undefined_by=replaced_undefined_by,
     )
     rows = zip(target_names, p, r, f1, s)
 
@@ -3165,6 +3323,7 @@ def classification_report(
             average=average,
             sample_weight=sample_weight,
             zero_division=zero_division,
+            replaced_undefined_by=replaced_undefined_by,
         )
         avg = [avg_p, avg_r, avg_f1, np.sum(s)]
 
@@ -3185,7 +3344,7 @@ def classification_report(
                 report += row_fmt.format(line_heading, *avg, width=width, digits=digits)
 
     if output_dict:
-        if "accuracy" in report_dict.keys():
+        if "accuracy" in report_dict:
             report_dict["accuracy"] = report_dict["accuracy"]["precision"]
         return report_dict
     else:
@@ -3304,7 +3463,7 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
             _average(y_true != y_pred, weights=sample_weight, normalize=True, xp=xp)
         )
     else:
-        raise ValueError("{0} is not supported".format(y_type))
+        raise ValueError(f"{y_type} is not supported")
 
 
 @validate_params(

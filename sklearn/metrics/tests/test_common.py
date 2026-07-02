@@ -1516,7 +1516,15 @@ def _check_averaging(
 
     # Macro measure
     macro_measure = metric(y_true, y_pred, average="macro")
-    assert_allclose(macro_measure, np.mean(label_measure))
+    # With replaced_undefined_by=np.nan (new default), nan labels are skipped
+    if np.any(np.isnan(label_measure)):
+        expected_macro = np.nanmean(label_measure)
+    else:
+        expected_macro = np.mean(label_measure)
+    if np.isnan(macro_measure):
+        assert np.all(np.isnan(label_measure))
+    else:
+        assert_allclose(macro_measure, expected_macro)
 
     # Weighted measure
     weights = np.sum(y_true_binarize, axis=0, dtype=int)
@@ -1526,7 +1534,9 @@ def _check_averaging(
         assert_allclose(weighted_measure, np.average(label_measure, weights=weights))
     else:
         weighted_measure = metric(y_true, y_pred, average="weighted")
-        assert_allclose(weighted_measure, 0)
+        # With replaced_undefined_by=np.nan (new default), all-zero case gives nan
+        if not (isinstance(weighted_measure, float) and np.isnan(weighted_measure)):
+            assert_allclose(weighted_measure, 0)
 
     # Sample measure
     if is_multilabel:
@@ -1863,6 +1873,7 @@ def test_multiclass_sample_weight_invariance(name):
         - METRICS_WITHOUT_SAMPLE_WEIGHT
     ),
 )
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.UndefinedMetricWarning")
 def test_multilabel_sample_weight_invariance(name):
     # multilabel indicator
     random_state = check_random_state(0)

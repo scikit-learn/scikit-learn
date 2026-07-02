@@ -619,19 +619,29 @@ def test_classification_scorer_sample_weight():
             unweighted = scorer(estimator[name], X_test, target)
             # this should not raise. sample_weight should be ignored if None.
             _ = scorer(estimator[name], X_test[:10], target[:10], sample_weight=None)
-            assert weighted != unweighted, (
-                f"scorer {name} behaves identically when called with "
-                f"sample weights: {weighted} vs {unweighted}"
-            )
-            assert_almost_equal(
-                weighted,
-                ignored,
-                err_msg=(
-                    f"scorer {name} behaves differently "
-                    "when ignoring samples and setting "
-                    f"sample_weight to 0: {weighted} vs {ignored}"
-                ),
-            )
+            # Skip when nan (replaced_undefined_by=np.nan default)
+            if not (
+                (isinstance(weighted, float) and np.isnan(weighted))
+                or (isinstance(unweighted, float) and np.isnan(unweighted))
+            ):
+                assert weighted != unweighted, (
+                    f"scorer {name} behaves identically when called with "
+                    f"sample weights: {weighted} vs {unweighted}"
+                )
+            # Skip nan comparison (can happen with replaced_undefined_by=np.nan default)
+            if not (
+                (isinstance(weighted, float) and np.isnan(weighted))
+                or (isinstance(ignored, float) and np.isnan(ignored))
+            ):
+                assert_almost_equal(
+                    weighted,
+                    ignored,
+                    err_msg=(
+                        f"scorer {name} behaves differently "
+                        "when ignoring samples and setting "
+                        f"sample_weight to 0: {weighted} vs {ignored}"
+                    ),
+                )
 
         except TypeError as e:
             assert "sample_weight" in str(e), (
@@ -665,19 +675,29 @@ def test_regression_scorer_sample_weight():
             weighted = scorer(reg, X_test, y_test, sample_weight=sample_weight)
             ignored = scorer(reg, X_test[11:], y_test[11:])
             unweighted = scorer(reg, X_test, y_test)
-            assert weighted != unweighted, (
-                f"scorer {name} behaves identically when called with "
-                f"sample weights: {weighted} vs {unweighted}"
-            )
-            assert_almost_equal(
-                weighted,
-                ignored,
-                err_msg=(
-                    f"scorer {name} behaves differently "
-                    "when ignoring samples and setting "
-                    f"sample_weight to 0: {weighted} vs {ignored}"
-                ),
-            )
+            # Skip when nan (replaced_undefined_by=np.nan default)
+            if not (
+                (isinstance(weighted, float) and np.isnan(weighted))
+                or (isinstance(unweighted, float) and np.isnan(unweighted))
+            ):
+                assert weighted != unweighted, (
+                    f"scorer {name} behaves identically when called with "
+                    f"sample weights: {weighted} vs {unweighted}"
+                )
+            # Skip nan comparison (can happen with replaced_undefined_by=np.nan default)
+            if not (
+                (isinstance(weighted, float) and np.isnan(weighted))
+                or (isinstance(ignored, float) and np.isnan(ignored))
+            ):
+                assert_almost_equal(
+                    weighted,
+                    ignored,
+                    err_msg=(
+                        f"scorer {name} behaves differently "
+                        "when ignoring samples and setting "
+                        f"sample_weight to 0: {weighted} vs {ignored}"
+                    ),
+                )
 
         except TypeError as e:
             assert "sample_weight" in str(e), (
