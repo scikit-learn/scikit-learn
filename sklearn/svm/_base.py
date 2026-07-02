@@ -83,6 +83,49 @@ def _one_vs_one_coef(dual_coef, n_support, support_vectors):
     return coef
 
 
+def _check_nu_feasibility(y, nu, sample_weight):
+    """Check the feasibility of `nu` for nu-SVC the same way libsvm does.
+
+    For each pair of classes ``(i, j)``, ``nu`` is feasible only if
+    ``nu * (n_i + n_j) / 2 <= min(n_i, n_j)``, where ``n_i`` is the (possibly
+    sample-weighted) number of samples of class ``i``. This mirrors the check
+    in ``svm_check_parameter`` in ``sklearn/svm/src/libsvm/svm.cpp`` and lets
+    us fail fast with the same error before computing a potentially expensive
+    callable kernel.
+
+    Parameters
+    ----------
+    y : ndarray of shape (n_samples,)
+        Encoded target values (one integer-valued float per class).
+
+    nu : float
+        The ``nu`` parameter of the nu-SVC model.
+
+    sample_weight : ndarray of shape (n_samples,) or shape (0,)
+        Per-sample weights. An empty array means uniform weights, matching the
+        libsvm default where ``W[i] == 1``.
+
+    Raises
+    ------
+    ValueError
+        If ``nu`` is infeasible, with the same message libsvm would raise.
+    """
+    classes, y_indices = np.unique(y, return_inverse=True)
+    if sample_weight.shape[0] == 0:
+        counts = np.bincount(y_indices, minlength=classes.shape[0]).astype(np.float64)
+    else:
+        counts = np.bincount(
+            y_indices, weights=sample_weight, minlength=classes.shape[0]
+        )
+
+    for i in range(counts.shape[0]):
+        n1 = counts[i]
+        for j in range(i + 1, counts.shape[0]):
+            n2 = counts[j]
+            if nu * (n1 + n2) / 2 > min(n1, n2):
+                raise ValueError("specified nu is infeasible")
+
+
 class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
     """Base class for estimators that use libsvm as backing library.
 
@@ -284,6 +327,15 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 self._gamma = 1.0 / X.shape[1]
         elif isinstance(self.gamma, Real):
             self._gamma = self.gamma
+
+        # For nu-SVC, the feasibility of `nu` only depends on the (possibly
+        # sample-weighted) class counts, not on the kernel. Check it here, before
+        # a potentially expensive callable kernel is computed in `_dense_fit`, so
+        # that an infeasible `nu` fails fast with the same error libsvm raises.
+        # libsvm performs the same check internally, but only after the kernel
+        # has been computed; this extra O(n) check has negligible overhead.
+        if self._impl == "nu_svc":
+            _check_nu_feasibility(y, self.nu, sample_weight)
 
         fit = self._sparse_fit if self._sparse else self._dense_fit
         if self.verbose:
