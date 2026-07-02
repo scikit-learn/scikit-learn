@@ -143,7 +143,7 @@ plt.show()
 # Post-hoc calibration of the predicted probabilities of
 # :class:`~sklearn.naive_bayes.GaussianNB` with :ref:`isotonic` or
 # :ref:`Sigmoid regression <sigmoid_regressor>` can fix this issue as can be
-#  seen from the nearly diagonal calibration curve. Neither method is perfect
+# seen from the nearly diagonal calibration curve. Neither method is perfect
 # because of the limited amount of training and calibration data (1,000 samples
 # for both).
 #
@@ -338,9 +338,11 @@ compute_metrics(clf_list, X_train, y_train, X_test, y_test)
 # -------
 #
 # Parametric sigmoid calibration can deal with situations where the calibration
-# curve . Non-parametric
-# isotonic calibration can also fix the calibration problem but may require more
-# data to produce good results.
+# curve of the base classifier is sigmoid (e.g. the underconfident
+# :class:`~sklearn.svm.LinearSVC`) or transposed-sigmoid (e.g. the overconfident
+# :class:`~sklearn.naive_bayes.GaussianNB`). Non-parametric isotonic calibration
+# can also fix the calibration problem but may require more data to produce good
+# results.
 #
 # References
 # ----------
