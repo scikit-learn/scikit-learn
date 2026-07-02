@@ -1,0 +1,3 @@
+- Added a warning for the future change in the default value of the `average` parameter
+  in `precision_recall_fscore_support` from `None` to `'binary'`, in version 1.12.
+  By :user:`François Paugam <FrancoisPgm>`.
