@@ -272,10 +272,7 @@ To get started, you need to
 #. :ref:`setup_development_environment`
 #. Find an issue to work on (see :ref:`new_contributors`)
 #. Follow the :ref:`development_workflow`
-#. Make sure, you noted the :ref:`pr_checklist`
-
-If you want to contribute :ref:`contribute_documentation`,
-make sure you are able to :ref:`build it locally <building_documentation>`, before submitting a PR.
+#. Make sure you can tick everything off from the :ref:`pr_checklist`
 
 .. note::
 
@@ -293,16 +290,6 @@ make sure you are able to :ref:`build it locally <building_documentation>`, befo
   how you plan to approach it, and start working on it. If somebody else has
   already said they'd be working on the issue in the past 2-3 weeks, please let
   them finish their work, otherwise consider it stalled and take it over.
-
-To maintain the quality of the codebase and ease the review process, any
-contribution must conform to the project's :ref:`coding guidelines
-<coding-guidelines>`, in particular:
-
-- Don't modify unrelated lines to keep the PR focused on the scope stated in its
-  description or issue.
-- Only write inline comments that add value and avoid stating the obvious: explain
-  the "why" rather than the "what".
-- **Most importantly**: Do not contribute code that you don't understand.
 
 .. _development_workflow:
 
@@ -383,7 +370,179 @@ line
 Pull request checklist
 ----------------------
 
-Before a PR can be merged, it needs to be approved by two core developers.
+.. raw:: html
+
+  <style>
+    /* Show caption on large screens */
+    @media screen and (min-width: 960px) {
+      .contribution-types .sd-tab-set {
+        --tab-caption-width: 20%;
+      }
+
+      .contribution-types .sd-tab-set.contrib-type::before {
+        content: "Type of Contribution";
+      }
+
+    }
+    p.rubric.rubric-large {
+      font-size: 1.3em;
+      border-bottom: none;
+    }
+    .contribution-types li {
+      list-style-type: "✓ ";
+    }
+    .contribution-types li li {
+      list-style-type: "✗ ";
+    }
+  </style>
+
+.. div:: contribution-types
+
+  .. tab-set::
+    :class: contrib-type
+
+    .. tab-item:: Code
+      :class-label: tab-6
+
+      .. rubric:: BEFORE opening a PR, make sure that:
+         :class: rubric-large
+
+      * Your PR relates to at least one existing issue that is ready for
+        contribution.
+        Please **do not** open PRs for issues:
+
+        - that are labeled with :ref:`"Needs triage" <issues_tagged_needs_triage>` or any
+          other kind of "Needs..." labels,
+        - where the discussion has not settled down to an explicit resolution plan,
+        - where the reporter has already expressed interest in opening a PR, or
+        - that already have cross-referenced and active PRs.
+
+        If no related issue exists yet, please :ref:`open one <submitting_bug_feature>`
+        to discuss your proposal first.
+
+      * You understand the code that you are about to submit.
+
+      * You didn't modify unrelated lines. Keep the PR focused on the scope stated in
+        its issue.
+
+      * You followed the :ref:`coding-guidelines` and properly commented and
+        documented your code.
+
+      * You added new tests for your bug-fixes or new features. In the
+        case of bug fixes, at the time of the PR, the tests should fail for the code
+        base in the ``main`` branch and pass for the PR code. The code coverage CI test
+        will fail if newly added code paths are not covered by a test.
+
+      * If your changes relate to performance or efficiency (bug fixes or new features),
+        you included a performance analysis with a benchmark script and profiling output
+        (see :ref:`monitoring_performances`). If relevant, also check out the
+        :ref:`performance-howto` guide for more details on profiling and Cython
+        optimizations.
+
+      * All :ref:`tests pass locally<testing_coverage>`
+
+      .. dropdown:: When contributing a new feature, also note the following
+
+        * Make sure your contribution fulfills our `new algorithm requirements
+          <https://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms>`_
+
+        * New features have some maintenance overhead. We expect PR authors
+          to take part in the maintenance for the code they submit, at least
+          initially.
+
+        * New features need to be illustrated with narrative
+          documentation in the user guide, with small code snippets.
+          If relevant, please also add references in the literature, with PDF links
+          when possible. The user guide should also include expected time and space complexity
+          of the algorithm and scalability, e.g. "this algorithm can scale to a
+          large number of samples > 100000, but does not scale in dimensionality:
+          `n_features` is expected to be lower than 100".
+
+        * New features should also include examples of usage. Have a look at other
+          examples in the `examples
+          <https://github.com/scikit-learn/scikit-learn/tree/main/examples>`__ directory
+          for reference. Examples should demonstrate why the new functionality is useful
+          in practice and, if possible, compare it to other methods available in
+          scikit-learn.
+
+      .. rubric:: WHEN opening a PR
+         :class: rubric-large
+
+      * Give your pull request a helpful title that summarizes what your
+        contribution does. This title will become the commit message once merged. In
+        some cases "Fix <ISSUE TITLE>" is enough. "Fix #<ISSUE NUMBER>" is **not** a
+        good title.
+
+      * Fill out the `pull request template <https://github.com/scikit-learn/scikit-learn/blob/main/.github/PULL_REQUEST_TEMPLATE.md>`_.
+
+      * If the pull request resolves any issues/PRs, use `keywords to create a link to them
+        <https://github.com/blog/1506-closing-issues-via-pull-requests/>`_
+        (e.g., ``Fixes #1234``; multiple issues/PRs are allowed as long as each
+        one is preceded by a keyword). **Upon merging, those issues/PRs will
+        automatically be closed by GitHub**. If your pull request is simply
+        related to some other issues/PRs, or it only partially resolves the target
+        issue, create a link to them without using the keywords (e.g., ``Towards #1234``).
+
+      .. rubric:: AFTER opening a PR
+         :class: rubric-large
+
+      * Add a `changelog entry
+        <https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md>`_
+        describing the changes if the PR is likely to affect users.
+
+      * Make sure all CI tests pass (check the provided links for more information on
+        any errors).
+
+      * If any part of the documentation was changed (which is very likely), also
+        check the rendered docs, see :ref:`generated_doc_CI`.
+
+    .. tab-item:: Documentation
+      :class-label: tab-6
+
+      .. rubric:: BEFORE opening a PR
+         :class: rubric-large
+
+      * Unless you're only fixing typos or obvious inconsistencies in the
+        documentation, make sure the PR relates to at least one existing issue
+        that is ready for contribution. Please **do not** open PRs for issues:
+
+        - that are labeled with :ref:`"Needs triage" <issues_tagged_needs_triage>` or any
+          other kind of "Needs..." labels,
+        - where the discussion has not settled down to an explicit resolution plan,
+        - where the reporter has already expressed interest in opening a PR, or
+        - that already have cross-referenced and active PRs.
+
+      * Make sure you followed the guidelines on contributing
+        :ref:`contribute_documentation`.
+
+      * Check that you can :ref:`build the documentation locally <building_documentation>`.
+
+      .. rubric:: WHEN opening a PR
+         :class: rubric-large
+
+      * Give the pull request a helpful title, starting with "DOC", that summarizes
+        what the contribution does. This title will become the commit message once
+        merged.
+
+      * Fill out the `pull request template <https://github.com/scikit-learn/scikit-learn/blob/main/.github/PULL_REQUEST_TEMPLATE.md>`_.
+
+      * If the pull request resolves any issues/PRs, use `keywords to create a link to them
+        <https://github.com/blog/1506-closing-issues-via-pull-requests/>`_
+        (e.g., ``Fixes #1234``; multiple issues/PRs are allowed as long as each
+        one is preceded by a keyword). **Upon merging, those issues/PRs will
+        automatically be closed by GitHub**. If the pull request is simply
+        related to some other issues/PRs, or it only partially resolves the target
+        issue, create a link to them without using the keywords (e.g., ``Towards #1234``).
+
+      .. rubric:: AFTER opening a PR
+         :class: rubric-large
+
+      * Make sure all CI tests pass (check the provided links for more information on
+        any errors).
+
+      * Check the rendered docs, see :ref:`generated_doc_CI`.
+
+Before a PR can be merged, it needs to be approved by **two** core developers.
 An incomplete contribution -- where you expect to do more work before receiving
 a full review -- should be marked as a `draft pull request
 <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request>`__
@@ -394,149 +553,12 @@ benefit from the inclusion of a `task list
 <https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments>`_ in
 the PR description.
 
-In order to ease the reviewing process, we recommend that your contribution
-complies with the following rules before marking a PR as "ready for review". The
-**bolded** ones are especially important:
-
-1. **Give your pull request a helpful title** that summarizes what your
-   contribution does. This title will often become the commit message once
-   merged so it should summarize your contribution for posterity. In some
-   cases "Fix <ISSUE TITLE>" is enough. "Fix #<ISSUE NUMBER>" is never a
-   good title.
-
-2. **Pull requests are expected to resolve one or more issues**.
-   Please **do not open PRs for issues that are labeled as "Needs triage"**
-   (see :ref:`issues_tagged_needs_triage`) or with other kinds of "Needs ..."
-   labels. Please do not open PRs for issues for which:
-
-   - the discussion has not settled down to an explicit resolution plan,
-   - the reporter has already expressed interest in opening a PR,
-   - there already exists cross-referenced and active PRs.
-
-   If merging your pull request means that some other issues/PRs should be closed,
-   you should `use keywords to create link to them
-   <https://github.com/blog/1506-closing-issues-via-pull-requests/>`_
-   (e.g., ``Fixes #1234``; multiple issues/PRs are allowed as long as each
-   one is preceded by a keyword). Upon merging, those issues/PRs will
-   automatically be closed by GitHub. If your pull request is simply
-   related to some other issues/PRs, or it only partially resolves the target
-   issue, create a link to them without using the keywords (e.g., ``Towards #1234``).
-
-3. **Make sure your code passes the tests**. The whole test suite can be run
-   with `pytest`, but it is usually not recommended since it takes a long
-   time. It is often enough to only run the test related to your changes:
-   for example, if you changed something in
-   `sklearn/linear_model/_logistic.py`, running the following commands will
-   usually be enough:
-
-   - `pytest sklearn/linear_model/_logistic.py` to make sure the doctest
-     examples are correct
-   - `pytest sklearn/linear_model/tests/test_logistic.py` to run the tests
-     specific to the file
-   - `pytest sklearn/linear_model` to test the whole
-     :mod:`~sklearn.linear_model` module
-   - `pytest doc/modules/linear_model.rst` to make sure the user guide
-     examples are correct.
-   - `pytest sklearn/tests/test_common.py -k LogisticRegression` to run all our
-     estimator checks (specifically for `LogisticRegression`, if that's the
-     estimator you changed).
-
-   There may be other failing tests, but they will be caught by the CI so
-   you don't need to run the whole test suite locally. For guidelines on how
-   to use ``pytest`` efficiently, see the :ref:`pytest_tips`.
-
-4. **Make sure your code is properly commented and documented**, and **make
-   sure the documentation renders properly**. To build the documentation, please
-   refer to our :ref:`contribute_documentation` guidelines. The CI will also
-   build the docs: please refer to :ref:`generated_doc_CI`.
-
-5. **Tests are necessary for enhancements to be
-   accepted**. Bug-fixes or new features should be provided with non-regression tests.
-   These tests verify the correct behavior of the fix or feature. In this manner,
-   further modifications on the code base are granted to be consistent with the
-   desired behavior. In the case of bug fixes, at the time of the PR, the
-   non-regression tests should fail for the code base in the ``main`` branch
-   and pass for the PR code.
-
-6. If your PR is likely to affect users, you need to add a changelog entry describing
-   your PR changes. See the
-   `README <https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md>`_
-   for more details.
-
-7. Follow the :ref:`coding-guidelines`.
-
-8. When applicable, use the validation tools and scripts in the :mod:`sklearn.utils`
-   module. A list of utility routines available for developers can be found in the
-   :ref:`developers-utils` page.
-
-9. PRs should often substantiate the change, through benchmarks of
-   performance and efficiency (see :ref:`monitoring_performances`) or through
-   examples of usage. Examples also illustrate the features and intricacies of
-   the library to users. Have a look at other examples in the `examples/
-   <https://github.com/scikit-learn/scikit-learn/tree/main/examples>`_
-   directory for reference. Examples should demonstrate why the new
-   functionality is useful in practice and, if possible, compare it to other
-   methods available in scikit-learn.
-
-10. New features have some maintenance overhead. We expect PR authors
-    to take part in the maintenance for the code they submit, at least
-    initially. New features need to be illustrated with narrative
-    documentation in the user guide, with small code snippets.
-    If relevant, please also add references in the literature, with PDF links
-    when possible.
-
-11. The user guide should also include expected time and space complexity
-    of the algorithm and scalability, e.g. "this algorithm can scale to a
-    large number of samples > 100000, but does not scale in dimensionality:
-    `n_features` is expected to be lower than 100".
-
-You can also check our :ref:`code_review` to get an idea of what reviewers
-will expect.
-
-You can check for common programming errors with the following tools:
-
-* Code with a good unit test coverage (at least 80%, better 100%), check with:
-
-  .. prompt:: bash
-
-    pip install pytest pytest-cov
-    pytest --cov sklearn path/to/tests
-
-  See also :ref:`testing_coverage`.
-
-* Run static analysis with `mypy`:
-
-  .. prompt:: bash
-
-      mypy sklearn
-
-  This must not produce new errors in your pull request. Using `# type: ignore`
-  annotation can be a workaround for a few cases that are not supported by
-  mypy, in particular,
-
-  - when importing C or Cython modules,
-  - on properties with decorators.
-
-Bonus points for contributions that include a performance analysis with
-a benchmark script and profiling output (see :ref:`monitoring_performances`).
-Also check out the :ref:`performance-howto` guide for more details on
-profiling and Cython optimizations.
-
 .. note::
 
   The current state of the scikit-learn code base is not compliant with
   all of those guidelines, but we expect that enforcing those constraints
   on all new contributions will get the overall code base quality in the
   right direction.
-
-.. seealso::
-
-   For two very well documented and more detailed guides on development
-   workflow, please pay a visit to the `Scipy Development Workflow
-   <https://scipy.github.io/devdocs/dev/dev_quickstart.html>`_ -
-   and the `Astropy Workflow for Developers
-   <https://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
-   sections.
 
 Continuous Integration (CI)
 ---------------------------
@@ -1070,15 +1092,33 @@ Testing and improving test coverage
 High-quality `unit testing <https://en.wikipedia.org/wiki/Unit_testing>`_
 is a corner-stone of the scikit-learn development process. For this
 purpose, we use the `pytest <https://docs.pytest.org>`_
-package. The tests are functions appropriately named, located in `tests`
+package.
+
+The tests are functions appropriately named, located in `tests`
 subdirectories, that check the validity of the algorithms and the
 different options of the code.
 
-Running `pytest` in a folder will run all the tests of the corresponding
-subpackages. For a more detailed `pytest` workflow, please refer to the
-:ref:`pr_checklist`.
+The whole test suite can be run with `pytest`, but it is usually not recommended since
+it takes a long time. It is often enough to only run the test related to your changes:
+for example, if you changed something in
+`sklearn/linear_model/_logistic.py`, running the following commands will
+usually be enough:
 
-We expect code coverage of new features to be at least around 90%.
+- `pytest sklearn/linear_model/_logistic.py` to make sure the doctest
+  examples are correct
+- `pytest sklearn/linear_model/tests/test_logistic.py` to run the tests
+  specific to the file
+- `pytest sklearn/linear_model` to test the whole
+  :mod:`~sklearn.linear_model` module
+- `pytest doc/modules/linear_model.rst` to make sure the user guide
+  examples are correct.
+- `pytest sklearn/tests/test_common.py -k LogisticRegression` to run all our
+  estimator checks (specifically for `LogisticRegression`, if that's the
+  estimator you changed).
+
+There may be other failing tests, but they will be caught by the CI so
+you don't need to run the whole test suite locally. For guidelines on how
+to use ``pytest`` efficiently, see the :ref:`pytest_tips`.
 
 .. dropdown:: Writing matplotlib-related tests
 
