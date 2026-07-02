@@ -1157,6 +1157,12 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
         .. versionadded:: 0.17
 
+    n_samples_seen_ : int
+        Number of samples processed by :meth:`partial_fit`. Reset to 0 when
+        :meth:`fit` is called.
+
+        .. versionadded:: 1.8
+
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -1246,6 +1252,13 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         self : object
             Fitted estimator.
         """
+        # Reset incremental state so that any subsequent partial_fit call
+        # starts fresh rather than accumulating on top of stale statistics.
+        for _attr in ("_XtX", "_Xty"):
+            if hasattr(self, _attr):
+                delattr(self, _attr)
+        self.n_samples_seen_ = 0
+
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), self.solver)
         xp, _, device_ = get_namespace_and_device(X)
         y, sample_weight = move_to(y, sample_weight, xp=xp, device=device_)
@@ -1261,6 +1274,138 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
             y_numeric=True,
         )
         return super().fit(X, y, sample_weight=sample_weight)
+
+    @_fit_context(prefer_skip_nested_validation=True)
+    def partial_fit(self, X, y, sample_weight=None):
+        """Incrementally fit Ridge regression model.
+
+        Accumulates sufficient statistics :math:`X^\\top X` and
+        :math:`X^\\top y` across batches, then solves the regularized normal
+        equations. Each call updates ``coef_`` and ``intercept_`` to reflect
+        all data seen so far.
+
+        Unlike :meth:`fit`, this method does not reset the model between
+        calls. Call :meth:`fit` (or construct a new estimator) to restart
+        from scratch.
+
+        .. note::
+            Sparse input is not supported. The ``solver`` hyperparameter is
+            ignored; the normal equations are always solved via Cholesky
+            factorization (``solver_`` is set to ``'cholesky'``).
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_features)
+            Training data. Sparse matrices are not supported.
+
+        y : ndarray of shape (n_samples,) or (n_samples, n_targets)
+            Target values.
+
+        sample_weight : float or ndarray of shape (n_samples,), default=None
+            Individual weights for each sample. If given a float, every
+            sample will have the same weight.
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
+        """
+        first_call = not hasattr(self, "_XtX")
+
+        X, y = validate_data(
+            self,
+            X,
+            y,
+            accept_sparse=False,
+            dtype=np.float64,
+            force_writeable=True,
+            multi_output=True,
+            y_numeric=True,
+            reset=first_call,
+        )
+
+        n_samples, n_features = X.shape
+        # Track whether caller passed 1-D y to restore that shape later.
+        y_ndim = y.ndim
+        y = y.reshape(n_samples, -1)
+        n_targets = y.shape[1]
+
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+
+        # Append a bias column so the intercept is absorbed into the weight
+        # vector: X_aug = [X | 1], w_aug = [coef | intercept].
+        if self.fit_intercept:
+            X_aug = np.hstack([X, np.ones((n_samples, 1), dtype=X.dtype)])
+        else:
+            X_aug = X
+
+        n_aug = X_aug.shape[1]
+
+        # Accumulate X_aug^T W X_aug and X_aug^T W y where W = diag(sw).
+        if sample_weight is not None:
+            X_sw = X_aug * sample_weight[:, np.newaxis]
+        else:
+            X_sw = X_aug
+        XtX_batch = X_sw.T @ X_aug
+        Xty_batch = X_sw.T @ y
+
+        if first_call:
+            self._XtX = XtX_batch
+            self._Xty = Xty_batch
+            self.n_samples_seen_ = n_samples
+        else:
+            self._XtX += XtX_batch
+            self._Xty += Xty_batch
+            self.n_samples_seen_ += n_samples
+
+        # Solve (X_aug^T X_aug + Lambda) w = X_aug^T y.
+        # Lambda = diag([alpha, ..., alpha, 0]) — the last entry (intercept)
+        # is not penalized.
+        alpha = np.atleast_1d(self.alpha)
+        one_alpha = np.array_equal(alpha, len(alpha) * [alpha[0]])
+
+        if not one_alpha and len(alpha) != n_targets:
+            raise ValueError(
+                f"alpha has {len(alpha)} elements but y has {n_targets} targets. "
+                "alpha must be a scalar or have the same length as the number "
+                "of targets."
+            )
+
+        if one_alpha:
+            A = self._XtX.copy()
+            A.flat[:: n_aug + 1] += alpha[0]
+            if self.fit_intercept:
+                # Undo regularization on the intercept (last diagonal entry).
+                A[-1, -1] -= alpha[0]
+            W = linalg.solve(A, self._Xty, assume_a="pos", overwrite_a=True)
+        else:
+            W = np.empty((n_aug, n_targets), dtype=np.float64)
+            for k in range(n_targets):
+                A_k = self._XtX.copy()
+                A_k.flat[:: n_aug + 1] += alpha[k]
+                if self.fit_intercept:
+                    A_k[-1, -1] -= alpha[k]
+                W[:, k] = linalg.solve(
+                    A_k, self._Xty[:, k], assume_a="pos", overwrite_a=True
+                )
+
+        if self.fit_intercept:
+            self.coef_ = W[:-1].T  # (n_targets, n_features)
+            self.intercept_ = W[-1]  # (n_targets,)
+        else:
+            self.coef_ = W.T  # (n_targets, n_features)
+            self.intercept_ = np.zeros(n_targets, dtype=np.float64)
+
+        # Restore 1-D shapes for single-target input (mirrors fit() behaviour).
+        if y_ndim == 1:
+            self.coef_ = self.coef_.ravel()
+            self.intercept_ = float(self.intercept_[0])
+
+        self.n_iter_ = None
+        self.solver_ = "cholesky"
+
+        return self
 
     def predict(self, X):
         """

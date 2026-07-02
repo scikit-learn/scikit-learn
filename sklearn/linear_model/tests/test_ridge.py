@@ -2663,3 +2663,162 @@ def test_set_score_request_with_default_scoring(metaestimator, make_dataset):
 
 # End of Metadata Routing Tests
 # =============================
+
+
+# ==============================================
+# Tests for Ridge.partial_fit (incremental fit)
+# ==============================================
+
+
+@pytest.fixture
+def ridge_partial_fit_data(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
+    n_samples, n_features = 200, 10
+    X = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples)
+    return X, y
+
+
+def test_ridge_partial_fit_matches_fit(ridge_partial_fit_data):
+    """partial_fit on the whole dataset should give the same result as fit."""
+    X, y = ridge_partial_fit_data
+    ridge_fit = Ridge(alpha=1.0).fit(X, y)
+    ridge_pf = Ridge(alpha=1.0).partial_fit(X, y)
+
+    assert_allclose(ridge_pf.coef_, ridge_fit.coef_, rtol=1e-10)
+    assert_allclose(ridge_pf.intercept_, ridge_fit.intercept_, atol=1e-10)
+
+
+def test_ridge_partial_fit_incremental(ridge_partial_fit_data):
+    """Batched partial_fit calls should converge to the same solution as fit."""
+    X, y = ridge_partial_fit_data
+    n_samples = X.shape[0]
+    batch_size = 50
+
+    ridge_fit = Ridge(alpha=1.0).fit(X, y)
+    ridge_pf = Ridge(alpha=1.0)
+    for start in range(0, n_samples, batch_size):
+        sl = slice(start, start + batch_size)
+        ridge_pf.partial_fit(X[sl], y[sl])
+
+    assert_allclose(ridge_pf.coef_, ridge_fit.coef_, rtol=1e-10)
+    assert_allclose(ridge_pf.intercept_, ridge_fit.intercept_, atol=1e-10)
+    assert ridge_pf.n_samples_seen_ == n_samples
+
+
+def test_ridge_partial_fit_no_intercept(ridge_partial_fit_data):
+    """partial_fit with fit_intercept=False should match fit."""
+    X, y = ridge_partial_fit_data
+    n_samples = X.shape[0]
+    batch_size = 50
+
+    ridge_fit = Ridge(alpha=2.0, fit_intercept=False).fit(X, y)
+    ridge_pf = Ridge(alpha=2.0, fit_intercept=False)
+    for start in range(0, n_samples, batch_size):
+        sl = slice(start, start + batch_size)
+        ridge_pf.partial_fit(X[sl], y[sl])
+
+    assert_allclose(ridge_pf.coef_, ridge_fit.coef_, rtol=1e-10)
+    assert_allclose(ridge_pf.intercept_, 0.0)
+
+
+def test_ridge_partial_fit_multi_target(global_random_seed):
+    """partial_fit should handle multi-target regression correctly."""
+    rng = np.random.RandomState(global_random_seed)
+    X = rng.randn(200, 8)
+    Y = rng.randn(200, 3)
+    n_samples = X.shape[0]
+    batch_size = 40
+
+    ridge_fit = Ridge(alpha=1.0).fit(X, Y)
+    ridge_pf = Ridge(alpha=1.0)
+    for start in range(0, n_samples, batch_size):
+        sl = slice(start, start + batch_size)
+        ridge_pf.partial_fit(X[sl], Y[sl])
+
+    assert ridge_pf.coef_.shape == (3, 8)
+    assert_allclose(ridge_pf.coef_, ridge_fit.coef_, rtol=1e-10)
+    assert_allclose(ridge_pf.intercept_, ridge_fit.intercept_, atol=1e-10)
+
+
+def test_ridge_partial_fit_sample_weight(global_random_seed):
+    """partial_fit with sample_weight should match fit with the same weights."""
+    rng = np.random.RandomState(global_random_seed)
+    X = rng.randn(100, 5)
+    y = rng.randn(100)
+    sw = rng.rand(100) + 0.5
+
+    ridge_fit = Ridge(alpha=1.0).fit(X, y, sample_weight=sw)
+    ridge_pf = Ridge(alpha=1.0).partial_fit(X, y, sample_weight=sw)
+
+    assert_allclose(ridge_pf.coef_, ridge_fit.coef_, rtol=1e-10)
+    assert_allclose(ridge_pf.intercept_, ridge_fit.intercept_, atol=1e-10)
+
+
+def test_ridge_partial_fit_per_target_alpha(global_random_seed):
+    """partial_fit with per-target alpha array should match fit."""
+    rng = np.random.RandomState(global_random_seed)
+    X = rng.randn(200, 6)
+    Y = rng.randn(200, 4)
+    alpha = [0.5, 1.0, 2.0, 5.0]
+
+    ridge_fit = Ridge(alpha=alpha).fit(X, Y)
+    ridge_pf = Ridge(alpha=alpha).partial_fit(X, Y)
+
+    assert_allclose(ridge_pf.coef_, ridge_fit.coef_, rtol=1e-10)
+    assert_allclose(ridge_pf.intercept_, ridge_fit.intercept_, atol=1e-10)
+
+
+def test_ridge_partial_fit_fit_resets_state(ridge_partial_fit_data):
+    """Calling fit() after partial_fit() should reset the incremental state."""
+    X, y = ridge_partial_fit_data
+    ridge = Ridge(alpha=1.0)
+    ridge.partial_fit(X[:100], y[:100])
+    assert hasattr(ridge, "_XtX")
+    assert hasattr(ridge, "n_samples_seen_")
+
+    ridge.fit(X, y)
+    assert not hasattr(ridge, "_XtX")
+    assert not hasattr(ridge, "_Xty")
+    assert ridge.n_samples_seen_ == 0
+
+    # After fit(), partial_fit should start fresh.
+    ridge.partial_fit(X[:50], y[:50])
+    assert ridge.n_samples_seen_ == 50
+
+
+def test_ridge_partial_fit_solver_attribute():
+    """partial_fit always sets solver_ to 'cholesky' regardless of solver param."""
+    X = np.random.randn(50, 5)
+    y = np.random.randn(50)
+    for solver in ["auto", "svd", "sag", "lsqr"]:
+        ridge = Ridge(alpha=1.0, solver=solver).partial_fit(X, y)
+        assert ridge.solver_ == "cholesky"
+        assert ridge.n_iter_ is None
+
+
+def test_ridge_partial_fit_predict(ridge_partial_fit_data):
+    """predict() should work after partial_fit."""
+    X, y = ridge_partial_fit_data
+    ridge = Ridge(alpha=1.0).partial_fit(X, y)
+    y_pred = ridge.predict(X)
+    assert y_pred.shape == (X.shape[0],)
+
+
+def test_ridge_partial_fit_sparse_raises(ridge_partial_fit_data):
+    """partial_fit should raise for sparse input."""
+    from scipy.sparse import csr_matrix
+
+    X, y = ridge_partial_fit_data
+    X_sparse = csr_matrix(X)
+    with pytest.raises(TypeError, match="Sparse data was passed for X"):
+        Ridge(alpha=1.0).partial_fit(X_sparse, y)
+
+
+def test_ridge_partial_fit_alpha_mismatch():
+    """partial_fit should raise when alpha length doesn't match n_targets."""
+    rng = np.random.RandomState(0)
+    X = rng.randn(50, 5)
+    Y = rng.randn(50, 3)
+    with pytest.raises(ValueError, match="alpha has 2 elements but y has 3"):
+        Ridge(alpha=[1.0, 2.0]).partial_fit(X, Y)
