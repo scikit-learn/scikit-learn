@@ -178,7 +178,6 @@ def _check_targets(y_true, y_pred, sample_weight=None, xp=None, device=None):
         if unique_labels_.shape[0] > 2:
             y_type = "multiclass"
 
-    xp, _ = get_namespace(y_true, y_pred)
     if y_type.startswith("multilabel"):
         if _is_numpy_namespace(xp):
             # XXX: do we really want to sparse-encode multilabel indicators when
@@ -555,7 +554,6 @@ def confusion_matrix(
     if sample_weight is None:
         sample_weight = np.ones(y_true.shape[0], dtype=np.int64)
 
-    y_true, y_pred = attach_unique(y_true, y_pred)
     if y_type not in ("binary", "multiclass"):
         raise ValueError("%s is not supported" % y_type)
 
