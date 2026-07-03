@@ -2454,7 +2454,7 @@ def _generate_get_feature_names_out(estimator, n_features_out, input_features=No
     estimator : estimator instance
         Estimator producing output feature names.
 
-    n_feature_out : int
+    n_features_out : int
         Number of feature names out.
 
     input_features : array-like of str or None, default=None
