@@ -2899,7 +2899,7 @@ def test_logistic_regression_array_api_compliance(
     # constrain the fitted models to a trivial baseline classifier where only
     # the intercept would be non-zero.
     lr_params = dict(
-        alpha=1e-1,
+        alpha=0.5,
         solver=solver,
         max_iter=500,
         class_weight=class_weight,
