@@ -19,6 +19,7 @@ from sklearn.tree import (
     _tree,
 )
 from sklearn.tree._reingold_tilford import Tree, buchheim
+from sklearn.utils._optional_dependencies import check_matplotlib_support
 from sklearn.utils._param_validation import (
     HasMethods,
     Interval,
@@ -26,6 +27,21 @@ from sklearn.utils._param_validation import (
     validate_params,
 )
 from sklearn.utils.validation import check_array, check_is_fitted
+
+
+def _matplotlib_to_rgb(color):
+    """Convert any valid matplotlib color to rgb in range [0, 255].
+
+    The graphviz DOT language expects RGB colors expressed in that range.
+    """
+    from matplotlib.colors import to_rgb
+
+    return [int(channel * 255) for channel in to_rgb(color)]
+
+
+def _rgb_to_hexstring(rgb):
+    """Convert 8bit integer rgb color to html hexstring"""
+    return "#{:02x}{:02x}{:02x}".format(*rgb)  # pylint: disable=consider-using-f-string
 
 
 def _color_brew(n):
@@ -93,6 +109,7 @@ SENTINEL = Sentinel()
         "precision": [Interval(Integral, 0, None, closed="left"), None],
         "ax": "no_validation",  # delegate validation to matplotlib
         "fontsize": [Interval(Integral, 0, None, closed="left"), None],
+        "fill_colors": ["array-like", None],
     },
     prefer_skip_nested_validation=True,
 )
@@ -111,6 +128,7 @@ def plot_tree(
     precision=3,
     ax=None,
     fontsize=None,
+    fill_colors=None,
 ):
     """Plot a decision tree.
 
@@ -178,6 +196,13 @@ def plot_tree(
     fontsize : int, default=None
         Size of text font. If None, determined automatically to fit figure.
 
+    fill_colors : list, default=None
+        A list of length ``decision_tree.n_classes[0]`` to be used as colors
+        to fill the tree nodes. Each element can be any valid matplotlib color
+        specification (e.g. a color name, a hex string, or an RGB tuple).
+        If None, colors with equally spaced hues are generated automatically.
+        Ignored if ``filled=False``.
+
     Returns
     -------
     annotations : list of artists
@@ -197,6 +222,8 @@ def plot_tree(
     [...]
     """
 
+    check_matplotlib_support("plot_tree")
+
     check_is_fitted(decision_tree)
 
     exporter = _MPLTreeExporter(
@@ -211,6 +238,7 @@ def plot_tree(
         rounded=rounded,
         precision=precision,
         fontsize=fontsize,
+        fill_colors=fill_colors,
     )
     return exporter.export(decision_tree, ax=ax)
 
@@ -229,6 +257,7 @@ class _BaseTreeExporter:
         rounded=False,
         precision=3,
         fontsize=None,
+        fill_colors=None,
     ):
         self.max_depth = max_depth
         self.feature_names = feature_names
@@ -241,6 +270,8 @@ class _BaseTreeExporter:
         self.rounded = rounded
         self.precision = precision
         self.fontsize = fontsize
+        self.colors = {"bounds": None}
+        self.fill_colors = fill_colors
 
     def get_color(self, value):
         # Find the appropriate color & intensity for a node
@@ -261,13 +292,22 @@ class _BaseTreeExporter:
         # compute the color as alpha against white
         color = [int(round(alpha * c + (1 - alpha) * 255, 0)) for c in color]
         # Return html color code in #RRGGBB format
-        return "#%2x%2x%2x" % tuple(color)
+        return _rgb_to_hexstring(color)
 
     def get_fill_color(self, tree, node_id):
         # Fetch appropriate color for node
         if "rgb" not in self.colors:
             # Initialize colors and bounds if required
-            self.colors["rgb"] = _color_brew(tree.n_classes[0])
+            if self.fill_colors is not None:
+                if len(self.fill_colors) != tree.n_classes[0]:
+                    raise ValueError(
+                        f"fill_colors has {len(self.fill_colors)} elements "
+                        f"but tree has {tree.n_classes[0]} classes"
+                    )
+                self.colors["rgb"] = [_matplotlib_to_rgb(c) for c in self.fill_colors]
+            else:
+                self.colors["rgb"] = _color_brew(tree.n_classes[0])
+
             if tree.n_outputs != 1:
                 # Find max and min impurities for multi-output
                 # The next line uses -max(impurity) instead of min(-impurity)
@@ -429,6 +469,7 @@ class _DOTTreeExporter(_BaseTreeExporter):
         special_characters=False,
         precision=3,
         fontname="helvetica",
+        fill_colors=None,
     ):
         super().__init__(
             max_depth=max_depth,
@@ -441,6 +482,7 @@ class _DOTTreeExporter(_BaseTreeExporter):
             proportion=proportion,
             rounded=rounded,
             precision=precision,
+            fill_colors=fill_colors,
         )
         self.leaves_parallel = leaves_parallel
         self.out_file = out_file
@@ -603,6 +645,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
         rounded=False,
         precision=3,
         fontsize=None,
+        fill_colors=None,
     ):
         super().__init__(
             max_depth=max_depth,
@@ -615,6 +658,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
             proportion=proportion,
             rounded=rounded,
             precision=precision,
+            fill_colors=fill_colors,
         )
         self.fontsize = fontsize
 
@@ -784,6 +828,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
         "special_characters": ["boolean"],
         "precision": [Interval(Integral, 0, None, closed="left"), None],
         "fontname": [str],
+        "fill_colors": ["array-like", None],
     },
     prefer_skip_nested_validation=True,
 )
@@ -805,6 +850,7 @@ def export_graphviz(
     special_characters=False,
     precision=3,
     fontname="helvetica",
+    fill_colors=None,
 ):
     """Export a decision tree in DOT format.
 
@@ -885,6 +931,13 @@ def export_graphviz(
     fontname : str, default='helvetica'
         Name of font used to render text.
 
+    fill_colors : list, default=None
+        A list of length ``decision_tree.n_classes[0]`` to be used as colors
+        to fill the tree nodes. Each element can be any valid matplotlib color
+        specification (e.g. a color name, a hex string, or an RGB tuple).
+        If None, colors with equally spaced hues are generated automatically.
+        Ignored if ``filled=False``.
+
     Returns
     -------
     dot_data : str
@@ -916,6 +969,9 @@ def export_graphviz(
             class_names, ensure_2d=False, dtype=None, ensure_min_samples=0
         )
 
+    if fill_colors is not None:
+        check_matplotlib_support(f"export_graphviz(..., {fill_colors=})")
+
     check_is_fitted(decision_tree)
     own_file = False
     return_string = False
@@ -944,6 +1000,7 @@ def export_graphviz(
             special_characters=special_characters,
             precision=precision,
             fontname=fontname,
+            fill_colors=fill_colors,
         )
         exporter.export(decision_tree)
 

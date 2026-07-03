@@ -1,3 +1,4 @@
+import inspect
 import pickle
 
 import numpy as np
@@ -13,6 +14,7 @@ from scipy.optimize import (
 from scipy.special import logsumexp
 
 from sklearn import config_context
+from sklearn._loss import _loss as _loss_module
 from sklearn._loss.link import IdentityLink, _inclusive_low_high
 from sklearn._loss.loss import (
     _LOSSES,
@@ -24,6 +26,7 @@ from sklearn._loss.loss import (
     HalfMultinomialLoss,
     HalfMultinomialLossArrayAPI,
     HalfPoissonLoss,
+    HalfPoissonLossArrayAPI,
     HalfSquaredError,
     HalfTweedieLoss,
     HalfTweedieLossIdentity,
@@ -34,10 +37,11 @@ from sklearn._loss.loss import (
 from sklearn.utils import assert_all_finite
 from sklearn.utils._array_api import (
     _atol_for_type,
-    _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
-    device,
+    move_to,
     yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._array_api import (
+    device as array_api_device,
 )
 from sklearn.utils._testing import (
     _array_api_for_tests,
@@ -1378,17 +1382,25 @@ def test_tweedie_log_identity_consistency(p):
     [
         (HalfBinomialLossArrayAPI, HalfBinomialLoss),
         (HalfMultinomialLossArrayAPI, HalfMultinomialLoss),
+        (HalfPoissonLossArrayAPI, HalfPoissonLoss),
     ],
-    ids=["HalfBinomialLoss", "HalfMultinomialLoss"],
+    ids=["HalfBinomialLoss", "HalfMultinomialLoss", "HalfPoissonLoss"],
 )
 @pytest.mark.parametrize(
-    "method_name", ["__call__", "gradient", "loss", "loss_gradient"]
+    "method_name",
+    [
+        "__call__",
+        "gradient",
+        "loss",
+        "loss_gradient",
+        "gradient_hessian",
+        "gradient_proba",
+    ],
 )
 @pytest.mark.parametrize("use_sample_weight", [False, True])
 @pytest.mark.parametrize(
-    "namespace, device_, dtype_name",
+    "namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 def test_loss_array_api(
     array_api_loss_class,
@@ -1396,19 +1408,31 @@ def test_loss_array_api(
     method_name,
     use_sample_weight,
     namespace,
-    device_,
+    device_name,
     dtype_name,
 ):
-    def _assert_array_api_result(result_xp, result_np, raw_prediction_xp, xp, atol):
-        assert_allclose(_convert_to_numpy(result_xp, xp=xp), result_np, atol=atol)
-        assert result_xp.dtype == raw_prediction_xp.dtype
-        assert device(result_xp) == device(raw_prediction_xp)
+    if loss_class == HalfMultinomialLoss and method_name == "gradient_hessian":
+        pytest.skip("Not implemented")
 
-    xp = _array_api_for_tests(namespace, device_)
+    def _assert_array_api_result(
+        result_xp, result_np, raw_prediction_xp, xp, rtol, atol
+    ):
+        assert_allclose(
+            move_to(result_xp, xp=np, device="cpu"), result_np, rtol=rtol, atol=atol
+        )
+        assert result_xp.dtype == raw_prediction_xp.dtype
+        assert array_api_device(result_xp) == array_api_device(raw_prediction_xp)
+
+    if method_name == "gradient_proba" and loss_class != HalfMultinomialLoss:
+        # `gradient_proba` is only valid for HalfMultinomialLoss
+        pytest.skip("Not implemented")
+
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
     atol = _atol_for_type(dtype_name)
+    rtol = 1e-6 if dtype_name == "float32" else 1e-11
     random_seed = 42
     n_samples = 100
-    array_api_loss_instance = array_api_loss_class()
+    array_api_loss_instance = array_api_loss_class(xp=xp, device=device)
     loss_instance = loss_class()
     y_true, raw_prediction = random_y_true_raw_prediction(
         loss=loss_instance,
@@ -1419,14 +1443,14 @@ def test_loss_array_api(
     )
     y_true = y_true.astype(dtype_name)
     raw_prediction = raw_prediction.astype(dtype_name)
-    y_true_xp = xp.asarray(y_true, device=device_)
-    raw_prediction_xp = xp.asarray(raw_prediction, device=device_)
+    y_true_xp = xp.asarray(y_true, device=device)
+    raw_prediction_xp = xp.asarray(raw_prediction, device=device)
     if use_sample_weight:
         rng = np.random.RandomState(random_seed)
         sample_weight_np = (
             rng.uniform(-1, 5, size=n_samples).clip(0, None).astype(dtype_name)
         )
-        sample_weight_xp = xp.asarray(sample_weight_np, device=device_)
+        sample_weight_xp = xp.asarray(sample_weight_np, device=device)
     else:
         sample_weight_np = None
         sample_weight_xp = None
@@ -1454,6 +1478,7 @@ def test_loss_array_api(
                         result_np=res_np,
                         raw_prediction_xp=raw_prediction_xp,
                         xp=xp,
+                        rtol=rtol,
                         atol=atol,
                     )
             else:
@@ -1462,25 +1487,25 @@ def test_loss_array_api(
                     result_np=result_np,
                     raw_prediction_xp=raw_prediction_xp,
                     xp=xp,
+                    rtol=rtol,
                     atol=atol,
                 )
 
 
 @pytest.mark.parametrize(
-    "namespace, device_, dtype_name",
+    "namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
-def test_log1pexp(namespace, device_, dtype_name):
+def test_log1pexp(namespace, device_name, dtype_name):
     mpmath = pytest.importorskip("mpmath")
     mpmath.mp.prec = 100  # Significantly more precise reference than float64.
     values_to_test = np.linspace(-40, 40, 300)
-    xp = _array_api_for_tests(namespace, device_)
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
     for value in values_to_test:
         if dtype_name == "float32":
-            x = xp.asarray(value, dtype=xp.float32, device=device_)
+            x = xp.asarray(value, dtype=xp.float32, device=device)
         else:
-            x = xp.asarray(value, dtype=xp.float64, device=device_)
+            x = xp.asarray(value, dtype=xp.float64, device=device)
 
         result_xp = float(
             _log1pexp(
@@ -1496,4 +1521,26 @@ def test_log1pexp(namespace, device_, dtype_name):
             result_mpmath,
             rel=1e-5 if dtype_name == "float32" else 1e-12,
             abs=0,
+        )
+
+
+def test_cy_loss_classes_module():
+    """Check that Cython extension types in _loss have the correct __module__.
+
+    When _loss_cython_tree in meson.build is missing __init__.py files, Cython
+    can not detect the package hierarchy and set __module__ = '_loss' instead
+    of 'sklearn._loss._loss' on all Cy* extension types, e.g.
+    `CyHalfMultinomialLoss`. This breaks downstream tools like skops that rely
+    on __module__ for serialization.
+    """
+    cy_classes = [
+        obj
+        for name, obj in inspect.getmembers(_loss_module, inspect.isclass)
+        if name.startswith("Cy")
+    ]
+    assert len(cy_classes) > 0, "No Cy* classes found in sklearn._loss._loss"
+    for cls in cy_classes:
+        assert cls.__module__ == "sklearn._loss._loss", (
+            f"{cls.__name__}.__module__ == {cls.__module__!r}, "
+            f"expected 'sklearn._loss._loss'"
         )

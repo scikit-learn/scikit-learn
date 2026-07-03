@@ -1,6 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import warnings
 from numbers import Real
 
 import numpy as np
@@ -11,10 +12,11 @@ from sklearn.preprocessing._target_encoder_fast import (
     _fit_encoding_fast,
     _fit_encoding_fast_auto_smooth,
 )
-from sklearn.utils import Bunch, indexable
+from sklearn.utils import indexable
 from sklearn.utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _raise_for_params,
     _routing_enabled,
     process_routing,
@@ -130,12 +132,21 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         applies if `cv` is an int or `None`. If `cv` is a cross-validation generator or
         an iterable, `shuffle` is ignored.
 
+        .. deprecated:: 1.9
+            `shuffle` is deprecated and will be removed in 1.11. Pass a cross-validation
+            generator as `cv` argument to specify the shuffling instead.
+
     random_state : int, RandomState instance or None, default=None
         When `shuffle` is True, `random_state` affects the ordering of the
         indices, which controls the randomness of each fold. Otherwise, this
         parameter has no effect.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
+
+        .. deprecated:: 1.9
+            `random_state` is deprecated and will be removed in 1.11. Pass a
+            cross-validation generator as `cv` argument to specify the random state of
+            the shuffling instead.
 
     Attributes
     ----------
@@ -221,18 +232,19 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         "target_type": [StrOptions({"auto", "continuous", "binary", "multiclass"})],
         "smooth": [StrOptions({"auto"}), Interval(Real, 0, None, closed="left")],
         "cv": ["cv_object"],
-        "shuffle": ["boolean"],
-        "random_state": ["random_state"],
+        "shuffle": ["boolean", StrOptions({"deprecated"})],
+        "random_state": ["random_state", StrOptions({"deprecated"})],
     }
 
+    # TODO(1.11) remove `shuffle` and `random_state` params, which had been deprecated
     def __init__(
         self,
         categories="auto",
         target_type="auto",
         smooth="auto",
         cv=5,
-        shuffle=True,
-        random_state=None,
+        shuffle="deprecated",
+        random_state="deprecated",
     ):
         self.categories = categories
         self.smooth = smooth
@@ -325,12 +337,29 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         X_ordinal, X_known_mask, y_encoded, n_categories = self._fit_encodings_all(X, y)
 
+        # TODO(1.11): remove code block
+        if self.shuffle != "deprecated" or self.random_state != "deprecated":
+            warnings.warn(
+                "`TargetEncoder.shuffle` and `TargetEncoder.random_state` are "
+                "deprecated in version 1.9 and will be removed in version 1.11. Pass a "
+                "cross-validation generator as `cv` argument to specify the shuffling "
+                "behaviour instead.",
+                FutureWarning,
+            )
+        shuffle = True if self.shuffle == "deprecated" else self.shuffle
+        cv_kwargs = {"shuffle": shuffle}
+        if self.random_state != "deprecated":
+            cv_kwargs["random_state"] = self.random_state
+
+        # TODO(1.11): pass shuffle=True to keep backwards compatibility for default
+        # inputs (will be ignored in `check_cv` if a cv object is passed);
+        # `random_state` already defaults to `None` in `check_cv` and doesn't need to
+        # be passed here
         cv = check_cv(
             self.cv,
             y,
             classifier=self.target_type_ != "continuous",
-            shuffle=self.shuffle,
-            random_state=self.random_state,
+            **cv_kwargs,
         )
 
         if _routing_enabled():
@@ -338,7 +367,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 X, y, params["groups"] = indexable(X, y, params["groups"])
             routed_params = process_routing(self, "fit_transform", **params)
         else:
-            routed_params = Bunch(splitter=Bunch(split={}))
+            routed_params = _manual_routing({"splitter": {}})
 
         # The internal cross-fitting is only well-defined when each sample index
         # appears in exactly one validation fold. Skip the validation check for
@@ -361,27 +390,31 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             X_out = np.empty(
                 (X_ordinal.shape[0], X_ordinal.shape[1] * len(self.classes_)),
                 dtype=np.float64,
+                order="F",
             )
         else:
             X_out = np.empty_like(X_ordinal, dtype=np.float64)
 
         for train_idx, test_idx in cv.split(X, y, **routed_params.splitter.split):
-            X_train, y_train = X_ordinal[train_idx, :], y_encoded[train_idx]
+            X_indices = np.ascontiguousarray(train_idx, dtype=np.intp)
+            y_train = y_encoded[train_idx]
             y_train_mean = np.mean(y_train, axis=0)
 
             if self.target_type_ == "multiclass":
                 encodings = self._fit_encoding_multiclass(
-                    X_train,
+                    X_ordinal,
                     y_train,
                     n_categories,
                     y_train_mean,
+                    X_indices=X_indices,
                 )
             else:
                 encodings = self._fit_encoding_binary_or_continuous(
-                    X_train,
+                    X_ordinal,
                     y_train,
                     n_categories,
                     y_train_mean,
+                    X_indices=X_indices,
                 )
             self._transform_X_ordinal(
                 X_out,
@@ -424,6 +457,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             X_out = np.empty(
                 (X_ordinal.shape[0], X_ordinal.shape[1] * len(self.classes_)),
                 dtype=np.float64,
+                order="F",
             )
         else:
             X_out = np.empty_like(X_ordinal, dtype=np.float64)
@@ -500,7 +534,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         return X_ordinal, X_known_mask, y, n_categories
 
     def _fit_encoding_binary_or_continuous(
-        self, X_ordinal, y, n_categories, target_mean
+        self, X_ordinal, y, n_categories, target_mean, X_indices=None
     ):
         """Learn target encodings."""
         if self.smooth == "auto":
@@ -511,6 +545,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 n_categories,
                 target_mean,
                 y_variance,
+                X_indices,
             )
         else:
             encodings = _fit_encoding_fast(
@@ -519,10 +554,13 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 n_categories,
                 self.smooth,
                 target_mean,
+                X_indices,
             )
         return encodings
 
-    def _fit_encoding_multiclass(self, X_ordinal, y, n_categories, target_mean):
+    def _fit_encoding_multiclass(
+        self, X_ordinal, y, n_categories, target_mean, X_indices=None
+    ):
         """Learn multiclass encodings.
 
         Learn encodings for each class (c) then reorder encodings such that
@@ -543,6 +581,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 y_class,
                 n_categories,
                 target_mean[i],
+                X_indices=X_indices,
             )
             encodings.extend(encoding)
 

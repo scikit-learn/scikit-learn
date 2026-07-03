@@ -19,14 +19,13 @@ The module structure is the following:
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import math
 import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
 from time import time
 
 import numpy as np
-from scipy.sparse import csc_matrix, csr_matrix, issparse
+from scipy.sparse import csc_array, csr_array, issparse
 
 from sklearn._loss.loss import (
     _LOSSES,
@@ -50,7 +49,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.tree._tree import DOUBLE, DTYPE, TREE_LEAF
+from sklearn.tree._tree import TREE_LEAF
 from sklearn.utils import check_array, check_random_state, column_or_1d
 from sklearn.utils._param_validation import HasMethods, Hidden, Interval, StrOptions
 from sklearn.utils.multiclass import check_classification_targets
@@ -68,27 +67,6 @@ _LOSSES.update(
         "huber": HuberLoss,
     }
 )
-
-
-def _safe_divide(numerator, denominator):
-    """Prevents overflow and division by zero."""
-    # This is used for classifiers where the denominator might become zero exactly.
-    # For instance for log loss, HalfBinomialLoss, if proba=0 or proba=1 exactly, then
-    # denominator = hessian = 0, and we should set the node value in the line search to
-    # zero as there is no improvement of the loss possible.
-    # For numerical safety, we do this already for extremely tiny values.
-    if abs(denominator) < 1e-150:
-        return 0.0
-    else:
-        # Cast to Python float to trigger Python errors, e.g. ZeroDivisionError,
-        # without relying on `np.errstate` that is not supported by Pyodide.
-        result = float(numerator) / float(denominator)
-        # Cast to Python float to trigger a ZeroDivisionError without relying
-        # on `np.errstate` that is not supported by Pyodide.
-        result = float(numerator) / float(denominator)
-        if math.isinf(result):
-            warnings.warn("overflow encountered in _safe_divide", RuntimeWarning)
-        return result
 
 
 def _init_raw_predictions(X, estimator, loss, use_predict_proba):
@@ -190,79 +168,82 @@ def _update_terminal_regions(
     # compute leaf for each sample in ``X``.
     terminal_regions = tree.apply(X)
 
-    if not isinstance(loss, HalfSquaredError):
+    if isinstance(loss, HalfSquaredError):
+        # the leaf values don't need an update for the squared error.
+        pass
+    elif isinstance(loss, (HalfBinomialLoss, HalfMultinomialLoss, ExponentialLoss)):
+        if sample_mask.all():
+            idx = terminal_regions
+        else:
+            neg_gradient = neg_gradient[sample_mask]
+            sample_weight = (
+                None if sample_weight is None else sample_weight[sample_mask]
+            )
+            y = y[sample_mask]
+            idx = terminal_regions[sample_mask]
+
+        n_nodes = tree.node_count
+
+        # Make a single Newton-Raphson step, see "Additive Logistic Regression:
+        # A Statistical View of Boosting" FHT00 and note that we use a slightly
+        # different version (factor 2) of "F" with proba=expit(raw_prediction).
+        # Our node estimate is given by:
+        #    sum(w * neg_gradient) / sum(w * hessian)
+        weighted_neg_grad = (
+            neg_gradient if sample_weight is None else neg_gradient * sample_weight
+        )
+        numerator = np.bincount(idx, weights=weighted_neg_grad, minlength=n_nodes)
+
+        if isinstance(loss, HalfMultinomialLoss):
+            K = loss.n_classes
+            # numerator = negative gradient * (k - 1) / k
+            # Note: The factor (k - 1)/k appears in the original papers "Greedy
+            # Function Approximation" by Friedman and "Additive Logistic
+            # Regression" by Friedman, Hastie, Tibshirani. This factor is, however,
+            # wrong or at least arbitrary as it directly multiplies the
+            # learning_rate. We keep it for backward compatibility.
+            numerator *= (K - 1) / K
+
+        if isinstance(loss, ExponentialLoss):
+            # denominator = hessian = y * exp(-raw) + (1-y) * exp(raw)
+            # if y=0: hessian = exp(raw) = -neg_g
+            #    y=1: hessian = exp(-raw) = neg_g
+            hessian = weighted_neg_grad.copy()
+            hessian[y == 0] *= -1
+        else:
+            # (loss is HalfBinomialLoss or HalfMultinomialLoss)
+            # denominator = hessian = w * prob * (1 - prob)
+            # with prob = y - neg_gradient
+            prob = y - neg_gradient
+            hessian = prob * (1 - prob)
+            if sample_weight is not None:
+                hessian *= sample_weight
+
+        denominator = np.bincount(idx, weights=hessian, minlength=n_nodes)
+
+        # For the log-loss, if proba=0 or proba=1 exactly, then
+        # denominator = hessian = 0, and we should set the node value in the
+        # line search to zero as there is no improvement of the loss possible.
+        # For numerical safety, we do this already for extremely tiny values.
+        nz = np.abs(denominator) > 1e-150
+        tree.value[:, 0, 0] = 0
+        tree.value[nz, 0, 0] = numerator[nz] / denominator[nz]
+    else:
+        # regression losses other than the squared error.
+        # As of now: absolute error, pinball loss, huber loss.
+
         # mask all which are not in sample mask.
         masked_terminal_regions = terminal_regions.copy()
         masked_terminal_regions[~sample_mask] = -1
-
-        if isinstance(loss, HalfBinomialLoss):
-
-            def compute_update(y_, indices, neg_gradient, raw_prediction, k):
-                # Make a single Newton-Raphson step, see "Additive Logistic Regression:
-                # A Statistical View of Boosting" FHT00 and note that we use a slightly
-                # different version (factor 2) of "F" with proba=expit(raw_prediction).
-                # Our node estimate is given by:
-                #    sum(w * (y - prob)) / sum(w * prob * (1 - prob))
-                # we take advantage that: y - prob = neg_gradient
-                neg_g = neg_gradient.take(indices, axis=0)
-                prob = y_ - neg_g
-                # numerator = negative gradient = y - prob
-                numerator = np.average(neg_g, weights=sw)
-                # denominator = hessian = prob * (1 - prob)
-                denominator = np.average(prob * (1 - prob), weights=sw)
-                return _safe_divide(numerator, denominator)
-
-        elif isinstance(loss, HalfMultinomialLoss):
-
-            def compute_update(y_, indices, neg_gradient, raw_prediction, k):
-                # we take advantage that: y - prob = neg_gradient
-                neg_g = neg_gradient.take(indices, axis=0)
-                prob = y_ - neg_g
-                K = loss.n_classes
-                # numerator = negative gradient * (k - 1) / k
-                # Note: The factor (k - 1)/k appears in the original papers "Greedy
-                # Function Approximation" by Friedman and "Additive Logistic
-                # Regression" by Friedman, Hastie, Tibshirani. This factor is, however,
-                # wrong or at least arbitrary as it directly multiplies the
-                # learning_rate. We keep it for backward compatibility.
-                numerator = np.average(neg_g, weights=sw)
-                numerator *= (K - 1) / K
-                # denominator = (diagonal) hessian = prob * (1 - prob)
-                denominator = np.average(prob * (1 - prob), weights=sw)
-                return _safe_divide(numerator, denominator)
-
-        elif isinstance(loss, ExponentialLoss):
-
-            def compute_update(y_, indices, neg_gradient, raw_prediction, k):
-                neg_g = neg_gradient.take(indices, axis=0)
-                # numerator = negative gradient = y * exp(-raw) - (1-y) * exp(raw)
-                numerator = np.average(neg_g, weights=sw)
-                # denominator = hessian = y * exp(-raw) + (1-y) * exp(raw)
-                # if y=0: hessian = exp(raw) = -neg_g
-                #    y=1: hessian = exp(-raw) = neg_g
-                hessian = neg_g.copy()
-                hessian[y_ == 0] *= -1
-                denominator = np.average(hessian, weights=sw)
-                return _safe_divide(numerator, denominator)
-
-        else:
-
-            def compute_update(y_, indices, neg_gradient, raw_prediction, k):
-                return loss.fit_intercept_only(
-                    y_true=y_ - raw_prediction[indices, k],
-                    sample_weight=sw,
-                )
-
         # update each leaf (= perform line search)
         for leaf in np.nonzero(tree.children_left == TREE_LEAF)[0]:
-            indices = np.nonzero(masked_terminal_regions == leaf)[
-                0
-            ]  # of terminal regions
-            y_ = y.take(indices, axis=0)
+            (indices,) = np.nonzero(masked_terminal_regions == leaf)
             sw = None if sample_weight is None else sample_weight[indices]
-            update = compute_update(y_, indices, neg_gradient, raw_prediction, k)
+            update = loss.fit_intercept_only(
+                y_true=y[indices] - raw_prediction[indices, k],
+                sample_weight=sw,
+            )
 
-            # TODO: Multiply here by learning rate instead of everywhere else.
             tree.value[leaf, 0, 0] = update
 
     # update predictions (both in-bag and out-of-bag)
@@ -631,7 +612,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            to a sparse ``csr_array``.
 
         y : array-like of shape (n_samples,)
             Target values (strings or integers in classification, real numbers
@@ -679,7 +660,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             X,
             y,
             accept_sparse=["csr", "csc", "coo"],
-            dtype=DTYPE,
+            dtype=np.float32,
             multi_output=True,
         )
         sample_weight_is_none = sample_weight is None
@@ -794,7 +775,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             # matrices. Finite values have already been checked in _validate_data.
             X_train = check_array(
                 X_train,
-                dtype=DTYPE,
+                dtype=np.float32,
                 order="C",
                 accept_sparse="csr",
                 ensure_all_finite=False,
@@ -857,8 +838,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             verbose_reporter = VerboseReporter(verbose=self.verbose)
             verbose_reporter.init(self, begin_at_stage)
 
-        X_csc = csc_matrix(X) if issparse(X) else None
-        X_csr = csr_matrix(X) if issparse(X) else None
+        X_csc = csc_array(X) if issparse(X) else None
+        X_csr = csr_array(X) if issparse(X) else None
 
         if self.n_iter_no_change is not None:
             loss_history = np.full(self.n_iter_no_change, np.inf)
@@ -996,7 +977,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            to a sparse ``csr_array``.
 
         check_input : bool, default=True
             If False, the input arrays X will not be checked.
@@ -1011,7 +992,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         """
         if check_input:
             X = validate_data(
-                self, X, dtype=DTYPE, order="C", accept_sparse="csr", reset=False
+                self, X, dtype=np.float32, order="C", accept_sparse="csr", reset=False
             )
         raw_predictions = self._raw_predict_init(X)
         for i in range(self.estimators_.shape[0]):
@@ -1084,7 +1065,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 "Got init=%s." % self.init,
                 UserWarning,
             )
-        grid = np.asarray(grid, dtype=DTYPE, order="C")
+        grid = np.asarray(grid, dtype=np.float32, order="C")
         n_estimators, n_trees_per_stage = self.estimators_.shape
         averaged_predictions = np.zeros(
             (n_trees_per_stage, grid.shape[0]), dtype=np.float64, order="C"
@@ -1111,7 +1092,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, its dtype will be converted to
             ``dtype=np.float32``. If a sparse matrix is provided, it will
-            be converted to a sparse ``csr_matrix``.
+            be converted to a sparse ``csr_array``.
 
         Returns
         -------
@@ -1584,7 +1565,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            to a sparse ``csr_array``.
 
         Returns
         -------
@@ -1596,7 +1577,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             array of shape (n_samples,).
         """
         X = validate_data(
-            self, X, dtype=DTYPE, order="C", accept_sparse="csr", reset=False
+            self, X, dtype=np.float32, order="C", accept_sparse="csr", reset=False
         )
         raw_predictions = self._raw_predict(X)
         if raw_predictions.shape[1] == 1:
@@ -1614,7 +1595,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            to a sparse ``csr_array``.
 
         Yields
         ------
@@ -1635,7 +1616,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            to a sparse ``csr_array``.
 
         Returns
         -------
@@ -1660,7 +1641,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            to a sparse ``csr_array``.
 
         Yields
         ------
@@ -1684,7 +1665,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            to a sparse ``csr_array``.
 
         Returns
         -------
@@ -1708,7 +1689,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            to a sparse ``csr_array``.
 
         Returns
         -------
@@ -1735,7 +1716,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            to a sparse ``csr_array``.
 
         Yields
         ------
@@ -2138,7 +2119,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     def _encode_y(self, y=None, sample_weight=None):
         # Just convert y to the expected dtype
         self.n_trees_per_iteration_ = 1
-        y = y.astype(DOUBLE, copy=False)
+        y = y.astype(np.float64, copy=False)
         return y
 
     def _get_loss(self, sample_weight):
@@ -2155,7 +2136,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            to a sparse ``csr_array``.
 
         Returns
         -------
@@ -2163,7 +2144,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
             The predicted values.
         """
         X = validate_data(
-            self, X, dtype=DTYPE, order="C", accept_sparse="csr", reset=False
+            self, X, dtype=np.float32, order="C", accept_sparse="csr", reset=False
         )
         # In regression we can directly return the raw value from the trees.
         return self._raw_predict(X).ravel()
@@ -2179,7 +2160,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            to a sparse ``csr_array``.
 
         Yields
         ------
@@ -2199,7 +2180,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, its dtype will be converted to
             ``dtype=np.float32``. If a sparse matrix is provided, it will
-            be converted to a sparse ``csr_matrix``.
+            be converted to a sparse ``csr_array``.
 
         Returns
         -------

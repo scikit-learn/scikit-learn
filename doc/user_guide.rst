@@ -14,11 +14,12 @@ User Guide
    metadata_routing.rst
    inspection.rst
    visualizations.rst
+   callbacks.rst
    data_transforms.rst
    datasets.rst
    computing.rst
    model_persistence.rst
    common_pitfalls.rst
-   dispatching.rst
+   data_interoperability.rst
    machine_learning_map.rst
    presentations.rst

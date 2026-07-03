@@ -142,6 +142,25 @@ API_REFERENCE = {
             },
         ],
     },
+    "sklearn.callback": {
+        "short_summary": "Callbacks.",
+        "description": None,
+        "sections": [
+            {
+                "title": None,
+                "autosummary": [
+                    "AutoPropagatedCallback",
+                    "CallbackContext",
+                    "CallbackSupportMixin",
+                    "FitCallback",
+                    "ProgressBar",
+                    "ScoringMonitor",
+                    "ScoringMonitorLog",
+                    "with_callbacks",
+                ],
+            },
+        ],
+    },
     "sklearn.cluster": {
         "short_summary": "Clustering.",
         "description": _get_guide("clustering", "biclustering"),
@@ -398,7 +417,7 @@ API_REFERENCE = {
         "sections": [
             {
                 "title": None,
-                "autosummary": ["enable_halving_search_cv", "enable_iterative_imputer"],
+                "autosummary": ["enable_halving_search_cv"],
             },
         ],
     },
@@ -744,6 +763,7 @@ API_REFERENCE = {
                     "jaccard_score",
                     "log_loss",
                     "matthews_corrcoef",
+                    "metric_at_thresholds",
                     "multilabel_confusion_matrix",
                     "ndcg_score",
                     "precision_recall_curve",

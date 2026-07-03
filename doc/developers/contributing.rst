@@ -63,13 +63,13 @@ There are many ways to contribute to scikit-learn. These include:
 
 * referencing scikit-learn from your blog and articles, linking to it from your website,
   or simply
-  `staring it <https://docs.github.com/en/get-started/exploring-projects-on-github/saving-repositories-with-stars>`__
-  to say "I use it"; this helps us promote the project
+  `starring it <https://docs.github.com/en/get-started/exploring-projects-on-github/saving-repositories-with-stars>`__
+  to say "I use it" all help us promote the project
 * :ref:`improving and investigating issues <bug_triaging>`
 * :ref:`reviewing other developers' pull requests <code_review>`
 * reporting difficulties when using this package by submitting an
   `issue <https://github.com/scikit-learn/scikit-learn/issues>`__, and giving a
-  "thumbs up" on issues that others reported and that are relevant to you (see
+  "thumbs up" on issues that others have reported that are relevant to you (see
   :ref:`submitting_bug_feature` for details)
 * improving the :ref:`contribute_documentation`
 * making a code contribution
@@ -117,7 +117,7 @@ scikit-learn and open source by:
 * :ref:`improving and investigating issues <bug_triaging>`
 
   * confirming that a problem reported can be reproduced and providing a
-    :ref:`minimal reproducible code <minimal_reproducer>` (if missing), can help you
+    :ref:`minimal reproducible code <minimal_reproducer>` (if missing) can help you
     learn about different use cases and user needs
   * investigating the root cause of an issue will aid you in familiarising yourself
     with the scikit-learn codebase
@@ -541,11 +541,10 @@ profiling and Cython optimizations.
 Continuous Integration (CI)
 ---------------------------
 
-* Azure pipelines are used for testing scikit-learn on Linux, Mac and Windows,
-  with different dependencies and settings.
+* Github Actions are used for various tasks, including testing scikit-learn on
+  Linux, Mac and Windows, with different dependencies and settings, building
+  wheels and source distributions.
 * CircleCI is used to build the docs for viewing.
-* Github Actions are used for various tasks, including building wheels and
-  source distributions.
 
 .. _commit_markers:
 
@@ -560,7 +559,6 @@ Commit Message Marker  Action Taken by CI
 ====================== ===================
 [ci skip]              CI is skipped completely
 [cd build]             CD is run (wheels and source distribution are built)
-[lint skip]            Azure pipeline skips linting
 [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc.) development builds
 [free-threaded]        Build & test with CPython 3.14 free-threaded
 [pyodide]              Build & test with Pyodide
@@ -835,7 +833,7 @@ additions in the following areas:
     using the `.. rubric:: Note` directive.
 
   * Add one or two **snippets** of code in "Example" section to show how it can
-    be used. The code should be runable as is, i.e. it should include all
+    be used. The code should be runnable as is, i.e. it should include all
     required imports. Keep this section as brief as possible.
 
 

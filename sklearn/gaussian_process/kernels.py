@@ -21,11 +21,12 @@
 # Note: this module is strongly inspired by the kernel module of the george
 #       package.
 
+import inspect
 import math
 import warnings
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
-from inspect import signature
+from functools import lru_cache
 
 import numpy as np
 from scipy.spatial.distance import cdist, pdist, squareform
@@ -35,6 +36,11 @@ from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics.pairwise import pairwise_kernels
 from sklearn.utils.validation import _num_samples
+
+# Cache constructor signature inspection for kernels as it empirically
+# proves to account for 15% or more of the total grid-search time of GP
+# model on small to medium data.
+signature = lru_cache(maxsize=32)(inspect.signature)
 
 
 def _check_length_scale(X, length_scale):
@@ -194,8 +200,7 @@ class Kernel(metaclass=ABCMeta):
         # introspect the constructor arguments to find the model parameters
         # to represent
         cls = self.__class__
-        init = getattr(cls.__init__, "deprecated_original", cls.__init__)
-        init_sign = signature(init)
+        init_sign = signature(cls.__init__)
         args, varargs = [], []
         for parameter in init_sign.parameters.values():
             if parameter.kind != parameter.VAR_KEYWORD and parameter.name != "self":

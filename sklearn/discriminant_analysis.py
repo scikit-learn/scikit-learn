@@ -20,7 +20,13 @@ from sklearn.base import (
 from sklearn.covariance import empirical_covariance, ledoit_wolf, shrunk_covariance
 from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.preprocessing import StandardScaler
-from sklearn.utils._array_api import _expit, device, get_namespace, size
+from sklearn.utils._array_api import (
+    _expit,
+    check_same_namespace,
+    device,
+    get_namespace,
+    size,
+)
 from sklearn.utils._param_validation import HasMethods, Interval, StrOptions
 from sklearn.utils.extmath import softmax
 from sklearn.utils.multiclass import check_classification_targets, unique_labels
@@ -749,6 +755,7 @@ class LinearDiscriminantAnalysis(
                 "transform not implemented for 'lsqr' solver (use 'svd' or 'eigen')."
             )
         check_is_fitted(self)
+        check_same_namespace(X, self, attribute="coef_", method="transform")
         X = validate_data(self, X, reset=False)
 
         if self.solver == "svd":
@@ -772,6 +779,7 @@ class LinearDiscriminantAnalysis(
             Estimated probabilities.
         """
         check_is_fitted(self)
+        check_same_namespace(X, self, attribute="coef_", method="predict_proba")
         xp, _ = get_namespace(X)
         decision = self.decision_function(X)
         if size(self.classes_) == 2:
@@ -793,6 +801,7 @@ class LinearDiscriminantAnalysis(
         C : ndarray of shape (n_samples, n_classes)
             Estimated log probabilities.
         """
+        check_same_namespace(X, self, attribute="coef_", method="predict_log_proba")
         xp, _ = get_namespace(X)
         prediction = self.predict_proba(X)
 

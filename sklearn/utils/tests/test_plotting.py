@@ -196,7 +196,7 @@ def test_get_legend_label(curve_legend_metric, curve_name, expected_label):
     assert label == expected_label
 
 
-# TODO(1.9) : Remove
+# TODO: Remove once kwargs deprecated on all displays
 @pytest.mark.parametrize("curve_kwargs", [{"alpha": 1.0}, None])
 @pytest.mark.parametrize("kwargs", [{}, {"alpha": 1.0}])
 def test_validate_curve_kwargs_deprecate_kwargs(curve_kwargs, kwargs):
@@ -266,8 +266,7 @@ def test_validate_curve_kwargs_error():
 
 @pytest.mark.parametrize("name", [None, "curve_name", ["curve_name"]])
 @pytest.mark.parametrize(
-    "legend_metric",
-    [{"mean": 0.8, "std": 0.2}, {"mean": None, "std": None}],
+    "legend_metric", [{"mean": 0.8, "std": 0.2}, {"mean": None, "std": None}]
 )
 @pytest.mark.parametrize("legend_metric_name", ["AUC", "AP"])
 @pytest.mark.parametrize("curve_kwargs", [None, {"color": "red"}])
@@ -439,7 +438,7 @@ def test_validate_score_name(score_name, scoring, negate_score, expected_score_n
         ([1, 2, 5, 10, 20, 50], 20, 40),
     ],
 )
-def test_inverval_max_min_ratio(data, lower_bound, upper_bound):
+def test_interval_max_min_ratio(data, lower_bound, upper_bound):
     assert lower_bound < _interval_max_min_ratio(data) < upper_bound
 
 

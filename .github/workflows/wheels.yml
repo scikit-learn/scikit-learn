@@ -34,7 +34,7 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -70,10 +70,6 @@ jobs:
             python: 313
             platform_id: win_amd64
           - os: windows-latest
-            python: 313t
-            platform_id: win_amd64
-            cibw_enable: cpython-freethreading
-          - os: windows-latest
             python: 314
             platform_id: win_amd64
           - os: windows-latest
@@ -90,10 +86,6 @@ jobs:
           - os: windows-11-arm
             python: 313
             platform_id: win_arm64
-          - os: windows-11-arm
-            python: 313t
-            platform_id: win_arm64
-            cibw_enable: cpython-freethreading
           - os: windows-11-arm
             python: 314
             platform_id: win_arm64
@@ -114,11 +106,6 @@ jobs:
             python: 313
             platform_id: manylinux_x86_64
             manylinux_image: manylinux_2_28
-          - os: ubuntu-latest
-            python: 313t
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux_2_28
-            cibw_enable: cpython-freethreading
           - os: ubuntu-latest
             python: 314
             platform_id: manylinux_x86_64
@@ -142,11 +129,6 @@ jobs:
             platform_id: manylinux_aarch64
             manylinux_image: manylinux_2_28
           - os: ubuntu-24.04-arm
-            python: 313t
-            platform_id: manylinux_aarch64
-            manylinux_image: manylinux_2_28
-            cibw_enable: cpython-freethreading
-          - os: ubuntu-24.04-arm
             python: 314
             platform_id: manylinux_aarch64
             manylinux_image: manylinux_2_28
@@ -166,10 +148,6 @@ jobs:
             python: 313
             platform_id: macosx_x86_64
           - os: macos-15-intel
-            python: 313t
-            platform_id: macosx_x86_64
-            cibw_enable: cpython-freethreading
-          - os: macos-15-intel
             python: 314
             platform_id: macosx_x86_64
           - os: macos-15-intel
@@ -187,10 +165,6 @@ jobs:
             python: 313
             platform_id: macosx_arm64
           - os: macos-14
-            python: 313t
-            platform_id: macosx_arm64
-            cibw_enable: cpython-freethreading
-          - os: macos-14
             python: 314
             platform_id: macosx_arm64
           - os: macos-14
@@ -199,21 +173,20 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
           python-version: "3.11" # update once build dependencies are available
 
-      - uses: conda-incubator/setup-miniconda@v3
+      - uses: conda-incubator/setup-miniconda@v4
         if: ${{ startsWith(matrix.platform_id, 'macosx') }}
         with:
           miniforge-version: latest
 
       - name: Build and test wheels
         env:
-          CIBW_ENABLE: ${{ matrix.cibw_enable }}
           CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
           CIBW_ARCHS: all
@@ -240,7 +213,7 @@ jobs:
         run: bash build_tools/wheels/build_wheels.sh
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: cibw-wheels-cp${{ matrix.python }}-${{ matrix.platform_id }}
           path: wheelhouse/*.whl
@@ -263,7 +236,7 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -279,7 +252,7 @@ jobs:
           SKLEARN_SKIP_NETWORK_TESTS: 1
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: cibw-sdist
           path: dist/*.tar.gz
@@ -295,10 +268,10 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Download artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           pattern: cibw-*
           path: dist
