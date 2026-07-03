@@ -1,0 +1,6 @@
+- :class:`metrics.ClassificationReportDisplay` renders a
+  :func:`~metrics.classification_report` as a heatmap of per-class
+  precision, recall and f1-score, with support shown as a text column. It
+  provides ``from_estimator`` and ``from_predictions`` constructors, and can
+  also visualize an existing report dict.
+  By :user:`Charles Givre <cgivre>`.
