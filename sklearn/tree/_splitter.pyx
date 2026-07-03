@@ -193,10 +193,6 @@ cdef class Splitter:
         self.y = y
 
         self.sample_weight = sample_weight
-        if n_categories is None:
-            self.n_categories = np.full(n_features, -1, dtype=np.intp)
-        else:
-            self.n_categories = n_categories
         return 0
 
     cdef int node_reset(

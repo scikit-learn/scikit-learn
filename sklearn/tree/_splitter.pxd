@@ -70,11 +70,6 @@ cdef class Splitter:
     cdef bint with_monotonic_cst
     cdef const float64_t[:] sample_weight
 
-    # Buffers for categorical feature handling:
-    # - n_categories: stores number of categories per feature; -1 if not categorical.
-    # - categorical_split: bitset to store the set of categories to split.
-    cdef const intp_t[::1] n_categories
-
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,
     # `node_split` reorganizes the node samples `samples[start:end]` in two
