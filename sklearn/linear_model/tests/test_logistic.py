@@ -21,7 +21,7 @@ from sklearn.callback.tests._utils import (
     skip_callback_test_if_wasm,
 )
 from sklearn.datasets import load_iris, make_classification, make_low_rank_matrix
-from sklearn.exceptions import ConvergenceWarning
+from sklearn.exceptions import ConvergenceWarning, NotFittedError
 from sklearn.linear_model import LogisticRegression, LogisticRegressionCV, SGDClassifier
 from sklearn.linear_model._logistic import (
     _log_reg_scoring_path,
@@ -102,6 +102,13 @@ def test_predict_2_classes(csr_container):
 def test_predict_3_classes(csr_container):
     check_predictions(LogisticRegression(C=10), X, Y2)
     check_predictions(LogisticRegression(C=10), csr_container(X), Y2)
+
+
+def test_predict_log_proba_unfitted_raises_error():
+    clf = LogisticRegression()
+    X = np.array([[-1.0, 0.0], [0.0, 1.0], [1.0, 1.0]])
+    with pytest.raises(NotFittedError, match="fit"):
+        clf.predict_log_proba(X)
 
 
 @pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")

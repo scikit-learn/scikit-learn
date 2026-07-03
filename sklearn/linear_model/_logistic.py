@@ -1657,6 +1657,7 @@ class LogisticRegression(
         """
         check_same_namespace(X, self, attribute="coef_", method="predict_log_proba")
         xp, _ = get_namespace(X)
+        check_is_fitted(self)
         return xp.log(self.predict_proba(X))
 
     def __sklearn_tags__(self):
