@@ -22,9 +22,10 @@ def _features_html(features, is_fitted_css_class=""):
             <summary>
               <div class="arrow"></div>
               <div>{total_features_line}</div>
-              <div class="image-container" title="Copy output features (max 100)">
+              <div class="image-container">
                 <button type="button" class="copy-paste-icon"
-                  aria-label="Copy output feature names to clipboard"
+                  title="{copy_features_label}"
+                  aria-label="{copy_features_label}"
                   onclick="
                   event.stopPropagation();
                   event.preventDefault();
@@ -51,6 +52,7 @@ def _features_html(features, is_fitted_css_class=""):
         </tr>
 
     """
+    copy_features_label = f"Copy output features (max {_MAX_DISPLAY_FEATURES})"
     total_features = len(features)
     display_features = features[:_MAX_DISPLAY_FEATURES]
 
@@ -69,5 +71,6 @@ def _features_html(features, is_fitted_css_class=""):
     return FEATURES_TABLE_TEMPLATE.format(
         total_features_line=total_features_line,
         is_fitted_css_class=html.escape(is_fitted_css_class),
+        copy_features_label=copy_features_label,
         rows="".join(rows),
     )
