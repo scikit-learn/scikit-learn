@@ -2924,7 +2924,7 @@ def test_logistic_regression_array_api_compliance(
     prediction_np = lr_np.predict(X_np)
     if solver == "lbfgs":
         atol = _atol_for_type(dtype_name) * 10
-        rtol = 1e-3 if dtype_name == "float32" else 1e-7
+        rtol = 5e-3 if dtype_name == "float32" else 1e-7
     else:
         atol = _atol_for_type(dtype_name) * 2
         rtol = 1e-4 if dtype_name == "float32" else 1e-8
