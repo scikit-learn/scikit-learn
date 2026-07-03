@@ -1,5 +1,5 @@
 - Metadata :term:`consumers <consumer>` that inherit from
-  :class:`~utils.metadata_routing.MetadataRequester` can now customise class-level
+  :class:`~utils.metadata_routing.MetadataRequester` can now customise their
   metadata requests by overriding their `__sklearn_build_declared_metadata_request__`
   method. :class:`~utils.metadata_routing.MethodMetadataRequest` and
   :func:`~utils.metadata_routing.get_declared_metadata_request_values` are now public

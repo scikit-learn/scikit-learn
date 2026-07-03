@@ -588,8 +588,8 @@ pipe.fit(X, y, sample_weight=my_weights, groups=my_groups).predict(
 
 #
 # %%
-# Customise class-level Metadata Requests in Consumers
-# ----------------------------------------------------
+# Customise Metadata Requests in Consumers
+# ----------------------------------------
 # Most :term:`consumers <consumer>` inherit from :class:`~base.BaseEstimator` and use
 # the class-level default metadata requests inferred from method signatures and
 # `__metadata_request__*` class attributes. Developers can instead inherit directly from
