@@ -23,14 +23,15 @@ def _features_html(features, is_fitted_css_class=""):
               <div class="arrow"></div>
               <div>{total_features_line}</div>
               <div class="image-container" title="Copy output features (max 100)">
-                <i class="copy-paste-icon"
+                <button type="button" class="copy-paste-icon"
+                  aria-label="Copy output feature names to clipboard"
                   onclick="
                   event.stopPropagation();
                   event.preventDefault();
                   copyFeatureNamesToClipboard(this);
                   "
                 >
-                </i>
+                </button>
               </div>
             </summary>
             <div class="features-container">

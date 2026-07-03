@@ -143,7 +143,8 @@ FEATURE_NAMES_HTML = """
                                 <summary>
                                     <div class="image-container"
                                          title="Copy all output features">
-                                        <i class="copy-paste-icon"></i>
+                                        <button type="button" class="copy-paste-icon">
+                                        </button>
                                     </div>
                                 </summary>
                                 <div class="features-container">
