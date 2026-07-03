@@ -154,9 +154,7 @@ import time
 from sklearn.datasets import make_blobs
 
 X_large, _ = make_blobs(n_samples=5_000, centers=5, random_state=42)
-labels_large = KMeans(n_clusters=5, random_state=42, n_init="auto").fit_predict(
-    X_large
-)
+labels_large = KMeans(n_clusters=5, random_state=42, n_init="auto").fit_predict(X_large)
 
 t0 = time.perf_counter()
 for _ in range(10):
@@ -189,17 +187,12 @@ plt.show()
 #
 # .. rubric:: Summary
 #
-# +---------------------------+-------------------------------+---------------------------+
-# | Property                  | Calinski-Harabasz             | Silhouette                |
-# +===========================+===============================+===========================+
-# | Range                     | [0, ∞) — higher is better    | [-1, 1] — higher is better|
-# +---------------------------+-------------------------------+---------------------------+
-# | Complexity                | O(n · d) — fast               | O(n²) — slow              |
-# +---------------------------+-------------------------------+---------------------------+
-# | Sensitive to cluster size | Yes (prefers balanced sizes)  | Less so                   |
-# +---------------------------+-------------------------------+---------------------------+
-# | Works with non-convex     | Poor                          | Poor (density-based       |
-# | clusters                  |                               | metrics preferred)        |
-# +---------------------------+-------------------------------+---------------------------+
-# | Good for                  | Fast sweeps, large data       | Interpretable [-1,1] score|
-# +---------------------------+-------------------------------+---------------------------+
+# **Calinski-Harabasz**: range [0, ∞) — higher is better; O(n·d) complexity;
+# sensitive to cluster size imbalance; best for fast sweeps on large data.
+#
+# **Silhouette**: range [-1, 1] — higher is better; O(n²) complexity (use
+# ``sample_size`` to approximate); less sensitive to cluster size; best when
+# an interpretable, bounded score is needed.
+#
+# Both metrics assume convex clusters and perform poorly on non-convex
+# geometry — prefer density-based metrics (e.g. DBCV) in those cases.
