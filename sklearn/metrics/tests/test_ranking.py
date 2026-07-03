@@ -2257,8 +2257,8 @@ def test_top_k_accuracy_score_array_api_tie_breaking(
         ],
         dtype=dtype_name,
     )
-    # Hand-computed scores under highest-index-first tie-breaking. They are
-    # exact because the boolean hits are averaged in float64.
+    # Hand-computed scores under highest-index-first tie-breaking; exact in
+    # the NumPy reference, which averages the boolean hits in float64.
     expected_scores = {1: 1 / 3, 2: 2 / 3}
 
     y_true_xp = xp.asarray(y_true, device=device)
@@ -2271,7 +2271,11 @@ def test_top_k_accuracy_score_array_api_tie_breaking(
 
         with config_context(array_api_dispatch=True):
             score_xp = top_k_accuracy_score(y_true_xp, y_score_xp, k=k)
-        assert score_xp == score_np
+        # Namespaces whose default floating dtype is float32 (e.g. PyTorch)
+        # average the boolean hits at float32 precision, so the comparison
+        # needs a tolerance. It is orders of magnitude smaller than the gap
+        # between the scores of the two possible tie-breaking directions.
+        assert score_xp == pytest.approx(score_np, rel=1e-6)
 
 
 @pytest.mark.parametrize(
