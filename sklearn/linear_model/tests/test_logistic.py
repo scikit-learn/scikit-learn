@@ -1125,7 +1125,7 @@ def test_logistic_regressioncv_class_weights(weight, class_weight, global_random
     with ignore_warnings(category=ConvergenceWarning):
         clf_lbfgs.fit(X, y)
 
-    for solver in set(SOLVERS) - set(["lbfgs", "liblinear", "newton-cholesky"]):
+    for solver in set(SOLVERS) - set(["lbfgs", "liblinear"]):
         clf = LogisticRegressionCV(
             solver=solver,
             scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
@@ -1317,7 +1317,7 @@ def test_logistic_regression_class_weights(global_random_seed, csr_container):
     y = iris.target[45:]
     class_weight_dict = _compute_class_weight_dictionary(y)
 
-    for solver in set(SOLVERS) - set(["liblinear", "newton-cholesky"]):
+    for solver in set(SOLVERS) - set(["liblinear"]):
         params = dict(
             alpha=1e-4, solver=solver, max_iter=2000, random_state=global_random_seed
         )
@@ -2831,6 +2831,7 @@ def test_logisticregression_warns_with_n_jobs():
         lr.fit(X, y)
 
 
+@pytest.mark.parametrize("solver", ["lbfgs", "newton-cg"])
 @pytest.mark.parametrize("binary", [False, True])
 @pytest.mark.parametrize("use_str_y", [False, True])
 @pytest.mark.parametrize("use_sample_weight", [False, True])
@@ -2841,6 +2842,7 @@ def test_logisticregression_warns_with_n_jobs():
 )
 @pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
 def test_logistic_regression_array_api_compliance(
+    solver,
     binary,
     use_str_y,
     use_sample_weight,
@@ -2898,11 +2900,17 @@ def test_logistic_regression_array_api_compliance(
     # the intercept would be non-zero.
     lr_params = dict(
         alpha=1e-1,
-        solver="lbfgs",
-        tol=1e-12,
+        solver=solver,
         max_iter=500,
         class_weight=class_weight,
     )
+    lr_params["tol"] = 1e-6 if dtype_name == "float32" else 1e-12
+    with warnings.catch_warnings():
+        # Make sure that we converge in the reference fit.
+        lr_np = LogisticRegression(**lr_params).fit(
+            X_np, y_np, sample_weight=sample_weight
+        )
+        assert lr_np.n_iter_ < lr_np.max_iter
 
     lr_np = LogisticRegression(**lr_params).fit(X_np, y_np, sample_weight=sample_weight)
     # Make sure that we converge in the reference fit.
@@ -2914,10 +2922,12 @@ def test_logistic_regression_array_api_compliance(
     predict_proba_np = lr_np.predict_proba(X_np)
     preditct_log_proba_np = lr_np.predict_log_proba(X_np)
     prediction_np = lr_np.predict(X_np)
-    # TODO: those tolerance levels seem quite high. Investigate further if we
-    # can hunt down the numerical discrepancies more precisely.
-    atol = _atol_for_type(dtype_name) * 10
-    rtol = 5e-3 if dtype_name == "float32" else 1e-4
+    if solver == "lbfgs":
+        atol = _atol_for_type(dtype_name) * 10
+        rtol = 1e-3 if dtype_name == "float32" else 1e-7
+    else:
+        atol = _atol_for_type(dtype_name) * 2
+        rtol = 1e-4 if dtype_name == "float32" else 1e-8
 
     with config_context(array_api_dispatch=True):
         lr_xp = LogisticRegression(**lr_params).fit(

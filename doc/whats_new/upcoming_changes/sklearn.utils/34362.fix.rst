@@ -1,0 +1,4 @@
+- The HTML representation of estimators now truncates the output feature list
+  to 100 entries to improve rendering performance for estimators with many
+  output features.
+  By :user:`Dea María Léon <deamarialeon>`.

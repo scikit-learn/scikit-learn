@@ -882,7 +882,7 @@ def test_set_pipeline_step_passthrough(passthrough):
         "memory": None,
         "m2__mult": 2,
         "last__mult": 5,
-        "transform_input": None,
+        "transform_input": ("X_val",),
         "verbose": False,
     }
 
@@ -2221,9 +2221,18 @@ def test_transform_input_no_slep6():
     """Make sure the right error is raised if slep6 is not enabled."""
     X = np.array([[1, 2], [3, 4]])
     y = np.array([0, 1])
-    msg = "The `transform_input` parameter can only be set if metadata"
+
+    # non-default / non-empty transform_input raises
+    msg = "The `transform_input` parameter can only be used if metadata"
     with pytest.raises(ValueError, match=msg):
         make_pipeline(DummyTransf(), transform_input=["blah"]).fit(X, y)
+
+    # default ("X_val",) doesn't raise even when X_val is not passed
+    make_pipeline(DummyTransf()).fit(X, y)
+
+    # the usual metadata-routing error is raised if X_val is passed
+    with pytest.raises(ValueError, match="Pipeline.fit does not accept"):
+        make_pipeline(DummyTransf()).fit(X, y, X_val=X)
 
 
 @config_context(enable_metadata_routing=True)

@@ -674,6 +674,7 @@ def enet_path(
     random_state = params.pop("random_state", None)
     selection = params.pop("selection", "cyclic")
     do_screening = params.pop("do_screening", True)
+    early_stopping = params.pop("early_stopping", True)
 
     if len(params) > 0:
         raise ValueError("Unexpected parameters in params", params.keys())
@@ -801,6 +802,7 @@ def enet_path(
                 random=random,
                 positive=positive,
                 do_screening=do_screening,
+                early_stopping=early_stopping,
             )
         elif multi_output:
             model = cd_fast.enet_coordinate_descent_multi_task(
@@ -820,6 +822,7 @@ def enet_path(
                 rng=rng,
                 random=random,
                 do_screening=do_screening,
+                early_stopping=early_stopping,
             )
         elif isinstance(precompute, np.ndarray):
             # We expect precompute to be already Fortran ordered when bypassing
@@ -839,6 +842,7 @@ def enet_path(
                 random,
                 positive,
                 do_screening,
+                early_stopping,
             )
         elif precompute is False:
             model = cd_fast.enet_coordinate_descent(
@@ -853,6 +857,7 @@ def enet_path(
                 random,
                 positive,
                 do_screening,
+                early_stopping,
             )
         else:
             raise ValueError(

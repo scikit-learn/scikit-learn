@@ -370,9 +370,7 @@ def test_multiclass_multioutput_estimator_predict_proba():
 
     Y = np.concatenate([y1, y2], axis=1)
 
-    clf = MultiOutputClassifier(
-        LogisticRegression(random_state=seed, alpha=1 / X.shape[0])
-    )
+    clf = MultiOutputClassifier(LogisticRegression())
 
     clf.fit(X, Y)
 
