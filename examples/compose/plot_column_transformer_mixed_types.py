@@ -27,6 +27,7 @@ model.
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
+# REMOVE THIS
 
 # %%
 import numpy as np
