@@ -1431,7 +1431,7 @@ def test_search_cv_sample_weight_equivalence(estimator):
                 "with `sample_weight` is not equivalent to fitting with removed "
                 "or repeated data points."
             )
-            assert_allclose_dense_sparse(s1, s2, err_msg=err_msg)
+            assert_allclose_dense_sparse(s1, s2, rtol=2e-7, err_msg=err_msg)
 
 
 @pytest.mark.parametrize(

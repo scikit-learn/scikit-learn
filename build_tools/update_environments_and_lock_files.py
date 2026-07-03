@@ -482,6 +482,28 @@ build_metadata_list = [
         },
         "python_version": "3.12.3",
     },
+    {
+        "name": "lint",
+        "type": "pip",
+        "tag": "lint",
+        "folder": "build_tools/github",
+        "pip_dependencies": ["pytest", "ruff", "mypy", "cython-lint"],
+        "package_constraints": {
+            # We set `pytest` to an arbitrary recent version to keep it consistent with
+            # the settings in `.pre-commit-config.yml`. They should be updated from
+            # time to time in both places.
+            "pytest": "9.1.0",
+            # We fix the version of the linters to some arbitrary version to
+            # avoid changing linting conventions too often.
+            # The meaning of the "min" values is set in `_min_dependencies.py`
+            # and should be updated from time to time when we feel the need
+            # for it.
+            "ruff": "min",
+            "mypy": "min",
+            "cython-lint": "min",
+        },
+        "python_version": "3.11",
+    },
 ]
 
 
