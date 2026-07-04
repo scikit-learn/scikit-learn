@@ -1,0 +1,6 @@
+- :class:`cluster.Birch` now computes subcluster radii from a numerically
+  stable centered second moment (a parallel-axis / Chan update). The previous
+  ``sum ||x_i||^2 / n - ||centroid||^2`` form catastrophically cancelled for
+  data far from the origin: the squared radius turned negative, was clamped to
+  ``0``, and ``threshold`` no longer bounded the leaf subclusters.
+  By :user:`Ilia Gradina <ilgrad>`.

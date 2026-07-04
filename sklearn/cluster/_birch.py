@@ -282,7 +282,10 @@ class _CFSubcluster:
         all sample data in memory.
 
     squared_sum_ : float
-        Sum of the squared l2 norms of all samples belonging to a subcluster.
+        Centered second moment of the subcluster: the sum of squared distances
+        of its samples to the subcluster centroid, ``sum_i ||x_i - centroid||^2``.
+        Combined across subclusters with the numerically stable parallel-axis
+        (Chan et al.) update, so the radius stays accurate far from the origin.
 
     centroid_ : ndarray of shape (branching_factor + 1, n_features)
         Centroid of the subcluster. Prevent recomputing of centroids when
@@ -305,15 +308,32 @@ class _CFSubcluster:
         else:
             self.n_samples_ = 1
             self.centroid_ = self.linear_sum_ = linear_sum
-            self.squared_sum_ = self.sq_norm_ = np.dot(
-                self.linear_sum_, self.linear_sum_
-            )
+            # ``sq_norm_`` is ||centroid||^2 (used for pairwise-distance
+            # shortcuts); ``squared_sum_`` is the centered second moment, which
+            # is 0 for a single point.
+            self.sq_norm_ = np.dot(self.linear_sum_, self.linear_sum_)
+            self.squared_sum_ = 0.0
         self.child_ = None
 
     def update(self, subcluster):
-        self.n_samples_ += subcluster.n_samples_
-        self.linear_sum_ += subcluster.linear_sum_
-        self.squared_sum_ += subcluster.squared_sum_
+        n_a, n_b = self.n_samples_, subcluster.n_samples_
+        new_n = n_a + n_b
+        # Combine the centered second moments with the numerically stable
+        # parallel-axis (Chan et al.) update rather than accumulating raw
+        # ``sum ||x||^2``: the cross term differences the two centroids, so the
+        # common offset cancels *before* squaring and the radius stays accurate
+        # arbitrarily far from the origin.
+        if n_a == 0:
+            self.squared_sum_ = subcluster.squared_sum_
+        else:
+            diff = self.centroid_ - subcluster.centroid_
+            self.squared_sum_ = (
+                self.squared_sum_
+                + subcluster.squared_sum_
+                + (n_a * n_b / new_n) * np.dot(diff, diff)
+            )
+        self.n_samples_ = new_n
+        self.linear_sum_ = self.linear_sum_ + subcluster.linear_sum_
         self.centroid_ = self.linear_sum_ / self.n_samples_
         self.sq_norm_ = np.dot(self.centroid_, self.centroid_)
 
@@ -321,21 +341,28 @@ class _CFSubcluster:
         """Check if a cluster is worthy enough to be merged. If
         yes then merge.
         """
-        new_ss = self.squared_sum_ + nominee_cluster.squared_sum_
+        n_a, n_b = self.n_samples_, nominee_cluster.n_samples_
+        new_n = n_a + n_b
         new_ls = self.linear_sum_ + nominee_cluster.linear_sum_
-        new_n = self.n_samples_ + nominee_cluster.n_samples_
         new_centroid = (1 / new_n) * new_ls
         new_sq_norm = np.dot(new_centroid, new_centroid)
 
-        # The squared radius of the cluster is defined:
-        #   r^2  = sum_i ||x_i - c||^2 / n
-        # with x_i the n points assigned to the cluster and c its centroid:
-        #   c = sum_i x_i / n
-        # This can be expanded to:
-        #   r^2 = sum_i ||x_i||^2 / n - 2 < sum_i x_i / n, c> + n ||c||^2 / n
-        # and therefore simplifies to:
-        #   r^2 = sum_i ||x_i||^2 / n - ||c||^2
-        sq_radius = new_ss / new_n - new_sq_norm
+        # ``squared_sum_`` is the centered second moment ``sum_i ||x_i - c||^2``.
+        # Combine the two subclusters with the numerically stable parallel-axis
+        # (Chan et al.) update; the cross term differences the centroids, so the
+        # common offset cancels before squaring.
+        diff = self.centroid_ - nominee_cluster.centroid_
+        new_ss = (
+            self.squared_sum_
+            + nominee_cluster.squared_sum_
+            + (n_a * n_b / new_n) * np.dot(diff, diff)
+        )
+
+        # The squared radius is then r^2 = sum_i ||x_i - c||^2 / n = new_ss / n.
+        # The previous ``sum ||x_i||^2 / n - ||c||^2`` form catastrophically
+        # cancelled far from the origin (it could even turn negative), which
+        # clamped every subcluster to radius 0 and collapsed the tree.
+        sq_radius = new_ss / new_n
 
         if sq_radius <= threshold**2:
             (
@@ -351,8 +378,11 @@ class _CFSubcluster:
     @property
     def radius(self):
         """Return radius of the subcluster"""
-        # Because of numerical issues, this could become negative
-        sq_radius = self.squared_sum_ / self.n_samples_ - self.sq_norm_
+        # ``squared_sum_`` is the centered second moment, so the radius is
+        # ``sqrt(squared_sum_ / n)`` with no ``- ||c||^2`` term to cancel.
+        # ``max(0, .)`` now only guards floating-point rounding near zero
+        # variance, not a genuinely negative value.
+        sq_radius = self.squared_sum_ / self.n_samples_
         return sqrt(max(0, sq_radius))
 
 
