@@ -1,0 +1,4 @@
+- :mod:`sklearn.linear_model` :class:`LogisticRegression` now correctly raises a
+  `NotFittedError` before checking namespace consistency in
+  :meth:`~sklearn.linear_model.LogisticRegression.predict_log_proba`.
+  By :user:`Praveen Kumar <InfinitePraveen>`.

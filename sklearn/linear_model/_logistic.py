@@ -1655,9 +1655,9 @@ class LogisticRegression(
             Returns the log-probability of the sample for each class in the
             model, where classes are ordered as they are in ``self.classes_``.
         """
+        check_is_fitted(self)
         check_same_namespace(X, self, attribute="coef_", method="predict_log_proba")
         xp, _ = get_namespace(X)
-        check_is_fitted(self)
         return xp.log(self.predict_proba(X))
 
     def __sklearn_tags__(self):
