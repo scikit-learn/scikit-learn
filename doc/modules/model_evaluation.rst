@@ -876,11 +876,27 @@ and inferred labels::
    weighted avg       0.67      0.60      0.59         5
    <BLANKLINE>
 
+:class:`ClassificationReportDisplay` renders the same report as a heatmap, with
+the per-class ``precision``, ``recall`` and ``f1-score`` shown on a shared
+``0``-``1`` color scale and ``support`` as a text column. This makes it easy to
+spot at a glance which classes the model handles well and which it struggles
+with, independently of how many samples each class has. See
+:ref:`sphx_glr_auto_examples_model_selection_plot_classification_report.py` for
+an example.
+
+.. image:: ../auto_examples/model_selection/images/sphx_glr_plot_classification_report_001.png
+   :target: ../auto_examples/model_selection/plot_classification_report.html
+   :scale: 70
+   :align: center
+
 .. rubric:: Examples
 
 * See :ref:`sphx_glr_auto_examples_classification_plot_digits_classification.py`
   for an example of classification report usage for
   hand-written digits.
+
+* See :ref:`sphx_glr_auto_examples_model_selection_plot_classification_report.py`
+  for an example of visualizing a classification report as a heatmap.
 
 * See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
   for an example of classification report usage for
