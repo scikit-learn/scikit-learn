@@ -29,11 +29,17 @@ class of an instance (red: class 1, green: class 2, blue: class 3).
 # We use a large test set to get reliable estimates of the Brier score and
 # log-loss values.
 #
-# To simplify the example, we use a fixed calibration set that is as
-# large as the training set. In practice, this would limit the amount of data
-# available for training the classifier and instead we would be better off
-# using a ensemble of calibrated classifiers using the internal cross-validation
-# of :class:`~sklearn.calibration.CalibratedClassifierCV`.
+# To simplify the example, we use a fixed calibration set that is as large as
+# the training set. In practice, this would limit the amount of data available
+# for training the classifier and instead we would be better off using a
+# ensemble of calibrated classifiers using the internal cross-validation of
+# :class:`~sklearn.calibration.CalibratedClassifierCV`.
+#
+# Similarly, we use a large test set to get reliable estimates of the log-loss
+# and Brier score values. In practice, we would be better off using an outer
+# cross-validation loop with the majority of the data used for training and
+# calibration to get better models, and the rest for evaluation, at the cost of
+# larger uncertainty in the scores.
 
 import numpy as np
 
@@ -340,7 +346,7 @@ base_classifiers = {
     "Gaussian Naive Bayes": GaussianNB(),
 }
 
-calibration_methods = ["sigmoid", "isotonic", "temperature"]
+calibration_methods = ["temperature", "sigmoid", "isotonic"]
 fig, axes = plt.subplots(
     nrows=len(base_classifiers),
     ncols=len(calibration_methods),
@@ -351,9 +357,17 @@ fig, axes = plt.subplots(
 scores = defaultdict(dict)
 
 for classifier_idx, (name, base_clf) in enumerate(base_classifiers.items()):
+    base_clf.fit(X_train, y_train)
+    y_pred_uncal = base_clf.predict_proba(X_test)
+    scores_for_classifier = scores[name]
+    scores_for_classifier.update(
+        {
+            "Classifier": name,
+            "Log-loss (original)": log_loss(y_test, y_pred_uncal),
+            "Brier score (original)": brier_score_loss(y_test, y_pred_uncal),
+        }
+    )
     for method_idx, calibration_method in enumerate(calibration_methods):
-        base_clf.fit(X_train, y_train)
-        y_pred_uncal = base_clf.predict_proba(X_test)
         cal_clf = CalibratedClassifierCV(
             FrozenEstimator(base_clf), method=calibration_method
         )
@@ -366,13 +380,9 @@ for classifier_idx, (name, base_clf) in enumerate(base_classifiers.items()):
             ax=axes[classifier_idx, method_idx],
             display_legend=(classifier_idx == 0 and method_idx == 0),
         )
-        scores_for_classifier = scores[name]
         scores_for_classifier.update(
             {
-                "Classifier": name,
-                "Log-loss (original)": log_loss(y_test, y_pred_uncal),
                 f"Log-loss ({calibration_method})": log_loss(y_test, y_pred_cal),
-                "Brier score (original)": brier_score_loss(y_test, y_pred_uncal),
                 f"Brier score ({calibration_method})": brier_score_loss(
                     y_test, y_pred_cal
                 ),
@@ -422,29 +432,46 @@ for classifier_idx, (name, base_clf) in enumerate(base_classifiers.items()):
 reordered_columns = [
     "Classifier",
     "Log-loss (original)",
+    "Log-loss (temperature)",
     "Log-loss (sigmoid)",
     "Log-loss (isotonic)",
-    "Log-loss (temperature)",
     "Brier score (original)",
+    "Brier score (temperature)",
     "Brier score (sigmoid)",
     "Brier score (isotonic)",
-    "Brier score (temperature)",
 ]
 pd.DataFrame(scores.values())[reordered_columns].round(3)
 
 # %%
 #
-# The table above shows that the sigmoid and temperature calibration methods
-# improve both the log-loss and the Brier score for most classifiers on this
-# task. The results for the isotonic calibration method are more mixed. This
-# could be due to the small size of the calibration set: the extra flexibility
-# of the isotonic calibration method does not seem to be beneficial in this
-# case and the discrete nature of the calibration map can even be detrimental.
+# The table above shows that the temperature and sigmoid calibration methods
+# improve both the log-loss and the Brier score for all classifiers on this
+# study. The results for the isotonic calibration method are more mixed. This
+# is likely caused the limited size of the calibration set: the extra
+# flexibility of the isotonic calibration method does not seem to be beneficial
+# in this case and the discrete nature of the calibration map can even be
+# detrimental and result in worse performance than the uncalibrated classifier.
+# Increasing the calibration set size would likely improve the results, in
+# particular for the isotonic calibration method, by making the calibration map
+# more smooth. You can try increasing the size of the calibration set to see
+# how the results improve. In the large calibration set limit, the isotonic
+# calibration method should perform as well or better than the sigmoid
+# calibration method which itself should perform as well or better than the
+# temperature calibration method, which itself should perform as well or better
+# than the uncalibrated classifier.
 #
-# To conclude, the One-vs-Rest multiclass-calibration strategies implemented in
-# `CalibratedClassifierCV` should not be trusted blindly and it's important to
-# check that post-hoc calibration is helpful from a quantitative point of view
-# by evaluating the classifier performance with and without calibration using
+# In practice, however, the data is often limited and one has to balance the
+# calibration set size and the training set size: it might be better to use
+# more training data to get a better base model then favor post-hoccalibration
+# methods that are more data efficient at the cost of flexibility. Also note,
+# that it's is possible that in some situations, the base model is already well
+# calibrated and that post-hoc methods will not improve the performance much as
+# shown for the Gaussian naive Bayes classifier in the table above.
+#
+# To conclude, none of the calibration methods implemented in
+# `CalibratedClassifierCV` should be trusted blindly. It's important to check
+# that post-hoc calibration is helpful from a quantitative point of view by
+# evaluating the classifier performance with and without calibration using
 # strictly proper scoring rules such as the log-loss or the Brier score.
 
 # %%
