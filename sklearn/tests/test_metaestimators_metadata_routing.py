@@ -1018,10 +1018,6 @@ def test_metadata_routed_to_sub_estimator_in_pipeline(metaestimator):
     if "estimator" not in metaestimator:
         # This test only applies to meta-estimators wrapping a sub-estimator.
         return
-    if "fit" not in filter_metadata_in_routing_methods(
-        metaestimator["estimator_routing_methods"]
-    ):
-        return
 
     metaestimator_class = metaestimator["metaestimator"]
     X = metaestimator["X"]
