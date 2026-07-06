@@ -563,7 +563,7 @@ Commit Message Marker  Action Taken by CI
 [free-threaded]        Build & test with CPython 3.14 free-threaded
 [pyodide]              Build & test with Pyodide
 [float32]              Run float32 tests by setting `SKLEARN_RUN_FLOAT32_TESTS=1`. See
-                       :ref:`Global configuration <environment_variable>` for more details
+                       :ref:`Global configuration <global_configuration>` for more details
 [all random seeds]     Run tests using the `global_random_seed` fixture with all random seeds.
                        See `this <https://github.com/scikit-learn/scikit-learn/issues/28959>`_
                        for more details about the commit message format

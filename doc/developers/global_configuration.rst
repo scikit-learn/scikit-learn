@@ -1,4 +1,4 @@
-.. _environment_variable:
+.. _global_configuration:
 
 Global configuration and environment variables
 ==============================================
@@ -26,7 +26,7 @@ Sets the default value for the `assume_finite` argument of
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Sets the default value for the `working_memory` argument of
-:func:`sklearn.set_config`. The global default value is 1024.
+:func:`sklearn.set_config`. The global default value is 1024 MiB.
 
 .. _envvar_SKLEARN_PAIRWISE_DIST_CHUNK_SIZE:
 
@@ -34,11 +34,11 @@ Sets the default value for the `working_memory` argument of
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This sets the size of chunk to be used by the underlying `PairwiseDistancesReductions`
-implementations. The default value is `256` which has been showed to be adequate on
+implementations. The default value is `256` which has been shown to be adequate on
 most machines.
 
 Users looking for the best performance might want to tune this variable using
-powers of 2 so as to get the best parallelism behavior for their hardware,
+powers of 2 so as to get the best :ref:`parallelism` behavior for their hardware,
 especially with respect to their caches' sizes.
 
 Testing and CI
@@ -149,14 +149,14 @@ Build and debug
 `SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When this environment variable is set to a non zero value, the `Cython`
-derivative, `boundscheck` is set to `True`. This is useful for finding
+When this environment variable is set to a non-zero value, the `Cython`
+directive `boundscheck` is set to `True`. This is useful for finding
 segfaults.
 
 `SKLEARN_BUILD_ENABLE_DEBUG_SYMBOLS`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When this environment variable is set to a non zero value, the debug symbols
+When this environment variable is set to a non-zero value, the debug symbols
 will be included in the compiled C extensions. Only debug symbols for POSIX
 systems are configured.
 

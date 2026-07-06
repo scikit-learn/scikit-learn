@@ -60,9 +60,10 @@ multi-processing, in order to avoid duplicating the memory in each process
 (which isn't reasonable with big datasets), joblib will create a `memmap
 <https://docs.scipy.org/doc/numpy/reference/generated/numpy.memmap.html>`_
 that all processes can share, when the data is bigger than 1MB.
-:ref:`SKLEARN_WORKING_MEMORY <envvar_SKLEARN_WORKING_MEMORY>` controls this
-memmap threshold (see :func:`~sklearn.set_config`). See :ref:`environment_variable`
-for other scikit-learn configuration environment variables.
+:ref:`SKLEARN_WORKING_MEMORY <envvar_SKLEARN_WORKING_MEMORY>` sets the default value for
+the `working_memory` argument of :func:`sklearn.set_config`. See
+:ref:`global_configuration` for this and other scikit-learn configuration environment
+variables.
 
 In some specific cases (when the code that is run in parallel releases the
 GIL), scikit-learn will indicate to ``joblib`` that a multi-threading
