@@ -445,4 +445,4 @@ def test_transform_target_regressor_metadata_routing_default_estimator():
     """Test that metadata request is set on the default regressor"""
     X, y = make_regression()
     ttr = TransformedTargetRegressor()
-    ttr.fit(X, y, sample_weight=np.empty(shape=(X.shape[0],)))
+    ttr.fit(X, y, sample_weight=np.ones(shape=(X.shape[0],)))

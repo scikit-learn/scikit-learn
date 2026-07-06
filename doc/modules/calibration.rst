@@ -55,6 +55,14 @@ represents the average predicted probability in each bin.
 The y-axis is then the *fraction of positives* given the predictions of that bin, i.e.
 the proportion of samples whose class is the positive class (in each bin).
 
+The number of bins is controlled by the `n_bins` parameter. While a higher
+number of bins provides a more granular view, it also requires more data to
+ensure that each bin has a sufficient number of samples to produce a stable
+estimate of the fraction of positives. When `n_bins="cube_root"`, the number of
+bins is automatically set to :math:`\lceil n_{\text{samples}}^{1/3} \rceil`,
+which aims to balance the trade-off between the bias and variance of the
+estimate [10]_ [11]_.
+
 The top calibration curve plot is created with
 :func:`CalibrationDisplay.from_estimator`, which uses :func:`calibration_curve` to
 calculate the per bin average predicted probabilities and fraction of positives.
@@ -357,3 +365,11 @@ parameters for each single class.
 .. [9] `On Calibration of Modern Neural Networks
        <https://proceedings.mlr.press/v70/guo17a/guo17a.pdf>`_,
        C. Guo, G. Pleiss, Y. Sun, & K. Q. Weinberger, ICML 2017.
+
+.. [10] `Minimum-Risk Recalibration of Classifiers
+       <https://proceedings.neurips.cc/paper_files/paper/2023/hash/dbd6b295535e44f2b8ec0c3f1da7c509-Abstract-Conference.html>`_,
+       Sun, Z., Song, D., & Hero, A. O., NeurIPS 2023.
+
+.. [11] `Information-Theoretic Generalization Analysis for Expected Calibration Error
+       <https://arxiv.org/abs/2405.15709>`_,
+       Futami, F., & Fujisawa, M., arXiv:2405.15709, 2024.
