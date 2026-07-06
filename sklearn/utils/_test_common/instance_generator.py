@@ -951,9 +951,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
-    CalibratedClassifierCV: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
-    },
     ColumnTransformer: {
         "check_estimators_empty_data_messages": "FIXME",
         "check_estimators_nan_inf": "FIXME",
@@ -987,11 +984,11 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
-    GaussianMixture: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
-    },
     GaussianNB: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
+        # TODO: Remove once fixed: https://github.com/pytorch/pytorch/issues/188128
+        "check_array_api_mixed_inputs": (
+            "PyTorch bug when asarray used on array-api-strict boolean array"
+        ),
         "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     GradientBoostingClassifier: {
@@ -1018,6 +1015,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     HalvingGridSearchCV: {
         "check_array_api_mixed_inputs": "mixed array API input support not added yet",
+        "check_array_api_string_and_numeric_inputs": (
+            "mixed string and numeric array API input support not added yet"
+        ),
         "check_fit2d_1sample": (
             "Fail during parameter check since min/max resources requires more samples"
         ),
@@ -1029,6 +1029,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     HalvingRandomSearchCV: {
         "check_array_api_mixed_inputs": "mixed array API input support not added yet",
+        "check_array_api_string_and_numeric_inputs": (
+            "mixed string and numeric array API input support not added yet"
+        ),
         "check_fit2d_1sample": (
             "Fail during parameter check since min/max resources requires more samples"
         ),
@@ -1087,6 +1090,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     LinearDiscriminantAnalysis: {
         "check_array_api_mixed_inputs": "mixed array API input support not added yet",
+        "check_array_api_string_and_numeric_inputs": (
+            "mixed string and numeric array API input support not added yet"
+        ),
     },
     LabelEncoder: {
         "check_array_api_same_namespace": "check_same_namespace not yet added",
@@ -1162,7 +1168,7 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     Nystroem: {
         "check_array_api_same_namespace": "check_same_namespace not yet added",
-        "check_transformer_preserves_dtypes": (
+        "check_transformer_preserve_dtypes": (
             "dtypes are preserved but not at a close enough precision"
         ),
     },
@@ -1177,6 +1183,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     PCA: {
         "check_array_api_mixed_inputs": "mixed array API input support not added yet",
+        "check_array_api_string_and_numeric_inputs": (
+            "mixed string and numeric array API input support not added yet"
+        ),
         # TODO: see gh-33205 for details
         "check_array_api_input": "`linalg.inv` fails because input is singular",
         "check_array_api_same_namespace": "check_same_namespace not yet added",
@@ -1202,6 +1211,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     PoissonRegressor: {
         "check_array_api_mixed_inputs": "mixed array API input support not added yet",
+        "check_array_api_string_and_numeric_inputs": (
+            "mixed string and numeric array API input support not added yet"
+        ),
         "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     PolynomialFeatures: {
@@ -1263,7 +1275,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         )
     },
     RidgeClassifier: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
         "check_non_transformer_estimators_n_iter": (
             "n_iter_ cannot be easily accessed."
         ),

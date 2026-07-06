@@ -63,7 +63,7 @@ The most common decisions are done on binary classification tasks, where the res
 probability of rain a decision is made on how to act (whether to take mitigating
 measures like an umbrella or not).
 For classifiers, this is what :term:`predict` returns.
-See also :ref:`threshold_tunning`.
+See also :ref:`threshold_tuning`.
 There are many scoring functions which measure different aspects of such a
 decision, most of them are covered with or derived from the
 :func:`metrics.confusion_matrix`.
@@ -1728,7 +1728,7 @@ class with the greater label for each output.
   >>> from sklearn.datasets import make_multilabel_classification
   >>> from sklearn.multioutput import MultiOutputClassifier
   >>> X, y = make_multilabel_classification(random_state=0)
-  >>> inner_clf = LogisticRegression(random_state=0)
+  >>> inner_clf = LogisticRegression()
   >>> clf = MultiOutputClassifier(inner_clf).fit(X, y)
   >>> y_score = np.transpose([y_pred[:, 1] for y_pred in clf.predict_proba(X)])
   >>> roc_auc_score(y, y_score, average=None)
@@ -3140,7 +3140,7 @@ expected value should be null and that their variance should be constant
 (homoschedasticity).
 
 If this is not the case, and in particular if the residuals plot show some
-banana-shaped structure, this is a hint that the model is likely mis-specified
+banana-shaped structure, this is a hint that the model is likely misspecified
 and that non-linear feature engineering or switching to a non-linear regression
 model might be useful.
 

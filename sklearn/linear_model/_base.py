@@ -170,7 +170,10 @@ def _preprocess_data(
 
     if check_input:
         X = check_array(
-            X, copy=copy, accept_sparse=["csr", "csc"], dtype=supported_float_dtypes(xp)
+            X,
+            copy=copy,
+            accept_sparse=["csr", "csc"],
+            dtype=supported_float_dtypes(xp, device=device_),
         )
         y = check_array(y, dtype=X.dtype, copy=True, ensure_2d=False)
     else:
@@ -483,6 +486,13 @@ class SparseCoefMixin:
         than the usual numpy.ndarray representation.
 
         The ``intercept_`` member is not converted.
+
+        .. warning::
+            This method is not supported for estimators fitted with array API
+            inputs (i.e. when :func:`sklearn.config_context` is used with
+            ``array_api_dispatch=True``). The call may succeed but subsequent
+            calls to :meth:`predict` and other methods involving passing arrays
+            may raise or return unexpected results.
 
         Returns
         -------

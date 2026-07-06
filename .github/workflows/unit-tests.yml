@@ -30,16 +30,14 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
           cache: 'pip'
       - name: Install linters
         run: |
-          source build_tools/shared.sh
-          # Include pytest compatibility with mypy
-          pip install pytest $(get_dep ruff min) $(get_dep mypy min) cython-lint
+          pip install -r build_tools/github/lint_lock.txt
       - name: Run linters
         run: ./build_tools/linting.sh
       - name: Run Meson OpenMP checks
@@ -54,7 +52,7 @@ jobs:
     outputs:
       message: ${{ steps.git-log.outputs.message }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - id: git-log
@@ -225,7 +223,7 @@ jobs:
 
     steps: &unit-tests-steps
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # This step is necessary to access the job name the same way in both matrix and
       # non-matrix jobs (like free-threaded or scipy-dev builds).
@@ -244,11 +242,11 @@ jobs:
           restore-keys: ccache-${{ env.JOB_NAME }}
 
       - name: Set up conda
-        uses: conda-incubator/setup-miniconda@v3
+        uses: conda-incubator/setup-miniconda@v4
         if: ${{ startsWith(env.DISTRIB, 'conda') }}
         with:
           miniforge-version: latest
-          auto-activate-base: true
+          auto-activate: true
           activate-environment: ""
 
       - name: Build scikit-learn
@@ -296,7 +294,7 @@ jobs:
         if: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
 
       - name: Upload coverage report to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         if: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
         with:
           files: ./coverage.xml
@@ -364,7 +362,7 @@ jobs:
       JOB_NAME: *debian-32bit-job-name
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Create cache for ccache
         uses: actions/cache@v5
@@ -374,11 +372,11 @@ jobs:
           restore-keys: ccache-${{ env.JOB_NAME }}
 
       - name: Set up conda
-        uses: conda-incubator/setup-miniconda@v3
+        uses: conda-incubator/setup-miniconda@v4
         if: ${{ startsWith(env.DISTRIB, 'conda') }}
         with:
           miniforge-version: latest
-          auto-activate-base: true
+          auto-activate: true
           activate-environment: ""
 
       # Enable global random seed randomization to discover seed-sensitive tests
@@ -455,7 +453,7 @@ jobs:
         if: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
 
       - name: Upload coverage report to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         if: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
         with:
           files: ./coverage.xml

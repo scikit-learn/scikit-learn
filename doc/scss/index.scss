@@ -150,23 +150,14 @@ div.sk-landing-more-info {
   }
 }
 
-/* Footer */
+/* Funding section */
 
-div.sk-landing-footer {
-  a.sk-footer-funding-link {
+div.sk-landing-funding {
+  a.sk-funding-link {
     text-decoration: none;
 
-    p.sk-footer-funding-text {
-      color: var(--pst-color-link);
-
-      &:hover {
-        color: var(--pst-color-secondary);
-      }
-    }
-
-    div.sk-footer-funding-logos > img {
-      max-height: 40px;
-      max-width: 85px;
+    div.sk-funding-logos > img {
+      height: 40px;
       margin: 0 8px 8px 8px;
       padding: 5px;
       border-radius: 3px;
