@@ -89,6 +89,12 @@ default_package_constraints = {
     # TODO: remove once when we're using the new way to enable coverage in subprocess
     # introduced in 7.0.0, see https://github.com/pytest-dev/pytest-cov?tab=readme-ov-file#upgrading-from-pytest-cov-63
     "pytest-cov": "<=6.3.0",
+    # Cython 3.2.6, 3.2.7 and 3.2.8 break pickling of cyfunctions (e.g.
+    # KDTree.query) across joblib/loky workers on Python 3.14. 3.2.5 works and a fix is
+    # expected in a later release, so only these versions are excluded instead of using
+    # <= 3.2.5 as constraint.
+    # See https://github.com/scikit-learn/scikit-learn/pull/34419
+    "cython": "!=3.2.6,!=3.2.7,!=3.2.8",
 }
 
 
