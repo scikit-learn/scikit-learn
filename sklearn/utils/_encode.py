@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from collections import Counter
+from collections.abc import Iterable
+from numbers import Real
 from typing import NamedTuple
 
 import narwhals.stable.v2 as nw
@@ -96,6 +98,9 @@ class MissingValues(NamedTuple):
 
     nan: bool
     none: bool
+    # All the different nan instances seen, useful because they end up merged
+    # into just np.nan:
+    all_nans: Iterable[Real] = (np.nan,)
 
     def to_list(self):
         """Convert tuple to a list where None is always first."""
@@ -130,15 +135,20 @@ def _extract_missing(values):
     if not missing_values_set:
         return values, MissingValues(nan=False, none=False)
 
+    all_nans = missing_values_set - {None}
     if None in missing_values_set:
         if len(missing_values_set) == 1:
-            output_missing_values = MissingValues(nan=False, none=True)
+            output_missing_values = MissingValues(
+                nan=False, none=True, all_nans=all_nans
+            )
         else:
             # If there is more than one missing value, then it has to be
             # float('nan') or np.nan
-            output_missing_values = MissingValues(nan=True, none=True)
+            output_missing_values = MissingValues(
+                nan=True, none=True, all_nans=all_nans
+            )
     else:
-        output_missing_values = MissingValues(nan=True, none=False)
+        output_missing_values = MissingValues(nan=True, none=False, all_nans=all_nans)
 
     # create set without the missing values
     output = values - missing_values_set
@@ -189,7 +199,7 @@ def _unique_python(values, *, return_inverse, return_counts):
         ret += (_map_to_integer(values, uniques),)
 
     if return_counts:
-        ret += (_get_counts(values, uniques),)
+        ret += (_get_counts(values, uniques, missing_values.all_nans),)
 
     return ret[0] if len(ret) == 1 else ret
 
@@ -373,26 +383,21 @@ def _check_unknown(values, known_values, return_mask=False):
     return diff
 
 
-def _get_counts(values, uniques):
+def _get_counts(values, uniques, nan_values=(np.nan,)):
     """Get the count of each of the `uniques` in `values`.
 
-    The counts will use the order passed in by `uniques`. For non-object dtypes,
-    `uniques` is assumed to be sorted and `np.nan` is at the end.
-
-    This code makes the assumption that:
-    `any(is_scalar_nan(v) for v in uniques[:-1]) is False`
+    The counts will use the order passed in by `uniques`.  `np.nan` is assumed
+    to be the last item in `uniques`, if it was one of the values.  For
+    non-object dtypes, `uniques` is assumed to be sorted.
     """
     if values.dtype.kind in "OU":
         counter = Counter(values)
         output = np.zeros(len(uniques), dtype=np.int64)
         for i, item in enumerate(uniques):
             output[i] = counter[item]
-        if is_scalar_nan(uniques[-1]) and not any(
-            is_scalar_nan(item) for item in uniques[:-1]
-        ):
-            output[-1] = sum(
-                val for item, val in counter.items() if is_scalar_nan(item)
-            )
+        if len(uniques) > 0 and is_scalar_nan(uniques[-1]):
+            # Should be the sum of all nans:
+            output[-1] = sum(counter[nan] for nan in nan_values)
         return output
 
     unique_values, counts = _unique_np(values, return_counts=True)
