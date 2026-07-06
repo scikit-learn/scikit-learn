@@ -77,6 +77,20 @@ def test_params_html_repr():
     assert "estimator-table" in _params_html_repr(params)
 
 
+def test_params_html_repr_copy_button():
+    """Copy control renders as an accessible <button> with an aria-label."""
+    params = ParamsDict(params={"alpha": 1}, estimator_class="")
+    html_output = _params_html_repr(params)
+
+    copy_button = (
+        r'<button type="button" class="copy-paste-icon"'
+        r'\s*aria-label="Copy alpha to clipboard"'
+    )
+    assert re.search(copy_button, html_output, flags=re.DOTALL)
+    # The original non-interactive <i> icon should no longer be emitted.
+    assert '<i class="copy-paste-icon"' not in html_output
+
+
 def test_params_html_repr_with_doc_links():
     """Test `_params_html_repr` with valid and invalid doc links."""
 
