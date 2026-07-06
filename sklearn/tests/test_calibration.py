@@ -46,7 +46,12 @@ from sklearn.model_selection import (
 )
 from sklearn.naive_bayes import GaussianNB, MultinomialNB
 from sklearn.pipeline import Pipeline, make_pipeline
-from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.preprocessing import (
+    LabelEncoder,
+    PolynomialFeatures,
+    SplineTransformer,
+    StandardScaler,
+)
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._array_api import (
@@ -291,6 +296,100 @@ def test_calibration_multiclass(clf, method, ensemble, global_random_seed):
     bs_uncal = brier_score_loss(y_test, y_pred_uncal, labels=labels)
     bs_cal = brier_score_loss(y_test, y_pred_cal, labels=labels)
     assert bs_cal < bs_uncal
+
+
+@pytest.mark.parametrize(
+    "estimator, expected_loss_improvement",
+    [
+        (RandomForestClassifier(max_depth=8, n_estimators=10, random_state=42), True),
+        (RandomForestClassifier(max_depth=3, n_estimators=10, random_state=42), False),
+        (
+            make_pipeline(
+                SplineTransformer(),
+                PolynomialFeatures(interaction_only=True, include_bias=False),
+                LogisticRegression(C=1e6, max_iter=1_000),
+            ),
+            True,
+        ),
+        (
+            DummyClassifier(strategy="prior"),
+            False,
+        ),
+        (GaussianNB(), False),
+    ],
+    ids=[
+        "random_forest_deep",
+        "random_forest_shallow",
+        "polynomial_low_reg",
+        "constant_classifier",
+        "gaussian_naive_bayes",
+    ],
+)
+@pytest.mark.parametrize("calibration_method", ["temperature", "sigmoid", "isotonic"])
+# @pytest.mark.parametrize("seed", [0, 1, 2])
+def test_asymptotic_multiclass_calibration_improvement(
+    estimator, expected_loss_improvement, calibration_method, global_random_seed
+):
+    """Sigmoid calibration improves or preserves multiclass proper scores.
+
+    Non-regression test inspired by the example in
+    :ref:`sphx_glr_auto_examples_calibration_plot_calibration_multiclass.py`.
+    It covers the example's base classifiers on slightly imbalanced 3-class
+    blob data (one class twice as frequent as each of the others).
+
+    All calibration methods are expected to improve the log-loss of the base
+    classifiers given enough calibration data because the log-loss is a
+    strictly proper scoring rule.
+
+    GaussianNB is already a very good fit for this problem so we do not expect
+    it to be improved by calibration. Shallow trees and dummy classifiers are
+    not a good model for this problem (underfitting) but they are still
+    expected to be well calibrated by default hence calibration should not
+    improve them much. But it should never significantly degrade their loss
+    either.
+    """
+    # Training set is small enough to make the test run fast and to make sure
+    # that some overfitting base classifiers are not perfectly calibrated by
+    # default.
+    n_train = 100
+    # Calibration is large enough to make assertions about the asymptotic
+    # behavior of the calibration estimators.
+    n_cal = 30_000
+    # Test set is large enough to get a good estimate of the population distribution.
+    n_test = 10_000
+    X, y = make_blobs(
+        n_samples=n_train + n_cal + n_test,
+        n_features=2,
+        centers=4,
+        cluster_std=5.0,
+        shuffle=True,
+        random_state=global_random_seed,
+    )
+    # Make the problem more difficult and imbalanced.
+    y[y == 3] = 2
+
+    X_train, y_train = X[:n_train], y[:n_train]
+    X_cal, y_cal = X[n_train : n_train + n_cal], y[n_train : n_train + n_cal]
+    X_test, y_test = X[n_train + n_cal :], y[n_train + n_cal :]
+
+    estimator.fit(X_train, y_train)
+    y_pred_uncal = estimator.predict_proba(X_test)
+
+    cal_clf = CalibratedClassifierCV(
+        FrozenEstimator(estimator), method=calibration_method
+    )
+    cal_clf.fit(X_cal, y_cal)
+    y_pred_cal = cal_clf.predict_proba(X_test)
+
+    log_loss_uncal = log_loss(y_test, y_pred_uncal)
+    log_loss_cal = log_loss(y_test, y_pred_cal)
+    if expected_loss_improvement:
+        assert log_loss_cal < 0.9 * log_loss_uncal  # at least 10% loss deacrease
+    else:
+        # Degradation should never be large. Increasing calibration and test
+        # data size would allow to reduce the 2% degradation at the cost of
+        # making the test run slower.
+        assert log_loss_cal < 1.02 * log_loss_uncal  # at most 2% loss increase
 
 
 def test_calibration_zero_probability():

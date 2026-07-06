@@ -71,6 +71,8 @@ from sklearn.utils.validation import (
     check_is_fitted,
 )
 
+_CLASSIFIER_RESPONSE_METHODS = ("predict_proba", "decision_function")
+
 
 def _ensure_logits(predictions, response_method_name, method):
     """Ensure that the predictions are in logits space.
@@ -102,10 +104,10 @@ def _ensure_logits(predictions, response_method_name, method):
     logits : array-like of shape (n_samples, n_classes) or (n_samples, 1).
         The logits.
     """
-    if response_method_name not in ("decision_function", "predict_proba"):
+    if response_method_name not in _CLASSIFIER_RESPONSE_METHODS:
         raise ValueError(
             f"Unknown response method name: {response_method_name}. "
-            "Expected 'decision_function' or 'predict_proba'."
+            f"Expected one of {_CLASSIFIER_RESPONSE_METHODS}."
         )
 
     if response_method_name == "decision_function":
@@ -161,8 +163,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     data is used for calibration. The user has to take care manually that data
     for model fitting and calibration are disjoint.
 
-    The calibration is based on the :term:`decision_function` method of the
-    `estimator` if it exists, else on :term:`predict_proba`.
+    The calibration is based on the :term:`predict_proba` method of the
+    `estimator` when available, otherwise on :term:`decision_function`.
 
     Read more in the :ref:`User Guide <calibration>`.
     In order to learn more on the CalibratedClassifierCV class, see the
@@ -193,9 +195,15 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         strategy with post-hoc renormalization, i.e., adjusting the probabilities after
         calibration to ensure they sum up to 1.
 
-        In contrast, temperature scaling naturally supports multi-class calibration by
-        applying `softmax(classifier_logits/T)` with a value of `T` (temperature)
-        that optimizes the log loss.
+        Temperature scaling naturally supports multi-class calibration by applying
+        `softmax(classifier_logits/T)` with a value of `T` (temperature) that
+        optimizes the log loss.
+
+        For all methods, ``predict_proba`` outputs are preferred when available.
+        Sigmoid and isotonic convert them to Bernoulli logits per class. Temperature
+        scaling converts them to symmetric multinomial logits. When ``predict_proba``
+        is unavailable (e.g. :class:`~sklearn.svm.LinearSVC`), ``decision_function``
+        outputs are used instead.
 
         For very uncalibrated classifiers on very imbalanced datasets, sigmoid
         calibration might be preferred because it fits an additional intercept
@@ -531,7 +539,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             this_estimator = clone(estimator)
             method_name = _check_response_method(
                 this_estimator,
-                ["decision_function", "predict_proba"],
+                _CLASSIFIER_RESPONSE_METHODS,
             ).__name__
             predictions = cross_val_predict(
                 estimator=this_estimator,
@@ -738,7 +746,7 @@ def _fit_classifier_calibrator_pair(
     predictions, _, response_method_used = _get_response_values(
         estimator,
         X_test,
-        response_method=["decision_function", "predict_proba"],
+        response_method=_CLASSIFIER_RESPONSE_METHODS,
         return_response_method_used=True,
     )
     predictions = _ensure_logits(
@@ -877,7 +885,7 @@ class _CalibratedClassifier:
         predictions, _, response_method_used = _get_response_values(
             self.estimator,
             X,
-            response_method=["decision_function", "predict_proba"],
+            response_method=_CLASSIFIER_RESPONSE_METHODS,
             return_response_method_used=True,
         )
         predictions = _ensure_logits(
