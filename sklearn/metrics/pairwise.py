@@ -1334,7 +1334,7 @@ def paired_distances(X, Y, *, metric="euclidean", **kwds):
     """
     Compute the paired distances between X and Y.
 
-    Compute the distances between (X[0], Y[0]), (X[1], Y[1]), etc.
+    Distances are calculated between (X[0], Y[0]), (X[1], Y[1]), ..., etc.
 
     Read more in the :ref:`User Guide <metrics>`.
 
