@@ -662,9 +662,8 @@ METRICS_WITH_LOG1P_Y = {
     "root_mean_squared_log_error",
 }
 
-# Metrics that do not *yet* support mixed namespace/device array API inputs
-# Note mixed namespace/device support is NOT planned for pairwise metrics
-METRICS_NOT_SUPPORTING_MIXED_NAMESPACE = {
+# Metrics that do not *yet* support array API inputs
+METRICS_NOT_SUPPORTING_ARRAY_API = {
     # "adjusted_balanced_accuracy_score",
     # "balanced_accuracy_score",
     "coverage_error",
@@ -2572,7 +2571,7 @@ def check_array_api_metric_pairwise(metric, array_namespace, device_name, dtype_
 def yield_metric_checker_combinations():
     ALL_METRICS_INCL_PAIRWISE = {**ALL_METRICS, **PAIRWISE_METRICS}
     for name in sorted(
-        set(ALL_METRICS_INCL_PAIRWISE) - METRICS_NOT_SUPPORTING_MIXED_NAMESPACE
+        set(ALL_METRICS_INCL_PAIRWISE) - METRICS_NOT_SUPPORTING_ARRAY_API
     ):
         metric = ALL_METRICS_INCL_PAIRWISE[name]
 
@@ -2641,7 +2640,7 @@ def _check_output(out_np, out_xp, xp_to, y2_xp):
     ],
 )
 @pytest.mark.parametrize(
-    "metric_name", sorted(ALL_METRICS.keys() - METRICS_NOT_SUPPORTING_MIXED_NAMESPACE)
+    "metric_name", sorted(ALL_METRICS.keys() - METRICS_NOT_SUPPORTING_ARRAY_API)
 )
 def test_mixed_array_api_namespace_input_compliance(
     metric_name, other_ns_and_device, y_pred_ns_and_device
@@ -2734,7 +2733,7 @@ def test_mixed_array_api_namespace_input_compliance(
     sorted(
         (
             CLASSIFICATION_METRICS.keys()
-            - (METRIC_UNDEFINED_BINARY | METRICS_NOT_SUPPORTING_MIXED_NAMESPACE)
+            - (METRIC_UNDEFINED_BINARY | METRICS_NOT_SUPPORTING_ARRAY_API)
         )
     ),
 )
@@ -2777,7 +2776,7 @@ def test_array_api_classification_string_input(metric_name):
     sorted(
         (CONTINUOUS_CLASSIFICATION_METRICS.keys())
         | set(CURVE_METRICS.keys())
-        - (METRIC_UNDEFINED_BINARY | METRICS_NOT_SUPPORTING_MIXED_NAMESPACE)
+        - (METRIC_UNDEFINED_BINARY | METRICS_NOT_SUPPORTING_ARRAY_API)
     ),
 )
 def test_array_api_classification_mixed_string_numeric_input(
