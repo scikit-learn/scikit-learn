@@ -662,130 +662,69 @@ METRICS_WITH_LOG1P_Y = {
     "root_mean_squared_log_error",
 }
 
-# Metrics that support mixed namespace/device array API inputs
-# Mixed namespace/device support is NOT planned for pairwise metrics
-METRICS_SUPPORTING_MIXED_NAMESPACE = [
-    "accuracy_score",
-    "average_precision_score",
-    "brier_score_loss",
-    "confusion_matrix_at_thresholds",
-    "d2_absolute_error_score",
-    "d2_brier_score",
-    "d2_log_loss_score",
-    "d2_pinball_score",
-    "d2_pinball_score_01",
-    "d2_pinball_score_09",
-    "d2_tweedie_score",
-    "explained_variance_score",
-    "f1_score",
-    "log_loss",
-    "max_error",
-    "mean_absolute_error",
-    "mean_absolute_percentage_error",
-    "mean_compound_poisson_deviance",
-    "mean_gamma_deviance",
-    "mean_normal_deviance",
-    "mean_pinball_loss",
-    "mean_poisson_deviance",
-    "mean_squared_error",
-    "mean_squared_log_error",
-    "mean_tweedie_deviance",
-    "median_absolute_error",
-    "multilabel_confusion_matrix",
-    "precision_score",
-    "r2_score",
-    "recall_score",
-    "root_mean_squared_error",
-    "root_mean_squared_log_error",
-]
-
-METRICS_NOT_SUPPORTING_MIXED_NAMESPACE = [
-    "additive_chi2_kernel",
-    "adjusted_balanced_accuracy_score",
-    "balanced_accuracy_score",
-    "chi2_kernel",
-    "cohen_kappa_score",
-    "confusion_matrix",
-    "cosine_distances",
-    "cosine_similarity",
+# Metrics that do not *yet* support mixed namespace/device array API inputs
+# Note mixed namespace/device support is NOT planned for pairwise metrics
+METRICS_NOT_SUPPORTING_MIXED_NAMESPACE = {
+    # "adjusted_balanced_accuracy_score",
+    # "balanced_accuracy_score",
     "coverage_error",
     "dcg_score",
-    "det_curve",
     "distance_metrics",
-    "euclidean_distances",
-    "f0.5_score",
-    "f2_score",
-    "hamming_loss",
+    # "f0.5_score",
+    # "f2_score",
     "haversine_distances",
     "hinge_loss",
-    "jaccard_score",
     "kernel_metrics",
     "label_ranking_average_precision_score",
     "label_ranking_loss",
-    "laplacian_kernel",
-    "linear_kernel",
-    "macro_f0.5_score",
-    "macro_f1_score",
-    "macro_f2_score",
-    "macro_jaccard_score",
-    "macro_precision_score",
-    "macro_recall_score",
-    "manhattan_distances",
+    # "macro_f0.5_score",
+    # "macro_f1_score",
+    # "macro_f2_score",
+    # "macro_jaccard_score",
+    # "macro_precision_score",
+    # "macro_recall_score",
     "matthews_corrcoef_score",
-    "micro_average_precision_score",
-    "micro_f0.5_score",
-    "micro_f1_score",
-    "micro_f2_score",
-    "micro_jaccard_score",
-    "micro_precision_score",
-    "micro_recall_score",
-    "micro_roc_auc",
-    "multilabel_confusion_matrix_sample",
+    # "micro_average_precision_score",
+    # "micro_f0.5_score",
+    # "micro_f1_score",
+    # "micro_f2_score",
+    # "micro_jaccard_score",
+    # "micro_precision_score",
+    # "micro_recall_score",
+    # "micro_roc_auc",
+    # "multilabel_confusion_matrix_sample",
     "nan_euclidean_distances",
     "ndcg_score",
-    "normalized_confusion_matrix",
+    # "normalized_confusion_matrix",
     "ovo_roc_auc",
     "ovr_roc_auc",
-    "paired_cosine_distances",
     "paired_distances",
-    "paired_euclidean_distances",
-    "paired_manhattan_distances",
-    "pairwise_distances",
-    "pairwise_distances_argmin",
-    "pairwise_distances_argmin_min",
-    "pairwise_distances_chunked",
-    "pairwise_kernels",
+    # "pairwise_distances_chunked",
     "partial_roc_auc",
-    "polynomial_kernel",
-    "precision_recall_curve",
-    "rbf_kernel",
     "roc_auc_score",
-    "roc_curve",
-    "samples_average_precision_score",
-    "samples_f0.5_score",
-    "samples_f1_score",
-    "samples_f2_score",
-    "samples_jaccard_score",
-    "samples_precision_score",
-    "samples_recall_score",
-    "samples_roc_auc",
-    "sigmoid_kernel",
+    # "samples_average_precision_score",
+    # "samples_f0.5_score",
+    # "samples_f1_score",
+    # "samples_f2_score",
+    # "samples_jaccard_score",
+    # "samples_precision_score",
+    # "samples_recall_score",
+    # "samples_roc_auc",
     "top_k_accuracy_score",
-    "unnormalized_accuracy_score",
-    "unnormalized_log_loss",
-    "unnormalized_zero_one_loss",
-    "weighted_average_precision_score",
-    "weighted_f0.5_score",
-    "weighted_f1_score",
-    "weighted_f2_score",
-    "weighted_jaccard_score",
-    "weighted_ovo_roc_auc",
-    "weighted_ovr_roc_auc",
-    "weighted_precision_score",
-    "weighted_recall_score",
-    "weighted_roc_auc",
-    "zero_one_loss",
-]
+    # "unnormalized_accuracy_score",
+    # "unnormalized_log_loss",
+    # "unnormalized_zero_one_loss",
+    # "weighted_average_precision_score",
+    # "weighted_f0.5_score",
+    # "weighted_f1_score",
+    # "weighted_f2_score",
+    # "weighted_jaccard_score",
+    # "weighted_ovo_roc_auc",
+    # "weighted_ovr_roc_auc",
+    # "weighted_precision_score",
+    # "weighted_recall_score",
+    # "weighted_roc_auc",
+}
 
 
 def _require_positive_targets(y1, y2):
@@ -2836,6 +2775,9 @@ def yield_metric_checker_combinations():
                     check_array_api_multilabel_continuous_classification_metric,
                 )
 
+        elif name in CURVE_METRICS:
+            yield metric, check_array_api_binary_classification_metric
+
         elif name in REGRESSION_METRICS:
             yield metric, check_array_api_regression_metric
             if name in MULTIOUTPUT_METRICS:
@@ -2875,7 +2817,9 @@ def _check_output(out_np, out_xp, xp_to, y2_xp):
         for args in yield_mixed_namespace_input_permutations()
     ],
 )
-@pytest.mark.parametrize("metric_name", sorted(METRICS_SUPPORTING_MIXED_NAMESPACE))
+@pytest.mark.parametrize(
+    "metric_name", sorted(ALL_METRICS.keys() - METRICS_NOT_SUPPORTING_MIXED_NAMESPACE)
+)
 def test_mixed_array_api_namespace_input_compliance(
     metric_name, other_ns_and_device, y_pred_ns_and_device
 ):
@@ -2965,8 +2909,10 @@ def test_mixed_array_api_namespace_input_compliance(
 @pytest.mark.parametrize(
     "metric_name",
     sorted(
-        set(METRICS_SUPPORTING_MIXED_NAMESPACE)
-        & (set(CLASSIFICATION_METRICS.keys()) - METRIC_UNDEFINED_BINARY)
+        (
+            CLASSIFICATION_METRICS.keys()
+            - (METRIC_UNDEFINED_BINARY | METRICS_NOT_SUPPORTING_MIXED_NAMESPACE)
+        )
     ),
 )
 @skip_if_array_api_compat_not_configured
@@ -3006,11 +2952,9 @@ def test_array_api_classification_string_input(metric_name):
 @pytest.mark.parametrize(
     "metric_name",
     sorted(
-        set(METRICS_SUPPORTING_MIXED_NAMESPACE)
-        & (
-            (set(CONTINUOUS_CLASSIFICATION_METRICS.keys()) | set(CURVE_METRICS.keys()))
-            - METRIC_UNDEFINED_BINARY
-        )
+        (CONTINUOUS_CLASSIFICATION_METRICS.keys())
+        | set(CURVE_METRICS.keys())
+        - (METRIC_UNDEFINED_BINARY | METRICS_NOT_SUPPORTING_MIXED_NAMESPACE)
     ),
 )
 def test_array_api_classification_mixed_string_numeric_input(
