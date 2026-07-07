@@ -1327,10 +1327,14 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     y_pred = lb.transform(y_pred)
 
     C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
-    # array_api_strict only supports floating point dtypes for __truediv__
-    # which is used below to compute the final result. Therefore we use the
-    # maximum floating point dtype available to avoid running into this
-    # problem.
+    # Cast the confusion matrix to the maximum-precision float dtype for two
+    # reasons:
+    # 1. The covariance terms below reach n_samples**4, which overflows int64
+    #    for n_samples as small as ~55k (see issue #9622); floats keep the
+    #    computation exact up to 2**53 and accurate beyond.
+    # 2. The array API standard leaves integer-dtype __truediv__
+    #    implementation-defined, and array_api_strict intentionally raises
+    #    for it.
     C = xp.astype(C, _max_precision_float_dtype(xp, device=device_), copy=False)
     t_sum = xp.sum(C, axis=1)
     p_sum = xp.sum(C, axis=0)
