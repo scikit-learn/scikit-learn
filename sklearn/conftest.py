@@ -16,7 +16,6 @@ from _pytest.doctest import DoctestItem
 from scipy.datasets import face
 from threadpoolctl import threadpool_limits
 
-from sklearn import set_config
 from sklearn._min_dependencies import PYTEST_MIN_VERSION
 from sklearn.datasets import (
     fetch_20newsgroups,
@@ -436,9 +435,6 @@ def pytest_addoption(parser, pluginmanager):
 def pytest_runtest_setup(item):
     if "no_check_spmatrix" in item.keywords and item.config.option.check_spmatrix:
         pytest.skip("skip due to check_spmatrix scipy patch breaking this test")
-
-    # Disable progressbars by default in tests
-    set_config(progressbar_by_default=False)
 
 
 def pytest_configure(config):

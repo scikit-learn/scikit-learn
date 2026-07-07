@@ -2,12 +2,12 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import re
+import sys
 import textwrap
 from unittest import mock
 
 import pytest
 
-from sklearn import config_context
 from sklearn.base import clone
 from sklearn.callback import ProgressBar
 from sklearn.callback.tests._utils import (
@@ -221,7 +221,6 @@ def test_estimator_without_subtasks(capsys):
     assert re.search(r"100%", captured.out)
 
 
-@config_context(progressbar_by_default=True)
 @pytest.mark.parametrize("Estimator", [MaxIterEstimator, NoCallbackEstimator])
 @pytest.mark.parametrize("verbose", [True, False])
 def test_progressbar_by_default(Estimator, verbose, capsys):
@@ -233,6 +232,8 @@ def test_progressbar_by_default(Estimator, verbose, capsys):
     except ImportError:
         rich_available = False
 
+    sys.ps1 = ">>> "  # mock an interactive shell
+
     X, y = make_classification(
         n_samples=10, n_features=2, random_state=0, n_informative=2, n_redundant=0
     )
@@ -241,6 +242,8 @@ def test_progressbar_by_default(Estimator, verbose, capsys):
     est = Estimator(**kwargs)
     est.verbose = verbose
     est.fit(X, y)
+
+    del sys.ps1
 
     captured = capsys.readouterr()
 

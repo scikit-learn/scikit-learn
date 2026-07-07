@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import functools
+import sys
 from contextlib import contextmanager
 
 from sklearn import get_config
@@ -132,12 +133,11 @@ def callback_management_context(estimator):
     ------
     None.
     """
-    # Put a progressbar by default if there is no callback
+    # Put a progressbar by default if there is no callback and no verbosity enabled
     if auto_probressbar := (
-        _progressbar_by_default()
+        hasattr(sys, "ps1")  # check if in an interactive env (ipython, jupyter, ...)
         and not hasattr(estimator, "_skl_callbacks")
         and not hasattr(estimator, "_parent_callback_ctx")
-        # Don't show progress bars if verbosity is enabled
         and (not hasattr(estimator, "verbose") or not estimator.verbose)
     ):
         try:

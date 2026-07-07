@@ -5,7 +5,6 @@ from os.path import exists, join
 import pytest
 from _pytest.doctest import DoctestItem
 
-from sklearn import set_config
 from sklearn.datasets import get_data_home
 from sklearn.datasets._base import _pkl_filepath
 from sklearn.datasets._twenty_newsgroups import CACHE_NAME
@@ -100,9 +99,6 @@ def skip_if_cupy_not_installed(fname):
 
 
 def pytest_runtest_setup(item):
-    # Disable progress bars for doc tests
-    set_config(progressbar_by_default=False)
-
     fname = item.fspath.strpath
     # normalize filename to use forward slashes on Windows for easier handling
     # later
