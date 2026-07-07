@@ -584,7 +584,7 @@ def _check_multimetric_scoring(estimator, scoring):
         - a list or tuple of unique strings;
         - a callable returning a dictionary where they keys are the metric
           names and the values are the metric scores;
-        - a dictionary with metric names as keys and callables a values.
+        - a dictionary with metric names as keys and callables as values.
 
         See :ref:`multimetric_grid_search` for an example.
 
@@ -968,7 +968,7 @@ def check_scoring(estimator=None, scoring=None, *, allow_none=False, raise_exc=T
         - a list, tuple or set of unique strings;
         - a callable returning a dictionary where the keys are the metric names and the
           values are the metric scorers;
-        - a dictionary with metric names as keys and callables a values. The callables
+        - a dictionary with metric names as keys and callables as values. The callables
           need to have the signature `callable(estimator, X, y)`.
 
     allow_none : bool, default=False
