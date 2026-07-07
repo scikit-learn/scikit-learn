@@ -175,7 +175,7 @@ def _check_reg_targets_with_floating_dtype(
 
     Extends `_check_reg_targets` by automatically selecting a suitable floating-point
     data type. If `y_pred` has a floating point dtype, it is used. Otherwise, the
-    dtype is determined by `_find_matching_floating_dtype` on all the inputs.
+    dtype is determined by `_find_matching_floating_dtype` on `y_pred`.
 
     Use this private method only when converting inputs to array API-compatibles.
 
