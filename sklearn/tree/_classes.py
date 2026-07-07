@@ -707,7 +707,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     splitter : {"best", "random"}, default="best"
         The strategy used to choose the split at each node. Supported
         strategies are "best" to choose the best split and "random" to choose
-        the best random split.
+        the best random split among considered features for this split.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -756,11 +756,8 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
 
-        .. note::
-
-            The search for a split does not stop until at least one
-            valid partition of the node samples is found, even if it requires to
-            effectively inspect more than ``max_features`` features.
+        Note: splitting may inspect more than ``max_features`` features if
+        needed to find a valid split.
 
     random_state : int, RandomState instance or None, default=None
         Controls the randomness of the estimator. The features are always
@@ -1121,7 +1118,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     splitter : {"best", "random"}, default="best"
         The strategy used to choose the split at each node. Supported
         strategies are "best" to choose the best split and "random" to choose
-        the best random split.
+        the best random split among considered features for this split.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -1173,9 +1170,8 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
 
-        Note: the search for a split does not stop until at least one
-        valid partition of the node samples is found, even if it requires to
-        effectively inspect more than ``max_features`` features.
+        Note: splitting may inspect more than ``max_features`` features if
+        needed to find a valid split.
 
     random_state : int, RandomState instance or None, default=None
         Controls the randomness of the estimator. The features are always
@@ -1452,6 +1448,10 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
     Warning: Extra-trees should only be used within ensemble methods.
 
+    From an implementation perspective, this model is effectively a
+    :class:`~sklearn.tree.DecisionTreeClassifier` with ``splitter="random"``
+    by default.
+
     Read more in the :ref:`User Guide <tree>`.
 
     Parameters
@@ -1516,9 +1516,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         .. versionchanged:: 1.1
             The default of `max_features` changed from `"auto"` to `"sqrt"`.
 
-        Note: the search for a split does not stop until at least one
-        valid partition of the node samples is found, even if it requires to
-        effectively inspect more than ``max_features`` features.
+        Note: splitting may inspect more than ``max_features`` features if
+        needed to find a valid split.
 
     random_state : int, RandomState instance or None, default=None
         Used to pick randomly the `max_features` used at each split.
@@ -1727,6 +1726,9 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     Warning: Extra-trees should only be used within ensemble methods.
 
+    From an implementation perspective, this model is effectively a
+    :class:`~sklearn.tree.DecisionTreeRegressor` with ``splitter="random"`` by default.
+
     Read more in the :ref:`User Guide <tree>`.
 
     Parameters
@@ -1804,9 +1806,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         .. versionchanged:: 1.1
             The default of `max_features` changed from `"auto"` to `1.0`.
 
-        Note: the search for a split does not stop until at least one
-        valid partition of the node samples is found, even if it requires to
-        effectively inspect more than ``max_features`` features.
+        Note: splitting may inspect more than ``max_features`` features if
+        needed to find a valid split.
 
     random_state : int, RandomState instance or None, default=None
         Used to pick randomly the `max_features` used at each split.

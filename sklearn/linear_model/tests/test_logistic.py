@@ -347,7 +347,7 @@ def test_consistency_path(global_random_seed):
             )
 
     # test for fit_intercept=True
-    for solver in ("lbfgs", "newton-cg", "newton-cholesky", "liblinear", "sag", "saga"):
+    for solver in SOLVERS:
         Cs = [1e3]
         coefs, Cs, _ = f(_logistic_regression_path)(
             X,
@@ -1080,7 +1080,7 @@ def test_logistic_regressioncv_class_weights(weight, class_weight, global_random
     with ignore_warnings(category=ConvergenceWarning):
         clf_lbfgs.fit(X, y)
 
-    for solver in set(SOLVERS) - set(["lbfgs", "liblinear", "newton-cholesky"]):
+    for solver in set(SOLVERS) - set(["lbfgs", "liblinear"]):
         clf = LogisticRegressionCV(
             solver=solver,
             scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
@@ -1278,7 +1278,7 @@ def test_logistic_regression_class_weights(global_random_seed, csr_container):
     y = iris.target[45:]
     class_weight_dict = _compute_class_weight_dictionary(y)
 
-    for solver in set(SOLVERS) - set(["liblinear", "newton-cholesky"]):
+    for solver in set(SOLVERS) - set(["liblinear"]):
         params = dict(solver=solver, max_iter=2000, random_state=global_random_seed)
         clf1 = LogisticRegression(class_weight="balanced", **params)
         clf2 = LogisticRegression(class_weight=class_weight_dict, **params)
@@ -2707,7 +2707,18 @@ def test_logisticregression_warns_with_n_jobs():
         lr.fit(X, y)
 
 
-def _get_data_for_array_api_testing(
+@pytest.mark.parametrize("solver", ["lbfgs", "newton-cg"])
+@pytest.mark.parametrize("binary", [False, True])
+@pytest.mark.parametrize("use_str_y", [False, True])
+@pytest.mark.parametrize("use_sample_weight", [False, True])
+@pytest.mark.parametrize("class_weight", [None, "balanced", "dict"])
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+@pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
+def test_logistic_regression_array_api_compliance(
+    solver,
     binary,
     use_str_y,
     use_sample_weight,
@@ -2754,39 +2765,6 @@ def _get_data_for_array_api_testing(
     else:
         sample_weight = None
 
-    return X_np, X_xp, y_np, y_xp_or_np, sample_weight, class_weight
-
-
-@pytest.mark.parametrize("binary", [False, True])
-@pytest.mark.parametrize("use_str_y", [False, True])
-@pytest.mark.parametrize("use_sample_weight", [False, True])
-@pytest.mark.parametrize("class_weight", [None, "balanced", "dict"])
-@pytest.mark.parametrize(
-    "array_namespace, device_name, dtype_name",
-    yield_namespace_device_dtype_combinations(),
-)
-@pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
-def test_logistic_regression_array_api_compliance(
-    binary,
-    use_str_y,
-    use_sample_weight,
-    class_weight,
-    array_namespace,
-    device_name,
-    dtype_name,
-):
-    X_np, X_xp, y_np, y_xp_or_np, sample_weight, class_weight = (
-        _get_data_for_array_api_testing(
-            binary=binary,
-            use_str_y=use_str_y,
-            use_sample_weight=use_sample_weight,
-            class_weight=class_weight,
-            array_namespace=array_namespace,
-            device_name=device_name,
-            dtype_name=dtype_name,
-        )
-    )
-
     # Use a strong regularization to ensure coef_ can be identified to a higher
     # precision even when taking into account the iterated discrepancies when
     # the gradient is computed in float32. This is only necessary because the
@@ -2796,9 +2774,8 @@ def test_logistic_regression_array_api_compliance(
     # also want to make sure that this choice of regularization does not
     # constrain the fitted models to a trivial baseline classifier where only
     # the intercept would be non-zero.
-    lr_params = dict(
-        C=1e-2, solver="lbfgs", tol=1e-12, max_iter=500, class_weight=class_weight
-    )
+    lr_params = dict(C=1e-2, solver=solver, max_iter=500, class_weight=class_weight)
+    lr_params["tol"] = 1e-6 if dtype_name == "float32" else 1e-12
     with warnings.catch_warnings():
         # Make sure that we converge in the reference fit.
         lr_np = LogisticRegression(**lr_params).fit(
@@ -2812,10 +2789,12 @@ def test_logistic_regression_array_api_compliance(
     predict_proba_np = lr_np.predict_proba(X_np)
     preditct_log_proba_np = lr_np.predict_log_proba(X_np)
     prediction_np = lr_np.predict(X_np)
-    # TODO: those tolerance levels seem quite high. Investigate further if we
-    # can hunt down the numerical discrepancies more precisely.
-    atol = _atol_for_type(dtype_name) * 10
-    rtol = 5e-3 if dtype_name == "float32" else 1e-5
+    if solver == "lbfgs":
+        atol = _atol_for_type(dtype_name) * 10
+        rtol = 1e-3 if dtype_name == "float32" else 1e-7
+    else:
+        atol = _atol_for_type(dtype_name) * 2
+        rtol = 1e-4 if dtype_name == "float32" else 1e-8
 
     with config_context(array_api_dispatch=True):
         with warnings.catch_warnings():
@@ -2884,17 +2863,43 @@ def test_logistic_regression_cv_array_api_compliance(
     device_name,
     dtype_name,
 ):
-    X_np, X_xp, y_np, y_xp_or_np, sample_weight, class_weight = (
-        _get_data_for_array_api_testing(
-            binary=binary,
-            use_str_y=use_str_y,
-            use_sample_weight=use_sample_weight,
-            class_weight=class_weight,
-            array_namespace=array_namespace,
-            device_name=device_name,
-            dtype_name=dtype_name,
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
+    X_np = iris.data.astype(dtype_name, copy=True)
+    n_samples, _ = X_np.shape
+    X_xp = xp.asarray(X_np, device=device)
+    if use_str_y:
+        if binary:
+            target = (iris.target > 0).astype(np.int64)
+            target = np.array(["setosa", "not-setosa"])[target]
+            if class_weight == "dict":
+                class_weight = {"setosa": 1.0, "not-setosa": 3.0}
+        else:
+            target = iris.target_names[iris.target]
+            if class_weight == "dict":
+                class_weight = {"virginica": 1.0, "setosa": 2.0, "versicolor": 3.0}
+        y_np = target.copy()
+        y_xp_or_np = np.asarray(y_np, copy=True)
+    else:
+        if binary:
+            target = (iris.target > 0).astype(np.int64)
+            if class_weight == "dict":
+                class_weight = {0: 1.0, 1: 3.0}
+        else:
+            target = iris.target
+            if class_weight == "dict":
+                class_weight = {0: 1.0, 1: 2.0, 2: 3.0}
+        y_np = target.astype(dtype_name)
+        y_xp_or_np = xp.asarray(y_np, device=device)
+
+    if use_sample_weight:
+        sample_weight = (
+            np.random.default_rng(0)
+            .uniform(-1, 5, size=n_samples)
+            .clip(0, None)
+            .astype(dtype_name)
         )
-    )
+    else:
+        sample_weight = None
     cv = StratifiedKFold(2, shuffle=False)
     precomputed_folds = list(cv.split(X_np, y_np))
     lr_cv_params = dict(
