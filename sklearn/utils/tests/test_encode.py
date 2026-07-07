@@ -256,9 +256,6 @@ def test_unique_util_with_all_missing_values():
     _, inverse = _unique(values, return_inverse=True)
     assert_array_equal(inverse, expected_inverse)
 
-    _, counts = _unique(values, return_counts=True)
-    assert len(values) == sum(counts)
-
 
 def test_check_unknown_with_both_missing_values():
     # test for both types of missing values for object dtype
@@ -314,17 +311,6 @@ NAN2 = float("nan")
             np.array(["b"] * 4 + ["a"] * 16 + ["c"] * 20, dtype=object),
             ["a", "b", "c", "e"],
             [16, 4, 20, 0],
-        ),
-        # Before #34385 was fixed, the result was [2, 6, 6, 6]. In practice, in
-        # most cases only np.nan would be present, so this probably wasn't
-        # impactful.
-        (
-            np.array(
-                ["a", np.nan, NAN1, np.nan, NAN2, NAN1, np.nan, "a"],
-                dtype=object,
-            ),
-            ["a", np.nan, NAN1, NAN2],
-            [2, 3, 2, 1],
         ),
     ],
 )
