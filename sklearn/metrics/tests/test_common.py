@@ -2566,7 +2566,7 @@ def check_array_api_metric_pairwise(metric, array_namespace, device_name, dtype_
 def yield_metric_checker_combinations():
     ALL_METRICS_INCL_PAIRWISE = {**ALL_METRICS, **PAIRWISE_METRICS}
     for name in sorted(
-        set(ALL_METRICS_INCL_PAIRWISE) - METRICS_NOT_SUPPORTING_ARRAY_API
+        ALL_METRICS_INCL_PAIRWISE.keys() - METRICS_NOT_SUPPORTING_ARRAY_API
     ):
         metric = ALL_METRICS_INCL_PAIRWISE[name]
 
