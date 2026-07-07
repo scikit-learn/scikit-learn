@@ -1166,7 +1166,7 @@ def _check_array_api_core(
     for attribute_name, attribute_value in array_attributes.items():
         if attribute_name == "l1_ratios_":
             # l1_ratios_ can be None and so it is skipped in this test
-            # because it is not associated with any namespace or device.
+            # because it is not associated with any array namespace or device.
             continue
 
         est_xp_attr = getattr(est_xp, attribute_name)
