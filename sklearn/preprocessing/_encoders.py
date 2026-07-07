@@ -627,7 +627,7 @@ class OneHotEncoder(_BaseEncoder):
         If True, allows encoding an array containing a mixture of types
         (e.g. strings and numbers)
 
-        .. versionadded:: x.x
+        .. versionadded:: 1.10
 
     Attributes
     ----------
@@ -1359,7 +1359,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         If True, allows encoding an array containing a mixture of types
         (e.g. strings and numbers).
 
-        .. versionadded:: x.x
+        .. versionadded:: 1.10
 
     Attributes
     ----------
