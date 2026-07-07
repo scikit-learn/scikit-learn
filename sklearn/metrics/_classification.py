@@ -104,7 +104,7 @@ def _check_targets(y_true, y_pred, sample_weight=None, xp=None, device=None):
     device : device, default=None
         Precomputed device. When passed, along with `xp`, typically from a caller
         that has already performed inspection of its own inputs, skips device
-        inspection and move everything to that device. If `None`, the inputs are
+        inspection and moves everything to that device. If `None`, the inputs are
         converted to the device of `y_pred`.
 
     Returns
