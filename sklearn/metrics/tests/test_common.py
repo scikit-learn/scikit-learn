@@ -690,7 +690,7 @@ METRICS_NOT_SUPPORTING_ARRAY_API = {
     # "micro_jaccard_score",
     # "micro_precision_score",
     # "micro_recall_score",
-    # "micro_roc_auc",
+    "micro_roc_auc",
     # "multilabel_confusion_matrix_sample",
     "nan_euclidean_distances",
     "ndcg_score",
@@ -708,7 +708,7 @@ METRICS_NOT_SUPPORTING_ARRAY_API = {
     # "samples_jaccard_score",
     # "samples_precision_score",
     # "samples_recall_score",
-    # "samples_roc_auc",
+    "samples_roc_auc",
     "top_k_accuracy_score",
     # "unnormalized_accuracy_score",
     # "unnormalized_log_loss",
@@ -718,11 +718,11 @@ METRICS_NOT_SUPPORTING_ARRAY_API = {
     # "weighted_f1_score",
     # "weighted_f2_score",
     # "weighted_jaccard_score",
-    # "weighted_ovo_roc_auc",
-    # "weighted_ovr_roc_auc",
+    "weighted_ovo_roc_auc",
+    "weighted_ovr_roc_auc",
     # "weighted_precision_score",
     # "weighted_recall_score",
-    # "weighted_roc_auc",
+    "weighted_roc_auc",
 }
 
 
