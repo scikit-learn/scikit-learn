@@ -134,7 +134,7 @@ def callback_management_context(estimator):
     None.
     """
     # Put a progressbar by default if there is no callback and no verbosity enabled
-    if auto_probressbar := (
+    if auto_progressbar := (
         hasattr(sys, "ps1")  # check if in an interactive env (ipython, jupyter, ...)
         and not hasattr(estimator, "_skl_callbacks")
         and not hasattr(estimator, "_parent_callback_ctx")
@@ -148,7 +148,7 @@ def callback_management_context(estimator):
             ]
         except ImportError:
             # Don't use progressbars if rich is not installed.
-            auto_probressbar = False
+            auto_progressbar = False
     try:
         yield
     finally:
@@ -172,7 +172,7 @@ def callback_management_context(estimator):
                     teardown_errors,
                 )
 
-        if auto_probressbar:
+        if auto_progressbar:
             del estimator._skl_callbacks
 
 
