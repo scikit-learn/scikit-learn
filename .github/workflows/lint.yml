@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -32,10 +32,9 @@ jobs:
 
       - name: Install dependencies
         run: |
-          source build_tools/shared.sh
-          # Include pytest compatibility with mypy
-          pip install pytest $(get_dep ruff min) $(get_dep mypy min) cython-lint
+          pip install -r build_tools/github/lint_lock.txt
           # we save the versions of the linters to be used in the error message later.
+          python -c "from importlib.metadata import version; print(f\"pytest={version('pytest')}\")" >> /tmp/versions.txt
           python -c "from importlib.metadata import version; print(f\"ruff={version('ruff')}\")" >> /tmp/versions.txt
           python -c "from importlib.metadata import version; print(f\"mypy={version('mypy')}\")" >> /tmp/versions.txt
           python -c "from importlib.metadata import version; print(f\"cython-lint={version('cython-lint')}\")" >> /tmp/versions.txt
