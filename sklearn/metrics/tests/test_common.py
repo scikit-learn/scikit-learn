@@ -2216,10 +2216,6 @@ def check_array_api_binary_classification_metric(
     y_true_np = np.array([0, 0, 1, 1])
     y_pred_np = np.array([0, 1, 0, 1])
 
-    metric_kwargs = {}
-    if metric.__name__ == "fbeta_score":
-        metric_kwargs = {"beta": 0.5}
-
     check_array_api_metric(
         metric,
         array_namespace,
@@ -2228,7 +2224,6 @@ def check_array_api_binary_classification_metric(
         a_np=y_true_np,
         b_np=y_pred_np,
         sample_weight=None,
-        **metric_kwargs,
     )
 
     sample_weight = np.array([0.0, 0.1, 2.0, 1.0], dtype=dtype_name)
@@ -2241,7 +2236,6 @@ def check_array_api_binary_classification_metric(
         a_np=y_true_np,
         b_np=y_pred_np,
         sample_weight=sample_weight,
-        **metric_kwargs,
     )
 
 
@@ -2251,7 +2245,8 @@ def check_array_api_multiclass_classification_metric(
     y_true_np = np.array([0, 1, 2, 3])
     y_pred_np = np.array([0, 1, 0, 2])
 
-    if metric.__name__ == "average_precision_score":
+    func_name = metric.func.__name__ if isinstance(metric, partial) else metric.__name__
+    if func_name == "average_precision_score":
         # we need y_pred_nd to be of shape (n_samples, n_classes)
         y_pred_np = np.array(
             [
