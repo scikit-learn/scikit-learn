@@ -345,5 +345,3 @@ https://conda.anaconda.org/conda-forge/noarch/sphinxcontrib-qthelp-2.0.0-pyhd8ed
 https://conda.anaconda.org/conda-forge/noarch/sphinx-9.1.0-pyhd8ed1ab_0.conda#aabfbc2813712b71ba8beb217a978498
 https://conda.anaconda.org/conda-forge/noarch/sphinxcontrib-serializinghtml-2.0.0-pyhd8ed1ab_0.conda#f77df1fcf9af03b7287342638befca77
 https://conda.anaconda.org/conda-forge/noarch/sphinxext-opengraph-0.13.0-pyhd8ed1ab_0.conda#1a159db0a9774bd77c1ea293bcaf17b7
-# pip libsass @ https://files.pythonhosted.org/packages/fd/5a/eb5b62641df0459a3291fc206cf5bd669c0feed7814dded8edef4ade8512/libsass-0.23.0-cp38-abi3-manylinux_2_5_x86_64.manylinux1_x86_64.whl#sha256=4a218406d605f325d234e4678bd57126a66a88841cb95bee2caeafdc6f138306
-# pip sphinxcontrib-sass @ https://files.pythonhosted.org/packages/3f/ec/194f2dbe55b3fe0941b43286c21abb49064d9d023abfb99305c79ad77cad/sphinxcontrib_sass-0.3.5-py2.py3-none-any.whl#sha256=850c83a36ed2d2059562504ccf496ca626c9c0bb89ec642a2d9c42105704bef6

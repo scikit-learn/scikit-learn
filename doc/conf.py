@@ -66,7 +66,6 @@ extensions = [
     "sphinx_copybutton",
     "sphinxext.opengraph",
     "matplotlib.sphinxext.plot_directive",
-    "sphinxcontrib.sass",
     "sphinx_remove_toctrees",
     "sphinx_design",
     # See sphinxext/
@@ -356,14 +355,6 @@ html_js_files = [
     "scripts/theme-observer.js",
 ]
 
-# Compile scss files into css files using sphinxcontrib-sass
-sass_src_dir, sass_out_dir = "scss", "css/styles"
-sass_targets = {
-    f"{file.stem}.scss": f"{file.stem}.css"
-    for file in Path(sass_src_dir).glob("*.scss")
-}
-
-# Additional CSS files, should be subset of the values of `sass_targets`
 html_css_files = ["styles/colors.css", "styles/custom.css"]
 
 
