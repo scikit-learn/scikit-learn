@@ -210,13 +210,12 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         columns_with_unknown = []
         for i in range(n_features):
             Xi = X_list[i]
-            X_int[:, i], diff = _encode(
-                Xi, uniques=self.categories_[i], return_diff=True
-            )
+            X_int[:, i] = _encode(Xi, uniques=self.categories_[i])
             X_mask[:, i] = X_int[:, i] != -1
 
             if not np.all(X_mask[:, i]):
                 if handle_unknown == "error":
+                    diff = _unique(Xi[~X_mask[:, i]])
                     msg = (
                         "Found unknown categories {0} in column {1}"
                         " during transform".format(diff, i)

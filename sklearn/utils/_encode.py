@@ -21,7 +21,7 @@ def _unique(values, *, return_inverse=False, return_counts=False):
     Parameters
     ----------
     values : ndarray
-        Values to check for unknowns.
+        Values to find uniques from.
 
     return_inverse : bool, default=False
         If True, also return the indices of the unique values.
@@ -171,14 +171,17 @@ class _nandict(dict):
 
 
 def _map_to_integer(values, uniques):
-    """Map values based on its position in uniques."""
+    """Map values based on their position in uniques.
+
+    Values not present in `uniques` are encoded as -1.
+    """
     xp, _ = get_namespace(values, uniques)
     table = _nandict({val: i for i, val in enumerate(uniques)})
     return xp.asarray([table[v] for v in values], device=device(values))
 
 
 def _unique_python(values, *, return_inverse, return_counts):
-    # Only used in `_uniques`, see docstring there for details
+    # Only used in `_unique`, see docstring there for details
     try:
         uniques_set = set(values)
         uniques_set, missing_values = _extract_missing(uniques_set)
@@ -204,7 +207,7 @@ def _unique_python(values, *, return_inverse, return_counts):
 
 
 def _encode_labels(values, *, uniques):
-    """Helper function to encode values into [0, n_uniques - 1].
+    """Encode labels into [0, n_uniques - 1].
 
     Uses pure python method for object dtype, and numpy method for
     all other dtypes.
@@ -212,6 +215,8 @@ def _encode_labels(values, *, uniques):
     be sorted. Importantly, this is not checked but assumed to already be
     the case. The calling method needs to ensure this for all non-object
     values.
+
+    Unknown values raise a ValueError.
 
     Parameters
     ----------
@@ -224,7 +229,12 @@ def _encode_labels(values, *, uniques):
     Returns
     -------
     encoded : ndarray
-        Encoded values
+        Encoded values.
+
+    Raises
+    ------
+    ValueError
+        If `values` contains labels that are not in `uniques`.
     """
     encoded, diff = _encode(values, uniques=uniques, return_diff=True)
     if diff.size:
@@ -233,7 +243,7 @@ def _encode_labels(values, *, uniques):
 
 
 def _encode(values, *, uniques, return_diff=False):
-    """Helper function to encode values into [0, n_uniques - 1].
+    """Encode values into [0, n_uniques - 1].
 
     Uses pure python method for object dtype, and numpy method for
     all other dtypes.
@@ -242,6 +252,8 @@ def _encode(values, *, uniques, return_diff=False):
     the case. The calling method needs to ensure this for all non-object
     values.
 
+    Values that are not present in `uniques` are encoded as -1.
+
     Parameters
     ----------
     values : ndarray
@@ -249,11 +261,17 @@ def _encode(values, *, uniques, return_diff=False):
     uniques : ndarray
         The unique values in `values`. If the dtype is not object, then
         `uniques` needs to be sorted.
+    return_diff : bool, default=False
+        If True, also return the unique values in `values` that are not
+        present in `uniques`.
 
     Returns
     -------
     encoded : ndarray
-        Encoded values
+        Encoded values.
+    diff : ndarray
+        The unique values present in `values` and not in `uniques`. Only
+        returned if ``return_diff=True``.
     """
     xp, _ = get_namespace(values, uniques)
     if not xp.isdtype(values.dtype, "numeric"):
