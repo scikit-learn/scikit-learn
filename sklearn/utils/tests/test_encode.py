@@ -25,7 +25,8 @@ from sklearn.utils._encode import _encode, _encode_labels, _get_counts, _unique
     ],
     ids=["int64", "float32-nan", "object", "object-None", "str"],
 )
-def test_encode_util(values, expected):
+@pytest.mark.parametrize("encode", [_encode, _encode_labels])
+def test_encode_util(values, expected, encode):
     uniques = _unique(values)
     assert_array_equal(uniques, expected)
 
@@ -33,7 +34,7 @@ def test_encode_util(values, expected):
     assert_array_equal(result, expected)
     assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
 
-    encoded = _encode(values, uniques=uniques)
+    encoded = encode(values, uniques=uniques)
     assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
 
     result, counts = _unique(values, return_counts=True)
