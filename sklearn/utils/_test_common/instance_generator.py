@@ -1014,7 +1014,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_requires_y_none": "Doesn't fail gracefully",
     },
     HalvingGridSearchCV: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
         "check_fit2d_1sample": (
             "Fail during parameter check since min/max resources requires more samples"
         ),
@@ -1025,7 +1024,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_requires_y_none": "Doesn't fail gracefully",
     },
     HalvingRandomSearchCV: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
         "check_fit2d_1sample": (
             "Fail during parameter check since min/max resources requires more samples"
         ),
