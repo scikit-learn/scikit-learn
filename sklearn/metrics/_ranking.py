@@ -371,7 +371,7 @@ def det_curve(
         referred to as false rejection or miss rate.
 
     thresholds : ndarray of shape (n_thresholds,)
-        Decreasing thresholds on the decision function (either `predict_proba`
+        Increasing thresholds on the decision function (either `predict_proba`
         or `decision_function`) used to compute FPR and FNR.
 
         .. versionchanged:: 1.7
