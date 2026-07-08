@@ -165,7 +165,7 @@ although they live in the same space.
 The K-means algorithm aims to choose centroids that minimise the **inertia**,
 or **within-cluster sum-of-squares criterion**:
 
-.. math:: \sum_{i=0}^{n}\min_{\mu_j \in C}(||x_i - \mu_j||^2)
+.. math:: \sum_{i=0}^{N-1}\min_{\mu_j \in C}(||x_i - \mu_j||^2)
 
 Inertia can be recognized as a measure of how internally coherent clusters are.
 It suffers from various drawbacks:
