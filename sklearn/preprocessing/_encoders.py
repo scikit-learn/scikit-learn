@@ -15,7 +15,12 @@ from sklearn.base import (
     TransformerMixin,
     _fit_context,
 )
-from sklearn.utils import _align_api_if_sparse, _safe_indexing, check_array
+from sklearn.utils import (
+    _align_api_if_sparse,
+    _safe_indexing,
+    assert_all_finite,
+    check_array,
+)
 from sklearn.utils._encode import (
     _check_unknown,
     _encode,
@@ -57,13 +62,12 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
           and cannot be used, e.g. for the `categories_` attribute.
 
         """
-        is_dataframe = hasattr(X, "iloc") and getattr(X, "ndim", 0) == 2
-        if not is_dataframe and nw.dependencies.is_into_dataframe(X):
-            X_nw = nw.from_native(X)
-            is_dataframe = any(
-                dtype in (nw.Categorical, nw.Enum) for dtype in X_nw.schema.dtypes()
-            )
-        if not is_dataframe:
+        is_dataframe = nw.dependencies.is_into_dataframe(X)
+        if is_dataframe:
+            # pandas dataframe, do validation later column by column, in order
+            # to keep the dtype information to be used in the encoder.
+            needs_validation = ensure_all_finite
+        else:
             # if not a dataframe, do normal check_array validation
             X_temp = check_array(X, dtype=None, ensure_all_finite=ensure_all_finite)
             if not hasattr(X, "dtype") and np.issubdtype(X_temp.dtype, np.str_):
@@ -71,39 +75,24 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             else:
                 X = X_temp
             needs_validation = False
-        else:
-            # pandas dataframe, do validation later column by column, in order
-            # to keep the dtype information to be used in the encoder.
-            needs_validation = ensure_all_finite
 
         n_samples, n_features = X.shape
         X_columns = []
 
         for i in range(n_features):
             Xi = _safe_indexing(X, indices=i, axis=1)
-            if self._is_categorical(Xi) and preserve_categorical:
+            if is_dataframe and self._is_categorical(Xi) and preserve_categorical:
                 self._validate_categorical(Xi, needs_validation)
-                X_columns.append(Xi)
-                continue
-
-            Xi_checked = check_array(
-                Xi, ensure_2d=False, dtype=None, ensure_all_finite=needs_validation
-            )
-            if self._is_categorical(Xi):
-                if preserve_categorical:
-                    X_columns.append(Xi)
-                    continue
-                Xi = Xi_checked.astype(object, copy=False)
-            else:
-                Xi = Xi_checked
+            elif needs_validation:
+                Xi = check_array(
+                    Xi, ensure_2d=False, dtype=None, ensure_all_finite=needs_validation
+                )
             X_columns.append(Xi)
 
         return X_columns, n_samples, n_features
 
     def _is_categorical(self, Xi):
         """Return True if the input is a Narwhals-supported Categorical Series."""
-        if hasattr(Xi, "cat") and hasattr(Xi.cat, "categories"):
-            return True
         if not nw.dependencies.is_into_series(Xi):
             return False
         return nw.from_native(Xi, allow_series=True).dtype in (nw.Categorical, nw.Enum)
@@ -114,21 +103,12 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             return
 
         categories, _, missing_mask = _get_categorical_categories_and_codes(Xi)
+        allow_nan = ensure_all_finite == "allow-nan"
         if categories.size:
-            check_array(
-                categories,
-                ensure_2d=False,
-                dtype=None,
-                ensure_all_finite=ensure_all_finite,
-            )
+            assert_all_finite(categories, allow_nan=allow_nan)
 
-        if ensure_all_finite is True and missing_mask.any():
-            check_array(
-                np.asarray([np.nan]),
-                ensure_2d=False,
-                dtype=None,
-                ensure_all_finite=ensure_all_finite,
-            )
+        if not allow_nan and missing_mask.any():
+            assert_all_finite(np.asarray([np.nan]), allow_nan=allow_nan)
 
     def _fit(
         self,
