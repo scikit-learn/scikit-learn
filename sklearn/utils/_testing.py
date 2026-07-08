@@ -699,7 +699,7 @@ def _check_consistency_items(
 
     Parameters
     ----------
-    items_doc : dict of dict of str
+    items_docs : dict of dict of str
         Dictionary where the key is the string type or description, value is
         a dictionary where the key is "type description" or "description"
         and the value is a list of object names with the same string type or
@@ -1084,7 +1084,7 @@ def raises(expected_exc_type, match=None, may_pass=False, err_msg=None):
 
     Parameters
     ----------
-    excepted_exc_type : Exception or list of Exception
+    expected_exc_type : Exception or list of Exception
         The exception that should be raised by the block. If a list, the block
         should raise one of the exceptions.
     match : str or list of str, default=None

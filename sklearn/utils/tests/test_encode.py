@@ -278,6 +278,10 @@ def test_check_unknown_with_both_missing_values():
     assert_array_equal(valid_mask, [False, True, True, True, False, False, False])
 
 
+NAN1 = float("nan")
+NAN2 = float("nan")
+
+
 @pytest.mark.parametrize(
     "values, uniques, expected_counts",
     [
@@ -317,3 +321,25 @@ def test_check_unknown_with_both_missing_values():
 def test_get_counts(values, uniques, expected_counts):
     counts = _get_counts(values, uniques)
     assert_array_equal(counts, expected_counts)
+
+
+def test_get_counts_multiple_nans():
+    """
+    When both np.nan and float("nan") are present, they get merged into np.nan.
+    """
+    values = np.array(
+        ["a", np.nan, NAN1, np.nan, NAN2, NAN1, np.nan, "a"],
+        dtype=object,
+    )
+    uniques = np.array(["a", np.nan], dtype=object)
+    expected_counts = [2, 6]
+    assert_array_equal(
+        _get_counts(values, uniques, [np.nan, NAN1, NAN2]), expected_counts
+    )
+
+    # Now try it via _unique, to make sure this works end-to-end:
+    real_uniques, real_counts = _unique(values, return_counts=True)
+    # Comparing two arrays with nan fails cause the nans are not equal to
+    # themselves. So compare as Python lists:
+    assert list(uniques) == list(real_uniques)
+    assert_array_equal(real_counts, expected_counts)
