@@ -232,7 +232,7 @@ def _encode_labels(values, *, uniques):
     return encoded
 
 
-def _encode(values, *, uniques, return_diff=True):
+def _encode(values, *, uniques, return_diff=False):
     """Helper function to encode values into [0, n_uniques - 1].
 
     Uses pure python method for object dtype, and numpy method for
@@ -260,9 +260,19 @@ def _encode(values, *, uniques, return_diff=True):
         encoded = _map_to_integer(values, uniques)
     else:
         encoded = xp.searchsorted(uniques, values)
-        # TODO: handle edge cases (probably)
-        # borders, NaN, ...
-        encoded[uniques[encoded] != values] = -1
+        if uniques.size:
+            encoded_safe = xp.minimum(encoded, uniques.shape[0] - 1)
+            matches = (encoded < uniques.shape[0]) & (uniques[encoded_safe] == values)
+
+            if xp.any(xp.isnan(uniques)):
+                matches |= (
+                    (encoded < uniques.shape[0])
+                    & xp.isnan(uniques[encoded_safe])
+                    & xp.isnan(values)
+                )
+        else:
+            matches = xp.zeros_like(encoded, dtype=xp.bool)
+        encoded[~matches] = -1
 
     if return_diff:
         diff = _unique(values[encoded == -1])

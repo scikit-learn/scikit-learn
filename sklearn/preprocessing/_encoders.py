@@ -159,8 +159,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         raise ValueError(error_msg)
 
                 if handle_unknown == "error":
-                    _, diff = _encode(Xi, cats, return_diff=True)
-                    if diff:
+                    _, diff = _encode(Xi, uniques=cats, return_diff=True)
+                    if diff.size:
                         msg = (
                             "Found unknown categories {0} in column {1}"
                             " during fit".format(diff, i)
@@ -210,12 +210,13 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         columns_with_unknown = []
         for i in range(n_features):
             Xi = X_list[i]
-            X_int[:, i] = _encode(Xi, uniques=self.categories_[i])
+            X_int[:, i], diff = _encode(
+                Xi, uniques=self.categories_[i], return_diff=True
+            )
             X_mask[:, i] = X_int[:, i] != -1
 
             if not np.all(X_mask[:, i]):
                 if handle_unknown == "error":
-                    diff = []  # TODO
                     msg = (
                         "Found unknown categories {0} in column {1}"
                         " during transform".format(diff, i)
