@@ -207,6 +207,7 @@ def _unique_python(values, *, return_inverse, return_counts):
 def _get_categorical_categories_and_codes(values):
     """Return categorical categories, integer codes, and the missing value mask."""
     if hasattr(values, "cat") and hasattr(values.cat, "categories"):
+        # for pandas, the Narwhals path below doesn't work
         categories = values.cat.categories.to_numpy()
         codes = values.cat.codes.to_numpy()
         isna = codes == -1
@@ -215,6 +216,7 @@ def _get_categorical_categories_and_codes(values):
     values = nw.from_native(values, allow_series=True)
     categories = values.cat.get_categories().to_numpy()
 
+    # for polars, this cast returns the categorical codes:
     codes = values.cast(nw.UInt32).to_numpy()
     isna = (
         np.isnan(codes) if codes.dtype.kind == "f" else np.zeros_like(codes, dtype=bool)
