@@ -227,6 +227,21 @@ def test_unique_categorical_pandas():
     assert_array_equal(counts, [2, 1, 0, 1])
 
 
+def test_unique_categorical_pandas_mixed_categories():
+    pd = pytest.importorskip("pandas")
+
+    values = pd.Series(
+        [1, "a"],
+        dtype=pd.CategoricalDtype([1, "a"]),
+    )
+
+    with pytest.raises(
+        TypeError,
+        match=".*input argument must be uniformly strings or numbers",
+    ):
+        _unique_categorical(values, return_inverse=True, return_counts=True)
+
+
 def test_unique_categorical_polars():
     pl = pytest.importorskip("polars")
 

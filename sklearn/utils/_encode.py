@@ -204,7 +204,7 @@ def _unique_python(values, *, return_inverse, return_counts):
     return ret[0] if len(ret) == 1 else ret
 
 
-def _get_categorical_categories_and_codes(values):
+def _get_categories_and_codes(values):
     """Return categorical categories, integer codes, and the missing value mask."""
     if hasattr(values, "cat") and hasattr(values.cat, "categories"):
         # for pandas, the Narwhals path below doesn't work
@@ -227,24 +227,32 @@ def _get_categorical_categories_and_codes(values):
     return categories, codes_no_missing, isna
 
 
-def _unique_categorical(values, *, return_inverse, return_counts):
-    categorical_categories, codes, isna = _get_categorical_categories_and_codes(values)
-    uniques = _unique(categorical_categories)
-    if np.array_equal(categorical_categories, uniques):
+def _unique_categorical(values, *, return_inverse=False, return_counts=False):
+    uniques, codes, isna = _get_categories_and_codes(values)
+    try:
+        is_sorted = (uniques[:-1] < uniques[1:]).all()
+    except TypeError:
+        # Preserve the user-facing mixed-type validation error from `_unique`.
+        _unique(uniques)
+        raise
+    if is_sorted:
         code_mapping = None
     else:
-        code_mapping = _encode(
-            categorical_categories, uniques=uniques, check_unknown=False
-        )
+        sorted_idx = np.argsort(uniques)
+        uniques = uniques[sorted_idx]
+        code_mapping = np.empty_like(sorted_idx)
+        code_mapping[sorted_idx] = np.arange(uniques.size)
+
     has_missing = isna.any()
     if has_missing:
         uniques = uniques.astype(object, copy=False)
         uniques = np.r_[uniques, np.nan]
+
     if not return_inverse and not return_counts:
         return uniques
 
     codes = codes.copy()
-    if code_mapping is not None:
+    if not is_sorted:
         codes[~isna] = code_mapping[codes[~isna]]
     if has_missing:
         codes[isna] = uniques.size - 1

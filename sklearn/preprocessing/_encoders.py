@@ -24,7 +24,7 @@ from sklearn.utils import (
 from sklearn.utils._encode import (
     _check_unknown,
     _encode,
-    _get_categorical_categories_and_codes,
+    _get_categories_and_codes,
     _get_counts,
     _unique,
     _unique_categorical,
@@ -102,7 +102,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         if not ensure_all_finite:
             return
 
-        categories, _, missing_mask = _get_categorical_categories_and_codes(Xi)
+        categories, _, missing_mask = _get_categories_and_codes(Xi)
         allow_nan = ensure_all_finite == "allow-nan"
         if categories.size:
             assert_all_finite(categories, allow_nan=allow_nan)
@@ -143,11 +143,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
             if self.categories == "auto":
                 if self._is_categorical(Xi):
-                    result = _unique_categorical(
-                        Xi,
-                        return_inverse=False,
-                        return_counts=compute_counts,
-                    )
+                    result = _unique_categorical(Xi, return_counts=compute_counts)
                 else:
                     result = _unique(Xi, return_counts=compute_counts)
                 if compute_counts:
@@ -328,9 +324,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
     def _transform_categorical(self, Xi, categories):
         """Encode a Narwhals Categorical Series from its integer codes."""
-        categorical_categories, codes, missing_mask = (
-            _get_categorical_categories_and_codes(Xi)
-        )
+        categorical_categories, codes, missing_mask = _get_categories_and_codes(Xi)
         valid_mask = np.ones_like(codes, dtype=bool)
 
         has_missing_category = bool(categories.size) and is_scalar_nan(categories[-1])
