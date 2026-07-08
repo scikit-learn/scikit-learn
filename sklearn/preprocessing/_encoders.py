@@ -104,7 +104,20 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             if  self.categories == "frequency":
 
                     self.decoder_mapping = [dict()]*n_features
-                    for i in range(n_features):
+
+            
+            for i in range(n_features):
+                    Xi = X_list[i]
+
+                    if self.categories == "auto":
+                        result = _unique(Xi, return_counts=compute_counts)
+                        if compute_counts:
+                            cats, counts = result
+                            category_counts.append(counts)
+                        else:
+                            cats = result
+                    elif self.categories == "frequency":
+                                    
                         #_unique sort so it handles ties in lexigraphical way
                         unique_vals, counts = _unique(X_list[i], return_counts=True)
                         local_decoder = {}
@@ -119,21 +132,10 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         for idx, val in enumerate(sorted_unique_vals):
                                 encoder_mapping[val] = idx
                                 local_decoder[idx] = val
-                        self.categories_.append(np.array(list(encoder_mapping.keys())))
-
+                        #self.categories_.append(np.array(list(encoder_mapping.keys())))
+                        cats = np.array(list(encoder_mapping.keys()))
                         self.decoder_mapping[i] = local_decoder
 
-            else:
-                for i in range(n_features):
-                    Xi = X_list[i]
-
-                    if self.categories == "auto":
-                        result = _unique(Xi, return_counts=compute_counts)
-                        if compute_counts:
-                            cats, counts = result
-                            category_counts.append(counts)
-                        else:
-                            cats = result
                     else:
                         if np.issubdtype(Xi.dtype, np.str_):
                             # Always convert string categories to objects to avoid
