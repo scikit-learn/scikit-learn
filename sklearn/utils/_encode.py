@@ -227,7 +227,7 @@ def _get_categories_and_codes(values):
     return categories, codes_no_missing, isna
 
 
-def _unique_categorical(values, *, return_inverse=False, return_counts=False):
+def _unique_categorical(values, *, return_counts=False):
     uniques, codes, isna = _get_categories_and_codes(values)
     try:
         is_sorted = (uniques[:-1] < uniques[1:]).all()
@@ -235,35 +235,29 @@ def _unique_categorical(values, *, return_inverse=False, return_counts=False):
         # Preserve the user-facing mixed-type validation error from `_unique`.
         _unique(uniques)
         raise
-    if is_sorted:
-        code_mapping = None
-    else:
+
+    if not is_sorted:
         sorted_idx = np.argsort(uniques)
         uniques = uniques[sorted_idx]
-        code_mapping = np.empty_like(sorted_idx)
-        code_mapping[sorted_idx] = np.arange(uniques.size)
 
-    has_missing = isna.any()
+    n_categories = uniques.size
+    n_missing = isna.sum()
+    has_missing = n_missing > 0
     if has_missing:
         uniques = uniques.astype(object, copy=False)
         uniques = np.r_[uniques, np.nan]
 
-    if not return_inverse and not return_counts:
+    if not return_counts:
         return uniques
 
-    codes = codes.copy()
+    counts = np.bincount(codes[~isna], minlength=n_categories)
     if not is_sorted:
-        codes[~isna] = code_mapping[codes[~isna]]
+        counts = counts[sorted_idx]
+
     if has_missing:
-        codes[isna] = uniques.size - 1
+        counts = np.r_[counts, n_missing]
 
-    ret = (uniques,)
-    if return_inverse:
-        ret += (codes,)
-    if return_counts:
-        ret += (np.bincount(codes, minlength=uniques.size),)
-
-    return ret
+    return uniques, counts
 
 
 def _encode(values, *, uniques, check_unknown=True):
