@@ -143,7 +143,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
             if self.categories == "auto":
                 if self._is_categorical(Xi):
-                    result = _unique_categorical(Xi, return_counts=compute_counts)
+                    result = _unique_categorical(Xi, return_counts=True)
                 else:
                     result = _unique(Xi, return_counts=compute_counts)
                 if compute_counts:
@@ -255,50 +255,58 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             Xi = X_list[i]
             if self._is_categorical(Xi):
                 diff, valid_mask, encoded = self._transform_categorical(
-                    Xi, self.categories_[i]
+                    Xi, self.categories_[i], columns_with_unknown
                 )
+                if not np.all(valid_mask):
+                    if handle_unknown == "error":
+                        msg = (
+                            "Found unknown categories {0} in column {1}"
+                            " during transform".format(diff, i)
+                        )
+                        raise ValueError(msg)
+                    else:
+                        if warn_on_unknown:
+                            columns_with_unknown.append(i)
             else:
                 diff, valid_mask = _check_unknown(
                     Xi, self.categories_[i], return_mask=True
                 )
+                if not np.all(valid_mask):
+                    if handle_unknown == "error":
+                        msg = (
+                            "Found unknown categories {0} in column {1}"
+                            " during transform".format(diff, i)
+                        )
+                        raise ValueError(msg)
+                    else:
+                        if warn_on_unknown:
+                            columns_with_unknown.append(i)
+                        # Set the problematic rows to an acceptable value and
+                        # continue `The rows are marked `X_mask` and will be
+                        # removed later.
+                        X_mask[:, i] = valid_mask
 
-            if not np.all(valid_mask):
-                if handle_unknown == "error":
-                    msg = (
-                        "Found unknown categories {0} in column {1}"
-                        " during transform".format(diff, i)
-                    )
-                    raise ValueError(msg)
-                else:
-                    if warn_on_unknown:
-                        columns_with_unknown.append(i)
-                    # Set the problematic rows to an acceptable value and
-                    # continue `The rows are marked `X_mask` and will be
-                    # removed later.
-                    X_mask[:, i] = valid_mask
+                        if not self._is_categorical(Xi):
+                            # cast Xi into the largest string type necessary
+                            # to handle different lengths of numpy strings
+                            if (
+                                self.categories_[i].dtype.kind in ("U", "S")
+                                and self.categories_[i].itemsize > Xi.itemsize
+                            ):
+                                Xi = Xi.astype(self.categories_[i].dtype)
+                            elif (
+                                self.categories_[i].dtype.kind == "O"
+                                and Xi.dtype.kind == "U"
+                            ):
+                                # categories are objects and Xi are numpy strings.
+                                # Cast Xi to an object dtype to prevent truncation
+                                # when setting invalid values.
+                                Xi = Xi.astype("O")
+                            else:
+                                Xi = Xi.copy()
 
-                    if not self._is_categorical(Xi):
-                        # cast Xi into the largest string type necessary
-                        # to handle different lengths of numpy strings
-                        if (
-                            self.categories_[i].dtype.kind in ("U", "S")
-                            and self.categories_[i].itemsize > Xi.itemsize
-                        ):
-                            Xi = Xi.astype(self.categories_[i].dtype)
-                        elif (
-                            self.categories_[i].dtype.kind == "O"
-                            and Xi.dtype.kind == "U"
-                        ):
-                            # categories are objects and Xi are numpy strings.
-                            # Cast Xi to an object dtype to prevent truncation
-                            # when setting invalid values.
-                            Xi = Xi.astype("O")
-                        else:
-                            Xi = Xi.copy()
+                            Xi[~valid_mask] = self.categories_[i][0]
 
-                        Xi[~valid_mask] = self.categories_[i][0]
-
-            if not self._is_categorical(Xi):
                 # We use check_unknown=False, since _check_unknown was
                 # already called above.
                 encoded = _encode(Xi, uniques=self.categories_[i], check_unknown=False)
@@ -322,56 +330,25 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         self._map_infrequent_categories(X_int, X_mask, ignore_category_indices)
         return X_int, X_mask
 
-    def _transform_categorical(self, Xi, categories):
+    def _transform_categorical(self, Xi, known_categories):
         """Encode a Narwhals Categorical Series from its integer codes."""
-        categorical_categories, codes, missing_mask = _get_categories_and_codes(Xi)
-        valid_mask = np.ones_like(codes, dtype=bool)
+        categories, codes = _unique_categorical(Xi, return_codes=True)
 
-        has_missing_category = bool(categories.size) and is_scalar_nan(categories[-1])
-        categories_without_missing = (
-            categories[:-1] if has_missing_category else categories
-        )
-        if np.array_equal(categorical_categories, categories_without_missing):
+        if np.array_equal(categories, known_categories, equal_nan=True):
             diff = []
-            encoded = codes.copy()
-            if missing_mask.any():
-                if has_missing_category:
-                    encoded[missing_mask] = categories.size - 1
-                else:
-                    encoded[missing_mask] = 0
-                    valid_mask[missing_mask] = False
-                    diff.append(np.nan)
-            return diff, valid_mask, encoded
+            valid_mask = np.ones_like(codes, dtype=bool)
+            return diff, valid_mask, codes
 
-        encoded = np.zeros_like(codes, dtype=int)
-        observed_codes = np.unique(codes[~missing_mask])
-
-        diff = []
-        if observed_codes.size:
-            observed_categories = categorical_categories[observed_codes].astype(
-                object, copy=False
-            )
-            diff, valid_observed_mask = _check_unknown(
-                observed_categories, categories, return_mask=True
-            )
-
-            mapping = np.zeros(categorical_categories.shape[0], dtype=int)
-            category_to_index = {category: i for i, category in enumerate(categories)}
-            valid_codes = observed_codes[valid_observed_mask]
-            for code, category in zip(valid_codes, categorical_categories[valid_codes]):
-                mapping[code] = category_to_index[category]
-
-            encoded[~missing_mask] = mapping[codes[~missing_mask]]
-            invalid_codes = observed_codes[~valid_observed_mask]
-            if invalid_codes.size:
-                valid_mask[np.isin(codes, invalid_codes)] = False
-
-        if missing_mask.any():
-            if has_missing_category:
-                encoded[missing_mask] = categories.size - 1
-            else:
-                valid_mask[missing_mask] = False
-                diff.append(np.nan)
+        diff, valid_cats_mask = _check_unknown(
+            categories, known_categories, return_mask=True
+        )
+        valid_mask = valid_cats_mask[codes]
+        categories = categories[valid_cats_mask]
+        # TODO: map codes based on valid_cats_mask
+        encoded_categories = _encode(
+            categories, uniques=known_categories, check_unknown=False
+        )
+        encoded = encoded_categories[codes]
 
         return diff, valid_mask, encoded
 

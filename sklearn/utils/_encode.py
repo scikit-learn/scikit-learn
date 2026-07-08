@@ -204,31 +204,68 @@ def _unique_python(values, *, return_inverse, return_counts):
     return ret[0] if len(ret) == 1 else ret
 
 
-def _get_categories_and_codes(values):
+def _unique_categorical(values, *, return_counts=False, return_sorted=True):
     """Return categorical categories, integer codes, and the missing value mask."""
     if hasattr(values, "cat") and hasattr(values.cat, "categories"):
         # for pandas, the Narwhals path below doesn't work
         categories = values.cat.categories.to_numpy()
         codes = values.cat.codes.to_numpy()
         isna = codes == -1
-        return categories, codes, isna
+        if isna.any():
+            codes[isna] = categories.size
+            categories = np.r_[categories, np.nan]
+    else:
+        values = nw.from_native(values, allow_series=True)
+        categories = values.cat.get_categories().to_numpy()
 
-    values = nw.from_native(values, allow_series=True)
-    categories = values.cat.get_categories().to_numpy()
+        # for polars, this cast returns the categorical codes:
+        codes = values.cast(nw.UInt32).to_numpy()
+        isna = (
+            np.isnan(codes)
+            if codes.dtype.kind == "f"
+            else np.zeros_like(codes, dtype=bool)
+        )
 
-    # for polars, this cast returns the categorical codes:
-    codes = values.cast(nw.UInt32).to_numpy()
-    isna = (
-        np.isnan(codes) if codes.dtype.kind == "f" else np.zeros_like(codes, dtype=bool)
-    )
+        codes_no_missing = np.zeros_like(codes, dtype=int)
+        codes_no_missing[~isna] = codes[~isna].astype(int)
 
-    codes_no_missing = np.zeros_like(codes, dtype=int)
-    codes_no_missing[~isna] = codes[~isna].astype(int)
-    return categories, codes_no_missing, isna
+    counts = np.bincount(codes, minlength=categories.size)
+
+    is_present = counts > 0
+    if not is_present.all():
+        categories = categories[is_present]
+        counts = counts[is_present]
+        # TODO: re-map codes
+
+    if not return_sorted:
+        if return_counts:
+            return categories, counts
+
+        return categories
+
+    try:
+        is_sorted = (categories[:-1] < categories[1:]).all()
+    except TypeError:
+        # Preserve the user-facing mixed-type validation error from `_unique`.
+        _unique(categories)
+        raise
+
+    if not is_sorted:
+        sorted_idx = np.argsort(categories)
+        categories = categories[sorted_idx]
+        counts = counts[sorted_idx]
+        # TODO:
+        codes_mapping = None
+
+    if return_counts:
+        return categories, counts
+
+    return categories
 
 
 def _unique_categorical(values, *, return_counts=False):
     uniques, codes, isna = _get_categories_and_codes(values)
+    counts = np.bincount(codes, minlength=n_categories)
     try:
         is_sorted = (uniques[:-1] < uniques[1:]).all()
     except TypeError:
