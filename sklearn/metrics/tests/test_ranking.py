@@ -1383,10 +1383,11 @@ def test_score_scale_invariance():
 )
 def test_det_curve_toydata(y_true, y_score, expected_fpr, expected_fnr):
     # Check on a batch of small examples.
-    fpr, fnr, _ = det_curve(y_true, y_score)
+    fpr, fnr, thresholds = det_curve(y_true, y_score)
 
     assert_allclose(fpr, expected_fpr)
     assert_allclose(fnr, expected_fnr)
+    assert np.all(np.diff(thresholds) >= 0)
 
 
 @pytest.mark.parametrize(
