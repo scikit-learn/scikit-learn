@@ -28,6 +28,12 @@ class KNNImputer(_BaseImputer):
     `n_neighbors` nearest neighbors found in the training set. Two samples are
     close if the features that neither is missing are close.
 
+    Note that meaningful neighbor-based imputation relies on having other
+    informative features to compute distances between samples: if only a
+    single feature is provided, all samples are equidistant and the
+    imputed value reduces to the column mean (equivalent to
+    :class:`~sklearn.impute.SimpleImputer`).
+
     Read more in the :ref:`User Guide <knnimpute>`.
 
     .. versionadded:: 0.22
