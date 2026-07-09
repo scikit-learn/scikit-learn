@@ -1017,25 +1017,40 @@ cdef class Tree:
     cdef inline cnp.ndarray _apply_dense(self, object X):
         """Finds the terminal region (=leaf node) for each sample in X."""
 
+        cdef intp_t n_samples
+        cdef const float32_t[:, :] X_ndarray32
+        cdef const float64_t[:, :] X_ndarray64
+
         # Check input
         if not isinstance(X, np.ndarray):
             raise ValueError("X should be in np.ndarray format, got %s"
                              % type(X))
 
-        if X.dtype != np.float32:
-            raise ValueError("X.dtype should be np.float32, got %s" % X.dtype)
+        n_samples = X.shape[0]
 
-        # Extract input
-        cdef const float32_t[:, :] X_ndarray = X
-        cdef intp_t n_samples = X.shape[0]
-        cdef float32_t X_i_node_feature
+        if X.dtype == np.float32:
+            X_ndarray32 = X
+            return self._apply_dense_impl(X_ndarray32, n_samples)
+        elif X.dtype == np.float64:
+            X_ndarray64 = X
+            return self._apply_dense_impl(X_ndarray64, n_samples)
+        else:
+            raise ValueError(
+                "X.dtype should be np.float32 or np.float64, got %s" % X.dtype
+            )
 
+    cdef cnp.ndarray _apply_dense_impl(
+        self,
+        const dense_input_dtype[:, :] X_ndarray,
+        intp_t n_samples,
+    ):
         # Initialize output
         cdef intp_t[:] out = np.zeros(n_samples, dtype=np.intp)
 
         # Initialize auxiliary data-structure
         cdef Node* node = NULL
         cdef intp_t i = 0
+        cdef dense_input_dtype X_i_node_feature
 
         cdef bint go_left
         cdef bint is_categorical
@@ -1047,13 +1062,18 @@ cdef class Tree:
                 while node.left_child != _TREE_LEAF:
                     X_i_node_feature = X_ndarray[i, node.feature]
                     is_categorical = self.n_categories[node.feature] > 0
-                    go_left = goes_left(
-                        node.threshold,
-                        node.left_cat_bitset,
-                        node.missing_go_to_left,
-                        is_categorical,
-                        X_i_node_feature,
-                    )
+                    if is_categorical:
+                        go_left = goes_left(
+                            node.threshold,
+                            node.left_cat_bitset,
+                            node.missing_go_to_left,
+                            is_categorical,
+                            X_i_node_feature,
+                        )
+                    elif isnan(X_i_node_feature):
+                        go_left = node.missing_go_to_left
+                    else:
+                        go_left = X_i_node_feature <= node.threshold
                     if go_left:
                         node = &self.nodes[node.left_child]
                     else:

@@ -737,7 +737,16 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             numbering.
         """
         check_is_fitted(self)
-        X = self._validate_X_predict(X, check_input)
+        if check_input and not issparse(X):
+            X = validate_data(
+                self,
+                X,
+                dtype=[np.float64, np.float32],
+                reset=False,
+            )
+        else:
+            X = self._validate_X_predict(X, check_input)
+
         return self.tree_.apply(X)
 
     def decision_path(self, X, check_input=True):

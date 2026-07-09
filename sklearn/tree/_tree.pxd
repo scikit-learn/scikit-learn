@@ -10,10 +10,12 @@ from sklearn.utils._typedefs cimport (
     float32_t, float64_t, intp_t, int32_t, uint8_t, uint32_t
 )
 from sklearn.tree._splitter cimport Splitter, SplitRecord
-
-from sklearn.tree._splitter cimport Splitter, SplitRecord
 from sklearn.tree._utils cimport Node
 from sklearn.utils._bitset cimport BITSET_DTYPE_C
+
+ctypedef fused dense_input_dtype:
+    float32_t
+    float64_t
 
 
 cdef struct ParentInfo:
@@ -74,6 +76,11 @@ cdef class Tree:
 
     cpdef compute_node_depths(self)
     cpdef compute_feature_importances(self, normalize=*)
+    cdef cnp.ndarray _apply_dense_impl(
+        self,
+        const dense_input_dtype[:, :] X_ndarray,
+        intp_t n_samples,
+    )
 
 
 # =============================================================================
