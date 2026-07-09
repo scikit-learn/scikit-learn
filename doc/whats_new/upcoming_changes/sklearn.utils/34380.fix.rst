@@ -1,4 +1,5 @@
-- ``utils._array_api.move_to`` now makes negative-stride NumPy arrays
-  contiguous before transferring them to PyTorch through DLPack, avoiding a
-  Python process abort in ``torch.from_dlpack``.
+- Array API supporting functions and estimators that handle mixed input
+  namespaces now make negative-stride NumPy arrays contiguous before
+  transferring them to PyTorch through DLPack, avoiding a Python process
+  abort in ``torch.from_dlpack``.
   By :user:`Yin Li <Kevin-Li-2025>`.
