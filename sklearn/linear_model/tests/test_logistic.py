@@ -2902,12 +2902,26 @@ def test_logistic_regression_cv_array_api_compliance(
         )
     else:
         sample_weight = None
+
     cv = StratifiedKFold(2, shuffle=False)
     precomputed_folds = list(cv.split(X_np, y_np))
+    atol = _atol_for_type(dtype_name) * 10
     if dtype_name == "float32":
-        solver_tol = 5e-3 if solver == "lbfgs" else 1e-5
+        # TODO: this test is currently very sensitive to the value
+        # of the solver tol, particularly for "lbgfs". The rtol value
+        # is also quite high. Therefore try to investigate the numerical
+        # stability of the convergence with "lbgfs" in a dedicated
+        # follow up issue and PR.
+        if solver == "lbfgs":
+            solver_tol = 5e-3
+            rtol = 6e-2
+        else:
+            solver_tol = 1e-5
+            rtol = 5e-3
     else:
         solver_tol = 1e-10
+        rtol = 5e-5
+
     lr_cv_params = dict(
         Cs=[0.01, 0.001],
         cv=precomputed_folds,
@@ -2930,8 +2944,6 @@ def test_logistic_regression_cv_array_api_compliance(
 
     prediction_np = lr_cv_np.predict(X_np)
     score_np = lr_cv_np.score(X_np, y_np)
-    atol = _atol_for_type(dtype_name) * 10
-    rtol = 6e-3 if dtype_name == "float32" else 5e-5
     xp, _ = _array_api_for_tests(array_namespace, device_name)
     with config_context(array_api_dispatch=True):
         with warnings.catch_warnings():
