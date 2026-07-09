@@ -301,7 +301,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
     def _transform_categorical(self, Xi, known_categories):
         """Encode a Narwhals Categorical Series from its integer codes."""
-        categories, codes = _unique_categorical(Xi, return_inverse=True)
+        categories, codes = _unique_categorical(
+            Xi, return_inverse=True, filter_present=False
+        )
         if _categories_equal_with_nan(categories, known_categories):
             return codes, []
 

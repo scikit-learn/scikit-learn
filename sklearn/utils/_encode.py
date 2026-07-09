@@ -207,7 +207,9 @@ def _unique_python(values, *, return_inverse, return_counts):
     return ret[0] if len(ret) == 1 else ret
 
 
-def _unique_categorical(values, *, return_inverse=False, return_counts=False):
+def _unique_categorical(
+    values, *, return_inverse=False, return_counts=False, filter_present=True
+):
     """Find unique values for categorical arrays without materializing values."""
     if hasattr(values, "cat") and hasattr(values.cat, "categories"):
         # for pandas, the Narwhals path below doesn't work
@@ -247,6 +249,10 @@ def _unique_categorical(values, *, return_inverse=False, return_counts=False):
             uniques = np.r_[uniques, np.nan]
         else:
             uniques = np.r_[uniques.astype(object, copy=False), np.nan]
+
+    if not filter_present:
+        assert return_inverse and not return_counts
+        return uniques, codes
 
     counts = np.bincount(codes, minlength=uniques.size)
     is_present = counts > 0
