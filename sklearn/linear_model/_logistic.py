@@ -1680,7 +1680,7 @@ class LogisticRegression(
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.sparse = True
-        tags.array_api_support = self.solver == "lbfgs"
+        tags.array_api_support = self.solver in ("lbfgs", "newton-cg")
         if self.solver == "liblinear":
             tags.classifier_tags.multi_class = False
 
@@ -2629,5 +2629,5 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.sparse = True
-        tags.array_api_support = self.solver == "lbfgs"
+        tags.array_api_support = self.solver in ("lbfgs", "newton-cg")
         return tags

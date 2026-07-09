@@ -2843,6 +2843,7 @@ def test_logistic_regression_array_api_compliance(
         assert_array_equal(prediction_xp, prediction_np)
 
 
+@pytest.mark.parametrize("solver", ["lbfgs", "newton-cg"])
 @pytest.mark.parametrize("refit", [True, False])
 @pytest.mark.parametrize("binary", [False, True])
 @pytest.mark.parametrize("use_str_y", [False, True])
@@ -2854,6 +2855,7 @@ def test_logistic_regression_array_api_compliance(
 )
 @pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
 def test_logistic_regression_cv_array_api_compliance(
+    solver,
     refit,
     binary,
     use_str_y,
@@ -2902,11 +2904,15 @@ def test_logistic_regression_cv_array_api_compliance(
         sample_weight = None
     cv = StratifiedKFold(2, shuffle=False)
     precomputed_folds = list(cv.split(X_np, y_np))
+    if dtype_name == "float32":
+        solver_tol = 5e-3 if solver == "lbfgs" else 1e-5
+    else:
+        solver_tol = 1e-10
     lr_cv_params = dict(
         Cs=[0.01, 0.001],
         cv=precomputed_folds,
-        solver="lbfgs",
-        tol=5e-3 if dtype_name == "float32" else 1e-10,
+        solver=solver,
+        tol=solver_tol,
         max_iter=200,
         class_weight=class_weight,
         scoring="neg_log_loss",
@@ -2925,7 +2931,7 @@ def test_logistic_regression_cv_array_api_compliance(
     prediction_np = lr_cv_np.predict(X_np)
     score_np = lr_cv_np.score(X_np, y_np)
     atol = _atol_for_type(dtype_name) * 10
-    rtol = 6e-2 if dtype_name == "float32" else 2e-4
+    rtol = 6e-3 if dtype_name == "float32" else 5e-5
     xp, _ = _array_api_for_tests(array_namespace, device_name)
     with config_context(array_api_dispatch=True):
         with warnings.catch_warnings():
@@ -2937,7 +2943,7 @@ def test_logistic_regression_cv_array_api_compliance(
         assert lr_cv_xp.n_iter_.shape == lr_cv_np.n_iter_.shape
         assert xp.max(lr_cv_xp.n_iter_) < lr_cv_xp.max_iter
 
-        for attr_name in ("coef_", "intercept_"):
+        for attr_name in ("scores_", "coefs_paths_", "coef_", "intercept_"):
             attr_xp = getattr(lr_cv_xp, attr_name)
             attr_np = getattr(lr_cv_np, attr_name)
             assert_allclose(
