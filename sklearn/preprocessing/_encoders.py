@@ -41,6 +41,21 @@ from sklearn.utils.validation import (
 __all__ = ["OneHotEncoder", "OrdinalEncoder"]
 
 
+def _categories_equal_with_nan(categories, known_categories):
+    """Check category equality while treating NaNs in matching positions as equal."""
+    if known_categories.size < categories.size:
+        return False
+
+    known_categories = known_categories[: categories.size]
+    equal = categories == known_categories
+    if not np.all(equal[:-1]):
+        return False
+
+    return equal[-1] or (
+        is_scalar_nan(categories[-1]) and is_scalar_nan(known_categories[-1])
+    )
+
+
 class _BaseEncoder(TransformerMixin, BaseEstimator):
     """
     Base class for encoders that includes the code to categorize and
@@ -287,6 +302,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
     def _transform_categorical(self, Xi, known_categories):
         """Encode a Narwhals Categorical Series from its integer codes."""
         categories, codes = _unique_categorical(Xi, return_inverse=True)
+        if _categories_equal_with_nan(categories, known_categories):
+            return codes, []
+
         encoded_categories, diff = _encode(
             categories, uniques=known_categories, return_diff=True
         )

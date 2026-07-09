@@ -1537,6 +1537,32 @@ def test_one_hot_encoder_pandas_categorical_transform_unknown_category():
         ohe.transform(df_test)
 
 
+@pytest.mark.parametrize(
+    "values, expected",
+    [
+        (["a", "b", "a"], [[0, 1], [1, 0], [0, 1]]),
+        (["a", None, "b"], [[0, 1, 0], [0, 0, 1], [1, 0, 0]]),
+    ],
+    ids=["without_missing", "with_missing"],
+)
+def test_one_hot_encoder_pandas_categorical_transform_fast_path(
+    values, expected, monkeypatch
+):
+    pd = pytest.importorskip("pandas")
+    from sklearn.preprocessing import _encoders
+
+    dtype = pd.CategoricalDtype(["b", "a", "c"])
+    df = pd.DataFrame({"col1": pd.Series(values, dtype=dtype)})
+
+    ohe = OneHotEncoder(sparse_output=False).fit(df)
+
+    def raise_if_called(*args, **kwargs):
+        raise AssertionError("_encode should not be called")
+
+    monkeypatch.setattr(_encoders, "_encode", raise_if_called)
+    assert_allclose(ohe.transform(df), expected)
+
+
 def test_one_hot_encoder_pandas_categorical_transform_category_variants():
     pd = pytest.importorskip("pandas")
 
