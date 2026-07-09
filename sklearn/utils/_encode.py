@@ -9,7 +9,7 @@ from typing import NamedTuple
 import narwhals.stable.v2 as nw
 import numpy as np
 
-from sklearn.utils._array_api import device, get_namespace
+from sklearn.utils._array_api import device, get_namespace, size
 from sklearn.utils._missing import is_scalar_nan
 
 
@@ -72,7 +72,7 @@ def _unique_np(values, return_inverse=False, return_counts=False):
 
     # np.unique will have duplicate missing values at the end of `uniques`
     # here we clip the nans and remove it from uniques
-    if uniques.size and is_scalar_nan(uniques[-1]):
+    if size(uniques) and is_scalar_nan(uniques[-1]):
         nan_idx = xp.searchsorted(uniques, xp.nan)
         uniques = uniques[: nan_idx + 1]
         if return_inverse:
@@ -305,7 +305,7 @@ def _encode_labels(values, *, uniques):
         If `values` contains labels that are not in `uniques`.
     """
     encoded, diff = _encode(values, uniques=uniques, return_diff=True)
-    if diff.size:
+    if size(diff):
         raise ValueError(f"y contains previously unseen labels: {diff}")
     return encoded
 
@@ -346,11 +346,11 @@ def _encode(values, *, uniques, return_diff=False):
         encoded = _map_to_integer(values, uniques)
     else:
         encoded = xp.searchsorted(uniques, values)
-        if uniques.size:
-            max_index = xp.asarray(
+        if size(uniques):
+            max_idx = xp.asarray(
                 uniques.shape[0] - 1, dtype=encoded.dtype, device=device(encoded)
             )
-            encoded_safe = xp.minimum(encoded, max_index)
+            encoded_safe = xp.minimum(encoded, max_idx)
             matches = (encoded < uniques.shape[0]) & (uniques[encoded_safe] == values)
 
             if xp.any(xp.isnan(uniques)):
