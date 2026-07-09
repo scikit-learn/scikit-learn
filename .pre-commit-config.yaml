@@ -38,9 +38,9 @@ repos:
     rev: v2.7.1
     hooks:
     -   id: prettier
-        files: ^doc/scss/|^doc/js/scripts/
+        files: ^doc/css/styles/|^doc/js/scripts/
         exclude: ^doc/js/scripts/vendor/
-        types_or: ["scss", "javascript"]
+        types_or: ["css", "javascript"]
 
 - repo: https://github.com/codespell-project/codespell
   # Configuration for codespell is in pyproject.toml
