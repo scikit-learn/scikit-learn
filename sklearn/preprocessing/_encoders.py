@@ -77,6 +77,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         n_samples, n_features = X.shape
         X_columns = []
 
+        if n_samples == 0:
+            raise ValueError("Found empty array")
+
         for i in range(n_features):
             Xi = _safe_indexing(X, indices=i, axis=1)
             if not needs_validation:
@@ -84,9 +87,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 continue
             if is_dataframe and self._is_categorical(Xi) and preserve_categorical:
                 categories = _unique_categorical(Xi)
-                if not categories.size:
-                    allow_nan = ensure_all_finite == "allow-nan"
-                    assert_all_finite(categories, allow_nan=allow_nan)
+                allow_nan = ensure_all_finite == "allow-nan"
+                assert_all_finite(categories, allow_nan=allow_nan)
             elif needs_validation:
                 Xi = check_array(
                     Xi, ensure_2d=False, dtype=None, ensure_all_finite=needs_validation

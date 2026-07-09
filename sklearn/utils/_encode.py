@@ -225,7 +225,7 @@ def _unique_categorical(values, *, return_inverse=False, return_counts=False):
             if codes.dtype.kind == "f"
             else np.zeros_like(codes, dtype=bool)
         )
-        codes_no_missing = np.full(codes.shape, -1, dtype=np.intp)
+        codes_no_missing = np.empty(codes.shape, dtype=np.intp)
         codes_no_missing[~isna] = codes[~isna].astype(np.intp)
         codes = codes_no_missing
 
@@ -236,14 +236,13 @@ def _unique_categorical(values, *, return_inverse=False, return_counts=False):
     counts = np.bincount(codes, minlength=uniques.size)
     is_present = counts > 0
     if not is_present.all():
-        present_indices = np.flatnonzero(is_present)
         codes_mapping = np.empty_like(is_present, dtype=np.intp)
-        codes_mapping[present_indices] = np.arange(present_indices.size)
+        codes_mapping[is_present] = np.arange(is_present.sum())
         codes = codes_mapping[codes]
         uniques = uniques[is_present]
         counts = counts[is_present]
 
-    has_missing = uniques.size > 0 and is_scalar_nan(uniques[-1])
+    has_missing = is_scalar_nan(uniques[-1])
     n_categories = uniques.size - int(has_missing)
     uniques_no_missing = uniques[:n_categories]
 
