@@ -1,0 +1,5 @@
+- :class:`preprocessing.OneHotEncoder` and
+  :class:`preprocessing.OrdinalEncoder` are now faster on pandas and polars
+  categorical features by reusing the categorical codes exposed by the
+  dataframe libraries.
+  By :user:`Arthur Lacote <cakedev0>`.

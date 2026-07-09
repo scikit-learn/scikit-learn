@@ -1556,7 +1556,7 @@ def test_X_val_raises_with_early_stopping_false():
 def test_dataframe_categorical_results_same_as_ndarray(
     dataframe_lib, HistGradientBoosting
 ):
-    """Check that pandas categorical give the same results as ndarray."""
+    """Check that dataframe categoricals give the same results as ndarray."""
     pytest.importorskip(dataframe_lib)
 
     rng = np.random.RandomState(42)
@@ -1564,13 +1564,13 @@ def test_dataframe_categorical_results_same_as_ndarray(
     n_cardinality = 50
     max_bins = 100
     f_num = rng.rand(n_samples)
-    f_cat = rng.randint(n_cardinality, size=n_samples)
+    f_cat_int = rng.randint(n_cardinality, size=n_samples)
 
     # Make f_cat an informative feature
-    y = (f_cat % 3 == 0) & (f_num > 0.2)
+    y = (f_cat_int % 3 == 0) & (f_num > 0.2)
 
-    X = np.c_[f_num, f_cat]
-    f_cat = [f"cat{c:0>3}" for c in f_cat]
+    X = np.c_[f_num, f_cat_int]
+    f_cat = [f"cat{c:0>3}" for c in f_cat_int]
     X_df = _convert_container(
         np.asarray([f_num, f_cat]).T,
         dataframe_lib,
@@ -1584,14 +1584,25 @@ def test_dataframe_categorical_results_same_as_ndarray(
 
     hist_kwargs = dict(max_iter=10, max_bins=max_bins, random_state=0)
     hist_np = HistGradientBoosting(categorical_features=[False, True], **hist_kwargs)
-    hist_np.fit(X_train, y_train)
 
     hist_pd = HistGradientBoosting(categorical_features="from_dtype", **hist_kwargs)
     hist_pd.fit(X_train_df, y_train)
 
-    # Check categories are correct and sorted
+    # Check categories are correct and preserve the dataframe categorical order
     categories = hist_pd._preprocessor.named_transformers_["encoder"].categories_[0]
-    assert_array_equal(categories, np.unique(f_cat))
+    if dataframe_lib == "pandas":
+        expected_categories = X_train_df["f_cat"].cat.categories.to_numpy()
+    else:
+        expected_categories = X_train_df["f_cat"].cat.get_categories().to_numpy()
+    assert_array_equal(categories, expected_categories)
+
+    cat_to_code = {
+        category: code for code, category in enumerate(expected_categories.tolist())
+    }
+    for X_split in (X_train, X_test):
+        X_split[:, 1] = [cat_to_code[f"cat{int(code):0>3}"] for code in X_split[:, 1]]
+
+    hist_np.fit(X_train, y_train)
 
     assert len(hist_np._predictors) == len(hist_pd._predictors)
     for predictor_1, predictor_2 in zip(hist_np._predictors, hist_pd._predictors):

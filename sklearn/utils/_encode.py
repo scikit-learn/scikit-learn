@@ -347,7 +347,10 @@ def _encode(values, *, uniques, return_diff=False):
     else:
         encoded = xp.searchsorted(uniques, values)
         if uniques.size:
-            encoded_safe = xp.minimum(encoded, uniques.shape[0] - 1)
+            max_index = xp.asarray(
+                uniques.shape[0] - 1, dtype=encoded.dtype, device=device(encoded)
+            )
+            encoded_safe = xp.minimum(encoded, max_index)
             matches = (encoded < uniques.shape[0]) & (uniques[encoded_safe] == values)
 
             if xp.any(xp.isnan(uniques)):
