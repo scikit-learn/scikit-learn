@@ -207,16 +207,16 @@ def _unique_python(values, *, return_inverse, return_counts):
     return ret[0] if len(ret) == 1 else ret
 
 
-def _get_categories_and_codes(values):
-    """Return categorical categories, integer codes, and the missing value mask."""
+def _unique_categorical(values, *, return_inverse=False, return_counts=False):
+    """Find unique values for categorical arrays without materializing values."""
     if hasattr(values, "cat") and hasattr(values.cat, "categories"):
         # for pandas, the Narwhals path below doesn't work
-        categories = values.cat.categories.to_numpy()
+        uniques = values.cat.categories.to_numpy()
         codes = values.cat.codes.to_numpy().astype(np.intp, copy=True)
         isna = codes == -1
     else:
         values = nw.from_native(values, allow_series=True)
-        categories = values.cat.get_categories().to_numpy()
+        uniques = values.cat.get_categories().to_numpy()
 
         # for polars, this cast returns the categorical codes:
         codes = values.cast(nw.UInt32).to_numpy()
@@ -229,13 +229,7 @@ def _get_categories_and_codes(values):
         codes_no_missing[~isna] = codes[~isna].astype(np.intp)
         codes = codes_no_missing
 
-    codes[isna] = categories.size
-    return categories, codes, isna
-
-
-def _unique_categorical(values, *, return_inverse=False, return_counts=False):
-    """Find unique values for categorical arrays without materializing values."""
-    uniques, codes, isna = _get_categories_and_codes(values)
+    codes[isna] = uniques.size
     if isna.any():
         uniques = np.concatenate([uniques.astype(object, copy=False), [np.nan]])
 

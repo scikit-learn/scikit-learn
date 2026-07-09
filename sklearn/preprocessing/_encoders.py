@@ -23,7 +23,6 @@ from sklearn.utils import (
 )
 from sklearn.utils._encode import (
     _encode,
-    _get_categories_and_codes,
     _get_counts,
     _unique,
     _unique_categorical,
@@ -80,8 +79,14 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
         for i in range(n_features):
             Xi = _safe_indexing(X, indices=i, axis=1)
+            if not needs_validation:
+                X_columns.append(Xi)
+                continue
             if is_dataframe and self._is_categorical(Xi) and preserve_categorical:
-                self._validate_categorical(Xi, needs_validation)
+                categories = _unique_categorical(Xi)
+                if not categories.size:
+                    allow_nan = ensure_all_finite == "allow-nan"
+                    assert_all_finite(categories, allow_nan=allow_nan)
             elif needs_validation:
                 Xi = check_array(
                     Xi, ensure_2d=False, dtype=None, ensure_all_finite=needs_validation
@@ -95,19 +100,6 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         if not nw.dependencies.is_into_series(Xi):
             return False
         return nw.from_native(Xi, allow_series=True).dtype in (nw.Categorical, nw.Enum)
-
-    def _validate_categorical(self, Xi, ensure_all_finite):
-        """Validate a Narwhals Categorical Series without materializing values."""
-        if not ensure_all_finite:
-            return
-
-        categories, _, missing_mask = _get_categories_and_codes(Xi)
-        allow_nan = ensure_all_finite == "allow-nan"
-        if categories.size:
-            assert_all_finite(categories, allow_nan=allow_nan)
-
-        if not allow_nan and missing_mask.any():
-            assert_all_finite(np.asarray([np.nan]), allow_nan=allow_nan)
 
     def _fit(
         self,
