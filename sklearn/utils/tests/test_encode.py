@@ -147,7 +147,7 @@ def test_unique_categorical_pandas():
         ["a", None, "b", "a"],
         dtype=pd.CategoricalDtype(["b", "a", "c"]),
     )
-    expected_uniques = np.array(["a", "b", np.nan], dtype=object)
+    expected_uniques = np.array(["b", "a", np.nan], dtype=object)
 
     uniques, inverse, counts = _unique_categorical(
         values, return_inverse=True, return_counts=True
@@ -155,30 +155,15 @@ def test_unique_categorical_pandas():
 
     assert_array_equal(uniques[:-1], expected_uniques[:-1])
     assert np.isnan(uniques[-1])
-    assert_array_equal(inverse, [0, 2, 1, 0])
-    assert_array_equal(counts, [2, 1, 1])
-
-
-def test_unique_categorical_pandas_mixed_categories():
-    pd = pytest.importorskip("pandas")
-
-    values = pd.Series(
-        [1, "a"],
-        dtype=pd.CategoricalDtype([1, "a"]),
-    )
-
-    with pytest.raises(
-        TypeError,
-        match=".*input argument must be uniformly strings or numbers",
-    ):
-        _unique_categorical(values, return_counts=True)
+    assert_array_equal(inverse, [1, 2, 0, 1])
+    assert_array_equal(counts, [1, 2, 1])
 
 
 def test_unique_categorical_polars():
     pl = pytest.importorskip("polars")
 
     values = pl.Series("x", ["a", None, "b", "a"], dtype=pl.Enum(["b", "a", "c"]))
-    expected_uniques = np.array(["a", "b", np.nan], dtype=object)
+    expected_uniques = np.array(["b", "a", np.nan], dtype=object)
 
     uniques, inverse, counts = _unique_categorical(
         values, return_inverse=True, return_counts=True
@@ -186,8 +171,8 @@ def test_unique_categorical_polars():
 
     assert_array_equal(uniques[:-1], expected_uniques[:-1])
     assert np.isnan(uniques[-1])
-    assert_array_equal(inverse, [0, 2, 1, 0])
-    assert_array_equal(counts, [2, 1, 1])
+    assert_array_equal(inverse, [1, 2, 0, 1])
+    assert_array_equal(counts, [1, 2, 1])
 
 
 def test_unique_categorical_polars_missing_inverse_codes():
@@ -197,9 +182,9 @@ def test_unique_categorical_polars_missing_inverse_codes():
 
     uniques, inverse = _unique_categorical(values, return_inverse=True)
 
-    assert_array_equal(uniques[:-1], ["a", "b"])
+    assert_array_equal(uniques[:-1], ["b", "a"])
     assert np.isnan(uniques[-1])
-    assert_array_equal(inverse, [0, 2, 1])
+    assert_array_equal(inverse, [1, 2, 0])
 
 
 def test_unique_util_with_all_missing_values():

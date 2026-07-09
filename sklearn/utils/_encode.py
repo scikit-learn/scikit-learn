@@ -229,9 +229,24 @@ def _unique_categorical(values, *, return_inverse=False, return_counts=False):
         codes_no_missing[~isna] = codes[~isna].astype(np.intp)
         codes = codes_no_missing
 
+    is_numeric = np.issubdtype(uniques.dtype, np.number)
+    if is_numeric:
+        is_sorted = (uniques[:-1] < uniques[1:]).all()
+        # Polars does not support numerical categories. Pandas sorts them by
+        # default, but user-specified categorical dtypes can still be unordered.
+        # We reject unordered numerical categories because downstream numerical
+        # encoding might rely on sorted categories.
+        if not is_sorted:
+            raise TypeError(
+                "Unsorted categories are not supported for numerical categorical data"
+            )
+
     codes[isna] = uniques.size
     if isna.any():
-        uniques = np.concatenate([uniques.astype(object, copy=False), [np.nan]])
+        if is_numeric:
+            uniques = np.r_[uniques, np.nan]
+        else:
+            uniques = np.r_[uniques.astype(object, copy=False), np.nan]
 
     counts = np.bincount(codes, minlength=uniques.size)
     is_present = counts > 0
@@ -241,32 +256,6 @@ def _unique_categorical(values, *, return_inverse=False, return_counts=False):
         codes = codes_mapping[codes]
         uniques = uniques[is_present]
         counts = counts[is_present]
-
-    has_missing = is_scalar_nan(uniques[-1])
-    n_categories = uniques.size - int(has_missing)
-    uniques_no_missing = uniques[:n_categories]
-
-    try:
-        is_sorted = (uniques_no_missing[:-1] < uniques_no_missing[1:]).all()
-    except TypeError:
-        # Preserve the user-facing mixed-type validation error from `_unique`.
-        _unique(uniques_no_missing)
-        raise
-
-    if not is_sorted:
-        sorted_idx = np.argsort(uniques_no_missing)
-        codes_mapping = np.empty_like(sorted_idx)
-        codes_mapping[sorted_idx] = np.arange(n_categories)
-        codes[~isna] = codes_mapping[codes[~isna]]
-        uniques_no_missing = uniques_no_missing[sorted_idx]
-        counts[:n_categories] = counts[sorted_idx]
-
-    if has_missing:
-        uniques = np.concatenate(
-            [uniques_no_missing.astype(object, copy=False), [np.nan]]
-        )
-    else:
-        uniques = uniques_no_missing
 
     ret = (uniques,)
 

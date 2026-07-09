@@ -1515,8 +1515,8 @@ def test_one_hot_encoder_pandas_categorical_filters_unobserved_categories():
 
     ohe = OneHotEncoder(sparse_output=False).fit(df)
 
-    assert_array_equal(ohe.categories_[0], ["a", "b"])
-    assert_allclose(ohe.transform(df), [[1, 0], [0, 1], [1, 0]])
+    assert_array_equal(ohe.categories_[0], ["b", "a"])
+    assert_allclose(ohe.transform(df), [[0, 1], [1, 0], [0, 1]])
 
 
 def test_one_hot_encoder_pandas_categorical_transform_unknown_category():
@@ -1546,28 +1546,28 @@ def test_one_hot_encoder_pandas_categorical_transform_category_variants():
     )
     ohe = OneHotEncoder(sparse_output=False, handle_unknown="ignore").fit(df)
 
-    assert_array_equal(ohe.categories_[0], ["bear", "cat", "dog"])
+    assert_array_equal(ohe.categories_[0], ["dog", "cat", "bear"])
 
     transform_cases = [
         (
             ["dog", "cat", "bear"],
             ["dog", "cat", "bear"],
-            [[0, 0, 1], [0, 1, 0], [1, 0, 0]],
+            [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
         ),
         (
             ["dog", "cat", "bear"],
             ["cat", "bear", "dog"],
-            [[0, 0, 1], [0, 1, 0], [1, 0, 0]],
+            [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
         ),
         (
             ["dog", "cat"],
             ["cat", "dog"],
-            [[0, 0, 1], [0, 1, 0]],
+            [[1, 0, 0], [0, 1, 0]],
         ),
         (
             ["dog", "bird", "cat"],
             ["cat", "dog", "bear", "bird"],
-            [[0, 0, 1], [0, 0, 0], [0, 1, 0]],
+            [[1, 0, 0], [0, 0, 0], [0, 1, 0]],
         ),
     ]
 
@@ -1592,8 +1592,8 @@ def test_one_hot_encoder_polars_enum_filters_unobserved_categories():
 
     ohe = OneHotEncoder(sparse_output=False).fit(df)
 
-    assert_array_equal(ohe.categories_[0], ["a", "b"])
-    assert_allclose(ohe.transform(df), [[1, 0], [0, 1], [1, 0]])
+    assert_array_equal(ohe.categories_[0], ["b", "a"])
+    assert_allclose(ohe.transform(df), [[0, 1], [1, 0], [0, 1]])
 
 
 def test_one_hot_encoder_polars_categorical_missing_values():
@@ -1604,9 +1604,9 @@ def test_one_hot_encoder_polars_categorical_missing_values():
 
     ohe = OneHotEncoder(sparse_output=False).fit(df)
 
-    assert_array_equal(ohe.categories_[0][:-1], ["a", "b"])
+    assert_array_equal(ohe.categories_[0][:-1], ["b", "a"])
     assert np.isnan(ohe.categories_[0][-1])
-    assert_allclose(ohe.transform(df), [[1, 0, 0], [0, 0, 1], [0, 1, 0]])
+    assert_allclose(ohe.transform(df), [[0, 1, 0], [0, 0, 1], [1, 0, 0]])
 
 
 def test_one_hot_encoder_polars_categorical_transform_unknown_category():
@@ -1636,28 +1636,28 @@ def test_one_hot_encoder_polars_enum_transform_category_variants():
     )
     ohe = OneHotEncoder(sparse_output=False, handle_unknown="ignore").fit(df)
 
-    assert_array_equal(ohe.categories_[0], ["bear", "cat", "dog"])
+    assert_array_equal(ohe.categories_[0], ["dog", "cat", "bear"])
 
     transform_cases = [
         (
             ["dog", "cat", "bear"],
             ["dog", "cat", "bear"],
-            [[0, 0, 1], [0, 1, 0], [1, 0, 0]],
+            [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
         ),
         (
             ["dog", "cat", "bear"],
             ["cat", "bear", "dog"],
-            [[0, 0, 1], [0, 1, 0], [1, 0, 0]],
+            [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
         ),
         (
             ["dog", "cat"],
             ["cat", "dog"],
-            [[0, 0, 1], [0, 1, 0]],
+            [[1, 0, 0], [0, 1, 0]],
         ),
         (
             ["dog", "bird", "cat"],
             ["cat", "dog", "bear", "bird"],
-            [[0, 0, 1], [0, 0, 0], [0, 1, 0]],
+            [[1, 0, 0], [0, 0, 0], [0, 1, 0]],
         ),
     ]
 
@@ -1890,8 +1890,8 @@ def test_ordinal_encoder_pandas_categorical_filters_unobserved_categories():
 
     ordinal = OrdinalEncoder().fit(df)
 
-    assert_array_equal(ordinal.categories_[0], ["a", "b"])
-    assert_allclose(ordinal.transform(df), [[0], [1], [0]])
+    assert_array_equal(ordinal.categories_[0], ["b", "a"])
+    assert_allclose(ordinal.transform(df), [[1], [0], [1]])
 
 
 def test_ordinal_encoder_polars_enum_filters_unobserved_categories():
@@ -1902,8 +1902,8 @@ def test_ordinal_encoder_polars_enum_filters_unobserved_categories():
 
     ordinal = OrdinalEncoder().fit(df)
 
-    assert_array_equal(ordinal.categories_[0], ["a", "b"])
-    assert_allclose(ordinal.transform(df), [[0], [1], [0]])
+    assert_array_equal(ordinal.categories_[0], ["b", "a"])
+    assert_allclose(ordinal.transform(df), [[1], [0], [1]])
 
 
 @pytest.mark.parametrize(
@@ -2474,7 +2474,7 @@ def test_ordinal_encoder_infrequent_pandas_categorical_unobserved_categories():
 
     ordinal = OrdinalEncoder(max_categories=2).fit(df)
 
-    assert_array_equal(ordinal.categories_[0], ["a", "b"])
+    assert_array_equal(ordinal.categories_[0], ["b", "a"])
     assert_array_equal(ordinal.infrequent_categories_[0], ["b"])
     assert_allclose(ordinal.transform(df), [[0], [1], [0]])
 
@@ -2487,7 +2487,7 @@ def test_ordinal_encoder_infrequent_polars_enum_unobserved_categories():
 
     ordinal = OrdinalEncoder(max_categories=2).fit(df)
 
-    assert_array_equal(ordinal.categories_[0], ["a", "b"])
+    assert_array_equal(ordinal.categories_[0], ["b", "a"])
     assert_array_equal(ordinal.infrequent_categories_[0], ["b"])
     assert_allclose(ordinal.transform(df), [[0], [1], [0]])
 
