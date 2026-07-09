@@ -2669,44 +2669,25 @@ def add_dummy_feature(X, value=1.0):
 
 def _sparse_column_percentile(column_nnz_data, n_zeros, percentiles):
     """Compute percentiles of a sparse column without densifying it.
-
-    Equivalent to::
-
-        np.nanpercentile(
-            np.concatenate([column_nnz_data, np.zeros(n_zeros)]),
-            percentiles,
-        )
-
-    but without allocating the zero-padded array. Assumes all values
-    are non-negative, so implicit zeros occupy the lowest ranks when
-    sorted (matches the QuantileTransformer requirement that sparse
-    input be nonnegative).
-
-    Parameters
-    ----------
-    column_nnz_data : ndarray of shape (n_nonzero,)
-        The nonzero values in the column.
-
-    n_zeros : int
-        The number of implicit zeros (n_samples - n_nonzero).
-
-    percentiles : array-like of shape (n_percentiles,)
-        Percentiles to compute, each in [0, 100].
-
-    Returns
-    -------
-    ndarray of shape (n_percentiles,)
-        The computed percentile values.
+    ...
     """
     percentiles = np.asarray(percentiles, dtype=float)
+
+    # nanpercentile ignores NaNs entirely -- match that behavior by
+    # excluding them from both the data and the total count.
+    nan_mask = np.isnan(column_nnz_data)
+    if nan_mask.any():
+        column_nnz_data = column_nnz_data[~nan_mask]
+
     n_total = n_zeros + column_nnz_data.size
 
     if n_total == 0:
-        return np.zeros(percentiles.shape)
+        # all-NaN column (no zeros, no valid non-zero values):
+        # nanpercentile returns nan in this case
+        return np.full(percentiles.shape, np.nan)
 
     sorted_nnz = np.sort(column_nnz_data)
 
-    # Linear-interpolation rank, matching numpy's default percentile method
     idx = percentiles / 100 * (n_total - 1)
     lo = np.floor(idx).astype(int)
     hi = np.ceil(idx).astype(int)
