@@ -43,6 +43,7 @@ from sklearn.utils import (
 from sklearn.utils._array_api import (
     _is_numpy_namespace,
     _matching_numpy_dtype,
+    _ravel,
     check_same_namespace,
     get_namespace,
     get_namespace_and_device,
@@ -398,6 +399,9 @@ def _logistic_regression_path(
 
     solver = _check_solver(solver, penalty, dual)
     xp, _, device_ = get_namespace_and_device(X)
+    # Only newton-cg has complete support of the array API, lbfgs still needs
+    # coef / w0 as numpy arrays.
+    coef_as_xp = solver == "newton-cg"
 
     # Preprocessing.
     if check_input:
@@ -440,9 +444,17 @@ def _logistic_regression_path(
         sample_weight *= class_weight_
 
     if is_binary:
-        w0 = np.zeros(
-            n_features + int(fit_intercept), dtype=_matching_numpy_dtype(X, xp=xp)
-        )
+        if coef_as_xp:
+            w0 = xp.zeros(
+                n_features + int(fit_intercept),
+                dtype=X.dtype,
+                device=device_,
+            )
+        else:
+            w0 = np.zeros(
+                n_features + int(fit_intercept),
+                dtype=_matching_numpy_dtype(X, xp=xp),
+            )
         # classes[1] is the "positive label"
         mask = move_to(y == classes[1], xp=xp, device=device_)
         y_bin = xp.ones(y.shape, dtype=X.dtype, device=device_)
@@ -457,12 +469,19 @@ def _logistic_regression_path(
         # i.e. y as a 1d-array of integers. LabelEncoder also saves memory
         # compared to LabelBinarizer, especially when n_classes is large.
         Y_multi = xp.asarray(le.transform(y), dtype=X.dtype, device=device_)
-        # It is important that w0 is F-contiguous.
-        w0 = np.zeros(
-            (size(classes), n_features + int(fit_intercept)),
-            order="F",
-            dtype=_matching_numpy_dtype(X, xp=xp),
-        )
+        if coef_as_xp:
+            w0 = xp.zeros(
+                (size(classes), n_features + int(fit_intercept)),
+                dtype=X.dtype,
+                device=device_,
+            )
+        else:
+            # It is important that w0 is F-contiguous.
+            w0 = np.zeros(
+                (size(classes), n_features + int(fit_intercept)),
+                order="F",
+                dtype=_matching_numpy_dtype(X, xp=xp),
+            )
 
     # IMPORTANT NOTE:
     # All solvers relying on LinearModelLoss need to scale the penalty with n_samples
@@ -480,13 +499,15 @@ def _logistic_regression_path(
     if coef is not None:
         if is_binary:
             if coef.ndim == 1 and coef.shape[0] == n_features + int(fit_intercept):
-                w0[:] = coef
+                w0[:] = move_to(coef, xp=xp, device=device_) if coef_as_xp else coef
             elif (
                 coef.ndim == 2
                 and coef.shape[0] == 1
                 and coef.shape[1] == n_features + int(fit_intercept)
             ):
-                w0[:] = coef[0]
+                w0[:] = (
+                    move_to(coef[0], xp=xp, device=device_) if coef_as_xp else coef[0]
+                )
             else:
                 msg = (
                     f"Initialization coef is of shape {coef.shape}, expected shape "
@@ -499,7 +520,9 @@ def _logistic_regression_path(
                 and coef.shape[0] == n_classes
                 and coef.shape[1] == n_features + int(fit_intercept)
             ):
-                w0[:, : coef.shape[1]] = coef
+                w0[:, : coef.shape[1]] = (
+                    move_to(coef, xp=xp, device=device_) if coef_as_xp else coef
+                )
             else:
                 msg = (
                     f"Initialization coef is of shape {coef.shape}, expected shape "
@@ -523,7 +546,7 @@ def _logistic_regression_path(
             func = loss.loss
             grad = loss.gradient
             hess = loss.gradient_hessian_product  # hess = [gradient, hessp]
-        warm_start_sag = {"coef": np.expand_dims(w0, axis=1)}
+        warm_start_sag = {"coef": w0[:, None]}
     else:  # multinomial
         loss = LinearModelLoss(
             base_loss=(
@@ -541,14 +564,17 @@ def _logistic_regression_path(
             # i.e. 1d-arrays. LinearModelLoss expects classes to be contiguous and
             # reconstructs the 2d-array via w0.reshape((n_classes, -1), order="F").
             # As w0 is F-contiguous, ravel(order="F") also avoids a copy.
-            w0 = w0.ravel(order="F")
+            if _is_numpy_namespace(xp) or not coef_as_xp:
+                w0 = w0.ravel(order="F")
+            else:
+                w0 = _ravel(w0.T, xp=xp)
         if solver == "lbfgs":
             func = loss.loss_gradient
         elif solver == "newton-cg":
             func = loss.loss
             grad = loss.gradient
             hess = loss.gradient_hessian_product  # hess = [gradient, hessp]
-        warm_start_sag = {"coef": w0.T}
+        warm_start_sag = {"coef": w0.T} if w0.ndim > 1 else {"coef": w0}
 
     coefs = list()
     n_iter = xp.zeros(len(Cs), dtype=xp.int32, device=device_)
@@ -606,6 +632,10 @@ def _logistic_regression_path(
             w0, loss = opt_res.x, opt_res.fun
             if lbfgs_bridge is not None:
                 lbfgs_bridge.close()
+            if fit_intercept and not is_binary:
+                # Use freedom to add the same constant to all classes in order to
+                # achieve the symmetric parametrization with sum(intercept) = 0
+                w0[-n_classes:] -= np.mean(w0[-n_classes:])
         elif solver == "newton-cg":
             l2_reg_strength = 1.0 / (C * sw_sum)
             args = (X, target, sample_weight, l2_reg_strength, n_threads)
@@ -619,6 +649,10 @@ def _logistic_regression_path(
                 tol=tol,
                 verbose=verbose,
             )
+            if fit_intercept and not is_binary:
+                # Use freedom to add the same constant to all classes in order to
+                # achieve the symmetric parametrization with sum(intercept) = 0
+                w0[-n_classes:] -= xp.mean(w0[-n_classes:])
         elif solver == "newton-cholesky":
             l2_reg_strength = 1.0 / (C * sw_sum)
             sol = NewtonCholeskySolver(
@@ -699,19 +733,19 @@ def _logistic_regression_path(
             raise ValueError(msg)
 
         if is_binary:
-            coefs.append(
-                xp.asarray(w0.copy(order=coefs_order), dtype=X.dtype, device=device_)
-            )
+            if _is_numpy_namespace(xp):
+                coefs.append(np.asarray(w0.copy(order=coefs_order), dtype=X.dtype))
+            else:
+                coefs.append(xp.asarray(w0, copy=True, dtype=X.dtype, device=device_))
         else:
             if solver in ["lbfgs", "newton-cg", "newton-cholesky"]:
-                multi_w0 = np.reshape(w0, (n_classes, -1), order="F")
+                if _is_numpy_namespace(xp) or not coef_as_xp:
+                    multi_w0 = np.reshape(w0, (n_classes, -1), order="F")
+                else:
+                    multi_w0 = xp.reshape(w0, (-1, n_classes)).T
             else:
                 multi_w0 = w0
-            coefs.append(
-                xp.asarray(
-                    multi_w0.copy(order=coefs_order), dtype=X.dtype, device=device_
-                )
-            )
+            coefs.append(xp.asarray(multi_w0, copy=True, dtype=X.dtype, device=device_))
 
         n_iter[i] = n_iter_i
 
