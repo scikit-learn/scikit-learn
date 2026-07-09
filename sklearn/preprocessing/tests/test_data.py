@@ -1500,6 +1500,25 @@ def test_quantile_transform_sparse_no_densify_large_n_samples():
     assert_allclose(transformer_small.quantiles_.ravel(), expected)
 
 
+def test_sparse_column_percentile_all_zeros_and_nan():
+    from sklearn.preprocessing._data import _sparse_column_percentile
+
+    # all-NaN, no implicit zeros: should return all-NaN, matching
+    # np.nanpercentile's behavior on an all-NaN input
+    result = _sparse_column_percentile(
+        np.array([np.nan, np.nan]), n_zeros=0, percentiles=np.array([0, 50, 100])
+    )
+    assert np.all(np.isnan(result))
+
+    # NaNs present alongside implicit zeros
+    result = _sparse_column_percentile(
+        np.array([1.0, np.nan, 3.0]), n_zeros=3, percentiles=np.array([0, 50, 100])
+    )
+    dense_equiv = np.array([1.0, np.nan, 3.0, 0, 0, 0])
+    expected = np.nanpercentile(dense_equiv, [0, 50, 100])
+    assert_allclose(result, expected)
+
+
 def test_quantile_transform_dense_toy():
     X = np.array(
         [[0, 2, 2.6], [25, 4, 4.1], [50, 6, 2.3], [75, 8, 9.5], [100, 10, 0.1]]
