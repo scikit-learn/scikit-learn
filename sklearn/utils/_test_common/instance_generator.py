@@ -167,6 +167,7 @@ from sklearn.preprocessing import (
     KBinsDiscretizer,
     KernelCenterer,
     LabelEncoder,
+    MaxAbsScaler,
     MinMaxScaler,
     Normalizer,
     OneHotEncoder,
@@ -1118,6 +1119,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
+    },
+    MaxAbsScaler: {
+        "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     MinMaxScaler: {
         "check_array_api_same_namespace": "check_same_namespace not yet added",

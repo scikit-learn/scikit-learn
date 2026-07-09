@@ -13,6 +13,7 @@ from sklearn.decomposition import PCA
 from sklearn.decomposition._pca import _assess_dimension, _infer_dimension
 from sklearn.utils._array_api import (
     _atol_for_type,
+    get_namespace,
     move_to,
     yield_namespace_device_dtype_combinations,
 )
@@ -1096,35 +1097,138 @@ def test_pca_mle_array_api_compliance(
         assert all(np.abs(extra_variance_xp_np - reference_variance) < atol)
 
 
+# Configurations covering every solver, including the randomized power-iteration
+# normalizer variants that previously raised/warned under array API dispatch.
+PCA_ARRAY_API_INVARIANT_CONFIGS = [
+    {"svd_solver": "full"},
+    {"svd_solver": "covariance_eigh"},
+    {"svd_solver": "arpack"},
+    {"svd_solver": "randomized", "power_iteration_normalizer": "QR"},
+    {"svd_solver": "randomized", "power_iteration_normalizer": "LU"},
+    {"svd_solver": "randomized", "power_iteration_normalizer": "auto"},
+    {"svd_solver": "auto"},
+]
+
+
+def _pca_array_api_config_id(config):
+    return "-".join(f"{k}={v}" for k, v in config.items())
+
+
+def _assert_pca_attrs_close_to_reference(estimator, reference, atol):
+    # SVD components have a sign ambiguity, hence the comparison on absolute
+    # values; numpy/scipy/torch SVD implementations also differ at the ULP level
+    # so a loose tolerance is used.
+    components = move_to(estimator.components_, xp=np, device="cpu")
+    assert_allclose(
+        np.abs(components), np.abs(reference.components_), atol=atol, rtol=0
+    )
+    for attr in ("mean_", "explained_variance_", "singular_values_"):
+        value = move_to(getattr(estimator, attr), xp=np, device="cpu")
+        assert_allclose(value, getattr(reference, attr), atol=atol, rtol=0)
+
+
 @pytest.mark.skipif(
     os.environ.get("SCIPY_ARRAY_API") != "1", reason="SCIPY_ARRAY_API not set to 1."
 )
-def test_array_api_error_and_warnings_on_unsupported_params():
-    xp = pytest.importorskip("array_api_strict")
-    iris_xp = xp.asarray(iris.data)
+@pytest.mark.parametrize(
+    "config", PCA_ARRAY_API_INVARIANT_CONFIGS, ids=_pca_array_api_config_id
+)
+@pytest.mark.parametrize("input_kind", ["numpy", "list", "torch"])
+def test_pca_array_api_dispatch_invariants_cpu(input_kind, config):
+    """Invariant 1: NumPy/list/torch-CPU inputs work with every solver, both with
+    and without array API dispatch.
 
+    - With dispatch off, fitted attributes are NumPy arrays.
+    - With dispatch on, fitted attributes live in the input namespace/device.
+    - Results match the dispatch-off NumPy reference (the strict no-op for NumPy).
+    """
+    X_np = iris.data.astype(np.float64)
+
+    # Reference fit: dispatch off on plain NumPy.
+    with config_context(array_api_dispatch=False):
+        reference = PCA(n_components=2, random_state=0, **config).fit(X_np)
+
+    atol = 1e-6
+
+    if input_kind == "numpy":
+        X = X_np
+    elif input_kind == "list":
+        X = X_np.tolist()
+    else:
+        torch = pytest.importorskip("torch")
+        X = torch.asarray(X_np)
+
+    # The namespace we expect fitted attributes to live in when dispatch is on.
+    with config_context(array_api_dispatch=True):
+        expected_xp, _ = get_namespace(X)
+
+    # Dispatch off: works for any input, attributes are NumPy.
+    with config_context(array_api_dispatch=False):
+        estimator_off = PCA(n_components=2, random_state=0, **config).fit(X)
+    assert isinstance(estimator_off.components_, np.ndarray)
+    _assert_pca_attrs_close_to_reference(estimator_off, reference, atol)
+
+    # Dispatch on: works for any input, attributes are in the input namespace,
+    # and no Array-API/LU fallback warning is emitted (strict no-op behaviour).
+    with config_context(array_api_dispatch=True):
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            estimator_on = PCA(n_components=2, random_state=0, **config).fit(X)
+        assert not [w for w in caught if "Array API" in str(w.message)], (
+            "unexpected Array API fallback warning under dispatch"
+        )
+        attr_xp, _ = get_namespace(estimator_on.components_)
+        assert attr_xp.__name__ == expected_xp.__name__
+        if input_kind == "torch":
+            assert array_device(estimator_on.components_) == array_device(X)
+    _assert_pca_attrs_close_to_reference(estimator_on, reference, atol)
+
+
+@pytest.mark.skipif(
+    os.environ.get("SCIPY_ARRAY_API") != "1", reason="SCIPY_ARRAY_API not set to 1."
+)
+def test_pca_arpack_non_cpu_array_api_raises(monkeypatch):
+    """Invariant 2 (deterministic): a non-CPU array API input combined with
+    ``svd_solver='arpack'`` raises a clear, solver-specific error under dispatch
+    instead of a backend "cannot convert" error.
+
+    No GPU is required: ``_is_numpy_consumable`` is patched to report the input as
+    non-host so the error path is exercised deterministically.
+    """
+    torch = pytest.importorskip("torch")
+    from sklearn.decomposition import _pca
+
+    monkeypatch.setattr(_pca, "_is_numpy_consumable", lambda array: False)
+
+    X = torch.asarray(iris.data.astype(np.float64))
     pca = PCA(n_components=2, svd_solver="arpack", random_state=0)
-    expected_msg = re.escape(
-        "PCA with svd_solver='arpack' is not supported for Array API inputs."
-    )
-    with pytest.raises(ValueError, match=expected_msg):
-        with config_context(array_api_dispatch=True):
-            pca.fit(iris_xp)
+    with config_context(array_api_dispatch=True):
+        with pytest.raises(ValueError, match=re.escape("svd_solver='arpack'")):
+            pca.fit(X)
 
-    pca.set_params(svd_solver="randomized", power_iteration_normalizer="LU")
-    expected_msg = re.escape(
-        "Array API does not support LU factorization. Set"
-        " `power_iteration_normalizer='QR'` instead."
-    )
-    with pytest.raises(ValueError, match=expected_msg):
-        with config_context(array_api_dispatch=True):
-            pca.fit(iris_xp)
 
-    pca.set_params(svd_solver="randomized", power_iteration_normalizer="auto")
-    expected_msg = re.escape(
-        "Array API does not support LU factorization, falling back to QR instead. Set"
-        " `power_iteration_normalizer='QR'` explicitly to silence this warning."
-    )
-    with pytest.warns(UserWarning, match=expected_msg):
-        with config_context(array_api_dispatch=True):
-            pca.fit(iris_xp)
+@pytest.mark.skipif(
+    os.environ.get("SCIPY_ARRAY_API") != "1", reason="SCIPY_ARRAY_API not set to 1."
+)
+def test_pca_arpack_gpu_array_api():
+    """Invariant 2 (real GPU): ``svd_solver='arpack'`` on a GPU tensor raises a
+    solver-specific error under dispatch, and the usual backend conversion error
+    when dispatch is off (unchanged from ``main``). Skipped without a GPU."""
+    torch = pytest.importorskip("torch")
+    if torch.cuda.is_available():
+        device = "cuda"
+    elif torch.backends.mps.is_available():
+        device = "mps"
+    else:
+        pytest.skip("no torch GPU device (cuda/mps) available")
+
+    X = torch.asarray(iris.data.astype(np.float32), device=device)
+    pca = PCA(n_components=2, svd_solver="arpack", random_state=0)
+
+    with config_context(array_api_dispatch=True):
+        with pytest.raises(ValueError, match=re.escape("svd_solver='arpack'")):
+            pca.fit(X)
+
+    with config_context(array_api_dispatch=False):
+        with pytest.raises(Exception):
+            clone(pca).fit(X)

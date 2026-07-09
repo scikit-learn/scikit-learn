@@ -25,6 +25,7 @@ from sklearn.utils._array_api import (
     _asarray_with_order,
     _is_numpy_namespace,
     _max_precision_float_dtype,
+    _should_coerce_to_numpy,
     get_namespace,
     get_namespace_and_device,
     move_to,
@@ -3026,6 +3027,32 @@ def validate_data(
 
     if no_val_X and no_val_y:
         raise ValueError("Validation should be done on X, y or both.")
+
+    # When array_api_dispatch is enabled, estimators whose tags report
+    # array_api_support=False cannot run on non-NumPy inputs. At fit time, coerce
+    # NumPy-consumable inputs to NumPy so that these estimators behave exactly as
+    # they do with dispatch disabled. Inputs that NumPy cannot consume (e.g.
+    # arrays on a non-CPU device) raise during the conversion below, matching the
+    # dispatch-off behaviour. Coercion is intentionally limited to fit
+    # (reset=True): at predict/transform time the input namespace must stay
+    # consistent with the (already coerced or native) fitted attributes.
+    # XXX Revisit moving `y` when we have consistent implementation of
+    # XXX "everything follows X". Though for estimators that are not aware
+    # XXX of array API we might still need to move y here?
+    if reset and not skip_check_array:
+        coercion_arrays = []
+        if not no_val_X:
+            coercion_arrays.append(X)
+        if not no_val_y:
+            coercion_arrays.append(y)
+
+        coerce_to_numpy, _ = _should_coerce_to_numpy(_estimator, *coercion_arrays)
+
+        if coerce_to_numpy:
+            if not no_val_X:
+                X = np.asarray(X)
+            if not no_val_y:
+                y = np.asarray(y)
 
     default_check_params = {"estimator": _estimator}
     check_params = {**default_check_params, **check_params}

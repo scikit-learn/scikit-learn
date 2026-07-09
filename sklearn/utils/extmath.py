@@ -338,11 +338,15 @@ def _randomized_range_finder(
     else:
         Q = xp.asarray(Q)
 
-    # Deal with "auto" mode
+    # Deal with "auto" mode. LU factorization is not part of the array API, but
+    # it is available for NumPy inputs even when array_api_dispatch is enabled,
+    # hence the guard `not _is_numpy_namespace(xp)`
+    # rather than `is_array_api_compliant`.
+    use_array_api = not _is_numpy_namespace(xp)
     if power_iteration_normalizer == "auto":
         if n_iter <= 2:
             power_iteration_normalizer = "none"
-        elif is_array_api_compliant:
+        elif use_array_api:
             # XXX: https://github.com/data-apis/array-api/issues/627
             warnings.warn(
                 "Array API does not support LU factorization, falling back to QR"
@@ -352,7 +356,7 @@ def _randomized_range_finder(
             power_iteration_normalizer = "QR"
         else:
             power_iteration_normalizer = "LU"
-    elif power_iteration_normalizer == "LU" and is_array_api_compliant:
+    elif power_iteration_normalizer == "LU" and use_array_api:
         raise ValueError(
             "Array API does not support LU factorization. Set "
             "`power_iteration_normalizer='QR'` instead."
