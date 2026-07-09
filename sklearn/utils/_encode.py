@@ -9,7 +9,7 @@ from typing import NamedTuple
 import narwhals.stable.v2 as nw
 import numpy as np
 
-from sklearn.utils._array_api import _isin, device, get_namespace, xpx
+from sklearn.utils._array_api import device, get_namespace
 from sklearn.utils._missing import is_scalar_nan
 
 
@@ -22,7 +22,7 @@ def _unique(values, *, return_inverse=False, return_counts=False):
     Parameters
     ----------
     values : ndarray
-        Values to check for unknowns.
+        Values to find uniques from.
 
     return_inverse : bool, default=False
         If True, also return the indices of the unique values.
@@ -168,18 +168,21 @@ class _nandict(dict):
     def __missing__(self, key):
         if hasattr(self, "nan_value") and is_scalar_nan(key):
             return self.nan_value
-        raise KeyError(key)
+        return -1
 
 
 def _map_to_integer(values, uniques):
-    """Map values based on its position in uniques."""
+    """Map values based on their position in uniques.
+
+    Values not present in `uniques` are encoded as -1.
+    """
     xp, _ = get_namespace(values, uniques)
     table = _nandict({val: i for i, val in enumerate(uniques)})
     return xp.asarray([table[v] for v in values], device=device(values))
 
 
 def _unique_python(values, *, return_inverse, return_counts):
-    # Only used in `_uniques`, see docstring there for details
+    # Only used in `_unique`, see docstring there for details
     try:
         uniques_set = set(values)
         uniques_set, missing_values = _extract_missing(uniques_set)
@@ -204,16 +207,13 @@ def _unique_python(values, *, return_inverse, return_counts):
     return ret[0] if len(ret) == 1 else ret
 
 
-def _unique_categorical(values, *, return_counts=False, return_sorted=True):
+def _get_categories_and_codes(values):
     """Return categorical categories, integer codes, and the missing value mask."""
     if hasattr(values, "cat") and hasattr(values.cat, "categories"):
         # for pandas, the Narwhals path below doesn't work
         categories = values.cat.categories.to_numpy()
-        codes = values.cat.codes.to_numpy()
+        codes = values.cat.codes.to_numpy().astype(np.intp, copy=True)
         isna = codes == -1
-        if isna.any():
-            codes[isna] = categories.size
-            categories = np.r_[categories, np.nan]
     else:
         values = nw.from_native(values, allow_series=True)
         categories = values.cat.get_categories().to_numpy()
@@ -225,80 +225,69 @@ def _unique_categorical(values, *, return_counts=False, return_sorted=True):
             if codes.dtype.kind == "f"
             else np.zeros_like(codes, dtype=bool)
         )
+        codes_no_missing = np.full(codes.shape, -1, dtype=np.intp)
+        codes_no_missing[~isna] = codes[~isna].astype(np.intp)
+        codes = codes_no_missing
 
-        codes_no_missing = np.zeros_like(codes, dtype=int)
-        codes_no_missing[~isna] = codes[~isna].astype(int)
+    codes[isna] = categories.size
+    return categories, codes, isna
 
-    counts = np.bincount(codes, minlength=categories.size)
 
+def _unique_categorical(values, *, return_inverse=False, return_counts=False):
+    """Find unique values for categorical arrays without materializing values."""
+    uniques, codes, isna = _get_categories_and_codes(values)
+    if isna.any():
+        uniques = np.concatenate([uniques.astype(object, copy=False), [np.nan]])
+
+    counts = np.bincount(codes, minlength=uniques.size)
     is_present = counts > 0
     if not is_present.all():
-        categories = categories[is_present]
+        present_indices = np.flatnonzero(is_present)
+        codes_mapping = np.empty_like(is_present, dtype=np.intp)
+        codes_mapping[present_indices] = np.arange(present_indices.size)
+        codes = codes_mapping[codes]
+        uniques = uniques[is_present]
         counts = counts[is_present]
-        # TODO: re-map codes
 
-    if not return_sorted:
-        if return_counts:
-            return categories, counts
-
-        return categories
+    has_missing = uniques.size > 0 and is_scalar_nan(uniques[-1])
+    n_categories = uniques.size - int(has_missing)
+    uniques_no_missing = uniques[:n_categories]
 
     try:
-        is_sorted = (categories[:-1] < categories[1:]).all()
+        is_sorted = (uniques_no_missing[:-1] < uniques_no_missing[1:]).all()
     except TypeError:
         # Preserve the user-facing mixed-type validation error from `_unique`.
-        _unique(categories)
+        _unique(uniques_no_missing)
         raise
 
     if not is_sorted:
-        sorted_idx = np.argsort(categories)
-        categories = categories[sorted_idx]
-        counts = counts[sorted_idx]
-        # TODO:
-        codes_mapping = None
+        sorted_idx = np.argsort(uniques_no_missing)
+        codes_mapping = np.empty_like(sorted_idx)
+        codes_mapping[sorted_idx] = np.arange(n_categories)
+        codes[~isna] = codes_mapping[codes[~isna]]
+        uniques_no_missing = uniques_no_missing[sorted_idx]
+        counts[:n_categories] = counts[sorted_idx]
+
+    if has_missing:
+        uniques = np.concatenate(
+            [uniques_no_missing.astype(object, copy=False), [np.nan]]
+        )
+    else:
+        uniques = uniques_no_missing
+
+    ret = (uniques,)
+
+    if return_inverse:
+        ret += (codes,)
 
     if return_counts:
-        return categories, counts
+        ret += (counts,)
 
-    return categories
-
-
-def _unique_categorical(values, *, return_counts=False):
-    uniques, codes, isna = _get_categories_and_codes(values)
-    counts = np.bincount(codes, minlength=n_categories)
-    try:
-        is_sorted = (uniques[:-1] < uniques[1:]).all()
-    except TypeError:
-        # Preserve the user-facing mixed-type validation error from `_unique`.
-        _unique(uniques)
-        raise
-
-    if not is_sorted:
-        sorted_idx = np.argsort(uniques)
-        uniques = uniques[sorted_idx]
-
-    n_categories = uniques.size
-    n_missing = isna.sum()
-    has_missing = n_missing > 0
-    if has_missing:
-        uniques = uniques.astype(object, copy=False)
-        uniques = np.r_[uniques, np.nan]
-
-    if not return_counts:
-        return uniques
-
-    counts = np.bincount(codes[~isna], minlength=n_categories)
-    if not is_sorted:
-        counts = counts[sorted_idx]
-
-    if has_missing:
-        counts = np.r_[counts, n_missing]
-
-    return uniques, counts
+    return ret[0] if len(ret) == 1 else ret
 
 
-def _encode(values, *, uniques, check_unknown=True):
-    """Helper function to encode values into [0, n_uniques - 1].
+def _encode_labels(values, *, uniques):
+    """Encode labels into [0, n_uniques - 1].
 
     Uses pure python method for object dtype, and numpy method for
     all other dtypes.
@@ -307,6 +296,8 @@ def _encode(values, *, uniques, check_unknown=True):
     the case. The calling method needs to ensure this for all non-object
     values.
 
+    Unknown values raise a ValueError.
+
     Parameters
     ----------
     values : ndarray
@@ -314,114 +305,78 @@ def _encode(values, *, uniques, check_unknown=True):
     uniques : ndarray
         The unique values in `values`. If the dtype is not object, then
         `uniques` needs to be sorted.
-    check_unknown : bool, default=True
-        If True, check for values in `values` that are not in `unique`
-        and raise an error. This is ignored for object dtype, and treated as
-        True in this case. This parameter is useful for
-        _BaseEncoder._transform() to avoid calling _check_unknown()
-        twice.
 
     Returns
     -------
     encoded : ndarray
-        Encoded values
+        Encoded values.
+
+    Raises
+    ------
+    ValueError
+        If `values` contains labels that are not in `uniques`.
     """
-    xp, _ = get_namespace(values, uniques)
-    if not xp.isdtype(values.dtype, "numeric"):
-        try:
-            return _map_to_integer(values, uniques)
-        except KeyError as e:
-            raise ValueError(f"y contains previously unseen labels: {e}")
-    else:
-        if check_unknown:
-            diff = _check_unknown(values, uniques)
-            if diff:
-                raise ValueError(f"y contains previously unseen labels: {diff}")
-        return xp.searchsorted(uniques, values)
+    encoded, diff = _encode(values, uniques=uniques, return_diff=True)
+    if diff.size:
+        raise ValueError(f"y contains previously unseen labels: {diff}")
+    return encoded
 
 
-def _check_unknown(values, known_values, return_mask=False):
-    """
-    Helper function to check for unknowns in values to be encoded.
+def _encode(values, *, uniques, return_diff=False):
+    """Encode values into [0, n_uniques - 1].
 
     Uses pure python method for object dtype, and numpy method for
     all other dtypes.
+    The numpy method has the limitation that the `uniques` need to
+    be sorted. Importantly, this is not checked but assumed to already be
+    the case. The calling method needs to ensure this for all non-object
+    values.
+
+    Values that are not present in `uniques` are encoded as -1.
 
     Parameters
     ----------
-    values : array
-        Values to check for unknowns.
-    known_values : array
-        Known values. Must be unique.
-    return_mask : bool, default=False
-        If True, return a mask of the same shape as `values` indicating
-        the valid values.
+    values : ndarray
+        Values to encode.
+    uniques : ndarray
+        The unique values in `values`. If the dtype is not object, then
+        `uniques` needs to be sorted.
+    return_diff : bool, default=False
+        If True, also return the unique values in `values` that are not
+        present in `uniques`.
 
     Returns
     -------
-    diff : list
-        The unique values present in `values` and not in `know_values`.
-    valid_mask : boolean array
-        Additionally returned if ``return_mask=True``.
-
+    encoded : ndarray
+        Encoded values.
+    diff : ndarray
+        The unique values present in `values` and not in `uniques`. Only
+        returned if ``return_diff=True``.
     """
-    xp, _ = get_namespace(values, known_values)
-    valid_mask = None
-
+    xp, _ = get_namespace(values, uniques)
     if not xp.isdtype(values.dtype, "numeric"):
-        values_set = set(values)
-        values_set, missing_in_values = _extract_missing(values_set)
-
-        uniques_set = set(known_values)
-        uniques_set, missing_in_uniques = _extract_missing(uniques_set)
-        diff = values_set - uniques_set
-
-        nan_in_diff = missing_in_values.nan and not missing_in_uniques.nan
-        none_in_diff = missing_in_values.none and not missing_in_uniques.none
-
-        def is_valid(value):
-            return (
-                value in uniques_set
-                or (missing_in_uniques.none and value is None)
-                or (missing_in_uniques.nan and is_scalar_nan(value))
-            )
-
-        if return_mask:
-            if diff or nan_in_diff or none_in_diff:
-                valid_mask = xp.array([is_valid(value) for value in values])
-            else:
-                valid_mask = xp.ones(len(values), dtype=xp.bool)
-
-        diff = list(diff)
-        if none_in_diff:
-            diff.append(None)
-        if nan_in_diff:
-            diff.append(np.nan)
+        encoded = _map_to_integer(values, uniques)
     else:
-        unique_values = xp.unique_values(values)
-        diff = xpx.setdiff1d(unique_values, known_values, assume_unique=True, xp=xp)
-        if return_mask:
-            if diff.size:
-                valid_mask = _isin(values, known_values, xp)
-            else:
-                valid_mask = xp.ones(len(values), dtype=xp.bool)
+        encoded = xp.searchsorted(uniques, values)
+        if uniques.size:
+            encoded_safe = xp.minimum(encoded, uniques.shape[0] - 1)
+            matches = (encoded < uniques.shape[0]) & (uniques[encoded_safe] == values)
 
-        # check for nans in the known_values
-        if xp.any(xp.isnan(known_values)):
-            diff_is_nan = xp.isnan(diff)
-            if xp.any(diff_is_nan):
-                # removes nan from valid_mask
-                if diff.size and return_mask:
-                    is_nan = xp.isnan(values)
-                    valid_mask[is_nan] = 1
+            if xp.any(xp.isnan(uniques)):
+                matches |= (
+                    (encoded < uniques.shape[0])
+                    & xp.isnan(uniques[encoded_safe])
+                    & xp.isnan(values)
+                )
+        else:
+            matches = xp.zeros_like(encoded, dtype=xp.bool)
+        encoded[~matches] = -1
 
-                # remove nan from diff
-                diff = diff[~diff_is_nan]
-        diff = list(diff)
+    if return_diff:
+        diff = _unique(values[encoded == -1])
+        return encoded, diff
 
-    if return_mask:
-        return diff, valid_mask
-    return diff
+    return encoded
 
 
 def _get_counts(values, uniques, nan_values=(np.nan,)):

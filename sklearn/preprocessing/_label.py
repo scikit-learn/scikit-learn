@@ -23,7 +23,7 @@ from sklearn.utils._array_api import (
     move_to,
     xpx,
 )
-from sklearn.utils._encode import _encode, _unique
+from sklearn.utils._encode import _encode_labels, _unique
 from sklearn.utils._param_validation import Interval, validate_params
 from sklearn.utils.multiclass import type_of_target, unique_labels
 from sklearn.utils.sparsefuncs import min_max_axis
@@ -141,7 +141,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
         if _num_samples(y) == 0:
             return xp.asarray([])
 
-        return _encode(y, uniques=self.classes_)
+        return _encode_labels(y, uniques=self.classes_)
 
     def inverse_transform(self, y):
         """Transform labels back to original encoding.

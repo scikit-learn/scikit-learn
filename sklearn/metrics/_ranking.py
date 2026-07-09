@@ -35,7 +35,7 @@ from sklearn.utils._array_api import (
     move_to,
     size,
 )
-from sklearn.utils._encode import _encode, _unique
+from sklearn.utils._encode import _encode_labels, _unique
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.sparsefuncs import count_nonzero
@@ -859,7 +859,7 @@ def _multiclass_roc_auc_score(
                 "for multiclass one-vs-one ROC AUC, "
                 "'sample_weight' must be None in this case."
             )
-        y_true_encoded = _encode(y_true, uniques=classes)
+        y_true_encoded = _encode_labels(y_true, uniques=classes)
         # Hand & Till (2001) implementation (ovo)
         return _average_multiclass_ovo_score(
             _binary_roc_auc_score, y_true_encoded, y_score, average=average
@@ -2227,7 +2227,7 @@ def top_k_accuracy_score(
             UndefinedMetricWarning,
         )
 
-    y_true_encoded = _encode(y_true, uniques=classes)
+    y_true_encoded = _encode_labels(y_true, uniques=classes)
 
     if y_type == "binary":
         if k == 1:
