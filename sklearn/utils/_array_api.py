@@ -515,50 +515,14 @@ def get_namespace_and_device(
         return xp, False, arrays_device
 
 
-def _is_numpy_consumable(array):
-    """Determine if an array can be consumed by NumPy.
-
-    Assumes that if ``array`` resides in host (CPU) memory then it can be
-    consumed by NumPy via ``numpy.asarray``.
-
-    Not everything that can be consumed by `np.asarray` will be flagged as
-    consumable by this function (e.g. lists).
-
-    Parameters
-    ----------
-    array : array object
-        Array to inspect.
-
-    Returns
-    -------
-    bool
-        True if ``array`` lives in host memory (and can thus be converted to a
-        NumPy array), False otherwise.
-    """
-    if isinstance(array, (numpy.ndarray, numpy.generic)):
-        return True
-    dlpack_device = getattr(array, "__dlpack_device__", None)
-    # We use the DLPack device type as proxy for whether or not `np.asarray`
-    # will work. We can't call `np.asarray` directly to find out. It will try to
-    # convert the array to a NumPy array, which may not be a cheaper operation.
-    if dlpack_device is None:
-        return False
-    try:
-        device_type = dlpack_device()[0]
-    except Exception:
-        return False
-    # kDLCPU == 1 in the DLPack device type enumeration. torch returns an enum
-    # whose integer value is 1, other libraries return a plain int.
-    return int(device_type) == 1
-
-
-def _should_coerce_to_numpy(estimator, *arrays):
-    """Decide whether an estimator's inputs should be coerced to NumPy.
+def _will_coerce_to_numpy(estimator, *arrays):
+    """Predict whether an estimator's inputs will be coerced to NumPy.
 
     For estimators that do not support the array API we coerce inputs to NumPy
-    if they are array-likes that NumPy can consume. Unsupported inputs (e.g.
-    arrays on a non-CPU device) are left untouched so that the subsequent
-    ``np.asarray`` call raises, exactly as it would with dispatch off.
+    by simply attempting ``np.asarray`` (mirroring the input validation on
+    ``main``). Inputs that NumPy cannot consume (e.g. arrays on a non-CPU
+    device such as a CUDA tensor) make that ``np.asarray`` call raise, exactly
+    as it would with dispatch off.
 
     The goal is to reproduce the dispatch-off behaviour where estimators will
     accept array-likes (e.g. torch CPU tensors) as input and convert them to NumPy.
@@ -574,11 +538,7 @@ def _should_coerce_to_numpy(estimator, *arrays):
     Returns
     -------
     coerce : bool
-        Whether the inputs should be coerced to NumPy.
-
-    effective_xp : module
-        Namespace to use for downstream validation and computation: the NumPy
-        namespace when ``coerce`` is True, otherwise the input namespace.
+        Whether the inputs will be coerced to NumPy.
     """
     # Inline import to avoid a circular import with sklearn.utils._tags.
     from sklearn.utils._tags import get_tags
@@ -591,9 +551,7 @@ def _should_coerce_to_numpy(estimator, *arrays):
             and not _is_numpy_namespace(xp)
             and not get_tags(estimator).array_api_support
         )
-    if coerce:
-        return True, np_compat
-    return False, xp
+    return coerce
 
 
 def move_to(*arrays, xp, device):
@@ -1245,7 +1203,7 @@ def move_estimator_arrays_to_inplace(estimator, xp, device):
     Unlike :func:`move_estimator_to`, which returns a clone, this mutates
     ``estimator`` directly. It is meant to move the fitted attributes of an
     estimator that was fitted on NumPy-coerced inputs (see
-    :func:`_should_coerce_to_numpy`) back to the input namespace and device.
+    :func:`_will_coerce_to_numpy`) back to the input namespace and device.
     Non-array attributes are left unchanged.
     """
     converter = partial(move_to, xp=xp, device=device)

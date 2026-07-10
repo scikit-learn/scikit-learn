@@ -25,7 +25,7 @@ from sklearn.utils._array_api import (
     _asarray_with_order,
     _is_numpy_namespace,
     _max_precision_float_dtype,
-    _should_coerce_to_numpy,
+    _will_coerce_to_numpy,
     get_namespace,
     get_namespace_and_device,
     move_to,
@@ -3030,11 +3030,12 @@ def validate_data(
 
     # When array_api_dispatch is enabled, estimators whose tags report
     # array_api_support=False cannot run on non-NumPy inputs. At fit time, coerce
-    # NumPy-consumable inputs to NumPy so that these estimators behave exactly as
-    # they do with dispatch disabled. Inputs that NumPy cannot consume (e.g.
-    # arrays on a non-CPU device) raise during the conversion below, matching the
-    # dispatch-off behaviour. Coercion is intentionally limited to fit
-    # (reset=True): at predict/transform time the input namespace must stay
+    # the inputs to NumPy so that these estimators behave exactly as they do with
+    # dispatch disabled. Coercion is a plain ``np.asarray`` (mirroring the input
+    # validation on ``main``): inputs that NumPy cannot consume (e.g. arrays on a
+    # non-CPU device such as a CUDA tensor) raise during the conversion below,
+    # matching the dispatch-off behaviour. Coercion is intentionally limited to
+    # fit (reset=True): at predict/transform time the input namespace must stay
     # consistent with the (already coerced or native) fitted attributes.
     # XXX Revisit moving `y` when we have consistent implementation of
     # XXX "everything follows X". Though for estimators that are not aware
@@ -3046,7 +3047,7 @@ def validate_data(
         if not no_val_y:
             coercion_arrays.append(y)
 
-        coerce_to_numpy, _ = _should_coerce_to_numpy(_estimator, *coercion_arrays)
+        coerce_to_numpy = _will_coerce_to_numpy(_estimator, *coercion_arrays)
 
         if coerce_to_numpy:
             if not no_val_X:

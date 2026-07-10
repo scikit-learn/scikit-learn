@@ -1,5 +1,4 @@
 import os
-import re
 import warnings
 
 import numpy as np
@@ -1187,23 +1186,70 @@ def test_pca_array_api_dispatch_invariants_cpu(input_kind, config):
 @pytest.mark.skipif(
     os.environ.get("SCIPY_ARRAY_API") != "1", reason="SCIPY_ARRAY_API not set to 1."
 )
-def test_pca_arpack_non_cpu_array_api_raises(monkeypatch):
-    """Invariant 2 (deterministic): a non-CPU array API input combined with
-    ``svd_solver='arpack'`` raises a clear, solver-specific error under dispatch
-    instead of a backend "cannot convert" error.
-
-    No GPU is required: ``_is_numpy_consumable`` is patched to report the input as
-    non-host so the error path is exercised deterministically.
+def test_pca_coerced_solver_roundtrips_via_np_asarray(monkeypatch):
+    """A non-NumPy but NumPy-consumable input (torch-CPU here, standing in for a
+    jax-CUDA-style array) with an unsupported solver is coerced to NumPy via
+    ``np.asarray`` and every fitted array attribute is moved back to the input
+    namespace/device (requirement #3).
     """
     torch = pytest.importorskip("torch")
-    from sklearn.decomposition import _pca
+    X = torch.asarray(iris.data.astype(np.float64))
 
-    monkeypatch.setattr(_pca, "_is_numpy_consumable", lambda array: False)
+    # Spy on np.asarray to confirm coercion goes through it (the mechanism that
+    # replaced the DLPack CPU probe). It must delegate so the fit still runs.
+    seen_types = []
+    real_asarray = np.asarray
+
+    def spy_asarray(a, *args, **kwargs):
+        seen_types.append(type(a))
+        return real_asarray(a, *args, **kwargs)
+
+    monkeypatch.setattr(np, "asarray", spy_asarray)
+
+    with config_context(array_api_dispatch=True):
+        expected_xp, _ = get_namespace(X)
+        pca = PCA(n_components=2, svd_solver="arpack", random_state=0).fit(X)
+
+        # The torch input was coerced to NumPy through np.asarray.
+        assert any(issubclass(t, torch.Tensor) for t in seen_types)
+
+        # Every fitted array attribute lives in the input namespace/device.
+        attrs = ("components_", "mean_", "explained_variance_", "singular_values_")
+        for attr in attrs:
+            value = getattr(pca, attr)
+            attr_xp, _ = get_namespace(value)
+            assert attr_xp.__name__ == expected_xp.__name__
+            assert array_device(value) == array_device(X)
+
+
+@pytest.mark.skipif(
+    os.environ.get("SCIPY_ARRAY_API") != "1", reason="SCIPY_ARRAY_API not set to 1."
+)
+def test_pca_arpack_non_consumable_array_api_raises(monkeypatch):
+    """Invariant 2 (deterministic): a non-CPU array API input (one NumPy cannot
+    consume) combined with ``svd_solver='arpack'`` raises the raw ``np.asarray``
+    conversion error under dispatch, exactly as it would with dispatch off. No
+    special-cased, solver-specific error is emitted.
+
+    No GPU is required: ``numpy.asarray`` is patched to fail for the torch input
+    so the non-consumable path is exercised deterministically.
+    """
+    torch = pytest.importorskip("torch")
 
     X = torch.asarray(iris.data.astype(np.float64))
+
+    real_asarray = np.asarray
+
+    def fake_asarray(a, *args, **kwargs):
+        if isinstance(a, torch.Tensor):
+            raise TypeError("can't convert non-CPU tensor to numpy")
+        return real_asarray(a, *args, **kwargs)
+
+    monkeypatch.setattr(np, "asarray", fake_asarray)
+
     pca = PCA(n_components=2, svd_solver="arpack", random_state=0)
     with config_context(array_api_dispatch=True):
-        with pytest.raises(ValueError, match=re.escape("svd_solver='arpack'")):
+        with pytest.raises(TypeError, match="can't convert non-CPU tensor"):
             pca.fit(X)
 
 
@@ -1211,9 +1257,10 @@ def test_pca_arpack_non_cpu_array_api_raises(monkeypatch):
     os.environ.get("SCIPY_ARRAY_API") != "1", reason="SCIPY_ARRAY_API not set to 1."
 )
 def test_pca_arpack_gpu_array_api():
-    """Invariant 2 (real GPU): ``svd_solver='arpack'`` on a GPU tensor raises a
-    solver-specific error under dispatch, and the usual backend conversion error
-    when dispatch is off (unchanged from ``main``). Skipped without a GPU."""
+    """Invariant 2 (real GPU): ``svd_solver='arpack'`` on a GPU tensor raises the
+    backend conversion error both with and without array API dispatch, because
+    NumPy cannot consume a non-CPU tensor (unchanged from ``main``). Skipped
+    without a GPU."""
     torch = pytest.importorskip("torch")
     if torch.cuda.is_available():
         device = "cuda"
@@ -1226,8 +1273,8 @@ def test_pca_arpack_gpu_array_api():
     pca = PCA(n_components=2, svd_solver="arpack", random_state=0)
 
     with config_context(array_api_dispatch=True):
-        with pytest.raises(ValueError, match=re.escape("svd_solver='arpack'")):
-            pca.fit(X)
+        with pytest.raises(Exception):
+            clone(pca).fit(X)
 
     with config_context(array_api_dispatch=False):
         with pytest.raises(Exception):

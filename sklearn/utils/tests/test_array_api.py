@@ -22,7 +22,6 @@ from sklearn.utils._array_api import (
     _expit,
     _fill_diagonal,
     _half_multinomial_loss,
-    _is_numpy_consumable,
     _is_numpy_namespace,
     _isin,
     _logit,
@@ -145,30 +144,6 @@ def test_get_namespace_array_api(monkeypatch):
             match="scipy's own support is not enabled.",
         ):
             get_namespace(X_xp)
-
-
-def test_is_numpy_consumable():
-    """`_is_numpy_consumable` is True for host (CPU) arrays, False otherwise."""
-    assert _is_numpy_consumable(numpy.ones((2, 2)))
-    assert _is_numpy_consumable(numpy.float64(1.0))
-
-    torch = pytest.importorskip("torch")
-    assert _is_numpy_consumable(torch.ones(2, 2))
-
-    strict = pytest.importorskip("array_api_strict")
-    assert _is_numpy_consumable(strict.ones((2, 2)))
-
-    # An array reporting a non-CPU DLPack device is treated as not consumable.
-    class _FakeNonHostArray:
-        def __dlpack_device__(self):
-            # (kDLCUDA, 0); see the DLPack device type enumeration.
-            return (2, 0)
-
-    assert not _is_numpy_consumable(_FakeNonHostArray())
-
-    # Things without DLPack device information are not consumable. This is
-    # a bit strange, but makes sense in the context of how the function is used.
-    assert not _is_numpy_consumable([1, 2, 3.141])
 
 
 @pytest.mark.parametrize(

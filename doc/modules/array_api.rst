@@ -90,6 +90,23 @@ While this will successfully convert some array API inputs (e.g., JAX array),
 we generally recommend setting `array_api_dispatch=True` when using array API inputs.
 This is because NumPy conversion can often fail, e.g., torch tensor allocated on GPU.
 
+Estimators without array API support
+====================================
+
+Not every estimator supports the array API, and some estimators only support it
+for certain hyper-parameters (for example :class:`~decomposition.PCA` supports
+it for ``svd_solver="full"`` but not for ``svd_solver="arpack"``). When
+`array_api_dispatch=True` and such an estimator (or configuration) receives a
+non-NumPy input, scikit-learn coerces the input to NumPy at `fit` time using
+:func:`numpy.asarray`, so the estimator behaves exactly as it does with
+`array_api_dispatch=False`. If NumPy cannot consume the input (for example a
+CUDA tensor), that conversion raises, matching the dispatch-disabled behaviour.
+
+For estimators that support the array API for *some* configurations, the fitted
+attributes are still returned in the input namespace and device, even when the
+current configuration internally falls back to NumPy. This keeps the output type
+consistent regardless of the chosen hyper-parameters.
+
 Example usage
 =============
 

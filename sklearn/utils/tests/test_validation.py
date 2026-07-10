@@ -42,6 +42,7 @@ from sklearn.utils._mocking import (
     MockDataFrame,
     _MockEstimatorOnOffPrediction,
 )
+from sklearn.utils._tags import get_tags
 from sklearn.utils._testing import (
     TempMemmap,
     _array_api_for_tests,
@@ -2538,3 +2539,59 @@ def test_num_samples_pa_chunked_array():
 
     result = _num_samples(chunked_array([[0.1, 0.2, 0.3]]))
     assert result == 3
+
+
+class _NoArrayAPIEstimator(BaseEstimator):
+    """Estimator that does not support the array API (default tag is False)."""
+
+    def fit(self, X, y=None):
+        X = validate_data(self, X, reset=True)
+        self.data_ = X
+        self.sum_ = X.sum(axis=0)
+        return self
+
+
+@skip_if_array_api_compat_not_configured
+def test_validate_data_coerces_unsupported_estimator_to_numpy():
+    """Under ``array_api_dispatch``, an estimator that does not support the array
+    API accepts a NumPy-consumable non-NumPy input (torch-CPU) and produces NumPy
+    fitted attributes, matching the dispatch-off behaviour (requirement #4).
+    """
+    torch = pytest.importorskip("torch")
+    X = torch.asarray(np.eye(3, dtype=np.float64))
+
+    est = _NoArrayAPIEstimator()
+    assert not get_tags(est).array_api_support
+
+    with config_context(array_api_dispatch=True):
+        est.fit(X)
+
+    # The validated input and the derived fitted attributes are NumPy arrays,
+    # exactly as they would be with dispatch disabled.
+    assert isinstance(est.data_, np.ndarray)
+    assert isinstance(est.sum_, np.ndarray)
+
+
+@skip_if_array_api_compat_not_configured
+def test_validate_data_non_consumable_input_raises(monkeypatch):
+    """When NumPy cannot consume the input (e.g. a CUDA tensor), the coercion in
+    ``validate_data`` lets the raw ``np.asarray`` error propagate, matching the
+    dispatch-off behaviour. Simulated deterministically by making ``np.asarray``
+    fail for the torch input, so no GPU is required.
+    """
+    torch = pytest.importorskip("torch")
+    X = torch.asarray(np.eye(3, dtype=np.float64))
+
+    real_asarray = np.asarray
+
+    def fake_asarray(a, *args, **kwargs):
+        if isinstance(a, torch.Tensor):
+            raise TypeError("can't convert non-CPU tensor to numpy")
+        return real_asarray(a, *args, **kwargs)
+
+    monkeypatch.setattr(np, "asarray", fake_asarray)
+
+    est = _NoArrayAPIEstimator()
+    with config_context(array_api_dispatch=True):
+        with pytest.raises(TypeError, match="can't convert non-CPU tensor"):
+            est.fit(X)
