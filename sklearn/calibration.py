@@ -110,20 +110,24 @@ def _ensure_logits(predictions, response_method_name, method):
             f"Expected one of {_CLASSIFIER_RESPONSE_METHODS}."
         )
 
+    xp, _, device_ = get_namespace_and_device(predictions)
+    one = xp.asarray(1.0, dtype=predictions.dtype, device=device_)
+
     if response_method_name == "decision_function":
         if predictions.ndim == 1:
-            return predictions.reshape(-1, 1)
+            return xp.reshape(predictions, (-1, 1))
         return predictions
 
-    eps = np.finfo(predictions.dtype).eps
-    predictions = predictions.clip(eps, 1 - eps)
+    eps = xp.finfo(predictions.dtype).eps
+    eps_ = xp.asarray(eps, dtype=predictions.dtype, device=device_)
+    predictions = xp.clip(predictions, eps_, one - eps_)
 
     if method in ("sigmoid", "isotonic"):
         if predictions.ndim == 1:
-            return LogitLink().link(predictions).reshape(-1, 1)
+            return xp.reshape(LogitLink().link(predictions), (-1, 1))
         if predictions.shape[1] == 2:
-            return LogitLink().link(predictions[:, 1]).reshape(-1, 1)
-        sigmoid_logits = np.zeros_like(predictions)
+            return xp.reshape(LogitLink().link(predictions[:, 1]), (-1, 1))
+        sigmoid_logits = xp.zeros_like(predictions)
         sigmoid_link = LogitLink()
         for i in range(predictions.shape[1]):
             sigmoid_logits[:, i] = sigmoid_link.link(predictions[:, i])
@@ -131,9 +135,10 @@ def _ensure_logits(predictions, response_method_name, method):
 
     if method == "temperature":
         if predictions.ndim == 1:
-            predictions = np.column_stack([1 - predictions, predictions])
+            predictions = xp.reshape(predictions, (-1, 1))
+            predictions = xp.concat([one - predictions, predictions], axis=1)
         elif predictions.shape[1] == 1:
-            predictions = np.concatenate([1 - predictions, predictions], axis=1)
+            predictions = xp.concat([one - predictions, predictions], axis=1)
         return MultinomialLogit().link(predictions)
 
     raise ValueError(
