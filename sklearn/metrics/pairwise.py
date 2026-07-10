@@ -1192,6 +1192,8 @@ def cosine_distances(X, Y=None):
 def paired_euclidean_distances(X, Y):
     """Compute the paired euclidean distances between X and Y.
 
+    Distances are calculated between (X[0], Y[0]), (X[1], Y[1]), ..., etc.
+
     Read more in the :ref:`User Guide <metrics>`.
 
     Parameters
@@ -1205,8 +1207,9 @@ def paired_euclidean_distances(X, Y):
     Returns
     -------
     distances : ndarray of shape (n_samples,)
-        Output array/matrix containing the calculated paired euclidean
-        distances.
+        Returns the euclidean distances between the row vectors of `X`
+        and the row vectors of `Y`, where `distances[i]` is the
+        distance between `X[i]` and `Y[i]`.
 
     Examples
     --------
@@ -1227,8 +1230,7 @@ def paired_euclidean_distances(X, Y):
 def paired_manhattan_distances(X, Y):
     """Compute the paired L1 distances between X and Y.
 
-    Distances are calculated between (X[0], Y[0]), (X[1], Y[1]), ...,
-    (X[n_samples], Y[n_samples]).
+    Distances are calculated between (X[0], Y[0]), (X[1], Y[1]), ..., etc.
 
     Read more in the :ref:`User Guide <metrics>`.
 
@@ -1243,8 +1245,9 @@ def paired_manhattan_distances(X, Y):
     Returns
     -------
     distances : ndarray of shape (n_samples,)
-        L1 paired distances between the row vectors of `X`
-        and the row vectors of `Y`.
+        Returns the manhattan distances between the row vectors of `X`
+        and the row vectors of `Y`, where `distances[i]` is the
+        distance between `X[i]` and `Y[i]`.
 
     Examples
     --------
@@ -1273,6 +1276,8 @@ def paired_cosine_distances(X, Y):
     """
     Compute the paired cosine distances between X and Y.
 
+    Distances are calculated between (X[0], Y[0]), (X[1], Y[1]), ..., etc.
+
     Read more in the :ref:`User Guide <metrics>`.
 
     Parameters
@@ -1286,7 +1291,7 @@ def paired_cosine_distances(X, Y):
     Returns
     -------
     distances : ndarray of shape (n_samples,)
-        Returns the distances between the row vectors of `X`
+        Returns the cosine distances between the row vectors of `X`
         and the row vectors of `Y`, where `distances[i]` is the
         distance between `X[i]` and `Y[i]`.
 
@@ -1329,7 +1334,7 @@ def paired_distances(X, Y, *, metric="euclidean", **kwds):
     """
     Compute the paired distances between X and Y.
 
-    Compute the distances between (X[0], Y[0]), (X[1], Y[1]), etc...
+    Distances are calculated between (X[0], Y[0]), (X[1], Y[1]), ..., etc.
 
     Read more in the :ref:`User Guide <metrics>`.
 
@@ -1358,7 +1363,8 @@ def paired_distances(X, Y, *, metric="euclidean", **kwds):
     -------
     distances : ndarray of shape (n_samples,)
         Returns the distances between the row vectors of `X`
-        and the row vectors of `Y`.
+        and the row vectors of `Y`, where `distances[i]` is the
+        distance between `X[i]` and `Y[i]`.
 
     See Also
     --------
