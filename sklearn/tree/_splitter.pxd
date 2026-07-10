@@ -6,9 +6,10 @@
 from sklearn.utils._typedefs cimport (
     float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t
 )
+
 from sklearn.tree._criterion cimport Criterion
 from sklearn.tree._tree cimport ParentInfo
-
+from sklearn.utils._bitset cimport BITSET_INNER_DTYPE_C, BITSET_DTYPE_C
 
 cdef struct SplitRecord:
     # Data to track sample split
@@ -16,7 +17,15 @@ cdef struct SplitRecord:
     intp_t pos             # Split samples array at the given position,
     #                      # i.e. count of samples below threshold for feature.
     #                      # pos is >= end if the node is a leaf.
-    float64_t threshold       # Threshold to split at.
+
+    # Threshold for numerical features splits:
+    # - feature values less than or equal to the threshold go left, and values greater than the threshold go right.
+    float64_t threshold
+
+    # Threshold for categorical features splits:
+    # - left_cat_bitset stores the set of categories that go to the left child.
+    BITSET_DTYPE_C left_cat_bitset
+
     float64_t improvement     # Impurity improvement given parent node.
     float64_t impurity_left   # Impurity of the left split.
     float64_t impurity_right  # Impurity of the right split.
@@ -42,7 +51,7 @@ cdef class Splitter:
 
     cdef intp_t[::1] samples             # Sample indices in X, y
     cdef intp_t n_samples                # X.shape[0]
-    cdef float64_t weighted_n_samples       # Weighted number of samples
+    cdef float64_t weighted_n_samples    # Weighted number of samples
     cdef intp_t[::1] features            # Feature indices in X
     cdef intp_t[::1] constant_features   # Constant features indices
     cdef intp_t n_features               # X.shape[1]
@@ -84,6 +93,7 @@ cdef class Splitter:
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
         const uint8_t[::1] missing_values_in_feature_mask,
+        const intp_t[::1] n_categories,
     ) except -1
 
     cdef int node_reset(
