@@ -7,6 +7,7 @@ Sequential feature selection
 
 from numbers import Integral, Real
 
+import narwhals.stable.v2 as nw
 import numpy as np
 
 from sklearn.base import (
@@ -19,6 +20,7 @@ from sklearn.base import (
 from sklearn.feature_selection._base import SelectorMixin
 from sklearn.metrics import check_scoring, get_scorer_names
 from sklearn.model_selection import check_cv, cross_val_score
+from sklearn.utils import _safe_indexing
 from sklearn.utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
@@ -212,6 +214,13 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             Training vectors, where `n_samples` is the number of samples and
             `n_features` is the number of predictors.
 
+            .. versionchanged:: 1.10
+                Pandas dataframes are now passed to the underlying estimator with
+                their original column names and dtypes, so that estimators relying
+                on them (e.g. a pipeline containing a
+                :class:`~sklearn.compose.ColumnTransformer` with a callable column
+                selector) can be used for the selection.
+
         y : array-like of shape (n_samples,), default=None
             Target values. This parameter may be ignored for
             unsupervised learning.
@@ -235,14 +244,26 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         """
         _raise_for_params(params, self, "fit")
         tags = self.__sklearn_tags__()
+        # Preserve X when it is a pandas dataframe so that the underlying estimator
+        # sees the selected columns with their original names and dtypes. This
+        # allows estimators relying on column names or dtypes (e.g. a pipeline
+        # containing a `ColumnTransformer` with a callable column selector) to be
+        # used for the selection.
+        preserve_X = nw.dependencies.is_pandas_dataframe(X)
         X = validate_data(
             self,
             X,
             accept_sparse="csc",
             ensure_min_features=2,
             ensure_all_finite=not tags.input_tags.allow_nan,
+            skip_check_array=preserve_X,
         )
         n_features = X.shape[1]
+        if preserve_X and n_features < 2:
+            raise ValueError(
+                f"Found array with {n_features} feature(s) (shape={X.shape}) while"
+                " a minimum of 2 is required by SequentialFeatureSelector."
+            )
 
         if self.n_features_to_select == "auto":
             if self.tol is not None:
@@ -316,7 +337,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             candidate_mask[feature_idx] = True
             if self.direction == "backward":
                 candidate_mask = ~candidate_mask
-            X_new = X[:, candidate_mask]
+            X_new = _safe_indexing(X, candidate_mask, axis=1)
             scores[feature_idx] = cross_val_score(
                 estimator,
                 X_new,
