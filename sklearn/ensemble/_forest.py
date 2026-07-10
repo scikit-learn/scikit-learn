@@ -1376,11 +1376,11 @@ class RandomForestClassifier(ForestClassifier):
             Float `max_samples` is relative to `sample_weight.sum()` instead of
             `X.shape[0]` for weighted samples.
 
-    monotonic_cst : array-like of int of shape (n_features), default=None
+    monotonic_cst : array-like of int of shape (n_features,), default=None
         Indicates the monotonicity constraint to enforce on each feature.
-          - 1: monotonic increase
+          - 1: monotonically increasing
           - 0: no constraint
-          - -1: monotonic decrease
+          - -1: monotonically decreasing
 
         If monotonic_cst is None, no constraints are applied.
 
@@ -1511,6 +1511,7 @@ class RandomForestClassifier(ForestClassifier):
         ],
     }
     _parameter_constraints.pop("splitter")
+    _parameter_constraints.pop("categorical_features")
 
     def __init__(
         self,
@@ -1768,7 +1769,7 @@ class RandomForestRegressor(ForestRegressor):
             Float `max_samples` is relative to `sample_weight.sum()` instead of
             `X.shape[0]` for weighted samples.
 
-    monotonic_cst : array-like of int of shape (n_features), default=None
+    monotonic_cst : array-like of int of shape (n_features,), default=None
         Indicates the monotonicity constraint to enforce on each feature.
           - 1: monotonically increasing
           - 0: no constraint
@@ -1888,6 +1889,7 @@ class RandomForestRegressor(ForestRegressor):
         **DecisionTreeRegressor._parameter_constraints,
     }
     _parameter_constraints.pop("splitter")
+    _parameter_constraints.pop("categorical_features")
 
     def __init__(
         self,
@@ -2161,7 +2163,7 @@ class ExtraTreesClassifier(ForestClassifier):
             Float `max_samples` is relative to `sample_weight.sum()` instead of
             `X.shape[0]` for weighted samples.
 
-    monotonic_cst : array-like of int of shape (n_features), default=None
+    monotonic_cst : array-like of int of shape (n_features,), default=None
         Indicates the monotonicity constraint to enforce on each feature.
           - 1: monotonically increasing
           - 0: no constraint
@@ -2284,6 +2286,8 @@ class ExtraTreesClassifier(ForestClassifier):
         ],
     }
     _parameter_constraints.pop("splitter")
+    # TODO: remove once randomsplitter supports categorical features
+    _parameter_constraints.pop("categorical_features")
 
     def __init__(
         self,
@@ -2536,7 +2540,7 @@ class ExtraTreesRegressor(ForestRegressor):
             Float `max_samples` is relative to `sample_weight.sum()` instead of
             `X.shape[0]` for weighted samples.
 
-    monotonic_cst : array-like of int of shape (n_features), default=None
+    monotonic_cst : array-like of int of shape (n_features,), default=None
         Indicates the monotonicity constraint to enforce on each feature.
           - 1: monotonically increasing
           - 0: no constraint
@@ -2640,6 +2644,8 @@ class ExtraTreesRegressor(ForestRegressor):
         **DecisionTreeRegressor._parameter_constraints,
     }
     _parameter_constraints.pop("splitter")
+    # TODO: remove once randomsplitter supports categorical features
+    _parameter_constraints.pop("categorical_features")
 
     def __init__(
         self,
@@ -2903,7 +2909,13 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         **BaseDecisionTree._parameter_constraints,
         "sparse_output": ["boolean"],
     }
-    for param in ("max_features", "ccp_alpha", "splitter", "monotonic_cst"):
+    for param in (
+        "max_features",
+        "ccp_alpha",
+        "splitter",
+        "monotonic_cst",
+        "categorical_features",
+    ):
         _parameter_constraints.pop(param)
 
     criterion = "squared_error"

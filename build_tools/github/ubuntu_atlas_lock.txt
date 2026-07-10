@@ -14,7 +14,7 @@ joblib==1.4.0
     # via -r build_tools/github/ubuntu_atlas_requirements.txt
 meson==1.11.1
     # via meson-python
-meson-python==0.19.0
+meson-python==0.20.0
     # via -r build_tools/github/ubuntu_atlas_requirements.txt
 narwhals==2.0.1
     # via -r build_tools/github/ubuntu_atlas_requirements.txt
@@ -31,7 +31,7 @@ pygments==2.20.0
     # via pytest
 pyproject-metadata==0.11.0
     # via meson-python
-pytest==9.0.3
+pytest==9.1.1
     # via
     #   -r build_tools/github/ubuntu_atlas_requirements.txt
     #   pytest-xdist

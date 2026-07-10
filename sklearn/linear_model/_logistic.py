@@ -34,7 +34,6 @@ from sklearn.model_selection import check_cv
 from sklearn.preprocessing import LabelEncoder
 from sklearn.svm._base import _fit_liblinear
 from sklearn.utils import (
-    Bunch,
     check_array,
     check_consistent_length,
     check_random_state,
@@ -44,6 +43,7 @@ from sklearn.utils import (
 from sklearn.utils._array_api import (
     _is_numpy_namespace,
     _matching_numpy_dtype,
+    _ravel,
     check_same_namespace,
     get_namespace,
     get_namespace_and_device,
@@ -56,6 +56,7 @@ from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _raise_for_params,
     _routing_enabled,
     process_routing,
@@ -394,6 +395,9 @@ def _logistic_regression_path(
 
     solver = _check_solver(solver, penalty, dual)
     xp, _, device_ = get_namespace_and_device(X)
+    # Only newton-cg has complete support of the array API, lbfgs still needs
+    # coef / w0 as numpy arrays.
+    coef_as_xp = solver == "newton-cg"
 
     # Preprocessing.
     if check_input:
@@ -436,9 +440,17 @@ def _logistic_regression_path(
         sample_weight *= class_weight_
 
     if is_binary:
-        w0 = np.zeros(
-            n_features + int(fit_intercept), dtype=_matching_numpy_dtype(X, xp=xp)
-        )
+        if coef_as_xp:
+            w0 = xp.zeros(
+                n_features + int(fit_intercept),
+                dtype=X.dtype,
+                device=device_,
+            )
+        else:
+            w0 = np.zeros(
+                n_features + int(fit_intercept),
+                dtype=_matching_numpy_dtype(X, xp=xp),
+            )
         # classes[1] is the "positive label"
         mask = move_to(y == classes[1], xp=xp, device=device_)
         y_bin = xp.ones(y.shape, dtype=X.dtype, device=device_)
@@ -453,12 +465,19 @@ def _logistic_regression_path(
         # i.e. y as a 1d-array of integers. LabelEncoder also saves memory
         # compared to LabelBinarizer, especially when n_classes is large.
         Y_multi = xp.asarray(le.transform(y), dtype=X.dtype, device=device_)
-        # It is important that w0 is F-contiguous.
-        w0 = np.zeros(
-            (size(classes), n_features + int(fit_intercept)),
-            order="F",
-            dtype=_matching_numpy_dtype(X, xp=xp),
-        )
+        if coef_as_xp:
+            w0 = xp.zeros(
+                (size(classes), n_features + int(fit_intercept)),
+                dtype=X.dtype,
+                device=device_,
+            )
+        else:
+            # It is important that w0 is F-contiguous.
+            w0 = np.zeros(
+                (size(classes), n_features + int(fit_intercept)),
+                order="F",
+                dtype=_matching_numpy_dtype(X, xp=xp),
+            )
 
     # IMPORTANT NOTE:
     # All solvers relying on LinearModelLoss need to scale the penalty with n_samples
@@ -476,13 +495,15 @@ def _logistic_regression_path(
     if coef is not None:
         if is_binary:
             if coef.ndim == 1 and coef.shape[0] == n_features + int(fit_intercept):
-                w0[:] = coef
+                w0[:] = move_to(coef, xp=xp, device=device_) if coef_as_xp else coef
             elif (
                 coef.ndim == 2
                 and coef.shape[0] == 1
                 and coef.shape[1] == n_features + int(fit_intercept)
             ):
-                w0[:] = coef[0]
+                w0[:] = (
+                    move_to(coef[0], xp=xp, device=device_) if coef_as_xp else coef[0]
+                )
             else:
                 msg = (
                     f"Initialization coef is of shape {coef.shape}, expected shape "
@@ -495,7 +516,9 @@ def _logistic_regression_path(
                 and coef.shape[0] == n_classes
                 and coef.shape[1] == n_features + int(fit_intercept)
             ):
-                w0[:, : coef.shape[1]] = coef
+                w0[:, : coef.shape[1]] = (
+                    move_to(coef, xp=xp, device=device_) if coef_as_xp else coef
+                )
             else:
                 msg = (
                     f"Initialization coef is of shape {coef.shape}, expected shape "
@@ -519,7 +542,7 @@ def _logistic_regression_path(
             func = loss.loss
             grad = loss.gradient
             hess = loss.gradient_hessian_product  # hess = [gradient, hessp]
-        warm_start_sag = {"coef": np.expand_dims(w0, axis=1)}
+        warm_start_sag = {"coef": w0[:, None]}
     else:  # multinomial
         loss = LinearModelLoss(
             base_loss=(
@@ -537,14 +560,17 @@ def _logistic_regression_path(
             # i.e. 1d-arrays. LinearModelLoss expects classes to be contiguous and
             # reconstructs the 2d-array via w0.reshape((n_classes, -1), order="F").
             # As w0 is F-contiguous, ravel(order="F") also avoids a copy.
-            w0 = w0.ravel(order="F")
+            if _is_numpy_namespace(xp) or not coef_as_xp:
+                w0 = w0.ravel(order="F")
+            else:
+                w0 = _ravel(w0.T, xp=xp)
         if solver == "lbfgs":
             func = loss.loss_gradient
         elif solver == "newton-cg":
             func = loss.loss
             grad = loss.gradient
             hess = loss.gradient_hessian_product  # hess = [gradient, hessp]
-        warm_start_sag = {"coef": w0.T}
+        warm_start_sag = {"coef": w0.T} if w0.ndim > 1 else {"coef": w0}
 
     coefs = list()
     n_iter = xp.zeros(len(Cs), dtype=xp.int32, device=device_)
@@ -605,6 +631,10 @@ def _logistic_regression_path(
             w0, loss = opt_res.x, opt_res.fun
             if lbfgs_bridge is not None:
                 lbfgs_bridge.close()
+            if fit_intercept and not is_binary:
+                # Use freedom to add the same constant to all classes in order to
+                # achieve the symmetric parametrization with sum(intercept) = 0
+                w0[-n_classes:] -= np.mean(w0[-n_classes:])
         elif solver == "newton-cg":
             l2_reg_strength = 1.0 / (C * sw_sum)
             args = (X, target, sample_weight, l2_reg_strength, n_threads)
@@ -618,6 +648,10 @@ def _logistic_regression_path(
                 tol=tol,
                 verbose=verbose,
             )
+            if fit_intercept and not is_binary:
+                # Use freedom to add the same constant to all classes in order to
+                # achieve the symmetric parametrization with sum(intercept) = 0
+                w0[-n_classes:] -= xp.mean(w0[-n_classes:])
         elif solver == "newton-cholesky":
             l2_reg_strength = 1.0 / (C * sw_sum)
             sol = NewtonCholeskySolver(
@@ -698,19 +732,19 @@ def _logistic_regression_path(
             raise ValueError(msg)
 
         if is_binary:
-            coefs.append(
-                xp.asarray(w0.copy(order=coefs_order), dtype=X.dtype, device=device_)
-            )
+            if _is_numpy_namespace(xp):
+                coefs.append(np.asarray(w0.copy(order=coefs_order), dtype=X.dtype))
+            else:
+                coefs.append(xp.asarray(w0, copy=True, dtype=X.dtype, device=device_))
         else:
             if solver in ["lbfgs", "newton-cg", "newton-cholesky"]:
-                multi_w0 = np.reshape(w0, (n_classes, -1), order="F")
+                if _is_numpy_namespace(xp) or not coef_as_xp:
+                    multi_w0 = np.reshape(w0, (n_classes, -1), order="F")
+                else:
+                    multi_w0 = xp.reshape(w0, (-1, n_classes)).T
             else:
                 multi_w0 = w0
-            coefs.append(
-                xp.asarray(
-                    multi_w0.copy(order=coefs_order), dtype=X.dtype, device=device_
-                )
-            )
+            coefs.append(xp.asarray(multi_w0, copy=True, dtype=X.dtype, device=device_))
 
         n_iter[i] = n_iter_i
 
@@ -1016,9 +1050,9 @@ class LogisticRegression(
 
         .. deprecated:: 1.8
            `penalty` was deprecated in version 1.8 and will be removed in 1.10.
-           Use `l1_ratio` instead. `l1_ratio=0` for `penalty='l2'`, `l1_ratio=1` for
-           `penalty='l1'` and `l1_ratio` set to any float between 0 and 1 for
-           `'penalty='elasticnet'`.
+           Use `l1_ratio` and `C` instead. `l1_ratio=0` for `penalty='l2'`,
+           `l1_ratio=1` for `penalty='l1'`, `l1_ratio` set to any float between 0 and 1
+           for `penalty='elasticnet'`, and `C=np.inf` for `penalty=None`.
 
     C : float, default=1.0
         Inverse of regularization strength; must be a positive float.
@@ -1089,8 +1123,9 @@ class LogisticRegression(
            *class_weight='balanced'*
 
     random_state : int, RandomState instance, default=None
-        Used when ``solver`` == 'sag', 'saga' or 'liblinear' to shuffle the
-        data. See :term:`Glossary <random_state>` for details.
+        Only used for `solver` == 'sag', 'saga' or 'liblinear' to shuffle the
+        data. It has no effect on the other solvers.
+        See :term:`Glossary <random_state>` for details.
 
     solver : {'lbfgs', 'liblinear', 'newton-cg', 'newton-cholesky', 'sag', 'saga'}, \
             default='lbfgs'
@@ -1178,10 +1213,15 @@ class LogisticRegression(
     classes_ : ndarray of shape (n_classes, )
         A list of class labels known to the classifier.
 
-    coef_ : ndarray of shape (1, n_features) or (n_classes, n_features)
-        Coefficient of the features in the decision function.
+    coef_ : ndarray or CSR matrix of shape (1, n_features) or (n_classes, n_features)
+        Coefficients of the features in the decision function.
 
         `coef_` is of shape (1, n_features) when the given problem is binary.
+
+        By default, it will be created as a dense array, but can be turned to
+        sparse (CSR format) through :meth:`sparsify` (which can be beneficial
+        under L1 regularization when many coefficients are zero), and back to
+        dense through :meth:`densify`.
 
     intercept_ : ndarray of shape (1,) or (n_classes,)
         Intercept (a.k.a. bias) added to the decision function.
@@ -1216,44 +1256,21 @@ class LogisticRegression(
 
     Notes
     -----
-    The underlying C implementation uses a random number generator to
-    select features when fitting the model. It is thus not uncommon,
-    to have slightly different results for the same input data. If
-    that happens, try with a smaller tol parameter.
+    For several reasons (floating point arithmetic, random number generators, etc.)
+    the coefficients of a fitted model might differ slightly (among machines,
+    scikit-learn versions, etc.) for the same input data. If that happens and you
+    want to avoid it, you can try with a smaller `tol` parameter.
 
     Predict output may not match that of standalone liblinear in certain
     cases. See :ref:`differences from liblinear <liblinear_differences>`
     in the narrative documentation.
-
-    References
-    ----------
-
-    L-BFGS-B -- Software for Large-scale Bound-constrained Optimization
-        Ciyou Zhu, Richard Byrd, Jorge Nocedal and Jose Luis Morales.
-        http://users.iems.northwestern.edu/~nocedal/lbfgsb.html
-
-    LIBLINEAR -- A Library for Large Linear Classification
-        https://www.csie.ntu.edu.tw/~cjlin/liblinear/
-
-    SAG -- Mark Schmidt, Nicolas Le Roux, and Francis Bach
-        Minimizing Finite Sums with the Stochastic Average Gradient
-        https://hal.inria.fr/hal-00860051/document
-
-    SAGA -- Defazio, A., Bach F. & Lacoste-Julien S. (2014).
-            :arxiv:`"SAGA: A Fast Incremental Gradient Method With Support
-            for Non-Strongly Convex Composite Objectives" <1407.0202>`
-
-    Hsiang-Fu Yu, Fang-Lan Huang, Chih-Jen Lin (2011). Dual coordinate descent
-        methods for logistic regression and maximum entropy models.
-        Machine Learning 85(1-2):41-75.
-        https://www.csie.ntu.edu.tw/~cjlin/papers/maxent_dual.pdf
 
     Examples
     --------
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.linear_model import LogisticRegression
     >>> X, y = load_iris(return_X_y=True)
-    >>> clf = LogisticRegression(random_state=0).fit(X, y)
+    >>> clf = LogisticRegression().fit(X, y)
     >>> clf.predict(X[:2, :])
     array([0, 0])
     >>> clf.predict_proba(X[:2, :])
@@ -1401,8 +1418,9 @@ class LogisticRegression(
                     " 1.10. To avoid this warning, leave 'penalty' set to its default"
                     " value and use 'l1_ratio' or 'C' instead."
                     " Use l1_ratio=0 instead of penalty='l2',"
-                    " l1_ratio=1 instead of penalty='l1', and "
-                    "C=np.inf instead of penalty=None."
+                    " l1_ratio=1 instead of penalty='l1',"
+                    " l1_ratio set to a float between 0 and 1 instead of"
+                    " penalty='elasticnet', and C=np.inf instead of penalty=None."
                 ),
                 FutureWarning,
             )
@@ -1734,9 +1752,9 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         .. deprecated:: 1.8
            `penalty` was deprecated in version 1.8 and will be removed in 1.10.
-           Use `l1_ratio` instead. `l1_ratio=0` for `penalty='l2'`, `l1_ratio=1` for
-           `penalty='l1'` and `l1_ratio` set to any float between 0 and 1 for
-           `'penalty='elasticnet'`.
+           Use `l1_ratio` and `C` instead. `l1_ratio=0` for `penalty='l2'`,
+           `l1_ratio=1` for `penalty='l1'`, `l1_ratio` set to any float between 0 and 1
+           for `penalty='elasticnet'`, and `C=np.inf` for `penalty=None`.
 
     scoring : str or callable, default=None
         The scoring method to use for cross-validation. Options:
@@ -1856,7 +1874,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             (and therefore on the intercept) `intercept_scaling` has to be increased.
 
     random_state : int, RandomState instance, default=None
-        Used when `solver='sag'`, 'saga' or 'liblinear' to shuffle the data.
+        Only used for `solver` == 'sag', 'saga' or 'liblinear' to shuffle the
+        data. It has no effect on the other solvers.
         Note that this only applies to the solver and not the cross-validation
         generator. See :term:`Glossary <random_state>` for details.
 
@@ -2118,9 +2137,11 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 (
                     "'penalty' was deprecated in version 1.8 and will be removed in"
                     " 1.10. To avoid this warning, leave 'penalty' set to its default"
-                    " value and use 'l1_ratios' instead."
-                    " Use l1_ratios=(0,) instead of penalty='l2' "
-                    " and l1_ratios=(1,) instead of penalty='l1'."
+                    " value and use 'l1_ratios' and 'Cs' instead."
+                    " Use l1_ratios=(0,) instead of penalty='l2',"
+                    " l1_ratios=(1,) instead of penalty='l1',"
+                    " l1_ratios set to floats between 0 and 1 instead of"
+                    " penalty='elasticnet', and Cs=(np.inf,) instead of penalty=None."
                 ),
                 FutureWarning,
             )
@@ -2228,11 +2249,12 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 **params,
             )
         else:
-            routed_params = Bunch()
-            routed_params.splitter = Bunch(split={})
-            routed_params.scorer = Bunch(score=params)
+            score_kwargs = dict(params)
             if sample_weight is not None:
-                routed_params.scorer.score["sample_weight"] = sample_weight
+                score_kwargs["sample_weight"] = sample_weight
+            routed_params = _manual_routing(
+                {"splitter": {}, "scorer": {"score": score_kwargs}}
+            )
 
         # init cross-validation generator
         cv = check_cv(self.cv, y, classifier=True)
@@ -2517,12 +2539,12 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 **score_params,
             )
         else:
-            routed_params = Bunch()
-            routed_params.scorer = Bunch(score={})
-            if score_params.get("sample_weight") is not None:
-                routed_params.scorer.score["sample_weight"] = score_params[
-                    "sample_weight"
-                ]
+            sw = (
+                {"sample_weight": score_params["sample_weight"]}
+                if score_params.get("sample_weight") is not None
+                else {}
+            )
+            routed_params = _manual_routing({"scorer": {"score": sw}})
 
         return scoring(
             self,

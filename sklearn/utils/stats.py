@@ -1,6 +1,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import numpy as np
+
 from sklearn.utils._array_api import (
     _find_matching_floating_dtype,
     get_namespace_and_device,
@@ -214,3 +216,30 @@ def _weighted_percentile(
         result = result[..., 0]
 
     return result[0, ...] if n_dim == 1 else result
+
+
+def _weighted_percentile_1d_sorted(array, sample_weight, percentile_rank):
+    """Compute weighted percentiles for sorted 1D data and percentile ranks.
+
+    This implements the "averaged_inverted_cdf" method as computed by
+    `_weighted_percentile(..., average=True)`, but it expects:
+    - `array` is sorted
+    - `array` has no NaN values
+    - `sample_weight` has strictly positive values
+    - `percentile_rank` is a 1D array
+    """
+    weight_cdf = np.cumsum(sample_weight, dtype=array.dtype)
+    adjusted_percentile_rank = percentile_rank / 100 * weight_cdf[-1]
+
+    percentile_indices = np.searchsorted(weight_cdf, adjusted_percentile_rank)
+    percentile_indices = np.clip(percentile_indices, 0, array.shape[0] - 1)
+
+    fraction_above = weight_cdf[percentile_indices] - adjusted_percentile_rank
+    is_fraction_above = fraction_above > np.finfo(array.dtype).eps
+    percentile_plus_one_indices = np.clip(percentile_indices + 1, 0, array.shape[0] - 1)
+
+    return np.where(
+        is_fraction_above,
+        array[percentile_indices],
+        (array[percentile_indices] + array[percentile_plus_one_indices]) / 2,
+    )

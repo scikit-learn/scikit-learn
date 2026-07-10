@@ -53,6 +53,7 @@ from sklearn.utils._testing import (
     _array_api_for_tests,
     _convert_container,
     assert_array_equal,
+    assert_run_python_script_without_output,
     skip_if_array_api_compat_not_configured,
 )
 from sklearn.utils.fixes import _IS_32BIT, CSR_CONTAINERS, np_version, parse_version
@@ -190,6 +191,34 @@ def test_move_to_sparse():
             move_to(sparse1, numpy_array, xp=xp_torch, device=device_cpu)
         with pytest.raises(TypeError, match=msg):
             move_to(sparse1, None, xp=xp_torch, device=device_cpu)
+
+
+def test_move_to_numpy_negative_strides_to_torch():
+    """Check NumPy arrays with negative strides can be moved to torch."""
+    pytest.importorskip("torch")
+
+    code = """
+import os
+
+os.environ["SCIPY_ARRAY_API"] = "1"
+
+import numpy
+from numpy.testing import assert_allclose
+
+from sklearn._config import config_context
+from sklearn.utils._array_api import get_namespace_and_device, move_to
+
+import torch
+
+a = numpy.arange(12.0).reshape(3, 4)[:, ::-1]
+with config_context(array_api_dispatch=True):
+    xp, _, device = get_namespace_and_device(torch.asarray([1.0]))
+    result = move_to(a, xp=xp, device=device)
+    assert_allclose(result.cpu().numpy(), a)
+"""
+    # This must run in a subprocess because old PyTorch versions abort the
+    # Python process before a Python exception can be raised.
+    assert_run_python_script_without_output(code)
 
 
 @pytest.mark.parametrize("array_api", ["numpy", "array_api_strict"])
@@ -503,6 +532,9 @@ class SimpleEstimator(BaseEstimator):
         check_same_namespace(X, self, attribute="X_", method="predict")
         return X
 
+    def sparsify(self):
+        self.X_ = sp.csr_matrix(self.X_)
+
 
 class SimpleEstimatorCustomLogic(BaseEstimator):
     def fit(self, X, y=None):
@@ -605,6 +637,31 @@ def test_check_fitted_attribute():
 
         with pytest.raises(ValueError, match=".*must use the same namespace"):
             est.predict(numpy.asarray([0]))
+
+
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize("X", [[[1.3, 4.5]], sp.csr_array([[1.3, 4.5]])])
+def test_check_fitted_attribute_with_non_array_input(X):
+    """Check validation of non-array input against fitted attribute ``X_``.
+
+    ``SimpleEstimator.predict`` calls ``check_same_namespace`` with
+    ``attribute="X_"`` to compare the input with the fitted data.
+    """
+    xp = pytest.importorskip("array_api_strict")
+
+    with config_context(array_api_dispatch=True):
+        est = SimpleEstimator().fit(numpy.asarray([[1.3, 4.5]]))
+        # shouldn't raise:
+        est.predict(X)
+
+        est.sparsify()
+        # shouldn't raise either:
+        est.predict(X)
+        est.predict(numpy.asarray([[1.3, 4.5]]))
+
+        est = SimpleEstimator().fit(xp.asarray([[1.3, 4.5]]))
+        with pytest.raises(ValueError, match="Array namespace.*not compatible"):
+            est.predict(X)
 
 
 @pytest.mark.parametrize(

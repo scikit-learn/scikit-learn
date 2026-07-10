@@ -1,0 +1,6 @@
+- :class:`tree.DecisionTreeRegressor`, :class:`tree.DecisionTreeClassifier`
+  now have native support for categorical features for binary classification and
+  single-output regression. Categorical features can be specified with the
+  `categorical_features` parameter. Up to 256 categories per features are supported.
+  By `:user:`Adam Li <adam2392>`, `:user:`Arthur Lacote <cakedev0>`,
+  :user:`Adrin Jalali <adrinjalali>` and :user:`Christian Lorentzen <lorentzenchr>`
