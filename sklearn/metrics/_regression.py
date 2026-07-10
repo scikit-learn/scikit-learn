@@ -117,9 +117,7 @@ def _check_reg_targets(
         correct keyword.
     """
     if xp is None or device is None:
-        xp, _, device = get_namespace_and_device(
-            y_true, y_pred, sample_weight, multioutput, xp=xp
-        )
+        xp, _, device = get_namespace_and_device(y_pred, xp=xp)
     # Ensure `y_true` and `sample_weight` are on the `y_pred` device and namespace.
     y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
 

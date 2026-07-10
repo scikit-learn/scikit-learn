@@ -6,6 +6,7 @@ from numpy.testing import assert_allclose
 from scipy import optimize
 from scipy.special import factorial, xlogy
 
+from sklearn._config import config_context
 from sklearn.dummy import DummyRegressor
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.metrics import (
@@ -28,7 +29,9 @@ from sklearn.metrics import (
 )
 from sklearn.metrics._regression import _check_reg_targets
 from sklearn.model_selection import GridSearchCV
+from sklearn.utils._array_api import get_namespace
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
@@ -362,6 +365,35 @@ def test__check_reg_targets_single_output_error():
 
     with pytest.raises(ValueError, match=msg):
         _check_reg_targets([1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], None, multioutput=[0.5])
+
+
+def test__check_reg_targets_array_api():
+    """Check arrays are returned in the correct namespace."""
+    xp, _ = _array_api_for_tests("array_api_strict")
+
+    # Do not pass `xp` and `device`
+    outputs = _check_reg_targets(
+        y_true=np.asarray([1, 2, 3, 4]),
+        y_pred=xp.asarray([2, 2, 3, 4]),
+        sample_weight=np.asarray([1, 1, 2, 1]),
+        multioutput=np.asarray([0.2, 0.2, 0.25, 0.35]),
+    )
+    with config_context(array_api_dispatch=True):
+        for output in outputs:
+            assert get_namespace(output) == xp
+
+    # Pass `xp` and `device`
+    outputs = _check_reg_targets(
+        y_true=np.asarray([1, 2, 3, 4]),
+        y_pred=np.asarray([2, 2, 3, 4]),
+        sample_weight=np.asarray([1, 1, 2, 1]),
+        multioutput=np.asarray([0.2, 0.2, 0.25, 0.35]),
+        xp=xp,
+        device="cpu",
+    )
+    with config_context(array_api_dispatch=True):
+        for output in outputs:
+            assert get_namespace(output) == xp
 
 
 def test_regression_multioutput_array():
