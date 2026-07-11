@@ -373,14 +373,14 @@ def test__check_reg_targets_array_api():
 
     # Do not pass `xp` and `device`
     outputs = _check_reg_targets(
-        y_true=np.asarra([[1, 0, 0, 1], [0, 1, 1, 1], [1, 1, 0, 1]]),
+        y_true=np.asarray([[1, 0, 0, 1], [0, 1, 1, 1], [1, 1, 0, 1]]),
         y_pred=xp.asarray([[0, 0, 0, 1], [1, 0, 1, 1], [0, 0, 0, 1]]),
         sample_weight=np.asarray([1, 1, 2]),
         multioutput=np.asarray([0.2, 0.2, 0.25, 0.35]),
     )
     with config_context(array_api_dispatch=True):
-        for output in outputs:
-            assert get_namespace(output) == xp
+        for output in outputs[1:]:
+            assert get_namespace(output)[0] == xp
 
     # Pass `xp` and `device`
     outputs = _check_reg_targets(
@@ -392,8 +392,8 @@ def test__check_reg_targets_array_api():
         device="cpu",
     )
     with config_context(array_api_dispatch=True):
-        for output in outputs:
-            assert get_namespace(output) == xp
+        for output in outputs[1:]:
+            assert get_namespace(output)[0] == xp
 
 
 def test_regression_multioutput_array():
