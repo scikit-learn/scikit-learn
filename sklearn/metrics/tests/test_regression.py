@@ -373,9 +373,9 @@ def test__check_reg_targets_array_api():
 
     # Do not pass `xp` and `device`
     outputs = _check_reg_targets(
-        y_true=np.asarray([1, 2, 3, 4]),
-        y_pred=xp.asarray([2, 2, 3, 4]),
-        sample_weight=np.asarray([1, 1, 2, 1]),
+        y_true=np.asarra([[1, 0, 0, 1], [0, 1, 1, 1], [1, 1, 0, 1]]),
+        y_pred=xp.asarray([[0, 0, 0, 1], [1, 0, 1, 1], [0, 0, 0, 1]]),
+        sample_weight=np.asarray([1, 1, 2]),
         multioutput=np.asarray([0.2, 0.2, 0.25, 0.35]),
     )
     with config_context(array_api_dispatch=True):
