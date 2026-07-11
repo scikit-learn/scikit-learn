@@ -2296,6 +2296,44 @@ def test_ordinal_encoder_infrequent_custom_mapping():
     assert_allclose(X_trans, expected_trans)
 
 
+def test_ordinal_encoder_infrequent_group_code_collision():
+    """Check that `unknown_value` / `encoded_missing_value` are rejected when they
+    collide with the shared code of the grouped infrequent categories.
+
+    Non-regression test: the infrequent categories are grouped into a single code,
+    so the number of codes used by the known categories decreases by
+    ``len(infrequent) - 1``, not ``len(infrequent)``. The off-by-one made the
+    cardinality one too small, so a value equal to the infrequent-group code
+    passed the collision checks and silently aliased with it.
+    """
+    # "b" (count 20) is the only frequent category -> code 0; {a, c, d} are grouped
+    # as infrequent and share code 1.
+    X = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3], dtype=object).T
+
+    # unknown_value == infrequent group code (1) collides and must raise.
+    with pytest.raises(
+        ValueError, match="unknown_value 1 is one of the values already used"
+    ):
+        OrdinalEncoder(
+            handle_unknown="use_encoded_value", unknown_value=1, max_categories=2
+        ).fit(X)
+
+    # The first safe code above the group is still accepted.
+    encoder = OrdinalEncoder(
+        handle_unknown="use_encoded_value", unknown_value=2, max_categories=2
+    ).fit(X)
+    assert_array_equal(encoder.infrequent_categories_, [["a", "c", "d"]])
+
+    # encoded_missing_value == infrequent group code (1) collides and must raise.
+    X_missing = np.array(
+        [["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3 + [np.nan]], dtype=object
+    ).T
+    with pytest.raises(
+        ValueError, match=r"encoded_missing_value \(1\) is already used"
+    ):
+        OrdinalEncoder(max_categories=2, encoded_missing_value=1).fit(X_missing)
+
+
 @pytest.mark.parametrize(
     "kwargs",
     [
