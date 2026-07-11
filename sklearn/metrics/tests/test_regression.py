@@ -384,8 +384,8 @@ def test__check_reg_targets_array_api():
 
     # Pass `xp` and `device`
     outputs = _check_reg_targets(
-        y_true=np.asarray([1, 2, 3, 4]),
-        y_pred=np.asarray([2, 2, 3, 4]),
+        y_true=np.asarray([[1, 0, 0, 1], [0, 1, 1, 1], [1, 1, 0, 1]]),
+        y_pred=np.asarray([[0, 0, 0, 1], [1, 0, 1, 1], [0, 0, 0, 1]]),
         sample_weight=np.asarray([1, 1, 2, 1]),
         multioutput=np.asarray([0.2, 0.2, 0.25, 0.35]),
         xp=xp,
