@@ -1248,6 +1248,13 @@ class LogisticRegression(
             In SciPy <= 1.0.0 the number of lbfgs iterations may exceed
             ``max_iter``. ``n_iter_`` will now report at most ``max_iter``.
 
+        .. note::
+
+            When ``warm_start=True`` and the model has already converged from a
+            previous fit, ``n_iter_`` may report 0 iterations for subsequent fits.
+            This is expected behavior as the optimizer starts from an already-optimal
+            point.
+
     See Also
     --------
     SGDClassifier : Incrementally trained logistic regression (when given
