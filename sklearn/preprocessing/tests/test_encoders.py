@@ -1819,6 +1819,31 @@ def test_ordinal_encoder_handle_missing_and_unknown(X, expected_X_trans, X_test)
     assert_allclose(oe.transform(X_test), [[-1.0]])
 
 
+def test_ordinal_encoder_missing_value_object_categories_numeric_transform():
+    """Check that transforming numeric data works when the encoder was fitted
+    on object dtype data containing missing values.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/34387
+    """
+    # np.nan is a known category from fit
+    oe = OrdinalEncoder(encoded_missing_value=np.nan)
+    oe.fit(np.array([[0], [1], [np.nan]], dtype=object))
+    X_trans = oe.transform([[np.nan]])
+    assert np.isnan(X_trans[0, 0])
+    assert_allclose(oe.transform([[1], [0]]), [[1.0], [0.0]])
+
+    # np.nan is unknown at transform time and encoded with `unknown_value`
+    oe = OrdinalEncoder(
+        encoded_missing_value=np.nan,
+        handle_unknown="use_encoded_value",
+        unknown_value=np.nan,
+    )
+    oe.fit(np.array([[0], [1]], dtype=object))
+    X_trans = oe.transform(np.array([[np.nan]]))
+    assert np.isnan(X_trans[0, 0])
+
+
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_ordinal_encoder_sparse(csr_container):
     """Check that we raise proper error with sparse input in OrdinalEncoder.
