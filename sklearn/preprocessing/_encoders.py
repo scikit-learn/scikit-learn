@@ -625,7 +625,7 @@ class OneHotEncoder(_BaseEncoder):
 
     allow_mixed_types : bool, default=False
         If True, allows encoding an array containing a mixture of types
-        (e.g. strings and numbers)
+        (e.g. strings and numbers).
 
         .. versionadded:: 1.10
 

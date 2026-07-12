@@ -1,0 +1,6 @@
+- Implemented a new parameter, `allow_mixed_types`, for
+  :class:`preprocessing.OneHotEncoder` & :class:`preprocessing.OrdinalEncoder`.
+  When set to `True`, arrays of mixed type (e.g. integers and strings) can be
+  encoded instead of raising a `TypeError`. Categories are ordered by grouping
+  values by type, and the original values and their types are preserved.
+  By :user:`Rany Kamel <ranykamel>`.
