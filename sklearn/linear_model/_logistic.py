@@ -1208,9 +1208,10 @@ class LogisticRegression(
     n_iter_ : ndarray of shape (1, )
     Actual number of iterations for all classes.
 
-    When ``warm_start=True``, this reports the number of iterations in
-    the last call to fit. It may be 0 if the model has already converged
-    from a previous fit.
+    .. note::
+        When ``warm_start=True``, this reports the number of iterations
+        in the last call to fit. It may be 0 if the model has already
+        converged from a previous fit.
 
         .. versionchanged:: 0.20
 
