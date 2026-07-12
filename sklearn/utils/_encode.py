@@ -206,8 +206,8 @@ def _unique_python(values, *, return_inverse, return_counts):
 def _encode(values, *, uniques, check_unknown=True):
     """Helper function to encode values into [0, n_uniques - 1].
 
-    Uses pure python method when `values` or `uniques` has an object
-    dtype, and numpy method for all other dtypes.
+    Uses pure python method when `values` or `uniques` has a non-numeric
+    dtype, and numpy method when both have a numeric dtype.
     The numpy method has the limitation that the `uniques` need to
     be sorted. Importantly, this is not checked but assumed to already be
     the case. The calling method needs to ensure this for all non-object
