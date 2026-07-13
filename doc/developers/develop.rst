@@ -680,7 +680,7 @@ In addition, we add the following guidelines:
   in all your docstrings.
 
 * When applicable, use the validation tools and scripts in the
-  :mod:`sklearn.utils` module. A overview of utility routines available for developers
+  :mod:`sklearn.utils` module. An overview of utility routines available for developers
   can be found in the sections below and the :ref:`developers-utils` page.
 
 * Only write inline comments that add value and avoid stating the obvious: explain
