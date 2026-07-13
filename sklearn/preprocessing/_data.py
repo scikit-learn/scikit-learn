@@ -17,6 +17,7 @@ from sklearn.base import (
     _fit_context,
 )
 from sklearn.callback import CallbackSupportMixin
+from sklearn.externals import array_api_extra as xpx
 from sklearn.preprocessing._encoders import OneHotEncoder
 from sklearn.utils import _array_api, check_array, metadata_routing, resample
 from sklearn.utils._array_api import (
@@ -524,8 +525,8 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             xp.asarray(feature_range[1], dtype=X.dtype, device=device_),
         )
 
-        data_min = _array_api._nanmin(X, axis=0, xp=xp)
-        data_max = _array_api._nanmax(X, axis=0, xp=xp)
+        data_min = xpx.nanmin(X, axis=0, xp=xp)
+        data_max = xpx.nanmax(X, axis=0, xp=xp)
 
         if first_pass:
             self.n_samples_seen_ = X.shape[0]
@@ -1351,7 +1352,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             mins, maxs = min_max_axis(X, axis=0, ignore_nan=True)
             max_abs = np.maximum(np.abs(mins), np.abs(maxs))
         else:
-            max_abs = _array_api._nanmax(xp.abs(X), axis=0, xp=xp)
+            max_abs = xpx.nanmax(xp.abs(X), axis=0, xp=xp)
 
         if first_pass:
             self.n_samples_seen_ = X.shape[0]

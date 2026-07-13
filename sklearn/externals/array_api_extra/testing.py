@@ -598,22 +598,23 @@ def _check_ns_shape_dtype(
     np = _require_numpy()
 
     actual_xp = array_namespace(actual)  # Raises on Python scalars and lists
-    desired_xp = array_namespace(desired)
 
     if xp is not None:
         _msg = (
-            "Namespace of desired array does not match the `xp` argument.\n"
-            f"Desired array's namespace: {desired_xp.__name__}\n"
+            "Namespace of actual array does not match the `xp` argument.\n"
+            f"Actual array's namespace: {actual_xp.__name__}\n"
             f"Expected namespace: {xp.__name__}."
         )
-        assert desired_xp == xp, _msg
-
-    _msg = (
-        "Namespaces of actual and desired arrays do not match.\n"
-        f"Actual: {actual_xp.__name__}\n"
-        f"Desired: {desired_xp.__name__}."
-    )
-    assert actual_xp == desired_xp, _msg
+        assert actual_xp == xp, _msg
+        desired_xp = xp
+    else:
+        desired_xp = array_namespace(desired)
+        _msg = (
+            "Namespaces of actual and desired arrays do not match.\n"
+            f"Actual: {actual_xp.__name__}\n"
+            f"Desired: {desired_xp.__name__}."
+        )
+        assert actual_xp == desired_xp, _msg
 
     if is_numpy_namespace(actual_xp) and check_scalar:
         # only NumPy distinguishes between scalars and arrays; we do if check_scalar.
@@ -650,6 +651,7 @@ def _check_ns_shape_dtype(
         msg = f"sizes do not match: {actual_size} != {desired_size}"
         assert actual_size == desired_size, msg
 
+    desired = desired_xp.asarray(desired)
     if check_dtype:
         msg = f"dtypes do not match: {actual.dtype} != {desired.dtype}"
         assert actual.dtype == desired.dtype, msg
@@ -774,6 +776,7 @@ def assert_close(
 
     Array arguments to `atol` and `rtol` must be valid input to :class:`float`.
     """
+    __tracebackhide__ = True
     actual, desired, xp, np = _check_ns_shape_dtype(
         actual, desired, check_dtype, check_shape, check_scalar, xp
     )
@@ -857,6 +860,7 @@ def assert_equal(
     assert_close : Similar function for inexact equality checks.
     numpy.testing.assert_array_equal : Similar function for NumPy arrays.
     """
+    __tracebackhide__ = True
     actual, desired, xp, np = _check_ns_shape_dtype(
         actual, desired, check_dtype, check_shape, check_scalar, xp
     )
@@ -918,6 +922,7 @@ def assert_less(
     assert_close : Similar function for inexact equality checks.
     numpy.testing.assert_array_less : Similar function for NumPy arrays.
     """
+    __tracebackhide__ = True
     x, y, xp, np = _check_ns_shape_dtype(
         x, y, check_dtype, check_shape, check_scalar, xp
     )

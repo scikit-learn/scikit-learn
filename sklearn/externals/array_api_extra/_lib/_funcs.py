@@ -19,23 +19,38 @@ from ._utils._helpers import (
     eager_shape,
     meta_namespace,
     ndindex,
+    normalize_pad_width,
 )
 from ._utils._typing import Array, Device, DType
 
 __all__ = [
     "angle",
     "apply_where",
+    "argpartition",
     "atleast_nd",
     "broadcast_shapes",
     "cov",
     "create_diagonal",
+    "default_dtype",
+    "diag_indices",
     "expand_dims",
+    "isclose",
+    "isin",
     "kron",
+    "nan_to_num",
+    "nanmax",
+    "nanmin",
     "nunique",
+    "one_hot",
     "pad",
+    "partition",
     "searchsorted",
     "setdiff1d",
     "sinc",
+    "tril_indices",
+    "triu_indices",
+    "union1d",
+    "unravel_index",
 ]
 
 
@@ -311,6 +326,59 @@ def create_diagonal(
     return xp.reshape(diag, (*batch_dims, n, n))
 
 
+def diag_indices(
+    n: int, /, *, ndim: int, device: Device | None, xp: ModuleType
+) -> tuple[Array, ...]:  # numpydoc ignore=PR01,RT01
+    """See docstring in array_api_extra._delegation."""
+    idx = xp.arange(n, device=device)
+    return (idx,) * ndim
+
+
+def _tri_indices(
+    n: int,
+    *,
+    offset: int,
+    m: int | None,
+    upper: bool,
+    device: Device | None,
+    xp: ModuleType,
+) -> tuple[Array, Array]:  # numpydoc ignore=PR01,RT01
+    """Shared implementation for `tril_indices` and `triu_indices`."""
+    cols = n if m is None else m
+    rows = xp.arange(n, device=device)[:, xp.newaxis]
+    cols_a = xp.arange(cols, device=device)[xp.newaxis, :]
+    delta = cols_a - rows
+    mask = delta >= offset if upper else delta <= offset
+    r, c = xp.nonzero(mask)
+    return (r, c)
+
+
+def tril_indices(
+    n: int,
+    /,
+    *,
+    offset: int,
+    m: int | None,
+    device: Device | None,
+    xp: ModuleType,
+) -> tuple[Array, Array]:  # numpydoc ignore=PR01,RT01
+    """See docstring in array_api_extra._delegation."""
+    return _tri_indices(n, offset=offset, m=m, upper=False, device=device, xp=xp)
+
+
+def triu_indices(
+    n: int,
+    /,
+    *,
+    offset: int,
+    m: int | None,
+    device: Device | None,
+    xp: ModuleType,
+) -> tuple[Array, Array]:  # numpydoc ignore=PR01,RT01
+    """See docstring in array_api_extra._delegation."""
+    return _tri_indices(n, offset=offset, m=m, upper=True, device=device, xp=xp)
+
+
 def default_dtype(
     xp: ModuleType,
     kind: Literal[
@@ -546,17 +614,7 @@ def pad(
     xp: ModuleType,
 ) -> Array:  # numpydoc ignore=PR01,RT01
     """See docstring in `array_api_extra._delegation.py`."""
-    # make pad_width a list of length-2 tuples of ints
-    if isinstance(pad_width, int):
-        pad_width_seq = [(pad_width, pad_width)] * x.ndim
-    elif (
-        isinstance(pad_width, tuple)
-        and len(pad_width) == 2
-        and all(isinstance(i, int) for i in pad_width)
-    ):
-        pad_width_seq = [cast(tuple[int, int], pad_width)] * x.ndim
-    else:
-        pad_width_seq = cast(list[tuple[int, int]], list(pad_width))
+    pad_width_seq = normalize_pad_width(pad_width, x.ndim)
 
     slices: list[slice] = []
     newshape: list[int] = []
@@ -757,3 +815,55 @@ def angle(z: Array, /, *, deg: bool = False, xp: ModuleType | None = None) -> Ar
     if deg:
         a = a * 180 / xp.pi
     return a
+
+
+def unravel_index(indices: Array, shape: tuple[int, ...], /) -> tuple[Array, ...]:
+    # numpydoc ignore=PR01,RT01
+    """See docstring in `array_api_extra._delegation.py`."""
+    coords: list[Array] = []
+    for dim in reversed(shape):
+        coords.append(indices % dim)
+        indices = indices // dim
+    return tuple(reversed(coords))
+
+
+def nanmin(  # numpydoc ignore=PR01,RT01
+    a: Array,
+    /,
+    *,
+    axis: int | tuple[int, ...] | None,
+    xp: ModuleType,
+) -> Array:
+    """See docstring in `array_api_extra._delegation.py`."""
+    mask = xp.isnan(a)
+    device_a = _compat.device(a)
+    x = xp.min(
+        xp.where(mask, xp.asarray(+xp.inf, dtype=a.dtype, device=device_a), a),
+        axis=axis,
+    )
+    # Replace Infs from all NaN slices with NaN again
+    mask = xp.all(mask, axis=axis)
+    if xp.any(mask):
+        x = xp.where(mask, xp.asarray(xp.nan, dtype=x.dtype, device=device_a), x)
+    return x
+
+
+def nanmax(  # numpydoc ignore=PR01,RT01
+    a: Array,
+    /,
+    *,
+    axis: int | tuple[int, ...] | None,
+    xp: ModuleType,
+) -> Array:
+    """See docstring in `array_api_extra._delegation.py`."""
+    mask = xp.isnan(a)
+    device_a = _compat.device(a)
+    x = xp.max(
+        xp.where(mask, xp.asarray(-xp.inf, dtype=a.dtype, device=device_a), a),
+        axis=axis,
+    )
+    # Replace Infs from all NaN slices with NaN again
+    mask = xp.all(mask, axis=axis)
+    if xp.any(mask):
+        x = xp.where(mask, xp.asarray(xp.nan, dtype=x.dtype, device=device_a), x)
+    return x

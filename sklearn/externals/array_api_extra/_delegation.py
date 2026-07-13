@@ -15,22 +15,38 @@ from ._lib._utils._compat import (
     is_torch_namespace,
 )
 from ._lib._utils._compat import device as get_device
-from ._lib._utils._helpers import asarrays, eager_shape
-from ._lib._utils._typing import Array, DType
+from ._lib._utils._helpers import (
+    asarrays,
+    deprecated,
+    eager_shape,
+    normalize_pad_width,
+)
+from ._lib._utils._typing import Array, Device, DType
 
 __all__ = [
+    "argpartition",
     "atleast_nd",
     "broadcast_shapes",
     "cov",
     "create_diagonal",
+    "diag_indices",
     "expand_dims",
     "isclose",
+    "isin",
     "kron",
     "nan_to_num",
+    "nanmax",
+    "nanmin",
     "one_hot",
     "pad",
+    "partition",
     "searchsorted",
+    "setdiff1d",
     "sinc",
+    "tril_indices",
+    "triu_indices",
+    "union1d",
+    "unravel_index",
 ]
 
 
@@ -83,18 +99,22 @@ def atleast_nd(x: Array, /, *, ndim: int, xp: ModuleType | None = None) -> Array
     return _funcs.atleast_nd(x, ndim=ndim, xp=xp)
 
 
+@deprecated(
+    "`xpx.broadcast_shapes` is deprecated and will be removed in v1.0.0. "
+    "`xp.broadcast_shapes` exists in the standard as of v2025.12."
+)
 def broadcast_shapes(
     *shapes: tuple[float | None, ...], xp: ModuleType | None = None
 ) -> tuple[int | None, ...]:
     """
     Compute the shape of the broadcasted arrays.
 
+    .. deprecated:: 0.11.0
+        :func:`broadcast_shapes` is deprecated and will be removed in v1.0.0.
+        :func:`array_api.broadcast_shapes` exists in the standard as of v2025.12.
+
     Duplicates :func:`numpy.broadcast_shapes`, with additional support for
     None and NaN sizes.
-
-    This is equivalent to ``xp.broadcast_arrays(arr1, arr2, ...)[0].shape``
-    without needing to worry about the backend potentially deep copying
-    the arrays.
 
     Parameters
     ----------
@@ -300,17 +320,73 @@ def create_diagonal(
     return _funcs.create_diagonal(x, offset=offset, xp=xp)
 
 
+def diag_indices(
+    n: int, /, *, ndim: int = 2, device: Device | None = None, xp: ModuleType
+) -> tuple[Array, ...]:
+    """
+    Return the indices to access the main diagonal of an array.
+
+    Equivalent to :func:`numpy.diag_indices`.
+
+    Parameters
+    ----------
+    n : int
+        The size of each dimension of the (hyper-)cube ``(n, n, ..., n)``
+        that the returned indices index into.
+    ndim : int, optional
+        The number of dimensions. Default: ``2``.
+    device : Device, optional
+        The device on which to place the returned arrays. Default: current device.
+    xp : array_namespace
+        The standard-compatible namespace to create the indices in.
+
+    Returns
+    -------
+    tuple of array
+        1-D integer arrays of length ``n`` that together index
+        the main diagonal of an array of shape ``(n,) * ndim``.
+
+    Examples
+    --------
+    >>> import array_api_strict as xp
+    >>> import array_api_extra as xpx
+    >>> rows, cols = xpx.diag_indices(3, xp=xp)
+    >>> rows
+    Array([0, 1, 2], dtype=array_api_strict.int64)
+    >>> cols
+    Array([0, 1, 2], dtype=array_api_strict.int64)
+    """
+    if n < 0:
+        msg = f"`n` must be non-negative, got {n}"
+        raise ValueError(msg)
+    if ndim < 1:
+        msg = f"`ndim` must be >= 1, got {ndim}"
+        raise ValueError(msg)
+    if device is None and (
+        is_numpy_namespace(xp) or is_cupy_namespace(xp) or is_jax_namespace(xp)
+    ):
+        return xp.diag_indices(n, ndim=ndim)
+    return _funcs.diag_indices(n, ndim=ndim, device=device, xp=xp)
+
+
+@deprecated(
+    "`xpx.expand_dims` is deprecated and will be removed in v1.0.0. "
+    "`xp.expand_dims` with support for a tuple of ints in `axis` "
+    "exists in the standard as of v2025.12."
+)
 def expand_dims(
     a: Array, /, *, axis: int | tuple[int, ...] = (0,), xp: ModuleType | None = None
 ) -> Array:
     """
     Expand the shape of an array.
 
+    .. deprecated:: 0.11.0
+        :func:`expand_dims` is deprecated and will be removed in v1.0.0.
+        :func:`array_api.expand_dims` with support for a tuple of ints in `axis`
+        exists in the standard as of v2025.12.
+
     Insert (a) new axis/axes that will appear at the position(s) specified by
     `axis` in the expanded array shape.
-
-    This is ``xp.expand_dims`` for `axis` an int *or a tuple of ints*.
-    Roughly equivalent to ``numpy.expand_dims`` for NumPy arrays.
 
     Parameters
     ----------
@@ -780,12 +856,13 @@ def pad(
     ):
         return xp.pad(x, pad_width, mode, constant_values=constant_values)
 
-    # https://github.com/pytorch/pytorch/blob/cf76c05b4dc629ac989d1fb8e789d4fac04a095a/torch/_numpy/_funcs_impl.py#L2045-L2056
     if is_torch_namespace(xp):
-        pad_width = xp.asarray(pad_width)
-        pad_width = xp.broadcast_to(pad_width, (x.ndim, 2))
-        pad_width = xp.flip(pad_width, axis=(0,)).flatten()
-        return xp.nn.functional.pad(x, tuple(pad_width), value=constant_values)  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
+        # normalize `pad_width` on the host rather than through a tensor as done in
+        # `torch/_numpy`'s implementation (avoids device transfers)
+        pad_width_seq = normalize_pad_width(pad_width, x.ndim)
+        # torch.nn.functional.pad counts dimensions from the last one
+        flat_pad_width = [w for pair in reversed(pad_width_seq) for w in pair]
+        return xp.nn.functional.pad(x, tuple(flat_pad_width), value=constant_values)
 
     return _funcs.pad(x, pad_width, constant_values=constant_values, xp=xp)
 
@@ -804,7 +881,7 @@ def searchsorted(
     Find the indices into a sorted array ``x1`` such that if the elements in ``x2``
     were inserted before the indices, the resulting array would remain sorted.
 
-    The behavior of this function is similar to that of `array_api.searchsorted`,
+    The behavior of this function is similar to that of :func:`array_api.searchsorted`,
     but it relaxes the requirement that `x1` must be one-dimensional.
     This function is vectorized, treating slices along the last axis
     as elements and preceding axes as batch (or "loop") dimensions.
@@ -1220,8 +1297,8 @@ def isin(
     """
     Determine whether each element in `a` is present in `b`.
 
-    Return a boolean array of the same shape as `a` that is True for elements
-    that are in `b` and False otherwise.
+    This is :func:`array_api.isin`, with additional `assume_unique`
+    and `kind` parameters.
 
     Parameters
     ----------
@@ -1307,3 +1384,306 @@ def union1d(a: Array, b: Array, /, *, xp: ModuleType | None = None) -> Array:
         return xp.union1d(a, b)
 
     return _funcs.union1d(a, b, xp=xp)
+
+
+def tril_indices(
+    n: int,
+    /,
+    *,
+    offset: int = 0,
+    m: int | None = None,
+    device: Device | None = None,
+    xp: ModuleType,
+) -> tuple[Array, Array]:
+    """
+    Return the indices of the lower triangle of an ``(n, m)`` array.
+
+    Equivalent to :func:`numpy.tril_indices` with parameter ``k`` renamed to
+    ``offset`` to match :func:`array_api.linalg.diagonal`'s naming.
+
+    Parameters
+    ----------
+    n : int
+        The row dimension of the array.
+    offset : int, optional
+        Diagonal offset; ``0`` (default) is the main diagonal. Corresponds
+        to ``k`` in :func:`numpy.tril_indices`.
+    m : int, optional
+        The column dimension. If ``None`` (default), assumed equal to `n`.
+    device : Device, optional
+        The device on which to place the returned arrays. Default: current device.
+    xp : array_namespace
+        The standard-compatible namespace to create the indices in.
+
+    Returns
+    -------
+    tuple of array
+        Row and column indices ``(rows, cols)`` of the lower triangle of
+        the ``(n, m)`` matrix, shifted by `offset`.
+
+    Notes
+    -----
+    The generic fallback uses :func:`array_api.nonzero`, so namespaces without
+    ``nonzero`` are not supported on that path.
+
+    Examples
+    --------
+    >>> import array_api_strict as xp
+    >>> import array_api_extra as xpx
+    >>> rows, cols = xpx.tril_indices(3, xp=xp)
+    >>> rows
+    Array([0, 1, 1, 2, 2, 2], dtype=array_api_strict.int64)
+    >>> cols
+    Array([0, 0, 1, 0, 1, 2], dtype=array_api_strict.int64)
+    """
+    if n < 0:
+        msg = f"`n` must be non-negative, got {n}"
+        raise ValueError(msg)
+    if m is not None and m < 0:
+        msg = f"`m` must be non-negative, got {m}"
+        raise ValueError(msg)
+    if device is None and (
+        is_numpy_namespace(xp)
+        or is_cupy_namespace(xp)
+        or is_jax_namespace(xp)
+        or is_dask_namespace(xp)
+    ):
+        return xp.tril_indices(n, k=offset, m=m)
+    if is_torch_namespace(xp):
+        # `torch.tril_indices` returns a 2xN tensor, not a tuple, and
+        # takes (row, col) rather than (n, *, m=None).
+        cols = n if m is None else m
+        idx = xp.tril_indices(n, cols, offset=offset, device=device)
+        return (idx[0], idx[1])
+    return _funcs.tril_indices(n, offset=offset, m=m, device=device, xp=xp)
+
+
+def triu_indices(
+    n: int,
+    /,
+    *,
+    offset: int = 0,
+    m: int | None = None,
+    device: Device | None = None,
+    xp: ModuleType,
+) -> tuple[Array, Array]:
+    """
+    Return the indices of the upper triangle of an ``(n, m)`` array.
+
+    Equivalent to :func:`numpy.triu_indices` with parameter ``k`` renamed to
+    ``offset`` to match :func:`array_api.linalg.diagonal`'s naming.
+
+    Parameters
+    ----------
+    n : int
+        The row dimension of the array.
+    offset : int, optional
+        Diagonal offset; ``0`` (default) is the main diagonal. Corresponds
+        to ``k`` in :func:`numpy.triu_indices`.
+    m : int, optional
+        The column dimension. If ``None`` (default), assumed equal to `n`.
+    device : Device, optional
+        The device on which to place the returned arrays. Default: current device.
+    xp : array_namespace
+        The standard-compatible namespace to create the indices in.
+
+    Returns
+    -------
+    tuple of array
+        Row and column indices ``(rows, cols)`` of the upper triangle of
+        the ``(n, m)`` matrix, shifted by `offset`.
+
+    Notes
+    -----
+    The generic fallback uses :func:`array_api.nonzero`, so namespaces without
+    ``nonzero`` are not supported on that path.
+
+    Examples
+    --------
+    >>> import array_api_strict as xp
+    >>> import array_api_extra as xpx
+    >>> rows, cols = xpx.triu_indices(3, xp=xp)
+    >>> rows
+    Array([0, 0, 0, 1, 1, 2], dtype=array_api_strict.int64)
+    >>> cols
+    Array([0, 1, 2, 1, 2, 2], dtype=array_api_strict.int64)
+    """
+    if n < 0:
+        msg = f"`n` must be non-negative, got {n}"
+        raise ValueError(msg)
+    if m is not None and m < 0:
+        msg = f"`m` must be non-negative, got {m}"
+        raise ValueError(msg)
+    if device is None and (
+        is_numpy_namespace(xp)
+        or is_cupy_namespace(xp)
+        or is_jax_namespace(xp)
+        or is_dask_namespace(xp)
+    ):
+        return xp.triu_indices(n, k=offset, m=m)
+    if is_torch_namespace(xp):
+        cols = n if m is None else m
+        idx = xp.triu_indices(n, cols, offset=offset, device=device)
+        return (idx[0], idx[1])
+    return _funcs.triu_indices(n, offset=offset, m=m, device=device, xp=xp)
+
+
+def unravel_index(
+    indices: Array,
+    shape: tuple[int, ...],
+    /,
+    *,
+    xp: ModuleType | None = None,
+) -> tuple[Array, ...]:
+    """
+    Convert a flat index or array of flat indices into a tuple of coordinate arrays.
+
+    Parameters
+    ----------
+    indices : array
+        An integer array whose elements are indices into the flattened version
+        of an array of dimensions `shape`.
+
+    shape : tuple of ints
+        The shape to use for unraveling `indices`.
+
+    xp : array_namespace, optional
+        The standard-compatible namespace for `indices`. Default: infer.
+
+    Returns
+    -------
+    tuple of array
+        A tuple of unraveled indices. Each array in the tuple has the same shape
+        as the `indices` array.
+
+    Examples
+    --------
+    >>> import array_api_extra as xpx
+    >>> import array_api_strict as xp
+    >>> xs, ys = xpx.unravel_index(xp.asarray([1, 2, 4, 5, 6, 8]), (4, 3))
+    >>> xs, ys
+    (
+        Array([0, 0, 1, 1, 2, 2], dtype=array_api_strict.int64),
+        Array([1, 2, 1, 2, 0, 2], dtype=array_api_strict.int64),
+    )
+    >>> [(int(x), int(y)) for x, y in zip(xs, ys)]
+    [(0, 1), (0, 2), (1, 1), (1, 2), (2, 0), (2, 2)]
+    >>> xs, ys = xpx.unravel_index(xp.arange(6), (2, 2))
+    >>> [(int(x), int(y)) for x, y in zip(xs, ys)]
+    [(0, 0), (0, 1), (1, 0), (1, 1), (0, 0), (0, 1)]
+    """
+    if xp is None:
+        xp = array_namespace(indices)
+
+    if (
+        is_numpy_namespace(xp)
+        or is_cupy_namespace(xp)
+        or is_dask_namespace(xp)
+        or is_jax_namespace(xp)
+        or is_torch_namespace(xp)
+    ):
+        return xp.unravel_index(indices, shape)
+
+    return _funcs.unravel_index(indices, shape)
+
+
+def nanmin(
+    a: Array,
+    /,
+    *,
+    axis: int | tuple[int, ...] | None = None,
+    xp: ModuleType | None = None,
+) -> Array:
+    """
+    Return the minimum of the array elements along a given axis, ignoring NaNs.
+
+    Parameters
+    ----------
+    a : Array
+        Input array.
+    axis : int or tuple of ints or None, optional
+        Axis or axes along which the minimum is computed. The default is to compute
+        the minimum of the flattened array.
+    xp : array_namespace, optional
+        The standard-compatible namespace for `a`. Default: infer.
+
+    Returns
+    -------
+    array
+        An array of minimum values along the given axis, ignoring NaNs.
+
+    Examples
+    --------
+    >>> import array_api_extra as xpx
+    >>> import array_api_strict as xp
+    >>> a = xp.asarray([[5, 3, xp.nan, 1], [4, xp.nan, 2, xp.nan]])
+    >>> xpx.nanmin(a)
+    Array(1., dtype=array_api_strict.float64)
+    >>> xpx.nanmin(a, axis=0)
+    Array([4., 3., 2., 1.], dtype=array_api_strict.float64)
+    >>> xpx.nanmin(a, axis=1)
+    Array([1., 2.], dtype=array_api_strict.float64)
+    """
+    if xp is None:
+        xp = array_namespace(a)
+
+    if (
+        is_numpy_namespace(xp)
+        or is_cupy_namespace(xp)
+        or is_dask_namespace(xp)
+        or is_jax_namespace(xp)
+    ):
+        return xp.nanmin(a, axis=axis)
+
+    return _funcs.nanmin(a, axis=axis, xp=xp)
+
+
+def nanmax(
+    a: Array,
+    /,
+    *,
+    axis: int | tuple[int, ...] | None = None,
+    xp: ModuleType | None = None,
+) -> Array:
+    """
+    Return the maximum of the array elements along a given axis, ignoring NaNs.
+
+    Parameters
+    ----------
+    a : Array
+        Input array.
+    axis : int or tuple of ints or None, optional
+        Axis or axes along which the maximum is computed. The default is to compute
+        the maximum of the flattened array.
+    xp : array_namespace, optional
+        The standard-compatible namespace for `a`. Default: infer.
+
+    Returns
+    -------
+    array
+        An array of maximum values along the given axis, ignoring NaNs.
+
+    Examples
+    --------
+    >>> import array_api_extra as xpx
+    >>> import array_api_strict as xp
+    >>> a = xp.asarray([[5, 3, xp.nan, 6], [4, xp.nan, 2, xp.nan]])
+    >>> xpx.nanmax(a)
+    Array(6., dtype=array_api_strict.float64)
+    >>> xpx.nanmax(a, axis=0)
+    Array([5., 3., 2., 6.], dtype=array_api_strict.float64)
+    >>> xpx.nanmax(a, axis=1)
+    Array([6., 4.], dtype=array_api_strict.float64)
+    """
+    if xp is None:
+        xp = array_namespace(a)
+
+    if (
+        is_numpy_namespace(xp)
+        or is_cupy_namespace(xp)
+        or is_dask_namespace(xp)
+        or is_jax_namespace(xp)
+    ):
+        return xp.nanmax(a, axis=axis)
+
+    return _funcs.nanmax(a, axis=axis, xp=xp)

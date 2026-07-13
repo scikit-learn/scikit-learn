@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import functools
 import io
 import math
 import pickle
 import types
-from collections.abc import Callable, Generator, Iterable, Iterator
+import warnings
+from collections.abc import Callable, Generator, Iterable, Iterator, Sequence
 from functools import wraps
 from types import ModuleType
 from typing import (
@@ -48,14 +50,36 @@ T = TypeVar("T")
 __all__ = [
     "asarrays",
     "capabilities",
+    "deprecated",
     "eager_shape",
     "in1d",
     "is_python_scalar",
     "jax_autojit",
     "meta_namespace",
+    "normalize_pad_width",
     "pickle_flatten",
     "pickle_unflatten",
 ]
+
+
+def deprecated(
+    msg: str, stacklevel: int = 2
+) -> Callable[[Callable[P, T]], Callable[P, T]]:  # numpydoc ignore=PR01,RT01
+    """Deprecate a function by emitting a warning on use."""
+
+    def decorate(func: Callable[P, T]) -> Callable[P, T]:  # numpydoc ignore=GL08
+        @functools.wraps(func)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:  # numpydoc ignore=GL08
+            warnings.warn(
+                msg,
+                category=DeprecationWarning,
+                stacklevel=stacklevel,
+            )
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorate
 
 
 def in1d(
@@ -585,3 +609,19 @@ def jax_autojit(
         return inner(wargs).obj
 
     return outer
+
+
+def normalize_pad_width(
+    pad_width: int | tuple[int, int] | Sequence[tuple[int, int]],
+    ndim: int,
+) -> list[tuple[int, int]]:  # numpydoc ignore=PR01,RT01
+    """Normalize `pad_width` to a list of `ndim` (before, after) pairs of ints."""
+    if isinstance(pad_width, int):
+        return [(pad_width, pad_width)] * ndim
+    if (
+        isinstance(pad_width, tuple)
+        and len(pad_width) == 2
+        and all(isinstance(i, int) for i in pad_width)
+    ):
+        return [cast(tuple[int, int], pad_width)] * ndim
+    return cast(list[tuple[int, int]], list(pad_width))
