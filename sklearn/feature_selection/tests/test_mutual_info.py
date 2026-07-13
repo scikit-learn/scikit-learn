@@ -328,3 +328,29 @@ def test_mutual_info_classif_repeated_values_feature(offset, global_random_seed)
 
     assert mi <= target_entropy
     assert mi == pytest.approx(0.0, abs=1e-3)
+
+
+@pytest.mark.parametrize("offset", [0.0, 1.0, 100.0])
+@pytest.mark.parametrize("sigma", [1e-6, 1e-10, 1e-14])
+def test_mutual_info_classif_delta_like_feature(offset, sigma, global_random_seed):
+    """A feature whose spread is far below its own magnitude, e.g. ``N(offset,
+    sigma)`` with ``sigma << offset``, is numerically almost constant: float64
+    rounding places its values on a coarse quantization grid. If the tie-breaking
+    noise does not dominate that grid, the k-NN estimator sees spurious structure
+    and over-estimates the mutual information with an independent target.
+
+    The noise is scaled to the grid, so this holds at any offset/spread.
+
+    Non-regression test for the general (non-constant) form of gh-30772.
+    """
+    rng = check_random_state(global_random_seed)
+    n_samples = 100_000
+    y = (np.arange(n_samples) < 10).astype(int)
+    X = (offset + sigma * rng.standard_normal(n_samples)).reshape(-1, 1)
+
+    p = y.mean()
+    target_entropy = -(p * np.log(p) + (1 - p) * np.log(1 - p))
+
+    mi = mutual_info_classif(X, y, random_state=global_random_seed)[0]
+
+    assert mi <= target_entropy
