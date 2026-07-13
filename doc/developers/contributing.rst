@@ -404,7 +404,7 @@ Pull request checklist
     .. tab-item:: Code
       :class-label: tab-6
 
-      .. rubric:: BEFORE opening a PR, make sure that:
+      .. rubric:: Before opening a PR, make sure that:
          :class: rubric-large
 
       * Your PR relates to at least one existing issue that is ready for
@@ -420,7 +420,7 @@ Pull request checklist
         If no related issue exists yet, please :ref:`open one <submitting_bug_feature>`
         to discuss your proposal first.
 
-      * You understand the code that you are about to submit.
+      * **Most importantly**: You understand the code that you are about to submit.
 
       * You didn't modify unrelated lines. Keep the PR focused on the scope stated in
         its issue.
@@ -465,7 +465,7 @@ Pull request checklist
           in practice and, if possible, compare it to other methods available in
           scikit-learn.
 
-      .. rubric:: WHEN opening a PR
+      .. rubric:: When opening a PR
          :class: rubric-large
 
       * Give your pull request a helpful title that summarizes what your
@@ -483,7 +483,7 @@ Pull request checklist
         related to some other issues/PRs, or it only partially resolves the target
         issue, create a link to them without using the keywords (e.g., ``Towards #1234``).
 
-      .. rubric:: AFTER opening a PR
+      .. rubric:: After opening a PR
          :class: rubric-large
 
       * Add a `changelog entry
@@ -499,7 +499,7 @@ Pull request checklist
     .. tab-item:: Documentation
       :class-label: tab-6
 
-      .. rubric:: BEFORE opening a PR
+      .. rubric:: Before opening a PR
          :class: rubric-large
 
       * Unless you're only fixing typos or obvious inconsistencies in the
@@ -517,7 +517,7 @@ Pull request checklist
 
       * Check that you can :ref:`build the documentation locally <building_documentation>`.
 
-      .. rubric:: WHEN opening a PR
+      .. rubric:: When opening a PR
          :class: rubric-large
 
       * Give the pull request a helpful title, starting with "DOC", that summarizes
@@ -534,7 +534,7 @@ Pull request checklist
         related to some other issues/PRs, or it only partially resolves the target
         issue, create a link to them without using the keywords (e.g., ``Towards #1234``).
 
-      .. rubric:: AFTER opening a PR
+      .. rubric:: After opening a PR
          :class: rubric-large
 
       * Make sure all CI tests pass (check the provided links for more information on
