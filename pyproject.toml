@@ -44,7 +44,7 @@ tracker = "https://github.com/scikit-learn/scikit-learn/issues"
 "release notes" = "https://scikit-learn.org/stable/whats_new"
 
 [project.optional-dependencies]
-build = ["numpy>=1.24.1", "scipy>=1.10.0", "cython>=3.1.2", "meson-python>=0.17.1"]
+build = ["numpy>=1.24.1", "scipy>=1.10.0", "cython>=3.1.2,<3.3", "meson-python>=0.17.1"]
 install = ["numpy>=1.24.1", "scipy>=1.10.0", "joblib>=1.4.0", "narwhals>=2.0.1", "threadpoolctl>=3.5.0"]
 benchmark = ["matplotlib>=3.6.1", "pandas>=1.5.0", "memory_profiler>=0.57.0"]
 docs = [
@@ -97,11 +97,12 @@ tests = [
 maintenance = ["conda-lock==3.0.1"]
 
 [build-system]
+# Upper-bound on cython due to a compiler crash on fused types with const/pointer qualifiers, introduced in 3.3.0a2. See cython/cython#7816, #7817.
 build-backend = "mesonpy"
 # Minimum requirements for the build system to execute.
 requires = [
     "meson-python>=0.17.1",
-    "cython>=3.1.2",
+    "cython>=3.1.2,<3.3",
     "numpy>=2",
     "scipy>=1.10.0",
 ]
