@@ -268,3 +268,63 @@ def test_mutual_info_n_jobs(global_random_seed, mutual_info_func, data_generator
     single_job = mutual_info_func(X, y, random_state=global_random_seed, n_jobs=1)
     multi_job = mutual_info_func(X, y, random_state=global_random_seed, n_jobs=2)
     assert_allclose(single_job, multi_job)
+
+
+@pytest.mark.parametrize("constant_value", [0.0, 1.0, 7.0, 1000.0])
+def test_mutual_info_classif_constant_feature(constant_value, global_random_seed):
+    """A constant continuous feature carries no information about the target.
+
+    Its mutual information must therefore be ~0 and, in particular, must not
+    exceed the entropy of the target. The tie-breaking noise is added to
+    continuous features after they are centered; without centering, a constant
+    feature sitting at a non-zero float magnitude loses the noise to float64
+    rounding, the resulting exact ties defeat the k-nearest-neighbors estimator,
+    and the mutual information is grossly over-estimated.
+
+    Non-regression test for gh-30772.
+    """
+    n_samples = 50_000
+    # Strongly imbalanced target -> small entropy, so the bug (MI far above the
+    # entropy) is unambiguous.
+    y = (np.arange(n_samples) < 10).astype(int)
+    X = np.full((n_samples, 1), constant_value)
+
+    p = y.mean()
+    target_entropy = -(p * np.log(p) + (1 - p) * np.log(1 - p))
+
+    mi = mutual_info_classif(X, y, random_state=global_random_seed)[0]
+
+    # Mutual information cannot exceed the entropy of the target, and a constant
+    # feature should give essentially zero.
+    assert mi <= target_entropy
+    assert mi == pytest.approx(0.0, abs=1e-3)
+
+
+@pytest.mark.parametrize("offset", [0.0, 5.0, 1000.0])
+def test_mutual_info_classif_repeated_values_feature(offset, global_random_seed):
+    """A continuous feature that is mostly one repeated value (e.g. many zeros, or
+    a near-constant column with a few outliers) but independent of the target must
+    not yield mutual information above the target entropy.
+
+    This is the more general form of gh-30772: the repeated values are exact ties,
+    and the tie-breaking noise must separate them cleanly. Adding that noise after
+    centering keeps it effective regardless of the ``offset`` the values sit at.
+    """
+    rng = check_random_state(global_random_seed)
+    n_samples = 200_000
+    y = (np.arange(n_samples) < 20).astype(int)
+
+    # 95% of the samples share a single value (`offset`); the rest have a genuine
+    # continuous spread around it -- all drawn independently of `y`.
+    feature = np.full(n_samples, offset, dtype=float)
+    tail = rng.random(n_samples) < 0.05
+    feature[tail] = offset + rng.standard_normal(tail.sum())
+    X = feature.reshape(-1, 1)
+
+    p = y.mean()
+    target_entropy = -(p * np.log(p) + (1 - p) * np.log(1 - p))
+
+    mi = mutual_info_classif(X, y, random_state=global_random_seed)[0]
+
+    assert mi <= target_entropy
+    assert mi == pytest.approx(0.0, abs=1e-3)

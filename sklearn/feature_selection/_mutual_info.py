@@ -294,8 +294,19 @@ def _estimate_mi(
     rng = check_random_state(random_state)
     if np.any(continuous_mask):
         X = X.astype(np.float64, copy=copy)
+        # Center as well as scale the continuous features. Continuous features are
+        # always dense here (a sparse `X` with continuous features raises above), so
+        # centering is safe and, since mutual information is translation invariant,
+        # it does not change the estimate for well-conditioned data. It matters for
+        # the tie-breaking noise added below: that noise has magnitude ~1e-10, and
+        # float64 only resolves ~1e-10 next to values whose magnitude is <~1e5. A
+        # feature sitting at a large offset (e.g. a constant column of 1.0, or any
+        # low-variance feature far from 0) would otherwise collapse many jittered
+        # samples onto identical float64 values, defeating the k-NN estimator and
+        # producing spuriously large mutual information (gh-30772). Centering pins
+        # the values near 0, where float64 has ample resolution for the noise.
         X[:, continuous_mask] = scale(
-            X[:, continuous_mask], with_mean=False, copy=False
+            X[:, continuous_mask], with_mean=True, copy=False
         )
 
         # Add small noise to continuous features as advised in Kraskov et. al.
@@ -307,7 +318,8 @@ def _estimate_mi(
         )
 
     if not discrete_target:
-        y = scale(y, with_mean=False)
+        # Center for the same numerical reason as the continuous features above.
+        y = scale(y, with_mean=True)
         y += (
             1e-10
             * np.maximum(1, np.mean(np.abs(y)))
