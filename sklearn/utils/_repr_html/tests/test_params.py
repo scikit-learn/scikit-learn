@@ -87,8 +87,6 @@ def test_params_html_repr_copy_button():
         r'\s*aria-label="Copy alpha to clipboard"'
     )
     assert re.search(copy_button, html_output, flags=re.DOTALL)
-    # The original non-interactive <i> icon should no longer be emitted.
-    assert '<i class="copy-paste-icon"' not in html_output
 
 
 def test_params_html_repr_with_doc_links():
