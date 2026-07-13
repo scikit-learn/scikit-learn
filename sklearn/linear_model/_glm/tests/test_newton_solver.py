@@ -1,7 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-# Most of the solvers are tested elsewhere. Here, we only test certrain low level
+# Most of the solvers are tested elsewhere. Here, we only test certain low level
 # aspects.
 import numpy as np
 import pytest

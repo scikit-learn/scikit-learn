@@ -32,7 +32,7 @@ def min_norm_subgradient(alpha, gradient, coef, linear_loss):
         mn_sg(f(x) + alpha ||x||_1)_j =
             f'(x)_j + alpha                        if x_j > 0
             f'(x)_j - alpha                        if x_j < 0
-            sign(f'(x)_j) max(|f'(x)| - alpha, 0)  if x_j = 0
+            sign(f'(x)_j) max(|f'(x)_j| - alpha, 0)  if x_j = 0
 
     for positive alpha. See between equations (26) and (27) in
     Yuan, Ho, Lin (2011).
@@ -907,7 +907,7 @@ class NewtonCDGramSolver(NewtonCholeskySolver):
         min 1/2 d' H d + G' d + l1_reg ||coef + d||_1 - l1_reg ||coef||_1
 
     with d = coef_newton and coef = current coefficients.
-    To circumvent the norm ||coef + d||_1, we instead minimized for
+    To circumvent the norm ||coef + d||_1, we instead minimize for
     c = coef_new = coef + d. This gives, up to constant terms
 
         min 1/2 c' H c + (G' - coef' H) c + l1_reg ||c||_1
@@ -1077,7 +1077,6 @@ class NewtonCDGramSolver(NewtonCholeskySolver):
             #   min_{w0} ... = -1/2 (q0 - Q0' w)' (q0 - Q0' w) / Q00
             # Added to the objective without intercept, we get
             #   obj = 1/2 w (Q - Q0 Q0' / Q00) w - (q - q0 Q0' / Q00) w + const
-            Hcoef = hessian @ self.coef
             Q = hessian[:-1, :-1]  # shape (n_features, n_features)
             Q0 = hessian[-1, :-1]  # shape (n_features,)
             Q00 = hessian[-1, -1]  # float
@@ -1153,7 +1152,7 @@ class NewtonCDGramSolver(NewtonCholeskySolver):
 
         # Set self.coef_newton and compute intercept terms.
         if n_inner_iter == 0:
-            # Safeguard: if nothing changed nothing should change in this iter.
+            # Safeguard: if nothing changed, nothing should change in this iter.
             # Without it, intercept terms might change.
             self.coef_newton = np.zeros_like(self.coef)
         elif self.is_multinomial_no_penalty:
@@ -1161,7 +1160,8 @@ class NewtonCDGramSolver(NewtonCholeskySolver):
                 # Add intercept tems but for the last class
                 intercepts = Q00_inv @ (q0 - Q0 @ w)
                 w = np.r_[w, intercepts]
-            # Add all zeros for the last class, intercept and coefficients.
+            # Add all zeros for the last class including both intercept and
+            # coefficients.
             w = w.reshape(-1, n_classes - 1)
             w = np.c_[w, np.zeros(w.shape[0])].flatten()
             self.coef_newton = w - self.coef
@@ -1217,6 +1217,6 @@ class NewtonCDGramSolver(NewtonCholeskySolver):
         d2 = self.coef_newton @ self.hessian @ self.coef_newton
         if self.l2_reg_strength > 0:
             # We neglected the l2_reg_strength in update_gradient_hessian.
-            weights, intercept = self.linear_loss.weight_intercept(self.coef_newton)
+            weights, _ = self.linear_loss.weight_intercept(self.coef_newton)
             d2 += 2 * self.linear_loss.l2_penalty(weights, self.l2_reg_strength)
         return d2

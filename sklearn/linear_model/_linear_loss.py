@@ -234,12 +234,8 @@ class LinearModelLoss:
         return weights, intercept, raw_prediction
 
     def l1_penalty(self, weights, l1_reg_strength):
-        """Compute L1 penalty term l1_reg_strength * ||w||_1."""
-        if weights.ndim != 1:
-            # L1/L1 norm
-            norm1_w = np.sum(np.abs(weights))
-        else:
-            norm1_w = np.linalg.norm(weights, ord=1)
+        """Compute L1 penalty term: l1_reg_strength * ||w||_1."""
+        norm1_w = np.linalg.vector_norm(weights, ord=1)
         return float(l1_reg_strength * norm1_w)
 
     def l2_penalty(self, weights, l2_reg_strength):
@@ -412,8 +408,8 @@ class LinearModelLoss:
 
         return loss, grad
 
-    # Note: From here on, l1_reg_strength is unused. But we want to ensure the same
-    # function signature across all those functions.
+    # Note: From here on, l1_reg_strength is unused. But we still want to ensure the
+    # same function signature across all related functions.
     def gradient(
         self,
         coef,
