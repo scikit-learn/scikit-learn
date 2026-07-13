@@ -1178,8 +1178,8 @@ class NewtonCDGramSolver(NewtonCholeskySolver):
             self.inner_tol *= 0.1
         elif n_inner_iter <= 4:  # "An Improved GLMNET" uses n_inner_iter <= 1
             self.inner_tol *= 0.25
+        # TODO(newton-cd): Check if the following improves convergence
         # elif n_inner_iter <= 8:
-        #     # TODO(newton-cd): Check if this improves convergence
         #     self.inner_tol *= 0.5
 
         if self.verbose >= 2:
