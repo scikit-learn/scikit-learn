@@ -1162,10 +1162,9 @@ class LogisticRegression(
     When set to ``True``, reuse the solution of the previous call to
     fit as initialization, otherwise, just erase the previous solution.
     Useless for liblinear solver. See :term:`the Glossary <warm_start>`.
+    Note that ``n_iter_`` may be 0 on subsequent fits when
+    ``warm_start=True`` if the model has already converged.
 
-    .. note::
-        When ``warm_start=True``, ``n_iter_`` may be 0 on subsequent
-        fits if the model has already converged from a previous fit.
 
         .. versionadded:: 0.17
            *warm_start* to support *lbfgs*, *newton-cg*, *sag*, *saga* solvers.
