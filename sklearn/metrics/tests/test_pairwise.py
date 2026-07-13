@@ -312,6 +312,34 @@ def test_pairwise_boolean_distance(metric):
         pairwise_distances(X.astype(bool), metric=metric)
 
 
+@pytest.mark.parametrize(
+    "func",
+    [pairwise_distances_argmin, pairwise_distances_argmin_min],
+)
+@pytest.mark.parametrize("metric", PAIRWISE_BOOLEAN_FUNCTIONS)
+def test_pairwise_distances_argmin_boolean_no_warning(func, metric):
+    """Non-regression test for #32495.
+
+    pairwise_distances_argmin and pairwise_distances_argmin_min should not
+    emit a DataConversionWarning when the input data is already boolean and
+    the metric is a boolean distance metric. Each metric is tested in
+    isolation to make failures easier to diagnose.
+    """
+    X = np.array([[True, False], [False, True]], dtype=bool)
+    Y = np.array([[True, True], [False, False]], dtype=bool)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DataConversionWarning)
+        func(X, Y, metric=metric)
+
+    # When data is NOT boolean, the warning should still be raised
+    Xf = np.array([[1.0, 0.0], [0.0, 1.0]])
+    Yf = np.array([[1.0, 1.0], [0.0, 0.0]])
+    msg = "Data was converted to boolean for metric %s" % metric
+    with pytest.warns(DataConversionWarning, match=msg):
+        func(Xf, Yf, metric=metric)
+
+
 def test_no_data_conversion_warning():
     # No warnings issued if metric is not a boolean distance function
     rng = np.random.RandomState(0)
