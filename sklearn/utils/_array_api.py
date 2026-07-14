@@ -580,6 +580,13 @@ def move_to(*arrays, xp, device):
             if xp == xp_array and device == device_array:
                 converted_arrays.append(array)
             else:
+                if _is_xp_namespace(xp, "torch") and _is_numpy_namespace(xp_array):
+                    if any(stride < 0 for stride in array.strides):
+                        # Work around PyTorch aborting the process when importing
+                        # negative-strided NumPy arrays with DLPack. Remove this once
+                        # https://github.com/pytorch/pytorch/issues/188023 is fixed.
+                        # See also https://github.com/scikit-learn/scikit-learn/issues/34307
+                        array = numpy.ascontiguousarray(array)
                 try:
                     # The dlpack protocol is the future proof and library agnostic
                     # method to transfer arrays across namespace and device boundaries
@@ -906,6 +913,9 @@ def _median(x, axis=None, keepdims=False, xp=None):
     # `torch.median` takes the lower of the two medians when `x` has even number
     # of elements, thus we use `torch.quantile(q=0.5)`, which gives mean of the two
     if array_api_compat.is_torch_namespace(xp):
+        # torch `quantile` only accepts floats
+        if not xp.isdtype(x.dtype, "real floating"):
+            x = xp.astype(x, _find_matching_floating_dtype(x, xp=xp), copy=False)
         return xp.quantile(x, q=0.5, dim=axis, keepdim=keepdims)
 
     if hasattr(xp, "median"):
@@ -1419,18 +1429,6 @@ def _linalg_solve(cov_chol, eye_matrix, xp):
         return scipy.linalg.solve_triangular(cov_chol, eye_matrix, lower=True)
     else:
         return xp.linalg.solve(cov_chol, eye_matrix)
-
-
-def _half_multinomial_loss(y, pred, sample_weight=None, xp=None):
-    """A version of the multinomial loss that is compatible with the array API"""
-    xp, _, device_ = get_namespace_and_device(y, pred, sample_weight)
-    log_sum_exp = _logsumexp(pred, axis=1, xp=xp)
-    y = xp.asarray(y, dtype=xp.int64, device=device_)
-    class_margins = xp.arange(y.shape[0], device=device_) * pred.shape[1]
-    label_predictions = xp.take(_ravel(pred), y + class_margins)
-    return float(
-        _average(log_sum_exp - label_predictions, weights=sample_weight, xp=xp)
-    )
 
 
 def _matching_numpy_dtype(X, xp=None):
