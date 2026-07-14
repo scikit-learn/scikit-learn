@@ -384,15 +384,17 @@ Pull request checklist
       }
 
     }
-    p.rubric.rubric-large {
-      font-size: 1.3em;
-      border-bottom: none;
-    }
     .contribution-types li {
       list-style-type: "✓ ";
     }
     .contribution-types li li {
       list-style-type: "✗ ";
+    }
+    /* sphinx-design forces margin-top: 0 on the first child of a tab's
+      content; restore the theme's normal heading margin so the first
+      heading lines up with the others. */
+    .contribution-types h4:first-child {
+      margin-top: 2.75rem !important;
     }
   </style>
 
@@ -404,8 +406,9 @@ Pull request checklist
     .. tab-item:: Code
       :class-label: tab-6
 
-      .. rubric:: Before opening a PR, make sure that:
-         :class: rubric-large
+      .. raw:: html
+
+        <h4 id="pr-checklist-code-before">Before opening a PR, make sure that:</h4>
 
       * Your PR relates to at least one existing issue that is ready for
         contribution.
@@ -465,8 +468,9 @@ Pull request checklist
           in practice and, if possible, compare it to other methods available in
           scikit-learn.
 
-      .. rubric:: When opening a PR
-         :class: rubric-large
+      .. raw:: html
+
+        <h4 id="pr-checklist-code-when">When opening a PR</h4>
 
       * Give your pull request a helpful title that summarizes what your
         contribution does. This title will become the commit message once merged. In
@@ -483,8 +487,9 @@ Pull request checklist
         related to some other issues/PRs, or it only partially resolves the target
         issue, create a link to them without using the keywords (e.g., ``Towards #1234``).
 
-      .. rubric:: After opening a PR
-         :class: rubric-large
+      .. raw:: html
+
+        <h4 id="pr-checklist-code-after">After opening a PR</h4>
 
       * Add a `changelog entry
         <https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md>`_
@@ -499,8 +504,9 @@ Pull request checklist
     .. tab-item:: Documentation
       :class-label: tab-6
 
-      .. rubric:: Before opening a PR
-         :class: rubric-large
+      .. raw:: html
+
+        <h4 id="pr-checklist-docs-before">Before opening a PR</h4>
 
       * Unless you're only fixing typos or obvious inconsistencies in the
         documentation, make sure the PR relates to at least one existing issue
@@ -517,8 +523,9 @@ Pull request checklist
 
       * Check that you can :ref:`build the documentation locally <building_documentation>`.
 
-      .. rubric:: When opening a PR
-         :class: rubric-large
+      .. raw:: html
+
+        <h4 id="pr-checklist-docs-when">When opening a PR</h4>
 
       * Give the pull request a helpful title, starting with "DOC", that summarizes
         what the contribution does. This title will become the commit message once
@@ -534,8 +541,9 @@ Pull request checklist
         related to some other issues/PRs, or it only partially resolves the target
         issue, create a link to them without using the keywords (e.g., ``Towards #1234``).
 
-      .. rubric:: After opening a PR
-         :class: rubric-large
+      .. raw:: html
+
+        <h4 id="pr-checklist-docs-after">After opening a PR</h4>
 
       * Make sure all CI tests pass (check the provided links for more information on
         any errors).
