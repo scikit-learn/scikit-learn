@@ -1,0 +1,3 @@
+- Fixes a :class:`cluster.Birch` persistence failure caused by deep recursion
+  when fitted trees contain many leaf nodes.
+  By :user:`snoopuppy582`.
