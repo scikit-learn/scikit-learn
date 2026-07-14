@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from sklearn._min_dependencies import dependent_packages
-from sklearn.utils._dataframe import is_df_or_series, is_polars_df
+from sklearn.utils._dataframe import is_df_or_series, is_pandas_df, is_polars_df
 from sklearn.utils._testing import _convert_container
 
 
@@ -14,6 +14,45 @@ def test_is_df_or_series(constructor_name):
 
     assert is_df_or_series(df)
     assert not is_df_or_series(np.asarray([1, 2, 3]))
+
+
+@pytest.mark.parametrize(
+    "constructor_name, minversion",
+    [
+        ("pyarrow", dependent_packages["pyarrow"][0]),
+        ("pandas", dependent_packages["pandas"][0]),
+        ("polars", dependent_packages["polars"][0]),
+    ],
+)
+def test_is_pandas_df_other_libraries(constructor_name, minversion):
+    df = _convert_container(
+        [[1, 4, 2], [3, 3, 6]],
+        constructor_name,
+        minversion=minversion,
+    )
+    if constructor_name in ("pyarrow", "polars"):
+        assert not is_pandas_df(df)
+    else:
+        assert is_pandas_df(df)
+
+
+def test_is_pandas_df_series():
+    """Check that is_pandas_df returns False for a pandas Series."""
+    pd = pytest.importorskip("pandas")
+
+    assert not is_pandas_df(pd.Series([1, 2, 3]))
+
+
+def test_is_pandas_df_for_duck_typed_pandas_dataframe():
+    """Check is_pandas_df for object that looks like a pandas dataframe."""
+
+    class NotAPandasDataFrame:
+        def __init__(self):
+            self.columns = [1, 2, 3]
+            self.iloc = "my_iloc"
+
+    not_a_pandas_df = NotAPandasDataFrame()
+    assert not is_pandas_df(not_a_pandas_df)
 
 
 @pytest.mark.parametrize(

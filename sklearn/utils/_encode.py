@@ -6,7 +6,6 @@ from collections.abc import Iterable
 from numbers import Real
 from typing import NamedTuple
 
-import narwhals.stable.v2 as nw
 import numpy as np
 
 from sklearn.utils._array_api import device, get_namespace, size
@@ -210,34 +209,16 @@ def _unique_python(values, *, return_inverse, return_counts):
 def _unique_categorical(
     values, *, return_inverse=False, return_counts=False, filter_present=True
 ):
-    """Find unique values for categorical arrays without materializing values."""
-    if hasattr(values, "cat") and hasattr(values.cat, "categories"):
-        # for pandas, the Narwhals path below doesn't work
-        uniques = values.cat.categories.to_numpy()
-        codes = values.cat.codes.to_numpy().astype(np.intp, copy=True)
-        isna = codes == -1
-    else:
-        values = nw.from_native(values, allow_series=True)
-        uniques = values.cat.get_categories().to_numpy()
-
-        # for polars, this cast returns the categorical codes:
-        codes = values.cast(nw.UInt32).to_numpy()
-        isna = (
-            np.isnan(codes)
-            if codes.dtype.kind == "f"
-            else np.zeros_like(codes, dtype=bool)
-        )
-        codes_no_missing = np.empty(codes.shape, dtype=np.intp)
-        codes_no_missing[~isna] = codes[~isna].astype(np.intp)
-        codes = codes_no_missing
-
+    """Find uniques for categorical pandas Series without materializing values."""
+    uniques = values.cat.categories.to_numpy()
+    codes = values.cat.codes.to_numpy(copy=True)
+    isna = codes == -1
     is_numeric = np.issubdtype(uniques.dtype, np.number)
     if is_numeric:
         is_sorted = (uniques[:-1] < uniques[1:]).all()
-        # Polars does not support numerical categories. Pandas sorts them by
-        # default, but user-specified categorical dtypes can still be unordered.
-        # We reject unordered numerical categories because downstream numerical
-        # encoding might rely on sorted categories.
+        # Pandas sorts numerical categories but user-specified categorical dtypes
+        # can still be unordered. We reject unordered numerical categories because
+        # downstream numerical encoding might rely on sorted categories.
         if not is_sorted:
             raise TypeError(
                 "Unsorted categories are not supported for numerical categorical data"
@@ -250,13 +231,10 @@ def _unique_categorical(
         else:
             uniques = np.r_[uniques.astype(object, copy=False), np.nan]
 
-    if not filter_present:
-        assert return_inverse and not return_counts
-        return uniques, codes
-
-    counts = np.bincount(codes, minlength=uniques.size)
-    is_present = counts > 0
-    if not is_present.all():
+    if filter_present or return_counts:
+        counts = np.bincount(codes, minlength=uniques.size)
+        is_present = counts > 0
+    if filter_present and not is_present.all():
         codes_mapping = np.empty_like(is_present, dtype=np.intp)
         codes_mapping[is_present] = np.arange(is_present.sum())
         codes = codes_mapping[codes]

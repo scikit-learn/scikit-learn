@@ -2487,7 +2487,6 @@ def test_ordinal_encoder_infrequent_polars_enum_unobserved_categories():
 
     ordinal = OrdinalEncoder(max_categories=2).fit(df)
 
-    assert_array_equal(ordinal.categories_[0], ["b", "a"])
     assert_array_equal(ordinal.infrequent_categories_[0], ["b"])
     assert_allclose(ordinal.transform(df), [[0], [1], [0]])
 

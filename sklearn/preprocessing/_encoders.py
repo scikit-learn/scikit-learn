@@ -21,6 +21,7 @@ from sklearn.utils import (
     assert_all_finite,
     check_array,
 )
+from sklearn.utils._dataframe import is_pandas_df, is_pandas_df_or_series
 from sklearn.utils._encode import (
     _encode,
     _get_counts,
@@ -75,7 +76,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
           and cannot be used, e.g. for the `categories_` attribute.
 
         """
-        is_dataframe = nw.dependencies.is_into_dataframe(X)
+        is_dataframe = is_pandas_df(X)
         if is_dataframe:
             # pandas dataframe, do validation later column by column, in order
             # to keep the dtype information to be used in the encoder.
@@ -114,7 +115,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
     def _is_categorical(self, Xi):
         """Return True if the input is a Narwhals-supported Categorical Series."""
-        if not nw.dependencies.is_into_series(Xi):
+        if not is_pandas_df_or_series(Xi):
             return False
         return nw.from_native(Xi, allow_series=True).dtype in (nw.Categorical, nw.Enum)
 

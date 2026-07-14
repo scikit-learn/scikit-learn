@@ -159,34 +159,6 @@ def test_unique_categorical_pandas():
     assert_array_equal(counts, [1, 2, 1])
 
 
-def test_unique_categorical_polars():
-    pl = pytest.importorskip("polars")
-
-    values = pl.Series("x", ["a", None, "b", "a"], dtype=pl.Enum(["b", "a", "c"]))
-    expected_uniques = np.array(["b", "a", np.nan], dtype=object)
-
-    uniques, inverse, counts = _unique_categorical(
-        values, return_inverse=True, return_counts=True
-    )
-
-    assert_array_equal(uniques[:-1], expected_uniques[:-1])
-    assert np.isnan(uniques[-1])
-    assert_array_equal(inverse, [1, 2, 0, 1])
-    assert_array_equal(counts, [1, 2, 1])
-
-
-def test_unique_categorical_polars_missing_inverse_codes():
-    pl = pytest.importorskip("polars")
-
-    values = pl.Series("x", ["a", None, "b"], dtype=pl.Enum(["b", "a", "c"]))
-
-    uniques, inverse = _unique_categorical(values, return_inverse=True)
-
-    assert_array_equal(uniques[:-1], ["b", "a"])
-    assert np.isnan(uniques[-1])
-    assert_array_equal(inverse, [1, 2, 0])
-
-
 def test_unique_util_with_all_missing_values():
     # test for all types of missing values for object dtype
     values = np.array([np.nan, "a", "c", "c", None, float("nan"), None], dtype=object)
