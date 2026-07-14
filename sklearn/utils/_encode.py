@@ -277,14 +277,10 @@ def _unique_categorical(
 def _encode_labels(values, *, uniques):
     """Encode labels into [0, n_uniques - 1].
 
-    Uses pure python method for object dtype, and numpy method for
-    all other dtypes.
-    The numpy method has the limitation that the `uniques` need to
-    be sorted. Importantly, this is not checked but assumed to already be
-    the case. The calling method needs to ensure this for all non-object
-    values.
+    Relies on `_encode`, see docstring there for more details.
 
-    Unknown values raise a ValueError.
+    Unknown values raise a ValueError, i.e. when `_encode` returns
+    a non-empty diff.
 
     Parameters
     ----------
