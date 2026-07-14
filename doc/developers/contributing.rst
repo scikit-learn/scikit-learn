@@ -378,9 +378,7 @@ Pull request checklist
     .. tab-item:: Code
       :class-label: tab-6
 
-      .. raw:: html
-
-        <h4 id="pr-checklist-code-before">Before opening a PR, make sure that:</h4>
+      **Before opening a PR, make sure that:**
 
       * Your PR relates to at least one existing issue that is ready for
         contribution.
@@ -440,9 +438,7 @@ Pull request checklist
           in practice and, if possible, compare it to other methods available in
           scikit-learn.
 
-      .. raw:: html
-
-        <h4 id="pr-checklist-code-when">When opening a PR</h4>
+      **When opening a PR**
 
       * Give your pull request a helpful title that summarizes what your
         contribution does. This title will become the commit message once merged. In
@@ -469,9 +465,7 @@ Pull request checklist
         <https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments>`_ in
         the PR description.
 
-      .. raw:: html
-
-        <h4 id="pr-checklist-code-after">After opening a PR</h4>
+      **After opening a PR**
 
       * Add a `changelog entry
         <https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md>`_
@@ -489,9 +483,7 @@ Pull request checklist
     .. tab-item:: Documentation
       :class-label: tab-6
 
-      .. raw:: html
-
-        <h4 id="pr-checklist-docs-before">Before opening a PR</h4>
+      **Before opening a PR**
 
       * Unless you're only fixing typos or obvious inconsistencies in the
         documentation, make sure the PR relates to at least one existing issue
@@ -508,9 +500,7 @@ Pull request checklist
 
       * Check that you can :ref:`build the documentation locally <building_documentation>`.
 
-      .. raw:: html
-
-        <h4 id="pr-checklist-docs-when">When opening a PR</h4>
+      **When opening a PR**
 
       * Give the pull request a helpful title, starting with "DOC", that summarizes
         what the contribution does. This title will become the commit message once
@@ -536,9 +526,7 @@ Pull request checklist
         <https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments>`_ in
         the PR description.
 
-      .. raw:: html
-
-        <h4 id="pr-checklist-docs-after">After opening a PR</h4>
+      **After opening a PR**
 
       * Make sure all CI tests pass (check the provided links for more information on
         any errors).
