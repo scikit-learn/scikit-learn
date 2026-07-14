@@ -1081,7 +1081,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_methods_sample_order_invariance": "check is not applicable."
     },
     LinearDiscriminantAnalysis: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
         "check_array_api_string_and_numeric_inputs": (
             "mixed string and numeric array API input support not added yet"
         ),

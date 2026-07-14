@@ -25,6 +25,7 @@ from sklearn.utils._array_api import (
     check_same_namespace,
     device,
     get_namespace,
+    move_to,
     size,
 )
 from sklearn.utils._param_validation import HasMethods, Interval, StrOptions
@@ -590,7 +591,10 @@ class LinearDiscriminantAnalysis(
             self.covariance_ = _class_cov(X, y, self.priors_)
 
         Xc = []
-        for idx, group in enumerate(self.classes_):
+        # `self.classes_` stays in `y`'s namespace/device; use an `X`-device copy
+        # so the mask `y == group` below does not mix devices.
+        classes = move_to(self.classes_, xp=xp, device=device(X))
+        for idx, group in enumerate(classes):
             Xg = X[y == group]
             Xc.append(Xg - self.means_[idx, :])
 
@@ -667,6 +671,10 @@ class LinearDiscriminantAnalysis(
             self, X, y, ensure_min_samples=2, dtype=[xp.float64, xp.float32]
         )
         self.classes_ = unique_labels(y)
+        # `y` follows `X`: move it to `X`'s namespace/device so downstream math
+        # stays single-device. Must stay after `classes_` above, which is
+        # intentionally kept in `y`'s original namespace/device.
+        y = move_to(y, xp=xp, device=device(X))
         n_samples, n_features = X.shape
         n_classes = self.classes_.shape[0]
 
