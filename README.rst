@@ -54,7 +54,7 @@ of Code project, and since then many volunteers have contributed. See
 the `About us <https://scikit-learn.org/dev/about.html#authors>`__ page
 for a list of core contributors.
 
-It is currently maintained by a community of contributors, with `support from several
+It is currently maintained by a community of contributors, with volunteers but also `support from several
 organisations <https://scikit-learn.org/dev/institutional_support.html>`__.
 
 Website: https://scikit-learn.org
