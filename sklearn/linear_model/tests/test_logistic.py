@@ -2800,7 +2800,6 @@ def test_logistic_regression_array_api_compliance(
         lr_xp = LogisticRegression(**lr_params).fit(
             X_xp, y_xp_or_np, sample_weight=sample_weight
         )
-
         assert lr_xp.n_iter_.shape == lr_np.n_iter_.shape
         assert int(lr_xp.n_iter_[0]) < lr_xp.max_iter
 
@@ -2929,6 +2928,7 @@ def test_logistic_regression_cv_array_api_compliance(
     )
     assert np.max(lr_cv_np.n_iter_) < lr_cv_np.max_iter
 
+    # Test that C was not too large for meaningful testing.
     assert np.abs(lr_cv_np.coef_).max() > 0.1
 
     prediction_np = lr_cv_np.predict(X_np)
@@ -2938,7 +2938,6 @@ def test_logistic_regression_cv_array_api_compliance(
         lr_cv_xp = LogisticRegressionCV(**lr_cv_params).fit(
             X_xp, y_xp_or_np, sample_weight=sample_weight
         )
-
         assert lr_cv_xp.n_iter_.shape == lr_cv_np.n_iter_.shape
         assert xp.max(lr_cv_xp.n_iter_) < lr_cv_xp.max_iter
 
