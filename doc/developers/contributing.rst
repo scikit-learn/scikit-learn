@@ -370,34 +370,6 @@ line
 Pull request checklist
 ----------------------
 
-.. raw:: html
-
-  <style>
-    /* Show caption on large screens */
-    @media screen and (min-width: 960px) {
-      .contribution-types .sd-tab-set {
-        --tab-caption-width: 20%;
-      }
-
-      .contribution-types .sd-tab-set.contrib-type::before {
-        content: "Type of Contribution";
-      }
-
-    }
-    .contribution-types li {
-      list-style-type: "✓ ";
-    }
-    .contribution-types li li {
-      list-style-type: "✗ ";
-    }
-    /* sphinx-design forces margin-top: 0 on the first child of a tab's
-      content; restore the theme's normal heading margin so the first
-      heading lines up with the others. */
-    .contribution-types h4:first-child {
-      margin-top: 2.75rem !important;
-    }
-  </style>
-
 .. div:: contribution-types
 
   .. tab-set::
