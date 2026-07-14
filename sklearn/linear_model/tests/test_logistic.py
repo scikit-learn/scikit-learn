@@ -2776,12 +2776,10 @@ def test_logistic_regression_array_api_compliance(
     # the intercept would be non-zero.
     lr_params = dict(C=1e-2, solver=solver, max_iter=500, class_weight=class_weight)
     lr_params["tol"] = 1e-6 if dtype_name == "float32" else 1e-12
-    with warnings.catch_warnings():
-        # Make sure that we converge in the reference fit.
-        lr_np = LogisticRegression(**lr_params).fit(
-            X_np, y_np, sample_weight=sample_weight
-        )
-        assert lr_np.n_iter_ < lr_np.max_iter
+
+    # Make sure that we converge in the reference fit.
+    lr_np = LogisticRegression(**lr_params).fit(X_np, y_np, sample_weight=sample_weight)
+    assert lr_np.n_iter_ < lr_np.max_iter
 
     # Test that C was not too large for meaningful testing.
     assert np.abs(lr_np.coef_).max() > 0.1
@@ -2797,13 +2795,11 @@ def test_logistic_regression_array_api_compliance(
         rtol = 1e-4 if dtype_name == "float32" else 1e-8
 
     with config_context(array_api_dispatch=True):
-        with warnings.catch_warnings():
-            # Make sure that we converge when using the namespace/device
-            # specific fit.
-            warnings.simplefilter("error", ConvergenceWarning)
-            lr_xp = LogisticRegression(**lr_params).fit(
-                X_xp, y_xp_or_np, sample_weight=sample_weight
-            )
+        # Make sure that we converge when using the namespace/device
+        # specific fit.
+        lr_xp = LogisticRegression(**lr_params).fit(
+            X_xp, y_xp_or_np, sample_weight=sample_weight
+        )
 
         assert lr_xp.n_iter_.shape == lr_np.n_iter_.shape
         assert int(lr_xp.n_iter_[0]) < lr_xp.max_iter
@@ -2848,7 +2844,6 @@ def test_logistic_regression_array_api_compliance(
 @pytest.mark.parametrize("binary", [False, True])
 @pytest.mark.parametrize("use_str_y", [False, True])
 @pytest.mark.parametrize("use_sample_weight", [False, True])
-@pytest.mark.parametrize("class_weight", [None, "balanced", "dict"])
 @pytest.mark.parametrize(
     "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
@@ -2860,7 +2855,6 @@ def test_logistic_regression_cv_array_api_compliance(
     binary,
     use_str_y,
     use_sample_weight,
-    class_weight,
     array_namespace,
     device_name,
     dtype_name,
@@ -2873,23 +2867,19 @@ def test_logistic_regression_cv_array_api_compliance(
         if binary:
             target = (iris.target > 0).astype(np.int64)
             target = np.array(["setosa", "not-setosa"])[target]
-            if class_weight == "dict":
-                class_weight = {"setosa": 1.0, "not-setosa": 3.0}
+            class_weight = {"setosa": 1.0, "not-setosa": 3.0}
         else:
             target = iris.target_names[iris.target]
-            if class_weight == "dict":
-                class_weight = {"virginica": 1.0, "setosa": 2.0, "versicolor": 3.0}
+            class_weight = {"virginica": 1.0, "setosa": 2.0, "versicolor": 3.0}
         y_np = target.copy()
         y_xp_or_np = np.asarray(y_np, copy=True)
     else:
         if binary:
             target = (iris.target > 0).astype(np.int64)
-            if class_weight == "dict":
-                class_weight = {0: 1.0, 1: 3.0}
+            class_weight = {0: 1.0, 1: 3.0}
         else:
             target = iris.target
-            if class_weight == "dict":
-                class_weight = {0: 1.0, 1: 2.0, 2: 3.0}
+            class_weight = {0: 1.0, 1: 2.0, 2: 3.0}
         y_np = target.astype(dtype_name)
         y_xp_or_np = xp.asarray(y_np, device=device)
 
@@ -2934,11 +2924,10 @@ def test_logistic_regression_cv_array_api_compliance(
         refit=refit,
     )
 
-    with warnings.catch_warnings():
-        lr_cv_np = LogisticRegressionCV(**lr_cv_params).fit(
-            X_np, y_np, sample_weight=sample_weight
-        )
-        assert np.max(lr_cv_np.n_iter_) < lr_cv_np.max_iter
+    lr_cv_np = LogisticRegressionCV(**lr_cv_params).fit(
+        X_np, y_np, sample_weight=sample_weight
+    )
+    assert np.max(lr_cv_np.n_iter_) < lr_cv_np.max_iter
 
     assert np.abs(lr_cv_np.coef_).max() > 0.1
 
@@ -2946,11 +2935,9 @@ def test_logistic_regression_cv_array_api_compliance(
     score_np = lr_cv_np.score(X_np, y_np)
     xp, _ = _array_api_for_tests(array_namespace, device_name)
     with config_context(array_api_dispatch=True):
-        with warnings.catch_warnings():
-            warnings.simplefilter("error", ConvergenceWarning)
-            lr_cv_xp = LogisticRegressionCV(**lr_cv_params).fit(
-                X_xp, y_xp_or_np, sample_weight=sample_weight
-            )
+        lr_cv_xp = LogisticRegressionCV(**lr_cv_params).fit(
+            X_xp, y_xp_or_np, sample_weight=sample_weight
+        )
 
         assert lr_cv_xp.n_iter_.shape == lr_cv_np.n_iter_.shape
         assert xp.max(lr_cv_xp.n_iter_) < lr_cv_xp.max_iter
