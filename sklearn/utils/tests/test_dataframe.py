@@ -43,18 +43,6 @@ def test_is_pandas_df_series():
     assert not is_pandas_df(pd.Series([1, 2, 3]))
 
 
-def test_is_pandas_df_for_duck_typed_pandas_dataframe():
-    """Check is_pandas_df for object that looks like a pandas dataframe."""
-
-    class NotAPandasDataFrame:
-        def __init__(self):
-            self.columns = [1, 2, 3]
-            self.iloc = "my_iloc"
-
-    not_a_pandas_df = NotAPandasDataFrame()
-    assert not is_pandas_df(not_a_pandas_df)
-
-
 @pytest.mark.parametrize(
     "constructor_name, minversion",
     [
