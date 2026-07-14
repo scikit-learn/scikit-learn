@@ -32,6 +32,8 @@
    Modified 2026:
    - Fixed a memory leak due to conditional deallocation of `newprob` attributes;
      see <https://github.com/scikit-learn/scikit-learn/pull/34256>
+   - Fixed an out-of-bound read when solver_type=MCSVM_CS;
+     see <https://github.com/scikit-learn/scikit-learn/pull/34273>
  */
 
 #include <math.h>
@@ -2941,7 +2943,7 @@ void get_n_iter(const model *model_, int* n_iter)
 {
     int labels;
     labels = model_->nr_class;
-    if (labels == 2)
+    if (labels == 2 || model_->param.solver_type == MCSVM_CS)
         labels = 1;
 
     if (model_->n_iter != NULL)
