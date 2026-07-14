@@ -9,7 +9,6 @@ from numpy.testing import assert_allclose
 from scipy.special import expit, logit
 
 from sklearn._config import config_context
-from sklearn._loss import HalfMultinomialLoss
 from sklearn.base import BaseEstimator
 from sklearn.utils._array_api import (
     _add_to_diagonal,
@@ -21,7 +20,6 @@ from sklearn.utils._array_api import (
     _estimator_with_converted_arrays,
     _expit,
     _fill_diagonal,
-    _half_multinomial_loss,
     _is_numpy_namespace,
     _isin,
     _logit,
@@ -53,6 +51,7 @@ from sklearn.utils._testing import (
     _array_api_for_tests,
     _convert_container,
     assert_array_equal,
+    assert_run_python_script_without_output,
     skip_if_array_api_compat_not_configured,
 )
 from sklearn.utils.fixes import _IS_32BIT, CSR_CONTAINERS, np_version, parse_version
@@ -190,6 +189,34 @@ def test_move_to_sparse():
             move_to(sparse1, numpy_array, xp=xp_torch, device=device_cpu)
         with pytest.raises(TypeError, match=msg):
             move_to(sparse1, None, xp=xp_torch, device=device_cpu)
+
+
+def test_move_to_numpy_negative_strides_to_torch():
+    """Check NumPy arrays with negative strides can be moved to torch."""
+    pytest.importorskip("torch")
+
+    code = """
+import os
+
+os.environ["SCIPY_ARRAY_API"] = "1"
+
+import numpy
+from numpy.testing import assert_allclose
+
+from sklearn._config import config_context
+from sklearn.utils._array_api import get_namespace_and_device, move_to
+
+import torch
+
+a = numpy.arange(12.0).reshape(3, 4)[:, ::-1]
+with config_context(array_api_dispatch=True):
+    xp, _, device = get_namespace_and_device(torch.asarray([1.0]))
+    result = move_to(a, xp=xp, device=device)
+    assert_allclose(result.cpu().numpy(), a)
+"""
+    # This must run in a subprocess because old PyTorch versions abort the
+    # Python process before a Python exception can be raised.
+    assert_run_python_script_without_output(code)
 
 
 @pytest.mark.parametrize("array_api", ["numpy", "array_api_strict"])
@@ -1044,42 +1071,6 @@ def test_supported_float_types(namespace, device_, expected_types):
     float_types = supported_float_dtypes(xp, device=device)
     expected = tuple(getattr(xp, dtype_name) for dtype_name in expected_types)
     assert float_types == expected
-
-
-@pytest.mark.parametrize("use_sample_weight", [False, True])
-@pytest.mark.parametrize(
-    "namespace, device_name, dtype_name",
-    yield_namespace_device_dtype_combinations(),
-)
-def test_half_multinomial_loss(use_sample_weight, namespace, device_name, dtype_name):
-    """Check that the array API version of :func:`_half_multinomial_loss` works
-    correctly and matches the results produced by :class:`HalfMultinomialLoss`
-    of the private `_loss` module.
-    """
-    n_samples = 5
-    n_classes = 3
-    rng = numpy.random.RandomState(42)
-    y = rng.randint(0, n_classes, n_samples).astype(dtype_name)
-    pred = rng.rand(n_samples, n_classes).astype(dtype_name)
-    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
-    y_xp = xp.asarray(y, device=device)
-    pred_xp = xp.asarray(pred, device=device)
-    if use_sample_weight:
-        sample_weight = numpy.ones_like(y)
-        sample_weight[1::2] = 2
-        sample_weight_xp = xp.asarray(sample_weight, device=device)
-    else:
-        sample_weight, sample_weight_xp = None, None
-
-    np_loss = HalfMultinomialLoss(n_classes=n_classes)(
-        y_true=y, raw_prediction=pred, sample_weight=sample_weight
-    )
-    with config_context(array_api_dispatch=True):
-        xp_loss = _half_multinomial_loss(
-            y=y_xp, pred=pred_xp, sample_weight=sample_weight_xp, xp=xp
-        )
-
-    assert numpy.isclose(np_loss, xp_loss)
 
 
 @pytest.mark.parametrize(
