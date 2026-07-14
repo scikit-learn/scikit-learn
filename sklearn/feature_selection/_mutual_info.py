@@ -118,17 +118,19 @@ def _compute_mi_cd(c, d, n_neighbors):
     radius = np.empty(n_samples)
     label_counts = np.empty(n_samples)
     k_all = np.empty(n_samples)
-    nn = NearestNeighbors()
     for label in np.unique(d):
         mask = d == label
         count = np.sum(mask)
         if count > 1:
             k = min(n_neighbors, count - 1)
-            nn.set_params(n_neighbors=k)
-            nn.fit(c[mask])
-            r = nn.kneighbors()[0]
-            radius[mask] = np.nextafter(r[:, -1], 0)
-            k_all[mask] = k
+            c_label = c[mask]
+            kd = KDTree(c_label)
+            # Radius = distance to the k-th same-class neighbor (self excluded).
+            radius[mask] = kd.query(c_label, k=k + 1)[0][:, -1]
+            # Tie-robust count: same-class neighbors in the *closed* ball (self
+            # excluded). Equals k without ties, and grows with the tie multiplicity
+            # at the boundary (gh-30772).
+            k_all[mask] = kd.query_radius(c_label, radius[mask], count_only=True) - 1
         label_counts[mask] = count
 
     # Ignore points with unique labels.
@@ -139,9 +141,11 @@ def _compute_mi_cd(c, d, n_neighbors):
     c = c[mask]
     radius = radius[mask]
 
+    # All-label neighbors in the same closed ball (self excluded), consistent with
+    # k_all so boundary ties cancel in the ratio below.
     kd = KDTree(c)
     m_all = kd.query_radius(c, radius, count_only=True, return_distance=False)
-    m_all = np.array(m_all)
+    m_all = np.array(m_all) - 1.0
 
     mi = (
         digamma(n_samples)
@@ -294,44 +298,28 @@ def _estimate_mi(
     rng = check_random_state(random_state)
     if np.any(continuous_mask):
         X = X.astype(np.float64, copy=copy)
-        X_continuous = X[:, continuous_mask]
-        # Center as well as scale the continuous features. Continuous features are
-        # always dense here (a sparse `X` with continuous features raises above), so
-        # centering is safe and, since mutual information is translation invariant,
-        # it does not change the estimate for well-conditioned data.
-        magnitude = np.max(np.abs(X_continuous), axis=0)
-        std = np.std(X_continuous, axis=0)
-        X[:, continuous_mask] = scale(X_continuous, with_mean=True, copy=False)
+        # Center and scale (continuous features are always dense here). Centering is
+        # MI-invariant and keeps values near 0 for well-conditioned jitter.
+        X[:, continuous_mask] = scale(
+            X[:, continuous_mask], with_mean=True, copy=False
+        )
 
-        # Add small noise to continuous features to break ties, as advised in
-        # Kraskov et al. The noise must dominate the float64 quantization grid a
-        # feature inherits from being stored at its own magnitude: standardizing a
-        # feature of magnitude ``m`` and standard deviation ``s`` maps that grid to
-        # a spacing of ``spacing(m) / s`` in unit-variance units. For well-scaled
-        # data this is ~1e-16 and the historical 1e-10 noise dominates it, so the
-        # estimate is unchanged. But for a feature at a large offset or with a tiny
-        # variance (e.g. a constant column, or ``N(1, 1e-10)``) the spacing blows up
-        # and a fixed 1e-10 noise is swamped, leaving many jittered samples on
-        # identical grid values; those ties defeat the k-NN estimator and inflate
-        # the mutual information (gh-30772). Scaling the noise to the grid keeps it
-        # effective at any magnitude while staying far below the resolvable signal
-        # (structure finer than the grid is not representable in float64, so this
-        # cannot erase real information).
-        std = np.where(std > 0, std, 1.0)
-        noise_scale = np.maximum(1e-10, 10 * np.spacing(magnitude) / std)
-        X[:, continuous_mask] += noise_scale * rng.standard_normal(
-            size=(n_samples, np.sum(continuous_mask))
+        # Tiny noise to break exact ties (Kraskov et al.); only speeds up the
+        # neighbor search -- correctness comes from the tie-robust counting above.
+        means = np.maximum(1, np.mean(np.abs(X[:, continuous_mask]), axis=0))
+        X[:, continuous_mask] += (
+            1e-10
+            * means
+            * rng.standard_normal(size=(n_samples, np.sum(continuous_mask)))
         )
 
     if not discrete_target:
-        # Center and scale the noise to the quantization grid for the same numerical
-        # reasons as the continuous features above.
-        magnitude = np.max(np.abs(y))
-        std = np.std(y)
         y = scale(y, with_mean=True)
-        std = std if std > 0 else 1.0
-        noise_scale = max(1e-10, 10 * np.spacing(magnitude) / std)
-        y += noise_scale * rng.standard_normal(size=n_samples)
+        y += (
+            1e-10
+            * np.maximum(1, np.mean(np.abs(y)))
+            * rng.standard_normal(size=n_samples)
+        )
 
     mi = Parallel(n_jobs=n_jobs)(
         delayed(_compute_mi)(x, y, discrete_feature, discrete_target, n_neighbors)

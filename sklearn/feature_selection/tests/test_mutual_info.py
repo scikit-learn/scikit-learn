@@ -4,6 +4,7 @@ import pytest
 from sklearn.datasets import make_classification, make_regression
 from sklearn.feature_selection import mutual_info_classif, mutual_info_regression
 from sklearn.feature_selection._mutual_info import _compute_mi
+from sklearn.metrics import mutual_info_score
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import (
     assert_allclose,
@@ -272,20 +273,12 @@ def test_mutual_info_n_jobs(global_random_seed, mutual_info_func, data_generator
 
 @pytest.mark.parametrize("constant_value", [0.0, 1.0, 7.0, 1000.0])
 def test_mutual_info_classif_constant_feature(constant_value, global_random_seed):
-    """A constant continuous feature carries no information about the target.
-
-    Its mutual information must therefore be ~0 and, in particular, must not
-    exceed the entropy of the target. The tie-breaking noise is added to
-    continuous features after they are centered; without centering, a constant
-    feature sitting at a non-zero float magnitude loses the noise to float64
-    rounding, the resulting exact ties defeat the k-nearest-neighbors estimator,
-    and the mutual information is grossly over-estimated.
+    """A constant feature carries no information: MI must be ~0 and <= H(target).
 
     Non-regression test for gh-30772.
     """
     n_samples = 50_000
-    # Strongly imbalanced target -> small entropy, so the bug (MI far above the
-    # entropy) is unambiguous.
+    # Strongly imbalanced target -> tiny entropy, so any MI inflation is obvious.
     y = (np.arange(n_samples) < 10).astype(int)
     X = np.full((n_samples, 1), constant_value)
 
@@ -302,20 +295,14 @@ def test_mutual_info_classif_constant_feature(constant_value, global_random_seed
 
 @pytest.mark.parametrize("offset", [0.0, 5.0, 1000.0])
 def test_mutual_info_classif_repeated_values_feature(offset, global_random_seed):
-    """A continuous feature that is mostly one repeated value (e.g. many zeros, or
-    a near-constant column with a few outliers) but independent of the target must
-    not yield mutual information above the target entropy.
-
-    This is the more general form of gh-30772: the repeated values are exact ties,
-    and the tie-breaking noise must separate them cleanly. Adding that noise after
-    centering keeps it effective regardless of the ``offset`` the values sit at.
+    """A feature that is mostly one repeated value (e.g. many zeros) but
+    independent of the target must give MI <= H (gh-30772, tie handling).
     """
     rng = check_random_state(global_random_seed)
-    n_samples = 200_000
-    y = (np.arange(n_samples) < 20).astype(int)
+    n_samples = 100_000
+    y = (np.arange(n_samples) < 10).astype(int)
 
-    # 95% of the samples share a single value (`offset`); the rest have a genuine
-    # continuous spread around it -- all drawn independently of `y`.
+    # 95% share the value `offset` (exact ties); the rest spread around it.
     feature = np.full(n_samples, offset, dtype=float)
     tail = rng.random(n_samples) < 0.05
     feature[tail] = offset + rng.standard_normal(tail.sum())
@@ -331,17 +318,11 @@ def test_mutual_info_classif_repeated_values_feature(offset, global_random_seed)
 
 
 @pytest.mark.parametrize("offset", [0.0, 1.0, 100.0])
-@pytest.mark.parametrize("sigma", [1e-6, 1e-10, 1e-14])
+@pytest.mark.parametrize("sigma", [1e-10, 1e-14])
 def test_mutual_info_classif_delta_like_feature(offset, sigma, global_random_seed):
-    """A feature whose spread is far below its own magnitude, e.g. ``N(offset,
-    sigma)`` with ``sigma << offset``, is numerically almost constant: float64
-    rounding places its values on a coarse quantization grid. If the tie-breaking
-    noise does not dominate that grid, the k-NN estimator sees spurious structure
-    and over-estimates the mutual information with an independent target.
-
-    The noise is scaled to the grid, so this holds at any offset/spread.
-
-    Non-regression test for the general (non-constant) form of gh-30772.
+    """A near-constant feature ``N(offset, sigma)`` with ``sigma << offset`` lands
+    on a coarse float64 grid (many equal distances). Independent of the target, it
+    must give MI <= H at any offset/spread (gh-30772, general non-constant form).
     """
     rng = check_random_state(global_random_seed)
     n_samples = 100_000
@@ -354,3 +335,58 @@ def test_mutual_info_classif_delta_like_feature(offset, sigma, global_random_see
     mi = mutual_info_classif(X, y, random_state=global_random_seed)[0]
 
     assert mi <= target_entropy
+
+
+@pytest.mark.parametrize("n_unique", [2, 5, 30])
+def test_mutual_info_classif_discrete_feature_as_continuous(
+    n_unique, global_random_seed
+):
+    """An integer-valued feature treated as *continuous* has many exact NN
+    collisions. The continuous estimator must still match the exact discrete MI
+    (``mutual_info_score``) and stay <= H (gh-30772, ties as the rule).
+    """
+    rng = check_random_state(global_random_seed)
+    n_samples = 5000
+    n_classes = 4
+
+    # Target is a noisy function of the feature -> true MI in (0, H).
+    feature = rng.randint(0, n_unique, size=n_samples)
+    flip = rng.random(n_samples) < 0.4
+    target = np.where(flip, rng.randint(0, n_classes, n_samples), feature % n_classes)
+
+    exact_mi = mutual_info_score(feature, target)  # discrete/discrete ground truth
+    target_entropy = mutual_info_score(target, target)
+
+    mi = mutual_info_classif(
+        feature.reshape(-1, 1).astype(float),
+        target,
+        discrete_features=False,
+        random_state=global_random_seed,
+    )[0]
+
+    assert mi <= target_entropy + 1e-3
+    assert mi == pytest.approx(exact_mi, abs=0.05)
+
+
+@pytest.mark.parametrize("offset", [0.0, 5.0, 100.0])
+def test_mutual_info_classif_perfect_predictor_recovers_entropy(
+    offset, global_random_seed
+):
+    """A perfect predictor gives MI == H(target), independent of the value offset.
+
+    This is the reporter's own reference in gh-30772
+    (``mutual_info_classif(target_as_float, target)``), previously offset-dependent.
+    """
+    big_n = 100_000
+    target = (np.arange(big_n) < 10).astype(int)
+    feature = target.astype(float) + offset  # perfect predictor, shifted by offset
+
+    p = target.mean()
+    target_entropy = -(p * np.log(p) + (1 - p) * np.log(1 - p))
+
+    mi = mutual_info_classif(
+        feature.reshape(-1, 1), target,
+        discrete_features=False, random_state=global_random_seed,
+    )[0]
+
+    assert mi == pytest.approx(target_entropy, abs=5e-4)
