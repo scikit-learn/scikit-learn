@@ -340,7 +340,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             sol = sol(
                 coef=coef,
                 linear_loss=linear_loss,
-                # l1_reg_strength=0.0 is default value for NewtonCDGramSolver
+                # l1_reg_strength=0.0 is the default value for NewtonCDGramSolver
                 l2_reg_strength=l2_reg_strength,
                 tol=self.tol,
                 max_iter=self.max_iter,

@@ -83,7 +83,7 @@ _LOGISTIC_SOLVER_CONVERGENCE_MSG = (
 
 
 def _check_solver(solver, penalty, dual):
-    if solver not in ["liblinear", "newton-cd-gram", "saga"] and penalty not in (
+    if solver not in ("liblinear", "newton-cd-gram", "saga") and penalty not in (
         "l2",
         None,
     ):
@@ -413,7 +413,7 @@ def _logistic_regression_path(
             accept_sparse="csr",
             dtype=[xp.float64, xp.float32],
             accept_large_sparse=solver
-            not in ["liblinear", "sag", "saga", "newton-cd-gram"],
+            not in ("liblinear", "newton-cd-gram", "sag", "saga"),
         )
         y = check_array(y, ensure_2d=False, dtype=None)
         check_consistent_length(X, y)
@@ -494,7 +494,7 @@ def _logistic_regression_path(
     #     C * sum(pointwise_loss) + penalty
     # instead of (as LinearModelLoss does)
     #     mean(pointwise_loss) + 1/C * penalty
-    if solver in ["lbfgs", "newton-cd-gram", "newton-cg", "newton-cholesky"]:
+    if solver in ("lbfgs", "newton-cd-gram", "newton-cg", "newton-cholesky"):
         # This needs to be calculated after sample_weight is multiplied by
         # class_weight. It is even tested that passing class_weight is equivalent to
         # passing sample_weights according to class_weight.
@@ -563,7 +563,7 @@ def _logistic_regression_path(
             fit_intercept=fit_intercept,
         )
         target = Y_multi
-        if solver in ["lbfgs", "newton-cd-gram", "newton-cg", "newton-cholesky"]:
+        if solver in ("lbfgs", "newton-cd-gram", "newton-cg", "newton-cholesky"):
             # scipy.optimize.minimize and newton-cg accept only ravelled parameters,
             # i.e. 1d-arrays. LinearModelLoss expects classes to be contiguous and
             # reconstructs the 2d-array via w0.reshape((n_classes, -1), order="F").
@@ -764,7 +764,7 @@ def _logistic_regression_path(
             else:
                 coefs.append(xp.asarray(w0, copy=True, dtype=X.dtype, device=device_))
         else:
-            if solver in ["lbfgs", "newton-cd-gram", "newton-cg", "newton-cholesky"]:
+            if solver in ("lbfgs", "newton-cd-gram", "newton-cg", "newton-cholesky"):
                 if _is_numpy_namespace(xp) or not coef_as_xp:
                     multi_w0 = np.reshape(w0, (n_classes, -1), order="F")
                 else:
@@ -1512,7 +1512,7 @@ class LogisticRegression(
             dtype=[xp.float64, xp.float32],
             order="C",
             accept_large_sparse=solver
-            not in ["liblinear", "sag", "saga", "newton-cd-gram"],
+            not in ("liblinear", "newton-cd-gram", "sag", "saga"),
         )
         n_features = X.shape[1]
         check_classification_targets(y)
@@ -2253,7 +2253,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             dtype=np.float64,
             order="C",
             accept_large_sparse=solver
-            not in ["liblinear", "sag", "saga", "newton-cd-gram"],
+            not in ("liblinear", "newton-cd-gram", "sag", "saga"),
         )
         n_features = X.shape[1]
         check_classification_targets(y)
