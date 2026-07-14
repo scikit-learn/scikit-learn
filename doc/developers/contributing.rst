@@ -459,6 +459,16 @@ Pull request checklist
         related to some other issues/PRs, or it only partially resolves the target
         issue, create a link to them without using the keywords (e.g., ``Towards #1234``).
 
+      * An incomplete contribution -- where you expect to do more work before receiving
+        a full review -- should be marked as a `draft pull request
+        <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request>`__
+        and changed to "ready for review" when it matures. Draft PRs may be useful to:
+        indicate you are working on something to avoid duplicated work, request
+        broad review of functionality or API, or seek collaborators. Draft PRs often
+        benefit from the inclusion of a `task list
+        <https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments>`_ in
+        the PR description.
+
       .. raw:: html
 
         <h4 id="pr-checklist-code-after">After opening a PR</h4>
@@ -472,6 +482,9 @@ Pull request checklist
 
       * If any part of the documentation was changed (which is very likely), also
         check the rendered docs, see :ref:`generated_doc_CI`.
+
+      * Be patient: Before a PR can be merged, it needs to be approved by **two** core
+        developers.
 
     .. tab-item:: Documentation
       :class-label: tab-6
@@ -513,6 +526,16 @@ Pull request checklist
         related to some other issues/PRs, or it only partially resolves the target
         issue, create a link to them without using the keywords (e.g., ``Towards #1234``).
 
+      * An incomplete contribution -- where you expect to do more work before receiving
+        a full review -- should be marked as a `draft pull request
+        <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request>`__
+        and changed to "ready for review" when it matures. Draft PRs may be useful to:
+        indicate you are working on something to avoid duplicated work, request
+        broad review of functionality or API, or seek collaborators. Draft PRs often
+        benefit from the inclusion of a `task list
+        <https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments>`_ in
+        the PR description.
+
       .. raw:: html
 
         <h4 id="pr-checklist-docs-after">After opening a PR</h4>
@@ -522,16 +545,8 @@ Pull request checklist
 
       * Check the rendered docs, see :ref:`generated_doc_CI`.
 
-Before a PR can be merged, it needs to be approved by **two** core developers.
-An incomplete contribution -- where you expect to do more work before receiving
-a full review -- should be marked as a `draft pull request
-<https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request>`__
-and changed to "ready for review" when it matures. Draft PRs may be useful to:
-indicate you are working on something to avoid duplicated work, request
-broad review of functionality or API, or seek collaborators. Draft PRs often
-benefit from the inclusion of a `task list
-<https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments>`_ in
-the PR description.
+      * Be patient: Before a PR can be merged, it needs to be approved by **two** core
+        developers.
 
 .. note::
 
