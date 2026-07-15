@@ -1338,7 +1338,7 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     C = xp.astype(C, _max_precision_float_dtype(xp, device=device_), copy=False)
     t_sum = xp.sum(C, axis=1)
     p_sum = xp.sum(C, axis=0)
-    n_correct = xp.sum(xp.linalg.diagonal(C))
+    n_correct = xp.linalg.trace(C)
     n_samples = xp.sum(p_sum)
     cov_ytyp = n_correct * n_samples - xp.sum(t_sum * p_sum)
     cov_ypyp = n_samples**2 - xp.sum(p_sum * p_sum)
