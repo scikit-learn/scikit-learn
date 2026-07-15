@@ -414,7 +414,7 @@ Pull request checklist
 
       * All :ref:`tests pass locally<testing_coverage>`.
 
-      .. dropdown:: When contributing a new feature, also note the following
+      * When contributing a new feature, also note the following:
 
         * Make sure your contribution fulfills our `new algorithm requirements
           <https://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms>`_.
