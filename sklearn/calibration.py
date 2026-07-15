@@ -1346,7 +1346,7 @@ def calibration_curve(
     if n_bins == "cube_root":
         n_bins = ceil(len(y_true) ** (1 / 3))
 
-    # TODO(1.12): remove, see PR #33908.
+    # TODO(1.12): remove with change of default strategy.
     if strategy == "warn":
         warnings.warn(
             "The default value of `strategy` will change "
@@ -1642,7 +1642,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             name=name,
         )
 
-        # TODO(1.12): remove, see PR #33908.
+        # TODO(1.12): remove with change of default strategy.
         if strategy == "warn":
             warnings.warn(
                 "The default value of `strategy` will change "
@@ -1775,7 +1775,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             y_true, y_prob, sample_weight=None, pos_label=pos_label, name=name
         )
 
-        # TODO(1.12): remove, see PR #33908.
+        # TODO(1.12): remove with change of default strategy.
         if strategy == "warn":
             warnings.warn(
                 "The default value of `strategy` will change "

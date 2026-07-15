@@ -513,7 +513,7 @@ def test_temperature_scaling_input_validation(global_dtype):
     assert_allclose(y_pred1, y_pred2)
 
 
-# TODO(1.12): remove warning filter, see PR #33908
+# TODO(1.12): remove warning filter with change of default strategy
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_calibration_curve():
     """Check calibration_curve function"""
@@ -548,7 +548,7 @@ def test_calibration_curve():
         calibration_curve(y_true2, y_pred2, strategy="percentile")
 
 
-# TODO(1.12): remove, see PR #33908
+# TODO(1.12): remove with change of default strategy
 def test_calibration_curve_strategy_future_warning():
     y_true = np.array([0, 0, 0, 1, 1, 1])
     y_pred = np.array([0.0, 0.1, 0.2, 0.8, 0.9, 1.0])
@@ -837,7 +837,7 @@ def test_calibration_display_compute(pyplot, iris_data_binary, n_bins, strategy)
         assert labels.get_text() in expected_legend_labels
 
 
-# TODO(1.12): remove warning filter, see PR #33908
+# TODO(1.12): remove warning filter with change of default strategy
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_plot_calibration_curve_pipeline(pyplot, iris_data_binary):
     # Ensure pipelines are supported by CalibrationDisplay.from_estimator
@@ -892,7 +892,7 @@ def test_calibration_display_label_class_plot(pyplot):
         assert labels.get_text() in expected_legend_labels
 
 
-# TODO(1.12): remove warning filter, see PR #33908
+# TODO(1.12): remove warning filter with change of default strategy
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
 def test_calibration_display_name_multiple_calls(
@@ -929,7 +929,7 @@ def test_calibration_display_name_multiple_calls(
         assert labels.get_text() in expected_legend_labels
 
 
-# TODO(1.12): remove warning filter, see PR #33908
+# TODO(1.12): remove warning filter with change of default strategy
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_calibration_display_ref_line(pyplot, iris_data_binary):
     # Check that `ref_line` only appears once
@@ -960,7 +960,7 @@ def test_calibration_curve_pos_label_error_str(dtype_y_str):
         calibration_curve(y1, y2)
 
 
-# TODO(1.12): remove warning filter, see PR #33908
+# TODO(1.12): remove warning filter with change of default strategy
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("dtype_y_str", [str, object])
 def test_calibration_curve_pos_label(dtype_y_str):
@@ -989,7 +989,7 @@ def test_calibration_curve_pos_label(dtype_y_str):
     assert_allclose(prob_true, [0, 0, 0.5, 1])
 
 
-# TODO(1.12): remove warning filter, see PR #33908
+# TODO(1.12): remove warning filter with change of default strategy
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "kwargs",
@@ -1010,7 +1010,7 @@ def test_calibration_display_kwargs(pyplot, iris_data_binary, kwargs):
     assert viz.line_.get_linestyle() == "-."
 
 
-# TODO(1.12): remove warning filter, see PR #33908
+# TODO(1.12): remove warning filter with change of default strategy
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("pos_label, expected_pos_label", [(None, 1), (0, 0), (1, 1)])
 def test_calibration_display_pos_label(
