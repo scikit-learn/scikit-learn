@@ -16,6 +16,10 @@ from scipy.linalg import LinAlgWarning, svd
 from sklearn import config_context
 from sklearn._loss import HalfMultinomialLoss
 from sklearn.base import clone
+from sklearn.callback.tests._utils import (
+    RecordingCallback,
+    skip_callback_test_if_wasm,
+)
 from sklearn.datasets import load_iris, make_classification, make_low_rank_matrix
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LogisticRegression, LogisticRegressionCV, SGDClassifier
@@ -270,7 +274,7 @@ def test_inconsistent_input():
     y_ = np.ones(X_.shape[0])
     y_[0] = 0
 
-    clf = LogisticRegression(random_state=0)
+    clf = LogisticRegression()
 
     # Wrong dimensions for training data
     y_wrong = y_[:-1]
@@ -343,7 +347,7 @@ def test_consistency_path(global_random_seed):
             )
 
     # test for fit_intercept=True
-    for solver in ("lbfgs", "newton-cg", "newton-cholesky", "liblinear", "sag", "saga"):
+    for solver in SOLVERS:
         Cs = [1e3]
         coefs, Cs, _ = f(_logistic_regression_path)(
             X,
@@ -471,6 +475,27 @@ def test_logistic_cv(global_random_seed, use_legacy_attributes):
         assert isinstance(lr_cv.C_, float)
         assert isinstance(lr_cv.l1_ratio_, float)
         assert lr_cv.scores_.shape == (n_cv, n_l1_ratios, n_Cs)
+
+
+# TODO(1.11): remove filterwarnings with change of default scoring
+@pytest.mark.filterwarnings("ignore:The default value.*scoring.*:FutureWarning")
+def test_logistic_cv_refit_false_non_elasticnet(global_random_seed):
+    """Test that non-elasticnet penalty with refit=False and
+    use_legacy_attributes=False works without error.
+
+    For non-elasticnet penalties, l1_ratio=0.0 (equivalent to pure L2).
+    Previously, None was stored, which caused float() to raise a
+    TypeError when use_legacy_attributes=False converted the value to a scalar.
+    """
+    X, y = make_classification(random_state=global_random_seed)
+    lr_cv = LogisticRegressionCV(
+        l1_ratios=[0.0],
+        refit=False,
+        use_legacy_attributes=False,
+        random_state=global_random_seed,
+    )
+    lr_cv.fit(X, y)
+    assert lr_cv.l1_ratio_ == 0.0
 
 
 def test_logistic_cv_mock_scorer():
@@ -1055,7 +1080,7 @@ def test_logistic_regressioncv_class_weights(weight, class_weight, global_random
     with ignore_warnings(category=ConvergenceWarning):
         clf_lbfgs.fit(X, y)
 
-    for solver in set(SOLVERS) - set(["lbfgs", "liblinear", "newton-cholesky"]):
+    for solver in set(SOLVERS) - set(["lbfgs", "liblinear"]):
         clf = LogisticRegressionCV(
             solver=solver,
             scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
@@ -1253,7 +1278,7 @@ def test_logistic_regression_class_weights(global_random_seed, csr_container):
     y = iris.target[45:]
     class_weight_dict = _compute_class_weight_dictionary(y)
 
-    for solver in set(SOLVERS) - set(["liblinear", "newton-cholesky"]):
+    for solver in set(SOLVERS) - set(["liblinear"]):
         params = dict(solver=solver, max_iter=2000, random_state=global_random_seed)
         clf1 = LogisticRegression(class_weight="balanced", **params)
         clf2 = LogisticRegression(class_weight=class_weight_dict, **params)
@@ -1994,7 +2019,7 @@ def test_LogisticRegressionCV_on_folds():
         ).fit(X[train_fold_0], y[train_fold_0])
 
         for cl in np.unique(y):
-            # Coefficients without intecept
+            # Coefficients without intercept
             assert_allclose(
                 lrcv.coefs_paths_[cl][idx_fold, idx_C, :-1],
                 lr.coef_[cl],
@@ -2465,26 +2490,24 @@ def test_lr_cv_scores_differ_when_sample_weight_is_requested(global_random_seed)
     sample_weight[: len(y) // 2] = 2
     kwargs = {"sample_weight": sample_weight}
 
-    scorer1 = get_scorer("accuracy")
-    lr_cv1 = LogisticRegressionCV(
-        scoring=scorer1,
-        tol=3e-6,
-        use_legacy_attributes=True,
-    )
+    scorer1 = get_scorer("accuracy").set_score_request(sample_weight=False)
+    lr_cv1 = LogisticRegressionCV(scoring=scorer1, tol=3e-6, use_legacy_attributes=True)
     lr_cv1.fit(X, y, **kwargs)
 
-    scorer2 = get_scorer("accuracy")
-    scorer2.set_score_request(sample_weight=True)
-    lr_cv2 = LogisticRegressionCV(
-        scoring=scorer2,
-        tol=3e-6,
-        use_legacy_attributes=True,
-    )
+    scorer2 = get_scorer("accuracy").set_score_request(sample_weight=True)
+    lr_cv2 = LogisticRegressionCV(scoring=scorer2, tol=3e-6, use_legacy_attributes=True)
     lr_cv2.fit(X, y, **kwargs)
 
     assert not np.allclose(lr_cv1.scores_[1], lr_cv2.scores_[1])
 
-    score_1 = lr_cv1.score(X_t, y_t, **kwargs)
+    # sample_weight cannot be passed to lr_cv1.score since it's unrequested.
+    err_msg = (
+        "LogisticRegressionCV.score got unexpected argument(s) {'sample_weight'},"
+        " which are not routed to any object."
+    )
+    with pytest.raises(TypeError, match=re.escape(err_msg)):
+        lr_cv1.score(X_t, y_t, **kwargs)
+    score_1 = lr_cv1.score(X_t, y_t)
     score_2 = lr_cv2.score(X_t, y_t, **kwargs)
 
     assert not np.allclose(score_1, score_2)
@@ -2684,6 +2707,7 @@ def test_logisticregression_warns_with_n_jobs():
         lr.fit(X, y)
 
 
+@pytest.mark.parametrize("solver", ["lbfgs", "newton-cg"])
 @pytest.mark.parametrize("binary", [False, True])
 @pytest.mark.parametrize("use_str_y", [False, True])
 @pytest.mark.parametrize("use_sample_weight", [False, True])
@@ -2694,6 +2718,7 @@ def test_logisticregression_warns_with_n_jobs():
 )
 @pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
 def test_logistic_regression_array_api_compliance(
+    solver,
     binary,
     use_str_y,
     use_sample_weight,
@@ -2702,7 +2727,7 @@ def test_logistic_regression_array_api_compliance(
     device_name,
     dtype_name,
 ):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     X_np = iris.data.astype(dtype_name, copy=True)
     n_samples, _ = X_np.shape
     X_xp = xp.asarray(X_np, device=device)
@@ -2749,9 +2774,8 @@ def test_logistic_regression_array_api_compliance(
     # also want to make sure that this choice of regularization does not
     # constrain the fitted models to a trivial baseline classifier where only
     # the intercept would be non-zero.
-    lr_params = dict(
-        C=1e-2, solver="lbfgs", tol=1e-12, max_iter=500, class_weight=class_weight
-    )
+    lr_params = dict(C=1e-2, solver=solver, max_iter=500, class_weight=class_weight)
+    lr_params["tol"] = 1e-6 if dtype_name == "float32" else 1e-12
     with warnings.catch_warnings():
         # Make sure that we converge in the reference fit.
         lr_np = LogisticRegression(**lr_params).fit(
@@ -2765,10 +2789,12 @@ def test_logistic_regression_array_api_compliance(
     predict_proba_np = lr_np.predict_proba(X_np)
     preditct_log_proba_np = lr_np.predict_log_proba(X_np)
     prediction_np = lr_np.predict(X_np)
-    # TODO: those tolerance levels seem quite high. Investigate further if we
-    # can hunt down the numerical discrepancies more precisely.
-    atol = _atol_for_type(dtype_name) * 10
-    rtol = 5e-3 if dtype_name == "float32" else 1e-5
+    if solver == "lbfgs":
+        atol = _atol_for_type(dtype_name) * 10
+        rtol = 1e-3 if dtype_name == "float32" else 1e-7
+    else:
+        atol = _atol_for_type(dtype_name) * 2
+        rtol = 1e-4 if dtype_name == "float32" else 1e-8
 
     with config_context(array_api_dispatch=True):
         with warnings.catch_warnings():
@@ -2862,7 +2888,7 @@ def test_logistic_regression_array_api_warm_start(
 ):
     """Test that warm_start=True works with array API inputs across
     multiple fit calls for both binary and multiclass classification."""
-    xp, device_ = _array_api_for_tests(array_namespace, device_name)
+    xp, device_ = _array_api_for_tests(array_namespace, device_name, dtype_name)
     X_np = iris.data.astype(dtype_name, copy=True)
     if binary:
         y_np = (iris.target > 0).astype(dtype_name)
@@ -2877,3 +2903,102 @@ def test_logistic_regression_array_api_warm_start(
         lr.fit(X_xp, y_xp)
         lr.predict(X_xp)
         lr.fit(X_xp, y_xp)
+
+
+# TODO(callbacks): also test for other solvers when they get supported.
+@pytest.mark.parametrize("max_iter", [0, 2, 1000])
+@skip_callback_test_if_wasm
+def test_logistic_regression_callback_support(max_iter):
+    """Test the callback support for LogisticRegression."""
+    X, y = make_classification(n_features=4, random_state=0)
+
+    cb = RecordingCallback()
+    lr = LogisticRegression(solver="lbfgs", max_iter=max_iter).set_callbacks(cb)
+    lr.fit(X, y)
+
+    assert cb.count_hooks("setup") == 1
+    assert cb.count_hooks("teardown") == 1
+    # 1 root for fit + number of iteration (always at least one) + 1 empty task
+    assert cb.count_hooks("on_fit_task_begin") == 1 + max(lr.n_iter_, 1) + 1
+    assert cb.count_hooks("on_fit_task_end") == 1 + max(lr.n_iter_, 1) + 1
+
+
+# TODO(callbacks): also test for other solvers when they get supported.
+@pytest.mark.parametrize("n_classes", [2, 3])
+@pytest.mark.parametrize("fit_intercept", [True, False])
+@skip_callback_test_if_wasm
+def test_logistic_regression_callback_fitted_estimator(n_classes, fit_intercept):
+    """Check the fitted_estimator in callback hooks.
+
+    It is able to predict, with learned parameters identical to the ones obtained if the
+    owner estimator had been fitted with the same number of iterations.
+    """
+    X, y = make_classification(
+        n_features=4,
+        n_informative=4,
+        n_redundant=0,
+        n_classes=n_classes,
+        random_state=0,
+    )
+    cb = RecordingCallback()
+
+    lr_params = {"solver": "lbfgs", "fit_intercept": fit_intercept}
+    lr = LogisticRegression(**lr_params).set_callbacks(cb).fit(X, y)
+    n_iter = lr.n_iter_[0]
+
+    iter_begins = [
+        rec
+        for rec in cb.record
+        if rec["name"] == "on_fit_task_begin" and "iter" in rec["context"].task_name
+    ]
+    iter_ends = [
+        rec
+        for rec in cb.record
+        if rec["name"] == "on_fit_task_end" and "iter" in rec["context"].task_name
+    ]
+
+    for i, (iter_begin, iter_end) in enumerate(zip(iter_begins, iter_ends)):
+        assert iter_begin["context"].task_id == i
+        assert iter_end["context"].task_id == i
+
+        if i > 0:
+            est = iter_begin["kwargs"]["fitted_estimator"]
+            expected_lr = LogisticRegression(**lr_params, max_iter=i).fit(X, y)
+            assert_allclose(est.coef_, expected_lr.coef_)
+            assert_allclose(est.intercept_, expected_lr.intercept_)
+            assert_allclose(est.predict(X), expected_lr.predict(X))
+
+        if i < n_iter:
+            est = iter_end["kwargs"]["fitted_estimator"]
+            expected_lr = LogisticRegression(**lr_params, max_iter=i + 1).fit(X, y)
+            assert_allclose(est.coef_, expected_lr.coef_)
+            assert_allclose(est.intercept_, expected_lr.intercept_)
+            assert_allclose(est.predict(X), expected_lr.predict(X))
+        else:
+            # Extra empty task with lbfgs solver.
+            assert iter_end["kwargs"]["fitted_estimator"] is None
+
+
+# TODO(1.10): Uncomment when scipy callbacks can be interrupted with StopIteration in
+# min dependencies (i.e. when min scipy version > 1.10 and StopIteration gets used
+# in the scipy callback function, see TODO in _make_scipy_callback_fun).
+# TODO(callbacks): also test for other solvers when they get supported.
+# def test_logistic_regression_fit_stopped_by_callback():
+#     """Test that a callback can interrupt the fit."""
+#     X, y = load_iris(return_X_y=True)
+#     cb = StopFitCallback()
+#     lr = LogisticRegression(solver="lbfgs").set_callbacks(cb)
+#     lr.fit(X, y)
+#     assert lr.n_iter_ == 1
+
+
+# TODO(callbacks): update/remove as more solvers get supported.
+@skip_callback_test_if_wasm
+def test_logistic_regression_callback_support_warning():
+    """Test the warning message when trying to set a callback with solver!='lbfgs'."""
+    cb = RecordingCallback()
+    with pytest.warns(
+        UserWarning,
+        match="Callbacks are only supported in LogisticRegression for solver='lbfgs'",
+    ):
+        LogisticRegression(solver="liblinear").set_callbacks(cb)

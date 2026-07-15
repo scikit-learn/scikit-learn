@@ -64,7 +64,6 @@ from sklearn.tree import (
     ExtraTreeClassifier,
     ExtraTreeRegressor,
 )
-from sklearn.tree._tree import DOUBLE, DTYPE
 from sklearn.utils import (
     check_random_state,
     compute_class_weight,
@@ -338,7 +337,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             y,
             multi_output=True,
             accept_sparse="csc",
-            dtype=DTYPE,
+            dtype=np.float32,
             ensure_all_finite=False,
         )
         # _compute_missing_values_in_feature_mask checks if X has missing values and
@@ -393,8 +392,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         y, expanded_class_weight = self._validate_y_class_weight(y, sample_weight)
 
-        if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
-            y = np.ascontiguousarray(y, dtype=DOUBLE)
+        if getattr(y, "dtype", None) != np.float64 or not y.flags.contiguous:
+            y = np.ascontiguousarray(y, dtype=np.float64)
 
         # Combined _sample_weight = sample_weight * expanded_class_weight
         # (when provided) used in _parallel_build_trees to draw indices
@@ -616,7 +615,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         X = validate_data(
             self,
             X,
-            dtype=DTYPE,
+            dtype=np.float32,
             accept_sparse="csr",
             reset=False,
             ensure_all_finite=ensure_all_finite,
@@ -1137,7 +1136,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
         Parameters
         ----------
-        grid : ndarray of shape (n_samples, n_target_features), dtype=DTYPE
+        grid : ndarray of shape (n_samples, n_target_features), dtype=np.float32
             The grid points on which the partial dependence should be
             evaluated.
         target_features : ndarray of shape (n_target_features), dtype=np.intp
@@ -1149,7 +1148,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         averaged_predictions : ndarray of shape (n_samples,)
             The value of the partial dependence function on each grid point.
         """
-        grid = np.asarray(grid, dtype=DTYPE, order="C")
+        grid = np.asarray(grid, dtype=np.float32, order="C")
         target_features = np.asarray(target_features, dtype=np.intp, order="C")
         averaged_predictions = np.zeros(
             shape=grid.shape[0], dtype=np.float64, order="C"
@@ -1377,18 +1376,17 @@ class RandomForestClassifier(ForestClassifier):
             Float `max_samples` is relative to `sample_weight.sum()` instead of
             `X.shape[0]` for weighted samples.
 
-    monotonic_cst : array-like of int of shape (n_features), default=None
+    monotonic_cst : array-like of int of shape (n_features,), default=None
         Indicates the monotonicity constraint to enforce on each feature.
-          - 1: monotonic increase
+          - 1: monotonically increasing
           - 0: no constraint
-          - -1: monotonic decrease
+          - -1: monotonically decreasing
 
         If monotonic_cst is None, no constraints are applied.
 
         Monotonicity constraints are not supported for:
           - multiclass classifications (i.e. when `n_classes > 2`),
-          - multioutput classifications (i.e. when `n_outputs_ > 1`),
-          - classifications trained on data with missing values.
+          - multioutput classifications (i.e. when `n_outputs_ > 1`).
 
         The constraints hold over the probability of the positive class.
 
@@ -1513,6 +1511,7 @@ class RandomForestClassifier(ForestClassifier):
         ],
     }
     _parameter_constraints.pop("splitter")
+    _parameter_constraints.pop("categorical_features")
 
     def __init__(
         self,
@@ -1770,7 +1769,7 @@ class RandomForestRegressor(ForestRegressor):
             Float `max_samples` is relative to `sample_weight.sum()` instead of
             `X.shape[0]` for weighted samples.
 
-    monotonic_cst : array-like of int of shape (n_features), default=None
+    monotonic_cst : array-like of int of shape (n_features,), default=None
         Indicates the monotonicity constraint to enforce on each feature.
           - 1: monotonically increasing
           - 0: no constraint
@@ -1779,8 +1778,7 @@ class RandomForestRegressor(ForestRegressor):
         If monotonic_cst is None, no constraints are applied.
 
         Monotonicity constraints are not supported for:
-          - multioutput regressions (i.e. when `n_outputs_ > 1`),
-          - regressions trained on data with missing values.
+          - multioutput regressions (i.e. when `n_outputs_ > 1`).
 
         Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
 
@@ -1891,6 +1889,7 @@ class RandomForestRegressor(ForestRegressor):
         **DecisionTreeRegressor._parameter_constraints,
     }
     _parameter_constraints.pop("splitter")
+    _parameter_constraints.pop("categorical_features")
 
     def __init__(
         self,
@@ -2164,7 +2163,7 @@ class ExtraTreesClassifier(ForestClassifier):
             Float `max_samples` is relative to `sample_weight.sum()` instead of
             `X.shape[0]` for weighted samples.
 
-    monotonic_cst : array-like of int of shape (n_features), default=None
+    monotonic_cst : array-like of int of shape (n_features,), default=None
         Indicates the monotonicity constraint to enforce on each feature.
           - 1: monotonically increasing
           - 0: no constraint
@@ -2174,8 +2173,7 @@ class ExtraTreesClassifier(ForestClassifier):
 
         Monotonicity constraints are not supported for:
           - multiclass classifications (i.e. when `n_classes > 2`),
-          - multioutput classifications (i.e. when `n_outputs_ > 1`),
-          - classifications trained on data with missing values.
+          - multioutput classifications (i.e. when `n_outputs_ > 1`).
 
         The constraints hold over the probability of the positive class.
 
@@ -2288,6 +2286,8 @@ class ExtraTreesClassifier(ForestClassifier):
         ],
     }
     _parameter_constraints.pop("splitter")
+    # TODO: remove once randomsplitter supports categorical features
+    _parameter_constraints.pop("categorical_features")
 
     def __init__(
         self,
@@ -2540,7 +2540,7 @@ class ExtraTreesRegressor(ForestRegressor):
             Float `max_samples` is relative to `sample_weight.sum()` instead of
             `X.shape[0]` for weighted samples.
 
-    monotonic_cst : array-like of int of shape (n_features), default=None
+    monotonic_cst : array-like of int of shape (n_features,), default=None
         Indicates the monotonicity constraint to enforce on each feature.
           - 1: monotonically increasing
           - 0: no constraint
@@ -2549,8 +2549,7 @@ class ExtraTreesRegressor(ForestRegressor):
         If monotonic_cst is None, no constraints are applied.
 
         Monotonicity constraints are not supported for:
-          - multioutput regressions (i.e. when `n_outputs_ > 1`),
-          - regressions trained on data with missing values.
+          - multioutput regressions (i.e. when `n_outputs_ > 1`).
 
         Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
 
@@ -2645,6 +2644,8 @@ class ExtraTreesRegressor(ForestRegressor):
         **DecisionTreeRegressor._parameter_constraints,
     }
     _parameter_constraints.pop("splitter")
+    # TODO: remove once randomsplitter supports categorical features
+    _parameter_constraints.pop("categorical_features")
 
     def __init__(
         self,
@@ -2908,7 +2909,13 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         **BaseDecisionTree._parameter_constraints,
         "sparse_output": ["boolean"],
     }
-    for param in ("max_features", "ccp_alpha", "splitter", "monotonic_cst"):
+    for param in (
+        "max_features",
+        "ccp_alpha",
+        "splitter",
+        "monotonic_cst",
+        "categorical_features",
+    ):
         _parameter_constraints.pop(param)
 
     criterion = "squared_error"

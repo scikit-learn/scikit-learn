@@ -217,7 +217,7 @@ def test_2d_y():
         StratifiedKFold(),
         RepeatedKFold(),
         RepeatedStratifiedKFold(),
-        StratifiedGroupKFold(),
+        StratifiedGroupKFold(n_splits=3),
         ShuffleSplit(),
         StratifiedShuffleSplit(test_size=0.5),
         GroupShuffleSplit(),
@@ -427,7 +427,7 @@ def test_stratified_kfold_no_shuffle():
 
 @pytest.mark.parametrize("shuffle", [False, True])
 @pytest.mark.parametrize("k", [4, 5, 6, 7, 8, 9, 10])
-@pytest.mark.parametrize("kfold", [StratifiedKFold, StratifiedGroupKFold])
+@pytest.mark.parametrize("kfold", (StratifiedKFold, StratifiedGroupKFold))
 def test_stratified_kfold_ratios(k, shuffle, kfold):
     # Check that stratified kfold preserves class ratios in individual splits
     # Repeat with shuffling turned off and on
@@ -454,7 +454,7 @@ def test_stratified_kfold_ratios(k, shuffle, kfold):
 
 @pytest.mark.parametrize("shuffle", [False, True])
 @pytest.mark.parametrize("k", [4, 6, 7])
-@pytest.mark.parametrize("kfold", [StratifiedKFold, StratifiedGroupKFold])
+@pytest.mark.parametrize("kfold", (StratifiedKFold, StratifiedGroupKFold))
 def test_stratified_kfold_label_invariance(k, shuffle, kfold):
     # Check that stratified kfold gives the same indices regardless of labels
     n_samples = 100
@@ -496,7 +496,7 @@ def test_kfold_balance():
         assert np.sum(sizes) == i
 
 
-@pytest.mark.parametrize("kfold", [StratifiedKFold, StratifiedGroupKFold])
+@pytest.mark.parametrize("kfold", (StratifiedKFold, StratifiedGroupKFold))
 def test_stratifiedkfold_balance(kfold):
     # Check that KFold returns folds with balanced sizes (only when
     # stratification is possible)
@@ -539,7 +539,7 @@ def test_shuffle_kfold():
     assert sum(all_folds) == 300
 
 
-@pytest.mark.parametrize("kfold", [KFold, StratifiedKFold, StratifiedGroupKFold])
+@pytest.mark.parametrize("kfold", (KFold, StratifiedKFold, StratifiedGroupKFold))
 def test_shuffle_kfold_stratifiedkfold_reproducibility(kfold):
     X = np.ones(15)  # Divisible by 3
     y = [0] * 7 + [1] * 8
@@ -1225,7 +1225,7 @@ def test_repeated_cv_repr(RepeatedCV):
     assert repeated_cv_repr == repr(repeated_cv)
 
 
-def test_repeated_kfold_determinstic_split():
+def test_repeated_kfold_deterministic_split():
     X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
     random_state = 258173307
     rkf = RepeatedKFold(n_splits=2, n_repeats=2, random_state=random_state)
@@ -1270,7 +1270,7 @@ def test_get_n_splits_for_repeated_stratified_kfold():
     assert expected_n_splits == rskf.get_n_splits()
 
 
-def test_repeated_stratified_kfold_determinstic_split():
+def test_repeated_stratified_kfold_deterministic_split():
     X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
     y = [1, 1, 1, 0, 0]
     random_state = 1944695409
@@ -1356,7 +1356,7 @@ def test_train_test_split_default_test_size(train_size, exp_train, exp_test):
 def test_array_api_train_test_split(
     shuffle, stratify, array_namespace, device_name, dtype_name
 ):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     X = np.arange(100).reshape((10, 10))
     y = np.arange(10)
@@ -1657,7 +1657,7 @@ def test_cv_iterable_wrapper():
     )
 
 
-@pytest.mark.parametrize("kfold", [GroupKFold, StratifiedGroupKFold])
+@pytest.mark.parametrize("kfold", (GroupKFold, StratifiedGroupKFold))
 @pytest.mark.parametrize("shuffle", [True, False])
 def test_group_kfold(kfold, shuffle, global_random_seed):
     rng = np.random.RandomState(global_random_seed)
@@ -1783,7 +1783,7 @@ def test_group_kfold(kfold, shuffle, global_random_seed):
     groups = np.array([1, 1, 1, 2, 2])
     X = y = np.ones(len(groups))
     with pytest.raises(ValueError, match="Cannot have number of splits.*greater"):
-        next(GroupKFold(n_splits=3).split(X, y, groups))
+        next(kfold(n_splits=3).split(X, y, groups))
 
 
 def test_time_series_cv():

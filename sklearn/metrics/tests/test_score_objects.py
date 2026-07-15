@@ -3,6 +3,7 @@ import pickle
 import re
 from copy import deepcopy
 from functools import partial
+from inspect import signature
 
 import joblib
 import numpy as np
@@ -20,6 +21,7 @@ from sklearn.datasets import (
     make_multilabel_classification,
     make_regression,
 )
+from sklearn.exceptions import UnsetMetadataPassedError
 from sklearn.linear_model import LogisticRegression, Perceptron, Ridge
 from sklearn.metrics import (
     accuracy_score,
@@ -477,7 +479,7 @@ def test_thresholded_scorers():
     # Test scorers that take thresholds.
     X, y = make_blobs(random_state=0, centers=2)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    clf = LogisticRegression(random_state=0)
+    clf = LogisticRegression()
     clf.fit(X_train, y_train)
     score1 = get_scorer("roc_auc")(clf, X_test, y_test)
     score2 = roc_auc_score(y_test, clf.decision_function(X_test))
@@ -1189,7 +1191,7 @@ def test_invalid_default_pos_label_ignored_on_multiclass():
 
     assert type_of_target(y) == "multiclass"
 
-    clf = LogisticRegression(max_iter=1000, random_state=0).fit(X, y)
+    clf = LogisticRegression(max_iter=1000).fit(X, y)
 
     # The default of average_precision_score pos_label is 1. It's not one of
     # the string class labels but it should be ignored when the scorer is
@@ -1278,18 +1280,38 @@ def test_scorer_metadata_request(name):
         weighted_scorer.get_metadata_routing().score.requests["sample_weight"] is True
     )
 
-    # make sure putting the scorer in a router doesn't request anything by
-    # default
+    # Some scoring functions accept sample_weight, some don't. We need to cover both
+    # cases.
+    scorer = get_scorer(name)
+    accepts_sample_weight = "sample_weight" in signature(scorer._score_func).parameters
+
     router = MetadataRouter(owner="test").add(
-        scorer=get_scorer(name),
+        scorer=scorer,
         method_mapping=MethodMapping().add(caller="score", callee="score"),
     )
-    # make sure `sample_weight` is refused if passed.
-    with pytest.raises(TypeError, match="got unexpected argument"):
+
+    if accepts_sample_weight:
+        # When sample_weight is accepted, `validate_data` passes and `route_params`
+        # raises
         router.validate_metadata(params={"sample_weight": 1}, method="score")
-    # make sure `sample_weight` is not routed even if passed.
-    routed_params = router.route_params(params={"sample_weight": 1}, caller="score")
-    assert not routed_params.scorer.score
+        scorer_repr = repr(scorer)
+        err_msg = (
+            "[sample_weight] are passed but are not explicitly set as requested or not"
+            f" requested for {scorer_repr}.score, which is used within test.score."
+            f" Call `{scorer_repr}.set_score_request({{metadata}}=True/False)` for each"
+            " metadata you want to request/ignore."
+        )
+        with pytest.raises(UnsetMetadataPassedError, match=re.escape(err_msg)):
+            router.route_params(params={"sample_weight": 1}, caller="score")
+    else:
+        # When sample_weight is not accepted, `validate_data` raises and `route_params`
+        # is never called
+        err_msg = re.escape(
+            "test.score got unexpected argument(s) {'sample_weight'}, which are not"
+            " routed to any object."
+        )
+        with pytest.raises(TypeError, match=err_msg):
+            router.validate_metadata(params={"sample_weight": 1}, method="score")
 
     # make sure putting weighted_scorer in a router requests sample_weight
     router = MetadataRouter(owner="test").add(
@@ -1489,7 +1511,7 @@ def test_get_scorer_multimetric(pass_estimator):
     """Check that check_scoring is compatible with multi-metric configurations."""
     X, y = make_classification(n_samples=150, n_features=10, random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    clf = LogisticRegression(random_state=0)
+    clf = LogisticRegression()
 
     if pass_estimator:
         check_scoring_ = check_scoring

@@ -232,6 +232,7 @@ def average_precision_score(
     0.77
     """
     xp, _, device = get_namespace_and_device(y_score)
+    y_score = check_array(y_score, ensure_2d=False)
     # To allow mixed string `y_true`/numeric `y_score` input, cannot move `y_true`
     # until it has been converted to an integer (e.g., via `label_binarize`)
     # Ensures `test_array_api_classification_mixed_string_numeric_input` passes.
@@ -331,11 +332,11 @@ def det_curve(
 
     Parameters
     ----------
-    y_true : ndarray of shape (n_samples,)
+    y_true : array-like of shape (n_samples,)
         True binary labels. If labels are not either {-1, 1} or {0, 1}, then
         pos_label should be explicitly given.
 
-    y_score : ndarray of shape of (n_samples,)
+    y_score : array-like of shape of (n_samples,)
         Target scores, can either be probability estimates of the positive
         class or non-thresholded decision values (as returned by
         :term:`decision_function` on some classifiers).
@@ -366,11 +367,11 @@ def det_curve(
 
     fnr : ndarray of shape (n_thresholds,)
         False negative rate (FNR) such that element i is the false negative
-        rate of predictions with score >= thresholds[i]. This is occasionally
+        rate of predictions with score < thresholds[i]. This is occasionally
         referred to as false rejection or miss rate.
 
     thresholds : ndarray of shape (n_thresholds,)
-        Decreasing thresholds on the decision function (either `predict_proba`
+        Increasing thresholds on the decision function (either `predict_proba`
         or `decision_function`) used to compute FPR and FNR.
 
         .. versionchanged:: 1.7
@@ -671,7 +672,7 @@ def roc_auc_score(
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.metrics import roc_auc_score
     >>> X, y = load_breast_cancer(return_X_y=True)
-    >>> clf = LogisticRegression(solver="newton-cholesky", random_state=0).fit(X, y)
+    >>> clf = LogisticRegression(solver="newton-cholesky").fit(X, y)
     >>> roc_auc_score(y, clf.predict_proba(X)[:, 1])
     0.99
     >>> roc_auc_score(y, clf.decision_function(X))
@@ -942,10 +943,10 @@ def confusion_matrix_at_thresholds(
 
     Parameters
     ----------
-    y_true : ndarray of shape (n_samples,)
+    y_true : array-like of shape (n_samples,)
         True targets of binary classification.
 
-    y_score : ndarray of shape (n_samples,)
+    y_score : array-like of shape (n_samples,)
         Estimated probabilities or output of a decision function.
 
     pos_label : int, float, bool or str, default=None
@@ -2268,7 +2269,7 @@ def metric_at_thresholds(
     r"""Compute `metric_func` per threshold for :term:`binary` data.
 
     Aids visualization of metric values across thresholds when tuning the
-    :ref:`decision threshold <threshold_tunning>`.
+    :ref:`decision threshold <threshold_tuning>`.
 
     Read more in the :ref:`User Guide <metric_at_thresholds>`.
 
