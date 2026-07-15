@@ -83,7 +83,7 @@ def min_norm_subgradient(alpha, gradient, coef, linear_loss):
             mn_sgrad = result[:-1]  # mn_sgrad is a view
     else:
         mn_sgrad = result
-    weights, intercept = linear_loss.weight_intercept(coef)
+    weights, _ = linear_loss.weight_intercept(coef)
     # For multiclass, weights.shape = (n_classes, n_features), flatten again.
     if linear_loss.base_loss.is_multiclass:
         weights = weights.ravel(order="F")
@@ -741,7 +741,7 @@ class NewtonCholeskySolver(NewtonSolver):
         )
 
     def prepare_gradient_hessian(self):
-        """Prepare gradient and hessian, in particular for multiclass case.
+        """Prepare gradient and hessian, in particular for the multiclass case.
 
         This can't go into update_gradient_hessian because we need to keep the original
         self.gradient and self.hessian for line search and convergence checks.
@@ -983,8 +983,9 @@ class NewtonCDGramSolver(NewtonCholeskySolver):
             # For non-canonical link functions and far away from the optimum, the
             # pointwise hessian can be negative.
             # We need non-negative hessians as we take the square root.
-            # TODO: This should be done LinearModelLoss.gradient_hessian, as now we
-            # have a slight inconsistency between hess_pointwise and the full hessian.
+            # TODO: This should be done in LinearModelLoss.gradient_hessian, as
+            # currently we have a slight inconsistency between hess_pointwise and the
+            # full hessian.
             np.maximum(0, self.hess_pointwise, out=self.hess_pointwise)
 
     def fallback_lbfgs_solve(self, X, y, sample_weight):
@@ -1091,7 +1092,7 @@ class NewtonCDGramSolver(NewtonCholeskySolver):
             # For the general treatment of the multinomial case, see
             # NewtonCholeskySolver.prepare_gradient_hessian.
             # In principle, this is the same case as fit_intercept above. Note:
-            # - The intecept of the last class is set to zero and the corresponding
+            # - The intercept of the last class is set to zero and the corresponding
             #   element/row/column has been removed from the arrays gradient and
             #   hessian, see prepare_gradient_hessian.
             # - The step of minimizing the intercept terms alone is more complicated
@@ -1157,7 +1158,7 @@ class NewtonCDGramSolver(NewtonCholeskySolver):
             self.coef_newton = np.zeros_like(self.coef)
         elif self.is_multinomial_no_penalty:
             if self.linear_loss.fit_intercept:
-                # Add intercept tems but for the last class
+                # Add intercept tems excluding the intercept of the last class.
                 intercepts = Q00_inv @ (q0 - Q0 @ w)
                 w = np.r_[w, intercepts]
             # Add all zeros for the last class including both intercept and
