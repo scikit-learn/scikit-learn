@@ -128,7 +128,7 @@ def _check_pos_label_statistics(
     check_metric(display, constructor_name, pos_label)
 
 
-# TODO(1.12): remove warning filter, see PR #33908
+# TODO(1.12): remove warning filter with change of default strategy
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "Display",
