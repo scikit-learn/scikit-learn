@@ -147,6 +147,48 @@ def _ensure_logits(predictions, response_method_name, method):
     )
 
 
+def _to_calibration_logits(predictions, *, response_method_name, method, classes=None):
+    """Convert precomputed classifier outputs to calibration logits.
+
+    This helper is used when predictions are obtained outside of
+    :func:`~sklearn.utils._response._get_response_values`, for instance via
+    :func:`~sklearn.model_selection.cross_val_predict`.
+    """
+    if (
+        response_method_name == "predict_proba"
+        and classes is not None
+        and classes.shape[0] == 2
+    ):
+        predictions = _process_predict_proba(
+            y_pred=predictions,
+            target_type="binary",
+            classes=classes,
+            pos_label=classes[1],
+        )
+    return _ensure_logits(
+        predictions,
+        response_method_name=response_method_name,
+        method=method,
+    )
+
+
+def _get_calibration_logits(estimator, X, *, method, pos_label=None):
+    """Get classifier outputs and convert them to calibration logits."""
+    predictions, _, response_method_used = _get_response_values(
+        estimator,
+        X,
+        response_method=_CLASSIFIER_RESPONSE_METHODS,
+        pos_label=pos_label,
+        return_response_method_used=True,
+    )
+    logits = _ensure_logits(
+        predictions,
+        response_method_name=response_method_used,
+        method=method,
+    )
+    return logits, response_method_used
+
+
 class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
     """Calibrate probabilities using isotonic, sigmoid, or temperature scaling.
 
@@ -555,19 +597,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 n_jobs=self.n_jobs,
                 params=routed_params.estimator.fit,
             )
-            if self.classes_.shape[0] == 2 and method_name == "predict_proba":
-                # Select the probability column of the positive class before
-                # converting to logits.
-                predictions = _process_predict_proba(
-                    y_pred=predictions,
-                    target_type="binary",
-                    classes=self.classes_,
-                    pos_label=self.classes_[1],
-                )
-            predictions = _ensure_logits(
+            predictions = _to_calibration_logits(
                 predictions,
                 response_method_name=method_name,
                 method=self.method,
+                classes=self.classes_,
             )
 
             if sample_weight is not None:
@@ -748,15 +782,9 @@ def _fit_classifier_calibrator_pair(
 
     estimator.fit(X_train, y_train, **fit_params_train)
 
-    predictions, _, response_method_used = _get_response_values(
+    predictions, _ = _get_calibration_logits(
         estimator,
         X_test,
-        response_method=_CLASSIFIER_RESPONSE_METHODS,
-        return_response_method_used=True,
-    )
-    predictions = _ensure_logits(
-        predictions,
-        response_method_name=response_method_used,
         method=method,
     )
 
@@ -887,15 +915,9 @@ class _CalibratedClassifier:
         proba : array, shape (n_samples, n_classes)
             The predicted probabilities. Can be exact zeros.
         """
-        predictions, _, response_method_used = _get_response_values(
+        predictions, _ = _get_calibration_logits(
             self.estimator,
             X,
-            response_method=_CLASSIFIER_RESPONSE_METHODS,
-            return_response_method_used=True,
-        )
-        predictions = _ensure_logits(
-            predictions,
-            response_method_name=response_method_used,
             method=self.method,
         )
 
