@@ -298,14 +298,11 @@ def _estimate_mi(
     rng = check_random_state(random_state)
     if np.any(continuous_mask):
         X = X.astype(np.float64, copy=copy)
-        # Center and scale (continuous features are always dense here). Centering is
-        # MI-invariant and keeps values near 0 for well-conditioned jitter.
         X[:, continuous_mask] = scale(
-            X[:, continuous_mask], with_mean=True, copy=False
+            X[:, continuous_mask], with_mean=False, copy=False
         )
 
-        # Tiny noise to break exact ties (Kraskov et al.); only speeds up the
-        # neighbor search -- correctness comes from the tie-robust counting above.
+        # Add small noise to continuous features as advised in Kraskov et. al.
         means = np.maximum(1, np.mean(np.abs(X[:, continuous_mask]), axis=0))
         X[:, continuous_mask] += (
             1e-10
@@ -314,7 +311,7 @@ def _estimate_mi(
         )
 
     if not discrete_target:
-        y = scale(y, with_mean=True)
+        y = scale(y, with_mean=False)
         y += (
             1e-10
             * np.maximum(1, np.mean(np.abs(y)))

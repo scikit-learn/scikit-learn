@@ -385,8 +385,10 @@ def test_mutual_info_classif_perfect_predictor_recovers_entropy(
     target_entropy = -(p * np.log(p) + (1 - p) * np.log(1 - p))
 
     mi = mutual_info_classif(
-        feature.reshape(-1, 1), target,
-        discrete_features=False, random_state=global_random_seed,
+        feature.reshape(-1, 1),
+        target,
+        discrete_features=False,
+        random_state=global_random_seed,
     )[0]
 
     assert mi == pytest.approx(target_entropy, abs=5e-4)
