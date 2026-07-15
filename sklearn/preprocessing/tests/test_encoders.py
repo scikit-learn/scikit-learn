@@ -2296,42 +2296,61 @@ def test_ordinal_encoder_infrequent_custom_mapping():
     assert_allclose(X_trans, expected_trans)
 
 
-def test_ordinal_encoder_infrequent_group_code_collision():
+@pytest.mark.parametrize(
+    ("data", "kwargs", "group_code", "infrequent"),
+    [
+        # A group of several infrequent categories collapses to one shared code:
+        # "b" (count 20) is the only frequent category -> code 0; {a, c, d} share
+        # code 1.
+        (
+            ["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3,
+            {"max_categories": 2},
+            1,
+            ["a", "c", "d"],
+        ),
+        # A single infrequent category (len(infrequent) == 1): {b, c} are frequent
+        # -> codes 0, 1 and "a" alone is grouped -> code 2. This is the boundary
+        # where the old ``- len(infrequent)`` (remove 1) diverges most from the
+        # correct ``- (len - 1)`` (remove 0).
+        (["a"] * 1 + ["b"] * 20 + ["c"] * 10, {"min_frequency": 5}, 2, ["a"]),
+    ],
+)
+def test_ordinal_encoder_infrequent_group_code_collision(
+    data, kwargs, group_code, infrequent
+):
     """Check that `unknown_value` / `encoded_missing_value` are rejected when they
     collide with the shared code of the grouped infrequent categories.
 
-    Non-regression test: the infrequent categories are grouped into a single code,
-    so the number of codes used by the known categories decreases by
-    ``len(infrequent) - 1``, not ``len(infrequent)``. The off-by-one made the
-    cardinality one too small, so a value equal to the infrequent-group code
-    passed the collision checks and silently aliased with it.
+    Non-regression test: grouping collapses the ``len(infrequent)`` infrequent
+    categories into a single shared code, so the number of codes used by the known
+    categories drops by ``len(infrequent) - 1``, not ``len(infrequent)``. The
+    off-by-one made the cardinality one too small, so a value equal to the
+    infrequent-group code passed the collision checks and silently aliased with it.
+    Covers both a multi-category group and the single-category boundary.
     """
-    # "b" (count 20) is the only frequent category -> code 0; {a, c, d} are grouped
-    # as infrequent and share code 1.
-    X = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3], dtype=object).T
+    X = np.array([data], dtype=object).T
 
-    # unknown_value == infrequent group code (1) collides and must raise.
+    # unknown_value == infrequent-group code collides and must raise.
     with pytest.raises(
-        ValueError, match="unknown_value 1 is one of the values already used"
+        ValueError,
+        match=f"unknown_value {group_code} is one of the values already used",
     ):
         OrdinalEncoder(
-            handle_unknown="use_encoded_value", unknown_value=1, max_categories=2
+            handle_unknown="use_encoded_value", unknown_value=group_code, **kwargs
         ).fit(X)
 
-    # The first safe code above the group is still accepted.
+    # The first code above the group is still accepted.
     encoder = OrdinalEncoder(
-        handle_unknown="use_encoded_value", unknown_value=2, max_categories=2
+        handle_unknown="use_encoded_value", unknown_value=group_code + 1, **kwargs
     ).fit(X)
-    assert_array_equal(encoder.infrequent_categories_, [["a", "c", "d"]])
+    assert_array_equal(encoder.infrequent_categories_, [infrequent])
 
-    # encoded_missing_value == infrequent group code (1) collides and must raise.
-    X_missing = np.array(
-        [["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3 + [np.nan]], dtype=object
-    ).T
+    # encoded_missing_value == infrequent-group code collides and must raise.
+    X_missing = np.array([data + [np.nan]], dtype=object).T
     with pytest.raises(
-        ValueError, match=r"encoded_missing_value \(1\) is already used"
+        ValueError, match=rf"encoded_missing_value \({group_code}\) is already used"
     ):
-        OrdinalEncoder(max_categories=2, encoded_missing_value=1).fit(X_missing)
+        OrdinalEncoder(encoded_missing_value=group_code, **kwargs).fit(X_missing)
 
 
 @pytest.mark.parametrize(
