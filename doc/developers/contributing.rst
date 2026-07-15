@@ -412,12 +412,12 @@ Pull request checklist
         :ref:`performance-howto` guide for more details on profiling and Cython
         optimizations.
 
-      * All :ref:`tests pass locally<testing_coverage>`
+      * All :ref:`tests pass locally<testing_coverage>`.
 
       .. dropdown:: When contributing a new feature, also note the following
 
         * Make sure your contribution fulfills our `new algorithm requirements
-          <https://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms>`_
+          <https://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms>`_.
 
         * New features have some maintenance overhead. We expect PR authors
           to take part in the maintenance for the code they submit, at least
@@ -438,7 +438,7 @@ Pull request checklist
           in practice and, if possible, compare it to other methods available in
           scikit-learn.
 
-      **When opening a PR**
+      **When opening a PR:**
 
       * Give your pull request a helpful title that summarizes what your
         contribution does. This title will become the commit message once merged. In
@@ -465,7 +465,7 @@ Pull request checklist
         <https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments>`_ in
         the PR description.
 
-      **After opening a PR**
+      **After opening a PR:**
 
       * Add a `changelog entry
         <https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md>`_
@@ -483,7 +483,7 @@ Pull request checklist
     .. tab-item:: Documentation
       :class-label: tab-6
 
-      **Before opening a PR**
+      **Before opening a PR:**
 
       * Unless you're only fixing typos or obvious inconsistencies in the
         documentation, make sure the PR relates to at least one existing issue
@@ -500,7 +500,7 @@ Pull request checklist
 
       * Check that you can :ref:`build the documentation locally <building_documentation>`.
 
-      **When opening a PR**
+      **When opening a PR:**
 
       * Give the pull request a helpful title, starting with "DOC", that summarizes
         what the contribution does. This title will become the commit message once
@@ -526,7 +526,7 @@ Pull request checklist
         <https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments>`_ in
         the PR description.
 
-      **After opening a PR**
+      **After opening a PR:**
 
       * Make sure all CI tests pass (check the provided links for more information on
         any errors).
