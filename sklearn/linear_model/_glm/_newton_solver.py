@@ -1158,7 +1158,7 @@ class NewtonCDGramSolver(NewtonCholeskySolver):
             self.coef_newton = np.zeros_like(self.coef)
         elif self.is_multinomial_no_penalty:
             if self.linear_loss.fit_intercept:
-                # Add intercept tems excluding the intercept of the last class.
+                # Add intercept terms, except for the intercept of the last class.
                 intercepts = Q00_inv @ (q0 - Q0 @ w)
                 w = np.r_[w, intercepts]
             # Add all zeros for the last class including both intercept and
