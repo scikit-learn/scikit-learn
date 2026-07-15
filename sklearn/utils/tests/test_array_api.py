@@ -21,7 +21,6 @@ from sklearn.utils._array_api import (
     _expit,
     _fill_diagonal,
     _is_numpy_namespace,
-    _isin,
     _logit,
     _logsumexp,
     _matching_numpy_dtype,
@@ -690,47 +689,6 @@ def test_max_precision_float_dtype(namespace, device_name, dtype_name):
         expected_dtype = xp.float32
 
     assert _max_precision_float_dtype(xp, device) == expected_dtype
-
-
-@pytest.mark.parametrize(
-    "array_namespace, device_name, dtype_name",
-    yield_namespace_device_dtype_combinations(),
-)
-@pytest.mark.parametrize("invert", [True, False])
-@pytest.mark.parametrize("assume_unique", [True, False])
-@pytest.mark.parametrize("element_size", [6, 10, 14])
-@pytest.mark.parametrize("int_dtype", ["int16", "int32", "int64", "uint8"])
-def test_isin(
-    array_namespace,
-    device_name,
-    dtype_name,
-    invert,
-    assume_unique,
-    element_size,
-    int_dtype,
-):
-    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
-    r = element_size // 2
-    element = 2 * numpy.arange(element_size).reshape((r, 2)).astype(int_dtype)
-    test_elements = numpy.array(numpy.arange(14), dtype=int_dtype)
-    element_xp = xp.asarray(element, device=device)
-    test_elements_xp = xp.asarray(test_elements, device=device)
-    expected = numpy.isin(
-        element=element,
-        test_elements=test_elements,
-        assume_unique=assume_unique,
-        invert=invert,
-    )
-    with config_context(array_api_dispatch=True):
-        result = _isin(
-            element=element_xp,
-            test_elements=test_elements_xp,
-            xp=xp,
-            assume_unique=assume_unique,
-            invert=invert,
-        )
-
-    assert_array_equal(move_to(result, xp=numpy, device="cpu"), expected)
 
 
 @pytest.mark.skipif(
