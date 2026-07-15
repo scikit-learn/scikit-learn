@@ -200,14 +200,29 @@ class ExtremeLearningBase(BaseEstimator, ABC):
         # If ridge_alpha is None, use direct solve using
         # MoorePenrose Pseudo-Inverse, otherwise use ridge regularized form.
 
+        # A = D.T @ D
+        # B = D.T @ y
+        # pinv(D) @ y = pinv(A)@B:
+        # pinv(D) @ y = (D.T @ D)^-1 @ D.T @ y
+
+        # pinv(A) @ B = pinv(D.T @ D) @ D.T @ y
+
+        # pinv(D.T @ D) @ D.T @ y = ((D.T @ D).T @ (D.T @ D))^-1 @ (D.T @ D).T @ D.T @ y
+        # = ((D.T @ D) @ (D.T @ D))^-1 @ (D.T @ D) @ D.T @ y
+        # = (D.T @ D)^-1 @ (D.T @ D)^-1 @ (D.T @ D) @ D.T @ y
+        # = (D.T @ D)^-1 @ D.T @ y
+
         if self.ridge_alpha is None:
-            if self.rtol is None:
-                self.coef_ = np.linalg.pinv(self.A) @ self.B
-            else:
-                self.coef_ = np.linalg.pinv(self.A, rcond=self.rtol) @ self.B
+            self.coef_ = np.linalg.pinv(self.A, rtol=self.rtol) @ self.B
         else:
-            reg = np.identity(self.A.shape[0]) * self.ridge_alpha
-            self.coef_ = np.linalg.solve(self.A + reg, self.B)
+            # np.linalg.solve(self.A + reg_mat, self.B)
+            # is equivalent to
+            # ridge = Ridge(
+            #   alpha=self.ridge_alpha, fit_intercept=False, solver='cholesky'
+            #   )
+            # ridge.fit(D_all[:current_batch], Y_all[:current_batch])
+            ridge_mat = np.eye(self.A.shape[0]) * self.ridge_alpha
+            self.coef_ = np.linalg.solve(self.A + ridge_mat, self.B)
         if self.coef_.ndim == 2 and self.coef_.shape[1] == 1:
             self.coef_ = self.coef_.ravel()
         return self
@@ -464,13 +479,14 @@ class ExtremeLearningClassifier(ClassifierMixin, ExtremeLearningBase):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            The input data.
 
-        y : array-like of shape (n_samples,)
-            The target values.
+        X : array-like of shape (n_samples, n_features)
+          The batched training input samples.
 
-        classes : array of shape (n_classes,), default=None
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
+          The batched target values (class labels).
+
+        classes : array-like of shape (n_classes,), default=None
             Classes across all calls to partial_fit.
             Can be obtained via `np.unique(y_all)`, where y_all is the
             target vector of the entire dataset.
@@ -480,7 +496,32 @@ class ExtremeLearningClassifier(ClassifierMixin, ExtremeLearningBase):
         Returns
         -------
         self : object
-            Returns the partially trained gradient free neural network.
+            The partially fitted estimator.
+
+        Notes
+        -----
+        The design matrix is incrementally updated by persisting the gram matrix
+        (D.T @ D) and the moment vector (D.T @ y) for each batch, then adding
+        the gram and moment contributions of each new batch.
+
+        For batches D = [D1, D2, ..., Dk].T::
+
+            [D1; D2; ...; Dk].T @ [D1; D2; ...; Dk] = sum_k(Dk.T @ Dk)
+            [D1; D2; ...; Dk].T @ [y1; y2; ...; yk] = sum_k(Dk.T @ yk)
+
+        This allows incremental accumulation.
+
+        The way we accumulate information across batches prevents us from using
+        ``Ridge()`` as we do in full fit. In ``partial_fit()`` we never have access to
+        the full design matrix, we only persist the aggregate quantities
+        ``D.T @ D``, ``D.T @ y``. Instead, for the regularized case, we directly solve
+        the system using ``scipy.linalg.solve(A + reg_mat, B)``, which is mathematically
+        equivalent to scikit-learn's ``Ridge(solver='cholesky')``.
+
+        One other difference between full fit and partial fit arises in the direct
+        solve path. Because ``pinv()`` is acting on ``D.T @ D`` as opposed to just D,
+        the condition number is squared. This may require a lower ``rtol`` to maintain
+        numerical stability and avoid loss of information.
         """
         # shape: (n_samples, n_features)
         X, y = validate_data(self, X, y, reset=not hasattr(self, "n_features_in_"))
@@ -776,16 +817,42 @@ class ExtremeLearningRegressor(RegressorMixin, MultiOutputMixin, ExtremeLearning
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            The input data.
 
-        y : array-like of shape (n_samples,)
-            The target values.
+        X : array-like of shape (n_samples, n_features)
+          The batched training input samples.
+
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
+          The batched target values (class labels).
 
         Returns
         -------
         self : object
-            Returns the partially trained gradient free neural network.
+            The partially fitted estimator.
+
+        Notes
+        -----
+        The design matrix is incrementally updated by persisting the gram matrix
+        (D.T @ D) and the moment vector (D.T @ y) for each batch, then adding
+        the gram and moment contributions of each new batch.
+
+        For batches D = [D1, D2, ..., Dk].T::
+
+            [D1; D2; ...; Dk].T @ [D1; D2; ...; Dk] = sum_k(Dk.T @ Dk)
+            [D1; D2; ...; Dk].T @ [y1; y2; ...; yk] = sum_k(Dk.T @ yk)
+
+        This allows incremental accumulation.
+
+        The way we accumulate information across batches prevents us from using
+        ``Ridge()`` as we do in full fit. In ``partial_fit()`` we never have access to
+        the full design matrix, we only persist the aggregate quantities
+        ``D.T @ D``, ``D.T @ y``. Instead, for the regularized case, we directly solve
+        the system using ``scipy.linalg.solve(A + reg_mat, B)``, which is mathematically
+        equivalent to scikit-learn's ``Ridge(solver='cholesky')``.
+
+        One other difference between full fit and partial fit arises in the direct
+        solve path. Because ``pinv()`` is acting on ``D.T @ D`` as opposed to just D,
+        the condition number is squared. This may require a lower ``rtol`` to maintain
+        numerical stability and avoid loss of information.
         """
         # shape: (n_samples, n_features)
         X, y = validate_data(self, X, y, reset=not hasattr(self, "n_features_in_"))
