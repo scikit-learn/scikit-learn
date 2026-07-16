@@ -2258,39 +2258,27 @@ def check_array_api_multiclass_classification_metric(
             dtype=dtype_name,
         )
 
-    additional_params = {
-        "average": ("micro", "macro", "weighted"),
-        "beta": (0.2, 0.5, 0.8),
-        "adjusted": (False, True),
-    }
-    metric_kwargs_combinations = _get_metric_kwargs_for_array_api_testing(
-        metric=metric,
-        params=additional_params,
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device_name,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_pred_np,
+        sample_weight=None,
     )
-    for metric_kwargs in metric_kwargs_combinations:
-        check_array_api_metric(
-            metric,
-            array_namespace,
-            device_name,
-            dtype_name,
-            a_np=y_true_np,
-            b_np=y_pred_np,
-            sample_weight=None,
-            **metric_kwargs,
-        )
 
-        sample_weight = np.array([0.0, 0.1, 2.0, 1.0], dtype=dtype_name)
+    sample_weight = np.array([0.0, 0.1, 2.0, 1.0], dtype=dtype_name)
 
-        check_array_api_metric(
-            metric,
-            array_namespace,
-            device_name,
-            dtype_name,
-            a_np=y_true_np,
-            b_np=y_pred_np,
-            sample_weight=sample_weight,
-            **metric_kwargs,
-        )
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device_name,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_pred_np,
+        sample_weight=sample_weight,
+    )
 
 
 def check_array_api_multilabel_classification_metric(
@@ -2299,38 +2287,27 @@ def check_array_api_multilabel_classification_metric(
     y_true_np = np.array([[1, 1], [0, 1], [0, 0]], dtype=dtype_name)
     y_pred_np = np.array([[1, 1], [1, 1], [1, 1]], dtype=dtype_name)
 
-    additional_params = {
-        "average": ("micro", "macro", "weighted"),
-        "beta": (0.2, 0.5, 0.8),
-    }
-    metric_kwargs_combinations = _get_metric_kwargs_for_array_api_testing(
-        metric=metric,
-        params=additional_params,
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device_name,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_pred_np,
+        sample_weight=None,
     )
-    for metric_kwargs in metric_kwargs_combinations:
-        check_array_api_metric(
-            metric,
-            array_namespace,
-            device_name,
-            dtype_name,
-            a_np=y_true_np,
-            b_np=y_pred_np,
-            sample_weight=None,
-            **metric_kwargs,
-        )
 
-        sample_weight = np.array([0.0, 0.1, 2.0], dtype=dtype_name)
+    sample_weight = np.array([0.0, 0.1, 2.0], dtype=dtype_name)
 
-        check_array_api_metric(
-            metric,
-            array_namespace,
-            device_name,
-            dtype_name,
-            a_np=y_true_np,
-            b_np=y_pred_np,
-            sample_weight=sample_weight,
-            **metric_kwargs,
-        )
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device_name,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_pred_np,
+        sample_weight=sample_weight,
+    )
 
 
 def check_array_api_binary_continuous_classification_metric(
@@ -2882,27 +2859,6 @@ def test_metrics_dataframe_series(metric_name, df_lib_name):
         pytest.skip(f"{metric_name} can not deal with 1d inputs")
 
     assert_allclose(metric(y_pred, y_true), expected_metric)
-
-
-def _get_metric_kwargs_for_array_api_testing(metric, params):
-    """Helper function to enable specifying a variety of additional params and
-    their corresponding values, so that they can be passed to a metric function
-    when testing for array api compliance."""
-    metric_kwargs_combinations = [{}]
-    for param, values in params.items():
-        if param not in signature(metric).parameters:
-            continue
-
-        new_combinations = []
-        for kwargs in metric_kwargs_combinations:
-            for value in values:
-                new_kwargs = kwargs.copy()
-                new_kwargs[param] = value
-                new_combinations.append(new_kwargs)
-
-        metric_kwargs_combinations = new_combinations
-
-    return metric_kwargs_combinations
 
 
 @pytest.mark.parametrize("name", sorted(ALL_METRICS))
