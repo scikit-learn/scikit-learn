@@ -1317,25 +1317,36 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     if y_type not in {"binary", "multiclass"}:
         raise ValueError("%s is not supported" % y_type)
 
+    xp, _, device_ = get_namespace_and_device(y_true, y_pred)
+
     lb = LabelEncoder()
-    lb.fit(np.hstack([y_true, y_pred]))
+    lb.fit(xp.concat([y_true, y_pred]))
     y_true = lb.transform(y_true)
     y_pred = lb.transform(y_pred)
 
     C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
-    t_sum = C.sum(axis=1, dtype=np.float64)
-    p_sum = C.sum(axis=0, dtype=np.float64)
-    n_correct = np.trace(C, dtype=np.float64)
-    n_samples = p_sum.sum()
-    cov_ytyp = n_correct * n_samples - np.dot(t_sum, p_sum)
-    cov_ypyp = n_samples**2 - np.dot(p_sum, p_sum)
-    cov_ytyt = n_samples**2 - np.dot(t_sum, t_sum)
+    # Cast the confusion matrix to the maximum-precision float dtype for two
+    # reasons:
+    # 1. The covariance terms below reach n_samples**4, which overflows int64
+    #    for n_samples as small as ~55k (see issue #9622); floats keep the
+    #    computation exact up to 2**53 and accurate beyond.
+    # 2. The array API standard leaves integer-dtype __truediv__
+    #    implementation-defined, and array_api_strict intentionally raises
+    #    for it.
+    C = xp.astype(C, _max_precision_float_dtype(xp, device=device_), copy=False)
+    t_sum = xp.sum(C, axis=1)
+    p_sum = xp.sum(C, axis=0)
+    n_correct = xp.linalg.trace(C)
+    n_samples = xp.sum(p_sum)
+    cov_ytyp = n_correct * n_samples - xp.sum(t_sum * p_sum)
+    cov_ypyp = n_samples**2 - xp.sum(p_sum * p_sum)
+    cov_ytyt = n_samples**2 - xp.sum(t_sum * t_sum)
 
     cov_ypyp_ytyt = cov_ypyp * cov_ytyt
-    if cov_ypyp_ytyt == 0:
+    if float(cov_ypyp_ytyt) == 0.0:
         return 0.0
     else:
-        return float(cov_ytyp / np.sqrt(cov_ypyp_ytyt))
+        return float(cov_ytyp / xp.sqrt(cov_ypyp_ytyt))
 
 
 @validate_params(

@@ -682,7 +682,7 @@ METRICS_NOT_SUPPORTING_ARRAY_API = {
     # "macro_jaccard_score",
     # "macro_precision_score",
     # "macro_recall_score",
-    "matthews_corrcoef_score",
+    # "matthews_corrcoef_score",
     # "micro_average_precision_score",
     # "micro_f0.5_score",
     # "micro_f1_score",
