@@ -137,6 +137,7 @@ METAESTIMATORS: list = [
         "metaestimator": LogisticRegressionCV,
         # TODO(1.11): remove scoring because neg_log_loss is default now
         "init_args": {
+            "alphas": 10,
             "use_legacy_attributes": False,
             "l1_ratios": (0,),
             "scoring": "neg_log_loss",

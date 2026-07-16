@@ -177,7 +177,7 @@ syntax::
 
       >>> param_grid = dict(reduce_dim=['passthrough', PCA(5), PCA(10)],
       ...                   clf=[SVC(), LogisticRegression()],
-      ...                   clf__C=[0.1, 10, 100])
+      ...                   clf__alpha=[1e-1, 1e-2, 1e-3])
       >>> grid_search = GridSearchCV(pipe, param_grid=param_grid)
 
   .. seealso::

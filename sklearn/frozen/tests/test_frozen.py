@@ -205,7 +205,7 @@ def test_frozen_params():
     frozen = FrozenEstimator(est)
 
     with pytest.raises(ValueError, match="You cannot set parameters of the inner"):
-        frozen.set_params(estimator__C=1)
+        frozen.set_params(estimator__alpha=1)
 
     assert frozen.get_params() == {"estimator": est}
 

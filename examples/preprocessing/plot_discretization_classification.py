@@ -63,7 +63,7 @@ def get_name(estimator):
 classifiers = [
     (
         make_pipeline(StandardScaler(), LogisticRegression()),
-        {"logisticregression__C": np.logspace(-1, 1, 3)},
+        {"logisticregression__alpha": np.logspace(-1, -3, 3)},
     ),
     (
         make_pipeline(StandardScaler(), LinearSVC(random_state=0)),
@@ -79,7 +79,7 @@ classifiers = [
         ),
         {
             "kbinsdiscretizer__n_bins": np.arange(5, 8),
-            "logisticregression__C": np.logspace(-1, 1, 3),
+            "logisticregression__alpha": np.logspace(-1, -3, 3),
         },
     ),
     (

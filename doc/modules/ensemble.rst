@@ -1477,7 +1477,7 @@ Optionally, weights can be provided for the individual classifiers::
     ...     voting='soft'
     ... )
 
-    >>> params = {'lr__C': [1.0, 100.0], 'rf__n_estimators': [20, 200]}
+    >>> params = {'lr__alpha': [1.0, 1e-3], 'rf__n_estimators': [20, 200]}
 
     >>> grid = GridSearchCV(estimator=eclf, param_grid=params, cv=5)
     >>> grid = grid.fit(iris.data, iris.target)

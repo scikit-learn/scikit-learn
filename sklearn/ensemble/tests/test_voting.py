@@ -129,7 +129,7 @@ def test_majority_label_iris(global_random_seed):
 
 def test_tie_situation():
     """Check voting classifier selects smaller class label in tie situation."""
-    clf1 = LogisticRegression()
+    clf1 = LogisticRegression(alpha=1e-2)
     clf2 = RandomForestClassifier(random_state=123)
     eclf = VotingClassifier(estimators=[("lr", clf1), ("rf", clf2)], voting="hard")
     assert clf1.fit(X, y).predict(X)[52] == 2
@@ -220,7 +220,7 @@ def test_predict_on_toy_problem(global_random_seed):
 
 def test_predict_proba_on_toy_problem():
     """Calculate predicted probabilities on toy dataset."""
-    clf1 = LogisticRegression()
+    clf1 = LogisticRegression(alpha=1.0)
     clf2 = RandomForestClassifier(random_state=123)
     clf3 = GaussianNB()
     X = np.array([[-1.1, -1.5], [-1.2, -1.4], [-3.4, -2.2], [1.1, 1.2]])
@@ -295,7 +295,7 @@ def test_gridsearch():
     )
 
     params = {
-        "lr__C": [1.0, 100.0],
+        "lr__alpha": [1.0, 1e-3],
         "voting": ["soft", "hard"],
         "weights": [[0.5, 0.5, 0.5], [1.0, 0.5, 0.5]],
     }

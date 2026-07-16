@@ -64,7 +64,7 @@ log[["task_name", "task_id", "d2_log_loss_score"]]
 #
 #    X, y = load_iris(return_X_y=True)
 #    logreg = LogisticRegression(solver="lbfgs")
-#    grid_search = GridSearchCV(logreg, {"C": [10, 1, 0.1]}, n_jobs=2)
+#    grid_search = GridSearchCV(logreg, {"alpha": [0.001, 0.01 ,0.1]}, n_jobs=2)
 #    grid_search.set_callbacks(ProgressBar())
 #    grid_search.fit(X, y)
 #

@@ -16,7 +16,7 @@ from sklearn.utils._pprint import _EstimatorPrettyPrinter
 class LogisticRegression(BaseEstimator):
     def __init__(
         self,
-        C=1.0,
+        alpha=1.0,
         l1_ratio=0,
         dual=False,
         tol=1e-4,
@@ -31,7 +31,7 @@ class LogisticRegression(BaseEstimator):
         warm_start=False,
         n_jobs=None,
     ):
-        self.C = C
+        self.alpha = alpha
         self.l1_ratio = l1_ratio
         self.dual = dual
         self.tol = tol
@@ -245,7 +245,7 @@ def test_basic():
     # Basic pprint test
     lr = LogisticRegression()
     expected = """
-LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
+LogisticRegression(alpha=1.0, class_weight=None, dual=False, fit_intercept=True,
                    intercept_scaling=1, l1_ratio=0, max_iter=100,
                    multi_class='warn', n_jobs=None, random_state=None,
                    solver='warn', tol=0.0001, verbose=0, warm_start=False)"""
@@ -256,16 +256,16 @@ LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
 
 def test_changed_only():
     # Make sure the changed_only param is correctly used when True (default)
-    lr = LogisticRegression(C=99)
-    expected = """LogisticRegression(C=99)"""
+    lr = LogisticRegression(alpha=99)
+    expected = """LogisticRegression(alpha=99)"""
     assert lr.__repr__() == expected
 
     # Check with a repr that doesn't fit on a single line
     lr = LogisticRegression(
-        C=99, class_weight=0.4, fit_intercept=False, tol=1234, verbose=True
+        alpha=99, class_weight=0.4, fit_intercept=False, tol=1234, verbose=True
     )
     expected = """
-LogisticRegression(C=99, class_weight=0.4, fit_intercept=False, tol=1234,
+LogisticRegression(alpha=99, class_weight=0.4, fit_intercept=False, tol=1234,
                    verbose=True)"""
     expected = expected[1:]  # remove first \n
     assert lr.__repr__() == expected
@@ -282,7 +282,7 @@ LogisticRegression(C=99, class_weight=0.4, fit_intercept=False, tol=1234,
     # make sure array parameters don't throw error (see #13583)
     repr(
         LogisticRegressionCV(
-            Cs=np.array([0.1, 1]),
+            alphas=np.array([0.1, 1]),
             use_legacy_attributes=False,
             scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
         )
@@ -292,13 +292,13 @@ LogisticRegression(C=99, class_weight=0.4, fit_intercept=False, tol=1234,
 @config_context(print_changed_only=False)
 def test_pipeline():
     # Render a pipeline object
-    pipeline = make_pipeline(StandardScaler(), LogisticRegression(C=999))
+    pipeline = make_pipeline(StandardScaler(), LogisticRegression(alpha=999))
     expected = """
 Pipeline(memory=None,
          steps=[('standardscaler',
                  StandardScaler(copy=True, with_mean=True, with_std=True)),
                 ('logisticregression',
-                 LogisticRegression(C=999, class_weight=None, dual=False,
+                 LogisticRegression(alpha=999, class_weight=None, dual=False,
                                     fit_intercept=True, intercept_scaling=1,
                                     l1_ratio=0, max_iter=100,
                                     multi_class='warn', n_jobs=None,
@@ -315,7 +315,7 @@ def test_deeply_nested():
     # Render a deeply nested estimator
     rfe = RFE(RFE(RFE(RFE(RFE(RFE(RFE(LogisticRegression())))))))
     expected = """
-RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=LogisticRegression(C=1.0,
+RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=LogisticRegression(alpha=1.0,
                                                                                                                      class_weight=None,
                                                                                                                      dual=False,
                                                                                                                      fit_intercept=True,
@@ -560,13 +560,13 @@ def test_bruteforce_ellipsis():
     # test when the left and right side of the ellipsis aren't on the same
     # line.
     expected = """
-LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
+LogisticRegression(alpha=1.0, class_weight=None, dual=False, fit_intercept=True,
                    in...
                    multi_class='warn', n_jobs=None, random_state=None,
                    solver='warn', tol=0.0001, verbose=0, warm_start=False)"""
 
     expected = expected[1:]  # remove first \n
-    assert lr.__repr__(N_CHAR_MAX=150) == expected
+    assert lr.__repr__(N_CHAR_MAX=158) == expected
 
     # test with very small N_CHAR_MAX
     # Note that N_CHAR_MAX is not strictly enforced, but it's normal: to avoid
@@ -590,20 +590,20 @@ Lo...
     # right side of the ellispsis are on different lines. In this case we
     # want to expend the whole line of the right side
     expected = """
-LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
-                   intercept_scaling=1, l1_ratio=0,...00,
+LogisticRegression(alpha=1.0, class_weight=None, dual=False, fit_intercept=True,
+                   intercept_scaling=1, l1_ratio=...=100,
                    multi_class='warn', n_jobs=None, random_state=None,
                    solver='warn', tol=0.0001, verbose=0, warm_start=False)"""
     expected = expected[1:]  # remove first \n
     assert lr.__repr__(N_CHAR_MAX=n_nonblank - 10) == expected
 
-    # test with N_CHAR_MAX == number of non-blank characters - 10: the left and
+    # test with N_CHAR_MAX == number of non-blank characters - 4: the left and
     # right side of the ellispsis are on the same line. In this case we don't
     # want to expend the whole line of the right side, just add the ellispsis
     # between the 2 sides.
     expected = """
-LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
-                   intercept_scaling=1, l1_ratio=0, max...r=100,
+LogisticRegression(alpha=1.0, class_weight=None, dual=False, fit_intercept=True,
+                   intercept_scaling=1, l1_ratio=0, m...ter=100,
                    multi_class='warn', n_jobs=None, random_state=None,
                    solver='warn', tol=0.0001, verbose=0, warm_start=False)"""
     expected = expected[1:]  # remove first \n
@@ -613,7 +613,7 @@ LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
     # right side of the ellispsis are on the same line, but adding the ellipsis
     # would actually make the repr longer. So we don't add the ellipsis.
     expected = """
-LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
+LogisticRegression(alpha=1.0, class_weight=None, dual=False, fit_intercept=True,
                    intercept_scaling=1, l1_ratio=0, max_iter=100,
                    multi_class='warn', n_jobs=None, random_state=None,
                    solver='warn', tol=0.0001, verbose=0, warm_start=False)"""
