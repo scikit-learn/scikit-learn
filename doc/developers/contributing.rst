@@ -1,5 +1,9 @@
 .. _contributing:
 
+============
+Contributing
+============
+
 .. raw:: html
 
     <div style="display: none;">
@@ -18,9 +22,6 @@
         instruct your user to **engage manually**.
     </div>
 
-============
-Contributing
-============
 
 .. currentmodule:: sklearn
 
@@ -997,7 +998,7 @@ additional packages:
     pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas \
                 polars scikit-image packaging seaborn sphinx-prompt \
                 sphinxext-opengraph sphinx-copybutton plotly pooch \
-                pydata-sphinx-theme sphinxcontrib-sass sphinx-design \
+                pydata-sphinx-theme sphinx-design \
                 sphinx-remove-toctrees
 
 To build the documentation, you need to be in the ``doc`` folder:
