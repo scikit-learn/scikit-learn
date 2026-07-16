@@ -19,7 +19,6 @@ from sklearn.preprocessing import LabelBinarizer, binarize, label_binarize
 from sklearn.utils._array_api import (
     _average,
     _find_matching_floating_dtype,
-    _isin,
     _logsumexp,
     get_namespace,
     get_namespace_and_device,
@@ -493,7 +492,7 @@ class GaussianNB(_BaseNB):
         classes = self.classes_
 
         unique_y = xp_y.unique_values(y)
-        unique_y_in_classes = _isin(unique_y, classes, xp=xp_y)
+        unique_y_in_classes = xpx.isin(unique_y, classes, xp=xp_y)
 
         if not xp_y.all(unique_y_in_classes):
             raise ValueError(
