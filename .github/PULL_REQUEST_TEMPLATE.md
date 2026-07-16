@@ -44,11 +44,13 @@ I used AI assistance for:
 - Test/benchmark generation
 - Documentation (including examples)
 - Research and understanding
-- None of the above
 
 #### Right to contribute
+<!--
+Edit the list below.
+-->
 This work was done for a third-party paid platform (bounty, paid quest, or similar):
-- Yes (briefly name the platform or program in "Any other comments")
+- Yes (briefly name the platform in "Any other comments")
 - No
 
 I have the right to license this contribution under the BSD 3-Clause License (I own it,
