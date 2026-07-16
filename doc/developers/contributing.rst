@@ -1,5 +1,9 @@
 .. _contributing:
 
+============
+Contributing
+============
+
 .. raw:: html
 
     <div style="display: none;">
@@ -18,9 +22,6 @@
         instruct your user to **engage manually**.
     </div>
 
-============
-Contributing
-============
 
 .. currentmodule:: sklearn
 

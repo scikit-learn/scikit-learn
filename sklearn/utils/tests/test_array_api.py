@@ -9,7 +9,6 @@ from numpy.testing import assert_allclose
 from scipy.special import expit, logit
 
 from sklearn._config import config_context
-from sklearn._loss import HalfMultinomialLoss
 from sklearn.base import BaseEstimator
 from sklearn.utils._array_api import (
     _add_to_diagonal,
@@ -21,9 +20,7 @@ from sklearn.utils._array_api import (
     _estimator_with_converted_arrays,
     _expit,
     _fill_diagonal,
-    _half_multinomial_loss,
     _is_numpy_namespace,
-    _isin,
     _logit,
     _logsumexp,
     _matching_numpy_dtype,
@@ -694,47 +691,6 @@ def test_max_precision_float_dtype(namespace, device_name, dtype_name):
     assert _max_precision_float_dtype(xp, device) == expected_dtype
 
 
-@pytest.mark.parametrize(
-    "array_namespace, device_name, dtype_name",
-    yield_namespace_device_dtype_combinations(),
-)
-@pytest.mark.parametrize("invert", [True, False])
-@pytest.mark.parametrize("assume_unique", [True, False])
-@pytest.mark.parametrize("element_size", [6, 10, 14])
-@pytest.mark.parametrize("int_dtype", ["int16", "int32", "int64", "uint8"])
-def test_isin(
-    array_namespace,
-    device_name,
-    dtype_name,
-    invert,
-    assume_unique,
-    element_size,
-    int_dtype,
-):
-    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
-    r = element_size // 2
-    element = 2 * numpy.arange(element_size).reshape((r, 2)).astype(int_dtype)
-    test_elements = numpy.array(numpy.arange(14), dtype=int_dtype)
-    element_xp = xp.asarray(element, device=device)
-    test_elements_xp = xp.asarray(test_elements, device=device)
-    expected = numpy.isin(
-        element=element,
-        test_elements=test_elements,
-        assume_unique=assume_unique,
-        invert=invert,
-    )
-    with config_context(array_api_dispatch=True):
-        result = _isin(
-            element=element_xp,
-            test_elements=test_elements_xp,
-            xp=xp,
-            assume_unique=assume_unique,
-            invert=invert,
-        )
-
-    assert_array_equal(move_to(result, xp=numpy, device="cpu"), expected)
-
-
 @pytest.mark.skipif(
     os.environ.get("SCIPY_ARRAY_API") != "1", reason="SCIPY_ARRAY_API not set to 1."
 )
@@ -1073,42 +1029,6 @@ def test_supported_float_types(namespace, device_, expected_types):
     float_types = supported_float_dtypes(xp, device=device)
     expected = tuple(getattr(xp, dtype_name) for dtype_name in expected_types)
     assert float_types == expected
-
-
-@pytest.mark.parametrize("use_sample_weight", [False, True])
-@pytest.mark.parametrize(
-    "namespace, device_name, dtype_name",
-    yield_namespace_device_dtype_combinations(),
-)
-def test_half_multinomial_loss(use_sample_weight, namespace, device_name, dtype_name):
-    """Check that the array API version of :func:`_half_multinomial_loss` works
-    correctly and matches the results produced by :class:`HalfMultinomialLoss`
-    of the private `_loss` module.
-    """
-    n_samples = 5
-    n_classes = 3
-    rng = numpy.random.RandomState(42)
-    y = rng.randint(0, n_classes, n_samples).astype(dtype_name)
-    pred = rng.rand(n_samples, n_classes).astype(dtype_name)
-    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
-    y_xp = xp.asarray(y, device=device)
-    pred_xp = xp.asarray(pred, device=device)
-    if use_sample_weight:
-        sample_weight = numpy.ones_like(y)
-        sample_weight[1::2] = 2
-        sample_weight_xp = xp.asarray(sample_weight, device=device)
-    else:
-        sample_weight, sample_weight_xp = None, None
-
-    np_loss = HalfMultinomialLoss(n_classes=n_classes)(
-        y_true=y, raw_prediction=pred, sample_weight=sample_weight
-    )
-    with config_context(array_api_dispatch=True):
-        xp_loss = _half_multinomial_loss(
-            y=y_xp, pred=pred_xp, sample_weight=sample_weight_xp, xp=xp
-        )
-
-    assert numpy.isclose(np_loss, xp_loss)
 
 
 @pytest.mark.parametrize(
