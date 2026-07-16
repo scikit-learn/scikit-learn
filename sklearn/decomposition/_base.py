@@ -14,10 +14,10 @@ from sklearn.base import (
     TransformerMixin,
 )
 from sklearn.utils._array_api import (
-    _add_to_diagonal, 
-    check_same_namespace, 
-    device, 
-    get_namespace
+    _add_to_diagonal,
+    check_same_namespace,
+    device,
+    get_namespace,
 )
 from sklearn.utils.validation import check_array, check_is_fitted, validate_data
 
@@ -196,7 +196,9 @@ class _BasePCA(
         If whitening is enabled, inverse_transform will compute the
         exact inverse operation, which includes reversing whitening.
         """
-        check_same_namespace(X, self, attribute="components_", method="inverse_transform")
+        check_same_namespace(
+            X, self, attribute="components_", method="inverse_transform"
+        )
         xp, _ = get_namespace(X)
 
         check_is_fitted(self)
