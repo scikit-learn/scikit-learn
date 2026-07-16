@@ -9,6 +9,7 @@ from sklearn import datasets
 from sklearn.base import BaseEstimator, clone
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.ensemble import AdaBoostClassifier, AdaBoostRegressor
+from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.svm import SVC, SVR
@@ -222,6 +223,12 @@ def test_importances():
 
     assert importances.shape[0] == 10
     assert (importances[:3, np.newaxis] >= importances[3:]).all()
+
+
+@pytest.mark.parametrize("estimator", [AdaBoostClassifier(), AdaBoostRegressor()])
+def test_feature_importances_not_fitted(estimator):
+    with pytest.raises(NotFittedError):
+        _ = estimator.feature_importances_
 
 
 def test_adaboost_classifier_sample_weight_error():
