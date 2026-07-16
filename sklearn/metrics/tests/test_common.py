@@ -2669,10 +2669,7 @@ def test_mixed_array_api_namespace_input_compliance(
             dtype = xp.int64
         return dtype
 
-    if metric_name in CLASSIFICATION_METRICS:
-        # These should all accept binary label input as there are no
-        # `CLASSIFICATION_METRICS` that are in `METRIC_UNDEFINED_BINARY` and are
-        # NOT `partial`s (which we do not test for in array API compliance)
+    if metric_name in (CLASSIFICATION_METRICS.keys() - METRIC_UNDEFINED_BINARY):
         data_cases = ["binary"]
     elif metric_name in {**CONTINUOUS_CLASSIFICATION_METRICS, **CURVE_METRICS}:
         if metric_name not in METRIC_UNDEFINED_BINARY:
