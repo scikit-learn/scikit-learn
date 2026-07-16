@@ -689,6 +689,12 @@ In addition, we add the following guidelines:
 A good example of code that we like can be found `here
 <https://gist.github.com/nateGeorge/5455d2c57fb33c1ae04706f2dc4fee01>`_.
 
+.. note::
+
+  The current state of the scikit-learn code base is not necessarily compliant with all
+  of those guidelines, but we expect that enforcing those constraints on all new
+  contributions will get the overall code base quality in the right direction.
+
 Input validation
 ----------------
 
