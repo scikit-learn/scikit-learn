@@ -2532,6 +2532,10 @@ array_api_metric_checkers = {
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
     ],
+    matthews_corrcoef: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+    ],
     multilabel_confusion_matrix: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
