@@ -13,7 +13,12 @@ from sklearn.base import (
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
 )
-from sklearn.utils._array_api import _add_to_diagonal, device, get_namespace
+from sklearn.utils._array_api import (
+    _add_to_diagonal, 
+    check_same_namespace, 
+    device, 
+    get_namespace
+)
 from sklearn.utils.validation import check_array, check_is_fitted, validate_data
 
 
@@ -135,7 +140,8 @@ class _BasePCA(
             Projection of X in the first principal components, where `n_samples`
             is the number of samples and `n_components` is the number of the components.
         """
-        xp, _ = get_namespace(X, self.components_, self.explained_variance_)
+        check_same_namespace(X, self, attribute="components_", method="transform")
+        xp, _ = get_namespace(X)
 
         check_is_fitted(self)
 
@@ -190,7 +196,8 @@ class _BasePCA(
         If whitening is enabled, inverse_transform will compute the
         exact inverse operation, which includes reversing whitening.
         """
-        xp, _ = get_namespace(X, self.components_, self.explained_variance_)
+        check_same_namespace(X, self, attribute="components_", method="inverse_transform")
+        xp, _ = get_namespace(X)
 
         check_is_fitted(self)
 
