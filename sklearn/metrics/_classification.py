@@ -124,8 +124,10 @@ def _check_targets(y_true, y_pred, sample_weight=None, xp=None, device=None):
     """
     if xp is None or device is None:
         xp, _, device = get_namespace_and_device(y_pred, xp=xp)
-    # Ensure `y_true` and `sample_weight` are on the `y_pred` device and namespace.
-    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
+    # Move to specified namespace and device, or the namespace and device of `y_pred`
+    y_true, y_pred, sample_weight = move_to(
+        y_true, y_pred, sample_weight, xp=xp, device=device
+    )
     y_true, y_pred = attach_unique(y_true, y_pred)
 
     check_consistent_length(y_true, y_pred, sample_weight)
