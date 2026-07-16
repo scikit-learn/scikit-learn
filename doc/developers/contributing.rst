@@ -536,13 +536,6 @@ Pull request checklist
       * Be patient: Before a PR can be merged, it needs to be approved by **two** core
         developers.
 
-.. note::
-
-  The current state of the scikit-learn code base is not compliant with
-  all of those guidelines, but we expect that enforcing those constraints
-  on all new contributions will get the overall code base quality in the
-  right direction.
-
 Continuous Integration (CI)
 ---------------------------
 
