@@ -12,7 +12,6 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy import optimize
-from scipy.sparse import issparse
 
 from sklearn._loss.loss import (
     HalfBinomialLoss,
@@ -53,6 +52,7 @@ from sklearn.utils._array_api import (
     move_to,
     size,
 )
+from sklearn.utils._indexing import _array_indexing
 from sklearn.utils._param_validation import Hidden, Interval, StrOptions
 from sklearn.utils.extmath import row_norms, softmax
 from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
@@ -862,16 +862,11 @@ def _log_reg_scoring_path(
     xp, _, device_ = get_namespace_and_device(X)
     train_xp = move_to(train, xp=xp, device=device_)
     test_xp = move_to(test, xp=xp, device=device_)
-    if issparse(X) or issparse(y):
-        X_train = X[train_xp]
-        X_test = X[test_xp]
-        y_train = y[train_xp]
-        y_test = y[test_xp]
-    else:
-        X_train = xp.take(X, train_xp, axis=0)
-        X_test = xp.take(X, test_xp, axis=0)
-        y_train = xp.take(y, train_xp, axis=0)
-        y_test = xp.take(y, test_xp, axis=0)
+    indices_dtype = train_xp.dtype
+    X_train = _array_indexing(X, train_xp, indices_dtype, axis=0)
+    X_test = _array_indexing(X, test_xp, indices_dtype, axis=0)
+    y_train = _array_indexing(y, train_xp, indices_dtype, axis=0)
+    y_test = _array_indexing(y, test_xp, indices_dtype, axis=0)
 
     sw_train, sw_test = None, None
     if sample_weight is not None:
