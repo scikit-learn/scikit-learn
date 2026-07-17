@@ -1009,7 +1009,7 @@ def test_multilabel_representation_invariance(name, coo_container):
         metric(y1_list_list_indicator, y2_list_list_indicator),
         measure,
         err_msg=(
-            f"{name} failed representation invariance between dense array and " 
+            f"{name} failed representation invariance between dense array and "
             "list of list indicator formats."
         ),
     )
