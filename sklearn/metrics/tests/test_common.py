@@ -394,7 +394,8 @@ METRIC_UNDEFINED_MULTICLASS = {
     "samples_recall_score",
     "samples_jaccard_score",
     "samples_roc_auc",
-    "average_precision_score",
+    "samples_average_precision_score",
+    "multilabel_confusion_matrix_sample",
 }
 
 # Metric undefined with "binary" or "multiclass" input
