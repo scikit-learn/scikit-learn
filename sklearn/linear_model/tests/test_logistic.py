@@ -309,20 +309,23 @@ def test_nan():
         clf.fit(Xnan, Y1)
 
 
-def test_consistency_path(global_random_seed):
-    # Test that the path algorithm is consistent
+@pytest.mark.parametrize("sample_weight", [None, 2])
+def test_consistency_path(global_random_seed, sample_weight):
+    """Test that the path algorithm is consistent with the class LogisticRgression."""
     rng = np.random.RandomState(global_random_seed)
     X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
     y = np.array([1] * 100 + [0] * 100, dtype=X.dtype)  # needs label encoding
     Cs = np.logspace(0, 4, 10)
+    if sample_weight is not None:
+        sample_weight = sample_weight * np.ones(X.shape[0])
 
-    f = ignore_warnings
     # can't test with fit_intercept=True since LIBLINEAR
     # penalizes the intercept
     for solver in ["sag", "saga"]:
-        coefs, Cs, _ = f(_logistic_regression_path)(
+        coefs, Cs, _ = _logistic_regression_path(
             X,
             y,
+            sample_weight=sample_weight,
             classes=np.array([0, 1]),
             Cs=Cs,
             fit_intercept=False,
@@ -330,6 +333,7 @@ def test_consistency_path(global_random_seed):
             solver=solver,
             max_iter=1000,
             random_state=global_random_seed,
+            check_input=True,
         )
         for i, C in enumerate(Cs):
             lr = LogisticRegression(
@@ -340,7 +344,7 @@ def test_consistency_path(global_random_seed):
                 random_state=global_random_seed,
                 max_iter=1000,
             )
-            lr.fit(X, y)
+            lr.fit(X, y, sample_weight=sample_weight)
             lr_coef = lr.coef_.ravel()
             assert_array_almost_equal(
                 lr_coef, coefs[i], decimal=4, err_msg="with solver = %s" % solver
@@ -349,9 +353,10 @@ def test_consistency_path(global_random_seed):
     # test for fit_intercept=True
     for solver in SOLVERS:
         Cs = [1e3]
-        coefs, Cs, _ = f(_logistic_regression_path)(
+        coefs, Cs, _ = _logistic_regression_path(
             X,
             y,
+            sample_weight=sample_weight,
             classes=np.array([0, 1]),
             Cs=Cs,
             tol=1e-6,
@@ -366,7 +371,7 @@ def test_consistency_path(global_random_seed):
             random_state=global_random_seed,
             solver=solver,
         )
-        lr.fit(X, y)
+        lr.fit(X, y, sample_weight=sample_weight)
         lr_coef = np.concatenate([lr.coef_.ravel(), lr.intercept_])
         assert_array_almost_equal(
             lr_coef, coefs[0], decimal=4, err_msg="with solver = %s" % solver
