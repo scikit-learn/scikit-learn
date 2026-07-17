@@ -244,7 +244,7 @@ def precision_recall_curve_padded_thresholds(*args, **kwargs):
     """
     precision, recall, thresholds = precision_recall_curve(*args, **kwargs)
 
-    pad_thresholds = len(precision) - len(thresholds)
+    pad_thresholds = precision.shape[0] - thresholds.shape[0]
 
     return np.array(
         [
@@ -2772,8 +2772,7 @@ def test_array_api_classification_string_input(metric_name):
 @pytest.mark.parametrize(
     "metric_name",
     sorted(
-        (CONTINUOUS_CLASSIFICATION_METRICS.keys())
-        | set(CURVE_METRICS.keys())
+        ((CONTINUOUS_CLASSIFICATION_METRICS.keys()) | set(CURVE_METRICS.keys()))
         - (METRIC_UNDEFINED_BINARY | METRICS_NOT_SUPPORTING_ARRAY_API)
     ),
 )
