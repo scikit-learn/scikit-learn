@@ -1675,3 +1675,21 @@ def test_criterion_param_deprecation(GradientBoosting):
     with pytest.warns(FutureWarning, match="criterion"):
         reg = GradientBoosting(criterion="friedman_mse")
         reg.fit(X, y)
+
+
+@pytest.mark.parametrize("GradientBoostingEstimator", GRADIENT_BOOSTING_ESTIMATORS)
+def test_resize_state_smaller_n_estimators_typeerror(GradientBoostingEstimator):
+    """Test that _resize_state raises ValueError, not TypeError.
+
+    Non-regression test for _resize_state using self.estimators_[0] instead
+    of self.estimators_.shape[0] in the error message format string,
+    which caused a misleading TypeError.
+    """
+    import numpy as np
+
+    est = GradientBoostingEstimator(n_estimators=5)
+    # populate estimators_ directly to bypass the fit-time check so the
+    # _resize_state path is actually exercised
+    est.estimators_ = np.empty((10, 1), dtype=object)
+    with pytest.raises(ValueError, match="resize with smaller n_estimators"):
+        est._resize_state()
