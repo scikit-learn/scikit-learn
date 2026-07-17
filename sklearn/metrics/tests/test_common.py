@@ -2657,7 +2657,10 @@ def test_mixed_array_api_namespace_input_compliance(
 
     data_all = {
         "binary": ([0, 0, 1, 1], [0, 1, 0, 1]),
-        "label_indicator_thresholded": ([[1, 0, 1, 0]], [[1, 1, 0, 0]]),
+        "label_indicator_thresholded": (
+            [[1, 0], [1, 0], [1, 1], [0, 0]],
+            [[1, 1], [1, 0], [0, 1], [0, 0]],
+        ),
         "binary_continuous": ([1, 0, 1, 0], [0.5, 0.2, 0.7, 0.6]),
         "label_indicator_continuous": ([[1, 0, 1, 0]], [[0.5, 0.2, 0.7, 0.6]]),
         "regression_integer": ([2, 1, 3, 4], [2, 1, 2, 2]),
