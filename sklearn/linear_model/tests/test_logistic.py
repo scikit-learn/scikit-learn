@@ -313,7 +313,7 @@ def test_consistency_path(global_random_seed):
     # Test that the path algorithm is consistent
     rng = np.random.RandomState(global_random_seed)
     X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
-    y = [1] * 100 + [-1] * 100
+    y = np.array([1] * 100 + [0] * 100, dtype=X.dtype)  # need label encoding
     Cs = np.logspace(0, 4, 10)
 
     f = ignore_warnings
@@ -323,7 +323,7 @@ def test_consistency_path(global_random_seed):
         coefs, Cs, _ = f(_logistic_regression_path)(
             X,
             y,
-            classes=[0, 1],
+            classes=np.array([0, 1]),
             Cs=Cs,
             fit_intercept=False,
             tol=1e-5,
@@ -352,7 +352,7 @@ def test_consistency_path(global_random_seed):
         coefs, Cs, _ = f(_logistic_regression_path)(
             X,
             y,
-            classes=[0, 1],
+            classes=np.array([0, 1]),
             Cs=Cs,
             tol=1e-6,
             solver=solver,
@@ -376,7 +376,7 @@ def test_consistency_path(global_random_seed):
 def test_logistic_regression_path_convergence_fail():
     rng = np.random.RandomState(0)
     X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
-    y = [1] * 100 + [-1] * 100
+    y = np.array([1] * 100 + [0] * 100, dtype=X.dtype)  # need label encoding
     Cs = [1e3]
 
     # Check that the convergence message points to both a model agnostic
@@ -384,7 +384,7 @@ def test_logistic_regression_path_convergence_fail():
     # documentation that includes hints on the solver configuration.
     with pytest.warns(ConvergenceWarning) as record:
         _logistic_regression_path(
-            X, y, classes=[0, 1], Cs=Cs, tol=0.0, max_iter=1, random_state=0, verbose=0
+            X, y, classes=np.array([0, 1]), Cs=Cs, tol=0.0, max_iter=1, verbose=0
         )
 
     assert len(record) == 1
@@ -571,7 +571,7 @@ def test_logistic_cv_multinomial_score(scoring, multiclass_agg_list):
     params["penalty"] = "l2"
 
     # we store the params to set them further in _log_reg_scoring_path
-    for key in ["C", "n_jobs", "warm_start"]:
+    for key in ["C", "n_jobs", "warm_start", "class_weight"]:
         del params[key]
     lr.fit(X[train], y[train])
     for averaging in multiclass_agg_list:
@@ -579,7 +579,7 @@ def test_logistic_cv_multinomial_score(scoring, multiclass_agg_list):
         assert_array_almost_equal(
             _log_reg_scoring_path(
                 X,
-                y,
+                LabelEncoder().fit_transform(y).astype(X.dtype),
                 train,
                 test,
                 classes=np.unique(y),
@@ -2103,7 +2103,7 @@ def test_logistic_regression_path_coefs_multinomial():
     Cs = [0.00001, 1, 10000]
     coefs, _, _ = _logistic_regression_path(
         X,
-        y,
+        y.astype(X.dtype),
         classes=np.unique(y),
         penalty="l1",
         Cs=Cs,
@@ -2135,7 +2135,7 @@ def test_logistic_regression_path_init_coefs():
     coef = np.ones((3, 3))
     _logistic_regression_path(
         X,
-        y,
+        y.astype(X.dtype),
         classes=classes,
         coef=coef,
         random_state=0,
@@ -2167,7 +2167,7 @@ def test_logistic_regression_path_init_coefs():
     coef = np.ones(3)
     _logistic_regression_path(
         X,
-        y,
+        y.astype(X.dtype),
         classes=classes,
         coef=coef,
         random_state=0,
@@ -2176,7 +2176,7 @@ def test_logistic_regression_path_init_coefs():
     coef = np.ones((1, 3))
     _logistic_regression_path(
         X,
-        y,
+        y.astype(X.dtype),
         classes=classes,
         coef=coef,
         random_state=0,
