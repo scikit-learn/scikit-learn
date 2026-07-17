@@ -2656,6 +2656,7 @@ def test_mixed_array_api_namespace_input_compliance(
 
     data_all = {
         "binary": ([0, 0, 1, 1], [0, 1, 0, 1]),
+        "label_indicator_thresholded": ([[1, 0, 1, 0]], [[1, 1, 0, 0]]),
         "binary_continuous": ([1, 0, 1, 0], [0.5, 0.2, 0.7, 0.6]),
         "label_indicator_continuous": ([[1, 0, 1, 0]], [[0.5, 0.2, 0.7, 0.6]]),
         "regression_integer": ([2, 1, 3, 4], [2, 1, 2, 2]),
@@ -2677,8 +2678,13 @@ def test_mixed_array_api_namespace_input_compliance(
             dtype = xp.int64
         return dtype
 
-    if metric_name in (CLASSIFICATION_METRICS.keys() - METRIC_UNDEFINED_BINARY):
-        data_cases = ["binary"]
+    if metric_name in CLASSIFICATION_METRICS.keys():
+        # Note we currently do not handle metrics that are undefined for binary
+        # and are not multilabel
+        if metric_name in (METRIC_UNDEFINED_BINARY & MULTILABELS_METRICS):
+            data_cases = ["label_indicator_thresholded"]
+        else:
+            data_cases = ["binary"]
     elif metric_name in {**CONTINUOUS_CLASSIFICATION_METRICS, **CURVE_METRICS}:
         if metric_name not in METRIC_UNDEFINED_BINARY:
             data_cases = ["binary_continuous"]
