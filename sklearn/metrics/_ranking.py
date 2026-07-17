@@ -1332,7 +1332,7 @@ def roc_curve(
     # kept, but does not drop more complicated cases like fps = [1, 3, 7],
     # tps = [1, 2, 4]; there is no harm in keeping too many thresholds.
     if drop_intermediate and fps.shape[0] > 2:
-        optimal_idxs = xp.where(
+        optimal_idxs = xp.nonzero(
             xp.concat(
                 [
                     xp.asarray([True], device=device),
