@@ -1445,7 +1445,8 @@ class LogisticRegression(
             )
             raise ValueError(msg)
         is_binary = n_classes == 2
-        y_encoded = xp.asarray(le.transform(y), dtype=X.dtype, device=device_)
+        y_encoded = move_to(le.transform(y), xp=xp, device=device_)
+        y_encoded = xp.astype(y_encoded, X.dtype, copy=False)
 
         if sample_weight is not None or self.class_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
