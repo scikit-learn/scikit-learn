@@ -1430,7 +1430,7 @@ def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
     else:
         if sample_weight is not None:
             xp, _ = get_namespace(sample_weight)
-            n_samples = xp.sum(sample_weight)
+            n_samples = float(xp.sum(sample_weight))
         else:
             n_samples = _num_samples(y_true)
         return n_samples - score
