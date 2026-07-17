@@ -860,8 +860,8 @@ def _log_reg_scoring_path(
         Actual number of iteration for each C in Cs.
     """
     xp, _, device_ = get_namespace_and_device(X)
-    train_xp = move_to(train, xp=xp, device=device_)
-    test_xp = move_to(test, xp=xp, device=device_)
+    train_xp = xp.asarray(train, device=device_)
+    test_xp = xp.asarray(test, device=device_)
     indices_dtype = train_xp.dtype
     X_train = _array_indexing(X, train_xp, indices_dtype, axis=0)
     X_test = _array_indexing(X, test_xp, indices_dtype, axis=0)
