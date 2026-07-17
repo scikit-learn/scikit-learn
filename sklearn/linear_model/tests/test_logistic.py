@@ -313,7 +313,7 @@ def test_consistency_path(global_random_seed):
     # Test that the path algorithm is consistent
     rng = np.random.RandomState(global_random_seed)
     X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
-    y = np.array([1] * 100 + [0] * 100, dtype=X.dtype)  # need label encoding
+    y = np.array([1] * 100 + [0] * 100, dtype=X.dtype)  # needs label encoding
     Cs = np.logspace(0, 4, 10)
 
     f = ignore_warnings
@@ -376,7 +376,7 @@ def test_consistency_path(global_random_seed):
 def test_logistic_regression_path_convergence_fail():
     rng = np.random.RandomState(0)
     X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
-    y = np.array([1] * 100 + [0] * 100, dtype=X.dtype)  # need label encoding
+    y = np.array([1] * 100 + [0] * 100, dtype=X.dtype)  # needs label encoding
     Cs = [1e3]
 
     # Check that the convergence message points to both a model agnostic
