@@ -248,7 +248,7 @@ def precision_recall_curve_padded_thresholds(*args, **kwargs):
 
     pad_thresholds = precision.shape[0] - thresholds.shape[0]
     thresholds_padded = xp.concat(
-        [xp.astype(thresholds, dtype=xp.float64), xp.full(pad_thresholds, xp.nan)]
+        [xp.astype(thresholds, xp.float64), xp.full(pad_thresholds, xp.nan)]
     )
     return xp.array([precision, recall, thresholds_padded])
 
