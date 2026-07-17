@@ -984,7 +984,7 @@ def cohen_kappa_score(
             raise ValueError(msg) from e
         raise
 
-    xp, _, device_ = get_namespace_and_device(y1, y2)
+    xp, _, device_ = get_namespace_and_device(confusion)
     n_classes = confusion.shape[0]
     # array_api_strict only supports floating point dtypes for __truediv__
     # which is used below to compute `expected` as well as `k`. Therefore
