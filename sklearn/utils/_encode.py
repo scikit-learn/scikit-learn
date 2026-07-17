@@ -8,7 +8,7 @@ from typing import NamedTuple
 
 import numpy as np
 
-from sklearn.utils._array_api import _isin, device, get_namespace, xpx
+from sklearn.utils._array_api import device, get_namespace, xpx
 from sklearn.utils._missing import is_scalar_nan
 
 
@@ -308,7 +308,7 @@ def _check_unknown(values, known_values, return_mask=False):
         diff = xpx.setdiff1d(unique_values, known_values, assume_unique=True, xp=xp)
         if return_mask:
             if diff.size:
-                valid_mask = _isin(values, known_values, xp)
+                valid_mask = xpx.isin(values, known_values, xp=xp)
             else:
                 valid_mask = xp.ones(len(values), dtype=xp.bool)
 

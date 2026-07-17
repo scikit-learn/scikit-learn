@@ -70,7 +70,7 @@ def discretize(
     max_svd_restarts : int, default=30
         Maximum number of attempts to restart SVD if convergence fails
 
-    n_iter_max : int, default=30
+    n_iter_max : int, default=20
         Maximum number of iterations to attempt in rotation and partition
         matrix search if machine precision convergence is not reached
 
