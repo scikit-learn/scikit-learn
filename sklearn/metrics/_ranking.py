@@ -1336,7 +1336,7 @@ def roc_curve(
             xp.concat(
                 [
                     xp.asarray([True], device=device),
-                    xp.logical_or(xp.diff(fps, 2), xp.diff(tps, 2)),
+                    xp.logical_or(xp.diff(fps, n=2), xp.diff(tps, n=2)),
                     xp.asarray([True], device=device),
                 ]
             )
