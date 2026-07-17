@@ -94,6 +94,7 @@ from sklearn.utils._array_api import (
     _atol_for_type,
     _max_precision_float_dtype,
     get_namespace,
+    get_namespace_and_device,
     move_to,
     yield_mixed_namespace_input_permutations,
     yield_namespace_device_dtype_combinations,
@@ -176,16 +177,21 @@ REGRESSION_METRICS = {
     "d2_absolute_error_score": d2_absolute_error_score,
 }
 
+
+def normalized_confusion_matrix(*args, **kwargs):
+    cm = confusion_matrix(*args, **kwargs)
+    xp, _, device = get_namespace_and_device(cm)
+    dtype_float = _max_precision_float_dtype(xp, device)
+    return xp.astype(cm, dtype_float) / xp.sum(cm, axis=1)[:, xp.newaxis]
+
+
 CLASSIFICATION_METRICS = {
     "accuracy_score": accuracy_score,
     "balanced_accuracy_score": balanced_accuracy_score,
     "adjusted_balanced_accuracy_score": partial(balanced_accuracy_score, adjusted=True),
     "unnormalized_accuracy_score": partial(accuracy_score, normalize=False),
     "confusion_matrix": confusion_matrix,
-    "normalized_confusion_matrix": lambda *args, **kwargs: (
-        confusion_matrix(*args, **kwargs).astype("float")
-        / confusion_matrix(*args, **kwargs).sum(axis=1)[:, np.newaxis]
-    ),
+    "normalized_confusion_matrix": normalized_confusion_matrix,
     "multilabel_confusion_matrix": multilabel_confusion_matrix,
     "multilabel_confusion_matrix_sample": partial(
         multilabel_confusion_matrix, samplewise=True
