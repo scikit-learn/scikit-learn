@@ -2926,6 +2926,7 @@ def test_logistic_regression_callback_support(max_iter):
 # TODO(callbacks): also test for other solvers when they get supported.
 @pytest.mark.parametrize("n_classes", [2, 3])
 @pytest.mark.parametrize("fit_intercept", [True, False])
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @skip_callback_test_if_wasm
 def test_logistic_regression_callback_fitted_estimator(n_classes, fit_intercept):
     """Check the fitted_estimator in callback hooks.
@@ -2940,6 +2941,7 @@ def test_logistic_regression_callback_fitted_estimator(n_classes, fit_intercept)
         n_classes=n_classes,
         random_state=0,
     )
+    y = y.astype(str)
     cb = RecordingCallback()
 
     lr_params = {"solver": "lbfgs", "fit_intercept": fit_intercept}
@@ -2966,14 +2968,14 @@ def test_logistic_regression_callback_fitted_estimator(n_classes, fit_intercept)
             expected_lr = LogisticRegression(**lr_params, max_iter=i).fit(X, y)
             assert_allclose(est.coef_, expected_lr.coef_)
             assert_allclose(est.intercept_, expected_lr.intercept_)
-            assert_allclose(est.predict(X), expected_lr.predict(X))
+            assert_allclose(est.predict_proba(X), expected_lr.predict_proba(X))
 
         if i < n_iter:
             est = iter_end["kwargs"]["fitted_estimator"]
             expected_lr = LogisticRegression(**lr_params, max_iter=i + 1).fit(X, y)
             assert_allclose(est.coef_, expected_lr.coef_)
             assert_allclose(est.intercept_, expected_lr.intercept_)
-            assert_allclose(est.predict(X), expected_lr.predict(X))
+            assert_allclose(est.predict_proba(X), expected_lr.predict_proba(X))
         else:
             # Extra empty task with lbfgs solver.
             assert iter_end["kwargs"]["fitted_estimator"] is None
