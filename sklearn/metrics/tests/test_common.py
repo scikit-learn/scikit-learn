@@ -961,7 +961,7 @@ def test_format_invariance_with_1d_vectors(name):
 @pytest.mark.parametrize("name", sorted(MULTILABELS_METRICS))
 @pytest.mark.parametrize("coo_container", COO_CONTAINERS)
 def test_multilabel_representation_invariance(name, coo_container):
-    # Check representation invariance for non-continuous multiclass metrics.
+    # Check representation invariance for non-continuous multilabel metrics.
     n_classes = 4
     n_samples = 50
 
@@ -1001,30 +1001,25 @@ def test_multilabel_representation_invariance(name, coo_container):
         metric(y1_sparse_indicator, y2_sparse_indicator),
         measure,
         err_msg=(
-            "%s failed representation invariance between "
+            f"{name} failed representation invariance between "
             "dense and sparse indicator formats."
-        )
-        % name,
+        ),
     )
     assert_almost_equal(
         metric(y1_list_list_indicator, y2_list_list_indicator),
         measure,
         err_msg=(
-            "%s failed representation invariance  "
-            "between dense array and list of list "
-            "indicator formats."
-        )
-        % name,
+            f"{name} failed representation invariance between dense array and " 
+            "list of list indicator formats."
+        ),
     )
     assert_almost_equal(
         metric(y1_list_array_indicator, y2_list_array_indicator),
         measure,
         err_msg=(
-            "%s failed representation invariance  "
-            "between dense and list of array "
-            "indicator formats."
-        )
-        % name,
+            f"{name} failed representation invariance between dense and list of "
+            "array indicator formats."
+        ),
     )
 
 
