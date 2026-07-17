@@ -2777,8 +2777,8 @@ def test_logistic_regression_array_api_compliance(
     lr_params = dict(C=1e-2, solver=solver, max_iter=500, class_weight=class_weight)
     lr_params["tol"] = 1e-6 if dtype_name == "float32" else 1e-12
 
-    # Make sure that we converge in the reference fit.
     lr_np = LogisticRegression(**lr_params).fit(X_np, y_np, sample_weight=sample_weight)
+    # Make sure that the reference fit converged.
     assert lr_np.n_iter_ < lr_np.max_iter
 
     # Test that C was not too large for meaningful testing.
@@ -2926,6 +2926,7 @@ def test_logistic_regression_cv_array_api_compliance(
     lr_cv_np = LogisticRegressionCV(**lr_cv_params).fit(
         X_np, y_np, sample_weight=sample_weight
     )
+    # Make sure that the reference fit converged.
     assert np.max(lr_cv_np.n_iter_) < lr_cv_np.max_iter
 
     # Test that C was not too large for meaningful testing.
