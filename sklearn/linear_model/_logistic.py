@@ -860,11 +860,8 @@ def _log_reg_scoring_path(
         Actual number of iteration for each C in Cs.
     """
     xp, _, device_ = get_namespace_and_device(X)
-    xp_y, _, device_y = get_namespace_and_device(y)
-    train_xp = xp.asarray(train, device=device_)
-    test_xp = xp.asarray(test, device=device_)
-    train_xp_y = xp_y.asarray(train, device=device_y)
-    test_xp_y = xp_y.asarray(test, device=device_y)
+    train_xp = move_to(train, xp=xp, device=device_)
+    test_xp = move_to(test, xp=xp, device=device_)
     if issparse(X) or issparse(y):
         X_train = X[train_xp]
         X_test = X[test_xp]
@@ -873,8 +870,8 @@ def _log_reg_scoring_path(
     else:
         X_train = xp.take(X, train_xp, axis=0)
         X_test = xp.take(X, test_xp, axis=0)
-        y_train = xp_y.take(y, train_xp_y, axis=0)
-        y_test = xp_y.take(y, test_xp_y, axis=0)
+        y_train = xp.take(y, train_xp, axis=0)
+        y_test = xp.take(y, test_xp, axis=0)
 
     sw_train, sw_test = None, None
     if sample_weight is not None:
@@ -915,7 +912,7 @@ def _log_reg_scoring_path(
     # As y is already expected to be label encoded, we don't set
     #     log_reg.classes_ = classes
     # but instead
-    log_reg.classes_ = np.arange(n_classes)
+    log_reg.classes_ = xp.arange(n_classes, dtype=X.dtype, device=device_)
 
     scores = list()
 
@@ -2221,7 +2218,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             )
             raise ValueError(msg)
         is_binary = n_classes == 2
-        y_encoded = np.asarray(le.transform(y), dtype=X.dtype)
+        y_encoded = move_to(le.transform(y), xp=xp, device=device_)
+        y_encoded = xp.astype(y_encoded, X.dtype, copy=False)
 
         if sample_weight is not None or self.class_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
@@ -2233,7 +2231,9 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 y=y,
                 sample_weight=sample_weight,
             )
-            class_weight_ = np.asarray(class_weight_[le.transform(y)], dtype=X.dtype)
+            class_weight_ = xp.asarray(
+                class_weight_[le.transform(y)], dtype=X.dtype, device=device_
+            )
             # Avoid overriding the input sample_weight.
             sample_weight = sample_weight * class_weight_
 
