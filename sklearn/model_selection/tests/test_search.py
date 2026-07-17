@@ -1880,6 +1880,41 @@ def test_parameters_sampler_replacement():
     assert len(samples) == 7
 
 
+def test_parameter_sampler_lists_of_dicts_uniform_sampling():
+    # Non-regression test for #18057: with a list of all-list dicts, each dict
+    # must be sampled about uniformly rather than in proportion to the number
+    # of candidate combinations it holds.
+    small = {"a": [1, 2, 3, 4, 5], "b": [1, 2, 3, 4, 5, 6]}  # 30 combinations
+    large = {  # 120 combinations
+        "a": [6, 7, 8],
+        "b": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        "c": [True, False],
+        "d": [True, False],
+    }
+    n_iter = 50
+    samples = list(ParameterSampler([small, large], n_iter=n_iter, random_state=1))
+    assert len(samples) == n_iter
+    # sampling without replacement is preserved: every draw is unique
+    assert len({tuple(sorted(s.items())) for s in samples}) == n_iter
+    from_small = sum(1 for s in samples if s["a"] in {1, 2, 3, 4, 5})
+    # both sub-grids get an equal share (was 9 / 41 before the fix)
+    assert from_small == 25
+    assert n_iter - from_small == 25
+
+
+def test_parameter_sampler_distribute_n_samples():
+    # Draws are spread across sub-grids as evenly as possible, capped by each
+    # sub-grid's size, with the remainder flowing to the larger sub-grids.
+    distribute = ParameterSampler._distribute_n_samples
+    assert distribute([30, 120], 50) == [25, 25]
+    assert distribute([10, 50, 100], 100) == [10, 45, 45]
+    assert sum(distribute([3, 3, 3], 7)) == 7
+    # a sub-grid is never asked for more unique samples than it can provide
+    alloc = distribute([2, 100], 50)
+    assert alloc[0] <= 2
+    assert sum(alloc) == 50
+
+
 def test_stochastic_gradient_loss_param():
     # Make sure the predict_proba works when loss is specified
     # as one of the parameters in the param_grid.
