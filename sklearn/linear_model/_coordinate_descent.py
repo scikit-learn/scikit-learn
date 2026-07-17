@@ -674,8 +674,8 @@ def enet_path(
     else:
         _alphas = alphas
 
-    X_offset_param = params.pop("X_offset", None)
-    X_scale_param = params.pop("X_scale", None)
+    X_offset = params.pop("X_offset", None)
+    X_scale = params.pop("X_scale", None)
     sample_weight = params.pop("sample_weight", None)
     tol = params.pop("tol", 1e-4)
     max_iter = params.pop("max_iter", 1000)
@@ -723,11 +723,10 @@ def enet_path(
 
     X_is_sparse = sparse.issparse(X)
     if X_is_sparse:
-        if X_offset_param is not None:
+        if X_offset is not None:
             # As sparse matrices are not actually centered we need this to be passed to
             # the CD solver.
-            X_sparse_scaling = X_offset_param / X_scale_param
-            X_sparse_scaling = np.asarray(X_sparse_scaling, dtype=X.dtype)
+            X_sparse_scaling = np.asarray(X_offset / X_scale, dtype=X.dtype)
         else:
             X_sparse_scaling = np.zeros(n_features, dtype=X.dtype)
     else:
@@ -793,6 +792,15 @@ def enet_path(
         algo = CD_Algo.ENET_CD_MULTITASK
     elif X_is_sparse:
         algo = CD_Algo.ENET_CD_SPARSE
+        R, norm2_cols_X = cd_fast.R_and_X_colnorm2_sparse(
+            w=coef_,
+            X_data=X_data,
+            X_indices=X_indices,
+            X_indptr=X_indptr,
+            y=y,
+            sample_weight=sample_weight,
+            X_mean=X_sparse_scaling,
+        )
     elif isinstance(precompute, np.ndarray):
         algo = CD_Algo.ENET_CD_GRAM
         # We expect precompute to be already Fortran ordered when bypassing checks
@@ -847,6 +855,8 @@ def enet_path(
                 sample_weight=sample_weight,
                 X_mean=X_sparse_scaling,
                 positive=positive,
+                R=R,
+                norm2_cols_X=norm2_cols_X,
                 **params,
             )
         elif algo == CD_Algo.ENET_CD_MULTITASK:
