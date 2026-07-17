@@ -62,6 +62,8 @@ from sklearn.metrics import (
     zero_one_loss,
 )
 from sklearn.metrics._base import _average_binary_score
+from sklearn.metrics._classification import _check_targets
+from sklearn.metrics._regression import _check_reg_targets
 from sklearn.metrics.pairwise import (
     additive_chi2_kernel,
     chi2_kernel,
@@ -2106,6 +2108,44 @@ def test_metrics_pos_label_error_str(metric, y_pred_threshold, dtype_y_str):
         metric(y1, y2)
 
 
+@pytest.mark.parametrize("check", (_check_targets, _check_reg_targets))
+def test_check_targets_array_api(check):
+    """Ensure `check` returns arrays in the correct namespace and device."""
+    xp, _ = _array_api_for_tests("array_api_strict")
+    y_pred = np.asarray([[0, 0, 0, 1], [1, 0, 1, 1], [0, 0, 0, 1]])
+    y_pred_xp = xp.asarray(y_pred)
+
+    kwarg = (
+        {"multioutput": np.asarray([0.2, 0.2, 0.25, 0.35])}
+        if check is _check_reg_targets
+        else {}
+    )
+    with config_context(array_api_dispatch=True):
+        # Do not pass `xp` and `device`
+        outputs = check(
+            y_true=np.asarray([[1, 0, 0, 1], [0, 1, 1, 1], [1, 1, 0, 1]]),
+            y_pred=y_pred_xp,
+            sample_weight=np.asarray([1, 1, 2]),
+            **kwarg,
+        )
+        for output in outputs[1:]:
+            assert get_namespace(output)[0] == xp
+            assert array_api_device(output) == array_api_device(y_pred_xp)
+
+        # Pass `xp` and `device`
+        outputs = check(
+            y_true=np.asarray([[1, 0, 0, 1], [0, 1, 1, 1], [1, 1, 0, 1]]),
+            y_pred=y_pred,
+            sample_weight=np.asarray([1, 1, 2]),
+            xp=xp,
+            device=array_api_device(y_pred_xp),
+            **kwarg,
+        )
+        for output in outputs[1:]:
+            assert get_namespace(output)[0] == xp
+            assert array_api_device(output) == array_api_device(y_pred_xp)
+
+
 def check_array_api_metric(
     metric, array_namespace, device_name, dtype_name, a_np, b_np, **metric_kwargs
 ):
@@ -2588,6 +2628,10 @@ array_api_metric_checkers = {
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
+    ],
+    matthews_corrcoef: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
     ],
     multilabel_confusion_matrix: [
         check_array_api_binary_classification_metric,

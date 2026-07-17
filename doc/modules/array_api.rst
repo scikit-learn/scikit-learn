@@ -217,6 +217,7 @@ Metrics
 - :func:`sklearn.metrics.hamming_loss`
 - :func:`sklearn.metrics.jaccard_score`
 - :func:`sklearn.metrics.log_loss`
+- :func:`sklearn.metrics.matthews_corrcoef` (see :ref:`device_support_for_float64`)
 - :func:`sklearn.metrics.max_error`
 - :func:`sklearn.metrics.mean_absolute_error`
 - :func:`sklearn.metrics.mean_absolute_percentage_error`
