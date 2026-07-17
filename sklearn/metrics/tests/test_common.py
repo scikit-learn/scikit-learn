@@ -244,20 +244,13 @@ def precision_recall_curve_padded_thresholds(*args, **kwargs):
     """
     precision, recall, thresholds = precision_recall_curve(*args, **kwargs)
 
-    pad_thresholds = precision.shape[0] - thresholds.shape[0]
+    xp = get_namespace(precision, recall, thresholds)
 
-    return np.array(
-        [
-            precision,
-            recall,
-            np.pad(
-                thresholds.astype(np.float64),
-                pad_width=(0, pad_thresholds),
-                mode="constant",
-                constant_values=[np.nan],
-            ),
-        ]
+    pad_thresholds = precision.shape[0] - thresholds.shape[0]
+    thresholds_padded = xp.concat(
+        [xp.astype(thresholds, dtype=xp.float64), xp.full(pad_thresholds, xp.nan)]
     )
+    return xp.array([precision, recall, thresholds_padded])
 
 
 CURVE_METRICS = {
