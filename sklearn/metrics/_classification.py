@@ -1211,7 +1211,8 @@ def jaccard_score(
     numerator = MCM[:, 1, 1]
     denominator = MCM[:, 1, 1] + MCM[:, 0, 1] + MCM[:, 1, 0]
 
-    xp, _, device_ = get_namespace_and_device(y_true, y_pred)
+    xp, _, device_ = get_namespace_and_device(MCM)
+    sample_weight = move_to(sample_weight, xp=xp, device=device_)
     if average == "micro":
         numerator = xp.asarray(xp.sum(numerator, keepdims=True), device=device_)
         denominator = xp.asarray(xp.sum(denominator, keepdims=True), device=device_)
@@ -2934,7 +2935,7 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     0.625
     """
     C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
-    xp, _, device_ = get_namespace_and_device(y_pred, y_true)
+    xp, _, device_ = get_namespace_and_device(C)
     if _is_xp_namespace(xp, "array_api_strict"):
         # array_api_strict only supports floating point dtypes for __truediv__
         # which is used below to compute `per_class`.
