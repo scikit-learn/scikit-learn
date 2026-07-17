@@ -869,7 +869,7 @@ def test_warm_start_smaller_n_estimators(Cls):
 
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
 def test_resize_state_smaller_n_estimators_error_message(Cls):
-    #Check that _resize_state raises a clear ValueError, not a TypeError 
+    # Check that _resize_state raises a clear ValueError, not a TypeError
     gb = Cls(n_estimators=5)
     gb.estimators_ = np.empty((10, 1), dtype=object)
     with pytest.raises(
