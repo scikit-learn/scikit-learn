@@ -250,8 +250,8 @@ def precision_recall_curve_padded_thresholds(*args, **kwargs):
     """
     precision, recall, thresholds = precision_recall_curve(*args, **kwargs)
 
-    xp, _ = get_namespace(precision, recall, thresholds)
-    dtype_ = _max_precision_float_dtype(thresholds)
+    xp, _, device_ = get_namespace_and_device(precision, recall, thresholds)
+    dtype_ = _max_precision_float_dtype(thresholds, device_)
 
     pad_thresholds = precision.shape[0] - thresholds.shape[0]
     thresholds_padded = xp.concat(
