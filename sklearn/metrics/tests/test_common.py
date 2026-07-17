@@ -1042,7 +1042,7 @@ def test_continuous_multilabel_representation_invariance(name):
     # Some metrics (e.g. log_loss) require y_score to be probabilities (sum to 1)
     y_score /= y_score.sum(axis=1, keepdims=True)
 
-    # To make sure at least one empty label is present
+    # To make sure at least one empty label row is present
     y_true[-1] = [0] * n_classes
 
     y_true_list_array_indicator = list(y_true)
