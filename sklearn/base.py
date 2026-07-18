@@ -129,10 +129,15 @@ def _clone_parametrized(estimator, *, safe=True):
         new_object_params[name] = clone(param, safe=False)
 
     new_object = klass(**new_object_params)
+    # Use object.__getattribute__ so MagicMock / other auto-attr objects do not
+    # invent a nested `_metadata_request` (which would recurse forever when
+    # cloned). See issue #34477.
     try:
-        new_object._metadata_request = clone(estimator._metadata_request)
+        metadata_request = object.__getattribute__(estimator, "_metadata_request")
     except AttributeError:
         pass
+    else:
+        new_object._metadata_request = clone(metadata_request)
 
     params_set = new_object.get_params(deep=False)
 

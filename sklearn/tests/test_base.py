@@ -203,6 +203,24 @@ def test_clone_nan():
     assert clf.empty is clf2.empty
 
 
+def test_clone_estimator_with_magicmock_param():
+    # MagicMock auto-creates missing attributes. Accessing `_metadata_request`
+    # via getattr must not recurse when cloning (issue #34477).
+    from unittest.mock import MagicMock
+
+    from sklearn.base import ClassifierMixin
+
+    class FastMockClassifier(BaseEstimator, ClassifierMixin):
+        def __init__(self, learning_rate=0.1):
+            self.learning_rate = learning_rate
+
+    mock_lr = MagicMock()
+    cloned = clone(FastMockClassifier(learning_rate=mock_lr))
+    assert isinstance(cloned, FastMockClassifier)
+    # Parameter itself is still cloned via safe=False deepcopy path for non-estimators
+    assert cloned.learning_rate is not None
+
+
 def test_clone_dict():
     # test that clone creates a clone of a dict
     orig = {"a": MyEstimator()}
