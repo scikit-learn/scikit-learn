@@ -1,0 +1,6 @@
+- :func:`base.clone` no longer enters infinite recursion when an estimator
+  parameter is a :class:`unittest.mock.MagicMock` (or similar auto-attribute
+  object). Access to ``_metadata_request`` now uses
+  ``object.__getattribute__`` so missing attributes are not invented during
+  cloning.
+  :pr:`34512` by :user:`Fstarnb <Fstarnb>`.
