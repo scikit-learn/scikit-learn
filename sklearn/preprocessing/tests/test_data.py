@@ -11,6 +11,10 @@ from scipy import sparse, stats
 
 from sklearn import config_context, datasets
 from sklearn.base import clone
+from sklearn.callback.tests._utils import (
+    RecordingCallback,
+    skip_callback_test_if_wasm,
+)
 from sklearn.exceptions import NotFittedError
 from sklearn.externals._packaging.version import parse as parse_version
 from sklearn.metrics.pairwise import linear_kernel
@@ -177,7 +181,7 @@ def test_standard_scaler_sample_weight_array_api(
 ):
     # N.B. The sample statistics for Xw w/ sample_weight should match
     #      the statistics of X w/ uniform sample_weight.
-    xp, device = _array_api_for_tests(namespace, device_name)
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
 
     X = np.array(X).astype(dtype_name, copy=False)
     y = np.ones(X.shape[0]).astype(dtype_name, copy=False)
@@ -696,7 +700,7 @@ def test_partial_fit_sparse_input(sample_weight, sparse_container):
 
 
 @pytest.mark.parametrize("sample_weight", [True, None])
-def test_standard_scaler_trasform_with_partial_fit(sample_weight):
+def test_standard_scaler_transform_with_partial_fit(sample_weight):
     # Check some postconditions after applying partial_fit and transform
     X = X_2d[:100, :]
 
@@ -796,6 +800,43 @@ def test_preprocessing_array_api_compliance(
         device_name=device_name,
         dtype_name=dtype_name,
     )
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [
+        MaxAbsScaler(),
+        MinMaxScaler(),
+        KernelCenterer(),
+    ],
+    ids=_get_check_estimator_ids,
+)
+def test_preprocessing_integer_array_api_on_float32_only_device(estimator):
+    xp, device = _array_api_for_tests("torch", device_name="mps", dtype_name="float32")
+
+    # TODO: replace this torch/MPS-specific coverage by array-api-strict once
+    # https://github.com/data-apis/array-api-strict/pull/206 is released.
+    X_np = np.asarray([[1, 2, 3], [4, 5, 6], [7, 8, 10]], dtype=np.int64)
+    X_xp = xp.asarray(X_np, device=device)
+
+    with config_context(array_api_dispatch=True):
+        X_out = estimator.fit_transform(X_xp)
+
+    assert X_out.dtype == xp.float32
+
+
+def test_normalize_integer_array_api_on_float32_only_device():
+    xp, device = _array_api_for_tests("torch", device_name="mps", dtype_name="float32")
+
+    # TODO: replace this torch/MPS-specific coverage by array-api-strict once
+    # https://github.com/data-apis/array-api-strict/pull/206 is released.
+    X_np = np.asarray([[1, 2, 3], [4, 5, 6], [7, 8, 10]], dtype=np.int64)
+    X_xp = xp.asarray(X_np, device=device)
+
+    with config_context(array_api_dispatch=True):
+        X_out = normalize(X_xp)
+
+    assert X_out.dtype == xp.float32
 
 
 @pytest.mark.parametrize(
@@ -2114,7 +2155,7 @@ def test_binarizer(constructor):
 )
 def test_binarizer_array_api_int(array_namespace, device_name, dtype_name):
     # Checks that Binarizer works with integer elements and float threshold
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     for dtype_name_ in [dtype_name, "int32", "int64"]:
         X_np = np.reshape(np.asarray([0, 1, 2, 3, 4], dtype=dtype_name_), (-1, 1))
         X_xp = xp.asarray(X_np, device=device)
@@ -2748,7 +2789,7 @@ def test_kernel_centerer_feature_names_out():
 
 @pytest.mark.parametrize("standardize", [True, False])
 def test_power_transformer_constant_feature(standardize):
-    """Check that PowerTransfomer leaves constant features unchanged."""
+    """Check that PowerTransformer leaves constant features unchanged."""
     X = [[-2, 0, 2], [-2, 0, 2], [-2, 0, 2]]
 
     pt = PowerTransformer(method="yeo-johnson", standardize=standardize).fit(X)
@@ -2867,3 +2908,25 @@ def test_transformer_inverse_transform_shape_error(TransformerClass):
     msg = f"X has 1 features, but {TransformerClass.__name__} is expecting 2 features"
     with pytest.raises(ValueError, match=msg):
         transformer.inverse_transform(X_wrong)
+
+
+@pytest.mark.parametrize("fit_method", ["fit", "partial_fit"])
+@skip_callback_test_if_wasm
+def test_standard_scaler_callback_support(fit_method):
+    """Check that the reconstruction attributes are correctly passed."""
+    X = np.random.RandomState(0).random_sample((10, 2))
+
+    cb = RecordingCallback()
+    scaler = StandardScaler().set_callbacks(cb)
+    getattr(scaler, fit_method)(X)
+    Xt = scaler.transform(X)
+
+    # StandardScaler has no iterative part -> only one task.
+    assert cb.count_hooks("setup") == 1
+    assert cb.count_hooks("teardown") == 1
+    assert cb.count_hooks("on_fit_task_begin") == 1
+    assert cb.count_hooks("on_fit_task_end") == 1
+
+    task_end_record = [rec for rec in cb.record if rec["name"] == "on_fit_task_end"][0]
+    fitted_scaler = task_end_record["kwargs"]["fitted_estimator"]
+    assert_allclose(fitted_scaler.transform(X), Xt)

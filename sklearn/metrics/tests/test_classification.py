@@ -749,19 +749,6 @@ def test_likelihood_ratios():
     assert_allclose(neg, 12 / 27)
 
 
-# TODO(1.9): remove test
-@pytest.mark.parametrize("raise_warning", [True, False])
-def test_likelihood_ratios_raise_warning_deprecation(raise_warning):
-    """Test that class_likelihood_ratios raises a `FutureWarning` when `raise_warning`
-    param is set."""
-    y_true = np.array([1, 0])
-    y_pred = np.array([1, 0])
-
-    msg = "`raise_warning` was deprecated in version 1.7 and will be removed in 1.9."
-    with pytest.warns(FutureWarning, match=msg):
-        class_likelihood_ratios(y_true, y_pred, raise_warning=raise_warning)
-
-
 def test_likelihood_ratios_replace_undefined_by_worst():
     """Test that class_likelihood_ratios returns the worst scores `1.0` for both LR+ and
     LR- when `replace_undefined_by=1` is set."""
@@ -2520,7 +2507,6 @@ def test__check_targets():
     MCN = "continuous-multioutput"
     # all of length 3
     EXAMPLES = [
-        (IND, np.array([[0, 1, 1], [1, 0, 0], [0, 0, 1]])),
         # must not be considered binary
         (IND, np.array([[0, 1], [1, 0], [1, 1]])),
         (MC, [2, 3, 1]),
@@ -2583,7 +2569,7 @@ def test__check_targets():
                         _check_targets(y1, y2)
 
         else:
-            merged_type, y1out, y2out, _ = _check_targets(y1, y2)
+            merged_type, _, y1out, y2out, _ = _check_targets(y1, y2)
             assert merged_type == expected
             if merged_type.startswith("multilabel"):
                 assert y1out.format == "csr"
@@ -2637,7 +2623,7 @@ def test__check_targets_sparse_inputs(y, target_type):
             _check_targets(y, y)
     else:
         # This should not raise an error
-        y_type, y_true_out, y_pred_out, _ = _check_targets(y, y)
+        y_type, _, y_true_out, y_pred_out, _ = _check_targets(y, y)
 
         assert y_type == "multilabel-indicator"
         assert y_true_out.format == "csr"
@@ -2815,65 +2801,65 @@ def test_hinge_loss_multiclass_invariance_lists():
 def test_log_loss():
     # binary case with symbolic labels ("no" < "yes")
     y_true = ["no", "no", "no", "yes", "yes", "yes"]
-    y_pred = np.array(
+    y_proba = np.array(
         [[0.5, 0.5], [0.1, 0.9], [0.01, 0.99], [0.9, 0.1], [0.75, 0.25], [0.001, 0.999]]
     )
-    loss = log_loss(y_true, y_pred)
-    loss_true = -np.mean(bernoulli.logpmf(np.array(y_true) == "yes", y_pred[:, 1]))
+    loss = log_loss(y_true, y_proba)
+    loss_true = -np.mean(bernoulli.logpmf(np.array(y_true) == "yes", y_proba[:, 1]))
     assert_allclose(loss, loss_true)
 
     # multiclass case; adapted from http://bit.ly/RJJHWA
     y_true = [1, 0, 2]
-    y_pred = [[0.2, 0.7, 0.1], [0.6, 0.2, 0.2], [0.6, 0.1, 0.3]]
-    loss = log_loss(y_true, y_pred, normalize=True)
+    y_proba = [[0.2, 0.7, 0.1], [0.6, 0.2, 0.2], [0.6, 0.1, 0.3]]
+    loss = log_loss(y_true, y_proba, normalize=True)
     assert_allclose(loss, 0.6904911)
 
     # check that we got all the shapes and axes right
-    # by doubling the length of y_true and y_pred
+    # by doubling the length of y_true and y_proba
     y_true *= 2
-    y_pred *= 2
-    loss = log_loss(y_true, y_pred, normalize=False)
+    y_proba *= 2
+    loss = log_loss(y_true, y_proba, normalize=False)
     assert_allclose(loss, 0.6904911 * 6)
 
     # raise error if number of classes are not equal.
     y_true = [1, 0, 2]
-    y_pred = [[0.3, 0.7], [0.6, 0.4], [0.4, 0.6]]
+    y_proba = [[0.3, 0.7], [0.6, 0.4], [0.4, 0.6]]
     with pytest.raises(ValueError):
-        log_loss(y_true, y_pred)
+        log_loss(y_true, y_proba)
 
     # raise error if labels do not contain all values of y_true
     y_true = ["a", "b", "c"]
-    y_pred = [[0.9, 0.1, 0.0], [0.1, 0.9, 0.0], [0.1, 0.1, 0.8]]
+    y_proba = [[0.9, 0.1, 0.0], [0.1, 0.9, 0.0], [0.1, 0.1, 0.8]]
     labels = ["a", "c", "d"]
     error_str = (
         "y_true contains values {'b'} not belonging to the passed "
         "labels ['a', 'c', 'd']."
     )
     with pytest.raises(ValueError, match=re.escape(error_str)):
-        log_loss(y_true, y_pred, labels=labels)
+        log_loss(y_true, y_proba, labels=labels)
 
     # case when y_true is a string array object
     y_true = ["ham", "spam", "spam", "ham"]
-    y_pred = [[0.3, 0.7], [0.6, 0.4], [0.4, 0.6], [0.7, 0.3]]
-    loss = log_loss(y_true, y_pred)
+    y_proba = [[0.3, 0.7], [0.6, 0.4], [0.4, 0.6], [0.7, 0.3]]
+    loss = log_loss(y_true, y_proba)
     assert_allclose(loss, 0.7469410)
 
     # test labels option
 
     y_true = [2, 2]
-    y_pred = [[0.2, 0.8], [0.6, 0.4]]
+    y_proba = [[0.2, 0.8], [0.6, 0.4]]
     y_score = np.array([[0.1, 0.9], [0.1, 0.9]])
     error_str = (
         "y_true contains only one label (2). Please provide the list of all "
         "expected class labels explicitly through the labels argument."
     )
     with pytest.raises(ValueError, match=re.escape(error_str)):
-        log_loss(y_true, y_pred)
+        log_loss(y_true, y_proba)
 
-    y_pred = [[0.2, 0.8], [0.6, 0.4], [0.7, 0.3]]
+    y_proba = [[0.2, 0.8], [0.6, 0.4], [0.7, 0.3]]
     error_str = "Found input variables with inconsistent numbers of samples: [3, 2]"
     with pytest.raises(ValueError, match=re.escape(error_str)):
-        log_loss(y_true, y_pred)
+        log_loss(y_true, y_proba)
 
     # works when the labels argument is used
 
@@ -2881,7 +2867,7 @@ def test_log_loss():
     calculated_log_loss = log_loss(y_true, y_score, labels=[1, 2])
     assert_allclose(calculated_log_loss, true_log_loss)
 
-    # ensure labels work when len(np.unique(y_true)) != y_pred.shape[1]
+    # ensure labels work when len(np.unique(y_true)) != y_proba.shape[1]
     y_true = [1, 2, 2]
     y_score2 = [[0.7, 0.1, 0.2], [0.2, 0.7, 0.1], [0.1, 0.7, 0.2]]
     loss = log_loss(y_true, y_score2, labels=[1, 2, 3])
@@ -2896,34 +2882,34 @@ def test_log_loss_eps(dtype):
     https://github.com/scikit-learn/scikit-learn/issues/24315
     """
     y_true = np.array([0, 1], dtype=dtype)
-    y_pred = np.array([1, 0], dtype=dtype)
+    y_proba = np.array([1, 0], dtype=dtype)
 
-    loss = log_loss(y_true, y_pred)
+    loss = log_loss(y_true, y_proba)
     assert np.isfinite(loss)
 
 
 @pytest.mark.parametrize("dtype", [np.float64, np.float32, np.float16])
 def test_log_loss_not_probabilities_warning(dtype):
-    """Check that log_loss raises a warning when y_pred values don't sum to 1."""
+    """Check that log_loss raises a warning when y_proba values don't sum to 1."""
     y_true = np.array([0, 1, 1, 0])
-    y_pred = np.array([[0.2, 0.7], [0.6, 0.3], [0.4, 0.7], [0.8, 0.3]], dtype=dtype)
+    y_proba = np.array([[0.2, 0.7], [0.6, 0.3], [0.4, 0.7], [0.8, 0.3]], dtype=dtype)
 
     with pytest.warns(UserWarning, match="The y_prob values do not sum to one."):
-        log_loss(y_true, y_pred)
+        log_loss(y_true, y_proba)
 
 
 @pytest.mark.parametrize(
-    "y_true, y_pred",
+    "y_true, y_proba",
     [
         ([0, 1, 0], [0, 1, 0]),
         ([0, 1, 0], [[1, 0], [0, 1], [1, 0]]),
         ([0, 1, 2], [[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
     ],
 )
-def test_log_loss_perfect_predictions(y_true, y_pred):
+def test_log_loss_perfect_predictions(y_true, y_proba):
     """Check that log_loss returns 0 for perfect predictions."""
     # Because of the clipping, the result is not exactly 0
-    assert log_loss(y_true, y_pred) == pytest.approx(0)
+    assert log_loss(y_true, y_proba) == pytest.approx(0)
 
 
 def test_log_loss_pandas_input():
@@ -2938,9 +2924,9 @@ def test_log_loss_pandas_input():
     except ImportError:
         pass
     for TrueInputType, PredInputType in types:
-        # y_pred dataframe, y_true series
-        y_true, y_pred = TrueInputType(y_tr), PredInputType(y_pr)
-        loss = log_loss(y_true, y_pred)
+        # y_proba dataframe, y_true series
+        y_true, y_proba = TrueInputType(y_tr), PredInputType(y_pr)
+        loss = log_loss(y_true, y_proba)
         assert_allclose(loss, 0.7469410)
 
 
@@ -2957,6 +2943,24 @@ def test_log_loss_warnings():
             [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
             labels=["spam", "eggs", "ham"],
         )
+
+
+# TODO(1.11): Remove
+def test_log_loss_y_pred_deprecation():
+    """Test `y_pred` deprecation in favor of `y_proba` for `log_loss`."""
+    y_true = np.array([0, 1, 1, 0])
+    y_proba = np.array([[0.1, 0.9], [0.9, 0.1], [0.8, 0.2], [0.35, 0.65]])
+
+    # Check no error raised
+    log_loss(y_true, y_proba)
+
+    msg = "`y_pred` was renamed to `y_proba` in version 1.9 and will be removed "
+    with pytest.warns(FutureWarning, match=re.escape(msg)):
+        log_loss(y_true, y_pred=y_proba)
+
+    msg = "Cannot use both `y_pred` and `y_proba`. `y_pred` is deprecated, "
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        log_loss(y_true, y_pred=y_proba, y_proba=y_proba)
 
 
 def test_brier_score_loss_binary():
@@ -3218,7 +3222,7 @@ def test_f1_for_small_binary_inputs_with_zero_division(y_true, y_pred, expected_
         make_scorer(recall_score, zero_division=np.nan),
     ],
 )
-def test_classification_metric_division_by_zero_nan_validaton(scoring):
+def test_classification_metric_division_by_zero_nan_validation(scoring):
     """Check that we validate `np.nan` properly for classification metrics.
 
     With `n_jobs=2` in cross-validation, the `np.nan` used for the singleton will be
@@ -3236,7 +3240,7 @@ def test_classification_metric_division_by_zero_nan_validaton(scoring):
 def test_d2_log_loss_score():
     y_true = [0, 0, 0, 1, 1, 1]
     y_true_string = ["no", "no", "no", "yes", "yes", "yes"]
-    y_pred = np.array(
+    y_proba = np.array(
         [
             [0.5, 0.5],
             [0.9, 0.1],
@@ -3246,7 +3250,7 @@ def test_d2_log_loss_score():
             [0.01, 0.99],
         ]
     )
-    y_pred_null = np.array(
+    y_proba_null = np.array(
         [
             [0.5, 0.5],
             [0.5, 0.5],
@@ -3256,28 +3260,28 @@ def test_d2_log_loss_score():
             [0.5, 0.5],
         ]
     )
-    d2_score = d2_log_loss_score(y_true=y_true, y_pred=y_pred)
-    log_likelihood = log_loss(y_true=y_true, y_pred=y_pred, normalize=False)
-    log_likelihood_null = log_loss(y_true=y_true, y_pred=y_pred_null, normalize=False)
+    d2_score = d2_log_loss_score(y_true=y_true, y_proba=y_proba)
+    log_likelihood = log_loss(y_true=y_true, y_proba=y_proba, normalize=False)
+    log_likelihood_null = log_loss(y_true=y_true, y_proba=y_proba_null, normalize=False)
     d2_score_true = 1 - log_likelihood / log_likelihood_null
     assert d2_score == pytest.approx(d2_score_true)
 
     # check that using sample weight also gives the correct d2 score
     sample_weight = np.array([2, 1, 3, 4, 3, 1])
-    y_pred_null[:, 0] = sample_weight[:3].sum() / sample_weight.sum()
-    y_pred_null[:, 1] = sample_weight[3:].sum() / sample_weight.sum()
+    y_proba_null[:, 0] = sample_weight[:3].sum() / sample_weight.sum()
+    y_proba_null[:, 1] = sample_weight[3:].sum() / sample_weight.sum()
     d2_score = d2_log_loss_score(
-        y_true=y_true, y_pred=y_pred, sample_weight=sample_weight
+        y_true=y_true, y_proba=y_proba, sample_weight=sample_weight
     )
     log_likelihood = log_loss(
         y_true=y_true,
-        y_pred=y_pred,
+        y_proba=y_proba,
         sample_weight=sample_weight,
         normalize=False,
     )
     log_likelihood_null = log_loss(
         y_true=y_true,
-        y_pred=y_pred_null,
+        y_proba=y_proba_null,
         sample_weight=sample_weight,
         normalize=False,
     )
@@ -3285,7 +3289,7 @@ def test_d2_log_loss_score():
     assert d2_score == pytest.approx(d2_score_true)
 
     # check if good predictions give a relatively higher value for the d2 score
-    y_pred = np.array(
+    y_proba = np.array(
         [
             [0.9, 0.1],
             [0.8, 0.2],
@@ -3295,14 +3299,14 @@ def test_d2_log_loss_score():
             [0.1, 0.9],
         ]
     )
-    d2_score = d2_log_loss_score(y_true, y_pred)
+    d2_score = d2_log_loss_score(y_true, y_proba)
     assert 0.5 < d2_score < 1.0
     # check that a similar value is obtained for string labels
-    d2_score_string = d2_log_loss_score(y_true_string, y_pred)
+    d2_score_string = d2_log_loss_score(y_true_string, y_proba)
     assert d2_score_string == pytest.approx(d2_score)
 
     # check if poor predictions gives a relatively low value for the d2 score
-    y_pred = np.array(
+    y_proba = np.array(
         [
             [0.5, 0.5],
             [0.1, 0.9],
@@ -3312,16 +3316,16 @@ def test_d2_log_loss_score():
             [0.1, 0.9],
         ]
     )
-    d2_score = d2_log_loss_score(y_true, y_pred)
+    d2_score = d2_log_loss_score(y_true, y_proba)
     assert d2_score < 0
     # check that a similar value is obtained for string labels
-    d2_score_string = d2_log_loss_score(y_true_string, y_pred)
+    d2_score_string = d2_log_loss_score(y_true_string, y_proba)
     assert d2_score_string == pytest.approx(d2_score)
 
     # check if simply using the average of the classes as the predictions
     # gives a d2 score of 0
     y_true = [0, 0, 0, 1, 1, 1]
-    y_pred = np.array(
+    y_proba = np.array(
         [
             [0.5, 0.5],
             [0.5, 0.5],
@@ -3331,23 +3335,23 @@ def test_d2_log_loss_score():
             [0.5, 0.5],
         ]
     )
-    d2_score = d2_log_loss_score(y_true, y_pred)
+    d2_score = d2_log_loss_score(y_true, y_proba)
     assert d2_score == 0
-    d2_score_string = d2_log_loss_score(y_true_string, y_pred)
+    d2_score_string = d2_log_loss_score(y_true_string, y_proba)
     assert d2_score_string == 0
 
     # check if simply using the average of the classes as the predictions
     # gives a d2 score of 0 when the positive class has a higher proportion
     y_true = [0, 1, 1, 1]
     y_true_string = ["no", "yes", "yes", "yes"]
-    y_pred = np.array([[0.25, 0.75], [0.25, 0.75], [0.25, 0.75], [0.25, 0.75]])
-    d2_score = d2_log_loss_score(y_true, y_pred)
+    y_proba = np.array([[0.25, 0.75], [0.25, 0.75], [0.25, 0.75], [0.25, 0.75]])
+    d2_score = d2_log_loss_score(y_true, y_proba)
     assert d2_score == 0
-    d2_score_string = d2_log_loss_score(y_true_string, y_pred)
+    d2_score_string = d2_log_loss_score(y_true_string, y_proba)
     assert d2_score_string == 0
     sample_weight = [2, 2, 2, 2]
     d2_score_with_sample_weight = d2_log_loss_score(
-        y_true, y_pred, sample_weight=sample_weight
+        y_true, y_proba, sample_weight=sample_weight
     )
     assert d2_score_with_sample_weight == 0
 
@@ -3356,7 +3360,7 @@ def test_d2_log_loss_score():
     y_true = ["high", "high", "low", "neutral"]
     sample_weight = [1.4, 0.6, 0.8, 0.2]
 
-    y_pred = np.array(
+    y_proba = np.array(
         [
             [0.8, 0.1, 0.1],
             [0.8, 0.1, 0.1],
@@ -3364,12 +3368,12 @@ def test_d2_log_loss_score():
             [0.1, 0.1, 0.8],
         ]
     )
-    d2_score = d2_log_loss_score(y_true, y_pred)
+    d2_score = d2_log_loss_score(y_true, y_proba)
     assert 0.5 < d2_score < 1.0
-    d2_score = d2_log_loss_score(y_true, y_pred, sample_weight=sample_weight)
+    d2_score = d2_log_loss_score(y_true, y_proba, sample_weight=sample_weight)
     assert 0.5 < d2_score < 1.0
 
-    y_pred = np.array(
+    y_proba = np.array(
         [
             [0.2, 0.5, 0.3],
             [0.1, 0.7, 0.2],
@@ -3377,9 +3381,9 @@ def test_d2_log_loss_score():
             [0.2, 0.7, 0.1],
         ]
     )
-    d2_score = d2_log_loss_score(y_true, y_pred)
+    d2_score = d2_log_loss_score(y_true, y_proba)
     assert d2_score < 0
-    d2_score = d2_log_loss_score(y_true, y_pred, sample_weight=sample_weight)
+    d2_score = d2_log_loss_score(y_true, y_proba, sample_weight=sample_weight)
     assert d2_score < 0
 
 
@@ -3391,23 +3395,23 @@ def test_d2_log_loss_score_missing_labels():
     y_true = [2, 0, 2, 0]
     labels = [0, 1, 2]
     sample_weight = [1.4, 0.6, 0.7, 0.3]
-    y_pred = np.tile([1, 0, 0], (4, 1))
+    y_proba = np.tile([1, 0, 0], (4, 1))
 
-    log_loss_obs = log_loss(y_true, y_pred, sample_weight=sample_weight, labels=labels)
+    log_loss_obs = log_loss(y_true, y_proba, sample_weight=sample_weight, labels=labels)
 
     # Null model consists of weighted average of the classes.
     # Given that the sum of the weights is 3,
     # - weighted average of 0s is (0.6 + 0.3) / 3 = 0.3
     # - weighted average of 1s is 0
     # - weighted average of 2s is (1.4 + 0.7) / 3 = 0.7
-    y_pred_null = np.tile([0.3, 0, 0.7], (4, 1))
+    y_proba_null = np.tile([0.3, 0, 0.7], (4, 1))
     log_loss_null = log_loss(
-        y_true, y_pred_null, sample_weight=sample_weight, labels=labels
+        y_true, y_proba_null, sample_weight=sample_weight, labels=labels
     )
 
     expected_d2_score = 1 - log_loss_obs / log_loss_null
     d2_score = d2_log_loss_score(
-        y_true, y_pred, sample_weight=sample_weight, labels=labels
+        y_true, y_proba, sample_weight=sample_weight, labels=labels
     )
     assert_allclose(d2_score, expected_d2_score)
 
@@ -3415,10 +3419,10 @@ def test_d2_log_loss_score_missing_labels():
 def test_d2_log_loss_score_label_order():
     """Check that d2_log_loss_score doesn't depend on the order of the labels."""
     y_true = [2, 0, 2, 0]
-    y_pred = np.tile([1, 0, 0], (4, 1))
+    y_proba = np.tile([1, 0, 0], (4, 1))
 
-    d2_score = d2_log_loss_score(y_true, y_pred, labels=[0, 1, 2])
-    d2_score_other = d2_log_loss_score(y_true, y_pred, labels=[0, 2, 1])
+    d2_score = d2_log_loss_score(y_true, y_proba, labels=[0, 1, 2])
+    d2_score_other = d2_log_loss_score(y_true, y_proba, labels=[0, 2, 1])
 
     assert_allclose(d2_score, d2_score_other)
 
@@ -3427,49 +3431,67 @@ def test_d2_log_loss_score_raises():
     """Test that d2_log_loss_score raises the appropriate errors on
     invalid inputs."""
     y_true = [0, 1, 2]
-    y_pred = [[0.2, 0.8], [0.5, 0.5], [0.4, 0.6]]
+    y_proba = [[0.2, 0.8], [0.5, 0.5], [0.4, 0.6]]
     err = "contain different number of classes"
     with pytest.raises(ValueError, match=err):
-        d2_log_loss_score(y_true, y_pred)
+        d2_log_loss_score(y_true, y_proba)
 
     # check error if the number of classes in labels do not match the number
-    # of classes in y_pred.
+    # of classes in y_proba.
     y_true = [0, 1, 2]
-    y_pred = [[0.5, 0.5], [0.5, 0.5], [0.5, 0.5]]
+    y_proba = [[0.5, 0.5], [0.5, 0.5], [0.5, 0.5]]
     labels = [0, 1, 2]
     err = "number of classes in labels is different"
     with pytest.raises(ValueError, match=err):
-        d2_log_loss_score(y_true, y_pred, labels=labels)
+        d2_log_loss_score(y_true, y_proba, labels=labels)
 
-    # check error if y_true and y_pred do not have equal lengths
+    # check error if y_true and y_proba do not have equal lengths
     y_true = [0, 1, 2]
-    y_pred = [[0.5, 0.5, 0.5], [0.6, 0.3, 0.1]]
+    y_proba = [[0.5, 0.5, 0.5], [0.6, 0.3, 0.1]]
     err = "inconsistent numbers of samples"
     with pytest.raises(ValueError, match=err):
-        d2_log_loss_score(y_true, y_pred)
+        d2_log_loss_score(y_true, y_proba)
 
     # check warning for samples < 2
     y_true = [1]
-    y_pred = [[0.5, 0.5]]
+    y_proba = [[0.5, 0.5]]
     err = "score is not well-defined"
     with pytest.warns(UndefinedMetricWarning, match=err):
-        d2_log_loss_score(y_true, y_pred)
+        d2_log_loss_score(y_true, y_proba)
 
     # check error when y_true only has 1 label
     y_true = [1, 1, 1]
-    y_pred = [[0.5, 0.5], [0.5, 0.5], [0.5, 0.5]]
+    y_proba = [[0.5, 0.5], [0.5, 0.5], [0.5, 0.5]]
     err = "y_true contains only one label"
     with pytest.raises(ValueError, match=err):
-        d2_log_loss_score(y_true, y_pred)
+        d2_log_loss_score(y_true, y_proba)
 
     # check error when y_true only has 1 label and labels also has
     # only 1 label
     y_true = [1, 1, 1]
     labels = [1]
-    y_pred = [[0.5, 0.5], [0.5, 0.5], [0.5, 0.5]]
+    y_proba = [[0.5, 0.5], [0.5, 0.5], [0.5, 0.5]]
     err = "The labels array needs to contain at least two"
     with pytest.raises(ValueError, match=err):
-        d2_log_loss_score(y_true, y_pred, labels=labels)
+        d2_log_loss_score(y_true, y_proba, labels=labels)
+
+
+# TODO(1.11): Remove
+def test_d2_log_loss_score_y_pred_deprecation():
+    """Test `y_pred` deprecation in favor of `y_proba` for `d2_log_loss_score`."""
+    y_true = np.array([0, 1, 1, 0])
+    y_proba = np.array([[0.1, 0.9], [0.9, 0.1], [0.8, 0.2], [0.35, 0.65]])
+
+    # Check no error raised
+    d2_log_loss_score(y_true, y_proba)
+
+    msg = "`y_pred` was renamed to `y_proba` in version 1.9 and will be removed "
+    with pytest.warns(FutureWarning, match=re.escape(msg)):
+        d2_log_loss_score(y_true, y_pred=y_proba)
+
+    msg = "Cannot use both `y_pred` and `y_proba`. `y_pred` is deprecated, "
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        d2_log_loss_score(y_true, y_pred=y_proba, y_proba=y_proba)
 
 
 def test_d2_brier_score():
@@ -3688,7 +3710,7 @@ def test_d2_brier_score_warning_on_less_than_two_samples():
 def test_confusion_matrix_array_api(array_namespace, device_name, dtype_name):
     """Test that `confusion_matrix` works for all array types when `labels` are passed
     such that the inner boolean `need_index_conversion` evaluates to `True`."""
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     y_true = xp.asarray([1, 2, 3], device=device)
     y_pred = xp.asarray([4, 5, 6], device=device)
@@ -3698,149 +3720,3 @@ def test_confusion_matrix_array_api(array_namespace, device_name, dtype_name):
         result = confusion_matrix(y_true, y_pred, labels=labels)
         assert get_namespace(result)[0] == get_namespace(y_pred)[0]
         assert array_api_device(result) == array_api_device(y_pred)
-
-
-@pytest.mark.parametrize(
-    "prob_metric", [brier_score_loss, log_loss, d2_brier_score, d2_log_loss_score]
-)
-@pytest.mark.parametrize("str_y_true", [False, True])
-@pytest.mark.parametrize("use_sample_weight", [False, True])
-@pytest.mark.parametrize(
-    "array_namespace, device_name, dtype_name",
-    yield_namespace_device_dtype_combinations(),
-)
-def test_probabilistic_metrics_array_api(
-    prob_metric,
-    str_y_true,
-    use_sample_weight,
-    array_namespace,
-    device_name,
-    dtype_name,
-):
-    """Test that :func:`brier_score_loss`, :func:`log_loss`, :func:`d2_brier_score`
-    and :func:`d2_log_loss_score` work correctly with the array API for binary
-    and multi-class inputs.
-    """
-    xp, device = _array_api_for_tests(array_namespace, device_name)
-    sample_weight = np.array([1, 2, 3, 1]) if use_sample_weight else None
-
-    # binary case
-    extra_kwargs = {}
-    if str_y_true:
-        y_true_np = np.array(["yes", "no", "yes", "no"])
-        y_true_xp_or_np = np.asarray(y_true_np)
-        if "brier" in prob_metric.__name__:
-            # `brier_score_loss` and `d2_brier_score` require specifying the
-            # `pos_label`
-            extra_kwargs["pos_label"] = "yes"
-    else:
-        y_true_np = np.array([1, 0, 1, 0])
-        y_true_xp_or_np = xp.asarray(y_true_np, device=device)
-
-    y_prob_np = np.array([0.5, 0.2, 0.7, 0.6], dtype=dtype_name)
-    y_prob_xp = xp.asarray(y_prob_np, device=device)
-    metric_score_np = prob_metric(
-        y_true_np, y_prob_np, sample_weight=sample_weight, **extra_kwargs
-    )
-    with config_context(array_api_dispatch=True):
-        metric_score_xp = prob_metric(
-            y_true_xp_or_np, y_prob_xp, sample_weight=sample_weight, **extra_kwargs
-        )
-
-    assert metric_score_xp == pytest.approx(metric_score_np)
-
-    # multi-class case
-    if str_y_true:
-        y_true_np = np.array(["a", "b", "c", "d"])
-        y_true_xp_or_np = np.asarray(y_true_np)
-    else:
-        y_true_np = np.array([0, 1, 2, 3])
-        y_true_xp_or_np = xp.asarray(y_true_np, device=device)
-
-    y_prob_np = np.array(
-        [
-            [0.5, 0.2, 0.2, 0.1],
-            [0.4, 0.4, 0.1, 0.1],
-            [0.1, 0.1, 0.7, 0.1],
-            [0.1, 0.2, 0.6, 0.1],
-        ],
-        dtype=dtype_name,
-    )
-    y_prob_xp = xp.asarray(y_prob_np, device=device)
-    metric_score_np = prob_metric(y_true_np, y_prob_np)
-    with config_context(array_api_dispatch=True):
-        metric_score_xp = prob_metric(y_true_xp_or_np, y_prob_xp)
-
-    assert metric_score_xp == pytest.approx(metric_score_np)
-
-
-@pytest.mark.parametrize(
-    "prob_metric", [brier_score_loss, log_loss, d2_brier_score, d2_log_loss_score]
-)
-@pytest.mark.parametrize("use_sample_weight", [False, True])
-@pytest.mark.parametrize(
-    "array_namespace, device_name, dtype_name",
-    yield_namespace_device_dtype_combinations(),
-)
-def test_probabilistic_metrics_multilabel_array_api(
-    prob_metric,
-    use_sample_weight,
-    array_namespace,
-    device_name,
-    dtype_name,
-):
-    """Test that :func:`brier_score_loss`, :func:`log_loss`, :func:`d2_brier_score`
-    and :func:`d2_log_loss_score` work correctly with the array API for
-    multi-label inputs.
-    """
-    xp, device = _array_api_for_tests(array_namespace, device_name)
-    sample_weight = np.array([1, 2, 3, 1]) if use_sample_weight else None
-    y_true_np = np.array(
-        [
-            [0, 0, 1, 1],
-            [1, 0, 1, 0],
-            [0, 1, 0, 0],
-            [1, 1, 0, 1],
-        ],
-        dtype=dtype_name,
-    )
-    y_true_xp = xp.asarray(y_true_np, device=device)
-    y_prob_np = np.array(
-        [
-            [0.15, 0.27, 0.46, 0.12],
-            [0.33, 0.38, 0.06, 0.23],
-            [0.06, 0.28, 0.03, 0.63],
-            [0.14, 0.31, 0.26, 0.29],
-        ],
-        dtype=dtype_name,
-    )
-    y_prob_xp = xp.asarray(y_prob_np, device=device)
-    metric_score_np = prob_metric(y_true_np, y_prob_np, sample_weight=sample_weight)
-    with config_context(array_api_dispatch=True):
-        metric_score_xp = prob_metric(y_true_xp, y_prob_xp, sample_weight=sample_weight)
-
-    assert metric_score_xp == pytest.approx(metric_score_np)
-
-
-@pytest.mark.parametrize(
-    "array_namespace, device_name, dtype_name",
-    yield_namespace_device_dtype_combinations(),
-)
-@pytest.mark.parametrize("prob_metric", [brier_score_loss, d2_brier_score])
-def test_pos_label_in_brier_score_metrics_array_api(
-    prob_metric, array_namespace, device_name, dtype_name
-):
-    """Check `pos_label` handled correctly when labels not in {-1, 1} or {0, 1}."""
-    # For 'brier_score' metrics, when `pos_label=None` and labels are not strings,
-    # `pos_label` defaults to the largest label.
-    xp, device = _array_api_for_tests(array_namespace, device_name)
-    y_true_pos_1 = xp.asarray(np.array([1, 0, 1, 0]), device=device)
-    # Result should be the same when we use 2's for the label instead of 1's
-    y_true_pos_2 = xp.asarray(np.array([2, 0, 2, 0]), device=device)
-    y_prob = xp.asarray(np.array([0.5, 0.2, 0.7, 0.6], dtype=dtype_name), device=device)
-
-    with config_context(array_api_dispatch=True):
-        metric_pos_1 = prob_metric(y_true_pos_1, y_prob)
-        metric_pos_2 = prob_metric(y_true_pos_2, y_prob)
-
-    assert metric_pos_1 == pytest.approx(metric_pos_2)

@@ -472,6 +472,10 @@ INIT_PARAMS = {
     # Default "auto" parameter can lead to different ordering of eigenvalues on
     # windows: #24105
     SpectralEmbedding: dict(eigen_tol=1e-05),
+    # SplineTransformer supports NaN only with handle_missing="zeros", so we
+    # need this additional parameter set for the allow_nan_estimators Sphinx
+    # directive to detect it.
+    SplineTransformer: [dict(), dict(handle_missing="zeros")],
     StackingClassifier: dict(
         estimators=[
             ("est1", DecisionTreeClassifier(max_depth=3, random_state=0)),
@@ -581,7 +585,6 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     GraphicalLasso: {"check_array_api_input": dict(max_iter=5, alpha=1.0)},
     IncrementalPCA: {"check_dict_unchanged": dict(batch_size=10, n_components=1)},
     Isomap: {"check_dict_unchanged": dict(n_components=1)},
-    # TODO(1.9) simplify when averaged_inverted_cdf is the default
     KBinsDiscretizer: {
         "check_sample_weight_equivalence_on_dense_data": [
             # Using subsample != None leads to a stochastic fit that is not
@@ -596,21 +599,6 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             # The "kmeans" strategy leads to a stochastic fit that is not
             # handled by the check_sample_weight_equivalence test.
         ],
-        "check_sample_weights_list": dict(
-            strategy="quantile", quantile_method="averaged_inverted_cdf"
-        ),
-        "check_sample_weights_pandas_series": dict(
-            strategy="quantile", quantile_method="averaged_inverted_cdf"
-        ),
-        "check_sample_weights_shape": dict(
-            strategy="quantile", quantile_method="averaged_inverted_cdf"
-        ),
-        "check_sample_weights_not_an_array": dict(
-            strategy="quantile", quantile_method="averaged_inverted_cdf"
-        ),
-        "check_sample_weights_not_overwritten": dict(
-            strategy="quantile", quantile_method="averaged_inverted_cdf"
-        ),
     },
     KernelPCA: {
         "check_dict_unchanged": dict(n_components=1),
@@ -997,6 +985,10 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         ),
     },
     GaussianNB: {
+        # TODO: Remove once fixed: https://github.com/pytorch/pytorch/issues/188128
+        "check_array_api_mixed_inputs": (
+            "PyTorch bug when asarray used on array-api-strict boolean array"
+        ),
         "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     GradientBoostingClassifier: {
@@ -1088,6 +1080,12 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     KNeighborsTransformer: {
         "check_methods_sample_order_invariance": "check is not applicable."
     },
+    LinearDiscriminantAnalysis: {
+        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
+        "check_array_api_string_and_numeric_inputs": (
+            "mixed string and numeric array API input support not added yet"
+        ),
+    },
     LabelEncoder: {
         "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
@@ -1162,7 +1160,7 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     Nystroem: {
         "check_array_api_same_namespace": "check_same_namespace not yet added",
-        "check_transformer_preserves_dtypes": (
+        "check_transformer_preserve_dtypes": (
             "dtypes are preserved but not at a close enough precision"
         ),
     },
@@ -1176,6 +1174,7 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         ),
     },
     PCA: {
+        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
         # TODO: see gh-33205 for details
         "check_array_api_input": "`linalg.inv` fails because input is singular",
         "check_array_api_same_namespace": "check_same_namespace not yet added",
@@ -1200,6 +1199,7 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         ),
     },
     PoissonRegressor: {
+        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
         "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     PolynomialFeatures: {
@@ -1263,7 +1263,7 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     RidgeClassifier: {
         "check_non_transformer_estimators_n_iter": (
             "n_iter_ cannot be easily accessed."
-        )
+        ),
     },
     SelfTrainingClassifier: {
         "check_non_transformer_estimators_n_iter": "n_iter_ can be 0."

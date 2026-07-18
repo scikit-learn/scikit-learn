@@ -7,6 +7,7 @@ import scipy as sp
 from sklearn.metrics._ranking import det_curve
 from sklearn.utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
+    _deprecate_estimator_name,
     _deprecate_y_pred_parameter,
 )
 
@@ -33,12 +34,22 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     fnr : ndarray
         False negative rate.
 
-    estimator_name : str, default=None
-        Name of estimator. If None, the estimator name is not shown.
+    name : str, default=None
+        Name for labeling the legend entry. If None, the estimator name is not shown.
+
+        .. versionchanged:: 1.10
+            `estimator_name` was deprecated in favor of `name`.
 
     pos_label : int, float, bool or str, default=None
         The label of the positive class. If not `None`, this value is displayed in
         the x- and y-axes labels.
+
+    estimator_name : str, default=None
+        Name of estimator. If None, the estimator name is not shown.
+
+        .. deprecated:: 1.10
+            `estimator_name` is deprecated and will be removed in 1.12. Use `name`
+            instead.
 
     Attributes
     ----------
@@ -73,17 +84,19 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     >>> y_score = clf.decision_function(X_test)
     >>> fpr, fnr, _ = det_curve(y_test, y_score)
     >>> display = DetCurveDisplay(
-    ...     fpr=fpr, fnr=fnr, estimator_name="SVC"
+    ...     fpr=fpr, fnr=fnr, name="SVC"
     ... )
     >>> display.plot()
     <...>
     >>> plt.show()
     """
 
-    def __init__(self, *, fpr, fnr, estimator_name=None, pos_label=None):
+    def __init__(
+        self, *, fpr, fnr, name=None, pos_label=None, estimator_name="deprecated"
+    ):
         self.fpr = fpr
         self.fnr = fnr
-        self.estimator_name = estimator_name
+        self.name = _deprecate_estimator_name(estimator_name, name, "1.10")
         self.pos_label = pos_label
 
     @classmethod
@@ -99,6 +112,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         pos_label=None,
         name=None,
         ax=None,
+        curve_kwargs=None,
         **kwargs,
     ):
         """Plot DET curve given an estimator and data.
@@ -151,8 +165,17 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Axes object to plot on. If `None`, a new figure and axes is
             created.
 
+        curve_kwargs : dict, default=None
+            Keywords arguments to be passed to matplotlib's `plot` function.
+
+            .. versionadded:: 1.10
+
         **kwargs : dict
             Additional keywords arguments passed to matplotlib `plot` function.
+
+            .. deprecated:: 1.10
+                `**kwargs` is deprecated and will be removed in 1.12. Pass matplotlib
+                arguments to `curve_kwargs` as a dictionary instead.
 
         Returns
         -------
@@ -197,6 +220,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             drop_intermediate=drop_intermediate,
             name=name,
             ax=ax,
+            curve_kwargs=curve_kwargs,
             pos_label=pos_label,
             **kwargs,
         )
@@ -212,6 +236,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         pos_label=None,
         name=None,
         ax=None,
+        curve_kwargs=None,
         y_pred="deprecated",
         **kwargs,
     ):
@@ -260,6 +285,11 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             Axes object to plot on. If `None`, a new figure and axes is
             created.
 
+        curve_kwargs : dict, default=None
+            Keywords arguments to be passed to matplotlib's `plot` function.
+
+            .. versionadded:: 1.10
+
         y_pred : array-like of shape (n_samples,)
             Target scores, can either be probability estimates of the positive
             class or non-thresholded decision values (as returned by
@@ -271,6 +301,10 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         **kwargs : dict
             Additional keywords arguments passed to matplotlib `plot` function.
+
+            .. deprecated:: 1.10
+                `**kwargs` is deprecated and will be removed in 1.12. Pass matplotlib
+                arguments to `curve_kwargs` as a dictionary instead.
 
         Returns
         -------
@@ -316,13 +350,13 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         viz = cls(
             fpr=fpr,
             fnr=fnr,
-            estimator_name=name,
+            name=name,
             pos_label=pos_label_validated,
         )
 
-        return viz.plot(ax=ax, name=name, **kwargs)
+        return viz.plot(ax=ax, name=name, curve_kwargs=curve_kwargs, **kwargs)
 
-    def plot(self, ax=None, *, name=None, **kwargs):
+    def plot(self, ax=None, *, name=None, curve_kwargs=None, **kwargs):
         """Plot visualization.
 
         Parameters
@@ -332,11 +366,20 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             created.
 
         name : str, default=None
-            Name of DET curve for labeling. If `None`, use `estimator_name` if
-            it is not `None`, otherwise no labeling is shown.
+            Name of DET curve for labeling. If `None`, use `name` provided at
+            `DetCurveDisplay` initialization, otherwise no labeling is shown.
+
+        curve_kwargs : dict, default=None
+            Keywords arguments to be passed to matplotlib's `plot` function.
+
+            .. versionadded:: 1.10
 
         **kwargs : dict
             Additional keywords arguments passed to matplotlib `plot` function.
+
+            .. deprecated:: 1.10
+                `**kwargs` is deprecated and will be removed in 1.12. Pass matplotlib
+                arguments to `curve_kwargs` as a dictionary instead.
 
         Returns
         -------
@@ -345,8 +388,16 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         """
         self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
 
-        line_kwargs = {} if name is None else {"label": name}
-        line_kwargs.update(**kwargs)
+        _, legend_metric = self._get_legend_metric(curve_kwargs, 1, None)
+        (curve_kwargs,) = self._validate_curve_kwargs(
+            1,
+            name,
+            legend_metric,
+            "",
+            curve_kwargs=curve_kwargs,
+            removed_version="1.12",
+            **kwargs,
+        )
 
         # We have the following bounds:
         # sp.stats.norm.ppf(0.0) = -np.inf
@@ -359,7 +410,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         (self.line_,) = self.ax_.plot(
             sp.stats.norm.ppf(self.fpr),
             sp.stats.norm.ppf(self.fnr),
-            **line_kwargs,
+            **curve_kwargs,
         )
         info_pos_label = (
             f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
@@ -369,7 +420,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         ylabel = "False Negative Rate" + info_pos_label
         self.ax_.set(xlabel=xlabel, ylabel=ylabel)
 
-        if "label" in line_kwargs:
+        if curve_kwargs.get("label") is not None:
             self.ax_.legend(loc="lower right")
 
         ticks = [0.001, 0.01, 0.05, 0.20, 0.5, 0.80, 0.95, 0.99, 0.999]

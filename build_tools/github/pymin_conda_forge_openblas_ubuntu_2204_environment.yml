@@ -8,10 +8,12 @@ dependencies:
   - numpy
   - blas[build=openblas]
   - scipy
-  - cython
+  - cython!=3.2.6,!=3.2.7,!=3.2.8
   - joblib
+  - narwhals
   - threadpoolctl
   - pandas
+  - rich
   - pyamg
   - pytest
   - pytest-xdist

@@ -61,10 +61,10 @@ def _make_dumb_dataset(n_samples):
 
 @pytest.mark.parametrize(
     "GradientBoosting, X, y",
-    [
+    (
         (HistGradientBoostingClassifier, X_classification, y_classification),
         (HistGradientBoostingRegressor, X_regression, y_regression),
-    ],
+    ),
 )
 @pytest.mark.parametrize(
     "params, err_msg",
@@ -524,7 +524,7 @@ def test_small_trainset():
 
 
 def test_missing_values_minmax_imputation():
-    # Compare the buit-in missing value handling of Histogram GBC with an
+    # Compare the built-in missing value handling of Histogram GBC with an
     # a-priori missing value imputation strategy that should yield the same
     # results in terms of decision function.
     #
@@ -943,7 +943,7 @@ def test_single_node_trees(Est):
 
 @pytest.mark.parametrize(
     "Est, loss, X, y",
-    [
+    (
         (
             HistGradientBoostingClassifier,
             HalfBinomialLoss(sample_weight=None),
@@ -956,7 +956,7 @@ def test_single_node_trees(Est):
             X_regression,
             y_regression,
         ),
-    ],
+    ),
 )
 def test_custom_loss(Est, loss, X, y):
     est = Est(loss=loss, max_iter=20)
@@ -965,7 +965,7 @@ def test_custom_loss(Est, loss, X, y):
 
 @pytest.mark.parametrize(
     "HistGradientBoosting, X, y",
-    [
+    (
         (HistGradientBoostingClassifier, X_classification, y_classification),
         (HistGradientBoostingRegressor, X_regression, y_regression),
         (
@@ -973,7 +973,7 @@ def test_custom_loss(Est, loss, X, y):
             X_multi_classification,
             y_multi_classification,
         ),
-    ],
+    ),
 )
 def test_staged_predict(HistGradientBoosting, X, y):
     # Test whether staged predictor eventually gives
@@ -1456,10 +1456,10 @@ def test_unknown_category_that_are_negative():
 
 @pytest.mark.parametrize(
     ("GradientBoosting", "make_X_y"),
-    [
+    (
         (HistGradientBoostingClassifier, make_classification),
         (HistGradientBoostingRegressor, make_regression),
-    ],
+    ),
 )
 @pytest.mark.parametrize("sample_weight", [False, True])
 def test_X_val_in_fit(GradientBoosting, make_X_y, sample_weight, global_random_seed):
@@ -1551,7 +1551,7 @@ def test_X_val_raises_with_early_stopping_false():
 @pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
 @pytest.mark.parametrize(
     "HistGradientBoosting",
-    [HistGradientBoostingClassifier, HistGradientBoostingRegressor],
+    (HistGradientBoostingClassifier, HistGradientBoostingRegressor),
 )
 def test_dataframe_categorical_results_same_as_ndarray(
     dataframe_lib, HistGradientBoosting
@@ -1606,7 +1606,7 @@ def test_dataframe_categorical_results_same_as_ndarray(
 @pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
 @pytest.mark.parametrize(
     "HistGradientBoosting",
-    [HistGradientBoostingClassifier, HistGradientBoostingRegressor],
+    (HistGradientBoostingClassifier, HistGradientBoostingRegressor),
 )
 def test_dataframe_categorical_errors(dataframe_lib, HistGradientBoosting):
     """Check error cases for pandas categorical feature."""
