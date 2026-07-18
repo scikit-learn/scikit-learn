@@ -2839,7 +2839,7 @@ def train_test_split(
         Whether or not to shuffle the data before splitting. If shuffle=False
         then stratify must be None.
 
-    stratify : array-like, default=None
+    stratify : array-like of shape (shape[0],), default=None
         If not None, data is split in a stratified fashion, using this as
         the class labels.
         Read more in the :ref:`User Guide <stratification>`.
