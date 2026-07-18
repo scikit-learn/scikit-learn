@@ -1373,8 +1373,8 @@ def _swapaxes(array, axis1, axis2, /, xp=None):
 
 
 def _unravel_index(indices, shape, /, xp=None):
-    # TODO: remove and use the respective array-api-extra function when version
-    # 0.11.1 is released.
+    # TODO: remove this and use the respective array-api-extra function when
+    # version 0.11.1 is released.
     # https://data-apis.org/array-api-extra/generated/array_api_extra.unravel_index.html
     xp, _ = get_namespace(indices)
     if hasattr(xp, "unravel_index"):
