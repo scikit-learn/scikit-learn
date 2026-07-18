@@ -13,12 +13,14 @@ assigning different length-scales to the two feature dimensions.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 
 from sklearn import datasets
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF
+from sklearn.inspection import DecisionBoundaryDisplay
 
 # import some data to play with
 iris = datasets.load_iris()
@@ -44,14 +46,20 @@ for i, clf in enumerate((gpc_rbf_isotropic, gpc_rbf_anisotropic)):
     # each point in the mesh [x_min, m_max]x[y_min, y_max].
     plt.subplot(1, 2, i + 1)
 
-    Z = clf.predict_proba(np.c_[xx.ravel(), yy.ravel()])
+    # Visualize the decision boundary as class regions
+    boundary_display = DecisionBoundaryDisplay.from_estimator(
+        clf, X, ax=plt.gca(), response_method="predict_proba", alpha=0.5
+    )
 
-    # Put the result into a color plot
-    Z = Z.reshape((xx.shape[0], xx.shape[1], 3))
-    plt.imshow(Z, extent=(x_min, x_max, y_min, y_max), origin="lower")
+    # Plot also the training points reusing the boundary display color scheme
+    plt.scatter(
+        X[:, 0],
+        X[:, 1],
+        c=y,
+        cmap=mpl.colors.ListedColormap(boundary_display.target_colors_),
+        edgecolors="k",
+    )
 
-    # Plot also the training points
-    plt.scatter(X[:, 0], X[:, 1], c=np.array(["r", "g", "b"])[y], edgecolors=(0, 0, 0))
     plt.xlabel("Sepal length")
     plt.ylabel("Sepal width")
     plt.xlim(xx.min(), xx.max())
