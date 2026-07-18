@@ -1,8 +1,9 @@
-name: Welcome first-time contributor
-# Post a welcome comment when a first-time contributor opens a pull request.
+name: First-time contributor workflow
+# Workflow to run when a first-time contributor opens a pull request.
 
 permissions:
   contents: read
+  issues: read
   pull-requests: write
 
 on:
@@ -11,39 +12,30 @@ on:
       - opened
 
 jobs:
-
-  post_comment:
-    name: welcome
+  first-time-contributor-pr:
+    name: first-time contributor workflow
     if: |
       github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR' ||
       github.event.pull_request.author_association == 'FIRST_TIMER' ||
       github.event.pull_request.author_association == 'NONE'
     runs-on: ubuntu-latest
 
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_REPO: ${{ github.repository }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+
     steps:
-
-      - name: Post welcome comment
-        run: |
-          gh api \
-          --method POST \
-          -H "Accept: application/vnd.github+json" \
-          -H "X-GitHub-Api-Version: 2022-11-28" \
-          /repos/$GH_REPO/issues/$PULL_REQUEST_NUMBER/comments \
-          -f "body=$BODY"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
-          PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
-          BODY: |
-            Thank you for opening your first pull request to scikit-learn! 🎉
-
-
-            To help get your contribution reviewed, please make sure that:
-
-            - You have filled out the [pull request template](https://github.com/scikit-learn/scikit-learn/blob/main/.github/PULL_REQUEST_TEMPLATE.md).
-            - The pull request addresses an existing issue that is ready for
-              contribution (e.g. not tagged as "Needs Triage", "Needs Decision", ...).
-              If you are proposing a new feature, please open an issue to discuss it first.
-            - There are no other open pull requests already targeting the same issue.
-            - You have followed the [pull request checklist](https://scikit-learn.org/stable/developers/contributing.html#pull-request-checklist).
-              In particular, linting and tests should pass.
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Install PyGithub
+        run: pip install -Uq PyGithub
+      - name: Checkout workflow script
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/scripts/welcome-first-time-contributor.py
+          sparse-checkout-cone-mode: false # false for files/ true for directories
+      - name: first-time contributor workflow
+        run: python .github/scripts/welcome-first-time-contributor.py
