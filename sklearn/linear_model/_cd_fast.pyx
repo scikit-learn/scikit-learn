@@ -607,7 +607,7 @@ cdef (floating, floating) gap_enet_sparse(
     bint positive,
     bint gap_smaller_eps,
 ) noexcept nogil:
-    """Compute dual gap for use in sparse_enet_coordinate_descent.
+    """Compute dual gap for use in enet_coordinate_descent_sparse.
 
     alpha > 0:            formulation A of the duality gap
     alpha = 0 & beta > 0: formulation B of the duality gap
@@ -705,7 +705,7 @@ cdef (floating, floating) gap_enet_sparse(
     return gap, dual_norm_XtA
 
 
-def sparse_enet_coordinate_descent(
+def enet_coordinate_descent_sparse(
     floating[::1] w,
     floating alpha,
     floating beta,
