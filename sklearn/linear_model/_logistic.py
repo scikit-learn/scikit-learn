@@ -2427,7 +2427,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 self.intercept_[0] = w[0, -1] if w.ndim == 2 else w[-1]
         else:
             self.C_ = xp.tile(self.C_, (n_classes,))
-            self.l1_ratio_ = np.tile(self.l1_ratio_, (n_classes,))
+            self.l1_ratio_ = np.tile(self.l1_ratio_, n_classes)
             self.coef_ = w[:, :n_features]
             if self.fit_intercept:
                 self.intercept_ = w[:, -1]
