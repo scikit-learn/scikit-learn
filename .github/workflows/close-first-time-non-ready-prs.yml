@@ -1,0 +1,35 @@
+name: close prs linked to not-ready issue
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: write
+
+on:
+  pull_request_target:
+    types: opened
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GITHUB_REPO: ${{ github.repository }}
+  PR_NUMBER: ${{ github.event.pull_request.number }}
+
+jobs:
+  close_non_ready_linked_prs:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR' &&
+        github.event.pull_request.state == 'open'
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Install PyGithub
+        run: pip install -Uq PyGithub
+      - name: Checkout workflow script
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/scripts/close_first_time_non_ready_prs.py
+          sparse-checkout-cone-mode: false # false for files/ true for directories
+      - name: Close PR if linked issue is not ready
+        run: python .github/scripts/close_first_time_non_ready_prs.py
