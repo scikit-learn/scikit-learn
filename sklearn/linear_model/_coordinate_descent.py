@@ -790,6 +790,17 @@ def enet_path(
 
     if multi_output:
         algo = CD_Algo.ENET_CD_MULTITASK
+        R, norm2_cols_X = cd_fast.R_and_X_colnorm2_multi_task(
+            W=coef_,
+            X=None if X_is_sparse else X,
+            X_is_sparse=X_is_sparse,
+            X_data=X_data,
+            X_indices=X_indices,
+            X_indptr=X_indptr,
+            Y=y,
+            sample_weight=sample_weight,
+            X_mean=X_sparse_scaling,
+        )
     elif X_is_sparse:
         algo = CD_Algo.ENET_CD_SPARSE
         R, norm2_cols_X = cd_fast.R_and_X_colnorm2_sparse(
@@ -806,8 +817,10 @@ def enet_path(
         # We expect precompute to be already Fortran ordered when bypassing checks
         if check_input:
             precompute = check_array(precompute, dtype=X.dtype.type, order="C")
+        Qw = precompute @ coef_
     else:  # precompute is False
         algo = CD_Algo.ENET_CD
+        R, norm2_cols_X = cd_fast.R_and_X_colnorm2(w=coef_, X=X, y=y)
 
     params = dict(
         max_iter=max_iter,
@@ -830,6 +843,8 @@ def enet_path(
                 X=X,
                 y=y,
                 positive=positive,
+                R=R,
+                norm2_cols_X=norm2_cols_X,
                 **params,
             )
         elif algo == CD_Algo.ENET_CD_GRAM:
@@ -841,6 +856,7 @@ def enet_path(
                 q=Xy,
                 y=y,
                 positive=positive,
+                Qw=Qw,
                 **params,
             )
         elif algo == CD_Algo.ENET_CD_SPARSE:
@@ -872,6 +888,8 @@ def enet_path(
                 Y=y,
                 sample_weight=sample_weight,
                 X_mean=X_sparse_scaling,
+                R=R,
+                norm2_cols_X=norm2_cols_X,
                 **params,
             )
 

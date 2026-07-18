@@ -139,6 +139,40 @@ message_ridge = (
 )
 
 
+def R_and_X_colnorm2(
+    const floating[::1] w,
+    const floating[::1, :] X,
+    const floating[::1] y,
+):
+    """Compute residuals and squared column norms of X.
+
+    Returns
+    -------
+    R : memoryview of shape (n_samples,)
+        Residuals: R = y - X @ w
+
+    norm2_cols_X : memoryview of shape (n_samples,)
+        Column norms of X: norm2_cols_X = np.sum(X**2, axis=0)
+    """
+    if floating is float:
+        dtype = np.float32
+    else:
+        dtype = np.float64
+    cdef unsigned int n_samples = y.shape[0]
+    cdef unsigned int n_features = w.shape[0]
+
+    cdef floating[::1] R = np.empty_like(y)
+    cdef floating[::1] norm2_cols_X = np.einsum(
+        "ij,ij->j", X, X, dtype=dtype, order="C"
+    )
+    # R = y - np.dot(X, w)
+    _copy(n_samples, &y[0], 1, &R[0], 1)
+    _gemv(ColMajor, NoTrans, n_samples, n_features, -1.0, &X[0, 0],
+          n_samples, &w[0], 1, 1.0, &R[0], 1)
+
+    return R, norm2_cols_X
+
+
 cdef inline floating dual_gap_formulation_A(
     floating alpha,  # L1 penalty
     floating beta,  # L1 penalty
@@ -280,6 +314,8 @@ def enet_coordinate_descent(
     bint positive=0,
     bint do_screening=1,
     bint early_stopping=1,
+    floating[::1] R=None,
+    floating[::1] norm2_cols_X=None,
 ):
     """
     Cython version of the coordinate descent algorithm for Elastic-Net regression.
@@ -383,14 +419,6 @@ def enet_coordinate_descent(
     cdef unsigned int n_samples = X.shape[0]
     cdef unsigned int n_features = X.shape[1]
 
-    # compute squared norms of the columns of X
-    # same as norm2_cols_X = np.square(X).sum(axis=0)
-    cdef floating[::1] norm2_cols_X = np.einsum(
-        "ij,ij->j", X, X, dtype=dtype, order="C"
-    )
-
-    # initial value of the residuals
-    cdef floating[::1] R = np.empty(n_samples, dtype=dtype)
     cdef floating[::1] XtA = np.empty(n_features, dtype=dtype)
 
     cdef floating d_j
@@ -421,11 +449,10 @@ def enet_coordinate_descent(
         active_set = np.empty(n_features, dtype=np.uint32)  # map [:n_active] -> j
         excluded_set = np.empty(n_features, dtype=np.uint8)
 
+    if R is None:
+        R, norm2_cols_X = R_and_X_colnorm2(w=w, X=X, y=y)
+
     with nogil:
-        # R = y - np.dot(X, w)
-        _copy(n_samples, &y[0], 1, &R[0], 1)
-        _gemv(ColMajor, NoTrans, n_samples, n_features, -1.0, &X[0, 0],
-              n_samples, &w[0], 1, 1.0, &R[0], 1)
 
         # tol *= np.dot(y, y)
         tol *= _dot(n_samples, &y[0], 1, &y[0], 1)
@@ -1240,6 +1267,7 @@ def enet_coordinate_descent_gram(
     bint positive=0,
     bint do_screening=1,
     bint early_stopping=1,
+    floating[::1] Qw=None,
 ):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
@@ -1273,8 +1301,6 @@ def enet_coordinate_descent_gram(
     # get the data information into easy vars
     cdef unsigned int n_features = Q.shape[0]
 
-    # initial value "Q w" which will be kept of up to date in the iterations
-    cdef floating[::1] Qw = np.dot(Q, w)
     cdef floating[::1] XtA = np.zeros(n_features, dtype=dtype)
     cdef floating y_norm2 = np.dot(y, y)
 
@@ -1306,6 +1332,10 @@ def enet_coordinate_descent_gram(
     if do_screening:
         active_set = np.empty(n_features, dtype=np.uint32)  # map [:n_active] -> j
         excluded_set = np.empty(n_features, dtype=np.uint8)
+
+    if Qw is None:
+        # initial value "Q w" which will be kept of up to date in the iterations
+        Qw = np.dot(Q, w)
 
     with nogil:
         tol *= y_norm2
@@ -1437,6 +1467,121 @@ def enet_coordinate_descent_gram(
                 warnings.warn(message, ConvergenceWarning)
 
     return np.asarray(w), gap, tol, n_iter + 1
+
+
+def R_and_X_colnorm2_multi_task(
+    const floating[::1, :] W,
+    const floating[::1, :] X,
+    bint X_is_sparse,
+    const floating[::1] X_data,
+    const int32_t[::1] X_indices,
+    const int32_t[::1] X_indptr,
+    const floating[::1, :] Y,
+    const floating[::1] sample_weight,
+    const floating[::1] X_mean,
+):
+    """Compute residuals and squared column norms of X.
+
+    Z = X - X_mean
+    sw = sample_weight
+
+    Returns
+    -------
+    R : memoryview of shape (n_samples, n_tasks)
+        Residuals:
+        - unweighted: R = Y - Z @ W
+        - weighted:   R = sw * (Y - Z @ W)
+
+    norm2_cols_X : memoryview of shape (n_samples,)
+        Column norms of X:
+        - unweighted: norm2_cols_X = np.sum((X - X_mean)**2, axis=0)
+        - weighted:   norm2_cols_X = np.sum(sw * (X - X_mean)**2, axis=0)
+    """
+    if floating is float:
+        dtype = np.float32
+    else:
+        dtype = np.float64
+    cdef unsigned int n_samples = Y.shape[0]
+    cdef unsigned int n_features = W.shape[1]
+    cdef unsigned int n_tasks = Y.shape[1]
+    cdef floating X_mean_j
+    cdef floating normalize_sum
+    cdef int32_t i, i_ind
+    cdef unsigned int j
+    cdef int32_t startptr = X_indptr[0]
+    cdef int32_t endptr
+    cdef bint center = False
+    cdef bint no_sample_weights = sample_weight is None
+
+    cdef floating[::1, :] R = np.empty_like(Y, order="F")  # shape (n_samples, n_tasks)
+    norm2_cols_X_array = np.empty(shape=n_features, dtype=dtype)
+    cdef floating[::1] norm2_cols_X = norm2_cols_X_array
+
+    if X_is_sparse and X_mean is not None:
+        # center = (X_mean != 0).any()
+        for j in range(n_features):
+            if X_mean[j]:
+                center = True
+                break
+
+    if not X_is_sparse:
+        np.einsum("ij,ij->j", X, X, dtype=dtype, out=norm2_cols_X_array)
+    else:
+        for j in range(n_features):
+            startptr = X_indptr[j]
+            endptr = X_indptr[j + 1]
+            normalize_sum = 0.0
+            X_mean_j = X_mean[j]
+
+            if no_sample_weights:
+                for i_ind in range(startptr, endptr):
+                    normalize_sum += (X_data[i_ind] - X_mean_j) ** 2
+                if center:
+                    normalize_sum += (n_samples - endptr + startptr) * X_mean_j ** 2
+            else:
+                for i_ind in range(startptr, endptr):
+                    i = X_indices[i_ind]
+                    normalize_sum += sample_weight[i] * (
+                        (X_data[i_ind] - X_mean_j) ** 2 - X_mean_j ** 2
+                    )
+                if center:
+                    for i in range(n_samples):
+                        normalize_sum += sample_weight[i] * X_mean_j ** 2
+            norm2_cols_X[j] = normalize_sum
+
+    _copy(n_samples * n_tasks, &Y[0, 0], 1, &R[0, 0], 1)
+    if not no_sample_weights and X_is_sparse:
+        for t in range(n_tasks):
+            for i in range(n_samples):
+                R[i, t] *= sample_weight[i]
+    for j in range(n_features):
+        for t in range(n_tasks):
+            if W[t, j] != 0:
+                if not X_is_sparse:
+                    _axpy(n_samples, -W[t, j], &X[0, j], 1, &R[0, t], 1)
+                else:
+                    if no_sample_weights:
+                        sparse_axpy(j, -W[t, j], X_data, X_indices, X_indptr, R[:, t])
+                    else:
+                        startptr = X_indptr[j]
+                        endptr = X_indptr[j + 1]
+                        for i_ind in range(startptr, endptr):
+                            i = X_indices[i_ind]
+                            R[i, t] -= sample_weight[i] * X_data[i_ind] * W[t, j]
+
+        if X_is_sparse and center:
+            # R = Y - (X - X_mean) @ W.T
+            X_mean_j = X_mean[j]
+            if no_sample_weights:
+                for i in range(n_samples):
+                    for t in range(n_tasks):
+                        R[i, t] += X_mean_j * W[t, j]
+            else:
+                for i in range(n_samples):
+                    for t in range(n_tasks):
+                        R[i, t] += sample_weight[i] * X_mean_j * W[t, j]
+
+    return R, norm2_cols_X
 
 
 cdef (floating, floating) gap_enet_multi_task(
@@ -1591,6 +1736,8 @@ def enet_coordinate_descent_multi_task(
     bint random=0,
     bint do_screening=1,
     bint early_stopping=1,
+    floating[::1, :] R=None,
+    floating[::1] norm2_cols_X=None,
 ):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net multi-task regression
@@ -1636,12 +1783,6 @@ def enet_coordinate_descent_multi_task(
     cdef unsigned int n_features = W.shape[1]
     cdef unsigned int n_tasks = Y.shape[1]
 
-    # compute squared norms of the columns of X
-    norm2_cols_X_array = np.empty(shape=n_features, dtype=dtype)
-    cdef floating[::1] norm2_cols_X = norm2_cols_X_array
-
-    # initial value of the residuals
-    cdef floating[::1, :] R  # shape (n_samples, n_tasks)
     cdef floating[:, ::1] XtA = np.empty((n_features, n_tasks), dtype=dtype)
     cdef floating[::1] XtA_row_norms = np.empty(n_features, dtype=dtype)
     cdef const floating[::1, :] Yw
@@ -1665,7 +1806,6 @@ def enet_coordinate_descent_multi_task(
     cdef uint8_t[::1] excluded_set
     cdef unsigned int j
     cdef unsigned int t
-    cdef int32_t i, i_ind, startptr, endptr
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
     cdef uint32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
@@ -1683,77 +1823,35 @@ def enet_coordinate_descent_multi_task(
 
     if no_sample_weights or not X_is_sparse:
         Yw = Y
-        R = np.copy(Y, order="F")
     else:
         Yw = np.multiply(sample_weight[:, None], Y)
-        R = np.copy(Yw, order="F")
 
-    if X_is_sparse:
-        R_sum = np.zeros(n_tasks, dtype=dtype)
+    if R is None:
+        R, norm2_cols_X = R_and_X_colnorm2_multi_task(
+            W=W,
+            X=X,
+            X_is_sparse=X_is_sparse,
+            X_data=X_data,
+            X_indices=X_indices,
+            X_indptr=X_indptr,
+            Y=Y,
+            sample_weight=sample_weight,
+            X_mean=X_mean,
+        )
+
+    if X_is_sparse and X_mean is not None:
         # center = (X_mean != 0).any()
         for j in range(n_features):
             if X_mean[j]:
                 center = True
                 break
 
-    # compute squared norms of the columns of X
-    # same as norm2_cols_X = np.square(X).sum(axis=0)
-    if not X_is_sparse:
-        np.einsum("ij,ij->j", X, X, dtype=dtype, out=norm2_cols_X_array)
-    else:
-        for j in range(n_features):
-            norm2_cols_X[j] = 0
-            startptr = X_indptr[j]
-            endptr = X_indptr[j + 1]
-            if no_sample_weights:
-                for i_ind in range(startptr, endptr):
-                    norm2_cols_X[j] += (X_data[i_ind] - X_mean[j]) ** 2
-                if center:
-                    norm2_cols_X[j] += (n_samples - endptr + startptr) * X_mean[j] ** 2
-            else:
-                for i_ind in range(startptr, endptr):
-                    i = X_indices[i_ind]
-                    norm2_cols_X[j] += sample_weight[i] * (
-                        (X_data[i_ind] - X_mean[j]) ** 2 - X_mean[j] ** 2
-                    )
-                if center:
-                    for i in range(n_samples):
-                        norm2_cols_X[j] += sample_weight[i] * X_mean[j] ** 2
+        R_sum = np.sum(R, axis=0)
+    # Note: No need to update R_sum from here on because the update terms cancel each
+    # other: w_j[t] * np.sum(X[:,j] - X_mean[j]) = 0. R_sum is only ever needed and
+    # calculated if X_mean is provided.
 
     with nogil:
-        # R = Y - X @ W.T
-        # R = Y was already set above.
-        for j in range(n_features):
-            for t in range(n_tasks):
-                if W[t, j] != 0:
-                    if not X_is_sparse:
-                        _axpy(n_samples, -W[t, j], &X[0, j], 1, &R[0, t], 1)
-                    else:
-                        if no_sample_weights:
-                            sparse_axpy(j, -W[t, j], X_data, X_indices, X_indptr, R[:, t])
-                        else:
-                            startptr = X_indptr[j]
-                            endptr = X_indptr[j + 1]
-                            for i_ind in range(startptr, endptr):
-                                i = X_indices[i_ind]
-                                R[i, t] -= sample_weight[i] * X_data[i_ind] * W[t, j]
-
-            if X_is_sparse and center:
-                # R = Y - (X - X_mean) @ W.T
-                if no_sample_weights:
-                    for i in range(n_samples):
-                        for t in range(n_tasks):
-                            R[i, t] += X_mean[j] * W[t, j]
-                            R_sum[t] += R[i, t]
-                else:
-                    for i in range(n_samples):
-                        for t in range(n_tasks):
-                            R[i, t] += sample_weight[i] * X_mean[j] * W[t, j]
-                            R_sum[t] += R[i, t]
-
-        # Note: No need to update R_sum from here on because the update terms cancel
-        # each other: w_j[t] * np.sum(X[:,j] - X_mean[j]) = 0. R_sum is only ever
-        # needed and calculated if X_mean is provided.
 
         # tol = tol * linalg.norm(Y, ord='fro') ** 2
         # with sample weights: tol *= y @ (sw * y)
