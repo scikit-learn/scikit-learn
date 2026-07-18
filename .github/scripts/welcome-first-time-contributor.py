@@ -117,4 +117,5 @@ if pr.state == "open":
         " In particular, linting and tests should pass."
     )
 
+    print(f"Posting welcome comment in #{PR_NUMBER}")
     pr.create_issue_comment(MESSAGE)
