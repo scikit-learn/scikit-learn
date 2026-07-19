@@ -249,7 +249,7 @@ def test_decision_boundary_display_classifier(
     )
     assert ax.get_title() == expected_title
 
-    # custom name override in from_estimator should be reflected in the title
+    # custom name override to be reflected in the title
     fig_custom, ax_custom = pyplot.subplots()
     disp_custom = DecisionBoundaryDisplay.from_estimator(
         fitted_clf,
