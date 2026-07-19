@@ -10,6 +10,7 @@ the lower the better.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import math
 import warnings
 from functools import partial
 from numbers import Integral, Real
@@ -29,6 +30,9 @@ from sklearn.utils import (
     column_or_1d,
 )
 from sklearn.utils._array_api import (
+    _average,
+    _bincount,
+    _is_numpy_namespace,
     _max_precision_float_dtype,
     get_namespace,
     get_namespace_and_device,
@@ -1696,20 +1700,30 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_base=2, ignore_ties=False):
         Cumulative Gain (the DCG obtained for a perfect ranking), in order to
         have a score between 0 and 1.
     """
-    discount = 1 / (np.log(np.arange(y_true.shape[1]) + 2) / np.log(log_base))
+    xp, _, device = get_namespace_and_device(y_true, y_score)
+    max_float_dtype = _max_precision_float_dtype(xp, device)
+    discount = 1 / (
+        xp.log(xp.arange(2, y_true.shape[1] + 2, dtype=max_float_dtype, device=device))
+        / math.log(log_base)
+    )
     if k is not None:
         discount[k:] = 0
     if ignore_ties:
-        ranking = np.argsort(y_score)[:, ::-1]
-        ranked = y_true[np.arange(ranking.shape[0])[:, np.newaxis], ranking]
-        cumulative_gains = discount.dot(ranked.T)
+        # Note: do not use `xp.argsort(y_score, descending=True)` as it does
+        # not break ties in the same way as reversing an ascending argsort
+        # (ties are ranked in reversed order of appearance when flipping,
+        # which the tests rely on).
+        ranking = xp.flip(xp.argsort(y_score, axis=1), axis=1)
+        ranked = xp.take_along_axis(y_true, ranking, axis=1)
+        cumulative_gains = discount @ xp.astype(ranked.T, max_float_dtype)
     else:
-        discount_cumsum = np.cumsum(discount)
-        cumulative_gains = [
-            _tie_averaged_dcg(y_t, y_s, discount_cumsum)
-            for y_t, y_s in zip(y_true, y_score)
-        ]
-        cumulative_gains = np.asarray(cumulative_gains)
+        discount_cumsum = xp.cumulative_sum(discount)
+        cumulative_gains = xp.stack(
+            [
+                _tie_averaged_dcg(y_true[i, :], y_score[i, :], discount_cumsum)
+                for i in range(y_true.shape[0])
+            ]
+        )
     return cumulative_gains
 
 
@@ -1750,15 +1764,26 @@ def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
     European conference on information retrieval (pp. 414-421). Springer,
     Berlin, Heidelberg.
     """
-    _, inv, counts = np.unique(-y_score, return_inverse=True, return_counts=True)
-    ranked = np.zeros(len(counts))
-    np.add.at(ranked, inv, y_true)
-    ranked /= counts
-    groups = np.cumsum(counts) - 1
-    discount_sums = np.empty(len(counts))
-    discount_sums[0] = discount_cumsum[groups[0]]
-    discount_sums[1:] = np.diff(discount_cumsum[groups])
-    return (ranked * discount_sums).sum()
+    xp, _, device = get_namespace_and_device(y_true, y_score)
+    max_float_dtype = _max_precision_float_dtype(xp, device)
+    if _is_numpy_namespace(xp):
+        # Fast path for numpy inputs: compute the inverse indices and the
+        # counts with a single pass over the data.
+        _, inv, counts = np.unique(-y_score, return_inverse=True, return_counts=True)
+    else:
+        # TODO: use a single call to `xp.unique_all` instead once PyTorch
+        # supports it. PyTorch cannot return the first-occurrence indices
+        # required by `unique_all`, see
+        # https://github.com/pytorch/pytorch/issues/36748.
+        _, inv = xp.unique_inverse(-y_score)
+        _, counts = xp.unique_counts(-y_score)
+    ranked = _bincount(inv, weights=y_true, xp=xp)
+    ranked = xp.astype(ranked, max_float_dtype)
+    ranked /= xp.astype(counts, max_float_dtype)
+    groups = xp.cumulative_sum(counts) - 1
+    group_cumsums = discount_cumsum[groups]
+    discount_sums = xp.concat([group_cumsums[:1], xp.diff(group_cumsums)])
+    return xp.sum(ranked * discount_sums)
 
 
 def _check_dcg_target_type(y_true):
@@ -1887,7 +1912,7 @@ def dcg_score(
     check_consistent_length(y_true, y_score, sample_weight)
     _check_dcg_target_type(y_true)
     return float(
-        np.average(
+        _average(
             _dcg_sample_scores(
                 y_true, y_score, k=k, log_base=log_base, ignore_ties=ignore_ties
             ),
@@ -2055,7 +2080,8 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     y_score = check_array(y_score, ensure_2d=False)
     check_consistent_length(y_true, y_score, sample_weight)
 
-    if y_true.min() < 0:
+    xp, _ = get_namespace(y_true, y_score)
+    if xp.min(y_true) < 0:
         raise ValueError("ndcg_score should not be used on negative y_true values.")
     if y_true.ndim > 1 and y_true.shape[1] <= 1:
         raise ValueError(
@@ -2064,7 +2090,7 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
         )
     _check_dcg_target_type(y_true)
     gain = _ndcg_sample_scores(y_true, y_score, k=k, ignore_ties=ignore_ties)
-    return float(np.average(gain, weights=sample_weight))
+    return float(_average(gain, weights=sample_weight))
 
 
 @validate_params(
