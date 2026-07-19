@@ -3,5 +3,5 @@
   :func:`sklearn.metrics.zero_one_loss`, :func:`sklearn.metrics.jaccard_score`,
   :func:`sklearn.metrics.balanced_accuracy_score` and
   :func:`sklearn.metrics.cohen_kappa_score`.
-  Also fixes :func:`sklearn.metrics.roc_curve` for PyTorch array inputs.
+  Also fixes several bugs in array API compliance of :func:`sklearn.metrics.roc_curve` .
   By :user:`Lucy Liu <lucyleeow>`.

@@ -1336,7 +1336,11 @@ def roc_curve(
             xp.concat(
                 [
                     xp.asarray([True], device=device),
-                    xp.logical_or(xp.diff(fps, n=2), xp.diff(tps, n=2)),
+                    # Spec recommends `logical_or` only accepts bool input
+                    xp.logical_or(
+                        xp.astype(xp.diff(fps, n=2), xp.bool),
+                        xp.astype(xp.diff(tps, n=2), xp.bool),
+                    ),
                     xp.asarray([True], device=device),
                 ]
             )
