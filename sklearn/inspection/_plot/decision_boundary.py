@@ -224,12 +224,6 @@ class DecisionBoundaryDisplay:
     ylabel : str, default=None
         Default label to place on y axis.
 
-    name : str, default=None
-        Name of the estimator used to create the display.
-
-    response_method_used : str, default=None
-        Response method used to compute `response`.
-
     multiclass_colors : str or list of matplotlib colors, default=None
         Specifies how to color each class when plotting all classes of
         :term:`multiclass` problems.
@@ -266,6 +260,12 @@ class DecisionBoundaryDisplay:
         .. deprecated:: 1.10
             `multiclass_colors` was renamed to `target_colors` in 1.10 and will be
             removed in 1.12.
+
+    response_method_used : str, default=None
+        Response method used to compute `response`.
+
+    name : str, default=None
+        Name of the estimator used to create the display.
 
     Attributes
     ----------
