@@ -245,7 +245,7 @@ def test_decision_boundary_display_classifier(
     assert disp.xx1.max() == pytest.approx(x1_max)
 
     expected_title = (
-        f'{type(fitted_clf).__name__} using "{response_method}" method'
+        f'{type(fitted_clf).__name__} using "{disp.response_method_used}" method'
     )
     assert ax.get_title() == expected_title
 
@@ -261,8 +261,9 @@ def test_decision_boundary_display_classifier(
         name="CustomName",
         ax=ax_custom,
     )
-    assert ax_custom.get_title() == (
-        f'CustomName using "{response_method}" method'
+    assert (
+        ax_custom.get_title()
+        == f'CustomName using "{disp_custom.response_method_used}" method'
     )
 
     fig2, ax2 = pyplot.subplots()

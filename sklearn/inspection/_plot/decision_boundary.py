@@ -569,9 +569,7 @@ class DecisionBoundaryDisplay:
 
         if title is None:
             if self.name is not None and self.response_method_used is not None:
-                title = (
-                    f'{self.name} using "{self.response_method_used}" method'
-                )
+                title = f'{self.name} using "{self.response_method_used}" method'
         if title is not None:
             ax.set_title(title)
 
