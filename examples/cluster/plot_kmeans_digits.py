@@ -168,7 +168,7 @@ DecisionBoundaryDisplay.from_estimator(
     reduced_data,
     response_method="predict",
     alpha=0.8,
-    multiclass_colors="tab10",
+    target_colors="tab10",
     plot_method="pcolormesh",
     grid_resolution=1000,
 )
