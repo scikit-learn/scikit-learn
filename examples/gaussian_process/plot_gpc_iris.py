@@ -25,7 +25,7 @@ from sklearn.inspection import DecisionBoundaryDisplay
 # import some data to play with
 iris = datasets.load_iris()
 X = iris.data[:, :2]  # we only take the first two features.
-y = np.array(iris.target, dtype=int)
+y = np.array(iris.target)
 
 kernel = 1.0 * RBF([1.0])
 gpc_rbf_isotropic = GaussianProcessClassifier(kernel=kernel).fit(X, y)
