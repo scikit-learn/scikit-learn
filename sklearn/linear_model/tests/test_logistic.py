@@ -309,27 +309,31 @@ def test_nan():
         clf.fit(Xnan, Y1)
 
 
-def test_consistency_path(global_random_seed):
-    # Test that the path algorithm is consistent
+@pytest.mark.parametrize("sample_weight", [None, 2])
+def test_consistency_path(global_random_seed, sample_weight):
+    """Test that the path algorithm is consistent with the class LogisticRgression."""
     rng = np.random.RandomState(global_random_seed)
     X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
-    y = [1] * 100 + [-1] * 100
+    y = np.array([1] * 100 + [0] * 100, dtype=X.dtype)  # needs label encoding
     Cs = np.logspace(0, 4, 10)
+    if sample_weight is not None:
+        sample_weight = sample_weight * np.ones(X.shape[0])
 
-    f = ignore_warnings
     # can't test with fit_intercept=True since LIBLINEAR
     # penalizes the intercept
     for solver in ["sag", "saga"]:
-        coefs, Cs, _ = f(_logistic_regression_path)(
+        coefs, Cs, _ = _logistic_regression_path(
             X,
             y,
-            classes=[0, 1],
+            sample_weight=sample_weight,
+            classes=np.array([0, 1]),
             Cs=Cs,
             fit_intercept=False,
             tol=1e-5,
             solver=solver,
             max_iter=1000,
             random_state=global_random_seed,
+            check_input=True,
         )
         for i, C in enumerate(Cs):
             lr = LogisticRegression(
@@ -340,7 +344,7 @@ def test_consistency_path(global_random_seed):
                 random_state=global_random_seed,
                 max_iter=1000,
             )
-            lr.fit(X, y)
+            lr.fit(X, y, sample_weight=sample_weight)
             lr_coef = lr.coef_.ravel()
             assert_array_almost_equal(
                 lr_coef, coefs[i], decimal=4, err_msg="with solver = %s" % solver
@@ -349,10 +353,11 @@ def test_consistency_path(global_random_seed):
     # test for fit_intercept=True
     for solver in SOLVERS:
         Cs = [1e3]
-        coefs, Cs, _ = f(_logistic_regression_path)(
+        coefs, Cs, _ = _logistic_regression_path(
             X,
             y,
-            classes=[0, 1],
+            sample_weight=sample_weight,
+            classes=np.array([0, 1]),
             Cs=Cs,
             tol=1e-6,
             solver=solver,
@@ -366,7 +371,7 @@ def test_consistency_path(global_random_seed):
             random_state=global_random_seed,
             solver=solver,
         )
-        lr.fit(X, y)
+        lr.fit(X, y, sample_weight=sample_weight)
         lr_coef = np.concatenate([lr.coef_.ravel(), lr.intercept_])
         assert_array_almost_equal(
             lr_coef, coefs[0], decimal=4, err_msg="with solver = %s" % solver
@@ -376,7 +381,7 @@ def test_consistency_path(global_random_seed):
 def test_logistic_regression_path_convergence_fail():
     rng = np.random.RandomState(0)
     X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
-    y = [1] * 100 + [-1] * 100
+    y = np.array([1] * 100 + [0] * 100, dtype=X.dtype)  # needs label encoding
     Cs = [1e3]
 
     # Check that the convergence message points to both a model agnostic
@@ -384,7 +389,7 @@ def test_logistic_regression_path_convergence_fail():
     # documentation that includes hints on the solver configuration.
     with pytest.warns(ConvergenceWarning) as record:
         _logistic_regression_path(
-            X, y, classes=[0, 1], Cs=Cs, tol=0.0, max_iter=1, random_state=0, verbose=0
+            X, y, classes=np.array([0, 1]), Cs=Cs, tol=0.0, max_iter=1, verbose=0
         )
 
     assert len(record) == 1
@@ -571,7 +576,7 @@ def test_logistic_cv_multinomial_score(scoring, multiclass_agg_list):
     params["penalty"] = "l2"
 
     # we store the params to set them further in _log_reg_scoring_path
-    for key in ["C", "n_jobs", "warm_start"]:
+    for key in ["C", "n_jobs", "warm_start", "class_weight"]:
         del params[key]
     lr.fit(X[train], y[train])
     for averaging in multiclass_agg_list:
@@ -579,7 +584,7 @@ def test_logistic_cv_multinomial_score(scoring, multiclass_agg_list):
         assert_array_almost_equal(
             _log_reg_scoring_path(
                 X,
-                y,
+                LabelEncoder().fit_transform(y).astype(X.dtype),
                 train,
                 test,
                 classes=np.unique(y),
@@ -2103,7 +2108,7 @@ def test_logistic_regression_path_coefs_multinomial():
     Cs = [0.00001, 1, 10000]
     coefs, _, _ = _logistic_regression_path(
         X,
-        y,
+        y.astype(X.dtype),
         classes=np.unique(y),
         penalty="l1",
         Cs=Cs,
@@ -2135,7 +2140,7 @@ def test_logistic_regression_path_init_coefs():
     coef = np.ones((3, 3))
     _logistic_regression_path(
         X,
-        y,
+        y.astype(X.dtype),
         classes=classes,
         coef=coef,
         random_state=0,
@@ -2167,7 +2172,7 @@ def test_logistic_regression_path_init_coefs():
     coef = np.ones(3)
     _logistic_regression_path(
         X,
-        y,
+        y.astype(X.dtype),
         classes=classes,
         coef=coef,
         random_state=0,
@@ -2176,7 +2181,7 @@ def test_logistic_regression_path_init_coefs():
     coef = np.ones((1, 3))
     _logistic_regression_path(
         X,
-        y,
+        y.astype(X.dtype),
         classes=classes,
         coef=coef,
         random_state=0,
@@ -2926,6 +2931,7 @@ def test_logistic_regression_callback_support(max_iter):
 # TODO(callbacks): also test for other solvers when they get supported.
 @pytest.mark.parametrize("n_classes", [2, 3])
 @pytest.mark.parametrize("fit_intercept", [True, False])
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @skip_callback_test_if_wasm
 def test_logistic_regression_callback_fitted_estimator(n_classes, fit_intercept):
     """Check the fitted_estimator in callback hooks.
@@ -2940,6 +2946,7 @@ def test_logistic_regression_callback_fitted_estimator(n_classes, fit_intercept)
         n_classes=n_classes,
         random_state=0,
     )
+    y = y.astype(str)
     cb = RecordingCallback()
 
     lr_params = {"solver": "lbfgs", "fit_intercept": fit_intercept}
@@ -2966,14 +2973,14 @@ def test_logistic_regression_callback_fitted_estimator(n_classes, fit_intercept)
             expected_lr = LogisticRegression(**lr_params, max_iter=i).fit(X, y)
             assert_allclose(est.coef_, expected_lr.coef_)
             assert_allclose(est.intercept_, expected_lr.intercept_)
-            assert_allclose(est.predict(X), expected_lr.predict(X))
+            assert_allclose(est.predict_proba(X), expected_lr.predict_proba(X))
 
         if i < n_iter:
             est = iter_end["kwargs"]["fitted_estimator"]
             expected_lr = LogisticRegression(**lr_params, max_iter=i + 1).fit(X, y)
             assert_allclose(est.coef_, expected_lr.coef_)
             assert_allclose(est.intercept_, expected_lr.intercept_)
-            assert_allclose(est.predict(X), expected_lr.predict(X))
+            assert_allclose(est.predict_proba(X), expected_lr.predict_proba(X))
         else:
             # Extra empty task with lbfgs solver.
             assert iter_end["kwargs"]["fitted_estimator"] is None
