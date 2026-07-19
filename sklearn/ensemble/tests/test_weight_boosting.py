@@ -231,9 +231,18 @@ def test_feature_importances_not_fitted_raises_not_fitted_error():
         clf.feature_importances_
 
 
-def test_feature_importances_without_feature_importances_raises_attribute_error():
-    clf = AdaBoostClassifier(estimator=LogisticRegression())
-    clf.fit(X, y_class)
+@pytest.mark.parametrize(
+    "Estimator, base_estimator, y",
+    [
+        (AdaBoostClassifier, LogisticRegression(), y_class),
+        (AdaBoostRegressor, LinearRegression(), y_regr),
+    ],
+)
+def test_feature_importances_without_feature_importances_raises_attribute_error(
+    Estimator, base_estimator, y
+):
+    clf = Estimator(estimator=base_estimator)
+    clf.fit(X, y)
     with pytest.raises(
         AttributeError,
         match="does not have a feature_importances_ attribute",
