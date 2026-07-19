@@ -166,6 +166,7 @@ plt.figure()
 DecisionBoundaryDisplay.from_estimator(
     kmeans,
     reduced_data,
+    ax=plt.gca(),
     response_method="predict",
     alpha=0.8,
     target_colors="tab10",
