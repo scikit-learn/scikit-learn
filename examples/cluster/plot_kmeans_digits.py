@@ -161,18 +161,7 @@ reduced_data = PCA(n_components=2).fit_transform(data)
 kmeans = KMeans(init="k-means++", n_clusters=n_digits, n_init=4)
 kmeans.fit(reduced_data)
 
-# Step size of the mesh. Decrease to increase the quality of the VQ.
-h = 0.02  # point in the mesh [x_min, x_max]x[y_min, y_max].
-
-# Plot the decision boundary. For that, we will assign a color to each
-x_min, x_max = reduced_data[:, 0].min() - 1, reduced_data[:, 0].max() + 1
-y_min, y_max = reduced_data[:, 1].min() - 1, reduced_data[:, 1].max() + 1
-xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
-
-# Obtain labels for each point in mesh. Use last trained model.
-Z = kmeans.predict(np.c_[xx.ravel(), yy.ravel()])
-Z = Z.reshape(xx.shape)
-
+plt.figure()
 # Put the result into a color plot
 DecisionBoundaryDisplay.from_estimator(
     kmeans,
@@ -200,8 +189,6 @@ plt.title(
     "K-means clustering on the digits dataset (PCA-reduced data)\n"
     "Centroids are marked with white cross"
 )
-plt.xlim(x_min, x_max)
-plt.ylim(y_min, y_max)
 plt.xticks(())
 plt.yticks(())
 plt.show()
