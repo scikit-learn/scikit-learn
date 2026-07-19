@@ -38,7 +38,7 @@ plt.figure(figsize=(10, 5))
 for i, clf in enumerate((gpc_rbf_isotropic, gpc_rbf_anisotropic)):
     plt.subplot(1, 2, i + 1)
 
-    # Visualize the decision boundary as class regions shaded in the predicted 
+    # Visualize the decision boundary as class regions shaded in the predicted
     # probability of the winning class
     boundary_display = DecisionBoundaryDisplay.from_estimator(
         clf, X, ax=plt.gca(), response_method="predict_proba", alpha=0.5
