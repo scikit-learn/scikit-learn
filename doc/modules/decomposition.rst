@@ -297,7 +297,7 @@ prediction (kernel dependency estimation). :class:`KernelPCA` supports both
 
 .. [Scholkopf1997] Schölkopf, Bernhard, Alexander Smola, and Klaus-Robert Müller.
    `"Kernel principal component analysis."
-   <https://people.eecs.berkeley.edu/~wainwrig/stat241b/scholkopf_kernel.pdf>`_
+   <https://graphics.stanford.edu/courses/cs233-25-spring/ReferencedPapers/scholkopf_kernel.pdf>`_
    International conference on artificial neural networks.
    Springer, Berlin, Heidelberg, 1997.
 

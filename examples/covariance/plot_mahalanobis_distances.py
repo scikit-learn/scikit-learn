@@ -52,8 +52,8 @@ observation ranking and clustering.
 
 .. rubric:: References
 
-.. [1] P. J. Rousseeuw. `Least median of squares regression
-    <http://web.ipac.caltech.edu/staff/fmasci/home/astro_refs/LeastMedianOfSquares.pdf>`_. J. Am
+.. [1] P. J. Rousseeuw. :doi:`Least median of squares regression
+    <10.1080/01621459.1984.10477105>`. J. Am
     Stat Ass, 79:871, 1984.
 .. [2] Wilson, E. B., & Hilferty, M. M. (1931). `The distribution of chi-square.
     <https://water.usgs.gov/osw/bulletin17b/Wilson_Hilferty_1931.pdf>`_
