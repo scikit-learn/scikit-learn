@@ -184,7 +184,11 @@ def normalized_confusion_matrix(*args, **kwargs):
     cm = confusion_matrix(*args, **kwargs)
     xp, _, device = get_namespace_and_device(cm)
     dtype_float = _max_precision_float_dtype(xp, device)
-    return xp.astype(cm, dtype_float) / xp.sum(cm, axis=1)[:, xp.newaxis]
+    # Only float allowed in __truediv__
+    return (
+        xp.astype(cm, dtype_float)
+        / xp.astype(xp.sum(cm, axis=1), dtype_float)[:, xp.newaxis]
+    )
 
 
 CLASSIFICATION_METRICS = {
