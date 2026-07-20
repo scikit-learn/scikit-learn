@@ -142,10 +142,7 @@ class ExtremeLearningBase(BaseEstimator, ABC):
         # If ridge_alpha is None, use direct solve using
         # MoorePenrose Pseudo-Inverse, otherwise use ridge regularized form.
         if self.ridge_alpha is None:
-            if self.rtol is None:
-                self.coef_ = np.linalg.pinv(D) @ y
-            else:
-                self.coef_ = np.linalg.pinv(D, rcond=self.rtol) @ y
+            self.coef_ = np.linalg.pinv(D, rcond=self.rtol) @ y
         else:
             ridge = Ridge(alpha=self.ridge_alpha, fit_intercept=False)
             ridge.fit(D, y)
@@ -568,7 +565,7 @@ class ExtremeLearningClassifier(ClassifierMixin, ExtremeLearningBase):
         if len(self.classes_) == 1:
             return np.full(X.shape[0], self.classes_[0], dtype=self.classes_.dtype)
 
-        out = self._predict_proba(X, check_input=False)
+        out = self._predict_proba(X)
         return self.classes_[np.argmax(out, axis=1)]
 
     def predict_proba(self, X):
@@ -587,11 +584,9 @@ class ExtremeLearningClassifier(ClassifierMixin, ExtremeLearningBase):
         """
         check_is_fitted(self)
         X = validate_data(self, X, reset=False)
-        return self._predict_proba(X, check_input=False)
+        return self._predict_proba(X)
 
-    def _predict_proba(self, X, check_input=True):
-        if check_input:
-            X = validate_data(self, X, reset=False)
+    def _predict_proba(self, X):
         out = super()._predict(X)
         return np.exp(out - logsumexp(out, axis=1, keepdims=True))
 
