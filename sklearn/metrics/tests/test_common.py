@@ -714,6 +714,7 @@ METRICS_NOT_SUPPORTING_ARRAY_API = {
     "ovo_roc_auc",
     "ovr_roc_auc",
     "paired_distances",
+    "pairwise_distances_argmin_min",
     "pairwise_distances_chunked",
     "partial_roc_auc",
     "roc_auc_score",
