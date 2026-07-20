@@ -218,15 +218,6 @@ jobs:
           name: cibw-wheels-cp${{ matrix.python }}-${{ matrix.platform_id }}
           path: wheelhouse/*.whl
 
-  update-tracker:
-    uses: ./.github/workflows/update_tracking_issue.yml
-    if: ${{ always() }}
-    needs: [build_wheels]
-    with:
-      job_status: ${{ needs.build_wheels.result }}
-    secrets:
-      BOT_GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
-
   # Build the source distribution under Linux
   build_sdist:
     name: Source distribution
@@ -288,3 +279,23 @@ jobs:
           ARTIFACTS_PATH: dist
         # Force a replacement if the remote file already exists
         run: bash build_tools/github/upload_anaconda.sh
+
+  # Track nightly failures in a single GitHub issue. The nightly build is only
+  # useful if the wheels and the sdist actually land on
+  # scientific-python-nightly-wheels, so the upload job is tracked as well and
+  # not just the build ones.
+  update-tracker:
+    uses: ./.github/workflows/update_tracking_issue.yml
+    if: ${{ always() }}
+    needs: [build_wheels, build_sdist, upload_anaconda]
+    with:
+      job_status: >-
+        ${{ (needs.build_wheels.result == 'success'
+        && needs.build_sdist.result == 'success'
+        && needs.upload_anaconda.result == 'success')
+        && 'success' || 'failure' }}
+      # A nightly upload either works or it does not, so there is no need for a
+      # maintainer to manually confirm that the failure is gone.
+      auto_close: true
+    secrets:
+      BOT_GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
