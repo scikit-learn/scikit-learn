@@ -263,7 +263,7 @@ def precision_recall_curve_padded_thresholds(*args, **kwargs):
     thresholds_padded = xp.stack(
         [xp.astype(thresholds, dtype_), xp.full(pad_thresholds, xp.nan)]
     )
-    return xp.asarray([precision, recall, thresholds_padded])
+    return xp.stack([precision, recall, thresholds_padded])
 
 
 CURVE_METRICS = {
