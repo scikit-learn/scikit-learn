@@ -142,7 +142,10 @@ class ExtremeLearningBase(BaseEstimator, ABC):
         # If ridge_alpha is None, use direct solve using
         # MoorePenrose Pseudo-Inverse, otherwise use ridge regularized form.
         if self.ridge_alpha is None:
-            self.coef_ = np.linalg.pinv(D, rcond=self.rtol) @ y
+            if self.rtol is None:
+                self.coef_ = np.linalg.pinv(D) @ y
+            else:
+                self.coef_ = np.linalg.pinv(D, rcond=self.rtol) @ y
         else:
             ridge = Ridge(alpha=self.ridge_alpha, fit_intercept=False)
             ridge.fit(D, y)
@@ -210,7 +213,10 @@ class ExtremeLearningBase(BaseEstimator, ABC):
         # = (D.T @ D)^-1 @ D.T @ y
 
         if self.ridge_alpha is None:
-            self.coef_ = np.linalg.pinv(self.A, rtol=self.rtol) @ self.B
+            if self.rtol is None:
+                self.coef_ = np.linalg.pinv(D) @ y
+            else:
+                self.coef_ = np.linalg.pinv(D, rcond=self.rtol) @ y
         else:
             # np.linalg.solve(self.A + reg_mat, self.B)
             # is equivalent to
