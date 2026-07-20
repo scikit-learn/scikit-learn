@@ -445,7 +445,8 @@ Pull request checklist
         some cases "Fix <ISSUE TITLE>" is enough. "Fix #<ISSUE NUMBER>" is **not** a
         good title.
 
-      * Fill out the `pull request template <https://github.com/scikit-learn/scikit-learn/blob/main/.github/PULL_REQUEST_TEMPLATE.md>`_.
+      * Fill out the `pull request template
+        <https://raw.githubusercontent.com/scikit-learn/scikit-learn/refs/heads/main/.github/PULL_REQUEST_TEMPLATE.md>`_.
 
       * If the pull request resolves any issues/PRs, use `keywords to create a link to them
         <https://github.com/blog/1506-closing-issues-via-pull-requests/>`_
@@ -506,8 +507,8 @@ Pull request checklist
         what the contribution does. This title will become the commit message once
         merged.
 
-      * Fill out the `pull request template <
-https://raw.githubusercontent.com/scikit-learn/scikit-learn/refs/heads/main/.github/PULL_REQUEST_TEMPLATE.md>`_.
+      * Fill out the `pull request template
+        <https://raw.githubusercontent.com/scikit-learn/scikit-learn/refs/heads/main/.github/PULL_REQUEST_TEMPLATE.md>`_.
 
       * If the pull request resolves any issues/PRs, use `keywords to create a link to them
         <https://github.com/blog/1506-closing-issues-via-pull-requests/>`_
