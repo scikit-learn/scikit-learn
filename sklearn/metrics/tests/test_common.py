@@ -393,6 +393,8 @@ METRIC_UNDEFINED_MULTICLASS = {
     "precision_recall_curve",
     "det_curve",
     # average='samples' only supports multilabel
+    "multilabel_confusion_matrix_sample",
+    "samples_average_precision_score",
     "samples_f0.5_score",
     "samples_f1_score",
     "samples_f2_score",
@@ -400,8 +402,6 @@ METRIC_UNDEFINED_MULTICLASS = {
     "samples_recall_score",
     "samples_jaccard_score",
     "samples_roc_auc",
-    "samples_average_precision_score",
-    "multilabel_confusion_matrix_sample",
 }
 
 # Metric undefined with "binary" or "multiclass" input
@@ -542,12 +542,15 @@ MULTILABELS_METRICS = {
     "micro_recall_score",
     "micro_jaccard_score",
     "multilabel_confusion_matrix",
+    "multilabel_confusion_matrix_sample",
+    "samples_average_precision_score",
     "samples_f0.5_score",
     "samples_f1_score",
     "samples_f2_score",
     "samples_precision_score",
     "samples_recall_score",
     "samples_jaccard_score",
+    "samples_roc_auc",
 }
 
 # Regression metrics with "multioutput-continuous" format support
