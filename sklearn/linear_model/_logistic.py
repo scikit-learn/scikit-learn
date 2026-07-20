@@ -2309,6 +2309,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         coefs_paths, Cs, scores, n_iter_ = zip(*fold_coefs_)
         self.Cs_ = Cs[0]  # the same for all folds and l1_ratios
         coefs_paths = xp.stack(coefs_paths)
+        n_iter_ = xp.stack(n_iter_)
         if is_binary:
             coefs_paths = xp.reshape(
                 coefs_paths, (len(folds), len(l1_ratios_), self.Cs_.shape[0], -1)
@@ -2323,7 +2324,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             # coefs_paths.shape = (n_folds, n_l1_ratios, n_Cs, n_classes, n_features)
             coefs_paths = xp.moveaxis(coefs_paths, (0, 1, 3), (1, 3, 0))
         # n_iter_.shape = (n_folds, n_l1_ratios, n_Cs)
-        n_iter_ = xp.stack(n_iter_)
         n_iter_ = xp.reshape(n_iter_, (len(folds), len(l1_ratios_), self.Cs_.shape[0]))
         self.n_iter_ = _swapaxes(n_iter_, 1, 2, xp=xp)[None, ...]
         # scores.shape = (n_folds, n_l1_ratios, n_Cs)
