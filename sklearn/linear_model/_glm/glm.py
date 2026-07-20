@@ -19,7 +19,11 @@ from sklearn._loss.loss import (
     HalfTweedieLossIdentity,
 )
 from sklearn.base import BaseEstimator, RegressorMixin, _fit_context
-from sklearn.linear_model._glm._newton_solver import NewtonCholeskySolver, NewtonSolver
+from sklearn.linear_model._glm._newton_solver import (
+    NewtonCDGramSolver,
+    NewtonCholeskySolver,
+    NewtonSolver,
+)
 from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.utils import check_array
 from sklearn.utils._array_api import (
@@ -163,6 +167,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         "fit_intercept": ["boolean"],
         "solver": [
             StrOptions({"lbfgs", "newton-cg", "newton-cholesky"}),
+            Hidden(StrOptions({"newton-cd-gram"})),
             Hidden(type),
         ],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
@@ -300,7 +305,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                     "ftol": 64 * np.finfo(float).eps,
                     **_get_additional_lbfgs_options_dict("iprint", self.verbose - 1),
                 },
-                args=(X, y, sample_weight, l2_reg_strength, n_threads),
+                args=(X, y, sample_weight, 0, l2_reg_strength, n_threads),
             )
             self.n_iter_ = _check_optimize_result(
                 "lbfgs", opt_res, max_iter=self.max_iter
@@ -321,15 +326,21 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 func=func,
                 grad=grad,
                 x0=coef,
-                args=(X, y, sample_weight, l2_reg_strength, n_threads),
+                args=(X, y, sample_weight, 0, l2_reg_strength, n_threads),
                 maxiter=self.max_iter,
                 tol=self.tol,
                 verbose=self.verbose,
             )
-        elif self.solver == "newton-cholesky":
-            sol = NewtonCholeskySolver(
+        elif self.solver in ("newton-cd-gram", "newton-cholesky"):
+            sol = (
+                NewtonCDGramSolver
+                if self.solver == "newton-cd-gram"
+                else NewtonCholeskySolver
+            )
+            sol = sol(
                 coef=coef,
                 linear_loss=linear_loss,
+                # l1_reg_strength=0.0 is the default value for NewtonCDGramSolver
                 l2_reg_strength=l2_reg_strength,
                 tol=self.tol,
                 max_iter=self.max_iter,
