@@ -2221,7 +2221,7 @@ def precision_recall_fscore_support(
     if average == "weighted":
         weights = true_sum
     elif average == "samples":
-        weights = sample_weight
+        weights = move_to(sample_weight, xp=xp, device=device_)
     else:
         weights = None
 
