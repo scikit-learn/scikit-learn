@@ -133,20 +133,6 @@ def get_message(log_file, repo_str, pr_number, sha, run_id, details, versions):
         details=details,
     )
 
-    # mypy
-    message += get_step_message(
-        log,
-        start="### Running mypy ###",
-        end="Problems detected by mypy",
-        title="`mypy`",
-        message=(
-            "`mypy` detected issues. Please fix them locally and push the changes. "
-            "Here you can see the detected issues. Note that the installed `mypy` "
-            f"version is `mypy={versions['mypy']}`."
-        ),
-        details=details,
-    )
-
     # cython-lint
     message += get_step_message(
         log,

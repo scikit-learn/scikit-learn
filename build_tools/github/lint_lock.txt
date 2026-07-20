@@ -10,10 +10,6 @@ cython-lint==0.21.0
     # via -r build_tools/github/lint_requirements.txt
 iniconfig==2.3.0
     # via pytest
-mypy==1.15.0
-    # via -r build_tools/github/lint_requirements.txt
-mypy-extensions==1.1.0
-    # via mypy
 packaging==26.2
     # via pytest
 pluggy==1.6.0
@@ -30,5 +26,3 @@ ruff==0.12.2
     # via -r build_tools/github/lint_requirements.txt
 tokenize-rt==6.2.0
     # via cython-lint
-typing-extensions==4.16.0
-    # via mypy

@@ -86,7 +86,6 @@ tests = [
     "pytest-cov>=2.9.0",
     "ruff>=0.12.2",
     "pyrefly>=1.1.1",
-    "mypy>=1.15",
     "cython-lint>=0.21",
     "pyamg>=5.0.0",
     "polars>=0.20.30",
@@ -226,16 +225,6 @@ ignore-missing-imports = [
 
 [tool.pyrefly.errors]
 bad-override = false
-missing-source-for-stubs = false
-
-[tool.mypy]
-ignore_missing_imports = true
-allow_redefinition = true
-exclude = "^sklearn/externals"
-
-[[tool.mypy.overrides]]
-module = ["joblib.*", "sklearn.externals.*"]
-follow_imports = "skip"
 
 [tool.cython-lint]
 # Ignore the same error codes as ruff
@@ -309,7 +298,7 @@ package = "sklearn"  # name of your package
         whatsnew_pattern = 'doc/whatsnew/upcoming_changes/[^/]+/\d+\.[^.]+\.rst'
 
 [tool.codespell]
-skip = ["./.git", "*.svg", "./.mypy_cache", "*sklearn/feature_extraction/_stop_words.py", "*sklearn/feature_extraction/tests/test_text.py", "./doc/_build", "./doc/auto_examples", "./doc/modules/generated"]
+skip = ["./.git", "*.svg", "*sklearn/feature_extraction/_stop_words.py", "*sklearn/feature_extraction/tests/test_text.py", "./doc/_build", "./doc/auto_examples", "./doc/modules/generated"]
 ignore-words = "build_tools/codespell_ignore_words.txt"
 
 [tool.towncrier]

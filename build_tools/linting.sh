@@ -43,17 +43,6 @@ else
     global_status=1
 fi
 
-echo -e "### Running mypy ###\n"
-mypy sklearn/
-status=$?
-if [[ $status -eq 0 ]]
-then
-    echo -e "No problem detected by mypy\n"
-else
-    echo -e "Problems detected by mypy, please fix them\n"
-    global_status=1
-fi
-
 echo -e "### Running cython-lint ###\n"
 cython-lint --ban-relative-imports sklearn/
 status=$?

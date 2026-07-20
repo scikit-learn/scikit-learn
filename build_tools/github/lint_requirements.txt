@@ -4,5 +4,4 @@
 pytest==9.1.0
 ruff==0.12.2  # min
 pyrefly==1.1.1  # min
-mypy==1.15  # min
 cython-lint==0.21  # min
