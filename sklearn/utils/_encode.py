@@ -4,7 +4,7 @@
 from collections import Counter
 from collections.abc import Iterable
 from numbers import Real
-from typing import NamedTuple
+from typing import NamedTuple, cast
 
 import numpy as np
 
@@ -99,7 +99,7 @@ class MissingValues(NamedTuple):
     none: bool
     # All the different nan instances seen, useful because they end up merged
     # into just np.nan:
-    all_nans: Iterable[Real] = (np.nan,)
+    all_nans: Iterable[Real] = (cast(Real, np.nan),)
 
     def to_list(self):
         """Convert tuple to a list where None is always first."""
