@@ -145,7 +145,6 @@ def test_lls_classification(n_class, activation, direct_links):
     X, y = load_digits(n_class=n_class, return_X_y=True)
 
     X = MinMaxScaler().fit_transform(X[:200])
-    y = y[:200]
 
     X_train = X[:150]
     y_train = y[:150]
@@ -218,12 +217,9 @@ def test_partial_fit_classifier(
         end = min(start + batch, len(X))
         Xb = X[start:end]
         yb = y[start:end]
-        if start == 0:
-            pf_model.partial_fit(Xb, yb, classes=classes)
-        else:
-            pf_model.partial_fit(Xb, yb)
+        pf_model.partial_fit(Xb, yb, classes=classes)
 
-    assert_allclose(ff_model.coef_, pf_model.coef_, rtol=1e-5, atol=1e-5)
+    assert_allclose(pf_model.coef_, ff_model.coef_, rtol=1e-5, atol=1e-5)
 
 
 @pytest.mark.parametrize("hidden_layer_sizes", [(10,), (5, 5)])
@@ -264,7 +260,7 @@ def test_partial_fit_regressor(
         yb = y[start:end]
         pf_model.partial_fit(Xb, yb)
 
-    assert_allclose(ff_model.coef_, pf_model.coef_, rtol=1e-5, atol=4e-5)
+    assert_allclose(pf_model.coef_, ff_model.coef_, rtol=1e-5, atol=4e-5)
 
 
 @pytest.mark.parametrize(
@@ -272,9 +268,10 @@ def test_partial_fit_regressor(
     [
         (0.1, 0.8327257206362838),
         # NOTE: for Moore-Penrose, a large singular value
-        # cutoff (rcond) is required to achieve reasonable R2 with
+        # cutoff (rtol) is required to achieve reasonable R2 with
         # the Boston Housing dataset
-        # Without rtol, R2 ~= -59.615
+        # Without rtol, R2 ~= -59.616
+        # This can be confirmed by commenting out `rtol=1e-3`
         (None, 0.764164981634744),
     ],
 )
@@ -307,7 +304,7 @@ def test_regression_boston(ridge_alpha, expected):
     )
     model.fit(X_train, y_train)
     # RandomForestRegressor() with default params scores
-    # 0.8733907 here; multi-layer RVFL with above params is a bit
+    # 0.890922 here; multi-layer RVFL with above params is a bit
     # worse, but certainly better than random chance:
     actual = model.score(X_test, y_test)
     assert_allclose(actual, expected)
@@ -318,9 +315,10 @@ def test_regression_boston(ridge_alpha, expected):
     [
         (0.1, 0.9473684210526315),
         # NOTE: for Moore-Penrose, a large singular value
-        # cutoff (rcond) is required to achieve reasonable accuracy
+        # cutoff (rtol) is required to achieve reasonable accuracy
         # with the Wisconsin breast cancer dataset
         # Without rtol accuracy ~= 0.7105
+        # This can be confirmed by commenting out `rtol=1e-3`
         (None, 0.9473684210526315),
     ],
 )
@@ -347,7 +345,7 @@ def test_classification_breast_cancer(ridge_alpha, expected):
         rtol=1e-3,  # has no effect for `Ridge`
     )
     model.fit(X_train, y_train)
-    # RandomForestRegressor() with default params scores 0.958 here
+    # RandomForestClassifier() with default params scores 0.9649123
     # RVFL with above params scores comparatively:
     actual = model.score(X_test, y_test)
     assert_allclose(actual, expected)
@@ -358,14 +356,14 @@ def test_classification_breast_cancer(ridge_alpha, expected):
     [
         (0.1, 0.8327240971436314),
         # NOTE: for Moore-Penrose, a large singular value
-        # cutoff (rcond) is required to achieve reasonable R2
+        # cutoff (rtol) is required to achieve reasonable R2
         # with the Boston Housing dataset
-        # Without rtol R2 ~= -59.614
+        # Without rtol R2 ~= -59.615
+        # This can be confirmed by commenting out `rtol=1e-6`
         (None, 0.8083442423720848),
     ],
 )
 def test_rtol_partial_fit(ridge_alpha, expected):
-    # this test takes ~41.70s... should we simplify?
     X, y = fetch_openml(
         name="boston", version=1, return_X_y=True, as_frame=False, parser="liac-arff"
     )
@@ -439,12 +437,9 @@ def test_batch_order_invariance():
         end = min(start + batch, len(X))
         Xb = X[start:end]
         yb = y[start:end]
-        if start == indices[0]:
-            pf_model.partial_fit(Xb, yb, classes=classes)
-        else:
-            pf_model.partial_fit(Xb, yb)
+        pf_model.partial_fit(Xb, yb, classes=classes)
 
-    assert_allclose(ff_model.coef_, pf_model.coef_, rtol=4e-8, atol=2e-10)
+    assert_allclose(pf_model.coef_, ff_model.coef_, rtol=4e-8, atol=2e-10)
 
 
 def test_batch_partition_invariance():
@@ -506,10 +501,9 @@ def test_partial_fit_ill_conditioned():
     batch = 10
     for start in range(0, len(X), batch):
         end = min(start + batch, len(X))
-        if start == 0:
-            pf_model.partial_fit(X[start:end], y[start:end], classes=classes)
-        else:
-            pf_model.partial_fit(X[start:end], y[start:end])
+        Xb = X[start:end]
+        yb = y[start:end]
+        pf_model.partial_fit(Xb, yb, classes=classes)
 
     # partial_fit() is expected to diverge from fit() given
     # these params
