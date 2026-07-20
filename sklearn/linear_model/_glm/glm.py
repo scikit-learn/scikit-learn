@@ -380,15 +380,16 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 verbose=self.verbose,
             )
         elif self.solver in ("newton-cd-gram", "newton-cholesky"):
-            sol = (
-                NewtonCDGramSolver
-                if self.solver == "newton-cd-gram"
-                else NewtonCholeskySolver
-            )
+            if self.solver == "newton-cholesky":
+                sol = NewtonCholeskySolver
+                params = dict()
+            else:
+                sol = NewtonCDGramSolver
+                params = dict(l1_reg_strength=l1_reg_strength)
             sol = sol(
                 coef=coef,
                 linear_loss=linear_loss,
-                l1_reg_strength=l1_reg_strength,
+                **params,
                 l2_reg_strength=l2_reg_strength,
                 tol=self.tol,
                 max_iter=self.max_iter,
