@@ -679,9 +679,21 @@ In addition, we add the following guidelines:
   <https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard>`_
   in all your docstrings.
 
+* When applicable, use the validation tools and scripts in the
+  :mod:`sklearn.utils` module. An overview of utility routines available for developers
+  can be found in the sections below and the :ref:`developers-utils` page.
+
+* Only write inline comments that add value and avoid stating the obvious: explain
+  the "why" rather than the "what".
 
 A good example of code that we like can be found `here
 <https://gist.github.com/nateGeorge/5455d2c57fb33c1ae04706f2dc4fee01>`_.
+
+.. note::
+
+  The current state of the scikit-learn code base is not necessarily compliant with all
+  of those guidelines, but we expect that enforcing those constraints on all new
+  contributions will get the overall code base quality in the right direction.
 
 Input validation
 ----------------
