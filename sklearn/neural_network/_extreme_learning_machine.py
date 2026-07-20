@@ -214,9 +214,9 @@ class ExtremeLearningBase(BaseEstimator, ABC):
 
         if self.ridge_alpha is None:
             if self.rtol is None:
-                self.coef_ = np.linalg.pinv(D) @ y
+                self.coef_ = np.linalg.pinv(self.A) @ self.B
             else:
-                self.coef_ = np.linalg.pinv(D, rcond=self.rtol) @ y
+                self.coef_ = np.linalg.pinv(self.A, rcond=self.rtol) @ self.B
         else:
             # np.linalg.solve(self.A + reg_mat, self.B)
             # is equivalent to
