@@ -81,8 +81,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
     l1_ratio : float, default=0.0
         The Elastic-Net mixing parameter, with `0 <= l1_ratio <= 1`. Setting
-        `l1_ratio=1` gives a pure L1-penalty, setting `l1_ratio=0` a pure L2-penalty.
-        Any value between 0 and 1 gives an Elastic-Net penalty of the form
+        `l1_ratio=1` gives a pure L1-penalty, setting `l1_ratio=0` gives a pure
+        L2-penalty. Any value between 0 and 1 gives an Elastic-Net penalty of the form
         `l1_ratio * L1 + (1 - l1_ratio) * L2`.
 
         .. warning::
@@ -591,8 +591,8 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
 
     l1_ratio : float, default=0.0
         The Elastic-Net mixing parameter, with `0 <= l1_ratio <= 1`. Setting
-        `l1_ratio=1` gives a pure L1-penalty, setting `l1_ratio=0` a pure L2-penalty.
-        Any value between 0 and 1 gives an Elastic-Net penalty of the form
+        `l1_ratio=1` gives a pure L1-penalty, setting `l1_ratio=0` gives a pure
+        L2-penalty. Any value between 0 and 1 gives an Elastic-Net penalty of the form
         `l1_ratio * L1 + (1 - l1_ratio) * L2`.
 
         .. warning::
@@ -779,8 +779,8 @@ class GammaRegressor(_GeneralizedLinearRegressor):
 
     l1_ratio : float, default=0.0
         The Elastic-Net mixing parameter, with `0 <= l1_ratio <= 1`. Setting
-        `l1_ratio=1` gives a pure L1-penalty, setting `l1_ratio=0` a pure L2-penalty.
-        Any value between 0 and 1 gives an Elastic-Net penalty of the form
+        `l1_ratio=1` gives a pure L1-penalty, setting `l1_ratio=0` gives a pure
+        L2-penalty. Any value between 0 and 1 gives an Elastic-Net penalty of the form
         `l1_ratio * L1 + (1 - l1_ratio) * L2`.
 
         .. warning::
@@ -981,8 +981,8 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
 
     l1_ratio : float, default=0.0
         The Elastic-Net mixing parameter, with `0 <= l1_ratio <= 1`. Setting
-        `l1_ratio=1` gives a pure L1-penalty, setting `l1_ratio=0` a pure L2-penalty.
-        Any value between 0 and 1 gives an Elastic-Net penalty of the form
+        `l1_ratio=1` gives a pure L1-penalty, setting `l1_ratio=0` gives a pure
+        L2-penalty. Any value between 0 and 1 gives an Elastic-Net penalty of the form
         `l1_ratio * L1 + (1 - l1_ratio) * L2`.
 
         .. warning::
