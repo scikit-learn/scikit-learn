@@ -393,7 +393,7 @@ Pull request checklist
         If no related issue exists yet, please :ref:`open one <submitting_bug_feature>`
         to discuss your proposal first.
 
-      * **Most importantly**: You understand the code that you are about to submit.
+      * **Most importantly**: you need to understand the code that you are about to submit.
 
       * You didn't modify unrelated lines. Keep the PR focused on the scope stated in
         its issue.
@@ -506,7 +506,8 @@ Pull request checklist
         what the contribution does. This title will become the commit message once
         merged.
 
-      * Fill out the `pull request template <https://github.com/scikit-learn/scikit-learn/blob/main/.github/PULL_REQUEST_TEMPLATE.md>`_.
+      * Fill out the `pull request template <
+https://raw.githubusercontent.com/scikit-learn/scikit-learn/refs/heads/main/.github/PULL_REQUEST_TEMPLATE.md>`_.
 
       * If the pull request resolves any issues/PRs, use `keywords to create a link to them
         <https://github.com/blog/1506-closing-issues-via-pull-requests/>`_
@@ -1074,8 +1075,7 @@ The tests are functions appropriately named, located in `tests`
 subdirectories, that check the validity of the algorithms and the
 different options of the code.
 
-The whole test suite can be run with `pytest`, but it is usually not recommended since
-it takes a long time. It is often enough to only run the test related to your changes:
+The whole test suite can be run with `pytest` and takes some time, roughly 10-20 minutes. It is often enough to only run the test related to your changes:
 for example, if you changed something in
 `sklearn/linear_model/_logistic.py`, running the following commands will
 usually be enough:
