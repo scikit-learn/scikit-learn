@@ -260,7 +260,7 @@ def precision_recall_curve_padded_thresholds(*args, **kwargs):
     dtype_ = _max_precision_float_dtype(xp, device_)
 
     pad_thresholds = precision.shape[0] - thresholds.shape[0]
-    thresholds_padded = xp.concat(
+    thresholds_padded = xp.stack(
         [xp.astype(thresholds, dtype_), xp.full(pad_thresholds, xp.nan)]
     )
     return xp.asarray([precision, recall, thresholds_padded])
