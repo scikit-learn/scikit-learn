@@ -260,7 +260,7 @@ def precision_recall_curve_padded_thresholds(*args, **kwargs):
     dtype_ = _max_precision_float_dtype(xp, device_)
 
     pad_thresholds = precision.shape[0] - thresholds.shape[0]
-    thresholds_padded = xp.stack(
+    thresholds_padded = xp.concat(
         [xp.astype(thresholds, dtype_), xp.full(pad_thresholds, xp.nan, device=device_)]
     )
     return xp.stack([precision, recall, thresholds_padded])
@@ -892,7 +892,8 @@ def test_sample_order_invariance_multilabel_and_multioutput():
         y_true, y_pred, y_score, random_state=0
     )
 
-    for name in MULTILABELS_METRICS:
+    # multilabel_confusion_matrix_sample uses `samplewise=True`
+    for name in MULTILABELS_METRICS - {"multilabel_confusion_matrix_sample"}:
         metric = ALL_METRICS[name]
         assert_allclose(
             metric(y_true, y_pred),
