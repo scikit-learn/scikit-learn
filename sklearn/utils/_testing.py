@@ -1514,7 +1514,8 @@ def _get_warnings_filters_info_list():
         # TODO: remove once a fixed seaborn release is our minimum.
         WarningInfo(
             "ignore",
-            message="vert: bool was deprecated in Matplotlib",
+            # Use `.` below instead of `:` to avoid string being split incorrectly
+            message="vert. bool was deprecated in Matplotlib",
             category=DeprecationWarning,
         ),
         # TODO(1.10): remove PassiveAggressive
