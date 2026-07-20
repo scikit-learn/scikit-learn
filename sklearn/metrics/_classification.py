@@ -1431,7 +1431,8 @@ def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
         return 1 - score
     else:
         if sample_weight is not None:
-            xp, _ = get_namespace(sample_weight)
+            xp, _, device_ = get_namespace_and_device(y_pred)
+            sample_weight = move_to(sample_weight, xp=xp, device=device_)
             n_samples = float(xp.sum(sample_weight))
         else:
             n_samples = _num_samples(y_true)
