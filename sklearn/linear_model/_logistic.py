@@ -236,7 +236,6 @@ def _logistic_regression_path(
     verbose=0,
     solver="lbfgs",
     coef=None,
-    class_weight=None,
     dual=False,
     penalty="l2",
     intercept_scaling=1.0,
@@ -265,8 +264,8 @@ def _logistic_regression_path(
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input data.
 
-    y : array-like of shape (n_samples,) or (n_samples, n_targets)
-        Input data, target values.
+    y : array-like of shape (n_samples,)
+        Input data, label encoded target values, i.e. integers starting from 0.
 
     classes : ndarray
         A list of class labels known to the classifier.
@@ -303,17 +302,6 @@ def _logistic_regression_path(
         Initialization value for coefficients of logistic regression.
         Useless for liblinear solver.
 
-    class_weight : dict or 'balanced', default=None
-        Weights associated with classes in the form ``{class_label: weight}``.
-        If not given, all classes are supposed to have weight one.
-
-        The "balanced" mode uses the values of y to automatically adjust
-        weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``.
-
-        Note that these weights will be multiplied with sample_weight (passed
-        through the fit method) if sample_weight is specified.
-
     dual : bool, default=False
         Dual or primal formulation. Dual formulation is only implemented for
         l2 penalty with liblinear solver. Prefer dual=False when
@@ -344,7 +332,7 @@ def _logistic_regression_path(
         data. See :term:`Glossary <random_state>` for details.
 
     check_input : bool, default=True
-        If False, the input arrays X and y will not be checked.
+        If False, the input arrays X and y (and sample_weight) will not be checked.
 
     max_squared_sum : float, default=None
         Maximum squared sum of X over samples. Used only in SAG solver.
@@ -418,13 +406,13 @@ def _logistic_regression_path(
         y = check_array(y, ensure_2d=False, dtype=None)
         check_consistent_length(X, y)
 
-    if sample_weight is not None or class_weight is not None:
-        sample_weight = _check_sample_weight(
-            sample_weight, X, dtype=X.dtype, copy=True, ensure_same_device=True
-        )
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(
+                sample_weight, X, dtype=X.dtype, copy=True, ensure_same_device=True
+            )
 
     n_samples, n_features = X.shape
-    n_classes = classes.shape[0] if hasattr(classes, "shape") else len(classes)
+    n_classes = size(classes)
     is_binary = n_classes == 2
 
     if solver == "liblinear" and not is_binary:
@@ -437,17 +425,8 @@ def _logistic_regression_path(
 
     random_state = check_random_state(random_state)
 
-    le = LabelEncoder().fit(classes)
-    if class_weight is not None:
-        class_weight_ = compute_class_weight(
-            class_weight, classes=classes, y=y, sample_weight=sample_weight
-        )
-        class_weight_ = xp.asarray(
-            class_weight_[le.transform(y)], dtype=X.dtype, device=device_
-        )
-        sample_weight *= class_weight_
-
     if is_binary:
+        # y is already encoded as values in {0, 1}.
         if coef_as_xp:
             w0 = xp.zeros(
                 n_features + int(fit_intercept),
@@ -459,20 +438,9 @@ def _logistic_regression_path(
                 n_features + int(fit_intercept),
                 dtype=_matching_numpy_dtype(X, xp=xp),
             )
-        # classes[1] is the "positive label"
-        mask = move_to(y == classes[1], xp=xp, device=device_)
-        y_bin = xp.ones(y.shape, dtype=X.dtype, device=device_)
         if solver == "liblinear":
-            y_bin[~mask] = -1.0
-        else:
-            # HalfBinomialLoss, used for those solvers, represents y in [0, 1] instead
-            # of in [-1, 1].
-            y_bin[~mask] = 0.0
+            y = 2 * y - 1  # liblinear requires target values -1, +1
     else:
-        # All solvers capable of a multinomial need LabelEncoder, not LabelBinarizer,
-        # i.e. y as a 1d-array of integers. LabelEncoder also saves memory
-        # compared to LabelBinarizer, especially when n_classes is large.
-        Y_multi = xp.asarray(le.transform(y), dtype=X.dtype, device=device_)
         if coef_as_xp:
             w0 = xp.zeros(
                 (size(classes), n_features + int(fit_intercept)),
@@ -535,7 +503,6 @@ def _logistic_regression_path(
                 raise ValueError(msg)
 
     if is_binary:
-        target = y_bin
         loss = LinearModelLoss(
             base_loss=(
                 HalfBinomialLoss()
@@ -562,7 +529,6 @@ def _logistic_regression_path(
             ),
             fit_intercept=fit_intercept,
         )
-        target = Y_multi
         if solver in ("lbfgs", "newton-cd-gram", "newton-cg", "newton-cholesky"):
             # scipy.optimize.minimize and newton-cg accept only ravelled parameters,
             # i.e. 1d-arrays. LinearModelLoss expects classes to be contiguous and
@@ -620,7 +586,7 @@ def _logistic_regression_path(
                 w0,
                 method="L-BFGS-B",
                 jac=True,
-                args=(X, target, sample_weight, 0, l2_reg_strength, n_threads),
+                args=(X, y, sample_weight, 0, l2_reg_strength, n_threads),
                 options={
                     "maxiter": max_iter,
                     "maxls": 50,  # default is 20
@@ -645,7 +611,7 @@ def _logistic_regression_path(
                 w0[-n_classes:] -= np.mean(w0[-n_classes:])
         elif solver == "newton-cg":
             l2_reg_strength = 1.0 / (C * sw_sum)
-            args = (X, target, sample_weight, 0, l2_reg_strength, n_threads)
+            args = (X, y, sample_weight, 0, l2_reg_strength, n_threads)
             w0, n_iter_i = _newton_cg(
                 grad_hess=hess,
                 func=func,
@@ -671,7 +637,7 @@ def _logistic_regression_path(
                 n_threads=n_threads,
                 verbose=verbose,
             )
-            w0 = sol.solve(X=X, y=target, sample_weight=sample_weight)
+            w0 = sol.solve(X=X, y=y, sample_weight=sample_weight)
             n_iter_i = sol.iteration
         elif solver == "newton-cd-gram":
             if penalty == "l1":
@@ -690,12 +656,12 @@ def _logistic_regression_path(
                 n_threads=n_threads,
                 verbose=verbose,
             )
-            w0 = sol.solve(X=X, y=target, sample_weight=sample_weight)
+            w0 = sol.solve(X=X, y=y, sample_weight=sample_weight)
             n_iter_i = sol.iteration
         elif solver == "liblinear":
             coef_, intercept_, n_iter_i = _fit_liblinear(
                 X,
-                target,
+                y,
                 C,
                 fit_intercept,
                 intercept_scaling,
@@ -712,7 +678,7 @@ def _logistic_regression_path(
                 w0 = np.concatenate([coef_.ravel(), intercept_])
             else:
                 w0 = coef_.ravel()
-            # n_iter_i is an array for each class. However, `target` is always encoded
+            # n_iter_i is an array for each class. However, y is encoded
             # in {-1, 1}, so we only take the first element of n_iter_i.
             n_iter_i = n_iter_i.item()
 
@@ -720,7 +686,6 @@ def _logistic_regression_path(
             if is_binary:
                 loss = "log"
             else:
-                target = target.astype(X.dtype, copy=False)
                 loss = "multinomial"
             # alpha is for L2-norm, beta is for L1-norm
             if penalty == "l1":
@@ -735,7 +700,7 @@ def _logistic_regression_path(
 
             w0, n_iter_i, warm_start_sag = sag_solver(
                 X,
-                target,
+                y,
                 sample_weight,
                 loss,
                 alpha,
@@ -791,7 +756,6 @@ def _log_reg_scoring_path(
     fit_intercept,
     max_iter,
     tol,
-    class_weight,
     verbose,
     solver,
     penalty,
@@ -810,8 +774,8 @@ def _log_reg_scoring_path(
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Training data.
 
-    y : array-like of shape (n_samples,) or (n_samples, n_targets)
-        Target labels.
+    y : array-like of shape (n_samples,)
+        Input data, label encoded target values, i.e. integers starting from 0.
 
     train : list of indices
         The indices of the train set.
@@ -844,17 +808,6 @@ def _log_reg_scoring_path(
 
     tol : float
         Tolerance for stopping criteria.
-
-    class_weight : dict or 'balanced'
-        Weights associated with classes in the form ``{class_label: weight}``.
-        If not given, all classes are supposed to have weight one.
-
-        The "balanced" mode uses the values of y to automatically adjust
-        weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
-
-        Note that these weights will be multiplied with sample_weight (passed
-        through the fit method) if sample_weight is specified.
 
     verbose : int
         For the liblinear and lbfgs solvers set verbose to any positive
@@ -954,7 +907,6 @@ def _log_reg_scoring_path(
         fit_intercept=fit_intercept,
         solver=solver,
         max_iter=max_iter,
-        class_weight=class_weight,
         tol=tol,
         verbose=verbose,
         dual=dual,
@@ -970,8 +922,12 @@ def _log_reg_scoring_path(
 
     log_reg = LogisticRegression(solver=solver)
 
+    n_classes = size(classes)
     # The score method of Logistic Regression has a classes_ attribute.
-    log_reg.classes_ = classes
+    # As y is already expected to be label encoded, we don't set
+    #     log_reg.classes_ = classes
+    # but instead
+    log_reg.classes_ = np.arange(n_classes)
 
     scores = list()
 
@@ -983,7 +939,7 @@ def _log_reg_scoring_path(
             return log_reg.score(X_test, y_test, sample_weight=sw_test)
 
     else:
-        is_binary = len(classes) <= 2
+        is_binary = n_classes <= 2
         score_params = score_params or {}
         score_params = _check_method_params(X=X, params=score_params, indices=test)
         # We need to pass the classes as "labels" argument to scorers that support
@@ -1005,12 +961,12 @@ def _log_reg_scoring_path(
             pos_label_kwarg = {}
             if is_binary and "pos_label" in sig:
                 # see _logistic_regression_path
-                pos_label_kwarg["pos_label"] = classes[-1]
+                pos_label_kwarg["pos_label"] = n_classes - 1  # classes[-1]
             scoring = make_scorer(
                 scoring._score_func,
                 greater_is_better=True if scoring._sign == 1 else False,
                 response_method=scoring._response_method,
-                labels=classes,
+                labels=log_reg.classes_,
                 **pos_label_kwarg,
                 **getattr(scoring, "_kwargs", {}),
             )
@@ -1514,11 +1470,36 @@ class LogisticRegression(
             accept_large_sparse=solver
             not in ("liblinear", "newton-cd-gram", "sag", "saga"),
         )
-        n_features = X.shape[1]
+        n_samples, n_features = X.shape
         check_classification_targets(y)
-        self.classes_ = xp_y.unique_values(y)
+        le = LabelEncoder().fit(y)
+        self.classes_ = le.classes_
         n_classes = size(self.classes_)
+        if n_classes < 2:
+            msg = (
+                "This solver needs samples of at least 2 classes in the data, but the "
+                f"data contains only one class: {self.classes_[0]}"
+            )
+            raise ValueError(msg)
         is_binary = n_classes == 2
+        y_encoded = move_to(le.transform(y), xp=xp, device=device_)
+        y_encoded = xp.astype(y_encoded, X.dtype, copy=False)
+
+        if sample_weight is not None or self.class_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+
+        if self.class_weight is not None:
+            class_weight_ = compute_class_weight(
+                self.class_weight,
+                classes=self.classes_,
+                y=y,
+                sample_weight=sample_weight,
+            )
+            class_weight_ = xp.asarray(
+                class_weight_[le.transform(y)], dtype=X.dtype, device=device_
+            )
+            # Avoid overriding the input sample_weight.
+            sample_weight = sample_weight * class_weight_
 
         # With lbfgs, the fit task will have a subtask even if max_iter is 0.
         # There's also always one extra empty subtask due to the scipy.optimize.minimize
@@ -1548,11 +1529,11 @@ class LogisticRegression(
                 )
             self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
                 X,
-                y,
+                2 * y_encoded - 1,  # liblinear requires target values -1, +1
                 self.C,
                 self.fit_intercept,
                 self.intercept_scaling,
-                self.class_weight,
+                None,  # class_weight
                 penalty,
                 self.dual,
                 self.verbose,
@@ -1567,13 +1548,6 @@ class LogisticRegression(
             max_squared_sum = row_norms(X, squared=True).max()
         else:
             max_squared_sum = None
-
-        if n_classes < 2:
-            raise ValueError(
-                "This solver needs samples of at least 2 classes"
-                " in the data, but the data contains only one"
-                " class: %r" % self.classes_[0]
-            )
 
         if self.warm_start:
             warm_start_coef = getattr(self, "coef_", None)
@@ -1593,7 +1567,7 @@ class LogisticRegression(
 
         coefs, _, n_iter = _logistic_regression_path(
             X,
-            y,
+            y_encoded,
             classes=self.classes_,
             Cs=[C_],
             l1_ratio=self.l1_ratio,
@@ -1602,7 +1576,6 @@ class LogisticRegression(
             verbose=self.verbose,
             solver=solver,
             max_iter=self.max_iter,
-            class_weight=self.class_weight,
             check_input=False,
             random_state=self.random_state,
             coef=warm_start_coef,
@@ -2255,25 +2228,40 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             accept_large_sparse=solver
             not in ("liblinear", "newton-cd-gram", "sag", "saga"),
         )
-        n_features = X.shape[1]
+        n_samples, n_features = X.shape
         check_classification_targets(y)
+        le = LabelEncoder().fit(y)
+        self.classes_ = le.classes_
+        n_classes = size(self.classes_)
+        if n_classes < 2:
+            msg = (
+                "This solver needs samples of at least 2 classes in the data, but the "
+                f"data contains only one class: {self.classes_[0]}"
+            )
+            raise ValueError(msg)
+        is_binary = n_classes == 2
+        y_encoded = np.asarray(le.transform(y), dtype=X.dtype)
 
-        class_weight = self.class_weight
+        if sample_weight is not None or self.class_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
-        # Encode for string labels
-        label_encoder = LabelEncoder().fit(y)
+        if self.class_weight is not None:
+            class_weight_ = compute_class_weight(
+                self.class_weight,
+                classes=self.classes_,
+                y=y,
+                sample_weight=sample_weight,
+            )
+            class_weight_ = np.asarray(class_weight_[le.transform(y)], dtype=X.dtype)
+            # Avoid overriding the input sample_weight.
+            sample_weight = sample_weight * class_weight_
 
         # The original class labels
-        classes_only_pos_if_binary = self.classes_ = label_encoder.classes_
-        n_classes = len(self.classes_)
-        is_binary = n_classes == 2
+        classes_only_pos_if_binary = self.classes_
 
-        if n_classes < 2:
-            raise ValueError(
-                "This solver needs samples of at least 2 classes"
-                " in the data, but the data contains only one"
-                f" class: {self.classes_[0]}."
-            )
+        if is_binary:
+            n_classes = 1
+            classes_only_pos_if_binary = classes_only_pos_if_binary[1:]
 
         if solver in ["sag", "saga"]:
             max_squared_sum = row_norms(X, squared=True).max()
@@ -2297,28 +2285,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         # init cross-validation generator
         cv = check_cv(self.cv, y, classifier=True)
-        folds = list(cv.split(X, y, **routed_params.splitter.split))
-
-        if isinstance(class_weight, dict):
-            if not (set(class_weight.keys()) <= set(self.classes_)):
-                msg = (
-                    "The given class_weight dict must have the class labels as keys; "
-                    f"classes={self.classes_} but key={class_weight.keys()}"
-                )
-                raise ValueError(msg)
-        elif class_weight == "balanced":
-            # compute the class weights for the entire dataset y
-            class_weight = compute_class_weight(
-                class_weight,
-                classes=self.classes_,
-                y=y,
-                sample_weight=sample_weight,
-            )
-            class_weight = dict(zip(self.classes_, class_weight))
-
-        if is_binary:
-            n_classes = 1
-            classes_only_pos_if_binary = classes_only_pos_if_binary[1:]
+        folds = list(cv.split(X, y_encoded, **routed_params.splitter.split))
 
         path_func = delayed(_log_reg_scoring_path)
 
@@ -2332,7 +2299,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose, prefer=prefer)(
             path_func(
                 X,
-                y,
+                y_encoded,
                 train,
                 test,
                 classes=self.classes_,
@@ -2344,7 +2311,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 tol=self.tol,
                 max_iter=self.max_iter,
                 verbose=self.verbose,
-                class_weight=class_weight,
                 scoring=scoring,
                 intercept_scaling=self.intercept_scaling,
                 random_state=self.random_state,
@@ -2414,7 +2380,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             # Note that y is label encoded
             w, _, _ = _logistic_regression_path(
                 X,
-                y,
+                y_encoded,
                 classes=self.classes_,
                 Cs=[C_],
                 solver=solver,
@@ -2423,7 +2389,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 max_iter=self.max_iter,
                 tol=self.tol,
                 penalty=penalty,
-                class_weight=class_weight,
                 verbose=max(0, self.verbose - 1),
                 random_state=self.random_state,
                 check_input=False,

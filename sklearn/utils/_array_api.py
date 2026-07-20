@@ -580,6 +580,13 @@ def move_to(*arrays, xp, device):
             if xp == xp_array and device == device_array:
                 converted_arrays.append(array)
             else:
+                if _is_xp_namespace(xp, "torch") and _is_numpy_namespace(xp_array):
+                    if any(stride < 0 for stride in array.strides):
+                        # Work around PyTorch aborting the process when importing
+                        # negative-strided NumPy arrays with DLPack. Remove this once
+                        # https://github.com/pytorch/pytorch/issues/188023 is fixed.
+                        # See also https://github.com/scikit-learn/scikit-learn/issues/34307
+                        array = numpy.ascontiguousarray(array)
                 try:
                     # The dlpack protocol is the future proof and library agnostic
                     # method to transfer arrays across namespace and device boundaries
@@ -906,6 +913,9 @@ def _median(x, axis=None, keepdims=False, xp=None):
     # `torch.median` takes the lower of the two medians when `x` has even number
     # of elements, thus we use `torch.quantile(q=0.5)`, which gives mean of the two
     if array_api_compat.is_torch_namespace(xp):
+        # torch `quantile` only accepts floats
+        if not xp.isdtype(x.dtype, "real floating"):
+            x = xp.astype(x, _find_matching_floating_dtype(x, xp=xp), copy=False)
         return xp.quantile(x, q=0.5, dim=axis, keepdim=keepdims)
 
     if hasattr(xp, "median"):
@@ -1245,89 +1255,6 @@ def indexing_dtype(xp):
     return xp.asarray(0).dtype
 
 
-def _isin(element, test_elements, xp, assume_unique=False, invert=False):
-    """Calculates ``element in test_elements``, broadcasting over `element`
-    only.
-
-    Returns a boolean array of the same shape as `element` that is True
-    where an element of `element` is in `test_elements` and False otherwise.
-    """
-    if _is_numpy_namespace(xp):
-        return xp.asarray(
-            numpy.isin(
-                element=element,
-                test_elements=test_elements,
-                assume_unique=assume_unique,
-                invert=invert,
-            )
-        )
-
-    original_element_shape = element.shape
-    element = xp.reshape(element, (-1,))
-    test_elements = xp.reshape(test_elements, (-1,))
-    return xp.reshape(
-        _in1d(
-            ar1=element,
-            ar2=test_elements,
-            xp=xp,
-            assume_unique=assume_unique,
-            invert=invert,
-        ),
-        original_element_shape,
-    )
-
-
-# Note: This is a helper for the function `_isin`.
-# It is not meant to be called directly.
-def _in1d(ar1, ar2, xp, assume_unique=False, invert=False):
-    """Checks whether each element of an array is also present in a
-    second array.
-
-    Returns a boolean array the same length as `ar1` that is True
-    where an element of `ar1` is in `ar2` and False otherwise.
-
-    This function has been adapted using the original implementation
-    present in numpy:
-    https://github.com/numpy/numpy/blob/v1.26.0/numpy/lib/arraysetops.py#L524-L758
-    """
-    xp, _ = get_namespace(ar1, ar2, xp=xp)
-
-    # This code is run to make the code significantly faster
-    if ar2.shape[0] < 10 * ar1.shape[0] ** 0.145:
-        if invert:
-            mask = xp.ones(ar1.shape[0], dtype=xp.bool, device=device(ar1))
-            for a in ar2:
-                mask &= ar1 != a
-        else:
-            mask = xp.zeros(ar1.shape[0], dtype=xp.bool, device=device(ar1))
-            for a in ar2:
-                mask |= ar1 == a
-        return mask
-
-    if not assume_unique:
-        ar1, rev_idx = xp.unique_inverse(ar1)
-        ar2 = xp.unique_values(ar2)
-
-    ar = xp.concat((ar1, ar2))
-    device_ = device(ar)
-    # We need this to be a stable sort.
-    order = xp.argsort(ar, stable=True)
-    reverse_order = xp.argsort(order, stable=True)
-    sar = xp.take(ar, order, axis=0)
-    if size(sar) >= 1:
-        bool_ar = sar[1:] != sar[:-1] if invert else sar[1:] == sar[:-1]
-    else:
-        # indexing undefined in standard when sar is empty
-        bool_ar = xp.asarray([False]) if invert else xp.asarray([True])
-    flag = xp.concat((bool_ar, xp.asarray([invert], device=device_)))
-    ret = xp.take(flag, reverse_order, axis=0)
-
-    if assume_unique:
-        return ret[: ar1.shape[0]]
-    else:
-        return xp.take(ret, rev_idx, axis=0)
-
-
 def _count_nonzero(X, axis=None, sample_weight=None, xp=None, device=None):
     """A variant of `sklearn.utils.sparsefuncs.count_nonzero` for the Array API.
 
@@ -1419,18 +1346,6 @@ def _linalg_solve(cov_chol, eye_matrix, xp):
         return scipy.linalg.solve_triangular(cov_chol, eye_matrix, lower=True)
     else:
         return xp.linalg.solve(cov_chol, eye_matrix)
-
-
-def _half_multinomial_loss(y, pred, sample_weight=None, xp=None):
-    """A version of the multinomial loss that is compatible with the array API"""
-    xp, _, device_ = get_namespace_and_device(y, pred, sample_weight)
-    log_sum_exp = _logsumexp(pred, axis=1, xp=xp)
-    y = xp.asarray(y, dtype=xp.int64, device=device_)
-    class_margins = xp.arange(y.shape[0], device=device_) * pred.shape[1]
-    label_predictions = xp.take(_ravel(pred), y + class_margins)
-    return float(
-        _average(log_sum_exp - label_predictions, weights=sample_weight, xp=xp)
-    )
 
 
 def _matching_numpy_dtype(X, xp=None):
