@@ -58,8 +58,8 @@ def _process_predict_proba(*, y_pred, target_type, classes, pos_label):
         )
 
     if target_type == "binary":
-        xp_classes, _ = get_namespace(classes)
-        col_idx = int(xp_classes.nonzero(_ravel(classes == pos_label))[0][0])
+        xp, _ = get_namespace(classes)
+        col_idx = int(xp.nonzero(_ravel(classes == pos_label))[0][0])
         return y_pred[:, col_idx]
     elif target_type == "multilabel-indicator":
         # Use a compress format of shape `(n_samples, n_output)`.

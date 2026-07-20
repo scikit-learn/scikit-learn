@@ -2233,13 +2233,13 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             sample_weight = sample_weight * class_weight_
 
         # The original class labels
-        classes_only_pos_if_binary = self.classes_
+        class_labels = self.classes_
 
         if is_binary:
             n_classes = 1
-            classes_only_pos_if_binary = classes_only_pos_if_binary[1:]
+            class_labels = class_labels[1:]
 
-        class_labels = move_to(classes_only_pos_if_binary, xp=np, device="cpu")
+        class_labels = move_to(class_labels, xp=np, device="cpu")
 
         if solver in ["sag", "saga"]:
             max_squared_sum = row_norms(X, squared=True).max()
@@ -2308,27 +2308,27 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         # - n_iter is of shape (1, n_folds, n_Cs, n_l1_ratios)
         coefs_paths, Cs, scores, n_iter_ = zip(*fold_coefs_)
         self.Cs_ = Cs[0]  # the same for all folds and l1_ratios
+        n_folds = len(folds)
+        n_cs = size(self.Cs_)
+        n_l1_ratios = len(l1_ratios_)
         coefs_paths = xp.stack(coefs_paths)
         n_iter_ = xp.stack(n_iter_)
         if is_binary:
-            coefs_paths = xp.reshape(
-                coefs_paths, (len(folds), len(l1_ratios_), self.Cs_.shape[0], -1)
-            )
+            coefs_paths = xp.reshape(coefs_paths, (n_folds, n_l1_ratios, n_cs, -1))
             # coefs_paths.shape = (n_folds, n_l1_ratios, n_Cs, n_features)
             coefs_paths = _swapaxes(coefs_paths, 1, 2, xp=xp)[None, ...]
         else:
             coefs_paths = xp.reshape(
-                coefs_paths,
-                (len(folds), len(l1_ratios_), self.Cs_.shape[0], n_classes, -1),
+                coefs_paths, (n_folds, n_l1_ratios, n_cs, n_classes, -1)
             )
             # coefs_paths.shape = (n_folds, n_l1_ratios, n_Cs, n_classes, n_features)
             coefs_paths = xp.moveaxis(coefs_paths, (0, 1, 3), (1, 3, 0))
         # n_iter_.shape = (n_folds, n_l1_ratios, n_Cs)
-        n_iter_ = xp.reshape(n_iter_, (len(folds), len(l1_ratios_), self.Cs_.shape[0]))
+        n_iter_ = xp.reshape(n_iter_, (n_folds, n_l1_ratios, n_cs))
         self.n_iter_ = _swapaxes(n_iter_, 1, 2, xp=xp)[None, ...]
         # scores.shape = (n_folds, n_l1_ratios, n_Cs)
         scores = xp.stack(scores)
-        scores = xp.reshape(scores, (len(folds), len(l1_ratios_), self.Cs_.shape[0]))
+        scores = xp.reshape(scores, (n_folds, n_l1_ratios, n_cs))
         scores = _swapaxes(scores, 1, 2, xp=xp)[None, ...]
         # repeat same scores across all classes
         scores = xp.tile(scores, (n_classes, 1, 1, 1))
@@ -2399,13 +2399,13 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             # each row of best_indices has the 2 indices for Cs and l1_ratios
             if is_binary:
                 fold_coef_paths = xp.stack(
-                    [coefs_paths[0, i, *best_indices[i], :] for i in range(len(folds))]
+                    [coefs_paths[0, i, *best_indices[i], :] for i in range(n_folds)]
                 )
             else:
                 fold_coef_paths = xp.stack(
                     [
                         coefs_paths[:, i, best_indices[i][0], best_indices[i][1], :]
-                        for i in range(len(folds))
+                        for i in range(n_folds)
                     ]
                 )
             w = xp.mean(fold_coef_paths, axis=0)
@@ -2445,8 +2445,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             self.n_iter_ = self.n_iter_[:, :, :, 0]
 
         if not use_legacy_attributes:
-            n_folds = len(folds)
-            n_cs = size(self.Cs_)
             n_dof = X.shape[1] + int(self.fit_intercept)
             self.C_ = float(self.C_[0])
             newpaths = xp.concat(tuple(self.coefs_paths_.values()), axis=0)

@@ -2800,11 +2800,11 @@ def test_logistic_regression_array_api_compliance(
         rtol = 1e-4 if dtype_name == "float32" else 1e-8
 
     with config_context(array_api_dispatch=True):
-        # Make sure that we converge when using the namespace/device
-        # specific fit.
         lr_xp = LogisticRegression(**lr_params).fit(
             X_xp, y_xp_or_np, sample_weight=sample_weight
         )
+        # Make sure that we converge when using the namespace/device
+        # specific fit.
         assert lr_xp.n_iter_.shape == lr_np.n_iter_.shape
         assert int(lr_xp.n_iter_[0]) < lr_xp.max_iter
 
