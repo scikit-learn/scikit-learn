@@ -680,6 +680,17 @@ def test_glm_wrong_y_range(glm):
         glm.fit(X, y)
 
 
+@pytest.mark.parametrize("GLM", (TweedieRegressor, PoissonRegressor, GammaRegressor))
+@pytest.mark.parametrize("solver", ("lbfgs", "newton-cg", "newton-cholesky"))
+def test_glm_l1_ratio_solver_raises(GLM, solver):
+    """Test that GLM raises if solver does not support l1_ratio > 0."""
+    X = np.array([[1, 1, 1, 1, 1], [0, 1, 2, 3, 4]]).T
+    y = np.linspace(1, 5, 4)
+    msg = f"The solver '{solver}' does not support l1_ratio > 0; got l1_ratio=0.1"
+    with pytest.raises(ValueError, match=msg):
+        GLM(l1_ratio=0.1, solver=solver).fit(X, y)
+
+
 @pytest.mark.parametrize("fit_intercept", [False, True])
 def test_glm_identity_regression(fit_intercept):
     """Test GLM regression with identity link on a simple dataset."""
@@ -913,7 +924,7 @@ def test_normal_ridge_comparison(
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
-def test_poisson_glmnet(solver):
+def test_poisson_glmnet_L2(solver):
     """Compare Poisson regression with L2 regularization and LogLink to glmnet"""
     # library("glmnet")
     # options(digits=10)
@@ -938,6 +949,35 @@ def test_poisson_glmnet(solver):
     glm.fit(X, y)
     assert_allclose(glm.intercept_, -0.12889386979, rtol=1e-5)
     assert_allclose(glm.coef_, [0.29019207995, 0.03741173122], rtol=1e-5)
+
+
+@pytest.mark.parametrize("solver", ["newton-cd-gram"])
+def test_poisson_glmnet_enet(solver):
+    """Compare Poisson regression with Elastic-Net penaltiy and LogLink to glmnet"""
+    # library("glmnet")
+    # options(digits=10)
+    # df <- data.frame(a=c(-2,-1,1,2), b=c(0,0,1,1), y=c(0,1,1,2))
+    # x <- data.matrix(df[,c("a", "b")])
+    # y <- df$y
+    # fit <- glmnet(x=x, y=y, alpha=0.5, lambda=1, intercept=T, family="poisson",
+    #               standardize=F, thresh=1e-12)
+    # coef(fit)  # s=1 because lambda=1
+    # (Intercept) -0.03550976074
+    # a            0.16936420181
+    # b            .
+    X = np.array([[-2, -1, 1, 2], [0, 0, 1, 1]]).T
+    y = np.array([0, 1, 1, 2])
+    glm = PoissonRegressor(
+        alpha=1,
+        l1_ratio=0.5,
+        fit_intercept=True,
+        tol=1e-12,
+        solver=solver,
+    )
+    glm.fit(X, y)
+    print(glm.coef_)
+    assert_allclose(glm.intercept_, -0.03550976074, rtol=1e-6)
+    assert_allclose(glm.coef_, [0.16936420181, 0], rtol=1e-6)
 
 
 def test_convergence_warning(regression_data):

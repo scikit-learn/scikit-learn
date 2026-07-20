@@ -1110,8 +1110,8 @@ class LogisticRegression(
         data. It has no effect on the other solvers.
         See :term:`Glossary <random_state>` for details.
 
-    solver : {'lbfgs', 'liblinear', 'newton-cg', 'newton-cholesky', 'sag', 'saga'}, \
-            default='lbfgs'
+    solver : {'lbfgs', 'liblinear', 'newton-cd-gram', 'newton-cg', 'newton-cholesky', \
+            'sag', 'saga'}, default='lbfgs'
 
         Algorithm to use in the optimization problem. Default is 'lbfgs'.
         To choose a solver, you might want to consider the following aspects:
@@ -1778,8 +1778,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            The default will change from None, i.e. accuracy, to 'neg_log_loss' in
            version 1.11.
 
-    solver : {'lbfgs', 'liblinear', 'newton-cg', 'newton-cholesky', 'sag', 'saga'}, \
-            default='lbfgs'
+    solver : {'lbfgs', 'liblinear', 'newton-cd-gram', 'newton-cg', 'newton-cholesky', \
+            'sag', 'saga'}, default='lbfgs'
 
         Algorithm to use in the optimization problem. Default is 'lbfgs'.
         To choose a solver, you might want to consider the following aspects:
