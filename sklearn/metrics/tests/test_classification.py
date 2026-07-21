@@ -18,8 +18,8 @@ from sklearn.metrics import (
     accuracy_score,
     average_precision_score,
     balanced_accuracy_score,
-    brier_calibration_error,
     brier_score_loss,
+    calibration_error,
     class_likelihood_ratios,
     classification_report,
     cohen_kappa_score,
@@ -3211,15 +3211,15 @@ def test_weighted_calibration_curve_matches_calibration_curve(strategy, n_bins):
     assert_allclose(bin_weights, expected_bin_weights)
 
 
-def test_brier_calibration_error_calibrated_predictions():
+def test_calibration_error_calibrated_predictions():
     y_true = np.array([0, 0, 0, 1] + [0, 1, 1, 1])
     y_proba = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
 
-    assert brier_calibration_error(y_true, y_proba) == pytest.approx(0.0)
+    assert calibration_error(y_true, y_proba) == pytest.approx(0.0)
 
 
-def _reference_brier_calibration_error(y_true, y_proba, n_bins):
-    """Independent NumPy reference for the unweighted Brier calibration error.
+def _reference_calibration_error(y_true, y_proba, n_bins, *, squared=False):
+    """Independent NumPy reference for the unweighted calibration error.
 
     Quantile (equal-mass) bins are built with linear-interpolation percentiles,
     then the squared calibration gaps are averaged weighting each bin by its
@@ -3233,13 +3233,15 @@ def _reference_brier_calibration_error(y_true, y_proba, n_bins):
         weight = np.count_nonzero(mask)
         error += weight * (y_true[mask].mean() - y_proba[mask].mean()) ** 2
         total += weight
-    return error / total
+    error = error / total
+    return error if squared else np.sqrt(error)
 
 
 # `n_samples` includes values not divisible by the resulting bin count, where a
 # (wrong) unweighted average over bins would disagree with the mass-weighted one.
 @pytest.mark.parametrize("n_samples", [12, 40, 53, 128])
-def test_brier_calibration_error_matches_reference(n_samples):
+@pytest.mark.parametrize("squared", [False, True])
+def test_calibration_error_matches_reference(n_samples, squared):
     # Cross-check the full pipeline (binning + mass-weighted aggregation) against
     # an independent reference.
     rng = check_random_state(n_samples)
@@ -3247,44 +3249,44 @@ def test_brier_calibration_error_matches_reference(n_samples):
     y_true = rng.binomial(1, y_proba)
     n_bins = int(np.ceil(np.cbrt(n_samples)))
 
-    expected = _reference_brier_calibration_error(y_true, y_proba, n_bins)
-    assert brier_calibration_error(y_true, y_proba) == pytest.approx(expected)
+    expected = _reference_calibration_error(y_true, y_proba, n_bins, squared=squared)
+    assert calibration_error(y_true, y_proba, squared=squared) == pytest.approx(
+        expected
+    )
 
 
-def test_brier_calibration_error_default_pos_label_single_class():
+def test_calibration_error_default_pos_label_single_class():
     y_true = np.array([0, 0])
     y_proba = np.array([0.1, 0.2])
 
-    assert brier_calibration_error(y_true, y_proba) == pytest.approx(
-        brier_calibration_error(y_true, y_proba, pos_label=1)
+    assert calibration_error(y_true, y_proba) == pytest.approx(
+        calibration_error(y_true, y_proba, pos_label=1)
     )
-    assert brier_calibration_error(y_true, y_proba) == pytest.approx(0.025)
+    assert calibration_error(y_true, y_proba) == pytest.approx(np.sqrt(0.025))
 
 
-def test_brier_calibration_error_absent_pos_label_single_class():
+def test_calibration_error_absent_pos_label_single_class():
     y_true = np.zeros(8)
     y_proba = np.array([0.25, 0.25, 0.25, 0.25, 0.75, 0.75, 0.75, 0.75])
 
     with warnings.catch_warnings():
         warnings.simplefilter("error", FutureWarning)
-        result = brier_calibration_error(y_true, y_proba, pos_label=2)
+        result = calibration_error(y_true, y_proba, pos_label=2)
 
-    assert result == pytest.approx(0.3125)
+    assert result == pytest.approx(np.sqrt(0.3125))
 
 
-def test_brier_calibration_error_sample_weights():
+def test_calibration_error_sample_weights():
     y_true = np.array([0, 0, 0, 1] + [1, 1, 1, 1])
     y_proba = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
     sample_weight = np.array([1, 1, 1, 1] + [3, 3, 3, 3])
 
-    assert brier_calibration_error(
+    assert calibration_error(
         y_true, y_proba, sample_weight=sample_weight.tolist()
-    ) == pytest.approx(
-        brier_calibration_error(y_true, y_proba, sample_weight=sample_weight)
-    )
-    assert brier_calibration_error(
+    ) == pytest.approx(calibration_error(y_true, y_proba, sample_weight=sample_weight))
+    assert calibration_error(
         y_true, y_proba, sample_weight=sample_weight
-    ) == pytest.approx(0.03515625)
+    ) == pytest.approx(0.1875)
 
 
 @pytest.mark.parametrize(
@@ -3307,13 +3309,13 @@ def test_brier_calibration_error_sample_weights():
         (
             "multiclass-proba",
             {},
-            "brier_calibration_error only supports binary classification",
+            "calibration_error only supports binary classification",
         ),
         ("multiclass-target", {}, "Only binary classification is supported"),
         ("nan-target-pos-label", {"pos_label": 1}, "Input contains NaN"),
     ],
 )
-def test_brier_calibration_error_raises(case, kwargs, err_msg):
+def test_calibration_error_raises(case, kwargs, err_msg):
     y_true = np.array([0, 0, 0, 1] + [1, 1, 1, 1])
     y_proba = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
 
@@ -3334,30 +3336,26 @@ def test_brier_calibration_error_raises(case, kwargs, err_msg):
     with warnings.catch_warnings():
         warnings.simplefilter("error", FutureWarning)
         with pytest.raises(ValueError, match=err_msg):
-            brier_calibration_error(y_true, y_proba, **kwargs)
+            calibration_error(y_true, y_proba, **kwargs)
 
 
-def test_brier_calibration_error_auto_bin_count_perfect_cube():
+def test_calibration_error_auto_bin_count_perfect_cube():
     # 64 = 4**3 is a boundary where libm `pow` can overshoot the cube root; the
     # metric must use ceil(cbrt(64)) = 4 bins (np.cbrt avoids the overshoot that
     # would give 5). Pin this by matching the 4-bin reference and *not* the 5-bin.
     y_true = np.array([0, 1] * 32)
     y_proba = np.linspace(0.01, 0.99, num=64)
 
-    result = brier_calibration_error(y_true, y_proba)
-    assert result == pytest.approx(
-        _reference_brier_calibration_error(y_true, y_proba, 4)
-    )
-    assert result != pytest.approx(
-        _reference_brier_calibration_error(y_true, y_proba, 5)
-    )
+    result = calibration_error(y_true, y_proba)
+    assert result == pytest.approx(_reference_calibration_error(y_true, y_proba, 4))
+    assert result != pytest.approx(_reference_calibration_error(y_true, y_proba, 5))
 
 
-def test_brier_calibration_error_repeated_probabilities():
+def test_calibration_error_repeated_probabilities():
     y_true = np.array([1, 0, 0, 1])
     y_proba = np.array([0.25, 0.25, 0.75, 0.75])
 
-    assert brier_calibration_error(y_true, y_proba) == pytest.approx(0.0625)
+    assert calibration_error(y_true, y_proba) == pytest.approx(0.25)
 
 
 def test_balanced_accuracy_score_unseen():
@@ -3396,7 +3394,7 @@ def test_balanced_accuracy_score(y_true, y_pred):
         precision_recall_fscore_support,
         precision_score,
         recall_score,
-        brier_calibration_error,
+        calibration_error,
         brier_score_loss,
     ],
 )
@@ -3412,7 +3410,7 @@ def test_classification_metric_pos_label_types(metric, classes):
     rng = np.random.RandomState(42)
     n_samples, pos_label = 10, classes[-1]
     y_true = rng.choice(classes, size=n_samples, replace=True)
-    if metric in (brier_calibration_error, brier_score_loss):
+    if metric in (calibration_error, brier_score_loss):
         # brier score loss requires probabilities
         y_pred = rng.uniform(size=n_samples)
     else:

@@ -27,8 +27,8 @@ from sklearn.metrics import (
     accuracy_score,
     average_precision_score,
     balanced_accuracy_score,
-    brier_calibration_error,
     brier_score_loss,
+    calibration_error,
     check_scoring,
     f1_score,
     fbeta_score,
@@ -111,7 +111,7 @@ CLF_SCORERS = [
     "recall_micro",
     "neg_log_loss",
     "neg_brier_score",
-    "neg_brier_calibration_error",
+    "neg_l2_calibration_error",
     "jaccard",
     "jaccard_weighted",
     "jaccard_macro",
@@ -448,32 +448,19 @@ def test_classification_multiclass_scores(scorer_name, metric):
     assert score == pytest.approx(expected_score)
 
 
-def test_brier_calibration_error_scorer_value():
-    # The scorer must return the negated metric evaluated on the positive-class
-    # probabilities, and route `pos_label` to both the response and the metric.
+def test_calibration_error_scorer_value():
     X, y = make_classification(n_classes=2, n_samples=60, random_state=0)
-    y = np.where(y == 1, "spam", "ham")
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, random_state=0, stratify=y
     )
     clf = LogisticRegression().fit(X_train, y_train)
 
-    pos_label = "spam"
-    pos_col = list(clf.classes_).index(pos_label)
-    expected = -brier_calibration_error(
-        y_test, clf.predict_proba(X_test)[:, pos_col], pos_label=pos_label
-    )
-
-    scorer = make_scorer(
-        brier_calibration_error,
-        greater_is_better=False,
-        response_method="predict_proba",
-        pos_label=pos_label,
-    )
+    expected = -calibration_error(y_test, clf.predict_proba(X_test)[:, 1])
+    scorer = get_scorer("neg_l2_calibration_error")
     assert scorer(clf, X_test, y_test) == pytest.approx(expected)
 
 
-def test_brier_calibration_error_scorer_multiclass_error():
+def test_calibration_error_scorer_multiclass_error():
     X, y = make_classification(
         n_classes=3, n_informative=3, n_samples=30, random_state=0
     )
@@ -482,8 +469,8 @@ def test_brier_calibration_error_scorer_multiclass_error():
     )
     clf = DecisionTreeClassifier(random_state=0).fit(X_train, y_train)
 
-    scorer = get_scorer("neg_brier_calibration_error")
-    err_msg = "brier_calibration_error only supports binary classification"
+    scorer = get_scorer("neg_l2_calibration_error")
+    err_msg = "calibration_error only supports binary classification"
     with pytest.raises(ValueError, match=err_msg):
         scorer(clf, X_test, y_test)
 

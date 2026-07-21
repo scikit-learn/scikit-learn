@@ -15,8 +15,8 @@ from sklearn.metrics import (
     accuracy_score,
     average_precision_score,
     balanced_accuracy_score,
-    brier_calibration_error,
     brier_score_loss,
+    calibration_error,
     classification_report,
     cohen_kappa_score,
     confusion_matrix,
@@ -269,8 +269,8 @@ CONTINUOUS_CLASSIFICATION_METRICS = {
     "log_loss": log_loss,
     "unnormalized_log_loss": partial(log_loss, normalize=False),
     "hinge_loss": hinge_loss,
-    "brier_calibration_error": brier_calibration_error,
     "brier_score_loss": brier_score_loss,
+    "calibration_error": calibration_error,
     "roc_auc_score": roc_auc_score,  # default: average="macro"
     "weighted_roc_auc": partial(roc_auc_score, average="weighted"),
     "samples_roc_auc": partial(roc_auc_score, average="samples"),
@@ -344,7 +344,7 @@ METRIC_UNDEFINED_MULTICLASS = {
     "dcg_score",
     "ndcg_score",
     "coverage_error",
-    "brier_calibration_error",
+    "calibration_error",
     # with default average='binary', multiclass is prohibited
     "precision_score",
     "recall_score",
@@ -386,7 +386,7 @@ METRICS_WITH_POS_LABEL = {
     "roc_curve",
     "precision_recall_curve",
     "det_curve",
-    "brier_calibration_error",
+    "calibration_error",
     "brier_score_loss",
     "d2_brier_score",
     "precision_score",
@@ -609,10 +609,10 @@ METRICS_WITHOUT_SAMPLE_WEIGHT = {
 
 # These metrics support `sample_weight`, but integer weights are not equivalent
 # to expanding the dataset by repeating samples because their definition depends
-# on the number of samples. In particular, `brier_calibration_error` sets the
+# on the number of samples. In particular, `calibration_error` sets the
 # number of bins to `ceil(cbrt(n_samples))` before computing quantile bins.
 METRICS_WITH_SAMPLE_WEIGHT_NOT_EQUIVALENT_TO_REPETITION = {
-    "brier_calibration_error",
+    "calibration_error",
 }
 
 WEIGHT_SCALE_DEPENDENT_METRICS = {
@@ -646,7 +646,7 @@ METRICS_WITH_LOG1P_Y = {
 METRICS_SUPPORTING_MIXED_NAMESPACE = [
     "accuracy_score",
     "average_precision_score",
-    "brier_calibration_error",
+    "calibration_error",
     "brier_score_loss",
     "confusion_matrix_at_thresholds",
     "d2_brier_score",
@@ -2615,7 +2615,7 @@ array_api_metric_checkers = {
         check_array_api_multilabel_classification_metric,
     ],
     # Continuous classification metrics
-    brier_calibration_error: [check_array_api_binary_continuous_classification_metric],
+    calibration_error: [check_array_api_binary_continuous_classification_metric],
     brier_score_loss: [
         check_array_api_binary_continuous_classification_metric,
         check_array_api_multiclass_continuous_classification_metric,

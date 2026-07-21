@@ -4036,29 +4036,32 @@ def brier_score_loss(
     {
         "y_true": ["array-like"],
         "y_proba": ["array-like"],
+        "norm": [StrOptions({"l2"})],
+        "squared": ["boolean"],
         "sample_weight": ["array-like", None],
         "pos_label": [Real, str, "boolean", None],
     },
     prefer_skip_nested_validation=True,
 )
-def brier_calibration_error(
+def calibration_error(
     y_true,
     y_proba,
     *,
+    norm="l2",
+    squared=False,
     sample_weight=None,
     pos_label=None,
 ):
-    """Compute the Brier calibration error for binary probabilistic predictions.
+    """Compute the calibration error for binary probabilistic predictions.
 
-    The Brier calibration error is the binned calibration term of the Brier
-    score decomposition. For each bin, it compares the average predicted
+    For each bin, the calibration error compares the average predicted
     probability of the positive class with the fraction of samples that
     actually belong to the positive class. Bins are defined by weighted
     quantiles of the predicted probabilities, also known as uniform-mass
     binning. Following [1]_, the number of bins is set to
     ``int(np.ceil(np.cbrt(n_samples)))``.
 
-    Read more in the :ref:`User Guide <brier_calibration_error>`.
+    Read more in the :ref:`User Guide <calibration_error>`.
 
     .. versionadded:: 1.10
 
@@ -4069,6 +4072,15 @@ def brier_calibration_error(
 
     y_proba : array-like of shape (n_samples,)
         Probabilities of the positive class.
+
+    norm : {"l2"}, default="l2"
+        Norm used to aggregate the calibration errors over the bins. Currently,
+        only ``"l2"`` is supported.
+
+    squared : bool, default=False
+        If ``True``, return the squared L2 calibration error, which is the
+        binned calibration term of the Brier score decomposition. If ``False``,
+        return the L2 calibration error.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -4086,7 +4098,7 @@ def brier_calibration_error(
     Returns
     -------
     score : float
-        Brier calibration error.
+        Calibration error.
 
     References
     ----------
@@ -4097,21 +4109,21 @@ def brier_calibration_error(
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.metrics import brier_calibration_error
+    >>> from sklearn.metrics import calibration_error
     >>> y_true = np.array([0, 0, 0, 1] + [0, 1, 1, 1])
     >>> y_proba = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
-    >>> brier_calibration_error(y_true, y_proba)
+    >>> calibration_error(y_true, y_proba)
     0.0
     >>> y_true = np.array([0, 0, 0, 0] + [1, 1, 1, 1])
-    >>> brier_calibration_error(y_true, y_proba)
-    0.0625
+    >>> calibration_error(y_true, y_proba)
+    0.25
     """
     y_proba = check_array(
         y_proba, ensure_2d=False, ensure_all_finite=False, input_name="y_proba"
     )
     if y_proba.ndim == 2 and y_proba.shape[1] > 1:
         raise ValueError(
-            "brier_calibration_error only supports binary classification. "
+            "calibration_error only supports binary classification. "
             "y_proba must be a 1d array of probabilities for the positive class; "
             f"got an array with shape {y_proba.shape}."
         )
@@ -4137,6 +4149,8 @@ def brier_calibration_error(
 
     xp, _ = get_namespace(bin_weights)
     error = xp.sum(bin_weights * (prob_true - prob_pred) ** 2) / xp.sum(bin_weights)
+    if not squared:
+        error = xp.sqrt(error)
     return float(error)
 
 
