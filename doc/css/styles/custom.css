@@ -10,6 +10,10 @@ html[data-theme="light"] .highlight pre {
   background: #fff;
 }
 
+html[data-theme="dark"] .highlight pre {
+  background: #000;
+}
+
 code.literal {
   border: 0;
 }
