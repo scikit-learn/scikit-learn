@@ -1951,6 +1951,41 @@ def test_cross_val_predict_with_method_multilabel_rf_rare_class():
             check_cross_val_predict_multilabel(est, X, y, method=method)
 
 
+@pytest.mark.parametrize("scoring", ["neg_log_loss", "roc_auc_ovr"])
+def test_cross_validate_rare_class_proba_scoring(scoring):
+    """Check scoring with classifier on a rare class problem.
+
+    In this context, the classifier might have missed some classes during training and
+    scoring will fail if we are not aligning the predictions onto the full set of
+    classes.
+    """
+    X = np.array(
+        [
+            [-2.0, -2.0],
+            [-1.5, -2.5],
+            [2.0, 2.0],
+            [1.5, 2.5],
+            [6.0, 6.0],
+        ]
+    )
+    # Class 2 is rare and lives only in the test fold below.
+    y = np.array([0, 0, 1, 1, 2])
+    train_idx = np.array([0, 2])  # only classes {0, 1} are seen during fit
+    test_idx = np.array([1, 3, 4])  # classes {0, 1, 2} present at scoring time
+    custom_splits = [(train_idx, test_idx)]
+
+    cv_results = cross_validate(
+        LogisticRegression(),
+        X,
+        y,
+        cv=custom_splits,
+        scoring=scoring,
+        error_score="raise",
+    )
+
+    assert np.isfinite(cv_results["test_score"]).all()
+
+
 def get_expected_predictions(X, y, cv, classes, est, method):
     expected_predictions = np.zeros([len(y), classes])
     func = getattr(est, method)
