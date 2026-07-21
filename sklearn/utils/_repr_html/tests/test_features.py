@@ -230,7 +230,7 @@ def test_features_html_structure():
     assert '<table class="features-table">' in html
     assert "<tbody>" in html
     assert "</tbody>" in html
-    assert '<i class="copy-paste-icon"' in html
+    assert '<button type="button" class="copy-paste-icon"' in html
     assert "copyFeatureNamesToClipboard" in html
 
 
