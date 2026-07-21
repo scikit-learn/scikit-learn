@@ -279,14 +279,10 @@ def _encode(values, *, uniques, return_diff=False):
                 uniques.shape[0] - 1, dtype=encoded.dtype, device=device(encoded)
             )
             encoded_safe = xp.minimum(encoded, max_idx)
-            matches = (encoded < uniques.shape[0]) & (uniques[encoded_safe] == values)
+            matches = uniques[encoded_safe] == values
 
             if xp.any(xp.isnan(uniques)):
-                matches |= (
-                    (encoded < uniques.shape[0])
-                    & xp.isnan(uniques[encoded_safe])
-                    & xp.isnan(values)
-                )
+                matches |= xp.isnan(values)
         else:
             matches = xp.zeros_like(encoded, dtype=xp.bool)
         encoded[~matches] = -1
