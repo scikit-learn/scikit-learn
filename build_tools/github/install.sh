@@ -77,7 +77,7 @@ python_environment_install_and_activate() {
 
         check_packages_dev_version $dev_packages
 
-        # TODO Remove use cython dev once
+        # TODO Switch back to cython dev (commented lines below) once
         # https://github.com/cython/cython/issues/7846 is fixed
         # Temporary work-around to upload development wheels
         echo "Installing cython 3.2.5 as temporary work-around for cython dev issues"
