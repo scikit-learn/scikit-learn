@@ -100,6 +100,8 @@ build-backend = "mesonpy"
 # Minimum requirements for the build system to execute.
 requires = [
     "meson-python>=0.17.1",
+    # TODO: once https://github.com/cython/cython/issues/7846 is fixed,
+    # change to "cython>[fixed-version]" or "cython>=3.1.2,!=3.2.6,!=3.2.7,..."
     "cython>=3.1.2,<3.2.6",
     "numpy>=2",
     "scipy>=1.10.0",
