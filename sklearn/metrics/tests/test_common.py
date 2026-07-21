@@ -184,7 +184,7 @@ def normalized_confusion_matrix(*args, **kwargs):
     cm = confusion_matrix(*args, **kwargs)
     xp, _, device = get_namespace_and_device(cm)
     dtype_float = _max_precision_float_dtype(xp, device)
-    # Only float allowed in __truediv__
+    # Only float allowed in __truediv__ in array API strict
     return (
         xp.astype(cm, dtype_float)
         / xp.astype(xp.sum(cm, axis=1), dtype_float)[:, xp.newaxis]
