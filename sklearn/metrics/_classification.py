@@ -1434,7 +1434,7 @@ def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
             xp, _ = get_namespace(sample_weight)
             # Required for NumPy conversion of 'numpy_as_array_works' inputs,
             # when array API dispatch off.
-            sample_weight = check_array(sample_weight, y_true, force_float_dtype=False)
+            sample_weight = check_array(sample_weight, ensure_2d=False)
             n_samples = float(xp.sum(sample_weight))
         else:
             n_samples = _num_samples(y_true)
