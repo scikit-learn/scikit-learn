@@ -158,18 +158,18 @@ import matplotlib.pyplot as plt
 from sklearn.inspection import DecisionBoundaryDisplay
 
 reduced_data = PCA(n_components=2).fit_transform(data)
-kmeans = KMeans(init="k-means++", n_clusters=n_digits, n_init=4)
+kmeans = KMeans(init="k-means++", n_clusters=n_digits, n_init=4, random_state=42)
 kmeans.fit(reduced_data)
 
 plt.figure()
-# Put the result into a color plot
+
 DecisionBoundaryDisplay.from_estimator(
     kmeans,
     reduced_data,
     ax=plt.gca(),
+    random_state=0,
     response_method="predict",
     alpha=0.8,
-    target_colors="tab10",
     plot_method="pcolormesh",
     grid_resolution=1000,
 )
