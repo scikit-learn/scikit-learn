@@ -1,8 +1,11 @@
+import pickle
+
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
 from sklearn.datasets import make_regression
+from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.ensemble._hist_gradient_boosting.common import (
     ALMOST_INF,
@@ -188,11 +191,10 @@ def test_categorical_predictor(bins_go_left, expected_predictions):
 
 
 def test_setstate_rejects_out_of_bounds_children():
-    """``TreePredictor.__setstate__`` rejects out-of-bounds child indices.
+    """``TreePredictor.__setstate__`` should check out-of-bounds child indices.
 
-    Non-regression test for a memory-safety issue: deserializing a crafted but
-    type-valid predictor and running inference performed out-of-bounds native
-    memory reads (segfault). ``left`` / ``right`` are validated at load time.
+    Non-regression test for a memory-safety issue, making sure deserializing a
+    malisciously crafted predictor doesn't give a segfault.
     """
     n_nodes = 3
     nodes = np.zeros(n_nodes, dtype=PREDICTOR_RECORD_DTYPE)
@@ -213,18 +215,11 @@ def test_setstate_rejects_out_of_bounds_children():
 
 
 def test_hist_gbdt_rejects_out_of_bounds_feature_idx():
-    """Out-of-bounds ``feature_idx`` is rejected when the model is loaded.
+    """Out-of-bounds ``feature_idx`` should be rejected when the model is loaded.
 
-    ``feature_idx`` is dereferenced as a column index into ``X`` in the nogil
-    traversal. Its upper bound is the number of features seen during fit, which
-    is known on the estimator (not on the individual ``TreePredictor``), so it
-    is validated in ``BaseHistGradientBoosting.__setstate__`` rather than on
-    every ``predict`` call.
+    Regression test for making sure loading a model with a malisciously invalid
+    ``feature_idx`` doesn't segfault and raises instead.
     """
-    import pickle
-
-    from sklearn.ensemble import HistGradientBoostingRegressor
-
     X, y = make_regression(n_samples=100, n_features=5, random_state=0)
     est = HistGradientBoostingRegressor(max_iter=3, random_state=0).fit(X, y)
 

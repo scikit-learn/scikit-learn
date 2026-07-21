@@ -8,6 +8,6 @@
   the forest and gradient-boosting ensembles that share the tree structure,
   and :class:`ensemble.HistGradientBoostingClassifier` /
   :class:`ensemble.HistGradientBoostingRegressor`. Note that loading models
-  from an untrusted source remains unsafe; this is a defense-in-depth
-  hardening of the model-loading trust boundary.
-  By :user:`Adrin Jalali <adrinjalali>`.
+  from an untrusted source remains unsafe in principle, while this making it
+  harder to form an attack.
+  By `Adrin Jalali`_

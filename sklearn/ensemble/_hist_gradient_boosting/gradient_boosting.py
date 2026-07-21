@@ -1245,16 +1245,14 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
     def __setstate__(self, state):
         super().__setstate__(state)
 
-        # Defense-in-depth for the model-loading trust boundary: the nogil
-        # traversal dereferences each split node's ``feature_idx`` as a column
-        # index into ``X`` without any bounds check. A tampered but type-valid
-        # predictor (e.g. one accepted by ``skops.io`` type auditing) would
-        # therefore trigger out-of-bounds native memory reads and a segfault at
-        # prediction time. ``feature_idx`` is bounded by the number of features
-        # seen during fit, which is available here (and only here, not on the
-        # individual ``TreePredictor``), so we validate it once at load time
-        # rather than on every ``predict`` call. The ``left`` / ``right`` node
-        # indices are validated in ``TreePredictor.__setstate__``.
+        # The cython traversal dereferences each split node's `feature_idx` as
+        # a column index into `X` without any bounds check. Loading a
+        # maliscious persisted model would therefore trigger out-of-bounds
+        # native memory reads and a segfault at prediction time. `feature_idx`
+        # is bounded by the number of features seen during fit, which is
+        # available here (and only here, not on the individual
+        # `TreePredictor`). The `left` / `right` node indices are validated in
+        # `TreePredictor.__setstate__`.
         n_features = getattr(self, "_n_features", None)
         if n_features is not None:
             for predictors_of_ith_iteration in getattr(self, "_predictors", []):
