@@ -28,5 +28,5 @@ ruff==0.12.2
     # via -r build_tools/github/lint_requirements.txt
 tokenize-rt==6.2.0
     # via cython-lint
-typing-extensions==4.15.0
+typing-extensions==4.16.0
     # via mypy
