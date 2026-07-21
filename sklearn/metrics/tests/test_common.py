@@ -681,6 +681,11 @@ METRICS_WITH_LOG1P_Y = {
     "root_mean_squared_log_error",
 }
 
+# Metrics returning per sample output
+METRICS_SAMPLEWISE = {
+    "multilabel_confusion_matrix_sample",
+}
+
 # Metrics that do not *yet* support array API inputs
 METRICS_NOT_SUPPORTING_ARRAY_API = {
     # "adjusted_balanced_accuracy_score",
@@ -892,8 +897,7 @@ def test_sample_order_invariance_multilabel_and_multioutput():
         y_true, y_pred, y_score, random_state=0
     )
 
-    # multilabel_confusion_matrix_sample uses `samplewise=True`
-    for name in MULTILABELS_METRICS - {"multilabel_confusion_matrix_sample"}:
+    for name in MULTILABELS_METRICS - METRICS_SAMPLEWISE:
         metric = ALL_METRICS[name]
         assert_allclose(
             metric(y_true, y_pred),
@@ -1767,17 +1771,18 @@ def check_sample_weight_invariance(name, metric, y1, y2, sample_weight=None):
         % (weighted_score, weighted_score_list, name),
     )
 
-    # check that integer weights is the same as repeated samples
-    repeat_weighted_score = metric(
-        np.repeat(y1, sample_weight, axis=0),
-        np.repeat(y2, sample_weight, axis=0),
-        sample_weight=None,
-    )
-    assert_allclose(
-        weighted_score,
-        repeat_weighted_score,
-        err_msg="Weighting %s is not equal to repeating samples" % name,
-    )
+    if name not in METRICS_SAMPLEWISE:
+        # check that integer weights is the same as repeated samples
+        repeat_weighted_score = metric(
+            np.repeat(y1, sample_weight, axis=0),
+            np.repeat(y2, sample_weight, axis=0),
+            sample_weight=None,
+        )
+        assert_allclose(
+            weighted_score,
+            repeat_weighted_score,
+            err_msg="Weighting %s is not equal to repeating samples" % name,
+        )
 
     # check that ignoring a fraction of the samples is equivalent to setting
     # the corresponding weights to zero
