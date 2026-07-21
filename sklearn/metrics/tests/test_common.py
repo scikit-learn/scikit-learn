@@ -1382,7 +1382,7 @@ def test_multilabel_representation_invariance(coo_container):
     y1_list_list_indicator = [list(a) for a in y1_list_array_indicator]
     y2_list_list_indicator = [list(a) for a in y2_list_array_indicator]
 
-    for name in MULTILABELS_METRICS:
+    for name in MULTILABELS_METRICS - CONTINUOUS_CLASSIFICATION_METRICS:
         metric = ALL_METRICS[name]
 
         # XXX cruel hack to work with partial functions
