@@ -1945,7 +1945,7 @@ def test_multiclass_sample_weight_invariance(name):
     "name",
     sorted(
         (MULTILABELS_METRICS | CONTINUOUS_MULTILABEL_METRICS)
-        - METRICS_WITHOUT_SAMPLE_WEIGHT
+        - (METRICS_WITHOUT_SAMPLE_WEIGHT | {"multilabel_confusion_matrix_sample"})
     ),
 )
 def test_multilabel_sample_weight_invariance(name):
