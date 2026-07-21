@@ -543,14 +543,12 @@ MULTILABELS_METRICS = {
     "micro_jaccard_score",
     "multilabel_confusion_matrix",
     "multilabel_confusion_matrix_sample",
-    "samples_average_precision_score",
     "samples_f0.5_score",
     "samples_f1_score",
     "samples_f2_score",
     "samples_precision_score",
     "samples_recall_score",
     "samples_jaccard_score",
-    "samples_roc_auc",
 }
 
 # Regression metrics with "multioutput-continuous" format support
@@ -1382,7 +1380,7 @@ def test_multilabel_representation_invariance(coo_container):
     y1_list_list_indicator = [list(a) for a in y1_list_array_indicator]
     y2_list_list_indicator = [list(a) for a in y2_list_array_indicator]
 
-    for name in MULTILABELS_METRICS - CONTINUOUS_CLASSIFICATION_METRICS:
+    for name in MULTILABELS_METRICS:
         metric = ALL_METRICS[name]
 
         # XXX cruel hack to work with partial functions
