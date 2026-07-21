@@ -13,6 +13,7 @@ from sklearn.calibration import (
     CalibrationDisplay,
     _CalibratedClassifier,
     _ensure_logits,
+    _get_calibration_logits,
     _sigmoid_calibration,
     _SigmoidCalibration,
     _TemperatureScaling,
@@ -579,6 +580,27 @@ def test_ensure_logits_invalid_response_method():
 def test_ensure_logits_invalid_method():
     with pytest.raises(ValueError, match="Unknown calibration method"):
         _ensure_logits(np.array([0.5]), "predict_proba", "invalid")
+
+
+def test_get_calibration_logits_prefers_predict_proba(data):
+    """When both responses exist, calibration inputs come from predict_proba."""
+    X, y = data
+    clf = LogisticRegression().fit(X, y)
+    assert hasattr(clf, "predict_proba")
+    assert hasattr(clf, "decision_function")
+
+    _, response_method = _get_calibration_logits(clf, X, method="sigmoid")
+    assert response_method == "predict_proba"
+
+
+def test_get_calibration_logits_decision_function_fallback(data):
+    """Fall back to decision_function when predict_proba is unavailable."""
+    X, y = data
+    clf = LinearSVC(random_state=0).fit(X, y)
+    assert not hasattr(clf, "predict_proba")
+
+    _, response_method = _get_calibration_logits(clf, X, method="sigmoid")
+    assert response_method == "decision_function"
 
 
 @pytest.mark.parametrize(
