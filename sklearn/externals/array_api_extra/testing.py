@@ -393,7 +393,7 @@ def patch_lazy_xp_functions(
             stacklevel=2,
         )
         # Enable using patch_lazy_xp_function not as a context manager
-        temp_setattr = monkeypatch.setattr  # type: ignore[assignment]  # pyright: ignore[reportAssignmentType]
+        temp_setattr = monkeypatch.setattr  # pyrefly: ignore[assignment]  # pyright: ignore[reportAssignmentType]
 
     def iter_tagged() -> Iterator[
         tuple[ModuleType | type, str, Any, Callable[..., Any], dict[str, Any]]
@@ -509,7 +509,7 @@ class _CountingDaskScheduler(SchedulerGetCallable):
         # offending line in the user's code
         assert self.count <= self.max_count, self.msg
 
-        return dask.get(dsk, keys, **kwargs)  # type: ignore[attr-defined]  # pyright: ignore[reportPrivateImportUsage]
+        return dask.get(dsk, keys, **kwargs)  # pyrefly: ignore[attr-defined]  # pyright: ignore[reportPrivateImportUsage]
 
 
 def _dask_wrap(
@@ -542,7 +542,7 @@ def _dask_wrap(
         # `pytest.raises` and `pytest.warns` to work as expected. Note that this would
         # not work on scheduler='distributed', as it would not block.
         arrays, rest = pickle_flatten(out, da.Array)
-        arrays = dask.persist(arrays, scheduler="threads")[0]  # type: ignore[attr-defined,no-untyped-call]  # pyright: ignore[reportPrivateImportUsage]
+        arrays = dask.persist(arrays, scheduler="threads")[0]  # pyrefly: ignore[attr-defined,no-untyped-call]  # pyright: ignore[reportPrivateImportUsage]
         return pickle_unflatten(arrays, rest)  # pyright: ignore[reportUnknownArgumentType]
 
     return wrapper
@@ -631,10 +631,10 @@ def _check_ns_shape_dtype(
 
     if is_dask_namespace(desired_xp):
         if any(math.isnan(i) for i in actual_shape):
-            actual.compute_chunk_sizes()  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
+            actual.compute_chunk_sizes()  # pyrefly: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
             actual_shape = cast(tuple[float, ...], actual.shape)
         if any(math.isnan(i) for i in desired_shape):
-            desired.compute_chunk_sizes()  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
+            desired.compute_chunk_sizes()  # pyrefly: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
             desired_shape = cast(tuple[float, ...], desired.shape)
 
     if check_shape:
@@ -663,7 +663,7 @@ def _is_materializable(x: Array) -> bool:  # numpydoc ignore=PR01,RT01
     """
     # Important: here we assume that we're not tracing -
     # e.g. we're not inside `jax.jit`` nor `cupy.cuda.Stream.begin_capture`.
-    return not is_torch_array(x) or x.device.type != "meta"  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
+    return not is_torch_array(x) or x.device.type != "meta"  # pyrefly: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
 
 
 def _as_numpy_array(  # numpydoc ignore=PR01,RT01
@@ -676,10 +676,10 @@ def _as_numpy_array(  # numpydoc ignore=PR01,RT01
     if is_cupy_namespace(xp):
         return xp.asnumpy(array)
     if is_pydata_sparse_namespace(xp):
-        return array.todense()  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
+        return array.todense()  # pyrefly: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
 
     if is_torch_namespace(xp):
-        array = cast(Array, array.resolve_conj())  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
+        array = cast(Array, array.resolve_conj())  # pyrefly: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
         array = to_device(array, "cpu")
     if is_array_api_strict_namespace(xp):
         cpu: Device = xp.Device("CPU_DEVICE")

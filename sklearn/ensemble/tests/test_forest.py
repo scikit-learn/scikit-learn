@@ -1536,7 +1536,7 @@ def test_poisson_y_positive_check():
 
 
 # mypy error: Variable "DEFAULT_JOBLIB_BACKEND" is not valid type
-class MyBackend(DEFAULT_JOBLIB_BACKEND):  # type: ignore[valid-type,misc]
+class MyBackend(DEFAULT_JOBLIB_BACKEND):
     def __init__(self, *args, **kwargs):
         self.count = 0
         super().__init__(*args, **kwargs)

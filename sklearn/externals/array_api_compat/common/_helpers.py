@@ -77,7 +77,7 @@ def _is_jax_zero_gradient_array(x: object) -> TypeGuard[_ZeroGradientArray]:
     """
     # Fast exit
     try:
-        dtype = x.dtype  # type: ignore[attr-defined]
+        dtype = x.dtype  # pyrefly: ignore[attr-defined]
     except AttributeError:
         return False
     cls = cast(Hashable, type(dtype))
@@ -523,11 +523,11 @@ def _cls_to_namespace(
             _check_api_version(api_version)
             from .. import numpy as xp
         elif use_compat is False:
-            import numpy as xp  # type: ignore[no-redef]
+            import numpy as xp  # pyrefly: ignore[no-redef]
         else:
             # NumPy 2.0+ have __array_namespace__; however they are not
             # yet fully array API compatible.
-            from .. import numpy as xp  # type: ignore[no-redef]
+            from .. import numpy as xp  # pyrefly: ignore[no-redef]
         return xp, _ClsToXPInfo.MAYBE_JAX_ZERO_GRADIENT
 
     # Note: this must happen _after_ the test for np.generic,
@@ -538,25 +538,25 @@ def _cls_to_namespace(
     if _issubclass_fast(cls_, "cupy", "ndarray"):
         if _use_compat:
             _check_api_version(api_version)
-            from .. import cupy as xp  # type: ignore[no-redef]
+            from .. import cupy as xp  # pyrefly: ignore[no-redef]
         else:
-            import cupy as xp  # type: ignore[no-redef]
+            import cupy as xp  # pyrefly: ignore[no-redef]
         return xp, None
 
     if _issubclass_fast(cls_, "torch", "Tensor"):
         if _use_compat:
             _check_api_version(api_version)
-            from .. import torch as xp  # type: ignore[no-redef]
+            from .. import torch as xp  # pyrefly: ignore[no-redef]
         else:
-            import torch as xp  # type: ignore[no-redef]
+            import torch as xp  # pyrefly: ignore[no-redef]
         return xp, None
 
     if _issubclass_fast(cls_, "dask.array", "Array"):
         if _use_compat:
             _check_api_version(api_version)
-            from ..dask import array as xp  # type: ignore[no-redef]
+            from ..dask import array as xp  # pyrefly: ignore[no-redef]
         else:
-            import dask.array as xp  # type: ignore[no-redef]
+            import dask.array as xp  # pyrefly: ignore[no-redef]
         return xp, None
 
     # Backwards compatibility for jax<0.4.32
@@ -802,7 +802,7 @@ def device(x: _ArrayApiObj, /) -> Device:
             return "cpu"
         # Return the device of the constituent array
         return device(inner)  # pyright: ignore
-    return x.device  # type: ignore  # pyright: ignore
+    return x.device  # pyrefly: ignore  # pyright: ignore
 
 
 # Prevent shadowing, used below

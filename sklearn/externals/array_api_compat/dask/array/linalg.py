@@ -24,7 +24,7 @@ SVDResult = _linalg.SVDResult
 # supports the mode keyword on QR
 # https://github.com/dask/dask/issues/10388
 #qr = get_xp(da)(_linalg.qr)
-def qr(  # type: ignore[no-redef]
+def qr(  # pyrefly: ignore[no-redef]
     x: Array,
     mode: Literal["reduced", "complete"] = "reduced",
     **kwargs: object,
@@ -41,7 +41,7 @@ matrix_norm = get_xp(da)(_linalg.matrix_norm)
 # Wrap the svd functions to not pass full_matrices to dask
 # when full_matrices=False (as that is the default behavior for dask),
 # and dask doesn't have the full_matrices keyword
-def svd(x: Array, full_matrices: bool = True, **kwargs: object) -> SVDResult:  # type: ignore[no-redef]
+def svd(x: Array, full_matrices: bool = True, **kwargs: object) -> SVDResult:  # pyrefly: ignore[no-redef]
     if full_matrices:
         raise ValueError("full_matrices=True is not supported by dask.")
     return da.linalg.svd(x, coerce_signs=False, **kwargs)

@@ -87,9 +87,9 @@ def asarray(
     # None is unsupported in NumPy 1.0, but we can use an internal enum
     # False in NumPy 1.0 means None in NumPy 2.0 and in the Array API
     if copy is None:
-        copy = np._CopyMode.IF_NEEDED  # type: ignore[assignment,attr-defined]
+        copy = np._CopyMode.IF_NEEDED  # pyrefly: ignore[assignment,attr-defined]
     elif copy is False:
-        copy = np._CopyMode.NEVER  # type: ignore[assignment,attr-defined]
+        copy = np._CopyMode.NEVER  # pyrefly: ignore[assignment,attr-defined]
 
     return np.array(obj, copy=copy, dtype=dtype, **kwargs)
 
@@ -151,7 +151,7 @@ def trunc(x: Array, /) -> Array:
 if hasattr(np, "vecdot"):
     vecdot = np.vecdot
 else:
-    vecdot = get_xp(np)(_aliases.vecdot)  # type: ignore[assignment]
+    vecdot = get_xp(np)(_aliases.vecdot)  # pyrefly: ignore[assignment]
 
 if hasattr(np, "isdtype"):
     isdtype = np.isdtype

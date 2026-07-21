@@ -346,7 +346,9 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
     # PrettyPrinter class to call methods of _EstimatorPrettyPrinter (see issue
     # 12906)
     # mypy error: "Type[PrettyPrinter]" has no attribute "_dispatch"
-    _dispatch = pprint.PrettyPrinter._dispatch.copy()  # type: ignore[attr-defined]
+    _dispatch = (
+        pprint.PrettyPrinter._dispatch.copy()  # pyrefly: ignore[missing-attribute]
+    )
     _dispatch[BaseEstimator.__repr__] = _pprint_estimator
     _dispatch[KeyValTuple.__repr__] = _pprint_key_val_tuple
 

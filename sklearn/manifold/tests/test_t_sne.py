@@ -13,7 +13,7 @@ from sklearn import config_context
 from sklearn.datasets import make_blobs
 
 # mypy error: Module 'sklearn.manifold' has no attribute '_barnes_hut_tsne'
-from sklearn.manifold import (  # type: ignore[attr-defined]
+from sklearn.manifold import (
     TSNE,
     _barnes_hut_tsne,
 )

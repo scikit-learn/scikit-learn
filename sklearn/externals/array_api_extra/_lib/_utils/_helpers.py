@@ -166,7 +166,7 @@ def asarrays(
     b_scalar = is_python_scalar(b)
     if not a_scalar and not b_scalar:
         # This includes misc. malformed input e.g. str
-        return a, b  # type: ignore[return-value]
+        return a, b  # pyrefly: ignore[return-value]
 
     swap = False
     if a_scalar:
@@ -316,7 +316,7 @@ def capabilities(
     elif is_torch_namespace(xp):
         # FIXME https://github.com/data-apis/array-api/issues/945
         device = xp.get_default_device() if device is None else xp.device(device)
-        if device.type == "meta":  # type: ignore[union-attr]  # pyright: ignore[reportAttributeAccessIssue,reportOptionalMemberAccess]
+        if device.type == "meta":  # pyrefly: ignore[union-attr]  # pyright: ignore[reportAttributeAccessIssue,reportOptionalMemberAccess]
             out = out.copy()
             out["boolean indexing"] = False
             out["data-dependent shapes"] = False
@@ -571,7 +571,7 @@ def jax_autojit(
     """
     import jax
 
-    @jax.jit  # type: ignore[untyped-decorator]  # pyright: ignore[reportUntypedFunctionDecorator]
+    @jax.jit  # pyrefly: ignore[untyped-decorator]  # pyright: ignore[reportUntypedFunctionDecorator]
     def inner(  # numpydoc ignore=GL08
         wargs: _AutoJITWrapper[Any],
     ) -> _AutoJITWrapper[T]:
