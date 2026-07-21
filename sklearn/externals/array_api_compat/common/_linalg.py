@@ -8,7 +8,7 @@ import numpy as np
 if np.__version__[0] == "2":
     from numpy.lib.array_utils import normalize_axis_tuple
 else:
-    from numpy.core.numeric import normalize_axis_tuple  # pyrefly: ignore[no-redef]
+    from numpy.core.numeric import normalize_axis_tuple  # type: ignore[no-redef]
 
 from .._internal import get_xp
 from ._aliases import isdtype, matmul, matrix_transpose, tensordot, vecdot

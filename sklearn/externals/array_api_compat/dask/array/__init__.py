@@ -6,7 +6,7 @@ __all__ = clone_module("dask.array", globals())
 
 # These imports may overwrite names from the import * above.
 from . import _aliases
-from ._aliases import *  # pyrefly: ignore[assignment] # noqa: F403
+from ._aliases import *  # type: ignore[assignment] # noqa: F403
 from ._info import __array_namespace_info__  # noqa: F401
 
 __array_api_version__: Final = "2025.12"

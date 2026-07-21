@@ -31,7 +31,7 @@ P = ParamSpec("P")
 
 
 @overload  # pyrefly: ignore[invalid-param-spec]
-def lazy_apply(  # pyrefly: ignore[valid-type]
+def lazy_apply(  # type: ignore[valid-type]
     func: Callable[P, Array | ArrayLike],
     *args: Array | complex | None,
     shape: tuple[int | None, ...] | None = None,
@@ -43,7 +43,7 @@ def lazy_apply(  # pyrefly: ignore[valid-type]
 
 
 @overload  # pyrefly: ignore[invalid-param-spec]
-def lazy_apply(  # pyrefly: ignore[valid-type]
+def lazy_apply(  # type: ignore[valid-type]
     func: Callable[P, Sequence[Array | ArrayLike]],
     *args: Array | complex | None,
     shape: Sequence[tuple[int | None, ...]],
@@ -54,7 +54,7 @@ def lazy_apply(  # pyrefly: ignore[valid-type]
 ) -> tuple[Array, ...]: ...  # numpydoc ignore=GL08
 
 
-def lazy_apply(  # pyrefly: ignore[valid-type]  # pyrefly: ignore[invalid-param-spec]  # numpydoc ignore=GL07,SA04
+def lazy_apply(  # type: ignore[valid-type]  # pyrefly: ignore[invalid-param-spec]  # numpydoc ignore=GL07,SA04
     func: Callable[P, Array | ArrayLike | Sequence[Array | ArrayLike]],
     *args: Array | complex | None,
     shape: tuple[int | None, ...] | Sequence[tuple[int | None, ...]] | None = None,
@@ -212,7 +212,7 @@ def lazy_apply(  # pyrefly: ignore[valid-type]  # pyrefly: ignore[invalid-param-
         # https://github.com/data-apis/array-api/issues/891#issuecomment-2637430522
         shapes = [cast(tuple[int | None, ...], shape)]
     else:
-        shapes = list(shape)  # pyrefly: ignore[arg-type]  # pyright: ignore[reportAssignmentType]
+        shapes = list(shape)  # type: ignore[arg-type]  # pyright: ignore[reportAssignmentType]
         multi_output = True
 
     if dtype is None:
@@ -243,7 +243,7 @@ def lazy_apply(  # pyrefly: ignore[valid-type]  # pyrefly: ignore[invalid-param-
         metas: list[Array] = [arg._meta for arg in array_args]  # pylint: disable=protected-access # pyright: ignore[reportAttributeAccessIssue] # pyrefly: ignore[missing-attribute]
         meta_xp = array_namespace(*metas)
 
-        wrapped = dask.delayed(  # pyrefly: ignore[attr-defined]  # pyright: ignore[reportPrivateImportUsage]
+        wrapped = dask.delayed(  # type: ignore[attr-defined]  # pyright: ignore[reportPrivateImportUsage]
             _lazy_apply_wrapper(func, as_numpy, multi_output, meta_xp),
             pure=True,
         )
@@ -282,7 +282,7 @@ def lazy_apply(  # pyrefly: ignore[valid-type]  # pyrefly: ignore[invalid-param-
         )
 
         # suppress unused-ignore to run mypy in -e lint as well as -e dev
-        out = cast(  # pyrefly: ignore[bad-cast,unused-ignore]
+        out = cast(  # type: ignore[bad-cast,unused-ignore]
             tuple[Array, ...],
             jax.pure_callback(
                 wrapped,

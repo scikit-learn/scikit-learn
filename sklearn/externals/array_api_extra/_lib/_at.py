@@ -324,7 +324,7 @@ class at:  # pylint: disable=invalid-name  # numpydoc ignore=PR02
                 # Use JAX's at[]
                 func = cast(
                     Callable[[Array | complex], Array],
-                    getattr(x.at[idx], at_op.value),  # pyrefly: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue,reportUnknownArgumentType]
+                    getattr(x.at[idx], at_op.value),  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue,reportUnknownArgumentType]
                 )
                 out = func(y)
                 # Undo int->float promotion on JAX after _AtOp.DIVIDE

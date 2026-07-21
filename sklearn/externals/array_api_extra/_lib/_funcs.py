@@ -611,7 +611,7 @@ def searchsorted(
 
     # while xp.any(b - a > 1):
     # refactored to for loop with ~log2(n) iterations for JAX JIT
-    for _ in range(int(math.log2(x1.shape[-1])) + 1):  # pyrefly: ignore[arg-type]  # pyright: ignore[reportArgumentType]
+    for _ in range(int(math.log2(x1.shape[-1])) + 1):  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
         c = (a + b) // 2
         x0 = xp.take_along_axis(x1, c, axis=-1)
         j = compare(x2, x0)
