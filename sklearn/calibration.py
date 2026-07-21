@@ -75,18 +75,19 @@ _CLASSIFIER_RESPONSE_METHODS = ("predict_proba", "decision_function")
 
 
 def _ensure_logits(predictions, response_method_name, method):
-    """Ensure that the predictions are in logits space.
+    """Prepare classifier outputs for the calibrator.
 
-    When the response method is ``predict_proba``, probabilities are converted
-    to logits depending on the calibration method:
+    When the response method is ``predict_proba``:
 
-    - For ``method`` in ``{'sigmoid', 'isotonic'}``, Bernoulli logits are
-      computed per class (OvR convention for multiclass).
+    - For ``method='sigmoid'``, Bernoulli logits are computed per class
+      (OvR convention for multiclass).
+    - For ``method='isotonic'``, probabilities are passed through (with
+      reshaping / positive-class selection in the binary case).
     - For ``method='temperature'``, multinomial logits are computed.
 
     When the response method is ``decision_function``, predictions are assumed
-    to already be in logits space and are returned unchanged (with reshaping
-    for the binary case).
+    to already be in score / logit space and are returned unchanged (with
+    reshaping for the binary case).
 
     Parameters
     ----------
@@ -101,8 +102,8 @@ def _ensure_logits(predictions, response_method_name, method):
 
     Returns
     -------
-    logits : array-like of shape (n_samples, n_classes) or (n_samples, 1).
-        The logits.
+    scores : array-like of shape (n_samples, n_classes) or (n_samples, 1).
+        Logits or probabilities prepared for the calibrator.
     """
     if response_method_name not in _CLASSIFIER_RESPONSE_METHODS:
         raise ValueError(
@@ -118,11 +119,19 @@ def _ensure_logits(predictions, response_method_name, method):
             return xp.reshape(predictions, (-1, 1))
         return predictions
 
+    if method == "isotonic":
+        # Keep probabilities on the probability scale for isotonic regression.
+        if predictions.ndim == 1:
+            return xp.reshape(predictions, (-1, 1))
+        if predictions.shape[1] == 2:
+            return xp.reshape(predictions[:, 1], (-1, 1))
+        return predictions
+
     eps = xp.finfo(predictions.dtype).eps
     eps_ = xp.asarray(eps, dtype=predictions.dtype, device=device_)
     predictions = xp.clip(predictions, eps_, one - eps_)
 
-    if method in ("sigmoid", "isotonic"):
+    if method == "sigmoid":
         if predictions.ndim == 1:
             return xp.reshape(LogitLink().link(predictions), (-1, 1))
         if predictions.shape[1] == 2:
@@ -247,9 +256,10 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         optimizes the log loss.
 
         For all methods, ``predict_proba`` outputs are preferred when available.
-        Sigmoid and isotonic convert them to Bernoulli logits per class. Temperature
-        scaling converts them to symmetric multinomial logits. When ``predict_proba``
-        is unavailable (e.g. :class:`~sklearn.svm.LinearSVC`), ``decision_function``
+        Sigmoid converts them to Bernoulli logits per class. Isotonic keeps them
+        as probabilities. Temperature scaling converts them to symmetric
+        multinomial logits. When ``predict_proba`` is unavailable
+        (e.g. :class:`~sklearn.svm.LinearSVC`), ``decision_function``
         outputs are used instead.
 
         For very uncalibrated classifiers on very imbalanced datasets, sigmoid
