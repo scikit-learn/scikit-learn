@@ -167,7 +167,6 @@ DecisionBoundaryDisplay.from_estimator(
     kmeans,
     reduced_data,
     ax=plt.gca(),
-    random_state=0,
     response_method="predict",
     alpha=0.8,
     plot_method="pcolormesh",
