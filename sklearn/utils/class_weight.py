@@ -9,10 +9,10 @@ from scipy import sparse
 from sklearn.utils._array_api import (
     _bincount,
     _is_numpy_namespace,
-    _isin,
     get_namespace_and_device,
     move_to,
     size,
+    xpx,
 )
 from sklearn.utils._param_validation import StrOptions, validate_params
 from sklearn.utils.validation import _check_sample_weight
@@ -85,7 +85,7 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
         # Find the weight of each class as present in y.
         le = LabelEncoder()
         y_ind = le.fit_transform(y)
-        if not all(_isin(classes, xp.astype(le.classes_, classes.dtype), xp=xp)):
+        if not all(xpx.isin(classes, xp.astype(le.classes_, classes.dtype), xp=xp)):
             raise ValueError("classes should have valid labels that are in y")
 
         if _is_numpy_namespace(xp) and sample_weight is not None:

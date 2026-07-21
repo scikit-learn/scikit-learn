@@ -15,7 +15,6 @@ from sklearn.utils import _align_api_if_sparse, column_or_1d
 from sklearn.utils._array_api import (
     _find_matching_floating_dtype,
     _is_numpy_namespace,
-    _isin,
     device,
     get_namespace,
     get_namespace_and_device,
@@ -627,7 +626,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
         y = column_or_1d(y)
 
         # pick out the known labels from y
-        y_in_classes = _isin(y, classes, xp=xp)
+        y_in_classes = xpx.isin(y, classes, xp=xp)
         y_seen = y[y_in_classes]
         indices = xp.searchsorted(sorted_class, y_seen)
         # cast `y_in_classes` to integer dtype for `xp.cumulative_sum`
