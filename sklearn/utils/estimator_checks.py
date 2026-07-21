@@ -740,7 +740,7 @@ def parametrize_with_checks(
 
     return pytest.mark.parametrize(
         "estimator, check",
-        _checks_generator(estimators, legacy, expected_failed_checks),
+        list(_checks_generator(estimators, legacy, expected_failed_checks)),
         ids=_get_check_estimator_ids,
     )
 
