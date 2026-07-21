@@ -1047,8 +1047,8 @@ class LogisticRegression(
 
     l1_ratio : float, default=0.0
         The Elastic-Net mixing parameter, with `0 <= l1_ratio <= 1`. Setting
-        `l1_ratio=1` gives a pure L1-penalty, setting `l1_ratio=0` a pure L2-penalty.
-        Any value between 0 and 1 gives an Elastic-Net penalty of the form
+        `l1_ratio=1` gives a pure L1-penalty, setting `l1_ratio=0` gives a pure
+        L2-penalty. Any value between 0 and 1 gives an Elastic-Net penalty of the form
         `l1_ratio * L1 + (1 - l1_ratio) * L2`.
 
         .. warning::
@@ -1110,8 +1110,8 @@ class LogisticRegression(
         data. It has no effect on the other solvers.
         See :term:`Glossary <random_state>` for details.
 
-    solver : {'lbfgs', 'liblinear', 'newton-cg', 'newton-cholesky', 'sag', 'saga'}, \
-            default='lbfgs'
+    solver : {'lbfgs', 'liblinear', 'newton-cd-gram', 'newton-cg', 'newton-cholesky', \
+            'sag', 'saga'}, default='lbfgs'
 
         Algorithm to use in the optimization problem. Default is 'lbfgs'.
         To choose a solver, you might want to consider the following aspects:
@@ -1714,8 +1714,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     l1_ratios : array-like of shape (n_l1_ratios), default=None
         Floats between 0 and 1 passed as Elastic-Net mixing parameter (scaling between
         L1 and L2 penalties). For `l1_ratio = 0` the penalty is an L2 penalty. For
-        `l1_ratio = 1` it is an L1 penalty. For `0 < l1_ratio < 1`, the penalty is a
-        combination of L1 and L2.
+        `l1_ratio = 1` it is an L1 penalty. Any value between 0 and 1 gives
+        an Elastic-Net penalty of the form `l1_ratio * L1 + (1 - l1_ratio) * L2`.
         All the values of the given array-like are tested by cross-validation and the
         one giving the best prediction score is used.
 
@@ -1778,8 +1778,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            The default will change from None, i.e. accuracy, to 'neg_log_loss' in
            version 1.11.
 
-    solver : {'lbfgs', 'liblinear', 'newton-cg', 'newton-cholesky', 'sag', 'saga'}, \
-            default='lbfgs'
+    solver : {'lbfgs', 'liblinear', 'newton-cd-gram', 'newton-cg', 'newton-cholesky', \
+            'sag', 'saga'}, default='lbfgs'
 
         Algorithm to use in the optimization problem. Default is 'lbfgs'.
         To choose a solver, you might want to consider the following aspects:
