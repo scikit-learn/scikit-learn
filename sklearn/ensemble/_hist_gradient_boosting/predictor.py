@@ -129,6 +129,23 @@ class TreePredictor:
         """
         _compute_partial_dependence(self.nodes, grid, target_features, out)
 
+    def _check_feature_idx_bounds(self, n_features):
+        """Validate that split nodes reference in-range feature columns.
+
+        This complements the ``left`` / ``right`` bounds validated at load time
+        in :meth:`__setstate__`: ``feature_idx`` is dereferenced as a column
+        index into ``X`` in the ``nogil`` traversal
+        (``_predict_from_raw_data`` / ``_predict_from_binned_data``), and its
+        upper bound is only known at predict time. A tampered but type-valid
+        node array would otherwise trigger an out-of-bounds native memory read.
+        """
+        feature_idx = self.nodes["feature_idx"]
+        if np.any((feature_idx < 0) | (feature_idx >= n_features)):
+            raise ValueError(
+                "predictor node array has out-of-bounds 'feature_idx' values: "
+                f"expected each to be in [0, {n_features})"
+            )
+
     def __setstate__(self, state):
         try:
             super().__setstate__(state)
@@ -147,3 +164,20 @@ class TreePredictor:
         # scikit-learn along with a common test.
         if self.nodes.dtype != PREDICTOR_RECORD_DTYPE:
             self.nodes = self.nodes.astype(PREDICTOR_RECORD_DTYPE, casting="same_kind")
+
+        # Defense-in-depth for the model-loading trust boundary: the nogil
+        # traversal in ``_predict_from_raw_data`` / ``_predict_from_binned_data``
+        # dereferences the ``left`` / ``right`` node indices without any bounds
+        # check. A tampered but type-valid node array (e.g. one that passes
+        # ``skops.io`` type auditing) would therefore trigger out-of-bounds
+        # native memory reads and a segfault at prediction time. ``left`` and
+        # ``right`` are ``uint32`` (hence non-negative), so we only need to check
+        # the upper bound here. ``feature_idx`` is validated at predict time by
+        # ``_check_feature_idx_bounds``, where the number of features is known.
+        n_nodes = self.nodes.shape[0]
+        for field in ("left", "right"):
+            if np.any(self.nodes[field] >= n_nodes):
+                raise ValueError(
+                    f"predictor node array has out-of-bounds '{field}' values: "
+                    f"expected each to be in [0, {n_nodes})"
+                )

@@ -838,6 +838,23 @@ cdef class Tree:
             expected_shape=value_shape
         )
 
+        # ``_check_node_ndarray`` only validates the structure (ndim,
+        # contiguity and dtype) of the node array, not the values of its
+        # integer index fields. The traversal code (``apply``, ``decision_path``
+        # and ``compute_feature_importances``) dereferences ``left_child`` /
+        # ``right_child`` node indices and the ``feature`` column index inside
+        # ``nogil`` blocks without any bounds check. A tampered but type-valid
+        # node array (e.g. one that passes ``skops.io`` type auditing) would
+        # therefore trigger out-of-bounds native memory reads and a segfault at
+        # prediction time. We validate those values once, here, at load time.
+        if self.node_count != node_ndarray.shape[0]:
+            raise ValueError(
+                "node array from the pickle is inconsistent: node_count "
+                f"({self.node_count}) does not match the number of nodes "
+                f"({node_ndarray.shape[0]})"
+            )
+        _check_node_ndarray_values(node_ndarray, n_features=self.n_features)
+
         self.capacity = node_ndarray.shape[0]
         if self._resize_c(self.capacity) != 0:
             raise MemoryError("resizing tree to %d" % self.capacity)
@@ -1551,6 +1568,40 @@ def _check_node_ndarray(node_ndarray, expected_dtype):
         )
 
     return node_ndarray.astype(expected_dtype, casting="same_kind")
+
+
+def _check_node_ndarray_values(node_ndarray, n_features):
+    """Validate the integer index fields of a node array.
+
+    This is a defense-in-depth check for the model-loading trust boundary.
+    ``_check_node_ndarray`` only validates the structure of the array; this
+    function validates that ``left_child`` / ``right_child`` node indices and
+    the ``feature`` column index stay within bounds, so that the ``nogil``
+    traversal code cannot perform out-of-bounds native memory reads on a
+    crafted but type-valid node array (see ``Tree.__setstate__``).
+    """
+    n_nodes = node_ndarray.shape[0]
+
+    # Children are either the ``TREE_LEAF`` (-1) sentinel or a valid node id
+    # in ``[0, n_nodes)``.
+    for field in ("left_child", "right_child"):
+        children = node_ndarray[field]
+        if np.any((children < TREE_LEAF) | (children >= n_nodes)):
+            raise ValueError(
+                f"node array from the pickle has out-of-bounds '{field}' "
+                f"values: expected each to be {TREE_LEAF} (leaf) or in "
+                f"[0, {n_nodes})"
+            )
+
+    # ``feature`` is either the ``TREE_UNDEFINED`` (-2) sentinel (leaf nodes)
+    # or a valid feature column index in ``[0, n_features)``.
+    feature = node_ndarray["feature"]
+    if np.any((feature < TREE_UNDEFINED) | (feature >= n_features)):
+        raise ValueError(
+            "node array from the pickle has out-of-bounds 'feature' values: "
+            f"expected each to be {TREE_UNDEFINED} (leaf) or in "
+            f"[0, {n_features})"
+        )
 
 
 # =============================================================================

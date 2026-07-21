@@ -49,6 +49,7 @@ from sklearn.tree._tree import (
     _build_pruned_tree_py,
     _check_n_classes,
     _check_node_ndarray,
+    _check_node_ndarray_values,
     _check_value_ndarray,
 )
 from sklearn.tree._tree import Tree as CythonTree
@@ -2379,6 +2380,75 @@ def test_check_node_ndarray():
 
     with pytest.raises(ValueError, match="node array.+incompatible dtype"):
         _check_node_ndarray(problematic_node_ndarray, expected_dtype=expected_dtype)
+
+
+def test_check_node_ndarray_values():
+    """Node index fields are validated to stay within bounds.
+
+    Non-regression test for a memory-safety issue where a tampered but
+    type-valid ``nodes`` array (e.g. one that passes ``skops.io`` type auditing)
+    was accepted by ``Tree.__setstate__`` and caused an out-of-bounds native
+    memory read (segfault) at prediction time.
+    """
+    n_features = 4
+    n_nodes = 5
+    node_ndarray = np.zeros((n_nodes,), dtype=NODE_DTYPE)
+    # A valid (if trivial) tree: all leaves, children point to the leaf
+    # sentinel and features are undefined.
+    node_ndarray["left_child"] = TREE_LEAF
+    node_ndarray["right_child"] = TREE_LEAF
+    node_ndarray["feature"] = TREE_UNDEFINED
+
+    # Valid array does not raise.
+    _check_node_ndarray_values(node_ndarray, n_features=n_features)
+
+    # A single internal node referencing valid children/feature is also fine.
+    valid = node_ndarray.copy()
+    valid["left_child"][0] = 1
+    valid["right_child"][0] = 2
+    valid["feature"][0] = n_features - 1
+    _check_node_ndarray_values(valid, n_features=n_features)
+
+    for field, bad_value, match in [
+        ("left_child", n_nodes, "out-of-bounds 'left_child'"),
+        ("left_child", -2, "out-of-bounds 'left_child'"),
+        ("right_child", 999_999_999, "out-of-bounds 'right_child'"),
+        ("feature", n_features, "out-of-bounds 'feature'"),
+        ("feature", -3, "out-of-bounds 'feature'"),
+    ]:
+        problematic = node_ndarray.copy()
+        problematic[field][0] = bad_value
+        with pytest.raises(ValueError, match=match):
+            _check_node_ndarray_values(problematic, n_features=n_features)
+
+
+def test_tree_setstate_rejects_tampered_nodes():
+    """``Tree.__setstate__`` rejects out-of-bounds node arrays.
+
+    Non-regression test for a memory-safety issue: deserializing a crafted but
+    type-valid tree model previously segfaulted at ``predict`` time. The bounds
+    check must reject it at load time with a ``ValueError`` instead.
+    """
+    X, y = datasets.make_classification(n_samples=60, n_features=4, random_state=0)
+    clf = DecisionTreeClassifier(max_depth=3, random_state=0).fit(X, y)
+
+    state = clf.tree_.__getstate__()
+
+    # Out-of-bounds child/feature indices (same dtype and shape as the original
+    # array, only the integer values are tampered with).
+    for field in ("left_child", "right_child", "feature"):
+        tampered = state.copy()
+        nodes = state["nodes"].copy()
+        nodes[field][:] = 999_999_999
+        tampered["nodes"] = nodes
+        with pytest.raises(ValueError, match="out-of-bounds"):
+            clf.tree_.__setstate__(tampered)
+
+    # Inconsistent ``node_count`` (does not match the number of nodes).
+    tampered = state.copy()
+    tampered["node_count"] = state["nodes"].shape[0] + 10
+    with pytest.raises(ValueError, match="node_count"):
+        clf.tree_.__setstate__(tampered)
 
 
 @pytest.mark.parametrize(
