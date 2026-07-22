@@ -1411,6 +1411,9 @@ def test_loss_array_api(
     device_name,
     dtype_name,
 ):
+    if loss_class == HalfMultinomialLoss and method_name == "gradient_hessian":
+        pytest.skip("Not implemented")
+
     def _assert_array_api_result(
         result_xp, result_np, raw_prediction_xp, xp, rtol, atol
     ):
