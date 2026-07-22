@@ -139,7 +139,7 @@ grid = GridSearchCV(
     # Use a non-stratified CV strategy to make sure that the inter-fold
     # standard deviation of the test scores is informative.
     cv=ShuffleSplit(n_splits=30, random_state=0),
-    n_jobs=1,  # increase this on your machine to use more physical cores
+    n_jobs=-1,  # increase this on your machine to use more physical cores
     param_grid=param_grid,
     scoring="accuracy",
     refit=best_low_complexity,
