@@ -173,7 +173,6 @@ ArffSparseDataType = Tuple[List, ...]
 
 
 if TYPE_CHECKING:
-    # typing_extensions is available when mypy is installed
     from typing_extensions import TypedDict
 
     class ArffContainerType(TypedDict):

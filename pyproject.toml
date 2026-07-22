@@ -218,8 +218,6 @@ project-includes = ["sklearn"]
 project-excludes = ["**/sklearn/externals*"]
 preset = "legacy"
 ignore-missing-imports = [
-    "joblib.*",
-    "sklearn.externals.*",
     "*",
 ]
 

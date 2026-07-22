@@ -1535,7 +1535,6 @@ def test_poisson_y_positive_check():
         est.fit(X, y)
 
 
-# mypy error: Variable "DEFAULT_JOBLIB_BACKEND" is not valid type
 class MyBackend(DEFAULT_JOBLIB_BACKEND):
     def __init__(self, *args, **kwargs):
         self.count = 0

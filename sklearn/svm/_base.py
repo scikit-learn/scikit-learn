@@ -12,9 +12,6 @@ from sklearn.base import BaseEstimator, ClassifierMixin, _fit_context
 from sklearn.exceptions import ConvergenceWarning, NotFittedError
 from sklearn.preprocessing import LabelEncoder
 from sklearn.svm import _liblinear as liblinear
-
-# mypy error: error: Module 'sklearn.svm' has no attribute '_libsvm'
-# (and same for other imports)
 from sklearn.svm import _libsvm as libsvm
 from sklearn.svm import _libsvm_sparse as libsvm_sparse
 from sklearn.utils import (

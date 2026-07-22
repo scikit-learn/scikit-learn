@@ -13,8 +13,6 @@ from joblib import effective_n_jobs
 from scipy import sparse
 
 from sklearn.base import RegressorMixin, _fit_context
-
-# mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from sklearn.linear_model import _cd_fast as cd_fast
 from sklearn.linear_model._base import (
     MultiOutputLinearModel,

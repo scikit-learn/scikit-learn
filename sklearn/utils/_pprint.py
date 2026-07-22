@@ -345,7 +345,7 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
     # Note: need to copy _dispatch to prevent instances of the builtin
     # PrettyPrinter class to call methods of _EstimatorPrettyPrinter (see issue
     # 12906)
-    # mypy error: "Type[PrettyPrinter]" has no attribute "_dispatch"
+    # pyrefly error: "Type[PrettyPrinter]" has no attribute "_dispatch"
     _dispatch = (
         pprint.PrettyPrinter._dispatch.copy()  # pyrefly: ignore[missing-attribute]
     )

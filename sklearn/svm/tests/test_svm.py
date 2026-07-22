@@ -23,8 +23,6 @@ from sklearn.metrics import f1_score
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.model_selection import train_test_split
 from sklearn.multiclass import OneVsRestClassifier
-
-# mypy error: Module 'sklearn.svm' has no attribute '_libsvm'
 from sklearn.svm import (
     SVR,
     LinearSVC,

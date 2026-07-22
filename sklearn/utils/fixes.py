@@ -187,8 +187,8 @@ if np_version >= parse_version("1.25.0"):
     from numpy.exceptions import ComplexWarning, VisibleDeprecationWarning
 else:
     from numpy import (  # noqa: F401
-        ComplexWarning,
-        VisibleDeprecationWarning,
+        ComplexWarning,  # pyrefly: ignore[missing-module-attribute]
+        VisibleDeprecationWarning,  # pyrefly: ignore[missing-module-attribute]
     )
 
 
