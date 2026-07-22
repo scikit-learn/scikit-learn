@@ -1,0 +1,2 @@
+- :class:`cluster.FuzzyCMeans` is added, implementing the Fuzzy C-Means (FCM) soft clustering algorithm.
+  :pr:`34127` by :user:`AbdoKnbGit`.
