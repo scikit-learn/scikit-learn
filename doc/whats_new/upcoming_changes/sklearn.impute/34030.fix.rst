@@ -1,0 +1,4 @@
+- |Fix| :class:`impute.SimpleImputer` now supports `missing_values=None` with
+  `strategy="mean"` and `strategy="median"` for object arrays containing numeric
+  values and `None`.
+  By :user:`Rohan Patnaik <rohan-patnaik>`.
