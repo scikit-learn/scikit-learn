@@ -2729,7 +2729,8 @@ def test_cross_val_predict_array_api_compliance(
     with config_context(array_api_dispatch=True):
         pred_xp = cross_val_predict(estimator, X_xp, y_xp, cv=cv)
 
-    pred_np = cross_val_predict(estimator, X_np, y_np, cv=cv)
+    with config_context(array_api_dispatch=False):
+        pred_np = cross_val_predict(estimator, X_np, y_np, cv=cv)
     assert_allclose(
         move_to(pred_xp, xp=np, device="cpu"), pred_np, atol=_atol_for_type(dtype_name)
     )
