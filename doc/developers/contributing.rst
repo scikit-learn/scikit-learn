@@ -194,9 +194,10 @@ PRs that appear to violate this policy will be closed without review.
 Right to contribute
 ===================
 
-Pull requests are accepted under the project's BSD 3-Clause License (see the ``COPYING``
-file in the repository root). By opening a pull request, you must have the **legal right
-to grant that license** for every part of your contribution.
+Pull requests are accepted under the project's `BSD 3-Clause
+License<https://github.com/scikit-learn/scikit-learn/blob/main/COPYING>`_. By opening a
+pull request, you must have the **legal right to grant that license** for every part of
+your contribution.
 
 In particular:
 
