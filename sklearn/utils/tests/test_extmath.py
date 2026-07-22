@@ -15,12 +15,10 @@ from sklearn.utils import gen_batches
 from sklearn.utils._arpack import _init_arpack_v0
 from sklearn.utils._array_api import (
     _max_precision_float_dtype,
+    array_device,
     get_namespace,
     move_to,
     yield_namespace_device_dtype_combinations,
-)
-from sklearn.utils._array_api import (
-    device as array_device,
 )
 from sklearn.utils._testing import (
     _array_api_for_tests,

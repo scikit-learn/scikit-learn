@@ -64,12 +64,12 @@ from sklearn.utils._array_api import (
     NamespaceAndDevice,
     _atol_for_type,
     _max_precision_float_dtype,
+    array_device,
     get_namespace,
     move_to,
     yield_mixed_namespace_input_permutations,
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._array_api import device as array_device
 from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._param_validation import (
     Interval,

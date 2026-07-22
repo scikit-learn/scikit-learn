@@ -31,9 +31,7 @@ from sklearn.mixture._gaussian_mixture import (
     _estimate_gaussian_parameters,
 )
 from sklearn.utils._array_api import (
-    device as array_api_device,
-)
-from sklearn.utils._array_api import (
+    array_device,
     get_namespace,
     move_to,
     yield_namespace_device_dtype_combinations,
@@ -1538,8 +1536,8 @@ def test_gaussian_mixture_array_api_compliance(
 
         assert get_namespace(gmm_xp.means_)[0] == xp
         assert get_namespace(gmm_xp.covariances_)[0] == xp
-        assert array_api_device(gmm_xp.means_) == array_api_device(X_xp)
-        assert array_api_device(gmm_xp.covariances_) == array_api_device(X_xp)
+        assert array_device(gmm_xp.means_) == array_device(X_xp)
+        assert array_device(gmm_xp.covariances_) == array_device(X_xp)
 
         predict_xp = gmm_xp.predict(X_xp)
         predict_proba_xp = gmm_xp.predict_proba(X_xp)
@@ -1558,7 +1556,7 @@ def test_gaussian_mixture_array_api_compliance(
         ]
         for result in results:
             assert get_namespace(result)[0] == xp
-            assert array_api_device(result) == array_api_device(X_xp)
+            assert array_device(result) == array_device(X_xp)
 
         for score in [score_xp, aic_xp, bic_xp]:
             assert isinstance(score, float)

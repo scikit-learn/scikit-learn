@@ -48,9 +48,7 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._array_api import (
-    device as array_api_device,
-)
-from sklearn.utils._array_api import (
+    array_device,
     get_namespace,
     move_to,
     yield_namespace_device_dtype_combinations,
@@ -1323,7 +1321,7 @@ def test_temperature_scaling_array_api_compliance(
         rtol = 1e-3 if dtype_name == "float32" else 1e-7
         assert get_namespace(calibrator_xp.beta_)[0].__name__ == xp.__name__
         assert calibrator_xp.beta_.dtype == X_cal_xp.dtype
-        assert array_api_device(calibrator_xp.beta_) == array_api_device(X_cal_xp)
+        assert array_device(calibrator_xp.beta_) == array_device(X_cal_xp)
         assert_allclose(
             move_to(calibrator_xp.beta_, xp=np, device="cpu"),
             calibrator_np.beta_,
@@ -1396,7 +1394,7 @@ def test_temperature_scaling_array_api_with_str_y_estimator_not_prefit(
         rtol = 1e-3 if dtype_name == "float32" else 1e-7
         assert get_namespace(calibrator_xp.beta_)[0].__name__ == xp.__name__
         assert calibrator_xp.beta_.dtype == X_xp.dtype
-        assert array_api_device(calibrator_xp.beta_) == array_api_device(X_xp)
+        assert array_device(calibrator_xp.beta_) == array_device(X_xp)
         assert_allclose(
             move_to(calibrator_xp.beta_, xp=np, device="cpu"),
             calibrator_np.beta_,

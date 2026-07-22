@@ -42,9 +42,7 @@ from sklearn.model_selection._split import (
 from sklearn.svm import SVC
 from sklearn.tests.metadata_routing_common import assert_request_is_empty
 from sklearn.utils._array_api import (
-    device as array_api_device,
-)
-from sklearn.utils._array_api import (
+    array_device,
     get_namespace,
     move_to,
     yield_namespace_device_dtype_combinations,
@@ -1389,10 +1387,10 @@ def test_array_api_train_test_split(
         assert get_namespace(y_test_xp)[0] == get_namespace(y_xp)[0]
 
         # Check device and dtype is preserved on output
-        assert array_api_device(X_train_xp) == array_api_device(X_xp)
-        assert array_api_device(y_train_xp) == array_api_device(y_xp)
-        assert array_api_device(X_test_xp) == array_api_device(X_xp)
-        assert array_api_device(y_test_xp) == array_api_device(y_xp)
+        assert array_device(X_train_xp) == array_device(X_xp)
+        assert array_device(y_train_xp) == array_device(y_xp)
+        assert array_device(X_test_xp) == array_device(X_xp)
+        assert array_device(y_test_xp) == array_device(y_xp)
 
     assert X_train_xp.dtype == X_xp.dtype
     assert y_train_xp.dtype == y_xp.dtype

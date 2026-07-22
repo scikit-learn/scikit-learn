@@ -32,6 +32,7 @@ from sklearn.utils._array_api import (
     _ravel,
     _swapaxes,
     _validate_diagonal_args,
+    array_device,
     check_same_namespace,
     get_namespace,
     get_namespace_and_device,
@@ -42,9 +43,6 @@ from sklearn.utils._array_api import (
     supported_float_dtypes,
     yield_mixed_namespace_input_permutations,
     yield_namespace_device_dtype_combinations,
-)
-from sklearn.utils._array_api import (
-    device as array_api_device,
 )
 from sklearn.utils._testing import (
     SkipTest,
@@ -161,10 +159,10 @@ def test_move_to_array_api_conversions(array_input, reference):
 
     with config_context(array_api_dispatch=True):
         array_in = xp_from.asarray([1, 2, 3], device=device_from)
-        device_reference = array_api_device(xp_to.asarray(1, device=device_to))
+        device_reference = array_device(xp_to.asarray(1, device=device_to))
         array_out = move_to(array_in, xp=xp_to, device=device_reference)
         assert get_namespace(array_out)[0] == xp_to
-        assert array_api_device(array_out) == device_reference
+        assert array_device(array_out) == device_reference
 
 
 def test_move_to_sparse():
@@ -280,7 +278,7 @@ def test_average(
         if np_version < parse_version("2.0.0") or np_version >= parse_version("2.1.0"):
             # NumPy 2.0 has a problem with the device attribute of scalar arrays:
             # https://github.com/numpy/numpy/issues/26850
-            assert array_api_device(array_in) == array_api_device(result)
+            assert array_device(array_in) == array_device(result)
 
     result = move_to(result, xp=numpy, device="cpu")
     assert_allclose(result, expected, atol=_atol_for_type(dtype_name))
@@ -356,9 +354,9 @@ def test_average_raises_with_invalid_parameters(
 
 
 def test_device_none_if_no_input():
-    assert array_api_device() is None
+    assert array_device() is None
 
-    assert array_api_device(None, "name") is None
+    assert array_device(None, "name") is None
 
 
 @skip_if_array_api_compat_not_configured
@@ -391,22 +389,22 @@ def test_device_inspection():
     # early for different devices would prevent the np.asarray conversion to
     # happen. For example, `r2_score(np.ones(5), torch.ones(5))` should work
     # fine with array API disabled.
-    assert array_api_device(Array("cpu"), Array("mygpu")) is None
+    assert array_device(Array("cpu"), Array("mygpu")) is None
 
     # Test that ValueError is raised if on different devices and array API dispatch is
     # enabled.
     err_msg = "Input arrays use different devices: cpu, mygpu"
     with config_context(array_api_dispatch=True):
         with pytest.raises(ValueError, match=err_msg):
-            array_api_device(Array("cpu"), Array("mygpu"))
+            array_device(Array("cpu"), Array("mygpu"))
 
         # Test expected value is returned otherwise
         array1 = Array("device")
         array2 = Array("device")
 
-        assert array1.device == array_api_device(array1)
-        assert array1.device == array_api_device(array1, array2)
-        assert array1.device == array_api_device(array1, array1, array2)
+        assert array1.device == array_device(array1)
+        assert array1.device == array_device(array1, array2)
+        assert array1.device == array_device(array1, array1, array2)
 
 
 # TODO: add cupy to the list of libraries once the following upstream issue
@@ -763,7 +761,7 @@ def test_count_nonzero(
     if np_version < parse_version("2.0.0") or np_version >= parse_version("2.1.0"):
         # NumPy 2.0 has a problem with the device attribute of scalar arrays:
         # https://github.com/numpy/numpy/issues/26850
-        assert array_api_device(array_xp) == array_api_device(result)
+        assert array_device(array_xp) == array_device(result)
 
 
 @pytest.mark.parametrize(
@@ -878,8 +876,8 @@ def test_sparse_device(csr_container, dispatch):
     if dispatch and os.environ.get("SCIPY_ARRAY_API") is None:
         raise SkipTest("SCIPY_ARRAY_API is not set: not checking array_api input")
     with config_context(array_api_dispatch=dispatch):
-        assert array_api_device(a, b) is None
-        assert array_api_device(a, np_arr) == expected_numpy_array_device
+        assert array_device(a, b) is None
+        assert array_device(a, np_arr) == expected_numpy_array_device
         assert get_namespace_and_device(a, b)[2] is None
         assert get_namespace_and_device(a, np_arr)[2] == expected_numpy_array_device
 
@@ -1018,7 +1016,7 @@ def test_logsumexp_integer_array_api_on_float32_only_device(axis):
 
 
 @pytest.mark.parametrize(
-    ("namespace", "device_", "expected_types"),
+    ("namespace", "device", "expected_types"),
     [
         ("numpy", None, ("float64", "float32", "float16")),
         ("array_api_strict", None, ("float64", "float32")),
@@ -1027,8 +1025,8 @@ def test_logsumexp_integer_array_api_on_float32_only_device(axis):
         ("torch", "mps", ("float32", "float16")),
     ],
 )
-def test_supported_float_types(namespace, device_, expected_types):
-    xp, device = _array_api_for_tests(namespace, device_name=device_)
+def test_supported_float_types(namespace, device, expected_types):
+    xp, device = _array_api_for_tests(namespace, device_name=device)
     float_types = supported_float_dtypes(xp, device=device)
     expected = tuple(getattr(xp, dtype_name) for dtype_name in expected_types)
     assert float_types == expected

@@ -13,10 +13,10 @@ from sklearn.decomposition import PCA
 from sklearn.decomposition._pca import _assess_dimension, _infer_dimension
 from sklearn.utils._array_api import (
     _atol_for_type,
+    array_device,
     move_to,
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._array_api import device as array_device
 from sklearn.utils._test_common.instance_generator import _get_check_estimator_ids
 from sklearn.utils._testing import _array_api_for_tests, assert_allclose
 from sklearn.utils.estimator_checks import (
