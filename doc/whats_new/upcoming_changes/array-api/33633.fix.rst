@@ -1,2 +1,8 @@
-- :class:`model_selection.GridSearchCV` now supports array API inputs with mixed devices.
+- :class:`model_selection.GridSearchCV`, :class:`model_selection.RandomizedSearchCV`,
+  :func:`model_selection.cross_validate` and :func:`model_selection.cross_val_score`
+  no longer force `y` into `X`'s array namespace during cross-validation. Namespace
+  and device handling of `y` is delegated to the wrapped estimator ("everything
+  follows `X`"), so an array API `X` can be combined with a NumPy `y`, including a
+  NumPy string `y` which cannot be held by array API namespaces such as
+  `array_api_strict`.
   By :user:`Tim Head <betatim>`.

@@ -20,7 +20,13 @@ from sklearn.base import (
 from sklearn.covariance import empirical_covariance, ledoit_wolf, shrunk_covariance
 from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.preprocessing import StandardScaler
-from sklearn.utils._array_api import _expit, device, get_namespace, size
+from sklearn.utils._array_api import (
+    _expit,
+    array_device,
+    check_same_namespace,
+    get_namespace,
+    size,
+)
 from sklearn.utils._param_validation import HasMethods, Interval, StrOptions
 from sklearn.utils.extmath import softmax
 from sklearn.utils.multiclass import check_classification_targets, unique_labels
@@ -107,7 +113,9 @@ def _class_means(X, y):
     """
     xp, is_array_api_compliant = get_namespace(X)
     classes, y = xp.unique_inverse(y)
-    means = xp.zeros((classes.shape[0], X.shape[1]), device=device(X), dtype=X.dtype)
+    means = xp.zeros(
+        (classes.shape[0], X.shape[1]), device=array_device(X), dtype=X.dtype
+    )
 
     if is_array_api_compliant:
         for i in range(classes.shape[0]):
@@ -596,7 +604,9 @@ class LinearDiscriminantAnalysis(
         std = xp.std(Xc, axis=0)
         # avoid division by zero in normalization
         std[std == 0] = 1.0
-        fac = xp.asarray(1.0 / (n_samples - n_classes), dtype=X.dtype, device=device(X))
+        fac = xp.asarray(
+            1.0 / (n_samples - n_classes), dtype=X.dtype, device=array_device(X)
+        )
 
         # 2) Within variance scaling
         X = xp.sqrt(fac) * (Xc / std)
@@ -749,6 +759,7 @@ class LinearDiscriminantAnalysis(
                 "transform not implemented for 'lsqr' solver (use 'svd' or 'eigen')."
             )
         check_is_fitted(self)
+        check_same_namespace(X, self, attribute="coef_", method="transform")
         X = validate_data(self, X, reset=False)
 
         if self.solver == "svd":
@@ -772,6 +783,7 @@ class LinearDiscriminantAnalysis(
             Estimated probabilities.
         """
         check_is_fitted(self)
+        check_same_namespace(X, self, attribute="coef_", method="predict_proba")
         xp, _ = get_namespace(X)
         decision = self.decision_function(X)
         if size(self.classes_) == 2:
@@ -793,6 +805,7 @@ class LinearDiscriminantAnalysis(
         C : ndarray of shape (n_samples, n_classes)
             Estimated log probabilities.
         """
+        check_same_namespace(X, self, attribute="coef_", method="predict_log_proba")
         xp, _ = get_namespace(X)
         prediction = self.predict_proba(X)
 

@@ -5,14 +5,14 @@ from pytest import approx
 
 from sklearn._config import config_context
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
+    array_device,
     get_namespace,
+    move_to,
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._array_api import device as array_device
 from sklearn.utils.estimator_checks import _array_api_for_tests
 from sklearn.utils.fixes import np_version, parse_version
-from sklearn.utils.stats import _weighted_percentile
+from sklearn.utils.stats import _weighted_percentile, _weighted_percentile_1d_sorted
 
 
 @pytest.mark.parametrize("average", [True, False])
@@ -183,6 +183,27 @@ def test_weighted_percentile_constant_multiplier(
     assert percentile == approx(percentile_multiplier)
 
 
+@pytest.mark.parametrize("percentile_rank", [np.array([0]), np.array([20, 50, 100])])
+def test_weighted_percentile_1d_sorted_matches_weighted_percentile(
+    global_random_seed, percentile_rank
+):
+    """Check sorted 1D helper against `_weighted_percentile`."""
+    rng = np.random.RandomState(global_random_seed)
+    for x in [
+        np.sort(rng.uniform(size=100)),
+        np.array([0, 1, 1, 2], dtype=float),
+        np.repeat([0, 1, 2], rng.choice(10, size=3)).astype(np.float32),
+    ]:
+        sample_weight = rng.uniform(low=0.1, high=10, size=x.shape[0])
+
+        percentile = _weighted_percentile_1d_sorted(x, sample_weight, percentile_rank)
+        expected_percentile = _weighted_percentile(
+            x, sample_weight, percentile_rank, average=True
+        )
+
+        assert_allclose(percentile, expected_percentile)
+
+
 @pytest.mark.parametrize("percentile_rank", [50, [20, 35, 50]])
 @pytest.mark.parametrize("average", [True, False])
 def test_weighted_percentile_2d(global_random_seed, percentile_rank, average):
@@ -299,7 +320,7 @@ def test_weighted_percentile_array_api_consistency(
     percentile,
 ):
     """Check `_weighted_percentile` gives consistent results with array API."""
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     # Skip test for percentile=0 edge case (#20528) on namespace/device where
     # xp.nextafter is broken. This is the case for torch with MPS device:
@@ -324,7 +345,7 @@ def test_weighted_percentile_array_api_consistency(
         result_xp = _weighted_percentile(X_xp, weights_xp, percentile)
         assert array_device(result_xp) == array_device(X_xp)
         assert get_namespace(result_xp)[0] == get_namespace(X_xp)[0]
-        result_xp_np = _convert_to_numpy(result_xp, xp=xp)
+        result_xp_np = move_to(result_xp, xp=np, device="cpu")
 
     assert result_xp_np.dtype == result_np.dtype
     assert result_xp_np.shape == result_np.shape

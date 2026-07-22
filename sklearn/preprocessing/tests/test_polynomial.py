@@ -20,13 +20,11 @@ from sklearn.preprocessing._csr_polynomial_expansion import (
     _get_sizeof_LARGEST_INT_t,
 )
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
     _is_numpy_namespace,
+    array_device,
     get_namespace,
+    move_to,
     yield_namespace_device_dtype_combinations,
-)
-from sklearn.utils._array_api import (
-    device as array_api_device,
 )
 from sklearn.utils._mask import _get_mask
 from sklearn.utils._testing import (
@@ -1349,7 +1347,7 @@ def test_polynomial_features_array_api_compliance(
     dtype_name,
 ):
     """Test array API compliance for PolynomialFeatures on 2 features up to degree 3."""
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     X, _ = two_features_degree3
     X_np = X.astype(dtype_name)
     X_xp = xp.asarray(X_np, device=device)
@@ -1363,9 +1361,9 @@ def test_polynomial_features_array_api_compliance(
         ).fit(X_xp)
         out_np = tf_np.transform(X_np)
         out_xp = tf_xp.transform(X_xp)
-        assert_allclose(_convert_to_numpy(out_xp, xp=xp), out_np)
+        assert_allclose(move_to(out_xp, xp=np, device="cpu"), out_np)
         assert get_namespace(out_xp)[0].__name__ == xp.__name__
-        assert array_api_device(out_xp) == array_api_device(X_xp)
+        assert array_device(out_xp) == array_device(X_xp)
         assert out_xp.dtype == X_xp.dtype
 
 
@@ -1378,7 +1376,7 @@ def test_polynomial_features_array_api_raises_on_order_F(
 ):
     """Test that PolynomialFeatures with order='F' raises ValueError on
     array API namespaces other than numpy."""
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     X = np.arange(6).reshape((3, 2)).astype(dtype_name)
     X_xp = xp.asarray(X, device=device)
     msg = "PolynomialFeatures does not support order='F' for non-numpy arrays"

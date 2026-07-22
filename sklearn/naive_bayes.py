@@ -18,12 +18,11 @@ from sklearn.base import BaseEstimator, ClassifierMixin, _fit_context
 from sklearn.preprocessing import LabelBinarizer, binarize, label_binarize
 from sklearn.utils._array_api import (
     _average,
-    _convert_to_numpy,
     _find_matching_floating_dtype,
-    _isin,
     _logsumexp,
     get_namespace,
     get_namespace_and_device,
+    move_to,
     size,
 )
 from sklearn.utils._param_validation import Interval
@@ -113,7 +112,7 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         jll = self._joint_log_likelihood(X)
         pred_indices = xp.argmax(jll, axis=1)
         if isinstance(self.classes_[0], str):
-            pred_indices = _convert_to_numpy(pred_indices, xp=xp)
+            pred_indices = move_to(pred_indices, xp=np, device="cpu")
         return self.classes_[pred_indices]
 
     def predict_log_proba(self, X):
@@ -438,7 +437,7 @@ class GaussianNB(_BaseNB):
 
         first_call = _check_partial_fit_first_call(self, classes)
         X, y = validate_data(self, X, y, reset=first_call)
-        xp, _, device_ = get_namespace_and_device(X)
+        xp, _, device = get_namespace_and_device(X)
         float_dtype = _find_matching_floating_dtype(X, xp=xp)
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=float_dtype)
@@ -456,18 +455,18 @@ class GaussianNB(_BaseNB):
             n_features = X.shape[1]
             n_classes = self.classes_.shape[0]
             self.theta_ = xp.zeros(
-                (n_classes, n_features), dtype=float_dtype, device=device_
+                (n_classes, n_features), dtype=float_dtype, device=device
             )
             self.var_ = xp.zeros(
-                (n_classes, n_features), dtype=float_dtype, device=device_
+                (n_classes, n_features), dtype=float_dtype, device=device
             )
 
-            self.class_count_ = xp.zeros(n_classes, dtype=float_dtype, device=device_)
+            self.class_count_ = xp.zeros(n_classes, dtype=float_dtype, device=device)
 
             # Initialise the class prior
             # Take into account the priors
             if self.priors is not None:
-                priors = xp.asarray(self.priors, dtype=float_dtype, device=device_)
+                priors = xp.asarray(self.priors, dtype=float_dtype, device=device)
                 # Check that the provided prior matches the number of classes
                 if priors.shape[0] != n_classes:
                     raise ValueError("Number of priors must match number of classes.")
@@ -481,7 +480,7 @@ class GaussianNB(_BaseNB):
             else:
                 # Initialize the priors to zeros for each class
                 self.class_prior_ = xp.zeros(
-                    self.classes_.shape[0], dtype=float_dtype, device=device_
+                    self.classes_.shape[0], dtype=float_dtype, device=device
                 )
         else:
             if X.shape[1] != self.theta_.shape[1]:
@@ -493,7 +492,7 @@ class GaussianNB(_BaseNB):
         classes = self.classes_
 
         unique_y = xp_y.unique_values(y)
-        unique_y_in_classes = _isin(unique_y, classes, xp=xp_y)
+        unique_y_in_classes = xpx.isin(unique_y, classes, xp=xp_y)
 
         if not xp_y.all(unique_y_in_classes):
             raise ValueError(
@@ -503,7 +502,7 @@ class GaussianNB(_BaseNB):
 
         for y_i in unique_y:
             i = int(xp_y.searchsorted(classes, y_i))
-            y_i_mask = xp.asarray(y == y_i, device=device_)
+            y_i_mask = xp.asarray(y == y_i, device=device)
             X_i = X[y_i_mask]
 
             if sample_weight is not None:
