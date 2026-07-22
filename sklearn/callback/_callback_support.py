@@ -2,10 +2,30 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import functools
+from collections import UserList, defaultdict
 from contextlib import contextmanager
 
 from sklearn.callback._base import AutoPropagatedCallback, FitCallback
 from sklearn.callback._callback_context import CallbackContext
+from sklearn.utils import Bunch
+from sklearn.utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    process_routing,
+)
+
+
+class MultiCallback(UserList):
+    """A class wrapping the callback list, to make the metadata routing cleaner."""
+
+    def get_metadata_routing(self):
+        router = MetadataRouter(owner=self).add(
+            **{f"callback_{i}": callback for i, callback in enumerate(self.data)},
+            method_mapping=MethodMapping()
+            .add(caller="on_fit_task_begin", callee="on_fit_task_begin")
+            .add(caller="on_fit_task_end", callee="on_fit_task_end"),
+        )
+        return router
 
 
 class CallbackSupportMixin:
@@ -39,7 +59,7 @@ class CallbackSupportMixin:
             )
 
         if callbacks:
-            self._skl_callbacks = list(callbacks)
+            self._skl_callbacks = MultiCallback(list(callbacks))
         else:
             self.__dict__.pop("_skl_callbacks", None)
 
@@ -99,6 +119,65 @@ class CallbackSupportMixin:
                 callback.setup(estimator=self, context=self._callback_fit_ctx)
 
         return self._callback_fit_ctx
+
+    def _add_callback_routing(self, router):
+        """Utility method to add the routing to callbacks to the estimator's router."""
+        if hasattr(self, "_skl_callbacks"):
+            router.add(
+                callbacks=self._skl_callbacks,
+                method_mapping=MethodMapping()
+                .add(caller="fit", callee="on_fit_task_begin")
+                .add(caller="fit", callee="on_fit_task_end"),
+            )
+        return router
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self)
+        return self._add_callback_routing(router)
+
+    def _get_callbacks_routed_params(self, routed_params):
+        """Utility method to get the callbacks' routed params.
+
+        Parameters
+        ----------
+        routed_params : Bunch
+            The routed params of fit.
+
+        Returns
+        -------
+        callbacks_params : Bunch or None
+            The routed params for the callbacks' on_fit_task_begin and on_fit_task_end
+            hooks.
+        """
+        if not hasattr(self, "_skl_callbacks") or not hasattr(
+            routed_params, "callbacks"
+        ):
+            return None
+
+        callbacks_params = defaultdict(Bunch)
+        for hook_name in ("on_fit_task_begin", "on_fit_task_end"):
+            if not routed_params.callbacks[hook_name]:
+                continue
+
+            for callback_name, params in process_routing(
+                self._skl_callbacks,
+                hook_name,
+                **routed_params.callbacks[hook_name],
+            ).items():
+                callbacks_params[callback_name][hook_name] = params[hook_name]
+
+        return Bunch(**callbacks_params)
 
 
 @contextmanager

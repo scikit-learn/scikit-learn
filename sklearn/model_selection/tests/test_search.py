@@ -16,6 +16,7 @@ from scipy.stats import bernoulli, expon, randint, uniform
 
 from sklearn import config_context
 from sklearn.base import BaseEstimator, ClassifierMixin, clone, is_classifier
+from sklearn.callback import ScoringMonitor
 from sklearn.callback.tests._utils import (
     MaxIterEstimator,
     NoCallbackEstimator,
@@ -3092,41 +3093,6 @@ def test_search_callbacks_propagation(search, refit):
         assert callback.count_hooks("teardown") == 1
 
 
-@skip_callback_test_if_wasm
-def test_search_callbacks_receive_sample_weight():
-    """Test that `sample_weight` gets passed to `callback.on_fit_task_*`.
-
-    Note this tests all *SearchCV classes that inherit from `BaseSearchCV`.
-    """
-    callback = RecordingCallback()
-    search = GridSearchCV(
-        MaxIterEstimator(), {"max_iter": [1, 2, 3]}, cv=2, scoring="accuracy"
-    ).set_callbacks(callback)
-    sample_weight = np.random.RandomState(0).randint(0, 5, size=y.shape[0])
-    search.fit(X, y, sample_weight=sample_weight)
-
-    evaluation_records = [
-        entry
-        for entry in callback.record
-        if entry["context"].task_name == "candidate-split-evaluation"
-    ]
-    assert evaluation_records
-    refit_records = [
-        entry
-        for entry in callback.record
-        if entry["context"].task_name == "refit-with-best-params"
-    ]
-    assert refit_records
-
-    for entry in evaluation_records:
-        assert "sample_weight" in entry["kwargs"]["metadata"]
-
-    for entry in refit_records:
-        assert "sample_weight" in entry["kwargs"]["metadata"]
-        passed_weights = entry["kwargs"]["metadata"]["sample_weight"]
-        assert_array_equal(passed_weights, sample_weight)
-
-
 @pytest.mark.parametrize(
     "search",
     _searchcv_callback_test_cases(MaxIterEstimator, "r2"),
@@ -3177,3 +3143,51 @@ def test_search_callbacks_with_partial_fit_failures():
     expected_n_tasks = 1 + 1 + 4  # root + search + 4 candidate-split evaluations
     assert callback.count_hooks("on_fit_task_begin") == expected_n_tasks
     assert callback.count_hooks("on_fit_task_end") == expected_n_tasks
+
+
+@skip_callback_test_if_wasm
+@config_context(enable_metadata_routing=True)
+def test_search_callback_metadata():
+    """Test the metadata routing to callbacks."""
+    cb = RecordingCallback().set_on_fit_task_begin_request(requested_arg_begin=True)
+    GridSearchCV(LogisticRegression(), {"C": [1, 10]}, cv=2).set_callbacks(cb).fit(
+        X, y, requested_arg_begin="value"
+    )
+    task_begin_metadatas = [
+        rec["kwargs"]["requested_arg_begin"]
+        for rec in cb.record
+        if rec["name"] == "on_fit_task_begin"
+        and rec["context"].task_name not in ("candidate-split-evaluation", "search")
+    ]
+    assert task_begin_metadatas
+    assert all([m == "value" for m in task_begin_metadatas])
+
+
+@skip_callback_test_if_wasm
+@config_context(enable_metadata_routing=True)
+def test_search_callbacks_and_scorer_with_metadata_routing():
+    """Check that metadata routed to callbacks and scorers don't interfere.
+
+    The goal is to verify that having different metadata routed to the gridsearch's
+    scorer and the callback's scorer does not cause any trouble.
+    """
+    score_func = lambda y_true, y_pred, req_arg: req_arg
+    callback_scorer = make_scorer(score_func=score_func).set_score_request(
+        req_arg="arg_callback"
+    )
+    search_scorer = make_scorer(score_func=score_func).set_score_request(
+        req_arg="arg_scorer"
+    )
+
+    callback = ScoringMonitor(scoring_train=callback_scorer)
+    search = GridSearchCV(
+        MaxIterEstimator().set_callbacks(callback),
+        {"max_iter": [2, 3]},
+        scoring=search_scorer,
+        cv=2,
+        refit=False,
+    ).fit(X, y, arg_callback="callback_score", arg_scorer=42)
+    train_scores = callback.get_logs().train_scores
+    assert train_scores
+    assert all([ll["score"] == "callback_score" for ll in train_scores])
+    assert search.best_score_ == 42

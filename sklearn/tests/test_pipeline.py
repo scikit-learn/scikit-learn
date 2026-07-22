@@ -2394,9 +2394,12 @@ class SimpleEstimator(BaseEstimator):
         return X - 1
 
 
-# split and partial_fit not relevant for pipelines
+# split, partial_fit, on_fit_task_begin and on_fit_task_end not relevant for pipelines
 @pytest.mark.parametrize(
-    "parent_method", sorted(set(METHODS) - {"split", "partial_fit"})
+    "parent_method",
+    sorted(
+        set(METHODS) - {"split", "partial_fit", "on_fit_task_begin", "on_fit_task_end"}
+    ),
 )
 @config_context(enable_metadata_routing=True)
 def test_metadata_routing_for_pipeline(parent_method):
@@ -2480,10 +2483,15 @@ def test_metadata_routing_for_pipeline(parent_method):
     )
 
 
-# split and partial_fit not relevant for pipelines
+# split, partial_fit, on_fit_task_begin and on_fit_task_end not relevant for pipelines
 # sorted is here needed to make `pytest -nX` work. W/o it, tests are collected
 # in different orders between workers and that makes it fail.
-@pytest.mark.parametrize("method", sorted(set(METHODS) - {"split", "partial_fit"}))
+@pytest.mark.parametrize(
+    "method",
+    sorted(
+        set(METHODS) - {"split", "partial_fit", "on_fit_task_begin", "on_fit_task_end"}
+    ),
+)
 @config_context(enable_metadata_routing=True)
 def test_metadata_routing_error_for_pipeline(method):
     """Test that metadata is not routed for pipelines when not requested."""

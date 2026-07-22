@@ -11,8 +11,8 @@ from datetime import datetime, timezone
 
 from sklearn.callback._base import AutoPropagatedCallback
 
-# List of the parameters expected to be in the hooks signatures
-VALID_HOOK_PARAMS_OUT = ["X", "y", "metadata", "fitted_estimator"]
+# Set of the hook parameters that do not come from metadata routing
+HOOK_NOT_ROUTED_PARAMS = {"X", "y", "fitted_estimator"}
 
 
 _cached_signature = functools.lru_cache()(inspect.signature)
@@ -315,28 +315,24 @@ class CallbackContext:
         # Keep a cache of the evaluated args to evaluate them only once.
         evaluated_args = {}
 
-        for callback in self._callbacks:
+        for i, callback in enumerate(self._callbacks):
             if callback in getattr(self, "_propagated_callbacks", []):
-                # Only call the `on_fit_task_end` hook of callbacks that are not
-                # propagated. For propagated callbacks, the hook will be called by the
+                # Only call the `on_fit_task_...` hooks of callbacks that are not
+                # propagated. For propagated callbacks, the hooks will be called by the
                 # sub-estimator's root context (both represent the same task).
                 continue
 
+            args_to_pass = getattr(
+                getattr(kwargs["metadata"], f"callback_{i}", None), hook_name, {}
+            )
+
             signature = _cached_signature(getattr(callback, hook_name))
-            params_names = {
+            kwarg_names = {
                 p.name
                 for p in signature.parameters.values()
                 if p.kind == p.KEYWORD_ONLY
             }
-            if diff := set(params_names) - set(VALID_HOOK_PARAMS_OUT):
-                raise TypeError(
-                    f"Hook {hook_name} of the callback {callback.__class__.__name__} "
-                    f"has parameters that are not valid: {diff}. The valid parameters "
-                    f"are: {VALID_HOOK_PARAMS_OUT}."
-                )
-
-            args_to_pass = {}
-            for param_name in params_names:
+            for param_name in HOOK_NOT_ROUTED_PARAMS & kwarg_names:
                 if param_name not in evaluated_args:
                     # Special case: "reconstruction_attributes" is not directly passed
                     # to the hook. A ready to predict/transform estimator is created
@@ -385,8 +381,11 @@ class CallbackContext:
         y : array-like or None, default=None
             The training targets of the current task.
 
-        metadata : dict or None, default=None
-            A dictionary containing training metadata for the current task.
+        metadata : dict of str -> object or None, default=None
+            If `enable_metadata_routing=True`: Parameters requested and accepted by
+            callbacks.
+            See :ref:`Metadata Routing User Guide <metadata_routing>` for more
+            details.
 
         reconstruction_attributes : dict or None, default=None
             A dictionary of the sufficient fitted attributes needed to construct a
@@ -427,8 +426,11 @@ class CallbackContext:
         y : array-like or None, default=None
             The training targets of the current task.
 
-        metadata : dict or None, default=None
-            A dictionary containing training metadata of the current task.
+        metadata : dict of str -> object or None, default=None
+            If `enable_metadata_routing=True`: Parameters requested and accepted by
+            callbacks.
+            See :ref:`Metadata Routing User Guide <metadata_routing>` for more
+            details.
 
         reconstruction_attributes : dict or None, default=None
             A dictionary of the sufficient fitted attributes needed to construct a
