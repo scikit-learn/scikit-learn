@@ -881,6 +881,7 @@ API_REFERENCE = {
                 "title": "Plotting",
                 "description": _get_guide("visualizations"),
                 "autosummary": [
+                    "ClassificationReportDisplay",
                     "ConfusionMatrixDisplay",
                     "DetCurveDisplay",
                     "PrecisionRecallDisplay",
