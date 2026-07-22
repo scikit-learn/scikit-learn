@@ -18,7 +18,7 @@ from sklearn.utils._array_api import (
     _max_precision_float_dtype,
     _nanmean,
     _nansum,
-    device,
+    array_device,
     get_namespace,
     get_namespace_and_device,
 )
@@ -323,7 +323,7 @@ def _randomized_range_finder(
     Q = random_state.normal(size=(A.shape[1], size))
     if A.dtype == xp.float32 or (
         is_array_api_compliant
-        and _max_precision_float_dtype(xp, device=device(A)) == xp.float32
+        and _max_precision_float_dtype(xp, device=array_device(A)) == xp.float32
     ):
         # Use float32 computation and components if A has a float32 dtype
         # or if A has integer dtype and device doesn't not support float64.
@@ -334,7 +334,7 @@ def _randomized_range_finder(
         Q = Q.astype(np.float32, copy=False)
 
     if is_array_api_compliant:
-        Q = xp.asarray(Q, device=device(A))
+        Q = xp.asarray(Q, device=array_device(A))
     else:
         Q = xp.asarray(Q)
 
@@ -964,7 +964,7 @@ def svd_flip(u, v, u_based_decision=True):
     if u_based_decision:
         # columns of u, rows of v, or equivalently rows of u.T and v
         max_abs_u_cols = xp.argmax(xp.abs(u.T), axis=1)
-        shift = xp.arange(u.T.shape[0], device=device(u))
+        shift = xp.arange(u.T.shape[0], device=array_device(u))
         indices = max_abs_u_cols + shift * u.T.shape[1]
         signs = xp.sign(xp.take(xp.reshape(u.T, (-1,)), indices, axis=0))
         u *= signs[np.newaxis, :]
@@ -973,7 +973,7 @@ def svd_flip(u, v, u_based_decision=True):
     else:
         # rows of v, columns of u
         max_abs_v_rows = xp.argmax(xp.abs(v), axis=1)
-        shift = xp.arange(v.shape[0], device=device(v))
+        shift = xp.arange(v.shape[0], device=array_device(v))
         indices = max_abs_v_rows + shift * v.shape[1]
         signs = xp.sign(xp.take(xp.reshape(v, (-1,)), indices, axis=0))
         if u is not None:

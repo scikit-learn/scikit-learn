@@ -262,7 +262,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 f"l1_ratio={self.l1_ratio}."
             )
             raise ValueError(msg)
-        xp, _, device_ = get_namespace_and_device(X)
+        xp, _, device = get_namespace_and_device(X)
         X, y = validate_data(
             self,
             X,
@@ -280,10 +280,10 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             # losses.
             sample_weight = _check_sample_weight(sample_weight, X, dtype=loss_dtype)
 
-        y, sample_weight = move_to(y, sample_weight, xp=xp, device=device_)
+        y, sample_weight = move_to(y, sample_weight, xp=xp, device=device)
 
         n_samples, n_features = X.shape
-        self._base_loss = self._get_loss(xp=xp, device=device_)
+        self._base_loss = self._get_loss(xp=xp, device=device)
 
         linear_loss = LinearModelLoss(
             base_loss=self._base_loss,
@@ -362,7 +362,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             coef = xp.asarray(
                 coef.copy(order="C" if not _is_numpy_namespace(xp) else "K"),
                 dtype=X.dtype,
-                device=device_,
+                device=device,
             )
         elif self.solver == "newton-cg":
             func = linear_loss.loss
@@ -514,8 +514,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             # losses.
             sample_weight = _check_sample_weight(sample_weight, X, dtype=y.dtype)
 
-        xp, _, device_ = get_namespace_and_device(X)
-        y, sample_weight = move_to(y, sample_weight, xp=xp, device=device_)
+        xp, _, device = get_namespace_and_device(X)
+        y, sample_weight = move_to(y, sample_weight, xp=xp, device=device)
 
         base_loss = self._base_loss
 
