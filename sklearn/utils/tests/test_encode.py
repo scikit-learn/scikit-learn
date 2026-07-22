@@ -1,3 +1,5 @@
+import pickle
+
 import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
@@ -115,6 +117,12 @@ def test_unique_util_missing_values_objects(missing_value):
 
     encoded = _encode(values, uniques=uniques)
     assert_array_equal(encoded, np.array([0, 2, 2, 3, 1]))
+
+
+def test_encode_uniques_survive_pickle():
+    values = np.array(["a", "c", np.nan, "b"], dtype=object)
+    uniques = pickle.loads(pickle.dumps(_unique(values)))
+    assert_array_equal(_encode(values, uniques=uniques), [0, 2, 3, 1])
 
 
 def test_unique_util_missing_values_numeric():
