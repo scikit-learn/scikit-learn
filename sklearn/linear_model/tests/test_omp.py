@@ -98,8 +98,8 @@ def test_unreachable_accuracy():
     "keyword_params",
     [{"n_nonzero_coefs": n_features + 1}],
 )
-def test_bad_input(positional_params, keyword_params):
-    with pytest.raises(ValueError):
+def test_n_nonzero_coefs_clipping(positional_params, keyword_params):
+    with pytest.warns(UserWarning, match="was clipped to"):
         orthogonal_mp(*positional_params, **keyword_params)
 
 
