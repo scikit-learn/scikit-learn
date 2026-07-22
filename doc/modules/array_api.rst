@@ -211,6 +211,7 @@ Metrics
 - :func:`sklearn.metrics.d2_log_loss_score`
 - :func:`sklearn.metrics.d2_pinball_score`
 - :func:`sklearn.metrics.d2_tweedie_score`
+- :func:`sklearn.metrics.dcg_score`
 - :func:`sklearn.metrics.det_curve`
 - :func:`sklearn.metrics.explained_variance_score`
 - :func:`sklearn.metrics.f1_score`
@@ -230,6 +231,7 @@ Metrics
 - :func:`sklearn.metrics.mean_tweedie_deviance`
 - :func:`sklearn.metrics.median_absolute_error`
 - :func:`sklearn.metrics.multilabel_confusion_matrix`
+- :func:`sklearn.metrics.ndcg_score`
 - :func:`sklearn.metrics.pairwise.additive_chi2_kernel`
 - :func:`sklearn.metrics.pairwise.chi2_kernel`
 - :func:`sklearn.metrics.pairwise.cosine_similarity`

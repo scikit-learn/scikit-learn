@@ -380,7 +380,14 @@ def type_of_target(y, input_name="", raise_unknown=False):
                 y = check_array(y, dtype=object, **check_y_kwargs)
 
     try:
-        first_row_or_val = y[[0], :] if issparse(y) else y[0]
+        if issparse(y):
+            first_row_or_val = y[[0], :]
+        elif _is_numpy_namespace(xp):
+            first_row_or_val = y[0]
+        else:
+            # The Array API standard only guarantees indexing with an integer
+            # when all dimensions are indexed, hence the trailing ellipsis.
+            first_row_or_val = y[0, ...]
         # labels in bytes format
         if isinstance(first_row_or_val, bytes):
             raise TypeError(
