@@ -49,7 +49,19 @@ def plot_permutation_importance(clf, X, y, ax):
         else "labels"
     )
     tick_labels_dict = {tick_labels_parameter_name: X.columns[perm_sorted_idx]}
-    ax.boxplot(result.importances[perm_sorted_idx].T, vert=False, **tick_labels_dict)
+    # `vert` was deprecated in matplotlib 3.11 and is replaced by `orientation`,
+    # which is available since matplotlib 3.10. The following code handles this,
+    # but as a scikit-learn user you probably can write simpler code by using
+    # `vert=False` (matplotlib < 3.11) or `orientation="horizontal"`
+    # (matplotlib >= 3.10).
+    orientation_dict = (
+        {"orientation": "horizontal"}
+        if parse_version(matplotlib.__version__) >= parse_version("3.10")
+        else {"vert": False}
+    )
+    ax.boxplot(
+        result.importances[perm_sorted_idx].T, **orientation_dict, **tick_labels_dict
+    )
     ax.axvline(x=0, color="k", linestyle="--")
     return ax
 
