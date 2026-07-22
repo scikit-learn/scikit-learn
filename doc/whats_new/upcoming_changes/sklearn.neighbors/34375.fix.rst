@@ -1,0 +1,2 @@
+- :func:`neighbors.RadiusNeighborsMixin.radius_neighbors` now correctly supports array-like radii when running in parallel with ``n_jobs > 1``.
+  By :user:`ArjunPakhan`.
