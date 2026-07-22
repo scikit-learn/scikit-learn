@@ -290,7 +290,7 @@ Yes. Contributions are accepted under the project's BSD 3-Clause License. You mu
 have the legal right to grant that license for your contribution (you own it, or your
 employer or client authorized the contribution). If you assigned the same work to
 another party, you may be unable to contribute it unless they authorize a
-BSD-3 grant. See :ref:`right_to_contribute` and :ref:`automated_contributions_policy`.
+BSD-3 license. See :ref:`right_to_contribute` and :ref:`automated_contributions_policy`.
 
 Why is my pull request not getting any attention?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -322,7 +322,7 @@ To help your issue receive attention or improve the likelihood of your pull requ
 being reviewed, you can try:
 
 * follow our :ref:`contribution guidelines <contributing>`, in particular
-  :ref:`automated_contributions_policy`, :ref:`right_to_contribute`, :ref:`filing_bugs`,
+  :ref:`automated_contributions_policy`,  :ref:`filing_bugs`,
   :ref:`stalled_pull_request` and :ref:`stalled_unclaimed_issues`,
 * complete all sections of the issue or pull request template provided by GitHub,
   including a clear description of the issue or motivation and thought process behind

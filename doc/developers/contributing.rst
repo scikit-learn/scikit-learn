@@ -181,8 +181,9 @@ Please do not paste AI generated text in the description of issues, PRs or in co
 as this makes it harder for reviewers to assess your contribution. We are happy for it
 to be used to improve grammar or if you are not a native English speaker.
 
-If you used AI tools, you need to state so in your PR description (see the pull request
-template). If the work was done for a third-party paid platform (for example bounties,
+If you used AI tools, you need to state so in your PR description.
+
+If the work was done for a third-party paid platform (for example bounties,
 paid "quests", or similar programs that compensate you for opening PRs or producing
 training data), state so. Do not use scikit-learn's review process as unpaid QA for an
 external company.
@@ -477,6 +478,9 @@ Pull request checklist
           for reference. Examples should demonstrate why the new functionality is useful
           in practice and, if possible, compare it to other methods available in
           scikit-learn.
+
+      * Make sure you are allowed to submit your code under the BSD 3-Clause License to
+        scikit-learn; see :ref:`right_to_contribute`.
 
       **When** opening a PR:
 
