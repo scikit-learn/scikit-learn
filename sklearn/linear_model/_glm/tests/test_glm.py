@@ -1282,13 +1282,15 @@ def test_poisson_regressor_array_api_compliance(
 
     params = dict(alpha=1, solver="lbfgs", max_iter=500)
     params["tol"] = 3e-6 if dtype_name == "float32" else 1e-13
-    glm_np = PoissonRegressor(**params).fit(X_np, y_np, sample_weight=sample_weight)
-    assert glm_np.n_iter_ < glm_np.max_iter
+    with config_context(array_api_dispatch=False):
+        glm_np = PoissonRegressor(**params).fit(X_np, y_np, sample_weight=sample_weight)
+        assert glm_np.n_iter_ < glm_np.max_iter
 
-    # Test that alpha was not too large for meaningful testing.
-    assert np.abs(glm_np.coef_).max() > 0.1
+        # Test that alpha was not too large for meaningful testing.
+        assert np.abs(glm_np.coef_).max() > 0.1
 
-    predict_np = glm_np.predict(X_np)
+        predict_np = glm_np.predict(X_np)
+
     atol = _atol_for_type(dtype_name)
     rtol = 2e-3 if dtype_name == "float32" else 3e-7
 

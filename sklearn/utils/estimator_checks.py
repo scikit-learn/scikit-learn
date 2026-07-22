@@ -1148,7 +1148,8 @@ def _check_array_api_core(
             fit_kwargs["sample_weight"], device=device_other
         )
 
-    est.fit(X, y, **fit_kwargs)
+    with config_context(array_api_dispatch=False):
+        est.fit(X, y, **fit_kwargs)
 
     est_xp = clone(est)
     with config_context(array_api_dispatch=True):
@@ -1235,20 +1236,24 @@ def _check_array_api_core(
         numpy_asarray_works = False
 
     if numpy_asarray_works:
-        # In this case, array_api_dispatch is disabled and we rely on np.asarray
-        # being called to convert the non-NumPy inputs to NumPy arrays when needed.
-        est_fitted_with_as_array = clone(est).fit(X_xp, y_xp)
-        # We only do a smoke test for now, in order to avoid complicating the
-        # test function even further.
-        for method_name in methods:
-            method = getattr(est_fitted_with_as_array, method_name, None)
-            if method is None:
-                continue
+        # In this case, array_api_dispatch is explicitly disabled and we rely on
+        # np.asarray being called to convert the non-NumPy inputs to NumPy arrays
+        # when needed. Pinning the flag to False ensures this branch keeps
+        # exercising the np.asarray fallback path regardless of the default value
+        # of the `array_api_dispatch` config flag.
+        with config_context(array_api_dispatch=False):
+            est_fitted_with_as_array = clone(est).fit(X_xp, y_xp)
+            # We only do a smoke test for now, in order to avoid complicating the
+            # test function even further.
+            for method_name in methods:
+                method = getattr(est_fitted_with_as_array, method_name, None)
+                if method is None:
+                    continue
 
-            if method_name == "score":
-                method(X_xp, y_xp)
-            else:
-                method(X_xp)
+                if method_name == "score":
+                    method(X_xp, y_xp)
+                else:
+                    method(X_xp)
 
     for method_name in methods:
         method = getattr(est, method_name, None)
@@ -1256,7 +1261,8 @@ def _check_array_api_core(
             continue
 
         if method_name == "score":
-            result = method(X, y)
+            with config_context(array_api_dispatch=False):
+                result = method(X, y)
             with config_context(array_api_dispatch=True):
                 result_xp = getattr(est_xp, method_name)(X_xp, y_xp)
             # score typically returns a Python float
@@ -1266,7 +1272,8 @@ def _check_array_api_core(
                 assert abs(result - result_xp) < _atol_for_type(X.dtype)
             continue
         else:
-            result = method(X)
+            with config_context(array_api_dispatch=False):
+                result = method(X)
             with config_context(array_api_dispatch=True):
                 result_xp = getattr(est_xp, method_name)(X_xp)
 
@@ -1302,7 +1309,8 @@ def _check_array_api_core(
                 assert result.dtype == result_xp_np.dtype
 
         if method_name == "transform" and hasattr(est, "inverse_transform"):
-            inverse_result = est.inverse_transform(result)
+            with config_context(array_api_dispatch=False):
+                inverse_result = est.inverse_transform(result)
             with config_context(array_api_dispatch=True):
                 inverse_result_xp = est_xp.inverse_transform(result_xp)
 

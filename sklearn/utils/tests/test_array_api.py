@@ -745,9 +745,10 @@ def test_count_nonzero(
         sample_weight = numpy.asarray([0.5, 1.5, 0.8, 3.2, 2.4], dtype=dtype_name)
     else:
         sample_weight = None
-    expected = sparse_count_nonzero(
-        csr_container(array), axis=axis, sample_weight=sample_weight
-    )
+    with config_context(array_api_dispatch=False):
+        expected = sparse_count_nonzero(
+            csr_container(array), axis=axis, sample_weight=sample_weight
+        )
     array_xp = xp.asarray(array, device=device)
 
     with config_context(array_api_dispatch=True):
@@ -857,7 +858,8 @@ def test_add_to_diagonal(array_namespace, device_name, dtype_name):
     array_xp = xp.asarray(array_np.copy(), device=device)
 
     add_val = [1, 2, 3]
-    _fill_diagonal(array_np, value=add_val, xp=np_xp)
+    with config_context(array_api_dispatch=False):
+        _fill_diagonal(array_np, value=add_val, xp=np_xp)
     with config_context(array_api_dispatch=True):
         _fill_diagonal(array_xp, value=add_val, xp=xp)
 
