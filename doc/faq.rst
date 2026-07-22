@@ -322,7 +322,7 @@ To help your issue receive attention or improve the likelihood of your pull requ
 being reviewed, you can try:
 
 * follow our :ref:`contribution guidelines <contributing>`, in particular
-  :ref:`automated_contributions_policy`,  :ref:`filing_bugs`,
+  :ref:`automated_contributions_policy`, :ref:`filing_bugs`,
   :ref:`stalled_pull_request` and :ref:`stalled_unclaimed_issues`,
 * complete all sections of the issue or pull request template provided by GitHub,
   including a clear description of the issue or motivation and thought process behind
