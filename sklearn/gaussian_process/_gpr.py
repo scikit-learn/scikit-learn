@@ -24,6 +24,7 @@ from sklearn.preprocessing._data import _handle_zeros_in_scale
 from sklearn.utils import check_random_state
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.optimize import _check_optimize_result
+from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import validate_data
 
 GPR_CHOLESKY_LOWER = True
@@ -309,13 +310,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     return -self.log_marginal_likelihood(theta, clone_kernel=False)
 
             # First optimize starting from theta specified in kernel
-            optima = [
-                (
-                    self._constrained_optimization(
-                        obj_func, self.kernel_.theta, self.kernel_.bounds
-                    )
-                )
-            ]
+            theta_initials = [self.kernel_.theta]
 
             # Additional runs are performed from log-uniform chosen initial
             # theta
@@ -325,12 +320,22 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                         "Multiple optimizer restarts (n_restarts_optimizer>0) "
                         "requires that all bounds are finite."
                     )
-                bounds = self.kernel_.bounds
-                for iteration in range(self.n_restarts_optimizer):
-                    theta_initial = self._rng.uniform(bounds[:, 0], bounds[:, 1])
-                    optima.append(
-                        self._constrained_optimization(obj_func, theta_initial, bounds)
+                theta_initials.extend(
+                    self._rng.uniform(
+                        self.kernel_.bounds[:, 0], self.kernel_.bounds[:, 1]
                     )
+                    for _ in range(self.n_restarts_optimizer)
+                )
+
+            optima = Parallel()(
+                self._constrained_optimization(
+                    bounds=self.kernel_.bounds,
+                    initial_theta=theta_initial,
+                    obj_func=obj_func,
+                )
+                for theta_initial in theta_initials
+            )
+
             # Select result from run with minimal (negative) log-marginal
             # likelihood
             lml_values = list(map(itemgetter(1), optima))
@@ -655,6 +660,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         else:
             return log_likelihood
 
+    @delayed
     def _constrained_optimization(self, obj_func, initial_theta, bounds):
         if self.optimizer == "fmin_l_bfgs_b":
             opt_res = scipy.optimize.minimize(
