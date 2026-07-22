@@ -42,7 +42,7 @@ if args.polars:
 
     # needs pyarrow to work:
     X = pl.from_pandas(X, include_index=False)
-    if format == "categorical":
+    if args.format == "categorical":
         X = X.with_columns(pl.col(string_cols).cast(pl.Categorical))
 
 # define encoders:
