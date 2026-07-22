@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from scipy import stats
 
-from sklearn import datasets
+from sklearn import config_context, datasets
 from sklearn.datasets import make_multilabel_classification
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.linear_model import LogisticRegression
@@ -37,7 +37,9 @@ from sklearn.metrics._ranking import (
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import label_binarize
 from sklearn.random_projection import _sparse_random_matrix
+from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     _convert_container,
     assert_allclose,
     assert_almost_equal,
@@ -2229,6 +2231,52 @@ def test_top_k_accuracy_score_ties(y_true, k, true_score):
         ]
     )
     assert top_k_accuracy_score(y_true, y_score, k=k) == pytest.approx(true_score)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_top_k_accuracy_score_array_api_tie_breaking(
+    array_namespace, device_name, dtype_name
+):
+    """Check that array API dispatch preserves the documented tie-breaking.
+
+    In case of ties, the labels with the highest indices must be chosen first.
+    An implementation resolving ties towards the lowest index instead (e.g.
+    using a stable descending argsort rather than flipping a stable ascending
+    one) would score 2/3 instead of 1/3 at k=1 on this data.
+    """
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
+
+    y_true = np.array([2, 0, 1])
+    y_score = np.array(
+        [
+            [0.3, 0.3, 0.3],  # all tied: top-1 is class 2 -> hit
+            [0.3, 0.3, 0.3],  # all tied: top-1 is class 2 -> miss
+            [0.1, 0.4, 0.4],  # 1 and 2 tied: top-1 is 2 -> miss, top-2 -> hit
+        ],
+        dtype=dtype_name,
+    )
+    # Hand-computed scores under highest-index-first tie-breaking; exact in
+    # the NumPy reference, which averages the boolean hits in float64.
+    expected_scores = {1: 1 / 3, 2: 2 / 3}
+
+    y_true_xp = xp.asarray(y_true, device=device)
+    y_score_xp = xp.asarray(y_score, device=device)
+
+    for k, expected_score in expected_scores.items():
+        with config_context(array_api_dispatch=False):
+            score_np = top_k_accuracy_score(y_true, y_score, k=k)
+        assert score_np == expected_score
+
+        with config_context(array_api_dispatch=True):
+            score_xp = top_k_accuracy_score(y_true_xp, y_score_xp, k=k)
+        # Namespaces whose default floating dtype is float32 (e.g. PyTorch)
+        # average the boolean hits at float32 precision, so the comparison
+        # needs a tolerance. It is orders of magnitude smaller than the gap
+        # between the scores of the two possible tie-breaking directions.
+        assert score_xp == pytest.approx(score_np, rel=1e-6)
 
 
 @pytest.mark.parametrize(

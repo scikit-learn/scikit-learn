@@ -2621,6 +2621,12 @@ array_api_metric_checkers = {
         check_array_api_multiclass_continuous_classification_metric,
         check_array_api_multilabel_continuous_classification_metric,
     ],
+    top_k_accuracy_score: [
+        check_array_api_multiclass_continuous_classification_metric,
+    ],
+    partial(top_k_accuracy_score, k=1): [
+        check_array_api_binary_continuous_classification_metric,
+    ],
     # Regression metrics
     d2_absolute_error_score: [
         check_array_api_regression_metric,

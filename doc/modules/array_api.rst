@@ -254,6 +254,7 @@ Metrics
 - :func:`sklearn.metrics.roc_curve`
 - :func:`sklearn.metrics.root_mean_squared_error`
 - :func:`sklearn.metrics.root_mean_squared_log_error`
+- :func:`sklearn.metrics.top_k_accuracy_score`
 - :func:`sklearn.metrics.zero_one_loss`
 
 Tools
