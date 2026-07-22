@@ -570,3 +570,23 @@ def test_subclassing_displays(pyplot, data, Display, params):
 
     display = SubclassOfDisplay.from_estimator(estimator, X, y, **params)
     assert isinstance(display, SubclassOfDisplay)
+
+
+def test_validation_curve_display_categorical_param(pyplot, data):
+    """Check ValidationCurveDisplay handles string/categorical param_range.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/28536
+    """
+    X, y = data
+    param_range = ["gini", "entropy"]
+    display = ValidationCurveDisplay.from_estimator(
+        DecisionTreeClassifier(random_state=0),
+        X,
+        y,
+        param_name="criterion",
+        param_range=param_range,
+    )
+    tick_labels = [t.get_text() for t in display.ax_.get_xticklabels()]
+    assert tick_labels == param_range
+    assert display.ax_.get_xlabel() == "criterion"
