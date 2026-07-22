@@ -203,6 +203,12 @@ plt.show()
 # out of the overfitting region occurs in a more spread range and the accuracy
 # does not seem to be degraded up to chance level.
 #
+# See e.g. :doi:`Bartlett, P., Jordan, M. & McAuliffe, J. (2006),
+# "Convexity, Classification, and Risk Bounds"
+# <10.1198/016214505000000907>` which establishes that for convex surrogate
+# losses (including the squared hinge loss used here), risk consistency does
+# not require the regularization parameter to grow with the sample size.
+#
 # Try increasing the value to `n_splits=1_000` for better results in the L2
 # case, which is not shown here due to the limitations on the documentation
 # builder.
