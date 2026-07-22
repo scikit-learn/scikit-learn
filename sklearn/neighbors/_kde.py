@@ -10,7 +10,7 @@ import itertools
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.special import gammainc
+from scipy.special import gammainc, logsumexp
 
 from sklearn.base import BaseEstimator, _fit_context
 from sklearn.neighbors._ball_tree import BallTree
@@ -92,6 +92,12 @@ class KernelDensity(BaseEstimator):
         metric.  For more information, see the documentation of
         :class:`BallTree` or :class:`KDTree`.
 
+    bounds : array-like of shape (n_features, 2), default=None
+        Lower and upper bounds for each dimension. Samples are reflected at the
+        boundaries to attenuate bias (Boneva et al., 1971). Use :code:`+- inf` to
+        indicate that a feature is not bounded. The computation cost grows exponentially
+        with :code:`n_features`.
+
     Attributes
     ----------
     n_features_in_ : int
@@ -118,6 +124,11 @@ class KernelDensity(BaseEstimator):
         problems.
     sklearn.neighbors.BallTree : Ball tree for fast generalized N-point
         problems.
+
+    References
+    ----------
+    * :doi:`Boneva et al., 1971. Spline Transformations: Three New Diagnostic Aids for
+      the Statistical Data-Analyst. <10.1111/j.2517-6161.1971.tb00855.x>`
 
     Examples
     --------
@@ -150,6 +161,7 @@ class KernelDensity(BaseEstimator):
         "breadth_first": ["boolean"],
         "leaf_size": [Interval(Integral, 1, None, closed="left")],
         "metric_params": [None, dict],
+        "bounds": [None, "array-like"],
     }
 
     def __init__(
@@ -164,6 +176,7 @@ class KernelDensity(BaseEstimator):
         breadth_first=True,
         leaf_size=40,
         metric_params=None,
+        bounds=None,
     ):
         self.algorithm = algorithm
         self.bandwidth = bandwidth
@@ -174,6 +187,7 @@ class KernelDensity(BaseEstimator):
         self.breadth_first = breadth_first
         self.leaf_size = leaf_size
         self.metric_params = metric_params
+        self.bounds = bounds
 
     def _choose_algorithm(self, algorithm, metric):
         # given the algorithm string + metric string, choose the optimal
@@ -190,6 +204,23 @@ class KernelDensity(BaseEstimator):
                     "invalid metric for {0}: '{1}'".format(TREE_DICT[algorithm], metric)
                 )
             return algorithm
+
+    def _evaluate_hypercube_faces(self):
+        n_dims = len(self.bounds)
+        # Start the queue with all vertices, then recursively create all faces.
+        queue = set(itertools.product(*self.bounds))
+        faces = set()
+        while queue:
+            face = queue.pop()
+            faces.add(face)
+            # Generate all possible higher-dimensional faces but only queue ones we
+            # haven't encountered before.
+            candidates = {face[:i] + (None,) + face[i + 1 :] for i in range(n_dims)}
+            queue.update(candidates - queue - faces)
+
+        # Cast the values to floats and filter out infinite bounds.
+        faces = np.asarray(list(faces), dtype=float)
+        return faces[~np.isinf(faces).any(axis=1)]
 
     @_fit_context(
         # KernelDensity.metric is not validated yet
@@ -275,15 +306,32 @@ class KernelDensity(BaseEstimator):
         else:
             N = self.tree_.sum_weight
         atol_N = self.atol * N
-        log_density = self.tree_.kernel_density(
-            X,
-            h=self.bandwidth_,
-            kernel=self.kernel,
-            atol=atol_N,
-            rtol=self.rtol,
-            breadth_first=self.breadth_first,
-            return_log=True,
-        )
+        if self.bounds is None:
+            log_density = self.tree_.kernel_density(
+                X,
+                h=self.bandwidth_,
+                kernel=self.kernel,
+                atol=atol_N,
+                rtol=self.rtol,
+                breadth_first=self.breadth_first,
+                return_log=True,
+            )
+        else:
+            scores = []
+            for face in self._evaluate_hypercube_faces():
+                reflected = np.where(np.isnan(face), X, 2 * face - X)
+                scores.append(
+                    self.tree_.kernel_density(
+                        reflected,
+                        h=self.bandwidth_,
+                        kernel=self.kernel,
+                        atol=atol_N,
+                        rtol=self.rtol,
+                        breadth_first=self.breadth_first,
+                        return_log=True,
+                    )
+                )
+            log_density = logsumexp(scores, axis=0)
         log_density -= np.log(N)
         return log_density
 
@@ -334,6 +382,9 @@ class KernelDensity(BaseEstimator):
         # TODO: implement sampling for other valid kernel shapes
         if self.kernel not in ["gaussian", "tophat"]:
             raise NotImplementedError()
+        # TODO: implement sampling on bounded domains
+        if self.bounds is not None:
+            raise NotImplementedError()
 
         data = np.asarray(self.tree_.data)
 
@@ -361,3 +412,41 @@ class KernelDensity(BaseEstimator):
                 / np.sqrt(s_sq)
             )
             return data[i] + X * correction[:, np.newaxis]
+
+    def _more_tags(self):
+        return {
+            "_xfail_checks": {
+                "check_sample_weights_invariance": (
+                    "sample_weight must have positive values"
+                ),
+            }
+        }
+
+    def _validate_data(
+        self,
+        X,
+        y="no_validation",
+        reset=True,
+        validate_separately=False,
+        cast_to_ndarray=True,
+        **check_params,
+    ):
+        if self.bounds is not None:
+            lower, upper = np.transpose(self.bounds)
+            if np.any(upper <= lower):
+                raise ValueError(
+                    f"invalid bounds: upper ({upper}) is not larger than lower "
+                    f"({lower})"
+                )
+            if np.any(X < lower):
+                raise ValueError("samples must be larger than lower bound")
+            if np.any(X > upper):
+                raise ValueError("samples must be smaller than upper bound")
+        return super()._validate_data(
+            X,
+            y,
+            reset,
+            validate_separately,
+            cast_to_ndarray,
+            **check_params,
+        )
