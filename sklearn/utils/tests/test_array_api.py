@@ -30,6 +30,7 @@ from sklearn.utils._array_api import (
     _nanmean,
     _nanmin,
     _ravel,
+    _swapaxes,
     _validate_diagonal_args,
     check_same_namespace,
     get_namespace,
@@ -1042,3 +1043,17 @@ def test_matching_numpy_dtype(namespace, device_name, dtype_name):
     with config_context(array_api_dispatch=True):
         ret_dtype = _matching_numpy_dtype(X_xp, xp=xp)
     assert ret_dtype == X_np.dtype
+
+
+@pytest.mark.parametrize(
+    "namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_swapaxes(namespace, device_name, dtype_name):
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
+    X_np = numpy.arange(10).reshape(5, 2).astype(dtype_name)
+    X_xp = xp.asarray(X_np, device=device)
+    result_np = numpy.swapaxes(X_np, 0, 1)
+    with config_context(array_api_dispatch=True):
+        result_xp = _swapaxes(X_xp, 0, 1)
+    assert_array_equal(move_to(result_xp, xp=numpy, device="cpu"), result_np)
