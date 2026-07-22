@@ -1,0 +1,4 @@
+- :class:`discriminant_analysis.LinearDiscriminantAnalysis` and
+  :class:`discriminant_analysis.QuadraticDiscriminantAnalysis` now
+  support shrinkage with `solver="svd"`.
+  By :user:`Daniel Herrera-Esposito <dherrera1911>`.
