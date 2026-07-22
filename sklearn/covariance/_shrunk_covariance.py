@@ -623,10 +623,10 @@ class LedoitWolf(EmpiricalCovariance):
         """
         # Not calling the parent object to fit, to avoid computing the
         # covariance matrix (and potentially the precision)
-        xp, _, device_ = get_namespace_and_device(X)
-        X = validate_data(self, X, dtype=supported_float_dtypes(xp, device_))
+        xp, _, device = get_namespace_and_device(X)
+        X = validate_data(self, X, dtype=supported_float_dtypes(xp, device))
         if self.assume_centered:
-            self.location_ = xp.zeros(X.shape[1], dtype=X.dtype, device=device_)
+            self.location_ = xp.zeros(X.shape[1], dtype=X.dtype, device=device)
         else:
             self.location_ = xp.mean(X, axis=0)
         covariance, shrinkage = _ledoit_wolf(

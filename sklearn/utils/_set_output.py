@@ -10,6 +10,7 @@ from scipy.sparse import issparse
 
 from sklearn._config import get_config
 from sklearn.utils._available_if import available_if
+from sklearn.utils.fixes import parse_version
 
 
 def check_library_installed(library):
@@ -169,7 +170,14 @@ class PolarsAdapter:
 
     def hstack(self, Xs):
         pl = check_library_installed("polars")
-        return pl.concat(Xs, how="horizontal")
+
+        # "horizontal" is deprecated in favor of "horizontal_extend" ahead of
+        # polars 2.0, see https://github.com/pola-rs/polars/issues/27927
+        how = "horizontal"
+        if parse_version(pl.__version__) >= parse_version("1.42.1"):
+            how = "horizontal_extend"
+
+        return pl.concat(Xs, how=how)
 
 
 class ContainerAdaptersManager:
