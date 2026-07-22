@@ -2419,14 +2419,14 @@ def test_check_node_ndarray_values():
     node_ndarray["feature"] = TREE_UNDEFINED
 
     # Valid array does not raise.
-    _check_node_ndarray_values(node_ndarray, n_features=n_features)
+    _check_node_ndarray_values(node_ndarray, n_features=n_features, node_count=n_nodes)
 
     # A single internal node referencing valid children/feature is also fine.
     valid = node_ndarray.copy()
     valid["left_child"][0] = 1
     valid["right_child"][0] = 2
     valid["feature"][0] = n_features - 1
-    _check_node_ndarray_values(valid, n_features=n_features)
+    _check_node_ndarray_values(valid, n_features=n_features, node_count=n_nodes)
 
     for field, bad_value, match in [
         ("left_child", n_nodes, "out-of-bounds 'left_child'"),
@@ -2438,7 +2438,15 @@ def test_check_node_ndarray_values():
         problematic = node_ndarray.copy()
         problematic[field][0] = bad_value
         with pytest.raises(ValueError, match=match):
-            _check_node_ndarray_values(problematic, n_features=n_features)
+            _check_node_ndarray_values(
+                problematic, n_features=n_features, node_count=n_nodes
+            )
+
+    # `node_count` inconsistent with the array length.
+    with pytest.raises(ValueError, match="node_count"):
+        _check_node_ndarray_values(
+            node_ndarray, n_features=n_features, node_count=n_nodes + 1
+        )
 
 
 def test_tree_setstate_rejects_tampered_nodes():

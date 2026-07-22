@@ -173,5 +173,5 @@ class TreePredictor:
             if np.any(self.nodes[field] >= n_nodes):
                 raise ValueError(
                     f"predictor node array has out-of-bounds '{field}' values: "
-                    f"expected each to be in [0, {n_nodes}), got {field}."
+                    f"expected each to be in [0, {n_nodes}), got {self.nodes[field]}."
                 )
