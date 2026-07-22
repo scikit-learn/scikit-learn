@@ -4,8 +4,8 @@ from numpy.testing import assert_allclose, assert_array_equal
 from pytest import approx
 
 from sklearn._config import config_context
-from sklearn.utils._array_api import device as array_device
 from sklearn.utils._array_api import (
+    array_device,
     get_namespace,
     move_to,
     yield_namespace_device_dtype_combinations,

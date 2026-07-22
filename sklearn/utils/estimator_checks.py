@@ -64,12 +64,12 @@ from sklearn.utils._array_api import (
     NamespaceAndDevice,
     _atol_for_type,
     _max_precision_float_dtype,
+    array_device,
     get_namespace,
     move_to,
     yield_mixed_namespace_input_permutations,
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._array_api import device as array_device
 from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._param_validation import (
     Interval,
@@ -1164,6 +1164,12 @@ def _check_array_api_core(
     # Fitted attributes which are arrays must have the same namespace as `X`,
     # except `classes_`, to allow it to be string when `y` is string.
     for attribute_name, attribute_value in array_attributes.items():
+        # TODO(1.10): remove with deprecation of default l1_ratios
+        if attribute_name == "l1_ratios_":
+            # l1_ratios_ can be None and so it is skipped in this test
+            # because it is not associated with any array namespace or device.
+            continue
+
         est_xp_attr = getattr(est_xp, attribute_name)
         # `classes_` should be in same ns and device as `y`
         expected_xp, expected_ns = (
