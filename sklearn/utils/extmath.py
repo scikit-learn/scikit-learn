@@ -45,8 +45,8 @@ def squared_norm(x):
         The Euclidean norm when x is a vector, the Frobenius norm when x
         is a matrix (2-d array).
     """
-    x = np.ravel(x, order="K")
-    if np.issubdtype(x.dtype, np.integer):
+    xp, _ = get_namespace(x)
+    if _is_numpy_namespace(xp) and np.issubdtype(x.dtype, np.integer):
         warnings.warn(
             (
                 "Array type is integer, np.dot may overflow. "
@@ -54,7 +54,7 @@ def squared_norm(x):
             ),
             UserWarning,
         )
-    return np.dot(x, x)
+    return xp.tensordot(x, x, axes=x.ndim)
 
 
 def row_norms(X, squared=False):
