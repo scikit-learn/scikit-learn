@@ -675,6 +675,22 @@ def test_logistic_cv_multinomial_score(scoring, multiclass_agg_list):
         )
 
 
+def test_logistic_cv_string_scorer_with_pos_label():
+    """Check that a binary scorer with ``pos_label`` can be reconstructed."""
+    X, y = make_classification(
+        n_samples=50, n_features=5, n_informative=3, random_state=0
+    )
+    logistic_regression_cv = LogisticRegressionCV(
+        Cs=[1.0],
+        cv=2,
+        l1_ratios=(0.0,),
+        scoring="f1_macro",
+        use_legacy_attributes=False,
+    ).fit(X, y)
+
+    assert_array_equal(logistic_regression_cv.C_, [1.0])
+
+
 def test_multinomial_logistic_regression_string_inputs():
     """Test internally encode labels"""
     n_samples, n_features, n_classes = 50, 5, 3
