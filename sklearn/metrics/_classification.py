@@ -1958,7 +1958,8 @@ def _check_set_wise_labels(
         "labels": ["array-like", None],
         "pos_label": [Real, str, "boolean", None],
         "average": [
-            StrOptions({"micro", "macro", "samples", "weighted", "binary", "warn"}),
+            StrOptions({"micro", "macro", "samples", "weighted", "binary"}),
+            Hidden(StrOptions({"warn"})),
             None,
         ],
         "warn_for": [list, tuple, set],
