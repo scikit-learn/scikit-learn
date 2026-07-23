@@ -68,6 +68,7 @@ jobs:
             ### Note
             If the CI tasks fail, create a new branch based on this PR and add the required fixes to that branch.
             Prefer re-running the same command above (with the matching `--select-tag`) rather than updating all lock files.
+            ${{ matrix.additional_commit_message && format('Remember to include `{0}` in your commit message so that the optional CI build runs.', matrix.additional_commit_message) || '' }}
 
       # The CUDA workflow needs to be triggered explicitly as it uses an expensive runner
       - name: Trigger additional tests
