@@ -1525,10 +1525,11 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         cardinalities = [len(categories) for categories in self.categories_]
         if self._infrequent_enabled:
             # Cardinality decreases because the infrequent categories are grouped
-            # together
+            # together into a single code, so `len(infrequent)` categories are
+            # replaced by one, reducing the count by `len(infrequent) - 1`.
             for feature_idx, infrequent in enumerate(self.infrequent_categories_):
                 if infrequent is not None:
-                    cardinalities[feature_idx] -= len(infrequent)
+                    cardinalities[feature_idx] -= len(infrequent) - 1
 
         # missing values are not considered part of the cardinality
         # when considering unknown categories or encoded_missing_value
