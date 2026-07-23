@@ -591,8 +591,9 @@ class LinearDiscriminantAnalysis(
             self.covariance_ = _class_cov(X, y, self.priors_)
 
         Xc = []
-        # `self.classes_` stays in `y`'s namespace/device; use an `X`-device copy
-        # so the mask `y == group` below does not mix devices.
+        # `self.classes_` stays in `y`'s namespace/device. Use a copy of classes
+        # using the device of `X` so the mask `y == group` below does not mix
+        # devices.
         classes = move_to(self.classes_, xp=xp, device=device(X))
         for idx, group in enumerate(classes):
             Xg = X[y == group]
