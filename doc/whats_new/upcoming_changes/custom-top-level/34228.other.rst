@@ -1,0 +1,4 @@
+- All estimators are now importable directly from the top-level `sklearn`
+  namespace, e.g. `from sklearn import LogisticRegression`. The estimators are
+  imported lazily, so importing `sklearn` does not eagerly import every
+  submodule. By :user:`Thomas Fan <thomasjpfan>`
