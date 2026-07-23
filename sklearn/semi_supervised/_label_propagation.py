@@ -229,6 +229,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             weight_matrices = weight_matrices.T
             probabilities = safe_sparse_dot(weight_matrices, self.label_distributions_)
         normalizer = np.atleast_2d(np.sum(probabilities, axis=1)).T
+        normalizer[normalizer == 0] = 1
         probabilities /= normalizer
         return probabilities
 
