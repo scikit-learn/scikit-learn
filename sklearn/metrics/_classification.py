@@ -2157,7 +2157,7 @@ def precision_recall_fscore_support(
      array([0., 0., 1.]), array([0. , 0. , 0.8]),
      array([2, 2, 2]))
     """
-    # TODO(1.12): remove warning and change the default of average to 'binary'
+    # TODO(1.12): remove warning and change the default of average to "binary"
     if average == "warn":
         warnings.warn(
             "The default value of `average` will change from None to 'binary' in 1.12.",
