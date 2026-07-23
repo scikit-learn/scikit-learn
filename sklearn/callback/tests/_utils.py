@@ -120,10 +120,17 @@ class NotValidCallback:
         pass  # pragma: no cover
 
 
-class NotValidSetupCallback(RecordingCallback):
+class NotValidSetupPositionalCallback(RecordingCallback):
     """Invalid callback since it has invalid positional parameters."""
 
-    def setup(self, estimator, context, not_valid_kwarg=None, *, X=None):
+    def setup(self, estimator, context, not_valid_arg=None):
+        pass  # pragma: no cover
+
+
+class NotValidSetupKwargOnlyCallback(RecordingCallback):
+    """Invalid callback since it has invalid kwarg-only parameters."""
+
+    def setup(self, estimator, context, *, not_valid_kwarg=None):
         pass  # pragma: no cover
 
 

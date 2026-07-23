@@ -11,7 +11,6 @@ from datetime import datetime, timezone
 
 from sklearn.callback._base import AutoPropagatedCallback
 
-
 _cached_signature = functools.lru_cache()(inspect.signature)
 
 

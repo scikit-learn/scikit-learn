@@ -36,6 +36,11 @@ def validate_callbacks(callbacks):
                 )
 
             if hook_name in ("setup", "teardown"):
+                if len(params) > 2:
+                    raise TypeError(
+                        f"The signature of the {hook_name!r} hook of the callback "
+                        f"{callback_name} must be {hook_name}(self, estimator, context)"
+                    )
                 continue
 
             kwarg_only = {p.name for p in params if p.kind == p.KEYWORD_ONLY}

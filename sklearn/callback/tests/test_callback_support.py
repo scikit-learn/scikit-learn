@@ -9,7 +9,8 @@ from sklearn.callback.tests._utils import (
     MaxIterEstimator,
     NotValidCallback,
     NotValidFitTaskBeginCallback,
-    NotValidSetupCallback,
+    NotValidSetupKwargOnlyCallback,
+    NotValidSetupPositionalCallback,
     RecordingAutoPropagatedCallback,
     RecordingCallback,
 )
@@ -50,7 +51,15 @@ def test_validate_callbacks_invalid_hook_positional():
     estimator = MaxIterEstimator()
     msg = r"'setup' .* must have exactly the positional parameters"
     with pytest.raises(TypeError, match=msg):
-        estimator.set_callbacks(NotValidSetupCallback())
+        estimator.set_callbacks(NotValidSetupPositionalCallback())
+
+
+def test_validate_callbacks_invalid_setup_kwarg():
+    """Check that a callback with invalid kwarg-only params in setup raises an error."""
+    estimator = MaxIterEstimator()
+    msg = r"The signature of the 'setup' hook .* must be"
+    with pytest.raises(TypeError, match=msg):
+        estimator.set_callbacks(NotValidSetupKwargOnlyCallback())
 
 
 def test_validate_callbacks_invalid_hook_kwargs():
