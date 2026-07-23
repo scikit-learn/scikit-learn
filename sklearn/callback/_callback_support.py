@@ -22,6 +22,7 @@ def validate_callbacks(callbacks):
                 f"Got {callback_name}."
             )
 
+        # isinstance for Protocols does not verify the methods' signatures.
         for hook_name in ("setup", "teardown", "on_fit_task_begin", "on_fit_task_end"):
             hook = getattr(callback, hook_name)
             params = list(inspect.signature(hook).parameters.values())
