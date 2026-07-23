@@ -46,9 +46,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelBinarizer, label_binarize
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._array_api import (
-    device as array_api_device,
-)
-from sklearn.utils._array_api import (
+    array_device,
     get_namespace,
     yield_namespace_device_dtype_combinations,
 )
@@ -3722,12 +3720,12 @@ def test_confusion_matrix_array_api(array_namespace, device_name, dtype_name):
     with config_context(array_api_dispatch=True):
         result = confusion_matrix(y_true, y_pred, labels=labels)
         assert get_namespace(result)[0] == get_namespace(y_pred)[0]
-        assert array_api_device(result) == array_api_device(y_pred)
+        assert array_device(result) == array_device(y_pred)
 
 
 # TODO(1.12): remove
 def test_precision_recall_fscore_support_average_deprecation_warning():
-    """Test the deprecation warning for `average` in precision_recall_fscore_support."""
+    """Test the future warning for `average` in precision_recall_fscore_support."""
 
     with pytest.warns(
         FutureWarning, match="`average` will change from None to 'binary' in 1.12"
