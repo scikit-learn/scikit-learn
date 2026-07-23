@@ -204,6 +204,7 @@ Metrics
 - :func:`sklearn.metrics.balanced_accuracy_score`
 - :func:`sklearn.metrics.brier_score_loss`
 - :func:`sklearn.metrics.calinski_harabasz_score`
+- :func:`sklearn.metrics.class_likelihood_ratios`
 - :func:`sklearn.metrics.cohen_kappa_score`
 - :func:`sklearn.metrics.confusion_matrix`
 - :func:`sklearn.metrics.d2_absolute_error_score`

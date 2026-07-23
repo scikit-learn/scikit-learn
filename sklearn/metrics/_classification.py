@@ -2424,7 +2424,12 @@ def class_likelihood_ratios(
         labels=labels,
     )
 
-    tn, fp, fn, tp = cm.ravel()
+    xp, _ = get_namespace(cm)
+    # Extract the four confusion matrix cells as Python floats, so that the
+    # ratio computations and the division-by-zero handling below are
+    # independent of the array namespace of the inputs.
+    cm = xp.reshape(cm, (-1,))
+    tn, fp, fn, tp = (float(cm[i]) for i in range(4))
     support_pos = tp + fn
     support_neg = tn + fp
     pos_num = tp * support_neg
@@ -2466,7 +2471,9 @@ def class_likelihood_ratios(
             # `np.inf` and `np.nan`
             positive_likelihood_ratio = desired_lr_pos
     else:
-        positive_likelihood_ratio = pos_num / pos_denom
+        # `pos_denom == 0` can only happen when `support_pos == 0`, in which
+        # case `pos_num == 0` as well: keep NumPy's `0 / 0 -> nan` semantics.
+        positive_likelihood_ratio = pos_num / pos_denom if pos_denom != 0 else np.nan
 
     # if `tn == 0`a division by zero will occur
     if tn == 0:
@@ -2485,7 +2492,9 @@ def class_likelihood_ratios(
             # `np.nan`
             negative_likelihood_ratio = desired_lr_neg
     else:
-        negative_likelihood_ratio = neg_num / neg_denom
+        # `neg_denom == 0` can only happen when `support_pos == 0`, in which
+        # case `neg_num == 0` as well: keep NumPy's `0 / 0 -> nan` semantics.
+        negative_likelihood_ratio = neg_num / neg_denom if neg_denom != 0 else np.nan
 
     return float(positive_likelihood_ratio), float(negative_likelihood_ratio)
 
