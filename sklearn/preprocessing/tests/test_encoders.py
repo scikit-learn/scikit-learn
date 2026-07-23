@@ -636,6 +636,255 @@ def test_ordinal_encoder(X):
     assert_array_equal(enc.fit_transform(X), exp)
 
 
+def test_ordinal_encoder_tie():
+
+    enc = OrdinalEncoder(
+        handle_unknown="use_encoded_value", unknown_value=-2,categories='frequency',
+    )
+    X_fit = np.array(
+        [
+            ["a", "x"],
+            ["a", "x"],
+            ["a", "x"],
+            ["a", "x"],
+            ["b", "y"],
+            ["b", "y"],
+            ["b", "y"],
+            ["b", "y"]
+        ],
+        dtype=object,
+    )
+    X_trans = np.array(
+        [   ["a", "x"],
+            ["a", "x"],
+            ["a", "x"],
+            ["a", "x"],
+            ["b", "y"],
+            ["b", "y"],
+            ["b", "y"],
+            ["b", "y"]
+        ],
+        dtype=object,
+    )
+    enc.fit(X_fit)
+
+    X_trans_enc = enc.transform(X_trans)
+    exp = np.array(
+        [
+            [ 0.0,  0.0],
+            [ 0.0,  0.0],
+            [ 0.0,  0.0],
+            [ 0.0,  0.0],
+            [ 1.0,  1.0],
+            [ 1.0,  1.0],
+            [ 1.0,  1.0],
+            [ 1.0,  1.0]
+        ], dtype="int64",
+    )
+    
+    assert_array_equal(X_trans_enc, exp)
+    X_trans_inv = enc.inverse_transform(X_trans_enc)
+    assert_array_equal(X_trans_inv, X_trans)
+
+def test_ordinal_encoder_tie_inv_fit():
+    # trying to break the fit by switching the order of fitting
+    enc = OrdinalEncoder(
+        handle_unknown="use_encoded_value", unknown_value=-2,categories='frequency',
+    )
+    X_fit = np.array(
+        [
+
+            ["b", "y"],
+            ["b", "y"],
+            ["b", "y"],
+            ["b", "y"],
+            ["a", "x"],
+            ["a", "x"],
+            ["a", "x"],
+            ["a", "x"]
+        ],
+        dtype=object,
+    )
+    X_trans = np.array(
+        [   ["a", "x"],
+            ["a", "x"],
+            ["a", "x"],
+            ["a", "x"],
+            ["b", "y"],
+            ["b", "y"],
+            ["b", "y"],
+            ["b", "y"]
+        ],
+        dtype=object,
+    )
+    enc.fit(X_fit)
+
+    X_trans_enc = enc.transform(X_trans)
+    exp = np.array(
+        [
+            [ 0.0,  0.0],
+            [ 0.0,  0.0],
+            [ 0.0,  0.0],
+            [ 0.0,  0.0],
+            [ 1.0,  1.0],
+            [ 1.0,  1.0],
+            [ 1.0,  1.0],
+            [ 1.0,  1.0]
+        ], dtype="int64",
+    )
+    
+    assert_array_equal(X_trans_enc, exp)
+    X_trans_inv = enc.inverse_transform(X_trans_enc)
+    assert_array_equal(X_trans_inv, X_trans)
+
+def test_ordinal_encoder_none():
+
+    enc = OrdinalEncoder(
+        handle_unknown="use_encoded_value", unknown_value=-2,categories='frequency',
+    )
+    X_fit = np.array(
+        [
+            ["a", "x"],
+            ["a", "x"],
+            ["a", "x"],
+            ["a", "x"],
+            ["b", "y"],
+            ["b", "y"],
+            ["b", "y"],
+            ["b", "y"]
+        ],
+        dtype=object,
+    )
+    X_trans = np.array(
+        [   ["a", "x"],
+            ["ab", "x"],
+            ["a", "x"],
+            ["a", "x"],
+            ["b", "y"],
+            ["b", "y"],
+            ["b", "y"],
+            ["b", "y"]
+        ],
+        dtype=object,
+    )
+    enc.fit(X_fit)
+
+    X_trans_enc = enc.transform(X_trans)
+    exp = np.array(
+        [
+            [ 0.0,  0.0],
+            [ -2.0,  0.0],
+            [ 0.0,  0.0],
+            [ 0.0,  0.0],
+            [ 1.0,  1.0],
+            [ 1.0,  1.0],
+            [ 1.0,  1.0],
+            [ 1.0,  1.0]
+        ], dtype="int64",
+    )
+    
+    assert_array_equal(X_trans_enc, exp)
+
+
+def test_ordinal_encoder_multy_letters():
+
+    enc = OrdinalEncoder(
+        handle_unknown="use_encoded_value", unknown_value=-2,categories='frequency',
+    )
+    X_fit = np.array(
+        [
+            ["aa", "xx"],
+            ["aa", "xx"],
+            ["aa", "xx"],
+            ["aa", "xx"],
+            ["bb", "yy"],
+            ["bb", "yy"],
+            ["bb", "yy"],
+            ["bb", "yy"]
+        ],
+        dtype=object,
+    )
+    X_trans = np.array(
+        [   ["aa", "xx"],
+            ["aa", "xx"],
+            ["aa", "xx"],
+            ["aa", "xx"],
+            ["bb", "yy"],
+            ["bb", "yy"],
+            ["bb", "yy"],
+            ["bb", "yy"]
+        ],
+        dtype=object,
+    )
+    enc.fit(X_fit)
+
+    X_trans_enc = enc.transform(X_trans)
+    exp = np.array(
+        [
+            [ 0.0,  0.0],
+            [ 0.0,  0.0],
+            [ 0.0,  0.0],
+            [ 0.0,  0.0],
+            [ 1.0,  1.0],
+            [ 1.0,  1.0],
+            [ 1.0,  1.0],
+            [ 1.0,  1.0]
+        ], dtype="int64",
+    )
+    
+    assert_array_equal(X_trans_enc, exp)
+    X_trans_inv = enc.inverse_transform(X_trans_enc)
+    assert_array_equal(X_trans_inv, X_trans)
+
+def test_ordinal_encoder_numbers():
+
+    enc = OrdinalEncoder(
+        handle_unknown="use_encoded_value", unknown_value=-2,categories='frequency',
+    )
+    X_fit = np.array(
+        [
+            [2, 7],
+            [2, 7],
+            [2, 7],
+            [1, 5],
+            [1, 5],
+            [1, 5],
+            [1, 5]
+        ],
+        dtype=object,
+    )
+    X_trans = np.array(
+        [   [2, 7],
+            [2, 7],
+            [2, 7],
+            [2, 7],
+            [1, 5],
+            [1, 5],
+            [1, 5],
+            [1, 5],
+        ],
+        dtype=object,
+    )
+    enc.fit(X_fit)
+
+    X_trans_enc = enc.transform(X_trans)
+    exp = np.array(
+        [
+            [ 0.0,  0.0],
+            [ 0.0,  0.0],
+            [ 0.0,  0.0],
+            [ 0.0,  0.0],
+            [ 1.0,  1.0],
+            [ 1.0,  1.0],
+            [ 1.0,  1.0],
+            [ 1.0,  1.0]
+        ], dtype="int64",
+    )
+    
+    assert_array_equal(X_trans_enc, exp)
+    X_trans_inv = enc.inverse_transform(X_trans_enc)
+    assert_array_equal(X_trans_inv, X_trans)
+
 @pytest.mark.parametrize(
     "X, X2, cats, cat_dtype",
     [
