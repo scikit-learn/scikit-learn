@@ -9,6 +9,7 @@ from sklearn import datasets
 from sklearn.base import BaseEstimator, clone
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.ensemble import AdaBoostClassifier, AdaBoostRegressor
+from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.svm import SVC, SVR
@@ -222,6 +223,31 @@ def test_importances():
 
     assert importances.shape[0] == 10
     assert (importances[:3, np.newaxis] >= importances[3:]).all()
+
+
+def test_feature_importances_not_fitted_raises_not_fitted_error():
+    clf = AdaBoostClassifier()
+    with pytest.raises(NotFittedError, match="is not fitted yet"):
+        clf.feature_importances_
+
+
+@pytest.mark.parametrize(
+    "Estimator, base_estimator, y",
+    [
+        (AdaBoostClassifier, LogisticRegression(), y_class),
+        (AdaBoostRegressor, LinearRegression(), y_regr),
+    ],
+)
+def test_feature_importances_without_feature_importances_raises_attribute_error(
+    Estimator, base_estimator, y
+):
+    clf = Estimator(estimator=base_estimator)
+    clf.fit(X, y)
+    with pytest.raises(
+        AttributeError,
+        match="does not have a feature_importances_ attribute",
+    ):
+        clf.feature_importances_
 
 
 def test_adaboost_classifier_sample_weight_error():
