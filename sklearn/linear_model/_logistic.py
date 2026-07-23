@@ -47,12 +47,15 @@ from sklearn.utils._array_api import (
     _is_numpy_namespace,
     _matching_numpy_dtype,
     _ravel,
+    _swapaxes,
+    _unravel_index,
     check_same_namespace,
     get_namespace,
     get_namespace_and_device,
     move_to,
     size,
 )
+from sklearn.utils._indexing import _array_indexing
 from sklearn.utils._param_validation import Hidden, Interval, StrOptions
 from sklearn.utils.extmath import row_norms, softmax
 from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
@@ -140,7 +143,7 @@ class _LbfgsCallbackBridge:
         fit_intercept,
         coefs_order,
         xp,
-        device_,
+        device,
     ):
         self._callback_ctx = callback_ctx
         self._estimator = estimator
@@ -154,7 +157,7 @@ class _LbfgsCallbackBridge:
             coefs_order=coefs_order,
             dtype=X.dtype,
             xp=xp,
-            device_=device_,
+            device=device,
         )
         # Start the first iteration's subcontext, using the initial weights.
         self._iter_ctx = self._start_iter(w0)
@@ -201,25 +204,25 @@ class _LbfgsCallbackBridge:
 
 
 def _compute_coef_intercept(
-    w, *, n_classes, is_binary, fit_intercept, coefs_order, dtype, xp, device_
+    w, *, n_classes, is_binary, fit_intercept, coefs_order, dtype, xp, device
 ):
     """Helper to compute coef and intercept from a flattened array of parameters."""
     if is_binary:
-        coef = xp.asarray(w.copy(order=coefs_order), dtype=dtype, device=device_)
+        coef = xp.asarray(w.copy(order=coefs_order), dtype=dtype, device=device)
         if fit_intercept:
             intercept = coef[-1:]
             coef = coef[:-1][None, :]
         else:
-            intercept = xp.zeros(1, dtype=dtype, device=device_)
+            intercept = xp.zeros(1, dtype=dtype, device=device)
             coef = coef[None, :]
     else:
         multi_w = np.reshape(w, (n_classes, -1), order="F")
-        coef = xp.asarray(multi_w.copy(order=coefs_order), dtype=dtype, device=device_)
+        coef = xp.asarray(multi_w.copy(order=coefs_order), dtype=dtype, device=device)
         if fit_intercept:
             intercept = coef[:, -1]
             coef = coef[:, :-1]
         else:
-            intercept = xp.zeros(n_classes, dtype=dtype, device=device_)
+            intercept = xp.zeros(n_classes, dtype=dtype, device=device)
 
     return coef, intercept
 
@@ -389,7 +392,7 @@ def _logistic_regression_path(
         Cs = np.logspace(-4, 4, Cs)
 
     solver = _check_solver(solver, penalty, dual)
-    xp, _, device_ = get_namespace_and_device(X)
+    xp, _, device = get_namespace_and_device(X)
     # Only newton-cg has complete support of the array API, lbfgs still needs
     # coef / w0 as numpy arrays.
     coef_as_xp = solver == "newton-cg"
@@ -431,7 +434,7 @@ def _logistic_regression_path(
             w0 = xp.zeros(
                 n_features + int(fit_intercept),
                 dtype=X.dtype,
-                device=device_,
+                device=device,
             )
         else:
             w0 = np.zeros(
@@ -445,7 +448,7 @@ def _logistic_regression_path(
             w0 = xp.zeros(
                 (size(classes), n_features + int(fit_intercept)),
                 dtype=X.dtype,
-                device=device_,
+                device=device,
             )
         else:
             # It is important that w0 is F-contiguous.
@@ -471,14 +474,14 @@ def _logistic_regression_path(
     if coef is not None:
         if is_binary:
             if coef.ndim == 1 and coef.shape[0] == n_features + int(fit_intercept):
-                w0[:] = move_to(coef, xp=xp, device=device_) if coef_as_xp else coef
+                w0[:] = move_to(coef, xp=xp, device=device) if coef_as_xp else coef
             elif (
                 coef.ndim == 2
                 and coef.shape[0] == 1
                 and coef.shape[1] == n_features + int(fit_intercept)
             ):
                 w0[:] = (
-                    move_to(coef[0], xp=xp, device=device_) if coef_as_xp else coef[0]
+                    move_to(coef[0], xp=xp, device=device) if coef_as_xp else coef[0]
                 )
             else:
                 msg = (
@@ -493,7 +496,7 @@ def _logistic_regression_path(
                 and coef.shape[1] == n_features + int(fit_intercept)
             ):
                 w0[:, : coef.shape[1]] = (
-                    move_to(coef, xp=xp, device=device_) if coef_as_xp else coef
+                    move_to(coef, xp=xp, device=device) if coef_as_xp else coef
                 )
             else:
                 msg = (
@@ -507,7 +510,7 @@ def _logistic_regression_path(
             base_loss=(
                 HalfBinomialLoss()
                 if _is_numpy_namespace(xp)
-                else HalfBinomialLossArrayAPI(xp=xp, device=device_)
+                else HalfBinomialLossArrayAPI(xp=xp, device=device)
             ),
             fit_intercept=fit_intercept,
         )
@@ -524,7 +527,7 @@ def _logistic_regression_path(
                 HalfMultinomialLoss(n_classes=size(classes))
                 if _is_numpy_namespace(xp)
                 else HalfMultinomialLossArrayAPI(
-                    n_classes=size(classes), xp=xp, device=device_
+                    n_classes=size(classes), xp=xp, device=device
                 )
             ),
             fit_intercept=fit_intercept,
@@ -547,7 +550,7 @@ def _logistic_regression_path(
         warm_start_sag = {"coef": w0.T} if w0.ndim > 1 else {"coef": w0}
 
     coefs = list()
-    n_iter = xp.zeros(len(Cs), dtype=xp.int32, device=device_)
+    n_iter = xp.zeros(len(Cs), dtype=xp.int32, device=device)
     coefs_order = "C" if not _is_numpy_namespace(xp) else "K"
     callback_metadata = (
         {"sample_weight": sample_weight} if sample_weight is not None else None
@@ -575,7 +578,7 @@ def _logistic_regression_path(
                     fit_intercept=fit_intercept,
                     coefs_order=coefs_order,
                     xp=xp,
-                    device_=device_,
+                    device=device,
                 )
             l2_reg_strength = 1.0 / (C * sw_sum)
             iprint = [-1, 50, 1, 100, 101][
@@ -727,7 +730,7 @@ def _logistic_regression_path(
             if _is_numpy_namespace(xp):
                 coefs.append(np.asarray(w0.copy(order=coefs_order), dtype=X.dtype))
             else:
-                coefs.append(xp.asarray(w0, copy=True, dtype=X.dtype, device=device_))
+                coefs.append(xp.asarray(w0, copy=True, dtype=X.dtype, device=device))
         else:
             if solver in ("lbfgs", "newton-cd-gram", "newton-cg", "newton-cholesky"):
                 if _is_numpy_namespace(xp) or not coef_as_xp:
@@ -736,11 +739,11 @@ def _logistic_regression_path(
                     multi_w0 = xp.reshape(w0, (-1, n_classes)).T
             else:
                 multi_w0 = w0
-            coefs.append(xp.asarray(multi_w0, copy=True, dtype=X.dtype, device=device_))
+            coefs.append(xp.asarray(multi_w0, copy=True, dtype=X.dtype, device=device))
 
         n_iter[i] = n_iter_i
 
-    return xp.stack(coefs), xp.asarray(Cs, device=device_), n_iter
+    return xp.stack(coefs), xp.asarray(Cs, device=device, dtype=X.dtype), n_iter
 
 
 # helper function for LogisticCV
@@ -883,16 +886,20 @@ def _log_reg_scoring_path(
     n_iter : ndarray of shape (n_cs,)
         Actual number of iteration for each C in Cs.
     """
-    X_train = X[train]
-    X_test = X[test]
-    y_train = y[train]
-    y_test = y[test]
+    xp, _, device = get_namespace_and_device(X)
+    train_xp = xp.asarray(train, device=device)
+    test_xp = xp.asarray(test, device=device)
+    indices_dtype = train_xp.dtype
+    X_train = _array_indexing(X, train_xp, indices_dtype, axis=0)
+    X_test = _array_indexing(X, test_xp, indices_dtype, axis=0)
+    y_train = _array_indexing(y, train_xp, indices_dtype, axis=0)
+    y_test = _array_indexing(y, test_xp, indices_dtype, axis=0)
 
     sw_train, sw_test = None, None
     if sample_weight is not None:
         sample_weight = _check_sample_weight(sample_weight, X)
-        sw_train = sample_weight[train]
-        sw_test = sample_weight[test]
+        sw_train = sample_weight[train_xp]
+        sw_test = sample_weight[test_xp]
 
     # Note: We pass classes for the whole dataset to avoid inconsistencies,
     # i.e. different number of classes in different folds. This way, if a class
@@ -927,7 +934,7 @@ def _log_reg_scoring_path(
     # As y is already expected to be label encoded, we don't set
     #     log_reg.classes_ = classes
     # but instead
-    log_reg.classes_ = np.arange(n_classes)
+    log_reg.classes_ = xp.arange(n_classes, dtype=X.dtype, device=device)
 
     scores = list()
 
@@ -974,7 +981,9 @@ def _log_reg_scoring_path(
         def calc_score(log_reg):
             return scoring(log_reg, X_test, y_test, **score_params)
 
-    for w, C in zip(coefs, Cs):
+    for i in range(size(Cs)):
+        w = coefs[i, ...]
+        C = Cs[i]
         log_reg.C = C
         if fit_intercept:
             log_reg.coef_ = w[..., :-1]
@@ -985,7 +994,8 @@ def _log_reg_scoring_path(
 
         scores.append(calc_score(log_reg))
 
-    return coefs, Cs, np.array(scores), n_iter
+    scores = xp.asarray(scores, device=device, dtype=X.dtype)
+    return coefs, Cs, scores, n_iter
 
 
 class LogisticRegression(
@@ -1438,8 +1448,8 @@ class LogisticRegression(
         if penalty == "elasticnet" and self.l1_ratio is None:
             raise ValueError("l1_ratio must be specified when penalty is elasticnet.")
 
-        xp, _, device_ = get_namespace_and_device(X)
-        sample_weight = move_to(sample_weight, xp=xp, device=device_)
+        xp, _, device = get_namespace_and_device(X)
+        sample_weight = move_to(sample_weight, xp=xp, device=device)
         xp_y, _ = get_namespace(y)
 
         if self.penalty is None:
@@ -1482,7 +1492,7 @@ class LogisticRegression(
             )
             raise ValueError(msg)
         is_binary = n_classes == 2
-        y_encoded = move_to(le.transform(y), xp=xp, device=device_)
+        y_encoded = move_to(le.transform(y), xp=xp, device=device)
         y_encoded = xp.astype(y_encoded, X.dtype, copy=False)
 
         if sample_weight is not None or self.class_weight is not None:
@@ -1496,7 +1506,7 @@ class LogisticRegression(
                 sample_weight=sample_weight,
             )
             class_weight_ = xp.asarray(
-                class_weight_[le.transform(y)], dtype=X.dtype, device=device_
+                class_weight_[le.transform(y)], dtype=X.dtype, device=device
             )
             # Avoid overriding the input sample_weight.
             sample_weight = sample_weight * class_weight_
@@ -1599,10 +1609,10 @@ class LogisticRegression(
                 self.coef_ = self.coef_[:, :-1]
         else:
             if is_binary:
-                self.intercept_ = xp.zeros(1, dtype=X.dtype, device=device_)
+                self.intercept_ = xp.zeros(1, dtype=X.dtype, device=device)
                 self.coef_ = self.coef_[None, :]
             else:
-                self.intercept_ = xp.zeros(n_classes, dtype=X.dtype, device=device_)
+                self.intercept_ = xp.zeros(n_classes, dtype=X.dtype, device=device)
 
         callback_ctx.call_on_fit_task_end(
             estimator=self,
@@ -1672,7 +1682,7 @@ class LogisticRegression(
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.sparse = True
-        tags.array_api_support = self.solver == "lbfgs"
+        tags.array_api_support = self.solver in ("lbfgs", "newton-cg")
         if self.solver == "liblinear":
             tags.classifier_tags.multi_class = False
 
@@ -2218,12 +2228,14 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             else:
                 l1_ratios_ = l1_ratios
 
+        xp, _, device = get_namespace_and_device(X)
+        sample_weight = move_to(sample_weight, xp=xp, device=device)
         X, y = validate_data(
             self,
             X,
             y,
             accept_sparse="csr",
-            dtype=np.float64,
+            dtype=[xp.float64, xp.float32],
             order="C",
             accept_large_sparse=solver
             not in ("liblinear", "newton-cd-gram", "sag", "saga"),
@@ -2240,7 +2252,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             )
             raise ValueError(msg)
         is_binary = n_classes == 2
-        y_encoded = np.asarray(le.transform(y), dtype=X.dtype)
+        y_encoded = move_to(le.transform(y), xp=xp, device=device)
+        y_encoded = xp.astype(y_encoded, X.dtype, copy=False)
 
         if sample_weight is not None or self.class_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
@@ -2252,16 +2265,20 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 y=y,
                 sample_weight=sample_weight,
             )
-            class_weight_ = np.asarray(class_weight_[le.transform(y)], dtype=X.dtype)
+            class_weight_ = xp.asarray(
+                class_weight_[le.transform(y)], dtype=X.dtype, device=device
+            )
             # Avoid overriding the input sample_weight.
             sample_weight = sample_weight * class_weight_
 
         # The original class labels
-        classes_only_pos_if_binary = self.classes_
+        class_labels = self.classes_
 
         if is_binary:
             n_classes = 1
-            classes_only_pos_if_binary = classes_only_pos_if_binary[1:]
+            class_labels = class_labels[1:]
+
+        class_labels = move_to(class_labels, xp=np, device="cpu")
 
         if solver in ["sag", "saga"]:
             max_squared_sum = row_norms(X, squared=True).max()
@@ -2330,59 +2347,68 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         # - n_iter is of shape (1, n_folds, n_Cs, n_l1_ratios)
         coefs_paths, Cs, scores, n_iter_ = zip(*fold_coefs_)
         self.Cs_ = Cs[0]  # the same for all folds and l1_ratios
+        n_folds = len(folds)
+        n_cs = size(self.Cs_)
+        n_l1_ratios = len(l1_ratios_)
+        coefs_paths = xp.stack(coefs_paths)
+        n_iter_ = xp.stack(n_iter_)
         if is_binary:
-            coefs_paths = np.reshape(
-                coefs_paths, (len(folds), len(l1_ratios_), len(self.Cs_), -1)
-            )
+            coefs_paths = xp.reshape(coefs_paths, (n_folds, n_l1_ratios, n_cs, -1))
             # coefs_paths.shape = (n_folds, n_l1_ratios, n_Cs, n_features)
-            coefs_paths = np.swapaxes(coefs_paths, 1, 2)[None, ...]
+            coefs_paths = _swapaxes(coefs_paths, 1, 2, xp=xp)[None, ...]
         else:
-            coefs_paths = np.reshape(
-                coefs_paths, (len(folds), len(l1_ratios_), len(self.Cs_), n_classes, -1)
+            coefs_paths = xp.reshape(
+                coefs_paths, (n_folds, n_l1_ratios, n_cs, n_classes, -1)
             )
             # coefs_paths.shape = (n_folds, n_l1_ratios, n_Cs, n_classes, n_features)
-            coefs_paths = np.moveaxis(coefs_paths, (0, 1, 3), (1, 3, 0))
+            coefs_paths = xp.moveaxis(coefs_paths, (0, 1, 3), (1, 3, 0))
         # n_iter_.shape = (n_folds, n_l1_ratios, n_Cs)
-        n_iter_ = np.reshape(n_iter_, (len(folds), len(l1_ratios_), len(self.Cs_)))
-        self.n_iter_ = np.swapaxes(n_iter_, 1, 2)[None, ...]
+        n_iter_ = xp.reshape(n_iter_, (n_folds, n_l1_ratios, n_cs))
+        self.n_iter_ = _swapaxes(n_iter_, 1, 2, xp=xp)[None, ...]
         # scores.shape = (n_folds, n_l1_ratios, n_Cs)
-        scores = np.reshape(scores, (len(folds), len(l1_ratios_), len(self.Cs_)))
-        scores = np.swapaxes(scores, 1, 2)[None, ...]
+        scores = xp.stack(scores)
+        scores = xp.reshape(scores, (n_folds, n_l1_ratios, n_cs))
+        scores = _swapaxes(scores, 1, 2, xp=xp)[None, ...]
         # repeat same scores across all classes
-        scores = np.tile(scores, (n_classes, 1, 1, 1))
-        self.scores_ = dict(zip(classes_only_pos_if_binary, scores))
-        self.coefs_paths_ = dict(zip(classes_only_pos_if_binary, coefs_paths))
+        scores = xp.tile(scores, (n_classes, 1, 1, 1))
+        self.scores_ = {class_labels[i]: scores[i, ...] for i in range(n_classes)}
+        self.coefs_paths_ = {
+            class_labels[i]: coefs_paths[i, ...] for i in range(n_classes)
+        }
 
         self.C_ = list()
         self.l1_ratio_ = list()
-        self.coef_ = np.empty((n_classes, n_features))
-        self.intercept_ = np.zeros(n_classes)
+        self.coef_ = xp.empty((n_classes, n_features), device=device, dtype=X.dtype)
+        self.intercept_ = xp.zeros(n_classes, device=device, dtype=X.dtype)
 
         # All scores are the same across classes
-        scores = self.scores_[classes_only_pos_if_binary[0]]
+        scores = self.scores_[class_labels[0]]
 
         if self.refit:
             # best_index over folds
-            scores_sum = scores.sum(axis=0)  # shape (n_cs, n_l1_ratios)
-            best_index = np.unravel_index(np.argmax(scores_sum), scores_sum.shape)
-
-            C_ = self.Cs_[best_index[0]]
+            scores_sum = xp.sum(scores, axis=0)  # shape (n_cs, n_l1_ratios)
+            best_index = _unravel_index(xp.argmax(scores_sum), scores_sum.shape)
+            best_index_int = [int(idx) for idx in best_index]
+            C_ = self.Cs_[best_index_int[0]]
             self.C_.append(C_)
 
-            l1_ratio_ = l1_ratios_[best_index[1]]
+            l1_ratio_ = l1_ratios_[best_index_int[1]]
             self.l1_ratio_.append(l1_ratio_)
 
             if is_binary:
-                coef_init = np.mean(coefs_paths[0, :, *best_index, :], axis=0)
+                coef_init = xp.mean(coefs_paths[0, :, *best_index_int, :], axis=0)
             else:
-                coef_init = np.mean(coefs_paths[:, :, *best_index, :], axis=1)
+                coef_init = xp.mean(coefs_paths[:, :, *best_index_int, :], axis=1)
+
+            if solver == "lbfgs":
+                coef_init = move_to(coef_init, xp=np, device="cpu")
 
             # Note that y is label encoded
             w, _, _ = _logistic_regression_path(
                 X,
                 y_encoded,
                 classes=self.classes_,
-                Cs=[C_],
+                Cs=[float(C_)],
                 solver=solver,
                 fit_intercept=self.fit_intercept,
                 coef=coef_init,
@@ -2396,53 +2422,56 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 sample_weight=sample_weight,
                 l1_ratio=l1_ratio_,
             )
-            w = w[0]
+            w = w[0, ...]
 
         else:
             # Take the best scores across every fold and the average of
             # all coefficients corresponding to the best scores.
             n_folds, n_cs, n_l1_ratios = scores.shape
-            scores = scores.reshape(n_folds, -1)  # (n_folds, n_cs * n_l1_ratios)
-            best_indices = np.argmax(scores, axis=1)  # (n_folds,)
-            best_indices = np.unravel_index(best_indices, (n_cs, n_l1_ratios))
-            best_indices = list(zip(*best_indices))  # (n_folds, 2)
+            scores = xp.reshape(scores, (n_folds, -1))  # (n_folds, n_cs * n_l1_ratios)
+            best_indices = xp.argmax(scores, axis=1)  # (n_folds,)
+            best_indices = _unravel_index(best_indices, (n_cs, n_l1_ratios))
+            best_indices = list(
+                (int(i), int(j))
+                for i, j in zip(*best_indices)  # (n_folds, 2)
+            )
             # each row of best_indices has the 2 indices for Cs and l1_ratios
             if is_binary:
-                w = np.mean(
-                    [coefs_paths[0, i, *best_indices[i], :] for i in range(len(folds))],
-                    axis=0,
+                fold_coef_paths = xp.stack(
+                    [coefs_paths[0, i, *best_indices[i], :] for i in range(n_folds)]
                 )
             else:
-                w = np.mean(
+                fold_coef_paths = xp.stack(
                     [
                         coefs_paths[:, i, best_indices[i][0], best_indices[i][1], :]
-                        for i in range(len(folds))
-                    ],
-                    axis=0,
+                        for i in range(n_folds)
+                    ]
                 )
+            w = xp.mean(fold_coef_paths, axis=0)
 
-            best_indices = np.asarray(best_indices)
+            best_indices = xp.asarray(best_indices, device=device)
             best_indices_C = best_indices[:, 0]
-            self.C_.append(np.mean(self.Cs_[best_indices_C]))
+            self.C_.append(xp.mean(self.Cs_[best_indices_C]))
 
             if penalty == "elasticnet":
                 best_indices_l1 = best_indices[:, 1]
-                self.l1_ratio_.append(np.mean(l1_ratios_[best_indices_l1]))
+                self.l1_ratio_.append(xp.mean(l1_ratios_[best_indices_l1]))
             else:
                 self.l1_ratio_.append(0.0)
 
+        self.C_ = xp.stack(self.C_)
         if is_binary:
             self.coef_ = w[:, :n_features] if w.ndim == 2 else w[:n_features][None, :]
             if self.fit_intercept:
                 self.intercept_[0] = w[0, -1] if w.ndim == 2 else w[-1]
         else:
-            self.C_ = np.tile(self.C_, n_classes)
+            self.C_ = xp.tile(self.C_, (n_classes,))
             self.l1_ratio_ = np.tile(self.l1_ratio_, n_classes)
             self.coef_ = w[:, :n_features]
             if self.fit_intercept:
                 self.intercept_ = w[:, -1]
 
-        self.C_ = np.asarray(self.C_)
+        self.C_ = xp.asarray(self.C_)
         self.l1_ratio_ = np.asarray(self.l1_ratio_)
         self.l1_ratios_ = np.asarray(l1_ratios_)
         if l1_ratios is None:
@@ -2455,43 +2484,43 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             self.n_iter_ = self.n_iter_[:, :, :, 0]
 
         if not use_legacy_attributes:
-            n_folds = len(folds)
-            n_cs = self.Cs_.size
             n_dof = X.shape[1] + int(self.fit_intercept)
             self.C_ = float(self.C_[0])
-            newpaths = np.concatenate(list(self.coefs_paths_.values()))
-            newscores = self.scores_[
-                classes_only_pos_if_binary[0]
-            ]  # same for all classes
-            newniter = self.n_iter_[0]
+            newpaths = xp.concat(tuple(self.coefs_paths_.values()), axis=0)
+            newscores = self.scores_[class_labels[0]]  # same for all classes
+            newniter = self.n_iter_[0, ...]
             if l1_ratios is None:
                 if n_classes <= 2:
-                    newpaths = newpaths.reshape(1, n_folds, n_cs, 1, n_dof)
+                    newpaths = xp.reshape(newpaths, (1, n_folds, n_cs, 1, n_dof))
                 else:
-                    newpaths = newpaths.reshape(n_classes, n_folds, n_cs, 1, n_dof)
-                newscores = newscores.reshape(n_folds, n_cs, 1)
-                newniter = newniter.reshape(n_folds, n_cs, 1)
+                    newpaths = xp.reshape(
+                        newpaths, (n_classes, n_folds, n_cs, 1, n_dof)
+                    )
+                newscores = xp.reshape(newscores, (n_folds, n_cs, 1))
+                newniter = xp.reshape(newniter, (n_folds, n_cs, 1))
                 if self.penalty == "l1":
                     self.l1_ratio_ = 1.0
                 else:
                     self.l1_ratio_ = 0.0
             else:
-                n_l1_ratios = len(self.l1_ratios_)
+                n_l1_ratios = self.l1_ratios_.shape[0]
                 self.l1_ratio_ = float(self.l1_ratio_[0])
                 if n_classes <= 2:
-                    newpaths = newpaths.reshape(1, n_folds, n_cs, n_l1_ratios, n_dof)
+                    newpaths = xp.reshape(
+                        newpaths, (1, n_folds, n_cs, n_l1_ratios, n_dof)
+                    )
                 else:
-                    newpaths = newpaths.reshape(
-                        n_classes, n_folds, n_cs, n_l1_ratios, n_dof
+                    newpaths = xp.reshape(
+                        newpaths, (n_classes, n_folds, n_cs, n_l1_ratios, n_dof)
                     )
             # newpaths.shape = (n_classes, n_folds, n_cs, n_l1_ratios, n_dof)
             # self.coefs_paths_.shape should be
             # (n_folds, n_l1_ratios, n_cs, n_classes, n_dof)
-            self.coefs_paths_ = np.moveaxis(newpaths, (0, 1, 3), (3, 0, 1))
+            self.coefs_paths_ = xp.moveaxis(newpaths, (0, 1, 3), (3, 0, 1))
             # newscores.shape = (n_folds, n_cs, n_l1_ratios)
             # self.scores_.shape should be (n_folds, n_l1_ratios, n_cs)
-            self.scores_ = np.moveaxis(newscores, (1, 2), (2, 1))
-            self.n_iter_ = np.moveaxis(newniter, (1, 2), (2, 1))
+            self.scores_ = xp.moveaxis(newscores, (1, 2), (2, 1))
+            self.n_iter_ = xp.moveaxis(newniter, (1, 2), (2, 1))
 
         return self
 
@@ -2600,5 +2629,5 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.sparse = True
-        tags.array_api_support = False
+        tags.array_api_support = self.solver in ("lbfgs", "newton-cg")
         return tags

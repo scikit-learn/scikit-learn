@@ -1,0 +1,4 @@
+- The default value of the `average` parameter of
+  :func:`precision_recall_fscore_support` will change from `None` to `"binary"` in
+  version 1.12.
+  By :user:`François Paugam <FrancoisPgm>`.
