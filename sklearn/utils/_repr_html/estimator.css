@@ -39,7 +39,10 @@
 }
 
 input:focus-visible ~ label {
-  outline: 1px solid currentColor;
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+  box-shadow: inset 0 0 0 2px currentColor;
+  border-radius: 2px;
 }
 
 .sk-global input.sk-hidden--visually {
