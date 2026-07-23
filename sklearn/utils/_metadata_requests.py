@@ -350,6 +350,16 @@ class MethodMetadataRequest:
         self.owner = owner
         self.method = method
 
+    def __sklearn_clone__(self):
+        # `owner` is a reference to the estimator and is only used by
+        # `_routing_repr` for display; deep-copying it would drag the full
+        # estimator state (and fail for non-picklable attributes) for no benefit.
+        return MethodMetadataRequest(
+            owner=self.owner,
+            method=self.method,
+            requests=deepcopy(self._requests),
+        )
+
     @property
     def requests(self):
         """Dictionary of the form: ``{key: alias}``."""
@@ -606,6 +616,14 @@ class MetadataRequest:
                 method,
                 MethodMetadataRequest(owner=owner, method=method),
             )
+
+    def __sklearn_clone__(self):
+        # `owner` is a reference to the estimator and is only used by
+        # `_routing_repr` for display; see MethodMetadataRequest.__sklearn_clone__.
+        new = MetadataRequest(owner=self.owner)
+        for method in SIMPLE_METHODS:
+            setattr(new, method, getattr(self, method).__sklearn_clone__())
+        return new
 
     def consumes(self, method, params):
         """Return params consumed as metadata in a :term:`consumer`.
@@ -913,6 +931,24 @@ class MetadataRouter:
         self._self_request = None
         self.owner = owner
 
+    def __sklearn_clone__(self):
+        # `owner` is a reference to the estimator and is only used by
+        # `_routing_repr` for display; see MethodMetadataRequest.__sklearn_clone__.
+        new = MetadataRouter(owner=self.owner)
+        new._self_request = (
+            self._self_request.__sklearn_clone__()
+            if self._self_request is not None
+            else None
+        )
+        new._route_mappings = {
+            name: RouterMappingPair(
+                mapping=deepcopy(pair.mapping),
+                router=pair.router.__sklearn_clone__(),
+            )
+            for name, pair in self._route_mappings.items()
+        }
+        return new
+
     def add_self_request(self, obj):
         """Add `self` (as a :term:`consumer`) to the `MetadataRouter`.
 
@@ -938,9 +974,9 @@ class MetadataRouter:
             Returns `self`.
         """
         if getattr(obj, "_type", None) == "metadata_request":
-            self._self_request = deepcopy(obj)
+            self._self_request = obj.__sklearn_clone__()
         elif hasattr(obj, "_get_metadata_request"):
-            self._self_request = deepcopy(obj._get_metadata_request())
+            self._self_request = obj._get_metadata_request().__sklearn_clone__()
         else:
             raise ValueError(
                 "Given `obj` is neither a `MetadataRequest` nor does it implement the"
@@ -1053,7 +1089,13 @@ class MetadataRouter:
 
         for name, route_mapping in self._route_mappings.items():
             for caller, callee in route_mapping.mapping:
-                if caller == method:
+                # A composite method (e.g. ``fit_transform``) routes metadata for
+                # each of its component methods (``fit`` and ``transform``), but a
+                # route mapping may also be declared directly on the composite
+                # method itself (e.g. ``TargetEncoder`` maps ``fit_transform`` to
+                # its splitter's ``split``). We therefore match the composite
+                # method as well as its components.
+                if (caller == method) or (caller in COMPOSITE_METHODS.get(method, ())):
                     res = res.union(
                         route_mapping.router._get_param_names(
                             method=callee, return_alias=True, ignore_self_request=False
@@ -1289,10 +1331,10 @@ def get_routing_for_object(obj=None):
     # doing this instead of a try/except since an AttributeError could be raised
     # for other reasons.
     if hasattr(obj, "get_metadata_routing"):
-        return deepcopy(obj.get_metadata_routing())
+        return obj.get_metadata_routing().__sklearn_clone__()
 
     elif getattr(obj, "_type", None) in ["metadata_request", "metadata_router"]:
-        return deepcopy(obj)
+        return obj.__sklearn_clone__()
 
     return MetadataRequest(owner=None)
 
@@ -1746,7 +1788,11 @@ def process_routing(_obj, _method, /, **kwargs):
 
     The output of this function is a :class:`~sklearn.utils.Bunch` that has a key for
     each consuming object and those hold keys for their consuming methods, which then
-    contain keys for the metadata which should be routed to them.
+    contain keys for the metadata which should be routed to them. Consumers should
+    use item access (``routed_params[child][method]``) rather than attribute access,
+    so that the structure remains usable after crossing process boundaries (e.g.
+    :class:`joblib.Parallel` with the dask backend), where serializers may downgrade
+    :class:`~sklearn.utils.Bunch` to plain :class:`dict`.
 
     Read more on developing custom estimators that can route metadata in the
     :ref:`Metadata Routing Developing Guide
@@ -1823,3 +1869,42 @@ def process_routing(_obj, _method, /, **kwargs):
     routed_params = request_routing.route_params(params=kwargs, caller=_method)
 
     return routed_params
+
+
+def _manual_routing(routing):
+    """Manually build a routed_params Bunch outside the ``process_routing`` path.
+
+    Use in meta-estimators that need to construct routing by hand — typically in
+    the ``else`` branch of ``if _routing_enabled()``, where pre-SLEP6 forwarding
+    behaviour is preserved. Returns the same nested ``Bunch`` shape that
+    :func:`process_routing` produces, so consumer code doesn't need to branch
+    on which path produced ``routed_params``.
+
+    Every child in ``routing`` is populated with a :class:`~sklearn.utils.Bunch`
+    containing every name in ``METHODS``. Methods listed in the per-child
+    sub-mapping carry the provided kwargs; methods not listed default to ``{}``.
+
+    Parameters
+    ----------
+    routing : dict[str, dict[str, dict] | None]
+        Mapping ``child_name -> (method_name -> kwargs)``. Pass ``{}`` (or
+        ``None``) for a child with no methods to forward to; every method in
+        the returned Bunch will be an empty dict.
+
+    Returns
+    -------
+    routed_params : Bunch
+        A :class:`~sklearn.utils.Bunch` of the form
+        ``{"child_name": {"method_name": {metadata: value}}}``. Consumers must
+        use item access (``result[child][method]``); attribute access is not
+        guaranteed to survive cross-process serialization (e.g. the joblib
+        dask backend downgrades :class:`Bunch` to plain :class:`dict`).
+    """
+    return Bunch(
+        **{
+            child: Bunch(
+                **{method: dict((methods or {}).get(method, {})) for method in METHODS}
+            )
+            for child, methods in routing.items()
+        }
+    )

@@ -25,9 +25,9 @@ from sklearn.metrics import check_scoring, get_scorer_names
 from sklearn.metrics._scorer import _MultimetricScorer
 from sklearn.model_selection._split import check_cv
 from sklearn.preprocessing import LabelEncoder
-from sklearn.utils import Bunch, _safe_indexing, check_random_state, indexable
+from sklearn.utils import _safe_indexing, check_random_state, indexable
 from sklearn.utils._array_api import (
-    device,
+    array_device,
     get_namespace,
     get_namespace_and_device,
     move_to,
@@ -42,6 +42,7 @@ from sklearn.utils._param_validation import (
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _routing_enabled,
     process_routing,
 )
@@ -158,7 +159,7 @@ def cross_validate(
         - a list or tuple of unique strings;
         - a callable returning a dictionary where the keys are the metric
           names and the values are the metric scores;
-        - a dictionary with metric names as keys and callables a values.
+        - a dictionary with metric names as keys and callables as values.
 
         See :ref:`multimetric_grid_search` for an example.
 
@@ -356,10 +357,13 @@ def cross_validate(
                 routed_params=e.routed_params,
             )
     else:
-        routed_params = Bunch()
-        routed_params.splitter = Bunch(split={"groups": groups})
-        routed_params.estimator = Bunch(fit=params)
-        routed_params.scorer = Bunch(score={})
+        routed_params = _manual_routing(
+            {
+                "splitter": {"split": {"groups": groups}},
+                "estimator": {"fit": params},
+                "scorer": {},
+            }
+        )
 
     indices = cv.split(X, y, **routed_params.splitter.split)
     if return_indices:
@@ -783,7 +787,7 @@ def _fit_and_score(
             Traceback str if the fit failed, None if the fit succeeded.
     """
     xp, _ = get_namespace(X)
-    X_device = device(X)
+    X_device = array_device(X)
 
     # Make sure that we can fancy index X even if train and test are provided
     # as NumPy arrays by NumPy only cross-validation splitters.
@@ -1203,9 +1207,12 @@ def cross_val_predict(
                 routed_params=e.routed_params,
             )
     else:
-        routed_params = Bunch()
-        routed_params.splitter = Bunch(split={"groups": groups})
-        routed_params.estimator = Bunch(fit=params)
+        routed_params = _manual_routing(
+            {
+                "splitter": {"split": {"groups": groups}},
+                "estimator": {"fit": params},
+            }
+        )
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
     splits = list(cv.split(X, y, **routed_params.splitter.split))
@@ -1220,7 +1227,7 @@ def cross_val_predict(
         method in ["decision_function", "predict_proba", "predict_log_proba"]
         and y is not None
     )
-    xp, is_array_api, device_ = get_namespace_and_device(X)
+    xp, is_array_api, device = get_namespace_and_device(X)
     xp_y, _ = get_namespace(y)
     if encode:
         y = xp_y.asarray(y)
@@ -1233,7 +1240,7 @@ def cross_val_predict(
                 y_enc[:, i_label] = LabelEncoder().fit_transform(y[:, i_label])
             y = y_enc
 
-    y = move_to(y, xp=xp, device=device_)
+    y = move_to(y, xp=xp, device=device)
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose, pre_dispatch=pre_dispatch)
@@ -1267,7 +1274,7 @@ def cross_val_predict(
             concat_pred.append(label_preds)
         predictions = concat_pred
     else:
-        inv_test_indices = xp.asarray(inv_test_indices, device=device(X))
+        inv_test_indices = xp.asarray(inv_test_indices, device=array_device(X))
         predictions = xp.concat(predictions)
 
     if isinstance(predictions, list):
@@ -1676,10 +1683,13 @@ def permutation_test_score(
             )
 
     else:
-        routed_params = Bunch()
-        routed_params.estimator = Bunch(fit=params)
-        routed_params.splitter = Bunch(split={"groups": groups})
-        routed_params.scorer = Bunch(score={})
+        routed_params = _manual_routing(
+            {
+                "estimator": {"fit": params},
+                "splitter": {"split": {"groups": groups}},
+                "scorer": {},
+            }
+        )
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
@@ -2012,10 +2022,13 @@ def learning_curve(
             )
 
     else:
-        routed_params = Bunch()
-        routed_params.estimator = Bunch(fit=params, partial_fit=params)
-        routed_params.splitter = Bunch(split={"groups": groups})
-        routed_params.scorer = Bunch(score={})
+        routed_params = _manual_routing(
+            {
+                "estimator": {"fit": params, "partial_fit": params},
+                "splitter": {"split": {"groups": groups}},
+                "scorer": {},
+            }
+        )
 
     # Store cv as list as we will be iterating over the list multiple times
     cv_iter = list(cv.split(X, y, **routed_params.splitter.split))
@@ -2464,10 +2477,13 @@ def validation_curve(
             )
 
     else:
-        routed_params = Bunch()
-        routed_params.estimator = Bunch(fit=params)
-        routed_params.splitter = Bunch(split={"groups": groups})
-        routed_params.scorer = Bunch(score={})
+        routed_params = _manual_routing(
+            {
+                "estimator": {"fit": params},
+                "splitter": {"split": {"groups": groups}},
+                "scorer": {},
+            }
+        )
 
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch, verbose=verbose)
     results = parallel(

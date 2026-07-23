@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import copy
+import functools
 import inspect
 import uuid
 import warnings
@@ -9,6 +10,9 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 
 from sklearn.callback._base import AutoPropagatedCallback
+
+
+_cached_signature = functools.lru_cache()(inspect.signature)
 
 
 class CallbackContext:
@@ -106,6 +110,7 @@ class CallbackContext:
         new_ctx._children_map = {}
         new_ctx.source_estimator_name = None
         new_ctx.source_task_name = None
+        new_ctx._subestimator_support_warnings = set()
 
         if hasattr(estimator, "_parent_callback_ctx"):
             # This context's task is the root task of the estimator which itself
@@ -314,7 +319,7 @@ class CallbackContext:
                 # sub-estimator's root context (both represent the same task).
                 continue
 
-            signature = inspect.signature(getattr(callback, hook_name))
+            signature = _cached_signature(getattr(callback, hook_name))
             params_names = {
                 p.name
                 for p in signature.parameters.values()
@@ -486,11 +491,18 @@ class CallbackContext:
             )
         ]
         if callbacks_to_propagate and not hasattr(sub_estimator, "set_callbacks"):
-            warnings.warn(
-                f"The estimator {sub_estimator.__class__.__name__} does not support "
-                f"callbacks. The callbacks attached to {self.estimator_name} will not "
-                f"be propagated to this estimator."
+            sub_estimator_name = sub_estimator.__class__.__name__
+            warning_message = (
+                f"The auto-propagated callbacks attached to {self.estimator_name} will "
+                f"not be propagated to {sub_estimator_name} because the latter does "
+                "not support callbacks."
             )
+            # Check on the root context not to repeat the same warning.
+            root_context = get_context_path(self)[0]
+            key = (self.estimator_name, sub_estimator_name)
+            if key not in root_context._subestimator_support_warnings:
+                warnings.warn(warning_message)
+                root_context._subestimator_support_warnings.add(key)
             callbacks_to_propagate = []
 
         if callbacks_to_propagate:
