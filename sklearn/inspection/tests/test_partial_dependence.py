@@ -523,12 +523,20 @@ def test_partial_dependence_easy_target(est, power):
     assert r2 > 0.99
 
 
-def test_partial_dependence_recursion_decision_tree_categorical_target_feature():
+@pytest.mark.parametrize(
+    "Estimator",
+    (
+        DecisionTreeRegressor,
+        HistGradientBoostingRegressor,
+        HistGradientBoostingClassifier,
+    ),
+)
+def test_partial_dependence_recursion_categorical_target_feature(Estimator):
     # Recursion is not supported as the re-encoding of the grid is not implemented
     X = np.array(["a", "b", "b", "a", "a"]).reshape(-1, 1)
     y = np.array([0, 1, 1, 0, 1])
 
-    est = DecisionTreeRegressor(categorical_features=[0]).fit(X, y)
+    est = Estimator(categorical_features=[0]).fit(X, y)
 
     with pytest.raises(
         NotImplementedError, match="not supported for categorical target features"
