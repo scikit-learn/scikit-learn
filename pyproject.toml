@@ -44,7 +44,9 @@ tracker = "https://github.com/scikit-learn/scikit-learn/issues"
 "release notes" = "https://scikit-learn.org/stable/whats_new"
 
 [project.optional-dependencies]
-build = ["numpy>=1.24.1", "scipy>=1.10.0", "cython>=3.1.2", "meson-python>=0.17.1"]
+# TODO: once https://github.com/cython/cython/issues/7846 is fixed and in a Cython release
+# change to "cython>[fixed-version]" or "cython>=3.1.2,!=3.2.6,!=3.2.7,..."
+build = ["numpy>=1.24.1", "scipy>=1.10.0", "cython>=3.1.2,<3.2.6", "meson-python>=0.17.1"]
 install = ["numpy>=1.24.1", "scipy>=1.10.0", "joblib>=1.4.0", "narwhals>=2.0.1", "threadpoolctl>=3.5.0"]
 benchmark = ["matplotlib>=3.6.1", "pandas>=1.5.0", "memory_profiler>=0.57.0"]
 docs = [
@@ -100,7 +102,9 @@ build-backend = "mesonpy"
 # Minimum requirements for the build system to execute.
 requires = [
     "meson-python>=0.17.1",
-    "cython>=3.1.2",
+    # TODO: once https://github.com/cython/cython/issues/7846 is fixed and in a Cython release
+    # change to "cython>[fixed-version]" or "cython>=3.1.2,!=3.2.6,!=3.2.7,..."
+    "cython>=3.1.2,<3.2.6",
     "numpy>=2",
     "scipy>=1.10.0",
 ]

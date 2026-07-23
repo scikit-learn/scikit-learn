@@ -34,11 +34,9 @@ from sklearn.metrics import d2_tweedie_score, mean_poisson_deviance
 from sklearn.model_selection import train_test_split
 from sklearn.utils._array_api import (
     _atol_for_type,
+    array_device,
     move_to,
     yield_namespace_device_dtype_combinations,
-)
-from sklearn.utils._array_api import (
-    device as array_api_device,
 )
 from sklearn.utils._testing import _array_api_for_tests, assert_allclose
 
@@ -1284,13 +1282,15 @@ def test_poisson_regressor_array_api_compliance(
 
     params = dict(alpha=1, solver="lbfgs", max_iter=500)
     params["tol"] = 3e-6 if dtype_name == "float32" else 1e-13
-    glm_np = PoissonRegressor(**params).fit(X_np, y_np, sample_weight=sample_weight)
-    assert glm_np.n_iter_ < glm_np.max_iter
+    with config_context(array_api_dispatch=False):
+        glm_np = PoissonRegressor(**params).fit(X_np, y_np, sample_weight=sample_weight)
+        assert glm_np.n_iter_ < glm_np.max_iter
 
-    # Test that alpha was not too large for meaningful testing.
-    assert np.abs(glm_np.coef_).max() > 0.1
+        # Test that alpha was not too large for meaningful testing.
+        assert np.abs(glm_np.coef_).max() > 0.1
 
-    predict_np = glm_np.predict(X_np)
+        predict_np = glm_np.predict(X_np)
+
     atol = _atol_for_type(dtype_name)
     rtol = 2e-3 if dtype_name == "float32" else 3e-7
 
@@ -1306,7 +1306,7 @@ def test_poisson_regressor_array_api_compliance(
                 move_to(attr_xp, xp=np, device="cpu"), attr_np, rtol=rtol, atol=atol
             )
             assert attr_xp.dtype == X_xp.dtype
-            assert array_api_device(attr_xp) == array_api_device(X_xp)
+            assert array_device(attr_xp) == array_device(X_xp)
 
         predict_xp = glm_xp.predict(X_xp)
         assert_allclose(
@@ -1316,7 +1316,7 @@ def test_poisson_regressor_array_api_compliance(
             atol=atol,
         )
         assert predict_xp.dtype == X_xp.dtype
-        assert array_api_device(predict_xp) == array_api_device(X_xp)
+        assert array_device(predict_xp) == array_device(X_xp)
 
 
 @pytest.mark.parametrize(
