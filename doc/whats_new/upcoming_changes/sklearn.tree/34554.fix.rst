@@ -1,5 +1,0 @@
-- :meth:`tree.DecisionTreeRegressor._compute_partial_dependence_recursion` (used by
-  :func:`inspection.partial_dependence` with ``method="recursion"``) now raises
-  `NotImplementedError` for categorical target features instead of silently
-  returning incorrect values. Use ``method="brute"`` instead.
-  By :user:`Arthur Lacote <cakedev0>`.
