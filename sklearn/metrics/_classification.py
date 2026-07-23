@@ -1959,6 +1959,7 @@ def _check_set_wise_labels(
         "pos_label": [Real, str, "boolean", None],
         "average": [
             StrOptions({"micro", "macro", "samples", "weighted", "binary"}),
+            Hidden(StrOptions({"warn"})),
             None,
         ],
         "warn_for": [list, tuple, set],
@@ -1978,7 +1979,7 @@ def precision_recall_fscore_support(
     beta=1.0,
     labels=None,
     pos_label=1,
-    average=None,
+    average="warn",
     warn_for=("precision", "recall", "f-score"),
     sample_weight=None,
     zero_division="warn",
@@ -2069,6 +2070,10 @@ def precision_recall_fscore_support(
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
 
+        .. versionchanged:: 1.12
+           The default value for `average` will change from None to 'binary' in version
+           1.12.
+
     warn_for : list, tuple or set, for internal use
         This determines which warnings will be made in the case that this
         function is being used to return only one of its metrics.
@@ -2153,6 +2158,14 @@ def precision_recall_fscore_support(
      array([0., 0., 1.]), array([0. , 0. , 0.8]),
      array([2, 2, 2]))
     """
+    # TODO(1.12): remove warning and change the default of average to "binary"
+    if average == "warn":
+        warnings.warn(
+            "The default value of `average` will change from None to 'binary' in 1.12.",
+            FutureWarning,
+        )
+        average = None
+
     _check_zero_division(zero_division)
     xp, _, device = get_namespace_and_device(y_pred)
     labels = _check_set_wise_labels(
