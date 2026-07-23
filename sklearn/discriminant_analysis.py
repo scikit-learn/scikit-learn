@@ -672,9 +672,6 @@ class LinearDiscriminantAnalysis(
             self, X, y, ensure_min_samples=2, dtype=[xp.float64, xp.float32]
         )
         self.classes_ = unique_labels(y)
-        # `y` follows `X`: move it to `X`'s namespace/device so downstream math
-        # stays single-device. Must stay after `classes_` above, which is
-        # intentionally kept in `y`'s original namespace/device.
         y = move_to(y, xp=xp, device=device(X))
         n_samples, n_features = X.shape
         n_classes = self.classes_.shape[0]
