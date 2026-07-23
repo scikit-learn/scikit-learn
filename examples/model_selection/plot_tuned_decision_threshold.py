@@ -58,51 +58,55 @@ model = make_pipeline(StandardScaler(), LogisticRegression())
 model
 
 # %%
-# We evaluate our model using cross-validation. We use the accuracy and the balanced
-# accuracy to report the performance of our model. The balanced accuracy is a metric
-# that is less sensitive to class imbalance and will allow us to put the accuracy
-# score in perspective.
-#
+# We evaluate our model using cross-validation. We use the precision and recall to
+# report the performance of our model.
+
 # Cross-validation allows us to study the variance of the decision threshold across
 # different splits of the data. However, the dataset is rather small and it would be
-# detrimental to use more than 5 folds to evaluate the dispersion. Therefore, we use
-# a :class:`~sklearn.model_selection.RepeatedStratifiedKFold` where we apply several
-# repetitions of 5-fold cross-validation.
+# detrimental to use more than 5 folds to evaluate the dispersion. Therefore, we use a
+# :class:`~sklearn.model_selection.RepeatedKFold` where we apply two repetitions of
+# 5-fold cross-validation to keep the computation time of this example short. Using more
+# repetitions would give a more reliable estimate of the variance of the decision
+# threshold, at the cost of a longer running time.
 import pandas as pd
 
-from sklearn.model_selection import RepeatedStratifiedKFold, cross_validate
+from sklearn.metrics import make_scorer, precision_score, recall_score
+from sklearn.model_selection import RepeatedKFold, cross_validate
 
-scoring = ["accuracy", "balanced_accuracy"]
+scoring = {
+    "precision": make_scorer(precision_score, pos_label=pos_label),
+    "recall": make_scorer(recall_score, pos_label=pos_label),
+}
+
 cv_scores = [
-    "train_accuracy",
-    "test_accuracy",
-    "train_balanced_accuracy",
-    "test_balanced_accuracy",
+    "train_precision",
+    "test_precision",
+    "train_recall",
+    "test_recall",
 ]
-cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=10, random_state=42)
-cv_results_vanilla_model = pd.DataFrame(
-    cross_validate(
-        model,
-        data,
-        target,
-        scoring=scoring,
-        cv=cv,
-        return_train_score=True,
-        return_estimator=True,
-    )
-)
-cv_results_vanilla_model[cv_scores].aggregate(["mean", "std"]).T
 
+cv = RepeatedKFold(n_splits=5, n_repeats=2, random_state=42)
+
+params = {
+    "scoring": scoring,
+    "cv": cv,
+    "return_train_score": True,
+    "return_estimator": True,
+    "n_jobs": 2,
+}
+
+cv_results_vanilla_model = pd.DataFrame(cross_validate(model, data, target, **params))
+cv_results_vanilla_model[cv_scores].aggregate(["mean", "std"]).T
 # %%
 # Our predictive model succeeds to grasp the relationship between the data and the
 # target. The training and testing scores are close to each other, meaning that our
-# predictive model is not overfitting. We can also observe that the balanced accuracy is
-# lower than the accuracy, due to the class imbalance previously mentioned.
+# predictive model is not overfitting.
 #
-# For this classifier, we let the decision threshold, used convert the probability of
-# the positive class into a class prediction, to its default value: 0.5. However, this
-# threshold might not be optimal. If our interest is to maximize the balanced accuracy,
-# we should select another threshold that would maximize this metric.
+# For this classifier, we let the decision threshold, used to convert the probability of
+# the positive class into a class prediction, remain at its default value: 0.5. However,
+# this threshold might not be optimal. For instance, if we are interested in maximizing
+# the f1-score, which is defined as the harmonic mean between precision and recall, we
+# probably need a different decision threshold.
 #
 # The :class:`~sklearn.model_selection.TunedThresholdClassifierCV` meta-estimator allows
 # to tune the decision threshold of a classifier given a metric of interest.
@@ -110,30 +114,27 @@ cv_results_vanilla_model[cv_scores].aggregate(["mean", "std"]).T
 # Tuning the decision threshold
 # -----------------------------
 #
-# We create a :class:`~sklearn.model_selection.TunedThresholdClassifierCV` and
-# configure it to maximize the balanced accuracy. We evaluate the model using the same
-# cross-validation strategy as previously.
+# We create a :class:`~sklearn.model_selection.TunedThresholdClassifierCV` and configure
+# it to maximize the f1-score, using the :func:`f1_score` function from the
+# :mod:`sklearn.metrics` module. We evaluate the model using the same cross-validation
+# strategy as before.
+from sklearn.metrics import f1_score
 from sklearn.model_selection import TunedThresholdClassifierCV
 
-tuned_model = TunedThresholdClassifierCV(estimator=model, scoring="balanced_accuracy")
-cv_results_tuned_model = pd.DataFrame(
-    cross_validate(
-        tuned_model,
-        data,
-        target,
-        scoring=scoring,
-        cv=cv,
-        return_train_score=True,
-        return_estimator=True,
-    )
+tuned_model = TunedThresholdClassifierCV(
+    estimator=model, scoring=make_scorer(f1_score, pos_label=pos_label)
 )
+cv_results_tuned_model = pd.DataFrame(
+    cross_validate(tuned_model, data, target, **params)
+)
+
 cv_results_tuned_model[cv_scores].aggregate(["mean", "std"]).T
 
 # %%
-# In comparison with the vanilla model, we observe that the balanced accuracy score
-# increased. Of course, it comes at the cost of a lower accuracy score. It means that
-# our model is now more sensitive to the positive class but makes more mistakes on the
-# negative class.
+# In comparison with the vanilla model, we observe that the recall of the tuned model
+# increased at the expense of precision. This is expected since we tuned the decision
+# threshold to maximize the f1-score, which favors a better balance between precision
+# and recall rather than the default threshold of 0.5.
 #
 # However, it is important to note that this tuned predictive model is internally the
 # same model as the vanilla model: they have the same fitted coefficients.
@@ -173,15 +174,112 @@ ax.legend(loc="upper right")
 _ = ax.set_title(
     "Distribution of the decision threshold \nacross different cross-validation folds"
 )
+# %%
+# On average, a decision threshold around 0.32 maximizes the f1-score, which is lower
+# than the default decision threshold of 0.50. To understand the tradeoffs better, we
+# view the corresponding points of these thresholds on a precision-recall curve. For
+# ease of presentation, we will consider only the first test set in our cross-validation
+# split, so that only one precision-recall curve is considered. We will also be defining
+# a function to generate this plot, as later on we will want to plot the
+# precision-recall curve again with an additional point, corresponding to another
+# decision threshold.
+
+import itertools
+
+from sklearn.metrics import PrecisionRecallDisplay
+
+cv_models = {
+    "Vanilla": cv_results_vanilla_model,
+    "Max F1": cv_results_tuned_model,
+}
+
+
+def plot_pr_curve():
+    fig, ax = plt.subplots(figsize=(6, 5))
+
+    test_indices = [test_index for _, test_index in cv.split(data, target)]
+    idx = 0  # Consider only the first test set
+
+    display = PrecisionRecallDisplay.from_estimator(
+        cv_results_vanilla_model["estimator"][idx],
+        data.iloc[test_indices[idx]],
+        target.iloc[test_indices[idx]],
+        name="precision-recall",
+        plot_chance_level=1,
+        ax=ax,
+    )
+
+    display.ax_.set_title("Precision-Recall curve")
+    symbols = itertools.cycle(["o", "<", ">"])
+    colors = itertools.cycle(["orange", "blue", "green"])
+
+    for model in cv_models:
+        ax.plot(
+            cv_models[model]["test_recall"][idx],
+            cv_models[model]["test_precision"][idx],
+            marker=next(symbols),
+            markersize=10,
+            color=next(colors),
+            label=f"{model} model",
+        )
+    ax.legend()
+
+
+plot_pr_curve()
 
 # %%
-# In average, a decision threshold around 0.32 maximizes the balanced accuracy, which is
-# different from the default decision threshold of 0.5. Thus tuning the decision
-# threshold is particularly important when the output of the predictive model
-# is used to make decisions. Besides, the metric used to tune the decision threshold
-# should be chosen carefully. Here, we used the balanced accuracy but it might not be
-# the most appropriate metric for the problem at hand. The choice of the "right" metric
-# is usually problem-dependent and might require some domain knowledge. Refer to the
-# example entitled,
-# :ref:`sphx_glr_auto_examples_model_selection_plot_cost_sensitive_learning.py`,
-# for more details.
+# From the plot above, we see that the new model achieves higher recall and lower
+# precision when compared to the vanilla model. This is intuitive when we think about
+# the corresponding decision thresholds. By decreasing the threshold from 0.50 to 0.32,
+# we allow our classifier to label more samples as positive, which also increases the
+# number of false positives.
+#
+# The metric used to tune the decision threshold should be chosen carefully. The choice
+# of the metric that makes sense to optimize for is usually problem-dependent, and might
+# require some domain knowledge. Here, we used the f1-score, which usually achieves a
+# good balance between precision and recall. However, this may not be the most
+# appropriate for our situation. In classifying patients as diabetic, we may decide that
+# recall is more important than precision, since the cost of leaving diabetes untreated
+# can be very harmful to the patient. Having said that, we may still want to maintain a
+# baseline level of precision, say 55%.
+#
+# This can be done as before, with the
+# :class:`~sklearn.model_selection.TunedThresholdClassifierCV` class, and a custom
+# scoring function.
+
+import numpy as np
+
+
+def constrained_recall(y_true, y_pred, pos_label):
+    precision = precision_score(y_true, y_pred, pos_label=pos_label)
+    recall = recall_score(y_true, y_pred, pos_label=pos_label)
+
+    if precision < 0.55:
+        return -np.inf
+    return recall
+
+
+constrained_recall_model = TunedThresholdClassifierCV(
+    estimator=model, scoring=make_scorer(constrained_recall, pos_label=pos_label)
+)
+
+cv_results_constrained_recall_model = pd.DataFrame(
+    cross_validate(constrained_recall_model, data, target, **params)
+)
+
+cv_results_constrained_recall_model[cv_scores].aggregate(["mean", "std"]).T
+# %%
+# We conclude this section by plotting the precision-recall curve a second time, but
+# with an additional point that corresponds to our new model which maximizes recall
+# under a constraint of maintaining 55% precision.
+cv_models["Max constrained recall"] = cv_results_constrained_recall_model
+plot_pr_curve()
+# %%
+# We can now see the tradeoffs between precision and recall across all our models, on
+# the given test set. The precision of our new model is lower than that of the vanilla
+# model, but higher than the model that maximizes f1-score. On the other hand, our new
+# model has higher recall than the vanilla model, but lower recall than the f1-score
+# model. By combining a custom scoring function with the
+# :class:`~sklearn.model_selection.TunedThresholdClassifierCV` class, the user gains
+# flexibility when deciding what metric to optimize for. The decision threshold can be
+# tuned by maximizing the chosen metric.
