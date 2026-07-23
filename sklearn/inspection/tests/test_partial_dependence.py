@@ -545,6 +545,31 @@ def test_partial_dependence_recursion_decision_tree_categorical_target_feature()
         )
 
 
+def test_partial_dependence_brute_decision_tree_categorical_target_feature():
+    # Unlike 'recursion' (see the test above), 'brute' does not traverse the
+    # tree with raw grid values: it calls `predict`, which re-encodes
+    # categories through `_categorical_encoder`. It must therefore stay
+    # correct even when raw categories don't coincide with their internal
+    # ordinal encoding, e.g. string categories.
+    category_values = np.array(["a", "b", "c", "d", "e", "f"], dtype=object)
+    X = np.repeat(category_values, 4).reshape(-1, 1)
+    y = np.isin(X.ravel(), ["b", "c", "f"]).astype(np.float64)
+
+    est = DecisionTreeRegressor(
+        categorical_features=[0], max_depth=1, random_state=0
+    ).fit(X, y)
+
+    brute = partial_dependence(
+        est, X, features=[0], method="brute", categorical_features=[0]
+    )
+
+    grid = brute["grid_values"][0].reshape(-1, 1)
+    expected = est.predict(grid)
+
+    assert_array_equal(np.sort(brute["grid_values"][0]), category_values)
+    assert_allclose(brute["average"][0], expected)
+
+
 def test_partial_dependence_recursion_decision_tree_missing_target_feature():
     # Missing values are isolated by the split. Recursion must route np.nan
     # according to the fitted node's missing_go_to_left flag.
