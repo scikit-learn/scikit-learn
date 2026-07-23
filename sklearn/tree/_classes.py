@@ -1036,10 +1036,9 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         For each categorical feature, there must be at most 255 unique
         categories. Missing values for categorical features should be
         represented by ``np.nan``; unknown categories at prediction time are
-        also treated as missing values. All other categorical values,
-        including negative numeric values, are treated as categories. All
-        categorical values are converted to floating point numbers. This means
-        that categorical values of 1.0 and 1 are treated as the same category.
+        also treated as missing values. All numerical values are converted to
+        floating point numbers. This means that categorical values of 1.0 and 1
+        are treated as the same category.
 
         .. versionadded:: 1.10
 
@@ -1457,10 +1456,9 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         For each categorical feature, there must be at most 255 unique
         categories. Missing values for categorical features should be
         represented by ``np.nan``; unknown categories at prediction time are
-        also treated as missing values. All other categorical values,
-        including negative numeric values, are treated as categories. All
-        categorical values are converted to floating point numbers. This means
-        that categorical values of 1.0 and 1 are treated as the same category.
+        also treated as missing values. All numerical values are converted to
+        floating point numbers. This means that categorical values of 1.0 and 1
+        are treated as the same category.
 
         .. versionadded:: 1.10
 
@@ -1850,10 +1848,9 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         For each categorical feature, there must be at most 255 unique
         categories. Missing values for categorical features should be
         represented by ``np.nan``; unknown categories at prediction time are
-        also treated as missing values. All other categorical values,
-        including negative numeric values, are treated as categories. All
-        categorical values are converted to floating point numbers. This means
-        that categorical values of 1.0 and 1 are treated as the same category.
+        also treated as missing values. All numerical values are converted to
+        floating point numbers. This means that categorical values of 1.0 and 1
+        are treated as the same category.
 
         .. versionadded:: 1.10
 
@@ -2147,10 +2144,9 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         For each categorical feature, there must be at most 255 unique
         categories. Missing values for categorical features should be
         represented by ``np.nan``; unknown categories at prediction time are
-        also treated as missing values. All other categorical values,
-        including negative numeric values, are treated as categories. All
-        categorical values are converted to floating point numbers. This means
-        that categorical values of 1.0 and 1 are treated as the same category.
+        also treated as missing values. All numerical values are converted to
+        floating point numbers. This means that categorical values of 1.0 and 1
+        are treated as the same category.
 
         .. versionadded:: 1.10
 
