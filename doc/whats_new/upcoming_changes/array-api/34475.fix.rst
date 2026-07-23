@@ -1,5 +1,3 @@
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` now supports array
-  API inputs where `y` are from a different namespace or
-  device than `X`, moving them to the namespace and device of `X` while keeping
-  `classes_` in the namespace and device of `y`.
+  API inputs where `y` is from a different namespace or device than `X`.
   By :user:`Kiyarash Fazeli <Fazel94>`.
