@@ -1063,7 +1063,7 @@ def test_logistic_regression_solvers_multiclass_unpenalized(
         ).fit(X, y)
         for solver in set(SOLVERS) - set(["liblinear"])
     }
-    for solver in regressors.keys():
+    for solver in regressors:
         # See the docstring of test_multinomial_identifiability_on_iris for reference.
         assert_allclose(
             regressors[solver].coef_.sum(axis=0), 0, atol=1e-10, err_msg=solver
@@ -3229,3 +3229,12 @@ def test_logistic_regression_callback_support_warning():
         match="Callbacks are only supported in LogisticRegression for solver='lbfgs'",
     ):
         LogisticRegression(solver="liblinear").set_callbacks(cb)
+
+
+def test_logistic_regression_cv_f1_macro():
+    """Non-regression test for issue #34531"""
+    X, y = make_classification(
+        n_samples=100, n_features=20, n_classes=2, random_state=0
+    )
+    clf = LogisticRegressionCV(cv=3, random_state=0, scoring="f1_macro")
+    clf.fit(X, y)
