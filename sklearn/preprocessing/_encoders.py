@@ -233,10 +233,10 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         and self.categories_[i].itemsize > Xi.itemsize
                     ):
                         Xi = Xi.astype(self.categories_[i].dtype)
-                    elif self.categories_[i].dtype.kind == "O" and Xi.dtype.kind == "U":
-                        # categories are objects and Xi are numpy strings.
-                        # Cast Xi to an object dtype to prevent truncation
-                        # when setting invalid values.
+                    elif self.categories_[i].dtype.kind == "O" and Xi.dtype.kind != "O":
+                        # categories are objects and Xi is a numpy string or
+                        # numeric array. Cast Xi to an object dtype to prevent
+                        # truncation or rounding when setting invalid values.
                         Xi = Xi.astype("O")
                     else:
                         Xi = Xi.copy()

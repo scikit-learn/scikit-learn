@@ -1,0 +1,4 @@
+- :class:`preprocessing.OrdinalEncoder` and :class:`preprocessing.OneHotEncoder` no
+  longer raise ``TypeError`` when transforming numeric data after being fitted on
+  object dtype data containing missing values.
+  By :user:`Dechante Chang <chang-pro>`.
