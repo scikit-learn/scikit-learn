@@ -2404,10 +2404,9 @@ def test_check_node_ndarray():
 def test_check_node_ndarray_values():
     """Node index fields are validated to stay within bounds.
 
-    Non-regression test for a memory-safety issue where a tampered but
-    type-valid ``nodes`` array (e.g. one that passes ``skops.io`` type auditing)
-    was accepted by ``Tree.__setstate__`` and caused an out-of-bounds native
-    memory read (segfault) at prediction time.
+    Non-regression test for a memory-safety issue where a tampered persisted
+    ``nodes`` array was loaded via ``Tree.__setstate__`` and caused an
+    out-of-bounds native memory read (segfault) at prediction time.
     """
     n_features = 4
     n_nodes = 5
@@ -2450,32 +2449,24 @@ def test_check_node_ndarray_values():
 
 
 def test_tree_setstate_rejects_tampered_nodes():
-    """``Tree.__setstate__`` rejects out-of-bounds node arrays.
+    """Loading a tampered tree model raises instead of segfaulting.
 
-    Non-regression test for a memory-safety issue: deserializing a crafted but
-    type-valid tree model previously segfaulted at ``predict`` time. The bounds
-    check must reject it at load time with a ``ValueError`` instead.
+    Non-regression test for a memory-safety issue: deserializing a malisciously
+    crafted tree model previously segfaulted at ``predict`` time. The individual
+    value bounds are covered by ``test_check_node_ndarray_values``; here we check
+    the end-to-end pickle round-trip. ``node_count`` is not tampered with here
+    since a mismatch makes ``__getstate__`` over-read the node buffer at dump
+    time (that case is covered by the unit test above).
     """
     X, y = datasets.make_classification(n_samples=60, n_features=4, random_state=0)
     clf = DecisionTreeClassifier(max_depth=3, random_state=0).fit(X, y)
 
-    state = clf.tree_.__getstate__()
+    # `__getstate__` returns a writable view into the tree's node buffer, so
+    # this tampers the fitted model in place with out-of-bounds child indices.
+    clf.tree_.__getstate__()["nodes"]["left_child"][:] = 999_999_999
 
-    # Out-of-bounds child/feature indices (same dtype and shape as the original
-    # array, only the integer values are tampered with).
-    for field in ("left_child", "right_child", "feature"):
-        tampered = state.copy()
-        nodes = state["nodes"].copy()
-        nodes[field][:] = 999_999_999
-        tampered["nodes"] = nodes
-        with pytest.raises(ValueError, match="out-of-bounds"):
-            clf.tree_.__setstate__(tampered)
-
-    # Inconsistent ``node_count`` (does not match the number of nodes).
-    tampered = state.copy()
-    tampered["node_count"] = state["nodes"].shape[0] + 10
-    with pytest.raises(ValueError, match="node_count"):
-        clf.tree_.__setstate__(tampered)
+    with pytest.raises(ValueError, match="out-of-bounds"):
+        pickle.loads(pickle.dumps(clf))
 
 
 @pytest.mark.parametrize(
