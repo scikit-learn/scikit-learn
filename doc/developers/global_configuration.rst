@@ -26,7 +26,8 @@ Sets the default value for the `assume_finite` argument of
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Sets the default value for the `working_memory` argument of
-:func:`sklearn.set_config`. The global default value is 1024 MiB.
+:func:`sklearn.set_config`. The global default value is 1024 MiB. See
+:ref:`working_memory` for details.
 
 .. _envvar_SKLEARN_PAIRWISE_DIST_CHUNK_SIZE:
 
@@ -108,6 +109,8 @@ admissible seeds on your local machine:
 
 When this environment variable is set to ``0``, tests that need network access
 are enabled. When unset or set to a non-zero value, network tests are skipped.
+
+.. _envvar_SKLEARN_RUN_FLOAT32_TESTS:
 
 `SKLEARN_RUN_FLOAT32_TESTS`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
