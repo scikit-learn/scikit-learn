@@ -8,6 +8,9 @@ from sklearn.callback.tests._utils import (
     FailingCallback,
     MaxIterEstimator,
     NotValidCallback,
+    NotValidFitTaskBeginCallback,
+    NotValidSetupKwargOnlyCallback,
+    NotValidSetupPositionalCallback,
     RecordingAutoPropagatedCallback,
     RecordingCallback,
 )
@@ -34,15 +37,37 @@ def test_set_callbacks(callbacks):
 
 
 @pytest.mark.parametrize("callback", [None, NotValidCallback(), RecordingCallback])
-def test_set_callbacks_error(callback):
+def test_validate_callbacks_invalid_callback(callback):
     """Check the error message when not passing a valid callback to `set_callbacks`."""
     estimator = MaxIterEstimator()
 
-    with pytest.raises(
-        TypeError,
-        match="callbacks must be instances following the FitCallback protocol.",
-    ):
+    msg = "Callbacks must be instances following the FitCallback protocol"
+    with pytest.raises(TypeError, match=msg):
         estimator.set_callbacks(callback)
+
+
+def test_validate_callbacks_invalid_hook_positional():
+    """Check that a callback with invalid positional parameters raises an error."""
+    estimator = MaxIterEstimator()
+    msg = r"'setup' .* must have exactly the positional parameters"
+    with pytest.raises(TypeError, match=msg):
+        estimator.set_callbacks(NotValidSetupPositionalCallback())
+
+
+def test_validate_callbacks_invalid_setup_kwarg():
+    """Check that a callback with invalid kwarg-only params in setup raises an error."""
+    estimator = MaxIterEstimator()
+    msg = r"The signature of the 'setup' hook .* must be"
+    with pytest.raises(TypeError, match=msg):
+        estimator.set_callbacks(NotValidSetupKwargOnlyCallback())
+
+
+def test_validate_callbacks_invalid_hook_kwargs():
+    """Check that a callback with invalid keyword-only parameters raises an error."""
+    estimator = MaxIterEstimator()
+    msg = r"'on_fit_task_begin' .* has parameters that are not valid"
+    with pytest.raises(TypeError, match=msg):
+        estimator.set_callbacks(NotValidFitTaskBeginCallback())
 
 
 @pytest.mark.parametrize(

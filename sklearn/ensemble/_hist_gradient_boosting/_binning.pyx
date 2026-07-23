@@ -1,6 +1,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+from math import log2, ceil
+
 from cython.parallel import prange
 from libc.math cimport isnan
 
@@ -49,18 +51,23 @@ def _map_to_bins(const X_DTYPE_C [:, :] data,
 
 cdef void _map_col_to_bins(
     const X_DTYPE_C [:] data,
-    const X_DTYPE_C [:] binning_thresholds,
+    const X_DTYPE_C [::1] binning_thresholds,
     const uint8_t is_categorical,
     const uint8_t missing_values_bin_idx,
     int n_threads,
-    X_BINNED_DTYPE_C [:] binned
+    X_BINNED_DTYPE_C [::1] binned
 ):
     """Binary search to find the bin index for each value in the data."""
     cdef:
         int i
-        int left
-        int right
-        int middle
+        uint8_t n_iter_bin_search
+        size_t n_bin_thresholds
+
+    n_bin_thresholds = len(binning_thresholds)
+    if n_bin_thresholds == 0:
+        n_iter_bin_search = 0
+    else:
+        n_iter_bin_search = int(ceil(log2(n_bin_thresholds)))
 
     for i in prange(data.shape[0], schedule='static', nogil=True,
                     num_threads=n_threads):
@@ -73,13 +80,43 @@ cdef void _map_col_to_bins(
             binned[i] = missing_values_bin_idx
         else:
             # for known values, use binary search
-            left, right = 0, binning_thresholds.shape[0]
-            while left < right:
-                # equal to (right + left - 1) // 2 but avoids overflow
-                middle = left + (right - left - 1) // 2
-                if data[i] <= binning_thresholds[middle]:
-                    right = middle
-                else:
-                    left = middle + 1
+            binned[i] = _binary_search(
+                data[i],
+                binning_thresholds,
+                n_bin_thresholds,
+                n_iter_bin_search
+            )
 
-            binned[i] = left
+
+cdef inline size_t _binary_search(
+    X_DTYPE_C value,
+    const X_DTYPE_C [::1] binning_thresholds,
+    size_t size,
+    uint8_t n_iterations
+) noexcept nogil:
+    cdef:
+        size_t left
+        size_t half
+        size_t middle
+        size_t remaining_size
+
+    # This implementation is designed to minimize branch mispredictions. See:
+    # https://pvk.ca/Blog/2012/07/03/binary-search-star-eliminates-star-branch-mispredictions/
+    # https://pvk.ca/Blog/2015/11/29/retrospective-on-binary-search-and-on-compression-slash-compilation/
+    left = 0
+    remaining_size = size
+
+    # Fixed number of loops, instead of less-predictable while loop:
+    for _ in range(n_iterations):
+        half = remaining_size / 2
+        middle = left + half
+        # Try for cmov instead of branch; see
+        # https://en.algorithmica.org/hpc/pipelining/branchless/ for details:
+        left = middle if (binning_thresholds[middle] < value) else left
+        remaining_size -= half
+
+    # Try for cmov instead of branch:
+    left = left + 1 if (
+        (left < size) and (value > binning_thresholds[left])
+    ) else left
+    return left

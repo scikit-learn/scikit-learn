@@ -11,10 +11,6 @@ from datetime import datetime, timezone
 
 from sklearn.callback._base import AutoPropagatedCallback
 
-# List of the parameters expected to be in the hooks signatures
-VALID_HOOK_PARAMS_OUT = ["X", "y", "metadata", "fitted_estimator"]
-
-
 _cached_signature = functools.lru_cache()(inspect.signature)
 
 
@@ -328,12 +324,6 @@ class CallbackContext:
                 for p in signature.parameters.values()
                 if p.kind == p.KEYWORD_ONLY
             }
-            if diff := set(params_names) - set(VALID_HOOK_PARAMS_OUT):
-                raise TypeError(
-                    f"Hook {hook_name} of the callback {callback.__class__.__name__} "
-                    f"has parameters that are not valid: {diff}. The valid parameters "
-                    f"are: {VALID_HOOK_PARAMS_OUT}."
-                )
 
             args_to_pass = {}
             for param_name in params_names:
@@ -517,7 +507,7 @@ class CallbackContext:
         if callbacks_to_propagate:
             self._propagated_callbacks = callbacks_to_propagate
             curr_callbacks = getattr(sub_estimator, "_skl_callbacks", [])
-            sub_estimator.set_callbacks(*(curr_callbacks + callbacks_to_propagate))
+            sub_estimator._set_callbacks(curr_callbacks + callbacks_to_propagate)
 
         try:
             yield
@@ -528,7 +518,7 @@ class CallbackContext:
                     for cb in sub_estimator._skl_callbacks
                     if cb not in callbacks_to_propagate
                 ]
-                sub_estimator.set_callbacks(*kept_callbacks)
+                sub_estimator._set_callbacks(kept_callbacks)
             del sub_estimator._parent_callback_ctx
 
 
