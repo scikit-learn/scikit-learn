@@ -382,7 +382,7 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None, squared
     float32, norms needs to be recomputed on upcast chunks.
     TODO: use a float64 accumulator in row_norms to avoid the latter.
     """
-    xp, _, device_ = get_namespace_and_device(X, Y)
+    xp, _, device = get_namespace_and_device(X, Y)
     if X_norm_squared is not None and X_norm_squared.dtype != xp.float32:
         XX = xp.reshape(X_norm_squared, (-1, 1))
     elif X.dtype != xp.float32:
@@ -410,7 +410,7 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None, squared
         distances += XX
         distances += YY
 
-    xp_zero = xp.asarray(0, device=device_, dtype=distances.dtype)
+    xp_zero = xp.asarray(0, device=device, dtype=distances.dtype)
     distances = _modify_in_place_if_numpy(
         xp, xp.maximum, distances, xp_zero, out=distances
     )
@@ -575,12 +575,12 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None, batch_size=None):
     X and Y are upcast to float64 by chunks, which size is chosen to limit
     memory increase by approximately 10% (at least 10MiB).
     """
-    xp, _, device_ = get_namespace_and_device(X, Y)
+    xp, _, device = get_namespace_and_device(X, Y)
     n_samples_X = X.shape[0]
     n_samples_Y = Y.shape[0]
     n_features = X.shape[1]
 
-    distances = xp.empty((n_samples_X, n_samples_Y), dtype=xp.float32, device=device_)
+    distances = xp.empty((n_samples_X, n_samples_Y), dtype=xp.float32, device=device)
 
     if batch_size is None:
         x_density = X.nnz / np.prod(X.shape) if issparse(X) else 1
@@ -608,7 +608,7 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None, batch_size=None):
         batch_size = max(int(batch_size), 1)
 
     x_batches = gen_batches(n_samples_X, batch_size)
-    xp_max_float = _max_precision_float_dtype(xp=xp, device=device_)
+    xp_max_float = _max_precision_float_dtype(xp=xp, device=device)
     for i, x_slice in enumerate(x_batches):
         X_chunk = xp.astype(X[x_slice, :], xp_max_float)
         if XX is None:
@@ -1105,14 +1105,14 @@ def manhattan_distances(X, Y=None):
         _sparse_manhattan(X.data, X.indices, X.indptr, Y.data, Y.indices, Y.indptr, D)
         return D
 
-    xp, _, device_ = get_namespace_and_device(X, Y)
+    xp, _, device = get_namespace_and_device(X, Y)
 
     if _is_numpy_namespace(xp):
         return distance.cdist(X, Y, "cityblock")
 
     # array API support
     float_dtype = _find_matching_floating_dtype(X, Y, xp=xp)
-    out = xp.empty((n_x, n_y), dtype=float_dtype, device=device_)
+    out = xp.empty((n_x, n_y), dtype=float_dtype, device=device)
     batch_size = 1024
     for i in range(0, n_x, batch_size):
         i_end = min(i + batch_size, n_x)
@@ -1192,6 +1192,8 @@ def cosine_distances(X, Y=None):
 def paired_euclidean_distances(X, Y):
     """Compute the paired euclidean distances between X and Y.
 
+    Distances are calculated between (X[0], Y[0]), (X[1], Y[1]), ..., etc.
+
     Read more in the :ref:`User Guide <metrics>`.
 
     Parameters
@@ -1205,8 +1207,9 @@ def paired_euclidean_distances(X, Y):
     Returns
     -------
     distances : ndarray of shape (n_samples,)
-        Output array/matrix containing the calculated paired euclidean
-        distances.
+        Returns the euclidean distances between the row vectors of `X`
+        and the row vectors of `Y`, where `distances[i]` is the
+        distance between `X[i]` and `Y[i]`.
 
     Examples
     --------
@@ -1227,8 +1230,7 @@ def paired_euclidean_distances(X, Y):
 def paired_manhattan_distances(X, Y):
     """Compute the paired L1 distances between X and Y.
 
-    Distances are calculated between (X[0], Y[0]), (X[1], Y[1]), ...,
-    (X[n_samples], Y[n_samples]).
+    Distances are calculated between (X[0], Y[0]), (X[1], Y[1]), ..., etc.
 
     Read more in the :ref:`User Guide <metrics>`.
 
@@ -1243,8 +1245,9 @@ def paired_manhattan_distances(X, Y):
     Returns
     -------
     distances : ndarray of shape (n_samples,)
-        L1 paired distances between the row vectors of `X`
-        and the row vectors of `Y`.
+        Returns the manhattan distances between the row vectors of `X`
+        and the row vectors of `Y`, where `distances[i]` is the
+        distance between `X[i]` and `Y[i]`.
 
     Examples
     --------
@@ -1273,6 +1276,8 @@ def paired_cosine_distances(X, Y):
     """
     Compute the paired cosine distances between X and Y.
 
+    Distances are calculated between (X[0], Y[0]), (X[1], Y[1]), ..., etc.
+
     Read more in the :ref:`User Guide <metrics>`.
 
     Parameters
@@ -1286,7 +1291,7 @@ def paired_cosine_distances(X, Y):
     Returns
     -------
     distances : ndarray of shape (n_samples,)
-        Returns the distances between the row vectors of `X`
+        Returns the cosine distances between the row vectors of `X`
         and the row vectors of `Y`, where `distances[i]` is the
         distance between `X[i]` and `Y[i]`.
 
@@ -1329,7 +1334,7 @@ def paired_distances(X, Y, *, metric="euclidean", **kwds):
     """
     Compute the paired distances between X and Y.
 
-    Compute the distances between (X[0], Y[0]), (X[1], Y[1]), etc...
+    Distances are calculated between (X[0], Y[0]), (X[1], Y[1]), ..., etc.
 
     Read more in the :ref:`User Guide <metrics>`.
 
@@ -1358,7 +1363,8 @@ def paired_distances(X, Y, *, metric="euclidean", **kwds):
     -------
     distances : ndarray of shape (n_samples,)
         Returns the distances between the row vectors of `X`
-        and the row vectors of `Y`.
+        and the row vectors of `Y`, where `distances[i]` is the
+        distance between `X[i]` and `Y[i]`.
 
     See Also
     --------
@@ -1817,7 +1823,7 @@ def additive_chi2_kernel(X, Y=None):
     array([[-1., -2.],
            [-2., -1.]])
     """
-    xp, _, device_ = get_namespace_and_device(X, Y)
+    xp, _, device = get_namespace_and_device(X, Y)
     X, Y = check_pairwise_arrays(X, Y, accept_sparse=False)
     if xp.any(X < 0):
         raise ValueError("X contains negative values.")
@@ -1834,8 +1840,8 @@ def additive_chi2_kernel(X, Y=None):
         yb = Y[None, :, :]
         nom = -((xb - yb) ** 2)
         denom = xb + yb
-        nom = xp.where(denom == 0, xp.asarray(0, dtype=dtype, device=device_), nom)
-        denom = xp.where(denom == 0, xp.asarray(1, dtype=dtype, device=device_), denom)
+        nom = xp.where(denom == 0, xp.asarray(0, dtype=dtype, device=device), nom)
+        denom = xp.where(denom == 0, xp.asarray(1, dtype=dtype, device=device), denom)
         return xp.sum(nom / denom, axis=2)
 
 

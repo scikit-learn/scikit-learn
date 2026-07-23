@@ -1,9 +1,6 @@
 /**
  * This is a general styling sheet.
  * It should be used for customizations that affect multiple pages.
- *
- * This file is compiled into styles/custom.css by sphinxcontrib.sass, see:
- * https://sass-lang.com/guide/
  */
 
 /* Global */
@@ -13,6 +10,10 @@ html[data-theme="light"] .highlight pre {
   background: #fff;
 }
 
+html[data-theme="dark"] .highlight pre {
+  background: #000;
+}
+
 code.literal {
   border: 0;
 }
@@ -20,8 +21,8 @@ code.literal {
 /* Version switcher */
 
 .version-switcher__menu.dropdown-menu {
-  // The version switcher is aligned right so we need to avoid the dropdown menu
-  // to be cut off by the right boundary
+  /* The version switcher is aligned right so we need to avoid the dropdown menu
+     to be cut off by the right boundary */
   left: unset;
   right: 0;
 
@@ -44,15 +45,15 @@ code.literal {
   width: 22.5%;
   min-width: 16rem;
 
-  // The version switcher button in the sidebar is ill-styled
+  /* The version switcher button in the sidebar is ill-styled */
   button.version-switcher__button {
     margin-bottom: unset;
     margin-left: 0.3rem;
     font-size: 1rem;
   }
 
-  // The section navigation part is to close to the right boundary (originally an even
-  // larger negative right margin was used)
+  /* The section navigation part is too close to the right boundary (originally an even
+     larger negative right margin was used) */
   nav.bd-links {
     margin-right: -0.5rem;
   }
@@ -71,14 +72,14 @@ code.literal {
     margin-bottom: 1.5rem;
   }
 
-  // Avoid changing the aspect ratio of images; add some padding so that at least
-  // there is some space between image and background in dark mode
+  /* Avoid changing the aspect ratio of images; add some padding so that at least
+     there is some space between image and background in dark mode */
   img {
     height: unset !important;
     padding: 1%;
   }
 
-  // Resize table of contents to make the top few levels of headings more visible
+  /* Resize table of contents to make the top few levels of headings more visible */
   li.toctree-l1 {
     padding-bottom: 0.5em;
 
@@ -113,7 +114,7 @@ details.sd-dropdown {
       font-size: 1rem;
     }
 
-    // See `js/scripts/dropdown.js`: this is styling the "expand/collapse all" button
+    /* See `js/scripts/dropdown.js`: this is styling the "expand/collapse all" button */
     > .sk-toggle-all {
       color: var(--pst-sd-dropdown-color);
       margin-right: 0.5rem;
@@ -126,11 +127,11 @@ details.sd-dropdown {
 /* Tabs (sphinx-design) */
 
 .sd-tab-set {
-  --tab-caption-width: 0%; // No tab caption by default
+  --tab-caption-width: 0%; /* No tab caption by default */
   margin-top: 1.5rem;
 
   &::before {
-    // Set `content` for tab caption
+    /* Set `content` for tab caption */
     width: var(--tab-caption-width);
     display: flex;
     align-items: center;
@@ -178,7 +179,7 @@ table.dataframe {
 
 /* Download/launcher links and top hint (sphinx-gallery) */
 
-// https://sphinx-gallery.github.io/stable/advanced.html#using-sphinx-gallery-sidebar-components
+/* https://sphinx-gallery.github.io/stable/advanced.html#using-sphinx-gallery-sidebar-components */
 .sphx-glr-download-link-note,
 .binder-badge,
 .lite-badge,
@@ -226,7 +227,8 @@ div.sk-authors-container {
 
 /* scikit-learn text-image grid, used in testimonials and sponsors pages */
 
-@mixin sk-text-image-grid($img-max-height) {
+div.sk-text-image-grid-small,
+div.sk-text-image-grid-large {
   display: flex;
   align-items: flex-start;
   flex-wrap: wrap;
@@ -237,36 +239,31 @@ div.sk-authors-container {
       width: 100%;
     }
   }
-
   div.image-box {
     width: 35%;
     @media screen and (max-width: 500px) {
       width: 100%;
     }
   }
-
   div.text-box .annotation {
     font-size: 0.9rem;
     font-style: italic;
     color: var(--pst-color-text-muted);
   }
-
   div.image-box {
     text-align: center;
-
     img {
-      max-height: $img-max-height;
+      max-height: var(--sk-img-max-height);
       max-width: 50%;
     }
   }
 }
 
 div.sk-text-image-grid-small {
-  @include sk-text-image-grid(60px);
+  --sk-img-max-height: 60px;
 }
-
 div.sk-text-image-grid-large {
-  @include sk-text-image-grid(100px);
+  --sk-img-max-height: 100px;
 }
 
 /* Institutional support: active funding participation table (institutional_support.rst) */
@@ -277,10 +274,6 @@ div.sk-text-image-grid-large {
   --bs-table-striped-bg: #fff;
   --bs-table-hover-bg: #fff;
   --bs-table-active-bg: #fff;
-  tbody,
-  tr,
-  td {
-  }
 
   th,
   td {
