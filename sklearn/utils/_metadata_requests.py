@@ -573,8 +573,8 @@ class MetadataRequest:
     Instances of `MethodMetadataRequest` are used in this class for each
     available method under `MetadataRequest(owner=obj).{method}`.
 
-    Every :term:`consumer` in scikit-learn has a `_metadata_request` attribute that is a
-    `MetadataRequest`.
+    Every :term:`consumer` in scikit-learn has a `_metadata_request` attribute that
+    is a `MetadataRequest`.
 
     Read more on developing custom estimators that can route metadata in the
     :ref:`Metadata Routing Developing Guide
