@@ -1117,3 +1117,23 @@ def test_minimum_input_sample_size():
     model = MLPRegressor(early_stopping=True, random_state=0)
     with pytest.raises(ValueError, match="The validation set is too small"):
         model.fit(X, y)
+
+def test_mlp_global_seed_invariance(global_random_seed):
+    """Test that MLPClassifier converges stably across the global random seed fixture."""
+    from sklearn.datasets import make_classification
+    from sklearn.neural_network import MLPClassifier
+
+    X, y = make_classification(
+        n_samples=60,
+        n_features=5,
+        n_classes=2,
+        random_state=global_random_seed,
+    )
+
+    clf = MLPClassifier(
+        hidden_layer_sizes=(5,), max_iter=500, random_state=global_random_seed
+    )
+    clf.fit(X, y)
+
+    assert hasattr(clf, "loss_curve_")
+    assert clf.score(X, y) > 0.75
