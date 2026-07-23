@@ -25,15 +25,17 @@ uncompressed the train set is 52 MB and the test set is 34 MB.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import binascii
 import codecs
 import logging
 import os
 import pickle
 import re
-import shutil
 import tarfile
+import zlib
 from contextlib import suppress
 from numbers import Integral, Real
+from tempfile import TemporaryDirectory
 
 import joblib
 import numpy as np
@@ -68,35 +70,48 @@ TRAIN_FOLDER = "20news-bydate-train"
 TEST_FOLDER = "20news-bydate-test"
 
 
-def _download_20newsgroups(target_dir, cache_path, n_retries, delay):
+def _download_20newsgroups(cache_path, n_retries, delay):
+    print("ENTER _download_20newsgroups", flush=True)
     """Download the 20 newsgroups data and stored it as a zipped pickle."""
-    train_path = os.path.join(target_dir, TRAIN_FOLDER)
-    test_path = os.path.join(target_dir, TEST_FOLDER)
+    data_home = os.path.dirname(cache_path)
+    os.makedirs(data_home, exist_ok=True)
 
-    os.makedirs(target_dir, exist_ok=True)
+    # Creating temp_dir as a direct subdirectory of data_home guarantees
+    # it is on the same filesystem, so the final os.rename below is atomic.
+    # This makes the function safe to call from multiple processes/threads
+    # at the same time (e.g. pytest-xdist workers).
+    with TemporaryDirectory(dir=data_home) as temp_dir:
+        print("TEMP DIR CREATED", temp_dir, flush=True)
+        train_path = os.path.join(temp_dir, TRAIN_FOLDER)
+        test_path = os.path.join(temp_dir, TEST_FOLDER)
 
-    logger.info("Downloading dataset from %s (14 MB)", ARCHIVE.url)
-    archive_path = _fetch_remote(
-        ARCHIVE, dirname=target_dir, n_retries=n_retries, delay=delay
-    )
+        logger.info("Downloading dataset from %s (14 MB)", ARCHIVE.url)
 
-    logger.debug("Decompressing %s", archive_path)
-    with tarfile.open(archive_path, "r:gz") as fp:
-        tarfile_extractall(fp, path=target_dir)
+        archive_path = _fetch_remote(
+            ARCHIVE, dirname=temp_dir, n_retries=n_retries, delay=delay
+        )
 
-    with suppress(FileNotFoundError):
-        os.remove(archive_path)
+        logger.debug("Decompressing %s", archive_path)
 
-    # Store a zipped pickle
-    cache = dict(
-        train=load_files(train_path, encoding="latin1"),
-        test=load_files(test_path, encoding="latin1"),
-    )
-    compressed_content = codecs.encode(pickle.dumps(cache), "zlib_codec")
-    with open(cache_path, "wb") as f:
-        f.write(compressed_content)
+        with tarfile.open(archive_path, "r:gz") as fp:
+            tarfile_extractall(fp, path=temp_dir)
 
-    shutil.rmtree(target_dir)
+        with suppress(FileNotFoundError):
+            os.remove(archive_path)
+        # Store a zipped pickle
+        cache = {
+            "train": load_files(train_path, encoding="latin1"),
+            "test": load_files(test_path, encoding="latin1"),
+        }
+
+        compressed_content = codecs.encode(pickle.dumps(cache), "zlib_codec")
+
+        cache_tmp_path = os.path.join(temp_dir, os.path.basename(cache_path))
+        with open(cache_tmp_path, "wb") as f:
+            f.write(compressed_content)
+
+        os.replace(cache_tmp_path, cache_path)
+
     return cache
 
 
@@ -308,7 +323,13 @@ def fetch_20newsgroups(
                 compressed_content = f.read()
             uncompressed_content = codecs.decode(compressed_content, "zlib_codec")
             cache = pickle.loads(uncompressed_content)
-        except Exception as e:
+        except (
+            pickle.UnpicklingError,
+            EOFError,
+            zlib.error,
+            binascii.Error,
+            OSError,
+        ) as e:
             print(80 * "_")
             print("Cache loading failed")
             print(80 * "_")
@@ -318,7 +339,6 @@ def fetch_20newsgroups(
         if download_if_missing:
             logger.info("Downloading 20news dataset. This may take a few minutes.")
             cache = _download_20newsgroups(
-                target_dir=twenty_home,
                 cache_path=cache_path,
                 n_retries=n_retries,
                 delay=delay,
@@ -329,10 +349,10 @@ def fetch_20newsgroups(
     if subset in ("train", "test"):
         data = cache[subset]
     elif subset == "all":
-        data_lst = list()
-        target = list()
-        filenames = list()
-        for subset in ("train", "test"):
+        data_lst = []
+        target = []
+        filenames = []
+        for subset_ in ("train", "test"):
             data = cache[subset]
             data_lst.extend(data.data)
             target.extend(data.target)
