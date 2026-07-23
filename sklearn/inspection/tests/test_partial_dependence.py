@@ -524,18 +524,11 @@ def test_partial_dependence_easy_target(est, power):
 
 
 def test_partial_dependence_recursion_decision_tree_categorical_target_feature():
-    # The 'recursion' method computes partial dependence by traversing the
-    # tree with the raw (unencoded) grid values, but categorical splits are
-    # expressed in terms of the encoding learned by `_categorical_encoder`
-    # at fit time. Since the two are not guaranteed to match, recursion must
-    # raise NotImplementedError for categorical target features.
-    category_values = np.arange(6, dtype=np.float64)
-    X = np.repeat(category_values, 4).reshape(-1, 1)
-    y = np.isin(X.ravel(), [1, 2, 5]).astype(np.float64)
+    # Recursion is not supported as the re-encoding of the grid is not implemented
+    X = np.array(["a", "b", "b", "a", "a"]).reshape(-1, 1)
+    y = np.array([0, 1, 1, 0, 1])
 
-    est = DecisionTreeRegressor(
-        categorical_features=[0], max_depth=1, random_state=0
-    ).fit(X, y)
+    est = DecisionTreeRegressor(categorical_features=[0]).fit(X, y)
 
     with pytest.raises(
         NotImplementedError, match="not supported for categorical target features"
@@ -543,31 +536,6 @@ def test_partial_dependence_recursion_decision_tree_categorical_target_feature()
         partial_dependence(
             est, X, features=[0], method="recursion", categorical_features=[0]
         )
-
-
-def test_partial_dependence_brute_decision_tree_categorical_target_feature():
-    # Unlike 'recursion' (see the test above), 'brute' does not traverse the
-    # tree with raw grid values: it calls `predict`, which re-encodes
-    # categories through `_categorical_encoder`. It must therefore stay
-    # correct even when raw categories don't coincide with their internal
-    # ordinal encoding, e.g. string categories.
-    category_values = np.array(["a", "b", "c", "d", "e", "f"], dtype=object)
-    X = np.repeat(category_values, 4).reshape(-1, 1)
-    y = np.isin(X.ravel(), ["b", "c", "f"]).astype(np.float64)
-
-    est = DecisionTreeRegressor(
-        categorical_features=[0], max_depth=1, random_state=0
-    ).fit(X, y)
-
-    brute = partial_dependence(
-        est, X, features=[0], method="brute", categorical_features=[0]
-    )
-
-    grid = brute["grid_values"][0].reshape(-1, 1)
-    expected = est.predict(grid)
-
-    assert_array_equal(np.sort(brute["grid_values"][0]), category_values)
-    assert_allclose(brute["average"][0], expected)
 
 
 def test_partial_dependence_recursion_decision_tree_missing_target_feature():

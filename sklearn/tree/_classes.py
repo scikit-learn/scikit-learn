@@ -1656,10 +1656,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             self.is_categorical_[target_features]
         ):
             # `grid` holds raw (unencoded) feature values, but the tree splits
-            # on the categories as encoded by `self._categorical_encoder` at
-            # fit time. The two only coincide by coincidence, so we cannot
-            # route `grid` through the tree without re-implementing that
-            # encoding here.
+            # on the categories as encoded by `self._categorical_encoder`.
             raise NotImplementedError(
                 "The 'recursion' method for partial dependence is not "
                 "supported for categorical target features. Use "
