@@ -173,6 +173,7 @@ ArffSparseDataType = Tuple[List, ...]
 
 
 if TYPE_CHECKING:
+    # For Pyrefly, typing_extensions symbols are available within TYPE_CHECKING blocks.
     from typing_extensions import TypedDict
 
     class ArffContainerType(TypedDict):
