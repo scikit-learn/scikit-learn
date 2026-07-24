@@ -332,14 +332,16 @@ def test_unique_labels_mixed_str_numerical_array_api():
 )
 def test_unique_labels_array_api(array_namespace, device, dtype_name):
     """Check `unique_labels` compliance for array API."""
-    xp, device_ = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device)
     y1_np = np.array([1, 2, 3], dtype=dtype_name)
     y2_np = np.array([2, 3, 4], dtype=dtype_name)
 
-    y1_xp = xp.asarray(y1_np, device=device_)
-    y2_xp = xp.asarray(y2_np, device=device_)
+    y1_xp = xp.asarray(y1_np, device=device)
+    y2_xp = xp.asarray(y2_np, device=device)
 
-    labels_np = unique_labels(y1_np, y2_np)
+    with config_context(array_api_dispatch=False):
+        labels_np = unique_labels(y1_np, y2_np)
+
     with config_context(array_api_dispatch=True):
         labels_xp = unique_labels(y1_xp, y2_xp)
         labels_xp_np = move_to(labels_xp, xp=np, device="cpu")

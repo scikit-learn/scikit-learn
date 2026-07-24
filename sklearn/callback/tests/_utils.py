@@ -120,8 +120,22 @@ class NotValidCallback:
         pass  # pragma: no cover
 
 
-class NotValidHookCallback(RecordingCallback):
-    """Invalid callback since it has invalid parameters in the hooks signatures."""
+class NotValidSetupPositionalCallback(RecordingCallback):
+    """Invalid callback since it has invalid positional parameters."""
+
+    def setup(self, estimator, context, not_valid_arg=None):
+        pass  # pragma: no cover
+
+
+class NotValidSetupKwargOnlyCallback(RecordingCallback):
+    """Invalid callback since it has invalid kwarg-only parameters."""
+
+    def setup(self, estimator, context, *, not_valid_kwarg=None):
+        pass  # pragma: no cover
+
+
+class NotValidFitTaskBeginCallback(RecordingCallback):
+    """Invalid callback since it has invalid keyword-only parameters."""
 
     def on_fit_task_begin(self, estimator, context, *, not_valid_kwarg=None):
         pass  # pragma: no cover
