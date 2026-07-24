@@ -5,6 +5,7 @@ import numbers
 import sys
 import warnings
 from abc import ABC, abstractmethod
+from enum import Enum
 from functools import partial
 from numbers import Integral, Real
 
@@ -50,6 +51,13 @@ from sklearn.utils.validation import (
     column_or_1d,
     validate_data,
 )
+
+
+class CD_Algo(Enum):
+    ENET_CD = 0
+    ENET_CD_GRAM = 1
+    ENET_CD_SPARSE = 2
+    ENET_CD_MULTITASK = 3
 
 
 def _set_order(X, y, order="C"):
@@ -781,12 +789,54 @@ def enet_path(
         X_indices = None
         X_indptr = None
 
+    if multi_output:
+        algo = CD_Algo.ENET_CD_MULTITASK
+    elif X_is_sparse:
+        algo = CD_Algo.ENET_CD_SPARSE
+    elif isinstance(precompute, np.ndarray):
+        algo = CD_Algo.ENET_CD_GRAM
+        # We expect precompute to be already Fortran ordered when bypassing checks
+        if check_input:
+            precompute = check_array(precompute, dtype=X.dtype.type, order="C")
+    else:  # precompute is False
+        algo = CD_Algo.ENET_CD
+
+    params = dict(
+        max_iter=max_iter,
+        tol=tol,
+        rng=rng,
+        random=random,
+        do_screening=do_screening,
+        early_stopping=early_stopping,
+    )
+
     for i, alpha in enumerate(alphas):
         # account for n_samples scaling in objectives between here and cd_fast
         l1_reg = alpha * l1_ratio * n_samples
         l2_reg = alpha * (1.0 - l1_ratio) * n_samples
-        if not multi_output and X_is_sparse:
-            model = cd_fast.sparse_enet_coordinate_descent(
+        if algo == CD_Algo.ENET_CD:
+            model = cd_fast.enet_coordinate_descent(
+                w=coef_,
+                alpha=l1_reg,
+                beta=l2_reg,
+                X=X,
+                y=y,
+                positive=positive,
+                **params,
+            )
+        elif algo == CD_Algo.ENET_CD_GRAM:
+            model = cd_fast.enet_coordinate_descent_gram(
+                w=coef_,
+                alpha=l1_reg,
+                beta=l2_reg,
+                Q=precompute,  # the gram matrix
+                q=Xy,
+                y=y,
+                positive=positive,
+                **params,
+            )
+        elif algo == CD_Algo.ENET_CD_SPARSE:
+            model = cd_fast.enet_coordinate_descent_sparse(
                 w=coef_,
                 alpha=l1_reg,
                 beta=l2_reg,
@@ -796,15 +846,10 @@ def enet_path(
                 y=y,
                 sample_weight=sample_weight,
                 X_mean=X_sparse_scaling,
-                max_iter=max_iter,
-                tol=tol,
-                rng=rng,
-                random=random,
                 positive=positive,
-                do_screening=do_screening,
-                early_stopping=early_stopping,
+                **params,
             )
-        elif multi_output:
+        elif algo == CD_Algo.ENET_CD_MULTITASK:
             model = cd_fast.enet_coordinate_descent_multi_task(
                 W=coef_,
                 alpha=l1_reg,
@@ -817,53 +862,9 @@ def enet_path(
                 Y=y,
                 sample_weight=sample_weight,
                 X_mean=X_sparse_scaling,
-                max_iter=max_iter,
-                tol=tol,
-                rng=rng,
-                random=random,
-                do_screening=do_screening,
-                early_stopping=early_stopping,
+                **params,
             )
-        elif isinstance(precompute, np.ndarray):
-            # We expect precompute to be already Fortran ordered when bypassing
-            # checks
-            if check_input:
-                precompute = check_array(precompute, dtype=X.dtype.type, order="C")
-            model = cd_fast.enet_coordinate_descent_gram(
-                coef_,
-                l1_reg,
-                l2_reg,
-                precompute,
-                Xy,
-                y,
-                max_iter,
-                tol,
-                rng,
-                random,
-                positive,
-                do_screening,
-                early_stopping,
-            )
-        elif precompute is False:
-            model = cd_fast.enet_coordinate_descent(
-                coef_,
-                l1_reg,
-                l2_reg,
-                X,
-                y,
-                max_iter,
-                tol,
-                rng,
-                random,
-                positive,
-                do_screening,
-                early_stopping,
-            )
-        else:
-            raise ValueError(
-                "Precompute should be one of True, False, 'auto' or array-like. Got %r"
-                % precompute
-            )
+
         coef_, dual_gap_, eps_, n_iter_ = model
         coefs[..., i] = coef_
         # we correct the scale of the returned dual gap, as the objective
