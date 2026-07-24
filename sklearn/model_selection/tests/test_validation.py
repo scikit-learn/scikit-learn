@@ -87,9 +87,10 @@ from sklearn.utils._array_api import (
     move_to,
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
+from sklearn.utils._mocking import CheckingClassifier
 from sklearn.utils._testing import (
     _array_api_for_tests,
+    _convert_container,
     assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
@@ -638,23 +639,34 @@ def test_cross_val_score_predict_groups():
             cross_val_predict(estimator=clf, X=X, y=y, cv=cv)
 
 
-def test_cross_val_score_pandas():
-    # check cross_val_score doesn't destroy pandas dataframe
-    types = [(MockDataFrame, MockDataFrame)]
-    try:
-        from pandas import DataFrame, Series
+@pytest.mark.parametrize(
+    ["input_type", "target_type"],
+    [
+        ("pandas", "series"),
+        ("polars", "polars_series"),
+        ("pyarrow", "pyarrow_array"),
+    ],
+)
+def test_cross_val_and_permutation_test_on_dataframe(input_type, target_type):
+    """Test that cross_val_predict, cross_val_score and permutation_test_score don't
+    destroy dataframes"""
+    # X dataframe, y series
+    # 3 fold cross val is used so we need at least 3 samples per class
+    X_df = _convert_container(X, input_type)
+    y_ser = _convert_container(y2, target_type)
+    input_type = type(X_df)
+    target_type = type(y_ser)
 
-        types.append((Series, DataFrame))
-    except ImportError:
-        pass
-    for TargetType, InputFeatureType in types:
-        # X dataframe, y series
-        # 3 fold cross val is used so we need at least 3 samples per class
-        X_df, y_ser = InputFeatureType(X), TargetType(y2)
-        check_df = lambda x: isinstance(x, InputFeatureType)
-        check_series = lambda x: isinstance(x, TargetType)
-        clf = CheckingClassifier(check_X=check_df, check_y=check_series)
-        cross_val_score(clf, X_df, y_ser, cv=3)
+    def check_df(x):
+        return isinstance(x, input_type) or isinstance(x.to_native(), input_type)
+
+    def check_series(x):
+        return isinstance(x, target_type) or isinstance(x.to_native(), target_type)
+
+    clf = CheckingClassifier(check_X=check_df, check_y=check_series)
+    cross_val_predict(clf, X_df, y_ser, cv=3)
+    cross_val_score(clf, X_df, y_ser, cv=3)
+    permutation_test_score(clf, X_df, y_ser)
 
 
 def test_cross_val_score_mask():
@@ -1119,24 +1131,6 @@ def test_cross_val_predict_input_types(coo_container):
     clf = CheckingClassifier(check_X=check_3d)
     predictions = cross_val_predict(clf, X_3d, y)
     assert_array_equal(predictions.shape, (150,))
-
-
-def test_cross_val_predict_pandas():
-    # check cross_val_score doesn't destroy pandas dataframe
-    types = [(MockDataFrame, MockDataFrame)]
-    try:
-        from pandas import DataFrame, Series
-
-        types.append((Series, DataFrame))
-    except ImportError:
-        pass
-    for TargetType, InputFeatureType in types:
-        # X dataframe, y series
-        X_df, y_ser = InputFeatureType(X), TargetType(y2)
-        check_df = lambda x: isinstance(x, InputFeatureType)
-        check_series = lambda x: isinstance(x, TargetType)
-        clf = CheckingClassifier(check_X=check_df, check_y=check_series)
-        cross_val_predict(clf, X_df, y_ser, cv=3)
 
 
 def test_cross_val_predict_unbalanced():
@@ -2038,26 +2032,6 @@ def test_score_memmap():
                 break
             except OSError:
                 sleep(1.0)
-
-
-def test_permutation_test_score_pandas():
-    # check permutation_test_score doesn't destroy pandas dataframe
-    types = [(MockDataFrame, MockDataFrame)]
-    try:
-        from pandas import DataFrame, Series
-
-        types.append((Series, DataFrame))
-    except ImportError:
-        pass
-    for TargetType, InputFeatureType in types:
-        # X dataframe, y series
-        iris = load_iris()
-        X, y = iris.data, iris.target
-        X_df, y_ser = InputFeatureType(X), TargetType(y)
-        check_df = lambda x: isinstance(x, InputFeatureType)
-        check_series = lambda x: isinstance(x, TargetType)
-        clf = CheckingClassifier(check_X=check_df, check_y=check_series)
-        permutation_test_score(clf, X_df, y_ser)
 
 
 def test_fit_and_score_failing():
