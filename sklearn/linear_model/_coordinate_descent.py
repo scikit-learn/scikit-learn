@@ -1116,8 +1116,8 @@ class ElasticNet(RegressorMixin, MultiOutputLinearModel):
             Target. Will be cast to X's dtype if necessary.
 
         sample_weight : float or array-like of shape (n_samples,), default=None
-            Sample weights. Internally, the `sample_weight` vector will be
-            rescaled to sum to `n_samples`.
+            Sample weights. Internally, the `sample_weight` vector is rescaled to
+            sum to `n_samples`. This argument is incompatible with ``precompute``.
 
             .. versionadded:: 0.23
 
@@ -2738,8 +2738,8 @@ class MultiTaskElasticNet(ElasticNet):
             Target. Will be cast to X's dtype if necessary.
 
         sample_weight : float or array-like of shape (n_samples,), default=None
-            Sample weights. Internally, the `sample_weight` vector will be
-            rescaled to sum to `n_samples`.
+            Sample weights. Internally, the `sample_weight` vector is rescaled to
+            sum to `n_samples`. This argument is incompatible with ``precompute``.
 
             .. versionadded:: 1.9
 
