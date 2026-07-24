@@ -2667,6 +2667,44 @@ def add_dummy_feature(X, value=1.0):
         return np.hstack((np.full((n_samples, 1), value), X))
 
 
+def _sparse_column_percentile(column_nnz_data, n_zeros, percentiles):
+    """Compute percentiles of a sparse column without densifying it.
+    ...
+    """
+    percentiles = np.asarray(percentiles, dtype=float)
+
+    # nanpercentile ignores NaNs entirely -- match that behavior by
+    # excluding them from both the data and the total count.
+    nan_mask = np.isnan(column_nnz_data)
+    if nan_mask.any():
+        column_nnz_data = column_nnz_data[~nan_mask]
+
+    n_total = n_zeros + column_nnz_data.size
+
+    if n_total == 0:
+        # all-NaN column (no zeros, no valid non-zero values):
+        # nanpercentile returns nan in this case
+        return np.full(percentiles.shape, np.nan)
+
+    sorted_nnz = np.sort(column_nnz_data)
+
+    idx = percentiles / 100 * (n_total - 1)
+    lo = np.floor(idx).astype(int)
+    hi = np.ceil(idx).astype(int)
+    frac = idx - lo
+
+    def value_at_rank(ranks):
+        ranks = np.clip(ranks, 0, n_total - 1)
+        out = np.zeros(ranks.shape, dtype=float)
+        mask = ranks >= n_zeros
+        out[mask] = sorted_nnz[ranks[mask] - n_zeros]
+        return out
+
+    v_lo = value_at_rank(lo)
+    v_hi = value_at_rank(hi)
+    return v_lo + frac * (v_hi - v_lo)
+
+
 class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Transform features using quantiles information.
 
@@ -2856,19 +2894,25 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
                 column_data[:column_subsample] = random_state.choice(
                     column_nnz_data, size=column_subsample, replace=False
                 )
+
+                if not column_data.size:
+                    self.quantiles_.append([0] * len(references))
+                else:
+                    self.quantiles_.append(np.nanpercentile(column_data, references))
             else:
                 if self.ignore_implicit_zeros:
-                    column_data = np.zeros(shape=len(column_nnz_data), dtype=X.dtype)
+                    column_data = column_nnz_data
+                    if not column_data.size:
+                        self.quantiles_.append([0] * len(references))
+                    else:
+                        self.quantiles_.append(
+                            np.nanpercentile(column_data, references)
+                        )
                 else:
-                    column_data = np.zeros(shape=n_samples, dtype=X.dtype)
-                column_data[: len(column_nnz_data)] = column_nnz_data
-
-            if not column_data.size:
-                # if no nnz, an error will be raised for computing the
-                # quantiles. Force the quantiles to be zeros.
-                self.quantiles_.append([0] * len(references))
-            else:
-                self.quantiles_.append(np.nanpercentile(column_data, references))
+                    n_zeros = n_samples - len(column_nnz_data)
+                    self.quantiles_.append(
+                        _sparse_column_percentile(column_nnz_data, n_zeros, references)
+                    )
         self.quantiles_ = np.transpose(self.quantiles_)
 
     @_fit_context(prefer_skip_nested_validation=True)
