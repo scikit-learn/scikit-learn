@@ -446,27 +446,8 @@ pd.DataFrame(scores.values())[reordered_columns].round(3)
 #
 # The table above shows that the temperature and sigmoid calibration methods
 # improve both the log-loss and the Brier score for all classifiers on this
-# study. The results for the isotonic calibration method are more mixed. This
-# is likely caused by the limited size of the calibration set: the extra
-# flexibility of the isotonic calibration method does not seem to be beneficial
-# in this case and the discrete nature of the calibration map can even be
-# detrimental and result in worse performance than the uncalibrated classifier.
-# Increasing the calibration set size would likely improve the results, in
-# particular for the isotonic calibration method, by making the calibration map
-# more smooth. You can try increasing the size of the calibration set to see
-# how the results improve. In the large calibration set limit, the isotonic
-# calibration method should perform as well or better than the sigmoid
-# calibration method which itself should perform as well or better than the
-# temperature calibration method, which itself should perform as well or better
-# than the uncalibrated classifier.
-#
-# In practice, however, the data is often limited and one has to balance the
-# calibration set size and the training set size: it might be better to use
-# more training data to get a better base model and favor post-hoc calibration
-# methods that are more data efficient at the cost of flexibility. Keep in
-# mind that the base model may already be well calibrated, in which case
-# post-hoc methods bring little improvement — as seen for the Gaussian
-# naive Bayes classifier in the table above.
+# study. The results for the isotonic calibration method are more mixed, likely
+# caused by the limited size of the calibration set.
 #
 # To conclude, none of the calibration methods implemented in
 # `CalibratedClassifierCV` should be trusted blindly. It's important to check
