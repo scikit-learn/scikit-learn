@@ -314,15 +314,26 @@ def orthogonal_mp(
 ):
     r"""Orthogonal Matching Pursuit (OMP).
 
-    Solves n_targets Orthogonal Matching Pursuit problems.
-    An instance of the problem has the form:
-
-    When parametrized by the number of non-zero coefficients using
+    Solves `n_targets` Orthogonal Matching Pursuit problems.
+    Each instance of the problem aims to approximate the optimum solution
+    vector, parametrized by the number of non-zero coefficients using
     `n_nonzero_coefs`:
-    argmin ||y - X\gamma||^2 subject to ||\gamma||_0 <= n_{nonzero coefs}
+
+    .. math::
+
+        \underset{w}{\operatorname{arg\,min\,}}
+        ||y - Xw||^2_2
+        \text{subject to}
+        ||w||_0 <= n_{nonzero coefs}
 
     When parametrized by error using the parameter `tol`:
-    argmin ||\gamma||_0 subject to ||y - X\gamma||^2 <= tol
+
+    .. math::
+
+        \underset{w}{\operatorname{arg\,min\,}}
+        ||w||_0
+        \text{subject to}
+        ||y - Xw||^2_2 <= tol
 
     Read more in the :ref:`User Guide <omp>`.
 
