@@ -798,13 +798,8 @@ def enet_path(
         # We expect precompute to be already Fortran ordered when bypassing checks
         if check_input:
             precompute = check_array(precompute, dtype=X.dtype.type, order="C")
-    elif precompute is False:
+    else:  # precompute is False
         algo = CD_Algo.ENET_CD
-    else:
-        raise ValueError(
-            "Precompute should be one of True, False, 'auto' or array-like. Got %r"
-            % precompute
-        )
 
     params = dict(
         max_iter=max_iter,
