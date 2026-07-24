@@ -83,10 +83,12 @@ if linked_issue and is_not_ready(linked_issue):
         "https://scikit-learn.org/stable/developers/contributing.html"
         "#issues-tagged-needs-triage\n\n"
         "For now, we are closing this pull request.\n\n"
-        "If you believe your proposed change addresses the linked issue, please "
+        "* If you believe your proposed change addresses the linked issue, please "
         "explain your proposal in that issue, and allow time for discussion with "
         "the maintainers so that consensus can be reached before implementation "
-        "begins."
+        "begins.\n\n"
+        "* If you believe this is a mistake, please leave a comment on "
+        "the linked issue as well."
     )
 
     print(f"Closing PR #{PR_NUMBER} with comment")
