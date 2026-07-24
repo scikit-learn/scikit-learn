@@ -1,8 +1,11 @@
+import pickle
+
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
 from sklearn.datasets import make_regression
+from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.ensemble._hist_gradient_boosting.common import (
     ALMOST_INF,
@@ -185,3 +188,51 @@ def test_categorical_predictor(bins_go_left, expected_predictions):
         n_threads,
     )
     assert_allclose(predictions, [1, 1])
+
+
+def test_setstate_rejects_out_of_bounds_children():
+    """``TreePredictor.__setstate__`` should check out-of-bounds child indices.
+
+    Non-regression test for a memory-safety issue, making sure deserializing a
+    malisciously crafted predictor doesn't give a segfault.
+    """
+    n_nodes = 3
+    nodes = np.zeros(n_nodes, dtype=PREDICTOR_RECORD_DTYPE)
+    # A valid single-split tree: root splits, children are leaves.
+    nodes[0]["left"] = 1
+    nodes[0]["right"] = 2
+    nodes[1]["is_leaf"] = True
+    nodes[2]["is_leaf"] = True
+
+    # Valid array round-trips without error.
+    TreePredictor(nodes, None, None).__setstate__({"nodes": nodes})
+
+    for field in ("left", "right"):
+        tampered = nodes.copy()
+        tampered[field][0] = 999_999_999
+        with pytest.raises(ValueError, match=f"out-of-bounds '{field}'"):
+            TreePredictor(tampered, None, None).__setstate__({"nodes": tampered})
+
+
+def test_hist_gbdt_rejects_out_of_bounds_feature_idx():
+    """Out-of-bounds ``feature_idx`` should be rejected when the model is loaded.
+
+    Regression test for making sure loading a model with a malisciously invalid
+    ``feature_idx`` doesn't segfault and raises instead.
+    """
+    X, y = make_regression(n_samples=100, n_features=5, random_state=0)
+    est = HistGradientBoostingRegressor(max_iter=3, random_state=0).fit(X, y)
+
+    # A valid model round-trips and predicts as before.
+    reloaded = pickle.loads(pickle.dumps(est))
+    assert_allclose(reloaded.predict(X), est.predict(X))
+
+    # Tamper the first split node of the first predictor with an out-of-range
+    # feature index (same dtype, only the value changes), then check that
+    # deserializing the tampered model is rejected.
+    predictor = est._predictors[0][0]
+    internal = np.flatnonzero(~predictor.nodes["is_leaf"].astype(bool))
+    predictor.nodes["feature_idx"][internal[0]] = X.shape[1] + 100
+
+    with pytest.raises(ValueError, match="out-of-bounds 'feature_idx'"):
+        pickle.loads(pickle.dumps(est))

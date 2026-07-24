@@ -1,0 +1,13 @@
+- Tree-based models now validate the node arrays supplied to
+  ``__setstate__`` at load time: the ``left_child`` / ``right_child`` node
+  indices and the ``feature`` column index are checked to be within bounds.
+  Previously a tampered but type-valid node array (e.g. one accepted by
+  ``skops.io`` type auditing) was loaded without complaint and caused an
+  out-of-bounds native memory read (segfault) during inference. This affects
+  :class:`tree.DecisionTreeClassifier`, :class:`tree.DecisionTreeRegressor`,
+  the forest and gradient-boosting ensembles that share the tree structure,
+  and :class:`ensemble.HistGradientBoostingClassifier` /
+  :class:`ensemble.HistGradientBoostingRegressor`. Note that loading models
+  from an untrusted source remains unsafe in principle, while this making it
+  harder to form an attack.
+  By `Adrin Jalali`_

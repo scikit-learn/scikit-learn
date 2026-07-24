@@ -889,6 +889,10 @@ cdef class Tree:
             expected_shape=value_shape
         )
 
+        _check_node_ndarray_values(
+            node_ndarray, n_features=self.n_features, node_count=self.node_count
+        )
+
         self.capacity = node_ndarray.shape[0]
         if self._resize_c(self.capacity) != 0:
             raise MemoryError("resizing tree to %d" % self.capacity)
@@ -1637,6 +1641,48 @@ def _check_node_ndarray(node_ndarray, expected_dtype):
         )
 
     return node_ndarray.astype(expected_dtype, casting="same_kind")
+
+
+def _check_node_ndarray_values(node_ndarray, n_features, node_count):
+    """Validate the values of a deserialized node array.
+
+    `_check_node_ndarray` only validates the structure of the array; this
+    function validates that `node_count` matches the array length and that the
+    `left_child` / `right_child` node indices and the `feature` column index
+    stay within bounds, so that the cython traversal cannot perform
+    out-of-bounds memory reads on a maliscious node array (see
+    `Tree.__setstate__`).
+    """
+    n_nodes = node_ndarray.shape[0]
+
+    # `node_count` is used to slice the `capacity`-sized node buffer (e.g. in
+    # `_get_node_ndarray`), so a mismatch is itself out-of-bounds.
+    if node_count != n_nodes:
+        raise ValueError(
+            f"node array from the pickle is inconsistent: node_count "
+            f"({node_count}) does not match the number of nodes ({n_nodes})"
+        )
+
+    # Children are either the `TREE_LEAF` (-1) sentinel or a valid node id in
+    # `[0, n_nodes)`.
+    for field in ("left_child", "right_child"):
+        children = node_ndarray[field]
+        if np.any((children < TREE_LEAF) | (children >= n_nodes)):
+            raise ValueError(
+                f"node array from the pickle has out-of-bounds '{field}' "
+                f"values: expected each to be {TREE_LEAF} (leaf) or in "
+                f"[0, {n_nodes}), got {children}"
+            )
+
+    # `feature` is either the `TREE_UNDEFINED` (-2) sentinel (leaf nodes) or a
+    # valid feature column index in `[0, n_features)`.
+    feature = node_ndarray["feature"]
+    if np.any((feature < TREE_UNDEFINED) | (feature >= n_features)):
+        raise ValueError(
+            f"node array from the pickle has out-of-bounds 'feature' values: "
+            f"expected each to be {TREE_UNDEFINED} (leaf) or in "
+            f"[0, {n_features}), got {feature}"
+        )
 
 
 # =============================================================================
