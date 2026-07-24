@@ -25,7 +25,6 @@ def _get_css_style():
 
 
 _CONTAINER_ID_COUNTER = _IDCounter("sk-container-id")
-_ESTIMATOR_ID_COUNTER = _IDCounter("sk-estimator-id")
 _CSS_STYLE = _get_css_style()
 
 
@@ -167,8 +166,7 @@ def _write_label_html(
     name = html.escape(name)
     if name_details is not None:
         name_details = html.escape(str(name_details))
-        checked_str = "checked" if checked else ""
-        est_id = _ESTIMATOR_ID_COUNTER.get_id()
+        open_str = "open" if checked else ""
 
         if doc_link:
             doc_label = "<span>Online documentation</span>"
@@ -193,19 +191,19 @@ def _write_label_html(
             if doc_link or is_fitted_icon
             else ""
         )
-        label_arrow_class = (
-            "" if name == "passthrough" else "sk-toggleable__label-arrow"
+        no_marker_class = (
+            "sk-toggleable__label--no-marker" if name == "passthrough" else ""
         )
 
         label_html = (
-            f'<label for="{est_id}" class="sk-toggleable__label {is_fitted_css_class} '
-            f'{label_arrow_class}">{name_caption_div}{links_div}</label>'
+            f'<summary class="sk-toggleable__label {is_fitted_css_class} '
+            f'{no_marker_class}">'
+            f'<span class="sk-toggleable__label-content">'
+            f"{name_caption_div}{links_div}</span></summary>"
         )
 
         out.write(
-            f'<input class="sk-toggleable__control sk-hidden--visually '
-            f'sk-global" id="{est_id}" '
-            f'type="checkbox" {checked_str}>{label_html}<div '
+            f'<details class="sk-toggleable" {open_str}>{label_html}<div '
             f'class="sk-toggleable__content {is_fitted_css_class}" '
             f'data-param-prefix="{html.escape(param_prefix)}">'
         )
@@ -217,7 +215,7 @@ def _write_label_html(
                 name_details = ""
             out.write(f"<pre>{name_details}</pre>")
 
-        out.write("</div>")
+        out.write("</div></details>")
         if features is None or len(features) == 0:
             features_div = ""
         else:

@@ -60,8 +60,8 @@ def test_write_label_html(checked):
         html_label = out.getvalue()
 
         p = (
-            r'<label for="sk-estimator-id-[0-9]*"'
-            r' class="sk-toggleable__label (fitted)? sk-toggleable__label-arrow">'
+            r'<summary class="sk-toggleable__label\s*(fitted)?\s*">'
+            r'<span class="sk-toggleable__label-content">'
             r"<div><div>LogisticRegression</div></div>"
         )
         re_compiled = re.compile(p)
@@ -70,7 +70,7 @@ def test_write_label_html(checked):
         assert "<pre>hello-world</pre>" in html_label
 
         if checked:
-            assert "checked>" in html_label
+            assert '<details class="sk-toggleable" open>' in html_label
 
 
 @pytest.mark.parametrize("est", ["passthrough", "drop", None])
@@ -218,7 +218,7 @@ def test_estimator_html_repr_pipeline():
     # low level estimators do not show changes
     with config_context(print_changed_only=True):
         assert html.escape(str(num_trans["pass"])) in html_output
-        assert "<div><div>passthrough</div></div></label>" in html_output
+        assert "<div><div>passthrough</div></div></span></summary>" in html_output
         assert html.escape(str(num_trans["imputer"])) in html_output
 
         for _, _, cols in preprocess.transformers:
@@ -275,8 +275,8 @@ def test_stacking_regressor(final_estimator):
 
     assert html.escape(str(reg.estimators[0][0])) in html_output
     p = (
-        r'<label for="sk-estimator-id-[0-9]*"'
-        r' class="sk-toggleable__label (fitted)? sk-toggleable__label-arrow">'
+        r'<summary class="sk-toggleable__label\s*(fitted)?\s*">'
+        r'<span class="sk-toggleable__label-content">'
         r"<div><div>LinearSVR</div></div>"
     )
     re_compiled = re.compile(p)
@@ -284,8 +284,8 @@ def test_stacking_regressor(final_estimator):
 
     if final_estimator is None:
         p = (
-            r'<label for="sk-estimator-id-[0-9]*"'
-            r' class="sk-toggleable__label (fitted)? sk-toggleable__label-arrow">'
+            r'<summary class="sk-toggleable__label\s*(fitted)?\s*">'
+            r'<span class="sk-toggleable__label-content">'
             r"<div><div>RidgeCV</div></div>"
         )
         re_compiled = re.compile(p)
@@ -303,7 +303,10 @@ def test_birch_duck_typing_meta():
     with config_context(print_changed_only=True):
         assert f"<pre>{html.escape(str(birch.n_clusters))}" in html_output
 
-        p = r"<div><div>AgglomerativeClustering</div></div><div>.+</div></label>"
+        p = (
+            r"<div><div>AgglomerativeClustering</div></div><div>."
+            "+</div></span></summary>"
+        )
         re_compiled = re.compile(p)
         assert re_compiled.search(html_output)
 
@@ -321,8 +324,8 @@ def test_ovo_classifier_duck_typing_meta():
         assert f"<pre>{html.escape(str(ovo.estimator))}" in html_output
         # regex to match the start of the tag
         p = (
-            r'<label for="sk-estimator-id-[0-9]*" '
-            r'class="sk-toggleable__label  sk-toggleable__label-arrow">'
+            r'<summary class="sk-toggleable__label\s*(fitted)?\s*">'
+            r'<span class="sk-toggleable__label-content">'
             r"<div><div>LinearSVC</div></div>"
         )
         re_compiled = re.compile(p)
@@ -342,7 +345,9 @@ def test_duck_typing_nested_estimator():
         param_distributions=param_distributions,
     )
     html_output = estimator_html_repr(kernel_ridge_tuned)
-    assert "<div><div>estimator: KernelRidge</div></div></label>" in html_output
+    assert (
+        "<div><div>estimator: KernelRidge</div></div></span></summary>" in html_output
+    )
 
 
 @pytest.mark.parametrize("print_changed_only", [True, False])
@@ -367,12 +372,15 @@ def test_fallback_exists():
 
 
 def test_show_arrow_pipeline():
-    """Show arrow in pipeline for top level in pipeline"""
+    """Show the native disclosure marker for the top-level box in a pipeline."""
     pipe = Pipeline([("scale", StandardScaler()), ("log_Reg", LogisticRegression())])
 
     html_output = estimator_html_repr(pipe)
+    # The top-level Pipeline is expandable, so its <summary> keeps the native
+    # disclosure marker (i.e. its class does not carry the ``--no-marker`` modifier).
     assert (
-        'class="sk-toggleable__label  sk-toggleable__label-arrow">'
+        'class="sk-toggleable__label  ">'
+        '<span class="sk-toggleable__label-content">'
         "<div><div>Pipeline</div></div>" in html_output
     )
 
@@ -616,8 +624,9 @@ def test_function_transformer_show_caption(func, expected_name):
     html_output = estimator_html_repr(ft)
 
     p = (
-        r'<label for="sk-estimator-id-[0-9]*" class="sk-toggleable__label fitted '
-        rf'sk-toggleable__label-arrow"><div><div>{expected_name}</div>'
+        r'<summary class="sk-toggleable__label fitted\s*">'
+        r'<span class="sk-toggleable__label-content">'
+        rf"<div><div>{expected_name}</div>"
         r'<div class="caption">FunctionTransformer</div></div>'
     )
     re_compiled = re.compile(p)

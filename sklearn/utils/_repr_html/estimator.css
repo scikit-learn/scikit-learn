@@ -38,20 +38,9 @@
   padding: 0;
 }
 
-input:focus-visible ~ label {
+summary.sk-toggleable__label:focus-visible {
   box-shadow: inset 0 0 0 2px currentColor;
   border-radius: 2px;
-}
-
-.sk-global input.sk-hidden--visually {
-  border: 0;
-  clip-path: inset(100%);
-  height: 1px;
-  margin: -1px;
-  overflow: hidden;
-  padding: 0;
-  position: absolute;
-  width: 1px;
 }
 
 .sk-global div.sk-dashed-wrapped {
@@ -149,35 +138,35 @@ clickable and can be expanded/collapsed.
 }
 
 /* Toggleable label */
-.sk-global label.sk-toggleable__label {
+.sk-global summary.sk-toggleable__label {
   cursor: pointer;
-  display: flex;
+  display: list-item;
   width: 100%;
   margin-bottom: 0;
   padding: 0.5em;
   box-sizing: border-box;
-  text-align: center;
+}
+
+/* Lay out the label content (name + doc link) in a row after the marker */
+.sk-global summary.sk-toggleable__label .sk-toggleable__label-content {
+  display: flex;
   align-items: center;
-  justify-content: center;
   gap: 0.5em;
 }
 
-.sk-global label.sk-toggleable__label .caption {
+.sk-global summary.sk-toggleable__label .caption {
   font-size: 0.6rem;
   font-weight: lighter;
   color: var(--sklearn-color-text-muted);
 }
 
-.sk-global label.sk-toggleable__label-arrow:before {
-  /* Arrow on the left of the label */
-  content: "▸";
-  float: left;
-  margin-right: 0.25em;
-  color: var(--sklearn-color-icon);
+/* Passthrough has nothing to expand, so hide its disclosure marker */
+.sk-global summary.sk-toggleable__label--no-marker {
+  list-style: none;
 }
 
-.sk-global label.sk-toggleable__label-arrow:hover:before {
-  color: var(--sklearn-color-text);
+.sk-global summary.sk-toggleable__label--no-marker::-webkit-details-marker {
+  display: none;
 }
 
 /* Toggleable content - dropdown */
@@ -207,61 +196,58 @@ clickable and can be expanded/collapsed.
   background-color: var(--sklearn-color-fitted-level-0);
 }
 
-.sk-global input.sk-toggleable__control:checked~div.sk-toggleable__content {
+.sk-global details[open] > div.sk-toggleable__content {
   /* Expand drop-down */
   display: block;
   width: 100%;
   overflow: visible;
 }
 
-.sk-global input.sk-toggleable__control:checked~label.sk-toggleable__label-arrow:before {
-  content: "▾";
-}
-
 /* Pipeline/ColumnTransformer-specific style */
 
-.sk-global div.sk-label input.sk-toggleable__control:checked~label.sk-toggleable__label {
+.sk-global div.sk-label details[open] > summary.sk-toggleable__label {
   color: var(--sklearn-color-text);
   background-color: var(--sklearn-color-unfitted-level-2);
 }
 
-.sk-global div.sk-label.fitted input.sk-toggleable__control:checked~label.sk-toggleable__label {
+.sk-global div.sk-label.fitted details[open] > summary.sk-toggleable__label {
   background-color: var(--sklearn-color-fitted-level-2);
 }
 
 /* Estimator-specific style */
 
 /* Colorize estimator box */
-.sk-global div.sk-estimator input.sk-toggleable__control:checked~label.sk-toggleable__label {
+.sk-global div.sk-estimator details[open] > summary.sk-toggleable__label {
   /* unfitted */
   background-color: var(--sklearn-color-unfitted-level-2);
 }
 
-.sk-global div.sk-estimator.fitted input.sk-toggleable__control:checked~label.sk-toggleable__label {
+.sk-global div.sk-estimator.fitted details[open] > summary.sk-toggleable__label {
   /* fitted */
   background-color: var(--sklearn-color-fitted-level-2);
 }
 
-.sk-global div.sk-label label.sk-toggleable__label,
+.sk-global div.sk-label summary.sk-toggleable__label,
 .sk-global div.sk-label label {
   /* The background is the default theme color */
   color: var(--sklearn-color-text-on-default-background);
 }
 
 /* On hover, darken the color of the background */
-.sk-global div.sk-label:hover label.sk-toggleable__label {
+.sk-global div.sk-label:hover summary.sk-toggleable__label {
   color: var(--sklearn-color-text);
   background-color: var(--sklearn-color-unfitted-level-2);
 }
 
 /* Label box, darken color on hover, fitted */
-.sk-global div.sk-label.fitted:hover label.sk-toggleable__label.fitted {
+.sk-global div.sk-label.fitted:hover summary.sk-toggleable__label.fitted {
   color: var(--sklearn-color-text);
   background-color: var(--sklearn-color-fitted-level-2);
 }
 
 /* Estimator label */
 
+.sk-global div.sk-label summary.sk-toggleable__label,
 .sk-global div.sk-label label {
   font-family: monospace;
   font-weight: bold;
