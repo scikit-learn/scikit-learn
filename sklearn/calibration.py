@@ -251,9 +251,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         strategy with post-hoc renormalization, i.e., adjusting the probabilities after
         calibration to ensure they sum up to 1.
 
-        Temperature scaling naturally supports multi-class calibration by applying
-        `softmax(classifier_logits/T)` with a value of `T` (temperature) that
-        optimizes the log loss.
+        In contrast, temperature scaling naturally supports multi-class calibration by
+        applying `softmax(classifier_logits/T)` with a value of `T` (temperature)
+        that optimizes the log loss.
 
         For all methods, ``predict_proba`` outputs are preferred when available.
         Sigmoid converts them to Bernoulli logits per class. Isotonic keeps them
