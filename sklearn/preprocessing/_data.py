@@ -47,6 +47,7 @@ from sklearn.utils.sparsefuncs_fast import (
     inplace_csr_row_normalize_l1,
     inplace_csr_row_normalize_l2,
 )
+from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
     _check_sample_weight,
@@ -2695,11 +2696,12 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
     Parameters
     ----------
     n_quantiles : int, default=1000 or n_samples
-        Number of quantiles to be computed. It corresponds to the number
-        of landmarks used to discretize the cumulative distribution function.
-        If n_quantiles is larger than the number of samples, n_quantiles is set
-        to the number of samples as a larger number of quantiles does not give
-        a better approximation of the cumulative distribution function
+        Number of quantiles to be computed. It corresponds to the number of
+        landmarks used to discretize the cumulative distribution function. If
+        n_quantiles is larger than the effective sample size (sum of sample
+        weights if provided, total number of samples otherwise), n_quantiles is
+        set to the effective sample size as a larger number of quantiles does
+        not give a better approximation of the cumulative distribution function
         estimator.
 
     output_distribution : {'uniform', 'normal'}, default='uniform'
@@ -2733,10 +2735,6 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
     Attributes
     ----------
-    n_quantiles_ : int
-        The actual number of quantiles used to discretize the cumulative
-        distribution function.
-
     quantiles_ : ndarray of shape (n_quantiles, n_features)
         The values corresponding the quantiles of reference.
 
@@ -2806,7 +2804,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         self.random_state = random_state
         self.copy = copy
 
-    def _dense_fit(self, X, random_state):
+    def _dense_fit(self, X, random_state, sample_weight=None):
         """Compute percentiles for dense matrices.
 
         Parameters
@@ -2826,10 +2824,35 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         if self.subsample is not None and self.subsample < n_samples:
             # Take a subsample of `X`
             X = resample(
-                X, replace=False, n_samples=self.subsample, random_state=random_state
+                X,
+                replace=False if sample_weight is None else True,
+                n_samples=self.subsample,
+                random_state=random_state,
+                sample_weight=sample_weight,
             )
+            # As we do not want to double count the sample weights, we set
+            # sample weights to None if they are used for subsampling
+            sample_weight = None
 
-        self.quantiles_ = np.nanpercentile(X, references, axis=0)
+        if sample_weight is not None:
+            self.quantiles_ = _weighted_percentile(
+                X,
+                sample_weight=sample_weight,
+                percentile_rank=references,
+                average=True,
+            )
+            self.quantiles_ = np.asarray(self.quantiles_).T
+        else:
+            self.quantiles_ = np.nanpercentile(
+                X,
+                references,
+                method="averaged_inverted_cdf",
+                axis=0,
+            )
+        self.quantiles_, quantile_idxs = np.unique(
+            self.quantiles_, return_index=True, axis=0
+        )
+        self.references_ = self.references_[quantile_idxs]
 
     def _sparse_fit(self, X, random_state):
         """Compute percentiles for sparse matrices.
@@ -2868,11 +2891,15 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
                 # quantiles. Force the quantiles to be zeros.
                 self.quantiles_.append([0] * len(references))
             else:
-                self.quantiles_.append(np.nanpercentile(column_data, references))
+                self.quantiles_.append(
+                    np.nanquantile(
+                        column_data, references / 100, method="averaged_inverted_cdf"
+                    )
+                )
         self.quantiles_ = np.transpose(self.quantiles_)
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_weight=None):
         """Compute the quantiles used for transforming.
 
         Parameters
@@ -2886,6 +2913,12 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         y : None
             Ignored.
 
+        sample_weight : array-like of shape (n_samples,), default=None
+            Individual weights for each sample. Sample weights are not
+            supported for sparse inputs.
+
+            .. versionadded:: 1.10
+
         Returns
         -------
         self : object
@@ -2894,29 +2927,28 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         if self.subsample is not None and self.n_quantiles > self.subsample:
             raise ValueError(
                 "The number of quantiles cannot be greater than"
-                " the number of samples used. Got {} quantiles"
-                " and {} samples.".format(self.n_quantiles, self.subsample)
+                f" the number of samples used. Got {self.n_quantiles} quantiles"
+                f" and {self.subsample} samples."
             )
 
         X = self._check_inputs(X, in_fit=True, copy=False)
-        n_samples = X.shape[0]
+        is_sparse = sparse.issparse(X)
 
-        if self.n_quantiles > n_samples:
-            warnings.warn(
-                "n_quantiles (%s) is greater than the total number "
-                "of samples (%s). n_quantiles is set to "
-                "n_samples." % (self.n_quantiles, n_samples)
+        if is_sparse and sample_weight is not None:
+            raise NotImplementedError(
+                "sample_weight is not supported for sparse input."
             )
-        self.n_quantiles_ = max(1, min(self.n_quantiles, n_samples))
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         rng = check_random_state(self.random_state)
 
         # Create the quantiles of reference
-        self.references_ = np.linspace(0, 1, self.n_quantiles_, endpoint=True)
-        if sparse.issparse(X):
+        self.references_ = np.linspace(0, 1, self.n_quantiles, endpoint=True)
+        if is_sparse:
             self._sparse_fit(X, rng)
         else:
-            self._dense_fit(X, rng)
+            self._dense_fit(X, rng, sample_weight=sample_weight)
 
         return self
 

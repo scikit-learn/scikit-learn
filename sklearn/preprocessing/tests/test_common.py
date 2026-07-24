@@ -48,7 +48,7 @@ def _get_valid_samples_by_column(X, col):
         (StandardScaler(with_mean=False), scale, True, False, []),
         (PowerTransformer("yeo-johnson"), power_transform, False, False, []),
         (PowerTransformer("box-cox"), power_transform, False, True, []),
-        (QuantileTransformer(n_quantiles=10), quantile_transform, True, False, []),
+        (QuantileTransformer(n_quantiles=7), quantile_transform, True, False, []),
         (RobustScaler(), robust_scale, False, False, []),
         (RobustScaler(with_centering=False), robust_scale, True, False, []),
     ],
