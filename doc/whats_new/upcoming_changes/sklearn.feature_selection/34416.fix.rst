@@ -1,0 +1,6 @@
+- :class:`feature_selection.SequentialFeatureSelector` with
+  `direction="backward"` and `n_features_to_select="auto"` no longer always
+  removes at least one feature: removing a feature is now evaluated against the
+  cross-validation score obtained with all features, so no feature is dropped
+  when doing so would not improve the score within `tol`.
+  By :user:`Pranav Achar <PranavAchar01>`.
