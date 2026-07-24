@@ -61,11 +61,13 @@ def _oas(X, *, assume_centered=False):
         IEEE Transactions on Signal Processing, 58(10), 5016-5029, 2010.
         https://arxiv.org/pdf/0907.4698.pdf
     """
+    xp, _ = get_namespace(X)
+
     if len(X.shape) == 2 and X.shape[1] == 1:
         # for only one feature, the result is the same whatever the shrinkage
         if not assume_centered:
-            X = X - X.mean()
-        return np.atleast_2d((X**2).mean()), 0.0
+            X = X - xp.mean(X)
+        return xp.reshape(xp.mean(X**2), (1, 1)), 0.0
 
     n_samples, n_features = X.shape
 
@@ -83,8 +85,8 @@ def _oas(X, *, assume_centered=False):
     # elements of S that is equal to trace(S)**2 / p**2.
     # See the definition of the Frobenius norm:
     # https://en.wikipedia.org/wiki/Matrix_norm#Frobenius_norm
-    alpha = np.mean(emp_cov**2)
-    mu = np.trace(emp_cov) / n_features
+    alpha = float(xp.mean(emp_cov**2))
+    mu = float(xp.linalg.trace(emp_cov)) / n_features
     mu_squared = mu**2
 
     # The factor 1 / p**2 will cancel out since it is in both the numerator and
@@ -98,7 +100,7 @@ def _oas(X, *, assume_centered=False):
     # where S is the empirical covariance and F is the shrinkage target defined as
     # F = trace(S) / n_features * np.identity(n_features) (cf. Eq. 3 in [1])
     shrunk_cov = (1.0 - shrinkage) * emp_cov
-    shrunk_cov.flat[:: n_features + 1] += shrinkage * mu
+    _add_to_diagonal(shrunk_cov, shrinkage * mu, xp)
 
     return shrunk_cov, shrinkage
 
@@ -815,6 +817,11 @@ class OAS(EmpiricalCovariance):
     for more detailed examples.
     """
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.array_api_support = True
+        return tags
+
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the Oracle Approximating Shrinkage covariance model to X.
@@ -832,13 +839,14 @@ class OAS(EmpiricalCovariance):
         self : object
             Returns the instance itself.
         """
-        X = validate_data(self, X)
         # Not calling the parent object to fit, to avoid computing the
         # covariance matrix (and potentially the precision)
+        xp, _, device_ = get_namespace_and_device(X)
+        X = validate_data(self, X, dtype=supported_float_dtypes(xp, device_))
         if self.assume_centered:
-            self.location_ = np.zeros(X.shape[1])
+            self.location_ = xp.zeros(X.shape[1], dtype=X.dtype, device=device_)
         else:
-            self.location_ = X.mean(0)
+            self.location_ = xp.mean(X, axis=0)
 
         covariance, shrinkage = _oas(X - self.location_, assume_centered=True)
         self.shrinkage_ = shrinkage

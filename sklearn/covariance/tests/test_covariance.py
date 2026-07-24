@@ -20,9 +20,11 @@ from sklearn.covariance import (
 from sklearn.covariance._shrunk_covariance import _ledoit_wolf, _oas
 from sklearn.utils._array_api import (
     _atol_for_type,
+    get_namespace,
     move_to,
     yield_namespace_device_dtype_combinations,
 )
+from sklearn.utils._array_api import device as array_device
 from sklearn.utils._test_common.instance_generator import _get_check_estimator_ids
 from sklearn.utils._testing import (
     _array_api_for_tests,
@@ -535,6 +537,49 @@ def test_mahalanobis_array_api(array_namespace, device_name, dtype_name):
     "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
 )
+@pytest.mark.parametrize("oas_function", [oas, _oas])
+@pytest.mark.parametrize("assume_centered", [True, False])
+@pytest.mark.parametrize(
+    "X_input",
+    [
+        pytest.param(X[:, :1], id="one-feature"),
+        pytest.param(X, id="multi-feature"),
+        pytest.param(np.zeros_like(X), id="zero-variance"),
+    ],
+)
+def test_oas_array_api(
+    array_namespace,
+    device_name,
+    dtype_name,
+    oas_function,
+    assume_centered,
+    X_input,
+):
+    """OAS functions should return the same result with array API inputs."""
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
+
+    X_np = X_input.astype(dtype_name, copy=False)
+    X_xp = xp.asarray(X_np, device=device)
+
+    covariance_np, shrinkage_np = oas_function(X_np, assume_centered=assume_centered)
+
+    with config_context(array_api_dispatch=True):
+        covariance_xp, shrinkage_xp = oas_function(
+            X_xp, assume_centered=assume_centered
+        )
+        assert get_namespace(covariance_xp)[0].__name__ == xp.__name__
+        assert array_device(covariance_xp) == array_device(X_xp)
+        assert covariance_xp.dtype == X_xp.dtype
+    covariance_xp_np = move_to(covariance_xp, xp=np, device="cpu")
+    assert_allclose(covariance_np, covariance_xp_np, atol=_atol_for_type(dtype_name))
+    assert isinstance(shrinkage_xp, float)
+    assert_allclose(shrinkage_np, shrinkage_xp, atol=_atol_for_type(dtype_name))
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
 @pytest.mark.parametrize(
     "check",
     [check_array_api_input_and_values],
@@ -542,7 +587,7 @@ def test_mahalanobis_array_api(array_namespace, device_name, dtype_name):
 )
 @pytest.mark.parametrize(
     "estimator",
-    [LedoitWolf()],
+    [LedoitWolf(), OAS()],
     ids=_get_check_estimator_ids,
 )
 def test_covariance_array_api_compliance(
