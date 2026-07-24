@@ -1,12 +1,8 @@
-- Add support for array inputs from mixed namespaces and devices for
-  :func:`sklearn.metrics.det_curve`, :func:`sklearn.metrics.roc_curve`,
-  :func:`sklearn.metrics.zero_one_loss`, :func:`sklearn.metrics.jaccard_score`,
-  :func:`sklearn.metrics.balanced_accuracy_score` and
+- Add support for array inputs from mixed namespaces and devices for:
+  :func:`sklearn.metrics.det_curve`,
+  :func:`sklearn.metrics.roc_curve`,
+  :func:`sklearn.metrics.zero_one_loss`,
+  :func:`sklearn.metrics.jaccard_score`,
+  :func:`sklearn.metrics.balanced_accuracy_score`,
   :func:`sklearn.metrics.cohen_kappa_score`.
-  Fixed support when `average="samples"` and `sample_weight` is an array from a
-  namespace or device different from `y_pred`, for
-  :func:`sklearn.metrics.precision_recall_fscore_support`,
-  :func:`sklearn.metrics.recall`, :func:`sklearn.metrics.precision`,
-  :func:`sklearn.metrics.f1_score` and :func:`sklearn.metrics.fbeta_score`.
-  Also fixes several bugs in array API compliance of :func:`sklearn.metrics.roc_curve` .
   By :user:`Lucy Liu <lucyleeow>`.
