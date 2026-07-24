@@ -63,7 +63,7 @@ def _openml_path_from_url(url: str) -> str:
 def _retry_with_clean_cache(
     openml_path: str,
     data_home: Optional[str],
-    no_retry_exception: Optional[Exception] = None,
+    no_retry_exception: Optional[type[Exception]] = None,
 ) -> Callable:
     """If the first call to the decorated function fails, the local cached file
     (if any) is removed and the function is called again. The retry happens

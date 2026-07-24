@@ -1372,4 +1372,4 @@ DEPRECATED_API_REFERENCE = {
 }
 """
 
-DEPRECATED_API_REFERENCE = {}  # type: ignore[var-annotated]
+DEPRECATED_API_REFERENCE = {}  # pyrefly: ignore[var-annotated]

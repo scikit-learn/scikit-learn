@@ -14,13 +14,14 @@ repos:
     -   id: ruff-check
         args: ["--fix", "--output-format=full"]
     -   id: ruff-format
--   repo: https://github.com/pre-commit/mirrors-mypy
-    # NOTE if you update the mypy version here, remember to update
-    # sklearn/_min_dependencies.py as well
-    rev: v1.15.0
+-   repo: https://github.com/facebook/pyrefly-pre-commit
+    # NOTE if you update the pyrefly version here, remember to update
+    # sklearn/_min_dependencies.py as well. This is the pyrefly version used
+    # for type checking (not a separate pre-commit hook version).
+    rev: 1.1.1
     hooks:
-     -  id: mypy
-        files: sklearn/
+    -   id: pyrefly-check
+        name: Pyrefly (type checking)
         # We set `pytest` to an arbitrary recent version to keep it consistent with the
         # linting settings in `build_tools/update_environments_and_lock_files.py`. They
         # should be updated from time to time in both places.

@@ -28,7 +28,7 @@ from sklearn.model_selection._search_successive_halving import (
     HalvingRandomSearchCV,
 )
 
-# use settattr to avoid mypy errors when monkeypatching
+# use settattr to avoid typing errors when monkeypatching
 setattr(model_selection, "HalvingRandomSearchCV", HalvingRandomSearchCV)
 setattr(model_selection, "HalvingGridSearchCV", HalvingGridSearchCV)
 

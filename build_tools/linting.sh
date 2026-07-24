@@ -32,14 +32,14 @@ else
     global_status=1
 fi
 
-echo -e "### Running mypy ###\n"
-mypy sklearn/
+echo -e "### Running pyrefly ###\n"
+pyrefly check
 status=$?
 if [[ $status -eq 0 ]]
 then
-    echo -e "No problem detected by mypy\n"
+    echo -e "No problem detected by pyrefly\n"
 else
-    echo -e "Problems detected by mypy, please fix them\n"
+    echo -e "Problems detected by pyrefly, please fix them\n"
     global_status=1
 fi
 
