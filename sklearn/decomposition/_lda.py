@@ -920,6 +920,25 @@ class LatentDirichletAllocation(
             word_cnt = X.sum()
         perword_bound = bound / word_cnt
 
+        if not sub_sampling:
+            # Normalize the beta prior contribution by the number of words used
+            # to estimate the component/topic-word distribution. This keeps the
+            # beta contribution comparable across different evaluation sets.
+            dirichlet_component_ = _dirichlet_expectation_2d(self.components_)
+            beta_term = np.sum(
+                (self.topic_word_prior_ - self.components_) * dirichlet_component_
+            )
+            beta_term += np.sum(
+                gammaln(self.components_) - gammaln(self.topic_word_prior_)
+            )
+            beta_term += np.sum(
+                gammaln(self.topic_word_prior_ * self.components_.shape[1])
+                - gammaln(np.sum(self.components_, axis=1))
+            )
+            perword_bound = (
+                bound - beta_term
+            ) / word_cnt + beta_term / self.components_.sum()
+
         return np.exp(-1.0 * perword_bound)
 
     def perplexity(self, X, sub_sampling=False):
