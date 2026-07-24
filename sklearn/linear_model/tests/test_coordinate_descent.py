@@ -1340,7 +1340,7 @@ def test_enet_sample_weight_consistency(
     check_sample_weight_equivalence alone and also tests sparse X.
     """
     rng = np.random.RandomState(global_random_seed)
-    n_samples, n_features = 10, 5
+    n_samples, n_features = 20, 8
     X = rng.rand(n_samples, n_features)
     y = rng.rand(n_samples)
 
