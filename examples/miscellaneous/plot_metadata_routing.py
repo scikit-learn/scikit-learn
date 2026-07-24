@@ -586,6 +586,111 @@ pipe.fit(X, y, sample_weight=my_weights, groups=my_groups).predict(
     X[:3], groups=my_groups
 )
 
+#
+# %%
+# Customise Metadata Requests in Consumers
+# ----------------------------------------
+# Most :term:`consumers <consumer>` inherit from :class:`~base.BaseEstimator` and use
+# the class-level default metadata requests inferred from method signatures and
+# `__metadata_request__*` class attributes. Developers can instead inherit directly from
+# :class:`~utils.metadata_routing.MetadataRequester` and override its
+# `__sklearn_build_declared_metadata_request__` method. This is useful when consumers
+# are not :term:`estimators <estimator>` or require a more nuanced control over which
+# parameters to treat as data or as metadata respectively, or when metadata is forwarded
+# to another callable.
+#
+# Custom implementations should follow the same pattern as the default: build a
+# :class:`~utils.metadata_routing.MetadataRequest` using
+# `get_declared_metadata_request_values`:
+
+# %%
+# These imports are only required for the examples in this section.
+
+from sklearn.utils.metadata_routing import (
+    MetadataRequest,
+    MetadataRequester,
+    MethodMetadataRequest,
+    get_declared_metadata_request_values,
+)
+
+# %%
+# Developers can exclude parameters from class-level metadata requests with
+# `ignore_params`. Here `y_true` and `y_pred` are arguments of `score` and should not be
+# treated as metadata.
+
+
+class CustomRequestConsumer(MetadataRequester):
+    __metadata_request__fit = {"my_param": True}
+
+    def fit(self, metadata1):
+        return self
+
+    def score(self, y_true, y_pred, metadata2):
+        return metadata2 + 100
+
+    def __sklearn_build_declared_metadata_request__(self):
+        requests = MetadataRequest(owner=self)
+        for method_name in ["fit", "score", "predict"]:
+            setattr(
+                requests,
+                method_name,
+                MethodMetadataRequest(
+                    owner=self,
+                    method=method_name,
+                    requests=get_declared_metadata_request_values(
+                        self,
+                        method_name,
+                        ignore_params={"y_true", "y_pred"},
+                    ),
+                ),
+            )
+        return requests
+
+
+consumer = CustomRequestConsumer()
+pprint(consumer.__sklearn_build_declared_metadata_request__()._serialize())
+
+# %%
+# When metadata is consumed by a different callable than the routed method name, pass
+# it as `method` to `get_declared_metadata_request_values`. (This is the same pattern
+# as internally used in :class:`~metrics._scorer._BaseScorer`.)
+#
+# Be aware that for the callable passed as `method`, the first parameter is always
+# treated as data and excluded from metadata discovery (e.g. `self` for an
+# unbound method, or `y` / `y_true` for a scoring function).
+
+
+def consuming_function(y, metadata1):
+    return 1
+
+
+class CustomFunctionConsumer(MetadataRequester):
+    def __init__(self, func):
+        self.func = func
+
+    def fit(self, metadata1, metadata2):
+        self.func(y=None, metadata1=metadata1)
+        return self
+
+    def __sklearn_build_declared_metadata_request__(self):
+        requests = MetadataRequest(owner=self)
+        setattr(
+            requests,
+            "fit",
+            MethodMetadataRequest(
+                owner=self,
+                method="fit",
+                requests=get_declared_metadata_request_values(
+                    self, "fit", method=self.func
+                ),
+            ),
+        )
+        return requests
+
+
+consumer = CustomFunctionConsumer(func=consuming_function)
+pprint(consumer.__sklearn_build_declared_metadata_request__()._serialize())
+
 # %%
 # Deprecation / Default Value Change
 # ----------------------------------
