@@ -158,6 +158,17 @@ function detectTheme(element) {
 }
 
 
+document.querySelectorAll('.sk-toggleable__control:not([data-sk-keydown-bound])').forEach(function(input) {
+    input.dataset.skKeydownBound = 'true';
+    input.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            event.stopPropagation();
+            input.checked = !input.checked;
+        }
+    });
+});
+
 function forceTheme(elementId) {
     const estimatorElement = document.querySelector(`#${elementId}`);
     if (estimatorElement === null) {

@@ -38,6 +38,11 @@
   padding: 0;
 }
 
+input:focus-visible ~ label {
+  box-shadow: inset 0 0 0 2px currentColor;
+  border-radius: 2px;
+}
+
 .sk-global input.sk-hidden--visually {
   border: 0;
   clip-path: inset(100%);

@@ -15,6 +15,7 @@ the :class:`sklearn.preprocessing.SplineTransformer` class and its
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
+# Build the doc - REMOVE THIS LINE
 
 # %%
 # Data exploration on the Bike Sharing Demand dataset

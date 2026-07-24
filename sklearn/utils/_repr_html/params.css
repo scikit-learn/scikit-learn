@@ -136,7 +136,9 @@ a.param-doc-link::before {
     border: thin solid var(--sklearn-color-fitted-level-3);
 }
 
-.param-doc-link:hover .param-doc-description {
+.param-doc-link:hover .param-doc-description,
+.param-doc-link:focus-visible .param-doc-description,
+.param-doc-link:focus-within .param-doc-description {
     display: block;
 }
 
