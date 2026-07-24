@@ -15,7 +15,7 @@ from sklearn.utils import _align_api_if_sparse, column_or_1d
 from sklearn.utils._array_api import (
     _find_matching_floating_dtype,
     _is_numpy_namespace,
-    device,
+    array_device,
     get_namespace,
     get_namespace_and_device,
     indexing_dtype,
@@ -164,7 +164,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
 
         diff = xpx.setdiff1d(
             y,
-            xp.arange(self.classes_.shape[0], device=device(y)),
+            xp.arange(self.classes_.shape[0], device=array_device(y)),
             xp=xp,
         )
         if diff.shape[0]:
@@ -568,7 +568,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
     if y_type == "unknown":
         raise ValueError("The type of target data is not known")
 
-    xp, is_array_api, device_ = get_namespace_and_device(y)
+    xp, is_array_api, device = get_namespace_and_device(y)
 
     if is_array_api and sparse_output and not _is_numpy_namespace(xp):
         raise ValueError(
@@ -578,7 +578,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
         )
 
     try:
-        classes = xp.asarray(classes, device=device_)
+        classes = xp.asarray(classes, device=device)
     except (ValueError, TypeError) as e:
         # `classes` contains an unsupported dtype for this namespace.
         # For example, attempting to create torch.tensor(["yes", "no"]) will fail.
@@ -633,7 +633,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
         y_in_classes = xp.astype(y_in_classes, int_dtype_)
         indptr = xp.concat(
             (
-                xp.asarray([0], device=device_),
+                xp.asarray([0], device=device),
                 xp.cumulative_sum(y_in_classes, axis=0),
             )
         )
@@ -650,7 +650,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
         )
 
         if not sparse_output:
-            Y = xp.asarray(Y.toarray(), device=device_)
+            Y = xp.asarray(Y.toarray(), device=device)
 
     elif y_type == "multilabel-indicator":
         if sparse_output:
@@ -662,7 +662,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
             if sp.issparse(y):
                 y = y.toarray()
 
-            Y = xp.asarray(y, device=device_, copy=True)
+            Y = xp.asarray(y, device=device, copy=True)
             if pos_label != 1:
                 Y[Y != 0] = pos_label
 
@@ -735,8 +735,8 @@ def _inverse_binarize_multiclass(y, classes, xp=None):
 
         return classes[y_i_argmax]
     else:
-        xp, _, device_ = get_namespace_and_device(y, xp=xp)
-        classes = xp.asarray(classes, device=device_)
+        xp, _, device = get_namespace_and_device(y, xp=xp)
+        classes = xp.asarray(classes, device=device)
         indices = xp.argmax(y, axis=1)
         indices = xp.clip(indices, 0, classes.shape[0] - 1)
 
@@ -749,8 +749,8 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold, xp=None):
     if output_type == "binary" and y.ndim == 2 and y.shape[1] > 2:
         raise ValueError("output_type='binary', but y.shape = {0}".format(y.shape))
 
-    xp, _, device_ = get_namespace_and_device(y, xp=xp)
-    classes = xp.asarray(classes, device=device_)
+    xp, _, device = get_namespace_and_device(y, xp=xp)
+    classes = xp.asarray(classes, device=device)
 
     if output_type != "binary" and y.shape[1] != classes.shape[0]:
         raise ValueError(
@@ -771,12 +771,12 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold, xp=None):
             y.data = np.array(y.data > threshold, dtype=int)
             y.eliminate_zeros()
         else:
-            y = xp.asarray(y.toarray() > threshold, dtype=int_dtype_, device=device_)
+            y = xp.asarray(y.toarray() > threshold, dtype=int_dtype_, device=device)
     else:
         y = xp.asarray(
-            xp.asarray(y, dtype=dtype_, device=device_) > threshold,
+            xp.asarray(y, dtype=dtype_, device=device) > threshold,
             dtype=int_dtype_,
-            device=device_,
+            device=device,
         )
 
     # Inverse transform data

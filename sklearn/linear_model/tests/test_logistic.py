@@ -44,11 +44,9 @@ from sklearn.svm import l1_min_c
 from sklearn.utils import compute_class_weight, shuffle
 from sklearn.utils._array_api import (
     _atol_for_type,
+    array_device,
     move_to,
     yield_namespace_device_dtype_combinations,
-)
-from sklearn.utils._array_api import (
-    device as array_api_device,
 )
 from sklearn.utils._testing import _array_api_for_tests, ignore_warnings
 from sklearn.utils.fixes import _IS_32BIT, COO_CONTAINERS, CSR_CONTAINERS
@@ -2880,16 +2878,23 @@ def test_logistic_regression_array_api_compliance(
     lr_params = dict(C=1e-2, solver=solver, max_iter=500, class_weight=class_weight)
     lr_params["tol"] = 1e-6 if dtype_name == "float32" else 1e-12
 
-    lr_np = LogisticRegression(**lr_params).fit(X_np, y_np, sample_weight=sample_weight)
-    # Make sure that the reference fit converged.
-    assert lr_np.n_iter_ < lr_np.max_iter
+    # Compute the reference fit and predictions with array API dispatch explicitly
+    # disabled so that they always follow the NumPy code path, independently of
+    # the default value of the `array_api_dispatch` config flag.
+    with config_context(array_api_dispatch=False):
+        lr_np = LogisticRegression(**lr_params).fit(
+            X_np, y_np, sample_weight=sample_weight
+        )
+        # Make sure that the reference fit converged.
+        assert lr_np.n_iter_ < lr_np.max_iter
 
-    # Test that C was not too large for meaningful testing.
-    assert np.abs(lr_np.coef_).max() > 0.1
+        # Test that C was not too large for meaningful testing.
+        assert np.abs(lr_np.coef_).max() > 0.1
 
-    predict_proba_np = lr_np.predict_proba(X_np)
-    preditct_log_proba_np = lr_np.predict_log_proba(X_np)
-    prediction_np = lr_np.predict(X_np)
+        predict_proba_np = lr_np.predict_proba(X_np)
+        preditct_log_proba_np = lr_np.predict_log_proba(X_np)
+        prediction_np = lr_np.predict(X_np)
+
     if solver == "lbfgs":
         atol = _atol_for_type(dtype_name) * 10
         rtol = 1e-3 if dtype_name == "float32" else 1e-7
@@ -2913,7 +2918,7 @@ def test_logistic_regression_array_api_compliance(
                 move_to(attr_xp, xp=np, device="cpu"), attr_np, rtol=rtol, atol=atol
             )
             assert attr_xp.dtype == X_xp.dtype
-            assert array_api_device(attr_xp) == array_api_device(X_xp)
+            assert array_device(attr_xp) == array_device(X_xp)
 
         predict_proba_xp = lr_xp.predict_proba(X_xp)
         assert_allclose(
@@ -2923,7 +2928,7 @@ def test_logistic_regression_array_api_compliance(
             atol=atol,
         )
         assert predict_proba_xp.dtype == X_xp.dtype
-        assert array_api_device(predict_proba_xp) == array_api_device(X_xp)
+        assert array_device(predict_proba_xp) == array_device(X_xp)
 
         predict_log_proba_xp = lr_xp.predict_log_proba(X_xp)
         assert_allclose(
@@ -2933,7 +2938,7 @@ def test_logistic_regression_array_api_compliance(
             atol=atol,
         )
         assert predict_log_proba_xp.dtype == X_xp.dtype
-        assert array_api_device(predict_log_proba_xp) == array_api_device(X_xp)
+        assert array_device(predict_log_proba_xp) == array_device(X_xp)
 
         prediction_xp = lr_xp.predict(X_xp)
         if not use_str_y:
@@ -3052,7 +3057,7 @@ def test_logistic_regression_cv_array_api_compliance(
                 move_to(attr_xp, xp=np, device="cpu"), attr_np, rtol=rtol, atol=atol
             )
             assert attr_xp.dtype == X_xp.dtype
-            assert array_api_device(attr_xp) == array_api_device(X_xp)
+            assert array_device(attr_xp) == array_device(X_xp)
 
         prediction_xp = lr_cv_xp.predict(X_xp)
         if not use_str_y:
@@ -3108,15 +3113,15 @@ def test_logistic_regression_array_api_warm_start(
 ):
     """Test that warm_start=True works with array API inputs across
     multiple fit calls for both binary and multiclass classification."""
-    xp, device_ = _array_api_for_tests(array_namespace, device_name, dtype_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     X_np = iris.data.astype(dtype_name, copy=True)
     if binary:
         y_np = (iris.target > 0).astype(dtype_name)
     else:
         y_np = iris.target.astype(dtype_name)
 
-    X_xp = xp.asarray(X_np, device=device_)
-    y_xp = xp.asarray(y_np, device=device_)
+    X_xp = xp.asarray(X_np, device=device)
+    y_xp = xp.asarray(y_np, device=device)
 
     with config_context(array_api_dispatch=True):
         lr = LogisticRegression(C=1e-2, solver="lbfgs", max_iter=300, warm_start=True)

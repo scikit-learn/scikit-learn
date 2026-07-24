@@ -4,8 +4,8 @@ from numpy.testing import assert_allclose, assert_array_equal
 from pytest import approx
 
 from sklearn._config import config_context
-from sklearn.utils._array_api import device as array_device
 from sklearn.utils._array_api import (
+    array_device,
     get_namespace,
     move_to,
     yield_namespace_device_dtype_combinations,
@@ -336,7 +336,8 @@ def test_weighted_percentile_array_api_consistency(
     # Ensure `data` of correct dtype
     X_np = X_np.astype(dtype_name)
 
-    result_np = _weighted_percentile(X_np, weights_np, percentile)
+    with config_context(array_api_dispatch=False):
+        result_np = _weighted_percentile(X_np, weights_np, percentile)
     # Convert to Array API arrays
     X_xp = xp.asarray(X_np, device=device)
     weights_xp = xp.asarray(weights_np, device=device)

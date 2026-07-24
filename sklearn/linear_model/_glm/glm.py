@@ -262,7 +262,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 f"l1_ratio={self.l1_ratio}."
             )
             raise ValueError(msg)
-        xp, _, device_ = get_namespace_and_device(X)
+        xp, _, device = get_namespace_and_device(X)
         X, y = validate_data(
             self,
             X,
@@ -272,6 +272,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             y_numeric=True,
             multi_output=False,
         )
+        y, sample_weight = move_to(y, sample_weight, xp=xp, device=device)
+
         loss_dtype = X.dtype
         y = check_array(y, dtype=loss_dtype, order="C", ensure_2d=False)
 
@@ -280,10 +282,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             # losses.
             sample_weight = _check_sample_weight(sample_weight, X, dtype=loss_dtype)
 
-        y, sample_weight = move_to(y, sample_weight, xp=xp, device=device_)
-
         n_samples, n_features = X.shape
-        self._base_loss = self._get_loss(xp=xp, device=device_)
+        self._base_loss = self._get_loss(xp=xp, device=device)
 
         linear_loss = LinearModelLoss(
             base_loss=self._base_loss,
@@ -362,7 +362,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             coef = xp.asarray(
                 coef.copy(order="C" if not _is_numpy_namespace(xp) else "K"),
                 dtype=X.dtype,
-                device=device_,
+                device=device,
             )
         elif self.solver == "newton-cg":
             func = linear_loss.loss
@@ -506,6 +506,10 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         # TODO: make D^2 a score function in module metrics (and thereby get
         #       input validation and so on)
         raw_prediction = self._linear_predictor(X)  # validates X
+
+        xp, _, device = get_namespace_and_device(X)
+        y, sample_weight = move_to(y, sample_weight, xp=xp, device=device)
+
         # required by losses
         y = check_array(y, dtype=raw_prediction.dtype, order="C", ensure_2d=False)
 
@@ -513,9 +517,6 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             # Note that _check_sample_weight calls check_array(order="C") required by
             # losses.
             sample_weight = _check_sample_weight(sample_weight, X, dtype=y.dtype)
-
-        xp, _, device_ = get_namespace_and_device(X)
-        y, sample_weight = move_to(y, sample_weight, xp=xp, device=device_)
 
         base_loss = self._base_loss
 
