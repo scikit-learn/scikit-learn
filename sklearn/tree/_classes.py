@@ -1648,11 +1648,23 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         averaged_predictions : ndarray of shape (n_samples,), dtype=np.float64
             The value of the partial dependence function on each grid point.
         """
+        target_features = np.asarray(target_features, dtype=np.intp, order="C")
+
+        if self.is_categorical_ is not None and np.any(
+            self.is_categorical_[target_features]
+        ):
+            # `grid` holds raw (unencoded) feature values, but the tree splits
+            # on the categories as encoded by `self._categorical_encoder`.
+            raise NotImplementedError(
+                "The 'recursion' method for partial dependence is not "
+                "supported for categorical target features. Use "
+                "method='brute' instead."
+            )
+
         grid = np.asarray(grid, dtype=np.float32, order="C")
         averaged_predictions = np.zeros(
             shape=grid.shape[0], dtype=np.float64, order="C"
         )
-        target_features = np.asarray(target_features, dtype=np.intp, order="C")
 
         self.tree_.compute_partial_dependence(
             grid, target_features, averaged_predictions
