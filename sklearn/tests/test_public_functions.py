@@ -216,6 +216,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.average_precision_score",
     "sklearn.metrics.balanced_accuracy_score",
     "sklearn.metrics.brier_score_loss",
+    "sklearn.metrics.calibration_error",
     "sklearn.metrics.calinski_harabasz_score",
     "sklearn.metrics.check_scoring",
     "sklearn.metrics.completeness_score",

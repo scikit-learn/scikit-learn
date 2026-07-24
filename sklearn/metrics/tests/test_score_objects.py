@@ -28,6 +28,7 @@ from sklearn.metrics import (
     average_precision_score,
     balanced_accuracy_score,
     brier_score_loss,
+    calibration_error,
     check_scoring,
     f1_score,
     fbeta_score,
@@ -110,6 +111,7 @@ CLF_SCORERS = [
     "recall_micro",
     "neg_log_loss",
     "neg_brier_score",
+    "neg_l2_calibration_error",
     "jaccard",
     "jaccard_weighted",
     "jaccard_macro",
@@ -444,6 +446,33 @@ def test_classification_multiclass_scores(scorer_name, metric):
     score = get_scorer(scorer_name)(clf, X_test, y_test)
     expected_score = metric(y_test, clf.predict(X_test))
     assert score == pytest.approx(expected_score)
+
+
+def test_calibration_error_scorer_value():
+    X, y = make_classification(n_classes=2, n_samples=60, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, random_state=0, stratify=y
+    )
+    clf = LogisticRegression().fit(X_train, y_train)
+
+    expected = -calibration_error(y_test, clf.predict_proba(X_test)[:, 1])
+    scorer = get_scorer("neg_l2_calibration_error")
+    assert scorer(clf, X_test, y_test) == pytest.approx(expected)
+
+
+def test_calibration_error_scorer_multiclass_error():
+    X, y = make_classification(
+        n_classes=3, n_informative=3, n_samples=30, random_state=0
+    )
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, random_state=0, stratify=y
+    )
+    clf = DecisionTreeClassifier(random_state=0).fit(X_train, y_train)
+
+    scorer = get_scorer("neg_l2_calibration_error")
+    err_msg = "calibration_error only supports binary classification"
+    with pytest.raises(ValueError, match=err_msg):
+        scorer(clf, X_test, y_test)
 
 
 def test_custom_scorer_pickling():
