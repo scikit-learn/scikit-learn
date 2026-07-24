@@ -1750,26 +1750,29 @@ def check_sample_weight_invariance(name, metric, y1, y2, sample_weight=None):
             err_msg="Weighting %s is not equal to repeating samples" % name,
         )
 
-    # check that ignoring a fraction of the samples is equivalent to setting
-    # the corresponding weights to zero
-    sample_weight_subset = sample_weight[1::2]
-    sample_weight_zeroed = np.copy(sample_weight)
-    sample_weight_zeroed[::2] = 0
-    y1_subset = y1[1::2]
-    y2_subset = y2[1::2]
-    weighted_score_subset = metric(
-        y1_subset, y2_subset, sample_weight=sample_weight_subset
-    )
-    weighted_score_zeroed = metric(y1, y2, sample_weight=sample_weight_zeroed)
-    assert_allclose(
-        weighted_score_subset,
-        weighted_score_zeroed,
-        err_msg=(
-            "Zeroing weights does not give the same result as "
-            "removing the corresponding samples (%s != %s) for %s"
+    # `METRICS_SAMPLEWISE` computes the metric per sample, thus there is still
+    # an otuput for 0 weighted samples.
+    if name not in METRICS_SAMPLEWISE:
+        # check that ignoring a fraction of the samples is equivalent to setting
+        # the corresponding weights to zero
+        sample_weight_subset = sample_weight[1::2]
+        sample_weight_zeroed = np.copy(sample_weight)
+        sample_weight_zeroed[::2] = 0
+        y1_subset = y1[1::2]
+        y2_subset = y2[1::2]
+        weighted_score_subset = metric(
+            y1_subset, y2_subset, sample_weight=sample_weight_subset
         )
-        % (weighted_score_zeroed, weighted_score_subset, name),
-    )
+        weighted_score_zeroed = metric(y1, y2, sample_weight=sample_weight_zeroed)
+        assert_allclose(
+            weighted_score_subset,
+            weighted_score_zeroed,
+            err_msg=(
+                "Zeroing weights does not give the same result as "
+                "removing the corresponding samples (%s != %s) for %s"
+            )
+            % (weighted_score_zeroed, weighted_score_subset, name),
+        )
 
     # Check the score is invariant under scaling of weights by a constant factor
     if name not in WEIGHT_SCALE_DEPENDENT_METRICS:
