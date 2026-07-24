@@ -207,8 +207,8 @@ Alternatively an already fitted classifier can be calibrated by using a
 It is up to the user to make sure that the data used for fitting the classifier
 is disjoint from the data used for fitting the regressor.
 
-:class:`CalibratedClassifierCV` supports the use of two regression techniques
-for calibration via the `method` parameter: `"sigmoid"` and `"isotonic"`.
+:class:`CalibratedClassifierCV` supports the use of three regression techniques for
+calibration via the `method` parameter: `"sigmoid"`, `"isotonic"` and `"temperature"`.
 
 .. _sigmoid_regressor:
 
@@ -221,9 +221,11 @@ The sigmoid regressor, `method="sigmoid"` is based on Platt's logistic model [4]
        p(y_i = 1 | f_i) = \frac{1}{1 + \exp(A f_i + B)} \,,
 
 where :math:`y_i` is the true label of sample :math:`i` and :math:`f_i`
-is the output of the un-calibrated classifier for sample :math:`i`. :math:`A`
-and :math:`B` are real numbers to be determined when fitting the regressor via
-maximum likelihood.
+is the uncalibrated classifier output for that sample. When the classifier
+implements :term:`predict_proba`, :math:`f_i = \text{logit}(\hat{p}_i)` is the
+logit of the predicted probability; otherwise, :math:`f_i` is the score from
+:term:`decision_function`. :math:`A` and :math:`B` are real numbers to be
+determined when fitting the regressor via maximum likelihood.
 
 The sigmoid method assumes the :ref:`calibration curve <calibration_curve>`
 can be corrected by applying a sigmoid function to the raw predictions. This
@@ -249,9 +251,10 @@ a step-wise non-decreasing function, see :mod:`sklearn.isotonic`. It minimizes:
        \sum_{i=1}^{n} (y_i - \hat{f}_i)^2
 
 subject to :math:`\hat{f}_i \geq \hat{f}_j` whenever
-:math:`f_i \geq f_j`. :math:`y_i` is the true
-label of sample :math:`i` and :math:`\hat{f}_i` is the output of the
-calibrated classifier for sample :math:`i` (i.e., the calibrated probability).
+:math:`f_i \geq f_j`. Here :math:`y_i` is the true label of sample
+:math:`i`, :math:`f_i` is the uncalibrated predicted probability from
+:term:`predict_proba`, and :math:`\hat{f}_i` is the recalibrated
+probability.
 This method is more general when compared to `'sigmoid'` as the only restriction
 is that the mapping function is monotonically increasing. It is thus more
 powerful as it can correct any monotonic distortion of the un-calibrated model.

@@ -6,11 +6,14 @@ import pytest
 from numpy.testing import assert_allclose
 
 from sklearn import config_context
+from sklearn._loss.link import LogitLink, MultinomialLogit
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.calibration import (
     CalibratedClassifierCV,
     CalibrationDisplay,
     _CalibratedClassifier,
+    _ensure_logits,
+    _get_calibration_logits,
     _sigmoid_calibration,
     _SigmoidCalibration,
     _TemperatureScaling,
@@ -42,9 +45,14 @@ from sklearn.model_selection import (
     cross_val_score,
     train_test_split,
 )
-from sklearn.naive_bayes import MultinomialNB
+from sklearn.naive_bayes import GaussianNB, MultinomialNB
 from sklearn.pipeline import Pipeline, make_pipeline
-from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.preprocessing import (
+    LabelEncoder,
+    PolynomialFeatures,
+    SplineTransformer,
+    StandardScaler,
+)
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._array_api import (
@@ -237,70 +245,150 @@ def test_parallel_execution(data, method, ensemble):
     assert_allclose(probs_parallel, probs_sequential)
 
 
+@pytest.mark.parametrize("clf", [GaussianNB(), LogisticRegression(C=1e-6)])
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
 @pytest.mark.parametrize("ensemble", [True, False])
-# increase the number of RNG seeds to assess the statistical stability of this
-# test:
-@pytest.mark.parametrize("seed", range(2))
-def test_calibration_multiclass(method, ensemble, seed):
-    def multiclass_brier(y_true, proba_pred, n_classes):
-        Y_onehot = np.eye(n_classes)[y_true]
-        return np.sum((Y_onehot - proba_pred) ** 2) / Y_onehot.shape[0]
-
-    # Test calibration for multiclass with classifier that implements
-    # only decision function.
-    clf = LinearSVC(random_state=7)
-    X, y = make_blobs(
-        n_samples=500, n_features=100, random_state=seed, centers=10, cluster_std=15.0
+def test_calibration_multiclass(clf, method, ensemble, global_random_seed):
+    # Test calibration for multiclass with a classifier that is known to be
+    # poorly calibrated by default:
+    # - GaussianNB in the presence of redundant features, hence over-confident;
+    # - LogisticRegression too regularized hence under-confident.
+    #
+    # Note: we need a large number of test data points to get a good estimate
+    # of the metrics and make this step insensitive to the random seed.
+    n_classes = 3
+    X, y = make_classification(
+        n_samples=30_000,
+        n_clusters_per_class=3,
+        n_classes=n_classes,
+        n_features=20,
+        n_informative=4,
+        n_redundant=16,
+        weights=[0.2, 0.2, 0.6],
+        random_state=global_random_seed,
     )
 
-    # Use an unbalanced dataset by collapsing 8 clusters into one class
-    # to make the naive calibration based on a softmax more unlikely
-    # to work.
-    y[y > 2] = 2
-    n_classes = np.unique(y).shape[0]
-    X_train, y_train = X[::2], y[::2]
-    X_test, y_test = X[1::2], y[1::2]
-
+    X_train, X_test, y_train, y_test = train_test_split(
+        X,
+        y,
+        random_state=global_random_seed,
+        stratify=y,
+        train_size=1_000,
+    )
     clf.fit(X_train, y_train)
+    if hasattr(clf, "predict_proba"):
+        y_pred_uncal = clf.predict_proba(X_test)
+    else:
+        # Naive predict_proba for LinearSVC.
+        y_pred_uncal = softmax(clf.decision_function(X_test))
+
+    assert_allclose(np.sum(y_pred_uncal, axis=1), np.ones(len(X_test)))
 
     cal_clf = CalibratedClassifierCV(clf, method=method, cv=5, ensemble=ensemble)
     cal_clf.fit(X_train, y_train)
-    probas = cal_clf.predict_proba(X_test)
-    # Check probabilities sum to 1
-    assert_allclose(np.sum(probas, axis=1), np.ones(len(X_test)))
-
-    # Check that the dataset is not too trivial, otherwise it's hard
-    # to get interesting calibration data during the internal
-    # cross-validation loop.
-    assert 0.65 < clf.score(X_test, y_test) < 0.95
-
-    # Check that the accuracy of the calibrated model is never degraded
-    # too much compared to the original classifier.
-    assert cal_clf.score(X_test, y_test) > 0.95 * clf.score(X_test, y_test)
+    y_pred_cal = cal_clf.predict_proba(X_test)
+    assert_allclose(np.sum(y_pred_cal, axis=1), np.ones(len(X_test)))
 
     # Check that Brier loss of calibrated classifier is smaller than
-    # loss obtained by naively turning OvR decision function to
-    # probabilities via a softmax
-    uncalibrated_brier = multiclass_brier(
-        y_test, softmax(clf.decision_function(X_test)), n_classes=n_classes
+    # loss obtained on the original classifier.
+    labels = np.arange(n_classes)
+    bs_uncal = brier_score_loss(y_test, y_pred_uncal, labels=labels)
+    bs_cal = brier_score_loss(y_test, y_pred_cal, labels=labels)
+    assert bs_cal < bs_uncal
+
+
+@pytest.mark.parametrize(
+    "estimator, expected_loss_improvement",
+    [
+        (RandomForestClassifier(max_depth=8, n_estimators=10, random_state=42), True),
+        (RandomForestClassifier(max_depth=3, n_estimators=10, random_state=42), False),
+        (
+            make_pipeline(
+                SplineTransformer(),
+                PolynomialFeatures(interaction_only=True, include_bias=False),
+                LogisticRegression(C=1e6, max_iter=1_000),
+            ),
+            True,
+        ),
+        (
+            DummyClassifier(strategy="prior"),
+            False,
+        ),
+        (GaussianNB(), False),
+    ],
+    ids=[
+        "random_forest_deep",
+        "random_forest_shallow",
+        "polynomial_low_reg",
+        "constant_classifier",
+        "gaussian_naive_bayes",
+    ],
+)
+@pytest.mark.parametrize("calibration_method", ["temperature", "sigmoid", "isotonic"])
+# @pytest.mark.parametrize("seed", [0, 1, 2])
+def test_asymptotic_multiclass_calibration_improvement(
+    estimator, expected_loss_improvement, calibration_method, global_random_seed
+):
+    """Sigmoid calibration improves or preserves multiclass proper scores.
+
+    Non-regression test inspired by the example in
+    :ref:`sphx_glr_auto_examples_calibration_plot_calibration_multiclass.py`.
+    It covers the example's base classifiers on slightly imbalanced 3-class
+    blob data (one class twice as frequent as each of the others).
+
+    All calibration methods are expected to improve the log-loss of the base
+    classifiers given enough calibration data because the log-loss is a
+    strictly proper scoring rule.
+
+    GaussianNB is already a very good fit for this problem so we do not expect
+    it to be improved by calibration. Shallow trees and dummy classifiers are
+    not a good model for this problem (underfitting) but they are still
+    expected to be well calibrated by default hence calibration should not
+    improve them much. But it should never significantly degrade their loss
+    either.
+    """
+    # Training set is small enough to make the test run fast and to make sure
+    # that some overfitting base classifiers are not perfectly calibrated by
+    # default.
+    n_train = 100
+    # Calibration is large enough to make assertions about the asymptotic
+    # behavior of the calibration estimators.
+    n_cal = 30_000
+    # Test set is large enough to get a good estimate of the population distribution.
+    n_test = 10_000
+    X, y = make_blobs(
+        n_samples=n_train + n_cal + n_test,
+        n_features=2,
+        centers=4,
+        cluster_std=5.0,
+        shuffle=True,
+        random_state=global_random_seed,
     )
-    calibrated_brier = multiclass_brier(y_test, probas, n_classes=n_classes)
+    # Make the problem more difficult and imbalanced.
+    y[y == 3] = 2
 
-    assert calibrated_brier < 1.1 * uncalibrated_brier
+    X_train, y_train = X[:n_train], y[:n_train]
+    X_cal, y_cal = X[n_train : n_train + n_cal], y[n_train : n_train + n_cal]
+    X_test, y_test = X[n_train + n_cal :], y[n_train + n_cal :]
 
-    # Test that calibration of a multiclass classifier decreases log-loss
-    # for RandomForestClassifier
-    clf = RandomForestClassifier(n_estimators=30, random_state=42)
-    clf.fit(X_train, y_train)
-    clf_probs = clf.predict_proba(X_test)
-    uncalibrated_brier = multiclass_brier(y_test, clf_probs, n_classes=n_classes)
+    estimator.fit(X_train, y_train)
+    y_pred_uncal = estimator.predict_proba(X_test)
 
-    cal_clf = CalibratedClassifierCV(clf, method=method, cv=5, ensemble=ensemble)
-    cal_clf.fit(X_train, y_train)
-    cal_clf_probs = cal_clf.predict_proba(X_test)
-    calibrated_brier = multiclass_brier(y_test, cal_clf_probs, n_classes=n_classes)
-    assert calibrated_brier < 1.1 * uncalibrated_brier
+    cal_clf = CalibratedClassifierCV(
+        FrozenEstimator(estimator), method=calibration_method
+    )
+    cal_clf.fit(X_cal, y_cal)
+    y_pred_cal = cal_clf.predict_proba(X_test)
+
+    log_loss_uncal = log_loss(y_test, y_pred_uncal)
+    log_loss_cal = log_loss(y_test, y_pred_cal)
+    if expected_loss_improvement:
+        assert log_loss_cal < 0.9 * log_loss_uncal  # at least 10% loss deacrease
+    else:
+        # Degradation should never be large. Increasing calibration and test
+        # data size would allow to reduce the 2% degradation at the cost of
+        # making the test run slower.
+        assert log_loss_cal < 1.02 * log_loss_uncal  # at most 2% loss increase
 
 
 def test_calibration_zero_probability():
@@ -422,6 +510,106 @@ def test_sigmoid_calibration():
     # arrays
     with pytest.raises(ValueError):
         _SigmoidCalibration().fit(np.vstack((exF, exF)), exY)
+
+
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic", "temperature"])
+@pytest.mark.parametrize(
+    "predictions",
+    [
+        np.array([1.0, -1.0, 0.5]),
+        np.array([[0.0, 1.0], [1.0, 0.0]]),
+        np.array([[2.0, 1.0, 0.0], [0.0, 1.0, 2.0]]),
+    ],
+    ids=["1d_binary", "2d_binary", "multiclass"],
+)
+def test_ensure_logits_decision_function(method, predictions):
+    # Apart from reshaping, this is a passthrough.
+    logits = _ensure_logits(predictions, "decision_function", method)
+    assert_allclose(logits.ravel(), predictions.ravel())
+
+
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic", "temperature"])
+@pytest.mark.parametrize(
+    "predictions",
+    [
+        np.array([0.2, 0.8]),
+        np.array([[0.8, 0.2], [0.3, 0.7]]),
+        np.array([[0.1, 0.2, 0.7], [0.5, 0.3, 0.2]]),
+    ],
+    ids=["1d_binary", "2d_binary", "multiclass"],
+)
+def test_ensure_logits_predict_proba(method, predictions):
+    if method == "isotonic":
+        # Probabilities are passed through (with binary reshaping).
+        if predictions.ndim == 1:
+            expected = predictions.reshape(-1, 1)
+        elif predictions.shape[1] == 2:
+            expected = predictions[:, 1].reshape(-1, 1)
+        else:
+            expected = predictions
+    else:
+        eps = np.finfo(predictions.dtype).eps
+        proba_clipped = predictions.clip(eps, 1 - eps)
+
+        if method == "sigmoid":
+            if predictions.ndim == 1:
+                expected = LogitLink().link(proba_clipped).reshape(-1, 1)
+            elif predictions.shape[1] == 2:
+                expected = LogitLink().link(proba_clipped[:, 1]).reshape(-1, 1)
+            else:
+                sigmoid_link = LogitLink()
+                expected = np.zeros_like(predictions)
+                for class_idx in range(predictions.shape[1]):
+                    expected[:, class_idx] = sigmoid_link.link(
+                        proba_clipped[:, class_idx]
+                    )
+        else:  # temperature
+            if predictions.ndim == 1:
+                proba_2d = np.column_stack([1 - proba_clipped, proba_clipped])
+            else:
+                proba_2d = proba_clipped
+            expected = MultinomialLogit().link(proba_2d)
+
+    scores = _ensure_logits(predictions, "predict_proba", method)
+    assert_allclose(scores, expected)
+
+
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic", "temperature"])
+def test_ensure_logits_probability_clipping(method):
+    proba = np.array([0.0, 1.0])
+    logits = _ensure_logits(proba, "predict_proba", method)
+    assert np.all(np.isfinite(logits))
+
+
+def test_ensure_logits_invalid_response_method():
+    with pytest.raises(ValueError, match="Unknown response method name"):
+        _ensure_logits(np.array([0.5]), "predict", "sigmoid")
+
+
+def test_ensure_logits_invalid_method():
+    with pytest.raises(ValueError, match="Unknown calibration method"):
+        _ensure_logits(np.array([0.5]), "predict_proba", "invalid")
+
+
+def test_get_calibration_logits_prefers_predict_proba(data):
+    """When both responses exist, calibration inputs come from predict_proba."""
+    X, y = data
+    clf = LogisticRegression().fit(X, y)
+    assert hasattr(clf, "predict_proba")
+    assert hasattr(clf, "decision_function")
+
+    _, response_method = _get_calibration_logits(clf, X, method="sigmoid")
+    assert response_method == "predict_proba"
+
+
+def test_get_calibration_logits_decision_function_fallback(data):
+    """Fall back to decision_function when predict_proba is unavailable."""
+    X, y = data
+    clf = LinearSVC(random_state=0).fit(X, y)
+    assert not hasattr(clf, "predict_proba")
+
+    _, response_method = _get_calibration_logits(clf, X, method="sigmoid")
+    assert response_method == "decision_function"
 
 
 @pytest.mark.parametrize(
