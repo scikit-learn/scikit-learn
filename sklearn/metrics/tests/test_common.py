@@ -254,12 +254,15 @@ def precision_recall_curve_padded_thresholds(*args, **kwargs):
     """
     precision, recall, thresholds = precision_recall_curve(*args, **kwargs)
 
-    xp, _, device_ = get_namespace_and_device(precision, recall, thresholds)
-    dtype_ = _max_precision_float_dtype(xp, device_)
+    xp, _, device = get_namespace_and_device(precision, recall, thresholds)
+    dtype_float = _max_precision_float_dtype(xp, device)
 
     pad_thresholds = precision.shape[0] - thresholds.shape[0]
     thresholds_padded = xp.concat(
-        [xp.astype(thresholds, dtype_), xp.full(pad_thresholds, xp.nan, device=device_)]
+        [
+            xp.astype(thresholds, dtype_float),
+            xp.full(pad_thresholds, xp.nan, device=device),
+        ]
     )
     return xp.stack([precision, recall, thresholds_padded])
 
@@ -856,6 +859,8 @@ def test_sample_order_invariance_multilabel_and_multioutput():
         y_true, y_pred, y_score, random_state=0
     )
 
+    # `METRICS_SAMPLEWISE` computes the metric per sample, thus order of samples
+    # affects output.
     for name in MULTILABELS_METRICS - METRICS_SAMPLEWISE:
         metric = ALL_METRICS[name]
         assert_allclose(
@@ -1730,6 +1735,8 @@ def check_sample_weight_invariance(name, metric, y1, y2, sample_weight=None):
         % (weighted_score, weighted_score_list, name),
     )
 
+    # `METRICS_SAMPLEWISE` computes the metric per sample, thus
+    # repeating samples is not equivalent to increasing their sample weights.
     if name not in METRICS_SAMPLEWISE:
         # check that integer weights is the same as repeated samples
         repeat_weighted_score = metric(
@@ -1906,7 +1913,7 @@ def test_multiclass_sample_weight_invariance(name):
     "name",
     sorted(
         (MULTILABELS_METRICS | CONTINUOUS_MULTILABEL_METRICS)
-        - (METRICS_WITHOUT_SAMPLE_WEIGHT | METRICS_SAMPLEWISE)
+        - METRICS_WITHOUT_SAMPLE_WEIGHT
     ),
 )
 def test_multilabel_sample_weight_invariance(name):
