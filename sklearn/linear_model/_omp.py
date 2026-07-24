@@ -320,14 +320,14 @@ def orthogonal_mp(
     (i.e. the :math:`\\ell_0` pseudo-norm) using `n_nonzero_coefs`:
 
     .. math::
-        \\underset{w}{\\operatorname{arg\\,min\\,}} ||y - Xw||^2_2
-            \\text{subject to} ||w||_0 <= n_{nonzero coefs}
+        \underset{w}{\operatorname{arg\,min\,}} ||y - Xw||^2_2
+            \text{subject to} ||w||_0 <= n_{nonzero_coefs}
 
     When parametrized by error using the parameter `tol`:
 
     .. math::
-        \\underset{w}{\\operatorname{arg\\,min\\,}} ||w||_0
-            \\text{subject to} ||y - Xw||^2_2 <= tol
+        \underset{w}{\operatorname{arg\,min\,}} ||w||_0
+            \text{subject to} ||y - Xw||^2_2 <= tol
 
     Read more in the :ref:`User Guide <omp>`.
 
@@ -663,7 +663,7 @@ class OrthogonalMatchingPursuit(RegressorMixin, MultiOutputLinearModel):
 
     .. math::
         \\underset{w}{\\operatorname{arg\\,min\\,}} ||y - Xw||^2_2
-            \\text{subject to} ||w||_0 <= n_{nonzero coefs}
+            \\text{subject to} ||w||_0 <= n_{nonzero_coefs}
 
     When parametrized by error using the parameter `tol`:
 
