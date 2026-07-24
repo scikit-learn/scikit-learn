@@ -16,6 +16,7 @@ from sklearn.metrics import (
     average_precision_score,
     balanced_accuracy_score,
     brier_score_loss,
+    calibration_error,
     classification_report,
     cohen_kappa_score,
     confusion_matrix,
@@ -267,6 +268,7 @@ CONTINUOUS_CLASSIFICATION_METRICS = {
     "unnormalized_log_loss": partial(log_loss, normalize=False),
     "hinge_loss": hinge_loss,
     "brier_score_loss": brier_score_loss,
+    "calibration_error": calibration_error,
     "roc_auc_score": roc_auc_score,  # default: average="macro"
     "weighted_roc_auc": partial(roc_auc_score, average="weighted"),
     "samples_roc_auc": partial(roc_auc_score, average="samples"),
@@ -340,6 +342,7 @@ METRIC_UNDEFINED_MULTICLASS = {
     "dcg_score",
     "ndcg_score",
     "coverage_error",
+    "calibration_error",
     # with default average='binary', multiclass is prohibited
     "precision_score",
     "recall_score",
@@ -381,6 +384,7 @@ METRICS_WITH_POS_LABEL = {
     "roc_curve",
     "precision_recall_curve",
     "det_curve",
+    "calibration_error",
     "brier_score_loss",
     "d2_brier_score",
     "precision_score",
@@ -601,6 +605,14 @@ METRICS_WITHOUT_SAMPLE_WEIGHT = {
     "weighted_ovo_roc_auc",
 }
 
+# These metrics support `sample_weight`, but integer weights are not equivalent
+# to expanding the dataset by repeating samples because their definition depends
+# on the number of samples. In particular, `calibration_error` sets the
+# number of bins to `ceil(cbrt(n_samples))` before computing quantile bins.
+METRICS_WITH_SAMPLE_WEIGHT_NOT_EQUIVALENT_TO_REPETITION = {
+    "calibration_error",
+}
+
 WEIGHT_SCALE_DEPENDENT_METRICS = {
     # 'confusion_matrix' metrics returns absolute `tps`, `fps` etc values, which
     # are scaled by weights, so will vary e.g., scaling by 3 will result in 3 * `tps`
@@ -632,6 +644,7 @@ METRICS_WITH_LOG1P_Y = {
 METRICS_SUPPORTING_MIXED_NAMESPACE = [
     "accuracy_score",
     "average_precision_score",
+    "calibration_error",
     "brier_score_loss",
     "confusion_matrix_at_thresholds",
     "d2_brier_score",
@@ -1665,17 +1678,18 @@ def check_sample_weight_invariance(name, metric, y1, y2, sample_weight=None):
         % (weighted_score, weighted_score_list, name),
     )
 
-    # check that integer weights is the same as repeated samples
-    repeat_weighted_score = metric(
-        np.repeat(y1, sample_weight, axis=0),
-        np.repeat(y2, sample_weight, axis=0),
-        sample_weight=None,
-    )
-    assert_allclose(
-        weighted_score,
-        repeat_weighted_score,
-        err_msg="Weighting %s is not equal to repeating samples" % name,
-    )
+    if name not in METRICS_WITH_SAMPLE_WEIGHT_NOT_EQUIVALENT_TO_REPETITION:
+        # check that integer weights is the same as repeated samples
+        repeat_weighted_score = metric(
+            np.repeat(y1, sample_weight, axis=0),
+            np.repeat(y2, sample_weight, axis=0),
+            sample_weight=None,
+        )
+        assert_allclose(
+            weighted_score,
+            repeat_weighted_score,
+            err_msg="Weighting %s is not equal to repeating samples" % name,
+        )
 
     # check that ignoring a fraction of the samples is equivalent to setting
     # the corresponding weights to zero
@@ -2599,6 +2613,7 @@ array_api_metric_checkers = {
         check_array_api_multilabel_classification_metric,
     ],
     # Continuous classification metrics
+    calibration_error: [check_array_api_binary_continuous_classification_metric],
     brier_score_loss: [
         check_array_api_binary_continuous_classification_metric,
         check_array_api_multiclass_continuous_classification_metric,

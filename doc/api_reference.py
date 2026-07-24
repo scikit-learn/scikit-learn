@@ -747,6 +747,7 @@ API_REFERENCE = {
                     "average_precision_score",
                     "balanced_accuracy_score",
                     "brier_score_loss",
+                    "calibration_error",
                     "class_likelihood_ratios",
                     "classification_report",
                     "cohen_kappa_score",
