@@ -2525,6 +2525,44 @@ def check_array_api_metric_pairwise(metric, array_namespace, device_name, dtype_
     )
 
 
+def check_array_api_ranking_metric(metric, array_namespace, device_name, dtype_name):
+    y_true_np = np.array(
+        [
+            [10, 0, 0, 1, 5],
+            [0, 0, 10, 5, 1],
+        ],
+        dtype=dtype_name,
+    )
+    y_score_np = np.array(
+        [
+            [0.1, 0.2, 0.3, 4, 70],
+            [5, 1, 3, 0, 50],
+        ],
+        dtype=dtype_name,
+    )
+
+    metric_kwargs_combinations = [{"sample_weight": None}]
+    metric_params = signature(metric).parameters
+    if "k" in metric_params:
+        metric_kwargs_combinations.append({"sample_weight": None, "k": 2})
+    if "ignore_ties" in metric_params:
+        metric_kwargs_combinations.append({"sample_weight": None, "ignore_ties": True})
+    metric_kwargs_combinations.append(
+        {"sample_weight": np.array([0.1, 2.0], dtype=dtype_name)}
+    )
+
+    for metric_kwargs in metric_kwargs_combinations:
+        check_array_api_metric(
+            metric,
+            array_namespace,
+            device_name,
+            dtype_name,
+            a_np=y_true_np,
+            b_np=y_score_np,
+            **metric_kwargs,
+        )
+
+
 array_api_metric_checkers = {
     # Classification metrics
     accuracy_score: [
@@ -2703,6 +2741,9 @@ array_api_metric_checkers = {
     polynomial_kernel: [check_array_api_metric_pairwise],
     rbf_kernel: [check_array_api_metric_pairwise],
     sigmoid_kernel: [check_array_api_metric_pairwise],
+    # Ranking metrics
+    dcg_score: [check_array_api_ranking_metric],
+    ndcg_score: [check_array_api_ranking_metric],
 }
 
 
