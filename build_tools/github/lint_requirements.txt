@@ -3,5 +3,5 @@
 # build_tools/update_environments_and_lock_files.py
 pytest==9.1.0
 ruff==0.12.2  # min
-mypy==1.15  # min
+pyrefly==1.1.1  # min
 cython-lint==0.21  # min

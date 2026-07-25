@@ -26,7 +26,7 @@ from sklearn.base import (
     is_classifier,
 )
 from sklearn.preprocessing import OrdinalEncoder
-from sklearn.tree import _criterion, _splitter  # type: ignore[attr-defined]
+from sklearn.tree import _criterion, _splitter
 from sklearn.tree._criterion import Criterion
 from sklearn.tree._tree import MAX_NUM_CATEGORIES_PY as MAX_NUM_CATEGORIES
 from sklearn.tree._tree import (
