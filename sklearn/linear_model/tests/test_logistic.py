@@ -2878,16 +2878,23 @@ def test_logistic_regression_array_api_compliance(
     lr_params = dict(C=1e-2, solver=solver, max_iter=500, class_weight=class_weight)
     lr_params["tol"] = 1e-6 if dtype_name == "float32" else 1e-12
 
-    lr_np = LogisticRegression(**lr_params).fit(X_np, y_np, sample_weight=sample_weight)
-    # Make sure that the reference fit converged.
-    assert lr_np.n_iter_ < lr_np.max_iter
+    # Compute the reference fit and predictions with array API dispatch explicitly
+    # disabled so that they always follow the NumPy code path, independently of
+    # the default value of the `array_api_dispatch` config flag.
+    with config_context(array_api_dispatch=False):
+        lr_np = LogisticRegression(**lr_params).fit(
+            X_np, y_np, sample_weight=sample_weight
+        )
+        # Make sure that the reference fit converged.
+        assert lr_np.n_iter_ < lr_np.max_iter
 
-    # Test that C was not too large for meaningful testing.
-    assert np.abs(lr_np.coef_).max() > 0.1
+        # Test that C was not too large for meaningful testing.
+        assert np.abs(lr_np.coef_).max() > 0.1
 
-    predict_proba_np = lr_np.predict_proba(X_np)
-    preditct_log_proba_np = lr_np.predict_log_proba(X_np)
-    prediction_np = lr_np.predict(X_np)
+        predict_proba_np = lr_np.predict_proba(X_np)
+        preditct_log_proba_np = lr_np.predict_log_proba(X_np)
+        prediction_np = lr_np.predict(X_np)
+
     if solver == "lbfgs":
         atol = _atol_for_type(dtype_name) * 10
         rtol = 1e-3 if dtype_name == "float32" else 1e-7

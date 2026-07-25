@@ -1460,9 +1460,10 @@ def check_array_api_attributes(
     X_iris_xp = xp.asarray(X_iris_np, device=device)
     y_iris_xp = xp.asarray(y_iris_np, device=device)
 
-    estimator.fit(X_iris_np, y_iris_np)
-    coef_np = estimator.coef_
-    intercept_np = estimator.intercept_
+    with config_context(array_api_dispatch=False):
+        estimator.fit(X_iris_np, y_iris_np)
+        coef_np = estimator.coef_
+        intercept_np = estimator.intercept_
 
     with config_context(array_api_dispatch=True):
         estimator_xp = clone(estimator).fit(X_iris_xp, y_iris_xp)
@@ -1535,9 +1536,11 @@ def test_ridge_classifier_multilabel_array_api(
     X, y = make_multilabel_classification(random_state=0)
     X_np = X.astype(dtype_name)
     y_np = y.astype(dtype_name)
-    ridge_np = estimator.fit(X_np, y_np)
-    pred_np = ridge_np.predict(X_np)
-    classes_np = ridge_np.classes_.copy()
+    with config_context(array_api_dispatch=False):
+        ridge_np = estimator.fit(X_np, y_np)
+        pred_np = ridge_np.predict(X_np)
+        classes_np = ridge_np.classes_.copy()
+
     with config_context(array_api_dispatch=True):
         X_xp, y_xp = xp.asarray(X_np, device=device), xp.asarray(y_np, device=device)
         ridge_xp = estimator.fit(X_xp, y_xp)
@@ -1562,8 +1565,9 @@ def test_ridge_per_target_alpha_array_api(array_namespace, device_name, dtype_na
     y_np = y.astype(dtype_name)
     alphas = np.asarray([1e-2, 0.1, 1.0], dtype=dtype_name)
 
-    ridge_np = Ridge(alpha=alphas, solver="svd").fit(X_np, y_np)
-    pred_np = ridge_np.predict(X_np)
+    with config_context(array_api_dispatch=False):
+        ridge_np = Ridge(alpha=alphas, solver="svd").fit(X_np, y_np)
+        pred_np = ridge_np.predict(X_np)
 
     with config_context(array_api_dispatch=True):
         X_xp, y_xp = xp.asarray(X_np, device=device), xp.asarray(y_np, device=device)

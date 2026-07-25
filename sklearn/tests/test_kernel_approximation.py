@@ -371,7 +371,8 @@ def test_nystroem_approximation_array_api(
     X_xp = xp.asarray(X_np, device=device)
 
     nystroem = Nystroem(n_components=n_components, kernel=kernel, random_state=0)
-    X_np_transformed = nystroem.fit_transform(X_np)
+    with config_context(array_api_dispatch=False):
+        X_np_transformed = nystroem.fit_transform(X_np)
 
     with config_context(array_api_dispatch=True):
         X_xp_transformed = nystroem.fit_transform(X_xp)
