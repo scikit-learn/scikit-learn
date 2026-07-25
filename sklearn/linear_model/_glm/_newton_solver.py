@@ -20,7 +20,7 @@ from sklearn.linear_model._base import _pre_fit
 from sklearn.linear_model._cd_fast import (
     enet_coordinate_descent,
     enet_coordinate_descent_gram,
-    sparse_enet_coordinate_descent,
+    enet_coordinate_descent_sparse,
 )
 from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
@@ -1284,7 +1284,7 @@ class NewtonCDSolver(NewtonSolver):
       again H @ coef_newton = -G (without L2 penalty).
 
     This minimization problem is then solved by enet_coordinate_descent or
-    sparse_enet_coordinate_descent.
+    enet_coordinate_descent_sparse.
 
     Note that this solver can naturally deal with sparse X.
 
@@ -1431,7 +1431,7 @@ class NewtonCDSolver(NewtonSolver):
                 # Ignore warnings that add little information for users.
                 warnings.simplefilter("ignore", ConvergenceWarning)
                 if sparse.issparse(X):
-                    w, gap, inner_tol, n_inner_iter = sparse_enet_coordinate_descent(
+                    w, gap, inner_tol, n_inner_iter = enet_coordinate_descent_sparse(
                         w=w,
                         alpha=self.l1_reg_strength,
                         beta=self.l2_reg_strength,
