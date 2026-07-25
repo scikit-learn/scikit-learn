@@ -14,6 +14,7 @@ User Guide
    metadata_routing.rst
    inspection.rst
    visualizations.rst
+   callbacks.rst
    data_transforms.rst
    datasets.rst
    computing.rst

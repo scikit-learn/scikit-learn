@@ -33,15 +33,15 @@
 .. |PythonMinVersion| replace:: 3.11
 .. |NumPyMinVersion| replace:: 1.24.1
 .. |SciPyMinVersion| replace:: 1.10.0
-.. |JoblibMinVersion| replace:: 1.3.0
+.. |JoblibMinVersion| replace:: 1.4.0
 .. |NarwhalsMinVersion| replace:: 2.0.1
-.. |ThreadpoolctlMinVersion| replace:: 3.2.0
+.. |ThreadpoolctlMinVersion| replace:: 3.5.0
 .. |MatplotlibMinVersion| replace:: 3.6.1
 .. |Scikit-ImageMinVersion| replace:: 0.22.0
 .. |PandasMinVersion| replace:: 1.5.0
 .. |SeabornMinVersion| replace:: 0.13.0
 .. |PytestMinVersion| replace:: 7.1.2
-.. |PlotlyMinVersion| replace:: 5.18.0
+.. |PlotlyMinVersion| replace:: 5.22.0
 
 .. image:: https://raw.githubusercontent.com/scikit-learn/scikit-learn/main/doc/logos/scikit-learn-logo.png
   :target: https://scikit-learn.org/
@@ -54,7 +54,8 @@ of Code project, and since then many volunteers have contributed. See
 the `About us <https://scikit-learn.org/dev/about.html#authors>`__ page
 for a list of core contributors.
 
-It is currently maintained by a team of volunteers.
+It is currently maintained by a community of contributors, with volunteers but also `support from several
+organisations <https://scikit-learn.org/dev/institutional_support.html>`__.
 
 Website: https://scikit-learn.org
 
@@ -161,8 +162,6 @@ The project was started in 2007 by David Cournapeau as a Google Summer
 of Code project, and since then many volunteers have contributed. See
 the `About us <https://scikit-learn.org/dev/about.html#authors>`__ page
 for a list of core contributors.
-
-The project is currently maintained by a team of volunteers.
 
 **Note**: `scikit-learn` was previously referred to as `scikits.learn`.
 

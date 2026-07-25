@@ -12,12 +12,8 @@ from sklearn.utils._typedefs cimport (
 from sklearn.tree._splitter cimport Splitter, SplitRecord
 
 from sklearn.tree._splitter cimport Splitter, SplitRecord
-from sklearn.tree._utils cimport SplitValue, Node
-from sklearn.utils._bitset cimport BITSET_INNER_BITS, BITSET_LENGTH
-
-
-cdef enum:
-    MAX_NUM_CATEGORIES = BITSET_LENGTH * BITSET_INNER_BITS
+from sklearn.tree._utils cimport Node
+from sklearn.utils._bitset cimport BITSET_DTYPE_C
 
 
 cdef struct ParentInfo:
@@ -40,7 +36,7 @@ cdef class Tree:
     cdef public intp_t n_outputs         # Number of outputs in y
     cdef public intp_t max_n_classes     # max(n_classes)
     cdef intp_t* n_categories            # (n_features,) array giving number of
-    #                                    # categories (<0 for non-categorical)
+    #                                    # categories (-1 for non-categorical)
 
     # Inner structures: values are stored separately from node structure,
     # since size is determined at runtime.
@@ -54,8 +50,8 @@ cdef class Tree:
     # Methods
     cdef intp_t _add_node(self, intp_t parent, bint is_left, bint is_leaf,
                           intp_t feature,
-                          SplitValue split_value,
-                          uint8_t split_kind,
+                          float64_t threshold,
+                          BITSET_DTYPE_C left_cat_bitset,
                           float64_t impurity,
                           intp_t n_node_samples,
                           float64_t weighted_n_node_samples,
@@ -106,8 +102,7 @@ cdef class TreeBuilder:
         object X,
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight=*,
-        const uint8_t[::1] missing_values_in_feature_mask=*,
-        const intp_t[::1] n_categories=*
+        const uint8_t[::1] missing_values_in_feature_mask=*
     )
 
     cdef _check_input(

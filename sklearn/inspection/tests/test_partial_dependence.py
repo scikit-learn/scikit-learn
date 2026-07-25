@@ -557,8 +557,8 @@ def test_partial_dependence_recursion_decision_tree_missing_target_feature():
 
     est = DecisionTreeRegressor(max_depth=1, random_state=0).fit(X, y)
     assert est.tree_.missing_go_to_left[0]
-    custom_values = {0: [0.0, np.nan, 1.0]}
 
+    custom_values = {0: [0.0, np.nan, 1.0]}
     recursion = partial_dependence(
         est, X, features=[0], method="recursion", custom_values=custom_values
     )
@@ -887,7 +887,7 @@ def test_partial_dependence_pipeline_custom_values(
 @pytest.mark.parametrize(
     "estimator",
     [
-        LogisticRegression(max_iter=1000, random_state=0),
+        LogisticRegression(max_iter=1000),
         GradientBoostingClassifier(random_state=0, n_estimators=5),
     ],
     ids=["estimator-brute", "estimator-recursion"],
@@ -1001,9 +1001,7 @@ def test_partial_dependence_feature_type(features, custom_values, expected_pd_sh
         (StandardScaler(), [iris.feature_names[i] for i in (0, 2)]),
         (RobustScaler(), [iris.feature_names[i] for i in (1, 3)]),
     )
-    pipe = make_pipeline(
-        preprocessor, LogisticRegression(max_iter=1000, random_state=0)
-    )
+    pipe = make_pipeline(preprocessor, LogisticRegression(max_iter=1000))
     pipe.fit(df, iris.target)
     pdp_pipe = partial_dependence(
         pipe,

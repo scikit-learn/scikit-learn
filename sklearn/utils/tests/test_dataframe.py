@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from sklearn._min_dependencies import dependent_packages
-from sklearn.utils._dataframe import is_df_or_series, is_pandas_df, is_polars_df
+from sklearn.utils._dataframe import is_df_or_series, is_polars_df
 from sklearn.utils._testing import _convert_container
 
 
@@ -14,31 +14,6 @@ def test_is_df_or_series(constructor_name):
 
     assert is_df_or_series(df)
     assert not is_df_or_series(np.asarray([1, 2, 3]))
-
-
-@pytest.mark.parametrize("constructor_name", ["pyarrow", "pandas", "polars"])
-def test_is_pandas_df_other_libraries(constructor_name):
-    df = _convert_container([[1, 4, 2], [3, 3, 6]], constructor_name)
-    if constructor_name in ("pyarrow", "polars"):
-        assert not is_pandas_df(df)
-    else:
-        assert is_pandas_df(df)
-
-
-def test_is_pandas_df():
-    """Check behavior of is_pandas_df when pandas is installed."""
-    pd = pytest.importorskip("pandas")
-    df = pd.DataFrame([[1, 2, 3]])
-    assert is_pandas_df(df)
-    assert not is_pandas_df(np.asarray([1, 2, 3]))
-    assert not is_pandas_df(1)
-
-
-def test_is_pandas_df_pandas_not_installed(hide_available_pandas):
-    """Check is_pandas_df when pandas is not installed."""
-
-    assert not is_pandas_df(np.asarray([1, 2, 3]))
-    assert not is_pandas_df(1)
 
 
 @pytest.mark.parametrize(

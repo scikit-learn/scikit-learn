@@ -4,10 +4,11 @@
 import warnings
 from functools import partial
 
+import narwhals.stable.v2 as nw
 import numpy as np
 
 from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
-from sklearn.utils._dataframe import is_pandas_df, is_polars_df
+from sklearn.utils._dataframe import is_polars_df
 from sklearn.utils._param_validation import StrOptions
 from sklearn.utils._repr_html.estimator import _VisualBlock
 from sklearn.utils._set_output import _get_adapter_from_container, _get_output_config
@@ -301,7 +302,9 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
                 "a {0} DataFrame to follow the `set_output` API  or `feature_names_out`"
                 " should be defined."
             )
-            if output_config == "pandas" and not is_pandas_df(out):
+            if output_config == "pandas" and not nw.dependencies.is_pandas_dataframe(
+                out
+            ):
                 warnings.warn(warn_msg.format("pandas"))
             elif output_config == "polars" and not is_polars_df(out):
                 warnings.warn(warn_msg.format("polars"))

@@ -338,6 +338,9 @@ def test_cross_validate_many_jobs():
     cross_validate(grid, X, y, n_jobs=2)
 
 
+# TODO(1.12): remove the filterwarnings when the default value of average in
+# precision_recall_fscore_support is changed.
+@pytest.mark.filterwarnings("ignore:.*default value of `average`.*:FutureWarning")
 def test_cross_validate_invalid_scoring_param():
     X, y = make_classification(random_state=0)
     estimator = MockClassifier()
@@ -394,7 +397,7 @@ def test_cross_validate_array_function_not_called():
     """Check that `__array_function__` (NEP18) is not called."""
     X = _NotAnArray([[1, 1], [1, 2], [1, 3], [1, 4], [2, 1], [2, 2], [2, 3], [2, 4]])
     y = _NotAnArray([1, 1, 1, 2, 2, 2, 1, 1])
-    estimator = LogisticRegression(random_state=0)
+    estimator = LogisticRegression()
     cross_validate(estimator, X, y, cv=2)
 
 
@@ -1147,7 +1150,7 @@ def test_cross_val_predict_unbalanced():
     )
     # Change the first sample to a new class
     y[0] = 2
-    clf = LogisticRegression(random_state=1)
+    clf = LogisticRegression()
     cv = StratifiedKFold(n_splits=2)
     train, test = list(cv.split(X, y))
     yhat_proba = cross_val_predict(clf, X, y, cv=cv, method="predict_proba")
@@ -1568,30 +1571,6 @@ def test_learning_curve_incremental_learning_params():
             error_score="raise",
         )
 
-    err_msg = "Fit parameter sample_weight has length 3; expected"
-    with pytest.raises(AssertionError, match=err_msg):
-        learning_curve(
-            estimator,
-            X,
-            y,
-            cv=3,
-            exploit_incremental_learning=True,
-            train_sizes=np.linspace(0.1, 1.0, 10),
-            error_score="raise",
-            params={"sample_weight": np.ones(3)},
-        )
-
-    learning_curve(
-        estimator,
-        X,
-        y,
-        cv=3,
-        exploit_incremental_learning=True,
-        train_sizes=np.linspace(0.1, 1.0, 10),
-        error_score="raise",
-        params={"sample_weight": np.ones(2)},
-    )
-
 
 def test_validation_curve():
     X, y = make_classification(
@@ -1896,7 +1875,7 @@ def test_gridsearchcv_cross_val_predict_with_method():
     iris = load_iris()
     X, y = iris.data, iris.target
     X, y = shuffle(X, y, random_state=0)
-    est = GridSearchCV(LogisticRegression(random_state=42), {"C": [0.1, 1]}, cv=2)
+    est = GridSearchCV(LogisticRegression(), {"C": [0.1, 1]}, cv=2)
     for method in ["decision_function", "predict_proba", "predict_log_proba"]:
         check_cross_val_predict_multiclass(est, X, y, method)
 
@@ -2505,7 +2484,8 @@ def test_groups_with_routing_validation(func, extra_args):
         (cross_val_score, {}),
         (cross_val_predict, {}),
         (learning_curve, {}),
-        (permutation_test_score, {}),
+        # Few permutations: this test only checks the params=None code path.
+        (permutation_test_score, {"n_permutations": 5}),
         (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
     ],
 )
@@ -2575,7 +2555,7 @@ def test_passed_unrequested_metadata(func, extra_args):
         (cross_val_score, {}),
         (cross_val_predict, {}),
         (learning_curve, {}),
-        (permutation_test_score, {}),
+        (permutation_test_score, {"n_permutations": 20}),
         (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
     ],
 )
@@ -2592,8 +2572,12 @@ def test_validation_functions_routing(func, extra_args):
         groups="split_groups", metadata="split_metadata"
     )
     estimator_registry = _Registry()
-    estimator = ConsumingClassifier(registry=estimator_registry).set_fit_request(
-        sample_weight="fit_sample_weight", metadata="fit_metadata"
+    estimator = (
+        ConsumingClassifier(registry=estimator_registry)
+        .set_fit_request(sample_weight="fit_sample_weight", metadata="fit_metadata")
+        .set_partial_fit_request(
+            sample_weight="fit_sample_weight", metadata="fit_metadata"
+        )
     )
 
     n_samples = _num_samples(X)
@@ -2643,7 +2627,7 @@ def test_validation_functions_routing(func, extra_args):
     for _scorer in scorer_registry:
         check_recorded_metadata(
             obj=_scorer,
-            method="score",
+            method="consuming_metric",
             parent=func.__name__,
             split_params=("sample_weight", "metadata"),
             sample_weight=score_weights,
@@ -2748,7 +2732,8 @@ def test_cross_val_predict_array_api_compliance(
     with config_context(array_api_dispatch=True):
         pred_xp = cross_val_predict(estimator, X_xp, y_xp, cv=cv)
 
-    pred_np = cross_val_predict(estimator, X_np, y_np, cv=cv)
+    with config_context(array_api_dispatch=False):
+        pred_np = cross_val_predict(estimator, X_np, y_np, cv=cv)
     assert_allclose(
         move_to(pred_xp, xp=np, device="cpu"), pred_np, atol=_atol_for_type(dtype_name)
     )

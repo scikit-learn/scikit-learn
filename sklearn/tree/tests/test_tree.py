@@ -44,11 +44,9 @@ from sklearn.tree._classes import (
     CRITERIA_CLF,
     CRITERIA_REG,
     DENSE_SPLITTERS,
-    MAX_NUM_CATEGORIES,
     SPARSE_SPLITTERS,
 )
 from sklearn.tree._criterion import _py_precompute_absolute_errors
-from sklearn.tree._partitioner import _py_sort
 from sklearn.tree._tree import (
     NODE_DTYPE,
     TREE_LEAF,
@@ -62,6 +60,7 @@ from sklearn.tree._tree import Tree as CythonTree
 from sklearn.utils import compute_sample_weight
 from sklearn.utils._array_api import xpx
 from sklearn.utils._testing import (
+    _convert_container,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
@@ -704,6 +703,16 @@ def test_error():
         with pytest.raises(NotFittedError):
             est.apply(T)
 
+        # test categorical features with more than 255 categories
+        X_cat = np.array([f"cat_{idx}" for idx in range(257)], dtype=object).reshape(
+            -1, 1
+        )
+        y_cat = np.arange(257) % 2
+        with pytest.raises(
+            ValueError, match=r"Values for categorical features.*\[0, 255\]"
+        ):
+            TreeEstimator(categorical_features=[0], random_state=0).fit(X_cat, y_cat)
+
     # non positive target for Poisson splitting Criterion
     est = DecisionTreeRegressor(criterion="poisson")
     with pytest.raises(ValueError, match="y is not positive.*Poisson"):
@@ -714,7 +723,7 @@ def test_error():
 
 def test_min_samples_split():
     """Test min_samples_split parameter"""
-    X = np.asfortranarray(iris.data, dtype=tree._tree.DTYPE)
+    X = np.asfortranarray(iris.data, dtype=np.float32)
     y = iris.target
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
@@ -745,7 +754,7 @@ def test_min_samples_split():
 
 def test_min_samples_leaf():
     # Test if leaves contain more than leaf_count training examples
-    X = np.asfortranarray(iris.data, dtype=tree._tree.DTYPE)
+    X = np.asfortranarray(iris.data, dtype=np.float32)
     y = iris.target
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
@@ -1715,7 +1724,7 @@ def test_min_weight_leaf_split_level(name, sparse_container):
 
 @pytest.mark.parametrize("name", ALL_TREES)
 def test_public_apply_all_trees(name):
-    X_small32 = X_small.astype(tree._tree.DTYPE, copy=False)
+    X_small32 = X_small.astype(np.float32, copy=False)
 
     est = ALL_TREES[name]()
     est.fit(X_small, y_small)
@@ -1725,7 +1734,7 @@ def test_public_apply_all_trees(name):
 @pytest.mark.parametrize("name", SPARSE_TREES)
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_public_apply_sparse_trees(name, csr_container):
-    X_small32 = csr_container(X_small.astype(tree._tree.DTYPE, copy=False))
+    X_small32 = csr_container(X_small.astype(np.float32, copy=False))
 
     est = ALL_TREES[name]()
     est.fit(X_small, y_small)
@@ -2103,13 +2112,13 @@ def assert_is_subtree(tree, subtree):
 @pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS + CSR_CONTAINERS)
 def test_apply_path_readonly_all_trees(name, splitter, sparse_container):
     dataset = DATASETS["clf_small"]
-    X_small = dataset["X"].astype(tree._tree.DTYPE, copy=False)
+    X_small = dataset["X"].astype(np.float32, copy=False)
     if sparse_container is None:
         X_readonly = create_memmap_backed_data(X_small)
     else:
         X_readonly = sparse_container(dataset["X"])
 
-        X_readonly.data = np.array(X_readonly.data, dtype=tree._tree.DTYPE)
+        X_readonly.data = np.array(X_readonly.data, dtype=np.float32)
         (
             X_readonly.data,
             X_readonly.indices,
@@ -2118,7 +2127,7 @@ def test_apply_path_readonly_all_trees(name, splitter, sparse_container):
             (X_readonly.data, X_readonly.indices, X_readonly.indptr)
         )
 
-    y_readonly = create_memmap_backed_data(np.array(y_small, dtype=tree._tree.DTYPE))
+    y_readonly = create_memmap_backed_data(np.array(y_small, dtype=np.float32))
     est = ALL_TREES[name](splitter=splitter)
     est.fit(X_readonly, y_readonly)
     assert_array_equal(est.predict(X_readonly), est.predict(X_small))
@@ -2331,7 +2340,7 @@ def get_different_alignment_node_ndarray(node_ndarray):
 
 def reduce_tree_with_different_bitness(tree):
     new_dtype = np.int64 if _IS_32BIT else np.int32
-    tree_cls, (n_features, n_classes, n_outputs, n_categories_in_feature), state = (
+    tree_cls, (n_features, n_classes, n_outputs, n_categories), state = (
         tree.__reduce__()
     )
     new_n_classes = n_classes.astype(new_dtype, casting="same_kind")
@@ -2341,7 +2350,7 @@ def reduce_tree_with_different_bitness(tree):
 
     return (
         tree_cls,
-        (n_features, new_n_classes, n_outputs, n_categories_in_feature),
+        (n_features, new_n_classes, n_outputs, n_categories),
         new_state,
     )
 
@@ -2559,14 +2568,25 @@ def test_min_sample_split_1_error(Tree):
 
 # TODO(1.11): remove the deprecated friedman_mse criterion parametrization
 @pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
+@pytest.mark.parametrize(
+    "categorical_features", [None, [True]], ids=["numerical", "categorical"]
+)
 @pytest.mark.parametrize("criterion", REG_CRITERIONS)
-def test_missing_values_best_splitter_on_equal_nodes_no_missing(criterion):
+def test_missing_values_best_splitter_on_equal_nodes_no_missing(
+    criterion, categorical_features
+):
     """Check missing values goes to correct node during predictions."""
     X = np.array([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
     y = np.array([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
     node_value_func = np.median if criterion == "absolute_error" else np.mean
 
-    dtc = DecisionTreeRegressor(random_state=42, max_depth=1, criterion=criterion)
+    params = dict(
+        random_state=42,
+        max_depth=1,
+        criterion=criterion,
+        categorical_features=categorical_features,
+    )
+    dtc = DecisionTreeRegressor(**params)
     dtc.fit(X, y)
 
     # Goes to right node because it has the most data points
@@ -2577,7 +2597,7 @@ def test_missing_values_best_splitter_on_equal_nodes_no_missing(criterion):
     X_equal = X[:-1]
     y_equal = y[:-1]
 
-    dtc = DecisionTreeRegressor(random_state=42, max_depth=1, criterion=criterion)
+    dtc = DecisionTreeRegressor(**params)
     dtc.fit(X_equal, y_equal)
 
     # Goes to right node because the implementation sets:
@@ -2983,7 +3003,7 @@ def test_build_pruned_tree_py():
 
     n_classes = np.atleast_1d(tree.n_classes_)
     pruned_tree = CythonTree(
-        tree.n_features_in_, n_classes, tree.n_outputs_, tree.n_categories_in_feature_
+        tree.n_features_in_, n_classes, tree.n_outputs_, tree.tree_._n_categories
     )
 
     # only keep the root note
@@ -2999,7 +3019,7 @@ def test_build_pruned_tree_py():
 
     # now keep all the leaves
     pruned_tree = CythonTree(
-        tree.n_features_in_, n_classes, tree.n_outputs_, tree.n_categories_in_feature_
+        tree.n_features_in_, n_classes, tree.n_outputs_, tree.tree_._n_categories
     )
     leave_in_subtree = np.zeros(tree.tree_.node_count, dtype=np.uint8)
     leave_in_subtree[1:] = 1
@@ -3019,7 +3039,7 @@ def test_build_pruned_tree_infinite_loop():
     tree.fit(iris.data, iris.target)
     n_classes = np.atleast_1d(tree.n_classes_)
     pruned_tree = CythonTree(
-        tree.n_features_in_, n_classes, tree.n_outputs_, tree.n_categories_in_feature_
+        tree.n_features_in_, n_classes, tree.n_outputs_, tree.tree_._n_categories
     )
 
     # only keeping one child as a leaf results in an improper tree
@@ -3029,28 +3049,6 @@ def test_build_pruned_tree_infinite_loop():
         ValueError, match="Node has reached a leaf in the original tree"
     ):
         _build_pruned_tree_py(pruned_tree, tree.tree_, leave_in_subtree)
-
-
-def test_sort_log2_build():
-    """Non-regression test for gh-30554.
-
-    Using log2 and log in sort correctly sorts feature_values, but the tie breaking is
-    different which can results in placing samples in a different order.
-    """
-    rng = np.random.default_rng(75)
-    some = rng.normal(loc=0.0, scale=10.0, size=10).astype(np.float32)
-    feature_values = np.concatenate([some] * 5)
-    samples = np.arange(50, dtype=np.intp)
-    _py_sort(feature_values, samples, 50)
-    # fmt: off
-    # no black reformatting for this specific array
-    expected_samples = [
-        0, 40, 30, 20, 10, 29, 39, 19, 49,  9, 45, 15, 35,  5, 25, 11, 31,
-        41,  1, 21, 22, 12,  2, 42, 32, 23, 13, 43,  3, 33,  6, 36, 46, 16,
-        26,  4, 14, 24, 34, 44, 27, 47,  7, 37, 17,  8, 38, 48, 28, 18
-    ]
-    # fmt: on
-    assert_array_equal(samples, expected_samples)
 
 
 def test_absolute_errors_precomputation_function(global_random_seed):
@@ -3174,7 +3172,7 @@ def test_friedman_mse_deprecation():
     "categorical_features, match",
     [
         # Wrong dtype (float)
-        ([0.5, 1.5], "must be an array-like of bool or int"),
+        ([0.5, 1.5], "must be an array-like of bool, int or str"),
         # Boolean mask wrong length
         ([False, False, False], "boolean mask must have shape"),
         # Index too large
@@ -3186,8 +3184,9 @@ def test_friedman_mse_deprecation():
 def test_invalid_categorical(name, categorical_features, match):
     """Test that invalid categorical_features specifications raise errors."""
     Tree = ALL_TREES[name]
+    X_array = np.asarray(X)
     with pytest.raises(ValueError, match=match):
-        Tree(categorical_features=categorical_features).fit(X, y)
+        Tree(categorical_features=categorical_features).fit(X_array, y)
 
 
 @pytest.mark.parametrize("name", ALL_TREES)
@@ -3208,15 +3207,16 @@ def test_no_sparse_with_categorical(name):
 
     Tree = ALL_TREES[name]
 
-    with pytest.raises(
-        NotImplementedError, match="Categorical features not supported with sparse"
-    ):
-        Tree(categorical_features=[3, 4]).fit(X_sparse, y)
+    # TODO: ExtraTree defaults to splitter="random" which rejects categorical
+    # before the sparse check even runs — skip those here since that
+    # validation is tested separately.
+    if "ExtraTree" in name:
+        pytest.skip("ExtraTree uses random splitter; categorical rejected earlier")
 
     with pytest.raises(
         NotImplementedError, match="Categorical features not supported with sparse"
     ):
-        Tree(categorical_features=[0]).fit(X_sparse, y)
+        Tree(categorical_features=[3, 4]).fit(X_sparse, y)
 
     with pytest.raises(
         NotImplementedError, match="Categorical features not supported with sparse"
@@ -3233,108 +3233,189 @@ def test_no_sparse_with_categorical(name):
 
 
 @pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
+def test_fit_categorical_with_monotonic_constraint(Tree):
+    X = np.array([[0.0], [1.0], [0.0], [1.0]], dtype=np.float64)
+    y = np.array([0, 1, 0, 1])
+
+    with pytest.raises(
+        ValueError, match="Categorical features cannot have monotonic constraints"
+    ):
+        Tree(categorical_features=[0], monotonic_cst=[1], random_state=0).fit(X, y)
+
+
+def test_predict_sparse_int64_indices_raises():
+    X = np.array([[0.0], [1.0]], dtype=np.float64)
+    y = np.array([0, 1])
+    est = DecisionTreeClassifier(random_state=0).fit(X, y)
+
+    X_sparse = scipy.sparse.csr_matrix(X.astype(np.float32))
+    X_sparse.indices = X_sparse.indices.astype(np.int64)
+    X_sparse.indptr = X_sparse.indptr.astype(np.int64)
+
+    with pytest.raises(ValueError, match="No support for np.int64 index"):
+        est.predict(X_sparse)
+
+
+@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
 @pytest.mark.parametrize(
-    "X_test, match",
+    "X, raw_categories",
     [
-        (np.array([[2.0]], dtype=np.float64), "Found unknown categories"),
-        (np.array([[0.5]], dtype=np.float64), "Found non-integer values"),
-        (np.array([[-1.0]], dtype=np.float64), "Found negative values"),
         (
+            np.array([[0.0], [0.0], [2.0], [2.0]], dtype=np.float64),
+            np.array([0.0, 2.0], dtype=np.float64),
+        ),
+        (
+            np.array([[1.0], [1.0], [2.0], [2.0]], dtype=np.float64),
+            np.array([1.0, 2.0], dtype=np.float64),
+        ),
+        (
+            np.array([["b"], ["b"], ["d"], ["d"]], dtype=object),
+            np.array(["b", "d"], dtype=object),
+        ),
+    ],
+    ids=["numeric_gap", "numeric_not_zero_based", "string_labels"],
+)
+def test_fit_categorical_raw_labels_are_reencoded(Tree, X, raw_categories):
+    """Check raw categorical labels are re-encoded for fitting and prediction."""
+    # Raw category labels need not already be dense integer codes.
+    y = np.array([0, 0, 1, 1])
+    est = Tree(categorical_features=[0], random_state=0).fit(X, y)
+
+    assert_array_equal(est.is_categorical_, [True])
+    assert_array_equal(est.tree_._n_categories, [2])
+    assert_array_equal(est._categorical_encoder.categories_[0], raw_categories)
+    assert_array_equal(est._categorical_encoder.transform(X).ravel(), [0, 0, 1, 1])
+    assert_array_equal(est.predict(X), y)
+
+
+@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
+@pytest.mark.parametrize(
+    "X, X_missing, X_unknown",
+    [
+        (
+            np.array([[0.0], [0.0], [1.0], [1.0], [np.nan], [np.nan]]),
             np.array([[np.nan]], dtype=np.float64),
-            "Missing values are not supported in categorical features",
+            [[2]],
+        ),
+        (
+            np.array([["a"], ["a"], ["b"], ["b"], [np.nan], [np.nan]], dtype=object),
+            np.array([[np.nan]], dtype=object),
+            [["c"]],
         ),
     ],
 )
-def test_predict_invalid_categorical_values(Tree, X_test, match):
-    X = np.array([[0.0], [1.0], [0.0], [1.0]], dtype=np.float64)
-    if Tree is DecisionTreeClassifier:
-        y = np.array([0, 1, 0, 1])
-    else:
-        y = np.array([0.0, 1.0, 0.0, 1.0])
+def test_fit_categorical_missing_values(Tree, X, X_missing, X_unknown):
+    y = np.array([0, 0, 0, 0, 1, 1])
 
+    est = Tree(categorical_features=[0], max_depth=1, random_state=0).fit(X, y)
+
+    assert_array_equal(est.tree_._n_categories, [2])
+    non_missing_prediction = est.predict(X[:1])
+    missing_prediction = est.predict(X_missing)
+
+    assert_array_equal(non_missing_prediction, [0])
+    assert missing_prediction[0] != non_missing_prediction[0]
+
+    unknown_prediction = est.predict(X_unknown)
+    assert_array_equal(unknown_prediction, missing_prediction)
+
+
+@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
+@pytest.mark.parametrize(
+    "X, X_test",
+    [
+        (
+            np.array([[0.0], [1.0], [0.0], [1.0]], dtype=np.float64),
+            np.array([[np.nan]], dtype=np.float64),
+        ),
+        (
+            np.array([["a"], ["b"], ["a"], ["b"]], dtype=object),
+            np.array([[np.nan]], dtype=object),
+        ),
+    ],
+)
+def test_predict_missing_category_without_fit_missing_values(Tree, X, X_test):
+    y = np.array([0, 1, 0, 1])
     est = Tree(categorical_features=[0], random_state=0).fit(X, y)
-    with pytest.raises(ValueError, match=match):
-        est.predict(X_test)
+
+    assert est.predict(X_test).shape == (1,)
 
 
 @pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
-@pytest.mark.parametrize("splitter", ["best", "random"])
-@pytest.mark.parametrize(
-    "X",
-    [
-        np.array([[0.0], [0.0], [2.0], [2.0]], dtype=np.float64),
-        np.array([[1.0], [1.0], [2.0], [2.0]], dtype=np.float64),
-    ],
-)
-def test_fit_invalid_categorical_non_contiguous_values(Tree, splitter, X):
-    y = np.array([0, 0, 1, 1])
-    with pytest.raises(ValueError, match="contiguous integer categories starting at 0"):
-        Tree(splitter=splitter, categorical_features=[0], random_state=0).fit(X, y)
+def test_predict_categorical_list_input(Tree):
+    X = np.array([["a"], ["b"], ["a"], ["b"]], dtype=object)
+    y = np.array([0, 1, 0, 1])
+    est = Tree(categorical_features=[0], random_state=0).fit(X, y)
+
+    assert_array_equal(est.predict([["a"], ["b"]]), y[:2])
+    assert_array_equal(est.predict([["a"], ["b"]], check_input=False), y[:2])
 
 
-def test_categorical_validation_uses_range_bounded_contiguity_check(monkeypatch):
-    calls = {"bincount": 0, "unique": 0}
-    orig_bincount = np.bincount
-    orig_unique = np.unique
-
-    def counting_bincount(x):
-        calls["bincount"] += 1
-        return orig_bincount(x)
-
-    def counting_unique(x):
-        calls["unique"] += 1
-        return orig_unique(x)
-
-    monkeypatch.setattr(np, "bincount", counting_bincount)
-    monkeypatch.setattr(np, "unique", counting_unique)
-
-    est = DecisionTreeClassifier(splitter="random", categorical_features=[0])
-    is_categorical = np.array([True])
-
-    X_small = np.arange(MAX_NUM_CATEGORIES, dtype=np.float64).reshape(-1, 1)
-    est._validate_categorical_values(X_small, is_categorical)
-    assert calls == {"bincount": 1, "unique": 0}
-
-    X_large = np.arange(MAX_NUM_CATEGORIES + 1, dtype=np.float64).reshape(-1, 1)
-    est._validate_categorical_values(X_large, is_categorical)
-    assert calls == {"bincount": 1, "unique": 1}
-
-
-@pytest.mark.parametrize("Tree", ALL_TREES.values())
-def test_n_random_categorical_splits_validation(Tree):
-    est = Tree(n_random_categorical_splits=-1)
-    with pytest.raises(
-        ValueError, match=r"'n_random_categorical_splits'.*range \[0, inf\)"
-    ):
-        est.fit([[0.0], [1.0]], [0, 1])
-
-
-@pytest.mark.parametrize(
-    "data_params",
-    [
-        {
-            "n_rows": 2000,
-            "n_numerical": 0,
-            "n_categorical": 5,
-            "cat_size": 4,
-            "n_num_meaningful": 0,
-            "n_cat_meaningful": 3,
-        },
-    ],
-)
 @pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
-def test_categorical_better_than_ordinal(Tree, data_params, global_random_seed):
+@pytest.mark.parametrize(
+    "constructor_name, categorical_features",
+    [
+        ("array", [1]),
+        ("pandas", ["f_cat"]),
+        ("pandas", "from_dtype"),
+        ("polars", ["f_cat"]),
+        ("polars", "from_dtype"),
+    ],
+)
+def test_categorical_features_mixed_containers(
+    Tree, constructor_name, categorical_features
+):
+    """Check categorical feature detection with mixed array and dataframe inputs."""
+    if constructor_name != "array":
+        pytest.importorskip(constructor_name)
+    X = np.array(
+        [
+            [0.0, "low"],
+            [1.0, "high"],
+            [2.0, "low"],
+            [3.0, "high"],
+        ],
+        dtype=object,
+    )
+    X = _convert_container(
+        X,
+        constructor_name,
+        column_names=["f_num", "f_cat"],
+        dtype=object,
+        categorical_feature_names=["f_cat"],
+    )
+    y = np.array([0, 1, 0, 1])
+
+    est = Tree(categorical_features=categorical_features, random_state=0).fit(X, y)
+
+    if constructor_name == "array":
+        assert not hasattr(est, "feature_names_in_")
+    else:
+        assert_array_equal(est.feature_names_in_, ["f_num", "f_cat"])
+    assert_array_equal(est.is_categorical_, [False, True])
+    assert_array_equal(est.tree_._n_categories, [-1, 2])
+    assert_array_equal(est.predict(X), y)
+
+
+@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
+def test_categorical_better_than_ordinal(Tree, global_random_seed):
     """Categorical-aware tree should perform at least as well as ordinal."""
     is_reg = Tree == DecisionTreeRegressor
-    X, y, _ = _make_categorical(
-        **data_params,
-        regression=is_reg,
-        return_tuple=True,
-        random_state=global_random_seed,
-    )
-    categorical_features = (
-        np.arange(data_params["n_categorical"]) + data_params["n_numerical"]
-    )
+
+    n_rows = 2000
+    n_categorical = 5
+    cat_size = 4
+    n_cat_meaningful = 3
+
+    rng = np.random.RandomState(global_random_seed)
+    X = rng.randint(0, cat_size, size=(n_rows, n_categorical))
+    X_ohe = OneHotEncoder(categories="auto").fit_transform(X[:, :n_cat_meaningful])
+    coefs = rng.standard_normal(X_ohe.shape[1])
+    y = np.asarray(X_ohe @ coefs).reshape(-1)
+    if not is_reg:
+        y = (y < y.mean()).astype(int)
+
+    categorical_features = np.arange(n_categorical)
 
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.3, random_state=42
@@ -3358,6 +3439,7 @@ def test_categorical_better_than_ordinal(Tree, data_params, global_random_seed):
 
 
 def test_categorical_split_vs_onehot_tree_depth():
+    """Check native categorical splits are more compact than one-hot trees."""
     # Simulate data: 8 categories, 1000 samples, binary classification,
     # non-ordinal mapping
     rng = np.random.RandomState(42)
@@ -3395,9 +3477,9 @@ def test_categorical_split_exact_tree():
 
     Dataset: 2 binary categorical features, binary classification.
 
-      feat0=0           → y=0  (always, regardless of feat1)
-      feat0=1, feat1=0  → y=0
-      feat0=1, feat1=1  → y=1
+      feat0=0           -> y=0  (always, regardless of feat1)
+      feat0=1, feat1=0  -> y=0
+      feat0=1, feat1=1  -> y=1
 
     Expected tree (5 nodes, depth 2):
       node 0 (root): split feat0, {0} left, {1} right
@@ -3447,136 +3529,6 @@ def test_categorical_split_exact_tree():
     assert reg.get_depth() == 2
     assert_allclose(tree_reg.impurity[tree_reg.children_left == TREE_LEAF], 0.0)
     assert_array_equal(reg.predict(X_test), [0.0, 0.0, 5.0, 10.0])
-
-
-@pytest.mark.parametrize("Tree", [ExtraTreeClassifier, ExtraTreeRegressor])
-@pytest.mark.parametrize("n_categories", [8, 300])
-def test_random_splitter_categorical(Tree, n_categories):
-    categories = np.arange(n_categories, dtype=np.float64)
-    X = categories.reshape(-1, 1)
-    y = (categories.astype(np.intp) % 2).astype(np.float64)
-
-    est = Tree(
-        random_state=0,
-        max_depth=1,
-        categorical_features=[0],
-    ).fit(X, y)
-    est_same = Tree(
-        random_state=0,
-        max_depth=1,
-        categorical_features=[0],
-    ).fit(X, y)
-
-    assert est.tree_.node_count == 3
-    assert est.tree_.split_kind[0] == SPLIT_CATEGORICAL_HASH
-    assert est.tree_.n_node_samples[1] > 0
-    assert est.tree_.n_node_samples[2] > 0
-
-    node_indicator = est.decision_path(X)
-    path_leaves = node_indicator.indices[node_indicator.indptr[1:] - 1]
-    assert_array_equal(path_leaves, est.apply(X))
-    assert_array_equal(est.apply(X), est_same.apply(X))
-    assert_array_equal(est.predict(X), est_same.predict(X))
-
-
-def test_random_splitter_accepts_large_categorical():
-    n_categories = 300
-    categories = np.arange(n_categories, dtype=np.float64)
-    X = categories.reshape(-1, 1)
-    y = categories.astype(np.intp) % 2
-
-    with pytest.raises(ValueError, match=r"\[0, 255\]"):
-        DecisionTreeClassifier(categorical_features=[0], random_state=0).fit(X, y)
-
-    est = DecisionTreeClassifier(
-        splitter="random",
-        random_state=0,
-        max_depth=1,
-        categorical_features=[0],
-    ).fit(X, y)
-
-    assert est.tree_.node_count == 3
-    assert est.tree_.split_kind[0] == SPLIT_CATEGORICAL_HASH
-
-
-@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
-def test_best_splitter_random_categorical_fallback_large_categorical(Tree):
-    n_categories = 300
-    categories = np.arange(n_categories, dtype=np.float64)
-    X = categories.reshape(-1, 1)
-    y = (categories.astype(np.intp) % 2).astype(np.float64)
-
-    est = Tree(
-        splitter="best",
-        random_state=0,
-        max_depth=1,
-        categorical_features=[0],
-        n_random_categorical_splits=32,
-    ).fit(X, y)
-    est_same = Tree(
-        splitter="best",
-        random_state=0,
-        max_depth=1,
-        categorical_features=[0],
-        n_random_categorical_splits=32,
-    ).fit(X, y)
-
-    assert est.tree_.node_count == 3
-    assert est.tree_.split_kind[0] == SPLIT_CATEGORICAL_HASH
-    assert est.tree_.n_node_samples[1] > 0
-    assert est.tree_.n_node_samples[2] > 0
-
-    node_indicator = est.decision_path(X)
-    path_leaves = node_indicator.indices[node_indicator.indptr[1:] - 1]
-    assert_array_equal(path_leaves, est.apply(X))
-    assert_array_equal(est.apply(X), est_same.apply(X))
-    assert_array_equal(est.predict(X), est_same.predict(X))
-
-
-@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
-def test_best_splitter_small_categorical_keeps_bitset_with_random_fallback(Tree):
-    n_categories = 8
-    categories = np.tile(np.arange(n_categories, dtype=np.float64), 4)
-    X = categories.reshape(-1, 1)
-    y = (categories.astype(np.intp) % 2).astype(np.float64)
-
-    est = Tree(
-        splitter="best",
-        random_state=0,
-        max_depth=1,
-        categorical_features=[0],
-        n_random_categorical_splits=32,
-    ).fit(X, y)
-
-    assert est.tree_.node_count == 3
-    assert est.tree_.split_kind[0] == SPLIT_CATEGORICAL_BITSET
-
-
-def test_random_splitter_rejects_large_non_contiguous_categorical():
-    categories = np.r_[np.arange(MAX_NUM_CATEGORIES), MAX_NUM_CATEGORIES + 1]
-    X = categories.reshape(-1, 1).astype(np.float64)
-    y = categories.astype(np.intp) % 2
-
-    with pytest.raises(ValueError, match="contiguous integer categories starting at 0"):
-        DecisionTreeClassifier(
-            splitter="random",
-            categorical_features=[0],
-            random_state=0,
-        ).fit(X, y)
-
-
-def test_best_splitter_random_categorical_fallback_rejects_non_contiguous():
-    categories = np.r_[np.arange(MAX_NUM_CATEGORIES), MAX_NUM_CATEGORIES + 1]
-    X = categories.reshape(-1, 1).astype(np.float64)
-    y = categories.astype(np.intp) % 2
-
-    with pytest.raises(ValueError, match="contiguous integer categories starting at 0"):
-        DecisionTreeClassifier(
-            splitter="best",
-            categorical_features=[0],
-            n_random_categorical_splits=1,
-            random_state=0,
-        ).fit(X, y)
 
 
 @pytest.mark.parametrize(

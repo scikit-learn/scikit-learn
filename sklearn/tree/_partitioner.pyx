@@ -19,10 +19,10 @@ import numpy as np
 cimport numpy as cnp
 cnp.import_array()
 from scipy.sparse import issparse
-from sklearn.utils._bitset cimport BITSET_DTYPE_C, init_bitset, set_bitset
-from sklearn.tree._utils cimport goes_left
-from sklearn.tree._tree cimport MAX_NUM_CATEGORIES
+from sklearn.utils._bitset cimport BITSET_DTYPE_C, init_bitset
+from sklearn.tree._utils cimport goes_left, MAX_NUM_CATEGORIES
 from sklearn.tree._splitter cimport SplitRecord
+from sklearn.utils._sorting cimport simultaneous_sort
 
 # Constant to switch between algorithm non zero value extract algorithm
 # in SparsePartitioner
@@ -46,7 +46,7 @@ cdef class DensePartitioner:
         intp_t[::1] samples,
         float32_t[::1] feature_values,
         const uint8_t[::1] missing_values_in_feature_mask,
-        const intp_t[::1] n_categories_in_feature,
+        const intp_t[::1] n_categories,
     ):
         self.X = X
         self.y = y
@@ -59,9 +59,8 @@ cdef class DensePartitioner:
         # TODO: As optimization we could make `swap_array_slices` always pick the smallest side
         # to get copied in the buffer, which would allow to use a buffer twice smaller.
 
-        self.n_categories_in_feature = n_categories_in_feature
-        self.n_categories = 0
-        self.n_words = -1
+        self.n_categories = n_categories
+        self.n_categories_current = 0
 
         # for breiman shortcut:
         self.counts = np.empty(MAX_NUM_CATEGORIES, dtype=np.intp)
@@ -92,7 +91,10 @@ cdef class DensePartitioner:
         For numerical features, this is a standard sort. For categorical
         features, samples are reordered using the Breiman ordering shortcut.
 
-        Returns ``True`` when the feature is constant at the current node.
+        Returns
+        -------
+        bint:
+            True when the feature is constant at the current node.
         """
         cdef:
             intp_t i, current_end, end_non_missing
@@ -134,51 +136,58 @@ cdef class DensePartitioner:
                 feature_values[i] = X[samples[i], current_feature]
 
         self.n_missing = n_missing
-        self.n_categories = self.n_categories_in_feature[current_feature]
-        if self.n_categories > 0:
-            self.n_words = (self.n_categories + 31) >> 5   # divide by 32 with ceil
-        else:
-            self.n_words = 0
+        self.n_categories_current = self.n_categories[current_feature]
+        end_non_missing = self.end - n_missing
 
         if n_missing == self.end - self.start:
             # if all the values at this point are missing, the values are sorted by default
             return True
 
-        # apply sort, or categorical sort (Breiman shortcut) depending on the dtype
-        if self.n_categories <= 0:
-            # not a categorical feature, so we apply sort as before. At this point
-            sort(&feature_values[self.start], &samples[self.start], self.end - self.start - n_missing)
+        # apply sort, different paths for numerical and categorical features
+        if self.n_categories_current <= 0:
+            # numerical feature: sort the feature values
+            simultaneous_sort(
+                &feature_values[self.start],
+                &samples[self.start],
+                end_non_missing - self.start,
+                use_three_way_partition=True,
+            )
 
             # if there are missing values found in this current candidate split, then
             # by definition the features cannot be constant
             if n_missing > 0:
                 return False
 
-            # end sample index that excludes the missing values
-            end_non_missing = self.end - n_missing
-
-            # This feature is considered constant (max - min <= FEATURE_THRESHOLD)
-            return feature_values[end_non_missing - 1] <= feature_values[self.start] + FEATURE_THRESHOLD
+            # This feature is considered constant if (max - min <= FEATURE_THRESHOLD)
+            return (
+                feature_values[end_non_missing - 1]
+                <= feature_values[self.start] + FEATURE_THRESHOLD
+            )
         else:
-            # a categorical feature
-            self._breiman_sort_categories(self.n_categories)
-            return feature_values[self.start] == feature_values[self.end - 1]
+            # categorical feature: sort feature values by mean target values
+            self.sort_categories(self.n_categories_current)
+            if n_missing > 0:
+                return False
+            return feature_values[self.start] == feature_values[end_non_missing - 1]
 
-    cdef void _breiman_sort_categories(self, intp_t nc) noexcept nogil:
-        """
-        Order self.sorted_cat by ascending average target value
-        and order self.features_values & self.samples such that
-        - self.features_values is ordered according to the order of sorted_cat
+    cdef void sort_categories(self, intp_t nc) noexcept nogil:
+        """Sort categorical features for the Breiman shortcut.
+
+        Sort categorical feature values by ascending average target value,
+        save as self.sorted_cat.
+        self.features_values & self.samples are ordered such that
+        - self.features_values is sorted according to the order of sorted_cat
         - the relation `self.features_values[p] = self.X[self.samples[p], f]` is
-          preserved
-
-        E.g. sorted_cat is [2 0 1]
-             features_values is [2 2 2 0 0 1 1 1 1]
+          preserved, example:
+          sorted_cat is [2 0 1]
+          features_values is [2 2 2 0 0 1 1 1 1]
 
         This ordering ensures the optimal split will be among the candidate splits
         evaluated by the splitter (this is called the Brieman shortcut).
 
         Time complexity: O(n + nc log nc)
+
+        See Breiman et al "Classification and Regression Trees" (1984), Chapter 4.2.2.
         """
         cdef:
             intp_t* counts = &self.counts[0]
@@ -189,6 +198,7 @@ cdef class DensePartitioner:
             float32_t* feature_values = &self.feature_values[0]
             intp_t* samples = &self.samples[0]
             intp_t c, r, p, new_p
+            intp_t end_non_missing = self.end - self.n_missing
             float64_t w = 1.
 
         memset(means, 0, nc * sizeof(float64_t))
@@ -196,7 +206,7 @@ cdef class DensePartitioner:
         memset(weighted_counts, 0, nc * sizeof(float64_t))
 
         # compute counts, weighted_counts and means
-        for p in range(self.start, self.end):
+        for p in range(self.start, end_non_missing):
             c = <int> feature_values[p]
             counts[c] += 1
             if self.sample_weight is not None:
@@ -211,7 +221,7 @@ cdef class DensePartitioner:
         # sorted_cat[i] = i-th categories sorted by ascending means
         for c in range(nc):
             sorted_cat[c] = c
-        sort(means, sorted_cat, nc)
+        simultaneous_sort(means, sorted_cat, nc, use_three_way_partition=True)
 
         # build offsets such that:
         # offsets[c] = sum( counts[x] for all x s.t. rank(x) <= rank(c) ) - 1
@@ -221,11 +231,10 @@ cdef class DensePartitioner:
             offset += counts[c]
             offsets[c] = self.start + offset - 1
 
-        # sort feature_values & samples in-place such that
-        # they are ordered by the mean of the category
-        # while ensuring samples of the same categories are contiguous
+        # sort feature_values & samples in-place such that they are ordered by the mean
+        # of the category  while ensuring samples of the same categories are contiguous
         p = self.start
-        while p < self.end:
+        while p < end_non_missing:
             c = <int> feature_values[p]
             new_p = offsets[c]
             if new_p > p:
@@ -358,7 +367,7 @@ cdef class DensePartitioner:
         # Move to next candidate split position
         p[0] += 1
 
-        if self.n_categories > 0:
+        if self.n_categories_current > 0:
             while (
                 p[0] < end_non_missing and
                 self.feature_values[p[0]] == self.feature_values[p[0] - 1]
@@ -422,15 +431,17 @@ cdef class DensePartitioner:
             intp_t best_feature = best_split[0].feature
             bint best_missing_go_to_left = best_split[0].missing_go_to_left
             float32_t current_value
+            bint is_categorical = self.n_categories[best_feature] > 0
             bint go_to_left
 
         while partition_start < partition_end:
             current_value = self.X[samples[partition_start], best_feature]
 
             go_to_left = goes_left(
-                best_split[0].split_value,
+                best_split[0].threshold,
+                best_split[0].left_cat_bitset,
                 best_missing_go_to_left,
-                best_split[0].split_kind,
+                is_categorical,
                 current_value
             )
             if go_to_left:
@@ -440,57 +451,33 @@ cdef class DensePartitioner:
                 samples[partition_start], samples[partition_end] = (
                     samples[partition_end], samples[partition_start])
 
-    cdef inline SplitValue position_to_split_value(
-        self, intp_t p_prev, intp_t position, bint missing_go_to_left
+    cdef inline void cat_position_to_split_bitset(
+        self,
+        intp_t position,
+        bint missing_go_to_left,
+        BITSET_DTYPE_C left_cat_bitset,
     ) noexcept nogil:
-        """Convert a split position into a concrete split value.
+        """Convert a categorical split position into a bitset."""
+        cdef:
+            intp_t n_left_non_missing = position - self.start
+            intp_t offset = 0
+            intp_t r
+            intp_t c
 
-        - For numerical features, this returns the usual mid-point threshold.
-        - For categorical features, it converts the split position into a bitset
-        over categories.
+        if missing_go_to_left:
+            n_left_non_missing -= self.n_missing
 
-        From the numerical threshold, or bitset, one can split the samples into
-        left and right child.
+        init_bitset(left_cat_bitset)
 
-        Note: for missing values, this assumes the missing values are on the right-side of
-        the array.
-        """
-        cdef SplitValue split
-        cdef intp_t end_non_missing = self.end - self.n_missing
+        if n_left_non_missing <= 0:
+            return
 
-        memset(<void*> &split, 0, sizeof(SplitValue))
-
-        # if we split categorically, compute a bitset and populate the SplitValue
-        if self.n_categories > 0:
-            split_pos_to_bitset_words(
-                position - self.start,  # since offset of start is possible
-                &self.sorted_cat[0],
-                self.n_categories,
-                &self.counts[0],
-                split.categorical_bitset,
-                self.n_words
-            )
-            return split
-
-        # if we split numerically, compute a numerical threshold
-        if position == end_non_missing and not missing_go_to_left:
-            # Split with the right node being only the missing values.
-            # Note that partioner.next_p never considers candidate
-            # splits for which the left node would move only the
-            # the missing values as this would be redundant with the
-            # split that only send missing values to the right.
-            # We use inf as a threshold because nan <= inf is false
-            # according to IEEE 754.
-            split.threshold = INFINITY_64t
-            return split
-
-        # Split between two non-missing values: sum of halves is
-        # used to avoid infinite value.
-        split.threshold = (
-            self.feature_values[p_prev] / 2.0 + self.feature_values[position] / 2.0
-        )
-
-        return split
+        for r in range(self.n_categories_current):
+            c = self.sorted_cat[r]
+            set_bitset(left_cat_bitset, <uint8_t> c)
+            offset += self.counts[c]
+            if offset >= n_left_non_missing:
+                break
 
 
 @final
@@ -506,7 +493,7 @@ cdef class SparsePartitioner:
         intp_t n_samples,
         float32_t[::1] feature_values,
         const uint8_t[::1] missing_values_in_feature_mask,
-        const intp_t[::1] n_categories_in_feature
+        const intp_t[::1] n_categories
     ):
         if not (issparse(X) and X.format == "csc"):
             raise ValueError("X should be in csc format")
@@ -532,8 +519,8 @@ cdef class SparsePartitioner:
 
         self.missing_values_in_feature_mask = missing_values_in_feature_mask
 
-        self.n_categories_in_feature = n_categories_in_feature
-        self.n_categories = 0
+        self.n_categories = n_categories
+        self.n_categories_current = 0
 
     cdef inline void init_node_split(self, intp_t start, intp_t end) noexcept nogil:
         """Initialize splitter at the beginning of node_split."""
@@ -554,12 +541,18 @@ cdef class SparsePartitioner:
 
         self.extract_nnz(current_feature)
         # Sort the positive and negative parts of `feature_values`
-        sort(&feature_values[self.start], &samples[self.start], self.end_negative - self.start)
+        simultaneous_sort(
+            &feature_values[self.start],
+            &samples[self.start],
+            self.end_negative - self.start,
+            use_three_way_partition=True,
+        )
         if self.start_positive < self.end:
-            sort(
+            simultaneous_sort(
                 &feature_values[self.start_positive],
                 &samples[self.start_positive],
-                self.end - self.start_positive
+                self.end - self.start_positive,
+                use_three_way_partition=True,
             )
 
         # Update index_to_samples to take into account the sort
@@ -674,7 +667,7 @@ cdef class SparsePartitioner:
         self.extract_nnz(best_split[0].feature)
         self._partition(best_split[0].split_value.threshold)
 
-    # TODO: use goes_left when refactored to support sparse categorical data.
+    # TODO: add left_cat_bitset when refactored to support categorical data
     cdef inline intp_t _partition(self, float64_t threshold) noexcept nogil:
         """
         Partition samples[start:end] based on threshold.
@@ -713,41 +706,14 @@ cdef class SparsePartitioner:
 
         return partition_end
 
-    cdef inline SplitValue position_to_split_value(
-        self, intp_t p_prev, intp_t p, bint missing_go_to_left
+    cdef inline void cat_position_to_split_bitset(
+        self,
+        intp_t position,
+        bint missing_go_to_left,
+        BITSET_DTYPE_C left_cat_bitset,
     ) noexcept nogil:
-        """Convert a split position into a concrete split value.
-
-        - For numerical features, this returns the usual mid-point threshold.
-        - For categorical features, it converts the split position into a bitset
-        over categories.
-
-        From the numerical threshold, or bitset, one can split the samples into
-        left and right child.
-        """
-        cdef SplitValue split
-        cdef intp_t end_non_missing = self.end - self.n_missing
-
-        memset(<void*> &split, 0, sizeof(SplitValue))
-
-        # if we split categorically, compute a bitset and populate the SplitValue
-        if self.n_categories > 0:
-            # TODO: not supported for now, so return the zeroed split.
-            return split
-
-        # if we split numerically, compute a numerical threshold
-        if p == end_non_missing:
-            # split with the right node being only the missing values
-            split.threshold = INFINITY_64t
-            return split
-
-        # split between two non-missing values
-        # sum of halves is used to avoid infinite value
-        split.threshold = (
-            self.feature_values[p_prev] / 2.0 + self.feature_values[p] / 2.0
-        )
-
-        return split
+        # Sparse categorical features are rejected before split search.
+        init_bitset(left_cat_bitset)
 
     cdef inline void extract_nnz(self, intp_t feature) noexcept nogil:
         """Extract and partition values for a given feature.
@@ -957,179 +923,10 @@ cdef inline void sparse_swap(intp_t[::1] index_to_samples, intp_t[::1] samples,
     index_to_samples[samples[pos_2]] = pos_2
 
 
-def _py_sort(float32_t[::1] feature_values, intp_t[::1] samples, intp_t n):
-    """Used for testing sort."""
-    sort(&feature_values[0], &samples[0], n)
-
-
-# Sort n-element arrays pointed to by feature_values and samples, simultaneously,
-# by the values in feature_values. Algorithm: Introsort (Musser, SP&E, 1997).
-cdef void sort(floating* feature_values, intp_t* samples, intp_t n) noexcept nogil:
-    if n == 0:
-        return
-    cdef intp_t maxd = 2 * <intp_t>log2(n)
-    introsort(feature_values, samples, n, maxd)
-
-
-cdef inline void swap(floating* feature_values, intp_t* samples,
+cdef inline void swap(float32_t* feature_values, intp_t* samples,
                       intp_t i, intp_t j) noexcept nogil:
-    # Helper for sort
     feature_values[i], feature_values[j] = feature_values[j], feature_values[i]
     samples[i], samples[j] = samples[j], samples[i]
-
-
-cdef inline floating median3(floating* feature_values, intp_t n) noexcept nogil:
-    # Median of three pivot selection, after Bentley and McIlroy (1993).
-    # Engineering a sort function. SP&E. Requires 8/3 comparisons on average.
-    cdef floating a = feature_values[0], b = feature_values[n / 2], c = feature_values[n - 1]
-    if a < b:
-        if b < c:
-            return b
-        elif a < c:
-            return c
-        else:
-            return a
-    elif b < c:
-        if a < c:
-            return a
-        else:
-            return c
-    else:
-        return b
-
-
-# Introsort with median of 3 pivot selection and 3-way partition function
-# (robust to repeated elements, e.g. lots of zero features).
-cdef void introsort(floating* feature_values, intp_t *samples,
-                    intp_t n, intp_t maxd) noexcept nogil:
-    cdef floating pivot
-    cdef intp_t i, l, r
-
-    while n > 1:
-        if maxd <= 0:   # max depth limit exceeded ("gone quadratic")
-            heapsort(feature_values, samples, n)
-            return
-        maxd -= 1
-
-        pivot = median3(feature_values, n)
-
-        # Three-way partition.
-        i = l = 0
-        r = n
-        while i < r:
-            if feature_values[i] < pivot:
-                swap(feature_values, samples, i, l)
-                i += 1
-                l += 1
-            elif feature_values[i] > pivot:
-                r -= 1
-                swap(feature_values, samples, i, r)
-            else:
-                i += 1
-
-        introsort(feature_values, samples, l, maxd)
-        feature_values += r
-        samples += r
-        n -= r
-
-
-cdef inline void sift_down(floating* feature_values, intp_t* samples,
-                           intp_t start, intp_t end) noexcept nogil:
-    # Restore heap order in feature_values[start:end] by moving the max element to start.
-    cdef intp_t child, maxind, root
-
-    root = start
-    while True:
-        child = root * 2 + 1
-
-        # find max of root, left child, right child
-        maxind = root
-        if child < end and feature_values[maxind] < feature_values[child]:
-            maxind = child
-        if child + 1 < end and feature_values[maxind] < feature_values[child + 1]:
-            maxind = child + 1
-
-        if maxind == root:
-            break
-        else:
-            swap(feature_values, samples, root, maxind)
-            root = maxind
-
-
-cdef void heapsort(floating* feature_values, intp_t* samples, intp_t n) noexcept nogil:
-    cdef intp_t start, end
-
-    # heapify
-    start = (n - 2) / 2
-    end = n
-    while True:
-        sift_down(feature_values, samples, start, end)
-        if start == 0:
-            break
-        start -= 1
-
-    # sort by shrinking the heap, putting the max element immediately after it
-    end = n - 1
-    while end > 0:
-        swap(feature_values, samples, 0, end)
-        sift_down(feature_values, samples, 0, end)
-        end = end - 1
-
-
-cdef inline void split_pos_to_bitset_words(
-    intp_t p,
-    const intp_t* sorted_cat,
-    intp_t n_sorted,
-    const intp_t* counts,
-    BITSET_DTYPE_C out_words,
-    intp_t n_words
-) noexcept nogil:
-    """Build a categorical-split bitset from a prefix of sorted categories.
-
-    Walk `sorted_cat` in order (typically sorted by ascending mean target)
-    and set the corresponding bit in `out_words` until the cumulative
-    sample count reaches `p`.  The result is a packed bitset where
-    bit *c* is set iff category *c* belongs to the left child.
-
-    Parameters
-    ----------
-    p : intp_t
-        Cumulative-count threshold.  Categories are added to the set
-        until ``sum(counts[sorted_cat[0..r]]) >= p``.
-        If ``p <= 0`` the output is the empty set.
-    sorted_cat : const intp_t*
-        Category ids in split-criterion order (length `n_sorted`).
-    n_sorted : intp_t
-        Number of entries in `sorted_cat` (typically `n_categories`).
-    counts : const intp_t*
-        Per-category sample counts (node-local histogram).
-    out_words : BITSET_DTYPE_C
-        Output buffer of 32-bit words; zeroed and filled by
-        this function.
-    n_words : intp_t
-        Length of `out_words`.  Must satisfy
-        ``n_words >= ceil((max_category_id + 1) / 32)``.
-
-    Notes
-    -----
-    Caller must guarantee that every id in `sorted_cat` satisfies
-    ``0 <= id < 32 * n_words``.  No bounds checking is performed.
-    This function is ``nogil`` and performs no allocation.
-    """
-    cdef intp_t r, c
-    cdef intp_t offset = 0
-
-    init_bitset(out_words)
-
-    if p <= 0:
-        return
-
-    for r in range(n_sorted):
-        c = sorted_cat[r]
-        set_bitset(out_words, <uint8_t> c)
-        offset += counts[c]
-        if offset >= p:
-            break
 
 
 cdef void swap_array_slices(

@@ -356,6 +356,14 @@ def test__check_reg_targets_exception():
         _check_reg_targets([1, 2, 3], [[1], [2], [3]], None, invalid_multioutput)
 
 
+def test__check_reg_targets_single_output_error():
+    """Test that custom weights raise an error for single-output data."""
+    msg = "Custom weights are useful only in multi-output cases."
+
+    with pytest.raises(ValueError, match=msg):
+        _check_reg_targets([1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], None, multioutput=[0.5])
+
+
 def test_regression_multioutput_array():
     y_true = [[1, 2], [2.5, -1], [4.5, 3], [5, 7]]
     y_pred = [[1, 1], [2, -1], [5, 4], [5, 6.5]]

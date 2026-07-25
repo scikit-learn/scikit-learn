@@ -42,9 +42,7 @@ from sklearn.model_selection._split import (
 from sklearn.svm import SVC
 from sklearn.tests.metadata_routing_common import assert_request_is_empty
 from sklearn.utils._array_api import (
-    device as array_api_device,
-)
-from sklearn.utils._array_api import (
+    array_device,
     get_namespace,
     move_to,
     yield_namespace_device_dtype_combinations,
@@ -427,7 +425,7 @@ def test_stratified_kfold_no_shuffle():
 
 @pytest.mark.parametrize("shuffle", [False, True])
 @pytest.mark.parametrize("k", [4, 5, 6, 7, 8, 9, 10])
-@pytest.mark.parametrize("kfold", [StratifiedKFold, StratifiedGroupKFold])
+@pytest.mark.parametrize("kfold", (StratifiedKFold, StratifiedGroupKFold))
 def test_stratified_kfold_ratios(k, shuffle, kfold):
     # Check that stratified kfold preserves class ratios in individual splits
     # Repeat with shuffling turned off and on
@@ -454,7 +452,7 @@ def test_stratified_kfold_ratios(k, shuffle, kfold):
 
 @pytest.mark.parametrize("shuffle", [False, True])
 @pytest.mark.parametrize("k", [4, 6, 7])
-@pytest.mark.parametrize("kfold", [StratifiedKFold, StratifiedGroupKFold])
+@pytest.mark.parametrize("kfold", (StratifiedKFold, StratifiedGroupKFold))
 def test_stratified_kfold_label_invariance(k, shuffle, kfold):
     # Check that stratified kfold gives the same indices regardless of labels
     n_samples = 100
@@ -496,7 +494,7 @@ def test_kfold_balance():
         assert np.sum(sizes) == i
 
 
-@pytest.mark.parametrize("kfold", [StratifiedKFold, StratifiedGroupKFold])
+@pytest.mark.parametrize("kfold", (StratifiedKFold, StratifiedGroupKFold))
 def test_stratifiedkfold_balance(kfold):
     # Check that KFold returns folds with balanced sizes (only when
     # stratification is possible)
@@ -539,7 +537,7 @@ def test_shuffle_kfold():
     assert sum(all_folds) == 300
 
 
-@pytest.mark.parametrize("kfold", [KFold, StratifiedKFold, StratifiedGroupKFold])
+@pytest.mark.parametrize("kfold", (KFold, StratifiedKFold, StratifiedGroupKFold))
 def test_shuffle_kfold_stratifiedkfold_reproducibility(kfold):
     X = np.ones(15)  # Divisible by 3
     y = [0] * 7 + [1] * 8
@@ -1367,9 +1365,11 @@ def test_array_api_train_test_split(
     y_np = y.astype(dtype_name)
     y_xp = xp.asarray(y_np, device=device)
 
-    X_train_np, X_test_np, y_train_np, y_test_np = train_test_split(
-        X_np, y, random_state=0, shuffle=shuffle, stratify=stratify
-    )
+    with config_context(array_api_dispatch=False):
+        X_train_np, X_test_np, y_train_np, y_test_np = train_test_split(
+            X_np, y, random_state=0, shuffle=shuffle, stratify=stratify
+        )
+
     with config_context(array_api_dispatch=True):
         if stratify is not None:
             stratify_xp = xp.asarray(stratify)
@@ -1387,10 +1387,10 @@ def test_array_api_train_test_split(
         assert get_namespace(y_test_xp)[0] == get_namespace(y_xp)[0]
 
         # Check device and dtype is preserved on output
-        assert array_api_device(X_train_xp) == array_api_device(X_xp)
-        assert array_api_device(y_train_xp) == array_api_device(y_xp)
-        assert array_api_device(X_test_xp) == array_api_device(X_xp)
-        assert array_api_device(y_test_xp) == array_api_device(y_xp)
+        assert array_device(X_train_xp) == array_device(X_xp)
+        assert array_device(y_train_xp) == array_device(y_xp)
+        assert array_device(X_test_xp) == array_device(X_xp)
+        assert array_device(y_test_xp) == array_device(y_xp)
 
     assert X_train_xp.dtype == X_xp.dtype
     assert y_train_xp.dtype == y_xp.dtype
@@ -1657,7 +1657,7 @@ def test_cv_iterable_wrapper():
     )
 
 
-@pytest.mark.parametrize("kfold", [GroupKFold, StratifiedGroupKFold])
+@pytest.mark.parametrize("kfold", (GroupKFold, StratifiedGroupKFold))
 @pytest.mark.parametrize("shuffle", [True, False])
 def test_group_kfold(kfold, shuffle, global_random_seed):
     rng = np.random.RandomState(global_random_seed)

@@ -22,8 +22,8 @@ from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils._array_api import (
     _expit,
+    array_device,
     check_same_namespace,
-    device,
     get_namespace,
     size,
 )
@@ -113,7 +113,9 @@ def _class_means(X, y):
     """
     xp, is_array_api_compliant = get_namespace(X)
     classes, y = xp.unique_inverse(y)
-    means = xp.zeros((classes.shape[0], X.shape[1]), device=device(X), dtype=X.dtype)
+    means = xp.zeros(
+        (classes.shape[0], X.shape[1]), device=array_device(X), dtype=X.dtype
+    )
 
     if is_array_api_compliant:
         for i in range(classes.shape[0]):
@@ -602,7 +604,9 @@ class LinearDiscriminantAnalysis(
         std = xp.std(Xc, axis=0)
         # avoid division by zero in normalization
         std[std == 0] = 1.0
-        fac = xp.asarray(1.0 / (n_samples - n_classes), dtype=X.dtype, device=device(X))
+        fac = xp.asarray(
+            1.0 / (n_samples - n_classes), dtype=X.dtype, device=array_device(X)
+        )
 
         # 2) Within variance scaling
         X = xp.sqrt(fac) * (Xc / std)
