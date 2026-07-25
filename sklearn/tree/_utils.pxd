@@ -15,6 +15,12 @@ from sklearn.utils._random cimport our_rand_r
 cdef enum:
     MAX_NUM_CATEGORIES = N_BITSETS
 
+cdef enum:
+    SPLIT_LEAF = -1
+    SPLIT_NUMERIC = 0
+    SPLIT_CATEGORICAL_BITSET = 1
+    SPLIT_CATEGORICAL_HASH = 2
+
 
 cdef struct Node:
     # Base storage structure for the nodes in a Tree object
@@ -33,21 +39,41 @@ cdef struct Node:
     intp_t n_node_samples                # Number of samples at the node
     float64_t weighted_n_node_samples    # Weighted number of samples at the node
     uint8_t missing_go_to_left           # Whether features have missing values
+    uint8_t split_kind                   # Kind of split (numeric, categorical, leaf)
+
+# 32-bit stable pseudo-random routing bit for SPLIT_CATEGORICAL_HASH.
+# The constants are from the "lowbias32" mixer from Chris Wellons'
+# hash-prospector work: see https://nullprogram.com/blog/2018/07/31/
+# This is deterministic and non-cryptographic.
+# Keep in sync with sklearn/tree/tests/test_split.py::_mix_uint32.
+cdef inline uint32_t mix_uint32(uint32_t x) noexcept nogil:
+    x ^= x >> 16
+    x *= <uint32_t> 0x7feb352d
+    x ^= x >> 15
+    x *= <uint32_t> 0x846ca68b
+    x ^= x >> 16
+    return x
 
 
 cdef inline bint goes_left(
     float64_t threshold,
     const BITSET_INNER_DTYPE_C* left_cat_bitset,
     bint missing_go_to_left,
-    bint is_categorical,
+    uint8_t split_kind,
     float32_t value,
 ) noexcept nogil:
     if isnan(value):
         return missing_go_to_left
-    elif is_categorical:
-        return in_bitset(left_cat_bitset, <uint8_t> value)
-    else:
+    elif split_kind == SPLIT_NUMERIC:
         return value <= threshold
+    elif split_kind == SPLIT_CATEGORICAL_BITSET:
+        return in_bitset(left_cat_bitset, <uint8_t> value)
+    elif split_kind == SPLIT_CATEGORICAL_HASH:
+        return mix_uint32(
+            left_cat_bitset[0] ^ <uint32_t> value
+        ) & 1
+    else:
+        return False
 
 
 cdef enum:

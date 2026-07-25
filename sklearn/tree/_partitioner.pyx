@@ -401,7 +401,8 @@ cdef class DensePartitioner:
 
         while partition_start < partition_end:
             go_to_left = goes_left(
-                current_split[0].split_value,
+                current_split[0].threshold,
+                current_split[0].left_cat_bitset,
                 current_split[0].missing_go_to_left,
                 current_split[0].split_kind,
                 feature_values[partition_start],
@@ -441,7 +442,7 @@ cdef class DensePartitioner:
                 best_split[0].threshold,
                 best_split[0].left_cat_bitset,
                 best_missing_go_to_left,
-                is_categorical,
+                best_split[0].split_kind,
                 current_value
             )
             if go_to_left:
@@ -657,7 +658,7 @@ cdef class SparsePartitioner:
         const SplitRecord* current_split,
     ) noexcept nogil:
         """Partition samples for feature_values at the current split."""
-        return self._partition(current_split[0].split_value.threshold)
+        return self._partition(current_split[0].threshold)
 
     cdef inline void partition_samples_final(
         self,
@@ -665,7 +666,7 @@ cdef class SparsePartitioner:
     ) noexcept nogil:
         """Partition samples for X at the best split's threshold and feature index."""
         self.extract_nnz(best_split[0].feature)
-        self._partition(best_split[0].split_value.threshold)
+        self._partition(best_split[0].threshold)
 
     # TODO: add left_cat_bitset when refactored to support categorical data
     cdef inline intp_t _partition(self, float64_t threshold) noexcept nogil:

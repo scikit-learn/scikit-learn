@@ -152,7 +152,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         categorical_features=None,
         monotonic_cst=None,
         n_random_categorical_splits=0,
-        categorical_features=None,
     ):
         self.criterion = criterion
         self.splitter = splitter
@@ -168,6 +167,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.ccp_alpha = ccp_alpha
         self.monotonic_cst = monotonic_cst
         self.categorical_features = categorical_features
+        self.n_random_categorical_splits = n_random_categorical_splits
 
     def get_depth(self):
         """Return the depth of the decision tree.
@@ -508,11 +508,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 if max_encoded_value >= MAX_NUM_CATEGORIES:
                     raise ValueError(f"{base_msg} Found {max_encoded_value}.")
 
-        if has_categorical and self.splitter == "random":
-            raise ValueError(
-                "Categorical features are not supported with splitter='random'. "
-                "Use splitter='best' instead."
-            )
         if has_categorical and self.n_outputs_ > 1:
             raise ValueError(
                 "Categorical features are not supported with multi-output targets."
@@ -531,6 +526,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             min_weight_leaf,
             random_state,
             monotonic_cst,
+            self.n_random_categorical_splits,
         )
 
         if is_classifier(self):

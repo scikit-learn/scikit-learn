@@ -28,7 +28,15 @@ from sklearn.tree._partitioner cimport (
     FEATURE_THRESHOLD, DensePartitioner, SparsePartitioner,
     position_to_split_threshold,
 )
-from sklearn.tree._utils cimport RAND_R_MAX, rand_int, rand_uniform
+from sklearn.utils._bitset cimport init_bitset
+from sklearn.tree._utils cimport (
+    RAND_R_MAX,
+    rand_int,
+    rand_uniform,
+    SPLIT_CATEGORICAL_BITSET,
+    SPLIT_CATEGORICAL_HASH,
+    SPLIT_NUMERIC,
+)
 import numpy as np
 
 # Introduce a fused-class to make it possible to share the split implementation
@@ -46,10 +54,12 @@ cdef inline void _init_split(SplitRecord* self, intp_t start_pos) noexcept nogil
     self.impurity_right = INFINITY
     self.pos = start_pos
     self.feature = 0
-    self.split_value.threshold = 0.
+    self.threshold = 0.
+    init_bitset(self.left_cat_bitset)
     self.split_kind = SPLIT_NUMERIC
     self.improvement = -INFINITY
     self.missing_go_to_left = False
+
 
 cdef class Splitter:
     """Abstract splitter class.
@@ -434,8 +444,8 @@ cdef inline int node_split_best(
 
                 current_split.split_kind = SPLIT_CATEGORICAL_HASH
                 current_split.missing_go_to_left = missing_go_to_left
-                init_bitset(current_split.split_value.categorical_bitset)
-                current_split.split_value.categorical_bitset[0] = <uint32_t> rand_int(
+                init_bitset(current_split.left_cat_bitset)
+                current_split.left_cat_bitset[0] = <uint32_t> rand_int(
                     1, RAND_R_MAX, random_state
                 )
 
@@ -539,12 +549,14 @@ cdef inline int node_split_best(
 
                     # given previous position and the new position, compute the value of this split
                     if partitioner.n_categories_current > 0:  # categorical feature
+                        current_split.split_kind = SPLIT_CATEGORICAL_BITSET
                         partitioner.cat_position_to_split_bitset(
                             p,
                             missing_go_to_left,
                             current_split.left_cat_bitset,
                         )
                     else:  # numerical feature
+                        current_split.split_kind = SPLIT_NUMERIC
                         current_split.threshold = position_to_split_threshold(
                             partitioner.feature_values,
                             p_prev,
@@ -744,21 +756,21 @@ cdef inline int node_split_random(
 
         if is_categorical:
             current_split.split_kind = SPLIT_CATEGORICAL_HASH
-            init_bitset(current_split.split_value.categorical_bitset)
-            current_split.split_value.categorical_bitset[0] = <uint32_t> rand_int(
+            init_bitset(current_split.left_cat_bitset)
+            current_split.left_cat_bitset[0] = <uint32_t> rand_int(
                 1, RAND_R_MAX, random_state
             )
         else:
             current_split.split_kind = SPLIT_NUMERIC
             # Draw a random threshold
-            current_split.split_value.threshold = rand_uniform(
+            current_split.threshold = rand_uniform(
                 min_feature_value,
                 max_feature_value,
                 random_state,
             )
 
-            if current_split.split_value.threshold == max_feature_value:
-                current_split.split_value.threshold = min_feature_value
+            if current_split.threshold == max_feature_value:
+                current_split.threshold = min_feature_value
 
         # Partition
         current_split.pos = partitioner.partition_samples(&current_split)

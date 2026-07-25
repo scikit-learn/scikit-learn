@@ -26,6 +26,13 @@ cdef struct SplitRecord:
     # - left_cat_bitset stores the set of categories that go to the left child.
     BITSET_DTYPE_C left_cat_bitset
 
+    # The kind of split:
+    # - SPLIT_NUMERIC: numerical split
+    # - SPLIT_CATEGORICAL_BITSET: categorical split using bitset
+    # - SPLIT_CATEGORICAL_HASH: categorical split using hash
+    # - SPLIT_LEAF: no split, the node is a leaf
+    uint8_t split_kind
+
     float64_t improvement     # Impurity improvement given parent node.
     float64_t impurity_left   # Impurity of the left split.
     float64_t impurity_right  # Impurity of the right split.
