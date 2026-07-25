@@ -141,17 +141,22 @@ clickable and can be expanded/collapsed.
 .sk-global summary.sk-toggleable__label {
   cursor: pointer;
   display: list-item;
+  /* Keep the disclosure marker inline so it shares a line with the content */
+  list-style-position: inside;
+  text-align: left;
   width: 100%;
   margin-bottom: 0;
   padding: 0.5em;
   box-sizing: border-box;
 }
 
-/* Lay out the label content (name + doc link) in a row after the marker */
+/* Lay out the label content (name + doc link) in a row next to the marker.
+   inline-flex keeps it on the same line as the inline disclosure marker. */
 .sk-global summary.sk-toggleable__label .sk-toggleable__label-content {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.5em;
+  vertical-align: middle;
 }
 
 .sk-global summary.sk-toggleable__label .caption {

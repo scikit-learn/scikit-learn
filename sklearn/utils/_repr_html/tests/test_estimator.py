@@ -304,8 +304,8 @@ def test_birch_duck_typing_meta():
         assert f"<pre>{html.escape(str(birch.n_clusters))}" in html_output
 
         p = (
-            r"<div><div>AgglomerativeClustering</div></div><div>."
-            "+</div></span></summary>"
+            r"<div><div>AgglomerativeClustering</div></div>"
+            r"<div>.+</div></span></summary>"
         )
         re_compiled = re.compile(p)
         assert re_compiled.search(html_output)
