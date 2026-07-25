@@ -338,6 +338,9 @@ def test_cross_validate_many_jobs():
     cross_validate(grid, X, y, n_jobs=2)
 
 
+# TODO(1.12): remove the filterwarnings when the default value of average in
+# precision_recall_fscore_support is changed.
+@pytest.mark.filterwarnings("ignore:.*default value of `average`.*:FutureWarning")
 def test_cross_validate_invalid_scoring_param():
     X, y = make_classification(random_state=0)
     estimator = MockClassifier()
