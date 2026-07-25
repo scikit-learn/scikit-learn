@@ -1850,9 +1850,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         represented by ``np.nan``; unknown categories at prediction time are
         also treated as missing values.
 
-        Unlike :class:`DecisionTreeClassifier`, categorical features are
-        supported with the default ``splitter='random'`` strategy, including
-        multi-class classification and multi-output targets.
+        Categorical features are supported with the default ``splitter='random'``
+        strategy, including multi-class classification and multi-output targets.
 
         .. versionadded:: 1.10
 
@@ -2148,9 +2147,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         represented by ``np.nan``; unknown categories at prediction time are
         also treated as missing values.
 
-        Unlike :class:`DecisionTreeRegressor`, categorical features are
-        supported with the default ``splitter='random'`` strategy, including
-        multi-output targets.
+        Categorical features are supported with the default ``splitter='random'``
+        strategy, including multi-output targets.
 
         .. versionadded:: 1.10
 
