@@ -27,7 +27,7 @@ from sklearn.model_selection._split import check_cv
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import _safe_indexing, check_random_state, indexable
 from sklearn.utils._array_api import (
-    device,
+    array_device,
     get_namespace,
     get_namespace_and_device,
     move_to,
@@ -787,7 +787,7 @@ def _fit_and_score(
             Traceback str if the fit failed, None if the fit succeeded.
     """
     xp, _ = get_namespace(X)
-    X_device = device(X)
+    X_device = array_device(X)
 
     # Make sure that we can fancy index X even if train and test are provided
     # as NumPy arrays by NumPy only cross-validation splitters.
@@ -1227,7 +1227,7 @@ def cross_val_predict(
         method in ["decision_function", "predict_proba", "predict_log_proba"]
         and y is not None
     )
-    xp, is_array_api, device_ = get_namespace_and_device(X)
+    xp, is_array_api, device = get_namespace_and_device(X)
     xp_y, _ = get_namespace(y)
     if encode:
         y = xp_y.asarray(y)
@@ -1240,7 +1240,7 @@ def cross_val_predict(
                 y_enc[:, i_label] = LabelEncoder().fit_transform(y[:, i_label])
             y = y_enc
 
-    y = move_to(y, xp=xp, device=device_)
+    y = move_to(y, xp=xp, device=device)
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose, pre_dispatch=pre_dispatch)
@@ -1274,7 +1274,7 @@ def cross_val_predict(
             concat_pred.append(label_preds)
         predictions = concat_pred
     else:
-        inv_test_indices = xp.asarray(inv_test_indices, device=device(X))
+        inv_test_indices = xp.asarray(inv_test_indices, device=array_device(X))
         predictions = xp.concat(predictions)
 
     if isinstance(predictions, list):

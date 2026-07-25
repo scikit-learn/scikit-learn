@@ -13,10 +13,10 @@ from sklearn.decomposition import PCA
 from sklearn.decomposition._pca import _assess_dimension, _infer_dimension
 from sklearn.utils._array_api import (
     _atol_for_type,
+    array_device,
     move_to,
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._array_api import device as array_device
 from sklearn.utils._test_common.instance_generator import _get_check_estimator_ids
 from sklearn.utils._testing import _array_api_for_tests, assert_allclose
 from sklearn.utils.estimator_checks import (
@@ -942,9 +942,10 @@ def check_array_api_get_precision(
     iris_np = iris.data.astype(dtype_name)
     iris_xp = xp.asarray(iris_np, device=device)
 
-    estimator.fit(iris_np)
-    precision_np = estimator.get_precision()
-    covariance_np = estimator.get_covariance()
+    with config_context(array_api_dispatch=False):
+        estimator.fit(iris_np)
+        precision_np = estimator.get_precision()
+        covariance_np = estimator.get_covariance()
 
     rtol = 2e-4 if iris_np.dtype == "float32" else 2e-7
     with config_context(array_api_dispatch=True):
@@ -1057,10 +1058,11 @@ def test_pca_mle_array_api_compliance(
     X_xp = xp.asarray(X, device=device)
     y_xp = xp.asarray(y, device=device)
 
-    est.fit(X, y)
+    with config_context(array_api_dispatch=False):
+        est.fit(X, y)
 
-    components_np = est.components_
-    explained_variance_np = est.explained_variance_
+        components_np = est.components_
+        explained_variance_np = est.explained_variance_
 
     est_xp = clone(est)
     with config_context(array_api_dispatch=True):
