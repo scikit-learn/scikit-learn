@@ -3,7 +3,7 @@
 
 from cpython cimport Py_INCREF, PyObject, PyTypeObject
 
-from libc.math cimport INFINITY, isnan
+from libc.math cimport INFINITY
 from libc.stdlib cimport free
 from libc.string cimport memcpy
 from libc.string cimport memset
@@ -24,7 +24,7 @@ from scipy.sparse import issparse
 from scipy.sparse import csr_array
 
 from sklearn.utils import _align_api_if_sparse
-from sklearn.utils._bitset cimport N_BITSETS, in_bitset, BITSET_DTYPE_C, BITSET_LENGTH
+from sklearn.utils._bitset cimport N_BITSETS, BITSET_DTYPE_C, BITSET_LENGTH
 
 from sklearn.tree._utils cimport goes_left, SPLIT_LEAF
 from sklearn.tree._utils cimport safe_realloc
@@ -100,7 +100,6 @@ cdef class TreeBuilder:
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight=None,
         const uint8_t[::1] missing_values_in_feature_mask=None,
-        const intp_t[::1] n_categories=None,
     ):
         """Build a decision tree from the training set (X, y)."""
         pass
@@ -801,10 +800,6 @@ cdef class Tree:
         return self._get_node_ndarray()['threshold'][:self.node_count]
 
     @property
-    def categorical_bitset(self):
-        return self._get_node_ndarray()['categorical_bitset'][:self.node_count]
-
-    @property
     def impurity(self):
         return self._get_node_ndarray()['impurity'][:self.node_count]
 
@@ -1213,6 +1208,7 @@ cdef class Tree:
         # Initialize auxiliary data-structure
         cdef Node* node = NULL
         cdef intp_t i = 0
+        cdef bint go_left
 
         with nogil:
             for i in range(n_samples):
@@ -1226,20 +1222,14 @@ cdef class Tree:
                     indptr[i + 1] += 1
 
                     X_i_node_feature = X_ndarray[i, node.feature]
-                    if isnan(X_i_node_feature):
-                        if node.missing_go_to_left:
-                            node = &self.nodes[node.left_child]
-                        else:
-                            node = &self.nodes[node.right_child]
-                    elif self.n_categories[node.feature] > 0:
-                        if in_bitset(
-                            node.left_cat_bitset,
-                            <uint8_t> X_i_node_feature
-                        ):
-                            node = &self.nodes[node.left_child]
-                        else:
-                            node = &self.nodes[node.right_child]
-                    elif X_i_node_feature <= node.threshold:
+                    go_left = goes_left(
+                        node.threshold,
+                        node.left_cat_bitset,
+                        node.missing_go_to_left,
+                        node.split_kind,
+                        X_i_node_feature,
+                    )
+                    if go_left:
                         node = &self.nodes[node.left_child]
                     else:
                         node = &self.nodes[node.right_child]
@@ -1496,7 +1486,6 @@ cdef class Tree:
             intp_t current_node_idx
             bint is_target_feature
             bint go_left
-            bint is_categorical
             intp_t _TREE_LEAF = TREE_LEAF  # to avoid python interactions
 
         for sample_idx in range(X.shape[0]):

@@ -432,7 +432,6 @@ cdef class DensePartitioner:
             intp_t best_feature = best_split[0].feature
             bint best_missing_go_to_left = best_split[0].missing_go_to_left
             float32_t current_value
-            bint is_categorical = self.n_categories[best_feature] > 0
             bint go_to_left
 
         while partition_start < partition_end:

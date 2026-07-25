@@ -95,60 +95,17 @@ class Split:
         ftr = int(tree.tree_.feature[0])
         split_kind = int(tree.tree_.split_kind[0])
         if split_kind == SPLIT_CATEGORICAL_BITSET:
-            cat_bitset = tree.tree_.categorical_bitset[0]
-            threshold = bitset_to_tuple(
-                cat_bitset,
-                n_categories=int(tree.tree_.n_categories[ftr]),
-            )
-        elif split_kind == SPLIT_CATEGORICAL_HASH:
-            threshold = int(tree.tree_.categorical_bitset[0, 0])
-        else:
-            threshold = tree.tree_.threshold[0]
-        missing_left = bool(tree.tree_.missing_go_to_left[0])
-        return cls(ftr, threshold, missing_left, split_kind)
-
-
-def powerset(iterable):
-    """returns all the subsets of `iterable` of length len(iterable) - 1."""
-    s = list(iterable)
-    return chain.from_iterable(
-        combinations(s, r) for r in range(1, (len(s) + 1) // 2 + 1)
-    )
-
-
-def bitset_to_tuple(v, n_categories):
-    bitset = np.asarray(v).reshape(-1)
-    bits_per_word = bitset.dtype.itemsize * 8
-    return tuple(
-        c
-        for c in range(n_categories)
-        if int(bitset[c // bits_per_word]) & (1 << (c % bits_per_word))
-    )
-
-
-@dataclass
-class Split:
-    feature: int
-    threshold: float | tuple
-    missing_left: bool = False
-
-    @property
-    def is_categorical(self):
-        return isinstance(self.threshold, tuple)
-
-    @classmethod
-    def from_tree(cls, tree):
-        ftr = int(tree.tree_.feature[0])
-        if tree.tree_._n_categories[ftr] > 0:
             cat_bitset = tree.tree_._left_cat_bitset[0]
             threshold = bitset_to_tuple(
                 cat_bitset,
                 n_categories=int(tree.tree_._n_categories[ftr]),
             )
+        elif split_kind == SPLIT_CATEGORICAL_HASH:
+            threshold = int(tree.tree_._left_cat_bitset[0, 0])
         else:
             threshold = tree.tree_.threshold[0]
         missing_left = bool(tree.tree_.missing_go_to_left[0])
-        return cls(ftr, threshold, missing_left)
+        return cls(ftr, threshold, missing_left, split_kind)
 
 
 @dataclass
@@ -200,6 +157,8 @@ class NaiveSplitter:
 
     @staticmethod
     def _categorical_goes_left(x, split):
+        if split.split_kind == SPLIT_CATEGORICAL_HASH:
+            return random_categorical_goes_left(split.threshold, x)
         x = x.astype(int)
         cat_go_left = np.zeros(max(max(x), max(split.threshold or [0])) + 1, dtype=bool)
         cat_go_left[list(split.threshold)] = True
@@ -219,7 +178,10 @@ class NaiveSplitter:
                 categories = tuple(int(th) for th in thresholds)
                 thresholds = list(powerset(categories))
             for th in thresholds:
-                yield Split(f, th)
+                if self.is_categorical[f]:
+                    yield Split(f, th, split_kind=SPLIT_CATEGORICAL_BITSET)
+                else:
+                    yield Split(f, th)
             if not nan_mask.any():
                 continue
             if not self.is_categorical[f]:
@@ -228,9 +190,14 @@ class NaiveSplitter:
             elif categories:
                 # With missing values, sending all observed categories to the
                 # left and missing values to the right is a valid split.
-                yield Split(f, categories)
+                yield Split(f, categories, split_kind=SPLIT_CATEGORICAL_BITSET)
             for th in thresholds:
-                yield Split(f, th, missing_left=True)
+                if self.is_categorical[f]:
+                    yield Split(
+                        f, th, missing_left=True, split_kind=SPLIT_CATEGORICAL_BITSET
+                    )
+                else:
+                    yield Split(f, th, missing_left=True)
 
     def best_split_naive(self, X, y, w):
         splits = list(self._generate_all_splits(X))
@@ -322,8 +289,6 @@ def test_split_impurity(
 ):
     is_clf = criterion in CLF_CRITERIONS
 
-    if categorical and "Extra" in Tree.__name__:
-        pytest.skip("Categorical features not implemented for the random splitter")
     rng = np.random.default_rng(global_random_seed)
 
     ns = [5] * 5 + [10] * 5 + [20, 30, 50, 100]

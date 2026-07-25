@@ -19,9 +19,6 @@ from numpy.testing import assert_allclose
 
 from sklearn import clone, datasets, tree
 from sklearn.dummy import DummyRegressor
-from sklearn.ensemble import (
-    HistGradientBoostingRegressor,
-)
 from sklearn.exceptions import NotFittedError
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import (
@@ -93,7 +90,6 @@ ALL_TREES: dict = dict()
 ALL_TREES.update(CLF_TREES)
 ALL_TREES.update(REG_TREES)
 
-SPLIT_CATEGORICAL_BITSET = 1
 SPLIT_CATEGORICAL_HASH = 2
 
 SPARSE_TREES = [
@@ -210,90 +206,6 @@ DATASETS = {
     "sparse-mix": {"X": X_sparse_mix, "y": y_random},
     "zeros": {"X": np.zeros((20, 3)), "y": y_random},
 }
-
-
-def _make_categorical(
-    n_rows: int,
-    n_numerical: int,
-    n_categorical: int,
-    cat_size: int,
-    n_num_meaningful: int,
-    n_cat_meaningful: int,
-    regression: bool,
-    return_tuple: bool,
-    random_state: int,
-):
-    """Generate a dataset with numerical and categorical features.
-
-    The target is a linear combination of one-hot-encoded meaningful
-    categorical features and meaningful numerical features, with random
-    coefficients. Non-meaningful features are pure noise.
-
-    X is laid out as ``[numerical_cols | categorical_cols]``, where
-    categorical columns contain integers in ``[0, cat_size)``.
-
-    Parameters
-    ----------
-    n_rows : int
-        Number of samples.
-    n_numerical : int
-        Number of numerical (continuous) features.
-    n_categorical : int
-        Number of categorical features.
-    cat_size : int
-        Number of distinct categories per categorical feature (uniform).
-    n_num_meaningful : int
-        How many of the first numerical features contribute to the target.
-    n_cat_meaningful : int
-        How many of the first categorical features contribute to the target.
-    regression : bool
-        If True, return continuous y. If False, binarize y at its mean.
-    return_tuple : bool
-        If True, return ``(X, y, meaningful_features)``.
-        If False, return a dict with keys ``"X"``, ``"y"``,
-        ``"meaningful_features"``.
-    random_state : int
-        Seed for ``np.random``.
-
-    Returns
-    -------
-    X : ndarray of shape (n_rows, n_numerical + n_categorical)
-        Feature matrix.
-    y : ndarray of shape (n_rows,)
-        Target values.
-    meaningful_features : ndarray of shape (n_num_meaningful + n_cat_meaningful,)
-        Indices of the features that actually influence the target.
-    """
-
-    from sklearn.preprocessing import OneHotEncoder
-
-    np.random.seed(random_state)
-    numeric = np.random.standard_normal((n_rows, n_numerical))
-    categorical = np.random.randint(0, cat_size, (n_rows, n_categorical))
-    categorical_ohe = OneHotEncoder(categories="auto").fit_transform(
-        categorical[:, :n_cat_meaningful]
-    )
-
-    data_meaningful = np.hstack(
-        (numeric[:, :n_num_meaningful], categorical_ohe.todense())
-    )
-    _, cols = data_meaningful.shape
-    coefs = np.random.standard_normal(cols)
-    y = np.dot(data_meaningful, coefs)
-    y = np.asarray(y).reshape(-1)
-    X = np.hstack((numeric, categorical))
-
-    if not regression:
-        y = (y < y.mean()).astype(int)
-
-    meaningful_features = np.r_[
-        np.arange(n_num_meaningful), np.arange(n_cat_meaningful) + n_numerical
-    ]
-
-    if return_tuple:
-        return X, y, meaningful_features
-    else:
-        return {"X": X, "y": y, "meaningful_features": meaningful_features}
 
 
 def assert_tree_equal(d, s, message):
@@ -1790,23 +1702,6 @@ def test_decision_path(name):
     assert est.tree_.max_depth <= max_depth
 
 
-@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
-def test_categorical_decision_path_leaf_matches_apply(Tree):
-    X = np.array(
-        [[0, 0], [0, 1], [1, 0], [1, 1]] * 5,
-        dtype=np.float64,
-    )
-    y = np.array([0, 0, 0, 1] * 5, dtype=np.float64)
-
-    est = Tree(random_state=0, categorical_features=[0, 1]).fit(X, y)
-    node_indicator = est.decision_path(X)
-    leaves = est.apply(X)
-    path_leaves = node_indicator.indices[node_indicator.indptr[1:] - 1]
-
-    assert est.tree_.max_depth == 2
-    assert_array_equal(path_leaves, leaves)
-
-
 @pytest.mark.parametrize("name", ALL_TREES)
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_no_sparse_y_support(name, csr_container):
@@ -3207,12 +3102,6 @@ def test_no_sparse_with_categorical(name):
 
     Tree = ALL_TREES[name]
 
-    # TODO: ExtraTree defaults to splitter="random" which rejects categorical
-    # before the sparse check even runs — skip those here since that
-    # validation is tested separately.
-    if "ExtraTree" in name:
-        pytest.skip("ExtraTree uses random splitter; categorical rejected earlier")
-
     with pytest.raises(
         NotImplementedError, match="Categorical features not supported with sparse"
     ):
@@ -3531,6 +3420,61 @@ def test_categorical_split_exact_tree():
     assert_array_equal(reg.predict(X_test), [0.0, 0.0, 5.0, 10.0])
 
 
+@pytest.mark.parametrize("Tree", [ExtraTreeClassifier, ExtraTreeRegressor])
+def test_random_splitter_categorical(Tree):
+    categories = np.arange(8, dtype=np.float64)
+    X = categories.reshape(-1, 1)
+    y = (categories.astype(np.intp) % 2).astype(np.float64)
+
+    est = Tree(
+        random_state=0,
+        max_depth=1,
+        categorical_features=[0],
+    ).fit(X, y)
+    est_same = Tree(
+        random_state=0,
+        max_depth=1,
+        categorical_features=[0],
+    ).fit(X, y)
+
+    assert est.tree_.node_count == 3
+    assert est.tree_.split_kind[0] == SPLIT_CATEGORICAL_HASH
+    assert est.tree_.n_node_samples[1] > 0
+    assert est.tree_.n_node_samples[2] > 0
+
+    node_indicator = est.decision_path(X)
+    path_leaves = node_indicator.indices[node_indicator.indptr[1:] - 1]
+    assert_array_equal(path_leaves, est.apply(X))
+    assert_array_equal(est.apply(X), est_same.apply(X))
+    assert_array_equal(est.predict(X), est_same.predict(X))
+
+
+def test_extratree_categorical_multiclass():
+    """ExtraTree random splits support multiclass categorical features."""
+    X = np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float64)
+    y = np.array([0, 1, 2, 0, 1, 2])
+
+    est = ExtraTreeClassifier(
+        random_state=0,
+        max_depth=1,
+        categorical_features=[0],
+    ).fit(X, y)
+
+    assert est.tree_.node_count == 3
+    assert est.tree_.split_kind[0] == SPLIT_CATEGORICAL_HASH
+
+
+def test_decision_tree_best_splitter_rejects_multiclass_categorical():
+    X = np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float64)
+    y = np.array([0, 1, 2, 0, 1, 2])
+
+    with pytest.raises(ValueError, match="splitter='best'"):
+        DecisionTreeClassifier(
+            categorical_features=[0],
+            random_state=0,
+        ).fit(X, y)
+
+
 @pytest.mark.parametrize(
     "X,y",
     [
@@ -3555,100 +3499,3 @@ def test_random_splitter_missing_values_uses_non_missing_min_max(X, y):
 
     assert np.isfinite(threshold)
     assert non_missing.min() <= threshold <= non_missing.max()
-
-
-def test_single_tree_equivalence_with_hgbt_regressor_categorical():
-    """Test single-split categorical equivalence between DT regressor and HGBT."""
-    n_categories = 6
-    category_counts = np.array([40, 19, 23, 29, 31, 37], dtype=np.intp)
-    X_cat = np.repeat(np.arange(n_categories, dtype=np.intp), category_counts)
-    X = X_cat.astype(np.float64).reshape(-1, 1)
-
-    # Non-ordinal categorical signal: categories {1,2,5} -> 0 and {0,3,4} -> 1.
-    # With max_depth=1 this yields one unique optimal split (up to left/right swap).
-    y_map = np.array([0.0, 0.0, 0.0, 1.0, 1.0, 1.0], dtype=np.float64)
-    y = y_map[X_cat]
-
-    tree = DecisionTreeRegressor(
-        criterion="squared_error",
-        max_depth=1,
-        max_leaf_nodes=2,
-        min_samples_leaf=1,
-        random_state=0,
-        categorical_features=[0],
-    ).fit(X, y)
-
-    hist = HistGradientBoostingRegressor(
-        loss="squared_error",
-        max_iter=1,
-        learning_rate=1.0,
-        max_depth=1,
-        max_leaf_nodes=2,
-        min_samples_leaf=1,
-        categorical_features=[0],
-        max_bins=255,
-        l2_regularization=0.0,
-        early_stopping=False,
-        random_state=0,
-    ).fit(X, y)
-
-    tree_pred = tree.predict(X)
-    hist_pred = hist.predict(X)
-    tree_score = tree.score(X, y)
-    hist_score = hist.score(X, y)
-
-    # test predictive equivalence
-    assert_allclose(hist_pred, tree_pred, atol=1e-7, rtol=0.0)
-    assert_allclose(hist_score, tree_score, atol=1e-12, rtol=1e-7)
-    assert hist_score > 0.99
-    assert tree_score > 0.99
-
-    # test high-level structure equivalence
-    hgb_tree = hist._predictors[0][0]
-    assert tree.get_depth() == 1 == hgb_tree.get_max_depth()
-    assert tree.get_n_leaves() == 2 == hgb_tree.get_n_leaf_nodes()
-    assert tree.tree_.feature[0] == 0 == hgb_tree.nodes[0]["feature_idx"]
-    assert hgb_tree.nodes[0]["is_categorical"]
-
-    # test equivalence with one sample
-    X_proto = np.arange(n_categories, dtype=np.float64).reshape(-1, 1)
-    dt_pred_proto = tree.predict(X_proto)
-    hgb_pred_proto = hist.predict(X_proto)
-    assert_allclose(hgb_pred_proto, dt_pred_proto, atol=1e-7, rtol=0.0)
-    assert_allclose(dt_pred_proto, y_map, atol=1e-12, rtol=0.0)
-
-    # test manually the categorical bit-set split
-    def _bitset_to_set(words, n_categories):
-        words = np.asarray(words)
-        bits_per_word = words.dtype.itemsize * 8
-        out = set()
-        for w_idx, w in enumerate(words):
-            v = int(w)
-            for b in range(bits_per_word):
-                c = w_idx * bits_per_word + b
-                if c >= n_categories:
-                    break
-                if (v >> b) & 1:
-                    out.add(c)
-        return frozenset(out)
-
-    def _canonical_split(cat_set, n_categories):
-        all_cats = frozenset(range(n_categories))
-        comp = all_cats - cat_set
-        # canonical: smaller side first (then lexicographic tie-break)
-        a, b = sorted((tuple(sorted(cat_set)), tuple(sorted(comp))))
-        return (a, b)
-
-    # DT root split set
-    dt_root_set = _bitset_to_set(tree.tree_.categorical_bitset[0], n_categories)
-
-    # HGBT root split set
-    hgb_tree = hist._predictors[0][0]
-    hgb_bitset_idx = int(hgb_tree.nodes[0]["bitset_idx"])
-    hgb_root_set = _bitset_to_set(
-        hgb_tree.raw_left_cat_bitsets[hgb_bitset_idx], n_categories
-    )
-
-    assert _canonical_split(dt_root_set, n_categories) == _canonical_split(
-        hgb_root_set, n_categories
-    )

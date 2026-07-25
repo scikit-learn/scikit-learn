@@ -22,6 +22,11 @@ cdef enum:
     SPLIT_CATEGORICAL_HASH = 2
 
 
+cdef enum:
+    # Maximum number of random categorical split candidates to evaluate per feature.
+    MAX_RANDOM_CATEGORICAL_SPLIT_ATTEMPTS = 256
+
+
 cdef struct Node:
     # Base storage structure for the nodes in a Tree object
 

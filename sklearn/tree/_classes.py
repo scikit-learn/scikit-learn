@@ -151,7 +151,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         ccp_alpha=0.0,
         categorical_features=None,
         monotonic_cst=None,
-        n_random_categorical_splits=0,
     ):
         self.criterion = criterion
         self.splitter = splitter
@@ -167,7 +166,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.ccp_alpha = ccp_alpha
         self.monotonic_cst = monotonic_cst
         self.categorical_features = categorical_features
-        self.n_random_categorical_splits = n_random_categorical_splits
 
     def get_depth(self):
         """Return the depth of the decision tree.
@@ -305,13 +303,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                         "No support for np.int64 index based sparse matrices"
                     )
 
-            is_categorical_ = self._check_categorical_feature_mask(X)
-            has_categorical = bool(np.any(is_categorical_))
-            if issparse(X) and has_categorical:
-                raise NotImplementedError(
-                    "Categorical features not supported with sparse inputs"
-                )
-
             if self.criterion == "poisson":
                 if np.any(y < 0):
                     raise ValueError(
@@ -327,9 +318,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         # Determine output settings
         n_samples, self.n_features_in_ = X.shape
         is_classification = is_classifier(self)
-        if is_categorical_ is None:
-            is_categorical_ = self._check_categorical_feature_mask(X)
-            has_categorical = bool(np.any(is_categorical_))
 
         y = np.atleast_1d(y)
         expanded_class_weight = None
@@ -508,15 +496,18 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 if max_encoded_value >= MAX_NUM_CATEGORIES:
                     raise ValueError(f"{base_msg} Found {max_encoded_value}.")
 
-        if has_categorical and self.n_outputs_ > 1:
-            raise ValueError(
-                "Categorical features are not supported with multi-output targets."
-            )
-        if has_categorical and is_classifier(self) and np.any(self.n_classes_ > 2):
-            raise ValueError(
-                "Categorical features are only supported for binary classification. "
-                f"Found {self.n_classes_.max()} classes."
-            )
+        if has_categorical and self.splitter == "best":
+            if self.n_outputs_ > 1:
+                raise ValueError(
+                    "Categorical features with splitter='best' are not supported "
+                    "with multi-output targets."
+                )
+            if is_classifier(self) and np.any(self.n_classes_ > 2):
+                raise ValueError(
+                    "Categorical features with splitter='best' are only supported "
+                    "for binary classification. "
+                    f"Found {self.n_classes_.max()} classes."
+                )
 
         SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
         splitter = SPLITTERS[self.splitter](
@@ -526,7 +517,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             min_weight_leaf,
             random_state,
             monotonic_cst,
-            self.n_random_categorical_splits,
         )
 
         if is_classifier(self):
@@ -662,18 +652,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 X.indices.dtype != np.intc or X.indptr.dtype != np.intc
             ):
                 raise ValueError("No support for np.int64 index based sparse matrices")
-
-            has_categorical = np.any(self.n_categories_in_feature_ > 0)
-            if issparse(X) and has_categorical:
-                raise NotImplementedError(
-                    "Categorical features not supported with sparse inputs"
-                )
-            if has_categorical:
-                self._validate_categorical_values(
-                    X,
-                    self.n_categories_in_feature_ > 0,
-                    n_categories_in_feature=self.n_categories_in_feature_,
-                )
         else:
             # The number of features is checked regardless of `check_input`
             _check_n_features(self, X, reset=False)
@@ -1057,6 +1035,9 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         categories. Missing values for categorical features should be
         represented by ``np.nan``; unknown categories at prediction time are
         also treated as missing values.
+
+        With the default ``splitter='best'``, categorical features are only
+        supported for binary classification and single-output regression.
 
         .. versionadded:: 1.10
 
@@ -1476,6 +1457,9 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         represented by ``np.nan``; unknown categories at prediction time are
         also treated as missing values.
 
+        With the default ``splitter='best'``, categorical features are only
+        supported for single-output regression.
+
         .. versionadded:: 1.10
 
     Attributes
@@ -1866,6 +1850,10 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         represented by ``np.nan``; unknown categories at prediction time are
         also treated as missing values.
 
+        Unlike :class:`DecisionTreeClassifier`, categorical features are
+        supported with the default ``splitter='random'`` strategy, including
+        multi-class classification and multi-output targets.
+
         .. versionadded:: 1.10
 
     Attributes
@@ -2159,6 +2147,10 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         categories. Missing values for categorical features should be
         represented by ``np.nan``; unknown categories at prediction time are
         also treated as missing values.
+
+        Unlike :class:`DecisionTreeRegressor`, categorical features are
+        supported with the default ``splitter='random'`` strategy, including
+        multi-output targets.
 
         .. versionadded:: 1.10
 
