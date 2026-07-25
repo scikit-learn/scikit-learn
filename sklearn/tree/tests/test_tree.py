@@ -3420,12 +3420,59 @@ def test_categorical_split_exact_tree():
     assert_array_equal(reg.predict(X_test), [0.0, 0.0, 5.0, 10.0])
 
 
-@pytest.mark.parametrize("Tree", [ExtraTreeClassifier, ExtraTreeRegressor])
-def test_random_splitter_categorical(Tree):
-    categories = np.arange(8, dtype=np.float64)
-    X = categories.reshape(-1, 1)
-    y = (categories.astype(np.intp) % 2).astype(np.float64)
+@pytest.mark.parametrize(
+    "Tree,y,X",
+    [
+        # Binary classification: y is 0 for even categories, 1 for odd
+        # (y = category % 2). The target depends on the category, so a good split
+        # should lower impurity.
+        (
+            ExtraTreeClassifier,
+            (np.arange(8, dtype=np.intp) % 2).astype(np.float64),
+            np.arange(8, dtype=np.float64).reshape(-1, 1),
+        ),
+        # Same even/odd target as above, but with ExtraTreeRegressor (single output).
+        (
+            ExtraTreeRegressor,
+            (np.arange(8, dtype=np.intp) % 2).astype(np.float64),
+            np.arange(8, dtype=np.float64).reshape(-1, 1),
+        ),
+        # Three-class classification: ExtraTree allows this; DecisionTree with
+        # splitter='best' does not.
+        (
+            ExtraTreeClassifier,
+            np.array([0, 1, 2, 0, 1, 2]),
+            np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float64),
+        ),
+        # Two target columns: ExtraTree allows this; DecisionTree with splitter='best'
+        # does not.
+        (
+            ExtraTreeRegressor,
+            np.array(
+                [
+                    [0.0, 1.0],
+                    [1.0, 2.0],
+                    [2.0, 0.0],
+                    [0.0, 1.0],
+                    [1.0, 2.0],
+                    [2.0, 0.0],
+                ]
+            ),
+            np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float64),
+        ),
+    ],
+    ids=["clf-binary", "reg-binary", "clf-multiclass", "reg-multioutput"],
+)
+def test_random_splitter_categorical(Tree, y, X):
+    """ExtraTree hash splits on categorical features fit and route correctly.
 
+    The first two cases use a binary target derived from category parity
+    (even categories -> 0, odd -> 1), so the chosen split should reduce
+    impurity and score above the root predictor.
+
+    The last two cases use target shapes that ``DecisionTree*`` rejects when
+    ``splitter='best'`` (multiclass classification and multi-output regression).
+    """
     est = Tree(
         random_state=0,
         max_depth=1,
@@ -3437,10 +3484,20 @@ def test_random_splitter_categorical(Tree):
         categorical_features=[0],
     ).fit(X, y)
 
-    assert est.tree_.node_count == 3
-    assert est.tree_.split_kind[0] == SPLIT_CATEGORICAL_HASH
-    assert est.tree_.n_node_samples[1] > 0
-    assert est.tree_.n_node_samples[2] > 0
+    tree = est.tree_
+    assert tree.node_count == 3
+    assert tree.split_kind[0] == SPLIT_CATEGORICAL_HASH
+    assert tree.n_node_samples[1] > 0
+    assert tree.n_node_samples[2] > 0
+
+    # The selected hash split should reduce impurity relative to the root.
+    assert tree.impurity[1] < tree.impurity[0]
+    assert tree.impurity[2] < tree.impurity[0]
+    weighted_impurity = tree.impurity * tree.n_node_samples / tree.n_node_samples[0]
+    assert weighted_impurity[1] + weighted_impurity[2] < weighted_impurity[0]
+
+    # A non-trivial split should beat the root predictor on the training data.
+    assert est.score(X, y) > 0.55
 
     node_indicator = est.decision_path(X)
     path_leaves = node_indicator.indices[node_indicator.indptr[1:] - 1]
@@ -3449,27 +3506,40 @@ def test_random_splitter_categorical(Tree):
     assert_array_equal(est.predict(X), est_same.predict(X))
 
 
-def test_extratree_categorical_multiclass():
-    """ExtraTree random splits support multiclass categorical features."""
+@pytest.mark.parametrize(
+    "Tree,y,match",
+    [
+        # DecisionTreeClassifier + 3 classes: splitter='best' only allows
+        # binary classification.
+        (
+            DecisionTreeClassifier,
+            np.array([0, 1, 2, 0, 1, 2]),
+            "binary classification",
+        ),
+        # DecisionTreeRegressor + 2 outputs: splitter='best' does not support
+        # multi-output targets.
+        (
+            DecisionTreeRegressor,
+            np.array(
+                [
+                    [0.0, 1.0],
+                    [1.0, 2.0],
+                    [2.0, 0.0],
+                    [0.0, 1.0],
+                    [1.0, 2.0],
+                    [2.0, 0.0],
+                ]
+            ),
+            "multi-output targets",
+        ),
+    ],
+    ids=["multiclass-classification", "multioutput-regression"],
+)
+def test_decision_tree_best_splitter_rejects_categorical_limits(Tree, y, match):
     X = np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float64)
-    y = np.array([0, 1, 2, 0, 1, 2])
 
-    est = ExtraTreeClassifier(
-        random_state=0,
-        max_depth=1,
-        categorical_features=[0],
-    ).fit(X, y)
-
-    assert est.tree_.node_count == 3
-    assert est.tree_.split_kind[0] == SPLIT_CATEGORICAL_HASH
-
-
-def test_decision_tree_best_splitter_rejects_multiclass_categorical():
-    X = np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0]], dtype=np.float64)
-    y = np.array([0, 1, 2, 0, 1, 2])
-
-    with pytest.raises(ValueError, match="splitter='best'"):
-        DecisionTreeClassifier(
+    with pytest.raises(ValueError, match=match):
+        Tree(
             categorical_features=[0],
             random_state=0,
         ).fit(X, y)
