@@ -34,7 +34,6 @@ def plot(X, labels, probabilities=None, parameters=None, ground_truth=False, ax=
     colors = [plt.cm.Spectral(each) for each in np.linspace(0, 1, len(unique_labels))]
     # The probability of a point belonging to its labeled cluster
     # determines the size of its marker
-    proba_map = {idx: probabilities[idx] for idx in range(len(labels))}
     for k, col in zip(unique_labels, colors):
         if k == -1:
             # Black used for noise.
@@ -48,7 +47,7 @@ def plot(X, labels, probabilities=None, parameters=None, ground_truth=False, ax=
                 "x" if k == -1 else "o",
                 markerfacecolor=tuple(col),
                 markeredgecolor="black",
-                alpha=0.5 if k == -1 else 0.1 + 0.9 * proba_map[ci],
+                alpha=0.5 if k == -1 else 0.1 + 0.9 * probabilities[ci],
             )
     n_clusters_ = len(unique_labels) - (1 if -1 in labels else 0)
     preamble = "True" if ground_truth else "Estimated"
