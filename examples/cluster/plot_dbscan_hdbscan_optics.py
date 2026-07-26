@@ -84,7 +84,7 @@ plot(X, labels=labels_true, ground_truth=True)
 # `eps` in Scikit-learn. Typically, they are not known ahead of time
 # and require tuning. More details regarding the algorithm and its
 # implementation can be found in :ref:`User Guide <DBSCAN>`.
-
+#
 # Using `eps=0.2` and `min_samples=10` on the example dataset, DBSCAN
 # correctly identifies the two left-most clusters but fails for those
 # on the right. This difference illustrates the limitations of choosing
@@ -108,7 +108,7 @@ plot(X, db.labels_, parameters={"eps": eps, "min_samples": min_samples})
 # distance between pairs of data points and varying this distance. The
 # full details of this algorithm can be found in :ref:`User Guide
 # <HDBSCAN>`.
-
+#
 # Using the same dataset, HDBSCAN successfully identifies all 4 clusters
 # despite the variation in density. Unlike DBSCAN and OPTICS, this
 # algorithm can output probabilities for each label, which is
