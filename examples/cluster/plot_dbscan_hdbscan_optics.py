@@ -126,8 +126,9 @@ plot(X, hdb.labels_, hdb.probabilities_)
 # Like HDBSCAN, OPTICS can be viewed as an improvement on DBSCAN, i.e.
 # it generalizes the `eps` parameter to a range of values. Unlike
 # HDBSCAN, however, the algorithm orders samples using the reachability
-# distance. More details can be found in :ref:`User Guide<optics>`.
-#
+# distance instead of the mutual reachability distance. More details can
+# be found in :ref:`User Guide<optics>`.
+
 from sklearn.cluster import OPTICS, cluster_optics_dbscan
 
 optics = OPTICS(min_samples=min_samples, min_cluster_size=0.1).fit(X)
