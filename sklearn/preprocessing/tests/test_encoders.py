@@ -628,13 +628,13 @@ def test_one_hot_encoder_drop_equals_if_binary():
     ],
     ids=["mixed", "numeric", "object"],
 )
-
 def test_ordinal_encoder(X):
     enc = OrdinalEncoder()
     exp = np.array([[0, 1, 0], [1, 0, 0]], dtype="int64")
     assert_array_equal(enc.fit_transform(X), exp.astype("float64"))
     enc = OrdinalEncoder(dtype="int64")
     assert_array_equal(enc.fit_transform(X), exp)
+
 
 @pytest.mark.parametrize(
     "kwargs",
@@ -686,6 +686,7 @@ def test_ordinal_encoder_frequency(kwargs):
     X_trans_inv = enc.inverse_transform(X_trans_enc)
     assert_array_equal(X_trans_inv, X_decoded)
 
+
 @pytest.mark.parametrize(
     "kwargs",
     [
@@ -704,7 +705,6 @@ def test_ordinal_encoder_all_infrequent_frequency(kwargs):
 
     X_test = [["a"], ["b"], ["c"], ["d"], ["e"]]
     assert_allclose(encoder.transform(X_test), [[0], [0], [0], [0], [-1]])
-
 
 
 @pytest.mark.parametrize(
