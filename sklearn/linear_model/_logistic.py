@@ -2275,11 +2275,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             self,
             X,
             y,
-            accept_sparse="csc" if solver == "newton-cd" else "csr",
+            accept_sparse="csr",  # CV will index data on first dimension
             dtype=[xp.float64, xp.float32],
-            order="F" if solver == "newton-cd" else "C",
-            accept_large_sparse=solver
-            not in ("liblinear", "newton-cd-gram", "sag", "saga"),
+            order="C",  # CV will index data on first dimension
+            accept_large_sparse=solver not in ("liblinear", "newton-cd", "sag", "saga"),
         )
         n_samples, n_features = X.shape
         check_classification_targets(y)
