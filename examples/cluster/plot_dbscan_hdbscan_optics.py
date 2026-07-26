@@ -33,7 +33,7 @@ def plot(X, labels, probabilities=None, parameters=None, ground_truth=False, ax=
 
     colors = [plt.cm.Spectral(each) for each in np.linspace(0, 1, len(unique_labels))]
     # The probability of a point belonging to its labeled cluster
-    # determines the size of its marker
+    # determines the opacity of its marker
     for k, col in zip(unique_labels, colors):
         if k == -1:
             # Black used for noise.
