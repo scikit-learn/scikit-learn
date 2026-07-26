@@ -289,4 +289,3 @@ def test_mutual_info_regression_copy():
     mutual_info_regression(X, y, copy=False, random_state=42)
     assert not np.array_equal(X, X_copy)
     assert not np.array_equal(y, y_copy)
-
