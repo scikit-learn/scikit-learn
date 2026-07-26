@@ -268,3 +268,25 @@ def test_mutual_info_n_jobs(global_random_seed, mutual_info_func, data_generator
     single_job = mutual_info_func(X, y, random_state=global_random_seed, n_jobs=1)
     multi_job = mutual_info_func(X, y, random_state=global_random_seed, n_jobs=2)
     assert_allclose(single_job, multi_job)
+
+
+def test_mutual_info_regression_copy():
+    # Check that copy=False modifies X and y in-place if they are float64,
+    # and copy=True does not modify them.
+    rng = np.random.RandomState(42)
+    X = rng.normal(0, 1, size=(50, 3)).astype(np.float64)
+    y = rng.normal(0, 1, size=50).astype(np.float64)
+
+    X_copy = X.copy()
+    y_copy = y.copy()
+
+    # With copy=True, original arrays should not be modified
+    mutual_info_regression(X, y, copy=True, random_state=42)
+    assert_array_equal(X, X_copy)
+    assert_array_equal(y, y_copy)
+
+    # With copy=False, original arrays should be modified in-place
+    mutual_info_regression(X, y, copy=False, random_state=42)
+    assert not np.array_equal(X, X_copy)
+    assert not np.array_equal(y, y_copy)
+
