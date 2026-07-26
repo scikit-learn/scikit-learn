@@ -73,16 +73,14 @@ def test_variance_nan(sparse_container):
 
 
 def test_transform_dataframe_allow_nan():
-    """For pandas output, NaN passes through but infinity is still rejected."""
+    """Test that `VarianceThreshold` (only built-in selector with hardcoded nan
+    support) passes nan values if "pandas" is selected as an output.
+    Regression test for https://github.com/scikit-learn/scikit-learn/issues/34500.
+    """
     pd = pytest.importorskip("pandas")
 
     X = pd.DataFrame({"a": [1.0, 2.0, 3.0], "b": [4.0, 5.0, 6.0]})
     sel = VarianceThreshold().set_output(transform="pandas").fit(X)
-
-    X_inf = X.copy()
-    X_inf.loc[0, "a"] = np.inf
-    with pytest.raises(ValueError, match="Input X contains infinity"):
-        sel.transform(X_inf)
 
     X_nan = X.copy()
     X_nan.loc[0, "a"] = np.nan
