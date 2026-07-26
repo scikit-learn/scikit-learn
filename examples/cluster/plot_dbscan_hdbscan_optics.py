@@ -136,6 +136,7 @@ plot(X, optics.labels_)
 
 # %%
 # Generalizations of DBSCAN
+# -------------------------
 #
 # HDBSCAN and OPTICS can be viewed as generalizing DBSCAN to a range of
 # densities instead of a fixed value. This is illustrated below, where
