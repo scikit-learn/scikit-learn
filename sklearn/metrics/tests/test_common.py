@@ -1751,7 +1751,7 @@ def check_sample_weight_invariance(name, metric, y1, y2, sample_weight=None):
         )
 
     # `METRICS_SAMPLEWISE` computes the metric per sample, thus there is still
-    # an otuput for 0 weighted samples.
+    # an output for 0 weighted samples.
     if name not in METRICS_SAMPLEWISE:
         # check that ignoring a fraction of the samples is equivalent to setting
         # the corresponding weights to zero
