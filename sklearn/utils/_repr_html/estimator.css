@@ -164,15 +164,6 @@ clickable and can be expanded/collapsed.
   color: var(--sklearn-color-text-muted);
 }
 
-/* Passthrough has nothing to expand, so hide its disclosure marker */
-.sk-global summary.sk-toggleable__label--no-marker {
-  list-style: none;
-}
-
-.sk-global summary.sk-toggleable__label--no-marker::-webkit-details-marker {
-  display: none;
-}
-
 /* Toggleable content - dropdown */
 
 .sk-global div.sk-toggleable__content {
@@ -251,8 +242,7 @@ clickable and can be expanded/collapsed.
 
 /* Estimator label */
 
-.sk-global div.sk-label summary.sk-toggleable__label,
-.sk-global div.sk-label label {
+.sk-global div.sk-label summary.sk-toggleable__label {
   font-family: monospace;
   font-weight: bold;
   line-height: 1.2em;

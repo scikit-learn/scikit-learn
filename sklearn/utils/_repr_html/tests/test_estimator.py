@@ -376,10 +376,10 @@ def test_show_arrow_pipeline():
     pipe = Pipeline([("scale", StandardScaler()), ("log_Reg", LogisticRegression())])
 
     html_output = estimator_html_repr(pipe)
-    # The top-level Pipeline is expandable, so its <summary> keeps the native
-    # disclosure marker (i.e. its class does not carry the ``--no-marker`` modifier).
+    # Every <summary> is a native disclosure widget, so the top-level Pipeline
+    # box shows the browser's native marker.
     assert (
-        'class="sk-toggleable__label  ">'
+        'class="sk-toggleable__label ">'
         '<span class="sk-toggleable__label-content">'
         "<div><div>Pipeline</div></div>" in html_output
     )

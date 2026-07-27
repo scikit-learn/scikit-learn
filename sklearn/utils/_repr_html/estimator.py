@@ -191,13 +191,8 @@ def _write_label_html(
             if doc_link or is_fitted_icon
             else ""
         )
-        no_marker_class = (
-            "sk-toggleable__label--no-marker" if name == "passthrough" else ""
-        )
-
         label_html = (
-            f'<summary class="sk-toggleable__label {is_fitted_css_class} '
-            f'{no_marker_class}">'
+            f'<summary class="sk-toggleable__label {is_fitted_css_class}">'
             f'<span class="sk-toggleable__label-content">'
             f"{name_caption_div}{links_div}</span></summary>"
         )
