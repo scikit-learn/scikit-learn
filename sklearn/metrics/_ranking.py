@@ -367,11 +367,11 @@ def det_curve(
 
     fnr : ndarray of shape (n_thresholds,)
         False negative rate (FNR) such that element i is the false negative
-        rate of predictions with score >= thresholds[i]. This is occasionally
+        rate of predictions with score < thresholds[i]. This is occasionally
         referred to as false rejection or miss rate.
 
     thresholds : ndarray of shape (n_thresholds,)
-        Decreasing thresholds on the decision function (either `predict_proba`
+        Increasing thresholds on the decision function (either `predict_proba`
         or `decision_function`) used to compute FPR and FNR.
 
         .. versionchanged:: 1.7
@@ -672,7 +672,7 @@ def roc_auc_score(
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.metrics import roc_auc_score
     >>> X, y = load_breast_cancer(return_X_y=True)
-    >>> clf = LogisticRegression(solver="newton-cholesky", random_state=0).fit(X, y)
+    >>> clf = LogisticRegression(solver="newton-cholesky").fit(X, y)
     >>> roc_auc_score(y, clf.predict_proba(X)[:, 1])
     0.99
     >>> roc_auc_score(y, clf.decision_function(X))

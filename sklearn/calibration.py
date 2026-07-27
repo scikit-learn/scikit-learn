@@ -410,9 +410,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 {"splitter": {}, "estimator": {"fit": fit_kwargs}}
             )
 
-        xp, is_array_api, device_ = get_namespace_and_device(X)
+        xp, is_array_api, device = get_namespace_and_device(X)
         if is_array_api:
-            y, sample_weight = move_to(y, sample_weight, xp=xp, device=device_)
+            y, sample_weight = move_to(y, sample_weight, xp=xp, device=device)
         # Check that each cross-validation fold can have at least one
         # example per class
         if isinstance(self.cv, int):
@@ -527,8 +527,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         check_is_fitted(self)
         # Compute the arithmetic mean of the predictions of the calibrated
         # classifiers
-        xp, _, device_ = get_namespace_and_device(X)
-        mean_proba = xp.zeros((_num_samples(X), self.classes_.shape[0]), device=device_)
+        xp, _, device = get_namespace_and_device(X)
+        mean_proba = xp.zeros((_num_samples(X), self.classes_.shape[0]), device=device)
         for calibrated_classifier in self.calibrated_classifiers_:
             proba = calibrated_classifier.predict_proba(X)
             mean_proba += proba
@@ -981,7 +981,7 @@ def _convert_to_logits(decision_values, eps=1e-12, xp=None):
     -------
     logits : ndarray of shape (n_samples, n_classes)
     """
-    xp, _, device_ = get_namespace_and_device(decision_values, xp=xp)
+    xp, _, device = get_namespace_and_device(decision_values, xp=xp)
     decision_values = check_array(
         decision_values, dtype=[xp.float64, xp.float32], ensure_2d=False
     )
@@ -993,7 +993,7 @@ def _convert_to_logits(decision_values, eps=1e-12, xp=None):
         row_sums_to_one = xp.all(
             xpx.isclose(
                 xp.sum(decision_values, axis=1),
-                xp.asarray(1.0, device=device_, dtype=decision_values.dtype),
+                xp.asarray(1.0, device=device, dtype=decision_values.dtype),
             )
         )
 
@@ -1427,9 +1427,9 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
     >>> X, y = make_classification(random_state=0)
     >>> X_train, X_test, y_train, y_test = train_test_split(
     ...     X, y, random_state=0)
-    >>> clf = LogisticRegression(random_state=0)
+    >>> clf = LogisticRegression()
     >>> clf.fit(X_train, y_train)
-    LogisticRegression(random_state=0)
+    LogisticRegression()
     >>> y_prob = clf.predict_proba(X_test)[:, 1]
     >>> prob_true, prob_pred = calibration_curve(y_test, y_prob, n_bins=10)
     >>> disp = CalibrationDisplay(prob_true, prob_pred, y_prob)
@@ -1603,9 +1603,9 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> X, y = make_classification(random_state=0)
         >>> X_train, X_test, y_train, y_test = train_test_split(
         ...     X, y, random_state=0)
-        >>> clf = LogisticRegression(random_state=0)
+        >>> clf = LogisticRegression()
         >>> clf.fit(X_train, y_train)
-        LogisticRegression(random_state=0)
+        LogisticRegression()
         >>> disp = CalibrationDisplay.from_estimator(clf, X_test, y_test)
         >>> plt.show()
         """
@@ -1726,9 +1726,9 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> X, y = make_classification(random_state=0)
         >>> X_train, X_test, y_train, y_test = train_test_split(
         ...     X, y, random_state=0)
-        >>> clf = LogisticRegression(random_state=0)
+        >>> clf = LogisticRegression()
         >>> clf.fit(X_train, y_train)
-        LogisticRegression(random_state=0)
+        LogisticRegression()
         >>> y_prob = clf.predict_proba(X_test)[:, 1]
         >>> disp = CalibrationDisplay.from_predictions(y_test, y_prob)
         >>> plt.show()

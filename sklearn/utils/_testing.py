@@ -699,7 +699,7 @@ def _check_consistency_items(
 
     Parameters
     ----------
-    items_doc : dict of dict of str
+    items_docs : dict of dict of str
         Dictionary where the key is the string type or description, value is
         a dictionary where the key is "type description" or "description"
         and the value is a list of object names with the same string type or
@@ -1084,7 +1084,7 @@ def raises(expected_exc_type, match=None, may_pass=False, err_msg=None):
 
     Parameters
     ----------
-    excepted_exc_type : Exception or list of Exception
+    expected_exc_type : Exception or list of Exception
         The exception that should be raised by the block. If a list, the block
         should raise one of the exceptions.
     match : str or list of str, default=None
@@ -1507,6 +1507,15 @@ def _get_warnings_filters_info_list():
         WarningInfo(
             "ignore",
             message=".+scattermapbox.+deprecated.+scattermap.+instead",
+            category=DeprecationWarning,
+        ),
+        # seaborn <=0.13.2 passes the deprecated `vert` argument to matplotlib's
+        # Axes.bxp internally (e.g. via sns.boxplot).
+        # TODO: remove once a fixed seaborn release is our minimum.
+        WarningInfo(
+            "ignore",
+            # Use `.` below instead of `:` to avoid string being split incorrectly
+            message="vert. bool was deprecated in Matplotlib",
             category=DeprecationWarning,
         ),
         # TODO(1.10): remove PassiveAggressive

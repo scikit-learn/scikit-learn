@@ -378,7 +378,7 @@ def test_stacking_regressor_error(y, params, type_err, msg_err):
         (
             StackingClassifier(
                 estimators=[
-                    ("first", LogisticRegression(random_state=0)),
+                    ("first", LogisticRegression()),
                     ("second", LinearSVC(random_state=0)),
                 ]
             ),
@@ -559,7 +559,7 @@ def test_stacking_cv_influence(stacker, X, y):
             StackingClassifier,
             DummyClassifier,
             "predict_proba",
-            LogisticRegression(random_state=42),
+            LogisticRegression(),
             X_iris,
             y_iris,
         ),
@@ -788,7 +788,7 @@ def test_stacking_classifier_multilabel_auto_predict(stack_method, passthrough):
         (
             StackingClassifier(
                 estimators=[
-                    ("lr", LogisticRegression(random_state=0)),
+                    ("lr", LogisticRegression()),
                     ("svm", LinearSVC(random_state=0)),
                 ]
             ),
@@ -807,7 +807,7 @@ def test_stacking_classifier_multilabel_auto_predict(stack_method, passthrough):
         (
             StackingClassifier(
                 estimators=[
-                    ("lr", LogisticRegression(random_state=0)),
+                    ("lr", LogisticRegression()),
                     ("other", "drop"),
                     ("svm", LinearSVC(random_state=0)),
                 ]

@@ -390,27 +390,31 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             X_out = np.empty(
                 (X_ordinal.shape[0], X_ordinal.shape[1] * len(self.classes_)),
                 dtype=np.float64,
+                order="F",
             )
         else:
             X_out = np.empty_like(X_ordinal, dtype=np.float64)
 
         for train_idx, test_idx in cv.split(X, y, **routed_params.splitter.split):
-            X_train, y_train = X_ordinal[train_idx, :], y_encoded[train_idx]
+            X_indices = np.ascontiguousarray(train_idx, dtype=np.intp)
+            y_train = y_encoded[train_idx]
             y_train_mean = np.mean(y_train, axis=0)
 
             if self.target_type_ == "multiclass":
                 encodings = self._fit_encoding_multiclass(
-                    X_train,
+                    X_ordinal,
                     y_train,
                     n_categories,
                     y_train_mean,
+                    X_indices=X_indices,
                 )
             else:
                 encodings = self._fit_encoding_binary_or_continuous(
-                    X_train,
+                    X_ordinal,
                     y_train,
                     n_categories,
                     y_train_mean,
+                    X_indices=X_indices,
                 )
             self._transform_X_ordinal(
                 X_out,
@@ -453,6 +457,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             X_out = np.empty(
                 (X_ordinal.shape[0], X_ordinal.shape[1] * len(self.classes_)),
                 dtype=np.float64,
+                order="F",
             )
         else:
             X_out = np.empty_like(X_ordinal, dtype=np.float64)
@@ -529,7 +534,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         return X_ordinal, X_known_mask, y, n_categories
 
     def _fit_encoding_binary_or_continuous(
-        self, X_ordinal, y, n_categories, target_mean
+        self, X_ordinal, y, n_categories, target_mean, X_indices=None
     ):
         """Learn target encodings."""
         if self.smooth == "auto":
@@ -540,6 +545,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 n_categories,
                 target_mean,
                 y_variance,
+                X_indices,
             )
         else:
             encodings = _fit_encoding_fast(
@@ -548,10 +554,13 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 n_categories,
                 self.smooth,
                 target_mean,
+                X_indices,
             )
         return encodings
 
-    def _fit_encoding_multiclass(self, X_ordinal, y, n_categories, target_mean):
+    def _fit_encoding_multiclass(
+        self, X_ordinal, y, n_categories, target_mean, X_indices=None
+    ):
         """Learn multiclass encodings.
 
         Learn encodings for each class (c) then reorder encodings such that
@@ -572,6 +581,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 y_class,
                 n_categories,
                 target_mean[i],
+                X_indices=X_indices,
             )
             encodings.extend(encoding)
 

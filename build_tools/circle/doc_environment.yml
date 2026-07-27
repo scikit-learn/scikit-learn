@@ -8,7 +8,7 @@ dependencies:
   - numpy
   - blas
   - scipy
-  - cython
+  - cython!=3.2.6,!=3.2.7,!=3.2.8
   - joblib
   - narwhals
   - threadpoolctl
@@ -41,6 +41,3 @@ dependencies:
   - towncrier
   - jupyterlite-sphinx
   - jupyterlite-pyodide-kernel
-  - pip
-  - pip:
-    - sphinxcontrib-sass
