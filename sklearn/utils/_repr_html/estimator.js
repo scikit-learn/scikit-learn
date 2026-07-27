@@ -158,15 +158,13 @@ function detectTheme(element) {
 }
 
 /*
- * Keep keyboard activation inside the diagram. Interactive parts of the display
- * (the <summary> toggles for estimators, parameters and features, doc links, copy
- * buttons) all act on Enter natively, but in notebook hosts such as Jupyter that
- * same Enter keydown also bubbles up to the notebook and switches the focused cell
- * into edit mode, stealing focus away from the diagram. Stop Enter at the diagram's
- * root container so it never reaches the host; we do NOT preventDefault, so the
+ * Keep keyboard activation inside the current HTML display. Interactive parts
+ * of the display act on Enter natively, but in a notebook that Enter keydown
+ * bubbles up to the notebook and switches the focused cell into edit mode,
+ * stealing focus away from the diagram. Stop Enter at the diagram's
+ * root container so it never reaches the host; we don't preventDefault, so the
  * native activation still happens. One listener on the container covers every
- * descendant, and the dataset flag keeps this idempotent since the script re-runs
- * for every diagram rendered on the page.
+ * descendant, and the dataset flag keeps this idempotent.
  */
 document.querySelectorAll(
     '.sk-top-container:not([data-sk-keydown-bound])'
