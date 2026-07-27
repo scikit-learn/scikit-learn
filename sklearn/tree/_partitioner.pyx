@@ -507,40 +507,35 @@ cdef class SparsePartitioner:
         intp_t current_feature
     ) noexcept nogil:
         """Simultaneously sort based on the feature_values."""
-        cdef:
-            float32_t[::1] feature_values = self.feature_values
-            intp_t[::1] index_to_samples = self.index_to_samples
-            intp_t[::1] samples = self.samples
-
         self.extract_nnz(current_feature)
         # Sort the positive and negative parts of `feature_values`
         simultaneous_sort(
-            &feature_values[self.start],
-            &samples[self.start],
+            &self.feature_values[self.start],
+            &self.samples[self.start],
             self.end_negative - self.start,
             use_three_way_partition=True,
         )
         if self.start_positive < self.end:
             simultaneous_sort(
-                &feature_values[self.start_positive],
-                &samples[self.start_positive],
+                &self.feature_values[self.start_positive],
+                &self.samples[self.start_positive],
                 self.end - self.start_positive,
                 use_three_way_partition=True,
             )
 
         # Update index_to_samples to take into account the sort
         for p in range(self.start, self.end_negative):
-            index_to_samples[samples[p]] = p
+            self.index_to_samples[self.samples[p]] = p
         for p in range(self.start_positive, self.end):
-            index_to_samples[samples[p]] = p
+            self.index_to_samples[self.samples[p]] = p
 
         # Add one or two zeros in feature_values, if there is any
         if self.end_negative < self.start_positive:
             self.start_positive -= 1
-            feature_values[self.start_positive] = 0.
+            self.feature_values[self.start_positive] = 0.
 
             if self.end_negative != self.start_positive:
-                feature_values[self.end_negative] = 0.
+                self.feature_values[self.end_negative] = 0.
                 self.end_negative += 1
 
         # XXX: When sparse supports missing values, this should be set to the
@@ -548,7 +543,7 @@ cdef class SparsePartitioner:
         self.n_missing = 0
 
         # This feature is considered constant (max - min <= FEATURE_THRESHOLD)
-        return feature_values[self.end - 1] <= feature_values[self.start] + FEATURE_THRESHOLD
+        return self.feature_values[self.end - 1] <= self.feature_values[self.start] + FEATURE_THRESHOLD
 
     cdef void shift_missing_to_the_left(self) noexcept nogil:
         pass  # Missing values are not supported for sparse data.
