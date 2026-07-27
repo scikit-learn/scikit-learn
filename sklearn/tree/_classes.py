@@ -69,6 +69,11 @@ __all__ = [
 # Types and constants
 # =============================================================================
 
+# Max categories for random/hash splits: all integers in [0, 2**24 - 1] are
+# exactly representable in float32 (the dtype used to encode categories).
+MAX_NUM_CATEGORIES_RANDOM = 2**24
+
+
 CRITERIA_CLF = {
     "gini": _criterion.Gini,
     "log_loss": _criterion.Entropy,
@@ -466,7 +471,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         # Validate fit-time categorical data and infer category counts.
         # Fit-time validation for categorical columns includes:
-        # - at most MAX_NUM_CATEGORIES encoded categories,
+        # - at most MAX_NUM_CATEGORIES encoded categories for splitter='best'
+        #   (bitset capacity), or MAX_NUM_CATEGORIES_RANDOM for splitter='random'
+        #   (float32 exact-integer encoding),
         # - no non-zero monotonic constraints on categorical features.
         n_categories = np.full(self.n_features_in_, -1, dtype=np.intp)
         if self.is_categorical_ is not None:
@@ -477,9 +484,13 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     "Categorical features cannot have monotonic constraints."
                 )
 
+            if self.splitter == "best":
+                max_n_categories = MAX_NUM_CATEGORIES
+            else:
+                max_n_categories = MAX_NUM_CATEGORIES_RANDOM
             base_msg = (
                 f"Values for categorical features should be integers in "
-                f"[0, {MAX_NUM_CATEGORIES - 1}]."
+                f"[0, {max_n_categories - 1}]."
             )
 
             for idx, categories in zip(
@@ -493,7 +504,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     n_categories[idx] = len(categories)
 
                 max_encoded_value = n_categories[idx] - 1
-                if max_encoded_value >= MAX_NUM_CATEGORIES:
+                if max_encoded_value >= max_n_categories:
                     raise ValueError(f"{base_msg} Found {max_encoded_value}.")
 
         if has_categorical and self.splitter == "best":
@@ -1032,7 +1043,9 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
           work. This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, there must be at most 255 unique
-        categories. Missing values for categorical features should be
+        categories when ``splitter='best'``. With ``splitter='random'``, up to
+        ``2**24 - 1`` categories are supported (limited by float32 encoding).
+        Missing values for categorical features should be
         represented by ``np.nan``; unknown categories at prediction time are
         also treated as missing values.
 
@@ -1453,7 +1466,9 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
           work. This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, there must be at most 255 unique
-        categories. Missing values for categorical features should be
+        categories when ``splitter='best'``. With ``splitter='random'``, up to
+        ``2**24 - 1`` categories are supported (limited by float32 encoding).
+        Missing values for categorical features should be
         represented by ``np.nan``; unknown categories at prediction time are
         also treated as missing values.
 
@@ -1845,10 +1860,10 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
           is supported by narwhals (or supports it): :func:`narwhals.from_native` must
           work. This is the case, for instance, for pandas and polars DataFrames.
 
-        For each categorical feature, there must be at most 255 unique
-        categories. Missing values for categorical features should be
-        represented by ``np.nan``; unknown categories at prediction time are
-        also treated as missing values.
+        For each categorical feature, there must be at most ``2**24 - 1``
+        unique categories (limited by float32 encoding). Missing values for
+        categorical features should be represented by ``np.nan``; unknown
+        categories at prediction time are also treated as missing values.
 
         Categorical features are supported with the default ``splitter='random'``
         strategy, including multi-class classification and multi-output targets.
@@ -2142,10 +2157,10 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
           is supported by narwhals (or supports it): :func:`narwhals.from_native` must
           work. This is the case, for instance, for pandas and polars DataFrames.
 
-        For each categorical feature, there must be at most 255 unique
-        categories. Missing values for categorical features should be
-        represented by ``np.nan``; unknown categories at prediction time are
-        also treated as missing values.
+        For each categorical feature, there must be at most ``2**24 - 1``
+        unique categories (limited by float32 encoding). Missing values for
+        categorical features should be represented by ``np.nan``; unknown
+        categories at prediction time are also treated as missing values.
 
         Categorical features are supported with the default ``splitter='random'``
         strategy, including multi-output targets.

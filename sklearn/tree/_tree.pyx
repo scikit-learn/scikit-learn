@@ -77,7 +77,7 @@ NODE_DTYPE = np.dtype([
     ('n_node_samples',          np.intp),            # 8 bytes  (offset 72)
     ('weighted_n_node_samples', np.float64),         # 8 bytes  (offset 80)
     ('missing_go_to_left',      np.uint8),           # 1 byte   (offset 88)
-    ('split_kind',              np.uint8),           # 1 byte  (offset 89)
+    ('split_kind',              np.int8),            # 1 byte  (offset 89)
 ], align=True)
 
 cdef inline void _init_parent_record(ParentInfo* record) noexcept nogil:
@@ -743,11 +743,7 @@ cdef class Tree:
     threshold : array of float64_t, shape [node_count]
         threshold[i] holds the threshold for the numeric internal node i.
 
-    categorical_bitset : array of uint32, shape [node_count, BITSET_LENGTH]
-        For categorical internal nodes, holds either the left-child category
-        bitset or the deterministic hash seed, depending on ``self.split_kind``.
-
-    split_kind : array of uint8, shape [node_count]
+    split_kind : array of int8, shape [node_count]
         Indicates whether the split is numeric, categorical bitset, or
         categorical hash.
 
@@ -906,13 +902,6 @@ cdef class Tree:
         node_ndarray = d['nodes']
         value_ndarray = d['values']
 
-        # If the array is big-endian, swap it back to native first:
-        if not node_ndarray.dtype.isnative:
-            # byteswap() returns a new array with the data swapped in place,
-            # then newbyteorder() marks it as native‐endian dtype.
-            _swapped = node_ndarray.byteswap()
-            node_ndarray = _swapped.view(_swapped.dtype.newbyteorder())
-
         value_shape = (node_ndarray.shape[0], self.n_outputs,
                        self.max_n_classes)
 
@@ -981,7 +970,7 @@ cdef class Tree:
                           intp_t feature,
                           float64_t threshold,
                           BITSET_DTYPE_C left_cat_bitset,
-                          uint8_t split_kind,
+                          int8_t split_kind,
                           float64_t impurity,
                           intp_t n_node_samples,
                           float64_t weighted_n_node_samples,

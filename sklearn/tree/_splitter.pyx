@@ -28,7 +28,6 @@ from sklearn.tree._partitioner cimport (
     FEATURE_THRESHOLD, DensePartitioner, SparsePartitioner,
     position_to_split_threshold,
 )
-from sklearn.tree._utils cimport MAX_RANDOM_CATEGORICAL_SPLIT_ATTEMPTS
 from sklearn.tree._utils cimport (
     RAND_R_MAX,
     rand_int,
@@ -77,7 +76,6 @@ cdef class Splitter:
         float64_t min_weight_leaf,
         object random_state,
         const int8_t[:] monotonic_cst,
-        *argv
     ):
         """
         Parameters
@@ -579,7 +577,6 @@ cdef inline int node_split_random(
     cdef float32_t min_feature_value
     cdef float32_t max_feature_value
     cdef bint is_categorical
-    cdef intp_t n_attempts
 
     _init_split(&best_split, end)
 
@@ -655,92 +652,87 @@ cdef inline int node_split_random(
         features[f_i], features[f_j] = features[f_j], features[f_i]
         has_missing = n_missing != 0
 
-        if is_categorical:
-            n_attempts = MAX_RANDOM_CATEGORICAL_SPLIT_ATTEMPTS
+        if has_missing:
+            # If there are missing values, then we randomly make all missing
+            # values go to the right or left.
+            #
+            # Note: compared to the BestSplitter, we do not evaluate the
+            # edge case where all the missing values go to the right node
+            # and the non-missing values go to the left node. This is because
+            # this would indicate a threshold outside of the observed range
+            # of the feature. However, it is not clear how much probability weight should
+            # be given to this edge case.
+            missing_go_to_left = rand_int(0, 2, random_state)
         else:
-            n_attempts = 1
+            missing_go_to_left = 0
 
-        for _ in range(n_attempts):
+        current_split.missing_go_to_left = missing_go_to_left
+
+        if is_categorical:
+            # Draw one random hash seed, analogous to one random numeric threshold.
+            current_split.split_kind = SPLIT_CATEGORICAL_HASH
+            init_bitset(current_split.left_cat_bitset)
+            current_split.left_cat_bitset[0] = <uint32_t> rand_int(
+                1, RAND_R_MAX, random_state
+            )
+        else:
+            current_split.split_kind = SPLIT_NUMERIC
+            # Draw a random threshold
+            current_split.threshold = rand_uniform(
+                min_feature_value,
+                max_feature_value,
+                random_state,
+            )
+
+            if current_split.threshold == max_feature_value:
+                current_split.threshold = min_feature_value
+
+        # Partition
+        current_split.pos = partitioner.partition_samples(&current_split)
+
+        n_left = current_split.pos - start
+        n_right = end - current_split.pos
+
+        # Reject if min_samples_leaf is not guaranteed
+        if n_left < min_samples_leaf or n_right < min_samples_leaf:
+            continue
+
+        # Evaluate split
+        # At this point, the criterion has a view into the samples that was partitioned
+        # by the partitioner. The criterion will use the partition to evaluating the split.
+        criterion.reset()
+        criterion.update(current_split.pos)
+
+        # Reject if min_weight_leaf is not satisfied
+        if ((criterion.weighted_n_left < min_weight_leaf) or
+                (criterion.weighted_n_right < min_weight_leaf)):
+            continue
+
+        # Reject if monotonicity constraints are not satisfied
+        if (
+                with_monotonic_cst and
+                monotonic_cst[current_split.feature] != 0 and
+                not criterion.check_monotonicity(
+                    monotonic_cst[current_split.feature],
+                    lower_bound,
+                    upper_bound,
+                )
+        ):
+            continue
+
+        current_proxy_improvement = criterion.proxy_impurity_improvement()
+
+        if current_proxy_improvement > best_proxy_improvement:
+            # if there are no missing values in the training data, during
+            # test time, we send missing values to the branch that contains
+            # the most samples during training time.
             if has_missing:
-                # If there are missing values, then we randomly make all missing
-                # values go to the right or left.
-                #
-                # Note: compared to the BestSplitter, we do not evaluate the
-                # edge case where all the missing values go to the right node
-                # and the non-missing values go to the left node. This is because
-                # this would indicate a threshold outside of the observed range
-                # of the feature. However, it is not clear how much probability weight should
-                # be given to this edge case.
-                missing_go_to_left = rand_int(0, 2, random_state)
+                current_split.missing_go_to_left = missing_go_to_left
             else:
-                missing_go_to_left = 0
+                current_split.missing_go_to_left = n_left > n_right
 
-            current_split.missing_go_to_left = missing_go_to_left
-
-            if is_categorical:
-                current_split.split_kind = SPLIT_CATEGORICAL_HASH
-                init_bitset(current_split.left_cat_bitset)
-                current_split.left_cat_bitset[0] = <uint32_t> rand_int(
-                    1, RAND_R_MAX, random_state
-                )
-            else:
-                current_split.split_kind = SPLIT_NUMERIC
-                # Draw a random threshold
-                current_split.threshold = rand_uniform(
-                    min_feature_value,
-                    max_feature_value,
-                    random_state,
-                )
-
-                if current_split.threshold == max_feature_value:
-                    current_split.threshold = min_feature_value
-
-            # Partition
-            current_split.pos = partitioner.partition_samples(&current_split)
-
-            n_left = current_split.pos - start
-            n_right = end - current_split.pos
-
-            # Reject if min_samples_leaf is not guaranteed
-            if n_left < min_samples_leaf or n_right < min_samples_leaf:
-                continue
-
-            # Evaluate split
-            # At this point, the criterion has a view into the samples that was partitioned
-            # by the partitioner. The criterion will use the partition to evaluating the split.
-            criterion.reset()
-            criterion.update(current_split.pos)
-
-            # Reject if min_weight_leaf is not satisfied
-            if ((criterion.weighted_n_left < min_weight_leaf) or
-                    (criterion.weighted_n_right < min_weight_leaf)):
-                continue
-
-            # Reject if monotonicity constraints are not satisfied
-            if (
-                    with_monotonic_cst and
-                    monotonic_cst[current_split.feature] != 0 and
-                    not criterion.check_monotonicity(
-                        monotonic_cst[current_split.feature],
-                        lower_bound,
-                        upper_bound,
-                    )
-            ):
-                continue
-
-            current_proxy_improvement = criterion.proxy_impurity_improvement()
-
-            if current_proxy_improvement > best_proxy_improvement:
-                # if there are no missing values in the training data, during
-                # test time, we send missing values to the branch that contains
-                # the most samples during training time.
-                if has_missing:
-                    current_split.missing_go_to_left = missing_go_to_left
-                else:
-                    current_split.missing_go_to_left = n_left > n_right
-
-                best_proxy_improvement = current_proxy_improvement
-                best_split = current_split  # copy
+            best_proxy_improvement = current_proxy_improvement
+            best_split = current_split  # copy
 
     # Reorganize into samples[start:best.pos] + samples[best.pos:end]
     if best_split.pos < end:

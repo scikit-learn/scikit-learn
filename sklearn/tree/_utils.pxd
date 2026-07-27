@@ -8,7 +8,7 @@ from libc.stdlib cimport realloc
 
 cimport numpy as cnp
 from sklearn.neighbors._quad_tree cimport Cell
-from sklearn.utils._typedefs cimport float32_t, float64_t, intp_t, uint8_t, int32_t, uint32_t, uint64_t
+from sklearn.utils._typedefs cimport float32_t, float64_t, intp_t, uint8_t, int8_t, int32_t, uint32_t, uint64_t
 from sklearn.utils._bitset cimport BITSET_DTYPE_C, BITSET_INNER_DTYPE_C, N_BITSETS, in_bitset
 from sklearn.utils._random cimport our_rand_r
 
@@ -20,11 +20,6 @@ cdef enum:
     SPLIT_NUMERIC = 0
     SPLIT_CATEGORICAL_BITSET = 1
     SPLIT_CATEGORICAL_HASH = 2
-
-
-cdef enum:
-    # Maximum number of random categorical split candidates to evaluate per feature.
-    MAX_RANDOM_CATEGORICAL_SPLIT_ATTEMPTS = 256
 
 
 cdef struct Node:
@@ -44,7 +39,7 @@ cdef struct Node:
     intp_t n_node_samples                # Number of samples at the node
     float64_t weighted_n_node_samples    # Weighted number of samples at the node
     uint8_t missing_go_to_left           # Whether features have missing values
-    uint8_t split_kind                   # Kind of split (numeric, categorical, leaf)
+    int8_t split_kind                    # Kind of split (numeric, categorical, leaf)
 
 # 32-bit stable pseudo-random routing bit for SPLIT_CATEGORICAL_HASH.
 # The constants are from the "lowbias32" mixer from Chris Wellons'
@@ -64,7 +59,7 @@ cdef inline bint goes_left(
     float64_t threshold,
     const BITSET_INNER_DTYPE_C* left_cat_bitset,
     bint missing_go_to_left,
-    uint8_t split_kind,
+    int8_t split_kind,
     float32_t value,
 ) noexcept nogil:
     if isnan(value):

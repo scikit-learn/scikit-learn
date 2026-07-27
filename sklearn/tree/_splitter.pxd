@@ -4,12 +4,12 @@
 # See _splitter.pyx for details.
 
 from sklearn.utils._typedefs cimport (
-    float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t, uint64_t
+    float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t
 )
 
 from sklearn.tree._criterion cimport Criterion
 from sklearn.tree._tree cimport ParentInfo
-from sklearn.utils._bitset cimport BITSET_INNER_DTYPE_C, BITSET_DTYPE_C
+from sklearn.utils._bitset cimport BITSET_DTYPE_C
 
 cdef struct SplitRecord:
     # Data to track sample split
@@ -31,7 +31,7 @@ cdef struct SplitRecord:
     # - SPLIT_CATEGORICAL_BITSET: categorical split using bitset
     # - SPLIT_CATEGORICAL_HASH: categorical split using hash
     # - SPLIT_LEAF: no split, the node is a leaf
-    uint8_t split_kind
+    int8_t split_kind
 
     float64_t improvement     # Impurity improvement given parent node.
     float64_t impurity_left   # Impurity of the left split.
@@ -77,14 +77,8 @@ cdef class Splitter:
     cdef bint with_monotonic_cst
     cdef const float64_t[:] sample_weight
 
-    # We know the number of categories within our dataset across each feature.
-    # If a feature index has -1, then it is not categorical
-    # Buffers for categorical feature handling:
-    # - n_categories: an array to store number of categories per feature; if -1,
-    #   then it is not categorical.
-    # - categorical_split_buffer: a bitset to store the categorical split
+    # Per-feature number of categories; -1 means the feature is numerical.
     cdef const intp_t[:] n_categories
-    cdef BITSET_INNER_DTYPE_C* categorical_split
 
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,

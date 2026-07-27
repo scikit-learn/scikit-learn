@@ -615,15 +615,22 @@ def test_error():
         with pytest.raises(NotFittedError):
             est.apply(T)
 
-        # test categorical features with more than 255 categories
+        # Categorical cardinality limits depend on the splitter:
+        # - best (DecisionTree*): bitset capacity is 256 categories ([0, 255])
+        # - random (ExtraTree*): up to 2**24 - 1 categories via hash splits
         X_cat = np.array([f"cat_{idx}" for idx in range(257)], dtype=object).reshape(
             -1, 1
         )
         y_cat = np.arange(257) % 2
-        with pytest.raises(
-            ValueError, match=r"Values for categorical features.*\[0, 255\]"
-        ):
-            TreeEstimator(categorical_features=[0], random_state=0).fit(X_cat, y_cat)
+        est_cat = TreeEstimator(categorical_features=[0], random_state=0)
+        if name.startswith("Extra"):
+            est_cat.fit(X_cat, y_cat)
+            assert est_cat.tree_.node_count >= 1
+        else:
+            with pytest.raises(
+                ValueError, match=r"Values for categorical features.*\[0, 255\]"
+            ):
+                est_cat.fit(X_cat, y_cat)
 
     # non positive target for Poisson splitting Criterion
     est = DecisionTreeRegressor(criterion="poisson")
@@ -3496,12 +3503,62 @@ def test_random_splitter_categorical(Tree, y, X):
     weighted_impurity = tree.impurity * tree.n_node_samples / tree.n_node_samples[0]
     assert weighted_impurity[1] + weighted_impurity[2] < weighted_impurity[0]
 
-    # A non-trivial split should beat the root predictor on the training data.
-    assert est.score(X, y) > 0.55
+    # A non-trivial split should beat the root/constant predictor.
+    # Classification uses accuracy (chance ~0.5 on balanced binary). Regression
+    # uses R^2, where the constant-mean baseline scores 0; with a single random
+    # hash attempt we only require a positive improvement.
+    if hasattr(est, "classes_"):
+        assert est.score(X, y) > 0.55
+    else:
+        assert est.score(X, y) > 0.0
 
     node_indicator = est.decision_path(X)
     path_leaves = node_indicator.indices[node_indicator.indptr[1:] - 1]
     assert_array_equal(path_leaves, est.apply(X))
+    assert_array_equal(est.apply(X), est_same.apply(X))
+    assert_array_equal(est.predict(X), est_same.predict(X))
+
+
+@pytest.mark.parametrize(
+    "Tree",
+    [ExtraTreeClassifier, ExtraTreeRegressor, DecisionTreeClassifier],
+    ids=["ExtraTreeClassifier", "ExtraTreeRegressor", "DecisionTree-random"],
+)
+def test_random_splitter_high_cardinality_categorical(Tree):
+    """Random splitter accepts >256 categories via hash splits."""
+    rng = np.random.RandomState(0)
+    n_categories = 300
+    n_samples = 600
+    X = rng.randint(0, n_categories, size=(n_samples, 1)).astype(object)
+    if issubclass(Tree, DecisionTreeClassifier):
+        # DecisionTree defaults to splitter='best'; force random.
+        tree_kwargs = {"splitter": "random"}
+        y = (np.asarray(X[:, 0], dtype=int) % 2).astype(np.intp)
+    elif issubclass(Tree, ExtraTreeClassifier):
+        tree_kwargs = {}
+        y = (np.asarray(X[:, 0], dtype=int) % 2).astype(np.intp)
+    else:
+        tree_kwargs = {}
+        y = (np.asarray(X[:, 0], dtype=int) % 2).astype(np.float64)
+
+    est = Tree(
+        random_state=0,
+        max_depth=1,
+        categorical_features=[0],
+        **tree_kwargs,
+    ).fit(X, y)
+    est_same = Tree(
+        random_state=0,
+        max_depth=1,
+        categorical_features=[0],
+        **tree_kwargs,
+    ).fit(X, y)
+
+    tree = est.tree_
+    assert tree.node_count == 3
+    assert tree.split_kind[0] == SPLIT_CATEGORICAL_HASH
+    assert tree.n_node_samples[1] > 0
+    assert tree.n_node_samples[2] > 0
     assert_array_equal(est.apply(X), est_same.apply(X))
     assert_array_equal(est.predict(X), est_same.predict(X))
 

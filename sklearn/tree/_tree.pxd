@@ -7,7 +7,7 @@ import numpy as np
 cimport numpy as cnp
 
 from sklearn.utils._typedefs cimport (
-    float32_t, float64_t, intp_t, int32_t, uint8_t, uint32_t
+    float32_t, float64_t, intp_t, int8_t, int32_t, uint8_t, uint32_t
 )
 from sklearn.tree._splitter cimport Splitter, SplitRecord
 
@@ -52,7 +52,7 @@ cdef class Tree:
                           intp_t feature,
                           float64_t threshold,
                           BITSET_DTYPE_C left_cat_bitset,
-                          uint8_t split_kind,
+                          int8_t split_kind,
                           float64_t impurity,
                           intp_t n_node_samples,
                           float64_t weighted_n_node_samples,

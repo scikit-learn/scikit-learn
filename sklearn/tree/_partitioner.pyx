@@ -311,27 +311,6 @@ cdef class DensePartitioner:
         """
         Compute the next p_prev and p for iterating over feature values.
 
-        if self.n_categories > 0:
-            # For categorical features (Breiman-sorted), skip samples of the
-            # same category. Feature values are integers so exact equality works.
-            while (
-                p[0] + 1 < end_non_missing and
-                self.feature_values[p[0] + 1] == self.feature_values[p[0]]
-            ):
-                p[0] += 1
-        else:
-            # For numerical features, use threshold-based grouping
-            while (
-                p[0] + 1 < end_non_missing and
-                self.feature_values[p[0] + 1] <= self.feature_values[p[0]] + FEATURE_THRESHOLD
-            ):
-                p[0] += 1
-
-        p_prev[0] = p[0]
-
-        # By adding 1, we have
-        # (feature_values[p] >= end) or (feature_values[p] > feature_values[p - 1])
-        p[0] += 1
         This method is used inside the best-split search function pass which starts
         by setting p = start at the beginning of each search pass and calls
         this method repeatedly with the same missing_go_to_left as for that pass.
@@ -343,7 +322,11 @@ cdef class DensePartitioner:
           shift_missing_to_the_left(), missing values are grouped at the left.
 
         Given that layout, this method advances p to the next valid split
-        position while skipping ties up to FEATURE_THRESHOLD:
+        position while skipping ties:
+        - for categorical features (Breiman-sorted), skip consecutive samples
+          with the same category;
+        - for numerical features, skip consecutive samples that differ by at
+          most FEATURE_THRESHOLD;
         - if missing_go_to_left: iterate p in [start + n_missing + 1, end)
         - otherwise: iterate p in [start, end - n_missing].
           The special case p == end - n_missing corresponds to "all non-missing
