@@ -21,12 +21,10 @@ from sklearn.preprocessing._csr_polynomial_expansion import (
 )
 from sklearn.utils._array_api import (
     _is_numpy_namespace,
+    array_device,
     get_namespace,
     move_to,
     yield_namespace_device_dtype_combinations,
-)
-from sklearn.utils._array_api import (
-    device as array_api_device,
 )
 from sklearn.utils._mask import _get_mask
 from sklearn.utils._testing import (
@@ -1365,7 +1363,7 @@ def test_polynomial_features_array_api_compliance(
         out_xp = tf_xp.transform(X_xp)
         assert_allclose(move_to(out_xp, xp=np, device="cpu"), out_np)
         assert get_namespace(out_xp)[0].__name__ == xp.__name__
-        assert array_api_device(out_xp) == array_api_device(X_xp)
+        assert array_device(out_xp) == array_device(X_xp)
         assert out_xp.dtype == X_xp.dtype
 
 

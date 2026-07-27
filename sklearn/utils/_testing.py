@@ -1509,6 +1509,15 @@ def _get_warnings_filters_info_list():
             message=".+scattermapbox.+deprecated.+scattermap.+instead",
             category=DeprecationWarning,
         ),
+        # seaborn <=0.13.2 passes the deprecated `vert` argument to matplotlib's
+        # Axes.bxp internally (e.g. via sns.boxplot).
+        # TODO: remove once a fixed seaborn release is our minimum.
+        WarningInfo(
+            "ignore",
+            # Use `.` below instead of `:` to avoid string being split incorrectly
+            message="vert. bool was deprecated in Matplotlib",
+            category=DeprecationWarning,
+        ),
         # TODO(1.10): remove PassiveAggressive
         WarningInfo(
             "ignore",

@@ -6,6 +6,7 @@ from numpy.testing import assert_allclose, assert_equal
 
 from sklearn.neighbors._kd_tree import KDTree, KDTree32, KDTree64
 from sklearn.neighbors.tests.test_ball_tree import get_dataset_for_binary_tree
+from sklearn.utils.fixes import _IS_WASM
 from sklearn.utils.parallel import Parallel, delayed
 
 DIMENSION = 3
@@ -105,6 +106,7 @@ def test_kernel_density_numerical_consistency(global_random_seed, metric):
     assert density32.dtype == np.float32
 
 
+@pytest.mark.xfail(_IS_WASM, reason="cannot start threads")
 def test_thread_safety(global_random_seed):
     X_64, _, Y_64, _ = get_dataset_for_binary_tree(random_seed=global_random_seed)
     tree = KDTree(X_64, 10)

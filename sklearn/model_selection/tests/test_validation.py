@@ -338,6 +338,9 @@ def test_cross_validate_many_jobs():
     cross_validate(grid, X, y, n_jobs=2)
 
 
+# TODO(1.12): remove the filterwarnings when the default value of average in
+# precision_recall_fscore_support is changed.
+@pytest.mark.filterwarnings("ignore:.*default value of `average`.*:FutureWarning")
 def test_cross_validate_invalid_scoring_param():
     X, y = make_classification(random_state=0)
     estimator = MockClassifier()
@@ -2729,7 +2732,8 @@ def test_cross_val_predict_array_api_compliance(
     with config_context(array_api_dispatch=True):
         pred_xp = cross_val_predict(estimator, X_xp, y_xp, cv=cv)
 
-    pred_np = cross_val_predict(estimator, X_np, y_np, cv=cv)
+    with config_context(array_api_dispatch=False):
+        pred_np = cross_val_predict(estimator, X_np, y_np, cv=cv)
     assert_allclose(
         move_to(pred_xp, xp=np, device="cpu"), pred_np, atol=_atol_for_type(dtype_name)
     )
