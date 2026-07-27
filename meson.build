@@ -27,7 +27,8 @@ elif cc.get_id() == 'msvc'
 endif
 
 _global_c_args = cc.get_supported_arguments(
-  '-g',
+  # Enable when doing profiling:
+  # '-g',
   '-Wno-unused-but-set-variable',
   '-Wno-unused-function',
   '-Wno-conversion',
