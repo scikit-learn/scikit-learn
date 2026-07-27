@@ -27,6 +27,7 @@ elif cc.get_id() == 'msvc'
 endif
 
 _global_c_args = cc.get_supported_arguments(
+  '-g',
   '-Wno-unused-but-set-variable',
   '-Wno-unused-function',
   '-Wno-conversion',
