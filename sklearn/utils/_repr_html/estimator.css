@@ -154,9 +154,8 @@ clickable and can be expanded/collapsed.
    inline-flex keeps it on the same line as the inline disclosure marker. */
 .sk-global summary.sk-toggleable__label .sk-toggleable__label-content {
   display: inline-flex;
-  align-items: center;
+  justify-items: center;
   gap: 0.5em;
-  vertical-align: middle;
 }
 
 .sk-global summary.sk-toggleable__label .caption {
