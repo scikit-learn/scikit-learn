@@ -610,6 +610,7 @@ def R_and_X_colnorm2_sparse(
     cdef floating w_j
     cdef floating X_mean_j
     cdef floating normalize_sum
+    cdef floating sw_sum
     cdef int32_t i, i_ind
     cdef unsigned int j
     cdef int32_t startptr = X_indptr[0]
@@ -626,6 +627,8 @@ def R_and_X_colnorm2_sparse(
             if X_mean[j]:
                 center = True
                 break
+        if center and not no_sample_weights:
+            sw_sum = np.sum(sample_weight)
 
     _copy(n_samples, &y[0], 1, &R[0], 1)
     if not no_sample_weights:
@@ -659,8 +662,8 @@ def R_and_X_colnorm2_sparse(
                 )
                 R[i] -= tmp * X_data[i_ind] * w_j
             if center:
+                normalize_sum += sw_sum * X_mean_j ** 2
                 for i in range(n_samples):
-                    normalize_sum += sample_weight[i] * X_mean_j ** 2
                     R[i] += sample_weight[i] * X_mean_j * w_j
             norm2_cols_X[j] = normalize_sum
         startptr = endptr
@@ -1506,9 +1509,10 @@ def R_and_X_colnorm2_multi_task(
     cdef unsigned int n_tasks = Y.shape[1]
     cdef floating X_mean_j
     cdef floating normalize_sum
+    cdef floating sw_sum
     cdef int32_t i, i_ind
     cdef unsigned int j
-    cdef int32_t startptr = X_indptr[0]
+    cdef int32_t startptr
     cdef int32_t endptr
     cdef bint center = False
     cdef bint no_sample_weights = sample_weight is None
@@ -1523,6 +1527,8 @@ def R_and_X_colnorm2_multi_task(
             if X_mean[j]:
                 center = True
                 break
+        if center and not no_sample_weights:
+            sw_sum = np.sum(sample_weight)
 
     if not X_is_sparse:
         np.einsum("ij,ij->j", X, X, dtype=dtype, out=norm2_cols_X_array)
@@ -1545,8 +1551,7 @@ def R_and_X_colnorm2_multi_task(
                         (X_data[i_ind] - X_mean_j) ** 2 - X_mean_j ** 2
                     )
                 if center:
-                    for i in range(n_samples):
-                        normalize_sum += sample_weight[i] * X_mean_j ** 2
+                    normalize_sum += sw_sum * X_mean_j ** 2
             norm2_cols_X[j] = normalize_sum
 
     _copy(n_samples * n_tasks, &Y[0, 0], 1, &R[0, 0], 1)
