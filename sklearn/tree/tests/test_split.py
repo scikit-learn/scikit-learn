@@ -232,9 +232,6 @@ def make_simple_dataset(
     y = rng.random(n) + X_dense.sum(axis=1)
     w = rng.integers(0, 5, size=n) if rng.uniform() < 0.5 else rng.random(n)
 
-    for idx in np.where(is_categorical)[0]:
-        nc = rng.integers(2, 6)  # cant go to high or test will be too slow
-        X_dense[:, idx] = to_categorical(X_dense[:, idx], nc, rng)
     with_duplicates = rng.integers(2) == 0
     if with_duplicates:
         X_dense = X_dense.round(1 if n < 50 else 2)

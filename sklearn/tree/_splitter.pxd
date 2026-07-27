@@ -23,7 +23,9 @@ cdef struct SplitRecord:
     float64_t threshold
 
     # Threshold for categorical features splits:
-    # - left_cat_bitset stores the set of categories that go to the left child.
+    # - for SPLIT_CATEGORICAL_BITSET: left_cat_bitset stores the set of
+    #   categories that go to the left child;
+    # - for SPLIT_CATEGORICAL_HASH: left_cat_bitset[0] stores the hash seed.
     BITSET_DTYPE_C left_cat_bitset
 
     # The kind of split:

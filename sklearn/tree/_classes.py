@@ -1043,9 +1043,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
           work. This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, there must be at most 255 unique
-        categories when ``splitter='best'``. With ``splitter='random'``, up to
-        ``2**24 - 1`` categories are supported (limited by float32 encoding).
-        Missing values for categorical features should be
+        categories. Missing values for categorical features should be
         represented by ``np.nan``; unknown categories at prediction time are
         also treated as missing values.
 
@@ -1466,9 +1464,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
           work. This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, there must be at most 255 unique
-        categories when ``splitter='best'``. With ``splitter='random'``, up to
-        ``2**24 - 1`` categories are supported (limited by float32 encoding).
-        Missing values for categorical features should be
+        categories. Missing values for categorical features should be
         represented by ``np.nan``; unknown categories at prediction time are
         also treated as missing values.
 
@@ -1860,10 +1856,10 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
           is supported by narwhals (or supports it): :func:`narwhals.from_native` must
           work. This is the case, for instance, for pandas and polars DataFrames.
 
-        For each categorical feature, there must be at most ``2**24 - 1``
-        unique categories (limited by float32 encoding). Missing values for
-        categorical features should be represented by ``np.nan``; unknown
-        categories at prediction time are also treated as missing values.
+        For each categorical feature, about 16 million unique categories are
+        supported. Missing values for categorical features should be represented
+        by ``np.nan``; unknown categories at prediction time are also treated as
+        missing values.
 
         Categorical features are supported with the default ``splitter='random'``
         strategy, including multi-class classification and multi-output targets.
@@ -2157,10 +2153,10 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
           is supported by narwhals (or supports it): :func:`narwhals.from_native` must
           work. This is the case, for instance, for pandas and polars DataFrames.
 
-        For each categorical feature, there must be at most ``2**24 - 1``
-        unique categories (limited by float32 encoding). Missing values for
-        categorical features should be represented by ``np.nan``; unknown
-        categories at prediction time are also treated as missing values.
+        For each categorical feature, about 16 million unique categories are
+        supported. Missing values for categorical features should be represented
+        by ``np.nan``; unknown categories at prediction time are also treated as
+        missing values.
 
         Categorical features are supported with the default ``splitter='random'``
         strategy, including multi-output targets.

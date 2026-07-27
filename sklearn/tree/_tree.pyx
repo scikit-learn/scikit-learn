@@ -276,12 +276,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                                (split.improvement + EPSILON <
                                 min_impurity_decrease))
 
-                if is_leaf:
-                    split.feature = 0
-                    split.threshold = 0.
-                    split.missing_go_to_left = False
-                    split.split_kind = SPLIT_LEAF
-
                 node_id = tree._add_node(parent, is_left, is_leaf, split.feature,
                                          split.threshold, split.left_cat_bitset,
                                          split.split_kind,
@@ -642,12 +636,6 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
             # splitting early, producing trees that are dissimilar to v0.18
             is_leaf = (is_leaf or split.pos >= end or
                        split.improvement + EPSILON < min_impurity_decrease)
-
-        if is_leaf:
-            split.feature = 0
-            split.threshold = 0.
-            split.missing_go_to_left = False
-            split.split_kind = SPLIT_LEAF
 
         node_id = tree._add_node(parent - tree.nodes
                                  if parent != NULL

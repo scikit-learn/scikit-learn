@@ -736,9 +736,12 @@ cdef inline int node_split_random(
 
     # Reorganize into samples[start:best.pos] + samples[best.pos:end]
     if best_split.pos < end:
-        partitioner.partition_samples_final(
-            &best_split
-        )
+        # With one attempt per feature, samples are already partitioned when
+        # the last evaluated feature is the best; skip the final partition then.
+        if current_split.feature != best_split.feature:
+            partitioner.partition_samples_final(
+                &best_split
+            )
 
         criterion.reset()
         criterion.update(best_split.pos)
