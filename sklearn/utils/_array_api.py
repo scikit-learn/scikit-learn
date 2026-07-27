@@ -203,7 +203,7 @@ def _single_array_device(array):
         return array.device
 
 
-def device(*array_list, remove_none=True, remove_types=REMOVE_TYPES_DEFAULT):
+def array_device(*array_list, remove_none=True, remove_types=REMOVE_TYPES_DEFAULT):
     """Hardware device where the array data resides on.
 
     If the hardware device is not the same for all arrays, an error is raised.
@@ -231,7 +231,7 @@ def device(*array_list, remove_none=True, remove_types=REMOVE_TYPES_DEFAULT):
     if not array_list:
         return None
 
-    device_ = _single_array_device(array_list[0])
+    device = _single_array_device(array_list[0])
 
     # Note: here we cannot simply use a Python `set` as it requires
     # hashable members which is not guaranteed for Array API device
@@ -239,12 +239,12 @@ def device(*array_list, remove_none=True, remove_types=REMOVE_TYPES_DEFAULT):
     # time of writing.
     for array in array_list[1:]:
         device_other = _single_array_device(array)
-        if device_ != device_other:
+        if device != device_other:
             raise ValueError(
-                f"Input arrays use different devices: {device_}, {device_other}"
+                f"Input arrays use different devices: {device}, {device_other}"
             )
 
-    return device_
+    return device
 
 
 def size(x):
@@ -502,7 +502,7 @@ def get_namespace_and_device(
         remove_none=remove_none,
         remove_types=remove_types,
     )
-    arrays_device = device(*array_list, **skip_remove_kwargs)
+    arrays_device = array_device(*array_list, **skip_remove_kwargs)
 
     if xp is None:
         xp, is_array_api = get_namespace(*array_list, **skip_remove_kwargs)
@@ -674,7 +674,7 @@ def _validate_diagonal_args(array, value, xp):
             f"`array` should be 2D. Got array with shape {tuple(array.shape)}"
         )
 
-    value = xp.asarray(value, dtype=array.dtype, device=device(array))
+    value = xp.asarray(value, dtype=array.dtype, device=array_device(array))
     if value.ndim not in [0, 1]:
         raise ValueError(
             "`value` needs to be a scalar or a 1D array, "
@@ -803,7 +803,7 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
     https://numpy.org/doc/stable/reference/generated/numpy.average.html but
     only for the common cases needed in scikit-learn.
     """
-    xp, _, device_ = get_namespace_and_device(a, weights, xp=xp)
+    xp, _, device = get_namespace_and_device(a, weights, xp=xp)
 
     if _is_numpy_namespace(xp):
         if normalize:
@@ -811,9 +811,9 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
         elif axis is None and weights is not None:
             return xp.asarray(numpy.dot(a, weights))
 
-    a = xp.asarray(a, device=device_)
+    a = xp.asarray(a, device=device)
     if weights is not None:
-        weights = xp.asarray(weights, device=device_)
+        weights = xp.asarray(weights, device=device)
 
     if weights is not None and a.shape != weights.shape:
         if axis is None:
@@ -928,63 +928,63 @@ def _median(x, axis=None, keepdims=False, xp=None):
 
 def _xlogy(x, y, xp=None):
     # TODO: Remove this once https://github.com/scipy/scipy/issues/21736 is fixed
-    xp, _, device_ = get_namespace_and_device(x, y, xp=xp)
+    xp, _, device = get_namespace_and_device(x, y, xp=xp)
 
     with numpy.errstate(divide="ignore", invalid="ignore"):
         temp = x * xp.log(y)
-    return xp.where(x == 0.0, xp.asarray(0.0, dtype=temp.dtype, device=device_), temp)
+    return xp.where(x == 0.0, xp.asarray(0.0, dtype=temp.dtype, device=device), temp)
 
 
 def _nanmin(X, axis=None, xp=None):
     # TODO: refactor once nan-aware reductions are standardized:
     # https://github.com/data-apis/array-api/issues/621
-    xp, _, device_ = get_namespace_and_device(X, xp=xp)
+    xp, _, device = get_namespace_and_device(X, xp=xp)
     if _is_numpy_namespace(xp):
         return xp.asarray(numpy.nanmin(X, axis=axis))
 
     else:
         mask = xp.isnan(X)
         X = xp.min(
-            xp.where(mask, xp.asarray(+xp.inf, dtype=X.dtype, device=device_), X),
+            xp.where(mask, xp.asarray(+xp.inf, dtype=X.dtype, device=device), X),
             axis=axis,
         )
         # Replace Infs from all NaN slices with NaN again
         mask = xp.all(mask, axis=axis)
         if xp.any(mask):
-            X = xp.where(mask, xp.asarray(xp.nan, dtype=X.dtype, device=device_), X)
+            X = xp.where(mask, xp.asarray(xp.nan, dtype=X.dtype, device=device), X)
         return X
 
 
 def _nanmax(X, axis=None, xp=None):
     # TODO: refactor once nan-aware reductions are standardized:
     # https://github.com/data-apis/array-api/issues/621
-    xp, _, device_ = get_namespace_and_device(X, xp=xp)
+    xp, _, device = get_namespace_and_device(X, xp=xp)
     if _is_numpy_namespace(xp):
         return xp.asarray(numpy.nanmax(X, axis=axis))
 
     else:
         mask = xp.isnan(X)
         X = xp.max(
-            xp.where(mask, xp.asarray(-xp.inf, dtype=X.dtype, device=device_), X),
+            xp.where(mask, xp.asarray(-xp.inf, dtype=X.dtype, device=device), X),
             axis=axis,
         )
         # Replace Infs from all NaN slices with NaN again
         mask = xp.all(mask, axis=axis)
         if xp.any(mask):
-            X = xp.where(mask, xp.asarray(xp.nan, dtype=X.dtype, device=device_), X)
+            X = xp.where(mask, xp.asarray(xp.nan, dtype=X.dtype, device=device), X)
         return X
 
 
 def _nanmean(X, axis=None, xp=None):
     # TODO: refactor once nan-aware reductions are standardized:
     # https://github.com/data-apis/array-api/issues/621
-    xp, _, device_ = get_namespace_and_device(X, xp=xp)
+    xp, _, device = get_namespace_and_device(X, xp=xp)
     if _is_numpy_namespace(xp):
         return xp.asarray(numpy.nanmean(X, axis=axis))
     else:
         mask = xp.isnan(X)
         total = xp.sum(
-            xp.where(mask, xp.asarray(0.0, dtype=X.dtype, device=device_), X), axis=axis
+            xp.where(mask, xp.asarray(0.0, dtype=X.dtype, device=device), X), axis=axis
         )
         count = xp.sum(xp.astype(xp.logical_not(mask), X.dtype), axis=axis)
         return total / count
@@ -1300,7 +1300,7 @@ def _bincount(array, weights=None, minlength=0, xp=None):
     else:
         weights_np = None
     bin_out = numpy.bincount(array_np, weights=weights_np, minlength=minlength)
-    return xp.asarray(bin_out, device=device(array))
+    return xp.asarray(bin_out, device=array_device(array))
 
 
 def _logsumexp(array, axis=None, xp=None):
@@ -1349,11 +1349,39 @@ def _linalg_solve(cov_chol, eye_matrix, xp):
 
 
 def _matching_numpy_dtype(X, xp=None):
-    xp, _, device_ = get_namespace_and_device(X, xp=xp)
+    xp, _, device = get_namespace_and_device(X, xp=xp)
     if _is_numpy_namespace(xp):
         return X.dtype
 
-    dtypes_dict = xp.__array_namespace_info__().dtypes(device=device_)
+    dtypes_dict = xp.__array_namespace_info__().dtypes(device=device)
     reversed_dtypes_dict = {dtype: name for name, dtype in dtypes_dict.items()}
     dtype_name = reversed_dtypes_dict[X.dtype]
     return np_compat.__array_namespace_info__().dtypes()[dtype_name]
+
+
+def _swapaxes(array, axis1, axis2, /, xp=None):
+    xp, _ = get_namespace(array)
+    if hasattr(xp, "swapaxes"):
+        return xp.swapaxes(array, axis1, axis2)
+
+    ndim = array.ndim
+    a1 = axis1 if axis1 >= 0 else axis1 + ndim
+    a2 = axis2 if axis2 >= 0 else axis2 + ndim
+    axes = list(range(ndim))
+    axes[a1], axes[a2] = axes[a2], axes[a1]
+    return xp.permute_dims(array, axes=tuple(axes))
+
+
+def _unravel_index(indices, shape, /, xp=None):
+    # TODO: remove this and use the respective array-api-extra function when
+    # version 0.11.1 is released.
+    # https://data-apis.org/array-api-extra/generated/array_api_extra.unravel_index.html
+    xp, _ = get_namespace(indices)
+    if hasattr(xp, "unravel_index"):
+        return xp.unravel_index(indices, shape)
+
+    coordinates = []
+    for dim in reversed(shape):
+        coordinates.append(indices % dim)
+        indices = indices // dim
+    return tuple(reversed(coordinates))

@@ -88,13 +88,11 @@ from sklearn.utils import shuffle
 from sklearn.utils._array_api import (
     _atol_for_type,
     _max_precision_float_dtype,
+    array_device,
     get_namespace,
     move_to,
     yield_mixed_namespace_input_permutations,
     yield_namespace_device_dtype_combinations,
-)
-from sklearn.utils._array_api import (
-    device as array_api_device,
 )
 from sklearn.utils._testing import (
     _array_api_for_tests,
@@ -2073,7 +2071,7 @@ def test_check_targets_array_api(check):
         )
         for output in outputs[1:]:
             assert get_namespace(output)[0] == xp
-            assert array_api_device(output) == array_api_device(y_pred_xp)
+            assert array_device(output) == array_device(y_pred_xp)
 
         # Pass `xp` and `device`
         outputs = check(
@@ -2081,12 +2079,12 @@ def test_check_targets_array_api(check):
             y_pred=y_pred,
             sample_weight=np.asarray([1, 1, 2]),
             xp=xp,
-            device=array_api_device(y_pred_xp),
+            device=array_device(y_pred_xp),
             **kwarg,
         )
         for output in outputs[1:]:
             assert get_namespace(output)[0] == xp
-            assert array_api_device(output) == array_api_device(y_pred_xp)
+            assert array_device(output) == array_device(y_pred_xp)
 
 
 def check_array_api_metric(
@@ -2737,8 +2735,8 @@ def _check_output(out_np, out_xp, xp_to, y2_xp, msg=""):
         assert (out_xp_ns := get_namespace(out_xp)[0]) == xp_to, (
             f"{msg} Namespace mismatch; got {out_xp_ns}, expected {xp_to}"
         )
-        assert (out_xp_device := array_api_device(out_xp)) == (
-            y2_xp_device := array_api_device(y2_xp)
+        assert (out_xp_device := array_device(out_xp)) == (
+            y2_xp_device := array_device(y2_xp)
         ), f"{msg} Device mismatch; got {out_xp_device}, expected {y2_xp_device}"
     # `classification_report` returns str (with default `output_dict=False`)
     elif isinstance(out_np, str):
