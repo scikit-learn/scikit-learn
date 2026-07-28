@@ -141,13 +141,17 @@ clickable and can be expanded/collapsed.
 .sk-global summary.sk-toggleable__label {
   cursor: pointer;
   display: list-item;
-  /* Keep the disclosure marker inline so it shares a line with the content */
   list-style-position: inside;
+  white-space: nowrap;
   text-align: left;
   width: 100%;
   margin-bottom: 0;
   padding: 0.5em;
   box-sizing: border-box;
+}
+
+.sk-global summary::marker {
+  color: var(--sklearn-color-icon)
 }
 
 /* Lay out the label content (name + doc link) in a row next to the marker.
