@@ -70,7 +70,6 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
 )
-from sklearn.utils.extmath import softmax
 from sklearn.utils.fixes import CSR_CONTAINERS
 from sklearn.utils.validation import check_is_fitted
 
@@ -278,7 +277,6 @@ def test_calibration_multiclass(clf, method, ensemble, global_random_seed):
     clf.fit(X_train, y_train)
     y_pred_uncal = clf.predict_proba(X_test)
 
-
     cal_clf = CalibratedClassifierCV(clf, method=method, cv=5, ensemble=ensemble)
     cal_clf.fit(X_train, y_train)
     y_pred_cal = cal_clf.predict_proba(X_test)
@@ -377,7 +375,7 @@ def test_asymptotic_multiclass_calibration_improvement(
 
     log_loss_uncal = log_loss(y_test, y_pred_uncal)
     log_loss_cal = log_loss(y_test, y_pred_cal)
-    if expected_loss_improvement:
+    if is_loss_expected_to_improve:
         assert log_loss_cal < 0.9 * log_loss_uncal  # at least 10% loss deacrease
     else:
         # Degradation should never be large. Increasing calibration and test
