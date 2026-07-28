@@ -535,8 +535,13 @@ def estimator_html_repr(estimator):
         html_template = (
             f"<style>{_CSS_STYLE}</style>"
             f"<body>"
-            # we need tabindex="0" to make it 'focusable'
-            f'<div id="{container_id}" tabindex="0" class="sk-top-container sk-global">'
+            # tabindex="0" makes the scroll container focusable so keyboard-only
+            # users can scroll an overflowing diagram.
+            # Anything in the tab order should also convey what it is to assistive
+            # tech, so added the role="group" grouping semantics.
+            # This satisfies axe-core checkers; Firefox's inspector still warns.
+            f'<div id="{container_id}" tabindex="0" role="group"'
+            f' class="sk-top-container sk-global">'
             '<div class="sk-text-repr-fallback">'
             f"<pre>{html.escape(estimator_str)}</pre><b>{fallback_msg}</b>"
             "</div>"
