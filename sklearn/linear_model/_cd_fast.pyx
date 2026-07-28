@@ -372,6 +372,8 @@ def enet_coordinate_descent(
 
     Further Parameters
     ------------------
+    random : bint, default=0 (False)
+        If False, uses cyclic coordinate descent. If True, pick features at random.
     positive : bint, default=0 (False)
         If set to True, forces coefficients w to be positive.
     do_screening : bint, default=1 (True)
@@ -380,6 +382,10 @@ def enet_coordinate_descent(
     early_stopping : bint, default=1 (True)
         If set to True, check for convergence (with the dual gap) before entering the
         main iteration loop.
+    R : memoryview or ndarray of shape (n_samples,) or None, default=None
+        Initial value of the residual `R = y - X @ w`. If None, it will be computed.
+    norm2_cols_X : memoryview or ndarray of shape (n_features,) or None, default=None
+        Squared column norms of X. If None, it will be computed.
 
     Returns
     -------
@@ -450,6 +456,7 @@ def enet_coordinate_descent(
         excluded_set = np.empty(n_features, dtype=np.uint8)
 
     if R is None:
+        # Initial value of the residuals. Will be kept up to date in the iterations.
         R, norm2_cols_X = R_and_X_colnorm2(w=w, X=X, y=y)
 
     with nogil:
@@ -861,6 +868,25 @@ def enet_coordinate_descent_sparse(
 
     The rest is the same as enet_coordinate_descent, but for sparse X.
 
+    Further Parameters
+    ------------------
+    random : bint, default=0 (False)
+        If False, uses cyclic coordinate descent. If True, pick features at random.
+    positive : bint, default=0 (False)
+        If set to True, forces coefficients w to be positive.
+    do_screening : bint, default=1 (True)
+        If set to True, use gap safe screening rules to screen coefficients
+        (exclude early based on dual gap).
+    early_stopping : bint, default=1 (True)
+        If set to True, check for convergence (with the dual gap) before entering the
+        main iteration loop.
+    R : memoryview or ndarray of shape (n_samples,) or None, default=None
+        Initial value of the residual `R = y - X @ w`. If None, it will be computed.
+        See `R_and_X_colnorm2_sparse` for how sample_weight and X_mean are taken
+        into account.
+    norm2_cols_X : memoryview or ndarray of shape (n_features,) or None, default=None
+        Squared column norms of X. If None, it will be computed.
+
     Returns
     -------
     w : ndarray of shape (n_features,)
@@ -942,6 +968,7 @@ def enet_coordinate_descent_sparse(
                 break
 
     if R is None:
+        # Initial value of the residuals. Will be kept up to date in the iterations.
         R, norm2_cols_X = R_and_X_colnorm2_sparse(
             w=w,
             X_data=X_data,
@@ -1284,6 +1311,21 @@ def enet_coordinate_descent_gram(
         Q = X^T X (Gram matrix)
         q = X^T y
 
+    Further Parameters
+    ------------------
+    random : bint, default=0 (False)
+        If False, uses cyclic coordinate descent. If True, pick features at random.
+    positive : bint, default=0 (False)
+        If set to True, forces coefficients w to be positive.
+    do_screening : bint, default=1 (True)
+        If set to True, use gap safe screening rules to screen coefficients
+        (exclude early based on dual gap).
+    early_stopping : bint, default=1 (True)
+        If set to True, check for convergence (with the dual gap) before entering the
+        main iteration loop.
+    Qw : memoryview or ndarray of shape (n_features,) or None, default=None
+        Initial value of `Q @ w`. If None, it will be computed.
+
     Returns
     -------
     w : ndarray of shape (n_features,)
@@ -1337,7 +1379,7 @@ def enet_coordinate_descent_gram(
         excluded_set = np.empty(n_features, dtype=np.uint8)
 
     if Qw is None:
-        # initial value "Q w" which will be kept of up to date in the iterations
+        # Initial value of Qw. Will be kept up to date in the iterations.
         Qw = np.dot(Q, w)
 
     with nogil:
@@ -1492,8 +1534,8 @@ def R_and_X_colnorm2_multi_task(
     -------
     R : memoryview of shape (n_samples, n_tasks)
         Residuals:
-        - unweighted: R = Y - Z @ W
-        - weighted:   R = sw * (Y - Z @ W)
+        - unweighted: R = Y - Z @ W.T
+        - weighted:   R = sw * (Y - Z @ W.T)
 
     norm2_cols_X : memoryview of shape (n_samples,)
         Column norms of X:
@@ -1606,7 +1648,7 @@ cdef (floating, floating) gap_enet_multi_task(
     bint no_sample_weights,
     const floating[::1] X_mean,
     bint center,
-    const floating[::1, :] R,  # current residuals = y - X @ w
+    const floating[::1, :] R,  # current residuals = y - X @ W.T
     const floating[::1] R_sum,
     floating[:, ::1] XtA,  # out
     floating[::1] XtA_row_norms,  # out
@@ -1757,6 +1799,23 @@ def enet_coordinate_descent_multi_task(
     Regression
     https://doi.org/10.48550/arXiv.1311.6529
 
+    Further Parameters
+    ------------------
+    random : bint, default=0 (False)
+        If False, uses cyclic coordinate descent. If True, pick features at random.
+    do_screening : bint, default=1 (True)
+        If set to True, use gap safe screening rules to screen coefficients
+        (exclude early based on dual gap).
+    early_stopping : bint, default=1 (True)
+        If set to True, check for convergence (with the dual gap) before entering the
+        main iteration loop.
+    R : memoryview or ndarray of shape (n_samples, n_tasks) or None, default=None
+        Initial value of the residual `R = y - X @ W.T`. If None, it will be computed.
+        See `R_and_X_colnorm2_multi_task` for how sample_weight and X_mean are taken
+        into account.
+    norm2_cols_X : memoryview or ndarray of shape (n_features,) or None, default=None
+        Squared column norms of X. If None, it will be computed.
+
     Returns
     -------
     W : ndarray of shape (n_tasks, n_features)
@@ -1832,6 +1891,7 @@ def enet_coordinate_descent_multi_task(
         Yw = np.multiply(sample_weight[:, None], Y)
 
     if R is None:
+        # Initial value of the residuals. Will be kept up to date in the iterations.
         R, norm2_cols_X = R_and_X_colnorm2_multi_task(
             W=W,
             X=X,
