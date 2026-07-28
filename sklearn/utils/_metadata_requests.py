@@ -639,7 +639,7 @@ class MetadataRequest:
                 method,
                 MethodMetadataRequest(owner=owner, method=method),
             )
-      
+
     def __sklearn_clone__(self):
         # `owner` is a reference to the estimator and is only used by
         # `_routing_repr` for display; see MethodMetadataRequest.__sklearn_clone__.
@@ -647,7 +647,7 @@ class MetadataRequest:
         for method in SIMPLE_METHODS:
             setattr(new, method, getattr(self, method).__sklearn_clone__())
         return new
-      
+
     def actualize_auto_requests(self):
         for method in SIMPLE_METHODS:
             getattr(self, method).actualize_auto_requests()
@@ -1660,18 +1660,18 @@ class _MetadataRequester:
         During class creation via `__init_subclass__`, it determines what metadata
         routing methods should be created. It does this by:
         1. Checking method signatures for passable metadata.
-        2. Updating the metadata request info with the metadata request values set at 
+        2. Updating the metadata request info with the metadata request values set at
         class level via the `__metadata_request__{method}` class attributes.
-        
+
         The collected information is used to create `set_{method}_request` methods
         (e.g. set_fit_request) that allow runtime configuration of metadata routing.
-        
+
         For example, if a method's signature includes `sample_weight`, this method will:
         - During class creation: Create a `set_{method}_request` method to configure
           how `sample_weight` should be routed
         - Right after initialization: Provide the default routing configuration for
           `sample_weight` based on class attributes and method signatures
-        
+
         Parameters
         ----------
         method_name : str
