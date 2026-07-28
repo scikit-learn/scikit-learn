@@ -2,12 +2,12 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import re
-import sys
 import textwrap
 from unittest import mock
 
 import pytest
 
+from sklearn import set_config
 from sklearn.base import clone
 from sklearn.callback import ProgressBar
 from sklearn.callback.tests._utils import (
@@ -222,8 +222,7 @@ def test_estimator_without_subtasks(capsys):
 
 
 @pytest.mark.parametrize("Estimator", [MaxIterEstimator, NoCallbackEstimator])
-@pytest.mark.parametrize("verbose", [True, False])
-def test_progressbar_by_default(Estimator, verbose, capsys):
+def test_progressbar_by_default(Estimator, capsys):
     """Test that the progressbar is used by default on compatible estimators."""
     try:
         import rich  # noqa: F401
@@ -232,7 +231,7 @@ def test_progressbar_by_default(Estimator, verbose, capsys):
     except ImportError:
         rich_available = False
 
-    sys.ps1 = ">>> "  # mock an interactive shell
+    set_config(default_callbacks=("progressbar",))
 
     X, y = make_classification(
         n_samples=10, n_features=2, random_state=0, n_informative=2, n_redundant=0
@@ -240,16 +239,15 @@ def test_progressbar_by_default(Estimator, verbose, capsys):
     kwargs = {"computation_intensity": 0.15} if Estimator == MaxIterEstimator else {}
 
     est = Estimator(**kwargs)
-    est.verbose = verbose
     est.fit(X, y)
 
-    del sys.ps1
+    set_config(default_callbacks=())
 
     captured = capsys.readouterr()
 
-    # The progressbar should by set only on compatible estimators, if there is no
+    # The progressbar should be set only on compatible estimators, if there is no
     # verbosity set and and if rich is available.
-    if Estimator == MaxIterEstimator and rich_available and not verbose:
+    if Estimator == MaxIterEstimator and rich_available:
         assert re.search(r"MaxIterEstimator - fit ━+ 100%", captured.out)
     else:
         assert not captured.out

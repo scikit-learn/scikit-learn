@@ -4,8 +4,16 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import os
+import sys
 import threading
 from contextlib import contextmanager as contextmanager
+
+try:
+    import rich  # noqa: F401
+
+    _rich_available = True
+except ImportError:
+    _rich_available = False
 
 _global_config = {
     "assume_finite": bool(os.environ.get("SKLEARN_ASSUME_FINITE", False)),
@@ -21,6 +29,10 @@ _global_config = {
     "enable_metadata_routing": False,
     "skip_parameter_validation": False,
     "sparse_interface": "spmatrix",
+    # Put progressbar by default only in an interactive env (ipython, jupyter, etc)
+    "default_callbacks": ("progressbar",)
+    if hasattr(sys, "ps1") and _rich_available
+    else (),
 }
 _threadlocal = threading.local()
 
@@ -31,6 +43,21 @@ def _get_threadlocal_config():
     if not hasattr(_threadlocal, "global_config"):
         _threadlocal.global_config = _global_config.copy()
     return _threadlocal.global_config
+
+
+def _validate_default_callbacks(callbacks):
+    """Utility to validate the callbacks to be set as default callbacks."""
+    from sklearn.callback._base import _BaseCallback
+
+    for cb in callbacks:
+        if cb != "progressbar" and not (
+            isinstance(cb, _BaseCallback) and not isinstance(cb, type)
+        ):
+            raise ValueError(
+                "Default callbacks must be callback instances or str in "
+                f"['progressbar'], got {cb} instead."
+            )
+    return callbacks
 
 
 def get_config():
@@ -73,6 +100,7 @@ def set_config(
     enable_metadata_routing=None,
     skip_parameter_validation=None,
     sparse_interface=None,
+    default_callbacks=None,
 ):
     """Set global scikit-learn configuration.
 
@@ -206,6 +234,15 @@ def set_config(
 
         .. versionadded:: 1.9
 
+    default_callbacks : tuple of str or callback instances, default=None
+        Default callbacks to attach to callback compatible estimators by default. The
+        possible string values are:
+
+        - "progressbar": A `~skleanr.callback.ProgressBar` callback with
+          `max_propagation_depth=0` and `min_duration=2`.
+
+        .. versionadded:: 1.10
+
     See Also
     --------
     config_context : Context manager for global scikit-learn configuration.
@@ -243,6 +280,10 @@ def set_config(
         local_config["skip_parameter_validation"] = skip_parameter_validation
     if sparse_interface is not None:
         local_config["sparse_interface"] = sparse_interface
+    if default_callbacks is not None:
+        local_config["default_callbacks"] = _validate_default_callbacks(
+            default_callbacks
+        )
 
 
 @contextmanager
@@ -259,6 +300,7 @@ def config_context(
     enable_metadata_routing=None,
     skip_parameter_validation=None,
     sparse_interface=None,
+    default_callbacks=None,
 ):
     """Context manager to temporarily change the global scikit-learn configuration.
 
@@ -387,6 +429,15 @@ def config_context(
 
         .. versionadded:: 1.8
 
+    default_callbacks : tuple of str or callback instances, default=None
+        Default callbacks to attach to callback compatible estimators by default. The
+        possible string values are:
+
+        - "progressbar": A `~skleanr.callback.ProgressBar` callback with
+          `max_propagation_depth=0` and `min_duration=2`.
+
+        .. versionadded:: 1.10
+
     Yields
     ------
     None.
@@ -427,6 +478,7 @@ def config_context(
         enable_metadata_routing=enable_metadata_routing,
         skip_parameter_validation=skip_parameter_validation,
         sparse_interface=sparse_interface,
+        default_callbacks=default_callbacks,
     )
 
     try:

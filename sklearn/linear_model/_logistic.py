@@ -588,7 +588,10 @@ def _logistic_regression_path(
             # only in the LogisticRegressionCV, keeping the LogisticRegression version
             # without that extra level.
             lbfgs_bridge = None
-            if callback_ctx is not None and hasattr(estimator, "_skl_callbacks"):
+            if callback_ctx is not None and any(
+                hasattr(estimator, attr)
+                for attr in ("_skl_callbacks", "_skl_default_callbacks")
+            ):
                 lbfgs_bridge = _LbfgsCallbackBridge(
                     callback_ctx,
                     estimator,
@@ -1326,6 +1329,7 @@ class LogisticRegression(
         warm_start=False,
         n_jobs=None,
     ):
+        super().__init__()
         self.penalty = penalty
         self.C = C
         self.l1_ratio = l1_ratio

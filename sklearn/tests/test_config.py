@@ -22,6 +22,7 @@ def test_config_context():
         "enable_metadata_routing": False,
         "skip_parameter_validation": False,
         "sparse_interface": "spmatrix",
+        "default_callbacks": (),
     }
 
     # Not using as a context manager affects nothing
@@ -41,6 +42,7 @@ def test_config_context():
             "enable_metadata_routing": False,
             "skip_parameter_validation": False,
             "sparse_interface": "spmatrix",
+            "default_callbacks": (),
         }
     assert get_config()["assume_finite"] is False
 
@@ -77,6 +79,7 @@ def test_config_context():
         "enable_metadata_routing": False,
         "skip_parameter_validation": False,
         "sparse_interface": "spmatrix",
+        "default_callbacks": (),
     }
 
     # No positional arguments

@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import functools
-import sys
 from contextlib import contextmanager
 
 from sklearn import get_config
@@ -10,16 +9,26 @@ from sklearn.callback._base import AutoPropagatedCallback, FitCallback
 from sklearn.callback._callback_context import CallbackContext
 
 
-def _progressbar_by_default():
-    """Return whether progressbars are added by default to compatible estimators.
+def _callbacks_by_default():
+    """Return the callbacks to attach by default to compatible estimators.
 
     Returns
     -------
-    enabled : bool
-        Whether progressbar by default is enabled. If the config is not set, it
-        defaults to False.
+    callbacks : list of callbacks
+        A list with the callbacks to attach by default to estimators, it
+        defaults to an empty list.
     """
-    return get_config().get("progressbar_by_default", False)
+    from sklearn.callback import ProgressBar
+
+    callbacks = []
+
+    for cb in get_config().get("default_callbacks", []):
+        if cb == "progressbar":
+            callbacks.append(ProgressBar(max_propagation_depth=0, min_duration=2))
+        else:
+            callbacks.append(cb)
+
+    return callbacks
 
 
 class CallbackSupportMixin:
@@ -28,6 +37,10 @@ class CallbackSupportMixin:
     .. document the private method
     .. automethod:: _init_callback_context
     """
+
+    def __init__(self):
+        if default_callbacks := _callbacks_by_default():
+            self._skl_default_callbacks = default_callbacks
 
     def set_callbacks(self, *callbacks):
         """Set callbacks for the estimator.
@@ -103,7 +116,10 @@ class CallbackSupportMixin:
         # Setup callbacks. We store callbacks for which setup has started in order to
         # only tear those down after fit.
         self._skl_callbacks_to_teardown = []
-        for callback in getattr(self, "_skl_callbacks", []):
+        callbacks = getattr(self, "_skl_callbacks", False) or getattr(
+            self, "_skl_default_callbacks", []
+        )
+        for callback in callbacks:
             # Only call the setup hook of callbacks that are not propagated from a
             # meta-estimator.
             if not (
@@ -133,22 +149,6 @@ def callback_management_context(estimator):
     ------
     None.
     """
-    # Put a progressbar by default if there is no callback and no verbosity enabled
-    if auto_progressbar := (
-        hasattr(sys, "ps1")  # check if in an interactive env (ipython, jupyter, ...)
-        and not hasattr(estimator, "_skl_callbacks")
-        and not hasattr(estimator, "_parent_callback_ctx")
-        and (not hasattr(estimator, "verbose") or not estimator.verbose)
-    ):
-        try:
-            from sklearn.callback import ProgressBar
-
-            estimator._skl_callbacks = [
-                ProgressBar(max_propagation_depth=0, min_duration=2)
-            ]
-        except ImportError:
-            # Don't use progressbars if rich is not installed.
-            auto_progressbar = False
     try:
         yield
     finally:
@@ -171,9 +171,6 @@ def callback_management_context(estimator):
                     "The following callback teardown errors occurred",
                     teardown_errors,
                 )
-
-        if auto_progressbar:
-            del estimator._skl_callbacks
 
 
 def with_callbacks(method):

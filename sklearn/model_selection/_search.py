@@ -478,6 +478,7 @@ class BaseSearchCV(
         error_score=np.nan,
         return_train_score=True,
     ):
+        super().__init__()
         self.scoring = scoring
         self.estimator = estimator
         self.n_jobs = n_jobs
