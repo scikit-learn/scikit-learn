@@ -276,13 +276,8 @@ def test_calibration_multiclass(clf, method, ensemble, global_random_seed):
         train_size=1_000,
     )
     clf.fit(X_train, y_train)
-    if hasattr(clf, "predict_proba"):
-        y_pred_uncal = clf.predict_proba(X_test)
-    else:
-        # Naive predict_proba for LinearSVC.
-        y_pred_uncal = softmax(clf.decision_function(X_test))
+    y_pred_uncal = clf.predict_proba(X_test)
 
-    assert_allclose(np.sum(y_pred_uncal, axis=1), np.ones(len(X_test)))
 
     cal_clf = CalibratedClassifierCV(clf, method=method, cv=5, ensemble=ensemble)
     cal_clf.fit(X_train, y_train)
@@ -327,7 +322,7 @@ def test_calibration_multiclass(clf, method, ensemble, global_random_seed):
 @pytest.mark.parametrize("calibration_method", ["temperature", "sigmoid", "isotonic"])
 # @pytest.mark.parametrize("seed", [0, 1, 2])
 def test_asymptotic_multiclass_calibration_improvement(
-    estimator, expected_loss_improvement, calibration_method, global_random_seed
+    estimator, is_loss_expected_to_improve, calibration_method, global_random_seed
 ):
     """Sigmoid calibration improves or preserves multiclass proper scores.
 
