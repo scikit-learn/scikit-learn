@@ -54,6 +54,7 @@ from sklearn.tree._tree import (
     _check_value_ndarray,
 )
 from sklearn.tree._tree import Tree as CythonTree
+from sklearn.tree._utils import SPLIT_CATEGORICAL_HASH
 from sklearn.utils import compute_sample_weight
 from sklearn.utils._array_api import xpx
 from sklearn.utils._testing import (
@@ -89,8 +90,6 @@ REG_TREES = {
 ALL_TREES: dict = dict()
 ALL_TREES.update(CLF_TREES)
 ALL_TREES.update(REG_TREES)
-
-SPLIT_CATEGORICAL_HASH = 2
 
 SPARSE_TREES = [
     "DecisionTreeClassifier",
@@ -3526,20 +3525,14 @@ def test_random_splitter_categorical(Tree, y, X):
 )
 def test_random_splitter_high_cardinality_categorical(Tree):
     """Random splitter accepts >256 categories via hash splits."""
-    rng = np.random.RandomState(0)
-    n_categories = 300
-    n_samples = 600
-    X = rng.randint(0, n_categories, size=(n_samples, 1)).astype(object)
-    if issubclass(Tree, DecisionTreeClassifier):
-        # DecisionTree defaults to splitter='best'; force random.
-        tree_kwargs = {"splitter": "random"}
-        y = (np.asarray(X[:, 0], dtype=int) % 2).astype(np.intp)
-    elif issubclass(Tree, ExtraTreeClassifier):
-        tree_kwargs = {}
-        y = (np.asarray(X[:, 0], dtype=int) % 2).astype(np.intp)
-    else:
-        tree_kwargs = {}
-        y = (np.asarray(X[:, 0], dtype=int) % 2).astype(np.float64)
+    n_categories = 500
+    # Include every level so cardinality is deterministic (>255), not sampled.
+    X = np.arange(n_categories).reshape(-1, 1)
+    y = X[:, 0] % 2
+    # DecisionTree defaults to splitter='best'; force random.
+    tree_kwargs = (
+        {"splitter": "random"} if issubclass(Tree, DecisionTreeClassifier) else {}
+    )
 
     est = Tree(
         random_state=0,

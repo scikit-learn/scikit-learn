@@ -15,7 +15,7 @@ from sklearn.utils._random cimport our_rand_r
 cdef enum:
     MAX_NUM_CATEGORIES = N_BITSETS
 
-cdef enum:
+cpdef enum:
     SPLIT_LEAF = -1
     SPLIT_NUMERIC = 0
     SPLIT_CATEGORICAL_BITSET = 1
@@ -45,7 +45,7 @@ cdef struct Node:
 # The constants are from the "lowbias32" mixer from Chris Wellons'
 # hash-prospector work: see https://nullprogram.com/blog/2018/07/31/
 # This is deterministic and non-cryptographic.
-# Keep in sync with sklearn/tree/tests/test_split.py::_mix_uint32.
+# Exposed to Python tests via _py_mix_uint32 in _utils.pyx.
 cdef inline uint32_t mix_uint32(uint32_t x) noexcept nogil:
     x ^= x >> 16
     x *= <uint32_t> 0x7feb352d

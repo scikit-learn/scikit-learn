@@ -16,6 +16,12 @@ from sklearn.tree import (
     ExtraTreeClassifier,
     ExtraTreeRegressor,
 )
+from sklearn.tree._utils import (
+    SPLIT_CATEGORICAL_BITSET,
+    SPLIT_CATEGORICAL_HASH,
+    SPLIT_NUMERIC,
+    _py_mix_uint32,
+)
 from sklearn.utils.stats import _weighted_percentile
 
 CLF_CRITERIONS = ("gini", "log_loss")
@@ -32,10 +38,6 @@ REG_TREES = {
     "DecisionTreeRegressor": DecisionTreeRegressor,
     "ExtraTreeRegressor": ExtraTreeRegressor,
 }
-
-SPLIT_NUMERIC = 0
-SPLIT_CATEGORICAL_BITSET = 1
-SPLIT_CATEGORICAL_HASH = 2
 
 
 def powerset(iterable):
@@ -56,24 +58,8 @@ def bitset_to_tuple(v, n_categories):
     )
 
 
-def _mix_uint32(x):
-    """Deterministic 32-bit stable pseudo-random hash.
-
-    Keep in sync with sklearn/tree/_utils.pyx::_mix_uint32.
-
-    see https://nullprogram.com/blog/2018/07/31/
-    """
-    x &= 0xFFFFFFFF
-    x ^= x >> 16
-    x = (x * 0x7FEB352D) & 0xFFFFFFFF
-    x ^= x >> 15
-    x = (x * 0x846CA68B) & 0xFFFFFFFF
-    x ^= x >> 16
-    return x & 0xFFFFFFFF
-
-
 def random_categorical_goes_left(seed, x):
-    return np.array([_mix_uint32(seed ^ int(category)) & 1 for category in x])
+    return np.array([_py_mix_uint32(seed ^ int(category)) & 1 for category in x])
 
 
 @dataclass
