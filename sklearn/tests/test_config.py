@@ -5,6 +5,7 @@ import pytest
 
 import sklearn
 from sklearn import config_context, get_config, set_config
+from sklearn.callback.tests._utils import RecordingCallback
 from sklearn.utils.fixes import _IS_WASM
 from sklearn.utils.parallel import Parallel, delayed
 
@@ -172,3 +173,13 @@ def test_config_array_api_dispatch_error_scipy(monkeypatch):
 
     with pytest.raises(ImportError, match="SciPy must be 1.14.0 or newer"):
         set_config(array_api_dispatch=True)
+
+
+@pytest.mark.parametrize("callback", ["wrong_string", RecordingCallback])
+def test_validate_default_callbacks(callback):
+    """Test the callback validation function."""
+
+    with pytest.raises(
+        ValueError, match="Default callbacks must be callback instances or str"
+    ):
+        set_config(default_callbacks=(callback,))
