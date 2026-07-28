@@ -371,7 +371,17 @@ class DecisionBoundaryDisplay:
     def multiclass_colors_(self):
         return self.target_colors_
 
-    def plot(self, plot_method="contourf", ax=None, xlabel=None, ylabel=None, **kwargs):
+    def plot(
+        self,
+        plot_method="contourf",
+        ax=None,
+        xlabel=None,
+        ylabel=None,
+        show_class_boundaries="auto",
+        response_kwargs=None,
+        boundary_kwargs=None,
+        **kwargs,
+    ):
         """Plot visualization.
 
         Parameters
@@ -393,13 +403,26 @@ class DecisionBoundaryDisplay:
         ylabel : str, default=None
             Overwrite the y-axis label.
 
+        show_class_boundaries : {'auto', bool}, default='auto'
+            Whether to overlay class boundaries for multiclass probability or
+            decision-function responses. If 'auto', the current default behavior is
+            preserved.
+
+        response_kwargs : dict, default=None
+            Additional keyword arguments for the main response plot.
+
+        boundary_kwargs : dict, default=None
+            Additional keyword arguments for the class-boundary overlay when one is
+            drawn.
+
         **kwargs : dict
-            Additional keyword arguments to be passed to the `plot_method`. For
-            :term:`binary` problems, `cmap` or `colors` can be set here to specify the
-            colormap or colors, otherwise the default colormap ('viridis') is used. If
-            not specified by the user, `zorder` is set to -1 to ensure that the decision
-            boundary is plotted in the background (in case a scatter plot is added on
-            top).
+            Legacy keyword arguments passed to the main response plot.
+
+            For :term:`binary` problems, `cmap` or `colors` can be set here to
+            specify the colormap or colors, otherwise the default colormap
+            ('viridis') is used. If not specified by the user, `zorder` is set to -1
+            to ensure that the decision boundary is plotted in the background (in
+            case a scatter plot is added on top).
 
         Returns
         -------
@@ -458,17 +481,33 @@ class DecisionBoundaryDisplay:
         if ax is None:
             _, ax = plt.subplots()
 
+        if show_class_boundaries not in ("auto", True, False):
+            raise ValueError(
+                "show_class_boundaries must be 'auto', True, or False. "
+                f"Got {show_class_boundaries} instead."
+            )
+
+        if response_kwargs is None:
+            response_kwargs = dict(kwargs)
+        else:
+            response_kwargs = {**kwargs, **response_kwargs}
+
+        if boundary_kwargs is None:
+            boundary_kwargs = {}
+        else:
+            boundary_kwargs = dict(boundary_kwargs)
+
         plot_func = getattr(ax, plot_method)
         if self.n_classes == 2:
-            self.surface_ = plot_func(self.xx0, self.xx1, self.response, **kwargs)
+            self.surface_ = plot_func(self.xx0, self.xx1, self.response, **response_kwargs)
         else:  # multiclass
             for kwarg in ("cmap", "colors"):
-                if kwarg in kwargs:
+                if kwarg in response_kwargs:
                     warnings.warn(
                         f"'{kwarg}' is ignored in favor of 'target_colors' "
                         "in the multiclass case."
                     )
-                    del kwargs[kwarg]
+                    del response_kwargs[kwarg]
 
             self.target_colors_ = _select_colors(
                 mpl, self.target_colors, self.n_classes
@@ -477,8 +516,8 @@ class DecisionBoundaryDisplay:
             # If not set by the user, set default values for `zorder` to ensure that the
             # decision boundary is plotted in the background (in case a scatter plot is
             # added on top)
-            if "zorder" not in kwargs:
-                kwargs["zorder"] = -1
+            if "zorder" not in response_kwargs:
+                response_kwargs["zorder"] = -1
 
             if self.response.ndim == 3:  # predict_proba and decision_function
                 multiclass_cmaps = [
@@ -495,40 +534,59 @@ class DecisionBoundaryDisplay:
                         mask=(self.response.argmax(axis=2) != class_idx),
                     )
                     self.surface_.append(
-                        plot_func(self.xx0, self.xx1, response, cmap=cmap, **kwargs)
-                    )
-
-                if plot_method == "contour":
-                    # Additionally plot the decision boundaries between classes.
-                    self.surface_.append(
                         plot_func(
                             self.xx0,
                             self.xx1,
+                            response,
+                            cmap=cmap,
+                            **response_kwargs,
+                        )
+                    )
+
+                show_boundaries = show_class_boundaries
+                if show_boundaries == "auto":
+                    show_boundaries = plot_method == "contour"
+
+                if show_boundaries:
+                    boundary_plot_kwargs = dict(boundary_kwargs)
+                    if "zorder" not in boundary_plot_kwargs:
+                        boundary_plot_kwargs["zorder"] = -1
+                    if "levels" not in boundary_plot_kwargs:
+                        boundary_plot_kwargs["levels"] = np.arange(self.n_classes)
+                    if "colors" not in boundary_plot_kwargs:
+                        boundary_plot_kwargs["colors"] = "black"
+
+                    # Additionally plot the decision boundaries between classes.
+                    self.surface_.append(
+                        ax.contour(
+                            self.xx0,
+                            self.xx1,
                             self.response.argmax(axis=2),
-                            colors="black",
-                            zorder=-1,
-                            # set levels to ensure all boundaries are plotted correctly
-                            levels=np.arange(self.n_classes),
+                            **boundary_plot_kwargs,
                         )
                     )
 
             elif self.response.ndim == 2:  # predict
                 # Set `levels` to ensure all class boundaries are displayed.
-                if "levels" not in kwargs:
+                line_kwargs = dict(response_kwargs)
+                line_kwargs.update(boundary_kwargs)
+                if "levels" not in line_kwargs:
                     if plot_method == "contour":
-                        kwargs["levels"] = np.arange(self.n_classes)
+                        line_kwargs["levels"] = np.arange(self.n_classes)
                     elif plot_method == "contourf":
-                        kwargs["levels"] = np.arange(self.n_classes + 1) - 0.5
+                        line_kwargs["levels"] = np.arange(self.n_classes + 1) - 0.5
 
                 if plot_method == "contour":
-                    self.surface_ = plot_func(
-                        self.xx0, self.xx1, self.response, colors="black", **kwargs
-                    )
+                    self.surface_ = plot_func(self.xx0, self.xx1, self.response, **line_kwargs)
                 else:
                     # `pcolormesh` requires cmap, for `contourf` it makes no difference
                     cmap = mpl.colors.ListedColormap(self.target_colors_)
                     self.surface_ = plot_func(
-                        self.xx0, self.xx1, self.response, cmap=cmap, **kwargs
+                        self.xx0,
+                        self.xx1,
+                        self.response,
+                        cmap=cmap,
+                        **response_kwargs,
                     )
 
         if xlabel is not None or not ax.get_xlabel():
@@ -554,6 +612,9 @@ class DecisionBoundaryDisplay:
         response_method="auto",
         class_of_interest=None,
         target_colors=None,
+        show_class_boundaries="auto",
+        response_kwargs=None,
+        boundary_kwargs=None,
         xlabel=None,
         ylabel=None,
         ax=None,
@@ -637,6 +698,18 @@ class DecisionBoundaryDisplay:
 
             .. versionadded:: 1.10
                 `multiclass_colors` was renamed to `target_colors`
+
+        show_class_boundaries : {'auto', bool}, default='auto'
+            Whether to overlay class boundaries for multiclass probability or
+            decision-function responses. If 'auto', the current default behavior is
+            preserved.
+
+        response_kwargs : dict, default=None
+            Additional keyword arguments for the main response plot.
+
+        boundary_kwargs : dict, default=None
+            Additional keyword arguments for the class-boundary overlay when one is
+            drawn.
 
         xlabel : str, default=None
             The label used for the x-axis. If `None`, an attempt is made to
@@ -851,4 +924,11 @@ class DecisionBoundaryDisplay:
             xlabel=xlabel,
             ylabel=ylabel,
         )
-        return display.plot(ax=ax, plot_method=plot_method, **kwargs)
+        return display.plot(
+            ax=ax,
+            plot_method=plot_method,
+            show_class_boundaries=show_class_boundaries,
+            response_kwargs=response_kwargs,
+            boundary_kwargs=boundary_kwargs,
+            **kwargs,
+        )

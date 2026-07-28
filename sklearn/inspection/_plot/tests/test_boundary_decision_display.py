@@ -616,6 +616,39 @@ def test_multiclass_plot_max_class(pyplot, response_method):
         )
 
 
+def test_multiclass_boundary_toggle(pyplot):
+    """Check that class boundaries can be disabled for multiclass contours."""
+    X, y = make_blobs(n_samples=150, centers=3, n_features=2, random_state=42)
+    clf = LogisticRegression().fit(X, y)
+
+    disp = DecisionBoundaryDisplay.from_estimator(
+        clf,
+        X,
+        response_method="predict_proba",
+        plot_method="contour",
+        show_class_boundaries=False,
+    )
+
+    assert len(disp.surface_) == len(clf.classes_)
+
+
+def test_multiclass_boundary_kwargs(pyplot):
+    """Check that boundary styling is independent from the response surface."""
+    X, y = make_blobs(n_samples=150, centers=3, n_features=2, random_state=42)
+    clf = LogisticRegression().fit(X, y)
+
+    disp = DecisionBoundaryDisplay.from_estimator(
+        clf,
+        X,
+        response_method="predict_proba",
+        plot_method="contour",
+        boundary_kwargs={"colors": "red", "linewidths": 2},
+    )
+
+    assert len(disp.surface_) == len(clf.classes_) + 1
+    assert disp.surface_[-1].colors == "red"
+
+
 @pytest.mark.parametrize(
     "target_colors, n_classes",
     [
