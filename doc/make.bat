@@ -47,10 +47,6 @@ if "%1" == "clean" (
 		rmdir /q /s modules\generated
 		echo. Removed modules\generated\
 	)
-	if exist css\styles\ (
-		rmdir /q /s css\styles
-		echo. Removed css\styles\
-	)
 	for %%i in (api\*.rst) do del /q "%%i"
 	echo. Removed api\*.rst
 	goto end

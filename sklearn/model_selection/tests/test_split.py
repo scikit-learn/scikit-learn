@@ -42,15 +42,13 @@ from sklearn.model_selection._split import (
 from sklearn.svm import SVC
 from sklearn.tests.metadata_routing_common import assert_request_is_empty
 from sklearn.utils._array_api import (
-    device as array_api_device,
-)
-from sklearn.utils._array_api import (
+    array_device,
     get_namespace,
     move_to,
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._testing import (
+    _convert_container,
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
@@ -1367,9 +1365,11 @@ def test_array_api_train_test_split(
     y_np = y.astype(dtype_name)
     y_xp = xp.asarray(y_np, device=device)
 
-    X_train_np, X_test_np, y_train_np, y_test_np = train_test_split(
-        X_np, y, random_state=0, shuffle=shuffle, stratify=stratify
-    )
+    with config_context(array_api_dispatch=False):
+        X_train_np, X_test_np, y_train_np, y_test_np = train_test_split(
+            X_np, y, random_state=0, shuffle=shuffle, stratify=stratify
+        )
+
     with config_context(array_api_dispatch=True):
         if stratify is not None:
             stratify_xp = xp.asarray(stratify)
@@ -1387,10 +1387,10 @@ def test_array_api_train_test_split(
         assert get_namespace(y_test_xp)[0] == get_namespace(y_xp)[0]
 
         # Check device and dtype is preserved on output
-        assert array_api_device(X_train_xp) == array_api_device(X_xp)
-        assert array_api_device(y_train_xp) == array_api_device(y_xp)
-        assert array_api_device(X_test_xp) == array_api_device(X_xp)
-        assert array_api_device(y_test_xp) == array_api_device(y_xp)
+        assert array_device(X_train_xp) == array_device(X_xp)
+        assert array_device(y_train_xp) == array_device(y_xp)
+        assert array_device(X_test_xp) == array_device(X_xp)
+        assert array_device(y_test_xp) == array_device(y_xp)
 
     assert X_train_xp.dtype == X_xp.dtype
     assert y_train_xp.dtype == y_xp.dtype
@@ -1478,21 +1478,15 @@ def test_train_test_split_32bit_overflow():
     assert y_train.size + y_test.size == big_number
 
 
-def test_train_test_split_pandas():
+@pytest.mark.parametrize("input_type", ["pandas", "polars", "pyarrow"])
+def test_train_test_split_dataframe(input_type):
     # check train_test_split doesn't destroy pandas dataframe
-    types = [MockDataFrame]
-    try:
-        from pandas import DataFrame
+    X_df = _convert_container(X, input_type)
+    input_type = type(X_df)
 
-        types.append(DataFrame)
-    except ImportError:
-        pass
-    for InputFeatureType in types:
-        # X dataframe
-        X_df = InputFeatureType(X)
-        X_train, X_test = train_test_split(X_df)
-        assert isinstance(X_train, InputFeatureType)
-        assert isinstance(X_test, InputFeatureType)
+    X_train, X_test = train_test_split(X_df)
+    assert isinstance(X_train, input_type)
+    assert isinstance(X_test, input_type)
 
 
 @pytest.mark.parametrize(
@@ -1506,15 +1500,6 @@ def test_train_test_split_sparse(sparse_container):
     X_train, X_test = train_test_split(X_s)
     assert issparse(X_train) and X_train.format == "csr"
     assert issparse(X_test) and X_test.format == "csr"
-
-
-def test_train_test_split_mock_pandas():
-    # X mock dataframe
-    X_df = MockDataFrame(X)
-    X_train, X_test = train_test_split(X_df)
-    assert isinstance(X_train, MockDataFrame)
-    assert isinstance(X_test, MockDataFrame)
-    X_train_arr, X_test_arr = train_test_split(X_df)
 
 
 def test_train_test_split_list_input():
