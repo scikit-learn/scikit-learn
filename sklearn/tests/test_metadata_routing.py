@@ -1209,6 +1209,12 @@ def test_default_instance_routing_overrides_class_level():
     class DefaultRoutingEstimator(BaseEstimator):
         __metadata_request__fit = {"prop": False}
 
+        def fit(self):
+            pass
+
+        def predict(self):
+            pass
+
         def get_metadata_routing(self):
             requests = super().get_metadata_routing()
             requests.fit.add_auto_request(

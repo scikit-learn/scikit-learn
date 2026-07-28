@@ -356,13 +356,16 @@ class MethodMetadataRequest:
 
     requests : dict of {str: bool, None or str}, default=None
         The initial requests for this method.
+
+    auto_requests : set of str, default=None
+        The default requests set on instance level.
     """
 
-    def __init__(self, owner, method, requests=None):
-        self._requests = requests or dict()
+    def __init__(self, owner, method, requests=None, auto_requests=None):
         self.owner = owner
         self.method = method
-        self._auto_requests = set()
+        self._requests = requests or dict()
+        self._auto_requests = auto_requests or set()
 
     def __sklearn_clone__(self):
         # `owner` is a reference to the estimator and is only used by
@@ -372,6 +375,7 @@ class MethodMetadataRequest:
             owner=self.owner,
             method=self.method,
             requests=deepcopy(self._requests),
+            auto_requests=deepcopy(self._auto_requests),
         )
 
     @property
