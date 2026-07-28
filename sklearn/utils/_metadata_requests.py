@@ -1363,7 +1363,7 @@ def get_routing_for_object(obj=None):
     if isinstance(obj, (MetadataRequest, MetadataRouter)):
         return obj.__sklearn_clone__()
     if hasattr(obj, "_metadata_request"):
-        return deepcopy(obj._metadata_request)
+        return obj._metadata_request.__sklearn_clone__()
     elif hasattr(obj, "get_metadata_routing"):
         requests = obj.get_metadata_routing().__sklearn_clone__()
         if _auto_requests_enabled():

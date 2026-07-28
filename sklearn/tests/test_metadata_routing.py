@@ -39,7 +39,7 @@ from sklearn.utils._metadata_requests import (
     SIMPLE_METHODS,
     MethodMetadataRequest,
     MethodPair,
-    _auto_routing_enabled,
+    _auto_requests_enabled,
     _MetadataRequester,
     request_is_alias,
     request_is_valid,
@@ -1198,9 +1198,9 @@ def test_unbound_set_methods_work():
     ],
 )
 def test_default_routing_disabled(metadata_request_policy, default_routing):
-    """Check correctness of _auto_routing_enabled."""
+    """Check correctness of _auto_requests_enabled."""
     with config_context(metadata_request_policy=metadata_request_policy):
-        assert _auto_routing_enabled() == default_routing
+        assert _auto_requests_enabled() == default_routing
 
 
 def test_default_instance_routing_overrides_class_level():
@@ -1294,7 +1294,7 @@ def test_metadata_router_clone_does_not_copy_owner():
 
 @config_context(enable_metadata_routing=True)
 def test_get_routing_for_object_does_not_deepcopy_estimator():
-    # Regression test for the skorch deepcopy issue: asking for routing info
+    # Regression test for the skorch deepcopy issue (#33827): asking for routing info
     # of an estimator should not deep-copy the estimator itself.
     class Est(BaseEstimator):
         def fit(self, X, y, sample_weight=None):
