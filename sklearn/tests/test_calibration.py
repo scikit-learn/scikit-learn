@@ -291,7 +291,7 @@ def test_calibration_multiclass(clf, method, ensemble, global_random_seed):
 
 
 @pytest.mark.parametrize(
-    "estimator, expected_loss_improvement",
+    "estimator, is_loss_expected_to_improve",
     [
         (RandomForestClassifier(max_depth=8, n_estimators=10, random_state=42), True),
         (RandomForestClassifier(max_depth=3, n_estimators=10, random_state=42), False),
