@@ -11,7 +11,7 @@ from numpy.testing import assert_allclose
 from scipy import sparse, stats
 
 from sklearn.base import clone
-from sklearn.datasets import make_classification, make_regression
+from sklearn.datasets import load_iris, make_classification, make_regression
 from sklearn.feature_selection import (
     GenericUnivariateSelect,
     SelectFdr,
