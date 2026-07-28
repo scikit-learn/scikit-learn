@@ -197,7 +197,7 @@ def set_config(
           auto-request.
         - `None`: Configuration is unchanged.
 
-        .. versionadded:: 1.8
+        .. versionadded:: 1.10
 
     skip_parameter_validation : bool, default=None
         If `True`, disable the validation of the hyper-parameters' types and values in
@@ -394,7 +394,7 @@ def config_context(
           auto-request.
         - `None`: Configuration is unchanged.
 
-        .. versionadded:: 1.8
+        .. versionadded:: 1.10
 
     skip_parameter_validation : bool, default=None
         If `True`, disable the validation of the hyper-parameters' types and values in

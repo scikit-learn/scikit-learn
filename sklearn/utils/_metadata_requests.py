@@ -171,15 +171,15 @@ def _routing_enabled():
     return get_config().get("enable_metadata_routing", False)
 
 
-def _auto_routing_enabled():
-    """Return whether auto-requested metadata routing is enabled.
+def _auto_requests_enabled():
+    """Return whether auto-requesting metadata is enabled.
 
-    .. versionadded:: 1.8
+    .. versionadded:: 1.10
 
     Returns
     -------
     enabled : bool
-        Whether auto-requested metadata routing is enabled.
+        Whether auto-requesting metadata is enabled.
     """
     return get_config().get("metadata_request_policy", "empty") == "auto"
 
@@ -1366,7 +1366,7 @@ def get_routing_for_object(obj=None):
         return deepcopy(obj._metadata_request)
     elif hasattr(obj, "get_metadata_routing"):
         requests = obj.get_metadata_routing().__sklearn_clone__()
-        if _auto_routing_enabled():
+        if _auto_requests_enabled():
             if hasattr(requests, "actualize_auto_requests"):
                 requests.actualize_auto_requests()
             if getattr(requests, "_self_request", None):
