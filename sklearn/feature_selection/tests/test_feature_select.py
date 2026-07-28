@@ -10,6 +10,8 @@ import pytest
 from numpy.testing import assert_allclose
 from scipy import sparse, stats
 
+from sklearn.base import clone
+from sklearn.utils._param_validation import InvalidParameterError
 from sklearn.datasets import load_iris, make_classification, make_regression
 from sklearn.feature_selection import (
     GenericUnivariateSelect,
@@ -473,6 +475,135 @@ def test_select_kbest_zero(dtype_in):
         X_selected = univariate_filter.transform(X)
     assert X_selected.shape == (20, 0)
     assert X_selected.dtype == dtype_in
+
+
+@pytest.mark.parametrize(
+    "scores, k, expected",
+    [
+        (
+            np.arange(20, dtype=np.float64),
+            5,
+            [False] * 15 + [True] * 5,
+        ),
+        (
+            np.array([1.0, 2.0, 2.0, 2.0, 3.0]),
+            3,
+            [False, False, True, True, True],
+        ),
+        (
+            np.array([np.nan, -np.inf, 0.0, np.inf, np.nan, 1.0]),
+            3,
+            [False, False, True, True, False, True],
+        ),
+    ],
+)
+def test_select_kbest_selection_methods(scores, k, expected):
+    supports = {}
+
+    for selection_method in ("auto", "partition", "stable_sort"):
+        selector = SelectKBest(k=k, selection_method=selection_method)
+        selector.scores_ = scores
+        supports[selection_method] = selector.get_support()
+
+        assert_array_equal(supports[selection_method], expected)
+
+    assert_array_equal(supports["partition"], supports["stable_sort"])
+
+
+@pytest.mark.parametrize(
+    "selection_method",
+    ["auto", "partition", "stable_sort"],
+)
+@pytest.mark.parametrize(
+    "k, expected",
+    [
+        (0, [False, False, False, False]),
+        ("all", [True, True, True, True]),
+        (10, [True, True, True, True]),
+    ],
+)
+def test_select_kbest_special_k(selection_method, k, expected):
+    selector = SelectKBest(k=k, selection_method=selection_method)
+    selector.scores_ = np.arange(4, dtype=np.float64)
+
+    assert_array_equal(selector.get_support(), expected)
+
+
+@pytest.mark.parametrize(
+    "n_features, expected_method",
+    [
+        (256, "stable_sort"),
+        (257, "partition"),
+    ],
+)
+def test_select_kbest_auto_boundary(monkeypatch, n_features, expected_method):
+    calls = []
+    original_argsort = np.argsort
+    original_partition = np.partition
+
+    def argsort(*args, **kwargs):
+        calls.append("stable_sort")
+        return original_argsort(*args, **kwargs)
+
+    def partition(*args, **kwargs):
+        calls.append("partition")
+        return original_partition(*args, **kwargs)
+
+    monkeypatch.setattr(np, "argsort", argsort)
+    monkeypatch.setattr(np, "partition", partition)
+
+    selector = SelectKBest(k=10)
+    selector.scores_ = np.arange(n_features, dtype=np.float64)
+    selector.get_support()
+
+    assert calls == [expected_method]
+
+
+@pytest.mark.parametrize(
+    "selection_method",
+    ["auto", "partition", "stable_sort"],
+)
+def test_select_kbest_oversized_k(selection_method):
+    def score_func(X, y):
+        return np.arange(X.shape[1], dtype=np.float64)
+
+    X = np.ones((3, 4))
+    y = np.array([0, 1, 0])
+
+    selector = SelectKBest(
+        score_func=score_func,
+        k=5,
+        selection_method=selection_method,
+    )
+
+    with pytest.warns(
+        UserWarning,
+        match="k=5 is greater than n_features=4",
+    ):
+        selector.fit(X, y)
+
+    assert_array_equal(selector.get_support(), np.ones(4, dtype=bool))
+
+
+def test_select_kbest_selection_method_estimator_api():
+    selector = SelectKBest(k=3, selection_method="partition")
+
+    assert selector.get_params()["selection_method"] == "partition"
+
+    cloned_selector = clone(selector)
+
+    assert cloned_selector.k == 3
+    assert cloned_selector.selection_method == "partition"
+
+
+def test_select_kbest_invalid_selection_method():
+    X = np.ones((3, 4))
+    y = np.array([0, 1, 0])
+
+    selector = SelectKBest(selection_method="invalid")
+
+    with pytest.raises(InvalidParameterError, match="selection_method"):
+        selector.fit(X, y)
 
 
 def test_select_heuristics_classif():
