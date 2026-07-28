@@ -43,7 +43,7 @@ data, rows, columns = make_checkerboard(
 
 plt.matshow(data, cmap=plt.cm.Blues)
 plt.title("Original dataset")
-_ = plt.show()
+plt.show()
 
 # %%
 # We shuffle the data and the goal is to reconstruct it afterwards using
@@ -62,7 +62,7 @@ data = data[row_idx_shuffled][:, col_idx_shuffled]
 
 plt.matshow(data, cmap=plt.cm.Blues)
 plt.title("Shuffled dataset")
-_ = plt.show()
+plt.show()
 
 # %%
 # Fitting `SpectralBiclustering`
@@ -102,7 +102,7 @@ reordered_data = reordered_rows[:, np.argsort(model.column_labels_)]
 
 plt.matshow(reordered_data, cmap=plt.cm.Blues)
 plt.title("After biclustering; rearranged to show biclusters")
-_ = plt.show()
+plt.show()
 
 # %%
 # As a last step, we want to demonstrate the relationships between the row

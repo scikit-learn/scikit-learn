@@ -13,7 +13,7 @@ and can be found here:
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from ..utils._typedefs cimport int32_t, uint32_t
+from sklearn.utils._typedefs cimport int32_t, uint32_t
 
 import numpy as np
 
@@ -24,14 +24,14 @@ cdef extern from "src/MurmurHash3.h":
 
 
 cpdef uint32_t murmurhash3_int_u32(int key, unsigned int seed):
-    """Compute the 32bit murmurhash3 of a int key at seed."""
+    """Compute the 32bit murmurhash3 of an int key at seed."""
     cdef uint32_t out
     MurmurHash3_x86_32(&key, sizeof(int), seed, &out)
     return out
 
 
 cpdef int32_t murmurhash3_int_s32(int key, unsigned int seed):
-    """Compute the 32bit murmurhash3 of a int key at seed."""
+    """Compute the 32bit murmurhash3 of an int key at seed."""
     cdef int32_t out
     MurmurHash3_x86_32(&key, sizeof(int), seed, &out)
     return out

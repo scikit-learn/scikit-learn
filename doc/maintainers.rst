@@ -10,6 +10,10 @@
     <p>Jérémie du Boisberranger</p>
     </div>
     <div>
+    <a href='https://github.com/virchan'><img src='https://avatars.githubusercontent.com/u/25701849?v=4' class='avatar' /></a> <br />
+    <p>Virgil Chan</p>
+    </div>
+    <div>
     <a href='https://github.com/lesteve'><img src='https://avatars.githubusercontent.com/u/1680079?v=4' class='avatar' /></a> <br />
     <p>Loïc Estève</p>
     </div>
@@ -28,10 +32,6 @@
     <div>
     <a href='https://github.com/betatim'><img src='https://avatars.githubusercontent.com/u/1448859?v=4' class='avatar' /></a> <br />
     <p>Tim Head</p>
-    </div>
-    <div>
-    <a href='https://github.com/NicolasHug'><img src='https://avatars.githubusercontent.com/u/1190450?v=4' class='avatar' /></a> <br />
-    <p>Nicolas Hug</p>
     </div>
     <div>
     <a href='https://github.com/adrinjalali'><img src='https://avatars.githubusercontent.com/u/1663864?v=4' class='avatar' /></a> <br />
@@ -68,6 +68,10 @@
     <div>
     <a href='https://github.com/OmarManzoor'><img src='https://avatars.githubusercontent.com/u/17495884?v=4' class='avatar' /></a> <br />
     <p>Omar Salman</p>
+    </div>
+    <div>
+    <a href='https://github.com/StefanieSenger'><img src='https://avatars.githubusercontent.com/u/91849487?v=4' class='avatar' /></a> <br />
+    <p>Stefanie Senger</p>
     </div>
     <div>
     <a href='https://github.com/GaelVaroquaux'><img src='https://avatars.githubusercontent.com/u/208217?v=4' class='avatar' /></a> <br />

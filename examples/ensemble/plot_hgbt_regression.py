@@ -309,7 +309,7 @@ ax.set(
 _ = ax.legend(loc="lower right")
 
 # %%
-# We observe a tendence to over-estimate the energy transfer. This could be be
+# We observe a tendency to over-estimate the energy transfer. This could be be
 # quantitatively confirmed by computing empirical coverage numbers as done in
 # the :ref:`calibration of confidence intervals section <calibration-section>`.
 # Keep in mind that those predicted percentiles are just estimations from a
@@ -326,7 +326,7 @@ _ = ax.legend(loc="lower right")
 #
 # Given specific domain knowledge that requires the relationship between a
 # feature and the target to be monotonically increasing or decreasing, one can
-# enforce such behaviour in the predictions of a HGBT model using monotonic
+# enforce such behaviour in the predictions of an HGBT model using monotonic
 # constraints. This makes the model more interpretable and can reduce its
 # variance (and potentially mitigate overfitting) at the risk of increasing
 # bias. Monotonic constraints can also be used to enforce specific regulatory

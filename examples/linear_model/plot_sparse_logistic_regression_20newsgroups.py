@@ -79,8 +79,8 @@ for model in models:
             % (model_params["name"], solver, this_max_iter)
         )
         clf = LogisticRegression(
+            l1_ratio=1,
             solver=solver,
-            penalty="l1",
             max_iter=this_max_iter,
             random_state=42,
         )

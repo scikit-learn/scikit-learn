@@ -6,7 +6,7 @@ body:
 - type: markdown
   attributes:
     value: >
-      #### If you want to propose a new algorithm, please refer first to the [scikit-learn inclusion criterion](https://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms).
+      #### If you want to propose a new algorithm, please refer first to the [scikit-learn inclusion criterion](https://scikit-learn.org/dev/faq.html#what-are-the-inclusion-criteria-for-new-algorithms).
 - type: textarea
   attributes:
     label: Describe the workflow you want to enable

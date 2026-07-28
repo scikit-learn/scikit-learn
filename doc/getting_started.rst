@@ -1,16 +1,17 @@
 Getting Started
 ===============
 
-The purpose of this guide is to illustrate some of the main features that
-``scikit-learn`` provides. It assumes a very basic working knowledge of
-machine learning practices (model fitting, predicting, cross-validation,
-etc.). Please refer to our :ref:`installation instructions
-<installation-instructions>` for installing ``scikit-learn``.
-
 ``Scikit-learn`` is an open source machine learning library that supports
 supervised and unsupervised learning. It also provides various tools for
 model fitting, data preprocessing, model selection, model evaluation,
 and many other utilities.
+
+The purpose of this guide is to illustrate some of the main features of
+``scikit-learn``. It assumes basic working knowledge of machine learning
+practices (model fitting, predicting, cross-validation, etc.). Please refer to
+our :ref:`installation instructions <installation-instructions>` to install
+``scikit-learn``, or jump to the :ref:`next_steps` section for additional
+guidance on using ``scikit-learn``.
 
 Fitting and predicting: estimator basics
 ----------------------------------------
@@ -167,13 +168,17 @@ a :class:`~sklearn.ensemble.RandomForestRegressor` that has been fitted with
 the best set of parameters. Read more in the :ref:`User Guide
 <grid_search>`::
 
-  >>> from sklearn.datasets import fetch_california_housing
+  >>> from sklearn.datasets import make_regression
   >>> from sklearn.ensemble import RandomForestRegressor
   >>> from sklearn.model_selection import RandomizedSearchCV
   >>> from sklearn.model_selection import train_test_split
   >>> from scipy.stats import randint
   ...
-  >>> X, y = fetch_california_housing(return_X_y=True)
+  >>> # create a synthetic dataset
+  >>> X, y = make_regression(n_samples=20640,
+  ...                        n_features=8,
+  ...                        noise=0.1,
+  ...                        random_state=0)
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
   ...
   >>> # define the parameter space that will be searched over
@@ -196,7 +201,7 @@ the best set of parameters. Read more in the :ref:`User Guide
   >>> # the search object now acts like a normal random forest estimator
   >>> # with max_depth=9 and n_estimators=4
   >>> search.score(X_test, y_test)
-  0.73...
+  0.84...
 
 .. note::
 
@@ -214,6 +219,7 @@ the best set of parameters. Read more in the :ref:`User Guide
     Using a pipeline for cross-validation and searching will largely keep
     you from this common pitfall.
 
+.. _next_steps:
 
 Next steps
 ----------
@@ -228,4 +234,5 @@ provide. You can also find an exhaustive list of the public API in the
 :ref:`api_ref`.
 
 You can also look at our numerous :ref:`examples <general_examples>` that
-illustrate the use of ``scikit-learn`` in many different contexts.
+illustrate the use of ``scikit-learn`` in many different contexts, or have
+a look at the :ref:`external_resources` for learning materials.

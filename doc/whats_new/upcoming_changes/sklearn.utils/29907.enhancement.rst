@@ -1,4 +1,0 @@
-- :func: `resample` now handles sample weights which allows
-  weighted resampling.
-  By :user:`Shruti Nath <snath-xoc>` and :user:`Olivier Grisel
-  <ogrisel>`

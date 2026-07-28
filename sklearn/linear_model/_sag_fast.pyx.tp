@@ -26,13 +26,13 @@ from libc.math cimport exp, fabs, isfinite, log
 from libc.time cimport time, time_t
 from libc.stdio cimport printf
 
-from .._loss._loss cimport (
+from sklearn._loss._loss cimport (
     CyLossFunction,
     CyHalfBinomialLoss,
     CyHalfMultinomialLoss,
     CyHalfSquaredError,
 )
-from ..utils._seq_dataset cimport SequentialDataset32, SequentialDataset64
+from sklearn.utils._seq_dataset cimport SequentialDataset32, SequentialDataset64
 
 
 {{for name_suffix, c_type, np_type in dtypes}}

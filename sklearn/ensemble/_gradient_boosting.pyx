@@ -7,19 +7,19 @@ from libc.string cimport memset
 import numpy as np
 from scipy.sparse import issparse
 
-from ..utils._typedefs cimport float32_t, float64_t, intp_t, int32_t, uint8_t
+from sklearn.utils._typedefs cimport float32_t, float64_t, intp_t, int32_t, uint8_t
 # Note: _tree uses cimport numpy, cnp.import_array, so we need to include
 # numpy headers in the build configuration of this extension
-from ..tree._tree cimport Node
-from ..tree._tree cimport Tree
-from ..tree._utils cimport safe_realloc
+from sklearn.tree._tree cimport Node
+from sklearn.tree._tree cimport Tree
+from sklearn.tree._utils cimport safe_realloc
 
 
 # no namespace lookup for numpy dtype and array creation
 from numpy import zeros as np_zeros
 
 
-# constant to mark tree leafs
+# constant to mark tree leaves
 cdef intp_t TREE_LEAF = -1
 
 cdef void _predict_regression_tree_inplace_fast_dense(

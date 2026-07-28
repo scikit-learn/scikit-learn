@@ -11,20 +11,21 @@ import numpy as np
 from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
 
-from ..base import MultiOutputMixin, RegressorMixin, _fit_context
-from ..model_selection import check_cv
-from ..utils import Bunch, as_float_array, check_array
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.metadata_routing import (
+from sklearn.base import RegressorMixin, _fit_context
+from sklearn.linear_model._base import LinearModel, MultiOutputLinearModel, _pre_fit
+from sklearn.model_selection import check_cv
+from sklearn.utils import as_float_array, check_array
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import validate_data
-from ._base import LinearModel, _pre_fit
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import FLOAT_DTYPES, validate_data
 
 premature = (
     "Orthogonal matching pursuit ended prematurely due to linear"
@@ -313,15 +314,20 @@ def orthogonal_mp(
 ):
     r"""Orthogonal Matching Pursuit (OMP).
 
-    Solves n_targets Orthogonal Matching Pursuit problems.
-    An instance of the problem has the form:
+    Solves `n_targets` Orthogonal Matching Pursuit problems.
+    Each instance of the problem fits a linear model with constraints
+    imposed on the number of non-zero coefficients
+    (i.e. the :math:`\\ell_0` pseudo-norm) using `n_nonzero_coefs`:
 
-    When parametrized by the number of non-zero coefficients using
-    `n_nonzero_coefs`:
-    argmin ||y - X\gamma||^2 subject to ||\gamma||_0 <= n_{nonzero coefs}
+    .. math::
+        \underset{w}{\operatorname{arg\,min\,}} ||y - Xw||^2_2
+            \text{ subject to } ||w||_0 \leq n_{\text{nonzero_coefs}}
 
     When parametrized by error using the parameter `tol`:
-    argmin ||\gamma||_0 subject to ||y - X\gamma||^2 <= tol
+
+    .. math::
+        \underset{w}{\operatorname{arg\,min\,}} ||w||_0
+            \text{ subject to } ||y - Xw||^2_2 \leq tol
 
     Read more in the :ref:`User Guide <omp>`.
 
@@ -334,7 +340,7 @@ def orthogonal_mp(
         Input targets.
 
     n_nonzero_coefs : int, default=None
-        Desired number of non-zero entries in the solution. If None (by
+        Maximum number of non-zero entries in the solution. If None (by
         default) this value is set to 10% of n_features.
 
     tol : float, default=None
@@ -492,8 +498,15 @@ def orthogonal_mp_gram(
 ):
     """Gram Orthogonal Matching Pursuit (OMP).
 
-    Solves n_targets Orthogonal Matching Pursuit problems using only
-    the Gram matrix X.T * X and the product X.T * y.
+    Solves `n_targets` Orthogonal Matching Pursuit problems using only
+    the precomputed Gram matrix ``X.T * X`` and the product ``X.T * y``.
+    This implementation efficiently computes the solution using the
+    Cholesky decomposition.
+
+    Each instance of the problem fits a linear model with constraints
+    imposed on the number of non-zero coefficients (i.e. the
+    :math:`\\ell_0` pseudo-norm) using `n_nonzero_coefs` or
+    on the error using the parameter `tol`.
 
     Read more in the :ref:`User Guide <omp>`.
 
@@ -506,7 +519,7 @@ def orthogonal_mp_gram(
         Input targets multiplied by `X`: `X.T * y`.
 
     n_nonzero_coefs : int, default=None
-        Desired number of non-zero entries in the solution. If `None` (by
+        Maximum number of non-zero entries in the solution. If `None` (by
         default) this value is set to 10% of n_features.
 
     tol : float, default=None
@@ -642,15 +655,28 @@ def orthogonal_mp_gram(
         return np.squeeze(coef)
 
 
-class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
+class OrthogonalMatchingPursuit(RegressorMixin, MultiOutputLinearModel):
     """Orthogonal Matching Pursuit model (OMP).
+
+    Fits a linear model with constraints imposed on the number of non-zero coefficients
+    (i.e. the :math:`\\ell_0` pseudo-norm) using `n_nonzero_coefs`:
+
+    .. math::
+        \\underset{w}{\\operatorname{arg\\,min\\,}} ||y - Xw||^2_2
+            \\text{ subject to } ||w||_0 \\leq n_{\\text{nonzero_coefs}}
+
+    When parametrized by error using the parameter `tol`:
+
+    .. math::
+        \\underset{w}{\\operatorname{arg\\,min\\,}} ||w||_0
+            \\text{ subject to } ||y - Xw||^2_2 \\leq tol
 
     Read more in the :ref:`User Guide <omp>`.
 
     Parameters
     ----------
     n_nonzero_coefs : int, default=None
-        Desired number of non-zero entries in the solution. Ignored if `tol` is set.
+        Maximum number of non-zero entries in the solution. Ignored if `tol` is set.
         When `None` and `tol` is also `None`, this value is either set to 10% of
         `n_features` or 1, whichever is greater.
 
@@ -665,8 +691,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     precompute : 'auto' or bool, default='auto'
         Whether to use a precomputed Gram and Xy matrix to speed up
         calculations. Improves performance when :term:`n_targets` or
-        :term:`n_samples` is very large. Note that if you already have such
-        matrices, you can pass them directly to the fit method.
+        :term:`n_samples` is very large.
 
     Attributes
     ----------
@@ -769,11 +794,19 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
-        X, y = validate_data(self, X, y, multi_output=True, y_numeric=True)
+        X, y = validate_data(
+            self, X, y, multi_output=True, y_numeric=True, dtype=FLOAT_DTYPES
+        )
         n_features = X.shape[1]
 
         X, y, X_offset, y_offset, X_scale, Gram, Xy = _pre_fit(
-            X, y, None, self.precompute, self.fit_intercept, copy=True
+            X,
+            y,
+            None,
+            self.precompute,
+            self.fit_intercept,
+            copy=True,
+            check_gram=False,
         )
 
         if y.ndim == 1:
@@ -919,9 +952,9 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         Possible inputs for cv are:
 
         - None, to use the default 5-fold cross-validation,
-        - integer, to specify the number of folds.
+        - integer, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, :class:`~sklearn.model_selection.KFold` is used.
 
@@ -1063,8 +1096,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
             routed_params = process_routing(self, "fit", **fit_params)
         else:
             # TODO(SLEP6): remove when metadata routing cannot be disabled.
-            routed_params = Bunch()
-            routed_params.splitter = Bunch(split={})
+            routed_params = _manual_routing({"splitter": {}})
         max_iter = (
             min(max(int(0.1 * X.shape[1]), 5), X.shape[1])
             if not self.max_iter
@@ -1114,7 +1146,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
             routing information.
         """
 
-        router = MetadataRouter(owner=self.__class__.__name__).add(
+        router = MetadataRouter(owner=self).add(
             splitter=self.cv,
             method_mapping=MethodMapping().add(caller="fit", callee="split"),
         )

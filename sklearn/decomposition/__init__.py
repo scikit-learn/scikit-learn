@@ -7,8 +7,7 @@ regarded as dimensionality reduction techniques.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from ..utils.extmath import randomized_svd
-from ._dict_learning import (
+from sklearn.decomposition._dict_learning import (
     DictionaryLearning,
     MiniBatchDictionaryLearning,
     SparseCoder,
@@ -16,19 +15,16 @@ from ._dict_learning import (
     dict_learning_online,
     sparse_encode,
 )
-from ._factor_analysis import FactorAnalysis
-from ._fastica import FastICA, fastica
-from ._incremental_pca import IncrementalPCA
-from ._kernel_pca import KernelPCA
-from ._lda import LatentDirichletAllocation
-from ._nmf import (
-    NMF,
-    MiniBatchNMF,
-    non_negative_factorization,
-)
-from ._pca import PCA
-from ._sparse_pca import MiniBatchSparsePCA, SparsePCA
-from ._truncated_svd import TruncatedSVD
+from sklearn.decomposition._factor_analysis import FactorAnalysis
+from sklearn.decomposition._fastica import FastICA, fastica
+from sklearn.decomposition._incremental_pca import IncrementalPCA
+from sklearn.decomposition._kernel_pca import KernelPCA
+from sklearn.decomposition._lda import LatentDirichletAllocation
+from sklearn.decomposition._nmf import NMF, MiniBatchNMF, non_negative_factorization
+from sklearn.decomposition._pca import PCA
+from sklearn.decomposition._sparse_pca import MiniBatchSparsePCA, SparsePCA
+from sklearn.decomposition._truncated_svd import TruncatedSVD
+from sklearn.utils.extmath import randomized_svd
 
 __all__ = [
     "NMF",

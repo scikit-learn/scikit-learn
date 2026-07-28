@@ -44,7 +44,7 @@ else
 fi
 
 echo -e "### Running cython-lint ###\n"
-cython-lint sklearn/
+cython-lint --ban-relative-imports sklearn/
 status=$?
 if [[ $status -eq 0 ]]
 then

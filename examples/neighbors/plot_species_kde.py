@@ -5,7 +5,7 @@ Kernel Density Estimate of Species Distributions
 This shows an example of a neighbors-based query (in particular a kernel
 density estimate) on geospatial data, using a Ball Tree built upon the
 Haversine distance metric -- i.e. distances over points in latitude/longitude.
-The dataset is provided by Phillips et. al. (2006).
+The dataset is provided by Phillips et. al. (2006) [1]_.
 If available, the example uses
 `basemap <https://matplotlib.org/basemap/>`_
 to plot the coast lines and national boundaries of South America.
@@ -29,10 +29,10 @@ The two species are:
 References
 ----------
 
-- `"Maximum entropy modeling of species geographic distributions"
-  <http://rob.schapire.net/papers/ecolmod.pdf>`_
-  S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
-  190:231-259, 2006.
+.. [1] `"Maximum entropy modeling of species geographic distributions"
+       <http://rob.schapire.net/papers/ecolmod.pdf>`_
+       S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
+       190:231-259, 2006.
 """
 
 # Authors: The scikit-learn developers

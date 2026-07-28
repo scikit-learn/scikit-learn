@@ -1,23 +1,22 @@
+import warnings
+
 import numpy as np
 import pytest
 
+from sklearn.base import clone
+from sklearn.cluster import DBSCAN, KMeans
 from sklearn.datasets import (
     load_iris,
     make_classification,
     make_multilabel_classification,
-    make_regression,
 )
 from sklearn.ensemble import IsolationForest
-from sklearn.linear_model import (
-    LinearRegression,
-    LogisticRegression,
-)
+from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.multioutput import ClassifierChain
 from sklearn.preprocessing import scale
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
-from sklearn.utils._mocking import _MockEstimatorOnOffPrediction
 from sklearn.utils._response import _get_response_values, _get_response_values_binary
-from sklearn.utils._testing import assert_allclose, assert_array_equal
+from sklearn.utils._testing import assert_allclose
 
 X, y = load_iris(return_X_y=True)
 # scale the data to avoid ConvergenceWarning with LogisticRegression
@@ -26,48 +25,51 @@ X_binary, y_binary = X[:100], y[:100]
 
 
 @pytest.mark.parametrize(
-    "response_method", ["decision_function", "predict_proba", "predict_log_proba"]
+    "estimator, response_method",
+    [
+        (DecisionTreeRegressor(), "predict_proba"),
+        (DecisionTreeRegressor(), ["predict_proba", "decision_function"]),
+        (KMeans(n_clusters=2), "predict_proba"),
+        (KMeans(n_clusters=2), ["predict_proba", "decision_function"]),
+        (DBSCAN(), "predict"),
+        (IsolationForest(), "predict_proba"),
+        (IsolationForest(), ["predict_proba", "score"]),
+    ],
 )
-def test_get_response_values_regressor_error(response_method):
-    """Check the error message with regressor an not supported response
-    method."""
-    my_estimator = _MockEstimatorOnOffPrediction(response_methods=[response_method])
-    X = "mocking_data", "mocking_target"
-    err_msg = f"{my_estimator.__class__.__name__} should either be a classifier"
-    with pytest.raises(ValueError, match=err_msg):
-        _get_response_values(my_estimator, X, response_method=response_method)
-
-
-@pytest.mark.parametrize("return_response_method_used", [True, False])
-def test_get_response_values_regressor(return_response_method_used):
-    """Check the behaviour of `_get_response_values` with regressor."""
-    X, y = make_regression(n_samples=10, random_state=0)
-    regressor = LinearRegression().fit(X, y)
-    results = _get_response_values(
-        regressor,
-        X,
-        response_method="predict",
-        return_response_method_used=return_response_method_used,
-    )
-    assert_array_equal(results[0], regressor.predict(X))
-    assert results[1] is None
-    if return_response_method_used:
-        assert results[2] == "predict"
+def test_estimator_unsupported_response(estimator, response_method):
+    """Check the error message with not supported response method."""
+    X, y = np.random.RandomState(0).randn(10, 2), np.array([0, 1] * 5)
+    estimator = clone(estimator).fit(X, y)  # clone to make test execution thread-safe
+    err_msg = "has none of the following attributes:"
+    with pytest.raises(AttributeError, match=err_msg):
+        _get_response_values(
+            estimator,
+            X,
+            response_method=response_method,
+        )
 
 
 @pytest.mark.parametrize(
-    "response_method",
-    ["predict", "decision_function", ["decision_function", "predict"]],
+    "estimator, response_method",
+    [
+        (LinearRegression(), "predict"),
+        (KMeans(n_clusters=2, random_state=0), "predict"),
+        (KMeans(n_clusters=2, random_state=0), "score"),
+        (KMeans(n_clusters=2, random_state=0), ["predict", "score"]),
+        (IsolationForest(random_state=0), "predict"),
+        (IsolationForest(random_state=0), "decision_function"),
+        (IsolationForest(random_state=0), ["decision_function", "predict"]),
+    ],
 )
 @pytest.mark.parametrize("return_response_method_used", [True, False])
-def test_get_response_values_outlier_detection(
-    response_method, return_response_method_used
+def test_estimator_get_response_values(
+    estimator, response_method, return_response_method_used
 ):
-    """Check the behaviour of `_get_response_values` with outlier detector."""
-    X, y = make_classification(n_samples=50, random_state=0)
-    outlier_detector = IsolationForest(random_state=0).fit(X, y)
+    """Check the behaviour of `_get_response_values`."""
+    X, y = np.random.RandomState(0).randn(10, 2), np.array([0, 1] * 5)
+    estimator = clone(estimator).fit(X, y)  # clone to make test execution thread-safe
     results = _get_response_values(
-        outlier_detector,
+        estimator,
         X,
         response_method=response_method,
         return_response_method_used=return_response_method_used,
@@ -75,8 +77,8 @@ def test_get_response_values_outlier_detection(
     chosen_response_method = (
         response_method[0] if isinstance(response_method, list) else response_method
     )
-    prediction_method = getattr(outlier_detector, chosen_response_method)
-    assert_array_equal(results[0], prediction_method(X))
+    prediction_method = getattr(estimator, chosen_response_method)
+    assert_allclose(results[0], prediction_method(X))
     assert results[1] is None
     if return_response_method_used:
         assert results[2] == chosen_response_method
@@ -235,7 +237,7 @@ def test_get_response_values_binary_classifier_predict_proba(
 def test_get_response_error(estimator, X, y, err_msg, params):
     """Check that we raise the proper error messages in _get_response_values_binary."""
 
-    estimator.fit(X, y)
+    estimator = clone(estimator).fit(X, y)  # clone to make test execution thread-safe
     with pytest.raises(ValueError, match=err_msg):
         _get_response_values_binary(estimator, X, **params)
 
@@ -308,7 +310,7 @@ def test_get_response_values_multiclass(estimator, response_method):
     """Check that we can call `_get_response_values` with a multiclass estimator.
     It should return the predictions untouched.
     """
-    estimator.fit(X, y)
+    estimator = clone(estimator).fit(X, y)  # clone to make test execution thread-safe
     predictions, pos_label = _get_response_values(
         estimator, X, response_method=response_method
     )
@@ -369,3 +371,78 @@ def test_get_response_values_multilabel_indicator(response_method):
         assert (y_pred > 1).sum() > 0
     else:  # response_method == "predict"
         assert np.logical_or(y_pred == 0, y_pred == 1).all()
+
+
+def test_response_values_type_of_target_on_classes_no_warning():
+    """
+    Ensure `_get_response_values` doesn't raise spurious warning.
+
+    "The number of unique classes is greater than > 50% of samples"
+    warning should not be raised when calling `type_of_target(classes_)`.
+
+    Non-regression test for issue #31583.
+    """
+    X = np.random.RandomState(0).randn(120, 3)
+    # 30 classes, less than 50% of number of samples
+    y = np.repeat(np.arange(30), 4)
+
+    clf = LogisticRegression().fit(X, y)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+
+        _get_response_values(clf, X, response_method="predict_proba")
+
+
+@pytest.mark.parametrize(
+    "estimator, response_method, target_type, expected_shape",
+    [
+        (LogisticRegression(), "predict", "binary", (10,)),
+        (LogisticRegression(), "predict_proba", "binary", (10,)),
+        (LogisticRegression(), "decision_function", "binary", (10,)),
+        (LogisticRegression(), "predict", "multiclass", (10,)),
+        (LogisticRegression(), "predict_proba", "multiclass", (10, 4)),
+        (LogisticRegression(), "decision_function", "multiclass", (10, 4)),
+        (ClassifierChain(LogisticRegression()), "predict", "multilabel", (10, 2)),
+        (ClassifierChain(LogisticRegression()), "predict_proba", "multilabel", (10, 2)),
+        (
+            ClassifierChain(LogisticRegression()),
+            "decision_function",
+            "multilabel",
+            (10, 2),
+        ),
+        (IsolationForest(), "predict", "binary", (10,)),
+        (IsolationForest(), "predict", "multiclass", (10,)),
+        (DecisionTreeRegressor(), "predict", "binary", (10,)),
+        (DecisionTreeRegressor(), "predict", "multiclass", (10,)),
+        (KMeans(n_clusters=2), "predict", "binary", (10,)),
+        (KMeans(n_clusters=4), "predict", "multiclass", (10,)),
+    ],
+)
+def test_response_values_output_shape_(
+    estimator, response_method, target_type, expected_shape
+):
+    """
+    Check that output shape corresponds to docstring description
+
+    - for binary classification, it is a 1d array of shape `(n_samples,)`;
+    - for multiclass classification
+        - with response_method="predict", it is a 1d array of shape `(n_samples,)`;
+        - otherwise, it is a 2d array of shape `(n_samples, n_classes)`;
+    - for multilabel classification, it is a 2d array of shape `(n_samples, n_outputs)`;
+    - for outlier detection, regression and clustering,
+      it is a 1d array of shape `(n_samples,)`.
+    """
+    X = np.random.RandomState(0).randn(10, 2)
+    if target_type == "binary":
+        y = np.array([0, 1] * 5)
+    elif target_type == "multiclass":
+        y = [0, 1, 2, 3, 0, 1, 2, 3, 3, 0]
+    else:  # multilabel
+        y = np.array([[0, 1], [1, 0]] * 5)
+
+    estimator = clone(estimator).fit(X, y)  # clone to make test execution thread-safe
+
+    y_pred, _ = _get_response_values(estimator, X, response_method=response_method)
+
+    assert y_pred.shape == expected_shape

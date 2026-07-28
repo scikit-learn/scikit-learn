@@ -171,7 +171,7 @@ pipeline = Pipeline(
                 },
             ),
         ),
-        # Use a SVC classifier on the combined features
+        # Use an SVC classifier on the combined features
         ("svc", LinearSVC(dual=False)),
     ],
     verbose=True,

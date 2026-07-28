@@ -4,6 +4,7 @@ import pytest
 from sklearn.linear_model import LogisticRegression
 from sklearn.utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
+    _deprecate_estimator_name,
     _despine,
     _interval_max_min_ratio,
     _validate_score_name,
@@ -117,6 +118,271 @@ def test_validate_from_predictions_params_returns(pyplot, name, pos_label, y_tru
     assert pos_label_out == expected_pos_label
 
 
+@pytest.mark.parametrize(
+    "params, err_msg",
+    [
+        (
+            {
+                # Missing "indices" key
+                "cv_results": {"estimator": "dummy"},
+                "X": np.array([[1, 2], [3, 4]]),
+                "y": np.array([0, 1]),
+                "sample_weight": None,
+            },
+            "`cv_results` does not contain one of the following",
+        ),
+        (
+            {
+                "cv_results": {
+                    "estimator": "dummy",
+                    "indices": {"test": [[1, 2], [1, 2]], "train": [[3, 4], [3, 4]]},
+                },
+                # `X` wrong length
+                "X": np.array([[1, 2]]),
+                "y": np.array([0, 1]),
+                "sample_weight": None,
+            },
+            "`X` does not contain the correct number of",
+        ),
+        (
+            {
+                "cv_results": {
+                    "estimator": "dummy",
+                    "indices": {"test": [[1, 2], [1, 2]], "train": [[3, 4], [3, 4]]},
+                },
+                "X": np.array([1, 2, 3, 4]),
+                # `y` not binary
+                "y": np.array([0, 2, 1, 3]),
+                "sample_weight": None,
+            },
+            "The target `y` is not binary",
+        ),
+        (
+            {
+                "cv_results": {
+                    "estimator": "dummy",
+                    "indices": {"test": [[1, 2], [1, 2]], "train": [[3, 4], [3, 4]]},
+                },
+                "X": np.array([1, 2, 3, 4]),
+                "y": np.array([0, 1, 0, 1]),
+                # `sample_weight` wrong length
+                "sample_weight": np.array([0.5]),
+            },
+            "Found input variables with inconsistent",
+        ),
+    ],
+)
+def test_validate_from_cv_results_params(pyplot, params, err_msg):
+    """Check parameter validation is performed correctly."""
+    with pytest.raises(ValueError, match=err_msg):
+        _BinaryClassifierCurveDisplayMixin()._validate_from_cv_results_params(**params)
+
+
+@pytest.mark.parametrize(
+    "curve_legend_metric, curve_name, expected_label",
+    [
+        (0.85, None, "AUC = 0.85"),
+        (None, "Model A", "Model A"),
+        (0.95, "Random Forest", "Random Forest (AUC = 0.95)"),
+        (None, None, None),
+    ],
+)
+def test_get_legend_label(curve_legend_metric, curve_name, expected_label):
+    """Check `_get_legend_label` returns the correct label."""
+    legend_metric_name = "AUC"
+    label = _BinaryClassifierCurveDisplayMixin._get_legend_label(
+        curve_legend_metric, curve_name, legend_metric_name
+    )
+    assert label == expected_label
+
+
+# TODO: Remove once kwargs deprecated on all displays
+@pytest.mark.parametrize("curve_kwargs", [{"alpha": 1.0}, None])
+@pytest.mark.parametrize("kwargs", [{}, {"alpha": 1.0}])
+def test_validate_curve_kwargs_deprecate_kwargs(curve_kwargs, kwargs):
+    """Check `_validate_curve_kwargs` deprecates kwargs correctly."""
+    n_curves = 1
+    name = None
+    legend_metric = {"mean": 0.8, "std": 0.1}
+    legend_metric_name = "AUC"
+
+    if curve_kwargs and kwargs:
+        with pytest.raises(ValueError, match="Cannot provide both `curve_kwargs`"):
+            _BinaryClassifierCurveDisplayMixin._validate_curve_kwargs(
+                n_curves,
+                name,
+                legend_metric,
+                legend_metric_name,
+                curve_kwargs,
+                **kwargs,
+            )
+    elif kwargs:
+        with pytest.warns(FutureWarning, match=r"`\*\*kwargs` is deprecated and"):
+            _BinaryClassifierCurveDisplayMixin._validate_curve_kwargs(
+                n_curves,
+                name,
+                legend_metric,
+                legend_metric_name,
+                curve_kwargs,
+                **kwargs,
+            )
+    else:
+        # No warning or error should be raised
+        _BinaryClassifierCurveDisplayMixin._validate_curve_kwargs(
+            n_curves, name, legend_metric, legend_metric_name, curve_kwargs, **kwargs
+        )
+
+
+def test_validate_curve_kwargs_error():
+    """Check `_validate_curve_kwargs` performs parameter validation correctly."""
+    n_curves = 3
+    legend_metric = {"mean": 0.8, "std": 0.1}
+    legend_metric_name = "AUC"
+    with pytest.raises(ValueError, match="`curve_kwargs` must be None"):
+        _BinaryClassifierCurveDisplayMixin._validate_curve_kwargs(
+            n_curves=n_curves,
+            name=None,
+            legend_metric=legend_metric,
+            legend_metric_name=legend_metric_name,
+            curve_kwargs=[{"alpha": 1.0}],
+        )
+    with pytest.raises(ValueError, match="To avoid labeling individual curves"):
+        name = ["one", "two", "three"]
+        _BinaryClassifierCurveDisplayMixin._validate_curve_kwargs(
+            n_curves=n_curves,
+            name=name,
+            legend_metric=legend_metric,
+            legend_metric_name=legend_metric_name,
+            curve_kwargs=None,
+        )
+        _BinaryClassifierCurveDisplayMixin._validate_curve_kwargs(
+            n_curves=n_curves,
+            name=name,
+            legend_metric=legend_metric,
+            legend_metric_name=legend_metric_name,
+            curve_kwargs={"alpha": 1.0},
+        )
+
+
+@pytest.mark.parametrize("name", [None, "curve_name", ["curve_name"]])
+@pytest.mark.parametrize(
+    "legend_metric", [{"mean": 0.8, "std": 0.2}, {"mean": None, "std": None}]
+)
+@pytest.mark.parametrize("legend_metric_name", ["AUC", "AP"])
+@pytest.mark.parametrize("curve_kwargs", [None, {"color": "red"}])
+def test_validate_curve_kwargs_single_legend(
+    name, legend_metric, legend_metric_name, curve_kwargs
+):
+    """Check `_validate_curve_kwargs` returns correct kwargs for single legend entry."""
+    n_curves = 3
+    curve_kwargs_out = _BinaryClassifierCurveDisplayMixin._validate_curve_kwargs(
+        n_curves=n_curves,
+        name=name,
+        legend_metric=legend_metric,
+        legend_metric_name=legend_metric_name,
+        curve_kwargs=curve_kwargs,
+    )
+
+    assert isinstance(curve_kwargs_out, list)
+    assert len(curve_kwargs_out) == n_curves
+
+    expected_label = None
+    if isinstance(name, list):
+        name = name[0]
+    if name is not None:
+        expected_label = name
+        if legend_metric["mean"] is not None:
+            expected_label = expected_label + f" ({legend_metric_name} = 0.80 +/- 0.20)"
+    # `name` is None
+    elif legend_metric["mean"] is not None:
+        expected_label = f"{legend_metric_name} = 0.80 +/- 0.20"
+
+    assert curve_kwargs_out[0]["label"] == expected_label
+    # All remaining curves should have None as "label"
+    assert curve_kwargs_out[1]["label"] is None
+    assert curve_kwargs_out[2]["label"] is None
+
+    if curve_kwargs is None:
+        assert all("color" not in kwargs for kwargs in curve_kwargs_out)
+    else:
+        assert all(kwargs["color"] == "red" for kwargs in curve_kwargs_out)
+
+
+@pytest.mark.parametrize("name", [None, "curve_name", ["one", "two", "three"]])
+@pytest.mark.parametrize(
+    "legend_metric", [{"metric": [1.0, 1.0, 1.0]}, {"metric": [None, None, None]}]
+)
+@pytest.mark.parametrize("legend_metric_name", ["AUC", "AP"])
+def test_validate_curve_kwargs_multi_legend(name, legend_metric, legend_metric_name):
+    """Check `_validate_curve_kwargs` returns correct kwargs for multi legend entry."""
+    n_curves = 3
+    curve_kwargs = [{"color": "red"}, {"color": "yellow"}, {"color": "blue"}]
+    curve_kwargs_out = _BinaryClassifierCurveDisplayMixin._validate_curve_kwargs(
+        n_curves=n_curves,
+        name=name,
+        legend_metric=legend_metric,
+        legend_metric_name=legend_metric_name,
+        curve_kwargs=curve_kwargs,
+    )
+
+    assert isinstance(curve_kwargs_out, list)
+    assert len(curve_kwargs_out) == n_curves
+
+    expected_labels = [None, None, None]
+    if isinstance(name, str):
+        expected_labels = "curve_name"
+        if legend_metric["metric"][0] is not None:
+            expected_labels = expected_labels + f" ({legend_metric_name} = 1.00)"
+        expected_labels = [expected_labels] * n_curves
+    elif isinstance(name, list) and legend_metric["metric"][0] is None:
+        expected_labels = name
+    elif isinstance(name, list) and legend_metric["metric"][0] is not None:
+        expected_labels = [
+            f"{name_single} ({legend_metric_name} = 1.00)" for name_single in name
+        ]
+    # `name` is None
+    elif legend_metric["metric"][0] is not None:
+        expected_labels = [f"{legend_metric_name} = 1.00"] * n_curves
+
+    for idx, expected_label in enumerate(expected_labels):
+        assert curve_kwargs_out[idx]["label"] == expected_label
+
+    for curve_kwarg, curve_kwarg_out in zip(curve_kwargs, curve_kwargs_out):
+        assert curve_kwarg_out["color"] == curve_kwarg["color"]
+
+
+@pytest.mark.parametrize("curve_kwargs", [None, {"color": "red"}])
+@pytest.mark.parametrize("n_curves", [1, 3])
+def test_validate_curve_kwargs_default_kwargs(n_curves, curve_kwargs):
+    """Check default kwargs are incorporated correctly."""
+    curve_kwargs_out = _BinaryClassifierCurveDisplayMixin._validate_curve_kwargs(
+        n_curves=n_curves,
+        name="test",
+        legend_metric={"mean": 0.8, "std": 0.2},
+        legend_metric_name="metric",
+        curve_kwargs=curve_kwargs,
+        default_curve_kwargs={"color": "blue"},
+        default_multi_curve_kwargs={"alpha": 0.7, "linestyle": "--", "color": "green"},
+    )
+    if n_curves > 1:
+        # `default_multi_curve_kwargs` are incorporated
+        assert all(kwarg["alpha"] == 0.7 for kwarg in curve_kwargs_out)
+        assert all(kwarg["linestyle"] == "--" for kwarg in curve_kwargs_out)
+        if curve_kwargs is None:
+            # `default_multi_curve_kwargs` over-rides `default_curve_kwargs`
+            assert all(kwarg["color"] == "green" for kwarg in curve_kwargs_out)
+        else:
+            # `curve_kwargs` over-rides any defaults
+            assert all(kwarg["color"] == "red" for kwarg in curve_kwargs_out)
+    # Single curve
+    elif curve_kwargs is None:
+        # Use `default_curve_kwargs`
+        assert all(kwarg["color"] == "blue" for kwarg in curve_kwargs_out)
+    else:
+        # Use `curve_kwargs`
+        assert all(kwarg["color"] == "red" for kwarg in curve_kwargs_out)
+
+
 def metric():
     pass  # pragma: no cover
 
@@ -172,7 +438,7 @@ def test_validate_score_name(score_name, scoring, negate_score, expected_score_n
         ([1, 2, 5, 10, 20, 50], 20, 40),
     ],
 )
-def test_inverval_max_min_ratio(data, lower_bound, upper_bound):
+def test_interval_max_min_ratio(data, lower_bound, upper_bound):
     assert lower_bound < _interval_max_min_ratio(data) < upper_bound
 
 
@@ -246,3 +512,31 @@ def test_despine(pyplot):
     assert ax.spines["right"].get_visible() is False
     assert ax.spines["bottom"].get_bounds() == (0, 1)
     assert ax.spines["left"].get_bounds() == (0, 1)
+
+
+@pytest.mark.parametrize("estimator_name", ["my_est_name", "deprecated"])
+@pytest.mark.parametrize("name", [None, "my_name"])
+def test_deprecate_estimator_name(estimator_name, name):
+    """Check `_deprecate_estimator_name` behaves correctly"""
+    version = "1.7"
+    version_remove = "1.9"
+
+    if estimator_name == "deprecated":
+        name_out = _deprecate_estimator_name(estimator_name, name, version)
+        assert name_out == name
+    # `estimator_name` is provided and `name` is:
+    elif name is None:
+        warning_message = (
+            f"`estimator_name` is deprecated in {version} and will be removed in "
+            f"{version_remove}. Use `name` instead."
+        )
+        with pytest.warns(FutureWarning, match=warning_message):
+            result = _deprecate_estimator_name(estimator_name, name, version)
+        assert result == estimator_name
+    elif name is not None:
+        error_message = (
+            f"Cannot provide both `estimator_name` and `name`. `estimator_name` "
+            f"is deprecated in {version} and will be removed in {version_remove}. "
+        )
+        with pytest.raises(ValueError, match=error_message):
+            _deprecate_estimator_name(estimator_name, name, version)

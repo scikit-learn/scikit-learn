@@ -22,8 +22,8 @@ flake8 to ignore the import, which appears as unused.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from .. import model_selection
-from ..model_selection._search_successive_halving import (
+from sklearn import model_selection
+from sklearn.model_selection._search_successive_halving import (
     HalvingGridSearchCV,
     HalvingRandomSearchCV,
 )

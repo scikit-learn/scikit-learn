@@ -1,4 +1,0 @@
-- :func:`metrics.det_curve` and :class:`metrics.DetCurveDisplay` now return an
-  extra threshold at infinity where the classifier always predicts the negative
-  class i.e. tps = fps = 0.
-  By :user:`Arturo Amor <ArturoAmorQ>`

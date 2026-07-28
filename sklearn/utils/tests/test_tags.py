@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass, fields
 
 import numpy as np
@@ -20,13 +21,8 @@ from sklearn.utils.estimator_checks import (
 )
 
 
-class NoTagsEstimator:
+class EmptyClassifier(ClassifierMixin, BaseEstimator):
     pass
-
-
-class ClassifierEstimator:
-    # This is to test whether not inheriting from mixins works.
-    _estimator_type = "classifier"
 
 
 class EmptyTransformer(TransformerMixin, BaseEstimator):
@@ -37,15 +33,25 @@ class EmptyRegressor(RegressorMixin, BaseEstimator):
     pass
 
 
-# TODO(1.8): Update when implementing __sklearn_tags__ is required
-@pytest.mark.filterwarnings(
-    "ignore:.*no attribute '__sklearn_tags__'.*:DeprecationWarning"
-)
+def test_type_error_is_thrown_for_class_vs_instance():
+    """Test that a clearer error is raised if a class is passed instead of an instance.
+
+    Related to the discussion in
+    https://github.com/scikit-learn/scikit-learn/issues/32394#issuecomment-3375647854.
+    """
+    estimator_class = EmptyClassifier
+    match = re.escape(
+        "Expected an estimator instance (EmptyClassifier()), "
+        "got estimator class instead (EmptyClassifier)."
+    )
+    with pytest.raises(TypeError, match=match):
+        get_tags(estimator_class)
+
+
 @pytest.mark.parametrize(
     "estimator, value",
     [
-        [NoTagsEstimator(), False],
-        [ClassifierEstimator(), True],
+        [EmptyClassifier(), True],
         [EmptyTransformer(), False],
         [EmptyRegressor(), True],
         [BaseEstimator(), False],
@@ -89,14 +95,13 @@ def test_tag_test_passes_with_inheritance():
     check_valid_tag_types("MyEstimator", MyEstimator())
 
 
-# TODO(1.8): Update this test to check for errors
 def test_tags_no_sklearn_tags_concrete_implementation():
     """Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/30479
 
     Either the estimator doesn't implement `__sklearn_tags` or there is no class
     implementing `__sklearn_tags__` without calling `super().__sklearn_tags__()` in
-    its mro. Thus, we raise a warning and request to inherit from
+    its mro. Thus, we raise an error and request to inherit from
     `BaseEstimator` that implements `__sklearn_tags__`.
     """
 
@@ -117,7 +122,7 @@ def test_tags_no_sklearn_tags_concrete_implementation():
             return np.full(shape=X.shape[0], fill_value=self.param)
 
     my_pipeline = Pipeline([("estimator", MyEstimator(param=1))])
-    with pytest.warns(DeprecationWarning, match="The following error was raised"):
+    with pytest.raises(AttributeError, match="The following error was raised"):
         my_pipeline.fit(X, y).predict(X)
 
     # 2nd case, the estimator doesn't implement `__sklearn_tags__` at all.
@@ -133,10 +138,10 @@ def test_tags_no_sklearn_tags_concrete_implementation():
             return np.full(shape=X.shape[0], fill_value=self.param)
 
     my_pipeline = Pipeline([("estimator", MyEstimator2(param=1))])
-    with pytest.warns(DeprecationWarning, match="The following error was raised"):
+    with pytest.raises(AttributeError, match="The following error was raised"):
         my_pipeline.fit(X, y).predict(X)
 
-    # check that we still raise an error if it is not a AttributeError or related to
+    # check that we still raise an error if it is not an AttributeError or related to
     # __sklearn_tags__
     class MyEstimator3(MyEstimator, BaseEstimator):
         def __init__(self, *, param=1, error_type=AttributeError):

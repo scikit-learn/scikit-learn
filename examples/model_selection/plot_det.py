@@ -98,15 +98,27 @@ ax_roc.grid(linestyle="--")
 ax_det.grid(linestyle="--")
 
 for name, clf in classifiers.items():
-    (color, linestyle) = (
-        ("black", "--") if name == "Non-informative baseline" else (None, None)
+    curve_kwargs = (
+        dict(color="black", linestyle="--")
+        if name == "Non-informative baseline"
+        else None
     )
     clf.fit(X_train, y_train)
     RocCurveDisplay.from_estimator(
-        clf, X_test, y_test, ax=ax_roc, name=name, color=color, linestyle=linestyle
+        clf,
+        X_test,
+        y_test,
+        ax=ax_roc,
+        name=name,
+        curve_kwargs=curve_kwargs,
     )
     DetCurveDisplay.from_estimator(
-        clf, X_test, y_test, ax=ax_det, name=name, color=color, linestyle=linestyle
+        clf,
+        X_test,
+        y_test,
+        ax=ax_det,
+        name=name,
+        curve_kwargs=curve_kwargs,
     )
 
 plt.legend()

@@ -1,5 +1,5 @@
 # numpydoc ignore=GL08
-# pylint: disable=missing-module-docstring
+# pylint: disable=missing-module-docstring,duplicate-code
 
 Array = object
 DType = object

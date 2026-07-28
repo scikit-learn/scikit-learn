@@ -149,7 +149,7 @@ facilitate the conversion of the data models between different machine learning
 frameworks, and to improve their portability on different computing
 architectures. More details are available from the `ONNX tutorial
 <https://onnx.ai/get-started.html>`__. To convert scikit-learn model to `ONNX`
-`sklearn-onnx <http://onnx.ai/sklearn-onnx/>`__ has been developed. However,
+`sklearn-onnx <https://onnx.ai/sklearn-onnx/>`__ has been developed. However,
 not all scikit-learn models are supported, and it is limited to the core
 scikit-learn and does not support most third party estimators. One can write a
 custom converter for third party or custom estimators, but the documentation to
@@ -159,7 +159,7 @@ do that is sparse and it might be challenging to do so.
 
   To convert the model to `ONNX` format, you need to give the converter some
   information about the input as well, about which you can read more `here
-  <http://onnx.ai/sklearn-onnx/index.html>`__::
+  <https://onnx.ai/sklearn-onnx/index.html>`__::
 
       from skl2onnx import to_onnx
       onx = to_onnx(clf, X[:1].astype(numpy.float32), target_opset=12)

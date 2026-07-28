@@ -3,11 +3,11 @@
 
 from copy import deepcopy
 
-from ..base import BaseEstimator
-from ..exceptions import NotFittedError
-from ..utils import get_tags
-from ..utils.metaestimators import available_if
-from ..utils.validation import check_is_fitted
+from sklearn.base import BaseEstimator
+from sklearn.exceptions import NotFittedError
+from sklearn.utils import get_tags
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.validation import check_is_fitted
 
 
 def _estimator_has(attr):
@@ -51,10 +51,10 @@ class FrozenEstimator(BaseEstimator):
     >>> from sklearn.frozen import FrozenEstimator
     >>> from sklearn.linear_model import LogisticRegression
     >>> X, y = make_classification(random_state=0)
-    >>> clf = LogisticRegression(random_state=0).fit(X, y)
+    >>> clf = LogisticRegression().fit(X, y)
     >>> frozen_clf = FrozenEstimator(clf)
     >>> frozen_clf.fit(X, y)  # No-op
-    FrozenEstimator(estimator=LogisticRegression(random_state=0))
+    FrozenEstimator(estimator=LogisticRegression())
     >>> frozen_clf.predict(X)  # Predictions from `clf.predict`
     array(...)
     """
