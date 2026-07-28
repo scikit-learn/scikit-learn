@@ -21,7 +21,7 @@ from ._utils._typing import Array, SetIndex
 
 if TYPE_CHECKING:  # pragma: no cover
     # TODO import from typing (requires Python >=3.11)
-    from typing_extensions import Self
+    from typing import Self
 
 
 class _AtOp(Enum):
@@ -37,7 +37,7 @@ class _AtOp(Enum):
     MAX = "max"
 
     # @override from Python 3.12
-    def __str__(self) -> str:  # pyright: ignore[reportImplicitOverride]
+    def __str__(self) -> str:  # pyright: ignore[reportImplicitOverride] # pyrefly: ignore[missing-override-decorator]
         """
         Return string representation (useful for pytest logs).
 
@@ -381,7 +381,7 @@ class at:  # pylint: disable=invalid-name  # numpydoc ignore=PR02
         # Note for this and all other methods based on _iop:
         # operator.iadd and operator.add subtly differ in behaviour, as
         # only iadd will trigger exceptions when y has an incompatible dtype.
-        return self._op(_AtOp.ADD, operator.iadd, operator.add, y, copy=copy, xp=xp)
+        return self._op(_AtOp.ADD, operator.iadd, operator.add, y, copy=copy, xp=xp)  # pyright: ignore[reportUnknownArgumentType]
 
     def subtract(
         self,
@@ -392,7 +392,12 @@ class at:  # pylint: disable=invalid-name  # numpydoc ignore=PR02
     ) -> Array:  # numpydoc ignore=PR01,RT01
         """Apply ``x[idx] -= y`` and return the updated array."""
         return self._op(
-            _AtOp.SUBTRACT, operator.isub, operator.sub, y, copy=copy, xp=xp
+            _AtOp.SUBTRACT,
+            operator.isub,  # pyright: ignore[reportUnknownArgumentType]
+            operator.sub,
+            y,
+            copy=copy,
+            xp=xp,
         )
 
     def multiply(
@@ -404,7 +409,12 @@ class at:  # pylint: disable=invalid-name  # numpydoc ignore=PR02
     ) -> Array:  # numpydoc ignore=PR01,RT01
         """Apply ``x[idx] *= y`` and return the updated array."""
         return self._op(
-            _AtOp.MULTIPLY, operator.imul, operator.mul, y, copy=copy, xp=xp
+            _AtOp.MULTIPLY,
+            operator.imul,  # pyright: ignore[reportUnknownArgumentType]
+            operator.mul,
+            y,
+            copy=copy,
+            xp=xp,
         )
 
     def divide(
@@ -416,7 +426,12 @@ class at:  # pylint: disable=invalid-name  # numpydoc ignore=PR02
     ) -> Array:  # numpydoc ignore=PR01,RT01
         """Apply ``x[idx] /= y`` and return the updated array."""
         return self._op(
-            _AtOp.DIVIDE, operator.itruediv, operator.truediv, y, copy=copy, xp=xp
+            _AtOp.DIVIDE,
+            operator.itruediv,  # pyright: ignore[reportUnknownArgumentType]
+            operator.truediv,  # pyright: ignore[reportUnknownArgumentType]
+            y,
+            copy=copy,
+            xp=xp,
         )
 
     def power(
@@ -427,7 +442,7 @@ class at:  # pylint: disable=invalid-name  # numpydoc ignore=PR02
         xp: ModuleType | None = None,
     ) -> Array:  # numpydoc ignore=PR01,RT01
         """Apply ``x[idx] **= y`` and return the updated array."""
-        return self._op(_AtOp.POWER, operator.ipow, operator.pow, y, copy=copy, xp=xp)
+        return self._op(_AtOp.POWER, operator.ipow, operator.pow, y, copy=copy, xp=xp)  # pyright: ignore[reportUnknownArgumentType]
 
     def min(
         self,

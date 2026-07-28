@@ -10,7 +10,7 @@ import pytest
 
 __all__ = ["NUMPY_VERSION", "Backend"]
 
-NUMPY_VERSION = tuple(int(v) for v in np.__version__.split(".")[:3])  # pyright: ignore[reportUnknownArgumentType]
+NUMPY_VERSION = tuple(int(v) for v in np.__version__.split(".")[:3])
 
 
 class Backend(Enum):  # numpydoc ignore=PR02
@@ -47,11 +47,12 @@ class Backend(Enum):  # numpydoc ignore=PR02
 
     def pytest_param(self) -> Any:
         """
-        Backend as a pytest parameter
+        Backend as a pytest parameter.
 
         Returns
         -------
         pytest.mark.ParameterSet
+            The backend as a pytest parameter.
         """
         id_ = (
             self.name.lower().replace("_gpu", ":gpu").replace("_readonly", ":readonly")

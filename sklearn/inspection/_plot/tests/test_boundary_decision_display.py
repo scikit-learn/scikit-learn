@@ -122,7 +122,7 @@ def test_multiclass_predict(pyplot):
     eps = 1.0
     X, y = make_classification(n_classes=3, n_informative=3, random_state=0)
     X = X[:, [0, 1]]
-    lr = LogisticRegression(random_state=0).fit(X, y)
+    lr = LogisticRegression().fit(X, y)
 
     disp = DecisionBoundaryDisplay.from_estimator(
         lr, X, response_method="predict", grid_resolution=grid_resolution, eps=1.0
