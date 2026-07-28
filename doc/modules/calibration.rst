@@ -225,7 +225,7 @@ is the uncalibrated classifier output for that sample. When the classifier
 implements :term:`predict_proba`, :math:`f_i = \text{logit}(\hat{p}_i)` is the
 logit of the predicted probability; otherwise, :math:`f_i` is the score from
 :term:`decision_function`. :math:`A` and :math:`B` are real numbers to be
-determined when fitting the regressor via maximum likelihood.
+determined when fitting via maximum likelihood.
 
 The sigmoid method assumes the :ref:`calibration curve <calibration_curve>`
 can be corrected by applying a sigmoid function to the raw predictions. This
@@ -253,8 +253,9 @@ a step-wise non-decreasing function, see :mod:`sklearn.isotonic`. It minimizes:
 subject to :math:`\hat{f}_i \geq \hat{f}_j` whenever
 :math:`f_i \geq f_j`. Here :math:`y_i` is the true label of sample
 :math:`i`, :math:`f_i` is the uncalibrated predicted probability from
-:term:`predict_proba`, and :math:`\hat{f}_i` is the recalibrated
-probability.
+:term:`predict_proba` or score from :term:`decision_function`,
+and :math:`\hat{f}_i` is the recalibrated probability.
+
 This method is more general when compared to `'sigmoid'` as the only restriction
 is that the mapping function is monotonically increasing. It is thus more
 powerful as it can correct any monotonic distortion of the un-calibrated model.
