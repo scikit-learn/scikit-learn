@@ -2042,7 +2042,8 @@ def test_feature_union_array_api_compliance(array_namespace, device_name, dtype_
         ]
     )
 
-    X_np_transformed = union.fit_transform(X_np)
+    with config_context(array_api_dispatch=False):
+        X_np_transformed = union.fit_transform(X_np)
 
     with config_context(array_api_dispatch=True):
         X_xp_transformed = union.fit_transform(X_xp)
