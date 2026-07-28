@@ -995,6 +995,9 @@ cdef class BinaryTree{{name_suffix}}:
 
         Get tree status.
 
+        .. deprecated:: 1.10
+            This method is deprecated in 1.10 and will be removed in 1.12.
+
         Returns
         -------
         tree_stats: tuple of int
@@ -1009,6 +1012,9 @@ cdef class BinaryTree{{name_suffix}}:
         reset_n_calls()
 
         Reset number of calls to 0.
+
+        .. deprecated:: 1.10
+            This method is deprecated in 1.10 and will be removed in 1.12.
         """
         self.n_calls = 0
 
@@ -1019,6 +1025,9 @@ cdef class BinaryTree{{name_suffix}}:
         get_n_calls()
 
         Get number of calls.
+
+        .. deprecated:: 1.10
+            This method is deprecated in 1.10 and will be removed in 1.12.
 
         Returns
         -------
