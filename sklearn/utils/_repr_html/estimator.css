@@ -143,7 +143,7 @@ clickable and can be expanded/collapsed.
   display: list-item;
   list-style-position: inside;
   white-space: nowrap;
-  text-align: left;
+  text-align: center;
   width: 100%;
   margin-bottom: 0;
   padding: 0.5em;
