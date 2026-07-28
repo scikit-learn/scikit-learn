@@ -47,7 +47,9 @@ def validate_callbacks(callbacks):
             hook = getattr(callback, hook_name)
             params = list(inspect.signature(hook).parameters.values())
 
-            positional = [p.name for p in params if p.kind != p.KEYWORD_ONLY]
+            positional = [
+                p.name for p in params if p.kind not in (p.KEYWORD_ONLY, p.VAR_KEYWORD)
+            ]
             expected_positional = ["estimator", "context"]
             if positional != expected_positional:
                 raise TypeError(
@@ -63,15 +65,6 @@ def validate_callbacks(callbacks):
                         f"{callback_name} must be {hook_name}(self, estimator, context)"
                     )
                 continue
-
-            kwarg_only = {p.name for p in params if p.kind == p.KEYWORD_ONLY}
-            valid_kwargs = {"X", "y", "metadata", "fitted_estimator"}
-            if invalid := kwarg_only - valid_kwargs:
-                raise TypeError(
-                    f"Hook {hook_name!r} of the callback {callback_name} has "
-                    f"parameters that are not valid: {invalid}. The valid parameters "
-                    f"are: {valid_kwargs}."
-                )
 
 
 class CallbackSupportMixin:
