@@ -9,9 +9,8 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 from scipy import sparse, stats
-
 from sklearn.base import clone
-from sklearn.utils._param_validation import InvalidParameterError
+
 from sklearn.datasets import load_iris, make_classification, make_regression
 from sklearn.feature_selection import (
     GenericUnivariateSelect,
@@ -29,6 +28,7 @@ from sklearn.feature_selection import (
     r_regression,
 )
 from sklearn.utils import safe_mask
+from sklearn.utils._param_validation import InvalidParameterError
 from sklearn.utils._testing import (
     _convert_container,
     assert_almost_equal,
