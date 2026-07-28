@@ -1782,6 +1782,8 @@ class _MetadataRequester:
         """
         if hasattr(self, "_metadata_request"):
             requests = get_routing_for_object(self._metadata_request)
+            if isinstance(requests, MetadataRouter):
+                return requests._self_request
         else:
             requests = MetadataRequest(owner=self)
             for method_name in SIMPLE_METHODS:
