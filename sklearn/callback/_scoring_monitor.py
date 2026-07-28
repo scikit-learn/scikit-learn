@@ -159,7 +159,7 @@ class ScoringMonitor(_MetadataRequester):
     @validate_params(
         {
             "scoring_train": [str, callable, list, tuple, dict, None],
-            "scoring_va": [str, callable, list, tuple, dict, None],
+            "scoring_val": [str, callable, list, tuple, dict, None],
         },
         prefer_skip_nested_validation=True,
     )
