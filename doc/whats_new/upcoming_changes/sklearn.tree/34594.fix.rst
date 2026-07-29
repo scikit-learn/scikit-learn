@@ -1,4 +1,0 @@
-- :class:`tree.DecisionTreeRegressor` now raises a `ValueError` when
-  `categorical_features` is used together with `criterion="absolute_error"`,
-  since the categorical split-finding algorithm does not find the best split
-  for this criterion. By :user:`Arthur Lacote <cakedev0>`.
