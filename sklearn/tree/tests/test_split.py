@@ -248,10 +248,7 @@ def test_split_impurity(
     if categorical and "Extra" in Tree.__name__:
         pytest.skip("Categorical features not implemented for the random splitter")
     if categorical and criterion == "absolute_error":
-        pytest.skip(
-            "Categorical features are not supported with criterion="
-            "'absolute_error' (see gh-34578)"
-        )
+        pytest.skip("AE is not supported with categorical features")
     rng = np.random.default_rng(global_random_seed)
 
     ns = [5] * 5 + [10] * 5 + [20, 30, 50, 100]
