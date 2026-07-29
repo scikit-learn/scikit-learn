@@ -54,7 +54,6 @@ class FitCallback(_BaseCallback, Protocol):
         *,
         X=None,
         y=None,
-        metadata=None,
         fitted_estimator=None,
     ):
         """Method called at the beginning of each fit task of the estimator.
@@ -73,9 +72,6 @@ class FitCallback(_BaseCallback, Protocol):
         y : array-like
             The training target values at this task.
 
-        metadata : dict
-            Training metadata at this task, e.g. sample weights.
-
         fitted_estimator : estimator instance
             A new instance of the estimator that is ready to predict, transform, etc ...
             as if fit had stopped at the beginning of this task.
@@ -88,7 +84,6 @@ class FitCallback(_BaseCallback, Protocol):
         *,
         X=None,
         y=None,
-        metadata=None,
         fitted_estimator=None,
     ):
         """Method called at the end of each fit task of the estimator.
@@ -106,9 +101,6 @@ class FitCallback(_BaseCallback, Protocol):
 
         y : array-like
             The training target values at this task.
-
-        metadata : dict
-            Training metadata at this task, e.g. sample weights.
 
         fitted_estimator : estimator instance
             A new instance of the estimator that is ready to predict, transform, etc ...
