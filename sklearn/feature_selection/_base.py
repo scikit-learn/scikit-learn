@@ -9,6 +9,7 @@ from operator import attrgetter
 
 import narwhals.stable.v2 as nw
 import numpy as np
+import pandas as pd
 import scipy.sparse
 from scipy.sparse import csc_array, csr_array, issparse
 
@@ -108,15 +109,30 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
 
         # note: we use get_tags instead of __sklearn_tags__ because this is a
         # public Mixin.
+        ensure_all_finite = not get_tags(self).input_tags.allow_nan
         X = validate_data(
             self,
             X,
             dtype=None,
             accept_sparse="csr",
-            ensure_all_finite=not get_tags(self).input_tags.allow_nan,
+            ensure_all_finite=ensure_all_finite,
             skip_check_array=preserve_X,
             reset=False,
         )
+        # When preserving the pandas DataFrame container (skip_check_array=True),
+        # check_array is not called, so ensure_all_finite must be enforced
+        # explicitly to reject infinite values in the pandas output path.
+        # https://github.com/scikit-learn/scikit-learn/issues/34500
+        if preserve_X and ensure_all_finite:
+            if isinstance(X, pd.DataFrame):
+                for col in X.columns:
+                    if X[col].dtype.kind in ("i", "f", "c") and not np.all(
+                        np.isfinite(X[col].values)
+                    ):
+                        raise ValueError(
+                            "Input X contains infinity or a value too large for"
+                            f" dtype('{X[col].dtype}')."
+                        )
         return self._transform(X)
 
     def _transform(self, X):
