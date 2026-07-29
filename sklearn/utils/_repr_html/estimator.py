@@ -167,6 +167,7 @@ def _write_label_html(
     if name_details is not None:
         name_details = html.escape(str(name_details))
         open_str = "open" if checked else ""
+        hide_marker = name == "passthrough" or name_details == "[]"
 
         if doc_link:
             doc_label = "<span>Online documentation</span>"
@@ -178,7 +179,7 @@ def _write_label_html(
                 f'<a class="sk-estimator-doc-link {is_fitted_css_class}"'
                 f' rel="noreferrer" target="_blank" href="{doc_link}">?{doc_label}</a>'
             )
-        if name == "passthrough" or name_details == "[]":
+        if hide_marker:
             name_caption = ""
         name_caption_div = (
             ""
@@ -191,8 +192,10 @@ def _write_label_html(
             if doc_link or is_fitted_icon
             else ""
         )
+        no_marker_class = " sk-toggleable__label--no-marker" if hide_marker else ""
         label_html = (
-            f'<summary class="sk-toggleable__label {is_fitted_css_class}">'
+            f'<summary class="sk-toggleable__label'
+            f' {is_fitted_css_class}{no_marker_class}">'
             f'<span class="sk-toggleable__label-content">'
             f"{name_caption_div}{links_div}</span></summary>"
         )
@@ -206,7 +209,7 @@ def _write_label_html(
         out.write(params)
         out.write(attrs)
         if name_details and ("Pipeline" not in name) and not params:
-            if name == "passthrough" or name_details == "[]":
+            if hide_marker:
                 name_details = ""
             out.write(f"<pre>{name_details}</pre>")
 
@@ -535,10 +538,8 @@ def estimator_html_repr(estimator):
         html_template = (
             f"<style>{_CSS_STYLE}</style>"
             f"<body>"
-            # tabindex="0" makes the scroll container focusable so keyboard-only
-            # users can scroll an overflowing diagram.
-            # Anything in the tab order should also convey what it is to assistive
-            # tech, so added the role="group" grouping semantics.
+            # tabindex="0" makes the scroll container focusable
+            # role="group" adds grouping semantics for accessibility rules.
             # This satisfies axe-core checkers; Firefox's inspector still warns.
             f'<div id="{container_id}" tabindex="0" role="group"'
             f' class="sk-top-container sk-global">'
