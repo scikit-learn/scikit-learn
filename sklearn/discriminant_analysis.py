@@ -28,6 +28,7 @@ from sklearn.utils._array_api import (
     move_to,
     size,
 )
+from sklearn.utils._encode import _encode
 from sklearn.utils._param_validation import HasMethods, Interval, StrOptions
 from sklearn.utils.extmath import softmax
 from sklearn.utils.multiclass import check_classification_targets, unique_labels
@@ -593,12 +594,10 @@ class LinearDiscriminantAnalysis(
             self.covariance_ = _class_cov(X, y, self.priors_)
 
         Xc = []
-        # `self.classes_` stays in `y`'s namespace/device. Use a copy of classes
-        # using the device of `X` so the mask `y == group` below does not mix
-        # devices.
-        classes = move_to(self.classes_, xp=xp, device=device(X))
-        for idx, group in enumerate(classes):
-            Xg = X[y == group]
+        # `y` holds integer class codes (see `fit`), so groups are indexed by
+        # position in `self.classes_`.
+        for idx in range(n_classes):
+            Xg = X[y == idx]
             Xc.append(Xg - self.means_[idx, :])
 
         self.xbar_ = self.priors_ @ self.means_
@@ -674,7 +673,13 @@ class LinearDiscriminantAnalysis(
             self, X, y, ensure_min_samples=2, dtype=[xp.float64, xp.float32]
         )
         self.classes_ = unique_labels(y)
-        y = move_to(y, xp=xp, device=device(X))
+        # `y` may hold strings, which no array API namespace can represent: move
+        # integer codes instead. `classes_` stays in `y`'s namespace and device.
+        y = move_to(
+            _encode(y, uniques=self.classes_, check_unknown=False),
+            xp=xp,
+            device=array_device(X),
+        )
         n_samples, n_features = X.shape
         n_classes = self.classes_.shape[0]
 
