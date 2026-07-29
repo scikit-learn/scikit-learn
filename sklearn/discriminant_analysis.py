@@ -673,8 +673,9 @@ class LinearDiscriminantAnalysis(
             self, X, y, ensure_min_samples=2, dtype=[xp.float64, xp.float32]
         )
         self.classes_ = unique_labels(y)
-        # `y` may hold strings, which no array API namespace can represent: move
-        # integer codes instead. `classes_` stays in `y`'s namespace and device.
+        # `y` may hold strings, which no array API namespace can represent,
+        # therefore convert to integer codes instead. 
+        # `classes_` stays in `y`'s namespace and device.
         y = move_to(
             _encode(y, uniques=self.classes_, check_unknown=False),
             xp=xp,
