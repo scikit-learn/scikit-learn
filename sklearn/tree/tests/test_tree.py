@@ -2470,7 +2470,7 @@ def test_missing_values_best_splitter_on_equal_nodes_no_missing(
 ):
     """Check missing values goes to correct node during predictions."""
     if categorical_features is not None and criterion == "absolute_error":
-        pytest.skip("AE is not supported with categorical features")
+        pytest.skip("absolute_error is not supported with categorical features in DecisionTreeRegressor")
     X = np.array([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
     y = np.array([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
     node_value_func = np.median if criterion == "absolute_error" else np.mean
