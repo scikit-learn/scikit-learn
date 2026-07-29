@@ -94,7 +94,7 @@ if linked_issue and is_not_ready(linked_issue):
     print(f"Closing PR #{PR_NUMBER} with comment")
     pr.create_issue_comment(MESSAGE)
     pr.edit(state="closed")
-    pr.add_to_labels("autoclose")
+    pr.add_to_labels("linked issue not ready")
 
 if pr.state == "open":
     # Post welcome comment
