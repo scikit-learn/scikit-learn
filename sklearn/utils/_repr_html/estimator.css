@@ -140,8 +140,6 @@ clickable and can be expanded/collapsed.
 /* Toggleable label */
 .sk-global summary.sk-toggleable__label {
   cursor: pointer;
-  display: list-item;
-  list-style-position: inside;
   white-space: nowrap;
   text-align: center;
   width: 100%;
