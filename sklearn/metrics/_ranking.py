@@ -1322,33 +1322,6 @@ def roc_curve(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
     )
 
-    # Attempt to drop thresholds corresponding to points in between and
-    # collinear with other points. These are always suboptimal and do not
-    # appear on a plotted ROC curve (and thus do not affect the AUC).
-    # Here np.diff(_, 2) is used as a "second derivative" to tell if there
-    # is a corner at the point. Both fps and tps must be tested to handle
-    # thresholds with multiple data points (which are combined in
-    # confusion_matrix_at_thresholds). This keeps all cases where the point should be
-    # kept, but does not drop more complicated cases like fps = [1, 3, 7],
-    # tps = [1, 2, 4]; there is no harm in keeping too many thresholds.
-    if drop_intermediate and fps.shape[0] > 2:
-        optimal_idxs = xp.nonzero(
-            xp.concat(
-                [
-                    xp.asarray([True], device=device),
-                    # Array API spec recommends `logical_or` only accepts bool input
-                    xp.logical_or(
-                        xp.astype(xp.diff(fps, n=2), xp.bool),
-                        xp.astype(xp.diff(tps, n=2), xp.bool),
-                    ),
-                    xp.asarray([True], device=device),
-                ]
-            )
-        )[0]
-        fps = fps[optimal_idxs]
-        tps = tps[optimal_idxs]
-        thresholds = thresholds[optimal_idxs]
-
     # Add an extra threshold position
     # to make sure that the curve starts at (0, 0)
     tps = xp.concat([xp.asarray([0.0], device=device), tps])
@@ -1356,6 +1329,59 @@ def roc_curve(
     # get dtype of `y_score` even if it is an array-like
     thresholds = xp.astype(thresholds, _max_precision_float_dtype(xp, device))
     thresholds = xp.concat([xp.asarray([xp.inf], device=device), thresholds])
+
+    # Attempt to drop thresholds corresponding to points in between and
+    # collinear with their neighbors in ROC space. These are always
+    # suboptimal and do not appear on a plotted ROC curve (and thus do not
+    # affect the AUC). This must happen *after* the (0, 0) origin point above
+    # has been prepended, otherwise points that are only redundant once the
+    # origin is taken into account would incorrectly be kept.
+    #
+    # Collinearity of three consecutive points (x0, y0), (x1, y1), (x2, y2)
+    # is tested with the cross product of the two vectors they form:
+    # (x1 - x0) * (y2 - y1) - (y1 - y0) * (x2 - x1). This is (numerically)
+    # zero iff the middle point lies on the straight line through its
+    # neighbors, regardless of how far apart the points are. This is more
+    # general than only checking points that are exactly midway between
+    # their neighbors (e.g. via a second-order finite difference), which
+    # misses many redundant points on longer collinear segments.
+    if drop_intermediate and fps.shape[0] > 2:
+        dx0 = fps[1:-1] - fps[:-2]
+        dy0 = tps[1:-1] - tps[:-2]
+        dx1 = fps[2:] - fps[1:-1]
+        dy1 = tps[2:] - tps[1:-1]
+        cross_product = dx0 * dy1 - dy0 * dx1
+        # fps and tps hold (possibly weighted) sample counts, so exactly
+        # collinear points yield an exactly zero cross product up to
+        # floating-point rounding error. Scale the tolerance with the
+        # magnitude of the coordinates (the cross product is a difference of
+        # two such products) to remain robust for large or float-weighted
+        # counts while not being too lax for small ones.
+        max_coord = xp.maximum(xp.max(fps), xp.max(tps))
+        max_coord = xp.where(
+            max_coord > 0,
+            max_coord,
+            xp.asarray(1.0, dtype=max_coord.dtype, device=device),
+        )
+        eps = xp.asarray(
+            xp.finfo(cross_product.dtype).eps,
+            dtype=cross_product.dtype,
+            device=device,
+        )
+        tolerance = 10 * eps * max_coord * max_coord
+        is_collinear = xp.abs(cross_product) <= tolerance
+        optimal_idxs = xp.nonzero(
+            xp.concat(
+                [
+                    xp.asarray([True], device=device),
+                    ~is_collinear,
+                    xp.asarray([True], device=device),
+                ]
+            )
+        )[0]
+        fps = fps[optimal_idxs]
+        tps = tps[optimal_idxs]
+        thresholds = thresholds[optimal_idxs]
 
     if fps[-1] <= 0:
         warnings.warn(

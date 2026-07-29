@@ -374,8 +374,11 @@ def test_roc_curve_toydata():
     )
     with pytest.warns(UndefinedMetricWarning, match=expected_message):
         tpr, fpr, _ = roc_curve(y_true, y_score)
-    assert_array_almost_equal(tpr, [0.0, 0.5, 1.0])
-    assert_array_almost_equal(fpr, [np.nan, np.nan, np.nan])
+    # All 3 points (the prepended origin and the 2 data points) are collinear
+    # (fpr is constant at 0 tp throughout), so the middle point is correctly
+    # dropped by `drop_intermediate` (the default). See gh-31635.
+    assert_array_almost_equal(tpr, [0.0, 1.0])
+    assert_array_almost_equal(fpr, [np.nan, np.nan])
     expected_message = (
         "Only one class is present in y_true. "
         "ROC AUC score is not defined in that case."
@@ -393,8 +396,10 @@ def test_roc_curve_toydata():
     )
     with pytest.warns(UndefinedMetricWarning, match=expected_message):
         tpr, fpr, _ = roc_curve(y_true, y_score)
-    assert_array_almost_equal(tpr, [np.nan, np.nan, np.nan])
-    assert_array_almost_equal(fpr, [0.0, 0.5, 1.0])
+    # Same reasoning as above (mirrored): all 3 points are collinear, so the
+    # middle point is dropped. See gh-31635.
+    assert_array_almost_equal(tpr, [np.nan, np.nan])
+    assert_array_almost_equal(fpr, [0.0, 1.0])
     expected_message = (
         "Only one class is present in y_true. "
         "ROC AUC score is not defined in that case."
@@ -442,13 +447,77 @@ def test_roc_curve_drop_intermediate():
     y_true = [0, 0, 0, 0, 1, 1]
     y_score = [0.0, 0.2, 0.5, 0.6, 0.7, 1.0]
     tpr, fpr, thresholds = roc_curve(y_true, y_score, drop_intermediate=True)
-    assert_array_almost_equal(thresholds, [np.inf, 1.0, 0.7, 0.0])
+    # The point at threshold 1.0, i.e. (fpr=0, tpr=0.5), is collinear with the
+    # prepended origin (fpr=0, tpr=0) and the next point (fpr=0, tpr=1) since
+    # all three lie on the vertical line fpr=0, so it is correctly dropped.
+    # See gh-31635.
+    assert_array_almost_equal(thresholds, [np.inf, 0.7, 0.0])
 
     # Test dropping thresholds with repeating scores
     y_true = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
     y_score = [0.0, 0.1, 0.6, 0.6, 0.7, 0.8, 0.9, 0.6, 0.7, 0.8, 0.9, 0.9, 1.0]
     tpr, fpr, thresholds = roc_curve(y_true, y_score, drop_intermediate=True)
     assert_array_almost_equal(thresholds, [np.inf, 1.0, 0.9, 0.7, 0.6, 0.0])
+
+
+@pytest.mark.parametrize(
+    "y_true, y_score, expected_fpr, expected_tpr, expected_thresholds",
+    [
+        # Perfect separator: everything strictly above the threshold of 4 is
+        # positive. The minimal ROC curve should have a single interior point.
+        (
+            [0, 0, 0, 0, 1, 1, 1, 1],
+            [0, 1, 2, 3, 4, 5, 6, 7],
+            [0.0, 0.0, 1.0],
+            [0.0, 1.0, 1.0],
+            [np.inf, 4.0, 0.0],
+        ),
+        # Same perfect separator, but with several tied/repeated scores below
+        # the decision boundary: all of those points lie on the same flat
+        # segment of the curve and should all be dropped as collinear.
+        (
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 1, 1, 1, 2, 2, 3, 4],
+            [0.0, 0.0, 1.0],
+            [0.0, 1.0, 1.0],
+            [np.inf, 4.0, 0.0],
+        ),
+        # A non-informative classifier: fpr == tpr at every threshold, so the
+        # whole curve lies on the diagonal and should collapse to 2 points.
+        (
+            [0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1],
+            [0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3],
+            [0.0, 1.0],
+            [0.0, 1.0],
+            [np.inf, 0.0],
+        ),
+    ],
+)
+def test_roc_curve_drop_intermediate_collinear_points(
+    y_true, y_score, expected_fpr, expected_tpr, expected_thresholds
+):
+    """Non-regression test for gh-31635.
+
+    `drop_intermediate=True` (the default) must remove *all* points that are
+    collinear with their neighbors in ROC space, including:
+
+    - points that are only redundant once the prepended (0, 0) origin point
+      is taken into account (bug 1 in the report), and
+    - points on longer flat/diagonal segments that are not exactly midway
+      between their neighbors (bug 2 in the report).
+    """
+    fpr, tpr, thresholds = roc_curve(y_true, y_score, drop_intermediate=True)
+    assert_array_almost_equal(fpr, expected_fpr)
+    assert_array_almost_equal(tpr, expected_tpr)
+    assert_array_almost_equal(thresholds, expected_thresholds)
+
+    # Sanity check: dropping intermediate, collinear points must never change
+    # the AUC nor discard a point that is not actually on the straight line
+    # connecting its neighbors in the non-dropped curve.
+    fpr_full, tpr_full, _ = roc_curve(y_true, y_score, drop_intermediate=False)
+    assert_almost_equal(auc(fpr, tpr), auc(fpr_full, tpr_full))
+    for x, y in zip(fpr, tpr):
+        assert np.any(np.isclose(fpr_full, x) & np.isclose(tpr_full, y))
 
 
 def test_roc_curve_fpr_tpr_increasing():

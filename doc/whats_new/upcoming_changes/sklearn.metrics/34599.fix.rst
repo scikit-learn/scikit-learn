@@ -1,0 +1,9 @@
+- :func:`metrics.roc_curve` with ``drop_intermediate=True`` (the default) no longer
+  keeps redundant points on the ROC curve. Previously, thresholds could be dropped
+  before the ``(0, 0)`` origin point was prepended, and the collinearity check itself
+  only detected points that were exactly midway between their neighbors, so many
+  collinear points on longer flat or diagonal segments were incorrectly kept. Both
+  issues are fixed by prepending the origin first and using a general geometric
+  collinearity test. This does not affect the ROC AUC or the visual shape of the
+  curve, only the number of points returned.
+  By :user:`Tharun Billuri <Tharunbilluri>`.
