@@ -513,8 +513,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if has_categorical and self.criterion == "absolute_error":
             raise ValueError(
                 "Categorical features are not supported with "
-                "criterion='absolute_error'. The algorithm used to find the best "
-                "split for categorical features is not valid for this criterion."
+                "criterion='absolute_error'."
             )
 
         SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
