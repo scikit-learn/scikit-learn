@@ -1157,7 +1157,7 @@ def precision_recall_curve(
     array([1. , 1. , 0.5, 0.5, 0. ])
     >>> thresholds
     array([0.1 , 0.35, 0.4 , 0.8 ])
-    >>> # FinTech example: payment fraud detection with imbalanced classes
+   >>> # FinTech example: payment fraud detection with imbalanced classes
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.metrics import precision_recall_curve
@@ -1170,7 +1170,6 @@ def precision_recall_curve(
     >>> scores = clf.predict_proba(X_test)[:, 1]
     >>> precision, recall, thresholds = precision_recall_curve(y_test, scores)
     """
-    
     xp, _, device = get_namespace_and_device(y_score)
 
     _, fps, _, tps, thresholds = confusion_matrix_at_thresholds(
