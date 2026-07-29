@@ -151,7 +151,7 @@ def R_and_X_colnorm2(
     R : memoryview of shape (n_samples,)
         Residuals: R = y - X @ w
 
-    norm2_cols_X : memoryview of shape (n_samples,)
+    norm2_cols_X : memoryview of shape (n_features,)
         Column norms of X: norm2_cols_X = np.sum(X**2, axis=0)
     """
     if floating is float:
