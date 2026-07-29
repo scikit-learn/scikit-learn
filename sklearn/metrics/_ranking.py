@@ -1170,7 +1170,6 @@ def precision_recall_curve(
     >>> scores = clf.predict_proba(X_test)[:, 1]
     >>> precision, recall, thresholds = precision_recall_curve(y_test, scores)
         """
-    
     xp, _, device = get_namespace_and_device(y_score)
 
     _, fps, _, tps, thresholds = confusion_matrix_at_thresholds(
