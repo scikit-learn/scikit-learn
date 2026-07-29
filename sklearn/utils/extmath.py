@@ -18,7 +18,7 @@ from sklearn.utils._array_api import (
     _max_precision_float_dtype,
     _nanmean,
     _nansum,
-    device,
+    array_device,
     get_namespace,
     get_namespace_and_device,
 )
@@ -45,8 +45,8 @@ def squared_norm(x):
         The Euclidean norm when x is a vector, the Frobenius norm when x
         is a matrix (2-d array).
     """
-    x = np.ravel(x, order="K")
-    if np.issubdtype(x.dtype, np.integer):
+    xp, _ = get_namespace(x)
+    if _is_numpy_namespace(xp) and np.issubdtype(x.dtype, np.integer):
         warnings.warn(
             (
                 "Array type is integer, np.dot may overflow. "
@@ -54,7 +54,7 @@ def squared_norm(x):
             ),
             UserWarning,
         )
-    return np.dot(x, x)
+    return xp.tensordot(x, x, axes=x.ndim)
 
 
 def row_norms(X, squared=False):
@@ -169,7 +169,9 @@ def safe_sparse_dot(a, b, *, dense_output=False):
     Parameters
     ----------
     a : {ndarray, sparse matrix}
+        First operand of the dot product.
     b : {ndarray, sparse matrix}
+        Second operand of the dot product.
     dense_output : bool, default=False
         When False, ``a`` and ``b`` both being sparse will yield sparse output.
         When True, output will always be a dense array.
@@ -216,10 +218,10 @@ def safe_sparse_dot(a, b, *, dense_output=False):
         dense_output
         and a.ndim == 2
         and b.ndim == 2
-        and a.dtype in (np.float32, np.float64)
-        and b.dtype in (np.float32, np.float64)
         and (sparse.issparse(a) and a.format in ("csc", "csr"))
         and (sparse.issparse(b) and b.format in ("csc", "csr"))
+        and a.dtype in (np.float32, np.float64)
+        and b.dtype in (np.float32, np.float64)
     ):
         # Use dedicated fast method for dense_C = sparse_A @ sparse_B
         return sparse_matmul_to_dense(a, b)
@@ -318,21 +320,23 @@ def _randomized_range_finder(
     # Generating normal random vectors with shape: (A.shape[1], size)
     # XXX: generate random number directly from xp if it's possible
     # one day.
-    Q = xp.asarray(random_state.normal(size=(A.shape[1], size)))
-    if hasattr(A, "dtype") and xp.isdtype(A.dtype, kind="real floating"):
-        # Use float32 computation and components if A has a float32 dtype.
-        Q = xp.astype(Q, A.dtype, copy=False)
+    Q = random_state.normal(size=(A.shape[1], size))
+    if A.dtype == xp.float32 or (
+        is_array_api_compliant
+        and _max_precision_float_dtype(xp, device=array_device(A)) == xp.float32
+    ):
+        # Use float32 computation and components if A has a float32 dtype
+        # or if A has integer dtype and device doesn't not support float64.
 
-    # Move Q to device if needed only after converting to float32 if needed to
-    # avoid allocating unnecessary memory on the device.
+        # Downcast while Q is still a NumPy array to avoid allocating float64
+        # on devices that do not support it. The Array API does not require
+        # xp.asarray(..., dtype=..., device=device) to accept such a downcast.
+        Q = Q.astype(np.float32, copy=False)
 
-    # Note: we cannot combine the astype and to_device operations in one go
-    # using xp.asarray(..., dtype=dtype, device=device) because downcasting
-    # from float64 to float32 in asarray might not always be accepted as only
-    # casts following type promotion rules are guarateed to work.
-    # https://github.com/data-apis/array-api/issues/647
     if is_array_api_compliant:
-        Q = xp.asarray(Q, device=device(A))
+        Q = xp.asarray(Q, device=array_device(A))
+    else:
+        Q = xp.asarray(Q)
 
     # Deal with "auto" mode
     if power_iteration_normalizer == "auto":
@@ -960,7 +964,7 @@ def svd_flip(u, v, u_based_decision=True):
     if u_based_decision:
         # columns of u, rows of v, or equivalently rows of u.T and v
         max_abs_u_cols = xp.argmax(xp.abs(u.T), axis=1)
-        shift = xp.arange(u.T.shape[0], device=device(u))
+        shift = xp.arange(u.T.shape[0], device=array_device(u))
         indices = max_abs_u_cols + shift * u.T.shape[1]
         signs = xp.sign(xp.take(xp.reshape(u.T, (-1,)), indices, axis=0))
         u *= signs[np.newaxis, :]
@@ -969,7 +973,7 @@ def svd_flip(u, v, u_based_decision=True):
     else:
         # rows of v, columns of u
         max_abs_v_rows = xp.argmax(xp.abs(v), axis=1)
-        shift = xp.arange(v.shape[0], device=device(v))
+        shift = xp.arange(v.shape[0], device=array_device(v))
         indices = max_abs_v_rows + shift * v.shape[1]
         signs = xp.sign(xp.take(xp.reshape(v, (-1,)), indices, axis=0))
         if u is not None:

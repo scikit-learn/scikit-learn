@@ -25,12 +25,12 @@ from sklearn.utils import _align_api_if_sparse, check_array, check_random_state
 from sklearn.utils._array_api import (
     _asarray_with_order,
     _average,
-    _convert_to_numpy,
     _expit,
-    _is_numpy_namespace,
+    check_same_namespace,
     get_namespace,
     get_namespace_and_device,
     indexing_dtype,
+    move_to,
     supported_float_dtypes,
 )
 from sklearn.utils._param_validation import Interval
@@ -164,13 +164,16 @@ def _preprocess_data(
     sample_weight_sqrt : ndarray of shape (n_samples, ) or None
         `np.sqrt(sample_weight)`
     """
-    xp, _, device_ = get_namespace_and_device(X, y, sample_weight)
+    xp, _, device = get_namespace_and_device(X, y, sample_weight)
     n_samples, n_features = X.shape
     X_is_sparse = sp.issparse(X)
 
     if check_input:
         X = check_array(
-            X, copy=copy, accept_sparse=["csr", "csc"], dtype=supported_float_dtypes(xp)
+            X,
+            copy=copy,
+            accept_sparse=["csr", "csc"],
+            dtype=supported_float_dtypes(xp, device=device),
         )
         y = check_array(y, dtype=X.dtype, copy=True, ensure_2d=False)
     else:
@@ -195,15 +198,15 @@ def _preprocess_data(
         y_offset = _average(y, axis=0, weights=sample_weight, xp=xp)
         y -= y_offset
     else:
-        X_offset = xp.zeros(n_features, dtype=X.dtype, device=device_)
+        X_offset = xp.zeros(n_features, dtype=X.dtype, device=device)
         if y.ndim == 1:
-            y_offset = xp.asarray(0.0, dtype=dtype_, device=device_)
+            y_offset = xp.asarray(0.0, dtype=dtype_, device=device)
         else:
-            y_offset = xp.zeros(y.shape[1], dtype=dtype_, device=device_)
+            y_offset = xp.zeros(y.shape[1], dtype=dtype_, device=device)
 
     # X_scale is no longer needed. It is a historic artifact from the
     # time where linear model exposed the normalize parameter.
-    X_scale = xp.ones(n_features, dtype=X.dtype, device=device_)
+    X_scale = xp.ones(n_features, dtype=X.dtype, device=device)
 
     if sample_weight is not None and rescale_with_sw:
         # Sample weight can be implemented via a simple rescaling.
@@ -301,14 +304,15 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features)
+        X : array-like or sparse matrix of shape (n_samples, n_features)
             Samples.
 
         Returns
         -------
-        C : array, shape (n_samples,)
-            Returns predicted values.
+        C : ndarray of shape (n_samples,)
+            Predicted values.
         """
+        check_same_namespace(X, self, attribute="coef_", method="predict")
         return self._decision_function(X)
 
     def _set_intercept(self, X_offset, y_offset, X_scale=None):
@@ -329,6 +333,26 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
 
         else:
             self.intercept_ = 0.0
+
+
+class MultiOutputLinearModel(MultiOutputMixin, LinearModel):
+    # Provides consistent docstring to `predict` for linear models that support
+    # multi-output.
+    def predict(self, X):
+        """
+        Predict using the linear model.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape (n_samples, n_features)
+            Samples.
+
+        Returns
+        -------
+        C : ndarray of shape (n_samples,) or (n_samples, n_outputs)
+            Predicted values.
+        """
+        return super().predict(X)
 
 
 # XXX Should this derive from LinearModel? It should be a mixin, not an ABC.
@@ -360,6 +384,7 @@ class LinearClassifierMixin(ClassifierMixin):
         """
         check_is_fitted(self)
         xp, _ = get_namespace(X)
+        check_same_namespace(X, self, attribute="coef_", method="decision_function")
 
         X = validate_data(self, X, accept_sparse="csr", reset=False)
         coef_T = self.coef_.T if self.coef_.ndim == 2 else self.coef_
@@ -384,21 +409,22 @@ class LinearClassifierMixin(ClassifierMixin):
         y_pred : ndarray of shape (n_samples,)
             Vector containing the class labels for each sample.
         """
-        xp, _ = get_namespace(X)
+        check_same_namespace(X, self, attribute="coef_", method="predict")
+        xp, _, device = get_namespace_and_device(X)
         scores = self.decision_function(X)
         if len(scores.shape) == 1:
             indices = xp.astype(scores > 0, indexing_dtype(xp))
         else:
             indices = xp.argmax(scores, axis=1)
 
-        # If `y` consists of strings during fitting then `self.classes_` will
-        # also contain strings and we handle such a scenario by returning the
-        # predictions according to the namespace of `self.classes_` i.e. numpy.
-        xp_classes, _ = get_namespace(self.classes_)
-        if _is_numpy_namespace(xp_classes):
-            indices = _convert_to_numpy(indices, xp=xp)
+        xp_classes, _, device_classes = get_namespace_and_device(self.classes_)
+        indices = move_to(indices, xp=xp_classes, device=device_classes)
 
-        return xp_classes.take(self.classes_, indices, axis=0)
+        y_pred = xp_classes.take(self.classes_, indices, axis=0)
+        if isinstance(y_pred[0], str):
+            return y_pred
+        else:
+            return move_to(y_pred, xp=xp, device=device)
 
     def _predict_proba_lr(self, X):
         """Probability estimation for OvR logistic regression.
@@ -461,6 +487,13 @@ class SparseCoefMixin:
 
         The ``intercept_`` member is not converted.
 
+        .. warning::
+            This method is not supported for estimators fitted with array API
+            inputs (i.e. when :func:`sklearn.config_context` is used with
+            ``array_api_dispatch=True``). The call may succeed but subsequent
+            calls to :meth:`predict` and other methods involving passing arrays
+            may raise or return unexpected results.
+
         Returns
         -------
         self
@@ -483,7 +516,7 @@ class SparseCoefMixin:
         return self
 
 
-class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
+class LinearRegression(RegressorMixin, MultiOutputLinearModel):
     """
     Ordinary least squares Linear Regression.
 
@@ -503,12 +536,14 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
     tol : float, default=1e-6
         The precision of the solution (`coef_`) is determined by `tol` which
-        specifies a different convergence criterion for the `lsqr` solver.
-        `tol` is set as `atol` and `btol` of :func:`scipy.sparse.linalg.lsqr` when
-        fitting on sparse training data. This parameter has no effect when fitting
-        on dense data.
+        specifies the convergence criterion of the underlying solver. `tol` is
+        set as `atol` and `btol` of :func:`scipy.sparse.linalg.lsqr` when
+        fitting on sparse training data. `tol` is set as `cond` of
+        :func:`scipy.linalg.lstsq` when fitting on dense training data.
 
         .. versionadded:: 1.7
+        .. versionchanged:: 1.9
+            Now supported on dense data, interpreted as the `cond` parameter.
 
     n_jobs : int, default=None
         The number of jobs to use for the computation. This will only provide
@@ -714,9 +749,9 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                 )
                 self.coef_ = np.vstack([out[0] for out in outs])
         else:
-            # cut-off ratio for small singular values
-            cond = max(X.shape) * np.finfo(X.dtype).eps
-            self.coef_, _, self.rank_, self.singular_ = linalg.lstsq(X, y, cond=cond)
+            self.coef_, _, self.rank_, self.singular_ = linalg.lstsq(
+                X, y, cond=self.tol
+            )
             self.coef_ = self.coef_.T
 
         if y.ndim == 1:

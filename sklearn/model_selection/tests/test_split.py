@@ -42,15 +42,13 @@ from sklearn.model_selection._split import (
 from sklearn.svm import SVC
 from sklearn.tests.metadata_routing_common import assert_request_is_empty
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
+    array_device,
     get_namespace,
+    move_to,
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._array_api import (
-    device as array_api_device,
-)
-from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._testing import (
+    _convert_container,
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
@@ -217,7 +215,7 @@ def test_2d_y():
         StratifiedKFold(),
         RepeatedKFold(),
         RepeatedStratifiedKFold(),
-        StratifiedGroupKFold(),
+        StratifiedGroupKFold(n_splits=3),
         ShuffleSplit(),
         StratifiedShuffleSplit(test_size=0.5),
         GroupShuffleSplit(),
@@ -427,7 +425,7 @@ def test_stratified_kfold_no_shuffle():
 
 @pytest.mark.parametrize("shuffle", [False, True])
 @pytest.mark.parametrize("k", [4, 5, 6, 7, 8, 9, 10])
-@pytest.mark.parametrize("kfold", [StratifiedKFold, StratifiedGroupKFold])
+@pytest.mark.parametrize("kfold", (StratifiedKFold, StratifiedGroupKFold))
 def test_stratified_kfold_ratios(k, shuffle, kfold):
     # Check that stratified kfold preserves class ratios in individual splits
     # Repeat with shuffling turned off and on
@@ -454,7 +452,7 @@ def test_stratified_kfold_ratios(k, shuffle, kfold):
 
 @pytest.mark.parametrize("shuffle", [False, True])
 @pytest.mark.parametrize("k", [4, 6, 7])
-@pytest.mark.parametrize("kfold", [StratifiedKFold, StratifiedGroupKFold])
+@pytest.mark.parametrize("kfold", (StratifiedKFold, StratifiedGroupKFold))
 def test_stratified_kfold_label_invariance(k, shuffle, kfold):
     # Check that stratified kfold gives the same indices regardless of labels
     n_samples = 100
@@ -496,7 +494,7 @@ def test_kfold_balance():
         assert np.sum(sizes) == i
 
 
-@pytest.mark.parametrize("kfold", [StratifiedKFold, StratifiedGroupKFold])
+@pytest.mark.parametrize("kfold", (StratifiedKFold, StratifiedGroupKFold))
 def test_stratifiedkfold_balance(kfold):
     # Check that KFold returns folds with balanced sizes (only when
     # stratification is possible)
@@ -539,7 +537,7 @@ def test_shuffle_kfold():
     assert sum(all_folds) == 300
 
 
-@pytest.mark.parametrize("kfold", [KFold, StratifiedKFold, StratifiedGroupKFold])
+@pytest.mark.parametrize("kfold", (KFold, StratifiedKFold, StratifiedGroupKFold))
 def test_shuffle_kfold_stratifiedkfold_reproducibility(kfold):
     X = np.ones(15)  # Divisible by 3
     y = [0] * 7 + [1] * 8
@@ -1225,7 +1223,7 @@ def test_repeated_cv_repr(RepeatedCV):
     assert repeated_cv_repr == repr(repeated_cv)
 
 
-def test_repeated_kfold_determinstic_split():
+def test_repeated_kfold_deterministic_split():
     X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
     random_state = 258173307
     rkf = RepeatedKFold(n_splits=2, n_repeats=2, random_state=random_state)
@@ -1270,7 +1268,7 @@ def test_get_n_splits_for_repeated_stratified_kfold():
     assert expected_n_splits == rskf.get_n_splits()
 
 
-def test_repeated_stratified_kfold_determinstic_split():
+def test_repeated_stratified_kfold_deterministic_split():
     X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
     y = [1, 1, 1, 0, 0]
     random_state = 1944695409
@@ -1356,7 +1354,7 @@ def test_train_test_split_default_test_size(train_size, exp_train, exp_test):
 def test_array_api_train_test_split(
     shuffle, stratify, array_namespace, device_name, dtype_name
 ):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     X = np.arange(100).reshape((10, 10))
     y = np.arange(10)
@@ -1367,9 +1365,11 @@ def test_array_api_train_test_split(
     y_np = y.astype(dtype_name)
     y_xp = xp.asarray(y_np, device=device)
 
-    X_train_np, X_test_np, y_train_np, y_test_np = train_test_split(
-        X_np, y, random_state=0, shuffle=shuffle, stratify=stratify
-    )
+    with config_context(array_api_dispatch=False):
+        X_train_np, X_test_np, y_train_np, y_test_np = train_test_split(
+            X_np, y, random_state=0, shuffle=shuffle, stratify=stratify
+        )
+
     with config_context(array_api_dispatch=True):
         if stratify is not None:
             stratify_xp = xp.asarray(stratify)
@@ -1387,10 +1387,10 @@ def test_array_api_train_test_split(
         assert get_namespace(y_test_xp)[0] == get_namespace(y_xp)[0]
 
         # Check device and dtype is preserved on output
-        assert array_api_device(X_train_xp) == array_api_device(X_xp)
-        assert array_api_device(y_train_xp) == array_api_device(y_xp)
-        assert array_api_device(X_test_xp) == array_api_device(X_xp)
-        assert array_api_device(y_test_xp) == array_api_device(y_xp)
+        assert array_device(X_train_xp) == array_device(X_xp)
+        assert array_device(y_train_xp) == array_device(y_xp)
+        assert array_device(X_test_xp) == array_device(X_xp)
+        assert array_device(y_test_xp) == array_device(y_xp)
 
     assert X_train_xp.dtype == X_xp.dtype
     assert y_train_xp.dtype == y_xp.dtype
@@ -1398,11 +1398,11 @@ def test_array_api_train_test_split(
     assert y_test_xp.dtype == y_xp.dtype
 
     assert_allclose(
-        _convert_to_numpy(X_train_xp, xp=xp),
+        move_to(X_train_xp, xp=np, device="cpu"),
         X_train_np,
     )
     assert_allclose(
-        _convert_to_numpy(X_test_xp, xp=xp),
+        move_to(X_test_xp, xp=np, device="cpu"),
         X_test_np,
     )
 
@@ -1478,21 +1478,15 @@ def test_train_test_split_32bit_overflow():
     assert y_train.size + y_test.size == big_number
 
 
-def test_train_test_split_pandas():
+@pytest.mark.parametrize("input_type", ["pandas", "polars", "pyarrow"])
+def test_train_test_split_dataframe(input_type):
     # check train_test_split doesn't destroy pandas dataframe
-    types = [MockDataFrame]
-    try:
-        from pandas import DataFrame
+    X_df = _convert_container(X, input_type)
+    input_type = type(X_df)
 
-        types.append(DataFrame)
-    except ImportError:
-        pass
-    for InputFeatureType in types:
-        # X dataframe
-        X_df = InputFeatureType(X)
-        X_train, X_test = train_test_split(X_df)
-        assert isinstance(X_train, InputFeatureType)
-        assert isinstance(X_test, InputFeatureType)
+    X_train, X_test = train_test_split(X_df)
+    assert isinstance(X_train, input_type)
+    assert isinstance(X_test, input_type)
 
 
 @pytest.mark.parametrize(
@@ -1506,15 +1500,6 @@ def test_train_test_split_sparse(sparse_container):
     X_train, X_test = train_test_split(X_s)
     assert issparse(X_train) and X_train.format == "csr"
     assert issparse(X_test) and X_test.format == "csr"
-
-
-def test_train_test_split_mock_pandas():
-    # X mock dataframe
-    X_df = MockDataFrame(X)
-    X_train, X_test = train_test_split(X_df)
-    assert isinstance(X_train, MockDataFrame)
-    assert isinstance(X_test, MockDataFrame)
-    X_train_arr, X_test_arr = train_test_split(X_df)
 
 
 def test_train_test_split_list_input():
@@ -1657,7 +1642,7 @@ def test_cv_iterable_wrapper():
     )
 
 
-@pytest.mark.parametrize("kfold", [GroupKFold, StratifiedGroupKFold])
+@pytest.mark.parametrize("kfold", (GroupKFold, StratifiedGroupKFold))
 @pytest.mark.parametrize("shuffle", [True, False])
 def test_group_kfold(kfold, shuffle, global_random_seed):
     rng = np.random.RandomState(global_random_seed)
@@ -1783,7 +1768,7 @@ def test_group_kfold(kfold, shuffle, global_random_seed):
     groups = np.array([1, 1, 1, 2, 2])
     X = y = np.ones(len(groups))
     with pytest.raises(ValueError, match="Cannot have number of splits.*greater"):
-        next(GroupKFold(n_splits=3).split(X, y, groups))
+        next(kfold(n_splits=3).split(X, y, groups))
 
 
 def test_time_series_cv():

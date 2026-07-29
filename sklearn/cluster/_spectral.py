@@ -70,7 +70,7 @@ def discretize(
     max_svd_restarts : int, default=30
         Maximum number of attempts to restart SVD if convergence fails
 
-    n_iter_max : int, default=30
+    n_iter_max : int, default=20
         Maximum number of iterations to attempt in rotation and partition
         matrix search if machine precision convergence is not reached
 
@@ -404,7 +404,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
     Parameters
     ----------
     n_clusters : int, default=8
-        The dimension of the projection subspace.
+        Number of clusters to extract.
 
     eigen_solver : {'arpack', 'lobpcg', 'amg'}, default=None
         The eigenvalue decomposition strategy to use. AMG requires pyamg

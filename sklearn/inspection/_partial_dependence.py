@@ -3,7 +3,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import warnings
 from collections.abc import Iterable
 
 import numpy as np
@@ -653,7 +652,7 @@ def partial_dependence(
         if response_method != "decision_function":
             raise ValueError(
                 "With the 'recursion' method, the response_method must be "
-                "'decision_function'. Got {}.".format(response_method)
+                f"'decision_function'. Got {response_method}."
             )
 
     if sample_weight is not None:
@@ -664,7 +663,7 @@ def partial_dependence(
         # the indexing to be positive. The upper bound will be checked
         # by _get_column_indices()
         if np.any(np.less(features, 0)):
-            raise ValueError("all features must be in [0, {}]".format(X.shape[1] - 1))
+            raise ValueError(f"all features must be in [0, {X.shape[1] - 1}]")
 
     features_indices = np.asarray(
         _get_column_indices(X, features), dtype=np.intp, order="C"
@@ -717,18 +716,13 @@ def partial_dependence(
             continue
 
         if _safe_indexing(X, feature_idx, axis=1).dtype.kind in "iu":
-            # TODO(1.9): raise a ValueError instead.
-            warnings.warn(
+            raise ValueError(
                 f"The column {feature!r} contains integer data. Partial "
                 "dependence plots are not supported for integer data: this "
                 "can lead to implicit rounding with NumPy arrays or even errors "
-                "with newer pandas versions. Please convert numerical features"
-                "to floating point dtypes ahead of time to avoid problems. "
-                "This will raise ValueError in scikit-learn 1.9.",
-                FutureWarning,
+                "with newer pandas versions. Please convert numerical features "
+                "to floating point dtypes ahead of time to avoid problems."
             )
-            # Do not warn again for other features to avoid spamming the caller.
-            break
 
     X_subset = _safe_indexing(X, features_indices, axis=1)
 
