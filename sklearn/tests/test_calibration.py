@@ -125,6 +125,8 @@ def test_calibration(data, method, csr_container, ensemble):
         cal_clf.fit(this_X_train, y_train, sample_weight=sw_train)
         prob_pos_cal_clf = cal_clf.predict_proba(this_X_test)[:, 1]
 
+        # TODO: once we have a calibration loss, use it instead of the
+        # brier score to check recalibration.
         # Check that brier score has improved after calibration
         assert brier_score_loss(y_test, prob_pos_clf) > brier_score_loss(
             y_test, prob_pos_cal_clf
@@ -282,6 +284,8 @@ def test_calibration_multiclass(clf, method, ensemble, global_random_seed):
     y_pred_cal = cal_clf.predict_proba(X_test)
     assert_allclose(np.sum(y_pred_cal, axis=1), np.ones(len(X_test)))
 
+    # TODO: once we have a calibration loss, use it instead of the
+    # brier score to check recalibration.
     # Check that Brier loss of calibrated classifier is smaller than
     # loss obtained on the original classifier.
     labels = np.arange(n_classes)
@@ -449,6 +453,8 @@ def test_calibration_frozen(csr_container, method):
             assert_array_equal(
                 y_pred_frozen, np.array([0, 1])[np.argmax(y_prob_frozen, axis=1)]
             )
+            # TODO: once we have a calibration loss, use it instead of the
+            # brier score to check recalibration.
             assert brier_score_loss(y_test, prob_pos_clf) > brier_score_loss(
                 y_test, prob_pos_cal_clf_frozen
             )
