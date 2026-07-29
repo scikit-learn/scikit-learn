@@ -1500,7 +1500,7 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
 
     Attributes
     ----------
-    coef_ : ndarray of shape (1, n_features) or (n_classes, n_features)
+    coef_ : ndarray of shape (n_features,) or (n_classes, n_features)
         Coefficient of the features in the decision function.
 
         ``coef_`` is of shape (1, n_features) when the given problem is binary.
