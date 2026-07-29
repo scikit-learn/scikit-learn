@@ -510,6 +510,12 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 "Categorical features are only supported for binary classification. "
                 f"Found {self.n_classes_.max()} classes."
             )
+        if has_categorical and self.criterion == "absolute_error":
+            raise ValueError(
+                "Categorical features are not supported with "
+                "criterion='absolute_error'. The algorithm used to find the best "
+                "split for categorical features is not valid for this criterion."
+            )
 
         SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
         splitter = SPLITTERS[self.splitter](
