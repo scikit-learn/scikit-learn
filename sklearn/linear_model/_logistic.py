@@ -170,7 +170,7 @@ class _LbfgsCallbackBridge:
             X=self._X,
             y=self._y,
             reconstruction_attributes={"coef_": coef, "intercept_": intercept},
-            metadata=self._callbacks_params,
+            metadata=getattr(self._callbacks_params, "on_fit_task_begin", None),
         )
         return ctx
 
@@ -182,7 +182,7 @@ class _LbfgsCallbackBridge:
             X=self._X,
             y=self._y,
             reconstruction_attributes={"coef_": coef, "intercept_": intercept},
-            metadata=self._callbacks_params,
+            metadata=getattr(self._callbacks_params, "on_fit_task_end", None),
         )
         # TODO(1.10): use the return value of ``call_on_fit_task_end`` (a bool
         # requesting early stopping) to ``raise StopIteration()``. scipy's
@@ -1527,12 +1527,12 @@ class LogisticRegression(
         routed_params = (
             process_routing(self, "fit", **params) if _routing_enabled() else None
         )
-        callbacks_params = self._get_callbacks_routed_params(routed_params)
+        callbacks_params = getattr(routed_params, "callbacks", None)
         callback_ctx.call_on_fit_task_begin(
             estimator=self,
             X=X,
             y=y,
-            metadata=callbacks_params,
+            metadata=getattr(callbacks_params, "on_fit_task_begin", None),
         )
 
         if solver == "liblinear":
@@ -1632,7 +1632,7 @@ class LogisticRegression(
             X=X,
             y=y,
             reconstruction_attributes={},
-            metadata=callbacks_params,
+            metadata=getattr(callbacks_params, "on_fit_task_end", None),
         )
 
         return self

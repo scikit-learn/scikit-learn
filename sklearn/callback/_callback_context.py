@@ -10,6 +10,7 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 
 from sklearn.callback._base import AutoPropagatedCallback
+from sklearn.utils.metadata_routing import process_routing
 
 # Set of the hook parameters that do not come from metadata routing
 HOOK_NOT_ROUTED_PARAMS = {"X", "y", "fitted_estimator"}
@@ -380,7 +381,7 @@ class CallbackContext:
         y : array-like or None, default=None
             The training targets of the current task.
 
-        metadata : dict of str -> object or None, default=None
+        metadata : dict , Bunch or None, default=None
             If `enable_metadata_routing=True`: Parameters requested and accepted by
             callbacks.
             See :ref:`Metadata Routing User Guide <metadata_routing>` for more
@@ -393,6 +394,8 @@ class CallbackContext:
             stopped at the beginning of this task. The `fitted_estimator` is the
             object that will be passed to the callbacks, if required.
         """
+        if metadata is not None:
+            metadata = process_routing(self._callbacks, "on_fit_task_begin", **metadata)
         self._call_hooks(
             estimator,
             hook_name="on_fit_task_begin",
@@ -425,7 +428,7 @@ class CallbackContext:
         y : array-like or None, default=None
             The training targets of the current task.
 
-        metadata : dict of str -> object or None, default=None
+        metadata : dict, Bunch or None, default=None
             If `enable_metadata_routing=True`: Parameters requested and accepted by
             callbacks.
             See :ref:`Metadata Routing User Guide <metadata_routing>` for more
@@ -444,6 +447,8 @@ class CallbackContext:
             Whether or not to stop the current level of iterations at this end of this
             task.
         """
+        if metadata is not None:
+            metadata = process_routing(self._callbacks, "on_fit_task_end", **metadata)
         return self._call_hooks(
             estimator,
             hook_name="on_fit_task_end",

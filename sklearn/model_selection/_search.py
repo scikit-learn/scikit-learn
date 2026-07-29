@@ -1004,12 +1004,12 @@ class BaseSearchCV(
         params = _check_method_params(X, params=params)
 
         routed_params = self._get_routed_params_for_fit(params)
-        callbacks_params = self._get_callbacks_routed_params(routed_params)
+        callbacks_params = getattr(routed_params, "callbacks", None)
         root_callback_ctx.call_on_fit_task_begin(
             estimator=self,
             X=X,
             y=y,
-            metadata=callbacks_params,
+            metadata=getattr(callbacks_params, "on_fit_task_begin", None),
         )
 
         self._checked_cv_orig = check_cv(
@@ -1183,7 +1183,7 @@ class BaseSearchCV(
                     estimator=self,
                     X=X,
                     y=y,
-                    metadata=callbacks_params,
+                    metadata=getattr(callbacks_params, "on_fit_task_begin", None),
                 )
 
                 refit_start_time = time.time()
@@ -1201,7 +1201,7 @@ class BaseSearchCV(
                 estimator=self,
                 X=X,
                 y=y,
-                metadata=callbacks_params,
+                metadata=getattr(callbacks_params, "on_fit_task_end", None),
             )
 
         # Store the only scorer not as a dict for single metric evaluation
@@ -1216,7 +1216,7 @@ class BaseSearchCV(
             estimator=self,
             X=X,
             y=y,
-            metadata=callbacks_params,
+            metadata=getattr(callbacks_params, "on_fit_task_end", None),
         )
 
         return self

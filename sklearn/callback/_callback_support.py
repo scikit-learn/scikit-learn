@@ -3,17 +3,12 @@
 
 import functools
 import inspect
-from collections import UserList, defaultdict
+from collections import UserList
 from contextlib import contextmanager
 
 from sklearn.callback._base import AutoPropagatedCallback, FitCallback
 from sklearn.callback._callback_context import CallbackContext
-from sklearn.utils import Bunch
-from sklearn.utils.metadata_routing import (
-    MetadataRouter,
-    MethodMapping,
-    process_routing,
-)
+from sklearn.utils.metadata_routing import MetadataRouter, MethodMapping
 
 
 class MultiCallback(UserList):
@@ -179,39 +174,6 @@ class CallbackSupportMixin:
         """
         router = MetadataRouter(owner=self)
         return self._add_callback_routing(router)
-
-    def _get_callbacks_routed_params(self, routed_params):
-        """Utility method to get the callbacks' routed params.
-
-        Parameters
-        ----------
-        routed_params : Bunch
-            The routed params of fit.
-
-        Returns
-        -------
-        callbacks_params : Bunch or None
-            The routed params for the callbacks' on_fit_task_begin and on_fit_task_end
-            hooks.
-        """
-        if not hasattr(self, "_skl_callbacks") or not hasattr(
-            routed_params, "callbacks"
-        ):
-            return None
-
-        callbacks_params = defaultdict(Bunch)
-        for hook_name in ("on_fit_task_begin", "on_fit_task_end"):
-            if not routed_params.callbacks[hook_name]:
-                continue
-
-            for callback_name, params in process_routing(
-                self._skl_callbacks,
-                hook_name,
-                **routed_params.callbacks[hook_name],
-            ).items():
-                callbacks_params[callback_name][hook_name] = params[hook_name]
-
-        return Bunch(**callbacks_params)
 
 
 @contextmanager

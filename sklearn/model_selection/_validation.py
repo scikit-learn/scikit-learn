@@ -823,13 +823,12 @@ def _fit_and_score(
     score_params_test = _check_method_params(X, params=score_params, indices=test)
     # Adjust length of callbacks metadata
     if callbacks_params is not None:
-        for cb_name in callbacks_params:
-            for hook_name in callbacks_params[cb_name]:
-                callbacks_params[cb_name][hook_name] = _check_method_params(
-                    X,
-                    params=callbacks_params[cb_name][hook_name],
-                    indices=train,
-                )
+        for hook_name in callbacks_params:
+            callbacks_params[hook_name] = _check_method_params(
+                X,
+                params=callbacks_params[hook_name],
+                indices=train,
+            )
 
     if parameters is not None:
         # here we clone the parameters, since sometimes the parameters
@@ -852,7 +851,7 @@ def _fit_and_score(
                     estimator=caller,
                     X=X_train,
                     y=y_train,
-                    metadata=callbacks_params,
+                    metadata=getattr(callbacks_params, "on_fit_task_begin", None),
                 )
                 if y_train is None:
                     estimator.fit(X_train, **fit_params)
@@ -898,7 +897,7 @@ def _fit_and_score(
                 estimator=caller,
                 X=X_train,
                 y=y_train,
-                metadata=callbacks_params,
+                metadata=getattr(callbacks_params, "on_fit_task_end", None),
             )
 
     if verbose > 1:
