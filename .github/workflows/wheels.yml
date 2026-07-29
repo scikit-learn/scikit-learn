@@ -263,7 +263,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: upload_anaconda
     needs: [build_wheels, build_sdist]
-    # The artifacts cannot be uploaded on PRs
+    # The artifacts should only be updated for push on branches (with special marker)
     if: github.event_name == 'push'
 
     steps:
