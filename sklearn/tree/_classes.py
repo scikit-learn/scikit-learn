@@ -1461,7 +1461,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         represented by ``np.nan``; unknown categories at prediction time are
         also treated as missing values.
 
-Categorical features are not supported with criterion="absolute_error".
+        Categorical features are not supported with `criterion="absolute_error"`.
 
         .. versionadded:: 1.10
 
