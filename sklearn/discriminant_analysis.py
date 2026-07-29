@@ -602,7 +602,7 @@ class LinearDiscriminantAnalysis(
         std = xp.std(Xc, axis=0)
         # avoid division by zero in normalization
         std[std == 0] = 1.0
-        fac = xp.asarray(1.0 / (n_samples - n_classes), dtype=X.dtype, device=device(X))
+        fac = xp.asarray(1.0 / n_samples, dtype=X.dtype, device=device(X))
 
         # 2) Within variance scaling
         X = xp.sqrt(fac) * (Xc / std)
@@ -922,8 +922,9 @@ class QuadraticDiscriminantAnalysis(
     covariance_ : list of len n_classes of ndarray \
             of shape (n_features, n_features)
         For each class, gives the covariance matrix estimated using the
-        samples of that class. The estimations are unbiased. Only present if
-        `store_covariance` is True.
+        samples of that class. The estimates use the maximum likelihood
+        (biased) covariance estimator. Only present if `store_covariance` is
+        True.
 
     means_ : array-like of shape (n_classes, n_features)
         Class-wise means.
@@ -943,7 +944,7 @@ class QuadraticDiscriminantAnalysis(
         For each class, contains the scaling of
         the Gaussian distributions along its principal axes, i.e. the
         variance in the rotated coordinate system. It corresponds to `S^2 /
-        (n_samples - 1)`, where `S` is the diagonal matrix of singular values
+        n_samples`, where `S` is the diagonal matrix of singular values
         from the SVD of `Xk`, where `Xk` is the centered matrix of samples
         from class k.
 
@@ -1041,13 +1042,13 @@ class QuadraticDiscriminantAnalysis(
         Xc = X - mean
         # Xc = U * S * V.T
         _, S, Vt = np.linalg.svd(Xc, full_matrices=False)
-        scaling = (S**2) / (n_samples - 1)  # scalings are squared singular values
+        scaling = (S**2) / n_samples  # scalings are squared singular values
         scaling = ((1 - self.reg_param) * scaling) + self.reg_param
         rotation = Vt.T
 
         cov = None
         if self.store_covariance:
-            # cov = V * (S^2 / (n-1)) * V.T
+            # cov = V * (S^2 / n) * V.T
             cov = scaling * Vt.T @ Vt
 
         return scaling, rotation, cov
