@@ -17,7 +17,12 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils.fixes import _IS_WASM
-from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.parallel import (
+    Parallel,
+    _FastThreadedParallel,
+    delayed,
+    parallel_map,
+)
 
 
 def get_working_memory():
@@ -195,3 +200,37 @@ def test_filter_warning_propagates_no_side_effect_with_loky_backend():
             joblib.delayed(warnings.warn)("Convergence warning", ConvergenceWarning)
             for _ in range(10)
         )
+
+
+def square(x: int) -> int:
+    return x * x
+
+
+@pytest.mark.parametrize(
+    "backend_params",
+    [{"backend": "threading"}, {"require": "sharedmem"}, {"prefer": "threads"}],
+)
+@pytest.mark.parametrize(
+    "return_as_params", [{}, {"return_as": "list"}, {"return_as": "generator"}]
+)
+def test_thread_fast_path(
+    backend_params: dict[str, str], return_as_params: dict[str, str]
+) -> None:
+    """When backend is threaded, and ``n_jobs > 1``, use fast path."""
+    par = Parallel(2, **backend_params, **return_as_params)
+    assert isinstance(par, _FastThreadedParallel)
+    result = par(delayed(square)(x) for x in [3, 5])
+    if return_as_params.get("return_as") == "generator":
+        assert not isinstance(result, list)
+        list_result = list(result)
+    else:
+        assert isinstance(result, list)
+        list_result = result
+    assert list_result == [9, 25]
+
+
+@pytest.mark.parametrize("backend", ["loky", "threading"])
+def test_map(backend: str) -> None:
+    result = parallel_map(square, [1, 2, 3], 2, backend=backend)
+    assert not isinstance(result, list)
+    assert list(result) == [1, 4, 9]

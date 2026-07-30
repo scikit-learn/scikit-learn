@@ -22,7 +22,7 @@ from threadpoolctl import ThreadpoolController
 from sklearn._config import config_context, get_config
 
 T = TypeVar("T")
-
+R = TypeVar("R")
 
 # Global threadpool controller instance that can be used to locally limit the number of
 # threads without looping through all shared libraries every time.
@@ -56,11 +56,12 @@ class _FastThreadedParallel:
         self._return_as = return_as
         self._n_threads = joblib.parallel.effective_n_jobs(n_jobs)
 
-    def map(self, func: Callable[[T], Any], iterable: Iterable[T]):
+    def _map(self, func: Callable[[T], Any], iterable: Iterable[T]) -> Iterable[R]:
         """Similar to built-in ``map()``, but parallel.
 
         There is no need to wrap in a ``delayed()``.
         """
+        assert self._return_as == "generator"
         config = get_config()
 
         def run(arg):
@@ -99,7 +100,7 @@ class _FastThreadedParallel:
 
             return _gen()
         else:
-            assert False, "shouldn't be reached"
+            assert False, "shouldn't be reached"  # pragma: nocover
 
 
 class _JoblibParallel(joblib.Parallel):
@@ -115,11 +116,12 @@ class _JoblibParallel(joblib.Parallel):
     .. versionadded:: 1.3
     """
 
-    def map(self, func: Callable[[T], Any], iterable: Iterable[T]):
+    def _map(self, func: Callable[[T], R], iterable: Iterable[T]) -> Iterable[R]:
         """Similar to built-in ``map()``, but parallel.
 
         There is no need to wrap in a ``delayed()``.
         """
+        assert self.return_as == "generator"
         delayed_func = delayed(func)
         return self(delayed_func(args) for args in iterable)
 
@@ -166,7 +168,7 @@ class _JoblibParallel(joblib.Parallel):
 def Parallel(*args, **kwargs) -> _FastThreadedParallel | _JoblibParallel:
     """Like :class:`joblib.Parallel` but propagates the scikit-learn configuration.
 
-    May also use a faster implementation when using a threaded backend.
+    May use a faster implementation when a threaded backend is requested.
 
     .. versionadded:: 1.3
     """
@@ -191,16 +193,32 @@ def Parallel(*args, **kwargs) -> _FastThreadedParallel | _JoblibParallel:
     is_threaded = (
         backend == "threading"
         or arguments["prefer"] == "threads"
-        or arguments["require"] == "shared_mem"
+        or arguments["require"] == "sharedmem"
     )
     if (
         is_threaded
         and arguments["return_as"] in ("list", "generator")
         and arguments["timeout"] is None
     ):
-        return _FastThreadedParallel(arguments["n_jobs"])
+        return _FastThreadedParallel(arguments["n_jobs"], arguments["return_as"])
     else:
         return _JoblibParallel(*args, **kwargs)
+
+
+def parallel_map(
+    func: Callable[[T], R],
+    iterable: Iterable[T],
+    n_jobs=None,
+    backend=None,
+    requires=None,
+) -> Iterable[R]:
+    """Similar to built-in ``map()``, but parallel.
+
+    There is no need to wrap in a ``delayed()``.
+    """
+    return Parallel(
+        n_jobs=n_jobs, backend=backend, requires=requires, return_as="generator"
+    )._map(func, iterable)
 
 
 # remove when https://github.com/joblib/joblib/issues/1071 is fixed
