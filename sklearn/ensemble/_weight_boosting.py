@@ -290,11 +290,6 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         feature_importances_ : ndarray of shape (n_features,)
             The feature importances.
         """
-        if self.estimators_ is None or len(self.estimators_) == 0:
-            raise ValueError(
-                "Estimator not fitted, call `fit` before `feature_importances_`."
-            )
-
         try:
             norm = self.estimator_weights_.sum()
             return (
