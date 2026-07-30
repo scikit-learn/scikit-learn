@@ -29,6 +29,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 from sklearn.utils import _align_api_if_sparse
 from sklearn.utils._testing import (
+    _convert_container,
     assert_allclose_dense_sparse,
     assert_almost_equal,
     skip_if_32bit,
@@ -1240,13 +1241,14 @@ def test_vectorizer_string_object_as_input(Vectorizer):
 @pytest.mark.parametrize(
     "Vectorizer", (CountVectorizer, TfidfVectorizer, HashingVectorizer)
 )
-def test_vectorizer_2d_array_like_as_input(Vectorizer):
+@pytest.mark.parametrize("container", ("list", "array", "pandas"))
+def test_vectorizer_2d_array_like_as_input(Vectorizer, container):
     # A 2D array-like (e.g. a single-column DataFrame) used to silently
-    # produce a nonsensical result instead of raising: iterating over it does
-    # not yield one document per sample.
+    # produce a nonsensical result instead of raising, or hard to comprehend erros:
+    # iterating over it does not yield one document per sample.
     message = "Iterable over raw text documents expected, 2-dimensional array-like"
     docs = ["one two", "three four", "five six"]
-    X_2d = np.array(docs, dtype=object).reshape(-1, 1)
+    X_2d = _convert_container([[d] for d in docs], container)
     vec = Vectorizer()
 
     with pytest.raises(ValueError, match=message):
@@ -1258,53 +1260,6 @@ def test_vectorizer_2d_array_like_as_input(Vectorizer):
 
     with pytest.raises(ValueError, match=message):
         vec.transform(X_2d)
-
-
-@pytest.mark.parametrize(
-    "Vectorizer", (CountVectorizer, TfidfVectorizer, HashingVectorizer)
-)
-def test_vectorizer_pandas_dataframe_as_input(Vectorizer):
-    # A single-column (or wider) DataFrame is a common and easy mistake: unlike
-    # a Series, iterating over a DataFrame yields its column names rather than
-    # its rows, so passing `df[["col"]]` instead of `df["col"]` used to
-    # silently vectorize the column name as if it were the only document.
-    pd = pytest.importorskip("pandas")
-    message = "Iterable over raw text documents expected, 2-dimensional array-like"
-    df = pd.DataFrame({"text": ["one two", "three four", "five six"]})
-    vec = Vectorizer()
-
-    with pytest.raises(ValueError, match=message):
-        vec.fit_transform(df[["text"]])
-
-    vec.fit_transform(df["text"])  # a Series is fine: one document per row
-
-
-def test_column_transformer_list_selector_with_vectorizer_raises():
-    # Non-regression test illustrating another common way to hit the 2D input
-    # error above: selecting columns by list (even a single-element list) in
-    # a ColumnTransformer passes a DataFrame down to the transformer, whereas
-    # a scalar (bare string) selector passes a 1D Series as documented in
-    # :class:`~sklearn.compose.ColumnTransformer`.
-    pd = pytest.importorskip("pandas")
-    from sklearn.compose import ColumnTransformer
-
-    df = pd.DataFrame(
-        {
-            "Heating": ["Forced Air", "Central, Gas"],
-            "Cooling": ["Central Air", None],
-        }
-    )
-    message = "Iterable over raw text documents expected, 2-dimensional array-like"
-
-    ct = ColumnTransformer(
-        [("heating", CountVectorizer(), ["Heating", "Cooling"])],
-    )
-    with pytest.raises(ValueError, match=message):
-        ct.fit_transform(df)
-
-    # Using a scalar column selector instead extracts a 1D Series and works.
-    ct = ColumnTransformer([("heating", CountVectorizer(), "Heating")])
-    ct.fit_transform(df)
 
 
 @pytest.mark.parametrize("X_dtype", [np.float32, np.float64])

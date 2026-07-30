@@ -198,14 +198,14 @@ def strip_tags(s):
 
 
 def _validate_raw_documents(raw_documents):
-    """Raise a helpful error for common misuses of the ``raw_documents`` API.
+    """Raise a helpful error for common misuses of the raw_documents API.
 
-    ``raw_documents`` must be a 1D iterable of documents (or file-like
-    objects), one per sample. Passing a single string, or a 2D array-like
-    such as a pandas/polars DataFrame or a 2D numpy array, does not raise:
-    Python happily iterates over such objects, but over the wrong axis
-    (characters of the string, or column labels/rows of the 2D structure),
-    silently producing a nonsensical result instead of the expected error.
+    raw_documents must be a 1D iterable of documents (or file-like objects).
+    But Python can iterate over a single string or a 2D array-like, so
+    raw_documents-consuming code don't raise for such inputs but produces
+    nonsensical results instead.
+
+    This function checks for this kind of wrong input and raises a clear error.
     """
     if isinstance(raw_documents, str):
         raise ValueError(
@@ -214,11 +214,9 @@ def _validate_raw_documents(raw_documents):
     shape = getattr(raw_documents, "shape", None)
     if shape is not None and len(shape) == 2:
         raise ValueError(
-            "Iterable over raw text documents expected, 2-dimensional "
-            f"array-like with shape {shape} received. A vectorizer expects "
-            "one document per sample, e.g. a single DataFrame column "
-            "(`df['column_name']`, not `df[['column_name']]`), or a scalar "
-            "(not list) column selector when used inside a ColumnTransformer."
+            "Iterable over raw text documents expected, 2-dimensional array-like"
+            f"with shape {shape} received. A vectorizer expects one document"
+            "per sample, e.g. a single DataFrame column `df['column_name']`"
         )
 
 
