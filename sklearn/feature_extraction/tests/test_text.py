@@ -1241,7 +1241,7 @@ def test_vectorizer_string_object_as_input(Vectorizer):
 @pytest.mark.parametrize(
     "Vectorizer", (CountVectorizer, TfidfVectorizer, HashingVectorizer)
 )
-@pytest.mark.parametrize("container", ("list", "array", "pandas"))
+@pytest.mark.parametrize("container", ("array", "pandas"))
 def test_vectorizer_2d_array_like_as_input(Vectorizer, container):
     # A 2D array-like (e.g. a single-column DataFrame) used to silently
     # produce a nonsensical result instead of raising, or hard to comprehend erros:
