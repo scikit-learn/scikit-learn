@@ -115,7 +115,6 @@ class ScoringMonitor:
             self._scorer = check_scoring(estimator=None, scoring=scoring)
 
         self._log = []
-        self._estimator_scorers = {}
 
         # Handle to the main-process listener, opened eagerly so that any worker that
         # receives a pickled copy of this callback can send data to the main process.
