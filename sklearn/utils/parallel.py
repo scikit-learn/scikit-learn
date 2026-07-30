@@ -69,7 +69,7 @@ class _FastThreadedParallel:
                     # thread when it is created. However, we might later want
                     # to reuse ThreadPoolExecutor, so better to just do the
                     # right thing.
-                    return ctx.run(f, *args, *kwargs)
+                    return ctx.run(f, *args, **kwargs)
 
             return list(pool.map(run, iterable))
 
