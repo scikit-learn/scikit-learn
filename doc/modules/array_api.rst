@@ -89,6 +89,9 @@ into NumPy arrays using :func:`numpy.asarray` (or :func:`numpy.array`).
 While this will successfully convert some array API inputs (e.g., JAX array),
 we generally recommend setting `array_api_dispatch=True` when using array API inputs.
 This is because NumPy conversion can often fail, e.g., torch tensor allocated on GPU.
+Also note that the output array will be NumPy when `array_api_dispatch=False` whereas
+when `array_api_dispatch=True` the output array will depend on the input array (see
+:ref:`input_output_array_api` for details).
 
 Example usage
 =============
@@ -159,7 +162,8 @@ Estimators
 - :class:`decomposition.PCA` (with `svd_solver="full"`, `svd_solver="covariance_eigh"`, or
   `svd_solver="randomized"` (`svd_solver="randomized"` only if `power_iteration_normalizer="QR"`))
 - :class:`kernel_approximation.Nystroem`
-- :class:`linear_model.LogisticRegression` (with `solver="lbfgs"`)
+- :class:`linear_model.LogisticRegression` (with `solver="lbfgs"` and `solver="newton-cg"`)
+- :class:`linear_model.LogisticRegressionCV` (with `solver="lbfgs"` and `solver="newton-cg"`)
 - :class:`linear_model.PoissonRegressor` (with `solver="lbfgs"`)
 - :class:`linear_model.Ridge` (with `solver="svd"`)
 - :class:`linear_model.RidgeCV` (see :ref:`device_support_for_float64`)
@@ -214,6 +218,7 @@ Metrics
 - :func:`sklearn.metrics.hamming_loss`
 - :func:`sklearn.metrics.jaccard_score`
 - :func:`sklearn.metrics.log_loss`
+- :func:`sklearn.metrics.matthews_corrcoef` (see :ref:`device_support_for_float64`)
 - :func:`sklearn.metrics.max_error`
 - :func:`sklearn.metrics.mean_absolute_error`
 - :func:`sklearn.metrics.mean_absolute_percentage_error`
@@ -260,17 +265,32 @@ Tools
 - :func:`model_selection.train_test_split`
 - :func:`utils.check_consistent_length`
 
+.. _input_output_array_api:
+
 Input and output array type handling
 ====================================
 
 Estimators and scoring functions are able to accept input arrays
 from different array libraries and/or devices. When a mixed set of input arrays is
-passed, scikit-learn converts arrays as needed to make them all consistent.
+passed, scikit-learn converts arrays as needed to make them all consistent. The
+following section describes how input and output array types are handled
+when `array_api_dispatch=True`.
 
 For estimators, the rule is **"everything follows** `X` **"** - mixed array inputs are
 converted so that they all match the array library and device of `X`.
 For scoring functions the rule is **"everything follows** `y_pred` **"** - mixed array
 inputs are converted so that they all match the array library and device of `y_pred`.
+
+Mixed array input support also covers the particular case where `y` is a NumPy
+array of string values, while other inputs are numerical arrays of any
+container type. As all models require numerical input, scikit-learn often converts
+`y` to a numerical representation internally (for instance via one-hot encoding or
+ordinal encoding). The result of this is able to be moved to the namespace and device
+of the other inputs, as string-valued arrays are not covered by the array API
+specifications.
+
+Note that the `classes_` estimator attribute always remains in the same array
+library as the original `y`, in order to support string class labels.
 
 When a function or method has been called with array API compatible inputs, the
 convention is to return arrays from the same array library and on the same

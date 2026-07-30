@@ -2813,9 +2813,10 @@ def train_test_split(
 
     Parameters
     ----------
-    *arrays : sequence of indexables with same length / shape[0]
-        Allowed inputs are lists, numpy arrays, scipy-sparse
-        matrices or pandas dataframes.
+    *arrays : sequence of array-like of shape (n_samples,) or \
+            (n_samples, n_outputs)
+        Indexable data-structures can be arrays, lists, dataframes, scipy
+        sparse matrices or pandas dataframes with consistent first dimension.
 
     test_size : float or int, default=None
         If float, should be between 0.0 and 1.0 and represent the proportion
@@ -2839,7 +2840,7 @@ def train_test_split(
         Whether or not to shuffle the data before splitting. If shuffle=False
         then stratify must be None.
 
-    stratify : array-like, default=None
+    stratify : array-like of shape (n_samples,), default=None
         If not None, data is split in a stratified fashion, using this as
         the class labels.
         Read more in the :ref:`User Guide <stratification>`.

@@ -40,5 +40,4 @@ dependencies:
   - towncrier=24.8.0  # min
   - pip
   - pip:
-    - sphinxcontrib-sass==0.3.4  # min
     - pandas==1.5.0  # min
