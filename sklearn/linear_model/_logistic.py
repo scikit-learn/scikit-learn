@@ -1331,7 +1331,6 @@ class LogisticRegression(
         warm_start=False,
         n_jobs=None,
     ):
-        super().__init__()
         self.penalty = penalty
         self.C = C
         self.l1_ratio = l1_ratio

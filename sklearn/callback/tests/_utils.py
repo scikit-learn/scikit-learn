@@ -197,7 +197,6 @@ class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
     _parameter_constraints: dict = {}
 
     def __init__(self, max_iter=20, computation_intensity=0.001):
-        super().__init__()
         self.max_iter = max_iter
         self.computation_intensity = computation_intensity
 

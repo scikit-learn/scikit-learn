@@ -84,8 +84,11 @@ class CallbackSupportMixin:
     .. automethod:: _init_callback_context
     """
 
-    def __init__(self):
-        if default_callbacks := _callbacks_by_default():
+    def _set_default_callbacks(self):
+        """Set the default callbacks."""
+        if not hasattr(self, "_skl_callbacks") and (
+            default_callbacks := _callbacks_by_default()
+        ):
             self._skl_default_callbacks = default_callbacks
 
     def set_callbacks(self, *callbacks):
@@ -107,6 +110,7 @@ class CallbackSupportMixin:
     def _set_callbacks(self, callbacks):
         """set_callbacks without validation."""
         if callbacks:
+            self.__dict__.pop("_skl_default_callbacks", None)
             self._skl_callbacks = list(callbacks)
         else:
             self.__dict__.pop("_skl_callbacks", None)
@@ -190,6 +194,8 @@ def callback_management_context(estimator):
     ------
     None.
     """
+    if isinstance(estimator, CallbackSupportMixin):
+        estimator._set_default_callbacks()
     try:
         yield
     finally:

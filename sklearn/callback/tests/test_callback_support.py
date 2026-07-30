@@ -178,6 +178,6 @@ def test_defaut_callbacks():
     default_callback = RecordingCallback()
     set_config(default_callbacks=(default_callback,))
 
-    estimator = MaxIterEstimator()
+    estimator = MaxIterEstimator().fit()
 
     assert estimator._skl_default_callbacks == [default_callback]
