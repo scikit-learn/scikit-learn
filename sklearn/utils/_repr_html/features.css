@@ -83,6 +83,14 @@
   filter: grayscale(100%) opacity(60%);
 }
 
+/* Keep this separate from the next selector */
+.features .copy-paste-icon:focus {
+  filter:none;
+}
+.features .copy-paste-icon:focus-visible {
+  filter: none;
+}
+
 .features .features-container table {
   width: 100%;
   margin: 0.01em;

@@ -155,8 +155,3 @@ a.param-doc-link::before {
     padding: 0;
     background-color: transparent;
 }
-
-.copy-paste-icon:focus-visible {
-    outline: 1px solid currentColor;
-    outline-offset: 1px;
-}

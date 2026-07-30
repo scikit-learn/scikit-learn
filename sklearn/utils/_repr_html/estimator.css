@@ -13,6 +13,8 @@
   --sklearn-color-fitted-level-1: #d4ebff;
   --sklearn-color-fitted-level-2: #b3dbfd;
   --sklearn-color-fitted-level-3: cornflowerblue;
+  /* Focus color */
+  --sklearn-color-focus: #740cd6;
 }
 
 .sk-global.light {
@@ -38,8 +40,15 @@
   padding: 0;
 }
 
-summary.sk-toggleable__label:focus-visible {
-  box-shadow: inset 0 0 0 2px currentColor;
+.sk-global :focus {
+  outline: 2px solid var(--sklearn-color-focus);
+  outline-offset: -1px;
+  border-radius: 2px;
+}
+
+.sk-global :focus-visible {
+  outline: 2px solid var(--sklearn-color-focus);
+  outline-offset: -1px;
   border-radius: 2px;
 }
 
@@ -293,7 +302,7 @@ clickable and can be expanded/collapsed.
 a:link.sk-estimator-doc-link,
 a:visited.sk-estimator-doc-link {
   float: right;
-  font-size: smaller;
+  font-size: small;
   line-height: 1em;
   font-family: monospace;
   background-color: var(--sklearn-color-unfitted-level-0);
@@ -305,7 +314,7 @@ a:visited.sk-estimator-doc-link {
   text-align: center;
   /* unfitted */
   border: var(--sklearn-color-unfitted-level-3) 1pt solid;
-  color: var(--sklearn-color-unfitted-level-3);
+  color: var(--sklearn-color-text);
 }
 
 .sk-estimator-doc-link.fitted,
@@ -314,7 +323,7 @@ a:visited.sk-estimator-doc-link.fitted {
   /* fitted */
   background-color: var(--sklearn-color-fitted-level-0);
   border: var(--sklearn-color-fitted-level-3) 1pt solid;
-  color: var(--sklearn-color-fitted-level-3);
+  color: var(--sklearn-color-text);
 }
 
 /* On hover */

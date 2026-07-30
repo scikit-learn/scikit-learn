@@ -157,11 +157,8 @@ function detectTheme(element) {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
-/*
- * Keep keyboard activation inside each HTML display. Interactive parts
- * of the display act on Enter natively, but in a notebook that Enter keydown
- * bubbles up to the notebook and switches the focused cell into edit mode,
- * stealing focus away from the diagram. This function avoids it.
+/* Avoid Enter keydown to bubble up to the notebook and switch the focused cell
+ * into edit mode steals focus away from the diagram.
  */
 document.querySelectorAll(
     '.sk-top-container:not([data-sk-keydown-bound])'
