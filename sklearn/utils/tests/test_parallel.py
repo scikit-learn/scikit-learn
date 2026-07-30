@@ -250,6 +250,22 @@ def test_thread_no_fast_path_single_threaded(backend_params: dict[str, str]):
     assert par(delayed(square)(x) for x in [1, 3]) == [1, 9]
 
 
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"backend": "somebackend", "require": "sharedmem"},
+        {"backend": "somebackend", "prefer": "threads"},
+    ],
+)
+def test_thread_no_fast_path_explicit_backend(params: dict[str, str]):
+    """
+    When an explicit non-threading backend is given, the fast path is not used.
+    """
+    # If fast path was used, it wouldn't raise a ValueError...
+    with pytest.raises(ValueError, match="Invalid backend"):
+        Parallel(2, **params)
+
+
 @pytest.mark.parametrize("backend", ["loky", "threading"])
 def test_map(backend: str) -> None:
     result = parallel_map(square, [1, 2, 3], 2, backend=backend)

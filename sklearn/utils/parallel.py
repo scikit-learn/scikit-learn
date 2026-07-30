@@ -10,10 +10,7 @@ import warnings
 from concurrent.futures import ThreadPoolExecutor
 from functools import update_wrapper
 from inspect import Signature
-from typing import TYPE_CHECKING, TypeVar
-
-if TYPE_CHECKING:
-    from typing import Any, Callable, Iterable, Literal
+from typing import Any, Callable, Iterable, Literal, TypeVar
 
 import joblib
 import joblib.parallel
@@ -52,7 +49,8 @@ class _FastThreadedParallel:
     """Similar interface to :class:`joblib.Parallel`, but with lower overhead."""
 
     def __init__(self, n_jobs, return_as: Literal["list", "generator"]):
-        assert n_jobs > 1
+        if n_jobs is None:
+            n_jobs = joblib.parallel.effective_n_jobs(-1)
         self._return_as = return_as
         self._n_jobs = n_jobs
 
@@ -171,6 +169,24 @@ def Parallel(*args, **kwargs) -> _FastThreadedParallel | _JoblibParallel:
     May use a faster implementation when a threaded backend is requested.
 
     .. versionadded:: 1.3
+
+    .. versionchanged:: 1.10
+       Now a function, can return a fast-path implementation for threaded use.
+
+    Parameters
+    ----------
+
+    *args : params
+        Constructor parameters for :class:`joblib.Parallel`.
+
+    **kwargs : params
+        Constructor parameters for :class:`joblib.Parallel`.
+
+    Returns
+    -------
+    object similar to :class:`joblib.Parallel`
+        Might be actual :class:`joblib.Parallel`, or a faster implementation
+        for threaded usage.
     """
     signature = Signature.from_callable(joblib.Parallel.__init__).bind(
         None, *args, **kwargs
@@ -196,10 +212,9 @@ def Parallel(*args, **kwargs) -> _FastThreadedParallel | _JoblibParallel:
         n_jobs = config["n_jobs"]
     n_jobs = joblib.parallel.effective_n_jobs(arguments["n_jobs"])
 
-    is_threaded = (
-        backend == "threading"
-        or arguments["prefer"] == "threads"
-        or arguments["require"] == "sharedmem"
+    is_threaded = backend == "threading" or (
+        backend is None
+        and (arguments["prefer"] == "threads" or arguments["require"] == "sharedmem")
     )
     if (
         is_threaded
@@ -220,14 +235,39 @@ def parallel_map(
     iterable: Iterable[T],
     n_jobs=None,
     backend=None,
-    requires=None,
+    prefer=None,
+    require=None,
 ) -> Iterable[R]:
     """Similar to built-in ``map()``, but parallel.
 
     There is no need to wrap in a ``delayed()``.
+
+    .. versionadded:: 1.10
+
+    Parameters
+    ----------
+    func : callable function
+        Called with each value in the iterable.
+    iterable : an iterable of values
+        Each value will be passed to func.
+    n_jobs : int, default=None
+        The maximum number of concurrently running jobs.
+        See :class:`joblib.Parallel` for details.
+    backend : str, ParallelBackendBase instance or None, default='loky'
+        Specify the parallelization backend implementation.
+        See :class:`joblib.Parallel` for details.
+    prefer : str in {'processes', 'threads'} or None, default=None
+        See :class:`joblib.Parallel` for details.
+    require : 'sharedmem' or None, default=None
+        See :class:`joblib.Parallel` for details.
+
+    Returns
+    -------
+    results : Iterable
+        Results of calling ``func(value)`` for value in the input iterable.
     """
     return Parallel(
-        n_jobs=n_jobs, backend=backend, requires=requires, return_as="generator"
+        n_jobs=n_jobs, backend=backend, require=require, return_as="generator"
     )._map(func, iterable)
 
 
