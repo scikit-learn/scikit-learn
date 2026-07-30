@@ -5,6 +5,7 @@ usage.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import contextvars
 import functools
 import warnings
 from concurrent.futures import ThreadPoolExecutor
@@ -46,17 +47,29 @@ class _FastThreadedParallel:
 
     def __init__(self, n_jobs):
         # TODO support return_as="generator"
+        # TODO shouldn't be used if _n_threads == 1
         self._n_threads = joblib.parallel.effective_n_jobs(n_jobs)
 
     def __call__(self, iterable):
-        # TODO warnings config
         config = get_config()
+        # Used for warnings configuration for versions of Python (notably
+        # free-threaded Python) that rely on contextvars for that information:
+        ctx = contextvars.copy_context()
+
         with ThreadPoolExecutor(self._n_threads) as pool:
 
             def run(params):
                 f, args, kwargs = params
                 with config_context(**config):
-                    return f(*args, *kwargs)
+                    # Undo unnecessary wrapping done by delayed():
+                    f = f.function
+                    # Technically you don't need the ctx.run() in some cases:
+                    # ThreadPoolExecutor has unexpected behavior on
+                    # free-threaded Python where the context gets copied to the
+                    # thread when it is created. However, we might later want
+                    # to reuse ThreadPoolExecutor, so better to just do the
+                    # right thing.
+                    return ctx.run(f, *args, *kwargs)
 
             return list(pool.map(run, iterable))
 
