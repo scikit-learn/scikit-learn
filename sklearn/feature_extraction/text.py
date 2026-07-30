@@ -10,6 +10,7 @@ import warnings
 from collections import defaultdict
 from collections.abc import Mapping
 from functools import partial
+from itertools import chain
 from numbers import Integral
 from operator import itemgetter
 
@@ -206,18 +207,59 @@ def _validate_raw_documents(raw_documents):
     nonsensical results instead.
 
     This function checks for this kind of wrong input and raises a clear error.
+
+    Returns
+    -------
+    raw_documents : iterable
+        Equivalent to the input, to be used in place of it (peeking at the
+        first element to validate it consumes it from a one-shot iterator).
     """
     if isinstance(raw_documents, str):
         raise ValueError(
             "Iterable over raw text documents expected, string object received."
         )
+
     shape = getattr(raw_documents, "shape", None)
     if shape is not None and len(shape) == 2:
         raise ValueError(
-            "Iterable over raw text documents expected, 2-dimensional array-like"
-            f"with shape {shape} received. A vectorizer expects one document"
-            "per sample, e.g. a single DataFrame column `df['column_name']`"
+            "Iterable over raw text documents expected, 2-dimensional "
+            f"array-like with shape {shape} received. A vectorizer expects "
+            "one document per sample, e.g. a single DataFrame column "
+            "(`df['column_name']`, not `df[['column_name']]`), or a scalar "
+            "(not list) column selector when used inside a ColumnTransformer."
         )
+
+    if iter(raw_documents) is raw_documents:
+        # A one-shot iterator/generator: peeking at its first element below
+        # would consume it, which some callers cannot afford (e.g.
+        # `HashingVectorizer.fit_transform` iterates the same object twice,
+        # once through `fit` and once through `transform`). Skip the deeper
+        # check in that case: the per-document decoding/analysis code will
+        # still surface a (less friendly) error for genuinely invalid content.
+        return raw_documents
+
+    raw_documents = iter(raw_documents)
+    try:
+        first_doc = next(raw_documents)
+    except StopIteration:
+        return iter(())
+
+    if isinstance(first_doc, (list, tuple, np.ndarray)):
+        # A document can legitimately be something other than a string, bytes
+        # or file-like object (e.g. a dict, when using a custom
+        # ``preprocessor``), so we don't validate its type in general. But a
+        # first "document" that is itself a list/tuple/array is an unambiguous
+        # sign of a 2-dimensional structure such as a list of lists.
+        raise ValueError(
+            "Iterable over raw text documents expected, 2-dimensional "
+            "array-like received: its first element is itself a "
+            f"{type(first_doc).__name__}. A vectorizer expects one document "
+            "per sample: did you mean to pass a 1D sequence of strings "
+            "rather than a 2-dimensional structure, e.g. a list of lists, or "
+            "a DataFrame column selected as a list "
+            "(`df[['column_name']]` instead of `df['column_name']`)?"
+        )
+    return chain([first_doc], raw_documents)
 
 
 def _check_stop_list(stop):
@@ -897,7 +939,7 @@ class HashingVectorizer(
         X : sparse matrix of shape (n_samples, n_features)
             Document-term matrix.
         """
-        _validate_raw_documents(X)
+        X = _validate_raw_documents(X)
 
         self._validate_ngram_range()
 
@@ -1378,7 +1420,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         # We intentionally don't call the transform method to make
         # fit_transform overridable without unwanted side effects in
         # TfidfVectorizer.
-        _validate_raw_documents(raw_documents)
+        raw_documents = _validate_raw_documents(raw_documents)
 
         self._validate_ngram_range()
         self._warn_for_unused_params()
@@ -1436,7 +1478,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         X : sparse matrix of shape (n_samples, n_features)
             Document-term matrix.
         """
-        _validate_raw_documents(raw_documents)
+        raw_documents = _validate_raw_documents(raw_documents)
         self._check_vocabulary()
 
         # use the same matrix-building strategy as fit_transform
