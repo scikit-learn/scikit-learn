@@ -206,9 +206,16 @@ def square(x: int) -> int:
     return x * x
 
 
+_THREADING_PARAMS = [
+    {"backend": "threading"},
+    {"require": "sharedmem"},
+    {"prefer": "threads"},
+]
+
+
 @pytest.mark.parametrize(
     "backend_params",
-    [{"backend": "threading"}, {"require": "sharedmem"}, {"prefer": "threads"}],
+    _THREADING_PARAMS,
 )
 @pytest.mark.parametrize(
     "return_as_params", [{}, {"return_as": "list"}, {"return_as": "generator"}]
@@ -227,6 +234,20 @@ def test_thread_fast_path(
         assert isinstance(result, list)
         list_result = result
     assert list_result == [9, 25]
+
+
+@pytest.mark.parametrize(
+    "backend_params",
+    _THREADING_PARAMS,
+)
+def test_thread_no_fast_path_single_threaded(backend_params: dict[str, str]):
+    """
+    When ``n_jobs == 1``, normal ``joblib.Parallel`` is used since that gives
+    us fast sequential execution.
+    """
+    par = Parallel(1, **backend_params)
+    assert not isinstance(par, _FastThreadedParallel)
+    assert par(delayed(square)(x) for x in [1, 3]) == [1, 9]
 
 
 @pytest.mark.parametrize("backend", ["loky", "threading"])

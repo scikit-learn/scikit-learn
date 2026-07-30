@@ -13,7 +13,7 @@ from inspect import Signature
 from typing import TYPE_CHECKING, TypeVar
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Iterable
+    from typing import Any, Callable, Iterable, Literal
 
 import joblib
 import joblib.parallel
@@ -51,10 +51,10 @@ def _with_config_and_warning_filters(delayed_func, config, warning_filters):
 class _FastThreadedParallel:
     """Similar interface to :class:`joblib.Parallel`, but with lower overhead."""
 
-    def __init__(self, n_jobs, return_as="list"):
-        # TODO shouldn't be used if _n_threads == 1
+    def __init__(self, n_jobs, return_as: Literal["list", "generator"]):
+        assert n_jobs > 1
         self._return_as = return_as
-        self._n_threads = joblib.parallel.effective_n_jobs(n_jobs)
+        self._n_jobs = n_jobs
 
     def _map(self, func: Callable[[T], Any], iterable: Iterable[T]) -> Iterable[R]:
         """Similar to built-in ``map()``, but parallel.
@@ -68,7 +68,7 @@ class _FastThreadedParallel:
             with config_context(**config):
                 return func(arg)
 
-        with ThreadPoolExecutor(self._n_threads) as pool:
+        with ThreadPoolExecutor(self._n_jobs) as pool:
             yield from pool.map(run, iterable)
 
     def __call__(self, iterable, _unwrap=False):
@@ -85,7 +85,7 @@ class _FastThreadedParallel:
         # For warnings, on free-threaded Python this already copies contextvars
         # on thread startup which is how that is controlled, so it works
         # automatically.
-        pool = ThreadPoolExecutor(self._n_threads)
+        pool = ThreadPoolExecutor(self._n_jobs)
         result = pool.map(run, iterable)
         if self._return_as == "list":
             with pool:
@@ -190,6 +190,12 @@ def Parallel(*args, **kwargs) -> _FastThreadedParallel | _JoblibParallel:
     config = getattr(joblib.parallel._backend, "config", default_parallel_config)
 
     backend = arguments["backend"] or config["backend"]
+
+    n_jobs = arguments["n_jobs"]
+    if n_jobs is None:
+        n_jobs = config["n_jobs"]
+    n_jobs = joblib.parallel.effective_n_jobs(arguments["n_jobs"])
+
     is_threaded = (
         backend == "threading"
         or arguments["prefer"] == "threads"
@@ -197,8 +203,12 @@ def Parallel(*args, **kwargs) -> _FastThreadedParallel | _JoblibParallel:
     )
     if (
         is_threaded
+        # Make sure only supported arguments are being passed in:
         and arguments["return_as"] in ("list", "generator")
         and arguments["timeout"] is None
+        # No point in threading if there is only one thread, joblib will handle
+        # this by using sequential backend.
+        and n_jobs > 1
     ):
         return _FastThreadedParallel(arguments["n_jobs"], arguments["return_as"])
     else:
