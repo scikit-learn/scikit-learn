@@ -206,6 +206,38 @@ def test_subcluster_dtype(global_dtype):
     assert brc.fit(X).subcluster_centers_.dtype == global_dtype
 
 
+def test_birch_numerical_stability_far_from_origin():
+    # Non-regression test for the numerical stability of the subcluster radius.
+    # The radius used to be computed as ``sum ||x_i||^2 / n - ||centroid||^2``,
+    # which catastrophically cancels once the data lives far from the origin:
+    # the squared radius went negative, was clamped to 0, so every leaf
+    # subcluster reported radius 0. ``threshold`` then no longer bounded the
+    # actual spread and the tree filled with degenerate zero-radius subclusters.
+    #
+    # float64 is used on purpose: the test isolates the CF formula, and a 1e8
+    # offset is not representable in float32 (the blob spread would be lost at
+    # the input level, independently of Birch).
+    X, _ = make_blobs(n_samples=200, centers=4, cluster_std=0.5, random_state=0)
+    X = X.astype(np.float64, copy=False)
+    threshold = 1.0
+
+    near = Birch(threshold=threshold, n_clusters=None).fit(X)
+    far = Birch(threshold=threshold, n_clusters=None).fit(X + 1e8)
+
+    near_radii = [sc.radius for leaf in near._get_leaves() for sc in leaf.subclusters_]
+    far_radii = [sc.radius for leaf in far._get_leaves() for sc in leaf.subclusters_]
+
+    # The blobs have a genuine spread near the origin ...
+    assert max(near_radii) > 0
+    # ... which must be preserved far from it -- it used to collapse to 0.0.
+    assert max(far_radii) > 0
+    # ``threshold`` must remain a true upper bound on every leaf radius.
+    check_threshold(far, threshold)
+    # And the tree must not fill up with degenerate zero-radius subclusters
+    # (the cancellation used to blow the leaf count up by an order of magnitude).
+    assert len(far.subcluster_centers_) < 3 * len(near.subcluster_centers_)
+
+
 def test_both_subclusters_updated():
     """Check that both subclusters are updated when a node a split, even when there are
     duplicated data points. Non-regression test for #23269.
