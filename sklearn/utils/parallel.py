@@ -7,9 +7,12 @@ usage.
 
 import functools
 import warnings
+from concurrent.futures import ThreadPoolExecutor
 from functools import update_wrapper
+from inspect import Signature
 
 import joblib
+import joblib.parallel
 from threadpoolctl import ThreadpoolController
 
 from sklearn._config import config_context, get_config
@@ -38,7 +41,27 @@ def _with_config_and_warning_filters(delayed_func, config, warning_filters):
         return delayed_func
 
 
-class Parallel(joblib.Parallel):
+class _FastThreadedParallel:
+    """Similar interface to :class:`joblib.Parallel`, but with lower overhead."""
+
+    def __init__(self, n_jobs):
+        # TODO support return_as="generator"
+        self._n_threads = joblib.parallel.effective_n_jobs(n_jobs)
+
+    def __call__(self, iterable):
+        # TODO warnings config
+        config = get_config()
+        with ThreadPoolExecutor(self._n_threads) as pool:
+
+            def run(params):
+                f, args, kwargs = params
+                with config_context(**config):
+                    return f(*args, *kwargs)
+
+            return list(pool.map(run, iterable))
+
+
+class _JoblibParallel(joblib.Parallel):
     """Tweak of :class:`joblib.Parallel` that propagates the scikit-learn configuration.
 
     This subclass of :class:`joblib.Parallel` ensures that the active configuration
@@ -89,6 +112,47 @@ class Parallel(joblib.Parallel):
             for delayed_func, args, kwargs in iterable
         )
         return super().__call__(iterable_with_config_and_warning_filters)
+
+
+def Parallel(*args, **kwargs) -> _FastThreadedParallel | _JoblibParallel:
+    """Like :class:`joblib.Parallel` but propagates the scikit-learn configuration.
+
+    May also use a faster implementation when using a threaded backend.
+
+    .. versionadded:: 1.3
+    """
+    signature = Signature.from_callable(joblib.Parallel.__init__).bind(
+        None, *args, **kwargs
+    )
+    signature.apply_defaults()
+    arguments = {
+        key: value.default_value if hasattr(value, "default_value") else value
+        for (key, value) in signature.arguments.items()
+    }
+
+    # TODO expose current config in joblib as semi-public API, so we don't rely
+    # on implementation details.
+    default_parallel_config = {
+        key: value.default_value if hasattr(value, "default_value") else value
+        for (key, value) in joblib.parallel.default_parallel_config.items()
+    }
+    config = getattr(joblib.parallel._backend, "config", default_parallel_config)
+
+    backend = arguments["backend"] or config["backend"]
+    is_threaded = (
+        backend == "threading"
+        or arguments["prefer"] == "threads"
+        or arguments["require"] == "shared_mem"
+    )
+    if (
+        is_threaded
+        # TODO can support generator too
+        and arguments["return_as"] == "list"
+        and arguments["timeout"] is None
+    ):
+        return _FastThreadedParallel(arguments["n_jobs"])
+    else:
+        return _JoblibParallel(*args, **kwargs)
 
 
 # remove when https://github.com/joblib/joblib/issues/1071 is fixed
