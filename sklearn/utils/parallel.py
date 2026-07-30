@@ -10,12 +10,19 @@ import warnings
 from concurrent.futures import ThreadPoolExecutor
 from functools import update_wrapper
 from inspect import Signature
+from typing import TYPE_CHECKING, TypeVar
+
+if TYPE_CHECKING:
+    from typing import Any, Callable, Iterable
 
 import joblib
 import joblib.parallel
 from threadpoolctl import ThreadpoolController
 
 from sklearn._config import config_context, get_config
+
+T = TypeVar("T")
+
 
 # Global threadpool controller instance that can be used to locally limit the number of
 # threads without looping through all shared libraries every time.
@@ -44,27 +51,55 @@ def _with_config_and_warning_filters(delayed_func, config, warning_filters):
 class _FastThreadedParallel:
     """Similar interface to :class:`joblib.Parallel`, but with lower overhead."""
 
-    def __init__(self, n_jobs):
-        # TODO support return_as="generator"
+    def __init__(self, n_jobs, return_as="list"):
         # TODO shouldn't be used if _n_threads == 1
+        self._return_as = return_as
         self._n_threads = joblib.parallel.effective_n_jobs(n_jobs)
 
-    def __call__(self, iterable):
+    def map(self, func: Callable[[T], Any], iterable: Iterable[T]):
+        """Similar to built-in ``map()``, but parallel.
+
+        There is no need to wrap in a ``delayed()``.
+        """
         config = get_config()
+
+        def run(arg):
+            with config_context(**config):
+                return func(arg)
+
+        with ThreadPoolExecutor(self._n_threads) as pool:
+            yield from pool.map(run, iterable)
+
+    def __call__(self, iterable, _unwrap=False):
+        config = get_config()
+
+        def run(params):
+            f, args, kwargs = params
+            with config_context(**config):
+                # Undo unnecessary wrapping done by delayed():
+                f = f.function
+
+                return f(*args, **kwargs)
+
         # For warnings, on free-threaded Python this already copies contextvars
         # on thread startup which is how that is controlled, so it works
         # automatically.
-        with ThreadPoolExecutor(self._n_threads) as pool:
+        pool = ThreadPoolExecutor(self._n_threads)
+        result = pool.map(run, iterable)
+        if self._return_as == "list":
+            with pool:
+                return list(result)
+        elif self._return_as == "generator":
 
-            def run(params):
-                f, args, kwargs = params
-                with config_context(**config):
-                    # Undo unnecessary wrapping done by delayed():
-                    f = f.function
+            def _gen():
+                try:
+                    yield from result
+                finally:
+                    pool.shutdown()
 
-                    return f(*args, **kwargs)
-
-            return list(pool.map(run, iterable))
+            return _gen()
+        else:
+            assert False, "shouldn't be reached"
 
 
 class _JoblibParallel(joblib.Parallel):
@@ -79,6 +114,14 @@ class _JoblibParallel(joblib.Parallel):
 
     .. versionadded:: 1.3
     """
+
+    def map(self, func: Callable[[T], Any], iterable: Iterable[T]):
+        """Similar to built-in ``map()``, but parallel.
+
+        There is no need to wrap in a ``delayed()``.
+        """
+        delayed_func = delayed(func)
+        return self(delayed_func(args) for args in iterable)
 
     def __call__(self, iterable):
         """Dispatch the tasks and return the results.
@@ -152,8 +195,7 @@ def Parallel(*args, **kwargs) -> _FastThreadedParallel | _JoblibParallel:
     )
     if (
         is_threaded
-        # TODO can support generator too
-        and arguments["return_as"] == "list"
+        and arguments["return_as"] in ("list", "generator")
         and arguments["timeout"] is None
     ):
         return _FastThreadedParallel(arguments["n_jobs"])
