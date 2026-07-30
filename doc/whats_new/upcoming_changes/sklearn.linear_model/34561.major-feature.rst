@@ -8,9 +8,9 @@
   rules) coordinate descent solvers of :class:`ElasticNet`.
 
   - `"newton-cd-gram"` constructs the full Hessian (gram) matrix and then uses
-    `ElasticNet(precompute=True)` as inner solver. It is a good choice for
+    `ElasticNet(precompute=True)` as the inner solver. It is a good choice for
     `n_samples >> n_features`.
-  - `"newton-cd"` avoids to construct the full Hessian matrix, but formulates the
+  - `"newton-cd"` avoids constructing the full Hessian matrix, but formulates the
     minimization problem for the inner solver as a penalized least squares problem
     (which amounts to taking the square root of the Hessian) and then uses
     `ElasticNet(precompute=False)` on it. It is a good choice for

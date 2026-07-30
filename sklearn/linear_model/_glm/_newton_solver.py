@@ -1250,7 +1250,7 @@ class NewtonCDSolver(NewtonSolver):
         min 1/2 d' H d + G' d + l1_reg ||coef + d||_1 - l1_reg ||coef||_1
 
     with d = coef_newton and coef = current coefficients.
-    To circumvent the norm ||coef + d||_1, we instead minimized for
+    To circumvent the norm ||coef + d||_1, we instead minimize for
     c = coef_new = coef + d. This gives, up to constant terms
 
         min 1/2 c' H c + (G' - coef' H) c + l1_reg ||c||_1
