@@ -5,7 +5,6 @@ usage.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import contextvars
 import functools
 import warnings
 from concurrent.futures import ThreadPoolExecutor
@@ -52,10 +51,9 @@ class _FastThreadedParallel:
 
     def __call__(self, iterable):
         config = get_config()
-        # Used for warnings configuration for versions of Python (notably
-        # free-threaded Python) that rely on contextvars for that information:
-        ctx = contextvars.copy_context()
-
+        # For warnings, on free-threaded Python this already copies contextvars
+        # on thread startup which is how that is controlled, so it works
+        # automatically.
         with ThreadPoolExecutor(self._n_threads) as pool:
 
             def run(params):
@@ -63,13 +61,8 @@ class _FastThreadedParallel:
                 with config_context(**config):
                     # Undo unnecessary wrapping done by delayed():
                     f = f.function
-                    # Technically you don't need the ctx.run() in some cases:
-                    # ThreadPoolExecutor has unexpected behavior on
-                    # free-threaded Python where the context gets copied to the
-                    # thread when it is created. However, we might later want
-                    # to reuse ThreadPoolExecutor, so better to just do the
-                    # right thing.
-                    return ctx.run(f, *args, **kwargs)
+
+                    return f(*args, **kwargs)
 
             return list(pool.map(run, iterable))
 
