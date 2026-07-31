@@ -1567,7 +1567,6 @@ def _path_residuals(
     path_params,
     alphas=None,
     l1_ratio=1,
-    X_order=None,
     dtype=None,
 ):
     """Returns the MSE for the models computed by 'path'.
@@ -1605,10 +1604,6 @@ def _path_residuals(
         l1 and l2 penalties). For ``l1_ratio = 0`` the penalty is an
         L2 penalty. For ``l1_ratio = 1`` it is an L1 penalty. For ``0
         < l1_ratio < 1``, the penalty is a combination of L1 and L2.
-
-    X_order : {'F', 'C'}, default=None
-        The order of the arrays expected by the path function to
-        avoid memory copies.
 
     dtype : a numpy dtype, default=None
         The dtype of the arrays expected by the path function to
@@ -1676,7 +1671,7 @@ def _path_residuals(
 
     # Do the ordering and type casting here, as if it is done in the path,
     # X is copied and a reference is kept here
-    X_train = check_array(X_train, accept_sparse="csc", dtype=dtype, order=X_order)
+    X_train = check_array(X_train, accept_sparse="csc", dtype=dtype, order="F")
     alphas, coefs, _ = path(X_train, y_train, **path_params)
     del X_train, y_train
 
@@ -1773,8 +1768,7 @@ class LinearModelCV(MultiOutputLinearModel, ABC):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training data. Pass directly as Fortran-contiguous data
-            to avoid unnecessary memory duplication. If y is mono-output,
+            Training data. If y is mono-output,
             X can be sparse. Note that large sparse matrices and arrays
             requiring `int64` indices are not accepted.
 
@@ -1827,7 +1821,7 @@ class LinearModelCV(MultiOutputLinearModel, ABC):
             # csr. We also want to allow y to be 64 or 32 but check_X_y only
             # allows to convert for 64.
             check_X_params = dict(
-                accept_sparse="csc",
+                accept_sparse="csr",
                 dtype=[np.float64, np.float32],
                 force_writeable=True,
                 copy=False,
@@ -1852,9 +1846,9 @@ class LinearModelCV(MultiOutputLinearModel, ABC):
             # csr. We also want to allow y to be 64 or 32 but check_X_y only
             # allows to convert for 64.
             check_X_params = dict(
-                accept_sparse="csc",
+                accept_sparse="csr",
                 dtype=[np.float64, np.float32],
-                order="F",
+                order=None,
                 force_writeable=True,
                 copy=copy_X,
             )
@@ -1969,7 +1963,6 @@ class LinearModelCV(MultiOutputLinearModel, ABC):
                 path_params,
                 alphas=this_alphas,
                 l1_ratio=this_l1_ratio,
-                X_order="F",
                 dtype=X.dtype.type,
             )
             for this_l1_ratio, this_alphas in zip(l1_ratios, alphas)
@@ -2003,6 +1996,7 @@ class LinearModelCV(MultiOutputLinearModel, ABC):
             self.alphas_ = np.asarray(alphas[0])
 
         # Refit the model with the parameters selected
+        X, y = _set_order(X, y, order="F")
         common_params = {
             name: value
             for name, value in self.get_params().items()
@@ -2284,8 +2278,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training data. Pass directly as Fortran-contiguous data
-            to avoid unnecessary memory duplication. If y is mono-output,
+            Training data. If y is mono-output,
             X can be sparse. Note that large sparse matrices and arrays
             requiring `int64` indices are not accepted.
 
@@ -2562,8 +2555,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training data. Pass directly as Fortran-contiguous data
-            to avoid unnecessary memory duplication. If y is mono-output,
+            Training data. If y is mono-output,
             X can be sparse. Note that large sparse matrices and arrays
             requiring `int64` indices are not accepted.
 
