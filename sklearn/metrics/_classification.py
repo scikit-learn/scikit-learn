@@ -417,7 +417,6 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     """
     xp, _, device = get_namespace_and_device(y_pred)
     # Compute accuracy for each possible representation
-    y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, _, y_true, y_pred, sample_weight = _check_targets(
         y_true, y_pred, sample_weight, xp=xp, device=device
     )
@@ -1313,7 +1312,6 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     >>> matthews_corrcoef(y_true, y_pred)
     -0.33
     """
-    y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, _, y_true, y_pred, sample_weight = _check_targets(
         y_true, y_pred, sample_weight
     )
