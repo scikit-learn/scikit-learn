@@ -108,11 +108,11 @@ class ScoringMonitor:
 
         # Turn the scorer into a MultimetricScorer for convenience
         if isinstance(scoring, str):
-            self._scorer = check_scoring(estimator=None, scoring=[scoring])
+            self._scorer = check_scoring(scoring=[scoring])
         elif callable(scoring) and isinstance(scoring, _BaseScorer):
-            self._scorer = check_scoring(estimator=None, scoring={"score": scoring})
+            self._scorer = check_scoring(scoring={"score": scoring})
         else:
-            self._scorer = check_scoring(estimator=None, scoring=scoring)
+            self._scorer = check_scoring(scoring=scoring)
 
         self._log = []
 
