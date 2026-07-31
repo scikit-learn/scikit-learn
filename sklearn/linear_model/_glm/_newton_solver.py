@@ -1335,7 +1335,7 @@ class NewtonCDSolver(NewtonSolver):
         self.hess_pointwise = np.empty_like(self.raw_prediction, order="F")
         self.sw_sum = X.shape[0] if sample_weight is None else np.sum(sample_weight)
         if sparse.issparse(X):
-            if not sparse.isspmatrix_csc(X):
+            if X.format != "csc":
                 raise ValueError(
                     f"X must be a CSC array/matrix for {self.__class__.__name__}"
                 )
