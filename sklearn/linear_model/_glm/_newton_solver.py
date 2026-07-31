@@ -1336,16 +1336,16 @@ class NewtonCDSolver(NewtonSolver):
         self.sw_sum = X.shape[0] if sample_weight is None else np.sum(sample_weight)
         if sparse.issparse(X):
             if not sparse.isspmatrix_csc(X):
-                ValueError(
+                raise ValueError(
                     f"X must be a CSC array/matrix for {self.__class__.__name__}"
                 )
             if self.linear_loss.base_loss.is_multiclass:
-                ValueError(
+                raise ValueError(
                     f"Solver {self.__class__.__name__} does not support multiclass "
                     "settings (n_classes >= 3)."
                 )
         elif not X.flags.f_contiguous:
-            ValueError(f"X must be F-contiguous for {self.__class__.__name__}")
+            raise ValueError(f"X must be F-contiguous for {self.__class__.__name__}")
 
     def update_gradient_hessian(self, X, y, sample_weight):
         """Update gradient and only pointwise hessian.
