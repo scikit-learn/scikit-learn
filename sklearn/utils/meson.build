@@ -34,6 +34,19 @@ utils_cython_tree = [
   fs.copyfile('_vector_sentinel.pxd'),
 ]
 
+# EXPERIMENTAL, local-machine-only: links _sorting against a locally-built
+# x86-simd-sort (see sklearn/utils/_sorting.pyx). Hardcoded absolute paths,
+# not portable, not meant to be merged -- speed-gain spike only.
+xss_scratchpad = '/tmp/claude-1000/-home-arthur-scikit-learn/c52acbef-6074-4de2-af5f-d274821ac498/scratchpad'
+xss_dep = declare_dependency(
+  link_args: [
+    xss_scratchpad / 'libxsswrap.so',
+    xss_scratchpad / 'xss' / 'builddir' / 'libx86simdsortcpp.so.1',
+    '-Wl,-rpath,' + xss_scratchpad,
+    '-Wl,-rpath,' + xss_scratchpad / 'xss' / 'builddir',
+  ],
+)
+
 utils_extension_metadata = {
   'sparsefuncs_fast':
     {'sources': [cython_gen.process('sparsefuncs_fast.pyx')]},
@@ -48,7 +61,7 @@ utils_extension_metadata = {
   '_openmp_helpers': {'sources': [cython_gen.process('_openmp_helpers.pyx')], 'dependencies': [openmp_dep]},
   '_random': {'sources': [cython_gen.process('_random.pyx')]},
   '_typedefs': {'sources': [cython_gen.process('_typedefs.pyx')]},
-  '_sorting': {'sources': [cython_gen.process('_sorting.pyx')]},
+  '_sorting': {'sources': [cython_gen.process('_sorting.pyx')], 'dependencies': [xss_dep]},
   '_vector_sentinel':
     {'sources': [cython_gen_cpp.process('_vector_sentinel.pyx')],
      'dependencies': [np_dep]},

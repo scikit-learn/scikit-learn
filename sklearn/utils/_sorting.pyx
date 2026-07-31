@@ -1,8 +1,32 @@
 from libc.math cimport log2
+from libc.stdint cimport int32_t
 
 from cython cimport floating
 
 from sklearn.utils._typedefs cimport intp_t
+
+
+# EXPERIMENTAL: dispatch to x86-simd-sort (AVX2/AVX-512 keyvalue_qsort) above
+# this many elements. Not portable (hardcoded link against a locally-built
+# shared library, see sklearn/utils/meson.build) and not merge-ready -- this
+# is a speed-gain spike, see discussion with Arthur on 2026-07-31.
+cdef intp_t SIMD_SORT_THRESHOLD = 3000
+
+# int32_t is used as the SIMD-sort index type since it packs twice as many
+# (key, index) pairs per SIMD lane as intp_t (int64) does, which matters more
+# than the sort itself for float32 keys. When `index_t` is already int32_t
+# (e.g. tree sample indices), the SIMD sort runs directly on it, no copy
+# needed. When `index_t` is intp_t, we narrow into a temporary int32 buffer,
+# sort, and widen back -- only safe while n fits in an int32, checked below.
+cdef extern from *:
+    """
+    #include <stdint.h>
+    #include <stddef.h>
+    void xss_keyvalue_sort_f64_i32(double *keys, int32_t *vals, size_t n);
+    void xss_keyvalue_sort_f32_i32(float *keys, int32_t *vals, size_t n);
+    """
+    void xss_keyvalue_sort_f64_i32(double *keys, int32_t *vals, size_t n) noexcept nogil
+    void xss_keyvalue_sort_f32_i32(float *keys, int32_t *vals, size_t n) noexcept nogil
 
 
 cdef void simultaneous_sort(
@@ -42,11 +66,27 @@ cdef void simultaneous_sort(
     """
     if n == 0:
         return
+
+    if n > SIMD_SORT_THRESHOLD and index_t is int32_t:
+        _simd_keyvalue_sort(values, <int32_t*>indices, n)
+        return
+
     cdef intp_t maxd = 2 * <intp_t>log2(n)
     if use_three_way_partition:
         introsort_3way(values, indices, n, maxd)
     else:
         introsort_2way(values, indices, n, maxd)
+
+
+cdef inline void _simd_keyvalue_sort(
+    floating* values, int32_t* indices, intp_t n
+) noexcept nogil:
+
+    # index_t is already int32_t: sort in place, no copy needed.
+    if floating is float:
+        xss_keyvalue_sort_f32_i32(values, indices, n)
+    else:
+        xss_keyvalue_sort_f64_i32(values, indices, n)
 
 
 def _py_simultaneous_sort(
