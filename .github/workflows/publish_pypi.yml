@@ -21,7 +21,7 @@ jobs:
     - uses: actions/checkout@v7
     - uses: actions/setup-python@v6
       with:
-        python-version: '3.8'
+        python-version: '3.11'
     - name: Install dependencies
       run: |
         pip install -U wheelhouse_uploader pyyaml

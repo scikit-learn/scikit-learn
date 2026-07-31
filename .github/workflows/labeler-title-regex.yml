@@ -20,7 +20,7 @@ jobs:
         persist-credentials: false
     - uses: actions/setup-python@v6
       with:
-        python-version: '3.9'
+        python-version: '3.11'
     - name: Install PyGithub
       run: pip install -Uq PyGithub
     - name: Label pull request
