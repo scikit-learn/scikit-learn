@@ -35,7 +35,7 @@ cdef class Criterion:
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
         float64_t weighted_n_samples,
-        const intp_t[:] sample_indices,
+        const int32_t[:] sample_indices,
         intp_t start,
         intp_t end,
     ) except -1 nogil:
@@ -53,7 +53,7 @@ cdef class Criterion:
             The weight of each sample stored as a Cython memoryview.
         weighted_n_samples : float64_t
             The total weight of the samples being considered
-        sample_indices : ndarray, dtype=intp_t
+        sample_indices : ndarray, dtype=int32_t
             A mask on the samples. Indices of the samples in X and y we want to use,
             where sample_indices[start:end] correspond to the samples in this node.
         start : intp_t
@@ -304,7 +304,7 @@ cdef class ClassificationCriterion(Criterion):
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
         float64_t weighted_n_samples,
-        const intp_t[:] sample_indices,
+        const int32_t[:] sample_indices,
         intp_t start,
         intp_t end
     ) except -1 nogil:
@@ -324,7 +324,7 @@ cdef class ClassificationCriterion(Criterion):
             The weight of each sample stored as a Cython memoryview.
         weighted_n_samples : float64_t
             The total weight of all samples
-        sample_indices : ndarray, dtype=intp_t
+        sample_indices : ndarray, dtype=int32_t
             A mask on the samples. Indices of the samples in X and y we want to use,
             where sample_indices[start:end] correspond to the samples in this node.
         start : intp_t
@@ -753,7 +753,7 @@ cdef class RegressionCriterion(Criterion):
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
         float64_t weighted_n_samples,
-        const intp_t[:] sample_indices,
+        const int32_t[:] sample_indices,
         intp_t start,
         intp_t end,
     ) except -1 nogil:
@@ -980,7 +980,7 @@ cdef class MSE(RegressionCriterion):
         impurity the right child (sample_indices[pos:end]).
         """
         cdef const float64_t[:] sample_weight = self.sample_weight
-        cdef const intp_t[:] sample_indices = self.sample_indices
+        cdef const int32_t[:] sample_indices = self.sample_indices
         cdef intp_t pos = self.pos
         cdef intp_t start = self.start
 
@@ -1023,7 +1023,7 @@ cdef void precompute_absolute_errors(
     const float64_t[::1] sorted_y,
     const intp_t[::1] ranks,
     const float64_t[:] sample_weight,
-    const intp_t[:] sample_indices,
+    const int32_t[:] sample_indices,
     WeightedFenwickTree tree,
     intp_t start,
     intp_t end,
@@ -1146,7 +1146,7 @@ cdef inline void compute_ranks(
 def _py_precompute_absolute_errors(
     const float64_t[:, ::1] ys,
     const float64_t[:] sample_weight,
-    const intp_t[:] sample_indices,
+    const int32_t[:] sample_indices,
     const intp_t start,
     const intp_t end,
     const intp_t n,
@@ -1306,7 +1306,7 @@ cdef class MAE(Criterion):
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
         float64_t weighted_n_samples,
-        const intp_t[:] sample_indices,
+        const int32_t[:] sample_indices,
         intp_t start,
         intp_t end,
     ) except -1 nogil:
@@ -1627,7 +1627,7 @@ cdef class Poisson(RegressionCriterion):
         """
         cdef const float64_t[:, ::1] y = self.y
         cdef const float64_t[:] sample_weight = self.sample_weight
-        cdef const intp_t[:] sample_indices = self.sample_indices
+        cdef const int32_t[:] sample_indices = self.sample_indices
 
         cdef float64_t y_mean = 0.
         cdef float64_t poisson_loss = 0.

@@ -161,8 +161,8 @@ cdef class Splitter:
 
         # Create a new array which will be used to store nonzero
         # samples from the feature of interest
-        self.samples = np.empty(n_samples, dtype=np.intp)
-        cdef intp_t[::1] samples = self.samples
+        self.samples = np.empty(n_samples, dtype=np.int32)
+        cdef int32_t[::1] samples = self.samples
 
         cdef intp_t i, j
         cdef float64_t weighted_n_samples = 0.0
@@ -171,7 +171,7 @@ cdef class Splitter:
         for i in range(n_samples):
             # Only work with positively weighted samples
             if sample_weight is None or sample_weight[i] != 0.0:
-                samples[j] = i
+                samples[j] = <int32_t> i
                 j += 1
 
             if sample_weight is not None:

@@ -49,7 +49,7 @@ cdef class Splitter:
     cdef object random_state             # Random state
     cdef uint32_t rand_r_state           # sklearn_rand_r random number state
 
-    cdef intp_t[::1] samples             # Sample indices in X, y
+    cdef int32_t[::1] samples             # Sample indices in X, y
     cdef intp_t n_samples                # X.shape[0]
     cdef float64_t weighted_n_samples    # Weighted number of samples
     cdef intp_t[::1] features            # Feature indices in X

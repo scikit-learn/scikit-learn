@@ -7,7 +7,7 @@ from sklearn.utils._typedefs cimport intp_t
 
 cdef void simultaneous_sort(
     floating* values,
-    intp_t* indices,
+    index_t* indices,
     intp_t n,
     bint use_three_way_partition=False,
 ) noexcept nogil:
@@ -51,7 +51,7 @@ cdef void simultaneous_sort(
 
 def _py_simultaneous_sort(
     floating[::1] values,
-    intp_t[::1] indices,
+    index_t[::1] indices,
     intp_t n,
     *,
     bint use_three_way_partition,
@@ -62,7 +62,7 @@ def _py_simultaneous_sort(
 
 cdef void introsort_2way(
     floating* values,
-    intp_t* indices,
+    index_t* indices,
     intp_t n,
     intp_t maxd,
 ) noexcept nogil:
@@ -109,7 +109,7 @@ cdef void introsort_2way(
 
 
 cdef void introsort_3way(
-    floating* values, intp_t *indices,
+    floating* values, index_t *indices,
     intp_t n, intp_t maxd
 ) noexcept nogil:
     """
@@ -158,7 +158,7 @@ cdef void introsort_3way(
 
 # ------------ HEAP SORT -------------
 
-cdef void heapsort(floating* feature_values, intp_t* samples, intp_t n) noexcept nogil:
+cdef void heapsort(floating* feature_values, index_t* samples, intp_t n) noexcept nogil:
     cdef intp_t start, end
 
     # heapify
@@ -178,7 +178,7 @@ cdef void heapsort(floating* feature_values, intp_t* samples, intp_t n) noexcept
         end = end - 1
 
 
-cdef inline void sift_down(floating* feature_values, intp_t* samples,
+cdef inline void sift_down(floating* feature_values, index_t* samples,
                            intp_t start, intp_t end) noexcept nogil:
     # Restore heap order in feature_values[start:end] by moving the max element to start.
     cdef intp_t child, maxind, root
@@ -203,7 +203,7 @@ cdef inline void sift_down(floating* feature_values, intp_t* samples,
 
 # ------------ HELPERS -------------
 
-cdef inline floating inplace_median3(floating* values, intp_t* indices, intp_t n) noexcept nogil:
+cdef inline floating inplace_median3(floating* values, index_t* indices, intp_t n) noexcept nogil:
     # # Median of three pivot selection
     # The smallest of the three is moved to the beginning of the array,
     # the middle (the pivot value) is moved to the end, and the largest
@@ -238,7 +238,7 @@ cdef inline floating median3(floating* feature_values, intp_t n) noexcept nogil:
         return b
 
 
-cdef inline void swap(floating* values, intp_t* indices,
+cdef inline void swap(floating* values, index_t* indices,
                       intp_t i, intp_t j) noexcept nogil:
     # Helper for sort
     values[i], values[j] = values[j], values[i]
@@ -246,9 +246,10 @@ cdef inline void swap(floating* values, intp_t* indices,
 
 
 cdef inline void insertion_sort(
-    floating* values, intp_t *indices, intp_t n
+    floating* values, index_t *indices, intp_t n
 ) noexcept nogil:
-    cdef intp_t i, j, temp_idx
+    cdef intp_t i, j
+    cdef index_t temp_idx
     cdef floating temp_val
 
     for i in range(1, n):
