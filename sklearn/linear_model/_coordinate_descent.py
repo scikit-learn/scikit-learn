@@ -13,7 +13,6 @@ import numpy as np
 from joblib import effective_n_jobs
 from scipy import sparse
 
-import sklearn
 from sklearn.base import RegressorMixin, _fit_context
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
@@ -2011,13 +2010,12 @@ class LinearModelCV(MultiOutputLinearModel, ABC):
         if isinstance(precompute, str) and precompute == "auto":
             model.precompute = False
 
-        with sklearn.config_context(skip_parameter_validation=True):
-            if sample_weight is None:
-                # MultiTaskElasticNetCV does not (yet) support sample_weight, even
-                # not sample_weight=None.
-                model.fit(X, y)
-            else:
-                model.fit(X, y, sample_weight=sample_weight)
+        if sample_weight is None:
+            # MultiTaskElasticNetCV does not (yet) support sample_weight, even
+            # not sample_weight=None.
+            model.fit(X, y)
+        else:
+            model.fit(X, y, sample_weight=sample_weight)
         if not hasattr(self, "l1_ratio"):
             del self.l1_ratio_
         self.coef_ = model.coef_
