@@ -438,11 +438,17 @@ def test_estimator_html_repr_unfitted_vs_fitted():
 def test_estimator_html_repr_fitted_icon(estimator):
     estimator = clone(estimator)  # Avoid side effects from previous tests.
     """Check that we are showing the fitted status icon only once."""
-    pattern = '<span class="sk-estimator-doc-link ">i<span>Not fitted</span></span>'
+    pattern = (
+        '<span class="sk-estimator-doc-link " tabindex="0">i<span>Not fitted</span>'
+        "</span>"
+    )
     assert estimator_html_repr(estimator).count(pattern) == 1
     X, y = load_iris(return_X_y=True)
     estimator.fit(X, y)
-    pattern = '<span class="sk-estimator-doc-link fitted">i<span>Fitted</span></span>'
+    pattern = (
+        '<span class="sk-estimator-doc-link fitted" tabindex="0">i<span>Fitted</span>'
+        "</span>"
+    )
     assert estimator_html_repr(estimator).count(pattern) == 1
 
 

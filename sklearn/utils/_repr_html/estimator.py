@@ -513,7 +513,7 @@ def estimator_html_repr(estimator):
             is_fitted_css_class = ""
 
     is_fitted_icon = (
-        f'<span class="sk-estimator-doc-link {is_fitted_css_class}">'
+        f'<span class="sk-estimator-doc-link {is_fitted_css_class}" tabindex="0">'
         f"i{status_label}</span>"
     )
     with closing(StringIO()) as out:

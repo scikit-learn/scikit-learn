@@ -48,7 +48,7 @@
 
 .sk-global :focus-visible {
   outline: 2px solid var(--sklearn-color-focus);
-  outline-offset: -1px;
+  outline-offset: -2px;
   border-radius: 2px;
 }
 
@@ -302,7 +302,7 @@ clickable and can be expanded/collapsed.
 a:link.sk-estimator-doc-link,
 a:visited.sk-estimator-doc-link {
   float: right;
-  font-size: small;
+  font-size: smaller;
   line-height: 1em;
   font-family: monospace;
   background-color: var(--sklearn-color-unfitted-level-0);
@@ -374,8 +374,16 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
   border: var(--sklearn-color-fitted-level-3);
 }
 
-.sk-estimator-doc-link:hover span {
+.sk-estimator-doc-link:hover span,
+.sk-estimator-doc-link:focus-visible span {
   display: block;
+}
+
+/* Focus ring round and outside of the small circular icon */
+.sk-global .sk-estimator-doc-link:focus,
+.sk-global .sk-estimator-doc-link:focus-visible {
+  border-radius: 1em;
+  outline-offset: 2px;
 }
 
 /* "?"-specific style due to the `<a>` HTML tag */
