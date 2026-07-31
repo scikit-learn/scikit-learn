@@ -239,7 +239,6 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
             The classification error for the current boost.
             If None then boosting has terminated early.
         """
-        pass
 
     def staged_score(self, X, y, sample_weight=None):
         """Return staged scores for X, y.
