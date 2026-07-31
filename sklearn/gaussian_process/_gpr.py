@@ -139,6 +139,13 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
+    n_jobs : int, default=None
+        The number of jobs to run in parallel. :meth:`fit` will perform
+        hyperparameter search in parallel if `n_restarts_optimizers` is >0.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
+        context. ``-1`` means using all processors. See :term:`Glossary
+        <n_jobs>` for more details.
+
     Attributes
     ----------
     X_train_ : array-like of shape (n_samples, n_features) or list of object
@@ -207,6 +214,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         "copy_X_train": ["boolean"],
         "n_targets": [Interval(Integral, 1, None, closed="left"), None],
         "random_state": ["random_state"],
+        "n_jobs": [Integral, None],
     }
 
     def __init__(
@@ -220,6 +228,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         copy_X_train=True,
         n_targets=None,
         random_state=None,
+        n_jobs=None,
     ):
         self.kernel = kernel
         self.alpha = alpha
@@ -229,6 +238,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self.copy_X_train = copy_X_train
         self.n_targets = n_targets
         self.random_state = random_state
+        self.n_jobs = None
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
@@ -327,7 +337,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     for _ in range(self.n_restarts_optimizer)
                 )
 
-            optima = Parallel()(
+            optima = Parallel(n_jobs=self.n_jobs)(
                 self._constrained_optimization(
                     bounds=self.kernel_.bounds,
                     initial_theta=theta_initial,
