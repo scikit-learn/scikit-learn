@@ -2697,12 +2697,11 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
     ----------
     n_quantiles : int, default=1000 or n_samples
         Number of quantiles to be computed. It corresponds to the number of
-        landmarks used to discretize the cumulative distribution function. If
-        n_quantiles is larger than the effective sample size (sum of sample
-        weights if provided, total number of samples otherwise), n_quantiles is
-        set to the effective sample size as a larger number of quantiles does
-        not give a better approximation of the cumulative distribution function
-        estimator.
+        landmarks used to discretize the cumulative distribution function.
+
+        .. versionchanged:: 1.10 n_quantiles are no longer capped according
+        to the number of samples. The number of quantiles is now always equal
+        to the value of n_quantiles.
 
     output_distribution : {'uniform', 'normal'}, default='uniform'
         Marginal distribution for the transformed data. The choices are
@@ -2735,6 +2734,10 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
     Attributes
     ----------
+    n_quantiles_ : int
+        The actual number of quantiles used to discretize the cumulative
+        distribution function.
+
     quantiles_ : ndarray of shape (n_quantiles, n_features)
         The values corresponding the quantiles of reference.
 
@@ -2820,7 +2823,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
         n_samples, n_features = X.shape
         references = self.references_ * 100
-
+        self.n_quantiles_ = self.n_quantiles
         if self.subsample is not None and self.subsample < n_samples:
             # Take a subsample of `X`
             X = resample(
@@ -2849,10 +2852,6 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
                 method="averaged_inverted_cdf",
                 axis=0,
             )
-        self.quantiles_, quantile_idxs = np.unique(
-            self.quantiles_, return_index=True, axis=0
-        )
-        self.references_ = self.references_[quantile_idxs]
 
     def _sparse_fit(self, X, random_state):
         """Compute percentiles for sparse matrices.
@@ -2938,13 +2937,14 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             raise NotImplementedError(
                 "sample_weight is not supported for sparse input."
             )
+        self.n_quantiles_ = self.n_quantiles
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         rng = check_random_state(self.random_state)
 
         # Create the quantiles of reference
-        self.references_ = np.linspace(0, 1, self.n_quantiles, endpoint=True)
+        self.references_ = np.linspace(0, 1, self.n_quantiles_, endpoint=True)
         if is_sparse:
             self._sparse_fit(X, rng)
         else:
