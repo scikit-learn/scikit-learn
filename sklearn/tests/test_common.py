@@ -93,13 +93,12 @@ class CallableEstimator(BaseEstimator):
         (LogisticRegression(C=2.0), "LogisticRegression(C=2.0)"),
         (
             LogisticRegression(
-                random_state=1,
                 solver="newton-cg",
                 class_weight="balanced",
                 warm_start=True,
             ),
             (
-                "LogisticRegression(class_weight='balanced',random_state=1,"
+                "LogisticRegression(class_weight='balanced',"
                 "solver='newton-cg',warm_start=True)"
             ),
         ),

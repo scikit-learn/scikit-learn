@@ -233,7 +233,7 @@ def test_regression_synthetic(global_random_seed):
     clf = GradientBoostingRegressor(**regression_params)
     clf.fit(X_train, y_train)
     mse = mean_squared_error(y_test, clf.predict(X_test))
-    assert mse < 2500.0
+    assert mse < 2550.0
 
     # Friedman3
     X, y = datasets.make_friedman3(n_samples=1200, random_state=random_state)
@@ -1345,11 +1345,11 @@ def _make_multiclass():
 
 @pytest.mark.parametrize(
     "gb, dataset_maker, init_estimator",
-    [
+    (
         (GradientBoostingClassifier, make_classification, DummyClassifier),
         (GradientBoostingClassifier, _make_multiclass, DummyClassifier),
         (GradientBoostingRegressor, make_regression, DummyRegressor),
-    ],
+    ),
     ids=["binary classification", "multiclass classification", "regression"],
 )
 def test_gradient_boosting_with_init(

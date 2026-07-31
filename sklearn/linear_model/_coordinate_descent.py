@@ -5,6 +5,7 @@ import numbers
 import sys
 import warnings
 from abc import ABC, abstractmethod
+from enum import Enum
 from functools import partial
 from numbers import Integral, Real
 
@@ -50,6 +51,13 @@ from sklearn.utils.validation import (
     column_or_1d,
     validate_data,
 )
+
+
+class CD_Algo(Enum):
+    ENET_CD = 0
+    ENET_CD_GRAM = 1
+    ENET_CD_SPARSE = 2
+    ENET_CD_MULTITASK = 3
 
 
 def _set_order(X, y, order="C"):
@@ -666,14 +674,15 @@ def enet_path(
     else:
         _alphas = alphas
 
-    X_offset_param = params.pop("X_offset", None)
-    X_scale_param = params.pop("X_scale", None)
+    X_offset = params.pop("X_offset", None)
+    X_scale = params.pop("X_scale", None)
     sample_weight = params.pop("sample_weight", None)
     tol = params.pop("tol", 1e-4)
     max_iter = params.pop("max_iter", 1000)
     random_state = params.pop("random_state", None)
     selection = params.pop("selection", "cyclic")
     do_screening = params.pop("do_screening", True)
+    early_stopping = params.pop("early_stopping", True)
 
     if len(params) > 0:
         raise ValueError("Unexpected parameters in params", params.keys())
@@ -714,11 +723,10 @@ def enet_path(
 
     X_is_sparse = sparse.issparse(X)
     if X_is_sparse:
-        if X_offset_param is not None:
+        if X_offset is not None:
             # As sparse matrices are not actually centered we need this to be passed to
             # the CD solver.
-            X_sparse_scaling = X_offset_param / X_scale_param
-            X_sparse_scaling = np.asarray(X_sparse_scaling, dtype=X.dtype)
+            X_sparse_scaling = np.asarray(X_offset / X_scale, dtype=X.dtype)
         else:
             X_sparse_scaling = np.zeros(n_features, dtype=X.dtype)
     else:
@@ -780,12 +788,79 @@ def enet_path(
         X_indices = None
         X_indptr = None
 
+    if multi_output:
+        algo = CD_Algo.ENET_CD_MULTITASK
+        R, norm2_cols_X = cd_fast.R_and_X_colnorm2_multi_task(
+            W=coef_,
+            X=None if X_is_sparse else X,
+            X_is_sparse=X_is_sparse,
+            X_data=X_data,
+            X_indices=X_indices,
+            X_indptr=X_indptr,
+            Y=y,
+            sample_weight=sample_weight,
+            X_mean=X_sparse_scaling,
+        )
+    elif X_is_sparse:
+        algo = CD_Algo.ENET_CD_SPARSE
+        R, norm2_cols_X = cd_fast.R_and_X_colnorm2_sparse(
+            w=coef_,
+            X_data=X_data,
+            X_indices=X_indices,
+            X_indptr=X_indptr,
+            y=y,
+            sample_weight=sample_weight,
+            X_mean=X_sparse_scaling,
+        )
+    elif isinstance(precompute, np.ndarray):
+        algo = CD_Algo.ENET_CD_GRAM
+        # We expect precompute to be already Fortran ordered when bypassing checks
+        if check_input:
+            precompute = check_array(precompute, dtype=X.dtype.type, order="C")
+        Qw = precompute @ coef_
+    else:  # precompute is False
+        algo = CD_Algo.ENET_CD
+        R, norm2_cols_X = cd_fast.R_and_X_colnorm2(w=coef_, X=X, y=y)
+
+    params = dict(
+        max_iter=max_iter,
+        tol=tol,
+        rng=rng,
+        random=random,
+        do_screening=do_screening,
+        early_stopping=early_stopping,
+    )
+
     for i, alpha in enumerate(alphas):
         # account for n_samples scaling in objectives between here and cd_fast
         l1_reg = alpha * l1_ratio * n_samples
         l2_reg = alpha * (1.0 - l1_ratio) * n_samples
-        if not multi_output and X_is_sparse:
-            model = cd_fast.sparse_enet_coordinate_descent(
+        if algo == CD_Algo.ENET_CD:
+            model = cd_fast.enet_coordinate_descent(
+                w=coef_,
+                alpha=l1_reg,
+                beta=l2_reg,
+                X=X,
+                y=y,
+                positive=positive,
+                R=R,
+                norm2_cols_X=norm2_cols_X,
+                **params,
+            )
+        elif algo == CD_Algo.ENET_CD_GRAM:
+            model = cd_fast.enet_coordinate_descent_gram(
+                w=coef_,
+                alpha=l1_reg,
+                beta=l2_reg,
+                Q=precompute,  # the gram matrix
+                q=Xy,
+                y=y,
+                positive=positive,
+                Qw=Qw,
+                **params,
+            )
+        elif algo == CD_Algo.ENET_CD_SPARSE:
+            model = cd_fast.enet_coordinate_descent_sparse(
                 w=coef_,
                 alpha=l1_reg,
                 beta=l2_reg,
@@ -795,14 +870,12 @@ def enet_path(
                 y=y,
                 sample_weight=sample_weight,
                 X_mean=X_sparse_scaling,
-                max_iter=max_iter,
-                tol=tol,
-                rng=rng,
-                random=random,
                 positive=positive,
-                do_screening=do_screening,
+                R=R,
+                norm2_cols_X=norm2_cols_X,
+                **params,
             )
-        elif multi_output:
+        elif algo == CD_Algo.ENET_CD_MULTITASK:
             model = cd_fast.enet_coordinate_descent_multi_task(
                 W=coef_,
                 alpha=l1_reg,
@@ -815,50 +888,11 @@ def enet_path(
                 Y=y,
                 sample_weight=sample_weight,
                 X_mean=X_sparse_scaling,
-                max_iter=max_iter,
-                tol=tol,
-                rng=rng,
-                random=random,
-                do_screening=do_screening,
+                R=R,
+                norm2_cols_X=norm2_cols_X,
+                **params,
             )
-        elif isinstance(precompute, np.ndarray):
-            # We expect precompute to be already Fortran ordered when bypassing
-            # checks
-            if check_input:
-                precompute = check_array(precompute, dtype=X.dtype.type, order="C")
-            model = cd_fast.enet_coordinate_descent_gram(
-                coef_,
-                l1_reg,
-                l2_reg,
-                precompute,
-                Xy,
-                y,
-                max_iter,
-                tol,
-                rng,
-                random,
-                positive,
-                do_screening,
-            )
-        elif precompute is False:
-            model = cd_fast.enet_coordinate_descent(
-                coef_,
-                l1_reg,
-                l2_reg,
-                X,
-                y,
-                max_iter,
-                tol,
-                rng,
-                random,
-                positive,
-                do_screening,
-            )
-        else:
-            raise ValueError(
-                "Precompute should be one of True, False, 'auto' or array-like. Got %r"
-                % precompute
-            )
+
         coef_, dual_gap_, eps_, n_iter_ = model
         coefs[..., i] = coef_
         # we correct the scale of the returned dual gap, as the objective
