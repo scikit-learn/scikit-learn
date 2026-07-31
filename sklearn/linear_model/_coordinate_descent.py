@@ -2280,8 +2280,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training data. Pass directly as Fortran-contiguous data
-            to avoid unnecessary memory duplication. If y is mono-output,
+            Training data. If y is mono-output,
             X can be sparse. Note that large sparse matrices and arrays
             requiring `int64` indices are not accepted.
 
@@ -2558,8 +2557,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training data. Pass directly as Fortran-contiguous data
-            to avoid unnecessary memory duplication. If y is mono-output,
+            Training data. If y is mono-output,
             X can be sparse. Note that large sparse matrices and arrays
             requiring `int64` indices are not accepted.
 
