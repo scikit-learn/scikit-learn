@@ -1,5 +1,3 @@
-from joblib import parallel_config
-
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.gaussian_process.kernels import ConstantKernel as C
@@ -21,7 +19,7 @@ class GaussianProcessRegressorBenchmark(Estimator, Benchmark):
         return _synth_regression_dataset(n_samples=500, n_features=5, n_informative=5)
 
     def make_estimator(self, params):
-        n_restarts, _ = params
+        n_restarts, n_jobs = params
 
         kernel = C(0.1, (1e-2, 1e2)) * RBF(
             length_scale=1.0, length_scale_bounds=(1e-3, 1e3)
@@ -32,17 +30,8 @@ class GaussianProcessRegressorBenchmark(Estimator, Benchmark):
             n_restarts_optimizer=n_restarts,
             normalize_y=True,
             random_state=0,
+            n_jobs=n_jobs,
         )
 
     def make_scorers(self):
         make_gen_reg_scorers(self)
-
-    def time_fit(self, *args):
-        _, n_jobs = args
-        with parallel_config(n_jobs=n_jobs):
-            super().time_fit(*args)
-
-    def peakmem_fit(self, *args):
-        _, n_jobs = args
-        with parallel_config(n_jobs=n_jobs):
-            super().peakmem_fit(*args)
