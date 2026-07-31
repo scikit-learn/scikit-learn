@@ -1377,7 +1377,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         The estimator that provides the initial predictions. Set via the ``init``
         argument.
 
-    estimators_ : ndarray of DecisionTreeRegressor of \
+    estimators_ : ndarray of DecisionTreeRegressor of \\
             shape (n_estimators, ``n_trees_per_iteration_``)
         The collection of fitted sub-estimators. ``n_trees_per_iteration_`` is 1 for
         binary classification, otherwise ``n_classes``.
@@ -1992,7 +1992,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         The estimator that provides the initial predictions. Set via the ``init``
         argument.
 
-    estimators_ : ndarray of DecisionTreeRegressor of 
+    estimators_ : ndarray of DecisionTreeRegressor of \
             shape (n_estimators, ``n_trees_per_iteration_``)
         The collection of fitted sub-estimators.
 
