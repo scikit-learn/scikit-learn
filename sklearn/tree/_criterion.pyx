@@ -1017,6 +1017,151 @@ cdef class MSE(RegressionCriterion):
         impurity_right[0] /= self.n_outputs
 
 
+cdef class MSESingleOutputNoSampleWeight(MSE):
+    """MSE impurity criterion specialized for single-output, unweighted regression.
+
+    RegressionCriterion's init/update/children_impurity loop over n_outputs and
+    check `sample_weight is not None` on every sample; both are unconditionally
+    trivial (n_outputs == 1, weight == 1.0) in this common case, so this
+    specialization drops the loop and the per-sample branch. Selected
+    automatically in place of MSE by BaseDecisionTree.fit when n_outputs_ == 1
+    and sample_weight is None -- see `isinstance(criterion, MSE)` in
+    _export.py, which is why this subclasses MSE rather than RegressionCriterion
+    directly.
+    """
+
+    cdef int init(
+        self,
+        const float64_t[:, ::1] y,
+        const float64_t[:] sample_weight,
+        float64_t weighted_n_samples,
+        const int32_t[:] sample_indices,
+        intp_t start,
+        intp_t end,
+    ) except -1 nogil:
+        """Initialize the criterion.
+
+        This initializes the criterion at node sample_indices[start:end] and children
+        sample_indices[start:start] and sample_indices[start:end].
+        """
+        cdef:
+            intp_t i, p
+            float64_t y_i
+            float64_t sum_total = 0.0
+
+        self.y = y
+        self.sample_weight = sample_weight
+        self.sample_indices = sample_indices
+        self.start = start
+        self.end = end
+        self.n_node_samples = end - start
+        self.weighted_n_samples = weighted_n_samples
+        self.weighted_n_node_samples = <float64_t> self.n_node_samples
+
+        self.sq_sum_total = 0.0
+        for p in range(start, end):
+            i = sample_indices[p]
+            y_i = self.y[i, 0]
+            sum_total += y_i
+            self.sq_sum_total += y_i * y_i
+        self.sum_total[0] = sum_total
+
+        self.reset()
+        return 0
+
+    cdef int reset(self) except -1 nogil:
+        """Reset the criterion at pos=start."""
+        self.pos = self.start
+        self.sum_left[0] = 0.0
+        self.sum_right[0] = self.sum_total[0]
+        self.weighted_n_left = 0.0
+        self.weighted_n_right = self.weighted_n_node_samples
+        return 0
+
+    cdef int reverse_reset(self) except -1 nogil:
+        """Reset the criterion at pos=end."""
+        self.pos = self.end
+        self.sum_right[0] = 0.0
+        self.sum_left[0] = self.sum_total[0]
+        self.weighted_n_right = 0.0
+        self.weighted_n_left = self.weighted_n_node_samples
+        return 0
+
+    cdef int update(self, intp_t new_pos) except -1 nogil:
+        """Updated statistics by moving sample_indices[pos:new_pos] to the left."""
+        cdef:
+            intp_t pos = self.pos
+            intp_t i, p
+            float64_t sum_left = self.sum_left[0]
+            float64_t* y = &self.y[0, 0]
+
+        # See RegressionCriterion.update: move from whichever side is cheaper.
+        if (new_pos - pos) <= (self.end - new_pos):
+            for p in range(pos, new_pos):
+                i = self.sample_indices[p]
+                sum_left += y[i]
+        else:
+            self.reverse_reset()
+            sum_left = self.sum_left[0]
+            for p in range(self.end - 1, new_pos - 1, -1):
+                i = self.sample_indices[p]
+                sum_left -= y[i]
+
+        self.sum_left[0] = sum_left
+        self.sum_right[0] = self.sum_total[0] - sum_left
+        self.weighted_n_left = <float64_t> (new_pos - self.start)
+        self.weighted_n_right = self.weighted_n_node_samples - self.weighted_n_left
+
+        self.pos = new_pos
+        return 0
+
+    cdef float64_t node_impurity(self) noexcept nogil:
+        """Evaluate the impurity of the current node.
+
+        Evaluate the MSE criterion as impurity of the current node,
+        i.e. the impurity of sample_indices[start:end]. The smaller the impurity the
+        better.
+        """
+        cdef float64_t mean = self.sum_total[0] / self.weighted_n_node_samples
+        return self.sq_sum_total / self.weighted_n_node_samples - mean * mean
+
+    cdef float64_t proxy_impurity_improvement(self) noexcept nogil:
+        """Compute a proxy of the impurity reduction, see MSE.proxy_impurity_improvement."""
+        return (
+            (self.sum_left[0] * self.sum_left[0]) / self.weighted_n_left
+            + (self.sum_right[0] * self.sum_right[0]) / self.weighted_n_right
+        )
+
+    cdef void children_impurity(self, float64_t* impurity_left,
+                                float64_t* impurity_right) noexcept nogil:
+        """Evaluate the impurity in children nodes.
+
+        i.e. the impurity of the left child (sample_indices[start:pos]) and the
+        impurity the right child (sample_indices[pos:end]).
+        """
+        cdef:
+            intp_t pos = self.pos
+            intp_t start = self.start
+            intp_t i, p
+            float64_t y_i
+            float64_t sq_sum_left = 0.0
+            float64_t sq_sum_right
+            float64_t mean_left
+            float64_t mean_right
+
+        for p in range(start, pos):
+            i = self.sample_indices[p]
+            y_i = self.y[i, 0]
+            sq_sum_left += y_i * y_i
+        sq_sum_right = self.sq_sum_total - sq_sum_left
+
+        mean_left = self.sum_left[0] / self.weighted_n_left
+        mean_right = self.sum_right[0] / self.weighted_n_right
+
+        impurity_left[0] = sq_sum_left / self.weighted_n_left - mean_left * mean_left
+        impurity_right[0] = sq_sum_right / self.weighted_n_right - mean_right * mean_right
+
+
 # Helper for MAE criterion:
 
 cdef void precompute_absolute_errors(
