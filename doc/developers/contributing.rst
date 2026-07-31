@@ -1564,6 +1564,17 @@ up this process by providing your feedback.
   - You are the face of the project. Bad days occur to everyone, in that
     occasion you deserve a break: try to take your time and stay offline.
 
+
+    An example of a constructive and productive code review comment:
+
+  .. code-block:: markdown
+
+     **Good Example:**
+     "Thanks for opening this! To align with our API conventions, we should use `check_is_fitted` here before accessing `self.estimators_`. Could you also add a small unit test in `test_weight_boosting.py` to cover this edge case?"
+
+     **Avoid:**
+     "This code is wrong and doesn't follow standard conventions."
+
   .. [1] Adapted from the numpy `communication guidelines
         <https://numpy.org/devdocs/dev/reviewer_guidelines.html#communication-guidelines>`_.
 
