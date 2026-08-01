@@ -462,7 +462,7 @@ def test_dbscan_no_warning_presorted_precomputed():
     # gh-31030: warning must not fire even when caller pre-sorts themselves
     X = np.random.RandomState(0).randn(200, 10)
     graph = _reverse_row_order(kneighbors_graph(X, n_neighbors=15, mode="distance"))
-    sorted_graph = sort_graph_by_row_values(graph.copy())
+    sorted_graph = sort_graph_by_row_values(graph.copy(), warn_when_not_sorted=False)
     with warnings.catch_warnings():
         warnings.simplefilter("error", EfficiencyWarning)
         dbscan(sorted_graph, eps=0.5, min_samples=5, metric="precomputed")
