@@ -967,12 +967,12 @@ def _log_reg_scoring_path(
         if "labels" in sig:
             pos_label_kwarg = {}
             if (
-    is_binary
-    and "pos_label" in sig
-    and "pos_label" not in getattr(scoring, "_kwargs", {})
-):
-              pos_label_kwarg["pos_label"] = n_classes - 1
-            print(scoring._kwargs)
+                is_binary
+                and "pos_label" in sig
+                and "pos_label" not in getattr(scoring, "_kwargs", {})
+            ):
+                pos_label_kwarg["pos_label"] = n_classes - 1
+            
             scoring = make_scorer(
                 scoring._score_func,
                 greater_is_better=True if scoring._sign == 1 else False,
