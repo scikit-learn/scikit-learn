@@ -61,8 +61,6 @@ from sklearn.tree import DecisionTreeClassifier
 # Parameters
 n_classes = 3
 n_estimators = 30
-cmap = plt.cm.RdYlBu
-plot_step = 0.02  # fine step width for decision surface contours
 plot_step_coarser = 0.5  # step widths for coarse classifier guesses
 RANDOM_SEED = 13  # fix the seed on each iteration
 
@@ -125,12 +123,11 @@ for pair in ([0, 1], [0, 2], [2, 3]):
             DecisionBoundaryDisplay.from_estimator(
                 model,
                 X,
-                cmap=cmap,
+                target_colors="RdYlBu",
+                alpha=0.9,
                 response_method="predict",
                 eps=1.0,
                 ax=ax,
-                xlabel=iris.feature_names[pair[0]],
-                ylabel=iris.feature_names[pair[1]],
             )
         else:
             # Choose alpha blend level with respect to the number
@@ -142,13 +139,11 @@ for pair in ([0, 1], [0, 2], [2, 3]):
                 DecisionBoundaryDisplay.from_estimator(
                     tree,
                     X,
-                    cmap=cmap,
+                    target_colors="RdYlBu",
                     alpha=estimator_alpha,
                     response_method="predict",
                     eps=1.0,
                     ax=ax,
-                    xlabel=iris.feature_names[pair[0]],
-                    ylabel=iris.feature_names[pair[1]],
                 )
 
         # Build a coarser grid to plot a set of ensemble classifications
@@ -167,7 +162,7 @@ for pair in ([0, 1], [0, 2], [2, 3]):
             yy_coarser,
             s=15,
             c=Z_points_coarser,
-            cmap=cmap,
+            cmap=plt.cm.RdYlBu,
             edgecolors="none",
         )
 
