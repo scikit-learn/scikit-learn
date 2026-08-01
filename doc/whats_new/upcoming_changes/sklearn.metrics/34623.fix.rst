@@ -1,0 +1,7 @@
+- :func:`metrics.explained_variance_score` now warns with
+  :class:`exceptions.UndefinedMetricWarning` and returns `nan` when called with
+  a single sample, instead of silently reporting a perfect score of 1.0. This
+  matches :func:`metrics.r2_score` and makes `LeaveOneOut` cross-validation
+  scored with `explained_variance` no longer report a perfect score for every
+  model.
+  By :user:`Pranav Achar <PranavAchar01>`.
