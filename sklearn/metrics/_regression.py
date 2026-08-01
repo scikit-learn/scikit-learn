@@ -1142,10 +1142,7 @@ def explained_variance_score(
     )
 
     if _num_samples(y_pred) < 2:
-        msg = (
-            "Explained variance score is not well-defined with less than two "
-            "samples."
-        )
+        msg = "Explained variance score is not well-defined with less than two samples."
         warnings.warn(msg, UndefinedMetricWarning)
         return float("nan")
 
