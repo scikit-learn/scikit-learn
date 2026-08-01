@@ -237,7 +237,8 @@ def _estimate_mi(
 
     copy : bool, default=True
         Whether to make a copy of the given data. If set to False, the initial
-        data will be overwritten.
+        data may be overwritten. However, the exact behavior is not guaranteed,
+        so you should not rely on the input data being modified.
 
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for adding small noise to
@@ -380,7 +381,8 @@ def mutual_info_regression(
 
     copy : bool, default=True
         Whether to make a copy of the given data. If set to False, the initial
-        data will be overwritten.
+        data may be overwritten. However, the exact behavior is not guaranteed,
+        so you should not rely on the input data being modified.
 
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for adding small noise to
@@ -508,7 +510,8 @@ def mutual_info_classif(
 
     copy : bool, default=True
         Whether to make a copy of the given data. If set to False, the initial
-        data will be overwritten.
+        data may be overwritten. However, the exact behavior is not guaranteed,
+        so you should not rely on the input data being modified.
 
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for adding small noise to
