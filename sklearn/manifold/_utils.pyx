@@ -58,7 +58,7 @@ def _binary_search_perplexity(
     cdef double entropy
     cdef double sum_Pi
     cdef double sum_disti_Pi
-    cdef long i, j, l
+    cdef long i, j
 
     # This array is later used as a 32bit array. It has multiple intermediate
     # floating point additions that benefit from the extra precision
@@ -71,7 +71,7 @@ def _binary_search_perplexity(
         beta = 1.0
 
         # Binary search of precision for i-th conditional distribution
-        for l in range(n_steps):
+        for _ in range(n_steps):
             # Compute current entropy and corresponding probabilities
             # computed just over the nearest neighbors or over all data
             # if we're not using neighbors

@@ -367,11 +367,11 @@ def det_curve(
 
     fnr : ndarray of shape (n_thresholds,)
         False negative rate (FNR) such that element i is the false negative
-        rate of predictions with score >= thresholds[i]. This is occasionally
+        rate of predictions with score < thresholds[i]. This is occasionally
         referred to as false rejection or miss rate.
 
     thresholds : ndarray of shape (n_thresholds,)
-        Decreasing thresholds on the decision function (either `predict_proba`
+        Increasing thresholds on the decision function (either `predict_proba`
         or `decision_function`) used to compute FPR and FNR.
 
         .. versionchanged:: 1.7
@@ -404,7 +404,7 @@ def det_curve(
     >>> thresholds
     array([0.35, 0.4 , 0.8 ])
     """
-    xp, _, device = get_namespace_and_device(y_true, y_score)
+    xp, _, device = get_namespace_and_device(y_score)
     _, fps, _, tps, thresholds = confusion_matrix_at_thresholds(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
     )
@@ -436,7 +436,8 @@ def det_curve(
         tps = tps[optimal_idxs]
         thresholds = thresholds[optimal_idxs]
 
-    if xp.unique_values(y_true).shape[0] != 2:
+    xp_y_true, _ = get_namespace(y_true)
+    if xp_y_true.unique_values(y_true).shape[0] != 2:
         raise ValueError(
             "Only one class is present in y_true. Detection error "
             "tradeoff curve is not defined in that case."
@@ -672,7 +673,7 @@ def roc_auc_score(
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.metrics import roc_auc_score
     >>> X, y = load_breast_cancer(return_X_y=True)
-    >>> clf = LogisticRegression(solver="newton-cholesky", random_state=0).fit(X, y)
+    >>> clf = LogisticRegression(solver="newton-cholesky").fit(X, y)
     >>> roc_auc_score(y, clf.predict_proba(X)[:, 1])
     0.99
     >>> roc_auc_score(y, clf.decision_function(X))
@@ -1315,7 +1316,7 @@ def roc_curve(
     >>> thresholds
     array([ inf, 0.8 , 0.4 , 0.35, 0.1 ])
     """
-    xp, _, device = get_namespace_and_device(y_true, y_score)
+    xp, _, device = get_namespace_and_device(y_score)
 
     _, fps, _, tps, thresholds = confusion_matrix_at_thresholds(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
@@ -1331,11 +1332,15 @@ def roc_curve(
     # kept, but does not drop more complicated cases like fps = [1, 3, 7],
     # tps = [1, 2, 4]; there is no harm in keeping too many thresholds.
     if drop_intermediate and fps.shape[0] > 2:
-        optimal_idxs = xp.where(
+        optimal_idxs = xp.nonzero(
             xp.concat(
                 [
                     xp.asarray([True], device=device),
-                    xp.logical_or(xp.diff(fps, 2), xp.diff(tps, 2)),
+                    # Array API spec recommends `logical_or` only accepts bool input
+                    xp.logical_or(
+                        xp.astype(xp.diff(fps, n=2), xp.bool),
+                        xp.astype(xp.diff(tps, n=2), xp.bool),
+                    ),
                     xp.asarray([True], device=device),
                 ]
             )
