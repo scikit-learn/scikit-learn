@@ -880,7 +880,7 @@ def test_precomputed_connectivity_metric_with_2_connected_components():
 
 
 @pytest.mark.parametrize("Clustering", [AgglomerativeClustering, FeatureAgglomeration])
-def test_agglomeration_ward_contrained_metric(Clustering):
+def test_agglomeration_ward_constrained_metric(Clustering):
     """Check that we raise an error when 'euclidean' or 'l2' are not passed with
     ward linkage."""
     rng = np.random.RandomState(0)

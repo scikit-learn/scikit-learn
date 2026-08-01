@@ -333,4 +333,4 @@ class __array_namespace_info__:
         __array_namespace_info__.dtypes
 
         """
-        return [cuda.Device(i) for i in range(cuda.runtime.getDeviceCount())]
+        return tuple(cuda.Device(i) for i in range(cuda.runtime.getDeviceCount()))

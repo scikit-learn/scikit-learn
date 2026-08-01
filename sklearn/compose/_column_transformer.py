@@ -7,12 +7,12 @@ different columns.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import warnings
 from collections import Counter
 from functools import partial
 from itertools import chain
 from numbers import Integral, Real
 
+import narwhals.stable.v2 as nw
 import numpy as np
 from scipy import sparse
 
@@ -20,13 +20,11 @@ from sklearn.base import TransformerMixin, _fit_context, clone
 from sklearn.pipeline import _fit_transform_one, _name_estimators, _transform_one
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils import Bunch
-from sklearn.utils._dataframe import is_pandas_df
 from sklearn.utils._indexing import (
     _determine_key_type,
     _get_column_indices,
     _safe_indexing,
 )
-from sklearn.utils._metadata_requests import METHODS
 from sklearn.utils._param_validation import HasMethods, Hidden, Interval, StrOptions
 from sklearn.utils._repr_html.estimator import _VisualBlock
 from sklearn.utils._set_output import (
@@ -39,7 +37,6 @@ from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
-    _routing_enabled,
     process_routing,
 )
 from sklearn.utils.metaestimators import _BaseComposition
@@ -165,23 +162,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         .. versionchanged:: 1.6
             `verbose_feature_names_out` can be a callable or a string to be formatted.
 
-    force_int_remainder_cols : bool, default=False
-        This parameter has no effect.
-
-        .. note::
-            If you do not access the list of columns for the remainder columns
-            in the `transformers_` fitted attribute, you do not need to set
-            this parameter.
-
-        .. versionadded:: 1.5
-
-        .. versionchanged:: 1.7
-           The default value for `force_int_remainder_cols` will change from
-           `True` to `False` in version 1.7.
-
-        .. deprecated:: 1.7
-           `force_int_remainder_cols` is deprecated and will be removed in 1.9.
-
     Attributes
     ----------
     transformers_ : list
@@ -300,7 +280,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         "transformer_weights": [dict, None],
         "verbose": ["verbose"],
         "verbose_feature_names_out": ["boolean", str, callable],
-        "force_int_remainder_cols": ["boolean", Hidden(StrOptions({"deprecated"}))],
     }
 
     def __init__(
@@ -313,7 +292,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         transformer_weights=None,
         verbose=False,
         verbose_feature_names_out=True,
-        force_int_remainder_cols="deprecated",
     ):
         self.transformers = transformers
         self.remainder = remainder
@@ -322,7 +300,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self.transformer_weights = transformer_weights
         self.verbose = verbose
         self.verbose_feature_names_out = verbose_feature_names_out
-        self.force_int_remainder_cols = force_int_remainder_cols
 
     @property
     def _transformers(self):
@@ -767,19 +744,22 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             )
         ]
         for Xs, name in zip(result, names):
-            if not getattr(Xs, "ndim", 0) == 2 and not hasattr(Xs, "__dataframe__"):
+            if not (
+                getattr(Xs, "ndim", 0) == 2 or nw.dependencies.is_into_dataframe(Xs)
+            ):
                 raise ValueError(
-                    "The output of the '{0}' transformer should be 2D (numpy array, "
-                    "scipy sparse array, dataframe).".format(name)
+                    f"The output of the '{name}' transformer should be 2D (numpy "
+                    "array, scipy sparse array, dataframe)."
                 )
         if _get_output_config("transform", self)["dense"] == "pandas":
             return
         try:
             import pandas as pd
         except ImportError:
+            # result cannot contain pd.DataFrame => early return
             return
         for Xs, name in zip(result, names):
-            if not is_pandas_df(Xs):
+            if not isinstance(Xs, pd.DataFrame):
                 continue
             for col_name, dtype in Xs.dtypes.to_dict().items():
                 if getattr(dtype, "na_value", None) is not pd.NA:
@@ -980,14 +960,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         """
         _raise_for_params(params, self, "fit_transform")
 
-        if self.force_int_remainder_cols != "deprecated":
-            warnings.warn(
-                "The parameter `force_int_remainder_cols` is deprecated and will be "
-                "removed in 1.9. It has no effect. Leave it to its default value to "
-                "avoid this warning.",
-                FutureWarning,
-            )
-
         validate_data(self, X=X, skip_check_array=True)
         X = _check_X(X)
         # set n_features_in_ attribute
@@ -997,10 +969,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self._validate_column_callables(X)
         self._validate_remainder(X)
 
-        if _routing_enabled():
-            routed_params = process_routing(self, "fit_transform", **params)
-        else:
-            routed_params = self._get_empty_routing()
+        # ``params`` is empty unless routing is enabled (guaranteed by
+        # ``_raise_for_params`` above), so the call below produces a properly
+        # shaped empty routing in the disabled case.
+        routed_params = process_routing(self, "fit_transform", **params)
 
         result = self._call_func_on_transformers(
             X,
@@ -1070,7 +1042,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         # were not present in fit time, and the order of the columns doesn't
         # matter.
         fit_dataframe_and_transform_dataframe = hasattr(self, "feature_names_in_") and (
-            is_pandas_df(X) or hasattr(X, "__dataframe__")
+            nw.dependencies.is_into_dataframe(X)
         )
 
         n_samples = _num_samples(X)
@@ -1097,10 +1069,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             # check that n_features_in_ is consistent
             _check_n_features(self, X, reset=False)
 
-        if _routing_enabled():
-            routed_params = process_routing(self, "transform", **params)
-        else:
-            routed_params = self._get_empty_routing()
+        routed_params = process_routing(self, "transform", **params)
 
         Xs = self._call_func_on_transformers(
             X,
@@ -1202,9 +1171,13 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     remainder_columns = self.feature_names_in_[
                         remainder_columns
                     ].tolist()
+                # get the fitted remainder function so we can access its methods to
+                # build the display in utils._repr_html.estimator.py
+                remainder_transformer = self.transformers_[-1][1]
 
                 transformers = chain(
-                    transformers, [("remainder", self.remainder, remainder_columns)]
+                    transformers,
+                    [("remainder", remainder_transformer, remainder_columns)],
                 )
         else:  # not fitted
             if self.remainder != "drop":
@@ -1229,26 +1202,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         except KeyError as e:
             raise KeyError(f"'{key}' is not a valid transformer name") from e
 
-    def _get_empty_routing(self):
-        """Return empty routing.
-
-        Used while routing can be disabled.
-
-        TODO: Remove when ``set_config(enable_metadata_routing=False)`` is no
-        more an option.
-        """
-        return Bunch(
-            **{
-                name: Bunch(**{method: {} for method in METHODS})
-                for name, step, _, _ in self._iter(
-                    fitted=False,
-                    column_as_labels=False,
-                    skip_drop=True,
-                    skip_empty_columns=True,
-                )
-            }
-        )
-
     def get_metadata_routing(self):
         """Get metadata routing of this object.
 
@@ -1269,7 +1222,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         # might happen if no columns are selected for that transformer. We
         # request all metadata requested by all transformers.
         transformers = self.transformers
-        if self.remainder not in ("drop", "passthrough"):
+        if self.remainder != "drop":
+            # Note: remainder="passthrough" will be converted into a FunctionTransformer
+            # internally, so it needs to be added to the router as well here, even if it
+            # doesn't consume any metadata, to avoid a `KeyError` later.
             transformers = chain(transformers, [("remainder", self.remainder, None)])
         for name, step, _ in transformers:
             method_mapping = MethodMapping()
@@ -1311,7 +1267,7 @@ def _check_X(X):
     """Use check_array only when necessary, e.g. on lists and other non-array-likes."""
     if (
         (hasattr(X, "__array__") and hasattr(X, "shape"))
-        or hasattr(X, "__dataframe__")
+        or nw.dependencies.is_into_dataframe(X)
         or sparse.issparse(X)
     ):
         return X
@@ -1360,7 +1316,6 @@ def make_column_transformer(
     n_jobs=None,
     verbose=False,
     verbose_feature_names_out=True,
-    force_int_remainder_cols="deprecated",
 ):
     """Construct a ColumnTransformer from the given transformers.
 
@@ -1433,23 +1388,6 @@ def make_column_transformer(
 
         .. versionadded:: 1.0
 
-    force_int_remainder_cols : bool, default=True
-        This parameter has no effect.
-
-        .. note::
-            If you do not access the list of columns for the remainder columns
-            in the :attr:`ColumnTransformer.transformers_` fitted attribute,
-            you do not need to set this parameter.
-
-        .. versionadded:: 1.5
-
-        .. versionchanged:: 1.7
-           The default value for `force_int_remainder_cols` will change from
-           `True` to `False` in version 1.7.
-
-        .. deprecated:: 1.7
-           `force_int_remainder_cols` is deprecated and will be removed in version 1.9.
-
     Returns
     -------
     ct : ColumnTransformer
@@ -1483,7 +1421,6 @@ def make_column_transformer(
         sparse_threshold=sparse_threshold,
         verbose=verbose,
         verbose_feature_names_out=verbose_feature_names_out,
-        force_int_remainder_cols=force_int_remainder_cols,
     )
 
 

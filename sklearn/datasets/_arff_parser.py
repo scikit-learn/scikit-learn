@@ -185,21 +185,21 @@ def _liac_arff_parser(
         pd = check_pandas_support("fetch_openml with as_frame=True")
 
         columns_info = OrderedDict(arff_container["attributes"])
-        columns_names = list(columns_info.keys())
+        column_names = list(columns_info.keys())
 
         # calculate chunksize
         first_row = next(arff_container["data"])
-        first_df = pd.DataFrame([first_row], columns=columns_names, copy=False)
+        first_df = pd.DataFrame([first_row], columns=column_names, copy=False)
 
         row_bytes = first_df.memory_usage(deep=True).sum()
         chunksize = get_chunk_n_rows(row_bytes)
 
         # read arff data with chunks
-        columns_to_keep = [col for col in columns_names if col in columns_to_select]
+        columns_to_keep = [col for col in column_names if col in columns_to_select]
         dfs = [first_df[columns_to_keep]]
         for data in chunk_generator(arff_container["data"], chunksize):
             dfs.append(
-                pd.DataFrame(data, columns=columns_names, copy=False)[columns_to_keep]
+                pd.DataFrame(data, columns=column_names, copy=False)[columns_to_keep]
             )
         # dfs[0] contains only one row, which may not have enough data to infer to
         # column's dtype. Here we use `dfs[1]` to configure the dtype in dfs[0]

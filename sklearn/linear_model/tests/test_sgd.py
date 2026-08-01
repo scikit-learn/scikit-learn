@@ -1861,7 +1861,7 @@ def test_l1_ratio():
     assert_array_almost_equal(est_en.coef_, est_l2.coef_)
 
 
-def test_underflow_or_overlow():
+def test_underflow_or_overflow():
     with np.errstate(all="raise"):
         # Generate some weird data with hugely unscaled features
         rng = np.random.RandomState(0)

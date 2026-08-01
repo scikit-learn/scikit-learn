@@ -196,8 +196,7 @@ Does scikit-learn work natively with various types of dataframes?
 Scikit-learn has limited support for :class:`pandas.DataFrame` and
 :class:`polars.DataFrame`. Scikit-learn estimators can accept both these dataframe types
 as input, and scikit-learn transformers can output dataframes using the `set_output`
-API. For more details, refer to
-:ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`.
+API. For more details, refer to :ref:`df_output_transform`.
 
 However, the internal computations in scikit-learn estimators rely on numerical
 operations that are more efficiently performed on homogeneous data structures such as

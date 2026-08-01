@@ -152,7 +152,6 @@ for classifier_idx, (name, classifier) in enumerate(classifiers.items()):
         response_method="predict_proba",
         class_of_interest=None,
         ax=axes[classifier_idx, len(y_unique)],
-        multiclass_colors="viridis",
         vmin=0,
         vmax=1,
         levels=levels,
@@ -163,7 +162,7 @@ for classifier_idx, (name, classifier) in enumerate(classifiers.items()):
         axes[classifier_idx, max_col].scatter(
             X_test[mask_label, 0],
             X_test[mask_label, 1],
-            c=max_class_disp.multiclass_colors_[[label], :],
+            c=max_class_disp.target_colors_[[label], :],
             **scatter_kwargs,
         )
 
