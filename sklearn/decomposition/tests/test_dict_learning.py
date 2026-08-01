@@ -978,6 +978,7 @@ def test_dict_learning_online_numerical_consistency(method):
 )
 def test_get_feature_names_out(estimator):
     """Check feature names for dict learning estimators."""
+    estimator = clone(estimator)
     estimator.fit(X)
     n_components = X.shape[1]
 

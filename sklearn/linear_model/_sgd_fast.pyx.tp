@@ -362,7 +362,7 @@ def _plain_sgd{{name_suffix}}(
     eta0 : double
         The initial learning rate.
         For PA-1 (`learning_rate=PA1`) and PA-II (`PA2`), it specifies the
-        aggressiveness parameter for the passive-agressive algorithm, see [1] where it
+        aggressiveness parameter for the passive-aggressive algorithm, see [1] where it
         is called C:
 
         - For PA-I it is the maximum step size.

@@ -34,7 +34,6 @@ from sklearn.metrics import check_scoring, get_scorer, get_scorer_names
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import (
-    Bunch,
     check_array,
     check_consistent_length,
     check_scalar,
@@ -45,7 +44,7 @@ from sklearn.utils._array_api import (
     _is_numpy_namespace,
     _max_precision_float_dtype,
     _ravel,
-    device,
+    array_device,
     get_namespace,
     get_namespace_and_device,
     move_to,
@@ -56,6 +55,7 @@ from sklearn.utils.fixes import _sparse_linalg_cg
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _raise_for_params,
     _routing_enabled,
     process_routing,
@@ -302,7 +302,7 @@ def _solve_svd(X, y, alpha, xp=None):
     idx = s > 1e-15  # same default value as scipy.linalg.pinv
     s_nnz = s[idx][:, None]
     UTy = U.T @ y
-    d = xp.zeros((s.shape[0], alpha.shape[0]), dtype=X.dtype, device=device(X))
+    d = xp.zeros((s.shape[0], alpha.shape[0]), dtype=X.dtype, device=array_device(X))
     d[idx] = s_nnz / (s_nnz**2 + alpha)
     d_UT_y = d * UTy
     return (Vt.T @ d_UT_y).T
@@ -630,7 +630,7 @@ def _ridge_regression(
     check_input=True,
     fit_intercept=False,
 ):
-    xp, is_array_api_compliant, device_ = get_namespace_and_device(
+    xp, is_array_api_compliant, device = get_namespace_and_device(
         X, y, sample_weight, X_scale, X_offset
     )
     is_numpy_namespace = _is_numpy_namespace(xp)
@@ -700,19 +700,8 @@ def _ridge_regression(
             # we implement sample_weight via a simple rescaling.
             X, y, sample_weight_sqrt = _rescale_data(X, y, sample_weight)
 
-    # Some callers of this method might pass alpha as single
-    # element array which already has been validated.
-    if alpha is not None and not isinstance(alpha, type(xp.asarray([0.0]))):
-        alpha = check_scalar(
-            alpha,
-            "alpha",
-            target_type=numbers.Real,
-            min_val=0.0,
-            include_boundaries="left",
-        )
-
     # There should be either 1 or n_targets penalties
-    alpha = _ravel(xp.asarray(alpha, device=device_, dtype=X.dtype), xp=xp)
+    alpha = _ravel(xp.asarray(alpha, device=device, dtype=X.dtype), xp=xp)
     if alpha.shape[0] not in [1, n_targets]:
         raise ValueError(
             "Number of targets and number of penalties do not correspond: %d != %d"
@@ -724,7 +713,7 @@ def _ridge_regression(
             shape=(n_targets,),
             fill_value=float(alpha[0]),
             dtype=alpha.dtype,
-            device=device_,
+            device=device,
         )
 
     n_iter = None
@@ -891,7 +880,7 @@ def resolve_solver_for_numpy(positive, return_intercept, is_sparse):
 
 class _BaseRidge(LinearModel, metaclass=ABCMeta):
     _parameter_constraints: dict = {
-        "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
+        "alpha": [Interval(Real, 0, None, closed="left"), "array-like"],
         "fit_intercept": ["boolean"],
         "copy_X": ["boolean"],
         "max_iter": [Interval(Integral, 1, None, closed="left"), None],
@@ -1047,7 +1036,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
     Parameters
     ----------
-    alpha : {float, ndarray of shape (n_targets,)}, default=1.0
+    alpha : float or array-like of shape (n_targets,), default=1.0
         Constant that multiplies the L2 term, controlling regularization
         strength. `alpha` must be a non-negative float i.e. in `[0, inf)`.
 
@@ -1258,7 +1247,9 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
             Fitted estimator.
         """
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), self.solver)
-        xp, _ = get_namespace(X, y, sample_weight)
+        xp, _, device = get_namespace_and_device(X)
+        y, sample_weight = move_to(y, sample_weight, xp=xp, device=device)
+
         X, y = validate_data(
             self,
             X,
@@ -1270,6 +1261,22 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
             y_numeric=True,
         )
         return super().fit(X, y, sample_weight=sample_weight)
+
+    def predict(self, X):
+        """
+        Predict using the linear model.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape (n_samples, n_features)
+            Samples.
+
+        Returns
+        -------
+        C : ndarray of shape (n_samples,) or (n_samples, n_outputs)
+            Predicted values.
+        """
+        return super().predict(X)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -1314,8 +1321,8 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
             The binarized version of `y`.
         """
         accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), solver)
-        xp, _, device_ = get_namespace_and_device(X)
-        sample_weight = move_to(sample_weight, xp=xp, device=device_)
+        xp, _, device = get_namespace_and_device(X)
+        sample_weight = move_to(sample_weight, xp=xp, device=device)
         X, y = validate_data(
             self,
             X,
@@ -1327,22 +1334,16 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         )
 
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
-        xp_y, y_is_array_api = get_namespace(y)
         Y = self._label_binarizer.fit_transform(y)
-        Y = move_to(Y, xp=xp, device=device_)
-        if y_is_array_api and xp_y.isdtype(y.dtype, "numeric"):
-            self.classes_ = move_to(
-                self._label_binarizer.classes_, xp=xp, device=device_
-            )
-        else:
-            self.classes_ = self._label_binarizer.classes_
+        Y = move_to(Y, xp=xp, device=device)
+        self.classes_ = self._label_binarizer.classes_
         if not self._label_binarizer.y_type_.startswith("multilabel"):
             y = column_or_1d(y, warn=True)
 
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         if self.class_weight:
             reweighting = compute_sample_weight(self.class_weight, y)
-            reweighting = move_to(reweighting, xp=xp, device=device_)
+            reweighting = move_to(reweighting, xp=xp, device=device)
             sample_weight = sample_weight * reweighting
         return X, y, sample_weight, Y
 
@@ -1351,7 +1352,7 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, spare matrix} of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data matrix for which we want to predict the targets.
 
         Returns
@@ -1379,7 +1380,7 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         return tags
 
     def _get_scorer_instance(self):
-        """Return a scorer which corresponds to what's defined in ClassiferMixin
+        """Return a scorer which corresponds to what's defined in ClassifierMixin
         parent class. This is used for routing `sample_weight`.
         """
         return get_scorer("accuracy")
@@ -1460,16 +1461,16 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
           coefficients. It is the most stable solver, in particular more stable
           for singular matrices than 'cholesky' at the cost of being slower.
 
-        - 'cholesky' uses the standard scipy.linalg.solve function to
+        - 'cholesky' uses the standard :func:`scipy.linalg.solve` function to
           obtain a closed-form solution.
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
-          scipy.sparse.linalg.cg. As an iterative algorithm, this solver is
+          :func:`scipy.sparse.linalg.cg`. As an iterative algorithm, this solver is
           more appropriate than 'cholesky' for large-scale data
           (possibility to set `tol` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
-          scipy.sparse.linalg.lsqr. It is the fastest and uses an iterative
+          :func:`scipy.sparse.linalg.lsqr`. It is the fastest and uses an iterative
           procedure.
 
         - 'sag' uses a Stochastic Average Gradient descent, and 'saga' uses
@@ -1535,7 +1536,7 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
     See Also
     --------
     Ridge : Ridge regression.
-    RidgeClassifierCV :  Ridge classifier with built-in cross validation.
+    RidgeClassifierCV : Ridge classifier with built-in cross validation.
 
     Notes
     -----
@@ -2208,8 +2209,8 @@ class _RidgeGCV(LinearModel):
         -------
         self : object
         """
-        xp, is_array_api, device_ = get_namespace_and_device(X)
-        y, sample_weight = move_to(y, sample_weight, xp=xp, device=device_)
+        xp, is_array_api, device = get_namespace_and_device(X)
+        y, sample_weight = move_to(y, sample_weight, xp=xp, device=device)
         if (is_array_api and xp.isdtype(X.dtype, "real floating")) or getattr(
             getattr(X, "dtype", None), "kind", None
         ) == "f":
@@ -2223,7 +2224,7 @@ class _RidgeGCV(LinearModel):
         # the array API namespace and device allow, convert the input values
         # to float64 whenever possible before converting the results back to
         # float32.
-        dtype = _max_precision_float_dtype(xp, device=device_)
+        dtype = _max_precision_float_dtype(xp, device=device)
         X, y = validate_data(
             self,
             X,
@@ -2270,7 +2271,7 @@ class _RidgeGCV(LinearModel):
             raise ValueError(f"Unknown {gcv_mode=}")
 
         if sqrt_sw is None:
-            sqrt_sw = xp.ones(n_samples, dtype=X.dtype, device=device_)
+            sqrt_sw = xp.ones(n_samples, dtype=X.dtype, device=device)
 
         decomposition = decompose(X, X_offset, y, sqrt_sw)
 
@@ -2286,7 +2287,7 @@ class _RidgeGCV(LinearModel):
 
         if self.store_cv_results:
             self.cv_results_ = xp.empty(
-                (n_samples * n_y, n_alphas), dtype=X.dtype, device=device_
+                (n_samples * n_y, n_alphas), dtype=X.dtype, device=device
             )
 
         best_coef, best_score, best_alpha = None, None, None
@@ -2326,7 +2327,7 @@ class _RidgeGCV(LinearModel):
                 if self.alpha_per_target and n_y > 1:
                     best_coef = coef
                     best_score = xp.reshape(alpha_score, shape=(-1,))
-                    best_alpha = xp.full(n_y, alpha, device=device_)
+                    best_alpha = xp.full(n_y, alpha, device=device)
                 else:
                     best_coef = coef
                     best_score = alpha_score
@@ -2385,10 +2386,10 @@ class _RidgeGCV(LinearModel):
         """Performs scoring with the specified scorer using the
         predictions and the true y values.
         """
-        xp, _, device_ = get_namespace_and_device(y)
+        xp, _, device = get_namespace_and_device(y)
         if self.is_clf:
             identity_estimator = _IdentityClassifier(
-                classes=xp.arange(n_y, device=device_)
+                classes=xp.arange(n_y, device=device)
             )
             _score = scorer(
                 identity_estimator,
@@ -2409,7 +2410,7 @@ class _RidgeGCV(LinearModel):
                         )
                         for j in range(n_y)
                     ],
-                    device=device_,
+                    device=device,
                 )
             else:
                 _score = scorer(
@@ -2537,9 +2538,12 @@ class _BaseRidgeCV(LinearModel):
                     **params,
                 )
             else:
-                routed_params = Bunch(scorer=Bunch(score={}))
-                if sample_weight is not None:
-                    routed_params.scorer.score["sample_weight"] = sample_weight
+                sw = (
+                    {"sample_weight": sample_weight}
+                    if sample_weight is not None
+                    else {}
+                )
+                routed_params = _manual_routing({"scorer": {"score": sw}})
 
             # reset `scorer` variable to original user-intend if no scoring is passed
             if self.scoring is None:
@@ -2734,6 +2738,8 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         settings: multiple prediction targets). When set to `True`, after
         fitting, the `alpha_` attribute will contain a value for each target.
         When set to `False`, a single alpha is used for all targets.
+        This flag is only compatible with ``cv=None`` (i.e. using
+        Leave-One-Out Cross-Validation).
 
         .. versionadded:: 0.24
 
@@ -2836,6 +2842,22 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         """
         super().fit(X, y, sample_weight=sample_weight, **params)
         return self
+
+    def predict(self, X):
+        """
+        Predict using the linear model.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape (n_samples, n_features)
+            Samples.
+
+        Returns
+        -------
+        C : ndarray of shape (n_samples,) or (n_samples, n_outputs)
+            Predicted values.
+        """
+        return super().predict(X)
 
     def _get_scorer_instance(self):
         """Return a scorer which corresponds to what's defined in RegressorMixin

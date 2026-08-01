@@ -13,18 +13,31 @@ import scipy.optimize
 from sklearn._loss.loss import (
     HalfGammaLoss,
     HalfPoissonLoss,
+    HalfPoissonLossArrayAPI,
     HalfSquaredError,
     HalfTweedieLoss,
     HalfTweedieLossIdentity,
 )
 from sklearn.base import BaseEstimator, RegressorMixin, _fit_context
-from sklearn.linear_model._glm._newton_solver import NewtonCholeskySolver, NewtonSolver
+from sklearn.linear_model._glm._newton_solver import (
+    NewtonCDGramSolver,
+    NewtonCholeskySolver,
+    NewtonSolver,
+)
 from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.utils import check_array
+from sklearn.utils._array_api import (
+    _average,
+    _is_numpy_namespace,
+    _matching_numpy_dtype,
+    get_namespace,
+    get_namespace_and_device,
+    move_to,
+)
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Hidden, Interval, StrOptions
 from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
-from sklearn.utils.optimize import _check_optimize_result
+from sklearn.utils.optimize import _check_optimize_result, _newton_cg
 from sklearn.utils.validation import (
     _check_sample_weight,
     check_is_fitted,
@@ -40,7 +53,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
     Therefore, the fit minimizes the following objective function with L2 priors as
     regularizer::
 
-        1/(2*sum(s_i)) * sum(s_i * deviance(y_i, h(x_i*w)) + 1/2 * alpha * ||w||_2^2
+        1/(2*sum(s_i)) * sum(s_i * deviance(y_i, h(x_i*w))
+        + alpha * l1_ratio ||w||_1 + 1/2 * alpha * (1 - l1_ratio) * ||w||_2^2
 
     with inverse link function h, s=sample_weight and per observation (unit) deviance
     deviance(y_i, h(x_i*w)). Note that for an EDM, 1/2 * deviance is the negative
@@ -59,21 +73,54 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
     Parameters
     ----------
     alpha : float, default=1
-        Constant that multiplies the penalty term and thus determines the
+        Constant that multiplies the penalty terms and determines the
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
-        Values must be in the range `[0.0, inf)`.
+        Values of `alpha` must be in the range `[0.0, inf)`.
+
+    l1_ratio : float, default=0.0
+        The Elastic-Net mixing parameter, with `0 <= l1_ratio <= 1`. Setting
+        `l1_ratio=1` gives a pure L1-penalty, setting `l1_ratio=0` gives a pure
+        L2-penalty. Any value between 0 and 1 gives an Elastic-Net penalty of the form
+        `l1_ratio * L1 + (1 - l1_ratio) * L2`.
+
+        .. warning::
+           Certain values of `l1_ratio`, i.e. some penalties, do not work with some
+           solvers. See the parameter `solver` below, to know the compatibility between
+           the penalty and solver.
+
+        .. versionadded:: 1.10
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
-        added to the linear predictor (X @ coef + intercept).
+        added to the linear predictor (`X @ coef + intercept`).
 
-    solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
+    solver : {'lbfgs', 'newton-cg', 'newton-cholesky'}, default='lbfgs'
         Algorithm to use in the optimization problem:
 
         'lbfgs'
             Calls scipy's L-BFGS-B optimizer.
+
+        'newton-cd-gram'
+            Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
+            iterated reweighted least squares) with an inner coordinate descent based
+            solver that uses the full Hessian/Gram matrix. It can solve for all
+            values of `l1_ratio`.
+            This solver is a good choice for `n_samples` >> `n_features`. Be aware
+            that the memory usage of this solver has a quadratic dependency on
+            `n_features` because it explicitly computes the Hessian matrix.
+
+            .. versionadded:: 1.10
+
+        'newton-cg'
+            Uses a slightly adapted version of scipy's Newton-CG optimizer. This is
+            sometimes called the truncated Newton method. Due to the fact that it
+            does not construct the Hessian matrix but only uses gradients and
+            vector products of the Hessian, it is a good solver when `X` is sparse
+            or when `X` has many features.
+
+            .. versionadded:: 1.10
 
         'newton-cholesky'
             Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
@@ -84,6 +131,20 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             `n_features` because it explicitly computes the Hessian matrix.
 
             .. versionadded:: 1.2
+
+        .. warning::
+           The choice of the algorithm depends on the penalty chosen (`l1_ratio=0`
+           for L2-penalty, `l1_ratio=1` for L1-penalty and `0 < l1_ratio < 1` for
+           Elastic-Net):
+
+           ================= ========================
+           solver            l1_ratio
+           ================= ========================
+           'lbfgs'           l1_ratio=0
+           'newton-cd-gram'  0<=l1_ratio<=1
+           'newton-cg'       l1_ratio=0
+           'newton-cholesky' l1_ratio=0
+           ================= ========================
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -142,9 +203,10 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
     # benchmarking.
     _parameter_constraints: dict = {
         "alpha": [Interval(Real, 0.0, None, closed="left")],
+        "l1_ratio": [Interval(Real, 0, 1, closed="both")],
         "fit_intercept": ["boolean"],
         "solver": [
-            StrOptions({"lbfgs", "newton-cholesky"}),
+            StrOptions({"lbfgs", "newton-cd-gram", "newton-cg", "newton-cholesky"}),
             Hidden(type),
         ],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
@@ -157,6 +219,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         self,
         *,
         alpha=1.0,
+        l1_ratio=0.0,
         fit_intercept=True,
         solver="lbfgs",
         max_iter=100,
@@ -165,6 +228,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         verbose=0,
     ):
         self.alpha = alpha
+        self.l1_ratio = l1_ratio
         self.fit_intercept = fit_intercept
         self.solver = solver
         self.max_iter = max_iter
@@ -192,15 +256,24 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         self : object
             Fitted model.
         """
+        if self.l1_ratio > 0 and self.solver != "newton-cd-gram":
+            msg = (
+                f"The solver '{self.solver}' does not support l1_ratio > 0; got "
+                f"l1_ratio={self.l1_ratio}."
+            )
+            raise ValueError(msg)
+        xp, _, device = get_namespace_and_device(X)
         X, y = validate_data(
             self,
             X,
             y,
             accept_sparse=["csc", "csr"],
-            dtype=[np.float64, np.float32],
+            dtype=[xp.float64, xp.float32],
             y_numeric=True,
             multi_output=False,
         )
+        y, sample_weight = move_to(y, sample_weight, xp=xp, device=device)
+
         loss_dtype = X.dtype
         y = check_array(y, dtype=loss_dtype, order="C", ensure_2d=False)
 
@@ -210,7 +283,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             sample_weight = _check_sample_weight(sample_weight, X, dtype=loss_dtype)
 
         n_samples, n_features = X.shape
-        self._base_loss = self._get_loss()
+        self._base_loss = self._get_loss(xp=xp, device=device)
 
         linear_loss = LinearModelLoss(
             base_loss=self._base_loss,
@@ -228,33 +301,36 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         # NOTE: Rescaling of sample_weight:
         # We want to minimize
         #     obj = 1/(2 * sum(sample_weight)) * sum(sample_weight * deviance)
-        #         + 1/2 * alpha * L2,
+        #         + a * L1 + 1/2 * b * L2
         # with
-        #     deviance = 2 * loss.
+        #     deviance = 2 * loss, a = alpha * l1_ratio, b = alpha * (1 - l1_ratio).
         # The objective is invariant to multiplying sample_weight by a constant. We
         # could choose this constant such that sum(sample_weight) = 1 in order to end
         # up with
-        #     obj = sum(sample_weight * loss) + 1/2 * alpha * L2.
+        #     obj = sum(sample_weight * loss) + a * L1 + 1/2 * b * L2.
         # But LinearModelLoss.loss() already computes
         #     average(loss, weights=sample_weight)
         # Thus, without rescaling, we have
         #     obj = LinearModelLoss.loss(...)
 
+        loss_dtype_np = _matching_numpy_dtype(X, xp=xp)
         if self.warm_start and hasattr(self, "coef_"):
+            coef_xp, _ = get_namespace(self.coef_)
+            coef = move_to(self.coef_, xp=np, device="cpu")
             if self.fit_intercept:
                 # LinearModelLoss needs intercept at the end of coefficient array.
-                coef = np.concatenate((self.coef_, np.array([self.intercept_])))
-            else:
-                coef = self.coef_
-            coef = coef.astype(loss_dtype, copy=False)
+                intercept = move_to(self.intercept_, xp=np, device="cpu")
+                coef = np.concatenate((coef, np.array([intercept])))
+            coef = coef.astype(loss_dtype_np, copy=False)
         else:
-            coef = linear_loss.init_zero_coef(X, dtype=loss_dtype)
+            coef = linear_loss.init_zero_coef(X, dtype=loss_dtype_np)
             if self.fit_intercept:
                 coef[-1] = linear_loss.base_loss.link.link(
-                    np.average(y, weights=sample_weight)
+                    _average(y, weights=sample_weight)
                 )
 
-        l2_reg_strength = self.alpha
+        l1_reg_strength = self.l1_ratio * self.alpha
+        l2_reg_strength = (1 - self.l1_ratio) * self.alpha
         n_threads = _openmp_effective_n_threads()
 
         # Algorithms for optimization:
@@ -277,16 +353,43 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                     "ftol": 64 * np.finfo(float).eps,
                     **_get_additional_lbfgs_options_dict("iprint", self.verbose - 1),
                 },
-                args=(X, y, sample_weight, l2_reg_strength, n_threads),
+                args=(X, y, sample_weight, 0, l2_reg_strength, n_threads),
             )
             self.n_iter_ = _check_optimize_result(
                 "lbfgs", opt_res, max_iter=self.max_iter
             )
             coef = opt_res.x
-        elif self.solver == "newton-cholesky":
-            sol = NewtonCholeskySolver(
+            coef = xp.asarray(
+                coef.copy(order="C" if not _is_numpy_namespace(xp) else "K"),
+                dtype=X.dtype,
+                device=device,
+            )
+        elif self.solver == "newton-cg":
+            func = linear_loss.loss
+            grad = linear_loss.gradient
+            hess = linear_loss.gradient_hessian_product  # hess = [gradient, hessp]
+
+            coef, self.n_iter_ = _newton_cg(
+                grad_hess=hess,
+                func=func,
+                grad=grad,
+                x0=coef,
+                args=(X, y, sample_weight, 0, l2_reg_strength, n_threads),
+                maxiter=self.max_iter,
+                tol=self.tol,
+                verbose=self.verbose,
+            )
+        elif self.solver in ("newton-cd-gram", "newton-cholesky"):
+            if self.solver == "newton-cholesky":
+                sol = NewtonCholeskySolver
+                params = dict()
+            else:
+                sol = NewtonCDGramSolver
+                params = dict(l1_reg_strength=l1_reg_strength)
+            sol = sol(
                 coef=coef,
                 linear_loss=linear_loss,
+                **params,
                 l2_reg_strength=l2_reg_strength,
                 tol=self.tol,
                 max_iter=self.max_iter,
@@ -334,12 +437,13 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         y_pred : array of shape (n_samples,)
             Returns predicted values of linear predictor.
         """
+        xp, _ = get_namespace(X)
         check_is_fitted(self)
         X = validate_data(
             self,
             X,
             accept_sparse=["csr", "csc", "coo"],
-            dtype=[np.float64, np.float32],
+            dtype=[xp.float64, xp.float32],
             ensure_2d=True,
             allow_nd=False,
             reset=False,
@@ -402,6 +506,10 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         # TODO: make D^2 a score function in module metrics (and thereby get
         #       input validation and so on)
         raw_prediction = self._linear_predictor(X)  # validates X
+
+        xp, _, device = get_namespace_and_device(X)
+        y, sample_weight = move_to(y, sample_weight, xp=xp, device=device)
+
         # required by losses
         y = check_array(y, dtype=raw_prediction.dtype, order="C", ensure_2d=False)
 
@@ -418,7 +526,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 f" {base_loss.__name__}."
             )
 
-        constant = np.average(
+        constant = _average(
             base_loss.constant_to_optimal_zero(y_true=y, sample_weight=None),
             weights=sample_weight,
         )
@@ -430,14 +538,14 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             sample_weight=sample_weight,
             n_threads=1,
         )
-        y_mean = base_loss.link.link(np.average(y, weights=sample_weight))
+        y_mean = base_loss.link.link(_average(y, weights=sample_weight))
         deviance_null = base_loss(
             y_true=y,
-            raw_prediction=np.tile(y_mean, y.shape[0]),
+            raw_prediction=xp.tile(y_mean, (y.shape[0],)),
             sample_weight=sample_weight,
             n_threads=1,
         )
-        return 1 - (deviance + constant) / (deviance_null + constant)
+        return float(1 - (deviance + constant) / (deviance_null + constant))
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -454,7 +562,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             pass  # pragma: no cover
         return tags
 
-    def _get_loss(self):
+    def _get_loss(self, xp=None, device=None):
         """This is only necessary because of the link and power arguments of the
         TweedieRegressor.
 
@@ -476,21 +584,54 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
     Parameters
     ----------
     alpha : float, default=1
-        Constant that multiplies the L2 penalty term and determines the
+        Constant that multiplies the penalty terms and determines the
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
         Values of `alpha` must be in the range `[0.0, inf)`.
 
+    l1_ratio : float, default=0.0
+        The Elastic-Net mixing parameter, with `0 <= l1_ratio <= 1`. Setting
+        `l1_ratio=1` gives a pure L1-penalty, setting `l1_ratio=0` gives a pure
+        L2-penalty. Any value between 0 and 1 gives an Elastic-Net penalty of the form
+        `l1_ratio * L1 + (1 - l1_ratio) * L2`.
+
+        .. warning::
+           Certain values of `l1_ratio`, i.e. some penalties, do not work with some
+           solvers. See the parameter `solver` below, to know the compatibility between
+           the penalty and solver.
+
+        .. versionadded:: 1.10
+
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (`X @ coef + intercept`).
 
-    solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
+    solver : {'lbfgs', 'newton-cg', 'newton-cholesky'}, default='lbfgs'
         Algorithm to use in the optimization problem:
 
         'lbfgs'
             Calls scipy's L-BFGS-B optimizer.
+
+        'newton-cd-gram'
+            Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
+            iterated reweighted least squares) with an inner coordinate descent based
+            solver that uses the full Hessian/Gram matrix. It can solve for all
+            values of `l1_ratio`.
+            This solver is a good choice for `n_samples` >> `n_features`. Be aware
+            that the memory usage of this solver has a quadratic dependency on
+            `n_features` because it explicitly computes the Hessian matrix.
+
+            .. versionadded:: 1.10
+
+        'newton-cg'
+            Uses a slightly adapted version of scipy's Newton-CG optimizer. This is
+            sometimes called the truncated Newton method. Due to the fact that it
+            does not construct the Hessian matrix but only uses gradients and
+            vector products of the Hessian, it is a good solver when `X` is sparse
+            or when `X` has many features.
+
+            .. versionadded:: 1.10
 
         'newton-cholesky'
             Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
@@ -501,6 +642,20 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
             `n_features` because it explicitly computes the Hessian matrix.
 
             .. versionadded:: 1.2
+
+        .. warning::
+           The choice of the algorithm depends on the penalty chosen (`l1_ratio=0`
+           for L2-penalty, `l1_ratio=1` for L1-penalty and `0 < l1_ratio < 1` for
+           Elastic-Net):
+
+           ================= ========================
+           solver            l1_ratio
+           ================= ========================
+           'lbfgs'           l1_ratio=0
+           'newton-cd-gram'  0<=l1_ratio<=1
+           'newton-cg'       l1_ratio=0
+           'newton-cholesky' l1_ratio=0
+           ================= ========================
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -574,6 +729,7 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
         self,
         *,
         alpha=1.0,
+        l1_ratio=0.0,
         fit_intercept=True,
         solver="lbfgs",
         max_iter=100,
@@ -583,6 +739,7 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
     ):
         super().__init__(
             alpha=alpha,
+            l1_ratio=l1_ratio,
             fit_intercept=fit_intercept,
             solver=solver,
             max_iter=max_iter,
@@ -591,8 +748,16 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
             verbose=verbose,
         )
 
-    def _get_loss(self):
-        return HalfPoissonLoss()
+    def _get_loss(self, xp=None, device=None):
+        if xp is None or _is_numpy_namespace(xp):
+            return HalfPoissonLoss()
+        else:
+            return HalfPoissonLossArrayAPI(xp=xp, device=device)
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.array_api_support = self.solver == "lbfgs"
+        return tags
 
 
 class GammaRegressor(_GeneralizedLinearRegressor):
@@ -607,21 +772,54 @@ class GammaRegressor(_GeneralizedLinearRegressor):
     Parameters
     ----------
     alpha : float, default=1
-        Constant that multiplies the L2 penalty term and determines the
+        Constant that multiplies the penalty terms and determines the
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
         Values of `alpha` must be in the range `[0.0, inf)`.
 
+    l1_ratio : float, default=0.0
+        The Elastic-Net mixing parameter, with `0 <= l1_ratio <= 1`. Setting
+        `l1_ratio=1` gives a pure L1-penalty, setting `l1_ratio=0` gives a pure
+        L2-penalty. Any value between 0 and 1 gives an Elastic-Net penalty of the form
+        `l1_ratio * L1 + (1 - l1_ratio) * L2`.
+
+        .. warning::
+           Certain values of `l1_ratio`, i.e. some penalties, do not work with some
+           solvers. See the parameter `solver` below, to know the compatibility between
+           the penalty and solver.
+
+        .. versionadded:: 1.10
+
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
-        added to the linear predictor `X @ coef_ + intercept_`.
+        added to the linear predictor (`X @ coef + intercept`).
 
-    solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
+    solver : {'lbfgs', 'newton-cg', 'newton-cholesky'}, default='lbfgs'
         Algorithm to use in the optimization problem:
 
         'lbfgs'
             Calls scipy's L-BFGS-B optimizer.
+
+        'newton-cd-gram'
+            Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
+            iterated reweighted least squares) with an inner coordinate descent based
+            solver that uses the full Hessian/Gram matrix. It can solve for all
+            values of `l1_ratio`.
+            This solver is a good choice for `n_samples` >> `n_features`. Be aware
+            that the memory usage of this solver has a quadratic dependency on
+            `n_features` because it explicitly computes the Hessian matrix.
+
+            .. versionadded:: 1.10
+
+        'newton-cg'
+            Uses a slightly adapted version of scipy's Newton-CG optimizer. This is
+            sometimes called the truncated Newton method. Due to the fact that it
+            does not construct the Hessian matrix but only uses gradients and
+            vector products of the Hessian, it is a good solver when `X` is sparse
+            or when `X` has many features.
+
+            .. versionadded:: 1.10
 
         'newton-cholesky'
             Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
@@ -632,6 +830,20 @@ class GammaRegressor(_GeneralizedLinearRegressor):
             `n_features` because it explicitly computes the Hessian matrix.
 
             .. versionadded:: 1.2
+
+        .. warning::
+           The choice of the algorithm depends on the penalty chosen (`l1_ratio=0`
+           for L2-penalty, `l1_ratio=1` for L1-penalty and `0 < l1_ratio < 1` for
+           Elastic-Net):
+
+           ================= ========================
+           solver            l1_ratio
+           ================= ========================
+           'lbfgs'           l1_ratio=0
+           'newton-cd-gram'  0<=l1_ratio<=1
+           'newton-cg'       l1_ratio=0
+           'newton-cholesky' l1_ratio=0
+           ================= ========================
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -706,6 +918,7 @@ class GammaRegressor(_GeneralizedLinearRegressor):
         self,
         *,
         alpha=1.0,
+        l1_ratio=0.0,
         fit_intercept=True,
         solver="lbfgs",
         max_iter=100,
@@ -715,6 +928,7 @@ class GammaRegressor(_GeneralizedLinearRegressor):
     ):
         super().__init__(
             alpha=alpha,
+            l1_ratio=l1_ratio,
             fit_intercept=fit_intercept,
             solver=solver,
             max_iter=max_iter,
@@ -723,7 +937,7 @@ class GammaRegressor(_GeneralizedLinearRegressor):
             verbose=verbose,
         )
 
-    def _get_loss(self):
+    def _get_loss(self, xp=None, device=None):
         return HalfGammaLoss()
 
 
@@ -760,11 +974,24 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
             For ``0 < power < 1``, no distribution exists.
 
     alpha : float, default=1
-        Constant that multiplies the L2 penalty term and determines the
+        Constant that multiplies the penalty terms and determines the
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
         Values of `alpha` must be in the range `[0.0, inf)`.
+
+    l1_ratio : float, default=0.0
+        The Elastic-Net mixing parameter, with `0 <= l1_ratio <= 1`. Setting
+        `l1_ratio=1` gives a pure L1-penalty, setting `l1_ratio=0` gives a pure
+        L2-penalty. Any value between 0 and 1 gives an Elastic-Net penalty of the form
+        `l1_ratio * L1 + (1 - l1_ratio) * L2`.
+
+        .. warning::
+           Certain values of `l1_ratio`, i.e. some penalties, do not work with some
+           solvers. See the parameter `solver` below, to know the compatibility between
+           the penalty and solver.
+
+        .. versionadded:: 1.10
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
@@ -779,11 +1006,31 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
         - 'log' for ``power > 0``, e.g. for Poisson, Gamma and Inverse Gaussian
           distributions
 
-    solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
+    solver : {'lbfgs', 'newton-cg', 'newton-cholesky'}, default='lbfgs'
         Algorithm to use in the optimization problem:
 
         'lbfgs'
             Calls scipy's L-BFGS-B optimizer.
+
+        'newton-cd-gram'
+            Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
+            iterated reweighted least squares) with an inner coordinate descent based
+            solver that uses the full Hessian/Gram matrix. It can solve for all
+            values of `l1_ratio`.
+            This solver is a good choice for `n_samples` >> `n_features`. Be aware
+            that the memory usage of this solver has a quadratic dependency on
+            `n_features` because it explicitly computes the Hessian matrix.
+
+            .. versionadded:: 1.10
+
+        'newton-cg'
+            Uses a slightly adapted version of scipy's Newton-CG optimizer. This is
+            sometimes called the truncated Newton method. Due to the fact that it
+            does not construct the Hessian matrix but only uses gradients and
+            vector products of the Hessian, it is a good solver when `X` is sparse
+            or when `X` has many features.
+
+            .. versionadded:: 1.10
 
         'newton-cholesky'
             Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
@@ -794,6 +1041,20 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
             `n_features` because it explicitly computes the Hessian matrix.
 
             .. versionadded:: 1.2
+
+        .. warning::
+           The choice of the algorithm depends on the penalty chosen (`l1_ratio=0`
+           for L2-penalty, `l1_ratio=1` for L1-penalty and `0 < l1_ratio < 1` for
+           Elastic-Net):
+
+           ================= ========================
+           solver            l1_ratio
+           ================= ========================
+           'lbfgs'           l1_ratio=0
+           'newton-cd-gram'  0<=l1_ratio<=1
+           'newton-cg'       l1_ratio=0
+           'newton-cholesky' l1_ratio=0
+           ================= ========================
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -871,6 +1132,7 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
         *,
         power=0.0,
         alpha=1.0,
+        l1_ratio=0.0,
         fit_intercept=True,
         link="auto",
         solver="lbfgs",
@@ -881,6 +1143,7 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
     ):
         super().__init__(
             alpha=alpha,
+            l1_ratio=l1_ratio,
             fit_intercept=fit_intercept,
             solver=solver,
             max_iter=max_iter,
@@ -891,7 +1154,7 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
         self.link = link
         self.power = power
 
-    def _get_loss(self):
+    def _get_loss(self, xp=None, device=None):
         if self.link == "auto":
             if self.power <= 0:
                 # identity link

@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numpy as np
 
 # Y_DYTPE is the dtype to which the targets y are converted to. This is also
