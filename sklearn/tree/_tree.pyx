@@ -1647,11 +1647,18 @@ def _check_node_ndarray_values(node_ndarray, n_features, node_count):
     """Validate the values of a deserialized node array.
 
     `_check_node_ndarray` only validates the structure of the array; this
-    function validates that `node_count` matches the array length and that the
-    `left_child` / `right_child` node indices and the `feature` column index
-    stay within bounds, so that the cython traversal cannot perform
-    out-of-bounds memory reads on a maliscious node array (see
-    `Tree.__setstate__`).
+    function validates the node values so that the cython traversal cannot be
+    tricked into an out-of-bounds memory access or an infinite loop by a
+    malicious node array (see `Tree.__setstate__`).
+
+    The traversal treats a node as a leaf iff `left_child == TREE_LEAF`, and
+    only dereferences `left_child` / `right_child` (as node ids) and `feature`
+    (as a column index into `X`) for the remaining, internal nodes. We
+    therefore only check those fields on internal nodes, and require each child
+    to be strictly greater than the node's own index: this keeps children in
+    `[0, n_nodes)` and, matching the `children_left[i] > i` invariant
+    documented on `Tree`, rules out cycles that would make the traversal loop
+    forever.
     """
     n_nodes = node_ndarray.shape[0]
 
@@ -1663,25 +1670,31 @@ def _check_node_ndarray_values(node_ndarray, n_features, node_count):
             f"({node_count}) does not match the number of nodes ({n_nodes})"
         )
 
-    # Children are either the `TREE_LEAF` (-1) sentinel or a valid node id in
-    # `[0, n_nodes)`.
-    for field in ("left_child", "right_child"):
-        children = node_ndarray[field]
-        if np.any((children < TREE_LEAF) | (children >= n_nodes)):
+    left_child = node_ndarray["left_child"]
+    right_child = node_ndarray["right_child"]
+    feature = node_ndarray["feature"]
+    node_index = np.arange(n_nodes)
+
+    # A node is internal iff its `left_child` is not the `TREE_LEAF` sentinel;
+    # only internal nodes have the fields below dereferenced.
+    is_internal = left_child != TREE_LEAF
+
+    # Each child must be a node id strictly greater than the own index.
+    for field, children in (("left_child", left_child), ("right_child", right_child)):
+        if np.any(is_internal & ((children <= node_index) | (children >= n_nodes))):
             raise ValueError(
                 f"node array from the pickle has out-of-bounds '{field}' "
-                f"values: expected each to be {TREE_LEAF} (leaf) or in "
-                f"[0, {n_nodes}), got {children}"
+                f"values: every internal node's '{field}' must be a node id "
+                f"greater than the node's own index and less than {n_nodes} "
+                f"(or {TREE_LEAF} for a leaf), got {children}"
             )
 
-    # `feature` is either the `TREE_UNDEFINED` (-2) sentinel (leaf nodes) or a
-    # valid feature column index in `[0, n_features)`.
-    feature = node_ndarray["feature"]
-    if np.any((feature < TREE_UNDEFINED) | (feature >= n_features)):
+    # `feature` is dereferenced as a column index into `X`.
+    if np.any(is_internal & ((feature < 0) | (feature >= n_features))):
         raise ValueError(
             f"node array from the pickle has out-of-bounds 'feature' values: "
-            f"expected each to be {TREE_UNDEFINED} (leaf) or in "
-            f"[0, {n_features}), got {feature}"
+            f"every internal node's 'feature' must be in [0, {n_features}), "
+            f"got {feature}"
         )
 
 

@@ -2402,11 +2402,15 @@ def test_check_node_ndarray():
 
 
 def test_check_node_ndarray_values():
-    """Node index fields are validated to stay within bounds.
+    """Node fields are validated to stay within bounds and consistent.
 
-    Non-regression test for a memory-safety issue where a tampered persisted
+    Non-regression test for memory-safety issues where a tampered persisted
     ``nodes`` array was loaded via ``Tree.__setstate__`` and caused an
-    out-of-bounds native memory read (segfault) at prediction time.
+    out-of-bounds native memory read/write (segfault) or an infinite loop at
+    prediction time. Validation enforces the joint per-node invariant: a node
+    is either a leaf (``left_child == TREE_LEAF``) or an internal node whose
+    ``left_child`` / ``right_child`` are valid node ids strictly greater than
+    the node's own index and whose ``feature`` is in ``[0, n_features)``.
     """
     n_features = 4
     n_nodes = 5
@@ -2427,19 +2431,37 @@ def test_check_node_ndarray_values():
     valid["feature"][0] = n_features - 1
     _check_node_ndarray_values(valid, n_features=n_features, node_count=n_nodes)
 
+    # Each case turns node 0 into an internal node (so its fields are actually
+    # dereferenced by the traversal) with one tampered, out-of-bounds field.
     for field, bad_value, match in [
+        # Child index past the end of the array.
         ("left_child", n_nodes, "out-of-bounds 'left_child'"),
-        ("left_child", -2, "out-of-bounds 'left_child'"),
         ("right_child", 999_999_999, "out-of-bounds 'right_child'"),
+        # Child index not strictly greater than the node's own index: a cycle
+        # (node 0 pointing at itself) never reaches a leaf, so the traversal
+        # would loop forever.
+        ("left_child", 0, "out-of-bounds 'left_child'"),
+        # `feature` sentinel/negative on an internal node -> used as a negative
+        # column index into `X` with wraparound disabled.
         ("feature", n_features, "out-of-bounds 'feature'"),
-        ("feature", -3, "out-of-bounds 'feature'"),
+        ("feature", TREE_UNDEFINED, "out-of-bounds 'feature'"),
+        ("feature", -1, "out-of-bounds 'feature'"),
     ]:
-        problematic = node_ndarray.copy()
+        problematic = valid.copy()
         problematic[field][0] = bad_value
         with pytest.raises(ValueError, match=match):
             _check_node_ndarray_values(
                 problematic, n_features=n_features, node_count=n_nodes
             )
+
+    # A leaf node (left_child == TREE_LEAF) never has its `feature` or
+    # `right_child` dereferenced, so arbitrary values there must not raise.
+    leaf_with_junk = node_ndarray.copy()
+    leaf_with_junk["feature"][0] = 999_999_999
+    leaf_with_junk["right_child"][0] = 999_999_999
+    _check_node_ndarray_values(
+        leaf_with_junk, n_features=n_features, node_count=n_nodes
+    )
 
     # `node_count` inconsistent with the array length.
     with pytest.raises(ValueError, match="node_count"):
@@ -2451,7 +2473,7 @@ def test_check_node_ndarray_values():
 def test_tree_setstate_rejects_tampered_nodes():
     """Loading a tampered tree model raises instead of segfaulting.
 
-    Non-regression test for a memory-safety issue: deserializing a malisciously
+    Non-regression test for a memory-safety issue: deserializing a maliciously
     crafted tree model previously segfaulted at ``predict`` time. The individual
     value bounds are covered by ``test_check_node_ndarray_values``; here we check
     the end-to-end pickle round-trip. ``node_count`` is not tampered with here

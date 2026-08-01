@@ -132,18 +132,23 @@ class TreePredictor:
     def _check_feature_idx_bounds(self, n_features):
         """Validate that split nodes reference in-range feature columns.
 
-        This complements the `left` / `right` bounds validated at load time in
-        `__setstate__`: `feature_idx` is dereferenced as a column index into
-        `X` in the `nogil` traversal (`_predict_from_raw_data` /
-        `_predict_from_binned_data`), which can cause a segfault if out of
-        bounts. We use `_n_features` saved in `fit` time to validate
-        `feature_idx` values, assuming it'd be the same during `predict`.
+        This complements the `left` / `right` / `bitset_idx` bounds validated
+        at load time in `__setstate__`: `feature_idx` is dereferenced as a
+        column index into `X` in the `nogil` traversal
+        (`_predict_from_raw_data` / `_predict_from_binned_data`), which can
+        cause a segfault if out of bounds. We use `_n_features` saved in `fit`
+        time to validate `feature_idx` values, assuming it'd be the same during
+        `predict`. Only split nodes dereference `feature_idx`, so only they are
+        validated.
         """
-        feature_idx = self.nodes["feature_idx"]
-        if np.any((feature_idx < 0) | (feature_idx >= n_features)):
+        nodes = self.nodes
+        is_split = ~nodes["is_leaf"].astype(bool)
+        feature_idx = nodes["feature_idx"]
+        if np.any(is_split & ((feature_idx < 0) | (feature_idx >= n_features))):
             raise ValueError(
                 "predictor node array has out-of-bounds 'feature_idx' values: "
-                f"expected each to be in [0, {n_features}), got {feature_idx}."
+                f"expected each split node's to be in [0, {n_features}), got "
+                f"{feature_idx}."
             )
 
     def __setstate__(self, state):
@@ -165,13 +170,44 @@ class TreePredictor:
         if self.nodes.dtype != PREDICTOR_RECORD_DTYPE:
             self.nodes = self.nodes.astype(PREDICTOR_RECORD_DTYPE, casting="same_kind")
 
-        # Checking bounds so that the nogil traversal in
-        # `_predict_from_raw_data` / `_predict_from_binned_data` wouldn't give
-        # a segfault when dereferencing indices.
-        n_nodes = self.nodes.shape[0]
+        # Bounds-check the node array so the nogil traversal in
+        # `_predict_from_raw_data` / `_predict_from_binned_data` can't segfault
+        # or loop forever on a malicious predictor. Leafness is the `is_leaf`
+        # flag; only split nodes dereference `left` / `right` (node ids) and
+        # `bitset_idx` (a row in the categorical bitset arrays). `feature_idx`
+        # is checked separately in `_check_feature_idx_bounds`, which needs
+        # `n_features`.
+        nodes = self.nodes
+        n_nodes = nodes.shape[0]
+        node_index = np.arange(n_nodes)
+        is_split = ~nodes["is_leaf"].astype(bool)
+
+        # `left` / `right` must be node ids strictly greater than the own index:
+        # this keeps them in `[0, n_nodes)` and rules out cycles.
         for field in ("left", "right"):
-            if np.any(self.nodes[field] >= n_nodes):
+            child = nodes[field]
+            if np.any(is_split & ((child <= node_index) | (child >= n_nodes))):
                 raise ValueError(
                     f"predictor node array has out-of-bounds '{field}' values: "
-                    f"expected each to be in [0, {n_nodes}), got {self.nodes[field]}."
+                    f"expected each split node's to be a node id greater than "
+                    f"the node's own index and less than {n_nodes}, got {child}."
+                )
+
+        # Categorical splits index the bitset arrays by `bitset_idx`, so it must
+        # be a valid row in both arrays. Only touch those arrays when such a
+        # split exists (a non-categorical predictor may carry empty ones).
+        is_categorical_split = is_split & nodes["is_categorical"].astype(bool)
+        if np.any(is_categorical_split):
+            bitset_idx = nodes["bitset_idx"]
+            n_bitsets = min(
+                self.binned_left_cat_bitsets.shape[0],
+                self.raw_left_cat_bitsets.shape[0],
+            )
+            if np.any(
+                is_categorical_split & ((bitset_idx < 0) | (bitset_idx >= n_bitsets))
+            ):
+                raise ValueError(
+                    "predictor node array has out-of-bounds 'bitset_idx' values: "
+                    f"expected each categorical split node's to be in "
+                    f"[0, {n_bitsets}), got {bitset_idx}."
                 )
