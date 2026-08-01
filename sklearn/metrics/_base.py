@@ -201,7 +201,7 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average="macro
             prevalence[ix] = _average(ab_mask, xp=xp)
 
         # array API does not allow mixed Boolean / integral indexing.
-        # Hence, need to convert to integers to able to index
+        # Hence, need to convert to integers to be able to index
         # y_score[ab_mask, a] and y_score[ab_mask, b].
         ab_mask = xp.nonzero(ab_mask)[0]
 
