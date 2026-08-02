@@ -13,13 +13,16 @@ from scipy import sparse as sp
 
 from sklearn.base import BaseEstimator, ClassifierMixin, _fit_context
 from sklearn.discriminant_analysis import DiscriminantAnalysisPredictionMixin
-from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.metrics.pairwise import pairwise_distances, pairwise_distances_argmin
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import get_tags
 from sklearn.utils._available_if import available_if
 from sklearn.utils._param_validation import Interval, StrOptions
-from sklearn.utils.multiclass import check_classification_targets
-from sklearn.utils.sparsefuncs import csc_median_axis_0
+from sklearn.utils.multiclass import (
+    _check_partial_fit_first_call,
+    check_classification_targets,
+)
+from sklearn.utils.sparsefuncs import csc_median_axis_0, mean_variance_axis
 from sklearn.utils.validation import check_is_fitted, validate_data
 
 
@@ -127,13 +130,15 @@ class NearestCentroid(
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
-        """Fit the NearestCentroid model according to the given training data.
+        """
+        Fit the NearestCentroid model according to the given training data.
 
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training vector, where `n_samples` is the number of samples and
             `n_features` is the number of features.
+            Note that centroid shrinking cannot be used with sparse matrices.
         y : array-like of shape (n_samples,)
             Target values.
 
@@ -142,19 +147,21 @@ class NearestCentroid(
         self : object
             Fitted estimator.
         """
-        if self.metric == "euclidean":
-            # Clear internal state to treat this as the first partial_fit call
-            for attr in ["classes_", "_class_counts", "_true_centroids", "_variance"]:
-                if hasattr(self, attr):
-                    delattr(self, attr)
-
-            # Strip Mock objects from tests to avoid array_function errors
-            y = np.asarray(y)
-            classes = np.unique(y)
-            return self.partial_fit(X, y, classes=classes)
-
-        # ---------- ORIGINAL BATCH MANHATTAN LOGIC ----------
-        X, y = validate_data(self, X, y, accept_sparse=["csc"])
+        # If X is sparse and the metric is "manhattan", store it in a csc
+        # format is easier to calculate the median.
+        if self.metric == "manhattan":
+            X, y = validate_data(self, X, y, accept_sparse=["csc"])
+        else:
+            ensure_all_finite = (
+                "allow-nan" if get_tags(self).input_tags.allow_nan else True
+            )
+            X, y = validate_data(
+                self,
+                X,
+                y,
+                ensure_all_finite=ensure_all_finite,
+                accept_sparse=["csr", "csc"],
+            )
         is_X_sparse = sp.issparse(X)
         check_classification_targets(y)
 
@@ -163,15 +170,14 @@ class NearestCentroid(
         y_ind = le.fit_transform(y)
         self.classes_ = classes = le.classes_
         n_classes = classes.size
-
         if n_classes < 2:
             raise ValueError(
-                "The number of classes has to be greater than one; "
-                "got {n_classes} class"
+                "The number of classes has to be greater than one; got %d class"
+                % (n_classes)
             )
 
-        if self.priors == "empirical":
-            _, class_counts = np.unique(y, return_inverse=True)
+        if self.priors == "empirical":  # estimate priors from sample
+            _, class_counts = np.unique(y, return_inverse=True)  # non-negative ints
             self.class_prior_ = np.bincount(class_counts) / float(len(y))
         elif self.priors == "uniform":
             self.class_prior_ = np.asarray([1 / n_classes] * n_classes)
@@ -187,7 +193,10 @@ class NearestCentroid(
             )
             self.class_prior_ = self.class_prior_ / self.class_prior_.sum()
 
+        # Mask mapping each class to its members.
         self.centroids_ = np.empty((n_classes, n_features), dtype=np.float64)
+
+        # Number of clusters in each class.
         nk = np.zeros(n_classes)
 
         for cur_class in range(n_classes):
@@ -196,11 +205,16 @@ class NearestCentroid(
             if is_X_sparse:
                 center_mask = np.where(center_mask)[0]
 
-            if not is_X_sparse:
-                self.centroids_[cur_class] = np.median(X[center_mask], axis=0)
-            else:
-                self.centroids_[cur_class] = csc_median_axis_0(X[center_mask])
+            if self.metric == "manhattan":
+                # NumPy does not calculate median of sparse matrices.
+                if not is_X_sparse:
+                    self.centroids_[cur_class] = np.median(X[center_mask], axis=0)
+                else:
+                    self.centroids_[cur_class] = csc_median_axis_0(X[center_mask])
+            else:  # metric == "euclidean"
+                self.centroids_[cur_class] = X[center_mask].mean(axis=0)
 
+        # Compute within-class std_dev with unshrunked centroids
         variance = np.array(X - self.centroids_[y_ind], copy=False) ** 2
         self.within_class_std_dev_ = np.array(
             np.sqrt(variance.sum(axis=0) / (n_samples - n_classes)), copy=False
@@ -212,31 +226,37 @@ class NearestCentroid(
             )
 
         err_msg = "All features have zero variance. Division by zero."
-        if (
-            is_X_sparse
-            and np.all((X.max(axis=0) - X.min(axis=0)).toarray() == 0)
-            or not is_X_sparse
-            and np.all(np.ptp(X, axis=0) == 0)
-        ):
+        if is_X_sparse and np.all((X.max(axis=0) - X.min(axis=0)).toarray() == 0):
+            raise ValueError(err_msg)
+        elif not is_X_sparse and np.all(np.ptp(X, axis=0) == 0):
             raise ValueError(err_msg)
 
         dataset_centroid_ = X.mean(axis=0)
+        # m parameter for determining deviation
         m = np.sqrt((1.0 / nk) - (1.0 / n_samples))
+        # Calculate deviation using the standard deviation of centroids.
+        # To deter outliers from affecting the results.
         s = self.within_class_std_dev_ + np.median(self.within_class_std_dev_)
-        mm = m.reshape(len(m), 1)
+        mm = m.reshape(len(m), 1)  # Reshape to allow broadcasting.
         ms = mm * s
         self.deviations_ = np.array(
             (self.centroids_ - dataset_centroid_) / ms, copy=False
         )
-
+        # Soft thresholding: if the deviation crosses 0 during shrinking,
+        # it becomes zero.
         if self.shrink_threshold:
             signs = np.sign(self.deviations_)
             self.deviations_ = np.abs(self.deviations_) - self.shrink_threshold
             np.clip(self.deviations_, 0, None, out=self.deviations_)
             self.deviations_ *= signs
+            # Now adjust the centroids using the deviation
             msd = ms * self.deviations_
             self.centroids_ = np.array(dataset_centroid_ + msd, copy=False)
 
+        # `fit` restarts from scratch: drop any state accumulated by `partial_fit`
+        # so a later `partial_fit` does not continue from a stale running total.
+        for attr in ("_class_counts", "_true_centroids", "_variance"):
+            self.__dict__.pop(attr, None)
         return self
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -264,13 +284,7 @@ class NearestCentroid(
         self : object
             Returns the instance itself.
         """
-        if self.metric == "manhattan":
-            raise ValueError(
-                "The 'manhattan' metric does not support partial_fit "
-                "because the median cannot be updated incrementally."
-            )
-
-        first_call = not hasattr(self, "classes_")
+        first_call = not hasattr(self, "_class_counts")
 
         ensure_all_finite = "allow-nan" if get_tags(self).input_tags.allow_nan else True
         X, y = validate_data(
@@ -278,20 +292,20 @@ class NearestCentroid(
             X,
             y,
             ensure_all_finite=ensure_all_finite,
-            accept_sparse=["csr", "csc"],
+            accept_sparse="csr",
             reset=first_call,
         )
         check_classification_targets(y)
+
+        # Sets `classes_` on the first call and checks it is unchanged on later
+        # ones. `unique_labels` sorts, so the per-class rows of the running
+        # totals below stay aligned with `classes_` even for unsorted `classes`.
+        _check_partial_fit_first_call(self, classes)
 
         # Strip Mock objects to avoid array_function errors
         y_arr = np.asarray(y)
 
         if first_call:
-            if classes is None:
-                raise ValueError(
-                    "classes must be passed on the first call to partial_fit."
-                )
-            self.classes_ = np.array(classes)
             n_classes = self.classes_.shape[0]
             n_features = X.shape[1]
 
@@ -359,11 +373,10 @@ class NearestCentroid(
                 continue
 
             if is_X_sparse:
-                batch_mean = np.asarray(X_class.mean(axis=0)).ravel()
-                batch_var = (
-                    np.asarray(X_class.multiply(X_class).mean(axis=0)).ravel()
-                    - batch_mean**2
-                )
+                # `mean_variance_axis` is numerically stable; computing the
+                # variance as E[X**2] - E[X]**2 cancels catastrophically when
+                # the feature mean is large relative to the within-class spread.
+                batch_mean, batch_var = mean_variance_axis(X_class, axis=0)
             else:
                 batch_mean = np.mean(X_class, axis=0)
                 batch_var = np.var(X_class, axis=0)
@@ -389,6 +402,9 @@ class NearestCentroid(
             self._class_counts[cur_class] = N_total
 
         total_samples = self._class_counts.sum()
+        # Classes listed in `classes` but not seen in any batch yet have no
+        # centroid, so they must not consume a degree of freedom here.
+        n_observed = int(np.count_nonzero(self._class_counts))
 
         if self.priors == "empirical":
             self.class_prior_ = self._class_counts / total_samples
@@ -398,20 +414,25 @@ class NearestCentroid(
         # Calculate pooled standard deviation using class variances
         total_sse = np.sum(self._variance * self._class_counts[:, np.newaxis], axis=0)
 
-        if total_samples > n_classes:
+        if total_samples > n_observed:
             self.within_class_std_dev_ = np.sqrt(
-                total_sse / (total_samples - n_classes)
+                total_sse / (total_samples - n_observed)
             )
         else:
             self.within_class_std_dev_ = np.zeros(self._true_centroids.shape[1])
 
-        if any(self.within_class_std_dev_ == 0) and total_samples > n_classes:
+        if any(self.within_class_std_dev_ == 0) and total_samples > n_observed:
             warnings.warn(
                 "self.within_class_std_dev_ has at least 1 zero standard deviation. "
                 "Inputs within the same classes for at least 1 feature are identical."
             )
 
-        if np.all((self._feature_max - self._feature_min) == 0):
+        # A batch small enough to be degenerate by construction (e.g. streaming
+        # one sample at a time) must not abort the fit; only raise once enough
+        # samples have accumulated for the spread to be meaningful.
+        if total_samples > n_observed and np.all(
+            (self._feature_max - self._feature_min) == 0
+        ):
             raise ValueError("All features have zero variance. Division by zero.")
 
         # Recalculate global deviations and apply soft thresholding
@@ -455,55 +476,43 @@ class NearestCentroid(
         y_pred : ndarray of shape (n_samples,)
             The predicted classes.
         """
-        check_is_fitted(self, ["centroids_", "classes_"])
-
-        ensure_all_finite = "allow-nan" if get_tags(self).input_tags.allow_nan else True
-
-        X = validate_data(
-            self,
-            X,
-            ensure_all_finite=ensure_all_finite,
-            accept_sparse="csr",
-            reset=False,
-        )
-
-        centroids = np.asarray(self.centroids_, dtype=np.float64, order="C")
-
-        # ---------- EUCLIDEAN ----------
-        if self.metric == "euclidean":
-            if sp.issparse(X):
-                X_sq = np.asarray(X.multiply(X).sum(axis=1)).ravel()
-                C_sq = np.sum(centroids * centroids, axis=1)
-                cross = X @ centroids.T
-                distances = X_sq[:, None] + C_sq[None, :] - 2 * cross
-            else:
-                X = np.asarray(X, dtype=np.float64, order="C")
-                X_sq = np.sum(X * X, axis=1)
-                C_sq = np.sum(centroids * centroids, axis=1)
-                cross = X @ centroids.T
-                distances = X_sq[:, None] + C_sq[None, :] - 2 * cross
-
-        # ---------- MANHATTAN ----------
-        elif self.metric == "manhattan":
-            if sp.issparse(X):
-                X = X.toarray()
-            else:
-                X = np.asarray(X, dtype=np.float64, order="C")
-
-            distances = np.empty((X.shape[0], centroids.shape[0]), dtype=np.float64)
-            for i, c in enumerate(centroids):
-                distances[:, i] = np.sum(np.abs(X - c), axis=1)
-
+        check_is_fitted(self)
+        if np.isclose(self.class_prior_, 1 / len(self.classes_)).all():
+            # `validate_data` is called here since we are not calling `super()`
+            ensure_all_finite = (
+                "allow-nan" if get_tags(self).input_tags.allow_nan else True
+            )
+            X = validate_data(
+                self,
+                X,
+                ensure_all_finite=ensure_all_finite,
+                accept_sparse="csr",
+                reset=False,
+            )
+            unobserved = self._unobserved_class_mask()
+            if unobserved is None:
+                return self.classes_[
+                    pairwise_distances_argmin(X, self.centroids_, metric=self.metric)
+                ]
+            # A class supplied to `partial_fit` but not yet seen in any batch
+            # has no centroid, so it must not win the nearest-centroid vote.
+            distances = pairwise_distances(X, self.centroids_, metric=self.metric)
+            distances[:, unobserved] = np.inf
+            return self.classes_[distances.argmin(axis=1)]
         else:
-            raise ValueError(f"Unsupported metric: {self.metric}")
+            return super().predict(X)
 
-        # ---------- APPLY PRIORS ----------
-        if hasattr(self, "class_prior_") and self.class_prior_ is not None:
-            log_priors = np.log(self.class_prior_)
-            scores = -distances + 2.0 * log_priors
-            return self.classes_[np.argmax(scores, axis=1)]
+    def _unobserved_class_mask(self):
+        """Mask of classes declared to `partial_fit` but not seen in any batch.
 
-        return self.classes_[np.argmin(distances, axis=1)]
+        Returns `None` when every class has been observed, which is always the
+        case after `fit` and lets `predict` keep its faster code path.
+        """
+        counts = getattr(self, "_class_counts", None)
+        if counts is None:
+            return None
+        mask = counts == 0
+        return mask if mask.any() else None
 
     def _decision_function(self, X):
         # return discriminant scores, see eq. (18.2) p. 652 of the ESL.
@@ -531,10 +540,18 @@ class NearestCentroid(
                 -distances + 2.0 * np.log(self.class_prior_[class_idx])
             )
 
+        unobserved = self._unobserved_class_mask()
+        if unobserved is not None:
+            discriminant_score[:, unobserved] = -np.inf
+
         return discriminant_score
 
     def _check_euclidean_metric(self):
         return self.metric == "euclidean"
+
+    # `metric="manhattan"` uses the feature-wise median, which cannot be
+    # updated incrementally, so `partial_fit` is only offered for "euclidean".
+    partial_fit = available_if(_check_euclidean_metric)(partial_fit)
 
     decision_function = available_if(_check_euclidean_metric)(
         DiscriminantAnalysisPredictionMixin.decision_function

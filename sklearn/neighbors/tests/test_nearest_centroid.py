@@ -340,11 +340,13 @@ def test_partial_fit_shrink_threshold():
     assert pred.shape == (len(y),)
 
 
-def test_partial_fit_manhattan_raises():
-    """Test partial_fit raises for manhattan metric."""
-    X, y = load_iris(return_X_y=True)
+def test_partial_fit_not_available_with_manhattan():
+    """Check partial_fit is not exposed for the manhattan metric, whose
+    feature-wise median cannot be updated incrementally.
+    """
     clf = NearestCentroid(metric="manhattan")
-    with pytest.raises(ValueError, match=r"manhattan.*partial_fit"):
+    assert not hasattr(clf, "partial_fit")
+    with pytest.raises(AttributeError):
         clf.partial_fit(X, y, classes=np.unique(y))
 
 
@@ -354,3 +356,101 @@ def test_partial_fit_missing_classes_raises():
     clf = NearestCentroid()
     with pytest.raises(ValueError, match="classes must be passed"):
         clf.partial_fit(X, y)
+
+
+@pytest.mark.parametrize("priors", ["uniform", "empirical", [0.2, 0.3, 0.5]])
+@pytest.mark.parametrize("shrink_threshold", [None, 0.5])
+def test_partial_fit_matches_fit(priors, shrink_threshold):
+    # Streaming the data in chunks must reproduce every fitted attribute of a
+    # single fit on the whole dataset.
+    X, y = load_iris(return_X_y=True)
+    kwargs = {"priors": priors, "shrink_threshold": shrink_threshold}
+
+    clf_fit = NearestCentroid(**kwargs).fit(X, y)
+    clf_partial = NearestCentroid(**kwargs)
+    for i, chunk in enumerate(np.array_split(np.arange(len(y)), 5)):
+        clf_partial.partial_fit(
+            X[chunk], y[chunk], classes=np.unique(y) if i == 0 else None
+        )
+
+    for attr in ("centroids_", "within_class_std_dev_", "deviations_", "class_prior_"):
+        assert_allclose(getattr(clf_fit, attr), getattr(clf_partial, attr))
+    assert_array_equal(clf_fit.predict(X), clf_partial.predict(X))
+
+
+@pytest.mark.parametrize("classes", [[0, 1, 2], [2, 0, 1], [1, 2, 0]])
+def test_partial_fit_classes_order_does_not_matter(classes):
+    # `classes_` must always be sorted, so the per-class centroid rows stay
+    # aligned with the labels no matter what order `classes` is given in.
+    X, y = load_iris(return_X_y=True)
+    clf = NearestCentroid()
+    clf.partial_fit(X, y, classes=classes)
+
+    assert_array_equal(clf.classes_, [0, 1, 2])
+    assert_array_equal(clf.predict(X), NearestCentroid().fit(X, y).predict(X))
+
+
+def test_partial_fit_inconsistent_classes_raises():
+    """Test partial_fit rejects a different `classes` on a later call."""
+    X, y = load_iris(return_X_y=True)
+    clf = NearestCentroid()
+    clf.partial_fit(X, y, classes=[0, 1, 2])
+    with pytest.raises(ValueError, match="is not the same as on last call"):
+        clf.partial_fit(X, y, classes=[0, 1, 3])
+
+
+def test_partial_fit_unknown_class_in_y_raises():
+    """Test partial_fit rejects a `y` holding labels absent from `classes`."""
+    X, y = load_iris(return_X_y=True)
+    clf = NearestCentroid()
+    with pytest.raises(ValueError, match="has classes not in"):
+        clf.partial_fit(X, y, classes=[0, 1])
+
+
+def test_partial_fit_single_sample_batches():
+    # Feeding one sample at a time is the point of partial_fit: a batch that is
+    # constant by construction must not be mistaken for zero-variance data.
+    X, y = load_iris(return_X_y=True)
+    clf = NearestCentroid()
+    for i in range(30):
+        clf.partial_fit(
+            X[i : i + 1], y[i : i + 1], classes=np.unique(y) if i == 0 else None
+        )
+
+    assert clf.centroids_.shape == (3, 4)
+    assert np.all(np.isfinite(clf.within_class_std_dev_))
+
+
+@pytest.mark.parametrize("priors", ["uniform", [0.2, 0.3, 0.5]])
+def test_partial_fit_unobserved_class_not_predicted(priors):
+    # A class announced through `classes` but absent from every batch seen so
+    # far has no centroid and must never win a prediction.
+    X, y = load_iris(return_X_y=True)
+    seen = y < 2
+    clf = NearestCentroid(priors=priors)
+    clf.partial_fit(X[seen], y[seen], classes=[0, 1, 2])
+
+    assert 2 not in clf.predict(X)
+    assert 2 not in clf.classes_[np.argmax(clf.predict_proba(X), axis=1)]
+
+    # once the missing class arrives it competes normally again
+    clf.partial_fit(X[~seen], y[~seen])
+    assert 2 in clf.predict(X)
+
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_partial_fit_sparse_matches_dense(csr_container):
+    # The pooled standard deviation must be computed stably: a one-pass
+    # E[X**2] - E[X]**2 cancels catastrophically on offset data and yields
+    # wrong values or NaN.
+    rng = np.random.RandomState(0)
+    X = 1e7 + rng.rand(200, 4)
+    X[100:] += 0.5
+    y = np.array([0] * 100 + [1] * 100)
+
+    dense = NearestCentroid().fit(X, y)
+    sparse = NearestCentroid().fit(csr_container(X), y)
+
+    assert np.all(np.isfinite(sparse.within_class_std_dev_))
+    assert_allclose(sparse.within_class_std_dev_, dense.within_class_std_dev_)
+    assert_allclose(sparse.centroids_, dense.centroids_)
