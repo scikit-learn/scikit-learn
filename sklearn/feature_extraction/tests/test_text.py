@@ -1652,3 +1652,64 @@ def test_hashing_vectorizer_transform_without_fit():
     corpus = ["This is test", "Another test"]
     result = vectorizer.transform(corpus)
     assert result.shape == (2, 10)
+
+
+def test_strip_tags_uses_module_level_pattern():
+    """`strip_tags` should reuse a single compiled regex defined at module level."""
+    from sklearn.feature_extraction import text as text_module
+
+    assert hasattr(text_module, "_strip_tags_re")
+    # Behavior preserved across the edge cases the helper is documented to cover.
+    assert strip_tags("<p>hello</p>") == " hello "
+    assert strip_tags("no tags") == "no tags"
+    assert strip_tags("<br/>") == " "
+    assert strip_tags("") == ""
+    # The function should consult the same compiled pattern object as the module.
+    sample = "<a href='x'>link</a> tail"
+    assert strip_tags(sample) == text_module._strip_tags_re.sub(" ", sample)
+
+
+def test_build_tokenizer_caches_compiled_pattern():
+    """`build_tokenizer` should reuse the compiled `token_pattern` across calls
+    and recompile only when the source pattern string changes."""
+    vectorizer = CountVectorizer(token_pattern=r"\b\w+\b")
+    text = "Hello, world! Foo 123"
+
+    # First call populates the cache.
+    tokenizer_a = vectorizer.build_tokenizer()
+    cached_a = getattr(vectorizer, "_cached_token_pattern")
+    assert cached_a is not None
+    assert cached_a.pattern == r"\b\w+\b"
+
+    # Second call with the same pattern must hit the cache (same compiled object).
+    tokenizer_b = vectorizer.build_tokenizer()
+    assert vectorizer._cached_token_pattern is cached_a
+    # The bound `findall` is recreated each call; tokenization stays identical.
+    assert tokenizer_a(text) == tokenizer_b(text) == ["Hello", "world", "Foo", "123"]
+
+    # Mutating `token_pattern` must invalidate the cache.
+    vectorizer.token_pattern = r"\w+"
+    tokenizer_c = vectorizer.build_tokenizer()
+    assert vectorizer._cached_token_pattern is not cached_a
+    assert vectorizer._cached_token_pattern.pattern == r"\w+"
+    assert tokenizer_c(text) == ["Hello", "world", "Foo", "123"]
+
+    # A third call with the new pattern reuses the freshly cached object.
+    tokenizer_d = vectorizer.build_tokenizer()
+    assert vectorizer._cached_token_pattern.pattern == r"\w+"
+    assert tokenizer_c(text) == tokenizer_d(text)
+
+
+def test_build_tokenizer_groups_validation_uses_cache():
+    """The >1-capturing-group validation must still run when the pattern changes,
+    even though subsequent calls are served from the cache."""
+    vectorizer = CountVectorizer(
+        token_pattern=r"([0-9]{1,3}(?:st|nd|rd|th))\s\b(\w{2,})\b"
+    )
+    with pytest.raises(ValueError, match="More than 1 capturing group"):
+        vectorizer.build_tokenizer()
+    # A valid pattern must compile and populate the cache.
+    vectorizer.token_pattern = r"\b\w+\b"
+    tokenizer = vectorizer.build_tokenizer()
+    assert tokenizer("the 1st sample") == ["the", "1st", "sample"]
+    assert vectorizer._cached_token_pattern.pattern == r"\b\w+\b"
