@@ -581,3 +581,4 @@ def mutual_info_classif(
         random_state=random_state,
         n_jobs=n_jobs,
     )
+    
