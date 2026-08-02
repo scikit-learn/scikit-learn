@@ -41,7 +41,7 @@ from sklearn.utils.fixes import (
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
 
-def _nw_into_df_or_series(x):
+def _nw_is_into_df_or_series(x):
     return nw.dependencies.is_into_dataframe(x) or nw.dependencies.is_into_series(x)
 
 
@@ -410,7 +410,7 @@ def _num_samples(x):
         if isinstance(x.shape[0], numbers.Integral):
             return x.shape[0]
 
-    if _nw_into_df_or_series(x):
+    if _nw_is_into_df_or_series(x):
         return nw.from_native(x, allow_series=True).shape[0]
 
     if not hasattr(x, "__len__") and not hasattr(x, "shape"):
@@ -494,8 +494,8 @@ def check_consistent_length(*arrays):
 def _make_indexable(iterable):
     """Ensure iterable supports indexing or convert to an indexable variant.
 
-    Convert sparse matrices to csr and other non-indexable iterable to arrays.
-    Let `None` and indexable objects (e.g. pandas dataframes) pass unchanged.
+    Convert sparse matrices to csr, dataframes to narwhals.DataFrame and other
+    non-indexable iterable to arrays. Let `None` and indexable objects pass unchanged.
 
     Parameters
     ----------
@@ -504,7 +504,12 @@ def _make_indexable(iterable):
     """
     if sp.issparse(iterable):
         return iterable.tocsr()
-    elif hasattr(iterable, "__getitem__") or hasattr(iterable, "iloc"):
+    elif _nw_is_into_df_or_series(iterable):
+        # Even if dataframe has __getitem__, semantics are quite different, examples:
+        # pandas: df[0] -> KeyError if 0 is not a column name
+        # polars: df[0] -> returns the 0th row
+        return iterable
+    elif hasattr(iterable, "__getitem__"):
         return iterable
     elif iterable is None:
         return iterable
@@ -915,7 +920,7 @@ def check_array(
     # track if we have a Series-like object to raise a better error message
     type_if_series = None
     # For dataframes, use narwhals
-    if _nw_into_df_or_series(array):
+    if _nw_is_into_df_or_series(array):
         array_df = nw.from_native(array, allow_series=True)
     else:
         array_df = None
@@ -2473,7 +2478,7 @@ def _generate_get_feature_names_out(estimator, n_features_out, input_features=No
     estimator : estimator instance
         Estimator producing output feature names.
 
-    n_feature_out : int
+    n_features_out : int
         Number of feature names out.
 
     input_features : array-like of str or None, default=None
