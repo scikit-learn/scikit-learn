@@ -124,9 +124,8 @@ for pair in ([0, 1], [0, 2], [2, 3]):
                 model,
                 X,
                 target_colors="RdYlBu",
-                alpha=0.9,
+                alpha=0.8,
                 response_method="predict",
-                eps=1.0,
                 ax=ax,
             )
         else:
@@ -142,7 +141,6 @@ for pair in ([0, 1], [0, 2], [2, 3]):
                     target_colors="RdYlBu",
                     alpha=estimator_alpha,
                     response_method="predict",
-                    eps=1.0,
                     ax=ax,
                 )
 
