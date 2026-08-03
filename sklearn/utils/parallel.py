@@ -223,7 +223,7 @@ def Parallel(*args, **kwargs) -> _FastThreadedParallel | _JoblibParallel:
         # this by using sequential backend.
         and n_jobs > 1
     ):
-        return _FastThreadedParallel(arguments["n_jobs"], arguments["return_as"])
+        return _FastThreadedParallel(n_jobs, arguments["return_as"])
     else:
         return _JoblibParallel(*args, **kwargs)
 
