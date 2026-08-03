@@ -1199,7 +1199,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         ),
     },
     PoissonRegressor: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
         "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     PolynomialFeatures: {
