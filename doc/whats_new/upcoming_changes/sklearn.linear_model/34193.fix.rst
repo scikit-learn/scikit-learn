@@ -1,0 +1,4 @@
+- :func:`linear_model.orthogonal_mp` and :func:`linear_model.orthogonal_mp_gram`
+  now clip ``n_nonzero_coefs`` to ``n_features`` with a warning instead of
+  raising a ``ValueError``, consistent with the behavior of LARS.
+  By :user:`Eden Rochman <EdenRochmanSharabi>`.
