@@ -271,3 +271,6 @@ def test_map(backend: str) -> None:
     result = parallel_map(square, [1, 2, 3], 2, backend=backend)
     assert not isinstance(result, list)
     assert list(result) == [1, 4, 9]
+
+
+# TODO test n_jobs for threads - set by config, passing -1, etc
