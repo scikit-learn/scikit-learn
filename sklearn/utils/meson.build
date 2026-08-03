@@ -34,18 +34,49 @@ utils_cython_tree = [
   fs.copyfile('_vector_sentinel.pxd'),
 ]
 
-# EXPERIMENTAL, local-machine-only: links _sorting against a locally-built
-# x86-simd-sort (see sklearn/utils/_sorting.pyx). Hardcoded absolute paths,
-# not portable, not meant to be merged -- speed-gain spike only.
-xss_scratchpad = '/tmp/claude-1000/-home-arthur-scikit-learn/c52acbef-6074-4de2-af5f-d274821ac498/scratchpad'
-xss_dep = declare_dependency(
-  link_args: [
-    xss_scratchpad / 'libxsswrap.so',
-    xss_scratchpad / 'xss' / 'builddir' / 'libx86simdsortcpp.so.1',
-    '-Wl,-rpath,' + xss_scratchpad,
-    '-Wl,-rpath,' + xss_scratchpad / 'xss' / 'builddir',
-  ],
+# EXPERIMENTAL: SIMD-accelerated simultaneous_sort (see _sorting.pyx), vendored
+# from https://github.com/numpy/x86-simd-sort as a meson subproject, built as a
+# static library and linked directly into the _sorting extension module.
+#
+# x86-simd-sort requires x86_64 (AVX2/AVX-512, runtime-dispatched by the
+# library itself); on any other architecture, or if the subproject can't be
+# fetched (e.g. no network access), we fall back to the plain introsort path.
+# `xss_available` and the generated _simd_sort_available.pxi are what
+# _sorting.pyx uses to decide, at Cython-compile-time, whether the SIMD
+# dispatch code is even emitted.
+xss_available = host_machine.cpu_family() == 'x86_64'
+if xss_available
+  xss_proj = subproject(
+    'x86-simd-sort',
+    default_options: [
+      'lib_type=static',
+      'build_tests=false',
+      'build_benchmarks=false',
+      'use_openmp=false',
+    ],
+    required: false,
+  )
+  xss_available = xss_proj.found()
+endif
+
+if xss_available
+  xss_dep = xss_proj.get_variable('x86simdsortcpp_dep')
+else
+  xss_dep = declare_dependency()
+endif
+
+_simd_sort_conf = configuration_data()
+_simd_sort_conf.set('HAVE_XSS_SIMD_SORT', xss_available ? 'True' : 'False')
+_simd_sort_pxi = configure_file(
+  input: '_simd_sort_available.pxi.in',
+  output: '_simd_sort_available.pxi',
+  configuration: _simd_sort_conf,
 )
+
+_sorting_sources = [cython_gen.process('_sorting.pyx'), _simd_sort_pxi]
+if xss_available
+  _sorting_sources += ['src' / 'xss_shim.cpp']
+endif
 
 utils_extension_metadata = {
   'sparsefuncs_fast':
@@ -61,7 +92,13 @@ utils_extension_metadata = {
   '_openmp_helpers': {'sources': [cython_gen.process('_openmp_helpers.pyx')], 'dependencies': [openmp_dep]},
   '_random': {'sources': [cython_gen.process('_random.pyx')]},
   '_typedefs': {'sources': [cython_gen.process('_typedefs.pyx')]},
-  '_sorting': {'sources': [cython_gen.process('_sorting.pyx')], 'dependencies': [xss_dep]},
+  '_sorting': {
+    'sources': _sorting_sources,
+    'dependencies': [xss_dep],
+    # x86simdsort.h uses C++17 syntax (e.g. std::function CTAD); sklearn's
+    # own project-wide cpp_std default (C++14) doesn't apply to it.
+    'override_options': xss_available ? ['cpp_std=c++17'] : [],
+  },
   '_vector_sentinel':
     {'sources': [cython_gen_cpp.process('_vector_sentinel.pyx')],
      'dependencies': [np_dep]},
@@ -73,6 +110,7 @@ foreach ext_name, ext_dict : utils_extension_metadata
     ext_name,
     [ext_dict.get('sources'), utils_cython_tree],
     dependencies: ext_dict.get('dependencies', []),
+    override_options: ext_dict.get('override_options', []),
     subdir: 'sklearn/utils',
     install: true
   )

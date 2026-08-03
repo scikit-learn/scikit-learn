@@ -1,0 +1,7 @@
+[wrap-git]
+url = https://github.com/numpy/x86-simd-sort.git
+revision = v7.0
+depth = 1
+
+[provide]
+x86simdsortcpp = x86simdsortcpp_dep
