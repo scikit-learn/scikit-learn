@@ -54,6 +54,7 @@ from sklearn.utils._tags import get_tags
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _EmptyRequest,
     _manual_routing,
     _raise_for_params,
     _routing_enabled,
@@ -953,6 +954,7 @@ class BaseSearchCV(
                     "estimator": {"fit": params},
                     "splitter": {"split": {"groups": groups}},
                     "scorer": {"score": score_kwargs},
+                    "callbacks": _EmptyRequest().callbacks,
                 }
             )
         return routed_params
@@ -1002,14 +1004,12 @@ class BaseSearchCV(
 
         X, y = indexable(X, y)
         params = _check_method_params(X, params=params)
-
         routed_params = self._get_routed_params_for_fit(params)
-        callbacks_params = getattr(routed_params, "callbacks", None)
         root_callback_ctx.call_on_fit_task_begin(
             estimator=self,
             X=X,
             y=y,
-            metadata=getattr(callbacks_params, "on_fit_task_begin", None),
+            metadata=routed_params.callbacks.on_fit_task_begin,
         )
 
         self._checked_cv_orig = check_cv(
@@ -1037,7 +1037,7 @@ class BaseSearchCV(
             error_score=self.error_score,
             verbose=self.verbose,
             caller=self,
-            callbacks_params=callbacks_params,
+            callbacks_params=routed_params.callbacks,
         )
         results = {}
         with parallel:
@@ -1183,7 +1183,7 @@ class BaseSearchCV(
                     estimator=self,
                     X=X,
                     y=y,
-                    metadata=getattr(callbacks_params, "on_fit_task_begin", None),
+                    metadata=routed_params.callbacks.on_fit_task_begin,
                 )
 
                 refit_start_time = time.time()
@@ -1201,7 +1201,7 @@ class BaseSearchCV(
                 estimator=self,
                 X=X,
                 y=y,
-                metadata=getattr(callbacks_params, "on_fit_task_end", None),
+                metadata=routed_params.callbacks.on_fit_task_end,
             )
 
         # Store the only scorer not as a dict for single metric evaluation
@@ -1216,7 +1216,7 @@ class BaseSearchCV(
             estimator=self,
             X=X,
             y=y,
-            metadata=getattr(callbacks_params, "on_fit_task_end", None),
+            metadata=routed_params.callbacks.on_fit_task_end,
         )
 
         return self

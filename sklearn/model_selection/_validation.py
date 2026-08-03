@@ -824,10 +824,21 @@ def _fit_and_score(
     # Adjust length of callbacks metadata
     if callbacks_params is not None:
         for hook_name in callbacks_params:
-            callbacks_params[hook_name] = _check_method_params(
-                X,
-                params=callbacks_params[hook_name],
-                indices=train,
+            # `_check_method_params` considers that all params that are arrays of same
+            # length as X should be resampled with the provided `indices`. But it is not
+            # always the case, e.g. X_val and y_val which are thus explicitly excluded.
+            # TODO: a more general solution for this problem is still needed.
+            params_to_check = {
+                k: v
+                for k, v in callbacks_params[hook_name].items()
+                if k not in ("X_val", "y_val")
+            }
+            callbacks_params[hook_name].update(
+                _check_method_params(
+                    X,
+                    params=params_to_check,
+                    indices=train,
+                )
             )
 
     if parameters is not None:
@@ -851,7 +862,7 @@ def _fit_and_score(
                     estimator=caller,
                     X=X_train,
                     y=y_train,
-                    metadata=getattr(callbacks_params, "on_fit_task_begin", None),
+                    metadata=callbacks_params.on_fit_task_begin,
                 )
                 if y_train is None:
                     estimator.fit(X_train, **fit_params)
@@ -897,7 +908,7 @@ def _fit_and_score(
                 estimator=caller,
                 X=X_train,
                 y=y_train,
-                metadata=getattr(callbacks_params, "on_fit_task_end", None),
+                metadata=callbacks_params.on_fit_task_end,
             )
 
     if verbose > 1:

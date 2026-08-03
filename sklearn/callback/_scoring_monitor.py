@@ -171,26 +171,14 @@ class ScoringMonitor(_MetadataRequester):
                 "making it unable to run any scorer. Please change at least one of "
                 "these values."
             )
-        if scoring_val != "no_val_score":
-            if not _routing_enabled():
-                raise (
-                    ValueError(
-                        "Using a scorer on validation data in "
-                        f"{self.__class__.__name__} is only supported when metadata "
-                        "routing is enabled. You can enable it using "
-                        "`sklearn.set_config(enable_metadata_routing=True)`. See the "
-                        "User Guide "
-                        "<https://scikit-learn.org/stable/metadata_routing.html> for "
-                        "more details on metadata routing."
-                    )
-                )
-            self.set_on_fit_task_end_request(X_val=True, y_val=True)
-
         # Turn the scorers into MultimetricScorer for convenience
         self._scorers = {
             "train": _convert_to_multiscorer(scoring_train),
             "val": _convert_to_multiscorer(scoring_val),
         }
+        if scoring_val != "no_val_score":
+            self._validate_validation_scorer()
+            self.set_on_fit_task_end_request(X_val=True, y_val=True)
 
         self._log = []
         self._estimator_scorers = {}
@@ -201,7 +189,24 @@ class ScoringMonitor(_MetadataRequester):
         # to grow the main process's log.
         self._listener_handle = open_listener(self._log.append, owner=self)
 
+    def _validate_validation_scorer(self):
+        """Raise an error if val scorer is set but metadata routing is disabled."""
+        if self._scorers["val"] != "no_val_score" and not _routing_enabled():
+            raise (
+                ValueError(
+                    "Using a scorer on validation data in "
+                    f"{self.__class__.__name__} is only supported when metadata "
+                    "routing is enabled. You can enable it using "
+                    "`sklearn.set_config(enable_metadata_routing=True)`. See the "
+                    "User Guide "
+                    "<https://scikit-learn.org/stable/metadata_routing.html> for "
+                    "more details on metadata routing."
+                )
+            )
+
     def setup(self, estimator, context):
+        self._validate_validation_scorer()
+
         # A scorer per estimator is needed to avoid race conditions when the callback is
         # set on different estimators and the scorer is the estimator's default scorer.
         if estimator not in self._estimator_scorers and (

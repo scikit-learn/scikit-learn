@@ -578,13 +578,31 @@ def test_no_scorer_error():
         ScoringMonitor()
 
 
-def test_scoring_val_no_metadata_routing_error():
-    """Test the error when using a validation scorer with metadata routing disabled."""
+def test_scoring_val_no_metadata_routing_error_at_init():
+    """Test the error when using a validation scorer with metadata routing disabled.
+
+    This test checks the error is raised at the callback's init.
+    """
     with pytest.raises(
         ValueError,
-        match="scorer on validation data .* supported when metadata routing is enabled",
+        match=r"scorer on validation data .* only supported when metadata routing",
     ):
         ScoringMonitor(scoring_val="r2")
+
+
+def test_scoring_val_no_metadata_routing_error_at_setup():
+    """Test the error when using a validation scorer with metadata routing disabled.
+
+    This test checks the error is raised at the callback's setup.
+    """
+    with config_context(enable_metadata_routing=True):
+        cb = ScoringMonitor(scoring_val="r2")
+    est = MaxIterEstimator().set_callbacks(cb)
+    with pytest.raises(
+        ValueError,
+        match=r"scorer on validation data .* only supported when metadata routing",
+    ):
+        est.fit()
 
 
 def test_repr_scoringmonitorlog():

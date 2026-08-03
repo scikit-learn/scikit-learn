@@ -170,7 +170,7 @@ class _LbfgsCallbackBridge:
             X=self._X,
             y=self._y,
             reconstruction_attributes={"coef_": coef, "intercept_": intercept},
-            metadata=getattr(self._callbacks_params, "on_fit_task_begin", None),
+            metadata=self._callbacks_params.on_fit_task_begin,
         )
         return ctx
 
@@ -182,7 +182,7 @@ class _LbfgsCallbackBridge:
             X=self._X,
             y=self._y,
             reconstruction_attributes={"coef_": coef, "intercept_": intercept},
-            metadata=getattr(self._callbacks_params, "on_fit_task_end", None),
+            metadata=self._callbacks_params.on_fit_task_end,
         )
         # TODO(1.10): use the return value of ``call_on_fit_task_end`` (a bool
         # requesting early stopping) to ``raise StopIteration()``. scipy's
@@ -1524,15 +1524,12 @@ class LogisticRegression(
         # callback logic.
         max_subtasks = max(self.max_iter, 1) + 1
         callback_ctx = self._init_callback_context(max_subtasks=max_subtasks)
-        routed_params = (
-            process_routing(self, "fit", **params) if _routing_enabled() else None
-        )
-        callbacks_params = getattr(routed_params, "callbacks", None)
+        routed_params = process_routing(self, "fit", **params)
         callback_ctx.call_on_fit_task_begin(
             estimator=self,
             X=X,
             y=y,
-            metadata=getattr(callbacks_params, "on_fit_task_begin", None),
+            metadata=routed_params.callbacks.on_fit_task_begin,
         )
 
         if solver == "liblinear":
@@ -1606,7 +1603,7 @@ class LogisticRegression(
             sample_weight=sample_weight,
             n_threads=n_threads,
             callback_ctx=callback_ctx,
-            callbacks_params=callbacks_params,
+            callbacks_params=routed_params.callbacks,
             estimator=self,
         )
 
@@ -1632,7 +1629,7 @@ class LogisticRegression(
             X=X,
             y=y,
             reconstruction_attributes={},
-            metadata=getattr(callbacks_params, "on_fit_task_end", None),
+            metadata=routed_params.callbacks.on_fit_task_end,
         )
 
         return self

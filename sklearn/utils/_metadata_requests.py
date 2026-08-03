@@ -1195,7 +1195,7 @@ class MetadataRouter:
         if self._self_request:
             self._self_request._check_warnings(params=params, method=caller)
 
-        res = Bunch()
+        res = Bunch(callbacks=_EmptyRequest().callbacks)
         for name, route_mapping in self._route_mappings.items():
             router, mapping = route_mapping.router, route_mapping.mapping
 
@@ -1523,6 +1523,22 @@ class RequestMethod:
         return func
 
 
+class _EmptyRequest:
+    """A class to make an empty request.
+
+    It returns an empty dict on routed_params.ANYTHING.ANY_METHOD.
+    """
+
+    def get(self, name, default=None):
+        return Bunch(**{method: dict() for method in METHODS})
+
+    def __getitem__(self, name):
+        return Bunch(**{method: dict() for method in METHODS})
+
+    def __getattr__(self, name):
+        return Bunch(**{method: dict() for method in METHODS})
+
+
 class _MetadataRequester:
     """Mixin class for adding metadata request functionality.
 
@@ -1670,7 +1686,7 @@ class _MetadataRequester:
 
         ignore_params = set() if ignore_params is None else set(ignore_params)
         ignore_params.update({"X", "y", "Y", "Xt", "yt"})
-        if isinstance(cls, _BaseCallback):
+        if issubclass(cls, _BaseCallback):
             ignore_params.update({"estimator", "context", "fitted_estimator"})
 
         params = defaultdict(
@@ -1848,17 +1864,7 @@ def process_routing(_obj, _method, /, **kwargs):
         # If routing is not enabled and kwargs are empty, then we don't have to
         # try doing any routing, we can simply return a structure which returns
         # an empty dict on routed_params.ANYTHING.ANY_METHOD.
-        class EmptyRequest:
-            def get(self, name, default=None):
-                return Bunch(**{method: dict() for method in METHODS})
-
-            def __getitem__(self, name):
-                return Bunch(**{method: dict() for method in METHODS})
-
-            def __getattr__(self, name):
-                return Bunch(**{method: dict() for method in METHODS})
-
-        return EmptyRequest()
+        return _EmptyRequest()
 
     if not (hasattr(_obj, "get_metadata_routing") or isinstance(_obj, MetadataRouter)):
         raise AttributeError(

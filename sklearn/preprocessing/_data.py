@@ -978,12 +978,11 @@ class StandardScaler(
 
         callback_ctx = self._init_callback_context()
         routed_params = process_routing(self, "fit", **params)
-        callbacks_params = getattr(routed_params, "callbacks", None)
         callback_ctx.call_on_fit_task_begin(
             estimator=self,
             X=X,
             y=y,
-            metadata=getattr(callbacks_params, "on_fit_task_begin", None),
+            metadata=routed_params.callbacks.on_fit_task_begin,
         )
 
         if sample_weight is not None:
@@ -1093,7 +1092,7 @@ class StandardScaler(
             X=X,
             y=y,
             reconstruction_attributes={},
-            metadata=getattr(callbacks_params, "on_fit_task_end", None),
+            metadata=routed_params.callbacks.on_fit_task_end,
         )
 
         return self

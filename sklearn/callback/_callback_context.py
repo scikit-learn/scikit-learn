@@ -323,7 +323,9 @@ class CallbackContext:
                 continue
 
             args_to_pass = getattr(
-                getattr(kwargs["metadata"], f"callback_{i}", None), hook_name, {}
+                getattr(copy.copy(kwargs["metadata"]), f"callback_{i}", None),
+                hook_name,
+                {},
             )
 
             signature = _cached_signature(getattr(callback, hook_name))
