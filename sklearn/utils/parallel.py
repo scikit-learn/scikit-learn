@@ -48,9 +48,7 @@ def _with_config_and_warning_filters(delayed_func, config, warning_filters):
 class _FastThreadedParallel:
     """Similar interface to :class:`joblib.Parallel`, but with lower overhead."""
 
-    def __init__(self, n_jobs, return_as: Literal["list", "generator"]):
-        if n_jobs is None:
-            n_jobs = joblib.parallel.effective_n_jobs(-1)
+    def __init__(self, n_jobs: int, return_as: Literal["list", "generator"]):
         self._return_as = return_as
         self._n_jobs = n_jobs
 
