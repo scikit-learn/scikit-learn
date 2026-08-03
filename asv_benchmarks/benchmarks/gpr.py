@@ -1,3 +1,5 @@
+import inspect
+
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.gaussian_process.kernels import ConstantKernel as C
@@ -25,13 +27,17 @@ class GaussianProcessRegressorBenchmark(Estimator, Benchmark):
             length_scale=1.0, length_scale_bounds=(1e-3, 1e3)
         ) + C(1e-5, (1e-5, 1e2))
 
-        return GaussianProcessRegressor(
-            kernel=kernel,
-            n_restarts_optimizer=n_restarts,
-            normalize_y=True,
-            random_state=0,
-            n_jobs=n_jobs,
-        )
+        kwargs = {
+            "kernel": kernel,
+            "n_restarts_optimizer": n_restarts,
+            "normalize_y": True,
+            "random_state": 0,
+        }
+
+        if "n_jobs" in inspect.signature(GaussianProcessRegressor.__init__).parameters:
+            kwargs["n_jobs"] = n_jobs
+
+        return GaussianProcessRegressor(**kwargs)
 
     def make_scorers(self):
         make_gen_reg_scorers(self)
