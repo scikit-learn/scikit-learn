@@ -1,0 +1,6 @@
+- :class:`linear_model.HuberRegressor` now raises a
+  :class:`exceptions.ConvergenceWarning` instead of a `ValueError` when the
+  L-BFGS-B solver reports a line search failure, which is consistent with the
+  other estimators relying on this solver. The coefficients of the last
+  iteration are returned instead of discarding the fitted model.
+  By :user:`Tirth Shendage <tirthfx>`.
