@@ -1,0 +1,4 @@
+- :class:`model_selection.ValidationCurveDisplay` now handles categorical
+  (non-numeric) ``param_range`` values by using integer indices for plotting
+  and setting the original values as tick labels.
+  By :user:`Eden Rochman <EdenRochmanSharabi>`.
