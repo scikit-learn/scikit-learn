@@ -1,0 +1,4 @@
+- :func:`feature_selection.r_regression` and :func:`feature_selection.f_regression`
+  no longer emit a spurious ``RuntimeWarning`` for constant features when floating
+  point cancellation makes the computed variance slightly negative.
+  By :user:`Eden Rochman <EdenRochmanSharabi>`.
