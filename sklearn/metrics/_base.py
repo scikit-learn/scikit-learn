@@ -13,7 +13,6 @@ from sklearn.utils import check_array, check_consistent_length
 from sklearn.utils._array_api import (
     _average,
     _ravel,
-    get_namespace,
     get_namespace_and_device,
 )
 from sklearn.utils.multiclass import type_of_target, unique_labels
@@ -180,15 +179,15 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average="macro
     """
     check_consistent_length(y_true, y_score)
 
-    xp, _ = get_namespace(y_score)
+    xp, _, device = get_namespace_and_device(y_score)
 
     y_true_unique = unique_labels(y_true)
     n_classes = y_true_unique.shape[0]
     n_pairs = n_classes * (n_classes - 1) // 2
-    pair_scores = xp.empty(n_pairs)
+    pair_scores = xp.empty(n_pairs, device=device)
 
     is_weighted = average == "weighted"
-    prevalence = xp.empty(n_pairs) if is_weighted else None
+    prevalence = xp.empty(n_pairs, device=device) if is_weighted else None
 
     # Compute scores treating a as positive class and b as negative class,
     # then b as positive class and a as negative class
