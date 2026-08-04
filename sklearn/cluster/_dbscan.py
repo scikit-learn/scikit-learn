@@ -434,7 +434,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", sparse.SparseEfficiencyWarning)
                 X.setdiag(X.diagonal())
-                # Sorting could be undone by .setdiag(), make sure its sorted
+                # Sorting could be undone by .setdiag(), make sure it's sorted
                 X = sort_graph_by_row_values(X, warn_when_not_sorted=False)
 
         neighbors_model = NearestNeighbors(

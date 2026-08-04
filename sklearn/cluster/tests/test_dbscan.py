@@ -440,7 +440,7 @@ def test_dbscan_precomputed_metric_with_initial_rows_zero(csr_container):
 
 
 def _reverse_row_order(graph):
-    # Make sure its NOT sorted by ROW values
+    # Make sure it's NOT sorted by ROW values
     graph = graph.copy()
     for i in range(graph.shape[0]):
         start, end = graph.indptr[i], graph.indptr[i + 1]
