@@ -20,6 +20,7 @@ from sklearn.utils._array_api import (
     _estimator_with_converted_arrays,
     _expit,
     _fill_diagonal,
+    _interp,
     _is_numpy_namespace,
     _logit,
     _logsumexp,
@@ -1043,6 +1044,159 @@ def test_matching_numpy_dtype(namespace, device_name, dtype_name):
     with config_context(array_api_dispatch=True):
         ret_dtype = _matching_numpy_dtype(X_xp, xp=xp)
     assert ret_dtype == X_np.dtype
+
+
+@pytest.mark.parametrize(
+    "x, xp, fp, left, right",
+    [
+        (1, [0, 2, 4], [1, -1, 1], None, None),
+        # test numpy.inf in fp
+        ([1, 2, 2.5, 3, 4], [1, 2, 3, 4], [1, 2, numpy.inf, 4], None, None),
+        # test numpy.nan in fp
+        ([1, 2, 2.5, 3, 4], [1, 2, 3, 4], [1, 2, numpy.nan, 4], None, None),
+        # test numpy.nan interpolation point
+        (numpy.nan, [0, 0.25, 0.5, 0.75, 1], [0, 0.25, 0.5, 0.75, 1], None, None),
+        (
+            numpy.linspace(0, 1, 50),
+            numpy.linspace(0, 1, 5),
+            numpy.linspace(0, 1, 5),
+            None,
+            None,
+        ),
+        # test nans in `xp` propagates to output
+        (0.5, [numpy.nan, 1], [0, 10], None, None),
+        # test left
+        (
+            numpy.asarray([-1, 0, 7, 8], dtype=numpy.float64),
+            numpy.arange(7, dtype=numpy.float64),
+            numpy.ones(7, dtype=numpy.float64),
+            0,
+            None,
+        ),
+        # test right
+        (
+            numpy.asarray([-1, 0, 7, 8], dtype=numpy.float64),
+            numpy.arange(7, dtype=numpy.float64),
+            numpy.ones(7, dtype=numpy.float64),
+            None,
+            2,
+        ),
+        # test left and right
+        (
+            numpy.asarray([-1, 0, 4, 5], dtype=numpy.float64),
+            numpy.arange(5, dtype=numpy.float64),
+            numpy.ones(5, dtype=numpy.float64),
+            0,
+            2,
+        ),
+    ],
+)
+@pytest.mark.parametrize(
+    "namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_interp(x, xp, fp, left, right, namespace, device_name, dtype_name):
+    xp_actual, device = _array_api_for_tests(namespace, device_name, dtype_name)
+
+    with config_context(array_api_dispatch=True):
+        dtype = getattr(xp_actual, dtype_name) if dtype_name else None
+        xp_xp = xp_actual.asarray(xp, dtype=dtype, device=device)
+        fp_xp = xp_actual.asarray(fp, dtype=dtype, device=device)
+        actual = _interp(x, xp_xp, fp_xp, left, right)
+        actual = move_to(actual, xp=numpy, device="cpu")
+
+    desired = numpy.interp(x, xp, fp, left, right).astype(dtype_name)
+
+    assert_allclose(actual, desired, atol=_atol_for_type(dtype_name))
+
+
+@pytest.mark.parametrize(
+    "namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_interp_empty_x(namespace, device_name, dtype_name):
+    # See https://github.com/numpy/numpy/issues/30316
+    xp_actual, device = _array_api_for_tests(namespace, device_name)
+
+    with config_context(array_api_dispatch=True):
+        dtype = getattr(xp_actual, dtype_name) if dtype_name else None
+        atol = _atol_for_type(dtype_name)
+
+        xp1 = xp_actual.asarray([], dtype=dtype, device=device)
+        fp1 = xp_actual.asarray([], dtype=dtype, device=device)
+
+        actual1 = _interp([], xp1, fp1)
+        actual1 = move_to(actual1, xp=numpy, device="cpu")
+        desired1 = numpy.interp([], [], []).astype(dtype_name)
+
+        assert_allclose(actual1, desired1, atol=atol)
+
+
+@pytest.mark.parametrize(
+    "namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_interp_raises(namespace, device_name, dtype_name):
+    xp_actual, device = _array_api_for_tests(namespace, device_name, dtype_name)
+
+    with config_context(array_api_dispatch=True):
+        dtype = getattr(xp_actual, dtype_name) if dtype_name else None
+        empty = xp_actual.asarray([], dtype=dtype, device=device)
+        arr_1 = xp_actual.asarray([1, 2, 3], dtype=dtype, device=device)
+
+        # `fp` or `xp` is empty
+        msg = "array of sample points is empty"
+        with pytest.raises(ValueError, match=msg):
+            _interp(0, empty, empty)
+
+        # `fp` and `xp` are not of the same length
+        arr_2 = xp_actual.asarray([4, 5], dtype=dtype, device=device)
+        msg = "fp and xp are not of the same length"
+        with pytest.raises(ValueError, match=msg):
+            _interp(0, arr_1, empty)
+        with pytest.raises(ValueError, match=msg):
+            _interp(0, empty, arr_1)
+        with pytest.raises(ValueError, match=msg):
+            _interp(0, arr_1, arr_2)
+        with pytest.raises(ValueError, match=msg):
+            _interp(0, arr_2, arr_1)
+
+        # should run successfully when `x` is empty
+        _interp(empty, empty, empty)
+        _interp(empty, arr_1, arr_1)
+
+
+@pytest.mark.parametrize(
+    "namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_interp_raises_with_complex(namespace, device_name, dtype_name):
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
+    complex_np = numpy.asarray([7 + 8j])
+    arr_real_np = numpy.asarray([1, 2], dtype=dtype_name)
+    arr_complex_np = numpy.asarray([2, 0], dtype=dtype_name) + 1j * numpy.asarray(
+        [4, 3], dtype=dtype_name
+    )
+    complex_type_name = arr_complex_np.dtype.name
+
+    with config_context(array_api_dispatch=True):
+        if not hasattr(xp, complex_type_name):
+            # This is the case for cupy as of March 2024 for instance.
+            pytest.skip(f"{namespace} does not support {complex_type_name}")
+
+        dtype = getattr(xp, dtype_name) if dtype_name else None
+        arr_real_xp = xp.asarray([1, 2], dtype=dtype, device=device)
+        complex_xp, arr_real_xp, arr_complex_xp = move_to(
+            complex_np, arr_real_np, arr_complex_np, xp=xp, device=device
+        )
+
+        msg = "Complex floating-point values are not supported by interp."
+        with pytest.raises(NotImplementedError, match=msg):
+            _interp(0.7, arr_real_xp, arr_complex_xp)
+        with pytest.raises(NotImplementedError, match=msg):
+            _interp(0.7, arr_complex_xp, arr_real_xp)
+        with pytest.raises(NotImplementedError, match=msg):
+            _interp(complex_xp, arr_real_xp, arr_real_xp)
 
 
 @pytest.mark.parametrize(
