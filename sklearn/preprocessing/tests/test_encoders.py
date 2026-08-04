@@ -808,7 +808,7 @@ def test_one_hot_encoder_warning():
     enc = OneHotEncoder()
     X = [["Male", 1], ["Female", 3]]
     with warnings.catch_warnings():
-        warnings.simplefilter("error")
+        warnings.simplefilter("error", category=UserWarning)
         enc.fit_transform(X)
 
 

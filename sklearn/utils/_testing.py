@@ -1529,7 +1529,7 @@ def _get_warnings_filters_info_list():
         # will happen, only that it won't be earlier than v2.2.
         WarningInfo(
             "ignore",
-            message=r"(?s).*All sparse matrix classes",
+            message=r"(?s).*All sparse matrix classes.+deprecated",
             category=DeprecationWarning,
         ),
     ]

@@ -30,6 +30,7 @@ from sklearn.utils.fixes import (
     CSR_CONTAINERS,
     LIL_CONTAINERS,
     _sparse_eye_array,
+    _sparse_random_array,
 )
 
 rtol = 1e-6
@@ -502,7 +503,7 @@ def test_sparse_preprocess_data_offsets(global_random_seed, lil_container):
     rng = np.random.RandomState(global_random_seed)
     n_samples = 200
     n_features = 2
-    X = sparse.rand(n_samples, n_features, density=0.5, random_state=rng)
+    X = _sparse_random_array((n_samples, n_features), density=0.5, random_state=rng)
     X = lil_container(X)
     y = rng.rand(n_samples)
     XA = X.toarray()
