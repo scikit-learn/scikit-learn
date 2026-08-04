@@ -564,7 +564,12 @@ def move_to(*arrays, xp, device):
         if _max_precision_float_dtype(xp, device) == xp.float32:
             arrays_ = []
             for array in arrays:
-                xp_array, _ = get_namespace(array)
+                try:
+                    xp_array, _ = get_namespace(array)
+                except (TypeError, ValueError):
+                    # Not an Array API array (e.g. a Python/NumPy scalar). Treat it as
+                    # NumPy, matching the behavior when array_api_dispatch is disabled.
+                    xp_array = np_compat
                 if getattr(array, "dtype", None) == xp_array.float64:
                     arrays_.append(xp_array.astype(array, xp_array.float32))
                 else:
@@ -577,7 +582,13 @@ def move_to(*arrays, xp, device):
             elif is_sparse:
                 converted_arrays.append(array)
             else:
-                xp_array, _, device_array = get_namespace_and_device(array)
+                try:
+                    xp_array, _, device_array = get_namespace_and_device(array)
+                except (TypeError, ValueError):
+                    # Not an Array API array (e.g. a Python/NumPy scalar). Treat it as
+                    # NumPy, matching the behavior when array_api_dispatch is disabled.
+                    xp_array, device_array = np_compat, array_device(array)
+
                 if xp == xp_array and device == device_array:
                     converted_arrays.append(array)
                 else:
