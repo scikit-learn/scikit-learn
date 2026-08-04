@@ -2,6 +2,9 @@
 or if specifically requested via environment variable
 (e.g. for CI jobs)."""
 
+import codecs
+import os
+import pickle
 from functools import partial
 from unittest.mock import patch
 
@@ -9,12 +12,16 @@ import numpy as np
 import pytest
 import scipy.sparse as sp
 
+from sklearn.datasets import fetch_20newsgroups
+from sklearn.datasets._base import _pkl_filepath
+from sklearn.datasets._twenty_newsgroups import CACHE_NAME, _download_20newsgroups
 from sklearn.datasets.tests.test_common import (
     check_as_frame,
     check_pandas_dependency_message,
     check_return_X_y,
 )
 from sklearn.preprocessing import normalize
+from sklearn.utils import Bunch
 from sklearn.utils._testing import assert_allclose_dense_sparse
 
 
@@ -141,3 +148,124 @@ def test_outdated_pickle(fetch_20newsgroups_vectorized_fxt):
             err_msg = "The cached dataset located in"
             with pytest.raises(ValueError, match=err_msg):
                 fetch_20newsgroups_vectorized_fxt(as_frame=True)
+
+
+def _write_fake_20newsgroups_cache(data_home):
+    """Write a minimal but structurally valid 20newsgroups cache to disk.
+
+    This lets tests exercise `fetch_20newsgroups`'s post-processing (e.g. the
+    `subset="all"` merging logic) without requiring network access.
+    """
+    cache = {
+        "train": Bunch(
+            data=["train doc 0", "train doc 1"],
+            target=np.array([0, 1]),
+            filenames=np.array(["train0", "train1"]),
+            target_names=["alt.atheism", "sci.space"],
+        ),
+        "test": Bunch(
+            data=["test doc 0"],
+            target=np.array([1]),
+            filenames=np.array(["test0"]),
+            target_names=["alt.atheism", "sci.space"],
+        ),
+    }
+    cache_path = _pkl_filepath(data_home, CACHE_NAME)
+    compressed_content = codecs.encode(pickle.dumps(cache), "zlib_codec")
+    with open(cache_path, "wb") as f:
+        f.write(compressed_content)
+    return cache
+
+
+def test_20news_subset_all_merges_train_and_test(tmp_path):
+    """Non-regression test for `fetch_20newsgroups(subset="all")`.
+
+    A previous change to the `subset == "all"` branch introduced a loop
+    variable that shadowed, without updating, a reference to the outer
+    `subset` parameter, which made every `subset="all"` call raise
+    `KeyError: 'all'`. This avoids the network dependency of `test_20news`
+    so it always runs in CI.
+    """
+    _write_fake_20newsgroups_cache(tmp_path)
+
+    data = fetch_20newsgroups(
+        data_home=tmp_path,
+        subset="all",
+        shuffle=False,
+        download_if_missing=False,
+    )
+
+    assert len(data.data) == 3
+    assert list(data.data) == ["train doc 0", "train doc 1", "test doc 0"]
+    assert_allclose_dense_sparse(data.target, np.array([0, 1, 1]))
+    assert list(data.filenames) == ["train0", "train1", "test0"]
+
+
+def test_download_20newsgroups_atomic_write(tmp_path, monkeypatch):
+    """`_download_20newsgroups` must never leave a partially written cache.
+
+    Non-regression test for a race condition (gh-32095) where concurrent
+    callers (e.g. separate pytest-xdist workers) could observe a partially
+    written cache file. The fix downloads and builds the cache in an
+    isolated temporary directory and finalizes it with an atomic
+    `os.replace`, mirroring the pattern already used by `fetch_openml` and
+    `fetch_covtype`.
+    """
+    cache_path = _pkl_filepath(str(tmp_path), CACHE_NAME)
+
+    fake_cache = {
+        "train": Bunch(data=["doc"], target=np.array([0]), filenames=np.array(["f"])),
+        "test": Bunch(data=["doc"], target=np.array([0]), filenames=np.array(["f"])),
+    }
+
+    def fake_fetch_remote(archive, dirname, n_retries, delay):
+        # Simulate a downloaded archive without touching the network.
+        archive_path = os.path.join(dirname, archive.filename)
+        with open(archive_path, "wb") as f:
+            f.write(b"not a real tar.gz, extraction is mocked below")
+        return archive_path
+
+    class _FakeTarfile:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    def fake_tarfile_open(*args, **kwargs):
+        return _FakeTarfile()
+
+    def fake_tarfile_extractall(fp, path):
+        # Create the train/test folders that load_files below expects.
+        os.makedirs(os.path.join(path, "20news-bydate-train"), exist_ok=True)
+        os.makedirs(os.path.join(path, "20news-bydate-test"), exist_ok=True)
+
+    def fake_load_files(path, encoding=None):
+        return fake_cache["train"] if "train" in path else fake_cache["test"]
+
+    monkeypatch.setattr(
+        "sklearn.datasets._twenty_newsgroups._fetch_remote", fake_fetch_remote
+    )
+    monkeypatch.setattr(
+        "sklearn.datasets._twenty_newsgroups.tarfile.open", fake_tarfile_open
+    )
+    monkeypatch.setattr(
+        "sklearn.datasets._twenty_newsgroups.tarfile_extractall",
+        fake_tarfile_extractall,
+    )
+    monkeypatch.setattr(
+        "sklearn.datasets._twenty_newsgroups.load_files", fake_load_files
+    )
+
+    result = _download_20newsgroups(cache_path=cache_path, n_retries=3, delay=1)
+
+    assert result["train"] is fake_cache["train"]
+    assert os.path.exists(cache_path)
+    # No leftover temporary directories or files should remain in data_home.
+    assert os.listdir(tmp_path) == [os.path.basename(cache_path)]
+
+    # The cache file that was written is a valid, fully-formed pickle.
+    with open(cache_path, "rb") as f:
+        uncompressed = codecs.decode(f.read(), "zlib_codec")
+    reloaded = pickle.loads(uncompressed)
+    assert set(reloaded) == {"train", "test"}

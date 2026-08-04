@@ -30,10 +30,10 @@ import logging
 import os
 import pickle
 import re
-import shutil
 import tarfile
 from contextlib import suppress
 from numbers import Integral, Real
+from tempfile import TemporaryDirectory
 
 import joblib
 import numpy as np
@@ -68,35 +68,48 @@ TRAIN_FOLDER = "20news-bydate-train"
 TEST_FOLDER = "20news-bydate-test"
 
 
-def _download_20newsgroups(target_dir, cache_path, n_retries, delay):
+def _download_20newsgroups(cache_path, n_retries, delay):
     """Download the 20 newsgroups data and stored it as a zipped pickle."""
-    train_path = os.path.join(target_dir, TRAIN_FOLDER)
-    test_path = os.path.join(target_dir, TEST_FOLDER)
+    data_home = os.path.dirname(cache_path)
+    os.makedirs(data_home, exist_ok=True)
 
-    os.makedirs(target_dir, exist_ok=True)
+    # Download, extract and build the cache in an isolated, uniquely-named
+    # temporary directory, then atomically move the finished cache file into
+    # place. This way, concurrent callers (e.g. separate pytest-xdist
+    # workers fetching the same dataset at the same time) never step on each
+    # other's working files, and a reader of cache_path either sees no cache
+    # file yet or a fully written one, never a partial one. Creating the
+    # temporary directory inside data_home guarantees it is on the same
+    # filesystem as cache_path, which os.replace requires to be atomic.
+    with TemporaryDirectory(dir=data_home) as temp_dir:
+        train_path = os.path.join(temp_dir, TRAIN_FOLDER)
+        test_path = os.path.join(temp_dir, TEST_FOLDER)
 
-    logger.info("Downloading dataset from %s (14 MB)", ARCHIVE.url)
-    archive_path = _fetch_remote(
-        ARCHIVE, dirname=target_dir, n_retries=n_retries, delay=delay
-    )
+        logger.info("Downloading dataset from %s (14 MB)", ARCHIVE.url)
+        archive_path = _fetch_remote(
+            ARCHIVE, dirname=temp_dir, n_retries=n_retries, delay=delay
+        )
 
-    logger.debug("Decompressing %s", archive_path)
-    with tarfile.open(archive_path, "r:gz") as fp:
-        tarfile_extractall(fp, path=target_dir)
+        logger.debug("Decompressing %s", archive_path)
+        with tarfile.open(archive_path, "r:gz") as fp:
+            tarfile_extractall(fp, path=temp_dir)
 
-    with suppress(FileNotFoundError):
-        os.remove(archive_path)
+        with suppress(FileNotFoundError):
+            os.remove(archive_path)
 
-    # Store a zipped pickle
-    cache = dict(
-        train=load_files(train_path, encoding="latin1"),
-        test=load_files(test_path, encoding="latin1"),
-    )
-    compressed_content = codecs.encode(pickle.dumps(cache), "zlib_codec")
-    with open(cache_path, "wb") as f:
-        f.write(compressed_content)
+        # Store a zipped pickle
+        cache = dict(
+            train=load_files(train_path, encoding="latin1"),
+            test=load_files(test_path, encoding="latin1"),
+        )
+        compressed_content = codecs.encode(pickle.dumps(cache), "zlib_codec")
+        cache_tmp_path = os.path.join(temp_dir, os.path.basename(cache_path))
+        with open(cache_tmp_path, "wb") as f:
+            f.write(compressed_content)
+        # os.replace is atomic on POSIX and, unlike os.rename, also succeeds
+        # on Windows when the destination already exists.
+        os.replace(cache_tmp_path, cache_path)
 
-    shutil.rmtree(target_dir)
     return cache
 
 
@@ -300,7 +313,6 @@ def fetch_20newsgroups(
 
     data_home = get_data_home(data_home=data_home)
     cache_path = _pkl_filepath(data_home, CACHE_NAME)
-    twenty_home = os.path.join(data_home, "20news_home")
     cache = None
     if os.path.exists(cache_path):
         try:
@@ -318,7 +330,6 @@ def fetch_20newsgroups(
         if download_if_missing:
             logger.info("Downloading 20news dataset. This may take a few minutes.")
             cache = _download_20newsgroups(
-                target_dir=twenty_home,
                 cache_path=cache_path,
                 n_retries=n_retries,
                 delay=delay,
