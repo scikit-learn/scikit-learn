@@ -568,7 +568,7 @@ class LinearDiscriminantAnalysis(
             self.priors_
         )
 
-    def _solve_svd(self, X, y):
+    def _solve_svd(self, X, y_encoded):
         """SVD solver.
 
         Parameters
@@ -576,8 +576,8 @@ class LinearDiscriminantAnalysis(
         X : array-like of shape (n_samples, n_features)
             Training data.
 
-        y : array-like of shape (n_samples,) or (n_samples, n_targets)
-            Target values.
+        y_encoded : array-like of shape (n_samples,)
+            Target values encoded as integer codes indexing `self.classes_`.
         """
         xp, is_array_api_compliant = get_namespace(X)
 
@@ -589,15 +589,15 @@ class LinearDiscriminantAnalysis(
         n_samples, _ = X.shape
         n_classes = self.classes_.shape[0]
 
-        self.means_ = _class_means(X, y)
+        self.means_ = _class_means(X, y_encoded)
         if self.store_covariance:
-            self.covariance_ = _class_cov(X, y, self.priors_)
+            self.covariance_ = _class_cov(X, y_encoded, self.priors_)
 
         Xc = []
-        # `y` holds integer class codes (see `fit`), so groups are indexed by
-        # position in `self.classes_`.
+        # `y_encoded` holds integer class codes (see `fit`), so groups are
+        # indexed by position in `self.classes_`.
         for idx in range(n_classes):
-            Xg = X[y == idx]
+            Xg = X[y_encoded == idx]
             Xc.append(Xg - self.means_[idx, :])
 
         self.xbar_ = self.priors_ @ self.means_
@@ -676,7 +676,7 @@ class LinearDiscriminantAnalysis(
         # `y` may hold strings, which no array API namespace can represent,
         # therefore convert to integer codes instead.
         # `classes_` stays in `y`'s namespace and device.
-        y = move_to(
+        y_encoded = move_to(
             _encode(y, uniques=self.classes_, check_unknown=False),
             xp=xp,
             device=array_device(X),
@@ -690,7 +690,7 @@ class LinearDiscriminantAnalysis(
             )
 
         if self.priors is None:  # estimate priors from sample
-            _, cnts = xp.unique_counts(y)  # non-negative ints
+            _, cnts = xp.unique_counts(y_encoded)  # non-negative ints
             self.priors_ = xp.astype(cnts, X.dtype) / float(n_samples)
         else:
             self.priors_ = xp.asarray(self.priors, dtype=X.dtype)
@@ -724,18 +724,18 @@ class LinearDiscriminantAnalysis(
                     "is not supported "
                     "with svd solver. Try another solver"
                 )
-            self._solve_svd(X, y)
+            self._solve_svd(X, y_encoded)
         elif self.solver == "lsqr":
             self._solve_lstsq(
                 X,
-                y,
+                y_encoded,
                 shrinkage=self.shrinkage,
                 covariance_estimator=self.covariance_estimator,
             )
         elif self.solver == "eigen":
             self._solve_eigen(
                 X,
-                y,
+                y_encoded,
                 shrinkage=self.shrinkage,
                 covariance_estimator=self.covariance_estimator,
             )
