@@ -10,9 +10,12 @@
 build
 
 # Meson subprojects are fetched at build/configure time from their .wrap
-# file (e.g. via git); only the .wrap recipe is version-controlled.
+# file (e.g. via git); only the .wrap recipe and any packagefiles/ patch
+# overlays (both maintainer-authored, never fetched) are version-controlled.
 subprojects/*
 !subprojects/*.wrap
+!subprojects/packagefiles/
+
 sklearn/datasets/__config__.py
 sklearn/**/*.html
 
