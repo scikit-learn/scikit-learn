@@ -1474,7 +1474,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         also treated as missing values.
 
         With the default ``splitter='best'``, categorical features are only
-        supported for single-output regression. 
+        supported for single-output regression.
         Categorical features are not supported with `criterion="absolute_error"`.
 
         .. versionadded:: 1.10

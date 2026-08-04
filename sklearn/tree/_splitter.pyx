@@ -55,7 +55,7 @@ cdef inline void _init_split(SplitRecord* self, intp_t start_pos) noexcept nogil
     self.pos = start_pos
     self.feature = 0
     self.threshold = 0.
-    init_bitset(self.left_cat_bitset)
+    init_bitset(self.left_cat_bitset_or_hashseed)
     self.split_kind = SPLIT_NUMERIC
     self.improvement = -INFINITY
     self.missing_go_to_left = False
@@ -467,7 +467,7 @@ cdef inline int node_split_best(
                         partitioner.cat_position_to_split_bitset(
                             p,
                             missing_go_to_left,
-                            current_split.left_cat_bitset,
+                            current_split.left_cat_bitset_or_hashseed,
                         )
                     else:  # numerical feature
                         current_split.split_kind = SPLIT_NUMERIC
@@ -669,12 +669,23 @@ cdef inline int node_split_random(
         current_split.missing_go_to_left = missing_go_to_left
 
         if is_categorical:
-            # Draw one random hash seed, analogous to one random numeric threshold.
+            # Draw random hash seeds until both children are non-empty.
+            # A single seed can map every category present in the node to the
+            # same side even when min_feature_value != max_feature_value; that
+            # empty-child partition must be rejected. Retrying is safe because
+            # at least two distinct categories are present, so a balanced
+            # partition is always reachable. Expected attempts are <= 2.
             current_split.split_kind = SPLIT_CATEGORICAL_HASH
-            init_bitset(current_split.left_cat_bitset)
-            current_split.left_cat_bitset[0] = <uint32_t> rand_int(
-                1, RAND_R_MAX, random_state
-            )
+            init_bitset(current_split.left_cat_bitset_or_hashseed)
+            while True:
+                current_split.left_cat_bitset_or_hashseed[0] = <uint32_t> rand_int(
+                    1, RAND_R_MAX, random_state
+                )
+                current_split.pos = partitioner.partition_samples(&current_split)
+                n_left = current_split.pos - start
+                n_right = end - current_split.pos
+                if n_left != 0 and n_right != 0:
+                    break
         else:
             current_split.split_kind = SPLIT_NUMERIC
             # Draw a random threshold
@@ -687,11 +698,11 @@ cdef inline int node_split_random(
             if current_split.threshold == max_feature_value:
                 current_split.threshold = min_feature_value
 
-        # Partition
-        current_split.pos = partitioner.partition_samples(&current_split)
+            # Partition
+            current_split.pos = partitioner.partition_samples(&current_split)
 
-        n_left = current_split.pos - start
-        n_right = end - current_split.pos
+            n_left = current_split.pos - start
+            n_right = end - current_split.pos
 
         # Reject if min_samples_leaf is not guaranteed
         if n_left < min_samples_leaf or n_right < min_samples_leaf:

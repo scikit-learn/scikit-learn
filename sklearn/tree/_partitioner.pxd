@@ -160,7 +160,7 @@ cdef class DensePartitioner:
         self,
         intp_t position,
         bint missing_go_to_left,
-        BITSET_DTYPE_C left_cat_bitset
+        BITSET_DTYPE_C left_cat_bitset_or_hashseed
     ) noexcept nogil
     cdef void sort_categories(
         self,
@@ -235,7 +235,7 @@ cdef class SparsePartitioner:
         self,
         intp_t position,
         bint missing_go_to_left,
-        BITSET_DTYPE_C left_cat_bitset
+        BITSET_DTYPE_C left_cat_bitset_or_hashseed
     ) noexcept nogil
     cdef void extract_nnz(
         self,

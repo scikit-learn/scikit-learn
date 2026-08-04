@@ -59,7 +59,14 @@ def bitset_to_tuple(v, n_categories):
 
 
 def random_categorical_goes_left(seed, x):
-    return np.array([_py_mix_uint32(seed ^ int(category)) & 1 for category in x])
+    """Pure Python implementation of the hash-based Cython goes_left function."""
+    # mix_uint32(seed ^ category_idx) & 1 yields a stable ~50/50 left/right bitset
+    # -> leads to unbiased splits for categorical features. This calls the pure Python
+    # implementation of the Cython function sklearn.tree._utils.goes_left for
+    # SPLIT_CATEGORICAL_HASH.
+    return np.array(
+        [_py_mix_uint32(seed ^ int(category_idx)) & 1 for category_idx in x]
+    )
 
 
 @dataclass
@@ -81,13 +88,14 @@ class Split:
         ftr = int(tree.tree_.feature[0])
         split_kind = int(tree.tree_.split_kind[0])
         if split_kind == SPLIT_CATEGORICAL_BITSET:
-            cat_bitset = tree.tree_._left_cat_bitset[0]
+            cat_bitset = tree.tree_._left_cat_bitset_or_hashseed[0]
             threshold = bitset_to_tuple(
                 cat_bitset,
                 n_categories=int(tree.tree_._n_categories[ftr]),
             )
         elif split_kind == SPLIT_CATEGORICAL_HASH:
-            threshold = int(tree.tree_._left_cat_bitset[0, 0])
+            # Hash seed is stored in word 0 of the dual-use bitset/seed field.
+            threshold = int(tree.tree_._left_cat_bitset_or_hashseed[0, 0])
         else:
             threshold = tree.tree_.threshold[0]
         missing_left = bool(tree.tree_.missing_go_to_left[0])
@@ -354,3 +362,52 @@ def test_split_impurity(
             best_split,
             actual_split,
         )
+
+
+def test_random_categorical_goes_left_unbiased():
+    """Direct check that hash routing is approximately balanced."""
+    rng = np.random.default_rng(42)
+
+    cat_indices = np.arange(1000)
+    seeds = rng.integers(0, np.iinfo(np.int32).max, 1000)
+
+    goes_left = np.concatenate(
+        [
+            random_categorical_goes_left(seed, cat_indices).reshape(-1, 1)
+            for seed in seeds
+        ],
+        axis=1,
+    )
+
+    np.testing.assert_allclose(goes_left.mean(axis=0), 0.5, atol=0.1)
+    np.testing.assert_allclose(goes_left.mean(axis=1), 0.5, atol=0.1)
+
+
+def test_random_categorical_split_unbiased_public_api():
+    """Public-API check that hash splits route samples ~50/50 to each child."""
+    rng = np.random.default_rng(42)
+
+    y = rng.integers(0, 2, 1000)
+    X = np.arange(y.shape[0]).reshape(-1, 1)
+    seeds = rng.integers(0, np.iinfo(np.int32).max, 1000)
+
+    child_indices = np.concatenate(
+        [
+            DecisionTreeClassifier(
+                splitter="random",
+                categorical_features=[0],
+                max_depth=1,
+                random_state=seed,
+            )
+            .fit(X, y)
+            .apply(X)
+            .reshape(-1, 1)
+            for seed in seeds
+        ],
+        axis=1,
+    )
+
+    # 1 is the left child index, 2 is the right child index. On average, a
+    # random category should go left half the time.
+    np.testing.assert_allclose(child_indices.mean(axis=0), 1.5, atol=0.1)
+    np.testing.assert_allclose(child_indices.mean(axis=1), 1.5, atol=0.1)

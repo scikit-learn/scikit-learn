@@ -3577,6 +3577,26 @@ def test_random_splitter_high_cardinality_categorical(Tree):
     assert_array_equal(est.predict(X), est_same.predict(X))
 
 
+def test_random_splitter_categorical_no_empty_child_underfitting():
+    """Hash-seed retries must prevent empty-child underfitting.
+
+    Without retries, a random categorical hash can send every category in a
+    low-cardinality node to the same child, reject the split, and leave the
+    tree underfit. See:
+    https://github.com/scikit-learn/scikit-learn/pull/33972#discussion_r3711392062
+    """
+    y = np.arange(1000)
+    X = y.reshape(-1, 1)
+    fitted_tree = DecisionTreeRegressor(
+        splitter="random",
+        categorical_features=[0],
+        random_state=0,
+    ).fit(X, y)
+    assert fitted_tree.tree_.n_leaves == X.shape[0], (
+        f"Fewer leaves than data points: {fitted_tree.tree_.n_leaves} < {X.shape[0]}"
+    )
+
+
 @pytest.mark.parametrize(
     "Tree,y,match",
     [

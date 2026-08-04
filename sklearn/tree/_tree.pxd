@@ -51,7 +51,7 @@ cdef class Tree:
     cdef intp_t _add_node(self, intp_t parent, bint is_left, bint is_leaf,
                           intp_t feature,
                           float64_t threshold,
-                          BITSET_DTYPE_C left_cat_bitset,
+                          BITSET_DTYPE_C left_cat_bitset_or_hashseed,
                           int8_t split_kind,
                           float64_t impurity,
                           intp_t n_node_samples,
