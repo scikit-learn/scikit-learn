@@ -659,8 +659,8 @@ cdef intp_t find_node_split_dim(const floating* data,
         min_val = max_val
         for i in range(1, n_points):
             val = data[node_indices[i] * n_features + j]
-            max_val = fmax(max_val, val)
-            min_val = fmin(min_val, val)
+            max_val = max_val if max_val > val else val
+            min_val = min_val if min_val < val else val
         spread = max_val - min_val
         if spread > max_spread:
             max_spread = spread
