@@ -63,7 +63,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
         classes.
 
     """
-    xp, _, _device = get_namespace_and_device(y_score, sample_weight)
+    xp, _, device = get_namespace_and_device(y_score)
     average_options = (None, "micro", "macro", "weighted", "samples")
     if average not in average_options:
         raise ValueError("average has to be one of {0}".format(average_options))
@@ -100,7 +100,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
             average_weight = xp.sum(y_true, axis=0)
         if xpx.isclose(
             xp.sum(average_weight),
-            xp.asarray(0, dtype=average_weight.dtype, device=_device),
+            xp.asarray(0, dtype=average_weight.dtype, device=device),
         ):
             return 0
 
@@ -117,13 +117,13 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
         y_score = xp.reshape(y_score, (-1, 1))
 
     n_classes = y_score.shape[not_average_axis]
-    score = xp.zeros((n_classes,), device=_device)
+    score = xp.zeros((n_classes,), device=device)
     for c in range(n_classes):
         y_true_c = _ravel(
-            xp.take(y_true, xp.asarray([c], device=_device), axis=not_average_axis)
+            xp.take(y_true, xp.asarray([c], device=device), axis=not_average_axis)
         )
         y_score_c = _ravel(
-            xp.take(y_score, xp.asarray([c], device=_device), axis=not_average_axis)
+            xp.take(y_score, xp.asarray([c], device=device), axis=not_average_axis)
         )
         score[c] = binary_metric(y_true_c, y_score_c, sample_weight=score_weight)
 
@@ -180,7 +180,7 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average="macro
     """
     check_consistent_length(y_true, y_score)
 
-    xp, _ = get_namespace(y_true, y_score)
+    xp, _ = get_namespace(y_score)
 
     y_true_unique = unique_labels(y_true)
     n_classes = y_true_unique.shape[0]
