@@ -472,8 +472,6 @@ def det_curve(
 
 def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None, xp=None):
     """Binary roc auc score."""
-    xp, _ = get_namespace(y_score, xp=xp)
-
     if xp.unique_values(y_true).shape[0] != 2:
         warnings.warn(
             (
@@ -490,11 +488,12 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None, xp=
     if max_fpr <= 0 or max_fpr > 1:
         raise ValueError("Expected max_fpr in range (0, 1], got: %r" % max_fpr)
 
-    # Add a single point at max_fpr by linear interpolation
-    stop = xp.searchsorted(fpr, max_fpr, "right")
-    x_interp = [fpr[stop - 1], fpr[stop]]
-    y_interp = [tpr[stop - 1], tpr[stop]]
-    interp_tpr = _interp(max_fpr, x_interp, y_interp, xp=xp)
+    stop = xp.searchsorted(
+        fpr, max_fpr, side="right"
+    )  # Add a single point at max_fpr by linear interpolation
+    x_interp = xp.stack([fpr[stop - 1], fpr[stop]])
+    y_interp = xp.stack([tpr[stop - 1], tpr[stop]])
+    interp_tpr = _interp(x=max_fpr, xp=x_interp, fp=y_interp)
     tpr = xp.concat([tpr[:stop], xp.expand_dims(interp_tpr, axis=0)], axis=0)
     fpr = xp.concat([fpr[:stop], xp.expand_dims(max_fpr, axis=0)], axis=0)
 
@@ -817,8 +816,6 @@ def _multiclass_roc_auc_score(
         Sample weights.
 
     """
-    xp, _, device_ = get_namespace_and_device(y_score, xp=xp)
-
     if not y_score.ndim == 2:
         raise ValueError(
             "`y_score` needs to be of shape `(n_samples, n_classes)`, since "
@@ -828,7 +825,7 @@ def _multiclass_roc_auc_score(
 
     if not xp.all(
         xpx.isclose(
-            xp.ones((y_score.shape[0],), dtype=y_score.dtype, device=device_),
+            xp.ones((y_score.shape[0],), dtype=y_score.dtype, device=y_score.device),
             xp.sum(y_score, axis=1),
         )
     ):
@@ -864,7 +861,7 @@ def _multiclass_roc_auc_score(
         classes = _unique(labels)
         if classes.shape[0] != labels.shape[0]:
             raise ValueError("Parameter 'labels' must be unique")
-        if not xp.array_equal(classes, labels):
+        if not xp.all(classes == labels):
             raise ValueError("Parameter 'labels' must be ordered")
         if classes.shape[0] != y_score.shape[1]:
             raise ValueError(
@@ -873,7 +870,7 @@ def _multiclass_roc_auc_score(
                     classes.shape[0], y_score.shape[1]
                 )
             )
-        if xp.setdiff1d(y_true, classes).shape[0]:
+        if xpx.setdiff1d(y_true, classes).shape[0]:
             raise ValueError("'y_true' contains labels not in parameter 'labels'")
     else:
         classes = _unique(y_true)
