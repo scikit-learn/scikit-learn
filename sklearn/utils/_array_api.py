@@ -641,33 +641,30 @@ def move_to(*arrays, xp, device):
                 if _is_xp_namespace(xp, "torch") and _is_numpy_namespace(xp_array):
                     if any(stride < 0 for stride in array.strides):
                         # Work around PyTorch aborting the process when importing
-                        # negative-strided NumPy arrays with DLPack. Remove this
-                        # once https://github.com/pytorch/pytorch/issues/188023 is
-                        # fixed. See also
-                        # https://github.com/scikit-learn/scikit-learn/issues/34307
+                        # negative-strided NumPy arrays with DLPack. Remove this once
+                        # https://github.com/pytorch/pytorch/issues/188023 is fixed.
+                        # See also https://github.com/scikit-learn/scikit-learn/issues/34307
                         array = numpy.ascontiguousarray(array)
                 try:
                     # The dlpack protocol is the future proof and library agnostic
-                    # method to transfer arrays across namespace and device
-                    # boundaries hence this method is attempted first and going
-                    # through NumPy is only used as fallback in case of failure.
-                    # Note: copy=None is the default since array-api 2023.12.
-                    # Namespace libraries should only trigger a copy automatically
-                    # if needed.
+                    # method to transfer arrays across namespace and device boundaries
+                    # hence this method is attempted first and going through NumPy is
+                    # only used as fallback in case of failure.
+                    # Note: copy=None is the default since array-api 2023.12. Namespace
+                    # libraries should only trigger a copy automatically if needed.
                     array_converted = xp.from_dlpack(array, device=device)
-                    # `AttributeError` occurs when `__dlpack__` and
-                    # `__dlpack_device__` methods are not present on the input
-                    # array `TypeError` and `NotImplementedError` for packages
-                    # that do not yet support dlpack 1.0
+                    # `AttributeError` occurs when `__dlpack__` and `__dlpack_device__`
+                    # methods are not present on the input array
+                    # `TypeError` and `NotImplementedError` for packages that do not
+                    # yet support dlpack 1.0
                     # (i.e. the `device`/`copy` kwargs, e.g., torch <= 2.8.0)
                     # See https://github.com/data-apis/array-api/pull/741 for
-                    # more details about the introduction of the `copy` and
-                    # `device` kwargs in the from_dlpack method and their expected
+                    # more details about the introduction of the `copy` and `device`
+                    # kwargs in the from_dlpack method and their expected
                     # meaning by namespaces implementing the array API spec.
-                    # TODO: try removing this once DLPack v1 more widely
-                    # TODO: supported ValueError not needed once min
-                    # TODO: NumPy >=2.4.0:
-                    # TODO: https://github.com/numpy/numpy/issues/30341
+                    # TODO: try removing this once DLPack v1 more widely supported
+                    # TODO: ValueError not needed once min NumPy >=2.4.0:
+                    # https://github.com/numpy/numpy/issues/30341
                 except (
                     AttributeError,
                     TypeError,
@@ -675,8 +672,7 @@ def move_to(*arrays, xp, device):
                     BufferError,
                     ValueError,
                 ):
-                    # Converting to numpy is tricky, handle this via dedicated
-                    # function
+                    # Converting to numpy is tricky, handle this via dedicated function
                     if _is_numpy_namespace(xp):
                         array_converted = _convert_to_numpy(array, xp_array)
                     # Convert from numpy, all array libraries can do this
@@ -684,8 +680,7 @@ def move_to(*arrays, xp, device):
                         array_converted = xp.asarray(array, device=device)
                     else:
                         # There is no generic way to convert from namespace A to B
-                        # So we first convert from A to numpy and then from
-                        # numpy to B.
+                        # So we first convert from A to numpy and then from numpy to B
                         # The way to avoid this round trip is to lobby for DLpack
                         # support in libraries A and B
                         array_np = _convert_to_numpy(array, xp_array)
