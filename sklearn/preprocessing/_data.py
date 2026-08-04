@@ -37,7 +37,12 @@ from sklearn.utils._param_validation import (
 )
 from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.extmath import _incremental_mean_and_var, row_norms
-from sklearn.utils.metadata_routing import process_routing
+from sklearn.utils.metadata_routing import (
+    MetadataRouter,
+    _manual_routing,
+    _routing_enabled,
+    process_routing,
+)
 from sklearn.utils.sparsefuncs import (
     incr_mean_variance_axis,
     inplace_column_scale,
@@ -976,17 +981,29 @@ class StandardScaler(
         )
         n_features = X.shape[1]
 
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+
         callback_ctx = self._init_callback_context()
-        routed_params = process_routing(self, "fit", **params)
+        if _routing_enabled():
+            routed_params = process_routing(
+                self, "fit", sample_weight=sample_weight, **params
+            )
+        else:
+            hook_params = {"on_fit_task_begin": {}, "on_fit_task_end": {}}
+            # For each callback hook, sample_weight is forwarded to the callbacks if
+            # it's set and at least one callback accepts it.
+            if sample_weight is not None:
+                for hook_name in ("on_fit_task_begin", "on_fit_task_end"):
+                    if self._callbacks_accept_sample_weight(hook_name):
+                        hook_params[hook_name]["sample_weight"] = sample_weight
+            routed_params = _manual_routing({"callbacks": hook_params})
         callback_ctx.call_on_fit_task_begin(
             estimator=self,
             X=X,
             y=y,
             metadata=routed_params.callbacks.on_fit_task_begin,
         )
-
-        if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         # Even in the case of `with_mean=False`, we update the mean anyway
         # This is needed for the incremental computation of the var
@@ -1193,6 +1210,23 @@ class StandardScaler(
         tags.transformer_tags.preserves_dtype = ["float64", "float32"]
         tags.array_api_support = True
         return tags
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.10
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self).add_self_request(self)
+        return self._add_callback_routing(router)
 
 
 class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):

@@ -13,6 +13,7 @@ from sklearn.callback.tests._utils import (
     NotValidSetupPositionalCallback,
     RecordingAutoPropagatedCallback,
     RecordingCallback,
+    SampleWeightCallback,
 )
 from sklearn.utils.parallel import Parallel, delayed
 
@@ -169,3 +170,20 @@ def test_set_callback_empty():
     # calling again doesn't raise
     estimator.set_callbacks()
     assert not hasattr(estimator, "_skl_callbacks")
+
+
+def test_callbacks_accept_sample_weight():
+    """Test the _callbacks_accept_sample_weight method."""
+    hook_name = "on_fit_task_end"
+
+    # False when no callback registered
+    est = MaxIterEstimator()
+    assert not est._callbacks_accept_sample_weight(hook_name)
+
+    # False when no callback accept sample_weight
+    est.set_callbacks(RecordingCallback())
+    assert not est._callbacks_accept_sample_weight(hook_name)
+
+    # True when at least one accepts sample_weight
+    est.set_callbacks(RecordingCallback(), SampleWeightCallback())
+    assert est._callbacks_accept_sample_weight(hook_name)

@@ -15,6 +15,8 @@ from sklearn.utils.metadata_routing import (
     MetadataRequest,
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
+    _routing_enabled,
     process_routing,
 )
 from sklearn.utils.parallel import Parallel, delayed
@@ -211,6 +213,18 @@ class NotRequiredKwargsCallback(RecordingCallback):
         super().on_fit_task_end(estimator, context, X=X, y=y)
 
 
+class SampleWeightCallback(RecordingCallback):
+    """A callback that accepts sample_weight in its on_fit_task_end hook."""
+
+    def on_fit_task_end(
+        self, estimator, context, *, X=None, y=None, sample_weight=None
+    ):
+        pass
+
+    def _accept_sample_weight(self, hook_name):
+        return hook_name == "on_fit_task_end"
+
+
 class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
     """A class that mimics the behavior of an estimator.
 
@@ -228,15 +242,24 @@ class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
         self.computation_intensity = computation_intensity
 
     @_fit_context(prefer_skip_nested_validation=False)
-    def fit(self, X=None, y=None, **fit_params):
+    def fit(self, X=None, y=None, sample_weight=None, **fit_params):
         callback_ctx = self._init_callback_context(max_subtasks=self.max_iter)
-        routed_params = process_routing(self, "fit", **fit_params)
-        callbacks_params = getattr(routed_params, "callbacks", None)
+        if _routing_enabled():
+            routed_params = process_routing(
+                self, "fit", sample_weight=sample_weight, **fit_params
+            )
+        else:
+            hook_params = {"on_fit_task_begin": {}, "on_fit_task_end": {}}
+            if sample_weight is not None:
+                for hook_name in ("on_fit_task_begin", "on_fit_task_end"):
+                    if self._callbacks_accept_sample_weight(hook_name):
+                        hook_params[hook_name]["sample_weight"] = sample_weight
+            routed_params = _manual_routing({"callbacks": hook_params})
         callback_ctx.call_on_fit_task_begin(
             estimator=self,
             X=X,
             y=y,
-            metadata=getattr(callbacks_params, "on_fit_task_begin", None),
+            metadata=routed_params.callbacks.on_fit_task_begin,
         )
 
         for i in range(self.max_iter):
@@ -245,7 +268,7 @@ class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
                 estimator=self,
                 X=X,
                 y=y,
-                metadata=getattr(callbacks_params, "on_fit_task_begin", None),
+                metadata=routed_params.callbacks.on_fit_task_begin,
             )
 
             time.sleep(self.computation_intensity)  # Computation intensive task
@@ -255,7 +278,7 @@ class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
                 X=X,
                 y=y,
                 reconstruction_attributes=lambda: {"n_iter_": i + 1},
-                metadata=getattr(callbacks_params, "on_fit_task_end", None),
+                metadata=routed_params.callbacks.on_fit_task_end,
             ):
                 break
 
@@ -266,13 +289,17 @@ class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
             X=X,
             y=y,
             reconstruction_attributes={},
-            metadata=getattr(callbacks_params, "on_fit_task_end", None),
+            metadata=routed_params.callbacks.on_fit_task_end,
         )
 
         return self
 
     def predict(self, X):
         return np.mean(X, axis=1) * self.n_iter_
+
+    def get_metadata_routing(self):
+        router = MetadataRouter(owner=self).add_self_request(self)
+        return self._add_callback_routing(router)
 
 
 class WhileEstimator(CallbackSupportMixin, BaseEstimator):

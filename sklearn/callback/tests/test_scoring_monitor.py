@@ -614,3 +614,25 @@ def test_repr_scoringmonitorlog():
         r"ScoringMonitorLog\(run_id=.*, estimator_name=MaxIterEstimator, timestamp=.*\)"
     )
     assert re.match(pattern, repr(cb.get_logs()))
+
+
+def test_accept_sample_weight():
+    """Test the _accept_sample_weight method."""
+    cb = ScoringMonitor(scoring_train="r2")
+    # True when the scorer accepts sample_weight.
+    assert cb._accept_sample_weight("on_fit_task_end")
+    # False on wrong hook.
+    assert not cb._accept_sample_weight("on_fit_task_begin")
+
+    # False with a warning when the scorer does not accept sample_weight.
+    with pytest.warns(UserWarning, match="does not support sample_weight"):
+        assert not ScoringMonitor(scoring_train=custom_score)._accept_sample_weight(
+            "on_fit_task_end"
+        )
+
+    # True with a warning when a multiscorer with at least one scorer that accepts
+    # sample_weiht but at least one that does not.
+    with pytest.warns(UserWarning, match="does not support sample_weight"):
+        assert ScoringMonitor(scoring_train=["r2", "rand_score"])._accept_sample_weight(
+            "on_fit_task_end"
+        )

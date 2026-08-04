@@ -12,7 +12,6 @@ from sklearn.utils._metadata_requests import (  # noqa: F401
     MetadataRequest,
     MetadataRouter,
     MethodMapping,
-    _EmptyRequest,
     _manual_routing,
     _MetadataRequester,
     _raise_for_params,

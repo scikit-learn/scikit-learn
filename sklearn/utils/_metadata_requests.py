@@ -108,6 +108,8 @@ from sklearn import get_config
 from sklearn.exceptions import UnsetMetadataPassedError
 from sklearn.utils._bunch import Bunch
 
+CALLBACK_METHODS = ["on_fit_task_begin", "on_fit_task_end"]
+
 # Only the following methods are supported in the routing mechanism. Adding new
 # methods at the moment involves monkeypatching this list.
 # Note that if this list is changed or monkeypatched, the corresponding method
@@ -124,9 +126,8 @@ SIMPLE_METHODS = [
     "split",
     "transform",
     "inverse_transform",
-    "on_fit_task_begin",
-    "on_fit_task_end",
-]
+] + CALLBACK_METHODS
+
 
 # These methods are a composite of other methods and one cannot set their
 # requests directly. Instead they should be set by setting the requests of the
@@ -1195,7 +1196,9 @@ class MetadataRouter:
         if self._self_request:
             self._self_request._check_warnings(params=params, method=caller)
 
-        res = Bunch(callbacks=_EmptyRequest().callbacks)
+        res = Bunch(
+            callbacks=Bunch(**{hook_name: {} for hook_name in CALLBACK_METHODS})
+        )
         for name, route_mapping in self._route_mappings.items():
             router, mapping = route_mapping.router, route_mapping.mapping
 
@@ -1523,22 +1526,6 @@ class RequestMethod:
         return func
 
 
-class _EmptyRequest:
-    """A class to make an empty request.
-
-    It returns an empty dict on routed_params.ANYTHING.ANY_METHOD.
-    """
-
-    def get(self, name, default=None):
-        return Bunch(**{method: dict() for method in METHODS})
-
-    def __getitem__(self, name):
-        return Bunch(**{method: dict() for method in METHODS})
-
-    def __getattr__(self, name):
-        return Bunch(**{method: dict() for method in METHODS})
-
-
 class _MetadataRequester:
     """Mixin class for adding metadata request functionality.
 
@@ -1864,7 +1851,17 @@ def process_routing(_obj, _method, /, **kwargs):
         # If routing is not enabled and kwargs are empty, then we don't have to
         # try doing any routing, we can simply return a structure which returns
         # an empty dict on routed_params.ANYTHING.ANY_METHOD.
-        return _EmptyRequest()
+        class EmptyRequest:
+            def get(self, name, default=None):
+                return Bunch(**{method: dict() for method in METHODS})
+
+            def __getitem__(self, name):
+                return Bunch(**{method: dict() for method in METHODS})
+
+            def __getattr__(self, name):
+                return Bunch(**{method: dict() for method in METHODS})
+
+        return EmptyRequest()
 
     if not (hasattr(_obj, "get_metadata_routing") or isinstance(_obj, MetadataRouter)):
         raise AttributeError(

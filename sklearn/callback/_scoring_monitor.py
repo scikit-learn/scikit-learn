@@ -3,6 +3,7 @@
 
 import datetime
 import uuid
+import warnings
 from collections import defaultdict
 from dataclasses import dataclass
 
@@ -203,6 +204,23 @@ class ScoringMonitor(_MetadataRequester):
                     "more details on metadata routing."
                 )
             )
+
+    def _accept_sample_weight(self, hook_name):
+        """Whetther the callback accepts sample_weight for a given hook."""
+        # TODO(slep006): remove when metadata routing is the only way
+        # Only check train scorers because val scorers cannot be used with metadata
+        # routing disabled anyway.
+        if hook_name != "on_fit_task_end":
+            return False
+
+        for name, scorer in self._scorers["train"]._scorers.items():
+            if not scorer._accept_sample_weight():
+                warnings.warn(
+                    f"The scoring {name}={scorer} does not support sample_weight, "
+                    "which may lead to statistically incorrect results when "
+                    "evaluating estimators using sample_weight in fit."
+                )
+        return self._scorers["train"]._accept_sample_weight()
 
     def setup(self, estimator, context):
         self._validate_validation_scorer()

@@ -522,16 +522,16 @@ def test_metadata_routing_callback_consumer():
     cb2 = (
         RecordingCallback()
         .set_on_fit_task_begin_request(requested_arg_begin="bar")
-        .set_on_fit_task_end_request(requested_arg_end="foobar")
+        .set_on_fit_task_end_request(requested_arg_end="sample_weight")
     )
 
     MaxIterEstimator().set_callbacks(cb, cb2).fit(
-        foo="val_1", requested_arg_end="val_2", bar="bar", foobar="foobar"
+        foo="val_1", requested_arg_end="val_2", bar="bar", sample_weight="sample_weight"
     )
 
     for record, val_begin, val_end in [
         (cb.record, "val_1", "val_2"),
-        (cb2.record, "bar", "foobar"),
+        (cb2.record, "bar", "sample_weight"),
     ]:
         task_begin_metadatas = [
             rec["kwargs"]["requested_arg_begin"]

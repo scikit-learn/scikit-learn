@@ -175,6 +175,16 @@ class CallbackSupportMixin:
         router = MetadataRouter(owner=self)
         return self._add_callback_routing(router)
 
+    def _callbacks_accept_sample_weight(self, hook_name):
+        # TODO(slep006): remove when metadata routing is the only way
+        """Whether a registered callback accepts sample_weight for the given hook."""
+        for cb in getattr(self, "_skl_callbacks", []):
+            if hasattr(cb, "_accept_sample_weight") and cb._accept_sample_weight(
+                hook_name
+            ):
+                return True
+        return False
+
 
 @contextmanager
 def callback_management_context(estimator):
