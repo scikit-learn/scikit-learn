@@ -82,15 +82,13 @@ class ScoringMonitor:
 
     Parameters
     ----------
-    scoring : str, callable, list, tuple, dict or None
+    scoring : str, callable, list, tuple, or dict
         The scoring method to use to monitor the model.
 
         If `scoring` represents a single score, one can use:
 
         - a single string (see :ref:`scoring_string_names`);
         - a callable (see :ref:`scoring_callable`) that returns a single value;
-        - `None`, the `estimator`'s
-          :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
         If `scoring` represents multiple scores, one can use:
 
@@ -101,21 +99,22 @@ class ScoringMonitor:
     """
 
     @validate_params(
-        {"scoring": [str, callable, list, tuple, dict, None]},
+        {"scoring": [str, callable, list, tuple, dict]},
         prefer_skip_nested_validation=True,
     )
     def __init__(self, *, scoring):
+        from sklearn.metrics import check_scoring
         from sklearn.metrics._scorer import _BaseScorer
 
-        self._scoring = scoring
         # Turn the scorer into a MultimetricScorer for convenience
         if isinstance(scoring, str):
-            self._scoring = [scoring]
+            self._scorer = check_scoring(scoring=[scoring])
         elif callable(scoring) and isinstance(scoring, _BaseScorer):
-            self._scoring = {"score": scoring}
+            self._scorer = check_scoring(scoring={"score": scoring})
+        else:
+            self._scorer = check_scoring(scoring=scoring)
 
         self._log = []
-        self._estimator_scorers = {}
 
         # Handle to the main-process listener, opened eagerly so that any worker that
         # receives a pickled copy of this callback can send data to the main process.
@@ -124,15 +123,10 @@ class ScoringMonitor:
         self._listener_handle = open_listener(self._log.append, owner=self)
 
     def setup(self, estimator, context):
-        # A scorer per estimator is needed to avoid race conditions when the callback is
-        # set on different estimators and the scorer is the estimator's default scorer.
-        if estimator not in self._estimator_scorers:
-            from sklearn.metrics import check_scoring
-
-            self._estimator_scorers[estimator] = check_scoring(estimator, self._scoring)
+        pass
 
     def teardown(self, estimator, context):
-        self._estimator_scorers.pop(estimator, None)
+        pass
 
     def on_fit_task_begin(self, estimator, context):
         pass
@@ -172,8 +166,7 @@ class ScoringMonitor:
         scores = {}
         metadata = {} if metadata is None else metadata
         if X is not None and y is not None:
-            scorer = self._estimator_scorers[estimator]
-            scores.update(scorer(fitted_estimator, X, y, **metadata))
+            scores.update(self._scorer(fitted_estimator, X, y, **metadata))
 
         send(self._listener_handle, (run_id, run_info, task_info_path, scores))
 
