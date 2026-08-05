@@ -75,121 +75,145 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         return X_columns, n_samples, n_features
 
     def _fit(
-        self,
-        X,
-        handle_unknown="error",
-        ensure_all_finite=True,
-        return_counts=False,
-        return_and_ignore_missing_for_infrequent=False,
-    ):
-        self._check_infrequent_enabled()
-        validate_data(self, X=X, reset=True, skip_check_array=True)
-        X_list, n_samples, n_features = self._check_X(
-            X, ensure_all_finite=ensure_all_finite
-        )
-        self.n_features_in_ = n_features
-
-        if self.categories != "auto":
-            if len(self.categories) != n_features:
-                raise ValueError(
-                    "Shape mismatch: if categories is an array,"
-                    " it has to be of shape (n_features,)."
-                )
-
-        self.categories_ = []
-        category_counts = []
-        compute_counts = return_counts or self._infrequent_enabled
-
-        for i in range(n_features):
-            Xi = X_list[i]
-
-            if self.categories == "auto":
-                result = _unique(Xi, return_counts=compute_counts)
-                if compute_counts:
-                    cats, counts = result
-                    category_counts.append(counts)
-                else:
-                    cats = result
-            else:
-                if np.issubdtype(Xi.dtype, np.str_):
-                    # Always convert string categories to objects to avoid
-                    # unexpected string truncation for longer category labels
-                    # passed in the constructor.
-                    Xi_dtype = object
-                else:
-                    Xi_dtype = Xi.dtype
-
-                cats = np.array(self.categories[i], dtype=Xi_dtype)
-                if (
-                    cats.dtype == object
-                    and isinstance(cats[0], bytes)
-                    and Xi.dtype.kind != "S"
-                ):
-                    msg = (
-                        f"In column {i}, the predefined categories have type 'bytes'"
-                        " which is incompatible with values of type"
-                        f" '{type(Xi[0]).__name__}'."
-                    )
-                    raise ValueError(msg)
-
-                # `nan` must be the last stated category
-                for category in cats[:-1]:
-                    if is_scalar_nan(category):
-                        raise ValueError(
-                            "Nan should be the last element in user"
-                            f" provided categories, see categories {cats}"
-                            f" in column #{i}"
-                        )
-
-                if cats.size != len(_unique(cats)):
-                    msg = (
-                        f"In column {i}, the predefined categories"
-                        " contain duplicate elements."
-                    )
-                    raise ValueError(msg)
-
-                if Xi.dtype.kind not in "OUS":
-                    sorted_cats = np.sort(cats)
-                    error_msg = (
-                        "Unsorted categories are not supported for numerical categories"
-                    )
-                    # if there are nans, nan should be the last element
-                    stop_idx = -1 if np.isnan(sorted_cats[-1]) else None
-                    if np.any(sorted_cats[:stop_idx] != cats[:stop_idx]):
-                        raise ValueError(error_msg)
-
-                if handle_unknown == "error":
-                    diff = _check_unknown(Xi, cats)
-                    if diff:
-                        msg = (
-                            "Found unknown categories {0} in column {1}"
-                            " during fit".format(diff, i)
-                        )
-                        raise ValueError(msg)
-                if compute_counts:
-                    category_counts.append(_get_counts(Xi, cats))
-
-            self.categories_.append(cats)
-
-        output = {"n_samples": n_samples}
-        if return_counts:
-            output["category_counts"] = category_counts
-
-        missing_indices = {}
-        if return_and_ignore_missing_for_infrequent:
-            for feature_idx, categories_for_idx in enumerate(self.categories_):
-                if is_scalar_nan(categories_for_idx[-1]):
-                    # `nan` values can only be placed in the latest position
-                    missing_indices[feature_idx] = categories_for_idx.size - 1
-            output["missing_indices"] = missing_indices
-
-        if self._infrequent_enabled:
-            self._fit_infrequent_category_mapping(
-                n_samples,
-                category_counts,
-                missing_indices,
+            self,
+            X,
+            handle_unknown="error",
+            ensure_all_finite=True,
+            return_counts=False,
+            return_and_ignore_missing_for_infrequent=False,
+        ):
+            self._check_infrequent_enabled()
+            validate_data(self, X=X, reset=True, skip_check_array=True)
+            X_list, n_samples, n_features = self._check_X(
+                X, ensure_all_finite=ensure_all_finite
             )
-        return output
+            self.n_features_in_ = n_features
+
+            if self.categories != "auto" and self.categories != "frequency" :
+                if len(self.categories) != n_features:
+                    raise ValueError(
+                        "Shape mismatch: if categories is an array,"
+                        " it has to be of shape (n_features,)."
+                    )
+
+            self.categories_ = []
+            category_counts = []
+            X_list_dict = {}
+            compute_counts = return_counts or self._infrequent_enabled
+            # try to fit it in the overal design
+            if  self.categories == "frequency":
+
+                    self.decoder_mapping = [dict()]*n_features
+
+            
+            for i in range(n_features):
+                    Xi = X_list[i]
+
+                    if self.categories == "auto":
+                        result = _unique(Xi, return_counts=compute_counts)
+                        if compute_counts:
+                            cats, counts = result
+                            category_counts.append(counts)
+                        else:
+                            cats = result
+                    elif self.categories == "frequency":
+                                    
+                        #_unique sort so it handles ties in lexigraphical way
+                        unique_vals, counts = _unique(X_list[i], return_counts=True)
+                        local_decoder = {}
+                        # first apply argsort
+                        #check if this will sort correctly 
+                        count_sort_idx = np.argsort(counts)
+                        sorted_unique_vals = unique_vals[count_sort_idx]
+
+                        # second construct two-way dictionary mapping
+                        encoder_mapping = dict()
+                        
+                        for idx, val in enumerate(sorted_unique_vals):
+                                encoder_mapping[val] = idx
+                                local_decoder[idx] = val
+                        #self.categories_.append(np.array(list(encoder_mapping.keys())))
+                        cats = np.array(list(encoder_mapping.keys()))
+                        self.decoder_mapping[i] = local_decoder
+
+                    else:
+                        if np.issubdtype(Xi.dtype, np.str_):
+                            # Always convert string categories to objects to avoid
+                            # unexpected string truncation for longer category labels
+                            # passed in the constructor.
+                            Xi_dtype = object
+                        else:
+                            Xi_dtype = Xi.dtype
+
+                        cats = np.array(self.categories[i], dtype=Xi_dtype)
+                        if (
+                            cats.dtype == object
+                            and isinstance(cats[0], bytes)
+                            and Xi.dtype.kind != "S"
+                        ):
+                            msg = (
+                                f"In column {i}, the predefined categories have type 'bytes'"
+                                " which is incompatible with values of type"
+                                f" '{type(Xi[0]).__name__}'."
+                            )
+                            raise ValueError(msg)
+
+                        # `nan` must be the last stated category
+                        for category in cats[:-1]:
+                            if is_scalar_nan(category):
+                                raise ValueError(
+                                    "Nan should be the last element in user"
+                                    f" provided categories, see categories {cats}"
+                                    f" in column #{i}"
+                                )
+
+                        if cats.size != len(_unique(cats)):
+                            msg = (
+                                f"In column {i}, the predefined categories"
+                                " contain duplicate elements."
+                            )
+                            raise ValueError(msg)
+
+                        if Xi.dtype.kind not in "OUS":
+                            sorted_cats = np.sort(cats)
+                            error_msg = (
+                                "Unsorted categories are not supported for numerical categories"
+                            )
+                            # if there are nans, nan should be the last element
+                            stop_idx = -1 if np.isnan(sorted_cats[-1]) else None
+                            if np.any(sorted_cats[:stop_idx] != cats[:stop_idx]):
+                                raise ValueError(error_msg)
+
+                        if handle_unknown == "error":
+                            diff = _check_unknown(Xi, cats)
+                            if diff:
+                                msg = (
+                                    "Found unknown categories {0} in column {1}"
+                                    " during fit".format(diff, i)
+                                )
+                                raise ValueError(msg)
+                        if compute_counts:
+                            category_counts.append(_get_counts(Xi, cats))
+                    self.categories_.append(cats)#['a' 'b'])
+            self.sorted_dict = dict(sorted(X_list_dict.items(), key=lambda item: item[1]))
+            output = {"n_samples": n_samples}
+            if return_counts:
+                output["category_counts"] = category_counts
+            missing_indices = {}
+            if return_and_ignore_missing_for_infrequent:
+                for feature_idx, categories_for_idx in enumerate(self.categories_):
+                    if is_scalar_nan(categories_for_idx[-1]):
+                        # `nan` values can only be placed in the latest position
+                        missing_indices[feature_idx] = categories_for_idx.size - 1
+                output["missing_indices"] = missing_indices
+
+            if self._infrequent_enabled:
+                self._fit_infrequent_category_mapping(
+                    n_samples,
+                    category_counts,
+                    missing_indices,
+                )
+            return output
 
     def _transform(
         self,
@@ -1118,7 +1142,7 @@ class OneHotEncoder(_BaseEncoder):
         """
         check_is_fitted(self)
         X = check_array(X, accept_sparse="csr")
-
+       
         n_samples, _ = X.shape
         n_features = len(self.categories_)
 
@@ -1440,7 +1464,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
     """
 
     _parameter_constraints: dict = {
-        "categories": [StrOptions({"auto"}), list],
+        "categories": [StrOptions({"auto","frequency"}), list],
         "dtype": "no_validation",  # validation delegated to numpy
         "encoded_missing_value": [Integral, type(np.nan)],
         "handle_unknown": [StrOptions({"error", "use_encoded_value"})],
@@ -1659,7 +1683,6 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
             rows_to_update = slice(None)
             categories = self.categories_[i]
-
             if infrequent_indices is not None and infrequent_indices[i] is not None:
                 # Compute mask for frequent categories
                 infrequent_encoding_value = len(categories) - len(infrequent_indices[i])
@@ -1683,7 +1706,14 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
                     rows_to_update = known_labels
 
             labels_int = labels[rows_to_update].astype("int64", copy=False)
-            X_tr[rows_to_update, i] = categories[labels_int]
+            decoded_arr = X_tr[rows_to_update, i]
+
+            if "decoder_mapping" in list(dir(self)):
+                vectorized = np.vectorize(self.decoder_mapping[i].get)
+                decoded_arr = vectorized(labels_int)
+            else:
+                X_tr[rows_to_update, i] = categories[labels_int]
+            X_tr[rows_to_update, i] = decoded_arr
 
         if found_unknown or infrequent_masks:
             X_tr = X_tr.astype(object, copy=False)
