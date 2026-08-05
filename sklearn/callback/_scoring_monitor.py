@@ -202,12 +202,12 @@ class ScoringMonitor(_MetadataRequester):
 
     def _accept_sample_weight(self, hook_name):
         """Whetther the callback accepts sample_weight for a given hook."""
-        # TODO(slep006): remove when metadata routing is the only way
-        # Only check train scorers because val scorers cannot be used with metadata
-        # routing disabled anyway.
+        # TODO(slep006): remove when metadata routing is the only way.
         if hook_name != "on_fit_task_end":
             return False
 
+        # Only check train scorers because val scorers cannot be used with metadata
+        # routing disabled anyway.
         for name, scorer in self._scorers["train"]._scorers.items():
             if not scorer._accept_sample_weight():
                 warnings.warn(
@@ -218,7 +218,7 @@ class ScoringMonitor(_MetadataRequester):
         return self._scorers["train"]._accept_sample_weight()
 
     def setup(self, estimator, context):
-        pass
+        self._validate_validation_scorer()
 
     def teardown(self, estimator, context):
         pass
