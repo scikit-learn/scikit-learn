@@ -155,7 +155,10 @@ def _extract_missing(values):
 
 
 class _nandict(dict):
-    """Dictionary with support for nans."""
+    """Dictionary with support for nans.
+
+    Accessing missing keys always return the -1 value instead of raising KeyError.
+    """
 
     def __init__(self, mapping):
         super().__init__(mapping)
