@@ -46,7 +46,7 @@ from sklearn.model_selection._validation import (
     _normalize_score_results,
     _warn_or_raise_about_fit_failures,
 )
-from sklearn.utils import Bunch, check_random_state
+from sklearn.utils import check_random_state
 from sklearn.utils._array_api import xpx
 from sklearn.utils._param_validation import HasMethods, Interval, StrOptions
 from sklearn.utils._repr_html.estimator import _VisualBlock
@@ -54,6 +54,7 @@ from sklearn.utils._tags import get_tags
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _raise_for_params,
     _routing_enabled,
     process_routing,
@@ -939,19 +940,21 @@ class BaseSearchCV(
         else:
             params = params.copy()
             groups = params.pop("groups", None)
-            routed_params = Bunch(
-                estimator=Bunch(fit=params),
-                splitter=Bunch(split={"groups": groups}),
-                scorer=Bunch(score={}),
-            )
-            # NOTE: sample_weight is forwarded to the scorer if sample_weight
-            # is not None and scorers accept sample_weight. For _MultimetricScorer,
-            # sample_weight is forwarded if any scorer accepts sample_weight
+            # sample_weight is forwarded to the scorer if it's set and the scorer
+            # accepts it (for _MultimetricScorer, if any scorer accepts it).
+            score_kwargs = {}
             if (
                 params.get("sample_weight") is not None
                 and self._check_scorers_accept_sample_weight()
             ):
-                routed_params.scorer.score["sample_weight"] = params["sample_weight"]
+                score_kwargs["sample_weight"] = params["sample_weight"]
+            routed_params = _manual_routing(
+                {
+                    "estimator": {"fit": params},
+                    "splitter": {"split": {"groups": groups}},
+                    "scorer": {"score": score_kwargs},
+                }
+            )
         return routed_params
 
     @_fit_context(

@@ -2,12 +2,13 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from collections import Counter
-from contextlib import suppress
+from collections.abc import Iterable
+from numbers import Real
 from typing import NamedTuple
 
 import numpy as np
 
-from sklearn.utils._array_api import _isin, device, get_namespace, xpx
+from sklearn.utils._array_api import array_device, get_namespace, size
 from sklearn.utils._missing import is_scalar_nan
 
 
@@ -20,7 +21,7 @@ def _unique(values, *, return_inverse=False, return_counts=False):
     Parameters
     ----------
     values : ndarray
-        Values to check for unknowns.
+        Values to find uniques from.
 
     return_inverse : bool, default=False
         If True, also return the indices of the unique values.
@@ -70,7 +71,7 @@ def _unique_np(values, return_inverse=False, return_counts=False):
 
     # np.unique will have duplicate missing values at the end of `uniques`
     # here we clip the nans and remove it from uniques
-    if uniques.size and is_scalar_nan(uniques[-1]):
+    if size(uniques) and is_scalar_nan(uniques[-1]):
         nan_idx = xp.searchsorted(uniques, xp.nan)
         uniques = uniques[: nan_idx + 1]
         if return_inverse:
@@ -96,6 +97,9 @@ class MissingValues(NamedTuple):
 
     nan: bool
     none: bool
+    # All the different nan instances seen, useful because they end up merged
+    # into just np.nan:
+    all_nans: Iterable[Real] = (np.nan,)
 
     def to_list(self):
         """Convert tuple to a list where None is always first."""
@@ -130,15 +134,20 @@ def _extract_missing(values):
     if not missing_values_set:
         return values, MissingValues(nan=False, none=False)
 
+    all_nans = missing_values_set - {None}
     if None in missing_values_set:
         if len(missing_values_set) == 1:
-            output_missing_values = MissingValues(nan=False, none=True)
+            output_missing_values = MissingValues(
+                nan=False, none=True, all_nans=all_nans
+            )
         else:
             # If there is more than one missing value, then it has to be
             # float('nan') or np.nan
-            output_missing_values = MissingValues(nan=True, none=True)
+            output_missing_values = MissingValues(
+                nan=True, none=True, all_nans=all_nans
+            )
     else:
-        output_missing_values = MissingValues(nan=True, none=False)
+        output_missing_values = MissingValues(nan=True, none=False, all_nans=all_nans)
 
     # create set without the missing values
     output = values - missing_values_set
@@ -146,7 +155,10 @@ def _extract_missing(values):
 
 
 class _nandict(dict):
-    """Dictionary with support for nans."""
+    """Dictionary with support for nans.
+
+    Accessing missing keys always return the -1 value instead of raising KeyError.
+    """
 
     def __init__(self, mapping):
         super().__init__(mapping)
@@ -158,18 +170,21 @@ class _nandict(dict):
     def __missing__(self, key):
         if hasattr(self, "nan_value") and is_scalar_nan(key):
             return self.nan_value
-        raise KeyError(key)
+        return -1
 
 
 def _map_to_integer(values, uniques):
-    """Map values based on its position in uniques."""
+    """Map values based on their position in uniques.
+
+    Values not present in `uniques` are encoded as -1.
+    """
     xp, _ = get_namespace(values, uniques)
     table = _nandict({val: i for i, val in enumerate(uniques)})
-    return xp.asarray([table[v] for v in values], device=device(values))
+    return xp.asarray([table[v] for v in values], device=array_device(values))
 
 
 def _unique_python(values, *, return_inverse, return_counts):
-    # Only used in `_uniques`, see docstring there for details
+    # Only used in `_unique`, see docstring there for details
     try:
         uniques_set = set(values)
         uniques_set, missing_values = _extract_missing(uniques_set)
@@ -189,20 +204,18 @@ def _unique_python(values, *, return_inverse, return_counts):
         ret += (_map_to_integer(values, uniques),)
 
     if return_counts:
-        ret += (_get_counts(values, uniques),)
+        ret += (_get_counts(values, uniques, missing_values.all_nans),)
 
     return ret[0] if len(ret) == 1 else ret
 
 
-def _encode(values, *, uniques, check_unknown=True):
-    """Helper function to encode values into [0, n_uniques - 1].
+def _encode_labels(values, *, uniques):
+    """Encode labels into [0, n_uniques - 1].
 
-    Uses pure python method for object dtype, and numpy method for
-    all other dtypes.
-    The numpy method has the limitation that the `uniques` need to
-    be sorted. Importantly, this is not checked but assumed to already be
-    the case. The calling method needs to ensure this for all non-object
-    values.
+    Relies on `_encode`, see docstring there for more details.
+
+    Unknown values raise a ValueError, i.e. when `_encode` returns
+    a non-empty diff.
 
     Parameters
     ----------
@@ -211,150 +224,99 @@ def _encode(values, *, uniques, check_unknown=True):
     uniques : ndarray
         The unique values in `values`. If the dtype is not object, then
         `uniques` needs to be sorted.
-    check_unknown : bool, default=True
-        If True, check for values in `values` that are not in `unique`
-        and raise an error. This is ignored for object dtype, and treated as
-        True in this case. This parameter is useful for
-        _BaseEncoder._transform() to avoid calling _check_unknown()
-        twice.
 
     Returns
     -------
     encoded : ndarray
-        Encoded values
+        Encoded values.
+
+    Raises
+    ------
+    ValueError
+        If `values` contains labels that are not in `uniques`.
     """
-    xp, _ = get_namespace(values, uniques)
-    if not xp.isdtype(values.dtype, "numeric"):
-        try:
-            return _map_to_integer(values, uniques)
-        except KeyError as e:
-            raise ValueError(f"y contains previously unseen labels: {e}")
-    else:
-        if check_unknown:
-            diff = _check_unknown(values, uniques)
-            if diff:
-                raise ValueError(f"y contains previously unseen labels: {diff}")
-        return xp.searchsorted(uniques, values)
+    encoded, diff = _encode(values, uniques=uniques, return_diff=True)
+    if size(diff):
+        raise ValueError(f"y contains previously unseen labels: {diff}")
+    return encoded
 
 
-def _check_unknown(values, known_values, return_mask=False):
-    """
-    Helper function to check for unknowns in values to be encoded.
+def _encode(values, *, uniques, return_diff=False):
+    """Encode values into [0, n_uniques - 1].
 
     Uses pure python method for object dtype, and numpy method for
     all other dtypes.
+    The numpy method has the limitation that the `uniques` need to
+    be sorted. Importantly, this is not checked but assumed to already be
+    the case. The calling method needs to ensure this for all non-object
+    values.
+
+    Values that are not present in `uniques` are encoded as -1.
 
     Parameters
     ----------
-    values : array
-        Values to check for unknowns.
-    known_values : array
-        Known values. Must be unique.
-    return_mask : bool, default=False
-        If True, return a mask of the same shape as `values` indicating
-        the valid values.
+    values : ndarray
+        Values to encode.
+    uniques : ndarray
+        The unique values in `values`. If the dtype is not object, then
+        `uniques` needs to be sorted.
+    return_diff : bool, default=False
+        If True, also return the unique values in `values` that are not
+        present in `uniques`.
 
     Returns
     -------
-    diff : list
-        The unique values present in `values` and not in `know_values`.
-    valid_mask : boolean array
-        Additionally returned if ``return_mask=True``.
-
+    encoded : ndarray
+        Encoded values.
+    diff : ndarray
+        The unique values present in `values` and not in `uniques`. Only
+        returned if ``return_diff=True``.
     """
-    xp, _ = get_namespace(values, known_values)
-    valid_mask = None
-
+    xp, _ = get_namespace(values, uniques)
     if not xp.isdtype(values.dtype, "numeric"):
-        values_set = set(values)
-        values_set, missing_in_values = _extract_missing(values_set)
-
-        uniques_set = set(known_values)
-        uniques_set, missing_in_uniques = _extract_missing(uniques_set)
-        diff = values_set - uniques_set
-
-        nan_in_diff = missing_in_values.nan and not missing_in_uniques.nan
-        none_in_diff = missing_in_values.none and not missing_in_uniques.none
-
-        def is_valid(value):
-            return (
-                value in uniques_set
-                or (missing_in_uniques.none and value is None)
-                or (missing_in_uniques.nan and is_scalar_nan(value))
-            )
-
-        if return_mask:
-            if diff or nan_in_diff or none_in_diff:
-                valid_mask = xp.array([is_valid(value) for value in values])
-            else:
-                valid_mask = xp.ones(len(values), dtype=xp.bool)
-
-        diff = list(diff)
-        if none_in_diff:
-            diff.append(None)
-        if nan_in_diff:
-            diff.append(np.nan)
+        encoded = _map_to_integer(values, uniques)
     else:
-        unique_values = xp.unique_values(values)
-        diff = xpx.setdiff1d(unique_values, known_values, assume_unique=True, xp=xp)
-        if return_mask:
-            if diff.size:
-                valid_mask = _isin(values, known_values, xp)
-            else:
-                valid_mask = xp.ones(len(values), dtype=xp.bool)
+        encoded = xp.searchsorted(uniques, values)
+        if size(uniques):
+            # Post-process the results to collect unknown values and encode them
+            # as -1. Since xp.searchsorted can assign indices larger than the
+            # maximum index in uniques for large unknown values, we first clip
+            # them before checking the decoding the encoded values recovers
+            # the original values or not to identify the unknown values.
+            max_idx = xp.asarray(
+                uniques.shape[0] - 1, dtype=encoded.dtype, device=array_device(encoded)
+            )
+            encoded_safe = xp.minimum(encoded, max_idx)
+            matches = uniques[encoded_safe] == values
 
-        # check for nans in the known_values
-        if xp.any(xp.isnan(known_values)):
-            diff_is_nan = xp.isnan(diff)
-            if xp.any(diff_is_nan):
-                # removes nan from valid_mask
-                if diff.size and return_mask:
-                    is_nan = xp.isnan(values)
-                    valid_mask[is_nan] = 1
+            if xp.any(xp.isnan(uniques)):
+                matches |= xp.isnan(values)
+        else:
+            matches = xp.zeros_like(encoded, dtype=xp.bool)
+        encoded[~matches] = -1
 
-                # remove nan from diff
-                diff = diff[~diff_is_nan]
-        diff = list(diff)
+    if return_diff:
+        diff = _unique(values[encoded == -1])
+        return encoded, diff
 
-    if return_mask:
-        return diff, valid_mask
-    return diff
-
-
-class _NaNCounter(Counter):
-    """Counter with support for nan values."""
-
-    def __init__(self, items):
-        super().__init__(self._generate_items(items))
-
-    def _generate_items(self, items):
-        """Generate items without nans. Stores the nan counts separately."""
-        for item in items:
-            if not is_scalar_nan(item):
-                yield item
-                continue
-            if not hasattr(self, "nan_count"):
-                self.nan_count = 0
-            self.nan_count += 1
-
-    def __missing__(self, key):
-        if hasattr(self, "nan_count") and is_scalar_nan(key):
-            return self.nan_count
-        raise KeyError(key)
+    return encoded
 
 
-def _get_counts(values, uniques):
+def _get_counts(values, uniques, nan_values=(np.nan,)):
     """Get the count of each of the `uniques` in `values`.
 
-    The counts will use the order passed in by `uniques`. For non-object dtypes,
-    `uniques` is assumed to be sorted and `np.nan` is at the end.
+    The counts will use the order passed in by `uniques`.  `np.nan` is assumed
+    to be the last item in `uniques`, if it was one of the values.  For
+    non-object dtypes, `uniques` is assumed to be sorted.
     """
     if values.dtype.kind in "OU":
-        counter = _NaNCounter(values)
+        counter = Counter(values)
         output = np.zeros(len(uniques), dtype=np.int64)
         for i, item in enumerate(uniques):
-            with suppress(KeyError):
-                output[i] = counter[item]
+            output[i] = counter[item]
+        if len(uniques) > 0 and is_scalar_nan(uniques[-1]):
+            # Should be the sum of all nans:
+            output[-1] = sum(counter[nan] for nan in nan_values)
         return output
 
     unique_values, counts = _unique_np(values, return_counts=True)

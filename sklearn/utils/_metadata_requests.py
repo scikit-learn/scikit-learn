@@ -1089,7 +1089,13 @@ class MetadataRouter:
 
         for name, route_mapping in self._route_mappings.items():
             for caller, callee in route_mapping.mapping:
-                if caller == method:
+                # A composite method (e.g. ``fit_transform``) routes metadata for
+                # each of its component methods (``fit`` and ``transform``), but a
+                # route mapping may also be declared directly on the composite
+                # method itself (e.g. ``TargetEncoder`` maps ``fit_transform`` to
+                # its splitter's ``split``). We therefore match the composite
+                # method as well as its components.
+                if (caller == method) or (caller in COMPOSITE_METHODS.get(method, ())):
                     res = res.union(
                         route_mapping.router._get_param_names(
                             method=callee, return_alias=True, ignore_self_request=False
@@ -1782,7 +1788,11 @@ def process_routing(_obj, _method, /, **kwargs):
 
     The output of this function is a :class:`~sklearn.utils.Bunch` that has a key for
     each consuming object and those hold keys for their consuming methods, which then
-    contain keys for the metadata which should be routed to them.
+    contain keys for the metadata which should be routed to them. Consumers should
+    use item access (``routed_params[child][method]``) rather than attribute access,
+    so that the structure remains usable after crossing process boundaries (e.g.
+    :class:`joblib.Parallel` with the dask backend), where serializers may downgrade
+    :class:`~sklearn.utils.Bunch` to plain :class:`dict`.
 
     Read more on developing custom estimators that can route metadata in the
     :ref:`Metadata Routing Developing Guide
@@ -1859,3 +1869,42 @@ def process_routing(_obj, _method, /, **kwargs):
     routed_params = request_routing.route_params(params=kwargs, caller=_method)
 
     return routed_params
+
+
+def _manual_routing(routing):
+    """Manually build a routed_params Bunch outside the ``process_routing`` path.
+
+    Use in meta-estimators that need to construct routing by hand — typically in
+    the ``else`` branch of ``if _routing_enabled()``, where pre-SLEP6 forwarding
+    behaviour is preserved. Returns the same nested ``Bunch`` shape that
+    :func:`process_routing` produces, so consumer code doesn't need to branch
+    on which path produced ``routed_params``.
+
+    Every child in ``routing`` is populated with a :class:`~sklearn.utils.Bunch`
+    containing every name in ``METHODS``. Methods listed in the per-child
+    sub-mapping carry the provided kwargs; methods not listed default to ``{}``.
+
+    Parameters
+    ----------
+    routing : dict[str, dict[str, dict] | None]
+        Mapping ``child_name -> (method_name -> kwargs)``. Pass ``{}`` (or
+        ``None``) for a child with no methods to forward to; every method in
+        the returned Bunch will be an empty dict.
+
+    Returns
+    -------
+    routed_params : Bunch
+        A :class:`~sklearn.utils.Bunch` of the form
+        ``{"child_name": {"method_name": {metadata: value}}}``. Consumers must
+        use item access (``result[child][method]``); attribute access is not
+        guaranteed to survive cross-process serialization (e.g. the joblib
+        dask backend downgrades :class:`Bunch` to plain :class:`dict`).
+    """
+    return Bunch(
+        **{
+            child: Bunch(
+                **{method: dict((methods or {}).get(method, {})) for method in METHODS}
+            )
+            for child, methods in routing.items()
+        }
+    )

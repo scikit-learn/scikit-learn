@@ -49,7 +49,7 @@ def _log_wishart_norm(degrees_of_freedom, log_det_precisions_chol, n_features):
         The number of degrees of freedom on the covariance Wishart
         distributions.
 
-    log_det_precision_chol : array-like of shape (n_components,)
+    log_det_precisions_chol : array-like of shape (n_components,)
          The determinant of the precision matrix for each component.
 
     n_features : int
