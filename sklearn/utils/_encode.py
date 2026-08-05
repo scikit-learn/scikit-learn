@@ -275,6 +275,11 @@ def _encode(values, *, uniques, return_diff=False):
     else:
         encoded = xp.searchsorted(uniques, values)
         if size(uniques):
+            # Post-process the results to collect unknown values and encode them
+            # as -1. Since xp.searchsorted can asign indices larger than the
+            # maximum index in uniques for large unknown values, we first clip
+            # them before checking the decoding the encoded values recovers
+            # the original values or not to identify the unknown values.
             max_idx = xp.asarray(
                 uniques.shape[0] - 1, dtype=encoded.dtype, device=array_device(encoded)
             )
