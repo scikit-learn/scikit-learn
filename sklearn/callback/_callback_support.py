@@ -8,6 +8,7 @@ from contextlib import contextmanager
 
 from sklearn.callback._base import AutoPropagatedCallback, FitCallback
 from sklearn.callback._callback_context import CallbackContext
+from sklearn.utils import Bunch
 from sklearn.utils.metadata_routing import MetadataRouter, MethodMapping
 
 
@@ -175,15 +176,25 @@ class CallbackSupportMixin:
         router = MetadataRouter(owner=self)
         return self._add_callback_routing(router)
 
-    def _callbacks_accept_sample_weight(self, hook_name):
+    def _get_manual_callbacks_params(self, sample_weight):
         # TODO(slep006): remove when metadata routing is the only way
-        """Whether a registered callback accepts sample_weight for the given hook."""
-        for cb in getattr(self, "_skl_callbacks", []):
-            if hasattr(cb, "_accept_sample_weight") and cb._accept_sample_weight(
-                hook_name
-            ):
-                return True
-        return False
+        """Generate manually routed params for callbacks when routing is disabled.
+
+        This is used to forward sample_weight to callback hooks that accept them even
+        if metadata routing is disabled.
+        """
+        callbacks_params = {"on_fit_task_begin": Bunch(), "on_fit_task_end": Bunch()}
+        if sample_weight is None:
+            return callbacks_params
+        for hook_name in ("on_fit_task_begin", "on_fit_task_end"):
+            for i, cb in enumerate(getattr(self, "_skl_callbacks", [])):
+                if hasattr(cb, "_accept_sample_weight") and cb._accept_sample_weight(
+                    hook_name
+                ):
+                    callbacks_params[hook_name][f"callback_{i}"] = {
+                        hook_name: {"sample_weight": sample_weight}
+                    }
+        return callbacks_params
 
 
 @contextmanager

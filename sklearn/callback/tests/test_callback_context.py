@@ -22,6 +22,7 @@ from sklearn.callback.tests._utils import (
     ParentFitEstimator,
     RecordingAutoPropagatedCallback,
     RecordingCallback,
+    SampleWeightCallback,
     StopFitCallback,
     ThirdPartyEstimator,
 )
@@ -578,3 +579,16 @@ def test_metadata_routing_callback_consumer_in_metaestimator(n_jobs):
     assert task_end_metadatas
     assert all([m == "val_1" for m in task_begin_metadatas])
     assert all([m == "val_2" for m in task_end_metadatas])
+
+
+def test_sample_weight_without_routing():
+    """Test that callbacks receive sample_weight even when routing is disabled."""
+    cb = SampleWeightCallback()
+
+    MaxIterEstimator().set_callbacks(cb).fit(sample_weight="sample_weight")
+
+    for rec in cb.record:
+        if rec["name"] == "on_fit_task_begin":
+            assert rec["kwargs"]["requested_arg_begin"] == "sample_weight"
+        elif rec["name"] == "on_fit_task_end":
+            assert rec["kwargs"]["requested_arg_end"] == "sample_weight"

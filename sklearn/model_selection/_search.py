@@ -942,23 +942,21 @@ class BaseSearchCV(
             groups = params.pop("groups", None)
             # sample_weight is forwarded to the scorer if it's set and the scorer
             # accepts it (for _MultimetricScorer, if any scorer accepts it).
-            # Same for the callbacks if any callback accepts it, for each hook.
+            # Same for the callbacks that accepts it, for each hook.
             score_kwargs = {}
-            callbacks_kwargs = {"on_fit_task_begin": {}, "on_fit_task_end": {}}
-            if params.get("sample_weight") is not None:
-                if self._check_scorers_accept_sample_weight():
-                    score_kwargs["sample_weight"] = params["sample_weight"]
-                for hook_name in ("on_fit_task_begin", "on_fit_task_end"):
-                    if self._callbacks_accept_sample_weight(hook_name):
-                        callbacks_kwargs[hook_name]["sample_weight"] = params[
-                            "sample_weight"
-                        ]
+            if (
+                params.get("sample_weight") is not None
+                and self._check_scorers_accept_sample_weight()
+            ):
+                score_kwargs["sample_weight"] = params["sample_weight"]
             routed_params = _manual_routing(
                 {
                     "estimator": {"fit": params},
                     "splitter": {"split": {"groups": groups}},
                     "scorer": {"score": score_kwargs},
-                    "callbacks": callbacks_kwargs,
+                    "callbacks": self._get_manual_callbacks_params(
+                        params.get("sample_weight")
+                    ),
                 }
             )
         return routed_params

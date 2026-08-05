@@ -22,6 +22,7 @@ from sklearn.callback.tests._utils import (
     NoCallbackEstimator,
     RecordingAutoPropagatedCallback,
     RecordingCallback,
+    SampleWeightCallback,
     skip_callback_test_if_wasm,
 )
 from sklearn.cluster import KMeans
@@ -3190,3 +3191,42 @@ def test_search_callbacks_and_scorer_with_metadata_routing():
     assert train_scores
     assert all([ll["score"] == "callback_score" for ll in train_scores])
     assert search.best_score_ == 42
+
+
+@skip_callback_test_if_wasm
+def test_search_callbacks_receive_sample_weight():
+    """Test that sample_weight is forwarded to callbacks even if routing is disabled.
+
+    Note this tests all *SearchCV classes that inherit from `BaseSearchCV`.
+    """
+    callback = SampleWeightCallback()
+    search = GridSearchCV(
+        MaxIterEstimator(), {"max_iter": [1, 2, 3]}, cv=2, scoring="accuracy"
+    ).set_callbacks(callback)
+    sample_weight = np.random.RandomState(0).randint(0, 5, size=y.shape[0])
+    search.fit(X, y, sample_weight=sample_weight)
+
+    evaluation_records = [
+        entry
+        for entry in callback.record
+        if entry["context"].task_name == "candidate-split-evaluation"
+    ]
+    assert evaluation_records
+    refit_records = [
+        entry
+        for entry in callback.record
+        if entry["context"].task_name == "refit-with-best-params"
+    ]
+    assert refit_records
+
+    for entry in evaluation_records:
+        if entry["name"] == "on_fit_task_begin":
+            assert entry["kwargs"]["requested_arg_begin"] is not None
+        elif entry["name"] == "on_fit_task_end":
+            assert entry["kwargs"]["requested_arg_end"] is not None
+
+    for entry in refit_records:
+        if entry["name"] == "on_fit_task_begin":
+            assert_array_equal(entry["kwargs"]["requested_arg_begin"], sample_weight)
+        elif entry["name"] == "on_fit_task_end":
+            assert_array_equal(entry["kwargs"]["requested_arg_end"], sample_weight)

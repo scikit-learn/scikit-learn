@@ -990,14 +990,9 @@ class StandardScaler(
                 self, "fit", sample_weight=sample_weight, **params
             )
         else:
-            hook_params = {"on_fit_task_begin": {}, "on_fit_task_end": {}}
-            # For each callback hook, sample_weight is forwarded to the callbacks if
-            # it's set and at least one callback accepts it.
-            if sample_weight is not None:
-                for hook_name in ("on_fit_task_begin", "on_fit_task_end"):
-                    if self._callbacks_accept_sample_weight(hook_name):
-                        hook_params[hook_name]["sample_weight"] = sample_weight
-            routed_params = _manual_routing({"callbacks": hook_params})
+            routed_params = _manual_routing(
+                {"callbacks": self._get_manual_callbacks_params(sample_weight)}
+            )
         callback_ctx.call_on_fit_task_begin(
             estimator=self,
             X=X,

@@ -172,18 +172,27 @@ def test_set_callback_empty():
     assert not hasattr(estimator, "_skl_callbacks")
 
 
-def test_callbacks_accept_sample_weight():
-    """Test the _callbacks_accept_sample_weight method."""
-    hook_name = "on_fit_task_end"
+def test_get_manual_callbacks_params():
+    """Test the _get_manual_callbacks_params method."""
 
-    # False when no callback registered
+    sample_weight = 12
+
+    output_no_forward = {"on_fit_task_begin": {}, "on_fit_task_end": {}}
+
+    output_forward = {
+        "on_fit_task_begin": {
+            "callback_1": {"on_fit_task_begin": {"sample_weight": sample_weight}}
+        },
+        "on_fit_task_end": {
+            "callback_1": {"on_fit_task_end": {"sample_weight": sample_weight}}
+        },
+    }
+
     est = MaxIterEstimator()
-    assert not est._callbacks_accept_sample_weight(hook_name)
+    assert est._get_manual_callbacks_params(sample_weight) == output_no_forward
 
-    # False when no callback accept sample_weight
     est.set_callbacks(RecordingCallback())
-    assert not est._callbacks_accept_sample_weight(hook_name)
+    assert est._get_manual_callbacks_params(sample_weight) == output_no_forward
 
-    # True when at least one accepts sample_weight
     est.set_callbacks(RecordingCallback(), SampleWeightCallback())
-    assert est._callbacks_accept_sample_weight(hook_name)
+    assert est._get_manual_callbacks_params(sample_weight) == output_forward

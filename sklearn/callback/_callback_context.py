@@ -10,7 +10,7 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 
 from sklearn.callback._base import AutoPropagatedCallback
-from sklearn.utils.metadata_routing import process_routing
+from sklearn.utils.metadata_routing import _routing_enabled, process_routing
 
 # Set of the hook parameters that do not come from metadata routing
 HOOK_NOT_ROUTED_PARAMS = {"X", "y", "fitted_estimator"}
@@ -322,10 +322,10 @@ class CallbackContext:
                 # sub-estimator's root context (both represent the same task).
                 continue
 
-            args_to_pass = getattr(
-                getattr(copy.copy(kwargs["metadata"]), f"callback_{i}", None),
-                hook_name,
-                {},
+            args_to_pass = (
+                copy.copy(kwargs["metadata"])
+                .get(f"callback_{i}", {})
+                .get(hook_name, {})
             )
 
             signature = _cached_signature(getattr(callback, hook_name))
@@ -396,7 +396,9 @@ class CallbackContext:
             stopped at the beginning of this task. The `fitted_estimator` is the
             object that will be passed to the callbacks, if required.
         """
-        if metadata is not None:
+        if metadata is None:
+            metadata = {}
+        elif _routing_enabled():
             metadata = process_routing(self._callbacks, "on_fit_task_begin", **metadata)
         self._call_hooks(
             estimator,
@@ -449,7 +451,9 @@ class CallbackContext:
             Whether or not to stop the current level of iterations at this end of this
             task.
         """
-        if metadata is not None:
+        if metadata is None:
+            metadata = {}
+        elif _routing_enabled():
             metadata = process_routing(self._callbacks, "on_fit_task_end", **metadata)
         return self._call_hooks(
             estimator,

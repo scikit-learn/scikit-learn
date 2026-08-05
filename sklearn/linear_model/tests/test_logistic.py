@@ -19,6 +19,7 @@ from sklearn._loss import HalfMultinomialLoss
 from sklearn.base import clone
 from sklearn.callback.tests._utils import (
     RecordingCallback,
+    SampleWeightCallback,
     skip_callback_test_if_wasm,
 )
 from sklearn.datasets import load_iris, make_classification, make_low_rank_matrix
@@ -3267,3 +3268,26 @@ def test_logistic_regression_callback_metadata(solver):
     n_metadata_found = sum([m == "val_end" for m in task_end_metadatas])
     # The last task of lbfgs is a fake one, so on_fit_task_end does not get metadata.
     assert n_metadata_found == len(task_end_metadatas) - 1
+
+
+@skip_callback_test_if_wasm
+def test_logistic_regression_callbacks_receive_sample_weight():
+    """Test that sample_weight is forwarded to callbacks even if routing is disabled."""
+
+    cb = SampleWeightCallback()
+    lr = LogisticRegression(solver="lbfgs").set_callbacks(cb)
+    X, y = make_classification(n_samples=20)
+    sample_weight = np.random.RandomState(0).randint(0, 5, size=y.shape[0])
+    lr.fit(X, y, sample_weight=sample_weight)
+
+    rec_begin = [rec for rec in cb.record if rec["name"] == "on_fit_task_begin"]
+    rec_end = [rec for rec in cb.record if rec["name"] == "on_fit_task_end"]
+
+    assert rec_begin
+    assert rec_end
+
+    for rec in rec_begin:
+        assert_array_equal(rec["kwargs"]["requested_arg_begin"], sample_weight)
+    for i, rec in enumerate(rec_end):
+        if i != len(rec_end) - 2:  # The penultimate one is an empty task.
+            assert_array_equal(rec["kwargs"]["requested_arg_end"], sample_weight)

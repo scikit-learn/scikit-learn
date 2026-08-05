@@ -214,15 +214,24 @@ class NotRequiredKwargsCallback(RecordingCallback):
 
 
 class SampleWeightCallback(RecordingCallback):
-    """A callback that accepts sample_weight in its on_fit_task_end hook."""
+    """A callback that accepts sample_weight in its hooks."""
+
+    def on_fit_task_begin(
+        self, estimator, context, *, X=None, y=None, sample_weight=None
+    ):
+        super().on_fit_task_begin(
+            estimator, context, X=X, y=y, requested_arg_begin=sample_weight
+        )
 
     def on_fit_task_end(
         self, estimator, context, *, X=None, y=None, sample_weight=None
     ):
-        pass
+        super().on_fit_task_end(
+            estimator, context, X=X, y=y, requested_arg_end=sample_weight
+        )
 
     def _accept_sample_weight(self, hook_name):
-        return hook_name == "on_fit_task_end"
+        return hook_name in ("on_fit_task_begin", "on_fit_task_end")
 
 
 class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
@@ -249,12 +258,9 @@ class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
                 self, "fit", sample_weight=sample_weight, **fit_params
             )
         else:
-            hook_params = {"on_fit_task_begin": {}, "on_fit_task_end": {}}
-            if sample_weight is not None:
-                for hook_name in ("on_fit_task_begin", "on_fit_task_end"):
-                    if self._callbacks_accept_sample_weight(hook_name):
-                        hook_params[hook_name]["sample_weight"] = sample_weight
-            routed_params = _manual_routing({"callbacks": hook_params})
+            routed_params = _manual_routing(
+                {"callbacks": self._get_manual_callbacks_params(sample_weight)}
+            )
         callback_ctx.call_on_fit_task_begin(
             estimator=self,
             X=X,
