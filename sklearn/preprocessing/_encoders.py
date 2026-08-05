@@ -104,7 +104,11 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             Xi = X_list[i]
 
             if self.categories == "auto":
-                result = _unique(Xi, return_counts=compute_counts)
+                result = _unique(
+                    Xi,
+                    return_counts=compute_counts,
+                    allow_mixed_types=getattr(self, "allow_mixed_types", None),
+                )
                 if compute_counts:
                     cats, counts = result
                     category_counts.append(counts)
@@ -619,6 +623,12 @@ class OneHotEncoder(_BaseEncoder):
 
         .. versionadded:: 1.3
 
+    allow_mixed_types : bool, default=False
+        If True, allows encoding an array containing a mixture of types
+        (e.g. strings and numbers).
+
+        .. versionadded:: 1.10
+
     Attributes
     ----------
     categories_ : list of arrays
@@ -762,6 +772,7 @@ class OneHotEncoder(_BaseEncoder):
         ],
         "sparse_output": ["boolean"],
         "feature_name_combiner": [StrOptions({"concat"}), callable],
+        "allow_mixed_types": ["boolean"],
     }
 
     def __init__(
@@ -775,6 +786,7 @@ class OneHotEncoder(_BaseEncoder):
         min_frequency=None,
         max_categories=None,
         feature_name_combiner="concat",
+        allow_mixed_types=False,
     ):
         self.categories = categories
         self.sparse_output = sparse_output
@@ -784,6 +796,7 @@ class OneHotEncoder(_BaseEncoder):
         self.min_frequency = min_frequency
         self.max_categories = max_categories
         self.feature_name_combiner = feature_name_combiner
+        self.allow_mixed_types = allow_mixed_types
 
     def _map_drop_idx_to_infrequent(self, feature_idx, drop_idx):
         """Convert `drop_idx` into the index for infrequent categories.
@@ -1342,6 +1355,12 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         .. versionadded:: 1.3
             Read more in the :ref:`User Guide <encoder_infrequent_categories>`.
 
+    allow_mixed_types : bool, default=False
+        If True, allows encoding an array containing a mixture of types
+        (e.g. strings and numbers).
+
+        .. versionadded:: 1.10
+
     Attributes
     ----------
     categories_ : list of arrays
@@ -1451,6 +1470,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
             Interval(RealNotInt, 0, 1, closed="neither"),
             None,
         ],
+        "allow_mixed_types": ["boolean"],
     }
 
     def __init__(
@@ -1463,6 +1483,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         encoded_missing_value=np.nan,
         min_frequency=None,
         max_categories=None,
+        allow_mixed_types=False,
     ):
         self.categories = categories
         self.dtype = dtype
@@ -1471,6 +1492,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self.encoded_missing_value = encoded_missing_value
         self.min_frequency = min_frequency
         self.max_categories = max_categories
+        self.allow_mixed_types = allow_mixed_types
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):

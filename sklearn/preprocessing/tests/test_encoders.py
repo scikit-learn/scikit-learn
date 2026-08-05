@@ -278,6 +278,63 @@ def test_one_hot_encoder(X):
     assert_allclose(Xtr.toarray(), [[0, 1, 1, 0, 1], [1, 0, 0, 1, 1]])
 
 
+def test_one_hot_encoder_allow_mixed_types_raises_by_default():
+    # Test that OneHotEncoder raises TypeError when allow_mixed_types is not set to True
+    X = [["a"], ["b"], ["c"], [1]]
+    err_msg = "Encoders require their input argument must be uniformly"
+    with pytest.raises(TypeError, match=err_msg):
+        OneHotEncoder(categories="auto").fit_transform(X)
+
+
+def test_one_hot_encoder_allow_mixed_types():
+    # Test that OneHotEncoder works with allow_mixed_types=True
+    X = [["a"], ["b"], ["c"], [1]]
+    enc = OneHotEncoder(categories="auto", allow_mixed_types=True, sparse_output=False)
+    Xtr = enc.fit_transform(X)
+
+    # numbers are ordered before other types
+    assert_array_equal(enc.categories_[0], np.array([1, "a", "b", "c"], dtype=object))
+    assert_allclose(
+        Xtr,
+        [
+            [0, 1, 0, 0],
+            [0, 0, 1, 0],
+            [0, 0, 0, 1],
+            [1, 0, 0, 0],
+        ],
+    )
+
+    inv = enc.inverse_transform(Xtr)
+    assert_array_equal(inv, np.array(X, dtype=object))
+    # int stays an int, not coerced to a string
+    assert inv[3, 0] == 1
+    assert isinstance(inv[3, 0], int)
+
+
+@pytest.mark.parametrize("Encoder", [OneHotEncoder, OrdinalEncoder])
+def test_encoder_allow_mixed_types_error_hint(Encoder):
+    # Test that OneHotEncoder and OrdinalEncoder raise TypeError with a hint
+    # to set allow_mixed_types=True
+    X = [["a"], ["b"], [1]]
+    err_msg = "set allow_mixed_types=True"
+    with pytest.raises(TypeError, match=err_msg):
+        Encoder().fit(X)
+
+
+def test_ordinal_encoder_allow_mixed_types():
+    # Test that OrdinalEncoder works with allow_mixed_types=True
+    X = [["a"], ["b"], ["c"], [1]]
+    enc = OrdinalEncoder(categories="auto", allow_mixed_types=True)
+    Xtr = enc.fit_transform(X)
+
+    assert_array_equal(enc.categories_[0], np.array([1, "a", "b", "c"], dtype=object))
+    assert_array_equal(Xtr.ravel(), [1, 2, 3, 0])
+
+    inv = enc.inverse_transform(Xtr)
+    assert_array_equal(inv, np.array(X, dtype=object))
+    assert isinstance(inv[3, 0], int)
+
+
 @pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist", "warn"])
 @pytest.mark.parametrize("sparse_", [False, True])
 @pytest.mark.parametrize("drop", [None, "first"])

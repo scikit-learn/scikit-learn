@@ -1,6 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import numbers
 from collections import Counter
 from collections.abc import Iterable
 from numbers import Real
@@ -12,7 +13,9 @@ from sklearn.utils._array_api import array_device, get_namespace, xpx
 from sklearn.utils._missing import is_scalar_nan
 
 
-def _unique(values, *, return_inverse=False, return_counts=False):
+def _unique(
+    values, *, return_inverse=False, return_counts=False, allow_mixed_types=None
+):
     """Helper function to find unique values with support for python objects.
 
     Uses pure python method for object dtype, and numpy method for
@@ -30,6 +33,14 @@ def _unique(values, *, return_inverse=False, return_counts=False):
         If True, also return the number of times each unique item appears in
         values.
 
+    allow_mixed_types : bool, default=None
+        If True, allow ``values`` to contain a mix of types (e.g. strings and
+        numbers) by grouping the unique values by type instead of raising a
+        ``TypeError``. Only affects the object-dtype path. ``False`` behaves
+        like ``None`` but additionally advertises the parameter in the error
+        message; pass ``None`` (the default) for callers that do not expose the
+        parameter.
+
     Returns
     -------
     unique : ndarray
@@ -45,7 +56,10 @@ def _unique(values, *, return_inverse=False, return_counts=False):
     """
     if values.dtype == object:
         return _unique_python(
-            values, return_inverse=return_inverse, return_counts=return_counts
+            values,
+            return_inverse=return_inverse,
+            return_counts=return_counts,
+            allow_mixed_types=allow_mixed_types,
         )
     # numerical
     return _unique_np(
@@ -177,21 +191,41 @@ def _map_to_integer(values, uniques):
     return xp.asarray([table[v] for v in values], device=array_device(values))
 
 
-def _unique_python(values, *, return_inverse, return_counts):
+def _sort_uniques(uniques_set, *, allow_mixed_types):
+    """Sort unique values, grouping by type for mixed types if allowed."""
+
+    # Group real numbers (int/float/bool, numpy scalars) into one bucket and
+    # other types by type name, so incomparable types are never compared.
+    def key(value):
+        if isinstance(value, numbers.Real):
+            return (0, "", value)
+        return (1, type(value).__qualname__, value)
+
+    try:
+        return sorted(uniques_set)
+    except TypeError:
+        if not allow_mixed_types:
+            raise
+        return sorted(uniques_set, key=key)
+
+
+def _unique_python(values, *, return_inverse, return_counts, allow_mixed_types=None):
     # Only used in `_uniques`, see docstring there for details
     try:
         uniques_set = set(values)
         uniques_set, missing_values = _extract_missing(uniques_set)
-
-        uniques = sorted(uniques_set)
+        uniques = _sort_uniques(uniques_set, allow_mixed_types=allow_mixed_types)
         uniques.extend(missing_values.to_list())
         uniques = np.array(uniques, dtype=values.dtype)
     except TypeError:
         types = sorted(t.__qualname__ for t in set(type(v) for v in values))
-        raise TypeError(
+        msg = (
             "Encoders require their input argument must be uniformly "
             f"strings or numbers. Got {types}"
         )
+        if allow_mixed_types is False:
+            msg += ". If you meant to encode mixed types, set allow_mixed_types=True"
+        raise TypeError(msg)
     ret = (uniques,)
 
     if return_inverse:
