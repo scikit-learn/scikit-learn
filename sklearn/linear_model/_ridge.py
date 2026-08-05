@@ -1502,7 +1502,7 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
     ----------
     coef_ : ndarray of shape (n_features,) or (n_classes, n_features)
         Coefficient of the features in the decision function.
-    
+
         ``coef_`` is of shape ``(n_features,)`` when the given problem is binary.
 
     intercept_ : float or ndarray of shape (n_targets,)
@@ -2948,7 +2948,7 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
 
     coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
         Coefficient of the features in the decision function.
-    
+
         ``coef_`` is of shape ``(n_features,)`` when the given problem is binary.
 
     intercept_ : float or ndarray of shape (n_targets,)
