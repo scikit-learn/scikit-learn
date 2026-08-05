@@ -13,6 +13,7 @@ from sklearn.datasets import make_blobs
 from sklearn.exceptions import DataConversionWarning, EfficiencyWarning
 from sklearn.metrics.cluster import contingency_matrix
 from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.neighbors import kneighbors_graph
 from sklearn.utils import shuffle
 from sklearn.utils._testing import assert_allclose, assert_array_equal
 from sklearn.utils.fixes import CSR_CONTAINERS
@@ -851,6 +852,27 @@ def test_optics_input_not_modified_precomputed_sparse_nodiag(
     # explicit 0s values.
     assert X.nnz == X_copy.nnz
     assert_array_equal(X.toarray(), X_copy.toarray())
+
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+@pytest.mark.parametrize("presorted", [True, False])
+def test_optics_precomputed_sparse_no_efficiency_warning(csr_container, presorted):
+    """Check that no `EfficiencyWarning` is raised on precomputed sparse input.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/34647
+    """
+    X = np.random.RandomState(0).randn(50, 5)
+    graph = csr_container(kneighbors_graph(X, n_neighbors=10, mode="distance"))
+    if not presorted:
+        # Reverse each row so that the graph is not sorted by row values.
+        for start, end in zip(graph.indptr, graph.indptr[1:]):
+            graph.data[start:end] = graph.data[start:end][::-1]
+            graph.indices[start:end] = graph.indices[start:end][::-1]
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", EfficiencyWarning)
+        OPTICS(metric="precomputed", min_samples=5).fit(graph)
 
 
 def test_optics_predecessor_correction_ordering():
