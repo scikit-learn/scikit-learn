@@ -1779,29 +1779,28 @@ class _MetadataRequester:
 def process_routing(_obj, _method, /, **kwargs):
     """Validate and route metadata.
 
-    This function is used inside a :term:`router`'s method, e.g. :term:`fit`,
-    to validate the metadata and handle the routing.
+    This function is used inside a :term:`router`'s method, e.g. :term:`fit`, to
+    validate the metadata and handle the routing.
 
-    Assuming this signature of a router's fit method:
-    ``fit(self, X, y, sample_weight=None, **fit_params)``,
-    a call to this function would be:
+    Assuming this signature of a router's fit method: ``fit(self, X, y,
+    sample_weight=None, **fit_params)``, a call to this function would be:
     ``process_routing(self, "fit", sample_weight=sample_weight, **fit_params)``.
 
-    Internally, the function uses the router's `MetadataRouter` object (as
-    returned by a call to its `get_metadata_routing` method) to validate
-    per method that the routed metadata had been requested by the underlying
-    estimator, and extracts a mapping of the given metadata to the requested
-    metadata based on the routing information defined by the `MetadataRouter`.
+    Internally, the function uses the router's `MetadataRouter` object (as returned by a
+    call to its `get_metadata_routing` method) to validate per method that the routed
+    metadata had been requested by the underlying estimator, and extracts a mapping of
+    the given metadata to the requested metadata based on the routing information
+    defined by the `MetadataRouter`.
 
-    Note that if routing is not enabled and ``kwargs`` is empty, then it
-    returns an empty routing where ``process_routing(...).ANYTHING.ANY_METHOD``
-    is always an empty dictionary.
+    Note that if routing is not enabled and ``kwargs`` is empty, then it returns an
+    empty routing where ``process_routing(...).ANYTHING.ANY_METHOD`` is always an empty
+    dictionary.
 
     The output of this function is a :class:`~sklearn.utils.Bunch` that has a key for
     each consuming object and those hold keys for their consuming methods, which then
-    contain keys for the metadata which should be routed to them. Consumers should
-    use item access (``routed_params[child][method]``) rather than attribute access,
-    so that the structure remains usable after crossing process boundaries (e.g.
+    contain keys for the metadata which should be routed to them. Consumers should use
+    item access (``routed_params[child][method]``) rather than attribute access, so that
+    the structure remains usable after crossing process boundaries (e.g.
     :class:`joblib.Parallel` with the dask backend), where serializers may downgrade
     :class:`~sklearn.utils.Bunch` to plain :class:`dict`.
 
@@ -1826,10 +1825,10 @@ def process_routing(_obj, _method, /, **kwargs):
     Returns
     -------
     routed_params : Bunch
-        A :class:`~sklearn.utils.Bunch` of the form ``{"object_name":
-        {"method_name": {metadata: value}}}`` which can be used to pass the
-        required metadata to corresponding methods or corresponding child objects.
-        The object names are those defined in `obj.get_metadata_routing()`.
+        A :class:`~sklearn.utils.Bunch` of the form ``{"object_name": {"method_name":
+        {metadata: value}}}`` which can be used to pass the required metadata to
+        corresponding methods or corresponding child objects. The object names are those
+        defined in `obj.get_metadata_routing()`, and 'callbacks'.
 
     Examples
     --------
@@ -1844,7 +1843,8 @@ def process_routing(_obj, _method, /, **kwargs):
     ...     "fit",
     ...     sample_weight=np.array([1, 1, 2]),
     ... )
-    {'estimator': {'fit': {'sample_weight': array([1, 1, 2])}}}
+    {'callbacks': {'on_fit_task_begin': {}, 'on_fit_task_end': {}}, 'estimator':
+     {'fit': {'sample_weight': array([1, 1, 2])}}}
     >>> set_config(enable_metadata_routing=False)
     """
     if not kwargs:
