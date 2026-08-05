@@ -659,10 +659,10 @@ def test_cross_val_and_permutation_test_on_dataframe(input_type, target_type):
     target_type = type(y_ser)
 
     def check_df(x):
-        return isinstance(x, input_type) or isinstance(x.to_native(), input_type)
+        return isinstance(x, input_type)
 
     def check_series(x):
-        return isinstance(x, target_type) or isinstance(x.to_native(), target_type)
+        return isinstance(x, target_type)
 
     clf = CheckingClassifier(check_X=check_df, check_y=check_series)
     cross_val_predict(clf, X_df, y_ser, cv=3)

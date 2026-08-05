@@ -118,15 +118,13 @@ class ScoringMonitor(_MetadataRequester):
 
     Parameters
     ----------
-    scoring_train : str, callable, list, tuple, dict or None, default="no_train_score"
+    scoring_train : str, callable, list, tuple or dict, default="no_train_score"
         The scoring method to use to monitor the model on the training data.
 
         If `scoring` represents a single score, one can use:
 
         - a single string (see :ref:`scoring_string_names`);
         - a callable (see :ref:`scoring_callable`) that returns a single value;
-        - `None`, the `estimator`'s
-          :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
         If `scoring` represents multiple scores, one can use:
 
@@ -137,15 +135,13 @@ class ScoringMonitor(_MetadataRequester):
 
         If `scoring = 'no_train_score'`, scores are not computed on the train set.
 
-    scoring_val : str, callable, list, tuple, dict or None, default="no_val_score"
+    scoring_val : str, callable, list, tuple, or dict, default="no_val_score"
         The scoring method to use to monitor the model on the validation data.
 
         If `scoring` represents a single score, one can use:
 
         - a single string (see :ref:`scoring_string_names`);
         - a callable (see :ref:`scoring_callable`) that returns a single value;
-        - `None`, the `estimator`'s
-          :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
         If `scoring` represents multiple scores, one can use:
 
@@ -159,8 +155,8 @@ class ScoringMonitor(_MetadataRequester):
 
     @validate_params(
         {
-            "scoring_train": [str, callable, list, tuple, dict, None],
-            "scoring_val": [str, callable, list, tuple, dict, None],
+            "scoring_train": [str, callable, list, tuple, dict],
+            "scoring_val": [str, callable, list, tuple, dict],
         },
         prefer_skip_nested_validation=True,
     )
@@ -182,7 +178,6 @@ class ScoringMonitor(_MetadataRequester):
             self.set_on_fit_task_end_request(X_val=True, y_val=True)
 
         self._log = []
-        self._estimator_scorers = {}
 
         # Handle to the main-process listener, opened eagerly so that any worker that
         # receives a pickled copy of this callback can send data to the main process.
@@ -223,19 +218,10 @@ class ScoringMonitor(_MetadataRequester):
         return self._scorers["train"]._accept_sample_weight()
 
     def setup(self, estimator, context):
-        self._validate_validation_scorer()
-
-        # A scorer per estimator is needed to avoid race conditions when the callback is
-        # set on different estimators and the scorer is the estimator's default scorer.
-        if estimator not in self._estimator_scorers and (
-            self._scorers["train"] is None or self._scorers["val"] is None
-        ):
-            from sklearn.metrics import check_scoring
-
-            self._estimator_scorers[estimator] = check_scoring(estimator)
+        pass
 
     def teardown(self, estimator, context):
-        self._estimator_scorers.pop(estimator, None)
+        pass
 
     def on_fit_task_begin(self, estimator, context):
         pass
@@ -284,16 +270,8 @@ class ScoringMonitor(_MetadataRequester):
             ):
                 continue
 
-            if self._scorers[dataset] is None:
-                scorer = self._estimator_scorers[estimator]
-                scorer_routed_params = {}
-            else:
-                scorer = self._scorers[dataset]
-                scorer_routed_params = (
-                    getattr(routed_params, f"scorer_{dataset}").score
-                    if routed_params is not None
-                    else {}
-                )
+            scorer = self._scorers[dataset]
+            scorer_routed_params = getattr(routed_params, f"scorer_{dataset}").score
             scores = scorer(
                 fitted_estimator,
                 data_X,
