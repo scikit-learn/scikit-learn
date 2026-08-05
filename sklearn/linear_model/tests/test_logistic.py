@@ -517,7 +517,8 @@ def test_liblinear_dual_random_state(global_random_seed):
 
 # TODO(1.12): remove deprecated use_legacy_attributes
 @pytest.mark.parametrize("use_legacy_attributes", [True, False])
-def test_logistic_cv(global_random_seed, use_legacy_attributes):
+@pytest.mark.parametrize("n_jobs", [1, 2])
+def test_logistic_cv(global_random_seed, use_legacy_attributes, n_jobs):
     # test for LogisticRegressionCV object
     n_samples, n_features, n_cv = 50, 5, 3
     rng = np.random.RandomState(global_random_seed)
@@ -534,6 +535,7 @@ def test_logistic_cv(global_random_seed, use_legacy_attributes):
         cv=n_cv,
         scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
         use_legacy_attributes=use_legacy_attributes,
+        n_jobs=n_jobs,
     )
     lr_cv.fit(X_ref, y)
     lr = LogisticRegression(
@@ -563,7 +565,8 @@ def test_logistic_cv(global_random_seed, use_legacy_attributes):
 
 # TODO(1.11): remove filterwarnings with change of default scoring
 @pytest.mark.filterwarnings("ignore:The default value.*scoring.*:FutureWarning")
-def test_logistic_cv_refit_false_non_elasticnet(global_random_seed):
+@pytest.mark.parametrize("n_jobs", [1, 2])
+def test_logistic_cv_refit_false_non_elasticnet(global_random_seed, n_jobs):
     """Test that non-elasticnet penalty with refit=False and
     use_legacy_attributes=False works without error.
 
@@ -577,6 +580,7 @@ def test_logistic_cv_refit_false_non_elasticnet(global_random_seed):
         refit=False,
         use_legacy_attributes=False,
         random_state=global_random_seed,
+        n_jobs=n_jobs,
     )
     lr_cv.fit(X, y)
     assert lr_cv.l1_ratio_ == 0.0
