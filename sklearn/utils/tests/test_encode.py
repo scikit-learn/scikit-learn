@@ -233,6 +233,20 @@ def test_check_unknown_with_both_missing_values():
     assert_array_equal(valid_mask, [False, True, True, True, False, False, False])
 
 
+def test_check_unknown_and_encode_object_uniques_numeric_values():
+    # numeric values against object dtype known values take the python path
+    # non-regression test for
+    # https://github.com/scikit-learn/scikit-learn/issues/34387
+    values = np.array([np.nan, 1.0])
+    known_values = np.array([0, 1, np.nan], dtype=object)
+
+    diff, valid_mask = _check_unknown(values, known_values, return_mask=True)
+    assert diff == []
+    assert_array_equal(valid_mask, [True, True])
+
+    assert_array_equal(_encode(values, uniques=known_values), [2, 1])
+
+
 NAN1 = float("nan")
 NAN2 = float("nan")
 

@@ -206,8 +206,8 @@ def _unique_python(values, *, return_inverse, return_counts):
 def _encode(values, *, uniques, check_unknown=True):
     """Helper function to encode values into [0, n_uniques - 1].
 
-    Uses pure python method for object dtype, and numpy method for
-    all other dtypes.
+    Uses pure python method when `values` or `uniques` has a non-numeric
+    dtype, and numpy method when both have a numeric dtype.
     The numpy method has the limitation that the `uniques` need to
     be sorted. Importantly, this is not checked but assumed to already be
     the case. The calling method needs to ensure this for all non-object
@@ -233,7 +233,9 @@ def _encode(values, *, uniques, check_unknown=True):
         Encoded values
     """
     xp, _ = get_namespace(values, uniques)
-    if not xp.isdtype(values.dtype, "numeric"):
+    if not xp.isdtype(values.dtype, "numeric") or not xp.isdtype(
+        uniques.dtype, "numeric"
+    ):
         try:
             return _map_to_integer(values, uniques)
         except KeyError as e:
@@ -250,8 +252,8 @@ def _check_unknown(values, known_values, return_mask=False):
     """
     Helper function to check for unknowns in values to be encoded.
 
-    Uses pure python method for object dtype, and numpy method for
-    all other dtypes.
+    Uses pure python method when `values` or `known_values` has an object
+    dtype, and numpy method for all other dtypes.
 
     Parameters
     ----------
@@ -274,7 +276,9 @@ def _check_unknown(values, known_values, return_mask=False):
     xp, _ = get_namespace(values, known_values)
     valid_mask = None
 
-    if not xp.isdtype(values.dtype, "numeric"):
+    if not xp.isdtype(values.dtype, "numeric") or not xp.isdtype(
+        known_values.dtype, "numeric"
+    ):
         values_set = set(values)
         values_set, missing_in_values = _extract_missing(values_set)
 
