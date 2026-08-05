@@ -1,0 +1,5 @@
+- :func:`utils.check_array` and :func:`utils.check_X_y` no longer convert
+  polars and pyarrow dataframes and series to the first accepted dtype when
+  `dtype` is a list of accepted dtypes that contains the combined dtype of the
+  input columns, consistently with the behavior for pandas dataframes.
+  By :user:`Eden Rochman <EdenRochmanSharabi>`.
