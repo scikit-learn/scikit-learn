@@ -9,6 +9,7 @@ from typing import NamedTuple
 import numpy as np
 
 from sklearn.utils._array_api import array_device, get_namespace, size
+from sklearn.utils._dataframe import is_pandas_df_or_series
 from sklearn.utils._missing import is_scalar_nan
 
 
@@ -43,6 +44,10 @@ def _unique(values, *, return_inverse=False, return_counts=False):
         The number of times each of the unique values comes up in the original
         array. Only provided if `return_counts` is True.
     """
+    if is_pandas_df_or_series(values):
+        return _unique_pandas(
+            values, return_inverse=return_inverse, return_counts=return_counts
+        )
     if values.dtype == object:
         return _unique_python(
             values, return_inverse=return_inverse, return_counts=return_counts
@@ -183,6 +188,96 @@ def _map_to_integer(values, uniques):
     return xp.asarray([table[v] for v in values], device=array_device(values))
 
 
+def _unique_pandas(values, *, return_inverse, return_counts):
+    """Fast path for pandas Series, see `_unique` docstring for details.
+
+    Relies on `pandas.factorize`/`Series.unique`, which handle
+    Categorical/Arrow-backed columns without materializing them into a full
+    per-row numpy object array first, and delegate uniquing/sorting/counting
+    to pandas' own (often vectorized/native) implementation rather than a
+    pure Python `set()`/`sorted()` loop.
+
+    For plain `object` dtype, there is no compact representation to avoid
+    materializing in the first place (`to_numpy()` is a no-op view), and
+    pandas' own per-call overhead (building an `Index`, dispatching through
+    its internal layers) is not worth paying versus the pure Python
+    `set()`/`sorted()` route, especially for small/medium data. So this
+    only actually delegates to pandas for non-`object` dtypes (Categorical,
+    Arrow-backed, etc.), and otherwise falls back to `_unique_python`.
+    """
+    import pandas as pd
+
+    if values.dtype == object:
+        return _unique_python(
+            values.to_numpy(),
+            return_inverse=return_inverse,
+            return_counts=return_counts,
+        )
+
+    if not return_inverse and not return_counts:
+        # `factorize` always computes a full per-row `codes` array as a
+        # byproduct, which is wasted work when only the unique values are
+        # needed (e.g. `OrdinalEncoder`/`OneHotEncoder` with
+        # `categories="auto"` and no infrequent-category handling).
+        # `Series.unique()` skips that, but unlike `factorize` with
+        # `use_na_sentinel=False`, it does not unify every missing-value
+        # representation (e.g. `None` and `np.nan` both present) into a
+        # single entry, so that is handled explicitly below.
+        uniques = np.asarray(values.unique(), dtype=object)
+        na_mask = pd.isna(uniques)
+        if na_mask.sum() > 1:
+            uniques = np.concatenate(
+                [uniques[~na_mask], np.array([np.nan], dtype=object)]
+            )
+        return pd.Index(uniques).sort_values(na_position="last").to_numpy()
+
+    codes, index = pd.factorize(values, sort=True, use_na_sentinel=False)
+    uniques = index.to_numpy()
+
+    ret = (uniques,)
+    if return_inverse:
+        ret += (codes,)
+    if return_counts:
+        ret += (np.bincount(codes, minlength=len(uniques)),)
+
+    return ret[0] if len(ret) == 1 else ret
+
+
+def _encode_pandas(values, uniques):
+    """Fast pandas equivalent of `_map_to_integer`.
+
+    Uses `pandas.Index.get_indexer` for a vectorized lookup instead of a
+    per-value Python dict lookup. `get_indexer`'s own nan-matching is not
+    reliable across all the ways a missing value can show up in an object
+    dtype Series (e.g. `None` is not always matched to a `nan` entry in the
+    index), so missing values are instead located with `pandas.isna`, which
+    handles every representation (`None`, `np.nan`, `pandas.NA`) uniformly.
+
+    Values not present in `uniques` are encoded as -1.
+
+    As in `_unique_pandas`, plain `object` dtype has no compact
+    representation worth preserving, so it's cheaper to materialize (a
+    no-op for `object` dtype) and reuse `_map_to_integer` than to pay
+    pandas' `Index`/`get_indexer` overhead.
+    """
+    import pandas as pd
+
+    if values.dtype == object:
+        return _map_to_integer(values.to_numpy(), uniques)
+
+    index = pd.Index(uniques)
+    codes = np.asarray(index.get_indexer(values))
+
+    na_mask = np.asarray(pd.isna(values))
+    if na_mask.any():
+        # By construction (see `_unique_pandas`/`_unique_python`), `nan` is
+        # always the last entry of `uniques` when present.
+        nan_code = index.size - 1 if index.hasnans else -1
+        codes = np.where(na_mask, nan_code, codes)
+
+    return codes
+
+
 def _unique_python(values, *, return_inverse, return_counts):
     # Only used in `_unique`, see docstring there for details
     try:
@@ -272,6 +367,13 @@ def _encode(values, *, uniques, return_diff=False):
         The unique values present in `values` and not in `uniques`. Only
         returned if ``return_diff=True``.
     """
+    if is_pandas_df_or_series(values):
+        encoded = _encode_pandas(values, uniques)
+        if return_diff:
+            diff = _unique(values[encoded == -1])
+            return encoded, diff
+        return encoded
+
     xp, _ = get_namespace(values, uniques)
     if not xp.isdtype(values.dtype, "numeric"):
         encoded = _map_to_integer(values, uniques)

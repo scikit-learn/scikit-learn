@@ -15,6 +15,7 @@ from sklearn.base import (
     _fit_context,
 )
 from sklearn.utils import _align_api_if_sparse, _safe_indexing, check_array
+from sklearn.utils._dataframe import is_pandas_df_or_series
 from sklearn.utils._encode import _encode, _get_counts, _unique
 from sklearn.utils._mask import _get_mask
 from sklearn.utils._missing import is_scalar_nan
@@ -48,7 +49,26 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
           of pandas DataFrame columns, as otherwise information is lost
           and cannot be used, e.g. for the `categories_` attribute.
 
+        For pandas dataframes, non-numeric columns are kept as pandas Series
+        (not materialized into a numpy array) so that `_unique`/`_encode` can
+        use a fast `pandas.factorize`/`Index.get_indexer`-based path on them,
+        instead of eagerly decoding e.g. Categorical or Arrow-backed columns
+        into a full array of individual Python objects.
         """
+        if is_pandas_df_or_series(X) and getattr(X, "ndim", 0) == 2:
+            import pandas as pd
+
+            n_samples, n_features = X.shape
+            X_columns = []
+            for i in range(n_features):
+                Xi = X.iloc[:, i]
+                if pd.api.types.is_numeric_dtype(Xi):
+                    Xi = check_array(
+                        Xi, ensure_2d=False, ensure_all_finite=ensure_all_finite
+                    )
+                X_columns.append(Xi)
+            return X_columns, n_samples, n_features
+
         if not (hasattr(X, "iloc") and getattr(X, "ndim", 0) == 2):
             # if not a dataframe, do normal check_array validation
             X_temp = check_array(X, dtype=None, ensure_all_finite=ensure_all_finite)
@@ -111,6 +131,13 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 else:
                     cats = result
             else:
+                if is_pandas_df_or_series(Xi):
+                    # User-provided `categories` is a comparatively rare and
+                    # already more expensive path (see checks below); fall
+                    # back to materializing the column rather than adapting
+                    # every numpy-dtype-based check below to pandas Series.
+                    Xi = Xi.to_numpy()
+
                 if np.issubdtype(Xi.dtype, np.str_):
                     # Always convert string categories to objects to avoid
                     # unexpected string truncation for longer category labels
