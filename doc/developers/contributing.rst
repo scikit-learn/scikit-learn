@@ -572,6 +572,12 @@ Commit Message Marker  Action Taken by CI
 [doc build]            Docs built including example gallery plots (very long)
 ====================== ===================
 
+Free-threaded builds are supported, but a single estimator instance is not
+guaranteed to be safe for concurrent use from multiple threads. In
+particular, methods that mutate the estimator, such as :meth:`fit`, should
+not be called concurrently on the same object. Other methods should only be
+assumed thread-safe when the estimator documentation states so explicitly.
+
 Note that, by default, the documentation is built but only the examples
 that are directly modified by the pull request are executed.
 
