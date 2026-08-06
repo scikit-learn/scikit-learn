@@ -25,7 +25,7 @@ from sklearn.metrics import check_scoring, get_scorer_names
 from sklearn.metrics._scorer import _MultimetricScorer
 from sklearn.model_selection._split import check_cv
 from sklearn.preprocessing import LabelEncoder
-from sklearn.utils import _safe_indexing, check_random_state, indexable
+from sklearn.utils import Bunch, _safe_indexing, check_random_state, indexable
 from sklearn.utils._array_api import (
     array_device,
     get_namespace,
@@ -823,23 +823,27 @@ def _fit_and_score(
     score_params_test = _check_method_params(X, params=score_params, indices=test)
     # Adjust length of callbacks metadata
     if callbacks_params is not None:
+        callbacks_params_checked = {}
         for hook_name in callbacks_params:
+            callbacks_params_checked[hook_name] = {}
             # `_check_method_params` considers that all params that are arrays of same
             # length as X should be resampled with the provided `indices`. But it is not
             # always the case, e.g. X_val and y_val which are thus explicitly excluded.
             # TODO: a more general solution for this problem is still needed.
-            params_to_check = {
-                k: v
-                for k, v in callbacks_params[hook_name].items()
-                if k not in ("X_val", "y_val")
-            }
-            callbacks_params[hook_name].update(
+            params_to_check = {}
+            for param_name, param_value in callbacks_params[hook_name].items():
+                if param_name in ("X_val", "y_val"):
+                    callbacks_params_checked[hook_name][param_name] = param_value
+                else:
+                    params_to_check[param_name] = param_value
+            callbacks_params_checked[hook_name].update(
                 _check_method_params(
                     X,
                     params=params_to_check,
                     indices=train,
                 )
             )
+        callbacks_params = Bunch(**callbacks_params_checked)
 
     if parameters is not None:
         # here we clone the parameters, since sometimes the parameters

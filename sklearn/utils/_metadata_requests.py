@@ -1196,9 +1196,7 @@ class MetadataRouter:
         if self._self_request:
             self._self_request._check_warnings(params=params, method=caller)
 
-        res = Bunch(
-            callbacks=Bunch(**{hook_name: {} for hook_name in CALLBACK_METHODS})
-        )
+        res = Bunch()
         for name, route_mapping in self._route_mappings.items():
             router, mapping = route_mapping.router, route_mapping.mapping
 
@@ -1829,8 +1827,7 @@ def process_routing(_obj, _method, /, **kwargs):
         A :class:`~sklearn.utils.Bunch` of the form ``{"object_name":
         {"method_name": {metadata: value}}}`` which can be used to pass the
         required metadata to corresponding methods or corresponding child objects.
-        The object names are those defined in `obj.get_metadata_routing()`, and
-        'callbacks'.
+        The object names are those defined in `obj.get_metadata_routing()`.
 
     Examples
     --------
@@ -1845,8 +1842,7 @@ def process_routing(_obj, _method, /, **kwargs):
     ...     "fit",
     ...     sample_weight=np.array([1, 1, 2]),
     ... )
-    {'callbacks': {'on_fit_task_begin': {}, 'on_fit_task_end': {}}, 'estimator':
-     {'fit': {'sample_weight': array([1, 1, 2])}}}
+    {'estimator': {'fit': {'sample_weight': array([1, 1, 2])}}}
     >>> set_config(enable_metadata_routing=False)
     """
     if not kwargs:

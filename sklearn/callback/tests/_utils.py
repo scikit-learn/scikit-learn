@@ -1,6 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import copy
 import time
 
 import numpy as np
@@ -12,7 +13,6 @@ from sklearn.callback._transport import open_listener, send
 from sklearn.utils._metadata_requests import _MetadataRequester
 from sklearn.utils.fixes import _IS_WASM
 from sklearn.utils.metadata_routing import (
-    MetadataRequest,
     MetadataRouter,
     MethodMapping,
     _manual_routing,
@@ -69,7 +69,7 @@ class RecordingCallback(_MetadataRequester):
                 "kwargs": {
                     "X": X,
                     "y": y,
-                    "requested_arg_begin": requested_arg_begin,
+                    "requested_arg_begin": copy.copy(requested_arg_begin),
                     "fitted_estimator": fitted_estimator,
                 },
             },
@@ -94,7 +94,7 @@ class RecordingCallback(_MetadataRequester):
                 "kwargs": {
                     "X": X,
                     "y": y,
-                    "requested_arg_end": requested_arg_end,
+                    "requested_arg_end": copy.copy(requested_arg_end),
                     "fitted_estimator": fitted_estimator,
                 },
             },
@@ -108,22 +108,6 @@ class RecordingCallback(_MetadataRequester):
 
     def count_hooks(self, hook_name):
         return len([rec for rec in self.record if rec["name"] == hook_name])
-
-    def set_on_fit_task_begin_request(self, requested_arg_begin):
-        if not hasattr(self, "_metadata_request"):
-            self._metadata_request = MetadataRequest(owner=self)
-        self._metadata_request.on_fit_task_begin.add_request(
-            param="requested_arg_begin", alias=requested_arg_begin
-        )
-        return self
-
-    def set_on_fit_task_end_request(self, requested_arg_end):
-        if not hasattr(self, "_metadata_request"):
-            self._metadata_request = MetadataRequest(owner=self)
-        self._metadata_request.on_fit_task_end.add_request(
-            param="requested_arg_end", alias=requested_arg_end
-        )
-        return self
 
 
 class RecordingAutoPropagatedCallback(RecordingCallback):

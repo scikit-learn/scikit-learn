@@ -592,3 +592,33 @@ def test_sample_weight_without_routing():
             assert rec["kwargs"]["requested_arg_begin"] == "sample_weight"
         elif rec["name"] == "on_fit_task_end":
             assert rec["kwargs"]["requested_arg_end"] == "sample_weight"
+
+
+def test_get_manual_routing_params():
+    """Test the _get_manual_routing_params method."""
+
+    estimator = MaxIterEstimator()
+    context = _make_callback_ctx(estimator, task_name="mytask", task_id=42)
+
+    assert context._get_manual_routing_params({}, "on_fit_task_begin") == {}
+    assert (
+        context._get_manual_routing_params({"sample_weight": 12}, "on_fit_task_begin")
+        == {}
+    )
+
+    estimator.set_callbacks(RecordingCallback())
+    context = _make_callback_ctx(estimator, task_name="mytask", task_id=42)
+
+    assert context._get_manual_routing_params({}, "on_fit_task_begin") == {}
+    assert (
+        context._get_manual_routing_params({"sample_weight": 12}, "on_fit_task_begin")
+        == {}
+    )
+
+    estimator.set_callbacks(RecordingCallback(), SampleWeightCallback())
+    context = _make_callback_ctx(estimator, task_name="mytask", task_id=42)
+
+    assert context._get_manual_routing_params({}, "on_fit_task_begin") == {}
+    assert context._get_manual_routing_params(
+        {"sample_weight": 12}, "on_fit_task_begin"
+    ) == {"callback_1": {"on_fit_task_begin": {"sample_weight": 12}}}

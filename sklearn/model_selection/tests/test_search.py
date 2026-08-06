@@ -3219,12 +3219,16 @@ def test_search_callbacks_receive_sample_weight():
     ]
     assert refit_records
 
+    # In evaluation task, sample_weight must have been split
     for entry in evaluation_records:
         if entry["name"] == "on_fit_task_begin":
-            assert entry["kwargs"]["requested_arg_begin"] is not None
+            assert (
+                len(entry["kwargs"]["requested_arg_begin"]) == len(sample_weight) // 2
+            )
         elif entry["name"] == "on_fit_task_end":
-            assert entry["kwargs"]["requested_arg_end"] is not None
+            assert len(entry["kwargs"]["requested_arg_end"]) == len(sample_weight) // 2
 
+    # In refit tasks, sample_weight must be the whole array
     for entry in refit_records:
         if entry["name"] == "on_fit_task_begin":
             assert_array_equal(entry["kwargs"]["requested_arg_begin"], sample_weight)

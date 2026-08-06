@@ -152,13 +152,12 @@ class CallbackSupportMixin:
 
     def _add_callback_routing(self, router):
         """Utility method to add the routing to callbacks to the estimator's router."""
-        if hasattr(self, "_skl_callbacks"):
-            router.add(
-                callbacks=self._skl_callbacks,
-                method_mapping=MethodMapping()
-                .add(caller="fit", callee="on_fit_task_begin")
-                .add(caller="fit", callee="on_fit_task_end"),
-            )
+        router.add(
+            callbacks=getattr(self, "_skl_callbacks", None),
+            method_mapping=MethodMapping()
+            .add(caller="fit", callee="on_fit_task_begin")
+            .add(caller="fit", callee="on_fit_task_end"),
+        )
         return router
 
     def get_metadata_routing(self):
@@ -191,9 +190,8 @@ class CallbackSupportMixin:
                 if hasattr(cb, "_accept_sample_weight") and cb._accept_sample_weight(
                     hook_name
                 ):
-                    callbacks_params[hook_name][f"callback_{i}"] = {
-                        hook_name: {"sample_weight": sample_weight}
-                    }
+                    callbacks_params[hook_name] = {"sample_weight": sample_weight}
+                    break
         return callbacks_params
 
 

@@ -400,6 +400,8 @@ class CallbackContext:
             metadata = {}
         elif _routing_enabled():
             metadata = process_routing(self._callbacks, "on_fit_task_begin", **metadata)
+        else:
+            metadata = self._get_manual_routing_params(metadata, "on_fit_task_begin")
         self._call_hooks(
             estimator,
             hook_name="on_fit_task_begin",
@@ -455,6 +457,8 @@ class CallbackContext:
             metadata = {}
         elif _routing_enabled():
             metadata = process_routing(self._callbacks, "on_fit_task_end", **metadata)
+        else:
+            metadata = self._get_manual_routing_params(metadata, "on_fit_task_end")
         return self._call_hooks(
             estimator,
             hook_name="on_fit_task_end",
@@ -463,6 +467,24 @@ class CallbackContext:
             metadata=metadata,
             reconstruction_attributes=reconstruction_attributes,
         )
+
+    def _get_manual_routing_params(self, metadata, hook_name):
+        """Generate manually routed params for callbacks when routing is disabled.
+
+        This is used to forward sample_weight to callback hooks that accept them even
+        if metadata routing is disabled.
+        """
+        params = {}
+        if "sample_weight" not in metadata:
+            return params
+        for i, cb in enumerate(self._callbacks):
+            if hasattr(cb, "_accept_sample_weight") and cb._accept_sample_weight(
+                hook_name
+            ):
+                params[f"callback_{i}"] = {
+                    hook_name: {"sample_weight": metadata["sample_weight"]}
+                }
+        return params
 
     @contextmanager
     def propagate_callback_context(self, sub_estimator):

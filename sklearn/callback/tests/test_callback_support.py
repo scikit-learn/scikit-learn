@@ -180,12 +180,8 @@ def test_get_manual_callbacks_params():
     output_no_forward = {"on_fit_task_begin": {}, "on_fit_task_end": {}}
 
     output_forward = {
-        "on_fit_task_begin": {
-            "callback_1": {"on_fit_task_begin": {"sample_weight": sample_weight}}
-        },
-        "on_fit_task_end": {
-            "callback_1": {"on_fit_task_end": {"sample_weight": sample_weight}}
-        },
+        "on_fit_task_begin": {"sample_weight": sample_weight},
+        "on_fit_task_end": {"sample_weight": sample_weight},
     }
 
     est = MaxIterEstimator()
