@@ -98,9 +98,8 @@ def test_map_to_bins(max_bins):
         _find_binning_thresholds(DATA[:, i], max_bins=max_bins) for i in range(2)
     ]
     binned = np.zeros_like(DATA, dtype=X_BINNED_DTYPE, order="F")
-    is_categorical = np.zeros(2, dtype=np.uint8)
     last_bin_idx = max_bins
-    _map_to_bins(DATA, bin_thresholds, is_categorical, last_bin_idx, n_threads, binned)
+    _map_to_bins(DATA, bin_thresholds, last_bin_idx, n_threads, binned)
     assert binned.shape == DATA.shape
     assert binned.dtype == np.uint8
     assert binned.flags.f_contiguous
@@ -454,17 +453,29 @@ def test_categorical_feature(n_bins):
     expected_trans = np.array([[0, 1, 2, n_bins - 1, 3, 4, 5]]).T
     assert_array_equal(bin_mapper.transform(X), expected_trans)
 
-    # Negative categories are mapped to the missing values' bin
-    # (i.e. the bin of index `missing_values_bin_idx_ == n_bins - 1).
-    # Unknown positive categories does not happen in practice and tested
-    # for illustration purpose.
+    # Categories outside of the known range are binned like any other
+    # value, using a binary search against the known thresholds: below the
+    # smallest known category they land in the first bin, above the
+    # largest known category they land in the last non-missing bin. This
+    # does not happen in practice (unknown categories are converted to NaN
+    # upstream by the estimator's OrdinalEncoder) and is tested here for
+    # illustration purpose only.
     X = np.array([[-4, -1, 100]], dtype=X_DTYPE).T
-    expected_trans = np.array([[n_bins - 1, n_bins - 1, 6]]).T
+    expected_trans = np.array([[0, 0, 6]]).T
     assert_array_equal(bin_mapper.transform(X), expected_trans)
 
 
-def test_categorical_feature_negative_missing():
-    """Make sure bin mapper treats negative categories as missing values."""
+def test_categorical_feature_negative_not_missing():
+    """Make sure bin mapper does NOT treat negative categories as missing values.
+
+    Non-regression test: negative categorical values used to be silently
+    mapped to the missing-values bin (a convention borrowed from LightGBM),
+    but this only ever applied to raw values fed directly to `_BinMapper`.
+    In practice, this internal class is fed pre-encoded data where
+    categories -- known or unknown -- are always non-negative or NaN (see
+    `BaseHistGradientBoosting._preprocess_X`), so the convention was dead
+    code from the public estimators' point of view and has been removed.
+    """
     X = np.array(
         [[4] * 500 + [1] * 3 + [5] * 10 + [-1] * 3 + [np.nan] * 4], dtype=X_DTYPE
     ).T
@@ -478,11 +489,13 @@ def test_categorical_feature_negative_missing():
 
     X = np.array([[-1, 1, 3, 5, np.nan]], dtype=X_DTYPE).T
 
-    # Negative values for categorical features are considered as missing values.
-    # They are mapped to the bin of index `bin_mapper.missing_values_bin_idx_`,
-    # which is 3 here.
+    # -1 is not a known category and is not NaN either: it is now handled
+    # like any other unknown value, via binary search against the known
+    # thresholds (here it lands in the first bin, same as the in-range
+    # value 3 which falls between categories 1 and 4). Only the true NaN
+    # is mapped to the missing-values bin (index 3 here).
     assert bin_mapper.missing_values_bin_idx_ == 3
-    expected_trans = np.array([[3, 0, 1, 2, 3]]).T
+    expected_trans = np.array([[0, 0, 1, 2, 3]]).T
     assert_array_equal(bin_mapper.transform(X), expected_trans)
 
 
