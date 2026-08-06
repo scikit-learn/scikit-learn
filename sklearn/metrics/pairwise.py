@@ -1997,15 +1997,28 @@ def _parallel_pairwise(X, Y, func, n_jobs, metric=None, **kwds):
     if effective_n_jobs(n_jobs) == 1:
         return func(X, Y, **kwds)
 
+    n_jobs_effective = effective_n_jobs(n_jobs)
+    slices = list(gen_even_slices(_num_samples(Y), n_jobs_effective))
+
+    if metric in _THREAD_UNSAFE_METRICS:
+        # loky: workers run in separate processes; in-place writes to a
+        # pickled array don't propagate back.  Each worker returns its chunk.
+        def _compute_chunk(s):
+            sliced_kwds = {
+                k: (v[s] if k == "Y_norm_squared" else v) for k, v in kwds.items()
+            }
+            return func(X, Y[s, ...], **sliced_kwds).T
+
+        chunks = Parallel(backend="loky", n_jobs=n_jobs)(
+            delayed(_compute_chunk)(s) for s in slices
+        )
+        ret = xp.concatenate(chunks, axis=0).T
+        return ret
+
+    # threading: in-place writes to transposed view are safe (shared memory)
     fd = delayed(_transposed_dist_wrapper)
-    # Transpose `ret` such that a given thread writes its output to a contiguous chunk.
-    # Note `order` (i.e. F/C-contiguous) is not included in array API standard, see
-    # https://github.com/data-apis/array-api/issues/571 for details.
-    # We assume that currently (April 2025) all array API compatible namespaces
-    # allocate 2D arrays using the C-contiguity convention by default.
     ret = xp.empty((X.shape[0], Y.shape[0]), device=device, dtype=dtype_float).T
-    backend = "loky" if metric in _THREAD_UNSAFE_METRICS else "threading"
-    Parallel(backend=backend, n_jobs=n_jobs)(
+    Parallel(backend="threading", n_jobs=n_jobs)(
         fd(
             func,
             ret,
@@ -2016,7 +2029,7 @@ def _parallel_pairwise(X, Y, func, n_jobs, metric=None, **kwds):
             # passed through kwds; slice it to match the current Y chunk.
             **{k: (v[s] if k == "Y_norm_squared" else v) for k, v in kwds.items()},
         )
-        for s in gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs))
+        for s in slices
     )
 
     if (X is Y or Y is None) and func is euclidean_distances:
@@ -2484,7 +2497,6 @@ def pairwise_distances(
             _pairwise_callable,
             metric=metric,
             ensure_all_finite=ensure_all_finite,
-            **kwds,
         )
     else:
         if issparse(X) or issparse(Y):
@@ -2506,7 +2518,7 @@ def pairwise_distances(
 
         if effective_n_jobs(n_jobs) == 1 and X is Y:
             return distance.squareform(distance.pdist(X, metric=metric, **kwds))
-        func = partial(distance.cdist, metric=metric, **kwds)
+        func = partial(distance.cdist, metric=metric)
 
     return _parallel_pairwise(X, Y, func, n_jobs, metric=metric, **kwds)
 
@@ -2705,6 +2717,6 @@ def pairwise_kernels(
             kwds = {k: kwds[k] for k in kwds if k in KERNEL_PARAMS[metric]}
         func = PAIRWISE_KERNEL_FUNCTIONS[metric]
     elif callable(metric):
-        func = partial(_pairwise_callable, metric=metric, **kwds)
+        func = partial(_pairwise_callable, metric=metric)
 
     return _parallel_pairwise(X, Y, func, n_jobs, **kwds)
