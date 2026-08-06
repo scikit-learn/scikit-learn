@@ -1,7 +1,11 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
 ============================================================
 Evaluating Model Performance on Highly Imbalanced Datasets
 ============================================================
+...
 
 In applications such as payment fraud detection or medical diagnosis, target
 classes are often severely imbalanced (e.g., 1-2% positive class). In these
