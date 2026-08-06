@@ -188,16 +188,14 @@ class ScoringMonitor(_MetadataRequester):
     def _validate_validation_scorer(self):
         """Raise an error if val scorer is set but metadata routing is disabled."""
         if self._scorers["val"] != "no_val_score" and not _routing_enabled():
-            raise (
-                ValueError(
-                    "Using a scorer on validation data in "
-                    f"{self.__class__.__name__} is only supported when metadata "
-                    "routing is enabled. You can enable it using "
-                    "`sklearn.set_config(enable_metadata_routing=True)`. See the "
-                    "User Guide "
-                    "<https://scikit-learn.org/stable/metadata_routing.html> for "
-                    "more details on metadata routing."
-                )
+            raise ValueError(
+                "Using a scorer on validation data in "
+                f"{self.__class__.__name__} is only supported when metadata "
+                "routing is enabled. You can enable it using "
+                "`sklearn.set_config(enable_metadata_routing=True)`. See the "
+                "User Guide "
+                "<https://scikit-learn.org/stable/metadata_routing.html> for "
+                "more details on metadata routing."
             )
 
     def _accept_sample_weight(self, hook_name):
