@@ -145,6 +145,8 @@ def test_unique_util_missing_values_objects(missing_value):
 
 
 def test_encode_uniques_survive_pickle():
+    # Ensure that encoding is unaffected by whether np.nan values in uniques
+    # have previously gone through a pickle round trip or not.
     values = np.array(["a", "c", np.nan, "b"], dtype=object)
     uniques = pickle.loads(pickle.dumps(_unique(values)))
     assert_array_equal(_encode(values, uniques=uniques), [0, 2, 3, 1])
