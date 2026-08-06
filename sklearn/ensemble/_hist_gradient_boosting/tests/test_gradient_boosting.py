@@ -1433,14 +1433,8 @@ def test_unknown_category_at_predict_time_is_treated_as_missing():
     """Check that categories unseen at fit time do not error, and are treated
     like a missing category regardless of their sign.
 
-    Categorical values are never treated specially based on their sign: only
-    whether they were seen during fit matters. This used to not be the case
-    for negative values, which were unconditionally mapped to the missing
-    bin (a convention borrowed from LightGBM), but this could only ever be
-    observed by feeding raw, pre-encoded arrays directly to the low-level
-    `_BinMapper`/`TreePredictor`, bypassing the estimator's own
-    `OrdinalEncoder`-based preprocessing which never lets negative values
-    reach that layer. Non-regression test for #24274.
+    We used to have a special treatment for negative value:
+    see https://github.com/scikit-learn/scikit-learn/pull/34663/
     """
     rng = np.random.RandomState(42)
     n_samples = 1000
