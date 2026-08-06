@@ -188,7 +188,7 @@ def _map_to_integer(values, uniques):
     return xp.asarray([table[v] for v in values], device=array_device(values))
 
 
-def _unique_pandas(values, *, return_inverse, return_counts):
+def _unique_pandas(values, *, return_inverse, return_counts, return_index=False):
     """Fast path for pandas Series, see `_unique` docstring for details.
 
     Relies on `pandas.factorize`/`Series.unique`, which handle
@@ -204,15 +204,26 @@ def _unique_pandas(values, *, return_inverse, return_counts):
     `set()`/`sorted()` route, especially for small/medium data. So this
     only actually delegates to pandas for non-`object` dtypes (Categorical,
     Arrow-backed, etc.), and otherwise falls back to `_unique_python`.
+
+    `return_index=True` (internal only, not exposed through `_unique`) also
+    returns the `pandas.Index` built along the way (or `None` for plain
+    `object` dtype, which doesn't build one) as the last element, so that
+    callers doing repeated `_encode_pandas` calls against the same `uniques`
+    (e.g. `_BaseEncoder.transform`) can cache and reuse it instead of making
+    `_encode_pandas` rebuild an equivalent one from scratch every time.
     """
     import pandas as pd
 
     if values.dtype == object:
-        return _unique_python(
+        result = _unique_python(
             values.to_numpy(),
             return_inverse=return_inverse,
             return_counts=return_counts,
         )
+        if not return_index:
+            return result
+        result = result if isinstance(result, tuple) else (result,)
+        return (*result, None)
 
     if not return_inverse and not return_counts:
         # `factorize` always computes a full per-row `codes` array as a
@@ -229,16 +240,20 @@ def _unique_pandas(values, *, return_inverse, return_counts):
             uniques = np.concatenate(
                 [uniques[~na_mask], np.array([np.nan], dtype=object)]
             )
-        return pd.Index(uniques).sort_values(na_position="last").to_numpy()
+        index = pd.Index(uniques).sort_values(na_position="last")
+        ret = (index.to_numpy(),)
+    else:
+        codes, index = pd.factorize(values, sort=True, use_na_sentinel=False)
+        uniques = index.to_numpy()
 
-    codes, index = pd.factorize(values, sort=True, use_na_sentinel=False)
-    uniques = index.to_numpy()
+        ret = (uniques,)
+        if return_inverse:
+            ret += (codes,)
+        if return_counts:
+            ret += (np.bincount(codes, minlength=len(uniques)),)
 
-    ret = (uniques,)
-    if return_inverse:
-        ret += (codes,)
-    if return_counts:
-        ret += (np.bincount(codes, minlength=len(uniques)),)
+    if return_index:
+        ret += (index,)
 
     return ret[0] if len(ret) == 1 else ret
 
@@ -259,13 +274,19 @@ def _encode_pandas(values, uniques):
     representation worth preserving, so it's cheaper to materialize (a
     no-op for `object` dtype) and reuse `_map_to_integer` than to pay
     pandas' `Index`/`get_indexer` overhead.
+
+    `uniques` may be a plain ndarray, or an already-built `pandas.Index`
+    (e.g. cached by the caller across repeated `transform` calls, since
+    building it is the same cost every time otherwise).
     """
     import pandas as pd
 
     if values.dtype == object:
+        if isinstance(uniques, pd.Index):
+            uniques = uniques.to_numpy()
         return _map_to_integer(values.to_numpy(), uniques)
 
-    index = pd.Index(uniques)
+    index = uniques if isinstance(uniques, pd.Index) else pd.Index(uniques)
     codes = np.asarray(index.get_indexer(values))
 
     na_mask = np.asarray(pd.isna(values))

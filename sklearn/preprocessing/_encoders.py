@@ -16,7 +16,7 @@ from sklearn.base import (
 )
 from sklearn.utils import _align_api_if_sparse, _safe_indexing, check_array
 from sklearn.utils._dataframe import is_pandas_df_or_series
-from sklearn.utils._encode import _encode, _get_counts, _unique
+from sklearn.utils._encode import _encode, _get_counts, _unique, _unique_pandas
 from sklearn.utils._mask import _get_mask
 from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
@@ -117,19 +117,45 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 )
 
         self.categories_ = []
+        # Cache a `pandas.Index` per non-numeric column, built once here
+        # rather than by `_encode` on every `transform` call: building it
+        # (which involves e.g. sorting for `get_indexer`'s hashtable) is a
+        # meaningful fraction of the pandas-Series fast path's cost, and
+        # `categories_[i]` never changes after fitting. `None` for columns
+        # where it won't be used (numeric columns, or when pandas isn't
+        # involved at all).
+        self._categories_pandas_index_ = []
         category_counts = []
         compute_counts = return_counts or self._infrequent_enabled
 
         for i in range(n_features):
             Xi = X_list[i]
+            index = None
 
             if self.categories == "auto":
-                result = _unique(Xi, return_counts=compute_counts)
-                if compute_counts:
-                    cats, counts = result
-                    category_counts.append(counts)
+                if is_pandas_df_or_series(Xi):
+                    # Grab the `pandas.Index` `_unique_pandas` builds
+                    # internally (e.g. via `factorize`) so it can be cached
+                    # for `transform`, rather than rebuilding an equivalent
+                    # one from `cats` below.
+                    result = _unique_pandas(
+                        Xi,
+                        return_inverse=False,
+                        return_counts=compute_counts,
+                        return_index=True,
+                    )
+                    if compute_counts:
+                        cats, counts, index = result
+                        category_counts.append(counts)
+                    else:
+                        cats, index = result
                 else:
-                    cats = result
+                    result = _unique(Xi, return_counts=compute_counts)
+                    if compute_counts:
+                        cats, counts = result
+                        category_counts.append(counts)
+                    else:
+                        cats = result
             else:
                 if is_pandas_df_or_series(Xi):
                     # User-provided `categories` is a comparatively rare and
@@ -197,6 +223,13 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     category_counts.append(_get_counts(Xi, cats))
 
             self.categories_.append(cats)
+            # Only cache the `Index` `_unique_pandas` already built above
+            # (the "auto" categories, pandas-Series-input case): building
+            # one here from `cats` directly would silently normalize a
+            # user-provided `None` category into `nan` (pandas' `Index`
+            # does that), corrupting `_map_to_integer`'s None-vs-nan
+            # distinction for the "predefined categories" branch.
+            self._categories_pandas_index_.append(index)
 
         output = {"n_samples": n_samples}
         if return_counts:
@@ -234,10 +267,15 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         X_int = np.zeros((n_samples, n_features), dtype=int, order="F")
         X_mask = np.ones((n_samples, n_features), dtype=bool, order="F")
 
+        category_indexes = getattr(self, "_categories_pandas_index_", None)
+
         columns_with_unknown = []
         for i in range(n_features):
             Xi = X_list[i]
-            X_int[:, i] = _encode(Xi, uniques=self.categories_[i])
+            uniques = self.categories_[i]
+            if category_indexes is not None and category_indexes[i] is not None:
+                uniques = category_indexes[i]
+            X_int[:, i] = _encode(Xi, uniques=uniques)
             X_mask[:, i] = X_int[:, i] != -1
 
             if not np.all(X_mask[:, i]):
