@@ -945,6 +945,28 @@ def test_incremental_variance_numerical_stability():
     assert tol > np.abs(np_var(A) - var).max()
 
 
+@pytest.mark.parametrize("sample_weight", [None, np.ones(10)])
+def test_incremental_mean_and_var_no_overflow(sample_weight):
+    # Non-regression test for gh-5602: the accumulated sum of a long stream
+    # of large values used to exceed the floating point range, returning
+    # inf or nan statistics even though the mean and the variance of the
+    # stream are representable. Using a power of two makes the expected
+    # statistics exactly representable.
+    big = 2.0**1020
+    X = np.full((10, 2), big)
+
+    mean, var, count = np.zeros(2), np.zeros(2), np.zeros(2)
+    with np.errstate(over="raise", invalid="raise"):
+        for _ in range(100):
+            mean, var, count = _incremental_mean_and_var(
+                X, mean, var, count, sample_weight=sample_weight
+            )
+
+    assert_allclose(mean, np.full(2, big))
+    assert_allclose(var, np.zeros(2))
+    assert_array_equal(count, np.full(2, 1000))
+
+
 def test_incremental_variance_ddof():
     # Test that degrees of freedom parameter for calculations are correct.
     rng = np.random.RandomState(1999)
