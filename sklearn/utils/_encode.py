@@ -199,13 +199,13 @@ def _unique_object_series(values, *, return_inverse, return_counts):
     # Only used in `_unique`, see docstring there for details
     value_counts = values.value_counts().sort(by=values.name, nulls_last=True)
     uniques = value_counts[:, 0].to_numpy()
-    counts = value_counts[:, 1].to_numpy()
 
     ret = (uniques,)
     if return_inverse:
         ret += (_encode_series(values, uniques),)
 
     if return_counts:
+        counts = value_counts[:, 1].to_numpy()
         ret += (counts,)
 
     return ret[0] if len(ret) == 1 else ret
