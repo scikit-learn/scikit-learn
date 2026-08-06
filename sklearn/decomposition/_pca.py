@@ -438,6 +438,7 @@ class PCA(_BasePCA):
             Returns the instance itself.
         """
         self._fit(X)
+        self._fitted_attrs_as_numpy()
         return self
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -474,9 +475,12 @@ class PCA(_BasePCA):
                 # X_new = X * V = U * S * Vt * V = U * S
                 U *= S[: self.n_components_]
 
-            return U
+            X_transformed = U
         else:  # solver="covariance_eigh" does not compute U at fit time.
-            return self._transform(X, xp, x_is_centered=x_is_centered)
+            X_transformed = self._transform(X, xp, x_is_centered=x_is_centered)
+
+        self._fitted_attrs_as_numpy()
+        return X_transformed
 
     def _fit(self, X):
         """Dispatch to the right submethod depending on the chosen solver."""

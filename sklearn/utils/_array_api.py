@@ -1156,6 +1156,45 @@ def move_estimator_to(estimator, xp, device):
     )
 
 
+def _fitted_attrs_as_numpy(estimator, *names):
+    """Store the named fitted attributes of `estimator` as NumPy arrays.
+
+    Meant to be called at the end of `fit`. Does nothing unless the
+    `store_fitted_as_numpy` configuration is enabled. Attributes that are
+    `None` are left unchanged.
+
+    Experimental, see https://github.com/scikit-learn/scikit-learn/issues/34604.
+    """
+    if not get_config()["store_fitted_as_numpy"]:
+        return
+
+    for name in names:
+        value = getattr(estimator, name, None)
+        # Python scalars and `None` are namespace neutral, leave them alone.
+        if hasattr(value, "dtype"):
+            setattr(estimator, name, move_to(value, xp=np_compat, device="cpu"))
+
+
+def _fitted_attrs_to(estimator, *names, xp, device):
+    """Return the named fitted attributes of `estimator` in `xp` on `device`.
+
+    Meant to be called by inference methods, listing only the attributes that
+    method actually uses. Unless the `store_fitted_as_numpy` configuration is
+    enabled the attributes are returned as they are stored.
+
+    Experimental, see https://github.com/scikit-learn/scikit-learn/issues/34604.
+    """
+    attrs = tuple(getattr(estimator, name) for name in names)
+    if get_config()["store_fitted_as_numpy"]:
+        # Python scalars and `None` are namespace neutral, leave them alone.
+        attrs = tuple(
+            move_to(attr, xp=xp, device=device) if hasattr(attr, "dtype") else attr
+            for attr in attrs
+        )
+
+    return attrs[0] if len(attrs) == 1 else attrs
+
+
 def check_same_namespace(X, estimator, *, attribute, method):
     """Check that estimator's fitted attribute is compatible with X.
 
@@ -1180,7 +1219,11 @@ def check_same_namespace(X, estimator, *, attribute, method):
         The name of the calling method (e.g. ``"predict"``). It is used to
         write the error message if the check fails.
     """
-    if not get_config()["array_api_dispatch"]:
+    config = get_config()
+    if not config["array_api_dispatch"] or config["store_fitted_as_numpy"]:
+        # When fitted attributes are stored as NumPy, inference methods move
+        # them to the namespace and device of their input, so any input is
+        # compatible with any fitted estimator.
         return
 
     attr = getattr(estimator, attribute)

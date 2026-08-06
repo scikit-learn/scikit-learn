@@ -17,6 +17,7 @@ _global_config = {
     ),
     "enable_cython_pairwise_dist": True,
     "array_api_dispatch": False,
+    "store_fitted_as_numpy": False,
     "transform_output": "default",
     "enable_metadata_routing": False,
     "skip_parameter_validation": False,
@@ -69,6 +70,7 @@ def set_config(
     pairwise_dist_chunk_size=None,
     enable_cython_pairwise_dist=None,
     array_api_dispatch=None,
+    store_fitted_as_numpy=None,
     transform_output=None,
     enable_metadata_routing=None,
     skip_parameter_validation=None,
@@ -151,6 +153,14 @@ def set_config(
         See the :ref:`User Guide <array_api>` for more details.
 
         .. versionadded:: 1.2
+
+    store_fitted_as_numpy : bool, default=None
+        If True, estimators that support the Array API store their fitted
+        attributes as NumPy arrays, whatever the namespace and device of `X`
+        passed to `fit`. Inference methods move the attributes they need to the
+        namespace and device of their input. Global default: False.
+
+        Experimental, see https://github.com/scikit-learn/scikit-learn/issues/34604.
 
     transform_output : str, default=None
         Configure output of `transform` and `fit_transform`.
@@ -235,6 +245,8 @@ def set_config(
 
         _check_array_api_dispatch(array_api_dispatch)
         local_config["array_api_dispatch"] = array_api_dispatch
+    if store_fitted_as_numpy is not None:
+        local_config["store_fitted_as_numpy"] = store_fitted_as_numpy
     if transform_output is not None:
         local_config["transform_output"] = transform_output
     if enable_metadata_routing is not None:
@@ -255,6 +267,7 @@ def config_context(
     pairwise_dist_chunk_size=None,
     enable_cython_pairwise_dist=None,
     array_api_dispatch=None,
+    store_fitted_as_numpy=None,
     transform_output=None,
     enable_metadata_routing=None,
     skip_parameter_validation=None,
@@ -332,6 +345,15 @@ def config_context(
         See the :ref:`User Guide <array_api>` for more details.
 
         .. versionadded:: 1.2
+
+    store_fitted_as_numpy : bool, default=None
+        If True, estimators that support the Array API store their fitted
+        attributes as NumPy arrays, whatever the namespace and device of `X`
+        passed to `fit`. Inference methods move the attributes they need to the
+        namespace and device of their input. If None, the existing configuration
+        won't change. Global default: False.
+
+        Experimental, see https://github.com/scikit-learn/scikit-learn/issues/34604.
 
     transform_output : str, default=None
         Configure output of `transform` and `fit_transform`.
@@ -423,6 +445,7 @@ def config_context(
         pairwise_dist_chunk_size=pairwise_dist_chunk_size,
         enable_cython_pairwise_dist=enable_cython_pairwise_dist,
         array_api_dispatch=array_api_dispatch,
+        store_fitted_as_numpy=store_fitted_as_numpy,
         transform_output=transform_output,
         enable_metadata_routing=enable_metadata_routing,
         skip_parameter_validation=skip_parameter_validation,

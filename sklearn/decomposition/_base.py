@@ -13,7 +13,13 @@ from sklearn.base import (
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
 )
-from sklearn.utils._array_api import _add_to_diagonal, array_device, get_namespace
+from sklearn.utils._array_api import (
+    _add_to_diagonal,
+    _fitted_attrs_as_numpy,
+    _fitted_attrs_to,
+    array_device,
+    get_namespace,
+)
 from sklearn.utils.validation import check_array, check_is_fitted, validate_data
 
 
@@ -135,9 +141,9 @@ class _BasePCA(
             Projection of X in the first principal components, where `n_samples`
             is the number of samples and `n_components` is the number of the components.
         """
-        xp, _ = get_namespace(X, self.components_, self.explained_variance_)
-
         check_is_fitted(self)
+
+        xp, _ = get_namespace(X)
 
         X = validate_data(
             self,
@@ -148,21 +154,39 @@ class _BasePCA(
         )
         return self._transform(X, xp=xp, x_is_centered=False)
 
+    def _fitted_attrs_as_numpy(self):
+        _fitted_attrs_as_numpy(
+            self,
+            "components_",
+            "mean_",
+            "explained_variance_",
+            "explained_variance_ratio_",
+            "singular_values_",
+            "noise_variance_",
+        )
+
     def _transform(self, X, xp, x_is_centered=False):
-        X_transformed = X @ self.components_.T
+        device = array_device(X)
+        components = _fitted_attrs_to(self, "components_", xp=xp, device=device)
+
+        X_transformed = X @ components.T
         if not x_is_centered:
             # Apply the centering after the projection.
             # For dense X this avoids copying or mutating the data passed by
             # the caller.
             # For sparse X it keeps sparsity and avoids having to wrap X into
             # a linear operator.
-            X_transformed -= xp.reshape(self.mean_, (1, -1)) @ self.components_.T
+            mean = _fitted_attrs_to(self, "mean_", xp=xp, device=device)
+            X_transformed -= xp.reshape(mean, (1, -1)) @ components.T
         if self.whiten:
             # For some solvers (such as "arpack" and "covariance_eigh"), on
             # rank deficient data, some components can have a variance
             # arbitrarily close to zero, leading to non-finite results when
             # whitening. To avoid this problem we clip the variance below.
-            scale = xp.sqrt(self.explained_variance_)
+            explained_variance = _fitted_attrs_to(
+                self, "explained_variance_", xp=xp, device=device
+            )
+            scale = xp.sqrt(explained_variance)
             min_scale = xp.finfo(scale.dtype).eps
             scale[scale < min_scale] = min_scale
             X_transformed /= scale
