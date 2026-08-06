@@ -405,14 +405,18 @@ def test_lof_mahalanobis_n_jobs_consistency():
     VI = np.ascontiguousarray(VI, dtype=np.float64)
 
     lof_1 = neighbors.LocalOutlierFactor(
-        n_neighbors=20, metric="mahalanobis",
-        metric_params={"VI": VI}, n_jobs=1,
+        n_neighbors=20,
+        metric="mahalanobis",
+        metric_params={"VI": VI},
+        n_jobs=1,
     )
     labels_1 = lof_1.fit_predict(X)
 
     lof_4 = neighbors.LocalOutlierFactor(
-        n_neighbors=20, metric="mahalanobis",
-        metric_params={"VI": VI}, n_jobs=4,
+        n_neighbors=20,
+        metric="mahalanobis",
+        metric_params={"VI": VI},
+        n_jobs=4,
     )
     labels_4 = lof_4.fit_predict(X)
 
