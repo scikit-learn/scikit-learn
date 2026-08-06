@@ -392,3 +392,28 @@ def test_lof_duplicate_samples():
     # Catch the warning
     with pytest.warns(UserWarning, match=re.escape(error_msg)):
         lof.fit_predict(X)
+
+
+def test_lof_mahalanobis_n_jobs_consistency():
+    """Non-regression test for #32753: LOF + mahalanobis + n_jobs > 1."""
+    rng = np.random.RandomState(42)
+    X_in = rng.normal(loc=0.0, scale=1.0, size=(200, 10))
+    X_out = rng.normal(loc=8.0, scale=1.0, size=(10, 10))
+    X = np.vstack([X_in, X_out])
+
+    VI = np.linalg.inv(np.cov(X.T))
+    VI = np.ascontiguousarray(VI, dtype=np.float64)
+
+    lof_1 = neighbors.LocalOutlierFactor(
+        n_neighbors=20, metric="mahalanobis",
+        metric_params={"VI": VI}, n_jobs=1,
+    )
+    labels_1 = lof_1.fit_predict(X)
+
+    lof_4 = neighbors.LocalOutlierFactor(
+        n_neighbors=20, metric="mahalanobis",
+        metric_params={"VI": VI}, n_jobs=4,
+    )
+    labels_4 = lof_4.fit_predict(X)
+
+    assert_array_equal(labels_1, labels_4)

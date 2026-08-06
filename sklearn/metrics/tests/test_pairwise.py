@@ -1861,3 +1861,15 @@ def test_sparse_manhattan_readonly_dataset(csr_container):
     Parallel(n_jobs=2, max_nbytes=0)(
         delayed(manhattan_distances)(m1, m2) for m1, m2 in zip(matrices1, matrices2)
     )
+
+
+def test_pairwise_distances_mahalanobis_n_jobs():
+    """Non-regression test for #32753: mahalanobis + n_jobs > 1 corruption."""
+    rng = np.random.RandomState(42)
+    X = rng.normal(size=(100, 5))
+    VI = np.linalg.inv(np.cov(X.T))
+
+    D1 = pairwise_distances(X, metric="mahalanobis", n_jobs=1, VI=VI)
+    D4 = pairwise_distances(X, metric="mahalanobis", n_jobs=4, VI=VI)
+
+    assert_allclose(D1, D4)

@@ -1970,9 +1970,24 @@ def _transposed_dist_wrapper(dist_func, dist_matrix, slice_, *args, **kwargs):
     dist_matrix[slice_, ...] = dist_func(*args, **kwargs).T
 
 
-def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
+# Metrics whose scipy C/Cython implementation uses shared mutable state
+# (e.g. an internal difference-vector buffer) and is therefore not safe
+# under concurrent threading.  For these we fall back to the process-based
+# "loky" backend so each worker gets its own address space.
+_THREAD_UNSAFE_METRICS = frozenset({"mahalanobis", "seuclidean"})
+
+
+def _parallel_pairwise(X, Y, func, n_jobs, metric=None, **kwds):
     """Break the pairwise matrix in n_jobs even slices
-    and compute them using multithreading."""
+    and compute them in parallel.
+
+    Parameters
+    ----------
+    metric : str or None
+        The distance metric name. Used to select the parallelism backend:
+        metrics listed in ``_THREAD_UNSAFE_METRICS`` are run with the
+        ``"loky"`` (process-based) backend instead of ``"threading"``.
+    """
     xp, _, device = get_namespace_and_device(X, Y)
     X, Y, dtype_float = _find_floating_dtype_allow_sparse(X, Y, xp=xp)
 
@@ -1982,7 +1997,6 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     if effective_n_jobs(n_jobs) == 1:
         return func(X, Y, **kwds)
 
-    # enforce a threading backend to prevent data communication overhead
     fd = delayed(_transposed_dist_wrapper)
     # Transpose `ret` such that a given thread writes its output to a contiguous chunk.
     # Note `order` (i.e. F/C-contiguous) is not included in array API standard, see
@@ -1990,7 +2004,8 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     # We assume that currently (April 2025) all array API compatible namespaces
     # allocate 2D arrays using the C-contiguity convention by default.
     ret = xp.empty((X.shape[0], Y.shape[0]), device=device, dtype=dtype_float).T
-    Parallel(backend="threading", n_jobs=n_jobs)(
+    backend = "loky" if metric in _THREAD_UNSAFE_METRICS else "threading"
+    Parallel(backend=backend, n_jobs=n_jobs)(
         fd(
             func,
             ret,
@@ -2493,7 +2508,7 @@ def pairwise_distances(
             return distance.squareform(distance.pdist(X, metric=metric, **kwds))
         func = partial(distance.cdist, metric=metric, **kwds)
 
-    return _parallel_pairwise(X, Y, func, n_jobs, **kwds)
+    return _parallel_pairwise(X, Y, func, n_jobs, metric=metric, **kwds)
 
 
 # These distances require boolean arrays, when using scipy.spatial.distance
