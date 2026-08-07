@@ -199,6 +199,12 @@ def _unique_pandas(values, *, return_inverse, return_counts):
 
     codes, index = pd.factorize(values, sort=True, use_na_sentinel=False)
     uniques = index.to_numpy()
+    if uniques.size and pd.isna(uniques[-1]):
+        # `factorize` doesn't always normalize the missing-value entry to
+        # `np.nan` (e.g. pandas StringDtype keeps it as `pd.NA`), but the
+        # rest of the codebase (`is_scalar_nan`-based checks) expects
+        # `np.nan` specifically.
+        uniques[-1] = np.nan
 
     ret = (uniques,)
     if return_inverse:
