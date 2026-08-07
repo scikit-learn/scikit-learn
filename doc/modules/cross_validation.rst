@@ -911,13 +911,52 @@ Example of 3-split time series cross-validation on a dataset with 6 samples::
   >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4], [1, 2], [3, 4]])
   >>> y = np.array([1, 2, 3, 4, 5, 6])
   >>> tscv = TimeSeriesSplit(n_splits=3)
-  >>> print(tscv)
-  TimeSeriesSplit(gap=0, max_train_size=None, n_splits=3, test_size=None)
   >>> for train, test in tscv.split(X):
   ...     print("%s %s" % (train, test))
   [0 1 2] [3]
   [0 1 2 3] [4]
   [0 1 2 3 4] [5]
+
+`TimeSeriesSplit` also supports a walk-forward mode where split boundaries are
+driven by window sizes rather than by a fixed number of folds:
+
+- ``n_splits="walk_forward"`` enables walk-forward splitting.
+- ``min_train_size`` defines the initial train size in expanding mode.
+- ``max_train_size`` defines the fixed train size in rolling mode.
+- ``test_size`` defines the width of each test window.
+- ``step`` controls how many samples the test window advances each split.
+- ``gap`` excludes samples between each train and test window.
+
+Expanding walk-forward example::
+
+  >>> X = np.zeros((10, 1))
+  >>> tscv = TimeSeriesSplit(
+  ...     n_splits="walk_forward",
+  ...     min_train_size=4,
+  ...     test_size=2,
+  ...     gap=1,
+  ...     step=2,
+  ... )
+  >>> for train, test in tscv.split(X):
+  ...     print("%s %s" % (train, test))
+  [0 1 2 3] [5 6]
+  [0 1 2 3 4 5] [7 8]
+
+Rolling walk-forward example::
+
+  >>> X = np.zeros((10, 1))
+  >>> tscv = TimeSeriesSplit(
+  ...     n_splits="walk_forward",
+  ...     max_train_size=3,
+  ...     test_size=2,
+  ...     gap=1,
+  ...     step=2,
+  ... )
+  >>> for train, test in tscv.split(X):
+  ...     print("%s %s" % (train, test))
+  [0 1 2] [4 5]
+  [2 3 4] [6 7]
+  [4 5 6] [8 9]
 
 Here is a visualization of the cross-validation behavior.
 
