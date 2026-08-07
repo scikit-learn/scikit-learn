@@ -4,6 +4,8 @@ Testing for Support Vector Machine module (sklearn.svm)
 TODO: remove hard coded numerical results when possible
 """
 
+import warnings
+
 import numpy as np
 import pytest
 from numpy.testing import (
@@ -1535,3 +1537,47 @@ def test_svc_nusvc_probA_probB_deprecated(est):
         _ = est.probA_
     with pytest.warns(FutureWarning, match="Attribute `probB_` was deprecated"):
         _ = est.probB_
+
+
+def test_svc_invalid_kernel_params():
+    """Test that warnings are issued for kernel params irrelevant to the kernel."""
+    from sklearn.datasets import load_iris
+
+    X_iris, y_iris = load_iris(return_X_y=True)
+
+    # gamma with a kernel that does not use it
+    with pytest.warns(UserWarning, match="gamma"):
+        svm.SVC(kernel="linear", gamma=1e-6).fit(X_iris, y_iris)
+
+    # degree with a kernel that does not use it
+    with pytest.warns(UserWarning, match="degree"):
+        svm.SVC(kernel="linear", degree=4).fit(X_iris, y_iris)
+
+    # coef0 with a kernel that does not use it
+    with pytest.warns(UserWarning, match="coef0"):
+        svm.SVC(kernel="linear", coef0=1.0).fit(X_iris, y_iris)
+
+    # Valid combinations — should NOT warn
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        svm.SVC(kernel="rbf", gamma=0.1).fit(X_iris, y_iris)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        svm.SVC(kernel="poly", degree=4).fit(X_iris, y_iris)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        svm.SVC(kernel="linear").fit(X_iris, y_iris)
+
+    # Callable kernel should NOT warn regardless of params
+    def linear_kernel(X, Y):
+        return X @ Y.T
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        svm.SVC(kernel=linear_kernel, gamma=1e-6).fit(X_iris, y_iris)
+
+    # SVR shares BaseLibSVM and should warn too
+    with pytest.warns(UserWarning, match="gamma"):
+        svm.SVR(kernel="linear", gamma=1e-6).fit(X_iris, y_iris)

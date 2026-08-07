@@ -45,6 +45,33 @@ from sklearn.utils.validation import (
 LIBSVM_IMPL = ["c_svc", "nu_svc", "one_class", "epsilon_svr", "nu_svr"]
 
 
+def _check_kernel_params(kernel, degree, gamma, coef0):
+    """Warn if kernel hyperparameters are set for an incompatible kernel."""
+    if callable(kernel):
+        return
+    if gamma != "scale" and kernel not in {"rbf", "poly", "sigmoid"}:
+        warnings.warn(
+            f"Parameter `gamma` is not used when `kernel='{kernel}'`. "
+            "Setting it has no effect on the model.",
+            UserWarning,
+            stacklevel=4,
+        )
+    if degree != 3 and kernel != "poly":
+        warnings.warn(
+            f"Parameter `degree` is not used when `kernel='{kernel}'`. "
+            "Setting it has no effect on the model.",
+            UserWarning,
+            stacklevel=4,
+        )
+    if coef0 != 0.0 and kernel not in {"poly", "sigmoid"}:
+        warnings.warn(
+            f"Parameter `coef0` is not used when `kernel='{kernel}'`. "
+            "Setting it has no effect on the model.",
+            UserWarning,
+            stacklevel=4,
+        )
+
+
 def _one_vs_one_coef(dual_coef, n_support, support_vectors):
     """Generate primal coefficients from dual coefficients
     for the one-vs-one multi class LibSVM in the case
@@ -202,6 +229,8 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         matrices as input.
         """
         rnd = check_random_state(self.random_state)
+
+        _check_kernel_params(self.kernel, self.degree, self.gamma, self.coef0)
 
         sparse = sp.issparse(X)
         if sparse and self.kernel == "precomputed":
