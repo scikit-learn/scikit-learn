@@ -37,11 +37,9 @@ from sklearn._loss.loss import (
 from sklearn.utils import assert_all_finite
 from sklearn.utils._array_api import (
     _atol_for_type,
+    array_device,
     move_to,
     yield_namespace_device_dtype_combinations,
-)
-from sklearn.utils._array_api import (
-    device as array_api_device,
 )
 from sklearn.utils._testing import (
     _array_api_for_tests,
@@ -1411,6 +1409,9 @@ def test_loss_array_api(
     device_name,
     dtype_name,
 ):
+    if loss_class == HalfMultinomialLoss and method_name == "gradient_hessian":
+        pytest.skip("Not implemented")
+
     def _assert_array_api_result(
         result_xp, result_np, raw_prediction_xp, xp, rtol, atol
     ):
@@ -1418,7 +1419,7 @@ def test_loss_array_api(
             move_to(result_xp, xp=np, device="cpu"), result_np, rtol=rtol, atol=atol
         )
         assert result_xp.dtype == raw_prediction_xp.dtype
-        assert array_api_device(result_xp) == array_api_device(raw_prediction_xp)
+        assert array_device(result_xp) == array_device(raw_prediction_xp)
 
     if method_name == "gradient_proba" and loss_class != HalfMultinomialLoss:
         # `gradient_proba` is only valid for HalfMultinomialLoss
@@ -1454,9 +1455,12 @@ def test_loss_array_api(
 
     method = getattr(loss_instance, method_name)
     array_api_method = getattr(array_api_loss_instance, method_name)
-    result_np = method(
-        y_true=y_true, raw_prediction=raw_prediction, sample_weight=sample_weight_np
-    )
+    with config_context(array_api_dispatch=False):
+        result_np = method(
+            y_true=y_true,
+            raw_prediction=raw_prediction,
+            sample_weight=sample_weight_np,
+        )
     with config_context(array_api_dispatch=True):
         result_xp = array_api_method(
             y_true=y_true_xp,

@@ -20,12 +20,10 @@ from sklearn.metrics.pairwise import (
 )
 from sklearn.utils._array_api import (
     _atol_for_type,
+    array_device,
     get_namespace_and_device,
     move_to,
     yield_namespace_device_dtype_combinations,
-)
-from sklearn.utils._array_api import (
-    device as array_device,
 )
 from sklearn.utils._testing import (
     _array_api_for_tests,
@@ -373,7 +371,8 @@ def test_nystroem_approximation_array_api(
     X_xp = xp.asarray(X_np, device=device)
 
     nystroem = Nystroem(n_components=n_components, kernel=kernel, random_state=0)
-    X_np_transformed = nystroem.fit_transform(X_np)
+    with config_context(array_api_dispatch=False):
+        X_np_transformed = nystroem.fit_transform(X_np)
 
     with config_context(array_api_dispatch=True):
         X_xp_transformed = nystroem.fit_transform(X_xp)

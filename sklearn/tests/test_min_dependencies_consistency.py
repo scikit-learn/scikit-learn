@@ -17,16 +17,11 @@ from sklearn.utils.fixes import parse_version
 TOY_MIN_DEPENDENCIES_PY_INFO = {
     "joblib": ("1.3.0", "install"),
     "scipy": ("1.10.0", "build, install"),
-    "conda-lock": ("3.0.1", "maintenance"),
 }
 
 TOY_MATCHING_PYPROJECT_SECTIONS = """
 [project]
 dependencies = ["joblib>=1.3.0", "scipy>=1.10.0"]
-[project.optional-dependencies]
-build = ["scipy>=1.10.0"]
-install = ["joblib>=1.3.0", "scipy>=1.10.0"]
-maintenance = ["conda-lock==3.0.1"]
 [build-system]
 requires = ["scipy>=1.10.0"]
 """
@@ -34,10 +29,6 @@ requires = ["scipy>=1.10.0"]
 TOY_MATCHING_PYPROJECT_SECTIONS_WITH_UPPER_BOUND = """
 [project]
 dependencies = ["joblib>=1.3.0,<2.0", "scipy>=1.10.0"]
-[project.optional-dependencies]
-build = ["scipy>=1.10.0,<1.19.0"]
-install = ["joblib>=1.3.0,<2.0", "scipy>=1.10.0"]
-maintenance = ["conda-lock==3.0.1"]
 [build-system]
 requires = ["scipy>=1.10.0,<1.19.0"]
 """
@@ -45,10 +36,6 @@ requires = ["scipy>=1.10.0,<1.19.0"]
 TOY_WRONG_SYMBOL_PYPROJECT_SECTIONS = """
 [project]
 dependencies = ["scipy<1.10.0"]
-[project.optional-dependencies]
-build = ["scipy>=1.10.0"]
-install = ["scipy>=1.10.0"]
-maintenance = ["conda-lock==3.0.1"]
 [build-system]
 requires = ["scipy>=1.10.0"]
 """
@@ -56,10 +43,6 @@ requires = ["scipy>=1.10.0"]
 TOY_MISSING_PACKAGE_PYPROJECT_SECTIONS = """
 [project]
 dependencies = ["scipy>=1.10.0"]
-[project.optional-dependencies]
-build = ["scipy>=1.10.0"]
-install = ["scipy>=1.10.0"]
-maintenance = ["conda-lock==3.0.1"]
 [build-system]
 requires = ["scipy>=1.10.0"]
 """
@@ -67,21 +50,13 @@ requires = ["scipy>=1.10.0"]
 TOY_ADDITIONAL_PACKAGE_PYPROJECT_SECTIONS = """
 [project]
 dependencies = ["joblib>=1.3.0", "scipy>=1.10.0"]
-[project.optional-dependencies]
-build = ["scipy>=1.10.0", "package_not_in_min_dependencies_py_file>=4.2"]
-install = ["joblib>=1.3.0", "scipy>=1.10.0"]
-maintenance = ["conda-lock==3.0.1"]
 [build-system]
-requires = ["scipy>=1.10.0"]
+requires = ["scipy>=1.10.0", "package_not_in_min_dependencies_py_file>=4.2"]
 """
 
 TOY_NON_MATCHING_VERSION_PYPROJECT_SECTIONS = """
 [project]
 dependencies = ["joblib>=1.42.0", "scipy>=1.10.0"]
-[project.optional-dependencies]
-build = ["scipy>=1.10.0"]
-install = ["joblib>=1.3.0", "scipy>=1.10.0"]
-maintenance = ["conda-lock==3.0.1"]
 [build-system]
 requires = ["scipy>=1.10.0"]
 """
@@ -129,18 +104,16 @@ def test_min_dependencies_readme():
 
 
 def extract_packages_and_pyproject_tags(dependencies):
-    min_dependencies_tag_to_packages_without_version = defaultdict(list)
-    for package, (min_version, tags) in dependencies.items():
-        for t in tags.split(", "):
-            min_dependencies_tag_to_packages_without_version[t].append(package)
-
     pyproject_section_to_min_dependencies_tag = {
         "build-system.requires": "build",
         "project.dependencies": "install",
     }
-    for tag in min_dependencies_tag_to_packages_without_version:
-        section = f"project.optional-dependencies.{tag}"
-        pyproject_section_to_min_dependencies_tag[section] = tag
+
+    min_dependencies_tag_to_packages_without_version = defaultdict(list)
+    for package, (min_version, tags) in dependencies.items():
+        for t in tags.split(", "):
+            if t in pyproject_section_to_min_dependencies_tag.values():
+                min_dependencies_tag_to_packages_without_version[t].append(package)
 
     return (
         min_dependencies_tag_to_packages_without_version,

@@ -5,6 +5,7 @@ import numbers
 import sys
 import warnings
 from abc import ABC, abstractmethod
+from enum import Enum
 from functools import partial
 from numbers import Integral, Real
 
@@ -50,6 +51,13 @@ from sklearn.utils.validation import (
     column_or_1d,
     validate_data,
 )
+
+
+class CD_Algo(Enum):
+    ENET_CD = 0
+    ENET_CD_GRAM = 1
+    ENET_CD_SPARSE = 2
+    ENET_CD_MULTITASK = 3
 
 
 def _set_order(X, y, order="C"):
@@ -666,8 +674,8 @@ def enet_path(
     else:
         _alphas = alphas
 
-    X_offset_param = params.pop("X_offset", None)
-    X_scale_param = params.pop("X_scale", None)
+    X_offset = params.pop("X_offset", None)
+    X_scale = params.pop("X_scale", None)
     sample_weight = params.pop("sample_weight", None)
     tol = params.pop("tol", 1e-4)
     max_iter = params.pop("max_iter", 1000)
@@ -715,11 +723,10 @@ def enet_path(
 
     X_is_sparse = sparse.issparse(X)
     if X_is_sparse:
-        if X_offset_param is not None:
+        if X_offset is not None:
             # As sparse matrices are not actually centered we need this to be passed to
             # the CD solver.
-            X_sparse_scaling = X_offset_param / X_scale_param
-            X_sparse_scaling = np.asarray(X_sparse_scaling, dtype=X.dtype)
+            X_sparse_scaling = np.asarray(X_offset / X_scale, dtype=X.dtype)
         else:
             X_sparse_scaling = np.zeros(n_features, dtype=X.dtype)
     else:
@@ -781,12 +788,79 @@ def enet_path(
         X_indices = None
         X_indptr = None
 
+    if multi_output:
+        algo = CD_Algo.ENET_CD_MULTITASK
+        R, norm2_cols_X = cd_fast.R_and_X_colnorm2_multi_task(
+            W=coef_,
+            X=None if X_is_sparse else X,
+            X_is_sparse=X_is_sparse,
+            X_data=X_data,
+            X_indices=X_indices,
+            X_indptr=X_indptr,
+            Y=y,
+            sample_weight=sample_weight,
+            X_mean=X_sparse_scaling,
+        )
+    elif X_is_sparse:
+        algo = CD_Algo.ENET_CD_SPARSE
+        R, norm2_cols_X = cd_fast.R_and_X_colnorm2_sparse(
+            w=coef_,
+            X_data=X_data,
+            X_indices=X_indices,
+            X_indptr=X_indptr,
+            y=y,
+            sample_weight=sample_weight,
+            X_mean=X_sparse_scaling,
+        )
+    elif isinstance(precompute, np.ndarray):
+        algo = CD_Algo.ENET_CD_GRAM
+        # We expect precompute to be already Fortran ordered when bypassing checks
+        if check_input:
+            precompute = check_array(precompute, dtype=X.dtype.type, order="C")
+        Qw = precompute @ coef_
+    else:  # precompute is False
+        algo = CD_Algo.ENET_CD
+        R, norm2_cols_X = cd_fast.R_and_X_colnorm2(w=coef_, X=X, y=y)
+
+    params = dict(
+        max_iter=max_iter,
+        tol=tol,
+        rng=rng,
+        random=random,
+        do_screening=do_screening,
+        early_stopping=early_stopping,
+    )
+
     for i, alpha in enumerate(alphas):
         # account for n_samples scaling in objectives between here and cd_fast
         l1_reg = alpha * l1_ratio * n_samples
         l2_reg = alpha * (1.0 - l1_ratio) * n_samples
-        if not multi_output and X_is_sparse:
-            model = cd_fast.sparse_enet_coordinate_descent(
+        if algo == CD_Algo.ENET_CD:
+            model = cd_fast.enet_coordinate_descent(
+                w=coef_,
+                alpha=l1_reg,
+                beta=l2_reg,
+                X=X,
+                y=y,
+                positive=positive,
+                R=R,
+                norm2_cols_X=norm2_cols_X,
+                **params,
+            )
+        elif algo == CD_Algo.ENET_CD_GRAM:
+            model = cd_fast.enet_coordinate_descent_gram(
+                w=coef_,
+                alpha=l1_reg,
+                beta=l2_reg,
+                Q=precompute,  # the gram matrix
+                q=Xy,
+                y=y,
+                positive=positive,
+                Qw=Qw,
+                **params,
+            )
+        elif algo == CD_Algo.ENET_CD_SPARSE:
+            model = cd_fast.enet_coordinate_descent_sparse(
                 w=coef_,
                 alpha=l1_reg,
                 beta=l2_reg,
@@ -796,15 +870,12 @@ def enet_path(
                 y=y,
                 sample_weight=sample_weight,
                 X_mean=X_sparse_scaling,
-                max_iter=max_iter,
-                tol=tol,
-                rng=rng,
-                random=random,
                 positive=positive,
-                do_screening=do_screening,
-                early_stopping=early_stopping,
+                R=R,
+                norm2_cols_X=norm2_cols_X,
+                **params,
             )
-        elif multi_output:
+        elif algo == CD_Algo.ENET_CD_MULTITASK:
             model = cd_fast.enet_coordinate_descent_multi_task(
                 W=coef_,
                 alpha=l1_reg,
@@ -817,53 +888,11 @@ def enet_path(
                 Y=y,
                 sample_weight=sample_weight,
                 X_mean=X_sparse_scaling,
-                max_iter=max_iter,
-                tol=tol,
-                rng=rng,
-                random=random,
-                do_screening=do_screening,
-                early_stopping=early_stopping,
+                R=R,
+                norm2_cols_X=norm2_cols_X,
+                **params,
             )
-        elif isinstance(precompute, np.ndarray):
-            # We expect precompute to be already Fortran ordered when bypassing
-            # checks
-            if check_input:
-                precompute = check_array(precompute, dtype=X.dtype.type, order="C")
-            model = cd_fast.enet_coordinate_descent_gram(
-                coef_,
-                l1_reg,
-                l2_reg,
-                precompute,
-                Xy,
-                y,
-                max_iter,
-                tol,
-                rng,
-                random,
-                positive,
-                do_screening,
-                early_stopping,
-            )
-        elif precompute is False:
-            model = cd_fast.enet_coordinate_descent(
-                coef_,
-                l1_reg,
-                l2_reg,
-                X,
-                y,
-                max_iter,
-                tol,
-                rng,
-                random,
-                positive,
-                do_screening,
-                early_stopping,
-            )
-        else:
-            raise ValueError(
-                "Precompute should be one of True, False, 'auto' or array-like. Got %r"
-                % precompute
-            )
+
         coef_, dual_gap_, eps_, n_iter_ = model
         coefs[..., i] = coef_
         # we correct the scale of the returned dual gap, as the objective
@@ -1538,7 +1567,6 @@ def _path_residuals(
     path_params,
     alphas=None,
     l1_ratio=1,
-    X_order=None,
     dtype=None,
 ):
     """Returns the MSE for the models computed by 'path'.
@@ -1576,10 +1604,6 @@ def _path_residuals(
         l1 and l2 penalties). For ``l1_ratio = 0`` the penalty is an
         L2 penalty. For ``l1_ratio = 1`` it is an L1 penalty. For ``0
         < l1_ratio < 1``, the penalty is a combination of L1 and L2.
-
-    X_order : {'F', 'C'}, default=None
-        The order of the arrays expected by the path function to
-        avoid memory copies.
 
     dtype : a numpy dtype, default=None
         The dtype of the arrays expected by the path function to
@@ -1647,7 +1671,7 @@ def _path_residuals(
 
     # Do the ordering and type casting here, as if it is done in the path,
     # X is copied and a reference is kept here
-    X_train = check_array(X_train, accept_sparse="csc", dtype=dtype, order=X_order)
+    X_train = check_array(X_train, accept_sparse="csc", dtype=dtype, order="F")
     alphas, coefs, _ = path(X_train, y_train, **path_params)
     del X_train, y_train
 
@@ -1744,8 +1768,7 @@ class LinearModelCV(MultiOutputLinearModel, ABC):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training data. Pass directly as Fortran-contiguous data
-            to avoid unnecessary memory duplication. If y is mono-output,
+            Training data. If y is mono-output,
             X can be sparse. Note that large sparse matrices and arrays
             requiring `int64` indices are not accepted.
 
@@ -1798,7 +1821,7 @@ class LinearModelCV(MultiOutputLinearModel, ABC):
             # csr. We also want to allow y to be 64 or 32 but check_X_y only
             # allows to convert for 64.
             check_X_params = dict(
-                accept_sparse="csc",
+                accept_sparse="csr",
                 dtype=[np.float64, np.float32],
                 force_writeable=True,
                 copy=False,
@@ -1823,9 +1846,9 @@ class LinearModelCV(MultiOutputLinearModel, ABC):
             # csr. We also want to allow y to be 64 or 32 but check_X_y only
             # allows to convert for 64.
             check_X_params = dict(
-                accept_sparse="csc",
+                accept_sparse="csr",
                 dtype=[np.float64, np.float32],
-                order="F",
+                order=None,
                 force_writeable=True,
                 copy=copy_X,
             )
@@ -1940,7 +1963,6 @@ class LinearModelCV(MultiOutputLinearModel, ABC):
                 path_params,
                 alphas=this_alphas,
                 l1_ratio=this_l1_ratio,
-                X_order="F",
                 dtype=X.dtype.type,
             )
             for this_l1_ratio, this_alphas in zip(l1_ratios, alphas)
@@ -1974,6 +1996,7 @@ class LinearModelCV(MultiOutputLinearModel, ABC):
             self.alphas_ = np.asarray(alphas[0])
 
         # Refit the model with the parameters selected
+        X, y = _set_order(X, y, order="F")
         common_params = {
             name: value
             for name, value in self.get_params().items()
@@ -2255,8 +2278,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training data. Pass directly as Fortran-contiguous data
-            to avoid unnecessary memory duplication. If y is mono-output,
+            Training data. If y is mono-output,
             X can be sparse. Note that large sparse matrices and arrays
             requiring `int64` indices are not accepted.
 
@@ -2533,8 +2555,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training data. Pass directly as Fortran-contiguous data
-            to avoid unnecessary memory duplication. If y is mono-output,
+            Training data. If y is mono-output,
             X can be sparse. Note that large sparse matrices and arrays
             requiring `int64` indices are not accepted.
 
