@@ -21,6 +21,7 @@ from sklearn.utils import _align_api_if_sparse, deprecated
 from sklearn.utils._array_api import (
     _max_precision_float_dtype,
     get_namespace_and_device,
+    move_to,
 )
 from sklearn.utils._param_validation import (
     Interval,
@@ -158,13 +159,15 @@ def contingency_matrix(
     if eps is not None and sparse:
         raise ValueError("Cannot set 'eps' when sparse=True")
 
-    classes, class_idx = np.unique(labels_true, return_inverse=True)
-    clusters, cluster_idx = np.unique(labels_pred, return_inverse=True)
+    xp, _, device = get_namespace_and_device(labels_true, labels_pred)
+    classes, class_idx = xp.unique_inverse(labels_true)
+    clusters, cluster_idx = xp.unique_inverse(labels_pred)
     n_classes = classes.shape[0]
     n_clusters = clusters.shape[0]
     # Using coo_matrix to accelerate simple histogram calculation,
     # i.e. bins are consecutive integers
     # Currently, coo_matrix is faster than histogram2d for simple cases
+    class_idx, cluster_idx = move_to(class_idx, cluster_idx, xp=np, device="cpu")
     contingency = sp.coo_array(
         (np.ones(class_idx.shape[0]), (class_idx, cluster_idx)),
         shape=(n_classes, n_clusters),
@@ -175,7 +178,7 @@ def contingency_matrix(
         contingency = contingency.tocsr()
         contingency.sum_duplicates()
     else:
-        contingency = contingency.toarray()
+        contingency = xp.asarray(contingency.toarray(), device=device)
         if eps is not None:
             # don't use += as contingency is integer
             contingency = contingency + eps
