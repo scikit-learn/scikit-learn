@@ -604,6 +604,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         sample_weight,
         coef_init,
         intercept_init,
+        _skip_on_zero_weights=False,
     ):
         first_call = not hasattr(self, "classes_")
         X, y = validate_data(
@@ -630,11 +631,12 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
 
         # Skip check that validation weights are not all zero when `early_stopping` is
         # set to True as `_make_validation_split` will raise a more informative error.
+        # When called via partial_fit, allow all-zero weights and handle them below.
         sample_weight = _check_sample_weight(
             sample_weight,
             X,
             dtype=X.dtype,
-            allow_all_zero_weights=self.early_stopping,
+            allow_all_zero_weights=self.early_stopping or _skip_on_zero_weights,
         )
 
         if getattr(self, "coef_", None) is None or coef_init is not None:
@@ -654,6 +656,11 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         self._loss_function_ = self._get_loss_function(loss)
         if not hasattr(self, "t_"):
             self.t_ = 1.0
+
+        # Treat an all-zero sample_weight batch as a no-op when called via
+        # partial_fit so that streaming workflows can skip batches with zero weights.
+        if _skip_on_zero_weights and np.all(sample_weight == 0):
+            return self
 
         # delegate to concrete training procedure
         if n_classes > 2:
@@ -905,6 +912,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             sample_weight=sample_weight,
             coef_init=None,
             intercept_init=None,
+            _skip_on_zero_weights=True,
         )
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -1500,6 +1508,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         sample_weight,
         coef_init,
         intercept_init,
+        _skip_on_zero_weights=False,
     ):
         first_call = getattr(self, "coef_", None) is None
         X, y = validate_data(
@@ -1517,7 +1526,13 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
         n_samples, n_features = X.shape
 
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        # When called via partial_fit, allow all-zero weights and handle them below.
+        sample_weight = _check_sample_weight(
+            sample_weight,
+            X,
+            dtype=X.dtype,
+            allow_all_zero_weights=_skip_on_zero_weights,
+        )
 
         # Allocate datastructures from input arguments
         if first_call:
@@ -1531,6 +1546,13 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         if self.average > 0 and getattr(self, "_average_coef", None) is None:
             self._average_coef = np.zeros(n_features, dtype=X.dtype, order="C")
             self._average_intercept = np.zeros(1, dtype=X.dtype, order="C")
+
+        # Treat an all-zero sample_weight batch as a no-op when called via
+        # partial_fit so that streaming workflows can skip batches with zero weights.
+        if _skip_on_zero_weights and np.all(sample_weight == 0):
+            if not hasattr(self, "t_"):
+                self.t_ = 1.0
+            return self
 
         self._fit_regressor(X, y, alpha, loss, learning_rate, sample_weight, max_iter)
 
@@ -1575,6 +1597,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             sample_weight=sample_weight,
             coef_init=None,
             intercept_init=None,
+            _skip_on_zero_weights=True,
         )
 
     def _fit(
@@ -2422,6 +2445,7 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
         sample_weight,
         coef_init,
         offset_init,
+        _skip_on_zero_weights=False,
     ):
         first_call = getattr(self, "coef_", None) is None
         X = validate_data(
@@ -2437,8 +2461,13 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
 
         n_features = X.shape[1]
 
-        # Allocate datastructures from input arguments
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        # When called via partial_fit, allow all-zero weights and handle them below.
+        sample_weight = _check_sample_weight(
+            sample_weight,
+            X,
+            dtype=X.dtype,
+            allow_all_zero_weights=_skip_on_zero_weights,
+        )
 
         # We use intercept = 1 - offset where intercept is the intercept of
         # the SGD implementation and offset is the offset of the One-Class SVM
@@ -2465,6 +2494,11 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
         self._loss_function_ = self._get_loss_function(loss)
         if not hasattr(self, "t_"):
             self.t_ = 1.0
+
+        # Treat an all-zero sample_weight batch as a no-op when called via
+        # partial_fit so that streaming workflows can skip batches with zero weights.
+        if _skip_on_zero_weights and np.all(sample_weight == 0):
+            return self
 
         # delegate to concrete training procedure
         self._fit_one_class(
@@ -2510,6 +2544,7 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
             sample_weight=sample_weight,
             coef_init=None,
             offset_init=None,
+            _skip_on_zero_weights=True,
         )
 
     def _fit(
