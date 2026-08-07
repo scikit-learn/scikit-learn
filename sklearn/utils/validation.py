@@ -991,7 +991,7 @@ def check_array(
             else:
                 null_counts = array_df.null_count().row(0)
                 has_unsafe_nulls = any(
-                    null_count > 0
+                    int(null_count) > 0
                     for nw_dtype, null_count in zip(nw_dtypes, null_counts)
                     if not nw_dtype.is_float()
                 )
