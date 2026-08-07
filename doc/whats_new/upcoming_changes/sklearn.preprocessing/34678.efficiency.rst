@@ -1,0 +1,6 @@
+- :class:`preprocessing.OneHotEncoder`, :class:`preprocessing.OrdinalEncoder`,
+  :class:`preprocessing.TargetEncoder`, and :class:`preprocessing.LabelEncoder`
+  are now much faster to fit and transform pandas categorical and string
+  columns, by operating directly on the pandas ``Series`` instead of first
+  converting it to a NumPy object array.
+  By :user:`Arthur Lacote <cakedev0>`.
