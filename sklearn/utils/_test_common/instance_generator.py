@@ -394,10 +394,10 @@ INIT_PARAMS = {
     NuSVR: dict(max_iter=-1),
     OneClassSVM: dict(max_iter=-1),
     OneHotEncoder: dict(handle_unknown="ignore"),
-    OneVsOneClassifier: dict(estimator=LogisticRegression(alpha=1e-4)),
-    OneVsRestClassifier: dict(estimator=LogisticRegression(alpha=1e-2)),
+    OneVsOneClassifier: dict(estimator=LogisticRegression()),
+    OneVsRestClassifier: dict(estimator=LogisticRegression()),
     OrthogonalMatchingPursuitCV: dict(cv=3),
-    OutputCodeClassifier: dict(estimator=LogisticRegression(alpha=0.1)),
+    OutputCodeClassifier: dict(estimator=LogisticRegression()),
     PassiveAggressiveClassifier: dict(max_iter=5),
     PassiveAggressiveRegressor: dict(max_iter=5),
     Perceptron: dict(max_iter=5),
@@ -510,7 +510,7 @@ INIT_PARAMS = {
     # TruncatedSVD doesn't run with n_components = n_features
     TruncatedSVD: dict(n_iter=5, n_components=1),
     TSNE: dict(perplexity=2),
-    TunedThresholdClassifierCV: dict(estimator=LogisticRegression(alpha=1e-2), cv=3),
+    TunedThresholdClassifierCV: dict(estimator=LogisticRegression(), cv=3),
     TweedieRegressor: dict(max_iter=5),
     VotingClassifier: dict(
         estimators=[
@@ -645,26 +645,25 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     LocallyLinearEmbedding: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     LogisticRegression: {
         "check_sample_weight_equivalence_on_dense_data": [
-            dict(alpha=1e-4, solver="lbfgs"),
-            dict(alpha=1e-4, solver="liblinear"),
-            dict(alpha=1e-4, solver="newton-cg"),
-            dict(alpha=1e-4, solver="newton-cholesky"),
-            dict(alpha=1e-4, solver="newton-cholesky", class_weight="balanced"),
+            dict(solver="lbfgs"),
+            dict(solver="liblinear"),
+            dict(solver="newton-cg"),
+            dict(solver="newton-cholesky"),
+            dict(solver="newton-cholesky", class_weight="balanced"),
         ]
     },
     LogisticRegressionCV: {
         "check_sample_weight_equivalence": [
-            dict(solver="lbfgs", use_legacy_attributes=False, alphas=10),
-            dict(solver="newton-cholesky", use_legacy_attributes=False, alphas=10),
+            dict(solver="lbfgs", use_legacy_attributes=False),
+            dict(solver="newton-cholesky", use_legacy_attributes=False),
             dict(
                 solver="newton-cholesky",
                 class_weight="balanced",
                 use_legacy_attributes=False,
-                alphas=10,
             ),
         ],
         "check_sample_weight_equivalence_on_sparse_data": [
-            dict(solver="liblinear", alphas=10),
+            dict(solver="liblinear"),
         ],
     },
     MDS: {"check_dict_unchanged": dict(max_iter=5, n_components=1, n_init=2)},

@@ -2068,7 +2068,7 @@ class RandomizedSearchCV(BaseSearchCV):
     >>> clf = RandomizedSearchCV(logistic, distributions, random_state=0)
     >>> search = clf.fit(iris.data, iris.target)
     >>> search.best_params_
-    {'alpha': np.float64(0.0103...), 'l1_ratio': 0}
+    {'alpha': np.float64(0.0335...), 'l1_ratio': 1}
     """
 
     _parameter_constraints: dict = {

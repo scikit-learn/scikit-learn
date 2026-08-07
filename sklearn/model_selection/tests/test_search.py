@@ -1217,7 +1217,7 @@ def test_random_search_cv_results_multimetric():
     n_splits = 3
     n_search_iter = 30
 
-    params = dict(alpha=np.logspace(-5, -1, 30))
+    params = dict(alpha=np.logspace(4, -1, 3))
     for refit in (True, False):
         random_searches = []
         for scoring in (("accuracy", "recall"), "accuracy", "recall"):

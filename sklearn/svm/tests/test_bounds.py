@@ -34,8 +34,8 @@ def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=1.0):
     )
     params = dict(fit_intercept=fit_intercept, intercept_scaling=intercept_scaling)
     if loss == "log":
-        clf = LogisticRegression(alpha=1e-4, l1_ratio=1, solver="liblinear", **params)
-        clf.alpha = 1 / (min_c * X.shape[0])
+        clf = LogisticRegression(l1_ratio=1, solver="liblinear", **params)
+        clf.alpha = 1 / min_c
     else:
         clf = LinearSVC(loss="squared_hinge", penalty="l1", dual=False, **params)
         clf.C = min_c
@@ -45,7 +45,7 @@ def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=1.0):
     assert (np.asarray(clf.intercept_) == 0).all()
 
     if loss == "log":
-        clf.alpha = 1 / (min_c * 1.01 * X.shape[0])
+        clf.alpha = 1 / (min_c * 1.01)
     else:
         clf.C = min_c * 1.01
     clf.fit(X, y)

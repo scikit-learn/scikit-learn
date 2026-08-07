@@ -271,7 +271,7 @@ def _logistic_regression_path(
         multiplies the penalty term (both L1 and L2). In this case, values must be in
         the range `[0.0, inf)`.
         If `alphas` is an integer, then a grid of `alpha` values is chosen on a
-        logarithmic scale, with between 1e-7 and 1e2.
+        logarithmic scale between 1e-4 and 1e4.
 
     Cs : int or array-like of shape (n_alphas,), default=10
 
@@ -407,12 +407,12 @@ def _logistic_regression_path(
     use_alpha = True  # TODO(1.14): remove
     if Cs is None:
         if isinstance(alphas, numbers.Integral):
-            alphas = np.logspace(2, -7, alphas)  # descending
+            alphas = np.logspace(4, -4, alphas)  # decreasing
         Cs = [None] * len(alphas)  # to ease ignoring it
     else:
         use_alpha = False
         if isinstance(Cs, numbers.Integral):
-            Cs = np.logspace(-4, 4, Cs)
+            Cs = np.logspace(-4, 4, Cs)  # increasing
         alphas = [None] * len(Cs)  # to ease ignoring it
 
     solver = _check_solver(solver, penalty, dual)
@@ -483,12 +483,13 @@ def _logistic_regression_path(
             )
         # classes[1] is the "positive label"
         mask = move_to(y == classes[1], xp=xp, device=device_)
-        y_bin = xp.ones(y.shape, dtype=X.dtype, device=device_)
         if solver == "liblinear":
+            y_bin = np.ones(y.shape, dtype=np.float64)
             y_bin[~mask] = -1.0
         else:
             # HalfBinomialLoss, used for those solvers, represents y in [0, 1] instead
             # of in [-1, 1].
+            y_bin = xp.ones(y.shape, dtype=X.dtype, device=device_)
             y_bin[~mask] = 0.0
     else:
         # All solvers capable of a multinomial need LabelEncoder, not LabelBinarizer,
@@ -509,17 +510,15 @@ def _logistic_regression_path(
                 dtype=_matching_numpy_dtype(X, xp=xp),
             )
 
-    # TODO(1.14): Modify or remove this note with the deprecation/removal of C and Cs.
     # IMPORTANT NOTE:
     # All solvers relying on LinearModelLoss need to scale the penalty with n_samples
     # or the sum of sample weights because the implemented logistic regression
     # objective here is (unfortunately)
-    #     C * sum(pointwise_loss) + penalty
-    # or equivalently
-    #    mean(pointwise_loss) + 1/(n*C) * penalty
+    #    mean(pointwise_loss) + alpha/n_samples * penalty
     # instead of (as LinearModelLoss does)
     #     mean(pointwise_loss) + alpha * penalty
-    # At least for solver in ["lbfgs", "newton-cg", "newton-cholesky"]
+    # TODO(1.14): Remove the following comment
+    # At least for solver in ["lbfgs", "newton-..."]
     # this needs to be calculated after sample_weight is multiplied by
     # class_weight. It is even tested that passing class_weight is equivalent to
     # passing sample_weights according to class_weight.
@@ -610,14 +609,9 @@ def _logistic_regression_path(
     callback_metadata = (
         {"sample_weight": sample_weight} if sample_weight is not None else None
     )
-    alphas_numerical = []
     for i, (alpha, C) in enumerate(zip(alphas, Cs)):
         if use_alpha:
-            if alpha == "1/n_samples":
-                l2_reg_strength = 1.0 / sw_sum_original
-            else:
-                l2_reg_strength = alpha
-            alphas_numerical.append(l2_reg_strength)
+            l2_reg_strength = alpha / sw_sum_original
         else:
             l2_reg_strength = 1.0 / (C * sw_sum_after_class_weights)
 
@@ -708,7 +702,9 @@ def _logistic_regression_path(
             coef_, intercept_, n_iter_i = _fit_liblinear(
                 X,
                 target,
-                1 / (l2_reg_strength * sw_sum_original) if use_alpha else C,
+                sw_sum_original / sw_sum_after_class_weights / alpha
+                if use_alpha
+                else C,
                 fit_intercept,
                 intercept_scaling,
                 None,
@@ -785,7 +781,8 @@ def _logistic_regression_path(
 
         if is_binary:
             if _is_numpy_namespace(xp):
-                coefs.append(np.asarray(w0.copy(order=coefs_order), dtype=X.dtype))
+                dtype = np.float64 if solver == "liblinear" else X.dtype
+                coefs.append(np.asarray(w0.copy(order=coefs_order), dtype=dtype))
             else:
                 coefs.append(xp.asarray(w0, copy=True, dtype=X.dtype, device=device_))
         else:
@@ -801,7 +798,7 @@ def _logistic_regression_path(
         n_iter[i] = n_iter_i
 
     if use_alpha:
-        alphas = xp.asarray(alphas_numerical, device=device_)
+        alphas = xp.asarray(alphas, device=device_)
         Cs = None
     else:
         alphas = None
@@ -858,8 +855,8 @@ def _log_reg_scoring_path(
         Each of the values in `alphas` describe the regularization strength that
         multiplies the penalty term (both L1 and L2). In this case, values must be in
         the range `[0.0, inf)`.
-        If `alphas` is as an integer, then a grid of `alpha` values is chosen on a
-        logarithmic scale, with between 1e-4 and 1e4.
+        If `alphas` is an integer, then a grid of `alpha` values is chosen on a
+        logarithmic scale between 1e-4 and 1e4.
 
     Cs : int or array-like of shape (n_alphas,), default=10
         Each of the values in Cs describes the inverse of
@@ -1104,8 +1101,8 @@ class LogisticRegression(
     It minimizes the objective function::
 
             1 / n_samples * sum_i logloss(y_i, x_i w)
-            + alpha * l1_ratio * ||w||_1
-            + 0.5 * alpha * (1 - l1_ratio) * ||w||^2_2
+            + alpha * l1_ratio / n_samples * ||w||_1
+            + 0.5 * alpha * (1 - l1_ratio) / n_samples * ||w||^2_2
 
     If you are interested in controlling the L1 and L2 penalty
     separately, keep in mind that this is equivalent to::
@@ -1153,23 +1150,19 @@ class LogisticRegression(
            `l1_ratio=1` for `penalty='l1'`, `l1_ratio` set to any float between 0 and 1
            for `penalty='elasticnet'`, and `C=np.inf` for `penalty=None`.
 
-    alpha : float, str, default='1/n_samples'
+    alpha : float, str, default=1.0
         Regularization strength that multiplies the penalty term (both L1 and L2).
         ``alpha = 0`` is equivalent to unpenalized logistic regression. In this case,
         the design matrix `X` must have full column rank (no collinearities).
         Values of `alpha` must be in the range `[0.0, inf)`.
-        If set to `'1/n_samples'`, it will use
-
-        - `alpha=1 / X.shape[0]` if `samples_weight` is None.
-        - `alpha=1 / np.sum(sample_weight)` otherwise.
 
         .. warning::
            In order to already use `alpha` during the deprecation period of `C`, just
            set `alpha` explicitly and don't change `C` (leave `C` at its default).
            If `C` is set to any value other than its default, `C` will be used and
            `alpha` is ignored.
-           Note that the new default of `alpha='1/n_samples'` gives the same results
-           as the old default `C=1.0` as long as `class_weight=None`.
+           Note that the new `alpha` is equivalent to `C=1/alpha` as long as
+           `class_weight=None`.
 
     C : float, default=1.0
         Inverse of regularization strength; must be a positive float.
@@ -1182,15 +1175,8 @@ class LogisticRegression(
         .. deprecated:: 1.10
            `C` was deprecated in version 1.10 and will be removed in 1.14.
            Use `alpha` instead.
-           Note that the new default of `alpha='1/n_samples'` gives the same results
-           as the old default `C=1.0` as long as `class_weight=None`. The
-           correspondence between `C` and `alpha` is
-
-           - `alpha / (C * n_samples)` if `sample_weight` is None
-           - `alpha / (C * np.sum(n_samples))` otherwise
-
-           Starting with version 1.12, an informative deprecation warning will be
-           raised if `C` is used.
+           Note that the new `alpha` is equivalent to `C=1/alpha` as long as
+           `class_weight=None`.
 
     l1_ratio : float, default=0.0
         The Elastic-Net mixing parameter, with `0 <= l1_ratio <= 1`. Setting
@@ -1400,12 +1386,12 @@ class LogisticRegression(
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.linear_model import LogisticRegression
     >>> X, y = load_iris(return_X_y=True)
-    >>> clf = LogisticRegression(alpha=1e-4).fit(X, y)
+    >>> clf = LogisticRegression(solver="newton-cholesky").fit(X, y)
     >>> clf.predict(X[:2, :])
     array([0, 0])
     >>> clf.predict_proba(X[:2, :])
-    array([[9.99...e-01, 4...e-04, 6...e-22],
-           [9.98...e-01, 1...e-03, 2...e-20]])
+    array([[9.81...e-01, 1.8...e-02, 1...e-08],
+           [9.71...e-01, 2.8...e-02, 3...e-08]])
     >>> clf.score(X, y)
     0.98
 
@@ -1419,10 +1405,7 @@ class LogisticRegression(
             None,
             Hidden(StrOptions({"deprecated"})),
         ],
-        "alpha": [
-            Interval(Real, 0.0, None, closed="left"),
-            StrOptions({"1/n_samples"}),
-        ],
+        "alpha": [Interval(Real, 0.0, None, closed="left")],
         "C": [
             Interval(Real, 0, None, closed="right"),
             Hidden(StrOptions({"deprecated"})),
@@ -1449,7 +1432,7 @@ class LogisticRegression(
         self,
         penalty="deprecated",
         *,
-        alpha="1/n_samples",
+        alpha=1.0,
         C="deprecated",
         l1_ratio=0.0,
         dual=False,
@@ -1535,18 +1518,13 @@ class LogisticRegression(
         depr_msg = (
             "'C' was deprecated in version 1.10 and will be removed in 1.14. "
             "Use alpha instead. "
-            "Note that the new default of alpha='1/n_samples' gives the same results "
-            "as the old default C=1.0 as long as class_weight=None. The "
-            "correspondence between C and alpha is\n"
-            "    - alpha / (C * n_samples) if sample_weight is None\n"
-            "    - alpha / (C * np.sum(n_samples)), otherwise"
-            # TODO How to avoid this warning
+            "Note that setting the new parameter alpha=1/C gives the same results as "
+            "the old C as long as class_weight=None. "
+            "You can avoid this warning by setting alpha and leaving C to its default."
         )
         if self.C != "deprecated":
-            if self.alpha == "1/n_samples":  # the default alpha
-                # TODO(1.12): raise deprecation warning
-                # warnings.warn(depr_msg, FutureWarning)
-                pass
+            if self.alpha == 1.0:  # alpha at its default
+                warnings.warn(depr_msg, FutureWarning)
             else:
                 msg = "You must set either 'alpha' or the deprecated 'C', but not both."
                 raise ValueError(msg)
@@ -1632,7 +1610,7 @@ class LogisticRegression(
 
         if self.penalty is None:
             # if not default values
-            if self.C != "deprecated" or self.alpha != "1/n_samples":
+            if self.C != "deprecated" or self.alpha != 1.0:
                 warnings.warn(
                     "Setting penalty=None will ignore the alpha, C and l1_ratio "
                     "parameters",
@@ -1676,47 +1654,6 @@ class LogisticRegression(
                     "solver or rescale the input X."
                 )
 
-            if C_ is None:
-                sample_weight = _check_sample_weight(
-                    sample_weight, X, dtype=X.dtype, copy=True, ensure_same_device=True
-                )
-                if self.class_weight is not None:
-                    le = LabelEncoder().fit(self.classes_)
-                    class_weight_ = compute_class_weight(
-                        self.class_weight,
-                        classes=self.classes_,
-                        y=y,
-                        sample_weight=sample_weight,
-                    )
-                    class_weight_ = xp.asarray(
-                        class_weight_[le.transform(y)], dtype=X.dtype, device=device_
-                    )
-                    sw_sum = float(xp.sum(class_weight_ * sample_weight))
-                else:
-                    sw_sum = float(xp.sum(sample_weight))
-
-                if alpha_ == "1/n_samples":
-                    C_ = 1.0
-                else:
-                    C_ = 1 / (alpha_ * sw_sum)
-
-            self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
-                X,
-                y,
-                C_,
-                self.fit_intercept,
-                self.intercept_scaling,
-                self.class_weight,
-                penalty,
-                self.dual,
-                self.verbose,
-                self.max_iter,
-                self.tol,
-                self.random_state,
-                sample_weight=sample_weight,
-            )
-            return self
-
         if solver in ["sag", "saga"]:
             max_squared_sum = row_norms(X, squared=True).max()
         else:
@@ -1757,11 +1694,13 @@ class LogisticRegression(
             verbose=self.verbose,
             solver=solver,
             max_iter=self.max_iter,
+            dual=self.dual,
             class_weight=self.class_weight,
             check_input=False,
             random_state=self.random_state,
             coef=warm_start_coef,
             penalty=penalty,
+            intercept_scaling=self.intercept_scaling,
             max_squared_sum=max_squared_sum,
             sample_weight=sample_weight,
             n_threads=n_threads,
@@ -1886,22 +1825,22 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
     Parameters
     ----------
-    alphas : int or array-like of shape (n_alphas,), default=None
+    alphas : int or array-like of shape (n_alphas,), default=10
         Each of the values in `alphas` describe the regularization strength that
         multiplies the penalty term (both L1 and L2). In this case, values must be in
         the range `[0.0, inf)`.
-        If `alphas` is as an integer, then a grid of `alpha` values is chosen on a
-        logarithmic scale between 1e-7 and 1e2. If the computed attribute `alpha_` is
-        on the boundary (either 1e-7 or 1e2), it might be a good idea to use a larger
+        If `alphas` is an integer, then a grid of `alpha` values is chosen on a
+        logarithmic scale between 1e-4 and 1e4. If the computed attribute `alpha_` is
+        on the boundary (either 1e-4 or 1e4), it might be a good idea to use a larger
         search space.
 
         .. warning::
-           During the deprecation period of `Cs`, you need to set `alphas` explicitly
-           in order to use it. If you do not set `alphas` to some value, the value of
-           `Cs` will be used.
-           Also note that the default of `alphas` will change from `None` to `10`
-           in version 1.12. This creates a grid of 10 values between 1e2 and 1e-7,
-           equally spaced on the log scale.
+           In order to already use `alphas` during the deprecation period of `Cs`, just
+           set `alphas` explicitly and don't change `Cs` (leave `Cs` at its default).
+           If `Cs` is set to any value other than its default, `Cs` will be used and
+           `alphas` is ignored.
+           Note that the new `alphas` is equivalent to `Cs=1/alphas` (for array-likes
+           of floats) as long as `class_weight=None`.
 
     Cs : int or list of floats, default=10
         Each of the values in Cs describes the inverse of regularization
@@ -1912,11 +1851,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         .. deprecated:: 1.10
            `Cs` was deprecated in version 1.10 and will be removed in 1.14.
-           For integers, use `alphas=Cs`.
-           For arrays, use `alphas=1/(Cs * n_samples)` or
-           `alphas=1/(Cs * np.sum(sample_weight))` instead.
-           The new default will be `alphas=10` (automatic grid of 10 values between
-           1e2 and 1e-7).
+           For integers, use `alphas=Cs` instead.
+           For array-likes, use `alphas=1/Cs` instead.
+           Note that the new `alphas` is equivalent to `Cs=1/alphas` (for array-likes
+           of floats) as long as `class_weight=None`.
 
     l1_ratios : array-like of shape (n_l1_ratios), default=None
         Floats between 0 and 1 passed as Elastic-Net mixing parameter (scaling between
@@ -2231,13 +2169,14 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     ...     use_legacy_attributes=False,
     ...     l1_ratios=(0,),
     ...     scoring="neg_log_loss",
+    ...     solver="newton-cholesky",
     ... ).fit(X, y)
     >>> clf.predict(X[:2, :])
     array([0, 0])
     >>> clf.predict_proba(X[:2, :]).shape
     (2, 3)
     >>> clf.score(X, y)
-    -0.043...
+    -0.041...
     """
 
     # TODO(1.11): remove this when sample_weight as positional arg is removed
@@ -2250,7 +2189,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
     _parameter_constraints.update(
         {
-            "alphas": [Interval(Integral, 1, None, closed="left"), "array-like", None],
+            "alphas": [Interval(Integral, 1, None, closed="left"), "array-like"],
             "Cs": [
                 Interval(Integral, 1, None, closed="left"),
                 "array-like",
@@ -2276,7 +2215,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     def __init__(
         self,
         *,
-        alphas=None,
+        alphas=10,
         Cs="deprecated",
         l1_ratios="warn",
         fit_intercept=True,
@@ -2345,15 +2284,15 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         depr_msg = (
             "'Cs' was deprecated in version 1.10 and will be removed in 1.14. "
-            "For integers, use alphas=Cs. "
-            "For arrays, use `alphas=1/(Cs * n_samples)` or "
-            "alphas=1/(Cs * np.sum(sample_weight))` instead. "
-            "The new default will be alpha=10 (automatic grid of 10 values "
-            "between 1e2 and 1e-7) as of version 1.12."
+            "For integers, use alphas=Cs instead. "
+            "For array-likes, use `alphas=1/Cs` instead. "
+            "Note that the new `alphas` is equivalent to `Cs=1/alphas` "
+            "(for array-likes of floats) as long as `class_weight=None`."
         )
         if not (isinstance(self.Cs, str) and self.Cs == "deprecated"):
-            if self.alphas is None:
-                warnings.warn("You are using 'Cs'. " + depr_msg, FutureWarning)
+            if isinstance(self.alphas, numbers.Integral) and self.alphas == 10:
+                # alphas at its default
+                warnings.warn(depr_msg, FutureWarning)
                 alphas_ = None
                 Cs_ = self.Cs
             else:
@@ -2361,17 +2300,9 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                     "You must set either 'alphas' or the deprecated 'Cs', but not both."
                 )
                 raise ValueError(msg)
-        elif isinstance(self.Cs, str) and self.Cs == "deprecated":
-            if self.alphas is None:
-                warnings.warn(depr_msg, FutureWarning)
-                Cs_ = 10  # the old default
-                alphas_ = None
-            else:
-                alphas_ = self.alphas
-                Cs_ = None
         else:
             alphas_ = self.alphas
-            Cs_ = self.Cs
+            Cs_ = None
 
         if isinstance(self.l1_ratios, str) and self.l1_ratios == "warn":
             l1_ratios = None
@@ -2625,12 +2556,12 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         if Cs[0] is None:
             use_alpha = True
             self.alphas_ = alphas[0]  # the same for all folds and l1_ratios
-            self._Cs_ = 1 / (np.asarray(self.alphas_) * sw_sum)
+            self._Cs_ = 1 / np.asarray(self.alphas_)
             n_alphas = len(self.alphas_)
         else:
             use_alpha = False
             self._Cs_ = Cs[0]  # the same for all folds and l1_ratios
-            self.alphas_ = 1 / (np.asarray(self._Cs_) * sw_sum)
+            self.alphas_ = 1 / np.asarray(self._Cs_)
             n_alphas = len(self._Cs_)
 
         if is_binary:
@@ -2762,7 +2693,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 self.intercept_ = w[:, -1]
 
         if use_alpha:
-            self._C_ = 1 / (np.asarray(self.alpha_) * sw_sum)
+            self._C_ = 1 / np.asarray(self.alpha_)
             self.alpha_ = float(self.alpha_[0])
         else:
             self._C_ = np.asarray(self._C_)
@@ -2928,13 +2859,17 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         tags.array_api_support = False
         return tags
 
-    @deprecated("C_ is deprecated, use alpha_ instead.")  # type: ignore[prop-decorator]
+    @deprecated(  # type: ignore[prop-decorator]
+        "C_ is deprecated and will be removed in 1.14, use alpha_ instead."
+    )
     @property
     def C_(self):
         """Best penalty parameter C."""
         return self._C_
 
-    @deprecated("Cs_ is deprecated, use alphas_ instead.")  # type: ignore[prop-decorator]
+    @deprecated(  # type: ignore[prop-decorator]
+        "Cs_ is deprecated and will be removed in 1.14, use alphas_ instead."
+    )
     @property
     def Cs_(self):
         """Values of C to CV search over."""

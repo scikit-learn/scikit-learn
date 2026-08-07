@@ -69,7 +69,7 @@ from sklearn.utils.fixes import CSR_CONTAINERS
         # This is a known limitation, see:
         # https://github.com/scikit-learn/scikit-learn/issues/21305
         pytest.param(
-            LogisticRegression(alpha=1e-4, l1_ratio=0.5, solver="saga", tol=1e-15),
+            LogisticRegression(l1_ratio=0.5, solver="saga", tol=1e-15),
             marks=pytest.mark.xfail(reason="Missing importance sampling scheme"),
         ),
         LogisticRegressionCV(
@@ -217,7 +217,7 @@ def test_linear_model_regressor_coef_shape(Regressor, ndim):
     ["Classifier", "params"],
     [
         (LinearSVC, {}),
-        (LogisticRegression, {"alpha": 1e-4}),
+        (LogisticRegression, {}),
         (
             LogisticRegressionCV,
             {
