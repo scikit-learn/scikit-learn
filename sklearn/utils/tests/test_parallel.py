@@ -17,7 +17,12 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils.fixes import _IS_WASM
-from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.parallel import (
+    Parallel,
+    _FastThreadedParallel,
+    delayed,
+    parallel_map,
+)
 
 
 def get_working_memory():
@@ -195,3 +200,77 @@ def test_filter_warning_propagates_no_side_effect_with_loky_backend():
             joblib.delayed(warnings.warn)("Convergence warning", ConvergenceWarning)
             for _ in range(10)
         )
+
+
+def square(x: int) -> int:
+    return x * x
+
+
+_THREADING_PARAMS = [
+    {"backend": "threading"},
+    {"require": "sharedmem"},
+    {"prefer": "threads"},
+]
+
+
+@pytest.mark.parametrize(
+    "backend_params",
+    _THREADING_PARAMS,
+)
+@pytest.mark.parametrize(
+    "return_as_params", [{}, {"return_as": "list"}, {"return_as": "generator"}]
+)
+def test_thread_fast_path(
+    backend_params: dict[str, str], return_as_params: dict[str, str]
+) -> None:
+    """When backend is threaded, and ``n_jobs > 1``, use fast path."""
+    par = Parallel(2, **backend_params, **return_as_params)
+    assert isinstance(par, _FastThreadedParallel)
+    result = par(delayed(square)(x) for x in [3, 5])
+    if return_as_params.get("return_as") == "generator":
+        assert not isinstance(result, list)
+        list_result = list(result)
+    else:
+        assert isinstance(result, list)
+        list_result = result
+    assert list_result == [9, 25]
+
+
+@pytest.mark.parametrize(
+    "backend_params",
+    _THREADING_PARAMS,
+)
+def test_thread_no_fast_path_single_threaded(backend_params: dict[str, str]):
+    """
+    When ``n_jobs == 1``, normal ``joblib.Parallel`` is used since that gives
+    us fast sequential execution.
+    """
+    par = Parallel(1, **backend_params)
+    assert not isinstance(par, _FastThreadedParallel)
+    assert par(delayed(square)(x) for x in [1, 3]) == [1, 9]
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"backend": "somebackend", "require": "sharedmem"},
+        {"backend": "somebackend", "prefer": "threads"},
+    ],
+)
+def test_thread_no_fast_path_explicit_backend(params: dict[str, str]):
+    """
+    When an explicit non-threading backend is given, the fast path is not used.
+    """
+    # If fast path was used, it wouldn't raise a ValueError...
+    with pytest.raises(ValueError, match="Invalid backend"):
+        Parallel(2, **params)
+
+
+@pytest.mark.parametrize("backend", ["loky", "threading"])
+def test_map(backend: str) -> None:
+    result = parallel_map(square, [1, 2, 3], 2, backend=backend)
+    assert not isinstance(result, list)
+    assert list(result) == [1, 4, 9]
+
+
+# TODO test n_jobs for threads - set by config, passing -1, etc

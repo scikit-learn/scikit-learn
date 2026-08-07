@@ -7,12 +7,19 @@ usage.
 
 import functools
 import warnings
+from concurrent.futures import ThreadPoolExecutor
 from functools import update_wrapper
+from inspect import Signature
+from typing import Any, Callable, Iterable, Literal, TypeVar
 
 import joblib
+import joblib.parallel
 from threadpoolctl import ThreadpoolController
 
 from sklearn._config import config_context, get_config
+
+T = TypeVar("T")
+R = TypeVar("R")
 
 # Global threadpool controller instance that can be used to locally limit the number of
 # threads without looping through all shared libraries every time.
@@ -38,7 +45,61 @@ def _with_config_and_warning_filters(delayed_func, config, warning_filters):
         return delayed_func
 
 
-class Parallel(joblib.Parallel):
+class _FastThreadedParallel:
+    """Similar interface to :class:`joblib.Parallel`, but with lower overhead."""
+
+    def __init__(self, n_jobs: int, return_as: Literal["list", "generator"]):
+        self._return_as = return_as
+        self._n_jobs = n_jobs
+
+    def _map(self, func: Callable[[T], Any], iterable: Iterable[T]) -> Iterable[R]:
+        """Similar to built-in ``map()``, but parallel.
+
+        There is no need to wrap in a ``delayed()``.
+        """
+        assert self._return_as == "generator"
+        config = get_config()
+
+        def run(arg):
+            with config_context(**config):
+                return func(arg)
+
+        with ThreadPoolExecutor(self._n_jobs) as pool:
+            yield from pool.map(run, iterable)
+
+    def __call__(self, iterable, _unwrap=False):
+        config = get_config()
+
+        def run(params):
+            f, args, kwargs = params
+            with config_context(**config):
+                # Undo unnecessary wrapping done by delayed():
+                f = f.function
+
+                return f(*args, **kwargs)
+
+        # For warnings, on free-threaded Python this already copies contextvars
+        # on thread startup which is how that is controlled, so it works
+        # automatically.
+        pool = ThreadPoolExecutor(self._n_jobs)
+        result = pool.map(run, iterable)
+        if self._return_as == "list":
+            with pool:
+                return list(result)
+        elif self._return_as == "generator":
+
+            def _gen():
+                try:
+                    yield from result
+                finally:
+                    pool.shutdown()
+
+            return _gen()
+        else:
+            assert False, "shouldn't be reached"  # pragma: nocover
+
+
+class _JoblibParallel(joblib.Parallel):
     """Tweak of :class:`joblib.Parallel` that propagates the scikit-learn configuration.
 
     This subclass of :class:`joblib.Parallel` ensures that the active configuration
@@ -50,6 +111,15 @@ class Parallel(joblib.Parallel):
 
     .. versionadded:: 1.3
     """
+
+    def _map(self, func: Callable[[T], R], iterable: Iterable[T]) -> Iterable[R]:
+        """Similar to built-in ``map()``, but parallel.
+
+        There is no need to wrap in a ``delayed()``.
+        """
+        assert self.return_as == "generator"
+        delayed_func = delayed(func)
+        return self(delayed_func(args) for args in iterable)
 
     def __call__(self, iterable):
         """Dispatch the tasks and return the results.
@@ -89,6 +159,114 @@ class Parallel(joblib.Parallel):
             for delayed_func, args, kwargs in iterable
         )
         return super().__call__(iterable_with_config_and_warning_filters)
+
+
+def Parallel(*args, **kwargs) -> _FastThreadedParallel | _JoblibParallel:
+    """Like :class:`joblib.Parallel` but propagates the scikit-learn configuration.
+
+    May use a faster implementation when a threaded backend is requested.
+
+    .. versionadded:: 1.3
+
+    .. versionchanged:: 1.10
+       Now a function, can return a fast-path implementation for threaded use.
+
+    Parameters
+    ----------
+
+    *args : params
+        Constructor parameters for :class:`joblib.Parallel`.
+
+    **kwargs : params
+        Constructor parameters for :class:`joblib.Parallel`.
+
+    Returns
+    -------
+    object similar to :class:`joblib.Parallel`
+        Might be actual :class:`joblib.Parallel`, or a faster implementation
+        for threaded usage.
+    """
+    signature = Signature.from_callable(joblib.Parallel.__init__).bind(
+        None, *args, **kwargs
+    )
+    signature.apply_defaults()
+    arguments = {
+        key: value.default_value if hasattr(value, "default_value") else value
+        for (key, value) in signature.arguments.items()
+    }
+
+    # TODO expose current config in joblib as semi-public API, so we don't rely
+    # on implementation details.
+    default_parallel_config = {
+        key: value.default_value if hasattr(value, "default_value") else value
+        for (key, value) in joblib.parallel.default_parallel_config.items()
+    }
+    config = getattr(joblib.parallel._backend, "config", default_parallel_config)
+
+    backend = arguments["backend"] or config["backend"]
+
+    n_jobs = arguments["n_jobs"]
+    if n_jobs is None:
+        n_jobs = config["n_jobs"]
+    n_jobs = joblib.parallel.effective_n_jobs(arguments["n_jobs"])
+
+    is_threaded = backend == "threading" or (
+        backend is None
+        and (arguments["prefer"] == "threads" or arguments["require"] == "sharedmem")
+    )
+    if (
+        is_threaded
+        # Make sure only supported arguments are being passed in:
+        and arguments["return_as"] in ("list", "generator")
+        and arguments["timeout"] is None
+        # No point in threading if there is only one thread, joblib will handle
+        # this by using sequential backend.
+        and n_jobs > 1
+    ):
+        return _FastThreadedParallel(n_jobs, arguments["return_as"])
+    else:
+        return _JoblibParallel(*args, **kwargs)
+
+
+def parallel_map(
+    func: Callable[[T], R],
+    iterable: Iterable[T],
+    n_jobs=None,
+    backend=None,
+    prefer=None,
+    require=None,
+) -> Iterable[R]:
+    """Similar to built-in ``map()``, but parallel.
+
+    There is no need to wrap in a ``delayed()``.
+
+    .. versionadded:: 1.10
+
+    Parameters
+    ----------
+    func : callable function
+        Called with each value in the iterable.
+    iterable : an iterable of values
+        Each value will be passed to func.
+    n_jobs : int, default=None
+        The maximum number of concurrently running jobs.
+        See :class:`joblib.Parallel` for details.
+    backend : str, ParallelBackendBase instance or None, default='loky'
+        Specify the parallelization backend implementation.
+        See :class:`joblib.Parallel` for details.
+    prefer : str in {'processes', 'threads'} or None, default=None
+        See :class:`joblib.Parallel` for details.
+    require : 'sharedmem' or None, default=None
+        See :class:`joblib.Parallel` for details.
+
+    Returns
+    -------
+    results : Iterable
+        Results of calling ``func(value)`` for value in the input iterable.
+    """
+    return Parallel(
+        n_jobs=n_jobs, backend=backend, require=require, return_as="generator"
+    )._map(func, iterable)
 
 
 # remove when https://github.com/joblib/joblib/issues/1071 is fixed
