@@ -856,6 +856,29 @@ def test_validate_data_skip_check_array():
         validate_data(no_op)
 
 
+@pytest.mark.parametrize("constructor_name", ["pandas", "polars", "pyarrow"])
+def test_validate_data_skip_check_array_if_dataframe(constructor_name):
+    """``skip_check_array="if-dataframe"`` keeps a dataframe but validates the rest."""
+    iris = datasets.load_iris()
+    df = _convert_container(
+        iris.data, constructor_name, column_names=iris.feature_names
+    )
+
+    class NoOpTransformer(TransformerMixin, BaseEstimator):
+        pass
+
+    no_op = NoOpTransformer()
+
+    # a dataframe is returned untouched...
+    assert validate_data(no_op, df, skip_check_array="if-dataframe") is df
+    # ...while any other array-like is still validated and converted
+    X_array = validate_data(no_op, iris.data.tolist(), skip_check_array="if-dataframe")
+    assert isinstance(X_array, np.ndarray)
+    # an invalid value is rejected
+    with pytest.raises(ValueError, match="skip_check_array must be a bool"):
+        validate_data(no_op, df, skip_check_array="nope")
+
+
 def test_clone_keeps_output_config():
     """Check that clone keeps the set_output config."""
 

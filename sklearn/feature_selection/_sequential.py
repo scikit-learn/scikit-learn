@@ -19,6 +19,7 @@ from sklearn.base import (
 from sklearn.feature_selection._base import SelectorMixin
 from sklearn.metrics import check_scoring, get_scorer_names
 from sklearn.model_selection import check_cv, cross_val_score
+from sklearn.utils import _safe_indexing
 from sklearn.utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
@@ -28,7 +29,11 @@ from sklearn.utils._metadata_requests import (
 )
 from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
 from sklearn.utils._tags import get_tags
-from sklearn.utils.validation import check_is_fitted, validate_data
+from sklearn.utils.validation import (
+    _num_features,
+    check_is_fitted,
+    validate_data,
+)
 
 
 class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
@@ -234,15 +239,21 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             Returns the instance itself.
         """
         _raise_for_params(params, self, "fit")
-        tags = self.__sklearn_tags__()
+        tags = get_tags(self)
+        # Keep dataframes untouched so the underlying estimator receives the
+        # original column dtypes (e.g. categoricals); any other array-like is
+        # validated and converted as usual, with sparse input normalised to a
+        # format that ``_safe_indexing(..., axis=1)`` supports.
+        accept_sparse = ["csr", "csc", "lil"] if tags.input_tags.sparse else False
         X = validate_data(
             self,
             X,
-            accept_sparse="csc",
-            ensure_min_features=2,
+            accept_sparse=accept_sparse,
             ensure_all_finite=not tags.input_tags.allow_nan,
+            ensure_min_features=2,
+            skip_check_array="if-dataframe",
         )
-        n_features = X.shape[1]
+        n_features = _num_features(X)
 
         if self.n_features_to_select == "auto":
             if self.tol is not None:
@@ -316,7 +327,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             candidate_mask[feature_idx] = True
             if self.direction == "backward":
                 candidate_mask = ~candidate_mask
-            X_new = X[:, candidate_mask]
+            X_new = _safe_indexing(X, candidate_mask, axis=1)
             scores[feature_idx] = cross_val_score(
                 estimator,
                 X_new,
@@ -337,6 +348,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         tags = super().__sklearn_tags__()
         tags.input_tags.allow_nan = get_tags(self.estimator).input_tags.allow_nan
         tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
+        # dataframe inputs are forwarded to the sub-estimator with their dtypes
+        tags.input_tags.preserves_dataframe = True
         return tags
 
     def get_metadata_routing(self):
