@@ -6,6 +6,7 @@ from functools import partial
 import numpy as np
 import pytest
 
+from sklearn import config_context
 from sklearn.callback import CallbackSupportMixin, with_callbacks
 from sklearn.callback._callback_context import (
     CallbackContext,
@@ -81,6 +82,7 @@ def test_propagate_callback_context_clean_up():
     assert not hasattr(estimator, "_parent_callback_ctx")
 
 
+@config_context(default_callbacks=[])
 def test_propagate_callback_context_no_callback():
     """Check that no callback is propagated if there's no callback."""
     estimator = MaxIterEstimator()

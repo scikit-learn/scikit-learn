@@ -7,7 +7,6 @@ from unittest import mock
 
 import pytest
 
-from sklearn import set_config
 from sklearn.base import clone
 from sklearn.callback import ProgressBar
 from sklearn.callback.tests._utils import (
@@ -219,15 +218,13 @@ def test_estimator_without_subtasks(capsys):
     assert re.search(r"100%", captured.out)
 
 
-def test_progressbar_by_default(capsys):
+def test_progressbar_by_default(monkeypatch, capsys):
     """Test that the progressbar by default."""
     pytest.importorskip("rich")
 
-    set_config(default_callbacks=("progressbar",))
+    monkeypatch.setattr("sys.ps1", ">>> ", raising=False)
 
     MaxIterEstimator(computation_intensity=0.15).fit()
-
-    set_config(default_callbacks=())
 
     captured = capsys.readouterr()
     assert re.search(r"MaxIterEstimator - fit ━+ 100%", captured.out)

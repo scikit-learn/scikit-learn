@@ -1,6 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import sys
 import time
 from datetime import timedelta
 from numbers import Integral, Real
@@ -10,7 +11,7 @@ from threading import Thread
 from sklearn.callback._callback_context import get_context_path
 from sklearn.callback._transport import close_listener, open_listener, send
 from sklearn.utils._optional_dependencies import check_rich_support
-from sklearn.utils._param_validation import Interval, validate_params
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 
 # Per-fit local queues and monitors, keyed by the run's `root_uuid`. Both are not
 # picklable so they live here rather than on the callback instance. Entries are added in
@@ -32,6 +33,12 @@ class ProgressBar:
     min_duration : float, default=0
         The minimum duration in seconds of a task to show its progress bar.
 
+    show : {'always', 'interactive_only'}, default='always'
+        When the progressbar should be displayed. Possible values are:
+          - 'always': Always show the progressbar.
+          - 'interactive_only': Only show the progressbar in ineractive environments,
+          such as a python shell or a jupyter notebook.
+
     Notes
     -----
     This callback requires rich to be installed.
@@ -41,14 +48,18 @@ class ProgressBar:
         {
             "max_propagation_depth": [Interval(Integral, 0, None, closed="left"), None],
             "min_duration": [Interval(Real, 0, None, closed="left")],
+            "show": [StrOptions({"always", "interactive_only"})],
         },
         prefer_skip_nested_validation=True,
     )
-    def __init__(self, max_propagation_depth=1, min_duration=0):
+    def __init__(self, max_propagation_depth=1, min_duration=0, show="always"):
         check_rich_support("Progressbar")
 
         self.max_propagation_depth = max_propagation_depth
         self.min_duration = min_duration
+        self.show = show
+
+        self._deactivated = show == "interactive_only" and not hasattr(sys, "ps1")
 
         # Handles to the main-process per-fit listeners, keyed by `root_uuid`.
         self._listener_handles = {}

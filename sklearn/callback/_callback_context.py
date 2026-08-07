@@ -316,6 +316,9 @@ class CallbackContext:
         evaluated_args = {}
 
         for callback in self._callbacks:
+            if hasattr(callback, "_deactivated") and callback._deactivated:
+                continue
+
             if callback in getattr(self, "_propagated_callbacks", []):
                 # Only call the `on_fit_task_end` hook of callbacks that are not
                 # propagated. For propagated callbacks, the hook will be called by the

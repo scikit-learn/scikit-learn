@@ -4,7 +4,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import os
-import sys
 import threading
 from contextlib import contextmanager as contextmanager
 
@@ -29,10 +28,7 @@ _global_config = {
     "enable_metadata_routing": False,
     "skip_parameter_validation": False,
     "sparse_interface": "spmatrix",
-    # Put progressbar by default only in an interactive env (ipython, jupyter, etc)
-    "default_callbacks": ("progressbar",)
-    if hasattr(sys, "ps1") and _rich_available
-    else (),
+    "default_callbacks": ("progressbar",) if _rich_available else (),
 }
 _threadlocal = threading.local()
 
@@ -235,11 +231,15 @@ def set_config(
         .. versionadded:: 1.9
 
     default_callbacks : tuple of str or callback instances, default=None
-        Default callbacks to attach to callback compatible estimators by default. The
-        possible string values are:
+        Default callbacks to attach to callback compatible estimators by default. These
+        callbacks are ignored if the estimator has callbacks manually registered.
+        Callback instances are shared by all estimators they are registered on. String
+        valued will generate a new callback instance with pre-defined parameters for
+        each estimator.
+        The possible string values are:
 
-        - "progressbar": A `~skleanr.callback.ProgressBar` callback with
-          `max_propagation_depth=0` and `min_duration=2`.
+        - "progressbar": A `~skleanr.callback.ProgressBar(max_propagation_depth=0,
+        min_duration=2, show="interactive_only")` callback instance is generated.
 
         .. versionadded:: 1.10
 
@@ -430,11 +430,15 @@ def config_context(
         .. versionadded:: 1.8
 
     default_callbacks : tuple of str or callback instances, default=None
-        Default callbacks to attach to callback compatible estimators by default. The
-        possible string values are:
+        Default callbacks to attach to callback compatible estimators by default. These
+        callbacks are ignored if the estimator has callbacks manually registered.
+        Callback instances are shared by all estimators they are registered on. String
+        valued will generate a new callback instance with pre-defined parameters for
+        each estimator.
+        The possible string values are:
 
-        - "progressbar": A `~skleanr.callback.ProgressBar` callback with
-          `max_propagation_depth=0` and `min_duration=2`.
+        - "progressbar": A `~skleanr.callback.ProgressBar(max_propagation_depth=0,
+        min_duration=2, show="interactive_only")` callback instance is generated.
 
         .. versionadded:: 1.10
 

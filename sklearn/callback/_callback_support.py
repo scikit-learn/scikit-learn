@@ -25,8 +25,16 @@ def _callbacks_by_default():
 
     for cb in get_config().get("default_callbacks", []):
         if cb == "progressbar":
-            callbacks.append(ProgressBar(max_propagation_depth=0, min_duration=2))
+            callbacks.append(
+                ProgressBar(
+                    max_propagation_depth=0, min_duration=2, show="interactive_only"
+                )
+            )
         else:
+            # If default callbacks are callback instances, these will be shared by all
+            # estimators they will be registered on. To have clones of these instances
+            # registered instead, the `_skl_default_callbacks` attribute will need to be
+            # made public.
             callbacks.append(cb)
 
     return callbacks
@@ -84,12 +92,11 @@ class CallbackSupportMixin:
     .. automethod:: _init_callback_context
     """
 
-    def _set_default_callbacks(self):
-        """Set the default callbacks."""
-        if not hasattr(self, "_skl_callbacks") and (
-            default_callbacks := _callbacks_by_default()
-        ):
-            self._skl_default_callbacks = default_callbacks
+    def __new__(cls, *args, **kwargs):
+        instance = super().__new__(cls)
+        if default_callbacks := _callbacks_by_default():
+            instance._skl_default_callbacks = default_callbacks
+        return instance
 
     def set_callbacks(self, *callbacks):
         """Set callbacks for the estimator.
@@ -161,6 +168,16 @@ class CallbackSupportMixin:
         # Setup callbacks. We store callbacks for which setup has started in order to
         # only tear those down after fit.
         self._skl_callbacks_to_teardown = []
+
+        if hasattr(self, "_skl_callbacks"):
+            callbacks = self._skl_callbacks
+        else:
+            callbacks = getattr(self, "_skl_default_callbacks", [])
+            if hasattr(self, "_parent_callback_ctx"):
+                callbacks = [
+                    cb for cb in callbacks if not isinstance(cb, AutoPropagatedCallback)
+                ]
+
         callbacks = getattr(self, "_skl_callbacks", False) or getattr(
             self, "_skl_default_callbacks", []
         )
@@ -170,7 +187,7 @@ class CallbackSupportMixin:
             if not (
                 isinstance(callback, AutoPropagatedCallback)
                 and hasattr(self, "_parent_callback_ctx")
-            ):
+            ) and not (hasattr(callback, "_deactivated") and callback._deactivated):
                 self._skl_callbacks_to_teardown.append(callback)
                 callback.setup(estimator=self, context=self._callback_fit_ctx)
 
@@ -194,8 +211,6 @@ def callback_management_context(estimator):
     ------
     None.
     """
-    if isinstance(estimator, CallbackSupportMixin):
-        estimator._set_default_callbacks()
     try:
         yield
     finally:
