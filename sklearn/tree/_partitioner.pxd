@@ -6,7 +6,7 @@
 from libc.math cimport INFINITY
 
 from sklearn.utils._typedefs cimport (
-    float32_t, float64_t, int32_t, intp_t, uint8_t
+    float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t, uint64_t
 )
 from sklearn.utils._bitset cimport BITSET_DTYPE_C, init_bitset, set_bitset
 from sklearn.tree._splitter cimport SplitRecord
@@ -149,8 +149,7 @@ cdef class DensePartitioner:
     ) noexcept nogil
     cdef intp_t partition_samples(
         self,
-        float64_t current_threshold,
-        bint missing_go_to_left
+        const SplitRecord* current_split,
     ) noexcept nogil
     cdef void partition_samples_final(
         self,
@@ -161,7 +160,7 @@ cdef class DensePartitioner:
         self,
         intp_t position,
         bint missing_go_to_left,
-        BITSET_DTYPE_C left_cat_bitset
+        BITSET_DTYPE_C left_cat_bitset_or_hashseed
     ) noexcept nogil
     cdef void sort_categories(
         self,
@@ -225,8 +224,7 @@ cdef class SparsePartitioner:
     ) noexcept nogil
     cdef intp_t partition_samples(
         self,
-        float64_t current_threshold,
-        bint missing_go_to_left,
+        const SplitRecord* current_split,
     ) noexcept nogil
     cdef void partition_samples_final(
         self,
@@ -237,7 +235,7 @@ cdef class SparsePartitioner:
         self,
         intp_t position,
         bint missing_go_to_left,
-        BITSET_DTYPE_C left_cat_bitset
+        BITSET_DTYPE_C left_cat_bitset_or_hashseed
     ) noexcept nogil
     cdef void extract_nnz(
         self,
