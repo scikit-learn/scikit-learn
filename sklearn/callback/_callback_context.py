@@ -97,7 +97,11 @@ class CallbackContext:
 
         # We don't store the estimator in the context to avoid circular references
         # because the estimator already holds a reference to the context.
-        new_ctx._callbacks = getattr(estimator, "_skl_callbacks", [])
+        new_ctx._callbacks = []
+        if hasattr(estimator, "_skl_callbacks"):
+            new_ctx._callbacks = estimator._skl_callbacks
+        elif not hasattr(estimator, "_parent_callback_ctx"):
+            new_ctx._callbacks = getattr(estimator, "_skl_default_callbacks", [])
         new_ctx.estimator_name = estimator.__class__.__name__
         new_ctx.task_name = task_name
         new_ctx.task_id = task_id
@@ -312,6 +316,9 @@ class CallbackContext:
         evaluated_args = {}
 
         for callback in self._callbacks:
+            if hasattr(callback, "_deactivated") and callback._deactivated:
+                continue
+
             if callback in getattr(self, "_propagated_callbacks", []):
                 # Only call the `on_fit_task_end` hook of callbacks that are not
                 # propagated. For propagated callbacks, the hook will be called by the
