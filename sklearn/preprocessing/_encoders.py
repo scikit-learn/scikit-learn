@@ -66,6 +66,10 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     Xi = check_array(
                         Xi, ensure_2d=False, ensure_all_finite=ensure_all_finite
                     )
+                elif Xi.dtype == object:
+                    # for object dtype, to_numpy() is free and pandas factorize/indexing
+                    # does not bring a big speed-up, so the object-array path is faster:
+                    Xi = Xi.to_numpy()
                 X_columns.append(Xi)
             return X_columns, n_samples, n_features
 
