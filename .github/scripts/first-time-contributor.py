@@ -1,11 +1,9 @@
 """First-time Contributor Workflow
 
-Called from .github/workflows/welcome-first-time-contributor.yml.
+Called from .github/workflows/first-time-contributor.yml.
 """
 
-import json
 import os
-import urllib.request
 
 from github import Github
 
@@ -14,7 +12,7 @@ GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 PR_NUMBER = int(os.getenv("PR_NUMBER"))
 
 
-def get_linked_issue(gh_repo, pr_number):
+def get_linked_issue(gh, gh_repo, pr_number):
     """Get the linked issue of the PR."""
     owner, name = gh_repo.split("/")
 
@@ -36,22 +34,10 @@ query($owner: String!, $name: String!, $pr_number: Int!) {
   }
 }
 """
-    request = urllib.request.Request(
-        "https://api.github.com/graphql",
-        method="POST",
-        headers={
-            "Authorization": f"Bearer {GITHUB_TOKEN}",
-            "Content-Type": "application/json",
-        },
-        data=json.dumps(
-            {
-                "query": CLOSING_ISSUE_QUERY,
-                "variables": {"owner": owner, "name": name, "pr_number": pr_number},
-            }
-        ).encode(),
+    _, payload = gh.requester.graphql_query(
+        CLOSING_ISSUE_QUERY,
+        {"owner": owner, "name": name, "pr_number": pr_number},
     )
-    with urllib.request.urlopen(request) as response:
-        payload = json.load(response)
     nodes = payload["data"]["repository"]["pullRequest"]["closingIssuesReferences"][
         "nodes"
     ]
@@ -70,7 +56,7 @@ gh = Github(GITHUB_TOKEN)
 repo = gh.get_repo(GITHUB_REPO)
 pr = repo.get_pull(PR_NUMBER)
 
-linked_issue = get_linked_issue(GITHUB_REPO, PR_NUMBER)
+linked_issue = get_linked_issue(gh, GITHUB_REPO, PR_NUMBER)
 
 if linked_issue and is_not_ready(linked_issue):
     # Close the PR if the linked issue is not ready

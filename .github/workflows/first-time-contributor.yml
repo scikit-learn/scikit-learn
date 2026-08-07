@@ -33,9 +33,9 @@ jobs:
       - name: Install PyGithub
         run: pip install -Uq PyGithub
       - name: Checkout workflow script
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
-          sparse-checkout: .github/scripts/welcome-first-time-contributor.py
+          sparse-checkout: .github/scripts/first-time-contributor.py
           sparse-checkout-cone-mode: false # false for files/ true for directories
       - name: first-time contributor workflow
-        run: python .github/scripts/welcome-first-time-contributor.py
+        run: python .github/scripts/first-time-contributor.py
