@@ -54,7 +54,8 @@ of Code project, and since then many volunteers have contributed. See
 the `About us <https://scikit-learn.org/dev/about.html#authors>`__ page
 for a list of core contributors.
 
-It is currently maintained by a team of volunteers.
+It is currently maintained by a community of contributors, with volunteers but also `support from several
+organisations <https://scikit-learn.org/dev/institutional_support.html>`__.
 
 Website: https://scikit-learn.org
 
@@ -144,8 +145,10 @@ directory (you will need to have ``pytest`` >= |PytestMinVersion| installed)::
 See the web page https://scikit-learn.org/dev/developers/contributing.html#testing-and-improving-test-coverage
 for more information.
 
-    Random number generation can be controlled during testing by setting
-    the ``SKLEARN_SEED`` environment variable.
+Random number generation can be controlled during testing by setting the
+``SKLEARN_SEED`` environment variable. See
+https://scikit-learn.org/dev/developers/global_configuration.html#sklearn-seed
+for details.
 
 Submitting a Pull Request
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -161,8 +164,6 @@ The project was started in 2007 by David Cournapeau as a Google Summer
 of Code project, and since then many volunteers have contributed. See
 the `About us <https://scikit-learn.org/dev/about.html#authors>`__ page
 for a list of core contributors.
-
-The project is currently maintained by a team of volunteers.
 
 **Note**: `scikit-learn` was previously referred to as `scikits.learn`.
 

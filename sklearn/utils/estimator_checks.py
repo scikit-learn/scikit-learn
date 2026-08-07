@@ -64,12 +64,12 @@ from sklearn.utils._array_api import (
     NamespaceAndDevice,
     _atol_for_type,
     _max_precision_float_dtype,
+    array_device,
     get_namespace,
     move_to,
     yield_mixed_namespace_input_permutations,
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._array_api import device as array_device
 from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._param_validation import (
     Interval,
@@ -740,7 +740,7 @@ def parametrize_with_checks(
 
     return pytest.mark.parametrize(
         "estimator, check",
-        _checks_generator(estimators, legacy, expected_failed_checks),
+        list(_checks_generator(estimators, legacy, expected_failed_checks)),
         ids=_get_check_estimator_ids,
     )
 
@@ -1148,7 +1148,8 @@ def _check_array_api_core(
             fit_kwargs["sample_weight"], device=device_other
         )
 
-    est.fit(X, y, **fit_kwargs)
+    with config_context(array_api_dispatch=False):
+        est.fit(X, y, **fit_kwargs)
 
     est_xp = clone(est)
     with config_context(array_api_dispatch=True):
@@ -1164,6 +1165,12 @@ def _check_array_api_core(
     # Fitted attributes which are arrays must have the same namespace as `X`,
     # except `classes_`, to allow it to be string when `y` is string.
     for attribute_name, attribute_value in array_attributes.items():
+        # TODO(1.10): remove with deprecation of default l1_ratios
+        if attribute_name == "l1_ratios_":
+            # l1_ratios_ can be None and so it is skipped in this test
+            # because it is not associated with any array namespace or device.
+            continue
+
         est_xp_attr = getattr(est_xp, attribute_name)
         # `classes_` should be in same ns and device as `y`
         expected_xp, expected_ns = (
@@ -1229,20 +1236,24 @@ def _check_array_api_core(
         numpy_asarray_works = False
 
     if numpy_asarray_works:
-        # In this case, array_api_dispatch is disabled and we rely on np.asarray
-        # being called to convert the non-NumPy inputs to NumPy arrays when needed.
-        est_fitted_with_as_array = clone(est).fit(X_xp, y_xp)
-        # We only do a smoke test for now, in order to avoid complicating the
-        # test function even further.
-        for method_name in methods:
-            method = getattr(est_fitted_with_as_array, method_name, None)
-            if method is None:
-                continue
+        # In this case, array_api_dispatch is explicitly disabled and we rely on
+        # np.asarray being called to convert the non-NumPy inputs to NumPy arrays
+        # when needed. Pinning the flag to False ensures this branch keeps
+        # exercising the np.asarray fallback path regardless of the default value
+        # of the `array_api_dispatch` config flag.
+        with config_context(array_api_dispatch=False):
+            est_fitted_with_as_array = clone(est).fit(X_xp, y_xp)
+            # We only do a smoke test for now, in order to avoid complicating the
+            # test function even further.
+            for method_name in methods:
+                method = getattr(est_fitted_with_as_array, method_name, None)
+                if method is None:
+                    continue
 
-            if method_name == "score":
-                method(X_xp, y_xp)
-            else:
-                method(X_xp)
+                if method_name == "score":
+                    method(X_xp, y_xp)
+                else:
+                    method(X_xp)
 
     for method_name in methods:
         method = getattr(est, method_name, None)
@@ -1250,7 +1261,8 @@ def _check_array_api_core(
             continue
 
         if method_name == "score":
-            result = method(X, y)
+            with config_context(array_api_dispatch=False):
+                result = method(X, y)
             with config_context(array_api_dispatch=True):
                 result_xp = getattr(est_xp, method_name)(X_xp, y_xp)
             # score typically returns a Python float
@@ -1260,7 +1272,8 @@ def _check_array_api_core(
                 assert abs(result - result_xp) < _atol_for_type(X.dtype)
             continue
         else:
-            result = method(X)
+            with config_context(array_api_dispatch=False):
+                result = method(X)
             with config_context(array_api_dispatch=True):
                 result_xp = getattr(est_xp, method_name)(X_xp)
 
@@ -1296,7 +1309,8 @@ def _check_array_api_core(
                 assert result.dtype == result_xp_np.dtype
 
         if method_name == "transform" and hasattr(est, "inverse_transform"):
-            inverse_result = est.inverse_transform(result)
+            with config_context(array_api_dispatch=False):
+                inverse_result = est.inverse_transform(result)
             with config_context(array_api_dispatch=True):
                 inverse_result_xp = est_xp.inverse_transform(result_xp)
 
