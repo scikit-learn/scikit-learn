@@ -21,7 +21,9 @@ def _get_dense_mask(X, value_to_mask):
         if value_to_mask is pandas.NA:
             return pandas.isna(X)
 
-    if is_scalar_nan(value_to_mask):
+    if value_to_mask is None and X.dtype.kind == "f":
+        Xt = np.isnan(X)
+    elif is_scalar_nan(value_to_mask):
         if X.dtype.kind == "f":
             Xt = np.isnan(X)
         elif X.dtype.kind in ("i", "u"):
