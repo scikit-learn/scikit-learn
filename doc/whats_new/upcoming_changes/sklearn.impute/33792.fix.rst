@@ -1,0 +1,5 @@
+- Fixed :meth:`impute.SimpleImputer.inverse_transform` to correctly restore
+  column ordering when ``add_indicator=True`` and ``keep_empty_features=False``
+  and some features were all-NaN during fit (causing them to be dropped by
+  :meth:`impute.SimpleImputer.transform`).
+  :pr:`33792` by :user:`Rudrendu Paul <RudrenduPaul>`.
