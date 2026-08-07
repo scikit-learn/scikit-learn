@@ -323,7 +323,7 @@ class CallbackContext:
                 continue
 
             args_to_pass = (
-                copy.copy(kwargs["metadata"])
+                kwargs["metadata"]
                 .get(f"callback_{i}", {})
                 .get(hook_name, {})
             )
