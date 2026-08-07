@@ -261,6 +261,12 @@ class DecisionBoundaryDisplay:
             `multiclass_colors` was renamed to `target_colors` in 1.10 and will be
             removed in 1.12.
 
+    response_method_used : str, default=None
+        Response method used to compute `response`.
+
+    name : str, default=None
+        Name of the estimator used to create the display.
+
     Attributes
     ----------
     surface_ : matplotlib `QuadContourSet` or `QuadMesh` or list of such objects
@@ -275,6 +281,12 @@ class DecisionBoundaryDisplay:
 
         .. versionadded:: 1.10
             `multiclass_colors_` was renamed to `target_colors_`
+
+    name : str or None
+        Name of the estimator used to create the display.
+
+    response_method_used : str or None
+        Response method used to compute `response`.
 
     ax_ : matplotlib Axes
         Axes with decision boundary.
@@ -350,6 +362,8 @@ class DecisionBoundaryDisplay:
         xlabel=None,
         ylabel=None,
         multiclass_colors="deprecated",  # TODO(1.12): remove
+        response_method_used=None,
+        name=None,
     ):
         self.xx0 = xx0
         self.xx1 = xx1
@@ -361,6 +375,8 @@ class DecisionBoundaryDisplay:
         )
         self.xlabel = xlabel
         self.ylabel = ylabel
+        self.response_method_used = response_method_used
+        self.name = name
 
     # TODO(1.12): remove
     @deprecated(  # type: ignore[prop-decorator]
@@ -371,7 +387,15 @@ class DecisionBoundaryDisplay:
     def multiclass_colors_(self):
         return self.target_colors_
 
-    def plot(self, plot_method="contourf", ax=None, xlabel=None, ylabel=None, **kwargs):
+    def plot(
+        self,
+        plot_method="contourf",
+        ax=None,
+        xlabel=None,
+        ylabel=None,
+        title=None,
+        **kwargs,
+    ):
         """Plot visualization.
 
         Parameters
@@ -392,6 +416,11 @@ class DecisionBoundaryDisplay:
 
         ylabel : str, default=None
             Overwrite the y-axis label.
+
+        title : str, default=None
+            Title to set on the axes. If ``None`` and the display was created by
+            :meth:`DecisionBoundaryDisplay.from_estimator`, a default title is set
+            using the estimator name and the response method that was used.
 
         **kwargs : dict
             Additional keyword arguments to be passed to the `plot_method`. For
@@ -538,6 +567,12 @@ class DecisionBoundaryDisplay:
             ylabel = self.ylabel if ylabel is None else ylabel
             ax.set_ylabel(ylabel)
 
+        if title is None:
+            if self.name is not None and self.response_method_used is not None:
+                title = f'{self.name} using "{self.response_method_used}" method'
+        if title is not None:
+            ax.set_title(title)
+
         self.ax_ = ax
         self.figure_ = ax.figure
         return self
@@ -556,6 +591,7 @@ class DecisionBoundaryDisplay:
         target_colors=None,
         xlabel=None,
         ylabel=None,
+        name=None,
         ax=None,
         multiclass_colors="deprecated",  # TODO(1.12): remove
         **kwargs,
@@ -647,6 +683,13 @@ class DecisionBoundaryDisplay:
             The label used for the y-axis. If `None`, an attempt is made to
             extract a label from `X` if it is a dataframe, otherwise an empty
             string is used.
+
+        name : str, default=None
+            Name to use for the display. If ``None``, the estimator class name
+            is used.
+
+            If provided, it is displayed in the default plot title when
+            ``plot(title=None)`` is called.
 
         ax : Matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
@@ -840,6 +883,9 @@ class DecisionBoundaryDisplay:
         if ylabel is None:
             ylabel = X.columns[1] if hasattr(X, "columns") else ""
 
+        if name is None:
+            name = type(estimator).__name__
+
         # TODO(1.12): remove and replace with direct use of `target_colors`
         target_colors = _deprecate_multiclass_colors(multiclass_colors, target_colors)
         display = cls(
@@ -850,5 +896,7 @@ class DecisionBoundaryDisplay:
             target_colors=target_colors,
             xlabel=xlabel,
             ylabel=ylabel,
+            response_method_used=response_method_used,
+            name=name,
         )
         return display.plot(ax=ax, plot_method=plot_method, **kwargs)
