@@ -15,7 +15,7 @@ from sklearn.base import (
     _fit_context,
 )
 from sklearn.utils import _align_api_if_sparse, _safe_indexing, check_array
-from sklearn.utils._dataframe import is_pandas_df_or_series
+from sklearn.utils._dataframe import is_pandas_df, is_pandas_df_or_series
 from sklearn.utils._encode import _encode, _get_counts, _unique
 from sklearn.utils._mask import _get_mask
 from sklearn.utils._missing import is_scalar_nan
@@ -38,7 +38,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
     """
 
-    def _check_X(self, X, ensure_all_finite=True):
+    def _check_X(self, X):
         """
         Perform custom check_array:
         - convert list of strings to object dtype
@@ -55,7 +55,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         instead of eagerly decoding e.g. Categorical or Arrow-backed columns
         into a full array of individual Python objects.
         """
-        if is_pandas_df_or_series(X) and getattr(X, "ndim", 0) == 2:
+        if is_pandas_df(X):
             import pandas as pd
 
             n_samples, n_features = X.shape
@@ -63,37 +63,25 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             for i in range(n_features):
                 Xi = X.iloc[:, i]
                 if pd.api.types.is_numeric_dtype(Xi):
-                    Xi = check_array(
-                        Xi, ensure_2d=False, ensure_all_finite=ensure_all_finite
-                    )
+                    Xi = check_array(Xi, ensure_2d=False, ensure_all_finite="allow-nan")
                 elif Xi.dtype == object:
-                    # for object dtype, to_numpy() is free and pandas factorize/indexing
-                    # does not bring a big speed-up, so the object-array path is faster:
+                    # for object dtype to_numpy() is free and pandas factorize/indexing
+                    # doesn't bring a big speed-up, so the object-array path is faster:
                     Xi = Xi.to_numpy()
                 X_columns.append(Xi)
             return X_columns, n_samples, n_features
 
-        if not (hasattr(X, "iloc") and getattr(X, "ndim", 0) == 2):
-            # if not a dataframe, do normal check_array validation
-            X_temp = check_array(X, dtype=None, ensure_all_finite=ensure_all_finite)
-            if not hasattr(X, "dtype") and np.issubdtype(X_temp.dtype, np.str_):
-                X = check_array(X, dtype=object, ensure_all_finite=ensure_all_finite)
-            else:
-                X = X_temp
-            needs_validation = False
+        X_temp = check_array(X, dtype=None, ensure_all_finite="allow-nan")
+        if not hasattr(X, "dtype") and np.issubdtype(X_temp.dtype, np.str_):
+            X = check_array(X, dtype=object, ensure_all_finite="allow-nan")
         else:
-            # pandas dataframe, do validation later column by column, in order
-            # to keep the dtype information to be used in the encoder.
-            needs_validation = ensure_all_finite
+            X = X_temp
 
         n_samples, n_features = X.shape
         X_columns = []
 
         for i in range(n_features):
             Xi = _safe_indexing(X, indices=i, axis=1)
-            Xi = check_array(
-                Xi, ensure_2d=False, dtype=None, ensure_all_finite=needs_validation
-            )
             X_columns.append(Xi)
 
         return X_columns, n_samples, n_features
@@ -102,15 +90,12 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         self,
         X,
         handle_unknown="error",
-        ensure_all_finite=True,
         return_counts=False,
         return_and_ignore_missing_for_infrequent=False,
     ):
         self._check_infrequent_enabled()
         validate_data(self, X=X, reset=True, skip_check_array=True)
-        X_list, n_samples, n_features = self._check_X(
-            X, ensure_all_finite=ensure_all_finite
-        )
+        X_list, n_samples, n_features = self._check_X(X)
         self.n_features_in_ = n_features
 
         if self.categories != "auto":
@@ -226,13 +211,10 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         self,
         X,
         handle_unknown="error",
-        ensure_all_finite=True,
         warn_on_unknown=False,
         ignore_category_indices=None,
     ):
-        X_list, n_samples, n_features = self._check_X(
-            X, ensure_all_finite=ensure_all_finite
-        )
+        X_list, n_samples, n_features = self._check_X(X)
         validate_data(self, X=X, reset=False, skip_check_array=True)
 
         X_int = np.zeros((n_samples, n_features), dtype=int, order="F")
@@ -1010,7 +992,6 @@ class OneHotEncoder(_BaseEncoder):
         self._fit(
             X,
             handle_unknown=self.handle_unknown,
-            ensure_all_finite="allow-nan",
         )
         self._set_drop_idx()
         self._n_features_outs = self._compute_n_features_outs()
@@ -1061,7 +1042,6 @@ class OneHotEncoder(_BaseEncoder):
         X_int, X_mask = self._transform(
             X,
             handle_unknown=handle_unknown,
-            ensure_all_finite="allow-nan",
             warn_on_unknown=warn_on_unknown,
         )
 
@@ -1527,7 +1507,6 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         fit_results = self._fit(
             X,
             handle_unknown=self.handle_unknown,
-            ensure_all_finite="allow-nan",
             return_and_ignore_missing_for_infrequent=True,
         )
         self._missing_indices = fit_results["missing_indices"]
@@ -1609,7 +1588,6 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         X_int, X_mask = self._transform(
             X,
             handle_unknown=self.handle_unknown,
-            ensure_all_finite="allow-nan",
             ignore_category_indices=self._missing_indices,
         )
         X_trans = X_int.astype(self.dtype, copy=False)
