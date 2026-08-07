@@ -225,7 +225,17 @@ def _encode_pandas(values, uniques):
     import pandas as pd
 
     index = pd.Index(uniques)
-    return np.asarray(index.get_indexer(values))
+    encoded = np.asarray(index.get_indexer(values))
+    if (
+        uniques.size
+        and isinstance(values.dtype, pd.StringDtype)
+        and pd.isna(uniques[-1])
+    ):
+        # On pandas<3, `Index.get_indexer` fails to match a string-dtype Series'
+        # missing entries (stored as `pandas.NA`) against an Index's `np.nan` entry,
+        # incorrectly reporting them as unknown (-1).
+        encoded[np.asarray(values.isna())] = len(uniques) - 1
+    return encoded
 
 
 def _unique_python(values, *, return_inverse, return_counts):
