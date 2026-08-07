@@ -105,12 +105,7 @@ def _make_expected_output_MetaEstimator(
     for i in range(n_outer):
         for j in range(n_inner):
             estimator_log = _make_expected_output_MaxIterEstimator(
-                max_iter,
-                scoring,
-                False,
-                X,
-                y,
-                root_task_id=j,
+                max_iter, scoring, False, X, y, root_task_id=j
             )
             for row in estimator_log:
                 row["task_id_path"] = (0, i) + row["task_id_path"]
@@ -270,14 +265,7 @@ def test_logged_values_meta_estimator_train(
     log = callback.get_logs(include_lineage=include_lineage)
     log_train = getattr(log, attr)
     expected_log_train = _make_expected_output_MetaEstimator(
-        n_outer,
-        n_inner,
-        max_iter,
-        scoring_train,
-        as_pandas,
-        include_lineage,
-        X,
-        y,
+        n_outer, n_inner, max_iter, scoring_train, as_pandas, include_lineage, X, y
     )
 
     if as_pandas:
@@ -542,11 +530,7 @@ def test_scoring_monitor_no_callback_support(backend):
     log_all = callback.get_logs(select="all")
 
     expected_log = _make_expected_output_MaxIterEstimator(
-        max_iter,
-        scoring="r2",
-        as_pandas=False,
-        X=X,
-        y=y,
+        max_iter, scoring="r2", as_pandas=False, X=X, y=y
     )
 
     assert len(log_all) == n_fits
