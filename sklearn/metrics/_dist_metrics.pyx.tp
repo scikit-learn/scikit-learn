@@ -1641,6 +1641,7 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         cdef float64_t tmp, d = 0
         cdef intp_t i, j
 
+        # compute (x1 - x2).T * VI * (x1 - x2)
         for i in range(size):
             tmp = 0
             for j in range(size):
