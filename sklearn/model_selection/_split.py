@@ -2240,6 +2240,10 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     are made by preserving the percentage of samples for each class in `y` in a
     binary or multiclass classification setting.
 
+    The per-class sample count between train and test splits can differ by one,
+    which for heavily underrepresented classes may result in no samples of that
+    class in the test set.
+
     Note: like the :class:`ShuffleSplit` strategy, stratified random splits
     do not guarantee that test sets across all folds will be mutually exclusive,
     and might include overlapping samples. However, this is still very likely for
