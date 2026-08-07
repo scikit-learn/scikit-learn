@@ -1425,9 +1425,7 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
         if hasattr(final_est, "fit_transform"):
             method_mapping.add(caller="fit_transform", callee="fit_transform")
         else:
-            method_mapping.add(caller="fit", callee="fit").add(
-                caller="fit", callee="transform"
-            )
+            method_mapping.add(caller="fit", callee="transform")
         (
             method_mapping.add(caller="fit", callee="fit")
             .add(caller="predict", callee="predict")
