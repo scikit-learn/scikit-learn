@@ -1756,6 +1756,22 @@ def test_ordinal_encoder_missing_value_support_pandas_string(
     assert np.isnan(X_inverse[2, 0])
 
 
+def test_ordinal_encoder_predefined_categories_pandas_series():
+    """Non-regression test for user-provided `categories` with a pandas
+    Series column of a non-`object` dtype (e.g. `category`): `_fit`'s
+    predefined-categories branch materializes such columns via
+    `to_numpy()` rather than adapting every numpy-dtype-based check in
+    that branch to pandas Series, see `_BaseEncoder._fit`.
+    """
+    pd = pytest.importorskip("pandas")
+
+    df = pd.DataFrame({"col1": pd.Series(["b", "a", "c"], dtype="category")})
+
+    oe = OrdinalEncoder(categories=[["c", "b", "a"]]).fit(df)
+    assert_array_equal(oe.categories_[0], ["c", "b", "a"])
+    assert_allclose(oe.transform(df), [[1], [2], [0]])
+
+
 @pytest.mark.parametrize(
     "X, X2, cats, cat_dtype",
     [

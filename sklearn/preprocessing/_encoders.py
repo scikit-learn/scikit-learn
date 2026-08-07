@@ -121,10 +121,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     cats = result
             else:
                 if is_pandas_df_or_series(Xi):
-                    # User-provided `categories` is a comparatively rare and
-                    # already more expensive path (see checks below); fall
-                    # back to materializing the column rather than adapting
-                    # every numpy-dtype-based check below to pandas Series.
+                    # User-provided `categories` is a comparatively rare and already
+                    # more expensive path => do not attempt the Series path
                     Xi = Xi.to_numpy()
 
                 if np.issubdtype(Xi.dtype, np.str_):
