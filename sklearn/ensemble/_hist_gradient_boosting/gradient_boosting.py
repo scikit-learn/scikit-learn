@@ -65,6 +65,16 @@ _LOSSES.update(
 )
 
 
+def _adjust_n_threads_for_small_hgb(n_samples, n_features, max_threads):
+    """Limit OpenMP overhead when fitting HGBT on small datasets."""
+    if max_threads <= 1:
+        return max_threads
+
+    n_threads = max(n_samples * n_features // int(1e5), 1)
+    n_threads = min(n_threads, max(n_features // 2, 1))
+    return min(n_threads, max_threads)
+
+
 def _update_leaves_values(loss, grower, y_true, raw_prediction, sample_weight):
     """Update the leaf values to be predicted by the tree.
 
@@ -523,7 +533,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         # `_openmp_effective_n_threads` is used to take cgroups CPU quotes
         # into account when determine the maximum number of threads to use.
-        n_threads = _openmp_effective_n_threads()
+        n_threads = _adjust_n_threads_for_small_hgb(
+            n_samples=n_samples,
+            n_features=self._n_features,
+            max_threads=_openmp_effective_n_threads(),
+        )
 
         if isinstance(self.loss, str):
             self._loss = self._get_loss(sample_weight=sample_weight)

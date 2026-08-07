@@ -1,0 +1,4 @@
+- |Efficiency| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` now limit the number of OpenMP
+  threads used during fitting on small datasets to avoid thread scheduling overhead.
+  By :user:`hanhan761 <hanhan761>`.
