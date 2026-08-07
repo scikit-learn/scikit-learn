@@ -13,6 +13,7 @@ from sklearn import config_context, datasets
 from sklearn.base import clone
 from sklearn.callback.tests._utils import (
     RecordingCallback,
+    SampleWeightCallback,
     skip_callback_test_if_wasm,
 )
 from sklearn.exceptions import NotFittedError
@@ -2934,3 +2935,21 @@ def test_standard_scaler_callback_support(fit_method):
     task_end_record = [rec for rec in cb.record if rec["name"] == "on_fit_task_end"][0]
     fitted_scaler = task_end_record["kwargs"]["fitted_estimator"]
     assert_allclose(fitted_scaler.transform(X), Xt)
+
+
+@pytest.mark.parametrize("fit_method", ["fit", "partial_fit"])
+@skip_callback_test_if_wasm
+def test_standard_scaler_callbacks_receive_sample_weight(fit_method):
+    """Test that sample_weight is forwarded to callbacks even if routing is disabled."""
+
+    cb = SampleWeightCallback()
+    scaler = StandardScaler().set_callbacks(cb)
+    X = np.random.RandomState(0).random_sample((10, 2))
+    sample_weight = np.random.RandomState(0).randint(0, 5, size=X.shape[0])
+    getattr(scaler, fit_method)(X, sample_weight=sample_weight)
+
+    for rec in cb.record:
+        if rec["name"] == "on_fit_task_begin":
+            assert_array_equal(rec["kwargs"]["requested_arg_begin"], sample_weight)
+        elif rec["name"] == "on_fit_task_end":
+            assert_array_equal(rec["kwargs"]["requested_arg_end"], sample_weight)

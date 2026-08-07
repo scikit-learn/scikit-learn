@@ -3,10 +3,26 @@
 
 import functools
 import inspect
+from collections import UserList
 from contextlib import contextmanager
 
 from sklearn.callback._base import AutoPropagatedCallback, FitCallback
 from sklearn.callback._callback_context import CallbackContext
+from sklearn.utils import Bunch
+from sklearn.utils.metadata_routing import MetadataRouter, MethodMapping
+
+
+class MultiCallback(UserList):
+    """A class wrapping the callback list, to make the metadata routing cleaner."""
+
+    def get_metadata_routing(self):
+        router = MetadataRouter(owner=self).add(
+            **{f"callback_{i}": callback for i, callback in enumerate(self.data)},
+            method_mapping=MethodMapping()
+            .add(caller="on_fit_task_begin", callee="on_fit_task_begin")
+            .add(caller="on_fit_task_end", callee="on_fit_task_end"),
+        )
+        return router
 
 
 def validate_callbacks(callbacks):
@@ -27,7 +43,9 @@ def validate_callbacks(callbacks):
             hook = getattr(callback, hook_name)
             params = list(inspect.signature(hook).parameters.values())
 
-            positional = [p.name for p in params if p.kind != p.KEYWORD_ONLY]
+            positional = [
+                p.name for p in params if p.kind not in (p.KEYWORD_ONLY, p.VAR_KEYWORD)
+            ]
             expected_positional = ["estimator", "context"]
             if positional != expected_positional:
                 raise TypeError(
@@ -43,15 +61,6 @@ def validate_callbacks(callbacks):
                         f"{callback_name} must be {hook_name}(self, estimator, context)"
                     )
                 continue
-
-            kwarg_only = {p.name for p in params if p.kind == p.KEYWORD_ONLY}
-            valid_kwargs = {"X", "y", "metadata", "fitted_estimator"}
-            if invalid := kwarg_only - valid_kwargs:
-                raise TypeError(
-                    f"Hook {hook_name!r} of the callback {callback_name} has "
-                    f"parameters that are not valid: {invalid}. The valid parameters "
-                    f"are: {valid_kwargs}."
-                )
 
 
 class CallbackSupportMixin:
@@ -80,7 +89,7 @@ class CallbackSupportMixin:
     def _set_callbacks(self, callbacks):
         """set_callbacks without validation."""
         if callbacks:
-            self._skl_callbacks = list(callbacks)
+            self._skl_callbacks = MultiCallback(list(callbacks))
         else:
             self.__dict__.pop("_skl_callbacks", None)
 
@@ -140,6 +149,50 @@ class CallbackSupportMixin:
                 callback.setup(estimator=self, context=self._callback_fit_ctx)
 
         return self._callback_fit_ctx
+
+    def _add_callback_routing(self, router):
+        """Utility method to add the routing to callbacks to the estimator's router."""
+        router.add(
+            callback=getattr(self, "_skl_callbacks", None),
+            method_mapping=MethodMapping()
+            .add(caller="fit", callee="on_fit_task_begin")
+            .add(caller="fit", callee="on_fit_task_end"),
+        )
+        return router
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self)
+        return self._add_callback_routing(router)
+
+    def _get_manual_callback_params(self, sample_weight):
+        # TODO(slep006): remove when metadata routing is the only way
+        """Generate manually routed params for callbacks when routing is disabled.
+
+        This is used to forward sample_weight to callback hooks that accept them even
+        if metadata routing is disabled.
+        """
+        callback_params = {"on_fit_task_begin": Bunch(), "on_fit_task_end": Bunch()}
+        if sample_weight is None:
+            return callback_params
+        for hook_name in ("on_fit_task_begin", "on_fit_task_end"):
+            for i, cb in enumerate(getattr(self, "_skl_callbacks", [])):
+                if hasattr(cb, "_accept_sample_weight") and cb._accept_sample_weight(
+                    hook_name
+                ):
+                    callback_params[hook_name] = {"sample_weight": sample_weight}
+                    break
+        return callback_params
 
 
 @contextmanager

@@ -13,6 +13,7 @@ from scipy.sparse import issparse
 
 from sklearn import config_context
 from sklearn.base import BaseEstimator, ClassifierMixin, clone, is_classifier
+from sklearn.callback.tests._utils import RecordingCallback
 from sklearn.cluster import KMeans
 from sklearn.datasets import (
     load_diabetes,
@@ -81,7 +82,7 @@ from sklearn.tests.metadata_routing_common import (
     _Registry,
     check_recorded_metadata,
 )
-from sklearn.utils import shuffle
+from sklearn.utils import Bunch, shuffle
 from sklearn.utils._array_api import (
     _atol_for_type,
     move_to,
@@ -2081,6 +2082,61 @@ def test_fit_and_score_working():
     )
     result = _fit_and_score(**fit_and_score_args)
     assert result["parameters"] == fit_and_score_args["parameters"]
+
+
+@config_context(enable_metadata_routing=True)
+def test_fit_and_score_with_callback_metadata():
+    """Test _fit_and_score with callbacks metadata.
+
+    Test with X_val and y_val metadata having the same length as X, to verify that it
+    does not get split like sample_weights or other metadata with the same length as X.
+    Also add another callback metadata with X's length to verify it does get split.
+    """
+    X, y = make_classification(n_samples=30, random_state=0)
+    X_val, y_val = make_classification(n_samples=30, random_state=0)
+    cb_no_split = (
+        RecordingCallback()
+        .set_on_fit_task_begin_request(requested_arg_begin="X_val")
+        .set_on_fit_task_end_request(requested_arg_end="y_val")
+    )
+    cb_split = (
+        RecordingCallback()
+        .set_on_fit_task_begin_request(requested_arg_begin="arg_to_split")
+        .set_on_fit_task_end_request(requested_arg_end="arg_to_split")
+    )
+    est = LogisticRegression().set_callbacks(cb_no_split, cb_split)
+
+    train, test = next(ShuffleSplit().split(X))
+    arg_to_split = np.ones(len(train))
+    # Test return_parameters option
+    _fit_and_score(
+        estimator=est,
+        X=X,
+        y=y,
+        scorer=dict(),
+        train=train,
+        test=test,
+        verbose=0,
+        parameters={"max_iter": 100, "tol": 0.1},
+        fit_params=None,
+        callback_ctx=est._init_callback_context(),
+        callback_params=Bunch(
+            on_fit_task_begin={"X_val": X_val, "arg_to_split": arg_to_split},
+            on_fit_task_end={"y_val": y_val, "arg_to_split": arg_to_split},
+        ),
+        score_params=None,
+    )
+    for rec in cb_no_split.record:
+        if rec["name"] == "on_fit_task_begin":
+            assert rec["kwargs"]["requested_arg_begin"].shape[0] == 30
+        elif rec["name"] == "on_fit_task_end":
+            assert rec["kwargs"]["requested_arg_end"].shape[0] == 30
+
+    for rec in cb_split.record:
+        if rec["name"] == "on_fit_task_begin":
+            assert rec["kwargs"]["requested_arg_begin"].shape[0] == len(train)
+        elif rec["name"] == "on_fit_task_end":
+            assert rec["kwargs"]["requested_arg_end"].shape[0] == len(train)
 
 
 class DataDependentFailingClassifier(BaseEstimator):
