@@ -17,7 +17,7 @@ from sklearn.base import BaseEstimator, ClusterMixin, _fit_context
 from sklearn.exceptions import DataConversionWarning
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics.pairwise import _VALID_METRICS, PAIRWISE_BOOLEAN_FUNCTIONS
-from sklearn.neighbors import NearestNeighbors
+from sklearn.neighbors import NearestNeighbors, sort_graph_by_row_values
 from sklearn.utils import gen_batches
 from sklearn.utils._chunking import get_chunk_n_rows
 from sklearn.utils._param_validation import (
@@ -341,6 +341,10 @@ class OPTICS(ClusterMixin, BaseEstimator):
                 # Set each diagonal to an explicit value so each point is its
                 # own neighbor
                 X.setdiag(X.diagonal())
+            # `setdiag` reorders the entries of each row by column index, so the
+            # graph has to be sorted by row values again to avoid a spurious
+            # `EfficiencyWarning` in every downstream neighbors query.
+            X = sort_graph_by_row_values(X, warn_when_not_sorted=False)
         memory = check_memory(self.memory)
 
         (
