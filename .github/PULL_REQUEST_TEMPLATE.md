@@ -39,11 +39,11 @@ Keep the ones that apply, delete the rest.
 Make sure that you adhere to our Automated Contributions Policy:
 https://scikit-learn.org/dev/developers/contributing.html#automated-contributions-policy
 -->
-I used AI assistance for:
-- Code generation (e.g., when writing an implementation or fixing a bug)
-- Test/benchmark generation
-- Documentation (including examples)
-- Research and understanding
+I used AI assistance for (untick boxes below where applicable):
+- [X] Code generation (e.g., when writing an implementation or fixing a bug)
+- [X] Test/benchmark generation
+- [X] Documentation (including examples)
+- [X] Research and understanding
 
 
 #### Any other comments?
