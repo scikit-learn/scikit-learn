@@ -51,7 +51,7 @@ for i in range(len(degrees)):
     plt.setp(ax, xticks=(), yticks=())
 
     polynomial_features = PolynomialFeatures(degree=degrees[i], include_bias=False)
-    linear_regression = LinearRegression()
+    linear_regression = LinearRegression(tol=np.finfo(float).eps)
     pipeline = Pipeline(
         [
             ("polynomial_features", polynomial_features),
