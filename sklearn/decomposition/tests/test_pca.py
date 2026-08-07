@@ -10,7 +10,7 @@ from sklearn import config_context, datasets
 from sklearn.base import clone
 from sklearn.datasets import load_iris, make_classification, make_low_rank_matrix
 from sklearn.decomposition import PCA
-from sklearn.decomposition._pca import _assess_dimension, _infer_dimension
+from sklearn.decomposition._pca import _infer_dimension
 from sklearn.utils._array_api import (
     _atol_for_type,
     array_device,
@@ -577,20 +577,19 @@ def test_pca_dim():
 
 
 def test_infer_dim_1():
-    # TODO: explain what this is testing
-    # Or at least use explicit variable names...
-    n, p = 1000, 5
+    # A single latent factor (one randn column times a fixed loading vector)
+    # buried in isotropic noise an order of magnitude smaller, so the true
+    # latent dimension is 1 and that is what should be inferred.
+    n_samples, n_features = 1000, 5
     rng = np.random.RandomState(0)
     X = (
-        rng.randn(n, p) * 0.1
-        + rng.randn(n, 1) * np.array([3, 4, 5, 1, 2])
+        rng.randn(n_samples, n_features) * 0.1
+        + rng.randn(n_samples, 1) * np.array([3, 4, 5, 1, 2])
         + np.array([1, 0, 7, 4, 6])
     )
-    pca = PCA(n_components=p, svd_solver="full")
+    pca = PCA(n_components=n_features, svd_solver="full")
     pca.fit(X)
-    spect = pca.explained_variance_
-    ll = np.array([_assess_dimension(spect, k, n) for k in range(1, p)])
-    assert ll[1] > ll.max() - 0.01 * n
+    assert _infer_dimension(pca.explained_variance_, n_samples) == 1
 
 
 def test_infer_dim_2():
@@ -816,25 +815,10 @@ def test_pca_n_components_mostly_explained_variance_ratio():
     assert pca2.n_components_ == X.shape[1]
 
 
-def test_assess_dimension_bad_rank():
-    # Test error when tested rank not in [1, n_features - 1]
-    spectrum = np.array([1, 1e-30, 1e-30, 1e-30])
-    n_samples = 10
-    for rank in (0, 5):
-        with pytest.raises(ValueError, match=r"should be in \[1, n_features - 1\]"):
-            _assess_dimension(spectrum, rank, n_samples)
-
-
 def test_small_eigenvalues_mle():
-    # Test rank associated with tiny eigenvalues are given a log-likelihood of
-    # -inf. The inferred rank will be 1
+    # Ranks resting on eigenvalues below the noise floor must never be chosen,
+    # however many of them there are.
     spectrum = np.array([1, 1e-30, 1e-30, 1e-30])
-
-    assert _assess_dimension(spectrum, rank=1, n_samples=10) > -np.inf
-
-    for rank in (2, 3):
-        assert _assess_dimension(spectrum, rank, 10) == -np.inf
-
     assert _infer_dimension(spectrum, 10) == 1
 
 
@@ -877,17 +861,42 @@ def test_mle_simple_case():
     assert pca_skl.n_components_ == n_dim - 1
 
 
-def test_assess_dimension_rank_one():
-    # Make sure assess_dimension works properly on a matrix of rank 1
+def test_infer_dimension_rank_one():
+    # Make sure inference works properly on a matrix of rank 1
     n_samples, n_features = 9, 6
     X = np.ones((n_samples, n_features))  # rank 1 matrix
     _, s, _ = np.linalg.svd(X, full_matrices=True)
     # except for rank 1, all eigenvalues are 0 resp. close to 0 (FP)
     assert_allclose(s[1:], np.zeros(n_features - 1), atol=1e-12)
 
-    assert np.isfinite(_assess_dimension(s, rank=1, n_samples=n_samples))
-    for rank in range(2, n_features):
-        assert _assess_dimension(s, rank, n_samples) == -np.inf
+    assert _infer_dimension(s, n_samples) == 1
+
+
+# Spectra whose selected rank is sensitive to every term of Minka's
+# log-likelihood. Picked by mutation testing: perturbing any single term (the
+# pu/pl/pv/pp pieces, either pair sum, the noise variance, the pair count, or
+# the rank penalty) changes the chosen rank of at least one of these. A shallow
+# likelihood maximum is what makes a spectrum sensitive, so these are gentle
+# decays rather than clean factor models.
+@pytest.mark.parametrize(
+    "spectrum, n_samples, expected",
+    [
+        (np.exp(-0.05 * np.arange(12.0)), 60, 8),
+        (np.exp(-0.3 * np.arange(30.0)), 60, 22),
+        (np.exp(-0.1 * np.arange(50.0)), 200, 36),
+        (np.linspace(50, 0.5, 20), 100, 19),
+    ],
+)
+def test_infer_dimension_sensitive_spectra(spectrum, n_samples, expected):
+    assert _infer_dimension(spectrum, n_samples) == expected
+
+
+def test_infer_dimension_tied_eigenvalues_is_not_an_error():
+    # An exactly isotropic spectrum makes every gap log(0), so no rank has a
+    # meaningful likelihood. _infer_dimension still has to return a rank in
+    # [1, n_features - 1] rather than propagating a math domain error.
+    spectrum = np.ones(8)
+    assert _infer_dimension(spectrum, 100) == 1
 
 
 def test_pca_randomized_svd_n_oversamples():
