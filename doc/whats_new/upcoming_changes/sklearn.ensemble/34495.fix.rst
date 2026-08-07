@@ -1,0 +1,4 @@
+- :class:`ensemble.AdaBoostClassifier` and :class:`ensemble.AdaBoostRegressor`
+  now raise a proper :class:`~sklearn.exceptions.NotFittedError` when
+  ``feature_importances_`` is accessed before fitting, instead of a plain
+  ``AttributeError``. By :user:`shipitdev <shipitdev>`.
