@@ -157,6 +157,19 @@ function detectTheme(element) {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
+/* Avoid Enter keydown to bubble up to the notebook and switch the focused cell
+ * into edit mode steals focus away from the diagram.
+ */
+document.querySelectorAll(
+    '.sk-top-container:not([data-sk-keydown-bound])'
+).forEach(function(container) {
+    container.dataset.skKeydownBound = 'true';
+    container.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            event.stopPropagation();
+        }
+    });
+});
 
 function forceTheme(elementId) {
     const estimatorElement = document.querySelector(`#${elementId}`);

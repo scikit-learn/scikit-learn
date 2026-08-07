@@ -13,6 +13,8 @@
   --sklearn-color-fitted-level-1: #d4ebff;
   --sklearn-color-fitted-level-2: #b3dbfd;
   --sklearn-color-fitted-level-3: cornflowerblue;
+  /* Focus color */
+  --sklearn-color-focus: #740cd6;
 }
 
 .sk-global.light {
@@ -38,15 +40,16 @@
   padding: 0;
 }
 
-.sk-global input.sk-hidden--visually {
-  border: 0;
-  clip-path: inset(100%);
-  height: 1px;
-  margin: -1px;
-  overflow: hidden;
-  padding: 0;
-  position: absolute;
-  width: 1px;
+.sk-global :focus {
+  outline: 2px solid var(--sklearn-color-focus);
+  outline-offset: -1px;
+  border-radius: 2px;
+}
+
+.sk-global :focus-visible {
+  outline: 2px solid var(--sklearn-color-focus);
+  outline-offset: -2px;
+  border-radius: 2px;
 }
 
 .sk-global div.sk-dashed-wrapped {
@@ -144,35 +147,36 @@ clickable and can be expanded/collapsed.
 }
 
 /* Toggleable label */
-.sk-global label.sk-toggleable__label {
+.sk-global summary.sk-toggleable__label {
   cursor: pointer;
-  display: flex;
+  white-space: nowrap;
+  text-align: center;
   width: 100%;
   margin-bottom: 0;
   padding: 0.5em;
   box-sizing: border-box;
-  text-align: center;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5em;
 }
 
-.sk-global label.sk-toggleable__label .caption {
+.sk-global summary::marker {
+  color: var(--sklearn-color-icon)
+}
+
+.sk-global summary.sk-toggleable__label--no-marker {
+  list-style: none;
+}
+
+/* Lay out the label content (name + doc link) in a row next to the marker. */
+.sk-global summary.sk-toggleable__label .sk-toggleable__label-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  margin-left: 0.5em;
+}
+
+.sk-global summary.sk-toggleable__label .caption {
   font-size: 0.6rem;
   font-weight: lighter;
   color: var(--sklearn-color-text-muted);
-}
-
-.sk-global label.sk-toggleable__label-arrow:before {
-  /* Arrow on the left of the label */
-  content: "▸";
-  float: left;
-  margin-right: 0.25em;
-  color: var(--sklearn-color-icon);
-}
-
-.sk-global label.sk-toggleable__label-arrow:hover:before {
-  color: var(--sklearn-color-text);
 }
 
 /* Toggleable content - dropdown */
@@ -202,62 +206,58 @@ clickable and can be expanded/collapsed.
   background-color: var(--sklearn-color-fitted-level-0);
 }
 
-.sk-global input.sk-toggleable__control:checked~div.sk-toggleable__content {
+.sk-global details[open] > div.sk-toggleable__content {
   /* Expand drop-down */
   display: block;
   width: 100%;
   overflow: visible;
 }
 
-.sk-global input.sk-toggleable__control:checked~label.sk-toggleable__label-arrow:before {
-  content: "▾";
-}
-
 /* Pipeline/ColumnTransformer-specific style */
 
-.sk-global div.sk-label input.sk-toggleable__control:checked~label.sk-toggleable__label {
+.sk-global div.sk-label details[open] > summary.sk-toggleable__label {
   color: var(--sklearn-color-text);
   background-color: var(--sklearn-color-unfitted-level-2);
 }
 
-.sk-global div.sk-label.fitted input.sk-toggleable__control:checked~label.sk-toggleable__label {
+.sk-global div.sk-label.fitted details[open] > summary.sk-toggleable__label {
   background-color: var(--sklearn-color-fitted-level-2);
 }
 
 /* Estimator-specific style */
 
 /* Colorize estimator box */
-.sk-global div.sk-estimator input.sk-toggleable__control:checked~label.sk-toggleable__label {
+.sk-global div.sk-estimator details[open] > summary.sk-toggleable__label {
   /* unfitted */
   background-color: var(--sklearn-color-unfitted-level-2);
 }
 
-.sk-global div.sk-estimator.fitted input.sk-toggleable__control:checked~label.sk-toggleable__label {
+.sk-global div.sk-estimator.fitted details[open] > summary.sk-toggleable__label {
   /* fitted */
   background-color: var(--sklearn-color-fitted-level-2);
 }
 
-.sk-global div.sk-label label.sk-toggleable__label,
+.sk-global div.sk-label summary.sk-toggleable__label,
 .sk-global div.sk-label label {
   /* The background is the default theme color */
   color: var(--sklearn-color-text-on-default-background);
 }
 
 /* On hover, darken the color of the background */
-.sk-global div.sk-label:hover label.sk-toggleable__label {
+.sk-global div.sk-label:hover summary.sk-toggleable__label {
   color: var(--sklearn-color-text);
   background-color: var(--sklearn-color-unfitted-level-2);
 }
 
 /* Label box, darken color on hover, fitted */
-.sk-global div.sk-label.fitted:hover label.sk-toggleable__label.fitted {
+.sk-global div.sk-label.fitted:hover summary.sk-toggleable__label.fitted {
   color: var(--sklearn-color-text);
   background-color: var(--sklearn-color-fitted-level-2);
 }
 
 /* Estimator label */
 
-.sk-global div.sk-label label {
+.sk-global div.sk-label summary.sk-toggleable__label {
   font-family: monospace;
   font-weight: bold;
   line-height: 1.2em;
@@ -314,7 +314,7 @@ a:visited.sk-estimator-doc-link {
   text-align: center;
   /* unfitted */
   border: var(--sklearn-color-unfitted-level-3) 1pt solid;
-  color: var(--sklearn-color-unfitted-level-3);
+  color: var(--sklearn-color-text);
 }
 
 .sk-estimator-doc-link.fitted,
@@ -323,7 +323,7 @@ a:visited.sk-estimator-doc-link.fitted {
   /* fitted */
   background-color: var(--sklearn-color-fitted-level-0);
   border: var(--sklearn-color-fitted-level-3) 1pt solid;
-  color: var(--sklearn-color-fitted-level-3);
+  color: var(--sklearn-color-text);
 }
 
 /* On hover */
@@ -374,8 +374,16 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
   border: var(--sklearn-color-fitted-level-3);
 }
 
-.sk-estimator-doc-link:hover span {
+.sk-estimator-doc-link:hover span,
+.sk-estimator-doc-link:focus-visible span {
   display: block;
+}
+
+/* Focus ring round and outside of the small circular icon */
+.sk-global .sk-estimator-doc-link:focus,
+.sk-global .sk-estimator-doc-link:focus-visible {
+  border-radius: 1em;
+  outline-offset: 2px;
 }
 
 /* "?"-specific style due to the `<a>` HTML tag */

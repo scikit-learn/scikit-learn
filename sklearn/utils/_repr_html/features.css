@@ -1,6 +1,5 @@
 .features {
   font-family: monospace;
-  cursor: pointer;
   background-color: var(--sklearn-color-unfitted-level-0);
   border: 1px dotted var(--sklearn-color-border-box);
   border-radius: .20em;
@@ -14,13 +13,15 @@
 
 .features summary {
   cursor: pointer;
-  display: flex;
   margin-bottom: 0;
   text-align: center;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5em;
   padding: .25em;
+}
+
+.features summary .features-summary-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
 }
 
 .features details[open] > summary {
@@ -32,15 +33,6 @@
 .features.fitted details[open] > summary {
   background-color: var(--sklearn-color-fitted-level-2);
   border-radius: .20em 0 0 0;
-}
-
-.features details > summary .arrow::before {
-  content: "▸";
-  color: grey;
-}
-
-.features details[open] > summary .arrow::before {
-  content: "▾";
 }
 
 .features details:hover > summary {
@@ -81,6 +73,14 @@
   width: 1em;
   height: 1em;
   filter: grayscale(100%) opacity(60%);
+}
+
+/* Keep this separate from the next selector */
+.features .copy-paste-icon:focus {
+  filter:none;
+}
+.features .copy-paste-icon:focus-visible {
+  filter: none;
 }
 
 .features .features-container table {

@@ -20,19 +20,20 @@ def _features_html(features, is_fitted_css_class=""):
         <div class="features {is_fitted_css_class}">
           <details>
             <summary>
-              <div class="arrow"></div>
-              <div>{total_features_line}</div>
-              <div class="image-container">
-                <button type="button" class="copy-paste-icon"
-                  title="{copy_features_label}"
-                  aria-label="{copy_features_label}"
-                  onclick="
-                  event.stopPropagation();
-                  event.preventDefault();
-                  copyFeatureNamesToClipboard(this);
-                  "
-                >
-                </button>
+              <div class="features-summary-content">
+                <div>{total_features_line}</div>
+                <div class="image-container">
+                  <button type="button" class="copy-paste-icon"
+                    title="{copy_features_label}"
+                    aria-label="{copy_features_label}"
+                    onclick="
+                    event.stopPropagation();
+                    event.preventDefault();
+                    copyFeatureNamesToClipboard(this);
+                    "
+                  >
+                  </button>
+                </div>
               </div>
             </summary>
             <div class="features-container">
