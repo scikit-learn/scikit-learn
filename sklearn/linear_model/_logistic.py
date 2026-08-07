@@ -143,13 +143,13 @@ class _LbfgsCallbackBridge:
         coefs_order,
         xp,
         device,
-        callbacks_params,
+        callback_params,
     ):
         self._callback_ctx = callback_ctx
         self._estimator = estimator
         self._X = X
         self._y = y
-        self._callbacks_params = callbacks_params
+        self._callback_params = callback_params
         self._coef_kwargs = dict(
             n_classes=n_classes,
             is_binary=is_binary,
@@ -170,7 +170,7 @@ class _LbfgsCallbackBridge:
             X=self._X,
             y=self._y,
             reconstruction_attributes={"coef_": coef, "intercept_": intercept},
-            metadata=self._callbacks_params.on_fit_task_begin,
+            metadata=self._callback_params.on_fit_task_begin,
         )
         return ctx
 
@@ -182,7 +182,7 @@ class _LbfgsCallbackBridge:
             X=self._X,
             y=self._y,
             reconstruction_attributes={"coef_": coef, "intercept_": intercept},
-            metadata=self._callbacks_params.on_fit_task_end,
+            metadata=self._callback_params.on_fit_task_end,
         )
         # TODO(1.10): use the return value of ``call_on_fit_task_end`` (a bool
         # requesting early stopping) to ``raise StopIteration()``. scipy's
@@ -249,7 +249,7 @@ def _logistic_regression_path(
     l1_ratio=None,
     n_threads=1,
     callback_ctx=None,
-    callbacks_params=None,
+    callback_params=None,
     estimator=None,
 ):
     """Compute a Logistic Regression model for a list of regularization
@@ -361,7 +361,7 @@ def _logistic_regression_path(
         The callback context of the fit task calling this function. If set to None, the
         callbacks will not be invoked.
 
-    callbacks_params : Bunch or None, default=None
+    callback_params : Bunch or None, default=None
         The metadata routed towards the callbacks.
 
     estimator : estimator instance or None, default=None
@@ -573,7 +573,7 @@ def _logistic_regression_path(
                     X,
                     y,
                     w0,
-                    callbacks_params=callbacks_params,
+                    callback_params=callback_params,
                     n_classes=n_classes,
                     is_binary=is_binary,
                     fit_intercept=fit_intercept,
@@ -1530,13 +1530,13 @@ class LogisticRegression(
             )
         else:
             routed_params = _manual_routing(
-                {"callbacks": self._get_manual_callbacks_params(sample_weight)}
+                {"callback": self._get_manual_callback_params(sample_weight)}
             )
         callback_ctx.call_on_fit_task_begin(
             estimator=self,
             X=X,
             y=y,
-            metadata=routed_params.callbacks.on_fit_task_begin,
+            metadata=routed_params.callback.on_fit_task_begin,
         )
 
         if solver == "liblinear":
@@ -1610,7 +1610,7 @@ class LogisticRegression(
             sample_weight=sample_weight,
             n_threads=n_threads,
             callback_ctx=callback_ctx,
-            callbacks_params=routed_params.callbacks,
+            callback_params=routed_params.callback,
             estimator=self,
         )
 
@@ -1636,7 +1636,7 @@ class LogisticRegression(
             X=X,
             y=y,
             reconstruction_attributes={},
-            metadata=routed_params.callbacks.on_fit_task_end,
+            metadata=routed_params.callback.on_fit_task_end,
         )
 
         return self

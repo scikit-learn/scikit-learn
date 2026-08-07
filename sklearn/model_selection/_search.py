@@ -954,7 +954,7 @@ class BaseSearchCV(
                     "estimator": {"fit": params},
                     "splitter": {"split": {"groups": groups}},
                     "scorer": {"score": score_kwargs},
-                    "callbacks": self._get_manual_callbacks_params(
+                    "callback": self._get_manual_callback_params(
                         params.get("sample_weight")
                     ),
                 }
@@ -1011,7 +1011,7 @@ class BaseSearchCV(
             estimator=self,
             X=X,
             y=y,
-            metadata=routed_params.callbacks.on_fit_task_begin,
+            metadata=routed_params.callback.on_fit_task_begin,
         )
 
         self._checked_cv_orig = check_cv(
@@ -1039,7 +1039,7 @@ class BaseSearchCV(
             error_score=self.error_score,
             verbose=self.verbose,
             caller=self,
-            callbacks_params=routed_params.callbacks,
+            callback_params=routed_params.callback,
         )
         results = {}
         with parallel:
@@ -1185,7 +1185,7 @@ class BaseSearchCV(
                     estimator=self,
                     X=X,
                     y=y,
-                    metadata=routed_params.callbacks.on_fit_task_begin,
+                    metadata=routed_params.callback.on_fit_task_begin,
                 )
 
                 refit_start_time = time.time()
@@ -1203,7 +1203,7 @@ class BaseSearchCV(
                 estimator=self,
                 X=X,
                 y=y,
-                metadata=routed_params.callbacks.on_fit_task_end,
+                metadata=routed_params.callback.on_fit_task_end,
             )
 
         # Store the only scorer not as a dict for single metric evaluation
@@ -1218,7 +1218,7 @@ class BaseSearchCV(
             estimator=self,
             X=X,
             y=y,
-            metadata=routed_params.callbacks.on_fit_task_end,
+            metadata=routed_params.callback.on_fit_task_end,
         )
 
         return self

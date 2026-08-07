@@ -172,8 +172,8 @@ def test_set_callback_empty():
     assert not hasattr(estimator, "_skl_callbacks")
 
 
-def test_get_manual_callbacks_params():
-    """Test the _get_manual_callbacks_params method."""
+def test_get_manual_callback_params():
+    """Test the _get_manual_callback_params method."""
 
     sample_weight = 12
 
@@ -185,10 +185,10 @@ def test_get_manual_callbacks_params():
     }
 
     est = MaxIterEstimator()
-    assert est._get_manual_callbacks_params(sample_weight) == output_no_forward
+    assert est._get_manual_callback_params(sample_weight) == output_no_forward
 
     est.set_callbacks(RecordingCallback())
-    assert est._get_manual_callbacks_params(sample_weight) == output_no_forward
+    assert est._get_manual_callback_params(sample_weight) == output_no_forward
 
     est.set_callbacks(RecordingCallback(), SampleWeightCallback())
-    assert est._get_manual_callbacks_params(sample_weight) == output_forward
+    assert est._get_manual_callback_params(sample_weight) == output_forward

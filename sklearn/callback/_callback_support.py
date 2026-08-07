@@ -153,7 +153,7 @@ class CallbackSupportMixin:
     def _add_callback_routing(self, router):
         """Utility method to add the routing to callbacks to the estimator's router."""
         router.add(
-            callbacks=getattr(self, "_skl_callbacks", None),
+            callback=getattr(self, "_skl_callbacks", None),
             method_mapping=MethodMapping()
             .add(caller="fit", callee="on_fit_task_begin")
             .add(caller="fit", callee="on_fit_task_end"),
@@ -175,24 +175,24 @@ class CallbackSupportMixin:
         router = MetadataRouter(owner=self)
         return self._add_callback_routing(router)
 
-    def _get_manual_callbacks_params(self, sample_weight):
+    def _get_manual_callback_params(self, sample_weight):
         # TODO(slep006): remove when metadata routing is the only way
         """Generate manually routed params for callbacks when routing is disabled.
 
         This is used to forward sample_weight to callback hooks that accept them even
         if metadata routing is disabled.
         """
-        callbacks_params = {"on_fit_task_begin": Bunch(), "on_fit_task_end": Bunch()}
+        callback_params = {"on_fit_task_begin": Bunch(), "on_fit_task_end": Bunch()}
         if sample_weight is None:
-            return callbacks_params
+            return callback_params
         for hook_name in ("on_fit_task_begin", "on_fit_task_end"):
             for i, cb in enumerate(getattr(self, "_skl_callbacks", [])):
                 if hasattr(cb, "_accept_sample_weight") and cb._accept_sample_weight(
                     hook_name
                 ):
-                    callbacks_params[hook_name] = {"sample_weight": sample_weight}
+                    callback_params[hook_name] = {"sample_weight": sample_weight}
                     break
-        return callbacks_params
+        return callback_params
 
 
 @contextmanager

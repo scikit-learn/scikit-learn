@@ -991,13 +991,13 @@ class StandardScaler(
             )
         else:
             routed_params = _manual_routing(
-                {"callbacks": self._get_manual_callbacks_params(sample_weight)}
+                {"callback": self._get_manual_callback_params(sample_weight)}
             )
         callback_ctx.call_on_fit_task_begin(
             estimator=self,
             X=X,
             y=y,
-            metadata=routed_params.callbacks.on_fit_task_begin,
+            metadata=routed_params.callback.on_fit_task_begin,
         )
 
         # Even in the case of `with_mean=False`, we update the mean anyway
@@ -1104,7 +1104,7 @@ class StandardScaler(
             X=X,
             y=y,
             reconstruction_attributes={},
-            metadata=routed_params.callbacks.on_fit_task_end,
+            metadata=routed_params.callback.on_fit_task_end,
         )
 
         return self

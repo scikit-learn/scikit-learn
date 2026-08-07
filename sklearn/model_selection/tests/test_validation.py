@@ -2120,7 +2120,7 @@ def test_fit_and_score_with_callback_metadata():
         parameters={"max_iter": 100, "tol": 0.1},
         fit_params=None,
         callback_ctx=est._init_callback_context(),
-        callbacks_params=Bunch(
+        callback_params=Bunch(
             on_fit_task_begin={"X_val": X_val, "arg_to_split": arg_to_split},
             on_fit_task_end={"y_val": y_val, "arg_to_split": arg_to_split},
         ),

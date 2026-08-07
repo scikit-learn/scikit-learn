@@ -689,7 +689,7 @@ def _fit_and_score(
     error_score=np.nan,
     caller=None,
     callback_ctx=None,
-    callbacks_params=None,
+    callback_params=None,
 ):
     """Fit estimator and compute scores for a given dataset split.
 
@@ -766,7 +766,7 @@ def _fit_and_score(
     callback_ctx : `CallbackContext` object or None, default=None
         Callback context for the evaluation task.
 
-    callbacks_params : dict or None
+    callback_params : dict or None
         Parameters that will be passed to the callbacks' on_fit_task_begin and
         on_fit_task_end hooks.
 
@@ -822,28 +822,28 @@ def _fit_and_score(
     score_params_train = _check_method_params(X, params=score_params, indices=train)
     score_params_test = _check_method_params(X, params=score_params, indices=test)
     # Adjust length of callbacks metadata
-    if callbacks_params is not None:
-        callbacks_params_checked = {}
-        for hook_name in callbacks_params:
-            callbacks_params_checked[hook_name] = {}
+    if callback_params is not None:
+        callback_params_checked = {}
+        for hook_name in callback_params:
+            callback_params_checked[hook_name] = {}
             # `_check_method_params` considers that all params that are arrays of same
             # length as X should be resampled with the provided `indices`. But it is not
             # always the case, e.g. X_val and y_val which are thus explicitly excluded.
             # TODO: a more general solution for this problem is still needed.
             params_to_check = {}
-            for param_name, param_value in callbacks_params[hook_name].items():
+            for param_name, param_value in callback_params[hook_name].items():
                 if param_name in ("X_val", "y_val"):
-                    callbacks_params_checked[hook_name][param_name] = param_value
+                    callback_params_checked[hook_name][param_name] = param_value
                 else:
                     params_to_check[param_name] = param_value
-            callbacks_params_checked[hook_name].update(
+            callback_params_checked[hook_name].update(
                 _check_method_params(
                     X,
                     params=params_to_check,
                     indices=train,
                 )
             )
-        callbacks_params = Bunch(**callbacks_params_checked)
+        callback_params = Bunch(**callback_params_checked)
 
     if parameters is not None:
         # here we clone the parameters, since sometimes the parameters
@@ -866,7 +866,7 @@ def _fit_and_score(
                     estimator=caller,
                     X=X_train,
                     y=y_train,
-                    metadata=callbacks_params.on_fit_task_begin,
+                    metadata=callback_params.on_fit_task_begin,
                 )
                 if y_train is None:
                     estimator.fit(X_train, **fit_params)
@@ -912,7 +912,7 @@ def _fit_and_score(
                 estimator=caller,
                 X=X_train,
                 y=y_train,
-                metadata=callbacks_params.on_fit_task_end,
+                metadata=callback_params.on_fit_task_end,
             )
 
     if verbose > 1:

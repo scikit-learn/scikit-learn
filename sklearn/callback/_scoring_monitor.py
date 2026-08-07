@@ -173,9 +173,6 @@ class ScoringMonitor(_MetadataRequester):
             "train": _convert_to_multiscorer(scoring_train),
             "val": _convert_to_multiscorer(scoring_val),
         }
-        if scoring_val != "no_val_score":
-            self._validate_validation_scorer()
-            self.set_on_fit_task_end_request(X_val=True, y_val=True)
 
         self._log = []
 
@@ -184,19 +181,6 @@ class ScoringMonitor(_MetadataRequester):
         # `self._log.append` is the message consumer that `send` calls will use to
         # to grow the main process's log.
         self._listener_handle = open_listener(self._log.append, owner=self)
-
-    def _validate_validation_scorer(self):
-        """Raise an error if val scorer is set but metadata routing is disabled."""
-        if self._scorers["val"] != "no_val_score" and not _routing_enabled():
-            raise ValueError(
-                "Using a scorer on validation data in "
-                f"{self.__class__.__name__} is only supported when metadata "
-                "routing is enabled. You can enable it using "
-                "`sklearn.set_config(enable_metadata_routing=True)`. See the "
-                "User Guide "
-                "<https://scikit-learn.org/stable/metadata_routing.html> for "
-                "more details on metadata routing."
-            )
 
     def _accept_sample_weight(self, hook_name):
         """Whetther the callback accepts sample_weight for a given hook."""
@@ -216,7 +200,21 @@ class ScoringMonitor(_MetadataRequester):
         return self._scorers["train"]._accept_sample_weight()
 
     def setup(self, estimator, context):
-        self._validate_validation_scorer()
+        # Since the val scorer requests X_val and y_val in setup, it creates a
+        # constraint to have the callback context initialized before calling
+        # `process_routing` in fit for all callback supporting estimators.
+        if self._scorers["val"] != "no_val_score":
+            if not _routing_enabled():
+                raise ValueError(
+                    "Using a scorer on validation data in "
+                    f"{self.__class__.__name__} is only supported when metadata "
+                    "routing is enabled. You can enable it using "
+                    "`sklearn.set_config(enable_metadata_routing=True)`. See the "
+                    "User Guide "
+                    "<https://scikit-learn.org/stable/metadata_routing.html> for "
+                    "more details on metadata routing."
+                )
+            self.set_on_fit_task_end_request(X_val=True, y_val=True)
 
     def teardown(self, estimator, context):
         pass
