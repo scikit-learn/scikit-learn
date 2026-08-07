@@ -13,7 +13,7 @@ from sklearn.datasets import make_blobs
 from sklearn.exceptions import DataConversionWarning, EfficiencyWarning
 from sklearn.metrics.cluster import contingency_matrix
 from sklearn.metrics.pairwise import pairwise_distances
-from sklearn.neighbors import kneighbors_graph
+from sklearn.neighbors import kneighbors_graph, sort_graph_by_row_values
 from sklearn.utils import shuffle
 from sklearn.utils._testing import assert_allclose, assert_array_equal
 from sklearn.utils.fixes import CSR_CONTAINERS
@@ -864,7 +864,11 @@ def test_optics_precomputed_sparse_no_efficiency_warning(csr_container, presorte
     """
     X = np.random.RandomState(0).randn(50, 5)
     graph = csr_container(kneighbors_graph(X, n_neighbors=10, mode="distance"))
-    if not presorted:
+    if presorted:
+        # Guarantee the graph is sorted by row values, so that the only thing
+        # that can unsort it is OPTICS itself (via `setdiag`).
+        graph = sort_graph_by_row_values(graph, warn_when_not_sorted=False)
+    else:
         # Reverse each row so that the graph is not sorted by row values.
         for start, end in zip(graph.indptr, graph.indptr[1:]):
             graph.data[start:end] = graph.data[start:end][::-1]
@@ -872,7 +876,7 @@ def test_optics_precomputed_sparse_no_efficiency_warning(csr_container, presorte
 
     with warnings.catch_warnings():
         warnings.simplefilter("error", EfficiencyWarning)
-        OPTICS(metric="precomputed", min_samples=5).fit(graph)
+        OPTICS(metric="precomputed").fit(graph)
 
 
 def test_optics_predecessor_correction_ordering():

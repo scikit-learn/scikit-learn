@@ -1,5 +1,4 @@
-- :class:`cluster.OPTICS` no longer raises a spurious
-  :class:`~sklearn.exceptions.EfficiencyWarning` for every sample when fitted on a
-  precomputed sparse distance matrix, even when that matrix was already sorted with
-  :func:`neighbors.sort_graph_by_row_values`.
-  By :user:`David Gao <DavidGao520>`.
+- :class:`cluster.OPTICS` no longer raises a
+  :class:`~sklearn.exceptions.EfficiencyWarning` when fitted on a
+  precomputed sparse distance matrix.
+  By :user:`Dea María Léon <deamarialeon>`.
