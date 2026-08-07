@@ -8,8 +8,10 @@ usage.
 import functools
 import warnings
 from functools import update_wrapper
+from multiprocessing.pool import ThreadPool
 
 import joblib
+from joblib.parallel import ThreadingBackend
 from threadpoolctl import ThreadpoolController
 
 from sklearn._config import config_context, get_config
@@ -19,6 +21,37 @@ from sklearn._config import config_context, get_config
 # It should not be accessed directly and _get_threadpool_controller should be used
 # instead.
 _threadpool_controller = None
+
+
+class ConstrainedThreadingBackend(ThreadingBackend):
+    """
+    Prevent oversaturation by limiting OpenMP pool sizes.
+
+    OpenMP pool size limits are thread-local, which is why we need to do this
+    for every thread in the pool.
+
+    This should eventually be the default in joblib.
+    """
+
+    def _limit_nested_thread_pools(self):
+        # OpenMP thread limits are per-thread:
+        ThreadpoolController().limit(
+            limits=max(joblib.cpu_count() // self._n_jobs, 1), user_api="openmp"
+        )
+
+    # TODO: this is a private joblib API
+    def _get_pool(self):
+        if self._pool is None:
+            self._pool = ThreadPool(
+                self._n_jobs, initializer=self._limit_nested_thread_pools
+            )
+        return self._pool
+
+
+# TODO it's unclear if joblib intended for pre-existing backends to be
+#      overridable.
+# Override default threading backend with one that limits oversaturation:
+joblib.register_parallel_backend("threading", ConstrainedThreadingBackend)
 
 
 def _with_config_and_warning_filters(delayed_func, config, warning_filters):
@@ -88,7 +121,28 @@ class Parallel(joblib.Parallel):
             )
             for delayed_func, args, kwargs in iterable
         )
-        return super().__call__(iterable_with_config_and_warning_filters)
+
+        # For processes this is redundant, matching the default logic in
+        # joblib. For threads, the OpenMP limit will be only for this thread,
+        # so we need to do it for other threads too; see
+        # ConstrainedThreadingBackend.
+        #
+        # Note that for BLAS libraries that don't know about OpenMP (e.g.
+        # OpenBLAS with pthreads) this limit may be too low if n_jobs is
+        # smaller than the number of available cores. The result is that BLAS
+        # calculations will be limited to only n_job cores instead of all
+        # cores. The alternative is having the number be too high, and given
+        # oversaturation can make OpenBLAS orders of magnitude slower, this is
+        # the better choice.
+        #
+        # Given this limitation, algorithms that cannot saturate all cores
+        # should having documentation suggesting either sticking to process
+        # pools, or choosing a better BLAS library.
+        # TODO don't do this on process pools:
+        with _get_threadpool_controller().limit(
+            limits=max(joblib.cpu_count() // self.n_jobs, 1)
+        ):
+            return super().__call__(iterable_with_config_and_warning_filters)
 
 
 # remove when https://github.com/joblib/joblib/issues/1071 is fixed
