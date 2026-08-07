@@ -683,6 +683,24 @@ def test_standard_scaler_partial_fit_numerical_stability(sparse_container):
     assert_allclose(scaler_incr.scale_, scaler.scale_, rtol=tol)
 
 
+def test_standard_scaler_partial_fit_large_values_no_overflow():
+    # Non-regression test for gh-5602: repeated calls to partial_fit on data
+    # with a large mean used to overflow the accumulated sum, turning the
+    # fitted statistics into inf or nan. A power of two keeps the expected
+    # statistics exactly representable.
+    big = 2.0**1020
+    X = np.full((10, 2), big)
+
+    scaler = StandardScaler()
+    with np.errstate(over="raise", invalid="raise"):
+        for _ in range(100):
+            scaler.partial_fit(X)
+
+    assert_allclose(scaler.mean_, [big, big])
+    assert_allclose(scaler.var_, [0.0, 0.0])
+    assert scaler.n_samples_seen_ == 1000
+
+
 @pytest.mark.parametrize("sample_weight", [True, None])
 @pytest.mark.parametrize("sparse_container", CSC_CONTAINERS + CSR_CONTAINERS)
 def test_partial_fit_sparse_input(sample_weight, sparse_container):
