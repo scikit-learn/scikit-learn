@@ -1719,5 +1719,5 @@ def test_Pipeline_in_PassthroughScorer():
             )
         ]
     )
-    search = GridSearchCV(pipe, {"logistic__C": [0.1, 1]}, n_jobs=1, cv=3)
+    search = GridSearchCV(pipe, {"logistic__alpha": [10, 1]}, n_jobs=1, cv=3)
     search.fit(X, y, sample_weight=sample_weight)
