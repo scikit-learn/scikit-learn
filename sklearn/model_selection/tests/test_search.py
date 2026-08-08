@@ -1216,7 +1216,7 @@ def test_random_search_cv_results_multimetric():
     n_splits = 3
     n_search_iter = 30
 
-    params = dict(C=np.logspace(-4, 1, 3))
+    params = dict(alpha=np.logspace(4, -1, 3))
     for refit in (True, False):
         random_searches = []
         for scoring in (("accuracy", "recall"), "accuracy", "recall"):
@@ -1339,7 +1339,9 @@ def test_unsupported_sample_weight_scorer():
 
     X, y = make_classification(n_samples=10, n_features=4, random_state=42)
     sw = np.ones_like(y)
-    search_cv = GridSearchCV(estimator=LogisticRegression(), param_grid={"C": [1, 10]})
+    search_cv = GridSearchCV(
+        estimator=LogisticRegression(), param_grid={"alpha": [1, 0.1]}
+    )
     # function
     search_cv.set_params(scoring=fake_score_func)
     with pytest.warns(UserWarning, match="does not support sample_weight"):
@@ -1362,9 +1364,11 @@ def test_unsupported_sample_weight_scorer():
 @pytest.mark.parametrize(
     "estimator",
     [
-        GridSearchCV(estimator=LogisticRegression(), param_grid={"C": [1, 10, 100]}),
+        GridSearchCV(
+            estimator=LogisticRegression(), param_grid={"alpha": [1, 0.1, 0.01]}
+        ),
         RandomizedSearchCV(
-            estimator=Ridge(), param_distributions={"alpha": [1, 0.1, 0.01]}
+            estimator=Ridge(), param_distributions={"alpha": [1, 0.1, 0.01]}, n_iter=3
         ),
     ],
 )

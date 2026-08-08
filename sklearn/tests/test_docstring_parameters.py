@@ -164,7 +164,7 @@ def test_docstring_parameters():
 
 
 def _construct_searchcv_instance(SearchCV):
-    return SearchCV(LogisticRegression(), {"C": [0.1, 1]})
+    return SearchCV(LogisticRegression(), {"alpha": [0.1, 1]})
 
 
 def _construct_compose_pipeline_instance(Estimator):
@@ -186,6 +186,8 @@ def _construct_sparse_coder(Estimator):
     return Estimator(dictionary=dictionary)
 
 
+# TODO(1.14): remove filterwarnings with deprecation period of C and Cs
+@pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 # TODO(1.10): remove copy warning filter
 @pytest.mark.filterwarnings(
     "ignore:The default value of `copy` will change from False to True in 1.10."
