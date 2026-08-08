@@ -184,14 +184,13 @@ def _map_to_integer(values, uniques):
 
 def _unique_python(values, *, return_inverse, return_counts):
     # Only used in `_unique`, see docstring there for details
-    if return_counts:
-        counter = Counter(values)
-        uniques_set = set(counter)
-    else:
-        uniques_set = set(values)
-    uniques_set, missing_values = _extract_missing(uniques_set)
-
     try:
+        if return_counts:
+            counter = Counter(values)
+            uniques_set = set(counter)
+        else:
+            uniques_set = set(values)
+        uniques_set, missing_values = _extract_missing(uniques_set)
         uniques = sorted(uniques_set)
     except TypeError:
         types = sorted(t.__qualname__ for t in set(type(v) for v in values))
