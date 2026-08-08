@@ -377,7 +377,7 @@ The parameter `deep` controls whether or not the parameters of the
     ...     print(f"{param} -> {value}")
     my_extra_param -> random
     subestimator__C -> deprecated
-    subestimator__alpha -> 1/n_samples
+    subestimator__alpha -> 1.0
     subestimator__class_weight -> None
     subestimator__dual -> False
     subestimator__fit_intercept -> True
