@@ -3159,7 +3159,7 @@ def test_logistic_regression_cv_array_api_compliance(
         # stability of the convergence with "lbgfs" in a dedicated
         # follow up issue and PR.
         if solver == "lbfgs":
-            solver_tol = 5e-4
+            solver_tol = 5e-5
             rtol = 6e-2
         else:
             solver_tol = 1e-5
