@@ -584,7 +584,10 @@ class OneHotEncoder(_BaseEncoder):
         infrequent categories along with the frequent categories. If `None`,
         there is no limit to the number of output features.
 
-        .. versionadded:: 1.1
+        When multiple categories have the same frequency at the cutoff boundary,
+        ties are resolved according to the ordering of the categories.
+
+    .. versionadded:: 1.1
             Read more in the :ref:`User Guide <encoder_infrequent_categories>`.
 
     feature_name_combiner : "concat" or callable, default="concat"
@@ -1312,6 +1315,9 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         categories, `max_categories` includes the category representing the
         infrequent categories along with the frequent categories. If `None`,
         there is no limit to the number of output features.
+
+        When multiple categories have the same frequency at the cutoff boundary,
+        ties are resolved according to the ordering of the categories.
 
         `max_categories` do **not** take into account missing or unknown
         categories. Setting `unknown_value` or `encoded_missing_value` to an
