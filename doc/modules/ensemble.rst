@@ -493,8 +493,8 @@ Finally, many parts of the implementation of
    BoostingDecision Tree" <https://papers.nips.cc/paper/
    6907-lightgbm-a-highly-efficient-gradient-boosting-decision-tree>`_
 
-.. [Fisher1958] Fisher, W.D. (1958). `"On Grouping for Maximum Homogeneity"
-   <http://csiss.ncgia.ucsb.edu/SPACE/workshops/2004/SAC/files/fisher.pdf>`_
+.. [Fisher1958] Fisher, W.D. (1958). :doi:`"On Grouping for Maximum Homogeneity"
+   <10.1080/01621459.1958.10501479>`
    Journal of the American Statistical Association, 53, 789-798.
 
 
@@ -927,8 +927,8 @@ based on permutation of the features.
    boosting machine <10.1214/aos/1013203451>`.
    Annals of Statistics, 29, 1189-1232.
 
-.. [Friedman2002] Friedman, J.H. (2002). `Stochastic gradient boosting.
-   <https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=48caac2f65bce47f6d27400ae4f60d8395cec2f3>`_.
+.. [Friedman2002] Friedman, J.H. (2002). :doi:`Stochastic gradient boosting.
+   <10.1016/S0167-9473(01)00065-2>`.
    Computational Statistics & Data Analysis, 38, 367-378.
 
 .. [R2007] G. Ridgeway (2006). `Generalized Boosted Models: A guide to the gbm
