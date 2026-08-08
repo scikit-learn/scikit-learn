@@ -700,6 +700,7 @@ METRICS_NOT_SUPPORTING_ARRAY_API = {
     "paired_distances",
     "pairwise_distances_argmin_min",
     "pairwise_distances_chunked",
+    "top_k_accuracy_score",
 }
 
 
