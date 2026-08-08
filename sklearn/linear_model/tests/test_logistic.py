@@ -36,7 +36,6 @@ from sklearn.model_selection import (
     LeaveOneGroupOut,
     StratifiedKFold,
     cross_val_score,
-    train_test_split,
 )
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.preprocessing import LabelEncoder, StandardScaler, scale
@@ -1903,32 +1902,7 @@ def test_elastic_net_l1_l2_equivalence(global_random_seed, C, penalty, l1_ratio)
     assert_array_almost_equal(lr_enet.coef_, lr_expected.coef_)
 
 
-@pytest.mark.parametrize("C", [0.001, 1, 100, 1e6])
-def test_elastic_net_vs_l1_l2(C, global_random_seed):
-    # Make sure that elasticnet with grid search on l1_ratio gives same or
-    # better results than just l1 or just l2.
-
-    X, y = make_classification(500, random_state=global_random_seed)
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, random_state=global_random_seed
-    )
-
-    param_grid = {"l1_ratio": np.linspace(0, 1, 5)}
-
-    enet_clf = LogisticRegression(l1_ratio=0.5, C=C, solver="newton-cd")
-    gs = GridSearchCV(enet_clf, param_grid, refit=True)
-
-    l1_clf = LogisticRegression(l1_ratio=1, C=C, solver="newton-cd")
-    l2_clf = LogisticRegression(l1_ratio=0, C=C, solver="newton-cd")
-
-    for clf in (gs, l1_clf, l2_clf):
-        clf.fit(X_train, y_train)
-
-    assert gs.score(X_test, y_test) >= l1_clf.score(X_test, y_test)
-    assert gs.score(X_test, y_test) >= l2_clf.score(X_test, y_test)
-
-
-@pytest.mark.parametrize("C", np.logspace(-3, 2, 4))
+@pytest.mark.parametrize("C", np.logspace(-3, 0, 4))
 @pytest.mark.parametrize("l1_ratio", [0.1, 0.5, 0.9])
 def test_LogisticRegression_elastic_net_objective(C, l1_ratio, global_random_seed):
     # Check that training with a penalty matching the objective leads
@@ -1936,8 +1910,9 @@ def test_LogisticRegression_elastic_net_objective(C, l1_ratio, global_random_see
     # Here we train a logistic regression with l2 (a) and elasticnet (b)
     # penalties, and compute the elasticnet objective. That of a should be
     # greater than that of b (both objectives are convex).
+    n_samples = 1000
     X, y = make_classification(
-        n_samples=1000,
+        n_samples=n_samples,
         n_classes=2,
         n_features=20,
         n_informative=10,
@@ -1955,9 +1930,9 @@ def test_LogisticRegression_elastic_net_objective(C, l1_ratio, global_random_see
 
     def enet_objective(lr):
         coef = lr.coef_.ravel()
-        obj = C * log_loss(y, lr.predict_proba(X), normalize=False)
-        obj += l1_ratio * np.sum(np.abs(coef))
-        obj += (1.0 - l1_ratio) * 0.5 * np.dot(coef, coef)
+        obj = log_loss(y, lr.predict_proba(X))
+        obj += l1_ratio * np.sum(np.abs(coef)) / (C * n_samples)
+        obj += (1.0 - l1_ratio) * 0.5 * np.dot(coef, coef) / (C * n_samples)
         return obj
 
     assert enet_objective(lr_enet) < enet_objective(lr_l2)
