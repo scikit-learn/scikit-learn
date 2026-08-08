@@ -445,3 +445,7 @@ Note on Intel GPU support
 PyTorch XPU support is only available in PyTorch >= 2.12. For detailed compatibility
 information and setup instructions, see the `PyTorch XPU documentation
 <https://docs.pytorch.org/docs/2.12/notes/get_start_xpu.html>`__.
+
+.. note::
+  
+   PyTorch support for Intel GPU (XPU) devices is under active development and may exhibit instability or unexpected performance slowdowns. Users targeting Intel GPUs are strongly encouraged to use the latest versions of PyTorch where fixes and optimizations are regularly released or to consider using `dpnp <https://intelpython.github.io/dpnp/>`__ as an alternative backend.
