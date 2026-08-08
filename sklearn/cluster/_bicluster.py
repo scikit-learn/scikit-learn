@@ -298,13 +298,17 @@ class SpectralCoclustering(BaseSpectral):
     --------
     >>> from sklearn.cluster import SpectralCoclustering
     >>> import numpy as np
-    >>> X = np.array([[1, 1], [2, 1], [1, 0],
-    ...               [4, 7], [3, 5], [3, 6]])
+    >>> X = np.array([[3, 3, 0, 0], [3, 3, 0, 0],
+    ...               [0, 0, 1, 1], [0, 0, 1, 1]])
     >>> clustering = SpectralCoclustering(n_clusters=2, random_state=0).fit(X)
-    >>> clustering.row_labels_ #doctest: +SKIP
-    array([0, 1, 1, 0, 0, 0], dtype=int32)
-    >>> clustering.column_labels_ #doctest: +SKIP
-    array([0, 0], dtype=int32)
+    >>> same_cluster = (
+    ...     clustering.row_labels_[:, np.newaxis] == clustering.column_labels_
+    ... )
+    >>> same_cluster.astype(int)
+    array([[1, 1, 0, 0],
+           [1, 1, 0, 0],
+           [0, 0, 1, 1],
+           [0, 0, 1, 1]])
     >>> clustering
     SpectralCoclustering(n_clusters=2, random_state=0)
 
