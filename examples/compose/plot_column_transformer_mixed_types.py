@@ -185,7 +185,7 @@ selector(dtype_include="category")(X_train)
 param_grid = {
     "preprocessor__num__imputer__strategy": ["mean", "median"],
     "preprocessor__cat__selector__percentile": [10, 30, 50, 70],
-    "classifier__alpha": [0.1, 1e-2, 1e-3, 1e-4],
+    "classifier__alpha": [10, 1, 0.1, 0.01],
 }
 
 search_cv = RandomizedSearchCV(clf, param_grid, n_iter=10, random_state=0)

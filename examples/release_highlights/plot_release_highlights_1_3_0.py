@@ -120,7 +120,7 @@ _ = ValidationCurveDisplay.from_estimator(
     X,
     y,
     param_name="alpha",
-    param_range=np.geomspace(1e2, 1e-5, num=10),
+    param_range=np.geomspace(1e5, 1e-3, num=10),
     score_type="both",
     score_name="Accuracy",
 )

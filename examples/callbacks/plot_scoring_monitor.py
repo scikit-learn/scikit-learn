@@ -57,7 +57,7 @@ model = make_pipeline(
 
 param_grid = {
     "standardscaler__with_std": [True, False],
-    "logisticregression__alpha": np.geomspace(1e-4, 1, 3),
+    "logisticregression__alpha": np.geomspace(1e2, 1e-2, 3),
 }
 
 grid_search = GridSearchCV(

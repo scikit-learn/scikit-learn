@@ -38,7 +38,7 @@ fig, axes = plt.subplots(3, 3)
 
 # Set regularization parameter
 params = dict(tol=0.01, solver="saga")
-for i, (alpha, axes_row) in enumerate(zip((1e-3, 1e-2, 1e-1), axes)):
+for i, (alpha, axes_row) in enumerate(zip((1, 1e1, 1e2), axes)):
     # Increase tolerance for short training time
     clf_l1_LR = LogisticRegression(alpha=alpha, l1_ratio=1, **params)
     clf_l2_LR = LogisticRegression(alpha=alpha, l1_ratio=0, **params)

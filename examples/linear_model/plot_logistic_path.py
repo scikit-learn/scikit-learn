@@ -56,7 +56,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import l1_min_c
 
 cs = l1_min_c(X, y, loss="log") * np.logspace(0, 1, 16)
-alphas = 1 / (cs * X.shape[0])
+alphas = 1 / cs
 
 # %%
 # Create a pipeline with `StandardScaler` and `LogisticRegression`, to normalize

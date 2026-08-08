@@ -237,7 +237,7 @@ otherwise an error is raised by the router object. For example, the following co
 raises an error, since it hasn't been explicitly specified whether ``sample_weight``
 should be passed to the estimator's scorer or not::
 
-    >>> param_grid = {"alpha": [1e-1, 1e-2]}
+    >>> param_grid = {"alpha": [10, 1]}
     >>> lr = LogisticRegression().set_fit_request(sample_weight=True)
     >>> try:
     ...     GridSearchCV(
