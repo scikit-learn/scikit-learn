@@ -823,7 +823,7 @@ def _multiclass_roc_auc_score(
         Sample weights.
 
     """
-    xp, _ = get_namespace(y_score)
+    xp, _, device = get_namespace_and_device(y_score)
 
     if not y_score.ndim == 2:
         raise ValueError(
@@ -834,7 +834,7 @@ def _multiclass_roc_auc_score(
 
     if not xp.all(
         xpx.isclose(
-            xp.ones((y_score.shape[0],), dtype=y_score.dtype, device=y_score.device),
+            xp.ones((y_score.shape[0],), dtype=y_score.dtype, device=device),
             xp.sum(y_score, axis=1),
         )
     ):
