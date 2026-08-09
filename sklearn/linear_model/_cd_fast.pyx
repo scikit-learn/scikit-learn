@@ -202,7 +202,7 @@ cdef inline floating dual_gap_formulation_A(
 
     primal = 0.5 * (R_norm2 + beta * w_l2_norm2) + alpha * w_l1_norm
 
-    if (dual_norm_XtA > alpha):
+    if dual_norm_XtA > alpha:
         scale = alpha / dual_norm_XtA
     else:
         scale = 1.0
@@ -2272,7 +2272,6 @@ cdef (floating, floating) gap_enet_multinomial(
     Note that X must always be replaced by A = sqrt(D) L' X
     """
     cdef floating gap, primal, dual
-    cdef floating scale  # Scaling factor to achieve dual feasible point.
     cdef floating dual_norm_XtA
     cdef floating R_norm2
     cdef floating Ry
@@ -2290,21 +2289,16 @@ cdef (floating, floating) gap_enet_multinomial(
     else:
         eps = DBL_EPSILON
 
+    # l2_norm2 = w @ w
     if beta > 0:
-        # l2_norm2 = w @ w
         w_l2_norm2 = _dot(n_classes * n_features, &w[0, 0], 1, &w[0, 0], 1)
-    if alpha > 0:
-        # w_l1_norm = np.sum(np.abs(w))
-        w_l1_norm = _asum(n_classes * n_features, &w[0, 0], 1)
     # R_norm2 = np.linalg.norm(R, ord="fro") ** 2
     R_norm2 = _dot(n_classes * n_samples, &R[0, 0], 1, &R[0, 0], 1)
     if not (alpha == 0 and beta == 0):
         # Ry = R.ravel(order="F") @ y.ravel(order="F")
         Ry = _dot(n_classes * n_samples, &R[0, 0], 1, &y[0, 0], 1)
 
-    primal = 0.5 * R_norm2 + alpha * w_l1_norm + 0.5 * beta * w_l2_norm2
-
-    # XtA = X'R -> A'R = X' L sqrt(D) R
+    # Begin XtA = X'R -> A'R = X' L sqrt(D) R
     # XtA[:, :] = (X.T @ LD_R).T
     if not X_is_sparse:
         for k in range(n_classes):
@@ -2338,6 +2332,7 @@ cdef (floating, floating) gap_enet_multinomial(
             n_classes - 1, &LD_R_sum0[0], 1, 1.0, &XtA[0, 0], 1,
         )
         free(LD_R_sum0)
+    # End XtA
 
     if alpha == 0:
         # ||X'R||_2^2
@@ -2350,31 +2345,32 @@ cdef (floating, floating) gap_enet_multinomial(
             # Compare with stopping criterion of LSQR.
             gap = dual_norm_XtA
             return gap, dual_norm_XtA
-        # This is Ridge regression with primal objective
-        #     P(w) = 1/2 ||y - X w||_2^2 + beta/2 ||w||_2^2
-        # We use the "alternative" dual formulation with alpha=0, see
-        # https://github.com/scikit-learn/scikit-learn/issues/22836
-        #     D(v) = -1/2 ||v||_2^2 - v'y - 1/(2 beta) |||X'v||_2^2
-        # With v = Xw - y = -R (residual), the dual gap reads
-        #     G = P(w) - D(-R)
-        #       = ||R||_2^2  + beta/2 ||w||_2^2 - R'y + 1/(2 beta) ||X'R||_2^2
+        # This is Ridge regression, we use formulation B for the dual gap.
+        primal = 0.5 * (R_norm2 + beta * w_l2_norm2)
         dual = -0.5 * R_norm2 + Ry - 1 / (2 * beta) * dual_norm_XtA
-    else:
-        # XtA = X.T @ R - beta * w
-        # XtA -= beta * w
-        _axpy(n_classes * n_features, -beta, &w[0, 0], 1, &XtA[0, 0], 1)
-        dual_norm_XtA = abs_max(n_classes * n_features, &XtA[0, 0])
+        gap = primal - dual
+        if gap_smaller_eps and abs(gap) <= 2 * eps * primal:
+            gap = 0.0
+        return gap, dual_norm_XtA
 
-        if dual_norm_XtA > alpha:
-            scale = alpha / dual_norm_XtA
-        else:
-            scale = 1.0
-        dual = -0.5 * (scale**2) * (R_norm2 + beta * w_l2_norm2)
-        dual += scale * Ry
+    # XtA = X.T @ R - beta * w
+    # XtA -= beta * w
+    _axpy(n_classes * n_features, -beta, &w[0, 0], 1, &XtA[0, 0], 1)
+    dual_norm_XtA = abs_max(n_classes * n_features, &XtA[0, 0])
 
-    gap = primal - dual
-    if gap_smaller_eps and abs(gap) <= 2 * eps * primal:
-        gap = 0.0
+    # w_l1_norm = np.sum(np.abs(w))
+    w_l1_norm = _asum(n_classes * n_features, &w[0, 0], 1)
+
+    gap = dual_gap_formulation_A(
+        alpha=alpha,
+        beta=beta,
+        w_l1_norm=w_l1_norm,
+        w_l2_norm2=w_l2_norm2,
+        R_norm2=R_norm2,
+        Ry=Ry,
+        dual_norm_XtA=dual_norm_XtA,
+        gap_smaller_eps=gap_smaller_eps,
+    )
     return gap, dual_norm_XtA
 
 
@@ -2399,6 +2395,7 @@ cdef inline void update_LD_R(
 
     Note:
         - LDL = diag(proba) - proba proba', the last term being the outer product.
+        - LD_R = L sqrt(D) R
         - We multiply by sample weights because we want the full hessian,
           sw_proba = sample_weight * proba.
     """
@@ -2426,7 +2423,7 @@ cdef inline void update_LD_R(
             memset(&x_k[0], 0, n_samples * sizeof(floating))
             for i_ind in range(startptr, endptr):
                 i = X_indices[i_ind]
-                x_k[i] += X_data[i_ind] * w_kj * sw_proba[i, k]
+                x_k[i] = X_data[i_ind] * w_kj * sw_proba[i, k]
                 LD_R[i, k] += (1 - proba[i, k]) * x_k[i]
 
         for l in range(n_classes):
@@ -2890,7 +2887,7 @@ def enet_coordinate_descent_multinomial(
         for n_iter in range(max_iter):
             w_max = 0.0
             d_w_max = 0.0
-            for k in range(n_classes):  # Loop over coordinates
+            for k in range(n_classes):  # Loop over classes
                 # tic = time(NULL)
                 at_least_one_feature_updated = False
                 # t_k[:] = 0
@@ -2941,6 +2938,8 @@ def enet_coordinate_descent_multinomial(
                         at_least_one_feature_updated = True
                         # Update residual
                         # R -= (w[j] - w_j) * X[:,j] -> (w[kj] - w_kj) * A[:,kj]
+                        # We could call update_LD_R, but we use the fact that we can
+                        # postpone certain operations to gain some performance.
                         if not fit_intercept:
                             # Update rotated residual LD_R instead of R
                             # L sqrt(D) R -= (w[kj] - w_kj) * LDL[:, k] * X[:, j]
@@ -2950,22 +2949,22 @@ def enet_coordinate_descent_multinomial(
                             #   for l in range(n_classes):
                             #       if l != k:
                             #           LD_R[:, l] -= proba[:, l] * x_k
-                            # faster version:
+                            # numpy faster version:
                             #   LD_R[:, k] += x_k
                             #   LD_R -= proba * x_k[:, None]
                             if not X_is_sparse:
                                 for i in range(n_samples):
-                                    x_k_[i] = (w_kj - W_[k, j]) * X_[i, j] * sw_proba_[i, k]
-                                    t_k_[i] += x_k_[i]  # accumulation for postponed update
-                                    LD_R_[i, k] += (1 - proba_[i, k]) * x_k_[i]
+                                    tmp = (w_kj - W_[k, j]) * X_[i, j] * sw_proba_[i, k]
+                                    t_k_[i] += tmp  # accumulation for postponed update
+                                    LD_R_[i, k] += (1 - proba_[i, k]) * tmp
                             else:
-                                memset(&x_k_[0], 0, n_samples * sizeof(float64_t))
                                 for i_ind in range(startptr, endptr):
                                     i = X_indices[i_ind]
-                                    x_k_[i] = (w_kj - W_[k, j]) * X_data[i_ind] * sw_proba_[i, k]
-                                    t_k_[i] += x_k_[i]
-                                    LD_R_[i, k] += (1 - proba_[i, k]) * x_k_[i]
-                            # Postpone updates of LD_R for classes != k.
+                                    tmp = (w_kj - W_[k, j]) * X_data[i_ind] * sw_proba_[i, k]
+                                    t_k_[i] += tmp
+                                    LD_R_[i, k] += (1 - proba_[i, k]) * tmp
+                            # Postpone updates of LD_R for classes != k,
+                            # given x_k as in numpy code above (we instead used tmp).
                             # for l in range(n_classes):
                             #     if l != k:
                             #         for i in range(n_samples):
@@ -2985,7 +2984,7 @@ def enet_coordinate_descent_multinomial(
                             #       for m in range(l + 1, n_classes):
                             #           LD_R[:, l] -= proba[:, l] * xx[:, m]
                             #           LD_R[:, m] -= proba[:, m] * xx[:, l]
-                            # faster version:
+                            # numpy faster version:
                             #   LD_R -= proba * np.sum(xx, axis=1)[:, None]
                             #   LD_R += xx
 
@@ -3000,17 +2999,19 @@ def enet_coordinate_descent_multinomial(
                                 for i_ind in range(startptr, endptr):
                                     i = X_indices[i_ind]
                                     xx_[i, k] = X_data[i_ind]
+                            d_w_j = w_kj - W_[k, j]
                             for l in range(n_classes - 1):
+                                tmp = -H00_pinv_H0_[l, jn + k]
                                 for i in range(n_samples):
-                                    xx_[i, l] -= H00_pinv_H0_[l, jn + k]
-                                    xx_[i, l] *= (w_kj - W_[k, j]) * sw_proba_[i, l]
+                                    xx_[i, l] += tmp
+                                    xx_[i, l] *= d_w_j * sw_proba_[i, l]
                                     tt_[i, l] += xx_[i, l]
                                     # LD_R_[i, l] += xx_[i, l]  # postponed
                                     x_k_[i] += xx_[i, l]  # x_k = np.sum(xx, axis=1)
                             if k == n_classes - 1:  # H00_pinv_H0[k, :] == 0
                                 l = n_classes - 1
                                 for i in range(n_samples):
-                                    xx_[i, l] *= (w_kj - W_[k, j]) * sw_proba_[i, l]
+                                    xx_[i, l] *= d_w_j * sw_proba_[i, l]
                                     tt_[i, l] += xx_[i, l]
                                     # LD_R_[i, l] += xx_[i, l]  # postponed
                                     x_k_[i] += xx_[i, l]  # x_k = np.sum(xx, axis=1)
