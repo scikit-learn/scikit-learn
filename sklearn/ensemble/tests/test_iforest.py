@@ -136,7 +136,7 @@ def test_iforest_sample_weight_with_zero_weights():
     assert np.isin(clf.estimators_samples_[0], np.flatnonzero(sample_weight)).all()
 
     with pytest.raises(
-        ValueError, match="At least one sample must have a positive weight"
+        ValueError, match="Sample weights must contain at least one non-zero number"
     ):
         IsolationForest(n_estimators=1, random_state=0).fit(
             X, sample_weight=np.zeros(X.shape[0])

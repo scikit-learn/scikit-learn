@@ -839,7 +839,7 @@ def test_zero_sample_weight_raises():
     sample_weight = np.zeros(X.shape[0])
 
     with pytest.raises(
-        ValueError, match="At least one sample must have a positive weight"
+        ValueError, match="Sample weights must contain at least one non-zero number"
     ):
         BaggingClassifier(bootstrap=False).fit(X, y, sample_weight=sample_weight)
 

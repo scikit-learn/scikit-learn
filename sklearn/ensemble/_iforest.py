@@ -353,6 +353,12 @@ class IsolationForest(OutlierMixin, BaseBagging):
             max_samples = int(self.max_samples * X.shape[0])
 
         if sample_weight is not None and not self.bootstrap:
+            if np.any(sample_weight == 0):
+                warn(
+                    "When sampling without replacement, zero-weight samples are "
+                    "never drawn. It is recommended to use bootstrap=True to take "
+                    "sample weights into account."
+                )
             max_samples = min(max_samples, np.count_nonzero(sample_weight))
 
         self.max_samples_ = max_samples

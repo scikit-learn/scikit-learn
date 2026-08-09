@@ -470,8 +470,12 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
                 f"Effective max_samples={max_samples} must be <= n_samples="
                 f"{X.shape[0]} to be able to sample without replacement."
             )
-        if sample_weight is not None and not np.any(sample_weight):
-            raise ValueError("At least one sample must have a positive weight.")
+        # Sampling without replacement draws via `_generate_bagging_indices`
+        # with the sample weights as probabilities, so zero-weight samples can
+        # never be drawn. Clamp the draw to the number of positive-weight
+        # samples; without this, np.random.choice raises "Fewer non-zero
+        # entries in p than size" (#34673). The generic `fit` already advises
+        # bootstrap=True when sample weights are used without replacement.
         if not self.bootstrap and sample_weight is not None:
             max_samples = min(max_samples, np.count_nonzero(sample_weight))
 
