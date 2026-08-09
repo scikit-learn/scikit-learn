@@ -13,7 +13,6 @@ from sklearn.linear_model._cd_fast import (
     enet_coordinate_descent_multinomial,
 )
 from sklearn.linear_model._glm._newton_solver import (
-    enet_coordinate_descent_multinomial_py,
     min_norm_subgradient,
 )
 from sklearn.linear_model._linear_loss import (
@@ -95,14 +94,10 @@ def test_min_norm_subgradient():
     reason="scipy version 1.17 required for sparse slicing",
 )
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
-@pytest.mark.parametrize(
-    "cd_multinomial",
-    [enet_coordinate_descent_multinomial, enet_coordinate_descent_multinomial_py],
-)
 @pytest.mark.parametrize("sparse_X", [False, True])
 @pytest.mark.parametrize("alpha", [0, 1])
 @pytest.mark.parametrize("max_iter", [1, 5])
-def test_cd_multinomial(cd_multinomial, sparse_X, alpha, max_iter):
+def test_cd_multinomial(sparse_X, alpha, max_iter):
     """Test that enet_coordinate_descent_multinomial is equivalent to
     enet_coordinate_descent_gram."""
     n_samples, n_features, n_classes = 5, 2, 3
@@ -152,7 +147,7 @@ def test_cd_multinomial(cd_multinomial, sparse_X, alpha, max_iter):
         early_stopping=False,
     )
     # As in NewtonCDSolver
-    w_cd, gap_cd, tol, n_iter = cd_multinomial(
+    w_cd, gap_cd, tol, n_iter = enet_coordinate_descent_multinomial(
         W=W.copy(order="F"),
         alpha=alpha,
         beta=beta,
@@ -238,7 +233,7 @@ def test_cd_multinomial(cd_multinomial, sparse_X, alpha, max_iter):
         positive=False,
         early_stopping=False,
     )
-    w_cd, gap_cd, tol, n_iter = cd_multinomial(
+    w_cd, gap_cd, tol, n_iter = enet_coordinate_descent_multinomial(
         W=W.copy(order="F"),
         alpha=alpha,
         beta=beta,
