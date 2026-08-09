@@ -1,0 +1,1 @@
+Fixed `ensemble.BaggingClassifier`, `ensemble.BaggingRegressor`, and `ensemble.IsolationForest` failing with zero sample weights when sampling without replacement.
