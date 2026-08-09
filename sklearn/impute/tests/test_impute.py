@@ -1529,6 +1529,48 @@ def test_simple_imputation_inverse_transform_empty_feature(empty_col):
     )
 
 
+def test_simple_imputation_inverse_transform_empty_feature_keep_empty_features():
+    """Regression test for gh-27012, `keep_empty_features=True` branch.
+
+    When `keep_empty_features=True`, an all-NaN feature during fit is *not*
+    dropped by `transform`, so `inverse_transform` must not treat it as an
+    invalid/skipped column: the short-circuit that skips the mask
+    computation in that case must leave column bookkeeping unaffected.
+    """
+    rng = np.random.RandomState(0)
+    n_samples, n_cols = 4, 3
+    empty_col = 1
+
+    X_fit = rng.rand(n_samples, n_cols)
+    X_fit[:, empty_col] = np.nan
+
+    # No missing values in the transform input: `empty_col` is only
+    # all-NaN in the *fit* data, which is what `keep_empty_features` acts on.
+    X_transform = rng.rand(n_samples, n_cols)
+
+    imputer = SimpleImputer(
+        strategy="mean", add_indicator=True, keep_empty_features=True
+    )
+    imputer.fit(X_fit)
+
+    # The all-NaN (during fit) column is kept (not dropped) by transform.
+    X_trans = imputer.transform(X_transform)
+    assert X_trans.shape[1] == n_cols + len(imputer.indicator_.features_)
+
+    X_inv = imputer.inverse_transform(X_trans)
+    assert X_inv.shape == X_transform.shape, (
+        "inverse_transform must return the original number of columns"
+    )
+    # No feature was missing in the transform input, so every column,
+    # including `empty_col`, must round-trip back to the original values.
+    np.testing.assert_allclose(
+        X_inv,
+        X_transform,
+        err_msg="inverse_transform must correctly restore all columns "
+        "when keep_empty_features=True",
+    )
+
+
 @pytest.mark.parametrize("missing_value", [-1, np.nan])
 def test_simple_imputation_inverse_transform_exceptions(missing_value):
     X_1 = np.array(
