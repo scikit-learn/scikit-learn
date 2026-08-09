@@ -159,6 +159,13 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     support_ : ndarray of shape (n_features,)
         The mask of selected features.
 
+    elimination_order_ : list of int of length (n_features - n_features_,)
+        Indices (in the original feature space) of features in the order
+        they were eliminated during the recursive feature elimination.
+        The first element is the index of the least important feature
+        (eliminated first) and the last element is the index of the last
+        feature removed before the desired number of features was reached.
+
     See Also
     --------
     RFECV : Recursive feature elimination with built-in cross-validated
