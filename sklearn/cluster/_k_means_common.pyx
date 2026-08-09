@@ -27,7 +27,7 @@ cdef floating _euclidean_dense_dense(
         floating result = 0
 
     # We manually unroll the loop for better cache optimization.
-    for i in range(n):
+    for _ in range(n):
         result += (
             (a[0] - b[0]) * (a[0] - b[0]) +
             (a[1] - b[1]) * (a[1] - b[1]) +
