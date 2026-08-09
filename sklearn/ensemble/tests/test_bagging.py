@@ -772,9 +772,11 @@ class EstimatorRejectingSampleWeight(BaseEstimator):
 @pytest.mark.parametrize("accept_sample_weight", [False, True])
 @pytest.mark.parametrize("metadata_routing", [False, True])
 @pytest.mark.parametrize("max_samples", [10, 0.8])
+@pytest.mark.parametrize("bootstrap", [True, False])
 def test_draw_indices_using_sample_weight(
-    bagging_class, accept_sample_weight, metadata_routing, max_samples
+    bagging_class, accept_sample_weight, metadata_routing, max_samples, bootstrap
 ):
+    # Non-regression test for #34673.
     X = np.arange(100).reshape(-1, 1)
     y = np.repeat([0, 1], 50)
     # all indices except 4 and 5 have zero weight
@@ -795,13 +797,23 @@ def test_draw_indices_using_sample_weight(
         expected_integer_max_samples = int(max_samples * sample_weight.sum())
     else:
         expected_integer_max_samples = max_samples
+    if not bootstrap:
+        expected_integer_max_samples = min(
+            expected_integer_max_samples, np.count_nonzero(sample_weight)
+        )
 
     with config_context(enable_metadata_routing=metadata_routing):
         # TODO(slep006): remove block when default routing is implemented
         if metadata_routing and accept_sample_weight:
             base_estimator = base_estimator.set_fit_request(sample_weight=True)
-        bagging = bagging_class(base_estimator, max_samples=max_samples, n_estimators=4)
+        bagging = bagging_class(
+            base_estimator,
+            max_samples=max_samples,
+            bootstrap=bootstrap,
+            n_estimators=4,
+        )
         bagging.fit(X, y, sample_weight=sample_weight)
+        assert bagging._max_samples == expected_integer_max_samples
         for estimator, samples in zip(bagging.estimators_, bagging.estimators_samples_):
             counts = np.bincount(samples, minlength=n_samples)
             assert sum(counts) == len(samples) == expected_integer_max_samples
@@ -820,6 +832,14 @@ def test_draw_indices_using_sample_weight(
                 assert estimator.y_.shape == (expected_integer_max_samples,)
                 assert_allclose(estimator.X_, X[samples])
                 assert_allclose(estimator.y_, y[samples])
+
+
+def test_zero_sample_weight_raises():
+    X, y = iris.data, iris.target
+    sample_weight = np.zeros(X.shape[0])
+
+    with pytest.raises(ValueError, match="At least one sample must have a positive weight"):
+        BaggingClassifier(bootstrap=False).fit(X, y, sample_weight=sample_weight)
 
 
 def test_oob_score_removed_on_warm_start():

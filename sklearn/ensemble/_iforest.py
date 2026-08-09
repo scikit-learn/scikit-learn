@@ -352,6 +352,9 @@ class IsolationForest(OutlierMixin, BaseBagging):
         else:  # max_samples is float
             max_samples = int(self.max_samples * X.shape[0])
 
+        if sample_weight is not None and not self.bootstrap:
+            max_samples = min(max_samples, np.count_nonzero(sample_weight))
+
         self.max_samples_ = max_samples
         max_depth = int(np.ceil(np.log2(max(max_samples, 2))))
         super()._fit(

@@ -118,6 +118,29 @@ def test_max_samples_attribute():
     assert clf.max_samples_ == 0.4 * X.shape[0]
 
 
+def test_iforest_sample_weight_with_zero_weights():
+    # Non-regression test for #34673.
+    X = iris.data
+    sample_weight = np.zeros(X.shape[0])
+    sample_weight[:10] = 1
+
+    clf = IsolationForest(n_estimators=1, random_state=0)
+    with pytest.warns(UserWarning, match="recommended to use bootstrap=True"):
+        clf.fit(X, sample_weight=sample_weight)
+
+    assert clf.max_samples_ == np.count_nonzero(sample_weight)
+    assert clf.estimators_[0].max_depth == int(
+        np.ceil(np.log2(max(np.count_nonzero(sample_weight), 2)))
+    )
+    assert len(clf.estimators_samples_[0]) == np.count_nonzero(sample_weight)
+    assert np.isin(clf.estimators_samples_[0], np.flatnonzero(sample_weight)).all()
+
+    with pytest.raises(ValueError, match="At least one sample must have a positive weight"):
+        IsolationForest(n_estimators=1, random_state=0).fit(
+            X, sample_weight=np.zeros(X.shape[0])
+        )
+
+
 def test_iforest_parallel_regression(global_random_seed):
     """Check parallel regression."""
     rng = check_random_state(global_random_seed)
