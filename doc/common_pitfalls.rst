@@ -256,6 +256,25 @@ subtle parameter.
     For reproducible results across executions, remove any use of
     `random_state=None`.
 
+    .. list-table::
+       :header-rows: 1
+
+       * - Goal
+         - Estimator
+         - CV Splitter
+       * - Same results every fit/split call
+         - int
+         - int
+       * - Robust CV of a randomized estimator (fresh RNG per fold)
+         - RandomState or None
+         - int
+       * - Comparable fold-to-fold scores across separate runs
+         - (any)
+         - int
+       * - Reproducible across program executions
+         - fixed RandomState or int
+         - int
+
 Using `None` or `RandomState` instances, and repeated calls to `fit` and `split`
 --------------------------------------------------------------------------------
 
