@@ -863,10 +863,11 @@ infrequent::
           [0., 0., 1.]])
 
 If there are infrequent categories with the same cardinality at the cutoff of
-`max_categories`, then the first `max_categories` are taken based on lexicon
-ordering. In the following example, "b", "c", and "d", have the same cardinality
-and with `max_categories=2`, "b" and "c" are infrequent because they have a higher
-lexicon order.
+`max_categories`, then the first `max_categories` are taken based on the sort
+order of the categories (via a stable sort). For `categories='auto'`, this is
+lexicographic or numeric sort order. In the following example, "b", "c", and "d"
+have the same cardinality and with `max_categories=3`, "b" and "c" are infrequent
+because they have a higher sort order.
 
    >>> X = np.asarray([["a"] * 20 + ["b"] * 10 + ["c"] * 10 + ["d"] * 10], dtype=object).T
    >>> enc = preprocessing.OneHotEncoder(max_categories=3).fit(X)

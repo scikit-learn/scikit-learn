@@ -584,6 +584,11 @@ class OneHotEncoder(_BaseEncoder):
         infrequent categories along with the frequent categories. If `None`,
         there is no limit to the number of output features.
 
+        When multiple categories have the same count at the cutoff boundary,
+        ties are broken using the sort order of the categories (via a stable
+        sort). For `categories='auto'`, this is lexicographic or numeric sort
+        order.
+
         .. versionadded:: 1.1
             Read more in the :ref:`User Guide <encoder_infrequent_categories>`.
 
@@ -1317,6 +1322,11 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         categories. Setting `unknown_value` or `encoded_missing_value` to an
         integer will increase the number of unique integer codes by one each.
         This can result in up to `max_categories + 2` integer codes.
+
+        When multiple categories have the same count at the cutoff boundary,
+        ties are broken using the sort order of the categories (via a stable
+        sort). For `categories='auto'`, this is lexicographic or numeric sort
+        order.
 
         .. versionadded:: 1.3
             Read more in the :ref:`User Guide <encoder_infrequent_categories>`.
