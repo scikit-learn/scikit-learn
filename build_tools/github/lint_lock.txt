@@ -14,7 +14,7 @@ mypy==1.15.0
     # via -r build_tools/github/lint_requirements.txt
 mypy-extensions==1.1.0
     # via mypy
-packaging==26.2
+packaging==26.3
     # via pytest
 pluggy==1.6.0
     # via pytest
