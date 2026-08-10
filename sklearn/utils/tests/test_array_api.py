@@ -1184,10 +1184,9 @@ def test_interp_raises_with_complex(namespace, device_name, dtype_name):
             # This is the case for cupy as of March 2024 for instance.
             pytest.skip(f"{namespace} does not support {complex_type_name}")
 
-        dtype = getattr(xp, dtype_name) if dtype_name else None
-        arr_real_xp = xp.asarray([1, 2], dtype=dtype, device=device)
-        complex_xp, arr_real_xp, arr_complex_xp = move_to(
-            complex_np, arr_real_np, arr_complex_np, xp=xp, device=device
+        complex_xp = xp.asarray(complex_np, device=device)
+        arr_complex_xp, arr_real_xp = move_to(
+            arr_complex_np, arr_real_np, xp=xp, device=device
         )
 
         msg = "Complex floating-point values are not supported by interp."
