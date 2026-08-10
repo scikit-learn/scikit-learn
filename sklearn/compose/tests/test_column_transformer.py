@@ -506,6 +506,16 @@ def test_column_transformer_sparse_array(csr_container):
         assert_allclose_dense_sparse(ct.fit(X_sparse).transform(X_sparse), X_res_both)
 
 
+def test_column_transformer_converts_non_subscriptable_sparse_input():
+    """Check that non-subscriptable sparse formats are converted to CSR."""
+    X = sparse.dia_array(np.arange(30).reshape(10, 3))
+    expected = sparse.csr_array(X.toarray()[:, [0, 1]])
+
+    ct = ColumnTransformer([("trans", "passthrough", [0, 1])])
+
+    assert_allclose_dense_sparse(ct.fit_transform(X), expected)
+
+
 def test_column_transformer_list():
     X_list = [[1, float("nan"), "a"], [0, 0, "b"]]
     expected_result = np.array(
