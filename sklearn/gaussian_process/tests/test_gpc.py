@@ -110,10 +110,6 @@ def test_converged_to_local_maximum(kernel):
     )
 
 
-@pytest.mark.xfail(
-    raises=AssertionError,
-    reason="https://github.com/scikit-learn/scikit-learn/issues/31366",
-)
 @pytest.mark.parametrize("kernel", non_fixed_kernels)
 @pytest.mark.parametrize("length_scale", np.logspace(-3, 3, 13))
 def test_lml_gradient(kernel, length_scale):
@@ -128,7 +124,7 @@ def test_lml_gradient(kernel, length_scale):
     # Compare analytic and numeric gradient of log marginal likelihood.
     gpr = GaussianProcessClassifier(kernel=kernel).fit(X, y)
     _, lml_gradient = gpr.log_marginal_likelihood(kernel.theta, eval_gradient=True)
-    epsilon = 1e-9
+    epsilon = 1e-6
     lml_gradient_approx = approx_fprime(
         kernel.theta.copy(),
         lambda theta: gpr.log_marginal_likelihood(theta, False),
