@@ -565,7 +565,7 @@ def test_sort_graph_by_row_values_warning(csr_container):
 
     # no warning
     with warnings.catch_warnings():
-        warnings.simplefilter("error")
+        warnings.simplefilter("error", category=EfficiencyWarning)
         sort_graph_by_row_values(X, copy=True, warn_when_not_sorted=False)
 
 

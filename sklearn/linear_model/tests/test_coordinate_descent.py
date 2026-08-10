@@ -141,7 +141,7 @@ def test_cython_solver_equivalence(sparse_csc_type):
     Xs = sparse_csc_type(X)
     for do_screening in [True, False]:
         coef_3 = zc()
-        cd_fast.sparse_enet_coordinate_descent(
+        cd_fast.enet_coordinate_descent_sparse(
             w=coef_3,
             alpha=alpha,
             X_data=Xs.data,
@@ -196,7 +196,7 @@ def test_cython_solver_early_stopping(cd):
     elif cd == "sparse_enet":
         Xs = sparse.csc_matrix(X)
         cd_solve = partial(
-            cd_fast.sparse_enet_coordinate_descent,
+            cd_fast.enet_coordinate_descent_sparse,
             X_data=Xs.data,
             X_indices=Xs.indices,
             X_indptr=Xs.indptr,
