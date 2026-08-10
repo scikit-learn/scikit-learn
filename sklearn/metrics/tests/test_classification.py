@@ -1619,97 +1619,107 @@ def test_multilabel_hamming_loss():
 
 
 def test_jaccard_score_validation():
-    y_true = np.array([0, 1, 0, 1, 1])
-    y_pred = np.array([0, 1, 0, 1, 1])
-    err_msg = re.escape("pos_label=2 is not a valid label. It should be one of [0 1]")
-    with pytest.raises(ValueError, match=err_msg):
-        jaccard_score(y_true, y_pred, average="binary", pos_label=2)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", category=UndefinedMetricWarning)
 
-    y_true = np.array([[0, 1, 1], [1, 0, 0]])
-    y_pred = np.array([[1, 1, 1], [1, 0, 1]])
-    msg1 = (
-        r"Target is multilabel-indicator but average='binary'. "
-        r"Please choose another average setting, one of \[None, "
-        r"'micro', 'macro', 'weighted', 'samples'\]."
-    )
-    with pytest.raises(ValueError, match=msg1):
-        jaccard_score(y_true, y_pred, average="binary", pos_label=-1)
+        y_true = np.array([0, 1, 0, 1, 1])
+        y_pred = np.array([0, 1, 0, 1, 1])
+        err_msg = re.escape(
+            "pos_label=2 is not a valid label. It should be one of [0 1]"
+        )
+        with pytest.raises(ValueError, match=err_msg):
+            jaccard_score(y_true, y_pred, average="binary", pos_label=2)
 
-    y_true = np.array([0, 1, 1, 0, 2])
-    y_pred = np.array([1, 1, 1, 1, 0])
-    msg2 = (
-        r"Target is multiclass but average='binary'. Please choose "
-        r"another average setting, one of \[None, 'micro', 'macro', "
-        r"'weighted'\]."
-    )
-    with pytest.raises(ValueError, match=msg2):
-        jaccard_score(y_true, y_pred, average="binary")
-    msg3 = "Samplewise metrics are not available outside of multilabel classification."
-    with pytest.raises(ValueError, match=msg3):
-        jaccard_score(y_true, y_pred, average="samples")
+        y_true = np.array([[0, 1, 1], [1, 0, 0]])
+        y_pred = np.array([[1, 1, 1], [1, 0, 1]])
+        msg1 = (
+            r"Target is multilabel-indicator but average='binary'. "
+            r"Please choose another average setting, one of \[None, "
+            r"'micro', 'macro', 'weighted', 'samples'\]."
+        )
+        with pytest.raises(ValueError, match=msg1):
+            jaccard_score(y_true, y_pred, average="binary", pos_label=-1)
 
-    msg = (
-        r"Note that pos_label \(set to 3\) is ignored when "
-        r"average != 'binary' \(got 'micro'\). You may use "
-        r"labels=\[pos_label\] to specify a single positive "
-        "class."
-    )
-    with pytest.warns(UserWarning, match=msg):
-        jaccard_score(y_true, y_pred, average="micro", pos_label=3)
+        y_true = np.array([0, 1, 1, 0, 2])
+        y_pred = np.array([1, 1, 1, 1, 0])
+        msg2 = (
+            r"Target is multiclass but average='binary'. Please choose "
+            r"another average setting, one of \[None, 'micro', 'macro', "
+            r"'weighted'\]."
+        )
+        with pytest.raises(ValueError, match=msg2):
+            jaccard_score(y_true, y_pred, average="binary")
+        msg3 = (
+            "Samplewise metrics are not available outside of multilabel classification."
+        )
+        with pytest.raises(ValueError, match=msg3):
+            jaccard_score(y_true, y_pred, average="samples")
+
+        msg = (
+            r"Note that pos_label \(set to 3\) is ignored when "
+            r"average != 'binary' \(got 'micro'\). You may use "
+            r"labels=\[pos_label\] to specify a single positive "
+            "class."
+        )
+        with pytest.warns(UserWarning, match=msg):
+            jaccard_score(y_true, y_pred, average="micro", pos_label=3)
 
 
-def test_multilabel_jaccard_score(recwarn):
-    # Dense label indicator matrix format
-    y1 = np.array([[0, 1, 1], [1, 0, 1]])
-    y2 = np.array([[0, 0, 1], [1, 0, 1]])
+def test_multilabel_jaccard_score():
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", category=UndefinedMetricWarning)
+        # Dense label indicator matrix format
+        y1 = np.array([[0, 1, 1], [1, 0, 1]])
+        y2 = np.array([[0, 0, 1], [1, 0, 1]])
 
-    # size(y1 \inter y2) = [1, 2]
-    # size(y1 \union y2) = [2, 2]
+        # size(y1 \inter y2) = [1, 2]
+        # size(y1 \union y2) = [2, 2]
 
-    assert jaccard_score(y1, y2, average="samples") == 0.75
-    assert jaccard_score(y1, y1, average="samples") == 1
-    assert jaccard_score(y2, y2, average="samples") == 1
-    assert jaccard_score(y2, np.logical_not(y2), average="samples") == 0
-    assert jaccard_score(y1, np.logical_not(y1), average="samples") == 0
-    assert jaccard_score(y1, np.zeros(y1.shape), average="samples") == 0
-    assert jaccard_score(y2, np.zeros(y1.shape), average="samples") == 0
+        assert jaccard_score(y1, y2, average="samples") == 0.75
+        assert jaccard_score(y1, y1, average="samples") == 1
+        assert jaccard_score(y2, y2, average="samples") == 1
+        assert jaccard_score(y2, np.logical_not(y2), average="samples") == 0
+        assert jaccard_score(y1, np.logical_not(y1), average="samples") == 0
+        assert jaccard_score(y1, np.zeros(y1.shape), average="samples") == 0
+        assert jaccard_score(y2, np.zeros(y1.shape), average="samples") == 0
 
-    y_true = np.array([[0, 1, 1], [1, 0, 0]])
-    y_pred = np.array([[1, 1, 1], [1, 0, 1]])
-    # average='macro'
-    assert_almost_equal(jaccard_score(y_true, y_pred, average="macro"), 2.0 / 3)
-    # average='micro'
-    assert_almost_equal(jaccard_score(y_true, y_pred, average="micro"), 3.0 / 5)
-    # average='samples'
-    assert_almost_equal(jaccard_score(y_true, y_pred, average="samples"), 7.0 / 12)
-    assert_almost_equal(
-        jaccard_score(y_true, y_pred, average="samples", labels=[0, 2]), 1.0 / 2
-    )
-    assert_almost_equal(
-        jaccard_score(y_true, y_pred, average="samples", labels=[1, 2]), 1.0 / 2
-    )
-    # average=None
-    assert_array_equal(
-        jaccard_score(y_true, y_pred, average=None), np.array([1.0 / 2, 1.0, 1.0 / 2])
-    )
+        y_true = np.array([[0, 1, 1], [1, 0, 0]])
+        y_pred = np.array([[1, 1, 1], [1, 0, 1]])
+        # average='macro'
+        assert_almost_equal(jaccard_score(y_true, y_pred, average="macro"), 2.0 / 3)
+        # average='micro'
+        assert_almost_equal(jaccard_score(y_true, y_pred, average="micro"), 3.0 / 5)
+        # average='samples'
+        assert_almost_equal(jaccard_score(y_true, y_pred, average="samples"), 7.0 / 12)
+        assert_almost_equal(
+            jaccard_score(y_true, y_pred, average="samples", labels=[0, 2]), 1.0 / 2
+        )
+        assert_almost_equal(
+            jaccard_score(y_true, y_pred, average="samples", labels=[1, 2]), 1.0 / 2
+        )
+        # average=None
+        assert_array_equal(
+            jaccard_score(y_true, y_pred, average=None),
+            np.array([1.0 / 2, 1.0, 1.0 / 2]),
+        )
 
-    y_true = np.array([[0, 1, 1], [1, 0, 1]])
-    y_pred = np.array([[1, 1, 1], [1, 0, 1]])
-    assert_almost_equal(jaccard_score(y_true, y_pred, average="macro"), 5.0 / 6)
-    # average='weighted'
-    assert_almost_equal(jaccard_score(y_true, y_pred, average="weighted"), 7.0 / 8)
+        y_true = np.array([[0, 1, 1], [1, 0, 1]])
+        y_pred = np.array([[1, 1, 1], [1, 0, 1]])
+        assert_almost_equal(jaccard_score(y_true, y_pred, average="macro"), 5.0 / 6)
+        # average='weighted'
+        assert_almost_equal(jaccard_score(y_true, y_pred, average="weighted"), 7.0 / 8)
 
-    msg2 = "Got 4 > 2"
-    with pytest.raises(ValueError, match=msg2):
-        jaccard_score(y_true, y_pred, labels=[4], average="macro")
-    msg3 = "Got -1 < 0"
-    with pytest.raises(ValueError, match=msg3):
-        jaccard_score(y_true, y_pred, labels=[-1], average="macro")
+        msg2 = "Got 4 > 2"
+        with pytest.raises(ValueError, match=msg2):
+            jaccard_score(y_true, y_pred, labels=[4], average="macro")
+        msg3 = "Got -1 < 0"
+        with pytest.raises(ValueError, match=msg3):
+            jaccard_score(y_true, y_pred, labels=[-1], average="macro")
 
-    msg = (
-        "Jaccard is ill-defined and being set to 0.0 in labels "
-        "with no true or predicted samples."
-    )
+        msg = (
+            "Jaccard is ill-defined and being set to 0.0 in labels "
+            "with no true or predicted samples."
+        )
 
     with pytest.warns(UndefinedMetricWarning, match=msg):
         assert (
@@ -1732,67 +1742,71 @@ def test_multilabel_jaccard_score(recwarn):
             == 0.5
         )
 
-    assert not list(recwarn)
+
+def test_multiclass_jaccard_score():
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", category=UndefinedMetricWarning)
+
+        y_true = ["ant", "ant", "cat", "cat", "ant", "cat", "bird", "bird"]
+        y_pred = ["cat", "ant", "cat", "cat", "ant", "bird", "bird", "cat"]
+        labels = ["ant", "bird", "cat"]
+        lb = LabelBinarizer()
+        lb.fit(labels)
+        y_true_bin = lb.transform(y_true)
+        y_pred_bin = lb.transform(y_pred)
+        multi_jaccard_score = partial(jaccard_score, y_true, y_pred)
+        bin_jaccard_score = partial(jaccard_score, y_true_bin, y_pred_bin)
+        multi_labels_list = [
+            ["ant", "bird"],
+            ["ant", "cat"],
+            ["cat", "bird"],
+            ["ant"],
+            ["bird"],
+            ["cat"],
+            None,
+        ]
+        bin_labels_list = [[0, 1], [0, 2], [2, 1], [0], [1], [2], None]
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", category=UndefinedMetricWarning)
+            # other than average='samples'/'none-samples', test everything else here
+            for average in ("macro", "weighted", "micro", None):
+                for m_label, b_label in zip(multi_labels_list, bin_labels_list):
+                    assert_almost_equal(
+                        multi_jaccard_score(average=average, labels=m_label),
+                        bin_jaccard_score(average=average, labels=b_label),
+                    )
+
+            y_true = np.array([[0, 0], [0, 0], [0, 0]])
+            y_pred = np.array([[0, 0], [0, 0], [0, 0]])
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=UndefinedMetricWarning)
+        jaccard_score(y_true, y_pred, average="weighted") == 0
 
 
-def test_multiclass_jaccard_score(recwarn):
-    y_true = ["ant", "ant", "cat", "cat", "ant", "cat", "bird", "bird"]
-    y_pred = ["cat", "ant", "cat", "cat", "ant", "bird", "bird", "cat"]
-    labels = ["ant", "bird", "cat"]
-    lb = LabelBinarizer()
-    lb.fit(labels)
-    y_true_bin = lb.transform(y_true)
-    y_pred_bin = lb.transform(y_pred)
-    multi_jaccard_score = partial(jaccard_score, y_true, y_pred)
-    bin_jaccard_score = partial(jaccard_score, y_true_bin, y_pred_bin)
-    multi_labels_list = [
-        ["ant", "bird"],
-        ["ant", "cat"],
-        ["cat", "bird"],
-        ["ant"],
-        ["bird"],
-        ["cat"],
-        None,
-    ]
-    bin_labels_list = [[0, 1], [0, 2], [2, 1], [0], [1], [2], None]
+def test_average_binary_jaccard_score():
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", category=UndefinedMetricWarning)
 
-    # other than average='samples'/'none-samples', test everything else here
-    for average in ("macro", "weighted", "micro", None):
-        for m_label, b_label in zip(multi_labels_list, bin_labels_list):
-            assert_almost_equal(
-                multi_jaccard_score(average=average, labels=m_label),
-                bin_jaccard_score(average=average, labels=b_label),
-            )
+        # tp=0, fp=0, fn=1, tn=0
+        assert jaccard_score([1], [0], average="binary") == 0.0
+        # tp=0, fp=0, fn=0, tn=1
+        msg = (
+            "Jaccard is ill-defined and being set to 0.0 due to "
+            "no true or predicted samples"
+        )
+        with pytest.warns(UndefinedMetricWarning, match=msg):
+            assert jaccard_score([0, 0], [0, 0], average="binary") == 0.0
 
-    y_true = np.array([[0, 0], [0, 0], [0, 0]])
-    y_pred = np.array([[0, 0], [0, 0], [0, 0]])
-    with ignore_warnings():
-        assert jaccard_score(y_true, y_pred, average="weighted") == 0
-
-    assert not list(recwarn)
-
-
-def test_average_binary_jaccard_score(recwarn):
-    # tp=0, fp=0, fn=1, tn=0
-    assert jaccard_score([1], [0], average="binary") == 0.0
-    # tp=0, fp=0, fn=0, tn=1
-    msg = (
-        "Jaccard is ill-defined and being set to 0.0 due to "
-        "no true or predicted samples"
-    )
-    with pytest.warns(UndefinedMetricWarning, match=msg):
-        assert jaccard_score([0, 0], [0, 0], average="binary") == 0.0
-
-    # tp=1, fp=0, fn=0, tn=0 (pos_label=0)
-    assert jaccard_score([0], [0], pos_label=0, average="binary") == 1.0
-    y_true = np.array([1, 0, 1, 1, 0])
-    y_pred = np.array([1, 0, 1, 1, 1])
-    assert_almost_equal(jaccard_score(y_true, y_pred, average="binary"), 3.0 / 4)
-    assert_almost_equal(
-        jaccard_score(y_true, y_pred, average="binary", pos_label=0), 1.0 / 2
-    )
-
-    assert not list(recwarn)
+        # tp=1, fp=0, fn=0, tn=0 (pos_label=0)
+        assert jaccard_score([0], [0], pos_label=0, average="binary") == 1.0
+        y_true = np.array([1, 0, 1, 1, 0])
+        y_pred = np.array([1, 0, 1, 1, 1])
+        assert_almost_equal(jaccard_score(y_true, y_pred, average="binary"), 3.0 / 4)
+        assert_almost_equal(
+            jaccard_score(y_true, y_pred, average="binary", pos_label=0), 1.0 / 2
+        )
 
 
 def test_jaccard_score_zero_division_warning():
@@ -2062,7 +2076,7 @@ def test_precision_recall_f1_no_labels(beta, average, zero_division):
     y_pred = np.zeros_like(y_true)
 
     with warnings.catch_warnings():
-        warnings.simplefilter("error")
+        warnings.simplefilter("error", category=UndefinedMetricWarning)
 
         p, r, f, s = precision_recall_fscore_support(
             y_true,
@@ -2128,7 +2142,7 @@ def test_precision_recall_f1_no_labels_average_none(zero_division):
     # |y_hat_i| = [0, 0, 0]
 
     with warnings.catch_warnings():
-        warnings.simplefilter("error")
+        warnings.simplefilter("error", category=UndefinedMetricWarning)
 
         p, r, f, s = precision_recall_fscore_support(
             y_true,
@@ -2285,7 +2299,7 @@ def test_prf_warnings():
 @pytest.mark.parametrize("zero_division", [0, 1, np.nan])
 def test_prf_no_warnings_if_zero_division_set(zero_division):
     with warnings.catch_warnings():
-        warnings.simplefilter("error")
+        warnings.simplefilter("error", category=UndefinedMetricWarning)
 
         # average of per-label scores
         for average in [None, "weighted", "macro"]:
@@ -2337,7 +2351,7 @@ def test_prf_no_warnings_if_zero_division_set(zero_division):
         )
 
     with warnings.catch_warnings(record=True) as record:
-        warnings.simplefilter("always")
+        warnings.simplefilter("always", category=UndefinedMetricWarning)
         precision_recall_fscore_support(
             [0, 0], [0, 0], average="binary", zero_division=zero_division
         )
@@ -2347,7 +2361,7 @@ def test_prf_no_warnings_if_zero_division_set(zero_division):
 @pytest.mark.parametrize("zero_division", ["warn", 0, 1, np.nan])
 def test_recall_warnings(zero_division):
     with warnings.catch_warnings():
-        warnings.simplefilter("error")
+        warnings.simplefilter("error", category=UndefinedMetricWarning)
 
         recall_score(
             np.array([[1, 1], [1, 1]]),
@@ -2357,7 +2371,7 @@ def test_recall_warnings(zero_division):
         )
 
     with warnings.catch_warnings(record=True) as record:
-        warnings.simplefilter("always")
+        warnings.simplefilter("always", category=UndefinedMetricWarning)
         recall_score(
             np.array([[0, 0], [0, 0]]),
             np.array([[1, 1], [1, 1]]),
@@ -2387,7 +2401,7 @@ def test_recall_warnings(zero_division):
 @pytest.mark.parametrize("zero_division", ["warn", 0, 1, np.nan])
 def test_precision_warnings(zero_division):
     with warnings.catch_warnings(record=True) as record:
-        warnings.simplefilter("always")
+        warnings.simplefilter("always", category=UndefinedMetricWarning)
         precision_score(
             np.array([[1, 1], [1, 1]]),
             np.array([[0, 0], [0, 0]]),
@@ -2414,7 +2428,7 @@ def test_precision_warnings(zero_division):
             )
 
     with warnings.catch_warnings():
-        warnings.simplefilter("error")
+        warnings.simplefilter("error", category=UndefinedMetricWarning)
 
         precision_score(
             np.array([[0, 0], [0, 0]]),
@@ -2427,7 +2441,7 @@ def test_precision_warnings(zero_division):
 @pytest.mark.parametrize("zero_division", ["warn", 0, 1, np.nan])
 def test_fscore_warnings(zero_division):
     with warnings.catch_warnings(record=True) as record:
-        warnings.simplefilter("always")
+        warnings.simplefilter("always", category=UndefinedMetricWarning)
 
         for score in [f1_score, partial(fbeta_score, beta=2)]:
             score(
