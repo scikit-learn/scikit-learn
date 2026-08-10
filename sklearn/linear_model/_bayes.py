@@ -151,6 +151,17 @@ class BayesianRidge(RegressorMixin, LinearModel):
     update rules do not guarantee that the marginal likelihood is increasing
     between two consecutive iterations of the optimization.
 
+    The default values of ``alpha_1``, ``alpha_2``, ``lambda_1`` and
+    ``lambda_2`` are intended to be weakly informative when the features and
+    the target have comparable magnitudes. Unlike ordinary least squares, this
+    estimator is not invariant to independently rescaling ``X`` or ``y``. If
+    they differ by several orders of magnitude, the updates of ``alpha`` and
+    ``lambda`` can converge to a poor solution (for example coefficients close
+    to zero). In that case, scale the features (and consider scaling the
+    target), for instance with
+    :class:`~sklearn.preprocessing.StandardScaler`, or choose hyperparameters
+    that match the scale of the data.
+
     References
     ----------
     D. J. C. MacKay, Bayesian Interpolation, Computation and Neural Systems,
@@ -566,6 +577,19 @@ class ARDRegression(RegressorMixin, LinearModel):
     See Also
     --------
     BayesianRidge : Bayesian ridge regression.
+
+    Notes
+    -----
+    The default values of ``alpha_1``, ``alpha_2``, ``lambda_1`` and
+    ``lambda_2`` are intended to be weakly informative when the features and
+    the target have comparable magnitudes. Unlike ordinary least squares, this
+    estimator is not invariant to independently rescaling ``X`` or ``y``. If
+    they differ by several orders of magnitude, the updates of ``alpha`` and
+    ``lambda`` can converge to a poor solution (for example coefficients close
+    to zero). In that case, scale the features (and consider scaling the
+    target), for instance with
+    :class:`~sklearn.preprocessing.StandardScaler`, or choose hyperparameters
+    that match the scale of the data.
 
     References
     ----------

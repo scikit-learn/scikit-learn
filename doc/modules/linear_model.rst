@@ -850,6 +850,15 @@ There are four more hyperparameters, :math:`\alpha_1`, :math:`\alpha_2`,
 :math:`\alpha` and :math:`\lambda`. These are usually chosen to be
 *non-informative*. By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 10^{-6}`.
 
+These defaults are only weakly informative when the features and the target
+have comparable magnitudes. :class:`BayesianRidge` and :class:`ARDRegression`
+are not scale-invariant: if ``X`` and ``y`` differ by several orders of
+magnitude, the fitted coefficients can collapse toward zero even when
+:class:`LinearRegression` recovers the linear relation. Rescale the features
+(and consider rescaling the target), for example with
+:class:`~sklearn.preprocessing.StandardScaler`, or set the gamma
+hyperparameters to values that match the scale of the data.
+
 Bayesian Ridge Regression is used for regression::
 
     >>> from sklearn import linear_model
