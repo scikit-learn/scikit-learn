@@ -200,21 +200,16 @@ class ScoringMonitor(_MetadataRequester):
         return self._scorers["train"]._accept_sample_weight()
 
     def setup(self, estimator, context):
-        # Since the val scorer requests X_val and y_val in setup, it creates a
-        # constraint to have the callback context initialized before calling
-        # `process_routing` in fit for all callback supporting estimators.
-        if self._scorers["val"] != "no_val_score":
-            if not _routing_enabled():
-                raise ValueError(
-                    "Using a scorer on validation data in "
-                    f"{self.__class__.__name__} is only supported when metadata "
-                    "routing is enabled. You can enable it using "
-                    "`sklearn.set_config(enable_metadata_routing=True)`. See the "
-                    "User Guide "
-                    "<https://scikit-learn.org/stable/metadata_routing.html> for "
-                    "more details on metadata routing."
-                )
-            self.set_on_fit_task_end_request(X_val=True, y_val=True)
+        if self._scorers["val"] != "no_val_score" and not _routing_enabled():
+            raise ValueError(
+                "Using a scorer on validation data in "
+                f"{self.__class__.__name__} is only supported when metadata "
+                "routing is enabled. You can enable it using "
+                "`sklearn.set_config(enable_metadata_routing=True)`. See the "
+                "User Guide "
+                "<https://scikit-learn.org/stable/metadata_routing.html> for "
+                "more details on metadata routing."
+            )
 
     def teardown(self, estimator, context):
         pass
@@ -286,6 +281,8 @@ class ScoringMonitor(_MetadataRequester):
             self._listener_handle = open_listener(self._log.append, owner=self)
 
     def get_metadata_routing(self):
+        if _routing_enabled() and self._scorers["val"] != "no_val_score":
+            self.set_on_fit_task_end_request(X_val=True, y_val=True)
         router = MetadataRouter(owner=self).add_self_request(self)
         for dataset in ("train", "val"):
             if (

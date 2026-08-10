@@ -40,6 +40,7 @@ from sklearn.utils._param_validation import (
     validate_params,
 )
 from sklearn.utils.metadata_routing import (
+    CALLBACK_METHODS,
     MetadataRouter,
     MethodMapping,
     _manual_routing,
@@ -824,7 +825,7 @@ def _fit_and_score(
     # Adjust length of callbacks metadata
     if callback_params is not None:
         callback_params_checked = {}
-        for hook_name in callback_params:
+        for hook_name in CALLBACK_METHODS:
             callback_params_checked[hook_name] = {}
             # `_check_method_params` considers that all params that are arrays of same
             # length as X should be resampled with the provided `indices`. But it is not
