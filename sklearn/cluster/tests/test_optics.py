@@ -820,11 +820,7 @@ def test_precomputed_dists(global_dtype, csr_container):
     redX = X[::2].astype(global_dtype, copy=False)
     dists = pairwise_distances(redX, metric="euclidean")
     dists = csr_container(dists) if csr_container is not None else dists
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", EfficiencyWarning)
-        clust1 = OPTICS(min_samples=10, algorithm="brute", metric="precomputed").fit(
-            dists
-        )
+    clust1 = OPTICS(min_samples=10, algorithm="brute", metric="precomputed").fit(dists)
     clust2 = OPTICS(min_samples=10, algorithm="brute", metric="euclidean").fit(redX)
 
     assert_allclose(clust1.reachability_, clust2.reachability_)
@@ -856,7 +852,7 @@ def test_optics_input_not_modified_precomputed_sparse_nodiag(
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 @pytest.mark.parametrize("presorted", [True, False])
-def test_optics_precomputed_sparse_no_warningOLD(csr_container, presorted):
+def test_optics_precomputed_sparse_no_warning(csr_container, presorted):
     """Test that `EfficiencyWarning` isn't emitted on precomputed sparse input.
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/34647
@@ -865,7 +861,7 @@ def test_optics_precomputed_sparse_no_warningOLD(csr_container, presorted):
     graph = csr_container(kneighbors_graph(X, n_neighbors=10, mode="distance"))
     if presorted:
         # Guarantee the graph is sorted by row values so only OPTICS can unsort it.
-        # presorted=True was the condition that reveled the bug that is being fixed
+        # presorted=True was the condition that revealed the bug that is being fixed
         graph = sort_graph_by_row_values(graph, warn_when_not_sorted=False)
     else:
         # Reverse each row so that the graph is not sorted by row values.
