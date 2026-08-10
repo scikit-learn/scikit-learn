@@ -488,7 +488,7 @@ build_metadata_list = [
         "type": "pip",
         "tag": "lint",
         "folder": "build_tools/github",
-        "pip_dependencies": ["pytest", "ruff", "mypy", "cython-lint"],
+        "pip_dependencies": ["pytest", "ruff", "pyrefly", "cython-lint"],
         "package_constraints": {
             # We set `pytest` to an arbitrary recent version to keep it consistent with
             # the settings in `.pre-commit-config.yml`. They should be updated from
@@ -500,7 +500,7 @@ build_metadata_list = [
             # and should be updated from time to time when we feel the need
             # for it.
             "ruff": "min",
-            "mypy": "min",
+            "pyrefly": "min",
             "cython-lint": "min",
         },
         "python_version": "3.11",
