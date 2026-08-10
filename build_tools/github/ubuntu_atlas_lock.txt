@@ -20,7 +20,7 @@ narwhals==2.0.1
     # via -r build_tools/github/ubuntu_atlas_requirements.txt
 ninja==1.13.0
     # via -r build_tools/github/ubuntu_atlas_requirements.txt
-packaging==26.2
+packaging==26.3
     # via
     #   meson-python
     #   pyproject-metadata
