@@ -119,7 +119,11 @@ def _assert_all_finite(
     # for object dtype data, we only check for NaNs (GH-13254)
     if not is_array_api and X.dtype == np.dtype("object") and not allow_nan:
         if _object_dtype_isnan(X).any():
-            raise ValueError("Input contains NaN")
+            raise ValueError(
+                "Input contains NaN or missing values. Consider imputation"
+                " (e.g., SimpleImputer) or removing rows with missing values"
+                " before passing data to the estimator."
+            )
 
     # We need only consider float arrays, hence can early return for all else.
     if not xp.isdtype(X.dtype, ("real floating", "complex floating")):
@@ -166,6 +170,16 @@ def _assert_all_finite_element_wise(
             type_err = f"infinity or a value too large for {msg_dtype!r}"
         padded_input_name = input_name + " " if input_name else ""
         msg_err = f"Input {padded_input_name}contains {type_err}."
+        if has_nan_error:
+            msg_err += (
+                " Consider imputation (e.g., SimpleImputer) or removing rows"
+                " with missing values before passing data to the estimator."
+            )
+        else:
+            msg_err += (
+                " Consider clipping or removing infinite values (e.g., using"
+                " np.isfinite) before passing data to the estimator."
+            )
         if estimator_name and input_name == "X" and has_nan_error:
             # Improve the error message on how to handle missing values in
             # scikit-learn.
