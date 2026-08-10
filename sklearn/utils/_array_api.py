@@ -563,6 +563,13 @@ def move_to(*arrays, xp, device):
             "namespace is Numpy"
         )
 
+    # Convert pandas Series/DataFrame to numpy arrays so that they can be
+    # moved to the target namespace via DLPack or asarray.
+    arrays = [
+        numpy.asarray(array) if (not is_none and is_df_or_series(array)) else array
+        for array, is_none in zip(arrays, none_mask)
+    ]
+
     arrays_ = arrays
     # Down cast float64 `arrays` when highest precision of `xp`/`device` is float32
     if _max_precision_float_dtype(xp, device) == xp.float32:
