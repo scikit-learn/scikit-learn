@@ -1,0 +1,6 @@
+- :meth:`neighbors.NearestNeighbors.radius_neighbors` now correctly
+  handles per-sample array radius with ``n_jobs > 1`` for ball_tree and
+  kd_tree algorithms. Previously, the full radius array was passed to
+  each parallel worker instead of the slice corresponding to its data
+  chunk.
+  By :user:`Abhishek Shivakumar <abhishekshivakumar>`.
