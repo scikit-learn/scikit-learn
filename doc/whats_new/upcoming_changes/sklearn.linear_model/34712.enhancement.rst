@@ -1,6 +1,6 @@
 - :class:`linear_model.BayesianRidge` and :class:`linear_model.ARDRegression`
   documentation now warn that the default Gamma hyperparameters are only weakly
-  informative when ``X`` and ``y`` have comparable magnitude, and that the
+  informative when `X` and `y` have comparable magnitude, and that the
   estimators are not invariant to independently rescaling the features or the
   target.
   By :user:`Onyemenam Ndubuisi <prondubuisi>`.

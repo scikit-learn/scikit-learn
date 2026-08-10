@@ -852,7 +852,7 @@ There are four more hyperparameters, :math:`\alpha_1`, :math:`\alpha_2`,
 
 These defaults are only weakly informative when the features and the target
 have comparable magnitudes. :class:`BayesianRidge` and :class:`ARDRegression`
-are not scale-invariant: if ``X`` and ``y`` differ by several orders of
+are not scale-invariant: if `X` and `y` differ by several orders of
 magnitude, the fitted coefficients can collapse toward zero even when
 :class:`LinearRegression` recovers the linear relation. Rescale the features
 (and consider rescaling the target), for example with
