@@ -1144,7 +1144,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
     Attributes
     ----------
-    coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
+    coef_ : ndarray of shape (n_features,) or (n_targets, n_features), or sparse matrix of shape (n_targets, n_features)
         Weight vector(s).
 
     intercept_ : float or ndarray of shape (n_targets,)
@@ -2946,7 +2946,7 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         .. versionchanged:: 1.5
             `cv_values_` changed to `cv_results_`.
 
-    coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
+    coef_ : ndarray of shape (n_features,) or (n_targets, n_features), or sparse matrix of shape (n_targets, n_features)
         Coefficient of the features in the decision function.
 
         ``coef_`` is of shape ``(n_features,)`` when the given problem is binary.

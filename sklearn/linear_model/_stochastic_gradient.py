@@ -1193,7 +1193,7 @@ class SGDClassifier(BaseSGDClassifier):
     Attributes
     ----------
     coef_ : ndarray of shape (1, n_features) if n_classes == 2 else \
-            (n_classes, n_features)
+            (n_classes, n_features), or sparse matrix of shape (n_classes, n_features)
         Weights assigned to the features.
 
     intercept_ : ndarray of shape (1,) if n_classes == 2 else (n_classes,)
@@ -2006,7 +2006,7 @@ class SGDRegressor(BaseSGDRegressor):
 
     Attributes
     ----------
-    coef_ : ndarray of shape (n_features,)
+    coef_ : ndarray of shape (n_features,), or sparse matrix of shape (1, n_features)
         Weights assigned to the features.
 
     intercept_ : ndarray of shape (1,)
@@ -2219,7 +2219,7 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
 
     Attributes
     ----------
-    coef_ : ndarray of shape (1, n_features)
+    coef_ : ndarray of shape (1, n_features), or sparse matrix of shape (1, n_features)
         Weights assigned to the features.
 
     offset_ : ndarray of shape (1,)

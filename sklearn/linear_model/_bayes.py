@@ -93,7 +93,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
     Attributes
     ----------
-    coef_ : array-like of shape (n_features,)
+    coef_ : array-like of shape (n_features,), or sparse matrix of shape (1, n_features)
         Coefficients of the regression model (mean of distribution)
 
     intercept_ : float
@@ -521,7 +521,7 @@ class ARDRegression(RegressorMixin, LinearModel):
 
     Attributes
     ----------
-    coef_ : array-like of shape (n_features,)
+    coef_ : array-like of shape (n_features,), or sparse matrix of shape (1, n_features)
         Coefficients of the regression model (mean of distribution)
 
     alpha_ : float

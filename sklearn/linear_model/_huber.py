@@ -178,7 +178,7 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
     Attributes
     ----------
-    coef_ : array, shape (n_features,)
+    coef_ : array, shape (n_features,), or sparse matrix of shape (1, n_features)
         Features got by optimizing the L2-regularized Huber loss.
 
     intercept_ : float

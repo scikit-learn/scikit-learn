@@ -1010,7 +1010,7 @@ class ElasticNet(RegressorMixin, MultiOutputLinearModel):
 
     Attributes
     ----------
-    coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
+    coef_ : ndarray of shape (n_features,) or (n_targets, n_features), or sparse matrix of shape (n_targets, n_features)
         Parameter vector (w in the cost function formula).
 
     sparse_coef_ : sparse matrix of shape (n_features,) or \
@@ -1429,7 +1429,7 @@ class Lasso(ElasticNet):
 
     Attributes
     ----------
-    coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
+    coef_ : ndarray of shape (n_features,) or (n_targets, n_features), or sparse matrix of shape (n_targets, n_features)
         Parameter vector (w in the cost function formula).
 
     dual_gap_ : float or ndarray of shape (n_targets,)
@@ -2153,7 +2153,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
     alpha_ : float
         The amount of penalization chosen by cross validation.
 
-    coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
+    coef_ : ndarray of shape (n_features,) or (n_targets, n_features), or sparse matrix of shape (n_targets, n_features)
         Parameter vector (w in the cost function formula).
 
     intercept_ : float or ndarray of shape (n_targets,)
@@ -2416,7 +2416,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         The compromise between l1 and l2 penalization chosen by
         cross validation.
 
-    coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
+    coef_ : ndarray of shape (n_features,) or (n_targets, n_features), or sparse matrix of shape (n_targets, n_features)
         Parameter vector (w in the cost function formula).
 
     intercept_ : float or ndarray of shape (n_targets, n_features)

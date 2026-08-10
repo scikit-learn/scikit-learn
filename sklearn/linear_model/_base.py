@@ -565,7 +565,7 @@ class LinearRegression(RegressorMixin, MultiOutputLinearModel):
 
     Attributes
     ----------
-    coef_ : array of shape (n_features, ) or (n_targets, n_features)
+    coef_ : array of shape (n_features, ) or (n_targets, n_features), or sparse matrix of shape (n_targets, n_features)
         Estimated coefficients for the linear regression problem.
         If multiple targets are passed during the fit (y 2D), this
         is a 2D array of shape (n_targets, n_features), while if only
