@@ -865,8 +865,7 @@ def test_optics_precomputed_sparse_no_efficiency_warning(csr_container, presorte
     X = np.random.RandomState(0).randn(50, 5)
     graph = csr_container(kneighbors_graph(X, n_neighbors=10, mode="distance"))
     if presorted:
-        # Guarantee the graph is sorted by row values, so that the only thing
-        # that can unsort it is OPTICS itself (via `setdiag`).
+        # Guarantee the graph is sorted by row values so only OPTICS can unsort it.
         graph = sort_graph_by_row_values(graph, warn_when_not_sorted=False)
     else:
         # Reverse each row so that the graph is not sorted by row values.
