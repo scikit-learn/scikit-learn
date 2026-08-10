@@ -856,9 +856,8 @@ def test_optics_input_not_modified_precomputed_sparse_nodiag(
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 @pytest.mark.parametrize("presorted", [True, False])
-def test_optics_precomputed_sparse_no_efficiency_warning(csr_container, presorted):
-    """Check that no `EfficiencyWarning` is raised on precomputed sparse input.
-
+def test_optics_precomputed_sparse_no_warning(csr_container, presorted):
+    """Test that `EfficiencyWarning` isn't emitted on precomputed sparse input.
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/34647
     """
