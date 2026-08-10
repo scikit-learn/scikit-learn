@@ -610,7 +610,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         if self.estimators_[0]._support_missing_values(X):
             ensure_all_finite = "allow-nan"
         else:
-            ensure_all_finite = True
+            # Tree-based models handle infinite values in prediction correctly
+            # since decision rules (x <= value) are well-defined for inf.
+            ensure_all_finite = "allow-inf"
 
         X = validate_data(
             self,

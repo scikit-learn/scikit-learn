@@ -105,7 +105,7 @@ def _deprecate_positional_args(func=None, *, version="1.3"):
 
 
 def _assert_all_finite(
-    X, allow_nan=False, msg_dtype=None, estimator_name=None, input_name=""
+    X, allow_nan=False, allow_inf=False, msg_dtype=None, estimator_name=None, input_name=""
 ):
     """Like assert_all_finite, but only for ndarray."""
 
@@ -138,6 +138,7 @@ def _assert_all_finite(
         X,
         xp=xp,
         allow_nan=allow_nan,
+        allow_inf=allow_inf,
         msg_dtype=msg_dtype,
         estimator_name=estimator_name,
         input_name=input_name,
@@ -145,7 +146,7 @@ def _assert_all_finite(
 
 
 def _assert_all_finite_element_wise(
-    X, *, xp, allow_nan, msg_dtype=None, estimator_name=None, input_name=""
+    X, *, xp, allow_nan, allow_inf=False, msg_dtype=None, estimator_name=None, input_name=""
 ):
     # Cython implementation doesn't support FP16 or complex numbers
     use_cython = (
@@ -154,9 +155,9 @@ def _assert_all_finite_element_wise(
     if use_cython:
         out = cy_isfinite(X.reshape(-1), allow_nan=allow_nan)
         has_nan_error = False if allow_nan else out == FiniteStatus.has_nan
-        has_inf = out == FiniteStatus.has_infinite
+        has_inf = False if allow_inf else out == FiniteStatus.has_infinite
     else:
-        has_inf = xp.any(xp.isinf(X))
+        has_inf = False if allow_inf else xp.any(xp.isinf(X))
         has_nan_error = False if allow_nan else xp.any(xp.isnan(X))
     if has_inf or has_nan_error:
         if has_nan_error:
@@ -554,7 +555,7 @@ def _ensure_sparse_format(
         Whether a forced copy will be triggered. If copy=False, a copy might
         be triggered by a conversion.
 
-    ensure_all_finite : bool or 'allow-nan'
+    ensure_all_finite : bool or 'allow-nan' or 'allow-inf'
         Whether to raise an error on np.inf, np.nan, pd.NA in X. The
         possibilities are:
 
@@ -562,9 +563,13 @@ def _ensure_sparse_format(
         - False: accepts np.inf, np.nan, pd.NA in X.
         - 'allow-nan': accepts only np.nan and pd.NA values in X. Values cannot
           be infinite.
+        - 'allow-inf': accepts np.inf in X. Values cannot be NaN or pd.NA.
 
         .. versionadded:: 0.20
            ``ensure_all_finite`` accepts the string ``'allow-nan'``.
+
+        .. versionadded:: 1.7
+           ``ensure_all_finite`` accepts the string ``'allow-inf'``.
 
         .. versionchanged:: 0.23
            Accepts `pd.NA` and converts it into `np.nan`
@@ -1096,7 +1101,8 @@ def check_array(
                 array,
                 input_name=input_name,
                 estimator_name=estimator_name,
-                allow_nan=ensure_all_finite == "allow-nan",
+                allow_nan=ensure_all_finite in ("allow-nan", "allow-inf"),
+                allow_inf=ensure_all_finite == "allow-inf",
             )
 
         if copy:
