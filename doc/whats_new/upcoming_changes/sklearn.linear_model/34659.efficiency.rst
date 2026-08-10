@@ -1,0 +1,4 @@
+- All solvers of :class:`linear_model.LogisticRegressionCV` are now faster on
+  free-threaded Python when using parallelism. The only exceptions are ``"sag"``
+  and ``"saga"`` solvers, which will continue to run at the same speed.
+  By :user:`Itamar Turner-Trauring <itamarst>`.
