@@ -962,6 +962,8 @@ def check_array(
             dtype = None
 
     if isinstance(dtype, (list, tuple)):
+        if len(dtype) == 0:
+            raise ValueError("dtype is an empty list, please provide a non-empty list.")
         if dtype_orig is not None and dtype_orig in dtype:
             # no dtype conversion required
             dtype = None
