@@ -2254,3 +2254,39 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             monotonic_cst=monotonic_cst,
             categorical_features=categorical_features,
         )
+
+    def fit(self, X, y, sample_weight=None, check_input=True):
+        """Build an extra tree regressor from the training set (X, y).
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The training input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csc_matrix``.
+
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
+            The target values (real numbers). Use ``dtype=np.float64`` and
+            ``order='C'`` for maximum efficiency.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If None, then samples are equally weighted. Splits
+            that would create child nodes with net zero or negative weight are
+            ignored while searching for a split in each node.
+
+        check_input : bool, default=True
+            Allow to bypass several input checking.
+            Don't use this parameter unless you know what you're doing.
+
+        Returns
+        -------
+        self : ExtraTreeRegressor
+            Fitted estimator.
+        """
+        super().fit(
+            X,
+            y,
+            sample_weight=sample_weight,
+            check_input=check_input,
+        )
+        return self
