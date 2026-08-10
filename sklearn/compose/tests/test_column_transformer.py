@@ -509,7 +509,7 @@ def test_column_transformer_sparse_array(csr_container):
 def test_column_transformer_converts_non_subscriptable_sparse_input():
     """Check that non-subscriptable sparse formats are converted to CSR."""
     X = sparse.dia_array(np.arange(30).reshape(10, 3))
-    expected = sparse.csr_array(X.toarray()[:, [0, 1]])
+    expected = X.toarray()[:, [0, 1]]
 
     ct = ColumnTransformer([("trans", "passthrough", [0, 1])])
 
