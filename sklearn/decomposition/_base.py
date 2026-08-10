@@ -13,7 +13,12 @@ from sklearn.base import (
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
 )
-from sklearn.utils._array_api import _add_to_diagonal, array_device, get_namespace
+from sklearn.utils._array_api import (
+    _add_to_diagonal,
+    array_device,
+    check_same_namespace,
+    get_namespace,
+)
 from sklearn.utils.validation import check_array, check_is_fitted, validate_data
 
 
@@ -139,6 +144,8 @@ class _BasePCA(
 
         check_is_fitted(self)
 
+        check_same_namespace(X, self, attribute="components_", method="transform")
+
         X = validate_data(
             self,
             X,
@@ -193,6 +200,8 @@ class _BasePCA(
         xp, _ = get_namespace(X, self.components_, self.explained_variance_)
 
         check_is_fitted(self)
+
+        check_same_namespace(X, self, attribute="components_", method="inverse_transform")
 
         X = check_array(X, input_name="X", dtype=[xp.float64, xp.float32])
 
