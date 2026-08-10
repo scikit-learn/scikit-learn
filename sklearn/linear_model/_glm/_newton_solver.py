@@ -719,16 +719,14 @@ class NewtonCholeskySolver(NewtonSolver):
         if self.has_already_warned and not self.linear_loss.base_loss.is_multiclass:
             # X might be singular, try to find minimum norm solution.
             if self.linear_loss.fit_intercept:
-                Xe = np.concatenate(
-                    (X, np.ones((X.shape[0], 1), dtype=X.dtype)), axis=1
-                )
+                Xe = np.concat((X, np.ones((X.shape[0], 1), dtype=X.dtype)), axis=1)
             else:
                 Xe = X
             eps = np.finfo(X.dtype).eps
             # As long as Xe @ coef remains constant, we are allowed to change coef.
             # This corresponds to the nullspace Z of Xe.
             Z = scipy.linalg.null_space(Xe, rcond=np.sqrt(eps))
-            if (k := Z.shape[1]) > 0:
+            if Z.shape[1] > 0:
                 # For any x of length Z.shape[1], we are free to add Z @ x to the
                 # coefficients: coef_new = coef + Z @ x. We want to minimize
                 # ||coef_new||_2^2 = ||coef + Z @ x||_2^2 which is a least squares.
