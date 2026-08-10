@@ -1665,7 +1665,7 @@ class _MetadataRequester:
         ignore_params = set() if ignore_params is None else set(ignore_params)
         ignore_params.update({"X", "y", "Y", "Xt", "yt"})
 
-        params = defaultdict(
+        params: defaultdict[str, Optional[Union[bool, str]]] = defaultdict(
             str,
             {
                 param_name: None

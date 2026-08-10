@@ -36,7 +36,7 @@ jobs:
           # we save the versions of the linters to be used in the error message later.
           python -c "from importlib.metadata import version; print(f\"pytest={version('pytest')}\")" >> /tmp/versions.txt
           python -c "from importlib.metadata import version; print(f\"ruff={version('ruff')}\")" >> /tmp/versions.txt
-          python -c "from importlib.metadata import version; print(f\"mypy={version('mypy')}\")" >> /tmp/versions.txt
+          python -c "from importlib.metadata import version; print(f\"pyrefly={version('pyrefly')}\")" >> /tmp/versions.txt
           python -c "from importlib.metadata import version; print(f\"cython-lint={version('cython-lint')}\")" >> /tmp/versions.txt
 
       - name: Run linting
