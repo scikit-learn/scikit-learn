@@ -1,0 +1,4 @@
+- :class:`cluster.OPTICS` no longer raises a spurious
+  :class:`~sklearn.exceptions.EfficiencyWarning` when given a precomputed
+  sparse distance matrix.
+  By :user:`Abhishek Shivakumar <abhishekshivakumar>`.
