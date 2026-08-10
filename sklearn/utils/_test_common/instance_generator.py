@@ -898,7 +898,7 @@ def _yield_instances_for_check(check, estimator_orig):
         yield estimator
 
 
-PER_ESTIMATOR_XFAIL_CHECKS = {
+PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
     AdaBoostClassifier: {
         # TODO: replace by a statistical test, see meta-issue #16298
         "check_sample_weight_equivalence_on_dense_data": (
