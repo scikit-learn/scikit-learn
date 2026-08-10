@@ -3042,6 +3042,18 @@ def validate_data(
             out = y
         else:
             out = X, y
+
+        # When skip_check_array is True (e.g., pandas output path), we still
+        # need to check for NaN and infinity if ensure_all_finite is requested.
+        ensure_all_finite = check_params.get("ensure_all_finite", True)
+        if not no_val_X and ensure_all_finite:
+            X_to_check = np.asarray(X) if not sp.issparse(X) else X
+            _assert_all_finite(
+                X_to_check,
+                allow_nan=ensure_all_finite == "allow-nan",
+                estimator_name=_check_estimator_name(_estimator),
+                input_name="X",
+            )
     elif not no_val_X and no_val_y:
         out = check_array(X, input_name="X", **check_params)
     elif no_val_X and not no_val_y:
