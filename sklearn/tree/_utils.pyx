@@ -2,14 +2,11 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from libc.stdlib cimport free
-from libc.stdlib cimport realloc
-from libc.math cimport log as ln
 from libc.string cimport memset
 
 cimport numpy as cnp
 cnp.import_array()
 
-from sklearn.utils._random cimport our_rand_r
 
 # =============================================================================
 # Helper functions
@@ -39,30 +36,6 @@ def _realloc_test():
     if p != NULL:
         free(p)
         assert False
-
-
-cdef inline cnp.ndarray sizet_ptr_to_ndarray(intp_t* data, intp_t size):
-    """Return copied data as 1D numpy array of intp's."""
-    cdef cnp.npy_intp shape[1]
-    shape[0] = <cnp.npy_intp> size
-    return cnp.PyArray_SimpleNewFromData(1, shape, cnp.NPY_INTP, data).copy()
-
-
-cdef inline intp_t rand_int(intp_t low, intp_t high,
-                            uint32_t* random_state) noexcept nogil:
-    """Generate a random integer in [low; end)."""
-    return low + our_rand_r(random_state) % (high - low)
-
-
-cdef inline float64_t rand_uniform(float64_t low, float64_t high,
-                                   uint32_t* random_state) noexcept nogil:
-    """Generate a random float64_t in [low; high)."""
-    return ((high - low) * <float64_t> our_rand_r(random_state) /
-            <float64_t> RAND_R_MAX) + low
-
-
-cdef inline float64_t log(float64_t x) noexcept nogil:
-    return ln(x) / ln(2.0)
 
 
 cdef class WeightedFenwickTree:
