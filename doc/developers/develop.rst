@@ -234,6 +234,28 @@ no need to document the second group (with a leading underscore).
 The estimated attributes are expected to be overridden when you call ``fit`` a second
 time.
 
+Effect of ``set_params`` on fitted attributes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Calling ``set_params`` after ``fit`` does not update estimated attributes
+(those ending with ``_``). Estimators should copy any constructor parameters
+that affect prediction behavior into fitted attributes during ``fit``. For
+example, :class:`~sklearn.neighbors.KNeighborsClassifier` stores
+``effective_metric_`` so that changing ``metric`` via ``set_params`` after
+``fit`` does not silently change the behavior of ``predict``.
+
+Calling ``set_params`` after ``fit`` and then ``predict`` is not guaranteed
+to produce the same results as calling ``fit`` with those parameters from
+scratch. Users should call ``fit`` again if they want to change the
+estimator's behavior:
+
+.. code-block:: python
+
+    estimator.fit(X, y)
+    estimator.set_params(n_neighbors=10)
+    # estimator.predict(X) uses the model fitted with the old n_neighbors value
+    estimator.fit(X, y)  # now refits with n_neighbors=10
+
 Universal attributes
 ^^^^^^^^^^^^^^^^^^^^
 
