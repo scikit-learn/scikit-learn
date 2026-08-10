@@ -40,11 +40,21 @@ utils_cython_tree = [
 #
 # x86-simd-sort requires x86_64 (AVX2/AVX-512, runtime-dispatched by the
 # library itself); on any other architecture, or if the subproject can't be
-# fetched (e.g. no network access), we fall back to the plain introsort path.
-# `xss_available` and the generated _simd_sort_available.pxi are what
-# _sorting.pyx uses to decide, at Cython-compile-time, whether the SIMD
-# dispatch code is even emitted.
-xss_available = host_machine.cpu_family() == 'x86_64'
+# fetched (e.g. no network access) and -Dsimd_sort wasn't force-enabled, we
+# fall back to the plain introsort path. `xss_available` and the generated
+# _simd_sort_available.pxi are what _sorting.pyx uses to decide, at
+# Cython-compile-time, whether the SIMD dispatch code is even emitted.
+simd_sort_opt = get_option('simd_sort')
+
+if simd_sort_opt.enabled() and host_machine.cpu_family() != 'x86_64'
+  error(
+    'simd_sort was force-enabled (-Dsimd_sort=enabled) but the vendored ' +
+    'x86-simd-sort subproject only supports x86_64 (host is: ' +
+    host_machine.cpu_family() + ').'
+  )
+endif
+
+xss_available = simd_sort_opt.allowed() and host_machine.cpu_family() == 'x86_64'
 if xss_available
   xss_proj = subproject(
     'x86-simd-sort',
@@ -54,10 +64,18 @@ if xss_available
       'build_benchmarks=false',
       'use_openmp=false',
     ],
-    required: false,
+    # required=true (enabled) turns a fetch/build failure into a hard error
+    # instead of a silent fallback -- useful to assert in CI/release builds
+    # that the accelerated path is really the one being shipped.
+    required: simd_sort_opt.enabled(),
   )
   xss_available = xss_proj.found()
 endif
+
+message(
+  'SIMD-accelerated tree sort (x86-simd-sort): ' +
+  (xss_available ? 'enabled' : 'disabled')
+)
 
 if xss_available
   xss_dep = xss_proj.get_variable('x86simdsortcpp_dep')
