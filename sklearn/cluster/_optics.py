@@ -341,9 +341,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
                 # Set each diagonal to an explicit value so each point is its
                 # own neighbor
                 X.setdiag(X.diagonal())
-            # `setdiag` reorders the entries of each row by column index, so the
-            # graph has to be sorted by row values again to avoid a spurious
-            # `EfficiencyWarning` in every downstream neighbors query.
+            # Sorting undone by .setdiag()
             X = sort_graph_by_row_values(X, warn_when_not_sorted=False)
         memory = check_memory(self.memory)
 
