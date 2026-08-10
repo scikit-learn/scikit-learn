@@ -201,7 +201,9 @@ class _BasePCA(
 
         check_is_fitted(self)
 
-        check_same_namespace(X, self, attribute="components_", method="inverse_transform")
+        check_same_namespace(
+            X, self, attribute="components_", method="inverse_transform"
+        )
 
         X = check_array(X, input_name="X", dtype=[xp.float64, xp.float32])
 
