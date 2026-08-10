@@ -105,7 +105,12 @@ def _deprecate_positional_args(func=None, *, version="1.3"):
 
 
 def _assert_all_finite(
-    X, allow_nan=False, allow_inf=False, msg_dtype=None, estimator_name=None, input_name=""
+    X,
+    allow_nan=False,
+    allow_inf=False,
+    msg_dtype=None,
+    estimator_name=None,
+    input_name="",
 ):
     """Like assert_all_finite, but only for ndarray."""
 
@@ -146,7 +151,14 @@ def _assert_all_finite(
 
 
 def _assert_all_finite_element_wise(
-    X, *, xp, allow_nan, allow_inf=False, msg_dtype=None, estimator_name=None, input_name=""
+    X,
+    *,
+    xp,
+    allow_nan,
+    allow_inf=False,
+    msg_dtype=None,
+    estimator_name=None,
+    input_name="",
 ):
     # Cython implementation doesn't support FP16 or complex numbers
     use_cython = (
