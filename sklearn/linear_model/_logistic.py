@@ -1008,13 +1008,18 @@ def _log_reg_scoring_path(
             if is_binary and "pos_label" in sig:
                 # see _logistic_regression_path
                 pos_label_kwarg["pos_label"] = n_classes - 1  # classes[-1]
+            # Avoid passing pos_label twice: if the scorer's _kwargs already
+            # contains pos_label, remove it to prevent a TypeError from
+            # make_scorer getting duplicate keyword arguments.
+            scorer_kwargs = dict(getattr(scoring, "_kwargs", {}))
+            scorer_kwargs.pop("pos_label", None)
             scoring = make_scorer(
                 scoring._score_func,
                 greater_is_better=True if scoring._sign == 1 else False,
                 response_method=scoring._response_method,
                 labels=log_reg.classes_,
                 **pos_label_kwarg,
-                **getattr(scoring, "_kwargs", {}),
+                **scorer_kwargs,
             )
 
         def calc_score(log_reg):

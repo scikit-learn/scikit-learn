@@ -1,0 +1,6 @@
+- :class:`linear_model.LogisticRegressionCV` no longer raises a
+  :class:`TypeError` when using a string scoring parameter (e.g.
+  ``scoring="f1_macro"``) on a binary classification problem. The
+  ``pos_label`` keyword argument was being passed twice to
+  :func:`metrics.make_scorer`.
+  By :user:`Abhishek Shivakumar <abhishekshivakumar>`.
