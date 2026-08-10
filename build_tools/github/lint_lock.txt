@@ -18,7 +18,7 @@ pycodestyle==2.14.0
     # via cython-lint
 pygments==2.20.0
     # via pytest
-pyrefly==1.1.1
+pyrefly==1.2.0
     # via -r build_tools/github/lint_requirements.txt
 pytest==9.1.0
     # via -r build_tools/github/lint_requirements.txt

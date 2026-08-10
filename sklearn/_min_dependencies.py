@@ -38,7 +38,7 @@ dependent_packages = {
     # NOTE if you update ruff, pyrefly or cython-lint here, remember to update
     # .pre-commit-config.yaml as well
     "ruff": ("0.12.2", "tests"),
-    "pyrefly": ("1.1.1", "tests"),
+    "pyrefly": ("1.2.0", "tests"),
     "cython-lint": ("0.21", "tests"),
     "pyamg": ("5.0.0", "tests"),
     "polars": ("0.20.30", "docs, tests"),

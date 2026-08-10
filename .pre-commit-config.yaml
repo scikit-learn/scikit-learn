@@ -18,7 +18,7 @@ repos:
     # NOTE if you update the pyrefly version here, remember to update
     # sklearn/_min_dependencies.py as well. This is the pyrefly version used
     # for type checking (not a separate pre-commit hook version).
-    rev: 1.1.1
+    rev: 1.2.0
     hooks:
     -   id: pyrefly-check
         name: Pyrefly (type checking)
