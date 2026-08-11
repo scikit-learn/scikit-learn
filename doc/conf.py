@@ -62,7 +62,6 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.imgconverter",
     "sphinx_gallery.gen_gallery",
-    "sphinx-prompt",
     "sphinx_copybutton",
     "sphinxext.opengraph",
     "matplotlib.sphinxext.plot_directive",
@@ -78,7 +77,7 @@ extensions = [
 ]
 
 # Specify how to identify the prompt when copying code snippets
-copybutton_prompt_text = r">>> |\.\.\. "
+copybutton_prompt_text = r">>> |\.\.\. |\$ |PS C:\\> "
 copybutton_prompt_is_regexp = True
 copybutton_exclude = "style"
 
