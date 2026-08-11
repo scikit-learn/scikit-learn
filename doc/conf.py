@@ -19,8 +19,16 @@ from datetime import datetime
 from pathlib import Path
 from urllib.request import urlopen
 
+import threadpoolctl
+
 from sklearn.externals._packaging.version import parse
 from sklearn.utils._testing import turn_warnings_into_errors
+
+# Sphinx forks its parallel read/write workers, and `fork()` only clones the calling
+# thread, so an OpenMP worker alive here is lost in the child, which then hangs in the
+# OpenMP join barrier. One thread per pool means there is none to lose; keep the
+# reference alive. See https://github.com/sphinx-gallery/sphinx-gallery/pull/1633
+_threadpool_limits = threadpoolctl.threadpool_limits(limits=1)
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory
