@@ -544,6 +544,18 @@ def dump_svmlight_file(
     else:
         if yval.ndim != 1 and not multilabel:
             raise ValueError("expected y of shape (n_samples,), got %r" % (yval.shape,))
+        # Multilabel requires a 2D target: one row per sample holding its set of
+        # labels, which is what the Cython dumper indexes as `y[i, j]`. A 1D y
+        # (scalar label per sample) slips through the shape check above when
+        # multilabel=True and then reaches that 2D index as a 1D array — reading
+        # out of bounds and terminating the interpreter with SIGSEGV (issue
+        # #34661). Reject it up front with a clear error instead of crashing.
+        if multilabel and yval.ndim != 2:
+            raise ValueError(
+                "When multilabel=True, y must be a 2D array of shape "
+                "(n_samples, n_labels), got %r. Pass an array-like of label "
+                "sequences such as [[0, 1], [2]]." % (yval.shape,)
+            )
 
     Xval = check_array(X, accept_sparse="csr")
     if Xval.shape[0] != yval.shape[0]:

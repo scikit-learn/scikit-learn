@@ -417,6 +417,20 @@ def test_dump_invalid():
         dump_svmlight_file(X, y[:-1], f)
 
 
+def test_dump_invalid_multilabel_1d_y():
+    # Multilabel needs a 2D target (one label-set row per sample); a 1D y is
+    # incompatible and previously reached the Cython dumper as a 1D array,
+    # whose 2D `y[i, j]` indexing read out of bounds and segfaulted the whole
+    # interpreter (issue #34661). It must raise a clear ValueError, not crash.
+    X = np.zeros((2, 2))
+    y_1d = np.array([0, 1])
+    f = BytesIO()
+    with pytest.raises(ValueError, match="multilabel"):
+        dump_svmlight_file(X, y_1d, f, multilabel=True)
+    # Can't return here: a segfault kills the process rather than raising, so an
+    # exception reaching this line already proves the interpreter survived.
+
+
 def test_dump_query_id():
     # test dumping a file with query_id
     X, y = _load_svmlight_local_test_file(datafile)
