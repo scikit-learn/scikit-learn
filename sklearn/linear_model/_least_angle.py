@@ -23,8 +23,6 @@ from sklearn.linear_model._base import (
     _preprocess_data,
 )
 from sklearn.model_selection import check_cv
-
-# mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
 from sklearn.utils import arrayfuncs, as_float_array, check_random_state
 from sklearn.utils._metadata_requests import (
     MetadataRouter,

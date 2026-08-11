@@ -1,0 +1,19 @@
+- The generalized linear models (GLM) :class:`linear_model.GammaRegressor`,
+  :class:`linear_model.PoissonRegressor` and :class:`linear_model.TweedieRegressor`
+  are now able to fit L1 and Elastic-Net penalties with the new parameter `l1_ratio`
+  together with the 2 new solvers `"newton-cd"` and `"newton-cd-gram"`.
+  These new solvers are also available for :class:`linear_model.LogisticRegression`.
+  They are based on the Newton solver infrastructure introduced for `"newton-cholesky"`
+  and take advantage of the already available and fast (e.g. via gap safe screening
+  rules) coordinate descent solvers of :class:`ElasticNet`.
+
+  - `"newton-cd-gram"` constructs the full Hessian (gram) matrix and then uses
+    `ElasticNet(precompute=True)` as the inner solver. It is a good choice for
+    `n_samples >> n_features`.
+  - `"newton-cd"` avoids constructing the full Hessian matrix, but formulates the
+    minimization problem for the inner solver as a penalized least squares problem
+    (which amounts to taking the square root of the Hessian) and then uses
+    `ElasticNet(precompute=False)` on it. It is a good choice for
+    `n_features > n_samples`.
+
+    By :user:`Christian Lorentzen <lorentzenchr>`. :pr:`34377`, :pr:`34523`.
