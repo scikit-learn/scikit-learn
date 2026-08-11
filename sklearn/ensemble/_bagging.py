@@ -462,13 +462,21 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
 
         # Validate max_samples
         if max_samples is None:
-            max_samples = self.max_samples
+            if not self.bootstrap and sample_weight is not None:
+                max_samples = np.count_nonzero(sample_weight)
+            else:
+                max_samples = self.max_samples
 
         max_samples = _get_n_samples_bootstrap(X.shape[0], max_samples, sample_weight)
-        if not self.bootstrap and max_samples > X.shape[0]:
+        n_effective_samples = (
+            np.count_nonzero(sample_weight)
+            if (sample_weight is not None and not self.bootstrap)
+            else X.shape[0]
+        )
+        if not self.bootstrap and max_samples > n_effective_samples:
             raise ValueError(
                 f"Effective max_samples={max_samples} must be <= n_samples="
-                f"{X.shape[0]} to be able to sample without replacement."
+                f"{n_effective_samples} to be able to sample without replacement."
             )
 
         # Store validated integer row sampling value

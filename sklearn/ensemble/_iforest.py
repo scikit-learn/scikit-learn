@@ -333,7 +333,11 @@ class IsolationForest(OutlierMixin, BaseBagging):
         y = rnd.uniform(size=X.shape[0])
 
         # ensure that max_sample is in [1, n_samples]:
-        n_samples = X.shape[0]
+        n_samples = (
+            np.count_nonzero(sample_weight)
+            if (sample_weight is not None and not self.bootstrap)
+            else X.shape[0]
+        )
 
         if isinstance(self.max_samples, str) and self.max_samples == "auto":
             max_samples = min(256, n_samples)
@@ -350,7 +354,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
             else:
                 max_samples = self.max_samples
         else:  # max_samples is float
-            max_samples = int(self.max_samples * X.shape[0])
+            max_samples = int(self.max_samples * n_samples)
 
         self.max_samples_ = max_samples
         max_depth = int(np.ceil(np.log2(max(max_samples, 2))))

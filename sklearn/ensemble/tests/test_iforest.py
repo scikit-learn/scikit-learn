@@ -393,3 +393,17 @@ def test_iforest_predict_parallel(global_random_seed, contamination, n_jobs):
 
     # assert the same results as non-parallel
     assert_array_equal(pred, pred_parallel)
+
+
+def test_iforest_zero_sample_weight_bootstrap_false():
+    """Check that zero sample_weight with bootstrap=False does not raise error."""
+    X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+    sample_weight = np.array([1.0, 0.0, 1.0, 0.0])
+
+    iso = IsolationForest(bootstrap=False, random_state=0)
+    iso.fit(X, sample_weight=sample_weight)
+
+    assert iso.max_samples_ == 2
+    for samples in iso.estimators_samples_:
+        assert np.isin(samples, [0, 2]).all()
+        assert len(samples) == 2

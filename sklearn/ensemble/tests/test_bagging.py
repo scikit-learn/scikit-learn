@@ -1171,3 +1171,18 @@ def test_bagging_without_support_metadata_routing(model):
     """Make sure that we still can use an estimator that does not implement the
     metadata routing."""
     model.fit(iris.data, iris.target)
+
+
+@pytest.mark.parametrize("bagging_class", [BaggingClassifier, BaggingRegressor])
+def test_zero_sample_weight_bootstrap_false(bagging_class):
+    """Check that zero sample_weight with bootstrap=False does not raise error."""
+    X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+    y = np.array([0, 0, 1, 1])
+    sample_weight = np.array([1.0, 0.0, 1.0, 0.0])
+
+    clf = bagging_class(bootstrap=False, random_state=0)
+    clf.fit(X, y, sample_weight=sample_weight)
+
+    for samples in clf.estimators_samples_:
+        assert np.isin(samples, [0, 2]).all()
+        assert len(samples) == 2
