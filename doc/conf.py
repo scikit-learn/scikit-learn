@@ -79,6 +79,8 @@ extensions = [
 # Specify how to identify the prompt when copying code snippets
 copybutton_prompt_text = r">>> |\.\.\. |\$ |PS C:\\> "
 copybutton_prompt_is_regexp = True
+# Without this, only the prompt line of a `\`-continued command gets copied
+copybutton_line_continuation_character = "\\"
 copybutton_exclude = "style"
 
 try:

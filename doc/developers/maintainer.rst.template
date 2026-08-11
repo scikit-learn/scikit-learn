@@ -204,11 +204,11 @@ Reference Steps
         .. code-block:: console
 
           $ git shortlog -s {{ previous_tag }}.. |
-            $ cut -f2- |
-            $ sort --ignore-case |
-            $ tr "\n" ";" |
-            $ sed "s/;/, /g;s/, $//" |
-            $ fold -s
+          $   cut -f2- |
+          $   sort --ignore-case |
+          $   tr "\n" ";" |
+          $   sed "s/;/, /g;s/, $//" |
+          $   fold -s
 
       Then create a PR targeting the `main` branch and cherry-pick this commit there.
       {%- endif %}
