@@ -11,8 +11,8 @@ import warnings
 from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial, wraps
-from inspect import signature
 from hashlib import md5
+from inspect import signature
 from numbers import Integral, Real
 from typing import Callable, Literal
 
