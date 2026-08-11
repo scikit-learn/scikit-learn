@@ -12,6 +12,7 @@ from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial, wraps
 from inspect import signature
+from hashlib import md5
 from numbers import Integral, Real
 from typing import Callable, Literal
 
@@ -5750,6 +5751,15 @@ def check_classifier_not_supporting_multiclass(name, estimator_orig):
         estimator.fit(X, y)
 
 
+def object_hash(obj: object) -> bytes:
+    """
+    Hash a Python object; mutating the object should change the result.
+
+    ``joblib.hash`` has issues with some of the estimators, so we use our own.
+    """
+    return md5(pickle.dumps(obj)).digest()
+
+
 def check_estimator_internal_state_unchanged_by_inference(name, estimator_orig):
     """
     Estimators' internal state should not be changed by inference methods, in
@@ -5757,17 +5767,16 @@ def check_estimator_internal_state_unchanged_by_inference(name, estimator_orig):
     """
     estimator, X_train, y_train, X_test, y_test = _fit_estimator(estimator_orig)
     check_methods = [
-        "predict",
         "transform",
+        "predict",
         "decision_function",
         "predict_proba",
         "predict_log_proba",
         "score",
         "score_samples",
     ]
-    # TODO what if id of objects changed
 
-    before_hash = joblib.hash(estimator)
+    before_hash = object_hash(estimator)
     for method_name in check_methods:
         if not hasattr(estimator, method_name):
             continue
@@ -5776,6 +5785,7 @@ def check_estimator_internal_state_unchanged_by_inference(name, estimator_orig):
             method(X_test, y_test)
         else:
             method(X_test)
-        assert joblib.hash(estimator) == before_hash, (
+        after_hash = object_hash(estimator)
+        assert after_hash == before_hash, (
             f"Hash of {estimator} changed when running {method_name}()"
         )
