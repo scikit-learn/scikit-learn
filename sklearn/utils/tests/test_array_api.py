@@ -1127,7 +1127,7 @@ def test_interp_empty_x(namespace, device_name, dtype_name):
 
         actual1 = _interp([], xp1, fp1)
         actual1 = move_to(actual1, xp=numpy, device="cpu")
-        desired1 = numpy.interp([], [], []).astype(dtype_name)
+        desired1 = numpy.asarray([], dtype=dtype_name)
 
         assert_allclose(actual1, desired1, atol=atol)
 
