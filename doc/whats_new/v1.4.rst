@@ -568,6 +568,15 @@ Changelog
   in favor of ``n_dim``. ``dim`` will be removed in version 1.6.
   :pr:`27718` by :user:`Adam Li <adam2392>`.
 
+:mod:`sklearn.datasets`
+.......................
+
+- |Enhancement| :func:`datasets.load_wine`, :func:`datasets.load_iris`,
+  :func:`datasets.load_breast_cancer` and :func:`datasets.load_digits`
+  now return the target as a pandas categorical dtype when ``as_frame``
+  is set to ``True``.
+  :pr:`22733` by :user:`Matt Williams <milliams>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
