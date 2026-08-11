@@ -18,6 +18,7 @@ from typing import Callable, Literal
 
 import joblib
 import numpy as np
+from joblib.externals import cloudpickle
 from scipy import sparse
 from scipy.stats import rankdata
 
@@ -5757,7 +5758,7 @@ def object_hash(obj: object) -> bytes:
 
     ``joblib.hash`` has issues with some of the estimators, so we use our own.
     """
-    return md5(pickle.dumps(obj)).digest()
+    return md5(cloudpickle.dumps(obj)).digest()
 
 
 def check_estimator_internal_state_unchanged_by_inference(name, estimator_orig):
