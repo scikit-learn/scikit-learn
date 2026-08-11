@@ -40,16 +40,9 @@
   padding: 0;
 }
 
-.sk-global :focus {
-  outline: 2px solid var(--sklearn-color-focus);
-  outline-offset: -1px;
-  border-radius: 2px;
-}
-
 .sk-global :focus-visible {
   outline: 2px solid var(--sklearn-color-focus);
   outline-offset: -2px;
-  border-radius: 2px;
 }
 
 .sk-global div.sk-dashed-wrapped {
@@ -257,7 +250,8 @@ clickable and can be expanded/collapsed.
 
 /* Estimator label */
 
-.sk-global div.sk-label summary.sk-toggleable__label {
+.sk-global div.sk-label summary.sk-toggleable__label,
+.sk-global div.sk-label label {
   font-family: monospace;
   font-weight: bold;
   line-height: 1.2em;
@@ -380,7 +374,6 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 }
 
 /* Focus ring round and outside of the small circular icon */
-.sk-global .sk-estimator-doc-link:focus,
 .sk-global .sk-estimator-doc-link:focus-visible {
   border-radius: 1em;
   outline-offset: 2px;
