@@ -5756,15 +5756,26 @@ def check_estimator_internal_state_unchanged_by_inference(name, estimator_orig):
     order to ensure thread safety.
     """
     estimator, X_train, y_train, X_test, y_test = _fit_estimator(estimator_orig)
-    check_methods = ["predict", "transform", "decision_function", "predict_proba"]
-    # TODO score
+    check_methods = [
+        "predict",
+        "transform",
+        "decision_function",
+        "predict_proba",
+        "predict_log_proba",
+        "score",
+        "score_samples",
+    ]
     # TODO what if id of objects changed
 
     before_hash = joblib.hash(estimator)
-    for method in check_methods:
-        if not hasattr(estimator, method):
+    for method_name in check_methods:
+        if not hasattr(estimator, method_name):
             continue
-        getattr(estimator, method)(X_test)
+        method = getattr(estimator, method_name)
+        if method_name == "score":
+            method(X_test, y_test)
+        else:
+            method(X_test)
         assert joblib.hash(estimator) == before_hash, (
-            f"Hash of {estimator} changed when running {method}()"
+            f"Hash of {estimator} changed when running {method_name}()"
         )
