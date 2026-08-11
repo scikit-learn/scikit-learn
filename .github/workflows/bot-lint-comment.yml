@@ -31,12 +31,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
 
-      - name: Ensure log files exist
-        # Check that the log files exist and create empty ones in case the Linter job
-        # failed to produce/upload them (see
-        # https://github.com/scikit-learn/scikit-learn/issues/34719).
-        run: touch "$ARTIFACTS_DIR/linting_output.txt" "$ARTIFACTS_DIR/versions.txt"
-
       # Adapted from https://github.com/docker-mailserver/docker-mailserver/pull/4267#issuecomment-2484565209
       # Unfortunately there is no easier way to do it
       - name: Get PR number from triggering workflow information
