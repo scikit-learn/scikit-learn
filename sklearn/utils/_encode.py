@@ -224,7 +224,9 @@ def _encode_pandas(values, uniques):
     """
     import pandas as pd
 
-    index = pd.Index(uniques)
+    # using "string" dtype is faster except when `values` is categorical dtype
+    dtype = None if isinstance(values.dtype, pd.CategoricalDtype) else "string"
+    index = pd.Index(uniques, dtype=dtype)
     encoded = np.asarray(index.get_indexer(values))
     if (
         uniques.size
