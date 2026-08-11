@@ -50,8 +50,8 @@ for i in range(len(degrees)):
     ax = plt.subplot(1, len(degrees), i + 1)
     plt.setp(ax, xticks=(), yticks=())
 
-    polynomial_features = PolynomialFeatures(degree=degrees[i], include_bias=False)    
-    # Avoid truncating small singular values as tol is used as cond in lstsq since v1.9
+    polynomial_features = PolynomialFeatures(degree=degrees[i], include_bias=False)
+    # Avoid truncating small singular values (tol is used as cond in lstsq since v1.9)
     linear_regression = LinearRegression(tol=np.finfo(float).eps)
     pipeline = Pipeline(
         [
