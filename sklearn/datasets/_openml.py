@@ -39,6 +39,11 @@ _DATA_INFO = "https://www.openml.org/api/v1/json/data/{}"
 _DATA_FEATURES = "https://www.openml.org/api/v1/json/data/features/{}"
 _DATA_QUALITIES = "https://www.openml.org/api/v1/json/data/qualities/{}"
 
+# Default socket timeout (in seconds) for OpenML network requests. Without an
+# explicit timeout, urlopen() can block indefinitely on a slow or unresponsive
+# server, and the TimeoutError retry handling below would never trigger.
+_OPENML_URLOPEN_TIMEOUT = 60
+
 OpenmlQualitiesType = List[Dict[str, str]]
 OpenmlFeaturesType = List[Dict[str, str]]
 
@@ -180,7 +185,9 @@ def _open_openml_url(
     req.add_header("Accept-encoding", "gzip")
 
     if data_home is None:
-        fsrc = _retry_on_network_error(n_retries, delay, req.full_url)(urlopen)(req)
+        fsrc = _retry_on_network_error(n_retries, delay, req.full_url)(urlopen)(
+            req, timeout=_OPENML_URLOPEN_TIMEOUT
+        )
         if is_gzip_encoded(fsrc):
             return gzip.GzipFile(fileobj=fsrc, mode="rb")
         return fsrc
@@ -198,7 +205,7 @@ def _open_openml_url(
             with TemporaryDirectory(dir=dir_name) as tmpdir:
                 with closing(
                     _retry_on_network_error(n_retries, delay, req.full_url)(urlopen)(
-                        req
+                        req, timeout=_OPENML_URLOPEN_TIMEOUT
                     )
                 ) as fsrc:
                     opener: Callable
