@@ -1172,12 +1172,12 @@ def test_interp_raises(namespace, device_name, dtype_name):
 )
 def test_interp_raises_with_complex(namespace, device_name, dtype_name):
     xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
-    complex_np = numpy.asarray([7 + 8j])
     arr_real_np = numpy.asarray([1, 2], dtype=dtype_name)
     arr_complex_np = numpy.asarray([2, 0], dtype=dtype_name) + 1j * numpy.asarray(
         [4, 3], dtype=dtype_name
     )
     complex_type_name = arr_complex_np.dtype.name
+    complex_np = numpy.asarray([7 + 8j], dtype=complex_type_name)
 
     with config_context(array_api_dispatch=True):
         if not hasattr(xp, complex_type_name):
