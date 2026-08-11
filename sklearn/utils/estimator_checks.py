@@ -5777,6 +5777,9 @@ def check_estimator_internal_state_unchanged_by_inference(name, estimator_orig):
     ]
 
     before_hash = object_hash(estimator)
+    attr_hashes = {
+        key: object_hash(value) for (key, value) in estimator.__dict__.items()
+    }
     for method_name in check_methods:
         if not hasattr(estimator, method_name):
             continue
@@ -5786,6 +5789,11 @@ def check_estimator_internal_state_unchanged_by_inference(name, estimator_orig):
         else:
             method(X_test)
         after_hash = object_hash(estimator)
-        assert after_hash == before_hash, (
-            f"Hash of {estimator} changed when running {method_name}()"
+        after_attr_hashes = {
+            key: object_hash(value) for (key, value) in estimator.__dict__.items()
+        }
+        err_message = (
+            f"Hash of {estimator} changed when running {method_name}(),"
+            + f" {attr_hashes} != {after_attr_hashes}"
         )
+        assert after_hash == before_hash, err_message
