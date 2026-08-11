@@ -226,7 +226,9 @@ def _encode_pandas(values, uniques):
 
     # using "string" dtype is faster except when `values` is categorical dtype
     dtype = None if isinstance(values.dtype, pd.CategoricalDtype) else "string"
-    index = pd.Index(uniques, dtype=dtype)
+    # `copy=True` for string: on pandas<3, building a StringDtype Index from an
+    # object ndarray coerces its `np.nan` entries to `pandas.NA` in place
+    index = pd.Index(uniques, dtype=dtype, copy=dtype == "string")
     encoded = np.asarray(index.get_indexer(values))
     if (
         uniques.size
