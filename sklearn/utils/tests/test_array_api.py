@@ -1057,9 +1057,9 @@ def test_matching_numpy_dtype(namespace, device_name, dtype_name):
         # test numpy.nan interpolation point
         (numpy.nan, [0, 0.25, 0.5, 0.75, 1], [0, 0.25, 0.5, 0.75, 1], None, None),
         (
-            numpy.linspace(0, 1, 50),
-            numpy.linspace(0, 1, 5),
-            numpy.linspace(0, 1, 5),
+            [i / 49 for i in range(50)],
+            [i / 4 for i in range(5)],
+            [i / 4 for i in range(5)],
             None,
             None,
         ),
@@ -1067,25 +1067,25 @@ def test_matching_numpy_dtype(namespace, device_name, dtype_name):
         (0.5, [numpy.nan, 1], [0, 10], None, None),
         # test left
         (
-            numpy.asarray([-1, 0, 7, 8], dtype=numpy.float64),
-            numpy.arange(7, dtype=numpy.float64),
-            numpy.ones(7, dtype=numpy.float64),
+            [-1, 0, 7, 8],
+            [i for i in range(7)],
+            [1 for _ in range(7)],
             0,
             None,
         ),
         # test right
         (
-            numpy.asarray([-1, 0, 7, 8], dtype=numpy.float64),
-            numpy.arange(7, dtype=numpy.float64),
-            numpy.ones(7, dtype=numpy.float64),
+            [-1, 0, 7, 8],
+            [i for i in range(7)],
+            [1 for _ in range(7)],
             None,
             2,
         ),
         # test left and right
         (
-            numpy.asarray([-1, 0, 4, 5], dtype=numpy.float64),
-            numpy.arange(5, dtype=numpy.float64),
-            numpy.ones(5, dtype=numpy.float64),
+            [-1, 0, 4, 5],
+            [i for i in range(5)],
+            [1 for _ in range(5)],
             0,
             2,
         ),
