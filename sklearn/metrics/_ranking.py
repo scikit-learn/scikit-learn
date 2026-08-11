@@ -90,7 +90,8 @@ def auc(x, y):
     >>> metrics.auc(fpr, tpr)
     0.75
     """
-    xp, _ = get_namespace(x, y)
+    # Inputs are assumed to be in the same namespace/device.
+    xp, _ = get_namespace(x)
 
     check_consistent_length(x, y)
     x = column_or_1d(x)
