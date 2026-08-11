@@ -1,0 +1,4 @@
+- Hierarchical clustering UnionFind path compression
+  (``fast_find``) now correctly compresses intermediate nodes to the root
+  (previously path compression could leave stale parent links).
+  By :user:`Vedant Madane <VedantMadane>`.

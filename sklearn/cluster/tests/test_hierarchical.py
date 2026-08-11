@@ -936,4 +936,3 @@ def test_union_find_fast_find_path_compression():
     # Should run quickly and return valid tree structure without error
     result = single_linkage_label(L)
     assert result.shape[0] == 2 * K - 1
-
