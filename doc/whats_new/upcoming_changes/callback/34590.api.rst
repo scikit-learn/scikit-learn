@@ -1,0 +1,3 @@
+- In :class:`callback.ScoringMonitor`, the option to provide `scoring=None` to have the
+  default scorer of the estimator has been removed.
+  By :user:`François Paugam <FrancoisPgm>`.

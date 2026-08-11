@@ -26,7 +26,7 @@ from sklearn.base import (
     is_classifier,
 )
 from sklearn.preprocessing import OrdinalEncoder
-from sklearn.tree import _criterion, _splitter  # type: ignore[attr-defined]
+from sklearn.tree import _criterion, _splitter
 from sklearn.tree._criterion import Criterion
 from sklearn.tree._tree import MAX_NUM_CATEGORIES_PY as MAX_NUM_CATEGORIES
 from sklearn.tree._tree import (
@@ -509,6 +509,11 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             raise ValueError(
                 "Categorical features are only supported for binary classification. "
                 f"Found {self.n_classes_.max()} classes."
+            )
+        if has_categorical and self.criterion == "absolute_error":
+            raise ValueError(
+                "Categorical features are not supported with "
+                "criterion='absolute_error'."
             )
 
         SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
@@ -1455,6 +1460,8 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         categories. Missing values for categorical features should be
         represented by ``np.nan``; unknown categories at prediction time are
         also treated as missing values.
+
+        Categorical features are not supported with `criterion="absolute_error"`.
 
         .. versionadded:: 1.10
 

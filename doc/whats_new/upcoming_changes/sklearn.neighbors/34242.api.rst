@@ -1,0 +1,3 @@
+- Getting statistics and number of calls from :class:`sklearn.neighbors.BallTree` and
+  :class:`sklearn.neighbors.KDTree` is deprecated. The relevant APIs will be removed in
+  version 1.12.

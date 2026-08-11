@@ -95,9 +95,7 @@ cdef class DensePartitioner:
         """
         cdef:
             intp_t i, current_end, end_non_missing
-            float32_t[::1] feature_values = self.feature_values
             const float32_t[:, :] X = self.X
-            intp_t[::1] samples = self.samples
             intp_t n_missing = 0
             const uint8_t[::1] missing_values_in_feature_mask = self.missing_values_in_feature_mask
 
@@ -113,24 +111,24 @@ cdef class DensePartitioner:
             while i <= current_end:
                 # Finds the right-most value that is not missing so that
                 # it can be swapped with missing values at its left.
-                if isnan(X[samples[current_end], current_feature]):
+                if isnan(X[self.samples[current_end], current_feature]):
                     n_missing += 1
                     current_end -= 1
                     continue
 
                 # X[samples[current_end], current_feature] is a non-missing value
-                if isnan(X[samples[i], current_feature]):
-                    samples[i], samples[current_end] = samples[current_end], samples[i]
+                if isnan(X[self.samples[i], current_feature]):
+                    self.samples[i], self.samples[current_end] = self.samples[current_end], self.samples[i]
                     n_missing += 1
                     current_end -= 1
 
-                feature_values[i] = X[samples[i], current_feature]
+                self.feature_values[i] = X[self.samples[i], current_feature]
                 i += 1
         else:
             # When there are no missing values, we only need to copy the data into
             # feature_values
             for i in range(self.start, self.end):
-                feature_values[i] = X[samples[i], current_feature]
+                self.feature_values[i] = X[self.samples[i], current_feature]
 
         self.n_missing = n_missing
         self.n_categories_current = self.n_categories[current_feature]
@@ -144,8 +142,8 @@ cdef class DensePartitioner:
         if self.n_categories_current <= 0:
             # numerical feature: sort the feature values
             simultaneous_sort(
-                &feature_values[self.start],
-                &samples[self.start],
+                &self.feature_values[self.start],
+                &self.samples[self.start],
                 end_non_missing - self.start,
                 use_three_way_partition=True,
             )
@@ -157,15 +155,15 @@ cdef class DensePartitioner:
 
             # This feature is considered constant if (max - min <= FEATURE_THRESHOLD)
             return (
-                feature_values[end_non_missing - 1]
-                <= feature_values[self.start] + FEATURE_THRESHOLD
+                self.feature_values[end_non_missing - 1]
+                <= self.feature_values[self.start] + FEATURE_THRESHOLD
             )
         else:
             # categorical feature: sort feature values by mean target values
             self.sort_categories(self.n_categories_current)
             if n_missing > 0:
                 return False
-            return feature_values[self.start] == feature_values[end_non_missing - 1]
+            return self.feature_values[self.start] == self.feature_values[end_non_missing - 1]
 
     cdef void sort_categories(self, intp_t nc) noexcept nogil:
         """Sort categorical features for the Breiman shortcut.
@@ -509,40 +507,35 @@ cdef class SparsePartitioner:
         intp_t current_feature
     ) noexcept nogil:
         """Simultaneously sort based on the feature_values."""
-        cdef:
-            float32_t[::1] feature_values = self.feature_values
-            intp_t[::1] index_to_samples = self.index_to_samples
-            intp_t[::1] samples = self.samples
-
         self.extract_nnz(current_feature)
         # Sort the positive and negative parts of `feature_values`
         simultaneous_sort(
-            &feature_values[self.start],
-            &samples[self.start],
+            &self.feature_values[self.start],
+            &self.samples[self.start],
             self.end_negative - self.start,
             use_three_way_partition=True,
         )
         if self.start_positive < self.end:
             simultaneous_sort(
-                &feature_values[self.start_positive],
-                &samples[self.start_positive],
+                &self.feature_values[self.start_positive],
+                &self.samples[self.start_positive],
                 self.end - self.start_positive,
                 use_three_way_partition=True,
             )
 
         # Update index_to_samples to take into account the sort
         for p in range(self.start, self.end_negative):
-            index_to_samples[samples[p]] = p
+            self.index_to_samples[self.samples[p]] = p
         for p in range(self.start_positive, self.end):
-            index_to_samples[samples[p]] = p
+            self.index_to_samples[self.samples[p]] = p
 
         # Add one or two zeros in feature_values, if there is any
         if self.end_negative < self.start_positive:
             self.start_positive -= 1
-            feature_values[self.start_positive] = 0.
+            self.feature_values[self.start_positive] = 0.
 
             if self.end_negative != self.start_positive:
-                feature_values[self.end_negative] = 0.
+                self.feature_values[self.end_negative] = 0.
                 self.end_negative += 1
 
         # XXX: When sparse supports missing values, this should be set to the
@@ -550,7 +543,7 @@ cdef class SparsePartitioner:
         self.n_missing = 0
 
         # This feature is considered constant (max - min <= FEATURE_THRESHOLD)
-        return feature_values[self.end - 1] <= feature_values[self.start] + FEATURE_THRESHOLD
+        return self.feature_values[self.end - 1] <= self.feature_values[self.start] + FEATURE_THRESHOLD
 
     cdef void shift_missing_to_the_left(self) noexcept nogil:
         pass  # Missing values are not supported for sparse data.
@@ -710,16 +703,10 @@ cdef class SparsePartitioner:
         feature : intp_t,
             Index of the feature we want to extract non zero value.
         """
-        cdef intp_t[::1] samples = self.samples
-        cdef float32_t[::1] feature_values = self.feature_values
         cdef intp_t indptr_start = self.X_indptr[feature]
         cdef intp_t indptr_end = self.X_indptr[feature + 1]
         cdef intp_t n_indices = <intp_t>(indptr_end - indptr_start)
         cdef intp_t n_samples = self.end - self.start
-        cdef intp_t[::1] index_to_samples = self.index_to_samples
-        cdef intp_t[::1] sorted_samples = self.sorted_samples
-        cdef const int32_t[::1] X_indices = self.X_indices
-        cdef const float32_t[::1] X_data = self.X_data
 
         # Use binary search if n_samples * log(n_indices) <
         # n_indices and index_to_samples approach otherwise.
@@ -728,22 +715,22 @@ cdef class SparsePartitioner:
         # approach.
         if ((1 - self.is_samples_sorted) * n_samples * log2(n_samples) +
                 n_samples * log2(n_indices) < EXTRACT_NNZ_SWITCH * n_indices):
-            extract_nnz_binary_search(X_indices, X_data,
+            extract_nnz_binary_search(self.X_indices, self.X_data,
                                       indptr_start, indptr_end,
-                                      samples, self.start, self.end,
-                                      index_to_samples,
-                                      feature_values,
+                                      self.samples, self.start, self.end,
+                                      self.index_to_samples,
+                                      self.feature_values,
                                       &self.end_negative, &self.start_positive,
-                                      sorted_samples, &self.is_samples_sorted)
+                                      self.sorted_samples, &self.is_samples_sorted)
 
         # Using an index to samples  technique to extract non zero values
         # index_to_samples is a mapping from X_indices to samples
         else:
-            extract_nnz_index_to_samples(X_indices, X_data,
+            extract_nnz_index_to_samples(self.X_indices, self.X_data,
                                          indptr_start, indptr_end,
-                                         samples, self.start, self.end,
-                                         index_to_samples,
-                                         feature_values,
+                                         self.samples, self.start, self.end,
+                                         self.index_to_samples,
+                                         self.feature_values,
                                          &self.end_negative, &self.start_positive)
 
 
