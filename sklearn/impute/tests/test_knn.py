@@ -1,6 +1,7 @@
+import warnings
+
 import numpy as np
 import pytest
-import warnings
 
 from sklearn import config_context
 from sklearn.impute import KNNImputer

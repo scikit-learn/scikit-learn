@@ -1,11 +1,10 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import warnings
 from numbers import Integral
 
 import numpy as np
-import warnings
-
 
 from sklearn.base import _fit_context
 from sklearn.impute._base import _BaseImputer
