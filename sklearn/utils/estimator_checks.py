@@ -457,6 +457,7 @@ def _yield_all_checks(estimator, legacy: bool):
     yield check_set_params
     yield check_dict_unchanged
     yield check_fit_idempotent
+    yield check_estimator_internal_state_unchanged_by_inference
     yield check_fit_check_is_fitted
     if not tags.no_validation:
         yield check_n_features_in
@@ -4649,15 +4650,7 @@ def check_fit_non_negative(name, estimator_orig):
         estimator.fit(X, y)
 
 
-def check_fit_idempotent(name, estimator_orig):
-    # Check that est.fit(X) is the same as est.fit(X).fit(X). Ideally we would
-    # check that the estimated parameters during training (e.g. coefs_) are
-    # the same, but having a universal comparison function for those
-    # attributes is difficult and full of edge cases. So instead we check that
-    # predict(), predict_proba(), decision_function() and transform() return
-    # the same results.
-
-    check_methods = ["predict", "transform", "decision_function", "predict_proba"]
+def _fit_estimator(estimator_orig):
     rng = np.random.RandomState(0)
 
     estimator = clone(estimator_orig)
@@ -4680,7 +4673,20 @@ def check_fit_idempotent(name, estimator_orig):
 
     # Fit for the first time
     estimator.fit(X_train, y_train)
+    return (estimator, X_train, y_train, X_test, y_test)
 
+
+def check_fit_idempotent(name, estimator_orig):
+    # Check that est.fit(X) is the same as est.fit(X).fit(X). Ideally we would
+    # check that the estimated parameters during training (e.g. coefs_) are
+    # the same, but having a universal comparison function for those
+    # attributes is difficult and full of edge cases. So instead we check that
+    # predict(), predict_proba(), decision_function() and transform() return
+    # the same results.
+
+    estimator, X_train, y_train, X_test, _ = _fit_estimator(estimator_orig)
+
+    check_methods = ["predict", "transform", "decision_function", "predict_proba"]
     result = {
         method: getattr(estimator, method)(X_test)
         for method in check_methods
@@ -5742,3 +5748,23 @@ def check_classifier_not_supporting_multiclass(name, estimator_orig):
         ValueError, match="Only binary classification is supported.", err_msg=err_msg
     ):
         estimator.fit(X, y)
+
+
+def check_estimator_internal_state_unchanged_by_inference(name, estimator_orig):
+    """
+    Estimators' internal state should not be changed by inference methods, in
+    order to ensure thread safety.
+    """
+    estimator, X_train, y_train, X_test, y_test = _fit_estimator(estimator_orig)
+    check_methods = ["predict", "transform", "decision_function", "predict_proba"]
+    # TODO score
+    # TODO what if id of objects changed
+
+    before_hash = joblib.hash(estimator)
+    for method in check_methods:
+        if not hasattr(estimator, method):
+            continue
+        getattr(estimator, method)(X_test)
+        assert joblib.hash(estimator) == before_hash, (
+            f"Hash of {estimator} changed when running {method}()"
+        )
