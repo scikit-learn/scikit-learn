@@ -1,0 +1,2 @@
+- Fixes a bug in :class:`ensemble.BaggingClassifier`, :class:`ensemble.BaggingRegressor`, and :class:`ensemble.IsolationForest` where passing a ``sample_weight`` with zero values raised a ``ValueError`` when ``bootstrap=False``.
+  By :user:`Azhar Hussain <azharhussaincs>`.
