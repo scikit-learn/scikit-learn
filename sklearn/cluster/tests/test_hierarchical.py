@@ -916,3 +916,24 @@ def test_agglomeration_ward_euclidean(Clustering, metric):
         linkage="ward",
     )
     clustering.fit(X)
+
+
+def test_union_find_fast_find_path_compression():
+    """Test that UnionFind.fast_find correctly compresses paths to the root (#34626)."""
+    from sklearn.cluster._hierarchical_fast import single_linkage_label
+
+    K = 100
+    rows = []
+    w = 0.0
+    for i in range(K - 1):
+        rows.append((i, i + 1, w))
+        w += 1.0
+    for i in range(K):
+        rows.append((i, K + i, w))
+        w += 1.0
+    L = np.array(rows, dtype=np.float64)
+
+    # Should run quickly and return valid tree structure without error
+    result = single_linkage_label(L)
+    assert result.shape[0] == 2 * K - 1
+

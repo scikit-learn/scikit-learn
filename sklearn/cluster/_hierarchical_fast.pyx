@@ -338,15 +338,17 @@ cdef class UnionFind(object):
 
     @cython.wraparound(True)
     cdef intp_t fast_find(self, intp_t n) noexcept:
-        cdef intp_t p
-        p = n
+        cdef intp_t root, nxt
+        root = n
         # find the highest node in the linkage graph so far
-        while self.parent[n] != -1:
-            n = self.parent[n]
+        while self.parent[root] != -1:
+            root = self.parent[root]
         # provide a shortcut up to the highest node
-        while self.parent[p] != n:
-            p, self.parent[p] = self.parent[p], n
-        return n
+        while self.parent[n] != -1 and self.parent[n] != root:
+            nxt = self.parent[n]
+            self.parent[n] = root
+            n = nxt
+        return root
 
 
 def _single_linkage_label(const float64_t[:, :] L):
