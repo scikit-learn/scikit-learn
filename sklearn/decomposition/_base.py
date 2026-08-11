@@ -15,8 +15,8 @@ from sklearn.base import (
 )
 from sklearn.utils._array_api import (
     _add_to_diagonal,
+    array_device,
     check_same_namespace,
-    device,
     get_namespace,
 )
 from sklearn.utils.validation import check_array, check_is_fitted, validate_data
