@@ -244,13 +244,15 @@ class KNNImputer(_BaseImputer):
             copy=self.copy,
         )
         if X.shape[1] == 1:
-            warnings.warn("KNNImputer is fitted on data with only one feature. "
-            "Neighbor-based imputation is not meaningful in this case, "
-            "and the results will be equivalent to using SimpleImputer "
-            "with a mean strategy. Consider using data with multiple "
-            "features if you want KNNImputer to leverage feature "
-            "relationships for imputation.",
-            UserWarning,)
+            warnings.warn(
+                "KNNImputer is fitted on data with only one feature. "
+                "Neighbor-based imputation is not meaningful in this case, "
+                "and the results will be equivalent to using SimpleImputer "
+                "with a mean strategy. Consider using data with multiple "
+                "features if you want KNNImputer to leverage feature "
+                "relationships for imputation.",
+                UserWarning,
+            )
 
         self._fit_X = X
         self._mask_fit_X = _get_mask(self._fit_X, self.missing_values)
