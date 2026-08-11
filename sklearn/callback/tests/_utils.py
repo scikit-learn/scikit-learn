@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 
 from sklearn.base import BaseEstimator, _fit_context, clone
-from sklearn.callback import CallbackSupportMixin, with_callbacks
+from sklearn.callback._callback_support import CallbackSupportMixin, with_callbacks
 from sklearn.callback._transport import open_listener, send
 from sklearn.utils.fixes import _IS_WASM
 from sklearn.utils.parallel import Parallel, delayed
@@ -463,3 +463,30 @@ class NoSubtaskEstimator(CallbackSupportMixin, BaseEstimator):
         callback_ctx.call_on_fit_task_end(estimator=self, X=X, y=y)
 
         return self
+
+
+def check_callback_estimator(estimator):
+    """Run all callback checks against a single estimator instance.
+
+    Third-party estimators that implement callback support can call this in
+    their own test suite::
+
+        from sklearn.callback import check_callback_estimator
+
+        def test_my_estimator_callbacks():
+            check_callback_estimator(MyEstimator())
+
+    Parameters
+    ----------
+    estimator : estimator instance
+        Must inherit from `CallbackSupportMixin` and have a working `fit`.
+    """
+    # Deferred to avoid the circular chain:
+    # sklearn.datasets → sklearn.preprocessing → sklearn.callback →
+    # sklearn.callback.tests._utils → sklearn.callback.tests.test_common →
+    # sklearn.datasets
+    from sklearn.callback.tests.test_common import _CHECKS, _make_data
+
+    X, y = _make_data(estimator)
+    for check in _CHECKS:
+        check(estimator, X, y)

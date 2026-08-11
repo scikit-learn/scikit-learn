@@ -11,11 +11,14 @@ from sklearn.callback._callback_context import CallbackContext
 from sklearn.callback._callback_support import CallbackSupportMixin, with_callbacks
 from sklearn.callback._progressbar import ProgressBar
 from sklearn.callback._scoring_monitor import ScoringMonitor, ScoringMonitorLog
+from sklearn.callback.tests._utils import check_callback_estimator
+
 
 __all__ = [
     "AutoPropagatedCallback",
     "CallbackContext",
     "CallbackSupportMixin",
+    "check_callback_estimator",
     "FitCallback",
     "ProgressBar",
     "ScoringMonitor",
