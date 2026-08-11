@@ -89,12 +89,12 @@ default_package_constraints = {
     # TODO: remove once when we're using the new way to enable coverage in subprocess
     # introduced in 7.0.0, see https://github.com/pytest-dev/pytest-cov?tab=readme-ov-file#upgrading-from-pytest-cov-63
     "pytest-cov": "<=6.3.0",
-    # Cython 3.2.6, 3.2.7 and 3.2.8 break pickling of cyfunctions (e.g.
+    # Cython 3.2.6 to 3.2.9 break pickling of cyfunctions (e.g.
     # KDTree.query) across joblib/loky workers on Python 3.14. 3.2.5 works and a fix is
     # expected in a later release, so only these versions are excluded instead of using
     # <= 3.2.5 as constraint.
     # See https://github.com/scikit-learn/scikit-learn/pull/34419
-    "cython": "!=3.2.6,!=3.2.7,!=3.2.8",
+    "cython": "!=3.2.6,!=3.2.7,!=3.2.8,!=3.2.9",
 }
 
 
@@ -488,7 +488,7 @@ build_metadata_list = [
         "type": "pip",
         "tag": "lint",
         "folder": "build_tools/github",
-        "pip_dependencies": ["pytest", "ruff", "mypy", "cython-lint"],
+        "pip_dependencies": ["pytest", "ruff", "pyrefly", "cython-lint"],
         "package_constraints": {
             # We set `pytest` to an arbitrary recent version to keep it consistent with
             # the settings in `.pre-commit-config.yml`. They should be updated from
@@ -500,7 +500,7 @@ build_metadata_list = [
             # and should be updated from time to time when we feel the need
             # for it.
             "ruff": "min",
-            "mypy": "min",
+            "pyrefly": "min",
             "cython-lint": "min",
         },
         "python_version": "3.11",

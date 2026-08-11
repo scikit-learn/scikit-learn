@@ -44,14 +44,17 @@ from sklearn.svm import l1_min_c
 from sklearn.utils import compute_class_weight, shuffle
 from sklearn.utils._array_api import (
     _atol_for_type,
+    array_device,
     move_to,
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._array_api import (
-    device as array_api_device,
-)
 from sklearn.utils._testing import _array_api_for_tests, ignore_warnings
-from sklearn.utils.fixes import _IS_32BIT, COO_CONTAINERS, CSR_CONTAINERS
+from sklearn.utils.fixes import (
+    _IS_32BIT,
+    COO_CONTAINERS,
+    CSR_CONTAINERS,
+    _sparse_random_array,
+)
 
 pytestmark = pytest.mark.filterwarnings(
     "error::sklearn.exceptions.ConvergenceWarning:sklearn.*"
@@ -64,6 +67,7 @@ pytestmark = pytest.mark.filterwarnings(
 SOLVERS = (
     "lbfgs",
     "liblinear",
+    "newton-cd",
     "newton-cd-gram",
     "newton-cg",
     "newton-cholesky",
@@ -186,6 +190,7 @@ def test_logistic_glmnet_L2(solver):
 
 
 @pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
+# TODO(newton-cd): add newton-cd when it supports multiclass
 @pytest.mark.parametrize("solver", ["newton-cd-gram", "saga"])
 def test_logistic_glmnet_L1(solver, global_random_seed):
     """Compare Logistic regression with L1 regularization to glmnet"""
@@ -240,11 +245,11 @@ def test_logistic_glmnet_L1(solver, global_random_seed):
     # change the value of the objective function nor the predictions.
     coef = r.x.reshape(3, -1).copy()
     coef[:, -1] -= coef[:, -1].mean()
-    # glm.intercept_ = [-0.070237,  0.140473, -0.070237]
+    # glm.intercept_ = [-0.07023662,  0.14047329, -0.07023667]
     assert_allclose(glm.intercept_, coef[:, -1], rtol=1e-4)
-    # glm.coef_ = [[-0.270748,  0.],
-    #              [ 0.      ,  0.],
-    #              [ 0.270748,  0.]])
+    # glm.coef_ = [[-0.27074806,  0.],
+    #              [ 0.        ,  0.],
+    #              [ 0.27074806,  0.]])
     assert_allclose(glm.coef_, coef[:, :-1], rtol=1e-5, atol=1e-8)
 
 
@@ -257,15 +262,16 @@ def test_check_solver_option(LR):
     X, y = iris.data, iris.target
 
     # only 'liblinear' solver
-    for solver in ["liblinear"]:
+    # TODO(newton-cd): remove newton-cd when it supports multiclass
+    for solver in ["liblinear", "newton-cd"]:
         msg = f"The '{solver}' solver does not support multiclass classification."
         lr = LR(solver=solver)
         with pytest.raises(ValueError, match=msg):
             lr.fit(X, y)
 
-    # all solvers except 'liblinear', 'newton-cd-gram' and 'saga'
+    # all solvers except 'liblinear', 'newton-cd', 'newton-cd-gram' and 'saga'
     for solver in ["lbfgs", "newton-cg", "newton-cholesky", "sag"]:
-        msg = "Solver %s supports only 'l2' or None penalties," % solver
+        msg = f"Solver '{solver}' supports only 'l2' or None penalties"
         if LR == LogisticRegression:
             lr = LR(solver=solver, l1_ratio=1)
         else:
@@ -278,13 +284,12 @@ def test_check_solver_option(LR):
         with pytest.raises(ValueError, match=msg):
             lr.fit(X, y)
 
-    # only saga supports elasticnet. We only test for liblinear because the
-    # error is raised before for the other solvers (solver %s supports only l2
-    # penalties)
+    # only saga, newton-cd and newton-cd-gram support elasticnet. We only test for
+    # liblinear because the error is raised before for the other solvers
     for solver in ["liblinear"]:
         msg = (
-            "Only solvers 'newton-cd-gram' and 'saga' support elasticnet penalty, "
-            f"got solver={solver}."
+            "Only solvers 'newton-cd', 'newton-cd-gram' and 'saga' support elasticnet "
+            f"penalty, got solver={solver}."
         )
         if LR == LogisticRegression:
             lr = LR(solver=solver, l1_ratio=0.5)
@@ -397,7 +402,7 @@ def test_consistency_path(global_random_seed, sample_weight):
 
     # can't test with fit_intercept=True since LIBLINEAR
     # penalizes the intercept
-    for solver in ["newton-cd-gram", "sag", "saga"]:
+    for solver in ["newton-cd", "newton-cd-gram", "sag", "saga"]:
         coefs, Cs, _ = _logistic_regression_path(
             X,
             y,
@@ -972,7 +977,8 @@ def test_logistic_regression_solvers_multiclass(fit_intercept):
         solver: LogisticRegression(
             solver=solver, max_iter=solver_max_iter.get(solver, 100), **params
         ).fit(X, y)
-        for solver in set(SOLVERS) - set(["liblinear"])
+        # TODO(newton-cd): remove newton-cd when it supports multiclass
+        for solver in set(SOLVERS) - set(["liblinear", "newton-cd"])
     }
     for solver, clf in classifiers.items():
         assert clf.coef_.shape == (n_classes, n_features), (
@@ -1006,7 +1012,8 @@ def test_logistic_regression_solvers_multiclass(fit_intercept):
             scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
             **params,
         ).fit(X, y)
-        for solver in set(SOLVERS) - set(["liblinear"])
+        # TODO(newton-cd): remove newton-cd when it supports multiclass
+        for solver in set(SOLVERS) - set(["liblinear", "newton-cd"])
     }
     for solver in classifiers_cv:
         assert_allclose(
@@ -1027,13 +1034,13 @@ def test_logistic_regression_solvers_multiclass_unpenalized(
     """Test and compare solver results for unpenalized multinomial multiclass."""
     # We want to avoid perfect separation.
     n_samples, n_features, n_classes = 100, 4, 3
-    rng = np.random.RandomState(global_random_seed)
+    rng = np.random.default_rng(global_random_seed)
     X = make_low_rank_matrix(
         n_samples=n_samples,
         n_features=n_features + fit_intercept,
         effective_rank=n_features + fit_intercept,
         tail_strength=0.1,
-        random_state=rng,
+        random_state=rng.integers(2**31),
     )
     if fit_intercept:
         X[:, -1] = 1
@@ -1049,10 +1056,7 @@ def test_logistic_regression_solvers_multiclass_unpenalized(
 
     loss = HalfMultinomialLoss(n_classes=n_classes)
     proba = loss.link.inverse(raw_prediction)
-    # Only newer numpy version (1.22) support more dimensions on pvals.
-    y = np.zeros(n_samples)
-    for i in range(n_samples):
-        y[i] = np.argwhere(rng.multinomial(n=1, pvals=proba[i, :]))[0, 0]
+    y = np.nonzero(rng.multinomial(n=1, pvals=proba))[1]
 
     tol = 1e-9
     params = dict(fit_intercept=fit_intercept, random_state=global_random_seed)
@@ -1066,7 +1070,8 @@ def test_logistic_regression_solvers_multiclass_unpenalized(
             max_iter=solver_max_iter.get(solver, 100),
             **params,
         ).fit(X, y)
-        for solver in set(SOLVERS) - set(["liblinear"])
+        # TODO(newton-cd): remove newton-cd when it supports multiclass
+        for solver in set(SOLVERS) - set(["liblinear", "newton-cd"])
     }
     for solver in regressors.keys():
         # See the docstring of test_multinomial_identifiability_on_iris for reference.
@@ -1115,7 +1120,7 @@ def test_logistic_cv_sparse(global_random_seed, solver, csr_container):
     )
     clfs.fit(csr_container(X), y)
 
-    rtol = 6e-2 if solver in ("sag", "saga") else 1e-5
+    rtol = 0.075 if solver in ("sag", "saga") else 1e-5
     assert_allclose(clfs.coef_, clf.coef_, rtol=rtol)
     assert_allclose(clfs.intercept_, clf.intercept_, rtol=rtol)
     assert clfs.C_ == clf.C_
@@ -1161,7 +1166,8 @@ def test_logistic_regressioncv_class_weights(weight, class_weight, global_random
     with ignore_warnings(category=ConvergenceWarning):
         clf_lbfgs.fit(X, y)
 
-    for solver in set(SOLVERS) - set(["lbfgs", "liblinear"]):
+    # TODO(newton-cd): remove newton-cd when it supports multiclass
+    for solver in set(SOLVERS) - set(["lbfgs", "liblinear", "newton-cd"]):
         clf = LogisticRegressionCV(
             solver=solver,
             scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
@@ -1359,7 +1365,8 @@ def test_logistic_regression_class_weights(global_random_seed, csr_container):
     y = iris.target[45:]
     class_weight_dict = _compute_class_weight_dictionary(y)
 
-    for solver in set(SOLVERS) - set(["liblinear"]):
+    # TODO(newton-cd): remove newton-cd when it supports multiclass
+    for solver in set(SOLVERS) - set(["liblinear", "newton-cd"]):
         params = dict(solver=solver, max_iter=2000, random_state=global_random_seed)
         clf1 = LogisticRegression(class_weight="balanced", **params)
         clf2 = LogisticRegression(class_weight=class_weight_dict, **params)
@@ -1454,21 +1461,22 @@ def test_logreg_l1(csr_container, fit_intercept, global_random_seed):
         result["liblinear"] = lr_liblinear.fit(X, y)
         assert_allclose(lr_saga.coef_, lr_liblinear.coef_, atol=0.3)
 
-    lr_cd = LogisticRegression(solver="newton-cd-gram", max_iter=20, **params)
-    result["newton-cd-gram"] = lr_cd.fit(X, y)
-    # The 2 coefficients for X_constant are ideally the same (minimum norm solution).
-    # For predictions, only their sum matters. It might be that their effect on the
-    # objective is in the last floating point digits such that the solver estimates
-    # them as being different.
-    if lr_cd.coef_[0, -1] == lr_cd.coef_[0, -2]:
-        # This is the ideal path, i.e. minimum norm solution.
-        assert_allclose(lr_cd.coef_, lr_saga.coef_, atol=1e-5)
-    else:
-        # This may happen for some random seeds.
-        assert_allclose(
-            np.sum(lr_cd.coef_[0, -2:]), np.sum(lr_saga.coef_[0, -2:]), rtol=1e-6
-        )
-        assert_allclose(lr_cd.coef_[0, :-2], lr_saga.coef_[0, :-2], rtol=1e-5)
+    for solver in ["newton-cd", "newton-cd-gram"]:
+        lr_cd = LogisticRegression(solver=solver, max_iter=20, **params)
+        result[solver] = lr_cd.fit(X, y)
+        # The 2 coefficients for X_constant are ideally the same (minimum norm
+        # solution). For predictions, only their sum matters. It might be that their
+        # effect on the objective is in the last floating point digits such that the
+        # solver estimates them as being different.
+        if lr_cd.coef_[0, -1] == lr_cd.coef_[0, -2]:
+            # This is the ideal path, i.e. minimum norm solution.
+            assert_allclose(lr_cd.coef_, lr_saga.coef_, atol=1e-5)
+        else:
+            # This may happen for some random seeds.
+            assert_allclose(
+                np.sum(lr_cd.coef_[0, -2:]), np.sum(lr_saga.coef_[0, -2:]), rtol=1e-6
+            )
+            assert_allclose(lr_cd.coef_[0, :-2], lr_saga.coef_[0, :-2], rtol=1e-5)
 
     # Check that solving on the sparse and dense data yield the same results
     X_sp = csr_container(X)
@@ -1619,7 +1627,8 @@ def test_n_iter(solver, use_legacy_attributes):
         assert clf_cv.n_iter_.shape == (n_cv_fold, n_l1_ratios, n_Cs)
 
     # multinomial case
-    if solver in ("liblinear",):
+    # TODO(newton-cd): remove newton-cd when it supports multiclass
+    if solver in ("liblinear", "newton-cd"):
         # This solver only supports one-vs-rest multiclass classification.
         return
 
@@ -1635,7 +1644,10 @@ def test_n_iter(solver, use_legacy_attributes):
         assert clf_cv.n_iter_.shape == (n_cv_fold, n_l1_ratios, n_Cs)
 
 
-@pytest.mark.parametrize("solver", sorted(set(SOLVERS) - set(["liblinear"])))
+# TODO(newton-cd): remove newton-cd when it supports multiclass
+@pytest.mark.parametrize(
+    "solver", sorted(set(SOLVERS) - set(["liblinear", "newton-cd"]))
+)
 @pytest.mark.parametrize("warm_start", (True, False))
 @pytest.mark.parametrize("fit_intercept", (True, False))
 def test_warm_start(global_random_seed, solver, warm_start, fit_intercept):
@@ -1668,6 +1680,7 @@ def test_warm_start(global_random_seed, solver, warm_start, fit_intercept):
         assert cum_diff > 2.0, msg
 
 
+# TODO(newton-cd): Think about adding newton-cd solvers.
 @pytest.mark.parametrize("solver", ["newton-cholesky", "newton-cg"])
 @pytest.mark.parametrize("fit_intercept", (True, False))
 @pytest.mark.parametrize("C", (1, np.inf))
@@ -2344,6 +2357,7 @@ def test_c_inf_no_warning(solver):
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         warnings.filterwarnings("ignore", category=ConvergenceWarning)
+        warnings.filterwarnings("ignore", category=UserWarning)
         lr.fit(X, y)
 
 
@@ -2516,13 +2530,13 @@ def test_large_sparse_matrix(solver, csr_container):
     # Non-regression test for pull-request #21093.
 
     # generate sparse matrix with int64 indices
-    X = csr_container(sparse.rand(20, 10, random_state=42))
+    X = csr_container(_sparse_random_array((20, 10), random_state=42))
     for attr in ["indices", "indptr"]:
         setattr(X, attr, getattr(X, attr).astype("int64"))
     rng = np.random.RandomState(42)
     y = rng.randint(2, size=X.shape[0])
 
-    if solver in ["liblinear", "newton-cd-gram", "sag", "saga"]:
+    if solver in ["liblinear", "newton-cd", "sag", "saga"]:
         msg = "Only sparse matrices with 32-bit integer indices"
         with pytest.raises(ValueError, match=msg):
             LogisticRegression(solver=solver).fit(X, y)
@@ -2882,19 +2896,24 @@ def test_logistic_regression_array_api_compliance(
     # the intercept would be non-zero.
     lr_params = dict(C=1e-2, solver=solver, max_iter=500, class_weight=class_weight)
     lr_params["tol"] = 1e-6 if dtype_name == "float32" else 1e-12
-    with warnings.catch_warnings():
-        # Make sure that we converge in the reference fit.
+
+    # Compute the reference fit and predictions with array API dispatch explicitly
+    # disabled so that they always follow the NumPy code path, independently of
+    # the default value of the `array_api_dispatch` config flag.
+    with config_context(array_api_dispatch=False):
         lr_np = LogisticRegression(**lr_params).fit(
             X_np, y_np, sample_weight=sample_weight
         )
+        # Make sure that the reference fit converged.
         assert lr_np.n_iter_ < lr_np.max_iter
 
-    # Test that C was not too large for meaningful testing.
-    assert np.abs(lr_np.coef_).max() > 0.1
+        # Test that C was not too large for meaningful testing.
+        assert np.abs(lr_np.coef_).max() > 0.1
 
-    predict_proba_np = lr_np.predict_proba(X_np)
-    preditct_log_proba_np = lr_np.predict_log_proba(X_np)
-    prediction_np = lr_np.predict(X_np)
+        predict_proba_np = lr_np.predict_proba(X_np)
+        preditct_log_proba_np = lr_np.predict_log_proba(X_np)
+        prediction_np = lr_np.predict(X_np)
+
     if solver == "lbfgs":
         atol = _atol_for_type(dtype_name) * 10
         rtol = 1e-3 if dtype_name == "float32" else 1e-7
@@ -2903,14 +2922,11 @@ def test_logistic_regression_array_api_compliance(
         rtol = 1e-4 if dtype_name == "float32" else 1e-8
 
     with config_context(array_api_dispatch=True):
-        with warnings.catch_warnings():
-            # Make sure that we converge when using the namespace/device
-            # specific fit.
-            warnings.simplefilter("error", ConvergenceWarning)
-            lr_xp = LogisticRegression(**lr_params).fit(
-                X_xp, y_xp_or_np, sample_weight=sample_weight
-            )
-
+        lr_xp = LogisticRegression(**lr_params).fit(
+            X_xp, y_xp_or_np, sample_weight=sample_weight
+        )
+        # Make sure that we converge when using the namespace/device
+        # specific fit.
         assert lr_xp.n_iter_.shape == lr_np.n_iter_.shape
         assert int(lr_xp.n_iter_[0]) < lr_xp.max_iter
 
@@ -2921,7 +2937,7 @@ def test_logistic_regression_array_api_compliance(
                 move_to(attr_xp, xp=np, device="cpu"), attr_np, rtol=rtol, atol=atol
             )
             assert attr_xp.dtype == X_xp.dtype
-            assert array_api_device(attr_xp) == array_api_device(X_xp)
+            assert array_device(attr_xp) == array_device(X_xp)
 
         predict_proba_xp = lr_xp.predict_proba(X_xp)
         assert_allclose(
@@ -2931,7 +2947,7 @@ def test_logistic_regression_array_api_compliance(
             atol=atol,
         )
         assert predict_proba_xp.dtype == X_xp.dtype
-        assert array_api_device(predict_proba_xp) == array_api_device(X_xp)
+        assert array_device(predict_proba_xp) == array_device(X_xp)
 
         predict_log_proba_xp = lr_xp.predict_log_proba(X_xp)
         assert_allclose(
@@ -2941,12 +2957,134 @@ def test_logistic_regression_array_api_compliance(
             atol=atol,
         )
         assert predict_log_proba_xp.dtype == X_xp.dtype
-        assert array_api_device(predict_log_proba_xp) == array_api_device(X_xp)
+        assert array_device(predict_log_proba_xp) == array_device(X_xp)
 
         prediction_xp = lr_xp.predict(X_xp)
         if not use_str_y:
             prediction_xp = move_to(prediction_xp, xp=np, device="cpu")
         assert_array_equal(prediction_xp, prediction_np)
+
+
+@pytest.mark.parametrize("solver", ["lbfgs", "newton-cg"])
+@pytest.mark.parametrize("refit", [True, False])
+@pytest.mark.parametrize("binary", [False, True])
+@pytest.mark.parametrize("use_str_y", [False, True])
+@pytest.mark.parametrize("use_sample_weight", [False, True])
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+@pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
+def test_logistic_regression_cv_array_api_compliance(
+    solver,
+    refit,
+    binary,
+    use_str_y,
+    use_sample_weight,
+    array_namespace,
+    device_name,
+    dtype_name,
+):
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
+    X_np = iris.data.astype(dtype_name, copy=True)
+    n_samples, _ = X_np.shape
+    X_xp = xp.asarray(X_np, device=device)
+    if use_str_y:
+        if binary:
+            target = (iris.target > 0).astype(np.int64)
+            target = np.array(["setosa", "not-setosa"])[target]
+            class_weight = {"setosa": 1.0, "not-setosa": 3.0}
+        else:
+            target = iris.target_names[iris.target]
+            class_weight = {"virginica": 1.0, "setosa": 2.0, "versicolor": 3.0}
+        y_np = target.copy()
+        y_xp_or_np = np.asarray(y_np, copy=True)
+    else:
+        if binary:
+            target = (iris.target > 0).astype(np.int64)
+            class_weight = {0: 1.0, 1: 3.0}
+        else:
+            target = iris.target
+            class_weight = {0: 1.0, 1: 2.0, 2: 3.0}
+        y_np = target.astype(dtype_name)
+        y_xp_or_np = xp.asarray(y_np, device=device)
+
+    if use_sample_weight:
+        sample_weight = (
+            np.random.default_rng(0)
+            .uniform(-1, 5, size=n_samples)
+            .clip(0, None)
+            .astype(dtype_name)
+        )
+    else:
+        sample_weight = None
+
+    cv = StratifiedKFold(2, shuffle=False)
+    precomputed_folds = list(cv.split(X_np, y_np))
+    atol = _atol_for_type(dtype_name) * 10
+    if dtype_name == "float32":
+        # TODO: this test is currently very sensitive to the value
+        # of the solver tol, particularly for "lbgfs". The rtol value
+        # is also quite high. Therefore try to investigate the numerical
+        # stability of the convergence with "lbgfs" in a dedicated
+        # follow up issue and PR.
+        if solver == "lbfgs":
+            solver_tol = 5e-3
+            rtol = 6e-2
+        else:
+            solver_tol = 1e-5
+            rtol = 5e-3
+    else:
+        solver_tol = 1e-10
+        rtol = 5e-5
+
+    lr_cv_params = dict(
+        Cs=[0.01, 0.001],
+        cv=precomputed_folds,
+        solver=solver,
+        tol=solver_tol,
+        max_iter=200,
+        class_weight=class_weight,
+        scoring="neg_log_loss",
+        use_legacy_attributes=False,
+        refit=refit,
+    )
+
+    lr_cv_np = LogisticRegressionCV(**lr_cv_params).fit(
+        X_np, y_np, sample_weight=sample_weight
+    )
+    # Make sure that the reference fit converged.
+    assert np.max(lr_cv_np.n_iter_) < lr_cv_np.max_iter
+
+    # Test that C was not too large for meaningful testing.
+    assert np.abs(lr_cv_np.coef_).max() > 0.1
+
+    prediction_np = lr_cv_np.predict(X_np)
+    score_np = lr_cv_np.score(X_np, y_np)
+    xp, _ = _array_api_for_tests(array_namespace, device_name)
+    with config_context(array_api_dispatch=True):
+        lr_cv_xp = LogisticRegressionCV(**lr_cv_params).fit(
+            X_xp, y_xp_or_np, sample_weight=sample_weight
+        )
+        assert lr_cv_xp.n_iter_.shape == lr_cv_np.n_iter_.shape
+        assert xp.max(lr_cv_xp.n_iter_) < lr_cv_xp.max_iter
+
+        for attr_name in ("scores_", "coefs_paths_", "coef_", "intercept_"):
+            attr_xp = getattr(lr_cv_xp, attr_name)
+            attr_np = getattr(lr_cv_np, attr_name)
+            assert_allclose(
+                move_to(attr_xp, xp=np, device="cpu"), attr_np, rtol=rtol, atol=atol
+            )
+            assert attr_xp.dtype == X_xp.dtype
+            assert array_device(attr_xp) == array_device(X_xp)
+
+        prediction_xp = lr_cv_xp.predict(X_xp)
+        if not use_str_y:
+            prediction_xp = move_to(prediction_xp, xp=np, device="cpu")
+        assert_array_equal(prediction_xp, prediction_np)
+
+        score_xp = lr_cv_xp.score(X_xp, y_xp_or_np)
+        assert_allclose(score_xp, score_np, rtol=rtol, atol=atol)
 
 
 # TODO(1.10): remove when penalty is removed
@@ -2994,15 +3132,15 @@ def test_logistic_regression_array_api_warm_start(
 ):
     """Test that warm_start=True works with array API inputs across
     multiple fit calls for both binary and multiclass classification."""
-    xp, device_ = _array_api_for_tests(array_namespace, device_name, dtype_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     X_np = iris.data.astype(dtype_name, copy=True)
     if binary:
         y_np = (iris.target > 0).astype(dtype_name)
     else:
         y_np = iris.target.astype(dtype_name)
 
-    X_xp = xp.asarray(X_np, device=device_)
-    y_xp = xp.asarray(y_np, device=device_)
+    X_xp = xp.asarray(X_np, device=device)
+    y_xp = xp.asarray(y_np, device=device)
 
     with config_context(array_api_dispatch=True):
         lr = LogisticRegression(C=1e-2, solver="lbfgs", max_iter=300, warm_start=True)
