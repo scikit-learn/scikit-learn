@@ -26,9 +26,10 @@ is merged. See https://github.com/blog/1506-closing-issues-via-pull-requests
 
 
 #### Introduce yourself
-<!-- Especially if you are new to the scikit-learn community, please introduce yourself. How do you
- use scikit-learn, what prompted you to make this contribution? Getting to know you
- helps us build trust in your judgement and welcome you into the community.
+<!-- Especially if you are new to the scikit-learn community, please introduce yourself.
+How do you use scikit-learn, what prompted you to make this contribution?
+Getting to know you helps us build trust in your judgement and welcome you into the
+community.
 -->
 
 
