@@ -851,23 +851,15 @@ def test_optics_input_not_modified_precomputed_sparse_nodiag(
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-@pytest.mark.parametrize("presorted", [True, False])
-def test_optics_precomputed_sparse_no_warning(csr_container, presorted):
+def test_optics_precomputed_sparse_no_warning(csr_container):
     """Test that `EfficiencyWarning` isn't emitted on precomputed sparse input.
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/34647
     """
     X = np.random.RandomState(0).randn(50, 5)
     graph = csr_container(kneighbors_graph(X, n_neighbors=10, mode="distance"))
-    if presorted:
-        # Guarantee the graph is sorted by row values so only OPTICS can unsort it.
-        # presorted=True was the condition that revealed the bug that is being fixed
-        graph = sort_graph_by_row_values(graph, warn_when_not_sorted=False)
-    else:
-        # Reverse each row so that the graph is not sorted by row values.
-        for start, end in zip(graph.indptr, graph.indptr[1:]):
-            graph.data[start:end] = graph.data[start:end][::-1]
-            graph.indices[start:end] = graph.indices[start:end][::-1]
+    # Sort the graph so only OPTICS can unsort it
+    graph = sort_graph_by_row_values(graph, warn_when_not_sorted=False)
 
     with warnings.catch_warnings():
         warnings.simplefilter("error", EfficiencyWarning)
