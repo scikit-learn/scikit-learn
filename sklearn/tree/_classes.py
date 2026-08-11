@@ -26,7 +26,7 @@ from sklearn.base import (
     is_classifier,
 )
 from sklearn.preprocessing import OrdinalEncoder
-from sklearn.tree import _criterion, _splitter  # type: ignore[attr-defined]
+from sklearn.tree import _criterion, _splitter
 from sklearn.tree._criterion import Criterion
 from sklearn.tree._tree import MAX_NUM_CATEGORIES_PY as MAX_NUM_CATEGORIES
 from sklearn.tree._tree import (
@@ -509,6 +509,11 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             raise ValueError(
                 "Categorical features are only supported for binary classification. "
                 f"Found {self.n_classes_.max()} classes."
+            )
+        if has_categorical and self.criterion == "absolute_error":
+            raise ValueError(
+                "Categorical features are not supported with "
+                "criterion='absolute_error'."
             )
 
         SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
@@ -1034,10 +1039,9 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
           work. This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, there must be at most 255 unique
-        categories. Negative values for categorical features encoded as numeric
-        dtypes are treated as missing values. All categorical values are
-        converted to floating point numbers. This means that categorical values
-        of 1.0 and 1 are treated as the same category.
+        categories. Missing values for categorical features should be
+        represented by ``np.nan``; unknown categories at prediction time are
+        also treated as missing values.
 
         .. versionadded:: 1.10
 
@@ -1453,10 +1457,11 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
           work. This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, there must be at most 255 unique
-        categories. Negative values for categorical features encoded as numeric
-        dtypes are treated as missing values. All categorical values are
-        converted to floating point numbers. This means that categorical values
-        of 1.0 and 1 are treated as the same category.
+        categories. Missing values for categorical features should be
+        represented by ``np.nan``; unknown categories at prediction time are
+        also treated as missing values.
+
+        Categorical features are not supported with `criterion="absolute_error"`.
 
         .. versionadded:: 1.10
 
@@ -1844,10 +1849,9 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
           work. This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, there must be at most 255 unique
-        categories. Negative values for categorical features encoded as numeric
-        dtypes are treated as missing values. All categorical values are
-        converted to floating point numbers. This means that categorical values
-        of 1.0 and 1 are treated as the same category.
+        categories. Missing values for categorical features should be
+        represented by ``np.nan``; unknown categories at prediction time are
+        also treated as missing values.
 
         .. versionadded:: 1.10
 
@@ -2139,10 +2143,9 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
           work. This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, there must be at most 255 unique
-        categories. Negative values for categorical features encoded as numeric
-        dtypes are treated as missing values. All categorical values are
-        converted to floating point numbers. This means that categorical values
-        of 1.0 and 1 are treated as the same category.
+        categories. Missing values for categorical features should be
+        represented by ``np.nan``; unknown categories at prediction time are
+        also treated as missing values.
 
         .. versionadded:: 1.10
 

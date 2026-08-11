@@ -53,7 +53,7 @@ class _BasePCA(
         exp_var_diff = xp.where(
             exp_var > self.noise_variance_,
             exp_var_diff,
-            xp.asarray(0.0, device=device(exp_var), dtype=exp_var.dtype),
+            xp.asarray(0.0, device=array_device(exp_var), dtype=exp_var.dtype),
         )
         cov = (components_.T * exp_var_diff) @ components_
         _add_to_diagonal(cov, self.noise_variance_, xp)
@@ -95,7 +95,7 @@ class _BasePCA(
         exp_var_diff = xp.where(
             exp_var > self.noise_variance_,
             exp_var_diff,
-            xp.asarray(0.0, device=device(exp_var)),
+            xp.asarray(0.0, device=array_device(exp_var)),
         )
         precision = components_ @ components_.T / self.noise_variance_
         _add_to_diagonal(precision, 1.0 / exp_var_diff, xp)

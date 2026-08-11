@@ -310,10 +310,10 @@ def mean_absolute_error(
     >>> mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.85...
     """
-    xp, _, device_ = get_namespace_and_device(y_pred)
+    xp, _, device = get_namespace_and_device(y_pred)
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
-            y_true, y_pred, sample_weight, multioutput, xp=xp, device=device_
+            y_true, y_pred, sample_weight, multioutput, xp=xp, device=device
         )
     )
 
@@ -408,10 +408,10 @@ def mean_pinball_loss(
     >>> mean_pinball_loss(y_true, y_true, alpha=0.9)
     0.0
     """
-    xp, _, device_ = get_namespace_and_device(y_pred)
+    xp, _, device = get_namespace_and_device(y_pred)
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
-            y_true, y_pred, sample_weight, multioutput, xp=xp, device=device_
+            y_true, y_pred, sample_weight, multioutput, xp=xp, device=device
         )
     )
 
@@ -512,13 +512,13 @@ def mean_absolute_percentage_error(
     >>> mean_absolute_percentage_error(y_true, y_pred)
     112589990684262.48
     """
-    xp, _, device_ = get_namespace_and_device(y_pred)
+    xp, _, device = get_namespace_and_device(y_pred)
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
-            y_true, y_pred, sample_weight, multioutput, xp=xp, device=device_
+            y_true, y_pred, sample_weight, multioutput, xp=xp, device=device
         )
     )
-    epsilon = xp.asarray(xp.finfo(xp.float64).eps, dtype=y_true.dtype, device=device_)
+    epsilon = xp.asarray(xp.finfo(xp.float64).eps, dtype=y_true.dtype, device=device)
     y_true_abs = xp.abs(y_true)
     mape = xp.abs(y_pred - y_true) / xp.maximum(y_true_abs, epsilon)
     output_errors = _average(mape, weights=sample_weight, axis=0, xp=xp)
@@ -603,10 +603,10 @@ def mean_squared_error(
     >>> mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.825...
     """
-    xp, _, device_ = get_namespace_and_device(y_pred)
+    xp, _, device = get_namespace_and_device(y_pred)
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
-            y_true, y_pred, sample_weight, multioutput, xp=xp, device=device_
+            y_true, y_pred, sample_weight, multioutput, xp=xp, device=device
         )
     )
     output_errors = _average(
@@ -688,10 +688,10 @@ def root_mean_squared_error(
     >>> root_mean_squared_error(y_true, y_pred)
     0.822...
     """
-    xp, _, device_ = get_namespace_and_device(y_pred)
+    xp, _, device = get_namespace_and_device(y_pred)
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
-            y_true, y_pred, sample_weight, multioutput, xp=xp, device=device_
+            y_true, y_pred, sample_weight, multioutput, xp=xp, device=device
         )
     )
 
@@ -784,10 +784,10 @@ def mean_squared_log_error(
     >>> mean_squared_log_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.060...
     """
-    xp, _, device_ = get_namespace_and_device(y_pred)
+    xp, _, device = get_namespace_and_device(y_pred)
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
-            y_true, y_pred, sample_weight, multioutput, xp=xp, device=device_
+            y_true, y_pred, sample_weight, multioutput, xp=xp, device=device
         )
     )
 
@@ -861,10 +861,10 @@ def root_mean_squared_log_error(
     >>> root_mean_squared_log_error(y_true, y_pred)
     0.199...
     """
-    xp, _, device_ = get_namespace_and_device(y_pred)
+    xp, _, device = get_namespace_and_device(y_pred)
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
-            y_true, y_pred, sample_weight, multioutput, xp=xp, device=device_
+            y_true, y_pred, sample_weight, multioutput, xp=xp, device=device
         )
     )
 
@@ -947,9 +947,9 @@ def median_absolute_error(
     >>> median_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.85
     """
-    xp, _, device_ = get_namespace_and_device(y_pred)
+    xp, _, device = get_namespace_and_device(y_pred)
     _, y_true, y_pred, sample_weight, multioutput = _check_reg_targets(
-        y_true, y_pred, sample_weight, multioutput, xp=xp, device=device_
+        y_true, y_pred, sample_weight, multioutput, xp=xp, device=device
     )
     if sample_weight is None:
         output_errors = _median(xp.abs(y_pred - y_true), axis=0)
@@ -1134,10 +1134,10 @@ def explained_variance_score(
     >>> explained_variance_score(y_true, y_pred, force_finite=False)
     -inf
     """
-    xp, _, device_ = get_namespace_and_device(y_pred)
+    xp, _, device = get_namespace_and_device(y_pred)
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
-            y_true, y_pred, sample_weight, multioutput, xp=xp, device=device_
+            y_true, y_pred, sample_weight, multioutput, xp=xp, device=device
         )
     )
 
@@ -1158,7 +1158,7 @@ def explained_variance_score(
         multioutput=multioutput,
         force_finite=force_finite,
         xp=xp,
-        device=device_,
+        device=device,
     )
 
 
@@ -1303,10 +1303,10 @@ def r2_score(
     >>> r2_score(y_true, y_pred, force_finite=False)
     -inf
     """
-    xp, _, device_ = get_namespace_and_device(y_pred)
+    xp, _, device = get_namespace_and_device(y_pred)
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
-            y_true, y_pred, sample_weight, multioutput, xp=xp, device=device_
+            y_true, y_pred, sample_weight, multioutput, xp=xp, device=device
         )
     )
 
@@ -1334,7 +1334,7 @@ def r2_score(
         multioutput=multioutput,
         force_finite=force_finite,
         xp=xp,
-        device=device_,
+        device=device,
     )
 
 
@@ -1475,9 +1475,9 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     >>> mean_tweedie_deviance(y_true, y_pred, power=1)
     1.4260...
     """
-    xp, _, device_ = get_namespace_and_device(y_pred)
+    xp, _, device = get_namespace_and_device(y_pred)
     y_type, y_true, y_pred, sample_weight, _ = _check_reg_targets_with_floating_dtype(
-        y_true, y_pred, sample_weight, multioutput=None, xp=xp, device=device_
+        y_true, y_pred, sample_weight, multioutput=None, xp=xp, device=device
     )
     if y_type == "continuous-multioutput":
         raise ValueError("Multioutput not supported in mean_tweedie_deviance")
@@ -1687,9 +1687,9 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     >>> d2_tweedie_score(y_true, y_true, power=2)
     1.0
     """
-    xp, _, device_ = get_namespace_and_device(y_pred)
+    xp, _, device = get_namespace_and_device(y_pred)
     y_type, y_true, y_pred, sample_weight, _ = _check_reg_targets_with_floating_dtype(
-        y_true, y_pred, sample_weight, multioutput=None, xp=xp, device=device_
+        y_true, y_pred, sample_weight, multioutput=None, xp=xp, device=device
     )
     if y_type == "continuous-multioutput":
         raise ValueError("Multioutput not supported in d2_tweedie_score")
@@ -1830,10 +1830,10 @@ def d2_pinball_score(
     >>> grid.best_params_
     {'fit_intercept': True}
     """
-    xp, _, device_ = get_namespace_and_device(y_pred)
+    xp, _, device = get_namespace_and_device(y_pred)
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
-            y_true, y_pred, sample_weight, multioutput, xp=xp, device=device_
+            y_true, y_pred, sample_weight, multioutput, xp=xp, device=device
         )
     )
 
@@ -1851,7 +1851,7 @@ def d2_pinball_score(
     )
 
     if sample_weight is None:
-        sample_weight = xp.ones([y_true.shape[0]], dtype=y_true.dtype, device=device_)
+        sample_weight = xp.ones([y_true.shape[0]], dtype=y_true.dtype, device=device)
 
     y_quantile = xp.tile(
         _weighted_percentile(
@@ -1879,7 +1879,7 @@ def d2_pinball_score(
         multioutput=multioutput,
         force_finite=True,
         xp=xp,
-        device=device_,
+        device=device,
     )
 
 
