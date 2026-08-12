@@ -23,7 +23,6 @@ jobs:
         run: mkdir -p "$ARTIFACTS_DIR"
 
       - name: Download artifact
-        continue-on-error: true
         uses: actions/download-artifact@v8
         with:
           name: lint-log
