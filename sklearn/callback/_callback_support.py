@@ -26,9 +26,7 @@ def _callbacks_by_default():
     for cb in get_config().get("default_callbacks", []):
         if cb == "progressbar":
             callbacks.append(
-                ProgressBar(
-                    max_propagation_depth=0, min_duration=2, show="interactive_only"
-                )
+                ProgressBar(show="interactive_only", min_duration=1),
             )
         else:
             # If default callbacks are callback instances, these will be shared by all
@@ -169,25 +167,22 @@ class CallbackSupportMixin:
         # only tear those down after fit.
         self._skl_callbacks_to_teardown = []
 
-        if hasattr(self, "_skl_callbacks"):
-            callbacks = self._skl_callbacks
-        else:
-            callbacks = getattr(self, "_skl_default_callbacks", [])
-            if hasattr(self, "_parent_callback_ctx"):
-                callbacks = [
-                    cb for cb in callbacks if not isinstance(cb, AutoPropagatedCallback)
-                ]
-
-        callbacks = getattr(self, "_skl_callbacks", False) or getattr(
-            self, "_skl_default_callbacks", []
-        )
+        callbacks = getattr(self, "_skl_callbacks", [])
+        default_callbacks = getattr(self, "_skl_default_callbacks", [])
+        if hasattr(self, "_parent_callback_ctx"):
+            default_callbacks = [
+                cb
+                for cb in default_callbacks
+                if not isinstance(cb, AutoPropagatedCallback)
+            ]
+        callbacks += default_callbacks
         for callback in callbacks:
             # Only call the setup hook of callbacks that are not propagated from a
-            # meta-estimator.
+            # meta-estimator and are not deactivated.
             if not (
                 isinstance(callback, AutoPropagatedCallback)
                 and hasattr(self, "_parent_callback_ctx")
-            ) and not (hasattr(callback, "_deactivated") and callback._deactivated):
+            ) and not getattr(callback, "_deactivated", False):
                 self._skl_callbacks_to_teardown.append(callback)
                 callback.setup(estimator=self, context=self._callback_fit_ctx)
 

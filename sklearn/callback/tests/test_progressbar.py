@@ -224,7 +224,7 @@ def test_progressbar_by_default(monkeypatch, capsys):
 
     monkeypatch.setattr("sys.ps1", ">>> ", raising=False)
 
-    MaxIterEstimator(computation_intensity=0.15).fit()
+    MaxIterEstimator(computation_intensity=0.06).fit()
 
     captured = capsys.readouterr()
     assert re.search(r"MaxIterEstimator - fit ━+ 100%", captured.out)
@@ -239,6 +239,6 @@ def test_progressbar_min_duration(capsys):
     captured = capsys.readouterr()
     assert captured.out == "\n"
     # Slow estimator
-    MaxIterEstimator(computation_intensity=0.3).set_callbacks(cb).fit()
+    MaxIterEstimator(computation_intensity=0.06).set_callbacks(cb).fit()
     captured = capsys.readouterr()
     assert re.search(r"MaxIterEstimator - fit ━+ 100%", captured.out)

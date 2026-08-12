@@ -3,7 +3,7 @@
 
 import pytest
 
-from sklearn import set_config
+from sklearn import config_context
 from sklearn.base import clone
 from sklearn.callback.tests._utils import (
     FailingCallback,
@@ -176,8 +176,7 @@ def test_defaut_callbacks():
     """Test that default callbacks get attached to compatible estimators."""
 
     default_callback = RecordingCallback()
-    set_config(default_callbacks=(default_callback,))
-
-    estimator = MaxIterEstimator().fit()
+    with config_context(default_callbacks=(default_callback,)):
+        estimator = MaxIterEstimator().fit()
 
     assert estimator._skl_default_callbacks == [default_callback]
