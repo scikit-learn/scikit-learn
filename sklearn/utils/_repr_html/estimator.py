@@ -181,14 +181,17 @@ def _write_label_html(
             )
         if hide_marker:
             name_caption = ""
-        name_caption_div = (
+        name_caption_span = (
             ""
             if name_caption is None or name_caption == ""
-            else f'<div class="caption">{html.escape(name_caption)}</div>'
+            else f'<span class="caption">{html.escape(name_caption)}</span>'
         )
-        name_caption_div = f"<div><div>{name}</div>{name_caption_div}</div>"
-        links_div = (
-            f"<div>{doc_link}{is_fitted_icon}</div>"
+        name_caption_span = (
+            f'<span class="sk-toggleable__label-name"><span>{name}</span>'
+            f"{name_caption_span}</span>"
+        )
+        links_span = (
+            f"<span>{doc_link}{is_fitted_icon}</span>"
             if doc_link or is_fitted_icon
             else ""
         )
@@ -197,7 +200,7 @@ def _write_label_html(
             f'<summary class="sk-toggleable__label'
             f' {is_fitted_css_class}{no_marker_class}">'
             f'<span class="sk-toggleable__label-content">'
-            f"{name_caption_div}{links_div}</span></summary>"
+            f"{name_caption_span}{links_span}</span></summary>"
         )
 
         out.write(

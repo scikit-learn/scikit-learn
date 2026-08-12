@@ -166,6 +166,13 @@ clickable and can be expanded/collapsed.
   margin-left: 0.5em;
 }
 
+/* Stack the estimator name/caption with flex, since they are spans.
+  <summary> only accepts phrasing content */
+.sk-global summary.sk-toggleable__label .sk-toggleable__label-name {
+  display: flex;
+  flex-direction: column;
+}
+
 .sk-global summary.sk-toggleable__label .caption {
   font-size: 0.6rem;
   font-weight: lighter;

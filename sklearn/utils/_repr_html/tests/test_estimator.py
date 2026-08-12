@@ -62,7 +62,8 @@ def test_write_label_html(open):
         p = (
             r'<summary class="sk-toggleable__label\s*(fitted)?\s*">'
             r'<span class="sk-toggleable__label-content">'
-            r"<div><div>LogisticRegression</div></div>"
+            r'<span class="sk-toggleable__label-name">'
+            r"<span>LogisticRegression</span></span>"
         )
         re_compiled = re.compile(p)
         assert re_compiled.search(html_label)
@@ -277,7 +278,7 @@ def test_stacking_regressor(final_estimator):
     p = (
         r'<summary class="sk-toggleable__label\s*(fitted)?\s*">'
         r'<span class="sk-toggleable__label-content">'
-        r"<div><div>LinearSVR</div></div>"
+        r'<span class="sk-toggleable__label-name"><span>LinearSVR</span></span>'
     )
     re_compiled = re.compile(p)
     assert re_compiled.search(html_output)
@@ -286,7 +287,7 @@ def test_stacking_regressor(final_estimator):
         p = (
             r'<summary class="sk-toggleable__label\s*(fitted)?\s*">'
             r'<span class="sk-toggleable__label-content">'
-            r"<div><div>RidgeCV</div></div>"
+            r'<span class="sk-toggleable__label-name"><span>RidgeCV</span></span>'
         )
         re_compiled = re.compile(p)
         assert re_compiled.search(html_output)
@@ -326,7 +327,7 @@ def test_ovo_classifier_duck_typing_meta():
         p = (
             r'<summary class="sk-toggleable__label\s*(fitted)?\s*">'
             r'<span class="sk-toggleable__label-content">'
-            r"<div><div>LinearSVC</div></div>"
+            r'<span class="sk-toggleable__label-name"><span>LinearSVC</span></span>'
         )
         re_compiled = re.compile(p)
         assert re_compiled.search(html_output)
@@ -381,7 +382,8 @@ def test_show_arrow_pipeline():
     assert (
         'class="sk-toggleable__label ">'
         '<span class="sk-toggleable__label-content">'
-        "<div><div>Pipeline</div></div>" in html_output
+        '<span class="sk-toggleable__label-name"><span>Pipeline</span></span>'
+        in html_output
     )
 
 
@@ -632,8 +634,8 @@ def test_function_transformer_show_caption(func, expected_name):
     p = (
         r'<summary class="sk-toggleable__label fitted\s*">'
         r'<span class="sk-toggleable__label-content">'
-        rf"<div><div>{expected_name}</div>"
-        r'<div class="caption">FunctionTransformer</div></div>'
+        rf'<span class="sk-toggleable__label-name"><span>{expected_name}</span>'
+        r'<span class="caption">FunctionTransformer</span></span>'
     )
     re_compiled = re.compile(p)
     assert re_compiled.search(html_output)
