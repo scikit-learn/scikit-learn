@@ -428,11 +428,9 @@ def test_estimator_html_repr_unfitted_vs_fitted():
 
     X, y = load_iris(return_X_y=True)
     estimator = MyEstimator()
-    # The status is checked through `aria-label`: the visible label is hidden by
-    # CSS, so `aria-label` is what carries the information to assistive technology.
-    assert 'aria-label="Not fitted estimator"' in estimator_html_repr(estimator)
+    assert "<span>Not fitted</span>" in estimator_html_repr(estimator)
     estimator.fit(X, y)
-    assert 'aria-label="Fitted estimator"' in estimator_html_repr(estimator)
+    assert "<span>Fitted</span>" in estimator_html_repr(estimator)
 
 
 @pytest.mark.parametrize(
@@ -449,40 +447,12 @@ def test_estimator_html_repr_unfitted_vs_fitted():
 def test_estimator_html_repr_fitted_icon(estimator):
     estimator = clone(estimator)  # Avoid side effects from previous tests.
     """Check that we are showing the fitted status icon only once."""
-    pattern = (
-        '<span class="sk-estimator-doc-link " tabindex="0" role="img"'
-        ' aria-label="Not fitted estimator">i'
-        '<span aria-hidden="true">Not fitted</span></span>'
-    )
+    pattern = '<span class="sk-estimator-doc-link ">i<span>Not fitted</span></span>'
     assert estimator_html_repr(estimator).count(pattern) == 1
     X, y = load_iris(return_X_y=True)
     estimator.fit(X, y)
-    pattern = (
-        '<span class="sk-estimator-doc-link fitted" tabindex="0" role="img"'
-        ' aria-label="Fitted estimator">i'
-        '<span aria-hidden="true">Fitted</span></span>'
-    )
+    pattern = '<span class="sk-estimator-doc-link fitted">i<span>Fitted</span></span>'
     assert estimator_html_repr(estimator).count(pattern) == 1
-
-
-def test_estimator_html_repr_doc_link_icon():
-    """Check the "?" documentation link and its accessible markup.
-
-    The link label is hidden by CSS until the link is hovered or focused, and
-    hidden content is excluded from the accessible name computation. Without
-    `aria-label` the link would be announced as just "?".
-    """
-    html_output = estimator_html_repr(LogisticRegression())
-
-    opening_tags = re.findall(r'<a class="sk-estimator-doc-link[^>]*>', html_output)
-    assert len(opening_tags) == 1
-    doc_link = opening_tags[0]
-
-    expected_label = "Documentation for LogisticRegression"
-    assert f'aria-label="{expected_label} (opens in a new tab)"' in doc_link
-    assert 'href="' in doc_link
-    # The visible label repeats the accessible name, so it must not be announced.
-    assert f'>?<span aria-hidden="true">{expected_label}</span></a>' in html_output
 
 
 @pytest.mark.parametrize("mock_version", ["1.3.0.dev0", "1.3.0"])

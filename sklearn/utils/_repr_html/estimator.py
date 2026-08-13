@@ -170,18 +170,14 @@ def _write_label_html(
         hide_marker = name == "passthrough" or name_details == "[]"
 
         if doc_link:
-            doc_label = "Online documentation"
+            doc_label = "<span>Online documentation</span>"
             if doc_link_label is not None:
-                doc_label = f"Documentation for {html.escape(str(doc_link_label))}"
+                doc_label = f"<span>Documentation for {doc_link_label}</span>"
             elif name is not None:
-                doc_label = f"Documentation for {name}"
-            # Without `aria-label`, the link would be announced as just "?".
-            # The label is shown in the visible span, hence `aria-hidden`
+                doc_label = f"<span>Documentation for {name}</span>"
             doc_link = (
                 f'<a class="sk-estimator-doc-link {is_fitted_css_class}"'
-                f' rel="noreferrer" target="_blank" href="{doc_link}"'
-                f' aria-label="{doc_label} (opens in a new tab)">'
-                f'?<span aria-hidden="true">{doc_label}</span></a>'
+                f' rel="noreferrer" target="_blank" href="{doc_link}">?{doc_label}</a>'
             )
         if hide_marker:
             name_caption = ""
@@ -508,25 +504,20 @@ def estimator_html_repr(estimator):
     from sklearn.utils.validation import check_is_fitted
 
     if not hasattr(estimator, "fit"):
-        status_label = "Not fitted"
+        status_label = "<span>Not fitted</span>"
         is_fitted_css_class = ""
     else:
         try:
             check_is_fitted(estimator)
-            status_label = "Fitted"
+            status_label = "<span>Fitted</span>"
             is_fitted_css_class = "fitted"
         except NotFittedError:
-            status_label = "Not fitted"
+            status_label = "<span>Not fitted</span>"
             is_fitted_css_class = ""
 
-    # This icon is informative only: there is nothing to activate, so `role="img"`
-    # is the matching role. It is focusable so that keyboard users can reveal the
-    # label, which CSS hides until the icon is hovered or focused; `aria-label` is
-    # therefore needed to give the icon an accessible name.
     is_fitted_icon = (
-        f'<span class="sk-estimator-doc-link {is_fitted_css_class}" tabindex="0"'
-        f' role="img" aria-label="{status_label} estimator">'
-        f'i<span aria-hidden="true">{status_label}</span></span>'
+        f'<span class="sk-estimator-doc-link {is_fitted_css_class}">'
+        f"i{status_label}</span>"
     )
     with closing(StringIO()) as out:
         container_id = _CONTAINER_ID_COUNTER.get_id()
