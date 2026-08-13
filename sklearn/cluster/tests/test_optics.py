@@ -13,6 +13,7 @@ from sklearn.datasets import make_blobs
 from sklearn.exceptions import DataConversionWarning, EfficiencyWarning
 from sklearn.metrics.cluster import contingency_matrix
 from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.neighbors import kneighbors_graph, sort_graph_by_row_values
 from sklearn.utils import shuffle
 from sklearn.utils._testing import assert_allclose, assert_array_equal
 from sklearn.utils.fixes import CSR_CONTAINERS
@@ -872,3 +873,50 @@ def test_optics_predecessor_correction_ordering():
     optics_2 = OPTICS(min_samples=3, metric="euclidean").fit(X_2)
 
     assert_array_equal(optics_1.labels_[reorder], optics_2.labels_)
+
+
+def _reverse_row_order(graph):
+    # Make sure it's NOT sorted by ROW values
+    graph = graph.copy()
+    for i in range(graph.shape[0]):
+        start, end = graph.indptr[i], graph.indptr[i + 1]
+        graph.data[start:end] = graph.data[start:end][::-1]
+        graph.indices[start:end] = graph.indices[start:end][::-1]
+    return graph
+
+
+def test_optics_no_warning_unsorted_precomputed():
+    # gh-34647: OPTICS should not warn on unsorted precomputed input.
+    X = np.random.RandomState(0).randn(200, 10)
+    graph = _reverse_row_order(kneighbors_graph(X, n_neighbors=15, mode="distance"))
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", EfficiencyWarning)
+        OPTICS(metric="precomputed", min_samples=5).fit(graph)
+
+
+def test_optics_no_warning_presorted_precomputed():
+    # gh-34647: warning must not fire even when caller pre-sorts themselves.
+    # setdiag() can undo the sorting, so sorting before fit is not enough.
+    X = np.random.RandomState(0).randn(200, 10)
+    graph = _reverse_row_order(kneighbors_graph(X, n_neighbors=15, mode="distance"))
+    sorted_graph = sort_graph_by_row_values(graph.copy(), warn_when_not_sorted=False)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", EfficiencyWarning)
+        OPTICS(metric="precomputed", min_samples=5).fit(sorted_graph)
+
+
+def test_optics_precomputed_sorting_does_not_change_results():
+    # The re-sort must not alter the clustering: an unsorted graph, the same
+    # graph pre-sorted, and the dense equivalent must all agree.
+    X = np.random.RandomState(0).randn(200, 10)
+    graph = _reverse_row_order(kneighbors_graph(X, n_neighbors=15, mode="distance"))
+    sorted_graph = sort_graph_by_row_values(graph.copy(), warn_when_not_sorted=False)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", EfficiencyWarning)
+        from_unsorted = OPTICS(metric="precomputed", min_samples=5).fit(graph)
+        from_sorted = OPTICS(metric="precomputed", min_samples=5).fit(sorted_graph)
+
+    assert_array_equal(from_unsorted.labels_, from_sorted.labels_)
+    assert_array_equal(from_unsorted.ordering_, from_sorted.ordering_)
+    assert_allclose(from_unsorted.reachability_, from_sorted.reachability_)
