@@ -8,12 +8,13 @@ usage.
 import functools
 import sys
 import warnings
+from concurrent.futures import ThreadPoolExecutor
 from functools import update_wrapper
 
 import joblib
 from threadpoolctl import ThreadpoolController
 
-from sklearn._config import config_context, get_config
+from sklearn._config import config_context, get_config, set_config
 
 # Global threadpool controller instance that can be used to locally limit the number of
 # threads without looping through all shared libraries every time.
@@ -190,6 +191,8 @@ def parallel_thread_map(n_jobs, func, *iterables):
     Like ``map()``, but runs using a thread pool on free-threaded Python, and
     aims for minimal overhead.
 
+    .. versionadded:: 1.10
+
     Parameters
     ----------
     n_jobs : int or None
@@ -199,8 +202,6 @@ def parallel_thread_map(n_jobs, func, *iterables):
         Called with each value in the iterable.
     iterables : iterables of values
         Each value will be passed to func.
-
-    .. versionadded:: 1.10
 
     Returns
     -------
@@ -216,13 +217,17 @@ def parallel_thread_map(n_jobs, func, *iterables):
     if n_jobs == 1:
         # Run sequentially:
         return map(func, *iterables)
-    # Future implementations may switch to alternatives with less overhead,
-    # e.g. concurrent.futures.ThreadPoolExecutor. If that happens, add some
-    # tests to ensure warnings and sklearn config get propagated.
-    func = delayed(func)
-    return Parallel(n_jobs, require="sharedmem", return_as="generator")(
-        func(*values) for values in zip(*iterables)
-    )
+
+    # Create pool here, so it copies contextvars:
+    config = get_config()
+    pool = ThreadPoolExecutor(n_jobs, initializer=lambda: set_config(**config))
+
+    # Make sure pool doesn't get garbage collected prematurely:
+    def gen():
+        with pool:
+            yield from pool.map(func, *iterables)
+
+    return gen()
 
 
 def _get_threadpool_controller():

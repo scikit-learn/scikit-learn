@@ -236,3 +236,27 @@ def test_parallel_thread_map_parallelism() -> None:
     else:
         assert current_thread().ident not in idents
         assert len(idents) > 1
+
+
+def test_parallel_thread_map_preserves_config() -> None:
+    """
+    The scikit-learn config is passed on to threads by
+    ``parallel_thread_map()``.
+    """
+    with config_context(working_memory=123):
+        results = set(
+            parallel_thread_map(-1, lambda _: get_working_memory(), range(100))
+        )
+
+    assert_array_equal(results, {123})
+
+
+def test_parallel_thread_map_warnings_settings() -> None:
+    """
+    Warning settings are propagated on to threads by ``parallel_thread_map()``.
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", category=ConvergenceWarning)
+
+        with pytest.raises(ConvergenceWarning):
+            list(parallel_thread_map(-1, lambda _: raise_warning(), range(2)))
