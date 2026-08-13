@@ -431,18 +431,13 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
 
         norm_solution = np.linalg.norm(np.r_[intercept, coef])
         norm_model = np.linalg.norm(np.r_[model.intercept_, model.coef_])
-        if solver == "newton-cholesky":
-            # Here, we find the minimum norm solution.
-            assert norm_model <= (1 + 1e-12) * norm_solution
-            assert model.intercept_ == pytest.approx(intercept)
-            assert_allclose(model.coef_, coef, rtol=rtol)
-        elif solver in ("newton-cd", "newton-cd-gram"):
+        if solver in ("newton-cd", "newton-cd-gram"):
             # XXX: This solver shows random behaviour. Sometimes it finds solutions
             # with norm_model <= norm_solution! So we check conditionally.
             if norm_model < (1 + 1e-12) * norm_solution:
                 assert model.intercept_ == pytest.approx(intercept)
                 assert_allclose(model.coef_, coef, rtol=rtol)
-        elif solver in ["lbfgs", "newton-cg"] and fit_intercept:
+        elif solver in ("lbfgs", "newton-cg") and fit_intercept:
             # But it is not the minimum norm solution. Otherwise the norms would be
             # equal.
             pytest.xfail(
@@ -456,10 +451,14 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
             # solution by adding a very small penalty. Even that fails for a reason we
             # do not properly understand at this point.
         else:
-            # (Stochastic) Gradient Descent is known to converge to the minimal
-            # distance ||x - x0||_2 from the initial point x0 (subject to
-            # y = prediction). Why our second order methods like LBFGS or newton-cg
-            # naturally converge to the minimum norm solution is not known.
+            # Here, we find the minimum norm solution.
+            # newton-cholesky explicitly takes care to find it.
+            # (Stochastic) Gradient Descent (https://doi.org/10.1137/0707027) as well
+            # as Newton CG (https://doi.org/10.1137/0709016) are known to converge
+            # to the minimal distance ||x - x0||_2 from the initial point x0 (subject
+            # to y = prediction). Why LBFGS also converge to the minimum norm solution
+            # is not known.
+            assert norm_model == pytest.approx(norm_solution)
             assert model.intercept_ == pytest.approx(intercept, rel=rtol)
             assert_allclose(model.coef_, coef, rtol=rtol)
 
@@ -648,7 +647,13 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
 
         norm_solution = np.linalg.norm(np.r_[intercept, coef])
         norm_model = np.linalg.norm(np.r_[model.intercept_, model.coef_])
-        if solver in cd_or_cg_solver + ["lbfgs"] and fit_intercept:
+        if solver in ("newton-cd", "newton-cd-gram"):
+            # XXX: This solver shows random behaviour. Sometimes it finds solutions
+            # with norm_model <= norm_solution! So we check conditionally.
+            if not (norm_model > (1 + 1e-12) * norm_solution):
+                assert model.intercept_ == pytest.approx(intercept)
+                assert_allclose(model.coef_, coef, rtol=1e-4)
+        elif solver in ("lbfgs", "newton-cg") and fit_intercept:
             # Same as in test_glm_regression_unpenalized.
             # But it is not the minimum norm solution. Otherwise the norms would be
             # equal.
@@ -664,7 +669,7 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
             elif solver in cd_or_cg_solver:
                 rtol = 1e-5
             else:
-                1e-4
+                rtol = 1e-4
             assert model.intercept_ == pytest.approx(intercept, rel=rtol)
             assert_allclose(model.coef_, coef, rtol=rtol)
 
