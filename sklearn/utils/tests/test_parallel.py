@@ -22,7 +22,6 @@ from sklearn.utils.fixes import _IS_WASM
 from sklearn.utils.parallel import (
     Parallel,
     delayed,
-    is_free_threaded,
     parallel_thread_map,
 )
 
@@ -231,7 +230,7 @@ def test_parallel_thread_map_parallelism() -> None:
 
     list(parallel_thread_map(-1, add_ident, range(1000)))
 
-    if not is_free_threaded() or joblib.effective_n_jobs(-1) == 1:
+    if joblib.effective_n_jobs(-1) == 1:
         assert idents == {current_thread().ident}
     else:
         assert current_thread().ident not in idents
