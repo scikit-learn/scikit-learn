@@ -779,6 +779,7 @@ class HashingVectorizer(
         "norm": [StrOptions({"l1", "l2"}), None],
         "alternate_sign": ["boolean"],
         "dtype": "no_validation",  # delegate to numpy
+        "n_jobs": [Integral, None],
     }
 
     def __init__(
@@ -1184,6 +1185,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         "vocabulary": [Mapping, HasMethods("__iter__"), None],
         "binary": ["boolean"],
         "dtype": "no_validation",  # delegate to numpy
+        "n_jobs": [Integral, None],
     }
 
     def __init__(
@@ -1935,6 +1937,15 @@ class TfidfVectorizer(CountVectorizer):
     sublinear_tf : bool, default=False
         Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
 
+    n_jobs : int, default=None
+        The number of parallel jobs to use for the computation.
+
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+        .. versionadded:: 1.10
+
     Attributes
     ----------
     vocabulary_ : dict
@@ -2007,6 +2018,7 @@ class TfidfVectorizer(CountVectorizer):
         use_idf=True,
         smooth_idf=True,
         sublinear_tf=False,
+        n_jobs=None,
     ):
         super().__init__(
             input=input,
@@ -2026,6 +2038,7 @@ class TfidfVectorizer(CountVectorizer):
             vocabulary=vocabulary,
             binary=binary,
             dtype=dtype,
+            n_jobs=n_jobs,
         )
         self.norm = norm
         self.use_idf = use_idf
