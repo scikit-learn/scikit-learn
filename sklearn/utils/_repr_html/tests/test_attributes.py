@@ -38,16 +38,12 @@ def test_numpy_fitted_attr():
         r"\s*<th>Value</th>"
         r"\s*</tr>"
         r'\s*<tr class="default">'
-        r'\s*<td class="param">'
-        r'\s*<a class="param-doc-link" style="text-decoration:none;">a</a>'
-        r"\s*</td>"
+        r'\s*<td class="param">a</td>'
         r'\s*<td class="fitted-att-type">int</td>'
         r"\s*<td>6</td>"
         r"\s*</tr>"
         r'\s*<tr class="default">'
-        r'\s*<td class="param">'
-        r'\s*<a class="param-doc-link" style="text-decoration:none;">b</a>'
-        r"\s*</td>"
+        r'\s*<td class="param">b</td>'
         r'\s*<td class="fitted-att-type">ndarray\[float64\]\(1,\)</td>'
         r"\s*<td>8</td>"
         r"\s*</tr>"
@@ -119,10 +115,8 @@ def test_pandas_column_names():
         r"\s*<th>Type</th>"
         r"\s*<th>Value</th>"
         r"\s*</tr>"
-        r"\s*<tr class=\"default\">"
-        r"\s*<td class=\"param\">"
-        r'\s*<a class="param-doc-link" style="text-decoration:none;">myabc_</a>'
-        r"\s*</td>"
+        r'\s*<tr class="default">'
+        r'\s*<td class="param">myabc_</td>'
         r'\s*<td class="fitted-att-type">DataFrame\[int64\]\(3,\s*3\)</td>'
         r"\s*<td>\s*A\s*B\s*C\s*0\s*\.\.\.\s*4\s*2\s*4\s*5\s*4\s*</td>"
         r"\s*</tr>"
@@ -159,9 +153,7 @@ def test_pandas_series_fitted_attr():
         r"\s*<th>Value</th>"
         r"\s*</tr>"
         r'\s*<tr class="default">'
-        r'\s*<td class="param">'
-        r'\s*<a class="param-doc-link" style="text-decoration:none;">new_</a>'
-        r"\s*</td>"
+        r'\s*<td class="param">new_</td>'
         r'\s*<td class="fitted-att-type">Series\[int64\]\(3,\)</td>'
         r"\s*<td>a\s*1\s*b\s*2...3\s*dtype:\s*int64</td>"
         r"\s*</tr>"

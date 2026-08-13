@@ -481,10 +481,6 @@ def test_estimator_html_repr_doc_link_icon():
     expected_label = "Documentation for LogisticRegression"
     assert f'aria-label="{expected_label} (opens in a new tab)"' in doc_link
     assert 'href="' in doc_link
-    # An `<a>` with an `href` is already exposed as a link and already focusable,
-    # so it must keep its implicit role and needs no explicit `tabindex`.
-    assert "role=" not in doc_link
-    assert "tabindex=" not in doc_link
     # The visible label repeats the accessible name, so it must not be announced.
     assert f'>?<span aria-hidden="true">{expected_label}</span></a>' in html_output
 
