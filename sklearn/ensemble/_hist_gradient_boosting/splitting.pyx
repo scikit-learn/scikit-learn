@@ -18,11 +18,18 @@ from libc.string cimport memcpy
 
 from sklearn.utils._bitset cimport BITSET_DTYPE_C, BITSET_INNER_DTYPE_C
 from sklearn.utils._bitset cimport in_bitset, init_bitset, set_bitset
+from sklearn.utils._openmp_helpers cimport _use_threads_for_workload
+from sklearn.utils._openmp_helpers import _min_instructions_per_thread
 from sklearn.utils._typedefs cimport uint8_t
 from sklearn.ensemble._hist_gradient_boosting.common cimport X_BINNED_DTYPE_C
 from sklearn.ensemble._hist_gradient_boosting.common cimport Y_DTYPE_C
 from sklearn.ensemble._hist_gradient_boosting.common cimport hist_struct
 from sklearn.ensemble._hist_gradient_boosting.common cimport MonotonicConstraint
+
+
+# Read once at import time rather than on every call; see
+# _min_instructions_per_thread's docstring for the env var it honors.
+cdef long long MIN_INSTRUCTIONS_PER_THREAD = _min_instructions_per_thread()
 
 
 cdef struct split_info_struct:
@@ -311,20 +318,30 @@ cdef class Splitter:
             int feature_idx = split_info.feature_idx
             const X_BINNED_DTYPE_C [::1] X_binned = \
                 self.X_binned[:, feature_idx]
-            unsigned int [::1] left_indices_buffer = self.left_indices_buffer
-            unsigned int [::1] right_indices_buffer = self.right_indices_buffer
             uint8_t is_categorical = split_info.is_categorical
             # Cython is unhappy if we set left_cat_bitset to
             # split_info.left_cat_bitset directly, so we need a tmp var
             BITSET_INNER_DTYPE_C [:] cat_bitset_tmp = split_info.left_cat_bitset
             BITSET_DTYPE_C left_cat_bitset
             int n_threads = self.n_threads
+            # Each sample costs ~5 simple ops to classify/copy below.
+            # but chunking cost extra work, so we reduce to 3
+            bint use_threads = _use_threads_for_workload(
+                n_threads, n_samples, 3, MIN_INSTRUCTIONS_PER_THREAD
+            )
+            # Probably always bad to parallelize for <1k samples
 
-            int [:] sizes = np.full(n_threads, n_samples // n_threads,
-                                    dtype=np.int32)
-            int [:] offset_in_buffers = np.zeros(n_threads, dtype=np.int32)
-            int [:] left_counts = np.empty(n_threads, dtype=np.int32)
-            int [:] right_counts = np.empty(n_threads, dtype=np.int32)
+            int right_child_position
+            unsigned int [::1] left_indices_buffer = self.left_indices_buffer
+            unsigned int [::1] right_indices_buffer = self.right_indices_buffer
+
+            # Only used when use_threads is True, see below.
+            int [:] sizes
+            int [:] offset_in_buffers
+            int [:] left_counts
+            int [:] right_counts
+            int [:] left_offset
+            int [:] right_offset
             int left_count
             int right_count
             int start
@@ -332,14 +349,33 @@ cdef class Splitter:
             int i
             int thread_idx
             int sample_idx
-            int right_child_position
             uint8_t turn_left
-            int [:] left_offset = np.zeros(n_threads, dtype=np.int32)
-            int [:] right_offset = np.zeros(n_threads, dtype=np.int32)
 
         # only set left_cat_bitset when is_categorical is True
         if is_categorical:
             left_cat_bitset = &cat_bitset_tmp[0]
+
+        if not use_threads:
+            # Single straight scan with two running counters, and a single
+            # copy-back instead of one per thread: cheaper than the
+            # multi-threaded version below when there isn't enough work to
+            # amortize its chunking/offset bookkeeping.
+            with nogil:
+                right_child_position = _split_indices_single_threaded(
+                    sample_indices, left_indices_buffer, right_indices_buffer,
+                    bin_idx, missing_go_to_left, missing_values_bin_idx,
+                    X_binned, is_categorical, left_cat_bitset,
+                )
+            return (sample_indices[:right_child_position],
+                    sample_indices[right_child_position:],
+                    right_child_position)
+
+        sizes = np.full(n_threads, n_samples // n_threads, dtype=np.int32)
+        offset_in_buffers = np.zeros(n_threads, dtype=np.int32)
+        left_counts = np.empty(n_threads, dtype=np.int32)
+        right_counts = np.empty(n_threads, dtype=np.int32)
+        left_offset = np.zeros(n_threads, dtype=np.int32)
+        right_offset = np.zeros(n_threads, dtype=np.int32)
 
         with nogil:
             for thread_idx in range(n_samples % n_threads):
@@ -490,12 +526,15 @@ cdef class Splitter:
             uint8_t [:] subsample_mask  # same as npy_bool
             int n_subsampled_features
             uint8_t missing_go_to_left
+            bint use_threads
 
         has_interaction_cst = allowed_features is not None
         if has_interaction_cst:
             n_allowed_features = allowed_features.shape[0]
         else:
             n_allowed_features = self.n_features
+
+        n_subsampled_features = n_allowed_features
 
         if feature_fraction_per_split < 1.0:
             # We do all random sampling before the nogil and make sure that we sample
@@ -510,6 +549,14 @@ cdef class Splitter:
             # https://github.com/numpy/numpy/issues/18273
             subsample_mask = subsample_mask_arr
 
+        # Each feature costs about 15 simple ops per bin scanned below.
+        use_threads = _use_threads_for_workload(
+            n_threads, <long long> n_subsampled_features * histograms.shape[1], 15,
+            MIN_INSTRUCTIONS_PER_THREAD,
+        )
+        # Much slower than single threaded for: n_threads=128, n_subsampled_features=50
+        # => 128 x 2000 is greater than 50 x 256 x 15
+
         with nogil:
 
             split_infos = <split_info_struct *> malloc(
@@ -517,8 +564,9 @@ cdef class Splitter:
 
             # split_info_idx is index of split_infos of size n_allowed_features.
             # features_idx is the index of the feature column in X.
-            for split_info_idx in prange(n_allowed_features, schedule='static',
-                                         num_threads=n_threads):
+            for split_info_idx in prange(n_subsampled_features, schedule='static',
+                                         num_threads=n_threads,
+                                         use_threads_if=use_threads):
                 if has_interaction_cst:
                     feature_idx = allowed_features[split_info_idx]
                 else:
@@ -1061,6 +1109,58 @@ cdef inline uint8_t sample_goes_left(
             or (
                 bin_value <= split_bin_idx
             ))
+
+
+cdef int _split_indices_single_threaded(
+        unsigned int [::1] sample_indices,
+        unsigned int [::1] left_indices_buffer,
+        unsigned int [::1] right_indices_buffer,
+        X_BINNED_DTYPE_C bin_idx,
+        uint8_t missing_go_to_left,
+        uint8_t missing_values_bin_idx,
+        const X_BINNED_DTYPE_C [::1] X_binned,
+        uint8_t is_categorical,
+        BITSET_DTYPE_C left_cat_bitset) noexcept nogil:
+    """Partition sample_indices into left/right in a single pass.
+
+    This is the single-threaded counterpart of the chunked, buffer-based
+    partition used by Splitter.split_indices: a single straight scan with
+    two running counters instead of the per-thread chunk sizes/offsets, and
+    a single copy-back instead of one per thread. Used when there isn't
+    enough work to justify the overhead of the multi-threaded version.
+
+    Like the multi-threaded version, this needs an auxiliary buffer (rather
+    than e.g. a simple in-place swap-based partition) to preserve the
+    relative order of samples within each child, which some tests rely on
+    even though the docstring of split_indices says it's not required.
+    """
+    cdef:
+        int n_samples = sample_indices.shape[0]
+        int left_count = 0
+        int right_count = 0
+        int i
+        unsigned int sample_idx
+        uint8_t turn_left
+
+    for i in range(n_samples):
+        sample_idx = sample_indices[i]
+        turn_left = sample_goes_left(
+            missing_go_to_left, missing_values_bin_idx, bin_idx,
+            X_binned[sample_idx], is_categorical, left_cat_bitset)
+        if turn_left:
+            left_indices_buffer[left_count] = sample_idx
+            left_count += 1
+        else:
+            right_indices_buffer[right_count] = sample_idx
+            right_count += 1
+
+    memcpy(&sample_indices[0], &left_indices_buffer[0],
+           sizeof(unsigned int) * left_count)
+    if right_count > 0:
+        memcpy(&sample_indices[left_count], &right_indices_buffer[0],
+               sizeof(unsigned int) * right_count)
+
+    return left_count
 
 
 cpdef inline Y_DTYPE_C compute_node_value(
