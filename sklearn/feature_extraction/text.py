@@ -724,6 +724,12 @@ class HashingVectorizer(
     dtype : type, default=np.float64
         Type of the matrix returned by fit_transform() or transform().
 
+        n_jobs : int or None
+        The maximum number of concurrently running jobs.
+        See :class:`joblib.Parallel` for details.
+
+        ..versionadded:: 1.10
+
     See Also
     --------
     CountVectorizer : Convert a collection of text documents to a matrix of
@@ -1084,6 +1090,12 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
     dtype : dtype, default=np.int64
         Type of the matrix returned by fit_transform() or transform().
+
+    n_jobs : int or None
+        The maximum number of concurrently running jobs.
+        See :class:`joblib.Parallel` for details.
+
+        ..versionadded:: 1.10
 
     Attributes
     ----------
