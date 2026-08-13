@@ -476,9 +476,7 @@ class CallbackContext:
         if "sample_weight" not in metadata:
             return params
         for i, cb in enumerate(self._callbacks):
-            if hasattr(cb, "_accept_sample_weight") and cb._accept_sample_weight(
-                hook_name
-            ):
+            if cb._accept_sample_weight(hook_name):
                 params[f"callback_{i}"] = {
                     hook_name: {"sample_weight": metadata["sample_weight"]}
                 }

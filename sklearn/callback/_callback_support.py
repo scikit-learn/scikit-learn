@@ -30,15 +30,12 @@ def validate_callbacks(callbacks):
     for callback in callbacks:
         callback_name = callback.__class__.__name__
 
-        # isinstance for a Protocol returns True for classes too (not only instances).
-        # Hence the additional check for classes.
-        if not isinstance(callback, FitCallback) or isinstance(callback, type):
+        if not isinstance(callback, FitCallback):
             raise TypeError(
                 f"Callbacks must be instances following the FitCallback protocol. "
                 f"Got {callback_name}."
             )
 
-        # isinstance for Protocols does not verify the methods' signatures.
         for hook_name in ("setup", "teardown", "on_fit_task_begin", "on_fit_task_end"):
             hook = getattr(callback, hook_name)
             params = list(inspect.signature(hook).parameters.values())

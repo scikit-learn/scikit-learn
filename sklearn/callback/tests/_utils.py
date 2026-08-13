@@ -8,9 +8,13 @@ import numpy as np
 import pytest
 
 from sklearn.base import BaseEstimator, _fit_context, clone
-from sklearn.callback import CallbackSupportMixin, with_callbacks
+from sklearn.callback import (
+    AutoPropagatedCallback,
+    CallbackSupportMixin,
+    FitCallback,
+    with_callbacks,
+)
 from sklearn.callback._transport import open_listener, send
-from sklearn.utils._metadata_requests import _MetadataRequester
 from sklearn.utils.fixes import _IS_WASM
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
@@ -27,7 +31,7 @@ skip_callback_test_if_wasm = pytest.mark.skipif(
 )
 
 
-class RecordingCallback(_MetadataRequester):
+class RecordingCallback(FitCallback):
     """A minimal callback used for smoke testing purposes.
 
     This callback keeps a record of the hooks called for introspection.
@@ -110,7 +114,7 @@ class RecordingCallback(_MetadataRequester):
         return len([rec for rec in self.record if rec["name"] == hook_name])
 
 
-class RecordingAutoPropagatedCallback(RecordingCallback):
+class RecordingAutoPropagatedCallback(RecordingCallback, AutoPropagatedCallback):
     """A minimal auto-propagated callback used for smoke testing purposes.
 
     This callback keeps a record of the hooks called for introspection.
@@ -120,17 +124,11 @@ class RecordingAutoPropagatedCallback(RecordingCallback):
     to sub-estimators.
     """
 
-    max_propagation_depth = None
+    _max_propagation_depth = None
 
 
 class NotValidCallback:
-    """Invalid callback since it's missing methods from the protocol."""
-
-    def setup(self, estimator, context):
-        pass  # pragma: no cover
-
-    def on_fit_task_end(self, estimator, context):
-        pass  # pragma: no cover
+    """Invalid callback since it's not inheriting from FitCallback."""
 
 
 class NotValidSetupPositionalCallback(RecordingCallback):

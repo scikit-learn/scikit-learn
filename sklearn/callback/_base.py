@@ -1,12 +1,11 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from typing import Protocol, runtime_checkable
+from sklearn.utils._metadata_requests import _MetadataRequester
 
 
-@runtime_checkable
-class _BaseCallback(Protocol):
-    """Protocol for the base callbacks."""
+class BaseCallback:
+    """Base class for the callbacks."""
 
     def setup(self, estimator, context):
         """Method called at the beginning of the fit method of the estimator.
@@ -42,10 +41,18 @@ class _BaseCallback(Protocol):
             sub-estimator of a meta-estimator.
         """
 
+    def _accept_sample_weight(self, hook_name):
+        """Method to check if the instance accepts sample_weight for a given hook.
 
-@runtime_checkable
-class FitCallback(_BaseCallback, Protocol):
-    """Protocol for the callbacks evaluated on tasks during the fit of an estimator."""
+        Callbacks that can use sample_weight must overwrite this method to signal if
+        a hook can be forwarded sample_weight when metadata routing is disabled.
+        """
+        # TODO(slep006): remove when metadata routing is always enabled.
+        return False
+
+
+class FitCallback(BaseCallback, _MetadataRequester):
+    """Base class for the callbacks evaluated during the fit of an estimator."""
 
     def on_fit_task_begin(
         self,
@@ -113,9 +120,8 @@ class FitCallback(_BaseCallback, Protocol):
         """
 
 
-@runtime_checkable
-class AutoPropagatedCallback(_BaseCallback, Protocol):
-    """Protocol for the auto-propagated callbacks
+class AutoPropagatedCallback(BaseCallback):
+    """Base class for the auto-propagated callbacks
 
     An auto-propagated callback is a callback that is meant to be set on a top-level
     estimator and that is automatically propagated to its sub-estimators (if any).
@@ -129,3 +135,11 @@ class AutoPropagatedCallback(_BaseCallback, Protocol):
         If set to None, the callback is propagated to sub-estimators at all nesting
         levels.
         """
+        return self._max_propagation_depth
+
+    @max_propagation_depth.setter
+    def max_propagation_depth(self, value):
+        """The setter: This is where you can add logic/validation"""
+        if not isinstance(value, int) or value < 0:
+            raise ValueError("max_propagation_depth must be a positive integer.")
+        self._max_propagation_depth = value

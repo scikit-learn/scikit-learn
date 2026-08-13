@@ -7,9 +7,10 @@ import warnings
 from collections import defaultdict
 from dataclasses import dataclass
 
+from sklearn.callback import FitCallback
 from sklearn.callback._callback_context import get_context_path
 from sklearn.callback._transport import can_reuse_listener, open_listener, send
-from sklearn.utils._metadata_requests import _MetadataRequester, _routing_enabled
+from sklearn.utils._metadata_requests import _routing_enabled
 from sklearn.utils._optional_dependencies import check_pandas_support
 from sklearn.utils._param_validation import StrOptions, validate_params
 from sklearn.utils.metadata_routing import (
@@ -109,7 +110,7 @@ def _convert_to_multiscorer(scoring):
     return check_scoring(scoring=scoring)
 
 
-class ScoringMonitor(_MetadataRequester):
+class ScoringMonitor(FitCallback):
     """Callback that monitors a score for each iterative step of an estimator.
 
     The specified scorers are called on the training and validation data at each
@@ -183,7 +184,7 @@ class ScoringMonitor(_MetadataRequester):
         self._listener_handle = open_listener(self._log.append, owner=self)
 
     def _accept_sample_weight(self, hook_name):
-        """Whetther the callback accepts sample_weight for a given hook."""
+        """Whether the callback accepts sample_weight for a given hook."""
         # TODO(slep006): remove when metadata routing is the only way.
         if hook_name != "on_fit_task_end":
             return False
@@ -211,12 +212,6 @@ class ScoringMonitor(_MetadataRequester):
                 "more details on metadata routing."
             )
 
-    def teardown(self, estimator, context):
-        pass
-
-    def on_fit_task_begin(self, estimator, context):
-        pass
-
     def on_fit_task_end(
         self,
         estimator,
@@ -229,6 +224,40 @@ class ScoringMonitor(_MetadataRequester):
         y_val=None,
         **score_params,
     ):
+        """Method called at the end of each fit task of the estimator.
+
+        Parameters
+        ----------
+        estimator : estimator instance
+            The estimator calling this callback hook.
+
+        context : `sklearn.callback.CallbackContext` instance
+            Context of the corresponding task.
+
+        X : array-like
+            The training data at this task.
+
+        y : array-like
+            The training target values at this task.
+
+        fitted_estimator : estimator instance
+            A new instance of the estimator that is ready to predict, transform, etc ...
+            as if fit had stopped at the end of this task.
+
+        X_val : array-like
+            The validation data at this task.
+
+        y_val : array-like
+            The validation target at this task.
+
+        **score_params : dict
+            Parameters to pass to the `score` method of the underlying scorer.
+
+        Returns
+        -------
+        stop : bool
+            Whether or not to stop the current level of iterations at this task.
+        """
         if fitted_estimator is None:
             return
 
