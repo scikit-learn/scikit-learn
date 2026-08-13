@@ -219,7 +219,10 @@ def test_estimator_html_repr_pipeline():
     # low level estimators do not show changes
     with config_context(print_changed_only=True):
         assert html.escape(str(num_trans["pass"])) in html_output
-        assert "<div><div>passthrough</div></div></span></summary>" in html_output
+        assert (
+            '<span class="sk-toggleable__label-name"><span>passthrough</span>'
+            "</span></span></summary>" in html_output
+        )
         assert html.escape(str(num_trans["imputer"])) in html_output
 
         for _, _, cols in preprocess.transformers:
@@ -305,8 +308,9 @@ def test_birch_duck_typing_meta():
         assert f"<pre>{html.escape(str(birch.n_clusters))}" in html_output
 
         p = (
-            r"<div><div>AgglomerativeClustering</div></div>"
-            r"<div>.+</div></span></summary>"
+            r'<span class="sk-toggleable__label-name">'
+            r"<span>AgglomerativeClustering</span></span>"
+            r"<span>.+</span></span></summary>"
         )
         re_compiled = re.compile(p)
         assert re_compiled.search(html_output)
@@ -347,7 +351,8 @@ def test_duck_typing_nested_estimator():
     )
     html_output = estimator_html_repr(kernel_ridge_tuned)
     assert (
-        "<div><div>estimator: KernelRidge</div></div></span></summary>" in html_output
+        '<span class="sk-toggleable__label-name"><span>estimator: KernelRidge</span>'
+        "</span></span></summary>" in html_output
     )
 
 

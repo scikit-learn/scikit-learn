@@ -542,8 +542,11 @@ def estimator_html_repr(estimator):
             f"<style>{_CSS_STYLE}</style>"
             f"<body>"
             # we need tabindex="0" to make it 'focusable'
-            f'<div id="{container_id}" tabindex="0" class="sk-top-container sk-global">'
-            '<div class="sk-text-repr-fallback">'
+            f'<div id="{container_id}" tabindex="0" role="region" '
+            f"aria-label="
+            f"{html.escape(estimator.__class__.__name__)} estimator diagram "
+            f'class="sk-top-container sk-global">'
+            f'<div class="sk-text-repr-fallback">'
             f"<pre>{html.escape(estimator_str)}</pre><b>{fallback_msg}</b>"
             "</div>"
             '<div class="sk-container" hidden>'

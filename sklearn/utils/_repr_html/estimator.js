@@ -157,15 +157,19 @@ function detectTheme(element) {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
-/* Avoid Enter keydown to bubble up to the notebook and switch the focused cell
- * into edit mode steals focus away from the diagram.
+/* Prevent Enter/Space keydown events from bubbling up to the notebook
+ * which would steal focus away from the diagram.
+ * Escape dismisses focus-shown tooltips (WCAG 1.4.13).
  */
 document.querySelectorAll(
     '.sk-top-container:not([data-sk-keydown-bound])'
 ).forEach(function(container) {
     container.dataset.skKeydownBound = 'true';
     container.addEventListener('keydown', function(event) {
-        if (event.key === 'Enter') {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.stopPropagation();
+        } else if (event.key === 'Escape') {
+            event.target.blur();
             event.stopPropagation();
         }
     });

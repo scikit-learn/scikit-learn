@@ -108,10 +108,7 @@ def _fitted_attr_html_repr(fitted_attributes):
             )
         else:
             # Just show the attribute name without link
-            fitted_attr_display = (
-                f'<a class="param-doc-link" style="text-decoration:none;">'
-                f"{html.escape(name)}</a>"
-            )
+            fitted_attr_display = html.escape(name)
 
         if len(attr_info) == 2:
             html_row_values = (
