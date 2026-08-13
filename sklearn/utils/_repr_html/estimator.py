@@ -170,14 +170,21 @@ def _write_label_html(
         hide_marker = name == "passthrough" or name_details == "[]"
 
         if doc_link:
-            doc_label = "<span>Online documentation</span>"
+            doc_label = "Online documentation"
             if doc_link_label is not None:
-                doc_label = f"<span>Documentation for {doc_link_label}</span>"
+                doc_label = f"Documentation for {html.escape(str(doc_link_label))}"
             elif name is not None:
-                doc_label = f"<span>Documentation for {name}</span>"
+                doc_label = f"Documentation for {name}"
+            # The visible label is hidden by CSS until the link is hovered or
+            # focused, and hidden content is excluded from the accessible name.
+            # Without `aria-label`, the link would be announced as just "?".
+            # The label is repeated in the visible span, hence `aria-hidden`
+            # there to avoid announcing it twice while the tooltip is shown.
             doc_link = (
                 f'<a class="sk-estimator-doc-link {is_fitted_css_class}"'
-                f' rel="noreferrer" target="_blank" href="{doc_link}">?{doc_label}</a>'
+                f' rel="noreferrer" target="_blank" href="{doc_link}"'
+                f' aria-label="{doc_label} (opens in a new tab)">'
+                f'?<span aria-hidden="true">{doc_label}</span></a>'
             )
         if hide_marker:
             name_caption = ""
@@ -504,20 +511,25 @@ def estimator_html_repr(estimator):
     from sklearn.utils.validation import check_is_fitted
 
     if not hasattr(estimator, "fit"):
-        status_label = "<span>Not fitted</span>"
+        status_label = "Not fitted"
         is_fitted_css_class = ""
     else:
         try:
             check_is_fitted(estimator)
-            status_label = "<span>Fitted</span>"
+            status_label = "Fitted"
             is_fitted_css_class = "fitted"
         except NotFittedError:
-            status_label = "<span>Not fitted</span>"
+            status_label = "Not fitted"
             is_fitted_css_class = ""
 
+    # This icon is informative only: there is nothing to activate, so `role="img"`
+    # is the matching role. It is focusable so that keyboard users can reveal the
+    # label, which CSS hides until the icon is hovered or focused; `aria-label` is
+    # therefore needed to give the icon an accessible name.
     is_fitted_icon = (
-        f'<span class="sk-estimator-doc-link {is_fitted_css_class}" tabindex="0">'
-        f"i{status_label}</span>"
+        f'<span class="sk-estimator-doc-link {is_fitted_css_class}" tabindex="0"'
+        f' role="img" aria-label="{status_label} estimator">'
+        f'i<span aria-hidden="true">{status_label}</span></span>'
     )
     with closing(StringIO()) as out:
         container_id = _CONTAINER_ID_COUNTER.get_id()
