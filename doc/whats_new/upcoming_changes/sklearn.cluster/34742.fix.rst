@@ -1,0 +1,5 @@
+- :class:`cluster.OPTICS` no longer raises a spurious
+  :class:`~sklearn.exceptions.EfficiencyWarning` for every sample when fitted
+  on a precomputed sparse distance matrix. Setting the diagonal could undo the
+  row-value sorting, so the graph is now re-sorted afterwards.
+  By :user:`Roshan Ramani <rawsun007>`.
