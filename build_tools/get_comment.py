@@ -20,8 +20,14 @@ def get_versions(versions_file):
     versions : dict
         A dictionary with the versions of the packages.
     """
-    with open(versions_file, "r") as f:
-        return dict(line.strip().split("=") for line in f)
+    try:
+        with open(versions_file, "r") as f:
+            return dict(line.strip().split("=") for line in f)
+    except FileNotFoundError:
+        # If the versions file wasn't created due to an early failure in the
+        # linting workflow, we still want the bot to comment on the PR with the
+        # merging upstream/main work-around message
+        return {}
 
 
 def get_step_message(log, start, end, title, message, details):
@@ -67,9 +73,6 @@ def get_step_message(log, start, end, title, message, details):
 
 
 def get_message(log_file, repo_str, pr_number, sha, run_id, details, versions):
-    with open(log_file, "r") as f:
-        log = f.read()
-
     sub_text = (
         "\n\n<sub> _Generated for commit:"
         f" [{sha[:7]}](https://github.com/{repo_str}/pull/{pr_number}/commits/{sha}). "
@@ -77,13 +80,22 @@ def get_message(log_file, repo_str, pr_number, sha, run_id, details, versions):
         f"(https://github.com/{repo_str}/actions/runs/{run_id})_ </sub>"
     )
 
+    try:
+        with open(log_file, "r") as f:
+            log = f.read()
+    except FileNotFoundError:
+        # If the log file wasn't created due to an early failure in the linting
+        # workflow, we still want the bot to comment on the PR with the merging
+        # upstream/main work-around message
+        log = ""
+
     if "### Linting completed ###" not in log:
         return (
             "## ❌ Linting issues\n\n"
             "There was an issue running the linter job. Please update with "
             "`upstream/main` ([link]("
             "https://scikit-learn.org/dev/developers/contributing.html"
-            "#how-to-contribute)) and push the changes. If you already have done "
+            "#development-workflow)) and push the changes. If you already have done "
             "that, please send an empty commit with `git commit --allow-empty` "
             "and push the changes to trigger the CI.\n\n" + sub_text
         )
