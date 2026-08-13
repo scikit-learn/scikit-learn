@@ -18,6 +18,7 @@ API or give up cross-process capabilities.
 
 import os
 import weakref
+from collections import OrderedDict
 from multiprocessing.connection import Client, Connection, Listener
 from threading import Thread
 from typing import Callable, NamedTuple
@@ -59,10 +60,35 @@ class ListenerHandle(NamedTuple):
 _listeners: dict[str, Listener] = {}
 _message_consumers: dict[str, Callable] = {}
 
+class _LRUConnectionCache(OrderedDict):
+    """LRU cache for connections to avoid fd leaks."""
+    def __init__(self, maxsize=16):
+        super().__init__()
+        self.maxsize = maxsize
+
+    def get(self, key, default=None):
+        if key in self:
+            self.move_to_end(key)
+            return self[key]
+        return default
+
+    def __getitem__(self, key):
+        self.move_to_end(key)
+        return super().__getitem__(key)
+
+    def __setitem__(self, key, value):
+        if key in self:
+            self.move_to_end(key)
+        super().__setitem__(key, value)
+        if len(self) > self.maxsize:
+            oldest = next(iter(self))
+            conn = self.pop(oldest)
+            conn.close()
+
 # Worker-side cache of client connections back to the main-process listeners, keyed by
 # listener address. The first cross-process send opens a client. Subsequent sends to the
 # same listener reuse the cached connection.
-_worker_connections: dict[str, Connection] = {}
+_worker_connections: _LRUConnectionCache = _LRUConnectionCache(maxsize=16)
 
 
 def open_listener(message_consumer, *, owner=None):
