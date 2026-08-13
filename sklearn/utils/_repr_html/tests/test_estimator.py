@@ -47,8 +47,8 @@ def dummy_function(x, y):
     return x + y  # pragma: nocover
 
 
-@pytest.mark.parametrize("open", [True, ""])
-def test_write_label_html(open):
+@pytest.mark.parametrize("checked", [True, ""])
+def test_write_label_html(checked):
     # Test checking logic and labeling
     name = "LogisticRegression"
     params = ""
@@ -56,7 +56,7 @@ def test_write_label_html(open):
     tool_tip = "hello-world"
 
     with closing(StringIO()) as out:
-        _write_label_html(out, params, attrs, name, tool_tip, checked=open)
+        _write_label_html(out, params, attrs, name, tool_tip, checked=checked)
         html_label = out.getvalue()
 
         p = (
@@ -70,8 +70,10 @@ def test_write_label_html(open):
         assert html_label.startswith('<div class="sk-label-container">')
         assert "<pre>hello-world</pre>" in html_label
 
-        if open:
+        if checked:
             assert '<details class="sk-toggleable" open>' in html_label
+        else:
+            assert '<details class="sk-toggleable" open>' not in html_label
 
 
 @pytest.mark.parametrize("est", ["passthrough", "drop", None])
