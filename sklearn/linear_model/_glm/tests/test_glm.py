@@ -512,7 +512,7 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
 
     norm_solution = np.linalg.norm(np.r_[intercept, intercept, coef, coef])
     if fit_intercept:
-        # Here we meed the factor of 2 because we did not divide X by 1/2.
+        # Here we need the factor of 2 because we did not divide X by 1/2.
         norm_model = np.linalg.norm(2 * np.r_[model.intercept_, model.coef_])
         model_coef = 2 * model.coef_[:-1]  # remove the intercept
     else:

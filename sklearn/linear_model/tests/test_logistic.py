@@ -1008,7 +1008,9 @@ def test_logistic_regression_solvers_multiclass_unpenalized(
             )
 
     # How about the minimum norm solution? See
-    # test_glm_regression_unpenalized_hstacked_X.
+    # test_glm_regression_unpenalized_hstacked_X:
+    # Fit on [X] is the same as fit on [X, X]/2. Instead of dividing X by 1/2, we add
+    # the factor 1/2 in the test of equal coefficients.
     X2 = np.concatenate((X, X), axis=1)
     with ignore_warnings(category=scipy.linalg.LinAlgWarning):
         regressors2 = {

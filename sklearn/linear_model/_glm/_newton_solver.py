@@ -642,22 +642,6 @@ class NewtonCholeskySolver(NewtonSolver):
                 self.coef_newton = scipy.linalg.solve(
                     hessian, -gradient, check_finite=False, assume_a="sym"
                 )
-                if self.is_multinomial_no_penalty:
-                    self.coef_newton = np.c_[
-                        self.coef_newton.reshape(n_dof, n_classes - 1), np.zeros(n_dof)
-                    ].reshape(-1)
-                    assert self.coef_newton.flags.f_contiguous
-                elif self.is_multinomial_with_intercept:
-                    self.coef_newton = np.r_[self.coef_newton, 0]
-                self.gradient_times_newton = self.gradient @ self.coef_newton
-                if self.gradient_times_newton > 0:
-                    if self.verbose:
-                        print(
-                            "  The inner solver found a Newton step that is not a "
-                            "descent direction and resorts to LBFGS steps instead."
-                        )
-                    self.use_fallback_lbfgs_solve = True
-                    return
         except (np.linalg.LinAlgError, scipy.linalg.LinAlgWarning) as e:
             # Possible causes:
             # 1. hess_pointwise is negative. But this is already taken care of in
@@ -688,7 +672,7 @@ class NewtonCholeskySolver(NewtonSolver):
             # eigenvectors corresponding to large enough eigenvalues. The eigenvalues
             # correspond to curvature, negative curvature is bad (non-convex problem),
             # tiny eigenvalues mean flat space.
-            eval, evec = scipy.linalg.eigh(self.hessian)
+            eval, evec = scipy.linalg.eigh(hessian)
             max_eval = eval[-1]
             eps = np.sqrt(np.finfo(X.dtype).eps)
             if max_eval <= eps:
@@ -711,9 +695,24 @@ class NewtonCholeskySolver(NewtonSolver):
             # Eigendecomposition Hessian = Q D Q', Newton step = -Q D^(-1) Q' grad
             # As Hessian is symmetric, Q is an orthonormal matrix.
             Q = evec[:, idx]
-            self.coef_newton = -Q @ ((1 / eval[idx]) * (Q.T @ self.gradient))
-            self.gradient_times_newton = self.gradient @ self.coef_newton
-            return
+            self.coef_newton = -Q @ ((1 / eval[idx]) * (Q.T @ gradient))
+
+        if self.is_multinomial_no_penalty:
+            self.coef_newton = np.c_[
+                self.coef_newton.reshape(n_dof, n_classes - 1), np.zeros(n_dof)
+            ].reshape(-1)
+            assert self.coef_newton.flags.f_contiguous
+        elif self.is_multinomial_with_intercept:
+            self.coef_newton = np.r_[self.coef_newton, 0]
+        self.gradient_times_newton = self.gradient @ self.coef_newton
+        if self.gradient_times_newton > 0:
+            if self.verbose:
+                print(
+                    "  The inner solver found a Newton step that is not a "
+                    "descent direction and resorts to LBFGS steps instead."
+                )
+            self.use_fallback_lbfgs_solve = True
+        return
 
     def finalize(self, X, y, sample_weight):
         if self.has_already_warned and not self.linear_loss.base_loss.is_multiclass:
