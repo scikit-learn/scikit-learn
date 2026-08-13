@@ -476,7 +476,7 @@ def _fetch_lfw_pairs(
     n_faces = shape.pop(0)
     shape.insert(0, 2)
     shape.insert(0, n_faces // 2)
-    pairs.shape = shape
+    pairs = pairs.reshape(shape)
 
     return pairs, target, np.array(["Different persons", "Same person"])
 
