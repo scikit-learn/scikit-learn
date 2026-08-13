@@ -6,6 +6,7 @@ usage.
 # SPDX-License-Identifier: BSD-3-Clause
 
 import functools
+import sys
 import warnings
 from functools import update_wrapper
 
@@ -184,6 +185,46 @@ class _FuncWrapper:
             return self.function(*args, **kwargs)
 
 
+def parallel_thread_map(n_jobs, func, *iterables):
+    """
+    Like ``map()``, but runs using a thread pool on free-threaded Python, and
+    aims for minimal overhead.
+
+    Parameters
+    ----------
+    n_jobs : int or None
+        The maximum number of concurrently running jobs.
+        See :class:`joblib.Parallel` for details.
+    func : callable function
+        Called with each value in the iterable.
+    iterables : iterables of values
+        Each value will be passed to func.
+
+    .. versionadded:: 1.10
+
+    Returns
+    -------
+    results : Iterable
+        Results of calling ``func(*values)`` for each set of values
+        from the input iterables.
+    """
+    if is_free_threaded():
+        n_jobs = joblib.effective_n_jobs(n_jobs)
+    else:
+        # If we're not free-threaded, don't bother with parallelism:
+        n_jobs = 1
+    if n_jobs == 1:
+        # Run sequentially:
+        return map(func, *iterables)
+    # Future implementations may switch to alternatives with less overhead,
+    # e.g. concurrent.futures.ThreadPoolExecutor. If that happens, add some
+    # tests to ensure warnings and sklearn config get propagated.
+    func = delayed(func)
+    return Parallel(n_jobs, require="sharedmem", return_as="generator")(
+        func(*values) for values in zip(*iterables)
+    )
+
+
 def _get_threadpool_controller():
     """Return the global threadpool controller instance."""
     global _threadpool_controller
@@ -212,3 +253,17 @@ def _threadpool_controller_decorator(limits=1, user_api="blas"):
         return wrapper
 
     return decorator
+
+
+def is_free_threaded() -> bool:
+    """Return whether the current Python has no GIL.
+
+    .. versionadded:: 1.10
+
+    Returns
+    -------
+    bool
+        Whether the Python interpreter is free-threaded, i.e. has no GIL.
+    """
+    is_gil_enabled = getattr(sys, "_is_gil_enabled", lambda: True)
+    return not is_gil_enabled()

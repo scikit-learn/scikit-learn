@@ -30,6 +30,7 @@ from sklearn.utils import metadata_routing
 from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
 from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.fixes import _IS_32BIT, SCIPY_VERSION_BELOW_1_12
+from sklearn.utils.parallel import parallel_thread_map
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
     check_array,
@@ -790,6 +791,7 @@ class HashingVectorizer(
         norm="l2",
         alternate_sign=True,
         dtype=np.float64,
+        n_jobs=None,
     ):
         self.input = input
         self.encoding = encoding
@@ -807,6 +809,7 @@ class HashingVectorizer(
         self.norm = norm
         self.alternate_sign = alternate_sign
         self.dtype = dtype
+        self.n_jobs = n_jobs
 
     @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y=None):
@@ -885,7 +888,7 @@ class HashingVectorizer(
         self._validate_ngram_range()
 
         analyzer = self.build_analyzer()
-        X = self._get_hasher().transform(analyzer(doc) for doc in X)
+        X = self._get_hasher().transform(parallel_thread_map(self.n_jobs, analyzer, X))
         if self.binary:
             X.data.fill(1)
         if self.norm is not None:
@@ -1182,6 +1185,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         vocabulary=None,
         binary=False,
         dtype=np.int64,
+        n_jobs=None,
     ):
         self.input = input
         self.encoding = encoding
@@ -1200,6 +1204,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         self.vocabulary = vocabulary
         self.binary = binary
         self.dtype = dtype
+        self.n_jobs = n_jobs
 
     def _sort_features(self, X, vocabulary):
         """Sort features by name
@@ -1269,9 +1274,9 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         values = _make_int_array()
         indptr.append(0)
-        for doc in raw_documents:
+        for doc in parallel_thread_map(self.n_jobs, analyze, raw_documents):
             feature_counter = {}
-            for feature in analyze(doc):
+            for feature in doc:
                 try:
                     feature_idx = vocabulary[feature]
                     if feature_idx not in feature_counter:
