@@ -724,11 +724,14 @@ class HashingVectorizer(
     dtype : type, default=np.float64
         Type of the matrix returned by fit_transform() or transform().
 
-        n_jobs : int or None
-        The maximum number of concurrently running jobs.
-        See :class:`joblib.Parallel` for details.
+    n_jobs : int, default=None
+        The number of parallel jobs to use for the computation.
 
-        ..versionadded:: 1.10
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+        .. versionadded:: 1.10
 
     See Also
     --------
@@ -1091,11 +1094,14 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     dtype : dtype, default=np.int64
         Type of the matrix returned by fit_transform() or transform().
 
-    n_jobs : int or None
-        The maximum number of concurrently running jobs.
-        See :class:`joblib.Parallel` for details.
+    n_jobs : int, default=None
+        The number of parallel jobs to use for the computation.
 
-        ..versionadded:: 1.10
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+        .. versionadded:: 1.10
 
     Attributes
     ----------

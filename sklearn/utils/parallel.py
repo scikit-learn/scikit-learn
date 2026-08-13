@@ -188,8 +188,10 @@ class _FuncWrapper:
 
 def parallel_thread_map(n_jobs, func, *iterables):
     """
-    Like ``map()``, but runs using a thread pool on free-threaded Python, and
-    aims for minimal overhead.
+    Like ``map()``, but on free-threaded Python runs in parallel.
+
+    Aims for minimal overhead, to maximize the cases where it improves
+    performance.
 
     .. versionadded:: 1.10
 
@@ -198,9 +200,11 @@ def parallel_thread_map(n_jobs, func, *iterables):
     n_jobs : int or None
         The maximum number of concurrently running jobs.
         See :class:`joblib.Parallel` for details.
+
     func : callable function
         Called with each value in the iterable.
-    iterables : iterables of values
+
+    *iterables : iterables of values
         Each value will be passed to func.
 
     Returns
