@@ -188,7 +188,7 @@ class _FuncWrapper:
 
 def parallel_thread_map(n_jobs, func, *iterables):
     """
-    Like ``map()``, but on free-threaded Python runs in parallel.
+    Like ``map()``, but uses threads to run in parallel.
 
     Aims for minimal overhead, to maximize the cases where it improves
     performance.
@@ -213,11 +213,7 @@ def parallel_thread_map(n_jobs, func, *iterables):
         Results of calling ``func(*values)`` for each set of values
         from the input iterables.
     """
-    if is_free_threaded():
-        n_jobs = joblib.effective_n_jobs(n_jobs)
-    else:
-        # If we're not free-threaded, don't bother with parallelism:
-        n_jobs = 1
+    n_jobs = joblib.effective_n_jobs(n_jobs)
     if n_jobs == 1:
         # Run sequentially:
         return map(func, *iterables)
