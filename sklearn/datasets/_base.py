@@ -1003,8 +1003,7 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
 
     target = data[:, -1].astype(int, copy=False)
     flat_data = data[:, :-1]
-    images = flat_data.view()
-    images.shape = (-1, 8, 8)
+    images = flat_data.reshape(-1, 8, 8)
 
     if n_class < 10:
         idx = target < n_class
