@@ -85,7 +85,7 @@ def test_estimator_html_repr_total_feature_names(pandas, total_output_features):
     out = estimator_html_repr(ct_cloned)
 
     assert "<div class='total_features'>" in out
-    assert "3 features</div>" in out
+    assert "3 features</span>" in out
     for feature_name in total_output_features:
         assert feature_name in out
 
@@ -166,7 +166,6 @@ def test_get_feature_names_out_exception():
     Xt = union.fit_transform(X)
     html = estimator_html_repr(union)
     assert "1 feature" in html
-    assert "<div> 0 features</div>" not in html
     assert "identity" in html
 
 

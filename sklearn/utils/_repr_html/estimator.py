@@ -175,11 +175,8 @@ def _write_label_html(
                 doc_label = f"Documentation for {html.escape(str(doc_link_label))}"
             elif name is not None:
                 doc_label = f"Documentation for {name}"
-            # The visible label is hidden by CSS until the link is hovered or
-            # focused, and hidden content is excluded from the accessible name.
             # Without `aria-label`, the link would be announced as just "?".
-            # The label is repeated in the visible span, hence `aria-hidden`
-            # there to avoid announcing it twice while the tooltip is shown.
+            # The label is shown in the visible span, hence `aria-hidden`
             doc_link = (
                 f'<a class="sk-estimator-doc-link {is_fitted_css_class}"'
                 f' rel="noreferrer" target="_blank" href="{doc_link}"'
