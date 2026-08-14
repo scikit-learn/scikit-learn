@@ -9,12 +9,14 @@ import scipy.sparse as sp
 from scipy.optimize import minimize
 
 from sklearn import datasets, linear_model, metrics
-from sklearn.base import clone, is_classifier
-from sklearn.datasets import make_blobs
+from sklearn.base import ClassifierMixin, clone, is_classifier
+from sklearn.datasets import make_blobs, make_classification, make_regression
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.kernel_approximation import Nystroem
 from sklearn.linear_model import _sgd_fast as sgd_fast
 from sklearn.linear_model import _stochastic_gradient
+from sklearn.linear_model._base import SPARSE_INTERCEPT_DECAY
+from sklearn.linear_model._stochastic_gradient import DEFAULT_EPSILON
 from sklearn.model_selection import (
     RandomizedSearchCV,
     ShuffleSplit,
@@ -31,7 +33,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
 )
-from sklearn.utils.fixes import _sparse_random_array
+from sklearn.utils.fixes import CSR_CONTAINERS, _sparse_random_array
 
 
 def _update_kwargs(kwargs):
@@ -2338,3 +2340,125 @@ def test_sgd_one_class_svm_formulation_with_scipy_minimize():
 
     assert_allclose(model.coef_, expected_coef, rtol=5e-3)
     assert_allclose(model.offset_, expected_offset, rtol=1e-2)
+
+
+# ---- Passive-Aggressive reference implementation & SGD equivalence tests ----
+# Moved from test_passive_aggressive.py during 1.10 PA class removal.
+
+
+class MyPassiveAggressive(ClassifierMixin):
+    """Pure-Python reference implementation of the Passive-Aggressive algorithm.
+
+    Used to verify that SGDClassifier/SGDRegressor with learning_rate='pa1'/'pa2'
+    produce identical results to the textbook PA update rule.
+    """
+
+    def __init__(
+        self,
+        C=1.0,
+        epsilon=DEFAULT_EPSILON,
+        loss="hinge",
+        fit_intercept=True,
+        n_iter=1,
+        random_state=None,
+    ):
+        self.C = C
+        self.epsilon = epsilon
+        self.loss = loss
+        self.fit_intercept = fit_intercept
+        self.n_iter = n_iter
+
+    def fit(self, X, y):
+        n_samples, n_features = X.shape
+        self.w = np.zeros(n_features, dtype=np.float64)
+        self.b = 0.0
+
+        # Mimic SGD's behavior for intercept
+        intercept_decay = 1.0
+        if sp.issparse(X):
+            intercept_decay = SPARSE_INTERCEPT_DECAY
+            X = X.toarray()
+
+        for t in range(self.n_iter):
+            for i in range(n_samples):
+                p = self.project(X[i])
+                if self.loss in ("hinge", "squared_hinge"):
+                    loss = max(1 - y[i] * p, 0)
+                else:
+                    loss = max(np.abs(p - y[i]) - self.epsilon, 0)
+
+                sqnorm = np.dot(X[i], X[i])
+
+                if self.loss in ("hinge", "epsilon_insensitive"):
+                    step = min(self.C, loss / sqnorm)
+                elif self.loss in ("squared_hinge", "squared_epsilon_insensitive"):
+                    step = loss / (sqnorm + 1.0 / (2 * self.C))
+
+                if self.loss in ("hinge", "squared_hinge"):
+                    step *= y[i]
+                else:
+                    step *= np.sign(y[i] - p)
+
+                self.w += step * X[i]
+                if self.fit_intercept:
+                    self.b += intercept_decay * step
+
+    def project(self, X):
+        return np.dot(X, self.w) + self.b
+
+
+@pytest.mark.parametrize("csr_container", [None, *CSR_CONTAINERS])
+@pytest.mark.parametrize(
+    ["loss", "lr"], [("hinge", "pa1"), ("squared_hinge", "pa2")]
+)
+def test_sgd_pa_classifier_correctness(loss, lr, csr_container):
+    """SGDClassifier with PA learning rates must match the reference PA impl."""
+    iris = datasets.load_iris()
+    rng = np.random.RandomState(12)
+    idx = np.arange(iris.data.shape[0])
+    rng.shuffle(idx)
+    X, y = iris.data[idx], iris.target[idx]
+    y_bin = y.copy()
+    y_bin[y != 1] = -1
+
+    data = csr_container(X) if csr_container is not None else X
+
+    ref = MyPassiveAggressive(loss=loss, n_iter=4)
+    ref.fit(data, y_bin)
+
+    sgd = linear_model.SGDClassifier(
+        loss="hinge", penalty=None, learning_rate=lr,
+        eta0=1.0, max_iter=4, shuffle=False, tol=None,
+    )
+    sgd.fit(data, y_bin)
+
+    assert_allclose(ref.w, sgd.coef_.ravel())
+
+
+@pytest.mark.parametrize("csr_container", [None, *CSR_CONTAINERS])
+@pytest.mark.parametrize(
+    ["loss", "lr"],
+    [("epsilon_insensitive", "pa1"), ("squared_epsilon_insensitive", "pa2")],
+)
+def test_sgd_pa_regressor_correctness(loss, lr, csr_container):
+    """SGDRegressor with PA learning rates must match the reference PA impl."""
+    iris = datasets.load_iris()
+    rng = np.random.RandomState(12)
+    idx = np.arange(iris.data.shape[0])
+    rng.shuffle(idx)
+    X, y = iris.data[idx], iris.target[idx]
+    y_bin = y.copy()
+    y_bin[y != 1] = -1
+
+    data = csr_container(X) if csr_container is not None else X
+
+    ref = MyPassiveAggressive(loss=loss, n_iter=4)
+    ref.fit(data, y_bin)
+
+    sgd = linear_model.SGDRegressor(
+        loss="epsilon_insensitive", penalty=None, learning_rate=lr,
+        eta0=1.0, max_iter=4, shuffle=False, tol=None,
+    )
+    sgd.fit(data, y_bin)
+
+    assert_allclose(ref.w, sgd.coef_.ravel())
