@@ -67,6 +67,7 @@ os.environ.setdefault("KMP_INIT_AT_FORK", "FALSE")
 # later is linked to the OpenMP runtime to make it possible to introspect
 # it and importing it first would fail if the OpenMP dll cannot be found.
 from sklearn import __check_build, _distributor_init  # noqa: E402 F401
+from sklearn._all import _estimators  # noqa: E402
 from sklearn.base import clone  # noqa: E402
 from sklearn.utils._show_versions import show_versions  # noqa: E402
 
@@ -112,14 +113,27 @@ _submodules = [
     "compose",
 ]
 
-__all__ = _submodules + [
-    # Non-modules:
-    "clone",
-    "get_config",
-    "set_config",
-    "config_context",
-    "show_versions",
-]
+
+# Reverse mapping from an estimator name to the public submodule it lives in,
+# used by `__getattr__` to lazily import the estimator on first access.
+_estimator_to_module = {
+    estimator: module
+    for module, estimators in _estimators.items()
+    for estimator in estimators
+}
+
+__all__ = (
+    _submodules
+    + sorted(_estimator_to_module)
+    + [
+        # Non-modules:
+        "clone",
+        "get_config",
+        "set_config",
+        "config_context",
+        "show_versions",
+    ]
+)
 
 
 def __dir__():
@@ -129,6 +143,12 @@ def __dir__():
 def __getattr__(name):
     if name in _submodules:
         return _importlib.import_module(f"sklearn.{name}")
+    elif name in _estimator_to_module:
+        module = _importlib.import_module(_estimator_to_module[name])
+        estimator = getattr(module, name)
+        # Cache on the module so subsequent accesses bypass `__getattr__`.
+        globals()[name] = estimator
+        return estimator
     else:
         try:
             return globals()[name]
