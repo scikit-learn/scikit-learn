@@ -3587,6 +3587,11 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     # contain strings, which have no place in a strict Array API namespace,
     # so they stay in their own namespace until encoded to plain integers.
     xp, _, device = get_namespace_and_device(pred_decision)
+    # `pred_decision` is documented as floats; an integer dtype would break
+    # the `-inf` sentinel used below to mask out the true class's score.
+    pred_decision = xp.astype(
+        pred_decision, _find_matching_floating_dtype(pred_decision, xp=xp)
+    )
     sample_weight = move_to(sample_weight, xp=xp, device=device)
 
     xp_labels, _ = get_namespace(labels if labels is not None else y_true)
