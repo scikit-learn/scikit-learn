@@ -75,10 +75,8 @@
   filter: grayscale(100%) opacity(60%);
 }
 
-/* Keep this separate from the next selector */
-.features .copy-paste-icon:focus {
-  filter:none;
-}
+/* The grayscale filter above also applies to the focus ring. Reset it.
+  The copy-paste buttons ring's style lives in estimator.css. */
 .features .copy-paste-icon:focus-visible {
   filter: none;
 }

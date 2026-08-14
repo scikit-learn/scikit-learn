@@ -45,6 +45,11 @@
   outline-offset: -2px;
 }
 
+/* Focus ring sits outside copy-paste icon */
+.sk-global .copy-paste-icon:focus-visible {
+    outline-offset: 2px;
+}
+
 .sk-global div.sk-dashed-wrapped {
   border: 1px dashed var(--sklearn-color-line);
   margin: 0 0.4em 0.5em 0.4em;

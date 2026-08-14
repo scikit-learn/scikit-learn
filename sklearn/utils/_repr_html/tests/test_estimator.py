@@ -47,7 +47,7 @@ def dummy_function(x, y):
     return x + y  # pragma: nocover
 
 
-@pytest.mark.parametrize("checked", [True, ""])
+@pytest.mark.parametrize("checked", [True, False])
 def test_write_label_html(checked):
     # Test checking logic and labeling
     name = "LogisticRegression"

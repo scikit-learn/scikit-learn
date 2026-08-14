@@ -98,6 +98,25 @@ function copyFeatureNamesToClipboard(element) {
         });
     return false;
 }
+
+/* Prevent Enter/Space keydown events from bubbling up to the notebook
+ * which would steal focus away from the diagram.
+ * Escape dismisses focus-shown tooltips (WCAG 1.4.13).
+ */
+document.querySelectorAll(
+    '.sk-top-container:not([data-sk-keydown-bound])'
+).forEach(function(container) {
+    container.dataset.skKeydownBound = 'true';
+    container.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.stopPropagation();
+        } else if (event.key === 'Escape') {
+            event.target.blur();
+            event.stopPropagation();
+        }
+    });
+});
+
 /**
  * Adapted from Skrub
  * https://github.com/skrub-data/skrub/blob/403466d1d5d4dc76a7ef569b3f8228db59a31dc3/skrub/_reporting/_data/templates/report.js#L789
@@ -156,24 +175,6 @@ function detectTheme(element) {
     // Fallback to system preference
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
-
-/* Prevent Enter/Space keydown events from bubbling up to the notebook
- * which would steal focus away from the diagram.
- * Escape dismisses focus-shown tooltips (WCAG 1.4.13).
- */
-document.querySelectorAll(
-    '.sk-top-container:not([data-sk-keydown-bound])'
-).forEach(function(container) {
-    container.dataset.skKeydownBound = 'true';
-    container.addEventListener('keydown', function(event) {
-        if (event.key === 'Enter' || event.key === ' ') {
-            event.stopPropagation();
-        } else if (event.key === 'Escape') {
-            event.target.blur();
-            event.stopPropagation();
-        }
-    });
-});
 
 function forceTheme(elementId) {
     const estimatorElement = document.querySelector(`#${elementId}`);

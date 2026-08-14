@@ -60,7 +60,11 @@ def local_server(request):
 
 
 def _make_page(body):
-    """Helper to create an HTML page that includes `estimator.js` and the given body."""
+    """Helper to create an HTML page that includes `estimator.js` and the given body.
+
+    The script is placed after the body, as `estimator_html_repr` does, because
+    `estimator.js` registers listeners on elements that must already exist.
+    """
 
     js_path = Path(__file__).parent.parent / "estimator.js"
     with open(js_path, "r", encoding="utf-8") as f:
@@ -68,11 +72,9 @@ def _make_page(body):
 
     return f"""
     <html>
-      <head>
-      <script>{script}</script>
-      </head>
       <body>
         {body}
+        <script>{script}</script>
       </body>
     </html>
     """
@@ -183,3 +185,32 @@ def test_copy_paste_feature_names(page, local_server):
     clipboard_content = page.evaluate("navigator.clipboard.readText()")
 
     assert clipboard_content == '[\n    "feature1",\n    "feature2",\n]'
+
+
+def test_keydown_does_not_escape_the_diagram(page, local_server):
+    """Test that `Enter`, `Space` and `Escape` do not bubble out of the diagram.
+
+    Notebooks bind those keys globally, so letting them through would steal the
+    focus away from the diagram. `Escape` additionally blurs the focused element
+    to dismiss the tooltips that are shown on focus.
+    """
+    url, set_html_response = local_server
+
+    set_html_response(
+        _make_page('<div class="sk-top-container"><button id="inside"></button></div>')
+    )
+    page.goto(url)
+
+    # Record the keys reaching the document, i.e. what the notebook would see.
+    page.evaluate(
+        "window.keysReachingDocument = [];"
+        "document.addEventListener('keydown',"
+        " event => window.keysReachingDocument.push(event.key));"
+    )
+
+    page.locator("#inside").focus()
+    for key in ["Enter", " ", "Escape"]:
+        page.keyboard.press(key)
+
+    assert page.evaluate("window.keysReachingDocument") == []
+    assert page.evaluate("document.activeElement === document.body")
