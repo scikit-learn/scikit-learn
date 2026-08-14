@@ -243,6 +243,19 @@ import numpy as np
 from libc.math cimport exp, fabs, log, log1p, pow
 from libc.stdlib cimport malloc, free
 
+from sklearn.utils._openmp_helpers cimport _use_threads_for_workload
+from sklearn.utils._openmp_helpers import _min_instructions_per_thread
+
+
+# Read once at import time rather than on every call; see
+# _min_instructions_per_thread's docstring for the env var it honors.
+cdef long long MIN_INSTRUCTIONS_PER_THREAD = _min_instructions_per_thread()
+
+# Rough, loss-agnostic cost in simple ops of evaluating one of the per-sample
+# loss/gradient/hessian closures below (a handful of arithmetic ops for the
+# cheapest losses, more for those relying on log/exp/pow).
+cdef int LOSS_OPS_PER_SAMPLE = 10
+
 
 # -------------------------------------
 # Helper functions
@@ -1041,15 +1054,20 @@ cdef class {{name}}(CyLossFunction):
         cdef:
             int i
             int n_samples = y_true.shape[0]
+            bint use_threads = _use_threads_for_workload(
+                n_threads, n_samples, LOSS_OPS_PER_SAMPLE, MIN_INSTRUCTIONS_PER_THREAD
+            )
 
         if sample_weight is None:
             for i in prange(
-                n_samples, schedule='static', nogil=True, num_threads=n_threads
+                n_samples, schedule='static', nogil=True, num_threads=n_threads,
+                use_threads_if=use_threads
             ):
                 loss_out[i] = {{closs}}(y_true[i], raw_prediction[i]{{with_param}})
         else:
             for i in prange(
-                n_samples, schedule='static', nogil=True, num_threads=n_threads
+                n_samples, schedule='static', nogil=True, num_threads=n_threads,
+                use_threads_if=use_threads
             ):
                 loss_out[i] = sample_weight[i] * {{closs}}(y_true[i], raw_prediction[i]{{with_param}})
 
@@ -1067,17 +1085,22 @@ cdef class {{name}}(CyLossFunction):
             int i
             int n_samples = y_true.shape[0]
             double_pair dbl2
+            bint use_threads = _use_threads_for_workload(
+                n_threads, n_samples, LOSS_OPS_PER_SAMPLE, MIN_INSTRUCTIONS_PER_THREAD
+            )
 
         if sample_weight is None:
             for i in prange(
-                n_samples, schedule='static', nogil=True, num_threads=n_threads
+                n_samples, schedule='static', nogil=True, num_threads=n_threads,
+                use_threads_if=use_threads
             ):
                 dbl2 = {{closs_grad}}(y_true[i], raw_prediction[i]{{with_param}})
                 loss_out[i] = dbl2.val1
                 gradient_out[i] = dbl2.val2
         else:
             for i in prange(
-                n_samples, schedule='static', nogil=True, num_threads=n_threads
+                n_samples, schedule='static', nogil=True, num_threads=n_threads,
+                use_threads_if=use_threads
             ):
                 dbl2 = {{closs_grad}}(y_true[i], raw_prediction[i]{{with_param}})
                 loss_out[i] = sample_weight[i] * dbl2.val1
@@ -1096,15 +1119,20 @@ cdef class {{name}}(CyLossFunction):
         cdef:
             int i
             int n_samples = y_true.shape[0]
+            bint use_threads = _use_threads_for_workload(
+                n_threads, n_samples, LOSS_OPS_PER_SAMPLE, MIN_INSTRUCTIONS_PER_THREAD
+            )
 
         if sample_weight is None:
             for i in prange(
-                n_samples, schedule='static', nogil=True, num_threads=n_threads
+                n_samples, schedule='static', nogil=True, num_threads=n_threads,
+                use_threads_if=use_threads
             ):
                 gradient_out[i] = {{cgrad}}(y_true[i], raw_prediction[i]{{with_param}})
         else:
             for i in prange(
-                n_samples, schedule='static', nogil=True, num_threads=n_threads
+                n_samples, schedule='static', nogil=True, num_threads=n_threads,
+                use_threads_if=use_threads
             ):
                 gradient_out[i] = sample_weight[i] * {{cgrad}}(y_true[i], raw_prediction[i]{{with_param}})
 
@@ -1121,17 +1149,22 @@ cdef class {{name}}(CyLossFunction):
             int i
             int n_samples = y_true.shape[0]
             double_pair dbl2
+            bint use_threads = _use_threads_for_workload(
+                n_threads, n_samples, LOSS_OPS_PER_SAMPLE, MIN_INSTRUCTIONS_PER_THREAD
+            )
 
         if sample_weight is None:
             for i in prange(
-                n_samples, schedule='static', nogil=True, num_threads=n_threads
+                n_samples, schedule='static', nogil=True, num_threads=n_threads,
+                use_threads_if=use_threads
             ):
                 dbl2 = {{cgrad_hess}}(y_true[i], raw_prediction[i]{{with_param}})
                 gradient_out[i] = dbl2.val1
                 hessian_out[i] = dbl2.val2
         else:
             for i in prange(
-                n_samples, schedule='static', nogil=True, num_threads=n_threads
+                n_samples, schedule='static', nogil=True, num_threads=n_threads,
+                use_threads_if=use_threads
             ):
                 dbl2 = {{cgrad_hess}}(y_true[i], raw_prediction[i]{{with_param}})
                 gradient_out[i] = sample_weight[i] * dbl2.val1

@@ -1762,3 +1762,28 @@ def test_pandas_nullable_dtype():
 
     clf = HistGradientBoostingClassifier()
     clf.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "HistGradientBoosting",
+    [HistGradientBoostingClassifier, HistGradientBoostingRegressor],
+)
+def test_max_features_less_than_one_does_not_crash(HistGradientBoosting):
+    # Non regression test: `Splitter.find_best_split` allocates a
+    # `split_infos` buffer sized for all allowed features, but used to only
+    # populate the first `n_subsampled_features` (< n_allowed_features
+    # whenever `max_features < 1`) entries before scanning the whole buffer
+    # to pick the best split. The unpopulated entries held uninitialized
+    # memory, which could be selected as the "best" split and later crash
+    # `Splitter.split_indices` with
+    # `OverflowError: value too large to convert to unsigned char` when its
+    # garbage `bin_idx` didn't fit in a uint8.
+    rng = np.random.RandomState(0)
+    X = rng.randn(2000, 20)
+    if HistGradientBoosting is HistGradientBoostingClassifier:
+        y = rng.randint(0, 2, size=2000)
+    else:
+        y = rng.randn(2000)
+
+    est = HistGradientBoosting(max_features=0.5, max_iter=50, random_state=0)
+    est.fit(X, y)  # should not raise

@@ -8,6 +8,20 @@ from joblib import cpu_count
 _CPU_COUNTS = {}
 
 
+def _min_instructions_per_thread():
+    """Minimum amount of work (in ~simple-instruction units) that must be
+    available per thread before bothering to parallelize a loop with
+    OpenMP; see ``_use_threads_for_workload`` in ``_openmp_helpers.pxd``.
+
+    Meant to be called once, at import time, by modules that use
+    ``_use_threads_for_workload``, and cached in a module-level constant
+    there. Defaults to 2000 and can be overridden with the
+    ``SKLEARN_MIN_INSTRUCTIONS_PER_THREAD`` environment variable, for
+    experimentation.
+    """
+    return int(os.environ.get("SKLEARN_MIN_INSTRUCTIONS_PER_THREAD", 2000))
+
+
 def _openmp_parallelism_enabled():
     """Determines whether scikit-learn has been built with OpenMP
 
