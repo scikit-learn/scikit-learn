@@ -216,6 +216,7 @@ Metrics
 - :func:`sklearn.metrics.f1_score`
 - :func:`sklearn.metrics.fbeta_score`
 - :func:`sklearn.metrics.hamming_loss`
+- :func:`sklearn.metrics.hinge_loss`
 - :func:`sklearn.metrics.jaccard_score`
 - :func:`sklearn.metrics.log_loss`
 - :func:`sklearn.metrics.matthews_corrcoef` (see :ref:`device_support_for_float64`)

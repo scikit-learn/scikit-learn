@@ -3579,20 +3579,31 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     check_consistent_length(y_true, pred_decision, sample_weight)
     pred_decision = check_array(pred_decision, ensure_2d=False)
     y_true = column_or_1d(y_true)
-    y_true_unique = np.unique(labels if labels is not None else y_true)
+    if labels is not None:
+        labels = column_or_1d(labels)
 
-    if y_true_unique.size > 2:
+    # Array API dispatch follows `pred_decision`, consistent with other
+    # scoring functions: "everything follows y_pred". `y_true`/`labels` may
+    # contain strings, which have no place in a strict Array API namespace,
+    # so they stay in their own namespace until encoded to plain integers.
+    xp, _, device = get_namespace_and_device(pred_decision)
+    sample_weight = move_to(sample_weight, xp=xp, device=device)
+
+    xp_labels, _ = get_namespace(labels if labels is not None else y_true)
+    y_true_unique = xp_labels.unique_values(labels if labels is not None else y_true)
+
+    if y_true_unique.shape[0] > 2:
         if pred_decision.ndim <= 1:
             raise ValueError(
                 "The shape of pred_decision cannot be 1d array"
                 "with a multiclass target. pred_decision shape "
                 "must be (n_samples, n_classes), that is "
-                f"({y_true.shape[0]}, {y_true_unique.size})."
+                f"({y_true.shape[0]}, {y_true_unique.shape[0]})."
                 f" Got: {pred_decision.shape}"
             )
 
         # pred_decision.ndim > 1 is true
-        if y_true_unique.size != pred_decision.shape[1]:
+        if y_true_unique.shape[0] != pred_decision.shape[1]:
             if labels is None:
                 raise ValueError(
                     "Please include all labels in y_true "
@@ -3605,38 +3616,59 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
                     "With a multiclass target, pred_decision "
                     "shape must be "
                     "(n_samples, n_classes), that is "
-                    f"({y_true.shape[0]}, {y_true_unique.size}). "
+                    f"({y_true.shape[0]}, {y_true_unique.shape[0]}). "
                     f"Got: {pred_decision.shape}"
                 )
         if labels is None:
             labels = y_true_unique
         le = LabelEncoder()
         le.fit(labels)
-        y_true = le.transform(y_true)
-        mask = np.ones_like(pred_decision, dtype=bool)
-        mask[np.arange(y_true.shape[0]), y_true] = False
-        margin = pred_decision[~mask]
-        margin -= np.max(pred_decision[mask].reshape(y_true.shape[0], -1), axis=1)
+        y_true_encoded = le.transform(y_true)
+        y_true_encoded = xp.astype(
+            move_to(y_true_encoded, xp=xp, device=device), xp.int64
+        )
+
+        # The Array API standard has no boolean-mask fancy indexing (it would
+        # produce a data-dependent output shape), so the true-class score and
+        # the best-of-the-rest score are each computed with a one-hot mask
+        # instead of `pred_decision[~mask]` / `pred_decision[mask]`.
+        n_classes = pred_decision.shape[1]
+        is_true_class = xp.astype(
+            xpx.one_hot(y_true_encoded, n_classes, xp=xp), xp.bool
+        )
+        zero = xp.asarray(0.0, dtype=pred_decision.dtype, device=device)
+        neg_inf = xp.asarray(-xp.inf, dtype=pred_decision.dtype, device=device)
+
+        true_class_score = xp.sum(xp.where(is_true_class, pred_decision, zero), axis=1)
+        other_class_best_score = xp.max(
+            xp.where(is_true_class, neg_inf, pred_decision), axis=1
+        )
+        margin = true_class_score - other_class_best_score
 
     else:
         # Handles binary class case
         # this code assumes that positive and negative labels
         # are encoded as +1 and -1 respectively
         pred_decision = column_or_1d(pred_decision)
-        pred_decision = np.ravel(pred_decision)
+        pred_decision = xp.reshape(pred_decision, (-1,))
 
         lbin = LabelBinarizer(neg_label=-1)
-        y_true = lbin.fit_transform(y_true)[:, 0]
+        y_true_encoded = lbin.fit_transform(y_true)[:, 0]
+        y_true_encoded = move_to(y_true_encoded, xp=xp, device=device)
+        # LabelBinarizer returns integer +/-1 labels; the Array API standard
+        # (unlike NumPy) disallows implicit int/float type promotion, so an
+        # explicit cast is required before combining with `pred_decision`.
+        y_true_encoded = xp.astype(y_true_encoded, pred_decision.dtype)
 
         try:
-            margin = y_true * pred_decision
+            margin = y_true_encoded * pred_decision
         except TypeError:
             raise TypeError("pred_decision should be an array of floats.")
 
     losses = 1 - margin
     # The hinge_loss doesn't penalize good enough predictions.
-    np.clip(losses, 0, None, out=losses)
-    return float(np.average(losses, weights=sample_weight))
+    losses = xp.clip(losses, 0.0, None)
+    return float(_average(losses, weights=sample_weight, xp=xp))
 
 
 def _one_hot_encoding_binary_target(y_true, pos_label, target_xp, target_device):
