@@ -3581,6 +3581,8 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     y_true = column_or_1d(y_true)
     if labels is not None:
         labels = column_or_1d(labels)
+    if sample_weight is not None:
+        sample_weight = column_or_1d(sample_weight)
 
     # Array API dispatch follows `pred_decision`, consistent with other
     # scoring functions: "everything follows y_pred". `y_true`/`labels` may
