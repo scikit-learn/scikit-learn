@@ -10,7 +10,7 @@ from scipy.optimize import minimize
 
 from sklearn import datasets, linear_model, metrics
 from sklearn.base import ClassifierMixin, clone, is_classifier
-from sklearn.datasets import make_blobs, make_classification, make_regression
+from sklearn.datasets import make_blobs
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.kernel_approximation import Nystroem
 from sklearn.linear_model import _sgd_fast as sgd_fast
@@ -2408,9 +2408,7 @@ class MyPassiveAggressive(ClassifierMixin):
 
 
 @pytest.mark.parametrize("csr_container", [None, *CSR_CONTAINERS])
-@pytest.mark.parametrize(
-    ["loss", "lr"], [("hinge", "pa1"), ("squared_hinge", "pa2")]
-)
+@pytest.mark.parametrize(["loss", "lr"], [("hinge", "pa1"), ("squared_hinge", "pa2")])
 def test_sgd_pa_classifier_correctness(loss, lr, csr_container):
     """SGDClassifier with PA learning rates must match the reference PA impl."""
     iris = datasets.load_iris()
@@ -2427,8 +2425,13 @@ def test_sgd_pa_classifier_correctness(loss, lr, csr_container):
     ref.fit(data, y_bin)
 
     sgd = linear_model.SGDClassifier(
-        loss="hinge", penalty=None, learning_rate=lr,
-        eta0=1.0, max_iter=4, shuffle=False, tol=None,
+        loss="hinge",
+        penalty=None,
+        learning_rate=lr,
+        eta0=1.0,
+        max_iter=4,
+        shuffle=False,
+        tol=None,
     )
     sgd.fit(data, y_bin)
 
@@ -2456,8 +2459,13 @@ def test_sgd_pa_regressor_correctness(loss, lr, csr_container):
     ref.fit(data, y_bin)
 
     sgd = linear_model.SGDRegressor(
-        loss="epsilon_insensitive", penalty=None, learning_rate=lr,
-        eta0=1.0, max_iter=4, shuffle=False, tol=None,
+        loss="epsilon_insensitive",
+        penalty=None,
+        learning_rate=lr,
+        eta0=1.0,
+        max_iter=4,
+        shuffle=False,
+        tol=None,
     )
     sgd.fit(data, y_bin)
 
