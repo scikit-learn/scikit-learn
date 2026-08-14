@@ -213,13 +213,13 @@ class TreeGrower:
         The shrinkage parameter to apply to the leaves values, also known as
         learning rate.
     n_threads : int, default=None
-        Number of OpenMP threads to use. If explicitly set, or if the
-        ``OMP_NUM_THREADS`` environment variable is set, `_openmp_effective_n_threads`
-        is called to determine the effective number of threads to use, which takes
-        cgroups CPU quotas into account (see its docstring for details). Otherwise,
-        the number of threads is chosen with a heuristic based on the number of
-        features and samples, to avoid parallelizing workloads that are too small
-        to benefit from it.
+        Number of OpenMP threads to use. If None, `_openmp_effective_n_threads` is
+        called to determine the effective number of threads to use, which takes
+        cgroups CPU quotas into account. See the docstring of
+        `_openmp_effective_n_threads` for details. Callers that want to avoid
+        parallelizing workloads that are too small to benefit from it (e.g. few
+        features or samples) should size ``n_threads`` themselves before calling
+        this class.
 
     Attributes
     ----------

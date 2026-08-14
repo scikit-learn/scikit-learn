@@ -22,6 +22,7 @@ from sklearn.ensemble._hist_gradient_boosting.common import (
 )
 from sklearn.utils import check_array, check_random_state
 from sklearn.utils._bitset import set_bitset_memoryview
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.stats import _weighted_percentile_1d_sorted
 from sklearn.utils.validation import check_is_fitted
@@ -288,12 +289,13 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         n_features_to_bin = sum(
             not self.is_categorical_[f_idx] for f_idx in range(n_features)
         )
+        max_n_threads = _openmp_effective_n_threads(self.n_threads)
         n_threads = max(
             1,
             min(
                 # starting joblib threads is expensive
-                round(n_features_to_bin * X.shape[0]) // 1e6,
-                self.n_threads,
+                (n_features_to_bin * X.shape[0]) // 1_000_000,
+                max_n_threads,
             ),
         )
 
@@ -350,7 +352,8 @@ class _BinMapper(TransformerMixin, BaseEstimator):
                 "to transform()".format(self.n_bins_non_missing_.shape[0], X.shape[1])
             )
 
-        n_threads = max(1, min(round(X.shape[0] / 2000), self.n_threads))
+        max_n_threads = _openmp_effective_n_threads(self.n_threads)
+        n_threads = max(1, min(round(X.shape[0] / 2000), max_n_threads))
 
         binned = np.zeros_like(X, dtype=X_BINNED_DTYPE, order="F")
         _map_to_bins(
