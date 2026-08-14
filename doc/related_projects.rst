@@ -50,6 +50,12 @@ enhance the functionality of scikit-learn's estimators.
   A Python package for AutoML on Tabular Data with Feature Engineering,
   Hyper-Parameters Tuning, Explanations and Automatic Documentation.
 
+- `BayesHalvingSearchCV <https://github.com/rpcoelho17/PatternSearch_HyperParam_Opt__V2>`_
+  Two scikit-learn-compatible hyperparameter search estimators, a Bayesian
+  (Gaussian Process) search and a Hooke-Jeeves pattern search, that grow
+  their data budget as the search converges; drop-in replacements for
+  ``GridSearchCV``/``RandomizedSearchCV``.
+
 **Experimentation and model registry frameworks**
 
 - `MLFlow <https://mlflow.org/>`_ An open source platform to manage the ML
