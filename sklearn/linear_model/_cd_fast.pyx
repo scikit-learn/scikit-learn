@@ -2939,7 +2939,11 @@ def enet_coordinate_descent_multinomial(
                         # Update residual
                         # R -= (w[j] - w_j) * X[:,j] -> (w[kj] - w_kj) * A[:,kj]
                         # We could call update_LD_R, but we use the fact that we can
-                        # postpone certain operations to gain some performance.
+                        # postpone certain operations to gain some performance:
+                        # We only update LD_R[:, k] which is needed for the next
+                        # coordinate iteration j, but we postpone LD_R[:, l] with l != k
+                        # to after the end of the j-loop (features), at the end of the
+                        # k-loop (classes). This is one main reason for the loop order.
                         if not fit_intercept:
                             # Update rotated residual LD_R instead of R
                             # L sqrt(D) R -= (w[kj] - w_kj) * LDL[:, k] * X[:, j]
@@ -2987,42 +2991,72 @@ def enet_coordinate_descent_multinomial(
                             # numpy faster version:
                             #   LD_R -= proba * np.sum(xx, axis=1)[:, None]
                             #   LD_R += xx
+                            # But instead of materializing the dense (n_samples,
+                            # n_classes) array xx for every single coordinate update j
+                            # (which needs an O(n_samples * n_classes) memset and
+                            # fill each time), we exploit that H00_pinv_H0[:, jn + k]
+                            # does not depend on the sample i. This decomposes xx's
+                            # column sum, x_k = np.sum(xx, axis=1), into
+                            #   x_k = d_w_j * (X[:, j] * sw_proba[:, k] - cross)
+                            #   cross = sw_proba[:, :-1] @ H00_pinv_H0[:, jn + k]
+                            # On top, cross can be computed with a single BLAS
+                            # matrix-vector product.
+                            # Only the accumulator tt (needed for the update of
+                            # LD_R[:, l], classes l != k, and postponed to after the
+                            # whole coordinate loop) still needs an O(n_samples) update
+                            # per class l, done via BLAS axpy instead of a hand written
+                            # for loop.
+                            # Note that tt[:, k] is never read in the postponed update
+                            # of LD_R[:, l] which always excludes l == k. We therefore
+                            # reused it below as scratch space.
+                            d_w_j = w_kj - W_[k, j]
 
-                            # x_k[:] = 0
-                            memset(&x_k_[0], 0, n_samples * sizeof(float64_t))
-                            # xx[:, :] = 0
-                            memset(&xx_[0, 0], 0, n_samples * n_classes * sizeof(float64_t))
-                            # xx[:, k] += X[:, j]
+                            # tt[:, k] = d_w_j * X[:, j] * sw_proba[:, k]  (scratch)
                             if not X_is_sparse:
-                                _copy(n_samples, &X_[0, j], 1, &xx_[0, k], 1)
+                                for i in range(n_samples):
+                                    tt_[i, k] = d_w_j * X_[i, j] * sw_proba_[i, k]
                             else:
+                                memset(&tt_[0, k], 0, n_samples * sizeof(float64_t))
                                 for i_ind in range(startptr, endptr):
                                     i = X_indices[i_ind]
-                                    xx_[i, k] = X_data[i_ind]
-                            d_w_j = w_kj - W_[k, j]
+                                    tt_[i, k] = d_w_j * X_data[i_ind] * sw_proba_[i, k]
+                            if k < n_classes - 1:
+                                tmp = -d_w_j * H00_pinv_H0_[k, jn + k]
+                                # tt[:, k] += tmp * sw_proba[:, k]
+                                _axpy(n_samples, tmp, &sw_proba_[0, k], 1, &tt_[0, k], 1)
+
+                            # cross = sw_proba[:, :-1] @ H00_pinv_H0[:, jn + k]
+                            # we use x_k as buffer to compute cross
+                            _gemv(
+                                ColMajor, NoTrans, n_samples, n_classes - 1,
+                                1.0, &sw_proba_[0, 0], n_samples,
+                                &H00_pinv_H0_[0, jn + k], 1,
+                                0.0, &x_k_[0], 1,
+                            )
+                            # x_k = d_w_j * (X[:, j] * sw_proba[:, k] - cross)
+                            if not X_is_sparse:
+                                for i in range(n_samples):
+                                    x_k_[i] = d_w_j * (X_[i, j] * sw_proba_[i, k] - x_k_[i])
+                            else:
+                                for i in range(n_samples):
+                                    x_k_[i] = -d_w_j * x_k_[i]
+                                for i_ind in range(startptr, endptr):
+                                    i = X_indices[i_ind]
+                                    x_k_[i] += d_w_j * X_data[i_ind] * sw_proba_[i, k]
+
+                            # Accumulate tt[:, l] for classes l != k (used after the
+                            # whole coordinate loop, in the postponed update).
                             for l in range(n_classes - 1):
-                                tmp = -H00_pinv_H0_[l, jn + k]
-                                for i in range(n_samples):
-                                    xx_[i, l] += tmp
-                                    xx_[i, l] *= d_w_j * sw_proba_[i, l]
-                                    tt_[i, l] += xx_[i, l]
-                                    # LD_R_[i, l] += xx_[i, l]  # postponed
-                                    x_k_[i] += xx_[i, l]  # x_k = np.sum(xx, axis=1)
-                            if k == n_classes - 1:  # H00_pinv_H0[k, :] == 0
-                                l = n_classes - 1
-                                for i in range(n_samples):
-                                    xx_[i, l] *= d_w_j * sw_proba_[i, l]
-                                    tt_[i, l] += xx_[i, l]
-                                    # LD_R_[i, l] += xx_[i, l]  # postponed
-                                    x_k_[i] += xx_[i, l]  # x_k = np.sum(xx, axis=1)
-                            # Postpone updates of LD_R for classes != k.
+                                if l == k:
+                                    continue
+                                tmp = -d_w_j * H00_pinv_H0_[l, jn + k]
+                                # tt[:, l] += tmp * sw_proba[:, l]
+                                _axpy(n_samples, tmp, &sw_proba_[0, l], 1, &tt_[0, l], 1)
+
                             for i in range(n_samples):
-                                LD_R_[i, k] += xx_[i, k] - proba_[i, k] * x_k_[i]
+                                LD_R_[i, k] += tt_[i, k] - proba_[i, k] * x_k_[i]
                                 t_k_[i] += x_k_[i]
-                            # The following is postponed.
-                            # for l in range(n_classes):
-                            #     for i in range(n_samples):
-                            #         LD_R_[i, l] -= proba_[i, l] * x_k_[i]
+                            # Postpone updates of LD_R for classes != k.
 
                     # time_r += time(NULL) - tic
 
@@ -3038,14 +3072,16 @@ def enet_coordinate_descent_multinomial(
                     if not fit_intercept:
                         # We accumulated t_k_ = (X @ (w_k - W[k, :])) * sw_proba[:, k]
                         for l in range(n_classes):
-                            if l != k:
-                                for i in range(n_samples):
-                                    LD_R_[i, l] -= proba_[i, l] * t_k_[i]
+                            if l == k:
+                                continue
+                            for i in range(n_samples):
+                                LD_R_[i, l] -= proba_[i, l] * t_k_[i]
                     else:
                         for l in range(n_classes):
-                            if l != k:
-                                for i in range(n_samples):
-                                    LD_R_[i, l] += tt_[i, l] - proba_[i, l] * t_k_[i]
+                            if l == k:
+                                continue
+                            for i in range(n_samples):
+                                LD_R_[i, l] += tt_[i, l] - proba_[i, l] * t_k_[i]
 
                 # time_r += time(NULL) - tic
 
