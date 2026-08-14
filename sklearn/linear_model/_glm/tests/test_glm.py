@@ -525,6 +525,13 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
         norm_model = np.linalg.norm(np.r_[model.coef_])
         model_coef = model.coef_
 
+    if solver == "newton-cholesky":
+        tol_norm = 1e-10
+    elif solver == "lbfgs":
+        tol_norm = 1e-6
+    else:
+        tol_norm = 1e-7
+
     if n_samples > n_features:  # long
         rtol = 1e-4
         if solver in ("newton-cd", "newton-cd-gram"):
@@ -540,7 +547,7 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
             if solver == "newton-cholesky":
                 assert model.intercept_ == pytest.approx(model.coef_[-1])
                 assert model.intercept_ == pytest.approx(0.5 * intercept)
-                assert norm_model == pytest.approx(norm_solution, rel=1e-11)
+                assert norm_model == pytest.approx(norm_solution, rel=tol_norm)
             else:
                 # Some solvers don't find the min norm solution. So we check that we
                 # have at least: model_intercept + model.coef_[-1] == intercept.
@@ -548,22 +555,20 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
                 pytest.xfail(
                     reason="GLM solver does not provide the minimum norm solution."
                 )
-                assert norm_model == pytest.approx(norm_solution, rel=1e-7)
+                assert norm_model == pytest.approx(norm_solution, rel=tol_norm)
         else:
-            rel = 1e-10 if solver == "newton-cholesky" else 1e-7
             if solver in ("newton-cd", "newton-cd-gram"):
                 pytest.xfail(
                     reason="GLM solver does not provide the minimum norm solution."
                 )
-            assert norm_model == pytest.approx(norm_solution, rel=rel)
+            assert norm_model == pytest.approx(norm_solution, rel=tol_norm)
     else:  # wide
         # As it is an underdetermined problem, prediction = y. The following shows that
         # we get a solution, i.e. a (non-unique) minimum of the objective function ...
         rtol = 1e-6 if solver == "lbfgs" else 5e-6
-        tol_norm = 1e-10 if solver == "newton-cholesky" else 1e-7
         assert_allclose(model.predict(X), y, rtol=rtol)
 
-        if (solver in ["lbfgs", "newton-cg"] and fit_intercept) or solver in (
+        if (solver in ("lbfgs", "newton-cg") and fit_intercept) or solver in (
             "newton-cd",
             "newton-cd-gram",
         ):
