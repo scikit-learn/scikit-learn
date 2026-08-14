@@ -22,7 +22,6 @@ from sklearn.ensemble._hist_gradient_boosting.common import (
 )
 from sklearn.utils import check_array, check_random_state
 from sklearn.utils._bitset import set_bitset_memoryview
-from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.stats import _weighted_percentile_1d_sorted
 from sklearn.utils.validation import check_is_fitted
@@ -286,7 +285,19 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         self.bin_thresholds_ = [None] * n_features
         n_bins_non_missing = [None] * n_features
 
-        non_cat_thresholds = Parallel(n_jobs=self.n_threads, backend="threading")(
+        n_features_to_bin = sum(
+            not self.is_categorical_[f_idx] for f_idx in range(n_features)
+        )
+        n_threads = max(
+            1,
+            min(
+                # starting joblib threads is expensive
+                round(n_features_to_bin * X.shape[0]) // 1e6,
+                self.n_threads,
+            ),
+        )
+
+        non_cat_thresholds = Parallel(n_jobs=n_threads, backend="threading")(
             delayed(_find_binning_thresholds)(
                 X[:, f_idx], max_bins, sample_weight=sample_weight
             )
@@ -339,7 +350,8 @@ class _BinMapper(TransformerMixin, BaseEstimator):
                 "to transform()".format(self.n_bins_non_missing_.shape[0], X.shape[1])
             )
 
-        n_threads = _openmp_effective_n_threads(self.n_threads)
+        n_threads = max(1, min(round(X.shape[0] / 2000), self.n_threads))
+
         binned = np.zeros_like(X, dtype=X_BINNED_DTYPE, order="F")
         _map_to_bins(
             X,

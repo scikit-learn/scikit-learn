@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import itertools
+import math
 from abc import ABC, abstractmethod
 from contextlib import contextmanager, nullcontext, suppress
 from functools import partial
@@ -523,7 +524,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         # `_openmp_effective_n_threads` is used to take cgroups CPU quotes
         # into account when determine the maximum number of threads to use.
-        n_threads = _openmp_effective_n_threads()
+        max_n_threads = _openmp_effective_n_threads()
 
         if isinstance(self.loss, str):
             self._loss = self._get_loss(sample_weight=sample_weight)
@@ -598,7 +599,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             is_categorical=self._is_categorical_remapped,
             known_categories=known_categories,
             random_state=self._random_seed,
-            n_threads=n_threads,
+            n_threads=max_n_threads,
         )
         X_binned_train = self._bin_data(
             X_train, sample_weight_train, is_training_data=True
@@ -610,6 +611,30 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         else:
             X_binned_val = None
 
+        # Use the same heuristic as TreeGrower to pick the number of threads:
+        # using the maximum number of available threads regardless of the size
+        # of the workload can be counter-productive (see _n_threads_for_grower).
+        # This value is reused for every step of the boosting loop (gradient
+        # and hessian computation, tree growing, updating predictions, etc.)
+        # so that threads are not spun up and down with a different count at
+        # each step.
+        # Heuristic number of threads to use for growing a single tree.
+
+        """
+        Using the maximum number of available threads regardless of the size of
+        the workload can be counter-productive: parallelizing over very few
+        features or samples adds thread-management overhead that outweighs the
+        benefit. This balances ``max_n_threads`` against ``n_features`` (so that
+        threads are not left idle or unevenly loaded) and against ``n_samples``
+        (so that small datasets use fewer threads).
+        """
+        n_samples, n_features = X_binned_train.shape
+        heuristic_n_threads = max(
+            n_features / math.ceil(n_features / max_n_threads),
+            math.log10(n_samples) * 2 - 6,
+        )
+        n_threads = min(max_n_threads, max(1, round(heuristic_n_threads)))
+
         # Uses binned data to check for missing values
         has_missing_values = (
             (X_binned_train == self._bin_mapper.missing_values_bin_idx_)
@@ -620,7 +645,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if self.verbose:
             print("Fitting gradient boosted rounds:")
 
-        n_samples = X_binned_train.shape[0]
         scoring_is_predefined_string = self.scoring in _SCORERS
         need_raw_predictions_val = X_binned_val is not None and (
             scoring_is_predefined_string or self.scoring == "loss"

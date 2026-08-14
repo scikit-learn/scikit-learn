@@ -8,9 +8,7 @@ the gradients and hessians of the training data.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import math
 import numbers
-import os
 from heapq import heappop, heappush
 from timeit import default_timer as time
 
@@ -26,23 +24,6 @@ from sklearn.ensemble._hist_gradient_boosting.predictor import TreePredictor
 from sklearn.ensemble._hist_gradient_boosting.splitting import Splitter
 from sklearn.utils._bitset import set_raw_bitset_from_binned_bitset
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
-
-
-def _n_threads_for_grower(n_features, n_samples, max_n_threads):
-    """Heuristic number of threads to use for growing a single tree.
-
-    Using the maximum number of available threads regardless of the size of
-    the workload can be counter-productive: parallelizing over very few
-    features or samples adds thread-management overhead that outweighs the
-    benefit. This balances ``max_n_threads`` against ``n_features`` (so that
-    threads are not left idle or unevenly loaded) and against ``n_samples``
-    (so that small datasets use fewer threads).
-    """
-    n_threads = max(
-        n_features / math.ceil(n_features / max_n_threads),
-        math.log10(n_samples) * 2 - 6,
-    )
-    return int(min(max_n_threads, max(1, round(n_threads))))
 
 
 class TreeNode:
@@ -290,15 +271,7 @@ class TreeGrower:
             min_gain_to_split,
             min_hessian_to_split,
         )
-        max_n_threads = _openmp_effective_n_threads(n_threads)
-        if n_threads is None and os.environ.get("OMP_NUM_THREADS") is None:
-            n_threads = _n_threads_for_grower(
-                n_features=X_binned.shape[1],
-                n_samples=X_binned.shape[0],
-                max_n_threads=max_n_threads,
-            )
-        else:
-            n_threads = max_n_threads
+        n_threads = n_threads or _openmp_effective_n_threads()
 
         if n_bins_non_missing is None:
             n_bins_non_missing = n_bins - 1
