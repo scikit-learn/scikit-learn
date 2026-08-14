@@ -201,7 +201,7 @@ def test_keydown_does_not_escape_the_diagram(page, local_server):
     )
     page.goto(url)
 
-    # Record the keys reaching the document, i.e. what the notebook would see.
+    # Record the keys reaching the document (what the notebook sees).
     page.evaluate(
         "window.keysReachingDocument = [];"
         "document.addEventListener('keydown',"
@@ -213,4 +213,35 @@ def test_keydown_does_not_escape_the_diagram(page, local_server):
         page.keyboard.press(key)
 
     assert page.evaluate("window.keysReachingDocument") == []
+    # when nothing is focused, the browser reports document.activeElement=<body>
+    # blur() is used in estimator.js to remove focus of a focused element
+    # so, the following is testing event.target.blur() run after Escape
     assert page.evaluate("document.activeElement === document.body")
+
+
+def test_keydown_listener_is_added_only_once(page, local_server):
+    """Test that running `estimator.js` twice does not add a second listener.
+
+    `estimator.js` is inlined in every estimator repr, so it runs once per
+    diagram shown in a notebook, on a page that already holds the other ones.
+    """
+    url, set_html_response = local_server
+
+    set_html_response(_make_page('<div class="sk-top-container"></div>'))
+    page.goto(url)
+
+    # Count the listeners added to the container from now on.
+    page.evaluate(
+        "() => {"
+        "    window.listenersAdded = 0;"
+        "    const container = document.querySelector('.sk-top-container');"
+        "    const addEventListener = container.addEventListener.bind(container);"
+        "    container.addEventListener = function(...args) {"
+        "        window.listenersAdded++;"
+        "        addEventListener(...args);"
+        "    };"
+        "}"
+    )
+    page.add_script_tag(path=str(Path(__file__).parent.parent / "estimator.js"))
+
+    assert page.evaluate("window.listenersAdded") == 0
