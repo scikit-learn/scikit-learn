@@ -25,7 +25,7 @@ is always controlled by environment variables or `threadpoolctl` as explained be
 Note that some estimators can leverage all three kinds of parallelism at different
 points of their training and prediction methods.
 
-We describe these 3 types of parallelism in the following subsections in more details.
+We describe these 3 types of parallelism in the following subsections in more detail.
 
 Higher-level parallelism with joblib
 ....................................
