@@ -564,7 +564,7 @@ cdef class Splitter:
 
             # split_info_idx is index of split_infos of size n_allowed_features.
             # features_idx is the index of the feature column in X.
-            for split_info_idx in prange(n_subsampled_features, schedule='static',
+            for split_info_idx in prange(n_allowed_features, schedule='static',
                                          num_threads=n_threads,
                                          use_threads_if=use_threads):
                 if has_interaction_cst:
