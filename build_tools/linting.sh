@@ -54,6 +54,21 @@ else
     global_status=1
 fi
 
+# We pass the tracked .rst files explicitly rather than a directory, because
+# sphinx-lint walks directories and would otherwise pick up generated files such
+# as the ones in doc/_build or doc/auto_examples in a local checkout.
+
+echo -e "### Running sphinx-lint ###\n"
+git ls-files -z '*.rst' | xargs -0 sphinx-lint
+status=$?
+if [[ $status -eq 0 ]]
+then
+    echo -e "No problem detected by sphinx-lint\n"
+else
+    echo -e "Problems detected by sphinx-lint, please fix them\n"
+    global_status=1
+fi
+
 # For docstrings and warnings of deprecated attributes to be rendered
 # properly, the `deprecated` decorator must come before the `property` decorator
 # (else they are treated as functions)
