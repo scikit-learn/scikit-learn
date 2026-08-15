@@ -54,7 +54,7 @@ enhance the functionality of scikit-learn's estimators.
   Two scikit-learn-compatible hyperparameter search estimators, a Bayesian
   (Gaussian Process) search and a Hooke-Jeeves pattern search, that grow
   their data budget as the search converges; drop-in replacements for
-  ``GridSearchCV``/``RandomizedSearchCV``.
+  `GridSearchCV`/`RandomizedSearchCV`.
 
 **Experimentation and model registry frameworks**
 
