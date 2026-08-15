@@ -159,6 +159,16 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     support_ : ndarray of shape (n_features,)
         The mask of selected features.
 
+    elimination_order_ : list of ndarray
+        The order in which features were eliminated during fitting. Each
+        element is an array of feature indices eliminated at that step.
+        ``elimination_order_[0]`` contains the first features removed and
+        ``elimination_order_[-1]`` contains the last features removed
+        before reaching ``n_features_to_select``. When ``step > 1``,
+        each array may contain multiple indices.
+
+        .. versionadded:: 1.10
+
     See Also
     --------
     RFECV : Recursive feature elimination with built-in cross-validated
@@ -196,6 +206,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
            False])
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
+    >>> len(selector.elimination_order_)
+    5
     """
 
     _parameter_constraints: dict = {
@@ -315,6 +327,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         support_ = np.ones(n_features, dtype=bool)
         ranking_ = np.ones(n_features, dtype=int)
+        elimination_order = []
 
         if step_score:
             self.step_n_features_ = []
@@ -356,7 +369,9 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             # Eliminate the worse features
             threshold = min(step, np.sum(support_) - n_features_to_select)
 
-            support_[features[ranks][:threshold]] = False
+            eliminated = features[ranks][:threshold]
+            elimination_order.append(eliminated)
+            support_[eliminated] = False
             ranking_[np.logical_not(support_)] += 1
 
         # Set final attributes
@@ -373,6 +388,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         self.n_features_ = support_.sum()
         self.support_ = support_
         self.ranking_ = ranking_
+        self.elimination_order_ = elimination_order
 
         return self
 
@@ -721,6 +737,16 @@ class RFECV(RFE):
     support_ : ndarray of shape (n_features,)
         The mask of selected features.
 
+    elimination_order_ : list of ndarray
+        The order in which features were eliminated during the final
+        full-data refit. Each element is an array of feature indices
+        eliminated at that step. ``elimination_order_[0]`` contains
+        the first features removed and ``elimination_order_[-1]``
+        contains the last features removed. When ``step > 1``, each
+        array may contain multiple indices.
+
+        .. versionadded:: 1.10
+
     See Also
     --------
     RFE : Recursive feature elimination.
@@ -921,6 +947,7 @@ class RFECV(RFE):
         self.support_ = rfe.support_
         self.n_features_ = rfe.n_features_
         self.ranking_ = rfe.ranking_
+        self.elimination_order_ = rfe.elimination_order_
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(self._transform(X), y, **routed_params.estimator.fit)
 
