@@ -168,9 +168,7 @@ def get_message(log_file, repo_str, pr_number, sha, run_id, details, versions):
         title="`sphinx-lint`",
         message=(
             "`sphinx-lint` detected issues in the documentation. Please fix them "
-            "locally and push the changes. Here you can see the detected issues. Note "
-            "that the installed `sphinx-lint` version is "
-            f"`sphinx-lint={versions['sphinx-lint']}`."
+            "locally and push the changes. Here you can see the detected issues."
         ),
         details=details,
     )
