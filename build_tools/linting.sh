@@ -54,10 +54,6 @@ else
     global_status=1
 fi
 
-# We pass the tracked .rst files explicitly rather than a directory, because
-# sphinx-lint walks directories and would otherwise pick up generated files such
-# as the ones in doc/_build or doc/auto_examples in a local checkout.
-
 echo -e "### Running sphinx-lint ###\n"
 git ls-files -z '*.rst' | xargs -0 sphinx-lint
 status=$?
