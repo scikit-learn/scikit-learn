@@ -1105,6 +1105,28 @@ def test_radius_neighbors_sort_results(algorithm, metric):
     assert _is_sorted_by_data(graph)
 
 
+@pytest.mark.parametrize("algorithm", ["ball_tree", "kd_tree"])
+def test_radius_neighbors_array_radius_multiple_jobs(algorithm):
+    # Non-regression test for gh-34338: passing a per-sample array of radii
+    # to `radius_neighbors` used to raise a ValueError when `n_jobs > 1`
+    # because the whole (unsliced) radius array was passed to every worker
+    # chunk instead of only the radii for that chunk's query points.
+    n_samples = 10
+    rng = np.random.RandomState(0)
+    X = rng.rand(n_samples, 3)
+    radius = np.full(n_samples, 0.4)
+
+    model = neighbors.NearestNeighbors(algorithm=algorithm, n_jobs=1).fit(X)
+    dist_1job, ind_1job = model.radius_neighbors(X, radius=radius)
+
+    model_n_jobs = neighbors.NearestNeighbors(algorithm=algorithm, n_jobs=2).fit(X)
+    dist_n_jobs, ind_n_jobs = model_n_jobs.radius_neighbors(X, radius=radius)
+
+    for i in range(n_samples):
+        assert_array_equal(np.sort(ind_1job[i]), np.sort(ind_n_jobs[i]))
+        assert_allclose(np.sort(dist_1job[i]), np.sort(dist_n_jobs[i]))
+
+
 def test_RadiusNeighborsClassifier_multioutput():
     # Test k-NN classifier on multioutput data
     rng = check_random_state(0)
