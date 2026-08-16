@@ -222,7 +222,12 @@ def test_multioutput_regression():
 
 def test_regression_metrics_at_limits():
     # Single-sample case
-    # Note: for r2 and d2_tweedie see also test_regression_single_sample
+    # Note: for r2, explained_variance and d2_tweedie see also
+    # test_regression_single_sample. explained_variance_score's numerator is
+    # always exactly 0 for a single sample (the mean-residual centering
+    # cancels it out regardless of whether the prediction is correct), so it
+    # cannot distinguish a perfect prediction from a wrong one at n=1 and,
+    # like r2_score, is not well-defined there.
     assert_almost_equal(mean_squared_error([0.0], [0.0]), 0.0)
     assert_almost_equal(root_mean_squared_error([0.0], [0.0]), 0.0)
     assert_almost_equal(mean_squared_log_error([0.0], [0.0]), 0.0)
@@ -231,7 +236,6 @@ def test_regression_metrics_at_limits():
     assert_almost_equal(mean_absolute_percentage_error([0.0], [0.0]), 0.0)
     assert_almost_equal(median_absolute_error([0.0], [0.0]), 0.0)
     assert_almost_equal(max_error([0.0], [0.0]), 0.0)
-    assert_almost_equal(explained_variance_score([0.0], [0.0]), 1.0)
 
     # Perfect cases
     assert_almost_equal(r2_score([0.0, 1], [0.0, 1]), 1.0)
@@ -492,7 +496,9 @@ def test_regression_custom_weights():
     assert_almost_equal(msle, msle2, decimal=2)
 
 
-@pytest.mark.parametrize("metric", [r2_score, d2_tweedie_score, d2_pinball_score])
+@pytest.mark.parametrize(
+    "metric", [r2_score, explained_variance_score, d2_tweedie_score, d2_pinball_score]
+)
 def test_regression_single_sample(metric):
     y_true = [0]
     y_pred = [1]

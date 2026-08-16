@@ -1,0 +1,5 @@
+- :func:`metrics.explained_variance_score` no longer silently returns ``1.0``
+  for a single-sample input regardless of prediction correctness. It now
+  raises an :class:`~sklearn.exceptions.UndefinedMetricWarning` and returns
+  ``nan``, matching the existing behavior of :func:`metrics.r2_score`.
+  By :user:`agu2347 <agu2347>`.
