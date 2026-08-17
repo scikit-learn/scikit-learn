@@ -1,4 +1,4 @@
-    /*  Authors: The scikit-learn developers
+/*  Authors: The scikit-learn developers
  SPDX-License-Identifier: BSD-3-Clause
 */
 
@@ -101,26 +101,19 @@ function copyFeatureNamesToClipboard(element) {
 
 /* Prevent Enter/Space keydown events from bubbling up to the notebook
  * which would steal focus away from the diagram.
- * Escape hides the tooltips shown on focus without moving the focus, so the
- * focused element stays visible and can still be operated with the keyboard.
- * Moving the focus brings the tooltips back.  WCAG 1.4.13
+ * Escape dismisses focus-shown tooltips (WCAG 1.4.13).
  */
 document.querySelectorAll(
     '.sk-top-container:not([data-sk-keydown-bound])'
 ).forEach(function(container) {
     container.dataset.skKeydownBound = 'true';
-
     container.addEventListener('keydown', function(event) {
         if (event.key === 'Enter' || event.key === ' ') {
             event.stopPropagation();
         } else if (event.key === 'Escape') {
-            container.classList.add('sk-tooltips-dismissed');
+            event.target.blur();
             event.stopPropagation();
         }
-    });
-
-    container.addEventListener('focusin', function() {
-        container.classList.remove('sk-tooltips-dismissed');
     });
 });
 

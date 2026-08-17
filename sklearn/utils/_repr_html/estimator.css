@@ -387,11 +387,6 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
   display: block;
 }
 
-/* Escape hides the tooltip while keeping the focus, see `estimator.js` */
-.sk-tooltips-dismissed .sk-estimator-doc-link:focus-visible span {
-  display: none;
-}
-
 /* Focus ring round and outside of the small circular icon */
 .sk-global .sk-estimator-doc-link:focus-visible {
   border-radius: 1em;
