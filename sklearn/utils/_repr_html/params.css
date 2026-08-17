@@ -42,10 +42,19 @@
 /*
     `table td`is set in notebook with right text-align.
     We need to overwrite it.
+    Padding added here so params without a doc link are
+    look like params with a link.
 */
 .estimator-table table td.param {
     text-align: left;
     position: relative;
+    padding: .5em;
+}
+
+/*
+    When the cell holds a link, the link brings its own padding
+*/
+.estimator-table table td.param:has(a.param-doc-link) {
     padding: 0;
 }
 
