@@ -1,6 +1,5 @@
 - The HTML representation of estimators is now fully keyboard accessible. The
   collapsible estimator boxes are built with native `<details>` and
   `<summary>` elements, so they can be reached and toggled with a keyboard
-  and are announced as disclosure widgets by screen readers. Tooltips are also
-  shown on keyboard focus and can be dismissed with the `Escape` key.
+  and are announced as disclosure widgets by screen readers.
   By :user:`Dea María Léon <deamarialeon>`.
