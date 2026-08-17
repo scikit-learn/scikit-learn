@@ -165,7 +165,9 @@ def test_bin_mapper_random_data(max_bins):
 
 @pytest.mark.parametrize("n_samples, max_bins", [(5, 5), (5, 10), (5, 11), (42, 255)])
 def test_bin_mapper_small_random_data(n_samples, max_bins, global_random_seed):
-    data = np.random.RandomState(global_random_seed).normal(size=n_samples).reshape(-1, 1)
+    data = (
+        np.random.RandomState(global_random_seed).normal(size=n_samples).reshape(-1, 1)
+    )
     assert len(np.unique(data)) == n_samples
 
     # max_bins is the number of bins for non-missing values
@@ -176,6 +178,7 @@ def test_bin_mapper_small_random_data(n_samples, max_bins, global_random_seed):
     assert binned.shape == data.shape
     assert binned.dtype == np.uint8
     assert_array_equal(binned.ravel()[np.argsort(data.ravel())], np.arange(n_samples))
+
 
 @pytest.mark.parametrize(
     "max_bins, n_distinct, multiplier",
@@ -328,6 +331,7 @@ def test_bin_mapper_idempotence(max_bins_small, max_bins_large, global_random_se
     binned_large = mapper_large.fit_transform(binned_small)
     assert_array_equal(binned_small, binned_large)
 
+
 @pytest.mark.parametrize("n_bins", [10, 100, 256])
 @pytest.mark.parametrize("diff", [-5, 0, 5])
 def test_n_bins_non_missing(n_bins, diff):
@@ -343,8 +347,12 @@ def test_n_bins_non_missing(n_bins, diff):
 
 def test_subsample(global_random_seed):
     # Make sure bin thresholds are different when applying subsampling
-    mapper_no_subsample = _BinMapper(subsample=None, random_state=global_random_seed).fit(DATA)
-    mapper_subsample = _BinMapper(subsample=256, random_state=global_random_seed).fit(DATA)
+    mapper_no_subsample = _BinMapper(
+        subsample=None, random_state=global_random_seed
+    ).fit(DATA)
+    mapper_subsample = _BinMapper(subsample=256, random_state=global_random_seed).fit(
+        DATA
+    )
 
     for feature in range(DATA.shape[1]):
         assert not np.allclose(
