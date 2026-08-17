@@ -13,8 +13,9 @@
   --sklearn-color-fitted-level-1: #d4ebff;
   --sklearn-color-fitted-level-2: #b3dbfd;
   --sklearn-color-fitted-level-3: cornflowerblue;
-  /* Focus color */
-  --sklearn-color-focus: #740cd6;
+  /* Chosen to keep at least 3:1 contrast (WCAG 1.4.11) against every
+  background (in both light and dark themes). */
+  --sklearn-color-focus: #8f3ce0;
 }
 
 .sk-global.light {
