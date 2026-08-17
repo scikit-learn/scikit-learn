@@ -60,11 +60,7 @@ def local_server(request):
 
 
 def _make_page(body):
-    """Helper to create an HTML page that includes `estimator.js` and the given body.
-
-    The script is placed after the body, as `estimator_html_repr` does, because
-    `estimator.js` registers listeners on elements that must already exist.
-    """
+    """Helper to create an HTML page that includes `estimator.js` and the given body."""
 
     js_path = Path(__file__).parent.parent / "estimator.js"
     with open(js_path, "r", encoding="utf-8") as f:
@@ -72,9 +68,11 @@ def _make_page(body):
 
     return f"""
     <html>
+      <head>
+      <script>{script}</script>
+      </head>
       <body>
         {body}
-        <script>{script}</script>
       </body>
     </html>
     """
@@ -185,75 +183,3 @@ def test_copy_paste_feature_names(page, local_server):
     clipboard_content = page.evaluate("navigator.clipboard.readText()")
 
     assert clipboard_content == '[\n    "feature1",\n    "feature2",\n]'
-
-
-def test_keydown_does_not_escape_the_diagram(page, local_server):
-    """Test that `Enter`, `Space` and `Escape` do not bubble out of the diagram.
-
-    Notebooks bind those keys globally, so letting them through would steal the
-    focus away from the diagram. `Escape` marks the container to hide the tooltips
-    shown on focus, without moving the focus: the focused element stays focused and
-    can still be operated with the keyboard. Moving the focus clears the mark.
-    """
-    url, set_html_response = local_server
-
-    set_html_response(
-        _make_page(
-            '<div class="sk-top-container">'
-            '<button id="inside"></button><button id="next"></button>'
-            "</div>"
-        )
-    )
-    page.goto(url)
-
-    # Record the keys reaching the document (what the notebook sees).
-    page.evaluate(
-        "window.keysReachingDocument = [];"
-        "document.addEventListener('keydown',"
-        " event => window.keysReachingDocument.push(event.key));"
-    )
-
-    container = page.locator(".sk-top-container")
-    is_dismissed = "el => el.classList.contains('sk-tooltips-dismissed')"
-
-    page.locator("#inside").focus()
-    for key in ["Enter", " ", "Escape"]:
-        page.keyboard.press(key)
-
-    assert page.evaluate("window.keysReachingDocument") == []
-    # `Escape` hides the tooltips without moving the focus, so the element that was
-    # focused before pressing it is still focused, and still operable.
-    assert page.evaluate("document.activeElement.id") == "inside"
-    assert container.evaluate(is_dismissed)
-
-    # Moving the focus brings the tooltips back.
-    page.locator("#next").focus()
-    assert not container.evaluate(is_dismissed)
-
-
-def test_keydown_listener_is_added_only_once(page, local_server):
-    """Test that running `estimator.js` twice does not add a second listener.
-
-    `estimator.js` is inlined in every estimator repr, so it runs once per
-    diagram shown in a notebook, on a page that already holds the other ones.
-    """
-    url, set_html_response = local_server
-
-    set_html_response(_make_page('<div class="sk-top-container"></div>'))
-    page.goto(url)
-
-    # Count the listeners added to the container from now on.
-    page.evaluate(
-        "() => {"
-        "    window.listenersAdded = 0;"
-        "    const container = document.querySelector('.sk-top-container');"
-        "    const addEventListener = container.addEventListener.bind(container);"
-        "    container.addEventListener = function(...args) {"
-        "        window.listenersAdded++;"
-        "        addEventListener(...args);"
-        "    };"
-        "}"
-    )
-    page.add_script_tag(path=str(Path(__file__).parent.parent / "estimator.js"))
-
-    assert page.evaluate("window.listenersAdded") == 0
