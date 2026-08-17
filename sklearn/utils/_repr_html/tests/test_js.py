@@ -191,13 +191,18 @@ def test_keydown_does_not_escape_the_diagram(page, local_server):
     """Test that `Enter`, `Space` and `Escape` do not bubble out of the diagram.
 
     Notebooks bind those keys globally, so letting them through would steal the
-    focus away from the diagram. `Escape` additionally blurs the focused element
-    to dismiss the tooltips that are shown on focus.
+    focus away from the diagram. `Escape` marks the container to hide the tooltips
+    shown on focus, without moving the focus: the focused element stays focused and
+    can still be operated with the keyboard. Moving the focus clears the mark.
     """
     url, set_html_response = local_server
 
     set_html_response(
-        _make_page('<div class="sk-top-container"><button id="inside"></button></div>')
+        _make_page(
+            '<div class="sk-top-container">'
+            '<button id="inside"></button><button id="next"></button>'
+            "</div>"
+        )
     )
     page.goto(url)
 
@@ -208,15 +213,22 @@ def test_keydown_does_not_escape_the_diagram(page, local_server):
         " event => window.keysReachingDocument.push(event.key));"
     )
 
+    container = page.locator(".sk-top-container")
+    is_dismissed = "el => el.classList.contains('sk-tooltips-dismissed')"
+
     page.locator("#inside").focus()
     for key in ["Enter", " ", "Escape"]:
         page.keyboard.press(key)
 
     assert page.evaluate("window.keysReachingDocument") == []
-    # when nothing is focused, the browser reports document.activeElement=<body>
-    # blur() is used in estimator.js to remove focus of a focused element
-    # so, the following is testing event.target.blur() run after Escape
-    assert page.evaluate("document.activeElement === document.body")
+    # `Escape` hides the tooltips without moving the focus, so the element that was
+    # focused before pressing it is still focused, and still operable.
+    assert page.evaluate("document.activeElement.id") == "inside"
+    assert container.evaluate(is_dismissed)
+
+    # Moving the focus brings the tooltips back.
+    page.locator("#next").focus()
+    assert not container.evaluate(is_dismissed)
 
 
 def test_keydown_listener_is_added_only_once(page, local_server):
