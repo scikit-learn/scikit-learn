@@ -5,7 +5,6 @@ from __future__ import annotations
 import operator
 from collections.abc import Callable
 from enum import Enum
-from types import ModuleType
 from typing import TYPE_CHECKING, ClassVar, cast
 
 from ._utils import _compat
@@ -17,7 +16,7 @@ from ._utils._compat import (
     is_writeable_array,
 )
 from ._utils._helpers import meta_namespace
-from ._utils._typing import Array, SetIndex
+from ._utils._typing import Array, ArrayNamespace, SetIndex
 
 if TYPE_CHECKING:  # pragma: no cover
     # TODO import from typing (requires Python >=3.11)
@@ -37,7 +36,7 @@ class _AtOp(Enum):
     MAX = "max"
 
     # @override from Python 3.12
-    def __str__(self) -> str:  # pyright: ignore[reportImplicitOverride] # pyrefly: ignore[missing-override-decorator]
+    def __str__(self) -> str:  # pyright: ignore[reportImplicitOverride]
         """
         Return string representation (useful for pytest logs).
 
@@ -229,7 +228,7 @@ class at:  # pylint: disable=invalid-name  # numpydoc ignore=PR02
         y: Array | complex,
         /,
         copy: bool | None,
-        xp: ModuleType | None,
+        xp: ArrayNamespace | None,
     ) -> Array:
         """
         Implement all update operations.
@@ -283,7 +282,7 @@ class at:  # pylint: disable=invalid-name  # numpydoc ignore=PR02
                 "    at(x)[idx].set(value)\n"
                 "(same for all other methods)."
             )
-            raise ValueError(msg)
+            raise ValueError(msg)  # noqa: TRY004
 
         if copy not in (True, False, None):
             msg = f"copy must be True, False, or None; got {copy!r}"
@@ -364,7 +363,7 @@ class at:  # pylint: disable=invalid-name  # numpydoc ignore=PR02
         y: Array | complex,
         /,
         copy: bool | None = None,
-        xp: ModuleType | None = None,
+        xp: ArrayNamespace | None = None,
     ) -> Array:  # numpydoc ignore=PR01,RT01
         """Apply ``x[idx] = y`` and return the update array."""
         return self._op(_AtOp.SET, None, None, y, copy=copy, xp=xp)
@@ -374,7 +373,7 @@ class at:  # pylint: disable=invalid-name  # numpydoc ignore=PR02
         y: Array | complex,
         /,
         copy: bool | None = None,
-        xp: ModuleType | None = None,
+        xp: ArrayNamespace | None = None,
     ) -> Array:  # numpydoc ignore=PR01,RT01
         """Apply ``x[idx] += y`` and return the updated array."""
 
@@ -388,7 +387,7 @@ class at:  # pylint: disable=invalid-name  # numpydoc ignore=PR02
         y: Array | complex,
         /,
         copy: bool | None = None,
-        xp: ModuleType | None = None,
+        xp: ArrayNamespace | None = None,
     ) -> Array:  # numpydoc ignore=PR01,RT01
         """Apply ``x[idx] -= y`` and return the updated array."""
         return self._op(
@@ -405,7 +404,7 @@ class at:  # pylint: disable=invalid-name  # numpydoc ignore=PR02
         y: Array | complex,
         /,
         copy: bool | None = None,
-        xp: ModuleType | None = None,
+        xp: ArrayNamespace | None = None,
     ) -> Array:  # numpydoc ignore=PR01,RT01
         """Apply ``x[idx] *= y`` and return the updated array."""
         return self._op(
@@ -422,7 +421,7 @@ class at:  # pylint: disable=invalid-name  # numpydoc ignore=PR02
         y: Array | complex,
         /,
         copy: bool | None = None,
-        xp: ModuleType | None = None,
+        xp: ArrayNamespace | None = None,
     ) -> Array:  # numpydoc ignore=PR01,RT01
         """Apply ``x[idx] /= y`` and return the updated array."""
         return self._op(
@@ -439,7 +438,7 @@ class at:  # pylint: disable=invalid-name  # numpydoc ignore=PR02
         y: Array | complex,
         /,
         copy: bool | None = None,
-        xp: ModuleType | None = None,
+        xp: ArrayNamespace | None = None,
     ) -> Array:  # numpydoc ignore=PR01,RT01
         """Apply ``x[idx] **= y`` and return the updated array."""
         return self._op(_AtOp.POWER, operator.ipow, operator.pow, y, copy=copy, xp=xp)  # pyright: ignore[reportUnknownArgumentType]
@@ -449,7 +448,7 @@ class at:  # pylint: disable=invalid-name  # numpydoc ignore=PR02
         y: Array | complex,
         /,
         copy: bool | None = None,
-        xp: ModuleType | None = None,
+        xp: ArrayNamespace | None = None,
     ) -> Array:  # numpydoc ignore=PR01,RT01
         """Apply ``x[idx] = minimum(x[idx], y)`` and return the updated array."""
         # On Dask, this function runs on the chunks, so we need to determine the
@@ -468,7 +467,7 @@ class at:  # pylint: disable=invalid-name  # numpydoc ignore=PR02
         y: Array | complex,
         /,
         copy: bool | None = None,
-        xp: ModuleType | None = None,
+        xp: ArrayNamespace | None = None,
     ) -> Array:  # numpydoc ignore=PR01,RT01
         """Apply ``x[idx] = maximum(x[idx], y)`` and return the updated array."""
         # See note on min()

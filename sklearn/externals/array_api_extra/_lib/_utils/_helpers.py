@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+import functools
 import io
 import math
 import pickle
 import types
-from collections.abc import Callable, Generator, Iterable, Iterator
+import warnings
+from collections.abc import Callable, Generator, Iterable, Iterator, Sequence
 from functools import wraps
-from types import ModuleType
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -30,7 +31,7 @@ from ._compat import (
     is_numpy_array,
     is_torch_namespace,
 )
-from ._typing import Array, Device
+from ._typing import Array, ArrayNamespace, Device
 
 if TYPE_CHECKING:  # pragma: no cover
     # TODO import from typing (requires Python >=3.12 and >=3.13)
@@ -48,14 +49,36 @@ T = TypeVar("T")
 __all__ = [
     "asarrays",
     "capabilities",
+    "deprecated",
     "eager_shape",
     "in1d",
     "is_python_scalar",
     "jax_autojit",
     "meta_namespace",
+    "normalize_pad_width",
     "pickle_flatten",
     "pickle_unflatten",
 ]
+
+
+def deprecated(
+    msg: str, stacklevel: int = 2
+) -> Callable[[Callable[P, T]], Callable[P, T]]:  # numpydoc ignore=PR01,RT01
+    """Deprecate a function by emitting a warning on use."""
+
+    def decorate(func: Callable[P, T]) -> Callable[P, T]:  # numpydoc ignore=GL08
+        @functools.wraps(func)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:  # numpydoc ignore=GL08
+            warnings.warn(
+                msg,
+                category=DeprecationWarning,
+                stacklevel=stacklevel,
+            )
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorate
 
 
 def in1d(
@@ -65,7 +88,7 @@ def in1d(
     *,
     assume_unique: bool = False,
     invert: bool = False,
-    xp: ModuleType | None = None,
+    xp: ArrayNamespace | None = None,
 ) -> Array:  # numpydoc ignore=PR01,RT01
     """
     Check whether each element of an array is also present in a second array.
@@ -131,7 +154,7 @@ def is_python_scalar(x: object) -> TypeIs[complex]:  # numpydoc ignore=PR01,RT01
 def asarrays(
     a: Array | complex,
     b: Array | complex,
-    xp: ModuleType,
+    xp: ArrayNamespace,
 ) -> tuple[Array, Array]:
     """
     Ensure both `a` and `b` are arrays.
@@ -257,8 +280,8 @@ def eager_shape(x: Array, /, axis: int | None = None) -> tuple[int, ...]:
 
 
 def meta_namespace(
-    *arrays: Array | complex | None, xp: ModuleType | None = None
-) -> ModuleType:
+    *arrays: Array | complex | None, xp: ArrayNamespace | None = None
+) -> ArrayNamespace:
     """
     Get the namespace of Dask chunks.
 
@@ -286,7 +309,7 @@ def meta_namespace(
 
 
 def capabilities(
-    xp: ModuleType, *, device: Device | None = None
+    xp: ArrayNamespace, *, device: Device | None = None
 ) -> dict[str, int | None]:
     """
     Return patched ``xp.__array_namespace_info__().capabilities()``.
@@ -405,7 +428,7 @@ def pickle_flatten(
         @override
         def persistent_id(
             self, obj: object
-        ) -> Literal[0, 1, None]:  # numpydoc ignore=GL08
+        ) -> Literal[0, 1] | None:  # numpydoc ignore=GL08
             if isinstance(obj, cls):
                 instances.append(obj)
                 return 0
@@ -422,7 +445,7 @@ def pickle_flatten(
                 # Note: a class that defines __slots__ without defining __getstate__
                 # cannot be pickled with __reduce__(), but can with __reduce_ex__(5)
                 _ = obj.__reduce_ex__(pickle.HIGHEST_PROTOCOL)
-            except Exception:  # pylint: disable=broad-exception-caught
+            except Exception:  # pylint: disable=broad-exception-caught  # noqa: BLE001
                 rest.append(obj)
                 return 1
 
@@ -585,3 +608,19 @@ def jax_autojit(
         return inner(wargs).obj
 
     return outer
+
+
+def normalize_pad_width(
+    pad_width: int | tuple[int, int] | Sequence[tuple[int, int]],
+    ndim: int,
+) -> list[tuple[int, int]]:  # numpydoc ignore=PR01,RT01
+    """Normalize `pad_width` to a list of `ndim` (before, after) pairs of ints."""
+    if isinstance(pad_width, int):
+        return [(pad_width, pad_width)] * ndim
+    if (
+        isinstance(pad_width, tuple)
+        and len(pad_width) == 2
+        and all(isinstance(i, int) for i in pad_width)
+    ):
+        return [cast(tuple[int, int], pad_width)] * ndim
+    return cast(list[tuple[int, int]], list(pad_width))
