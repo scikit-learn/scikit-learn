@@ -233,9 +233,9 @@ feedback:
   your **Python, scikit-learn, numpy, and scipy versions**. This information
   can be found by running:
 
-  .. prompt:: bash
+  .. code-block:: console
 
-    python -c "import sklearn; sklearn.show_versions()"
+    $ python -c "import sklearn; sklearn.show_versions()"
 
 - Please ensure all **code snippets and error messages are formatted in
   appropriate code blocks**.  See `Creating and highlighting code blocks
@@ -302,17 +302,17 @@ The next steps describe the process of modifying code and submitting a PR:
 #. Synchronize your ``main`` branch with the ``upstream/main`` branch,
    more details on `GitHub Docs <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/syncing-a-fork>`_:
 
-   .. prompt:: bash
+   .. code-block:: console
 
-      git checkout main
-      git fetch upstream
-      git merge upstream/main
+      $ git checkout main
+      $ git fetch upstream
+      $ git merge upstream/main
 
 #. Create a feature branch to hold your development changes:
 
-   .. prompt:: bash
+   .. code-block:: console
 
-      git checkout -b my_feature
+      $ git checkout -b my_feature
 
    and start making changes. Always use a feature branch. It's good
    practice to never work on the ``main`` branch!
@@ -321,10 +321,10 @@ The next steps describe the process of modifying code and submitting a PR:
    do the version control. When you're done editing, add changed files using
    ``git add`` and then ``git commit``:
 
-   .. prompt:: bash
+   .. code-block:: console
 
-      git add modified_files
-      git commit
+      $ git add modified_files
+      $ git commit
 
    .. note::
 
@@ -336,9 +336,9 @@ The next steps describe the process of modifying code and submitting a PR:
 
    Then push the changes to your GitHub account with:
 
-   .. prompt:: bash
+   .. code-block:: console
 
-      git push -u origin my_feature
+      $ git push -u origin my_feature
 
 #. Follow `these <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
    instructions to create a pull request from your fork. This will send a
@@ -350,10 +350,10 @@ The next steps describe the process of modifying code and submitting a PR:
 It is often helpful to keep your local feature branch synchronized with the
 latest changes of the main scikit-learn repository:
 
-.. prompt:: bash
+.. code-block:: console
 
-    git fetch upstream
-    git merge upstream/main
+    $ git fetch upstream
+    $ git merge upstream/main
 
 Subsequently, you might need to solve the conflicts. You can refer to the
 `Git documentation related to resolving merge conflict using the command
@@ -580,16 +580,16 @@ Resolve conflicts in lock files
 
 Here is a bash snippet that helps resolving conflicts in environment and lock files:
 
-.. prompt:: bash
+.. code-block:: console
 
-  # pull latest upstream/main
-  git pull upstream main --no-rebase
-  # resolve conflicts - keeping the upstream/main version for specific files
-  git checkout --theirs  build_tools/*/*.lock build_tools/*/*environment.yml \
+  $ # pull latest upstream/main
+  $ git pull upstream main --no-rebase
+  $ # resolve conflicts - keeping the upstream/main version for specific files
+  $ git checkout --theirs  build_tools/*/*.lock build_tools/*/*environment.yml \
       build_tools/*/*lock.txt build_tools/*/*requirements.txt
-  git add build_tools/*/*.lock build_tools/*/*environment.yml \
+  $ git add build_tools/*/*.lock build_tools/*/*environment.yml \
       build_tools/*/*lock.txt build_tools/*/*requirements.txt
-  git merge --continue
+  $ git merge --continue
 
 This will merge `upstream/main` into our branch, automatically prioritising the
 `upstream/main` for conflicting environment and lock files (this is good enough, because
@@ -600,9 +600,9 @@ other conflicts to resolve.
 
 Finally, we have to re-generate the environment and lock files for the CIs by running:
 
-.. prompt:: bash
+.. code-block:: console
 
-  python build_tools/update_environments_and_lock_files.py
+  $ python build_tools/update_environments_and_lock_files.py
 
 .. _stalled_pull_request:
 
@@ -753,9 +753,9 @@ additions in the following areas:
     `RandomForestClassifier` docstring has been modified, the following command
     would test its docstring compliance:
 
-    .. prompt:: bash
+    .. code-block:: console
 
-      pytest --doctest-modules sklearn/ensemble/_forest.py -k RandomForestClassifier
+      $ pytest --doctest-modules sklearn/ensemble/_forest.py -k RandomForestClassifier
 
   * The correct order of sections is: Parameters, Returns, See Also, Notes, Examples.
     See the `numpydoc documentation
@@ -973,9 +973,9 @@ HTML output by following :ref:`building_documentation`. The resulting HTML files
 will be placed in ``_build/html/`` and are viewable in a web browser, for instance by
 opening the local ``_build/html/index.html`` file or by running a local server
 
-.. prompt:: bash
+.. code-block:: console
 
-  python -m http.server -d _build/html
+  $ python -m http.server -d _build/html
 
 
 .. _building_documentation:
@@ -993,51 +993,51 @@ additional packages:
 ..
     packaging is not needed once setuptools starts shipping packaging>=17.0
 
-.. prompt:: bash
+.. code-block:: console
 
-    pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas \
-                polars scikit-image packaging seaborn sphinx-prompt \
+    $ pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas \
+                polars scikit-image packaging seaborn \
                 sphinxext-opengraph sphinx-copybutton plotly pooch \
                 pydata-sphinx-theme sphinx-design \
                 sphinx-remove-toctrees
 
 To build the documentation, you need to be in the ``doc`` folder:
 
-.. prompt:: bash
+.. code-block:: console
 
-    cd doc
+    $ cd doc
 
 In the vast majority of cases, you only need to generate the web site without
 the example gallery:
 
-.. prompt:: bash
+.. code-block:: console
 
-    make
+    $ make
 
 The documentation will be generated in the ``_build/html/stable`` directory
 and are viewable in a web browser, for instance by opening the local
 ``_build/html/stable/index.html`` file.
 To also generate the example gallery you can use:
 
-.. prompt:: bash
+.. code-block:: console
 
-    make html
+    $ make html
 
 This will run all the examples, which takes a while. You can also run only a few examples based on their file names.
 Here is a way to run all examples with filenames containing `plot_calibration`:
 
-.. prompt:: bash
+.. code-block:: console
 
-    EXAMPLES_PATTERN="plot_calibration" make html
+    $ EXAMPLES_PATTERN="plot_calibration" make html
 
 You can use regular expressions for more advanced use cases.
 
 Set the environment variable `NO_MATHJAX=1` if you intend to view the documentation in
 an offline setting. To build the PDF manual, run:
 
-.. prompt:: bash
+.. code-block:: console
 
-    make latexpdf
+    $ make latexpdf
 
 .. admonition:: Sphinx version
    :class: warning
@@ -1151,43 +1151,43 @@ more details please check the `asv installation webpage
 
 First of all you need to install the development version of asv:
 
-.. prompt:: bash
+.. code-block:: console
 
-    pip install git+https://github.com/airspeed-velocity/asv
+    $ pip install git+https://github.com/airspeed-velocity/asv
 
 and change your directory to `asv_benchmarks/`:
 
-.. prompt:: bash
+.. code-block:: console
 
-  cd asv_benchmarks
+  $ cd asv_benchmarks
 
 The benchmark suite is configured to run against your local clone of
 scikit-learn. Make sure it is up to date:
 
-.. prompt:: bash
+.. code-block:: console
 
-  git fetch upstream
+  $ git fetch upstream
 
 In the benchmark suite, the benchmarks are organized following the same
 structure as scikit-learn. For example, you can compare the performance of a
 specific estimator between ``upstream/main`` and the branch you are working on:
 
-.. prompt:: bash
+.. code-block:: console
 
-  asv continuous -b LogisticRegression upstream/main HEAD
+  $ asv continuous -b LogisticRegression upstream/main HEAD
 
 The command uses conda by default for creating the benchmark environments. If
 you want to use virtualenv instead, use the `-E` flag:
 
-.. prompt:: bash
+.. code-block:: console
 
-  asv continuous -E virtualenv -b LogisticRegression upstream/main HEAD
+  $ asv continuous -E virtualenv -b LogisticRegression upstream/main HEAD
 
 You can also specify a whole module to benchmark:
 
-.. prompt:: bash
+.. code-block:: console
 
-  asv continuous -b linear_model upstream/main HEAD
+  $ asv continuous -b linear_model upstream/main HEAD
 
 You can replace `HEAD` by any local branch. By default it will only report the
 benchmarks that have changed by at least 10%. You can control this ratio with
@@ -1195,9 +1195,9 @@ the `-f` flag.
 
 To run the full benchmark suite, simply remove the `-b` flag :
 
-.. prompt:: bash
+.. code-block:: console
 
-  asv continuous upstream/main HEAD
+  $ asv continuous upstream/main HEAD
 
 However this can take up to two hours. The `-b` flag also accepts a regular
 expression for a more complex subset of benchmarks to run.
@@ -1205,38 +1205,38 @@ expression for a more complex subset of benchmarks to run.
 To run the benchmarks without comparing to another branch, use the `run`
 command:
 
-.. prompt:: bash
+.. code-block:: console
 
-  asv run -b linear_model HEAD^!
+  $ asv run -b linear_model HEAD^!
 
 You can also run the benchmark suite using the version of scikit-learn already
 installed in your current Python environment:
 
-.. prompt:: bash
+.. code-block:: console
 
-  asv run --python=same
+  $ asv run --python=same
 
 It's particularly useful when you installed scikit-learn in editable mode to
 avoid creating a new environment each time you run the benchmarks. By default
 the results are not saved when using an existing installation. To save the
 results you must specify a commit hash:
 
-.. prompt:: bash
+.. code-block:: console
 
-  asv run --python=same --set-commit-hash=<commit hash>
+  $ asv run --python=same --set-commit-hash=<commit hash>
 
 Benchmarks are saved and organized by machine, environment and commit. To see
 the list of all saved benchmarks:
 
-.. prompt:: bash
+.. code-block:: console
 
-  asv show
+  $ asv show
 
 and to see the report of a specific run:
 
-.. prompt:: bash
+.. code-block:: console
 
-  asv show <commit hash>
+  $ asv show <commit hash>
 
 When running benchmarks for a pull request you're working on please report the
 results on github.
@@ -1630,9 +1630,9 @@ make this task easier and faster (in no particular order).
 - Configure `git blame` to ignore the commit that migrated the code style to
   `black` and then `ruff`.
 
-  .. prompt:: bash
+  .. code-block:: console
 
-      git config blame.ignoreRevsFile .git-blame-ignore-revs
+      $ git config blame.ignoreRevsFile .git-blame-ignore-revs
 
   Find out more information in black's
   `documentation for avoiding ruining git blame <https://black.readthedocs.io/en/stable/guides/introducing_black_to_your_project.html#avoiding-ruining-git-blame>`_.

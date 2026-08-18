@@ -49,7 +49,6 @@ dependent_packages = {
     "numpydoc": ("1.2.0", "docs, tests"),
     "Pillow": ("12.1.1", "docs"),
     "pooch": ("1.8.0", "docs, examples, tests"),
-    "sphinx-prompt": ("1.4.0", "docs"),
     "sphinxext-opengraph": ("0.9.1", "docs"),
     "plotly": ("5.22.0", "docs, examples"),
     "sphinx-remove-toctrees": ("1.0.0.post1", "docs"),

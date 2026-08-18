@@ -29,7 +29,6 @@ dependencies:
   - sphinx-gallery=0.17.1  # min
   - sphinx-copybutton=0.5.2  # min
   - numpydoc=1.2.0  # min
-  - sphinx-prompt=1.4.0  # min
   - plotly=5.22.0  # min
   - polars=0.20.30  # min
   - pooch=1.8.0  # min

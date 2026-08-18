@@ -169,9 +169,9 @@ Python code: it takes around 100% of the accumulated time of the module. In
 order to better understand the profile of this specific function, let
 us install ``line_profiler`` and wire it to IPython:
 
-.. prompt:: bash $
+.. code-block:: console
 
-  pip install line_profiler
+  $ pip install line_profiler
 
 Now restart IPython and let us use this new toy::
 
@@ -240,15 +240,15 @@ responsible for allocating the various allocations that led to peak memory.
 
 First, install the latest version:
 
-.. prompt:: bash $
+.. code-block:: console
 
-  pip install -U memray
+  $ pip install -U memray
 
 Then, run a script using the relevant code under ``memray``:
 
-.. prompt:: bash $
+.. code-block:: console
 
-  memray run example.py
+  $ memray run example.py
 
 It will tell you where it wrote the resulting data::
 
@@ -256,9 +256,9 @@ It will tell you where it wrote the resulting data::
 
 You can then convert this data into an HTML report:
 
-.. prompt:: bash $
+.. code-block:: console
 
-  memray flamegraph memray-example.py.123.bin
+  $ memray flamegraph memray-example.py.123.bin
 
 In this case it will generate a file called
 "memray-flamegraph-example.py.123.html" which you can then open in a browser. If
@@ -279,9 +279,9 @@ amount.
 
 First, install the latest version:
 
-.. prompt:: bash $
+.. code-block:: console
 
-  pip install -U memory_profiler
+  $ pip install -U memory_profiler
 
 Then, setup the magics in a manner similar to ``line_profiler``::
 
@@ -401,15 +401,15 @@ kcachegrind
 ``yep`` can be used to create a profiling report.
 ``kcachegrind`` provides a graphical environment to visualize this report:
 
-.. prompt:: bash $
+.. code-block:: console
 
-  # Run yep to profile some python script
-  python -m yep -c my_file.py
+  $ # Run yep to profile some python script
+  $ python -m yep -c my_file.py
 
-.. prompt:: bash $
+.. code-block:: console
 
-  # open my_file.py.callgrin with kcachegrind
-  kcachegrind my_file.py.prof
+  $ # open my_file.py.callgrin with kcachegrind
+  $ kcachegrind my_file.py.prof
 
 .. note::
 
