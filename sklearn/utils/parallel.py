@@ -6,6 +6,7 @@ usage.
 # SPDX-License-Identifier: BSD-3-Clause
 
 import functools
+import sys
 import warnings
 from functools import update_wrapper
 
@@ -212,3 +213,17 @@ def _threadpool_controller_decorator(limits=1, user_api="blas"):
         return wrapper
 
     return decorator
+
+
+def is_free_threaded() -> bool:
+    """Return whether the current Python has no GIL.
+
+    .. versionadded:: 1.10
+
+    Returns
+    -------
+    bool
+        Whether the Python interpreter is free-threaded, i.e. has no GIL.
+    """
+    is_gil_enabled = getattr(sys, "_is_gil_enabled", lambda: True)
+    return not is_gil_enabled()
