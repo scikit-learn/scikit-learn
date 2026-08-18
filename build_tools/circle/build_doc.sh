@@ -157,10 +157,11 @@ else
 fi
 
 # Installing required system packages to support the rendering of math
-# notation in the HTML documentation and to optimize the image files
+# notation in the HTML documentation, to optimize the image files and to fetch
+# the datasets cache (one of its files is stored with git-lfs)
 sudo -E apt-get -yq update --allow-releaseinfo-change
 sudo -E apt-get -yq --no-install-suggests --no-install-recommends \
-    install dvipng gsfonts ccache zip optipng
+    install dvipng gsfonts ccache zip optipng git-lfs
 
 # deactivate circleci virtualenv and setup a conda env instead
 if [[ `type -t deactivate` ]]; then
@@ -209,6 +210,25 @@ then
     python build_tools/circle/list_versions.py --json doc/js/versions.json --rst doc/versions.rst
 fi
 
+
+# Seed the scikit-learn data home with a snapshot of the datasets cache kept in
+# a separate repository. Examples fetching their data from external providers,
+# OpenML in particular, regularly fail because the provider is unavailable,
+# which has nothing to do with the changes being built. Files already in the
+# data home, i.e. restored from the CircleCI cache, take precedence over the
+# snapshot.
+DATASETS_CACHE_DIR=$(mktemp -d)
+if git lfs install --skip-repo && git clone --depth 1 \
+    https://github.com/lesteve/scikit_learn_data $DATASETS_CACHE_DIR
+then
+    rm -rf $DATASETS_CACHE_DIR/.git
+    mkdir -p $HOME/scikit_learn_data
+    cp -Rn $DATASETS_CACHE_DIR/. $HOME/scikit_learn_data
+else
+    echo "Failed to set up the datasets cache, the examples will fetch their" \
+        "datasets from the original providers"
+fi
+rm -rf $DATASETS_CACHE_DIR
 
 # The pipefail is requested to propagate exit code
 set -o pipefail && cd doc && make $make_args 2>&1 | tee ~/log.txt
