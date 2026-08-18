@@ -569,6 +569,25 @@ estimator's RNG as a hyper-parameter that can be tuned.
 
 Whether we pass `RandomState` instances or integers to CV splitters has no
 impact on robustness, as long as `split` is only called once. When `split`
-is called multiple times, fold-to-fold comparison isn't possible anymore. As
-a result, passing integer to CV splitters is usually safer and covers most
-use-cases.
+    is called multiple times, fold-to-fold comparison isn't possible anymore. As
+    a result, passing integer to CV splitters is usually safer and covers most
+    use-cases.
+
+    .. list-table:: Recommendation summary for controlling randomness
+       :header-rows: 1
+
+       * - Goal
+         - Estimator
+         - CV Splitter
+       * - Same results every fit/split call
+         - int
+         - int
+       * - Robust CV of a randomized estimator (fresh RNG per fold)
+         - `RandomState` or `None`
+         - int
+       * - Comparable fold-to-fold scores across separate runs
+         - any
+         - int
+       * - Reproducible across program executions
+         - fixed `RandomState` or int
+         - int
