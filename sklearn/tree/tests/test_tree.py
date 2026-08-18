@@ -1632,6 +1632,22 @@ def test_min_weight_leaf_split_level(name, sparse_container):
     assert est.tree_.max_depth == 0
 
 
+def test_apply_preserves_float64_threshold_precision():
+    """Check that samples equal to a tree threshold go to the left child.
+
+    Float64 input should preserve its precision when applying the tree
+    to avoid inconsistent routing at decision thresholds.
+    """
+    rng = np.random.RandomState(6)
+    X = rng.normal(size=(100, 1))
+    y = rng.randint(0, 2, size=X.shape[0])
+
+    clf = DecisionTreeClassifier(max_depth=1, random_state=0).fit(X, y)
+    threshold = clf.tree_.threshold[0]
+
+    assert clf.apply([[threshold]])[0] == clf.tree_.children_left[0]
+
+
 @pytest.mark.parametrize("name", ALL_TREES)
 def test_public_apply_all_trees(name):
     X_small32 = X_small.astype(np.float32, copy=False)
