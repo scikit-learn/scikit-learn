@@ -572,7 +572,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         if total_n_estimators < self.estimators_.shape[0]:
             raise ValueError(
                 "resize with smaller n_estimators %d < %d"
-                % (total_n_estimators, self.estimators_[0])
+                % (total_n_estimators, self.estimators_.shape[0])
             )
 
         self.estimators_ = np.resize(
