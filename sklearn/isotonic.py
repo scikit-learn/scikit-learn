@@ -12,7 +12,12 @@ from scipy import interpolate, optimize
 from scipy.stats import spearmanr
 
 from sklearn._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
-from sklearn.base import BaseEstimator, RegressorMixin, TransformerMixin, _fit_context
+from sklearn.base import (
+    BaseEstimator,
+    RegressorMixin,
+    TransformerMixin,
+    _fit_context,
+)
 from sklearn.utils import check_array, check_consistent_length, metadata_routing
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.fixes import parse_version, sp_base_version
@@ -152,7 +157,9 @@ def isotonic_regression(
     array([2.75   , 2.75   , 2.75   , 2.75   , 7.33,
            7.33, 7.33, 7.33, 7.33, 7.33])
     """
-    y = check_array(y, ensure_2d=False, input_name="y", dtype=[np.float64, np.float32])
+    y = check_array(
+        y, ensure_2d=False, input_name="y", dtype=[np.float64, np.float32]
+    )
     if sp_base_version >= parse_version("1.12.0"):
         res = optimize.isotonic_regression(
             y=y, weights=sample_weight, increasing=increasing
@@ -163,7 +170,9 @@ def isotonic_regression(
         # Also remove _inplace_contiguous_isotonic_regression.
         order = np.s_[:] if increasing else np.s_[::-1]
         y = np.array(y[order], dtype=y.dtype)
-        sample_weight = _check_sample_weight(sample_weight, y, dtype=y.dtype, copy=True)
+        sample_weight = _check_sample_weight(
+            sample_weight, y, dtype=y.dtype, copy=True
+        )
         sample_weight = np.ascontiguousarray(sample_weight[order])
         _inplace_contiguous_isotonic_regression(y, sample_weight)
         y = y[order]
@@ -283,7 +292,9 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         "out_of_bounds": [StrOptions({"nan", "clip", "raise"})],
     }
 
-    def __init__(self, *, y_min=None, y_max=None, increasing=True, out_of_bounds="nan"):
+    def __init__(
+        self, *, y_min=None, y_max=None, increasing=True, out_of_bounds="nan"
+    ):
         self.y_min = y_min
         self.y_max = y_max
         self.increasing = increasing
