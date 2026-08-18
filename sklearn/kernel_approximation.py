@@ -25,6 +25,8 @@ from sklearn.metrics.pairwise import (
 from sklearn.utils import _align_api_if_sparse, check_random_state
 from sklearn.utils._array_api import (
     _find_matching_floating_dtype,
+    _fitted_attrs_as_numpy,
+    _fitted_attrs_to,
     get_namespace_and_device,
 )
 from sklearn.utils._indexing import _safe_indexing
@@ -1071,6 +1073,9 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         self.components_ = basis
         self.component_indices_ = basis_inds
         self._n_features_out = n_components
+        _fitted_attrs_as_numpy(
+            self, "components_", "normalization_", "component_indices_"
+        )
         return self
 
     def transform(self, X):
@@ -1094,10 +1099,14 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         xp, _, device = get_namespace_and_device(X)
         X = validate_data(self, X, accept_sparse="csr", reset=False)
 
+        components_, normalization_ = _fitted_attrs_to(
+            self, "components_", "normalization_", xp=xp, device=device
+        )
+
         kernel_params = self._get_kernel_params()
         embedded = pairwise_kernels(
             X,
-            self.components_,
+            components_,
             metric=self.kernel,
             filter_params=True,
             n_jobs=self.n_jobs,
@@ -1105,7 +1114,7 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         )
         dtype = _find_matching_floating_dtype(embedded, xp=xp)
         embedded = xp.asarray(embedded, dtype=dtype, device=device)
-        return embedded @ self.normalization_.T
+        return embedded @ normalization_.T
 
     def _get_kernel_params(self):
         params = self.kernel_params

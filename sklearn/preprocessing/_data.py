@@ -21,6 +21,8 @@ from sklearn.preprocessing._encoders import OneHotEncoder
 from sklearn.utils import _array_api, check_array, metadata_routing, resample
 from sklearn.utils._array_api import (
     _find_matching_floating_dtype,
+    _fitted_attrs_as_numpy,
+    _fitted_attrs_to,
     _max_precision_float_dtype,
     _modify_in_place_if_numpy,
     array_device,
@@ -925,7 +927,11 @@ class StandardScaler(
         """
         # Reset internal state before fitting
         self._reset()
-        return self.partial_fit(X, y, sample_weight)
+        self.partial_fit(X, y, sample_weight)
+        # Only here and not in `partial_fit`, which reads these attributes back
+        # as the running state of the incremental mean and variance.
+        _fitted_attrs_as_numpy(self, "mean_", "scale_", "var_")
+        return self
 
     @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y=None, sample_weight=None):
@@ -1053,10 +1059,15 @@ class StandardScaler(
                 self.n_samples_seen_ += X.shape[0] - xp.isnan(X).sum(axis=0)
 
             else:
+                # A previous `fit` may have stored these as NumPy, but the
+                # incremental update needs them alongside `X`.
+                mean_, var_ = _fitted_attrs_to(
+                    self, "mean_", "var_", xp=xp, device=X_device
+                )
                 self.mean_, self.var_, self.n_samples_seen_ = _incremental_mean_and_var(
                     X,
-                    self.mean_,
-                    self.var_,
+                    mean_,
+                    var_,
                     self.n_samples_seen_,
                     sample_weight=sample_weight,
                 )
@@ -1119,19 +1130,23 @@ class StandardScaler(
             ensure_all_finite="allow-nan",
         )
 
+        mean_, scale_ = _fitted_attrs_to(
+            self, "mean_", "scale_", xp=xp, device=X_device
+        )
+
         if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
                     "Cannot center sparse matrices: pass `with_mean=False` "
                     "instead. See docstring for motivation and alternatives."
                 )
-            if self.scale_ is not None:
-                inplace_column_scale(X, 1 / self.scale_)
+            if scale_ is not None:
+                inplace_column_scale(X, 1 / scale_)
         else:
             if self.with_mean:
-                X -= xp.astype(self.mean_, X.dtype)
+                X -= xp.astype(mean_, X.dtype)
             if self.with_std:
-                X /= xp.astype(self.scale_, X.dtype)
+                X /= xp.astype(scale_, X.dtype)
         return X
 
     def inverse_transform(self, X, copy=None):
@@ -1163,19 +1178,23 @@ class StandardScaler(
             ensure_all_finite="allow-nan",
         )
 
+        mean_, scale_ = _fitted_attrs_to(
+            self, "mean_", "scale_", xp=xp, device=X_device
+        )
+
         if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
                     "Cannot uncenter sparse matrices: pass `with_mean=False` "
                     "instead See docstring for motivation and alternatives."
                 )
-            if self.scale_ is not None:
-                inplace_column_scale(X, self.scale_)
+            if scale_ is not None:
+                inplace_column_scale(X, scale_)
         else:
             if self.with_std:
-                X *= xp.astype(self.scale_, X.dtype)
+                X *= xp.astype(scale_, X.dtype)
             if self.with_mean:
-                X += xp.astype(self.mean_, X.dtype)
+                X += xp.astype(mean_, X.dtype)
         return X
 
     def __sklearn_tags__(self):

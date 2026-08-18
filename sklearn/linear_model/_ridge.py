@@ -41,6 +41,7 @@ from sklearn.utils import (
     compute_sample_weight,
 )
 from sklearn.utils._array_api import (
+    _fitted_attrs_as_numpy,
     _is_numpy_namespace,
     _max_precision_float_dtype,
     _ravel,
@@ -1260,7 +1261,9 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
             multi_output=True,
             y_numeric=True,
         )
-        return super().fit(X, y, sample_weight=sample_weight)
+        super().fit(X, y, sample_weight=sample_weight)
+        _fitted_attrs_as_numpy(self, "coef_", "intercept_", "n_iter_")
+        return self
 
     def predict(self, X):
         """

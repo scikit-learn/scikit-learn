@@ -45,6 +45,7 @@ from sklearn.utils import (
     metadata_routing,
 )
 from sklearn.utils._array_api import (
+    _fitted_attrs_as_numpy,
     _is_numpy_namespace,
     _matching_numpy_dtype,
     _ravel,
@@ -1661,6 +1662,8 @@ class LogisticRegression(
             metadata=callback_metadata,
             reconstruction_attributes={},
         )
+
+        _fitted_attrs_as_numpy(self, "coef_", "intercept_", "classes_", "n_iter_")
 
         return self
 

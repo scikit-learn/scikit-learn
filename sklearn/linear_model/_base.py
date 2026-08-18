@@ -26,6 +26,7 @@ from sklearn.utils._array_api import (
     _asarray_with_order,
     _average,
     _expit,
+    _fitted_attrs_to,
     check_same_namespace,
     get_namespace,
     get_namespace_and_device,
@@ -292,11 +293,14 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
 
         X = validate_data(self, X, accept_sparse=["csr", "csc", "coo"], reset=False)
-        coef_ = self.coef_
+        xp, _, device = get_namespace_and_device(X)
+        coef_, intercept_ = _fitted_attrs_to(
+            self, "coef_", "intercept_", xp=xp, device=device
+        )
         if coef_.ndim == 1:
-            return X @ coef_ + self.intercept_
+            return X @ coef_ + intercept_
         else:
-            return X @ coef_.T + self.intercept_
+            return X @ coef_.T + intercept_
 
     def predict(self, X):
         """
@@ -383,12 +387,15 @@ class LinearClassifierMixin(ClassifierMixin):
             this class would be predicted.
         """
         check_is_fitted(self)
-        xp, _ = get_namespace(X)
+        xp, _, device = get_namespace_and_device(X)
         check_same_namespace(X, self, attribute="coef_", method="decision_function")
 
         X = validate_data(self, X, accept_sparse="csr", reset=False)
-        coef_T = self.coef_.T if self.coef_.ndim == 2 else self.coef_
-        scores = safe_sparse_dot(X, coef_T, dense_output=True) + self.intercept_
+        coef_, intercept_ = _fitted_attrs_to(
+            self, "coef_", "intercept_", xp=xp, device=device
+        )
+        coef_T = coef_.T if coef_.ndim == 2 else coef_
+        scores = safe_sparse_dot(X, coef_T, dense_output=True) + intercept_
         return (
             xp.reshape(scores, (-1,))
             if (scores.ndim > 1 and scores.shape[1] == 1)
@@ -417,10 +424,16 @@ class LinearClassifierMixin(ClassifierMixin):
         else:
             indices = xp.argmax(scores, axis=1)
 
-        xp_classes, _, device_classes = get_namespace_and_device(self.classes_)
+        classes_ = self.classes_
+        if getattr(classes_.dtype, "kind", "O") not in "OUS":
+            # String/object labels cannot live in a non-NumPy namespace, for
+            # those we keep taking on the host and move the result instead.
+            classes_ = _fitted_attrs_to(self, "classes_", xp=xp, device=device)
+
+        xp_classes, _, device_classes = get_namespace_and_device(classes_)
         indices = move_to(indices, xp=xp_classes, device=device_classes)
 
-        y_pred = xp_classes.take(self.classes_, indices, axis=0)
+        y_pred = xp_classes.take(classes_, indices, axis=0)
         if isinstance(y_pred[0], str):
             return y_pred
         else:
