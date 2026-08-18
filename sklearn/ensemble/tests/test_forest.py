@@ -604,6 +604,47 @@ def test_forest_oob_warning(ForestEstimator):
         estimator.fit(iris.data, iris.target)
 
 
+@pytest.mark.parametrize("ForestClassifier", FOREST_CLASSIFIERS.values())
+def test_forest_oob_nan_for_never_left_out_classifier(ForestClassifier):
+    """Samples never in the OOB set should have NaN in oob_decision_function_,
+    not 0.0 as in the old (incorrect) behavior."""
+    X, y = make_classification(n_samples=10, n_features=5, random_state=0)
+    with pytest.warns(UserWarning, match="Some inputs do not have OOB scores"):
+        clf = ForestClassifier(
+            n_estimators=1, oob_score=True, bootstrap=True, random_state=0
+        )
+        clf.fit(X, y)
+
+    oob_df = clf.oob_decision_function_
+    never_oob = np.isnan(oob_df).any(axis=1)
+    # With n_estimators=1 on a 10-sample dataset, some samples must be never-OOB
+    assert never_oob.any()
+    # Never-left-out rows must be all-NaN (the old code produced 0.0 instead)
+    assert np.all(np.isnan(oob_df[never_oob]))
+    # OOB rows must contain valid probabilities
+    assert not np.any(np.isnan(oob_df[~never_oob]))
+    # oob_score_ must be finite (computed only over OOB samples)
+    assert np.isfinite(clf.oob_score_)
+
+
+@pytest.mark.parametrize("ForestRegressor", FOREST_REGRESSORS.values())
+def test_forest_oob_nan_for_never_left_out_regressor(ForestRegressor):
+    """Samples never in the OOB set should have NaN in oob_prediction_,
+    not 0.0 as in the old (incorrect) behavior."""
+    X, y = make_regression(n_samples=10, n_features=5, random_state=0)
+    with pytest.warns(UserWarning, match="Some inputs do not have OOB scores"):
+        reg = ForestRegressor(
+            n_estimators=1, oob_score=True, bootstrap=True, random_state=0
+        )
+        reg.fit(X, y)
+
+    oob_pred = reg.oob_prediction_
+    never_oob = np.isnan(oob_pred)
+    assert never_oob.any()
+    # oob_score_ must be finite (computed only over OOB samples)
+    assert np.isfinite(reg.oob_score_)
+
+
 @pytest.mark.parametrize("ForestEstimator", FOREST_CLASSIFIERS_REGRESSORS.values())
 def test_forest_oob_score_requires_bootstrap(ForestEstimator):
     """Check that we raise an error if OOB score is requested without
