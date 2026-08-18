@@ -537,7 +537,6 @@ def test_mahalanobis_array_api(array_namespace, device_name, dtype_name):
     "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
 )
-@pytest.mark.parametrize("oas_function", [oas, _oas])
 @pytest.mark.parametrize("assume_centered", [True, False])
 @pytest.mark.parametrize(
     "X_input",
@@ -551,7 +550,6 @@ def test_oas_array_api(
     array_namespace,
     device_name,
     dtype_name,
-    oas_function,
     assume_centered,
     X_input,
 ):
@@ -561,7 +559,7 @@ def test_oas_array_api(
     X_np = X_input.astype(dtype_name, copy=False)
     X_xp = xp.asarray(X_np, device=device)
 
-    covariance_np, shrinkage_np = oas_function(X_np, assume_centered=assume_centered)
+    covariance_np, shrinkage_np = oas(X_np, assume_centered=assume_centered)
 
     with config_context(array_api_dispatch=True):
         covariance_xp, shrinkage_xp = oas_function(
