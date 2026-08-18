@@ -5,3 +5,4 @@ pytest==9.1.0
 ruff==0.12.2  # min
 pyrefly==1.2.0  # min
 cython-lint==0.21  # min
+codespell==2.4.1  # min
