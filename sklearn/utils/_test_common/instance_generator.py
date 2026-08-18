@@ -1177,7 +1177,6 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
         "check_array_api_mixed_inputs": "mixed array API input support not added yet",
         # TODO: see gh-33205 for details
         "check_array_api_input": "`linalg.inv` fails because input is singular",
-        "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     Perceptron: {
         # TODO: replace by a statistical test, see meta-issue #16298
