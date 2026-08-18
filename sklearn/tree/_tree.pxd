@@ -11,18 +11,9 @@ from sklearn.utils._typedefs cimport (
 )
 from sklearn.tree._splitter cimport Splitter, SplitRecord
 
-
-cdef struct Node:
-    # Base storage structure for the nodes in a Tree object
-
-    intp_t left_child                    # id of the left child of the node
-    intp_t right_child                   # id of the right child of the node
-    intp_t feature                       # Feature used for splitting the node
-    float64_t threshold                  # Threshold value at the node
-    float64_t impurity                   # Impurity of the node (i.e., the value of the criterion)
-    intp_t n_node_samples                # Number of samples at the node
-    float64_t weighted_n_node_samples    # Weighted number of samples at the node
-    uint8_t missing_go_to_left     # Whether features have missing values
+from sklearn.tree._splitter cimport Splitter, SplitRecord
+from sklearn.tree._utils cimport Node
+from sklearn.utils._bitset cimport BITSET_DTYPE_C
 
 
 cdef struct ParentInfo:
@@ -44,6 +35,8 @@ cdef class Tree:
     cdef intp_t* n_classes               # Number of classes in y[:, k]
     cdef public intp_t n_outputs         # Number of outputs in y
     cdef public intp_t max_n_classes     # max(n_classes)
+    cdef intp_t* n_categories            # (n_features,) array giving number of
+    #                                    # categories (-1 for non-categorical)
 
     # Inner structures: values are stored separately from node structure,
     # since size is determined at runtime.
@@ -56,7 +49,10 @@ cdef class Tree:
 
     # Methods
     cdef intp_t _add_node(self, intp_t parent, bint is_left, bint is_leaf,
-                          intp_t feature, float64_t threshold, float64_t impurity,
+                          intp_t feature,
+                          float64_t threshold,
+                          BITSET_DTYPE_C left_cat_bitset,
+                          float64_t impurity,
                           intp_t n_node_samples,
                           float64_t weighted_n_node_samples,
                           uint8_t missing_go_to_left) except -1 nogil
@@ -106,7 +102,7 @@ cdef class TreeBuilder:
         object X,
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight=*,
-        const uint8_t[::1] missing_values_in_feature_mask=*,
+        const uint8_t[::1] missing_values_in_feature_mask=*
     )
 
     cdef _check_input(

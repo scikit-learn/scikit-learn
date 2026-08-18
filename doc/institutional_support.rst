@@ -163,7 +163,8 @@ funded one year for a developer to work on the project full-time (2014-2015), 50
 of the time of Guillaume Lemaitre (2016-2017) and 50% of the time of Joris van den
 Bossche (2017-2018).
 
-`NYU Moore-Sloan Data Science Environment <https://cds.nyu.edu/mooresloan/>`_
+`NYU Moore-Sloan Data Science Environment
+<https://web.archive.org/web/20240719150041/https://cds.nyu.edu/mooresloan/>`_
 funded Andreas Mueller (2014-2016) to work on this project. The Moore-Sloan
 Data Science Environment also funds several students to work on the project
 part-time.
@@ -172,7 +173,7 @@ part-time.
 (2014), Tom Dupré la Tour (2015), Raghav RV (2015-2017), Thierry Guillemot
 (2016-2017) and Albert Thomas (2017) to work on scikit-learn.
 
-`The Labex DigiCosme <https://digicosme.lri.fr>`_ funded Nicolas Goix
+`The Labex DigiCosme <https://anr.fr/ProjetIA-11-LABX-0045>`_ funded Nicolas Goix
 (2015-2016), Tom Dupré la Tour (2015-2016 and 2017-2018), Mathurin Massias
 (2018-2019) to work part time on scikit-learn during their PhDs. It also
 funded a scikit-learn coding sprint in 2015.
