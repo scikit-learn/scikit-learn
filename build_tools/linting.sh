@@ -54,6 +54,13 @@ else
     global_status=1
 fi
 
+# We pass tracked .rst files explicitly instead of directories to avoid
+# checking Sphinx generated files as the ones in doc/_build or doc/auto_examples
+# when using the command locally.
+
+# git ls-files '*.rst' z prints git-tracked .rst files separated with NUL bytes
+# xargs -0 Reads the NUL-separated list and passes it as arguments
+
 echo -e "### Running sphinx-lint ###\n"
 git ls-files -z '*.rst' | xargs -0 sphinx-lint
 status=$?
