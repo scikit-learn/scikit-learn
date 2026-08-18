@@ -20,11 +20,11 @@ from sklearn.covariance import (
 from sklearn.covariance._shrunk_covariance import _ledoit_wolf, _oas
 from sklearn.utils._array_api import (
     _atol_for_type,
+    array_device,
     get_namespace,
     move_to,
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._array_api import device as array_device
 from sklearn.utils._test_common.instance_generator import _get_check_estimator_ids
 from sklearn.utils._testing import (
     _array_api_for_tests,
