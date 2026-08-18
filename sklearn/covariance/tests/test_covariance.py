@@ -562,9 +562,7 @@ def test_oas_array_api(
     covariance_np, shrinkage_np = oas(X_np, assume_centered=assume_centered)
 
     with config_context(array_api_dispatch=True):
-        covariance_xp, shrinkage_xp = oas_function(
-            X_xp, assume_centered=assume_centered
-        )
+        covariance_xp, shrinkage_xp = oas(X_xp, assume_centered=assume_centered)
         assert get_namespace(covariance_xp)[0].__name__ == xp.__name__
         assert array_device(covariance_xp) == array_device(X_xp)
         assert covariance_xp.dtype == X_xp.dtype
