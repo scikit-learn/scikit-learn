@@ -657,6 +657,44 @@ def _argmin_reduce(dist, start):
     return xp.argmin(dist, axis=1)
 
 
+def _ensure_boolean_dtype_for_metric(X, Y, metric, *, ensure_all_finite=True):
+    """Ensure X and Y have the correct dtype for the given metric.
+
+    For boolean distance metrics (e.g., Jaccard, Dice), this function checks if
+    X and Y need to be converted to bool dtype and emits a DataConversionWarning
+    if conversion is necessary. For non-boolean metrics, it delegates to
+    :func:`check_pairwise_arrays` with the default float dtype.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples_X, n_features)
+        Input array.
+
+    Y : array-like of shape (n_samples_Y, n_features)
+        Input array.
+
+    metric : str
+        The metric to be used.
+
+    ensure_all_finite : bool or 'allow-nan', default=True
+        Whether to raise an error on np.inf, np.nan, pd.NA in array.
+
+    Returns
+    -------
+    X : ndarray of shape (n_samples_X, n_features)
+        Converted array.
+
+    Y : ndarray of shape (n_samples_Y, n_features)
+        Converted array.
+    """
+    if metric in PAIRWISE_BOOLEAN_FUNCTIONS:
+        if getattr(X, "dtype", None) != bool or getattr(Y, "dtype", None) != bool:
+            msg = "Data was converted to boolean for metric %s" % metric
+            warnings.warn(msg, DataConversionWarning)
+        return check_pairwise_arrays(X, Y, dtype=bool, ensure_all_finite=ensure_all_finite)
+    return check_pairwise_arrays(X, Y, ensure_all_finite=ensure_all_finite)
+
+
 _VALID_METRICS = [
     "euclidean",
     "l2",
@@ -799,7 +837,7 @@ def pairwise_distances_argmin_min(
     array([1., 1.])
     """
     ensure_all_finite = "allow-nan" if metric == "nan_euclidean" else True
-    X, Y = check_pairwise_arrays(X, Y, ensure_all_finite=ensure_all_finite)
+    X, Y = _ensure_boolean_dtype_for_metric(X, Y, metric, ensure_all_finite=ensure_all_finite)
 
     if axis == 0:
         X, Y = Y, X
@@ -940,7 +978,7 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
     array([0, 1])
     """
     ensure_all_finite = "allow-nan" if metric == "nan_euclidean" else True
-    X, Y = check_pairwise_arrays(X, Y, ensure_all_finite=ensure_all_finite)
+    X, Y = _ensure_boolean_dtype_for_metric(X, Y, metric, ensure_all_finite=ensure_all_finite)
     xp, _ = get_namespace(X, Y)
 
     if axis == 0:
