@@ -341,7 +341,6 @@ build_metadata_list = [
             common_dependencies_without_coverage, ["pandas"]
         )
         + [
-            "ccache",
             "scikit-image",
             "seaborn",
             "memory_profiler",
@@ -399,7 +398,6 @@ build_metadata_list = [
         "channels": ["conda-forge"],
         "conda_dependencies": common_dependencies_without_coverage
         + [
-            "ccache",
             "scikit-image",
             "seaborn",
             "memory_profiler",

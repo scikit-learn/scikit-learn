@@ -22,7 +22,6 @@ dependencies:
   - pip
   - ninja
   - meson-python
-  - ccache
   - scikit-image
   - seaborn
   - memory_profiler

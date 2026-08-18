@@ -21,7 +21,6 @@ dependencies:
   - pip
   - ninja
   - meson-python
-  - ccache
   - scikit-image=0.22.0  # min
   - seaborn
   - memory_profiler
