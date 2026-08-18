@@ -179,12 +179,8 @@ conda activate
 create_conda_environment_from_lock_file $CONDA_ENV_NAME $LOCK_FILE
 conda activate $CONDA_ENV_NAME
 
-# Sets up ccache when using system compiler
+# Sets up ccache
 export PATH="/usr/lib/ccache:$PATH"
-# Sets up ccache when using conda-forge compilers (needs to be after conda
-# activate which sets CC and CXX)
-export CC="ccache $CC"
-export CXX="ccache $CXX"
 ccache -M 512M
 export CCACHE_COMPRESS=1
 # Zeroing statistics so that ccache statistics are shown only for this build
