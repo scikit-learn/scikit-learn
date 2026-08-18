@@ -22,11 +22,37 @@ auth = (user, token)
 
 LOGO_URL = "https://avatars2.githubusercontent.com/u/365630?v=4"
 REPO_FOLDER = Path(path.abspath(__file__)).parent.parent
+API_ENTRY_POINT = "https://api.github.com/orgs/scikit-learn/"
+RATE_LIMIT_RETRY_DELAYS = (10, 30, 0)  # seconds
+
+# GitHub API returns 30 items per page.
+TEAM_PAGES = 2
+MEMBER_PAGES = 3
+
+TEAM_SLUGS = {
+    "core_devs": "core-devs",
+    "contributor_experience_team": "contributor-experience-team",
+    "comm_team": "communication-team",
+    "documentation_team": "documentation-team",
+}
+
+# Missing/incorrect names as reported by the GitHub API.
+MISSING_NAMES = {
+    "bthirion": "Bertrand Thirion",
+    "dubourg": "Vincent Dubourg",
+    "Duchesnay": "Edouard Duchesnay",
+    "Lars": "Lars Buitinck",
+    "MechCoder": "Manoj Kumar",
+}
+
+session = requests.Session()
+session.auth = auth
 
 
 def get(url):
-    for sleep_time in [10, 30, 0]:
-        reply = requests.get(url, auth=auth)
+    reply = None
+    for sleep_time in RATE_LIMIT_RETRY_DELAYS:
+        reply = session.get(url)
         api_limit = (
             "message" in reply.json()
             and "API rate limit exceeded" in reply.json()["message"]
@@ -40,47 +66,30 @@ def get(url):
     return reply
 
 
+def get_paginated_logins(url, n_pages):
+    """Fetch `n_pages` pages (30 entries each) of logins from a GitHub API endpoint."""
+    entries = []
+    for page in range(1, n_pages + 1):
+        reply = get(f"{url}?page={page}")
+        entries.extend(reply.json())
+    return {entry["login"] for entry in entries}
+
+
 def get_contributors():
     """Get the list of contributor profiles. Require admin rights."""
-    # get core devs and contributor experience team
-    core_devs = []
-    documentation_team = []
-    contributor_experience_team = []
-    comm_team = []
-    core_devs_slug = "core-devs"
-    contributor_experience_team_slug = "contributor-experience-team"
-    comm_team_slug = "communication-team"
-    documentation_team_slug = "documentation-team"
+    teams = {}
+    for name, slug in TEAM_SLUGS.items():
+        print(f"Retrieving {slug}\n")
+        teams[name] = get_paginated_logins(f"{API_ENTRY_POINT}teams/{slug}/members", TEAM_PAGES)
 
-    entry_point = "https://api.github.com/orgs/scikit-learn/"
-
-    for team_slug, lst in zip(
-        (
-            core_devs_slug,
-            contributor_experience_team_slug,
-            comm_team_slug,
-            documentation_team_slug,
-        ),
-        (core_devs, contributor_experience_team, comm_team, documentation_team),
-    ):
-        print(f"Retrieving {team_slug}\n")
-        for page in [1, 2]:  # 30 per page
-            reply = get(f"{entry_point}teams/{team_slug}/members?page={page}")
-            lst.extend(reply.json())
+    core_devs = teams["core_devs"]
+    contributor_experience_team = teams["contributor_experience_team"]
+    comm_team = teams["comm_team"]
+    documentation_team = teams["documentation_team"]
 
     # get members of scikit-learn on GitHub
     print("Retrieving members\n")
-    members = []
-    for page in [1, 2, 3]:  # 30 per page
-        reply = get(f"{entry_point}members?page={page}")
-        members.extend(reply.json())
-
-    # keep only the logins
-    core_devs = set(c["login"] for c in core_devs)
-    documentation_team = set(c["login"] for c in documentation_team)
-    contributor_experience_team = set(c["login"] for c in contributor_experience_team)
-    comm_team = set(c["login"] for c in comm_team)
-    members = set(c["login"] for c in members)
+    members = get_paginated_logins(f"{API_ENTRY_POINT}members", MEMBER_PAGES)
 
     # add missing contributors with GitHub accounts
     members |= {"dubourg", "mbrucher", "thouis", "jarrodmillman"}
@@ -109,46 +118,26 @@ def get_contributors():
     # Up-to-now, we can subtract the team emeritus from the original emeritus
     emeritus -= emeritus_contributor_experience_team | emeritus_comm_team
 
-    # get profiles from GitHub
-    core_devs = [get_profile(login) for login in core_devs]
-    emeritus = [get_profile(login) for login in emeritus]
-    contributor_experience_team = [
-        get_profile(login) for login in contributor_experience_team
-    ]
-    emeritus_contributor_experience_team = [
-        get_profile(login) for login in emeritus_contributor_experience_team
-    ]
-    comm_team = [get_profile(login) for login in comm_team]
-    emeritus_comm_team = [get_profile(login) for login in emeritus_comm_team]
-    documentation_team = [get_profile(login) for login in documentation_team]
-
-    # sort by last name
-    core_devs = sorted(core_devs, key=key)
-    emeritus = sorted(emeritus, key=key)
-    contributor_experience_team = sorted(contributor_experience_team, key=key)
-    emeritus_contributor_experience_team = sorted(
-        emeritus_contributor_experience_team, key=key
-    )
-    documentation_team = sorted(documentation_team, key=key)
-    comm_team = sorted(comm_team, key=key)
-    emeritus_comm_team = sorted(emeritus_comm_team, key=key)
+    def profiles(logins):
+        """Fetch profiles for a set of logins, sorted by last name."""
+        return sorted((get_profile(login) for login in logins), key=key)
 
     return (
-        core_devs,
-        emeritus,
-        contributor_experience_team,
-        emeritus_contributor_experience_team,
-        comm_team,
-        emeritus_comm_team,
-        documentation_team,
+        profiles(core_devs),
+        profiles(emeritus),
+        profiles(contributor_experience_team),
+        profiles(emeritus_contributor_experience_team),
+        profiles(comm_team),
+        profiles(emeritus_comm_team),
+        profiles(documentation_team),
     )
 
 
 def get_profile(login):
     """Get the GitHub profile from login"""
-    print("get profile for %s" % (login,))
+    print(f"get profile for {login}")
     try:
-        profile = get("https://api.github.com/users/%s" % login).json()
+        profile = get(f"https://api.github.com/users/{login}").json()
     except requests.exceptions.HTTPError:
         return dict(name=login, avatar_url=LOGO_URL, html_url="")
 
@@ -156,15 +145,8 @@ def get_profile(login):
         profile["name"] = profile["login"]
 
     # fix missing names
-    missing_names = {
-        "bthirion": "Bertrand Thirion",
-        "dubourg": "Vincent Dubourg",
-        "Duchesnay": "Edouard Duchesnay",
-        "Lars": "Lars Buitinck",
-        "MechCoder": "Manoj Kumar",
-    }
-    if profile["name"] in missing_names:
-        profile["name"] = missing_names[profile["name"]]
+    if profile["name"] in MISSING_NAMES:
+        profile["name"] = MISSING_NAMES[profile["name"]]
 
     return profile
 
@@ -187,20 +169,24 @@ def generate_table(contributors):
     for contributor in contributors:
         lines.append("    <div>")
         lines.append(
-            "    <a href='%s'><img src='%s' class='avatar' /></a> <br />"
-            % (contributor["html_url"], contributor["avatar_url"])
+            "    <a href='{}'><img src='{}' class='avatar' /></a> <br />".format(
+                contributor["html_url"], contributor["avatar_url"]
+            )
         )
-        lines.append("    <p>%s</p>" % (contributor["name"],))
+        lines.append(f"    <p>{contributor['name']}</p>")
         lines.append("    </div>")
     lines.append("    </div>")
     return "\n".join(lines) + "\n"
 
 
 def generate_list(contributors):
-    lines = []
-    for contributor in contributors:
-        lines.append("- %s" % (contributor["name"],))
+    lines = [f"- {contributor['name']}" for contributor in contributors]
     return "\n".join(lines) + "\n"
+
+
+def write_rst(filename, content):
+    with open(REPO_FOLDER / "doc" / filename, "w+", encoding="utf-8") as rst_file:
+        rst_file.write(content)
 
 
 if __name__ == "__main__":
@@ -215,39 +201,25 @@ if __name__ == "__main__":
     ) = get_contributors()
 
     print("Generating rst files")
-    with open(
-        REPO_FOLDER / "doc" / "maintainers.rst", "w+", encoding="utf-8"
-    ) as rst_file:
-        rst_file.write(generate_table(core_devs))
 
-    with open(
-        REPO_FOLDER / "doc" / "maintainers_emeritus.rst", "w+", encoding="utf-8"
-    ) as rst_file:
-        rst_file.write(generate_list(emeritus))
+    # (contributors, output filename, table-vs-list generator)
+    outputs = [
+        (core_devs, "maintainers.rst", generate_table),
+        (emeritus, "maintainers_emeritus.rst", generate_list),
+        (
+            contributor_experience_team,
+            "contributor_experience_team.rst",
+            generate_table,
+        ),
+        (
+            emeritus_contributor_experience_team,
+            "contributor_experience_team_emeritus.rst",
+            generate_list,
+        ),
+        (comm_team, "communication_team.rst", generate_table),
+        (emeritus_comm_team, "communication_team_emeritus.rst", generate_list),
+        (documentation_team, "documentation_team.rst", generate_table),
+    ]
 
-    with open(
-        REPO_FOLDER / "doc" / "contributor_experience_team.rst", "w+", encoding="utf-8"
-    ) as rst_file:
-        rst_file.write(generate_table(contributor_experience_team))
-
-    with open(
-        REPO_FOLDER / "doc" / "contributor_experience_team_emeritus.rst",
-        "w+",
-        encoding="utf-8",
-    ) as rst_file:
-        rst_file.write(generate_list(emeritus_contributor_experience_team))
-
-    with open(
-        REPO_FOLDER / "doc" / "communication_team.rst", "w+", encoding="utf-8"
-    ) as rst_file:
-        rst_file.write(generate_table(comm_team))
-
-    with open(
-        REPO_FOLDER / "doc" / "communication_team_emeritus.rst", "w+", encoding="utf-8"
-    ) as rst_file:
-        rst_file.write(generate_list(emeritus_comm_team))
-
-    with open(
-        REPO_FOLDER / "doc" / "documentation_team.rst", "w+", encoding="utf-8"
-    ) as rst_file:
-        rst_file.write(generate_table(documentation_team))
+    for contributors, filename, generator in outputs:
+        write_rst(filename, generator(contributors))
