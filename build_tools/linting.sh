@@ -54,6 +54,17 @@ else
     global_status=1
 fi
 
+echo -e "### Running codespell ###\n"
+git ls-files -z | xargs -0 codespell
+status=$?
+if [[ $status -eq 0 ]]
+then
+    echo -e "No problem detected by codespell\n"
+else
+    echo -e "Problems detected by codespell, please fix them\n"
+    global_status=1
+fi
+
 # For docstrings and warnings of deprecated attributes to be rendered
 # properly, the `deprecated` decorator must come before the `property` decorator
 # (else they are treated as functions)
