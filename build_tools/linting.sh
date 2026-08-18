@@ -54,6 +54,8 @@ else
     global_status=1
 fi
 
+# Codespell is configured in pyproject.toml. Only git-tracked files are checked,
+# so that untracked local files (build artifacts, notebooks) are left alone.
 echo -e "### Running codespell ###\n"
 git ls-files -z | xargs -0 codespell
 status=$?
