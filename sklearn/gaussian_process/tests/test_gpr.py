@@ -876,3 +876,24 @@ def test_gpr_predict_no_cov_no_std_return(kernel):
     y_pred = gpr.predict(X, return_cov=False, return_std=False)
 
     assert_allclose(y_pred, y)
+
+
+@pytest.mark.parametrize("kernel", kernels)
+def test_n_jobs_parallel(kernel):
+    gpr1 = GaussianProcessRegressor(
+        kernel=kernel, n_restarts_optimizer=5, random_state=42, n_jobs=1
+    ).fit(X, y)
+    gpr2 = GaussianProcessRegressor(
+        kernel=kernel, n_restarts_optimizer=5, random_state=42, n_jobs=2
+    ).fit(X, y)
+    gpr3 = GaussianProcessRegressor(
+        kernel=kernel, n_restarts_optimizer=5, random_state=42, n_jobs=-1
+    ).fit(X, y)
+    y1, y1_cov = gpr1.predict(X, return_cov=True)
+    y2, y2_cov = gpr2.predict(X, return_cov=True)
+    y3, y3_cov = gpr3.predict(X, return_cov=True)
+
+    assert_almost_equal(y1, y2)
+    assert_almost_equal(y1, y3)
+    assert_almost_equal(y1_cov, y2_cov)
+    assert_almost_equal(y1_cov, y3_cov)

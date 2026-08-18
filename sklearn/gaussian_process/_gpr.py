@@ -24,6 +24,7 @@ from sklearn.preprocessing._data import _handle_zeros_in_scale
 from sklearn.utils import check_random_state
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.optimize import _check_optimize_result
+from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import validate_data
 
 GPR_CHOLESKY_LOWER = True
@@ -138,6 +139,13 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
+    n_jobs : int, default=None
+        The number of jobs to run in parallel. :meth:`fit` will perform
+        hyperparameter search in parallel if `n_restarts_optimizers` is >0.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
+        context. ``-1`` means using all processors. See :term:`Glossary
+        <n_jobs>` for more details.
+
     Attributes
     ----------
     X_train_ : array-like of shape (n_samples, n_features) or list of object
@@ -206,6 +214,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         "copy_X_train": ["boolean"],
         "n_targets": [Interval(Integral, 1, None, closed="left"), None],
         "random_state": ["random_state"],
+        "n_jobs": [Integral, None],
     }
 
     def __init__(
@@ -219,6 +228,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         copy_X_train=True,
         n_targets=None,
         random_state=None,
+        n_jobs=None,
     ):
         self.kernel = kernel
         self.alpha = alpha
@@ -228,6 +238,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self.copy_X_train = copy_X_train
         self.n_targets = n_targets
         self.random_state = random_state
+        self.n_jobs = n_jobs
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
@@ -309,13 +320,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     return -self.log_marginal_likelihood(theta, clone_kernel=False)
 
             # First optimize starting from theta specified in kernel
-            optima = [
-                (
-                    self._constrained_optimization(
-                        obj_func, self.kernel_.theta, self.kernel_.bounds
-                    )
-                )
-            ]
+            theta_initials = [self.kernel_.theta]
 
             # Additional runs are performed from log-uniform chosen initial
             # theta
@@ -325,12 +330,22 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                         "Multiple optimizer restarts (n_restarts_optimizer>0) "
                         "requires that all bounds are finite."
                     )
-                bounds = self.kernel_.bounds
-                for iteration in range(self.n_restarts_optimizer):
-                    theta_initial = self._rng.uniform(bounds[:, 0], bounds[:, 1])
-                    optima.append(
-                        self._constrained_optimization(obj_func, theta_initial, bounds)
+                theta_initials.extend(
+                    self._rng.uniform(
+                        self.kernel_.bounds[:, 0], self.kernel_.bounds[:, 1]
                     )
+                    for _ in range(self.n_restarts_optimizer)
+                )
+
+            optima = Parallel(n_jobs=self.n_jobs)(
+                self._constrained_optimization(
+                    bounds=self.kernel_.bounds,
+                    initial_theta=theta_initial,
+                    obj_func=obj_func,
+                )
+                for theta_initial in theta_initials
+            )
+
             # Select result from run with minimal (negative) log-marginal
             # likelihood
             lml_values = list(map(itemgetter(1), optima))
@@ -655,6 +670,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         else:
             return log_likelihood
 
+    @delayed
     def _constrained_optimization(self, obj_func, initial_theta, bounds):
         if self.optimizer == "fmin_l_bfgs_b":
             opt_res = scipy.optimize.minimize(
