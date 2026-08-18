@@ -1,0 +1,7 @@
+- :class:`decomposition.DictionaryLearning`, :class:`decomposition.MiniBatchDictionaryLearning`
+  and :class:`decomposition.SparseCoder` now correctly report the number of output
+  features from :meth:`get_feature_names_out` when `split_sign=True`, preserve the
+  input dtype in the split code, and :meth:`decomposition.DictionaryLearning.fit_transform`
+  now consistently applies the sign-splitting so that its output matches
+  :meth:`decomposition.DictionaryLearning.transform`.
+  By :user:`Sahil Mangla <sahil-mangla>`.

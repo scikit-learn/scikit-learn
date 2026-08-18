@@ -1089,6 +1089,16 @@ class _BaseSparseCoding(ClassNamePrefixFeaturesOutMixin, TransformerMixin):
         self.n_jobs = n_jobs
         self.positive_code = positive_code
 
+    def _apply_split_sign(self, code):
+        """Split the code into a positive and negative side, if requested."""
+        if not self.split_sign:
+            return code
+        n_samples, n_features = code.shape
+        split_code = np.empty((n_samples, 2 * n_features), dtype=code.dtype)
+        split_code[:, :n_features] = np.maximum(code, 0)
+        split_code[:, n_features:] = -np.minimum(code, 0)
+        return split_code
+
     def _transform(self, X, dictionary):
         """Private method allowing to accommodate both DictionaryLearning and
         SparseCoder."""
@@ -1110,15 +1120,7 @@ class _BaseSparseCoding(ClassNamePrefixFeaturesOutMixin, TransformerMixin):
             positive=self.positive_code,
         )
 
-        if self.split_sign:
-            # feature vector is split into a positive and negative side
-            n_samples, n_features = code.shape
-            split_code = np.empty((n_samples, 2 * n_features))
-            split_code[:, :n_features] = np.maximum(code, 0)
-            split_code[:, n_features:] = -np.minimum(code, 0)
-            code = split_code
-
-        return code
+        return self._apply_split_sign(code)
 
     def transform(self, X):
         """Encode the data as a sparse combination of the dictionary atoms.
@@ -1411,7 +1413,10 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
     @property
     def _n_features_out(self):
         """Number of transformed output features."""
-        return self.n_components_
+        n_features_out = self.n_components_
+        if self.split_sign:
+            n_features_out *= 2
+        return n_features_out
 
 
 class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
@@ -1744,12 +1749,15 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.components_ = U
         self.error_ = E
 
-        return V
+        return self._apply_split_sign(V)
 
     @property
     def _n_features_out(self):
         """Number of transformed output features."""
-        return self.components_.shape[0]
+        n_features_out = self.components_.shape[0]
+        if self.split_sign:
+            n_features_out *= 2
+        return n_features_out
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -2333,7 +2341,10 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     @property
     def _n_features_out(self):
         """Number of transformed output features."""
-        return self.components_.shape[0]
+        n_features_out = self.components_.shape[0]
+        if self.split_sign:
+            n_features_out *= 2
+        return n_features_out
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()

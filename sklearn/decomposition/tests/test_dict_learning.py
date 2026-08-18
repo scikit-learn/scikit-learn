@@ -296,6 +296,52 @@ def test_dict_learning_split():
     assert_array_almost_equal(Xr, Xr2)
 
 
+@pytest.mark.parametrize(
+    "estimator_class", [DictionaryLearning, MiniBatchDictionaryLearning]
+)
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_dict_learning_split_sign_n_features_out(estimator_class, dtype):
+    """Check that split_sign is consistently reflected in the number of
+    output features, the output dtype, and that fit_transform and transform
+    produce outputs of matching shape.
+
+    Non-regression test for gh-34768.
+    """
+    n_components = 4
+    Xd = X.astype(dtype)
+    est = estimator_class(
+        n_components,
+        split_sign=True,
+        transform_algorithm="threshold",
+        random_state=0,
+    )
+
+    Xt_fit = est.fit_transform(Xd)
+    Xt_transform = est.transform(Xd)
+
+    assert Xt_fit.shape == Xt_transform.shape == (Xd.shape[0], 2 * n_components)
+    assert Xt_fit.dtype == dtype
+    assert Xt_transform.dtype == dtype
+
+    feature_names = est.get_feature_names_out()
+    assert len(feature_names) == 2 * n_components
+
+
+def test_sparse_coder_split_sign_n_features_out():
+    """Non-regression test for gh-34768."""
+    n_components = 4
+    dictionary = rng_global.randn(n_components, n_features)
+    coder = SparseCoder(
+        dictionary=dictionary, split_sign=True, transform_algorithm="threshold"
+    ).fit(X)
+
+    Xt = coder.transform(X)
+    assert Xt.shape == (X.shape[0], 2 * n_components)
+
+    feature_names = coder.get_feature_names_out()
+    assert len(feature_names) == 2 * n_components
+
+
 def test_dict_learning_online_shapes():
     rng = np.random.RandomState(0)
     n_components = 8
