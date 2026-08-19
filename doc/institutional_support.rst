@@ -56,6 +56,9 @@ financially support scikit-learn as follows:
 .. |probabl| image:: images/probabl.png
   :target: https://probabl.ai
 
+.. |intel| image:: images/intel-small.png
+  :target: https://www.intel.com
+
 .. |wellcome| image:: images/wellcome-trust-small.png
   :target: https://wellcome.org
 
@@ -89,7 +92,8 @@ financially support scikit-learn as follows:
      - 0.5 FTE or more
      - less than 0.5 FTE
    * - |probabl|
-     - * |czi| |wellcome|
+     - * |intel|
+       * |czi| |wellcome|
        * |nvidia|
        * |nasa| |quansightlabs|
        * |chanel|
@@ -98,6 +102,10 @@ financially support scikit-learn as follows:
 
 FTE stands for Full-Time Equivalent.
 
+* `Intel <https://www.intel.com/>`_ supports scikit-learn via Probabl (2026)
+  through a `collaboration to accelerate scikit-learn on Intel hardware
+  <https://blog.probabl.ai/intel-and-probabl-announce-collaboration-to-accelerate-scikit-learn-on-intel-hardware>`_.
+ 
 * `The Chan-Zuckerberg Initiative <https://chanzuckerberg.com/>`_ and `Wellcome
   Trust <https://wellcome.org/>`_ support the work of Lucy Liu, Dea Maria Leon,
   Anne Beyer and Francois Paugam through the `Essential Open Source Software
