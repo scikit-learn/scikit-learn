@@ -602,7 +602,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             is_categorical=self._is_categorical_remapped,
             known_categories=known_categories,
             random_state=self._random_seed,
-            n_threads=max_n_threads,
+            max_n_threads=max_n_threads,
         )
         X_binned_train = self._bin_data(
             X_train, sample_weight_train, is_training_data=True
