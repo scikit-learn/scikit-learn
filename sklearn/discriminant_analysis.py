@@ -25,8 +25,10 @@ from sklearn.utils._array_api import (
     array_device,
     check_same_namespace,
     get_namespace,
+    move_to,
     size,
 )
+from sklearn.utils._encode import _encode
 from sklearn.utils._param_validation import HasMethods, Interval, StrOptions
 from sklearn.utils.extmath import softmax
 from sklearn.utils.multiclass import check_classification_targets, unique_labels
@@ -95,7 +97,7 @@ def _cov(X, shrinkage=None, covariance_estimator=None):
     return s
 
 
-def _class_means(X, y):
+def _class_means(X, y_encoded, *, n_classes):
     """Compute class means.
 
     Parameters
@@ -103,8 +105,11 @@ def _class_means(X, y):
     X : array-like of shape (n_samples, n_features)
         Input data.
 
-    y : array-like of shape (n_samples,) or (n_samples, n_targets)
-        Target values.
+    y_encoded : array-like of shape (n_samples,)
+        Target values encoded as integer codes indexing `self.classes_`.
+
+    n_classes : int
+        Number of classes, i.e. `1 + max(y_encoded)`.
 
     Returns
     -------
@@ -112,24 +117,23 @@ def _class_means(X, y):
         Class means.
     """
     xp, is_array_api_compliant = get_namespace(X)
-    classes, y = xp.unique_inverse(y)
-    means = xp.zeros(
-        (classes.shape[0], X.shape[1]), device=array_device(X), dtype=X.dtype
-    )
+    means = xp.zeros((n_classes, X.shape[1]), device=array_device(X), dtype=X.dtype)
 
     if is_array_api_compliant:
-        for i in range(classes.shape[0]):
-            means[i, :] = xp.mean(X[y == i], axis=0)
+        for i in range(n_classes):
+            means[i, :] = xp.mean(X[y_encoded == i], axis=0)
     else:
         # TODO: Explore the choice of using bincount + add.at as it seems sub optimal
         # from a performance-wise
-        cnt = np.bincount(y)
-        np.add.at(means, y, X)
+        cnt = np.bincount(y_encoded, minlength=n_classes)
+        np.add.at(means, y_encoded, X)
         means /= cnt[:, None]
     return means
 
 
-def _class_cov(X, y, priors, shrinkage=None, covariance_estimator=None):
+def _class_cov(
+    X, y_encoded, priors, shrinkage=None, covariance_estimator=None, *, n_classes
+):
     """Compute weighted within-class covariance matrix.
 
     The per-class covariance are weighted by the class priors.
@@ -139,8 +143,11 @@ def _class_cov(X, y, priors, shrinkage=None, covariance_estimator=None):
     X : array-like of shape (n_samples, n_features)
         Input data.
 
-    y : array-like of shape (n_samples,) or (n_samples, n_targets)
-        Target values.
+    y_encoded : array-like of shape (n_samples,)
+        Target values encoded as integer codes indexing `self.classes_`.
+
+    n_classes : int
+        Number of classes, i.e. `1 + max(y_encoded)`.
 
     priors : array-like of shape (n_classes,)
         Class priors.
@@ -168,10 +175,9 @@ def _class_cov(X, y, priors, shrinkage=None, covariance_estimator=None):
     cov : array-like of shape (n_features, n_features)
         Weighted within-class covariance matrix
     """
-    classes = np.unique(y)
     cov = np.zeros(shape=(X.shape[1], X.shape[1]))
-    for idx, group in enumerate(classes):
-        Xg = X[y == group, :]
+    for idx in range(n_classes):
+        Xg = X[y_encoded == idx, :]
         cov += priors[idx] * np.atleast_2d(_cov(Xg, shrinkage, covariance_estimator))
     return cov
 
@@ -444,7 +450,7 @@ class LinearDiscriminantAnalysis(
         self.tol = tol  # used only in svd solver
         self.covariance_estimator = covariance_estimator
 
-    def _solve_lstsq(self, X, y, shrinkage, covariance_estimator):
+    def _solve_lstsq(self, X, y_encoded, shrinkage, covariance_estimator):
         """Least squares solver.
 
         The least squares solver computes a straightforward solution of the
@@ -459,8 +465,8 @@ class LinearDiscriminantAnalysis(
         X : array-like of shape (n_samples, n_features)
             Training data.
 
-        y : array-like of shape (n_samples,) or (n_samples, n_classes)
-            Target values.
+        y_encoded : array-like of shape (n_samples,)
+            Target values encoded as integer codes indexing `self.classes_`.
 
         shrinkage : 'auto', float or None
             Shrinkage parameter, possible values:
@@ -491,16 +497,22 @@ class LinearDiscriminantAnalysis(
            (Second Edition). John Wiley & Sons, Inc., New York, 2001. ISBN
            0-471-05669-3.
         """
-        self.means_ = _class_means(X, y)
+        n_classes = self.classes_.shape[0]
+        self.means_ = _class_means(X, y_encoded, n_classes=n_classes)
         self.covariance_ = _class_cov(
-            X, y, self.priors_, shrinkage, covariance_estimator
+            X,
+            y_encoded,
+            self.priors_,
+            shrinkage,
+            covariance_estimator,
+            n_classes=n_classes,
         )
         self.coef_ = linalg.lstsq(self.covariance_, self.means_.T)[0].T
         self.intercept_ = -0.5 * np.diag(np.dot(self.means_, self.coef_.T)) + np.log(
             self.priors_
         )
 
-    def _solve_eigen(self, X, y, shrinkage, covariance_estimator):
+    def _solve_eigen(self, X, y_encoded, shrinkage, covariance_estimator):
         """Eigenvalue solver.
 
         The eigenvalue solver computes the optimal solution of the Rayleigh
@@ -513,8 +525,8 @@ class LinearDiscriminantAnalysis(
         X : array-like of shape (n_samples, n_features)
             Training data.
 
-        y : array-like of shape (n_samples,) or (n_samples, n_targets)
-            Target values.
+        y_encoded : array-like of shape (n_samples,)
+            Target values encoded as integer codes indexing `self.classes_`.
 
         shrinkage : 'auto', float or None
             Shrinkage parameter, possible values:
@@ -545,9 +557,15 @@ class LinearDiscriminantAnalysis(
            (Second Edition). John Wiley & Sons, Inc., New York, 2001. ISBN
            0-471-05669-3.
         """
-        self.means_ = _class_means(X, y)
+        n_classes = self.classes_.shape[0]
+        self.means_ = _class_means(X, y_encoded, n_classes=n_classes)
         self.covariance_ = _class_cov(
-            X, y, self.priors_, shrinkage, covariance_estimator
+            X,
+            y_encoded,
+            self.priors_,
+            shrinkage,
+            covariance_estimator,
+            n_classes=n_classes,
         )
 
         Sw = self.covariance_  # within scatter
@@ -566,7 +584,7 @@ class LinearDiscriminantAnalysis(
             self.priors_
         )
 
-    def _solve_svd(self, X, y):
+    def _solve_svd(self, X, y_encoded):
         """SVD solver.
 
         Parameters
@@ -574,8 +592,8 @@ class LinearDiscriminantAnalysis(
         X : array-like of shape (n_samples, n_features)
             Training data.
 
-        y : array-like of shape (n_samples,) or (n_samples, n_targets)
-            Target values.
+        y_encoded : array-like of shape (n_samples,)
+            Target values encoded as integer codes indexing `self.classes_`.
         """
         xp, is_array_api_compliant = get_namespace(X)
 
@@ -587,13 +605,17 @@ class LinearDiscriminantAnalysis(
         n_samples, _ = X.shape
         n_classes = self.classes_.shape[0]
 
-        self.means_ = _class_means(X, y)
+        self.means_ = _class_means(X, y_encoded, n_classes=n_classes)
         if self.store_covariance:
-            self.covariance_ = _class_cov(X, y, self.priors_)
+            self.covariance_ = _class_cov(
+                X, y_encoded, self.priors_, n_classes=n_classes
+            )
 
         Xc = []
-        for idx, group in enumerate(self.classes_):
-            Xg = X[y == group]
+        # `y_encoded` holds integer class codes (see `fit`), so groups are
+        # indexed by position in `self.classes_`.
+        for idx in range(n_classes):
+            Xg = X[y_encoded == idx]
             Xc.append(Xg - self.means_[idx, :])
 
         self.xbar_ = self.priors_ @ self.means_
@@ -669,6 +691,14 @@ class LinearDiscriminantAnalysis(
             self, X, y, ensure_min_samples=2, dtype=[xp.float64, xp.float32]
         )
         self.classes_ = unique_labels(y)
+        # `y` may hold strings, which no array API namespace can represent,
+        # therefore convert to integer codes instead.
+        # `classes_` stays in `y`'s namespace and device.
+        y_encoded = move_to(
+            _encode(y, uniques=self.classes_),
+            xp=xp,
+            device=array_device(X),
+        )
         n_samples, n_features = X.shape
         n_classes = self.classes_.shape[0]
 
@@ -678,7 +708,7 @@ class LinearDiscriminantAnalysis(
             )
 
         if self.priors is None:  # estimate priors from sample
-            _, cnts = xp.unique_counts(y)  # non-negative ints
+            _, cnts = xp.unique_counts(y_encoded)  # non-negative ints
             self.priors_ = xp.astype(cnts, X.dtype) / float(n_samples)
         else:
             self.priors_ = xp.asarray(self.priors, dtype=X.dtype)
@@ -712,18 +742,18 @@ class LinearDiscriminantAnalysis(
                     "is not supported "
                     "with svd solver. Try another solver"
                 )
-            self._solve_svd(X, y)
+            self._solve_svd(X, y_encoded)
         elif self.solver == "lsqr":
             self._solve_lstsq(
                 X,
-                y,
+                y_encoded,
                 shrinkage=self.shrinkage,
                 covariance_estimator=self.covariance_estimator,
             )
         elif self.solver == "eigen":
             self._solve_eigen(
                 X,
-                y,
+                y_encoded,
                 shrinkage=self.shrinkage,
                 covariance_estimator=self.covariance_estimator,
             )
