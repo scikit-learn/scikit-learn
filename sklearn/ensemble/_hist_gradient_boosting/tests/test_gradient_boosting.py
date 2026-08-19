@@ -1791,3 +1791,98 @@ def test_max_features_less_than_one_does_not_crash(HistGradientBoosting):
 
     est = HistGradientBoosting(max_features=0.5, max_iter=50, random_state=0)
     est.fit(X, y)  # should not raise
+
+
+def _get_heuristic_n_threads(max_n_threads, n_samples, n_features, active_wait):
+    return hgb_module.BaseHistGradientBoosting._get_heurirstic_optimal_n_threads(
+        max_n_threads, n_samples, n_features, active_wait=active_wait
+    )
+
+
+@pytest.mark.parametrize("active_wait", [True, False])
+@pytest.mark.parametrize(
+    "max_n_threads, n_samples, n_features",
+    [
+        (1, 1, 1),
+        (1, 10**7, 1000),
+        (64, 1, 1),
+        (8, 10, 2),
+        (8, 10**7, 2),
+        (32, 10**5, 500),
+    ],
+)
+def test_get_heuristic_optimal_n_threads_bounds(
+    max_n_threads, n_samples, n_features, active_wait
+):
+    # The heuristic should never recommend using fewer than 1 thread, nor more
+    # than the threads actually available.
+    n_threads = _get_heuristic_n_threads(
+        max_n_threads, n_samples, n_features, active_wait
+    )
+    assert isinstance(n_threads, int)
+    assert 1 <= n_threads <= max_n_threads
+
+
+@pytest.mark.parametrize("active_wait", [True, False])
+def test_get_heuristic_optimal_n_threads_max_n_threads_one(active_wait):
+    # However large the workload, there is nothing to parallelize over when
+    # only one thread is available.
+    for n_samples, n_features in [(1, 1), (10**7, 1), (1, 1000), (10**7, 1000)]:
+        assert _get_heuristic_n_threads(1, n_samples, n_features, active_wait) == 1
+
+
+@pytest.mark.parametrize("active_wait", [True, False])
+def test_get_heuristic_optimal_n_threads_tiny_workload(active_wait):
+    # A single sample and a single feature is as small as a workload gets:
+    # thread management overhead would dominate, whatever the thread budget.
+    assert _get_heuristic_n_threads(64, 1, 1, active_wait) == 1
+
+
+@pytest.mark.parametrize("active_wait", [True, False])
+def test_get_heuristic_optimal_n_threads_monotonic_in_n_features(active_wait):
+    # More features to parallelize over should never make the heuristic
+    # recommend fewer threads, and it should saturate at max_n_threads once
+    # there is at least one feature per thread.
+    max_n_threads = 8
+    n_threads_by_n_features = [
+        _get_heuristic_n_threads(
+            max_n_threads, n_samples=10, n_features=n_features, active_wait=active_wait
+        )
+        for n_features in [1, 2, 4, 8, 16, 100]
+    ]
+    assert n_threads_by_n_features == sorted(n_threads_by_n_features)
+    assert n_threads_by_n_features[-1] == max_n_threads
+
+
+@pytest.mark.parametrize("active_wait", [True, False])
+def test_get_heuristic_optimal_n_threads_monotonic_in_n_samples(active_wait):
+    # More samples to parallelize over should never make the heuristic
+    # recommend fewer threads.
+    max_n_threads = 8
+    n_threads_by_n_samples = [
+        _get_heuristic_n_threads(
+            max_n_threads, n_samples=n_samples, n_features=2, active_wait=active_wait
+        )
+        for n_samples in [1, 10, 100, 1000, 10**4, 10**5, 10**6, 10**7]
+    ]
+    assert n_threads_by_n_samples == sorted(n_threads_by_n_samples)
+
+
+def test_get_heuristic_optimal_n_threads_active_wait_uses_more_threads():
+    # Active waiting lowers the cost of waking up idle threads, so the
+    # heuristic should be at least as willing to use more threads for the
+    # same, large enough, sample-bound workload as when threads sleep
+    # instead of spinning.
+    max_n_threads = 16
+    for n_samples in [10**4, 10**5, 10**6, 10**7, 10**8]:
+        n_threads_active = _get_heuristic_n_threads(
+            max_n_threads, n_samples, n_features=1, active_wait=True
+        )
+        n_threads_passive = _get_heuristic_n_threads(
+            max_n_threads, n_samples, n_features=1, active_wait=False
+        )
+        assert n_threads_active >= n_threads_passive
+    # And strictly more for at least one, large enough, sample count.
+    assert _get_heuristic_n_threads(
+        max_n_threads, 10**8, 1, active_wait=True
+    ) > _get_heuristic_n_threads(max_n_threads, 10**8, 1, active_wait=False)
