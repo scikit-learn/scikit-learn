@@ -42,10 +42,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import FunctionTransformer, LabelEncoder, OrdinalEncoder
 from sklearn.utils import check_random_state, compute_sample_weight, resample
 from sklearn.utils._missing import is_scalar_nan
-from sklearn.utils._openmp_helpers import (
-    _openmp_effective_n_threads,
-    _openmp_uses_active_wait,
-)
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
@@ -617,10 +614,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         n_samples, n_features = X_binned_train.shape
 
         n_threads = self._get_heurirstic_optimal_n_threads(
-            max_n_threads,
-            n_samples,
-            n_features,
-            active_wait=_openmp_uses_active_wait(),
+            max_n_threads, n_samples, n_features
         )
 
         # Uses binned data to check for missing values
@@ -968,9 +962,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         return self
 
     @staticmethod
-    def _get_heurirstic_optimal_n_threads(
-        max_n_threads, n_samples, n_features, *, active_wait
-    ):
+    def _get_heurirstic_optimal_n_threads(max_n_threads, n_samples, n_features):
         """
         Using the maximum number of available threads regardless of the size of
         the workload can be counter-productive: parallelizing over very few
@@ -987,12 +979,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         n_threads_needed_for_features = math.ceil(n_features / n_features_per_thread)
 
         # Very empirical: more samples warrant more threads, on a log scale.
-        # With active waiting, we can afford more of them.
-        n_threads_for_samples_wise_parallelism = (
-            math.log10(n_samples / 1e3) * 2
-            if active_wait
-            else math.log10(n_samples / 1e5) * 2
-        )
+        n_threads_for_samples_wise_parallelism = math.log10(n_samples / 1e3) * 2
 
         heuristic_n_threads = max(
             n_threads_needed_for_features, n_threads_for_samples_wise_parallelism
