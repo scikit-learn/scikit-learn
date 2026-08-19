@@ -78,12 +78,15 @@ function copyFeatureNamesToClipboard(element) {
 
     navigator.clipboard.writeText(formattedText)
         .then(() => {
-            element.style.display = 'none';
-            element.parentElement.appendChild(copyMark);
+            /* Hide only the icon image: display none would remove the
+             * focused button and drop keyboard focus to the page body. */
+            element.style.backgroundImage = 'none';
+            element.appendChild(copyMark);
 
             setTimeout(() => {
                 copyMark.remove();
                 element.innerHTML = originalHTML;
+                element.style.backgroundImage = '';
                 element.style = originalStyle;
             }, 1000);
         })
@@ -110,8 +113,17 @@ document.querySelectorAll(
     container.addEventListener('keydown', function(event) {
         if (event.key === 'Enter' || event.key === ' ') {
             event.stopPropagation();
+            /* Space only has a native action on summaries and buttons.
+             * Anywhere else its default is to scroll the notebook, which
+             * moves the focused element out of view. */
+            if (event.key === ' ' && !event.target.closest('summary, button')) {
+                event.preventDefault();
+            }
         } else if (event.key === 'Escape') {
             event.target.blur();
+            /* Keep the keyboard position inside the diagram instead of
+             * dropping focus to the page body. */
+            container.focus();
             event.stopPropagation();
         }
     });
