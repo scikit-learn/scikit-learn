@@ -165,7 +165,7 @@ cdef class HistogramBuilder:
             5 - 2*hessians_are_constant,
             MIN_INSTRUCTIONS_PER_THREAD
         )
-        use_threads_features = _use_threads_for_workload(
+        use_threads_features = n_allowed_features > 1 and _use_threads_for_workload(
             n_threads, <long long> n_allowed_features * n_samples,
             10 - 3 * hessians_are_constant,
             MIN_INSTRUCTIONS_PER_THREAD,
@@ -291,7 +291,7 @@ cdef class HistogramBuilder:
             n_allowed_features = allowed_features.shape[0]
 
         # Each (feature, bin) pair costs ~10 simple field subtractions below.
-        use_threads = _use_threads_for_workload(
+        use_threads = n_allowed_features > 1 and _use_threads_for_workload(
             n_threads, <long long> n_allowed_features * self.n_bins, 10,
             MIN_INSTRUCTIONS_PER_THREAD,
         )

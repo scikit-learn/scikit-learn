@@ -611,29 +611,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         else:
             X_binned_val = None
 
-        # Use the same heuristic as TreeGrower to pick the number of threads:
-        # using the maximum number of available threads regardless of the size
-        # of the workload can be counter-productive (see _n_threads_for_grower).
-        # This value is reused for every step of the boosting loop (gradient
-        # and hessian computation, tree growing, updating predictions, etc.)
-        # so that threads are not spun up and down with a different count at
-        # each step.
-        # Heuristic number of threads to use for growing a single tree.
-
-        """
-        Using the maximum number of available threads regardless of the size of
-        the workload can be counter-productive: parallelizing over very few
-        features or samples adds thread-management overhead that outweighs the
-        benefit. This balances ``max_n_threads`` against ``n_features`` (so that
-        threads are not left idle or unevenly loaded) and against ``n_samples``
-        (so that small datasets use fewer threads).
-        """
         n_samples, n_features = X_binned_train.shape
-        heuristic_n_threads = max(
-            n_features / math.ceil(n_features / max_n_threads),
-            math.log10(n_samples) * 2 - 6,
+
+        n_threads = self._get_heurirstic_optimal_n_threads(
+            max_n_threads, n_samples, n_features
         )
-        n_threads = min(max_n_threads, max(1, round(heuristic_n_threads)))
 
         # Uses binned data to check for missing values
         has_missing_values = (
@@ -978,6 +960,35 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.validation_score_ = np.asarray(self.validation_score_)
         del self._in_fit  # hard delete so we're sure it can't be used anymore
         return self
+
+    def _get_heurirstic_optimal_n_threads(max_n_threads, n_samples, n_features):
+        """
+        Using the maximum number of available threads regardless of the size of
+        the workload can be counter-productive: parallelizing over very few
+        features or samples adds thread-management overhead that outweighs the
+        benefit. This balances ``max_n_threads`` against ``n_features`` (so that
+        threads are not left idle or unevenly loaded) and against ``n_samples``
+        (so that small datasets use fewer threads).
+        """
+        active_wait = True  # TODO: read GOMP_SPINCOUNT/KMP_BLOCKTIME
+
+        n_features_per_thread = math.ceil(n_features / max_n_threads)
+        n_threads_needed_for_all_features = math.ceil(
+            n_features / n_features_per_thread
+        )
+
+        # very empricial:
+        n_threads_for_samples_wise_parallelism = (
+            math.log10(n_samples / 1e3) * 2
+            if active_wait
+            else math.log10(n_samples / 1e5) * 2,
+        )
+
+        heuristic_n_threads = max(
+            n_threads_needed_for_all_features, n_threads_for_samples_wise_parallelism
+        )
+
+        return min(max_n_threads, max(1, round(heuristic_n_threads)))
 
     def _is_fitted(self):
         return len(getattr(self, "_predictors", [])) > 0
