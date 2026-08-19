@@ -972,12 +972,14 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         """
         active_wait = True  # TODO: read GOMP_SPINCOUNT/KMP_BLOCKTIME
 
+        # Compute the per-thread chunk size first, then derive how many threads
+        # are actually needed to cover n_features with that chunk size: this can
+        # be lower than max_n_threads, avoiding threads with little to no work.
         n_features_per_thread = math.ceil(n_features / max_n_threads)
-        n_threads_needed_for_all_features = math.ceil(
-            n_features / n_features_per_thread
-        )
+        n_threads_needed_for_features = math.ceil(n_features / n_features_per_thread)
 
-        # very empricial:
+        # Very empirical: more samples warrant more threads, on a log scale.
+        # With active waiting, we can afford more of them.
         n_threads_for_samples_wise_parallelism = (
             math.log10(n_samples / 1e3) * 2
             if active_wait
@@ -985,7 +987,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         )
 
         heuristic_n_threads = max(
-            n_threads_needed_for_all_features, n_threads_for_samples_wise_parallelism
+            n_threads_needed_for_features, n_threads_for_samples_wise_parallelism
         )
 
         return min(max_n_threads, max(1, round(heuristic_n_threads)))
