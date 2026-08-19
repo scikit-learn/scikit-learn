@@ -17,7 +17,7 @@ import numpy as np
 from sklearn import __version__
 from sklearn._config import config_context, get_config
 from sklearn.exceptions import InconsistentVersionWarning
-from sklearn.utils._metadata_requests import _MetadataRequester, _routing_enabled
+from sklearn.utils._metadata_requests import MetadataRequester, _routing_enabled
 from sklearn.utils._missing import is_pandas_na, is_scalar_nan
 from sklearn.utils._param_validation import validate_parameter_constraints
 from sklearn.utils._repr_html.base import ReprHTMLMixin, _HTMLDocumentationLinkMixin
@@ -162,7 +162,7 @@ def _clone_parametrized(estimator, *, safe=True):
     return new_object
 
 
-class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequester):
+class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, MetadataRequester):
     """Base class for all estimators in scikit-learn.
 
     Inheriting from this class provides default implementations of:
