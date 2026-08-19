@@ -46,6 +46,7 @@
 .sk-global :focus-visible {
   outline: 2px solid var(--sklearn-color-focus);
   outline-offset: -2px;
+  border-radius: 0.25em;
 }
 
 /* Focus ring sits outside copy-paste icon.
@@ -393,7 +394,7 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 /* Focus ring round and outside of the small circular icon */
 .sk-global .sk-estimator-doc-link:focus-visible {
   border-radius: 1em;
-  outline-offset: 2px;
+  outline-offset: 1px;
 }
 
 .sk-top-container.sk-global {
