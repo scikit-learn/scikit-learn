@@ -2,4 +2,3 @@
   spurious :class:`~sklearn.exceptions.EfficiencyWarning` when given a
   precomputed sparse distance matrix.
   By :user:`Vadim <Tweezky66>`.
-  

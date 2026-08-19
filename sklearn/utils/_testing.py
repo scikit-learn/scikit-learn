@@ -51,6 +51,7 @@ from sklearn.utils._array_api import (
 )
 from sklearn.utils.fixes import (
     _IS_32BIT,
+    _IS_WASM,
     VisibleDeprecationWarning,
     _in_unstable_openblas_configuration,
 )
@@ -358,6 +359,9 @@ try:
     skip_if_no_numpydoc = pytest.mark.skipif(
         not _is_numpydoc(),
         reason="numpydoc is required to test the docstrings",
+    )
+    skip_callback_test_if_wasm = pytest.mark.skipif(
+        _IS_WASM, reason="callback tests are skipped on WASM/Pyodide"
     )
 except ImportError:
     pass

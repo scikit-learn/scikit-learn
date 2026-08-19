@@ -11,10 +11,7 @@ from scipy import sparse, stats
 
 from sklearn import config_context, datasets
 from sklearn.base import clone
-from sklearn.callback.tests._utils import (
-    RecordingCallback,
-    skip_callback_test_if_wasm,
-)
+from sklearn.callback.tests._common.callbacks import RecordingCallback
 from sklearn.exceptions import NotFittedError
 from sklearn.externals._packaging.version import parse as parse_version
 from sklearn.metrics.pairwise import linear_kernel
@@ -55,6 +52,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
     assert_array_less,
+    skip_callback_test_if_wasm,
     skip_if_32bit,
 )
 from sklearn.utils.estimator_checks import (
