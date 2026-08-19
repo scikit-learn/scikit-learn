@@ -1,4 +1,7 @@
 import os
+import re
+import subprocess
+import sys
 from joblib import cpu_count
 
 
@@ -6,6 +9,10 @@ from joblib import cpu_count
 # the lifecycle of a Python program. This dictionary is keyed by
 # only_physical_cores.
 _CPU_COUNTS = {}
+
+# Module level cache for _openmp_uses_active_wait, since computing it spawns
+# a subprocess. None means "not computed yet".
+_ACTIVE_WAIT_CACHE = None
 
 
 def _min_instructions_per_thread():
@@ -15,57 +22,105 @@ def _min_instructions_per_thread():
 
     Meant to be called once, at import time, by modules that use
     ``_use_threads_for_workload``, and cached in a module-level constant
-    there. Defaults to 2000 and can be overridden with the
+    there. Can be overridden with the
     ``SKLEARN_MIN_INSTRUCTIONS_PER_THREAD`` environment variable, for
     experimentation.
+
+    Defaults to 2000 if OpenMP threads actively wait (see
+    ``_openmp_uses_active_wait``), since they can then rejoin a parallel
+    region cheaply. Without active waiting, spinning up threads for small
+    workloads is comparatively more costly, so the default is raised to
+    20000.
     """
-    return int(os.environ.get("SKLEARN_MIN_INSTRUCTIONS_PER_THREAD", 2000))
+    default = 2000 if _openmp_uses_active_wait() else 20_000
+    return int(os.environ.get("SKLEARN_MIN_INSTRUCTIONS_PER_THREAD", default))
+
+
+# Patterns matched against the block an OpenMP runtime prints on stderr when
+# OMP_DISPLAY_ENV is set: they identify a *resolved* spin-count setting (as
+# opposed to what was requested through environment variables, which the
+# runtime may ignore, normalize, or default differently) that means idle
+# threads do not spin. Note that ``OMP_WAIT_POLICY`` is not a reliable
+# signal by itself: e.g. libgomp can report it as ``PASSIVE`` while
+# ``GOMP_SPINCOUNT`` was explicitly set to a large value, which still makes
+# threads spin in practice. Values may be prefixed by a device scope (e.g.
+# "[host] ") and wrapped in quotes, hence the loose whitespace/quoting.
+_PASSIVE_WAIT_PATTERNS = tuple(
+    re.compile(pattern)
+    for pattern in (
+        # GNU libgomp: spinning at most once is effectively passive.
+        r"GOMP_SPINCOUNT\s*=\s*'?[01]'?\D",
+        # Intel's and LLVM's OpenMP runtimes.
+        r"KMP_BLOCKTIME\s*=\s*'?0'?\D",
+    )
+)
 
 
 def _openmp_uses_active_wait():
-    """Whether idle OpenMP threads are expected to spin (busy-wait) rather
-    than sleep while waiting for work.
+    """Whether idle OpenMP threads actually spin (busy-wait) rather than
+    sleep while waiting for work.
 
     A thread that actively waits can rejoin a parallel region with much
     lower latency than one that has gone to sleep, which makes it worth
     spinning up more threads for smaller workloads. This is controlled by
-    environment variables that are specific to each OpenMP runtime rather
-    than exposed through a portable API, so they have to be inspected
-    manually:
+    ``GOMP_SPINCOUNT`` (GNU's ``libgomp``) and ``KMP_BLOCKTIME`` (Intel's
+    and LLVM's OpenMP runtimes).
 
-    - ``GOMP_SPINCOUNT``, for GNU's ``libgomp``: number of times to spin
-      before waiting passively. Defaults to 300000 (i.e. active) unless
-      ``OMP_WAIT_POLICY=PASSIVE`` is set, in which case it defaults to 0.
-    - ``KMP_BLOCKTIME``, for Intel's and LLVM's OpenMP runtimes: time in ms
-      to spin before sleeping. Defaults to 200 (i.e. active).
+    Reading these directly from ``os.environ`` is unreliable: which
+    variable applies depends on which OpenMP runtime is actually loaded,
+    and each has its own default (that can change across versions/vendors)
+    when unset. Instead, this asks the runtime for its own resolved
+    settings: it spawns a short-lived subprocess with
+    ``OMP_DISPLAY_ENV=VERBOSE``, which makes the OpenMP runtime print the
+    settings it actually resolved to on stderr, and scans that output for
+    ``_PASSIVE_WAIT_PATTERNS`` above.
 
-    An explicit value of ``0`` for either variable disables active waiting
-    for the corresponding runtime, and the portable ``OMP_WAIT_POLICY=
-    PASSIVE`` disables it regardless of the above. Since we cannot tell
-    which runtime is actually loaded, we conservatively report active
-    waiting as disabled if any of these point that way.
+    If the subprocess fails, times out, or none of these patterns are
+    found, this conservatively assumes active waiting is enabled.
 
-    Meant to be called once, at import time, by modules that need to adapt
-    their threading heuristics to whether OpenMP threads wait actively, and
-    cached in a module-level constant there.
+    Spawning a subprocess is too costly to redo on every call, so the
+    result is cached at the module level after the first call.
     """
-    wait_policy = os.environ.get("OMP_WAIT_POLICY", "").upper()
-    if wait_policy == "PASSIVE":
-        return False
+    global _ACTIVE_WAIT_CACHE
 
-    for spin_env_var in ("GOMP_SPINCOUNT", "KMP_BLOCKTIME"):
-        value = os.environ.get(spin_env_var)
-        if value is None:
-            continue
-        try:
-            if int(value) == 0:
-                return False
-        except ValueError:
-            # Non-integer values such as "INFINITE" (GOMP_SPINCOUNT) mean
-            # active waiting is (very much) enabled.
-            pass
+    if _ACTIVE_WAIT_CACHE is not None:
+        return _ACTIVE_WAIT_CACHE
 
-    return True
+    if not SKLEARN_OPENMP_PARALLELISM_ENABLED:
+        _ACTIVE_WAIT_CACHE = False
+        return _ACTIVE_WAIT_CACHE
+
+    env = os.environ.copy()
+    env["OMP_DISPLAY_ENV"] = "VERBOSE"
+    # Forces the OpenMP runtime to actually initialize (and thus dump its
+    # resolved environment) in this fresh subprocess: GNU libgomp
+    # initializes eagerly on load, but the LLVM/Intel libomp runtime only
+    # initializes lazily, on the first real OpenMP call.
+    import_script = (
+        "from sklearn.utils._openmp_helpers import _openmp_effective_n_threads; "
+        "_openmp_effective_n_threads()"
+    )
+
+    active_wait = True  # conservative fallback
+    try:
+        completed = subprocess.run(
+            [sys.executable, "-c", import_script],
+            check=False,
+            capture_output=True,
+            env=env,
+            text=True,
+            timeout=30,
+        )
+    except Exception:
+        completed = None
+
+    if completed is not None:
+        output = completed.stdout + "\n" + completed.stderr
+        if any(pattern.search(output) for pattern in _PASSIVE_WAIT_PATTERNS):
+            active_wait = False
+
+    _ACTIVE_WAIT_CACHE = active_wait
+    return _ACTIVE_WAIT_CACHE
 
 
 def _openmp_parallelism_enabled():

@@ -68,9 +68,6 @@ _LOSSES.update(
     }
 )
 
-# See `_openmp_uses_active_wait`'s docstring for the env vars it honors.
-_OPENMP_USES_ACTIVE_WAIT = _openmp_uses_active_wait()
-
 
 def _update_leaves_values(loss, grower, y_true, raw_prediction, sample_weight):
     """Update the leaf values to be predicted by the tree.
@@ -620,7 +617,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         n_samples, n_features = X_binned_train.shape
 
         n_threads = self._get_heurirstic_optimal_n_threads(
-            max_n_threads, n_samples, n_features, active_wait=_OPENMP_USES_ACTIVE_WAIT
+            max_n_threads,
+            n_samples,
+            n_features,
+            active_wait=_openmp_uses_active_wait(),
         )
 
         # Uses binned data to check for missing values
@@ -967,6 +967,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         del self._in_fit  # hard delete so we're sure it can't be used anymore
         return self
 
+    @staticmethod
     def _get_heurirstic_optimal_n_threads(
         max_n_threads, n_samples, n_features, *, active_wait
     ):
