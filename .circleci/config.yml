@@ -36,7 +36,7 @@ jobs:
       # a useful fallback for PRs from contributors who don't have a cache
       # for `main`.
       # Caches are not shared across repositories. This means that the
-      # scikit-learn/scikit-learn cache is used by PRs from <user>/scikit-learn.
+      # scikit-learn/scikit-learn cache is not used by PRs from <user>/scikit-learn.
       - restore_cache:
           keys:
             - v1-doc-min-deps-datasets-{{ .Branch }}
@@ -85,7 +85,7 @@ jobs:
       # a useful fallback for PRs from contributors who don't have a cache
       # for `main`.
       # Caches are not shared across repositories. This means that the
-      # scikit-learn/scikit-learn cache is used by PRs from <user>/scikit-learn.
+      # scikit-learn/scikit-learn cache is not used by PRs from <user>/scikit-learn.
       - restore_cache:
           keys:
             - v1-doc-datasets-{{ .Branch }}
