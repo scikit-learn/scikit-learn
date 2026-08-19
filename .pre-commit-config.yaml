@@ -48,9 +48,10 @@ repos:
         files: ^doc/css/styles/|^doc/js/scripts/
         exclude: ^doc/js/scripts/vendor/
         types_or: ["css", "javascript"]
-
-- repo: https://github.com/codespell-project/codespell
-  # Configuration for codespell is in pyproject.toml
-  rev: v2.4.1
-  hooks:
-  - id: codespell
+-   repo: https://github.com/codespell-project/codespell
+    # Configuration for codespell is in pyproject.toml
+    # NOTE if you update the codespell version here, remember to update
+    # sklearn/_min_dependencies.py as well
+    rev: v2.4.1
+    hooks:
+    -   id: codespell

@@ -6,3 +6,4 @@ ruff==0.12.2  # min
 pyrefly==1.2.0  # min
 cython-lint==0.21  # min
 sphinx-lint==1.0.2  # min
+codespell==2.4.1  # min
