@@ -105,7 +105,7 @@ FTE stands for Full-Time Equivalent.
 * `Intel <https://www.intel.com/>`_ supports scikit-learn via Probabl (2026)
   through a `collaboration to accelerate scikit-learn on Intel hardware
   <https://blog.probabl.ai/intel-and-probabl-announce-collaboration-to-accelerate-scikit-learn-on-intel-hardware>`_.
- 
+
 * `The Chan-Zuckerberg Initiative <https://chanzuckerberg.com/>`_ and `Wellcome
   Trust <https://wellcome.org/>`_ support the work of Lucy Liu, Dea Maria Leon,
   Anne Beyer and Francois Paugam through the `Essential Open Source Software
