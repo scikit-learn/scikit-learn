@@ -54,6 +54,22 @@ else
     global_status=1
 fi
 
+echo -e "### Running sphinx-lint ###\n"
+# Use git ls-files + xargs to avoid running sphinx-lint on generated rst files
+# (e.g. doc/modules/generated from sphinx autodoc or .rst from rst.template
+# files). This is easier to use this pattern than explicitly using -i to ignore
+# specific files and folders. This matters mostly when running locally, since
+# in the lint CI the doc hasn't been built
+git ls-files -z '*.rst' | xargs -0 sphinx-lint
+status=$?
+if [[ $status -eq 0 ]]
+then
+    echo -e "No problem detected by sphinx-lint\n"
+else
+    echo -e "Problems detected by sphinx-lint, please fix them\n"
+    global_status=1
+fi
+
 # For docstrings and warnings of deprecated attributes to be rendered
 # properly, the `deprecated` decorator must come before the `property` decorator
 # (else they are treated as functions)
