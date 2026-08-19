@@ -22,15 +22,15 @@ Set up a local clone of your fork
 Clone your fork of the scikit-learn repo from your GitHub account to your
 local disk:
 
-.. prompt::
+.. code-block:: console
 
-  git clone https://github.com/YourLogin/scikit-learn.git  # add --depth 1 if your connection is slow
+  $ git clone https://github.com/YourLogin/scikit-learn.git  # add --depth 1 if your connection is slow
 
 and change into that directory:
 
-.. prompt::
+.. code-block:: console
 
-  cd scikit-learn
+  $ cd scikit-learn
 
 .. _upstream:
 
@@ -38,16 +38,16 @@ Next, add the ``upstream`` remote. This saves a reference to the main
 scikit-learn repository, which you can use to keep your repository
 synchronized with the latest changes (you'll need this later in the :ref:`development_workflow`):
 
-.. prompt::
+.. code-block:: console
 
-  git remote add upstream https://github.com/scikit-learn/scikit-learn.git
+  $ git remote add upstream https://github.com/scikit-learn/scikit-learn.git
 
 Check that the `upstream` and `origin` remote aliases are configured correctly
 by running:
 
-.. prompt::
+.. code-block:: console
 
-  git remote -v
+  $ git remote -v
 
 This should display:
 
@@ -125,7 +125,7 @@ the required packages.
           Open the downloaded "Miniforge Prompt" and create a new conda environment with
           the required python packages:
 
-          .. prompt::
+          .. code-block:: text
 
             conda create -n sklearn-dev -c conda-forge ^
               python numpy scipy narwhals cython meson-python ninja ^
@@ -134,7 +134,7 @@ the required packages.
 
           Activate the newly created conda environment:
 
-          .. prompt::
+          .. code-block:: text
 
             conda activate sklearn-dev
 
@@ -156,15 +156,15 @@ the required packages.
 
           Now create a virtual environment (venv_) and install the required python packages:
 
-          .. prompt::
+          .. code-block:: text
 
             python -m venv sklearn-dev
 
-          .. prompt::
+          .. code-block:: text
 
             sklearn-dev\Scripts\activate  # activate
 
-          .. prompt::
+          .. code-block:: text
 
             pip install wheel numpy scipy cython meson-python ninja ^
               pytest pytest-cov ruff==0.12.2 pyrefly numpydoc ^
@@ -186,27 +186,27 @@ the required packages.
           which provides OpenMP-enabled C/C++ compilers based on the LLVM toolchain,
           you first need to install the macOS command line tools:
 
-          .. prompt::
+          .. code-block:: console
 
-            xcode-select --install
+            $ xcode-select --install
 
           Next, download and install `the conda-forge installer`_ (Miniforge) for your system.
           Conda-forge provides a conda-based distribution of
           Python and the most popular scientific libraries.
           Create a new conda environment with the required python packages:
 
-          .. prompt::
+          .. code-block:: console
 
-            conda create -n sklearn-dev -c conda-forge python \
+            $ conda create -n sklearn-dev -c conda-forge python \
               numpy scipy cython meson-python ninja \
               pytest pytest-cov ruff==0.12.2 pyrefly numpydoc \
               joblib threadpoolctl compilers llvm-openmp pre-commit
 
           and activate the newly created conda environment:
 
-          .. prompt::
+          .. code-block:: console
 
-            conda activate sklearn-dev
+            $ conda activate sklearn-dev
 
         .. tab-item:: pip
           :class-label: tab-6
@@ -217,15 +217,15 @@ the required packages.
 
           Install the macOS command line tools:
 
-          .. prompt::
+          .. code-block:: console
 
-            xcode-select --install
+            $ xcode-select --install
 
           Next, install the LLVM OpenMP library with Homebrew_:
 
-          .. prompt::
+          .. code-block:: console
 
-            brew install libomp
+            $ brew install libomp
 
           Install a recent version of Python (|PythonMinVersion| or later) using Homebrew_
           (`brew install python`) or by manually installing the package from the
@@ -233,17 +233,17 @@ the required packages.
 
           Now create a virtual environment (venv_) and install the required python packages:
 
-          .. prompt::
+          .. code-block:: console
 
-            python -m venv sklearn-dev
+            $ python -m venv sklearn-dev
 
-          .. prompt::
+          .. code-block:: console
 
-            source sklearn-dev/bin/activate  # activate
+            $ source sklearn-dev/bin/activate  # activate
 
-          .. prompt::
+          .. code-block:: console
 
-            pip install wheel numpy scipy cython meson-python ninja \
+            $ pip install wheel numpy scipy cython meson-python ninja \
               pytest pytest-cov ruff==0.12.2 pyrefly numpydoc \
               joblib threadpoolctl pre-commit
 
@@ -263,18 +263,18 @@ the required packages.
           Create a new conda environment with the required python packages
           (including `compilers` for a working C/C++ compiler with OpenMP support):
 
-          .. prompt::
+          .. code-block:: console
 
-            conda create -n sklearn-dev -c conda-forge python \
+            $ conda create -n sklearn-dev -c conda-forge python \
               numpy scipy cython meson-python ninja \
               pytest pytest-cov ruff==0.12.2 pyrefly numpydoc \
               joblib threadpoolctl compilers pre-commit
 
           and activate the newly created environment:
 
-          .. prompt::
+          .. code-block:: console
 
-            conda activate sklearn-dev
+            $ conda activate sklearn-dev
 
         .. tab-item:: pip
           :class-label: tab-6
@@ -282,9 +282,9 @@ the required packages.
 
           To check your installed Python version, run:
 
-          .. prompt::
+          .. code-block:: console
 
-            python3 --version
+            $ python3 --version
 
           If you don't have Python |PythonMinVersion| or later, please install `python3`
           from your distribution's package manager.
@@ -296,37 +296,37 @@ the required packages.
           * On debian-based distributions (e.g., Ubuntu), the compiler is included in
             the `build-essential` package, and you also need the Python header files:
 
-            .. prompt::
+            .. code-block:: console
 
-              sudo apt-get install build-essential python3-dev
+              $ sudo apt-get install build-essential python3-dev
 
           * On redhat-based distributions (e.g. CentOS), install `gcc`` for C and C++,
             as well as the Python header files:
 
-            .. prompt::
+            .. code-block:: console
 
-              sudo yum -y install gcc gcc-c++ python3-devel
+              $ sudo yum -y install gcc gcc-c++ python3-devel
 
           * On Arche Linux, the Python header files are already included in the python
             installation, and `gcc`` includes the required compilers for C and C++:
 
-            .. prompt::
+            .. code-block:: console
 
-              sudo pacman -S gcc
+              $ sudo pacman -S gcc
 
           Now create a virtual environment (venv_) and install the required python packages:
 
-          .. prompt::
+          .. code-block:: console
 
-            python -m venv sklearn-dev
+            $ python -m venv sklearn-dev
 
-          .. prompt::
+          .. code-block:: console
 
-            source sklearn-dev/bin/activate  # activate
+            $ source sklearn-dev/bin/activate  # activate
 
-          .. prompt::
+          .. code-block:: console
 
-            pip install wheel numpy scipy cython meson-python ninja \
+            $ pip install wheel numpy scipy cython meson-python ninja \
               pytest pytest-cov ruff==0.12.2 pyrefly numpydoc \
               joblib threadpoolctl pre-commit
 
@@ -339,9 +339,9 @@ Make sure you are in the `scikit-learn` directory
 and your venv or conda `sklearn-dev` environment is activated.
 You can now install an editable version of scikit-learn with `pip`:
 
-.. prompt::
+.. code-block:: console
 
-  pip install --editable . --verbose --no-build-isolation --config-settings editable-verbose=true
+  $ pip install --editable . --verbose --no-build-isolation --config-settings editable-verbose=true
 
 .. dropdown:: Note on `--config-settings`
 
@@ -360,9 +360,9 @@ You can now install an editable version of scikit-learn with `pip`:
 To check your installation, make sure that the installed scikit-learn has a
 version number ending with `.dev0`:
 
-.. prompt::
+.. code-block:: console
 
-  python -c "import sklearn; sklearn.show_versions()"
+  $ python -c "import sklearn; sklearn.show_versions()"
 
 You should now have a working installation of scikit-learn and your git repository
 properly configured.
@@ -371,9 +371,9 @@ It can be useful to run the tests now (even though it will take some time)
 to verify your installation and to be aware of warnings and errors that are not
 related to you contribution:
 
-.. prompt::
+.. code-block:: console
 
-  pytest
+  $ pytest
 
 For more information on testing, see also the :ref:`pr_checklist`
 and :ref:`pytest_tips`.
@@ -387,9 +387,9 @@ Additionally, install the `pre-commit hooks <https://pre-commit.com>`__, which w
 automatically check your code for linting problems before each commit in the
 :ref:`development_workflow`:
 
-.. prompt::
+.. code-block:: console
 
-  pre-commit install
+  $ pre-commit install
 
 .. _OpenMP: https://en.wikipedia.org/wiki/OpenMP
 .. _meson-python: https://mesonbuild.com/meson-python

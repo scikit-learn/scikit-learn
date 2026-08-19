@@ -57,17 +57,17 @@ it is possible to select a subset of tests using pytest selectors.
 In particular, one can run a `single test based on its node ID
 <https://docs.pytest.org/en/latest/example/markers.html#selecting-tests-based-on-their-node-id>`_:
 
-.. prompt:: bash $
+.. code-block:: console
 
-  pytest -v sklearn/linear_model/tests/test_logistic.py::test_sparsify
+  $ pytest -v sklearn/linear_model/tests/test_logistic.py::test_sparsify
 
 or use the `-k pytest parameter
 <https://docs.pytest.org/en/latest/example/markers.html#using-k-expr-to-select-tests-based-on-their-name>`_
 to select tests based on their name. For instance,:
 
-.. prompt:: bash $
+.. code-block:: console
 
-  pytest sklearn/tests/test_common.py -v -k LogisticRegression
+  $ pytest sklearn/tests/test_common.py -v -k LogisticRegression
 
 will run all :term:`common tests` for the ``LogisticRegression`` estimator.
 
@@ -80,9 +80,9 @@ When a unit test fails, the following tricks can make debugging easier:
    instead drop into the rich IPython debugger ``ipdb``, you may set up a
    shell alias to:
 
-   .. prompt:: bash $
+   .. code-block:: console
 
-      pytest --pdbcls=IPython.terminal.debugger:TerminalPdb --capture no
+      $ pytest --pdbcls=IPython.terminal.debugger:TerminalPdb --capture no
 
 Other `pytest` options that may become useful include:
 
@@ -251,9 +251,9 @@ Using a lock-file to get an environment close to the CI
 conda and pip packages as on the CI. For example, the following command will
 create a conda environment named `scikit-learn-doc` that is similar to the CI:
 
-.. prompt:: bash $
+.. code-block:: console
 
-    conda-lock install -n scikit-learn-doc build_tools/circle/doc_linux-64_conda.lock
+    $ conda-lock install -n scikit-learn-doc build_tools/circle/doc_linux-64_conda.lock
 
 .. note::
 
@@ -268,9 +268,9 @@ environment from the right environment yaml file, although it won't be as close
 as the CI environment as using the associated lock-file. For example for the
 doc build:
 
-.. prompt:: bash $
+.. code-block:: console
 
-    conda env create -n scikit-learn-doc -f build_tools/circle/doc_environment.yml -y
+    $ conda env create -n scikit-learn-doc -f build_tools/circle/doc_environment.yml -y
 
 This may not give you exactly the same package versions as in the CI for a
 variety of reasons, for example:
@@ -319,9 +319,9 @@ code. Follow these steps:
 
 4. Run valgrind as follows:
 
-   .. prompt:: bash $
+   .. code-block:: console
 
-        valgrind -v --suppressions=valgrind-python.supp python my_test_script.py
+        $ valgrind -v --suppressions=valgrind-python.supp python my_test_script.py
 
 .. _valgrind: https://valgrind.org
 .. _`README.valgrind`: https://github.com/python/cpython/blob/master/Misc/README.valgrind
@@ -358,36 +358,36 @@ https://github.com/multiarch/qemu-user-static).
 Prepare a folder on the host filesystem and download the necessary tools and
 source code:
 
-.. prompt:: bash $
+.. code-block:: console
 
-    mkdir arm64
-    pushd arm64
-    wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-aarch64.sh
-    git clone https://github.com/scikit-learn/scikit-learn.git
+    $ mkdir arm64
+    $ pushd arm64
+    $ wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-aarch64.sh
+    $ git clone https://github.com/scikit-learn/scikit-learn.git
 
 Use docker to install QEMU user mode and run an ARM64v8 container with access
 to your shared folder under the `/io` mount point:
 
-.. prompt:: bash $
+.. code-block:: console
 
-    docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-    docker run -v `pwd`:/io --rm -it arm64v8/ubuntu /bin/bash
+    $ docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+    $ docker run -v `pwd`:/io --rm -it arm64v8/ubuntu /bin/bash
 
 In the container, install miniforge3 for the ARM64 (a.k.a. aarch64)
 architecture:
 
-.. prompt:: bash $
+.. code-block:: console
 
-    bash Miniforge3-Linux-aarch64.sh
-    # Choose to install miniforge3 under: `/io/miniforge3`
+    $ bash Miniforge3-Linux-aarch64.sh
+    $ # Choose to install miniforge3 under: `/io/miniforge3`
 
 Whenever you restart a new container, you will need to reinit the conda env
 previously installed under `/io/miniforge3`:
 
-.. prompt:: bash $
+.. code-block:: console
 
-    /io/miniforge3/bin/conda init
-    source /root/.bashrc
+    $ /io/miniforge3/bin/conda init
+    $ source /root/.bashrc
 
 as the `/root` home folder is part of the ephemeral docker container. Every
 file or directory stored under `/io` is persistent on the other hand.

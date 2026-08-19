@@ -19,8 +19,16 @@ from datetime import datetime
 from pathlib import Path
 from urllib.request import urlopen
 
+import threadpoolctl
+
 from sklearn.externals._packaging.version import parse
 from sklearn.utils._testing import turn_warnings_into_errors
+
+# Sphinx forks its parallel read/write workers, and `fork()` only clones the calling
+# thread, so an OpenMP worker alive here is lost in the child, which then hangs in the
+# OpenMP join barrier. One thread per pool means there is none to lose; keep the
+# reference alive. See https://github.com/sphinx-gallery/sphinx-gallery/pull/1633
+_threadpool_limits = threadpoolctl.threadpool_limits(limits=1)
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory
@@ -33,8 +41,6 @@ import jinja2
 import sphinx_gallery
 from github_link import make_linkcode_resolve
 from sphinx.util.logging import getLogger
-from sphinx_gallery.notebook import add_code_cell, add_markdown_cell
-from sphinx_gallery.sorting import ExampleTitleSortKey
 
 logger = getLogger(__name__)
 
@@ -62,7 +68,6 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.imgconverter",
     "sphinx_gallery.gen_gallery",
-    "sphinx-prompt",
     "sphinx_copybutton",
     "sphinxext.opengraph",
     "matplotlib.sphinxext.plot_directive",
@@ -78,7 +83,7 @@ extensions = [
 ]
 
 # Specify how to identify the prompt when copying code snippets
-copybutton_prompt_text = r">>> |\.\.\. "
+copybutton_prompt_text = r">>> |\.\.\. |\$ |PS C:\\> "
 copybutton_prompt_is_regexp = True
 copybutton_exclude = "style"
 
@@ -586,144 +591,6 @@ else:
     binder_branch = "{}.{}.X".format(major, minor)
 
 
-class SubSectionTitleOrder:
-    """Sort example gallery by title of subsection.
-
-    Assumes README.txt exists for all subsections and uses the subsection with
-    dashes, '---', as the adornment.
-    """
-
-    def __init__(self, src_dir):
-        self.src_dir = src_dir
-        self.regex = re.compile(r"^([\w ]+)\n-", re.MULTILINE)
-
-    def __repr__(self):
-        return "<%s>" % (self.__class__.__name__,)
-
-    def __call__(self, directory):
-        src_path = os.path.normpath(os.path.join(self.src_dir, directory))
-
-        # Forces Release Highlights to the top
-        if os.path.basename(src_path) == "release_highlights":
-            return "0"
-
-        readme = os.path.join(src_path, "README.txt")
-
-        try:
-            with open(readme, "r") as f:
-                content = f.read()
-        except FileNotFoundError:
-            return directory
-
-        title_match = self.regex.search(content)
-        if title_match is not None:
-            return title_match.group(1)
-        return directory
-
-
-class SKExampleTitleSortKey(ExampleTitleSortKey):
-    """Sorts release highlights based on version number."""
-
-    def __call__(self, filename):
-        title = super().__call__(filename)
-        prefix = "plot_release_highlights_"
-
-        # Use title to sort if not a release highlight
-        if not str(filename).startswith(prefix):
-            return title
-
-        major_minor = filename[len(prefix) :].split("_")[:2]
-        version_float = float(".".join(major_minor))
-
-        # negate to place the newest version highlights first
-        return -version_float
-
-
-def notebook_modification_function(notebook_content, notebook_filename):
-    notebook_content_str = str(notebook_content)
-    warning_template = "\n".join(
-        [
-            "<div class='alert alert-{message_class}'>",
-            "",
-            "# JupyterLite warning",
-            "",
-            "{message}",
-            "</div>",
-        ]
-    )
-
-    message_class = "warning"
-    message = (
-        "Running the scikit-learn examples in JupyterLite is experimental and you may"
-        " encounter some unexpected behavior.\n\nThe main difference is that imports"
-        " will take a lot longer than usual, for example the first `import sklearn` can"
-        " take roughly 10-20s.\n\nIf you notice problems, feel free to open an"
-        " [issue](https://github.com/scikit-learn/scikit-learn/issues/new/choose)"
-        " about it."
-    )
-
-    markdown = warning_template.format(message_class=message_class, message=message)
-
-    dummy_notebook_content = {"cells": []}
-    add_markdown_cell(dummy_notebook_content, markdown)
-
-    code_lines = []
-
-    if "seaborn" in notebook_content_str:
-        code_lines.append("%pip install seaborn")
-    if "plotly.express" in notebook_content_str:
-        code_lines.append("%pip install plotly nbformat")
-    if "skimage" in notebook_content_str:
-        code_lines.append("%pip install scikit-image")
-    if "polars" in notebook_content_str:
-        code_lines.append("%pip install polars")
-    if "fetch_" in notebook_content_str:
-        code_lines.extend(
-            [
-                "%pip install pyodide-http",
-                "import pyodide_http",
-                "pyodide_http.patch_all()",
-            ]
-        )
-    # always import matplotlib and pandas to avoid Pyodide limitation with
-    # imports inside functions
-    code_lines.extend(["import matplotlib", "import pandas"])
-
-    # Work around https://github.com/jupyterlite/pyodide-kernel/issues/166
-    # and https://github.com/pyodide/micropip/issues/223 by installing the
-    # dependencies first, and then scikit-learn from Anaconda.org.
-    if "dev" in release:
-        dev_docs_specific_code = [
-            "import piplite",
-            "import joblib",
-            "import threadpoolctl",
-            "import scipy",
-            "await piplite.install(\n"
-            f"  'scikit-learn=={release}',\n"
-            "   index_urls='https://pypi.anaconda.org/scientific-python-nightly-wheels/simple',\n"
-            ")",
-        ]
-
-        code_lines.extend(dev_docs_specific_code)
-
-    if code_lines:
-        code_lines = ["# JupyterLite-specific code"] + code_lines
-        code = "\n".join(code_lines)
-        add_code_cell(dummy_notebook_content, code)
-
-    notebook_content["cells"] = (
-        dummy_notebook_content["cells"] + notebook_content["cells"]
-    )
-
-
-default_global_config = sklearn.get_config()
-
-
-def reset_sklearn_config(gallery_conf, fname):
-    """Reset sklearn config to default values."""
-    sklearn.set_config(**default_global_config)
-
-
 sg_examples_dir = "../examples"
 sg_gallery_dir = "auto_examples"
 sphinx_gallery_conf = {
@@ -733,8 +600,8 @@ sphinx_gallery_conf = {
     "reference_url": {"sklearn": None},
     "examples_dirs": [sg_examples_dir],
     "gallery_dirs": [sg_gallery_dir],
-    "subsection_order": SubSectionTitleOrder(sg_examples_dir),
-    "within_subsection_order": SKExampleTitleSortKey,
+    "subsection_order": "sphinx_gallery_helpers.subsection_order",
+    "within_subsection_order": "sphinx_gallery_helpers.SKExampleTitleSortKey",
     "binder": {
         "org": "scikit-learn",
         "repo": "scikit-learn",
@@ -748,11 +615,17 @@ sphinx_gallery_conf = {
     "remove_config_comments": True,
     "plot_gallery": "True",
     "recommender": {"enable": True, "n_examples": 4, "min_df": 12},
-    "reset_modules": ("matplotlib", "seaborn", reset_sklearn_config),
+    "reset_modules": (
+        "matplotlib",
+        "seaborn",
+        "sphinx_gallery_helpers.reset_sklearn_config",
+    ),
 }
 if with_jupyterlite:
     sphinx_gallery_conf["jupyterlite"] = {
-        "notebook_modification_function": notebook_modification_function
+        "notebook_modification_function": (
+            "sphinx_gallery_helpers.notebook_modification_function"
+        )
     }
 
 # For the index page of the gallery and each nested section, we hide the secondary
