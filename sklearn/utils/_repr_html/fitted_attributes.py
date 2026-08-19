@@ -36,7 +36,7 @@ def _read_fitted_attr(value):
     r.maxstring = 9
 
     if isinstance(value, float):
-        value = round(value, 3)
+        return f"{value:.4g}"
 
     return html.escape(r.repr(value))
 

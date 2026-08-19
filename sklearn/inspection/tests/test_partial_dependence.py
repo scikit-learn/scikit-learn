@@ -3,7 +3,6 @@ Testing for the partial dependence module.
 """
 
 import re
-import warnings
 
 import numpy as np
 import pytest
@@ -524,6 +523,57 @@ def test_partial_dependence_easy_target(est, power):
     assert r2 > 0.99
 
 
+def test_partial_dependence_recursion_decision_tree_categorical_target_feature():
+    # Non-ordinal categorical signal: categories {1, 2, 5} -> 1 and
+    # {0, 3, 4} -> 0. Recursion must route with the categorical bitset.
+    category_values = np.arange(6, dtype=np.float64)
+    X = np.repeat(category_values, 4).reshape(-1, 1)
+    y = np.isin(X.ravel(), [1, 2, 5]).astype(np.float64)
+
+    est = DecisionTreeRegressor(
+        categorical_features=[0], max_depth=1, random_state=0
+    ).fit(X, y)
+
+    recursion = partial_dependence(
+        est, X, features=[0], method="recursion", categorical_features=[0]
+    )
+    brute = partial_dependence(
+        est, X, features=[0], method="brute", categorical_features=[0]
+    )
+
+    grid = recursion["grid_values"][0].reshape(-1, 1)
+    expected = est.predict(grid)
+
+    assert_array_equal(recursion["grid_values"][0], category_values)
+    assert_allclose(recursion["average"][0], brute["average"][0])
+    assert_allclose(recursion["average"][0], expected)
+
+
+def test_partial_dependence_recursion_decision_tree_missing_target_feature():
+    # Missing values are isolated by the split. Recursion must route np.nan
+    # according to the fitted node's missing_go_to_left flag.
+    X = np.array([0.0, 0.0, np.nan, np.nan, 1.0, 1.0, 1.0]).reshape(-1, 1)
+    y = np.array([0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0])
+
+    est = DecisionTreeRegressor(max_depth=1, random_state=0).fit(X, y)
+    assert est.tree_.missing_go_to_left[0]
+
+    custom_values = {0: [0.0, np.nan, 1.0]}
+    recursion = partial_dependence(
+        est, X, features=[0], method="recursion", custom_values=custom_values
+    )
+    brute = partial_dependence(
+        est, X, features=[0], method="brute", custom_values=custom_values
+    )
+
+    grid = recursion["grid_values"][0].reshape(-1, 1)
+    expected = est.predict(grid)
+
+    assert_array_equal(recursion["grid_values"][0], custom_values[0])
+    assert_allclose(recursion["average"][0], brute["average"][0])
+    assert_allclose(recursion["average"][0], expected)
+
+
 @pytest.mark.parametrize(
     "Estimator",
     (
@@ -641,7 +691,7 @@ def test_partial_dependence_unknown_feature_string(estimator):
     estimator = clone(estimator).fit(df, y)
 
     features = ["random"]
-    err_msg = "A given column is not a column of the dataframe"
+    err_msg = "Some column names are not columns of the dataframe"
     with pytest.raises(ValueError, match=err_msg):
         partial_dependence(estimator, df, features)
 
@@ -837,7 +887,7 @@ def test_partial_dependence_pipeline_custom_values(
 @pytest.mark.parametrize(
     "estimator",
     [
-        LogisticRegression(max_iter=1000, random_state=0),
+        LogisticRegression(max_iter=1000),
         GradientBoostingClassifier(random_state=0, n_estimators=5),
     ],
     ids=["estimator-brute", "estimator-recursion"],
@@ -951,9 +1001,7 @@ def test_partial_dependence_feature_type(features, custom_values, expected_pd_sh
         (StandardScaler(), [iris.feature_names[i] for i in (0, 2)]),
         (RobustScaler(), [iris.feature_names[i] for i in (1, 3)]),
     )
-    pipe = make_pipeline(
-        preprocessor, LogisticRegression(max_iter=1000, random_state=0)
-    )
+    pipe = make_pipeline(preprocessor, LogisticRegression(max_iter=1000))
     pipe.fit(df, iris.target)
     pdp_pipe = partial_dependence(
         pipe,
@@ -1144,26 +1192,21 @@ def test_reject_array_with_integer_dtype():
     y = np.array([0, 1, 0, 1])
     clf = DummyClassifier()
     clf.fit(X, y)
-    with pytest.warns(
-        FutureWarning, match=re.escape("The column 0 contains integer data.")
+    with pytest.raises(
+        ValueError, match=re.escape("The column 0 contains integer data.")
     ):
         partial_dependence(clf, X, features=0)
-
-    with pytest.warns(
-        FutureWarning, match=re.escape("The column 1 contains integer data.")
+    with pytest.raises(
+        ValueError, match=re.escape("The column 1 contains integer data.")
     ):
         partial_dependence(clf, X, features=[1], categorical_features=[0])
-
-    with pytest.warns(
-        FutureWarning, match=re.escape("The column 0 contains integer data.")
+    with pytest.raises(
+        ValueError, match=re.escape("The column 0 contains integer data.")
     ):
         partial_dependence(clf, X, features=[0, 1])
-
     # The following should not raise as we do not compute numerical partial
     # dependence on integer columns.
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        partial_dependence(clf, X, features=1, categorical_features=[1])
+    partial_dependence(clf, X, features=1, categorical_features=[1])
 
 
 def test_reject_pandas_with_integer_dtype():
@@ -1179,22 +1222,18 @@ def test_reject_pandas_with_integer_dtype():
     clf = DummyClassifier()
     clf.fit(X, y)
 
-    with pytest.warns(
-        FutureWarning, match=re.escape("The column 'c' contains integer data.")
+    with pytest.raises(
+        ValueError, match=re.escape("The column 'c' contains integer data.")
     ):
         partial_dependence(clf, X, features="c")
-
-    with pytest.warns(
-        FutureWarning, match=re.escape("The column 'c' contains integer data.")
+    with pytest.raises(
+        ValueError, match=re.escape("The column 'c' contains integer data.")
     ):
         partial_dependence(clf, X, features=["a", "c"])
-
     # The following should not raise as we do not compute numerical partial
     # dependence on integer columns.
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        partial_dependence(clf, X, features=["a"])
-        partial_dependence(clf, X, features=["c"], categorical_features=["c"])
+    partial_dependence(clf, X, features=["a"])
+    partial_dependence(clf, X, features=["c"], categorical_features=["c"])
 
 
 def test_partial_dependence_empty_categorical_features():

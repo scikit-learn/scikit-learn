@@ -195,14 +195,13 @@ def _smacof_single(
     return X, stress, it + 1
 
 
-# TODO(1.9): change default `n_init` to 1, see PR #31117
 @validate_params(
     {
         "dissimilarities": ["array-like"],
         "metric": ["boolean"],
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "init": ["array-like", None],
-        "n_init": [Interval(Integral, 1, None, closed="left"), StrOptions({"warn"})],
+        "n_init": [Interval(Integral, 1, None, closed="left")],
         "n_jobs": [Integral, None],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "verbose": ["verbose"],
@@ -219,7 +218,7 @@ def smacof(
     metric=True,
     n_components=2,
     init=None,
-    n_init="warn",
+    n_init=1,
     n_jobs=None,
     max_iter=300,
     verbose=0,
@@ -268,14 +267,14 @@ def smacof(
         Starting configuration of the embedding to initialize the algorithm. By
         default, the algorithm is initialized with a randomly chosen array.
 
-    n_init : int, default=8
+    n_init : int, default=1
         Number of times the SMACOF algorithm will be run with different
         initializations. The final results will be the best output of the runs,
         determined by the run with the smallest final stress. If ``init`` is
         provided, this option is overridden and a single run is performed.
 
         .. versionchanged:: 1.9
-           The default value for `n_iter` will change from 8 to 1 in version 1.9.
+           The default value for `n_iter` changed from 8 to 1.
 
     n_jobs : int, default=None
         The number of jobs to use for the computation. If multiple
@@ -364,13 +363,6 @@ def smacof(
     3.2e-05
     """
 
-    if n_init == "warn":
-        warnings.warn(
-            "The default value of `n_init` will change from 8 to 1 in 1.9.",
-            FutureWarning,
-        )
-        n_init = 8
-
     dissimilarities = check_array(dissimilarities)
     random_state = check_random_state(random_state)
 
@@ -433,7 +425,6 @@ def smacof(
         return best_pos, best_stress
 
 
-# TODO(1.9): change default `n_init` to 1, see PR #31117
 # TODO(1.10): change default `init` to "classical_mds", see PR #32229
 # TODO(1.10): drop support for boolean `metric`, see PR #32229
 # TODO(1.10): drop support for `dissimilarity`, see PR #32229
@@ -455,13 +446,13 @@ class MDS(BaseEstimator):
         .. versionchanged:: 1.8
            The parameter `metric` was renamed into `metric_mds`.
 
-    n_init : int, default=4
+    n_init : int, default=1
         Number of times the SMACOF algorithm will be run with different
         initializations. The final results will be the best output of the runs,
         determined by the run with the smallest final stress.
 
         .. versionchanged:: 1.9
-           The default value for `n_init` will change from 4 to 1 in version 1.9.
+           The default value for `n_init` changed from 4 to 1.
 
     init : {'random', 'classical_mds'}, default='random'
         The initialization approach. If `random`, random initialization is used.
@@ -654,7 +645,7 @@ class MDS(BaseEstimator):
         n_components=2,
         *,
         metric_mds=True,
-        n_init="warn",
+        n_init=1,
         init="warn",
         max_iter=300,
         verbose=0,
@@ -740,16 +731,6 @@ class MDS(BaseEstimator):
             X transformed in the new space.
         """
 
-        if self.n_init == "warn":
-            warnings.warn(
-                "The default value of `n_init` will change from 4 to 1 in 1.9. "
-                "To suppress this warning, provide some value of `n_init`.",
-                FutureWarning,
-            )
-            self._n_init = 4
-        else:
-            self._n_init = self.n_init
-
         if self.init == "warn":
             warnings.warn(
                 "The default value of `init` will change from 'random' to "
@@ -823,7 +804,7 @@ class MDS(BaseEstimator):
             metric=self._metric_mds,
             n_components=self.n_components,
             init=init_array,
-            n_init=self._n_init,
+            n_init=self.n_init,
             n_jobs=self.n_jobs,
             max_iter=self.max_iter,
             verbose=self.verbose,

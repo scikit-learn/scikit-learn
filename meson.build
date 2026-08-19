@@ -3,7 +3,7 @@ project(
   'c', 'cpp', 'cython',
   version: run_command('sklearn/_build_utils/version.py', check: true).stdout().strip(),
   license: 'BSD-3',
-  meson_version: '>= 1.1.0',
+  meson_version: '>= 1.9.0',
   default_options: [
     'c_std=c11',
     'cpp_std=c++14',
@@ -27,6 +27,8 @@ elif cc.get_id() == 'msvc'
 endif
 
 _global_c_args = cc.get_supported_arguments(
+  # Enable when doing profiling:
+  # '-g',
   '-Wno-unused-but-set-variable',
   '-Wno-unused-function',
   '-Wno-conversion',

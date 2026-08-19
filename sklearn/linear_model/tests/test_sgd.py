@@ -1861,7 +1861,7 @@ def test_l1_ratio():
     assert_array_almost_equal(est_en.coef_, est_l2.coef_)
 
 
-def test_underflow_or_overlow():
+def test_underflow_or_overflow():
     with np.errstate(all="raise"):
         # Generate some weird data with hugely unscaled features
         rng = np.random.RandomState(0)
@@ -2136,11 +2136,11 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     X = _sparse_random_array((500, 2000), density=0.02, format="csr", rng=random_state)
     y = random_state.choice(20, 500)
 
-    # Begin by fitting a SGD classifier sequentially
+    # Begin by fitting an SGD classifier sequentially
     clf_sequential = SGDClassifier(max_iter=1000, n_jobs=1, random_state=42)
     clf_sequential.fit(X, y)
 
-    # Fit a SGDClassifier using the specified backend, and make sure the
+    # Fit an SGDClassifier using the specified backend, and make sure the
     # coefficients are equal to those obtained using a sequential fit
     clf_parallel = SGDClassifier(max_iter=1000, n_jobs=4, random_state=42)
     with joblib.parallel_backend(backend=backend):

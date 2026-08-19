@@ -5,7 +5,6 @@ from __future__ import annotations
 import operator
 from collections.abc import Callable
 from enum import Enum
-from types import ModuleType
 from typing import TYPE_CHECKING, ClassVar, cast
 
 from ._utils import _compat
@@ -17,11 +16,11 @@ from ._utils._compat import (
     is_writeable_array,
 )
 from ._utils._helpers import meta_namespace
-from ._utils._typing import Array, SetIndex
+from ._utils._typing import Array, ArrayNamespace, SetIndex
 
 if TYPE_CHECKING:  # pragma: no cover
     # TODO import from typing (requires Python >=3.11)
-    from typing_extensions import Self
+    from typing import Self
 
 
 class _AtOp(Enum):
@@ -229,7 +228,7 @@ class at:  # pylint: disable=invalid-name  # numpydoc ignore=PR02
         y: Array | complex,
         /,
         copy: bool | None,
-        xp: ModuleType | None,
+        xp: ArrayNamespace | None,
     ) -> Array:
         """
         Implement all update operations.
@@ -283,7 +282,7 @@ class at:  # pylint: disable=invalid-name  # numpydoc ignore=PR02
                 "    at(x)[idx].set(value)\n"
                 "(same for all other methods)."
             )
-            raise ValueError(msg)
+            raise ValueError(msg)  # noqa: TRY004
 
         if copy not in (True, False, None):
             msg = f"copy must be True, False, or None; got {copy!r}"
@@ -364,7 +363,7 @@ class at:  # pylint: disable=invalid-name  # numpydoc ignore=PR02
         y: Array | complex,
         /,
         copy: bool | None = None,
-        xp: ModuleType | None = None,
+        xp: ArrayNamespace | None = None,
     ) -> Array:  # numpydoc ignore=PR01,RT01
         """Apply ``x[idx] = y`` and return the update array."""
         return self._op(_AtOp.SET, None, None, y, copy=copy, xp=xp)
@@ -374,25 +373,30 @@ class at:  # pylint: disable=invalid-name  # numpydoc ignore=PR02
         y: Array | complex,
         /,
         copy: bool | None = None,
-        xp: ModuleType | None = None,
+        xp: ArrayNamespace | None = None,
     ) -> Array:  # numpydoc ignore=PR01,RT01
         """Apply ``x[idx] += y`` and return the updated array."""
 
         # Note for this and all other methods based on _iop:
         # operator.iadd and operator.add subtly differ in behaviour, as
         # only iadd will trigger exceptions when y has an incompatible dtype.
-        return self._op(_AtOp.ADD, operator.iadd, operator.add, y, copy=copy, xp=xp)
+        return self._op(_AtOp.ADD, operator.iadd, operator.add, y, copy=copy, xp=xp)  # pyright: ignore[reportUnknownArgumentType]
 
     def subtract(
         self,
         y: Array | complex,
         /,
         copy: bool | None = None,
-        xp: ModuleType | None = None,
+        xp: ArrayNamespace | None = None,
     ) -> Array:  # numpydoc ignore=PR01,RT01
         """Apply ``x[idx] -= y`` and return the updated array."""
         return self._op(
-            _AtOp.SUBTRACT, operator.isub, operator.sub, y, copy=copy, xp=xp
+            _AtOp.SUBTRACT,
+            operator.isub,  # pyright: ignore[reportUnknownArgumentType]
+            operator.sub,
+            y,
+            copy=copy,
+            xp=xp,
         )
 
     def multiply(
@@ -400,11 +404,16 @@ class at:  # pylint: disable=invalid-name  # numpydoc ignore=PR02
         y: Array | complex,
         /,
         copy: bool | None = None,
-        xp: ModuleType | None = None,
+        xp: ArrayNamespace | None = None,
     ) -> Array:  # numpydoc ignore=PR01,RT01
         """Apply ``x[idx] *= y`` and return the updated array."""
         return self._op(
-            _AtOp.MULTIPLY, operator.imul, operator.mul, y, copy=copy, xp=xp
+            _AtOp.MULTIPLY,
+            operator.imul,  # pyright: ignore[reportUnknownArgumentType]
+            operator.mul,
+            y,
+            copy=copy,
+            xp=xp,
         )
 
     def divide(
@@ -412,11 +421,16 @@ class at:  # pylint: disable=invalid-name  # numpydoc ignore=PR02
         y: Array | complex,
         /,
         copy: bool | None = None,
-        xp: ModuleType | None = None,
+        xp: ArrayNamespace | None = None,
     ) -> Array:  # numpydoc ignore=PR01,RT01
         """Apply ``x[idx] /= y`` and return the updated array."""
         return self._op(
-            _AtOp.DIVIDE, operator.itruediv, operator.truediv, y, copy=copy, xp=xp
+            _AtOp.DIVIDE,
+            operator.itruediv,  # pyright: ignore[reportUnknownArgumentType]
+            operator.truediv,  # pyright: ignore[reportUnknownArgumentType]
+            y,
+            copy=copy,
+            xp=xp,
         )
 
     def power(
@@ -424,17 +438,17 @@ class at:  # pylint: disable=invalid-name  # numpydoc ignore=PR02
         y: Array | complex,
         /,
         copy: bool | None = None,
-        xp: ModuleType | None = None,
+        xp: ArrayNamespace | None = None,
     ) -> Array:  # numpydoc ignore=PR01,RT01
         """Apply ``x[idx] **= y`` and return the updated array."""
-        return self._op(_AtOp.POWER, operator.ipow, operator.pow, y, copy=copy, xp=xp)
+        return self._op(_AtOp.POWER, operator.ipow, operator.pow, y, copy=copy, xp=xp)  # pyright: ignore[reportUnknownArgumentType]
 
     def min(
         self,
         y: Array | complex,
         /,
         copy: bool | None = None,
-        xp: ModuleType | None = None,
+        xp: ArrayNamespace | None = None,
     ) -> Array:  # numpydoc ignore=PR01,RT01
         """Apply ``x[idx] = minimum(x[idx], y)`` and return the updated array."""
         # On Dask, this function runs on the chunks, so we need to determine the
@@ -453,7 +467,7 @@ class at:  # pylint: disable=invalid-name  # numpydoc ignore=PR02
         y: Array | complex,
         /,
         copy: bool | None = None,
-        xp: ModuleType | None = None,
+        xp: ArrayNamespace | None = None,
     ) -> Array:  # numpydoc ignore=PR01,RT01
         """Apply ``x[idx] = maximum(x[idx], y)`` and return the updated array."""
         # See note on min()

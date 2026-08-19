@@ -33,7 +33,8 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or binary decisions.
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
 
     average : {None, 'micro', 'macro', 'samples', 'weighted'}, default='macro'
         If ``None``, the scores for each class are returned. Otherwise,

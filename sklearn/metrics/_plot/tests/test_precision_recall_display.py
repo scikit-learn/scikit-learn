@@ -259,7 +259,7 @@ def test_precision_recall_display_from_cv_results_plotting(
         ),
     ],
 )
-def test_precison_recall_plot_parameter_length_validation(pyplot, params, err_msg):
+def test_precision_recall_plot_parameter_length_validation(pyplot, params, err_msg):
     """Check `plot` parameter length validation performed correctly."""
     display = PrecisionRecallDisplay(**params)
     if err_msg:
