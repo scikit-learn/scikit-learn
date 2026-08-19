@@ -320,7 +320,7 @@ if __name__ == "__main__":
             # try again without the details.
             message = get_message(
                 log_file,
-                repo=repo,
+                repo_str=repo_str,
                 pr_number=pr_number,
                 sha=sha,
                 run_id=run_id,
