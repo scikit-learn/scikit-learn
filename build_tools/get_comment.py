@@ -160,6 +160,21 @@ def get_message(log_file, repo_str, pr_number, sha, run_id, details, versions):
         details=details,
     )
 
+    # sphinx-lint
+    message += get_step_message(
+        log,
+        start="### Running sphinx-lint ###",
+        end="Problems detected by sphinx-lint",
+        title="`sphinx-lint`",
+        message=(
+            "`sphinx-lint` detected issues in the documentation. Please fix them "
+            "locally and push the changes. Here you can see the detected issues. Note "
+            "that the installed `sphinx-lint` version is "
+            f"`sphinx-lint={versions['sphinx-lint']}`."
+        ),
+        details=details,
+    )
+
     # codespell
     message += get_step_message(
         log,
