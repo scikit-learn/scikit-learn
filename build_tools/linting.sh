@@ -73,7 +73,7 @@ fi
 echo -e "### Running codespell ###\n"
 # Use git ls-files + xargs to avoid running Codespell on untracked local files
 # (like build artifacts or notebooks). It's easier to use this pattern than
-# explicitly excluding files with --exclude-file and other flags
+# explicitly excluding files with --exclude-file and other flags.
 # This matters mostly when running locally not in CI.
 git ls-files -z | xargs -0 codespell
 status=$?
