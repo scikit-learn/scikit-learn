@@ -48,8 +48,11 @@
   outline-offset: -2px;
 }
 
-/* Focus ring sits outside copy-paste icon */
+/* Focus ring sits outside copy-paste icon.
+   The outline is repeated because notebooks sets it. We need
+   a more specific selector than the generic rule above. */
 .sk-global .copy-paste-icon:focus-visible {
+    outline: 2px solid var(--sklearn-color-focus);
     outline-offset: 2px;
 }
 
