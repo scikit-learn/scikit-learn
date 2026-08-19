@@ -102,15 +102,21 @@ function copyFeatureNamesToClipboard(element) {
     return false;
 }
 
-/* Prevent Enter/Space keydown events from bubbling up to the notebook
- * which would steal focus away from the diagram.
+/* Prevent keys pressed inside a diagram from triggering notebook actions
+ * (entering edit mode, moving the cell selection, scrolling the notebook).
+ * The listener is on `window` in the capture phase because the notebook
+ * processes its shortcuts on the document during capture, before any
+ * listener attached inside the page body would run.
  * Escape dismisses focus-shown tooltips (WCAG 1.4.13).
  */
-document.querySelectorAll(
-    '.sk-top-container:not([data-sk-keydown-bound])'
-).forEach(function(container) {
-    container.dataset.skKeydownBound = 'true';
-    container.addEventListener('keydown', function(event) {
+if (!window.skEstimatorKeydownGuard) {
+    window.skEstimatorKeydownGuard = true;
+    window.addEventListener('keydown', function(event) {
+        const container = event.target instanceof Element
+            ? event.target.closest('.sk-top-container') : null;
+        if (container === null) {
+            return;
+        }
         if (event.key === 'Enter' || event.key === ' ') {
             event.stopPropagation();
             /* Space only has a native action on summaries and buttons.
@@ -125,9 +131,14 @@ document.querySelectorAll(
              * dropping focus to the page body. */
             container.focus();
             event.stopPropagation();
+        } else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+                    'PageUp', 'PageDown', 'Home', 'End'].includes(event.key)) {
+            /* Let the browser scroll the focused tooltip or container, but
+             * keep the notebook from moving the cell selection. */
+            event.stopPropagation();
         }
-    });
-});
+    }, true);
+}
 
 /**
  * Adapted from Skrub
