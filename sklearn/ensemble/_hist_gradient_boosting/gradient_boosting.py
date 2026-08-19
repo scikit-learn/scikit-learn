@@ -42,7 +42,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import FunctionTransformer, LabelEncoder, OrdinalEncoder
 from sklearn.utils import check_random_state, compute_sample_weight, resample
 from sklearn.utils._missing import is_scalar_nan
-from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils._openmp_helpers import (
+    _openmp_effective_n_threads,
+    _openmp_uses_active_wait,
+)
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
@@ -64,6 +67,9 @@ _LOSSES.update(
         "quantile": PinballLoss,
     }
 )
+
+# See `_openmp_uses_active_wait`'s docstring for the env vars it honors.
+_OPENMP_USES_ACTIVE_WAIT = _openmp_uses_active_wait()
 
 
 def _update_leaves_values(loss, grower, y_true, raw_prediction, sample_weight):
@@ -614,7 +620,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         n_samples, n_features = X_binned_train.shape
 
         n_threads = self._get_heurirstic_optimal_n_threads(
-            max_n_threads, n_samples, n_features
+            max_n_threads, n_samples, n_features, active_wait=_OPENMP_USES_ACTIVE_WAIT
         )
 
         # Uses binned data to check for missing values
@@ -961,7 +967,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         del self._in_fit  # hard delete so we're sure it can't be used anymore
         return self
 
-    def _get_heurirstic_optimal_n_threads(max_n_threads, n_samples, n_features):
+    def _get_heurirstic_optimal_n_threads(
+        max_n_threads, n_samples, n_features, *, active_wait
+    ):
         """
         Using the maximum number of available threads regardless of the size of
         the workload can be counter-productive: parallelizing over very few
@@ -970,7 +978,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         threads are not left idle or unevenly loaded) and against ``n_samples``
         (so that small datasets use fewer threads).
         """
-        active_wait = True  # TODO: read GOMP_SPINCOUNT/KMP_BLOCKTIME
 
         # Compute the per-thread chunk size first, then derive how many threads
         # are actually needed to cover n_features with that chunk size: this can

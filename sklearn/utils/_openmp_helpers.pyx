@@ -22,6 +22,52 @@ def _min_instructions_per_thread():
     return int(os.environ.get("SKLEARN_MIN_INSTRUCTIONS_PER_THREAD", 2000))
 
 
+def _openmp_uses_active_wait():
+    """Whether idle OpenMP threads are expected to spin (busy-wait) rather
+    than sleep while waiting for work.
+
+    A thread that actively waits can rejoin a parallel region with much
+    lower latency than one that has gone to sleep, which makes it worth
+    spinning up more threads for smaller workloads. This is controlled by
+    environment variables that are specific to each OpenMP runtime rather
+    than exposed through a portable API, so they have to be inspected
+    manually:
+
+    - ``GOMP_SPINCOUNT``, for GNU's ``libgomp``: number of times to spin
+      before waiting passively. Defaults to 300000 (i.e. active) unless
+      ``OMP_WAIT_POLICY=PASSIVE`` is set, in which case it defaults to 0.
+    - ``KMP_BLOCKTIME``, for Intel's and LLVM's OpenMP runtimes: time in ms
+      to spin before sleeping. Defaults to 200 (i.e. active).
+
+    An explicit value of ``0`` for either variable disables active waiting
+    for the corresponding runtime, and the portable ``OMP_WAIT_POLICY=
+    PASSIVE`` disables it regardless of the above. Since we cannot tell
+    which runtime is actually loaded, we conservatively report active
+    waiting as disabled if any of these point that way.
+
+    Meant to be called once, at import time, by modules that need to adapt
+    their threading heuristics to whether OpenMP threads wait actively, and
+    cached in a module-level constant there.
+    """
+    wait_policy = os.environ.get("OMP_WAIT_POLICY", "").upper()
+    if wait_policy == "PASSIVE":
+        return False
+
+    for spin_env_var in ("GOMP_SPINCOUNT", "KMP_BLOCKTIME"):
+        value = os.environ.get(spin_env_var)
+        if value is None:
+            continue
+        try:
+            if int(value) == 0:
+                return False
+        except ValueError:
+            # Non-integer values such as "INFINITE" (GOMP_SPINCOUNT) mean
+            # active waiting is (very much) enabled.
+            pass
+
+    return True
+
+
 def _openmp_parallelism_enabled():
     """Determines whether scikit-learn has been built with OpenMP
 
