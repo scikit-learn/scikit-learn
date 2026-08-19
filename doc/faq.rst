@@ -284,6 +284,14 @@ usually a major and lengthy undertaking, it is recommended to start with
 :ref:`known issues <new_contributors>`. Please do not contact the contributors
 of scikit-learn directly regarding contributing to scikit-learn.
 
+Do I need special rights to contribute code under the BSD license?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Yes. Contributions are accepted under the project's BSD 3-Clause License. You must
+have the legal right to grant that license for your contribution (you own it, or your
+employer or client authorized the contribution). If you assigned the same work to
+another party, you may be unable to contribute it unless they authorize a
+BSD-3 license. See :ref:`right_to_contribute` and :ref:`automated_contributions_policy`.
+
 Why is my pull request not getting any attention?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
