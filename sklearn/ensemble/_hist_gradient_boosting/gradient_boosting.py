@@ -990,7 +990,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         n_threads_for_samples_wise_parallelism = (
             math.log10(n_samples / 1e3) * 2
             if active_wait
-            else math.log10(n_samples / 1e5) * 2,
+            else math.log10(n_samples / 1e5) * 2
         )
 
         heuristic_n_threads = max(
