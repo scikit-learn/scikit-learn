@@ -590,7 +590,7 @@ def move_to(*arrays, xp, device):
                     and not _is_numpy_namespace(xp)
                     and not isinstance(array, numpy.ndarray)
                 ):
-                    # Other array-like containers (e.g. lists,pandas Series)
+                    # Other array-like containers (e.g. Python lists, pandas Series...)
                     # are first converted to numpy arrays to ensure dlpack
                     # compatibility.
                     array = numpy.asarray(array)
