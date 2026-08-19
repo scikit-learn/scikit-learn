@@ -72,7 +72,7 @@ NODE_DTYPE = np.dtype([
     ('right_child',             np.intp),            # 8 bytes  (offset 8)
     ('feature',                 np.intp),            # 8 bytes  (offset 16)
     ('threshold',               np.float64),         # 8 bytes  (offset 24)
-    ('left_cat_bitset_or_hashseed',         (np.uint32, BITSET_LENGTH)),  # 32 bytes (offset 32)
+    ('left_cat_bitset',         (np.uint32, BITSET_LENGTH)),  # 32 bytes (offset 32)
     ('impurity',                np.float64),         # 8 bytes  (offset 64)
     ('n_node_samples',          np.intp),            # 8 bytes  (offset 72)
     ('weighted_n_node_samples', np.float64),         # 8 bytes  (offset 80)
@@ -277,7 +277,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                                 min_impurity_decrease))
 
                 node_id = tree._add_node(parent, is_left, is_leaf, split.feature,
-                                         split.threshold, split.left_cat_bitset_or_hashseed,
+                                         split.threshold, split.left_cat_bitset,
                                          split.split_kind,
                                          parent_record.impurity,
                                          n_node_samples, weighted_n_node_samples,
@@ -643,7 +643,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                  is_left, is_leaf,
                                  split.feature,
                                  split.threshold,
-                                 split.left_cat_bitset_or_hashseed,
+                                 split.left_cat_bitset,
                                  split.split_kind,
                                  parent_record.impurity,
                                  n_node_samples, weighted_n_node_samples,
@@ -813,8 +813,8 @@ cdef class Tree:
 
     # TODO: Convert to public property
     @property
-    def _left_cat_bitset_or_hashseed(self):
-        return self._get_node_ndarray()['left_cat_bitset_or_hashseed'][:self.node_count]
+    def _left_cat_bitset(self):
+        return self._get_node_ndarray()['left_cat_bitset'][:self.node_count]
 
     # TODO: Convert n_classes to cython.integral memory view once
     #  https://github.com/cython/cython/issues/5243 is fixed
@@ -957,7 +957,7 @@ cdef class Tree:
     cdef intp_t _add_node(self, intp_t parent, bint is_left, bint is_leaf,
                           intp_t feature,
                           float64_t threshold,
-                          BITSET_DTYPE_C left_cat_bitset_or_hashseed,
+                          BITSET_DTYPE_C left_cat_bitset,
                           int8_t split_kind,
                           float64_t impurity,
                           intp_t n_node_samples,
@@ -1001,9 +1001,9 @@ cdef class Tree:
             if self.n_categories[feature] > 0:
                 node.threshold = -INFINITY
                 memcpy(
-                    node.left_cat_bitset_or_hashseed,
-                    left_cat_bitset_or_hashseed,
-                    sizeof(node.left_cat_bitset_or_hashseed),
+                    node.left_cat_bitset,
+                    left_cat_bitset,
+                    sizeof(node.left_cat_bitset),
                 )
             else:
                 node.threshold = threshold
@@ -1062,7 +1062,7 @@ cdef class Tree:
                     X_i_node_feature = X_ndarray[i, node.feature]
                     go_left = goes_left(
                         node.threshold,
-                        node.left_cat_bitset_or_hashseed,
+                        node.left_cat_bitset,
                         node.missing_go_to_left,
                         node.split_kind,
                         X_i_node_feature,
@@ -1135,7 +1135,7 @@ cdef class Tree:
 
                     go_left = goes_left(
                         node.threshold,
-                        node.left_cat_bitset_or_hashseed,
+                        node.left_cat_bitset,
                         node.missing_go_to_left,
                         node.split_kind,
                         feature_value,
@@ -1201,7 +1201,7 @@ cdef class Tree:
                     X_i_node_feature = X_ndarray[i, node.feature]
                     go_left = goes_left(
                         node.threshold,
-                        node.left_cat_bitset_or_hashseed,
+                        node.left_cat_bitset,
                         node.missing_go_to_left,
                         node.split_kind,
                         X_i_node_feature,
@@ -1289,7 +1289,7 @@ cdef class Tree:
 
                     go_left = goes_left(
                         node.threshold,
-                        node.left_cat_bitset_or_hashseed,
+                        node.left_cat_bitset,
                         node.missing_go_to_left,
                         node.split_kind,
                         feature_value,
@@ -1497,7 +1497,7 @@ cdef class Tree:
                         # In this case, we push left or right child on stack
                         go_left = goes_left(
                             current_node.threshold,
-                            current_node.left_cat_bitset_or_hashseed,
+                            current_node.left_cat_bitset,
                             current_node.missing_go_to_left,
                             current_node.split_kind,
                             X[sample_idx, feature_idx],
@@ -2043,7 +2043,7 @@ cdef void _build_pruned_tree(
 
             new_node_id = tree._add_node(
                 parent, is_left, is_leaf, node.feature,
-                node.threshold, node.left_cat_bitset_or_hashseed, node.split_kind,
+                node.threshold, node.left_cat_bitset, node.split_kind,
                 node.impurity, node.n_node_samples,
                 node.weighted_n_node_samples, node.missing_go_to_left)
 

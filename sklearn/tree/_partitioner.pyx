@@ -383,7 +383,7 @@ cdef class DensePartitioner:
         while partition_start < partition_end:
             go_to_left = goes_left(
                 current_split[0].threshold,
-                current_split[0].left_cat_bitset_or_hashseed,
+                current_split[0].left_cat_bitset,
                 current_split[0].missing_go_to_left,
                 current_split[0].split_kind,
                 feature_values[partition_start],
@@ -420,7 +420,7 @@ cdef class DensePartitioner:
 
             go_to_left = goes_left(
                 best_split[0].threshold,
-                best_split[0].left_cat_bitset_or_hashseed,
+                best_split[0].left_cat_bitset,
                 best_missing_go_to_left,
                 best_split[0].split_kind,
                 current_value
@@ -436,7 +436,7 @@ cdef class DensePartitioner:
         self,
         intp_t position,
         bint missing_go_to_left,
-        BITSET_DTYPE_C left_cat_bitset_or_hashseed,
+        BITSET_DTYPE_C left_cat_bitset,
     ) noexcept nogil:
         """Convert a categorical split position into a bitset."""
         cdef:
@@ -448,14 +448,14 @@ cdef class DensePartitioner:
         if missing_go_to_left:
             n_left_non_missing -= self.n_missing
 
-        init_bitset(left_cat_bitset_or_hashseed)
+        init_bitset(left_cat_bitset)
 
         if n_left_non_missing <= 0:
             return
 
         for r in range(self.n_categories_current):
             c = self.sorted_cat[r]
-            set_bitset(left_cat_bitset_or_hashseed, <uint8_t> c)
+            set_bitset(left_cat_bitset, <uint8_t> c)
             offset += self.counts[c]
             if offset >= n_left_non_missing:
                 break
@@ -643,7 +643,7 @@ cdef class SparsePartitioner:
         self.extract_nnz(best_split[0].feature)
         self._partition(best_split[0].threshold)
 
-    # TODO: add left_cat_bitset_or_hashseed when refactored to support categorical data
+    # TODO: add left_cat_bitset when refactored to support categorical data
     cdef inline intp_t _partition(self, float64_t threshold) noexcept nogil:
         """
         Partition samples[start:end] based on threshold.
@@ -686,10 +686,10 @@ cdef class SparsePartitioner:
         self,
         intp_t position,
         bint missing_go_to_left,
-        BITSET_DTYPE_C left_cat_bitset_or_hashseed,
+        BITSET_DTYPE_C left_cat_bitset,
     ) noexcept nogil:
         # Sparse categorical features are rejected before split search.
-        init_bitset(left_cat_bitset_or_hashseed)
+        init_bitset(left_cat_bitset)
 
     cdef inline void extract_nnz(self, intp_t feature) noexcept nogil:
         """Extract and partition values for a given feature.

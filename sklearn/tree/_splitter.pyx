@@ -29,6 +29,7 @@ from sklearn.tree._partitioner cimport (
     position_to_split_threshold,
 )
 from sklearn.tree._utils cimport (
+    MAX_RANDOM_CATEGORICAL_SPLIT_RETRIES,
     RAND_R_MAX,
     rand_int,
     rand_uniform,
@@ -37,6 +38,8 @@ from sklearn.tree._utils cimport (
     SPLIT_NUMERIC,
 )
 from sklearn.utils._bitset cimport init_bitset
+import warnings
+
 import numpy as np
 
 # Introduce a fused-class to make it possible to share the split implementation
@@ -55,7 +58,7 @@ cdef inline void _init_split(SplitRecord* self, intp_t start_pos) noexcept nogil
     self.pos = start_pos
     self.feature = 0
     self.threshold = 0.
-    init_bitset(self.left_cat_bitset_or_hashseed)
+    init_bitset(self.left_cat_bitset)
     self.split_kind = SPLIT_NUMERIC
     self.improvement = -INFINITY
     self.missing_go_to_left = False
@@ -467,7 +470,7 @@ cdef inline int node_split_best(
                         partitioner.cat_position_to_split_bitset(
                             p,
                             missing_go_to_left,
-                            current_split.left_cat_bitset_or_hashseed,
+                            current_split.left_cat_bitset,
                         )
                     else:  # numerical feature
                         current_split.split_kind = SPLIT_NUMERIC
@@ -676,9 +679,9 @@ cdef inline int node_split_random(
             # at least two distinct categories are present, so a balanced
             # partition is always reachable. Expected attempts are <= 2.
             current_split.split_kind = SPLIT_CATEGORICAL_HASH
-            init_bitset(current_split.left_cat_bitset_or_hashseed)
-            while True:
-                current_split.left_cat_bitset_or_hashseed[0] = <uint32_t> rand_int(
+            init_bitset(current_split.left_cat_bitset)
+            for _ in range(MAX_RANDOM_CATEGORICAL_SPLIT_RETRIES):
+                current_split.left_cat_bitset[0] = <uint32_t> rand_int(
                     1, RAND_R_MAX, random_state
                 )
                 current_split.pos = partitioner.partition_samples(&current_split)
@@ -686,6 +689,25 @@ cdef inline int node_split_random(
                 n_right = end - current_split.pos
                 if n_left != 0 and n_right != 0:
                     break
+            else:  # pragma: no cover
+                # Unreachable from the public API: ordinal encoding guarantees
+                # at least two distinct categories when min != max, so a
+                # non-empty split is found well before this cap. Safety net
+                # only; not tested.
+                with gil:
+                    warnings.warn(
+                        (
+                            "Failed to find a non-empty random categorical "
+                            "split after "
+                            f"{MAX_RANDOM_CATEGORICAL_SPLIT_RETRIES} retries. "
+                            "This should not happen for ordinal-encoded "
+                            "categorical features. Please open an issue at "
+                            "https://github.com/scikit-learn/scikit-learn/"
+                            "issues with a minimal reproducer."
+                        ),
+                        UserWarning,
+                    )
+                continue
         else:
             current_split.split_kind = SPLIT_NUMERIC
             # Draw a random threshold

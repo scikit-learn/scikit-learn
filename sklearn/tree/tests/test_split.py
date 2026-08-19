@@ -88,14 +88,14 @@ class Split:
         ftr = int(tree.tree_.feature[0])
         split_kind = int(tree.tree_.split_kind[0])
         if split_kind == SPLIT_CATEGORICAL_BITSET:
-            cat_bitset = tree.tree_._left_cat_bitset_or_hashseed[0]
+            cat_bitset = tree.tree_._left_cat_bitset[0]
             threshold = bitset_to_tuple(
                 cat_bitset,
                 n_categories=int(tree.tree_._n_categories[ftr]),
             )
         elif split_kind == SPLIT_CATEGORICAL_HASH:
             # Hash seed is stored in word 0 of the dual-use bitset/seed field.
-            threshold = int(tree.tree_._left_cat_bitset_or_hashseed[0, 0])
+            threshold = int(tree.tree_._left_cat_bitset[0, 0])
         else:
             threshold = tree.tree_.threshold[0]
         missing_left = bool(tree.tree_.missing_go_to_left[0])

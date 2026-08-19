@@ -14,6 +14,10 @@ from sklearn.utils._random cimport our_rand_r
 
 cdef enum:
     MAX_NUM_CATEGORIES = N_BITSETS
+    # Safety cap for ExtraTree hash-seed retries. Unreachable from the public
+    # API because ordinal encoding guarantees at least two categories when
+    # min != max, so a non-empty split is found well before this limit.
+    MAX_RANDOM_CATEGORICAL_SPLIT_RETRIES = 100
 
 cpdef enum:
     SPLIT_LEAF = -1
@@ -32,10 +36,10 @@ cdef struct Node:
     # - feature values less than or equal to the threshold go left, and values greater than the threshold go right.
     float64_t threshold
     # Threshold / seed for categorical features splits:
-    # - for SPLIT_CATEGORICAL_BITSET: left_cat_bitset_or_hashseed stores the set of
+    # - for SPLIT_CATEGORICAL_BITSET: left_cat_bitset stores the set of
     #   categories that go to the left child;
-    # - for SPLIT_CATEGORICAL_HASH: left_cat_bitset_or_hashseed[0] stores the hash seed.
-    BITSET_DTYPE_C left_cat_bitset_or_hashseed
+    # - for SPLIT_CATEGORICAL_HASH: left_cat_bitset[0] stores the hash seed.
+    BITSET_DTYPE_C left_cat_bitset
 
     float64_t impurity                   # Impurity of the node (i.e., the value of the criterion)
     intp_t n_node_samples                # Number of samples at the node
@@ -59,7 +63,7 @@ cdef inline uint32_t mix_uint32(uint32_t x) noexcept nogil:
 
 cdef inline bint goes_left(
     float64_t threshold,
-    const BITSET_INNER_DTYPE_C* left_cat_bitset_or_hashseed,
+    const BITSET_INNER_DTYPE_C* left_cat_bitset,
     bint missing_go_to_left,
     int8_t split_kind,
     float32_t value,
@@ -69,13 +73,13 @@ cdef inline bint goes_left(
     elif split_kind == SPLIT_NUMERIC:
         return value <= threshold
     elif split_kind == SPLIT_CATEGORICAL_BITSET:
-        return in_bitset(left_cat_bitset_or_hashseed, <uint8_t> value)
+        return in_bitset(left_cat_bitset, <uint8_t> value)
     elif split_kind == SPLIT_CATEGORICAL_HASH:
         # mix_uint32(seed ^ category_idx) & 1 is a stable ~50/50 left/right
         # routing bit (see mix_uint32 / lowbias32 above). The seed is stored
-        # in left_cat_bitset_or_hashseed[0]; value is the ordinal category index.
+        # in left_cat_bitset[0]; value is the ordinal category index.
         return mix_uint32(
-            left_cat_bitset_or_hashseed[0] ^ <uint32_t> value
+            left_cat_bitset[0] ^ <uint32_t> value
         ) & 1
     else:
         return False
