@@ -41,7 +41,7 @@ from sklearn.utils.fixes import (
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
 
-def _nw_into_df_or_series(x):
+def _nw_is_into_df_or_series(x):
     return nw.dependencies.is_into_dataframe(x) or nw.dependencies.is_into_series(x)
 
 
@@ -380,7 +380,7 @@ def _num_samples(x):
         if isinstance(x.shape[0], numbers.Integral):
             return x.shape[0]
 
-    if _nw_into_df_or_series(x):
+    if _nw_is_into_df_or_series(x):
         return nw.from_native(x, allow_series=True).shape[0]
 
     if not hasattr(x, "__len__") and not hasattr(x, "shape"):
@@ -464,8 +464,8 @@ def check_consistent_length(*arrays):
 def _make_indexable(iterable):
     """Ensure iterable supports indexing or convert to an indexable variant.
 
-    Convert sparse matrices to csr and other non-indexable iterable to arrays.
-    Let `None` and indexable objects (e.g. pandas dataframes) pass unchanged.
+    Convert sparse matrices to csr, dataframes to narwhals.DataFrame and other
+    non-indexable iterable to arrays. Let `None` and indexable objects pass unchanged.
 
     Parameters
     ----------
@@ -474,7 +474,12 @@ def _make_indexable(iterable):
     """
     if sp.issparse(iterable):
         return iterable.tocsr()
-    elif hasattr(iterable, "__getitem__") or hasattr(iterable, "iloc"):
+    elif _nw_is_into_df_or_series(iterable):
+        # Even if dataframe has __getitem__, semantics are quite different, examples:
+        # pandas: df[0] -> KeyError if 0 is not a column name
+        # polars: df[0] -> returns the 0th row
+        return iterable
+    elif hasattr(iterable, "__getitem__"):
         return iterable
     elif iterable is None:
         return iterable
@@ -846,7 +851,8 @@ def check_array(
     Returns
     -------
     array_converted : object
-        The converted and validated array.
+        The converted and validated array: a numpy array, Array API compatible array,
+        sparse array or sparse matrix.
 
     Examples
     --------
@@ -884,7 +890,7 @@ def check_array(
     # track if we have a Series-like object to raise a better error message
     type_if_series = None
     # For dataframes, use narwhals
-    if _nw_into_df_or_series(array):
+    if _nw_is_into_df_or_series(array):
         array_df = nw.from_native(array, allow_series=True)
     else:
         array_df = None
@@ -903,17 +909,19 @@ def check_array(
         def is_pd_sparse(dtype):
             return isinstance(dtype, SparseDtype)
 
-        if hasattr(array, "sparse") and array.dtypes.apply(is_pd_sparse).all():
+        # Note that array may be a narhwals.DataFrame backed by a pandas.DataFrame.
+        df_pandas = array_df.to_native()
+        if hasattr(df_pandas, "sparse") and df_pandas.dtypes.apply(is_pd_sparse).all():
             # All columns of the pandas.DataFrame are sparse. Note that the `sparse`
             # attribute is not a guaranteed detection for all sparse columns.
             is_pandas_fully_sparse_df = True
-        elif array.dtypes.apply(is_pd_sparse).any():
+        elif df_pandas.dtypes.apply(is_pd_sparse).any():
             warnings.warn(
                 "pandas.DataFrame with sparse columns found."
                 "It will be converted to a dense numpy array."
             )
 
-        dtypes_orig = list(array.dtypes)
+        dtypes_orig = list(df_pandas.dtypes)
         pandas_requires_conversion = any(
             _pandas_dtype_needs_early_conversion(i) for i in dtypes_orig
         )
@@ -985,9 +993,9 @@ def check_array(
     context = " by %s" % estimator_name if estimator is not None else ""
 
     # When all dataframe columns are sparse, convert to a sparse array
-    if is_pandas_fully_sparse_df and array.ndim > 1:
+    if is_pandas_fully_sparse_df:
         # DataFrame.sparse only supports `to_coo`
-        array = array.sparse.to_coo()
+        array = df_pandas.sparse.to_coo()
 
     if sp.issparse(array):
         _ensure_no_complex_data(array)
@@ -2451,7 +2459,7 @@ def _generate_get_feature_names_out(estimator, n_features_out, input_features=No
     estimator : estimator instance
         Estimator producing output feature names.
 
-    n_feature_out : int
+    n_features_out : int
         Number of feature names out.
 
     input_features : array-like of str or None, default=None

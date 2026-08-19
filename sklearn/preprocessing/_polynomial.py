@@ -421,12 +421,12 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             matrix is provided, it will be converted into CSR format.
         """
         check_is_fitted(self)
-        xp, _, device_ = get_namespace_and_device(X)
+        xp, _, device = get_namespace_and_device(X)
         X = validate_data(
             self,
             X,
             order="F",
-            dtype=supported_float_dtypes(xp=xp, device=device_),
+            dtype=supported_float_dtypes(xp=xp, device=device),
             reset=False,
             accept_sparse=("csr", "csc"),
         )
@@ -496,7 +496,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             XP = xp.empty(
                 shape=(n_samples, self._n_out_full),
                 dtype=X.dtype,
-                device=device_,
+                device=device,
                 **order_kwargs,
             )
 
@@ -566,7 +566,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                     Xout = xp.empty(
                         shape=(n_samples, n_Xout),
                         dtype=XP.dtype,
-                        device=device_,
+                        device=device,
                         **order_kwargs,
                     )
                     Xout[:, 0] = 1

@@ -466,15 +466,13 @@ def load_descr(descr_file_name, *, descr_module=DESCR_MODULE, encoding="utf-8"):
 
     Parameters
     ----------
-    descr_file_name : str, default=None
+    descr_file_name : str
         Name of rst file to be loaded from `descr_module/descr_file_name`.
-        For example `'wine_data.rst'`. See also :func:`load_descr`.
-        If not None, also returns the corresponding description of
-        the dataset.
+        For example `'wine_data.rst'`.
 
     descr_module : str or module, default='sklearn.datasets.descr'
-        Module where `descr_file_name` lives. See also :func:`load_descr`.
-        The default  is `'sklearn.datasets.descr'`.
+        Module where `descr_file_name` lives.
+        The default is `'sklearn.datasets.descr'`.
 
     encoding : str, default="utf-8"
         Name of the encoding that `descr_file_name` will be decoded with.
@@ -1005,8 +1003,7 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
 
     target = data[:, -1].astype(int, copy=False)
     flat_data = data[:, :-1]
-    images = flat_data.view()
-    images.shape = (-1, 8, 8)
+    images = flat_data.reshape(-1, 8, 8)
 
     if n_class < 10:
         idx = target < n_class

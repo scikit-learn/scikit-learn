@@ -6,6 +6,7 @@ from math import ceil, floor, log
 from numbers import Integral, Real
 
 import numpy as np
+from scipy.stats import rankdata
 
 from sklearn.base import _fit_context, is_classifier
 from sklearn.metrics._scorer import get_scorer_names
@@ -13,6 +14,7 @@ from sklearn.model_selection import ParameterGrid, ParameterSampler
 from sklearn.model_selection._search import BaseSearchCV
 from sklearn.model_selection._split import _yields_constant_splits
 from sklearn.utils import resample
+from sklearn.utils._array_api import xpx
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import _num_samples, validate_data
@@ -60,6 +62,30 @@ def _top_k(results, k, itr):
     # highest scores.
     sorted_indices = np.roll(np.argsort(scores), np.count_nonzero(np.isnan(scores)))
     return np.array(params[iter_indices][sorted_indices[-k:]])
+
+
+def _trim_cv_results_to_last_iter(results, best_index):
+    """Trim results to the last halving iteration only."""
+    last_iter_indices = np.flatnonzero(results["iter"] == np.max(results["iter"]))
+    start = int(last_iter_indices[0])  # the last iteration is always at the end
+    trimmed = {key: value[start:] for key, value in results.items()}
+
+    mean_test_score = trimmed["mean_test_score"]
+    if np.isnan(mean_test_score).all():
+        rank_result = np.ones_like(mean_test_score, dtype=np.int32)
+    else:
+        min_array_means = np.nanmin(mean_test_score) - 1
+        scores_for_rank = xpx.nan_to_num(mean_test_score, fill_value=min_array_means)
+        rank_result = rankdata(-scores_for_rank, method="min").astype(
+            np.int32, copy=False
+        )
+    trimmed["rank_test_score"] = rank_result
+
+    # `best_index` is guaranteed to lie in the last-iteration slice because
+    # `BaseSuccessiveHalving._select_best_index` only returns indices from it.
+    new_best_index = best_index - start
+
+    return trimmed, new_best_index
 
 
 class BaseSuccessiveHalving(BaseSearchCV):
@@ -242,6 +268,15 @@ class BaseSuccessiveHalving(BaseSearchCV):
         self._n_samples_orig = _num_samples(X)
 
         super().fit(X, y=y, **params)
+
+        self.all_cv_results_ = {
+            key: value
+            for key, value in self.cv_results_.items()
+            if key != "rank_test_score"
+        }
+        self.cv_results_, self.best_index_ = _trim_cv_results_to_last_iter(
+            self.all_cv_results_, self.best_index_
+        )
 
         # Set best_score_: BaseSearchCV does not set it, as refit is a callable
         self.best_score_ = self.cv_results_["mean_test_score"][self.best_index_]
@@ -597,20 +632,31 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
     cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, that can be
-        imported into a pandas ``DataFrame``. It contains lots of information
-        for analysing the results of a search.
-        Please refer to the :ref:`User guide<successive_halving_cv_results>`
-        for details.
+        imported into a pandas ``DataFrame``. It contains the cross-validation
+        results for the candidates evaluated in the **last** halving
+        iteration only. ``rank_test_score`` is computed among those
+        candidates.
         For an example of analysing ``cv_results_``,
         see :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`.
+
+    all_cv_results_ : dict of numpy (masked) ndarrays
+        A dict with the same structure as ``cv_results_``, containing the
+        cross-validation results for all candidates across all halving
+        iterations. Each row is identified by the ``iter`` and
+        ``n_resources`` columns. Unlike ``cv_results_``, it does not include a
+        ``rank_test_score`` column: ranking candidates evaluated with a varying
+        number of resources against each other is not meaningful.
+        Please refer to the :ref:`User guide<successive_halving_cv_results>`
+        for details.
 
     best_estimator_ : estimator or dict
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
-        on the left out data. Not available if ``refit=False``.
+        on the left out data, in the last halving iteration.
+        Not available if ``refit=False``.
 
     best_score_ : float
-        Mean cross-validated score of the best_estimator.
+        Mean cross-validated score of the ``best_estimator_``.
 
     best_params_ : dict
         Parameter setting that gave the best results on the hold out data.
@@ -958,20 +1004,31 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
     cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, that can be
-        imported into a pandas ``DataFrame``. It contains lots of information
-        for analysing the results of a search.
-        Please refer to the :ref:`User guide<successive_halving_cv_results>`
-        for details.
+        imported into a pandas ``DataFrame``. It contains the cross-validation
+        results for the candidates evaluated in the **last** halving
+        iteration only. ``rank_test_score`` is computed among those
+        candidates.
         For an example of analysing ``cv_results_``,
         see :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`.
+
+    all_cv_results_ : dict of numpy (masked) ndarrays
+        A dict with the same structure as ``cv_results_``, containing the
+        cross-validation results for all candidates across all halving
+        iterations. Each row is identified by the ``iter`` and
+        ``n_resources`` columns. Unlike ``cv_results_``, it does not include a
+        ``rank_test_score`` column: ranking candidates evaluated with a varying
+        number of resources against each other is not meaningful.
+        Please refer to the :ref:`User guide<successive_halving_cv_results>`
+        for details.
 
     best_estimator_ : estimator or dict
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
-        on the left out data. Not available if ``refit=False``.
+        on the left out data, in the last halving iteration.
+        Not available if ``refit=False``.
 
     best_score_ : float
-        Mean cross-validated score of the best_estimator.
+        Mean cross-validated score of the ``best_estimator_``.
 
     best_params_ : dict
         Parameter setting that gave the best results on the hold out data.
