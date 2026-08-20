@@ -3579,10 +3579,6 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     check_consistent_length(y_true, pred_decision, sample_weight)
     pred_decision = check_array(pred_decision, ensure_2d=False)
     y_true = column_or_1d(y_true)
-    if labels is not None:
-        labels = column_or_1d(labels)
-    if sample_weight is not None:
-        sample_weight = column_or_1d(sample_weight)
 
     # Array API dispatch follows `pred_decision`, consistent with other
     # scoring functions: "everything follows y_pred". `y_true`/`labels` may
@@ -3630,10 +3626,7 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
             labels = y_true_unique
         le = LabelEncoder()
         le.fit(labels)
-        y_true_encoded = le.transform(y_true)
-        y_true_encoded = xp.astype(
-            move_to(y_true_encoded, xp=xp, device=device), xp.int64
-        )
+        y_true_encoded = move_to(le.transform(y_true), xp=xp, device=device)
 
         # The Array API standard has no boolean-mask fancy indexing (it would
         # produce a data-dependent output shape), so the true-class score and
