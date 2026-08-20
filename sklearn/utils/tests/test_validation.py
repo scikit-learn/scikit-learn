@@ -542,6 +542,41 @@ def test_check_array_pandas_string_dtype_numeric_error():
     assert_array_equal(result, s_str.values)
 
 
+def test_check_array_polars_lazyframe_error():
+    """check_array raises an informative error for a polars LazyFrame.
+
+    Lazy dataframes are not supported and used to be treated as 0-dimensional
+    object arrays, leading to a confusing error message suggesting to reshape
+    the input.
+    """
+    pl = pytest.importorskip("polars")
+
+    X_lazy = pl.LazyFrame({"a": [1.0, 2.0], "b": [3.0, 4.0]})
+    msg = (
+        "A polars LazyFrame was passed, but lazy dataframes are not supported. "
+        "Use '.collect()' to convert it to a polars DataFrame."
+    )
+    with pytest.raises(TypeError, match=re.escape(msg)):
+        check_array(X_lazy)
+
+
+def test_validate_data_polars_lazyframe_error():
+    """validate_data raises an informative error for a polars LazyFrame."""
+    pl = pytest.importorskip("polars")
+
+    X_lazy = pl.LazyFrame({"a": [1.0, 2.0], "b": [3.0, 4.0]})
+    msg = re.escape("A polars LazyFrame was passed for X, but lazy dataframes are")
+    estimator = PassthroughTransformer()
+    with pytest.raises(TypeError, match=msg):
+        estimator.fit(X_lazy)
+
+    # The error is also raised when validating without resetting an already
+    # fitted estimator, e.g. at transform or predict time.
+    estimator = PassthroughTransformer().fit(X_lazy.collect())
+    with pytest.raises(TypeError, match=msg):
+        validate_data(estimator, X_lazy, reset=False)
+
+
 @pytest.mark.parametrize(
     "pd_dtype", ["Int8", "Int16", "UInt8", "UInt16", "Float32", "Float64"]
 )
