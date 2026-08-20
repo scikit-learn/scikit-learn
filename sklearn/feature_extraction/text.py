@@ -29,7 +29,7 @@ from sklearn.preprocessing import normalize
 from sklearn.utils import metadata_routing
 from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
 from sklearn.utils._sparse import _align_api_if_sparse
-from sklearn.utils.fixes import _IS_32BIT, SCIPY_VERSION_BELOW_1_12
+from sklearn.utils.fixes import _IS_32BIT
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
     check_array,
@@ -1457,13 +1457,9 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         inverse_vocabulary = terms[np.argsort(indices)]
 
         if sp.issparse(X):
-            if SCIPY_VERSION_BELOW_1_12:
-                return [
-                    inverse_vocabulary[X[[i], :].nonzero()[-1]].ravel()
-                    for i in range(n_samples)
-                ]
+            indptr, col_idx = X.indptr, X.indices
             return [
-                inverse_vocabulary[X[i, :].nonzero()[-1]].ravel()
+                inverse_vocabulary[col_idx[indptr[i] : indptr[i + 1]]]
                 for i in range(n_samples)
             ]
         else:
