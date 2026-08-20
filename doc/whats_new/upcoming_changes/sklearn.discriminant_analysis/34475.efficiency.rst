@@ -1,0 +1,6 @@
+- :class:`discriminant_analysis.LinearDiscriminantAnalysis` is faster to fit: the
+  target is ordinal-encoded once in `fit` and the number of classes is passed down
+  to the internal helpers, removing a redundant pass over the target to recompute
+  the unique class labels. Computing the class means is up to 1.4x faster for
+  large numbers of samples and classes.
+  By :user:`Kiyarash Fazeli <Fazel94>`.
