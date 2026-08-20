@@ -264,17 +264,17 @@ subtle parameter.
          - Estimator
          - CV splitter
        * - Identical results for repeated calls to `fit`/`split`
-         - int
-         - int
+         - `int`
+         - `int`
        * - Robust CV results, with fresh randomness for each fold
          - `RandomState` instance or `None`
-         - int
-       * - Comparable per-fold scores across separate runs
-         - any
-         - int
+         - `int`
+       * - Comparable per-fold scores across different models/configurations
+         - `any`
+         - `int`
        * - Reproducible results across different program executions
-         - int, or a fixed `RandomState` instance
-         - int
+         - `int`, or a fixed `RandomState` instance
+         - `int`
 
 Using `None` or `RandomState` instances, and repeated calls to `fit` and `split`
 --------------------------------------------------------------------------------
