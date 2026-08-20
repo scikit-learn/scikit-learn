@@ -1900,7 +1900,7 @@ class MiniBatchNMF(_BaseNMF):
         results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    verbose : bool, default=False
+    verbose : int, default=0
         Whether to be verbose.
 
     Attributes
