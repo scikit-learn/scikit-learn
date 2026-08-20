@@ -17,8 +17,8 @@ def check_matplotlib_support(caller_name):
         import matplotlib  # noqa: F401
     except ImportError as e:
         raise ImportError(
-            "{} requires matplotlib. You can install matplotlib with "
-            "`pip install matplotlib`".format(caller_name)
+            f"{caller_name} requires matplotlib. You can install matplotlib with "
+            "`pip install matplotlib`"
         ) from e
 
 
@@ -43,4 +43,20 @@ def check_pandas_support(caller_name):
 
         return pandas
     except ImportError as e:
-        raise ImportError("{} requires pandas.".format(caller_name)) from e
+        raise ImportError(f"{caller_name} requires pandas.") from e
+
+
+def check_rich_support(caller_name):
+    """Raise ImportError with detailed error message if rich is not installed.
+
+    Caller should lazily import rich and call this helper before any computation.
+
+    Parameters
+    ----------
+    caller_name : str
+        The name of the caller that requires rich.
+    """
+    try:
+        import rich  # noqa: F401
+    except ImportError as e:
+        raise ImportError(f"{caller_name} requires rich.") from e

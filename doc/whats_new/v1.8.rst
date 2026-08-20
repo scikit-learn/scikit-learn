@@ -332,7 +332,7 @@ other people in the wider Scientific Python and CPython ecosystem, for example
   `eta0` is not used by the default learning rate "optimal" of those two estimators.
   By :user:`Christian Lorentzen <lorentzenchr>`. :pr:`31933`
 
-- |Fix| :class:`linear_model.LogisticRegressionCV` is able to handle CV splits where
+- |Enhancement| :class:`linear_model.LogisticRegressionCV` is able to handle CV splits where
   some class labels are missing in some folds. Before, it raised an error whenever a
   class label were missing in a fold.
   By :user:`Christian Lorentzen <lorentzenchr>`. :pr:`32747`

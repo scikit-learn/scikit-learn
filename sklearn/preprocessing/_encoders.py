@@ -14,12 +14,13 @@ from sklearn.base import (
     TransformerMixin,
     _fit_context,
 )
-from sklearn.utils import _safe_indexing, check_array
-from sklearn.utils._encode import _check_unknown, _encode, _get_counts, _unique
+from sklearn.utils import _align_api_if_sparse, _safe_indexing, check_array
+from sklearn.utils._encode import _encode, _get_counts, _unique
 from sklearn.utils._mask import _get_mask
 from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
 from sklearn.utils._set_output import _get_output_config
+from sklearn.utils.fixes import _ensure_sparse_index_int32
 from sklearn.utils.validation import (
     _check_feature_names_in,
     check_is_fitted,
@@ -158,8 +159,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         raise ValueError(error_msg)
 
                 if handle_unknown == "error":
-                    diff = _check_unknown(Xi, cats)
-                    if diff:
+                    _, diff = _encode(_unique(Xi), uniques=cats, return_diff=True)
+                    if diff.size:
                         msg = (
                             "Found unknown categories {0} in column {1}"
                             " during fit".format(diff, i)
@@ -203,47 +204,26 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         )
         validate_data(self, X=X, reset=False, skip_check_array=True)
 
-        X_int = np.zeros((n_samples, n_features), dtype=int)
-        X_mask = np.ones((n_samples, n_features), dtype=bool)
+        X_int = np.zeros((n_samples, n_features), dtype=int, order="F")
+        X_mask = np.ones((n_samples, n_features), dtype=bool, order="F")
 
         columns_with_unknown = []
         for i in range(n_features):
             Xi = X_list[i]
-            diff, valid_mask = _check_unknown(Xi, self.categories_[i], return_mask=True)
+            X_int[:, i] = _encode(Xi, uniques=self.categories_[i])
+            X_mask[:, i] = X_int[:, i] != -1
 
-            if not np.all(valid_mask):
+            if not np.all(X_mask[:, i]):
                 if handle_unknown == "error":
+                    diff = _unique(Xi[~X_mask[:, i]])
                     msg = (
                         "Found unknown categories {0} in column {1}"
                         " during transform".format(diff, i)
                     )
                     raise ValueError(msg)
-                else:
-                    if warn_on_unknown:
-                        columns_with_unknown.append(i)
-                    # Set the problematic rows to an acceptable value and
-                    # continue `The rows are marked `X_mask` and will be
-                    # removed later.
-                    X_mask[:, i] = valid_mask
-                    # cast Xi into the largest string type necessary
-                    # to handle different lengths of numpy strings
-                    if (
-                        self.categories_[i].dtype.kind in ("U", "S")
-                        and self.categories_[i].itemsize > Xi.itemsize
-                    ):
-                        Xi = Xi.astype(self.categories_[i].dtype)
-                    elif self.categories_[i].dtype.kind == "O" and Xi.dtype.kind == "U":
-                        # categories are objects and Xi are numpy strings.
-                        # Cast Xi to an object dtype to prevent truncation
-                        # when setting invalid values.
-                        Xi = Xi.astype("O")
-                    else:
-                        Xi = Xi.copy()
+                elif warn_on_unknown:
+                    columns_with_unknown.append(i)
 
-                    Xi[~valid_mask] = self.categories_[i][0]
-            # We use check_unknown=False, since _check_unknown was
-            # already called above.
-            X_int[:, i] = _encode(Xi, uniques=self.categories_[i], check_unknown=False)
         if columns_with_unknown:
             if handle_unknown == "infrequent_if_exist":
                 msg = (
@@ -544,8 +524,8 @@ class OneHotEncoder(_BaseEncoder):
             Support for dropping infrequent categories.
 
     sparse_output : bool, default=True
-        When ``True``, it returns a :class:`scipy.sparse.csr_matrix`,
-        i.e. a sparse matrix in "Compressed Sparse Row" (CSR) format.
+        When ``True``, it returns a SciPy sparse matrix/array
+        in "Compressed Sparse Row" (CSR) format.
 
         .. versionadded:: 1.2
            `sparse` was renamed to `sparse_output`
@@ -1009,8 +989,7 @@ class OneHotEncoder(_BaseEncoder):
         """
         Transform X using one-hot encoding.
 
-        If `sparse_output=True` (default), it returns an instance of
-        :class:`scipy.sparse._csr.csr_matrix` (CSR format).
+        If `sparse_output=True` (default), it returns a SciPy sparse in CSR format.
 
         If there are infrequent categories for a feature, set by specifying
         `max_categories` or `min_frequency`, the infrequent categories are
@@ -1072,9 +1051,9 @@ class OneHotEncoder(_BaseEncoder):
             X_int[X_int > to_drop] -= 1
             X_mask &= keep_cells
 
-        mask = X_mask.ravel()
         feature_indices = np.cumsum([0] + self._n_features_outs)
-        indices = (X_int + feature_indices[:-1]).ravel()[mask]
+        X_int += feature_indices[:-1]
+        indices = X_int[X_mask].ravel()
 
         indptr = np.empty(n_samples + 1, dtype=int)
         indptr[0] = 0
@@ -1082,15 +1061,16 @@ class OneHotEncoder(_BaseEncoder):
         np.cumsum(indptr[1:], out=indptr[1:])
         data = np.ones(indptr[-1])
 
-        out = sparse.csr_matrix(
+        out = sparse.csr_array(
             (data, indices, indptr),
             shape=(n_samples, feature_indices[-1]),
             dtype=self.dtype,
         )
-        if not self.sparse_output:
-            return out.toarray()
+        if self.sparse_output:
+            _ensure_sparse_index_int32(out)
+            return _align_api_if_sparse(out)
         else:
-            return out
+            return out.toarray()
 
     def inverse_transform(self, X):
         """

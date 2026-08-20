@@ -3,12 +3,8 @@ import re
 import pytest
 
 from sklearn import config_context
-from sklearn.utils._repr_html.params import (
-    ParamsDict,
-    _generate_link_to_param_doc,
-    _params_html_repr,
-    _read_params,
-)
+from sklearn.utils._repr_html.common import generate_link_to_param_doc
+from sklearn.utils._repr_html.params import ParamsDict, _params_html_repr, _read_params
 
 
 def test_params_dict_content():
@@ -79,6 +75,18 @@ def test_params_html_repr():
     params = ParamsDict(params={"a": 1, "b": 2}, estimator_class="")
     assert "parameters-table" in _params_html_repr(params)
     assert "estimator-table" in _params_html_repr(params)
+
+
+def test_params_html_repr_copy_button():
+    """Copy control renders as an accessible <button> with an aria-label."""
+    params = ParamsDict(params={"alpha": 1}, estimator_class="")
+    html_output = _params_html_repr(params)
+
+    copy_button = (
+        r'<button type="button" class="copy-paste-icon"'
+        r'\s*aria-label="Copy alpha to clipboard"'
+    )
+    assert re.search(copy_button, html_output, flags=re.DOTALL)
 
 
 def test_params_html_repr_with_doc_links():
@@ -182,10 +190,10 @@ def test_generate_link_to_param_doc_basic():
         """
 
     doc_link = "mock_module.MockEstimator.html"
-    url = _generate_link_to_param_doc(MockEstimator, "alpha", doc_link)
+    url = generate_link_to_param_doc(MockEstimator, "alpha", doc_link)
     assert url == "mock_module.MockEstimator.html#:~:text=alpha,-float"
 
-    url = _generate_link_to_param_doc(MockEstimator, "beta", doc_link)
+    url = generate_link_to_param_doc(MockEstimator, "beta", doc_link)
     assert url == "mock_module.MockEstimator.html#:~:text=beta,-int"
 
 
@@ -202,7 +210,7 @@ def test_generate_link_to_param_doc_param_not_found():
         """
 
     doc_link = "mock_module.MockEstimator.html"
-    url = _generate_link_to_param_doc(MockEstimator, "gamma", doc_link)
+    url = generate_link_to_param_doc(MockEstimator, "gamma", doc_link)
 
     assert url is None
 
@@ -214,5 +222,27 @@ def test_generate_link_to_param_doc_empty_docstring():
         pass
 
     doc_link = "mock_module.MockEstimator.html"
-    url = _generate_link_to_param_doc(MockEstimator, "alpha", doc_link)
+    url = generate_link_to_param_doc(MockEstimator, "alpha", doc_link)
     assert url is None
+
+
+def test_generate_link_to_param_doc_special_char():
+    """Non-regression test for
+    https://github.com/scikit-learn/scikit-learn/issues/33830
+    """
+
+    class MockEstimator:
+        """Mock class.
+
+        Attributes
+        ----------
+        weird_attr_ : ndarray of shape (`n_features_in_`,)
+        """
+
+    doc_link = "mock_module.MockEstimator.html"
+    url = generate_link_to_param_doc(MockEstimator, "weird_attr_", doc_link)
+    expected_url = (
+        "mock_module.MockEstimator.html#:~:text=weird_attr_,"
+        "-ndarray%20of%20shape%20%28n_features_in_%2C%29"
+    )
+    assert url == expected_url

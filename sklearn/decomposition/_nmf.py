@@ -25,6 +25,7 @@ from sklearn.decomposition._cdnmf_fast import _update_cdnmf_fast
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils import check_array, check_random_state, gen_batches
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.extmath import _randomized_svd, safe_sparse_dot, squared_norm
 from sklearn.utils.validation import check_is_fitted, check_non_negative, validate_data
 
@@ -196,8 +197,8 @@ def _special_sparse_dot(W, H, X):
                 axis=1
             )
 
-        WH = sp.coo_matrix((dot_vals, (ii, jj)), shape=X.shape)
-        return WH.tocsr()
+        WH = sp.coo_array((dot_vals, (ii, jj)), shape=X.shape)
+        return _align_api_if_sparse(WH.tocsr())
     else:
         return np.dot(W, H)
 
@@ -479,9 +480,11 @@ def _fit_coordinate_descent(
        Cichocki, Andrzej, and P. H. A. N. Anh-Huy. IEICE transactions on fundamentals
        of electronics, communications and computer sciences 92.3: 708-721, 2009.
     """
-    # so W and Ht are both in C order in memory
-    Ht = check_array(H.T, order="C")
-    X = check_array(X, accept_sparse="csr")
+    # ensure that W and Ht are both in C order in memory and that X is csr
+    W = np.ascontiguousarray(W)
+    Ht = np.ascontiguousarray(H.T)
+    if sp.issparse(X) and X.format == "csc":
+        X = X.tocsr()
 
     rng = check_random_state(random_state)
 

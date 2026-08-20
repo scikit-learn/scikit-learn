@@ -160,11 +160,14 @@ hist_ordinal
 # held-out part. This way, each sample is encoded using statistics from data it
 # was not part of, preventing information leakage from the target.
 
+from sklearn.model_selection import KFold
 from sklearn.preprocessing import TargetEncoder
 
 target_encoder = make_column_transformer(
     (
-        TargetEncoder(target_type="continuous", random_state=42),
+        TargetEncoder(
+            target_type="continuous", cv=KFold(shuffle=True, random_state=42)
+        ),
         make_column_selector(dtype_include="category"),
     ),
     remainder="passthrough",

@@ -77,7 +77,6 @@ class deprecated:
         cls.__new__ = wrapped
 
         wrapped.__name__ = "__new__"
-        wrapped.deprecated_original = new
         # Restore the original signature, see PEP 362.
         cls.__signature__ = sig
 

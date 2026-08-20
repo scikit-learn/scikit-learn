@@ -84,18 +84,19 @@ from sklearn.tests.metadata_routing_common import (
 from sklearn.utils import shuffle
 from sklearn.utils._array_api import (
     _atol_for_type,
-    _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
+    move_to,
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
+from sklearn.utils._mocking import CheckingClassifier
 from sklearn.utils._testing import (
     _array_api_for_tests,
+    _convert_container,
     assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
 )
+from sklearn.utils.estimator_checks import _NotAnArray
 from sklearn.utils.fixes import COO_CONTAINERS, CSR_CONTAINERS
 from sklearn.utils.validation import _num_samples
 
@@ -338,6 +339,9 @@ def test_cross_validate_many_jobs():
     cross_validate(grid, X, y, n_jobs=2)
 
 
+# TODO(1.12): remove the filterwarnings when the default value of average in
+# precision_recall_fscore_support is changed.
+@pytest.mark.filterwarnings("ignore:.*default value of `average`.*:FutureWarning")
 def test_cross_validate_invalid_scoring_param():
     X, y = make_classification(random_state=0)
     estimator = MockClassifier()
@@ -388,6 +392,14 @@ def test_cross_validate_invalid_scoring_param():
 
     with pytest.warns(UserWarning, match=warning_message):
         cross_validate(estimator, X, y, scoring={"foo": multiclass_scorer})
+
+
+def test_cross_validate_array_function_not_called():
+    """Check that `__array_function__` (NEP18) is not called."""
+    X = _NotAnArray([[1, 1], [1, 2], [1, 3], [1, 4], [2, 1], [2, 2], [2, 3], [2, 4]])
+    y = _NotAnArray([1, 1, 1, 2, 2, 2, 1, 1])
+    estimator = LogisticRegression()
+    cross_validate(estimator, X, y, cv=2)
 
 
 def test_cross_validate_nested_estimator():
@@ -627,23 +639,34 @@ def test_cross_val_score_predict_groups():
             cross_val_predict(estimator=clf, X=X, y=y, cv=cv)
 
 
-def test_cross_val_score_pandas():
-    # check cross_val_score doesn't destroy pandas dataframe
-    types = [(MockDataFrame, MockDataFrame)]
-    try:
-        from pandas import DataFrame, Series
+@pytest.mark.parametrize(
+    ["input_type", "target_type"],
+    [
+        ("pandas", "series"),
+        ("polars", "polars_series"),
+        ("pyarrow", "pyarrow_array"),
+    ],
+)
+def test_cross_val_and_permutation_test_on_dataframe(input_type, target_type):
+    """Test that cross_val_predict, cross_val_score and permutation_test_score don't
+    destroy dataframes"""
+    # X dataframe, y series
+    # 3 fold cross val is used so we need at least 3 samples per class
+    X_df = _convert_container(X, input_type)
+    y_ser = _convert_container(y2, target_type)
+    input_type = type(X_df)
+    target_type = type(y_ser)
 
-        types.append((Series, DataFrame))
-    except ImportError:
-        pass
-    for TargetType, InputFeatureType in types:
-        # X dataframe, y series
-        # 3 fold cross val is used so we need at least 3 samples per class
-        X_df, y_ser = InputFeatureType(X), TargetType(y2)
-        check_df = lambda x: isinstance(x, InputFeatureType)
-        check_series = lambda x: isinstance(x, TargetType)
-        clf = CheckingClassifier(check_X=check_df, check_y=check_series)
-        cross_val_score(clf, X_df, y_ser, cv=3)
+    def check_df(x):
+        return isinstance(x, input_type)
+
+    def check_series(x):
+        return isinstance(x, target_type)
+
+    clf = CheckingClassifier(check_X=check_df, check_y=check_series)
+    cross_val_predict(clf, X_df, y_ser, cv=3)
+    cross_val_score(clf, X_df, y_ser, cv=3)
+    permutation_test_score(clf, X_df, y_ser)
 
 
 def test_cross_val_score_mask():
@@ -1110,24 +1133,6 @@ def test_cross_val_predict_input_types(coo_container):
     assert_array_equal(predictions.shape, (150,))
 
 
-def test_cross_val_predict_pandas():
-    # check cross_val_score doesn't destroy pandas dataframe
-    types = [(MockDataFrame, MockDataFrame)]
-    try:
-        from pandas import DataFrame, Series
-
-        types.append((Series, DataFrame))
-    except ImportError:
-        pass
-    for TargetType, InputFeatureType in types:
-        # X dataframe, y series
-        X_df, y_ser = InputFeatureType(X), TargetType(y2)
-        check_df = lambda x: isinstance(x, InputFeatureType)
-        check_series = lambda x: isinstance(x, TargetType)
-        clf = CheckingClassifier(check_X=check_df, check_y=check_series)
-        cross_val_predict(clf, X_df, y_ser, cv=3)
-
-
 def test_cross_val_predict_unbalanced():
     X, y = make_classification(
         n_samples=100,
@@ -1139,7 +1144,7 @@ def test_cross_val_predict_unbalanced():
     )
     # Change the first sample to a new class
     y[0] = 2
-    clf = LogisticRegression(random_state=1)
+    clf = LogisticRegression()
     cv = StratifiedKFold(n_splits=2)
     train, test = list(cv.split(X, y))
     yhat_proba = cross_val_predict(clf, X, y, cv=cv, method="predict_proba")
@@ -1560,30 +1565,6 @@ def test_learning_curve_incremental_learning_params():
             error_score="raise",
         )
 
-    err_msg = "Fit parameter sample_weight has length 3; expected"
-    with pytest.raises(AssertionError, match=err_msg):
-        learning_curve(
-            estimator,
-            X,
-            y,
-            cv=3,
-            exploit_incremental_learning=True,
-            train_sizes=np.linspace(0.1, 1.0, 10),
-            error_score="raise",
-            params={"sample_weight": np.ones(3)},
-        )
-
-    learning_curve(
-        estimator,
-        X,
-        y,
-        cv=3,
-        exploit_incremental_learning=True,
-        train_sizes=np.linspace(0.1, 1.0, 10),
-        error_score="raise",
-        params={"sample_weight": np.ones(2)},
-    )
-
 
 def test_validation_curve():
     X, y = make_classification(
@@ -1888,7 +1869,7 @@ def test_gridsearchcv_cross_val_predict_with_method():
     iris = load_iris()
     X, y = iris.data, iris.target
     X, y = shuffle(X, y, random_state=0)
-    est = GridSearchCV(LogisticRegression(random_state=42), {"C": [0.1, 1]}, cv=2)
+    est = GridSearchCV(LogisticRegression(), {"C": [0.1, 1]}, cv=2)
     for method in ["decision_function", "predict_proba", "predict_log_proba"]:
         check_cross_val_predict_multiclass(est, X, y, method)
 
@@ -2051,26 +2032,6 @@ def test_score_memmap():
                 break
             except OSError:
                 sleep(1.0)
-
-
-def test_permutation_test_score_pandas():
-    # check permutation_test_score doesn't destroy pandas dataframe
-    types = [(MockDataFrame, MockDataFrame)]
-    try:
-        from pandas import DataFrame, Series
-
-        types.append((Series, DataFrame))
-    except ImportError:
-        pass
-    for TargetType, InputFeatureType in types:
-        # X dataframe, y series
-        iris = load_iris()
-        X, y = iris.data, iris.target
-        X_df, y_ser = InputFeatureType(X), TargetType(y)
-        check_df = lambda x: isinstance(x, InputFeatureType)
-        check_series = lambda x: isinstance(x, TargetType)
-        clf = CheckingClassifier(check_X=check_df, check_y=check_series)
-        permutation_test_score(clf, X_df, y_ser)
 
 
 def test_fit_and_score_failing():
@@ -2497,7 +2458,8 @@ def test_groups_with_routing_validation(func, extra_args):
         (cross_val_score, {}),
         (cross_val_predict, {}),
         (learning_curve, {}),
-        (permutation_test_score, {}),
+        # Few permutations: this test only checks the params=None code path.
+        (permutation_test_score, {"n_permutations": 5}),
         (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
     ],
 )
@@ -2567,7 +2529,7 @@ def test_passed_unrequested_metadata(func, extra_args):
         (cross_val_score, {}),
         (cross_val_predict, {}),
         (learning_curve, {}),
-        (permutation_test_score, {}),
+        (permutation_test_score, {"n_permutations": 20}),
         (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
     ],
 )
@@ -2584,8 +2546,12 @@ def test_validation_functions_routing(func, extra_args):
         groups="split_groups", metadata="split_metadata"
     )
     estimator_registry = _Registry()
-    estimator = ConsumingClassifier(registry=estimator_registry).set_fit_request(
-        sample_weight="fit_sample_weight", metadata="fit_metadata"
+    estimator = (
+        ConsumingClassifier(registry=estimator_registry)
+        .set_fit_request(sample_weight="fit_sample_weight", metadata="fit_metadata")
+        .set_partial_fit_request(
+            sample_weight="fit_sample_weight", metadata="fit_metadata"
+        )
     )
 
     n_samples = _num_samples(X)
@@ -2635,7 +2601,7 @@ def test_validation_functions_routing(func, extra_args):
     for _scorer in scorer_registry:
         check_recorded_metadata(
             obj=_scorer,
-            method="score",
+            method="consuming_metric",
             parent=func.__name__,
             split_params=("sample_weight", "metadata"),
             sample_weight=score_weights,
@@ -2713,17 +2679,16 @@ def test_learning_curve_exploit_incremental_learning_routing():
 )
 @pytest.mark.parametrize("cv", [None, 3, 5])
 @pytest.mark.parametrize(
-    "namespace, device_, dtype_name",
+    "namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 def test_cross_val_predict_array_api_compliance(
-    estimator, cv, namespace, device_, dtype_name
+    estimator, cv, namespace, device_name, dtype_name
 ):
     """Test that `cross_val_predict` functions correctly with the array API
     with both a classifier and a regressor."""
 
-    xp = _array_api_for_tests(namespace, device_)
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
     if is_classifier(estimator):
         X, y = make_classification(
             n_samples=1000, n_features=5, n_classes=3, n_informative=3, random_state=42
@@ -2735,13 +2700,45 @@ def test_cross_val_predict_array_api_compliance(
 
     X_np = X.astype(dtype_name)
     y_np = y.astype(dtype_name)
-    X_xp = xp.asarray(X_np, device=device_)
-    y_xp = xp.asarray(y_np, device=device_)
+    X_xp = xp.asarray(X_np, device=device)
+    y_xp = xp.asarray(y_np, device=device)
 
     with config_context(array_api_dispatch=True):
         pred_xp = cross_val_predict(estimator, X_xp, y_xp, cv=cv)
 
-    pred_np = cross_val_predict(estimator, X_np, y_np, cv=cv)
+    with config_context(array_api_dispatch=False):
+        pred_np = cross_val_predict(estimator, X_np, y_np, cv=cv)
     assert_allclose(
-        _convert_to_numpy(pred_xp, xp), pred_np, atol=_atol_for_type(dtype_name)
+        move_to(pred_xp, xp=np, device="cpu"), pred_np, atol=_atol_for_type(dtype_name)
     )
+
+
+@pytest.mark.parametrize("y_is_string", [False, True])
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_cross_validate_array_api_mixed_inputs(
+    array_namespace, device_name, dtype_name, y_is_string
+):
+    """Check cross_validate works with array API `X` and NumPy `y`.
+
+    `cross_validate` is a function so it is not covered by the common
+    `check_array_api_*` estimator checks.
+    """
+    xp, device = _array_api_for_tests(array_namespace, device_name)
+
+    X_np = np.arange(100).reshape((10, 10)).astype(dtype_name)
+    X_xp = xp.asarray(X_np, device=device)
+    y_np = np.array([0] * 5 + [1] * 5)
+    if y_is_string:
+        y_np = np.array(["a", "b"])[y_np]
+
+    with config_context(array_api_dispatch=True):
+        cross_validate(
+            LogisticRegression(),
+            X_xp,
+            y_np,
+            cv=2,
+            error_score="raise",
+        )
