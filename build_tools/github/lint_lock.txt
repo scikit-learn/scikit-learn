@@ -4,6 +4,8 @@
 #
 #    pip-compile --output-file=build_tools/github/lint_lock.txt build_tools/github/lint_requirements.txt
 #
+codespell==2.4.1
+    # via -r build_tools/github/lint_requirements.txt
 cython==3.2.9
     # via cython-lint
 cython-lint==0.21.0
@@ -18,7 +20,7 @@ polib==1.2.0
     # via sphinx-lint
 pycodestyle==2.14.0
     # via cython-lint
-pygments==2.20.0
+pygments==2.21.0
     # via pytest
 pyrefly==1.2.0
     # via -r build_tools/github/lint_requirements.txt
