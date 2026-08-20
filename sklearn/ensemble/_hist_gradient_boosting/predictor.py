@@ -14,6 +14,7 @@ from sklearn.ensemble._hist_gradient_boosting._predictor import (
 )
 from sklearn.ensemble._hist_gradient_boosting.common import (
     PREDICTOR_RECORD_DTYPE,
+    X_BITSET_LENGTH,
     Y_DTYPE,
 )
 
@@ -193,19 +194,45 @@ class TreePredictor:
                     f"the node's own index and less than {n_nodes}, got {child}."
                 )
 
-        # Categorical splits index the bitset arrays by `bitset_idx`, so it must
-        # be a valid row in both arrays. Only touch those arrays when such a
+        # Together with the strict increase above, allowing a node to be the
+        # child of at most one other node makes the array a tree rather than a
+        # DAG. `_compute_partial_dependence` visits both children of a split and
+        # sizes its stacks from the node count, so a node reachable through
+        # several paths makes it do work exponential in the number of nodes.
+        children = np.concatenate((nodes["left"][is_split], nodes["right"][is_split]))
+        if children.size and np.bincount(children, minlength=n_nodes).max() > 1:
+            raise ValueError(
+                "predictor node array is inconsistent: expected each node to be "
+                "the child of at most one node, got several nodes sharing a child."
+            )
+
+        # Categorical splits index the bitset arrays as
+        # `bitsets[bitset_idx, binned_value // 32]`, where `binned_value` is a
+        # uint8. Both the row (`bitset_idx`) and the implied column therefore
+        # need to be in bounds, i.e. the arrays must have `X_BITSET_LENGTH`
+        # columns and enough rows. Only touch those arrays when a categorical
         # split exists (a non-categorical predictor may carry empty ones).
         is_categorical_split = is_split & nodes["is_categorical"].astype(bool)
         if np.any(is_categorical_split):
+            for name in ("binned_left_cat_bitsets", "raw_left_cat_bitsets"):
+                bitsets = getattr(self, name, None)
+                if (
+                    bitsets is None
+                    or bitsets.ndim != 2
+                    or bitsets.shape[1] != X_BITSET_LENGTH
+                ):
+                    shape = None if bitsets is None else bitsets.shape
+                    raise ValueError(
+                        f"predictor '{name}' has an invalid shape: expected "
+                        f"(n_categorical_splits, {X_BITSET_LENGTH}), got {shape}."
+                    )
+
             bitset_idx = nodes["bitset_idx"]
             n_bitsets = min(
                 self.binned_left_cat_bitsets.shape[0],
                 self.raw_left_cat_bitsets.shape[0],
             )
-            if np.any(
-                is_categorical_split & ((bitset_idx < 0) | (bitset_idx >= n_bitsets))
-            ):
+            if np.any(is_categorical_split & (bitset_idx >= n_bitsets)):
                 raise ValueError(
                     "predictor node array has out-of-bounds 'bitset_idx' values: "
                     f"expected each categorical split node's to be in "

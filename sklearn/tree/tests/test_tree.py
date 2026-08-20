@@ -8,6 +8,7 @@ import io
 import pickle
 import re
 import struct
+from functools import partial
 from itertools import chain, pairwise, product
 
 import joblib
@@ -2421,15 +2422,22 @@ def test_check_node_ndarray_values():
     node_ndarray["right_child"] = TREE_LEAF
     node_ndarray["feature"] = TREE_UNDEFINED
 
-    # Valid array does not raise.
-    _check_node_ndarray_values(node_ndarray, n_features=n_features, node_count=n_nodes)
+    # Valid array does not raise. `max_depth` is only required to be at least
+    # the real depth of the array, so a generous value is fine here.
+    check = partial(
+        _check_node_ndarray_values,
+        n_features=n_features,
+        node_count=n_nodes,
+        max_depth=n_nodes,
+    )
+    check(node_ndarray)
 
     # A single internal node referencing valid children/feature is also fine.
     valid = node_ndarray.copy()
     valid["left_child"][0] = 1
     valid["right_child"][0] = 2
     valid["feature"][0] = n_features - 1
-    _check_node_ndarray_values(valid, n_features=n_features, node_count=n_nodes)
+    check(valid)
 
     # Each case turns node 0 into an internal node (so its fields are actually
     # dereferenced by the traversal) with one tampered, out-of-bounds field.
@@ -2446,27 +2454,47 @@ def test_check_node_ndarray_values():
         ("feature", n_features, "out-of-bounds 'feature'"),
         ("feature", TREE_UNDEFINED, "out-of-bounds 'feature'"),
         ("feature", -1, "out-of-bounds 'feature'"),
+        # Both children are the same node: the array is a DAG rather than a
+        # tree, which blows up the traversals visiting both children.
+        ("right_child", 1, "child of at most one node"),
     ]:
         problematic = valid.copy()
         problematic[field][0] = bad_value
         with pytest.raises(ValueError, match=match):
-            _check_node_ndarray_values(
-                problematic, n_features=n_features, node_count=n_nodes
-            )
+            check(problematic)
+
+    # Two internal nodes sharing a child, same reason.
+    shared = valid.copy()
+    shared["left_child"][1] = 3
+    shared["right_child"][1] = 4
+    shared["feature"][1] = 0
+    shared["left_child"][2] = 3  # already the left child of node 1
+    shared["right_child"][2] = 4
+    shared["feature"][2] = 0
+    with pytest.raises(ValueError, match="child of at most one node"):
+        check(shared)
 
     # A leaf node (left_child == TREE_LEAF) never has its `feature` or
     # `right_child` dereferenced, so arbitrary values there must not raise.
     leaf_with_junk = node_ndarray.copy()
     leaf_with_junk["feature"][0] = 999_999_999
     leaf_with_junk["right_child"][0] = 999_999_999
-    _check_node_ndarray_values(
-        leaf_with_junk, n_features=n_features, node_count=n_nodes
-    )
+    check(leaf_with_junk)
 
     # `node_count` inconsistent with the array length.
     with pytest.raises(ValueError, match="node_count"):
         _check_node_ndarray_values(
-            node_ndarray, n_features=n_features, node_count=n_nodes + 1
+            node_ndarray,
+            n_features=n_features,
+            node_count=n_nodes + 1,
+            max_depth=n_nodes,
+        )
+
+    # `max_depth` smaller than the real depth of the array: it sizes the
+    # `indices` buffer that `decision_path` writes into.
+    with pytest.raises(ValueError, match="max_depth"):
+        _check_node_ndarray_values(
+            valid, n_features=n_features, node_count=n_nodes, max_depth=0
         )
 
 
@@ -2489,6 +2517,26 @@ def test_tree_setstate_rejects_tampered_nodes():
 
     with pytest.raises(ValueError, match="out-of-bounds"):
         pickle.loads(pickle.dumps(clf))
+
+
+def test_tree_setstate_rejects_understated_max_depth():
+    """Loading a tree whose ``max_depth`` understates the node array raises.
+
+    Non-regression test for a memory-safety issue: ``decision_path`` sizes its
+    ``indices`` buffer as ``n_samples * (1 + max_depth)`` and writes one entry
+    per node it walks through, so a ``max_depth`` smaller than the real depth of
+    the tree corrupted the heap instead of raising.
+    """
+    X, y = datasets.make_classification(n_samples=60, n_features=4, random_state=0)
+    clf = DecisionTreeClassifier(max_depth=3, random_state=0).fit(X, y)
+
+    cls, args, state = clf.tree_.__reduce__()
+    state = dict(state)
+    assert state["max_depth"] > 0
+    state["max_depth"] = 0
+
+    with pytest.raises(ValueError, match="max_depth"):
+        cls(*args).__setstate__(state)
 
 
 @pytest.mark.parametrize(

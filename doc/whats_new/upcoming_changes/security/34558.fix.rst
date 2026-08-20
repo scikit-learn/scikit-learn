@@ -2,10 +2,12 @@
   ``__setstate__`` at load time: a node must be either a leaf, or an internal
   node whose child indices are valid node ids greater than the node's own
   index and whose ``feature`` column index (``feature_idx`` for the histogram
-  GBDTs, plus ``bitset_idx`` for categorical splits) is within bounds.
-  Previously, loading a malicious or corrupted model could trigger an
-  out-of-bounds native memory read/write (segfault) or an infinite loop during
-  inference. This affects
+  GBDTs, plus ``bitset_idx`` for categorical splits) is within bounds. A node
+  can be the child of at most one node, and ``max_depth`` must cover the depth
+  of the node array. Previously, loading a malicious or corrupted model could
+  trigger an out-of-bounds native memory read/write (segfault), an infinite
+  loop, or work exponential in the number of nodes during inference. This
+  affects
   :class:`tree.DecisionTreeClassifier`, :class:`tree.DecisionTreeRegressor`,
   the forest and gradient-boosting ensembles that share the tree structure,
   and :class:`ensemble.HistGradientBoostingClassifier` /

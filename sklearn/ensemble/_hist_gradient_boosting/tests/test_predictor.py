@@ -299,3 +299,54 @@ def test_setstate_rejects_out_of_bounds_bitset_idx():
         TreePredictor(tampered, binned_cat_bitsets, raw_cat_bitsets).__setstate__(
             {"nodes": tampered}
         )
+
+
+@pytest.mark.parametrize("name", ["binned_left_cat_bitsets", "raw_left_cat_bitsets"])
+def test_setstate_rejects_narrow_cat_bitsets(name):
+    """``__setstate__`` should reject bitset arrays with too few columns.
+
+    Non-regression test for a memory-safety issue: the bitset arrays are indexed
+    as ``bitsets[bitset_idx, binned_value // 32]`` with ``binned_value`` a uint8,
+    so an array with fewer than ``X_BITSET_LENGTH`` columns is read out of bounds
+    even when ``bitset_idx`` itself is a valid row.
+    """
+    nodes = np.zeros(3, dtype=PREDICTOR_RECORD_DTYPE)
+    nodes[0]["left"] = 1
+    nodes[0]["right"] = 2
+    nodes[0]["is_categorical"] = True
+    nodes[1]["is_leaf"] = True
+    nodes[2]["is_leaf"] = True
+
+    bitsets = {
+        "binned_left_cat_bitsets": np.zeros((1, 8), dtype=X_BITSET_INNER_DTYPE),
+        "raw_left_cat_bitsets": np.zeros((1, 8), dtype=X_BITSET_INNER_DTYPE),
+    }
+    # Right number of rows, but too few columns.
+    bitsets[name] = np.zeros((1, 1), dtype=X_BITSET_INNER_DTYPE)
+
+    predictor = TreePredictor(
+        nodes, bitsets["binned_left_cat_bitsets"], bitsets["raw_left_cat_bitsets"]
+    )
+    with pytest.raises(ValueError, match=f"'{name}' has an invalid shape"):
+        predictor.__setstate__({"nodes": nodes})
+
+
+def test_setstate_rejects_shared_children():
+    """``__setstate__`` should reject a node being the child of several nodes.
+
+    Non-regression test for a denial-of-service issue: sharing children makes the
+    node array a DAG instead of a tree, and the number of root-to-leaf paths then
+    grows exponentially with the number of nodes.
+    ``_compute_partial_dependence`` walks all of them.
+    """
+    n_nodes = 4
+    nodes = np.zeros(n_nodes, dtype=PREDICTOR_RECORD_DTYPE)
+    nodes[0]["left"] = 1
+    nodes[0]["right"] = 2
+    nodes[1]["left"] = 3
+    nodes[1]["right"] = 3  # same child twice
+    nodes[2]["is_leaf"] = True
+    nodes[3]["is_leaf"] = True
+
+    with pytest.raises(ValueError, match="child of at most one node"):
+        TreePredictor(nodes, None, None).__setstate__({"nodes": nodes})
