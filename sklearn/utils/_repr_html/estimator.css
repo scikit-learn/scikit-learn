@@ -248,10 +248,14 @@ clickable and can be expanded/collapsed.
   background-color: var(--sklearn-color-fitted-level-2);
 }
 
+/* Estimator label */
 .sk-global div.sk-label summary.sk-toggleable__label,
 .sk-global div.sk-label label {
   /* The background is the default theme color */
   color: var(--sklearn-color-text-on-default-background);
+  font-family: monospace;
+  font-weight: bold;
+  line-height: 1.2em;
 }
 
 /* On hover, darken the color of the background */
@@ -264,15 +268,6 @@ clickable and can be expanded/collapsed.
 .sk-global div.sk-label.fitted:hover summary.sk-toggleable__label.fitted {
   color: var(--sklearn-color-text);
   background-color: var(--sklearn-color-fitted-level-2);
-}
-
-/* Estimator label */
-
-.sk-global div.sk-label summary.sk-toggleable__label,
-.sk-global div.sk-label label {
-  font-family: monospace;
-  font-weight: bold;
-  line-height: 1.2em;
 }
 
 .sk-global div.sk-label-container {
@@ -338,11 +333,12 @@ a:visited.sk-estimator-doc-link.fitted {
   color: var(--sklearn-color-text);
 }
 
-/* On hover */
+/* On hover.
+   The descendant selectors are needed to outrank `a:link.sk-estimator-doc-link`
+   above, which is more specific than a bare `.sk-estimator-doc-link:hover`. */
 div.sk-estimator:hover .sk-estimator-doc-link:hover,
 .sk-estimator-doc-link:hover,
-div.sk-label-container:hover .sk-estimator-doc-link:hover,
-.sk-estimator-doc-link:hover {
+div.sk-label-container:hover .sk-estimator-doc-link:hover {
   /* unfitted */
   background-color: var(--sklearn-color-unfitted-level-3);
   border: var(--sklearn-color-fitted-level-0) 1pt solid;
@@ -352,8 +348,7 @@ div.sk-label-container:hover .sk-estimator-doc-link:hover,
 
 div.sk-estimator.fitted:hover .sk-estimator-doc-link.fitted:hover,
 .sk-estimator-doc-link.fitted:hover,
-div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
-.sk-estimator-doc-link.fitted:hover {
+div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover {
   /* fitted */
   background-color: var(--sklearn-color-fitted-level-3);
   border: var(--sklearn-color-fitted-level-0) 1pt solid;

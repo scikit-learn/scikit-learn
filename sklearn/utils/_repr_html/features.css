@@ -84,6 +84,7 @@
 .features .features-container table {
   width: 100%;
   margin: 0.01em;
+  table-layout: inherit;
 }
 
 .features .features-container table tr:nth-child(odd) {
@@ -96,10 +97,6 @@
 
 .features .features-container table tr:hover {
   background-color: #e0e0e0;
-}
-
-.features .features-container table {
-  table-layout: inherit;
 }
 
 .features .features-container table td {
