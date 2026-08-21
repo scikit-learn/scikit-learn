@@ -130,7 +130,24 @@ def _assert_all_finite(
     # Cython implementation to prevent false positives and provide a detailed
     # error message.
     with np.errstate(over="ignore"):
-        first_pass_isfinite = xp.isfinite(xp.sum(X))
+        if (
+            _is_numpy_namespace(xp)
+            and X.ndim == 2
+            and X.dtype.kind == "f"
+            and (X.flags["C_CONTIGUOUS"] or X.flags["F_CONTIGUOUS"])
+        ):
+            # A full xp.sum(X) reduction is a generic, direction-agnostic sum.
+            # A BLAS gemv against a ones vector is faster, but only when its
+            # direction matches the array's memory layout (row sums for
+            # C-contiguous, column sums for F-contiguous) -- the "wrong"
+            # direction can be slower than the plain sum it replaces.
+            if X.flags["C_CONTIGUOUS"]:
+                partial_sums = X @ np.ones(X.shape[1], dtype=X.dtype)
+            else:
+                partial_sums = np.ones(X.shape[0], dtype=X.dtype) @ X
+            first_pass_isfinite = xp.isfinite(np.sum(partial_sums))
+        else:
+            first_pass_isfinite = xp.isfinite(xp.sum(X))
     if first_pass_isfinite:
         return
 
