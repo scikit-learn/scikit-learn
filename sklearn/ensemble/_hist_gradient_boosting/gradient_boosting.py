@@ -1316,11 +1316,21 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 "time.".format(self.__class__.__name__)
             )
 
+        target_features = np.asarray(target_features, dtype=np.intp, order="C")
+
+        if self.is_categorical_ is not None and np.any(
+            self.is_categorical_[target_features]
+        ):
+            raise NotImplementedError(
+                "The 'recursion' method for partial dependence is not "
+                "supported for categorical target features. Use "
+                "method='brute' instead."
+            )
+
         grid = np.asarray(grid, dtype=X_DTYPE, order="C")
         averaged_predictions = np.zeros(
             (self.n_trees_per_iteration_, grid.shape[0]), dtype=Y_DTYPE
         )
-        target_features = np.asarray(target_features, dtype=np.intp, order="C")
 
         for predictors_of_ith_iteration in self._predictors:
             for k, predictor in enumerate(predictors_of_ith_iteration):
