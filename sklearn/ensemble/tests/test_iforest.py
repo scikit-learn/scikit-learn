@@ -393,3 +393,29 @@ def test_iforest_predict_parallel(global_random_seed, contamination, n_jobs):
 
     # assert the same results as non-parallel
     assert_array_equal(pred, pred_parallel)
+
+
+def test_iforest_zero_sample_weight():
+    """Regression test for gh-34673.
+
+    IsolationForest (bootstrap=False by default) used to raise
+    ``ValueError: Fewer non-zero entries in p than size`` when any
+    sample_weight entry was zero.  Zero-weighting a row is the documented
+    way to exclude it, so this must not crash.
+    """
+    rng = np.random.RandomState(0)
+    X = rng.uniform(size=(80, 4))
+    w = np.ones(80)
+    w[0] = 0.0  # exclude the first sample
+
+    clf = IsolationForest(random_state=0)
+    clf.fit(X, sample_weight=w)
+
+    # Must produce valid scores — the zero-weighted row should score normally.
+    scores = clf.decision_function(X)
+    assert scores.shape == (80,)
+    assert np.isfinite(scores).all()
+
+    # The zero-weighted row must never be selected in any estimator's sample.
+    for sample_indices in clf.estimators_samples_:
+        assert 0 not in sample_indices

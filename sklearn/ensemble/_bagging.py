@@ -85,6 +85,12 @@ def _generate_bagging_indices(
         )
     else:
         normalized_sample_weight = sample_weight / np.sum(sample_weight)
+        if not bootstrap_samples:
+            # Without replacement, numpy.choice requires at least max_samples
+            # non-zero entries in p. Clamp to the available support so that
+            # zero-weighted rows (the documented way to exclude a sample) are
+            # simply excluded rather than raising ValueError (gh-34673).
+            max_samples = min(max_samples, np.count_nonzero(sample_weight))
         sample_indices = random_state.choice(
             n_samples,
             max_samples,

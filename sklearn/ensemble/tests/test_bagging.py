@@ -1171,3 +1171,32 @@ def test_bagging_without_support_metadata_routing(model):
     """Make sure that we still can use an estimator that does not implement the
     metadata routing."""
     model.fit(iris.data, iris.target)
+
+
+@pytest.mark.parametrize(
+    "model",
+    [
+        BaggingClassifier(bootstrap=False, random_state=0),
+        BaggingRegressor(bootstrap=False, random_state=0),
+    ],
+)
+def test_bagging_zero_sample_weight_no_bootstrap(model):
+    """Regression test for gh-34673.
+
+    Zero sample_weight with bootstrap=False used to raise
+    ``ValueError: Fewer non-zero entries in p than size`` because
+    numpy.choice cannot draw without-replacement more samples than there
+    are non-zero probability entries.  Zero-weighting a row is the
+    documented way to exclude it from the fit, so this must not crash.
+    """
+    rng = np.random.RandomState(0)
+    X = rng.uniform(size=(80, 4))
+    y = rng.randint(0, 2, size=80)
+    w = np.ones(80)
+    w[0] = 0.0  # exclude the first sample
+
+    model.fit(X, y, sample_weight=w)
+
+    # Zero-weighted row must never appear in any estimator's training set.
+    for sample_indices in model.estimators_samples_:
+        assert 0 not in sample_indices
