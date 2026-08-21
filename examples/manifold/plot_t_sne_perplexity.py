@@ -104,5 +104,6 @@ plt.show()
 # %%
 # The `fit_transform` time tends to increase with perplexity. Higher perplexity
 # means t-SNE considers more neighbors when computing pairwise affinities,
-# making that step more expensive. In this case, we only show a single
-# measurement, but repeated measurements would better display the trend.
+# making that step more expensive. In this case, we show a single measurement as
+# `tsne.fit_transform` was only called once. Repeated calls would better capture
+# the distribution of times.
