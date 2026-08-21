@@ -27,6 +27,11 @@ from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.stats import _weighted_percentile_1d_sorted
 from sklearn.utils.validation import check_is_fitted
 
+# Minimum total number of elements (n_features_to_bin * n_samples) below
+# which `_BinMapper.fit` computes binning thresholds sequentially rather than
+# with a joblib threading backend:
+_MIN_ELEMENTS_FOR_THREADED_BINNING = 5_000_000
+
 
 def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
     """Extract quantiles from a continuous feature.
@@ -293,14 +298,11 @@ class _BinMapper(TransformerMixin, BaseEstimator):
             not self.is_categorical_[f_idx] for f_idx in range(n_features)
         )
         max_n_threads = _openmp_effective_n_threads(self.max_n_threads)
-        n_threads = max(
-            1,
-            min(
-                # starting joblib threads is expensive
-                (n_features_to_bin * X.shape[0]) // 1_000_000,
-                max_n_threads,
-            ),
+
+        use_threads = (
+            n_features_to_bin * X.shape[0] >= _MIN_ELEMENTS_FOR_THREADED_BINNING
         )
+        n_threads = min(n_features_to_bin, max_n_threads) if use_threads else 1
 
         non_cat_thresholds = Parallel(n_jobs=n_threads, backend="threading")(
             delayed(_find_binning_thresholds)(
