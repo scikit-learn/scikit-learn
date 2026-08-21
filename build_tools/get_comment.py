@@ -175,6 +175,22 @@ def get_message(log_file, repo_str, pr_number, sha, run_id, details, versions):
         details=details,
     )
 
+    # codespell
+    message += get_step_message(
+        log,
+        start="### Running codespell ###",
+        end="Problems detected by codespell",
+        title="`codespell`",
+        message=(
+            "`codespell` detected likely spelling mistakes. Please fix them locally "
+            "and push the changes. If a word is a false positive, add it to "
+            "`build_tools/codespell_ignore_words.txt`. Here you can see the detected "
+            "issues. Note that the installed `codespell` version is "
+            f"`codespell={versions['codespell']}`."
+        ),
+        details=details,
+    )
+
     # deprecation order
     message += get_step_message(
         log,

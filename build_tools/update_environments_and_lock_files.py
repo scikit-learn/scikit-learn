@@ -324,10 +324,21 @@ build_metadata_list = [
         + [
             "wheel",
             "pip",
+            # Listed explicitly (it is otherwise a transitive dependency of blas) so
+            # that the constraint below is applied.
+            # Remove when the constraint on libopenblas is removed.
+            "libopenblas",
         ],
         "package_constraints": {
             "python": "3.11",
             "blas": "[build=openblas]",
+            # OpenBLAS 0.3.34 makes the Windows test runs segfault intermittently
+            # ("Windows fatal exception: access violation" inside gemm and LAPACK calls,
+            # crashing xdist workers). 0.3.33 is unaffected. Only 0.3.34 is excluded so
+            # that a later release is picked up automatically.
+            # See https://github.com/scikit-learn/scikit-learn/issues/34717
+            # TODO: remove once a fixed OpenBLAS is available.
+            "libopenblas": "!=0.3.34",
         },
     },
     {
@@ -488,7 +499,14 @@ build_metadata_list = [
         "type": "pip",
         "tag": "lint",
         "folder": "build_tools/github",
-        "pip_dependencies": ["pytest", "ruff", "pyrefly", "cython-lint", "sphinx-lint"],
+        "pip_dependencies": [
+            "pytest",
+            "ruff",
+            "pyrefly",
+            "cython-lint",
+            "sphinx-lint",
+            "codespell",
+        ],
         "package_constraints": {
             # We set `pytest` to an arbitrary recent version to keep it consistent with
             # the settings in `.pre-commit-config.yml`. They should be updated from
@@ -503,6 +521,7 @@ build_metadata_list = [
             "pyrefly": "min",
             "cython-lint": "min",
             "sphinx-lint": "min",
+            "codespell": "min",
         },
         "python_version": "3.11",
     },
