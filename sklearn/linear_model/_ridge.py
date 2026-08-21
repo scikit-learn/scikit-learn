@@ -212,13 +212,23 @@ def _solve_lsqr(
     return coefs, n_iter
 
 
-def _solve_cholesky(X, y, alpha):
+def _solve_cholesky(X, y, alpha, X_offset=None):
     # w = inv(X^t X + alpha*Id) * X.T y
+    #
+    # If X_offset is given, X is assumed to *not* be centered (unlike y, which
+    # is always assumed centered) and the Gram matrix is corrected
+    # algebraically instead of materializing a centered copy of X:
+    #   Xc.T @ Xc = X.T @ X - n_samples * outer(X_offset, X_offset)
+    # Xy needs no such correction: Xc.T @ yc = X.T @ yc - X_offset * yc.sum(0),
+    # and yc.sum(0) is 0 because yc is centered.
     n_features = X.shape[1]
     n_targets = y.shape[1]
 
     A = safe_sparse_dot(X.T, X, dense_output=True)
     Xy = safe_sparse_dot(X.T, y, dense_output=True)
+
+    if X_offset is not None:
+        A -= X.shape[0] * np.outer(X_offset, X_offset)
 
     one_alpha = np.array_equal(alpha, len(alpha) * [alpha[0]])
 
@@ -755,8 +765,14 @@ def _ridge_regression(
                 solver = "svd"
         else:
             try:
-                coef = _solve_cholesky(X, y, alpha)
+                coef = _solve_cholesky(X, y, alpha, X_offset=X_offset)
             except linalg.LinAlgError:
+                if X_offset is not None:
+                    # X was left uncentered to avoid materializing a copy on
+                    # the (common) successful path; the svd fallback below
+                    # needs centered X, so pay for that copy now, on this
+                    # rare failure path.
+                    X = X - X_offset
                 # use SVD solver if matrix is singular
                 solver = "svd"
 
@@ -960,6 +976,20 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
+        # Dense X with n_features <= n_samples, no sample weights, and a solver
+        # that resolves to "cholesky" hits _solve_cholesky's primal branch,
+        # which can apply centering algebraically from X_offset instead of on
+        # a materialized centered copy of X. This avoids an O(n_samples *
+        # n_features) pass over X for what is the most common Ridge shape.
+        use_no_center_cholesky = (
+            self.fit_intercept
+            and not sparse.issparse(X)
+            and sample_weight is None
+            and not self.positive
+            and solver in ("auto", "cholesky")
+            and X.shape[0] >= X.shape[1]
+        )
+
         # when X is sparse we only remove offset from y
         X, y, X_offset, y_offset, X_scale, _ = _preprocess_data(
             X,
@@ -968,6 +998,8 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             copy=self.copy_X,
             sample_weight=sample_weight,
             rescale_with_sw=False,
+            center_X=not use_no_center_cholesky,
+            fast_mean_X=use_no_center_cholesky,
         )
 
         if solver == "sag" and sparse.issparse(X) and self.fit_intercept:
@@ -993,6 +1025,10 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             if sparse.issparse(X) and self.fit_intercept:
                 # required to fit intercept with sparse_cg and lbfgs solver
                 params = {"X_offset": X_offset, "X_scale": X_scale}
+            elif use_no_center_cholesky:
+                # X was left uncentered; _solve_cholesky applies the
+                # correction algebraically from X_offset.
+                params = {"X_offset": X_offset}
             else:
                 # for dense matrices or when intercept is set to 0
                 params = {}
