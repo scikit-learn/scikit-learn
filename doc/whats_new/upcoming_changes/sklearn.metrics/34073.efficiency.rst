@@ -1,0 +1,7 @@
+- :func:`metrics.multilabel_confusion_matrix` now uses a fast path for integer or
+  bool inputs whose present labels form the dense range `[0, K-1]`, avoiding
+  the redundant unique and searchsorted scans inside `LabelEncoder.transform`.
+  This also speeds up :func:`metrics.f1_score`, :func:`metrics.jaccard_score`,
+  :func:`metrics.precision_score`, :func:`metrics.recall_score`, and
+  :func:`metrics.precision_recall_fscore_support` for the same inputs.
+  By :user:`Muhammad Taha Mukhtar <tahamukhtar20>`.
