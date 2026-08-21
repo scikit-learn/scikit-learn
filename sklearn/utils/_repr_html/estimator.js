@@ -125,15 +125,12 @@ if (!window.skEstimatorKeydownGuard) {
                 event.preventDefault();
             }
         } else if (event.key === 'Escape') {
+            /* Step back out to the diagram itself, so the keyboard position
+             * stays inside it instead of dropping to the page body.
+             * Blurring first is needed: focusing the container on its own
+             * does not always move the focus off the current element. */
             event.target.blur();
-            /* Keep the keyboard position inside the diagram instead of
-             * dropping focus to the page body. */
             container.focus();
-            event.stopPropagation();
-        } else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
-                    'PageUp', 'PageDown', 'Home', 'End'].includes(event.key)) {
-            /* Let the browser scroll the focused container, but keep the
-             * notebook from moving the cell selection. */
             event.stopPropagation();
         }
     }, true);
