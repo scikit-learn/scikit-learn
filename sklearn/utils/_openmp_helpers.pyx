@@ -90,12 +90,16 @@ def _calibrate_min_instructions_per_thread(n_threads):
     "simple instructions" unit that ``_use_threads_for_workload`` uses.
 
     ``repeats`` and ``idle_gap`` below were empirically found to give
-    stable, representative measurements. The outer measurement loop takes
-    the minimum over 25 independent draws rather than fewer: on busy/noisy
-    machines (e.g. shared, many-core servers), the estimate can still be
-    trending downward well past 7 draws, so a higher count reduces the
-    chance of caching a noise-inflated value for the lifetime of the
-    process.
+    stable, representative measurements while keeping this cheap: this runs
+    synchronously on first use (e.g. the first ``fit``/``predict`` call in a
+    process), and larger ``n_threads`` teams are themselves more expensive to
+    dispatch, so both ``repeats`` and the number of draws are kept modest
+    rather than maximizing robustness on noisy machines. On a busy/many-core
+    machine the estimate could in principle keep trending downward well past
+    this many draws, but measurements across a wide range of team sizes
+    showed the minimum stabilizing well before that, so this trades a bit of
+    that robustness for bounding the worst-case (largest-team) calibration
+    cost to roughly a hundred milliseconds rather than close to a second.
 
     Falls back to ``_DEFAULT_MIN_INSTRUCTIONS_PER_THREAD`` if OpenMP is
     disabled or the measurement fails or looks unreasonable for any reason
@@ -106,7 +110,7 @@ def _calibrate_min_instructions_per_thread(n_threads):
 
     try:
         n_threads = max(2, n_threads)
-        repeats = 100
+        repeats = 30
         idle_gap = 10
 
         # The very first OpenMP parallel region dispatched in a process pays
@@ -122,7 +126,7 @@ def _calibrate_min_instructions_per_thread(n_threads):
         # so the minimum across samples is the one least
         # contaminated by such noise (the same reasoning `timeit` uses).
         best_dispatch_seconds = None
-        for _ in range(25):
+        for _ in range(15):
             elapsed = _bench_prange_dispatch(n_threads, repeats, idle_gap)
             dispatch_seconds = elapsed / repeats
             if best_dispatch_seconds is None or dispatch_seconds < best_dispatch_seconds:

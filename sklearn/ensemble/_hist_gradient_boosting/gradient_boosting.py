@@ -76,13 +76,24 @@ def _max_n_threads_for_workload(n_work_items, ops_per_item, max_n_threads):
     that ``_use_threads_for_workload`` uses: requesting more threads than
     this just means downstream parallel regions veto the team and run
     serially anyway, wasting its dispatch cost for nothing.
+
+    Searches from 1 thread upward rather than from ``max_n_threads`` down:
+    ``_min_instructions_per_thread`` calibrates lazily per power-of-2 team
+    size the first time that size is requested, and calibrating a large team
+    is itself much more expensive than a small one (synchronizing more
+    threads takes longer). Most workloads end up recommending a small
+    ``n_threads``, so climbing from 1 means the (cheap) small-team buckets
+    get calibrated first and the (expensive) large-team ones are only
+    touched when the workload actually clears every smaller size first,
+    instead of unconditionally paying for the largest one up front.
     """
-    n_threads = max(1, max_n_threads)
+    max_n_threads = max(1, max_n_threads)
     total_work = n_work_items * ops_per_item
-    while n_threads > 1 and (
-        total_work < _min_instructions_per_thread(n_threads) * n_threads
+    n_threads = 1
+    while n_threads < max_n_threads and (
+        total_work >= _min_instructions_per_thread(n_threads + 1) * (n_threads + 1)
     ):
-        n_threads -= 1
+        n_threads += 1
     return n_threads
 
 
