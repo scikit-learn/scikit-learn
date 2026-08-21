@@ -319,10 +319,19 @@ cdef class Splitter:
             BITSET_INNER_DTYPE_C [:] cat_bitset_tmp = split_info.left_cat_bitset
             BITSET_DTYPE_C left_cat_bitset
             int n_threads = self.n_threads
-            # Each sample costs ~5 simple ops to classify/copy below.
-            # but chunking cost extra work, so we reduce to 3
+            # Empirically measured (see benchmarks/bench_hgb_ops_per_item.py):
+            # ~3 simple ops per sample to classify/copy below for a plain
+            # numerical split, ~7 with missing values (extra branch), ~9 for
+            # a categorical split (bitset lookup). The split being applied is
+            # a single one, so which of these applies is known exactly here,
+            # unlike in find_node_split which scans many features at once.
+            int split_indices_ops = (
+                9 if is_categorical
+                else 7 if self.has_missing_values[feature_idx]
+                else 3
+            )
             bint use_threads = _use_threads_for_workload(
-                n_threads, n_samples, 3, _min_instructions_per_thread(n_threads)
+                n_threads, n_samples, split_indices_ops, _min_instructions_per_thread(n_threads)
             )
             # Probably always bad to parallelize for <1k samples
 
@@ -552,13 +561,18 @@ cdef class Splitter:
             if has_interaction_cst:
                 split_features = allowed_features
 
-        # Each feature costs about 15 simple ops per bin scanned below.
+        # Each feature costs about 5 simple ops per bin scanned below for
+        # plain numerical features (empirically measured, see
+        # benchmarks/bench_hgb_ops_per_item.py, consistent across very
+        # different machines); missing values roughly double that (bins are
+        # scanned twice, see the missing_go_to_left loop below) and
+        # categorical features cost several times more (~30), but this
+        # doesn't distinguish between feature kinds, so it stays
+        # conservative for the common, mostly-plain-numerical case.
         use_threads = _use_threads_for_workload(
-            n_threads, n_split_candidates * histograms.shape[1], 15,
+            n_threads, n_split_candidates * histograms.shape[1], 5,
             _min_instructions_per_thread(n_threads),
         )
-        # Much slower than single threaded for: n_threads=128, n_split_candidates=50
-        # => 128 x 2000 is greater than 50 x 256 x 15
 
         with nogil:
 

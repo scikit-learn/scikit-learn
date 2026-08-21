@@ -16,9 +16,9 @@ from sklearn.ensemble._hist_gradient_boosting.common cimport X_BINNED_DTYPE_C
 from sklearn.ensemble._hist_gradient_boosting.common cimport node_struct
 
 
-# Rough cost, in simple ops, of traversing the tree for a single sample:
-# a handful of comparisons/branches per level, for a handful of levels.
-cdef int PREDICT_ONE_OPS = 20
+# Cost, in simple ops, of traversing the tree for a single sample
+# (empirically measured, see benchmarks/bench_hgb_ops_per_item.py).
+cdef int PREDICT_ONE_OPS = 25
 
 
 def _predict_from_raw_data(  # raw data = non-binned data
