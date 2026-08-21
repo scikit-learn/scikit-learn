@@ -889,6 +889,13 @@ cdef class Tree:
             expected_shape=value_shape
         )
 
+        _check_node_ndarray_values(
+            node_ndarray,
+            n_features=self.n_features,
+            node_count=self.node_count,
+            max_depth=self.max_depth,
+        )
+
         self.capacity = node_ndarray.shape[0]
         if self._resize_c(self.capacity) != 0:
             raise MemoryError("resizing tree to %d" % self.capacity)
@@ -1637,6 +1644,118 @@ def _check_node_ndarray(node_ndarray, expected_dtype):
         )
 
     return node_ndarray.astype(expected_dtype, casting="same_kind")
+
+
+def _check_node_ndarray_values(node_ndarray, n_features, node_count, max_depth):
+    """Validate the values of a deserialized node array.
+
+    `_check_node_ndarray` only validates the structure of the array; this
+    function validates the node values so that the cython traversal cannot be
+    tricked into an out-of-bounds memory access or an infinite loop by a
+    malicious node array (see `Tree.__setstate__`).
+
+    The traversal treats a node as a leaf iff `left_child == TREE_LEAF`, and
+    only dereferences `left_child` / `right_child` (as node ids) and `feature`
+    (as a column index into `X`) for the remaining, internal nodes. We
+    therefore only check those fields on internal nodes, and require each child
+    to be strictly greater than the node's own index: this keeps children in
+    `[0, n_nodes)` and, matching the `children_left[i] > i` invariant
+    documented on `Tree`, rules out cycles that would make the traversal loop
+    forever. Requiring on top of that that a node is the child of at most one
+    node makes the array a tree rather than a DAG, which bounds the number of
+    paths the traversals that visit both children have to walk.
+
+    `max_depth` and `node_count` are not node values, but they size buffers
+    that the traversals write node ids into, so they are checked against the
+    node array here as well.
+    """
+    n_nodes = node_ndarray.shape[0]
+
+    # `node_count` is used to slice the `capacity`-sized node buffer (e.g. in
+    # `_get_node_ndarray`), so a mismatch is itself out-of-bounds.
+    if node_count != n_nodes:
+        raise ValueError(
+            f"node array from the pickle is inconsistent: node_count "
+            f"({node_count}) does not match the number of nodes ({n_nodes})"
+        )
+
+    left_child = node_ndarray["left_child"]
+    right_child = node_ndarray["right_child"]
+    feature = node_ndarray["feature"]
+    node_index = np.arange(n_nodes)
+
+    # A node is internal iff its `left_child` is not the `TREE_LEAF` sentinel;
+    # only internal nodes have the fields below dereferenced.
+    is_internal = left_child != TREE_LEAF
+
+    # Each child must be a node id strictly greater than the own index.
+    for field, children in (("left_child", left_child), ("right_child", right_child)):
+        if np.any(is_internal & ((children <= node_index) | (children >= n_nodes))):
+            raise ValueError(
+                f"node array from the pickle has out-of-bounds '{field}' "
+                f"values: every internal node's '{field}' must be a node id "
+                f"greater than the node's own index and less than {n_nodes} "
+                f"(or {TREE_LEAF} for a leaf), got {children}"
+            )
+
+    # `feature` is dereferenced as a column index into `X`.
+    if np.any(is_internal & ((feature < 0) | (feature >= n_features))):
+        raise ValueError(
+            f"node array from the pickle has out-of-bounds 'feature' values: "
+            f"every internal node's 'feature' must be in [0, {n_features}), "
+            f"got {feature}"
+        )
+
+    # `compute_partial_dependence` visits both children of an internal node and
+    # sizes its stacks from the node count, so a node reachable through several
+    # paths makes it do work exponential in the number of nodes.
+    children = np.concatenate((left_child[is_internal], right_child[is_internal]))
+    if children.size and np.bincount(children, minlength=n_nodes).max() > 1:
+        raise ValueError(
+            "node array from the pickle is inconsistent: expected each node to "
+            "be the child of at most one node, got several nodes sharing a child"
+        )
+
+    _check_max_depth(node_ndarray["left_child"], node_ndarray["right_child"], max_depth)
+
+
+def _check_max_depth(const intp_t[:] left_child, const intp_t[:] right_child,
+                     max_depth):
+    """Validate `max_depth` against the actual depth of the node array.
+
+    `decision_path` sizes its `indices` buffer as `n_samples * (1 + max_depth)`
+    and writes one entry per node it walks through, without bounds checking, so
+    a `max_depth` smaller than the real depth of the tree overflows that buffer.
+
+    Children are strictly greater than their parent (enforced by the caller), so
+    every node comes after all of its parents and a single forward pass gives
+    each node its final depth.
+    """
+    cdef:
+        intp_t n_nodes = left_child.shape[0]
+        intp_t[::1] depth = np.zeros(n_nodes, dtype=np.intp)
+        intp_t i, child_depth, max_depth_seen = 0
+
+    with nogil:
+        for i in range(n_nodes):
+            if depth[i] > max_depth_seen:
+                max_depth_seen = depth[i]
+
+            if left_child[i] == _TREE_LEAF:
+                continue
+
+            child_depth = depth[i] + 1
+            if depth[left_child[i]] < child_depth:
+                depth[left_child[i]] = child_depth
+            if depth[right_child[i]] < child_depth:
+                depth[right_child[i]] = child_depth
+
+    if max_depth < max_depth_seen:
+        raise ValueError(
+            f"node array from the pickle is inconsistent: max_depth "
+            f"({max_depth}) is smaller than the depth of the node array "
+            f"({max_depth_seen})"
+        )
 
 
 # =============================================================================
