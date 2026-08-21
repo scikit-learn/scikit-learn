@@ -40,6 +40,23 @@ from sklearn.utils.fixes import (
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
+# Mapping from narwhals dtypes to the numpy dtypes obtained when converting a
+# column to numpy. Used to compute the combined dtype of the columns of
+# non-pandas dataframes and series.
+_NARWHALS_TO_NUMPY_DTYPES = {
+    nw.Float64: np.float64,
+    nw.Float32: np.float32,
+    nw.Int64: np.int64,
+    nw.Int32: np.int32,
+    nw.Int16: np.int16,
+    nw.Int8: np.int8,
+    nw.UInt64: np.uint64,
+    nw.UInt32: np.uint32,
+    nw.UInt16: np.uint16,
+    nw.UInt8: np.uint8,
+    nw.Boolean: np.bool_,
+}
+
 
 def _nw_is_into_df_or_series(x):
     return nw.dependencies.is_into_dataframe(x) or nw.dependencies.is_into_series(x)
@@ -950,6 +967,36 @@ def check_array(
         else:
             # Set to None to let array.astype work out the best dtype
             dtype_orig = None
+
+    elif array_df is not None:
+        # Non-pandas dataframe or series (e.g. polars dataframe or series, or
+        # pyarrow table). Derive the combined dtype of the columns from the
+        # narwhals schema so that no conversion happens when `dtype` is a list
+        # of accepted dtypes containing the combined dtype.
+        if isinstance(array_df, nw.Series):
+            nw_dtypes = [array_df.dtype]
+        else:
+            nw_dtypes = list(array_df.schema.values())
+        np_dtypes = [_NARWHALS_TO_NUMPY_DTYPES.get(nw_dtype) for nw_dtype in nw_dtypes]
+        if np_dtypes and all(np_dtype is not None for np_dtype in np_dtypes):
+            # Non-float columns do not preserve their dtype when converted to
+            # numpy if they contain nulls (e.g. an integer column with nulls
+            # converts to float64 with NaN), so the dtype can only be derived
+            # from the schema when such columns have no nulls. Float columns
+            # keep their dtype since nulls convert to NaN.
+            if all(nw_dtype.is_float() for nw_dtype in nw_dtypes):
+                has_unsafe_nulls = False
+            elif isinstance(array_df, nw.Series):
+                has_unsafe_nulls = array_df.null_count() > 0
+            else:
+                null_counts = array_df.null_count().row(0)
+                has_unsafe_nulls = any(
+                    int(null_count) > 0
+                    for nw_dtype, null_count in zip(nw_dtypes, null_counts)
+                    if not nw_dtype.is_float()
+                )
+            if not has_unsafe_nulls:
+                dtype_orig = np.result_type(*np_dtypes)
 
     if dtype_numeric:
         if dtype_orig is not None and (
