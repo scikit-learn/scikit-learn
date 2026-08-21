@@ -275,7 +275,7 @@ def test_pipeline_invalid_parameters():
     # Check that params are not set when naming them wrong
     msg = re.escape(
         "Invalid parameter 'C' for estimator SelectKBest(). Valid parameters are: ['k',"
-        " 'score_func']."
+        " 'score_func', 'selection_method']."
     )
     with pytest.raises(ValueError, match=msg):
         pipe.set_params(anova__C=0.1)
