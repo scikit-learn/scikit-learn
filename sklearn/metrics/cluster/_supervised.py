@@ -159,7 +159,13 @@ def contingency_matrix(
     if eps is not None and sparse:
         raise ValueError("Cannot set 'eps' when sparse=True")
 
-    xp, _, device = get_namespace_and_device(labels_true, labels_pred)
+    xp, is_array_api_compliant, device = get_namespace_and_device(
+        labels_true, labels_pred
+    )
+    if not is_array_api_compliant:
+        # this is required when the labels are not arrays, for example simple lists
+        labels_true = xp.asarray(labels_true)
+        labels_pred = xp.asarray(labels_pred)
     classes, class_idx = xp.unique_inverse(labels_true)
     clusters, cluster_idx = xp.unique_inverse(labels_pred)
     n_classes = classes.shape[0]
