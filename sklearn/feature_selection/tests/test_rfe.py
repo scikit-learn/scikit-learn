@@ -776,3 +776,45 @@ def test_rfe_sparse_coef(feature_importance):
 
     assert_array_equal(selector_sparse.support_, selector_dense.support_)
     assert_array_equal(selector_sparse.ranking_, selector_dense.ranking_)
+
+
+def test_rfe_pandas_dataframe_preservation():
+    pd = pytest.importorskip("pandas")
+    iris = load_iris(as_frame=True)
+    X = iris.data
+    y = iris.target
+
+    rfe = RFE(
+        estimator=RandomForestClassifier(n_estimators=5, random_state=0),
+        n_features_to_select=2,
+    )
+    rfe.fit(X, y)
+
+    # Check the feature names are correctly tracked on RFE and sub-estimator
+    assert_array_equal(rfe.feature_names_in_, X.columns.to_numpy())
+    expected_selected = X.columns[rfe.support_].to_numpy()
+    assert_array_equal(rfe.estimator_.feature_names_in_, expected_selected)
+
+    preds = rfe.predict(X)
+    assert len(preds) == len(X)
+
+
+def test_rfecv_pandas_dataframe_preservation():
+    pd = pytest.importorskip("pandas")
+    iris = load_iris(as_frame=True)
+    X = iris.data
+    y = iris.target
+
+    rfecv = RFECV(
+        estimator=RandomForestClassifier(n_estimators=5, random_state=0),
+        min_features_to_select=2,
+        cv=3,
+    )
+    rfecv.fit(X, y)
+
+    assert_array_equal(rfecv.feature_names_in_, X.columns.to_numpy())
+    expected_selected = X.columns[rfecv.support_].to_numpy()
+    assert_array_equal(rfecv.estimator_.feature_names_in_, expected_selected)
+
+    preds = rfecv.predict(X)
+    assert len(preds) == len(X)

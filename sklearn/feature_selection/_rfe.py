@@ -10,6 +10,8 @@ from numbers import Integral
 import numpy as np
 from joblib import effective_n_jobs
 
+import narwhals.stable.v2 as nw
+
 from sklearn.base import (
     BaseEstimator,
     MetaEstimatorMixin,
@@ -21,7 +23,7 @@ from sklearn.feature_selection._base import SelectorMixin, _get_feature_importan
 from sklearn.metrics import get_scorer
 from sklearn.model_selection import check_cv
 from sklearn.model_selection._validation import _score
-from sklearn.utils import metadata_routing
+from sklearn.utils import metadata_routing, _safe_indexing
 from sklearn.utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
@@ -60,7 +62,7 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer, routed_params):
         y_train,
         lambda estimator, features: _score(
             estimator,
-            X_test[:, features],
+            _safe_indexing(X_test, features, axis=1),
             y_test,
             scorer,
             score_params=score_params,
@@ -281,6 +283,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         # step_score is not exposed to users and is used when implementing RFECV
         # self.step_scores_ will not be calculated when calling _fit through fit
 
+        preserve_X = nw.dependencies.is_pandas_dataframe(X)
+
         X, y = validate_data(
             self,
             X,
@@ -289,6 +293,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             ensure_min_features=2,
             ensure_all_finite=False,
             multi_output=True,
+            skip_check_array=preserve_X,
         )
 
         # Initialization
@@ -332,7 +337,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             if self.verbose > 0:
                 print("Fitting estimator with %d features." % np.sum(support_))
 
-            estimator.fit(X[:, features], y, **fit_params)
+            estimator.fit(_safe_indexing(X, features, axis=1), y, **fit_params)
 
             # Compute step values on the previous selection iteration because
             # 'estimator' must use features that have not been eliminated yet
@@ -362,7 +367,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         # Set final attributes
         features = np.arange(n_features)[support_]
         self.estimator_ = clone(self.estimator)
-        self.estimator_.fit(X[:, features], y, **fit_params)
+        self.estimator_.fit(_safe_indexing(X, features, axis=1), y, **fit_params)
 
         # Compute step values when only n_features_to_select features left
         if step_score:
@@ -828,6 +833,7 @@ class RFECV(RFE):
             Fitted estimator.
         """
         _raise_for_params(params, self, "fit", allow=["groups"])
+        preserve_X = nw.dependencies.is_pandas_dataframe(X)
         X, y = validate_data(
             self,
             X,
@@ -836,6 +842,7 @@ class RFECV(RFE):
             ensure_min_features=2,
             ensure_all_finite=False,
             multi_output=True,
+            skip_check_array=preserve_X,
         )
 
         if _routing_enabled():
