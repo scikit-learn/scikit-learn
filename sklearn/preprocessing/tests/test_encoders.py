@@ -1715,6 +1715,63 @@ def test_ordinal_encoder_missing_value_support_pandas_categorical(
     assert np.isnan(X_inverse[2, 0])
 
 
+@pytest.mark.parametrize("string_dtype", ["string[python]", "string[pyarrow]"])
+@pytest.mark.parametrize("encoded_missing_value", [np.nan, -2])
+def test_ordinal_encoder_missing_value_support_pandas_string(
+    string_dtype, encoded_missing_value
+):
+    """Non-regression test for pandas `string` dtype columns.
+
+    `string[python]`/`string[pyarrow]` are non-`object` dtypes (unlike plain
+    `category`), so they exercise the same `_unique_pandas`/`_encode_pandas`
+    fast path (`pandas.factorize`/`Index.get_indexer`) as `category`, on a
+    different pandas Series storage backend. `factorize` doesn't normalize
+    a missing entry to `np.nan` the same way for `string` as it does for
+    `category` (it keeps `pandas.NA`), which `_unique_pandas` needs to
+    correct explicitly.
+    """
+    pd = pytest.importorskip("pandas")
+    if string_dtype == "string[pyarrow]":
+        pytest.importorskip("pyarrow")
+
+    df = pd.DataFrame(
+        {
+            "col1": pd.Series(["c", "a", None, "b", "a"], dtype=string_dtype),
+        }
+    )
+
+    oe = OrdinalEncoder(encoded_missing_value=encoded_missing_value).fit(df)
+    assert len(oe.categories_) == 1
+    assert_array_equal(oe.categories_[0][:3], ["a", "b", "c"])
+    assert np.isnan(oe.categories_[0][-1])
+
+    df_trans = oe.transform(df)
+
+    assert_allclose(df_trans, [[2.0], [0.0], [encoded_missing_value], [1.0], [0.0]])
+
+    X_inverse = oe.inverse_transform(df_trans)
+    assert X_inverse.shape == (5, 1)
+    assert_array_equal(X_inverse[:2, 0], ["c", "a"])
+    assert_array_equal(X_inverse[3:, 0], ["b", "a"])
+    assert np.isnan(X_inverse[2, 0])
+
+
+def test_ordinal_encoder_predefined_categories_pandas_series():
+    """Non-regression test for user-provided `categories` with a pandas
+    Series column of a non-`object` dtype (e.g. `category`): `_fit`'s
+    predefined-categories branch materializes such columns via
+    `to_numpy()` rather than adapting every numpy-dtype-based check in
+    that branch to pandas Series, see `_BaseEncoder._fit`.
+    """
+    pd = pytest.importorskip("pandas")
+
+    df = pd.DataFrame({"col1": pd.Series(["b", "a", "c"], dtype="category")})
+
+    oe = OrdinalEncoder(categories=[["c", "b", "a"]]).fit(df)
+    assert_array_equal(oe.categories_[0], ["c", "b", "a"])
+    assert_allclose(oe.transform(df), [[1], [2], [0]])
+
+
 @pytest.mark.parametrize(
     "X, X2, cats, cat_dtype",
     [
