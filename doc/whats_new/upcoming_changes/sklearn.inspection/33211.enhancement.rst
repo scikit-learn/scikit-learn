@@ -1,0 +1,6 @@
+- :func:`inspection.DecisionBoundaryDisplay.from_estimator` and
+  :func:`inspection.DecisionBoundaryDisplay.plot` now accept optional
+  ``xlim`` and ``ylim`` parameters to override the automatic data-based
+  plot limits. This allows users to set custom x-axis and y-axis limits
+  for the decision boundary visualization.
+  By :user:`Anne Beyer <AnneBeyer>` and :user:`Shaurya Bisht <ShauryaDusht>`.
