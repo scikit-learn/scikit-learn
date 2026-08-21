@@ -7,10 +7,9 @@ import warnings
 from copy import deepcopy
 from numbers import Integral
 
+import narwhals.stable.v2 as nw
 import numpy as np
 from joblib import effective_n_jobs
-
-import narwhals.stable.v2 as nw
 
 from sklearn.base import (
     BaseEstimator,
@@ -23,7 +22,7 @@ from sklearn.feature_selection._base import SelectorMixin, _get_feature_importan
 from sklearn.metrics import get_scorer
 from sklearn.model_selection import check_cv
 from sklearn.model_selection._validation import _score
-from sklearn.utils import metadata_routing, _safe_indexing
+from sklearn.utils import _safe_indexing, metadata_routing
 from sklearn.utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
