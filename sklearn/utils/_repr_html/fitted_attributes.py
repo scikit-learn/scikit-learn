@@ -81,7 +81,7 @@ def _fitted_attr_html_repr(fitted_attributes):
             style="anchor-name: --doc-link-{fitted_attr_name};"
             rel="noreferrer" target="_blank" href="{link}">
             {fitted_attr_name}
-            <span class="param-doc-description"
+            <span class="param-doc-description" tabindex="-1"
             style="position-anchor: --doc-link-{fitted_attr_name};">
             {fitted_attr_description}</span>
         </a>

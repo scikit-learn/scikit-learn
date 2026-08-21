@@ -107,7 +107,6 @@ function copyFeatureNamesToClipboard(element) {
  * The listener is on `window` in the capture phase because the notebook
  * processes its shortcuts on the document during capture, before any
  * listener attached inside the page body would run.
- * Escape dismisses focus-shown tooltips (WCAG 1.4.13).
  */
 if (!window.skEstimatorKeydownGuard) {
     window.skEstimatorKeydownGuard = true;
@@ -133,8 +132,8 @@ if (!window.skEstimatorKeydownGuard) {
             event.stopPropagation();
         } else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
                     'PageUp', 'PageDown', 'Home', 'End'].includes(event.key)) {
-            /* Let the browser scroll the focused tooltip or container, but
-             * keep the notebook from moving the cell selection. */
+            /* Let the browser scroll the focused container, but keep the
+             * notebook from moving the cell selection. */
             event.stopPropagation();
         }
     }, true);

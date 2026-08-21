@@ -145,14 +145,9 @@ a.param-doc-link::before {
     border: thin solid var(--sklearn-color-fitted-level-3);
 }
 
-/*
-    :focus-within keeps the tooltip open when Tab moves into it. Overflowing
-    tooltips are scrollable and browsers make them keyboard-focusable. But
-    hiding one at that moment would drop the focus to the page body.
-    (we hide the tooltip with the anchor mechanism)
-*/
+/* The tooltip is shown on hover and when the link takes keyboard focus. */
 .param-doc-link:hover .param-doc-description,
-.param-doc-link:focus-within .param-doc-description {
+.param-doc-link:focus .param-doc-description {
     display: block;
 }
 
