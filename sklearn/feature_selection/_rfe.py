@@ -334,7 +334,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             # Rank the remaining features
             estimator = clone(self.estimator)
             if self.verbose > 0:
-                print("Fitting estimator with %d features." % np.sum(support_))
+                print(f"Fitting estimator with {np.sum(support_)} features.")
 
             estimator.fit(_safe_indexing(X, features, axis=1), y, **fit_params)
 
@@ -380,6 +380,20 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         return self
 
+    def _transform_for_estimator(self, X):
+        """Transform X to the selected features, preserving the DataFrame."""
+        preserve_X = nw.dependencies.is_pandas_dataframe(X)
+        X = validate_data(
+            self,
+            X,
+            dtype=None,
+            accept_sparse="csr",
+            ensure_all_finite=not get_tags(self).input_tags.allow_nan,
+            skip_check_array=preserve_X,
+            reset=False,
+        )
+        return self._transform(X)
+
     @available_if(_estimator_has("predict"))
     def predict(self, X, **predict_params):
         """Reduce X to the selected features and predict using the estimator.
@@ -413,7 +427,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             routed_params = _manual_routing({"estimator": {}})
 
         return self.estimator_.predict(
-            self.transform(X), **routed_params.estimator.predict
+            self._transform_for_estimator(X), **routed_params.estimator.predict
         )
 
     @available_if(_estimator_has("score"))
@@ -454,7 +468,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             routed_params = _manual_routing({"estimator": {"score": score_params}})
 
         return self.estimator_.score(
-            self.transform(X), y, **routed_params.estimator.score
+            self._transform_for_estimator(X), y, **routed_params.estimator.score
         )
 
     def _get_support_mask(self):
@@ -481,7 +495,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             [n_samples].
         """
         check_is_fitted(self)
-        return self.estimator_.decision_function(self.transform(X))
+        return self.estimator_.decision_function(self._transform_for_estimator(X))
 
     @available_if(_estimator_has("predict_proba"))
     def predict_proba(self, X):
@@ -501,7 +515,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             classes corresponds to that in the attribute :term:`classes_`.
         """
         check_is_fitted(self)
-        return self.estimator_.predict_proba(self.transform(X))
+        return self.estimator_.predict_proba(self._transform_for_estimator(X))
 
     @available_if(_estimator_has("predict_log_proba"))
     def predict_log_proba(self, X):
@@ -519,7 +533,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             classes corresponds to that in the attribute :term:`classes_`.
         """
         check_is_fitted(self)
-        return self.estimator_.predict_log_proba(self.transform(X))
+        return self.estimator_.predict_log_proba(self._transform_for_estimator(X))
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
