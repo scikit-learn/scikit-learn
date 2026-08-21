@@ -8,8 +8,6 @@ Common code for all metrics.
 
 from itertools import combinations
 
-import numpy as np
-
 import sklearn.externals.array_api_extra as xpx
 from sklearn.utils import check_array, check_consistent_length
 from sklearn.utils._array_api import (
@@ -17,7 +15,7 @@ from sklearn.utils._array_api import (
     _ravel,
     get_namespace_and_device,
 )
-from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.multiclass import type_of_target, unique_labels
 
 
 def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight=None):
@@ -64,7 +62,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
         classes.
 
     """
-    xp, _, _device = get_namespace_and_device(y_score, sample_weight)
+    xp, _, device = get_namespace_and_device(y_score)
     average_options = (None, "micro", "macro", "weighted", "samples")
     if average not in average_options:
         raise ValueError("average has to be one of {0}".format(average_options))
@@ -101,7 +99,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
             average_weight = xp.sum(y_true, axis=0)
         if xpx.isclose(
             xp.sum(average_weight),
-            xp.asarray(0, dtype=average_weight.dtype, device=_device),
+            xp.asarray(0, dtype=average_weight.dtype, device=device),
         ):
             return 0
 
@@ -118,13 +116,13 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
         y_score = xp.reshape(y_score, (-1, 1))
 
     n_classes = y_score.shape[not_average_axis]
-    score = xp.zeros((n_classes,), device=_device)
+    score = xp.zeros((n_classes,), device=device)
     for c in range(n_classes):
         y_true_c = _ravel(
-            xp.take(y_true, xp.asarray([c], device=_device), axis=not_average_axis)
+            xp.take(y_true, xp.asarray([c], device=device), axis=not_average_axis)
         )
         y_score_c = _ravel(
-            xp.take(y_score, xp.asarray([c], device=_device), axis=not_average_axis)
+            xp.take(y_score, xp.asarray([c], device=device), axis=not_average_axis)
         )
         score[c] = binary_metric(y_true_c, y_score_c, sample_weight=score_weight)
 
@@ -181,23 +179,30 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average="macro
     """
     check_consistent_length(y_true, y_score)
 
-    y_true_unique = np.unique(y_true)
+    xp, _, device = get_namespace_and_device(y_score)
+
+    y_true_unique = unique_labels(y_true)
     n_classes = y_true_unique.shape[0]
     n_pairs = n_classes * (n_classes - 1) // 2
-    pair_scores = np.empty(n_pairs)
+    pair_scores = xp.empty(n_pairs, device=device)
 
     is_weighted = average == "weighted"
-    prevalence = np.empty(n_pairs) if is_weighted else None
+    prevalence = xp.empty(n_pairs, device=device) if is_weighted else None
 
     # Compute scores treating a as positive class and b as negative class,
     # then b as positive class and a as negative class
     for ix, (a, b) in enumerate(combinations(y_true_unique, 2)):
         a_mask = y_true == a
         b_mask = y_true == b
-        ab_mask = np.logical_or(a_mask, b_mask)
+        ab_mask = xp.logical_or(a_mask, b_mask)
 
         if is_weighted:
-            prevalence[ix] = np.average(ab_mask)
+            prevalence[ix] = _average(ab_mask, xp=xp)
+
+        # array API does not allow mixed Boolean / integral indexing.
+        # Hence, need to convert to integers to be able to index
+        # y_score[ab_mask, a] and y_score[ab_mask, b].
+        ab_mask = xp.nonzero(ab_mask)[0]
 
         a_true = a_mask[ab_mask]
         b_true = b_mask[ab_mask]
@@ -206,4 +211,4 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average="macro
         b_true_score = binary_metric(b_true, y_score[ab_mask, b])
         pair_scores[ix] = (a_true_score + b_true_score) / 2
 
-    return np.average(pair_scores, weights=prevalence)
+    return _average(pair_scores, weights=prevalence, xp=xp)
