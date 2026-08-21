@@ -1,0 +1,4 @@
+- :class:`compose.ColumnTransformer` now converts non-subscriptable sparse inputs,
+  such as DIA-format arrays, to CSR format before selecting columns. This allows
+  sparse formats supported by the underlying transformers to be used directly.
+  By :user:`Nikhi00718`.
