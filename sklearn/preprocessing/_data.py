@@ -94,7 +94,12 @@ def _is_constant_feature(var, mean, n_samples):
     max_float_dtype = _max_precision_float_dtype(xp=xp, device=device)
     eps = xp.finfo(max_float_dtype).eps
 
-    upper_bound = n_samples * eps * var + (n_samples * mean * eps) ** 2
+    # The upper bound can overflow to inf for very large means. The
+    # comparison below remains meaningful: no finite variance can exceed an
+    # infinite bound and such a feature is indeed indistinguishable from a
+    # constant feature.
+    with np.errstate(over="ignore"):
+        upper_bound = n_samples * eps * var + (n_samples * mean * eps) ** 2
     return var <= upper_bound
 
 
