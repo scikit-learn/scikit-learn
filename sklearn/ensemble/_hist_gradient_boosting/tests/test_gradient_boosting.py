@@ -1834,14 +1834,30 @@ def test_get_heuristic_optimal_n_threads_tiny_workload():
 def test_get_heuristic_optimal_n_threads_monotonic_in_n_features():
     # More features to parallelize over should never make the heuristic
     # recommend fewer threads, and it should saturate at max_n_threads once
-    # there is at least one feature per thread.
+    # there is at least one feature per thread -- provided the total workload
+    # is large enough that a full-sized team is actually worth it (see
+    # test_get_heuristic_optimal_n_threads_many_features_few_samples for the
+    # opposite case, where it isn't).
     max_n_threads = 8
     n_threads_by_n_features = [
-        _get_heuristic_n_threads(max_n_threads, n_samples=10, n_features=n_features)
+        _get_heuristic_n_threads(
+            max_n_threads, n_samples=10**5, n_features=n_features
+        )
         for n_features in [1, 2, 4, 8, 16, 100]
     ]
     assert n_threads_by_n_features == sorted(n_threads_by_n_features)
     assert n_threads_by_n_features[-1] == max_n_threads
+
+
+def test_get_heuristic_optimal_n_threads_many_features_few_samples():
+    # Many features alone should not push the heuristic all the way to
+    # max_n_threads when the total workload (roughly n_samples * n_features)
+    # is tiny:
+    n_threads = _get_heuristic_n_threads(
+        max_n_threads=128, n_samples=100, n_features=2000
+    )
+    print(n_threads)
+    assert 1 < n_threads < 100
 
 
 def test_get_heuristic_optimal_n_threads_monotonic_in_n_samples():
