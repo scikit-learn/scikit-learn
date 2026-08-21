@@ -295,7 +295,7 @@ def test_gridsearch():
     )
 
     params = {
-        "lr__C": [1.0, 100.0],
+        "lr__alpha": [1.0, 1e-2],
         "voting": ["soft", "hard"],
         "weights": [[0.5, 0.5, 0.5], [1.0, 0.5, 0.5]],
     }

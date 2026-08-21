@@ -986,27 +986,28 @@ the probability of the positive class :math:`P(y_i=1|X_i)` as
 
 As an optimization problem, binary
 class logistic regression with regularization term :math:`r(w)` minimizes the
-following cost function:
+following objective function:
 
 .. math::
     :name: regularized-logistic-loss
 
     \min_{w} \frac{1}{S}\sum_{i=1}^n s_i
     \left(-y_i \log(\hat{p}(X_i)) - (1 - y_i) \log(1 - \hat{p}(X_i))\right)
-    + \frac{r(w)}{S C}\,,
+    + \frac{\alpha}{S} r(w)\,,
 
 where :math:`{s_i}` corresponds to the weights assigned by the user to a
 specific training sample (the vector :math:`s` is formed by element-wise
 multiplication of the class weights and sample weights),
-and the sum :math:`S = \sum_{i=1}^n s_i`.
+and the sum :math:`S = \sum_{i=1}^n s_i`. For `sample_weight=None` (and no
+class weights), we have :math:`s_i=1` and :math:`S = n_{\text{samples}}`.
 
 We currently provide four choices for the regularization or penalty term :math:`r(w)`
-via the arguments `C` and `l1_ratio`:
+via the arguments `alpha` and `l1_ratio`:
 
 +-------------------------------+-------------------------------------------------+
 | penalty                       | :math:`r(w)`                                    |
 +===============================+=================================================+
-| none (`C=np.inf`)             | :math:`0`                                       |
+| none (`alpha=0`)              | :math:`0`                                       |
 +-------------------------------+-------------------------------------------------+
 | :math:`\ell_1` (`l1_ratio=1`) | :math:`\|w\|_1`                                 |
 +-------------------------------+-------------------------------------------------+
@@ -1019,11 +1020,6 @@ For ElasticNet, :math:`\rho` (which corresponds to the `l1_ratio` parameter)
 controls the strength of :math:`\ell_1` regularization vs. :math:`\ell_2`
 regularization. Elastic-Net is equivalent to :math:`\ell_1` when
 :math:`\rho = 1` and equivalent to :math:`\ell_2` when :math:`\rho=0`.
-
-Note that the scale of the class weights and the sample weights will influence
-the optimization problem. For instance, multiplying the sample weights by a
-constant :math:`b>0` is equivalent to multiplying the (inverse) regularization
-strength `C` by :math:`b`.
 
 Multinomial Case
 ----------------
@@ -1056,21 +1052,23 @@ logistic regression, see also `log-linear model
 
   .. math::
     \min_W -\frac{1}{S}\sum_{i=1}^n \sum_{k=0}^{K-1} s_{ik} [y_i = k] \log(\hat{p}_k(X_i))
-    + \frac{r(W)}{S C}\,,
+    + \frac{\alpha}{S} r(W)\,,
 
   where :math:`[P]` represents the Iverson bracket which evaluates to :math:`0`
   if :math:`P` is false, otherwise it evaluates to :math:`1`.
 
   Again, :math:`s_{ik}` are the weights assigned by the user (multiplication of sample
   weights and class weights) with their sum :math:`S = \sum_{i=1}^n \sum_{k=0}^{K-1} s_{ik}`.
+  For `sample_weight=None` (and no class weights), we have :math:`s_i=1` and
+  :math:`S = n_{\text{samples}}`.
 
   We currently provide four choices for the regularization or penalty term :math:`r(W)`
-  via the arguments `C` and `l1_ratio`, where :math:`m` is the number of features:
+  via the arguments `alpha` and `l1_ratio`, where :math:`m` is the number of features:
 
   +-------------------------------+----------------------------------------------------------------------------------+
   | penalty                       | :math:`r(W)`                                                                     |
   +===============================+==================================================================================+
-  | none (`C=np.inf`)             | :math:`0`                                                                        |
+  | none (`alpha=0`)              | :math:`0`                                                                        |
   +-------------------------------+----------------------------------------------------------------------------------+
   | :math:`\ell_1` (`l1_ratio=1`) | :math:`\|W\|_{1,1} = \sum_{i=1}^m\sum_{j=1}^{K}|W_{i,j}|`                        |
   +-------------------------------+----------------------------------------------------------------------------------+
@@ -1181,8 +1179,8 @@ zero, is likely to be an underfit, bad model and you are advised to set
     multinomial loss is expected to give better calibrated results as compared to
     a "one-vs-rest" scheme.
     For :math:`\ell_1` regularization :func:`sklearn.svm.l1_min_c` allows to
-    calculate the lower bound for C in order to get a non "null" (all feature
-    weights to zero) model.
+    calculate the lower bound for C, which equals 1/alpha in order
+    to get a non "null" (all feature weights to zero) model.
 
   * The "lbfgs", "newton-cg", "newton-cholesky" and "sag" solvers only support
     :math:`\ell_2` regularization or no regularization, and are found to converge
@@ -1249,7 +1247,7 @@ zero, is likely to be an underfit, bad model and you are advised to set
 
 
 :class:`LogisticRegressionCV` implements Logistic Regression with built-in
-cross-validation support, to find the optimal `C` and `l1_ratio` parameters
+cross-validation support, to find the optimal `alpha` and `l1_ratio` parameters
 according to the ``scoring`` attribute. The "newton-cg", "sag", "saga" and
 "lbfgs" solvers are found to be faster for high-dimensional dense data, due
 to warm-starting (see :term:`Glossary <warm_start>`).
