@@ -10,11 +10,6 @@ from sklearn.utils._openmp_helpers cimport _use_threads_for_workload
 from sklearn.utils._openmp_helpers import _min_instructions_per_thread
 
 
-# Read once at import time rather than on every call; see
-# _min_instructions_per_thread's docstring for the env var it honors.
-cdef long long MIN_INSTRUCTIONS_PER_THREAD = _min_instructions_per_thread()
-
-
 def _update_raw_predictions(
         Y_DTYPE_C [::1] raw_predictions,  # OUT
         grower,
@@ -63,7 +58,7 @@ cdef inline void _update_raw_predictions_helper(
         # Across all leaves, exactly n_samples positions are visited, each
         # costing ~3 simple ops (indirect index, add, store) below.
         bint use_threads = _use_threads_for_workload(
-            n_threads, n_samples, 3, MIN_INSTRUCTIONS_PER_THREAD
+            n_threads, n_samples, 3, _min_instructions_per_thread()
         )
 
     for leaf_idx in prange(n_leaves, schedule='static', nogil=True,

@@ -16,10 +16,6 @@ from sklearn.ensemble._hist_gradient_boosting.common cimport X_BINNED_DTYPE_C
 from sklearn.ensemble._hist_gradient_boosting.common cimport node_struct
 
 
-# Read once at import time rather than on every call; see
-# _min_instructions_per_thread's docstring for the env var it honors.
-cdef long long MIN_INSTRUCTIONS_PER_THREAD = _min_instructions_per_thread()
-
 # Rough cost, in simple ops, of traversing the tree for a single sample:
 # a handful of comparisons/branches per level, for a handful of levels.
 cdef int PREDICT_ONE_OPS = 20
@@ -38,7 +34,7 @@ def _predict_from_raw_data(  # raw data = non-binned data
         int i
         int n_samples = numeric_data.shape[0]
         bint use_threads = _use_threads_for_workload(
-            n_threads, n_samples, PREDICT_ONE_OPS, MIN_INSTRUCTIONS_PER_THREAD
+            n_threads, n_samples, PREDICT_ONE_OPS, _min_instructions_per_thread()
         )
 
     for i in prange(n_samples, schedule='static', nogil=True,
@@ -112,7 +108,7 @@ def _predict_from_binned_data(
         int i
         int n_samples = binned_data.shape[0]
         bint use_threads = _use_threads_for_workload(
-            n_threads, n_samples, PREDICT_ONE_OPS, MIN_INSTRUCTIONS_PER_THREAD
+            n_threads, n_samples, PREDICT_ONE_OPS, _min_instructions_per_thread()
         )
 
     for i in prange(n_samples, schedule='static', nogil=True,

@@ -27,11 +27,6 @@ from sklearn.ensemble._hist_gradient_boosting.common cimport hist_struct
 from sklearn.ensemble._hist_gradient_boosting.common cimport MonotonicConstraint
 
 
-# Read once at import time rather than on every call; see
-# _min_instructions_per_thread's docstring for the env var it honors.
-cdef long long MIN_INSTRUCTIONS_PER_THREAD = _min_instructions_per_thread()
-
-
 cdef struct split_info_struct:
     # Same as the SplitInfo class, but we need a C struct to use it in the
     # nogil sections and to use in arrays.
@@ -327,7 +322,7 @@ cdef class Splitter:
             # Each sample costs ~5 simple ops to classify/copy below.
             # but chunking cost extra work, so we reduce to 3
             bint use_threads = _use_threads_for_workload(
-                n_threads, n_samples, 3, MIN_INSTRUCTIONS_PER_THREAD
+                n_threads, n_samples, 3, _min_instructions_per_thread()
             )
             # Probably always bad to parallelize for <1k samples
 
@@ -552,7 +547,7 @@ cdef class Splitter:
         # Each feature costs about 15 simple ops per bin scanned below.
         use_threads = _use_threads_for_workload(
             n_threads, <long long> n_subsampled_features * histograms.shape[1], 15,
-            MIN_INSTRUCTIONS_PER_THREAD,
+            _min_instructions_per_thread(),
         )
         # Much slower than single threaded for: n_threads=128, n_subsampled_features=50
         # => 128 x 2000 is greater than 50 x 256 x 15

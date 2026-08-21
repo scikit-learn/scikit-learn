@@ -18,11 +18,6 @@ from sklearn.utils._openmp_helpers import _min_instructions_per_thread
 from sklearn.utils._typedefs cimport uint8_t
 
 
-# Read once at import time rather than on every call; see
-# _min_instructions_per_thread's docstring for the env var it honors.
-cdef long long MIN_INSTRUCTIONS_PER_THREAD = _min_instructions_per_thread()
-
-
 # Notes:
 # - IN views are read-only, OUT views are write-only
 # - In a lot of functions here, we pass feature_idx and the whole 2d
@@ -154,6 +149,7 @@ cdef class HistogramBuilder:
             int n_threads = self.n_threads
             bint use_threads_populate
             bint use_threads_features
+            long long min_instructions_per_thread = _min_instructions_per_thread()
 
         if has_interaction_cst:
             n_allowed_features = allowed_features.shape[0]
@@ -163,12 +159,12 @@ cdef class HistogramBuilder:
         use_threads_populate = _use_threads_for_workload(
             n_threads, n_samples,
             5 - 2*hessians_are_constant,
-            MIN_INSTRUCTIONS_PER_THREAD
+            min_instructions_per_thread
         )
         use_threads_features = n_allowed_features > 1 and _use_threads_for_workload(
             n_threads, <long long> n_allowed_features * n_samples,
             10 - 3 * hessians_are_constant,
-            MIN_INSTRUCTIONS_PER_THREAD,
+            min_instructions_per_thread,
         )
 
         with nogil:
@@ -293,7 +289,7 @@ cdef class HistogramBuilder:
         # Each (feature, bin) pair costs ~10 simple field subtractions below.
         use_threads = n_allowed_features > 1 and _use_threads_for_workload(
             n_threads, <long long> n_allowed_features * self.n_bins, 10,
-            MIN_INSTRUCTIONS_PER_THREAD,
+            _min_instructions_per_thread(),
         )
 
         # Compute histogram of each feature

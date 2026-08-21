@@ -1,4 +1,7 @@
 import os
+from time import perf_counter
+
+from cython.parallel import prange
 from joblib import cpu_count
 
 
@@ -7,19 +10,132 @@ from joblib import cpu_count
 # only_physical_cores.
 _CPU_COUNTS = {}
 
+# Fallback amount of work (in ~simple-instruction units) that must be
+# available per thread before bothering to parallelize a loop with OpenMP;
+# see `_use_threads_for_workload` in `_openmp_helpers.pxd`. Used until
+# `_calibrate_min_instructions_per_thread` has run once, and whenever it
+# fails to produce a sensible measurement.
+_DEFAULT_MIN_INSTRUCTIONS_PER_THREAD = 2000
+
+# None means "not calibrated yet". Calibration always ends up setting this
+# to an int (falling back to the default above on any issue), so it only
+# ever runs once per process.
+_MIN_INSTRUCTIONS_PER_THREAD = None
+
 
 def _min_instructions_per_thread():
     """Minimum amount of work (in ~simple-instruction units) that must be
     available per thread before bothering to parallelize a loop with
     OpenMP; see ``_use_threads_for_workload`` in ``_openmp_helpers.pxd``.
 
-    Meant to be called once, at import time, by modules that use
-    ``_use_threads_for_workload``, and cached in a module-level constant
-    there. Defaults to 2000 and can be overridden with the
-    ``SKLEARN_MIN_INSTRUCTIONS_PER_THREAD`` environment variable, for
-    experimentation.
+    The actual cost of dispatching an OpenMP parallel region varies a lot
+    across machines and OpenMP runtimes/configurations (e.g. whether idle
+    threads spin or sleep between parallel regions). Rather than guess at
+    it, this is measured empirically, once per process, by
+    ``_calibrate_min_instructions_per_thread`` the first time this function
+    is called; every call after that just returns the cached result.
     """
-    return int(os.environ.get("SKLEARN_MIN_INSTRUCTIONS_PER_THREAD", 2000))
+    global _MIN_INSTRUCTIONS_PER_THREAD
+    if _MIN_INSTRUCTIONS_PER_THREAD is None:
+        _MIN_INSTRUCTIONS_PER_THREAD = _calibrate_min_instructions_per_thread()
+    return _MIN_INSTRUCTIONS_PER_THREAD
+
+
+def _bench_empty_loop(Py_ssize_t repeats):
+    """Time ``repeats`` iterations of a bare nogil loop.
+
+    Used as a baseline to subtract from ``_bench_prange_dispatch``, to
+    isolate the cost of dispatching the parallel region itself from that of
+    the (otherwise identical) enclosing sequential bookkeeping.
+    """
+    cdef Py_ssize_t _r
+    t0 = perf_counter()
+    with nogil:
+        for _r in range(repeats):
+            pass
+    return perf_counter() - t0
+
+
+def _bench_prange_dispatch(int n_threads, Py_ssize_t repeats, Py_ssize_t idle_gap):
+    """Time ``repeats`` dispatches of a near-empty OpenMP parallel region.
+
+    Each dispatch parallelizes a loop with exactly one iteration per thread
+    (as close to "no actual work" as an OpenMP parallel region gets), so the
+    measured time is essentially the fixed cost of spinning up/joining the
+    thread team. ``idle_gap`` trivial sequential iterations are inserted
+    between dispatches, giving worker threads a short idle period before the
+    next one, similar to the gaps between the parallel regions this is
+    calibrating for.
+    """
+    cdef:
+        Py_ssize_t _r, _i, j
+        Py_ssize_t _sink = 0
+    t0 = perf_counter()
+    with nogil:
+        for _r in range(repeats):
+            for _i in prange(n_threads, schedule='static', num_threads=n_threads):
+                pass
+            for j in range(idle_gap):
+                _sink = j
+    return perf_counter() - t0
+
+
+def _calibrate_min_instructions_per_thread():
+    """Measure the actual cost of dispatching an OpenMP parallel region on
+    this machine, and convert it to the "simple instructions" unit that
+    ``_use_threads_for_workload`` uses.
+
+    ``n_threads``, ``repeats`` and ``idle_gap`` below were empirically found
+    to give stable, representative measurements: half the physical cores is
+    enough to exercise real thread dispatch/synchronization overhead without
+    over-subscribing on small machines; more repeats or a larger idle gap
+    did not noticeably change the result.
+
+    Falls back to ``_DEFAULT_MIN_INSTRUCTIONS_PER_THREAD`` if OpenMP is
+    disabled or the measurement fails or looks unreasonable for any reason
+    (this must never raise, since it runs implicitly on first use).
+    """
+    if not SKLEARN_OPENMP_PARALLELISM_ENABLED:
+        return _DEFAULT_MIN_INSTRUCTIONS_PER_THREAD
+
+    try:
+        try:
+            n_physical_cores = _CPU_COUNTS[True]
+        except KeyError:
+            n_physical_cores = cpu_count(only_physical_cores=True)
+            _CPU_COUNTS[True] = n_physical_cores
+        n_threads = max(2, n_physical_cores // 2)
+        repeats = 100
+        idle_gap = 10
+
+        # The very first OpenMP parallel region dispatched in a process pays
+        # for one-time thread pool creation (tens of us), on top of the
+        # steady-state dispatch cost this is trying to measure. Warm it up,
+        # untimed, before measuring.
+        _bench_prange_dispatch(n_threads, repeats, idle_gap)
+
+        baseline_per_repeat = _bench_empty_loop(repeats) / repeats
+
+        # Take several independent measurements and keep the minimum:
+        # external interference (CPU frequency scaling, other processes
+        # scheduler preemption, ...) can only ever slow a measurement down,
+        # never speed it up below the true steady-state dispatch cost,
+        # so the minimum across samples is the one least
+        # contaminated by such noise (the same reasoning `timeit` uses).
+        best_dispatch_seconds = None
+        for _ in range(7):
+            elapsed = _bench_prange_dispatch(n_threads, repeats, idle_gap)
+            dispatch_seconds = max(elapsed / repeats - baseline_per_repeat, 0.0)
+            if best_dispatch_seconds is None or dispatch_seconds < best_dispatch_seconds:
+                best_dispatch_seconds = dispatch_seconds
+
+        # The default (2000) was picked as the rough equivalent
+        # of ~1us of simple work, i.e. ~2e9 simple-instructions-per-second;
+        # convert the measured dispatch overhead to that unit:
+        measured = round(best_dispatch_seconds * 2e9)
+        return max(1, measured)
+    except Exception:
+        return _DEFAULT_MIN_INSTRUCTIONS_PER_THREAD
 
 
 def _openmp_parallelism_enabled():

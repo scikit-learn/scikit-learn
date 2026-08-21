@@ -45,10 +45,9 @@ cdef inline bint _use_threads_for_workload(
     # `if(...)` clause on the OpenMP construct, so no thread team is created
     # at all when it evaluates to false.
     #
-    # min_instructions_per_thread should be read once by the caller, at
-    # import time, via _min_instructions_per_thread() below (which honors
-    # the SKLEARN_MIN_INSTRUCTIONS_PER_THREAD env var) rather than
-    # re-derived on every call.
+    # min_instructions_per_thread should be obtained by the caller via
+    # _min_instructions_per_thread() (in _openmp_helpers.pyx), which caches
+    # it after calibrating it once, on first use, for the whole process.
     return (n_threads > 1) and (
         n_work_items * <long long> ops_per_item
         >= min_instructions_per_thread * <long long> n_threads
