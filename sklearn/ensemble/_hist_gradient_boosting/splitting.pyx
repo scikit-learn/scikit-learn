@@ -322,7 +322,7 @@ cdef class Splitter:
             # Each sample costs ~5 simple ops to classify/copy below.
             # but chunking cost extra work, so we reduce to 3
             bint use_threads = _use_threads_for_workload(
-                n_threads, n_samples, 3, _min_instructions_per_thread()
+                n_threads, n_samples, 3, _min_instructions_per_thread(n_threads)
             )
             # Probably always bad to parallelize for <1k samples
 
@@ -555,7 +555,7 @@ cdef class Splitter:
         # Each feature costs about 15 simple ops per bin scanned below.
         use_threads = _use_threads_for_workload(
             n_threads, n_split_candidates * histograms.shape[1], 15,
-            _min_instructions_per_thread(),
+            _min_instructions_per_thread(n_threads),
         )
         # Much slower than single threaded for: n_threads=128, n_split_candidates=50
         # => 128 x 2000 is greater than 50 x 256 x 15

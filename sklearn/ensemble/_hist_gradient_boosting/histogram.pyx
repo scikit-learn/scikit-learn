@@ -149,7 +149,7 @@ cdef class HistogramBuilder:
             int n_threads = self.n_threads
             bint use_threads_populate
             bint use_threads_features
-            long long min_instructions_per_thread = _min_instructions_per_thread()
+            long long min_instructions_per_thread = _min_instructions_per_thread(n_threads)
 
         if has_interaction_cst:
             n_allowed_features = allowed_features.shape[0]
@@ -289,7 +289,7 @@ cdef class HistogramBuilder:
         # Each (feature, bin) pair costs ~10 simple field subtractions below.
         use_threads = n_allowed_features > 1 and _use_threads_for_workload(
             n_threads, <long long> n_allowed_features * self.n_bins, 10,
-            _min_instructions_per_thread(),
+            _min_instructions_per_thread(n_threads),
         )
 
         # Compute histogram of each feature

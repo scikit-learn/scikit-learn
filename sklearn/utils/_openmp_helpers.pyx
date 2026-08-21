@@ -17,28 +17,47 @@ _CPU_COUNTS = {}
 # fails to produce a sensible measurement.
 _DEFAULT_MIN_INSTRUCTIONS_PER_THREAD = 2000
 
-# None means "not calibrated yet". Calibration always ends up setting this
-# to an int (falling back to the default above on any issue), so it only
-# ever runs once per process.
-_MIN_INSTRUCTIONS_PER_THREAD = None
+# Cache of calibrated values, keyed by thread-count "bucket" (see
+# `_min_instructions_per_thread`). Populated lazily: calibration always ends
+# up setting a bucket's entry to an int (falling back to the default above
+# on any issue), so a given bucket only ever gets calibrated once per
+# process.
+_MIN_INSTRUCTIONS_PER_THREAD_CACHE = {}
 
 
-def _min_instructions_per_thread():
+def _min_instructions_per_thread(n_threads):
     """Minimum amount of work (in ~simple-instruction units) that must be
     available per thread before bothering to parallelize a loop with
-    OpenMP; see ``_use_threads_for_workload`` in ``_openmp_helpers.pxd``.
+    ``n_threads`` threads via OpenMP; see ``_use_threads_for_workload`` in
+    ``_openmp_helpers.pxd``.
 
     The actual cost of dispatching an OpenMP parallel region varies a lot
     across machines and OpenMP runtimes/configurations (e.g. whether idle
     threads spin or sleep between parallel regions). Rather than guess at
-    it, this is measured empirically, once per process, by
-    ``_calibrate_min_instructions_per_thread`` the first time this function
-    is called; every call after that just returns the cached result.
+    it, this is measured empirically by ``_calibrate_min_instructions_per_thread``,
+    the first time a given team size is requested; every call after that
+    just returns the cached result.
+
+    Dispatch overhead does not scale linearly with the size of the thread
+    team (e.g. synchronizing a team spread across several NUMA nodes costs
+    more per thread than a small, single-socket one), so a single
+    process-wide calibration would be systematically wrong for some team
+    sizes. Calibrating separately for every distinct ``n_threads`` value
+    would fix that, but would also mean most calls pay for a fresh, uncached
+    calibration. As a middle ground, ``n_threads`` is rounded down to the
+    closest power of 2: this keeps the number of distinct calibrations (and
+    thus their one-off cost) small, while still capturing how dispatch
+    overhead grows with team size, since real team sizes rarely differ from
+    their rounded-down power of 2 by more than 2x.
     """
-    global _MIN_INSTRUCTIONS_PER_THREAD
-    if _MIN_INSTRUCTIONS_PER_THREAD is None:
-        _MIN_INSTRUCTIONS_PER_THREAD = _calibrate_min_instructions_per_thread()
-    return _MIN_INSTRUCTIONS_PER_THREAD
+    cdef int bucket = 1 << ((max(1, n_threads)).bit_length() - 1)
+
+    global _MIN_INSTRUCTIONS_PER_THREAD_CACHE
+    if bucket not in _MIN_INSTRUCTIONS_PER_THREAD_CACHE:
+        _MIN_INSTRUCTIONS_PER_THREAD_CACHE[bucket] = (
+            _calibrate_min_instructions_per_thread(bucket)
+        )
+    return _MIN_INSTRUCTIONS_PER_THREAD_CACHE[bucket]
 
 
 def _bench_prange_dispatch(int n_threads, Py_ssize_t repeats, Py_ssize_t idle_gap):
@@ -65,16 +84,18 @@ def _bench_prange_dispatch(int n_threads, Py_ssize_t repeats, Py_ssize_t idle_ga
     return perf_counter() - t0
 
 
-def _calibrate_min_instructions_per_thread():
-    """Measure the actual cost of dispatching an OpenMP parallel region on
-    this machine, and convert it to the "simple instructions" unit that
-    ``_use_threads_for_workload`` uses.
+def _calibrate_min_instructions_per_thread(n_threads):
+    """Measure the actual cost of dispatching an OpenMP parallel region with
+    a team of ``n_threads`` threads on this machine, and convert it to the
+    "simple instructions" unit that ``_use_threads_for_workload`` uses.
 
-    ``n_threads``, ``repeats`` and ``idle_gap`` below were empirically found
-    to give stable, representative measurements: half the physical cores is
-    enough to exercise real thread dispatch/synchronization overhead without
-    over-subscribing on small machines; more repeats or a larger idle gap
-    did not noticeably change the result.
+    ``repeats`` and ``idle_gap`` below were empirically found to give
+    stable, representative measurements. The outer measurement loop takes
+    the minimum over 25 independent draws rather than fewer: on busy/noisy
+    machines (e.g. shared, many-core servers), the estimate can still be
+    trending downward well past 7 draws, so a higher count reduces the
+    chance of caching a noise-inflated value for the lifetime of the
+    process.
 
     Falls back to ``_DEFAULT_MIN_INSTRUCTIONS_PER_THREAD`` if OpenMP is
     disabled or the measurement fails or looks unreasonable for any reason
@@ -84,12 +105,7 @@ def _calibrate_min_instructions_per_thread():
         return _DEFAULT_MIN_INSTRUCTIONS_PER_THREAD
 
     try:
-        try:
-            n_physical_cores = _CPU_COUNTS[True]
-        except KeyError:
-            n_physical_cores = cpu_count(only_physical_cores=True)
-            _CPU_COUNTS[True] = n_physical_cores
-        n_threads = max(2, n_physical_cores // 2)
+        n_threads = max(2, n_threads)
         repeats = 100
         idle_gap = 10
 
@@ -106,7 +122,7 @@ def _calibrate_min_instructions_per_thread():
         # so the minimum across samples is the one least
         # contaminated by such noise (the same reasoning `timeit` uses).
         best_dispatch_seconds = None
-        for _ in range(7):
+        for _ in range(25):
             elapsed = _bench_prange_dispatch(n_threads, repeats, idle_gap)
             dispatch_seconds = elapsed / repeats
             if best_dispatch_seconds is None or dispatch_seconds < best_dispatch_seconds:

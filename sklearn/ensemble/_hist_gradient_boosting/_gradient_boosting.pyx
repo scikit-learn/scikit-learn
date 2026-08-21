@@ -58,7 +58,7 @@ cdef inline void _update_raw_predictions_helper(
         # Across all leaves, exactly n_samples positions are visited, each
         # costing ~3 simple ops (indirect index, add, store) below.
         bint use_threads = _use_threads_for_workload(
-            n_threads, n_samples, 3, _min_instructions_per_thread()
+            n_threads, n_samples, 3, _min_instructions_per_thread(n_threads)
         )
 
     for leaf_idx in prange(n_leaves, schedule='static', nogil=True,
