@@ -41,7 +41,7 @@
   padding: 0;
 }
 
-/* The first selector is the scrollable container itself, which is focusable. */
+/* The first selector is the scrollable container itself which is focusable. */
 .sk-global:focus-visible,
 .sk-global :focus-visible {
   outline: 2px solid var(--sklearn-color-focus);
