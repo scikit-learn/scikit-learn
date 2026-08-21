@@ -41,21 +41,6 @@ def _min_instructions_per_thread():
     return _MIN_INSTRUCTIONS_PER_THREAD
 
 
-def _bench_empty_loop(Py_ssize_t repeats):
-    """Time ``repeats`` iterations of a bare nogil loop.
-
-    Used as a baseline to subtract from ``_bench_prange_dispatch``, to
-    isolate the cost of dispatching the parallel region itself from that of
-    the (otherwise identical) enclosing sequential bookkeeping.
-    """
-    cdef Py_ssize_t _r
-    t0 = perf_counter()
-    with nogil:
-        for _r in range(repeats):
-            pass
-    return perf_counter() - t0
-
-
 def _bench_prange_dispatch(int n_threads, Py_ssize_t repeats, Py_ssize_t idle_gap):
     """Time ``repeats`` dispatches of a near-empty OpenMP parallel region.
 
@@ -114,8 +99,6 @@ def _calibrate_min_instructions_per_thread():
         # untimed, before measuring.
         _bench_prange_dispatch(n_threads, repeats, idle_gap)
 
-        baseline_per_repeat = _bench_empty_loop(repeats) / repeats
-
         # Take several independent measurements and keep the minimum:
         # external interference (CPU frequency scaling, other processes
         # scheduler preemption, ...) can only ever slow a measurement down,
@@ -125,7 +108,7 @@ def _calibrate_min_instructions_per_thread():
         best_dispatch_seconds = None
         for _ in range(7):
             elapsed = _bench_prange_dispatch(n_threads, repeats, idle_gap)
-            dispatch_seconds = max(elapsed / repeats - baseline_per_repeat, 0.0)
+            dispatch_seconds = elapsed / repeats
             if best_dispatch_seconds is None or dispatch_seconds < best_dispatch_seconds:
                 best_dispatch_seconds = dispatch_seconds
 
