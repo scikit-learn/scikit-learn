@@ -89,7 +89,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         )
         self.n_features_in_ = n_features
 
-        if self.categories != "auto":
+        if self.categories != "auto" and self.categories != "frequency":
             if len(self.categories) != n_features:
                 raise ValueError(
                     "Shape mismatch: if categories is an array,"
@@ -110,6 +110,20 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     category_counts.append(counts)
                 else:
                     cats = result
+            elif self.categories == "frequency":
+                unique_vals, counts = _unique(X_list[i], return_counts=True)
+                local_decoder = {}
+                count_sort_idx = np.argsort(counts)
+                sorted_unique_vals = unique_vals[count_sort_idx]
+                encoder_mapping = dict()
+                for idx, val in enumerate(sorted_unique_vals):
+                    encoder_mapping[val] = idx
+                    local_decoder[idx] = val
+                if compute_counts:
+                    cats =  np.array(list(encoder_mapping.keys()))
+                    category_counts.append(counts)
+                else:
+                    cats = np.array(list(encoder_mapping.keys()))
             else:
                 if np.issubdtype(Xi.dtype, np.str_):
                     # Always convert string categories to objects to avoid
@@ -1260,6 +1274,9 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         Categories (unique values) per feature:
 
         - 'auto' : Determine categories automatically from the training data.
+        - 'frequency' : Determine categories automatically based on the most
+          frequency of the samples.The least frequent is encoded 0 the second
+          lest frequent is encoded 1 and so on. 
         - list : ``categories[i]`` holds the categories expected in the ith
           column. The passed categories should not mix strings and numeric
           values, and should be sorted in case of numeric values.
@@ -1419,7 +1436,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
     """
 
     _parameter_constraints: dict = {
-        "categories": [StrOptions({"auto"}), list],
+        "categories": [StrOptions({"auto","frequency"}), list],
         "dtype": "no_validation",  # validation delegated to numpy
         "encoded_missing_value": [Integral, type(np.nan)],
         "handle_unknown": [StrOptions({"error", "use_encoded_value"})],
