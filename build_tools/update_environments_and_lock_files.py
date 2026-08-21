@@ -324,10 +324,21 @@ build_metadata_list = [
         + [
             "wheel",
             "pip",
+            # Listed explicitly (it is otherwise a transitive dependency of blas) so
+            # that the constraint below is applied.
+            # Remove when the constraint on libopenblas is removed.
+            "libopenblas",
         ],
         "package_constraints": {
             "python": "3.11",
             "blas": "[build=openblas]",
+            # OpenBLAS 0.3.34 makes the Windows test runs segfault intermittently
+            # ("Windows fatal exception: access violation" inside gemm and LAPACK calls,
+            # crashing xdist workers). 0.3.33 is unaffected. Only 0.3.34 is excluded so
+            # that a later release is picked up automatically.
+            # See https://github.com/scikit-learn/scikit-learn/issues/34717
+            # TODO: remove once a fixed OpenBLAS is available.
+            "libopenblas": "!=0.3.34",
         },
     },
     {
