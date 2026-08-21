@@ -49,6 +49,7 @@ def test_regression_dataset(n_bins):
         max_leaf_nodes=max_leaf_nodes,
         n_bins=n_bins,
         n_bins_non_missing=mapper.n_bins_non_missing_,
+        n_threads=n_threads,
     )
     grower.grow()
 

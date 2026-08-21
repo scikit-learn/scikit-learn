@@ -815,7 +815,11 @@ def test_sum_hessians_are_sample_weight(Loss):
 
     # Build histogram
     grower = TreeGrower(
-        X_binned, gradients[:, 0], hessians[:, 0], n_bins=bin_mapper.n_bins
+        X_binned,
+        gradients[:, 0],
+        hessians[:, 0],
+        n_bins=bin_mapper.n_bins,
+        n_threads=n_threads,
     )
     histograms = grower.histogram_builder.compute_histograms_brute(
         grower.root.sample_indices
@@ -1762,3 +1766,106 @@ def test_pandas_nullable_dtype():
 
     clf = HistGradientBoostingClassifier()
     clf.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "HistGradientBoosting",
+    [HistGradientBoostingClassifier, HistGradientBoostingRegressor],
+)
+def test_max_features_less_than_one_does_not_crash(HistGradientBoosting):
+    # Non regression test: `Splitter.find_best_split` allocates a
+    # `split_infos` buffer sized for all allowed features, but used to only
+    # populate the first `n_subsampled_features` (< n_allowed_features
+    # whenever `max_features < 1`) entries before scanning the whole buffer
+    # to pick the best split. The unpopulated entries held uninitialized
+    # memory, which could be selected as the "best" split and later crash
+    # `Splitter.split_indices` with
+    # `OverflowError: value too large to convert to unsigned char` when its
+    # garbage `bin_idx` didn't fit in a uint8.
+    rng = np.random.RandomState(0)
+    X = rng.randn(2000, 20)
+    if HistGradientBoosting is HistGradientBoostingClassifier:
+        y = rng.randint(0, 2, size=2000)
+    else:
+        y = rng.randn(2000)
+
+    est = HistGradientBoosting(max_features=0.5, max_iter=50, random_state=0)
+    est.fit(X, y)  # should not raise
+
+
+def _get_heuristic_n_threads(max_n_threads, n_samples, n_features):
+    return hgb_module.BaseHistGradientBoosting._get_heurirstic_optimal_n_threads(
+        max_n_threads, n_samples, n_features
+    )
+
+
+@pytest.mark.parametrize(
+    "max_n_threads, n_samples, n_features",
+    [
+        (1, 1, 1),
+        (1, 10**7, 1000),
+        (64, 1, 1),
+        (8, 10, 2),
+        (8, 10**7, 2),
+        (32, 10**5, 500),
+    ],
+)
+def test_get_heuristic_optimal_n_threads_bounds(max_n_threads, n_samples, n_features):
+    # The heuristic should never recommend using fewer than 1 thread, nor more
+    # than the threads actually available.
+    n_threads = _get_heuristic_n_threads(max_n_threads, n_samples, n_features)
+    assert isinstance(n_threads, int)
+    assert 1 <= n_threads <= max_n_threads
+
+
+def test_get_heuristic_optimal_n_threads_max_n_threads_one():
+    # However large the workload, there is nothing to parallelize over when
+    # only one thread is available.
+    for n_samples, n_features in [(1, 1), (10**7, 1), (1, 1000), (10**7, 1000)]:
+        assert _get_heuristic_n_threads(1, n_samples, n_features) == 1
+
+
+def test_get_heuristic_optimal_n_threads_tiny_workload():
+    # A single sample and a single feature is as small as a workload gets:
+    # thread management overhead would dominate, whatever the thread budget.
+    assert _get_heuristic_n_threads(64, 1, 1) == 1
+
+
+def test_get_heuristic_optimal_n_threads_monotonic_in_n_features():
+    # More features to parallelize over should never make the heuristic
+    # recommend fewer threads, and it should saturate at max_n_threads once
+    # there is at least one feature per thread -- provided the total workload
+    # is large enough that a full-sized team is actually worth it (see
+    # test_get_heuristic_optimal_n_threads_many_features_few_samples for the
+    # opposite case, where it isn't).
+    max_n_threads = 8
+    n_threads_by_n_features = [
+        _get_heuristic_n_threads(
+            max_n_threads, n_samples=10**5, n_features=n_features
+        )
+        for n_features in [1, 2, 4, 8, 16, 100]
+    ]
+    assert n_threads_by_n_features == sorted(n_threads_by_n_features)
+    assert n_threads_by_n_features[-1] == max_n_threads
+
+
+def test_get_heuristic_optimal_n_threads_many_features_few_samples():
+    # Many features alone should not push the heuristic all the way to
+    # max_n_threads when the total workload (roughly n_samples * n_features)
+    # is tiny:
+    n_threads = _get_heuristic_n_threads(
+        max_n_threads=128, n_samples=100, n_features=2000
+    )
+    print(n_threads)
+    assert 1 < n_threads < 100
+
+
+def test_get_heuristic_optimal_n_threads_monotonic_in_n_samples():
+    # More samples to parallelize over should never make the heuristic
+    # recommend fewer threads.
+    max_n_threads = 8
+    n_threads_by_n_samples = [
+        _get_heuristic_n_threads(max_n_threads, n_samples=n_samples, n_features=2)
+        for n_samples in [1, 10, 100, 1000, 10**4, 10**5, 10**6, 10**7]
+    ]
+    assert n_threads_by_n_samples == sorted(n_threads_by_n_samples)

@@ -13,6 +13,8 @@ from sklearn.ensemble._hist_gradient_boosting.common import HISTOGRAM_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common cimport hist_struct
 from sklearn.ensemble._hist_gradient_boosting.common cimport X_BINNED_DTYPE_C
 from sklearn.ensemble._hist_gradient_boosting.common cimport G_H_DTYPE_C
+from sklearn.utils._openmp_helpers cimport _use_threads_for_workload
+from sklearn.utils._openmp_helpers import _min_instructions_per_thread
 from sklearn.utils._typedefs cimport uint8_t
 
 
@@ -127,7 +129,7 @@ cdef class HistogramBuilder:
             The computed histograms of the current node.
         """
         cdef:
-            int n_samples
+            int n_samples = sample_indices.shape[0]
             int feature_idx
             int f_idx
             int i
@@ -145,30 +147,48 @@ cdef class HistogramBuilder:
             )
             bint has_interaction_cst = allowed_features is not None
             int n_threads = self.n_threads
+            bint use_threads_populate
+            bint use_threads_features
+            long long min_instructions_per_thread = _min_instructions_per_thread(n_threads)
 
         if has_interaction_cst:
             n_allowed_features = allowed_features.shape[0]
 
-        with nogil:
-            n_samples = sample_indices.shape[0]
+        # Empirically measured (see benchmarks/bench_hgb_ops_per_item.py):
+        # each sample costs ~1-2 simple ops to reorder below, and each
+        # (feature, sample) pair costs ~1-2 simple ops to bin/accumulate.
+        use_threads_populate = _use_threads_for_workload(
+            n_threads, n_samples,
+            2 - hessians_are_constant,
+            min_instructions_per_thread
+        )
+        use_threads_features = n_allowed_features > 1 and _use_threads_for_workload(
+            n_threads, <long long> n_allowed_features * n_samples,
+            2 - hessians_are_constant,
+            min_instructions_per_thread,
+        )
 
+        with nogil:
             # Populate ordered_gradients and ordered_hessians. (Already done
             # for root) Ordering the gradients and hessians helps to improve
             # cache hit.
             if sample_indices.shape[0] != gradients.shape[0]:
                 if hessians_are_constant:
                     for i in prange(n_samples, schedule='static',
-                                    num_threads=n_threads):
+                                    num_threads=n_threads,
+                                    use_threads_if=use_threads_populate):
                         ordered_gradients[i] = gradients[sample_indices[i]]
                 else:
                     for i in prange(n_samples, schedule='static',
-                                    num_threads=n_threads):
+                                    num_threads=n_threads,
+                                    use_threads_if=use_threads_populate):
                         ordered_gradients[i] = gradients[sample_indices[i]]
                         ordered_hessians[i] = hessians[sample_indices[i]]
 
             # Compute histogram of each feature
             for f_idx in prange(
-                n_allowed_features, schedule='static', num_threads=n_threads
+                n_allowed_features, schedule='static', num_threads=n_threads,
+                use_threads_if=use_threads_features
             ):
                 if has_interaction_cst:
                     feature_idx = allowed_features[f_idx]
@@ -262,13 +282,21 @@ cdef class HistogramBuilder:
             int n_allowed_features = self.n_features
             bint has_interaction_cst = allowed_features is not None
             int n_threads = self.n_threads
+            bint use_threads
 
         if has_interaction_cst:
             n_allowed_features = allowed_features.shape[0]
 
+        # Each (feature, bin) pair costs ~3 simple field subtractions below
+        # (empirically measured, see benchmarks/bench_hgb_ops_per_item.py).
+        use_threads = n_allowed_features > 1 and _use_threads_for_workload(
+            n_threads, <long long> n_allowed_features * self.n_bins, 3,
+            _min_instructions_per_thread(n_threads),
+        )
+
         # Compute histogram of each feature
         for f_idx in prange(n_allowed_features, schedule='static', nogil=True,
-                            num_threads=n_threads):
+                            num_threads=n_threads, use_threads_if=use_threads):
             if has_interaction_cst:
                 feature_idx = allowed_features[f_idx]
             else:

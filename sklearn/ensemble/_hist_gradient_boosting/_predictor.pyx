@@ -6,12 +6,19 @@ from libc.math cimport isnan
 import numpy as np
 
 from sklearn.utils._bitset cimport BITSET_INNER_DTYPE_C, in_bitset_2d_memoryview
+from sklearn.utils._openmp_helpers cimport _use_threads_for_workload
+from sklearn.utils._openmp_helpers import _min_instructions_per_thread
 from sklearn.utils._typedefs cimport intp_t, uint8_t
 from sklearn.ensemble._hist_gradient_boosting.common cimport X_DTYPE_C
 from sklearn.ensemble._hist_gradient_boosting.common cimport Y_DTYPE_C
 from sklearn.ensemble._hist_gradient_boosting.common import Y_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common cimport X_BINNED_DTYPE_C
 from sklearn.ensemble._hist_gradient_boosting.common cimport node_struct
+
+
+# Cost, in simple ops, of traversing the tree for a single sample
+# (empirically measured, see benchmarks/bench_hgb_ops_per_item.py).
+cdef int PREDICT_ONE_OPS = 25
 
 
 def _predict_from_raw_data(  # raw data = non-binned data
@@ -25,9 +32,13 @@ def _predict_from_raw_data(  # raw data = non-binned data
 
     cdef:
         int i
+        int n_samples = numeric_data.shape[0]
+        bint use_threads = _use_threads_for_workload(
+            n_threads, n_samples, PREDICT_ONE_OPS, _min_instructions_per_thread(n_threads)
+        )
 
-    for i in prange(numeric_data.shape[0], schedule='static', nogil=True,
-                    num_threads=n_threads):
+    for i in prange(n_samples, schedule='static', nogil=True,
+                    num_threads=n_threads, use_threads_if=use_threads):
         out[i] = _predict_one_from_raw_data(
             nodes, numeric_data, raw_left_cat_bitsets,
             known_cat_bitsets,
@@ -95,9 +106,13 @@ def _predict_from_binned_data(
 
     cdef:
         int i
+        int n_samples = binned_data.shape[0]
+        bint use_threads = _use_threads_for_workload(
+            n_threads, n_samples, PREDICT_ONE_OPS, _min_instructions_per_thread(n_threads)
+        )
 
-    for i in prange(binned_data.shape[0], schedule='static', nogil=True,
-                    num_threads=n_threads):
+    for i in prange(n_samples, schedule='static', nogil=True,
+                    num_threads=n_threads, use_threads_if=use_threads):
         out[i] = _predict_one_from_binned_data(nodes,
                                                binned_data,
                                                binned_left_cat_bitsets, i,
