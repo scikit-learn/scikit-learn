@@ -63,8 +63,30 @@ H = pca.fit_transform(X)  # Reconstruct signals based on orthogonal components
 # ------------
 
 import matplotlib.pyplot as plt
+from scipy.optimize import (
+    linear_sum_assignment,
+)
 
 plt.figure()
+
+
+# Reorder the ICA and PCA components to match ground truth
+def sort_signals(true_signals, recovered_signals):
+    n_signals = true_signals.shape[1]
+
+    # Compute correlation matrix
+    correlation = np.corrcoef(true_signals.T, recovered_signals.T)[
+        :n_signals, n_signals:
+    ]
+    # Find optimal one-to-one assignment
+    _, col_idx = linear_sum_assignment(-np.abs(correlation))
+
+    return recovered_signals[:, col_idx]
+
+
+H = sort_signals(S, H)
+S_ = sort_signals(S, S_)
+
 
 models = [X, S, S_, H]
 names = [
