@@ -250,6 +250,7 @@ METRIC_MAPPING{{name_suffix}} = {
     'jaccard': JaccardDistance{{name_suffix}},
     'dice': DiceDistance{{name_suffix}},
     'kulsinski': KulsinskiDistance{{name_suffix}},
+    'precomputed': PrecomputedDistanceMatrix{{name_suffix}},
     'rogerstanimoto': RogersTanimotoDistance{{name_suffix}},
     'russellrao': RussellRaoDistance{{name_suffix}},
     'sokalmichener': SokalMichenerDistance{{name_suffix}},
@@ -356,6 +357,18 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
     "sokalmichener"    SokalMichenerDistance    2 * NNEQ / (N + NNEQ)
     "sokalsneath"      SokalSneathDistance      NNEQ / (NNEQ + 0.5 * NTT)
     =================  =======================  ===============================
+
+    **Metrics with precomputed distances:** Any user can compute a distance
+    matrix and provide access to the distances, neighbors and other
+    data defined in this interface. The precomputed distance matrix should be
+    (n_samples_X, n_samples_Y) shape fulfilling the properties of a valid distance
+    metric.
+    
+    =================  =========================  ===============================
+    identifier         class name                 distance function
+    -----------------  -------------------------  -------------------------------
+    "precomputed"      PrecomputedDistanceMatrix  predefined
+    =================  =========================  ===============================
 
     **User-defined distance:**
 

@@ -77,7 +77,7 @@ class BaseDistancesReductionDispatcher:
             "hamming",
             *BOOL_METRICS,
         }
-        return sorted(({"sqeuclidean"} | set(METRIC_MAPPING64.keys())) - excluded)
+        return sorted(({"sqeuclidean", "precomputed"} | set(METRIC_MAPPING64.keys())) - excluded)
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
