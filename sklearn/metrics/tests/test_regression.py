@@ -492,7 +492,9 @@ def test_regression_custom_weights():
     assert_almost_equal(msle, msle2, decimal=2)
 
 
-@pytest.mark.parametrize("metric", [r2_score, d2_tweedie_score, d2_pinball_score])
+@pytest.mark.parametrize(
+    "metric", [r2_score, d2_tweedie_score, d2_pinball_score, d2_absolute_error_score]
+)
 def test_regression_single_sample(metric):
     y_true = [0]
     y_pred = [1]
