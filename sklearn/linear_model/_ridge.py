@@ -981,12 +981,17 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         # which can apply centering algebraically from X_offset instead of on
         # a materialized centered copy of X. This avoids an O(n_samples *
         # n_features) pass over X for what is the most common Ridge shape.
+        # Array API dispatch to a non-numpy namespace always resolves "auto"
+        # (and forbids explicit "cholesky") to "svd" instead (see
+        # resolve_solver), which needs X to actually be centered, so this
+        # fast path must not engage there.
         use_no_center_cholesky = (
             self.fit_intercept
             and not sparse.issparse(X)
             and sample_weight is None
             and not self.positive
             and solver in ("auto", "cholesky")
+            and _is_numpy_namespace(xp)
             and X.shape[0] >= X.shape[1]
         )
 
