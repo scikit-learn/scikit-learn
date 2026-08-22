@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import pytest
 
@@ -568,3 +570,20 @@ def test_knn_imputer_distance_weighted_not_enough_neighbors(na, working_memory):
 def test_knn_tags(na, allow_nan):
     knn = KNNImputer(missing_values=na)
     assert knn.__sklearn_tags__().input_tags.allow_nan == allow_nan
+
+
+def test_knn_imputer_single_feature_warns():
+    X = np.array([[1], [2], [np.nan], [4]])
+    imputer = KNNImputer(n_neighbors=2)
+
+    with pytest.warns(UserWarning, match="only one feature"):
+        imputer.fit(X)
+
+
+def test_knn_imputer_multi_feature_no_warning():
+    X = np.array([[1, 5], [2, 6], [np.nan, 7], [4, 8]])
+    imputer = KNNImputer(n_neighbors=2)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        imputer.fit(X)
