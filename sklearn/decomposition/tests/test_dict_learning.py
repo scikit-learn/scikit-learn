@@ -295,6 +295,34 @@ def test_dict_learning_split():
     Xr2 = dico.inverse_transform(split_code)
     assert_array_almost_equal(Xr, Xr2)
 
+    # get_feature_names_out matches 2 * n_components
+    assert len(dico.get_feature_names_out()) == 2 * n_components
+
+    # fit_transform applies split_sign
+    dico_fit_trans = DictionaryLearning(
+        n_components, transform_algorithm="threshold", split_sign=True, random_state=0
+    )
+    code_fit_trans = dico_fit_trans.fit_transform(X)
+    assert code_fit_trans.shape == (n_samples, 2 * n_components)
+
+    # dtype preservation for float32
+    X_f32 = X.astype(np.float32)
+    assert dico.transform(X_f32).dtype == np.float32
+
+    # SparseCoder and MiniBatchDictionaryLearning
+    sc = SparseCoder(
+        dictionary=dico.components_, transform_algorithm="threshold", split_sign=True
+    )
+    assert len(sc.get_feature_names_out()) == 2 * n_components
+    assert sc.transform(X_f32).dtype == np.float32
+
+    mb = MiniBatchDictionaryLearning(
+        n_components, transform_algorithm="threshold", split_sign=True, random_state=0
+    ).fit(X)
+    assert len(mb.get_feature_names_out()) == 2 * n_components
+    assert mb.transform(X_f32).dtype == np.float32
+
+
 
 def test_dict_learning_online_shapes():
     rng = np.random.RandomState(0)

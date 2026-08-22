@@ -1113,7 +1113,7 @@ class _BaseSparseCoding(ClassNamePrefixFeaturesOutMixin, TransformerMixin):
         if self.split_sign:
             # feature vector is split into a positive and negative side
             n_samples, n_features = code.shape
-            split_code = np.empty((n_samples, 2 * n_features))
+            split_code = np.empty((n_samples, 2 * n_features), dtype=code.dtype)
             split_code[:, :n_features] = np.maximum(code, 0)
             split_code[:, n_features:] = -np.minimum(code, 0)
             code = split_code
@@ -1411,7 +1411,8 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
     @property
     def _n_features_out(self):
         """Number of transformed output features."""
-        return self.n_components_
+        n_features = self.n_components_
+        return 2 * n_features if self.split_sign else n_features
 
 
 class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
@@ -1744,12 +1745,21 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.components_ = U
         self.error_ = E
 
+        if self.split_sign:
+            # feature vector is split into a positive and negative side
+            n_samples, n_features = V.shape
+            split_code = np.empty((n_samples, 2 * n_features), dtype=V.dtype)
+            split_code[:, :n_features] = np.maximum(V, 0)
+            split_code[:, n_features:] = -np.minimum(V, 0)
+            V = split_code
+
         return V
 
     @property
     def _n_features_out(self):
         """Number of transformed output features."""
-        return self.components_.shape[0]
+        n_features = self.components_.shape[0]
+        return 2 * n_features if self.split_sign else n_features
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -2333,7 +2343,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     @property
     def _n_features_out(self):
         """Number of transformed output features."""
-        return self.components_.shape[0]
+        n_features = self.components_.shape[0]
+        return 2 * n_features if self.split_sign else n_features
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
