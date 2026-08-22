@@ -1,0 +1,6 @@
+- :class:`tree.ExtraTreeRegressor`, :class:`tree.ExtraTreeClassifier`
+  now have native support for categorical features, including multi-class
+  classification and multi-output targets. Categorical features can be specified
+  with the `categorical_features` parameter. Up to ``2**24 - 1`` categories per
+  feature are supported via random hash splits.
+  By :user:`Adam Li <adam2392>` and :user:`Adrin Jalali <adrinjalali>`
