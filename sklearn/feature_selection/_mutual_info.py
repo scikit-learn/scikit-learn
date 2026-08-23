@@ -378,9 +378,10 @@ def mutual_info_regression(
         see [2]_ and [3]_. Higher values reduce variance of the estimation, but
         could introduce a bias.
 
-    copy : bool, default=True
-        Whether to make a copy of the given data. If set to False, the initial
-        data will be overwritten.
+   copy : bool, default=True
+        Whether to copy the input. If False, the original array will be
+        modified in-place (small noise is added to continuous features to
+        prevent zero distances).
 
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for adding small noise to
