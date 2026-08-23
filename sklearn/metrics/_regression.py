@@ -245,6 +245,12 @@ def _check_reg_targets_with_floating_dtype(
     return y_type, y_true, y_pred, sample_weight, multioutput
 
 
+def _num_effective_samples(y, sample_weight, xp):
+    if sample_weight is None:
+        return _num_samples(y)
+    return int(xp.count_nonzero(sample_weight))
+
+
 @validate_params(
     {
         "y_true": ["array-like"],
@@ -1310,7 +1316,7 @@ def r2_score(
         )
     )
 
-    if _num_samples(y_pred) < 2:
+    if _num_effective_samples(y_pred, sample_weight, xp) < 2:
         msg = "R^2 score is not well-defined with less than two samples."
         warnings.warn(msg, UndefinedMetricWarning)
         return float("nan")
@@ -1694,7 +1700,7 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     if y_type == "continuous-multioutput":
         raise ValueError("Multioutput not supported in d2_tweedie_score")
 
-    if _num_samples(y_pred) < 2:
+    if _num_effective_samples(y_pred, sample_weight, xp) < 2:
         msg = "D^2 score is not well-defined with less than two samples."
         warnings.warn(msg, UndefinedMetricWarning)
         return float("nan")
@@ -1837,7 +1843,7 @@ def d2_pinball_score(
         )
     )
 
-    if _num_samples(y_pred) < 2:
+    if _num_effective_samples(y_pred, sample_weight, xp) < 2:
         msg = "D^2 score is not well-defined with less than two samples."
         warnings.warn(msg, UndefinedMetricWarning)
         return float("nan")

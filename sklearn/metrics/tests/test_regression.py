@@ -492,7 +492,10 @@ def test_regression_custom_weights():
     assert_almost_equal(msle, msle2, decimal=2)
 
 
-@pytest.mark.parametrize("metric", [r2_score, d2_tweedie_score, d2_pinball_score])
+@pytest.mark.parametrize(
+    "metric",
+    [r2_score, d2_tweedie_score, d2_pinball_score, d2_absolute_error_score],
+)
 def test_regression_single_sample(metric):
     y_true = [0]
     y_pred = [1]
@@ -502,6 +505,21 @@ def test_regression_single_sample(metric):
     with pytest.warns(UndefinedMetricWarning, match=warning_msg):
         score = metric(y_true, y_pred)
         assert np.isnan(score)
+
+
+@pytest.mark.parametrize(
+    "metric",
+    [r2_score, d2_tweedie_score, d2_pinball_score, d2_absolute_error_score],
+)
+def test_regression_single_effective_sample(metric):
+    y_true = [0, 100]
+    y_pred = [1, -999]
+    sample_weight = [1, 0]
+
+    warning_msg = "not well-defined with less than two samples."
+    with pytest.warns(UndefinedMetricWarning, match=warning_msg):
+        score = metric(y_true, y_pred, sample_weight=sample_weight)
+    assert np.isnan(score)
 
 
 def test_tweedie_deviance_continuity(global_random_seed):
