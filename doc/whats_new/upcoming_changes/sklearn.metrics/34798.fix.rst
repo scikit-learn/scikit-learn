@@ -1,0 +1,6 @@
+- :func:`metrics.r2_score`, :func:`metrics.d2_tweedie_score`,
+  :func:`metrics.d2_pinball_score`, and :func:`metrics.d2_absolute_error_score` now
+  return a NaN score with an :class:`exceptions.UndefinedMetricWarning` when zero
+  sample weights leave fewer than two observations, instead of returning a finite
+  score or raising a ``ZeroDivisionError``.
+  By :user:`A Aswanth Raj <aswanth-07>`.
