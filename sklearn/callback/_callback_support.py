@@ -184,9 +184,7 @@ class CallbackSupportMixin:
             return callback_params
         for hook_name in ("on_fit_task_begin", "on_fit_task_end"):
             for i, cb in enumerate(getattr(self, "_skl_callbacks", [])):
-                if hasattr(cb, "_accept_sample_weight") and cb._accept_sample_weight(
-                    hook_name
-                ):
+                if cb._accept_sample_weight(hook_name):
                     callback_params[hook_name] = {"sample_weight": sample_weight}
                     break
         return callback_params
