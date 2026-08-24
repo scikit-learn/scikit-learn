@@ -1338,8 +1338,7 @@ def export_dict(
     if class_names is not None:
         if not single_output_clf:
             raise ValueError(
-                "class_names is only supported for single-output "
-                "classification trees."
+                "class_names is only supported for single-output classification trees."
             )
         class_names = check_array(
             class_names, ensure_2d=False, dtype=None, ensure_min_samples=0

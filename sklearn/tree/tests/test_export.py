@@ -788,9 +788,7 @@ def test_export_dict():
     assert "feature" not in tree_dict["left"]
     assert "left" not in tree_dict["left"]
 
-    tree_dict = export_dict(
-        clf, feature_names=["a", "b"], class_names=["neg", "pos"]
-    )
+    tree_dict = export_dict(clf, feature_names=["a", "b"], class_names=["neg", "pos"])
     assert tree_dict["feature_name"] == "b"
     assert tree_dict["left"]["class"] == "neg"
     assert tree_dict["right"]["class"] == "pos"
