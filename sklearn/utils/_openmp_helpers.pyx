@@ -1,5 +1,4 @@
 import os
-import numpy as np
 from time import perf_counter
 
 from cython.parallel import prange
@@ -67,24 +66,33 @@ def _use_threads_for_workload(workload_size, n_threads):
     This compares the estimated serial runtime against the estimated parallel runtime
     and only recommends threading if that is actually faster.
     """
+    if n_threads == 1:
+        return False
     t_serial = workload_size / 2e9
     t_parallelized = (
         t_serial / n_threads
         + _omp_prange_dispatch_overhead(n_threads)
     )
 
-    return (n_threads > 1) and t_parallelized < t_serial
+    return t_parallelized < t_serial
 
 
 def _optimal_n_threads_for_workload(workload_size, max_n_threads):
     t_serial = workload_size / 2e9
-    times = [t_serial]
+    best_t = t_serial
+    best_n_threads = 1
     for n_threads in range(2, max_n_threads + 1):
-        times.append(
+        t_parallelized = (
             t_serial / n_threads
             + _omp_prange_dispatch_overhead(n_threads)
         )
-    return np.argmin(times) + 1
+        if t_parallelized > t_serial:
+            break
+        elif t_parallelized < best_t:
+            best_t = best_t
+            best_n_threads = n_threads
+
+    return best_n_threads
 
 
 def _bench_prange_dispatch(int n_threads, Py_ssize_t n_repeats):

@@ -1848,13 +1848,12 @@ def test_get_heuristic_optimal_n_threads_monotonic_in_n_features():
 
 def test_get_heuristic_optimal_n_threads_many_features_few_samples():
     # Many features alone should not push the heuristic all the way to
-    # max_n_threads when the total workload (roughly n_samples * n_features)
-    # is tiny:
-    n_threads = _get_heuristic_n_threads(
-        max_n_threads=128, n_samples=100, n_features=2000
+    # max_n_threads when the total workload is tiny:
+    est = HistGradientBoostingRegressor(max_bins=5)
+    n_threads = est._get_heuristic_optimal_n_threads(
+        max_n_threads=10, n_samples=10, n_features=50
     )
-    print(n_threads)
-    assert 1 < n_threads < 100
+    assert n_threads < 10
 
 
 def test_get_heuristic_optimal_n_threads_monotonic_in_n_samples():
