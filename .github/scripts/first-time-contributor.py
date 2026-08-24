@@ -5,7 +5,7 @@ Called from .github/workflows/first-time-contributor.yml.
 
 import os
 
-from github import Auth, Github
+from github import Github
 
 GITHUB_REPO = os.getenv("GITHUB_REPO")
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
