@@ -48,6 +48,7 @@ from sklearn.utils._array_api import (
     get_namespace,
     get_namespace_and_device,
     move_to,
+    supported_float_dtypes,
 )
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.extmath import row_norms, safe_sparse_dot
@@ -976,6 +977,8 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
+        X_is_sparse = sparse.issparse(X)
+
         # Dense X with n_features <= n_samples, no sample weights, and a solver
         # that resolves to "cholesky" hits _solve_cholesky's primal branch,
         # which can apply centering algebraically from X_offset instead of on
@@ -987,7 +990,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         # fast path must not engage there.
         use_no_center_cholesky = (
             self.fit_intercept
-            and not sparse.issparse(X)
+            and not X_is_sparse
             and sample_weight is None
             and not self.positive
             and solver in ("auto", "cholesky")
@@ -995,12 +998,49 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             and X.shape[0] >= X.shape[1]
         )
 
+        # `Ridge.fit`'s own `validate_data` call already dtype-checked (to
+        # one of `supported_float_dtypes`), shape-checked and finite-checked
+        # X and y, so _preprocess_data's own check_array pass over them is
+        # redundant when X is already one of those dtypes: no dtype, shape or
+        # finiteness fact can have changed in between, and dense arrays have
+        # no accept_sparse-driven format conversion to perform. This can't be
+        # assumed unconditionally though:
+        # - RidgeClassifier reaches here through `_prepare_data`, whose own
+        #   `validate_data` call does *not* request a float dtype, so X can
+        #   still be e.g. int64 -- in which case check_array's dtype
+        #   coercion is the only place that ever converts it, and skipping
+        #   it left `y -= y_offset` trying to write float into an int64 y.
+        # - For sparse X, check_input=True also converts non-csr/csc formats
+        #   such as coo (which some solvers' accept_sparse legitimately
+        #   allows through unconverted) into a format `mean_variance_axis`
+        #   requires -- skipping that breaks e.g.
+        #   `Ridge(solver="lsqr").fit(X_coo, y)` with `fit_intercept=True`.
+        # Scoped to the numpy namespace like the rest of this fast path:
+        # the dtype/shape/finite guarantee from `validate_data` should hold
+        # equally for other array-API namespaces, but that isn't verified
+        # here, and this optimization only targets the CPU/numpy case.
+        check_input = (
+            X_is_sparse
+            or not _is_numpy_namespace(xp)
+            or X.dtype not in supported_float_dtypes(xp)
+        )
+
         # when X is sparse we only remove offset from y
         X, y, X_offset, y_offset, X_scale, _ = _preprocess_data(
             X,
             y,
             fit_intercept=self.fit_intercept,
-            copy=self.copy_X,
+            # On the no-center fast path X is never mutated (no `X -=
+            # X_offset`, and `_solve_cholesky` only reads from X), so the
+            # defensive copy that `copy_X` exists for is unneeded there,
+            # regardless of what the user passed: skip it. Elsewhere, X *is*
+            # mutated in place below (`X -= X_offset`) and `validate_data`
+            # commonly returns the caller's own array unchanged (it only
+            # copies when actually needed, e.g. to fix up writeability), so
+            # `copy_X` must still be honored there to avoid silently
+            # mutating the caller's array when they asked not to.
+            copy=False if use_no_center_cholesky else self.copy_X,
+            check_input=check_input,
             sample_weight=sample_weight,
             rescale_with_sw=False,
             center_X=not use_no_center_cholesky,
