@@ -152,15 +152,14 @@ cdef class HistogramBuilder:
         if has_interaction_cst:
             n_allowed_features = allowed_features.shape[0]
 
-        # Empirically measured (see benchmarks/bench_hgb_ops_per_item.py):
-        # each sample costs ~1-2 simple ops to reorder below, and each
-        # (feature, sample) pair costs ~1-2 simple ops to bin/accumulate.
+        # Numbers of ops per items are empirically measured
+        # (see benchmarks/bench_hgb_ops_per_item.py):
         use_threads_populate = _use_threads_for_workload(
             n_samples * (2 - hessians_are_constant),
             n_threads,
         )
         use_threads_features = n_allowed_features > 1 and _use_threads_for_workload(
-            n_allowed_features * n_samples * (2 - hessians_are_constant),
+            n_allowed_features * n_samples * (3 - hessians_are_constant),
             n_threads
         )
 
@@ -283,10 +282,9 @@ cdef class HistogramBuilder:
         if has_interaction_cst:
             n_allowed_features = allowed_features.shape[0]
 
-        # Each (feature, bin) pair costs ~3 simple field subtractions below
-        # (empirically measured, see benchmarks/bench_hgb_ops_per_item.py).
+        # 5 is empirically measured, see benchmarks/bench_hgb_ops_per_item.py:
         use_threads = n_allowed_features > 1 and _use_threads_for_workload(
-            n_allowed_features * self.n_bins * 3, n_threads
+            n_allowed_features * self.n_bins * 5, n_threads
         )
 
         # Compute histogram of each feature

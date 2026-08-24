@@ -318,21 +318,15 @@ cdef class Splitter:
             BITSET_INNER_DTYPE_C [:] cat_bitset_tmp = split_info.left_cat_bitset
             BITSET_DTYPE_C left_cat_bitset
             int n_threads = self.n_threads
-            # Empirically measured (see benchmarks/bench_hgb_ops_per_item.py):
-            # ~3 simple ops per sample to classify/copy below for a plain
-            # numerical split, ~7 with missing values (extra branch), ~9 for
-            # a categorical split (bitset lookup). The split being applied is
-            # a single one, so which of these applies is known exactly here,
-            # unlike in find_node_split which scans many features at once.
+            # Empirically measured (see benchmarks/calibrate_hgb_ops_per_item.py):
             int split_indices_ops = (
-                9 if is_categorical
-                else 7 if self.has_missing_values[feature_idx]
-                else 3
+                15 if is_categorical
+                else 8 if self.has_missing_values[feature_idx]
+                else 4
             )
             bint use_threads = _use_threads_for_workload(
                 n_samples * split_indices_ops, n_threads
             )
-            # Probably always bad to parallelize for <1k samples
 
             int right_child_position
             unsigned int [::1] left_indices_buffer = self.left_indices_buffer
@@ -560,16 +554,15 @@ cdef class Splitter:
             if has_interaction_cst:
                 split_features = allowed_features
 
-        # Each feature costs about 5 simple ops per bin scanned below for
+        # Each feature costs about 6 simple ops per bin scanned below for
         # plain numerical features (empirically measured, see
         # benchmarks/bench_hgb_ops_per_item.py, consistent across very
         # different machines); missing values roughly double that (bins are
         # scanned twice, see the missing_go_to_left loop below) and
-        # categorical features cost several times more (~30), but this
-        # doesn't distinguish between feature kinds, so it stays
-        # conservative for the common, mostly-plain-numerical case.
+        # categorical features cost several times more (~40), but this
+        # doesn't distinguish between feature kinds, so it takes an in-between:
         use_threads = _use_threads_for_workload(
-            n_split_candidates * histograms.shape[1] * 5, n_threads
+            n_split_candidates * histograms.shape[1] * 9, n_threads
         )
 
         with nogil:

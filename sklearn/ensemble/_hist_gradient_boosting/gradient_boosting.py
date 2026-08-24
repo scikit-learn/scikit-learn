@@ -975,12 +975,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         """
 
         # This is called once per fit, with the full training set's shape,
-        # and the resulting n_threads is then reused for every node of every
-        # tree even though the actual per-node workload shrinks as nodes get
-        # deeper/smaller. `self.max_bins * 2` is a floor on that per-node
-        # workload, modeling how small it can get once splitting bottoms out
-        # (we could compute an expected depth to make this more accurate).
-        features_parallel_work = max(n_samples, self.max_bins * 2) * n_features
+        # and the resulting n_threads is then reused for every node of every tree
+        # even though the actual per-node workload shrinks as nodes get deeper/smaller.
+        # To account for that we use smaller per-item costs than what is returned by
+        # benchmarks/bench_hgb_ops_per_item.py
+        features_parallel_work = max(n_samples, self.max_bins * 4) * n_features
         samples_parallel_work = n_samples / 2
         n_threads = _optimal_n_threads_for_workload(
             features_parallel_work, max_n_threads
