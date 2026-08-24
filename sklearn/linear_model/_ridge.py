@@ -1012,7 +1012,6 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             sample_weight=sample_weight,
             rescale_with_sw=False,
             center_X=not use_no_center_cholesky,
-            fast_mean_X=use_no_center_cholesky,
         )
 
         if solver == "sag" and X_is_sparse and self.fit_intercept:

@@ -26,7 +26,6 @@ from sklearn.utils._array_api import (
     _asarray_with_order,
     _average,
     _expit,
-    _is_numpy_namespace,
     check_same_namespace,
     get_namespace,
     get_namespace_and_device,
@@ -121,7 +120,6 @@ def _preprocess_data(
     check_input=True,
     rescale_with_sw=True,
     center_X=True,
-    fast_mean_X=False,
 ):
     """Common data preprocessing for fitting linear models.
 
@@ -155,15 +153,6 @@ def _preprocess_data(
     centering algebraically from `X_offset` instead of on a materialized
     centered copy of `X`). It has no effect on sparse `X`, which is never
     centered in place regardless.
-
-    `fast_mean_X=True` computes `X_offset` (for dense, unweighted, numpy `X`)
-    as a single BLAS gemv (`(1 / n_samples) @ X`) instead of `X.mean(axis=0)`.
-    This is faster but sums in a different order, so it is opt-in and meant
-    only for callers whose downstream numerics are insensitive to the tiny
-    (~1e-16 relative) resulting difference in `X_offset` -- e.g. it is not
-    used by default because it can change tie-breaking in combinatorial
-    solvers such as LARS, or avoid an overflow-to-inf that some code
-    (knowingly or not) relies on for extreme-magnitude `X`.
 
     Returns
     -------
@@ -208,12 +197,8 @@ def _preprocess_data(
         if X_is_sparse:
             X_offset, X_var = mean_variance_axis(X, axis=0, weights=sample_weight)
         else:
-            if fast_mean_X and sample_weight is None and _is_numpy_namespace(xp):
-                ones_over_n = xp.full(n_samples, 1.0 / n_samples, dtype=X.dtype)
-                X_offset = ones_over_n @ X
-            else:
-                X_offset = _average(X, axis=0, weights=sample_weight, xp=xp)
-                X_offset = xp.astype(X_offset, X.dtype, copy=False)
+            X_offset = _average(X, axis=0, weights=sample_weight, xp=xp)
+            X_offset = xp.astype(X_offset, X.dtype, copy=False)
 
             if center_X:
                 X -= X_offset
