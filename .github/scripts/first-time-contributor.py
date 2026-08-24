@@ -5,7 +5,7 @@ Called from .github/workflows/first-time-contributor.yml.
 
 import os
 
-from github import Github
+from github import Auth, Github
 
 GITHUB_REPO = os.getenv("GITHUB_REPO")
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
@@ -52,7 +52,7 @@ def is_not_ready(issue):
     )
 
 
-gh = Github(GITHUB_TOKEN)
+gh = Github(autAuth.Token(GITHUB_TOKEN))
 repo = gh.get_repo(GITHUB_REPO)
 pr = repo.get_pull(PR_NUMBER)
 
