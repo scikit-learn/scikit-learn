@@ -2,6 +2,7 @@
 Testing for export functions of decision trees (sklearn.tree.export).
 """
 
+import json
 from io import StringIO
 from re import finditer, search
 from textwrap import dedent
@@ -15,6 +16,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.tree import (
     DecisionTreeClassifier,
     DecisionTreeRegressor,
+    export_dict,
     export_graphviz,
     export_text,
     plot_tree,
@@ -771,3 +773,186 @@ def test_not_fitted_tree(pyplot):
     clf = DecisionTreeRegressor()
     with pytest.raises(NotFittedError):
         plot_tree(clf)
+
+
+def test_export_dict():
+    clf = DecisionTreeClassifier(max_depth=2, random_state=0)
+    clf.fit(X, y)
+    tree_dict = export_dict(clf)
+
+    assert tree_dict["node_id"] == 0
+    assert tree_dict["feature"] == 1
+    assert tree_dict["threshold"] == 0.0
+    assert tree_dict["left"]["class"] == -1
+    assert tree_dict["right"]["class"] == 1
+    assert "feature" not in tree_dict["left"]
+    assert "left" not in tree_dict["left"]
+
+    tree_dict = export_dict(
+        clf, feature_names=["a", "b"], class_names=["neg", "pos"]
+    )
+    assert tree_dict["feature_name"] == "b"
+    assert tree_dict["left"]["class"] == "neg"
+    assert tree_dict["right"]["class"] == "pos"
+
+    X_mo = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
+    y_mo = [[-1, -1], [-1, -1], [-1, -1], [1, 1], [1, 1], [1, 1]]
+    reg = DecisionTreeRegressor(max_depth=2, random_state=0)
+    reg.fit(X_mo, y_mo)
+    tree_dict = export_dict(reg, decimals=1)
+    assert "class" not in tree_dict["left"]
+    assert tree_dict["left"]["value"] == [[-1.0], [-1.0]]
+    assert tree_dict["right"]["value"] == [[1.0], [1.0]]
+
+
+def test_export_dict_max_depth():
+    X_l = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [-1, 1]]
+    y_l = [-1, -1, -1, 1, 1, 1, 2]
+    clf = DecisionTreeClassifier(max_depth=4, random_state=0)
+    clf.fit(X_l, y_l)
+
+    full = export_dict(clf)
+    truncated = export_dict(clf, max_depth=0)
+
+    assert "left" in full["right"]
+    assert truncated["right"]["truncated"] is True
+    assert "left" not in truncated["right"]
+    assert "value" in truncated["right"]
+    assert "class" in truncated["right"]
+
+
+def test_export_dict_json_round_trip():
+    clf = DecisionTreeClassifier(max_depth=2, random_state=0)
+    clf.fit(X, y)
+    tree_dict = export_dict(clf, feature_names=["a", "b"])
+
+    assert json.loads(json.dumps(tree_dict)) == tree_dict
+
+
+def test_export_dict_matches_export_text():
+    X_l = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [-1, 1]]
+    y_l = [-1, -1, -1, 1, 1, 1, 2]
+    clf = DecisionTreeClassifier(max_depth=4, random_state=0)
+    clf.fit(X_l, y_l)
+    tree_dict = export_dict(clf)
+    text_report = export_text(clf, max_depth=10)
+
+    leaves = []
+
+    def collect_leaves(node):
+        if "left" in node:
+            collect_leaves(node["left"])
+            collect_leaves(node["right"])
+        else:
+            leaves.append(node["class"])
+
+    collect_leaves(tree_dict)
+    expected = [
+        int(line.rsplit(":", 1)[1])
+        for line in text_report.splitlines()
+        if "class:" in line
+    ]
+    assert leaves == expected
+
+
+def test_export_dict_default_decimals_matches_predict():
+    X_l = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [-1, 1]]
+    y_l = [-1, -1, -1, 1, 1, 1, 2]
+    clf = DecisionTreeClassifier(max_depth=4, random_state=0)
+    clf.fit(X_l, y_l)
+    tree_dict = export_dict(clf)
+
+    def route(node, x):
+        while "left" in node:
+            v = x[node["feature"]]
+            node = node["left"] if v <= node["threshold"] else node["right"]
+        return node["class"]
+
+    thresholds = []
+
+    def collect(node):
+        if "left" in node:
+            thresholds.append((node["feature"], node["threshold"]))
+            collect(node["left"])
+            collect(node["right"])
+
+    collect(tree_dict)
+
+    for feature, threshold in thresholds:
+        for sign in (-1, 1):
+            x = np.array(X_l[0], dtype=float)
+            x[feature] = threshold + sign * 1e-6
+            assert route(tree_dict, x) == clf.predict([x])[0]
+
+
+def test_export_dict_rounding_changes_routing():
+    X_r = np.array([[0.0], [1.0], [1.75], [1.751], [3.0], [3.5]])
+    y_r = [0, 0, 0, 1, 1, 1]
+    clf = DecisionTreeClassifier(max_depth=1, random_state=0).fit(X_r, y_r)
+
+    x_boundary = np.array([1.76])
+    true_pred = clf.predict([x_boundary])[0]
+
+    def route(node, x):
+        while "left" in node:
+            v = x[node["feature"]]
+            node = node["left"] if v <= node["threshold"] else node["right"]
+        return node["class"]
+
+    assert route(export_dict(clf), x_boundary) == true_pred
+    rounded = export_dict(clf, decimals=1)
+    assert rounded["threshold"] == 1.8
+    assert route(rounded, x_boundary) != true_pred
+
+
+def test_export_dict_string_class_labels():
+    y_str = ["neg", "neg", "neg", "pos", "pos", "pos"]
+    clf = DecisionTreeClassifier(max_depth=2, random_state=0).fit(X, y_str)
+    tree_dict = export_dict(clf)
+
+    assert tree_dict["left"]["class"] == "neg"
+    assert isinstance(tree_dict["left"]["class"], str)
+    json.dumps(tree_dict)
+
+
+def test_export_dict_out_file(tmp_path):
+    clf = DecisionTreeClassifier(max_depth=2, random_state=0)
+    clf.fit(X, y)
+    tree_dict = export_dict(clf)
+
+    path = tmp_path / "tree.json"
+    result = export_dict(clf, str(path))
+    assert result == tree_dict
+    with open(path) as f:
+        assert json.load(f) == tree_dict
+
+    buf = StringIO()
+    result = export_dict(clf, out_file=buf)
+    assert result == tree_dict
+    assert json.loads(buf.getvalue()) == tree_dict
+    assert not buf.closed
+
+
+def test_export_dict_errors():
+    clf = DecisionTreeClassifier(max_depth=2, random_state=0)
+    clf.fit(X, y)
+
+    err_msg = "feature_names must contain 2 elements, got 1"
+    with pytest.raises(ValueError, match=err_msg):
+        export_dict(clf, feature_names=["a"])
+
+    err_msg = (
+        "When `class_names` is an array, it should contain as"
+        " many items as `decision_tree.classes_`. Got 1 while"
+        " the tree was fitted with 2 classes."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        export_dict(clf, class_names=["a"])
+
+    reg = DecisionTreeRegressor(max_depth=2, random_state=0)
+    reg.fit(X, y)
+    with pytest.raises(ValueError, match="only supported for single-output"):
+        export_dict(reg, class_names=["a"])
+
+    with pytest.raises(NotFittedError):
+        export_dict(DecisionTreeClassifier())
