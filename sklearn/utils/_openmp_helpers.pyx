@@ -89,7 +89,7 @@ def _optimal_n_threads_for_workload(workload_size, max_n_threads):
         if t_parallelized > t_serial:
             break
         elif t_parallelized < best_t:
-            best_t = best_t
+            best_t = t_parallelized
             best_n_threads = n_threads
 
     return best_n_threads
