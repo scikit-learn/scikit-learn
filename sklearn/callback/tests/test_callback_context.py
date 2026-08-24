@@ -13,17 +13,19 @@ from sklearn.callback._callback_context import (
     _from_reconstruction_attributes,
     get_context_path,
 )
-from sklearn.callback.tests._utils import (
-    MaxIterEstimator,
-    MetaEstimator,
-    NoCallbackEstimator,
-    NoSubtaskEstimator,
+from sklearn.callback.tests._common.callbacks import (
     NotRequiredKwargsCallback,
-    ParentFitEstimator,
     RecordingAutoPropagatedCallback,
     RecordingCallback,
     SampleWeightCallback,
     StopFitCallback,
+)
+from sklearn.callback.tests._common.estimators import (
+    MaxIterEstimator,
+    MetaEstimator,
+    NoCallbackEstimator,
+    NoSubtaskEstimator,
+    ParentFitEstimator,
     ThirdPartyEstimator,
 )
 

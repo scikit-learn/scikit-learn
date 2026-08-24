@@ -1674,7 +1674,7 @@ class _MetadataRequester:
         if issubclass(cls, FitCallback):
             ignore_params.update({"estimator", "context", "fitted_estimator"})
 
-        params = defaultdict(
+        params: defaultdict[str, Optional[Union[bool, str]]] = defaultdict(
             str,
             {
                 param_name: None

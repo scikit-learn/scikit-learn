@@ -17,7 +17,7 @@ import textwrap
 import pytest
 
 from sklearn.callback import ProgressBar, ScoringMonitor
-from sklearn.callback.tests._utils import MaxIterEstimator
+from sklearn.callback.tests._common.estimators import MaxIterEstimator
 from sklearn.datasets import make_regression
 
 

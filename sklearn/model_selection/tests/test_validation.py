@@ -13,7 +13,7 @@ from scipy.sparse import issparse
 
 from sklearn import config_context
 from sklearn.base import BaseEstimator, ClassifierMixin, clone, is_classifier
-from sklearn.callback.tests._utils import RecordingCallback
+from sklearn.callback.tests._common.callbacks import RecordingCallback
 from sklearn.cluster import KMeans
 from sklearn.datasets import (
     load_diabetes,
