@@ -1,4 +1,5 @@
 import os
+import numpy as np
 from time import perf_counter
 
 from cython.parallel import prange
@@ -73,6 +74,17 @@ def _use_threads_for_workload(workload_size, n_threads):
     )
 
     return (n_threads > 1) and t_parallelized < t_serial
+
+
+def _optimal_n_threads_for_workload(workload_size, max_n_threads):
+    t_serial = workload_size / 2e9
+    times = [t_serial]
+    for n_threads in range(2, max_n_threads + 1):
+        times.append(
+            t_serial / n_threads
+            + _omp_prange_dispatch_overhead(n_threads)
+        )
+    return np.argmin(times) + 1
 
 
 def _bench_prange_dispatch(int n_threads, Py_ssize_t n_repeats):

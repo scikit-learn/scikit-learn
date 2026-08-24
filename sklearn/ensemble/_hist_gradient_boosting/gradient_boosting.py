@@ -44,7 +44,7 @@ from sklearn.utils import check_random_state, compute_sample_weight, resample
 from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._openmp_helpers import (
     _openmp_effective_n_threads,
-    _use_threads_for_workload,
+    _optimal_n_threads_for_workload,
 )
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
 from sklearn.utils.multiclass import check_classification_targets
@@ -974,12 +974,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         (``n_samples``, ``n_features``) to avoid that.
         """
 
-        # Compute the per-thread chunk size first, then derive how many threads
-        # are actually needed to cover n_features with that chunk size: this can
-        # be lower than max_n_threads, avoiding threads with little to no work.
-        n_features_per_thread = math.ceil(n_features / max_n_threads)
-        n_threads = math.ceil(n_features / n_features_per_thread)
-
         # This is called once per fit, with the full training set's shape,
         # and the resulting n_threads is then reused for every node of every
         # tree even though the actual per-node workload shrinks as nodes get
@@ -988,27 +982,24 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # (we could compute an expected depth to make this more accurate).
         features_parallel_work = max(n_samples, self.max_bins * 3) * n_features
         samples_parallel_work = n_samples / 2
+        n_threads = _optimal_n_threads_for_workload(
+            features_parallel_work, max_n_threads
+        )
 
-        if not _use_threads_for_workload(features_parallel_work, n_threads):
-            # The dataset is too small to benefit from `n_threads` threads
-            # over features: shrink it.
-            adjusted_n_threads = 1
-            while adjusted_n_threads < max_n_threads and _use_threads_for_workload(
-                features_parallel_work, adjusted_n_threads + 1
-            ):
-                adjusted_n_threads += 1
+        # Compute the per-thread chunk size first, then derive how many threads
+        # are actually needed to cover n_features with that chunk size: this can
+        # be lower than max_n_threads, avoiding threads with little to no work.
+        n_features_per_thread = math.ceil(n_features / n_threads)
+        n_threads = math.ceil(n_features / n_features_per_thread)
 
-            n_features_per_thread = math.ceil(n_features / adjusted_n_threads)
-            n_threads = math.ceil(n_features / n_features_per_thread)
-        elif _use_threads_for_workload(samples_parallel_work, n_threads):
-            # The dataset has enough samples that a larger team could still
-            # pay off when parallelizing over n_samples (e.g. apply_split),
-            # even though features_parallel_work alone didn't need it: grow
-            # n_threads to capture that.
-            while n_threads < max_n_threads and _use_threads_for_workload(
-                samples_parallel_work, n_threads + 1
-            ):
-                n_threads += 1
+        # The dataset has enough samples that a larger team could still
+        # pay off when parallelizing over n_samples (e.g. apply_split),
+        # even though features_parallel_work alone didn't need it: grow
+        # n_threads to capture that.
+        n_threads = max(
+            n_threads,
+            _optimal_n_threads_for_workload(samples_parallel_work, max_n_threads),
+        )
 
         return n_threads
 
