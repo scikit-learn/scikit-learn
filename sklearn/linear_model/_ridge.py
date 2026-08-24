@@ -389,17 +389,16 @@ def _solve_lbfgs(
     return coefs
 
 
-def _get_valid_accept_sparse(is_X_sparse, solver):
+def _get_valid_accept_sparse(is_X_sparse, solver, fit_intercept=False):
     if is_X_sparse and solver in ["auto", "sag", "saga"]:
         # sag/saga's Cython solver needs actual CSR structure to run.
         return "csr"
-    else:
-        # Every other sparse-capable code path (_solve_sparse_cg, _solve_lsqr,
-        # _preprocess_data's mean_variance_axis, ...) only ever goes through
-        # generic scipy sparse ops or explicitly requires csr/csc, so there is
-        # no need to accept (and thus convert downstream) other formats such
-        # as coo here.
+    elif is_X_sparse and fit_intercept:
+        # when `fit_intercept=True`, `mean_variance_axis` will be called on X
+        # and it requires csr/csc format
         return ["csr", "csc"]
+    else:
+        return ["csr", "csc", "coo"]
 
 
 @validate_params(
@@ -1003,26 +1002,11 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             and X.shape[0] >= X.shape[1]
         )
 
-        # Both `Ridge.fit` and `RidgeClassifier._prepare_data` already run
-        # `validate_data` with a matching `dtype`/`accept_sparse` contract
-        # (the latter via `_get_valid_accept_sparse`, same as above), so by
-        # the time X and y reach here they're already a supported float
-        # dtype and, if sparse, already csr/csc -- check_input=False below
-        # trusts that instead of having _preprocess_data redo it.
-        # (when X is sparse we only remove the offset from y)
         X, y, X_offset, y_offset, X_scale, _ = _preprocess_data(
             X,
             y,
             fit_intercept=self.fit_intercept,
-            # On the no-center fast path X is never mutated (no `X -=
-            # X_offset`, and `_solve_cholesky` only reads from X), so the
-            # defensive copy that `copy_X` exists for is unneeded there,
-            # regardless of what the user passed: skip it. Elsewhere, X *is*
-            # mutated in place below (`X -= X_offset`) and `validate_data`
-            # commonly returns the caller's own array unchanged (it only
-            # copies when actually needed, e.g. to fix up writeability), so
-            # `copy_X` must still be honored there to avoid silently
-            # mutating the caller's array when they asked not to.
+            # When `use_no_center_cholesky=True`, X is never mutated:
             copy=False if use_no_center_cholesky else self.copy_X,
             check_input=False,
             sample_weight=sample_weight,
@@ -1311,7 +1295,9 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         self : object
             Fitted estimator.
         """
-        _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), self.solver)
+        _accept_sparse = _get_valid_accept_sparse(
+            sparse.issparse(X), self.solver, self.fit_intercept
+        )
         xp, _, device = get_namespace_and_device(X)
         y, sample_weight = move_to(y, sample_weight, xp=xp, device=device)
 
@@ -1385,7 +1371,9 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         Y : ndarray of shape (n_samples, n_classes)
             The binarized version of `y`.
         """
-        accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), solver)
+        accept_sparse = _get_valid_accept_sparse(
+            sparse.issparse(X), solver, self.fit_intercept
+        )
         xp, _, device = get_namespace_and_device(X)
         sample_weight = move_to(sample_weight, xp=xp, device=device)
         X, y = validate_data(
