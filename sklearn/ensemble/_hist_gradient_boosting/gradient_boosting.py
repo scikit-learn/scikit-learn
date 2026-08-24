@@ -43,8 +43,8 @@ from sklearn.preprocessing import FunctionTransformer, LabelEncoder, OrdinalEnco
 from sklearn.utils import check_random_state, compute_sample_weight, resample
 from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._openmp_helpers import (
-    _min_instructions_per_thread,
     _openmp_effective_n_threads,
+    _use_threads_for_workload,
 )
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
 from sklearn.utils.multiclass import check_classification_targets
@@ -67,34 +67,6 @@ _LOSSES.update(
         "quantile": PinballLoss,
     }
 )
-
-
-def _max_n_threads_for_workload(n_work_items, ops_per_item, max_n_threads):
-    """Largest n_threads (<= max_n_threads, at least 1) for which a workload
-    of ``n_work_items`` items, each costing about ``ops_per_item`` simple
-    instructions, actually clears the calibrated dispatch-overhead threshold
-    that ``_use_threads_for_workload`` uses: requesting more threads than
-    this just means downstream parallel regions veto the team and run
-    serially anyway, wasting its dispatch cost for nothing.
-
-    Searches from 1 thread upward rather than from ``max_n_threads`` down:
-    ``_min_instructions_per_thread`` calibrates lazily per power-of-2 team
-    size the first time that size is requested, and calibrating a large team
-    is itself much more expensive than a small one (synchronizing more
-    threads takes longer). Most workloads end up recommending a small
-    ``n_threads``, so climbing from 1 means the (cheap) small-team buckets
-    get calibrated first and the (expensive) large-team ones are only
-    touched when the workload actually clears every smaller size first,
-    instead of unconditionally paying for the largest one up front.
-    """
-    max_n_threads = max(1, max_n_threads)
-    total_work = n_work_items * ops_per_item
-    n_threads = 1
-    while n_threads < max_n_threads and (
-        total_work >= _min_instructions_per_thread(n_threads + 1) * (n_threads + 1)
-    ):
-        n_threads += 1
-    return n_threads
 
 
 def _update_leaves_values(loss, grower, y_true, raw_prediction, sample_weight):
@@ -644,7 +616,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         n_samples, n_features = X_binned_train.shape
 
-        n_threads = self._get_heurirstic_optimal_n_threads(
+        n_threads = self._get_heuristic_optimal_n_threads(
             max_n_threads, n_samples, n_features
         )
 
@@ -992,55 +964,53 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         del self._in_fit  # hard delete so we're sure it can't be used anymore
         return self
 
-    @staticmethod
-    def _get_heurirstic_optimal_n_threads(max_n_threads, n_samples, n_features):
-        """
-        Using the maximum number of available threads regardless of the size of
-        the workload can be counter-productive: parallelizing over very few
-        features or samples adds thread-management overhead that outweighs the
-        benefit. This balances ``max_n_threads`` against ``n_features`` (so that
-        threads are not left idle or unevenly loaded) and against ``n_samples``
-        (so that small datasets use fewer threads).
+    def _get_heuristic_optimal_n_threads(self, max_n_threads, n_samples, n_features):
+        """Heuristic for the number of threads to use throughout a fit.
+
+        Using the maximum number of available threads regardless of the size
+        of the workload can be counter-productive: thread dispatch overhead
+        can end up outweighing the actual work. This balances
+        ``max_n_threads`` against the size of the training set
+        (``n_samples``, ``n_features``) to avoid that.
         """
 
         # Compute the per-thread chunk size first, then derive how many threads
         # are actually needed to cover n_features with that chunk size: this can
         # be lower than max_n_threads, avoiding threads with little to no work.
         n_features_per_thread = math.ceil(n_features / max_n_threads)
-        n_threads_needed_for_features = math.ceil(n_features / n_features_per_thread)
+        n_threads = math.ceil(n_features / n_features_per_thread)
 
-        # How many threads a purely per-sample workload (e.g. split_indices,
-        # update_raw_predictions: ~3 simple ops/sample) actually supports given
-        # the calibrated dispatch overhead. This makes sure large-n_samples,
-        # few-n_features workloads still get enough threads, without relying on
-        # an arbitrary log-scale guess.
-        n_threads_for_samples_wise_parallelism = _max_n_threads_for_workload(
-            n_samples, ops_per_item=3, max_n_threads=max_n_threads
-        )
+        # This is called once per fit, with the full training set's shape,
+        # and the resulting n_threads is then reused for every node of every
+        # tree even though the actual per-node workload shrinks as nodes get
+        # deeper/smaller. `self.max_bins * 3` is a floor on that per-node
+        # workload, modeling how small it can get once splitting bottoms out
+        # (we could compute an expected depth to make this more accurate).
+        features_parallel_work = max(n_samples, self.max_bins * 3) * n_features
+        samples_parallel_work = n_samples / 2
 
-        n_threads = min(
-            max_n_threads,
-            max(
-                1,
-                n_threads_needed_for_features,
-                n_threads_for_samples_wise_parallelism,
-            ),
-        )
+        if not _use_threads_for_workload(features_parallel_work, n_threads):
+            # The dataset is too small to benefit from `n_threads` threads
+            # over features: shrink it.
+            adjusted_n_threads = 1
+            while adjusted_n_threads < max_n_threads and _use_threads_for_workload(
+                features_parallel_work, adjusted_n_threads + 1
+            ):
+                adjusted_n_threads += 1
 
-        # The above only looks at n_features and n_samples separately, so with
-        # many features but few samples it can still pick a large n_threads
-        # even though the actual per-node workload is tiny. If that team turns
-        # out too large for the workload, every downstream parallel region
-        # (histogram building, splitting, ...) vetoes it via
-        # `_use_threads_for_workload` and runs serially anyway, wasting the
-        # larger team's setup cost for nothing. Shrink n_threads until the
-        # root node's histogram-building work (the largest, most
-        # representative per-node workload over a fit, using the cheapest
-        # constant-hessian per-item cost from histogram.pyx as a conservative
-        # lower bound) would actually clear that same threshold.
-        return _max_n_threads_for_workload(
-            n_samples * n_features, ops_per_item=7, max_n_threads=n_threads
-        )
+            n_features_per_thread = math.ceil(n_features / adjusted_n_threads)
+            n_threads = math.ceil(n_features / n_features_per_thread)
+        elif _use_threads_for_workload(samples_parallel_work, n_threads):
+            # The dataset has enough samples that a larger team could still
+            # pay off when parallelizing over n_samples (e.g. apply_split),
+            # even though features_parallel_work alone didn't need it: grow
+            # n_threads to capture that.
+            while n_threads < max_n_threads and _use_threads_for_workload(
+                samples_parallel_work, n_threads + 1
+            ):
+                n_threads += 1
+
+        return n_threads
 
     def _is_fitted(self):
         return len(getattr(self, "_predictors", [])) > 0

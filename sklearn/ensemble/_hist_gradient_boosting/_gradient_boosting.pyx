@@ -6,8 +6,7 @@ import numpy as np
 
 from sklearn.ensemble._hist_gradient_boosting.common import Y_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common cimport Y_DTYPE_C
-from sklearn.utils._openmp_helpers cimport _use_threads_for_workload
-from sklearn.utils._openmp_helpers import _min_instructions_per_thread
+from sklearn.utils._openmp_helpers import _use_threads_for_workload
 
 
 def _update_raw_predictions(
@@ -58,9 +57,7 @@ cdef inline void _update_raw_predictions_helper(
         # Across all leaves, exactly n_samples positions are visited, each
         # costing ~1 simple op (indirect index, add, store) below
         # (empirically measured, see benchmarks/bench_hgb_ops_per_item.py).
-        bint use_threads = _use_threads_for_workload(
-            n_threads, n_samples, 1, _min_instructions_per_thread(n_threads)
-        )
+        bint use_threads = _use_threads_for_workload(n_samples, n_threads)
 
     for leaf_idx in prange(n_leaves, schedule='static', nogil=True,
                            num_threads=n_threads, use_threads_if=use_threads):

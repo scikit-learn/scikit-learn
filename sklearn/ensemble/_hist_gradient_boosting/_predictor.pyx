@@ -6,8 +6,7 @@ from libc.math cimport isnan
 import numpy as np
 
 from sklearn.utils._bitset cimport BITSET_INNER_DTYPE_C, in_bitset_2d_memoryview
-from sklearn.utils._openmp_helpers cimport _use_threads_for_workload
-from sklearn.utils._openmp_helpers import _min_instructions_per_thread
+from sklearn.utils._openmp_helpers import _use_threads_for_workload
 from sklearn.utils._typedefs cimport intp_t, uint8_t
 from sklearn.ensemble._hist_gradient_boosting.common cimport X_DTYPE_C
 from sklearn.ensemble._hist_gradient_boosting.common cimport Y_DTYPE_C
@@ -34,7 +33,7 @@ def _predict_from_raw_data(  # raw data = non-binned data
         int i
         int n_samples = numeric_data.shape[0]
         bint use_threads = _use_threads_for_workload(
-            n_threads, n_samples, PREDICT_ONE_OPS, _min_instructions_per_thread(n_threads)
+            n_samples * PREDICT_ONE_OPS, n_threads
         )
 
     for i in prange(n_samples, schedule='static', nogil=True,
@@ -108,7 +107,7 @@ def _predict_from_binned_data(
         int i
         int n_samples = binned_data.shape[0]
         bint use_threads = _use_threads_for_workload(
-            n_threads, n_samples, PREDICT_ONE_OPS, _min_instructions_per_thread(n_threads)
+            n_samples * PREDICT_ONE_OPS, n_threads
         )
 
     for i in prange(n_samples, schedule='static', nogil=True,

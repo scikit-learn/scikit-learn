@@ -18,8 +18,7 @@ from libc.string cimport memcpy
 
 from sklearn.utils._bitset cimport BITSET_DTYPE_C, BITSET_INNER_DTYPE_C
 from sklearn.utils._bitset cimport in_bitset, init_bitset, set_bitset
-from sklearn.utils._openmp_helpers cimport _use_threads_for_workload
-from sklearn.utils._openmp_helpers import _min_instructions_per_thread
+from sklearn.utils._openmp_helpers import _use_threads_for_workload
 from sklearn.utils._typedefs cimport uint8_t
 from sklearn.ensemble._hist_gradient_boosting.common cimport X_BINNED_DTYPE_C
 from sklearn.ensemble._hist_gradient_boosting.common cimport Y_DTYPE_C
@@ -331,7 +330,7 @@ cdef class Splitter:
                 else 3
             )
             bint use_threads = _use_threads_for_workload(
-                n_threads, n_samples, split_indices_ops, _min_instructions_per_thread(n_threads)
+                n_samples * split_indices_ops, n_threads
             )
             # Probably always bad to parallelize for <1k samples
 
@@ -570,8 +569,7 @@ cdef class Splitter:
         # doesn't distinguish between feature kinds, so it stays
         # conservative for the common, mostly-plain-numerical case.
         use_threads = _use_threads_for_workload(
-            n_threads, n_split_candidates * histograms.shape[1], 5,
-            _min_instructions_per_thread(n_threads),
+            n_split_candidates * histograms.shape[1] * 5, n_threads
         )
 
         with nogil:

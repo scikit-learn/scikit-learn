@@ -1794,9 +1794,8 @@ def test_max_features_less_than_one_does_not_crash(HistGradientBoosting):
 
 
 def _get_heuristic_n_threads(max_n_threads, n_samples, n_features):
-    return hgb_module.BaseHistGradientBoosting._get_heurirstic_optimal_n_threads(
-        max_n_threads, n_samples, n_features
-    )
+    est = HistGradientBoostingRegressor()
+    return est._get_heuristic_optimal_n_threads(max_n_threads, n_samples, n_features)
 
 
 @pytest.mark.parametrize(

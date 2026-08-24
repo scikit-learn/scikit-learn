@@ -10,33 +10,32 @@ from joblib import cpu_count
 # only_physical_cores.
 _CPU_COUNTS = {}
 
-# Fallback amount of work (in ~simple-instruction units) that must be
-# available per thread before bothering to parallelize a loop with OpenMP;
-# see `_use_threads_for_workload` in `_openmp_helpers.pxd`. Used until
-# `_calibrate_min_instructions_per_thread` has run once, and whenever it
-# fails to produce a sensible measurement.
-_DEFAULT_MIN_INSTRUCTIONS_PER_THREAD = 2000
 
-# Cache of calibrated values, keyed by thread-count "bucket" (see
-# `_min_instructions_per_thread`). Populated lazily: calibration always ends
-# up setting a bucket's entry to an int (falling back to the default above
-# on any issue), so a given bucket only ever gets calibrated once per
-# process.
-_MIN_INSTRUCTIONS_PER_THREAD_CACHE = {}
+# Cache of calibrated per-thread dispatch-overhead values (in seconds),
+# keyed by thread-count "bucket" (see `_omp_prange_dispatch_overhead`).
+# Populated lazily: calibration always ends up setting a bucket's entry to
+# a float (falling back to the default below on any issue), so a given
+# bucket only ever gets calibrated once per process.
+_OVERHEAD_PER_THREAD_CACHE = {}
+
+# Fallback per-thread OpenMP dispatch overhead (in seconds), used until
+# `_calibrate_overhead_per_thread` has run once for a given bucket, and
+# whenever it fails to produce a sensible measurement.
+_DEFAULT_OVERHEAD_PER_THREAD = 1e-6
 
 
-def _min_instructions_per_thread(n_threads):
-    """Minimum amount of work (in ~simple-instruction units) that must be
-    available per thread before bothering to parallelize a loop with
-    ``n_threads`` threads via OpenMP; see ``_use_threads_for_workload`` in
-    ``_openmp_helpers.pxd``.
+def _omp_prange_dispatch_overhead(n_threads):
+    """Estimated total dispatch overhead (in seconds) of an OpenMP parallel
+    region run with a team of ``n_threads`` threads on this machine; used by
+    ``_use_threads_for_workload`` below to decide whether parallelizing is
+    worth it.
 
     The actual cost of dispatching an OpenMP parallel region varies a lot
     across machines and OpenMP runtimes/configurations (e.g. whether idle
     threads spin or sleep between parallel regions). Rather than guess at
-    it, this is measured empirically by ``_calibrate_min_instructions_per_thread``,
+    it, this is measured empirically by ``_calibrate_overhead_per_thread``,
     the first time a given team size is requested; every call after that
-    just returns the cached result.
+    just scales the cached per-bucket value by ``n_threads``.
 
     Dispatch overhead does not scale linearly with the size of the thread
     team (e.g. synchronizing a team spread across several NUMA nodes costs
@@ -46,50 +45,58 @@ def _min_instructions_per_thread(n_threads):
     would fix that, but would also mean most calls pay for a fresh, uncached
     calibration. As a middle ground, ``n_threads`` is rounded down to the
     closest power of 2: this keeps the number of distinct calibrations (and
-    thus their one-off cost) small, while still capturing how dispatch
-    overhead grows with team size, since real team sizes rarely differ from
-    their rounded-down power of 2 by more than 2x.
+    thus their one-off cost) small.
     """
     cdef int bucket = 1 << ((max(1, n_threads)).bit_length() - 1)
 
-    global _MIN_INSTRUCTIONS_PER_THREAD_CACHE
-    if bucket not in _MIN_INSTRUCTIONS_PER_THREAD_CACHE:
-        _MIN_INSTRUCTIONS_PER_THREAD_CACHE[bucket] = (
-            _calibrate_min_instructions_per_thread(bucket)
+    global _OVERHEAD_PER_THREAD_CACHE
+    if bucket not in _OVERHEAD_PER_THREAD_CACHE:
+        _OVERHEAD_PER_THREAD_CACHE[bucket] = (
+            _calibrate_overhead_per_thread(bucket)
         )
-    return _MIN_INSTRUCTIONS_PER_THREAD_CACHE[bucket]
+    return _OVERHEAD_PER_THREAD_CACHE[bucket] * n_threads
 
 
-def _bench_prange_dispatch(int n_threads, Py_ssize_t repeats, Py_ssize_t idle_gap):
-    """Time ``repeats`` dispatches of a near-empty OpenMP parallel region.
+def _use_threads_for_workload(workload_size, n_threads):
+    """Decide whether a workload is worth parallelizing over ``n_threads``.
 
-    Each dispatch parallelizes a loop with exactly one iteration per thread
-    (as close to "no actual work" as an OpenMP parallel region gets), so the
-    measured time is essentially the fixed cost of spinning up/joining the
-    thread team. ``idle_gap`` trivial sequential iterations are inserted
-    between dispatches, giving worker threads a short idle period before the
-    next one, similar to the gaps between the parallel regions this is
-    calibrating for.
+    ``workload_size`` is the estimated size of the workload, in ~simple-instructions
+    (callers derive it as roughly ``n_work_items * ops_per_item``;
+     we assume ~2e9 such simple instructions per second).
+    This compares the estimated serial runtime against the estimated parallel runtime
+    and only recommends threading if that is actually faster.
     """
+    t_serial = workload_size / 2e9
+    t_parallelized = (
+        t_serial / n_threads
+        + _omp_prange_dispatch_overhead(n_threads)
+    )
+
+    return (n_threads > 1) and t_parallelized < t_serial
+
+
+def _bench_prange_dispatch(int n_threads, Py_ssize_t n_repeats):
+    """Time ``n_repeats`` dispatches of a near-empty OpenMP parallel region."""
     cdef:
         Py_ssize_t _r, _i, j
         Py_ssize_t _sink = 0
     t0 = perf_counter()
     with nogil:
-        for _r in range(repeats):
+        for _r in range(n_repeats):
             for _i in prange(n_threads, schedule='static', num_threads=n_threads):
                 pass
-            for j in range(idle_gap):
+            # Trivial sequential iterations giving worker threads a short idle period:
+            for j in range(5):
                 _sink = j
+            # This is to make sure we measure the active wait behavior, see gh-34764
     return perf_counter() - t0
 
 
-def _calibrate_min_instructions_per_thread(n_threads):
-    """Measure the actual cost of dispatching an OpenMP parallel region with
-    a team of ``n_threads`` threads on this machine, and convert it to the
-    "simple instructions" unit that ``_use_threads_for_workload`` uses.
+def _calibrate_overhead_per_thread(n_threads):
+    """Measure the actual cost, in seconds, of dispatching an OpenMP
+    parallel region with a team of ``n_threads`` threads on this machine.
 
-    ``repeats`` and ``idle_gap`` below were empirically found to give
+    ``n_repeats`` and ``n_measures`` below were empirically found to give
     stable, representative measurements while keeping this cheap: this runs
     synchronously on first use (e.g. the first ``fit``/``predict`` call in a
     process), and larger ``n_threads`` teams are themselves more expensive to
@@ -101,23 +108,21 @@ def _calibrate_min_instructions_per_thread(n_threads):
     that robustness for bounding the worst-case (largest-team) calibration
     cost to roughly a hundred milliseconds rather than close to a second.
 
-    Falls back to ``_DEFAULT_MIN_INSTRUCTIONS_PER_THREAD`` if OpenMP is
-    disabled or the measurement fails or looks unreasonable for any reason
-    (this must never raise, since it runs implicitly on first use).
+    Falls back to ``_DEFAULT_OVERHEAD_PER_THREAD`` if OpenMP is
+    disabled or the measurement fails.
     """
     if not SKLEARN_OPENMP_PARALLELISM_ENABLED:
-        return _DEFAULT_MIN_INSTRUCTIONS_PER_THREAD
+        return _DEFAULT_OVERHEAD_PER_THREAD
 
     try:
-        n_threads = max(2, n_threads)
-        repeats = 30
-        idle_gap = 10
+        n_repeats = 30
+        n_measures = 15
 
         # The very first OpenMP parallel region dispatched in a process pays
         # for one-time thread pool creation (tens of us), on top of the
         # steady-state dispatch cost this is trying to measure. Warm it up,
         # untimed, before measuring.
-        _bench_prange_dispatch(n_threads, repeats, idle_gap)
+        _bench_prange_dispatch(n_threads, n_repeats)
 
         # Take several independent measurements and keep the minimum:
         # external interference (CPU frequency scaling, other processes
@@ -125,20 +130,12 @@ def _calibrate_min_instructions_per_thread(n_threads):
         # never speed it up below the true steady-state dispatch cost,
         # so the minimum across samples is the one least
         # contaminated by such noise (the same reasoning `timeit` uses).
-        best_dispatch_seconds = None
-        for _ in range(15):
-            elapsed = _bench_prange_dispatch(n_threads, repeats, idle_gap)
-            dispatch_seconds = elapsed / repeats
-            if best_dispatch_seconds is None or dispatch_seconds < best_dispatch_seconds:
-                best_dispatch_seconds = dispatch_seconds
-
-        # The default (2000) was picked as the rough equivalent
-        # of ~1us of simple work, i.e. ~2e9 simple-instructions-per-second;
-        # convert the measured dispatch overhead to that unit:
-        measured = round(best_dispatch_seconds * 2e9)
-        return max(1, measured)
+        return min(
+            _bench_prange_dispatch(n_threads, n_repeats) / n_repeats
+            for _ in range(n_measures)
+        ) / n_threads
     except Exception:
-        return _DEFAULT_MIN_INSTRUCTIONS_PER_THREAD
+        return _DEFAULT_OVERHEAD_PER_THREAD
 
 
 def _openmp_parallelism_enabled():

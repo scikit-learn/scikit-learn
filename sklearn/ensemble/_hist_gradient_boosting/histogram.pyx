@@ -13,8 +13,7 @@ from sklearn.ensemble._hist_gradient_boosting.common import HISTOGRAM_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common cimport hist_struct
 from sklearn.ensemble._hist_gradient_boosting.common cimport X_BINNED_DTYPE_C
 from sklearn.ensemble._hist_gradient_boosting.common cimport G_H_DTYPE_C
-from sklearn.utils._openmp_helpers cimport _use_threads_for_workload
-from sklearn.utils._openmp_helpers import _min_instructions_per_thread
+from sklearn.utils._openmp_helpers import _use_threads_for_workload
 from sklearn.utils._typedefs cimport uint8_t
 
 
@@ -149,7 +148,6 @@ cdef class HistogramBuilder:
             int n_threads = self.n_threads
             bint use_threads_populate
             bint use_threads_features
-            long long min_instructions_per_thread = _min_instructions_per_thread(n_threads)
 
         if has_interaction_cst:
             n_allowed_features = allowed_features.shape[0]
@@ -158,14 +156,12 @@ cdef class HistogramBuilder:
         # each sample costs ~1-2 simple ops to reorder below, and each
         # (feature, sample) pair costs ~1-2 simple ops to bin/accumulate.
         use_threads_populate = _use_threads_for_workload(
-            n_threads, n_samples,
-            2 - hessians_are_constant,
-            min_instructions_per_thread
+            n_samples * (2 - hessians_are_constant),
+            n_threads,
         )
         use_threads_features = n_allowed_features > 1 and _use_threads_for_workload(
-            n_threads, <long long> n_allowed_features * n_samples,
-            2 - hessians_are_constant,
-            min_instructions_per_thread,
+            n_allowed_features * n_samples * (2 - hessians_are_constant),
+            n_threads
         )
 
         with nogil:
@@ -290,8 +286,7 @@ cdef class HistogramBuilder:
         # Each (feature, bin) pair costs ~3 simple field subtractions below
         # (empirically measured, see benchmarks/bench_hgb_ops_per_item.py).
         use_threads = n_allowed_features > 1 and _use_threads_for_workload(
-            n_threads, <long long> n_allowed_features * self.n_bins, 3,
-            _min_instructions_per_thread(n_threads),
+            n_allowed_features * self.n_bins * 3, n_threads
         )
 
         # Compute histogram of each feature
