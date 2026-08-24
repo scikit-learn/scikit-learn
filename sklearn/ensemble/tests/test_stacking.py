@@ -378,7 +378,7 @@ def test_stacking_regressor_error(y, params, type_err, msg_err):
         (
             StackingClassifier(
                 estimators=[
-                    ("first", LogisticRegression(random_state=0)),
+                    ("first", LogisticRegression()),
                     ("second", LinearSVC(random_state=0)),
                 ]
             ),
@@ -554,12 +554,12 @@ def test_stacking_cv_influence(stacker, X, y):
 
 @pytest.mark.parametrize(
     "Stacker, Estimator, stack_method, final_estimator, X, y",
-    [
+    (
         (
             StackingClassifier,
             DummyClassifier,
             "predict_proba",
-            LogisticRegression(random_state=42),
+            LogisticRegression(),
             X_iris,
             y_iris,
         ),
@@ -571,7 +571,7 @@ def test_stacking_cv_influence(stacker, X, y):
             X_diabetes,
             y_diabetes,
         ),
-    ],
+    ),
 )
 def test_stacking_prefit(Stacker, Estimator, stack_method, final_estimator, X, y):
     """Check the behaviour of stacking when `cv='prefit'`"""
@@ -788,7 +788,7 @@ def test_stacking_classifier_multilabel_auto_predict(stack_method, passthrough):
         (
             StackingClassifier(
                 estimators=[
-                    ("lr", LogisticRegression(random_state=0)),
+                    ("lr", LogisticRegression()),
                     ("svm", LinearSVC(random_state=0)),
                 ]
             ),
@@ -807,7 +807,7 @@ def test_stacking_classifier_multilabel_auto_predict(stack_method, passthrough):
         (
             StackingClassifier(
                 estimators=[
-                    ("lr", LogisticRegression(random_state=0)),
+                    ("lr", LogisticRegression()),
                     ("other", "drop"),
                     ("svm", LinearSVC(random_state=0)),
                 ]
@@ -948,7 +948,9 @@ def test_get_metadata_routing_without_fit(Estimator, Child):
 )
 @config_context(enable_metadata_routing=True)
 def test_metadata_routing_for_stacking_estimators(Estimator, Child, prop, prop_value):
-    """Test that metadata is routed correctly for Stacking*."""
+    """Test that metadata is routed correctly for Stacking*. Note that `fit_transform`
+    like `fit` goes through `_BaseStacking.fit().transform()` and thus no separate test
+    is needed."""
 
     est = Estimator(
         [
@@ -965,30 +967,27 @@ def test_metadata_routing_for_stacking_estimators(Estimator, Child, prop, prop_v
     )
 
     est.fit(X_iris, y_iris, **{prop: prop_value})
-    est.fit_transform(X_iris, y_iris, **{prop: prop_value})
+
+    for estimator in est.estimators_:
+        registry = estimator.registry
+        assert len(registry)
+        check_recorded_metadata(
+            obj=estimator,
+            method="fit",
+            parent="fit",
+            split_params=(prop,),
+            **{prop: prop_value},
+        )
 
     est.predict(X_iris, **{prop: prop_value})
 
-    for estimator in est.estimators:
-        # access sub-estimator in (name, est) with estimator[1]:
-        registry = estimator[1].registry
-        assert len(registry)
-        for sub_est in registry:
-            check_recorded_metadata(
-                obj=sub_est,
-                method="fit",
-                parent="fit",
-                split_params=(prop),
-                **{prop: prop_value},
-            )
-    # access final_estimator:
     registry = est.final_estimator_.registry
     assert len(registry)
     check_recorded_metadata(
-        obj=registry[-1],
+        obj=est.final_estimator_,
         method="predict",
         parent="predict",
-        split_params=(prop),
+        split_params=(prop,),
         **{prop: prop_value},
     )
 

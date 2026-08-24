@@ -42,26 +42,6 @@ def is_pandas_df_or_series(X):
     return isinstance(X, (pd.DataFrame, pd.Series))
 
 
-def is_pandas_df(X):
-    """Return True if the X is a pandas dataframe.
-
-    Parameters
-    ----------
-    X : {array-like, dataframe}
-        The array-like or dataframe object to check.
-
-    Returns
-    -------
-    bool
-        True if the X is a pandas dataframe, False otherwise.
-    """
-    try:
-        pd = sys.modules["pandas"]
-    except KeyError:
-        return False
-    return isinstance(X, pd.DataFrame)
-
-
 def is_pyarrow_data(X):
     """Return True if the X is a pyarrow Table, RecordBatch, Array or ChunkedArray.
 

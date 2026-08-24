@@ -27,12 +27,18 @@ from sklearn.feature_extraction.text import (
 from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
+from sklearn.utils import _align_api_if_sparse
 from sklearn.utils._testing import (
     assert_allclose_dense_sparse,
     assert_almost_equal,
     skip_if_32bit,
 )
-from sklearn.utils.fixes import _IS_WASM, CSC_CONTAINERS, CSR_CONTAINERS
+from sklearn.utils.fixes import (
+    _IS_WASM,
+    CSC_CONTAINERS,
+    CSR_CONTAINERS,
+    _sparse_random_array,
+)
 
 JUNK_FOOD_DOCS = (
     "the pizza pizza beer copyright",
@@ -657,9 +663,9 @@ def test_hashing_vectorizer():
     assert np.max(X.data) > 0
     assert np.max(X.data) < 1
 
-    # Check that the rows are normalized
-    for i in range(X.shape[0]):
-        assert_almost_equal(np.linalg.norm(X[0].data, 2), 1.0)
+    # Check that the rows are normalized (l2 norm)
+    for row in X:
+        assert_almost_equal(np.linalg.norm(row.data, 2), 1.0)
 
     # Check vectorization with some non-default parameters
     v = HashingVectorizer(ngram_range=(1, 2), norm="l1")
@@ -676,9 +682,9 @@ def test_hashing_vectorizer():
     assert np.min(X.data) > -1
     assert np.max(X.data) < 1
 
-    # Check that the rows are normalized
-    for i in range(X.shape[0]):
-        assert_almost_equal(np.linalg.norm(X[0].data, 1), 1.0)
+    # Check that the rows are normalized (l1 norm)
+    for row in X:
+        assert_almost_equal(np.linalg.norm(row.data, 1), 1.0)
 
 
 def test_feature_names():
@@ -1238,7 +1244,7 @@ def test_vectorizer_string_object_as_input(Vectorizer):
 
 @pytest.mark.parametrize("X_dtype", [np.float32, np.float64])
 def test_tfidf_transformer_type(X_dtype):
-    X = sparse.rand(10, 20000, dtype=X_dtype, random_state=42)
+    X = _sparse_random_array((10, 20000), dtype=X_dtype, random_state=42)
     X_trans = TfidfTransformer().fit_transform(X)
     assert X_trans.dtype == X.dtype
 
@@ -1247,7 +1253,7 @@ def test_tfidf_transformer_type(X_dtype):
     "csc_container, csr_container", product(CSC_CONTAINERS, CSR_CONTAINERS)
 )
 def test_tfidf_transformer_sparse(csc_container, csr_container):
-    X = sparse.rand(10, 20000, dtype=np.float64, random_state=42)
+    X = _sparse_random_array((10, 20000), dtype=np.float64, random_state=42)
     X_csc = csc_container(X)
     X_csr = csr_container(X)
 
@@ -1599,7 +1605,7 @@ def test_vectorizers_do_not_have_set_output(Estimator):
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_tfidf_transformer_copy(csr_container):
     """Check the behaviour of TfidfTransformer.transform with the copy parameter."""
-    X = sparse.rand(10, 20000, dtype=np.float64, random_state=42)
+    X = _sparse_random_array((10, 20000), dtype=np.float64, random_state=42)
     X_csr = csr_container(X)
 
     # keep a copy of the original matrix for later comparison
@@ -1612,13 +1618,22 @@ def test_tfidf_transformer_copy(csr_container):
     assert X_transform is not X_csr
 
     X_transform = transformer.transform(X_csr, copy=False)
-    assert X_transform is X_csr
+    # allow for config["sparse_interface"] to change output type
+    # there should be no data copied, but the `id` will change.
+    if _align_api_if_sparse(X_csr) is X_csr:
+        assert X_transform is X_csr
+    else:
+        assert X_transform is not X_csr
+        assert X_transform.indptr is X_csr.indptr
+        assert X_transform.indices.base is X_csr.indices.base
+        assert X_transform.data.base is X_csr.data.base
+
     with pytest.raises(AssertionError):
         assert_allclose_dense_sparse(X_csr, X_csr_original)
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_tfidf_vectorizer_perserve_dtype_idf(dtype):
+def test_tfidf_vectorizer_preserve_dtype_idf(dtype):
     """Check that `idf_` has the same dtype as the input data.
 
     Non-regression test for:

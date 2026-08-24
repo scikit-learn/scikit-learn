@@ -93,8 +93,7 @@ def _changed_params(estimator):
     estimator with non-default values."""
 
     params = estimator.get_params(deep=False)
-    init_func = getattr(estimator.__init__, "deprecated_original", estimator.__init__)
-    init_params = inspect.signature(init_func).parameters
+    init_params = inspect.signature(estimator.__init__).parameters
     init_params = {name: param.default for name, param in init_params.items()}
 
     def has_changed(k, v):
@@ -346,8 +345,10 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
     # Note: need to copy _dispatch to prevent instances of the builtin
     # PrettyPrinter class to call methods of _EstimatorPrettyPrinter (see issue
     # 12906)
-    # mypy error: "Type[PrettyPrinter]" has no attribute "_dispatch"
-    _dispatch = pprint.PrettyPrinter._dispatch.copy()  # type: ignore[attr-defined]
+    # pyrefly error: "Class `PrettyPrinter` has no class attribute `_dispatch`"
+    _dispatch = (
+        pprint.PrettyPrinter._dispatch.copy()  # pyrefly: ignore[missing-attribute]
+    )
     _dispatch[BaseEstimator.__repr__] = _pprint_estimator
     _dispatch[KeyValTuple.__repr__] = _pprint_key_val_tuple
 

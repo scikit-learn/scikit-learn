@@ -77,7 +77,7 @@ def test_check_X_on_predict_fail(iris, pred_func):
         getattr(clf, pred_func)(X)
 
 
-@pytest.mark.parametrize("input_type", ["list", "array", "sparse", "dataframe"])
+@pytest.mark.parametrize("input_type", ["list", "array", "sparse", "pandas"])
 def test_checking_classifier(iris, input_type):
     # Check that the CheckingClassifier outputs what we expect
     X, y = iris

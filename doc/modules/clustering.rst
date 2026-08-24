@@ -165,7 +165,7 @@ although they live in the same space.
 The K-means algorithm aims to choose centroids that minimise the **inertia**,
 or **within-cluster sum-of-squares criterion**:
 
-.. math:: \sum_{i=0}^{n}\min_{\mu_j \in C}(||x_i - \mu_j||^2)
+.. math:: \sum_{i=0}^{N-1}\min_{\mu_j \in C}(||x_i - \mu_j||^2)
 
 Inertia can be recognized as a measure of how internally coherent clusters are.
 It suffers from various drawbacks:
@@ -237,7 +237,7 @@ clustering algorithms, see :func:`sklearn.cluster.kmeans_plusplus` for details
 and example usage.
 
 The algorithm supports sample weights, which can be given by a parameter
-``sample_weight``. This allows to assign more weight to some samples when
+``sample_weight``. This allows assigning more weight to some samples when
 computing cluster centers and values of inertia. For example, assigning a
 weight of 2 to a sample is equivalent to adding a duplicate of that sample
 to the dataset :math:`X`.
@@ -849,7 +849,7 @@ clusters from Bisecting K-Means are well ordered and create quite a visible hier
   * `"A Comparison of Document Clustering Techniques"
     <https://www.philippe-fournier-viger.com/spmf/bisectingkmeans.pdf>`_ Michael
     Steinbach, George Karypis and Vipin Kumar, Department of Computer Science and
-    Egineering, University of Minnesota (June 2000)
+    Engineering, University of Minnesota (June 2000)
   * `"Performance Analysis of K-Means and Bisecting K-Means Algorithms in Weblog
     Data"
     <https://ijeter.everscience.org/Manuscripts/Volume-4/Issue-8/Vol-4-issue-8-M-23.pdf>`_
@@ -2120,7 +2120,7 @@ of classes.
 
 .. topic:: Advantages:
 
-  - Allows to examine the spread of each true cluster across predicted clusters
+  - Allows examining the spread of each true cluster across predicted clusters
     and vice versa.
 
   - The contingency table calculated is typically utilized in the calculation of

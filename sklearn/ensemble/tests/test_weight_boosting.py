@@ -9,7 +9,7 @@ from sklearn import datasets
 from sklearn.base import BaseEstimator, clone
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.ensemble import AdaBoostClassifier, AdaBoostRegressor
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.svm import SVC, SVR
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
@@ -283,8 +283,8 @@ def test_sample_weights_infinite():
 def test_sparse_classification(sparse_container, expected_internal_type):
     # Check classification with sparse input.
 
-    class CustomSVC(SVC):
-        """SVC variant that records the nature of the training set."""
+    class CustomProbabilisticClassifier(LogisticRegression):
+        """LogisticRegression variant that records the nature of the training set."""
 
         def fit(self, X, y, sample_weight=None):
             """Modification on fit caries data type for later verification."""
@@ -305,13 +305,13 @@ def test_sparse_classification(sparse_container, expected_internal_type):
 
     # Trained on sparse format
     sparse_classifier = AdaBoostClassifier(
-        estimator=CustomSVC(probability=True),
+        estimator=CustomProbabilisticClassifier(),
         random_state=1,
     ).fit(X_train_sparse, y_train)
 
     # Trained on dense format
     dense_classifier = AdaBoostClassifier(
-        estimator=CustomSVC(probability=True),
+        estimator=CustomProbabilisticClassifier(),
         random_state=1,
     ).fit(X_train, y_train)
 
@@ -367,7 +367,7 @@ def test_sparse_classification(sparse_container, expected_internal_type):
     # Verify sparsity of data is maintained during training
     types = [i.data_type_ for i in sparse_classifier.estimators_]
 
-    assert all([t == expected_internal_type for t in types])
+    assert all(issubclass(t, expected_internal_type) for t in types)
 
 
 @pytest.mark.parametrize(
@@ -427,7 +427,7 @@ def test_sparse_regression(sparse_container, expected_internal_type):
 
     types = [i.data_type_ for i in sparse_regressor.estimators_]
 
-    assert all([t == expected_internal_type for t in types])
+    assert all(issubclass(t, expected_internal_type) for t in types)
 
 
 def test_sample_weight_adaboost_regressor():

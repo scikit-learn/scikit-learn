@@ -2,6 +2,7 @@ import warnings
 
 import numpy as np
 import pytest
+import scipy.sparse as sp
 from numpy.testing import assert_allclose, assert_array_almost_equal, assert_array_equal
 
 from sklearn.base import config_context
@@ -28,10 +29,13 @@ from sklearn.metrics.cluster._supervised import (
 )
 from sklearn.utils import assert_all_finite
 from sklearn.utils._array_api import (
-    _get_namespace_device_dtype_ids,
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._testing import _array_api_for_tests, assert_almost_equal
+from sklearn.utils._testing import (
+    _array_api_for_tests,
+    assert_almost_equal,
+    skip_if_array_api_compat_not_configured,
+)
 
 score_funcs = [
     adjusted_rand_score,
@@ -284,12 +288,11 @@ def test_entropy():
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
-def test_entropy_array_api(array_namespace, device, dtype_name):
-    xp = _array_api_for_tests(array_namespace, device)
+def test_entropy_array_api(array_namespace, device_name, dtype_name):
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     float_labels = xp.asarray(np.asarray([0, 0, 42.0], dtype=dtype_name), device=device)
     empty_int32_labels = xp.asarray([], dtype=xp.int32, device=device)
     int_labels = xp.asarray([1, 1, 1, 1], device=device)
@@ -522,11 +525,13 @@ def test_normalized_mutual_info_score_bounded(average_method):
     assert 0 <= nmi < 1
 
 
-# TODO(1.9): remove
-@pytest.mark.parametrize("sparse", [True, False])
-def test_fowlkes_mallows_sparse_deprecated(sparse):
-    """Check deprecation warning for 'sparse' parameter of fowlkes_mallows_score."""
-    with pytest.warns(
-        FutureWarning, match="The 'sparse' parameter was deprecated in 1.7"
-    ):
-        fowlkes_mallows_score([0, 1], [1, 1], sparse=sparse)
+@skip_if_array_api_compat_not_configured
+def test_contingency_matrix_array_api_sparse():
+    "Check sparse array can be returned when `array_api_dispatch=True`."
+    with config_context(array_api_dispatch=True):
+        res = contingency_matrix(
+            np.array([1, 2]),
+            np.array([1, 0]),
+            sparse=True,
+        )
+        assert isinstance(res, sp.csr_matrix)

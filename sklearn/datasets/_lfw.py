@@ -306,7 +306,7 @@ def fetch_lfw_people(
         Ratio used to resize the each face picture. If `None`, no resizing is
         performed.
 
-    min_faces_per_person : int, default=None
+    min_faces_per_person : int, default=0
         The extracted dataset will only retain pictures of people that have at
         least `min_faces_per_person` different pictures.
 
@@ -476,7 +476,7 @@ def _fetch_lfw_pairs(
     n_faces = shape.pop(0)
     shape.insert(0, 2)
     shape.insert(0, n_faces // 2)
-    pairs.shape = shape
+    pairs = pairs.reshape(shape)
 
     return pairs, target, np.array(["Different persons", "Same person"])
 

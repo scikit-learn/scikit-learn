@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+import functools
 import io
 import math
 import pickle
 import types
-from collections.abc import Callable, Generator, Iterable
+import warnings
+from collections.abc import Callable, Generator, Iterable, Iterator, Sequence
 from functools import wraps
-from types import ModuleType
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -28,10 +29,9 @@ from ._compat import (
     is_dask_namespace,
     is_jax_namespace,
     is_numpy_array,
-    is_pydata_sparse_namespace,
     is_torch_namespace,
 )
-from ._typing import Array, Device
+from ._typing import Array, ArrayNamespace, Device
 
 if TYPE_CHECKING:  # pragma: no cover
     # TODO import from typing (requires Python >=3.12 and >=3.13)
@@ -49,15 +49,36 @@ T = TypeVar("T")
 __all__ = [
     "asarrays",
     "capabilities",
+    "deprecated",
     "eager_shape",
     "in1d",
     "is_python_scalar",
     "jax_autojit",
-    "mean",
     "meta_namespace",
+    "normalize_pad_width",
     "pickle_flatten",
     "pickle_unflatten",
 ]
+
+
+def deprecated(
+    msg: str, stacklevel: int = 2
+) -> Callable[[Callable[P, T]], Callable[P, T]]:  # numpydoc ignore=PR01,RT01
+    """Deprecate a function by emitting a warning on use."""
+
+    def decorate(func: Callable[P, T]) -> Callable[P, T]:  # numpydoc ignore=GL08
+        @functools.wraps(func)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:  # numpydoc ignore=GL08
+            warnings.warn(
+                msg,
+                category=DeprecationWarning,
+                stacklevel=stacklevel,
+            )
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorate
 
 
 def in1d(
@@ -67,7 +88,7 @@ def in1d(
     *,
     assume_unique: bool = False,
     invert: bool = False,
-    xp: ModuleType | None = None,
+    xp: ArrayNamespace | None = None,
 ) -> Array:  # numpydoc ignore=PR01,RT01
     """
     Check whether each element of an array is also present in a second array.
@@ -122,29 +143,6 @@ def in1d(
     return xp.take(ret, rev_idx, axis=0)
 
 
-def mean(
-    x: Array,
-    /,
-    *,
-    axis: int | tuple[int, ...] | None = None,
-    keepdims: bool = False,
-    xp: ModuleType | None = None,
-) -> Array:  # numpydoc ignore=PR01,RT01
-    """
-    Complex mean, https://github.com/data-apis/array-api/issues/846.
-    """
-    if xp is None:
-        xp = array_namespace(x)
-
-    if xp.isdtype(x.dtype, "complex floating"):
-        x_real = xp.real(x)
-        x_imag = xp.imag(x)
-        mean_real = xp.mean(x_real, axis=axis, keepdims=keepdims)
-        mean_imag = xp.mean(x_imag, axis=axis, keepdims=keepdims)
-        return mean_real + (mean_imag * xp.asarray(1j))
-    return xp.mean(x, axis=axis, keepdims=keepdims)
-
-
 def is_python_scalar(x: object) -> TypeIs[complex]:  # numpydoc ignore=PR01,RT01
     """Return True if `x` is a Python scalar, False otherwise."""
     # isinstance(x, float) returns True for np.float64
@@ -156,7 +154,7 @@ def is_python_scalar(x: object) -> TypeIs[complex]:  # numpydoc ignore=PR01,RT01
 def asarrays(
     a: Array | complex,
     b: Array | complex,
-    xp: ModuleType,
+    xp: ArrayNamespace,
 ) -> tuple[Array, Array]:
     """
     Ensure both `a` and `b` are arrays.
@@ -212,10 +210,10 @@ def asarrays(
         }
         kind = same_dtype[type(cast(complex, b))]
         if xp.isdtype(a.dtype, kind):
-            xb = xp.asarray(b, dtype=a.dtype)
+            xb = xp.asarray(b, dtype=a.dtype, device=_compat.device(a))
         else:
             # Undefined behaviour. Let the function deal with it, if it can.
-            xb = xp.asarray(b)
+            xb = xp.asarray(b, device=_compat.device(a))
 
     else:
         # Neither a nor b are Array API objects.
@@ -250,7 +248,7 @@ def ndindex(*x: int) -> Generator[tuple[int, ...]]:
             yield *i, j
 
 
-def eager_shape(x: Array, /) -> tuple[int, ...]:
+def eager_shape(x: Array, /, axis: int | None = None) -> tuple[int, ...]:
     """
     Return shape of an array. Raise if shape is not fully defined.
 
@@ -258,6 +256,8 @@ def eager_shape(x: Array, /) -> tuple[int, ...]:
     ----------
     x : Array
         Input array.
+    axis : int, optional
+        If provided, only returns the tuple (shape[axis],).
 
     Returns
     -------
@@ -265,7 +265,14 @@ def eager_shape(x: Array, /) -> tuple[int, ...]:
         Shape of the array.
     """
     shape = x.shape
-    # Dask arrays uses non-standard NaN instead of None
+    if axis is not None:
+        s = shape[axis]
+        # Dask arrays uses non-standard NaN instead of None
+        if s is None or math.isnan(s):
+            msg = f"Unsupported lazy shape for axis {axis}"
+            raise TypeError(msg)
+        return (s,)
+
     if any(s is None or math.isnan(s) for s in shape):
         msg = "Unsupported lazy shape"
         raise TypeError(msg)
@@ -273,8 +280,8 @@ def eager_shape(x: Array, /) -> tuple[int, ...]:
 
 
 def meta_namespace(
-    *arrays: Array | complex | None, xp: ModuleType | None = None
-) -> ModuleType:
+    *arrays: Array | complex | None, xp: ArrayNamespace | None = None
+) -> ArrayNamespace:
     """
     Get the namespace of Dask chunks.
 
@@ -302,7 +309,7 @@ def meta_namespace(
 
 
 def capabilities(
-    xp: ModuleType, *, device: Device | None = None
+    xp: ArrayNamespace, *, device: Device | None = None
 ) -> dict[str, int | None]:
     """
     Return patched ``xp.__array_namespace_info__().capabilities()``.
@@ -323,14 +330,7 @@ def capabilities(
         Capabilities of the namespace.
     """
     out = xp.__array_namespace_info__().capabilities()
-    if is_pydata_sparse_namespace(xp):
-        if out["boolean indexing"]:
-            # FIXME https://github.com/pydata/sparse/issues/876
-            # boolean indexing is supported, but not when the index is a sparse array.
-            # boolean indexing by list or numpy array is not part of the Array API.
-            out = out.copy()
-            out["boolean indexing"] = False
-    elif is_jax_namespace(xp):
+    if is_jax_namespace(xp):
         if out["boolean indexing"]:  # pragma: no cover
             # Backwards compatibility with jax <0.6.0
             # https://github.com/jax-ml/jax/issues/27418
@@ -428,9 +428,9 @@ def pickle_flatten(
         @override
         def persistent_id(
             self, obj: object
-        ) -> Literal[0, 1, None]:  # numpydoc ignore=GL08
+        ) -> Literal[0, 1] | None:  # numpydoc ignore=GL08
             if isinstance(obj, cls):
-                instances.append(obj)  # type: ignore[arg-type]
+                instances.append(obj)
                 return 0
 
             typ_ = type(obj)
@@ -445,7 +445,7 @@ def pickle_flatten(
                 # Note: a class that defines __slots__ without defining __getstate__
                 # cannot be pickled with __reduce__(), but can with __reduce_ex__(5)
                 _ = obj.__reduce_ex__(pickle.HIGHEST_PROTOCOL)
-            except Exception:  # pylint: disable=broad-exception-caught
+            except Exception:  # pylint: disable=broad-exception-caught  # noqa: BLE001
                 rest.append(obj)
                 return 1
 
@@ -512,13 +512,24 @@ class _AutoJITWrapper(Generic[T]):  # numpydoc ignore=PR01
     convert them to/from PyTrees.
     """
 
-    obj: T
+    _obj: Any
+    _is_iter: bool
     _registered: ClassVar[bool] = False
-    __slots__: tuple[str, ...] = ("obj",)
+    __slots__: tuple[str, ...] = ("_is_iter", "_obj")
 
     def __init__(self, obj: T) -> None:  # numpydoc ignore=GL08
         self._register()
-        self.obj = obj
+        if isinstance(obj, Iterator):
+            self._obj = list(obj)
+            self._is_iter = True
+        else:
+            self._obj = obj
+            self._is_iter = False
+
+    @property
+    def obj(self) -> T:  # numpydoc ignore=RT01
+        """Return wrapped object."""
+        return iter(self._obj) if self._is_iter else self._obj
 
     @classmethod
     def _register(cls) -> None:  # numpydoc ignore=SS06
@@ -531,7 +542,7 @@ class _AutoJITWrapper(Generic[T]):  # numpydoc ignore=PR01
 
             jax.tree_util.register_pytree_node(
                 cls,
-                lambda obj: pickle_flatten(obj, jax.Array),  # pyright: ignore[reportUnknownArgumentType]
+                lambda instance: pickle_flatten(instance, jax.Array),  # pyright: ignore[reportUnknownArgumentType]
                 lambda aux_data, children: pickle_unflatten(children, aux_data),  # pyright: ignore[reportUnknownArgumentType]
             )
             cls._registered = True
@@ -556,6 +567,7 @@ def jax_autojit(
     - Automatically descend into non-array return values and find ``jax.Array`` objects
       inside them, then rebuild them downstream of exiting the JIT, swapping the JAX
       tracer objects with concrete arrays.
+    - Returned iterators are immediately completely consumed.
 
     See Also
     --------
@@ -582,7 +594,7 @@ def jax_autojit(
     """
     import jax
 
-    @jax.jit  # type: ignore[misc]  # pyright: ignore[reportUntypedFunctionDecorator]
+    @jax.jit  # type: ignore[untyped-decorator]  # pyright: ignore[reportUntypedFunctionDecorator]
     def inner(  # numpydoc ignore=GL08
         wargs: _AutoJITWrapper[Any],
     ) -> _AutoJITWrapper[T]:
@@ -596,3 +608,19 @@ def jax_autojit(
         return inner(wargs).obj
 
     return outer
+
+
+def normalize_pad_width(
+    pad_width: int | tuple[int, int] | Sequence[tuple[int, int]],
+    ndim: int,
+) -> list[tuple[int, int]]:  # numpydoc ignore=PR01,RT01
+    """Normalize `pad_width` to a list of `ndim` (before, after) pairs of ints."""
+    if isinstance(pad_width, int):
+        return [(pad_width, pad_width)] * ndim
+    if (
+        isinstance(pad_width, tuple)
+        and len(pad_width) == 2
+        and all(isinstance(i, int) for i in pad_width)
+    ):
+        return [cast(tuple[int, int], pad_width)] * ndim
+    return cast(list[tuple[int, int]], list(pad_width))

@@ -6,7 +6,6 @@ import pytest
 from numpy.testing import assert_allclose, assert_array_equal
 from scipy import sparse
 from scipy.interpolate import BSpline
-from scipy.sparse import random as sparse_random
 
 from sklearn._config import config_context
 from sklearn.linear_model import LinearRegression
@@ -20,11 +19,10 @@ from sklearn.preprocessing._csr_polynomial_expansion import (
     _get_sizeof_LARGEST_INT_t,
 )
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
     _is_numpy_namespace,
-    device,
+    array_device,
     get_namespace,
+    move_to,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._mask import _get_mask
@@ -36,6 +34,7 @@ from sklearn.utils._testing import (
 from sklearn.utils.fixes import (
     CSC_CONTAINERS,
     CSR_CONTAINERS,
+    _sparse_random_array,
 )
 
 
@@ -906,7 +905,9 @@ def test_num_combinations(
 def test_polynomial_features_csr_X_floats(
     deg, include_bias, interaction_only, dtype, csr_container, global_random_seed
 ):
-    X_csr = csr_container(sparse_random(1000, 10, 0.5, random_state=global_random_seed))
+    X_csr = csr_container(
+        _sparse_random_array((1000, 10), density=0.5, random_state=global_random_seed)
+    )
     X = X_csr.toarray()
 
     est = PolynomialFeatures(
@@ -941,7 +942,9 @@ def test_polynomial_features_csr_X_floats(
 def test_polynomial_features_csr_X_zero_row(
     zero_row_index, deg, interaction_only, csr_container, global_random_seed
 ):
-    X_csr = csr_container(sparse_random(3, 10, 1.0, random_state=global_random_seed))
+    X_csr = csr_container(
+        _sparse_random_array((3, 10), density=1.0, random_state=global_random_seed)
+    )
     X_csr[zero_row_index, :] = 0.0
     X = X_csr.toarray()
 
@@ -964,7 +967,9 @@ def test_polynomial_features_csr_X_zero_row(
 def test_polynomial_features_csr_X_degree_4(
     include_bias, interaction_only, csr_container, global_random_seed
 ):
-    X_csr = csr_container(sparse_random(1000, 10, 0.5, random_state=global_random_seed))
+    X_csr = csr_container(
+        _sparse_random_array((1000, 10), density=0.5, random_state=global_random_seed)
+    )
     X = X_csr.toarray()
 
     est = PolynomialFeatures(
@@ -998,7 +1003,7 @@ def test_polynomial_features_csr_X_dim_edges(
     deg, dim, interaction_only, csr_container, global_random_seed
 ):
     X_csr = csr_container(
-        sparse_random(1000, dim, 0.5, random_state=global_random_seed)
+        _sparse_random_array((1000, dim), density=0.5, random_state=global_random_seed)
     )
     X = X_csr.toarray()
 
@@ -1332,9 +1337,8 @@ def test_csr_polynomial_expansion_windows_fail(csr_container):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("interaction_only", [True, False])
 @pytest.mark.parametrize("include_bias", [True, False])
@@ -1345,14 +1349,14 @@ def test_polynomial_features_array_api_compliance(
     include_bias,
     interaction_only,
     array_namespace,
-    device_,
+    device_name,
     dtype_name,
 ):
     """Test array API compliance for PolynomialFeatures on 2 features up to degree 3."""
-    xp = _array_api_for_tests(array_namespace, device_)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     X, _ = two_features_degree3
     X_np = X.astype(dtype_name)
-    X_xp = xp.asarray(X_np, device=device_)
+    X_xp = xp.asarray(X_np, device=device)
     with config_context(array_api_dispatch=True):
         tf_np = PolynomialFeatures(
             degree=degree, include_bias=include_bias, interaction_only=interaction_only
@@ -1363,25 +1367,24 @@ def test_polynomial_features_array_api_compliance(
         ).fit(X_xp)
         out_np = tf_np.transform(X_np)
         out_xp = tf_xp.transform(X_xp)
-        assert_allclose(_convert_to_numpy(out_xp, xp=xp), out_np)
+        assert_allclose(move_to(out_xp, xp=np, device="cpu"), out_np)
         assert get_namespace(out_xp)[0].__name__ == xp.__name__
-        assert device(out_xp) == device(X_xp)
+        assert array_device(out_xp) == array_device(X_xp)
         assert out_xp.dtype == X_xp.dtype
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 def test_polynomial_features_array_api_raises_on_order_F(
-    array_namespace, device_, dtype_name
+    array_namespace, device_name, dtype_name
 ):
     """Test that PolynomialFeatures with order='F' raises ValueError on
     array API namespaces other than numpy."""
-    xp = _array_api_for_tests(array_namespace, device_)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     X = np.arange(6).reshape((3, 2)).astype(dtype_name)
-    X_xp = xp.asarray(X, device=device_)
+    X_xp = xp.asarray(X, device=device)
     msg = "PolynomialFeatures does not support order='F' for non-numpy arrays"
     with config_context(array_api_dispatch=True):
         pf = PolynomialFeatures(order="F").fit(X_xp)

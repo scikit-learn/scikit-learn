@@ -5,7 +5,6 @@ from __future__ import annotations
 import math
 from collections.abc import Callable, Sequence
 from functools import partial, wraps
-from types import ModuleType
 from typing import TYPE_CHECKING, Any, ParamSpec, TypeAlias, cast, overload
 
 from ._funcs import broadcast_shapes
@@ -16,7 +15,7 @@ from ._utils._compat import (
     is_jax_namespace,
 )
 from ._utils._helpers import is_python_scalar
-from ._utils._typing import Array, DType
+from ._utils._typing import Array, ArrayNamespace, DType
 
 if TYPE_CHECKING:  # pragma: no cover
     import numpy as np
@@ -30,37 +29,37 @@ else:
 P = ParamSpec("P")
 
 
-@overload
+@overload  # pyrefly: ignore[invalid-param-spec]
 def lazy_apply(  # type: ignore[valid-type]
     func: Callable[P, Array | ArrayLike],
     *args: Array | complex | None,
     shape: tuple[int | None, ...] | None = None,
     dtype: DType | None = None,
     as_numpy: bool = False,
-    xp: ModuleType | None = None,
+    xp: ArrayNamespace | None = None,
     **kwargs: P.kwargs,  # pyright: ignore[reportGeneralTypeIssues]
 ) -> Array: ...  # numpydoc ignore=GL08
 
 
-@overload
+@overload  # pyrefly: ignore[invalid-param-spec]
 def lazy_apply(  # type: ignore[valid-type]
     func: Callable[P, Sequence[Array | ArrayLike]],
     *args: Array | complex | None,
     shape: Sequence[tuple[int | None, ...]],
     dtype: Sequence[DType] | None = None,
     as_numpy: bool = False,
-    xp: ModuleType | None = None,
+    xp: ArrayNamespace | None = None,
     **kwargs: P.kwargs,  # pyright: ignore[reportGeneralTypeIssues]
 ) -> tuple[Array, ...]: ...  # numpydoc ignore=GL08
 
 
-def lazy_apply(  # type: ignore[valid-type]  # numpydoc ignore=GL07,SA04
+def lazy_apply(  # type: ignore[valid-type]  # pyrefly: ignore[invalid-param-spec]  # numpydoc ignore=GL07,SA04
     func: Callable[P, Array | ArrayLike | Sequence[Array | ArrayLike]],
     *args: Array | complex | None,
     shape: tuple[int | None, ...] | Sequence[tuple[int | None, ...]] | None = None,
     dtype: DType | Sequence[DType] | None = None,
     as_numpy: bool = False,
-    xp: ModuleType | None = None,
+    xp: ArrayNamespace | None = None,
     **kwargs: P.kwargs,  # pyright: ignore[reportGeneralTypeIssues]
 ) -> Array | tuple[Array, ...]:
     """
@@ -240,7 +239,7 @@ def lazy_apply(  # type: ignore[valid-type]  # numpydoc ignore=GL07,SA04
     if is_dask_namespace(xp):
         import dask
 
-        metas: list[Array] = [arg._meta for arg in array_args]  # pylint: disable=protected-access    # pyright: ignore[reportAttributeAccessIssue]
+        metas: list[Array] = [arg._meta for arg in array_args]  # pylint: disable=protected-access # pyright: ignore[reportAttributeAccessIssue] # pyrefly: ignore[missing-attribute]
         meta_xp = array_namespace(*metas)
 
         wrapped = dask.delayed(  # type: ignore[attr-defined]  # pyright: ignore[reportPrivateImportUsage]
@@ -302,7 +301,7 @@ def lazy_apply(  # type: ignore[valid-type]  # numpydoc ignore=GL07,SA04
     return out if multi_output else out[0]
 
 
-def _is_jax_jit_enabled(xp: ModuleType) -> bool:  # numpydoc ignore=PR01,RT01
+def _is_jax_jit_enabled(xp: ArrayNamespace) -> bool:  # numpydoc ignore=PR01,RT01
     """Return True if this function is being called inside ``jax.jit``."""
     import jax  # pylint: disable=import-outside-toplevel
 
@@ -317,7 +316,7 @@ def _lazy_apply_wrapper(  # numpydoc ignore=PR01,RT01
     func: Callable[..., Array | ArrayLike | Sequence[Array | ArrayLike]],
     as_numpy: bool,
     multi_output: bool,
-    xp: ModuleType,
+    xp: ArrayNamespace,
 ) -> Callable[..., tuple[Array, ...]]:
     """
     Helper of `lazy_apply`.

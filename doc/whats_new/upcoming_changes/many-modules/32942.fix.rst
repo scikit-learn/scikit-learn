@@ -1,4 +1,0 @@
-- Some parameter descriptions in the HTML representation of estimators
-  were not properly escaped, which could lead to malformed HTML if the
-  description contains characters like `<` or `>`.
-  By :user:`Olivier Grisel <ogrisel>`.

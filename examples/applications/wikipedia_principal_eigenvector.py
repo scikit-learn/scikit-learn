@@ -146,7 +146,7 @@ def get_adjacency_matrix(redirects_filename, page_links_filename, limit=None):
             break
 
     print("Computing the adjacency matrix")
-    X = sparse.lil_matrix((len(index_map), len(index_map)), dtype=np.float32)
+    X = sparse.lil_array((len(index_map), len(index_map)), dtype=np.float32)
     for i, j in links:
         X[i, j] = 1.0
     del links
