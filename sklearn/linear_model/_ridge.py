@@ -48,7 +48,6 @@ from sklearn.utils._array_api import (
     get_namespace,
     get_namespace_and_device,
     move_to,
-    supported_float_dtypes,
 )
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.extmath import row_norms, safe_sparse_dot
@@ -392,9 +391,15 @@ def _solve_lbfgs(
 
 def _get_valid_accept_sparse(is_X_sparse, solver):
     if is_X_sparse and solver in ["auto", "sag", "saga"]:
+        # sag/saga's Cython solver needs actual CSR structure to run.
         return "csr"
     else:
-        return ["csr", "csc", "coo"]
+        # Every other sparse-capable code path (_solve_sparse_cg, _solve_lsqr,
+        # _preprocess_data's mean_variance_axis, ...) only ever goes through
+        # generic scipy sparse ops or explicitly requires csr/csc, so there is
+        # no need to accept (and thus convert downstream) other formats such
+        # as coo here.
+        return ["csr", "csc"]
 
 
 @validate_params(
@@ -998,34 +1003,13 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             and X.shape[0] >= X.shape[1]
         )
 
-        # `Ridge.fit`'s own `validate_data` call already dtype-checked (to
-        # one of `supported_float_dtypes`), shape-checked and finite-checked
-        # X and y, so _preprocess_data's own check_array pass over them is
-        # redundant when X is already one of those dtypes: no dtype, shape or
-        # finiteness fact can have changed in between, and dense arrays have
-        # no accept_sparse-driven format conversion to perform. This can't be
-        # assumed unconditionally though:
-        # - RidgeClassifier reaches here through `_prepare_data`, whose own
-        #   `validate_data` call does *not* request a float dtype, so X can
-        #   still be e.g. int64 -- in which case check_array's dtype
-        #   coercion is the only place that ever converts it, and skipping
-        #   it left `y -= y_offset` trying to write float into an int64 y.
-        # - For sparse X, check_input=True also converts non-csr/csc formats
-        #   such as coo (which some solvers' accept_sparse legitimately
-        #   allows through unconverted) into a format `mean_variance_axis`
-        #   requires -- skipping that breaks e.g.
-        #   `Ridge(solver="lsqr").fit(X_coo, y)` with `fit_intercept=True`.
-        # Scoped to the numpy namespace like the rest of this fast path:
-        # the dtype/shape/finite guarantee from `validate_data` should hold
-        # equally for other array-API namespaces, but that isn't verified
-        # here, and this optimization only targets the CPU/numpy case.
-        check_input = (
-            X_is_sparse
-            or not _is_numpy_namespace(xp)
-            or X.dtype not in supported_float_dtypes(xp)
-        )
-
-        # when X is sparse we only remove offset from y
+        # Both `Ridge.fit` and `RidgeClassifier._prepare_data` already run
+        # `validate_data` with a matching `dtype`/`accept_sparse` contract
+        # (the latter via `_get_valid_accept_sparse`, same as above), so by
+        # the time X and y reach here they're already a supported float
+        # dtype and, if sparse, already csr/csc -- check_input=False below
+        # trusts that instead of having _preprocess_data redo it.
+        # (when X is sparse we only remove the offset from y)
         X, y, X_offset, y_offset, X_scale, _ = _preprocess_data(
             X,
             y,
@@ -1040,14 +1024,14 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             # `copy_X` must still be honored there to avoid silently
             # mutating the caller's array when they asked not to.
             copy=False if use_no_center_cholesky else self.copy_X,
-            check_input=check_input,
+            check_input=False,
             sample_weight=sample_weight,
             rescale_with_sw=False,
             center_X=not use_no_center_cholesky,
             fast_mean_X=use_no_center_cholesky,
         )
 
-        if solver == "sag" and sparse.issparse(X) and self.fit_intercept:
+        if solver == "sag" and X_is_sparse and self.fit_intercept:
             self.coef_, self.n_iter_, self.intercept_, self.solver_ = _ridge_regression(
                 X,
                 y,
@@ -1067,7 +1051,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             self.intercept_ += y_offset
 
         else:
-            if sparse.issparse(X) and self.fit_intercept:
+            if X_is_sparse and self.fit_intercept:
                 # required to fit intercept with sparse_cg and lbfgs solver
                 params = {"X_offset": X_offset, "X_scale": X_scale}
             elif use_no_center_cholesky:
@@ -1409,6 +1393,11 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
             X,
             y,
             accept_sparse=accept_sparse,
+            # X (not y: dtype here only ever applies to X, never to the
+            # class labels) needs to already be a supported float dtype by
+            # the time it reaches `_BaseRidge.fit`, which trusts this
+            # validation and skips its own for dense X.
+            dtype=[xp.float64, xp.float32],
             multi_output=True,
             y_numeric=False,
             force_writeable=True,
