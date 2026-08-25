@@ -1209,10 +1209,8 @@ def test_auto_requests_override_class_level_requests():
     class DefaultRoutingEstimator(BaseEstimator):
         __metadata_request__fit = {"prop": False}
 
-        def fit(self):
-            pass  # pragma: no cover
-
-        def predict(self):
+        def fit(self, X, y, prop):
+            # fit method to prove the override of the class-level request
             pass  # pragma: no cover
 
         def get_metadata_routing(self):

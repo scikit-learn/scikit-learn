@@ -51,6 +51,7 @@ from sklearn.utils import metadata_routing
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    get_routing_for_object,
     process_routing,
 )
 from sklearn.utils.validation import check_is_fitted
@@ -83,7 +84,7 @@ def check_metadata(obj, **kwargs):
 # %%
 # A utility function to nicely print the routing information of an object:
 def print_routing(obj):
-    pprint(obj.get_metadata_routing()._serialize())
+    pprint(get_routing_for_object(obj)._serialize())
 
 
 # %%
