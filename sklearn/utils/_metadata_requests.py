@@ -437,8 +437,9 @@ class MethodMetadataRequest:
         return self
 
     def actualize_auto_requests(self):
-        for param in self._auto_requests:
-            self.add_request(param=param, alias=True)
+        if _auto_routing_enabled():
+            for param in self._auto_requests:
+                self.add_request(param=param, alias=True)
         return self
 
     def _get_param_names(self, return_alias):
