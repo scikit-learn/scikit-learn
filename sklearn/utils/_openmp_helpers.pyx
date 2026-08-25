@@ -1,4 +1,5 @@
 import os
+import threading
 from time import perf_counter
 
 from cython.parallel import prange
@@ -17,6 +18,13 @@ _CPU_COUNTS = {}
 # a float (falling back to the default below on any issue), so a given
 # bucket only ever gets calibrated once per process.
 _OVERHEAD_PER_THREAD_CACHE = {}
+
+# Guards the check-then-calibrate-then-set below so that two Python threads
+# racing on the same uncalibrated bucket (e.g. a threading-backend
+# joblib.Parallel fitting several estimators at once) cannot both dispatch
+# concurrent calibration runs, which would contaminate each other's timing
+# and let a corrupted measurement win the cache permanently.
+_OVERHEAD_PER_THREAD_LOCK = threading.Lock()
 
 # Fallback per-thread OpenMP dispatch overhead (in seconds), used until
 # `_calibrate_overhead_per_thread` has run once for a given bucket, and
@@ -51,9 +59,13 @@ def _omp_prange_dispatch_overhead(n_threads):
 
     global _OVERHEAD_PER_THREAD_CACHE
     if bucket not in _OVERHEAD_PER_THREAD_CACHE:
-        _OVERHEAD_PER_THREAD_CACHE[bucket] = (
-            _calibrate_overhead_per_thread(bucket)
-        )
+        with _OVERHEAD_PER_THREAD_LOCK:
+            # Re-check: another thread may have finished calibrating this
+            # bucket while we were waiting for the lock.
+            if bucket not in _OVERHEAD_PER_THREAD_CACHE:
+                _OVERHEAD_PER_THREAD_CACHE[bucket] = (
+                    _calibrate_overhead_per_thread(bucket)
+                )
     return _OVERHEAD_PER_THREAD_CACHE[bucket] * n_threads
 
 
