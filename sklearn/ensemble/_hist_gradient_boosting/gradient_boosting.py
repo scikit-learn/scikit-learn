@@ -979,26 +979,30 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # even though the actual per-node workload shrinks as nodes get deeper/smaller.
         # To account for that we use smaller per-item costs than what is returned by
         # benchmarks/bench_hgb_ops_per_item.py
-        features_parallel_work = max(n_samples, self.max_bins * 4) * n_features
+        features_parallel_work = max(n_samples, self.max_bins * 3) * n_features
         samples_parallel_work = n_samples / 2
-        n_threads = _optimal_n_threads_for_workload(
+        n_features_threads = _optimal_n_threads_for_workload(
             features_parallel_work, max_n_threads
         )
 
         # Compute the per-thread chunk size first, then derive how many threads
         # are actually needed to cover n_features with that chunk size: this can
-        # be lower than max_n_threads, avoiding threads with little to no work.
-        n_features_per_thread = math.ceil(n_features / n_threads)
+        # be lower than n_features_threads, avoiding threads with little to no work.
+        # Note: this enforces n_threads <= n_features
+        n_features_per_thread = math.ceil(n_features / n_features_threads)
         n_threads = math.ceil(n_features / n_features_per_thread)
 
-        # The dataset has enough samples that a larger team could still
-        # pay off when parallelizing over n_samples (e.g. apply_split),
-        # even though features_parallel_work alone didn't need it: grow
-        # n_threads to capture that.
-        n_threads = max(
-            n_threads,
-            _optimal_n_threads_for_workload(samples_parallel_work, max_n_threads),
+        # Handle cases where n_features is small, but the dataset is big
+        # and might benefit from more threads than n_features.
+        # This is delicate as it can quickly be detrimental for features-wise
+        # parallelization
+        n_samples_threads = _optimal_n_threads_for_workload(
+            samples_parallel_work, max_n_threads
         )
+        if n_features == 1:
+            n_threads = n_samples_threads
+        elif n_features <= n_samples_threads:
+            n_threads = min(n_samples_threads, max(n_features * 2, 16))
 
         return n_threads
 
