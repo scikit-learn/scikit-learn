@@ -271,7 +271,7 @@ def test_verbose_k_best(capsys):
 
 def test_k_best_selects_best():
     # Tests that the labels added by st really are the 10 best labels.
-    est = LogisticRegression(random_state=0)
+    est = LogisticRegression()
     st = SelfTrainingClassifier(est, criterion="k_best", max_iter=1, k_best=10)
     has_label = y_train_missing_labels != -1
     st.fit(X_train, y_train_missing_labels)

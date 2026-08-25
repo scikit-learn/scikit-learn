@@ -51,6 +51,7 @@ from sklearn.utils._array_api import (
 )
 from sklearn.utils.fixes import (
     _IS_32BIT,
+    _IS_WASM,
     VisibleDeprecationWarning,
     _in_unstable_openblas_configuration,
 )
@@ -358,6 +359,9 @@ try:
     skip_if_no_numpydoc = pytest.mark.skipif(
         not _is_numpydoc(),
         reason="numpydoc is required to test the docstrings",
+    )
+    skip_callback_test_if_wasm = pytest.mark.skipif(
+        _IS_WASM, reason="callback tests are skipped on WASM/Pyodide"
     )
 except ImportError:
     pass
@@ -699,7 +703,7 @@ def _check_consistency_items(
 
     Parameters
     ----------
-    items_doc : dict of dict of str
+    items_docs : dict of dict of str
         Dictionary where the key is the string type or description, value is
         a dictionary where the key is "type description" or "description"
         and the value is a list of object names with the same string type or
@@ -1084,7 +1088,7 @@ def raises(expected_exc_type, match=None, may_pass=False, err_msg=None):
 
     Parameters
     ----------
-    excepted_exc_type : Exception or list of Exception
+    expected_exc_type : Exception or list of Exception
         The exception that should be raised by the block. If a list, the block
         should raise one of the exceptions.
     match : str or list of str, default=None
@@ -1314,6 +1318,9 @@ def _array_api_for_tests(array_namespace, device_name=None, dtype_name=None):
         The importable name of the array namespace module.
     device_name : str or None, default=None
         The device name for array allocation. Can be None for default device.
+    dtype_name : str or None, default=None
+        The name of the data type. If passed, used to skip the test if
+        dtype not supported for a specific namespace and device.
 
     Returns
     -------
@@ -1412,9 +1419,9 @@ def _array_api_for_tests(array_namespace, device_name=None, dtype_name=None):
 def _get_warnings_filters_info_list():
     @dataclass
     class WarningInfo:
-        action: "warnings._ActionKind"  # type: ignore[annotation-unchecked]
-        message: str = ""  # type: ignore[annotation-unchecked]
-        category: type[Warning] = Warning  # type: ignore[annotation-unchecked]
+        action: "warnings._ActionKind"
+        message: str = ""
+        category: type[Warning] = Warning
 
         def to_filterwarning_str(self):
             if self.category.__module__ == "builtins":
@@ -1509,11 +1516,28 @@ def _get_warnings_filters_info_list():
             message=".+scattermapbox.+deprecated.+scattermap.+instead",
             category=DeprecationWarning,
         ),
+        # seaborn <=0.13.2 passes the deprecated `vert` argument to matplotlib's
+        # Axes.bxp internally (e.g. via sns.boxplot).
+        # TODO: remove once a fixed seaborn release is our minimum.
+        WarningInfo(
+            "ignore",
+            # Use `.` below instead of `:` to avoid string being split incorrectly
+            message="vert. bool was deprecated in Matplotlib",
+            category=DeprecationWarning,
+        ),
         # TODO(1.10): remove PassiveAggressive
         WarningInfo(
             "ignore",
             message="Class PassiveAggressive.+is deprecated",
             category=FutureWarning,
+        ),
+        # TODO: remove once the version where scipy has removed all the sparse matrix
+        # classes is our min version; note that scipy did not yet announce when this
+        # will happen, only that it won't be earlier than v2.2.
+        WarningInfo(
+            "ignore",
+            message=r"(?s).*All sparse matrix classes.+deprecated",
+            category=DeprecationWarning,
         ),
     ]
 

@@ -259,12 +259,15 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         if weights is None:
             y_pred = np.mean(_y[neigh_ind], axis=1)
         else:
-            y_pred = np.empty((neigh_dist.shape[0], _y.shape[1]), dtype=np.float64)
+            # Weighted sum of the neighbors' targets over the neighbor axis,
+            # for every query and output column. Equivalent to
+            #     np.sum(_y[neigh_ind] * weights[:, :, None], axis=1)
+            # but the einsum avoids materializing that full product. Here
+            # _y[neigh_ind] is (n_queries, n_neighbors, n_outputs) and weights
+            # is (n_queries, n_neighbors).
             denom = np.sum(weights, axis=1)
-
-            for j in range(_y.shape[1]):
-                num = np.sum(_y[neigh_ind, j] * weights, axis=1)
-                y_pred[:, j] = num / denom
+            num = np.einsum("ijk,ij->ik", _y[neigh_ind], weights)
+            y_pred = num / denom[:, None]
 
         if self._y.ndim == 1:
             y_pred = y_pred.ravel()

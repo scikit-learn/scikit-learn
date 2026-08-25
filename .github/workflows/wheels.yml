@@ -34,7 +34,7 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -173,7 +173,7 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -198,16 +198,10 @@ jobs:
           CIBW_CONFIG_SETTINGS_WINDOWS: "setup-args=--vsenv"
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir}
           CIBW_BEFORE_BUILD: bash {project}/build_tools/wheels/cibw_before_build.sh {project}
-          CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }} ${{matrix.platform_id}}
           CIBW_ENVIRONMENT_PASS_LINUX: RUNNER_OS
           # TODO Put back pandas when there is a pandas release with Python 3.14 wheels
           CIBW_TEST_REQUIRES: ${{ contains(matrix.python, '314') && 'pytest' || 'pytest pandas' }} scipy
-          # On Windows, we use a custom Docker image and CIBW_TEST_REQUIRES_WINDOWS
-          # does not make sense because it would install dependencies in the host
-          # rather than inside the Docker image
-          CIBW_TEST_REQUIRES_WINDOWS: ""
           CIBW_TEST_COMMAND: bash {project}/build_tools/wheels/test_wheels.sh {project}
-          CIBW_TEST_COMMAND_WINDOWS: bash {project}/build_tools/github/test_windows_wheels.sh ${{ matrix.python }} {project} ${{matrix.platform_id}}
           CIBW_BUILD_VERBOSITY: 1
 
         run: bash build_tools/wheels/build_wheels.sh
@@ -236,7 +230,7 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -263,12 +257,12 @@ jobs:
     runs-on: ubuntu-latest
     environment: upload_anaconda
     needs: [build_wheels, build_sdist]
-    # The artifacts cannot be uploaded on PRs
-    if: github.event_name != 'pull_request'
+    # The artifacts should only be updated for push on branches (with special marker)
+    if: github.event_name == 'push'
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Download artifacts
         uses: actions/download-artifact@v8
@@ -283,7 +277,6 @@ jobs:
       - name: Upload artifacts
         env:
           # Secret variables need to be mapped to environment variables explicitly
-          SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN }}
           SCIKIT_LEARN_STAGING_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_STAGING_UPLOAD_TOKEN }}
           ARTIFACTS_PATH: dist
         # Force a replacement if the remote file already exists

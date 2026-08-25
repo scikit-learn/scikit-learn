@@ -130,7 +130,7 @@ def _clone_parametrized(estimator, *, safe=True):
 
     new_object = klass(**new_object_params)
     try:
-        new_object._metadata_request = copy.deepcopy(estimator._metadata_request)
+        new_object._metadata_request = clone(estimator._metadata_request)
     except AttributeError:
         pass
 
@@ -357,7 +357,13 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
         """Get fitted attributes of the estimator."""
 
         fitted_attr = {}
-        for name, value in inspect.getmembers(self):
+        # Ignore deprecation warnings for deprecated fitted attributes when
+        # generating the repr.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", FutureWarning)
+            members = inspect.getmembers(self)
+
+        for name, value in members:
             # We display up to 100 fitted attributes
             if len(fitted_attr) > 100:
                 fitted_attr["..."] = {

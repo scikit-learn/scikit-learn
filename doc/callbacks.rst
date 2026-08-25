@@ -145,7 +145,8 @@ the grid search::
     14       fit       13  0.958...
     15       fit       14  0.941...
 
-.. TODO(callbacks): link to an example of how to use and plot the scores from the logs
+See :ref:`sphx_glr_auto_examples_callbacks_plot_scoring_monitor.py` for an
+example of how to use and plot the scores from the logs.
 
 Auto-propagated callbacks
 -------------------------

@@ -25,6 +25,14 @@ is merged. See https://github.com/blog/1506-closing-issues-via-pull-requests
 #### What does this implement/fix? Explain your changes.
 
 
+#### Introduce yourself
+<!-- Especially if you are new to the scikit-learn community, please introduce yourself.
+How do you use scikit-learn, what prompted you to make this contribution?
+Getting to know you helps us build trust in your judgement and welcome you into the
+community.
+-->
+
+
 #### AI usage disclosure
 <!--
 Edit the list below to show when/how you used AI tools to create this PR.
