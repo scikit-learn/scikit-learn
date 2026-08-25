@@ -457,8 +457,9 @@ class MethodMetadataRequest:
 
     def _actualize_auto_requests(self):
         """Set metadata requests for all params in self._auto_requests."""
-        for param in self._auto_requests:
-            self.add_request(param=param, alias=True)
+        if _auto_requests_enabled():
+            for param in self._auto_requests:
+                self.add_request(param=param, alias=True)
         return self
 
     def _get_param_names(self, return_alias):
