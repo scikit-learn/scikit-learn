@@ -1,6 +1,9 @@
-- :class:`tree.ExtraTreeRegressor`, :class:`tree.ExtraTreeClassifier`
-  now have native support for categorical features, including multi-class
-  classification and multi-output targets. Categorical features can be specified
-  with the `categorical_features` parameter. Up to ``2**24 - 1`` categories per
-  feature are supported via random hash splits.
-  By :user:`Adam Li <adam2392>` and :user:`Adrin Jalali <adrinjalali>`
+- :class:`tree.DecisionTreeRegressor`, :class:`tree.DecisionTreeClassifier`,
+  :class:`tree.ExtraTreeRegressor`, and :class:`tree.ExtraTreeClassifier`
+  now have native support for categorical features via the `categorical_features`
+  parameter. Decision trees support binary classification and single-output
+  regression (all criteria except `'absolute_error'`) with up to 256 categories
+  per feature. Extra trees also support multi-class / multi-output targets with
+  up to ``2**24 - 1`` categories via random hash splits.
+  By :user:`Adam Li <adam2392>`, :user:`Arthur Lacote <cakedev0>`,
+  :user:`Adrin Jalali <adrinjalali>` and :user:`Christian Lorentzen <lorentzenchr>`
