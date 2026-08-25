@@ -1629,7 +1629,6 @@ def fetch_file(
         local_filename = filename_from_url
     elif Path(local_filename).name != local_filename or local_filename in (
         "",
-        ".",
         "..",
     ):
         raise ValueError(

@@ -696,7 +696,7 @@ def test_fetch_file_rejects_path_as_local_filename(monkeypatch, tmpdir, local_fi
 
     # The check happens before any download and nothing is written to disk.
     assert urlretrieve_mock.call_count == 0
-    assert list(client_side.iterdir()) == []
+    assert list(Path(tmpdir).rglob("*")) == [client_side]
 
 
 def test_fetch_file_accepts_plain_local_filename(monkeypatch, tmpdir):
