@@ -1,11 +1,12 @@
 import math
+import os
 import re
 
 import numpy as np
 import pytest
 from scipy import stats
 
-from sklearn import datasets
+from sklearn import config_context, datasets
 from sklearn.datasets import make_multilabel_classification
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.linear_model import LogisticRegression
@@ -37,7 +38,9 @@ from sklearn.metrics._ranking import (
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import label_binarize
 from sklearn.random_projection import _sparse_random_matrix
+from sklearn.utils._array_api import _convert_to_numpy
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     _convert_container,
     assert_allclose,
     assert_almost_equal,
@@ -944,6 +947,61 @@ def test_confusion_matrix_at_thresholds(global_random_seed):
     assert_allclose(tps + fns, n_pos)
     assert_allclose(tns + fps, n_neg)
     assert_allclose(tns + fps + fns + tps, n_samples)
+
+
+@pytest.mark.skipif(
+    os.environ.get("SCIPY_ARRAY_API") != "1", reason="SCIPY_ARRAY_API not set to 1."
+)
+@pytest.mark.parametrize("weight_kind", ["uniform", "variable"])
+def test_confusion_matrix_at_thresholds_float32_only_weighted_large_n(weight_kind):
+    """Weighted counts stay stable on float32-only devices for n_pos > 2**24.
+
+    Float32 cumulative sums of unit weights saturate past 2**24. Weight
+    normalization alone is not enough at this scale; a fixed-point integer
+    cumsum is used instead. See #34813.
+    """
+    pytest.importorskip("array_api_strict")
+
+    try:
+        xp, device = _array_api_for_tests("array_api_strict", "no_float64", "float32")
+    except Exception as exc:  # pragma: no cover - older array-api-strict
+        pytest.skip(f"array-api-strict no_float64 device unavailable: {exc}")
+
+    rng = np.random.RandomState(0)
+    n_samples = 20_000_000
+    y_true_np = (rng.random(n_samples) < 0.9).astype(np.int32)
+    y_score_np = (rng.random(n_samples) + y_true_np * 0.01).astype(np.float32)
+    if weight_kind == "uniform":
+        sample_weight_np = np.ones(n_samples, dtype=np.float32)
+    else:
+        sample_weight_np = rng.uniform(0.5, 1.5, size=n_samples).astype(np.float32)
+    n_pos = int(y_true_np.sum())
+    assert n_pos > 2**24
+
+    _, _, _, tps_ref, _ = confusion_matrix_at_thresholds(
+        y_true_np,
+        y_score_np.astype(np.float64),
+        sample_weight=sample_weight_np.astype(np.float64),
+    )
+    expected_pos_weight = float(np.dot(y_true_np, sample_weight_np.astype(np.float64)))
+
+    y_true = xp.asarray(y_true_np, device=device)
+    y_score = xp.asarray(y_score_np, dtype=xp.float32, device=device)
+    sample_weight = xp.asarray(sample_weight_np, dtype=xp.float32, device=device)
+    with config_context(array_api_dispatch=True):
+        _, fps, _, tps, _ = confusion_matrix_at_thresholds(
+            y_true, y_score, sample_weight=sample_weight
+        )
+
+    tps_np = _convert_to_numpy(tps, xp=xp)
+    fps_np = _convert_to_numpy(fps, xp=xp)
+    # Allow float32 rounding of large integer-valued counts (ulp of 2 above 2**24)
+    # plus fixed-point quantization at 1e-6 relative resolution.
+    assert_allclose(tps_np[-1], expected_pos_weight, rtol=1e-5, atol=1)
+    assert_allclose(tps_np, tps_ref, rtol=1e-5, atol=1)
+    assert_allclose(
+        fps_np[-1] + tps_np[-1], float(sample_weight_np.sum()), rtol=1e-5, atol=1
+    )
 
 
 @pytest.mark.parametrize("curve_func", CURVE_FUNCS)

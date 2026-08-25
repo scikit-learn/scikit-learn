@@ -776,6 +776,24 @@ def _max_precision_float_dtype(xp, device):
     return xp.float32
 
 
+def _max_precision_int_dtype(xp, device):
+    """Return the widest signed integer dtype supported by the device.
+
+    Note that scikit-learn only considers int32 and int64 as suitable integer
+    dtypes for accumulators.
+    """
+    if _is_numpy_namespace(xp):
+        return xp.int64
+
+    integral_dtypes = xp.__array_namespace_info__().dtypes(
+        kind="signed integer", device=device
+    )
+    if "int64" in integral_dtypes:
+        return xp.int64
+
+    return xp.int32
+
+
 def _find_matching_floating_dtype(*arrays, xp):
     """Find a suitable floating point dtype when computing with arrays.
 
