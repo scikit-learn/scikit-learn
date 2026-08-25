@@ -1,0 +1,6 @@
+- :class:`linear_model.ElasticNetCV`, :class:`linear_model.LassoCV` and
+  :class:`linear_model.MultiTaskElasticNetCV` now avoid prematurely converting `X` to
+  F-contiguous array or sparse CSC because the inner cross validation take subsamples
+  of `X` which then need the same conversion again, anyway. So this PR can avoid memory
+  copies of `X`.
+  By :user:`Christian Lorentzen <lorentzenchr>`.
