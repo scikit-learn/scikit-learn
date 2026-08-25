@@ -699,7 +699,15 @@ def test_fetch_file_rejects_path_as_local_filename(monkeypatch, tmpdir, local_fi
     assert list(Path(tmpdir).rglob("*")) == [client_side]
 
 
-def test_fetch_file_accepts_plain_local_filename(monkeypatch, tmpdir):
+@pytest.mark.parametrize(
+    "local_filename",
+    [
+        "renamed.jsonl",
+        ".hidden.jsonl",
+        "data..jsonl",
+    ],
+)
+def test_fetch_file_accepts_plain_local_filename(monkeypatch, tmpdir, local_filename):
     server_side = tmpdir.mkdir("server_side")
     server_data = '{"a": 1, "b": 2}\n'
     Path(server_side / "data.jsonl").write_text(server_data, encoding="utf-8")
@@ -710,11 +718,10 @@ def test_fetch_file_accepts_plain_local_filename(monkeypatch, tmpdir):
         "sklearn.datasets._base.urlretrieve", _mock_urlretrieve(server_side)
     )
 
-    for local_filename in ["renamed.jsonl", ".hidden.jsonl", "data..jsonl"]:
-        fetched_file_path = fetch_file(
-            "https://example.com/data.jsonl",
-            folder=client_side,
-            local_filename=local_filename,
-        )
-        assert fetched_file_path == client_side / local_filename
-        assert fetched_file_path.read_text(encoding="utf-8") == server_data
+    fetched_file_path = fetch_file(
+        "https://example.com/data.jsonl",
+        folder=client_side,
+        local_filename=local_filename,
+    )
+    assert fetched_file_path == client_side / local_filename
+    assert fetched_file_path.read_text(encoding="utf-8") == server_data
