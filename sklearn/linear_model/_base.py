@@ -149,9 +149,7 @@ def _preprocess_data(
     sample weights.
 
     `center_X=False` lets a caller with a dense `X` skip the `O(n_samples *
-    n_features)` centering pass (e.g. because its solver can apply the
-    centering algebraically from `X_offset` instead of on a materialized
-    centered copy of `X`). It has no effect on sparse `X`, which is never
+    n_features)` centering pass. It has no effect on sparse `X`, which is never
     centered in place regardless.
 
     Returns
