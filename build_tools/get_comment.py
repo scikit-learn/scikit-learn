@@ -20,8 +20,14 @@ def get_versions(versions_file):
     versions : dict
         A dictionary with the versions of the packages.
     """
-    with open(versions_file, "r") as f:
-        return dict(line.strip().split("=") for line in f)
+    try:
+        with open(versions_file, "r") as f:
+            return dict(line.strip().split("=") for line in f)
+    except FileNotFoundError:
+        # If the versions file wasn't created due to an early failure in the
+        # linting workflow, we still want the bot to comment on the PR with the
+        # merging upstream/main work-around message
+        return {}
 
 
 def get_step_message(log, start, end, title, message, details):
@@ -67,9 +73,6 @@ def get_step_message(log, start, end, title, message, details):
 
 
 def get_message(log_file, repo_str, pr_number, sha, run_id, details, versions):
-    with open(log_file, "r") as f:
-        log = f.read()
-
     sub_text = (
         "\n\n<sub> _Generated for commit:"
         f" [{sha[:7]}](https://github.com/{repo_str}/pull/{pr_number}/commits/{sha}). "
@@ -77,13 +80,22 @@ def get_message(log_file, repo_str, pr_number, sha, run_id, details, versions):
         f"(https://github.com/{repo_str}/actions/runs/{run_id})_ </sub>"
     )
 
+    try:
+        with open(log_file, "r") as f:
+            log = f.read()
+    except FileNotFoundError:
+        # If the log file wasn't created due to an early failure in the linting
+        # workflow, we still want the bot to comment on the PR with the merging
+        # upstream/main work-around message
+        log = ""
+
     if "### Linting completed ###" not in log:
         return (
             "## ❌ Linting issues\n\n"
             "There was an issue running the linter job. Please update with "
             "`upstream/main` ([link]("
             "https://scikit-learn.org/dev/developers/contributing.html"
-            "#how-to-contribute)) and push the changes. If you already have done "
+            "#development-workflow)) and push the changes. If you already have done "
             "that, please send an empty commit with `git commit --allow-empty` "
             "and push the changes to trigger the CI.\n\n" + sub_text
         )
@@ -144,6 +156,37 @@ def get_message(log_file, repo_str, pr_number, sha, run_id, details, versions):
             "the changes. Here you can see the detected issues. Note that the "
             "installed `cython-lint` version is "
             f"`cython-lint={versions['cython-lint']}`."
+        ),
+        details=details,
+    )
+
+    # sphinx-lint
+    message += get_step_message(
+        log,
+        start="### Running sphinx-lint ###",
+        end="Problems detected by sphinx-lint",
+        title="`sphinx-lint`",
+        message=(
+            "`sphinx-lint` detected issues in the documentation. Please fix them "
+            "locally and push the changes. Here you can see the detected issues. Note "
+            "that the installed `sphinx-lint` version is "
+            f"`sphinx-lint={versions['sphinx-lint']}`."
+        ),
+        details=details,
+    )
+
+    # codespell
+    message += get_step_message(
+        log,
+        start="### Running codespell ###",
+        end="Problems detected by codespell",
+        title="`codespell`",
+        message=(
+            "`codespell` detected likely spelling mistakes. Please fix them locally "
+            "and push the changes. If a word is a false positive, add it to "
+            "`build_tools/codespell_ignore_words.txt`. Here you can see the detected "
+            "issues. Note that the installed `codespell` version is "
+            f"`codespell={versions['codespell']}`."
         ),
         details=details,
     )
@@ -320,7 +363,7 @@ if __name__ == "__main__":
             # try again without the details.
             message = get_message(
                 log_file,
-                repo=repo,
+                repo_str=repo_str,
                 pr_number=pr_number,
                 sha=sha,
                 run_id=run_id,

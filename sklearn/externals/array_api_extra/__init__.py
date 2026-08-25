@@ -7,29 +7,38 @@ from ._delegation import (
     broadcast_shapes,
     cov,
     create_diagonal,
+    deg2rad,
+    diag_indices,
     expand_dims,
     isclose,
     isin,
     kron,
     nan_to_num,
+    nanmax,
+    nanmin,
+    nansum,
+    nunique,
     one_hot,
     pad,
     partition,
+    rad2deg,
     searchsorted,
     setdiff1d,
     sinc,
+    tril_indices,
+    triu_indices,
     union1d,
+    unravel_index,
 )
 from ._lib._at import at
 from ._lib._funcs import (
     angle,
     apply_where,
     default_dtype,
-    nunique,
 )
 from ._lib._lazy import lazy_apply
 
-__version__ = "0.10.3"
+__version__ = "0.11.1"
 
 # pylint: disable=duplicate-code
 __all__ = [
@@ -43,19 +52,28 @@ __all__ = [
     "cov",
     "create_diagonal",
     "default_dtype",
+    "deg2rad",
+    "diag_indices",
     "expand_dims",
     "isclose",
     "isin",
     "kron",
     "lazy_apply",
     "nan_to_num",
+    "nanmax",
+    "nanmin",
+    "nansum",
     "nunique",
     "one_hot",
     "pad",
     "partition",
+    "rad2deg",
     "searchsorted",
     "setdiff1d",
     "sinc",
     "testing",
+    "tril_indices",
+    "triu_indices",
     "union1d",
+    "unravel_index",
 ]
