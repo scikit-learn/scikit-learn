@@ -313,11 +313,11 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             def obj_func(theta, eval_gradient=True):
                 if eval_gradient:
                     lml, grad = self.log_marginal_likelihood(
-                        theta, eval_gradient=True, clone_kernel=False
+                        theta, eval_gradient=True, clone_kernel=True
                     )
                     return -lml, -grad
                 else:
-                    return -self.log_marginal_likelihood(theta, clone_kernel=False)
+                    return -self.log_marginal_likelihood(theta, clone_kernel=True)
 
             # First optimize starting from theta specified in kernel
             theta_initials = [self.kernel_.theta]
