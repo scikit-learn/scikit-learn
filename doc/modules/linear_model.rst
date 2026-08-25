@@ -135,6 +135,8 @@ is specified, :class:`Ridge` will choose between the `"lbfgs"`, `"cholesky"`,
 and `"sparse_cg"` solvers. :class:`Ridge` will begin checking the conditions
 shown in the following table from top to bottom. If the condition is true,
 the corresponding solver is chosen.
+Depending on the shape of the data, this automatic selection may solve the
+primal or dual formulation of the ridge problem.
 
 +-------------+----------------------------------------------------+
 | **Solver**  | **Condition**                                      |
