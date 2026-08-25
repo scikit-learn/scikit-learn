@@ -81,13 +81,11 @@ def _digits_dataset(n_samples=None, dtype=np.float32):
 
 
 @M.cache
-def _synth_regression_dataset(
-    n_samples=100000, n_features=100, n_informative=None, dtype=np.float32
-):
+def _synth_regression_dataset(n_samples=100000, n_features=100, dtype=np.float32):
     X, y = make_regression(
         n_samples=n_samples,
         n_features=n_features,
-        n_informative=n_features // 10 if n_informative is None else n_informative,
+        n_informative=n_features // 10,
         noise=50,
         random_state=0,
     )
