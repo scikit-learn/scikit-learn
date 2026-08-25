@@ -476,7 +476,10 @@ print_routing(meta_est)
 # Here's an example demonstrating both approaches:
 
 
-class DefaultRoutingClassifier(ClassifierMixin, BaseEstimator):
+class ClassifierWithRequestDefaults(ClassifierMixin, BaseEstimator):
+    """This consumer can use `sample_weight` in its `fit` and `other_metadata` in its
+    `predict` method."""
+
     # Class-level default request for fit method
     __metadata_request__fit = {"sample_weight": True}
 
@@ -485,7 +488,7 @@ class DefaultRoutingClassifier(ClassifierMixin, BaseEstimator):
         # `set_config(metadata_request_policy="auto")` is set. The `add_auto_request`
         # method does this.
         requests = super().get_metadata_routing()
-        requests.predict.add_auto_request("groups")
+        requests.predict.add_auto_request("other_metadata")
         return requests
 
     def fit(self, X, y, sample_weight=None):
@@ -493,8 +496,8 @@ class DefaultRoutingClassifier(ClassifierMixin, BaseEstimator):
         self.classes_ = np.array([0, 1])
         return self
 
-    def predict(self, X, groups=None):
-        check_metadata(self, groups=groups)
+    def predict(self, X, other_metadata=None):
+        check_metadata(self, other_metadata=other_metadata)
         return np.ones(len(X))
 
 
@@ -503,12 +506,12 @@ class DefaultRoutingClassifier(ClassifierMixin, BaseEstimator):
 # simple methods (`fit`+`transform`, `fit`+`predict`). Call `add_auto_request` (or
 # `set_*_request`) on the simple methods instead.
 
-# Let's see the default class-level routing configuration:
-clf = DefaultRoutingClassifier()
+# Let's see the default class-level requests:
+clf = ClassifierWithRequestDefaults()
 print_routing(clf)
 
 # %%
-# And now with auto requests enabled:
+# And now with auto requests enabled, applying the instance-level requests:
 with config_context(metadata_request_policy="auto"):
     print_routing(clf)
 
@@ -516,7 +519,7 @@ with config_context(metadata_request_policy="auto"):
 # means they can override them.
 
 # %%
-# The routing can still be modified by the user with set_*_request methods, which take
+# The routing can still be modified by the user with `set_*_request` methods, which take
 # precedence over the previous two ways to set requests:
 clf.set_fit_request(sample_weight=False)
 print_routing(clf)
