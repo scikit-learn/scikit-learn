@@ -1318,6 +1318,9 @@ def _array_api_for_tests(array_namespace, device_name=None, dtype_name=None):
         The importable name of the array namespace module.
     device_name : str or None, default=None
         The device name for array allocation. Can be None for default device.
+    dtype_name : str or None, default=None
+        The name of the data type. If passed, used to skip the test if
+        dtype not supported for a specific namespace and device.
 
     Returns
     -------
