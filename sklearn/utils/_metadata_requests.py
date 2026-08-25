@@ -359,6 +359,8 @@ class MethodMetadataRequest:
 
     auto_requests : set of str, default=None
         The default requests set on instance level.
+
+        .. versionadded:: 1.10
     """
 
     def __init__(self, owner, method, requests=None, auto_requests=None):
@@ -433,6 +435,23 @@ class MethodMetadataRequest:
         return self
 
     def add_auto_request(self, *params):
+        """Mark metadata to request when auto-request policy is enabled.
+
+        This method is used by developers of scikit-learn compatible estimators. To
+        learn how to enable and use the auto-request policy refer to
+        :ref:`metadata_routing_auto_request`.
+
+        Parameters
+        ----------
+        *params : str
+            Names of metadata to auto-request for this method, passed as separate
+            arguments (e.g. `add_auto_request("groups", "sample_weight")`).
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
+        """
         self._auto_requests.update(params)
         return self
 

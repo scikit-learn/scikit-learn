@@ -468,7 +468,7 @@ print_routing(meta_est)
 #    remove a metadata from the metadata routing machinery if necessary.
 # 2. Instance-level defaults via the `add_auto_request` method, which would only
 #    request the metadata if ``set_config(metadata_request_policy="auto")`` is
-#    set.
+#    set by the user.
 #
 # Here's an example demonstrating both approaches:
 
