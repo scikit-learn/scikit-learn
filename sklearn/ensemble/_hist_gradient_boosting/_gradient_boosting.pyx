@@ -56,7 +56,7 @@ cdef inline void _update_raw_predictions_helper(
         int n_samples = raw_predictions.shape[0]
         # Across all leaves, exactly n_samples positions are visited, each
         # costing ~1 simple op below
-        # (empirically measured, see benchmarks/bench_hgb_ops_per_item.py).
+        # (empirically measured, see benchmarks/calibrate_hgb_ops_per_item.py).
         bint use_threads = _use_threads_for_workload(n_samples, n_threads)
 
     for leaf_idx in prange(n_leaves, schedule='static', nogil=True,

@@ -556,7 +556,7 @@ cdef class Splitter:
 
         # Each feature costs about 6 simple ops per bin scanned below for
         # plain numerical features (empirically measured, see
-        # benchmarks/bench_hgb_ops_per_item.py, consistent across very
+        # benchmarks/calibrate_hgb_ops_per_item.py, consistent across very
         # different machines); missing values roughly double that (bins are
         # scanned twice, see the missing_go_to_left loop below) and
         # categorical features cost several times more (~40), but this

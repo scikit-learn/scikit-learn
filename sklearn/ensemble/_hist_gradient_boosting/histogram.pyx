@@ -153,7 +153,7 @@ cdef class HistogramBuilder:
             n_allowed_features = allowed_features.shape[0]
 
         # Numbers of ops per items are empirically measured
-        # (see benchmarks/bench_hgb_ops_per_item.py):
+        # (see benchmarks/calibrate_hgb_ops_per_item.py):
         use_threads_populate = _use_threads_for_workload(
             n_samples * (2 - hessians_are_constant),
             n_threads,
@@ -282,7 +282,7 @@ cdef class HistogramBuilder:
         if has_interaction_cst:
             n_allowed_features = allowed_features.shape[0]
 
-        # 5 is empirically measured, see benchmarks/bench_hgb_ops_per_item.py:
+        # 5 is empirically measured, see benchmarks/calibrate_hgb_ops_per_item.py:
         use_threads = n_allowed_features > 1 and _use_threads_for_workload(
             n_allowed_features * self.n_bins * 5, n_threads
         )

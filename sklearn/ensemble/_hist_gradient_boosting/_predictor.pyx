@@ -16,7 +16,7 @@ from sklearn.ensemble._hist_gradient_boosting.common cimport node_struct
 
 
 # Cost, in simple ops, of traversing the tree for a single sample
-# (empirically measured, see benchmarks/bench_hgb_ops_per_item.py).
+# (empirically measured, see benchmarks/calibrate_hgb_ops_per_item.py).
 cdef int PREDICT_ONE_OPS = 25
 
 

@@ -66,7 +66,7 @@ def _use_threads_for_workload(workload_size, n_threads):
     This compares the estimated serial runtime against the estimated parallel runtime
     and only recommends threading if that is actually faster.
     """
-    if n_threads == 1:
+    if n_threads <= 1:
         return False
     t_serial = workload_size / 2e9
     t_parallelized = (

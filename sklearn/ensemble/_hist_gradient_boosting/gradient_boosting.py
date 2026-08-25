@@ -978,7 +978,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # and the resulting n_threads is then reused for every node of every tree
         # even though the actual per-node workload shrinks as nodes get deeper/smaller.
         # To account for that we use smaller per-item costs than what is returned by
-        # benchmarks/bench_hgb_ops_per_item.py
+        # benchmarks/calibrate_hgb_ops_per_item.py
         features_parallel_work = max(n_samples, self.max_bins * 3) * n_features
         samples_parallel_work = n_samples / 2
         n_features_threads = _optimal_n_threads_for_workload(
