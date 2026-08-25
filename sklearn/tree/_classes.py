@@ -1474,7 +1474,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         to be estimated reliably. Consider limiting ``max_depth`` or increasing
         ``min_samples_leaf`` when predicting a quantile far from 0.5.
 
-    .. versionadded:: 1.10
+        .. versionadded:: 1.10
 
     categorical_features : array-like of {bool, int, str} of shape (n_features,) or \
         (n_categorical_features,), or "from_dtype", default=None
@@ -2184,7 +2184,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         to be estimated reliably. Consider limiting ``max_depth`` or increasing
         ``min_samples_leaf`` when predicting a quantile far from 0.5.
 
-    .. versionadded:: 1.10
+        .. versionadded:: 1.10
 
     categorical_features : array-like of {bool, int, str} of shape (n_features,) or \
         (n_categorical_features,), or "from_dtype", default=None
