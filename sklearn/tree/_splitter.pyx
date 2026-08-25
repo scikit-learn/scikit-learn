@@ -28,7 +28,18 @@ from sklearn.tree._partitioner cimport (
     FEATURE_THRESHOLD, DensePartitioner, SparsePartitioner,
     position_to_split_threshold,
 )
-from sklearn.tree._utils cimport RAND_R_MAX, rand_int, rand_uniform
+from sklearn.tree._utils cimport (
+    MAX_RANDOM_CATEGORICAL_SPLIT_RETRIES,
+    RAND_R_MAX,
+    rand_int,
+    rand_uniform,
+    SPLIT_CATEGORICAL_BITSET,
+    SPLIT_CATEGORICAL_HASH,
+    SPLIT_NUMERIC,
+)
+from sklearn.utils._bitset cimport init_bitset
+import warnings
+
 import numpy as np
 
 # Introduce a fused-class to make it possible to share the split implementation
@@ -47,8 +58,11 @@ cdef inline void _init_split(SplitRecord* self, intp_t start_pos) noexcept nogil
     self.pos = start_pos
     self.feature = 0
     self.threshold = 0.
+    init_bitset(self.left_cat_bitset)
+    self.split_kind = SPLIT_NUMERIC
     self.improvement = -INFINITY
     self.missing_go_to_left = False
+
 
 cdef class Splitter:
     """Abstract splitter class.
@@ -193,6 +207,12 @@ cdef class Splitter:
         self.y = y
 
         self.sample_weight = sample_weight
+        # Initialize the number of categories for each feature
+        # A value of -1 indicates a non-categorical feature
+        if n_categories is None:
+            self.n_categories = np.array([-1] * n_features, dtype=np.intp)
+        else:
+            self.n_categories = n_categories
         return 0
 
     cdef int node_reset(
@@ -369,8 +389,9 @@ cdef inline int node_split_best(
         f_j += n_found_constants
         # f_j in the interval [n_total_constants, f_i[
         current_split.feature = features[f_j]
-
-        is_constant = partitioner.sort_samples_and_feature_values(current_split.feature)
+        is_constant = partitioner.sort_samples_and_feature_values(
+            current_split.feature
+        )
         n_missing = partitioner.n_missing
 
         if is_constant:
@@ -445,12 +466,14 @@ cdef inline int node_split_best(
 
                     # given previous position and the new position, compute the value of this split
                     if partitioner.n_categories_current > 0:  # categorical feature
+                        current_split.split_kind = SPLIT_CATEGORICAL_BITSET
                         partitioner.cat_position_to_split_bitset(
                             p,
                             missing_go_to_left,
                             current_split.left_cat_bitset,
                         )
                     else:  # numerical feature
+                        current_split.split_kind = SPLIT_NUMERIC
                         current_split.threshold = position_to_split_threshold(
                             partitioner.feature_values,
                             p_prev,
@@ -529,6 +552,7 @@ cdef inline int node_split_random(
     cdef intp_t[::1] features = splitter.features
     cdef intp_t[::1] constant_features = splitter.constant_features
     cdef intp_t n_features = splitter.n_features
+    cdef const intp_t[:] n_categories = splitter.n_categories
 
     cdef intp_t max_features = splitter.max_features
     cdef intp_t min_samples_leaf = splitter.min_samples_leaf
@@ -555,6 +579,7 @@ cdef inline int node_split_random(
     cdef intp_t n_visited_features = 0
     cdef float32_t min_feature_value
     cdef float32_t max_feature_value
+    cdef bint is_categorical
 
     _init_split(&best_split, end)
 
@@ -602,8 +627,10 @@ cdef inline int node_split_random(
         # f_j in the interval [n_total_constants, f_i[
 
         current_split.feature = features[f_j]
+        is_categorical = n_categories[current_split.feature] > 0
 
-        # Find min, max as we will randomly select a threshold between them
+        # Find min, max to detect constant features and, for numerical
+        # features, to randomly select a threshold between them.
         partitioner.find_min_max(
             current_split.feature, &min_feature_value, &max_feature_value
         )
@@ -628,13 +655,6 @@ cdef inline int node_split_random(
         features[f_i], features[f_j] = features[f_j], features[f_i]
         has_missing = n_missing != 0
 
-        # Draw a random threshold
-        current_split.threshold = rand_uniform(
-            min_feature_value,
-            max_feature_value,
-            random_state,
-        )
-
         if has_missing:
             # If there are missing values, then we randomly make all missing
             # values go to the right or left.
@@ -649,16 +669,62 @@ cdef inline int node_split_random(
         else:
             missing_go_to_left = 0
 
-        if current_split.threshold == max_feature_value:
-            current_split.threshold = min_feature_value
+        current_split.missing_go_to_left = missing_go_to_left
 
-        # Partition
-        current_split.pos = partitioner.partition_samples(
-            current_split.threshold, missing_go_to_left
-        )
+        if is_categorical:
+            # Draw random hash seeds until both children are non-empty.
+            # A single seed can map every category present in the node to the
+            # same side even when min_feature_value != max_feature_value; that
+            # empty-child partition must be rejected. Retrying is safe because
+            # at least two distinct categories are present, so a balanced
+            # partition is always reachable. Expected attempts are <= 2.
+            current_split.split_kind = SPLIT_CATEGORICAL_HASH
+            init_bitset(current_split.left_cat_bitset)
+            for _ in range(MAX_RANDOM_CATEGORICAL_SPLIT_RETRIES):
+                current_split.left_cat_bitset[0] = <uint32_t> rand_int(
+                    1, RAND_R_MAX, random_state
+                )
+                current_split.pos = partitioner.partition_samples(&current_split)
+                n_left = current_split.pos - start
+                n_right = end - current_split.pos
+                if n_left != 0 and n_right != 0:
+                    break
+            else:  # pragma: no cover
+                # Unreachable from the public API: ordinal encoding guarantees
+                # at least two distinct categories when min != max, so a
+                # non-empty split is found well before this cap. Safety net
+                # only; not tested.
+                with gil:
+                    warnings.warn(
+                        (
+                            "Failed to find a non-empty random categorical "
+                            "split after "
+                            f"{MAX_RANDOM_CATEGORICAL_SPLIT_RETRIES} retries. "
+                            "This should not happen for ordinal-encoded "
+                            "categorical features. Please open an issue at "
+                            "https://github.com/scikit-learn/scikit-learn/"
+                            "issues with a minimal reproducer."
+                        ),
+                        UserWarning,
+                    )
+                continue
+        else:
+            current_split.split_kind = SPLIT_NUMERIC
+            # Draw a random threshold
+            current_split.threshold = rand_uniform(
+                min_feature_value,
+                max_feature_value,
+                random_state,
+            )
 
-        n_left = current_split.pos - start
-        n_right = end - current_split.pos
+            if current_split.threshold == max_feature_value:
+                current_split.threshold = min_feature_value
+
+            # Partition
+            current_split.pos = partitioner.partition_samples(&current_split)
+
+            n_left = current_split.pos - start
+            n_right = end - current_split.pos
 
         # Reject if min_samples_leaf is not guaranteed
         if n_left < min_samples_leaf or n_right < min_samples_leaf:
@@ -703,6 +769,8 @@ cdef inline int node_split_random(
 
     # Reorganize into samples[start:best.pos] + samples[best.pos:end]
     if best_split.pos < end:
+        # With one attempt per feature, samples are already partitioned when
+        # the last evaluated feature is the best; skip the final partition then.
         if current_split.feature != best_split.feature:
             partitioner.partition_samples_final(
                 &best_split

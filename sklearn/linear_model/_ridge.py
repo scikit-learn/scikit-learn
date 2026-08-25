@@ -1699,25 +1699,6 @@ def _check_gcv_mode(X, gcv_mode):
     return "gram" if n <= p else "cov"
 
 
-def _find_smallest_angle(query, vectors):
-    """Find the column of vectors that is most aligned with the query.
-
-    Both query and the columns of vectors must have their l2 norm equal to 1.
-
-    Parameters
-    ----------
-    query : ndarray of shape (n_samples,)
-        Normalized query vector.
-
-    vectors : ndarray of shape (n_samples, n_features)
-        Vectors to which we compare query, as columns. Must be normalized.
-    """
-    xp, _ = get_namespace(query)
-    abs_cosine = xp.abs(query @ vectors)
-    index = xp.argmax(abs_cosine)
-    return index
-
-
 class _X_CenterStackOp(sparse.linalg.LinearOperator):
     """Behaves as centered and scaled X with an added intercept column.
 
