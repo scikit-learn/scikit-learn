@@ -1024,25 +1024,35 @@ def confusion_matrix_at_thresholds(
             y_true, y_score, sample_weight
         )
     )
-    if weight is None:
-        weight = 1.0
-
     # accumulate the true positives with decreasing threshold
-    max_float_dtype = _max_precision_float_dtype(xp, device)
-    # Perform the weighted cumulative sum using float64 precision when possible
-    # to avoid numerical stability problem with tens of millions of very noisy
-    # predictions:
-    # https://github.com/scikit-learn/scikit-learn/issues/31533#issuecomment-2967062437
-    y_true = xp.astype(y_true, max_float_dtype)
-    tps = xp.cumulative_sum(y_true * weight, dtype=max_float_dtype)[threshold_idxs]
-    if sample_weight is not None:
-        # express fps as a cumsum to ensure fps is increasing even in
-        # the presence of floating point errors
+    if sample_weight is None:
+        supported_int_dtypes = xp.__array_namespace_info__().dtypes(
+            kind="signed integer", device=device
+        )
+        accum_int_dtype = xp.int64 if "int64" in supported_int_dtypes else xp.int32
+        y_true_int = xp.astype(y_true, accum_int_dtype)
+        tps_int = xp.cumulative_sum(y_true_int, dtype=accum_int_dtype)[threshold_idxs]
+        fps_int = (xp.astype(threshold_idxs, accum_int_dtype) + 1) - tps_int
+
+        output_dtype = (
+            y_score.dtype
+            if hasattr(y_score, "dtype") and xp.isdtype(y_score.dtype, "real floating")
+            else _max_precision_float_dtype(xp, device)
+        )
+        tps = xp.astype(tps_int, output_dtype)
+        fps = xp.astype(fps_int, output_dtype)
+    else:
+        max_float_dtype = _max_precision_float_dtype(xp, device)
+        # Perform the weighted cumulative sum using float64 precision when possible
+        # to avoid numerical stability problem with tens of millions of very noisy
+        # predictions:
+        # https://github.com/scikit-learn/scikit-learn/issues/31533#issuecomment-2967062437
+        y_true = xp.astype(y_true, max_float_dtype)
+        tps = xp.cumulative_sum(y_true * weight, dtype=max_float_dtype)[threshold_idxs]
         fps = xp.cumulative_sum((1 - y_true) * weight, dtype=max_float_dtype)[
             threshold_idxs
         ]
-    else:
-        fps = 1 + xp.astype(threshold_idxs, max_float_dtype) - tps
+
     tns = fps[-1] - fps
     fns = tps[-1] - tps
     return tns, fps, fns, tps, y_score[threshold_idxs]

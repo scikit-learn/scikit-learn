@@ -946,6 +946,43 @@ def test_confusion_matrix_at_thresholds(global_random_seed):
     assert_allclose(tns + fps + fns + tps, n_samples)
 
 
+def test_confusion_matrix_at_thresholds_unweighted_integer_accumulation():
+    """Test unweighted integer accumulation and output dtype consistency."""
+    # Test with float32 scores
+    y_true = np.array([0, 0, 1, 1, 0, 1])
+    y_score = np.array([0.1, 0.2, 0.35, 0.8, 0.4, 0.9], dtype=np.float32)
+
+    tns, fps, fns, tps, _ = confusion_matrix_at_thresholds(y_true, y_score)
+    assert tps.dtype == np.float32
+    assert fps.dtype == np.float32
+    assert_array_equal(
+        tps, np.array([1.0, 2.0, 2.0, 3.0, 3.0, 3.0], dtype=np.float32)
+    )
+    assert_array_equal(
+        fps, np.array([0.0, 0.0, 1.0, 1.0, 2.0, 3.0], dtype=np.float32)
+    )
+    assert_array_equal(
+        fns, np.array([2.0, 1.0, 1.0, 0.0, 0.0, 0.0], dtype=np.float32)
+    )
+    assert_array_equal(
+        tns, np.array([3.0, 3.0, 2.0, 2.0, 1.0, 0.0], dtype=np.float32)
+    )
+
+    # Test edge case: all positive
+    y_all_pos = np.array([1, 1, 1, 1])
+    y_pos_score = np.array([0.9, 0.8, 0.7, 0.6])
+    _, fps_p, _, tps_p, _ = confusion_matrix_at_thresholds(y_all_pos, y_pos_score)
+    assert_array_equal(fps_p, [0.0, 0.0, 0.0, 0.0])
+    assert_array_equal(tps_p, [1.0, 2.0, 3.0, 4.0])
+
+    # Test edge case: all negative
+    y_all_neg = np.array([0, 0, 0, 0])
+    y_neg_score = np.array([0.9, 0.8, 0.7, 0.6])
+    _, fps_n, _, tps_n, _ = confusion_matrix_at_thresholds(y_all_neg, y_neg_score)
+    assert_array_equal(tps_n, [0.0, 0.0, 0.0, 0.0])
+    assert_array_equal(fps_n, [1.0, 2.0, 3.0, 4.0])
+
+
 @pytest.mark.parametrize("curve_func", CURVE_FUNCS)
 def test_confusion_matrix_at_thresholds_multiclass_error(curve_func):
     rng = check_random_state(404)
