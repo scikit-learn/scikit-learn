@@ -7,7 +7,7 @@ import pytest
 from sklearn.base import clone
 from sklearn.callback import ScoringMonitor
 from sklearn.callback._scoring_monitor import ScoringMonitorLog
-from sklearn.callback.tests._utils import (
+from sklearn.callback.tests._common.estimators import (
     MaxIterEstimator,
     MetaEstimator,
     WhileEstimator,
