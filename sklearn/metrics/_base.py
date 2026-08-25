@@ -14,6 +14,7 @@ from sklearn.utils._array_api import (
     _average,
     _ravel,
     get_namespace_and_device,
+    move_to,
 )
 from sklearn.utils.multiclass import type_of_target, unique_labels
 
@@ -77,6 +78,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
     check_consistent_length(y_true, y_score, sample_weight)
     y_true = check_array(y_true)
     y_score = check_array(y_score)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
 
     not_average_axis = 1
     score_weight = sample_weight
@@ -180,6 +182,7 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average="macro
     check_consistent_length(y_true, y_score)
 
     xp, _, device = get_namespace_and_device(y_score)
+    y_true = move_to(y_true, xp=xp, device=device)
 
     y_true_unique = unique_labels(y_true)
     n_classes = y_true_unique.shape[0]
