@@ -478,7 +478,7 @@ class DefaultRoutingClassifier(ClassifierMixin, BaseEstimator):
     __metadata_request__fit = {"sample_weight": True}
 
     def get_metadata_routing(self):
-        # Each instance can configure metadata which should be requested by default if
+        # Each instance can configure metadata which should be auto-requested if
         # `set_config(metadata_request_policy="auto")` is set. The `add_auto_request`
         # method does this.
         requests = super().get_metadata_routing()
@@ -495,6 +495,11 @@ class DefaultRoutingClassifier(ClassifierMixin, BaseEstimator):
         return np.ones(len(X))
 
 
+# Note that setting auto-requests on *composite* methods such as `fit_transform` or
+# `fit_predict` will not have an effect. Their requests are the union of the underlying
+# simple methods (`fit`+`transform`, `fit`+`predict`). Call `add_auto_request` (or
+# `set_*_request`) on the simple methods instead.
+
 # Let's see the default routing configuration
 clf = DefaultRoutingClassifier()
 print_routing(clf)
@@ -505,7 +510,7 @@ with config_context(metadata_request_policy="auto"):
     print_routing(clf)
 
 # %%
-# The routing can still be modified using set_*_request methods
+# The routing can still be modified by the user with set_*_request methods
 clf.set_fit_request(sample_weight=False)
 print_routing(clf)
 

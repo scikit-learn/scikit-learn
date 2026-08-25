@@ -441,6 +441,10 @@ class MethodMetadataRequest:
         learn how to enable and use the auto-request policy refer to
         :ref:`metadata_routing_auto_request`.
 
+        Note that setting auto-requests on *composite* methods such as `fit_transform`
+        or will not have an effect. Call `add_auto_request` on the simple methods
+        instead.
+
         Parameters
         ----------
         *params : str
@@ -673,9 +677,9 @@ class MetadataRequest:
             setattr(new, method, getattr(self, method).__sklearn_clone__())
         return new
 
-    def actualize_auto_requests(self):
+    def _actualize_auto_requests(self):
         for method in SIMPLE_METHODS:
-            getattr(self, method).actualize_auto_requests()
+            getattr(self, method)._actualize_auto_requests()
         return self
 
     def consumes(self, method, params):
@@ -1392,10 +1396,10 @@ def get_routing_for_object(obj=None):
     elif hasattr(obj, "get_metadata_routing"):
         requests = obj.get_metadata_routing().__sklearn_clone__()
         if _auto_requests_enabled():
-            if hasattr(requests, "actualize_auto_requests"):
-                requests.actualize_auto_requests()
+            if hasattr(requests, "_actualize_auto_requests"):
+                requests._actualize_auto_requests()
             if getattr(requests, "_self_request", None):
-                requests._self_request.actualize_auto_requests()
+                requests._self_request._actualize_auto_requests()
         return requests
 
     return MetadataRequest(owner=None)
@@ -1689,7 +1693,7 @@ class _MetadataRequester:
         class level via the `__metadata_request__{method}` class attributes.
 
         The collected information is used to create `set_{method}_request` methods
-        (e.g. set_fit_request) that allow runtime configuration of metadata routing.
+        (e.g. `set_fit_request`) that allow runtime configuration of metadata routing.
 
         For example, if a method's signature includes `sample_weight`, this method will:
         - During class creation: Create a `set_{method}_request` method to configure

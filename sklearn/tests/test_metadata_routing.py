@@ -1197,39 +1197,41 @@ def test_unbound_set_methods_work():
         ("empty", False),
     ],
 )
-def test_default_routing_disabled(metadata_request_policy, default_routing):
+def test_auto_requests_disabled(metadata_request_policy, default_routing):
     """Check correctness of _auto_requests_enabled."""
     with config_context(metadata_request_policy=metadata_request_policy):
         assert _auto_requests_enabled() == default_routing
 
 
-def test_default_instance_routing_overrides_class_level():
-    """Test that instance-level default routing overrides class-level."""
+def test_auto_requests_override_class_level_requests():
+    """Test that instance-level auto requests override class-level default requests."""
 
     class DefaultRoutingEstimator(BaseEstimator):
         __metadata_request__fit = {"prop": False}
 
         def fit(self):
-            pass
+            pass  # pragma: no cover
 
         def predict(self):
-            pass
+            pass  # pragma: no cover
 
         def get_metadata_routing(self):
             requests = super().get_metadata_routing()
-            requests.fit.add_auto_request(
-                "prop"
-            )  # Override class-level False with True
-            requests.predict.add_auto_request("prop")  # Add new method request
+            # Override class-level False with True:
+            requests.fit.add_auto_request("prop")
+            # Add new method request:
+            requests.predict.add_auto_request("prop")
             return requests
 
     est = DefaultRoutingEstimator()
 
     with config_context(metadata_request_policy="auto"):
-        # Instance-level True should override class-level False
+        # Instance-level True should override class-level False:
         assert get_routing_for_object(est).fit.requests["prop"] is True
-        # New method request should be present
+        # New method request should be present:
         assert get_routing_for_object(est).predict.requests["prop"] is True
+        # Request for composite method is set too:
+        assert get_routing_for_object(est).fit_transform.requests["prop"] is True
 
 
 class _UncopyableOwner:
