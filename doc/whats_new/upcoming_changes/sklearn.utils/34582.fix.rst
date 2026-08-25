@@ -1,5 +1,6 @@
-- The HTML representation of estimators is now fully keyboard accessible. The
+- The HTML representation of estimators is now keyboard accessible. The
   collapsible estimator boxes are built with native `<details>` and
-  `<summary>` elements, so they can be reached and toggled with a keyboard
-  and are announced as disclosure widgets by screen readers.
+  `<summary>` elements, so they can be reached and toggled with a keyboard.
+  They are announced as disclosure widgets by screen readers. The element with
+  keyboard focus is now shown with a visible outline.
   By :user:`Dea María Léon <deamarialeon>`.
