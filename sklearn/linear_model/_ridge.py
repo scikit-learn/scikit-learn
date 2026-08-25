@@ -639,7 +639,6 @@ def _ridge_regression(
     random_state=None,
     return_n_iter=False,
     return_intercept=False,
-    return_solver=False,
     X_scale=None,
     X_offset=None,
     check_input=True,
@@ -850,7 +849,7 @@ def _ridge_regression(
     else:
         res = coef
 
-    return (*res, solver) if return_solver else res
+    return res
 
 
 def resolve_solver(solver, positive, return_intercept, is_sparse, xp):
@@ -982,23 +981,17 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         X_is_sparse = sparse.issparse(X)
+        self.solver_ = resolve_solver(
+            solver, self.positive, return_intercept=False, is_sparse=X_is_sparse, xp=xp
+        )
 
-        # Dense X with n_features <= n_samples, no sample weights, and a solver
-        # that resolves to "cholesky" hits _solve_cholesky's primal branch,
-        # which can apply centering algebraically from X_offset instead of on
-        # a materialized centered copy of X. This avoids an O(n_samples *
-        # n_features) pass over X for what is the most common Ridge shape.
-        # Array API dispatch to a non-numpy namespace always resolves "auto"
-        # (and forbids explicit "cholesky") to "svd" instead (see
-        # resolve_solver), which needs X to actually be centered, so this
-        # fast path must not engage there.
+        # X with n_features <= n_samples, no sample weights, and a
+        # resolved "cholesky" solver hits _solve_cholesky's primal branch,
+        # which can apply an algebraically-centering optimization.
         use_no_center_cholesky = (
             self.fit_intercept
-            and not X_is_sparse
             and sample_weight is None
-            and not self.positive
-            and solver in ("auto", "cholesky")
-            and _is_numpy_namespace(xp)
+            and self.solver_ == "cholesky"
             and X.shape[0] >= X.shape[1]
         )
 
@@ -1015,7 +1008,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         )
 
         if solver == "sag" and X_is_sparse and self.fit_intercept:
-            self.coef_, self.n_iter_, self.intercept_, self.solver_ = _ridge_regression(
+            self.coef_, self.n_iter_, self.intercept_ = _ridge_regression(
                 X,
                 y,
                 alpha=self.alpha,
@@ -1027,7 +1020,6 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                 random_state=self.random_state,
                 return_n_iter=True,
                 return_intercept=True,
-                return_solver=True,
                 check_input=False,
             )
             # add the offset which was subtracted by _preprocess_data
@@ -1045,19 +1037,18 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                 # for dense matrices or when intercept is set to 0
                 params = {}
 
-            self.coef_, self.n_iter_, self.solver_ = _ridge_regression(
+            self.coef_, self.n_iter_ = _ridge_regression(
                 X,
                 y,
                 alpha=self.alpha,
                 sample_weight=sample_weight,
                 max_iter=self.max_iter,
                 tol=self.tol,
-                solver=solver,
+                solver=self.solver_,
                 positive=self.positive,
                 random_state=self.random_state,
                 return_n_iter=True,
                 return_intercept=False,
-                return_solver=True,
                 check_input=False,
                 fit_intercept=self.fit_intercept,
                 **params,
