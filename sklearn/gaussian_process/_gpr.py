@@ -338,7 +338,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 )
 
             optima = Parallel(n_jobs=self.n_jobs)(
-                self._constrained_optimization(
+                delayed(self._constrained_optimization)(
                     bounds=self.kernel_.bounds,
                     initial_theta=theta_initial,
                     obj_func=obj_func,
@@ -670,7 +670,6 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         else:
             return log_likelihood
 
-    @delayed
     def _constrained_optimization(self, obj_func, initial_theta, bounds):
         if self.optimizer == "fmin_l_bfgs_b":
             opt_res = scipy.optimize.minimize(
