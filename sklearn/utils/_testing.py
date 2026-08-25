@@ -51,6 +51,7 @@ from sklearn.utils._array_api import (
 )
 from sklearn.utils.fixes import (
     _IS_32BIT,
+    _IS_WASM,
     VisibleDeprecationWarning,
     _in_unstable_openblas_configuration,
 )
@@ -358,6 +359,9 @@ try:
     skip_if_no_numpydoc = pytest.mark.skipif(
         not _is_numpydoc(),
         reason="numpydoc is required to test the docstrings",
+    )
+    skip_callback_test_if_wasm = pytest.mark.skipif(
+        _IS_WASM, reason="callback tests are skipped on WASM/Pyodide"
     )
 except ImportError:
     pass
@@ -1314,6 +1318,9 @@ def _array_api_for_tests(array_namespace, device_name=None, dtype_name=None):
         The importable name of the array namespace module.
     device_name : str or None, default=None
         The device name for array allocation. Can be None for default device.
+    dtype_name : str or None, default=None
+        The name of the data type. If passed, used to skip the test if
+        dtype not supported for a specific namespace and device.
 
     Returns
     -------
