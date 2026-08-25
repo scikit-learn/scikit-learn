@@ -1034,14 +1034,14 @@ class MetadataRouter:
             self._self_request = obj.__sklearn_clone__()
         elif isinstance(obj, _MetadataRequester):
             self._self_request = obj._get_metadata_request().__sklearn_clone__()
-        elif isinstance(obj, MetadataRouter):
-            # TODO: check if we can safely remove this, since passing a MetadataRouter
-            # into a `self_request` is something we do in our tests only
-            self._self_request = (
-                obj._self_request.__sklearn_clone__()
-                if obj._self_request is not None
-                else None
-            )
+        # elif isinstance(obj, MetadataRouter):
+        #     # TODO: check if we can safely remove this, since passing a MetadataRouter
+        #     # into a `self_request` is something we do in our tests only
+        #     self._self_request = (
+        #         obj._self_request.__sklearn_clone__()
+        #         if obj._self_request is not None
+        #         else None
+        #     )
         else:
             raise ValueError(
                 "Given `obj` is neither a `MetadataRequest` nor does it implement the"
