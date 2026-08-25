@@ -3074,15 +3074,16 @@ def test_quantile_confidence_interval_coverage(global_random_seed):
     Test that quantile regression confidence intervals have appropriate coverage.
     """
     rng = np.random.default_rng(global_random_seed)
-    n_samples = 2000
+    n_samples = 8000
     X = rng.uniform(0.0, 1.0, size=(n_samples, 1))
-    y = np.sin(2 * np.pi * X[:, 0])
+    noise = rng.standard_normal(size=n_samples) * 0.1
+    y = np.sin(2 * np.pi * X[:, 0]) + noise
 
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.4, random_state=0
     )
     common_params = dict(
-        criterion="quantile", max_depth=6, min_samples_leaf=30, random_state=0
+        criterion="quantile", max_depth=6, min_samples_leaf=150, random_state=0
     )
 
     lower = DecisionTreeRegressor(**common_params, quantile=0.1)
