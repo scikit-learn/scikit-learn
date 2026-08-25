@@ -2851,10 +2851,7 @@ def test_array_api_classification_string_input(metric_name):
     ),
 )
 def test_array_api_mixed_pandas_integer_input(metric_name):
-    """Check pandas categorical inputs accepted with array API dispatch enabled.
-
-    They should work like for string inputs.
-    """
+    """Check that mixed pandas and array API integer inputs are accepted."""
     pd = pytest.importorskip("pandas")
     xp, device = _array_api_for_tests("array_api_strict", "device1", "float64")
     metric = ALL_METRICS[metric_name]
