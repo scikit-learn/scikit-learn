@@ -955,18 +955,10 @@ def test_confusion_matrix_at_thresholds_unweighted_integer_accumulation():
     tns, fps, fns, tps, _ = confusion_matrix_at_thresholds(y_true, y_score)
     assert tps.dtype == np.float32
     assert fps.dtype == np.float32
-    assert_array_equal(
-        tps, np.array([1.0, 2.0, 2.0, 3.0, 3.0, 3.0], dtype=np.float32)
-    )
-    assert_array_equal(
-        fps, np.array([0.0, 0.0, 1.0, 1.0, 2.0, 3.0], dtype=np.float32)
-    )
-    assert_array_equal(
-        fns, np.array([2.0, 1.0, 1.0, 0.0, 0.0, 0.0], dtype=np.float32)
-    )
-    assert_array_equal(
-        tns, np.array([3.0, 3.0, 2.0, 2.0, 1.0, 0.0], dtype=np.float32)
-    )
+    assert_array_equal(tps, np.array([1.0, 2.0, 2.0, 3.0, 3.0, 3.0], dtype=np.float32))
+    assert_array_equal(fps, np.array([0.0, 0.0, 1.0, 1.0, 2.0, 3.0], dtype=np.float32))
+    assert_array_equal(fns, np.array([2.0, 1.0, 1.0, 0.0, 0.0, 0.0], dtype=np.float32))
+    assert_array_equal(tns, np.array([3.0, 3.0, 2.0, 2.0, 1.0, 0.0], dtype=np.float32))
 
     # Test edge case: all positive
     y_all_pos = np.array([1, 1, 1, 1])
