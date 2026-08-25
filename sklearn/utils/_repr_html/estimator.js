@@ -121,7 +121,7 @@ if (!window.skEstimatorKeydownGuard) {
             /* Space only has a native action on summaries and buttons.
              * Anywhere else its default is to scroll the notebook, which
              * moves the focused element out of view. */
-            if (event.key === ' ' && !event.target.closest('summary, button')) {
+            if (event.key === ' ' && !event.target.matches('summary, button')) {
                 event.preventDefault();
             }
         } else if (event.key === 'Escape') {
