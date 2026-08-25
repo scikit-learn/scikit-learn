@@ -662,11 +662,9 @@ def test_fetch_file_with_sha256(monkeypatch, tmpdir):
 @pytest.mark.parametrize(
     "local_filename",
     [
-        # A path that also holds a filename.
         "../escaped.jsonl",
         "subfolder/data.jsonl",
         "/absolute/data.jsonl",
-        # A path with no filename at all.
         "subfolder/",
         "/absolute/dir/",
         "../",
