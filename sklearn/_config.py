@@ -187,15 +187,16 @@ def set_config(
         .. versionadded:: 1.3
 
     metadata_request_policy : str, default=None
-        Configure the default metadata request policy.
+        Configure the metadata request policy.
 
-        The default value of this configuration is "empty". Refer to :ref:`metadata
-        routing user guide <metadata_routing>` for more details.
+        This flag controls instance `add_auto_request` flags. Class-level request
+        defaults and `set_*_request` always apply.
 
-        - `"empty"`: No metadata is requested by default.
-        - `"auto"`: Metadata is requested if the consumer has flagged it as an
-          auto-request.
-        - `None`: Configuration is unchanged.
+        - `"empty"`: do not apply auto-requests
+        - `"auto"`: apply requests for metadata flagged with `add_auto_request`
+        - `None`: configuration is unchanged
+
+        Refer to :ref:`metadata routing user guide <metadata_routing>` for more details.
 
         .. versionadded:: 1.10
 
@@ -384,15 +385,16 @@ def config_context(
         .. versionadded:: 1.3
 
     metadata_request_policy : str, default=None
-        Configure the default metadata request policy.
+        Configure the metadata request policy.
 
-        The default value of this configuration is "empty". Refer to :ref:`metadata
-        routing user guide <metadata_routing>` for more details.
+        This flag controls instance `add_auto_request` flags. Class-level request
+        defaults and `set_*_request` always apply.
 
-        - `"empty"`: No metadata is requested by default.
-        - `"auto"`: Metadata is requested if the consumer has flagged it as an
-          auto-request.
-        - `None`: Configuration is unchanged.
+        - `"empty"`: do not apply auto-requests
+        - `"auto"`: apply requests for metadata flagged with `add_auto_request`
+        - `None`: configuration is unchanged
+
+        Refer to :ref:`metadata routing user guide <metadata_routing>` for more details.
 
         .. versionadded:: 1.10
 
