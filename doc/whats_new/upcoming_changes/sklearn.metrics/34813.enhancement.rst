@@ -1,6 +1,0 @@
-- :func:`sklearn.metrics.confusion_matrix_at_thresholds`, :func:`sklearn.metrics.roc_curve`,
-  :func:`sklearn.metrics.precision_recall_curve`, :func:`sklearn.metrics.det_curve`, and
-  :func:`sklearn.metrics.roc_auc_score` now use exact integer cumulative sums for unweighted
-  inputs (`sample_weight=None`), preventing floating-point precision saturation on `float32`-only
-  array API devices when processing datasets exceeding :math:`2^{24}` samples.
-  By :user:`Kaynup <Kaynup>`.
