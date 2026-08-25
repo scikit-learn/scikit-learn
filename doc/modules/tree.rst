@@ -648,7 +648,8 @@ Quantile (pinball loss):
 
 Use ``criterion="quantile"`` together with the ``quantile`` parameter to
 choose :math:`\alpha \in (0, 1)`. The special case ``quantile=0.5`` corresponds
-to the median.
+to the median. As it relies on the same implementation as the MAE criterion,
+it is likewise 3–6× slower to fit than the MSE criterion.
 
 .. _tree_missing_value_support:
 

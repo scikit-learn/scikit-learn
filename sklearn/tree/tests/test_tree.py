@@ -76,7 +76,13 @@ from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import check_random_state
 
 CLF_CRITERIONS = ("gini", "log_loss")
-REG_CRITERIONS = ("squared_error", "absolute_error", "friedman_mse", "poisson")
+REG_CRITERIONS = (
+    "squared_error",
+    "absolute_error",
+    "friedman_mse",
+    "poisson",
+    "quantile",
+)
 
 CLF_TREES = {
     "DecisionTreeClassifier": DecisionTreeClassifier,
@@ -2480,14 +2486,18 @@ def test_missing_values_best_splitter_on_equal_nodes_no_missing(
     criterion, categorical_features
 ):
     """Check missing values goes to correct node during predictions."""
-    if categorical_features is not None and criterion == "absolute_error":
+    if categorical_features is not None and criterion in ("absolute_error", "quantile"):
         pytest.skip(
-            "absolute_error is not supported with categorical features in "
+            f"{criterion} is not supported with categorical features in "
             "DecisionTreeRegressor"
         )
     X = np.array([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
     y = np.array([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
-    node_value_func = np.median if criterion == "absolute_error" else np.mean
+    # criterion="quantile" defaults to quantile=0.5, i.e. the median, same as
+    # criterion="absolute_error".
+    node_value_func = (
+        np.median if criterion in ("absolute_error", "quantile") else np.mean
+    )
 
     params = dict(
         random_state=42,
@@ -3198,20 +3208,21 @@ def test_fit_categorical_with_monotonic_constraint(Tree):
         Tree(categorical_features=[0], monotonic_cst=[1], random_state=0).fit(X, y)
 
 
-def test_fit_categorical_with_absolute_error():
+@pytest.mark.parametrize("criterion", ["absolute_error", "quantile"])
+def test_fit_categorical_with_absolute_error(criterion):
     # Non-regression test: the categorical split-finding algorithm is not
-    # valid for criterion="absolute_error" (see gh-34578), so it should be
-    # rejected rather than silently return a possibly suboptimal split.
+    # valid for criterion="absolute_error" (see gh-34578), nor for
+    # criterion="quantile" which relies on the same split-finding logic, so
+    # it should be rejected rather than silently return a possibly
+    # suboptimal split.
     X = np.array([[0.0], [1.0], [0.0], [1.0]], dtype=np.float64)
     y = np.array([0.0, 1.0, 0.0, 1.0])
 
     with pytest.raises(
         ValueError,
-        match="Categorical features are not supported with criterion='absolute_error'",
+        match=f"Categorical features are not supported with criterion='{criterion}'",
     ):
-        DecisionTreeRegressor(categorical_features=[0], criterion="absolute_error").fit(
-            X, y
-        )
+        DecisionTreeRegressor(categorical_features=[0], criterion=criterion).fit(X, y)
 
 
 def test_predict_sparse_int64_indices_raises():

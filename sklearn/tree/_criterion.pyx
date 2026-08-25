@@ -1244,8 +1244,6 @@ cdef class Pinball(Criterion):
       `left_quantiles[pos - 1]` and `right_quantiles[pos]` to derive the
       mid-point value and to validate monotonic constraints when enabled.
 
-    - Missing values are not supported for Pinball: `init_missing` raises.
-
     For a complementary, in-depth discussion of the mathematics and design
     choices, see the external report:
     https://github.com/cakedev0/fast-mae-split/blob/main/report.ipynb

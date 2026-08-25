@@ -1634,7 +1634,7 @@ class RandomForestRegressor(ForestRegressor):
         .. versionchanged:: 1.9
             Criterion `"friedman_mse"` was deprecated.
 
-        .. versionadded:: 1.9
+        .. versionadded:: 1.10
            Quantile/Pinball loss criterion
 
     max_depth : int, default=None
@@ -1798,6 +1798,10 @@ class RandomForestRegressor(ForestRegressor):
     quantile : float, default=0.5
         The quantile to predict when ``criterion="quantile"``. It must be strictly
         between 0 and 1.
+
+        Extreme quantiles (close to 0 or 1) require enough samples in each leaf
+        to be estimated reliably. Consider limiting ``max_depth`` or increasing
+        ``min_samples_leaf`` when predicting a quantile far from 0.5.
 
     Attributes
     ----------
@@ -2413,7 +2417,7 @@ class ExtraTreesRegressor(ForestRegressor):
         .. versionchanged:: 1.9
             Criterion `"friedman_mse"` was deprecated.
 
-        .. versionadded:: 1.9
+        .. versionadded:: 1.10
            Quantile/Pinball loss criterion
 
     max_depth : int, default=None
@@ -2581,6 +2585,10 @@ class ExtraTreesRegressor(ForestRegressor):
     quantile : float, default=0.5
         The quantile to predict when ``criterion="quantile"``. It must be strictly
         between 0 and 1.
+
+        Extreme quantiles (close to 0 or 1) require enough samples in each leaf
+        to be estimated reliably. Consider limiting ``max_depth`` or increasing
+        ``min_samples_leaf`` when predicting a quantile far from 0.5.
 
     Attributes
     ----------

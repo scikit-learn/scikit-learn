@@ -118,7 +118,7 @@ def test_monotonic_constraints_classifications(
     ids=["dense-without-missing", "sparse-without-missing", "dense-with-missing"],
 )
 @pytest.mark.parametrize("depth_first_builder", (True, False))
-@pytest.mark.parametrize("criterion", ("absolute_error", "squared_error"))
+@pytest.mark.parametrize("criterion", ("absolute_error", "squared_error", "quantile"))
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 def test_monotonic_constraints_regressions(
     TreeRegressor,
@@ -313,7 +313,7 @@ def test_1d_opposite_monotonicity_cst_data(TreeRegressor):
 @pytest.mark.parametrize("with_missing", (True, False))
 @pytest.mark.parametrize("monotonic_sign", (-1, 1))
 @pytest.mark.parametrize("depth_first_builder", (True, False))
-@pytest.mark.parametrize("criterion", ("absolute_error", "squared_error"))
+@pytest.mark.parametrize("criterion", ("absolute_error", "squared_error", "quantile"))
 def test_1d_tree_nodes_values(
     TreeRegressor,
     with_missing,
@@ -477,7 +477,7 @@ def test_assert_nd_reg_tree_children_monotonic_bounded():
 @pytest.mark.parametrize("with_missing", (True, False))
 @pytest.mark.parametrize("monotonic_sign", (-1, 1))
 @pytest.mark.parametrize("depth_first_builder", (True, False))
-@pytest.mark.parametrize("criterion", ("absolute_error", "squared_error"))
+@pytest.mark.parametrize("criterion", ("absolute_error", "squared_error", "quantile"))
 def test_nd_tree_nodes_values(
     TreeRegressor,
     with_missing,

@@ -527,10 +527,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     "for binary classification. "
                     f"Found {self.n_classes_.max()} classes."
                 )
-        if has_categorical and self.criterion == "absolute_error":
+        if has_categorical and self.criterion in ("absolute_error", "quantile"):
             raise ValueError(
                 "Categorical features are not supported with "
-                "criterion='absolute_error'."
+                f"criterion={self.criterion!r}."
             )
 
         SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
@@ -1345,7 +1345,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         .. versionchanged:: 1.9
             Criterion `"friedman_mse"` was deprecated.
 
-        .. versionadded:: 1.9
+        .. versionadded:: 1.10
            Quantile/Pinball loss criterion
 
     splitter : {"best", "random"}, default="best"
@@ -1470,6 +1470,10 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         The quantile to predict when ``criterion="quantile"``. It must be strictly
         between 0 and 1. If 0.5 (default), the model predicts the median.
 
+        Extreme quantiles (close to 0 or 1) require enough samples in each leaf
+        to be estimated reliably. Consider limiting ``max_depth`` or increasing
+        ``min_samples_leaf`` when predicting a quantile far from 0.5.
+
     .. versionadded:: 1.10
 
     categorical_features : array-like of {bool, int, str} of shape (n_features,) or \
@@ -1494,7 +1498,8 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         With the default ``splitter='best'``, categorical features are only
         supported for single-output regression.
-        Categorical features are not supported with `criterion="absolute_error"`.
+        Categorical features are not supported with `criterion="absolute_error"`
+        or `criterion="quantile"`.
 
         .. versionadded:: 1.10
 
@@ -2058,7 +2063,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         .. versionchanged:: 1.9
             Criterion `"friedman_mse"` was deprecated.
 
-        .. versionadded:: 1.9
+        .. versionadded:: 1.10
            Quantile/Pinball loss criterion
 
     splitter : {"random", "best"}, default="random"
@@ -2175,6 +2180,10 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         The quantile to predict when ``criterion="quantile"``. It must be strictly
         between 0 and 1. If 0.5 (default), the model predicts the median.
 
+        Extreme quantiles (close to 0 or 1) require enough samples in each leaf
+        to be estimated reliably. Consider limiting ``max_depth`` or increasing
+        ``min_samples_leaf`` when predicting a quantile far from 0.5.
+
     .. versionadded:: 1.10
 
     categorical_features : array-like of {bool, int, str} of shape (n_features,) or \
@@ -2199,6 +2208,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
         Categorical features are supported with the default ``splitter='random'``
         strategy, including multi-output targets.
+        Categorical features are not supported with `criterion="absolute_error"`
+        or `criterion="quantile"`.
 
         .. versionadded:: 1.10
 
