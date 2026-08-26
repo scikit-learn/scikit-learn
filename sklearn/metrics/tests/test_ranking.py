@@ -1,5 +1,4 @@
 import math
-import os
 import re
 
 import numpy as np
@@ -46,6 +45,7 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
+    skip_if_array_api_compat_not_configured,
 )
 from sklearn.utils.extmath import softmax
 from sklearn.utils.fixes import CSR_CONTAINERS
@@ -949,9 +949,7 @@ def test_confusion_matrix_at_thresholds(global_random_seed):
     assert_allclose(tns + fps + fns + tps, n_samples)
 
 
-@pytest.mark.skipif(
-    os.environ.get("SCIPY_ARRAY_API") != "1", reason="SCIPY_ARRAY_API not set to 1."
-)
+@skip_if_array_api_compat_not_configured
 @pytest.mark.parametrize("weight_kind", ["uniform", "variable"])
 def test_confusion_matrix_at_thresholds_float32_only_weighted_large_n(weight_kind):
     """Weighted counts stay stable on float32-only devices for n_pos > 2**24.
