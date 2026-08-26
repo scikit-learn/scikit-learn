@@ -179,13 +179,9 @@ PRs that appear to violate this policy will be closed without review.
 Submitting a bug report or a feature request
 ============================================
 
-We use GitHub issues to track all bugs and feature requests; feel free to open
-an issue if you have found a bug or wish to see a feature implemented.
-
-In case you experience issues using this package, do not hesitate to submit a
-ticket to the
-`Bug Tracker <https://github.com/scikit-learn/scikit-learn/issues>`_. You are
-also welcome to post feature requests or pull requests.
+We use `GitHub issues <https://github.com/scikit-learn/scikit-learn/issues>`_ to
+track all bugs and feature requests; feel free to open an issue if you have found a bug
+or wish to see a feature implemented.
 
 It is recommended to check that your issue complies with the
 following rules before submitting:
