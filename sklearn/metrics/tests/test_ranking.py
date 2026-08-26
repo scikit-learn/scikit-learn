@@ -38,7 +38,7 @@ from sklearn.metrics._ranking import (
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import label_binarize
 from sklearn.random_projection import _sparse_random_matrix
-from sklearn.utils._array_api import _convert_to_numpy
+from sklearn.utils._array_api import move_to
 from sklearn.utils._testing import (
     _array_api_for_tests,
     _convert_container,
@@ -993,8 +993,8 @@ def test_confusion_matrix_at_thresholds_float32_only_weighted_large_n(weight_kin
             y_true, y_score, sample_weight=sample_weight
         )
 
-    tps_np = _convert_to_numpy(tps, xp=xp)
-    fps_np = _convert_to_numpy(fps, xp=xp)
+    tps_np = move_to(tps, xp=np, device="cpu")
+    fps_np = move_to(fps, xp=np, device="cpu")
     # Allow float32 rounding of large integer-valued counts (ulp of 2 above 2**24)
     # plus fixed-point quantization at 1e-6 relative resolution.
     assert_allclose(tps_np[-1], expected_pos_weight, rtol=1e-5, atol=1)
