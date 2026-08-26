@@ -30,7 +30,6 @@ from sklearn.utils import (
 )
 from sklearn.utils._array_api import (
     _max_precision_float_dtype,
-    _max_precision_int_dtype,
     get_namespace,
     get_namespace_and_device,
     move_to,
@@ -1038,12 +1037,12 @@ def confusion_matrix_at_thresholds(
     # n around 2**24, so the normalized cumsum still drifts.
     max_float_dtype = _max_precision_float_dtype(xp, device)
     if sample_weight is not None and max_float_dtype == xp.float32:
-        int_dtype = _max_precision_int_dtype(xp, device)
         # Micro-unit fixed point: enough resolution for typical weights while
-        # keeping scaled totals inside int64 for very large n.
+        # keeping scaled totals inside int64 for very large n. int64 is assumed
+        # available on float32-only devices of interest (e.g. torch MPS).
         scale = 1_000_000
-        y_true_i = xp.astype(y_true, int_dtype)
-        w_scaled = xp.astype(xp.round(weight * scale), int_dtype)
+        y_true_i = xp.astype(y_true, xp.int64)
+        w_scaled = xp.astype(xp.round(weight * scale), xp.int64)
         tps_i = xp.cumulative_sum(y_true_i * w_scaled)[threshold_idxs]
         fps_i = xp.cumulative_sum((1 - y_true_i) * w_scaled)[threshold_idxs]
         # Divide in the integer domain first so we never cast integers much

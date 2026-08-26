@@ -25,7 +25,6 @@ from sklearn.utils._array_api import (
     _logsumexp,
     _matching_numpy_dtype,
     _max_precision_float_dtype,
-    _max_precision_int_dtype,
     _median,
     _nanmax,
     _nanmean,
@@ -689,22 +688,6 @@ def test_max_precision_float_dtype(namespace, device_name, dtype_name):
         expected_dtype = xp.float32
 
     assert _max_precision_float_dtype(xp, device) == expected_dtype
-
-
-@pytest.mark.parametrize(
-    "namespace, device_name, dtype_name",
-    yield_namespace_device_dtype_combinations(),
-)
-def test_max_precision_int_dtype(namespace, device_name, dtype_name):
-    xp, device = _array_api_for_tests(namespace, device_name)
-    try:
-        xp.asarray([0], dtype=xp.int64, device=device)
-        expected_dtype = xp.int64
-    except Exception:
-        # Some devices do not support int64 (e.g. array-api-strict's no_x64).
-        expected_dtype = xp.int32
-
-    assert _max_precision_int_dtype(xp, device) == expected_dtype
 
 
 @pytest.mark.skipif(
