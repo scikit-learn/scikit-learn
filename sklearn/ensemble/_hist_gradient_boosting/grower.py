@@ -91,6 +91,7 @@ class TreeNode:
         partition_stop,
         sum_gradients,
         sum_hessians,
+        sum_weights,
         value=None,
     ):
         self.depth = depth
@@ -98,6 +99,7 @@ class TreeNode:
         self.n_samples = sample_indices.shape[0]
         self.sum_gradients = sum_gradients
         self.sum_hessians = sum_hessians
+        self.sum_weights = sum_weights
         self.value = value
         self.is_leaf = False
         self.allowed_features = None
@@ -262,6 +264,7 @@ class TreeGrower:
         rng=np.random.default_rng(),
         shrinkage=1.0,
         n_threads=None,
+        sample_weight=None,
     ):
         self._validate_parameters(
             X_binned,
@@ -311,7 +314,13 @@ class TreeGrower:
 
         hessians_are_constant = hessians.shape[0] == 1
         self.histogram_builder = HistogramBuilder(
-            X_binned, n_bins, gradients, hessians, hessians_are_constant, n_threads
+            X_binned,
+            n_bins,
+            gradients,
+            hessians,
+            hessians_are_constant,
+            n_threads,
+            sample_weights=sample_weight,
         )
         missing_values_bin_idx = n_bins - 1
         self.splitter = Splitter(
@@ -431,6 +440,7 @@ class TreeGrower:
             sum_hessians = self.histogram_builder.hessians[0] * n_samples
         else:
             sum_hessians = histogram_array["sum_hessians"].sum()
+        sum_weights = histogram_array["sum_weights"].sum()
         self.root = TreeNode(
             depth=depth,
             sample_indices=self.splitter.partition,
@@ -438,10 +448,11 @@ class TreeGrower:
             partition_stop=n_samples,
             sum_gradients=sum_gradients,
             sum_hessians=sum_hessians,
+            sum_weights=sum_weights,
             value=0,
         )
 
-        if self.root.n_samples < 2 * self.min_samples_leaf:
+        if self.root.sum_weights < 2 * self.min_samples_leaf:
             # Do not even bother computing any splitting statistics.
             self._finalize_leaf(self.root)
             return
@@ -472,6 +483,7 @@ class TreeGrower:
             histograms=node.histograms,
             sum_gradients=node.sum_gradients,
             sum_hessians=node.sum_hessians,
+            sum_weights=node.sum_weights,
             value=node.value,
             lower_bound=node.children_lower_bound,
             upper_bound=node.children_upper_bound,
@@ -515,6 +527,7 @@ class TreeGrower:
             partition_stop=node.partition_start + right_child_pos,
             sum_gradients=node.split_info.sum_gradient_left,
             sum_hessians=node.split_info.sum_hessian_left,
+            sum_weights=node.split_info.sum_weight_left,
             value=node.split_info.value_left,
         )
         right_child_node = TreeNode(
@@ -524,6 +537,7 @@ class TreeGrower:
             partition_stop=node.partition_stop,
             sum_gradients=node.split_info.sum_gradient_right,
             sum_hessians=node.split_info.sum_hessian_right,
+            sum_weights=node.split_info.sum_weight_right,
             value=node.split_info.value_right,
         )
 
@@ -565,9 +579,9 @@ class TreeGrower:
             self._finalize_leaf(right_child_node)
             return left_child_node, right_child_node
 
-        if left_child_node.n_samples < self.min_samples_leaf * 2:
+        if left_child_node.sum_weights < self.min_samples_leaf * 2:
             self._finalize_leaf(left_child_node)
-        if right_child_node.n_samples < self.min_samples_leaf * 2:
+        if right_child_node.sum_weights < self.min_samples_leaf * 2:
             self._finalize_leaf(right_child_node)
 
         if self.with_monotonic_cst:

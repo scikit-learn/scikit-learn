@@ -38,6 +38,8 @@ cdef struct split_info_struct:
     Y_DTYPE_C sum_hessian_right
     unsigned int n_samples_left
     unsigned int n_samples_right
+    Y_DTYPE_C sum_weight_left
+    Y_DTYPE_C sum_weight_right
     Y_DTYPE_C value_left
     Y_DTYPE_C value_right
     uint8_t is_categorical
@@ -79,6 +81,10 @@ class SplitInfo:
         The number of samples in the left child.
     n_samples_right : int
         The number of samples in the right child.
+    sum_weight_left : float
+        The sum of the sample weights of all the samples in the left child.
+    sum_weight_right : float
+        The sum of the sample weights of all the samples in the right child.
     is_categorical : bool
         Whether the split is done on a categorical feature.
     left_cat_bitset : ndarray of shape=(8,), dtype=uint32 or None
@@ -92,7 +98,8 @@ class SplitInfo:
     def __init__(self, gain, feature_idx, bin_idx,
                  missing_go_to_left, sum_gradient_left, sum_hessian_left,
                  sum_gradient_right, sum_hessian_right, n_samples_left,
-                 n_samples_right, value_left, value_right,
+                 n_samples_right, sum_weight_left, sum_weight_right,
+                 value_left, value_right,
                  is_categorical, left_cat_bitset):
         self.gain = gain
         self.feature_idx = feature_idx
@@ -104,6 +111,8 @@ class SplitInfo:
         self.sum_hessian_right = sum_hessian_right
         self.n_samples_left = n_samples_left
         self.n_samples_right = n_samples_right
+        self.sum_weight_left = sum_weight_left
+        self.sum_weight_right = sum_weight_right
         self.value_left = value_left
         self.value_right = value_right
         self.is_categorical = is_categorical
@@ -433,6 +442,7 @@ cdef class Splitter:
             const Y_DTYPE_C lower_bound=-INFINITY,
             const Y_DTYPE_C upper_bound=INFINITY,
             const unsigned int [:] allowed_features=None,
+            sum_weights=None,
             ):
         """For each feature, find the best bin to split on at a given node.
 
@@ -487,9 +497,21 @@ cdef class Splitter:
             int n_threads = self.n_threads
             bint has_interaction_cst = False
             Y_DTYPE_C feature_fraction_per_split = self.feature_fraction_per_split
+            Y_DTYPE_C sum_weights_total
             uint8_t [:] subsample_mask  # same as npy_bool
             int n_subsampled_features
             uint8_t missing_go_to_left
+
+        # When not provided (e.g. direct calls in tests), derive the node's
+        # total sum of sample weights from the histograms. The sum over the
+        # bins of a single feature equals the node total, since each sample
+        # contributes to exactly one bin per feature.
+        if sum_weights is None:
+            sum_weights_total = 0.
+            for _b in range(histograms.shape[1]):
+                sum_weights_total += histograms[0, _b].sum_weights
+        else:
+            sum_weights_total = sum_weights
 
         has_interaction_cst = allowed_features is not None
         if has_interaction_cst:
@@ -545,8 +567,8 @@ cdef class Splitter:
                     self._find_best_bin_to_split_category(
                         feature_idx, has_missing_values[feature_idx],
                         histograms, n_samples, sum_gradients, sum_hessians,
-                        value, monotonic_cst[feature_idx], lower_bound,
-                        upper_bound, &split_infos[split_info_idx])
+                        sum_weights_total, value, monotonic_cst[feature_idx],
+                        lower_bound, upper_bound, &split_infos[split_info_idx])
                 else:
                     # We scan bins from left to right and, if there are any
                     # missing values, we scan a second time with missing
@@ -563,7 +585,7 @@ cdef class Splitter:
                         self._find_best_bin_to_split_numerical(
                             feature_idx, has_missing_values[feature_idx],
                             histograms, n_samples, sum_gradients, sum_hessians,
-                            value, monotonic_cst[feature_idx],
+                            sum_weights_total, value, monotonic_cst[feature_idx],
                             lower_bound, upper_bound, missing_go_to_left,
                             &split_infos[split_info_idx])
 
@@ -585,6 +607,8 @@ cdef class Splitter:
             split_info.sum_hessian_right,
             split_info.n_samples_left,
             split_info.n_samples_right,
+            split_info.sum_weight_left,
+            split_info.sum_weight_right,
             split_info.value_left,
             split_info.value_right,
             split_info.is_categorical,
@@ -620,6 +644,7 @@ cdef class Splitter:
             unsigned int n_samples,
             Y_DTYPE_C sum_gradients,
             Y_DTYPE_C sum_hessians,
+            Y_DTYPE_C sum_weights,
             Y_DTYPE_C value,
             signed char monotonic_cst,
             Y_DTYPE_C lower_bound,
@@ -640,12 +665,12 @@ cdef class Splitter:
             unsigned int hist_bin_idx
             int n_bins_non_missing = self.n_bins_non_missing[feature_idx]
             unsigned int n_samples_left
-            unsigned int n_samples_right
-            unsigned int n_samples_ = n_samples
             int start
             int end
             Y_DTYPE_C sum_hessian_left
             Y_DTYPE_C sum_hessian_right
+            Y_DTYPE_C sum_weight_left
+            Y_DTYPE_C sum_weight_right
             Y_DTYPE_C sum_gradient_left
             Y_DTYPE_C sum_gradient_right
             Y_DTYPE_C loss_current_node
@@ -654,6 +679,7 @@ cdef class Splitter:
 
             Y_DTYPE_C best_sum_hessian_left
             Y_DTYPE_C best_sum_gradient_left
+            Y_DTYPE_C best_sum_weight_left
             unsigned int best_bin_idx
             unsigned int best_n_samples_left
             Y_DTYPE_C best_gain = split_info.gain
@@ -661,6 +687,7 @@ cdef class Splitter:
 
         sum_gradient_left, sum_hessian_left = 0., 0.
         n_samples_left = 0
+        sum_weight_left = 0.
 
         loss_current_node = _loss_from_value(value, sum_gradients)
 
@@ -679,7 +706,8 @@ cdef class Splitter:
 
             hist = histograms[feature_idx, hist_bin_idx]
             n_samples_left += hist.count
-            n_samples_right = n_samples_ - n_samples_left
+            sum_weight_left += hist.sum_weights
+            sum_weight_right = sum_weights - sum_weight_left
 
             if self.hessians_are_constant:
                 sum_hessian_left += hist.count
@@ -697,9 +725,9 @@ cdef class Splitter:
                 # is already considered when missing_go_to_left is False.
                 continue
 
-            if n_samples_left < self.min_samples_leaf:
+            if sum_weight_left < self.min_samples_leaf:
                 continue
-            if n_samples_right < self.min_samples_leaf:
+            if sum_weight_right < self.min_samples_leaf:
                 # won't get any better
                 break
 
@@ -723,6 +751,7 @@ cdef class Splitter:
                 best_bin_idx = bin_idx
                 best_sum_gradient_left = sum_gradient_left
                 best_sum_hessian_left = sum_hessian_left
+                best_sum_weight_left = sum_weight_left
                 best_n_samples_left = n_samples_left
 
         if found_better_split:
@@ -735,6 +764,8 @@ cdef class Splitter:
             split_info.sum_hessian_right = sum_hessians - best_sum_hessian_left
             split_info.n_samples_left = best_n_samples_left
             split_info.n_samples_right = n_samples - best_n_samples_left
+            split_info.sum_weight_left = best_sum_weight_left
+            split_info.sum_weight_right = sum_weights - best_sum_weight_left
 
             # We recompute best values here but it's cheap
             split_info.value_left = compute_node_value(
@@ -753,6 +784,7 @@ cdef class Splitter:
             unsigned int n_samples,
             Y_DTYPE_C sum_gradients,
             Y_DTYPE_C sum_hessians,
+            Y_DTYPE_C sum_weights,
             Y_DTYPE_C value,
             char monotonic_cst,
             Y_DTYPE_C lower_bound,
@@ -785,12 +817,14 @@ cdef class Splitter:
             Y_DTYPE_C loss_current_node
             Y_DTYPE_C sum_gradient_left, sum_hessian_left
             Y_DTYPE_C sum_gradient_right, sum_hessian_right
-            unsigned int n_samples_left, n_samples_right
+            Y_DTYPE_C sum_weight_left, sum_weight_right
+            unsigned int n_samples_left
             Y_DTYPE_C gain
             Y_DTYPE_C best_gain = -1.0
             uint8_t found_better_split = False
             Y_DTYPE_C best_sum_hessian_left
             Y_DTYPE_C best_sum_gradient_left
+            Y_DTYPE_C best_sum_weight_left
             unsigned int best_n_samples_left
             unsigned int best_cat_infos_thresh
             # Reduces the effect of noises in categorical features,
@@ -892,6 +926,7 @@ cdef class Splitter:
 
             # The categories we'll consider will go to the left child
             sum_gradient_left, sum_hessian_left = 0., 0.
+            sum_weight_left = 0.
             n_samples_left = 0
 
             for i in range(middle):
@@ -900,7 +935,8 @@ cdef class Splitter:
                 hist = feature_hist[bin_idx]
 
                 n_samples_left += hist.count
-                n_samples_right = n_samples - n_samples_left
+                sum_weight_left += hist.sum_weights
+                sum_weight_right = sum_weights - sum_weight_left
 
                 if self.hessians_are_constant:
                     sum_hessian_left += hist.count
@@ -912,12 +948,12 @@ cdef class Splitter:
                 sum_gradient_right = sum_gradients - sum_gradient_left
 
                 if (
-                    n_samples_left < self.min_samples_leaf or
+                    sum_weight_left < self.min_samples_leaf or
                     sum_hessian_left < self.min_hessian_to_split
                 ):
                     continue
                 if (
-                    n_samples_right < self.min_samples_leaf or
+                    sum_weight_right < self.min_samples_leaf or
                     sum_hessian_right < self.min_hessian_to_split
                 ):
                     break
@@ -933,6 +969,7 @@ cdef class Splitter:
                     best_cat_infos_thresh = sorted_cat_idx
                     best_sum_gradient_left = sum_gradient_left
                     best_sum_hessian_left = sum_hessian_left
+                    best_sum_weight_left = sum_weight_left
                     best_n_samples_left = n_samples_left
                     best_direction = direction
 
@@ -949,6 +986,8 @@ cdef class Splitter:
             split_info.sum_hessian_right = sum_hessians - best_sum_hessian_left
             split_info.n_samples_left = best_n_samples_left
             split_info.n_samples_right = n_samples - best_n_samples_left
+            split_info.sum_weight_left = best_sum_weight_left
+            split_info.sum_weight_right = sum_weights - best_sum_weight_left
 
             # We recompute best values here but it's cheap
             split_info.value_left = compute_node_value(

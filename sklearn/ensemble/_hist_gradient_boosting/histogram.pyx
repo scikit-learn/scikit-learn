@@ -9,10 +9,11 @@ from libc.string cimport memset
 
 import numpy as np
 
-from sklearn.ensemble._hist_gradient_boosting.common import HISTOGRAM_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common import HISTOGRAM_DTYPE, Y_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common cimport hist_struct
 from sklearn.ensemble._hist_gradient_boosting.common cimport X_BINNED_DTYPE_C
 from sklearn.ensemble._hist_gradient_boosting.common cimport G_H_DTYPE_C
+from sklearn.ensemble._hist_gradient_boosting.common cimport Y_DTYPE_C
 from sklearn.utils._typedefs cimport uint8_t
 
 
@@ -81,6 +82,8 @@ cdef class HistogramBuilder:
         G_H_DTYPE_C [::1] hessians
         G_H_DTYPE_C [::1] ordered_gradients
         G_H_DTYPE_C [::1] ordered_hessians
+        Y_DTYPE_C [::1] sample_weights
+        Y_DTYPE_C [::1] ordered_weights
         uint8_t hessians_are_constant
         int n_threads
 
@@ -88,7 +91,8 @@ cdef class HistogramBuilder:
                  unsigned int n_bins, G_H_DTYPE_C [::1] gradients,
                  G_H_DTYPE_C [::1] hessians,
                  uint8_t hessians_are_constant,
-                 int n_threads):
+                 int n_threads,
+                 Y_DTYPE_C [::1] sample_weights=None):
 
         self.X_binned = X_binned
         self.n_features = X_binned.shape[1]
@@ -102,6 +106,10 @@ cdef class HistogramBuilder:
         self.ordered_hessians = hessians.copy()
         self.hessians_are_constant = hessians_are_constant
         self.n_threads = n_threads
+        if sample_weights is None:
+            sample_weights = np.ones(gradients.shape[0], dtype=Y_DTYPE)
+        self.sample_weights = sample_weights
+        self.ordered_weights = sample_weights.copy()
 
     def compute_histograms_brute(
         HistogramBuilder self,
@@ -138,6 +146,8 @@ cdef class HistogramBuilder:
             G_H_DTYPE_C [::1] gradients = self.gradients
             G_H_DTYPE_C [::1] ordered_hessians = self.ordered_hessians
             G_H_DTYPE_C [::1] hessians = self.hessians
+            Y_DTYPE_C [::1] ordered_weights = self.ordered_weights
+            Y_DTYPE_C [::1] sample_weights = self.sample_weights
             # Histograms will be initialized to zero later within a prange
             hist_struct [:, ::1] histograms = np.empty(
                 shape=(self.n_features, self.n_bins),
@@ -160,11 +170,13 @@ cdef class HistogramBuilder:
                     for i in prange(n_samples, schedule='static',
                                     num_threads=n_threads):
                         ordered_gradients[i] = gradients[sample_indices[i]]
+                        ordered_weights[i] = sample_weights[sample_indices[i]]
                 else:
                     for i in prange(n_samples, schedule='static',
                                     num_threads=n_threads):
                         ordered_gradients[i] = gradients[sample_indices[i]]
                         ordered_hessians[i] = hessians[sample_indices[i]]
+                        ordered_weights[i] = sample_weights[sample_indices[i]]
 
             # Compute histogram of each feature
             for f_idx in prange(
@@ -176,7 +188,7 @@ cdef class HistogramBuilder:
                     feature_idx = f_idx
 
                 self._compute_histogram_brute_single_feature(
-                    feature_idx, sample_indices, histograms
+                    feature_idx, sample_indices, ordered_weights, histograms
                 )
 
         return histograms
@@ -185,6 +197,7 @@ cdef class HistogramBuilder:
             HistogramBuilder self,
             const int feature_idx,
             const unsigned int [::1] sample_indices,  # IN
+            const Y_DTYPE_C [::1] ordered_weights,     # IN
             hist_struct [:, ::1] histograms) noexcept nogil:  # OUT
         """Compute the histogram for a given feature."""
 
@@ -197,6 +210,8 @@ cdef class HistogramBuilder:
                 self.ordered_gradients[:n_samples]
             G_H_DTYPE_C [::1] ordered_hessians = \
                 self.ordered_hessians[:n_samples]
+            const Y_DTYPE_C [::1] ordered_weights_view = \
+                ordered_weights[:n_samples]
             uint8_t hessians_are_constant = \
                 self.hessians_are_constant
 
@@ -207,20 +222,24 @@ cdef class HistogramBuilder:
             if hessians_are_constant:
                 _build_histogram_root_no_hessian(feature_idx, X_binned,
                                                  ordered_gradients,
+                                                 ordered_weights_view,
                                                  histograms)
             else:
                 _build_histogram_root(feature_idx, X_binned,
                                       ordered_gradients, ordered_hessians,
-                                      histograms)
+                                      ordered_weights_view, histograms)
         else:
             if hessians_are_constant:
                 _build_histogram_no_hessian(feature_idx,
                                             sample_indices, X_binned,
-                                            ordered_gradients, histograms)
+                                            ordered_gradients,
+                                            ordered_weights_view,
+                                            histograms)
             else:
                 _build_histogram(feature_idx, sample_indices,
                                  X_binned, ordered_gradients,
-                                 ordered_hessians, histograms)
+                                 ordered_hessians,
+                                 ordered_weights_view, histograms)
 
     def compute_histograms_subtraction(
         HistogramBuilder self,
@@ -289,6 +308,7 @@ cpdef void _build_histogram_naive(
         X_BINNED_DTYPE_C [:] binned_feature,  # IN
         G_H_DTYPE_C [:] ordered_gradients,  # IN
         G_H_DTYPE_C [:] ordered_hessians,  # IN
+        Y_DTYPE_C [:] ordered_weights,  # IN
         hist_struct [:, :] out) noexcept nogil:  # OUT
     """Build histogram in a naive way, without optimizing for cache hit.
 
@@ -304,6 +324,7 @@ cpdef void _build_histogram_naive(
         bin_idx = binned_feature[sample_idx]
         out[feature_idx, bin_idx].sum_gradients += ordered_gradients[i]
         out[feature_idx, bin_idx].sum_hessians += ordered_hessians[i]
+        out[feature_idx, bin_idx].sum_weights += ordered_weights[i]
         out[feature_idx, bin_idx].count += 1
 
 
@@ -330,6 +351,7 @@ cpdef void _subtract_histograms(
     for i in range(n_bins):
         hist_a[feature_idx, i].sum_gradients -= hist_b[feature_idx, i].sum_gradients
         hist_a[feature_idx, i].sum_hessians -= hist_b[feature_idx, i].sum_hessians
+        hist_a[feature_idx, i].sum_weights -= hist_b[feature_idx, i].sum_weights
         hist_a[feature_idx, i].count -= hist_b[feature_idx, i].count
 
 
@@ -339,6 +361,7 @@ cpdef void _build_histogram(
         const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
         const G_H_DTYPE_C [::1] ordered_gradients,  # IN
         const G_H_DTYPE_C [::1] ordered_hessians,  # IN
+        const Y_DTYPE_C [::1] ordered_weights,  # IN
         hist_struct [:, ::1] out) noexcept nogil:  # OUT
     """Return histogram for a given feature."""
     cdef:
@@ -368,6 +391,11 @@ cpdef void _build_histogram(
         out[feature_idx, bin_2].sum_hessians += ordered_hessians[i + 2]
         out[feature_idx, bin_3].sum_hessians += ordered_hessians[i + 3]
 
+        out[feature_idx, bin_0].sum_weights += ordered_weights[i]
+        out[feature_idx, bin_1].sum_weights += ordered_weights[i + 1]
+        out[feature_idx, bin_2].sum_weights += ordered_weights[i + 2]
+        out[feature_idx, bin_3].sum_weights += ordered_weights[i + 3]
+
         out[feature_idx, bin_0].count += 1
         out[feature_idx, bin_1].count += 1
         out[feature_idx, bin_2].count += 1
@@ -377,6 +405,7 @@ cpdef void _build_histogram(
         bin_idx = binned_feature[sample_indices[i]]
         out[feature_idx, bin_idx].sum_gradients += ordered_gradients[i]
         out[feature_idx, bin_idx].sum_hessians += ordered_hessians[i]
+        out[feature_idx, bin_idx].sum_weights += ordered_weights[i]
         out[feature_idx, bin_idx].count += 1
 
 
@@ -385,6 +414,7 @@ cpdef void _build_histogram_no_hessian(
         const unsigned int [::1] sample_indices,  # IN
         const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
         const G_H_DTYPE_C [::1] ordered_gradients,  # IN
+        const Y_DTYPE_C [::1] ordered_weights,  # IN
         hist_struct [:, ::1] out) noexcept nogil:  # OUT
     """Return histogram for a given feature, not updating hessians.
 
@@ -413,6 +443,11 @@ cpdef void _build_histogram_no_hessian(
         out[feature_idx, bin_2].sum_gradients += ordered_gradients[i + 2]
         out[feature_idx, bin_3].sum_gradients += ordered_gradients[i + 3]
 
+        out[feature_idx, bin_0].sum_weights += ordered_weights[i]
+        out[feature_idx, bin_1].sum_weights += ordered_weights[i + 1]
+        out[feature_idx, bin_2].sum_weights += ordered_weights[i + 2]
+        out[feature_idx, bin_3].sum_weights += ordered_weights[i + 3]
+
         out[feature_idx, bin_0].count += 1
         out[feature_idx, bin_1].count += 1
         out[feature_idx, bin_2].count += 1
@@ -421,14 +456,15 @@ cpdef void _build_histogram_no_hessian(
     for i in range(unrolled_upper, n_node_samples):
         bin_idx = binned_feature[sample_indices[i]]
         out[feature_idx, bin_idx].sum_gradients += ordered_gradients[i]
+        out[feature_idx, bin_idx].sum_weights += ordered_weights[i]
         out[feature_idx, bin_idx].count += 1
-
 
 cpdef void _build_histogram_root(
         const int feature_idx,
         const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
         const G_H_DTYPE_C [::1] all_gradients,  # IN
         const G_H_DTYPE_C [::1] all_hessians,  # IN
+        const Y_DTYPE_C [::1] all_weights,  # IN
         hist_struct [:, ::1] out) noexcept nogil:  # OUT
     """Compute histogram of the root node.
 
@@ -465,6 +501,11 @@ cpdef void _build_histogram_root(
         out[feature_idx, bin_2].sum_hessians += all_hessians[i + 2]
         out[feature_idx, bin_3].sum_hessians += all_hessians[i + 3]
 
+        out[feature_idx, bin_0].sum_weights += all_weights[i]
+        out[feature_idx, bin_1].sum_weights += all_weights[i + 1]
+        out[feature_idx, bin_2].sum_weights += all_weights[i + 2]
+        out[feature_idx, bin_3].sum_weights += all_weights[i + 3]
+
         out[feature_idx, bin_0].count += 1
         out[feature_idx, bin_1].count += 1
         out[feature_idx, bin_2].count += 1
@@ -474,6 +515,7 @@ cpdef void _build_histogram_root(
         bin_idx = binned_feature[i]
         out[feature_idx, bin_idx].sum_gradients += all_gradients[i]
         out[feature_idx, bin_idx].sum_hessians += all_hessians[i]
+        out[feature_idx, bin_idx].sum_weights += all_weights[i]
         out[feature_idx, bin_idx].count += 1
 
 
@@ -481,6 +523,7 @@ cpdef void _build_histogram_root_no_hessian(
         const int feature_idx,
         const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
         const G_H_DTYPE_C [::1] all_gradients,  # IN
+        const Y_DTYPE_C [::1] all_weights,  # IN
         hist_struct [:, ::1] out) noexcept nogil:  # OUT
     """Compute histogram of the root node, not updating hessians.
 
@@ -499,6 +542,7 @@ cpdef void _build_histogram_root_no_hessian(
         unsigned int bin_idx
 
     for i in range(0, unrolled_upper, 4):
+
         bin_0 = binned_feature[i]
         bin_1 = binned_feature[i + 1]
         bin_2 = binned_feature[i + 2]
@@ -509,6 +553,11 @@ cpdef void _build_histogram_root_no_hessian(
         out[feature_idx, bin_2].sum_gradients += all_gradients[i + 2]
         out[feature_idx, bin_3].sum_gradients += all_gradients[i + 3]
 
+        out[feature_idx, bin_0].sum_weights += all_weights[i]
+        out[feature_idx, bin_1].sum_weights += all_weights[i + 1]
+        out[feature_idx, bin_2].sum_weights += all_weights[i + 2]
+        out[feature_idx, bin_3].sum_weights += all_weights[i + 3]
+
         out[feature_idx, bin_0].count += 1
         out[feature_idx, bin_1].count += 1
         out[feature_idx, bin_2].count += 1
@@ -517,4 +566,5 @@ cpdef void _build_histogram_root_no_hessian(
     for i in range(unrolled_upper, n_samples):
         bin_idx = binned_feature[i]
         out[feature_idx, bin_idx].sum_gradients += all_gradients[i]
+        out[feature_idx, bin_idx].sum_weights += all_weights[i]
         out[feature_idx, bin_idx].count += 1

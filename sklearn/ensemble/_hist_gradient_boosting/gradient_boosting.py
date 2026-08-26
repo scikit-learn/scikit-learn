@@ -837,6 +837,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     rng=self._feature_subsample_rng,
                     shrinkage=self.learning_rate,
                     n_threads=n_threads,
+                    sample_weight=sample_weight_train,
                 )
                 grower.grow()
 

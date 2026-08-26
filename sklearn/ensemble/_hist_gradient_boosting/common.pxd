@@ -16,6 +16,7 @@ cdef packed struct hist_struct:
     # to be packed since by default numpy dtypes aren't aligned
     Y_DTYPE_C sum_gradients
     Y_DTYPE_C sum_hessians
+    Y_DTYPE_C sum_weights
     unsigned int count
 
 

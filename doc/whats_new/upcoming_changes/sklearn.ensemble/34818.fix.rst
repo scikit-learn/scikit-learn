@@ -1,0 +1,6 @@
+- |Fix| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` now correctly apply
+  `min_samples_leaf` using the sum of sample weights instead of the
+  unweighted sample count when `sample_weight` is provided. This makes the
+  constraint consistent with the equivalent repeated-sample training.
+  By :user:`Amarnath S <Amarnath10i>`.

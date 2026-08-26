@@ -26,23 +26,38 @@ def test_build_histogram(build_func):
     ordered_hessians = np.array([1, 1, 2], dtype=G_H_DTYPE)
 
     sample_indices = np.array([0, 2, 3], dtype=np.uint32)
+    weights = np.ones(len(sample_indices), dtype=np.float64)
     hist = np.zeros((1, 3), dtype=HISTOGRAM_DTYPE)
     build_func(
-        0, sample_indices, binned_feature, ordered_gradients, ordered_hessians, hist
+        0,
+        sample_indices,
+        binned_feature,
+        ordered_gradients,
+        ordered_hessians,
+        weights,
+        hist,
     )
     hist = hist[0]
     assert_array_equal(hist["count"], [2, 1, 0])
     assert_allclose(hist["sum_gradients"], [1, 3, 0])
     assert_allclose(hist["sum_hessians"], [2, 2, 0])
+    assert_allclose(hist["sum_weights"], [2, 1, 0])
 
     # Larger sample_indices (above unrolling threshold)
     sample_indices = np.array([0, 2, 3, 6, 7], dtype=np.uint32)
     ordered_gradients = np.array([0, 1, 3, 0, 1], dtype=G_H_DTYPE)
     ordered_hessians = np.array([1, 1, 2, 1, 0], dtype=G_H_DTYPE)
 
+    weights = np.ones(len(sample_indices), dtype=np.float64)
     hist = np.zeros((1, 3), dtype=HISTOGRAM_DTYPE)
     build_func(
-        0, sample_indices, binned_feature, ordered_gradients, ordered_hessians, hist
+        0,
+        sample_indices,
+        binned_feature,
+        ordered_gradients,
+        ordered_hessians,
+        weights,
+        hist,
     )
     hist = hist[0]
     assert_array_equal(hist["count"], [2, 2, 1])
@@ -63,15 +78,22 @@ def test_histogram_sample_order_independence():
         np.arange(n_samples, dtype=np.uint32), n_sub_samples, replace=False
     )
     ordered_gradients = rng.randn(n_sub_samples).astype(G_H_DTYPE)
+    ordered_weights = np.ones(n_sub_samples, dtype=np.float64)
     hist_gc = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
     _build_histogram_no_hessian(
-        0, sample_indices, binned_feature, ordered_gradients, hist_gc
+        0, sample_indices, binned_feature, ordered_gradients, ordered_weights, hist_gc
     )
 
     ordered_hessians = rng.exponential(size=n_sub_samples).astype(G_H_DTYPE)
     hist_ghc = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
     _build_histogram(
-        0, sample_indices, binned_feature, ordered_gradients, ordered_hessians, hist_ghc
+        0,
+        sample_indices,
+        binned_feature,
+        ordered_gradients,
+        ordered_hessians,
+        ordered_weights,
+        hist_ghc,
     )
 
     permutation = rng.permutation(n_sub_samples)
@@ -127,16 +149,31 @@ def test_unrolled_equivalent_to_naive(constant_hessian):
     hist_gc = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
     hist_ghc = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
     hist_naive = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
+    all_weights = np.ones(n_samples, dtype=np.float64)
+    ordered_weights = np.ones(n_samples, dtype=np.float64)
 
-    _build_histogram_root_no_hessian(0, binned_feature, ordered_gradients, hist_gc_root)
+    _build_histogram_root_no_hessian(
+        0, binned_feature, ordered_gradients, all_weights, hist_gc_root
+    )
     _build_histogram_root(
-        0, binned_feature, ordered_gradients, ordered_hessians, hist_ghc_root
+        0,
+        binned_feature,
+        ordered_gradients,
+        ordered_hessians,
+        all_weights,
+        hist_ghc_root,
     )
     _build_histogram_no_hessian(
-        0, sample_indices, binned_feature, ordered_gradients, hist_gc
+        0, sample_indices, binned_feature, ordered_gradients, ordered_weights, hist_gc
     )
     _build_histogram(
-        0, sample_indices, binned_feature, ordered_gradients, ordered_hessians, hist_ghc
+        0,
+        sample_indices,
+        binned_feature,
+        ordered_gradients,
+        ordered_hessians,
+        ordered_weights,
+        hist_ghc,
     )
     _build_histogram_naive(
         0,
@@ -144,6 +181,7 @@ def test_unrolled_equivalent_to_naive(constant_hessian):
         binned_feature,
         ordered_gradients,
         ordered_hessians,
+        ordered_weights,
         hist_naive,
     )
 
@@ -175,11 +213,17 @@ def test_hist_subtraction(constant_hessian):
         ordered_hessians = np.ones(n_samples, dtype=G_H_DTYPE)
     else:
         ordered_hessians = rng.lognormal(size=n_samples).astype(G_H_DTYPE)
+    ordered_weights = np.ones(n_samples, dtype=np.float64)
 
     hist_parent = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
     if constant_hessian:
         _build_histogram_no_hessian(
-            0, sample_indices, binned_feature, ordered_gradients, hist_parent
+            0,
+            sample_indices,
+            binned_feature,
+            ordered_gradients,
+            ordered_weights,
+            hist_parent,
         )
     else:
         _build_histogram(
@@ -188,6 +232,7 @@ def test_hist_subtraction(constant_hessian):
             binned_feature,
             ordered_gradients,
             ordered_hessians,
+            ordered_weights,
             hist_parent,
         )
 
@@ -196,10 +241,16 @@ def test_hist_subtraction(constant_hessian):
     sample_indices_left = sample_indices[mask]
     ordered_gradients_left = ordered_gradients[mask]
     ordered_hessians_left = ordered_hessians[mask]
+    ordered_weights_left = ordered_weights[mask]
     hist_left = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
     if constant_hessian:
         _build_histogram_no_hessian(
-            0, sample_indices_left, binned_feature, ordered_gradients_left, hist_left
+            0,
+            sample_indices_left,
+            binned_feature,
+            ordered_gradients_left,
+            ordered_weights_left,
+            hist_left,
         )
     else:
         _build_histogram(
@@ -208,16 +259,23 @@ def test_hist_subtraction(constant_hessian):
             binned_feature,
             ordered_gradients_left,
             ordered_hessians_left,
+            ordered_weights_left,
             hist_left,
         )
 
     sample_indices_right = sample_indices[~mask]
     ordered_gradients_right = ordered_gradients[~mask]
     ordered_hessians_right = ordered_hessians[~mask]
+    ordered_weights_right = ordered_weights[~mask]
     hist_right = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
     if constant_hessian:
         _build_histogram_no_hessian(
-            0, sample_indices_right, binned_feature, ordered_gradients_right, hist_right
+            0,
+            sample_indices_right,
+            binned_feature,
+            ordered_gradients_right,
+            ordered_weights_right,
+            hist_right,
         )
     else:
         _build_histogram(
@@ -226,6 +284,7 @@ def test_hist_subtraction(constant_hessian):
             binned_feature,
             ordered_gradients_right,
             ordered_hessians_right,
+            ordered_weights_right,
             hist_right,
         )
 
@@ -234,6 +293,6 @@ def test_hist_subtraction(constant_hessian):
     _subtract_histograms(0, n_bins, hist_left_sub, hist_right)
     _subtract_histograms(0, n_bins, hist_right_sub, hist_left)
 
-    for key in ("count", "sum_hessians", "sum_gradients"):
+    for key in ("count", "sum_hessians", "sum_gradients", "sum_weights"):
         assert_allclose(hist_left[key], hist_left_sub[key], rtol=1e-6)
         assert_allclose(hist_right[key], hist_right_sub[key], rtol=1e-6)

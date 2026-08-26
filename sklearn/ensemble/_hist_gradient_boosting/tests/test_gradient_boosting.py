@@ -652,6 +652,35 @@ def test_consistent_lengths():
         gbdt.fit(X, y[1:])
 
 
+@pytest.mark.parametrize(
+    "Klass", [HistGradientBoostingRegressor, HistGradientBoostingClassifier]
+)
+def test_min_samples_leaf_with_sample_weight(Klass):
+    # min_samples_leaf must be applied to the sum of sample weights, not to the
+    # number of samples. Training with integer sample weights must therefore be
+    # equivalent to training on data where each sample is repeated according to
+    # its weight (no sample_weight passed). See #34745.
+    rng = np.random.RandomState(0)
+    n_samples = 50
+    X = rng.randn(n_samples, 3)
+    if Klass is HistGradientBoostingClassifier:
+        y = (X[:, 0] > 0).astype(int)
+    else:
+        y = X[:, 0]
+    sample_weight = rng.randint(1, 4, size=n_samples).astype(float)
+
+    est_weighted = Klass(min_samples_leaf=5, max_iter=50, learning_rate=1.0)
+    est_weighted.fit(X, y, sample_weight=sample_weight)
+
+    repeats = sample_weight.astype(int)
+    X_rep = np.repeat(X, repeats, axis=0)
+    y_rep = np.repeat(y, repeats, axis=0)
+    est_repeated = Klass(min_samples_leaf=5, max_iter=50, learning_rate=1.0)
+    est_repeated.fit(X_rep, y_rep)
+
+    assert_allclose(est_weighted.predict(X), est_repeated.predict(X), atol=1e-3)
+
+
 def test_infinite_values_missing_values():
     # High level test making sure that inf and nan values are properly handled
     # when both are present. This is similar to
