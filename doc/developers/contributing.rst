@@ -359,8 +359,9 @@ line
 .. topic:: Learning Git
 
     The `Git documentation <https://git-scm.com/doc>`_ and
-    https://try.github.io are excellent resources to get started with git,
-    and understanding all of the commands shown here.
+    `Learn Git Branching <https://learngitbranching.js.org/>`_ are excellent
+    resources to get started with git, and understanding all of the commands
+    shown here.
 
 .. _pr_checklist:
 
