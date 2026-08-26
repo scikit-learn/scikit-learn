@@ -773,9 +773,7 @@ def _ridge_regression(
             except linalg.LinAlgError:
                 if X_offset is not None:
                     # X was left uncentered to avoid materializing a copy on
-                    # the (common) successful path; the svd fallback below
-                    # needs centered X, so pay for that copy now, on this
-                    # rare failure path.
+                    # the svd fallback needs centered X:
                     X = X - X_offset
                 # use SVD solver if matrix is singular
                 solver = "svd"
@@ -999,8 +997,13 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             X,
             y,
             fit_intercept=self.fit_intercept,
-            # When `use_no_center_cholesky=True`, X is never mutated:
-            copy=False if use_no_center_cholesky else self.copy_X,
+            copy=(
+                self.copy_X
+                # If `use_no_center_cholesky` or X is sparse,
+                # X is never mutated
+                and not use_no_center_cholesky
+                and not X_is_sparse
+            ),
             check_input=False,
             sample_weight=sample_weight,
             rescale_with_sw=False,
