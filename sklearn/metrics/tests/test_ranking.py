@@ -959,10 +959,7 @@ def test_confusion_matrix_at_thresholds_float32_only_unweighted_large_n():
     """
     pytest.importorskip("array_api_strict")
 
-    try:
-        xp, device = _array_api_for_tests("array_api_strict", "no_float64", "float32")
-    except Exception as exc:  # pragma: no cover - older array-api-strict
-        pytest.skip(f"array-api-strict no_float64 device unavailable: {exc}")
+    xp, device = _array_api_for_tests("array_api_strict", "no_float64", "float32")
 
     rng = np.random.RandomState(0)
     # Enough positives to exceed the float32 integer precision limit.
