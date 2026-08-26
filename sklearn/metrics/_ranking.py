@@ -1026,13 +1026,9 @@ def confusion_matrix_at_thresholds(
     )
     # accumulate the true positives with decreasing threshold
     if sample_weight is None:
-        supported_int_dtypes = xp.__array_namespace_info__().dtypes(
-            kind="signed integer", device=device
-        )
-        accum_int_dtype = xp.int64 if "int64" in supported_int_dtypes else xp.int32
-        y_true_int = xp.astype(y_true, accum_int_dtype)
-        tps_int = xp.cumulative_sum(y_true_int, dtype=accum_int_dtype)[threshold_idxs]
-        fps_int = (xp.astype(threshold_idxs, accum_int_dtype) + 1) - tps_int
+        y_true_int = xp.astype(y_true, xp.int64)
+        tps_int = xp.cumulative_sum(y_true_int, dtype=xp.int64)[threshold_idxs]
+        fps_int = (xp.astype(threshold_idxs, xp.int64) + 1) - tps_int
 
         output_dtype = (
             y_score.dtype
