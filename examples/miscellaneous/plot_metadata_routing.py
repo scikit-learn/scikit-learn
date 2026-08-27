@@ -515,8 +515,8 @@ print_routing(clf)
 with config_context(metadata_request_policy="auto"):
     print_routing(clf)
 
-# The instance-level auto-requests are set on top of the class-level requests and can
-# override them.
+# The instance-level auto-requests are set on top of the class-level requests (and can
+# override them).
 
 # %%
 # The routing can still be modified by the user with `set_*_request` methods, which take
@@ -526,17 +526,18 @@ clf.set_fit_request(sample_weight=False)
 print_routing(clf)
 
 # %%
-# The same applies for instance-level requests:
+# Instance-level requests can also be overridden:
 with config_context(metadata_request_policy="auto"):
     clf = ClassifierWithRequestDefaults()
-    clf.set_fit_request(sample_weight=False)
+    clf.set_predict_request(other_metadata=False)
     print_routing(clf)
 
-
 # %%
-# On a consuming :term:`router`, put the auto-requests onto a `MetadataRequest`, then
+# On a consuming :term:`router`, apply `add_auto_request` on the `MetadataRequest`, then
 # attach it with ``add_self_request``. Here we subclass `RouterConsumerClassifier` from
 # above:
+
+
 class RouterConsumerClassifierWithAutoRequests(RouterConsumerClassifier):
     def get_metadata_routing(self):
         self_request = self._get_metadata_request()
@@ -555,11 +556,15 @@ class RouterConsumerClassifierWithAutoRequests(RouterConsumerClassifier):
 
 
 meta_est = RouterConsumerClassifierWithAutoRequests(estimator=ExampleClassifier())
+
+# %%
+# With the default `metadata_request_policy="class-level"`, no request is automatically
+# set:
 print_routing(meta_est)
 
 # %%
-# With auto-requests enabled, `sample_weight` is requested on the meta-estimator
-# itself (``$self_request``):
+# When the auto-request policy is set, the consuming router requests `sample_weight`
+# for its own usage:
 with config_context(metadata_request_policy="auto"):
     print_routing(meta_est)
 

@@ -442,8 +442,8 @@ class MethodMetadataRequest:
         :ref:`metadata_routing_auto_request`.
 
         Note that setting auto-requests on *composite* methods such as `fit_transform`
-        or will not have an effect. Call `add_auto_request` on the simple methods
-        instead.
+        or `fit_predict` will not have an effect. Call `add_auto_request` on the simple
+        methods instead.
 
         Parameters
         ----------

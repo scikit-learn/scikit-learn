@@ -196,6 +196,8 @@ def set_config(
         - `"auto"`: apply requests for metadata flagged with `add_auto_request`
         - `None`: configuration is unchanged
 
+        Global default: `"class-level"`.
+
         Refer to :ref:`metadata_routing_auto_request` for more details.
 
         .. versionadded:: 1.10
@@ -393,6 +395,8 @@ def config_context(
         - `"class-level"`: do not apply auto-requests
         - `"auto"`: apply requests for metadata flagged with `add_auto_request`
         - `None`: configuration is unchanged
+
+        Global default: `"class-level"`.
 
         Refer to :ref:`metadata_routing_auto_request` for more details.
 
