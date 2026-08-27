@@ -22,6 +22,7 @@ from sklearn.metrics import get_scorer
 from sklearn.model_selection import check_cv
 from sklearn.model_selection._validation import _score
 from sklearn.utils import _safe_indexing, metadata_routing
+from sklearn.utils._dataframe import is_df_or_series
 from sklearn.utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
@@ -281,13 +282,16 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         # step_score is not exposed to users and is used when implementing RFECV
         # self.step_scores_ will not be calculated when calling _fit through fit
 
+        preserve_X = is_df_or_series(X)
         X, y = validate_data(
             self,
             X,
             y,
             accept_sparse="csc",
+            ensure_min_features=2,
+            ensure_all_finite=False,
             multi_output=True,
-            skip_check_array=True,
+            skip_check_array=preserve_X,
         )
 
         # Initialization
@@ -377,12 +381,15 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     def _transform_for_estimator(self, X):
         """Transform X to the selected features, preserving the DataFrame."""
+        preserve_X = is_df_or_series(X)
         X = validate_data(
             self,
             X,
+            dtype=None,
             accept_sparse="csr",
+            ensure_all_finite=not get_tags(self).input_tags.allow_nan,
+            skip_check_array=preserve_X,
             reset=False,
-            skip_check_array=True,
         )
         return self._transform(X)
 
@@ -838,13 +845,16 @@ class RFECV(RFE):
             Fitted estimator.
         """
         _raise_for_params(params, self, "fit", allow=["groups"])
+        preserve_X = is_df_or_series(X)
         X, y = validate_data(
             self,
             X,
             y,
             accept_sparse="csr",
+            ensure_min_features=2,
+            ensure_all_finite=False,
             multi_output=True,
-            skip_check_array=True,
+            skip_check_array=preserve_X,
         )
 
         if _routing_enabled():
