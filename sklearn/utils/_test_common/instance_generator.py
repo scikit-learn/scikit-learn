@@ -898,7 +898,7 @@ def _yield_instances_for_check(check, estimator_orig):
         yield estimator
 
 
-PER_ESTIMATOR_XFAIL_CHECKS = {
+PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
     AdaBoostClassifier: {
         # TODO: replace by a statistical test, see meta-issue #16298
         "check_sample_weight_equivalence_on_dense_data": (
@@ -1014,10 +1014,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_requires_y_none": "Doesn't fail gracefully",
     },
     HalvingGridSearchCV: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
-        "check_array_api_string_and_numeric_inputs": (
-            "mixed string and numeric array API input support not added yet"
-        ),
         "check_fit2d_1sample": (
             "Fail during parameter check since min/max resources requires more samples"
         ),
@@ -1028,10 +1024,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_requires_y_none": "Doesn't fail gracefully",
     },
     HalvingRandomSearchCV: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
-        "check_array_api_string_and_numeric_inputs": (
-            "mixed string and numeric array API input support not added yet"
-        ),
         "check_fit2d_1sample": (
             "Fail during parameter check since min/max resources requires more samples"
         ),
@@ -1087,12 +1079,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     KNeighborsTransformer: {
         "check_methods_sample_order_invariance": "check is not applicable."
-    },
-    LinearDiscriminantAnalysis: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
-        "check_array_api_string_and_numeric_inputs": (
-            "mixed string and numeric array API input support not added yet"
-        ),
     },
     LabelEncoder: {
         "check_array_api_same_namespace": "check_same_namespace not yet added",
@@ -1182,13 +1168,8 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         ),
     },
     PCA: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
-        "check_array_api_string_and_numeric_inputs": (
-            "mixed string and numeric array API input support not added yet"
-        ),
         # TODO: see gh-33205 for details
         "check_array_api_input": "`linalg.inv` fails because input is singular",
-        "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     Perceptron: {
         # TODO: replace by a statistical test, see meta-issue #16298
@@ -1210,10 +1191,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         ),
     },
     PoissonRegressor: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
-        "check_array_api_string_and_numeric_inputs": (
-            "mixed string and numeric array API input support not added yet"
-        ),
         "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     PolynomialFeatures: {
