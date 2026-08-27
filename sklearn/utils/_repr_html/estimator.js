@@ -126,9 +126,7 @@ if (!window.skEstimatorKeydownGuard) {
             }
         } else if (event.key === 'Escape') {
             /* Step back out to the diagram itself, so the keyboard position
-             * stays inside it instead of dropping to the page body.
-             * Blurring first is needed: focusing the container on its own
-             * does not always move the focus off the current element. */
+             * stays inside it instead of dropping to the page body. */
             event.target.blur();
             container.focus();
             event.stopPropagation();
