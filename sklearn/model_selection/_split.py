@@ -1102,9 +1102,13 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
             y_counts_per_fold[i] -= group_y_counts
             fold_eval = np.mean(std_per_class)
             samples_in_fold = np.sum(y_counts_per_fold[i])
-            is_current_fold_better = fold_eval < min_eval or (
-                np.isclose(fold_eval, min_eval)
-                and samples_in_fold < min_samples_in_fold
+            # `fold_eval` values that are mathematically equal can still differ
+            # by a few ULP. Comparing them with a strict `<` would let that noise
+            # decide the assignment and bypass the tiebreak below, which can leave
+            # a fold empty when there is no slack (`n_groups == n_splits`).
+            is_tied = np.isclose(fold_eval, min_eval)
+            is_current_fold_better = (fold_eval < min_eval and not is_tied) or (
+                is_tied and samples_in_fold < min_samples_in_fold
             )
             if is_current_fold_better:
                 min_eval = fold_eval
