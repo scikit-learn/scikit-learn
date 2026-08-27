@@ -226,12 +226,42 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
         if columns_with_unknown:
             if handle_unknown == "infrequent_if_exist":
-                msg = (
-                    "Found unknown categories in columns "
-                    f"{columns_with_unknown} during transform. These "
-                    "unknown categories will be encoded as the "
-                    "infrequent category."
-                )
+                infrequent_indices = getattr(self, "_infrequent_indices", None)
+                infrequent_cols = [
+                    i
+                    for i in columns_with_unknown
+                    if infrequent_indices is not None
+                    and infrequent_indices[i] is not None
+                ]
+                zeros_cols = [
+                    i
+                    for i in columns_with_unknown
+                    if infrequent_indices is None
+                    or infrequent_indices[i] is None
+                ]
+                if infrequent_cols and zeros_cols:
+                    msg = (
+                        "Found unknown categories in columns "
+                        f"{columns_with_unknown} during transform. The unknown "
+                        f"categories in columns {infrequent_cols} will be "
+                        "encoded as the infrequent category. Those in columns "
+                        f"{zeros_cols} will be encoded as all zeros, because "
+                        "these columns have no infrequent category."
+                    )
+                elif infrequent_cols:
+                    msg = (
+                        "Found unknown categories in columns "
+                        f"{infrequent_cols} during transform. These "
+                        "unknown categories will be encoded as the "
+                        "infrequent category."
+                    )
+                else:
+                    msg = (
+                        "Found unknown categories in columns "
+                        f"{zeros_cols} during transform. These "
+                        "unknown categories will be encoded as all zeros, "
+                        "because these columns have no infrequent category."
+                    )
             else:
                 msg = (
                     "Found unknown categories in columns "

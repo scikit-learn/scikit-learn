@@ -1622,12 +1622,33 @@ def test_ohe_drop_first_explicit_categories(handle_unknown):
     else:
         warn_msg = (
             r"Found unknown categories in columns \[0\] during transform. "
-            r"These unknown categories will be encoded as the "
-            r"infrequent category."
+            r"These unknown categories will be encoded as all zeros, "
+            r"because these columns have no infrequent category."
         )
     with pytest.warns(UserWarning, match=warn_msg):
         X_trans = ohe.transform(X_test)
     assert_allclose(X_trans, X_expected)
+
+
+def test_ohe_unknown_category_warning_mixed_infrequent():
+    """Check warning accurately describes mixed infrequent and zero-encoded columns."""
+    X = [["a", "x"], ["a", "x"], ["b", "x"], ["b", "y"]]
+
+    encoder = OneHotEncoder(
+        drop="first",
+        sparse_output=False,
+        handle_unknown="infrequent_if_exist",
+        min_frequency=2,
+    ).fit(X)
+
+    warn_msg = (
+        r"Found unknown categories in columns \[0, 1\] during transform\. "
+        r"The unknown categories in columns \[1\] will be encoded as the infrequent category\. "
+        r"Those in columns \[0\] will be encoded as all zeros, because these columns have no infrequent category\."
+    )
+    with pytest.warns(UserWarning, match=warn_msg):
+        X_trans = encoder.transform([["c", "z"]])
+    assert_allclose(X_trans, np.array([[0.0, 1.0]]))
 
 
 def test_ohe_more_informative_error_message():
